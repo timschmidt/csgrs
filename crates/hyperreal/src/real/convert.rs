@@ -242,6 +242,12 @@ impl Real {
         const NEG_BITS: u64 = 0x8000_0000_0000_0000;
         const EXP_BITS: u64 = 0x7ff0_0000_0000_0000;
 
+        if matches!(self.class, crate::real::Class::One)
+            && let fast @ Some(_) = self.rational.to_f64_approx()
+        {
+            return fast;
+        }
+
         let c = self.fold_ref();
         let sign = match self.refine_sign_until(-1075) {
             Some(sign) => sign,
@@ -361,7 +367,7 @@ mod tests {
 
     #[test]
     fn repr_f32() {
-        let f: f32 = 1.23456789;
+        let f: f32 = 1.234_567_9;
         let a: Real = f.try_into().unwrap();
         let correct = Real::new(Rational::fraction(5178153, 4194304).unwrap());
         assert_eq!(a, correct);
@@ -425,7 +431,7 @@ mod tests {
 
     #[test]
     fn arbitrary_roundtrip() {
-        assert_eq!(0.123456789_f32, roundtrip(0.123456789_f32));
+        assert_eq!(0.123_456_79_f32, roundtrip(0.123_456_79_f32));
         assert_eq!(987654321_f32, roundtrip(987654321_f32));
         assert_eq!(0.123456789_f64, roundtrip(0.123456789_f64));
         assert_eq!(987654321_f64, roundtrip(987654321_f64));
@@ -460,7 +466,7 @@ mod tests {
         // Large but still subnormal
         let sub = f32::from_bits(0x7c0000);
         assert_eq!(sub, roundtrip(sub));
-        let sub = f64::from_bits(0x000f_ffff_00000000);
+        let sub = f64::from_bits(0x000f_ffff_0000_0000);
         assert_eq!(sub, roundtrip(sub));
     }
 
@@ -470,7 +476,7 @@ mod tests {
     fn bit_conversion() {
         let r = Real::new(Rational::fraction(2, 5).unwrap()) * Real::pi();
         let f: f32 = r.sin().into();
-        assert_eq!(f, 0.951056516);
+        assert_eq!(f, 0.951_056_54);
     }
 
     // Our Pi isn't exactly equal to the IEEE approximations since it's more accurate
@@ -486,7 +492,7 @@ mod tests {
     fn max_u64_f32() {
         let max_u64: Rational = u64::MAX.into();
         let r = Real::new(max_u64);
-        let f: f32 = r.try_into().unwrap();
+        let f: f32 = r.into();
         assert_eq!(f, u64::MAX as f32);
     }
 
@@ -494,7 +500,7 @@ mod tests {
     fn max_u64_f64() {
         let max_u64: Rational = u64::MAX.into();
         let r = Real::new(max_u64);
-        let d: f64 = r.try_into().unwrap();
+        let d: f64 = r.into();
         assert_eq!(d, u64::MAX as f64);
     }
 
@@ -502,6 +508,9 @@ mod tests {
     fn borrowed_f64_approx_finite_values() {
         let half = Real::new(Rational::fraction(1, 2).unwrap());
         assert_eq!(half.to_f64_approx(), Some(0.5));
+
+        let one_third = Real::new(Rational::fraction(1, 3).unwrap());
+        assert_eq!(one_third.to_f64_approx(), Some(1.0 / 3.0));
 
         let pi = Real::pi().to_f64_approx().unwrap();
         assert!(std::f64::consts::PI.to_bits().abs_diff(pi.to_bits()) < 2);

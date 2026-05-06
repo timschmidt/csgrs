@@ -3,7 +3,6 @@ use std::str::FromStr;
 use crate::{Problem, Rational, real::Real};
 use ciborium::{Value, de, ser};
 use num::BigInt;
-use serde_json;
 
 impl Real {
     /// Serializes the Real to a JSON string.

@@ -194,7 +194,7 @@ impl Simple {
                     let Some(exact) = operand.exact_value(names)? else {
                         return Ok(None);
                     };
-                    value = value * exact;
+                    value *= exact;
                 }
                 Ok(Some(value))
             }
@@ -326,7 +326,7 @@ impl Simple {
                     let literals = self.operands.iter().skip(1);
                     if literals.clone().all(|operand| operand.literal().is_some()) {
                         for operand in literals {
-                            value = value * operand.literal().unwrap();
+                            value *= operand.literal().unwrap();
                         }
                         return Ok(Real::new(value));
                     }
@@ -848,12 +848,15 @@ mod tests {
             "(acos (sqrt 2))",
             "(acosh 0)",
             "(acosh -2)",
-            "(atanh 1)",
-            "(atanh -1)",
             "(atanh (sqrt 2))",
         ] {
             let xpr: Simple = case.parse().unwrap();
             assert_eq!(xpr.evaluate(&empty), Err(Problem::NotANumber), "{case}");
+        }
+
+        for case in ["(atanh 1)", "(atanh -1)"] {
+            let xpr: Simple = case.parse().unwrap();
+            assert_eq!(xpr.evaluate(&empty), Err(Problem::Infinity), "{case}");
         }
     }
 

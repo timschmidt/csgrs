@@ -585,51 +585,45 @@ impl Real {
             return Ok(Self::zero());
         }
         match &self.class {
-            One => {
-                if self.rational.extract_square_will_succeed() {
-                    let (square, rest) = self.rational.extract_square_reduced();
-                    if rest == *rationals::ONE {
-                        return Ok(Self {
-                            rational: square,
-                            class: One,
-                            computable: Computable::one(),
-                            signal: None,
-                        });
-                    } else {
-                        return Ok(Self {
-                            rational: square,
-                            class: Sqrt(rest.clone()),
-                            computable: Computable::sqrt_rational(rest),
-                            signal: None,
-                        });
-                    }
+            One if self.rational.extract_square_will_succeed() => {
+                let (square, rest) = self.rational.extract_square_reduced();
+                if rest == *rationals::ONE {
+                    return Ok(Self {
+                        rational: square,
+                        class: One,
+                        computable: Computable::one(),
+                        signal: None,
+                    });
+                } else {
+                    return Ok(Self {
+                        rational: square,
+                        class: Sqrt(rest.clone()),
+                        computable: Computable::sqrt_rational(rest),
+                        signal: None,
+                    });
                 }
             }
-            Pi => {
-                if self.rational.extract_square_will_succeed() {
-                    let (square, rest) = self.rational.clone().extract_square_reduced();
-                    if rest == *rationals::ONE {
-                        return Ok(Self {
-                            rational: square,
-                            class: Irrational,
-                            computable: Computable::sqrt(self.computable),
-                            signal: None,
-                        });
-                    }
+            Pi if self.rational.extract_square_will_succeed() => {
+                let (square, rest) = self.rational.clone().extract_square_reduced();
+                if rest == *rationals::ONE {
+                    return Ok(Self {
+                        rational: square,
+                        class: Irrational,
+                        computable: Computable::sqrt(self.computable),
+                        signal: None,
+                    });
                 }
             }
-            Exp(exp) => {
-                if self.rational.extract_square_will_succeed() {
-                    let (square, rest) = self.rational.clone().extract_square_reduced();
-                    if rest == *rationals::ONE {
-                        let exp = exp.clone() / Rational::new(2);
-                        return Ok(Self {
-                            rational: square,
-                            class: Exp(exp.clone()),
-                            computable: Computable::e(exp),
-                            signal: None,
-                        });
-                    }
+            Exp(exp) if self.rational.extract_square_will_succeed() => {
+                let (square, rest) = self.rational.clone().extract_square_reduced();
+                if rest == *rationals::ONE {
+                    let exp = exp.clone() / Rational::new(2);
+                    return Ok(Self {
+                        rational: square,
+                        class: Exp(exp.clone()),
+                        computable: Computable::e(exp),
+                        signal: None,
+                    });
                 }
             }
             _ => (),
@@ -789,15 +783,13 @@ impl Real {
         }
         match &self.class {
             One => return Self::ln_rational(self.rational),
-            Exp(exp) => {
-                if self.rational == *rationals::ONE {
-                    return Ok(Self {
-                        rational: exp.clone(),
-                        class: One,
-                        computable: Computable::one(),
-                        signal: None,
-                    });
-                }
+            Exp(exp) if self.rational == *rationals::ONE => {
+                return Ok(Self {
+                    rational: exp.clone(),
+                    class: One,
+                    computable: Computable::one(),
+                    signal: None,
+                });
             }
             _ => (),
         }
@@ -1200,10 +1192,17 @@ impl Real {
         (self + root).ln()
     }
 
-    /// The inverse hyperbolic tangent of this Real, or [`Problem::NotANumber`] outside (-1, 1).
+    /// The inverse hyperbolic tangent of this Real.
+    ///
+    /// Returns [`Problem::Infinity`] at the endpoints `-1` and `1`, or
+    /// [`Problem::NotANumber`] outside `(-1, 1)`.
     pub fn atanh(self) -> Result<Real, Problem> {
         if self.definitely_zero() {
             return Ok(Self::zero());
+        }
+        let one_real = Self::new(Rational::one());
+        if self == one_real || self == -one_real.clone() {
+            return Err(Problem::Infinity);
         }
         if self.class == One {
             let magnitude = if self.rational.sign() == Sign::Minus {
@@ -1211,7 +1210,7 @@ impl Real {
             } else {
                 self.rational.clone()
             };
-            if magnitude >= *rationals::ONE {
+            if magnitude > *rationals::ONE {
                 return Err(Problem::NotANumber);
             }
 
@@ -1220,7 +1219,12 @@ impl Real {
             return Ok(Self::ln_rational(ratio)? * Self::new(Rational::fraction(1, 2).unwrap()));
         }
         if let Sqrt(r) = &self.class
-            && self.rational.clone() * self.rational.clone() * r.clone() >= *rationals::ONE
+            && self.rational.clone() * self.rational.clone() * r.clone() == *rationals::ONE
+        {
+            return Err(Problem::Infinity);
+        }
+        if let Sqrt(r) = &self.class
+            && self.rational.clone() * self.rational.clone() * r.clone() > *rationals::ONE
         {
             return Err(Problem::NotANumber);
         }
@@ -1404,14 +1408,14 @@ impl Real {
 
     /// Raise this Real to some Real exponent.
     pub fn pow(self, exponent: Self) -> Result<Self, Problem> {
-        if let Exp(ref n) = self.class {
-            if n == rationals::ONE.deref() {
-                if self.rational == *rationals::ONE {
-                    return exponent.exp();
-                } else {
-                    let left = Real::new(self.rational).pow(exponent.clone())?;
-                    return Ok(left * exponent.exp()?);
-                }
+        if let Exp(ref n) = self.class
+            && n == rationals::ONE.deref()
+        {
+            if self.rational == *rationals::ONE {
+                return exponent.exp();
+            } else {
+                let left = Real::new(self.rational).pow(exponent.clone())?;
+                return Ok(left * exponent.exp()?);
             }
         }
         /* could handle self == 10 =>  10 ^ log10(exponent) specially */
@@ -1607,10 +1611,9 @@ impl<T: AsRef<Real>> Add<T> for &Real {
             };
             if let Ok(r) =
                 Self::Output::simple_log_sum(self.rational.clone(), b, other.rational.clone(), d)
+                && let Ok(simple) = Self::Output::ln_rational(r)
             {
-                if let Ok(simple) = Self::Output::ln_rational(r) {
-                    return simple;
-                }
+                return simple;
             }
         }
         let left = self.fold_ref();
@@ -1689,10 +1692,9 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
             };
             if let Ok(r) =
                 Self::Output::simple_log_sum(self.rational.clone(), b, -other.rational.clone(), d)
+                && let Ok(simple) = Self::Output::ln_rational(r)
             {
-                if let Ok(simple) = Self::Output::ln_rational(r) {
-                    return simple;
-                }
+                return simple;
             }
         }
         let left = self.fold_ref();

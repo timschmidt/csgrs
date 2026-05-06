@@ -1,6 +1,6 @@
 use crate::Problem;
 use num::bigint::Sign::{self, *};
-use num::{BigInt, BigUint, bigint::ToBigInt, bigint::ToBigUint};
+use num::{BigInt, BigUint, ToPrimitive, bigint::ToBigInt, bigint::ToBigUint};
 use num::{One, Zero};
 use serde::{Deserialize, Serialize};
 use std::sync::LazyLock;
@@ -333,6 +333,33 @@ impl Rational {
         } else {
             Some(candidate)
         }
+    }
+
+    pub(crate) fn to_f64_approx(&self) -> Option<f64> {
+        if self.sign == NoSign {
+            return Some(0.0);
+        }
+
+        let msd = self.msd_exact()?;
+        if msd > 1023 {
+            return None;
+        }
+        if msd < -1075 {
+            return Some(0.0);
+        }
+
+        let numerator = self.numerator.to_f64()?;
+        let denominator = self.denominator.to_f64()?;
+        let value = numerator / denominator;
+        if !value.is_finite() {
+            return None;
+        }
+
+        Some(match self.sign {
+            Minus => -value,
+            NoSign => 0.0,
+            Plus => value,
+        })
     }
 
     /// Is this Rational better understood as a fraction?

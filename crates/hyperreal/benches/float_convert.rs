@@ -51,7 +51,7 @@ fn bench_float_convert(c: &mut Criterion) {
     let mut group = c.benchmark_group("float_convert");
 
     group.bench_function("f32_normal", |b| {
-        b.iter(|| black_box(Rational::try_from(black_box(1.23456789_f32)).unwrap()))
+        b.iter(|| black_box(Rational::try_from(black_box(1.234_567_9_f32)).unwrap()))
     });
     group.bench_function("f64_normal", |b| {
         b.iter(|| black_box(Rational::try_from(black_box(1.23456789_f64)).unwrap()))
@@ -63,7 +63,7 @@ fn bench_float_convert(c: &mut Criterion) {
         b.iter(|| black_box(Rational::try_from(black_box(f64::from_bits(2))).unwrap()))
     });
     group.bench_function("real_f32_normal", |b| {
-        b.iter(|| black_box(Real::try_from(black_box(1.23456789_f32)).unwrap()))
+        b.iter(|| black_box(Real::try_from(black_box(1.234_567_9_f32)).unwrap()))
     });
     group.bench_function("real_f64_normal", |b| {
         b.iter(|| black_box(Real::try_from(black_box(1.23456789_f64)).unwrap()))

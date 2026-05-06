@@ -403,7 +403,7 @@ mod tests {
 
     #[test]
     fn disp_small() {
-        let smol = Computable::rational(Rational::fraction(4, 1000_000).unwrap());
+        let smol = Computable::rational(Rational::fraction(4, 1_000_000).unwrap());
         assert_eq!(format!("{smol:.0}"), "0");
         assert_eq!(format!("{smol:.2}"), "0.00");
         assert_eq!(format!("{smol}"), "0.000004");

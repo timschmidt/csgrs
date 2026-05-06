@@ -241,7 +241,7 @@ mod tests {
 
     #[test]
     fn repr_f32() {
-        let f: f32 = 1.23456789;
+        let f: f32 = 1.234_567_9;
         let a: Rational = f.try_into().unwrap();
         let correct = Rational::fraction(5178153, 4194304).unwrap();
         assert_eq!(a, correct);

@@ -361,7 +361,7 @@ mod tests {
         assert!(closest_f64(
             answer,
             // Value from wolframalpha.com
-            0.29595896909330400696886606953617752145
+            0.295_958_969_093_304
         ));
     }
 
@@ -424,7 +424,7 @@ mod tests {
             (10, 1),
             (10_000_000_000_000_000, 16),
             (100_000_000_000_000_000, 17),
-            (1000_000_000_000_000_000, 18),
+            (1_000_000_000_000_000_000, 18),
         ] {
             let n = Real::new(Rational::new(n));
             let answer = n.log10().unwrap();
@@ -547,9 +547,11 @@ mod tests {
             -1.4436354751788103
         ));
 
+        for value in [Real::new(Rational::new(1)), Real::new(Rational::new(-1))] {
+            assert_eq!(value.atanh(), Err(Problem::Infinity));
+        }
+
         for value in [
-            Real::new(Rational::new(1)),
-            Real::new(Rational::new(-1)),
             Real::new(Rational::fraction(11, 10).unwrap()),
             Real::new(Rational::fraction(-11, 10).unwrap()),
         ] {
@@ -578,6 +580,9 @@ mod tests {
             Real::new(Rational::new(2)).sqrt().unwrap().atanh(),
             Err(Problem::NotANumber)
         );
+        let sqrt_endpoint = Real::new(Rational::new(4)).sqrt().unwrap()
+            * Real::new(Rational::fraction(1, 2).unwrap());
+        assert_eq!(sqrt_endpoint.atanh(), Err(Problem::Infinity));
     }
 
     #[test]

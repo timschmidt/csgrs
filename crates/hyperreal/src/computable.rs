@@ -199,7 +199,7 @@ impl BoundInfo {
                     ..
                 },
             ) => {
-                let sign = match (left_sign.clone(), right_sign.clone()) {
+                let sign = match (left_sign, right_sign) {
                     (Some(left), Some(right)) if left == right => Some(left),
                     (Some(Sign::Plus), Some(Sign::Minus))
                     | (Some(Sign::Minus), Some(Sign::Plus)) => match (left_msd, right_msd) {
@@ -266,7 +266,7 @@ impl BoundInfo {
     fn known_sign(&self) -> Option<Sign> {
         match self {
             Self::Zero => Some(Sign::NoSign),
-            Self::NonZero { sign, .. } => sign.clone(),
+            Self::NonZero { sign, .. } => *sign,
             Self::Unknown => None,
         }
     }
@@ -741,10 +741,10 @@ impl Computable {
                 return Some(Some(sign));
             }
 
-            if let Some((_, appr)) = node.cached() {
-                if appr.abs() > BigInt::one() {
-                    return Some(Some(appr.sign()));
-                }
+            if let Some((_, appr)) = node.cached()
+                && appr.abs() > BigInt::one()
+            {
+                return Some(Some(appr.sign()));
             }
 
             match &*node.internal {
@@ -1172,18 +1172,18 @@ impl Computable {
         if self.exact_rational().is_some_and(|r| r == Rational::one()) {
             return Self::rational(Rational::zero());
         }
-        if let Approximation::Ratio(r) = &*self.internal {
-            if r.sign() == Sign::Plus {
-                let (shift, reduced) = r.factor_two_powers();
-                if shift != 0 {
-                    let reduced_ln = if reduced == Rational::one() {
-                        Self::integer(BigInt::zero())
-                    } else {
-                        Self::rational(reduced).ln()
-                    };
-                    let shift: BigInt = shift.into();
-                    return reduced_ln.add(Self::integer(shift).multiply(Self::ln2()));
-                }
+        if let Approximation::Ratio(r) = &*self.internal
+            && r.sign() == Sign::Plus
+        {
+            let (shift, reduced) = r.factor_two_powers();
+            if shift != 0 {
+                let reduced_ln = if reduced == Rational::one() {
+                    Self::integer(BigInt::zero())
+                } else {
+                    Self::rational(reduced).ln()
+                };
+                let shift: BigInt = shift.into();
+                return reduced_ln.add(Self::integer(shift).multiply(Self::ln2()));
             }
         }
 
@@ -1283,23 +1283,24 @@ impl Computable {
                 }
             };
 
-            if let Some(scale) = left.exact_rational() {
-                if let Some(value) = reduced(scale, right) {
-                    return value;
-                }
+            if let Some(scale) = left.exact_rational()
+                && let Some(value) = reduced(scale, right)
+            {
+                return value;
             }
-            if let Some(scale) = right.exact_rational() {
-                if let Some(value) = reduced(scale, left) {
-                    return value;
-                }
+            if let Some(scale) = right.exact_rational()
+                && let Some(value) = reduced(scale, left)
+            {
+                return value;
             }
         }
-        if let Some(rational) = self.exact_rational() {
-            if rational.sign() != Sign::Minus && rational.extract_square_will_succeed() {
-                let (root, rest) = rational.extract_square_reduced();
-                if rest == Rational::one() {
-                    return Self::rational(root);
-                }
+        if let Some(rational) = self.exact_rational()
+            && rational.sign() != Sign::Minus
+            && rational.extract_square_will_succeed()
+        {
+            let (root, rest) = rational.extract_square_reduced();
+            if rest == Rational::one() {
+                return Self::rational(root);
             }
         }
         Self {
@@ -1323,10 +1324,10 @@ impl Computable {
 
     /// Arctangent of this number.
     pub fn atan(self) -> Computable {
-        if let Some(rational) = self.exact_rational() {
-            if rational.sign() == Sign::NoSign {
-                return Self::rational(Rational::zero());
-            }
+        if let Some(rational) = self.exact_rational()
+            && rational.sign() == Sign::NoSign
+        {
+            return Self::rational(Rational::zero());
         }
         if self.exact_sign() == Some(Sign::Minus) {
             return self.negate().atan().negate();
@@ -1376,25 +1377,25 @@ impl Computable {
 
     /// Multiplicative inverse of this number.
     pub fn inverse(self) -> Computable {
-        if let Some(rational) = self.exact_rational() {
-            if let Ok(inverse) = rational.inverse() {
-                return Self::rational(inverse);
-            }
+        if let Some(rational) = self.exact_rational()
+            && let Ok(inverse) = rational.inverse()
+        {
+            return Self::rational(inverse);
         }
-        if let Approximation::Negate(child) = self.internal.as_ref() {
-            if child.exact_sign().is_some_and(|sign| sign != Sign::NoSign) {
-                return child.clone().inverse().negate();
-            }
+        if let Approximation::Negate(child) = self.internal.as_ref()
+            && child.exact_sign().is_some_and(|sign| sign != Sign::NoSign)
+        {
+            return child.clone().inverse().negate();
         }
-        if let Approximation::Offset(child, n) = self.internal.as_ref() {
-            if child.exact_sign().is_some_and(|sign| sign != Sign::NoSign) {
-                return child.clone().inverse().shift_left(-n);
-            }
+        if let Approximation::Offset(child, n) = self.internal.as_ref()
+            && child.exact_sign().is_some_and(|sign| sign != Sign::NoSign)
+        {
+            return child.clone().inverse().shift_left(-n);
         }
-        if let Approximation::Inverse(child) = self.internal.as_ref() {
-            if child.exact_sign().is_some_and(|sign| sign != Sign::NoSign) {
-                return child.clone();
-            }
+        if let Approximation::Inverse(child) = self.internal.as_ref()
+            && child.exact_sign().is_some_and(|sign| sign != Sign::NoSign)
+        {
+            return child.clone();
         }
         Self {
             internal: Box::new(Approximation::Inverse(self)),
@@ -1506,32 +1507,32 @@ impl Computable {
         if let (Some(left), Some(right)) = (left_exact.as_ref(), right_exact.as_ref()) {
             return Self::rational(left.clone() * right.clone());
         }
-        if let Some(scale) = left_exact.as_ref() {
-            if let Approximation::Multiply(inner_left, inner_right) = &*other.internal {
-                if let Some(inner_scale) = inner_left.exact_rational() {
-                    return inner_right
-                        .clone()
-                        .multiply(Self::rational(scale.clone() * inner_scale));
-                }
-                if let Some(inner_scale) = inner_right.exact_rational() {
-                    return inner_left
-                        .clone()
-                        .multiply(Self::rational(scale.clone() * inner_scale));
-                }
+        if let Some(scale) = left_exact.as_ref()
+            && let Approximation::Multiply(inner_left, inner_right) = &*other.internal
+        {
+            if let Some(inner_scale) = inner_left.exact_rational() {
+                return inner_right
+                    .clone()
+                    .multiply(Self::rational(scale.clone() * inner_scale));
+            }
+            if let Some(inner_scale) = inner_right.exact_rational() {
+                return inner_left
+                    .clone()
+                    .multiply(Self::rational(scale.clone() * inner_scale));
             }
         }
-        if let Some(scale) = right_exact.as_ref() {
-            if let Approximation::Multiply(inner_left, inner_right) = &*self.internal {
-                if let Some(inner_scale) = inner_left.exact_rational() {
-                    return inner_right
-                        .clone()
-                        .multiply(Self::rational(scale.clone() * inner_scale));
-                }
-                if let Some(inner_scale) = inner_right.exact_rational() {
-                    return inner_left
-                        .clone()
-                        .multiply(Self::rational(scale.clone() * inner_scale));
-                }
+        if let Some(scale) = right_exact.as_ref()
+            && let Approximation::Multiply(inner_left, inner_right) = &*self.internal
+        {
+            if let Some(inner_scale) = inner_left.exact_rational() {
+                return inner_right
+                    .clone()
+                    .multiply(Self::rational(scale.clone() * inner_scale));
+            }
+            if let Some(inner_scale) = inner_right.exact_rational() {
+                return inner_left
+                    .clone()
+                    .multiply(Self::rational(scale.clone() * inner_scale));
             }
         }
         Self {
@@ -1798,9 +1799,8 @@ impl Computable {
             return Some(public_sign(sign));
         }
 
-        match self.cheap_bound().known_sign() {
-            Some(sign) => return Some(public_sign(sign)),
-            None => {}
+        if let Some(sign) = self.cheap_bound().known_sign() {
+            return Some(public_sign(sign));
         }
 
         let start = if min_precision > 0 { min_precision } else { 0 };
@@ -1956,10 +1956,10 @@ impl Computable {
             self.cheap_bound().known_msd(),
             other.cheap_bound().known_msd(),
         ) {
-            if left_msd >= tolerance + 1 && right_msd <= tolerance - 1 {
+            if left_msd > tolerance && right_msd < tolerance {
                 return Ordering::Greater;
             }
-            if right_msd >= tolerance + 1 && left_msd <= tolerance - 1 {
+            if right_msd > tolerance && left_msd < tolerance {
                 return Ordering::Less;
             }
         }
