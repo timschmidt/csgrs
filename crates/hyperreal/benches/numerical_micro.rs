@@ -217,6 +217,30 @@ const NUMERICAL_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Approximates cos(7/5).",
             },
             BenchDoc {
+                name: "sin_f64_cold_p96",
+                description: "Approximates sin(1.23456789 imported exactly from f64).",
+            },
+            BenchDoc {
+                name: "cos_f64_cold_p96",
+                description: "Approximates cos(1.23456789 imported exactly from f64).",
+            },
+            BenchDoc {
+                name: "sin_1e6_cold_p96",
+                description: "Approximates sin(1000000).",
+            },
+            BenchDoc {
+                name: "cos_1e6_cold_p96",
+                description: "Approximates cos(1000000).",
+            },
+            BenchDoc {
+                name: "sin_1e30_cold_p96",
+                description: "Approximates sin(10^30).",
+            },
+            BenchDoc {
+                name: "cos_1e30_cold_p96",
+                description: "Approximates cos(10^30).",
+            },
+            BenchDoc {
                 name: "cos_cached_p96",
                 description: "Repeats a cached cos(7/5) approximation.",
             },
@@ -989,6 +1013,51 @@ fn bench_computable_transcendentals(c: &mut Criterion) {
     group.bench_function("cos_cold_p96", |b| {
         b.iter_batched(
             || trig_input.clone().cos(),
+            |value| black_box(value.approx(trig_p)),
+            BatchSize::SmallInput,
+        )
+    });
+    let f64_trig_input = Computable::rational(Rational::try_from(1.23456789_f64).unwrap());
+    group.bench_function("sin_f64_cold_p96", |b| {
+        b.iter_batched(
+            || f64_trig_input.clone().sin(),
+            |value| black_box(value.approx(trig_p)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("cos_f64_cold_p96", |b| {
+        b.iter_batched(
+            || f64_trig_input.clone().cos(),
+            |value| black_box(value.approx(trig_p)),
+            BatchSize::SmallInput,
+        )
+    });
+    let million_trig_input = Computable::rational(Rational::new(1_000_000));
+    group.bench_function("sin_1e6_cold_p96", |b| {
+        b.iter_batched(
+            || million_trig_input.clone().sin(),
+            |value| black_box(value.approx(trig_p)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("cos_1e6_cold_p96", |b| {
+        b.iter_batched(
+            || million_trig_input.clone().cos(),
+            |value| black_box(value.approx(trig_p)),
+            BatchSize::SmallInput,
+        )
+    });
+    let e30_trig_input = Computable::rational(Rational::from_bigint(BigInt::from(10_u8).pow(30)));
+    group.bench_function("sin_1e30_cold_p96", |b| {
+        b.iter_batched(
+            || e30_trig_input.clone().sin(),
+            |value| black_box(value.approx(trig_p)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("cos_1e30_cold_p96", |b| {
+        b.iter_batched(
+            || e30_trig_input.clone().cos(),
             |value| black_box(value.approx(trig_p)),
             BatchSize::SmallInput,
         )

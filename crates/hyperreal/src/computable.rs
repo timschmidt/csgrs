@@ -1192,6 +1192,23 @@ impl Computable {
         if positive { multiple } else { -multiple }
     }
 
+    fn known_msd_for_trig_reduction(&self) -> Option<Option<Precision>> {
+        match &*self.internal {
+            Approximation::Int(n) => Some(if n.sign() == Sign::NoSign {
+                None
+            } else {
+                Some(n.magnitude().bits() as Precision - 1)
+            }),
+            Approximation::Ratio(r) => Some(r.msd_exact()),
+            Approximation::Constant(constant) => constant.bound_info().known_msd(),
+            _ => self.cheap_bound().known_msd(),
+        }
+    }
+
+    fn trig_reduction_msd(&self) -> Option<Precision> {
+        self.known_msd_for_trig_reduction().flatten()
+    }
+
     fn cos_reduced_by_half_pi(self, multiplier: BigInt) -> Computable {
         let adjustment = Self::pi()
             .shift_right(1)
@@ -1218,6 +1235,21 @@ impl Computable {
             .is_some_and(|r| r.sign() == Sign::NoSign)
         {
             return Self::one();
+        }
+        if let Some(msd) = self.trig_reduction_msd() {
+            if msd < 0 {
+                return Self {
+                    internal: Box::new(Approximation::PrescaledCos(self)),
+                    cache: RefCell::new(Cache::Invalid),
+                    bound: RefCell::new(BoundCache::Invalid),
+                    exact_sign: RefCell::new(ExactSignCache::Invalid),
+                    signal: None,
+                };
+            }
+            if msd >= 3 {
+                let multiplier = Self::half_pi_multiple(&self);
+                return self.cos_reduced_by_half_pi(multiplier);
+            }
         }
         let rough_appr = self.approx(-1);
         let abs_rough_appr = rough_appr.magnitude();
@@ -1247,6 +1279,36 @@ impl Computable {
             .is_some_and(|r| r.sign() == Sign::NoSign)
         {
             return Self::rational(Rational::zero());
+        }
+        if let Some(msd) = self.trig_reduction_msd() {
+            if msd < 0 {
+                return Self {
+                    internal: Box::new(Approximation::PrescaledSin(self)),
+                    cache: RefCell::new(Cache::Invalid),
+                    bound: RefCell::new(BoundCache::Invalid),
+                    exact_sign: RefCell::new(ExactSignCache::Invalid),
+                    signal: None,
+                };
+            }
+            if msd >= 3 {
+                let multiplier = Self::half_pi_multiple(&self);
+                let adjustment = Self::pi()
+                    .shift_right(1)
+                    .multiply(Self::rational(Rational::from_bigint(multiplier.clone())).negate());
+                let reduced = self.add(adjustment);
+                let quadrant = ((&multiplier % signed::FOUR.deref()) + signed::FOUR.deref())
+                    % signed::FOUR.deref();
+
+                if quadrant.is_zero() {
+                    return reduced.sin();
+                } else if quadrant == *signed::ONE {
+                    return reduced.cos();
+                } else if quadrant == *signed::TWO {
+                    return reduced.sin().negate();
+                } else {
+                    return reduced.cos().negate();
+                }
+            }
         }
         let rough_appr = self.approx(-1);
         let abs_rough_appr = rough_appr.magnitude();
