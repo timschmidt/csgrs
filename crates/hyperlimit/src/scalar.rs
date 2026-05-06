@@ -14,6 +14,7 @@ pub struct MagnitudeBounds {
 }
 
 impl MagnitudeBounds {
+    /// Construct exact lower and upper absolute-value bounds.
     pub const fn exact(abs: f64) -> Self {
         Self {
             abs_lower: abs,
@@ -25,15 +26,22 @@ impl MagnitudeBounds {
 /// Structural facts a scalar may expose without full evaluation.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct ScalarFacts {
+    /// Known exact sign, if available.
     pub sign: Option<Sign>,
+    /// Whether the scalar is exactly zero, if known.
     pub exact_zero: Option<bool>,
+    /// Whether zero has been ruled out, if known.
     pub provably_nonzero: Option<bool>,
+    /// Whether the scalar representation is exact, if known.
     pub exact: Option<bool>,
+    /// Whether the scalar is known to be rational-only, if known.
     pub rational_only: Option<bool>,
+    /// Conservative magnitude bounds, if available.
     pub magnitude: Option<MagnitudeBounds>,
 }
 
 impl ScalarFacts {
+    /// Convert structural facts into the public sign-knowledge model.
     pub fn sign_knowledge(self) -> SignKnowledge {
         if let Some(sign) = self.sign {
             SignKnowledge::exact(sign)
@@ -49,30 +57,37 @@ impl ScalarFacts {
 
 /// Minimal structural interface. Backends can implement only what they know.
 pub trait StructuralScalar: Sized {
+    /// Return all cheap structural facts known for this scalar.
     fn scalar_facts(&self) -> ScalarFacts {
         ScalarFacts::default()
     }
 
+    /// Return known sign information without forcing full evaluation.
     fn known_sign(&self) -> SignKnowledge {
         self.scalar_facts().sign_knowledge()
     }
 
+    /// Return whether the scalar is exactly zero, if known.
     fn is_exact_zero(&self) -> Option<bool> {
         self.scalar_facts().exact_zero
     }
 
+    /// Return whether the scalar is known not to be zero, if known.
     fn is_provably_nonzero(&self) -> Option<bool> {
         self.scalar_facts().provably_nonzero
     }
 
+    /// Return whether the scalar is known to be rational-only, if known.
     fn is_rational_only(&self) -> Option<bool> {
         self.scalar_facts().rational_only
     }
 
+    /// Return conservative magnitude bounds, if available.
     fn magnitude_bounds(&self) -> Option<MagnitudeBounds> {
         self.scalar_facts().magnitude
     }
 
+    /// Try to refine the sign without going below `min_precision`.
     fn refine_sign_until(&self, _min_precision: i32) -> SignKnowledge {
         SignKnowledge::Unknown
     }
@@ -108,10 +123,13 @@ pub trait PredicateScalar:
 /// subexpression for scalar backends where cloning is materially more expensive
 /// than primitive numeric copies.
 pub trait BorrowedPredicateScalar: PredicateScalar {
+    /// Add two borrowed scalar values.
     fn add_ref(&self, rhs: &Self) -> Self;
 
+    /// Subtract two borrowed scalar values.
     fn sub_ref(&self, rhs: &Self) -> Self;
 
+    /// Multiply two borrowed scalar values.
     fn mul_ref(&self, rhs: &Self) -> Self;
 }
 

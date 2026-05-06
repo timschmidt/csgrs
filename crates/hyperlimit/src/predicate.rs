@@ -3,8 +3,11 @@
 /// A concrete sign.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Sign {
+    /// Strictly negative.
     Negative,
+    /// Exactly zero.
     Zero,
+    /// Strictly positive.
     Positive,
 }
 
@@ -50,7 +53,12 @@ pub enum Certainty {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SignKnowledge {
     /// The sign is known with the given certainty.
-    Known { sign: Sign, certainty: Certainty },
+    Known {
+        /// Known sign.
+        sign: Sign,
+        /// Certainty level for the sign.
+        certainty: Certainty,
+    },
     /// The value is known to be nonzero but its sign has not been exposed.
     NonZero,
     /// The sign cannot be decided without escalation.
@@ -58,6 +66,7 @@ pub enum SignKnowledge {
 }
 
 impl SignKnowledge {
+    /// Construct exactly known sign knowledge.
     pub const fn exact(sign: Sign) -> Self {
         Self::Known {
             sign,
@@ -65,6 +74,7 @@ impl SignKnowledge {
         }
     }
 
+    /// Construct sign knowledge produced by a conservative filter.
     pub const fn filtered(sign: Sign) -> Self {
         Self::Known {
             sign,
@@ -72,6 +82,7 @@ impl SignKnowledge {
         }
     }
 
+    /// Return the concrete sign if it is known.
     pub const fn sign(self) -> Option<Sign> {
         match self {
             Self::Known { sign, .. } => Some(sign),
@@ -83,11 +94,17 @@ impl SignKnowledge {
 /// Which stage decided, or failed to decide, a predicate.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Escalation {
+    /// Decided using structural scalar facts.
     Structural,
+    /// Decided using a conservative numeric filter.
     Filter,
+    /// Decided using exact scalar arithmetic.
     Exact,
+    /// Decided using a robust backend fallback.
     RobustFallback,
+    /// Decided after adaptive scalar refinement.
     Refined,
+    /// Not decided by the enabled stages.
     Undecided,
 }
 
@@ -96,18 +113,24 @@ pub enum Escalation {
 pub enum PredicateOutcome<T> {
     /// The predicate was decided.
     Decided {
+        /// Decided predicate value.
         value: T,
+        /// Certainty level for the result.
         certainty: Certainty,
+        /// Stage that decided the result.
         stage: Escalation,
     },
     /// More capability, fallback, or refinement is needed.
     Unknown {
+        /// Additional capability needed to decide the result.
         needed: RefinementNeed,
+        /// Stage at which evaluation stopped.
         stage: Escalation,
     },
 }
 
 impl<T> PredicateOutcome<T> {
+    /// Construct a decided predicate outcome.
     pub const fn decided(value: T, certainty: Certainty, stage: Escalation) -> Self {
         Self::Decided {
             value,
@@ -116,10 +139,12 @@ impl<T> PredicateOutcome<T> {
         }
     }
 
+    /// Construct an undecided predicate outcome.
     pub const fn unknown(needed: RefinementNeed, stage: Escalation) -> Self {
         Self::Unknown { needed, stage }
     }
 
+    /// Return the decided value, or `None` when the outcome is unknown.
     pub fn value(self) -> Option<T> {
         match self {
             Self::Decided { value, .. } => Some(value),
@@ -131,9 +156,13 @@ impl<T> PredicateOutcome<T> {
 /// What additional work would be required.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum RefinementNeed {
+    /// Exact arithmetic is needed.
     ExactArithmetic,
+    /// A robust fallback backend is needed.
     RobustFallback,
+    /// More scalar precision or refinement is needed.
     ScalarRefinement,
+    /// The enabled backends cannot decide this case.
     Unsupported,
 }
 

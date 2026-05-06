@@ -5,8 +5,11 @@ use crate::predicate::Sign;
 /// Side of an oriented line in 2D.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum LineSide {
+    /// Point lies to the right of the oriented line.
     Right,
+    /// Point lies on the line.
     On,
+    /// Point lies to the left of the oriented line.
     Left,
 }
 
@@ -23,8 +26,11 @@ impl From<Sign> for LineSide {
 /// Side of an oriented plane.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PlaneSide {
+    /// Point lies below the oriented plane.
     Below,
+    /// Point lies on the plane.
     On,
+    /// Point lies above the oriented plane.
     Above,
 }
 

@@ -11,11 +11,24 @@ fallback, `predicated` asks scalar values and intermediate determinant terms for
 facts such as known sign, exact zero, provable nonzero status, exact/rational
 state, magnitude bounds, interval bounds, and sign-refinement capability.
 
+In the current local stack:
+
+- `hyperreal` is the rich exact/symbolic scalar layer.
+- `realistic_blas` is the complex/vector/matrix layer over crate-owned scalar
+  backends and forwards backend-neutral scalar facts.
+- `predicated` is the predicate and geometry-policy layer. It decides how to
+  combine structural facts, numeric filters, exact arithmetic, bounded
+  refinement, and robust fallback.
+
+This separation is intentional. `predicated` does not own scalar expression
+internals or matrix algebra, and the lower layers do not decide geometric
+topology.
+
 ## Status
 
-This is an early `0.1.0` crate. The public surface is intentionally small, and
-this is not a full geometry kernel. It does not provide mesh, polygon, BSP, CSG,
-or intersection algorithms.
+This is an early `0.1.1` crate. The public surface is intentionally small and
+docs.rs-oriented. It is not a full geometry kernel and does not provide mesh,
+polygon, BSP, CSG, or intersection algorithms.
 
 Currently implemented:
 
@@ -27,8 +40,11 @@ Currently implemented:
 - Predicate outcomes that record result certainty and deciding stage.
 - Scalar traits for structural facts, magnitude facts, refinement, and `f64`
   filter conversion.
+- Borrowed scalar arithmetic traits to avoid unnecessary cloning when predicate
+  terms are built over richer scalar backends.
 - Optional adapters for `robust`, `geogram_predicates`, `hyperreal`,
   `realistic_blas`, and `inari`.
+- Strict rustdoc coverage for the public API surface used by downstream crates.
 
 See [benchmarks.md](benchmarks.md) for the generated Criterion benchmark
 summary across predicates and scalar representations.
@@ -247,11 +263,18 @@ With `hyperreal`, predicates consume the current `hyperreal` structural API:
 sign, zero knowledge, exact rational state, magnitude bits, finite `f64`
 approximations, and bounded sign refinement.
 
+Use this path when predicates can work directly over `hyperreal::Real` scalar
+values and do not need vector or matrix types from `realistic_blas`.
+
 ### realistic_blas
 
 With `realistic-blas`, predicates consume facts forwarded by
 `realistic_blas::Scalar<B>`. Geometry policy remains in this crate; matrix and
 vector operations remain in `realistic_blas`.
+
+Use this path when application data already lives in `realistic_blas` scalar,
+vector, or matrix types, or when you want the same predicate code to work over
+both `HyperrealBackend` and `ApproxBackend`.
 
 ### inari Intervals
 
@@ -283,6 +306,15 @@ RUSTFLAGS='-Ctarget-cpu=haswell' cargo test --features interval
 - `classify`: `LineSide` and `PlaneSide` enums.
 - `backend`: optional backend adapters and backend capability descriptors.
 - `error`: crate-local error/result types.
+
+## Relationship to the other crates
+
+- Use `hyperreal` when the main problem is exact rational, symbolic, or
+  computable scalar arithmetic.
+- Use `realistic_blas` when the main problem is small fixed-size linear algebra
+  over exact/symbolic or approximate scalar backends.
+- Use `predicated` when the main problem is deciding geometric signs and
+  classifications while preserving provenance and escalation policy.
 
 Common types and functions are re-exported at the crate root, including
 `Point2`, `Point3`, `Plane3`, `orient2d`, `orient3d`, `incircle2d`,

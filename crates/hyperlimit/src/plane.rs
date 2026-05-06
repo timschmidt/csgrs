@@ -11,11 +11,14 @@ use crate::scalar::{BorrowedPredicateScalar, PredicateScalar};
 /// Plane represented by `normal . point + offset = 0`.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Plane3<S> {
+    /// Plane normal vector.
     pub normal: Point3<S>,
+    /// Constant offset in `normal . point + offset = 0`.
     pub offset: S,
 }
 
 impl<S> Plane3<S> {
+    /// Construct a plane from a normal vector and offset.
     pub const fn new(normal: Point3<S>, offset: S) -> Self {
         Self { normal, offset }
     }
