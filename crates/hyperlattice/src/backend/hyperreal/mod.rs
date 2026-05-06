@@ -76,22 +76,47 @@ impl BackendScalarTrait for BackendScalar {
         self.0.pow(exponent.0).map(Self).map_err(Problem::from)
     }
 
+    #[inline]
     fn add_ref(self, rhs: &Self) -> Self {
         Self(&self.0 + &rhs.0)
     }
 
+    #[inline]
+    fn add_refs(left: &Self, right: &Self) -> Self {
+        Self(&left.0 + &right.0)
+    }
+
+    #[inline]
     fn sub_ref(self, rhs: &Self) -> Self {
         Self(&self.0 - &rhs.0)
     }
 
+    #[inline]
+    fn sub_refs(left: &Self, right: &Self) -> Self {
+        Self(&left.0 - &right.0)
+    }
+
+    #[inline]
     fn mul_ref(self, rhs: &Self) -> Self {
         Self(&self.0 * &rhs.0)
     }
 
+    #[inline]
+    fn mul_refs(left: &Self, right: &Self) -> Self {
+        Self(&left.0 * &right.0)
+    }
+
+    #[inline]
     fn div_ref(self, rhs: &Self) -> BlasResult<Self> {
         (&self.0 / &rhs.0).map(Self).map_err(Problem::from)
     }
 
+    #[inline]
+    fn div_refs(left: &Self, right: &Self) -> BlasResult<Self> {
+        (&left.0 / &right.0).map(Self).map_err(Problem::from)
+    }
+
+    #[inline]
     fn dot3(left: [&Self; 3], right: [&Self; 3]) -> Self {
         let p0 = &left[0].0 * &right[0].0;
         let p1 = &left[1].0 * &right[1].0;
@@ -100,6 +125,7 @@ impl BackendScalarTrait for BackendScalar {
         Self(&sum01 + &p2)
     }
 
+    #[inline]
     fn dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
         let p0 = &left[0].0 * &right[0].0;
         let p1 = &left[1].0 * &right[1].0;
@@ -159,13 +185,7 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     fn atanh(self) -> BlasResult<Self> {
-        self.0.atanh().map(Self).map_err(|problem| {
-            let problem = Problem::from(problem);
-            match problem {
-                Problem::DivideByZero => Problem::Infinity,
-                problem => problem,
-            }
-        })
+        self.0.atanh().map(Self).map_err(Problem::from)
     }
 
     fn div(self, rhs: Self) -> BlasResult<Self> {
@@ -173,11 +193,11 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     fn definitely_zero(&self) -> bool {
-        self.structural_facts().zero == ZeroStatus::Zero
+        self.0.definitely_zero()
     }
 
     fn zero_status(&self) -> ZeroStatus {
-        self.structural_facts().zero
+        map_zero(self.0.zero_status())
     }
 
     fn structural_facts(&self) -> ScalarFacts {

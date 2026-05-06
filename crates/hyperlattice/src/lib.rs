@@ -496,7 +496,7 @@ impl<B: Backend> Add<&Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn add(self, rhs: &Scalar<B>) -> Self::Output {
-        self.clone() + rhs
+        Scalar(B::Repr::add_refs(&self.0, &rhs.0))
     }
 }
 
@@ -514,7 +514,7 @@ impl<B: Backend> Sub<Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn sub(self, rhs: Scalar<B>) -> Self::Output {
-        self.clone() - rhs
+        Scalar(B::Repr::sub_refs(&self.0, &rhs.0))
     }
 }
 
@@ -523,7 +523,7 @@ impl<B: Backend> Sub<&Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn sub(self, rhs: &Scalar<B>) -> Self::Output {
-        self.clone() - rhs
+        Scalar(B::Repr::sub_refs(&self.0, &rhs.0))
     }
 }
 
@@ -550,7 +550,7 @@ impl<B: Backend> Mul<&Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn mul(self, rhs: &Scalar<B>) -> Self::Output {
-        self.clone() * rhs
+        Scalar(B::Repr::mul_refs(&self.0, &rhs.0))
     }
 }
 
@@ -568,7 +568,7 @@ impl<B: Backend> Div<Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn div(self, rhs: Scalar<B>) -> Self::Output {
-        self.clone() / rhs
+        B::Repr::div_refs(&self.0, &rhs.0).map(Scalar)
     }
 }
 
@@ -577,7 +577,7 @@ impl<B: Backend> Div<&Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn div(self, rhs: &Scalar<B>) -> Self::Output {
-        self.clone() / rhs
+        B::Repr::div_refs(&self.0, &rhs.0).map(Scalar)
     }
 }
 

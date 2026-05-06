@@ -112,6 +112,46 @@ impl BackendScalarTrait for BackendScalar {
         Self::from_unary(center, self.epsilon + exponent.epsilon)
     }
 
+    #[inline]
+    fn add_refs(left: &Self, right: &Self) -> Self {
+        let value = left.value + right.value;
+        Self {
+            value,
+            epsilon: left.epsilon + right.epsilon + ROUNDING_EPSILON * value.abs(),
+        }
+    }
+
+    #[inline]
+    fn sub_refs(left: &Self, right: &Self) -> Self {
+        let value = left.value - right.value;
+        Self {
+            value,
+            epsilon: left.epsilon + right.epsilon + ROUNDING_EPSILON * value.abs(),
+        }
+    }
+
+    #[inline]
+    fn mul_refs(left: &Self, right: &Self) -> Self {
+        let value = left.value * right.value;
+        let epsilon = product_epsilon(left, right, value);
+        Self { value, epsilon }
+    }
+
+    #[inline]
+    fn div_refs(left: &Self, right: &Self) -> BlasResult<Self> {
+        match right.zero_status() {
+            ZeroStatus::Zero => return Err(Problem::DivideByZero),
+            ZeroStatus::Unknown => return Err(Problem::UnknownZero),
+            ZeroStatus::NonZero => {}
+        }
+
+        let center = left.value / right.value;
+        let denom = right.value.abs() - right.epsilon;
+        let epsilon = left.epsilon / denom + left.value.abs() * right.epsilon / (denom * denom);
+        Self::new(center, epsilon + ROUNDING_EPSILON * center.abs())
+    }
+
+    #[inline]
     fn dot3(left: [&Self; 3], right: [&Self; 3]) -> Self {
         let p0 = left[0].value * right[0].value;
         let p1 = left[1].value * right[1].value;
@@ -125,6 +165,7 @@ impl BackendScalarTrait for BackendScalar {
         Self { value, epsilon }
     }
 
+    #[inline]
     fn dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
         let p0 = left[0].value * right[0].value;
         let p1 = left[1].value * right[1].value;

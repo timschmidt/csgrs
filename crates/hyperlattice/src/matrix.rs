@@ -428,14 +428,20 @@ fn multiply_arrays_rhs_ref<B: Backend, const N: usize>(
 ) -> [[Scalar<B>; N]; N] {
     from_fn(|row| {
         from_fn(|col| {
-            let p0 = left[row][0].clone().mul_cached(&right[0][col]);
-            let p1 = left[row][1].clone().mul_cached(&right[1][col]);
-            let p2 = left[row][2].clone().mul_cached(&right[2][col]);
+            let left_terms = [&left[row][0], &left[row][1], &left[row][2]];
+            let right_terms = [&right[0][col], &right[1][col], &right[2][col]];
             if let Some(lhs) = left[row].get(3) {
-                let p3 = lhs.clone().mul_cached(&right[3][col]);
-                (p0 + p1) + (p2 + p3)
+                Scalar::dot4(
+                    [left_terms[0], left_terms[1], left_terms[2], lhs],
+                    [
+                        right_terms[0],
+                        right_terms[1],
+                        right_terms[2],
+                        &right[3][col],
+                    ],
+                )
             } else {
-                p0 + (p1 + p2)
+                Scalar::dot3(left_terms, right_terms)
             }
         })
     })
@@ -447,14 +453,20 @@ fn multiply_arrays_ref<B: Backend, const N: usize>(
 ) -> [[Scalar<B>; N]; N] {
     from_fn(|row| {
         from_fn(|col| {
-            let p0 = left[row][0].clone().mul_cached(&right[0][col]);
-            let p1 = left[row][1].clone().mul_cached(&right[1][col]);
-            let p2 = left[row][2].clone().mul_cached(&right[2][col]);
+            let left_terms = [&left[row][0], &left[row][1], &left[row][2]];
+            let right_terms = [&right[0][col], &right[1][col], &right[2][col]];
             if let Some(lhs) = left[row].get(3) {
-                let p3 = lhs.clone().mul_cached(&right[3][col]);
-                (p0 + p1) + (p2 + p3)
+                Scalar::dot4(
+                    [left_terms[0], left_terms[1], left_terms[2], lhs],
+                    [
+                        right_terms[0],
+                        right_terms[1],
+                        right_terms[2],
+                        &right[3][col],
+                    ],
+                )
             } else {
-                p0 + (p1 + p2)
+                Scalar::dot3(left_terms, right_terms)
             }
         })
     })
@@ -465,14 +477,15 @@ fn transform_vector_rhs_ref<B: Backend, const N: usize>(
     right: &[Scalar<B>; N],
 ) -> [Scalar<B>; N] {
     from_fn(|row| {
-        let p0 = left[row][0].clone().mul_cached(&right[0]);
-        let p1 = left[row][1].clone().mul_cached(&right[1]);
-        let p2 = left[row][2].clone().mul_cached(&right[2]);
+        let left_terms = [&left[row][0], &left[row][1], &left[row][2]];
+        let right_terms = [&right[0], &right[1], &right[2]];
         if let (Some(lhs), Some(rhs)) = (left[row].get(3), right.get(3)) {
-            let p3 = lhs.clone().mul_cached(rhs);
-            (p0 + p1) + (p2 + p3)
+            Scalar::dot4(
+                [left_terms[0], left_terms[1], left_terms[2], lhs],
+                [right_terms[0], right_terms[1], right_terms[2], rhs],
+            )
         } else {
-            p0 + (p1 + p2)
+            Scalar::dot3(left_terms, right_terms)
         }
     })
 }
@@ -491,10 +504,7 @@ fn mul_sub<B: Backend>(
     left_b: &Scalar<B>,
     right_b: &Scalar<B>,
 ) -> Scalar<B> {
-    left_a
-        .clone()
-        .mul_cached(right_a)
-        .sub_cached(&left_b.clone().mul_cached(right_b))
+    left_a * right_a - left_b * right_b
 }
 
 #[inline]
@@ -504,10 +514,7 @@ fn mul_add<B: Backend>(
     left_b: &Scalar<B>,
     right_b: &Scalar<B>,
 ) -> Scalar<B> {
-    left_a
-        .clone()
-        .mul_cached(right_a)
-        .add_cached(&left_b.clone().mul_cached(right_b))
+    left_a * right_a + left_b * right_b
 }
 
 #[inline]
@@ -519,7 +526,7 @@ fn mul_add_sub<B: Backend>(
     left_c: &Scalar<B>,
     right_c: &Scalar<B>,
 ) -> Scalar<B> {
-    mul_add(left_a, right_a, left_b, right_b).sub_cached(&left_c.clone().mul_cached(right_c))
+    mul_add(left_a, right_a, left_b, right_b) - left_c * right_c
 }
 
 #[inline]
@@ -531,10 +538,7 @@ fn mul_sub_add<B: Backend>(
     left_c: &Scalar<B>,
     right_c: &Scalar<B>,
 ) -> Scalar<B> {
-    left_a
-        .clone()
-        .mul_cached(right_a)
-        .sub_cached(&mul_add(left_b, right_b, left_c, right_c))
+    left_a * right_a - mul_add(left_b, right_b, left_c, right_c)
 }
 
 fn determinant3<B: Backend>(m: &[[Scalar<B>; 3]; 3]) -> Scalar<B> {
@@ -608,15 +612,9 @@ fn matrix4_factors<B: Backend>(m: &[[Scalar<B>; 4]; 4]) -> ([Scalar<B>; 6], [Sca
 }
 
 fn determinant4_from_factors<B: Backend>(s: &[Scalar<B>; 6], c: &[Scalar<B>; 6]) -> Scalar<B> {
-    let p0 = s[0].clone().mul_cached(&c[5]);
-    let p1 = s[1].clone().mul_cached(&c[4]);
-    let p2 = s[2].clone().mul_cached(&c[3]);
-    let p3 = s[3].clone().mul_cached(&c[2]);
-    let p4 = s[4].clone().mul_cached(&c[1]);
-    let p5 = s[5].clone().mul_cached(&c[0]);
-    p0.add_cached(&p2)
-        .add_cached(&p3.add_cached(&p5))
-        .sub_cached(&p1.add_cached(&p4))
+    let positive = Scalar::dot3([&s[0], &s[2], &s[3]], [&c[5], &c[3], &c[2]]) + &s[5] * &c[0];
+    let negative = &s[1] * &c[4] + &s[4] * &c[1];
+    positive - negative
 }
 
 fn determinant4<B: Backend>(m: &[[Scalar<B>; 4]; 4]) -> Scalar<B> {
@@ -908,7 +906,7 @@ macro_rules! impl_matrix {
 
             fn add(self, rhs: $name<B>) -> Self::Output {
                 $name(from_fn(|row| {
-                    from_fn(|col| self.0[row][col].clone().add_cached(&rhs.0[row][col]))
+                    from_fn(|col| &self.0[row][col] + &rhs.0[row][col])
                 }))
             }
         }
@@ -918,7 +916,7 @@ macro_rules! impl_matrix {
 
             fn add(self, rhs: &$name<B>) -> Self::Output {
                 $name(from_fn(|row| {
-                    from_fn(|col| self.0[row][col].clone().add_cached(&rhs.0[row][col]))
+                    from_fn(|col| &self.0[row][col] + &rhs.0[row][col])
                 }))
             }
         }
@@ -985,7 +983,7 @@ macro_rules! impl_matrix {
 
             fn sub(self, rhs: $name<B>) -> Self::Output {
                 $name(from_fn(|row| {
-                    from_fn(|col| self.0[row][col].clone() - rhs.0[row][col].clone())
+                    from_fn(|col| &self.0[row][col] - &rhs.0[row][col])
                 }))
             }
         }
@@ -995,7 +993,7 @@ macro_rules! impl_matrix {
 
             fn sub(self, rhs: &$name<B>) -> Self::Output {
                 $name(from_fn(|row| {
-                    from_fn(|col| self.0[row][col].clone().sub_cached(&rhs.0[row][col]))
+                    from_fn(|col| &self.0[row][col] - &rhs.0[row][col])
                 }))
             }
         }

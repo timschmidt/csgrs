@@ -92,22 +92,47 @@ pub trait BackendScalar:
     /// Raises this value to a scalar exponent.
     fn pow(self, exponent: Self) -> BlasResult<Self>;
     /// Adds a borrowed right-hand operand.
+    #[inline]
     fn add_ref(self, rhs: &Self) -> Self {
         self + rhs.clone()
     }
+    /// Adds two borrowed operands.
+    #[inline]
+    fn add_refs(left: &Self, right: &Self) -> Self {
+        left.clone().add_ref(right)
+    }
     /// Subtracts a borrowed right-hand operand.
+    #[inline]
     fn sub_ref(self, rhs: &Self) -> Self {
         self - rhs.clone()
     }
+    /// Subtracts two borrowed operands.
+    #[inline]
+    fn sub_refs(left: &Self, right: &Self) -> Self {
+        left.clone().sub_ref(right)
+    }
     /// Multiplies by a borrowed right-hand operand.
+    #[inline]
     fn mul_ref(self, rhs: &Self) -> Self {
         self * rhs.clone()
     }
+    /// Multiplies two borrowed operands.
+    #[inline]
+    fn mul_refs(left: &Self, right: &Self) -> Self {
+        left.clone().mul_ref(right)
+    }
     /// Divides by a borrowed right-hand operand.
+    #[inline]
     fn div_ref(self, rhs: &Self) -> BlasResult<Self> {
         self.div(rhs.clone())
     }
+    /// Divides two borrowed operands.
+    #[inline]
+    fn div_refs(left: &Self, right: &Self) -> BlasResult<Self> {
+        left.clone().div_ref(right)
+    }
     /// Returns the three-lane dot product.
+    #[inline]
     fn dot3(left: [&Self; 3], right: [&Self; 3]) -> Self {
         let p0 = left[0].clone().mul_ref(right[0]);
         let p1 = left[1].clone().mul_ref(right[1]);
@@ -115,6 +140,7 @@ pub trait BackendScalar:
         p0.add_ref(&p1).add_ref(&p2)
     }
     /// Returns the four-lane dot product.
+    #[inline]
     fn dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
         let p0 = left[0].clone().mul_ref(right[0]);
         let p1 = left[1].clone().mul_ref(right[1]);

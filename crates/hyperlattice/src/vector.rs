@@ -65,15 +65,7 @@ macro_rules! impl_vector {
                 let mag = self.magnitude()?;
                 reject_definite_zero(&mag)?;
                 let inv_mag = mag.inverse()?;
-                if B::MOVE_ELEMENTWISE {
-                    Ok(Self(self.0.clone().map(|value| value.mul_cached(&inv_mag))))
-                } else {
-                    let mut values = self.0.clone();
-                    for value in &mut values {
-                        *value = value.clone().mul_cached(&inv_mag);
-                    }
-                    Ok(Self(values))
-                }
+                Ok(Self(from_fn(|i| &self.0[i] * &inv_mag)))
             }
 
             /// Returns a unit vector after rejecting zero and unknown-zero magnitudes.
@@ -81,15 +73,7 @@ macro_rules! impl_vector {
                 let mag = self.magnitude()?;
                 require_known_nonzero(&mag)?;
                 let inv_mag = mag.inverse()?;
-                if B::MOVE_ELEMENTWISE {
-                    Ok(Self(self.0.clone().map(|value| value.mul_cached(&inv_mag))))
-                } else {
-                    let mut values = self.0.clone();
-                    for value in &mut values {
-                        *value = value.clone().mul_cached(&inv_mag);
-                    }
-                    Ok(Self(values))
-                }
+                Ok(Self(from_fn(|i| &self.0[i] * &inv_mag)))
             }
 
             /// Returns a checked unit vector after attaching an abort signal.
@@ -100,15 +84,7 @@ macro_rules! impl_vector {
                 let mag = self.magnitude_with_abort(signal)?;
                 require_known_nonzero(&mag)?;
                 let inv_mag = mag.inverse()?;
-                if B::MOVE_ELEMENTWISE {
-                    Ok(Self(self.0.clone().map(|value| value.mul_cached(&inv_mag))))
-                } else {
-                    let mut values = self.0.clone();
-                    for value in &mut values {
-                        *value = value.clone().mul_cached(&inv_mag);
-                    }
-                    Ok(Self(values))
-                }
+                Ok(Self(from_fn(|i| &self.0[i] * &inv_mag)))
             }
 
             /// Divides every component by `rhs` after rejecting unknown-zero divisors.
@@ -220,7 +196,7 @@ macro_rules! impl_vector {
             type Output = $name<B>;
 
             fn add(self, rhs: &$name<B>) -> Self::Output {
-                $name(from_fn(|i| self.0[i].clone().add_cached(&rhs.0[i])))
+                $name(from_fn(|i| &self.0[i] + &rhs.0[i]))
             }
         }
 
@@ -284,7 +260,7 @@ macro_rules! impl_vector {
                 let mut left = self.0.iter();
                 $name(
                     rhs.0
-                        .map(|rhs| left.next().expect("vectors have equal length").clone() - rhs),
+                        .map(|rhs| left.next().expect("vectors have equal length") - rhs),
                 )
             }
         }
@@ -293,7 +269,7 @@ macro_rules! impl_vector {
             type Output = $name<B>;
 
             fn sub(self, rhs: &$name<B>) -> Self::Output {
-                $name(from_fn(|i| self.0[i].clone().sub_cached(&rhs.0[i])))
+                $name(from_fn(|i| &self.0[i] - &rhs.0[i]))
             }
         }
 

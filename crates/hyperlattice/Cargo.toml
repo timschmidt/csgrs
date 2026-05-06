@@ -12,7 +12,8 @@ categories = ["mathematics"]
 
 [dependencies]
 num = { version = "0.4.3", optional = true }
-hyperreal = { version = "0.10.2", optional = true }
+#hyperreal = { version = "0.10.2", optional = true }
+hyperreal = { path = "../hyperreal/", optional = true }
 
 [dev-dependencies]
 astro-float = "0.9.5"

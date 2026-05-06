@@ -43,7 +43,7 @@ impl<B: Backend> Complex<B> {
 
     /// Returns `re^2 + im^2`.
     pub fn norm_squared(&self) -> Scalar<B> {
-        self.re.clone().mul_cached(&self.re) + self.im.clone().mul_cached(&self.im)
+        &self.re * &self.re + &self.im * &self.im
     }
 
     /// Returns the multiplicative inverse.
@@ -108,8 +108,8 @@ impl<B: Backend> Complex<B> {
         let denom = rhs.norm_squared();
         require_known_nonzero(&denom)?;
         let inv_denom = denom.inverse()?;
-        let re = self.re.clone().mul_cached(&rhs.re) + self.im.clone().mul_cached(&rhs.im);
-        let im = self.im.mul_cached(&rhs.re) - self.re.mul_cached(&rhs.im);
+        let re = &self.re * &rhs.re + &self.im * &rhs.im;
+        let im = &self.im * &rhs.re - &self.re * &rhs.im;
         Ok(Self::new(
             re.mul_cached(&inv_denom),
             im.mul_cached(&inv_denom),
@@ -204,10 +204,7 @@ impl<B: Backend> Add<Complex<B>> for &Complex<B> {
     type Output = Complex<B>;
 
     fn add(self, rhs: Complex<B>) -> Self::Output {
-        Complex::new(
-            self.re.clone().add_cached(&rhs.re),
-            self.im.clone().add_cached(&rhs.im),
-        )
+        Complex::new(&self.re + rhs.re, &self.im + rhs.im)
     }
 }
 
@@ -215,10 +212,7 @@ impl<B: Backend> Add<&Complex<B>> for &Complex<B> {
     type Output = Complex<B>;
 
     fn add(self, rhs: &Complex<B>) -> Self::Output {
-        Complex::new(
-            self.re.clone().add_cached(&rhs.re),
-            self.im.clone().add_cached(&rhs.im),
-        )
+        Complex::new(&self.re + &rhs.re, &self.im + &rhs.im)
     }
 }
 
@@ -242,7 +236,7 @@ impl<B: Backend> Sub<Complex<B>> for &Complex<B> {
     type Output = Complex<B>;
 
     fn sub(self, rhs: Complex<B>) -> Self::Output {
-        Complex::new(self.re.clone() - rhs.re, self.im.clone() - rhs.im)
+        Complex::new(&self.re - rhs.re, &self.im - rhs.im)
     }
 }
 
@@ -250,10 +244,7 @@ impl<B: Backend> Sub<&Complex<B>> for &Complex<B> {
     type Output = Complex<B>;
 
     fn sub(self, rhs: &Complex<B>) -> Self::Output {
-        Complex::new(
-            self.re.clone().sub_cached(&rhs.re),
-            self.im.clone().sub_cached(&rhs.im),
-        )
+        Complex::new(&self.re - &rhs.re, &self.im - &rhs.im)
     }
 }
 
@@ -277,8 +268,8 @@ impl<B: Backend> Mul for Complex<B> {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        let re = self.re.clone().mul_cached(&rhs.re) - self.im.clone().mul_cached(&rhs.im);
-        let im = self.re.mul_cached(&rhs.im) + self.im.mul_cached(&rhs.re);
+        let re = &self.re * &rhs.re - &self.im * &rhs.im;
+        let im = &self.re * &rhs.im + &self.im * &rhs.re;
         Self::new(re, im)
     }
 }
@@ -287,8 +278,8 @@ impl<B: Backend> Mul<&Complex<B>> for Complex<B> {
     type Output = Self;
 
     fn mul(self, rhs: &Complex<B>) -> Self::Output {
-        let re = self.re.clone().mul_cached(&rhs.re) - self.im.clone().mul_cached(&rhs.im);
-        let im = self.re.mul_cached(&rhs.im) + self.im.mul_cached(&rhs.re);
+        let re = &self.re * &rhs.re - &self.im * &rhs.im;
+        let im = &self.re * &rhs.im + &self.im * &rhs.re;
         Self::new(re, im)
     }
 }
@@ -297,8 +288,8 @@ impl<B: Backend> Mul<Complex<B>> for &Complex<B> {
     type Output = Complex<B>;
 
     fn mul(self, rhs: Complex<B>) -> Self::Output {
-        let re = self.re.clone().mul_cached(&rhs.re) - self.im.clone().mul_cached(&rhs.im);
-        let im = self.re.clone().mul_cached(&rhs.im) + self.im.clone().mul_cached(&rhs.re);
+        let re = &self.re * &rhs.re - &self.im * &rhs.im;
+        let im = &self.re * &rhs.im + &self.im * &rhs.re;
         Complex::new(re, im)
     }
 }
@@ -307,8 +298,8 @@ impl<B: Backend> Mul<&Complex<B>> for &Complex<B> {
     type Output = Complex<B>;
 
     fn mul(self, rhs: &Complex<B>) -> Self::Output {
-        let re = self.re.clone().mul_cached(&rhs.re) - self.im.clone().mul_cached(&rhs.im);
-        let im = self.re.clone().mul_cached(&rhs.im) + self.im.clone().mul_cached(&rhs.re);
+        let re = &self.re * &rhs.re - &self.im * &rhs.im;
+        let im = &self.re * &rhs.im + &self.im * &rhs.re;
         Complex::new(re, im)
     }
 }
@@ -318,8 +309,8 @@ impl<B: Backend> Div for Complex<B> {
 
     fn div(self, rhs: Self) -> Self::Output {
         let inv_denom = rhs.norm_squared().inverse()?;
-        let re = self.re.clone().mul_cached(&rhs.re) + self.im.clone().mul_cached(&rhs.im);
-        let im = self.im.mul_cached(&rhs.re) - self.re.mul_cached(&rhs.im);
+        let re = &self.re * &rhs.re + &self.im * &rhs.im;
+        let im = &self.im * &rhs.re - &self.re * &rhs.im;
         Ok(Self::new(
             re.mul_cached(&inv_denom),
             im.mul_cached(&inv_denom),
@@ -332,8 +323,8 @@ impl<B: Backend> Div<&Complex<B>> for Complex<B> {
 
     fn div(self, rhs: &Complex<B>) -> Self::Output {
         let inv_denom = rhs.norm_squared().inverse()?;
-        let re = self.re.clone().mul_cached(&rhs.re) + self.im.clone().mul_cached(&rhs.im);
-        let im = self.im.mul_cached(&rhs.re) - self.re.mul_cached(&rhs.im);
+        let re = &self.re * &rhs.re + &self.im * &rhs.im;
+        let im = &self.im * &rhs.re - &self.re * &rhs.im;
         Ok(Self::new(
             re.mul_cached(&inv_denom),
             im.mul_cached(&inv_denom),
@@ -346,8 +337,8 @@ impl<B: Backend> Div<Complex<B>> for &Complex<B> {
 
     fn div(self, rhs: Complex<B>) -> Self::Output {
         let inv_denom = rhs.norm_squared().inverse()?;
-        let re = self.re.clone().mul_cached(&rhs.re) + self.im.clone().mul_cached(&rhs.im);
-        let im = self.im.clone().mul_cached(&rhs.re) - self.re.clone().mul_cached(&rhs.im);
+        let re = &self.re * &rhs.re + &self.im * &rhs.im;
+        let im = &self.im * &rhs.re - &self.re * &rhs.im;
         Ok(Complex::new(
             re.mul_cached(&inv_denom),
             im.mul_cached(&inv_denom),
@@ -360,8 +351,8 @@ impl<B: Backend> Div<&Complex<B>> for &Complex<B> {
 
     fn div(self, rhs: &Complex<B>) -> Self::Output {
         let inv_denom = rhs.norm_squared().inverse()?;
-        let re = self.re.clone().mul_cached(&rhs.re) + self.im.clone().mul_cached(&rhs.im);
-        let im = self.im.clone().mul_cached(&rhs.re) - self.re.clone().mul_cached(&rhs.im);
+        let re = &self.re * &rhs.re + &self.im * &rhs.im;
+        let im = &self.im * &rhs.re - &self.re * &rhs.im;
         Ok(Complex::new(
             re.mul_cached(&inv_denom),
             im.mul_cached(&inv_denom),
