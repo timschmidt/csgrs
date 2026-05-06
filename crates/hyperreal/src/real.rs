@@ -581,7 +581,8 @@ impl Real {
         })
     }
 
-    fn inverse_ref(&self) -> Result<Self, Problem> {
+    /// The multiplicative inverse of this Real without consuming it.
+    pub fn inverse_ref(&self) -> Result<Self, Problem> {
         if self.definitely_zero() {
             return Err(Problem::DivideByZero);
         }

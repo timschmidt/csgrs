@@ -262,6 +262,29 @@ mod tests {
     }
 
     #[test]
+    fn dyadic_arithmetic_stays_reduced() {
+        let three_eighths = Rational::fraction(3, 8).unwrap();
+        let five_sixteenths = Rational::fraction(5, 16).unwrap();
+
+        assert_eq!(
+            three_eighths.clone() + five_sixteenths.clone(),
+            Rational::fraction(11, 16).unwrap()
+        );
+        assert_eq!(
+            three_eighths.clone() - five_sixteenths.clone(),
+            Rational::fraction(1, 16).unwrap()
+        );
+        assert_eq!(
+            three_eighths.clone() * five_sixteenths.clone(),
+            Rational::fraction(15, 128).unwrap()
+        );
+        assert_eq!(
+            three_eighths / five_sixteenths,
+            Rational::fraction(6, 5).unwrap()
+        );
+    }
+
+    #[test]
     fn reduced_subnormal_f64() {
         let value: Rational = f64::from_bits(2).try_into().unwrap();
         let correct =

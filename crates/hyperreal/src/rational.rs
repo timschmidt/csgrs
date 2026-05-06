@@ -115,8 +115,12 @@ impl Rational {
     }
 
     fn maybe_reduce(self) -> Self {
-        /* for now, always */
-        self.reduce()
+        if Self::is_power_of_two(&self.denominator) {
+            let denominator = self.denominator.clone();
+            self.reduce_by_power_of_two_divisor(&denominator)
+        } else {
+            self.reduce()
+        }
     }
 
     fn reduce_with_possible_divisor(self, possible_divisor: &BigUint) -> Self {
@@ -125,6 +129,10 @@ impl Rational {
         }
         if self.denominator == *ONE.deref() || possible_divisor == &*ONE {
             return self;
+        }
+
+        if Self::is_power_of_two(possible_divisor) {
+            return self.reduce_by_power_of_two_divisor(possible_divisor);
         }
 
         let divisor = num::Integer::gcd(&self.numerator, possible_divisor);
@@ -144,6 +152,11 @@ impl Rational {
             return self;
         }
 
+        if Self::is_power_of_two(&self.denominator) {
+            let denominator = self.denominator.clone();
+            return self.reduce_by_power_of_two_divisor(&denominator);
+        }
+
         let divisor = num::Integer::gcd(&self.numerator, &self.denominator);
         if divisor == *ONE.deref() {
             self
@@ -155,6 +168,39 @@ impl Rational {
                 numerator,
                 denominator,
             }
+        }
+    }
+
+    fn is_power_of_two(value: &BigUint) -> bool {
+        if value.is_zero() {
+            return false;
+        }
+        value.trailing_zeros() == Some(value.bits() - 1)
+    }
+
+    fn reduce_by_power_of_two_divisor(self, possible_divisor: &BigUint) -> Self {
+        if self.sign == NoSign || self.numerator.is_zero() {
+            return Self::zero();
+        }
+        let numerator_shift = self
+            .numerator
+            .trailing_zeros()
+            .expect("non-zero numerator has trailing zeros");
+        if numerator_shift == 0 {
+            return self;
+        }
+        let divisor_shift = possible_divisor
+            .trailing_zeros()
+            .expect("power-of-two divisor has trailing zeros");
+        let shift = numerator_shift.min(divisor_shift);
+        if shift == 0 {
+            return self;
+        }
+        let shift = usize::try_from(shift).expect("shift should fit in usize");
+        Self {
+            sign: self.sign,
+            numerator: self.numerator >> shift,
+            denominator: self.denominator >> shift,
         }
     }
 

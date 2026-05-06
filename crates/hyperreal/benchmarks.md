@@ -190,13 +190,13 @@ Exact conversion from IEEE-754 floats into `Rational` and `Real` values.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `float_convert/f32_normal` | 207.80 ns | 207.22 ns - 208.38 ns | Converts a normal `f32` into an exact `Rational`. |
-| `float_convert/f64_normal` | 388.71 ns | 385.18 ns - 394.62 ns | Converts a normal `f64` into an exact `Rational`. |
-| `float_convert/f64_binary_fraction` | 109.00 ns | 108.83 ns - 109.22 ns | Converts an exactly representable binary `f64` fraction into `Rational`. |
-| `float_convert/f64_subnormal` | 158.98 ns | 158.53 ns - 159.54 ns | Converts a subnormal `f64` into an exact `Rational`. |
-| `float_convert/real_f32_normal` | 284.51 ns | 284.20 ns - 284.84 ns | Converts a normal `f32` through the public `Real::try_from` path. |
-| `float_convert/real_f64_normal` | 451.50 ns | 450.91 ns - 452.10 ns | Converts a normal `f64` through the public `Real::try_from` path. |
-| `float_convert/real_f64_subnormal` | 228.98 ns | 228.39 ns - 229.59 ns | Converts a subnormal `f64` through the public `Real::try_from` path. |
+| `float_convert/f32_normal` | 64.11 ns | 63.80 ns - 64.52 ns | Converts a normal `f32` into an exact `Rational`. |
+| `float_convert/f64_normal` | 61.89 ns | 61.34 ns - 62.42 ns | Converts a normal `f64` into an exact `Rational`. |
+| `float_convert/f64_binary_fraction` | 61.55 ns | 61.31 ns - 61.86 ns | Converts an exactly representable binary `f64` fraction into `Rational`. |
+| `float_convert/f64_subnormal` | 75.76 ns | 74.85 ns - 76.68 ns | Converts a subnormal `f64` into an exact `Rational`. |
+| `float_convert/real_f32_normal` | 135.61 ns | 134.08 ns - 137.13 ns | Converts a normal `f32` through the public `Real::try_from` path. |
+| `float_convert/real_f64_normal` | 131.66 ns | 130.51 ns - 133.67 ns | Converts a normal `f64` through the public `Real::try_from` path. |
+| `float_convert/real_f64_subnormal` | 146.39 ns | 145.65 ns - 147.40 ns | Converts a subnormal `f64` through the public `Real::try_from` path. |
 
 <!-- END float_convert -->
 
