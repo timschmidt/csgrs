@@ -434,6 +434,16 @@ impl Computable {
         }
     }
 
+    pub(crate) fn prescaled_tan(value: Computable) -> Computable {
+        Self {
+            internal: Box::new(Approximation::PrescaledTan(value)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            signal: None,
+        }
+    }
+
     fn shared_constant(constant: SharedConstant) -> Computable {
         Self {
             internal: Box::new(Approximation::Constant(constant)),
@@ -1615,6 +1625,7 @@ impl Computable {
         }
     }
 
+    /// Attach an abort signal checked by long-running approximation routines.
     pub fn abort(&mut self, s: Signal) {
         self.signal = Some(s);
     }
@@ -1847,6 +1858,7 @@ impl Computable {
         }
     }
 
+    /// Try to determine the exact sign, refining cached approximations as needed.
     pub fn sign(&self) -> Sign {
         if let Some(sign) = self.exact_sign() {
             return sign;

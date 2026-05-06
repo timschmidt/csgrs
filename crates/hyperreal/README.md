@@ -1,6 +1,21 @@
 # Hyperreal
 
-Hyperreal is a Rust library for exact rational arithmetic and computable real arithmetic. It started from Hans Boehm's "Towards an API for the Real Numbers" model and has since grown into a more performance-focused Rust implementation with symbolic tracking, exact shortcuts, structural inspection APIs, borrowed arithmetic support, and a benchmark suite for the hot numerical paths.
+Hyperreal is a Rust library for exact rational arithmetic and computable real
+arithmetic. It started from Hans Boehm's "Towards an API for the Real Numbers"
+model and has since grown into a more performance-focused Rust implementation
+with symbolic tracking, exact shortcuts, structural inspection APIs, borrowed
+arithmetic support, and a benchmark suite for the hot numerical paths.
+
+Within the local stack, `hyperreal` is the scalar foundation:
+
+- `realistic_blas` uses `hyperreal::Real` as its default exact/symbolic scalar
+  backend.
+- `predicated` can consume `hyperreal::Real` directly as a predicate scalar,
+  or indirectly through `realistic_blas::Scalar`.
+- The public handoff surface is intentionally conservative: downstream crates
+  use `structural_facts`, `exact_rational`, `to_f64_approx`,
+  `refine_sign_until`, and `sign_until` instead of depending on private
+  evaluator internals.
 
 ## What it provides
 
@@ -36,6 +51,9 @@ The project is no longer just a straight Java port. The current codebase include
 
 - direct and benchmarked transcendental fast paths
 - exact and symbolic trig, inverse trig, log, exp, and inverse hyperbolic shortcuts
+- exact special-form recognition for rational multiples of `pi`, including
+  `sin(pi*r)`, `cos(pi*r)`, `tan(pi*r)`, and principal-branch inverse
+  compositions where the structure is known
 - borrowed `Rational` and `Real` arithmetic APIs
 - public structural inspection for robust downstream filtering and predicates
 - bounded sign refinement that stops at the requested precision floor
@@ -49,18 +67,24 @@ The project is no longer just a straight Java port. The current codebase include
   - scalar structural and arithmetic microbenchmarks
 - internal separation between public exact facts and planner-only evaluator facts
 
+The current implementation is suitable as an exact/symbolic scalar backend for
+experimentation, predicate filtering, and benchmark-driven numerical work. It
+is not intended to compete with dense numeric BLAS libraries for large matrix
+kernels; higher-level crates should treat it as a rich scalar type and choose
+their own algebra and geometry policies.
+
 ## Installation
 
 ```toml
 [dependencies]
-hyperreal = "0.10.3"
+hyperreal = "0.10.4"
 ```
 
 To build only the numeric library without the `Simple` expression parser:
 
 ```toml
 [dependencies]
-hyperreal = { version = "0.10.3", default-features = false }
+hyperreal = { version = "0.10.4", default-features = false }
 ```
 
 Cargo features:
@@ -190,6 +214,9 @@ Current work in the tree includes:
 - borrowed arithmetic improvements, with separate benchmarks for exact, symbolic, scaled, and unscaled public paths
 - allocation-free detection of power-of-two rational scales in scalar folding paths
 - benchmark-guided evaluator and public-wrapper refactoring
+- stack-level benchmark coverage through `realistic_blas` and `predicated`,
+  which helps separate scalar construction costs from vector/matrix and
+  predicate policy costs
 
 Benchmark targets:
 
@@ -208,3 +235,12 @@ The generated benchmark reference is useful for spotting which layer a slowdown 
 - `Real::abort` can be used to attach an external stop signal to long-running evaluation.
 - Public structural APIs expose conservative numeric facts without exposing private evaluator internals.
 - Planner-only evaluator facts remain private; downstream crates should use `structural_facts`, `exact_rational`, `refine_sign_until`, and `sign_until`.
+
+## Related crates
+
+- `realistic_blas`: vector, matrix, and complex arithmetic over a crate-owned
+  `Scalar` wrapper. Its default backend is `hyperreal`, and it forwards
+  structural facts for predicate users.
+- `predicated`: geometry-oriented predicates and classification helpers. It
+  owns predicate escalation policy and can use `hyperreal` either directly or
+  through `realistic_blas`.

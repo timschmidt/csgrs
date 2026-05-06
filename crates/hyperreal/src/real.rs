@@ -481,6 +481,53 @@ impl Real {
         }
     }
 
+    fn sin_pi_rational(rational: Rational) -> Real {
+        if rational.is_integer() {
+            return Self::zero();
+        }
+        let mut exact: Option<Real> = None;
+        let denominator = rational.denominator();
+        if denominator == unsigned::TWO.deref() {
+            exact = Some(Self::new(Rational::one()));
+        }
+        if denominator == unsigned::THREE.deref() {
+            exact = Some(constants::sqrt_three_over_two());
+        }
+        if denominator == unsigned::FOUR.deref() {
+            exact = Some(constants::sqrt_two_over_two());
+        }
+        if denominator == unsigned::SIX.deref() {
+            exact = Some(constants::half());
+        }
+        if let Some(real) = exact {
+            return if sin_pi_neg(rational) {
+                real.neg()
+            } else {
+                real
+            };
+        }
+
+        let (negate, reduced) = curve(rational);
+        let argument =
+            Computable::multiply(Computable::pi(), Computable::rational(reduced.clone()));
+        let computable = Computable::prescaled_sin(argument);
+        if negate {
+            Self {
+                rational: Rational::new(-1),
+                class: SinPi(reduced),
+                computable,
+                signal: None,
+            }
+        } else {
+            Self {
+                rational: Rational::one(),
+                class: SinPi(reduced),
+                computable,
+                signal: None,
+            }
+        }
+    }
+
     /// The inverse of this Real, or a [`Problem`] if that's impossible,
     /// in particular Problem::DivideByZero if this real is zero.
     ///
@@ -813,50 +860,7 @@ impl Real {
                 };
             }
             Pi => {
-                if self.rational.is_integer() {
-                    return Self::zero();
-                }
-                let mut r: Option<Real> = None;
-                let d = self.rational.denominator();
-                if d == unsigned::TWO.deref() {
-                    r = Some(Self::new(Rational::one()));
-                }
-                if d == unsigned::THREE.deref() {
-                    r = Some(constants::sqrt_three_over_two());
-                }
-                if d == unsigned::FOUR.deref() {
-                    r = Some(constants::sqrt_two_over_two());
-                }
-                if d == unsigned::SIX.deref() {
-                    r = Some(constants::half());
-                }
-                if let Some(real) = r {
-                    if sin_pi_neg(self.rational.clone()) {
-                        return real.neg();
-                    } else {
-                        return real;
-                    }
-                } else {
-                    let (neg, r) = curve(self.rational);
-                    let new =
-                        Computable::multiply(Computable::pi(), Computable::rational(r.clone()));
-                    let computable = Computable::prescaled_sin(new);
-                    if neg {
-                        return Self {
-                            rational: Rational::new(-1),
-                            class: SinPi(r),
-                            computable,
-                            signal: None,
-                        };
-                    } else {
-                        return Self {
-                            rational: Rational::one(),
-                            class: SinPi(r),
-                            computable,
-                            signal: None,
-                        };
-                    }
-                }
+                return Self::sin_pi_rational(self.rational);
             }
             _ => (),
         }
@@ -880,13 +884,7 @@ impl Real {
                 };
             }
             Pi => {
-                let off = Self {
-                    rational: self.rational + Rational::fraction(1, 2).unwrap(),
-                    class: Pi,
-                    computable: self.computable,
-                    signal: None,
-                };
-                return off.sin();
+                return Self::sin_pi_rational(self.rational + Rational::fraction(1, 2).unwrap());
             }
             _ => (),
         }
@@ -938,18 +936,19 @@ impl Real {
                 } else {
                     let new =
                         Computable::multiply(Computable::pi(), Computable::rational(n.clone()));
+                    let computable = Computable::prescaled_tan(new);
                     if neg {
                         return Ok(Self {
                             rational: Rational::new(-1),
                             class: TanPi(n),
-                            computable: Computable::tan(new),
+                            computable,
                             signal: None,
                         });
                     } else {
                         return Ok(Self {
                             rational: Rational::one(),
                             class: TanPi(n),
-                            computable: Computable::tan(new),
+                            computable,
                             signal: None,
                         });
                     }
@@ -1099,6 +1098,14 @@ impl Real {
         {
             return Err(Problem::NotANumber);
         }
+        if matches!(&self.class, Sqrt(_)) {
+            return Ok(self.make_computable(|value| {
+                let denominator = Computable::one()
+                    .add(value.clone().square().negate())
+                    .sqrt();
+                value.multiply(denominator.inverse()).atan()
+            }));
+        }
 
         let one = Self::new(Rational::one());
         let radicand = one.clone() - self.clone().powi(BigInt::from(2_u8))?;
@@ -1154,8 +1161,10 @@ impl Real {
                 value.add(square.multiply(denominator.inverse())).ln_1p()
             }));
         }
-        let one = Self::new(Rational::one());
-        (self.clone() + (self.clone().powi(BigInt::from(2_u8))? + one).sqrt()?).ln()
+        Ok(self.make_computable(|value| {
+            let radicand = value.clone().square().add(Computable::one());
+            value.add(radicand.sqrt()).ln()
+        }))
     }
 
     /// The inverse hyperbolic cosine of this Real, or [`Problem::NotANumber`] for values < 1.
@@ -1229,6 +1238,17 @@ impl Real {
             && self.rational.clone() * self.rational.clone() * r.clone() > *rationals::ONE
         {
             return Err(Problem::NotANumber);
+        }
+        if matches!(&self.class, Sqrt(_)) {
+            return Ok(self.make_computable(|value| {
+                let one = Computable::one();
+                let numerator = one.clone().add(value.clone());
+                let denominator = one.add(value.negate());
+                numerator
+                    .multiply(denominator.inverse())
+                    .ln()
+                    .multiply(Computable::rational(Rational::fraction(1, 2).unwrap()))
+            }));
         }
         let one = Self::new(Rational::one());
         let numerator = one.clone() + self.clone();

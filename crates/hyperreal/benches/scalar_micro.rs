@@ -302,6 +302,44 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
             },
         ],
     },
+    BenchGroupDoc {
+        name: "exact_transcendental_special_forms",
+        description: "Construction-time shortcuts for exact rational multiples of pi and inverse compositions.",
+        benches: &[
+            BenchDoc {
+                name: "sin_pi_7",
+                description: "Builds the exact special form for sin(pi/7).",
+            },
+            BenchDoc {
+                name: "cos_pi_7",
+                description: "Builds the exact special form for cos(pi/7).",
+            },
+            BenchDoc {
+                name: "tan_pi_7",
+                description: "Builds the exact special form for tan(pi/7).",
+            },
+            BenchDoc {
+                name: "asin_sin_6pi_7",
+                description: "Recognizes the principal branch of asin(sin(6pi/7)).",
+            },
+            BenchDoc {
+                name: "acos_cos_9pi_7",
+                description: "Recognizes the principal branch of acos(cos(9pi/7)).",
+            },
+            BenchDoc {
+                name: "atan_tan_6pi_7",
+                description: "Recognizes the principal branch of atan(tan(6pi/7)).",
+            },
+            BenchDoc {
+                name: "asinh_large",
+                description: "Builds a large inverse hyperbolic sine without exact intermediate Reals.",
+            },
+            BenchDoc {
+                name: "atanh_sqrt_half",
+                description: "Builds atanh(sqrt(2)/2) after exact structural domain checks.",
+            },
+        ],
+    },
 ];
 
 fn rational(n: i64, d: u64) -> Rational {
@@ -579,12 +617,81 @@ fn bench_dense_algebra(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_exact_transcendental_special_forms(c: &mut Criterion) {
+    let mut group = c.benchmark_group("exact_transcendental_special_forms");
+    let pi_over_7 = Real::pi() * real(1, 7);
+    let six_pi_over_7 = Real::pi() * real(6, 7);
+    let nine_pi_over_7 = Real::pi() * real(9, 7);
+    let asinh_large = Real::new(Rational::new(1_000_000));
+    let atanh_sqrt_half = Real::new(Rational::new(2)).sqrt().unwrap() * real(1, 2);
+
+    group.bench_function("sin_pi_7", |b| {
+        b.iter_batched(
+            || pi_over_7.clone(),
+            |value| black_box(value.sin()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("cos_pi_7", |b| {
+        b.iter_batched(
+            || pi_over_7.clone(),
+            |value| black_box(value.cos()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("tan_pi_7", |b| {
+        b.iter_batched(
+            || pi_over_7.clone(),
+            |value| black_box(value.tan().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("asin_sin_6pi_7", |b| {
+        b.iter_batched(
+            || six_pi_over_7.clone(),
+            |value| black_box(value.sin().asin().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("acos_cos_9pi_7", |b| {
+        b.iter_batched(
+            || nine_pi_over_7.clone(),
+            |value| black_box(value.cos().acos().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atan_tan_6pi_7", |b| {
+        b.iter_batched(
+            || six_pi_over_7.clone(),
+            |value| black_box(value.tan().unwrap().atan().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("asinh_large", |b| {
+        b.iter_batched(
+            || asinh_large.clone(),
+            |value| black_box(value.asinh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atanh_sqrt_half", |b| {
+        b.iter_batched(
+            || atanh_sqrt_half.clone(),
+            |value| black_box(value.atanh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_raw_cache_hit_cost,
     bench_structural_query_speed,
     bench_pure_scalar_algorithm_speed,
     bench_borrowed_op_overhead,
-    bench_dense_algebra
+    bench_dense_algebra,
+    bench_exact_transcendental_special_forms
 );
 criterion_main!(benches);

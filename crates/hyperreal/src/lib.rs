@@ -1,3 +1,11 @@
+//! Exact rational, symbolic real, and computable real arithmetic.
+//!
+//! `hyperreal` represents values as a mix of exact rationals, recognized
+//! symbolic forms such as `pi`, `e`, logarithms, and trigonometric special
+//! forms, and lazily evaluated computable expressions. The public structural
+//! query APIs expose cheap conservative facts for callers that need to avoid
+//! forcing high-precision evaluation.
+
 mod rational;
 pub use crate::rational::Rational;
 

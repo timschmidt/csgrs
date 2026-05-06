@@ -247,6 +247,7 @@ impl Simple {
         }
     }
 
+    /// Evaluate this parsed expression using the supplied symbol table.
     pub fn evaluate(&self, names: &Symbols) -> Result<Real, Problem> {
         use Operator::*;
         match self.op {
@@ -527,6 +528,7 @@ impl Simple {
         }
     }
 
+    /// Parse one parenthesized prefix expression from a character stream.
     pub fn parse(chars: &mut Peekable<Chars>) -> Result<Self, &'static str> {
         if let Some('(') = chars.peek() {
             chars.next();

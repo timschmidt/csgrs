@@ -455,6 +455,21 @@ mod tests {
     }
 
     #[test]
+    fn inverse_trig_exact_principal_branches() {
+        assert_eq!(pi_fraction(6, 7).sin().asin().unwrap(), pi_fraction(1, 7));
+        assert_eq!(pi_fraction(-6, 7).sin().asin().unwrap(), pi_fraction(-1, 7));
+        assert_eq!(pi_fraction(9, 7).cos().acos().unwrap(), pi_fraction(5, 7));
+        assert_eq!(
+            pi_fraction(6, 7).tan().unwrap().atan().unwrap(),
+            pi_fraction(-1, 7)
+        );
+        assert_eq!(
+            pi_fraction(-6, 7).tan().unwrap().atan().unwrap(),
+            pi_fraction(1, 7)
+        );
+    }
+
+    #[test]
     fn inverse_trig_general_values() {
         assert!(closest_f64(
             Real::new(Rational::fraction(3, 10).unwrap())
