@@ -7,12 +7,29 @@ mod convert;
 mod test;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+struct ConstProductClass {
+    pi_power: u8,
+    exp_power: Rational,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct LnProductClass {
+    left: Rational,
+    right: Rational,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 enum Class {
-    One,             // Exactly one
-    Pi,              // Exactly pi
-    Sqrt(Rational),  // Square root of some positive integer without an integer square root
-    Exp(Rational),   // Rational is never zero
-    Ln(Rational),    // Rational > 1
+    One,                                  // Exactly one
+    Pi,                                   // Exactly pi
+    PiPow(u8),                            // Exactly pi**n, n >= 2
+    PiExp(Rational),                      // Exactly pi * e**Rational
+    PiSqrt(Rational),                     // Exactly pi * sqrt(Rational)
+    ConstProduct(Box<ConstProductClass>), // Exactly pi**n * e**Rational
+    Sqrt(Rational), // Square root of some positive integer without an integer square root
+    Exp(Rational),  // Rational is never zero
+    Ln(Rational),   // Rational > 1
+    LnProduct(Box<LnProductClass>), // Product of two logarithms, ordered by base
     Log10(Rational), // Rational > 1 and never a multiple of ten
     SinPi(Rational), // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
     TanPi(Rational), // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
@@ -29,9 +46,18 @@ impl PartialEq for Class {
         match (self, other) {
             (One, One) => true,
             (Pi, Pi) => true,
+            (PiPow(r), PiPow(s)) => r == s,
+            (PiExp(r), PiExp(s)) => r == s,
+            (PiSqrt(r), PiSqrt(s)) => r == s,
+            (ConstProduct(left), ConstProduct(right)) => {
+                left.pi_power == right.pi_power && left.exp_power == right.exp_power
+            }
             (Sqrt(r), Sqrt(s)) => r == s,
             (Exp(r), Exp(s)) => r == s,
             (Ln(r), Ln(s)) => r == s,
+            (LnProduct(left), LnProduct(right)) => {
+                left.left == right.left && left.right == right.right
+            }
             (Log10(r), Log10(s)) => r == s,
             (SinPi(r), SinPi(s)) => r == s,
             (TanPi(r), TanPi(s)) => r == s,
@@ -55,8 +81,90 @@ impl Class {
         if br == *rationals::ZERO {
             (One, Computable::one())
         } else {
-            (Exp(br.clone()), Computable::e(br))
+            (Exp(br.clone()), Computable::exp_rational(br))
         }
+    }
+
+    fn pi_power_computable(power: u8) -> Computable {
+        let mut value = Computable::pi();
+        for _ in 1..power {
+            value = value.multiply(Computable::pi());
+        }
+        value
+    }
+
+    fn make_pi_power(power: u8) -> (Class, Computable) {
+        match power {
+            0 => (One, Computable::one()),
+            1 => (Pi, Computable::pi()),
+            _ => (PiPow(power), Self::pi_power_computable(power)),
+        }
+    }
+
+    fn make_pi_exp(br: Rational) -> (Class, Computable) {
+        Self::make_const_product(1, br)
+    }
+
+    fn make_const_product(pi_power: u8, exp_power: Rational) -> (Class, Computable) {
+        if pi_power == 0 {
+            return Self::make_exp(exp_power);
+        }
+        if exp_power == *rationals::ZERO {
+            return Self::make_pi_power(pi_power);
+        }
+        if pi_power == 1 {
+            return (
+                PiExp(exp_power.clone()),
+                Computable::pi().multiply(Computable::exp_rational(exp_power)),
+            );
+        }
+        (
+            ConstProduct(Box::new(ConstProductClass {
+                pi_power,
+                exp_power: exp_power.clone(),
+            })),
+            Self::pi_power_computable(pi_power).multiply(Computable::exp_rational(exp_power)),
+        )
+    }
+
+    fn make_pi_sqrt(r: Rational) -> (Class, Computable) {
+        (
+            PiSqrt(r.clone()),
+            Computable::pi().multiply(Computable::sqrt_rational(r)),
+        )
+    }
+
+    fn ln_computable(base: &Rational) -> Computable {
+        if base == &Rational::new(2) {
+            Computable::ln_constant(2).unwrap()
+        } else if base == &Rational::new(3) {
+            Computable::ln_constant(3).unwrap()
+        } else if base == &Rational::new(5) {
+            Computable::ln_constant(5).unwrap()
+        } else if base == &Rational::new(6) {
+            Computable::ln_constant(6).unwrap()
+        } else if base == &Rational::new(7) {
+            Computable::ln_constant(7).unwrap()
+        } else if base == &Rational::new(10) {
+            Computable::ln_constant(10).unwrap()
+        } else {
+            Computable::rational(base.clone()).ln()
+        }
+    }
+
+    fn make_ln_product(left: Rational, right: Rational) -> (Class, Computable) {
+        let (left, right) = if left <= right {
+            (left, right)
+        } else {
+            (right, left)
+        };
+        (
+            LnProduct(Box::new(LnProductClass {
+                left: left.clone(),
+                right: right.clone(),
+            })),
+            Self::ln_computable(&left).multiply(Self::ln_computable(&right)),
+        )
     }
 }
 
@@ -75,6 +183,18 @@ mod constants {
     use crate::real::Class;
     use crate::{Computable, Rational, Real};
     thread_local! {
+        static PI: Real = Real {
+            rational: Rational::one(),
+            class: Class::Pi,
+            computable: Computable::pi(),
+            signal: None,
+        };
+        static TAU: Real = Real {
+            rational: Rational::new(2),
+            class: Class::Pi,
+            computable: Computable::pi(),
+            signal: None,
+        };
         static HALF: Real = Real::new(Rational::fraction(1, 2).unwrap());
         static SQRT_TWO_OVER_TWO: Real = Real {
             rational: Rational::fraction(1, 2).unwrap(),
@@ -146,6 +266,14 @@ mod constants {
 
     pub(super) fn half() -> Real {
         HALF.with(|real| real.clone())
+    }
+
+    pub(super) fn pi() -> Real {
+        PI.with(|real| real.clone())
+    }
+
+    pub(super) fn tau() -> Real {
+        TAU.with(|real| real.clone())
     }
 
     pub(super) fn sqrt_two_over_two() -> Real {
@@ -281,12 +409,12 @@ impl Real {
 
     /// π, the ratio of a circle's circumference to its diameter.
     pub fn pi() -> Real {
-        Self {
-            rational: Rational::one(),
-            class: Pi,
-            computable: Computable::pi(),
-            signal: None,
-        }
+        constants::pi()
+    }
+
+    /// τ, the ratio of a circle's circumference to its radius.
+    pub fn tau() -> Real {
+        constants::tau()
     }
 
     /// e, Euler's number and the base of the natural logarithm function.
@@ -373,7 +501,8 @@ impl Real {
         let computable = self.computable.structural_facts();
         let sign = match self.class {
             One => Some(real_sign_from_num(rational_sign)),
-            Pi | Sqrt(_) | Exp(_) | Ln(_) | Log10(_) | SinPi(_) | TanPi(_) => {
+            Pi | PiPow(_) | PiExp(_) | PiSqrt(_) | ConstProduct(_) | Sqrt(_) | Exp(_) | Ln(_)
+            | LnProduct(_) | Log10(_) | SinPi(_) | TanPi(_) => {
                 Some(real_sign_from_num(rational_sign))
             }
             Irrational => {
@@ -410,9 +539,8 @@ impl Real {
         match self.rational.sign() {
             Sign::NoSign => ZeroKnowledge::Zero,
             Sign::Minus | Sign::Plus => match self.class {
-                One | Pi | Sqrt(_) | Exp(_) | Ln(_) | Log10(_) | SinPi(_) | TanPi(_) => {
-                    ZeroKnowledge::NonZero
-                }
+                One | Pi | PiPow(_) | PiExp(_) | PiSqrt(_) | ConstProduct(_) | Sqrt(_) | Exp(_)
+                | Ln(_) | LnProduct(_) | Log10(_) | SinPi(_) | TanPi(_) => ZeroKnowledge::NonZero,
                 Irrational => self.computable.zero_status(),
             },
         }
@@ -450,9 +578,8 @@ impl Real {
     /// This will be accurate for trivial Rationals and many but not all other cases.
     pub fn best_sign(&self) -> Sign {
         match &self.class {
-            One | Pi | Sqrt(_) | Exp(_) | Ln(_) | Log10(_) | SinPi(_) | TanPi(_) => {
-                self.rational.sign()
-            }
+            One | Pi | PiPow(_) | PiExp(_) | PiSqrt(_) | ConstProduct(_) | Sqrt(_) | Exp(_)
+            | Ln(_) | LnProduct(_) | Log10(_) | SinPi(_) | TanPi(_) => self.rational.sign(),
             _ => match (self.rational.sign(), self.computable.sign()) {
                 (Sign::NoSign, _) => Sign::NoSign,
                 (_, Sign::NoSign) => Sign::NoSign,
@@ -567,7 +694,18 @@ impl Real {
                 return Ok(Self {
                     rational: self.rational.inverse()?,
                     class: Exp(exp.clone()),
-                    computable: Computable::e(exp),
+                    computable: Computable::exp_rational(exp),
+                    signal: None,
+                });
+            }
+            PiExp(exp) => {
+                let exp = Neg::neg(exp.clone());
+                return Ok(Self {
+                    rational: self.rational.inverse()?,
+                    class: Irrational,
+                    computable: Computable::pi()
+                        .inverse()
+                        .multiply(Computable::exp_rational(exp)),
                     signal: None,
                 });
             }
@@ -610,7 +748,18 @@ impl Real {
                 Ok(Self {
                     rational: self.rational.clone().inverse()?,
                     class: Exp(exp.clone()),
-                    computable: Computable::e(exp),
+                    computable: Computable::exp_rational(exp),
+                    signal: None,
+                })
+            }
+            PiExp(exp) => {
+                let exp = Neg::neg(exp.clone());
+                Ok(Self {
+                    rational: self.rational.clone().inverse()?,
+                    class: Irrational,
+                    computable: Computable::pi()
+                        .inverse()
+                        .multiply(Computable::exp_rational(exp)),
                     signal: None,
                 })
             }
@@ -669,7 +818,7 @@ impl Real {
                     return Ok(Self {
                         rational: square,
                         class: Exp(exp.clone()),
-                        computable: Computable::e(exp),
+                        computable: Computable::exp_rational(exp),
                         signal: None,
                     });
                 }
@@ -690,7 +839,7 @@ impl Real {
                 return Ok(Self {
                     rational: Rational::one(),
                     class: Exp(self.rational.clone()),
-                    computable: Computable::e(self.rational),
+                    computable: Computable::exp_rational(self.rational),
                     signal: None,
                 });
             }
@@ -1087,12 +1236,7 @@ impl Real {
                 return Err(Problem::NotANumber);
             }
 
-            return Ok(self.make_computable(|value| {
-                let denominator = Computable::one()
-                    .add(value.clone().square().negate())
-                    .sqrt();
-                value.multiply(denominator.inverse()).atan()
-            }));
+            return Ok(self.make_computable(|value| value.asin()));
         }
         if let Sqrt(r) = &self.class
             && self.rational.clone() * self.rational.clone() * r.clone() > *rationals::ONE
@@ -1100,12 +1244,7 @@ impl Real {
             return Err(Problem::NotANumber);
         }
         if matches!(&self.class, Sqrt(_)) {
-            return Ok(self.make_computable(|value| {
-                let denominator = Computable::one()
-                    .add(value.clone().square().negate())
-                    .sqrt();
-                value.multiply(denominator.inverse()).atan()
-            }));
+            return Ok(self.make_computable(|value| value.asin()));
         }
 
         let one = Self::new(Rational::one());
@@ -1126,12 +1265,25 @@ impl Real {
             if self.rational == Rational::new(-1) {
                 return Ok(Self::pi());
             }
+            let magnitude = if self.rational.sign() == Sign::Minus {
+                self.rational.clone().neg()
+            } else {
+                self.rational.clone()
+            };
+            if magnitude > *rationals::ONE {
+                return Err(Problem::NotANumber);
+            }
         }
         if let Some(asin) = self.asin_exact() {
             return Ok(Self::pi_fraction(1, 2) - asin);
         }
+        if let Sqrt(r) = &self.class
+            && self.rational.clone() * self.rational.clone() * r.clone() > *rationals::ONE
+        {
+            return Err(Problem::NotANumber);
+        }
 
-        Ok(Self::pi_fraction(1, 2) - self.asin()?)
+        Ok(self.make_computable(|value| value.acos()))
     }
 
     /// The inverse tangent of this Real.
@@ -1162,10 +1314,7 @@ impl Real {
                 value.add(square.multiply(denominator.inverse())).ln_1p()
             }));
         }
-        Ok(self.make_computable(|value| {
-            let radicand = value.clone().square().add(Computable::one());
-            value.add(radicand.sqrt()).ln()
-        }))
+        Ok(self.make_computable(Computable::asinh))
     }
 
     /// The inverse hyperbolic cosine of this Real, or [`Problem::NotANumber`] for values < 1.
@@ -1197,11 +1346,7 @@ impl Real {
                 shifted.add(radicand.sqrt()).ln_1p()
             }));
         }
-        Ok(self.make_computable(|value| {
-            let one = Computable::one();
-            let radicand = value.clone().square().add(one.negate());
-            value.add(radicand.sqrt()).ln()
-        }))
+        Ok(self.make_computable(Computable::acosh))
     }
 
     /// The inverse hyperbolic tangent of this Real.
@@ -1225,6 +1370,9 @@ impl Real {
             if magnitude > *rationals::ONE {
                 return Err(Problem::NotANumber);
             }
+            if magnitude.msd_exact().is_some_and(|msd| msd <= -4) {
+                return Ok(self.make_computable(Computable::atanh));
+            }
 
             let one = Rational::one();
             let ratio = (one.clone() + self.rational.clone()) / (one - self.rational);
@@ -1241,15 +1389,7 @@ impl Real {
             return Err(Problem::NotANumber);
         }
         if matches!(&self.class, Sqrt(_)) {
-            return Ok(self.make_computable(|value| {
-                let one = Computable::one();
-                let numerator = one.clone().add(value.clone());
-                let denominator = one.add(value.negate());
-                numerator
-                    .multiply(denominator.inverse())
-                    .ln()
-                    .multiply(Computable::rational(Rational::fraction(1, 2).unwrap()))
-            }));
+            return Ok(self.make_computable(Computable::atanh));
         }
         let one = Self::new(Rational::one());
         let numerator = one.clone() + self.clone();
@@ -1551,8 +1691,19 @@ impl fmt::Display for Real {
             match &self.class {
                 One => Ok(()),
                 Pi => f.write_str(" Pi"),
+                PiPow(n) => write!(f, " x Pi**({})", &n),
+                PiExp(n) => write!(f, " x Pi x e**({})", &n),
+                PiSqrt(n) => write!(f, " x Pi x √({})", &n),
+                ConstProduct(product) => write!(
+                    f,
+                    " x Pi**({}) x e**({})",
+                    product.pi_power, product.exp_power
+                ),
                 Exp(n) => write!(f, " x e**({})", &n),
                 Ln(n) => write!(f, " x ln({})", &n),
+                LnProduct(product) => {
+                    write!(f, " x ln({}) x ln({})", product.left, product.right)
+                }
                 Log10(n) => write!(f, " x log10({})", &n),
                 Sqrt(n) => write!(f, " √({})", &n),
                 SinPi(n) => write!(f, " x sin({} x Pi)", &n),
@@ -1751,6 +1902,15 @@ impl Real {
                 computable: Computable::one(),
                 signal: None,
             }
+        } else if (x == &Rational::new(2) && y == &Rational::new(3))
+            || (x == &Rational::new(3) && y == &Rational::new(2))
+        {
+            Self {
+                rational: Rational::one(),
+                class: Sqrt(Rational::new(6)),
+                computable: Computable::sqrt_rational(Rational::new(6)),
+                signal: None,
+            }
         } else {
             let product = x * y;
             if product == *rationals::ZERO {
@@ -1834,11 +1994,195 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 }
             }
             (Pi, Pi) => {
+                let (class, computable) = Class::make_pi_power(2);
                 let rational = &self.rational * &other.rational;
                 Self::Output {
                     rational,
-                    class: Irrational,
-                    computable: Computable::square(Computable::pi()),
+                    class,
+                    computable,
+                    signal: None,
+                }
+            }
+            (PiPow(power), Pi) | (Pi, PiPow(power)) => {
+                let Some(power) = power.checked_add(1) else {
+                    let rational = &self.rational * &other.rational;
+                    return Self::Output {
+                        rational,
+                        class: Irrational,
+                        computable: Computable::multiply(
+                            self.computable.clone(),
+                            other.computable.clone(),
+                        ),
+                        signal: None,
+                    };
+                };
+                let (class, computable) = Class::make_pi_power(power);
+                let rational = &self.rational * &other.rational;
+                Self::Output {
+                    rational,
+                    class,
+                    computable,
+                    signal: None,
+                }
+            }
+            (PiPow(left), PiPow(right)) => {
+                let Some(power) = left.checked_add(*right) else {
+                    let rational = &self.rational * &other.rational;
+                    return Self::Output {
+                        rational,
+                        class: Irrational,
+                        computable: Computable::multiply(
+                            self.computable.clone(),
+                            other.computable.clone(),
+                        ),
+                        signal: None,
+                    };
+                };
+                let (class, computable) = Class::make_pi_power(power);
+                let rational = &self.rational * &other.rational;
+                Self::Output {
+                    rational,
+                    class,
+                    computable,
+                    signal: None,
+                }
+            }
+            (Pi, Exp(r)) | (Exp(r), Pi) => {
+                let (class, computable) = Class::make_pi_exp(r.clone());
+                let rational = &self.rational * &other.rational;
+                Self::Output {
+                    rational,
+                    class,
+                    computable,
+                    signal: None,
+                }
+            }
+            (PiPow(power), Exp(exp)) | (Exp(exp), PiPow(power)) => {
+                let (class, computable) = Class::make_const_product(*power, exp.clone());
+                let rational = &self.rational * &other.rational;
+                Self::Output {
+                    rational,
+                    class,
+                    computable,
+                    signal: None,
+                }
+            }
+            (PiExp(r), Exp(s)) | (Exp(s), PiExp(r)) => {
+                let (class, computable) = Class::make_pi_exp(r + s);
+                let rational = &self.rational * &other.rational;
+                Self::Output {
+                    rational,
+                    class,
+                    computable,
+                    signal: None,
+                }
+            }
+            (ConstProduct(product), Exp(exp)) | (Exp(exp), ConstProduct(product)) => {
+                let (class, computable) =
+                    Class::make_const_product(product.pi_power, product.exp_power.clone() + exp);
+                let rational = &self.rational * &other.rational;
+                Self::Output {
+                    rational,
+                    class,
+                    computable,
+                    signal: None,
+                }
+            }
+            (ConstProduct(product), Pi) | (Pi, ConstProduct(product)) => {
+                let Some(pi_power) = product.pi_power.checked_add(1) else {
+                    let rational = &self.rational * &other.rational;
+                    return Self::Output {
+                        rational,
+                        class: Irrational,
+                        computable: Computable::multiply(
+                            self.computable.clone(),
+                            other.computable.clone(),
+                        ),
+                        signal: None,
+                    };
+                };
+                let (class, computable) =
+                    Class::make_const_product(pi_power, product.exp_power.clone());
+                let rational = &self.rational * &other.rational;
+                Self::Output {
+                    rational,
+                    class,
+                    computable,
+                    signal: None,
+                }
+            }
+            (ConstProduct(product), PiPow(power)) | (PiPow(power), ConstProduct(product)) => {
+                let Some(pi_power) = product.pi_power.checked_add(*power) else {
+                    let rational = &self.rational * &other.rational;
+                    return Self::Output {
+                        rational,
+                        class: Irrational,
+                        computable: Computable::multiply(
+                            self.computable.clone(),
+                            other.computable.clone(),
+                        ),
+                        signal: None,
+                    };
+                };
+                let (class, computable) =
+                    Class::make_const_product(pi_power, product.exp_power.clone());
+                let rational = &self.rational * &other.rational;
+                Self::Output {
+                    rational,
+                    class,
+                    computable,
+                    signal: None,
+                }
+            }
+            (ConstProduct(left), ConstProduct(right)) => {
+                let Some(pi_power) = left.pi_power.checked_add(right.pi_power) else {
+                    let rational = &self.rational * &other.rational;
+                    return Self::Output {
+                        rational,
+                        class: Irrational,
+                        computable: Computable::multiply(
+                            self.computable.clone(),
+                            other.computable.clone(),
+                        ),
+                        signal: None,
+                    };
+                };
+                let (class, computable) =
+                    Class::make_const_product(pi_power, left.exp_power.clone() + &right.exp_power);
+                let rational = &self.rational * &other.rational;
+                Self::Output {
+                    rational,
+                    class,
+                    computable,
+                    signal: None,
+                }
+            }
+            (Pi, Sqrt(r)) | (Sqrt(r), Pi) => {
+                let (class, computable) = Class::make_pi_sqrt(r.clone());
+                let rational = &self.rational * &other.rational;
+                Self::Output {
+                    rational,
+                    class,
+                    computable,
+                    signal: None,
+                }
+            }
+            (PiSqrt(r), Sqrt(s)) | (Sqrt(s), PiSqrt(r)) if r == s => {
+                let rational = &self.rational * &other.rational * r;
+                Self::Output {
+                    rational,
+                    class: Pi,
+                    computable: Computable::pi(),
+                    signal: None,
+                }
+            }
+            (Ln(r), Ln(s)) => {
+                let (class, computable) = Class::make_ln_product(r.clone(), s.clone());
+                let rational = &self.rational * &other.rational;
+                Self::Output {
+                    rational,
+                    class,
+                    computable,
                     signal: None,
                 }
             }
@@ -1880,6 +2224,66 @@ impl<T: AsRef<Real>> Div<T> for &Real {
         if self.class == other.class {
             let rational = &self.rational / &other.rational;
             return Ok(Real::new(rational));
+        }
+        match (&self.class, &other.class) {
+            (PiPow(power), Pi) if *power > 1 => {
+                let (class, computable) = Class::make_pi_power(power - 1);
+                return Ok(Real {
+                    rational: &self.rational / &other.rational,
+                    class,
+                    computable,
+                    signal: None,
+                });
+            }
+            (ConstProduct(product), Exp(exp)) => {
+                let (class, computable) =
+                    Class::make_const_product(product.pi_power, &product.exp_power - exp);
+                return Ok(Real {
+                    rational: &self.rational / &other.rational,
+                    class,
+                    computable,
+                    signal: None,
+                });
+            }
+            (ConstProduct(product), Pi) if product.pi_power > 0 => {
+                let (class, computable) =
+                    Class::make_const_product(product.pi_power - 1, product.exp_power.clone());
+                return Ok(Real {
+                    rational: &self.rational / &other.rational,
+                    class,
+                    computable,
+                    signal: None,
+                });
+            }
+            (PiExp(exp), Exp(divisor_exp)) => {
+                let (class, computable) = Class::make_pi_exp(exp - divisor_exp);
+                return Ok(Real {
+                    rational: &self.rational / &other.rational,
+                    class,
+                    computable,
+                    signal: None,
+                });
+            }
+            (PiExp(exp), Pi) => {
+                let (class, computable) = Class::make_exp(exp.clone());
+                return Ok(Real {
+                    rational: &self.rational / &other.rational,
+                    class,
+                    computable,
+                    signal: None,
+                });
+            }
+            _ => {}
+        }
+        if let (Sqrt(left), Sqrt(right)) = (&self.class, &other.class)
+            && let Some(right_integer) = right.to_big_integer()
+        {
+            let square = Real::multiply_sqrts(left, right);
+            let denominator = &other.rational * Rational::from_bigint(right_integer);
+            return Ok(Real {
+                rational: &square.rational * &self.rational / denominator,
+                ..square
+            });
         }
         if other.class == One {
             let rational = &self.rational / &other.rational;

@@ -1175,6 +1175,26 @@ mod tests {
     }
 
     #[test]
+    fn dyadic_add_sub_stay_reduced() {
+        let three_eighths = Rational::fraction(3, 8).unwrap();
+        let five_sixteenths = Rational::fraction(5, 16).unwrap();
+
+        assert_eq!(
+            &three_eighths + &five_sixteenths,
+            Rational::fraction(11, 16).unwrap()
+        );
+        assert_eq!(
+            &three_eighths - &five_sixteenths,
+            Rational::fraction(1, 16).unwrap()
+        );
+        assert_eq!(
+            &five_sixteenths - &three_eighths,
+            Rational::fraction(-1, 16).unwrap()
+        );
+        assert_eq!(&three_eighths - &three_eighths, Rational::zero());
+    }
+
+    #[test]
     fn compare() {
         assert!(Rational::one() > Rational::zero());
         assert!(Rational::new(5) > Rational::new(4));

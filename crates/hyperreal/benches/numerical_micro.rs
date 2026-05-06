@@ -277,6 +277,22 @@ const NUMERICAL_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Repeats a cached computable acos approximation.",
             },
             BenchDoc {
+                name: "asin_tiny_cold_p96",
+                description: "Approximates asin(1e-12), exercising the tiny-input series.",
+            },
+            BenchDoc {
+                name: "acos_tiny_cold_p96",
+                description: "Approximates acos(1e-12), exercising the tiny-input complement.",
+            },
+            BenchDoc {
+                name: "asin_near_one_cold_p96",
+                description: "Approximates asin(0.999999), exercising the endpoint complement.",
+            },
+            BenchDoc {
+                name: "acos_near_one_cold_p96",
+                description: "Approximates acos(0.999999), exercising the endpoint transform.",
+            },
+            BenchDoc {
                 name: "atan_cold_p96",
                 description: "Approximates atan(7/10).",
             },
@@ -319,6 +335,14 @@ const NUMERICAL_MICRO_GROUPS: &[BenchGroupDoc] = &[
             BenchDoc {
                 name: "atanh_cached_p128",
                 description: "Repeats a cached computable atanh approximation.",
+            },
+            BenchDoc {
+                name: "atanh_tiny_cold_p128",
+                description: "Approximates atanh(1e-12), exercising the tiny-input series.",
+            },
+            BenchDoc {
+                name: "atanh_near_one_cold_p128",
+                description: "Approximates atanh(0.999999), exercising the endpoint log transform.",
             },
             BenchDoc {
                 name: "asinh_zero_cold_p128",
@@ -563,39 +587,23 @@ fn inverse_scaled_product_chain(depth: usize) -> Computable {
 }
 
 fn computable_asin(value: Computable) -> Computable {
-    let one = Computable::one();
-    let denominator = one.add(value.clone().square().negate()).sqrt();
-    value.multiply(denominator.inverse()).atan()
+    value.asin()
 }
 
 fn computable_acos(value: Computable) -> Computable {
-    Computable::pi()
-        .multiply(Computable::rational(Rational::fraction(1, 2).unwrap()))
-        .add(computable_asin(value).negate())
+    value.acos()
 }
 
 fn computable_asinh(value: Computable) -> Computable {
-    value
-        .clone()
-        .add(value.square().add(Computable::one()).sqrt())
-        .ln()
+    value.asinh()
 }
 
 fn computable_acosh(value: Computable) -> Computable {
-    value
-        .clone()
-        .add(value.square().add(Computable::one().negate()).sqrt())
-        .ln()
+    value.acosh()
 }
 
 fn computable_atanh(value: Computable) -> Computable {
-    let one = Computable::one();
-    let numerator = one.clone().add(value.clone());
-    let denominator = one.add(value.negate());
-    numerator
-        .multiply(denominator.inverse())
-        .ln()
-        .multiply(Computable::rational(Rational::fraction(1, 2).unwrap()))
+    value.atanh()
 }
 
 fn asymmetric_product_bad_order() -> Computable {
@@ -1096,6 +1104,40 @@ fn bench_computable_transcendentals(c: &mut Criterion) {
         b.iter(|| black_box(acos_cached.approx(trig_p)))
     });
 
+    let tiny_inverse_trig_input =
+        Computable::rational(Rational::fraction(1, 1_000_000_000_000).unwrap());
+    group.bench_function("asin_tiny_cold_p96", |b| {
+        b.iter_batched(
+            || tiny_inverse_trig_input.clone().asin(),
+            |value| black_box(value.approx(trig_p)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("acos_tiny_cold_p96", |b| {
+        b.iter_batched(
+            || tiny_inverse_trig_input.clone().acos(),
+            |value| black_box(value.approx(trig_p)),
+            BatchSize::SmallInput,
+        )
+    });
+
+    let near_one_inverse_trig_input =
+        Computable::rational(Rational::fraction(999_999, 1_000_000).unwrap());
+    group.bench_function("asin_near_one_cold_p96", |b| {
+        b.iter_batched(
+            || near_one_inverse_trig_input.clone().asin(),
+            |value| black_box(value.approx(trig_p)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("acos_near_one_cold_p96", |b| {
+        b.iter_batched(
+            || near_one_inverse_trig_input.clone().acos(),
+            |value| black_box(value.approx(trig_p)),
+            BatchSize::SmallInput,
+        )
+    });
+
     group.bench_function("atan_cold_p96", |b| {
         b.iter_batched(
             || inverse_trig_input.clone().atan(),
@@ -1173,6 +1215,21 @@ fn bench_computable_transcendentals(c: &mut Criterion) {
     atanh_cached.approx(p);
     group.bench_function("atanh_cached_p128", |b| {
         b.iter(|| black_box(atanh_cached.approx(p)))
+    });
+
+    group.bench_function("atanh_tiny_cold_p128", |b| {
+        b.iter_batched(
+            || tiny_inverse_trig_input.clone().atanh(),
+            |value| black_box(value.approx(p)),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atanh_near_one_cold_p128", |b| {
+        b.iter_batched(
+            || near_one_inverse_trig_input.clone().atanh(),
+            |value| black_box(value.approx(p)),
+            BatchSize::SmallInput,
+        )
     });
 
     let zero_hyperbolic_input = Computable::rational(Rational::zero());

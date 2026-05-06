@@ -351,7 +351,7 @@ fn real(n: i64, d: u64) -> Real {
 }
 
 fn tau_computable() -> Computable {
-    Computable::pi().multiply(Computable::rational(Rational::new(2)))
+    Computable::tau()
 }
 
 fn warm_cache(value: &Computable, precision: i32) {
@@ -362,7 +362,7 @@ fn structural_values() -> Vec<(&'static str, Real)> {
     let tiny = Real::new(
         Rational::from_bigint_fraction(BigInt::from(1), BigUint::from(1_u8) << 160).unwrap(),
     );
-    let tau = Real::pi() * Real::new(Rational::new(2));
+    let tau = Real::tau();
     let pi_minus_three = Real::pi() - Real::new(Rational::new(3));
     let sqrt_two = Real::new(Rational::new(2)).sqrt().unwrap();
     let dense_expr = ((Real::pi() * real(7, 8)) + sqrt_two.clone()) * real(3, 5);
@@ -441,7 +441,7 @@ fn bench_raw_cache_hit_cost(c: &mut Criterion) {
         ("zero", Computable::rational(Rational::zero())),
         ("one", Computable::one()),
         ("two", Computable::rational(Rational::new(2))),
-        ("e", Computable::rational(Rational::one()).exp()),
+        ("e", Computable::e()),
         ("pi", Computable::pi()),
         ("tau", tau_computable()),
     ];

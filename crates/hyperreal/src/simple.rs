@@ -135,6 +135,7 @@ impl Simple {
     fn lookup(name: &str, names: &Symbols) -> Result<Real, Problem> {
         match name {
             "pi" => Ok(Real::pi()),
+            "tau" => Ok(Real::tau()),
             "e" => Ok(Real::e()),
             _ => names.get(name).cloned().ok_or(Problem::NotFound),
         }
@@ -142,7 +143,7 @@ impl Simple {
 
     fn lookup_exact(name: &str, names: &Symbols) -> Option<Rational> {
         match name {
-            "pi" | "e" => None,
+            "pi" | "tau" | "e" => None,
             _ => names.get(name).and_then(Real::exact_rational),
         }
     }

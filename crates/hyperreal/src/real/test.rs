@@ -41,6 +41,16 @@ mod tests {
         let answer = a * b;
         let two: Real = 2.into();
         assert_eq!(answer, two);
+
+        let sqrt_two = Real::new(Rational::new(2)).sqrt().unwrap();
+        let sqrt_three = Real::new(Rational::new(3)).sqrt().unwrap();
+        let product = &sqrt_two * &sqrt_three;
+        let quotient = (&sqrt_two / &sqrt_three).unwrap();
+        assert_eq!(product, Real::new(Rational::new(6)).sqrt().unwrap());
+        assert_eq!(
+            quotient * Real::new(Rational::new(3)),
+            Real::new(Rational::new(6)).sqrt().unwrap()
+        );
     }
 
     #[test]
@@ -116,8 +126,8 @@ mod tests {
         assert_eq!(Real::pi().zero_status(), ZeroKnowledge::NonZero);
         assert_eq!(Real::e().zero_status(), ZeroKnowledge::NonZero);
 
-        let unknown = Real::pi() - Real::new(Rational::fraction(22, 7).unwrap());
-        assert_eq!(unknown.zero_status(), ZeroKnowledge::Unknown);
+        let near_pi = Real::pi() - Real::new(Rational::fraction(22, 7).unwrap());
+        assert_eq!(near_pi.zero_status(), ZeroKnowledge::NonZero);
     }
 
     #[test]
@@ -293,6 +303,37 @@ mod tests {
     }
 
     #[test]
+    fn pi_exp_products_remain_symbolically_combinable() {
+        let left = Real::pi() * Real::new(Rational::fraction(7, 8).unwrap());
+        let right = Real::e() * Real::new(Rational::fraction(5, 6).unwrap());
+        let product = &left * &right;
+        let doubled = &product + &product;
+
+        assert_eq!(product.zero_status(), ZeroKnowledge::NonZero);
+        assert_eq!(doubled.zero_status(), ZeroKnowledge::NonZero);
+        assert_eq!(doubled, product.clone() * Real::new(Rational::new(2)));
+        assert_eq!(doubled.structural_facts().sign, Some(RealSign::Positive));
+
+        let pi_square = &Real::pi() * &Real::pi();
+        assert_eq!(
+            &pi_square + &pi_square,
+            pi_square.clone() * Real::from(2_i32)
+        );
+
+        let pi_sqrt_two = &Real::pi() * Real::from(2_i32).sqrt().unwrap();
+        assert_eq!(
+            &pi_sqrt_two + &pi_sqrt_two,
+            pi_sqrt_two.clone() * Real::from(2_i32)
+        );
+
+        let ln_product = Real::from(2_i32).ln().unwrap() * Real::from(3_i32).ln().unwrap();
+        assert_eq!(
+            &ln_product + &ln_product,
+            ln_product.clone() * Real::from(2_i32)
+        );
+    }
+
+    #[test]
     fn real_refine_sign_until_handles_refined_and_unresolved_cases() {
         let tiny = Real::new(
             Rational::from_bigint_fraction(num::BigInt::from(1), num::BigUint::from(1_u8) << 64)
@@ -301,8 +342,8 @@ mod tests {
         let near_pi = Real::pi() - tiny;
         assert_eq!(near_pi.refine_sign_until(-8), Some(RealSign::Positive));
 
-        let unresolved = Real::pi() - Real::new(Rational::new(3));
-        assert_eq!(unresolved.refine_sign_until(0), None);
+        let certified = Real::pi() - Real::new(Rational::new(3));
+        assert_eq!(certified.refine_sign_until(0), Some(RealSign::Positive));
     }
 
     #[test]

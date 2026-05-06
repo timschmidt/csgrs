@@ -35,6 +35,10 @@ const FLOAT_CONVERT_GROUPS: &[BenchGroupDoc] = &[BenchGroupDoc {
             description: "Converts a normal `f64` through the public `Real::try_from` path.",
         },
         BenchDoc {
+            name: "real_f64_binary_fraction",
+            description: "Converts an exactly representable binary `f64` fraction through the public `Real::try_from` path.",
+        },
+        BenchDoc {
             name: "real_f64_subnormal",
             description: "Converts a subnormal `f64` through the public `Real::try_from` path.",
         },
@@ -67,6 +71,9 @@ fn bench_float_convert(c: &mut Criterion) {
     });
     group.bench_function("real_f64_normal", |b| {
         b.iter(|| black_box(Real::try_from(black_box(1.23456789_f64)).unwrap()))
+    });
+    group.bench_function("real_f64_binary_fraction", |b| {
+        b.iter(|| black_box(Real::try_from(black_box(0.75_f64)).unwrap()))
     });
     group.bench_function("real_f64_subnormal", |b| {
         b.iter(|| black_box(Real::try_from(black_box(f64::from_bits(2))).unwrap()))

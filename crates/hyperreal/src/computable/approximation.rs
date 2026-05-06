@@ -24,6 +24,8 @@ pub(super) enum Approximation {
     PrescaledLn(Computable),
     IntegralAtan(BigInt),
     PrescaledAtan(Computable),
+    PrescaledAsin(Computable),
+    PrescaledAtanh(Computable),
     PrescaledCos(Computable),
     PrescaledSin(Computable),
     PrescaledTan(Computable),
@@ -34,6 +36,7 @@ pub(super) enum Approximation {
 pub(super) enum SharedConstant {
     E,
     Pi,
+    Tau,
     Ln2,
     Ln3,
     Ln5,
@@ -45,20 +48,21 @@ pub(super) enum SharedConstant {
 }
 
 impl SharedConstant {
-    pub(super) const COUNT: usize = 10;
+    pub(super) const COUNT: usize = 11;
 
     pub(super) fn cache_index(self) -> usize {
         match self {
             Self::E => 0,
             Self::Pi => 1,
-            Self::Ln2 => 2,
-            Self::Ln3 => 3,
-            Self::Ln5 => 4,
-            Self::Ln6 => 5,
-            Self::Ln7 => 6,
-            Self::Ln10 => 7,
-            Self::Sqrt2 => 8,
-            Self::Sqrt3 => 9,
+            Self::Tau => 2,
+            Self::Ln2 => 3,
+            Self::Ln3 => 4,
+            Self::Ln5 => 5,
+            Self::Ln6 => 6,
+            Self::Ln7 => 7,
+            Self::Ln10 => 8,
+            Self::Sqrt2 => 9,
+            Self::Sqrt3 => 10,
         }
     }
 }
@@ -82,6 +86,8 @@ impl Approximation {
             PrescaledLn(c) => ln(signal, c, p),
             IntegralAtan(i) => atan(signal, i, p),
             PrescaledAtan(c) => atan_computable(signal, c, p),
+            PrescaledAsin(c) => asin_computable(signal, c, p),
+            PrescaledAtanh(c) => atanh_computable(signal, c, p),
             PrescaledCos(c) => cos(signal, c, p),
             PrescaledSin(c) => sin(signal, c, p),
             PrescaledTan(c) => tan(signal, c, p),
@@ -95,6 +101,7 @@ impl SharedConstant {
         match self {
             Self::E => e(p),
             Self::Pi => pi(signal, p),
+            Self::Tau => pi(signal, p - 1),
             Self::Ln2 => ln2(signal, p),
             Self::Ln3 => ln_constant(signal, Rational::new(3), p),
             Self::Ln5 => ln_constant(signal, Rational::new(5), p),
@@ -740,6 +747,70 @@ fn atan_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> Big
         current_term = scale(current_term * &op_squared, op_prec);
         current_term *= -(n - 2);
         current_term /= n;
+        sum += &current_term;
+    }
+
+    scale(sum, calc_precision - p)
+}
+
+// Approximate asin(c) for small |c|.
+fn asin_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    if p >= 1 {
+        return Zero::zero();
+    }
+
+    let iterations_needed: i32 = -p / 2 + 4;
+    let calc_precision = p - bound_log2(2 * iterations_needed) - 5;
+    let op_prec = calc_precision - 3;
+    let op_appr = c.approx_signal(signal, op_prec);
+    let op_squared = scale(&op_appr * &op_appr, op_prec);
+
+    let max_trunc_error = signed::ONE.deref() << (p - 4 - calc_precision);
+    let mut current_term = scale(op_appr, op_prec - calc_precision);
+    let mut sum = current_term.clone();
+    let mut n = 0_i32;
+
+    while current_term.abs() > max_trunc_error {
+        if should_stop(signal) {
+            break;
+        }
+        n += 1;
+        current_term = scale(current_term * &op_squared, op_prec);
+        let numerator = (2 * n - 1) * (2 * n - 1);
+        let denominator = (2 * n) * (2 * n + 1);
+        current_term *= numerator;
+        current_term /= denominator;
+        sum += &current_term;
+    }
+
+    scale(sum, calc_precision - p)
+}
+
+// Approximate atanh(c) for small |c|.
+fn atanh_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    if p >= 1 {
+        return Zero::zero();
+    }
+
+    let iterations_needed: i32 = -p / 2 + 4;
+    let calc_precision = p - bound_log2(2 * iterations_needed) - 5;
+    let op_prec = calc_precision - 3;
+    let op_appr = c.approx_signal(signal, op_prec);
+    let op_squared = scale(&op_appr * &op_appr, op_prec);
+
+    let max_trunc_error = signed::ONE.deref() << (p - 4 - calc_precision);
+    let mut current_power = scale(op_appr, op_prec - calc_precision);
+    let mut current_term = current_power.clone();
+    let mut sum = current_term.clone();
+    let mut n = 1_i32;
+
+    while current_term.abs() > max_trunc_error {
+        if should_stop(signal) {
+            break;
+        }
+        n += 2;
+        current_power = scale(current_power * &op_squared, op_prec);
+        current_term = &current_power / n;
         sum += &current_term;
     }
 
