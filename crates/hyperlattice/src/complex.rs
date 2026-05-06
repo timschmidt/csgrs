@@ -376,7 +376,7 @@ impl<B: Backend> Div<&Scalar<B>> for Complex<B> {
     type Output = BlasResult<Self>;
 
     fn div(self, rhs: &Scalar<B>) -> Self::Output {
-        let inv_rhs = rhs.clone().inverse()?;
+        let inv_rhs = rhs.inverse_ref()?;
         Ok(Self::new(
             self.re.mul_cached(&inv_rhs),
             self.im.mul_cached(&inv_rhs),

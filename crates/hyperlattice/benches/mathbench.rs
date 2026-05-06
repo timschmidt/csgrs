@@ -1,6 +1,6 @@
 use std::{cell::Cell, collections::BTreeMap, env, fs, hint::black_box, path::Path};
 
-use criterion::{BenchmarkGroup, BenchmarkId, Criterion};
+use criterion::{BatchSize, BenchmarkGroup, BenchmarkId, Criterion};
 use realistic_blas::Rational;
 use realistic_blas::{
     ApproxBackend, Backend, Complex, HyperrealBackend, Matrix3, Matrix4, Scalar, Vector3, Vector4,

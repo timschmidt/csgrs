@@ -47,7 +47,13 @@ fn scalar_trig_rows() -> Vec<BenchRow> {
 fn borrowed_op_rows() -> Vec<BenchRow> {
     let mut rows = Vec::new();
     for op in ["add", "sub", "mul", "div"] {
-        for mode in ["owned_ref", "ref_owned", "refs"] {
+        for mode in [
+            "owned_ref",
+            "ref_owned",
+            "refs",
+            "owned_ref_with_clone",
+            "ref_owned_with_clone",
+        ] {
             rows.push(BenchRow {
                 title: Box::leak(format!("scalar {op} {mode}").into_boxed_str()),
                 group: "borrowed_ops",

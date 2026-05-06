@@ -48,27 +48,35 @@ fn bench_borrowed_operations_for<B, F>(
     for name in ["add", "sub", "mul", "div"] {
         group.bench_function(format!("{label}/scalar {name} owned_ref"), |b| {
             let cursor = Cell::new(0);
-            b.iter(|| {
-                let (lhs, rhs) = next_case(&scalar_pairs, &cursor);
-                match name {
-                    "add" => black_box(black_box(lhs.clone()) + black_box(rhs)),
-                    "sub" => black_box(black_box(lhs.clone()) - black_box(rhs)),
-                    "mul" => black_box(black_box(lhs.clone()) * black_box(rhs)),
-                    _ => black_box((black_box(lhs.clone()) / black_box(rhs)).unwrap()),
-                }
-            })
+            b.iter_batched(
+                || {
+                    let (lhs, rhs) = next_case(&scalar_pairs, &cursor);
+                    (lhs.clone(), rhs)
+                },
+                |(lhs, rhs)| match name {
+                    "add" => black_box(black_box(lhs) + black_box(rhs)),
+                    "sub" => black_box(black_box(lhs) - black_box(rhs)),
+                    "mul" => black_box(black_box(lhs) * black_box(rhs)),
+                    _ => black_box((black_box(lhs) / black_box(rhs)).unwrap()),
+                },
+                BatchSize::SmallInput,
+            )
         });
         group.bench_function(format!("{label}/scalar {name} ref_owned"), |b| {
             let cursor = Cell::new(0);
-            b.iter(|| {
-                let (lhs, rhs) = next_case(&scalar_pairs, &cursor);
-                match name {
-                    "add" => black_box(black_box(lhs) + black_box(rhs.clone())),
-                    "sub" => black_box(black_box(lhs) - black_box(rhs.clone())),
-                    "mul" => black_box(black_box(lhs) * black_box(rhs.clone())),
-                    _ => black_box((black_box(lhs) / black_box(rhs.clone())).unwrap()),
-                }
-            })
+            b.iter_batched(
+                || {
+                    let (lhs, rhs) = next_case(&scalar_pairs, &cursor);
+                    (lhs, rhs.clone())
+                },
+                |(lhs, rhs)| match name {
+                    "add" => black_box(black_box(lhs) + black_box(rhs)),
+                    "sub" => black_box(black_box(lhs) - black_box(rhs)),
+                    "mul" => black_box(black_box(lhs) * black_box(rhs)),
+                    _ => black_box((black_box(lhs) / black_box(rhs)).unwrap()),
+                },
+                BatchSize::SmallInput,
+            )
         });
         group.bench_function(format!("{label}/scalar {name} refs"), |b| {
             let cursor = Cell::new(0);
@@ -79,6 +87,30 @@ fn bench_borrowed_operations_for<B, F>(
                     "sub" => black_box(black_box(lhs) - black_box(rhs)),
                     "mul" => black_box(black_box(lhs) * black_box(rhs)),
                     _ => black_box((black_box(lhs) / black_box(rhs)).unwrap()),
+                }
+            })
+        });
+        group.bench_function(format!("{label}/scalar {name} owned_ref_with_clone"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let (lhs, rhs) = next_case(&scalar_pairs, &cursor);
+                match name {
+                    "add" => black_box(black_box(lhs.clone()) + black_box(rhs)),
+                    "sub" => black_box(black_box(lhs.clone()) - black_box(rhs)),
+                    "mul" => black_box(black_box(lhs.clone()) * black_box(rhs)),
+                    _ => black_box((black_box(lhs.clone()) / black_box(rhs)).unwrap()),
+                }
+            })
+        });
+        group.bench_function(format!("{label}/scalar {name} ref_owned_with_clone"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let (lhs, rhs) = next_case(&scalar_pairs, &cursor);
+                match name {
+                    "add" => black_box(black_box(lhs) + black_box(rhs.clone())),
+                    "sub" => black_box(black_box(lhs) - black_box(rhs.clone())),
+                    "mul" => black_box(black_box(lhs) * black_box(rhs.clone())),
+                    _ => black_box((black_box(lhs) / black_box(rhs.clone())).unwrap()),
                 }
             })
         });

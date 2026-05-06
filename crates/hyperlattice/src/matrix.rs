@@ -2,6 +2,7 @@
 
 use std::array::from_fn;
 use std::fmt;
+use std::mem;
 use std::ops::{Add, BitXor, Div, Index, IndexMut, Mul, Neg, Sub};
 
 use crate::scalar::{
@@ -163,6 +164,20 @@ where
     }
 }
 
+fn scale_entry_in_place<B: Backend>(value: &mut Scalar<B>, factor: &Scalar<B>) {
+    let current = mem::replace(value, Scalar::zero());
+    *value = current.mul_cached(factor);
+}
+
+fn subtract_scaled_entry_in_place<B: Backend>(
+    value: &mut Scalar<B>,
+    pivot: &Scalar<B>,
+    factor: &Scalar<B>,
+) {
+    let current = mem::replace(value, Scalar::zero());
+    *value = current - pivot.clone().mul_cached(factor);
+}
+
 macro_rules! impl_solve_left_system_fixed {
     (
         $solve_fn:ident,
@@ -188,11 +203,11 @@ macro_rules! impl_solve_left_system_fixed {
 
                 let inv_pivot = left[col][col].clone().inverse()?;
                 for i in 0..$n {
-                    right[col][i] = right[col][i].clone().mul_cached(&inv_pivot);
+                    scale_entry_in_place(&mut right[col][i], &inv_pivot);
                 }
                 left[col][col] = Scalar::one();
                 for i in (col + 1)..$n {
-                    left[col][i] = left[col][i].clone().mul_cached(&inv_pivot);
+                    scale_entry_in_place(&mut left[col][i], &inv_pivot);
                 }
                 let pivot_left = left[col].clone();
                 let pivot_right = right[col].clone();
@@ -207,12 +222,10 @@ macro_rules! impl_solve_left_system_fixed {
                     }
                     left[row][col] = Scalar::zero();
                     for i in (col + 1)..$n {
-                        let left_correction = pivot_left[i].clone().mul_cached(&factor);
-                        left[row][i] = left[row][i].clone() - left_correction;
+                        subtract_scaled_entry_in_place(&mut left[row][i], &pivot_left[i], &factor);
                     }
                     for i in 0..$n {
-                        let right_correction = pivot_right[i].clone().mul_cached(&factor);
-                        right[row][i] = right[row][i].clone() - right_correction;
+                        subtract_scaled_entry_in_place(&mut right[row][i], &pivot_right[i], &factor);
                     }
                 }
             }
@@ -236,11 +249,11 @@ macro_rules! impl_solve_left_system_fixed {
 
                 let inv_pivot = left[col][col].clone().inverse()?;
                 for i in 0..$n {
-                    right[col][i] = right[col][i].clone().mul_cached(&inv_pivot);
+                    scale_entry_in_place(&mut right[col][i], &inv_pivot);
                 }
                 left[col][col] = Scalar::one();
                 for i in (col + 1)..$n {
-                    left[col][i] = left[col][i].clone().mul_cached(&inv_pivot);
+                    scale_entry_in_place(&mut left[col][i], &inv_pivot);
                 }
                 let pivot_left = left[col].clone();
                 let pivot_right = right[col].clone();
@@ -255,12 +268,10 @@ macro_rules! impl_solve_left_system_fixed {
                     }
                     left[row][col] = Scalar::zero();
                     for i in (col + 1)..$n {
-                        let left_correction = pivot_left[i].clone().mul_cached(&factor);
-                        left[row][i] = left[row][i].clone() - left_correction;
+                        subtract_scaled_entry_in_place(&mut left[row][i], &pivot_left[i], &factor);
                     }
                     for i in 0..$n {
-                        let right_correction = pivot_right[i].clone().mul_cached(&factor);
-                        right[row][i] = right[row][i].clone() - right_correction;
+                        subtract_scaled_entry_in_place(&mut right[row][i], &pivot_right[i], &factor);
                     }
                 }
             }
@@ -286,11 +297,11 @@ macro_rules! impl_solve_left_system_fixed {
 
                 let inv_pivot = clone_with_abort(&left[col][col], signal).inverse()?;
                 for i in 0..$n {
-                    right[col][i] = right[col][i].clone().mul_cached(&inv_pivot);
+                    scale_entry_in_place(&mut right[col][i], &inv_pivot);
                 }
                 left[col][col] = Scalar::one();
                 for i in (col + 1)..$n {
-                    left[col][i] = left[col][i].clone().mul_cached(&inv_pivot);
+                    scale_entry_in_place(&mut left[col][i], &inv_pivot);
                 }
                 let pivot_left = left[col].clone();
                 let pivot_right = right[col].clone();
@@ -305,12 +316,10 @@ macro_rules! impl_solve_left_system_fixed {
                     }
                     left[row][col] = Scalar::zero();
                     for i in (col + 1)..$n {
-                        let left_correction = pivot_left[i].clone().mul_cached(&factor);
-                        left[row][i] = left[row][i].clone() - left_correction;
+                        subtract_scaled_entry_in_place(&mut left[row][i], &pivot_left[i], &factor);
                     }
                     for i in 0..$n {
-                        let right_correction = pivot_right[i].clone().mul_cached(&factor);
-                        right[row][i] = right[row][i].clone() - right_correction;
+                        subtract_scaled_entry_in_place(&mut right[row][i], &pivot_right[i], &factor);
                     }
                 }
             }
@@ -1112,7 +1121,7 @@ macro_rules! impl_matrix {
 
             fn div(self, rhs: &Scalar<B>) -> Self::Output {
                 reject_definite_zero(rhs)?;
-                let inv_rhs = rhs.clone().inverse()?;
+                let inv_rhs = rhs.inverse_ref()?;
                 if B::MOVE_ELEMENTWISE {
                     Ok(Self(
                         self.0

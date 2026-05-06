@@ -4,7 +4,8 @@ use common::{abort_signal, frac, r, unknown_zero};
 use realistic_blas::{
     Problem, ScalarFacts, ScalarSign, ZeroStatus, acos, acosh, asin, asin_with_abort, atanh, ln,
     log10, log10_with_abort, one, pi, powi, reciprocal, reciprocal_checked,
-    reciprocal_checked_with_abort, sin, sqrt, tan, tau, zero, zero_status, zero_status_with_abort,
+    reciprocal_checked_with_abort, reciprocal_ref, reciprocal_ref_checked, sin, sqrt, tan, tau,
+    zero, zero_status, zero_status_with_abort,
 };
 
 #[test]
@@ -129,6 +130,14 @@ fn hyperreal_inverse_trig_helpers_preserve_exact_paths() {
 fn checked_scalar_reciprocal_rejects_zero() {
     assert_eq!(reciprocal_checked(zero()), Err(Problem::DivideByZero));
     assert_eq!(reciprocal_checked(r(4)).unwrap(), frac(1, 4));
+}
+
+#[test]
+fn borrowed_scalar_reciprocal_does_not_consume_input() {
+    let value = r(4);
+    assert_eq!(reciprocal_ref(&value).unwrap(), frac(1, 4));
+    assert_eq!(reciprocal_ref_checked(&value).unwrap(), frac(1, 4));
+    assert_eq!(value, r(4));
 }
 
 #[test]

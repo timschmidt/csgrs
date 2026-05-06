@@ -89,6 +89,11 @@ pub trait BackendScalar:
     fn pi() -> Self;
     /// Returns the multiplicative inverse.
     fn inverse(self) -> BlasResult<Self>;
+    /// Returns the multiplicative inverse of a borrowed value.
+    #[inline]
+    fn inverse_ref(&self) -> BlasResult<Self> {
+        self.clone().inverse()
+    }
     /// Raises this value to a scalar exponent.
     fn pow(self, exponent: Self) -> BlasResult<Self>;
     /// Adds a borrowed right-hand operand.

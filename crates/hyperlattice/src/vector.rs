@@ -374,7 +374,7 @@ macro_rules! impl_vector {
 
             fn div(self, rhs: &Scalar<B>) -> Self::Output {
                 reject_definite_zero(rhs)?;
-                let inv_rhs = rhs.clone().inverse()?;
+                let inv_rhs = rhs.inverse_ref()?;
                 if B::MOVE_ELEMENTWISE {
                     Ok(Self(self.0.map(|value| value.mul_cached(&inv_rhs))))
                 } else {

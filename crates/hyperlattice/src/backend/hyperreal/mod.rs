@@ -72,6 +72,11 @@ impl BackendScalarTrait for BackendScalar {
         self.0.inverse().map(Self).map_err(Problem::from)
     }
 
+    #[inline]
+    fn inverse_ref(&self) -> BlasResult<Self> {
+        self.0.inverse_ref().map(Self).map_err(Problem::from)
+    }
+
     fn pow(self, exponent: Self) -> BlasResult<Self> {
         self.0.pow(exponent.0).map(Self).map_err(Problem::from)
     }

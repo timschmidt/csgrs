@@ -89,6 +89,11 @@ impl BackendScalarTrait for BackendScalar {
         Self::one().div(self)
     }
 
+    #[inline]
+    fn inverse_ref(&self) -> BlasResult<Self> {
+        Self::div_refs(&Self::one(), self)
+    }
+
     fn pow(self, exponent: Self) -> BlasResult<Self> {
         let lower = self.value - self.epsilon;
         let upper = self.value + self.epsilon;

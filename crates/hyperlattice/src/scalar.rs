@@ -143,10 +143,21 @@ pub fn reciprocal<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
     value.inverse()
 }
 
+/// Returns the multiplicative inverse of `value` without consuming it.
+pub fn reciprocal_ref<B: Backend>(value: &Scalar<B>) -> BlasResult<Scalar<B>> {
+    value.inverse_ref()
+}
+
 /// Returns the multiplicative inverse after rejecting zero and unknown-zero values.
 pub fn reciprocal_checked<B: Backend>(value: Scalar<B>) -> CheckedBlasResult<Scalar<B>> {
     require_known_nonzero(&value)?;
     value.inverse()
+}
+
+/// Returns the checked multiplicative inverse without consuming `value`.
+pub fn reciprocal_ref_checked<B: Backend>(value: &Scalar<B>) -> CheckedBlasResult<Scalar<B>> {
+    require_known_nonzero(value)?;
+    value.inverse_ref()
 }
 
 /// Returns the checked multiplicative inverse after attaching an abort signal.

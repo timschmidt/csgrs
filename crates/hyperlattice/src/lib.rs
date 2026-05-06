@@ -200,6 +200,11 @@ impl<B: Backend> Scalar<B> {
         self.0.inverse().map(Self)
     }
 
+    /// Returns the multiplicative inverse without consuming this scalar.
+    pub fn inverse_ref(&self) -> BlasResult<Self> {
+        self.0.inverse_ref().map(Self)
+    }
+
     #[inline]
     pub(crate) fn mul_cached(self, factor: &Self) -> Self {
         Self(self.0.mul_ref(&factor.0))
