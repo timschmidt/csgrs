@@ -6,7 +6,7 @@ model and has since grown into a more performance-focused Rust implementation
 with symbolic tracking, exact shortcuts, structural inspection APIs, borrowed
 arithmetic support, and a benchmark suite for the hot numerical paths.
 
-Within the local stack, `hyperreal` is the scalar foundation:
+`Hyperreal` is the independently useful scalar foundation of a linear algebra and geometry stack:
 
 - `realistic_blas` uses `hyperreal::Real` as its default exact/symbolic scalar
   backend.
