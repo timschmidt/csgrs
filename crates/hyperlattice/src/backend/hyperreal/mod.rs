@@ -15,6 +15,7 @@ thread_local! {
     static ONE: OnceCell<BackendScalar> = const { OnceCell::new() };
     static E: OnceCell<BackendScalar> = const { OnceCell::new() };
     static PI: OnceCell<BackendScalar> = const { OnceCell::new() };
+    static TAU: OnceCell<BackendScalar> = const { OnceCell::new() };
 }
 
 fn cached(
@@ -74,6 +75,12 @@ impl BackendScalarTrait for BackendScalar {
 
     fn pi() -> Self {
         cached(&PI, || Self(hyperreal::Real::pi()))
+    }
+
+    fn tau() -> Self {
+        // Use hyperreal's cached internal `tau` representation instead of
+        // rebuilding `2 * pi` through public scalar multiplication.
+        cached(&TAU, || Self(hyperreal::Real::tau()))
     }
 
     fn inverse(self) -> BlasResult<Self> {

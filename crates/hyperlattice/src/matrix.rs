@@ -188,6 +188,8 @@ fn matrix_power<B: Backend, const N: usize>(
     match exponent {
         0 => return identity_array(),
         1 => return base,
+        // Low exponents dominate transform/matrix helper use. Unrolling them
+        // avoids the generic squaring loop's extra clones and branch work.
         2 => return multiply_arrays(base.clone(), base),
         3 => {
             let square = multiply_arrays(base.clone(), base.clone());
@@ -592,6 +594,9 @@ fn multiply_arrays<B: Backend, const N: usize>(
 ) -> [[Scalar<B>; N]; N] {
     from_fn(|row| {
         from_fn(|col| {
+            // One const-generic helper serves both 3x3 and 4x4 owned multiply.
+            // The borrowed variants below are separately unrolled because their
+            // benchmarks are more sensitive to this fourth-lane branch.
             let left_terms = [&left[row][0], &left[row][1], &left[row][2]];
             let right_terms = [&right[0][col], &right[1][col], &right[2][col]];
             if let (Some(lhs), Some(rhs_row)) = (left[row].get(3), right.get(3)) {

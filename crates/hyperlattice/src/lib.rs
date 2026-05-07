@@ -195,6 +195,11 @@ impl<B: Backend> Scalar<B> {
         Self(B::Repr::pi())
     }
 
+    /// Returns tau, equal to `2 * pi`.
+    pub fn tau() -> Self {
+        Self(B::Repr::tau())
+    }
+
     /// Returns the multiplicative inverse of this scalar.
     pub fn inverse(self) -> BlasResult<Self> {
         self.0.inverse().map(Self)

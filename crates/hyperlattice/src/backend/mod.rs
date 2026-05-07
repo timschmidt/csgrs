@@ -87,6 +87,13 @@ pub trait BackendScalar:
     fn e() -> Self;
     /// Constructs pi.
     fn pi() -> Self;
+    /// Constructs tau.
+    ///
+    /// Backends can override this when they have a cached or symbolic `2*pi`.
+    /// The default keeps compact approximate backends simple.
+    fn tau() -> Self {
+        Self::from(2_i8) * Self::pi()
+    }
     /// Returns the multiplicative inverse.
     fn inverse(self) -> BlasResult<Self>;
     /// Returns the multiplicative inverse of a borrowed value.

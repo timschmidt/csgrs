@@ -51,6 +51,44 @@ The benchmark suite compares:
 
 See [`benchmarks.md`](./benchmarks.md) for the generated Criterion summary.
 
+## Performance Techniques
+
+The crate is optimized for small fixed-size algebra over rich scalar backends,
+especially `hyperreal::Real`. The main shortcuts are documented here so they
+remain intentional and benchmarkable.
+
+- `Scalar` exposes backend hooks for borrowed add, subtract, multiply, inverse,
+  dot3, and dot4. Hyperreal-backed values can then avoid cloning expression
+  graphs for every lane of a vector or matrix kernel.
+- Common scalar constructors in the hyperreal backend are cached per thread, so
+  `zero`, `one`, `e`, and `pi` do not rebuild symbolic constants.
+- Elementwise vector, matrix, and complex operations use an owned-left,
+  borrowed-right pattern through `mul_cached`, `add_cached`, and `sub_cached`.
+  This is visible in borrowed-op and matrix benchmarks.
+- Small integer powers are written out for low exponents before falling back to
+  exponentiation by squaring. This avoids loop overhead and keeps clone
+  placement predictable for symbolic scalars.
+- Dot products build products first and use backend-specific pairwise summation
+  for 4-lane cases, reducing expression depth in complex and matrix kernels.
+- Fixed 3x3 and 4x4 borrowed matrix multiplication is unrolled because the
+  const-generic helper was measurably slower for hyperreal-backed matrices.
+- Matrix right-division uses borrowed transposes and Gauss-Jordan elimination.
+  The adjugate/inverse route and some clone-avoidance variants were benchmarked
+  and kept only where they won.
+- Checked and abort-aware division/inversion paths run zero-status checks before
+  expensive algebra. Ordinary paths stay optimistic where the backend can do so
+  safely.
+- The approx backend mirrors the public API with an `f64 +/- epsilon` interval
+  model and keeps its own dot-product paths scalar and unrolled, providing a
+  lower-cost comparison point for the exact/symbolic backend.
+- Structural fact forwarding is deliberately borrowed and conservative, because
+  `predicated` calls it heavily before deciding whether to build exact
+  predicate expressions.
+
+Any new shortcut should be guarded by the relevant `mathbench` row, plus a
+hyperreal scalar microbench when the change is really a scalar representation
+choice.
+
 ## Features
 
 - Re-exports `hyperreal::{Real, Rational}` for explicit construction and interop
