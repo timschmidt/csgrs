@@ -20,19 +20,23 @@ struct LnProductClass {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 enum Class {
-    One,                                  // Exactly one
-    Pi,                                   // Exactly pi
-    PiPow(u8),                            // Exactly pi**n, n >= 2
-    PiExp(Rational),                      // Exactly pi * e**Rational
-    PiSqrt(Rational),                     // Exactly pi * sqrt(Rational)
+    One,              // Exactly one
+    Pi,               // Exactly pi
+    PiPow(u8),        // Exactly pi**n, n >= 2
+    PiExp(Rational),  // Exactly pi * e**Rational
+    PiSqrt(Rational), // Exactly pi * sqrt(Rational)
+    // Boxed so uncommon combined constants do not bloat every `Real` value.
+    // Dense algebra and borrowed-op benches are sensitive to enum size.
     ConstProduct(Box<ConstProductClass>), // Exactly pi**n * e**Rational
     Sqrt(Rational), // Square root of some positive integer without an integer square root
     Exp(Rational),  // Rational is never zero
     Ln(Rational),   // Rational > 1
+    // Boxed for the same reason as `ConstProduct`: keep the common `Real`
+    // representation small while still preserving a lightweight symbolic form.
     LnProduct(Box<LnProductClass>), // Product of two logarithms, ordered by base
-    Log10(Rational), // Rational > 1 and never a multiple of ten
-    SinPi(Rational), // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
-    TanPi(Rational), // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
+    Log10(Rational),                // Rational > 1 and never a multiple of ten
+    SinPi(Rational),                // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
+    TanPi(Rational),                // 0 < Rational < 1/2 also never 1/6 or 1/4 or 1/3
     Irrational,
 }
 
@@ -106,6 +110,9 @@ impl Class {
     }
 
     fn make_const_product(pi_power: u8, exp_power: Rational) -> (Class, Computable) {
+        // Normalize back to the smaller legacy variants whenever possible.
+        // This preserves exact symbolic products without making common `pi`,
+        // `e^q`, or `pi * e^q` paths pay for the generalized representation.
         if pi_power == 0 {
             return Self::make_exp(exp_power);
         }
@@ -128,6 +135,8 @@ impl Class {
     }
 
     fn make_pi_sqrt(r: Rational) -> (Class, Computable) {
+        // `pi * sqrt(n)` appears in algebra kernels; keeping it symbolic lets
+        // repeated products collapse before falling back to generic computables.
         (
             PiSqrt(r.clone()),
             Computable::pi().multiply(Computable::sqrt_rational(r)),
@@ -614,6 +623,8 @@ impl Real {
         }
         let mut exact: Option<Real> = None;
         let denominator = rational.denominator();
+        // Small rational multiples of pi have compact exact forms. Keep these symbolic so
+        // later algebra and predicate queries avoid generic trig evaluation.
         if denominator == unsigned::TWO.deref() {
             exact = Some(Self::new(Rational::one()));
         }
@@ -635,6 +646,8 @@ impl Real {
         }
 
         let (negate, reduced) = curve(rational);
+        // For non-tabulated rational multiples, reduce to the principal curve and store a
+        // SinPi certificate rather than collapsing to an opaque computable.
         let argument =
             Computable::multiply(Computable::pi(), Computable::rational(reduced.clone()));
         let computable = Computable::prescaled_sin(argument);
@@ -671,6 +684,7 @@ impl Real {
         }
         match &self.class {
             One => {
+                // Rational reciprocals remain exact.
                 return Ok(Self {
                     rational: self.rational.inverse()?,
                     class: One,
@@ -680,6 +694,8 @@ impl Real {
             }
             Sqrt(sqrt) => {
                 if let Some(sqrt) = sqrt.to_big_integer() {
+                    // Rationalize 1/(a*sqrt(n)) when n is integral, keeping a sqrt form
+                    // instead of an opaque inverse node.
                     let rational = (self.rational * Rational::from_bigint(sqrt)).inverse()?;
                     return Ok(Self {
                         rational,
@@ -690,6 +706,7 @@ impl Real {
                 }
             }
             Exp(exp) => {
+                // e^x inverts to e^-x symbolically.
                 let exp = Neg::neg(exp.clone());
                 return Ok(Self {
                     rational: self.rational.inverse()?,
@@ -783,6 +800,7 @@ impl Real {
         }
         match &self.class {
             One if self.rational.extract_square_will_succeed() => {
+                // Extract rational square factors before creating sqrt nodes.
                 let (square, rest) = self.rational.extract_square_reduced();
                 if rest == *rationals::ONE {
                     return Ok(Self {
@@ -812,6 +830,7 @@ impl Real {
                 }
             }
             Exp(exp) if self.rational.extract_square_will_succeed() => {
+                // sqrt(e^x) = e^(x/2) when the rational scale is also a square.
                 let (square, rest) = self.rational.clone().extract_square_reduced();
                 if rest == *rationals::ONE {
                     let exp = exp.clone() / Rational::new(2);
@@ -836,6 +855,8 @@ impl Real {
         }
         match &self.class {
             One => {
+                // exp(rational) is a first-class symbolic form used heavily by exact
+                // constant products.
                 return Ok(Self {
                     rational: Rational::one(),
                     class: Exp(self.rational.clone()),
@@ -845,6 +866,7 @@ impl Real {
             }
             Ln(ln) => {
                 if let Some(int) = self.rational.to_big_integer() {
+                    // exp(k ln n) folds to n^k when k is integral.
                     return Ok(Self {
                         rational: ln.clone().powi(int)?,
                         class: One,
@@ -926,6 +948,8 @@ impl Real {
         let n = r.to_big_integer()?;
         let n = n.magnitude();
 
+        // Recognize common integer powers so logs share cached scaled-ln constants
+        // instead of creating many unrelated Ln nodes.
         for base in [2, 3, 5, 6, 7, 10] {
             if let Some(n) = Self::integer_log(n, base) {
                 return constants::scaled_ln(base, n as i64);
@@ -948,6 +972,7 @@ impl Real {
                 if let Some(answer) = Self::ln_small(&inv) {
                     return Ok(-answer);
                 }
+                // Normalize ln(r<1) as -ln(1/r) to improve symbolic sharing.
                 let new = Computable::rational(inv.clone());
                 Ok(Self {
                     rational: Rational::new(-1),
@@ -961,6 +986,7 @@ impl Real {
                 if let Some(answer) = Self::ln_small(&r) {
                     return Ok(answer);
                 }
+                // Positive rationals above one get a lightweight Ln certificate.
                 let new = Computable::rational(r.clone());
                 Ok(Self {
                     rational: Rational::one(),
@@ -981,6 +1007,7 @@ impl Real {
         match &self.class {
             One => return Self::ln_rational(self.rational),
             Exp(exp) if self.rational == *rationals::ONE => {
+                // ln(e^x) collapses exactly for the pure exponential class.
                 return Ok(Self {
                     rational: exp.clone(),
                     class: One,
@@ -1010,6 +1037,7 @@ impl Real {
                 };
             }
             Pi => {
+                // sin(q*pi) has exact small-denominator and reusable SinPi handling.
                 return Self::sin_pi_rational(self.rational);
             }
             _ => (),
@@ -1034,6 +1062,8 @@ impl Real {
                 };
             }
             Pi => {
+                // cos(q*pi) is represented through the same SinPi machinery with a
+                // half-turn shift, keeping exact identities in one place.
                 return Self::sin_pi_rational(self.rational + Rational::fraction(1, 2).unwrap());
             }
             _ => (),
@@ -1062,6 +1092,8 @@ impl Real {
                 if self.rational.is_integer() {
                     return Ok(Self::zero());
                 }
+                // Rational multiples of pi get exact tangent values for the usual small
+                // denominators, otherwise a compact TanPi certificate.
                 let (neg, n) = tan_curve(self.rational);
                 let mut r: Option<Real> = None;
                 let d = n.denominator();
@@ -1121,6 +1153,7 @@ impl Real {
 
         match &self.class {
             One => {
+                // Exact inverse-trig table for rational endpoints and half-angle values.
                 if self.rational == *rationals::ONE {
                     Some(Self::pi_fraction(1, 2))
                 } else if self.rational == Rational::new(-1) {
@@ -1134,6 +1167,7 @@ impl Real {
                 }
             }
             Sqrt(r) => {
+                // Recognize sqrt(2)/2 and sqrt(3)/2 forms produced by exact trig.
                 let sign = self.rational.sign();
                 let magnitude = if sign == Sign::Minus {
                     self.rational.clone().neg()
@@ -1156,6 +1190,8 @@ impl Real {
                 Some(Self::new(angle) * Self::pi())
             }
             SinPi(r) => {
+                // asin(sin(q*pi)) can reuse the stored angle when it is already in the
+                // principal branch represented by SinPi.
                 if self.rational == *rationals::ONE {
                     Some(Self::new(r.clone()) * Self::pi())
                 } else if self.rational == Rational::new(-1) {
@@ -1187,6 +1223,7 @@ impl Real {
                 if *r != Rational::new(3) {
                     return None;
                 }
+                // atan(sqrt(3)) and atan(sqrt(3)/3) have exact pi-fraction answers.
                 let sign = self.rational.sign();
                 let magnitude = if sign == Sign::Minus {
                     self.rational.clone().neg()
@@ -1209,6 +1246,8 @@ impl Real {
                 Some(Self::new(angle) * Self::pi())
             }
             TanPi(r) => {
+                // Preserve exact inverse for TanPi certificates instead of going through
+                // the generic atan kernel.
                 if self.rational == *rationals::ONE {
                     Some(Self::new(r.clone()) * Self::pi())
                 } else if self.rational == Rational::new(-1) {
@@ -1227,6 +1266,8 @@ impl Real {
             return Ok(exact);
         }
         if self.class == One {
+            // Plain rationals use the computable asin kernel after cheap domain checks; it
+            // has tiny/endpoint specializations that would be obscured by the atan formula.
             let magnitude = if self.rational.sign() == Sign::Minus {
                 self.rational.clone().neg()
             } else {
@@ -1244,9 +1285,12 @@ impl Real {
             return Err(Problem::NotANumber);
         }
         if matches!(&self.class, Sqrt(_)) {
+            // Sqrt inputs commonly arise from exact trig; keep them on the computable asin
+            // path so recognizable forms survive longer.
             return Ok(self.make_computable(|value| value.asin()));
         }
 
+        // Generic identity asin(x) = atan(x / sqrt(1-x^2)).
         let one = Self::new(Rational::one());
         let radicand = one.clone() - self.clone().powi(BigInt::from(2_u8))?;
         let denominator = radicand.sqrt().map_err(|problem| match problem {
@@ -1275,6 +1319,7 @@ impl Real {
             }
         }
         if let Some(asin) = self.asin_exact() {
+            // acos(x) shares the exact asin table through pi/2 - asin(x).
             return Ok(Self::pi_fraction(1, 2) - asin);
         }
         if let Sqrt(r) = &self.class
@@ -1304,6 +1349,8 @@ impl Real {
             return Ok(self.neg().asinh()?.neg());
         }
         if self.fold_ref().approx(-4) <= BigInt::from(64_u8) {
+            // Near zero, asinh(x) is evaluated with a log1p-style transform to avoid
+            // cancellation in ln(x + sqrt(1+x^2)).
             return Ok(self.make_computable(|value| {
                 let square = value.clone().square();
                 let denominator = square
@@ -1339,6 +1386,7 @@ impl Real {
             }
         }
         if self.fold_ref().approx(-4) <= BigInt::from(64_u8) {
+            // Near one, acosh(x) uses ln1p on (x-1)+sqrt(x^2-1) for a smaller log input.
             return Ok(self.make_computable(|value| {
                 let one = Computable::one();
                 let shifted = value.clone().add(one.clone().negate());
@@ -1371,11 +1419,14 @@ impl Real {
                 return Err(Problem::NotANumber);
             }
             if magnitude.msd_exact().is_some_and(|msd| msd <= -4) {
+                // Tiny rational atanh is faster in the dedicated computable kernel than
+                // building ln((1+x)/(1-x))/2.
                 return Ok(self.make_computable(Computable::atanh));
             }
 
             let one = Rational::one();
             let ratio = (one.clone() + self.rational.clone()) / (one - self.rational);
+            // Non-tiny rationals can remain an exact logarithm ratio.
             return Ok(Self::ln_rational(ratio)? * Self::new(Rational::fraction(1, 2).unwrap()));
         }
         if let Sqrt(r) = &self.class
@@ -1398,6 +1449,8 @@ impl Real {
     }
 
     fn recursive_powi(base: &Real, exp: &BigUint) -> Self {
+        // Fallback for sign-unknown integer powers: repeated squaring is cheaper and more
+        // exact than forcing ln/exp through a value whose sign cannot be certified.
         let mut result = Self::new(Rational::one());
         let mut factor = base.clone();
         let bits = exp.bits();
@@ -1433,6 +1486,8 @@ impl Real {
     fn exp_ln_powi(self, exp: BigInt) -> Result<Self, Problem> {
         match self.best_sign() {
             Sign::NoSign => {
+                // Unknown sign cannot safely use ln(base)*exp, so keep the exact
+                // repeated-squaring fallback even though it may allocate more nodes.
                 if exp.sign() == Sign::Minus {
                     Ok(Self::recursive_powi(&self, exp.magnitude()).neg())
                 } else {
@@ -1440,6 +1495,8 @@ impl Real {
                 }
             }
             Sign::Plus => {
+                // Known-positive generic powers use exp(exp*ln(base)) to avoid a long
+                // multiplication chain for large exponents.
                 let value = self.fold();
                 let exp = Computable::integer(exp);
 
@@ -1491,6 +1548,7 @@ impl Real {
         if let Ok(rational) = self.rational.clone().powi(exp.clone()) {
             match &self.class {
                 One => {
+                    // Pure rationals stay exact under integer powers.
                     return Ok(Self {
                         rational,
                         class: One,
@@ -1499,6 +1557,8 @@ impl Real {
                     });
                 }
                 Sqrt(sqrt) => 'quick: {
+                    // (a*sqrt(n))^k can peel off n^(k/2); this preserves exact sqrt
+                    // structure for odd powers and collapses even powers to rationals.
                     let odd = exp.bit(0);
                     let Ok(rf2) = sqrt.clone().powi(exp.clone() >> 1) else {
                         break 'quick;
@@ -1520,6 +1580,8 @@ impl Real {
                     if let Some(computable) =
                         Self::compute_exp_ln_powi(self.computable.clone(), exp.clone())
                     {
+                        // Reuse the exact rational scale while moving the irrational part
+                        // to the cheaper exp(ln(x)*k) representation.
                         return Ok(Self {
                             rational,
                             class: Irrational,
@@ -1536,6 +1598,8 @@ impl Real {
     /// Fractional (Non-integer) rational exponent.
     fn pow_fraction(self, exponent: Rational) -> Result<Self, Problem> {
         if exponent.denominator() == unsigned::TWO.deref() {
+            // Half-integer powers are common enough to route through powi + sqrt, which
+            // exposes exact-square simplifications.
             let n = exponent.shifted_big_integer(1);
             self.powi(n)?.sqrt()
         } else {
@@ -1575,8 +1639,10 @@ impl Real {
             && n == rationals::ONE.deref()
         {
             if self.rational == *rationals::ONE {
+                // e^x with unit scale is just exp(x), preserving the symbolic exp path.
                 return exponent.exp();
             } else {
+                // (a*e)^x = a^x * e^x keeps the e^x part symbolic.
                 let left = Real::new(self.rational).pow(exponent.clone())?;
                 return Ok(left * exponent.exp()?);
             }
@@ -1737,6 +1803,8 @@ impl Real {
         c: Rational,
         d: Rational,
     ) -> Result<Rational, Problem> {
+        // Simplify a*ln(b) + c*ln(d) as ln(b^a*d^c) when the coefficients are
+        // integral. This keeps log-heavy algebra in lightweight Ln forms.
         let Some(a) = a.to_big_integer() else {
             return Err(Problem::NotAnInteger);
         };
@@ -1756,6 +1824,8 @@ impl<T: AsRef<Real>> Add<T> for &Real {
     fn add(self, other: T) -> Self::Output {
         let other = other.as_ref();
         if self.class == other.class {
+            // Same symbolic basis: combine only the rational scale and keep the existing
+            // computable certificate.
             let rational = &self.rational + &other.rational;
             if rational.sign() == Sign::NoSign {
                 return Self::Output::zero();
@@ -1777,6 +1847,8 @@ impl<T: AsRef<Real>> Add<T> for &Real {
             return self.clone();
         }
         if self.class.is_ln() && other.class.is_ln() {
+            // Log sums with integral coefficients can collapse to one Ln node, avoiding a
+            // generic computable addition in log-heavy expressions.
             let Ln(b) = self.class.clone() else {
                 unreachable!()
             };
@@ -1837,6 +1909,7 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
     fn sub(self, other: T) -> Self::Output {
         let other = other.as_ref();
         if self.class == other.class {
+            // Same symbolic basis subtraction mirrors addition: update the scale only.
             let rational = &self.rational - &other.rational;
             if rational.sign() == Sign::NoSign {
                 return Self::Output::zero();
@@ -1858,6 +1931,8 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
             return -other;
         }
         if self.class.is_ln() && other.class.is_ln() {
+            // Log differences use the same ln-product simplifier with a negated
+            // coefficient for the right-hand term.
             let Ln(b) = self.class.clone() else {
                 unreachable!()
             };

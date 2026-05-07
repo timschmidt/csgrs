@@ -117,6 +117,9 @@ impl Rational {
     fn maybe_reduce(self) -> Self {
         if Self::is_power_of_two(&self.denominator) {
             let denominator = self.denominator.clone();
+            // Dyadic rationals dominate f64 imports and trig reduction scales.  When the
+            // denominator is a power of two, remove common factors with shifts instead of a
+            // full BigInt gcd.
             self.reduce_by_power_of_two_divisor(&denominator)
         } else {
             self.reduce()
@@ -132,6 +135,8 @@ impl Rational {
         }
 
         if Self::is_power_of_two(possible_divisor) {
+            // Callers often already know a possible divisor from the operation they just
+            // performed.  Preserve that hint for dyadic cases so reduction stays shift-only.
             return self.reduce_by_power_of_two_divisor(possible_divisor);
         }
 
@@ -154,6 +159,8 @@ impl Rational {
 
         if Self::is_power_of_two(&self.denominator) {
             let denominator = self.denominator.clone();
+            // Powers of two are common enough that avoiding gcd here shows up in scalar
+            // import and matrix benchmarks.
             return self.reduce_by_power_of_two_divisor(&denominator);
         }
 
@@ -175,6 +182,8 @@ impl Rational {
         if value.is_zero() {
             return false;
         }
+        // BigUint has cheap trailing-zero and bit-length queries; together they identify a
+        // dyadic denominator without allocating or dividing.
         value.trailing_zeros() == Some(value.bits() - 1)
     }
 
@@ -197,6 +206,8 @@ impl Rational {
             return self;
         }
         let shift = usize::try_from(shift).expect("shift should fit in usize");
+        // Shift out common powers of two directly.  This is the hot reduction path for
+        // exactly representable binary fractions.
         Self {
             sign: self.sign,
             numerator: self.numerator >> shift,
@@ -310,6 +321,8 @@ impl Rational {
     }
 
     pub(crate) fn factor_two_powers(&self) -> (i32, Self) {
+        // Split a rational into 2^shift * odd_part.  Computable multiplication consumes
+        // the shift as an Offset node, which is cheaper than a generic exact scale.
         let numerator_shift = self.numerator.trailing_zeros().unwrap_or(0);
         let denominator_shift = self
             .denominator
@@ -334,6 +347,8 @@ impl Rational {
 
     #[inline]
     pub(crate) fn power_of_two_shift(&self) -> Option<(i32, Sign)> {
+        // Identify exact +/-2^k scales. Computable multiplication consumes these as
+        // binary Offset nodes, which are cheaper than generic rational products.
         if self.sign == NoSign {
             return None;
         }

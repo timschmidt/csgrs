@@ -380,6 +380,10 @@ fn should_stop(signal: &Option<Signal>) -> bool {
 }
 
 thread_local! {
+    // Constants are value objects, so separate `Computable::pi()` calls are
+    // common. Sharing only their approximation cache avoids rebuilding large
+    // constant approximations in scalar and matrix workloads while keeping the
+    // public `Computable` instances independently owned.
     static SHARED_CONSTANT_CACHES: RefCell<Vec<Cache>> =
         RefCell::new(vec![Cache::Invalid; SharedConstant::COUNT]);
 }
@@ -1099,18 +1103,22 @@ impl Computable {
             .as_ref()
             .is_some_and(|r| *r == Rational::one())
         {
+            // e^1 is the shared cached constant, not a fresh PrescaledExp node.
             return Self::e_constant();
         }
         if self
             .exact_rational()
             .is_some_and(|r| r.sign() == Sign::NoSign)
         {
+            // e^0 is exact and must stay outside the approximation pipeline.
             return Self::one();
         }
         let low_prec: Precision = -4;
         let rough_appr: BigInt = self.approx(low_prec);
         // At precision -4, an approximation outside +/-8 implies |x| > 0.5.
         if rough_appr > *signed::EIGHT || rough_appr < -signed::EIGHT.clone() {
+            // Keep the Taylor kernel near zero by subtracting k*ln(2), then reapply
+            // the scale as a binary shift. This avoids slow huge-argument series work.
             let ln2 = Self::ln2();
             let mut multiple = self.integer_ratio_nearest(ln2.clone());
 
@@ -1149,6 +1157,8 @@ impl Computable {
 
     /// Calculate nearby multiple of pi.
     fn pi_multiple(&self) -> BigInt {
+        // Use one low-precision quotient and a cheap correction instead of a full
+        // high-precision division. Trig reduction calls this on hot paths.
         let mut multiple = self.integer_ratio_nearest(Self::pi());
         let adjustment =
             Self::pi().multiply(Self::rational(Rational::from_bigint(multiple.clone())).negate());
@@ -1165,6 +1175,8 @@ impl Computable {
 
     /// Calculate nearby multiple of pi/2.
     fn half_pi_multiple(&self) -> BigInt {
+        // Same nearest-multiple trick as `pi_multiple`, specialized for the quadrant
+        // reductions used by sin/cos.
         let half_pi = Self::pi().shift_right(1);
         let mut multiple = self.integer_ratio_nearest(half_pi.clone());
         let adjustment =
@@ -1181,6 +1193,8 @@ impl Computable {
     }
 
     fn medium_half_pi_multiple(rough_appr: &BigInt) -> BigInt {
+        // For medium arguments the rough approximation already distinguishes the only
+        // useful half-pi multiples, avoiding a second approximation of x/(pi/2).
         let positive = rough_appr.sign() != Sign::Minus;
         let magnitude = rough_appr.magnitude();
         let multiple = if magnitude < unsigned::FIVE.deref() {
@@ -1193,6 +1207,11 @@ impl Computable {
     }
 
     fn known_msd_for_trig_reduction(&self) -> Option<Option<Precision>> {
+        // Trig construction used to call `approx(-1)` before deciding whether
+        // an argument was already small or definitely huge. Exact rationals and
+        // shared constants already carry enough structural MSD information, so
+        // using it here avoids an extra approximation pass for generic scalar
+        // sin/cos rows such as 1e6 and 1e30.
         match &*self.internal {
             Approximation::Int(n) => Some(if n.sign() == Sign::NoSign {
                 None
@@ -1238,6 +1257,9 @@ impl Computable {
         }
         if let Some(msd) = self.trig_reduction_msd() {
             if msd < 0 {
+                // Known |x| < 1: go directly to the prescaled Taylor kernel.
+                // The fallback rough approximation stays in place for unknown
+                // magnitudes where structural bounds are not trustworthy.
                 return Self {
                     internal: Box::new(Approximation::PrescaledCos(self)),
                     cache: RefCell::new(Cache::Invalid),
@@ -1247,6 +1269,9 @@ impl Computable {
                 };
             }
             if msd >= 3 {
+                // Known |x| >= 8: skip the preliminary `approx(-1)` and go
+                // straight to half-pi reduction. This is the hot large-argument
+                // path for generic sin/cos benchmarks.
                 let multiplier = Self::half_pi_multiple(&self);
                 return self.cos_reduced_by_half_pi(multiplier);
             }
@@ -1265,6 +1290,8 @@ impl Computable {
         }
 
         let multiplier = if abs_rough_appr < unsigned::SIX.deref() {
+            // Medium arguments can reuse the rough quadrant table. Larger values need the
+            // more expensive nearest-half-pi reduction to keep the residual small.
             Self::medium_half_pi_multiple(&rough_appr)
         } else {
             Self::half_pi_multiple(&self)
@@ -1282,6 +1309,7 @@ impl Computable {
         }
         if let Some(msd) = self.trig_reduction_msd() {
             if msd < 0 {
+                // Known |x| < 1: direct prescaled sine avoids reduction setup.
                 return Self {
                     internal: Box::new(Approximation::PrescaledSin(self)),
                     cache: RefCell::new(Cache::Invalid),
@@ -1291,6 +1319,8 @@ impl Computable {
                 };
             }
             if msd >= 3 {
+                // Known large input: avoid the extra rough approximation and
+                // reduce by half-pi immediately.
                 let multiplier = Self::half_pi_multiple(&self);
                 let adjustment = Self::pi()
                     .shift_right(1)
@@ -1324,6 +1354,8 @@ impl Computable {
         }
 
         if abs_rough_appr < unsigned::SIX.deref() {
+            // Medium sine inputs are rewritten through exact symmetries instead of going
+            // through the generic half-pi division path.
             let multiplier = Self::medium_half_pi_multiple(&rough_appr);
             if multiplier == *signed::ONE {
                 return Self::pi().shift_right(1).add(self.negate()).cos();
@@ -1381,6 +1413,8 @@ impl Computable {
         }
 
         if abs_rough_appr < unsigned::FIVE.deref() {
+            // Near pi/2, cotangent of the complement converges faster and avoids the
+            // unstable generic tan series at the pole.
             let complement = Self::pi().shift_right(1).add(self.negate());
             return Self {
                 internal: Box::new(Approximation::PrescaledCot(complement)),
@@ -1392,6 +1426,7 @@ impl Computable {
         }
 
         if abs_rough_appr < unsigned::SIX.deref() {
+            // Near pi, reflect back to a small tangent argument.
             return Self::pi().add(self.negate()).tan().negate();
         }
 
@@ -1415,6 +1450,8 @@ impl Computable {
         {
             let (shift, reduced) = r.factor_two_powers();
             if shift != 0 {
+                // ln(r * 2^k) = ln(r) + k ln(2). Pulling dyadic scale out keeps
+                // f64-derived rationals on a cheap symbolic/log path.
                 let reduced_ln = if reduced == Rational::one() {
                     Self::integer(BigInt::zero())
                 } else {
@@ -1435,6 +1472,8 @@ impl Computable {
             panic!("ArithmeticException");
         }
         if rough_appr <= *low_ln_limit {
+            // For values below 0.5, invert and negate so the prescaled ln1p kernel sees a
+            // better-conditioned argument.
             return self.inverse().ln().negate();
         }
         if rough_appr >= *high_ln_limit {
@@ -1442,9 +1481,13 @@ impl Computable {
             let sixty_four = signed::SIXTY_FOUR.deref();
 
             if rough_appr <= *sixty_four {
+                // Moderate large values use repeated sqrt: ln(x) = 4 ln(sqrt(sqrt(x))).
+                // That is cheaper than running ln1p far from one.
                 let quarter = self.sqrt().sqrt().ln();
                 return quarter.shift_left(2);
             } else {
+                // Very large values are scaled by powers of two before ln1p, then the
+                // binary exponent is added back as k ln(2).
                 let mut extra_bits: i32 = (rough_appr.bits() - 5).try_into().expect(
                     "Approximation should have few enough bits to fit in a 32-bit signed integer",
                 );
@@ -1470,6 +1513,8 @@ impl Computable {
 
         let minus_one = Self::integer(signed::MINUS_ONE.clone());
         let fraction = Self::add(self, minus_one);
+        // Final path is ln(1+x), where the prior reductions keep |x| small enough for the
+        // prescaled series.
         Self::prescaled_ln(fraction)
     }
 
@@ -1495,6 +1540,7 @@ impl Computable {
     /// Square root of this number.
     pub fn sqrt(self) -> Computable {
         if let Approximation::Square(child) = self.internal.as_ref() {
+            // sqrt(x^2) can collapse to abs(x) when the sign is structurally known.
             match child.exact_sign() {
                 Some(Sign::Plus) => return child.clone(),
                 Some(Sign::Minus) => return child.clone().negate(),
@@ -1504,6 +1550,8 @@ impl Computable {
         }
         if let Approximation::Multiply(left, right) = self.internal.as_ref() {
             let reduced = |scale: Rational, square_side: &Computable| {
+                // Recognize c*x^2 where c is an exact square, preserving the symbolic x
+                // instead of introducing a generic sqrt node.
                 let (root, rest) = scale.extract_square_reduced();
                 if rest != Rational::one() {
                     return None;
@@ -1536,6 +1584,7 @@ impl Computable {
             && rational.sign() != Sign::Minus
             && rational.extract_square_will_succeed()
         {
+            // Perfect rational squares stay exact.
             let (root, rest) = rational.extract_square_reduced();
             if rest == Rational::one() {
                 return Self::rational(root);
@@ -1573,6 +1622,7 @@ impl Computable {
 
         let rough_appr = self.approx(-4);
         if rough_appr <= *signed::EIGHT {
+            // Small atan arguments use the prescaled series directly.
             return Self {
                 internal: Box::new(Approximation::PrescaledAtan(self)),
                 cache: RefCell::new(Cache::Invalid),
@@ -1585,12 +1635,15 @@ impl Computable {
         let one = Self::one();
         let half = one.clone().shift_right(1);
         if rough_appr <= *signed::SIXTEEN {
+            // For middle-sized arguments, subtract atan(1/2) before recursing. This keeps
+            // the residual small without jumping all the way to the reciprocal identity.
             let numerator = self.clone().add(half.clone().negate());
             let denominator = one.add(self.multiply(half));
             return Self::prescaled_atan(BigInt::from(2_u8))
                 .add(numerator.multiply(denominator.inverse()).atan());
         }
 
+        // Large positive atan uses pi/2 - atan(1/x), which converges faster.
         Self::pi()
             .shift_right(1)
             .add(self.inverse().atan().negate())
@@ -1604,6 +1657,8 @@ impl Computable {
                 Sign::Minus => return self.negate().asin().negate(),
                 Sign::Plus => {
                     if rational.msd_exact().is_some_and(|msd| msd <= -4) {
+                        // Tiny asin(x) is handled by its dedicated series; the generic
+                        // atan transform builds extra sqrt/division nodes.
                         return Self {
                             internal: Box::new(Approximation::PrescaledAsin(self)),
                             cache: RefCell::new(Cache::Invalid),
@@ -1613,6 +1668,7 @@ impl Computable {
                         };
                     }
                     if rational >= Rational::fraction(7, 8).unwrap() {
+                        // Near 1, use pi/2 - acos(x); acos has the endpoint transform.
                         return Self::pi().shift_right(1).add(self.acos().negate());
                     }
                 }
@@ -1654,6 +1710,8 @@ impl Computable {
         }
 
         if self.exact_sign() == Some(Sign::Plus) {
+            // For positive values, acos(x) = 2 atan(sqrt((1-x)/(1+x))). This is the
+            // endpoint-friendly path for values near 1.
             let one = Self::one();
             let numerator = one.clone().add(self.clone().negate());
             let denominator = one.add(self);
@@ -1690,6 +1748,7 @@ impl Computable {
                 Sign::Minus => return self.negate().atanh().negate(),
                 Sign::Plus => {
                     if rational.msd_exact().is_some_and(|msd| msd <= -4) {
+                        // Tiny atanh(x) is best served by the direct odd series.
                         return Self {
                             internal: Box::new(Approximation::PrescaledAtanh(self)),
                             cache: RefCell::new(Cache::Invalid),
@@ -1785,22 +1844,28 @@ impl Computable {
     /// Square of this number.
     pub fn square(self) -> Self {
         if let Some(rational) = self.exact_rational() {
+            // Exact rationals can square without approximation or expression growth.
             return Self::rational(rational.clone() * rational);
         }
         if let Approximation::Negate(child) = self.internal.as_ref() {
+            // (-x)^2 is x^2; dropping the negate avoids an extra node in repeated products.
             return child.clone().square();
         }
         if let Approximation::Sqrt(child) = self.internal.as_ref() {
             match child.exact_sign() {
+                // sqrt(x)^2 can collapse only when x is structurally known nonnegative.
                 Some(Sign::Plus) | Some(Sign::NoSign) => return child.clone(),
                 _ => {}
             }
         }
         if let Approximation::Offset(child, n) = self.internal.as_ref() {
+            // (x * 2^n)^2 is x^2 * 2^(2n); keeping powers of two as offsets is much
+            // cheaper than multiplying by an exact rational scale.
             return child.clone().square().shift_left(n * 2);
         }
         if let Approximation::Multiply(left, right) = &*self.internal {
             if let Some(scale) = left.exact_rational() {
+                // Peel exact scales out of products before squaring symbolic factors.
                 return right
                     .clone()
                     .square()
@@ -1830,9 +1895,12 @@ impl Computable {
         if matches!(left_exact.as_ref(), Some(r) if r.sign() == Sign::NoSign)
             || matches!(right_exact.as_ref(), Some(r) if r.sign() == Sign::NoSign)
         {
+            // Zero annihilates without preserving the other expression tree.
             return Self::rational(Rational::zero());
         }
         if matches!(left_exact.as_ref(), Some(r) if *r == Rational::one()) {
+            // Multiplication by +/-1 stays as identity/negate so downstream exact-sign
+            // queries still see the original structure.
             return other;
         }
         if matches!(right_exact.as_ref(), Some(r) if *r == Rational::one()) {
@@ -1845,6 +1913,8 @@ impl Computable {
             return self.negate();
         }
         if let Some((shift, sign)) = left_exact.as_ref().and_then(Rational::power_of_two_shift) {
+            // Dyadic scales are represented as binary offsets, avoiding generic multiply
+            // evaluation during approximation.
             let shifted = other.shift_left(shift);
             return if sign == Sign::Minus {
                 shifted.negate()
@@ -1861,12 +1931,14 @@ impl Computable {
             };
         }
         if let (Some(left), Some(right)) = (left_exact.as_ref(), right_exact.as_ref()) {
+            // Collapse purely exact products immediately.
             return Self::rational(left.clone() * right.clone());
         }
         if let Some(scale) = left_exact.as_ref()
             && let Approximation::Multiply(inner_left, inner_right) = &*other.internal
         {
             if let Some(inner_scale) = inner_left.exact_rational() {
+                // Combine adjacent exact scales so factored symbolic products stay shallow.
                 return inner_right
                     .clone()
                     .multiply(Self::rational(scale.clone() * inner_scale));
@@ -2265,6 +2337,8 @@ impl Computable {
     /// Do not call this function if `self` and `other` may be the same.
     pub fn compare_to(&self, other: &Self) -> Ordering {
         if let (Some(left), Some(right)) = (self.exact_rational(), other.exact_rational()) {
+            // Exact rationals compare directly; escalating to approximate comparison here is
+            // both slower and can burn cache precision unnecessarily.
             return left
                 .partial_cmp(&right)
                 .expect("exact rationals should be comparable");
@@ -2288,6 +2362,8 @@ impl Computable {
                 )
                 && left_msd != right_msd
             {
+                // Same-sign values with different most-significant digits have a known
+                // order without evaluating either value to a requested precision.
                 return match left {
                     Sign::Plus => left_msd.cmp(&right_msd),
                     Sign::Minus => right_msd.cmp(&left_msd),
@@ -2309,6 +2385,8 @@ impl Computable {
     /// Compare two values to a specified tolerance (more negative numbers are more precise).
     pub fn compare_absolute(&self, other: &Self, tolerance: Precision) -> Ordering {
         if let (Some(left), Some(right)) = (self.exact_rational(), other.exact_rational()) {
+            // Absolute comparison of exact rationals is still exact and should not enter
+            // the computable approximation loop.
             let left_abs = if left.sign() == Sign::Minus {
                 left.neg()
             } else {
@@ -2324,6 +2402,7 @@ impl Computable {
                 .expect("exact rationals should be comparable");
         }
         match (self.exact_sign(), other.exact_sign()) {
+            // Zero-vs-nonzero absolute comparisons can be decided from cached exact signs.
             (Some(Sign::NoSign), Some(Sign::NoSign)) => return Ordering::Equal,
             (Some(Sign::NoSign), Some(_)) => return Ordering::Less,
             (Some(_), Some(Sign::NoSign)) => return Ordering::Greater,
@@ -2334,6 +2413,8 @@ impl Computable {
             other.cheap_bound().known_msd(),
         ) {
             if left_msd > tolerance && right_msd < tolerance {
+                // Cheap MSD bounds can prove a tolerance-separated absolute ordering before
+                // allocating fresh approximations.
                 return Ordering::Greater;
             }
             if right_msd > tolerance && left_msd < tolerance {

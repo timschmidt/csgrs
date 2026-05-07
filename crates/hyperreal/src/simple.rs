@@ -256,12 +256,17 @@ impl Simple {
                 if self.could_evaluate_exact()
                     && let Some(value) = self.evaluate_exact(names)?
                 {
+                    // Fold fully exact parser subtrees immediately.  This avoids building
+                    // symbolic/computable expression graphs for literal arithmetic that the
+                    // caller expects to stay cheap and exact.
                     return Ok(Real::new(value));
                 }
                 if let Some(first) = self.operands.first().and_then(Operand::literal) {
                     let mut value = first.clone();
                     let literals = self.operands.iter().skip(1);
                     if literals.clone().all(|operand| operand.literal().is_some()) {
+                        // The all-literal path keeps simple parsed sums in the rational
+                        // representation instead of allocating a chain of Real additions.
                         for operand in literals {
                             value = value + operand.literal().unwrap();
                         }
@@ -284,6 +289,8 @@ impl Simple {
                     if self.could_evaluate_exact()
                         && let Some(value) = self.evaluate_exact(names)?
                     {
+                        // Unary exact negation is kept rational so sign/MSD queries can be
+                        // answered structurally without touching computable approximations.
                         return Ok(Real::new(value));
                     }
                     let operand = self.operands.first().unwrap();
@@ -297,6 +304,9 @@ impl Simple {
                     if self.could_evaluate_exact()
                         && let Some(value) = self.evaluate_exact(names)?
                     {
+                        // Multi-operand exact subtraction is another parser-level fold; it
+                        // prevents cheap constants such as "pi - 3" from being polluted by
+                        // unrelated literal arithmetic around them.
                         return Ok(Real::new(value));
                     }
                     if let Some(first) = self.operands.first().and_then(Operand::literal) {
@@ -321,6 +331,9 @@ impl Simple {
                 if self.could_evaluate_exact()
                     && let Some(value) = self.evaluate_exact(names)?
                 {
+                    // Preserve exact products as rationals whenever every operand can be
+                    // evaluated exactly; generic multiplication is much more expensive for
+                    // values that do not need symbolic structure.
                     return Ok(Real::new(value));
                 }
                 if let Some(first) = self.operands.first().and_then(Operand::literal) {

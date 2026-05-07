@@ -115,6 +115,10 @@ impl TryFrom<f64> for Rational {
     type Error = Problem;
 
     fn try_from(n: f64) -> Result<Rational, Self::Error> {
+        // Decode IEEE-754 directly instead of formatting through decimal or
+        // building a general ratio first. Most finite f64 values are dyadic;
+        // preserving that representation keeps later exact rational arithmetic
+        // on the reduced power-of-two fast path.
         const NEG_BITS: u64 = 0x8000_0000_0000_0000;
         const EXP_BITS: u64 = 0x7ff0_0000_0000_0000;
         const SIG_BITS: u64 = 0x000f_ffff_ffff_ffff;

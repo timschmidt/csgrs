@@ -245,6 +245,9 @@ impl Real {
         if matches!(self.class, crate::real::Class::One)
             && let fast @ Some(_) = self.rational.to_f64_approx()
         {
+            // Exact rationals can often be rounded to f64 without touching the
+            // lazy computable tree. This matters for matrix/predicate code that
+            // asks for approximate centers of plain scalar data.
             return fast;
         }
 
