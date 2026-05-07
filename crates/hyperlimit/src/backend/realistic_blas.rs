@@ -40,6 +40,8 @@ impl<B: realistic_blas::Backend> PredicateScalar for realistic_blas::Scalar<B> {
 
     #[inline(always)]
     fn prefer_f64_filter_before_arithmetic() -> bool {
+        // Realistic BLAS scalars may wrap exact symbolic values; conservative f64 filtering
+        // avoids building those trees when the determinant sign is already certified.
         true
     }
 }

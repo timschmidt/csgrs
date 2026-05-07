@@ -7,6 +7,9 @@ use crate::predicate::{Sign, SignKnowledge};
 /// The caller supplies the determinant and a scale estimate. If the determinant
 /// is comfortably outside the roundoff envelope, the sign is returned.
 pub fn det_sign_filter(det: f64, scale: f64, epsilon_multiplier: f64) -> SignKnowledge {
+    // This is the shared front door for predicate f64 shortcuts. It is deliberately
+    // allocation-free and only certifies signs outside the error envelope; everything else
+    // must continue to structural, exact, or robust fallback paths.
     if !det.is_finite() || !scale.is_finite() {
         return SignKnowledge::Unknown;
     }

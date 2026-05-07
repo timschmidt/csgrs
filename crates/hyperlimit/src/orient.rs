@@ -73,6 +73,8 @@ pub fn orient2d_with_policy<S: BorrowedPredicateScalar>(
     c: &Point2<S>,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Sign> {
+    // Exact symbolic backends opt into this conservative f64 prefilter so clear decisions
+    // avoid constructing subtraction/multiplication expression trees at all.
     if S::prefer_f64_filter_before_arithmetic()
         && let Some(outcome) = orient2d_point_filter(a, b, c)
     {
@@ -694,6 +696,9 @@ fn sign_filter_outcome(
     scale: f64,
     epsilon_multiplier: f64,
 ) -> Option<PredicateOutcome<Sign>> {
+    // Float filters only return when the error bound proves the sign.  Unknown cases still
+    // escalate to exact scalar arithmetic, so this is a performance shortcut, not a semantic
+    // weakening.
     match det_sign_filter(det, scale, epsilon_multiplier) {
         SignKnowledge::Known { sign, certainty } => Some(PredicateOutcome::decided(
             sign,

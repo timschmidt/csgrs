@@ -128,6 +128,10 @@ fn refine_scalar_sign_if_allowed<S: PredicateScalar>(
 pub(crate) fn signed_term_filter<S: PredicateScalar>(
     terms: &[(&S, Sign)],
 ) -> Option<PredicateOutcome<Sign>> {
+    // This filter is a performance shortcut ahead of exact predicate fallback.
+    // It intentionally uses only cheap scalar facts: exact zero, structural
+    // sign, and conservative magnitude. If any needed fact is missing, we stop
+    // and let the normal predicate pipeline refine or fall back.
     let mut nonzero = Vec::new();
 
     for (term, multiplier) in terms {
@@ -166,6 +170,9 @@ pub(crate) fn signed_term_filter<S: PredicateScalar>(
 }
 
 fn dominance_sign(terms: &[(Sign, MagnitudeBounds)]) -> Option<Sign> {
+    // Dominant-term detection catches expressions like `pi - 3` without
+    // constructing exact fallback objects. The two-bit gap is conservative:
+    // it leaves ambiguous near-cancellation to the slower but safer path.
     for (index, (sign, magnitude)) in terms.iter().enumerate() {
         if magnitude.abs_lower <= 0.0 {
             continue;

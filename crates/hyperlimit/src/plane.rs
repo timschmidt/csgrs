@@ -50,6 +50,9 @@ pub fn classify_point_plane_with_policy<S: BorrowedPredicateScalar>(
     plane: &Plane3<S>,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<PlaneSide> {
+    // Exact symbolic backends can spend more constructing the plane-side scalar than the
+    // conservative f64 filter costs, so try the filter before scalar arithmetic when the
+    // backend opts in.
     if S::prefer_f64_filter_before_arithmetic()
         && let Some(outcome) = classify_point_plane_filter(point, plane)
     {
@@ -124,6 +127,8 @@ fn classify_point_plane_filter<S: PredicateScalar>(
     point: &Point3<S>,
     plane: &Plane3<S>,
 ) -> Option<PredicateOutcome<PlaneSide>> {
+    // This mirrors the orientation filters: return only when the floating error bound
+    // proves the side, otherwise let structural/exact scalar paths decide.
     let nx = plane.normal.x.to_f64()?;
     let ny = plane.normal.y.to_f64()?;
     let nz = plane.normal.z.to_f64()?;

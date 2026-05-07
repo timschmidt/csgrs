@@ -38,6 +38,8 @@ impl PredicateScalar for hyperreal::Real {
 
     #[inline(always)]
     fn prefer_f64_filter_before_arithmetic() -> bool {
+        // Hyperreal expression construction is expensive enough that a proven f64 filter is
+        // worth trying before exact predicate arithmetic.
         true
     }
 }
