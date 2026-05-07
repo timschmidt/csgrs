@@ -375,6 +375,9 @@ impl Rational {
     }
 
     pub(crate) fn msd_exact(&self) -> Option<i32> {
+        // Exact binary magnitude from bit lengths only. This is used by Real
+        // and Computable structural queries to avoid an approximation just to
+        // choose working precision.
         if self.sign == NoSign {
             return None;
         }
@@ -397,6 +400,9 @@ impl Rational {
     }
 
     pub(crate) fn to_f64_approx(&self) -> Option<f64> {
+        // Fast borrowed approximate conversion for modest rationals. If either
+        // side cannot fit through num-traits' f64 conversion, callers fall back
+        // to the general Computable approximation path.
         if self.sign == NoSign {
             return Some(0.0);
         }
@@ -487,6 +493,8 @@ impl Rational {
     const EXTRACT_SQUARE_MAX_LEN: u64 = 5000;
 
     fn make_squares() -> Vec<(BigUint, BigUint)> {
+        // Tiny prime-square table covers the residuals that appear most often
+        // in exact trig and matrix examples without running full factorization.
         vec![
             (
                 ToBigUint::to_biguint(&2).unwrap(),
@@ -521,6 +529,8 @@ impl Rational {
 
     // Some(root) squared is n, otherwise None
     fn try_perfect(n: BigUint) -> Option<BigUint> {
+        // BigUint::sqrt is cheap enough as a final check once small square
+        // factors have been stripped.
         let root = n.sqrt();
         let square = &root * &root;
         if square == n { Some(root) } else { None }
@@ -530,6 +540,9 @@ impl Rational {
     fn extract_square(n: BigUint) -> (BigUint, BigUint) {
         static SQUARES: LazyLock<Vec<(BigUint, BigUint)>> = LazyLock::new(Rational::make_squares);
 
+        // Partial square extraction is a performance shortcut, not full prime
+        // factorization. It peels common small squares and then tests a few
+        // residual divisors so sqrt simplification remains bounded.
         let one: BigUint = One::one();
         let mut root = one.clone();
         let mut rest = n;

@@ -34,6 +34,8 @@ impl TryFrom<f32> for Real {
     type Error = Problem;
 
     fn try_from(n: f32) -> Result<Real, Self::Error> {
+        // Import floats as exact dyadic rationals. That preserves structural
+        // facts and avoids immediately lowering user data to Computable nodes.
         let rational: Rational = n.try_into()?;
         Ok(Real::new(rational))
     }
@@ -43,6 +45,8 @@ impl TryFrom<f64> for Real {
     type Error = Problem;
 
     fn try_from(n: f64) -> Result<Real, Self::Error> {
+        // Same exact dyadic import as f32; the public Real constructor keeps the
+        // value in the rational class so matrix inputs stay cheap.
         let rational: Rational = n.try_into()?;
         Ok(Real::new(rational))
     }
@@ -53,6 +57,9 @@ impl Real {
     pub(crate) fn fold_ref(&self) -> Computable {
         use crate::real::{Class, rationals};
 
+        // Keep the rational scale separate until a generic computable kernel is
+        // unavoidable. Folding `a * class` eagerly would erase exact classes
+        // that sign, sqrt, log, and trig shortcuts can still exploit.
         let mut c = if self.rational == *rationals::ONE {
             self.computable.clone()
         } else if self.class == Class::One {
@@ -73,6 +80,8 @@ impl Real {
     pub(crate) fn fold(self) -> Computable {
         use crate::real::rationals;
 
+        // Owned folding mirrors `fold_ref` but moves the computable when the
+        // rational scale is one; scalar transcendental kernels hit this path.
         if self.rational == *rationals::ONE {
             let mut c = self.computable;
             if let Some(s) = self.signal {
@@ -99,6 +108,8 @@ fn sig_exp_32(c: Computable, mut msd: Precision) -> (u32, u32) {
     const OVERSIZE: u32 = SIG_BITS.next_power_of_two() << 1;
 
     if msd <= -126 {
+        // Subnormal output needs the fixed minimum precision, independent of
+        // the discovered MSD.
         let sig = c
             .approx(-149)
             .magnitude()
@@ -111,6 +122,8 @@ fn sig_exp_32(c: Computable, mut msd: Precision) -> (u32, u32) {
             (sig, 0)
         }
     } else {
+        // Normal output requests just enough bits for the f32 significand, then
+        // repairs the exponent if rounding carried into a new top bit.
         let mut sig: u32 = c
             .approx(msd - 24)
             .magnitude()
@@ -144,6 +157,7 @@ impl From<Real> for f32 {
         };
 
         let Some(msd) = c.iter_msd_stop(-150) else {
+            // Below the f32 subnormal floor, round to signed zero.
             return match neg {
                 0 => 0.0,
                 1 => -0.0,
@@ -151,6 +165,7 @@ impl From<Real> for f32 {
             };
         };
         if msd > 127 {
+            // Above the finite f32 range, saturate to signed infinity.
             return match neg {
                 0 => f32::INFINITY,
                 1 => f32::NEG_INFINITY,
@@ -171,6 +186,8 @@ fn sig_exp_64(c: Computable, mut msd: Precision) -> (u64, u64) {
     const OVERSIZE: u64 = SIG_BITS.next_power_of_two() << 1;
 
     if msd <= -1022 {
+        // Subnormal f64 path mirrors f32 with the wider significand and lower
+        // minimum precision.
         let sig = c
             .approx(-1074)
             .magnitude()
@@ -182,6 +199,8 @@ fn sig_exp_64(c: Computable, mut msd: Precision) -> (u64, u64) {
             (sig, 0)
         }
     } else {
+        // Normal f64 path requests 53 useful bits and handles one-bit carry from
+        // rounding by shifting the significand and bumping the exponent.
         let mut sig: u64 = c
             .approx(msd - 53)
             .magnitude()
@@ -215,6 +234,7 @@ impl From<Real> for f64 {
         };
 
         let Some(msd) = c.iter_msd_stop(-1075) else {
+            // Too small for f64, including subnormal precision.
             return match neg {
                 0 => 0.0,
                 1 => -0.0,
@@ -222,6 +242,7 @@ impl From<Real> for f64 {
             };
         };
         if msd > 1023 {
+            // Too large for finite f64.
             return match neg {
                 0 => f64::INFINITY,
                 1 => f64::NEG_INFINITY,
@@ -253,6 +274,9 @@ impl Real {
 
         let c = self.fold_ref();
         let sign = match self.refine_sign_until(-1075) {
+            // Borrowed conversion refuses to do unbounded refinement for sign.
+            // Returning signed zero here keeps approximate-center users from
+            // accidentally forcing exact evaluation of unresolved expressions.
             Some(sign) => sign,
             None => return Some(0.0),
         };
@@ -263,9 +287,12 @@ impl Real {
         };
 
         let Some(msd) = c.iter_msd_stop(-1075) else {
+            // Magnitude below f64's minimum representable scale.
             return Some(0.0);
         };
         if msd > 1023 {
+            // Unlike `From<Real> for f64`, borrowed approximate conversion
+            // reports overflow as None so callers can distinguish saturation.
             return None;
         }
         let (sig_bits, exp) = sig_exp_64(c, msd);

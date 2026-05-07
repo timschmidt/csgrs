@@ -131,6 +131,36 @@ mod tests {
     }
 
     #[test]
+    fn const_offsets_certify_simple_pi_and_e_gaps() {
+        use crate::real::Class::{ConstOffset, Irrational};
+
+        let pi_minus_three = Real::pi() - Real::new(Rational::new(3));
+        assert!(matches!(pi_minus_three.class, ConstOffset(_)));
+        assert_eq!(pi_minus_three.zero_status(), ZeroKnowledge::NonZero);
+        assert_eq!(
+            pi_minus_three.structural_facts().sign,
+            Some(RealSign::Positive)
+        );
+
+        let two_pi_minus_six = Real::new(Rational::new(2)) * Real::pi() - Real::from(6_i32);
+        assert!(matches!(two_pi_minus_six.class, ConstOffset(_)));
+        assert_eq!(
+            two_pi_minus_six.structural_facts().sign,
+            Some(RealSign::Positive)
+        );
+
+        let e_minus_two = Real::e() - Real::new(Rational::new(2));
+        assert!(matches!(e_minus_two.class, ConstOffset(_)));
+        assert_eq!(
+            e_minus_two.structural_facts().sign,
+            Some(RealSign::Positive)
+        );
+
+        let close_rational = Real::pi() - Real::new(Rational::fraction(22, 7).unwrap());
+        assert!(matches!(close_rational.class, Irrational));
+    }
+
+    #[test]
     fn ln_zero() {
         let zero = Real::zero();
         assert_eq!(zero.ln(), Err(Problem::NotANumber));
@@ -331,6 +361,67 @@ mod tests {
             &ln_product + &ln_product,
             ln_product.clone() * Real::from(2_i32)
         );
+    }
+
+    #[test]
+    fn symbolic_constant_multiplication_and_division_reduce() {
+        use crate::real::Class::ConstProductSqrt;
+
+        let pi = Real::pi();
+        let e = Real::e();
+        let pi_square = &pi * &pi;
+
+        let pi_e = &Real::pi() * &Real::e();
+        let pi_e_square = &pi_e * &pi_e;
+        assert_eq!((&pi_e_square / &pi_e).unwrap(), pi_e);
+
+        let e_three = Real::new(Rational::new(3)).exp().unwrap();
+        let e_two = Real::new(Rational::new(2)).exp().unwrap();
+        assert_eq!((&e_three / &e).unwrap(), e_two.clone());
+        assert_eq!(
+            (&Real::new(Rational::one()) / &e).unwrap(),
+            e.clone().inverse().unwrap()
+        );
+
+        let pi_over_e = (&Real::pi() / &Real::e()).unwrap();
+        assert_eq!(&pi_over_e * &Real::e(), Real::pi());
+        let inverse_pi = Real::pi().inverse().unwrap();
+        assert_eq!(&inverse_pi * &Real::pi(), Real::new(Rational::one()));
+        assert_eq!(
+            (&Real::new(Rational::one()) / &Real::pi()).unwrap(),
+            inverse_pi
+        );
+        assert_eq!((&Real::e() / &Real::pi()).unwrap() * &Real::pi(), Real::e());
+
+        let pi_cube_e_five =
+            &(&pi_square * &Real::pi()) * &Real::new(Rational::new(5)).exp().unwrap();
+        let pi_e_two = &Real::pi() * &e_two;
+        let quotient = (&pi_cube_e_five / &pi_e_two).unwrap();
+        let expected = &pi_square * Real::new(Rational::new(3)).exp().unwrap();
+        assert_eq!(quotient, expected);
+        let inverse_pi_e = pi_e.clone().inverse().unwrap();
+        assert_eq!(inverse_pi_e * &pi_e, Real::new(Rational::one()));
+
+        let sqrt_two = Real::from(2_i32).sqrt().unwrap();
+        let pi_e_sqrt_two = &pi_e * &sqrt_two;
+        assert!(matches!(pi_e_sqrt_two.class, ConstProductSqrt(_)));
+        assert_eq!(&pi_e_sqrt_two * &sqrt_two, Real::from(2_i32) * &pi_e);
+        assert_eq!((&pi_e_sqrt_two / &e).unwrap(), &pi * &sqrt_two);
+        assert_eq!(
+            pi_e_sqrt_two.clone().inverse().unwrap() * &pi_e_sqrt_two,
+            Real::new(Rational::one())
+        );
+    }
+
+    #[test]
+    fn ln_scaled_exp_reduces_to_log_scale_plus_exponent() {
+        use crate::real::Class::LnAffine;
+
+        let scaled = Real::new(Rational::new(2)) * Real::e();
+        let expected = Real::new(Rational::new(2)).ln().unwrap() + Real::new(Rational::one());
+        let actual = scaled.ln().unwrap();
+        assert!(matches!(actual.class, LnAffine(_)));
+        assert!(closest_f64(actual, expected.into()));
     }
 
     #[test]

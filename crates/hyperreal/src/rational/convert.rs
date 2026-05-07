@@ -44,6 +44,8 @@ fn pow2_fraction_u32(numerator: u32, denominator_shift: u32, neg: bool) -> Ratio
     if numerator == 0 {
         return Rational::zero();
     }
+    // Binary floats import as numerator / 2^k. Strip common powers of two here
+    // so the resulting Rational is reduced without a general BigUint gcd.
     let shift = numerator.trailing_zeros().min(denominator_shift);
     let numerator = numerator >> shift;
     let denominator_shift = denominator_shift - shift;
@@ -58,6 +60,8 @@ fn pow2_fraction_u64(numerator: u64, denominator_shift: u32, neg: bool) -> Ratio
     if numerator == 0 {
         return Rational::zero();
     }
+    // Same reduced-dyadic path as f32. This is the hot finite-f64 import path
+    // used by realistic_blas and predicated benchmark construction.
     let shift = numerator.trailing_zeros().min(denominator_shift);
     let numerator = numerator >> shift;
     let denominator_shift = denominator_shift - shift;
@@ -72,6 +76,8 @@ impl TryFrom<f32> for Rational {
     type Error = Problem;
 
     fn try_from(n: f32) -> Result<Rational, Self::Error> {
+        // Decode IEEE-754 directly. This mirrors the f64 path and keeps exact
+        // binary fractions in dyadic form instead of promoting to a larger ratio.
         const NEG_BITS: u32 = 0x8000_0000;
         const EXP_BITS: u32 = 0x7f80_0000;
         const SIG_BITS: u32 = 0x007f_ffff;

@@ -229,6 +229,53 @@ Benchmark targets:
 
 The generated benchmark reference is useful for spotting which layer a slowdown belongs to. For example, `borrowed_ops` covers direct owned-vs-borrowed arithmetic, while `scalar_micro` separates exact structural queries, unscaled public `Real` addition, and scaled public `Real` addition.
 
+### Performance Techniques
+
+The implementation deliberately keeps a set of small symbolic and structural
+shortcuts. These are not algebra-system ambitions; they are the cases that show
+up in `hyperreal`, `realistic_blas`, and `predicated` benchmarks.
+
+- Constants such as `pi`, `tau`, `e`, common square-root scales, and common
+  logarithms are cached internally and cloned from thread-local storage.
+- `Rational` has dyadic fast paths for IEEE-754 imports and power-of-two scale
+  reduction, avoiding general gcd work in common `f64`-derived values.
+- `Real` stores a rational scale plus a symbolic/computable class. Same-class
+  addition and subtraction adjust only the rational scale.
+- Exact symbolic classes are kept for `pi`, positive powers of `pi`, `1/pi`,
+  `e^q/pi`, `pi*e^q`, signed `pi^n*e^q` products, square roots, `pi*sqrt(q)`,
+  selected logs, log products, rational `sin(pi*q)`, and rational
+  `tan(pi*q)`.
+- Constant-product multiplication, division, and reciprocal paths stay inside
+  the symbolic `pi^n*e^q` family when this avoids generic computable nodes.
+  The lightweight `1/pi` and `e^q/pi` forms are kept separate from the boxed
+  general product because scalar and matrix division by `pi` are hot enough to
+  measure.
+- `ln(e^x)` and `ln(a*e^x)` collapse to `x` or `ln(a)+x`; small integer-power
+  logarithms reuse cached scaled-log constants.
+- Exact trig and inverse-trig tables recognize small rational multiples of
+  `pi`, `sqrt(2)/2`, `sqrt(3)/2`, `sqrt(3)`, and `sqrt(3)/3`.
+- Rational and square-root domain checks for inverse trig and inverse
+  hyperbolic functions run before generic computable construction.
+- Tiny and endpoint inverse trig/hyperbolic cases use dedicated computable
+  kernels or `ln1p`-style transforms to avoid slow generic formulas and
+  cancellation.
+- `sqrt`, integer powers, multiplication, and computable squaring peel exact
+  rational scale factors and preserve square-root structure where benchmarks
+  show that it helps.
+- `Computable` carries cheap structural bounds, exact-sign caches, precision
+  caches, and dominant-term sign shortcuts so sign, zero, and magnitude queries
+  can often return without refinement.
+- Trig and exponential computable kernels use argument-size knowledge,
+  prescaled forms, and identity-based reductions for large and tiny arguments.
+- Borrowed `Real` arithmetic exists so downstream vector, matrix, and predicate
+  kernels can avoid cloning expression graphs.
+- Abort-aware APIs attach the signal only to cloned computable values that may
+  refine; cheap structural queries still try to decide before evaluating.
+
+When adding another shortcut, add a focused test plus a Criterion row in the
+smallest relevant bench. Keep it only when the targeted row improves without
+regressing the broader `realistic_blas` or `predicated` paths.
+
 ## Notes
 
 - Some computations are intentionally lazy and may run for a long time if you request difficult values at high precision.

@@ -67,12 +67,12 @@ Cost of cold and cached `Computable::approx` calls for simple values.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `raw_cache_hit_cost/zero` | not run | not run | Cached approximation request for exact zero. |
-| `raw_cache_hit_cost/one` | not run | not run | Cached approximation request for exact one. |
-| `raw_cache_hit_cost/two` | not run | not run | Cached approximation request for exact two. |
-| `raw_cache_hit_cost/e` | not run | not run | Cached approximation request for Euler's constant. |
-| `raw_cache_hit_cost/pi` | not run | not run | Cached approximation request for pi. |
-| `raw_cache_hit_cost/tau` | not run | not run | Cached approximation request for two pi. |
+| `raw_cache_hit_cost/zero` | 50.90 ns | 50.15 ns - 51.71 ns | Cached approximation request for exact zero. |
+| `raw_cache_hit_cost/one` | 66.50 ns | 66.14 ns - 67.03 ns | Cached approximation request for exact one. |
+| `raw_cache_hit_cost/two` | 67.10 ns | 66.41 ns - 67.88 ns | Cached approximation request for exact two. |
+| `raw_cache_hit_cost/e` | 70.77 ns | 70.36 ns - 71.14 ns | Cached approximation request for Euler's constant. |
+| `raw_cache_hit_cost/pi` | 70.53 ns | 70.26 ns - 70.80 ns | Cached approximation request for pi. |
+| `raw_cache_hit_cost/tau` | 70.51 ns | 69.95 ns - 71.39 ns | Cached approximation request for two pi. |
 
 ### `structural_query_speed`
 
@@ -80,46 +80,46 @@ Speed of public structural queries across exact, transcendental, and composite `
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `structural_query_speed/zero_zero_status` | not run | not run | Checks zero/nonzero facts for exact zero. |
-| `structural_query_speed/zero_sign_query` | not run | not run | Reads sign facts for exact zero. |
-| `structural_query_speed/zero_msd_query` | not run | not run | Reads magnitude facts for exact zero. |
-| `structural_query_speed/zero_structural_facts` | not run | not run | Computes full structural facts for exact zero. |
-| `structural_query_speed/one_zero_status` | not run | not run | Checks zero/nonzero facts for exact one. |
-| `structural_query_speed/one_sign_query` | not run | not run | Reads sign facts for exact one. |
-| `structural_query_speed/one_msd_query` | not run | not run | Reads magnitude facts for exact one. |
-| `structural_query_speed/one_structural_facts` | not run | not run | Computes full structural facts for exact one. |
-| `structural_query_speed/negative_zero_status` | not run | not run | Checks zero/nonzero facts for an exact negative integer. |
-| `structural_query_speed/negative_sign_query` | not run | not run | Reads sign facts for an exact negative integer. |
-| `structural_query_speed/negative_msd_query` | not run | not run | Reads magnitude facts for an exact negative integer. |
-| `structural_query_speed/negative_structural_facts` | not run | not run | Computes full structural facts for an exact negative integer. |
-| `structural_query_speed/tiny_exact_zero_status` | not run | not run | Checks zero/nonzero facts for a tiny exact rational. |
-| `structural_query_speed/tiny_exact_sign_query` | not run | not run | Reads sign facts for a tiny exact rational. |
-| `structural_query_speed/tiny_exact_msd_query` | not run | not run | Reads magnitude facts for a tiny exact rational. |
-| `structural_query_speed/tiny_exact_structural_facts` | not run | not run | Computes full structural facts for a tiny exact rational. |
-| `structural_query_speed/pi_zero_status` | not run | not run | Checks zero/nonzero facts for pi. |
-| `structural_query_speed/pi_sign_query` | not run | not run | Reads sign facts for pi. |
-| `structural_query_speed/pi_msd_query` | not run | not run | Reads magnitude facts for pi. |
-| `structural_query_speed/pi_structural_facts` | not run | not run | Computes full structural facts for pi. |
-| `structural_query_speed/e_zero_status` | not run | not run | Checks zero/nonzero facts for e. |
-| `structural_query_speed/e_sign_query` | not run | not run | Reads sign facts for e. |
-| `structural_query_speed/e_msd_query` | not run | not run | Reads magnitude facts for e. |
-| `structural_query_speed/e_structural_facts` | not run | not run | Computes full structural facts for e. |
-| `structural_query_speed/tau_zero_status` | not run | not run | Checks zero/nonzero facts for tau. |
-| `structural_query_speed/tau_sign_query` | not run | not run | Reads sign facts for tau. |
-| `structural_query_speed/tau_msd_query` | not run | not run | Reads magnitude facts for tau. |
-| `structural_query_speed/tau_structural_facts` | not run | not run | Computes full structural facts for tau. |
-| `structural_query_speed/sqrt_two_zero_status` | not run | not run | Checks zero/nonzero facts for sqrt(2). |
-| `structural_query_speed/sqrt_two_sign_query` | not run | not run | Reads sign facts for sqrt(2). |
-| `structural_query_speed/sqrt_two_msd_query` | not run | not run | Reads magnitude facts for sqrt(2). |
-| `structural_query_speed/sqrt_two_structural_facts` | not run | not run | Computes full structural facts for sqrt(2). |
-| `structural_query_speed/pi_minus_three_zero_status` | not run | not run | Checks zero/nonzero facts for pi - 3. |
-| `structural_query_speed/pi_minus_three_sign_query` | not run | not run | Reads sign facts for pi - 3. |
-| `structural_query_speed/pi_minus_three_msd_query` | not run | not run | Reads magnitude facts for pi - 3. |
-| `structural_query_speed/pi_minus_three_structural_facts` | not run | not run | Computes full structural facts for pi - 3. |
-| `structural_query_speed/dense_expr_zero_status` | not run | not run | Checks zero/nonzero facts for a dense composite expression. |
-| `structural_query_speed/dense_expr_sign_query` | not run | not run | Reads sign facts for a dense composite expression. |
-| `structural_query_speed/dense_expr_msd_query` | not run | not run | Reads magnitude facts for a dense composite expression. |
-| `structural_query_speed/dense_expr_structural_facts` | not run | not run | Computes full structural facts for a dense composite expression. |
+| `structural_query_speed/zero_zero_status` | 0.73 ns | 0.72 ns - 0.75 ns | Checks zero/nonzero facts for exact zero. |
+| `structural_query_speed/zero_sign_query` | 4.41 ns | 4.35 ns - 4.49 ns | Reads sign facts for exact zero. |
+| `structural_query_speed/zero_msd_query` | 6.43 ns | 6.29 ns - 6.66 ns | Reads magnitude facts for exact zero. |
+| `structural_query_speed/zero_structural_facts` | 7.45 ns | 7.03 ns - 8.20 ns | Computes full structural facts for exact zero. |
+| `structural_query_speed/one_zero_status` | 0.82 ns | 0.79 ns - 0.86 ns | Checks zero/nonzero facts for exact one. |
+| `structural_query_speed/one_sign_query` | 24.11 ns | 23.31 ns - 25.05 ns | Reads sign facts for exact one. |
+| `structural_query_speed/one_msd_query` | 24.35 ns | 24.16 ns - 24.55 ns | Reads magnitude facts for exact one. |
+| `structural_query_speed/one_structural_facts` | 24.40 ns | 24.23 ns - 24.58 ns | Computes full structural facts for exact one. |
+| `structural_query_speed/negative_zero_status` | 0.81 ns | 0.78 ns - 0.83 ns | Checks zero/nonzero facts for an exact negative integer. |
+| `structural_query_speed/negative_sign_query` | 22.87 ns | 22.70 ns - 23.06 ns | Reads sign facts for an exact negative integer. |
+| `structural_query_speed/negative_msd_query` | 27.33 ns | 26.33 ns - 28.45 ns | Reads magnitude facts for an exact negative integer. |
+| `structural_query_speed/negative_structural_facts` | 27.45 ns | 27.22 ns - 27.74 ns | Computes full structural facts for an exact negative integer. |
+| `structural_query_speed/tiny_exact_zero_status` | 0.82 ns | 0.80 ns - 0.85 ns | Checks zero/nonzero facts for a tiny exact rational. |
+| `structural_query_speed/tiny_exact_sign_query` | 25.89 ns | 25.44 ns - 26.42 ns | Reads sign facts for a tiny exact rational. |
+| `structural_query_speed/tiny_exact_msd_query` | 28.91 ns | 28.75 ns - 29.10 ns | Reads magnitude facts for a tiny exact rational. |
+| `structural_query_speed/tiny_exact_structural_facts` | 33.08 ns | 32.37 ns - 34.04 ns | Computes full structural facts for a tiny exact rational. |
+| `structural_query_speed/pi_zero_status` | 0.81 ns | 0.80 ns - 0.81 ns | Checks zero/nonzero facts for pi. |
+| `structural_query_speed/pi_sign_query` | 35.75 ns | 34.21 ns - 37.53 ns | Reads sign facts for pi. |
+| `structural_query_speed/pi_msd_query` | 39.77 ns | 39.49 ns - 40.08 ns | Reads magnitude facts for pi. |
+| `structural_query_speed/pi_structural_facts` | 39.36 ns | 39.18 ns - 39.55 ns | Computes full structural facts for pi. |
+| `structural_query_speed/e_zero_status` | 0.84 ns | 0.83 ns - 0.86 ns | Checks zero/nonzero facts for e. |
+| `structural_query_speed/e_sign_query` | 34.10 ns | 33.80 ns - 34.45 ns | Reads sign facts for e. |
+| `structural_query_speed/e_msd_query` | 38.99 ns | 38.78 ns - 39.21 ns | Reads magnitude facts for e. |
+| `structural_query_speed/e_structural_facts` | 38.95 ns | 38.24 ns - 39.88 ns | Computes full structural facts for e. |
+| `structural_query_speed/tau_zero_status` | 0.80 ns | 0.80 ns - 0.81 ns | Checks zero/nonzero facts for tau. |
+| `structural_query_speed/tau_sign_query` | 33.45 ns | 32.85 ns - 34.39 ns | Reads sign facts for tau. |
+| `structural_query_speed/tau_msd_query` | 39.05 ns | 38.34 ns - 39.92 ns | Reads magnitude facts for tau. |
+| `structural_query_speed/tau_structural_facts` | 40.99 ns | 39.78 ns - 42.33 ns | Computes full structural facts for tau. |
+| `structural_query_speed/sqrt_two_zero_status` | 0.78 ns | 0.78 ns - 0.79 ns | Checks zero/nonzero facts for sqrt(2). |
+| `structural_query_speed/sqrt_two_sign_query` | 34.06 ns | 32.94 ns - 35.53 ns | Reads sign facts for sqrt(2). |
+| `structural_query_speed/sqrt_two_msd_query` | 38.97 ns | 38.63 ns - 39.34 ns | Reads magnitude facts for sqrt(2). |
+| `structural_query_speed/sqrt_two_structural_facts` | 36.74 ns | 36.37 ns - 37.14 ns | Computes full structural facts for sqrt(2). |
+| `structural_query_speed/pi_minus_three_zero_status` | 0.92 ns | 0.91 ns - 0.94 ns | Checks zero/nonzero facts for pi - 3. |
+| `structural_query_speed/pi_minus_three_sign_query` | 35.19 ns | 34.59 ns - 35.84 ns | Reads sign facts for pi - 3. |
+| `structural_query_speed/pi_minus_three_msd_query` | 40.32 ns | 39.58 ns - 41.31 ns | Reads magnitude facts for pi - 3. |
+| `structural_query_speed/pi_minus_three_structural_facts` | 40.74 ns | 40.19 ns - 41.41 ns | Computes full structural facts for pi - 3. |
+| `structural_query_speed/dense_expr_zero_status` | 3.00 ns | 2.93 ns - 3.08 ns | Checks zero/nonzero facts for a dense composite expression. |
+| `structural_query_speed/dense_expr_sign_query` | 34.56 ns | 34.16 ns - 34.99 ns | Reads sign facts for a dense composite expression. |
+| `structural_query_speed/dense_expr_msd_query` | 38.49 ns | 38.12 ns - 39.08 ns | Reads magnitude facts for a dense composite expression. |
+| `structural_query_speed/dense_expr_structural_facts` | 37.87 ns | 37.73 ns - 38.00 ns | Computes full structural facts for a dense composite expression. |
 
 ### `pure_scalar_algorithm_speed`
 
@@ -127,14 +127,14 @@ Core scalar algorithms that do not require high-precision transcendental approxi
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `pure_scalar_algorithm_speed/rational_add` | not run | not run | Adds two nontrivial rational values. |
-| `pure_scalar_algorithm_speed/rational_mul` | not run | not run | Multiplies two nontrivial rational values. |
-| `pure_scalar_algorithm_speed/rational_div` | not run | not run | Divides two nontrivial rational values. |
-| `pure_scalar_algorithm_speed/real_exact_add` | not run | not run | Adds exact rational-backed `Real` values. |
-| `pure_scalar_algorithm_speed/real_exact_mul` | not run | not run | Multiplies exact rational-backed `Real` values. |
-| `pure_scalar_algorithm_speed/real_exact_div` | not run | not run | Divides exact rational-backed `Real` values. |
-| `pure_scalar_algorithm_speed/real_exact_sqrt_reduce` | not run | not run | Reduces an exact square-root expression. |
-| `pure_scalar_algorithm_speed/real_exact_ln_reduce` | not run | not run | Reduces an exact logarithm of a power of two. |
+| `pure_scalar_algorithm_speed/rational_add` | 404.28 ns | 398.48 ns - 410.75 ns | Adds two nontrivial rational values. |
+| `pure_scalar_algorithm_speed/rational_mul` | 117.67 ns | 117.17 ns - 118.21 ns | Multiplies two nontrivial rational values. |
+| `pure_scalar_algorithm_speed/rational_div` | 595.32 ns | 591.83 ns - 599.30 ns | Divides two nontrivial rational values. |
+| `pure_scalar_algorithm_speed/real_exact_add` | 440.01 ns | 436.11 ns - 444.23 ns | Adds exact rational-backed `Real` values. |
+| `pure_scalar_algorithm_speed/real_exact_mul` | 186.72 ns | 184.16 ns - 189.36 ns | Multiplies exact rational-backed `Real` values. |
+| `pure_scalar_algorithm_speed/real_exact_div` | 672.76 ns | 668.24 ns - 677.34 ns | Divides exact rational-backed `Real` values. |
+| `pure_scalar_algorithm_speed/real_exact_sqrt_reduce` | 746.55 ns | 706.79 ns - 796.26 ns | Reduces an exact square-root expression. |
+| `pure_scalar_algorithm_speed/real_exact_ln_reduce` | 441.10 ns | 431.24 ns - 453.97 ns | Reduces an exact logarithm of a power of two. |
 
 ### `borrowed_op_overhead`
 
@@ -142,14 +142,14 @@ Borrowed versus owned operation overhead for rational and real operands.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `borrowed_op_overhead/rational_clone_pair` | not run | not run | Clones two rational values. |
-| `borrowed_op_overhead/rational_add_refs` | not run | not run | Adds rational references. |
-| `borrowed_op_overhead/rational_add_owned` | not run | not run | Adds owned rational values. |
-| `borrowed_op_overhead/real_clone_pair` | not run | not run | Clones two scaled transcendental `Real` values. |
-| `borrowed_op_overhead/real_unscaled_add_refs` | not run | not run | Adds borrowed unscaled transcendental `Real` values. |
-| `borrowed_op_overhead/real_unscaled_add_owned` | not run | not run | Adds owned unscaled transcendental `Real` values. |
-| `borrowed_op_overhead/real_add_refs` | not run | not run | Adds borrowed scaled transcendental `Real` values. |
-| `borrowed_op_overhead/real_add_owned` | not run | not run | Adds owned scaled transcendental `Real` values. |
+| `borrowed_op_overhead/rational_clone_pair` | 46.22 ns | 43.25 ns - 51.11 ns | Clones two rational values. |
+| `borrowed_op_overhead/rational_add_refs` | 448.17 ns | 384.22 ns - 523.09 ns | Adds rational references. |
+| `borrowed_op_overhead/rational_add_owned` | 1.006 us | 835.18 ns - 1.193 us | Adds owned rational values. |
+| `borrowed_op_overhead/real_clone_pair` | 438.26 ns | 403.93 ns - 488.24 ns | Clones two scaled transcendental `Real` values. |
+| `borrowed_op_overhead/real_unscaled_add_refs` | 174.89 ns | 173.07 ns - 177.22 ns | Adds borrowed unscaled transcendental `Real` values. |
+| `borrowed_op_overhead/real_unscaled_add_owned` | 222.18 ns | 219.08 ns - 225.57 ns | Adds owned unscaled transcendental `Real` values. |
+| `borrowed_op_overhead/real_add_refs` | 889.12 ns | 867.87 ns - 912.13 ns | Adds borrowed scaled transcendental `Real` values. |
+| `borrowed_op_overhead/real_add_owned` | 826.04 ns | 812.20 ns - 842.52 ns | Adds owned scaled transcendental `Real` values. |
 
 ### `dense_algebra`
 
@@ -157,10 +157,10 @@ Small dense algebra kernels that stress repeated exact and symbolic operations.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `dense_algebra/rational_dot_64` | not run | not run | Computes a 64-element rational dot product. |
-| `dense_algebra/rational_matmul_8` | not run | not run | Computes an 8x8 rational matrix multiply. |
-| `dense_algebra/real_dot_36` | not run | not run | Computes a 36-element dot product over symbolic `Real` values. |
-| `dense_algebra/real_matmul_6` | not run | not run | Computes a 6x6 matrix multiply over symbolic `Real` values. |
+| `dense_algebra/rational_dot_64` | 37.427 us | 36.065 us - 38.907 us | Computes a 64-element rational dot product. |
+| `dense_algebra/rational_matmul_8` | 237.989 us | 229.925 us - 249.364 us | Computes an 8x8 rational matrix multiply. |
+| `dense_algebra/real_dot_36` | 28.885 us | 27.840 us - 30.195 us | Computes a 36-element dot product over symbolic `Real` values. |
+| `dense_algebra/real_matmul_6` | 157.907 us | 153.698 us - 163.094 us | Computes a 6x6 matrix multiply over symbolic `Real` values. |
 
 ### `exact_transcendental_special_forms`
 
@@ -168,14 +168,37 @@ Construction-time shortcuts for exact rational multiples of pi and inverse compo
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `exact_transcendental_special_forms/sin_pi_7` | 552.99 ns | 546.44 ns - 561.66 ns | Builds the exact special form for sin(pi/7). |
-| `exact_transcendental_special_forms/cos_pi_7` | 1.061 us | 1.056 us - 1.066 us | Builds the exact special form for cos(pi/7). |
-| `exact_transcendental_special_forms/tan_pi_7` | 496.04 ns | 493.28 ns - 499.45 ns | Builds the exact special form for tan(pi/7). |
-| `exact_transcendental_special_forms/asin_sin_6pi_7` | 1.089 us | 1.083 us - 1.095 us | Recognizes the principal branch of asin(sin(6pi/7)). |
-| `exact_transcendental_special_forms/acos_cos_9pi_7` | 2.471 us | 2.458 us - 2.485 us | Recognizes the principal branch of acos(cos(9pi/7)). |
-| `exact_transcendental_special_forms/atan_tan_6pi_7` | 1.115 us | 1.103 us - 1.129 us | Recognizes the principal branch of atan(tan(6pi/7)). |
-| `exact_transcendental_special_forms/asinh_large` | 3.684 us | 3.661 us - 3.710 us | Builds a large inverse hyperbolic sine without exact intermediate Reals. |
-| `exact_transcendental_special_forms/atanh_sqrt_half` | 8.187 us | 7.326 us - 9.874 us | Builds atanh(sqrt(2)/2) after exact structural domain checks. |
+| `exact_transcendental_special_forms/sin_pi_7` | 581.05 ns | 570.93 ns - 592.04 ns | Builds the exact special form for sin(pi/7). |
+| `exact_transcendental_special_forms/cos_pi_7` | 1.016 us | 1.013 us - 1.019 us | Builds the exact special form for cos(pi/7). |
+| `exact_transcendental_special_forms/tan_pi_7` | 503.05 ns | 498.53 ns - 507.23 ns | Builds the exact special form for tan(pi/7). |
+| `exact_transcendental_special_forms/asin_sin_6pi_7` | 1.097 us | 1.086 us - 1.109 us | Recognizes the principal branch of asin(sin(6pi/7)). |
+| `exact_transcendental_special_forms/acos_cos_9pi_7` | 2.470 us | 2.369 us - 2.620 us | Recognizes the principal branch of acos(cos(9pi/7)). |
+| `exact_transcendental_special_forms/atan_tan_6pi_7` | 1.095 us | 1.090 us - 1.101 us | Recognizes the principal branch of atan(tan(6pi/7)). |
+| `exact_transcendental_special_forms/asinh_large` | 3.638 us | 3.615 us - 3.657 us | Builds a large inverse hyperbolic sine without exact intermediate Reals. |
+| `exact_transcendental_special_forms/atanh_sqrt_half` | 6.880 us | 6.709 us - 7.079 us | Builds atanh(sqrt(2)/2) after exact structural domain checks. |
+
+### `symbolic_reductions`
+
+Existing symbolic constant algebra cases considered for additional reductions.
+
+| Benchmark output | Mean | 95% CI | What it measures |
+| --- | ---: | ---: | --- |
+| `symbolic_reductions/sqrt_pi_square` | 143.98 ns | 139.06 ns - 149.97 ns | Reduces sqrt(pi^2). |
+| `symbolic_reductions/sqrt_pi_e_square` | 181.06 ns | 178.38 ns - 184.62 ns | Reduces sqrt((pi * e)^2). |
+| `symbolic_reductions/ln_scaled_e` | 1.892 us | 1.847 us - 1.956 us | Reduces ln(2 * e). |
+| `symbolic_reductions/sub_pi_three` | 1.751 us | 1.729 us - 1.774 us | Builds the certified pi - 3 constant-offset form. |
+| `symbolic_reductions/pi_minus_three_facts` | 37.89 ns | 37.36 ns - 38.48 ns | Reads structural facts for the cached pi - 3 offset form. |
+| `symbolic_reductions/div_exp_exp` | 3.730 us | 3.662 us - 3.822 us | Reduces e^3 / e. |
+| `symbolic_reductions/div_pi_square_e` | 3.277 us | 3.246 us - 3.310 us | Reduces pi^2 / e. |
+| `symbolic_reductions/div_const_products` | 4.542 us | 4.407 us - 4.703 us | Reduces (pi^3 * e^5) / (pi * e^2). |
+| `symbolic_reductions/inverse_pi` | 96.94 ns | 95.48 ns - 99.13 ns | Builds the reciprocal of pi. |
+| `symbolic_reductions/div_one_pi` | 286.93 ns | 280.01 ns - 294.58 ns | Reduces 1 / pi. |
+| `symbolic_reductions/div_e_pi` | 343.53 ns | 341.01 ns - 346.18 ns | Reduces e / pi. |
+| `symbolic_reductions/mul_pi_inverse_pi` | 270.73 ns | 264.59 ns - 276.42 ns | Multiplies pi by its reciprocal. |
+| `symbolic_reductions/mul_pi_e_sqrt_two` | 996.75 ns | 971.54 ns - 1.028 us | Builds the factored pi * e * sqrt(2) form. |
+| `symbolic_reductions/mul_const_product_sqrt_sqrt` | 809.61 ns | 742.89 ns - 908.87 ns | Cancels sqrt(2) from (pi * e * sqrt(2)) * sqrt(2). |
+| `symbolic_reductions/div_const_product_sqrt_e` | 1.115 us | 1.098 us - 1.134 us | Reduces (pi * e * sqrt(2)) / e. |
+| `symbolic_reductions/inverse_const_product_sqrt` | 3.796 us | 3.751 us - 3.850 us | Builds a rationalized reciprocal of pi * e * sqrt(2). |
 
 <!-- END scalar_micro -->
 

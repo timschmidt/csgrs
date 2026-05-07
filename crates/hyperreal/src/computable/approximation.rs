@@ -10,18 +10,41 @@ use std::ops::Deref;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub(super) enum Approximation {
+    // Exact integer leaf. This is the cheapest approximation source and also
+    // exposes exact sign/MSD facts without any refinement.
     Int(BigInt),
+    // Shared constants use a process-local approximation cache keyed by enum
+    // discriminant; do not replace these with fresh expression trees.
     Constant(SharedConstant),
+    // Generic reciprocal node. Constructors try to eliminate this for exact
+    // rationals, double inverses, and signed binary offsets before it reaches
+    // approximation.
     Inverse(Computable),
+    // Sign wrapper kept separate so negate/negate and sign queries collapse
+    // without touching child approximation caches.
     Negate(Computable),
+    // Generic sum. The evaluator treats Add specially to avoid recursive stack
+    // growth in deep expression chains.
     Add(Computable, Computable),
+    // Generic product. Exact and dyadic scales are peeled off before this node
+    // is created because multiplication dominates dense algebra kernels.
     Multiply(Computable, Computable),
+    // Dedicated square node exposes sign/MSD facts and lets sqrt(square(x))
+    // collapse structurally when x has a known sign.
     Square(Computable),
+    // Exact rational leaf, used for imported floats and parser-folded exact
+    // subexpressions.
     Ratio(Rational),
+    // Binary scaling by 2^n. This is the preferred representation for dyadic
+    // factors because approximation becomes a precision shift.
     Offset(Computable, i32),
+    // The remaining Prescaled* variants are approximation kernels whose callers
+    // have already reduced the argument into the range required by the series.
     PrescaledExp(Computable),
     Sqrt(Computable),
     PrescaledLn(Computable),
+    // IntegralAtan stores atan(1/n), used by Machin-style pi and midpoint atan
+    // reductions without constructing a rational reciprocal node.
     IntegralAtan(BigInt),
     PrescaledAtan(Computable),
     PrescaledAsin(Computable),
@@ -71,6 +94,9 @@ impl Approximation {
     pub fn approximate(&self, signal: &Option<Signal>, p: Precision) -> BigInt {
         use Approximation::*;
 
+        // This is intentionally a thin dispatcher. Algebraic simplification and
+        // cache selection live in `Computable` constructors so kernels can assume
+        // their documented preconditions and avoid repeated shape checks.
         match self {
             Int(i) => scale(i.clone(), -p),
             Constant(c) => c.approximate(signal, p),
@@ -98,6 +124,10 @@ impl Approximation {
 
 impl SharedConstant {
     fn approximate(self, signal: &Option<Signal>, p: Precision) -> BigInt {
+        // Every shared constant routes through the same enum so cloned public
+        // constants share approximation caches. Some constants are still built
+        // from series identities here, but the cache prevents redoing that work
+        // for repeated scalar and matrix operations.
         match self {
             Self::E => e(p),
             Self::Pi => pi(signal, p),
@@ -115,6 +145,9 @@ impl SharedConstant {
 }
 
 fn raw(kind: Approximation) -> Computable {
+    // Build a node with no constructor-level simplification. This is used only
+    // for internal constant identities where adding public simplification would
+    // either recurse back into the same constant or erase the intended kernel.
     Computable {
         internal: Box::new(kind),
         cache: std::cell::RefCell::new(crate::computable::Cache::Invalid),
@@ -125,6 +158,9 @@ fn raw(kind: Approximation) -> Computable {
 }
 
 fn pi(signal: &Option<Signal>, p: Precision) -> BigInt {
+    // Machin formula: pi = 4 * (4 atan(1/5) - atan(1/239)).
+    // It converges much faster than a generic trig/log identity and is stable
+    // enough to serve as the shared pi cache source.
     let atan5 = Computable::prescaled_atan(BigInt::from(5_u8));
     let atan_239 = Computable::prescaled_atan(BigInt::from(239_u16));
     let four = Computable::integer(BigInt::from(4_u8));
@@ -134,6 +170,9 @@ fn pi(signal: &Option<Signal>, p: Precision) -> BigInt {
 }
 
 fn ln2(signal: &Option<Signal>, p: Precision) -> BigInt {
+    // A fixed atanh/log1p decomposition for ln(2). Keeping ln2 as its own
+    // shared constant matters because exp/ln range reduction adds multiples of
+    // ln2 frequently.
     let prescaled_9 = raw(Approximation::PrescaledLn(Computable::rational(
         Rational::fraction(1, 9).unwrap(),
     )));
@@ -155,14 +194,20 @@ fn ln2(signal: &Option<Signal>, p: Precision) -> BigInt {
 }
 
 fn ln_constant(signal: &Option<Signal>, n: Rational, p: Precision) -> BigInt {
+    // Non-ln2 logarithm constants reuse the normal logarithm reduction, then
+    // benefit from the shared-constant cache on future calls.
     Computable::rational(n).ln().approx_signal(signal, p)
 }
 
 fn sqrt_constant(signal: &Option<Signal>, n: Rational, p: Precision) -> BigInt {
+    // sqrt(2) and sqrt(3) are common exact trig results; they share caches even
+    // though the approximation kernel is the generic sqrt.
     raw(Approximation::Sqrt(Computable::rational(n))).approx_signal(signal, p)
 }
 
 fn e_terms_for_precision(p: Precision) -> u32 {
+    // Choose enough 1/k! terms so the binary-split tail is below the requested
+    // bit precision. Positive precisions need only a tiny constant amount.
     let needed_bits = if p < 0 { (-p) as u64 + 4 } else { 4 };
     let mut factorial = BigUint::one();
     let mut n = 0_u32;
@@ -178,6 +223,8 @@ fn e_terms_for_precision(p: Precision) -> u32 {
 
 // Returns (P, Q) for sum_{k=a}^{b-1} 1 / prod_{j=a}^k j == P / Q
 fn e_binary_split(a: u32, b: u32) -> (BigUint, BigUint) {
+    // Binary splitting keeps numerator/denominator growth balanced. A linear
+    // summation of rationals is noticeably more allocation-heavy for cold e.
     if b - a == 1 {
         return (BigUint::one(), BigUint::from(a));
     }
@@ -189,6 +236,9 @@ fn e_binary_split(a: u32, b: u32) -> (BigUint, BigUint) {
 }
 
 fn rounded_ratio(numerator: BigUint, denominator: BigUint, p: Precision) -> BigInt {
+    // All kernels return an integer scaled by 2^-p and accurate within one unit
+    // at that scale. Centralizing rounding avoids subtly different half-up
+    // behavior between constants.
     if p <= 0 {
         let shift = usize::try_from(-p).expect("precision shift should fit in usize");
         let dividend = numerator << shift;
@@ -201,6 +251,8 @@ fn rounded_ratio(numerator: BigUint, denominator: BigUint, p: Precision) -> BigI
 }
 
 fn e(p: Precision) -> BigInt {
+    // e = 1 + sum_{k>=1} 1/k!. The tail is evaluated as one rational by binary
+    // splitting and rounded once at the target scale.
     let terms = e_terms_for_precision(p);
     if terms == 0 {
         return rounded_ratio(BigUint::one(), BigUint::one(), p);
@@ -211,6 +263,9 @@ fn e(p: Precision) -> BigInt {
 }
 
 fn inverse(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    // Plan reciprocal precision from the operand MSD. This avoids evaluating
+    // the denominator far more accurately than the final rounded quotient can
+    // use, which was a hotspot in scalar division and matrix inverse paths.
     let msd = c.iter_msd();
     let inv_msd = 1 - msd;
     let digits_needed = inv_msd - p + 3;
@@ -235,6 +290,9 @@ fn inverse(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
 }
 
 fn add(signal: &Option<Signal>, c1: &Computable, c2: &Computable, p: Precision) -> BigInt {
+    // Addition first tries to prove one operand too small to affect the result
+    // at precision p. That dominates deep structural sums and avoids touching
+    // tiny terms when signs/MSDs are already known.
     let extra = 4;
     let cutoff = p - extra;
     let (sign1, msd1) = c1.planning_sign_and_msd();
@@ -290,6 +348,9 @@ fn multiply_with_known_msd(
     other: &Computable,
     p: Precision,
 ) -> BigInt {
+    // Evaluate the unknown-size operand first, then request only the precision
+    // actually needed from the known-size operand. This asymmetric planning is
+    // cheaper for products of exact scales and expensive transcendental nodes.
     let prec_other = p - known_msd - 3;
     let appr_other = other.approx_signal(signal, prec_other);
 
@@ -306,6 +367,9 @@ fn multiply_with_known_msd(
 }
 
 fn multiply(signal: &Option<Signal>, c1: &Computable, c2: &Computable, p: Precision) -> BigInt {
+    // Prefer the operand with known larger magnitude as the precision anchor.
+    // If one side is effectively zero at the planning cutoff, the product is
+    // zero at the requested precision without evaluating both sides deeply.
     let half_prec = (p >> 1) - 1;
     let (sign1, msd1) = c1.planning_sign_and_msd();
     let (sign2, msd2) = c2.planning_sign_and_msd();
@@ -327,6 +391,8 @@ fn multiply(signal: &Option<Signal>, c1: &Computable, c2: &Computable, p: Precis
 }
 
 fn square(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    // Square can reuse one approximation of the child. Constructors create this
+    // node for repeated powers so multiplication does not duplicate child work.
     let half_prec = (p >> 1) - 1;
     let (sign, msd) = c.planning_sign_and_msd();
     if sign == Some(Sign::NoSign) {
@@ -351,6 +417,8 @@ fn square(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
 }
 
 fn ratio(r: &Rational, p: Precision) -> BigInt {
+    // Exact rationals approximate by shifting the numerator/denominator ratio
+    // directly; dyadic rationals make this path especially cheap.
     if p >= 0 {
         scale(r.shifted_big_integer(0), -p)
     } else {
@@ -359,6 +427,8 @@ fn ratio(r: &Rational, p: Precision) -> BigInt {
 }
 
 fn offset(signal: &Option<Signal>, c: &Computable, n: i32, p: Precision) -> BigInt {
+    // x * 2^n at precision p is just x at precision p-n. This is why dyadic
+    // scales are represented as Offset nodes instead of generic multiplication.
     c.approx_signal(signal, p - n)
 }
 
@@ -373,6 +443,8 @@ fn bound_log2(n: i32) -> i32 {
 /* Only intended for Computable values < 0.5, others will be pre-scaled
  * in Computable::exp */
 fn exp(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    // Kernel precondition: caller has reduced |c| below roughly 1/2. The series
+    // is intentionally simple here; range reduction belongs in `Computable::exp`.
     if p >= 1 {
         return Zero::zero();
     }
@@ -413,6 +485,9 @@ fn exp(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
 }
 
 fn sqrt(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    // Sqrt uses a fixed-size integer sqrt for moderate precision and recursive
+    // Newton refinement for deeper requests. This avoids pulling in floating
+    // approximations while keeping high-precision sqrt from scaling quadratically.
     let fp_prec: i32 = 140;
     let fp_op_prec: i32 = 150;
 
@@ -472,6 +547,8 @@ fn sqrt(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
 // Compute cosine of |c| < 1
 // uses a Taylor series expansion.
 fn cos(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    // Kernel precondition: |c| < 1. Argument reduction and exact pi-multiple
+    // handling happen before this node is constructed.
     if p >= 1 {
         return signed::ONE.deref().clone();
     }
@@ -521,6 +598,8 @@ fn cos(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
 // Compute sine of |c| < 1
 // uses a Taylor series expansion.
 fn sin(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    // Kernel precondition: |c| < 1. The caller keeps large arguments out of this
+    // Taylor loop so huge sin/cos rows spend time in reduction, not series setup.
     if p >= 1 {
         return Zero::zero();
     }
@@ -572,6 +651,8 @@ fn sin(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
 // but computes both approximations locally to avoid building
 // separate Computable trees for sin, cos, inverse, and multiply.
 fn tan(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    // Kernel precondition: |c| < 1 and not near a pole. The constructor rewrites
+    // near-pi/2 inputs to cot(complement) before this quotient is used.
     if p >= 1 {
         return Zero::zero();
     }
@@ -600,6 +681,8 @@ fn tan(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
 // This mirrors tan(x) = sin(x) / cos(x), but flips the quotient so
 // tan(pi/2 - x) can avoid building an extra inverse Computable node.
 fn cot(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    // Used only after a tangent complement reduction, where sin(c) should be
+    // safely away from zero.
     if p >= 1 {
         return Zero::zero();
     }
@@ -630,6 +713,8 @@ fn cot(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
 // whose odd-power series converges substantially faster
 // than the direct Taylor series when x is near 1/2.
 fn ln(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    // Kernel precondition: this computes ln(1+x), not arbitrary ln(x). Public
+    // construction keeps |x| < 1/2 by inversion, sqrt scaling, and powers of two.
     if p >= 0 {
         return Zero::zero();
     }
@@ -674,6 +759,8 @@ fn ln(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
 // Approximate the Arctangent of 1/n where n is some small integer > base
 // what is "base" in this context?
 fn atan(signal: &Option<Signal>, i: &BigInt, p: Precision) -> BigInt {
+    // Integral atan is used for atan(1/n), where division by n^2 each iteration
+    // is cheaper and more stable than approximating a rational Computable child.
     if p >= 1 {
         return Zero::zero();
     }
@@ -724,6 +811,8 @@ fn atan(signal: &Option<Signal>, i: &BigInt, p: Precision) -> BigInt {
 
 // Approximate atan(c) for |c| < 1/2.
 fn atan_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    // Kernel precondition: |c| is small. Larger atan inputs are reduced by
+    // subtraction of atan(1/2) or the reciprocal identity before reaching here.
     if p >= 1 {
         return Zero::zero();
     }
@@ -755,6 +844,8 @@ fn atan_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> Big
 
 // Approximate asin(c) for small |c|.
 fn asin_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    // Dedicated tiny-argument asin series. It avoids the generic atan/sqrt
+    // transform, which is overkill and slower when |x| is already very small.
     if p >= 1 {
         return Zero::zero();
     }
@@ -788,6 +879,8 @@ fn asin_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> Big
 
 // Approximate atanh(c) for small |c|.
 fn atanh_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    // Dedicated tiny-argument atanh series, also reused by the ln1p kernel after
+    // it transforms ln(1+x) into 2*atanh(x/(2+x)).
     if p >= 1 {
         return Zero::zero();
     }

@@ -39,8 +39,14 @@ enum ExactSignCache {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum BoundInfo {
+    // Unknown means the expression may still be zero or either sign; callers
+    // must not use it to short-circuit exact predicates.
     Unknown,
+    // Exact structural zero, usually from rational leaves or annihilating
+    // products.
     Zero,
+    // NonZero may have an unknown sign or inexact MSD. That is still enough for
+    // zero-status fast paths and precision planning.
     NonZero {
         sign: Option<Sign>,
         msd: Option<Precision>,
@@ -186,6 +192,9 @@ impl BoundInfo {
     }
 
     fn add(self, other: Self) -> Self {
+        // Addition can certify sign when operands share a sign or one MSD
+        // dominates an opposite-signed operand. Near-cancellation deliberately
+        // returns Unknown so callers fall back to refinement.
         match (self, other) {
             (Self::Zero, other) | (other, Self::Zero) => other,
             (
@@ -289,6 +298,9 @@ impl BoundInfo {
 
 impl SharedConstant {
     fn bound_info(self) -> BoundInfo {
+        // Coarse but exact-enough MSD facts for shared constants. These feed
+        // structural queries and trig/ln reduction planning without forcing a
+        // cached approximation.
         let msd = match self {
             SharedConstant::E | SharedConstant::Pi | SharedConstant::Ln10 => Some(1),
             SharedConstant::Tau => Some(2),
@@ -304,6 +316,9 @@ impl SharedConstant {
     }
 
     fn interval(self) -> (Rational, Rational) {
+        // Narrow rational intervals used only for constant+rational sign
+        // certificates. They are intentionally cheap and hand-picked, not a
+        // replacement for high-precision approximation.
         match self {
             Self::E => (
                 Rational::fraction(271_828, 100_000).unwrap(),
@@ -468,6 +483,8 @@ impl Computable {
     }
 
     pub(crate) fn ln_constant(base: u32) -> Option<Computable> {
+        // Common logarithms are shared constants so repeated symbolic ln forms
+        // reuse one approximation cache across cloned Real values.
         let constant = match base {
             2 => SharedConstant::Ln2,
             3 => SharedConstant::Ln3,
@@ -481,6 +498,8 @@ impl Computable {
     }
 
     pub(crate) fn sqrt_constant(n: i64) -> Option<Computable> {
+        // sqrt(2) and sqrt(3) are exact trig outputs; caching them prevents
+        // fresh sqrt kernels in every sin/cos special form.
         let constant = match n {
             2 => SharedConstant::Sqrt2,
             3 => SharedConstant::Sqrt3,
@@ -490,6 +509,9 @@ impl Computable {
     }
 
     pub(crate) fn prescaled_sin(value: Computable) -> Computable {
+        // Caller promises argument reduction has already happened. Keeping this
+        // constructor private prevents large arguments from entering the Taylor
+        // kernel directly.
         Self {
             internal: Box::new(Approximation::PrescaledSin(value)),
             cache: RefCell::new(Cache::Invalid),
@@ -500,6 +522,8 @@ impl Computable {
     }
 
     pub(crate) fn prescaled_tan(value: Computable) -> Computable {
+        // Same reduced-argument contract as prescaled_sin; tangent additionally
+        // relies on the public constructor to handle near-pole complements.
         Self {
             internal: Box::new(Approximation::PrescaledTan(value)),
             cache: RefCell::new(Cache::Invalid),
@@ -510,6 +534,9 @@ impl Computable {
     }
 
     fn shared_constant(constant: SharedConstant) -> Computable {
+        // Shared constants start with valid structural facts. Approximation
+        // values are cached globally per thread, but the bound/sign caches can
+        // be initialized directly on each lightweight wrapper.
         Self {
             internal: Box::new(Approximation::Constant(constant)),
             cache: RefCell::new(Cache::Invalid),
@@ -534,6 +561,7 @@ impl Computable {
 impl Computable {
     pub(crate) fn exp_rational(r: Rational) -> Self {
         if r == Rational::one() {
+            // e^1 is hot enough to route to the shared e cache.
             Self::e_constant()
         } else {
             let rational = Self::rational(r);
@@ -558,6 +586,9 @@ impl Computable {
     }
 
     fn shared_constant_term(&self) -> Option<(SharedConstant, Rational)> {
+        // Recognize "exact rational scale times one shared constant" through
+        // lightweight wrappers. This supports pi-3/e-2 style sign certificates
+        // without needing a full symbolic Real class.
         match &*self.internal {
             Approximation::Constant(constant) => Some((*constant, Rational::one())),
             Approximation::Negate(child) => {
@@ -584,6 +615,9 @@ impl Computable {
     }
 
     fn bound_from_strict_interval(lower: Rational, upper: Rational) -> BoundInfo {
+        // Convert an interval that excludes zero into a reusable sign/MSD
+        // certificate. If the interval crosses zero, preserve correctness by
+        // returning Unknown.
         let zero = Rational::zero();
         let (sign, magnitude_lower, magnitude_upper) = if lower > zero {
             (Sign::Plus, lower, upper)
@@ -608,6 +642,9 @@ impl Computable {
         term: &(SharedConstant, Rational),
         rational: &Rational,
     ) -> BoundInfo {
+        // Specialized structural bound for c*K + q where K is a shared constant.
+        // This is the computable-side companion to Real's ConstOffset class and
+        // keeps generic Add nodes for pi-3 from needing approximation refinement.
         let (constant, scale) = term;
         let (lower, upper) = constant.interval();
         let scaled_lower = lower * scale;
@@ -622,6 +659,9 @@ impl Computable {
     }
 
     fn cached_at_precision(&self, p: Precision) -> Option<BigInt> {
+        // A cached value at precision q can answer any less precise request p
+        // by shifting, but not a more precise one. Shared constants use the
+        // thread-local cache; other nodes keep their cache beside the node.
         let cached = if let Some(constant) = self.shared_constant_kind() {
             SHARED_CONSTANT_CACHES.with(|caches| {
                 let caches = caches.borrow();
@@ -649,6 +689,9 @@ impl Computable {
     }
 
     fn store_cache_value(&self, p: Precision, value: BigInt) {
+        // Store only exact node approximation results, not temporary scaled
+        // values. For shared constants this updates the global thread-local
+        // cache so every cloned constant wrapper benefits.
         if let Some(constant) = self.shared_constant_kind() {
             SHARED_CONSTANT_CACHES.with(|caches| {
                 caches.borrow_mut()[constant.cache_index()] = Cache::Valid((p, value));
@@ -667,12 +710,16 @@ impl Computable {
     }
 
     fn store_bound(&self, info: &BoundInfo) {
+        // Unknown facts are intentionally not cached; a later approximation may
+        // discover a real sign/MSD and should be allowed to populate the cache.
         if *info != BoundInfo::Unknown {
             self.bound.replace(BoundCache::Valid(info.clone()));
         }
     }
 
     fn bound_from_approx(prec: Precision, appr: &BigInt) -> BoundInfo {
+        // Approximation values with magnitude <= 1 are within the allowed error
+        // band, so they cannot certify sign or nonzero status.
         if appr.abs() <= BigInt::one() {
             BoundInfo::Unknown
         } else {
@@ -685,6 +732,8 @@ impl Computable {
     }
 
     fn cheap_bound_shallow(&self, budget: usize) -> Option<BoundInfo> {
+        // First try a shallow recursive walk. It is faster for common small
+        // trees and avoids allocating the explicit stack used by deep chains.
         if let Some(info) = self.cached_bound() {
             return Some(info);
         }
@@ -739,6 +788,9 @@ impl Computable {
     fn cheap_bound(&self) -> BoundInfo {
         const SHALLOW_BOUND_BUDGET: usize = 24;
 
+        // The public structural API leans on this method heavily. It must stay
+        // conservative: a false NonZero or sign certificate is a correctness
+        // bug, while Unknown only costs later refinement.
         if let Some(info) = self.cached_bound() {
             return info;
         }
@@ -785,6 +837,9 @@ impl Computable {
         let mut frames = vec![Frame::Eval(self)];
         let mut values: Vec<BoundInfo> = Vec::new();
 
+        // Deep addition/multiplication chains are common after algebra kernels.
+        // Use an explicit stack so structural fact discovery cannot recurse
+        // through thousands of nodes.
         while let Some(frame) = frames.pop() {
             match frame {
                 Frame::Eval(node) => {
@@ -868,6 +923,10 @@ impl Computable {
     }
 
     fn exact_sign(&self) -> Option<Sign> {
+        // `exact_sign` is stronger than "current approximation sign": it means
+        // the expression shape or a separated cached approximation proves the
+        // sign. Unknown is cached separately so impossible structural proofs do
+        // not repeat on every predicate query.
         let cached_sign = *self.exact_sign.borrow();
         match cached_sign {
             ExactSignCache::Valid(sign) => return Some(sign),
@@ -915,6 +974,8 @@ impl Computable {
         }
 
         fn exact_sign_direct(node: &Computable) -> Option<Option<Sign>> {
+            // Direct cases either know their sign structurally or are known not
+            // to be structurally decidable without visiting children.
             if let Some(sign) = cached_exact_sign(node) {
                 return Some(sign);
             }
@@ -954,6 +1015,9 @@ impl Computable {
         let mut frames = vec![Frame::Eval(self)];
         let mut values: Vec<Option<Sign>> = Vec::new();
 
+        // Mirror cheap_bound's nonrecursive traversal for deep structural
+        // expressions. This matters for predicate-heavy code that asks only for
+        // sign and never needs numeric approximation.
         while let Some(frame) = frames.pop() {
             match frame {
                 Frame::Eval(node) => {
@@ -1092,6 +1156,9 @@ impl Computable {
     }
 
     fn integer_ratio_nearest(&self, divisor: Computable) -> BigInt {
+        // Low-precision nearest-integer quotient used only for range reduction.
+        // It deliberately asks for a rough result and relies on caller-side
+        // correction instead of doing an expensive exact division.
         let quotient = self.clone().multiply(divisor.inverse());
         scale(quotient.approx(-4), -4)
     }
@@ -1519,6 +1586,8 @@ impl Computable {
     }
 
     fn prescaled_ln(self) -> Self {
+        // Private constructor for ln(1+x). Public ln range reduction must run
+        // first so this node never sees an arbitrary positive value.
         Self {
             internal: Box::new(Approximation::PrescaledLn(self)),
             cache: RefCell::new(Cache::Invalid),
@@ -1529,10 +1598,14 @@ impl Computable {
     }
 
     pub(crate) fn ln_1p(self) -> Self {
+        // Exposed internally for inverse-hyperbolic endpoint transforms that
+        // have already constructed the small x in ln(1+x).
         self.prescaled_ln()
     }
 
     pub(crate) fn sqrt_rational(r: Rational) -> Self {
+        // Preserve the rational leaf so sqrt can still collapse perfect
+        // rational squares before allocating a generic Sqrt node.
         let rational = Self::rational(r);
         Self::sqrt(rational)
     }
@@ -1600,6 +1673,8 @@ impl Computable {
     }
 
     fn prescaled_atan(n: BigInt) -> Self {
+        // atan(1/n) kernel used by pi and atan reduction constants. Passing the
+        // denominator as an integer keeps the series loop division-only.
         Self {
             internal: Box::new(Approximation::IntegralAtan(n)),
             cache: RefCell::new(Cache::Invalid),
@@ -1727,6 +1802,8 @@ impl Computable {
 
     /// Inverse hyperbolic sine of this number.
     pub fn asinh(self) -> Computable {
+        // Generic identity. Real-level callers may route small arguments through
+        // ln1p-style transforms before falling back here.
         let radicand = self.clone().square().add(Self::one());
         self.add(radicand.sqrt()).ln()
     }
@@ -1734,6 +1811,8 @@ impl Computable {
     /// Inverse hyperbolic cosine of this number. The caller is responsible for
     /// ensuring the input is in-domain.
     pub fn acosh(self) -> Computable {
+        // Generic identity for already validated inputs. Real-level acosh has
+        // exact sqrt/log shortcuts and near-one transforms before this fallback.
         let one = Self::one();
         let radicand = self.clone().square().add(one.negate());
         self.add(radicand.sqrt()).ln()
@@ -1764,6 +1843,8 @@ impl Computable {
             return self.negate().atanh().negate();
         }
 
+        // General formula 1/2 * ln((1+x)/(1-x)). Tiny exact rationals avoid
+        // this path because the odd atanh series has much less setup.
         let one = Self::one();
         let numerator = one.clone().add(self.clone());
         let denominator = one.add(self.negate());
@@ -1776,9 +1857,13 @@ impl Computable {
     /// Negate this number.
     pub fn negate(self) -> Computable {
         if let Some(rational) = self.exact_rational() {
+            // Keep exact leaves exact; a Negate node would hide cheap rational
+            // sign/MSD facts.
             return Self::rational(rational.neg());
         }
         if let Approximation::Negate(child) = self.internal.as_ref() {
+            // Double negation cancels at construction time so exact sign walks
+            // and approximation stacks stay shallow.
             return child.clone();
         }
         Self {
@@ -1795,21 +1880,28 @@ impl Computable {
         if let Some(rational) = self.exact_rational()
             && let Ok(inverse) = rational.inverse()
         {
+            // Exact rational reciprocals stay exact; this is common in BLAS
+            // division by scalar constants.
             return Self::rational(inverse);
         }
         if let Approximation::Negate(child) = self.internal.as_ref()
             && child.exact_sign().is_some_and(|sign| sign != Sign::NoSign)
         {
+            // 1/(-x) = -(1/x). The nonzero sign guard avoids manufacturing a
+            // reciprocal of a value that may be zero.
             return child.clone().inverse().negate();
         }
         if let Approximation::Offset(child, n) = self.internal.as_ref()
             && child.exact_sign().is_some_and(|sign| sign != Sign::NoSign)
         {
+            // 1/(x*2^n) = (1/x)*2^-n, preserving the cheap binary scale.
             return child.clone().inverse().shift_left(-n);
         }
         if let Approximation::Inverse(child) = self.internal.as_ref()
             && child.exact_sign().is_some_and(|sign| sign != Sign::NoSign)
         {
+            // Inverse of inverse collapses only when the inner value is
+            // structurally nonzero.
             return child.clone();
         }
         Self {
@@ -1826,6 +1918,8 @@ impl Computable {
             return self;
         }
         if let Approximation::Offset(child, inner) = self.internal.as_ref() {
+            // Combine nested binary offsets rather than growing a chain of
+            // no-op-ish wrappers.
             return child.clone().shift_left(inner + n);
         }
         Self {
@@ -1974,6 +2068,8 @@ impl Computable {
 
     pub(crate) fn multiply_rational(self, scale: Rational) -> Computable {
         if scale.sign() == Sign::NoSign {
+            // Multiplying by zero drops the expression tree, including any
+            // pending expensive approximation work.
             return Self::rational(Rational::zero());
         }
         if scale == Rational::one() {
@@ -1983,6 +2079,8 @@ impl Computable {
             return self.negate();
         }
         if let Some((shift, sign)) = scale.power_of_two_shift() {
+            // The borrowed Real fold path calls this often; recognize dyadic
+            // scales before building a generic Multiply node.
             let shifted = self.shift_left(shift);
             return if sign == Sign::Minus {
                 shifted.negate()
@@ -2025,6 +2123,9 @@ impl Computable {
         } else {
             BoundInfo::Unknown
         };
+        // Store any c*K+q certificate directly on the Add node. The arithmetic
+        // still falls back to a generic sum, but structural sign/fact queries
+        // can answer from the certificate.
         let certified_sign = certified_bound.known_sign();
         Self {
             internal: Box::new(Approximation::Add(self, other)),
@@ -2102,6 +2203,9 @@ impl Computable {
             &*self.internal,
             Approximation::Negate(_) | Approximation::Add(_, _) | Approximation::Offset(_, _)
         ) {
+            // Most node kinds evaluate as one kernel call. Only Negate/Add/Offset
+            // are flattened below because they form the long chains seen in
+            // parser, matrix, and structural-reduction workloads.
             let result = self.internal.approximate(signal, p);
             self.store_cache_value(p, result.clone());
             return result;
@@ -2120,15 +2224,22 @@ impl Computable {
 
                     match &*node.internal {
                         Approximation::Negate(child) => {
+                            // Flatten sign wrappers so a deep chain of negated
+                            // sums does not recurse through approx_signal.
                             frames.push(Frame::FinishNegate(node, prec));
                             frames.push(Frame::Eval(child, prec));
                         }
                         Approximation::Add(left, right) => {
+                            // Evaluate add children at two guard bits, then
+                            // round once. This mirrors the recursive add kernel
+                            // but avoids stack growth for chained additions.
                             frames.push(Frame::FinishAdd(node, prec));
                             frames.push(Frame::Eval(right, prec - 2));
                             frames.push(Frame::Eval(left, prec - 2));
                         }
                         Approximation::Offset(child, n) => {
+                            // Binary offsets translate the requested precision
+                            // instead of doing any arithmetic at finish time.
                             frames.push(Frame::FinishOffset(node, prec));
                             frames.push(Frame::Eval(child, prec - *n));
                         }

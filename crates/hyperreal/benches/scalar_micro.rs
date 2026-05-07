@@ -340,6 +340,76 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
             },
         ],
     },
+    BenchGroupDoc {
+        name: "symbolic_reductions",
+        description: "Existing symbolic constant algebra cases considered for additional reductions.",
+        benches: &[
+            BenchDoc {
+                name: "sqrt_pi_square",
+                description: "Reduces sqrt(pi^2).",
+            },
+            BenchDoc {
+                name: "sqrt_pi_e_square",
+                description: "Reduces sqrt((pi * e)^2).",
+            },
+            BenchDoc {
+                name: "ln_scaled_e",
+                description: "Reduces ln(2 * e).",
+            },
+            BenchDoc {
+                name: "sub_pi_three",
+                description: "Builds the certified pi - 3 constant-offset form.",
+            },
+            BenchDoc {
+                name: "pi_minus_three_facts",
+                description: "Reads structural facts for the cached pi - 3 offset form.",
+            },
+            BenchDoc {
+                name: "div_exp_exp",
+                description: "Reduces e^3 / e.",
+            },
+            BenchDoc {
+                name: "div_pi_square_e",
+                description: "Reduces pi^2 / e.",
+            },
+            BenchDoc {
+                name: "div_const_products",
+                description: "Reduces (pi^3 * e^5) / (pi * e^2).",
+            },
+            BenchDoc {
+                name: "inverse_pi",
+                description: "Builds the reciprocal of pi.",
+            },
+            BenchDoc {
+                name: "div_one_pi",
+                description: "Reduces 1 / pi.",
+            },
+            BenchDoc {
+                name: "div_e_pi",
+                description: "Reduces e / pi.",
+            },
+            BenchDoc {
+                name: "mul_pi_inverse_pi",
+                description: "Multiplies pi by its reciprocal.",
+            },
+            BenchDoc {
+                name: "mul_pi_e_sqrt_two",
+                description: "Builds the factored pi * e * sqrt(2) form.",
+            },
+            BenchDoc {
+                name: "mul_const_product_sqrt_sqrt",
+                description: "Cancels sqrt(2) from (pi * e * sqrt(2)) * sqrt(2).",
+            },
+            BenchDoc {
+                name: "div_const_product_sqrt_e",
+                description: "Reduces (pi * e * sqrt(2)) / e.",
+            },
+            BenchDoc {
+                name: "inverse_const_product_sqrt",
+                description: "Builds a rationalized reciprocal of pi * e * sqrt(2).",
+            },
+        ],
+    },
 ];
 
 fn rational(n: i64, d: u64) -> Rational {
@@ -685,6 +755,137 @@ fn bench_exact_transcendental_special_forms(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_symbolic_reductions(c: &mut Criterion) {
+    let mut group = c.benchmark_group("symbolic_reductions");
+    let pi = Real::pi();
+    let e = Real::e();
+    let pi_square = &pi * &pi;
+    let pi_e = &pi * &e;
+    let pi_e_square = &pi_e * &pi_e;
+    let scaled_e = Real::new(Rational::new(2)) * e.clone();
+    let pi_minus_three = Real::pi() - Real::new(Rational::new(3));
+    let sqrt_two = Real::new(Rational::new(2)).sqrt().unwrap();
+    let pi_e_sqrt_two = &pi_e * &sqrt_two;
+    let e_three = Real::new(Rational::new(3)).exp().unwrap();
+    let pi_square_over_e_left = pi_square.clone();
+    let pi_cube_e_five =
+        (&(&pi_square * &pi) * &Real::new(Rational::new(5)).exp().unwrap()).clone();
+    let pi_e_two = &pi * &Real::new(Rational::new(2)).exp().unwrap();
+    let one = Real::new(Rational::one());
+    let inverse_pi = pi.clone().inverse().unwrap();
+
+    group.bench_function("sqrt_pi_square", |b| {
+        b.iter_batched(
+            || pi_square.clone(),
+            |value| black_box(value.sqrt().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("sqrt_pi_e_square", |b| {
+        b.iter_batched(
+            || pi_e_square.clone(),
+            |value| black_box(value.sqrt().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("ln_scaled_e", |b| {
+        b.iter_batched(
+            || scaled_e.clone(),
+            |value| black_box(value.ln().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("sub_pi_three", |b| {
+        b.iter_batched(
+            || (Real::pi(), Real::new(Rational::new(3))),
+            |(left, right)| black_box(left - right),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("pi_minus_three_facts", |b| {
+        b.iter(|| black_box(black_box(&pi_minus_three).structural_facts()))
+    });
+    group.bench_function("div_exp_exp", |b| {
+        b.iter_batched(
+            || (e_three.clone(), e.clone()),
+            |(left, right)| black_box((left / right).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("div_pi_square_e", |b| {
+        b.iter_batched(
+            || (pi_square_over_e_left.clone(), e.clone()),
+            |(left, right)| black_box((left / right).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("div_const_products", |b| {
+        b.iter_batched(
+            || (pi_cube_e_five.clone(), pi_e_two.clone()),
+            |(left, right)| black_box((left / right).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("inverse_pi", |b| {
+        b.iter_batched(
+            || pi.clone(),
+            |value| black_box(value.inverse().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("div_one_pi", |b| {
+        b.iter_batched(
+            || (one.clone(), pi.clone()),
+            |(left, right)| black_box((left / right).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("div_e_pi", |b| {
+        b.iter_batched(
+            || (e.clone(), pi.clone()),
+            |(left, right)| black_box((left / right).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("mul_pi_inverse_pi", |b| {
+        b.iter_batched(
+            || (pi.clone(), inverse_pi.clone()),
+            |(left, right)| black_box(left * right),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("mul_pi_e_sqrt_two", |b| {
+        b.iter_batched(
+            || (pi_e.clone(), sqrt_two.clone()),
+            |(left, right)| black_box(left * right),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("mul_const_product_sqrt_sqrt", |b| {
+        b.iter_batched(
+            || (pi_e_sqrt_two.clone(), sqrt_two.clone()),
+            |(left, right)| black_box(left * right),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("div_const_product_sqrt_e", |b| {
+        b.iter_batched(
+            || (pi_e_sqrt_two.clone(), e.clone()),
+            |(left, right)| black_box((left / right).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("inverse_const_product_sqrt", |b| {
+        b.iter_batched(
+            || pi_e_sqrt_two.clone(),
+            |value| black_box(value.inverse().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_raw_cache_hit_cost,
@@ -692,6 +893,7 @@ criterion_group!(
     bench_pure_scalar_algorithm_speed,
     bench_borrowed_op_overhead,
     bench_dense_algebra,
-    bench_exact_transcendental_special_forms
+    bench_exact_transcendental_special_forms,
+    bench_symbolic_reductions
 );
 criterion_main!(benches);

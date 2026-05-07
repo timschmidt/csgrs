@@ -8,29 +8,67 @@ mod test;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct ConstProductClass {
-    pi_power: u8,
+    // Signed pi power lets reciprocal products such as 1/pi and e^q/pi remain
+    // symbolic instead of falling into a generic inverse node.
+    pi_power: i16,
     exp_power: Rational,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+struct ConstOffsetClass {
+    // Invariant: the inner value pi^n*e^q + offset is constructed only when
+    // cheaply certified positive. The outer Real.rational carries any sign.
+    pi_power: i16,
+    exp_power: Rational,
+    offset: Rational,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct ConstProductSqrtClass {
+    // Factored sqrt products are positive internally. Keeping the sqrt separate
+    // allows later multiplication/division to cancel it exactly.
+    pi_power: i16,
+    exp_power: Rational,
+    radicand: Rational,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct LnAffineClass {
+    // Constructed only for positive offset + ln(base). This preserves the
+    // nonzero/sign invariant shared by all non-Irrational classes.
+    offset: Rational,
+    base: Rational,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 struct LnProductClass {
+    // Bases are sorted at construction so products compare and combine without
+    // considering operand order.
     left: Rational,
     right: Rational,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 enum Class {
-    One,              // Exactly one
-    Pi,               // Exactly pi
-    PiPow(u8),        // Exactly pi**n, n >= 2
-    PiExp(Rational),  // Exactly pi * e**Rational
-    PiSqrt(Rational), // Exactly pi * sqrt(Rational)
+    // `Class` is a certificate, not the whole value: `Real.rational` scales the
+    // mathematical value represented here. All variants except `Irrational` are
+    // exact, nonzero, and positive internally unless a comment says otherwise.
+    One,                // Exactly one
+    Pi,                 // Exactly pi
+    PiPow(u8),          // Exactly pi**n, n >= 2
+    PiInv,              // Exactly 1 / pi
+    PiExp(Rational),    // Exactly pi * e**Rational
+    PiInvExp(Rational), // Exactly e**Rational / pi
+    PiSqrt(Rational),   // Exactly pi * sqrt(Rational)
     // Boxed so uncommon combined constants do not bloat every `Real` value.
     // Dense algebra and borrowed-op benches are sensitive to enum size.
-    ConstProduct(Box<ConstProductClass>), // Exactly pi**n * e**Rational
+    ConstProduct(Box<ConstProductClass>), // Exactly pi**n * e**Rational, signed n
+    ConstOffset(Box<ConstOffsetClass>),   // Exactly pi**n * e**Rational + Rational
+    ConstProductSqrt(Box<ConstProductSqrtClass>), // Exactly pi**n * e**Rational * sqrt(Rational)
     Sqrt(Rational), // Square root of some positive integer without an integer square root
     Exp(Rational),  // Rational is never zero
     Ln(Rational),   // Rational > 1
+    LnAffine(Box<LnAffineClass>), // Exactly Rational + ln(Rational), constructed positive only
     // Boxed for the same reason as `ConstProduct`: keep the common `Real`
     // representation small while still preserving a lightweight symbolic form.
     LnProduct(Box<LnProductClass>), // Product of two logarithms, ordered by base
@@ -51,14 +89,29 @@ impl PartialEq for Class {
             (One, One) => true,
             (Pi, Pi) => true,
             (PiPow(r), PiPow(s)) => r == s,
+            (PiInv, PiInv) => true,
             (PiExp(r), PiExp(s)) => r == s,
+            (PiInvExp(r), PiInvExp(s)) => r == s,
             (PiSqrt(r), PiSqrt(s)) => r == s,
             (ConstProduct(left), ConstProduct(right)) => {
                 left.pi_power == right.pi_power && left.exp_power == right.exp_power
             }
+            (ConstOffset(left), ConstOffset(right)) => {
+                left.pi_power == right.pi_power
+                    && left.exp_power == right.exp_power
+                    && left.offset == right.offset
+            }
+            (ConstProductSqrt(left), ConstProductSqrt(right)) => {
+                left.pi_power == right.pi_power
+                    && left.exp_power == right.exp_power
+                    && left.radicand == right.radicand
+            }
             (Sqrt(r), Sqrt(s)) => r == s,
             (Exp(r), Exp(s)) => r == s,
             (Ln(r), Ln(s)) => r == s,
+            (LnAffine(left), LnAffine(right)) => {
+                left.offset == right.offset && left.base == right.base
+            }
             (LnProduct(left), LnProduct(right)) => {
                 left.left == right.left && left.right == right.right
             }
@@ -73,6 +126,9 @@ impl PartialEq for Class {
 impl Class {
     // Could treat Exp specially for large negative exponents
     fn is_non_zero(&self) -> bool {
+        // Every current symbolic class except the rational scale itself is
+        // constructed as non-zero. Keeping this invariant lets zero/sign
+        // queries short-circuit without touching the computable graph.
         true
     }
 
@@ -82,6 +138,8 @@ impl Class {
     }
 
     fn make_exp(br: Rational) -> (Class, Computable) {
+        // `e^0` is the rational one. Normalizing here keeps exp-products from
+        // leaving behind a symbolic class that would slow equality and sign checks.
         if br == *rationals::ZERO {
             (One, Computable::one())
         } else {
@@ -89,7 +147,9 @@ impl Class {
         }
     }
 
-    fn pi_power_computable(power: u8) -> Computable {
+    fn pi_power_computable(power: u16) -> Computable {
+        // Pi powers are kept as shallow multiply chains only for symbolic
+        // constants. Large generic powers still use the normal pow machinery.
         let mut value = Computable::pi();
         for _ in 1..power {
             value = value.multiply(Computable::pi());
@@ -101,7 +161,7 @@ impl Class {
         match power {
             0 => (One, Computable::one()),
             1 => (Pi, Computable::pi()),
-            _ => (PiPow(power), Self::pi_power_computable(power)),
+            _ => (PiPow(power), Self::pi_power_computable(u16::from(power))),
         }
     }
 
@@ -109,15 +169,20 @@ impl Class {
         Self::make_const_product(1, br)
     }
 
-    fn make_const_product(pi_power: u8, exp_power: Rational) -> (Class, Computable) {
+    fn make_const_product(pi_power: i16, exp_power: Rational) -> (Class, Computable) {
         // Normalize back to the smaller legacy variants whenever possible.
-        // This preserves exact symbolic products without making common `pi`,
-        // `e^q`, or `pi * e^q` paths pay for the generalized representation.
+        // Rarer signed pi powers stay boxed; direct `pi`, `1/pi`, `e^q`,
+        // and one-pi-factor products have smaller dedicated variants.
         if pi_power == 0 {
             return Self::make_exp(exp_power);
         }
         if exp_power == *rationals::ZERO {
-            return Self::make_pi_power(pi_power);
+            if let Ok(power) = u8::try_from(pi_power) {
+                return Self::make_pi_power(power);
+            }
+            if pi_power == -1 {
+                return (PiInv, Computable::pi().inverse());
+            }
         }
         if pi_power == 1 {
             return (
@@ -125,13 +190,156 @@ impl Class {
                 Computable::pi().multiply(Computable::exp_rational(exp_power)),
             );
         }
+        if pi_power == -1 {
+            return (
+                PiInvExp(exp_power.clone()),
+                Computable::pi()
+                    .inverse()
+                    .multiply(Computable::exp_rational(exp_power)),
+            );
+        }
+        let pi = Self::signed_pi_power_computable(pi_power);
+        let computable = if exp_power == *rationals::ZERO {
+            pi
+        } else {
+            pi.multiply(Computable::exp_rational(exp_power.clone()))
+        };
         (
             ConstProduct(Box::new(ConstProductClass {
                 pi_power,
                 exp_power: exp_power.clone(),
             })),
-            Self::pi_power_computable(pi_power).multiply(Computable::exp_rational(exp_power)),
+            computable,
         )
+    }
+
+    fn const_offset_positive_certified(
+        pi_power: i16,
+        exp_power: &Rational,
+        offset: &Rational,
+    ) -> bool {
+        // `ConstOffset` participates in the same zero/sign fast path as the
+        // purely multiplicative classes, so only construct it when the inner
+        // value is cheaply certified positive. This deliberately covers the hot
+        // `pi - 3` and `e - 2` style reductions and leaves near-cancellation
+        // cases on the generic computable path.
+        if offset.sign() != Sign::Minus {
+            return true;
+        }
+        let threshold = -offset.clone();
+        if exp_power == &*rationals::ZERO && pi_power == 1 {
+            threshold <= Rational::new(3)
+        } else if exp_power == &*rationals::ONE && pi_power == 0 {
+            threshold <= Rational::new(2)
+        } else {
+            false
+        }
+    }
+
+    fn make_const_offset(
+        pi_power: i16,
+        exp_power: Rational,
+        offset: Rational,
+    ) -> Option<(Class, Computable)> {
+        if offset == *rationals::ZERO {
+            return Some(Self::make_const_product(pi_power, exp_power));
+        }
+        if pi_power == 0 && exp_power == *rationals::ZERO {
+            return None;
+        }
+        if !Self::const_offset_positive_certified(pi_power, &exp_power, &offset) {
+            return None;
+        }
+        let (_, constant) = Self::make_const_product(pi_power, exp_power.clone());
+        let computable = Computable::add(constant, Computable::rational(offset.clone()));
+        Some((
+            ConstOffset(Box::new(ConstOffsetClass {
+                pi_power,
+                exp_power,
+                offset,
+            })),
+            computable,
+        ))
+    }
+
+    fn signed_pi_power_computable(power: i16) -> Computable {
+        // Negative pi powers are represented by inverting the positive cached
+        // pi-chain. This is cheaper than creating an opaque reciprocal product
+        // and lets later multiplication cancel back to the exact classes.
+        if power >= 0 {
+            return Self::pi_power_computable(power as u16);
+        }
+        Self::pi_power_computable(power.unsigned_abs()).inverse()
+    }
+
+    fn const_product_parts(&self) -> Option<(i16, Rational)> {
+        // A lightweight deconstructor for the pi^n * e^q family. This is the
+        // single point that lets newer classes (`1/pi`, `e^q/pi`) participate
+        // in old multiplication/division reductions without growing more arms.
+        match self {
+            One => Some((0, Rational::zero())),
+            Pi => Some((1, Rational::zero())),
+            PiPow(power) => Some((i16::from(*power), Rational::zero())),
+            PiInv => Some((-1, Rational::zero())),
+            Exp(exp) => Some((0, exp.clone())),
+            PiExp(exp) => Some((1, exp.clone())),
+            PiInvExp(exp) => Some((-1, exp.clone())),
+            ConstProduct(product) => Some((product.pi_power, product.exp_power.clone())),
+            _ => None,
+        }
+    }
+
+    fn const_offset_parts(&self) -> Option<(i16, Rational, Rational)> {
+        // Treat plain constant products as offset-zero values. This lets
+        // rational addition/subtraction share one normalization path while the
+        // zero-offset case normalizes back to the smaller multiplicative class.
+        match self {
+            ConstOffset(offset) => Some((
+                offset.pi_power,
+                offset.exp_power.clone(),
+                offset.offset.clone(),
+            )),
+            _ => {
+                let (pi_power, exp_power) = self.const_product_parts()?;
+                Some((pi_power, exp_power, Rational::zero()))
+            }
+        }
+    }
+
+    fn can_take_const_offset(&self) -> bool {
+        // Gate the offset probe so ordinary sqrt/log/trig additions do not pay
+        // for a const-product deconstruction they can never use. This gate was
+        // added after borrowed matrix multiplication benchmarks caught the cost.
+        matches!(
+            self,
+            Pi | PiPow(_)
+                | PiInv
+                | Exp(_)
+                | PiExp(_)
+                | PiInvExp(_)
+                | ConstProduct(_)
+                | ConstOffset(_)
+        )
+    }
+
+    fn divide_const_products(left: &Class, right: &Class) -> Option<(Class, Computable)> {
+        // General quotient closure for symbolic constants. The checked integer
+        // arithmetic is a guardrail for rare constructed powers; overflow falls
+        // back to the generic computable path rather than wrapping a certificate.
+        let (left_pi, left_exp) = left.const_product_parts()?;
+        let (right_pi, right_exp) = right.const_product_parts()?;
+        let pi_power = left_pi.checked_sub(right_pi)?;
+        Some(Self::make_const_product(pi_power, left_exp - right_exp))
+    }
+
+    fn multiply_const_products(left: &Class, right: &Class) -> Option<(Class, Computable)> {
+        // Product closure mirrors division and is kept behind the exact special
+        // forms in `Mul`; this retains very small hot arms while still catching
+        // less common signed-power products.
+        let (left_pi, left_exp) = left.const_product_parts()?;
+        let (right_pi, right_exp) = right.const_product_parts()?;
+        let pi_power = left_pi.checked_add(right_pi)?;
+        Some(Self::make_const_product(pi_power, left_exp + right_exp))
     }
 
     fn make_pi_sqrt(r: Rational) -> (Class, Computable) {
@@ -143,7 +351,62 @@ impl Class {
         )
     }
 
+    fn make_const_product_sqrt(
+        pi_power: i16,
+        exp_power: Rational,
+        radicand: Rational,
+    ) -> (Class, Computable) {
+        // This is a factored positive class: the rational scale carries all sign
+        // information, while the inner pi/e/sqrt product stays non-zero. Keeping
+        // the common `pi*sqrt(n)` and plain `sqrt(n)` variants avoids regressing
+        // the old tight arms.
+        if radicand == *rationals::ONE {
+            return Self::make_const_product(pi_power, exp_power);
+        }
+        if pi_power == 0 && exp_power == *rationals::ZERO {
+            return (Sqrt(radicand.clone()), Computable::sqrt_rational(radicand));
+        }
+        if pi_power == 1 && exp_power == *rationals::ZERO {
+            return Self::make_pi_sqrt(radicand);
+        }
+        let (_, constant) = Self::make_const_product(pi_power, exp_power.clone());
+        let computable = constant.multiply(Computable::sqrt_rational(radicand.clone()));
+        (
+            ConstProductSqrt(Box::new(ConstProductSqrtClass {
+                pi_power,
+                exp_power,
+                radicand,
+            })),
+            computable,
+        )
+    }
+
+    fn const_product_sqrt_parts(&self) -> Option<(i16, Rational, Rational)> {
+        // Deconstructor for classes that contain an explicit sqrt factor. It is
+        // intentionally narrower than `const_product_parts` so hot pi/e products
+        // do not pay sqrt-specific reductions.
+        match self {
+            Sqrt(radicand) => Some((0, Rational::zero(), radicand.clone())),
+            PiSqrt(radicand) => Some((1, Rational::zero(), radicand.clone())),
+            ConstProductSqrt(product) => Some((
+                product.pi_power,
+                product.exp_power.clone(),
+                product.radicand.clone(),
+            )),
+            _ => None,
+        }
+    }
+
+    fn has_const_product_sqrt_factor(&self) -> bool {
+        // Cheap prefilter before calling the heavier sqrt-product deconstructor
+        // in multiply/divide fallbacks.
+        matches!(self, Sqrt(_) | PiSqrt(_) | ConstProductSqrt(_))
+    }
+
     fn ln_computable(base: &Rational) -> Computable {
+        // Common logarithm constants share Computable caches. Dense symbolic
+        // expressions repeatedly build ln(2), ln(3), etc.; routing them here
+        // avoids independent approximation caches for the same mathematical value.
         if base == &Rational::new(2) {
             Computable::ln_constant(2).unwrap()
         } else if base == &Rational::new(3) {
@@ -161,7 +424,30 @@ impl Class {
         }
     }
 
+    fn make_ln_affine(offset: Rational, base: Rational) -> Option<(Class, Computable)> {
+        // Like `ConstOffset`, this additive form is only admitted when the
+        // inner value is structurally positive. That keeps sign and zero queries
+        // as cheap as other exact classes while avoiding a generic add node for
+        // ln(a*e^q) with positive q.
+        if base <= *rationals::ONE || offset.sign() == Sign::Minus {
+            return None;
+        }
+        if offset == *rationals::ZERO {
+            return Some((Ln(base.clone()), Self::ln_computable(&base)));
+        }
+        let computable = Computable::add(
+            Computable::rational(offset.clone()),
+            Self::ln_computable(&base),
+        );
+        Some((
+            LnAffine(Box::new(LnAffineClass { offset, base })),
+            computable,
+        ))
+    }
+
     fn make_ln_product(left: Rational, right: Rational) -> (Class, Computable) {
+        // Sort factors so ln(a)*ln(b) and ln(b)*ln(a) compare equal and share
+        // downstream structural facts.
         let (left, right) = if left <= right {
             (left, right)
         } else {
@@ -192,6 +478,9 @@ mod constants {
     use crate::real::Class;
     use crate::{Computable, Rational, Real};
     thread_local! {
+        // These are the canonical internal constants. Public constructors clone
+        // these symbolic/computable forms instead of rebuilding exact classes and
+        // caches on every call.
         static PI: Real = Real {
             rational: Rational::one(),
             class: Class::Pi,
@@ -302,6 +591,9 @@ mod constants {
     }
 
     pub(super) fn scaled_ln(base: u32, coefficient: i64) -> Option<Real> {
+        // Return clones of canonical cached ln constants with only the rational
+        // scale adjusted. This is cheaper than constructing a fresh Ln class and
+        // computable cache for every recognized log power.
         let mut value = match base {
             2 => LN2.with(|real| real.clone()),
             3 => LN3.with(|real| real.clone()),
@@ -349,6 +641,11 @@ pub type Signal = Arc<AtomicBool>;
 ///
 /// This type is functionally the product of a [`Computable`] number
 /// and a [`Rational`].
+///
+/// Internally the rational scale is kept beside a lightweight symbolic
+/// [`Class`] certificate. Many hot operations inspect that certificate before
+/// folding into the generic computable graph; do not eagerly combine the fields
+/// unless a generic kernel really needs it.
 ///
 /// # Examples
 ///
@@ -510,8 +807,13 @@ impl Real {
         let computable = self.computable.structural_facts();
         let sign = match self.class {
             One => Some(real_sign_from_num(rational_sign)),
-            Pi | PiPow(_) | PiExp(_) | PiSqrt(_) | ConstProduct(_) | Sqrt(_) | Exp(_) | Ln(_)
+            Pi | PiPow(_) | PiInv | PiExp(_) | PiInvExp(_) | PiSqrt(_) | ConstProduct(_)
+            | ConstOffset(_) | ConstProductSqrt(_) | Sqrt(_) | Exp(_) | Ln(_) | LnAffine(_)
             | LnProduct(_) | Log10(_) | SinPi(_) | TanPi(_) => {
+                // Exact symbolic classes are positive by construction, so the
+                // outer rational scale alone determines sign. Additive classes
+                // such as ConstOffset/LnAffine are admitted only when this
+                // invariant is certified.
                 Some(real_sign_from_num(rational_sign))
             }
             Irrational => {
@@ -547,11 +849,12 @@ impl Real {
     pub fn zero_status(&self) -> ZeroKnowledge {
         match self.rational.sign() {
             Sign::NoSign => ZeroKnowledge::Zero,
-            Sign::Minus | Sign::Plus => match self.class {
-                One | Pi | PiPow(_) | PiExp(_) | PiSqrt(_) | ConstProduct(_) | Sqrt(_) | Exp(_)
-                | Ln(_) | LnProduct(_) | Log10(_) | SinPi(_) | TanPi(_) => ZeroKnowledge::NonZero,
-                Irrational => self.computable.zero_status(),
-            },
+            // All named/exact classes are non-zero when their rational scale is
+            // non-zero; only opaque computables need refinement. Keep this as a
+            // negative test so adding another exact class does not lengthen this
+            // predicate-heavy fast path.
+            Sign::Minus | Sign::Plus if !matches!(self.class, Irrational) => ZeroKnowledge::NonZero,
+            Sign::Minus | Sign::Plus => self.computable.zero_status(),
         }
     }
 
@@ -586,17 +889,17 @@ impl Real {
     /// Our best attempt to discern the [`Sign`] of this Real.
     /// This will be accurate for trivial Rationals and many but not all other cases.
     pub fn best_sign(&self) -> Sign {
-        match &self.class {
-            One | Pi | PiPow(_) | PiExp(_) | PiSqrt(_) | ConstProduct(_) | Sqrt(_) | Exp(_)
-            | Ln(_) | LnProduct(_) | Log10(_) | SinPi(_) | TanPi(_) => self.rational.sign(),
-            _ => match (self.rational.sign(), self.computable.sign()) {
+        if !matches!(self.class, Irrational) {
+            self.rational.sign()
+        } else {
+            match (self.rational.sign(), self.computable.sign()) {
                 (Sign::NoSign, _) => Sign::NoSign,
                 (_, Sign::NoSign) => Sign::NoSign,
                 (Sign::Plus, Sign::Plus) => Sign::Plus,
                 (Sign::Plus, Sign::Minus) => Sign::Minus,
                 (Sign::Minus, Sign::Plus) => Sign::Minus,
                 (Sign::Minus, Sign::Minus) => Sign::Plus,
-            },
+            }
         }
     }
 
@@ -607,6 +910,8 @@ impl Real {
     where
         F: FnOnce(Computable) -> Computable,
     {
+        // This is the boundary where exact/symbolic information is intentionally
+        // discarded. Callers should exhaust local exact shortcuts before using it.
         let computable = convert(self.fold());
 
         Self {
@@ -705,6 +1010,26 @@ impl Real {
                     });
                 }
             }
+            Pi => {
+                // Consume the existing pi computable and only swap the lightweight class.
+                // Rebuilding through `make_const_product` is measurably slower for `1/pi`.
+                return Ok(Self {
+                    rational: self.rational.inverse()?,
+                    class: PiInv,
+                    computable: self.computable.inverse(),
+                    signal: None,
+                });
+            }
+            PiInv => {
+                // Reciprocal-pi is its own class; inverting it restores the
+                // canonical cached pi class without generic const-product setup.
+                return Ok(Self {
+                    rational: self.rational.inverse()?,
+                    class: Pi,
+                    computable: self.computable.inverse(),
+                    signal: None,
+                });
+            }
             Exp(exp) => {
                 // e^x inverts to e^-x symbolically.
                 let exp = Neg::neg(exp.clone());
@@ -716,17 +1041,52 @@ impl Real {
                 });
             }
             PiExp(exp) => {
-                let exp = Neg::neg(exp.clone());
+                // pi*e^x inverts to e^-x/pi, preserving the one-pi-factor class
+                // used by division/multiplication fast arms.
                 return Ok(Self {
                     rational: self.rational.inverse()?,
-                    class: Irrational,
-                    computable: Computable::pi()
-                        .inverse()
-                        .multiply(Computable::exp_rational(exp)),
+                    class: PiInvExp(exp.clone().neg()),
+                    computable: self.computable.inverse(),
+                    signal: None,
+                });
+            }
+            PiInvExp(exp) => {
+                // The reciprocal of e^x/pi is pi*e^-x.
+                return Ok(Self {
+                    rational: self.rational.inverse()?,
+                    class: PiExp(exp.clone().neg()),
+                    computable: self.computable.inverse(),
                     signal: None,
                 });
             }
             _ => (),
+        }
+        if let Some((pi_power, exp_power, radicand)) = self.class.const_product_sqrt_parts() {
+            // Rationalize factored sqrt products as
+            // 1 / (a*pi^n*e^q*sqrt(r)) = pi^-n*e^-q*sqrt(r) / (a*r).
+            // Keeping the sqrt attached to the constant product lets later
+            // multiplication cancel it without creating an opaque inverse node.
+            let rational = (self.rational * radicand.clone()).inverse()?;
+            let (class, computable) =
+                Class::make_const_product_sqrt(-pi_power, exp_power.neg(), radicand);
+            return Ok(Self {
+                rational,
+                class,
+                computable,
+                signal: None,
+            });
+        }
+        if let Some((pi_power, exp_power)) = self.class.const_product_parts() {
+            // Keep reciprocal constant products symbolic as pi^-n * e^-q. This matters
+            // for scalar and matrix division by pi-heavy constants because the product
+            // can later collapse back to `One`, `Exp`, `Pi`, or `PiExp`.
+            let (class, computable) = Class::make_const_product(-pi_power, exp_power.neg());
+            return Ok(Self {
+                rational: self.rational.inverse()?,
+                class,
+                computable,
+                signal: None,
+            });
         }
         Ok(Self {
             rational: self.rational.inverse()?,
@@ -745,6 +1105,8 @@ impl Real {
             One => Ok(Self::new(self.rational.clone().inverse()?)),
             Sqrt(sqrt) => {
                 if let Some(sqrt) = sqrt.to_big_integer() {
+                    // Same rationalization as the owned path, but clone only the
+                    // rational/computable pieces needed to leave `self` intact.
                     let rational = (&self.rational * Rational::from_bigint(sqrt)).inverse()?;
                     return Ok(Self {
                         rational,
@@ -760,8 +1122,24 @@ impl Real {
                     signal: None,
                 })
             }
+            Pi => Ok(Self {
+                // Preserve the dedicated reciprocal-pi class for borrowed scalar
+                // division; rebuilding through the generic constant product costs more.
+                rational: self.rational.clone().inverse()?,
+                class: PiInv,
+                computable: self.computable.clone().inverse(),
+                signal: None,
+            }),
+            PiInv => Ok(Self {
+                rational: self.rational.clone().inverse()?,
+                class: Pi,
+                computable: self.computable.clone().inverse(),
+                signal: None,
+            }),
             Exp(exp) => {
-                let exp = Neg::neg(exp.clone());
+                // Borrowed inverse keeps e^x symbolic as e^-x, avoiding a generic
+                // reciprocal node in matrix/vector scalar division.
+                let exp = exp.clone().neg();
                 Ok(Self {
                     rational: self.rational.clone().inverse()?,
                     class: Exp(exp.clone()),
@@ -769,23 +1147,51 @@ impl Real {
                     signal: None,
                 })
             }
-            PiExp(exp) => {
-                let exp = Neg::neg(exp.clone());
+            PiExp(exp) => Ok(Self {
+                rational: self.rational.clone().inverse()?,
+                class: PiInvExp(exp.clone().neg()),
+                computable: self.computable.clone().inverse(),
+                signal: None,
+            }),
+            PiInvExp(exp) => Ok(Self {
+                rational: self.rational.clone().inverse()?,
+                class: PiExp(exp.clone().neg()),
+                computable: self.computable.clone().inverse(),
+                signal: None,
+            }),
+            _ => {
+                if let Some((pi_power, exp_power, radicand)) = self.class.const_product_sqrt_parts()
+                {
+                    // Borrowed path mirrors owned rationalization while cloning
+                    // only the reduced rational radicand and symbolic powers.
+                    let rational = (&self.rational * radicand.clone()).inverse()?;
+                    let (class, computable) =
+                        Class::make_const_product_sqrt(-pi_power, exp_power.neg(), radicand);
+                    return Ok(Self {
+                        rational,
+                        class,
+                        computable,
+                        signal: None,
+                    });
+                }
+                if let Some((pi_power, exp_power)) = self.class.const_product_parts() {
+                    // Rare constant products still stay symbolic in the borrowed
+                    // path so `a / (pi^n e^q)` can cancel in the following multiply.
+                    let (class, computable) = Class::make_const_product(-pi_power, exp_power.neg());
+                    return Ok(Self {
+                        rational: self.rational.clone().inverse()?,
+                        class,
+                        computable,
+                        signal: None,
+                    });
+                }
                 Ok(Self {
                     rational: self.rational.clone().inverse()?,
                     class: Irrational,
-                    computable: Computable::pi()
-                        .inverse()
-                        .multiply(Computable::exp_rational(exp)),
+                    computable: Computable::inverse(self.computable.clone()),
                     signal: None,
                 })
             }
-            _ => Ok(Self {
-                rational: self.rational.clone().inverse()?,
-                class: Irrational,
-                computable: Computable::inverse(self.computable.clone()),
-                signal: None,
-            }),
         }
     }
 
@@ -819,6 +1225,9 @@ impl Real {
                 }
             }
             Pi if self.rational.extract_square_will_succeed() => {
+                // If only the rational scale is a square, keep sqrt(pi) as a
+                // computable sqrt rather than inventing a symbolic sqrt-pi class
+                // that has not shown benchmark wins.
                 let (square, rest) = self.rational.clone().extract_square_reduced();
                 if rest == *rationals::ONE {
                     return Ok(Self {
@@ -883,6 +1292,8 @@ impl Real {
 
     /// The base 10 logarithm of this Real or Problem::NotANumber if this Real is negative.
     pub fn log10(self) -> Result<Real, Problem> {
+        // Use the cached ln(10) symbolic constant. Division recognizes ln/ln10
+        // and can return a lightweight Log10 class for exact log inputs.
         self.ln()? / constants::scaled_ln(10, 1).unwrap()
     }
 
@@ -893,6 +1304,9 @@ impl Real {
         use num::bigint::ToBigUint;
         // TODO weed out some large failure cases early and return None
 
+        // Build powers by repeated squaring, divide by the largest usable power,
+        // then walk back down. This recognizes n = base^k without trial-dividing
+        // by base k times.
         // Calculate base^2 base^4 base^8 base^16 and so on until it is bigger than next
         let mut result: Option<u64> = None;
         let mut powers: Vec<BigUint> = Vec::new();
@@ -999,6 +1413,32 @@ impl Real {
         }
     }
 
+    fn try_add_rational_to_ln_term(term: &Real, offset: Rational) -> Option<Real> {
+        // Normalize q + a*ln(b) as a * (q/a + ln(b)) when the inner affine log
+        // is positive. If the sign certificate is not cheap, return None and let
+        // ordinary addition build a generic computable sum.
+        if offset == *rationals::ZERO {
+            return Some(term.clone());
+        }
+        if term.class == One {
+            return Some(Real::new(&term.rational + offset));
+        }
+        let Ln(base) = &term.class else {
+            return None;
+        };
+        if term.rational.sign() == Sign::NoSign {
+            return Some(Real::new(offset));
+        }
+        let class_offset = offset / &term.rational;
+        let (class, computable) = Class::make_ln_affine(class_offset, base.clone())?;
+        Some(Real {
+            rational: term.rational.clone(),
+            class,
+            computable,
+            signal: None,
+        })
+    }
+
     /// The natural logarithm of this Real or Problem::NotANumber if this Real is negative.
     pub fn ln(self) -> Result<Real, Problem> {
         if self.best_sign() != Sign::Plus {
@@ -1006,14 +1446,24 @@ impl Real {
         }
         match &self.class {
             One => return Self::ln_rational(self.rational),
-            Exp(exp) if self.rational == *rationals::ONE => {
-                // ln(e^x) collapses exactly for the pure exponential class.
-                return Ok(Self {
-                    rational: exp.clone(),
-                    class: One,
-                    computable: Computable::one(),
-                    signal: None,
-                });
+            Exp(exp) => {
+                if self.rational == *rationals::ONE {
+                    // ln(e^x) collapses exactly for the pure exponential class.
+                    return Ok(Self {
+                        rational: exp.clone(),
+                        class: One,
+                        computable: Computable::one(),
+                        signal: None,
+                    });
+                }
+                // ln(a * e^x) = ln(a) + x for positive rational scale `a`.
+                // The positive-offset case is stored as one factored `ln` class
+                // so repeated predicates do not traverse a generic add graph.
+                let log_scale = Self::ln_rational(self.rational)?;
+                if let Some(answer) = Self::try_add_rational_to_ln_term(&log_scale, exp.clone()) {
+                    return Ok(answer);
+                }
+                return Ok(log_scale + Self::new(exp.clone()));
             }
             _ => (),
         }
@@ -1028,6 +1478,9 @@ impl Real {
         }
         match &self.class {
             One => {
+                // Plain rational trig still uses Computable, not SinPi/TanPi:
+                // those exact certificates are reserved for rational multiples
+                // of pi where algebra can later invert them.
                 let new = Computable::rational(self.rational.clone());
                 return Self {
                     rational: Rational::one(),
@@ -1053,6 +1506,8 @@ impl Real {
         }
         match &self.class {
             One => {
+                // Same policy as sine: generic rational cosine enters the
+                // computable trig reducer, while pi-multiple exactness is below.
                 let new = Computable::rational(self.rational.clone());
                 return Self {
                     rational: Rational::one(),
@@ -1080,6 +1535,9 @@ impl Real {
 
         match &self.class {
             One => {
+                // For non-pi rational arguments there are no exact tangent
+                // certificates, but Computable::tan still applies small/medium
+                // argument reductions.
                 let new = Computable::rational(self.rational.clone());
                 return Ok(Self {
                     rational: Rational::one(),
@@ -1758,15 +2216,28 @@ impl fmt::Display for Real {
                 One => Ok(()),
                 Pi => f.write_str(" Pi"),
                 PiPow(n) => write!(f, " x Pi**({})", &n),
+                PiInv => f.write_str(" / Pi"),
                 PiExp(n) => write!(f, " x Pi x e**({})", &n),
+                PiInvExp(n) => write!(f, " x e**({}) / Pi", &n),
                 PiSqrt(n) => write!(f, " x Pi x √({})", &n),
                 ConstProduct(product) => write!(
                     f,
                     " x Pi**({}) x e**({})",
                     product.pi_power, product.exp_power
                 ),
+                ConstOffset(offset) => write!(
+                    f,
+                    " x (Pi**({}) x e**({}) + {})",
+                    offset.pi_power, offset.exp_power, offset.offset
+                ),
+                ConstProductSqrt(product) => write!(
+                    f,
+                    " x Pi**({}) x e**({}) x √({})",
+                    product.pi_power, product.exp_power, product.radicand
+                ),
                 Exp(n) => write!(f, " x e**({})", &n),
                 Ln(n) => write!(f, " x ln({})", &n),
+                LnAffine(term) => write!(f, " x ({} + ln({}))", term.offset, term.base),
                 LnProduct(product) => {
                     write!(f, " x ln({}) x ln({})", product.left, product.right)
                 }
@@ -1816,6 +2287,24 @@ impl Real {
         let right = d.powi(c)?;
         Ok(left * right)
     }
+
+    fn try_add_rational_to_const_term(term: &Real, offset: Rational) -> Option<Real> {
+        if offset == *rationals::ZERO {
+            return Some(term.clone());
+        }
+        if term.rational.sign() == Sign::NoSign {
+            return Some(Real::new(offset));
+        }
+        let (pi_power, exp_power, existing_offset) = term.class.const_offset_parts()?;
+        let class_offset = existing_offset + offset / &term.rational;
+        let (class, computable) = Class::make_const_offset(pi_power, exp_power, class_offset)?;
+        Some(Real {
+            rational: term.rational.clone(),
+            class,
+            computable,
+            signal: None,
+        })
+    }
 }
 
 impl<T: AsRef<Real>> Add<T> for &Real {
@@ -1861,6 +2350,23 @@ impl<T: AsRef<Real>> Add<T> for &Real {
             {
                 return simple;
             }
+        }
+        if other.class == One
+            && self.class.can_take_const_offset()
+            && let Some(sum) =
+                Self::Output::try_add_rational_to_const_term(self, other.rational.clone())
+        {
+            // Preserve certified offsets such as `pi - 3` as exact structural
+            // classes. This avoids paying generic addition during sign/MSD
+            // predicates on almost-simple constants.
+            return sum;
+        }
+        if self.class == One
+            && other.class.can_take_const_offset()
+            && let Some(sum) =
+                Self::Output::try_add_rational_to_const_term(other, self.rational.clone())
+        {
+            return sum;
         }
         let left = self.fold_ref();
         let right = other.fold_ref();
@@ -1944,6 +2450,20 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
                 && let Ok(simple) = Self::Output::ln_rational(r)
             {
                 return simple;
+            }
+        }
+        if other.class == One && self.class.can_take_const_offset() {
+            if let Some(difference) =
+                Self::Output::try_add_rational_to_const_term(self, -other.rational.clone())
+            {
+                return difference;
+            }
+        }
+        if self.class == One && other.class.can_take_const_offset() {
+            if let Some(difference) =
+                Self::Output::try_add_rational_to_const_term(other, -self.rational.clone())
+            {
+                return -difference;
             }
         }
         let left = self.fold_ref();
@@ -2133,7 +2653,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 }
             }
             (PiPow(power), Exp(exp)) | (Exp(exp), PiPow(power)) => {
-                let (class, computable) = Class::make_const_product(*power, exp.clone());
+                let (class, computable) = Class::make_const_product(i16::from(*power), exp.clone());
                 let rational = &self.rational * &other.rational;
                 Self::Output {
                     rational,
@@ -2187,7 +2707,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 }
             }
             (ConstProduct(product), PiPow(power)) | (PiPow(power), ConstProduct(product)) => {
-                let Some(pi_power) = product.pi_power.checked_add(*power) else {
+                let Some(pi_power) = product.pi_power.checked_add(i16::from(*power)) else {
                     let rational = &self.rational * &other.rational;
                     return Self::Output {
                         rational,
@@ -2242,6 +2762,54 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     signal: None,
                 }
             }
+            (Exp(exp), Sqrt(r)) | (Sqrt(r), Exp(exp)) => {
+                let (class, computable) = Class::make_const_product_sqrt(0, exp.clone(), r.clone());
+                let rational = &self.rational * &other.rational;
+                Self::Output {
+                    rational,
+                    class,
+                    computable,
+                    signal: None,
+                }
+            }
+            (PiExp(exp), Sqrt(r)) | (Sqrt(r), PiExp(exp)) => {
+                // Keep the common `(pi*e^q)*sqrt(r)` construction out of the
+                // generic fallback; scalar and BLAS kernels create this form
+                // often enough that the direct arm pays for itself.
+                let (class, computable) = Class::make_const_product_sqrt(1, exp.clone(), r.clone());
+                let rational = &self.rational * &other.rational;
+                Self::Output {
+                    rational,
+                    class,
+                    computable,
+                    signal: None,
+                }
+            }
+            (PiInvExp(exp), Sqrt(r)) | (Sqrt(r), PiInvExp(exp)) => {
+                let (class, computable) =
+                    Class::make_const_product_sqrt(-1, exp.clone(), r.clone());
+                let rational = &self.rational * &other.rational;
+                Self::Output {
+                    rational,
+                    class,
+                    computable,
+                    signal: None,
+                }
+            }
+            (ConstProduct(product), Sqrt(r)) | (Sqrt(r), ConstProduct(product)) => {
+                let (class, computable) = Class::make_const_product_sqrt(
+                    product.pi_power,
+                    product.exp_power.clone(),
+                    r.clone(),
+                );
+                let rational = &self.rational * &other.rational;
+                Self::Output {
+                    rational,
+                    class,
+                    computable,
+                    signal: None,
+                }
+            }
             (PiSqrt(r), Sqrt(s)) | (Sqrt(s), PiSqrt(r)) if r == s => {
                 let rational = &self.rational * &other.rational * r;
                 Self::Output {
@@ -2262,6 +2830,100 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 }
             }
             _ => {
+                if self.class.has_const_product_sqrt_factor()
+                    || other.class.has_const_product_sqrt_factor()
+                {
+                    if let (
+                        Some((left_pi, left_exp, left_rad)),
+                        Some((right_pi, right_exp, right_rad)),
+                    ) = (
+                        self.class.const_product_sqrt_parts(),
+                        other.class.const_product_sqrt_parts(),
+                    ) {
+                        if let Some(pi_power) = left_pi.checked_add(right_pi) {
+                            let square = Self::Output::multiply_sqrts(&left_rad, &right_rad);
+                            let rational = &square.rational * &self.rational * &other.rational;
+                            let exp_power = left_exp + right_exp;
+                            match square.class {
+                                One => {
+                                    let (class, computable) =
+                                        Class::make_const_product(pi_power, exp_power);
+                                    return Self::Output {
+                                        rational,
+                                        class,
+                                        computable,
+                                        signal: None,
+                                    };
+                                }
+                                Sqrt(radicand) => {
+                                    let (class, computable) = Class::make_const_product_sqrt(
+                                        pi_power, exp_power, radicand,
+                                    );
+                                    return Self::Output {
+                                        rational,
+                                        class,
+                                        computable,
+                                        signal: None,
+                                    };
+                                }
+                                _ => unreachable!(),
+                            }
+                        }
+                    }
+                    if let (Some((sqrt_pi, sqrt_exp, radicand)), Some((product_pi, product_exp))) = (
+                        self.class.const_product_sqrt_parts(),
+                        other.class.const_product_parts(),
+                    ) {
+                        if let Some(pi_power) = sqrt_pi.checked_add(product_pi) {
+                            // General sqrt-product closure covers less common forms such as
+                            // `(pi*sqrt(2))*e` without moving hot `pi*sqrt(n)` arms.
+                            let (class, computable) = Class::make_const_product_sqrt(
+                                pi_power,
+                                sqrt_exp + product_exp,
+                                radicand,
+                            );
+                            let rational = &self.rational * &other.rational;
+                            return Self::Output {
+                                rational,
+                                class,
+                                computable,
+                                signal: None,
+                            };
+                        }
+                    }
+                    if let (Some((product_pi, product_exp)), Some((sqrt_pi, sqrt_exp, radicand))) = (
+                        self.class.const_product_parts(),
+                        other.class.const_product_sqrt_parts(),
+                    ) {
+                        if let Some(pi_power) = product_pi.checked_add(sqrt_pi) {
+                            let (class, computable) = Class::make_const_product_sqrt(
+                                pi_power,
+                                product_exp + sqrt_exp,
+                                radicand,
+                            );
+                            let rational = &self.rational * &other.rational;
+                            return Self::Output {
+                                rational,
+                                class,
+                                computable,
+                                signal: None,
+                            };
+                        }
+                    }
+                }
+                if let Some((class, computable)) =
+                    Class::multiply_const_products(&self.class, &other.class)
+                {
+                    // Existing pi^n * e^q forms are closed under multiplication. Keep this
+                    // fallback after the specialized arms so sqrt-heavy paths do not pay it.
+                    let rational = &self.rational * &other.rational;
+                    return Self::Output {
+                        rational,
+                        class,
+                        computable,
+                        signal: None,
+                    };
+                }
                 let rational = &self.rational * &other.rational;
                 Self::Output {
                     rational,
@@ -2300,6 +2962,22 @@ impl<T: AsRef<Real>> Div<T> for &Real {
             let rational = &self.rational / &other.rational;
             return Ok(Real::new(rational));
         }
+        if other.class == One {
+            let rational = &self.rational / &other.rational;
+            if self.class == One {
+                return Ok(Real::new(rational));
+            }
+            return Ok(Real {
+                rational,
+                class: self.class.clone(),
+                computable: self.computable.clone(),
+                signal: self.signal.clone(),
+            });
+        }
+        // These small constant-product quotient arms intentionally duplicate the
+        // generalized helper below. A simpler "always use divide_const_products"
+        // version improved rare deep products but regressed tiny hot cases such as
+        // `e / pi`, so keep the fast arms for one-step pi/e reductions.
         match (&self.class, &other.class) {
             (PiPow(power), Pi) if *power > 1 => {
                 let (class, computable) = Class::make_pi_power(power - 1);
@@ -2360,19 +3038,89 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                 ..square
             });
         }
-        if other.class == One {
-            let rational = &self.rational / &other.rational;
-            if self.class == One {
-                return Ok(Real::new(rational));
-            }
+        if let Some((class, computable)) = Class::divide_const_products(&self.class, &other.class) {
+            // Keep the signed pi^n * e^q quotient ahead of the general sqrt
+            // fallback. Tiny hot divisions such as `1 / pi` and `e / pi`
+            // are more common than factored sqrt quotients in matrix kernels.
             return Ok(Real {
-                rational,
-                class: self.class.clone(),
-                computable: self.computable.clone(),
-                signal: self.signal.clone(),
+                rational: &self.rational / &other.rational,
+                class,
+                computable,
+                signal: None,
             });
         }
-
+        if self.class.has_const_product_sqrt_factor() || other.class.has_const_product_sqrt_factor()
+        {
+            if let (Some((left_pi, left_exp, left_rad)), Some((right_pi, right_exp, right_rad))) = (
+                self.class.const_product_sqrt_parts(),
+                other.class.const_product_sqrt_parts(),
+            ) {
+                if let Some(pi_power) = left_pi.checked_sub(right_pi) {
+                    // Rationalize sqrt-heavy quotients before falling back to `other.inverse()`.
+                    // This keeps `(pi*e*sqrt(2))/(e*sqrt(3))` as one factored sqrt
+                    // product instead of an opaque division graph.
+                    let square = Real::multiply_sqrts(&left_rad, &right_rad);
+                    let denominator = &other.rational * right_rad;
+                    let rational = &square.rational * &self.rational / denominator;
+                    let exp_power = left_exp - right_exp;
+                    return Ok(match square.class {
+                        One => {
+                            let (class, computable) =
+                                Class::make_const_product(pi_power, exp_power);
+                            Real {
+                                rational,
+                                class,
+                                computable,
+                                signal: None,
+                            }
+                        }
+                        Sqrt(radicand) => {
+                            let (class, computable) =
+                                Class::make_const_product_sqrt(pi_power, exp_power, radicand);
+                            Real {
+                                rational,
+                                class,
+                                computable,
+                                signal: None,
+                            }
+                        }
+                        _ => unreachable!(),
+                    });
+                }
+            }
+            if let (Some((sqrt_pi, sqrt_exp, radicand)), Some((product_pi, product_exp))) = (
+                self.class.const_product_sqrt_parts(),
+                other.class.const_product_parts(),
+            ) {
+                if let Some(pi_power) = sqrt_pi.checked_sub(product_pi) {
+                    let (class, computable) =
+                        Class::make_const_product_sqrt(pi_power, sqrt_exp - product_exp, radicand);
+                    return Ok(Real {
+                        rational: &self.rational / &other.rational,
+                        class,
+                        computable,
+                        signal: None,
+                    });
+                }
+            }
+            if let (Some((product_pi, product_exp)), Some((sqrt_pi, sqrt_exp, radicand))) = (
+                self.class.const_product_parts(),
+                other.class.const_product_sqrt_parts(),
+            ) {
+                if let Some(pi_power) = product_pi.checked_sub(sqrt_pi) {
+                    let denominator = &other.rational * radicand.clone();
+                    let rational = &self.rational / denominator;
+                    let (class, computable) =
+                        Class::make_const_product_sqrt(pi_power, product_exp - sqrt_exp, radicand);
+                    return Ok(Real {
+                        rational,
+                        class,
+                        computable,
+                        signal: None,
+                    });
+                }
+            }
+        }
         // Simplify ln(x) / ln(10) to just log10(x)
         if other.class.is_ln() && self.class.is_ln() {
             if let Ln(s) = other.class.clone() {
