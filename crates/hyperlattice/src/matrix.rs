@@ -35,6 +35,63 @@ fn transpose_array<B: Backend, const N: usize>(matrix: [[Scalar<B>; N]; N]) -> [
     })
 }
 
+fn transpose_array_ref<B: Backend, const N: usize>(
+    matrix: &[[Scalar<B>; N]; N],
+) -> [[Scalar<B>; N]; N] {
+    // Borrowed matrix division needs transposed working copies. Cloning
+    // directly into transposed layout avoids cloning whole matrices first and
+    // then running the owned transpose machinery.
+    from_fn(|row| from_fn(|col| matrix[col][row].clone()))
+}
+
+fn transpose_array4<B: Backend>(matrix: [[Scalar<B>; 4]; 4]) -> [[Scalar<B>; 4]; 4] {
+    // Hand-written 4x4 transpose avoids the generic `Option::take` owned
+    // transpose overhead in the borrowed right-division wrapper.
+    let [
+        [m00, m01, m02, m03],
+        [m10, m11, m12, m13],
+        [m20, m21, m22, m23],
+        [m30, m31, m32, m33],
+    ] = matrix;
+    [
+        [m00, m10, m20, m30],
+        [m01, m11, m21, m31],
+        [m02, m12, m22, m32],
+        [m03, m13, m23, m33],
+    ]
+}
+
+fn transpose_array4_ref<B: Backend>(matrix: &[[Scalar<B>; 4]; 4]) -> [[Scalar<B>; 4]; 4] {
+    // Same as `transpose_array_ref`, but fully unrolled because the 4x4
+    // borrowed division benchmark is sensitive to generic array construction.
+    [
+        [
+            matrix[0][0].clone(),
+            matrix[1][0].clone(),
+            matrix[2][0].clone(),
+            matrix[3][0].clone(),
+        ],
+        [
+            matrix[0][1].clone(),
+            matrix[1][1].clone(),
+            matrix[2][1].clone(),
+            matrix[3][1].clone(),
+        ],
+        [
+            matrix[0][2].clone(),
+            matrix[1][2].clone(),
+            matrix[2][2].clone(),
+            matrix[3][2].clone(),
+        ],
+        [
+            matrix[0][3].clone(),
+            matrix[1][3].clone(),
+            matrix[2][3].clone(),
+            matrix[3][3].clone(),
+        ],
+    ]
+}
+
 /// Three-by-three row-major matrix.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Matrix3<B: Backend = DefaultBackend>(
@@ -220,7 +277,9 @@ fn subtract_scaled_entry_in_place<B: Backend>(
     factor: &Scalar<B>,
 ) {
     let current = mem::replace(value, Scalar::zero());
-    *value = current - pivot.clone().mul_cached(factor);
+    // Keep both `pivot` and `factor` borrowed. The old form cloned `pivot`
+    // before multiplying, which is expensive for hyperreal-backed matrices.
+    *value = current - pivot * factor;
 }
 
 macro_rules! impl_solve_left_system_fixed {
@@ -261,11 +320,25 @@ macro_rules! impl_solve_left_system_fixed {
                     if row == col {
                         continue;
                     }
-                    let factor = left[row][col].clone();
+                    // In 4x4 elimination, exact zero factors occur often enough
+                    // to skip cloning and row updates. For 3x3 this extra query
+                    // regressed the borrowed div benchmark, so it is gated out.
+                    if $n != 3 && left[row][col].definitely_zero() {
+                        continue;
+                    }
+                    let factor = if $n == 3 {
+                        // 3x3 wins by moving the factor out of the slot instead
+                        // of cloning it; 4x4 kept the clone path after benches.
+                        mem::replace(&mut left[row][col], Scalar::zero())
+                    } else {
+                        left[row][col].clone()
+                    };
                     if factor.definitely_zero() {
                         continue;
                     }
-                    left[row][col] = Scalar::zero();
+                    if $n != 3 {
+                        left[row][col] = Scalar::zero();
+                    }
                     for i in (col + 1)..$n {
                         subtract_scaled_entry_in_place(&mut left[row][i], &pivot_left[i], &factor);
                     }
@@ -311,11 +384,24 @@ macro_rules! impl_solve_left_system_fixed {
                     if row == col {
                         continue;
                     }
-                    let factor = left[row][col].clone();
+                    // See the ordinary solver branch above for the benchmark
+                    // rationale behind the 4x4-only zero precheck.
+                    if $n != 3 && left[row][col].definitely_zero() {
+                        continue;
+                    }
+                    let factor = if $n == 3 {
+                        // 3x3-specific clone avoidance; 4x4 is left on the
+                        // older path because moving factors was slower there.
+                        mem::replace(&mut left[row][col], Scalar::zero())
+                    } else {
+                        left[row][col].clone()
+                    };
                     if factor.definitely_zero() {
                         continue;
                     }
-                    left[row][col] = Scalar::zero();
+                    if $n != 3 {
+                        left[row][col] = Scalar::zero();
+                    }
                     for i in (col + 1)..$n {
                         subtract_scaled_entry_in_place(&mut left[row][i], &pivot_left[i], &factor);
                     }
@@ -363,11 +449,23 @@ macro_rules! impl_solve_left_system_fixed {
                     if row == col {
                         continue;
                     }
-                    let factor = left[row][col].clone();
+                    // Abort-aware solver uses the same performance split as the
+                    // ordinary and checked paths.
+                    if $n != 3 && left[row][col].definitely_zero() {
+                        continue;
+                    }
+                    let factor = if $n == 3 {
+                        // 3x3-specific clone avoidance; see ordinary path.
+                        mem::replace(&mut left[row][col], Scalar::zero())
+                    } else {
+                        left[row][col].clone()
+                    };
                     if factor.definitely_zero() {
                         continue;
                     }
-                    left[row][col] = Scalar::zero();
+                    if $n != 3 {
+                        left[row][col] = Scalar::zero();
+                    }
                     for i in (col + 1)..$n {
                         subtract_scaled_entry_in_place(&mut left[row][i], &pivot_left[i], &factor);
                     }
@@ -409,6 +507,19 @@ fn right_divide_matrix3<B: Backend>(
     )?))
 }
 
+fn right_divide_matrix3_ref<B: Backend>(
+    left: &[[Scalar<B>; 3]; 3],
+    right: &[[Scalar<B>; 3]; 3],
+) -> BlasResult<[[Scalar<B>; 3]; 3]> {
+    // Borrowed right-division is implemented as a left solve on transposes.
+    // Clone directly into transposed working storage instead of cloning both
+    // matrices and dispatching through the owned `/` implementation.
+    Ok(transpose_array(solve_left_system3(
+        transpose_array_ref(right),
+        transpose_array_ref(left),
+    )?))
+}
+
 fn right_divide_matrix3_checked<B: Backend>(
     left: [[Scalar<B>; 3]; 3],
     right: [[Scalar<B>; 3]; 3],
@@ -438,6 +549,18 @@ fn right_divide_matrix4<B: Backend>(
     Ok(transpose_array(solve_left_system4(
         transpose_array(right),
         transpose_array(left),
+    )?))
+}
+
+fn right_divide_matrix4_ref<B: Backend>(
+    left: &[[Scalar<B>; 4]; 4],
+    right: &[[Scalar<B>; 4]; 4],
+) -> BlasResult<[[Scalar<B>; 4]; 4]> {
+    // Same borrowed right-division shortcut as 3x3, with unrolled 4x4
+    // transposes. The adjugate/inverse route was benchmarked and was slower.
+    Ok(transpose_array4(solve_left_system4(
+        transpose_array4_ref(right),
+        transpose_array4_ref(left),
     )?))
 }
 
@@ -536,6 +659,51 @@ fn multiply_arrays_ref<B: Backend, const N: usize>(
             }
         })
     })
+}
+
+fn multiply_arrays3_ref<B: Backend>(
+    left: &[[Scalar<B>; 3]; 3],
+    right: &[[Scalar<B>; 3]; 3],
+) -> [[Scalar<B>; 3]; 3] {
+    // Fixed 3x3 borrowed multiply avoids the const-generic helper's per-cell
+    // "is there a fourth lane?" branch and intermediate tiny arrays.
+    let cell = |row: usize, col: usize| {
+        Scalar::dot3(
+            [&left[row][0], &left[row][1], &left[row][2]],
+            [&right[0][col], &right[1][col], &right[2][col]],
+        )
+    };
+    [
+        [cell(0, 0), cell(0, 1), cell(0, 2)],
+        [cell(1, 0), cell(1, 1), cell(1, 2)],
+        [cell(2, 0), cell(2, 1), cell(2, 2)],
+    ]
+}
+
+fn multiply_arrays4_ref<B: Backend>(
+    left: &[[Scalar<B>; 4]; 4],
+    right: &[[Scalar<B>; 4]; 4],
+) -> [[Scalar<B>; 4]; 4] {
+    // Fixed 4x4 borrowed multiply is similarly unrolled. This is deliberately
+    // duplicated from the generic path because the branchless version wins in
+    // borrowed mat4 multiply benchmarks.
+    let cell = |row: usize, col: usize| {
+        Scalar::dot4(
+            [&left[row][0], &left[row][1], &left[row][2], &left[row][3]],
+            [
+                &right[0][col],
+                &right[1][col],
+                &right[2][col],
+                &right[3][col],
+            ],
+        )
+    };
+    [
+        [cell(0, 0), cell(0, 1), cell(0, 2), cell(0, 3)],
+        [cell(1, 0), cell(1, 1), cell(1, 2), cell(1, 3)],
+        [cell(2, 0), cell(2, 1), cell(2, 2), cell(2, 3)],
+        [cell(3, 0), cell(3, 1), cell(3, 2), cell(3, 3)],
+    ]
 }
 
 fn transform_vector_rhs_ref<B: Backend, const N: usize>(
@@ -763,6 +931,8 @@ macro_rules! impl_matrix {
         $vector:ident,
         $n:expr,
         $div_fn:ident,
+        $div_ref_fn:ident,
+        $mul_ref_fn:ident,
         $div_checked_fn:ident,
         $div_checked_abort_fn:ident
     ) => {
@@ -1198,7 +1368,7 @@ macro_rules! impl_matrix {
             type Output = $name<B>;
 
             fn mul(self, rhs: &$name<B>) -> Self::Output {
-                $name(multiply_arrays_ref(&self.0, &rhs.0))
+                $name($mul_ref_fn(&self.0, &rhs.0))
             }
         }
 
@@ -1230,7 +1400,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<$name<B>>;
 
             fn div(self, rhs: &$name<B>) -> Self::Output {
-                self.clone() / rhs
+                Ok($name($div_ref_fn(&self.0, &rhs.0)?))
             }
         }
 
@@ -1292,6 +1462,8 @@ impl_matrix!(
     Vector3,
     3,
     right_divide_matrix3,
+    right_divide_matrix3_ref,
+    multiply_arrays3_ref,
     right_divide_matrix3_checked,
     right_divide_matrix3_checked_with_abort
 );
@@ -1300,6 +1472,8 @@ impl_matrix!(
     Vector4,
     4,
     right_divide_matrix4,
+    right_divide_matrix4_ref,
+    multiply_arrays4_ref,
     right_divide_matrix4_checked,
     right_divide_matrix4_checked_with_abort
 );

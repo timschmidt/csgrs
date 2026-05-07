@@ -104,6 +104,8 @@ macro_rules! impl_vector {
                 require_known_nonzero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
                 if B::MOVE_ELEMENTWISE {
+                    // Some backends, notably hyperreal, are cheaper when owned vector slots
+                    // are consumed element-by-element instead of cloned and overwritten.
                     Ok(Self(self.0.map(|value| value.mul_cached(&inv_rhs))))
                 } else {
                     let mut values = self.0;

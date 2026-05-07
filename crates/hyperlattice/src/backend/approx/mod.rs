@@ -198,6 +198,8 @@ impl BackendScalarTrait for BackendScalar {
 
     #[inline]
     fn dot3(left: [&Self; 3], right: [&Self; 3]) -> Self {
+        // Keep the approximate backend's dot product fully scalar and unrolled. This avoids
+        // temporary arrays/iterators while still accumulating the uncertainty terms once.
         let p0 = left[0].value * right[0].value;
         let p1 = left[1].value * right[1].value;
         let p2 = left[2].value * right[2].value;
@@ -212,6 +214,8 @@ impl BackendScalarTrait for BackendScalar {
 
     #[inline]
     fn dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
+        // Pairwise summation mirrors the hyperreal dot4 shape and keeps the rounding
+        // envelope tighter than a longer left-associated chain.
         let p0 = left[0].value * right[0].value;
         let p1 = left[1].value * right[1].value;
         let p2 = left[2].value * right[2].value;

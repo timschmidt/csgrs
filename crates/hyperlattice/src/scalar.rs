@@ -81,6 +81,8 @@ pub fn zero_status<B: Backend>(value: &Scalar<B>) -> ZeroStatus {
 pub fn zero_status_with_abort<B: Backend>(value: &Scalar<B>, signal: &AbortSignal) -> ZeroStatus {
     let status = zero_status(value);
     if status != ZeroStatus::Unknown || !signal.load(Ordering::Relaxed) {
+        // Fast path for the common case: known structural status, or no active abort
+        // request. Cloning just to attach a signal showed up in predicate-heavy benches.
         return status;
     }
 
@@ -194,6 +196,8 @@ pub fn powi<B: Backend>(base: Scalar<B>, exponent: i64) -> BlasResult<Scalar<B>>
     }
 
     let exp = exponent.unsigned_abs();
+    // The hyperreal backend opts into hard-coded tiny exponents because the generic
+    // squaring loop clones enough symbolic state to show up in scalar and matrix benches.
     let positive = match (B::SPECIALIZE_SCALAR_POWI, exp) {
         (_, 1) => base,
         (true, 2) => base.clone() * base,

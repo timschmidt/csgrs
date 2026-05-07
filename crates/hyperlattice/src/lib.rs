@@ -207,21 +207,30 @@ impl<B: Backend> Scalar<B> {
 
     #[inline]
     pub(crate) fn mul_cached(self, factor: &Self) -> Self {
+        // Hot elementwise kernels often reuse one scalar factor across an
+        // entire vector/matrix. Keeping the factor borrowed avoids cloning
+        // hyperreal expression graphs for every lane.
         Self(self.0.mul_ref(&factor.0))
     }
 
     #[inline]
     pub(crate) fn add_cached(self, rhs: &Self) -> Self {
+        // Same borrowed-factor pattern as `mul_cached`; this is intentionally
+        // tiny but centralizes the "owned lhs, borrowed rhs" fast path.
         Self(self.0.add_ref(&rhs.0))
     }
 
     #[inline]
     pub(crate) fn sub_cached(self, rhs: &Self) -> Self {
+        // Avoid cloning the scalar subtrahend in repeated elementwise kernels.
         Self(self.0.sub_ref(&rhs.0))
     }
 
     #[inline]
     pub(crate) fn dot3(left: [&Self; 3], right: [&Self; 3]) -> Self {
+        // Route fixed-size dot products through the backend so expensive
+        // representations can choose a better add/mul ordering than the
+        // default trait methods.
         Self(B::Repr::dot3(
             [&left[0].0, &left[1].0, &left[2].0],
             [&right[0].0, &right[1].0, &right[2].0],
@@ -230,6 +239,7 @@ impl<B: Backend> Scalar<B> {
 
     #[inline]
     pub(crate) fn dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
+        // See `dot3`; matrix and complex kernels hit this path heavily.
         Self(B::Repr::dot4(
             [&left[0].0, &left[1].0, &left[2].0, &left[3].0],
             [&right[0].0, &right[1].0, &right[2].0, &right[3].0],

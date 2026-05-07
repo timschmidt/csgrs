@@ -8,6 +8,9 @@ use crate::{
 };
 
 thread_local! {
+    // Hyperreal constants are immutable but not free to build: they carry
+    // symbolic/computable state. Cache the common scalar constructors per
+    // thread so tight BLAS loops do not repeatedly allocate fresh constants.
     static ZERO: OnceCell<BackendScalar> = const { OnceCell::new() };
     static ONE: OnceCell<BackendScalar> = const { OnceCell::new() };
     static E: OnceCell<BackendScalar> = const { OnceCell::new() };
@@ -45,7 +48,12 @@ pub struct BackendScalar(pub(crate) hyperreal::Real);
 pub struct HyperrealBackend;
 
 impl Backend for HyperrealBackend {
+    // Hyperreal `Real` clones can copy expression graphs. Moving owned matrix
+    // entries is faster for elementwise operations despite being a little more
+    // verbose than indexing from fixed arrays.
     const MOVE_ELEMENTWISE: bool = true;
+    // Small integer powers appear in vector/matrix helpers; explicit low
+    // exponents avoid clone-heavy generic exponentiation by squaring.
     const SPECIALIZE_SCALAR_POWI: bool = true;
 
     type Repr = BackendScalar;
@@ -163,6 +171,8 @@ impl BackendScalarTrait for BackendScalar {
 
     #[inline]
     fn dot3(left: [&Self; 3], right: [&Self; 3]) -> Self {
+        // Build the three products first, then add by reference. This avoids
+        // cloning intermediate hyperreal products in dense matrix multiply.
         let p0 = &left[0].0 * &right[0].0;
         let p1 = &left[1].0 * &right[1].0;
         let p2 = &left[2].0 * &right[2].0;
@@ -172,6 +182,8 @@ impl BackendScalarTrait for BackendScalar {
 
     #[inline]
     fn dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
+        // Pairwise summation is both a small expression tree and a benchmarked
+        // win for 4-lane matrix/complex kernels.
         let p0 = &left[0].0 * &right[0].0;
         let p1 = &left[1].0 * &right[1].0;
         let p2 = &left[2].0 * &right[2].0;

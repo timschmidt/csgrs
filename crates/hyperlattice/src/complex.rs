@@ -49,6 +49,8 @@ impl<B: Backend> Complex<B> {
     /// Returns the multiplicative inverse.
     pub fn reciprocal(self) -> BlasResult<Self> {
         let inv_denom = self.norm_squared().inverse()?;
+        // Apply the shared denominator by borrowed cached multiplication; cloning it for
+        // both real and imaginary components is visible with symbolic scalar backends.
         Ok(Self::new(
             self.re.mul_cached(&inv_denom),
             (-self.im).mul_cached(&inv_denom),
@@ -60,6 +62,7 @@ impl<B: Backend> Complex<B> {
         let denom = self.norm_squared();
         require_known_nonzero(&denom)?;
         let inv_denom = denom.inverse()?;
+        // Same cached-denominator path as `reciprocal`, after the checked zero gate.
         Ok(Self::new(
             self.re.mul_cached(&inv_denom),
             (-self.im).mul_cached(&inv_denom),
@@ -110,6 +113,7 @@ impl<B: Backend> Complex<B> {
         let inv_denom = denom.inverse()?;
         let re = &self.re * &rhs.re + &self.im * &rhs.im;
         let im = &self.im * &rhs.re - &self.re * &rhs.im;
+        // The inverse norm is reused for both components, so keep it borrowed.
         Ok(Self::new(
             re.mul_cached(&inv_denom),
             im.mul_cached(&inv_denom),
@@ -120,6 +124,7 @@ impl<B: Backend> Complex<B> {
     pub fn div_real_checked(self, rhs: Scalar<B>) -> CheckedBlasResult<Self> {
         require_known_nonzero(&rhs)?;
         let inv_rhs = rhs.inverse()?;
+        // Real scalar division has a single inverse shared by both components.
         Ok(Self::new(
             self.re.mul_cached(&inv_rhs),
             self.im.mul_cached(&inv_rhs),
@@ -128,6 +133,8 @@ impl<B: Backend> Complex<B> {
 }
 
 fn complex_powi_positive<B: Backend>(base: Complex<B>, exponent: u64) -> Complex<B> {
+    // Small powers are common in BLAS-style polynomial kernels.  Writing them out avoids
+    // loop bookkeeping and keeps clone placement tuned for the borrowed scalar backend.
     match exponent {
         1 => base,
         2 => base.clone() * base,
