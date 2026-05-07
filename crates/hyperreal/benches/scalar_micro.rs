@@ -9,6 +9,36 @@ use bench_docs::{BenchDoc, BenchGroupDoc};
 
 const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
     BenchGroupDoc {
+        name: "construction_speed",
+        description: "Cost of constructing common exact scalar identities.",
+        benches: &[
+            BenchDoc {
+                name: "rational_one",
+                description: "Constructs `Rational::one()`.",
+            },
+            BenchDoc {
+                name: "rational_new_one",
+                description: "Constructs one through `Rational::new(1)`.",
+            },
+            BenchDoc {
+                name: "computable_one",
+                description: "Constructs `Computable::one()`.",
+            },
+            BenchDoc {
+                name: "real_new_rational_one",
+                description: "Constructs one through `Real::new(Rational::one())`.",
+            },
+            BenchDoc {
+                name: "real_one",
+                description: "Constructs one through `Real::one()`.",
+            },
+            BenchDoc {
+                name: "real_from_i32_one",
+                description: "Constructs one through integer conversion.",
+            },
+        ],
+    },
+    BenchGroupDoc {
         name: "raw_cache_hit_cost",
         description: "Cost of cold and cached `Computable::approx` calls for simple values.",
         benches: &[
@@ -428,6 +458,27 @@ fn warm_cache(value: &Computable, precision: i32) {
     black_box(value.approx(precision));
 }
 
+fn bench_construction_speed(c: &mut Criterion) {
+    let mut group = c.benchmark_group("construction_speed");
+
+    group.bench_function("rational_one", |b| b.iter(|| black_box(Rational::one())));
+    group.bench_function("rational_new_one", |b| {
+        b.iter(|| black_box(Rational::new(black_box(1))))
+    });
+    group.bench_function("computable_one", |b| {
+        b.iter(|| black_box(Computable::one()))
+    });
+    group.bench_function("real_new_rational_one", |b| {
+        b.iter(|| black_box(Real::new(Rational::one())))
+    });
+    group.bench_function("real_one", |b| b.iter(|| black_box(Real::one())));
+    group.bench_function("real_from_i32_one", |b| {
+        b.iter(|| black_box(Real::from(black_box(1_i32))))
+    });
+
+    group.finish();
+}
+
 fn structural_values() -> Vec<(&'static str, Real)> {
     let tiny = Real::new(
         Rational::from_bigint_fraction(BigInt::from(1), BigUint::from(1_u8) << 160).unwrap(),
@@ -439,7 +490,7 @@ fn structural_values() -> Vec<(&'static str, Real)> {
 
     vec![
         ("zero", Real::zero()),
-        ("one", Real::new(Rational::one())),
+        ("one", Real::one()),
         ("negative", Real::new(Rational::new(-7))),
         ("tiny_exact", tiny),
         ("pi", Real::pi()),
@@ -888,6 +939,7 @@ fn bench_symbolic_reductions(c: &mut Criterion) {
 
 criterion_group!(
     benches,
+    bench_construction_speed,
     bench_raw_cache_hit_cost,
     bench_structural_query_speed,
     bench_pure_scalar_algorithm_speed,

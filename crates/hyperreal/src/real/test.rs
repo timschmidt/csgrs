@@ -11,6 +11,15 @@ mod tests {
     }
 
     #[test]
+    fn one_constructor_matches_integer_conversion() {
+        let one = Real::one();
+        assert_eq!(one, Real::new(Rational::one()));
+        assert_eq!(one, Real::from(1_i32));
+        assert_eq!(one.zero_status(), ZeroKnowledge::NonZero);
+        assert_eq!(one.structural_facts().sign, Some(RealSign::Positive));
+    }
+
+    #[test]
     fn parse() {
         let counting: Real = "123456789".parse().unwrap();
         let answer = Real::new(Rational::new(123456789));

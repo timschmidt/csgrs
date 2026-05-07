@@ -61,6 +61,19 @@ Owned versus borrowed arithmetic for symbolic irrational `Real` values.
 
 Microbenchmarks for scalar operations, structural queries, cache hits, and dense exact arithmetic.
 
+### `construction_speed`
+
+Cost of constructing common exact scalar identities.
+
+| Benchmark output | Mean | 95% CI | What it measures |
+| --- | ---: | ---: | --- |
+| `construction_speed/rational_one` | 15.69 ns | 15.53 ns - 15.92 ns | Constructs `Rational::one()`. |
+| `construction_speed/rational_new_one` | 19.62 ns | 19.40 ns - 19.88 ns | Constructs one through `Rational::new(1)`. |
+| `construction_speed/computable_one` | 26.12 ns | 25.99 ns - 26.26 ns | Constructs `Computable::one()`. |
+| `construction_speed/real_new_rational_one` | 103.53 ns | 102.48 ns - 104.67 ns | Constructs one through `Real::new(Rational::one())`. |
+| `construction_speed/real_one` | 101.81 ns | 100.87 ns - 102.93 ns | Constructs one through `Real::one()`. |
+| `construction_speed/real_from_i32_one` | 102.71 ns | 102.12 ns - 103.41 ns | Constructs one through integer conversion. |
+
 ### `raw_cache_hit_cost`
 
 Cost of cold and cached `Computable::approx` calls for simple values.

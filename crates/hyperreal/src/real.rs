@@ -703,6 +703,16 @@ impl Real {
         }
     }
 
+    /// One, the multiplicative identity.
+    pub fn one() -> Real {
+        Self {
+            rational: Rational::one(),
+            class: One,
+            computable: Computable::one(),
+            signal: None,
+        }
+    }
+
     /// The specified [`Rational`] as a Real.
     pub fn new(rational: Rational) -> Real {
         Self {

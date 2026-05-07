@@ -459,10 +459,10 @@ impl Computable {
     /// Exactly one.
     pub fn one() -> Computable {
         Self {
-            internal: Box::new(Approximation::Int(BigInt::one())),
+            internal: Box::new(Approximation::One),
             cache: RefCell::new(Cache::Invalid),
-            bound: RefCell::new(BoundCache::Invalid),
-            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            bound: RefCell::new(BoundCache::Valid(BoundInfo::with_sign(Sign::Plus, Some(0)))),
+            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
             signal: None,
         }
     }
@@ -786,6 +786,7 @@ impl Computable {
             return None;
         }
         let info = match &*self.internal {
+            Approximation::One => Some(BoundInfo::with_sign(Sign::Plus, Some(0))),
             Approximation::Int(n) => Some(if n.sign() == Sign::NoSign {
                 BoundInfo::Zero
             } else {
@@ -857,6 +858,7 @@ impl Computable {
 
         fn direct_bound(node: &Computable) -> Option<BoundInfo> {
             match &*node.internal {
+                Approximation::One => Some(BoundInfo::with_sign(Sign::Plus, Some(0))),
                 Approximation::Int(n) => Some(if n.sign() == Sign::NoSign {
                     BoundInfo::Zero
                 } else {
@@ -1032,6 +1034,7 @@ impl Computable {
             }
 
             match &*node.internal {
+                Approximation::One => Some(Some(Sign::Plus)),
                 Approximation::Int(n) => Some(Some(n.sign())),
                 Approximation::Constant(_) => Some(Some(Sign::Plus)),
                 Approximation::Ratio(r) => Some(Some(r.sign())),
@@ -1198,6 +1201,7 @@ impl Computable {
         // constructor shortcuts from accidentally forcing approximation of a
         // composite just to discover that it is not rational.
         match &*self.internal {
+            Approximation::One => Some(Rational::one()),
             Approximation::Int(n) => Some(Rational::from_bigint(n.clone())),
             Approximation::Ratio(r) => Some(r.clone()),
             _ => None,
@@ -1329,6 +1333,7 @@ impl Computable {
         // using it here avoids an extra approximation pass for generic scalar
         // sin/cos rows such as 1e6 and 1e30.
         match &*self.internal {
+            Approximation::One => Some(Some(0)),
             Approximation::Int(n) => Some(if n.sign() == Sign::NoSign {
                 None
             } else {
@@ -1987,6 +1992,7 @@ impl Computable {
     /// ensuring the input is in-domain.
     pub fn acosh(self) -> Computable {
         let exact_rational_msd = match self.internal.as_ref() {
+            Approximation::One => return Self::rational(Rational::zero()),
             Approximation::Ratio(r) => {
                 if r == &Rational::one() {
                     return Self::rational(Rational::zero());
@@ -2368,6 +2374,9 @@ impl Computable {
     }
 
     pub(crate) fn integer(n: BigInt) -> Self {
+        if n == *signed::ONE {
+            return Self::one();
+        }
         Self {
             internal: Box::new(Approximation::Int(n)),
             cache: RefCell::new(Cache::Invalid),

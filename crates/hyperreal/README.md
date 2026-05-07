@@ -38,6 +38,7 @@ The crate is benchmark-driven and no longer just a direct port of computable
 real ideas. Current implementation work includes:
 
 - exact rational and dyadic fast paths
+- dedicated identity constructors for common exact ones and zeros
 - cached internal constants for `pi`, `tau`, `e`, common square roots, and
   common logarithms
 - symbolic classes for selected `pi`, `e`, `sqrt`, `ln`, `sin(pi*q)`, and
@@ -161,7 +162,8 @@ Performance shortcuts are intentionally documented next to the code that uses
 them. The main techniques are:
 
 - keep exact rational and dyadic values outside generic computable graphs
-- clone cached internal constants instead of rebuilding them
+- build identity values through dedicated constructors and clone cached named
+  constants instead of rebuilding them
 - preserve lightweight symbolic classes only where benchmarks show value
 - reduce trig and exponential arguments before entering series kernels
 - use endpoint and tiny-argument transforms for inverse trig and inverse

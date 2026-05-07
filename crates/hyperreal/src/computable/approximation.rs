@@ -13,6 +13,9 @@ pub(super) enum Approximation {
     // Exact integer leaf. This is the cheapest approximation source and also
     // exposes exact sign/MSD facts without any refinement.
     Int(BigInt),
+    // Exact one is hot enough to avoid even the tiny BigInt payload carried by
+    // Int(1). Real::one and integer identity conversion use this leaf.
+    One,
     // Shared constants use a process-local approximation cache keyed by enum
     // discriminant; do not replace these with fresh expression trees.
     Constant(SharedConstant),
@@ -106,6 +109,7 @@ impl Approximation {
         // their documented preconditions and avoid repeated shape checks.
         match self {
             Int(i) => scale(i.clone(), -p),
+            One => scale(signed::ONE.deref().clone(), -p),
             Constant(c) => c.approximate(signal, p),
             Inverse(c) => inverse(signal, c, p),
             Negate(c) => -c.approx_signal(signal, p),

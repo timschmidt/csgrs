@@ -7,6 +7,15 @@ macro_rules! impl_integer_conversion {
         impl From<$T> for Real {
             #[inline]
             fn from(n: $T) -> Real {
+                // Integer identity conversion is a public hot path through
+                // realistic_blas and predicated. Keep 0 and 1 on dedicated
+                // Real constructors instead of paying BigInt rational import.
+                if n == 0 {
+                    return Real::zero();
+                }
+                if n == 1 {
+                    return Real::one();
+                }
                 Real::new(Rational::from_bigint(ToBigInt::to_bigint(&n).unwrap()))
             }
         }

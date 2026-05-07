@@ -82,7 +82,20 @@ impl Rational {
 
     /// The non-negative Rational corresponding to the provided [`i64`].
     pub fn new(n: i64) -> Self {
-        Self::from_bigint(ToBigInt::to_bigint(&n).unwrap())
+        // Identity rationals are pervasive in symbolic normalization. Build
+        // them directly instead of routing through BigInt conversion and
+        // reduction; benchmarks cover this path because higher crates construct
+        // matrix identities and scalar ones constantly.
+        match n {
+            0 => Self::zero(),
+            1 => Self::one(),
+            -1 => Self {
+                sign: Minus,
+                numerator: BigUint::one(),
+                denominator: BigUint::one(),
+            },
+            _ => Self::from_bigint(ToBigInt::to_bigint(&n).unwrap()),
+        }
     }
 
     /// The Rational corresponding to the provided [`BigInt`].
