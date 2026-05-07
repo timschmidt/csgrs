@@ -215,6 +215,18 @@ fn approx_scalar_structural_facts_track_intervals() {
     assert_eq!(negative.to_f64_approx(), Some(-4.0));
 }
 
+#[cfg(feature = "approx-backend")]
+#[test]
+fn approx_scalar_partial_eq_handles_overflowed_infinities() {
+    let huge = realistic_blas::Scalar::<realistic_blas::ApproxBackend>::try_from(1.0e308).unwrap();
+    let positive_inf = huge.clone() * huge.clone();
+    let same_positive_inf = huge.clone() * huge.clone();
+    let negative_inf = -positive_inf.clone();
+
+    assert_eq!(positive_inf, same_positive_inf);
+    assert_ne!(positive_inf, negative_inf);
+}
+
 #[test]
 fn inverse_scalar_helpers_accept_abort_signal() {
     let signal = abort_signal();

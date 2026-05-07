@@ -1,190 +1,106 @@
 # realistic_blas
 
-`realistic_blas` is a small Rust linear algebra library built around a
-crate-owned `Scalar` type. It is the vector/matrix layer in the local geometry
-stack, sitting between semantics-rich scalar backends such as `hyperreal` and
-geometry-policy crates such as `predicated`.
+`realistic_blas` provides small fixed-size linear algebra over a crate-owned
+`Scalar` type.
 
-The crate provides scalar helpers, complex numbers, 3D/4D vectors, and 3x3/4x4
-matrices using `Scalar` throughout. `Scalar`, `Complex`, `Vector3`, `Vector4`,
-`Matrix3`, and `Matrix4` are generic over a backend marker and default to the
-feature-selected `DefaultBackend`. By default, `Scalar` is backed by
-`hyperreal::Real` from the published `hyperreal` crate. The approximate backend
-is also available explicitly. `approx-backend` uses an `f64` value plus an `f64`
-epsilon to model approximate error bounds and unknown-zero conditions.
+It includes scalars, complex numbers, 3D/4D vectors, and 3x3/4x4 matrices. The
+public types are generic over backend markers:
 
-The crate intentionally does not own robust geometry predicates such as
-`orient2d`, `orient3d`, or point/plane classification. Instead it exposes
-backend-neutral scalar facts so a predicate layer can exploit known sign,
-zero/non-zero status, exact-rational availability, magnitude hints, and
-borrowed finite approximations without depending directly on a backend's
-private representation.
+- `HyperrealBackend`: exact/symbolic scalars backed by `hyperreal::Real`
+- `ApproxBackend`: an `f64` center value plus an absolute `f64` error bound
+- `DefaultBackend`: `HyperrealBackend` when `hyperreal-backend` is enabled,
+  otherwise `ApproxBackend` when only `approx-backend` is enabled
 
-In the current stack:
+The default feature set enables both backends. The default scalar representation
+remains `HyperrealBackend`.
 
-- `hyperreal` supplies the default exact/symbolic scalar backend.
-- `realistic_blas` owns complex, vector, and matrix algebra over that scalar
-  abstraction, plus an explicit approximate backend for comparison and
-  lighter-weight workflows.
-- `predicated` consumes scalar facts from `realistic_blas::Scalar<B>` when
-  geometric predicates need policy, robust fallback, or exact sign escalation.
+## Relationship to Other Crates
 
-This crate deliberately preserves those boundaries. It forwards introspection
-facts from scalar backends, but it does not decide geometry topology or robust
-predicate escalation policy.
+- `hyperreal` supplies the default exact/symbolic scalar representation.
+- `realistic_blas` owns complex, vector, and matrix algebra over backend-neutral
+  `Scalar<B>` values.
+- `predicated` can consume `realistic_blas::Scalar<B>` structural facts when
+  geometry predicates need sign provenance, filtering, refinement, or robust
+  fallback.
 
-## Current status
+`realistic_blas` forwards scalar facts. It does not own robust predicate policy
+or geometry topology.
 
-`realistic_blas` is an experimental but actively benchmarked `0.3.1` crate. The
-current focus is ergonomic exact/symbolic algebra over small fixed-size
-objects, not raw dense linear algebra throughput. Recent work has reduced clone
-pressure in borrowed and mixed owned/borrowed scalar paths, added backend hooks
-for borrowed arithmetic, and made scalar introspection cheap enough for
-predicate filters to call frequently.
+## Current State
 
-The benchmark suite compares:
+Version `0.3.2` is experimental and benchmarked. The focus is ergonomic
+small-object algebra over rich scalar backends, not high-throughput dense BLAS.
 
-- exact/symbolic hyperreal-backed scalar, vector, matrix, and trig operations
-- the approximate backend
-- external numeric libraries used as throughput reference points
-- borrowed, owned, and mixed scalar operation forms
+Implemented:
 
-See [`benchmarks.md`](./benchmarks.md) for the generated Criterion summary.
+- `Scalar<B>` constants and elementary functions
+- `Complex<B>` arithmetic and integer powers
+- `Vector3<B>` and `Vector4<B>` componentwise arithmetic, scalar operations,
+  dot products, magnitude, normalization, and checked variants
+- `Matrix3<B>` and `Matrix4<B>` componentwise arithmetic, multiplication,
+  scalar division, matrix division, determinant, inverse, transpose,
+  reciprocal, integer powers, and checked/abort-aware variants
+- `ZeroStatus`, `ScalarFacts`, `ScalarSign`, and `ScalarMagnitudeBits`
+- `AbortSignal` and `_with_abort` APIs for computations that may refine
+  hyperreal values
+- symbolic and alternate decimal formatting for hyperreal-backed values
 
-## Performance Techniques
+Fallible operations return `BlasResult<T>`. Checked operations reject both
+definite zero and unknown-zero divisors or pivots.
 
-The crate is optimized for small fixed-size algebra over rich scalar backends,
-especially `hyperreal::Real`. The main shortcuts are documented here so they
-remain intentional and benchmarkable.
+## Installation
 
-- `Scalar` exposes backend hooks for borrowed add, subtract, multiply, inverse,
-  dot3, and dot4. Hyperreal-backed values can then avoid cloning expression
-  graphs for every lane of a vector or matrix kernel.
-- Common scalar constructors in the hyperreal backend are cached per thread, so
-  `zero`, `one`, `e`, and `pi` do not rebuild symbolic constants.
-- Elementwise vector, matrix, and complex operations use an owned-left,
-  borrowed-right pattern through `mul_cached`, `add_cached`, and `sub_cached`.
-  This is visible in borrowed-op and matrix benchmarks.
-- Small integer powers are written out for low exponents before falling back to
-  exponentiation by squaring. This avoids loop overhead and keeps clone
-  placement predictable for symbolic scalars.
-- Dot products build products first and use backend-specific pairwise summation
-  for 4-lane cases, reducing expression depth in complex and matrix kernels.
-- Fixed 3x3 and 4x4 borrowed matrix multiplication is unrolled because the
-  const-generic helper was measurably slower for hyperreal-backed matrices.
-- Matrix right-division uses borrowed transposes and Gauss-Jordan elimination.
-  The adjugate/inverse route and some clone-avoidance variants were benchmarked
-  and kept only where they won.
-- Checked and abort-aware division/inversion paths run zero-status checks before
-  expensive algebra. Ordinary paths stay optimistic where the backend can do so
-  safely.
-- The approx backend mirrors the public API with an `f64 +/- epsilon` interval
-  model and keeps its own dot-product paths scalar and unrolled, providing a
-  lower-cost comparison point for the exact/symbolic backend.
-- Structural fact forwarding is deliberately borrowed and conservative, because
-  `predicated` calls it heavily before deciding whether to build exact
-  predicate expressions.
+```toml
+[dependencies]
+realistic_blas = "0.3.2"
+```
 
-Any new shortcut should be guarded by the relevant `mathbench` row, plus a
-hyperreal scalar microbench when the change is really a scalar representation
-choice.
-
-## Features
-
-- Re-exports `hyperreal::{Real, Rational}` for explicit construction and interop
-  when `hyperreal-backend` is enabled. Library operations use crate-owned
-  `Scalar` and `Problem`.
-- Exposes `HyperrealBackend`, `ApproxBackend`, and `DefaultBackend` markers so
-  both backends can be used in one build when both backend features are enabled.
-- Constants and scalar helpers: `zero`, `one`, `e`, `pi`, `tau`, `i`,
-  `reciprocal`, `reciprocal_checked`, `pow`, `powi`.
-- Elementary functions: `exp`, `ln`, `log10`, `sqrt`, `sin`, `cos`, `tan`.
-- Hyperbolic functions: `sinh`, `cosh`, `tanh`.
-- Inverse trigonometric and hyperbolic helpers: `asin`, `acos`, `atan`, `asinh`,
-  `acosh`, `atanh`.
-- `ZeroStatus`, `Problem`, and `CheckedBlasResult` for APIs that reject unknown
-  zero conditions instead of proceeding optimistically.
-- `ScalarSign`, `ScalarFacts`, and `ScalarMagnitudeBits` for conservative
-  backend-neutral structural facts used by robust predicate layers.
-- Borrowed scalar inspection via `Scalar::structural_facts`,
-  `Scalar::refine_sign_until`, and `Scalar::to_f64_approx`. These APIs are the
-  current handoff surface for `predicated`.
-- `AbortSignal` and `_with_abort` variants for zero-sensitive or conversion
-  APIs that may need cancellable `Real` evaluation.
-- `Complex` with arithmetic, reciprocal, checked reciprocal, conjugate, and
-  integer powers, plus symbolic and alternate decimal display formatting.
-- `Vector3` and `Vector4` with componentwise vector/vector arithmetic,
-  componentwise vector/scalar addition and subtraction, scalar multiplication
-  and division, checked scalar division, dot product, magnitude, normalization,
-  checked normalization, abort-aware checked division/normalization, and
-  symbolic and alternate decimal display formatting.
-- `Matrix3` and `Matrix4` with componentwise matrix/matrix arithmetic,
-  componentwise matrix/scalar addition and subtraction, matrix multiplication,
-  scalar division, checked scalar division, matrix division, checked matrix
-  division, integer powers via `^`, checked integer powers, transpose,
-  determinant, inverse, checked inverse, reciprocal, checked reciprocal, and
-  abort-aware checked division/inversion/power helpers, and symbolic and
-  alternate decimal display formatting.
-
-## Install
-
-From the local sibling checkout used by this stack:
+From sibling checkouts:
 
 ```toml
 [dependencies]
 realistic_blas = { path = "../realistic_blas" }
 ```
 
-When using a published release, depend on the matching crate version:
+The published hyperreal-backed feature should use the matching `hyperreal`
+release:
 
 ```toml
-[dependencies]
-realistic_blas = "0.3.1"
-```
-
-The default feature set enables both backends. In this workspace the
-`hyperreal-backend` feature depends on the sibling `hyperreal` crate; when
-published, it should use the matching published `hyperreal` version. The
-current local stack is aligned with:
-
-```toml
-hyperreal = "0.10.4"
+hyperreal = "0.10.5"
 num = "0.4.3"
 ```
 
-The approximate `f64 + epsilon` backend has no normal dependencies on
-`hyperreal` or `num`. To use it:
+Approx-only build:
 
 ```toml
 [dependencies]
 realistic_blas = {
-    path = "../realistic_blas",
+    version = "0.3.2",
     default-features = false,
     features = ["approx-backend"],
 }
 ```
 
-Backend features gate availability rather than changing the shared API shape.
-When both `hyperreal-backend` and `approx-backend` are enabled,
-`DefaultBackend` remains `HyperrealBackend` and approximate values can be
-requested explicitly with types such as `Scalar<ApproxBackend>` or
-`Vector3<ApproxBackend>`.
+Features:
+
+| Feature | Default | Purpose |
+| --- | --- | --- |
+| `hyperreal-backend` | yes | Enables `HyperrealBackend`, `Real`/`Rational` re-exports, and exact/symbolic scalars. |
+| `approx-backend` | yes | Enables `ApproxBackend` with `f64 +/- epsilon` scalar intervals. |
 
 ## Examples
 
 ### Scalars
 
 ```rust
-use realistic_blas::{ln, log10, pi, sqrt, tau, Scalar};
+use realistic_blas::{Scalar, ln, log10, pi, sqrt, tau};
 
 fn s(value: i32) -> Scalar {
     value.into()
 }
 
 let nine: Scalar = 9.into();
-let three = sqrt(nine).unwrap();
-assert_eq!(three, s(3));
-
+assert_eq!(sqrt(nine).unwrap(), s(3));
 assert_eq!(tau(), s(2) * pi());
 assert_eq!(ln(realistic_blas::e()).unwrap(), s(1));
 assert_eq!(log10(s(100)).unwrap(), s(2));
@@ -204,85 +120,10 @@ let approx_vector = Vector3::<ApproxBackend>::new([approx.clone(), approx.clone(
 assert_eq!(exact_vector.0.len(), approx_vector.0.len());
 ```
 
-Many operations are fallible because scalar arithmetic can fail for invalid
-domains, division by zero, unknown zero conditions, or unsupported conversions.
-Fallible helpers return:
-
-```rust
-type BlasResult<T> = Result<T, realistic_blas::Problem>;
-```
-
-Checked helpers reject definite zero and unknown-zero cases:
-
-```rust
-type CheckedBlasResult<T> = Result<T, realistic_blas::Problem>;
-```
-
-For computations that may force hyperreal backend evaluation, callers can attach
-a cancellation flag before calling into `realistic_blas`, or use the provided
-abort-aware checked helpers. The approx backend accepts these APIs as no-ops.
-
-```rust
-use std::sync::Arc;
-use std::sync::atomic::AtomicBool;
-use realistic_blas::{AbortSignal, Vector3};
-
-let signal: AbortSignal = Arc::new(AtomicBool::new(false));
-let vector = Vector3::new([3.into(), 4.into(), 0.into()]);
-let unit = vector.normalize_checked_with_abort(&signal).unwrap();
-
-signal.store(true, std::sync::atomic::Ordering::Relaxed);
-```
-
-### Structural Scalar Facts
-
-`Scalar` exposes backend-neutral facts for downstream robust predicate crates.
-These APIs are borrowed and conservative: missing sign or magnitude information
-means the backend did not prove the fact cheaply.
-
-```rust
-use realistic_blas::{ScalarSign, ZeroStatus, pi};
-
-let facts = pi().structural_facts();
-assert_eq!(facts.sign, Some(ScalarSign::Positive));
-assert_eq!(facts.zero, ZeroStatus::NonZero);
-assert!(!facts.exact_rational);
-
-let approx = pi().to_f64_approx().unwrap();
-assert!(approx > 3.0 && approx < 4.0);
-```
-
-The Hyperreal backend forwards `Real::structural_facts`,
-`Real::refine_sign_until`, and `Real::to_f64_approx`. The approx backend derives
-the same public facts from its stored `value +/- epsilon` interval.
-
-`realistic_blas` only forwards facts. Predicate escalation policy, robust
-fallbacks, exact determinant paths, and topology classification belong in
-`predicated` or another geometry-specific crate.
-
-## Relationship to the other crates
-
-- Use `hyperreal` directly when you need exact rational, symbolic, or computable
-  scalar arithmetic without vectors or matrices.
-- Use `realistic_blas` when you need small fixed-size vectors, matrices,
-  complex numbers, and scalar functions over either exact/symbolic or
-  approximate scalar backends.
-- Use `predicated` when you need geometry predicates, classification, and
-  provenance for how a sign/topology decision was made.
-
-### Complex Numbers
-
-```rust
-use realistic_blas::{i, Complex};
-
-let minus_one = Complex::new((-1).into(), 0.into());
-assert_eq!((i() ^ 2).unwrap(), minus_one);
-```
-
 ### Vectors
 
 ```rust
-use realistic_blas::{one, Rational, Scalar, Vector3};
+use realistic_blas::{Rational, Scalar, Vector3, one};
 
 fn s(value: i32) -> Scalar {
     value.into()
@@ -293,9 +134,7 @@ let offset = v.clone() + s(10);
 
 assert_eq!(v.dot(&v), s(25));
 assert_eq!(offset, Vector3::new([s(13), s(14), s(10)]));
-
-let unit = v.normalize().unwrap();
-assert_eq!(unit.dot(&unit), one());
+assert_eq!(v.normalize().unwrap().dot(&v.normalize().unwrap()), one());
 
 let half = Rational::fraction(1, 2).unwrap().into();
 let displayed = Vector3::new([half, s(2), s(3)]);
@@ -317,101 +156,77 @@ let matrix = Matrix3::new([
     [s(0), s(1), s(4)],
     [s(5), s(6), s(0)],
 ]);
-let incremented = matrix.clone() + s(1);
 
 assert_eq!(matrix.determinant(), s(1));
-assert_eq!(
-    incremented,
-    Matrix3::new([
-        [s(2), s(3), s(4)],
-        [s(1), s(2), s(5)],
-        [s(6), s(7), s(1)],
-    ])
-);
 assert_eq!(matrix.clone() * matrix.clone().inverse().unwrap(), Matrix3::identity());
-assert_eq!((matrix.clone() ^ 0).unwrap(), Matrix3::identity());
+assert_eq!((matrix ^ 0).unwrap(), Matrix3::identity());
 ```
 
-## Formatting
-
-`Complex`, `Vector3`, `Vector4`, `Matrix3`, and `Matrix4` implement `Display`.
-With the realistic backend, normal formatting forwards each component to
-`Real`'s symbolic display, while alternate formatting forwards to `Real`'s
-decimal display. With the approx backend, both forms display the approximate
-center value.
+### Structural Facts
 
 ```rust
-use realistic_blas::{Matrix3, Rational, Scalar};
+use realistic_blas::{ScalarSign, ZeroStatus, pi};
 
-fn s(value: i32) -> Scalar {
-    value.into()
-}
+let facts = pi().structural_facts();
+assert_eq!(facts.sign, Some(ScalarSign::Positive));
+assert_eq!(facts.zero, ZeroStatus::NonZero);
+assert!(!facts.exact_rational);
 
-let half = Rational::fraction(1, 2).unwrap().into();
-let matrix = Matrix3::new([[half, s(2), s(3)], [s(4), s(5), s(6)], [s(7), s(8), s(9)]]);
-
-assert_eq!(format!("{matrix}"), "[[1/2, 2, 3], [4, 5, 6], [7, 8, 9]]");
-assert_eq!(format!("{matrix:#}"), "[[0.5, 2, 3], [4, 5, 6], [7, 8, 9]]");
+let approx = pi().to_f64_approx().unwrap();
+assert!(approx > 3.0 && approx < 4.0);
 ```
 
-The formatting examples above use the default hyperreal backend. With the approx
-backend, `Rational` is not available and normal formatting prints approximate
-decimal center values.
+The hyperreal backend forwards `Real::structural_facts`,
+`Real::refine_sign_until`, and `Real::to_f64_approx`. The approx backend derives
+facts from its stored interval.
+
+### Abort-Aware Checked Operations
+
+```rust
+use realistic_blas::{AbortSignal, Vector3};
+use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
+
+let signal: AbortSignal = Arc::new(AtomicBool::new(false));
+let vector = Vector3::new([3.into(), 4.into(), 0.into()]);
+
+let unit = vector.normalize_checked_with_abort(&signal).unwrap();
+assert_eq!(unit.dot(&unit), 1.into());
+```
+
+## Performance Notes
+
+The crate is optimized for small fixed-size algebra over rich scalars:
+
+- backend hooks for borrowed add, subtract, multiply, divide, inverse, and dot
+  products reduce cloning of hyperreal expression graphs
+- common hyperreal scalar constants are cached per thread
+- vector, matrix, and complex operations use owned-left/borrowed-right forms in
+  hot paths
+- small scalar powers are specialized before exponentiation by squaring
+- 3x3 and 4x4 borrowed matrix multiplication is unrolled
+- matrix division and inversion use checked zero-status paths where requested
+- scalar facts are forwarded by borrow so `predicated` can query them cheaply
+- the approx backend mirrors the API with a lower-cost interval representation
+
+Run the benchmark suite:
+
+```sh
+cargo bench --bench mathbench
+```
+
+The generated benchmark summary is in [`benchmarks.md`](benchmarks.md).
 
 ## Source Layout
 
-The crate root re-exports the public API from focused modules:
-
-- `src/scalar.rs`: scalar constants, functions, zero status, and structural
-  fact types around `Scalar`.
-- `src/complex.rs`: `Complex` and complex arithmetic.
-- `src/vector.rs`: `Vector3`, `Vector4`, and vector operations.
-- `src/matrix.rs`: `Matrix3`, `Matrix4`, and matrix operations.
-- `src/backend/hyperreal`: hyperreal-backed `Scalar` implementation.
-- `src/backend/approx`: approximate `f64 + epsilon` `Scalar` implementation.
-
-## Notes
-
-### Current Integration State
-
-- `realistic_blas` has implemented its part of the predicate-integration plan:
-  scalar fact forwarding through `Scalar<B>`.
-- The Hyperreal backend uses the upstream structural and inverse elementary
-  function APIs from `hyperreal`.
-- The approx backend maps its interval model into conservative `ScalarFacts`.
-- Full robust predicate implementation is not in this crate. The next layer is
-  expected to consume these APIs from `predicated`.
-
-When the hyperreal backend is selected, inverse trigonometric and inverse
-hyperbolic helpers dispatch to native `hyperreal::Real` methods, preserving
-exact symbolic paths where `hyperreal` can represent them. The approx backend
-implements the same helpers with its local `f64 + epsilon` interval model.
-
-The approx backend stores a center value and an absolute error bound. A scalar
-with an interval containing zero reports `ZeroStatus::Unknown`, so checked
-division, normalization, and matrix inversion exercise the same unknown-zero API
-surface as the hyperreal backend.
-
-Division-sensitive operations have two API paths. The checked path uses
-`zero_status` and rejects both definite zero and `ZeroStatus::Unknown`.
-Abort-aware checked variants attach an `AbortSignal` before running those zero
-classification checks. The default hyperreal backend keeps the ordinary path
-optimistic where possible; the approx backend may return `Problem::UnknownZero`
-from ordinary arithmetic when an interval contains zero.
-
-Matrix inversion uses Gauss-Jordan elimination. Ordinary inversion picks a pivot
-that is not definitely zero. Checked inversion requires a pivot classified as
-`ZeroStatus::NonZero`.
-
-Scalar addition and subtraction are implemented as `Vector3 + Scalar`,
-`Vector4 - Scalar`, `Matrix3 + Scalar`, and similar left-hand vector/matrix
-forms. The reverse forms, such as `Scalar + Vector3`, cannot be implemented
-directly because Rust's orphan rules forbid implementing a standard-library
-trait for an external left-hand type.
+- `src/scalar.rs`: scalar constants, functions, facts, and zero status
+- `src/complex.rs`: `Complex`
+- `src/vector.rs`: `Vector3` and `Vector4`
+- `src/matrix.rs`: `Matrix3` and `Matrix4`
+- `src/backend/hyperreal`: hyperreal-backed scalar implementation
+- `src/backend/approx`: approximate scalar implementation
 
 ## Development
-
-Run the standard checks:
 
 ```sh
 cargo fmt --check
@@ -420,18 +235,11 @@ cargo test --all-targets --all-features
 cargo test --all-targets --no-default-features --features approx-backend
 cargo clippy --all-targets -- -D warnings
 cargo clippy --all-targets --all-features -- -D warnings
-cargo clippy --all-targets --no-default-features --features approx-backend -- -D warnings
 ```
 
-Use `--all-features` to validate that explicit backend type parameters can use
-the realistic and approximate backends in the same build.
+Use `--all-features` when checking code that uses explicit
+`HyperrealBackend` and `ApproxBackend` type parameters in the same build.
 
-Run the Criterion benchmark suite:
+## License
 
-```sh
-cargo bench --bench mathbench
-```
-
-See [benchmarks.md](benchmarks.md) for operation coverage and benchmark
-results. A completed `cargo bench --bench mathbench` run rewrites that file
-from Criterion's saved median estimates.
+MIT.

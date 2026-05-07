@@ -452,6 +452,14 @@ impl BackendScalarTrait for BackendScalar {
 
 impl PartialEq for BackendScalar {
     fn eq(&self, rhs: &Self) -> bool {
+        // Avoid `inf - inf` in the tolerance check; it produces NaN and would
+        // make equal overflowed centers compare false.
+        if self.value == rhs.value {
+            return true;
+        }
+        if !self.value.is_finite() || !rhs.value.is_finite() {
+            return false;
+        }
         (self.value - rhs.value).abs() <= self.epsilon + rhs.epsilon
     }
 }

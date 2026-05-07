@@ -448,7 +448,7 @@ checksum = "4f467dd6dccf739c208452f8014c75c18bb8301b050ad1cfb27153803edb0f51"
 
 [[package]]
 name = "hyperreal"
-version = "0.10.4"
+version = "0.10.5"
 dependencies = [
  "ciborium",
  "num",
@@ -868,7 +868,7 @@ dependencies = [
 
 [[package]]
 name = "realistic_blas"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "astro-float",
  "criterion",
