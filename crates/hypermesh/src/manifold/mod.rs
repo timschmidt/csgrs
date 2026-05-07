@@ -13,8 +13,8 @@ use crate::{Real, Half, Vec3, Vec3u, K_PRECISION, next_of, Mat3};
 use super::hmesh::Hmesh;
 #[cfg(feature = "rayon")] use rayon::prelude::*;
 
-// The core struct for all boolean operations. Do not change the properties directly because it
-// does face indices sorting by its position, and all the following operations are based on it.
+// The core struct for all boolean operations. Avoid modifying properties directly, as the struct
+// maintains internal face index sorting based on vertex positions—a prerequisite for all subsequent operations.
 #[derive(Clone, Debug)]
 pub struct Manifold {
     pub ps: Vec<Vec3>,            // positions
