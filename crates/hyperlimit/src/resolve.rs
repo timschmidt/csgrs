@@ -18,6 +18,10 @@ pub(crate) fn resolve_scalar_sign<S: PredicateScalar>(
     fallback: impl FnOnce() -> Option<PredicateOutcome<Sign>>,
     unknown_need: RefinementNeed,
 ) -> PredicateOutcome<Sign> {
+    // The ordering is the performance policy for every predicate: use facts
+    // already attached to the scalar, then determinant-specific cheap filters,
+    // then exact/refinement/fallback stages. Reordering this can easily move
+    // exact symbolic backends from nanosecond fact checks to expression builds.
     decide_scalar_sign(value, Escalation::Structural)
         .or_else(filter)
         .or_else(|| exact_scalar_sign_if_allowed(value, policy))

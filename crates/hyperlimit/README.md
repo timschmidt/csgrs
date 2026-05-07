@@ -175,6 +175,38 @@ The default policy is `PredicatePolicy::STRICT`, which does not return
 approximate topology. `PredicatePolicy::APPROXIMATE` is useful for previews and
 debugging.
 
+## Performance Techniques
+
+`predicated` tries to avoid exact determinant construction unless the cheaper
+layers cannot decide the sign. The performance shortcuts are policy-aware and
+conservative: they may return `Unknown`, but they must not invent topology.
+
+- Predicate kernels use `BorrowedPredicateScalar` operations so rich scalar
+  backends such as `hyperreal::Real` and `realistic_blas::Scalar` do not clone
+  every coordinate while building determinant terms.
+- The shared resolver asks for scalar structural sign, exact-zero status,
+  nonzero status, exact/rational state, and magnitude bounds before invoking
+  exact predicate arithmetic.
+- Orientation and plane predicates run conservative `f64` filters before exact
+  scalar arithmetic when inputs expose finite approximations.
+- Signed-term and magnitude-gap filters can decide determinant signs when one
+  term dominates the others by a conservative bit gap.
+- Exact scalar sign and exact predicate hooks are separated. This lets a backend
+  provide cheap scalar facts without requiring it to implement full predicate
+  determinant evaluation.
+- Bounded sign refinement is used only after structural/filter/exact attempts
+  fail and only when policy permits refinement.
+- Robust fallback through `robust` or `geogram` is policy-gated and only uses
+  finite `f64`-convertible coordinates. Interval coordinates expose `f64`
+  fallback only for singleton finite intervals.
+- Geogram in-circle and in-sphere fallback calls both symbolic-perturbation
+  polarities and reports zero on disagreement, preserving unperturbed boundary
+  semantics.
+
+When changing predicate performance logic, run the feature-specific
+`predicates` Criterion rows for the affected backends and keep exact/filtered
+provenance semantics unchanged.
+
 Policy-specific variants live in their modules:
 
 ```rust

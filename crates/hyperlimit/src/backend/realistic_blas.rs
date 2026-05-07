@@ -59,6 +59,8 @@ fn map_magnitude(magnitude: realistic_blas::ScalarMagnitudeBits) -> Option<Magni
 }
 
 fn scalar_facts_from_realistic_blas(facts: realistic_blas::ScalarFacts) -> ScalarFacts {
+    // Forward realistic_blas facts without asking the wrapped scalar for an
+    // exact value. This keeps predicate filters on the borrowed structural path.
     ScalarFacts {
         sign: facts.sign.map(map_sign),
         exact_zero: Some(matches!(facts.zero, realistic_blas::ZeroStatus::Zero)),
