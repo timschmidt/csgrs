@@ -750,4 +750,124 @@ mod tests {
         let actual: f64 = from_float.into();
         assert!((actual - 14.508657738524219).abs() < 1e-12);
     }
+
+    fn assert_close(value: Real, expected: f64, tolerance: f64) {
+        let actual: f64 = value.into();
+        let scale = expected.abs().max(1.0);
+        assert!(
+            (actual - expected).abs() <= tolerance * scale,
+            "actual {actual}, expected {expected}, tolerance {tolerance}"
+        );
+    }
+
+    fn adversarial_tiny() -> Real {
+        Real::new(Rational::fraction(1, 1_000_000_000_000).unwrap())
+    }
+
+    fn adversarial_near_one() -> Real {
+        Real::new(Rational::fraction(999_999, 1_000_000).unwrap())
+    }
+
+    #[test]
+    fn adversarial_trig_tiny_huge_and_near_pole_cases() {
+        use num::bigint::{BigInt, BigUint};
+
+        let tiny = adversarial_tiny();
+        let tiny_f64 = 1e-12_f64;
+        assert_close(tiny.clone().sin(), tiny_f64.sin(), 1e-14);
+        assert_close(tiny.clone().cos(), tiny_f64.cos(), 1e-14);
+        assert_close(tiny.clone().tan().unwrap(), tiny_f64.tan(), 1e-14);
+
+        let medium = Real::new(Rational::fraction(7, 5).unwrap());
+        let medium_f64 = 7.0_f64 / 5.0_f64;
+        assert_close(medium.clone().sin(), medium_f64.sin(), 1e-14);
+        assert_close(medium.clone().cos(), medium_f64.cos(), 1e-14);
+        assert_close(medium.clone().tan().unwrap(), medium_f64.tan(), 1e-14);
+
+        let huge_even_pi_multiple = Real::new(Rational::from_bigint(BigInt::from(1_u8) << 128))
+            * Real::pi()
+            + medium.clone();
+        assert_close(huge_even_pi_multiple.clone().sin(), medium_f64.sin(), 1e-12);
+        assert_close(huge_even_pi_multiple.clone().cos(), medium_f64.cos(), 1e-12);
+        assert_close(
+            huge_even_pi_multiple.tan().unwrap(),
+            medium_f64.tan(),
+            1e-12,
+        );
+
+        let near_half_pi = pi_fraction(1, 2)
+            - Real::new(
+                Rational::from_bigint_fraction(BigInt::from(1_u8), BigUint::from(1_u8) << 40)
+                    .unwrap(),
+            );
+        let near_half_pi_f64 = std::f64::consts::FRAC_PI_2 - 2_f64.powi(-40);
+        assert_close(near_half_pi.clone().sin(), near_half_pi_f64.sin(), 1e-12);
+        assert_close(near_half_pi.cos(), near_half_pi_f64.cos(), 1e-10);
+    }
+
+    #[test]
+    fn adversarial_inverse_trig_endpoint_and_symmetry_cases() {
+        let tiny = adversarial_tiny();
+        let tiny_f64 = 1e-12_f64;
+        assert_close(tiny.clone().asin().unwrap(), tiny_f64.asin(), 1e-14);
+        assert_close(tiny.clone().acos().unwrap(), tiny_f64.acos(), 1e-14);
+        assert_close(tiny.clone().atan().unwrap(), tiny_f64.atan(), 1e-14);
+
+        let near_one = adversarial_near_one();
+        let near_one_f64 = 0.999999_f64;
+        assert_close(near_one.clone().asin().unwrap(), near_one_f64.asin(), 1e-12);
+        assert_close(near_one.clone().acos().unwrap(), near_one_f64.acos(), 1e-12);
+
+        let near_minus_one = -near_one;
+        assert_close(
+            near_minus_one.clone().asin().unwrap(),
+            (-near_one_f64).asin(),
+            1e-12,
+        );
+        assert_close(
+            near_minus_one.acos().unwrap(),
+            (-near_one_f64).acos(),
+            1e-12,
+        );
+
+        let huge = Real::new(Rational::new(1_000_000));
+        assert_close(huge.atan().unwrap(), 1_000_000_f64.atan(), 1e-14);
+
+        let just_outside = Real::new(Rational::one()) + tiny;
+        assert_eq!(just_outside.clone().asin(), Err(Problem::NotANumber));
+        assert_eq!(just_outside.acos(), Err(Problem::NotANumber));
+    }
+
+    #[test]
+    fn adversarial_inverse_hyperbolic_endpoint_cases() {
+        let tiny = adversarial_tiny();
+        let tiny_f64 = 1e-12_f64;
+        assert_close(tiny.clone().asinh().unwrap(), tiny_f64.asinh(), 1e-14);
+        assert_close(tiny.clone().atanh().unwrap(), tiny_f64.atanh(), 1e-14);
+
+        let near_one = adversarial_near_one();
+        let near_one_f64 = 0.999999_f64;
+        assert_close(
+            near_one.clone().atanh().unwrap(),
+            near_one_f64.atanh(),
+            5e-12,
+        );
+        assert_close((-near_one).atanh().unwrap(), (-near_one_f64).atanh(), 5e-12);
+
+        let one_plus_tiny = Real::new(Rational::one()) + tiny.clone();
+        assert_close(
+            one_plus_tiny.clone().acosh().unwrap(),
+            (1.0_f64 + tiny_f64).acosh(),
+            1e-9,
+        );
+
+        let large = Real::new(Rational::new(1_000_000));
+        assert_close(large.clone().asinh().unwrap(), 1_000_000_f64.asinh(), 1e-14);
+        assert_close(large.acosh().unwrap(), 1_000_000_f64.acosh(), 1e-14);
+
+        let one_minus_tiny = Real::new(Rational::one()) - tiny;
+        assert_eq!(one_minus_tiny.acosh(), Err(Problem::NotANumber));
+        assert_eq!(Real::new(Rational::one()).atanh(), Err(Problem::Infinity));
+        assert_eq!(one_plus_tiny.atanh(), Err(Problem::NotANumber));
+    }
 }

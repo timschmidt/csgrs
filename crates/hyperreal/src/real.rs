@@ -758,6 +758,9 @@ fn tan_curve(r: Rational) -> (bool, Rational) {
 // 0 < r < 0.5
 // Never actually used for exact zero or half
 fn curve(r: Rational) -> (bool, Rational) {
+    // Reduce rational multiples of pi to the first half-turn and record the
+    // sign separately. SinPi/TanPi classes depend on this canonical argument so
+    // equivalent exact trig values compare cheaply.
     if r.sign() == Sign::Minus {
         let (neg, s) = curve(r.neg());
         return (!neg, s);
@@ -771,6 +774,8 @@ fn curve(r: Rational) -> (bool, Rational) {
 }
 
 fn sin_pi_neg(r: Rational) -> bool {
+    // For exact sin(q*pi) table entries, the integer part alone determines the
+    // sign after the rational argument has been normalized.
     if r.sign() == Sign::Minus {
         return !sin_pi_neg(r.neg());
     }
@@ -1669,6 +1674,8 @@ impl Real {
 
         match &self.class {
             One => {
+                // atan(+/-1) is one of the few rational inputs with an exact
+                // pi-fraction result; catching it avoids constructing an atan node.
                 if self.rational == *rationals::ONE {
                     Some(Self::pi_fraction(1, 4))
                 } else if self.rational == Rational::new(-1) {
@@ -1762,9 +1769,11 @@ impl Real {
     pub fn acos(self) -> Result<Real, Problem> {
         if self.class == One {
             if self.rational == *rationals::ONE {
+                // acos(1) is exactly zero and must not enter the generic kernel.
                 return Ok(Self::zero());
             }
             if self.rational == Rational::new(-1) {
+                // acos(-1) is exactly pi, using the cached internal constant.
                 return Ok(Self::pi());
             }
             let magnitude = if self.rational.sign() == Sign::Minus {
@@ -1773,6 +1782,8 @@ impl Real {
                 self.rational.clone()
             };
             if magnitude > *rationals::ONE {
+                // Exact rational domain failures are rejected before any
+                // approximation machinery is constructed.
                 return Err(Problem::NotANumber);
             }
         }
@@ -1832,6 +1843,7 @@ impl Real {
                 return Err(Problem::NotANumber);
             }
         } else if let Sqrt(r) = &self.class {
+            // Domain-check factored sqrt values exactly: (a*sqrt(r))^2 = a^2*r.
             if self.rational.sign() == Sign::Minus
                 || self.rational.clone() * self.rational.clone() * r.clone() < *rationals::ONE
             {
@@ -1890,14 +1902,18 @@ impl Real {
         if let Sqrt(r) = &self.class
             && self.rational.clone() * self.rational.clone() * r.clone() == *rationals::ONE
         {
+            // Exact sqrt endpoint, e.g. sqrt(2)/2 scaled to magnitude one.
             return Err(Problem::Infinity);
         }
         if let Sqrt(r) = &self.class
             && self.rational.clone() * self.rational.clone() * r.clone() > *rationals::ONE
         {
+            // Exact sqrt domain failure avoids an approximation sign query.
             return Err(Problem::NotANumber);
         }
         if matches!(&self.class, Sqrt(_)) {
+            // In-domain sqrt inputs stay on the computable atanh path so the
+            // factored radical can still be recognized by lower constructors.
             return Ok(self.make_computable(Computable::atanh));
         }
         let one = Self::new(Rational::one());
@@ -2289,6 +2305,9 @@ impl Real {
     }
 
     fn try_add_rational_to_const_term(term: &Real, offset: Rational) -> Option<Real> {
+        // Add rational offsets to a recognized pi/e constant without discarding
+        // the symbolic certificate. This is the cheap path for facts on values
+        // like pi - 3 and e - 2.
         if offset == *rationals::ZERO {
             return Some(term.clone());
         }
@@ -2491,6 +2510,8 @@ impl Real {
         let x = x.as_ref();
         let y = y.as_ref();
         if x == y {
+            // sqrt(x)*sqrt(x) collapses to the exact rational x, eliminating an
+            // otherwise expensive symbolic-irrational product.
             Self {
                 rational: x.clone(),
                 class: One,
@@ -2500,6 +2521,8 @@ impl Real {
         } else if (x == &Rational::new(2) && y == &Rational::new(3))
             || (x == &Rational::new(3) && y == &Rational::new(2))
         {
+            // sqrt(2)*sqrt(3) is common enough in trig-derived matrices to keep
+            // as sqrt(6) without running the general square-extraction code.
             Self {
                 rational: Rational::one(),
                 class: Sqrt(Rational::new(6)),
@@ -2518,6 +2541,8 @@ impl Real {
             }
             let (a, b) = product.extract_square_reduced();
             if b == *rationals::ONE {
+                // The product contains a full square, so return only the exact
+                // rational factor and keep subsequent sign/equality checks cheap.
                 return Self {
                     rational: a,
                     class: One,
@@ -2570,6 +2595,9 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 signal: self.signal.clone(),
             };
         }
+        // The table below is deliberately explicit. The generic fallback can
+        // represent every product, but these hot symbolic arms preserve exact
+        // pi/e/sqrt/log structure and avoid building opaque Computable graphs.
         match (&self.class, &other.class) {
             (Sqrt(r), Sqrt(s)) => {
                 let square = Self::Output::multiply_sqrts(r, s);
@@ -2579,6 +2607,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 }
             }
             (Exp(r), Exp(s)) => {
+                // e^r * e^s = e^(r+s), keeping exponent arithmetic exact.
                 let (class, computable) = Class::make_exp(r + s);
                 let rational = &self.rational * &other.rational;
                 Self::Output {
@@ -2589,6 +2618,8 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 }
             }
             (Pi, Pi) => {
+                // pi*pi promotes to the pi-power family instead of a generic
+                // irrational product.
                 let (class, computable) = Class::make_pi_power(2);
                 let rational = &self.rational * &other.rational;
                 Self::Output {
@@ -2599,6 +2630,8 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 }
             }
             (PiPow(power), Pi) | (Pi, PiPow(power)) => {
+                // Extend existing pi powers in-place; overflow falls back to a
+                // generic Computable product rather than wrapping the exponent.
                 let Some(power) = power.checked_add(1) else {
                     let rational = &self.rational * &other.rational;
                     return Self::Output {
@@ -2621,6 +2654,8 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 }
             }
             (PiPow(left), PiPow(right)) => {
+                // Closed pi-power multiplication keeps dense algebra from
+                // repeatedly allocating equivalent pi chains.
                 let Some(power) = left.checked_add(*right) else {
                     let rational = &self.rational * &other.rational;
                     return Self::Output {
@@ -2643,6 +2678,8 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 }
             }
             (Pi, Exp(r)) | (Exp(r), Pi) => {
+                // pi*e^q has a compact legacy class because it is a frequent
+                // endpoint of exact transcendental simplification.
                 let (class, computable) = Class::make_pi_exp(r.clone());
                 let rational = &self.rational * &other.rational;
                 Self::Output {
@@ -2653,6 +2690,8 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 }
             }
             (PiPow(power), Exp(exp)) | (Exp(exp), PiPow(power)) => {
+                // Higher pi powers times e^q use the boxed const-product form so
+                // common Real values do not grow to carry the rare fields inline.
                 let (class, computable) = Class::make_const_product(i16::from(*power), exp.clone());
                 let rational = &self.rational * &other.rational;
                 Self::Output {
@@ -2663,6 +2702,8 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 }
             }
             (PiExp(r), Exp(s)) | (Exp(s), PiExp(r)) => {
+                // Existing pi*e^q times another e^r only changes the exact
+                // exponent; no new multiply node is needed.
                 let (class, computable) = Class::make_pi_exp(r + s);
                 let rational = &self.rational * &other.rational;
                 Self::Output {
@@ -2673,6 +2714,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 }
             }
             (ConstProduct(product), Exp(exp)) | (Exp(exp), ConstProduct(product)) => {
+                // Keep boxed pi^n*e^q products closed under another e^r factor.
                 let (class, computable) =
                     Class::make_const_product(product.pi_power, product.exp_power.clone() + exp);
                 let rational = &self.rational * &other.rational;
@@ -2684,6 +2726,8 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 }
             }
             (ConstProduct(product), Pi) | (Pi, ConstProduct(product)) => {
+                // Multiplying by one more pi is a checked exponent bump. The
+                // generic path is still available for deliberately huge powers.
                 let Some(pi_power) = product.pi_power.checked_add(1) else {
                     let rational = &self.rational * &other.rational;
                     return Self::Output {
@@ -2707,6 +2751,8 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 }
             }
             (ConstProduct(product), PiPow(power)) | (PiPow(power), ConstProduct(product)) => {
+                // Same closure for pi^k factors; keeping it exact helps matrix
+                // products cancel pi powers later in division.
                 let Some(pi_power) = product.pi_power.checked_add(i16::from(*power)) else {
                     let rational = &self.rational * &other.rational;
                     return Self::Output {
@@ -2730,6 +2776,8 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 }
             }
             (ConstProduct(left), ConstProduct(right)) => {
+                // Fully factored pi^n*e^q products combine by exact exponent
+                // arithmetic and retain their reusable computable cache.
                 let Some(pi_power) = left.pi_power.checked_add(right.pi_power) else {
                     let rational = &self.rational * &other.rational;
                     return Self::Output {
@@ -2753,6 +2801,8 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 }
             }
             (Pi, Sqrt(r)) | (Sqrt(r), Pi) => {
+                // pi*sqrt(r) has a compact direct class because it appears in
+                // exact trig constants and BLAS-style products.
                 let (class, computable) = Class::make_pi_sqrt(r.clone());
                 let rational = &self.rational * &other.rational;
                 Self::Output {
@@ -2763,6 +2813,8 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 }
             }
             (Exp(exp), Sqrt(r)) | (Sqrt(r), Exp(exp)) => {
+                // e^q*sqrt(r) is kept factored so later multiply/divide can peel
+                // off the exact exponential and radicand pieces.
                 let (class, computable) = Class::make_const_product_sqrt(0, exp.clone(), r.clone());
                 let rational = &self.rational * &other.rational;
                 Self::Output {
@@ -2786,6 +2838,8 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 }
             }
             (PiInvExp(exp), Sqrt(r)) | (Sqrt(r), PiInvExp(exp)) => {
+                // The signed pi exponent is part of the factored sqrt class, so
+                // e^q/pi times sqrt(r) remains easy to divide by pi or sqrt(r).
                 let (class, computable) =
                     Class::make_const_product_sqrt(-1, exp.clone(), r.clone());
                 let rational = &self.rational * &other.rational;
@@ -2797,6 +2851,8 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 }
             }
             (ConstProduct(product), Sqrt(r)) | (Sqrt(r), ConstProduct(product)) => {
+                // Attach a sqrt factor to an existing pi/e product without
+                // losing the separate radicand needed for rationalization.
                 let (class, computable) = Class::make_const_product_sqrt(
                     product.pi_power,
                     product.exp_power.clone(),
@@ -2811,6 +2867,8 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 }
             }
             (PiSqrt(r), Sqrt(s)) | (Sqrt(s), PiSqrt(r)) if r == s => {
+                // pi*sqrt(r)*sqrt(r) collapses the sqrt pair into the rational
+                // scale, leaving a plain pi certificate.
                 let rational = &self.rational * &other.rational * r;
                 Self::Output {
                     rational,
@@ -2820,6 +2878,8 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 }
             }
             (Ln(r), Ln(s)) => {
+                // Products of simple logs get a sorted symbolic class so
+                // ln(a)*ln(b) and ln(b)*ln(a) share equality and sign facts.
                 let (class, computable) = Class::make_ln_product(r.clone(), s.clone());
                 let rational = &self.rational * &other.rational;
                 Self::Output {
@@ -3031,6 +3091,9 @@ impl<T: AsRef<Real>> Div<T> for &Real {
         if let (Sqrt(left), Sqrt(right)) = (&self.class, &other.class)
             && let Some(right_integer) = right.to_big_integer()
         {
+            // Rationalize sqrt(a)/sqrt(b) as sqrt(a*b)/b when b is an integer.
+            // This keeps simple radical quotients exact instead of using
+            // `other.inverse()` and losing the radicand certificate.
             let square = Real::multiply_sqrts(left, right);
             let denominator = &other.rational * Rational::from_bigint(right_integer);
             return Ok(Real {
@@ -3093,6 +3156,8 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                 other.class.const_product_parts(),
             ) {
                 if let Some(pi_power) = sqrt_pi.checked_sub(product_pi) {
+                    // Divide out only the pi/e product and leave the sqrt factor
+                    // intact for later exact radical products.
                     let (class, computable) =
                         Class::make_const_product_sqrt(pi_power, sqrt_exp - product_exp, radicand);
                     return Ok(Real {
@@ -3108,6 +3173,8 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                 other.class.const_product_sqrt_parts(),
             ) {
                 if let Some(pi_power) = product_pi.checked_sub(sqrt_pi) {
+                    // Dividing by sqrt(r) multiplies numerator and denominator
+                    // by sqrt(r); keep the remaining sqrt(r) factored.
                     let denominator = &other.rational * radicand.clone();
                     let rational = &self.rational / denominator;
                     let (class, computable) =
@@ -3125,6 +3192,8 @@ impl<T: AsRef<Real>> Div<T> for &Real {
         if other.class.is_ln() && self.class.is_ln() {
             if let Ln(s) = other.class.clone() {
                 if s == *rationals::TEN {
+                    // log10 is a smaller exact certificate than a quotient of
+                    // two logs and gives equality/fact queries a direct shape.
                     let Ln(r) = &self.class else {
                         unreachable!();
                     };

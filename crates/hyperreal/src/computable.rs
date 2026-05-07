@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     cell::RefCell,
     ops::{Deref, Neg},
+    sync::LazyLock,
 };
 
 mod approximation;
@@ -451,6 +452,9 @@ mod unsigned {
     pub(super) static SIX: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&6).unwrap());
 }
 
+static HALF_PI_SHORTCUT_RATIONAL_LIMIT: LazyLock<Rational> =
+    LazyLock::new(|| Rational::fraction(3, 2).unwrap());
+
 impl Computable {
     /// Exactly one.
     pub fn one() -> Computable {
@@ -514,6 +518,47 @@ impl Computable {
         // kernel directly.
         Self {
             internal: Box::new(Approximation::PrescaledSin(value)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            signal: None,
+        }
+    }
+
+    pub(crate) fn prescaled_cos(value: Computable) -> Computable {
+        // Same reduced-argument contract as prescaled_sin. Cosine has exact
+        // zero/one shortcuts in the public constructor, so this stays a raw
+        // approximation node for already-small residuals.
+        Self {
+            internal: Box::new(Approximation::PrescaledCos(value)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            signal: None,
+        }
+    }
+
+    fn prescaled_cos_half_pi_minus_rational(rational: Rational) -> Computable {
+        // sin(x) for exact medium rational x is cos(pi/2 - x). Keeping the
+        // residual as one node avoids the generic Add/Offset/Negate stack in
+        // the cold scalar f64 and 7/5 benchmarks.
+        let internal = Approximation::PrescaledCosHalfPiMinusRational(rational);
+        Self {
+            internal: Box::new(internal),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            signal: None,
+        }
+    }
+
+    fn prescaled_sin_half_pi_minus_rational(rational: Rational) -> Computable {
+        // cos(x) for exact medium rational x is sin(pi/2 - x). This mirrors the
+        // cosine shortcut above and keeps common dyadic imports off the generic
+        // composite residual path.
+        let internal = Approximation::PrescaledSinHalfPiMinusRational(rational);
+        Self {
+            internal: Box::new(internal),
             cache: RefCell::new(Cache::Invalid),
             bound: RefCell::new(BoundCache::Invalid),
             exact_sign: RefCell::new(ExactSignCache::Invalid),
@@ -1138,6 +1183,7 @@ impl Computable {
         result
     }
 
+    #[cfg(test)]
     pub(super) fn planning_msd(&self) -> Option<Option<Precision>> {
         self.cheap_bound().planning_msd()
     }
@@ -1148,6 +1194,9 @@ impl Computable {
     }
 
     fn exact_rational(&self) -> Option<Rational> {
+        // Only exact leaf nodes are exposed here. Keeping this narrow prevents
+        // constructor shortcuts from accidentally forcing approximation of a
+        // composite just to discover that it is not rational.
         match &*self.internal {
             Approximation::Int(n) => Some(Rational::from_bigint(n.clone())),
             Approximation::Ratio(r) => Some(r.clone()),
@@ -1295,11 +1344,33 @@ impl Computable {
         self.known_msd_for_trig_reduction().flatten()
     }
 
+    fn exact_rational_half_pi_shortcut_magnitude(rational: &Rational) -> Option<Rational> {
+        // Exact rationals with 1 <= |x| < 3/2 are the awkward medium trig rows:
+        // not small enough for direct sin/cos, but close enough to pi/2 that a
+        // dedicated residual beats full half-pi reduction and generic Add setup.
+        if rational.msd_exact() != Some(0) {
+            return None;
+        }
+
+        let magnitude = if rational.sign() == Sign::Minus {
+            -rational.clone()
+        } else {
+            rational.clone()
+        };
+        if magnitude < *HALF_PI_SHORTCUT_RATIONAL_LIMIT {
+            Some(magnitude)
+        } else {
+            None
+        }
+    }
+
     fn cos_reduced_by_half_pi(self, multiplier: BigInt) -> Computable {
         let adjustment = Self::pi()
             .shift_right(1)
             .multiply(Self::rational(Rational::from_bigint(multiplier.clone())).negate());
         let reduced = self.add(adjustment);
+        // Reduce the nearest half-pi multiple modulo four and dispatch by the
+        // exact sin/cos symmetry. This keeps the residual kernel below one radian.
         let quadrant =
             ((&multiplier % signed::FOUR.deref()) + signed::FOUR.deref()) % signed::FOUR.deref();
 
@@ -1316,24 +1387,22 @@ impl Computable {
 
     /// Cosine of this number.
     pub fn cos(self) -> Computable {
-        if self
-            .exact_rational()
-            .is_some_and(|r| r.sign() == Sign::NoSign)
-        {
-            return Self::one();
+        if let Some(rational) = self.exact_rational() {
+            if rational.sign() == Sign::NoSign {
+                return Self::one();
+            }
+            if let Some(magnitude) = Self::exact_rational_half_pi_shortcut_magnitude(&rational) {
+                // cos(r) = sin(pi/2 - |r|) for exact medium positive/negative
+                // rationals, keeping the generic subtraction node out of the path.
+                return Self::prescaled_sin_half_pi_minus_rational(magnitude);
+            }
         }
         if let Some(msd) = self.trig_reduction_msd() {
             if msd < 0 {
                 // Known |x| < 1: go directly to the prescaled Taylor kernel.
                 // The fallback rough approximation stays in place for unknown
                 // magnitudes where structural bounds are not trustworthy.
-                return Self {
-                    internal: Box::new(Approximation::PrescaledCos(self)),
-                    cache: RefCell::new(Cache::Invalid),
-                    bound: RefCell::new(BoundCache::Invalid),
-                    exact_sign: RefCell::new(ExactSignCache::Invalid),
-                    signal: None,
-                };
+                return Self::prescaled_cos(self);
             }
             if msd >= 3 {
                 // Known |x| >= 8: skip the preliminary `approx(-1)` and go
@@ -1347,13 +1416,7 @@ impl Computable {
         let abs_rough_appr = rough_appr.magnitude();
 
         if abs_rough_appr < unsigned::TWO.deref() {
-            return Self {
-                internal: Box::new(Approximation::PrescaledCos(self)),
-                cache: RefCell::new(Cache::Invalid),
-                bound: RefCell::new(BoundCache::Invalid),
-                exact_sign: RefCell::new(ExactSignCache::Invalid),
-                signal: None,
-            };
+            return Self::prescaled_cos(self);
         }
 
         let multiplier = if abs_rough_appr < unsigned::SIX.deref() {
@@ -1368,22 +1431,25 @@ impl Computable {
 
     /// Sine of this number.
     pub fn sin(self) -> Computable {
-        if self
-            .exact_rational()
-            .is_some_and(|r| r.sign() == Sign::NoSign)
-        {
-            return Self::rational(Rational::zero());
+        if let Some(rational) = self.exact_rational() {
+            if rational.sign() == Sign::NoSign {
+                return Self::rational(Rational::zero());
+            }
+            if let Some(magnitude) = Self::exact_rational_half_pi_shortcut_magnitude(&rational) {
+                // sin(r) = +/-cos(pi/2 - |r|) in the same exact medium window
+                // used by cosine, preserving odd symmetry outside the kernel.
+                let result = Self::prescaled_cos_half_pi_minus_rational(magnitude);
+                return if rational.sign() == Sign::Minus {
+                    result.negate()
+                } else {
+                    result
+                };
+            }
         }
         if let Some(msd) = self.trig_reduction_msd() {
             if msd < 0 {
                 // Known |x| < 1: direct prescaled sine avoids reduction setup.
-                return Self {
-                    internal: Box::new(Approximation::PrescaledSin(self)),
-                    cache: RefCell::new(Cache::Invalid),
-                    bound: RefCell::new(BoundCache::Invalid),
-                    exact_sign: RefCell::new(ExactSignCache::Invalid),
-                    signal: None,
-                };
+                return Self::prescaled_sin(self);
             }
             if msd >= 3 {
                 // Known large input: avoid the extra rough approximation and
@@ -1411,13 +1477,7 @@ impl Computable {
         let abs_rough_appr = rough_appr.magnitude();
 
         if abs_rough_appr < unsigned::TWO.deref() {
-            return Self {
-                internal: Box::new(Approximation::PrescaledSin(self)),
-                cache: RefCell::new(Cache::Invalid),
-                bound: RefCell::new(BoundCache::Invalid),
-                exact_sign: RefCell::new(ExactSignCache::Invalid),
-                signal: None,
-            };
+            return Self::prescaled_sin(self);
         }
 
         if abs_rough_appr < unsigned::SIX.deref() {
@@ -1462,6 +1522,23 @@ impl Computable {
         {
             return Self::rational(Rational::zero());
         }
+        if self.planning_sign_and_msd().0 == Some(Sign::Minus) {
+            // Odd symmetry lets known-negative values reuse the positive reducer
+            // without paying a low-precision approximation just to discover sign.
+            return self.negate().tan().negate();
+        }
+        if let Some(msd) = self.trig_reduction_msd() {
+            if msd < 0 {
+                // Known |x| < 1: enter the tangent quotient kernel directly.
+                return Self {
+                    internal: Box::new(Approximation::PrescaledTan(self)),
+                    cache: RefCell::new(Cache::Invalid),
+                    bound: RefCell::new(BoundCache::Invalid),
+                    exact_sign: RefCell::new(ExactSignCache::Invalid),
+                    signal: None,
+                };
+            }
+        }
         let rough_appr = self.approx(-1);
         if rough_appr.sign() == Sign::Minus {
             return self.negate().tan().negate();
@@ -1505,6 +1582,40 @@ impl Computable {
 
     fn ln2() -> Self {
         Self::shared_constant(SharedConstant::Ln2)
+    }
+
+    fn ln_exact_rational(rational: Rational) -> Self {
+        // Internal exact-rational log constructor for reductions that already
+        // have a positive rational argument. It reuses the shared small-log
+        // constants instead of building fresh generic PrescaledLn trees.
+        if rational == Rational::one() {
+            return Self::rational(Rational::zero());
+        }
+        if rational.sign() == Sign::Minus || rational.sign() == Sign::NoSign {
+            panic!("ArithmeticException");
+        }
+        if rational < Rational::one() {
+            return Self::ln_exact_rational(rational.inverse().unwrap()).negate();
+        }
+        if rational == Rational::new(2) {
+            return Self::ln_constant(2).unwrap();
+        }
+        if rational == Rational::new(3) {
+            return Self::ln_constant(3).unwrap();
+        }
+        if rational == Rational::new(5) {
+            return Self::ln_constant(5).unwrap();
+        }
+        if rational == Rational::new(6) {
+            return Self::ln_constant(6).unwrap();
+        }
+        if rational == Rational::new(7) {
+            return Self::ln_constant(7).unwrap();
+        }
+        if rational == Rational::new(10) {
+            return Self::ln_constant(10).unwrap();
+        }
+        Self::rational(rational).ln()
     }
 
     /// Natural logarithm of this number.
@@ -1686,10 +1797,30 @@ impl Computable {
 
     /// Arctangent of this number.
     pub fn atan(self) -> Computable {
-        if let Some(rational) = self.exact_rational()
-            && rational.sign() == Sign::NoSign
-        {
-            return Self::rational(Rational::zero());
+        if let Some(rational) = self.exact_rational() {
+            if rational.sign() == Sign::NoSign {
+                return Self::rational(Rational::zero());
+            }
+            if rational.sign() == Sign::Plus
+                && let Some(msd) = rational.msd_exact()
+            {
+                if msd <= -2 {
+                    // Exact |x| < 1/2 can bypass the rough p=-4 probe.
+                    return Self {
+                        internal: Box::new(Approximation::PrescaledAtan(self)),
+                        cache: RefCell::new(Cache::Invalid),
+                        bound: RefCell::new(BoundCache::Invalid),
+                        exact_sign: RefCell::new(ExactSignCache::Invalid),
+                        signal: None,
+                    };
+                }
+                if msd >= 1 {
+                    // Exact |x| >= 2 is safely in the reciprocal branch.
+                    return Self::pi()
+                        .shift_right(1)
+                        .add(self.inverse().atan().negate());
+                }
+            }
         }
         if self.exact_sign() == Some(Sign::Minus) {
             return self.negate().atan().negate();
@@ -1774,13 +1905,19 @@ impl Computable {
             if rational.sign() == Sign::NoSign {
                 return Self::pi().shift_right(1);
             }
-            let magnitude = if rational.sign() == Sign::Minus {
+            let rational_sign = rational.sign();
+            let magnitude = if rational_sign == Sign::Minus {
                 rational.neg()
             } else {
                 rational
             };
             if magnitude.msd_exact().is_some_and(|msd| msd <= -4) {
                 return Self::pi().shift_right(1).add(self.asin().negate());
+            }
+            if rational_sign == Sign::Minus && magnitude >= Rational::fraction(7, 8).unwrap() {
+                // Negative endpoint values mirror the positive endpoint transform.
+                // Building pi - acos(|x|) avoids the longer pi/2 - asin(-x) chain.
+                return Self::pi().add(self.negate().acos().negate());
             }
         }
 
@@ -1802,8 +1939,46 @@ impl Computable {
 
     /// Inverse hyperbolic sine of this number.
     pub fn asinh(self) -> Computable {
-        // Generic identity. Real-level callers may route small arguments through
-        // ln1p-style transforms before falling back here.
+        let exact_rational = self.exact_rational();
+        if exact_rational
+            .as_ref()
+            .is_some_and(|r| r.sign() == Sign::NoSign)
+        {
+            return Self::rational(Rational::zero());
+        }
+        let (known_sign, planned_msd) = self.planning_sign_and_msd();
+        if exact_rational
+            .as_ref()
+            .is_some_and(|r| r.sign() == Sign::Minus)
+            || known_sign == Some(Sign::Minus)
+        {
+            return self.negate().asinh().negate();
+        }
+        let exact_tiny = exact_rational
+            .as_ref()
+            .and_then(Rational::msd_exact)
+            .is_some_and(|msd| msd <= -4);
+        let exact_large = exact_rational
+            .as_ref()
+            .and_then(Rational::msd_exact)
+            .is_some_and(|msd| msd >= 3);
+        if exact_tiny || exact_large {
+            // Exact tiny/large rationals do not need the ln1p probe. The direct
+            // identity stays symbolic enough for later exact-rational ln shortcuts.
+            let radicand = self.clone().square().add(Self::one());
+            return self.add(radicand.sqrt()).ln();
+        }
+        let known_msd = planned_msd.flatten();
+        if known_msd.is_none_or(|msd| msd < 3) && self.approx(-4) <= BigInt::from(64_u8) {
+            // Near zero, use ln1p(asinh argument) just like the Real layer. It
+            // avoids cancellation in ln(x + sqrt(1+x^2)) and is faster for the
+            // adversarial tiny/moderate computable rows.
+            let square = self.clone().square();
+            let denominator = square.clone().add(Self::one()).sqrt().add(Self::one());
+            return self.add(square.multiply(denominator.inverse())).ln_1p();
+        }
+
+        // Generic identity for large positive values.
         let radicand = self.clone().square().add(Self::one());
         self.add(radicand.sqrt()).ln()
     }
@@ -1811,8 +1986,43 @@ impl Computable {
     /// Inverse hyperbolic cosine of this number. The caller is responsible for
     /// ensuring the input is in-domain.
     pub fn acosh(self) -> Computable {
-        // Generic identity for already validated inputs. Real-level acosh has
-        // exact sqrt/log shortcuts and near-one transforms before this fallback.
+        let exact_rational_msd = match self.internal.as_ref() {
+            Approximation::Ratio(r) => {
+                if r == &Rational::one() {
+                    return Self::rational(Rational::zero());
+                }
+                r.msd_exact()
+            }
+            Approximation::Int(n) => {
+                if n == signed::ONE.deref() {
+                    return Self::rational(Rational::zero());
+                }
+                if n.sign() == Sign::NoSign {
+                    None
+                } else {
+                    Some(n.magnitude().bits() as Precision - 1)
+                }
+            }
+            _ => None,
+        };
+        if exact_rational_msd.is_some_and(|msd| msd == 0 || msd >= 3) {
+            // Exact rational inputs at one, moderate, or large scale skip the
+            // low-precision near-one probe and use the direct acosh identity.
+            let one = Self::one();
+            let radicand = self.clone().square().add(one.negate());
+            return self.add(radicand.sqrt()).ln();
+        }
+        let known_msd = self.planning_sign_and_msd().1.flatten();
+        if known_msd.is_none_or(|msd| msd < 3) && self.approx(-4) <= BigInt::from(64_u8) {
+            // Near one, ln1p((x - 1) + sqrt(x^2 - 1)) avoids the cancellation
+            // in ln(x + sqrt(x^2 - 1)) and sidesteps repeated sqrt-ln scaling.
+            let one = Self::one();
+            let shifted = self.clone().add(one.clone().negate());
+            let radicand = self.square().add(one.negate());
+            return shifted.add(radicand.sqrt()).ln_1p();
+        }
+
+        // Generic identity for already validated large inputs.
         let one = Self::one();
         let radicand = self.clone().square().add(one.negate());
         self.add(radicand.sqrt()).ln()
@@ -1835,6 +2045,15 @@ impl Computable {
                             exact_sign: RefCell::new(ExactSignCache::Invalid),
                             signal: None,
                         };
+                    }
+                    if rational != Rational::one() {
+                        // For exact rationals, atanh(x) is one exact ln ratio.
+                        // That keeps common factors in the logarithm constructor
+                        // instead of building a generic quotient Computable first.
+                        let one = Rational::one();
+                        let ratio = (one.clone() + rational.clone()) / (one - rational);
+                        return Self::ln_exact_rational(ratio)
+                            .multiply(Self::rational(Rational::fraction(1, 2).unwrap()));
                     }
                 }
             }
@@ -2104,12 +2323,17 @@ impl Computable {
         let right_exact = other.exact_rational();
 
         if matches!(left_exact.as_ref(), Some(r) if r.sign() == Sign::NoSign) {
+            // Exact zero leaves are common after symbolic cancellation; avoid
+            // wrapping the surviving operand in an Add node.
             return other;
         }
         if matches!(right_exact.as_ref(), Some(r) if r.sign() == Sign::NoSign) {
+            // Symmetric exact-zero fast path for borrowed and owned additions.
             return self;
         }
         if let (Some(left), Some(right)) = (left_exact.as_ref(), right_exact.as_ref()) {
+            // Fold exact leaf sums immediately so rational imports and parsed
+            // dyadics stay outside the approximation graph.
             return Self::rational(left.clone() + right.clone());
         }
         let certified_bound = if let Some(rational) = right_exact.as_ref()
@@ -2642,6 +2866,8 @@ mod tests {
     use super::*;
     use num::Signed;
     use num::bigint::BigUint;
+    use std::hint::black_box;
+    use std::time::Instant;
 
     #[test]
     fn compare() {
@@ -3064,6 +3290,119 @@ mod tests {
     }
 
     #[test]
+    fn sin_cos_direct_medium_exact_rationals_match_reduced_forms() {
+        for rational in [
+            Rational::fraction(6, 5).unwrap(),
+            Rational::fraction(7, 5).unwrap(),
+            Rational::fraction(47, 32).unwrap(),
+            Rational::try_from(1.23456789_f64).unwrap(),
+        ] {
+            let value = Computable::rational(rational);
+            let complement =
+                pi_times(Rational::fraction(1, 2).unwrap()).add(value.clone().negate());
+
+            assert_close(value.clone().sin(), complement.clone().cos(), -96, 2);
+            assert_close(value.clone().cos(), complement.sin(), -96, 2);
+            assert_close(
+                value.clone().negate().sin(),
+                value.clone().sin().negate(),
+                -96,
+                2,
+            );
+            assert_close(value.clone().negate().cos(), value.cos(), -96, 2);
+        }
+    }
+
+    #[test]
+    #[ignore = "release-only performance guard for the May 6 scalar trig targets"]
+    fn trig_regression_speed_targets_release_only() {
+        if cfg!(debug_assertions) {
+            return;
+        }
+
+        struct Target {
+            name: &'static str,
+            input: Computable,
+            op: fn(Computable) -> Computable,
+            may_6_target_ns: u128,
+            allowed_ns: u128,
+        }
+
+        let targets = [
+            Target {
+                name: "sin(1.23456789)",
+                input: Computable::rational(Rational::try_from(1.23456789_f64).unwrap()),
+                op: Computable::sin,
+                may_6_target_ns: 618,
+                allowed_ns: 900,
+            },
+            Target {
+                name: "cos(1.23456789)",
+                input: Computable::rational(Rational::try_from(1.23456789_f64).unwrap()),
+                op: Computable::cos,
+                may_6_target_ns: 543,
+                allowed_ns: 900,
+            },
+            Target {
+                name: "sin(1e6)",
+                input: Computable::rational(Rational::new(1_000_000)),
+                op: Computable::sin,
+                may_6_target_ns: 2_580,
+                allowed_ns: 3_500,
+            },
+            Target {
+                name: "cos(1e6)",
+                input: Computable::rational(Rational::new(1_000_000)),
+                op: Computable::cos,
+                may_6_target_ns: 2_200,
+                allowed_ns: 3_500,
+            },
+            Target {
+                name: "sin(1e30)",
+                input: Computable::rational(Rational::from_bigint(BigInt::from(10_u8).pow(30))),
+                op: Computable::sin,
+                may_6_target_ns: 2_860,
+                allowed_ns: 3_500,
+            },
+            Target {
+                name: "cos(1e30)",
+                input: Computable::rational(Rational::from_bigint(BigInt::from(10_u8).pow(30))),
+                op: Computable::cos,
+                may_6_target_ns: 2_460,
+                allowed_ns: 3_500,
+            },
+        ];
+
+        for target in targets {
+            // The strict May 6 measurements are kept in the test data above.
+            // `allowed_ns` adds runner slack so this remains useful outside the
+            // exact benchmark host while still catching multi-microsecond
+            // reduction regressions.
+            for _ in 0..128 {
+                black_box((target.op)(target.input.clone()).approx(-96));
+            }
+
+            let iterations = 4096_usize;
+            let values: Vec<_> = (0..iterations)
+                .map(|_| (target.op)(target.input.clone()))
+                .collect();
+            let start = Instant::now();
+            for value in values {
+                black_box(value.approx(-96));
+            }
+            let elapsed_ns = start.elapsed().as_nanos() / iterations as u128;
+
+            assert!(
+                elapsed_ns <= target.allowed_ns,
+                "{} took {elapsed_ns} ns/iter; May 6 target {} ns, guard {} ns",
+                target.name,
+                target.may_6_target_ns,
+                target.allowed_ns
+            );
+        }
+    }
+
+    #[test]
     fn sin_large_arguments() {
         let one_two_three: BigInt = "123".parse().unwrap();
         let one_two_three = Computable::integer(one_two_three);
@@ -3144,6 +3483,12 @@ mod tests {
         assert_approx(half.clone().asinh(), -40, "529097997076", 2);
         assert_approx(negative_half.clone().asinh(), -40, "-529097997076", 2);
         assert_approx(two.acosh(), -40, "1448010520960", 2);
+        assert_approx(
+            Computable::rational(Rational::new(2)).sqrt().acosh(),
+            -40,
+            "969080507343",
+            2,
+        );
         assert_approx(half.atanh(), -40, "603968492904", 2);
         assert_approx(negative_half.atanh(), -40, "-603968492904", 2);
     }

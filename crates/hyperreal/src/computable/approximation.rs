@@ -50,7 +50,14 @@ pub(super) enum Approximation {
     PrescaledAsin(Computable),
     PrescaledAtanh(Computable),
     PrescaledCos(Computable),
+    // Exact medium rational trig inputs use dedicated pi/2 - r residual nodes.
+    // This avoids rebuilding a generic Add(Offset(pi), -r) graph while keeping
+    // approximation lazy until the caller asks for a precision.
+    PrescaledCosHalfPiMinusRational(Rational),
     PrescaledSin(Computable),
+    // Sine shares the same exact residual representation as cosine so the
+    // endpoint identities stay cheap without a generic subtraction node.
+    PrescaledSinHalfPiMinusRational(Rational),
     PrescaledTan(Computable),
     PrescaledCot(Computable),
 }
@@ -115,7 +122,9 @@ impl Approximation {
             PrescaledAsin(c) => asin_computable(signal, c, p),
             PrescaledAtanh(c) => atanh_computable(signal, c, p),
             PrescaledCos(c) => cos(signal, c, p),
+            PrescaledCosHalfPiMinusRational(r) => cos_half_pi_minus_rational(signal, r, p),
             PrescaledSin(c) => sin(signal, c, p),
+            PrescaledSinHalfPiMinusRational(r) => sin_half_pi_minus_rational(signal, r, p),
             PrescaledTan(c) => tan(signal, c, p),
             PrescaledCot(c) => cot(signal, c, p),
         }
@@ -269,15 +278,34 @@ fn inverse(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     let msd = c.iter_msd();
     let inv_msd = 1 - msd;
     let digits_needed = inv_msd - p + 3;
-    let prec_needed = msd - digits_needed;
-    let log_scale_factor = -p - prec_needed;
+    let mut prec_needed = msd - digits_needed;
+    let mut log_scale_factor = -p - prec_needed;
 
-    if log_scale_factor < 0 {
-        return Zero::zero();
-    }
+    let scaled_divisor = loop {
+        if log_scale_factor < 0 {
+            return Zero::zero();
+        }
+
+        let scaled = c.approx_signal(signal, prec_needed);
+        if !scaled.is_zero() {
+            break scaled;
+        }
+
+        if should_stop(signal) {
+            return Zero::zero();
+        }
+
+        // `iter_msd` is deliberately cheap and may overestimate a value whose
+        // leading bits come from cancellation, such as a nested sqrt/log
+        // reduction. Refine instead of dividing by a rounded-zero denominator.
+        prec_needed -= 8;
+        log_scale_factor += 8;
+        if log_scale_factor > 16_384 {
+            panic!("ArithmeticException");
+        }
+    };
 
     let dividend = signed::ONE.deref() << log_scale_factor;
-    let scaled_divisor = c.approx_signal(signal, prec_needed);
     let abs_scaled_divisor = scaled_divisor.abs();
     let adj_dividend = dividend + (&abs_scaled_divisor >> 1);
     let result: BigInt = adj_dividend / abs_scaled_divisor;
@@ -467,12 +495,15 @@ fn exp(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Thus final error is < 1 ulp.
     let scaled_1 = signed::ONE.deref() << -calc_precision;
 
-    let max_trunc_error = signed::ONE.deref() << (p - 4 - calc_precision);
+    // The loop compares borrowed magnitudes. Calling `abs()` here allocates a
+    // fresh BigInt every term and shows up in cold transcendental benches.
+    let max_trunc_error = BigUint::one()
+        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
     let mut current_term = scaled_1.clone();
     let mut sum = scaled_1;
     let mut n: i32 = 0;
 
-    while current_term.abs() > max_trunc_error {
+    while current_term.magnitude() > &max_trunc_error {
         if should_stop(signal) {
             break;
         }
@@ -492,10 +523,23 @@ fn sqrt(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     let fp_op_prec: i32 = 150;
 
     let max_prec_needed = p.saturating_mul(2).saturating_sub(1);
-    let msd = c
-        .planning_msd()
-        .unwrap_or_else(|| c.msd(max_prec_needed))
-        .unwrap_or(Precision::MIN);
+    let (known_sign, planned_msd) = c.planning_sign_and_msd();
+    if known_sign == Some(Sign::NoSign) {
+        return Zero::zero();
+    }
+    let msd = match planned_msd {
+        Some(Some(msd)) => msd,
+        _ => match c.msd(max_prec_needed) {
+            Some(msd) => msd,
+            None => {
+                let rough = c.approx_signal(signal, max_prec_needed);
+                if rough.is_zero() {
+                    return Zero::zero();
+                }
+                rough.magnitude().bits() as Precision - 1 + max_prec_needed
+            }
+        },
+    };
 
     if msd <= max_prec_needed {
         return Zero::zero();
@@ -574,12 +618,14 @@ fn cos(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Final rounding error is <= 1/2 ulp.
     // Thus final error is < 1 ulp.
 
-    let max_trunc_error = signed::ONE.deref() << (p - 4 - calc_precision);
+    // Keep the truncation guard allocation-free across Taylor iterations.
+    let max_trunc_error = BigUint::one()
+        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
     let mut n = 0;
     let mut current_term = signed::ONE.deref() << (-calc_precision);
     let mut current_sum = current_term.clone();
 
-    while current_term.abs() > max_trunc_error {
+    while current_term.magnitude() > &max_trunc_error {
         if should_stop(signal) {
             break;
         }
@@ -587,8 +633,57 @@ fn cos(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
 
         /* current_term = - current_term * op_squared / n * (n - 1)   */
         current_term = scale(current_term * &op_squared, op_prec);
-        let divisor: BigInt = (-(n * (n - 1))).into();
-        current_term /= divisor;
+        current_term /= -(n * (n - 1));
+
+        current_sum += &current_term;
+    }
+    scale(current_sum, calc_precision - p)
+}
+
+fn half_pi_minus_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
+    // Specialized residual for exact medium trig inputs. It performs the same
+    // guarded subtraction as the generic Add(Offset(pi), -r) path, but without
+    // allocating or querying a composite expression on every cold approximation.
+    let extra = 2;
+    let work_precision = p - extra;
+    let half_pi = Computable::pi().approx_signal(signal, work_precision + 1);
+    let rational = ratio(r, work_precision);
+    scale(half_pi - rational, -extra)
+}
+
+// Compute cosine of pi/2 - r for exact 1 <= r < 3/2.
+fn cos_half_pi_minus_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
+    if p >= 1 {
+        return signed::ONE.deref().clone();
+    }
+    let iterations_needed = -p / 2 + 4;
+
+    if should_stop(signal) {
+        return signed::ONE.deref().clone();
+    }
+
+    let calc_precision = p - bound_log2(2 * iterations_needed) - 4;
+    let op_prec = p - 2;
+    // Compute the exact rational residual directly from cached pi. The generic
+    // equivalent would allocate a short Add tree before entering this same series.
+    let op_appr = half_pi_minus_rational(signal, r, op_prec);
+    let op_squared = scale(&op_appr * &op_appr, op_prec);
+
+    // Keep the truncation guard allocation-free across Taylor iterations.
+    let max_trunc_error = BigUint::one()
+        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
+    let mut n = 0;
+    let mut current_term = signed::ONE.deref() << (-calc_precision);
+    let mut current_sum = current_term.clone();
+
+    while current_term.magnitude() > &max_trunc_error {
+        if should_stop(signal) {
+            break;
+        }
+        n += 2;
+
+        current_term = scale(current_term * &op_squared, op_prec);
+        current_term /= -(n * (n - 1));
 
         current_sum += &current_term;
     }
@@ -625,12 +720,14 @@ fn sin(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Final rounding error is <= 1/2 ulp.
     // Thus final error is < 1 ulp.
 
-    let max_trunc_error = signed::ONE.deref() << (p - 4 - calc_precision);
+    // Keep the truncation guard allocation-free across Taylor iterations.
+    let max_trunc_error = BigUint::one()
+        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
     let mut n = 1;
     let mut current_term = scale(op_appr.clone(), op_prec - calc_precision);
     let mut current_sum = current_term.clone();
 
-    while current_term.abs() > max_trunc_error {
+    while current_term.magnitude() > &max_trunc_error {
         if should_stop(signal) {
             break;
         }
@@ -638,8 +735,46 @@ fn sin(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
 
         /* current_term = - current_term * op_squared / n * (n - 1)   */
         current_term = scale(current_term * &op_squared, op_prec);
-        let divisor: BigInt = (-(n * (n - 1))).into();
-        current_term /= divisor;
+        current_term /= -(n * (n - 1));
+
+        current_sum += &current_term;
+    }
+    scale(current_sum, calc_precision - p)
+}
+
+// Compute sine of pi/2 - r for exact 1 <= r < 3/2.
+fn sin_half_pi_minus_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
+    if p >= 1 {
+        return Zero::zero();
+    }
+    let iterations_needed = -p / 2 + 4;
+
+    if should_stop(signal) {
+        return Zero::zero();
+    }
+
+    let calc_precision = p - bound_log2(2 * iterations_needed) - 4;
+    let op_prec = p - 2;
+    // Compute the exact rational residual directly from cached pi. The generic
+    // equivalent would allocate a short Add tree before entering this same series.
+    let op_appr = half_pi_minus_rational(signal, r, op_prec);
+    let op_squared = scale(&op_appr * &op_appr, op_prec);
+
+    // Keep the truncation guard allocation-free across Taylor iterations.
+    let max_trunc_error = BigUint::one()
+        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
+    let mut n = 1;
+    let mut current_term = scale(op_appr.clone(), op_prec - calc_precision);
+    let mut current_sum = current_term.clone();
+
+    while current_term.magnitude() > &max_trunc_error {
+        if should_stop(signal) {
+            break;
+        }
+        n += 2;
+
+        current_term = scale(current_term * &op_squared, op_prec);
+        current_term /= -(n * (n - 1));
 
         current_sum += &current_term;
     }
@@ -741,9 +876,12 @@ fn ln(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     let mut sum = current_term.clone();
     let mut n = 1;
 
-    let max_trunc_error = signed::ONE.deref() << (p - 4 - calc_precision);
+    // Keep the atanh-transformed ln series from allocating an absolute BigInt
+    // on every odd term.
+    let max_trunc_error = BigUint::one()
+        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
 
-    while current_term.abs() > max_trunc_error {
+    while current_term.magnitude() > &max_trunc_error {
         if should_stop(signal) {
             break;
         }
@@ -794,7 +932,7 @@ fn atan(signal: &Option<Signal>, i: &BigInt, p: Precision) -> BigInt {
     let mut sign = 1;
     let mut n = 1;
 
-    while *current_term.magnitude() > max_trunc_error {
+    while current_term.magnitude() > &max_trunc_error {
         if should_stop(signal) {
             break;
         }
@@ -823,12 +961,15 @@ fn atan_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> Big
     let op_appr = c.approx_signal(signal, op_prec);
     let op_squared = scale(&op_appr * &op_appr, op_prec);
 
-    let max_trunc_error = signed::ONE.deref() << (p - 4 - calc_precision);
+    // Borrowed magnitude checks matter here because tiny inverse-trig benches
+    // run many short series from cold caches.
+    let max_trunc_error = BigUint::one()
+        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
     let mut current_term = scale(op_appr, op_prec - calc_precision);
     let mut sum = current_term.clone();
     let mut n = 1;
 
-    while current_term.abs() > max_trunc_error {
+    while current_term.magnitude() > &max_trunc_error {
         if should_stop(signal) {
             break;
         }
@@ -856,12 +997,15 @@ fn asin_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> Big
     let op_appr = c.approx_signal(signal, op_prec);
     let op_squared = scale(&op_appr * &op_appr, op_prec);
 
-    let max_trunc_error = signed::ONE.deref() << (p - 4 - calc_precision);
+    // Borrowed magnitude checks matter here because tiny inverse-trig benches
+    // run many short series from cold caches.
+    let max_trunc_error = BigUint::one()
+        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
     let mut current_term = scale(op_appr, op_prec - calc_precision);
     let mut sum = current_term.clone();
     let mut n = 0_i32;
 
-    while current_term.abs() > max_trunc_error {
+    while current_term.magnitude() > &max_trunc_error {
         if should_stop(signal) {
             break;
         }
@@ -891,13 +1035,16 @@ fn atanh_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> Bi
     let op_appr = c.approx_signal(signal, op_prec);
     let op_squared = scale(&op_appr * &op_appr, op_prec);
 
-    let max_trunc_error = signed::ONE.deref() << (p - 4 - calc_precision);
+    // Borrowed magnitude checks matter here because tiny inverse-hyperbolic
+    // benches run many short series from cold caches.
+    let max_trunc_error = BigUint::one()
+        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
     let mut current_power = scale(op_appr, op_prec - calc_precision);
     let mut current_term = current_power.clone();
     let mut sum = current_term.clone();
     let mut n = 1_i32;
 
-    while current_term.abs() > max_trunc_error {
+    while current_term.magnitude() > &max_trunc_error {
         if should_stop(signal) {
             break;
         }
