@@ -34,7 +34,7 @@ fn setup(
 ) {
     let now = Instant::now();
 
-    let num = 5;
+    let num = 4;
     let res = menger_sponge(num);
 
     println!(">>>>>>>>>>>>>> Compute a menger sponge of level {}, elapsed time: {:?}", num, now.elapsed());
