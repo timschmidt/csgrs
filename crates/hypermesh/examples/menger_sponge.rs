@@ -34,7 +34,7 @@ fn setup(
 ) {
     let now = Instant::now();
 
-    let num = 4;
+    let num = 5;
     let res = menger_sponge(num);
 
     println!(">>>>>>>>>>>>>> Compute a menger sponge of level {}, elapsed time: {:?}", num, now.elapsed());
@@ -71,7 +71,7 @@ fn setup(
 }
 
 pub fn menger_sponge(n: usize) -> Manifold {
-    let res = generate_cube().unwrap();
+    let res = Manifold::new(&PS, &TS).unwrap();
     let mut holes = vec![];
     fractal(&res, &mut holes, 0., 0., 1., 1, n);
     let holes_z = compose(&holes).unwrap();
@@ -100,4 +100,61 @@ pub fn menger_sponge(n: usize) -> Manifold {
     let res = compute_boolean(&res, &holes_x, OpType::Subtract).unwrap();
     let res = compute_boolean(&res, &holes_y, OpType::Subtract).unwrap();
     res
+}
+
+const PS: [f64; 24] = [
+    -0.5, -0.5, -0.5,
+    -0.5, -0.5,  0.5,
+    -0.5,  0.5, -0.5,
+    -0.5,  0.5,  0.5,
+     0.5, -0.5, -0.5,
+     0.5, -0.5,  0.5,
+     0.5,  0.5, -0.5,
+     0.5,  0.5,  0.5
+];
+
+const TS: [usize; 36] = [
+    1, 0, 4, 2, 4, 0,
+    1, 3, 0, 3, 1, 5,
+    3, 2, 0, 3, 7, 2,
+    5, 4, 6, 5, 1, 4,
+    6, 4, 2, 7, 6, 2,
+    7, 3, 5, 7, 5, 6
+];
+
+pub fn compose(ms: &Vec<Manifold>) -> std::result::Result<Manifold, String> {
+    let mut ps = vec![];
+    let mut ts = vec![];
+    let mut offset = 0;
+    for m in ms {
+        for h in m.hs.iter() { ts.push(h.tail + offset); }
+        for p in m.ps.iter() {
+            ps.push(p.x as f64);
+            ps.push(p.y as f64);
+            ps.push(p.z as f64);
+        }
+        offset += m.nv;
+    }
+    Manifold::new(&ps, &ts)
+}
+
+pub fn fractal(hole: &Manifold, holes: &mut Vec<Manifold>, x: f64, y: f64, w: f64, depth: usize, depth_max: usize) {
+    let w = w / 3.;
+    let p = hole.ps.iter().map(|p| [p.x as f64 * w + x, p.y as f64 * w + y, p.z as f64]).flatten().collect::<Vec<f64>>();
+    holes.push(Manifold::new(&p, &TS).unwrap());
+
+    if depth == depth_max { return; }
+
+    for xy in [
+        (x - w, y - w),
+        (x - w, y    ),
+        (x - w, y + w),
+        (x    , y + w),
+        (x + w, y + w),
+        (x + w, y    ),
+        (x + w, y - w),
+        (x    , y - w)
+    ] {
+        fractal(hole, holes, xy.0, xy.1, w, depth + 1, depth_max);
+    }
 }

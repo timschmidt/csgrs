@@ -25,11 +25,11 @@ Examples such as a Menger Sponge generator and simple mesh boolean samples can b
 ```
  cargo run --package boolmesh --release --example menger_sponge --features=bevy,rayon,f32
 ```
+In versions following v0.1.9, primitive generators and transformation methods have been removed from the Manifold struct. This change reflects a shift in focus toward the library's core boolean engine. Given that primitive generation and transformation matrices can now be easily handled by external utilities or AI-assisted coding, I have decided to keep the codebase lean and specialized.
 
 ## Roadmap
 Planned upcoming implementations include:
-- More multi-threading optimizations 
-- A CSG tree structure for pre-computation optimization
+- Signed Distance Field (SDF)
 - UV value and mesh ordering inheritance for output meshes
 
 ## LICENSE

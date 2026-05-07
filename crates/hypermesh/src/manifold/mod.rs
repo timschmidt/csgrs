@@ -63,7 +63,7 @@ impl Manifold {
         Self::new_impl(weld, idx, None, None)
     }
 
-    pub fn new_impl(
+    pub(crate) fn new_impl(
         ps : Vec<Vec3>,
         idx: Vec<Vec3u>,
         eps: Option<Real>,
@@ -101,19 +101,6 @@ impl Manifold {
         Ok(mfd)
     }
 
-    pub fn get_indices(&self) -> Vec<Vec3u> {
-        self.hs.chunks(3).map(|cs| Vec3u::new(cs[0].tail, cs[1].tail, cs[2].tail)).collect()
-    }
-
-    pub fn set_epsilon(&mut self, min_epsilon: Real, use_single: bool) {
-        let scl = self.bounding_box.scale();
-        let mut e = min_epsilon.max(K_PRECISION * scl);
-        e = if e.is_finite() { e } else { -1. };
-        let t = if use_single { e.max(Real::EPSILON * scl) } else { e };
-        self.eps = e;
-        self.tol = self.tol.max(t);
-    }
-
     pub fn is_manifold(&self) -> bool {
         self.hs.iter().enumerate().all(|(i, h)| {
             if h.tail().is_none() || h.head().is_none() { return true; }
@@ -131,22 +118,6 @@ impl Manifold {
         })
     }
 
-    pub fn translate(&mut self, x: f64, y: f64, z: f64) {
-        let t = Vec3::new(x as Real, y as Real, z as Real);
-        let p = self.ps.iter().map(|p| *p + t).collect();
-        *self = Manifold::new_impl(p, self.get_indices(), None, None).unwrap();
-    }
-
-    pub fn rotate(&mut self, x: f64, y: f64, z: f64) {
-        let r = Mat3::from_euler(glam::EulerRot::XYZ, x as Real, y as Real, z as Real);
-        let p = self.ps.iter().map(|p| r * *p).collect();
-        *self = Manifold::new_impl(p, self.get_indices(), None, None).unwrap();
-    }
-
-    pub fn scale(&mut self, x: f64, y: f64, z: f64) {
-        let p = self.ps.iter().map(|p| Vec3::new(p.x * x as Real, p.y * y as Real, p.z * z as Real)).collect();
-        *self = Manifold::new_impl(p, self.get_indices(), None, None).unwrap();
-    }
 }
 
 fn compute_face_morton(
