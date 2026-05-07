@@ -62,13 +62,9 @@ From sibling checkouts:
 realistic_blas = { path = "../realistic_blas" }
 ```
 
-The published hyperreal-backed feature should use the matching `hyperreal`
-release:
-
-```toml
-hyperreal = "0.10.5"
-num = "0.4.3"
-```
+The hyperreal-backed feature pulls in the matching `hyperreal` and `num`
+dependencies. Applications only need direct `hyperreal` or `num` dependencies
+when they use those crates outside `realistic_blas`.
 
 Approx-only build:
 
@@ -200,7 +196,8 @@ The crate is optimized for small fixed-size algebra over rich scalars:
 
 - backend hooks for borrowed add, subtract, multiply, divide, inverse, and dot
   products reduce cloning of hyperreal expression graphs
-- common hyperreal scalar constants are cached per thread
+- hyperreal-backed constants and identities delegate to `hyperreal`
+  constructors
 - vector, matrix, and complex operations use owned-left/borrowed-right forms in
   hot paths
 - small scalar powers are specialized before exponentiation by squaring

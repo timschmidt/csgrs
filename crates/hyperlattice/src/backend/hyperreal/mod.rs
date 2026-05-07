@@ -1,4 +1,3 @@
-use std::cell::OnceCell;
 use std::fmt;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
@@ -6,24 +5,6 @@ use crate::backend::{Backend, BackendScalar as BackendScalarTrait};
 use crate::{
     AbortSignal, BlasResult, Problem, ScalarFacts, ScalarMagnitudeBits, ScalarSign, ZeroStatus,
 };
-
-thread_local! {
-    // Hyperreal constants are immutable but not free to build: they carry
-    // symbolic/computable state. Cache the common scalar constructors per
-    // thread so tight BLAS loops do not repeatedly allocate fresh constants.
-    static ZERO: OnceCell<BackendScalar> = const { OnceCell::new() };
-    static ONE: OnceCell<BackendScalar> = const { OnceCell::new() };
-    static E: OnceCell<BackendScalar> = const { OnceCell::new() };
-    static PI: OnceCell<BackendScalar> = const { OnceCell::new() };
-    static TAU: OnceCell<BackendScalar> = const { OnceCell::new() };
-}
-
-fn cached(
-    cell: &'static std::thread::LocalKey<OnceCell<BackendScalar>>,
-    init: fn() -> BackendScalar,
-) -> BackendScalar {
-    cell.with(|slot| slot.get_or_init(init).clone())
-}
 
 fn map_sign(sign: hyperreal::RealSign) -> ScalarSign {
     match sign {
@@ -62,25 +43,25 @@ impl Backend for HyperrealBackend {
 
 impl BackendScalarTrait for BackendScalar {
     fn zero() -> Self {
-        cached(&ZERO, || Self(hyperreal::Real::zero()))
+        Self(hyperreal::Real::zero())
     }
 
     fn one() -> Self {
-        cached(&ONE, || Self(1.into()))
+        Self(hyperreal::Real::one())
     }
 
     fn e() -> Self {
-        cached(&E, || Self(hyperreal::Real::e()))
+        Self(hyperreal::Real::e())
     }
 
     fn pi() -> Self {
-        cached(&PI, || Self(hyperreal::Real::pi()))
+        Self(hyperreal::Real::pi())
     }
 
     fn tau() -> Self {
         // Use hyperreal's cached internal `tau` representation instead of
         // rebuilding `2 * pi` through public scalar multiplication.
-        cached(&TAU, || Self(hyperreal::Real::tau()))
+        Self(hyperreal::Real::tau())
     }
 
     fn inverse(self) -> BlasResult<Self> {

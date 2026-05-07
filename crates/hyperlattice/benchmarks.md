@@ -75,11 +75,11 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 
 | Benchmark | Approx | Hyperreal from f64 | Hyperreal rational | astro-float 128 | numerica128 | symbolica | Hyperreal f64 / approx | Hyperreal f64 / astro | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `zero` | 0.49 ns | 57.17 ns | 52.86 ns | 24.60 ns | 15.78 ns | 0.98 ns | 115.74x | 2.32x | 3.62x | 58.58x |
-| `one` | 0.49 ns | 66.40 ns | 62.77 ns | 44.42 ns | 31.50 ns | 32.00 ns | 136.49x | 1.49x | 2.11x | 2.08x |
-| `e` | 0.49 ns | 76.07 ns | 73.23 ns | 55.49 ns | 1.07 us | 224.80 ns | 154.12x | 1.37x | 0.07x | 0.34x |
-| `pi` | 0.49 ns | 59.40 ns | 55.50 ns | 44.73 ns | 49.22 ns | 224.40 ns | 120.66x | 1.33x | 1.21x | 0.26x |
-| `tau` | 0.48 ns | 205.24 ns | 189.03 ns | 119.18 ns | 102.74 ns | 1.84 us | 425.04x | 1.72x | 2.00x | 0.11x |
+| `zero` | 0.49 ns | 42.72 ns | 52.86 ns | 24.60 ns | 15.78 ns | 0.98 ns | 86.50x | 1.74x | 2.71x | 43.59x |
+| `one` | 0.49 ns | 48.52 ns | 62.77 ns | 44.42 ns | 31.50 ns | 32.00 ns | 99.74x | 1.09x | 1.54x | 1.52x |
+| `e` | 0.49 ns | 70.13 ns | 73.23 ns | 55.49 ns | 1.07 us | 224.80 ns | 142.09x | 1.26x | 0.07x | 0.31x |
+| `pi` | 0.49 ns | 52.51 ns | 55.50 ns | 44.73 ns | 49.22 ns | 224.40 ns | 106.66x | 1.17x | 1.07x | 0.23x |
+| `tau` | 0.48 ns | 184.82 ns | 189.03 ns | 119.18 ns | 102.74 ns | 1.84 us | 382.75x | 1.55x | 1.80x | 0.10x |
 | `add` | 5.35 ns | 289.50 ns | 379.59 ns | 54.53 ns | 42.37 ns | 1.25 us | 54.12x | 5.31x | 6.83x | 0.23x |
 | `sub` | 5.46 ns | 316.95 ns | 446.97 ns | 57.39 ns | 45.31 ns | 2.38 us | 58.01x | 5.52x | 7.00x | 0.13x |
 | `neg` | 5.33 ns | 64.56 ns | 61.92 ns | 23.85 ns | 20.45 ns | 1.06 us | 12.12x | 2.71x | 3.16x | 0.06x |

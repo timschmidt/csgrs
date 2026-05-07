@@ -138,8 +138,8 @@ pub fn pi() -> Scalar {
 
 /// Returns tau, equal to `2 * pi`.
 pub fn tau() -> Scalar {
-    // Route through the backend hook so exact backends can return their cached
-    // symbolic tau instead of rebuilding `2 * pi` through multiplication.
+    // Route through the backend hook so exact backends can return symbolic tau
+    // instead of rebuilding `2 * pi` through multiplication.
     Scalar::tau()
 }
 
