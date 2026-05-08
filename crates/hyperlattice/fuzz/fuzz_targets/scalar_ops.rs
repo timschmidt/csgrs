@@ -163,10 +163,12 @@ fn scalar_fuzz<Backend: realistic_blas::Backend>(input: Input<Backend>) {
     }
 
     // ── Invariant: ApproxBackend never claims exact rational representation ───
-    assert!(
-        !a.structural_facts().exact_rational,
-        "ApproxBackend must not claim exact_rational"
-    );
+    if std::any::TypeId::of::<Backend>() == std::any::TypeId::of::<ApproxBackend>() {
+        assert!(
+            !a.structural_facts().exact_rational,
+            "ApproxBackend must not claim exact_rational"
+        );
+    }
 
     // ── Invariant: powi(a, 1) is the identity ────────────────────────────────
     match powi(a.clone(), 1) {
