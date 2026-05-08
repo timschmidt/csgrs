@@ -1,3 +1,7 @@
+//! [`Arbitrary`] implementations for the core geometry types
+//!
+//! Enable the `arbitrary` crate feature to activate these.
+
 use arbitrary::{Arbitrary, Unstructured, Error};
 
 use crate::{Backend as NumBackend, Scalar};
