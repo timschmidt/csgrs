@@ -178,14 +178,15 @@ fn vector_fuzz<Backend: realistic_blas::Backend>(input: Input<Backend>) {
 
     assert_eq!(v4a.dot(&v4b), v4b.dot(&v4a), "Vector4 dot product must be commutative");
 
-    assert_eq!(v4a.clone() * one, v4a, "Vector4 * 1 must equal the vector");
+    assert_eq!(v4a.clone() * one.clone(), v4a, "Vector4 * 1 must equal the vector");
 
-    let scaled_zero4 = v4a.clone() * scalar_zero;
+    let scaled_zero4 = v4a.clone() * scalar_zero.clone();
     for i in 0..4 {
         assert!(
             scaled_zero4[i].definitely_zero(),
             "Vector4 component {i} of v * 0 must be exactly zero"
         );
+    }
     }
 
     assert_eq!(
