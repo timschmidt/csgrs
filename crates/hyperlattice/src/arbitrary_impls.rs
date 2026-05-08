@@ -13,7 +13,7 @@ use crate::{Complex, Matrix3, Matrix4, Vector3, Vector4};
 fn finite_f64(u: &mut Unstructured<'_>) -> arbitrary::Result<f64> {
     let bits = u64::arbitrary(u)?;
     let f = f64::from_bits(bits);
-    if f.is_finite() { Ok(f) } else { Err(Error::IncorrectFormat) }
+    if f.is_finite() { Ok(f) } else { Ok(0.0) }
 }
 
 /// Optional [`Arbitrary`] implementations for approximate-backend types.
