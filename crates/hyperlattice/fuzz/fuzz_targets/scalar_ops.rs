@@ -4,27 +4,43 @@
 //! functions (`powi`, `reciprocal`, `sinh`, `cosh`, `tanh`, …), and a
 //! comprehensive set of algebraic invariants for [`ApproxBackend`] scalars.
 //!
-//! Run with: `cargo fuzz run scalar_ops` from the `fuzz/` directory.
+//! Run with: `cargo +nightly fuzz run scalar_ops` from the `fuzz/` directory.
 
 #![no_main]
 
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
 use realistic_blas::{
-    ApproxBackend, Scalar, ZeroStatus,
+    ApproxBackend, HyperrealBackend, Scalar, ZeroStatus,
     cosh, powi, reciprocal, reciprocal_checked, reciprocal_ref, reciprocal_ref_checked, sinh,
     tanh,
 };
 
-#[derive(Arbitrary, Debug)]
-struct Input {
-    a: Scalar<ApproxBackend>,
-    b: Scalar<ApproxBackend>,
+#[derive(Debug)]
+struct Input<Backend: realistic_blas::Backend> {
+    a: Scalar<Backend>,
+    b: Scalar<Backend>,
     /// Bounded exponent so powi computation stays tractable.
     exp: i8,
 }
 
-fuzz_target!(|input: Input| {
+impl<'a, Backend: realistic_blas::Backend> Arbitrary<'a> for Input<Backend> where Scalar<Backend>: Arbitrary<'a> {
+    fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self {
+            a: Arbitrary::arbitrary(u)?,
+            b: Arbitrary::arbitrary(u)?,
+            exp: Arbitrary::arbitrary(u)?,
+        })
+    }
+}
+
+fuzz_target!(|input: (Input<ApproxBackend>, Input<HyperrealBackend>)| {
+    let (approx_input, hyperreal_input) = input;
+    scalar_fuzz(approx_input);
+    scalar_fuzz(hyperreal_input);
+});
+
+fn scalar_fuzz<Backend: realistic_blas::Backend>(input: Input<Backend>) {
     let Input { a, b, exp } = input;
 
     // ── No-panic: owned and borrowed arithmetic ──────────────────────────────
@@ -115,8 +131,8 @@ fuzz_target!(|input: Input| {
     );
 
     // ── Invariant: additive identity ─────────────────────────────────────────
-    let zero = Scalar::<ApproxBackend>::zero();
-    let one = Scalar::<ApproxBackend>::one();
+    let zero = Scalar::<Backend>::zero();
+    let one = Scalar::<Backend>::one();
     assert_eq!(a.clone() + zero.clone(), a, "a + 0 must equal a");
     assert_eq!(zero.clone() + a.clone(), a, "0 + a must equal a");
 
@@ -174,4 +190,4 @@ fuzz_target!(|input: Input| {
             Err(e) => panic!("powi(NonZero, 0) must succeed; got {e:?}"),
         }
     }
-});
+}
