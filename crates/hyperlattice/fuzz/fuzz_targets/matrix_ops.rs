@@ -302,7 +302,7 @@ fn matrix_fuzz<Backend: realistic_blas::Backend>(input: Input<Backend>) {
         Err(e) => panic!("Matrix4 powi(M, 2) must succeed; got {e:?}"),
     }
 
-    assert_eq!(i4.clone().determinant(), one, "det(I₄) must equal 1");
+    assert_eq!(i4.clone().determinant(), one.clone(), "det(I₄) must equal 1");
 
     let zero_v4 = Vector4::<Backend>::zero();
     let mv_zero4 = m4a.clone() * zero_v4.clone();
