@@ -78,7 +78,7 @@ fn bench_scalar_operations_for<B, F>(
         b.iter(|| black_box(Scalar::<B>::pi()))
     });
     group.bench_function(format!("{label}/tau"), |b| {
-        b.iter(|| black_box(Scalar::<B>::from(2) * Scalar::<B>::pi()))
+        b.iter(|| black_box(Scalar::<B>::tau()))
     });
     group.bench_function(format!("{label}/add"), |b| {
         let cursor = Cell::new(0);
