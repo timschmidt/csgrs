@@ -13,19 +13,41 @@ use std::sync::{Arc, atomic::AtomicBool};
 
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
-use realistic_blas::{ApproxBackend, Matrix3, Matrix4, Scalar, Vector3, Vector4, ZeroStatus};
+use realistic_blas::{ApproxBackend, HyperrealBackend, Matrix3, Matrix4, Scalar, Vector3, Vector4, ZeroStatus};
 
-#[derive(Arbitrary, Debug)]
-struct Input {
-    m3a: Matrix3<ApproxBackend>,
-    m3b: Matrix3<ApproxBackend>,
-    m4a: Matrix4<ApproxBackend>,
-    m4b: Matrix4<ApproxBackend>,
-    v3: Vector3<ApproxBackend>,
-    v4: Vector4<ApproxBackend>,
+#[derive(Debug)]
+struct Input<Backend: realistic_blas::Backend> {
+    m3a: Matrix3<Backend>,
+    m3b: Matrix3<Backend>,
+    m4a: Matrix4<Backend>,
+    m4b: Matrix4<Backend>,
+    v3: Vector3<Backend>,
+    v4: Vector4<Backend>,
 }
 
-fuzz_target!(|input: Input| {
+impl<'a, Backend: realistic_blas::Backend> Arbitrary<'a> for Input<Backend>
+where Matrix3<Backend>: Arbitrary<'a>, Matrix4<Backend>: Arbitrary<'a>,
+    Vector3<Backend>: Arbitrary<'a>, Vector4<Backend>: Arbitrary<'a>
+{
+    fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self {
+            m3a: Arbitrary::arbitrary(u)?,
+            m3b: Arbitrary::arbitrary(u)?,
+            m4a: Arbitrary::arbitrary(u)?,
+            m4b: Arbitrary::arbitrary(u)?,
+            v3: Arbitrary::arbitrary(u)?,
+            v4: Arbitrary::arbitrary(u)?,
+        })
+    }
+}
+
+fuzz_target!(|input: (Input<ApproxBackend>, Input<HyperrealBackend>)| {
+    let (approx_input, hyperreal_input) = input;
+    matrix_fuzz(approx_input);
+    matrix_fuzz(hyperreal_input);
+});
+
+fn matrix_fuzz<Backend: realistic_blas::Backend>(input: Input<Backend>) {
     let Input { m3a, m3b, m4a, m4b, v3, v4 } = input;
 
     let signal = Arc::new(AtomicBool::new(false));
@@ -180,7 +202,7 @@ fuzz_target!(|input: Input| {
     );
 
     // Identity multiplication: I·M == M and M·I == M.
-    let i3 = Matrix3::<ApproxBackend>::identity();
+    let i3 = Matrix3::<Backend>::identity();
     assert_eq!(i3.clone() * m3a.clone(), m3a, "I · M must equal M for Matrix3");
     assert_eq!(m3a.clone() * i3.clone(), m3a, "M · I must equal M for Matrix3");
 
@@ -205,7 +227,7 @@ fuzz_target!(|input: Input| {
 
     // determinant(I) == 1: all integer arithmetic on exact scalars, so the
     // computed value is 1.0 and PartialEq (interval) trivially holds.
-    let one = Scalar::<ApproxBackend>::one();
+    let one = Scalar::<Backend>::one();
     assert_eq!(
         i3.clone().determinant(),
         one.clone(),
@@ -214,7 +236,7 @@ fuzz_target!(|input: Input| {
 
     // M · 0_vector == 0_vector: every dot product with a zero right-hand side
     // produces value=0.0, epsilon=0.0 exactly (all cross terms vanish).
-    let zero_v3 = Vector3::<ApproxBackend>::zero();
+    let zero_v3 = Vector3::<Backend>::zero();
     let mv_zero3 = m3a.clone() * zero_v3.clone();
     for i in 0..3 {
         assert!(
@@ -260,7 +282,7 @@ fuzz_target!(|input: Input| {
         "Matrix4 addition must be commutative"
     );
 
-    let i4 = Matrix4::<ApproxBackend>::identity();
+    let i4 = Matrix4::<Backend>::identity();
     assert_eq!(i4.clone() * m4a.clone(), m4a, "I · M must equal M for Matrix4");
     assert_eq!(m4a.clone() * i4.clone(), m4a, "M · I must equal M for Matrix4");
 
@@ -282,7 +304,7 @@ fuzz_target!(|input: Input| {
 
     assert_eq!(i4.clone().determinant(), one, "det(I₄) must equal 1");
 
-    let zero_v4 = Vector4::<ApproxBackend>::zero();
+    let zero_v4 = Vector4::<Backend>::zero();
     let mv_zero4 = m4a.clone() * zero_v4.clone();
     for i in 0..4 {
         assert!(
@@ -298,4 +320,4 @@ fuzz_target!(|input: Input| {
         m4a.clone() + &m4b,
         "Matrix4 + Matrix4 must equal Matrix4 + &Matrix4"
     );
-});
+}

@@ -12,17 +12,35 @@ use std::sync::{Arc, atomic::AtomicBool};
 
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
-use realistic_blas::{ApproxBackend, Scalar, Vector3, Vector4, ZeroStatus};
+use realistic_blas::{ApproxBackend, HyperrealBackend, Scalar, Vector3, Vector4, ZeroStatus};
 
-#[derive(Arbitrary, Debug)]
-struct Input {
-    v3a: Vector3<ApproxBackend>,
-    v3b: Vector3<ApproxBackend>,
-    v4a: Vector4<ApproxBackend>,
-    v4b: Vector4<ApproxBackend>,
+#[derive(Debug)]
+struct Input<Backend: realistic_blas::Backend> {
+    v3a: Vector3<Backend>,
+    v3b: Vector3<Backend>,
+    v4a: Vector4<Backend>,
+    v4b: Vector4<Backend>,
 }
 
-fuzz_target!(|input: Input| {
+impl<'a, Backend: realistic_blas::Backend> Arbitrary<'a> for Input<Backend>
+where Vector3<Backend>: Arbitrary<'a>, Vector4<Backend>: Arbitrary<'a> {
+    fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self {
+            v3a: Arbitrary::arbitrary(u)?,
+            v3b: Arbitrary::arbitrary(u)?,
+            v4a: Arbitrary::arbitrary(u)?,
+            v4b: Arbitrary::arbitrary(u)?,
+        })
+    }
+}
+
+fuzz_target!(|input: (Input<ApproxBackend>, Input<HyperrealBackend>)| {
+    let (approx_input, hyperreal_input) = input;
+    vector_fuzz(approx_input);
+    vector_fuzz(hyperreal_input);
+});
+
+fn vector_fuzz<Backend: realistic_blas::Backend>(input: Input<Backend>) {
     let Input { v3a, v3b, v4a, v4b } = input;
 
     let signal = Arc::new(AtomicBool::new(false));
@@ -119,11 +137,11 @@ fuzz_target!(|input: Input| {
     assert_eq!(v3a.dot(&v3b), v3b.dot(&v3a), "Vector3 dot product must be commutative");
 
     // Scalar multiplicative identity: v * 1 == v component-wise.
-    let one = Scalar::<ApproxBackend>::one();
+    let one = Scalar::<Backend>::one();
     assert_eq!(v3a.clone() * one.clone(), v3a, "Vector3 * 1 must equal the vector");
 
     // Scalar zero annihilator: every component of v * 0 is exactly zero.
-    let scalar_zero = Scalar::<ApproxBackend>::zero();
+    let scalar_zero = Scalar::<Backend>::zero();
     let scaled_zero3 = v3a.clone() * scalar_zero.clone();
     for i in 0..3 {
         assert!(
@@ -175,4 +193,4 @@ fuzz_target!(|input: Input| {
         v4a.clone() + &v4b,
         "Vector4 + Vector4 must equal Vector4 + &Vector4"
     );
-});
+}

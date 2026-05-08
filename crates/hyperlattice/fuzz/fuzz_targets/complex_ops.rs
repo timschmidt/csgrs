@@ -11,15 +11,30 @@
 
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
-use realistic_blas::{ApproxBackend, Complex, ZeroStatus};
+use realistic_blas::{ApproxBackend, HyperrealBackend, Complex, ZeroStatus};
 
-#[derive(Arbitrary, Debug)]
-struct Input {
-    z: Complex<ApproxBackend>,
-    w: Complex<ApproxBackend>,
+#[derive(Debug)]
+struct Input<Backend: realistic_blas::Backend> {
+    z: Complex<Backend>,
+    w: Complex<Backend>,
 }
 
-fuzz_target!(|input: Input| {
+impl<'a, Backend: realistic_blas::Backend> Arbitrary<'a> for Input<Backend> where Complex<Backend>: Arbitrary<'a> {
+    fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self {
+            z: Arbitrary::arbitrary(u)?,
+            w: Arbitrary::arbitrary(u)?,
+        })
+    }
+}
+
+fuzz_target!(|input: (Input<ApproxBackend>, Input<HyperrealBackend>)| {
+    let (approx_input, hyperreal_input) = input;
+    complex_fuzz(approx_input);
+    complex_fuzz(hyperreal_input);
+});
+
+fn complex_fuzz<Backend: realistic_blas::Backend>(input: Input<Backend>) {
     let Input { z, w } = input;
 
     // ── No-panic: owned and borrowed arithmetic ──────────────────────────────
@@ -105,12 +120,12 @@ fuzz_target!(|input: Input| {
     );
 
     // ── Invariant: additive identity ─────────────────────────────────────────
-    let complex_zero = Complex::<ApproxBackend>::zero();
+    let complex_zero = Complex::<Backend>::zero();
     assert_eq!(z.clone() + complex_zero.clone(), z, "z + 0 must equal z");
     assert_eq!(complex_zero + z.clone(), z, "0 + z must equal z");
 
     // ── Invariant: multiplicative identity ───────────────────────────────────
-    let complex_one = Complex::<ApproxBackend>::one();
+    let complex_one = Complex::<Backend>::one();
     assert_eq!(z.clone() * complex_one.clone(), z, "z * 1 must equal z");
     assert_eq!(complex_one * z.clone(), z, "1 * z must equal z");
 
@@ -138,7 +153,7 @@ fuzz_target!(|input: Input| {
         if let Ok(result) = z.clone().powi(0) {
             assert_eq!(
                 result,
-                Complex::<ApproxBackend>::one(),
+                Complex::<Backend>::one(),
                 "powi(non-zero z, 0) must equal 1"
             );
         }
@@ -160,7 +175,7 @@ fuzz_target!(|input: Input| {
     // norm_squared = 0·0 + 0·0 = 0 exactly (every cross term in product_epsilon
     // vanishes when both value and epsilon are 0.0).
     assert!(
-        Complex::<ApproxBackend>::zero().norm_squared().definitely_zero(),
+        Complex::<Backend>::zero().norm_squared().definitely_zero(),
         "norm_squared of Complex::zero() must be exactly zero"
     );
-});
+}
