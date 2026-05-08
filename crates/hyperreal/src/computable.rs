@@ -466,6 +466,7 @@ static INVERSE_ENDPOINT_RATIONAL_THRESHOLD: LazyLock<Rational> =
 impl Computable {
     /// Exactly zero.
     pub fn zero() -> Computable {
+        crate::trace_dispatch!("computable", "constructor", "zero");
         Self {
             internal: Box::new(Approximation::Int(BigInt::zero())),
             cache: RefCell::new(Cache::Invalid),
@@ -477,6 +478,7 @@ impl Computable {
 
     /// Exactly one.
     pub fn one() -> Computable {
+        crate::trace_dispatch!("computable", "constructor", "one");
         Self {
             internal: Box::new(Approximation::One),
             cache: RefCell::new(Cache::Invalid),
@@ -488,26 +490,31 @@ impl Computable {
 
     /// Approximate π, the ratio of a circle's circumference to its diameter.
     pub fn pi() -> Computable {
+        crate::trace_dispatch!("computable", "constructor", "cached-pi");
         Self::shared_constant(SharedConstant::Pi)
     }
 
     /// Approximate τ, the ratio of a circle's circumference to its radius.
     pub fn tau() -> Computable {
+        crate::trace_dispatch!("computable", "constructor", "cached-tau");
         Self::shared_constant(SharedConstant::Tau)
     }
 
     /// Approximate e, Euler's number and the base of the natural logarithm.
     pub fn e() -> Computable {
+        crate::trace_dispatch!("computable", "constructor", "cached-e");
         Self::e_constant()
     }
 
     pub(crate) fn e_constant() -> Computable {
+        crate::trace_dispatch!("computable", "constructor", "cached-e-internal");
         Self::shared_constant(SharedConstant::E)
     }
 
     pub(crate) fn ln_constant(base: u32) -> Option<Computable> {
         // Common logarithms are shared constants so repeated symbolic ln forms
         // reuse one approximation cache across cloned Real values.
+        crate::trace_dispatch!("computable", "constructor", "shared-log-constant-probe");
         let constant = match base {
             2 => SharedConstant::Ln2,
             3 => SharedConstant::Ln3,
@@ -523,6 +530,7 @@ impl Computable {
     pub(crate) fn sqrt_constant(n: i64) -> Option<Computable> {
         // sqrt(2) and sqrt(3) are exact trig outputs; caching them prevents
         // fresh sqrt kernels in every sin/cos special form.
+        crate::trace_dispatch!("computable", "constructor", "shared-sqrt-constant-probe");
         let constant = match n {
             2 => SharedConstant::Sqrt2,
             3 => SharedConstant::Sqrt3,
@@ -535,6 +543,7 @@ impl Computable {
         // Caller promises argument reduction has already happened. Keeping this
         // constructor private prevents large arguments from entering the Taylor
         // kernel directly.
+        crate::trace_dispatch!("computable", "constructor", "prescaled-sin");
         Self {
             internal: Box::new(Approximation::PrescaledSin(value)),
             cache: RefCell::new(Cache::Invalid),
@@ -548,6 +557,7 @@ impl Computable {
         // Same reduced-argument contract as prescaled_sin. Cosine has exact
         // zero/one shortcuts in the public constructor, so this stays a raw
         // approximation node for already-small residuals.
+        crate::trace_dispatch!("computable", "constructor", "prescaled-cos");
         Self {
             internal: Box::new(Approximation::PrescaledCos(value)),
             cache: RefCell::new(Cache::Invalid),
@@ -562,6 +572,7 @@ impl Computable {
         // reduction until digits are requested. This keeps construction and
         // structural queries cheap while preserving the canonical reducer for
         // actual approximation.
+        crate::trace_dispatch!("computable", "constructor", "cos-large-rational-deferred");
         Self {
             internal: Box::new(Approximation::CosLargeRational(rational)),
             cache: RefCell::new(Cache::Invalid),
@@ -575,6 +586,11 @@ impl Computable {
         // sin(x) for exact medium rational x is cos(pi/2 - x). Keeping the
         // residual as one node avoids the generic Add/Offset/Negate stack in
         // the cold scalar f64 and 7/5 benchmarks.
+        crate::trace_dispatch!(
+            "computable",
+            "constructor",
+            "prescaled-cos-half-pi-minus-rational"
+        );
         let internal = Approximation::PrescaledCosHalfPiMinusRational(rational);
         Self {
             internal: Box::new(internal),
@@ -589,6 +605,11 @@ impl Computable {
         // cos(x) for exact medium rational x is sin(pi/2 - x). This mirrors the
         // cosine shortcut above and keeps common dyadic imports off the generic
         // composite residual path.
+        crate::trace_dispatch!(
+            "computable",
+            "constructor",
+            "prescaled-sin-half-pi-minus-rational"
+        );
         let internal = Approximation::PrescaledSinHalfPiMinusRational(rational);
         Self {
             internal: Box::new(internal),
@@ -601,10 +622,26 @@ impl Computable {
 
     pub(crate) fn sin_large_rational_deferred(rational: Rational) -> Computable {
         // Same lazy-construction policy as cos_large_rational_deferred. The
-        // stored rational is exact, so approximation can rebuild the normal
-        // Computable::sin path without changing numerical semantics.
+        // standalone approximation path intentionally reuses the generic
+        // reducer; direct residual arithmetic only won for tangent, where one
+        // reduction feeds both numerator and denominator.
+        crate::trace_dispatch!("computable", "constructor", "sin-large-rational-deferred");
         Self {
             internal: Box::new(Approximation::SinLargeRational(rational)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            signal: None,
+        }
+    }
+
+    pub(crate) fn tan_large_rational_deferred(rational: Rational) -> Computable {
+        // Tangent used to run through generic pi reduction even for exact large
+        // rationals. Deferring it into a dedicated approximation node lets the
+        // hot 1e6/1e30 rows share the direct half-pi residual used by sin/cos.
+        crate::trace_dispatch!("computable", "constructor", "tan-large-rational-deferred");
+        Self {
+            internal: Box::new(Approximation::TanLargeRational(rational)),
             cache: RefCell::new(Cache::Invalid),
             bound: RefCell::new(BoundCache::Invalid),
             exact_sign: RefCell::new(ExactSignCache::Invalid),
@@ -615,6 +652,7 @@ impl Computable {
     pub(crate) fn prescaled_tan(value: Computable) -> Computable {
         // Same reduced-argument contract as prescaled_sin; tangent additionally
         // relies on the public constructor to handle near-pole complements.
+        crate::trace_dispatch!("computable", "constructor", "prescaled-tan");
         Self {
             internal: Box::new(Approximation::PrescaledTan(value)),
             cache: RefCell::new(Cache::Invalid),
@@ -628,6 +666,7 @@ impl Computable {
         // Tiny exact-rational asinh inputs use a direct odd-power series. This
         // keeps public construction cheap for scalar endpoint benches and only
         // enters the kernel after |x| has been structurally certified tiny.
+        crate::trace_dispatch!("computable", "constructor", "prescaled-asinh");
         Self {
             internal: Box::new(Approximation::PrescaledAsinh(value)),
             cache: RefCell::new(Cache::Invalid),
@@ -641,6 +680,7 @@ impl Computable {
         // For x >= 0, acos(x) is reduced with 2*atan(sqrt((1-x)/(1+x))).
         // A single deferred node avoids allocating that whole formula during
         // public construction of endpoint-heavy inverse trig expressions.
+        crate::trace_dispatch!("computable", "constructor", "acos-positive-deferred");
         Self {
             internal: Box::new(Approximation::AcosPositive(value)),
             cache: RefCell::new(Cache::Invalid),
@@ -654,6 +694,7 @@ impl Computable {
         // Endpoint atanh uses a deferred ln-ratio node. This keeps construction
         // cheap for predicate/scalar benches while preserving the same
         // approximation identity when a numeric value is requested.
+        crate::trace_dispatch!("computable", "constructor", "atanh-direct-deferred");
         Self {
             internal: Box::new(Approximation::AtanhDirect(value)),
             cache: RefCell::new(Cache::Invalid),
@@ -667,6 +708,7 @@ impl Computable {
         // Near-one acosh uses a deferred ln1p/sqrt reduction. That avoids
         // building the reduction graph during scalar construction while keeping
         // the cancellation-resistant approximation path.
+        crate::trace_dispatch!("computable", "constructor", "acosh-near-one-deferred");
         Self {
             internal: Box::new(Approximation::AcoshNearOne(value)),
             cache: RefCell::new(Cache::Invalid),
@@ -680,6 +722,7 @@ impl Computable {
         // Large acosh uses a deferred direct ln/sqrt identity for Real scalar
         // construction. The public Computable kernel keeps the eager graph for
         // approximation-heavy callers.
+        crate::trace_dispatch!("computable", "constructor", "acosh-direct-deferred");
         Self {
             internal: Box::new(Approximation::AcoshDirect(value)),
             cache: RefCell::new(Cache::Invalid),
@@ -693,6 +736,7 @@ impl Computable {
         // Moderate/tiny asinh inputs use a deferred ln1p reduction so public
         // construction stays lightweight while approximation still avoids
         // cancellation near zero.
+        crate::trace_dispatch!("computable", "constructor", "asinh-near-zero-deferred");
         let sign = value.exact_sign();
         Self {
             internal: Box::new(Approximation::AsinhNearZero(value)),
@@ -707,6 +751,7 @@ impl Computable {
         // Large asinh inputs use a deferred direct ln/sqrt identity. The caller
         // chooses this only after sign and size reduction, so no extra probing
         // is needed during construction.
+        crate::trace_dispatch!("computable", "constructor", "asinh-direct-deferred");
         let sign = value.exact_sign();
         Self {
             internal: Box::new(Approximation::AsinhDirect(value)),
@@ -721,6 +766,7 @@ impl Computable {
         // Shared constants start with valid structural facts. Approximation
         // values are cached globally per thread, but the bound/sign caches can
         // be initialized directly on each lightweight wrapper.
+        crate::trace_dispatch!("computable", "constructor", "shared-constant-wrapper");
         Self {
             internal: Box::new(Approximation::Constant(constant)),
             cache: RefCell::new(Cache::Invalid),
@@ -736,14 +782,17 @@ impl Computable {
             // Canonicalize rational zero at construction time. This exposes
             // exact sign/zero facts immediately and avoids a Ratio leaf in the
             // many higher-level code paths that still call `rational(0)`.
+            crate::trace_dispatch!("computable", "constructor", "rational-zero-canonicalized");
             return Self::zero();
         }
         if r.is_one() {
             // Route rational one through the dedicated One node so callers that
             // import exact f64/integer identities get the same cheap constructor
             // and structural facts as `Computable::one()`.
+            crate::trace_dispatch!("computable", "constructor", "rational-one-canonicalized");
             return Self::one();
         }
+        crate::trace_dispatch!("computable", "constructor", "rational-node");
         Self {
             internal: Box::new(Approximation::Ratio(r)),
             cache: RefCell::new(Cache::Invalid),
@@ -1408,6 +1457,7 @@ impl Computable {
     pub fn exp(self) -> Computable {
         if self.exact_rational().as_ref().is_some_and(Rational::is_one) {
             // e^1 is the shared cached constant, not a fresh PrescaledExp node.
+            crate::trace_dispatch!("computable", "exp", "exact-one-shared-e");
             return Self::e_constant();
         }
         if self
@@ -1415,6 +1465,7 @@ impl Computable {
             .is_some_and(|r| r.sign() == Sign::NoSign)
         {
             // e^0 is exact and must stay outside the approximation pipeline.
+            crate::trace_dispatch!("computable", "exp", "exact-zero-one");
             return Self::one();
         }
         let low_prec: Precision = -4;
@@ -1444,6 +1495,7 @@ impl Computable {
                     continue;
                 }
 
+                crate::trace_dispatch!("computable", "exp", "ln2-range-reduction");
                 return reduced.exp().shift_left(
                     multiple
                         .try_into()
@@ -1452,6 +1504,7 @@ impl Computable {
             }
         }
 
+        crate::trace_dispatch!("computable", "exp", "prescaled-kernel");
         Self {
             internal: Box::new(Approximation::PrescaledExp(self)),
             cache: RefCell::new(Cache::Invalid),
@@ -1482,7 +1535,7 @@ impl Computable {
     }
 
     /// Calculate nearby multiple of pi/2.
-    fn half_pi_multiple(&self) -> BigInt {
+    pub(super) fn half_pi_multiple(&self) -> BigInt {
         // Same nearest-multiple trick as `pi_multiple`, specialized for the quadrant
         // reductions used by sin/cos. Exact-rational inputs first try an integer
         // quotient against cached pi so huge arguments avoid constructing
@@ -1505,7 +1558,7 @@ impl Computable {
         multiple
     }
 
-    fn half_pi_multiple_exact_rational(rational: &Rational) -> Option<BigInt> {
+    pub(super) fn half_pi_multiple_exact_rational(rational: &Rational) -> Option<BigInt> {
         // Large exact rationals are the hot scalar sin/cos construction path.
         // Estimate round(2*x/pi) with one cached pi approximation and integer
         // arithmetic, then let half_pi_multiple's residual correction validate
@@ -1612,11 +1665,13 @@ impl Computable {
     pub fn cos(self) -> Computable {
         if let Some(rational) = self.exact_rational() {
             if rational.sign() == Sign::NoSign {
+                crate::trace_dispatch!("computable", "cos", "exact-zero-one");
                 return Self::one();
             }
             if let Some(magnitude) = Self::exact_rational_half_pi_shortcut_magnitude(&rational) {
                 // cos(r) = sin(pi/2 - |r|) for exact medium positive/negative
                 // rationals, keeping the generic subtraction node out of the path.
+                crate::trace_dispatch!("computable", "cos", "medium-rational-half-pi-rewrite");
                 return Self::prescaled_sin_half_pi_minus_rational(magnitude);
             }
         }
@@ -1625,6 +1680,7 @@ impl Computable {
                 // Known |x| < 1: go directly to the prescaled Taylor kernel.
                 // The fallback rough approximation stays in place for unknown
                 // magnitudes where structural bounds are not trustworthy.
+                crate::trace_dispatch!("computable", "cos", "structural-small-prescaled");
                 return Self::prescaled_cos(self);
             }
             if msd >= 3 {
@@ -1632,6 +1688,7 @@ impl Computable {
                 // straight to half-pi reduction. This is the hot large-argument
                 // path for generic sin/cos benchmarks.
                 let multiplier = Self::half_pi_multiple(&self);
+                crate::trace_dispatch!("computable", "cos", "structural-large-half-pi-reduction");
                 return self.cos_reduced_by_half_pi(multiplier);
             }
         }
@@ -1639,14 +1696,17 @@ impl Computable {
         let abs_rough_appr = rough_appr.magnitude();
 
         if abs_rough_appr < unsigned::TWO.deref() {
+            crate::trace_dispatch!("computable", "cos", "rough-small-prescaled");
             return Self::prescaled_cos(self);
         }
 
         let multiplier = if abs_rough_appr < unsigned::SIX.deref() {
             // Medium arguments can reuse the rough quadrant table. Larger values need the
             // more expensive nearest-half-pi reduction to keep the residual small.
+            crate::trace_dispatch!("computable", "cos", "rough-medium-half-pi-reduction");
             Self::medium_half_pi_multiple(&rough_appr)
         } else {
+            crate::trace_dispatch!("computable", "cos", "generic-half-pi-reduction");
             Self::half_pi_multiple(&self)
         };
         self.cos_reduced_by_half_pi(multiplier)
@@ -1656,11 +1716,13 @@ impl Computable {
     pub fn sin(self) -> Computable {
         if let Some(rational) = self.exact_rational() {
             if rational.sign() == Sign::NoSign {
+                crate::trace_dispatch!("computable", "sin", "exact-zero");
                 return Self::zero();
             }
             if let Some(magnitude) = Self::exact_rational_half_pi_shortcut_magnitude(&rational) {
                 // sin(r) = +/-cos(pi/2 - |r|) in the same exact medium window
                 // used by cosine, preserving odd symmetry outside the kernel.
+                crate::trace_dispatch!("computable", "sin", "medium-rational-half-pi-rewrite");
                 let result = Self::prescaled_cos_half_pi_minus_rational(magnitude);
                 return if rational.sign() == Sign::Minus {
                     result.negate()
@@ -1672,6 +1734,7 @@ impl Computable {
         if let Some(msd) = self.trig_reduction_msd() {
             if msd < 0 {
                 // Known |x| < 1: direct prescaled sine avoids reduction setup.
+                crate::trace_dispatch!("computable", "sin", "structural-small-prescaled");
                 return Self::prescaled_sin(self);
             }
             if msd >= 3 {
@@ -1685,6 +1748,7 @@ impl Computable {
                 let quadrant = ((&multiplier % signed::FOUR.deref()) + signed::FOUR.deref())
                     % signed::FOUR.deref();
 
+                crate::trace_dispatch!("computable", "sin", "structural-large-half-pi-reduction");
                 if quadrant.is_zero() {
                     return reduced.sin();
                 } else if quadrant == *signed::ONE {
@@ -1700,6 +1764,7 @@ impl Computable {
         let abs_rough_appr = rough_appr.magnitude();
 
         if abs_rough_appr < unsigned::TWO.deref() {
+            crate::trace_dispatch!("computable", "sin", "rough-small-prescaled");
             return Self::prescaled_sin(self);
         }
 
@@ -1707,6 +1772,7 @@ impl Computable {
             // Medium sine inputs are rewritten through exact symmetries instead of going
             // through the generic half-pi division path.
             let multiplier = Self::medium_half_pi_multiple(&rough_appr);
+            crate::trace_dispatch!("computable", "sin", "rough-medium-special-rewrite");
             if multiplier == *signed::ONE {
                 return Self::pi().shift_right(1).add(self.negate()).cos();
             } else if multiplier == *signed::MINUS_ONE {
@@ -1726,6 +1792,7 @@ impl Computable {
         let quadrant =
             ((&multiplier % signed::FOUR.deref()) + signed::FOUR.deref()) % signed::FOUR.deref();
 
+        crate::trace_dispatch!("computable", "sin", "generic-half-pi-reduction");
         if quadrant.is_zero() {
             reduced.sin()
         } else if quadrant == *signed::ONE {
@@ -1739,20 +1806,26 @@ impl Computable {
 
     /// Tangent of this number.
     pub fn tan(self) -> Computable {
-        if self
-            .exact_rational()
-            .is_some_and(|r| r.sign() == Sign::NoSign)
-        {
-            return Self::zero();
+        if let Some(rational) = self.exact_rational() {
+            if rational.sign() == Sign::NoSign {
+                crate::trace_dispatch!("computable", "tan", "exact-zero");
+                return Self::zero();
+            }
+            if rational.msd_exact().is_some_and(|msd| msd >= 3) {
+                crate::trace_dispatch!("computable", "tan", "large-rational-deferred");
+                return Self::tan_large_rational_deferred(rational);
+            }
         }
         if self.planning_sign_and_msd().0 == Some(Sign::Minus) {
             // Odd symmetry lets known-negative values reuse the positive reducer
             // without paying a low-precision approximation just to discover sign.
+            crate::trace_dispatch!("computable", "tan", "known-negative-symmetry");
             return self.negate().tan().negate();
         }
         if let Some(msd) = self.trig_reduction_msd() {
             if msd < 0 {
                 // Known |x| < 1: enter the tangent quotient kernel directly.
+                crate::trace_dispatch!("computable", "tan", "structural-small-prescaled");
                 return Self {
                     internal: Box::new(Approximation::PrescaledTan(self)),
                     cache: RefCell::new(Cache::Invalid),
@@ -1764,12 +1837,14 @@ impl Computable {
         }
         let rough_appr = self.approx(-1);
         if rough_appr.sign() == Sign::Minus {
+            crate::trace_dispatch!("computable", "tan", "rough-negative-symmetry");
             return self.negate().tan().negate();
         }
 
         let abs_rough_appr = rough_appr.magnitude();
 
         if abs_rough_appr < unsigned::TWO.deref() {
+            crate::trace_dispatch!("computable", "tan", "rough-small-prescaled");
             return Self {
                 internal: Box::new(Approximation::PrescaledTan(self)),
                 cache: RefCell::new(Cache::Invalid),
@@ -1783,6 +1858,7 @@ impl Computable {
             // Near pi/2, cotangent of the complement converges faster and avoids the
             // unstable generic tan series at the pole.
             let complement = Self::pi().shift_right(1).add(self.negate());
+            crate::trace_dispatch!("computable", "tan", "near-half-pi-cotangent-rewrite");
             return Self {
                 internal: Box::new(Approximation::PrescaledCot(complement)),
                 cache: RefCell::new(Cache::Invalid),
@@ -1794,12 +1870,14 @@ impl Computable {
 
         if abs_rough_appr < unsigned::SIX.deref() {
             // Near pi, reflect back to a small tangent argument.
+            crate::trace_dispatch!("computable", "tan", "near-pi-reflection");
             return Self::pi().add(self.negate()).tan().negate();
         }
 
         let multiplier = Self::pi_multiple(&self);
         let adjustment =
             Self::pi().multiply(Self::rational(Rational::from_bigint(multiplier)).negate());
+        crate::trace_dispatch!("computable", "tan", "generic-pi-reduction");
         self.add(adjustment).tan()
     }
 
@@ -1812,38 +1890,49 @@ impl Computable {
         // have a positive rational argument. It reuses the shared small-log
         // constants instead of building fresh generic PrescaledLn trees.
         if rational.is_one() {
+            crate::trace_dispatch!("computable", "ln", "exact-rational-one");
             return Self::zero();
         }
         if rational.sign() == Sign::Minus || rational.sign() == Sign::NoSign {
+            crate::trace_dispatch!("computable", "ln", "exact-rational-domain-error");
             panic!("ArithmeticException");
         }
         if rational < Rational::one() {
+            crate::trace_dispatch!("computable", "ln", "exact-rational-inverse-rewrite");
             return Self::ln_exact_rational(rational.inverse().unwrap()).negate();
         }
         if rational == Rational::new(2) {
+            crate::trace_dispatch!("computable", "ln", "shared-ln2");
             return Self::ln_constant(2).unwrap();
         }
         if rational == Rational::new(3) {
+            crate::trace_dispatch!("computable", "ln", "shared-ln3");
             return Self::ln_constant(3).unwrap();
         }
         if rational == Rational::new(5) {
+            crate::trace_dispatch!("computable", "ln", "shared-ln5");
             return Self::ln_constant(5).unwrap();
         }
         if rational == Rational::new(6) {
+            crate::trace_dispatch!("computable", "ln", "shared-ln6");
             return Self::ln_constant(6).unwrap();
         }
         if rational == Rational::new(7) {
+            crate::trace_dispatch!("computable", "ln", "shared-ln7");
             return Self::ln_constant(7).unwrap();
         }
         if rational == Rational::new(10) {
+            crate::trace_dispatch!("computable", "ln", "shared-ln10");
             return Self::ln_constant(10).unwrap();
         }
+        crate::trace_dispatch!("computable", "ln", "exact-rational-generic");
         Self::rational(rational).ln()
     }
 
     /// Natural logarithm of this number.
     pub fn ln(self) -> Computable {
         if self.exact_rational().is_some_and(|r| r.is_one()) {
+            crate::trace_dispatch!("computable", "ln", "exact-one-zero");
             return Self::zero();
         }
         if let Approximation::Ratio(r) = &*self.internal
@@ -1859,6 +1948,7 @@ impl Computable {
                     Self::rational(reduced).ln()
                 };
                 let shift: BigInt = shift.into();
+                crate::trace_dispatch!("computable", "ln", "dyadic-scale-rewrite");
                 return reduced_ln.add(Self::integer(shift).multiply(Self::ln2()));
             }
         }
@@ -1870,11 +1960,13 @@ impl Computable {
         let low_prec = -4;
         let rough_appr = self.approx(low_prec);
         if rough_appr < BigInt::zero() {
+            crate::trace_dispatch!("computable", "ln", "domain-negative");
             panic!("ArithmeticException");
         }
         if rough_appr <= *low_ln_limit {
             // For values below 0.5, invert and negate so the prescaled ln1p kernel sees a
             // better-conditioned argument.
+            crate::trace_dispatch!("computable", "ln", "small-inverse-rewrite");
             return self.inverse().ln().negate();
         }
         if rough_appr >= *high_ln_limit {
@@ -1888,6 +1980,7 @@ impl Computable {
                 // Brent/Zimmermann Ch. 4:
                 // https://maths-people.anu.edu.au/~brent/pd/mca-cup-0.5.9.pdf.
                 let quarter = self.sqrt().sqrt().ln();
+                crate::trace_dispatch!("computable", "ln", "sqrt-range-reduction");
                 return quarter.shift_left(2);
             } else {
                 // Very large values are scaled by powers of two before ln1p, then the
@@ -1912,6 +2005,7 @@ impl Computable {
 
                 let scaled_result = scaled.ln();
                 let extra: BigInt = extra_bits.into();
+                crate::trace_dispatch!("computable", "ln", "binary-scale-reduction");
                 return scaled_result.add(Self::integer(extra).multiply(Self::ln2()));
             }
         }
@@ -1920,6 +2014,7 @@ impl Computable {
         let fraction = Self::add(self, minus_one);
         // Final path is ln(1+x), where the prior reductions keep |x| small enough for the
         // prescaled series.
+        crate::trace_dispatch!("computable", "ln", "prescaled-ln1p-kernel");
         Self::prescaled_ln(fraction)
     }
 
@@ -1953,9 +2048,18 @@ impl Computable {
         if let Approximation::Square(child) = self.internal.as_ref() {
             // sqrt(x^2) can collapse to abs(x) when the sign is structurally known.
             match child.exact_sign() {
-                Some(Sign::Plus) => return child.clone(),
-                Some(Sign::Minus) => return child.clone().negate(),
-                Some(Sign::NoSign) => return Self::zero(),
+                Some(Sign::Plus) => {
+                    crate::trace_dispatch!("computable", "sqrt", "square-positive-collapse");
+                    return child.clone();
+                }
+                Some(Sign::Minus) => {
+                    crate::trace_dispatch!("computable", "sqrt", "square-negative-abs-collapse");
+                    return child.clone().negate();
+                }
+                Some(Sign::NoSign) => {
+                    crate::trace_dispatch!("computable", "sqrt", "square-zero-collapse");
+                    return Self::zero();
+                }
                 None => {}
             }
         }
@@ -1983,11 +2087,13 @@ impl Computable {
             if let Some(scale) = left.exact_rational()
                 && let Some(value) = reduced(scale, right)
             {
+                crate::trace_dispatch!("computable", "sqrt", "scaled-square-collapse");
                 return value;
             }
             if let Some(scale) = right.exact_rational()
                 && let Some(value) = reduced(scale, left)
             {
+                crate::trace_dispatch!("computable", "sqrt", "scaled-square-collapse");
                 return value;
             }
         }
@@ -1998,9 +2104,11 @@ impl Computable {
             // Perfect rational squares stay exact.
             let (root, rest) = rational.extract_square_reduced();
             if rest.is_one() {
+                crate::trace_dispatch!("computable", "sqrt", "exact-rational-square");
                 return Self::rational(root);
             }
         }
+        crate::trace_dispatch!("computable", "sqrt", "generic-sqrt-node");
         Self {
             internal: Box::new(Approximation::Sqrt(self)),
             cache: RefCell::new(Cache::Invalid),
@@ -2026,6 +2134,7 @@ impl Computable {
     pub fn atan(self) -> Computable {
         if let Some(rational) = self.exact_rational() {
             if rational.sign() == Sign::NoSign {
+                crate::trace_dispatch!("computable", "atan", "exact-zero");
                 return Self::zero();
             }
             if rational.sign() == Sign::Plus
@@ -2033,6 +2142,7 @@ impl Computable {
             {
                 if msd <= -2 {
                     // Exact |x| < 1/2 can bypass the rough p=-4 probe.
+                    crate::trace_dispatch!("computable", "atan", "exact-tiny-prescaled");
                     return Self {
                         internal: Box::new(Approximation::PrescaledAtan(self)),
                         cache: RefCell::new(Cache::Invalid),
@@ -2043,6 +2153,7 @@ impl Computable {
                 }
                 if msd >= 1 {
                     // Exact |x| >= 2 is safely in the reciprocal branch.
+                    crate::trace_dispatch!("computable", "atan", "exact-large-reciprocal");
                     return Self::pi()
                         .shift_right(1)
                         .add(self.inverse().atan().negate());
@@ -2050,12 +2161,14 @@ impl Computable {
             }
         }
         if self.exact_sign() == Some(Sign::Minus) {
+            crate::trace_dispatch!("computable", "atan", "known-negative-symmetry");
             return self.negate().atan().negate();
         }
 
         let rough_appr = self.approx(-4);
         if rough_appr <= *signed::EIGHT {
             // Small atan arguments use the prescaled series directly.
+            crate::trace_dispatch!("computable", "atan", "rough-small-prescaled");
             return Self {
                 internal: Box::new(Approximation::PrescaledAtan(self)),
                 cache: RefCell::new(Cache::Invalid),
@@ -2074,11 +2187,13 @@ impl Computable {
             // https://doi.org/10.1145/321941.321944.
             let numerator = self.clone().add(half.clone().negate());
             let denominator = one.add(self.multiply(half));
+            crate::trace_dispatch!("computable", "atan", "medium-atan-half-reduction");
             return Self::prescaled_atan(BigInt::from(2_u8))
                 .add(numerator.multiply(denominator.inverse()).atan());
         }
 
         // Large positive atan uses pi/2 - atan(1/x), which converges faster.
+        crate::trace_dispatch!("computable", "atan", "large-reciprocal");
         Self::pi()
             .shift_right(1)
             .add(self.inverse().atan().negate())
@@ -2088,12 +2203,19 @@ impl Computable {
     pub fn asin(self) -> Computable {
         if let Some(rational) = self.exact_rational() {
             match rational.sign() {
-                Sign::NoSign => return Self::zero(),
-                Sign::Minus => return self.negate().asin().negate(),
+                Sign::NoSign => {
+                    crate::trace_dispatch!("computable", "asin", "exact-zero");
+                    return Self::zero();
+                }
+                Sign::Minus => {
+                    crate::trace_dispatch!("computable", "asin", "exact-negative-symmetry");
+                    return self.negate().asin().negate();
+                }
                 Sign::Plus => {
                     if rational.msd_exact().is_some_and(|msd| msd <= -4) {
                         // Tiny asin(x) is handled by its dedicated series; the generic
                         // atan transform builds extra sqrt/division nodes.
+                        crate::trace_dispatch!("computable", "asin", "exact-tiny-prescaled");
                         return Self {
                             internal: Box::new(Approximation::PrescaledAsin(self)),
                             cache: RefCell::new(Cache::Invalid),
@@ -2104,15 +2226,18 @@ impl Computable {
                     }
                     if rational >= *INVERSE_ENDPOINT_RATIONAL_THRESHOLD {
                         // Near 1, use pi/2 - acos(x); acos has the endpoint transform.
+                        crate::trace_dispatch!("computable", "asin", "endpoint-via-acos");
                         return Self::pi().shift_right(1).add(self.acos().negate());
                     }
                 }
             }
         }
         if self.exact_sign() == Some(Sign::Minus) {
+            crate::trace_dispatch!("computable", "asin", "known-negative-symmetry");
             return self.negate().asin().negate();
         }
 
+        crate::trace_dispatch!("computable", "asin", "generic-atan-sqrt-transform");
         let one = Self::one();
         let denominator = one
             .clone()
@@ -2126,12 +2251,15 @@ impl Computable {
     pub fn acos(self) -> Computable {
         if let Some(rational) = self.exact_rational() {
             if rational.is_one() {
+                crate::trace_dispatch!("computable", "acos", "exact-one-zero");
                 return Self::zero();
             }
             if rational == Rational::new(-1) {
+                crate::trace_dispatch!("computable", "acos", "exact-minus-one-pi");
                 return Self::pi();
             }
             if rational.sign() == Sign::NoSign {
+                crate::trace_dispatch!("computable", "acos", "exact-zero-half-pi");
                 return Self::pi().shift_right(1);
             }
             let rational_sign = rational.sign();
@@ -2141,11 +2269,13 @@ impl Computable {
                 rational
             };
             if magnitude.msd_exact().is_some_and(|msd| msd <= -4) {
+                crate::trace_dispatch!("computable", "acos", "tiny-via-asin");
                 return Self::pi().shift_right(1).add(self.asin().negate());
             }
             if rational_sign == Sign::Minus && magnitude >= *INVERSE_ENDPOINT_RATIONAL_THRESHOLD {
                 // Negative endpoint values mirror the positive endpoint transform.
                 // Building pi - acos(|x|) avoids the longer pi/2 - asin(-x) chain.
+                crate::trace_dispatch!("computable", "acos", "negative-endpoint-rewrite");
                 return Self::pi().add(self.negate().acos().negate());
             }
         }
@@ -2153,9 +2283,11 @@ impl Computable {
         if self.exact_sign() == Some(Sign::Plus) {
             // For positive values, acos(x) = 2 atan(sqrt((1-x)/(1+x))). This is the
             // endpoint-friendly path for values near 1.
+            crate::trace_dispatch!("computable", "acos", "positive-endpoint-deferred");
             return Self::acos_positive(self);
         }
 
+        crate::trace_dispatch!("computable", "acos", "generic-half-pi-minus-asin");
         Self::pi().shift_right(1).add(self.asin().negate())
     }
 
@@ -2166,6 +2298,7 @@ impl Computable {
             .as_ref()
             .is_some_and(|r| r.sign() == Sign::NoSign)
         {
+            crate::trace_dispatch!("computable", "asinh", "exact-zero");
             return Self::zero();
         }
         let (known_sign, planned_msd) = self.planning_sign_and_msd();
@@ -2174,6 +2307,7 @@ impl Computable {
             .is_some_and(|r| r.sign() == Sign::Minus)
             || known_sign == Some(Sign::Minus)
         {
+            crate::trace_dispatch!("computable", "asinh", "known-negative-symmetry");
             return self.negate().asinh().negate();
         }
         let exact_tiny = exact_rational
@@ -2185,10 +2319,12 @@ impl Computable {
             .and_then(Rational::msd_exact)
             .is_some_and(|msd| msd >= 3);
         if exact_tiny {
+            crate::trace_dispatch!("computable", "asinh", "exact-tiny-prescaled");
             return Self::prescaled_asinh(self);
         }
         if exact_large {
             let radicand = self.clone().square().add(Self::one());
+            crate::trace_dispatch!("computable", "asinh", "exact-large-direct-ln-sqrt");
             return self.add(radicand.sqrt()).ln();
         }
         let known_msd = planned_msd.flatten();
@@ -2198,10 +2334,12 @@ impl Computable {
             // than a deferred Real-only wrapper.
             let square = self.clone().square();
             let denominator = square.clone().add(Self::one()).sqrt().add(Self::one());
+            crate::trace_dispatch!("computable", "asinh", "near-zero-ln1p-transform");
             return self.add(square.multiply(denominator.inverse())).ln_1p();
         }
 
         let radicand = self.clone().square().add(Self::one());
+        crate::trace_dispatch!("computable", "asinh", "generic-direct-ln-sqrt");
         self.add(radicand.sqrt()).ln()
     }
 
@@ -2209,15 +2347,20 @@ impl Computable {
     /// ensuring the input is in-domain.
     pub fn acosh(self) -> Computable {
         let exact_rational_msd = match self.internal.as_ref() {
-            Approximation::One => return Self::zero(),
+            Approximation::One => {
+                crate::trace_dispatch!("computable", "acosh", "exact-one-zero");
+                return Self::zero();
+            }
             Approximation::Ratio(r) => {
                 if r.is_one() {
+                    crate::trace_dispatch!("computable", "acosh", "exact-one-zero");
                     return Self::zero();
                 }
                 r.msd_exact()
             }
             Approximation::Int(n) => {
                 if n == signed::ONE.deref() {
+                    crate::trace_dispatch!("computable", "acosh", "exact-one-zero");
                     return Self::zero();
                 }
                 if n.sign() == Sign::NoSign {
@@ -2233,6 +2376,7 @@ impl Computable {
             // use the direct acosh identity.
             let one = Self::one();
             let radicand = self.clone().square().add(one.negate());
+            crate::trace_dispatch!("computable", "acosh", "exact-large-direct-ln-sqrt");
             return self.add(radicand.sqrt()).ln();
         }
         let known_msd = self.planning_sign_and_msd().1.flatten();
@@ -2243,12 +2387,14 @@ impl Computable {
             let one = Self::one();
             let shifted = self.clone().add(one.clone().negate());
             let radicand = self.square().add(one.negate());
+            crate::trace_dispatch!("computable", "acosh", "near-one-ln1p-transform");
             return shifted.add(radicand.sqrt()).ln_1p();
         }
 
         // Generic identity for already validated large inputs.
         let one = Self::one();
         let radicand = self.clone().square().add(one.negate());
+        crate::trace_dispatch!("computable", "acosh", "generic-direct-ln-sqrt");
         self.add(radicand.sqrt()).ln()
     }
 
@@ -2257,11 +2403,18 @@ impl Computable {
     pub fn atanh(self) -> Computable {
         if let Some(rational) = self.exact_rational() {
             match rational.sign() {
-                Sign::NoSign => return Self::zero(),
-                Sign::Minus => return self.negate().atanh().negate(),
+                Sign::NoSign => {
+                    crate::trace_dispatch!("computable", "atanh", "exact-zero");
+                    return Self::zero();
+                }
+                Sign::Minus => {
+                    crate::trace_dispatch!("computable", "atanh", "exact-negative-symmetry");
+                    return self.negate().atanh().negate();
+                }
                 Sign::Plus => {
                     if rational.msd_exact().is_some_and(|msd| msd <= -4) {
                         // Tiny atanh(x) is best served by the direct odd series.
+                        crate::trace_dispatch!("computable", "atanh", "exact-tiny-prescaled");
                         return Self {
                             internal: Box::new(Approximation::PrescaledAtanh(self)),
                             cache: RefCell::new(Cache::Invalid),
@@ -2276,6 +2429,7 @@ impl Computable {
                         // instead of building a generic quotient Computable first.
                         let one = Rational::one();
                         let ratio = (one.clone() + rational.clone()) / (one - rational);
+                        crate::trace_dispatch!("computable", "atanh", "exact-log-ratio");
                         return Self::ln_exact_rational(ratio)
                             .multiply(Self::rational(Rational::fraction(1, 2).unwrap()));
                     }
@@ -2283,11 +2437,13 @@ impl Computable {
             }
         }
         if self.exact_sign() == Some(Sign::Minus) {
+            crate::trace_dispatch!("computable", "atanh", "known-negative-symmetry");
             return self.negate().atanh().negate();
         }
 
         // General formula 1/2 * ln((1+x)/(1-x)). Tiny exact rationals avoid
         // this path because the odd atanh series has much less setup.
+        crate::trace_dispatch!("computable", "atanh", "generic-log-ratio");
         let one = Self::one();
         let numerator = one.clone().add(self.clone());
         let denominator = one.add(self.negate());
@@ -2730,22 +2886,34 @@ impl Computable {
         let exact_bound = exact.as_ref().map(BoundInfo::from_rational);
 
         let mut sign = self.exact_sign().map(public_sign);
+        #[cfg(feature = "dispatch-trace")]
+        if sign.is_some() {
+            crate::trace_dispatch!("computable", "structural_facts", "exact-sign-cache");
+        }
         if sign.is_none()
             && let Some((_, appr)) = self.cached()
             && appr.abs() > BigInt::one()
         {
+            crate::trace_dispatch!("computable", "structural_facts", "approximation-cache-sign");
             sign = Some(public_sign(appr.sign()));
         }
 
         let bound = self.cheap_bound();
         if sign.is_none() {
-            sign = bound.known_sign().map(public_sign);
+            let bound_sign = bound.known_sign();
+            #[cfg(feature = "dispatch-trace")]
+            if bound_sign.is_some() {
+                crate::trace_dispatch!("computable", "structural_facts", "cheap-bound-sign");
+            }
+            sign = bound_sign.map(public_sign);
         }
         if sign.is_none() {
-            sign = exact_bound
-                .as_ref()
-                .and_then(BoundInfo::known_sign)
-                .map(public_sign);
+            let exact_bound_sign = exact_bound.as_ref().and_then(BoundInfo::known_sign);
+            #[cfg(feature = "dispatch-trace")]
+            if exact_bound_sign.is_some() {
+                crate::trace_dispatch!("computable", "structural_facts", "exact-rational-bound");
+            }
+            sign = exact_bound_sign.map(public_sign);
         }
 
         let zero = match sign {
@@ -2782,6 +2950,7 @@ impl Computable {
     #[inline]
     pub fn zero_status(&self) -> ZeroKnowledge {
         if let Some(sign) = self.exact_sign() {
+            crate::trace_dispatch!("computable", "zero_status", "exact-sign-cache");
             return if sign == Sign::NoSign {
                 ZeroKnowledge::Zero
             } else {
@@ -2790,15 +2959,25 @@ impl Computable {
         }
 
         match self.cheap_bound() {
-            BoundInfo::Zero => ZeroKnowledge::Zero,
-            BoundInfo::NonZero { .. } => ZeroKnowledge::NonZero,
-            BoundInfo::Unknown => ZeroKnowledge::Unknown,
+            BoundInfo::Zero => {
+                crate::trace_dispatch!("computable", "zero_status", "cheap-bound-zero");
+                ZeroKnowledge::Zero
+            }
+            BoundInfo::NonZero { .. } => {
+                crate::trace_dispatch!("computable", "zero_status", "cheap-bound-nonzero");
+                ZeroKnowledge::NonZero
+            }
+            BoundInfo::Unknown => {
+                crate::trace_dispatch!("computable", "zero_status", "unknown");
+                ZeroKnowledge::Unknown
+            }
         }
     }
 
     /// Try to prove the sign without refining past `min_precision`.
     pub fn sign_until(&self, min_precision: Precision) -> Option<RealSign> {
         if let Some(sign) = self.exact_sign() {
+            crate::trace_dispatch!("computable", "sign_until", "exact-sign-cache");
             return Some(public_sign(sign));
         }
         if let Some((_, appr)) = self.cached()
@@ -2806,13 +2985,16 @@ impl Computable {
         {
             let sign = appr.sign();
             self.exact_sign.replace(ExactSignCache::Valid(sign));
+            crate::trace_dispatch!("computable", "sign_until", "approximation-cache-sign");
             return Some(public_sign(sign));
         }
 
         if let Some(sign) = self.cheap_bound().known_sign() {
+            crate::trace_dispatch!("computable", "sign_until", "cheap-bound-sign");
             return Some(public_sign(sign));
         }
 
+        crate::trace_dispatch!("computable", "sign_until", "precision-refinement");
         let start = if min_precision > 0 { min_precision } else { 0 };
         let mut p = start;
         loop {
@@ -2841,8 +3023,10 @@ impl Computable {
             .exact_rational()
             .is_some_and(|r| r.sign() == Sign::NoSign)
         {
+            crate::trace_dispatch!("computable", "sign_until", "exact-rational-zero");
             Some(RealSign::Zero)
         } else {
+            crate::trace_dispatch!("computable", "sign_until", "unknown");
             None
         }
     }
@@ -2850,6 +3034,7 @@ impl Computable {
     /// Try to determine the exact sign, refining cached approximations as needed.
     pub fn sign(&self) -> Sign {
         if let Some(sign) = self.exact_sign() {
+            crate::trace_dispatch!("computable", "sign", "exact-sign-cache");
             return sign;
         }
         {
@@ -2858,10 +3043,12 @@ impl Computable {
                 let sign = cache_appr.sign();
                 if sign != Sign::NoSign {
                     self.exact_sign.replace(ExactSignCache::Valid(sign));
+                    crate::trace_dispatch!("computable", "sign", "approximation-cache-sign");
                     return sign;
                 }
             }
         }
+        crate::trace_dispatch!("computable", "sign", "precision-refinement");
         let mut sign = Sign::NoSign;
         let mut p = 0;
         while p > -2000 && sign == Sign::NoSign {
@@ -3520,9 +3707,14 @@ mod tests {
     }
 
     fn assert_close(left: Computable, right: Computable, p: Precision, max_error: i32) {
-        let error = (left.approx(p) - right.approx(p)).abs();
+        let left = left.approx(p);
+        let right = right.approx(p);
+        let error = (&left - &right).abs();
         let max_error = BigInt::from(max_error);
-        assert!(error <= max_error);
+        assert!(
+            error <= max_error,
+            "left {left}, right {right}, error {error}"
+        );
     }
 
     fn pi_times(r: Rational) -> Computable {
@@ -4061,6 +4253,25 @@ mod tests {
             huge.tan().compare_absolute(&offset.tan(), -72),
             Ordering::Equal
         );
+    }
+
+    #[test]
+    fn exact_large_rational_trig_uses_correct_quadrant() {
+        let million = Computable::rational(Rational::new(1_000_000));
+
+        assert_approx(million.clone().sin(), -32, "-1503210646", 8);
+        assert_approx(million.clone().cos(), -32, "4023319752", 8);
+        assert_approx(million.tan(), -32, "-1604704811", 8);
+    }
+
+    #[test]
+    fn exact_huge_rational_trig_uses_correct_quadrant() {
+        let huge = Rational::new(10).powi(BigInt::from(30)).unwrap();
+        let direct = Computable::rational(huge.clone());
+
+        assert_approx(direct.clone().sin(), -72, "-425565037129932206620", 8);
+        assert_approx(direct.clone().cos(), -72, "-4703152091704373381319", 8);
+        assert_approx(direct.tan(), -72, "427303652622316740317", 16);
     }
 
     #[test]

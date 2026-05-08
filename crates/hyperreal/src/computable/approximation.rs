@@ -2,7 +2,7 @@ use crate::Computable;
 use crate::Rational;
 use crate::computable::{Precision, Signal, scale, shift, should_stop, signed};
 use num::bigint::Sign;
-use num::{BigInt, BigUint, Signed};
+use num::{BigInt, BigUint, Signed, ToPrimitive};
 use num::{One, Zero};
 use serde::Deserialize;
 use serde::Serialize;
@@ -80,12 +80,17 @@ pub(super) enum Approximation {
     // approximation lazy until the caller asks for a precision.
     PrescaledCosHalfPiMinusRational(Rational),
     PrescaledSin(Computable),
-    // Same lazy large-rational policy as cosine. The approximation kernel still
-    // uses the normal Computable::sin reducer so numerical behavior is shared.
+    // Same lazy large-rational policy as cosine. Standalone sine still enters
+    // the generic reducer because direct residual arithmetic did not benchmark
+    // faster unless tangent can reuse one reduction for both sin and cos.
     SinLargeRational(Rational),
     // Sine shares the same exact residual representation as cosine so the
     // endpoint identities stay cheap without a generic subtraction node.
     PrescaledSinHalfPiMinusRational(Rational),
+    // Tangent gets its own large-rational node because the generic path first
+    // builds a pi-reduced residual and then a quotient tree. The direct kernel
+    // below reuses the same half-pi residual as sin/cos and divides locally.
+    TanLargeRational(Rational),
     PrescaledTan(Computable),
     PrescaledCot(Computable),
 }
@@ -163,6 +168,7 @@ impl Approximation {
             PrescaledSin(c) => sin(signal, c, p),
             SinLargeRational(r) => sin_large_rational(signal, r, p),
             PrescaledSinHalfPiMinusRational(r) => sin_half_pi_minus_rational(signal, r, p),
+            TanLargeRational(r) => tan_large_rational(signal, r, p),
             PrescaledTan(c) => tan(signal, c, p),
             PrescaledCot(c) => cot(signal, c, p),
         }
@@ -697,10 +703,135 @@ fn cos(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     scale(current_sum, calc_precision - p)
 }
 
+fn large_rational_half_pi_multiple(signal: &Option<Signal>, r: &Rational) -> BigInt {
+    // Deferred large-rational trig needs the same nearest-half-pi quotient as
+    // Computable::sin/cos, but rebuilding a Ratio node just to call the generic
+    // reducer was the remaining hot path in exact 1e6/1e30 benchmarks. This is
+    // the exact-rational Payne-Hanek quotient estimate from the constructor
+    // layer, with the residual correction performed directly from cached pi.
+    let mut multiple = Computable::half_pi_multiple_exact_rational(r)
+        .unwrap_or_else(|| Computable::rational(r.clone()).half_pi_multiple());
+    let rough_appr = large_rational_half_pi_residual(signal, r, &multiple, -1);
+
+    if rough_appr >= *crate::computable::signed::TWO {
+        multiple += 1;
+    } else if rough_appr <= -crate::computable::signed::TWO.deref().clone() {
+        multiple -= 1;
+    }
+
+    multiple
+}
+
+fn large_rational_half_pi_residual(
+    signal: &Option<Signal>,
+    r: &Rational,
+    multiple: &BigInt,
+    p: Precision,
+) -> BigInt {
+    // Approximate r - multiple*pi/2 at precision p without allocating
+    // Add(Multiply(Pi, k), Ratio(r)). This is the performance-critical part of
+    // the direct large-rational kernels; it keeps the mathematical reduction
+    // identical to the generic path while avoiding expression graph setup.
+    let extra = 3;
+    let work_precision = p - extra;
+    let rational = ratio(r, work_precision);
+    let multiple_msd = i32::try_from(multiple.magnitude().bits().saturating_sub(1))
+        .expect("large trig quotient bits should fit in i32");
+    let pi_precision = work_precision - multiple_msd - 4;
+    let pi = Computable::pi().approx_signal(signal, pi_precision);
+    let half_pi_multiple = scale(pi * multiple, pi_precision - work_precision - 1);
+    scale(rational - half_pi_multiple, -extra)
+}
+
+fn large_rational_quadrant(multiple: &BigInt) -> BigInt {
+    ((multiple % crate::computable::signed::FOUR.deref()) + crate::computable::signed::FOUR.deref())
+        % crate::computable::signed::FOUR.deref()
+}
+
+fn cos_large_rational_residual(
+    signal: &Option<Signal>,
+    r: &Rational,
+    multiple: &BigInt,
+    p: Precision,
+) -> BigInt {
+    // Same Taylor kernel as cos(|x| < 1), but the argument approximation comes
+    // from the direct residual above instead of a child Computable node.
+    if p >= 1 {
+        return signed::ONE.deref().clone();
+    }
+    let iterations_needed = -p / 2 + 4;
+
+    if should_stop(signal) {
+        return signed::ONE.deref().clone();
+    }
+
+    let calc_precision = p - bound_log2(2 * iterations_needed) - 4;
+    let op_prec = p - 2;
+    let op_appr = large_rational_half_pi_residual(signal, r, multiple, op_prec);
+    let op_squared = scale(&op_appr * &op_appr, op_prec);
+
+    let max_trunc_error = BigUint::one()
+        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
+    let mut n = 0;
+    let mut current_term = signed::ONE.deref() << (-calc_precision);
+    let mut current_sum = current_term.clone();
+
+    while current_term.magnitude() > &max_trunc_error {
+        if should_stop(signal) {
+            break;
+        }
+        n += 2;
+        current_term = scale(current_term * &op_squared, op_prec);
+        current_term /= -(n * (n - 1));
+        current_sum += &current_term;
+    }
+    scale(current_sum, calc_precision - p)
+}
+
+fn sin_large_rational_residual(
+    signal: &Option<Signal>,
+    r: &Rational,
+    multiple: &BigInt,
+    p: Precision,
+) -> BigInt {
+    // Same Taylor kernel as sin(|x| < 1), fed by the direct large-rational
+    // residual to avoid constructing a generic reduced Computable expression.
+    if p >= 1 {
+        return Zero::zero();
+    }
+    let iterations_needed = -p / 2 + 4;
+
+    if should_stop(signal) {
+        return Zero::zero();
+    }
+
+    let calc_precision = p - bound_log2(2 * iterations_needed) - 4;
+    let op_prec = p - 2;
+    let op_appr = large_rational_half_pi_residual(signal, r, multiple, op_prec);
+    let op_squared = scale(&op_appr * &op_appr, op_prec);
+
+    let max_trunc_error = BigUint::one()
+        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
+    let mut n = 1;
+    let mut current_term = scale(op_appr.clone(), op_prec - calc_precision);
+    let mut current_sum = current_term.clone();
+
+    while current_term.magnitude() > &max_trunc_error {
+        if should_stop(signal) {
+            break;
+        }
+        n += 2;
+        current_term = scale(current_term * &op_squared, op_prec);
+        current_term /= -(n * (n - 1));
+        current_sum += &current_term;
+    }
+    scale(current_sum, calc_precision - p)
+}
+
 fn cos_large_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
-    // This is a deferred construction-only shortcut. Approximation deliberately
-    // re-enters the canonical Computable::cos path so the large-argument range
-    // reducer has one implementation and one set of accuracy assumptions.
+    // Benchmarking showed that direct residual arithmetic is not faster for
+    // standalone large sin/cos nodes: the generic reducer's existing caches and
+    // correction path still win. Keep this node construction-lazy only.
     Computable::rational(r.clone())
         .cos()
         .approx_signal(signal, p)
@@ -811,7 +942,8 @@ fn sin(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
 }
 
 fn sin_large_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
-    // See cos_large_rational: lazy construction without a second range reducer.
+    // See cos_large_rational: direct residual kernels are kept for tangent,
+    // where the quotient can reuse one reduction, but not for standalone sine.
     Computable::rational(r.clone())
         .sin()
         .approx_signal(signal, p)
@@ -876,7 +1008,62 @@ fn tan(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
         panic!("ArithmeticException");
     }
 
-    let scaled_numerator = sin_appr << -p;
+    let scaled_numerator = if cos_appr.sign() == Sign::Minus {
+        -sin_appr << -p
+    } else {
+        sin_appr << -p
+    };
+    let adjustment = &abs_cos >> 1;
+
+    if scaled_numerator.sign() == Sign::Minus {
+        let rounded: BigInt = ((-scaled_numerator) + adjustment) / abs_cos;
+        -rounded
+    } else {
+        (scaled_numerator + adjustment) / abs_cos
+    }
+}
+
+fn tan_large_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
+    // Large tangent is evaluated as a local sin/cos quotient after the same
+    // direct half-pi reduction used by sin/cos. This keeps exact large rationals
+    // off the generic pi-reduction path and avoids constructing inverse nodes.
+    crate::trace_dispatch!("computable_approx", "tan", "large-rational-direct-quotient");
+    if p >= 1 {
+        return Zero::zero();
+    }
+
+    let working_prec = p - 8;
+    let multiple = large_rational_half_pi_multiple(signal, r);
+    let (sin_appr, cos_appr) = match large_rational_quadrant(&multiple).to_u8() {
+        Some(0) => (
+            sin_large_rational_residual(signal, r, &multiple, working_prec),
+            cos_large_rational_residual(signal, r, &multiple, working_prec),
+        ),
+        Some(1) => (
+            cos_large_rational_residual(signal, r, &multiple, working_prec),
+            -sin_large_rational_residual(signal, r, &multiple, working_prec),
+        ),
+        Some(2) => (
+            -sin_large_rational_residual(signal, r, &multiple, working_prec),
+            -cos_large_rational_residual(signal, r, &multiple, working_prec),
+        ),
+        Some(3) => (
+            -cos_large_rational_residual(signal, r, &multiple, working_prec),
+            sin_large_rational_residual(signal, r, &multiple, working_prec),
+        ),
+        _ => unreachable!("quadrant reduction is modulo four"),
+    };
+    let abs_cos = cos_appr.abs();
+
+    if abs_cos.is_zero() {
+        panic!("ArithmeticException");
+    }
+
+    let scaled_numerator = if cos_appr.sign() == Sign::Minus {
+        -sin_appr << -p
+    } else {
+        sin_appr << -p
+    };
     let adjustment = &abs_cos >> 1;
 
     if scaled_numerator.sign() == Sign::Minus {

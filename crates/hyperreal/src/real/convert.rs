@@ -70,12 +70,11 @@ impl Real {
         // unavoidable. Folding `a * class` eagerly would erase exact classes
         // that sign, sqrt, log, and trig shortcuts can still exploit.
         let mut c = if self.rational == *rationals::ONE {
-            self.computable.clone()
+            self.computable_clone()
         } else if self.class == Class::One {
             Computable::rational(self.rational.clone())
         } else {
-            self.computable
-                .clone()
+            self.computable_clone()
                 .multiply_rational(self.rational.clone())
         };
 
@@ -91,17 +90,25 @@ impl Real {
 
         // Owned folding mirrors `fold_ref` but moves the computable when the
         // rational scale is one; scalar transcendental kernels hit this path.
-        if self.rational == *rationals::ONE {
-            let mut c = self.computable;
-            if let Some(s) = self.signal {
+        let crate::Real {
+            rational,
+            class,
+            computable,
+            signal,
+        } = self;
+        if rational == *rationals::ONE {
+            let mut c = computable.unwrap_or_else(Computable::one);
+            if let Some(s) = signal {
                 c.abort(s.clone());
             }
             c
-        } else if self.class == crate::real::Class::One {
-            Computable::rational(self.rational)
+        } else if class == crate::real::Class::One {
+            Computable::rational(rational)
         } else {
-            let mut c = self.computable.multiply_rational(self.rational);
-            if let Some(s) = self.signal {
+            let mut c = computable
+                .unwrap_or_else(Computable::one)
+                .multiply_rational(rational);
+            if let Some(s) = signal {
                 c.abort(s);
             }
             c

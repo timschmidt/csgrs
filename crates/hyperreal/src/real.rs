@@ -467,6 +467,68 @@ impl Class {
             Self::ln_computable(&left).multiply(Self::ln_computable(&right)),
         )
     }
+
+    fn computable_certificate(&self) -> Computable {
+        // Exact symbolic classes are small certificates for a computable value.
+        // Cloning a cold `Real` in dense algebra should copy the certificate and
+        // rebuild this lightweight wrapper instead of duplicating a larger
+        // Computable payload whose cache is usually empty.
+        match self {
+            One => Computable::one(),
+            Pi => Computable::pi(),
+            PiPow(power) => Self::pi_power_computable(u16::from(*power)),
+            PiInv => Computable::pi().inverse(),
+            Exp(exp) => Computable::exp_rational(exp.clone()),
+            PiExp(exp) => Computable::pi().multiply(Computable::exp_rational(exp.clone())),
+            PiInvExp(exp) => Computable::pi()
+                .inverse()
+                .multiply(Computable::exp_rational(exp.clone())),
+            ConstProduct(product) => {
+                let pi = Self::signed_pi_power_computable(product.pi_power);
+                if product.exp_power == *rationals::ZERO {
+                    pi
+                } else {
+                    pi.multiply(Computable::exp_rational(product.exp_power.clone()))
+                }
+            }
+            ConstOffset(offset) => {
+                let constant =
+                    Self::make_const_product(offset.pi_power, offset.exp_power.clone()).1;
+                Computable::add(constant, Computable::rational(offset.offset.clone()))
+            }
+            Sqrt(radicand) => Computable::sqrt_rational(radicand.clone()),
+            PiSqrt(radicand) => {
+                Computable::pi().multiply(Computable::sqrt_rational(radicand.clone()))
+            }
+            ConstProductSqrt(product) => {
+                let constant =
+                    Self::make_const_product(product.pi_power, product.exp_power.clone()).1;
+                constant.multiply(Computable::sqrt_rational(product.radicand.clone()))
+            }
+            Ln(base) => Self::ln_computable(base),
+            LnAffine(affine) => Computable::add(
+                Computable::rational(affine.offset.clone()),
+                Self::ln_computable(&affine.base),
+            ),
+            LnProduct(product) => {
+                Self::ln_computable(&product.left).multiply(Self::ln_computable(&product.right))
+            }
+            Log10(base) => {
+                Self::ln_computable(base).multiply(Self::ln_computable(&*rationals::TEN).inverse())
+            }
+            SinPi(rational) => {
+                let argument =
+                    Computable::multiply(Computable::pi(), Computable::rational(rational.clone()));
+                Computable::prescaled_sin(argument)
+            }
+            TanPi(rational) => {
+                let argument =
+                    Computable::multiply(Computable::pi(), Computable::rational(rational.clone()));
+                Computable::prescaled_tan(argument)
+            }
+            Irrational => panic!("opaque irrational classes must carry their Computable payload"),
+        }
+    }
 }
 
 mod rationals {
@@ -492,80 +554,80 @@ mod constants {
         static PI: Real = Real {
             rational: Rational::one(),
             class: Class::Pi,
-            computable: Computable::pi(),
+            computable: Some(Computable::pi()),
             signal: None,
         };
         static TAU: Real = Real {
             rational: Rational::new(2),
             class: Class::Pi,
-            computable: Computable::pi(),
+            computable: Some(Computable::pi()),
             signal: None,
         };
         static HALF: Real = Real::new(Rational::fraction(1, 2).unwrap());
         static SQRT_TWO_OVER_TWO: Real = Real {
             rational: Rational::fraction(1, 2).unwrap(),
             class: Class::Sqrt(Rational::new(2)),
-            computable: Computable::sqrt_constant(2).unwrap(),
+            computable: Some(Computable::sqrt_constant(2).unwrap()),
             signal: None,
         };
         static SQRT_THREE_OVER_TWO: Real = Real {
             rational: Rational::fraction(1, 2).unwrap(),
             class: Class::Sqrt(Rational::new(3)),
-            computable: Computable::sqrt_constant(3).unwrap(),
+            computable: Some(Computable::sqrt_constant(3).unwrap()),
             signal: None,
         };
         static SQRT_THREE: Real = Real {
             rational: Rational::one(),
             class: Class::Sqrt(Rational::new(3)),
-            computable: Computable::sqrt_constant(3).unwrap(),
+            computable: Some(Computable::sqrt_constant(3).unwrap()),
             signal: None,
         };
         static SQRT_THREE_OVER_THREE: Real = Real {
             rational: Rational::fraction(1, 3).unwrap(),
             class: Class::Sqrt(Rational::new(3)),
-            computable: Computable::sqrt_constant(3).unwrap(),
+            computable: Some(Computable::sqrt_constant(3).unwrap()),
             signal: None,
         };
         static LN2: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(2)),
-            computable: Computable::ln_constant(2).unwrap(),
+            computable: Some(Computable::ln_constant(2).unwrap()),
             signal: None,
         };
         static LN3: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(3)),
-            computable: Computable::ln_constant(3).unwrap(),
+            computable: Some(Computable::ln_constant(3).unwrap()),
             signal: None,
         };
         static LN5: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(5)),
-            computable: Computable::ln_constant(5).unwrap(),
+            computable: Some(Computable::ln_constant(5).unwrap()),
             signal: None,
         };
         static LN6: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(6)),
-            computable: Computable::ln_constant(6).unwrap(),
+            computable: Some(Computable::ln_constant(6).unwrap()),
             signal: None,
         };
         static LN7: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(7)),
-            computable: Computable::ln_constant(7).unwrap(),
+            computable: Some(Computable::ln_constant(7).unwrap()),
             signal: None,
         };
         static LN10: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(10)),
-            computable: Computable::ln_constant(10).unwrap(),
+            computable: Some(Computable::ln_constant(10).unwrap()),
             signal: None,
         };
         static E: Real = Real {
             rational: Rational::one(),
             class: Class::Exp(Rational::one()),
-            computable: Computable::e_constant(),
+            computable: Some(Computable::e_constant()),
             signal: None,
         };
     }
@@ -683,66 +745,114 @@ pub type Signal = Arc<AtomicBool>;
 /// let answer = nine.sqrt().unwrap();
 /// assert_eq!(answer, three);
 /// ```
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Real {
     rational: Rational,
     class: Class,
-    computable: Computable,
+    // Pure exact rationals do not need a computable payload. Leaving this empty
+    // avoids allocating a fresh Computable::one() sentinel for every rational
+    // scalar produced by dense algebra and matrix kernels; folding materializes
+    // the rational leaf only when a generic approximation kernel actually needs it.
+    computable: Option<Computable>,
     #[serde(skip)]
     signal: Option<Signal>,
 }
 
+impl Clone for Real {
+    fn clone(&self) -> Self {
+        // `Computable` caches are accelerators, not semantic state. Most Real
+        // clones in realistic_blas matrix kernels are cold exact symbols, so
+        // cloning the full payload just to preserve an empty cache is wasted
+        // work. Rebuild exact symbolic computables from the compact class
+        // certificate; keep opaque irrational payloads and abort-attached values
+        // as true clones because their graph shape or signal cannot be inferred.
+        let computable = if self.signal.is_some() || matches!(self.class, Irrational) {
+            self.computable.clone()
+        } else if matches!(self.class, One) {
+            None
+        } else {
+            Some(self.class.computable_certificate())
+        };
+
+        Self {
+            rational: self.rational.clone(),
+            class: self.class.clone(),
+            computable,
+            signal: self.signal.clone(),
+        }
+    }
+}
+
 impl Real {
+    fn exact_rational_unchecked(rational: Rational) -> Real {
+        Self {
+            rational,
+            class: One,
+            computable: None,
+            signal: None,
+        }
+    }
+
+    fn computable_ref(&self) -> &Computable {
+        self.computable
+            .as_ref()
+            .expect("non-rational Real classes carry a computable payload")
+    }
+
+    fn computable_clone(&self) -> Computable {
+        self.computable
+            .clone()
+            .unwrap_or_else(|| self.class.computable_certificate())
+    }
+
+    fn into_computable(self) -> Computable {
+        self.computable
+            .unwrap_or_else(|| self.class.computable_certificate())
+    }
+
     /// Provide an atomic flag to signal early abort of calculations.
     /// The provided flag can be used e.g. from another execution thread.
     /// Aborted calculations may have incorrect results.
     pub fn abort(&mut self, s: Signal) {
         self.signal = Some(s.clone());
-        self.computable.abort(s);
+        if let Some(computable) = &mut self.computable {
+            computable.abort(s);
+        }
     }
 
     /// Zero, the additive identity.
     pub fn zero() -> Real {
-        Self {
-            rational: Rational::zero(),
-            class: One,
-            computable: Computable::one(),
-            signal: None,
-        }
+        crate::trace_dispatch!("real", "constructor", "zero");
+        Self::exact_rational_unchecked(Rational::zero())
     }
 
     /// One, the multiplicative identity.
     pub fn one() -> Real {
-        Self {
-            rational: Rational::one(),
-            class: One,
-            computable: Computable::one(),
-            signal: None,
-        }
+        crate::trace_dispatch!("real", "constructor", "one");
+        Self::exact_rational_unchecked(Rational::one())
     }
 
     /// The specified [`Rational`] as a Real.
     pub fn new(rational: Rational) -> Real {
-        Self {
-            rational,
-            class: One,
-            computable: Computable::one(),
-            signal: None,
-        }
+        crate::trace_dispatch!("real", "constructor", "rational");
+        Self::exact_rational_unchecked(rational)
     }
 
     /// π, the ratio of a circle's circumference to its diameter.
     pub fn pi() -> Real {
+        crate::trace_dispatch!("real", "constructor", "cached-pi");
         constants::pi()
     }
 
     /// τ, the ratio of a circle's circumference to its radius.
     pub fn tau() -> Real {
+        crate::trace_dispatch!("real", "constructor", "cached-tau");
         constants::tau()
     }
 
     /// e, Euler's number and the base of the natural logarithm function.
     pub fn e() -> Real {
+        crate::trace_dispatch!("real", "constructor", "cached-e");
         constants::e()
     }
 }
@@ -804,6 +914,7 @@ impl Real {
     /// Is this Real exactly zero?
     #[inline]
     pub fn definitely_zero(&self) -> bool {
+        crate::trace_dispatch!("real", "definitely_zero", "rational-sign");
         self.rational.sign() == Sign::NoSign
     }
 
@@ -819,15 +930,29 @@ impl Real {
     #[inline]
     pub fn structural_facts(&self) -> RealStructuralFacts {
         if matches!(self.class, One) {
+            crate::trace_dispatch!("real", "structural_facts", "exact-rational");
             return facts_from_rational(&self.rational, true);
         }
 
         let rational_sign = self.rational.sign();
         if rational_sign == Sign::NoSign {
+            crate::trace_dispatch!("real", "structural_facts", "zero-scale");
             return facts_from_rational(&self.rational, false);
         }
 
-        let computable = self.computable.structural_facts();
+        crate::trace_dispatch!(
+            "real",
+            "structural_facts",
+            match self.class {
+                One => "exact-rational",
+                Irrational => "scaled-computable",
+                Pi | PiPow(_) | PiInv | PiExp(_) | PiInvExp(_) | PiSqrt(_) | ConstProduct(_)
+                | ConstOffset(_) | ConstProductSqrt(_) | Sqrt(_) | Exp(_) | Ln(_) | LnAffine(_)
+                | LnProduct(_) | Log10(_) | SinPi(_) | TanPi(_) => "symbolic-nonzero-scale",
+            }
+        );
+
+        let computable = self.computable_ref().structural_facts();
         let sign = match self.class {
             One => Some(real_sign_from_num(rational_sign)),
             Pi | PiPow(_) | PiInv | PiExp(_) | PiInvExp(_) | PiSqrt(_) | ConstProduct(_)
@@ -871,13 +996,22 @@ impl Real {
     #[inline]
     pub fn zero_status(&self) -> ZeroKnowledge {
         match self.rational.sign() {
-            Sign::NoSign => ZeroKnowledge::Zero,
+            Sign::NoSign => {
+                crate::trace_dispatch!("real", "zero_status", "zero-scale");
+                ZeroKnowledge::Zero
+            }
             // All named/exact classes are non-zero when their rational scale is
             // non-zero; only opaque computables need refinement. Keep this as a
             // negative test so adding another exact class does not lengthen this
             // predicate-heavy fast path.
-            Sign::Minus | Sign::Plus if !matches!(self.class, Irrational) => ZeroKnowledge::NonZero,
-            Sign::Minus | Sign::Plus => self.computable.zero_status(),
+            Sign::Minus | Sign::Plus if !matches!(self.class, Irrational) => {
+                crate::trace_dispatch!("real", "zero_status", "symbolic-nonzero-scale");
+                ZeroKnowledge::NonZero
+            }
+            Sign::Minus | Sign::Plus => {
+                crate::trace_dispatch!("real", "zero_status", "scaled-computable");
+                self.computable_ref().zero_status()
+            }
         }
     }
 
@@ -885,12 +1019,15 @@ impl Real {
     pub fn refine_sign_until(&self, min_precision: i32) -> Option<RealSign> {
         let facts = self.structural_facts();
         if let Some(sign) = facts.sign {
+            crate::trace_dispatch!("real", "refine_sign_until", "structural-facts");
             return Some(sign);
         }
         if self.rational.sign() == Sign::NoSign {
+            crate::trace_dispatch!("real", "refine_sign_until", "zero-scale");
             return Some(RealSign::Zero);
         }
-        let computable_sign = self.computable.sign_until(min_precision)?;
+        crate::trace_dispatch!("real", "refine_sign_until", "computable-refine");
+        let computable_sign = self.computable_ref().sign_until(min_precision)?;
         multiply_public_sign(
             Some(real_sign_from_num(self.rational.sign())),
             Some(computable_sign),
@@ -913,9 +1050,11 @@ impl Real {
     /// This will be accurate for trivial Rationals and many but not all other cases.
     pub fn best_sign(&self) -> Sign {
         if !matches!(self.class, Irrational) {
+            crate::trace_dispatch!("real", "best_sign", "symbolic-or-rational");
             self.rational.sign()
         } else {
-            match (self.rational.sign(), self.computable.sign()) {
+            crate::trace_dispatch!("real", "best_sign", "scaled-computable");
+            match (self.rational.sign(), self.computable_ref().sign()) {
                 (Sign::NoSign, _) => Sign::NoSign,
                 (_, Sign::NoSign) => Sign::NoSign,
                 (Sign::Plus, Sign::Plus) => Sign::Plus,
@@ -940,7 +1079,7 @@ impl Real {
         Self {
             rational: Rational::one(),
             class: Irrational,
-            computable,
+            computable: Some(computable),
             signal: None,
         }
     }
@@ -983,14 +1122,14 @@ impl Real {
             Self {
                 rational: Rational::new(-1),
                 class: SinPi(reduced),
-                computable,
+                computable: Some(computable),
                 signal: None,
             }
         } else {
             Self {
                 rational: Rational::one(),
                 class: SinPi(reduced),
-                computable,
+                computable: Some(computable),
                 signal: None,
             }
         }
@@ -1014,9 +1153,9 @@ impl Real {
             One => {
                 // Rational reciprocals remain exact.
                 return Ok(Self {
-                    rational: self.rational.inverse()?,
+                    rational: self.rational.clone().inverse()?,
                     class: One,
-                    computable: Computable::one(),
+                    computable: None,
                     signal: None,
                 });
             }
@@ -1037,9 +1176,9 @@ impl Real {
                 // Consume the existing pi computable and only swap the lightweight class.
                 // Rebuilding through `make_const_product` is measurably slower for `1/pi`.
                 return Ok(Self {
-                    rational: self.rational.inverse()?,
+                    rational: self.rational.clone().inverse()?,
                     class: PiInv,
-                    computable: self.computable.inverse(),
+                    computable: Some(self.computable_clone().inverse()),
                     signal: None,
                 });
             }
@@ -1047,9 +1186,9 @@ impl Real {
                 // Reciprocal-pi is its own class; inverting it restores the
                 // canonical cached pi class without generic const-product setup.
                 return Ok(Self {
-                    rational: self.rational.inverse()?,
+                    rational: self.rational.clone().inverse()?,
                     class: Pi,
-                    computable: self.computable.inverse(),
+                    computable: Some(self.computable_clone().inverse()),
                     signal: None,
                 });
             }
@@ -1057,9 +1196,9 @@ impl Real {
                 // e^x inverts to e^-x symbolically.
                 let exp = Neg::neg(exp.clone());
                 return Ok(Self {
-                    rational: self.rational.inverse()?,
+                    rational: self.rational.clone().inverse()?,
                     class: Exp(exp.clone()),
-                    computable: Computable::exp_rational(exp),
+                    computable: Some(Computable::exp_rational(exp)),
                     signal: None,
                 });
             }
@@ -1067,18 +1206,18 @@ impl Real {
                 // pi*e^x inverts to e^-x/pi, preserving the one-pi-factor class
                 // used by division/multiplication fast arms.
                 return Ok(Self {
-                    rational: self.rational.inverse()?,
+                    rational: self.rational.clone().inverse()?,
                     class: PiInvExp(exp.clone().neg()),
-                    computable: self.computable.inverse(),
+                    computable: Some(self.computable_clone().inverse()),
                     signal: None,
                 });
             }
             PiInvExp(exp) => {
                 // The reciprocal of e^x/pi is pi*e^-x.
                 return Ok(Self {
-                    rational: self.rational.inverse()?,
+                    rational: self.rational.clone().inverse()?,
                     class: PiExp(exp.clone().neg()),
-                    computable: self.computable.inverse(),
+                    computable: Some(self.computable_clone().inverse()),
                     signal: None,
                 });
             }
@@ -1095,7 +1234,7 @@ impl Real {
             return Ok(Self {
                 rational,
                 class,
-                computable,
+                computable: Some(computable),
                 signal: None,
             });
         }
@@ -1107,14 +1246,14 @@ impl Real {
             return Ok(Self {
                 rational: self.rational.inverse()?,
                 class,
-                computable,
+                computable: Some(computable),
                 signal: None,
             });
         }
         Ok(Self {
-            rational: self.rational.inverse()?,
+            rational: self.rational.clone().inverse()?,
             class: Irrational,
-            computable: Computable::inverse(self.computable),
+            computable: Some(Computable::inverse(self.computable_clone())),
             signal: None,
         })
     }
@@ -1141,7 +1280,7 @@ impl Real {
                 Ok(Self {
                     rational: self.rational.clone().inverse()?,
                     class: Irrational,
-                    computable: Computable::inverse(self.computable.clone()),
+                    computable: Some(Computable::inverse(self.computable_clone())),
                     signal: None,
                 })
             }
@@ -1150,13 +1289,13 @@ impl Real {
                 // division; rebuilding through the generic constant product costs more.
                 rational: self.rational.clone().inverse()?,
                 class: PiInv,
-                computable: self.computable.clone().inverse(),
+                computable: Some(self.computable_clone().inverse()),
                 signal: None,
             }),
             PiInv => Ok(Self {
                 rational: self.rational.clone().inverse()?,
                 class: Pi,
-                computable: self.computable.clone().inverse(),
+                computable: Some(self.computable_clone().inverse()),
                 signal: None,
             }),
             Exp(exp) => {
@@ -1166,20 +1305,20 @@ impl Real {
                 Ok(Self {
                     rational: self.rational.clone().inverse()?,
                     class: Exp(exp.clone()),
-                    computable: Computable::exp_rational(exp),
+                    computable: Some(Computable::exp_rational(exp)),
                     signal: None,
                 })
             }
             PiExp(exp) => Ok(Self {
                 rational: self.rational.clone().inverse()?,
                 class: PiInvExp(exp.clone().neg()),
-                computable: self.computable.clone().inverse(),
+                computable: Some(self.computable_clone().inverse()),
                 signal: None,
             }),
             PiInvExp(exp) => Ok(Self {
                 rational: self.rational.clone().inverse()?,
                 class: PiExp(exp.clone().neg()),
-                computable: self.computable.clone().inverse(),
+                computable: Some(self.computable_clone().inverse()),
                 signal: None,
             }),
             _ => {
@@ -1193,7 +1332,7 @@ impl Real {
                     return Ok(Self {
                         rational,
                         class,
-                        computable,
+                        computable: Some(computable),
                         signal: None,
                     });
                 }
@@ -1204,14 +1343,14 @@ impl Real {
                     return Ok(Self {
                         rational: self.rational.clone().inverse()?,
                         class,
-                        computable,
+                        computable: Some(computable),
                         signal: None,
                     });
                 }
                 Ok(Self {
                     rational: self.rational.clone().inverse()?,
                     class: Irrational,
-                    computable: Computable::inverse(self.computable.clone()),
+                    computable: Some(Computable::inverse(self.computable_clone())),
                     signal: None,
                 })
             }
@@ -1222,9 +1361,11 @@ impl Real {
     /// in particular Problem::SqrtNegative if this Real is negative.
     pub fn sqrt(self) -> Result<Real, Problem> {
         if self.best_sign() == Sign::Minus {
+            crate::trace_dispatch!("real", "sqrt", "domain-negative");
             return Err(Problem::SqrtNegative);
         }
         if self.definitely_zero() {
+            crate::trace_dispatch!("real", "sqrt", "exact-zero");
             return Ok(Self::zero());
         }
         match &self.class {
@@ -1232,17 +1373,19 @@ impl Real {
                 // Extract rational square factors before creating sqrt nodes.
                 let (square, rest) = self.rational.extract_square_reduced();
                 if rest == *rationals::ONE {
+                    crate::trace_dispatch!("real", "sqrt", "rational-perfect-square");
                     return Ok(Self {
                         rational: square,
                         class: One,
-                        computable: Computable::one(),
+                        computable: None,
                         signal: None,
                     });
                 } else {
+                    crate::trace_dispatch!("real", "sqrt", "rational-sqrt-special-form");
                     return Ok(Self {
                         rational: square,
                         class: Sqrt(rest.clone()),
-                        computable: Computable::sqrt_rational(rest),
+                        computable: Some(Computable::sqrt_rational(rest)),
                         signal: None,
                     });
                 }
@@ -1253,10 +1396,11 @@ impl Real {
                 // that has not shown benchmark wins.
                 let (square, rest) = self.rational.clone().extract_square_reduced();
                 if rest == *rationals::ONE {
+                    crate::trace_dispatch!("real", "sqrt", "pi-scale-computable-sqrt");
                     return Ok(Self {
                         rational: square,
                         class: Irrational,
-                        computable: Computable::sqrt(self.computable),
+                        computable: Some(Computable::sqrt(self.into_computable())),
                         signal: None,
                     });
                 }
@@ -1266,10 +1410,11 @@ impl Real {
                 let (square, rest) = self.rational.clone().extract_square_reduced();
                 if rest == *rationals::ONE {
                     let exp = exp.clone() / Rational::new(2);
+                    crate::trace_dispatch!("real", "sqrt", "exp-half-special-form");
                     return Ok(Self {
                         rational: square,
                         class: Exp(exp.clone()),
-                        computable: Computable::exp_rational(exp),
+                        computable: Some(Computable::exp_rational(exp)),
                         signal: None,
                     });
                 }
@@ -1277,32 +1422,36 @@ impl Real {
             _ => (),
         }
 
+        crate::trace_dispatch!("real", "sqrt", "generic-computable");
         Ok(self.make_computable(Computable::sqrt))
     }
 
     /// Apply the exponential function to this Real parameter.
     pub fn exp(self) -> Result<Real, Problem> {
         if self.definitely_zero() {
+            crate::trace_dispatch!("real", "exp", "exact-zero-one");
             return Ok(Self::one());
         }
         match &self.class {
             One => {
                 // exp(rational) is a first-class symbolic form used heavily by exact
                 // constant products.
+                crate::trace_dispatch!("real", "exp", "rational-exp-special-form");
                 return Ok(Self {
                     rational: Rational::one(),
                     class: Exp(self.rational.clone()),
-                    computable: Computable::exp_rational(self.rational),
+                    computable: Some(Computable::exp_rational(self.rational)),
                     signal: None,
                 });
             }
             Ln(ln) => {
                 if let Some(int) = self.rational.to_big_integer() {
                     // exp(k ln n) folds to n^k when k is integral.
+                    crate::trace_dispatch!("real", "exp", "integer-log-collapse");
                     return Ok(Self {
                         rational: ln.clone().powi(int)?,
                         class: One,
-                        computable: Computable::one(),
+                        computable: None,
                         signal: None,
                     });
                 }
@@ -1310,6 +1459,7 @@ impl Real {
             _ => (),
         }
 
+        crate::trace_dispatch!("real", "exp", "generic-computable");
         Ok(self.make_computable(Computable::exp))
     }
 
@@ -1317,6 +1467,7 @@ impl Real {
     pub fn log10(self) -> Result<Real, Problem> {
         // Use the cached ln(10) symbolic constant. Division recognizes ln/ln10
         // and can return a lightweight Log10 class for exact log inputs.
+        crate::trace_dispatch!("real", "log10", "ln-div-cached-ln10");
         self.ln()? / constants::scaled_ln(10, 1).unwrap()
     }
 
@@ -1407,28 +1558,35 @@ impl Real {
             Some(Less) => {
                 let inv = r.inverse()?;
                 if let Some(answer) = Self::ln_small(&inv) {
+                    crate::trace_dispatch!("real", "ln", "rational-inverse-shared-log");
                     return Ok(-answer);
                 }
                 // Normalize ln(r<1) as -ln(1/r) to improve symbolic sharing.
                 let new = Computable::rational(inv.clone());
+                crate::trace_dispatch!("real", "ln", "rational-inverse-ln-special-form");
                 Ok(Self {
                     rational: Rational::new(-1),
                     class: Ln(inv),
-                    computable: Computable::ln(new),
+                    computable: Some(Computable::ln(new)),
                     signal: None,
                 })
             }
-            Some(Equal) => Ok(Self::zero()),
+            Some(Equal) => {
+                crate::trace_dispatch!("real", "ln", "rational-one-zero");
+                Ok(Self::zero())
+            }
             Some(Greater) => {
                 if let Some(answer) = Self::ln_small(&r) {
+                    crate::trace_dispatch!("real", "ln", "rational-shared-log");
                     return Ok(answer);
                 }
                 // Positive rationals above one get a lightweight Ln certificate.
                 let new = Computable::rational(r.clone());
+                crate::trace_dispatch!("real", "ln", "rational-ln-special-form");
                 Ok(Self {
                     rational: Rational::one(),
                     class: Ln(r),
-                    computable: Computable::ln(new),
+                    computable: Some(Computable::ln(new)),
                     signal: None,
                 })
             }
@@ -1457,7 +1615,7 @@ impl Real {
         Some(Real {
             rational: term.rational.clone(),
             class,
-            computable,
+            computable: Some(computable),
             signal: None,
         })
     }
@@ -1465,6 +1623,7 @@ impl Real {
     /// The natural logarithm of this Real or Problem::NotANumber if this Real is negative.
     pub fn ln(self) -> Result<Real, Problem> {
         if self.best_sign() != Sign::Plus {
+            crate::trace_dispatch!("real", "ln", "domain-not-positive");
             return Err(Problem::NotANumber);
         }
         match &self.class {
@@ -1472,10 +1631,11 @@ impl Real {
             Exp(exp) => {
                 if self.rational == *rationals::ONE {
                     // ln(e^x) collapses exactly for the pure exponential class.
+                    crate::trace_dispatch!("real", "ln", "pure-exp-collapse");
                     return Ok(Self {
                         rational: exp.clone(),
                         class: One,
-                        computable: Computable::one(),
+                        computable: None,
                         signal: None,
                     });
                 }
@@ -1484,19 +1644,23 @@ impl Real {
                 // so repeated predicates do not traverse a generic add graph.
                 let log_scale = Self::ln_rational(self.rational)?;
                 if let Some(answer) = Self::try_add_rational_to_ln_term(&log_scale, exp.clone()) {
+                    crate::trace_dispatch!("real", "ln", "scaled-exp-affine-log-special-form");
                     return Ok(answer);
                 }
+                crate::trace_dispatch!("real", "ln", "scaled-exp-log-plus-exponent");
                 return Ok(log_scale + Self::new(exp.clone()));
             }
             _ => (),
         }
 
+        crate::trace_dispatch!("real", "ln", "generic-computable");
         Ok(self.make_computable(Computable::ln))
     }
 
     /// The sine of this Real.
     pub fn sin(self) -> Real {
         if self.definitely_zero() {
+            crate::trace_dispatch!("real", "sin", "exact-zero");
             return Self::zero();
         }
         match &self.class {
@@ -1509,30 +1673,35 @@ impl Real {
                     // half-pi range-reduction cost immediately. Defer it for
                     // plain Real scalars; approximation still enters the same
                     // Computable reducer when digits are actually needed.
+                    crate::trace_dispatch!("real", "sin", "large-rational-deferred-node");
                     Computable::sin_large_rational_deferred(self.rational.clone())
                 } else {
+                    crate::trace_dispatch!("real", "sin", "rational-generic-computable");
                     Computable::sin(Computable::rational(self.rational.clone()))
                 };
                 return Self {
                     rational: Rational::one(),
                     class: Irrational,
-                    computable,
+                    computable: Some(computable),
                     signal: None,
                 };
             }
             Pi => {
                 // sin(q*pi) has exact small-denominator and reusable SinPi handling.
+                crate::trace_dispatch!("real", "sin", "pi-rational-special-form");
                 return Self::sin_pi_rational(self.rational);
             }
             _ => (),
         }
 
+        crate::trace_dispatch!("real", "sin", "generic-computable");
         self.make_computable(Computable::sin)
     }
 
     /// The cosine of this Real.
     pub fn cos(self) -> Real {
         if self.definitely_zero() {
+            crate::trace_dispatch!("real", "cos", "exact-zero-one");
             return Self::one();
         }
         match &self.class {
@@ -1543,31 +1712,36 @@ impl Real {
                     // Mirror the sine lazy path for large exact rationals. This
                     // removes eager quotient and residual construction from
                     // scalar setup without adding a second numeric algorithm.
+                    crate::trace_dispatch!("real", "cos", "large-rational-deferred-node");
                     Computable::cos_large_rational_deferred(self.rational.clone())
                 } else {
+                    crate::trace_dispatch!("real", "cos", "rational-generic-computable");
                     Computable::cos(Computable::rational(self.rational.clone()))
                 };
                 return Self {
                     rational: Rational::one(),
                     class: Irrational,
-                    computable,
+                    computable: Some(computable),
                     signal: None,
                 };
             }
             Pi => {
                 // cos(q*pi) is represented through the same SinPi machinery with a
                 // half-turn shift, keeping exact identities in one place.
+                crate::trace_dispatch!("real", "cos", "pi-rational-sinpi-rewrite");
                 return Self::sin_pi_rational(self.rational + Rational::fraction(1, 2).unwrap());
             }
             _ => (),
         }
 
+        crate::trace_dispatch!("real", "cos", "generic-computable");
         self.make_computable(Computable::cos)
     }
 
     /// The tangent of this Real.
     pub fn tan(self) -> Result<Real, Problem> {
         if self.definitely_zero() {
+            crate::trace_dispatch!("real", "tan", "exact-zero");
             return Ok(Self::zero());
         }
 
@@ -1577,15 +1751,17 @@ impl Real {
                 // certificates, but Computable::tan still applies small/medium
                 // argument reductions.
                 let new = Computable::rational(self.rational.clone());
+                crate::trace_dispatch!("real", "tan", "rational-generic-computable");
                 return Ok(Self {
                     rational: Rational::one(),
                     class: Irrational,
-                    computable: Computable::tan(new),
+                    computable: Some(Computable::tan(new)),
                     signal: None,
                 });
             }
             Pi => {
                 if self.rational.is_integer() {
+                    crate::trace_dispatch!("real", "tan", "pi-integer-zero");
                     return Ok(Self::zero());
                 }
                 // Rational multiples of pi get exact tangent values for the usual small
@@ -1594,6 +1770,7 @@ impl Real {
                 let mut r: Option<Real> = None;
                 let d = n.denominator();
                 if d == unsigned::TWO.deref() {
+                    crate::trace_dispatch!("real", "tan", "pi-half-pole");
                     return Err(Problem::NotANumber);
                 }
                 if d == unsigned::THREE.deref() {
@@ -1606,6 +1783,7 @@ impl Real {
                     r = Some(constants::sqrt_three_over_three());
                 }
                 if let Some(real) = r {
+                    crate::trace_dispatch!("real", "tan", "pi-rational-exact-table");
                     if neg {
                         return Ok(real.neg());
                     } else {
@@ -1615,18 +1793,19 @@ impl Real {
                     let new =
                         Computable::multiply(Computable::pi(), Computable::rational(n.clone()));
                     let computable = Computable::prescaled_tan(new);
+                    crate::trace_dispatch!("real", "tan", "tanpi-special-form");
                     if neg {
                         return Ok(Self {
                             rational: Rational::new(-1),
                             class: TanPi(n),
-                            computable,
+                            computable: Some(computable),
                             signal: None,
                         });
                     } else {
                         return Ok(Self {
                             rational: Rational::one(),
                             class: TanPi(n),
-                            computable,
+                            computable: Some(computable),
                             signal: None,
                         });
                     }
@@ -1635,6 +1814,7 @@ impl Real {
             _ => (),
         }
 
+        crate::trace_dispatch!("real", "tan", "generic-computable");
         Ok(self.make_computable(Computable::tan))
     }
 
@@ -1761,6 +1941,7 @@ impl Real {
     /// The inverse sine of this Real, or [`Problem::NotANumber`] outside [-1, 1].
     pub fn asin(self) -> Result<Real, Problem> {
         if let Some(exact) = self.asin_exact() {
+            crate::trace_dispatch!("real", "asin", "exact-special-form");
             return Ok(exact);
         }
         if self.class == One {
@@ -1772,23 +1953,28 @@ impl Real {
                 self.rational.clone()
             };
             if magnitude > *rationals::ONE {
+                crate::trace_dispatch!("real", "asin", "rational-domain-error");
                 return Err(Problem::NotANumber);
             }
 
+            crate::trace_dispatch!("real", "asin", "rational-computable");
             return Ok(self.make_computable(|value| value.asin()));
         }
         if let Sqrt(r) = &self.class
             && self.rational.clone() * self.rational.clone() * r.clone() > *rationals::ONE
         {
+            crate::trace_dispatch!("real", "asin", "sqrt-domain-error");
             return Err(Problem::NotANumber);
         }
         if matches!(&self.class, Sqrt(_)) {
             // Sqrt inputs commonly arise from exact trig; keep them on the computable asin
             // path so recognizable forms survive longer.
+            crate::trace_dispatch!("real", "asin", "sqrt-computable");
             return Ok(self.make_computable(|value| value.asin()));
         }
 
         // Generic identity asin(x) = atan(x / sqrt(1-x^2)).
+        crate::trace_dispatch!("real", "asin", "generic-atan-sqrt-rewrite");
         let one = Self::one();
         let radicand = one.clone() - self.clone().powi(BigInt::from(2_u8))?;
         let denominator = radicand.sqrt().map_err(|problem| match problem {
@@ -1803,10 +1989,12 @@ impl Real {
         if self.class == One {
             if self.rational == *rationals::ONE {
                 // acos(1) is exactly zero and must not enter the generic kernel.
+                crate::trace_dispatch!("real", "acos", "exact-one-zero");
                 return Ok(Self::zero());
             }
             if self.rational == Rational::new(-1) {
                 // acos(-1) is exactly pi, using the cached internal constant.
+                crate::trace_dispatch!("real", "acos", "exact-minus-one-pi");
                 return Ok(Self::pi());
             }
             let magnitude = if self.rational.sign() == Sign::Minus {
@@ -1817,51 +2005,62 @@ impl Real {
             if magnitude > *rationals::ONE {
                 // Exact rational domain failures are rejected before any
                 // approximation machinery is constructed.
+                crate::trace_dispatch!("real", "acos", "rational-domain-error");
                 return Err(Problem::NotANumber);
             }
         }
         if let Some(asin) = self.asin_exact() {
             // acos(x) shares the exact asin table through pi/2 - asin(x).
+            crate::trace_dispatch!("real", "acos", "asin-table-special-form");
             return Ok(Self::pi_fraction(1, 2) - asin);
         }
         if let Sqrt(r) = &self.class
             && self.rational.clone() * self.rational.clone() * r.clone() > *rationals::ONE
         {
+            crate::trace_dispatch!("real", "acos", "sqrt-domain-error");
             return Err(Problem::NotANumber);
         }
 
+        crate::trace_dispatch!("real", "acos", "generic-computable");
         Ok(self.make_computable(|value| value.acos()))
     }
 
     /// The inverse tangent of this Real.
     pub fn atan(self) -> Result<Real, Problem> {
         if let Some(exact) = self.atan_exact() {
+            crate::trace_dispatch!("real", "atan", "exact-special-form");
             return Ok(exact);
         }
 
+        crate::trace_dispatch!("real", "atan", "generic-computable");
         Ok(self.make_computable(Computable::atan))
     }
 
     /// The inverse hyperbolic sine of this Real.
     pub fn asinh(self) -> Result<Real, Problem> {
         if self.definitely_zero() {
+            crate::trace_dispatch!("real", "asinh", "exact-zero");
             return Ok(Self::zero());
         }
         if self.class == One && self.rational.msd_exact().is_some_and(|msd| msd <= -4) {
             // Tiny exact rationals have a dedicated computable asinh series.
             // Enter it directly before Real-level odd symmetry expands the
             // expression into a larger ln1p graph.
+            crate::trace_dispatch!("real", "asinh", "tiny-rational-computable");
             return Ok(self.make_computable(Computable::asinh));
         }
         if self.best_sign() == Sign::Minus {
+            crate::trace_dispatch!("real", "asinh", "negative-symmetry");
             return Ok(self.neg().asinh()?.neg());
         }
         if self.fold_ref().approx(-4) <= BigInt::from(64_u8) {
             // Near zero, delegate to the deferred computable ln1p reduction so
             // public construction stays cheap without giving up the stable
             // approximation identity.
+            crate::trace_dispatch!("real", "asinh", "near-zero-deferred-node");
             return Ok(self.make_computable(Computable::asinh_near_zero_deferred));
         }
+        crate::trace_dispatch!("real", "asinh", "direct-deferred-node");
         Ok(self.make_computable(Computable::asinh_direct_deferred))
     }
 
@@ -1869,9 +2068,11 @@ impl Real {
     pub fn acosh(self) -> Result<Real, Problem> {
         if self.class == One {
             if self.rational == *rationals::ONE {
+                crate::trace_dispatch!("real", "acosh", "exact-one-zero");
                 return Ok(Self::zero());
             }
             if self.rational < *rationals::ONE {
+                crate::trace_dispatch!("real", "acosh", "rational-domain-error");
                 return Err(Problem::NotANumber);
             }
             if self.rational.msd_exact().is_some_and(|msd| msd >= 3) {
@@ -1879,6 +2080,7 @@ impl Real {
                 // neighborhood of one, so skip the low-precision proximity
                 // probe and let the computable acosh kernel use its direct
                 // large-input identity.
+                crate::trace_dispatch!("real", "acosh", "large-rational-direct-deferred-node");
                 return Ok(self.make_computable(Computable::acosh_direct_deferred));
             }
         } else if let Sqrt(r) = &self.class {
@@ -1886,11 +2088,13 @@ impl Real {
             if self.rational.sign() == Sign::Minus
                 || self.rational.clone() * self.rational.clone() * r.clone() < *rationals::ONE
             {
+                crate::trace_dispatch!("real", "acosh", "sqrt-domain-error");
                 return Err(Problem::NotANumber);
             }
         } else {
             let one = Self::one();
             if (self.clone() - one).best_sign() == Sign::Minus {
+                crate::trace_dispatch!("real", "acosh", "generic-domain-error");
                 return Err(Problem::NotANumber);
             }
         }
@@ -1898,8 +2102,10 @@ impl Real {
             // Near one, delegate to the deferred computable ln1p/sqrt
             // reduction so public construction does not allocate the full
             // approximation graph.
+            crate::trace_dispatch!("real", "acosh", "near-one-deferred-node");
             return Ok(self.make_computable(Computable::acosh_near_one_deferred));
         }
+        crate::trace_dispatch!("real", "acosh", "direct-deferred-node");
         Ok(self.make_computable(Computable::acosh_direct_deferred))
     }
 
@@ -1909,10 +2115,12 @@ impl Real {
     /// [`Problem::NotANumber`] outside `(-1, 1)`.
     pub fn atanh(self) -> Result<Real, Problem> {
         if self.definitely_zero() {
+            crate::trace_dispatch!("real", "atanh", "exact-zero");
             return Ok(Self::zero());
         }
         let one_real = Self::one();
         if self == one_real || self == -one_real.clone() {
+            crate::trace_dispatch!("real", "atanh", "endpoint-infinity");
             return Err(Problem::Infinity);
         }
         if self.class == One {
@@ -1922,42 +2130,50 @@ impl Real {
                 self.rational.clone()
             };
             if magnitude > *rationals::ONE {
+                crate::trace_dispatch!("real", "atanh", "rational-domain-error");
                 return Err(Problem::NotANumber);
             }
             if magnitude.msd_exact().is_some_and(|msd| msd <= -4) {
                 // Tiny rational atanh is faster in the dedicated computable kernel than
                 // building ln((1+x)/(1-x))/2.
+                crate::trace_dispatch!("real", "atanh", "tiny-rational-computable");
                 return Ok(self.make_computable(Computable::atanh));
             }
             if magnitude >= *rationals::SEVEN_EIGHTHS {
                 // Endpoint-adjacent rationals are hot in scalar predicates and
                 // benchmarks; a deferred computable ln-ratio avoids eagerly
                 // allocating the exact logarithm tree.
+                crate::trace_dispatch!("real", "atanh", "endpoint-deferred-node");
                 return Ok(self.make_computable(Computable::atanh_direct_deferred));
             }
 
             let one = Rational::one();
             let ratio = (one.clone() + self.rational.clone()) / (one - self.rational);
             // Non-tiny rationals can remain an exact logarithm ratio.
+            crate::trace_dispatch!("real", "atanh", "rational-log-ratio-special-form");
             return Ok(Self::ln_rational(ratio)? * Self::new(Rational::fraction(1, 2).unwrap()));
         }
         if let Sqrt(r) = &self.class
             && self.rational.clone() * self.rational.clone() * r.clone() == *rationals::ONE
         {
             // Exact sqrt endpoint, e.g. sqrt(2)/2 scaled to magnitude one.
+            crate::trace_dispatch!("real", "atanh", "sqrt-endpoint-infinity");
             return Err(Problem::Infinity);
         }
         if let Sqrt(r) = &self.class
             && self.rational.clone() * self.rational.clone() * r.clone() > *rationals::ONE
         {
             // Exact sqrt domain failure avoids an approximation sign query.
+            crate::trace_dispatch!("real", "atanh", "sqrt-domain-error");
             return Err(Problem::NotANumber);
         }
         if matches!(&self.class, Sqrt(_)) {
             // In-domain sqrt inputs stay on the computable atanh path so the
             // factored radical can still be recognized by lower constructors.
+            crate::trace_dispatch!("real", "atanh", "sqrt-computable");
             return Ok(self.make_computable(Computable::atanh));
         }
+        crate::trace_dispatch!("real", "atanh", "generic-log-ratio-rewrite");
         let one = Self::one();
         let numerator = one.clone() + self.clone();
         let denominator = one - self;
@@ -2019,7 +2235,7 @@ impl Real {
                 Ok(Self {
                     rational: Rational::one(),
                     class: Irrational,
-                    computable: value.ln().multiply(exp).exp(),
+                    computable: Some(value.ln().multiply(exp).exp()),
                     signal: None,
                 })
             }
@@ -2031,14 +2247,14 @@ impl Real {
                     Ok(Self {
                         rational: Rational::one(),
                         class: Irrational,
-                        computable: value.ln().multiply(exp).exp().negate(),
+                        computable: Some(value.ln().multiply(exp).exp().negate()),
                         signal: None,
                     })
                 } else {
                     Ok(Self {
                         rational: Rational::one(),
                         class: Irrational,
-                        computable: value.ln().multiply(exp).exp(),
+                        computable: Some(value.ln().multiply(exp).exp()),
                         signal: None,
                     })
                 }
@@ -2049,26 +2265,31 @@ impl Real {
     /// Raise this Real to some integer exponent.
     pub fn powi(self, exp: BigInt) -> Result<Self, Problem> {
         if exp == *signed::ONE {
+            crate::trace_dispatch!("real", "powi", "exponent-one");
             return Ok(self);
         }
         if exp.sign() == Sign::NoSign {
             if self.definitely_zero() {
+                crate::trace_dispatch!("real", "powi", "zero-to-zero-domain-error");
                 return Err(Problem::NotANumber);
             } else {
+                crate::trace_dispatch!("real", "powi", "exponent-zero-one");
                 return Ok(Self::one());
             }
         }
         if exp.sign() == Sign::Minus && self.definitely_zero() {
+            crate::trace_dispatch!("real", "powi", "zero-negative-exponent-domain-error");
             return Err(Problem::NotANumber);
         }
         if let Ok(rational) = self.rational.clone().powi(exp.clone()) {
             match &self.class {
                 One => {
                     // Pure rationals stay exact under integer powers.
+                    crate::trace_dispatch!("real", "powi", "rational-exact");
                     return Ok(Self {
                         rational,
                         class: One,
-                        computable: self.computable,
+                        computable: None,
                         signal: None,
                     });
                 }
@@ -2087,27 +2308,31 @@ impl Real {
                             computable: self.computable,
                             signal: None,
                         };
+                        crate::trace_dispatch!("real", "powi", "sqrt-odd-special-form");
                         return Ok(n);
                     } else {
+                        crate::trace_dispatch!("real", "powi", "sqrt-even-rational");
                         return Ok(Self::new(product));
                     }
                 }
                 _ => {
                     if let Some(computable) =
-                        Self::compute_exp_ln_powi(self.computable.clone(), exp.clone())
+                        Self::compute_exp_ln_powi(self.computable_clone(), exp.clone())
                     {
                         // Reuse the exact rational scale while moving the irrational part
                         // to the cheaper exp(ln(x)*k) representation.
+                        crate::trace_dispatch!("real", "powi", "irrational-exp-ln");
                         return Ok(Self {
                             rational,
                             class: Irrational,
-                            computable,
+                            computable: Some(computable),
                             signal: None,
                         });
                     }
                 }
             }
         }
+        crate::trace_dispatch!("real", "powi", "fallback-exp-ln-or-repeated-square");
         self.exp_ln_powi(exp)
     }
 
@@ -2117,8 +2342,10 @@ impl Real {
             // Half-integer powers are common enough to route through powi + sqrt, which
             // exposes exact-square simplifications.
             let n = exponent.shifted_big_integer(1);
+            crate::trace_dispatch!("real", "pow", "half-integer-powi-sqrt");
             self.powi(n)?.sqrt()
         } else {
+            crate::trace_dispatch!("real", "pow", "fractional-arbitrary");
             self.pow_arb(Real::new(exponent))
         }
     }
@@ -2129,20 +2356,26 @@ impl Real {
         match self.best_sign() {
             Sign::NoSign => {
                 if exponent.best_sign() == Sign::Plus {
+                    crate::trace_dispatch!("real", "pow", "zero-positive-exponent");
                     Ok(Real::zero())
                 } else {
+                    crate::trace_dispatch!("real", "pow", "zero-nonpositive-domain-error");
                     Err(Problem::NotAnInteger)
                 }
             }
-            Sign::Minus => Err(Problem::NotAnInteger),
+            Sign::Minus => {
+                crate::trace_dispatch!("real", "pow", "negative-arbitrary-domain-error");
+                Err(Problem::NotAnInteger)
+            }
             Sign::Plus => {
                 let value = self.fold();
                 let exp = exponent.fold();
 
+                crate::trace_dispatch!("real", "pow", "positive-exp-ln");
                 Ok(Self {
                     rational: Rational::one(),
                     class: Irrational,
-                    computable: value.ln().multiply(exp).exp(),
+                    computable: Some(value.ln().multiply(exp).exp()),
                     signal: None,
                 })
             }
@@ -2156,10 +2389,12 @@ impl Real {
         {
             if self.rational == *rationals::ONE {
                 // e^x with unit scale is just exp(x), preserving the symbolic exp path.
+                crate::trace_dispatch!("real", "pow", "e-base-exp");
                 return exponent.exp();
             } else {
                 // (a*e)^x = a^x * e^x keeps the e^x part symbolic.
                 let left = Real::new(self.rational).pow(exponent.clone())?;
+                crate::trace_dispatch!("real", "pow", "scaled-e-base-split");
                 return Ok(left * exponent.exp()?);
             }
         }
@@ -2168,16 +2403,20 @@ impl Real {
             let r = exponent.rational;
             match r.to_big_integer() {
                 Some(n) => {
+                    crate::trace_dispatch!("real", "pow", "integer-exponent");
                     return self.powi(n);
                 }
                 None => {
+                    crate::trace_dispatch!("real", "pow", "rational-exponent");
                     return self.pow_fraction(r);
                 }
             }
         }
         if exponent.definitely_zero() {
+            crate::trace_dispatch!("real", "pow", "zero-exponent");
             return self.powi(BigInt::ZERO);
         }
+        crate::trace_dispatch!("real", "pow", "arbitrary-exponent");
         self.pow_arb(exponent)
     }
 
@@ -2317,7 +2556,7 @@ impl std::str::FromStr for Real {
         Ok(Self {
             rational,
             class: One,
-            computable: Computable::one(),
+            computable: None,
             signal: None,
         })
     }
@@ -2362,7 +2601,7 @@ impl Real {
         Some(Real {
             rational: term.rational.clone(),
             class,
-            computable,
+            computable: Some(computable),
             signal: None,
         })
     }
@@ -2435,7 +2674,7 @@ impl<T: AsRef<Real>> Add<T> for &Real {
         Self::Output {
             rational: Rational::one(),
             class: Irrational,
-            computable,
+            computable: Some(computable),
             signal: None,
         }
     }
@@ -2533,7 +2772,7 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
         Self::Output {
             rational: Rational::one(),
             class: Irrational,
-            computable,
+            computable: Some(computable),
             signal: None,
         }
     }
@@ -2557,7 +2796,7 @@ impl Real {
             Self {
                 rational: x.clone(),
                 class: One,
-                computable: Computable::one(),
+                computable: None,
                 signal: None,
             }
         } else if (x == &Rational::new(2) && y == &Rational::new(3))
@@ -2568,7 +2807,7 @@ impl Real {
             Self {
                 rational: Rational::one(),
                 class: Sqrt(Rational::new(6)),
-                computable: Computable::sqrt_rational(Rational::new(6)),
+                computable: Some(Computable::sqrt_rational(Rational::new(6))),
                 signal: None,
             }
         } else {
@@ -2577,7 +2816,7 @@ impl Real {
                 return Self {
                     rational: product,
                     class: One,
-                    computable: Computable::one(),
+                    computable: None,
                     signal: None,
                 };
             }
@@ -2588,14 +2827,14 @@ impl Real {
                 return Self {
                     rational: a,
                     class: One,
-                    computable: Computable::one(),
+                    computable: None,
                     signal: None,
                 };
             }
             Self {
                 rational: a,
                 class: Sqrt(b.clone()),
-                computable: Computable::sqrt_rational(b),
+                computable: Some(Computable::sqrt_rational(b)),
                 signal: None,
             }
         }
@@ -2655,7 +2894,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 Self::Output {
                     rational,
                     class,
-                    computable,
+                    computable: Some(computable),
                     signal: None,
                 }
             }
@@ -2667,7 +2906,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 Self::Output {
                     rational,
                     class,
-                    computable,
+                    computable: Some(computable),
                     signal: None,
                 }
             }
@@ -2679,10 +2918,10 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     return Self::Output {
                         rational,
                         class: Irrational,
-                        computable: Computable::multiply(
-                            self.computable.clone(),
-                            other.computable.clone(),
-                        ),
+                        computable: Some(Computable::multiply(
+                            self.computable_clone(),
+                            other.computable_clone(),
+                        )),
                         signal: None,
                     };
                 };
@@ -2691,7 +2930,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 Self::Output {
                     rational,
                     class,
-                    computable,
+                    computable: Some(computable),
                     signal: None,
                 }
             }
@@ -2703,10 +2942,10 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     return Self::Output {
                         rational,
                         class: Irrational,
-                        computable: Computable::multiply(
-                            self.computable.clone(),
-                            other.computable.clone(),
-                        ),
+                        computable: Some(Computable::multiply(
+                            self.computable_clone(),
+                            other.computable_clone(),
+                        )),
                         signal: None,
                     };
                 };
@@ -2715,7 +2954,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 Self::Output {
                     rational,
                     class,
-                    computable,
+                    computable: Some(computable),
                     signal: None,
                 }
             }
@@ -2727,7 +2966,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 Self::Output {
                     rational,
                     class,
-                    computable,
+                    computable: Some(computable),
                     signal: None,
                 }
             }
@@ -2739,7 +2978,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 Self::Output {
                     rational,
                     class,
-                    computable,
+                    computable: Some(computable),
                     signal: None,
                 }
             }
@@ -2751,7 +2990,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 Self::Output {
                     rational,
                     class,
-                    computable,
+                    computable: Some(computable),
                     signal: None,
                 }
             }
@@ -2763,7 +3002,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 Self::Output {
                     rational,
                     class,
-                    computable,
+                    computable: Some(computable),
                     signal: None,
                 }
             }
@@ -2775,10 +3014,10 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     return Self::Output {
                         rational,
                         class: Irrational,
-                        computable: Computable::multiply(
-                            self.computable.clone(),
-                            other.computable.clone(),
-                        ),
+                        computable: Some(Computable::multiply(
+                            self.computable_clone(),
+                            other.computable_clone(),
+                        )),
                         signal: None,
                     };
                 };
@@ -2788,7 +3027,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 Self::Output {
                     rational,
                     class,
-                    computable,
+                    computable: Some(computable),
                     signal: None,
                 }
             }
@@ -2800,10 +3039,10 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     return Self::Output {
                         rational,
                         class: Irrational,
-                        computable: Computable::multiply(
-                            self.computable.clone(),
-                            other.computable.clone(),
-                        ),
+                        computable: Some(Computable::multiply(
+                            self.computable_clone(),
+                            other.computable_clone(),
+                        )),
                         signal: None,
                     };
                 };
@@ -2813,7 +3052,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 Self::Output {
                     rational,
                     class,
-                    computable,
+                    computable: Some(computable),
                     signal: None,
                 }
             }
@@ -2825,10 +3064,10 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     return Self::Output {
                         rational,
                         class: Irrational,
-                        computable: Computable::multiply(
-                            self.computable.clone(),
-                            other.computable.clone(),
-                        ),
+                        computable: Some(Computable::multiply(
+                            self.computable_clone(),
+                            other.computable_clone(),
+                        )),
                         signal: None,
                     };
                 };
@@ -2838,7 +3077,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 Self::Output {
                     rational,
                     class,
-                    computable,
+                    computable: Some(computable),
                     signal: None,
                 }
             }
@@ -2850,7 +3089,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 Self::Output {
                     rational,
                     class,
-                    computable,
+                    computable: Some(computable),
                     signal: None,
                 }
             }
@@ -2862,7 +3101,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 Self::Output {
                     rational,
                     class,
-                    computable,
+                    computable: Some(computable),
                     signal: None,
                 }
             }
@@ -2875,7 +3114,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 Self::Output {
                     rational,
                     class,
-                    computable,
+                    computable: Some(computable),
                     signal: None,
                 }
             }
@@ -2888,7 +3127,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 Self::Output {
                     rational,
                     class,
-                    computable,
+                    computable: Some(computable),
                     signal: None,
                 }
             }
@@ -2904,7 +3143,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 Self::Output {
                     rational,
                     class,
-                    computable,
+                    computable: Some(computable),
                     signal: None,
                 }
             }
@@ -2915,7 +3154,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 Self::Output {
                     rational,
                     class: Pi,
-                    computable: Computable::pi(),
+                    computable: Some(Computable::pi()),
                     signal: None,
                 }
             }
@@ -2927,7 +3166,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 Self::Output {
                     rational,
                     class,
-                    computable,
+                    computable: Some(computable),
                     signal: None,
                 }
             }
@@ -2953,7 +3192,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                                     return Self::Output {
                                         rational,
                                         class,
-                                        computable,
+                                        computable: Some(computable),
                                         signal: None,
                                     };
                                 }
@@ -2964,7 +3203,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                                     return Self::Output {
                                         rational,
                                         class,
-                                        computable,
+                                        computable: Some(computable),
                                         signal: None,
                                     };
                                 }
@@ -2988,7 +3227,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                             return Self::Output {
                                 rational,
                                 class,
-                                computable,
+                                computable: Some(computable),
                                 signal: None,
                             };
                         }
@@ -3007,7 +3246,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                             return Self::Output {
                                 rational,
                                 class,
-                                computable,
+                                computable: Some(computable),
                                 signal: None,
                             };
                         }
@@ -3022,7 +3261,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     return Self::Output {
                         rational,
                         class,
-                        computable,
+                        computable: Some(computable),
                         signal: None,
                     };
                 }
@@ -3030,10 +3269,10 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                 Self::Output {
                     rational,
                     class: Irrational,
-                    computable: Computable::multiply(
-                        self.computable.clone(),
-                        other.computable.clone(),
-                    ),
+                    computable: Some(Computable::multiply(
+                        self.computable_clone(),
+                        other.computable_clone(),
+                    )),
                     signal: None,
                 }
             }
@@ -3086,7 +3325,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                 return Ok(Real {
                     rational: &self.rational / &other.rational,
                     class,
-                    computable,
+                    computable: Some(computable),
                     signal: None,
                 });
             }
@@ -3096,7 +3335,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                 return Ok(Real {
                     rational: &self.rational / &other.rational,
                     class,
-                    computable,
+                    computable: Some(computable),
                     signal: None,
                 });
             }
@@ -3106,7 +3345,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                 return Ok(Real {
                     rational: &self.rational / &other.rational,
                     class,
-                    computable,
+                    computable: Some(computable),
                     signal: None,
                 });
             }
@@ -3115,7 +3354,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                 return Ok(Real {
                     rational: &self.rational / &other.rational,
                     class,
-                    computable,
+                    computable: Some(computable),
                     signal: None,
                 });
             }
@@ -3124,7 +3363,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                 return Ok(Real {
                     rational: &self.rational / &other.rational,
                     class,
-                    computable,
+                    computable: Some(computable),
                     signal: None,
                 });
             }
@@ -3150,7 +3389,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
             return Ok(Real {
                 rational: &self.rational / &other.rational,
                 class,
-                computable,
+                computable: Some(computable),
                 signal: None,
             });
         }
@@ -3175,7 +3414,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                             Real {
                                 rational,
                                 class,
-                                computable,
+                                computable: Some(computable),
                                 signal: None,
                             }
                         }
@@ -3185,7 +3424,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                             Real {
                                 rational,
                                 class,
-                                computable,
+                                computable: Some(computable),
                                 signal: None,
                             }
                         }
@@ -3205,7 +3444,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     return Ok(Real {
                         rational: &self.rational / &other.rational,
                         class,
-                        computable,
+                        computable: Some(computable),
                         signal: None,
                     });
                 }
@@ -3224,7 +3463,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     return Ok(Real {
                         rational,
                         class,
-                        computable,
+                        computable: Some(computable),
                         signal: None,
                     });
                 }
@@ -3241,11 +3480,13 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     };
                     let rational = &self.rational / &other.rational;
                     let ln10 = constants::scaled_ln(10, 1).unwrap();
-                    let computable = self.computable.clone().multiply(ln10.computable.inverse());
+                    let computable = self
+                        .computable_clone()
+                        .multiply(ln10.computable_clone().inverse());
                     return Ok(Real {
                         rational,
                         class: Log10(r.clone()),
-                        computable: computable.clone(),
+                        computable: Some(computable),
                         ..self.clone()
                     });
                 }

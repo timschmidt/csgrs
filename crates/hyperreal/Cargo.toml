@@ -10,6 +10,9 @@ readme = "README.md"
 [features]
 default = ["simple"]
 simple = []
+# Compile-time opt-in diagnostic hooks for benchmark path tracing. The
+# instrumentation macro compiles away unless this feature is enabled.
+dispatch-trace = []
 
 [dependencies]
 ciborium = "0.2.2"
@@ -28,6 +31,11 @@ required-features = ["simple"]
 [[bench]]
 name = "borrowed_ops"
 harness = false
+
+[[bench]]
+name = "dispatch_trace"
+harness = false
+required-features = ["dispatch-trace"]
 
 [[bench]]
 name = "library_perf"

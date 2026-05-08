@@ -185,6 +185,14 @@ cargo bench --bench adversarial_transcendentals
 
 The generated benchmark summary is in [`benchmarks.md`](./benchmarks.md).
 
+Run dispatch tracing separately:
+
+```sh
+cargo bench --bench dispatch_trace --features dispatch-trace
+```
+
+The generated trace summary is in [`dispatch_trace.md`](./dispatch_trace.md).
+
 ## Development
 
 Common checks:
@@ -202,4 +210,6 @@ without regressing broader `realistic_blas` or `predicated` benchmarks.
 
 ## License
 
-Apache-2.0.
+(C) https://github.com/timschmidt Apache-2.0 / MIT
+(C) https://github.com/tialaramex/realistic/ Apache-2.0
+(C) https://github.com/siefkenj Apache-2.0
