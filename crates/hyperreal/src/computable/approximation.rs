@@ -8,6 +8,16 @@ use serde::Deserialize;
 use serde::Serialize;
 use std::ops::Deref;
 
+// The elementary kernels in this file use the standard multiple-precision
+// pattern of reducing the argument into a small interval, evaluating a guarded
+// power series, then rounding once at the requested binary scale. The main
+// references for those algorithm families are Brent, "Fast Multiple-Precision
+// Evaluation of Elementary Functions", JACM 1976, https://doi.org/10.1145/321941.321944,
+// and Brent/Zimmermann, "Modern Computer Arithmetic", Ch. 4,
+// https://maths-people.anu.edu.au/~brent/pd/mca-cup-0.5.9.pdf.
+// Comments at individual shortcuts call out hyperreal-specific representation
+// choices added to avoid construction, allocation, or cache duplication costs.
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub(super) enum Approximation {
     // Exact integer leaf. This is the cheapest approximation source and also
@@ -60,11 +70,19 @@ pub(super) enum Approximation {
     AtanhDirect(Computable),
     PrescaledAtanh(Computable),
     PrescaledCos(Computable),
+    // Large exact-rational Real::cos construction is intentionally deferred:
+    // range reduction needs cached pi plus BigInt quotient work, which is wasted
+    // in scalar construction benchmarks and predicate-heavy code that never
+    // asks for digits.
+    CosLargeRational(Rational),
     // Exact medium rational trig inputs use dedicated pi/2 - r residual nodes.
     // This avoids rebuilding a generic Add(Offset(pi), -r) graph while keeping
     // approximation lazy until the caller asks for a precision.
     PrescaledCosHalfPiMinusRational(Rational),
     PrescaledSin(Computable),
+    // Same lazy large-rational policy as cosine. The approximation kernel still
+    // uses the normal Computable::sin reducer so numerical behavior is shared.
+    SinLargeRational(Rational),
     // Sine shares the same exact residual representation as cosine so the
     // endpoint identities stay cheap without a generic subtraction node.
     PrescaledSinHalfPiMinusRational(Rational),
@@ -140,8 +158,10 @@ impl Approximation {
             AtanhDirect(c) => atanh_direct(signal, c, p),
             PrescaledAtanh(c) => atanh_computable(signal, c, p),
             PrescaledCos(c) => cos(signal, c, p),
+            CosLargeRational(r) => cos_large_rational(signal, r, p),
             PrescaledCosHalfPiMinusRational(r) => cos_half_pi_minus_rational(signal, r, p),
             PrescaledSin(c) => sin(signal, c, p),
+            SinLargeRational(r) => sin_large_rational(signal, r, p),
             PrescaledSinHalfPiMinusRational(r) => sin_half_pi_minus_rational(signal, r, p),
             PrescaledTan(c) => tan(signal, c, p),
             PrescaledCot(c) => cot(signal, c, p),
@@ -187,7 +207,9 @@ fn raw(kind: Approximation) -> Computable {
 fn pi(signal: &Option<Signal>, p: Precision) -> BigInt {
     // Machin formula: pi = 4 * (4 atan(1/5) - atan(1/239)).
     // It converges much faster than a generic trig/log identity and is stable
-    // enough to serve as the shared pi cache source.
+    // enough to serve as the shared pi cache source. This is the same
+    // arctangent/Machin-style family used in multiple-precision elementary
+    // evaluation; see Brent, https://doi.org/10.1145/321941.321944.
     let atan5 = Computable::prescaled_atan(BigInt::from(5_u8));
     let atan_239 = Computable::prescaled_atan(BigInt::from(239_u16));
     let four = Computable::integer(BigInt::from(4_u8));
@@ -199,7 +221,10 @@ fn pi(signal: &Option<Signal>, p: Precision) -> BigInt {
 fn ln2(signal: &Option<Signal>, p: Precision) -> BigInt {
     // A fixed atanh/log1p decomposition for ln(2). Keeping ln2 as its own
     // shared constant matters because exp/ln range reduction adds multiples of
-    // ln2 frequently.
+    // ln2 frequently. The identity routes each piece through the reduced
+    // ln(1+x) kernel, following the argument-reduction-plus-series approach in
+    // Brent/Zimmermann, Ch. 4:
+    // https://maths-people.anu.edu.au/~brent/pd/mca-cup-0.5.9.pdf.
     let prescaled_9 = raw(Approximation::PrescaledLn(Computable::rational(
         Rational::fraction(1, 9).unwrap(),
     )));
@@ -252,6 +277,9 @@ fn e_terms_for_precision(p: Precision) -> u32 {
 fn e_binary_split(a: u32, b: u32) -> (BigUint, BigUint) {
     // Binary splitting keeps numerator/denominator growth balanced. A linear
     // summation of rationals is noticeably more allocation-heavy for cold e.
+    // This is the standard binary-splitting technique for series evaluation;
+    // see Brent/Zimmermann, Sec. 4.9:
+    // https://maths-people.anu.edu.au/~brent/pd/mca-cup-0.5.9.pdf.
     if b - a == 1 {
         return (BigUint::one(), BigUint::from(a));
     }
@@ -279,7 +307,9 @@ fn rounded_ratio(numerator: BigUint, denominator: BigUint, p: Precision) -> BigI
 
 fn e(p: Precision) -> BigInt {
     // e = 1 + sum_{k>=1} 1/k!. The tail is evaluated as one rational by binary
-    // splitting and rounded once at the target scale.
+    // splitting and rounded once at the target scale. Rounding only once keeps
+    // the exact-real cache stable and avoids accumulating per-term rational
+    // normalization costs.
     let terms = e_terms_for_precision(p);
     if terms == 0 {
         return rounded_ratio(BigUint::one(), BigUint::one(), p);
@@ -491,6 +521,9 @@ fn bound_log2(n: i32) -> i32 {
 fn exp(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Kernel precondition: caller has reduced |c| below roughly 1/2. The series
     // is intentionally simple here; range reduction belongs in `Computable::exp`.
+    // That split mirrors standard multiple-precision exp algorithms: reduce
+    // first, evaluate the Taylor series on the reduced input, and reconstruct.
+    // See Brent, https://doi.org/10.1145/321941.321944.
     if p >= 1 {
         return Zero::zero();
     }
@@ -537,6 +570,9 @@ fn sqrt(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Sqrt uses a fixed-size integer sqrt for moderate precision and recursive
     // Newton refinement for deeper requests. This avoids pulling in floating
     // approximations while keeping high-precision sqrt from scaling quadratically.
+    // Newton sqrt/reciprocal-sqrt refinement is the standard arbitrary-precision
+    // strategy described in Brent/Zimmermann, Secs. 1.5 and 4.2:
+    // https://maths-people.anu.edu.au/~brent/pd/mca-cup-0.5.9.pdf.
     let fp_prec: i32 = 140;
     let fp_op_prec: i32 = 150;
 
@@ -610,7 +646,10 @@ fn sqrt(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
 // uses a Taylor series expansion.
 fn cos(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Kernel precondition: |c| < 1. Argument reduction and exact pi-multiple
-    // handling happen before this node is constructed.
+    // handling happen before this node is constructed. Keeping range reduction
+    // outside the Taylor kernel is the same split used by multi-precision
+    // sin/cos algorithms in Brent/Zimmermann, Ch. 4:
+    // https://maths-people.anu.edu.au/~brent/pd/mca-cup-0.5.9.pdf.
     if p >= 1 {
         return signed::ONE.deref().clone();
     }
@@ -656,6 +695,15 @@ fn cos(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
         current_sum += &current_term;
     }
     scale(current_sum, calc_precision - p)
+}
+
+fn cos_large_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
+    // This is a deferred construction-only shortcut. Approximation deliberately
+    // re-enters the canonical Computable::cos path so the large-argument range
+    // reducer has one implementation and one set of accuracy assumptions.
+    Computable::rational(r.clone())
+        .cos()
+        .approx_signal(signal, p)
 }
 
 fn half_pi_minus_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
@@ -713,6 +761,8 @@ fn cos_half_pi_minus_rational(signal: &Option<Signal>, r: &Rational, p: Precisio
 fn sin(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Kernel precondition: |c| < 1. The caller keeps large arguments out of this
     // Taylor loop so huge sin/cos rows spend time in reduction, not series setup.
+    // This follows the reduced-argument series scheme in Brent/Zimmermann, Ch. 4:
+    // https://maths-people.anu.edu.au/~brent/pd/mca-cup-0.5.9.pdf.
     if p >= 1 {
         return Zero::zero();
     }
@@ -758,6 +808,13 @@ fn sin(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
         current_sum += &current_term;
     }
     scale(current_sum, calc_precision - p)
+}
+
+fn sin_large_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
+    // See cos_large_rational: lazy construction without a second range reducer.
+    Computable::rational(r.clone())
+        .sin()
+        .approx_signal(signal, p)
 }
 
 // Compute sine of pi/2 - r for exact 1 <= r < 3/2.
@@ -868,6 +925,9 @@ fn cot(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
 fn ln(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Kernel precondition: this computes ln(1+x), not arbitrary ln(x). Public
     // construction keeps |x| < 1/2 by inversion, sqrt scaling, and powers of two.
+    // The atanh transform is a standard log argument reduction for faster odd
+    // power-series convergence; see Brent/Zimmermann, Ch. 4:
+    // https://maths-people.anu.edu.au/~brent/pd/mca-cup-0.5.9.pdf.
     if p >= 0 {
         return Zero::zero();
     }
@@ -917,6 +977,8 @@ fn ln(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
 fn atan(signal: &Option<Signal>, i: &BigInt, p: Precision) -> BigInt {
     // Integral atan is used for atan(1/n), where division by n^2 each iteration
     // is cheaper and more stable than approximating a rational Computable child.
+    // This is the arctangent-series kernel used by the Machin pi computation;
+    // see Brent, https://doi.org/10.1145/321941.321944.
     if p >= 1 {
         return Zero::zero();
     }
@@ -969,6 +1031,8 @@ fn atan(signal: &Option<Signal>, i: &BigInt, p: Precision) -> BigInt {
 fn atan_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Kernel precondition: |c| is small. Larger atan inputs are reduced by
     // subtraction of atan(1/2) or the reciprocal identity before reaching here.
+    // That reduction-before-series shape follows the elementary-function
+    // approach in Brent, https://doi.org/10.1145/321941.321944.
     if p >= 1 {
         return Zero::zero();
     }

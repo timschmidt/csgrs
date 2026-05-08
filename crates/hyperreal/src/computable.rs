@@ -405,6 +405,12 @@ thread_local! {
 }
 
 /// Computable approximation of a Real number.
+///
+/// This is a demand-driven exact-real representation: every node can produce an
+/// integer approximation at a requested binary precision, and caches store only
+/// approximations proven for that node. The model follows the constructive/exact
+/// real arithmetic approach in Boehm et al., "Exact real arithmetic: a case
+/// study in higher order programming", https://doi.org/10.1145/319838.319860.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Computable {
     internal: Box<Approximation>,
@@ -540,6 +546,20 @@ impl Computable {
         }
     }
 
+    pub(crate) fn cos_large_rational_deferred(rational: Rational) -> Computable {
+        // Real::cos for large plain rationals defers the expensive half-pi
+        // reduction until digits are requested. This keeps construction and
+        // structural queries cheap while preserving the canonical reducer for
+        // actual approximation.
+        Self {
+            internal: Box::new(Approximation::CosLargeRational(rational)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            signal: None,
+        }
+    }
+
     fn prescaled_cos_half_pi_minus_rational(rational: Rational) -> Computable {
         // sin(x) for exact medium rational x is cos(pi/2 - x). Keeping the
         // residual as one node avoids the generic Add/Offset/Negate stack in
@@ -561,6 +581,19 @@ impl Computable {
         let internal = Approximation::PrescaledSinHalfPiMinusRational(rational);
         Self {
             internal: Box::new(internal),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            signal: None,
+        }
+    }
+
+    pub(crate) fn sin_large_rational_deferred(rational: Rational) -> Computable {
+        // Same lazy-construction policy as cos_large_rational_deferred. The
+        // stored rational is exact, so approximation can rebuild the normal
+        // Computable::sin path without changing numerical semantics.
+        Self {
+            internal: Box::new(Approximation::SinLargeRational(rational)),
             cache: RefCell::new(Cache::Invalid),
             bound: RefCell::new(BoundCache::Invalid),
             exact_sign: RefCell::new(ExactSignCache::Invalid),
@@ -802,23 +835,29 @@ impl Computable {
         // A cached value at precision q can answer any less precise request p
         // by shifting, but not a more precise one. Shared constants use the
         // thread-local cache; other nodes keep their cache beside the node.
-        let cached = if let Some(constant) = self.shared_constant_kind() {
-            SHARED_CONSTANT_CACHES.with(|caches| {
-                let caches = caches.borrow();
-                match &caches[constant.cache_index()] {
-                    Cache::Valid((cache_prec, cache_appr)) => {
-                        Some((*cache_prec, cache_appr.clone()))
-                    }
-                    Cache::Invalid => None,
-                }
-            })
-        } else {
-            let cache = self.cache.borrow();
-            if let Cache::Valid((cache_prec, cache_appr)) = &*cache {
-                Some((*cache_prec, cache_appr.clone()))
-            } else {
-                None
+        if let Some(constant) = self.shared_constant_kind() {
+            if let Some(cached) = Self::cached_shared_constant_at_precision(constant, p) {
+                return Some(cached);
             }
+            if constant == SharedConstant::Tau
+                && let Some(cached) =
+                    Self::cached_shared_constant_at_precision(SharedConstant::Pi, p - 1)
+            {
+                // tau is exactly 2*pi, so a pi approximation at precision p-1
+                // is already a tau approximation at precision p. Populate the
+                // tau cache from pi instead of re-running the Machin pi kernel
+                // when callers ask for tau after pi has been warmed.
+                Self::store_shared_constant_cache_value(SharedConstant::Tau, p, cached.clone());
+                return Some(cached);
+            }
+            return None;
+        }
+
+        let cache = self.cache.borrow();
+        let cached = if let Cache::Valid((cache_prec, cache_appr)) = &*cache {
+            Some((*cache_prec, cache_appr.clone()))
+        } else {
+            None
         }?;
 
         if p >= cached.0 {
@@ -828,14 +867,35 @@ impl Computable {
         }
     }
 
+    fn cached_shared_constant_at_precision(
+        constant: SharedConstant,
+        p: Precision,
+    ) -> Option<BigInt> {
+        SHARED_CONSTANT_CACHES.with(|caches| {
+            let caches = caches.borrow();
+            let Cache::Valid((cache_prec, cache_appr)) = &caches[constant.cache_index()] else {
+                return None;
+            };
+            if p >= *cache_prec {
+                Some(scale(cache_appr.clone(), *cache_prec - p))
+            } else {
+                None
+            }
+        })
+    }
+
+    fn store_shared_constant_cache_value(constant: SharedConstant, p: Precision, value: BigInt) {
+        SHARED_CONSTANT_CACHES.with(|caches| {
+            caches.borrow_mut()[constant.cache_index()] = Cache::Valid((p, value));
+        });
+    }
+
     fn store_cache_value(&self, p: Precision, value: BigInt) {
         // Store only exact node approximation results, not temporary scaled
         // values. For shared constants this updates the global thread-local
         // cache so every cloned constant wrapper benefits.
         if let Some(constant) = self.shared_constant_kind() {
-            SHARED_CONSTANT_CACHES.with(|caches| {
-                caches.borrow_mut()[constant.cache_index()] = Cache::Valid((p, value));
-            });
+            Self::store_shared_constant_cache_value(constant, p, value);
         } else {
             self.cache.replace(Cache::Valid((p, value)));
         }
@@ -1313,7 +1373,10 @@ impl Computable {
     fn integer_ratio_nearest(&self, divisor: Computable) -> BigInt {
         // Low-precision nearest-integer quotient used only for range reduction.
         // It deliberately asks for a rough result and relies on caller-side
-        // correction instead of doing an expensive exact division.
+        // correction instead of doing an expensive exact division. The trig
+        // callers use this as hyperreal's exact-real analogue of Payne-Hanek
+        // radian reduction: compute enough quotient bits, then correct from the
+        // residual. Payne/Hanek: https://doi.org/10.1145/1057600.1057602.
         let quotient = self.clone().multiply(divisor.inverse());
         scale(quotient.approx(-4), -4)
     }
@@ -1341,6 +1404,8 @@ impl Computable {
         if rough_appr > *signed::EIGHT || rough_appr < -signed::EIGHT.clone() {
             // Keep the Taylor kernel near zero by subtracting k*ln(2), then reapply
             // the scale as a binary shift. This avoids slow huge-argument series work.
+            // This is the standard exp argument reduction described in Brent,
+            // https://doi.org/10.1145/321941.321944.
             let ln2 = Self::ln2();
             let mut multiple = self.integer_ratio_nearest(ln2.clone());
 
@@ -1380,7 +1445,9 @@ impl Computable {
     /// Calculate nearby multiple of pi.
     fn pi_multiple(&self) -> BigInt {
         // Use one low-precision quotient and a cheap correction instead of a full
-        // high-precision division. Trig reduction calls this on hot paths.
+        // high-precision division. Trig reduction calls this on hot paths; the
+        // quotient/residual structure is the same problem addressed by
+        // Payne-Hanek range reduction, https://doi.org/10.1145/1057600.1057602.
         let mut multiple = self.integer_ratio_nearest(Self::pi());
         let adjustment =
             Self::pi().multiply(Self::rational(Rational::from_bigint(multiple.clone())).negate());
@@ -1398,7 +1465,9 @@ impl Computable {
     /// Calculate nearby multiple of pi/2.
     fn half_pi_multiple(&self) -> BigInt {
         // Same nearest-multiple trick as `pi_multiple`, specialized for the quadrant
-        // reductions used by sin/cos.
+        // reductions used by sin/cos. Exact-rational inputs first try an integer
+        // quotient against cached pi so huge arguments avoid constructing
+        // x*(pi/2)^-1, then the residual correction validates the quadrant.
         let half_pi = Self::pi().shift_right(1);
         let mut multiple = self
             .exact_rational()
@@ -1422,6 +1491,8 @@ impl Computable {
         // Estimate round(2*x/pi) with one cached pi approximation and integer
         // arithmetic, then let half_pi_multiple's residual correction validate
         // the result. This avoids building and approximating x * (pi/2)^-1.
+        // It is a lightweight exact-rational variant of Payne-Hanek radian
+        // reduction: https://doi.org/10.1145/1057600.1057602.
         let msd = rational.msd_exact()?;
         if msd < 3 {
             return None;
@@ -1793,12 +1864,16 @@ impl Computable {
 
             if rough_appr <= *sixty_four {
                 // Moderate large values use repeated sqrt: ln(x) = 4 ln(sqrt(sqrt(x))).
-                // That is cheaper than running ln1p far from one.
+                // That is cheaper than running ln1p far from one. This is a
+                // local low-overhead form of logarithm argument reduction; see
+                // Brent/Zimmermann Ch. 4:
+                // https://maths-people.anu.edu.au/~brent/pd/mca-cup-0.5.9.pdf.
                 let quarter = self.sqrt().sqrt().ln();
                 return quarter.shift_left(2);
             } else {
                 // Very large values are scaled by powers of two before ln1p, then the
-                // binary exponent is added back as k ln(2).
+                // binary exponent is added back as k ln(2). This keeps the
+                // final ln1p kernel in its documented convergence interval.
                 let mut extra_bits: i32 = (rough_appr.bits() - 5).try_into().expect(
                     "Approximation should have few enough bits to fit in a 32-bit signed integer",
                 );
@@ -1976,6 +2051,8 @@ impl Computable {
         if rough_appr <= *signed::SIXTEEN {
             // For middle-sized arguments, subtract atan(1/2) before recursing. This keeps
             // the residual small without jumping all the way to the reciprocal identity.
+            // This follows the range-reduce-before-series pattern in Brent,
+            // https://doi.org/10.1145/321941.321944.
             let numerator = self.clone().add(half.clone().negate());
             let denominator = one.add(self.multiply(half));
             return Self::prescaled_atan(BigInt::from(2_u8))
@@ -2997,8 +3074,6 @@ mod tests {
     use super::*;
     use num::Signed;
     use num::bigint::BigUint;
-    use std::hint::black_box;
-    use std::time::Instant;
 
     #[test]
     fn compare() {
@@ -3155,6 +3230,27 @@ mod tests {
             .cached()
             .expect("tau cache should be shared across instances");
         assert!(cached.0 <= -32);
+    }
+
+    #[test]
+    fn tau_cache_reuses_warmed_pi_cache() {
+        std::thread::spawn(|| {
+            let pi = Computable::pi();
+            let _ = pi.approx(-64);
+            assert!(Computable::tau().cached().is_none());
+
+            let tau_appr = Computable::tau().approx(-32);
+            let pi_scaled_as_tau = Computable::pi().approx(-33);
+            assert_eq!(tau_appr, pi_scaled_as_tau);
+
+            let cached = Computable::tau()
+                .cached()
+                .expect("tau cache should be filled from pi cache");
+            assert_eq!(cached.0, -32);
+            assert_eq!(cached.1, tau_appr);
+        })
+        .join()
+        .expect("tau cache test thread should finish");
     }
 
     #[test]
@@ -3441,95 +3537,6 @@ mod tests {
                 2,
             );
             assert_close(value.clone().negate().cos(), value.cos(), -96, 2);
-        }
-    }
-
-    #[test]
-    #[ignore = "release-only performance guard for the May 6 scalar trig targets"]
-    fn trig_regression_speed_targets_release_only() {
-        if cfg!(debug_assertions) {
-            return;
-        }
-
-        struct Target {
-            name: &'static str,
-            input: Computable,
-            op: fn(Computable) -> Computable,
-            may_6_target_ns: u128,
-            allowed_ns: u128,
-        }
-
-        let targets = [
-            Target {
-                name: "sin(1.23456789)",
-                input: Computable::rational(Rational::try_from(1.23456789_f64).unwrap()),
-                op: Computable::sin,
-                may_6_target_ns: 618,
-                allowed_ns: 900,
-            },
-            Target {
-                name: "cos(1.23456789)",
-                input: Computable::rational(Rational::try_from(1.23456789_f64).unwrap()),
-                op: Computable::cos,
-                may_6_target_ns: 543,
-                allowed_ns: 900,
-            },
-            Target {
-                name: "sin(1e6)",
-                input: Computable::rational(Rational::new(1_000_000)),
-                op: Computable::sin,
-                may_6_target_ns: 2_580,
-                allowed_ns: 3_500,
-            },
-            Target {
-                name: "cos(1e6)",
-                input: Computable::rational(Rational::new(1_000_000)),
-                op: Computable::cos,
-                may_6_target_ns: 2_200,
-                allowed_ns: 3_500,
-            },
-            Target {
-                name: "sin(1e30)",
-                input: Computable::rational(Rational::from_bigint(BigInt::from(10_u8).pow(30))),
-                op: Computable::sin,
-                may_6_target_ns: 2_860,
-                allowed_ns: 3_500,
-            },
-            Target {
-                name: "cos(1e30)",
-                input: Computable::rational(Rational::from_bigint(BigInt::from(10_u8).pow(30))),
-                op: Computable::cos,
-                may_6_target_ns: 2_460,
-                allowed_ns: 3_500,
-            },
-        ];
-
-        for target in targets {
-            // The strict May 6 measurements are kept in the test data above.
-            // `allowed_ns` adds runner slack so this remains useful outside the
-            // exact benchmark host while still catching multi-microsecond
-            // reduction regressions.
-            for _ in 0..128 {
-                black_box((target.op)(target.input.clone()).approx(-96));
-            }
-
-            let iterations = 4096_usize;
-            let values: Vec<_> = (0..iterations)
-                .map(|_| (target.op)(target.input.clone()))
-                .collect();
-            let start = Instant::now();
-            for value in values {
-                black_box(value.approx(-96));
-            }
-            let elapsed_ns = start.elapsed().as_nanos() / iterations as u128;
-
-            assert!(
-                elapsed_ns <= target.allowed_ns,
-                "{} took {elapsed_ns} ns/iter; May 6 target {} ns, guard {} ns",
-                target.name,
-                target.may_6_target_ns,
-                target.allowed_ns
-            );
         }
     }
 

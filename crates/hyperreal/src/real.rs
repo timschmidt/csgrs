@@ -53,6 +53,10 @@ enum Class {
     // `Class` is a certificate, not the whole value: `Real.rational` scales the
     // mathematical value represented here. All variants except `Irrational` are
     // exact, nonzero, and positive internally unless a comment says otherwise.
+    // These symbolic forms are hyperreal-specific performance shortcuts layered
+    // on top of the computable exact-real machinery; the invariants are kept
+    // adjacent here because sign/zero/fact predicates rely on them for early
+    // exits without approximation.
     One,                // Exactly one
     Pi,                 // Exactly pi
     PiPow(u8),          // Exactly pi**n, n >= 2
@@ -132,8 +136,10 @@ impl Class {
         true
     }
 
-    // Any logarithmn can be added
     fn is_ln(&self) -> bool {
+        // Only simple `Ln(base)` values participate in the two-log sum/difference
+        // collapse. Wider log classes intentionally skip that shortcut so the
+        // simplifier stays cheap on non-log algebra.
         matches!(self, Ln(_))
     }
 
@@ -1498,11 +1504,19 @@ impl Real {
                 // Plain rational trig still uses Computable, not SinPi/TanPi:
                 // those exact certificates are reserved for rational multiples
                 // of pi where algebra can later invert them.
-                let new = Computable::rational(self.rational.clone());
+                let computable = if self.rational.magnitude_at_least_power_of_two(3) {
+                    // Large rational sin/cos construction used to pay the full
+                    // half-pi range-reduction cost immediately. Defer it for
+                    // plain Real scalars; approximation still enters the same
+                    // Computable reducer when digits are actually needed.
+                    Computable::sin_large_rational_deferred(self.rational.clone())
+                } else {
+                    Computable::sin(Computable::rational(self.rational.clone()))
+                };
                 return Self {
                     rational: Rational::one(),
                     class: Irrational,
-                    computable: Computable::sin(new),
+                    computable,
                     signal: None,
                 };
             }
@@ -1525,11 +1539,18 @@ impl Real {
             One => {
                 // Same policy as sine: generic rational cosine enters the
                 // computable trig reducer, while pi-multiple exactness is below.
-                let new = Computable::rational(self.rational.clone());
+                let computable = if self.rational.magnitude_at_least_power_of_two(3) {
+                    // Mirror the sine lazy path for large exact rationals. This
+                    // removes eager quotient and residual construction from
+                    // scalar setup without adding a second numeric algorithm.
+                    Computable::cos_large_rational_deferred(self.rational.clone())
+                } else {
+                    Computable::cos(Computable::rational(self.rational.clone()))
+                };
                 return Self {
                     rational: Rational::one(),
                     class: Irrational,
-                    computable: Computable::cos(new),
+                    computable,
                     signal: None,
                 };
             }

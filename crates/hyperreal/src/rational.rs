@@ -391,6 +391,27 @@ impl Rational {
         Some((numerator_shift - denominator_shift, self.sign))
     }
 
+    pub(crate) fn magnitude_at_least_power_of_two(&self, exponent: u32) -> bool {
+        // Hot constructors sometimes need only a threshold such as |x| >= 8.
+        // Bit lengths prove almost every case without the exact shift/compare
+        // used by msd_exact(); only boundary-sized rationals allocate a shifted
+        // denominator for the final comparison.
+        if self.sign == NoSign {
+            return false;
+        }
+
+        let numerator_bits = self.numerator.bits();
+        let target_bits = self.denominator.bits() + u64::from(exponent);
+        if numerator_bits > target_bits {
+            return true;
+        }
+        if numerator_bits < target_bits {
+            return false;
+        }
+
+        self.numerator >= (&self.denominator << exponent as usize)
+    }
+
     pub(crate) fn msd_exact(&self) -> Option<i32> {
         // Exact binary magnitude from bit lengths only. This is used by Real
         // and Computable structural queries to avoid an approximation just to
@@ -1217,6 +1238,36 @@ mod tests {
         assert_eq!(Rational::fraction(7, 8).unwrap().power_of_two_shift(), None);
         assert_eq!(Rational::fraction(5, 6).unwrap().power_of_two_shift(), None);
         assert_eq!(Rational::zero().power_of_two_shift(), None);
+    }
+
+    #[test]
+    fn magnitude_at_least_power_of_two_handles_threshold_boundaries() {
+        assert!(
+            !Rational::fraction(7, 1)
+                .unwrap()
+                .magnitude_at_least_power_of_two(3)
+        );
+        assert!(
+            Rational::fraction(8, 1)
+                .unwrap()
+                .magnitude_at_least_power_of_two(3)
+        );
+        assert!(
+            Rational::fraction(-9, 1)
+                .unwrap()
+                .magnitude_at_least_power_of_two(3)
+        );
+        assert!(
+            !Rational::fraction(15, 2)
+                .unwrap()
+                .magnitude_at_least_power_of_two(3)
+        );
+        assert!(
+            Rational::fraction(16, 2)
+                .unwrap()
+                .magnitude_at_least_power_of_two(3)
+        );
+        assert!(!Rational::zero().magnitude_at_least_power_of_two(3));
     }
 
     #[test]

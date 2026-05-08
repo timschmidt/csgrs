@@ -799,6 +799,11 @@ mod tests {
         assert_close(medium.clone().cos(), medium_f64.cos(), 1e-14);
         assert_close(medium.clone().tan().unwrap(), medium_f64.tan(), 1e-14);
 
+        let large = Real::new(Rational::new(1_000_000));
+        let large_f64 = 1_000_000_f64;
+        assert_close(large.clone().sin(), large_f64.sin(), 1e-12);
+        assert_close(large.cos(), large_f64.cos(), 1e-12);
+
         let huge_even_pi_multiple = Real::new(Rational::from_bigint(BigInt::from(1_u8) << 128))
             * Real::pi()
             + medium.clone();

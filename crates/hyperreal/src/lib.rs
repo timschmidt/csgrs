@@ -4,7 +4,9 @@
 //! symbolic forms such as `pi`, `e`, logarithms, and trigonometric special
 //! forms, and lazily evaluated computable expressions. The public structural
 //! query APIs expose cheap conservative facts for callers that need to avoid
-//! forcing high-precision evaluation.
+//! forcing high-precision evaluation. The lazy approximation layer follows the
+//! exact-real arithmetic model described by Boehm et al.,
+//! https://doi.org/10.1145/319838.319860.
 
 mod rational;
 pub use crate::rational::Rational;
