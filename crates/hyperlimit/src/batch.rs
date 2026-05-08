@@ -35,6 +35,7 @@ pub fn orient2d_batch_with_policy<S: BorrowedPredicateScalar>(
     cases: &[Orient2dCase<S>],
     policy: PredicatePolicy,
 ) -> Vec<PredicateOutcome<Sign>> {
+    crate::trace_dispatch!("predicated", "batch", "orient2d-sequential");
     cases
         .iter()
         .map(|(a, b, c)| orient2d_with_policy(a, b, c, policy))
@@ -53,6 +54,7 @@ pub fn classify_point_line_batch_with_policy<S: BorrowedPredicateScalar>(
     cases: &[Orient2dCase<S>],
     policy: PredicatePolicy,
 ) -> Vec<PredicateOutcome<LineSide>> {
+    crate::trace_dispatch!("predicated", "batch", "classify-point-line-sequential");
     cases
         .iter()
         .map(|(from, to, point)| classify_point_line_with_policy(from, to, point, policy))
@@ -71,6 +73,7 @@ pub fn orient3d_batch_with_policy<S: BorrowedPredicateScalar>(
     cases: &[Orient3dCase<S>],
     policy: PredicatePolicy,
 ) -> Vec<PredicateOutcome<Sign>> {
+    crate::trace_dispatch!("predicated", "batch", "orient3d-sequential");
     cases
         .iter()
         .map(|(a, b, c, d)| orient3d_with_policy(a, b, c, d, policy))
@@ -89,6 +92,7 @@ pub fn classify_point_plane_batch_with_policy<S: BorrowedPredicateScalar>(
     cases: &[PointPlaneCase<S>],
     policy: PredicatePolicy,
 ) -> Vec<PredicateOutcome<PlaneSide>> {
+    crate::trace_dispatch!("predicated", "batch", "classify-point-plane-sequential");
     cases
         .iter()
         .map(|(point, plane)| classify_point_plane_with_policy(point, plane, policy))
@@ -107,6 +111,11 @@ pub fn classify_point_oriented_plane_batch_with_policy<S: BorrowedPredicateScala
     cases: &[Orient3dCase<S>],
     policy: PredicatePolicy,
 ) -> Vec<PredicateOutcome<PlaneSide>> {
+    crate::trace_dispatch!(
+        "predicated",
+        "batch",
+        "classify-point-oriented-plane-sequential"
+    );
     cases
         .iter()
         .map(|(a, b, c, point)| classify_point_oriented_plane_with_policy(a, b, c, point, policy))
@@ -125,6 +134,7 @@ pub fn incircle2d_batch_with_policy<S: BorrowedPredicateScalar>(
     cases: &[Incircle2dCase<S>],
     policy: PredicatePolicy,
 ) -> Vec<PredicateOutcome<Sign>> {
+    crate::trace_dispatch!("predicated", "batch", "incircle2d-sequential");
     cases
         .iter()
         .map(|(a, b, c, d)| incircle2d_with_policy(a, b, c, d, policy))
@@ -143,6 +153,7 @@ pub fn insphere3d_batch_with_policy<S: BorrowedPredicateScalar>(
     cases: &[Insphere3dCase<S>],
     policy: PredicatePolicy,
 ) -> Vec<PredicateOutcome<Sign>> {
+    crate::trace_dispatch!("predicated", "batch", "insphere3d-sequential");
     cases
         .iter()
         .map(|(a, b, c, d, e)| insphere3d_with_policy(a, b, c, d, e, policy))
@@ -170,6 +181,7 @@ mod parallel {
     where
         S: BorrowedPredicateScalar + Sync,
     {
+        crate::trace_dispatch!("predicated", "batch", "orient2d-parallel");
         cases
             .par_iter()
             .map(|(a, b, c)| orient2d_with_policy(a, b, c, policy))
@@ -194,6 +206,7 @@ mod parallel {
     where
         S: BorrowedPredicateScalar + Sync,
     {
+        crate::trace_dispatch!("predicated", "batch", "classify-point-line-parallel");
         cases
             .par_iter()
             .map(|(from, to, point)| classify_point_line_with_policy(from, to, point, policy))
@@ -216,6 +229,7 @@ mod parallel {
     where
         S: BorrowedPredicateScalar + Sync,
     {
+        crate::trace_dispatch!("predicated", "batch", "orient3d-parallel");
         cases
             .par_iter()
             .map(|(a, b, c, d)| orient3d_with_policy(a, b, c, d, policy))
@@ -240,6 +254,7 @@ mod parallel {
     where
         S: BorrowedPredicateScalar + Sync,
     {
+        crate::trace_dispatch!("predicated", "batch", "classify-point-plane-parallel");
         cases
             .par_iter()
             .map(|(point, plane)| classify_point_plane_with_policy(point, plane, policy))
@@ -264,6 +279,11 @@ mod parallel {
     where
         S: BorrowedPredicateScalar + Sync,
     {
+        crate::trace_dispatch!(
+            "predicated",
+            "batch",
+            "classify-point-oriented-plane-parallel"
+        );
         cases
             .par_iter()
             .map(|(a, b, c, point)| {
@@ -288,6 +308,7 @@ mod parallel {
     where
         S: BorrowedPredicateScalar + Sync,
     {
+        crate::trace_dispatch!("predicated", "batch", "incircle2d-parallel");
         cases
             .par_iter()
             .map(|(a, b, c, d)| incircle2d_with_policy(a, b, c, d, policy))
@@ -310,6 +331,7 @@ mod parallel {
     where
         S: BorrowedPredicateScalar + Sync,
     {
+        crate::trace_dispatch!("predicated", "batch", "insphere3d-parallel");
         cases
             .par_iter()
             .map(|(a, b, c, d, e)| insphere3d_with_policy(a, b, c, d, e, policy))

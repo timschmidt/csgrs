@@ -160,6 +160,10 @@ fn render_markdown(rows: &[Row]) -> String {
     md.push_str("## Commands\n\n");
     md.push_str("Run the default benchmark suite and update this file:\n\n");
     md.push_str("```sh\ncargo bench --bench predicates\n```\n\n");
+    md.push_str("Run dispatch tracing separately and update `dispatch_trace.md`:\n\n");
+    md.push_str(
+        "```sh\ncargo bench --bench predicates --features dispatch-trace,realistic-blas -- --write-dispatch-trace-md\n```\n\n",
+    );
     md.push_str("Regenerate this file from existing Criterion output:\n\n");
     md.push_str("```sh\ncargo run --example write_benchmarks_md\n```\n\n");
     md.push_str("Run optional scalar representation benchmarks:\n\n");

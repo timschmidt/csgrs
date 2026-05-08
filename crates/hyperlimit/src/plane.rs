@@ -53,12 +53,19 @@ pub fn classify_point_plane_with_policy<S: BorrowedPredicateScalar>(
     // Exact symbolic backends can spend more constructing the plane-side scalar than the
     // conservative f64 filter costs, so try the filter before scalar arithmetic when the
     // backend opts in.
-    if S::prefer_f64_filter_before_arithmetic()
-        && let Some(outcome) = classify_point_plane_filter(point, plane)
-    {
-        return outcome;
+    if S::prefer_f64_filter_before_arithmetic() {
+        if let Some(outcome) = classify_point_plane_filter(point, plane) {
+            crate::trace_dispatch!("predicated", "classify_point_plane", "f64-point-filter-hit");
+            return outcome;
+        }
+        crate::trace_dispatch!(
+            "predicated",
+            "classify_point_plane",
+            "f64-point-filter-miss"
+        );
     }
 
+    crate::trace_dispatch!("predicated", "classify_point_plane", "scalar-dot");
     let x_term = mul(&plane.normal.x, &point.x);
     let y_term = mul(&plane.normal.y, &point.y);
     let z_term = mul(&plane.normal.z, &point.z);
@@ -101,6 +108,7 @@ pub fn classify_point_oriented_plane_with_policy<S: BorrowedPredicateScalar>(
     point: &Point3<S>,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<PlaneSide> {
+    crate::trace_dispatch!("predicated", "classify_point_oriented_plane", "orient3d");
     map_outcome(
         orient3d_with_policy(a, b, c, point, policy),
         PlaneSide::from,
@@ -141,12 +149,26 @@ fn classify_point_plane_filter<S: PredicateScalar>(
     let scale = nx.abs() * x.abs() + ny.abs() * y.abs() + nz.abs() * z.abs() + d.abs();
 
     match crate::filter::det_sign_filter(value, scale, 16.0) {
-        SignKnowledge::Known { sign, certainty } => Some(PredicateOutcome::decided(
-            PlaneSide::from(sign),
-            certainty,
-            Escalation::Filter,
-        )),
-        SignKnowledge::NonZero | SignKnowledge::Unknown => None,
+        SignKnowledge::Known { sign, certainty } => {
+            crate::trace_dispatch!("predicated", "classify_point_plane_filter", "decided");
+            Some(PredicateOutcome::decided(
+                PlaneSide::from(sign),
+                certainty,
+                Escalation::Filter,
+            ))
+        }
+        SignKnowledge::NonZero => {
+            crate::trace_dispatch!(
+                "predicated",
+                "classify_point_plane_filter",
+                "nonzero-no-sign"
+            );
+            None
+        }
+        SignKnowledge::Unknown => {
+            crate::trace_dispatch!("predicated", "classify_point_plane_filter", "unknown");
+            None
+        }
     }
 }
 

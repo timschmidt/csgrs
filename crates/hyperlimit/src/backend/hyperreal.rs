@@ -16,23 +16,41 @@ pub const CAPABILITIES: BackendCapabilities = BackendCapabilities {
 
 impl StructuralScalar for hyperreal::Real {
     fn scalar_facts(&self) -> ScalarFacts {
+        crate::trace_dispatch!("predicated_hyperreal_adapter", "structural", "scalar-facts");
         scalar_facts_from_hyperreal(self.structural_facts())
     }
 
     fn known_sign(&self) -> SignKnowledge {
+        crate::trace_dispatch!("predicated_hyperreal_adapter", "structural", "known-sign");
         scalar_facts_from_hyperreal(self.structural_facts()).sign_knowledge()
     }
 
     fn refine_sign_until(&self, min_precision: i32) -> SignKnowledge {
-        self.refine_sign_until(min_precision)
-            .map(|sign| SignKnowledge::exact(map_sign(sign)))
-            .unwrap_or(SignKnowledge::Unknown)
+        match self.refine_sign_until(min_precision) {
+            Some(sign) => {
+                crate::trace_dispatch!("predicated_hyperreal_adapter", "structural", "refine-hit");
+                SignKnowledge::exact(map_sign(sign))
+            }
+            None => {
+                crate::trace_dispatch!(
+                    "predicated_hyperreal_adapter",
+                    "structural",
+                    "refine-unknown"
+                );
+                SignKnowledge::Unknown
+            }
+        }
     }
 }
 
 impl PredicateScalar for hyperreal::Real {
     #[inline]
     fn to_f64(&self) -> Option<f64> {
+        crate::trace_dispatch!(
+            "predicated_hyperreal_adapter",
+            "conversion",
+            "to-f64-approx"
+        );
         self.to_f64_approx()
     }
 
@@ -40,6 +58,11 @@ impl PredicateScalar for hyperreal::Real {
     fn prefer_f64_filter_before_arithmetic() -> bool {
         // Hyperreal expression construction is expensive enough that a proven f64 filter is
         // worth trying before exact predicate arithmetic.
+        crate::trace_dispatch!(
+            "predicated_hyperreal_adapter",
+            "policy",
+            "prefer-f64-prefilter"
+        );
         true
     }
 }

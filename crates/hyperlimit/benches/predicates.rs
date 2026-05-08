@@ -1,6 +1,10 @@
 mod benchmark_report;
+mod dispatch_trace;
 
 use criterion::{BenchmarkId, Criterion, black_box};
+#[cfg(feature = "parallel")]
+use dispatch_trace::trace_dispatch_row;
+use dispatch_trace::{begin_dispatch_trace_run, trace_dispatch_cases, write_dispatch_trace_report};
 use predicated::{
     BorrowedPredicateScalar, LineSide, Plane3, PlaneSide, Point2, Point3, PredicateOutcome, Sign,
     classify_point_line, classify_point_oriented_plane, classify_point_plane, incircle2d,
@@ -67,6 +71,13 @@ where
     let mut group = c.benchmark_group("orient2d");
     for workload in Workload::ALL {
         let cases = orient2d_cases(workload, scalar);
+        trace_dispatch_cases(
+            format!("orient2d/{label}/{}", workload.name()),
+            &cases,
+            |(a, b, d)| {
+                black_box(sign_score(orient2d(a, b, d)));
+            },
+        );
         group.bench_with_input(
             BenchmarkId::new(label, workload.name()),
             &cases,
@@ -95,6 +106,13 @@ where
     let mut group = c.benchmark_group("classify_point_line");
     for workload in Workload::ALL {
         let cases = orient2d_cases(workload, scalar);
+        trace_dispatch_cases(
+            format!("classify_point_line/{label}/{}", workload.name()),
+            &cases,
+            |(a, b, d)| {
+                black_box(line_score(classify_point_line(a, b, d)));
+            },
+        );
         group.bench_with_input(
             BenchmarkId::new(label, workload.name()),
             &cases,
@@ -123,6 +141,13 @@ where
     let mut group = c.benchmark_group("orient3d");
     for workload in Workload::ALL {
         let cases = orient3d_cases(workload, scalar);
+        trace_dispatch_cases(
+            format!("orient3d/{label}/{}", workload.name()),
+            &cases,
+            |(a, b, c, d)| {
+                black_box(sign_score(orient3d(a, b, c, d)));
+            },
+        );
         group.bench_with_input(
             BenchmarkId::new(label, workload.name()),
             &cases,
@@ -152,6 +177,13 @@ where
     let mut group = c.benchmark_group("classify_point_plane");
     for workload in Workload::ALL {
         let cases = explicit_plane_cases(workload, scalar);
+        trace_dispatch_cases(
+            format!("classify_point_plane/{label}/{}", workload.name()),
+            &cases,
+            |(point, plane)| {
+                black_box(plane_score(classify_point_plane(point, plane)));
+            },
+        );
         group.bench_with_input(
             BenchmarkId::new(label, workload.name()),
             &cases,
@@ -179,6 +211,13 @@ where
     let mut group = c.benchmark_group("classify_point_oriented_plane");
     for workload in Workload::ALL {
         let cases = oriented_plane_cases(workload, scalar);
+        trace_dispatch_cases(
+            format!("classify_point_oriented_plane/{label}/{}", workload.name()),
+            &cases,
+            |(a, b, c, point)| {
+                black_box(plane_score(classify_point_oriented_plane(a, b, c, point)));
+            },
+        );
         group.bench_with_input(
             BenchmarkId::new(label, workload.name()),
             &cases,
@@ -208,6 +247,13 @@ where
     let mut group = c.benchmark_group("incircle2d");
     for workload in Workload::ALL {
         let cases = incircle2d_cases(workload, scalar);
+        trace_dispatch_cases(
+            format!("incircle2d/{label}/{}", workload.name()),
+            &cases,
+            |(a, b, c, d)| {
+                black_box(sign_score(incircle2d(a, b, c, d)));
+            },
+        );
         group.bench_with_input(
             BenchmarkId::new(label, workload.name()),
             &cases,
@@ -237,6 +283,13 @@ where
     let mut group = c.benchmark_group("insphere3d");
     for workload in Workload::ALL {
         let cases = insphere3d_cases(workload, scalar);
+        trace_dispatch_cases(
+            format!("insphere3d/{label}/{}", workload.name()),
+            &cases,
+            |(a, b, c, d, e)| {
+                black_box(sign_score(insphere3d(a, b, c, d, e)));
+            },
+        );
         group.bench_with_input(
             BenchmarkId::new(label, workload.name()),
             &cases,
@@ -265,6 +318,20 @@ fn bench_parallel_batches(c: &mut Criterion) {
     let mut orient3 = c.benchmark_group("batch_orient3d");
     for workload in Workload::ALL {
         let cases = orient3d_cases(workload, f64_scalar);
+        trace_dispatch_row(
+            format!("batch_orient3d/f64_sequential/{}", workload.name()),
+            || {
+                let outcomes = predicated::orient3d_batch(black_box(&cases));
+                black_box(outcomes.into_iter().map(sign_score).sum::<i64>());
+            },
+        );
+        trace_dispatch_row(
+            format!("batch_orient3d/f64_parallel/{}", workload.name()),
+            || {
+                let outcomes = predicated::orient3d_batch_parallel(black_box(&cases));
+                black_box(outcomes.into_iter().map(sign_score).sum::<i64>());
+            },
+        );
         orient3.bench_with_input(
             BenchmarkId::new("f64_sequential", workload.name()),
             &cases,
@@ -291,6 +358,20 @@ fn bench_parallel_batches(c: &mut Criterion) {
     let mut incircle = c.benchmark_group("batch_incircle2d");
     for workload in Workload::ALL {
         let cases = incircle2d_cases(workload, f64_scalar);
+        trace_dispatch_row(
+            format!("batch_incircle2d/f64_sequential/{}", workload.name()),
+            || {
+                let outcomes = predicated::incircle2d_batch(black_box(&cases));
+                black_box(outcomes.into_iter().map(sign_score).sum::<i64>());
+            },
+        );
+        trace_dispatch_row(
+            format!("batch_incircle2d/f64_parallel/{}", workload.name()),
+            || {
+                let outcomes = predicated::incircle2d_batch_parallel(black_box(&cases));
+                black_box(outcomes.into_iter().map(sign_score).sum::<i64>());
+            },
+        );
         incircle.bench_with_input(
             BenchmarkId::new("f64_sequential", workload.name()),
             &cases,
@@ -317,6 +398,20 @@ fn bench_parallel_batches(c: &mut Criterion) {
     let mut insphere = c.benchmark_group("batch_insphere3d");
     for workload in Workload::ALL {
         let cases = insphere3d_cases(workload, f64_scalar);
+        trace_dispatch_row(
+            format!("batch_insphere3d/f64_sequential/{}", workload.name()),
+            || {
+                let outcomes = predicated::insphere3d_batch(black_box(&cases));
+                black_box(outcomes.into_iter().map(sign_score).sum::<i64>());
+            },
+        );
+        trace_dispatch_row(
+            format!("batch_insphere3d/f64_parallel/{}", workload.name()),
+            || {
+                let outcomes = predicated::insphere3d_batch_parallel(black_box(&cases));
+                black_box(outcomes.into_iter().map(sign_score).sum::<i64>());
+            },
+        );
         insphere.bench_with_input(
             BenchmarkId::new("f64_sequential", workload.name()),
             &cases,
@@ -347,6 +442,14 @@ fn bench_interval_representation(c: &mut Criterion) {
 
     let mut orient = c.benchmark_group("orient2d");
     let cases = interval_orient2d_cells();
+    trace_dispatch_cases("orient2d/interval_cells/strict", &cases, |(a, b, d)| {
+        black_box(sign_score(predicated::orient::orient2d_with_policy(
+            a,
+            b,
+            d,
+            predicated::PredicatePolicy::STRICT,
+        )));
+    });
     orient.bench_with_input(
         BenchmarkId::new("interval_cells", "strict"),
         &cases,
@@ -369,6 +472,19 @@ fn bench_interval_representation(c: &mut Criterion) {
 
     let mut incircle = c.benchmark_group("incircle2d");
     let cases = interval_incircle2d_cells();
+    trace_dispatch_cases(
+        "incircle2d/interval_cells/strict",
+        &cases,
+        |(a, b, c, d)| {
+            black_box(sign_score(predicated::orient::incircle2d_with_policy(
+                a,
+                b,
+                c,
+                d,
+                predicated::PredicatePolicy::STRICT,
+            )));
+        },
+    );
     incircle.bench_with_input(
         BenchmarkId::new("interval_cells", "strict"),
         &cases,
@@ -680,16 +796,30 @@ fn plane_score(outcome: PredicateOutcome<PlaneSide>) -> i64 {
 }
 
 fn main() {
-    let mut criterion = Criterion::default().configure_from_args();
-    bench_predicates(&mut criterion);
-    criterion.final_summary();
+    let trace_only = std::env::args()
+        .any(|arg| arg == "--write-dispatch-trace-md" || arg == "--dispatch-trace-only");
+    if trace_only {
+        begin_dispatch_trace_run();
+    }
 
-    match benchmark_report::write_benchmarks_md() {
-        Ok(summary) => eprintln!(
-            "updated {} from {} Criterion benchmark results",
-            summary.path.display(),
-            summary.rows
-        ),
-        Err(error) => eprintln!("failed to update benchmarks.md: {error}"),
+    let mut criterion = if trace_only {
+        Criterion::default().with_filter("$^")
+    } else {
+        Criterion::default().configure_from_args()
+    };
+    bench_predicates(&mut criterion);
+    if trace_only {
+        write_dispatch_trace_report();
+    } else {
+        criterion.final_summary();
+
+        match benchmark_report::write_benchmarks_md() {
+            Ok(summary) => eprintln!(
+                "updated {} from {} Criterion benchmark results",
+                summary.path.display(),
+                summary.rows
+            ),
+            Err(error) => eprintln!("failed to update benchmarks.md: {error}"),
+        }
     }
 }

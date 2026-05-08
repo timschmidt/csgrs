@@ -254,6 +254,14 @@ cargo bench --bench predicates
 
 The generated benchmark summary is in [`benchmarks.md`](benchmarks.md).
 
+Run dispatch tracing separately:
+
+```sh
+cargo bench --bench predicates --features dispatch-trace,realistic-blas -- --write-dispatch-trace-md
+```
+
+The generated trace summary is in [`dispatch_trace.md`](dispatch_trace.md).
+
 Render predicate demo plots:
 
 ```sh

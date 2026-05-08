@@ -5,6 +5,20 @@
 //! exact zero, magnitude bounds, and refinement capability before falling back
 //! to generic robust predicate machinery.
 
+#[cfg(feature = "dispatch-trace")]
+macro_rules! trace_dispatch {
+    ($layer:expr, $operation:expr, $path:expr) => {
+        ::hyperreal::dispatch_trace::record($layer, $operation, $path);
+    };
+}
+
+#[cfg(not(feature = "dispatch-trace"))]
+macro_rules! trace_dispatch {
+    ($layer:expr, $operation:expr, $path:expr) => {};
+}
+
+pub(crate) use trace_dispatch;
+
 pub mod backend;
 pub mod batch;
 pub mod classify;

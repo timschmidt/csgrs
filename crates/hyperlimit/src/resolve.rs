@@ -22,14 +22,47 @@ pub(crate) fn resolve_scalar_sign<S: PredicateScalar>(
     // already attached to the scalar, then determinant-specific cheap filters,
     // then exact/refinement/fallback stages. Reordering this can easily move
     // exact symbolic backends from nanosecond fact checks to expression builds.
-    decide_scalar_sign(value, Escalation::Structural)
-        .or_else(filter)
-        .or_else(|| exact_scalar_sign_if_allowed(value, policy))
-        .or_else(|| exact_evaluation_if_allowed(policy, exact))
-        .or_else(|| refine_scalar_sign_if_allowed(value, policy))
-        .or_else(fallback)
-        .or_else(|| approximate_if_allowed(value, policy))
-        .unwrap_or_else(|| PredicateOutcome::unknown(unknown_need, Escalation::Undecided))
+    if let Some(outcome) = decide_scalar_sign(value, Escalation::Structural) {
+        crate::trace_dispatch!(
+            "predicated",
+            "resolve_scalar_sign",
+            "structural-scalar-facts"
+        );
+        return outcome;
+    }
+
+    if let Some(outcome) = filter() {
+        crate::trace_dispatch!("predicated", "resolve_scalar_sign", "predicate-filter");
+        return outcome;
+    }
+
+    if let Some(outcome) = exact_scalar_sign_if_allowed(value, policy) {
+        crate::trace_dispatch!("predicated", "resolve_scalar_sign", "exact-scalar-facts");
+        return outcome;
+    }
+
+    if let Some(outcome) = exact_evaluation_if_allowed(policy, exact) {
+        crate::trace_dispatch!("predicated", "resolve_scalar_sign", "exact-predicate");
+        return outcome;
+    }
+
+    if let Some(outcome) = refine_scalar_sign_if_allowed(value, policy) {
+        crate::trace_dispatch!("predicated", "resolve_scalar_sign", "scalar-refinement");
+        return outcome;
+    }
+
+    if let Some(outcome) = fallback() {
+        crate::trace_dispatch!("predicated", "resolve_scalar_sign", "robust-fallback");
+        return outcome;
+    }
+
+    if let Some(outcome) = approximate_if_allowed(value, policy) {
+        crate::trace_dispatch!("predicated", "resolve_scalar_sign", "approximate");
+        return outcome;
+    }
+
+    crate::trace_dispatch!("predicated", "resolve_scalar_sign", "unknown");
+    PredicateOutcome::unknown(unknown_need, Escalation::Undecided)
 }
 
 pub(crate) fn decide_scalar_sign<S: PredicateScalar>(
@@ -38,9 +71,17 @@ pub(crate) fn decide_scalar_sign<S: PredicateScalar>(
 ) -> Option<PredicateOutcome<Sign>> {
     match value.known_sign() {
         SignKnowledge::Known { sign, certainty } => {
+            crate::trace_dispatch!("predicated", "decide_scalar_sign", "known-sign");
             Some(PredicateOutcome::decided(sign, certainty, stage))
         }
-        SignKnowledge::NonZero | SignKnowledge::Unknown => None,
+        SignKnowledge::NonZero => {
+            crate::trace_dispatch!("predicated", "decide_scalar_sign", "nonzero-no-sign");
+            None
+        }
+        SignKnowledge::Unknown => {
+            crate::trace_dispatch!("predicated", "decide_scalar_sign", "unknown");
+            None
+        }
     }
 }
 
@@ -49,10 +90,19 @@ pub(crate) fn approximate_if_allowed<S: PredicateScalar>(
     policy: PredicatePolicy,
 ) -> Option<PredicateOutcome<Sign>> {
     if !policy.allow_approximate {
+        crate::trace_dispatch!("predicated", "approximate_if_allowed", "disabled");
         return None;
     }
 
-    let sign = Sign::from_f64(value.to_f64()?)?;
+    let Some(value) = value.to_f64() else {
+        crate::trace_dispatch!("predicated", "approximate_if_allowed", "no-f64");
+        return None;
+    };
+    let Some(sign) = Sign::from_f64(value) else {
+        crate::trace_dispatch!("predicated", "approximate_if_allowed", "zero-or-nan");
+        return None;
+    };
+    crate::trace_dispatch!("predicated", "approximate_if_allowed", "decided");
     Some(PredicateOutcome::decided(
         sign,
         Certainty::Approximate,
@@ -79,21 +129,33 @@ fn exact_scalar_sign_if_allowed<S: PredicateScalar>(
     policy: PredicatePolicy,
 ) -> Option<PredicateOutcome<Sign>> {
     if !policy.allow_exact {
+        crate::trace_dispatch!("predicated", "exact_scalar_sign", "disabled");
         return None;
     }
 
     let facts = value.scalar_facts();
     if facts.exact != Some(true) && facts.rational_only != Some(true) {
+        crate::trace_dispatch!("predicated", "exact_scalar_sign", "not-exact-scalar");
         return None;
     }
 
     match facts.sign_knowledge() {
-        SignKnowledge::Known { sign, .. } => Some(PredicateOutcome::decided(
-            sign,
-            Certainty::Exact,
-            Escalation::Exact,
-        )),
-        SignKnowledge::NonZero | SignKnowledge::Unknown => None,
+        SignKnowledge::Known { sign, .. } => {
+            crate::trace_dispatch!("predicated", "exact_scalar_sign", "decided");
+            Some(PredicateOutcome::decided(
+                sign,
+                Certainty::Exact,
+                Escalation::Exact,
+            ))
+        }
+        SignKnowledge::NonZero => {
+            crate::trace_dispatch!("predicated", "exact_scalar_sign", "nonzero-no-sign");
+            None
+        }
+        SignKnowledge::Unknown => {
+            crate::trace_dispatch!("predicated", "exact_scalar_sign", "unknown");
+            None
+        }
     }
 }
 
@@ -102,10 +164,24 @@ fn exact_evaluation_if_allowed(
     exact: impl FnOnce() -> Option<Sign>,
 ) -> Option<PredicateOutcome<Sign>> {
     if !policy.allow_exact {
+        crate::trace_dispatch!("predicated", "exact_evaluation", "disabled");
         return None;
     }
 
-    exact().map(|sign| PredicateOutcome::decided(sign, Certainty::Exact, Escalation::Exact))
+    match exact() {
+        Some(sign) => {
+            crate::trace_dispatch!("predicated", "exact_evaluation", "decided");
+            Some(PredicateOutcome::decided(
+                sign,
+                Certainty::Exact,
+                Escalation::Exact,
+            ))
+        }
+        None => {
+            crate::trace_dispatch!("predicated", "exact_evaluation", "unavailable");
+            None
+        }
+    }
 }
 
 fn refine_scalar_sign_if_allowed<S: PredicateScalar>(
@@ -113,17 +189,31 @@ fn refine_scalar_sign_if_allowed<S: PredicateScalar>(
     policy: PredicatePolicy,
 ) -> Option<PredicateOutcome<Sign>> {
     if !policy.allow_refinement {
+        crate::trace_dispatch!("predicated", "refine_scalar_sign", "disabled");
         return None;
     }
 
-    let precision = policy.max_refinement_precision?;
+    let Some(precision) = policy.max_refinement_precision else {
+        crate::trace_dispatch!("predicated", "refine_scalar_sign", "no-precision-budget");
+        return None;
+    };
     match value.refine_sign_until(precision) {
-        SignKnowledge::Known { sign, certainty } => Some(PredicateOutcome::decided(
-            sign,
-            certainty,
-            Escalation::Refined,
-        )),
-        SignKnowledge::NonZero | SignKnowledge::Unknown => None,
+        SignKnowledge::Known { sign, certainty } => {
+            crate::trace_dispatch!("predicated", "refine_scalar_sign", "decided");
+            Some(PredicateOutcome::decided(
+                sign,
+                certainty,
+                Escalation::Refined,
+            ))
+        }
+        SignKnowledge::NonZero => {
+            crate::trace_dispatch!("predicated", "refine_scalar_sign", "nonzero-no-sign");
+            None
+        }
+        SignKnowledge::Unknown => {
+            crate::trace_dispatch!("predicated", "refine_scalar_sign", "unknown");
+            None
+        }
     }
 }
 
@@ -141,18 +231,28 @@ pub(crate) fn signed_term_filter<S: PredicateScalar>(
     for (term, multiplier) in terms {
         let facts = term.scalar_facts();
         if facts.exact_zero == Some(true) || facts.sign == Some(Sign::Zero) {
+            crate::trace_dispatch!("predicated", "signed_term_filter", "zero-term");
             continue;
         }
 
-        let sign = facts.sign?;
+        let Some(sign) = facts.sign else {
+            crate::trace_dispatch!("predicated", "signed_term_filter", "missing-sign");
+            return None;
+        };
         let sign = multiply_sign(sign, *multiplier);
         if sign == Sign::Zero {
+            crate::trace_dispatch!("predicated", "signed_term_filter", "zero-after-multiplier");
             continue;
         }
-        nonzero.push((sign, facts.magnitude?));
+        let Some(magnitude) = facts.magnitude else {
+            crate::trace_dispatch!("predicated", "signed_term_filter", "missing-magnitude");
+            return None;
+        };
+        nonzero.push((sign, magnitude));
     }
 
     if nonzero.is_empty() {
+        crate::trace_dispatch!("predicated", "signed_term_filter", "all-zero");
         return Some(PredicateOutcome::decided(
             Sign::Zero,
             Certainty::Filtered,
@@ -162,6 +262,7 @@ pub(crate) fn signed_term_filter<S: PredicateScalar>(
 
     let first = nonzero[0].0;
     if nonzero.iter().all(|(sign, _)| *sign == first) {
+        crate::trace_dispatch!("predicated", "signed_term_filter", "same-sign");
         return Some(PredicateOutcome::decided(
             first,
             Certainty::Filtered,
@@ -169,8 +270,20 @@ pub(crate) fn signed_term_filter<S: PredicateScalar>(
         ));
     }
 
-    dominance_sign(&nonzero)
-        .map(|sign| PredicateOutcome::decided(sign, Certainty::Filtered, Escalation::Filter))
+    match dominance_sign(&nonzero) {
+        Some(sign) => {
+            crate::trace_dispatch!("predicated", "signed_term_filter", "dominant-term");
+            Some(PredicateOutcome::decided(
+                sign,
+                Certainty::Filtered,
+                Escalation::Filter,
+            ))
+        }
+        None => {
+            crate::trace_dispatch!("predicated", "signed_term_filter", "mixed-no-dominance");
+            None
+        }
+    }
 }
 
 fn dominance_sign(terms: &[(Sign, MagnitudeBounds)]) -> Option<Sign> {
@@ -179,6 +292,7 @@ fn dominance_sign(terms: &[(Sign, MagnitudeBounds)]) -> Option<Sign> {
     // it leaves ambiguous near-cancellation to the slower but safer path.
     for (index, (sign, magnitude)) in terms.iter().enumerate() {
         if magnitude.abs_lower <= 0.0 {
+            crate::trace_dispatch!("predicated", "dominance_sign", "nonpositive-lower-bound");
             continue;
         }
 
@@ -191,10 +305,12 @@ fn dominance_sign(terms: &[(Sign, MagnitudeBounds)]) -> Option<Sign> {
         }
 
         if magnitude.abs_lower > others_upper {
+            crate::trace_dispatch!("predicated", "dominance_sign", "decided");
             return Some(*sign);
         }
     }
 
+    crate::trace_dispatch!("predicated", "dominance_sign", "none");
     None
 }
 

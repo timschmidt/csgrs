@@ -18,23 +18,53 @@ pub const CAPABILITIES: BackendCapabilities = BackendCapabilities {
 
 impl<B: realistic_blas::Backend> StructuralScalar for realistic_blas::Scalar<B> {
     fn scalar_facts(&self) -> ScalarFacts {
+        crate::trace_dispatch!(
+            "predicated_realistic_blas_adapter",
+            "structural",
+            "scalar-facts"
+        );
         scalar_facts_from_realistic_blas(self.structural_facts())
     }
 
     fn known_sign(&self) -> SignKnowledge {
+        crate::trace_dispatch!(
+            "predicated_realistic_blas_adapter",
+            "structural",
+            "known-sign"
+        );
         scalar_facts_from_realistic_blas(self.structural_facts()).sign_knowledge()
     }
 
     fn refine_sign_until(&self, min_precision: i32) -> SignKnowledge {
-        self.refine_sign_until(min_precision)
-            .map(|sign| SignKnowledge::exact(map_sign(sign)))
-            .unwrap_or(SignKnowledge::Unknown)
+        match self.refine_sign_until(min_precision) {
+            Some(sign) => {
+                crate::trace_dispatch!(
+                    "predicated_realistic_blas_adapter",
+                    "structural",
+                    "refine-hit"
+                );
+                SignKnowledge::exact(map_sign(sign))
+            }
+            None => {
+                crate::trace_dispatch!(
+                    "predicated_realistic_blas_adapter",
+                    "structural",
+                    "refine-unknown"
+                );
+                SignKnowledge::Unknown
+            }
+        }
     }
 }
 
 impl<B: realistic_blas::Backend> PredicateScalar for realistic_blas::Scalar<B> {
     #[inline]
     fn to_f64(&self) -> Option<f64> {
+        crate::trace_dispatch!(
+            "predicated_realistic_blas_adapter",
+            "conversion",
+            "to-f64-approx"
+        );
         self.to_f64_approx()
     }
 
@@ -42,6 +72,11 @@ impl<B: realistic_blas::Backend> PredicateScalar for realistic_blas::Scalar<B> {
     fn prefer_f64_filter_before_arithmetic() -> bool {
         // Realistic BLAS scalars may wrap exact symbolic values; conservative f64 filtering
         // avoids building those trees when the determinant sign is already certified.
+        crate::trace_dispatch!(
+            "predicated_realistic_blas_adapter",
+            "policy",
+            "prefer-f64-prefilter"
+        );
         true
     }
 }
