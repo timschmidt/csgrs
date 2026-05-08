@@ -329,6 +329,15 @@ impl BackendScalarTrait for BackendScalar {
         }
     }
 
+    fn is_exact_dyadic_rational(&self) -> bool {
+        crate::trace_dispatch!(
+            "realistic_blas_hyperreal_backend",
+            "query",
+            "exact-dyadic-rational"
+        );
+        self.0.is_exact_dyadic_rational()
+    }
+
     fn refine_sign_until(&self, min_precision: i32) -> Option<ScalarSign> {
         crate::trace_dispatch!(
             "realistic_blas_hyperreal_backend",

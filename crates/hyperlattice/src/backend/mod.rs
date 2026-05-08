@@ -318,6 +318,15 @@ pub trait BackendScalar:
             magnitude: None,
         }
     }
+    /// Returns true when the value is exactly rational and dyadic.
+    ///
+    /// Matrix right-division uses this as a representation heuristic: dyadic
+    /// hyperreal rationals reduce with shifts, so shared-adjugate kernels can
+    /// win there, while decimal rationals usually favor Gauss-Jordan solves
+    /// with fewer intermediate products.
+    fn is_exact_dyadic_rational(&self) -> bool {
+        false
+    }
     /// Tries to prove the sign without refining beyond the requested precision.
     fn refine_sign_until(&self, _min_precision: i32) -> Option<ScalarSign> {
         self.structural_facts().sign

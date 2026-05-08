@@ -499,37 +499,114 @@ impl_solve_left_system_fixed!(
     4
 );
 
+fn prefer_shared_adjugate_right_division<B: Backend, const N: usize>(
+    left: &[[Scalar<B>; N]; N],
+    right: &[[Scalar<B>; N]; N],
+) -> bool {
+    // Shared adjugate division trades fewer inverses for more products. That
+    // wins for dyadic hyperreal inputs because reduction is shift-only, but it
+    // regresses decimal rationals by creating many non-power-of-two gcds. Keep
+    // the heuristic generic by asking the backend for this cheap structural
+    // representation fact instead of depending on hyperreal internals here.
+    left.iter()
+        .flat_map(|row| row.iter())
+        .chain(right.iter().flat_map(|row| row.iter()))
+        .all(Scalar::is_exact_dyadic_rational)
+}
+
 fn right_divide_matrix3<B: Backend>(
     left: [[Scalar<B>; 3]; 3],
     right: [[Scalar<B>; 3]; 3],
 ) -> BlasResult<[[Scalar<B>; 3]; 3]> {
-    Ok(transpose_array(solve_left_system3(
-        transpose_array(right),
-        transpose_array(left),
-    )?))
+    if !prefer_shared_adjugate_right_division(&left, &right) {
+        crate::trace_dispatch!(
+            "realistic_blas_matrix",
+            "helper",
+            "right-divide3-gauss-jordan"
+        );
+        return Ok(transpose_array(solve_left_system3(
+            transpose_array(right),
+            transpose_array(left),
+        )?));
+    }
+
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "right-divide3-shared-adjugate"
+    );
+    // Shared-scale prototype: compute `left * adj(right)` and distribute
+    // `1/det(right)` only after the matrix product. Exact backends pay heavily
+    // for each pivot inverse in Gauss-Jordan division, so this branch compares
+    // one shared scalar inverse plus more multiplies against repeated pivot
+    // normalization. Keep it only while matrix profile traces and Criterion
+    // timings show wins.
+    let (adjugate, det) = matrix3_adjugate_and_determinant(&right);
+    let inv_det = det.inverse()?;
+    Ok(scale_matrix3(multiply_arrays(left, adjugate), &inv_det))
 }
 
 fn right_divide_matrix3_ref<B: Backend>(
     left: &[[Scalar<B>; 3]; 3],
     right: &[[Scalar<B>; 3]; 3],
 ) -> BlasResult<[[Scalar<B>; 3]; 3]> {
-    // Borrowed right-division is implemented as a left solve on transposes.
-    // Clone directly into transposed working storage instead of cloning both
-    // matrices and dispatching through the owned `/` implementation.
-    Ok(transpose_array(solve_left_system3(
-        transpose_array_ref(right),
-        transpose_array_ref(left),
-    )?))
+    if !prefer_shared_adjugate_right_division(left, right) {
+        crate::trace_dispatch!(
+            "realistic_blas_matrix",
+            "helper",
+            "right-divide3-ref-gauss-jordan"
+        );
+        // Borrowed right-division is implemented as a left solve on transposes.
+        // Clone directly into transposed working storage instead of cloning both
+        // matrices and dispatching through the owned `/` implementation.
+        return Ok(transpose_array(solve_left_system3(
+            transpose_array_ref(right),
+            transpose_array_ref(left),
+        )?));
+    }
+
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "right-divide3-ref-shared-adjugate"
+    );
+    // Borrowed division keeps the left matrix borrowed through the product and
+    // materializes only the divisor adjugate. This is the same shared-scale
+    // experiment as the owned path, but avoids cloning both inputs before
+    // transposed Gauss-Jordan elimination.
+    let (adjugate, det) = matrix3_adjugate_and_determinant(right);
+    let inv_det = det.inverse()?;
+    Ok(scale_matrix3(
+        multiply_arrays_ref(left, &adjugate),
+        &inv_det,
+    ))
 }
 
 fn right_divide_matrix3_checked<B: Backend>(
     left: [[Scalar<B>; 3]; 3],
     right: [[Scalar<B>; 3]; 3],
 ) -> CheckedBlasResult<[[Scalar<B>; 3]; 3]> {
-    Ok(transpose_array(solve_left_system3_checked(
-        transpose_array(right),
-        transpose_array(left),
-    )?))
+    if !prefer_shared_adjugate_right_division(&left, &right) {
+        crate::trace_dispatch!(
+            "realistic_blas_matrix",
+            "helper",
+            "right-divide3-checked-gauss-jordan"
+        );
+        return Ok(transpose_array(solve_left_system3_checked(
+            transpose_array(right),
+            transpose_array(left),
+        )?));
+    }
+
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "right-divide3-checked-shared-adjugate"
+    );
+    let (adjugate, det) = matrix3_adjugate_and_determinant(&right);
+    require_known_nonzero(&det)?;
+    let inv_det = det.inverse()?;
+    Ok(scale_matrix3(multiply_arrays(left, adjugate), &inv_det))
 }
 
 fn right_divide_matrix3_checked_with_abort<B: Backend>(
@@ -537,43 +614,123 @@ fn right_divide_matrix3_checked_with_abort<B: Backend>(
     right: [[Scalar<B>; 3]; 3],
     signal: &AbortSignal,
 ) -> CheckedBlasResult<[[Scalar<B>; 3]; 3]> {
-    Ok(transpose_array(solve_left_system3_checked_with_abort(
-        transpose_array(right),
-        transpose_array(left),
-        signal,
-    )?))
+    if !prefer_shared_adjugate_right_division(&left, &right) {
+        crate::trace_dispatch!(
+            "realistic_blas_matrix",
+            "helper",
+            "right-divide3-checked-abort-gauss-jordan"
+        );
+        return Ok(transpose_array(solve_left_system3_checked_with_abort(
+            transpose_array(right),
+            transpose_array(left),
+            signal,
+        )?));
+    }
+
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "right-divide3-checked-abort-shared-adjugate"
+    );
+    let (adjugate, det) = matrix3_adjugate_and_determinant(&right);
+    let det = with_abort(det, signal);
+    require_known_nonzero(&det)?;
+    let inv_det = det.inverse()?;
+    Ok(scale_matrix3(multiply_arrays(left, adjugate), &inv_det))
 }
 
 fn right_divide_matrix4<B: Backend>(
     left: [[Scalar<B>; 4]; 4],
     right: [[Scalar<B>; 4]; 4],
 ) -> BlasResult<[[Scalar<B>; 4]; 4]> {
-    Ok(transpose_array(solve_left_system4(
-        transpose_array(right),
-        transpose_array(left),
-    )?))
+    if !prefer_shared_adjugate_right_division(&left, &right) {
+        crate::trace_dispatch!(
+            "realistic_blas_matrix",
+            "helper",
+            "right-divide4-gauss-jordan"
+        );
+        return Ok(transpose_array(solve_left_system4(
+            transpose_array(right),
+            transpose_array(left),
+        )?));
+    }
+
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "right-divide4-shared-adjugate"
+    );
+    let (s, c) = matrix4_factors(&right);
+    let det = determinant4_from_factors(&s, &c);
+    let inv_det = det.inverse()?;
+    let adjugate = matrix4_adjugate_from_factors(&right, &s, &c);
+    Ok(scale_matrix4(multiply_arrays(left, adjugate), &inv_det))
 }
 
 fn right_divide_matrix4_ref<B: Backend>(
     left: &[[Scalar<B>; 4]; 4],
     right: &[[Scalar<B>; 4]; 4],
 ) -> BlasResult<[[Scalar<B>; 4]; 4]> {
-    // Same borrowed right-division shortcut as 3x3, with unrolled 4x4
-    // transposes. The adjugate/inverse route was benchmarked and was slower.
-    Ok(transpose_array4(solve_left_system4(
-        transpose_array4_ref(right),
-        transpose_array4_ref(left),
-    )?))
+    if !prefer_shared_adjugate_right_division(left, right) {
+        crate::trace_dispatch!(
+            "realistic_blas_matrix",
+            "helper",
+            "right-divide4-ref-gauss-jordan"
+        );
+        // Same borrowed right-division shortcut as 3x3, with unrolled 4x4
+        // transposes. The adjugate route is kept only for dyadic inputs.
+        return Ok(transpose_array4(solve_left_system4(
+            transpose_array4_ref(right),
+            transpose_array4_ref(left),
+        )?));
+    }
+
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "right-divide4-ref-shared-adjugate"
+    );
+    // The 4x4 cofactor route does substantially more scalar multiplication
+    // than Gauss-Jordan, but it carries one shared determinant inverse. This
+    // branch is intentionally isolated so trace rows can decide whether exact
+    // rational normalization or scalar op count dominates.
+    let (s, c) = matrix4_factors(right);
+    let det = determinant4_from_factors(&s, &c);
+    let inv_det = det.inverse()?;
+    let adjugate = matrix4_adjugate_from_factors(right, &s, &c);
+    Ok(scale_matrix4(
+        multiply_arrays_ref(left, &adjugate),
+        &inv_det,
+    ))
 }
 
 fn right_divide_matrix4_checked<B: Backend>(
     left: [[Scalar<B>; 4]; 4],
     right: [[Scalar<B>; 4]; 4],
 ) -> CheckedBlasResult<[[Scalar<B>; 4]; 4]> {
-    Ok(transpose_array(solve_left_system4_checked(
-        transpose_array(right),
-        transpose_array(left),
-    )?))
+    if !prefer_shared_adjugate_right_division(&left, &right) {
+        crate::trace_dispatch!(
+            "realistic_blas_matrix",
+            "helper",
+            "right-divide4-checked-gauss-jordan"
+        );
+        return Ok(transpose_array(solve_left_system4_checked(
+            transpose_array(right),
+            transpose_array(left),
+        )?));
+    }
+
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "right-divide4-checked-shared-adjugate"
+    );
+    let (s, c) = matrix4_factors(&right);
+    let det = determinant4_from_factors(&s, &c);
+    require_known_nonzero(&det)?;
+    let inv_det = det.inverse()?;
+    let adjugate = matrix4_adjugate_from_factors(&right, &s, &c);
+    Ok(scale_matrix4(multiply_arrays(left, adjugate), &inv_det))
 }
 
 fn right_divide_matrix4_checked_with_abort<B: Backend>(
@@ -581,11 +738,31 @@ fn right_divide_matrix4_checked_with_abort<B: Backend>(
     right: [[Scalar<B>; 4]; 4],
     signal: &AbortSignal,
 ) -> CheckedBlasResult<[[Scalar<B>; 4]; 4]> {
-    Ok(transpose_array(solve_left_system4_checked_with_abort(
-        transpose_array(right),
-        transpose_array(left),
-        signal,
-    )?))
+    if !prefer_shared_adjugate_right_division(&left, &right) {
+        crate::trace_dispatch!(
+            "realistic_blas_matrix",
+            "helper",
+            "right-divide4-checked-abort-gauss-jordan"
+        );
+        return Ok(transpose_array(solve_left_system4_checked_with_abort(
+            transpose_array(right),
+            transpose_array(left),
+            signal,
+        )?));
+    }
+
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "right-divide4-checked-abort-shared-adjugate"
+    );
+    let (s, c) = matrix4_factors(&right);
+    let det = determinant4_from_factors(&s, &c);
+    let det = with_abort(det, signal);
+    require_known_nonzero(&det)?;
+    let inv_det = det.inverse()?;
+    let adjugate = matrix4_adjugate_from_factors(&right, &s, &c);
+    Ok(scale_matrix4(multiply_arrays(left, adjugate), &inv_det))
 }
 
 fn multiply_arrays<B: Backend, const N: usize>(
@@ -753,6 +930,13 @@ fn scale_matrix3<B: Backend>(
     matrix.map(|row| row.map(|value| value.mul_cached(factor)))
 }
 
+fn scale_matrix4<B: Backend>(
+    matrix: [[Scalar<B>; 4]; 4],
+    factor: &Scalar<B>,
+) -> [[Scalar<B>; 4]; 4] {
+    matrix.map(|row| row.map(|value| value.mul_cached(factor)))
+}
+
 #[inline]
 fn mul_sub<B: Backend>(
     left_a: &Scalar<B>,
@@ -799,6 +983,10 @@ fn mul_sub_add<B: Backend>(
 
 fn determinant3<B: Backend>(m: &[[Scalar<B>; 3]; 3]) -> Scalar<B> {
     crate::trace_dispatch!("realistic_blas_matrix", "helper", "determinant3");
+    // Keep determinant infallible and division-free. A Bareiss prototype would
+    // need pivot divisions and a fallback for singular or unknown-zero pivots,
+    // which does not match the public determinant contract and adds exact
+    // rational normalization work to the common 3x3 case.
     let c00 = mul_sub(&m[1][1], &m[2][2], &m[1][2], &m[2][1]);
     let c10 = mul_sub(&m[1][2], &m[2][0], &m[1][0], &m[2][2]);
     let c20 = mul_sub(&m[1][0], &m[2][1], &m[1][1], &m[2][0]);
@@ -829,6 +1017,9 @@ fn matrix3_adjugate_and_determinant<B: Backend>(
 
 fn invert_matrix3<B: Backend>(matrix: [[Scalar<B>; 3]; 3]) -> BlasResult<[[Scalar<B>; 3]; 3]> {
     crate::trace_dispatch!("realistic_blas_matrix", "helper", "invert-matrix3");
+    // Cofactor inversion is intentionally kept for 3x3 reciprocal/inverse.
+    // A Gauss-Jordan solve against the identity was benchmarked on the matrix
+    // suite and was much slower because it pays one pivot inverse per column.
     let (adjugate, det) = matrix3_adjugate_and_determinant(&matrix);
     let inv_det = det.inverse()?;
     Ok(scale_matrix3(adjugate, &inv_det))
@@ -894,6 +1085,9 @@ fn determinant4_from_factors<B: Backend>(s: &[Scalar<B>; 6], c: &[Scalar<B>; 6])
 
 fn determinant4<B: Backend>(m: &[[Scalar<B>; 4]; 4]) -> Scalar<B> {
     crate::trace_dispatch!("realistic_blas_matrix", "helper", "determinant4");
+    // The six-minor formula shares the same division-free rationale as 3x3.
+    // It is also reused by the cofactor inverse path, so determinant and
+    // inverse stay aligned with the trace counters used for regression checks.
     let (s, c) = matrix4_factors(m);
     determinant4_from_factors(&s, &c)
 }
@@ -933,6 +1127,10 @@ fn matrix4_scaled_adjugate_from_factors<B: Backend>(
 }
 
 fn invert_matrix4<B: Backend>(matrix: [[Scalar<B>; 4]; 4]) -> BlasResult<[[Scalar<B>; 4]; 4]> {
+    // The fixed cofactor formula also wins for 4x4 inverse despite doing more
+    // arithmetic than elimination. It creates one shared determinant inverse,
+    // while the solve prototype repeatedly normalized pivot rows and regressed
+    // both dyadic and decimal-rational benchmark rows.
     let (s, c) = matrix4_factors(&matrix);
     let det = determinant4_from_factors(&s, &c);
     let inv_det = det.inverse()?;
@@ -965,6 +1163,50 @@ fn invert_matrix4_checked_with_abort<B: Backend>(
     Ok(matrix4_scaled_adjugate_from_factors(
         &matrix, &s, &c, &inv_det,
     ))
+}
+
+fn matrix4_adjugate_from_factors<B: Backend>(
+    m: &[[Scalar<B>; 4]; 4],
+    s: &[Scalar<B>; 6],
+    c: &[Scalar<B>; 6],
+) -> [[Scalar<B>; 4]; 4] {
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "matrix4-unscaled-adjugate-from-factors"
+    );
+    // Shared-scale division needs the 4x4 adjugate without multiplying each
+    // cofactor by `1/det`. This deliberately duplicates the scaled inverse
+    // formula above: refactoring the hot inverse path through an unscaled
+    // temporary would add an extra matrix pass and previously made these rows
+    // sensitive to code layout. Keep the duplicate only while right-division
+    // benchmarks prove that delaying the common scalar is worthwhile.
+    [
+        [
+            mul_add_sub(&m[1][1], &c[5], &m[1][3], &c[3], &m[1][2], &c[4]),
+            mul_sub_add(&m[0][2], &c[4], &m[0][1], &c[5], &m[0][3], &c[3]),
+            mul_add_sub(&m[3][1], &s[5], &m[3][3], &s[3], &m[3][2], &s[4]),
+            mul_sub_add(&m[2][2], &s[4], &m[2][1], &s[5], &m[2][3], &s[3]),
+        ],
+        [
+            mul_sub_add(&m[1][2], &c[2], &m[1][0], &c[5], &m[1][3], &c[1]),
+            mul_add_sub(&m[0][0], &c[5], &m[0][3], &c[1], &m[0][2], &c[2]),
+            mul_sub_add(&m[3][2], &s[2], &m[3][0], &s[5], &m[3][3], &s[1]),
+            mul_add_sub(&m[2][0], &s[5], &m[2][3], &s[1], &m[2][2], &s[2]),
+        ],
+        [
+            mul_add_sub(&m[1][0], &c[4], &m[1][3], &c[0], &m[1][1], &c[2]),
+            mul_sub_add(&m[0][1], &c[2], &m[0][0], &c[4], &m[0][3], &c[0]),
+            mul_add_sub(&m[3][0], &s[4], &m[3][3], &s[0], &m[3][1], &s[2]),
+            mul_sub_add(&m[2][1], &s[2], &m[2][0], &s[4], &m[2][3], &s[0]),
+        ],
+        [
+            mul_sub_add(&m[1][1], &c[1], &m[1][0], &c[3], &m[1][2], &c[0]),
+            mul_add_sub(&m[0][0], &c[3], &m[0][2], &c[0], &m[0][1], &c[1]),
+            mul_sub_add(&m[3][1], &s[1], &m[3][0], &s[3], &m[3][2], &s[0]),
+            mul_add_sub(&m[2][0], &s[3], &m[2][2], &s[0], &m[2][1], &s[1]),
+        ],
+    ]
 }
 
 macro_rules! impl_matrix {

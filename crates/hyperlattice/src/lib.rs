@@ -256,6 +256,12 @@ impl<B: Backend> Scalar<B> {
     }
 
     #[inline]
+    pub(crate) fn is_exact_dyadic_rational(&self) -> bool {
+        crate::trace_dispatch!("realistic_blas", "scalar_query", "exact-dyadic-rational");
+        self.0.is_exact_dyadic_rational()
+    }
+
+    #[inline]
     pub(crate) fn dot3(left: [&Self; 3], right: [&Self; 3]) -> Self {
         // Route fixed-size dot products through the backend so expensive
         // representations can choose a better add/mul ordering than the

@@ -18,6 +18,60 @@ fn bench_matrix_operations_for<B, F>(
     ];
     let signal = abort_signal();
 
+    let profile_input = match label {
+        "hyperreal" => Some("from-f64"),
+        "hyperreal-rational" => Some("rational"),
+        _ => None,
+    };
+    if let Some(input) = profile_input {
+        trace_matrix_profile_row("mat3", "reciprocal", input, lhs3_cases.len(), || {
+            for value in &lhs3_cases {
+                black_box(black_box(value.clone()).reciprocal().unwrap());
+            }
+        });
+        trace_matrix_profile_row("mat3", "inverse_checked", input, lhs3_cases.len(), || {
+            for value in &lhs3_cases {
+                black_box(black_box(value.clone()).inverse_checked().unwrap());
+            }
+        });
+        trace_matrix_profile_row("mat3", "div_matrix", input, lhs3_cases.len(), || {
+            for index in 0..lhs3_cases.len() {
+                black_box(
+                    (black_box(lhs3_cases[index].clone()) / black_box(rhs3_cases[index].clone()))
+                        .unwrap(),
+                );
+            }
+        });
+        trace_matrix_profile_row("mat3", "powi", input, lhs3_cases.len(), || {
+            for value in &lhs3_cases {
+                black_box(black_box(value.clone()).powi(3).unwrap());
+            }
+        });
+        trace_matrix_profile_row("mat4", "reciprocal", input, lhs4_cases.len(), || {
+            for value in &lhs4_cases {
+                black_box(black_box(value.clone()).reciprocal().unwrap());
+            }
+        });
+        trace_matrix_profile_row("mat4", "inverse_checked", input, lhs4_cases.len(), || {
+            for value in &lhs4_cases {
+                black_box(black_box(value.clone()).inverse_checked().unwrap());
+            }
+        });
+        trace_matrix_profile_row("mat4", "div_matrix", input, lhs4_cases.len(), || {
+            for index in 0..lhs4_cases.len() {
+                black_box(
+                    (black_box(lhs4_cases[index].clone()) / black_box(rhs4_cases[index].clone()))
+                        .unwrap(),
+                );
+            }
+        });
+        trace_matrix_profile_row("mat4", "powi", input, lhs4_cases.len(), || {
+            for value in &lhs4_cases {
+                black_box(black_box(value.clone()).powi(3).unwrap());
+            }
+        });
+    }
+
     trace_dispatch_row(format!("matrix_ops/{label}/mat3 reciprocal"), || {
         for value in &lhs3_cases {
             black_box(black_box(value.clone()).reciprocal().unwrap());
@@ -103,6 +157,11 @@ fn bench_matrix_operations_for<B, F>(
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 reciprocal_checked"), || {
         for value in &lhs4_cases {
             black_box(black_box(value.clone()).reciprocal_checked().unwrap());
+        }
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 inverse_checked"), || {
+        for value in &lhs4_cases {
+            black_box(black_box(value.clone()).inverse_checked().unwrap());
         }
     });
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 powi"), || {
