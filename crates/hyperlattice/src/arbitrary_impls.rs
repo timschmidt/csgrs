@@ -42,13 +42,28 @@ mod arbitrary_approx {
 mod arbitrary_hyperreal {
     use super::*;
     use crate::{HyperrealBackend, Rational};
+    use num::bigint::{BigInt, Sign};
+
+    fn arbitrary_sign(u: &mut Unstructured<'_>) -> arbitrary::Result<Sign> {
+        u.choose(&[Sign::NoSign, Sign::Minus, Sign::Plus]).copied()
+    }
 
     impl<'a> Arbitrary<'a> for Scalar<HyperrealBackend> {
         fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-            let value = finite_f64(u)?;
-            let rational = <Rational as core::convert::TryFrom<f64>>::try_from(value)
-                .map_err(|_| Error::IncorrectFormat)?;
-            Ok(Self::new(rational))
+            if u.ratio(1, 2)? {
+                let value = finite_f64(u)?;
+                let rational = <Rational as core::convert::TryFrom<f64>>::try_from(value)
+                    .map_err(|_| Error::IncorrectFormat)?;
+                Ok(Self::new(rational))
+            } else {
+                Ok(Self::new(Rational::from_bigint(
+                    BigInt::from_bytes_le(arbitrary_sign(u)?, u.arbitrary()?)
+                )))
+            }
+        }
+
+        fn size_hint(depth: usize) -> (usize, Option<usize>) {
+            (u64::size_hint(depth).0 + 1, None)
         }
     }
 }
