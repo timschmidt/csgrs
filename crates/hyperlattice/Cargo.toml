@@ -14,6 +14,8 @@ categories = ["mathematics"]
 num = { version = "0.4.3", optional = true }
 hyperreal = { path = "../hyperreal/", version = "0.10.5", optional = true }
 
+arbitrary = { version = "1", features = ["derive"], optional = true }
+
 [dev-dependencies]
 astro-float = "0.9.5"
 criterion = "0.7.0"
@@ -25,6 +27,7 @@ default = ["hyperreal-backend", "approx-backend"]
 hyperreal-backend = ["dep:num", "dep:hyperreal"]
 approx-backend = []
 hyperreal-dispatch-trace = ["dep:num", "dep:hyperreal", "hyperreal/dispatch-trace"]
+arbitrary = ["dep:arbitrary"]
 
 [[bench]]
 name = "mathbench"
