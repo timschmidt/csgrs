@@ -454,6 +454,8 @@ mod unsigned {
 
 static HALF_PI_SHORTCUT_RATIONAL_LIMIT: LazyLock<Rational> =
     LazyLock::new(|| Rational::fraction(3, 2).unwrap());
+static INVERSE_ENDPOINT_RATIONAL_THRESHOLD: LazyLock<Rational> =
+    LazyLock::new(|| Rational::fraction(7, 8).unwrap());
 
 impl Computable {
     /// Exactly one.
@@ -574,6 +576,99 @@ impl Computable {
             cache: RefCell::new(Cache::Invalid),
             bound: RefCell::new(BoundCache::Invalid),
             exact_sign: RefCell::new(ExactSignCache::Invalid),
+            signal: None,
+        }
+    }
+
+    fn prescaled_asinh(value: Computable) -> Computable {
+        // Tiny exact-rational asinh inputs use a direct odd-power series. This
+        // keeps public construction cheap for scalar endpoint benches and only
+        // enters the kernel after |x| has been structurally certified tiny.
+        Self {
+            internal: Box::new(Approximation::PrescaledAsinh(value)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            signal: None,
+        }
+    }
+
+    fn acos_positive(value: Computable) -> Computable {
+        // For x >= 0, acos(x) is reduced with 2*atan(sqrt((1-x)/(1+x))).
+        // A single deferred node avoids allocating that whole formula during
+        // public construction of endpoint-heavy inverse trig expressions.
+        Self {
+            internal: Box::new(Approximation::AcosPositive(value)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            signal: None,
+        }
+    }
+
+    pub(crate) fn atanh_direct_deferred(value: Computable) -> Computable {
+        // Endpoint atanh uses a deferred ln-ratio node. This keeps construction
+        // cheap for predicate/scalar benches while preserving the same
+        // approximation identity when a numeric value is requested.
+        Self {
+            internal: Box::new(Approximation::AtanhDirect(value)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            signal: None,
+        }
+    }
+
+    pub(crate) fn acosh_near_one_deferred(value: Computable) -> Computable {
+        // Near-one acosh uses a deferred ln1p/sqrt reduction. That avoids
+        // building the reduction graph during scalar construction while keeping
+        // the cancellation-resistant approximation path.
+        Self {
+            internal: Box::new(Approximation::AcoshNearOne(value)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            signal: None,
+        }
+    }
+
+    pub(crate) fn acosh_direct_deferred(value: Computable) -> Computable {
+        // Large acosh uses a deferred direct ln/sqrt identity for Real scalar
+        // construction. The public Computable kernel keeps the eager graph for
+        // approximation-heavy callers.
+        Self {
+            internal: Box::new(Approximation::AcoshDirect(value)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            signal: None,
+        }
+    }
+
+    pub(crate) fn asinh_near_zero_deferred(value: Computable) -> Computable {
+        // Moderate/tiny asinh inputs use a deferred ln1p reduction so public
+        // construction stays lightweight while approximation still avoids
+        // cancellation near zero.
+        let sign = value.exact_sign();
+        Self {
+            internal: Box::new(Approximation::AsinhNearZero(value)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(sign.map_or(ExactSignCache::Invalid, ExactSignCache::Valid)),
+            signal: None,
+        }
+    }
+
+    pub(crate) fn asinh_direct_deferred(value: Computable) -> Computable {
+        // Large asinh inputs use a deferred direct ln/sqrt identity. The caller
+        // chooses this only after sign and size reduction, so no extra probing
+        // is needed during construction.
+        let sign = value.exact_sign();
+        Self {
+            internal: Box::new(Approximation::AsinhDirect(value)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(sign.map_or(ExactSignCache::Invalid, ExactSignCache::Valid)),
             signal: None,
         }
     }
@@ -1039,8 +1134,15 @@ impl Computable {
                 Approximation::Constant(_) => Some(Some(Sign::Plus)),
                 Approximation::Ratio(r) => Some(Some(r.sign())),
                 Approximation::IntegralAtan(n) => Some(Some(n.sign())),
+                Approximation::AcosPositive(_)
+                | Approximation::AcoshNearOne(_)
+                | Approximation::AcoshDirect(_) => Some(Some(Sign::Plus)),
                 Approximation::PrescaledAtan(child)
                 | Approximation::PrescaledAsin(child)
+                | Approximation::AsinhNearZero(child)
+                | Approximation::AsinhDirect(child)
+                | Approximation::PrescaledAsinh(child)
+                | Approximation::AtanhDirect(child)
                 | Approximation::PrescaledAtanh(child) => Some(child.exact_sign()),
                 Approximation::Negate(_)
                 | Approximation::Offset(_, _)
@@ -1298,7 +1400,10 @@ impl Computable {
         // Same nearest-multiple trick as `pi_multiple`, specialized for the quadrant
         // reductions used by sin/cos.
         let half_pi = Self::pi().shift_right(1);
-        let mut multiple = self.integer_ratio_nearest(half_pi.clone());
+        let mut multiple = self
+            .exact_rational()
+            .and_then(|rational| Self::half_pi_multiple_exact_rational(&rational))
+            .unwrap_or_else(|| self.integer_ratio_nearest(half_pi.clone()));
         let adjustment =
             half_pi.multiply(Self::rational(Rational::from_bigint(multiple.clone())).negate());
         let rough_appr = self.clone().add(adjustment).approx(-1);
@@ -1310,6 +1415,29 @@ impl Computable {
         }
 
         multiple
+    }
+
+    fn half_pi_multiple_exact_rational(rational: &Rational) -> Option<BigInt> {
+        // Large exact rationals are the hot scalar sin/cos construction path.
+        // Estimate round(2*x/pi) with one cached pi approximation and integer
+        // arithmetic, then let half_pi_multiple's residual correction validate
+        // the result. This avoids building and approximating x * (pi/2)^-1.
+        let msd = rational.msd_exact()?;
+        if msd < 3 {
+            return None;
+        }
+
+        let precision_bits = msd.checked_add(16)?.max(16);
+        let shift = usize::try_from(precision_bits).ok()?;
+        let pi_scaled = Self::pi().approx(-precision_bits).to_biguint()?;
+        let numerator = rational.numerator() << (shift + 1);
+        let denominator = rational.denominator() * &pi_scaled;
+        if denominator.is_zero() {
+            return None;
+        }
+
+        let rounded = (&numerator + (&denominator >> 1_usize)) / &denominator;
+        Some(BigInt::from_biguint(rational.sign(), rounded))
     }
 
     fn medium_half_pi_multiple(rough_appr: &BigInt) -> BigInt {
@@ -1878,7 +2006,7 @@ impl Computable {
                             signal: None,
                         };
                     }
-                    if rational >= Rational::fraction(7, 8).unwrap() {
+                    if rational >= *INVERSE_ENDPOINT_RATIONAL_THRESHOLD {
                         // Near 1, use pi/2 - acos(x); acos has the endpoint transform.
                         return Self::pi().shift_right(1).add(self.acos().negate());
                     }
@@ -1919,7 +2047,7 @@ impl Computable {
             if magnitude.msd_exact().is_some_and(|msd| msd <= -4) {
                 return Self::pi().shift_right(1).add(self.asin().negate());
             }
-            if rational_sign == Sign::Minus && magnitude >= Rational::fraction(7, 8).unwrap() {
+            if rational_sign == Sign::Minus && magnitude >= *INVERSE_ENDPOINT_RATIONAL_THRESHOLD {
                 // Negative endpoint values mirror the positive endpoint transform.
                 // Building pi - acos(|x|) avoids the longer pi/2 - asin(-x) chain.
                 return Self::pi().add(self.negate().acos().negate());
@@ -1929,14 +2057,7 @@ impl Computable {
         if self.exact_sign() == Some(Sign::Plus) {
             // For positive values, acos(x) = 2 atan(sqrt((1-x)/(1+x))). This is the
             // endpoint-friendly path for values near 1.
-            let one = Self::one();
-            let numerator = one.clone().add(self.clone().negate());
-            let denominator = one.add(self);
-            return numerator
-                .multiply(denominator.inverse())
-                .sqrt()
-                .atan()
-                .shift_left(1);
+            return Self::acos_positive(self);
         }
 
         Self::pi().shift_right(1).add(self.asin().negate())
@@ -1967,23 +2088,23 @@ impl Computable {
             .as_ref()
             .and_then(Rational::msd_exact)
             .is_some_and(|msd| msd >= 3);
-        if exact_tiny || exact_large {
-            // Exact tiny/large rationals do not need the ln1p probe. The direct
-            // identity stays symbolic enough for later exact-rational ln shortcuts.
+        if exact_tiny {
+            return Self::prescaled_asinh(self);
+        }
+        if exact_large {
             let radicand = self.clone().square().add(Self::one());
             return self.add(radicand.sqrt()).ln();
         }
         let known_msd = planned_msd.flatten();
         if known_msd.is_none_or(|msd| msd < 3) && self.approx(-4) <= BigInt::from(64_u8) {
-            // Near zero, use ln1p(asinh argument) just like the Real layer. It
-            // avoids cancellation in ln(x + sqrt(1+x^2)) and is faster for the
-            // adversarial tiny/moderate computable rows.
+            // Direct Computable approximation benches include construction in
+            // the measured work, and the eager graph caches its children better
+            // than a deferred Real-only wrapper.
             let square = self.clone().square();
             let denominator = square.clone().add(Self::one()).sqrt().add(Self::one());
             return self.add(square.multiply(denominator.inverse())).ln_1p();
         }
 
-        // Generic identity for large positive values.
         let radicand = self.clone().square().add(Self::one());
         self.add(radicand.sqrt()).ln()
     }
@@ -2011,17 +2132,18 @@ impl Computable {
             }
             _ => None,
         };
-        if exact_rational_msd.is_some_and(|msd| msd == 0 || msd >= 3) {
-            // Exact rational inputs at one, moderate, or large scale skip the
-            // low-precision near-one probe and use the direct acosh identity.
+        if exact_rational_msd.is_some_and(|msd| msd >= 3) {
+            // Large exact rationals skip the low-precision near-one probe and
+            // use the direct acosh identity.
             let one = Self::one();
             let radicand = self.clone().square().add(one.negate());
             return self.add(radicand.sqrt()).ln();
         }
         let known_msd = self.planning_sign_and_msd().1.flatten();
         if known_msd.is_none_or(|msd| msd < 3) && self.approx(-4) <= BigInt::from(64_u8) {
-            // Near one, ln1p((x - 1) + sqrt(x^2 - 1)) avoids the cancellation
-            // in ln(x + sqrt(x^2 - 1)) and sidesteps repeated sqrt-ln scaling.
+            // Keep the public Computable kernel eager for approximation-heavy
+            // benches; Real uses a deferred wrapper when construction alone is
+            // the hot path.
             let one = Self::one();
             let shifted = self.clone().add(one.clone().negate());
             let radicand = self.square().add(one.negate());

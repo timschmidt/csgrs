@@ -666,6 +666,12 @@ mod tests {
             0.29567304756342244
         ));
         assert!(closest_f64(
+            Real::new(Rational::fraction(-1, 1_000_000_000_000).unwrap())
+                .asinh()
+                .unwrap(),
+            -1.0e-12
+        ));
+        assert!(closest_f64(
             Real::new(Rational::new(2)).sqrt().unwrap().asinh().unwrap(),
             1.1462158347805889
         ));
@@ -852,6 +858,7 @@ mod tests {
         let tiny = adversarial_tiny();
         let tiny_f64 = 1e-12_f64;
         assert_close(tiny.clone().asinh().unwrap(), tiny_f64.asinh(), 1e-14);
+        assert_close((-tiny.clone()).asinh().unwrap(), (-tiny_f64).asinh(), 1e-14);
         assert_close(tiny.clone().atanh().unwrap(), tiny_f64.atanh(), 1e-14);
 
         let near_one = adversarial_near_one();

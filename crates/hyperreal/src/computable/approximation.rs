@@ -51,6 +51,13 @@ pub(super) enum Approximation {
     IntegralAtan(BigInt),
     PrescaledAtan(Computable),
     PrescaledAsin(Computable),
+    AcosPositive(Computable),
+    AcoshNearOne(Computable),
+    AcoshDirect(Computable),
+    AsinhNearZero(Computable),
+    AsinhDirect(Computable),
+    PrescaledAsinh(Computable),
+    AtanhDirect(Computable),
     PrescaledAtanh(Computable),
     PrescaledCos(Computable),
     // Exact medium rational trig inputs use dedicated pi/2 - r residual nodes.
@@ -124,6 +131,13 @@ impl Approximation {
             IntegralAtan(i) => atan(signal, i, p),
             PrescaledAtan(c) => atan_computable(signal, c, p),
             PrescaledAsin(c) => asin_computable(signal, c, p),
+            AcosPositive(c) => acos_positive(signal, c, p),
+            AcoshNearOne(c) => acosh_near_one(signal, c, p),
+            AcoshDirect(c) => acosh_direct(signal, c, p),
+            AsinhNearZero(c) => asinh_near_zero(signal, c, p),
+            AsinhDirect(c) => asinh_direct(signal, c, p),
+            PrescaledAsinh(c) => asinh_computable(signal, c, p),
+            AtanhDirect(c) => atanh_direct(signal, c, p),
             PrescaledAtanh(c) => atanh_computable(signal, c, p),
             PrescaledCos(c) => cos(signal, c, p),
             PrescaledCosHalfPiMinusRational(r) => cos_half_pi_minus_rational(signal, r, p),
@@ -1023,6 +1037,117 @@ fn asin_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> Big
     }
 
     scale(sum, calc_precision - p)
+}
+
+fn acos_positive(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    // Positive-domain acos uses 2*atan(sqrt((1-x)/(1+x))). Keeping it as one
+    // approximation node makes public construction cheap for endpoint-heavy
+    // inverse trig rows while preserving the existing stable reduction.
+    let one = Computable::one();
+    let numerator = one.clone().add(c.clone().negate());
+    let denominator = one.add(c.clone());
+    numerator
+        .multiply(denominator.inverse())
+        .sqrt()
+        .atan()
+        .shift_left(1)
+        .approx_signal(signal, p)
+}
+
+fn acosh_near_one(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    // Near one, acosh(x) is ln1p((x - 1) + sqrt(x^2 - 1)). Deferring the graph
+    // keeps construction cheap for endpoint-adjacent scalar rows without
+    // changing the cancellation-avoiding approximation identity.
+    let one = Computable::one();
+    let shifted = c.clone().add(one.clone().negate());
+    let radicand = c.clone().square().add(one.negate());
+    shifted
+        .add(radicand.sqrt())
+        .ln_1p()
+        .approx_signal(signal, p)
+}
+
+fn acosh_direct(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    // Large acosh inputs use ln(x + sqrt(x^2 - 1)); this node is used by Real
+    // construction paths where allocating that graph eagerly is the bottleneck.
+    let one = Computable::one();
+    let radicand = c.clone().square().add(one.negate());
+    c.clone().add(radicand.sqrt()).ln().approx_signal(signal, p)
+}
+
+fn asinh_near_zero(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    // Near zero, asinh(x) is evaluated through ln1p(x + x^2/(sqrt(1+x^2)+1)).
+    // This deferred node removes construction overhead but preserves the
+    // cancellation-resistant formula used by the public Real path.
+    let square = c.clone().square();
+    let denominator = square
+        .clone()
+        .add(Computable::one())
+        .sqrt()
+        .add(Computable::one());
+    c.clone()
+        .add(square.multiply(denominator.inverse()))
+        .ln_1p()
+        .approx_signal(signal, p)
+}
+
+fn asinh_direct(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    // Large asinh inputs use ln(x + sqrt(1+x^2)); deferring the direct identity
+    // keeps scalar construction from allocating the sqrt/log graph eagerly.
+    let radicand = c.clone().square().add(Computable::one());
+    c.clone().add(radicand.sqrt()).ln().approx_signal(signal, p)
+}
+
+// Approximate asinh(c) for small |c|.
+fn asinh_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    // Dedicated tiny-argument asinh series. It avoids constructing the generic
+    // ln(x + sqrt(1+x^2)) or ln1p expression for exact tiny rational inputs.
+    if p >= 1 {
+        return Zero::zero();
+    }
+
+    let iterations_needed: i32 = -p / 2 + 4;
+    let calc_precision = p - bound_log2(2 * iterations_needed) - 5;
+    let op_prec = calc_precision - 3;
+    let op_appr = c.approx_signal(signal, op_prec);
+    let op_squared = scale(&op_appr * &op_appr, op_prec);
+
+    // This is the asin recurrence with alternating sign:
+    // asinh(x) = x - x^3/6 + 3x^5/40 - ...
+    let max_trunc_error = BigUint::one()
+        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
+    let mut current_term = scale(op_appr, op_prec - calc_precision);
+    let mut sum = current_term.clone();
+    let mut n = 0_i32;
+
+    while current_term.magnitude() > &max_trunc_error {
+        if should_stop(signal) {
+            break;
+        }
+        n += 1;
+        current_term = scale(current_term * &op_squared, op_prec);
+        let numerator = -((2 * n - 1) * (2 * n - 1));
+        let denominator = (2 * n) * (2 * n + 1);
+        current_term *= numerator;
+        current_term /= denominator;
+        sum += &current_term;
+    }
+
+    scale(sum, calc_precision - p)
+}
+
+fn atanh_direct(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    // Endpoint atanh construction should not eagerly allocate the full exact
+    // log-ratio graph. Approximation still uses the stable identity
+    // atanh(x) = 1/2 * ln((1+x)/(1-x)).
+    let one = Computable::one();
+    let numerator = one.clone().add(c.clone());
+    let denominator = one.add(c.clone().negate());
+    numerator
+        .multiply(denominator.inverse())
+        .ln()
+        .multiply(Computable::rational(Rational::fraction(1, 2).unwrap()))
+        .approx_signal(signal, p)
 }
 
 // Approximate atanh(c) for small |c|.

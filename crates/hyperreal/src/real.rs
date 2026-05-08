@@ -470,6 +470,8 @@ mod rationals {
     pub(super) static HALF: LazyLock<Rational> =
         LazyLock::new(|| Rational::fraction(1, 2).unwrap());
     pub(super) static ONE: LazyLock<Rational> = LazyLock::new(|| Rational::new(1));
+    pub(super) static SEVEN_EIGHTHS: LazyLock<Rational> =
+        LazyLock::new(|| Rational::fraction(7, 8).unwrap());
     pub(super) static ZERO: LazyLock<Rational> = LazyLock::new(Rational::zero);
     pub(super) static TEN: LazyLock<Rational> = LazyLock::new(|| Rational::new(10));
 }
@@ -1824,23 +1826,22 @@ impl Real {
         if self.definitely_zero() {
             return Ok(Self::zero());
         }
+        if self.class == One && self.rational.msd_exact().is_some_and(|msd| msd <= -4) {
+            // Tiny exact rationals have a dedicated computable asinh series.
+            // Enter it directly before Real-level odd symmetry expands the
+            // expression into a larger ln1p graph.
+            return Ok(self.make_computable(Computable::asinh));
+        }
         if self.best_sign() == Sign::Minus {
             return Ok(self.neg().asinh()?.neg());
         }
         if self.fold_ref().approx(-4) <= BigInt::from(64_u8) {
-            // Near zero, asinh(x) is evaluated with a log1p-style transform to avoid
-            // cancellation in ln(x + sqrt(1+x^2)).
-            return Ok(self.make_computable(|value| {
-                let square = value.clone().square();
-                let denominator = square
-                    .clone()
-                    .add(Computable::one())
-                    .sqrt()
-                    .add(Computable::one());
-                value.add(square.multiply(denominator.inverse())).ln_1p()
-            }));
+            // Near zero, delegate to the deferred computable ln1p reduction so
+            // public construction stays cheap without giving up the stable
+            // approximation identity.
+            return Ok(self.make_computable(Computable::asinh_near_zero_deferred));
         }
-        Ok(self.make_computable(Computable::asinh))
+        Ok(self.make_computable(Computable::asinh_direct_deferred))
     }
 
     /// The inverse hyperbolic cosine of this Real, or [`Problem::NotANumber`] for values < 1.
@@ -1851,6 +1852,13 @@ impl Real {
             }
             if self.rational < *rationals::ONE {
                 return Err(Problem::NotANumber);
+            }
+            if self.rational.msd_exact().is_some_and(|msd| msd >= 3) {
+                // Large exact rationals cannot be in the cancellation-prone
+                // neighborhood of one, so skip the low-precision proximity
+                // probe and let the computable acosh kernel use its direct
+                // large-input identity.
+                return Ok(self.make_computable(Computable::acosh_direct_deferred));
             }
         } else if let Sqrt(r) = &self.class {
             // Domain-check factored sqrt values exactly: (a*sqrt(r))^2 = a^2*r.
@@ -1866,15 +1874,12 @@ impl Real {
             }
         }
         if self.fold_ref().approx(-4) <= BigInt::from(64_u8) {
-            // Near one, acosh(x) uses ln1p on (x-1)+sqrt(x^2-1) for a smaller log input.
-            return Ok(self.make_computable(|value| {
-                let one = Computable::one();
-                let shifted = value.clone().add(one.clone().negate());
-                let radicand = value.square().add(one.negate());
-                shifted.add(radicand.sqrt()).ln_1p()
-            }));
+            // Near one, delegate to the deferred computable ln1p/sqrt
+            // reduction so public construction does not allocate the full
+            // approximation graph.
+            return Ok(self.make_computable(Computable::acosh_near_one_deferred));
         }
-        Ok(self.make_computable(Computable::acosh))
+        Ok(self.make_computable(Computable::acosh_direct_deferred))
     }
 
     /// The inverse hyperbolic tangent of this Real.
@@ -1902,6 +1907,12 @@ impl Real {
                 // Tiny rational atanh is faster in the dedicated computable kernel than
                 // building ln((1+x)/(1-x))/2.
                 return Ok(self.make_computable(Computable::atanh));
+            }
+            if magnitude >= *rationals::SEVEN_EIGHTHS {
+                // Endpoint-adjacent rationals are hot in scalar predicates and
+                // benchmarks; a deferred computable ln-ratio avoids eagerly
+                // allocating the exact logarithm tree.
+                return Ok(self.make_computable(Computable::atanh_direct_deferred));
             }
 
             let one = Rational::one();

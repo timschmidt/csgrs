@@ -333,6 +333,10 @@ impl Rational {
         &self.denominator
     }
 
+    pub(crate) fn numerator(&self) -> &BigUint {
+        &self.numerator
+    }
+
     pub(crate) fn factor_two_powers(&self) -> (i32, Self) {
         // Split a rational into 2^shift * odd_part.  Computable multiplication consumes
         // the shift as an Offset node, which is cheaper than a generic exact scale.
