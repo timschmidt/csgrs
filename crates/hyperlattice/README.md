@@ -214,6 +214,14 @@ cargo bench --bench mathbench
 
 The generated benchmark summary is in [`benchmarks.md`](benchmarks.md).
 
+Run dispatch tracing separately:
+
+```sh
+cargo bench --bench mathbench --features hyperreal-dispatch-trace -- --write-dispatch-trace-md
+```
+
+The generated trace summary is in [`dispatch_trace.md`](dispatch_trace.md).
+
 ## Source Layout
 
 - `src/scalar.rs`: scalar constants, functions, facts, and zero status

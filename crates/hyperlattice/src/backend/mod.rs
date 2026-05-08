@@ -92,6 +92,7 @@ pub trait BackendScalar:
     /// Backends can override this when they have a cached or symbolic `2*pi`.
     /// The default keeps compact approximate backends simple.
     fn tau() -> Self {
+        crate::trace_dispatch!("realistic_blas_backend_trait", "constructor", "tau-default");
         Self::from(2_i8) * Self::pi()
     }
     /// Returns the multiplicative inverse.
@@ -99,6 +100,11 @@ pub trait BackendScalar:
     /// Returns the multiplicative inverse of a borrowed value.
     #[inline]
     fn inverse_ref(&self) -> BlasResult<Self> {
+        crate::trace_dispatch!(
+            "realistic_blas_backend_trait",
+            "method",
+            "inverse-ref-default"
+        );
         self.clone().inverse()
     }
     /// Raises this value to a scalar exponent.
@@ -106,86 +112,151 @@ pub trait BackendScalar:
     /// Adds a borrowed right-hand operand.
     #[inline]
     fn add_ref(self, rhs: &Self) -> Self {
+        crate::trace_dispatch!(
+            "realistic_blas_backend_trait",
+            "op",
+            "add-owned-ref-default"
+        );
         self + rhs.clone()
     }
     /// Adds an owned left-hand operand and a borrowed right-hand operand.
     #[inline]
     fn add_owned_ref(left: Self, right: &Self) -> Self {
+        crate::trace_dispatch!(
+            "realistic_blas_backend_trait",
+            "op",
+            "add-owned-ref-default"
+        );
         left.add_ref(right)
     }
     /// Adds a borrowed left-hand operand and an owned right-hand operand.
     #[inline]
     fn add_ref_owned(left: &Self, right: Self) -> Self {
+        crate::trace_dispatch!(
+            "realistic_blas_backend_trait",
+            "op",
+            "add-ref-owned-default"
+        );
         Self::add_refs(left, &right)
     }
     /// Adds two borrowed operands.
     #[inline]
     fn add_refs(left: &Self, right: &Self) -> Self {
+        crate::trace_dispatch!("realistic_blas_backend_trait", "op", "add-ref-ref-default");
         left.clone().add_ref(right)
     }
     /// Subtracts a borrowed right-hand operand.
     #[inline]
     fn sub_ref(self, rhs: &Self) -> Self {
+        crate::trace_dispatch!(
+            "realistic_blas_backend_trait",
+            "op",
+            "sub-owned-ref-default"
+        );
         self - rhs.clone()
     }
     /// Subtracts a borrowed right-hand operand from an owned left-hand operand.
     #[inline]
     fn sub_owned_ref(left: Self, right: &Self) -> Self {
+        crate::trace_dispatch!(
+            "realistic_blas_backend_trait",
+            "op",
+            "sub-owned-ref-default"
+        );
         left.sub_ref(right)
     }
     /// Subtracts an owned right-hand operand from a borrowed left-hand operand.
     #[inline]
     fn sub_ref_owned(left: &Self, right: Self) -> Self {
+        crate::trace_dispatch!(
+            "realistic_blas_backend_trait",
+            "op",
+            "sub-ref-owned-default"
+        );
         Self::sub_refs(left, &right)
     }
     /// Subtracts two borrowed operands.
     #[inline]
     fn sub_refs(left: &Self, right: &Self) -> Self {
+        crate::trace_dispatch!("realistic_blas_backend_trait", "op", "sub-ref-ref-default");
         left.clone().sub_ref(right)
     }
     /// Multiplies by a borrowed right-hand operand.
     #[inline]
     fn mul_ref(self, rhs: &Self) -> Self {
+        crate::trace_dispatch!(
+            "realistic_blas_backend_trait",
+            "op",
+            "mul-owned-ref-default"
+        );
         self * rhs.clone()
     }
     /// Multiplies an owned left-hand operand by a borrowed right-hand operand.
     #[inline]
     fn mul_owned_ref(left: Self, right: &Self) -> Self {
+        crate::trace_dispatch!(
+            "realistic_blas_backend_trait",
+            "op",
+            "mul-owned-ref-default"
+        );
         left.mul_ref(right)
     }
     /// Multiplies a borrowed left-hand operand by an owned right-hand operand.
     #[inline]
     fn mul_ref_owned(left: &Self, right: Self) -> Self {
+        crate::trace_dispatch!(
+            "realistic_blas_backend_trait",
+            "op",
+            "mul-ref-owned-default"
+        );
         Self::mul_refs(left, &right)
     }
     /// Multiplies two borrowed operands.
     #[inline]
     fn mul_refs(left: &Self, right: &Self) -> Self {
+        crate::trace_dispatch!("realistic_blas_backend_trait", "op", "mul-ref-ref-default");
         left.clone().mul_ref(right)
     }
     /// Divides by a borrowed right-hand operand.
     #[inline]
     fn div_ref(self, rhs: &Self) -> BlasResult<Self> {
+        crate::trace_dispatch!(
+            "realistic_blas_backend_trait",
+            "op",
+            "div-owned-ref-default"
+        );
         self.div(rhs.clone())
     }
     /// Divides an owned left-hand operand by a borrowed right-hand operand.
     #[inline]
     fn div_owned_ref(left: Self, right: &Self) -> BlasResult<Self> {
+        crate::trace_dispatch!(
+            "realistic_blas_backend_trait",
+            "op",
+            "div-owned-ref-default"
+        );
         left.div_ref(right)
     }
     /// Divides a borrowed left-hand operand by an owned right-hand operand.
     #[inline]
     fn div_ref_owned(left: &Self, right: Self) -> BlasResult<Self> {
+        crate::trace_dispatch!(
+            "realistic_blas_backend_trait",
+            "op",
+            "div-ref-owned-default"
+        );
         Self::div_refs(left, &right)
     }
     /// Divides two borrowed operands.
     #[inline]
     fn div_refs(left: &Self, right: &Self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas_backend_trait", "op", "div-ref-ref-default");
         left.clone().div_ref(right)
     }
     /// Returns the three-lane dot product.
     #[inline]
     fn dot3(left: [&Self; 3], right: [&Self; 3]) -> Self {
+        crate::trace_dispatch!("realistic_blas_backend_trait", "op", "dot3-default");
         let p0 = left[0].clone().mul_ref(right[0]);
         let p1 = left[1].clone().mul_ref(right[1]);
         let p2 = left[2].clone().mul_ref(right[2]);
@@ -194,6 +265,7 @@ pub trait BackendScalar:
     /// Returns the four-lane dot product.
     #[inline]
     fn dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
+        crate::trace_dispatch!("realistic_blas_backend_trait", "op", "dot4-default");
         let p0 = left[0].clone().mul_ref(right[0]);
         let p1 = left[1].clone().mul_ref(right[1]);
         let p2 = left[2].clone().mul_ref(right[2]);

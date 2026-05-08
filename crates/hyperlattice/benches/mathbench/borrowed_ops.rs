@@ -46,6 +46,16 @@ fn bench_borrowed_operations_for<B, F>(
     ];
 
     for name in ["add", "sub", "mul", "div"] {
+        trace_dispatch_row(format!("borrowed_ops/{label}/scalar {name} refs"), || {
+            for (lhs, rhs) in &scalar_pairs {
+                match name {
+                    "add" => black_box(black_box(lhs) + black_box(rhs)),
+                    "sub" => black_box(black_box(lhs) - black_box(rhs)),
+                    "mul" => black_box(black_box(lhs) * black_box(rhs)),
+                    _ => black_box((black_box(lhs) / black_box(rhs)).unwrap()),
+                };
+            }
+        });
         group.bench_function(format!("{label}/scalar {name} owned_ref"), |b| {
             let cursor = Cell::new(0);
             b.iter_batched(
@@ -118,6 +128,29 @@ fn bench_borrowed_operations_for<B, F>(
 
     macro_rules! bench_vector_borrowed {
         ($dimension:literal, $lhs:ident, $rhs:ident) => {
+            trace_dispatch_row(format!("borrowed_ops/{label}/{} add refs", $dimension), || {
+                for index in 0..$lhs.len() {
+                    black_box(black_box(&$lhs[index]) + black_box(&$rhs[index]));
+                }
+            });
+            trace_dispatch_row(format!("borrowed_ops/{label}/{} sub refs", $dimension), || {
+                for index in 0..$lhs.len() {
+                    black_box(black_box(&$lhs[index]) - black_box(&$rhs[index]));
+                }
+            });
+            trace_dispatch_row(format!("borrowed_ops/{label}/{} mul_scalar_ref", $dimension), || {
+                for index in 0..$lhs.len() {
+                    black_box(black_box($lhs[index].clone()) * black_box(&scalar_cases[index]));
+                }
+            });
+            trace_dispatch_row(format!("borrowed_ops/{label}/{} div_scalar_ref", $dimension), || {
+                for index in 0..$lhs.len() {
+                    black_box(
+                        (black_box($lhs[index].clone()) / black_box(&scalar_cases[index]))
+                            .unwrap(),
+                    );
+                }
+            });
             group.bench_function(format!("{label}/{} add refs", $dimension), |b| {
                 let cursor = Cell::new(0);
                 b.iter(|| {
@@ -178,6 +211,39 @@ fn bench_borrowed_operations_for<B, F>(
 
     macro_rules! bench_matrix_borrowed {
         ($dimension:literal, $lhs:ident, $rhs:ident) => {
+            trace_dispatch_row(format!("borrowed_ops/{label}/{} add refs", $dimension), || {
+                for index in 0..$lhs.len() {
+                    black_box(black_box(&$lhs[index]) + black_box(&$rhs[index]));
+                }
+            });
+            trace_dispatch_row(format!("borrowed_ops/{label}/{} sub refs", $dimension), || {
+                for index in 0..$lhs.len() {
+                    black_box(black_box(&$lhs[index]) - black_box(&$rhs[index]));
+                }
+            });
+            trace_dispatch_row(format!("borrowed_ops/{label}/{} mul refs", $dimension), || {
+                for index in 0..$lhs.len() {
+                    black_box(black_box(&$lhs[index]) * black_box(&$rhs[index]));
+                }
+            });
+            trace_dispatch_row(format!("borrowed_ops/{label}/{} div refs", $dimension), || {
+                for index in 0..$lhs.len() {
+                    black_box((black_box(&$lhs[index]) / black_box(&$rhs[index])).unwrap());
+                }
+            });
+            trace_dispatch_row(format!("borrowed_ops/{label}/{} mul_scalar_ref", $dimension), || {
+                for index in 0..$lhs.len() {
+                    black_box(black_box($lhs[index].clone()) * black_box(&scalar_cases[index]));
+                }
+            });
+            trace_dispatch_row(format!("borrowed_ops/{label}/{} div_scalar_ref", $dimension), || {
+                for index in 0..$lhs.len() {
+                    black_box(
+                        (black_box($lhs[index].clone()) / black_box(&scalar_cases[index]))
+                            .unwrap(),
+                    );
+                }
+            });
             group.bench_function(format!("{label}/{} add refs", $dimension), |b| {
                 let cursor = Cell::new(0);
                 b.iter(|| {
@@ -257,6 +323,11 @@ fn bench_borrowed_operations_for<B, F>(
     bench_matrix_borrowed!("mat3", mat3_lhs, mat3_rhs);
     bench_matrix_borrowed!("mat4", mat4_lhs, mat4_rhs);
 
+    trace_dispatch_row(format!("borrowed_ops/{label}/mat3 transform_vec refs"), || {
+        for index in 0..mat3_lhs.len() {
+            black_box(black_box(&mat3_lhs[index]) * black_box(&vec3_lhs[index]));
+        }
+    });
     group.bench_function(format!("{label}/mat3 transform_vec refs"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
@@ -264,6 +335,11 @@ fn bench_borrowed_operations_for<B, F>(
             cursor.set((index + 1) % mat3_lhs.len());
             black_box(black_box(&mat3_lhs[index]) * black_box(&vec3_lhs[index]))
         })
+    });
+    trace_dispatch_row(format!("borrowed_ops/{label}/mat4 transform_vec refs"), || {
+        for index in 0..mat4_lhs.len() {
+            black_box(black_box(&mat4_lhs[index]) * black_box(&vec4_lhs[index]));
+        }
     });
     group.bench_function(format!("{label}/mat4 transform_vec refs"), |b| {
         let cursor = Cell::new(0);
@@ -275,6 +351,24 @@ fn bench_borrowed_operations_for<B, F>(
     });
 
     for name in ["add", "sub", "mul", "div"] {
+        trace_dispatch_row(format!("borrowed_ops/{label}/complex {name} refs"), || {
+            for index in 0..complex_lhs.len() {
+                match name {
+                    "add" => {
+                        black_box(black_box(&complex_lhs[index]) + black_box(&complex_rhs[index]))
+                    }
+                    "sub" => {
+                        black_box(black_box(&complex_lhs[index]) - black_box(&complex_rhs[index]))
+                    }
+                    "mul" => {
+                        black_box(black_box(&complex_lhs[index]) * black_box(&complex_rhs[index]))
+                    }
+                    _ => black_box(
+                        (black_box(&complex_lhs[index]) / black_box(&complex_rhs[index])).unwrap(),
+                    ),
+                };
+            }
+        });
         group.bench_function(format!("{label}/complex {name} refs"), |b| {
             let cursor = Cell::new(0);
             b.iter(|| {

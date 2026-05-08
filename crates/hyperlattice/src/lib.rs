@@ -46,6 +46,20 @@ use std::sync::atomic::AtomicBool;
 #[cfg(feature = "hyperreal-backend")]
 pub use hyperreal::{Rational, Real};
 
+#[cfg(feature = "hyperreal-dispatch-trace")]
+macro_rules! trace_dispatch {
+    ($layer:expr, $operation:expr, $path:expr) => {
+        ::hyperreal::dispatch_trace::record($layer, $operation, $path);
+    };
+}
+
+#[cfg(not(feature = "hyperreal-dispatch-trace"))]
+macro_rules! trace_dispatch {
+    ($layer:expr, $operation:expr, $path:expr) => {};
+}
+
+pub(crate) use trace_dispatch;
+
 /// Shared cancellation signal used by abort-aware APIs.
 ///
 /// With the hyperreal backend, the signal is attached to cloned `Real` values
@@ -177,36 +191,43 @@ impl PartialEq<Scalar<HyperrealBackend>> for Rational {
 impl<B: Backend> Scalar<B> {
     /// Returns the additive identity.
     pub fn zero() -> Self {
+        crate::trace_dispatch!("realistic_blas", "scalar_constructor", "zero");
         Self(B::Repr::zero())
     }
 
     /// Returns the multiplicative identity.
     pub fn one() -> Self {
+        crate::trace_dispatch!("realistic_blas", "scalar_constructor", "one");
         Self(B::Repr::one())
     }
 
     /// Returns Euler's number.
     pub fn e() -> Self {
+        crate::trace_dispatch!("realistic_blas", "scalar_constructor", "e");
         Self(B::Repr::e())
     }
 
     /// Returns pi.
     pub fn pi() -> Self {
+        crate::trace_dispatch!("realistic_blas", "scalar_constructor", "pi");
         Self(B::Repr::pi())
     }
 
     /// Returns tau, equal to `2 * pi`.
     pub fn tau() -> Self {
+        crate::trace_dispatch!("realistic_blas", "scalar_constructor", "tau");
         Self(B::Repr::tau())
     }
 
     /// Returns the multiplicative inverse of this scalar.
     pub fn inverse(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas", "scalar_method", "inverse-owned");
         self.0.inverse().map(Self)
     }
 
     /// Returns the multiplicative inverse without consuming this scalar.
     pub fn inverse_ref(&self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas", "scalar_method", "inverse-ref");
         self.0.inverse_ref().map(Self)
     }
 
@@ -215,6 +236,7 @@ impl<B: Backend> Scalar<B> {
         // Hot elementwise kernels often reuse one scalar factor across an
         // entire vector/matrix. Keeping the factor borrowed avoids cloning
         // hyperreal expression graphs for every lane.
+        crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "mul-cached");
         Self(self.0.mul_ref(&factor.0))
     }
 
@@ -222,12 +244,14 @@ impl<B: Backend> Scalar<B> {
     pub(crate) fn add_cached(self, rhs: &Self) -> Self {
         // Same borrowed-factor pattern as `mul_cached`; this is intentionally
         // tiny but centralizes the "owned lhs, borrowed rhs" fast path.
+        crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "add-cached");
         Self(self.0.add_ref(&rhs.0))
     }
 
     #[inline]
     pub(crate) fn sub_cached(self, rhs: &Self) -> Self {
         // Avoid cloning the scalar subtrahend in repeated elementwise kernels.
+        crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "sub-cached");
         Self(self.0.sub_ref(&rhs.0))
     }
 
@@ -236,6 +260,7 @@ impl<B: Backend> Scalar<B> {
         // Route fixed-size dot products through the backend so expensive
         // representations can choose a better add/mul ordering than the
         // default trait methods.
+        crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot3-backend");
         Self(B::Repr::dot3(
             [&left[0].0, &left[1].0, &left[2].0],
             [&right[0].0, &right[1].0, &right[2].0],
@@ -245,6 +270,7 @@ impl<B: Backend> Scalar<B> {
     #[inline]
     pub(crate) fn dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
         // See `dot3`; matrix and complex kernels hit this path heavily.
+        crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-backend");
         Self(B::Repr::dot4(
             [&left[0].0, &left[1].0, &left[2].0, &left[3].0],
             [&right[0].0, &right[1].0, &right[2].0, &right[3].0],
@@ -253,71 +279,85 @@ impl<B: Backend> Scalar<B> {
 
     /// Raises this scalar to a scalar exponent.
     pub fn pow(self, exponent: Self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas", "scalar_method", "pow");
         self.0.pow(exponent.0).map(Self)
     }
 
     /// Returns `e` raised to this scalar.
     pub fn exp(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas", "scalar_method", "exp");
         self.0.exp().map(Self)
     }
 
     /// Returns the natural logarithm.
     pub fn ln(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas", "scalar_method", "ln");
         self.0.ln().map(Self)
     }
 
     /// Returns the base-10 logarithm.
     pub fn log10(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas", "scalar_method", "log10");
         self.0.log10().map(Self)
     }
 
     /// Returns the principal square root.
     pub fn sqrt(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas", "scalar_method", "sqrt");
         self.0.sqrt().map(Self)
     }
 
     /// Returns the sine.
     pub fn sin(self) -> Self {
+        crate::trace_dispatch!("realistic_blas", "scalar_method", "sin");
         Self(self.0.sin())
     }
 
     /// Returns the cosine.
     pub fn cos(self) -> Self {
+        crate::trace_dispatch!("realistic_blas", "scalar_method", "cos");
         Self(self.0.cos())
     }
 
     /// Returns the tangent.
     pub fn tan(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas", "scalar_method", "tan");
         self.0.tan().map(Self)
     }
 
     /// Returns the inverse sine.
     pub fn asin(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas", "scalar_method", "asin");
         self.0.asin().map(Self)
     }
 
     /// Returns the inverse cosine.
     pub fn acos(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas", "scalar_method", "acos");
         self.0.acos().map(Self)
     }
 
     /// Returns the inverse tangent.
     pub fn atan(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas", "scalar_method", "atan");
         self.0.atan().map(Self)
     }
 
     /// Returns the inverse hyperbolic sine.
     pub fn asinh(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas", "scalar_method", "asinh");
         self.0.asinh().map(Self)
     }
 
     /// Returns the inverse hyperbolic cosine.
     pub fn acosh(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas", "scalar_method", "acosh");
         self.0.acosh().map(Self)
     }
 
     /// Returns the inverse hyperbolic tangent.
     pub fn atanh(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas", "scalar_method", "atanh");
         self.0.atanh().map(Self)
     }
 
@@ -326,16 +366,19 @@ impl<B: Backend> Scalar<B> {
     /// This is an optimistic predicate. Use [`Scalar::zero_status`] or
     /// [`zero_status`] when unknown-zero conditions must be distinguished.
     pub fn definitely_zero(&self) -> bool {
+        crate::trace_dispatch!("realistic_blas", "scalar_query", "definitely-zero");
         self.0.definitely_zero()
     }
 
     /// Classifies this scalar as zero, non-zero, or unknown.
     pub fn zero_status(&self) -> ZeroStatus {
+        crate::trace_dispatch!("realistic_blas", "scalar_query", "zero-status");
         self.0.zero_status()
     }
 
     /// Returns conservative structural facts exposed by this scalar's backend.
     pub fn structural_facts(&self) -> ScalarFacts {
+        crate::trace_dispatch!("realistic_blas", "scalar_query", "structural-facts");
         self.0.structural_facts()
     }
 
@@ -344,11 +387,13 @@ impl<B: Backend> Scalar<B> {
     /// Backends without refinement support return only signs already known from
     /// structural facts.
     pub fn refine_sign_until(&self, min_precision: i32) -> Option<ScalarSign> {
+        crate::trace_dispatch!("realistic_blas", "scalar_query", "refine-sign-until");
         self.0.refine_sign_until(min_precision)
     }
 
     /// Returns a borrowed finite `f64` approximation when one is available.
     pub fn to_f64_approx(&self) -> Option<f64> {
+        crate::trace_dispatch!("realistic_blas", "scalar_query", "to-f64-approx");
         self.0.to_f64_approx()
     }
 
@@ -357,6 +402,7 @@ impl<B: Backend> Scalar<B> {
     /// This affects hyperreal backend evaluation. It is a no-op on the approx
     /// backend.
     pub fn abort(&mut self, signal: AbortSignal) {
+        crate::trace_dispatch!("realistic_blas", "scalar_query", "attach-abort");
         self.0.abort(signal);
     }
 }
@@ -430,6 +476,7 @@ impl<B: Backend> TryFrom<f32> for Scalar<B> {
     type Error = Problem;
 
     fn try_from(value: f32) -> Result<Self, Self::Error> {
+        crate::trace_dispatch!("realistic_blas", "scalar_constructor", "try-from-f32");
         B::Repr::try_from(value).map(Self)
     }
 }
@@ -438,12 +485,14 @@ impl<B: Backend> TryFrom<f64> for Scalar<B> {
     type Error = Problem;
 
     fn try_from(value: f64) -> Result<Self, Self::Error> {
+        crate::trace_dispatch!("realistic_blas", "scalar_constructor", "try-from-f64");
         B::Repr::try_from(value).map(Self)
     }
 }
 
 impl<B: Backend> From<Scalar<B>> for f64 {
     fn from(value: Scalar<B>) -> Self {
+        crate::trace_dispatch!("realistic_blas", "scalar_conversion", "into-f64");
         value.0.into_f64()
     }
 }
@@ -453,6 +502,7 @@ impl<B: Backend> Add for Scalar<B> {
 
     #[inline]
     fn add(self, rhs: Self) -> Self::Output {
+        crate::trace_dispatch!("realistic_blas", "scalar_op", "add-owned-owned");
         Self(self.0 + rhs.0)
     }
 }
@@ -462,6 +512,7 @@ impl<B: Backend> Sub for Scalar<B> {
 
     #[inline]
     fn sub(self, rhs: Self) -> Self::Output {
+        crate::trace_dispatch!("realistic_blas", "scalar_op", "sub-owned-owned");
         Self(self.0 - rhs.0)
     }
 }
@@ -471,6 +522,7 @@ impl<B: Backend> Neg for Scalar<B> {
 
     #[inline]
     fn neg(self) -> Self::Output {
+        crate::trace_dispatch!("realistic_blas", "scalar_op", "neg-owned");
         Self(-self.0)
     }
 }
@@ -480,6 +532,7 @@ impl<B: Backend> Mul for Scalar<B> {
 
     #[inline]
     fn mul(self, rhs: Self) -> Self::Output {
+        crate::trace_dispatch!("realistic_blas", "scalar_op", "mul-owned-owned");
         Self(self.0 * rhs.0)
     }
 }
@@ -489,6 +542,7 @@ impl<B: Backend> Div for Scalar<B> {
 
     #[inline]
     fn div(self, rhs: Self) -> Self::Output {
+        crate::trace_dispatch!("realistic_blas", "scalar_op", "div-owned-owned");
         self.0.div(rhs.0).map(Self)
     }
 }
@@ -498,6 +552,7 @@ impl<B: Backend> Add<&Scalar<B>> for Scalar<B> {
 
     #[inline]
     fn add(self, rhs: &Scalar<B>) -> Self::Output {
+        crate::trace_dispatch!("realistic_blas", "scalar_op", "add-owned-ref");
         Self(B::Repr::add_owned_ref(self.0, &rhs.0))
     }
 }
@@ -507,6 +562,7 @@ impl<B: Backend> Add<Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn add(self, rhs: Scalar<B>) -> Self::Output {
+        crate::trace_dispatch!("realistic_blas", "scalar_op", "add-ref-owned");
         Scalar(B::Repr::add_ref_owned(&self.0, rhs.0))
     }
 }
@@ -516,6 +572,7 @@ impl<B: Backend> Add<&Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn add(self, rhs: &Scalar<B>) -> Self::Output {
+        crate::trace_dispatch!("realistic_blas", "scalar_op", "add-ref-ref");
         Scalar(B::Repr::add_refs(&self.0, &rhs.0))
     }
 }
@@ -525,6 +582,7 @@ impl<B: Backend> Sub<&Scalar<B>> for Scalar<B> {
 
     #[inline]
     fn sub(self, rhs: &Scalar<B>) -> Self::Output {
+        crate::trace_dispatch!("realistic_blas", "scalar_op", "sub-owned-ref");
         Self(B::Repr::sub_owned_ref(self.0, &rhs.0))
     }
 }
@@ -534,6 +592,7 @@ impl<B: Backend> Sub<Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn sub(self, rhs: Scalar<B>) -> Self::Output {
+        crate::trace_dispatch!("realistic_blas", "scalar_op", "sub-ref-owned");
         Scalar(B::Repr::sub_ref_owned(&self.0, rhs.0))
     }
 }
@@ -543,6 +602,7 @@ impl<B: Backend> Sub<&Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn sub(self, rhs: &Scalar<B>) -> Self::Output {
+        crate::trace_dispatch!("realistic_blas", "scalar_op", "sub-ref-ref");
         Scalar(B::Repr::sub_refs(&self.0, &rhs.0))
     }
 }
@@ -552,6 +612,7 @@ impl<B: Backend> Mul<&Scalar<B>> for Scalar<B> {
 
     #[inline]
     fn mul(self, rhs: &Scalar<B>) -> Self::Output {
+        crate::trace_dispatch!("realistic_blas", "scalar_op", "mul-owned-ref");
         Self(B::Repr::mul_owned_ref(self.0, &rhs.0))
     }
 }
@@ -561,6 +622,7 @@ impl<B: Backend> Mul<Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn mul(self, rhs: Scalar<B>) -> Self::Output {
+        crate::trace_dispatch!("realistic_blas", "scalar_op", "mul-ref-owned");
         Scalar(B::Repr::mul_ref_owned(&self.0, rhs.0))
     }
 }
@@ -570,6 +632,7 @@ impl<B: Backend> Mul<&Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn mul(self, rhs: &Scalar<B>) -> Self::Output {
+        crate::trace_dispatch!("realistic_blas", "scalar_op", "mul-ref-ref");
         Scalar(B::Repr::mul_refs(&self.0, &rhs.0))
     }
 }
@@ -579,6 +642,7 @@ impl<B: Backend> Div<&Scalar<B>> for Scalar<B> {
 
     #[inline]
     fn div(self, rhs: &Scalar<B>) -> Self::Output {
+        crate::trace_dispatch!("realistic_blas", "scalar_op", "div-owned-ref");
         B::Repr::div_owned_ref(self.0, &rhs.0).map(Self)
     }
 }
@@ -588,6 +652,7 @@ impl<B: Backend> Div<Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn div(self, rhs: Scalar<B>) -> Self::Output {
+        crate::trace_dispatch!("realistic_blas", "scalar_op", "div-ref-owned");
         B::Repr::div_ref_owned(&self.0, rhs.0).map(Scalar)
     }
 }
@@ -597,6 +662,7 @@ impl<B: Backend> Div<&Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn div(self, rhs: &Scalar<B>) -> Self::Output {
+        crate::trace_dispatch!("realistic_blas", "scalar_op", "div-ref-ref");
         B::Repr::div_refs(&self.0, &rhs.0).map(Scalar)
     }
 }

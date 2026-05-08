@@ -24,6 +24,7 @@ impl Backend for ApproxBackend {
 
 impl BackendScalar {
     pub(crate) fn new(value: f64, epsilon: f64) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "constructor", "new");
         if value.is_nan() || epsilon.is_nan() || epsilon < 0.0 {
             return Err(Problem::NotANumber);
         }
@@ -34,6 +35,7 @@ impl BackendScalar {
     }
 
     fn rounded(value: f64) -> Self {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "constructor", "rounded");
         Self {
             value,
             epsilon: ROUNDING_EPSILON * value.abs(),
@@ -41,6 +43,11 @@ impl BackendScalar {
     }
 
     fn rounded_with_input(value: f64, input_epsilon: f64) -> Self {
+        crate::trace_dispatch!(
+            "realistic_blas_approx_backend",
+            "constructor",
+            "rounded-with-input"
+        );
         Self {
             value,
             epsilon: input_epsilon + ROUNDING_EPSILON * value.abs(),
@@ -48,6 +55,7 @@ impl BackendScalar {
     }
 
     fn from_unary(value: f64, propagated_epsilon: f64) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "constructor", "from-unary");
         Self::new(
             value,
             propagated_epsilon.abs() + ROUNDING_EPSILON * value.abs(),
@@ -64,6 +72,7 @@ fn product_epsilon(left: &BackendScalar, right: &BackendScalar, product: f64) ->
 
 impl BackendScalarTrait for BackendScalar {
     fn zero() -> Self {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "constructor", "zero");
         Self {
             value: 0.0,
             epsilon: 0.0,
@@ -71,6 +80,7 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     fn one() -> Self {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "constructor", "one");
         Self {
             value: 1.0,
             epsilon: 0.0,
@@ -78,23 +88,28 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     fn e() -> Self {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "constructor", "e");
         Self::rounded(std::f64::consts::E)
     }
 
     fn pi() -> Self {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "constructor", "pi");
         Self::rounded(std::f64::consts::PI)
     }
 
     fn inverse(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "method", "inverse-owned");
         Self::one().div(self)
     }
 
     #[inline]
     fn inverse_ref(&self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "method", "inverse-ref");
         Self::div_refs(&Self::one(), self)
     }
 
     fn pow(self, exponent: Self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "method", "pow");
         let lower = self.value - self.epsilon;
         let upper = self.value + self.epsilon;
         let exponent_is_known_integer = exponent.epsilon == 0.0 && exponent.value.fract() == 0.0;
@@ -119,6 +134,7 @@ impl BackendScalarTrait for BackendScalar {
 
     #[inline]
     fn add_refs(left: &Self, right: &Self) -> Self {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "op", "add-ref-ref");
         let value = left.value + right.value;
         Self {
             value,
@@ -138,6 +154,7 @@ impl BackendScalarTrait for BackendScalar {
 
     #[inline]
     fn sub_refs(left: &Self, right: &Self) -> Self {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "op", "sub-ref-ref");
         let value = left.value - right.value;
         Self {
             value,
@@ -157,6 +174,7 @@ impl BackendScalarTrait for BackendScalar {
 
     #[inline]
     fn mul_refs(left: &Self, right: &Self) -> Self {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "op", "mul-ref-ref");
         let value = left.value * right.value;
         let epsilon = product_epsilon(left, right, value);
         Self { value, epsilon }
@@ -174,6 +192,7 @@ impl BackendScalarTrait for BackendScalar {
 
     #[inline]
     fn div_refs(left: &Self, right: &Self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "op", "div-ref-ref");
         match right.zero_status() {
             ZeroStatus::Zero => return Err(Problem::DivideByZero),
             ZeroStatus::Unknown => return Err(Problem::UnknownZero),
@@ -200,6 +219,7 @@ impl BackendScalarTrait for BackendScalar {
     fn dot3(left: [&Self; 3], right: [&Self; 3]) -> Self {
         // Keep the approximate backend's dot product fully scalar and unrolled. This avoids
         // temporary arrays/iterators while still accumulating the uncertainty terms once.
+        crate::trace_dispatch!("realistic_blas_approx_backend", "op", "dot3-specialized");
         let p0 = left[0].value * right[0].value;
         let p1 = left[1].value * right[1].value;
         let p2 = left[2].value * right[2].value;
@@ -216,6 +236,7 @@ impl BackendScalarTrait for BackendScalar {
     fn dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
         // Pairwise summation mirrors the hyperreal dot4 shape and keeps the rounding
         // envelope tighter than a longer left-associated chain.
+        crate::trace_dispatch!("realistic_blas_approx_backend", "op", "dot4-specialized");
         let p0 = left[0].value * right[0].value;
         let p1 = left[1].value * right[1].value;
         let p2 = left[2].value * right[2].value;
@@ -232,10 +253,12 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     fn exp(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "method", "exp");
         Self::from_unary(self.value.exp(), self.epsilon)
     }
 
     fn ln(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "method", "ln");
         if self.value + self.epsilon <= 0.0 {
             return Err(Problem::NotANumber);
         }
@@ -246,6 +269,7 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     fn log10(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "method", "log10");
         if self.value + self.epsilon <= 0.0 {
             return Err(Problem::NotANumber);
         }
@@ -259,6 +283,7 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     fn sqrt(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "method", "sqrt");
         let lower = self.value - self.epsilon;
         let upper = self.value + self.epsilon;
         if upper < 0.0 {
@@ -276,14 +301,17 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     fn sin(self) -> Self {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "method", "sin");
         Self::rounded_with_input(self.value.sin(), self.epsilon)
     }
 
     fn cos(self) -> Self {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "method", "cos");
         Self::rounded_with_input(self.value.cos(), self.epsilon)
     }
 
     fn tan(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "method", "tan");
         let cos = self.value.cos();
         if cos.abs() <= self.epsilon {
             return Err(Problem::NotANumber);
@@ -292,6 +320,7 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     fn asin(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "method", "asin");
         let lower = self.value - self.epsilon;
         let upper = self.value + self.epsilon;
         if upper < -1.0 || lower > 1.0 {
@@ -310,6 +339,7 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     fn acos(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "method", "acos");
         let lower = self.value - self.epsilon;
         let upper = self.value + self.epsilon;
         if upper < -1.0 || lower > 1.0 {
@@ -328,6 +358,7 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     fn atan(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "method", "atan");
         Self::from_unary(
             self.value.atan(),
             self.epsilon / (1.0 + self.value * self.value),
@@ -335,6 +366,7 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     fn asinh(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "method", "asinh");
         Self::from_unary(
             self.value.asinh(),
             self.epsilon / (1.0 + self.value * self.value).sqrt(),
@@ -342,6 +374,7 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     fn acosh(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "method", "acosh");
         let lower = self.value - self.epsilon;
         let upper = self.value + self.epsilon;
         if upper < 1.0 {
@@ -360,6 +393,7 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     fn atanh(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "method", "atanh");
         let lower = self.value - self.epsilon;
         let upper = self.value + self.epsilon;
         if lower <= -1.0 || upper >= 1.0 {
@@ -379,6 +413,7 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     fn div(self, rhs: Self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "op", "div-owned-owned");
         match rhs.zero_status() {
             ZeroStatus::Zero => return Err(Problem::DivideByZero),
             ZeroStatus::Unknown => return Err(Problem::UnknownZero),
@@ -392,10 +427,12 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     fn definitely_zero(&self) -> bool {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "query", "definitely-zero");
         self.value == 0.0 && self.epsilon == 0.0
     }
 
     fn zero_status(&self) -> ZeroStatus {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "query", "zero-status");
         if self.definitely_zero() {
             ZeroStatus::Zero
         } else if self.value.abs() > self.epsilon {
@@ -406,6 +443,7 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     fn structural_facts(&self) -> ScalarFacts {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "query", "structural-facts");
         let zero = self.zero_status();
         let sign = if self.definitely_zero() {
             Some(ScalarSign::Zero)
@@ -439,13 +477,25 @@ impl BackendScalarTrait for BackendScalar {
         }
     }
 
-    fn abort(&mut self, _signal: AbortSignal) {}
+    fn abort(&mut self, _signal: AbortSignal) {
+        crate::trace_dispatch!(
+            "realistic_blas_approx_backend",
+            "query",
+            "attach-abort-noop"
+        );
+    }
 
     fn into_f64(self) -> f64 {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "conversion", "into-f64");
         self.value
     }
 
     fn to_f64_approx(&self) -> Option<f64> {
+        crate::trace_dispatch!(
+            "realistic_blas_approx_backend",
+            "conversion",
+            "to-f64-approx"
+        );
         self.value.is_finite().then_some(self.value)
     }
 }
@@ -491,6 +541,11 @@ impl TryFrom<f32> for BackendScalar {
     type Error = Problem;
 
     fn try_from(value: f32) -> Result<Self, Self::Error> {
+        crate::trace_dispatch!(
+            "realistic_blas_approx_backend",
+            "constructor",
+            "try-from-f32"
+        );
         Self::new(value.into(), 0.0)
     }
 }
@@ -499,6 +554,11 @@ impl TryFrom<f64> for BackendScalar {
     type Error = Problem;
 
     fn try_from(value: f64) -> Result<Self, Self::Error> {
+        crate::trace_dispatch!(
+            "realistic_blas_approx_backend",
+            "constructor",
+            "try-from-f64"
+        );
         Self::new(value, 0.0)
     }
 }
@@ -508,6 +568,11 @@ impl Add for BackendScalar {
 
     #[inline]
     fn add(self, rhs: Self) -> Self::Output {
+        crate::trace_dispatch!(
+            "realistic_blas_approx_backend",
+            "trait_op",
+            "add-owned-owned"
+        );
         let value = self.value + rhs.value;
         Self {
             value,
@@ -521,6 +586,11 @@ impl Sub for BackendScalar {
 
     #[inline]
     fn sub(self, rhs: Self) -> Self::Output {
+        crate::trace_dispatch!(
+            "realistic_blas_approx_backend",
+            "trait_op",
+            "sub-owned-owned"
+        );
         let value = self.value - rhs.value;
         Self {
             value,
@@ -534,6 +604,7 @@ impl Neg for BackendScalar {
 
     #[inline]
     fn neg(self) -> Self::Output {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "trait_op", "neg-owned");
         Self {
             value: -self.value,
             epsilon: self.epsilon,
@@ -546,6 +617,11 @@ impl Mul for BackendScalar {
 
     #[inline]
     fn mul(self, rhs: Self) -> Self::Output {
+        crate::trace_dispatch!(
+            "realistic_blas_approx_backend",
+            "trait_op",
+            "mul-owned-owned"
+        );
         let value = self.value * rhs.value;
         let epsilon = product_epsilon(&self, &rhs, value);
         Self { value, epsilon }

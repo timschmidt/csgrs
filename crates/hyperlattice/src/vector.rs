@@ -50,21 +50,25 @@ macro_rules! impl_vector {
         impl<B: Backend> $name<B> {
             /// Constructs a vector from its component array.
             pub fn new(values: [Scalar<B>; $n]) -> Self {
+                crate::trace_dispatch!("realistic_blas_vector", "constructor", "new");
                 Self(values)
             }
 
             /// Returns the zero vector.
             pub fn zero() -> Self {
+                crate::trace_dispatch!("realistic_blas_vector", "constructor", "zero");
                 Self(from_fn(|_| Scalar::zero()))
             }
 
             /// Returns the Euclidean magnitude.
             pub fn magnitude(&self) -> BlasResult<Scalar<B>> {
+                crate::trace_dispatch!("realistic_blas_vector", "method", "magnitude");
                 self.dot(self).sqrt()
             }
 
             /// Returns the Euclidean magnitude after attaching an abort signal.
             pub fn magnitude_with_abort(&self, signal: &AbortSignal) -> BlasResult<Scalar<B>> {
+                crate::trace_dispatch!("realistic_blas_vector", "method", "magnitude-with-abort");
                 with_abort(self.dot_with_abort(self, signal), signal).sqrt()
             }
 
@@ -74,6 +78,7 @@ macro_rules! impl_vector {
             /// scalar backend rejects a divisor for another reason, that
             /// [`Problem`](crate::Problem) is propagated.
             pub fn normalize(&self) -> BlasResult<Self> {
+                crate::trace_dispatch!("realistic_blas_vector", "method", "normalize");
                 let mag = self.magnitude()?;
                 reject_definite_zero(&mag)?;
                 let inv_mag = mag.inverse()?;
@@ -82,6 +87,7 @@ macro_rules! impl_vector {
 
             /// Returns a unit vector after rejecting zero and unknown-zero magnitudes.
             pub fn normalize_checked(&self) -> CheckedBlasResult<Self> {
+                crate::trace_dispatch!("realistic_blas_vector", "method", "normalize-checked");
                 let mag = self.magnitude()?;
                 require_known_nonzero(&mag)?;
                 let inv_mag = mag.inverse()?;
@@ -93,6 +99,11 @@ macro_rules! impl_vector {
                 &self,
                 signal: &AbortSignal,
             ) -> CheckedBlasResult<Self> {
+                crate::trace_dispatch!(
+                    "realistic_blas_vector",
+                    "method",
+                    "normalize-checked-with-abort"
+                );
                 let mag = self.magnitude_with_abort(signal)?;
                 require_known_nonzero(&mag)?;
                 let inv_mag = mag.inverse()?;
@@ -101,6 +112,7 @@ macro_rules! impl_vector {
 
             /// Divides every component by `rhs` after rejecting unknown-zero divisors.
             pub fn div_scalar_checked(self, rhs: Scalar<B>) -> CheckedBlasResult<Self> {
+                crate::trace_dispatch!("realistic_blas_vector", "method", "div-scalar-checked");
                 require_known_nonzero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
                 if B::MOVE_ELEMENTWISE {
@@ -122,6 +134,11 @@ macro_rules! impl_vector {
                 rhs: Scalar<B>,
                 signal: &AbortSignal,
             ) -> CheckedBlasResult<Self> {
+                crate::trace_dispatch!(
+                    "realistic_blas_vector",
+                    "method",
+                    "div-scalar-checked-with-abort"
+                );
                 let rhs = with_abort(rhs, signal);
                 require_known_nonzero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
@@ -172,6 +189,7 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn add(self, rhs: Self) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_vector", "op", "add-owned-owned");
                 if B::MOVE_ELEMENTWISE {
                     Self(map_array2(self.0, rhs.0, |lhs, rhs| lhs + rhs))
                 } else {
@@ -184,6 +202,7 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn add(self, rhs: &$name<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_vector", "op", "add-owned-ref");
                 Self(map_array_ref(self.0, &rhs.0, Scalar::add_cached))
             }
         }
@@ -192,6 +211,7 @@ macro_rules! impl_vector {
             type Output = $name<B>;
 
             fn add(self, rhs: $name<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_vector", "op", "add-ref-owned");
                 let mut left = self.0.iter();
                 $name(
                     rhs.0
@@ -204,6 +224,7 @@ macro_rules! impl_vector {
             type Output = $name<B>;
 
             fn add(self, rhs: &$name<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_vector", "op", "add-ref-ref");
                 $name(from_fn(|i| &self.0[i] + &rhs.0[i]))
             }
         }
@@ -212,6 +233,7 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn add(self, rhs: Scalar<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_vector", "op", "add-scalar-owned");
                 let rhs = &rhs;
                 if B::MOVE_ELEMENTWISE {
                     Self(self.0.map(|value| value.add_cached(rhs)))
@@ -229,6 +251,7 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn add(self, rhs: &Scalar<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_vector", "op", "add-scalar-ref");
                 Self(self.0.map(|value| value.add_cached(rhs)))
             }
         }
@@ -237,6 +260,7 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn sub(self, rhs: Self) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_vector", "op", "sub-owned-owned");
                 if B::MOVE_ELEMENTWISE {
                     Self(map_array2(self.0, rhs.0, |lhs, rhs| lhs - rhs))
                 } else {
@@ -249,6 +273,7 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn sub(self, rhs: &$name<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_vector", "op", "sub-owned-ref");
                 Self(map_array_ref(self.0, &rhs.0, Scalar::sub_cached))
             }
         }
@@ -257,6 +282,7 @@ macro_rules! impl_vector {
             type Output = $name<B>;
 
             fn sub(self, rhs: $name<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_vector", "op", "sub-ref-owned");
                 let mut left = self.0.iter();
                 $name(
                     rhs.0
@@ -269,6 +295,7 @@ macro_rules! impl_vector {
             type Output = $name<B>;
 
             fn sub(self, rhs: &$name<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_vector", "op", "sub-ref-ref");
                 $name(from_fn(|i| &self.0[i] - &rhs.0[i]))
             }
         }
@@ -277,6 +304,7 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn sub(self, rhs: Scalar<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_vector", "op", "sub-scalar-owned");
                 let rhs = &rhs;
                 if B::MOVE_ELEMENTWISE {
                     Self(self.0.map(|value| value.sub_cached(rhs)))
@@ -294,6 +322,7 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn sub(self, rhs: &Scalar<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_vector", "op", "sub-scalar-ref");
                 Self(self.0.map(|value| value.sub_cached(rhs)))
             }
         }
@@ -302,6 +331,7 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn neg(self) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_vector", "op", "neg-owned");
                 if B::MOVE_ELEMENTWISE {
                     Self(self.0.map(|value| -value))
                 } else {
@@ -314,6 +344,7 @@ macro_rules! impl_vector {
             type Output = $name<B>;
 
             fn neg(self) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_vector", "op", "neg-ref");
                 $name(from_fn(|i| -self.0[i].clone()))
             }
         }
@@ -322,6 +353,7 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn mul(self, rhs: Scalar<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_vector", "op", "mul-scalar-owned");
                 let rhs = &rhs;
                 if B::MOVE_ELEMENTWISE {
                     Self(self.0.map(|value| value.mul_cached(rhs)))
@@ -339,6 +371,7 @@ macro_rules! impl_vector {
             type Output = Self;
 
             fn mul(self, rhs: &Scalar<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_vector", "op", "mul-scalar-ref");
                 Self(self.0.map(|value| value.mul_cached(rhs)))
             }
         }
@@ -347,6 +380,7 @@ macro_rules! impl_vector {
             type Output = BlasResult<Self>;
 
             fn div(self, rhs: Scalar<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_vector", "op", "div-scalar-owned");
                 reject_definite_zero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
                 if B::MOVE_ELEMENTWISE {
@@ -365,6 +399,7 @@ macro_rules! impl_vector {
             type Output = BlasResult<Self>;
 
             fn div(self, rhs: &Scalar<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_vector", "op", "div-scalar-ref");
                 reject_definite_zero(rhs)?;
                 let inv_rhs = rhs.inverse_ref()?;
                 if B::MOVE_ELEMENTWISE {
@@ -387,6 +422,7 @@ impl_vector!(Vector4, 4);
 impl<B: Backend> Vector3<B> {
     /// Returns the dot product with `rhs`.
     pub fn dot(&self, rhs: &Self) -> Scalar<B> {
+        crate::trace_dispatch!("realistic_blas_vector", "method", "dot3");
         Scalar::dot3(
             [&self.0[0], &self.0[1], &self.0[2]],
             [&rhs.0[0], &rhs.0[1], &rhs.0[2]],
@@ -395,6 +431,7 @@ impl<B: Backend> Vector3<B> {
 
     /// Returns the dot product after attaching an abort signal to operands.
     pub fn dot_with_abort(&self, rhs: &Self, signal: &AbortSignal) -> Scalar<B> {
+        crate::trace_dispatch!("realistic_blas_vector", "method", "dot3-with-abort");
         let p0 = clone_with_abort(&self.0[0], signal) * clone_with_abort(&rhs.0[0], signal);
         let p1 = clone_with_abort(&self.0[1], signal) * clone_with_abort(&rhs.0[1], signal);
         let p2 = clone_with_abort(&self.0[2], signal) * clone_with_abort(&rhs.0[2], signal);
@@ -405,6 +442,7 @@ impl<B: Backend> Vector3<B> {
 impl<B: Backend> Vector4<B> {
     /// Returns the dot product with `rhs`.
     pub fn dot(&self, rhs: &Self) -> Scalar<B> {
+        crate::trace_dispatch!("realistic_blas_vector", "method", "dot4");
         Scalar::dot4(
             [&self.0[0], &self.0[1], &self.0[2], &self.0[3]],
             [&rhs.0[0], &rhs.0[1], &rhs.0[2], &rhs.0[3]],
@@ -413,6 +451,7 @@ impl<B: Backend> Vector4<B> {
 
     /// Returns the dot product after attaching an abort signal to operands.
     pub fn dot_with_abort(&self, rhs: &Self, signal: &AbortSignal) -> Scalar<B> {
+        crate::trace_dispatch!("realistic_blas_vector", "method", "dot4-with-abort");
         let p0 = clone_with_abort(&self.0[0], signal) * clone_with_abort(&rhs.0[0], signal);
         let p1 = clone_with_abort(&self.0[1], signal) * clone_with_abort(&rhs.0[1], signal);
         let p2 = clone_with_abort(&self.0[2], signal) * clone_with_abort(&rhs.0[2], signal);

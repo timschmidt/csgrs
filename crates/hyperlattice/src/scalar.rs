@@ -61,16 +61,19 @@ pub(crate) fn two<B: Backend>() -> Scalar<B> {
 }
 
 pub(crate) fn with_abort<B: Backend>(mut value: Scalar<B>, signal: &AbortSignal) -> Scalar<B> {
+    crate::trace_dispatch!("realistic_blas", "abort", "attach-owned-scalar");
     value.abort(signal.clone());
     value
 }
 
 pub(crate) fn clone_with_abort<B: Backend>(value: &Scalar<B>, signal: &AbortSignal) -> Scalar<B> {
+    crate::trace_dispatch!("realistic_blas", "abort", "clone-and-attach");
     with_abort(value.clone(), signal)
 }
 
 /// Classifies a scalar as zero, non-zero, or unknown.
 pub fn zero_status<B: Backend>(value: &Scalar<B>) -> ZeroStatus {
+    crate::trace_dispatch!("realistic_blas", "zero_status", "scalar-query");
     value.zero_status()
 }
 
@@ -83,25 +86,42 @@ pub fn zero_status_with_abort<B: Backend>(value: &Scalar<B>, signal: &AbortSigna
     if status != ZeroStatus::Unknown || !signal.load(Ordering::Relaxed) {
         // Fast path for the common case: known structural status, or no active abort
         // request. Cloning just to attach a signal showed up in predicate-heavy benches.
+        crate::trace_dispatch!("realistic_blas", "zero_status_abort", "no-clone-fast-path");
         return status;
     }
 
+    crate::trace_dispatch!(
+        "realistic_blas",
+        "zero_status_abort",
+        "clone-with-active-abort"
+    );
     zero_status(&clone_with_abort(value, signal))
 }
 
 pub(crate) fn reject_definite_zero<B: Backend>(value: &Scalar<B>) -> BlasResult<()> {
     if value.definitely_zero() {
+        crate::trace_dispatch!("realistic_blas", "zero_guard", "definite-zero-rejected");
         Err(Problem::DivideByZero)
     } else {
+        crate::trace_dispatch!("realistic_blas", "zero_guard", "not-definitely-zero");
         Ok(())
     }
 }
 
 pub(crate) fn require_known_nonzero<B: Backend>(value: &Scalar<B>) -> CheckedBlasResult<()> {
     match zero_status(value) {
-        ZeroStatus::Zero => Err(Problem::DivideByZero),
-        ZeroStatus::NonZero => Ok(()),
-        ZeroStatus::Unknown => Err(Problem::UnknownZero),
+        ZeroStatus::Zero => {
+            crate::trace_dispatch!("realistic_blas", "zero_guard", "checked-zero-rejected");
+            Err(Problem::DivideByZero)
+        }
+        ZeroStatus::NonZero => {
+            crate::trace_dispatch!("realistic_blas", "zero_guard", "checked-nonzero");
+            Ok(())
+        }
+        ZeroStatus::Unknown => {
+            crate::trace_dispatch!("realistic_blas", "zero_guard", "checked-unknown-rejected");
+            Err(Problem::UnknownZero)
+        }
     }
 }
 
@@ -118,21 +138,25 @@ pub(crate) fn require_known_nonzero_with_abort<B: Backend>(
 
 /// Returns the additive identity.
 pub fn zero() -> Scalar {
+    crate::trace_dispatch!("realistic_blas", "free_function", "zero");
     Scalar::zero()
 }
 
 /// Returns the multiplicative identity.
 pub fn one() -> Scalar {
+    crate::trace_dispatch!("realistic_blas", "free_function", "one");
     Scalar::one()
 }
 
 /// Returns Euler's number.
 pub fn e() -> Scalar {
+    crate::trace_dispatch!("realistic_blas", "free_function", "e");
     Scalar::e()
 }
 
 /// Returns pi.
 pub fn pi() -> Scalar {
+    crate::trace_dispatch!("realistic_blas", "free_function", "pi");
     Scalar::pi()
 }
 
@@ -140,6 +164,7 @@ pub fn pi() -> Scalar {
 pub fn tau() -> Scalar {
     // Route through the backend hook so exact backends can return symbolic tau
     // instead of rebuilding `2 * pi` through multiplication.
+    crate::trace_dispatch!("realistic_blas", "free_function", "tau");
     Scalar::tau()
 }
 
@@ -150,22 +175,30 @@ pub fn i() -> Complex {
 
 /// Returns the multiplicative inverse of `value`.
 pub fn reciprocal<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "reciprocal-owned");
     value.inverse()
 }
 
 /// Returns the multiplicative inverse of `value` without consuming it.
 pub fn reciprocal_ref<B: Backend>(value: &Scalar<B>) -> BlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "reciprocal-ref");
     value.inverse_ref()
 }
 
 /// Returns the multiplicative inverse after rejecting zero and unknown-zero values.
 pub fn reciprocal_checked<B: Backend>(value: Scalar<B>) -> CheckedBlasResult<Scalar<B>> {
+    crate::trace_dispatch!(
+        "realistic_blas",
+        "free_function",
+        "reciprocal-checked-owned"
+    );
     require_known_nonzero(&value)?;
     value.inverse()
 }
 
 /// Returns the checked multiplicative inverse without consuming `value`.
 pub fn reciprocal_ref_checked<B: Backend>(value: &Scalar<B>) -> CheckedBlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "reciprocal-checked-ref");
     require_known_nonzero(value)?;
     value.inverse_ref()
 }
@@ -175,6 +208,11 @@ pub fn reciprocal_checked_with_abort<B: Backend>(
     value: Scalar<B>,
     signal: &AbortSignal,
 ) -> CheckedBlasResult<Scalar<B>> {
+    crate::trace_dispatch!(
+        "realistic_blas",
+        "free_function",
+        "reciprocal-checked-with-abort"
+    );
     let value = with_abort(value, signal);
     require_known_nonzero_with_abort(&value, signal)?;
     value.inverse()
@@ -182,6 +220,7 @@ pub fn reciprocal_checked_with_abort<B: Backend>(
 
 /// Raises `base` to a scalar exponent.
 pub fn pow<B: Backend>(base: Scalar<B>, exponent: Scalar<B>) -> BlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "pow");
     base.pow(exponent)
 }
 
@@ -192,8 +231,10 @@ pub fn pow<B: Backend>(base: Scalar<B>, exponent: Scalar<B>) -> BlasResult<Scala
 pub fn powi<B: Backend>(base: Scalar<B>, exponent: i64) -> BlasResult<Scalar<B>> {
     if exponent == 0 {
         if base.definitely_zero() {
+            crate::trace_dispatch!("realistic_blas", "powi", "zero-to-zero-domain-error");
             return Err(Problem::NotANumber);
         }
+        crate::trace_dispatch!("realistic_blas", "powi", "exponent-zero-one");
         return Ok(Scalar::<B>::one());
     }
 
@@ -201,25 +242,38 @@ pub fn powi<B: Backend>(base: Scalar<B>, exponent: i64) -> BlasResult<Scalar<B>>
     // The hyperreal backend opts into hard-coded tiny exponents because the generic
     // squaring loop clones enough symbolic state to show up in scalar and matrix benches.
     let positive = match (B::SPECIALIZE_SCALAR_POWI, exp) {
-        (_, 1) => base,
-        (true, 2) => base.clone() * base,
+        (_, 1) => {
+            crate::trace_dispatch!("realistic_blas", "powi", "exponent-one");
+            base
+        }
+        (true, 2) => {
+            crate::trace_dispatch!("realistic_blas", "powi", "specialized-square");
+            base.clone() * base
+        }
         (true, 3) => {
+            crate::trace_dispatch!("realistic_blas", "powi", "specialized-cube");
             let square = base.clone() * base.clone();
             square * base
         }
         (true, 4) => {
+            crate::trace_dispatch!("realistic_blas", "powi", "specialized-fourth");
             let square = base.clone() * base;
             square.clone() * square
         }
         (true, 5) => {
+            crate::trace_dispatch!("realistic_blas", "powi", "specialized-fifth");
             let square = base.clone() * base.clone();
             let fourth = square.clone() * square;
             fourth * base
         }
-        _ => powi_by_squaring(base, exp),
+        _ => {
+            crate::trace_dispatch!("realistic_blas", "powi", "generic-squaring");
+            powi_by_squaring(base, exp)
+        }
     };
 
     if exponent < 0 {
+        crate::trace_dispatch!("realistic_blas", "powi", "negative-inverse");
         positive.inverse()
     } else {
         Ok(positive)
@@ -248,16 +302,19 @@ fn powi_by_squaring<B: Backend>(base: Scalar<B>, exponent: u64) -> Scalar<B> {
 
 /// Returns `e` raised to `value`.
 pub fn exp<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "exp");
     value.exp()
 }
 
 /// Returns the natural logarithm of `value`.
 pub fn ln<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "ln");
     value.ln()
 }
 
 /// Returns the base-10 logarithm of `value`.
 pub fn log10<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "log10");
     value.log10()
 }
 
@@ -266,31 +323,37 @@ pub fn log10_with_abort<B: Backend>(
     value: Scalar<B>,
     signal: &AbortSignal,
 ) -> BlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "log10-with-abort");
     with_abort(value, signal).log10()
 }
 
 /// Returns the principal square root of `value`.
 pub fn sqrt<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "sqrt");
     value.sqrt()
 }
 
 /// Returns the sine of `value`.
 pub fn sin<B: Backend>(value: Scalar<B>) -> Scalar<B> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "sin");
     value.sin()
 }
 
 /// Returns the cosine of `value`.
 pub fn cos<B: Backend>(value: Scalar<B>) -> Scalar<B> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "cos");
     value.cos()
 }
 
 /// Returns the tangent of `value`.
 pub fn tan<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "tan");
     value.tan()
 }
 
 /// Returns the hyperbolic sine of `value`.
 pub fn sinh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "sinh-exp-formula");
     let positive = value.clone().exp()?;
     let negative = (-value).exp()?;
     (positive - negative) / two()
@@ -298,6 +361,7 @@ pub fn sinh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
 
 /// Returns the hyperbolic cosine of `value`.
 pub fn cosh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "cosh-exp-formula");
     let positive = value.clone().exp()?;
     let negative = (-value).exp()?;
     (positive + negative) / two()
@@ -305,6 +369,7 @@ pub fn cosh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
 
 /// Returns the hyperbolic tangent of `value`.
 pub fn tanh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "tanh-exp-formula");
     let positive = value.clone().exp()?;
     let negative = (-value).exp()?;
     (positive.clone() - negative.clone()) / (positive + negative)
@@ -312,6 +377,7 @@ pub fn tanh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
 
 /// Returns the inverse sine of `value`.
 pub fn asin<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "asin");
     value.asin()
 }
 
@@ -320,11 +386,13 @@ pub fn asin_with_abort<B: Backend>(
     value: Scalar<B>,
     signal: &AbortSignal,
 ) -> BlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "asin-with-abort");
     with_abort(value, signal).asin()
 }
 
 /// Returns the inverse cosine of `value`.
 pub fn acos<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "acos");
     value.acos()
 }
 
@@ -333,11 +401,13 @@ pub fn acos_with_abort<B: Backend>(
     value: Scalar<B>,
     signal: &AbortSignal,
 ) -> BlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "acos-with-abort");
     with_abort(value, signal).acos()
 }
 
 /// Returns the inverse tangent of `value`.
 pub fn atan<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "atan");
     value.atan()
 }
 
@@ -346,11 +416,13 @@ pub fn atan_with_abort<B: Backend>(
     value: Scalar<B>,
     signal: &AbortSignal,
 ) -> BlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "atan-with-abort");
     with_abort(value, signal).atan()
 }
 
 /// Returns the inverse hyperbolic sine of `value`.
 pub fn asinh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "asinh");
     value.asinh()
 }
 
@@ -359,11 +431,13 @@ pub fn asinh_with_abort<B: Backend>(
     value: Scalar<B>,
     signal: &AbortSignal,
 ) -> BlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "asinh-with-abort");
     with_abort(value, signal).asinh()
 }
 
 /// Returns the inverse hyperbolic cosine of `value`.
 pub fn acosh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "acosh");
     value.acosh()
 }
 
@@ -372,11 +446,13 @@ pub fn acosh_with_abort<B: Backend>(
     value: Scalar<B>,
     signal: &AbortSignal,
 ) -> BlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "acosh-with-abort");
     with_abort(value, signal).acosh()
 }
 
 /// Returns the inverse hyperbolic tangent of `value`.
 pub fn atanh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "atanh");
     value.atanh()
 }
 
@@ -385,5 +461,6 @@ pub fn atanh_with_abort<B: Backend>(
     value: Scalar<B>,
     signal: &AbortSignal,
 ) -> BlasResult<Scalar<B>> {
+    crate::trace_dispatch!("realistic_blas", "free_function", "atanh-with-abort");
     with_abort(value, signal).atanh()
 }

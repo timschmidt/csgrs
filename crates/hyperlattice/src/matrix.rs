@@ -592,6 +592,7 @@ fn multiply_arrays<B: Backend, const N: usize>(
     left: [[Scalar<B>; N]; N],
     right: [[Scalar<B>; N]; N],
 ) -> [[Scalar<B>; N]; N] {
+    crate::trace_dispatch!("realistic_blas_matrix", "helper", "multiply-owned-owned");
     from_fn(|row| {
         from_fn(|col| {
             // One const-generic helper serves both 3x3 and 4x4 owned multiply.
@@ -620,6 +621,7 @@ fn multiply_arrays_rhs_ref<B: Backend, const N: usize>(
     left: [[Scalar<B>; N]; N],
     right: &[[Scalar<B>; N]; N],
 ) -> [[Scalar<B>; N]; N] {
+    crate::trace_dispatch!("realistic_blas_matrix", "helper", "multiply-owned-ref");
     from_fn(|row| {
         from_fn(|col| {
             let left_terms = [&left[row][0], &left[row][1], &left[row][2]];
@@ -645,6 +647,11 @@ fn multiply_arrays_ref<B: Backend, const N: usize>(
     left: &[[Scalar<B>; N]; N],
     right: &[[Scalar<B>; N]; N],
 ) -> [[Scalar<B>; N]; N] {
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "multiply-ref-owned-or-generic"
+    );
     from_fn(|row| {
         from_fn(|col| {
             let left_terms = [&left[row][0], &left[row][1], &left[row][2]];
@@ -672,6 +679,11 @@ fn multiply_arrays3_ref<B: Backend>(
 ) -> [[Scalar<B>; 3]; 3] {
     // Fixed 3x3 borrowed multiply avoids the const-generic helper's per-cell
     // "is there a fourth lane?" branch and intermediate tiny arrays.
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "multiply3-ref-ref-specialized"
+    );
     let cell = |row: usize, col: usize| {
         Scalar::dot3(
             [&left[row][0], &left[row][1], &left[row][2]],
@@ -692,6 +704,11 @@ fn multiply_arrays4_ref<B: Backend>(
     // Fixed 4x4 borrowed multiply is similarly unrolled. This is deliberately
     // duplicated from the generic path because the branchless version wins in
     // borrowed mat4 multiply benchmarks.
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "multiply4-ref-ref-specialized"
+    );
     let cell = |row: usize, col: usize| {
         Scalar::dot4(
             [&left[row][0], &left[row][1], &left[row][2], &left[row][3]],
@@ -781,6 +798,7 @@ fn mul_sub_add<B: Backend>(
 }
 
 fn determinant3<B: Backend>(m: &[[Scalar<B>; 3]; 3]) -> Scalar<B> {
+    crate::trace_dispatch!("realistic_blas_matrix", "helper", "determinant3");
     let c00 = mul_sub(&m[1][1], &m[2][2], &m[1][2], &m[2][1]);
     let c10 = mul_sub(&m[1][2], &m[2][0], &m[1][0], &m[2][2]);
     let c20 = mul_sub(&m[1][0], &m[2][1], &m[1][1], &m[2][0]);
@@ -790,6 +808,11 @@ fn determinant3<B: Backend>(m: &[[Scalar<B>; 3]; 3]) -> Scalar<B> {
 fn matrix3_adjugate_and_determinant<B: Backend>(
     matrix: &[[Scalar<B>; 3]; 3],
 ) -> ([[Scalar<B>; 3]; 3], Scalar<B>) {
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "matrix3-adjugate-and-determinant"
+    );
     let m = &matrix;
     let c00 = mul_sub(&m[1][1], &m[2][2], &m[1][2], &m[2][1]);
     let c01 = mul_sub(&m[0][2], &m[2][1], &m[0][1], &m[2][2]);
@@ -805,6 +828,7 @@ fn matrix3_adjugate_and_determinant<B: Backend>(
 }
 
 fn invert_matrix3<B: Backend>(matrix: [[Scalar<B>; 3]; 3]) -> BlasResult<[[Scalar<B>; 3]; 3]> {
+    crate::trace_dispatch!("realistic_blas_matrix", "helper", "invert-matrix3");
     let (adjugate, det) = matrix3_adjugate_and_determinant(&matrix);
     let inv_det = det.inverse()?;
     Ok(scale_matrix3(adjugate, &inv_det))
@@ -813,6 +837,7 @@ fn invert_matrix3<B: Backend>(matrix: [[Scalar<B>; 3]; 3]) -> BlasResult<[[Scala
 fn invert_matrix3_checked<B: Backend>(
     matrix: [[Scalar<B>; 3]; 3],
 ) -> CheckedBlasResult<[[Scalar<B>; 3]; 3]> {
+    crate::trace_dispatch!("realistic_blas_matrix", "helper", "invert-matrix3-checked");
     let (adjugate, det) = matrix3_adjugate_and_determinant(&matrix);
     require_known_nonzero(&det)?;
     let inv_det = det.inverse()?;
@@ -823,6 +848,11 @@ fn invert_matrix3_checked_with_abort<B: Backend>(
     matrix: [[Scalar<B>; 3]; 3],
     signal: &AbortSignal,
 ) -> CheckedBlasResult<[[Scalar<B>; 3]; 3]> {
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "invert-matrix3-checked-with-abort"
+    );
     let (adjugate, det) = matrix3_adjugate_and_determinant(&matrix);
     let det = with_abort(det, signal);
     require_known_nonzero(&det)?;
@@ -831,6 +861,7 @@ fn invert_matrix3_checked_with_abort<B: Backend>(
 }
 
 fn matrix4_factors<B: Backend>(m: &[[Scalar<B>; 4]; 4]) -> ([Scalar<B>; 6], [Scalar<B>; 6]) {
+    crate::trace_dispatch!("realistic_blas_matrix", "helper", "matrix4-factors");
     let s = [
         mul_sub(&m[0][0], &m[1][1], &m[1][0], &m[0][1]),
         mul_sub(&m[0][0], &m[1][2], &m[1][0], &m[0][2]),
@@ -851,12 +882,18 @@ fn matrix4_factors<B: Backend>(m: &[[Scalar<B>; 4]; 4]) -> ([Scalar<B>; 6], [Sca
 }
 
 fn determinant4_from_factors<B: Backend>(s: &[Scalar<B>; 6], c: &[Scalar<B>; 6]) -> Scalar<B> {
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "determinant4-from-factors"
+    );
     let positive = Scalar::dot3([&s[0], &s[2], &s[3]], [&c[5], &c[3], &c[2]]) + &s[5] * &c[0];
     let negative = &s[1] * &c[4] + &s[4] * &c[1];
     positive - negative
 }
 
 fn determinant4<B: Backend>(m: &[[Scalar<B>; 4]; 4]) -> Scalar<B> {
+    crate::trace_dispatch!("realistic_blas_matrix", "helper", "determinant4");
     let (s, c) = matrix4_factors(m);
     determinant4_from_factors(&s, &c)
 }
@@ -944,16 +981,19 @@ macro_rules! impl_matrix {
         impl<B: Backend> $name<B> {
             /// Constructs a matrix from row-major entries.
             pub fn new(values: [[Scalar<B>; $n]; $n]) -> Self {
+                crate::trace_dispatch!("realistic_blas_matrix", "constructor", "new");
                 Self(values)
             }
 
             /// Returns the zero matrix.
             pub fn zero() -> Self {
+                crate::trace_dispatch!("realistic_blas_matrix", "constructor", "zero");
                 Self(from_fn(|_| from_fn(|_| Scalar::zero())))
             }
 
             /// Returns the identity matrix.
             pub fn identity() -> Self {
+                crate::trace_dispatch!("realistic_blas_matrix", "constructor", "identity");
                 Self(from_fn(|row| {
                     from_fn(|col| {
                         if row == col {
@@ -967,6 +1007,7 @@ macro_rules! impl_matrix {
 
             /// Returns the transpose.
             pub fn transpose(&self) -> Self {
+                crate::trace_dispatch!("realistic_blas_matrix", "method", "transpose");
                 Self(from_fn(|row| from_fn(|col| self.0[col][row].clone())))
             }
 
@@ -974,6 +1015,7 @@ macro_rules! impl_matrix {
             ///
             /// This is equivalent to [`inverse`](Self::inverse).
             pub fn reciprocal(self) -> BlasResult<Self> {
+                crate::trace_dispatch!("realistic_blas_matrix", "method", "reciprocal");
                 self.inverse()
             }
 
@@ -981,6 +1023,7 @@ macro_rules! impl_matrix {
             ///
             /// This is equivalent to [`inverse_checked`](Self::inverse_checked).
             pub fn reciprocal_checked(self) -> CheckedBlasResult<Self> {
+                crate::trace_dispatch!("realistic_blas_matrix", "method", "reciprocal-checked");
                 self.inverse_checked()
             }
 
@@ -988,6 +1031,7 @@ macro_rules! impl_matrix {
             ///
             /// Negative exponents invert the matrix first.
             pub fn powi(self, exponent: i32) -> BlasResult<Self> {
+                crate::trace_dispatch!("realistic_blas_matrix", "method", "powi");
                 let base = if exponent < 0 {
                     self.inverse()?.0
                 } else {
@@ -998,6 +1042,7 @@ macro_rules! impl_matrix {
 
             /// Raises the matrix to an integer power using checked inversion.
             pub fn powi_checked(self, exponent: i32) -> CheckedBlasResult<Self> {
+                crate::trace_dispatch!("realistic_blas_matrix", "method", "powi-checked");
                 let base = if exponent < 0 {
                     self.inverse_checked()?.0
                 } else {
@@ -1012,6 +1057,11 @@ macro_rules! impl_matrix {
                 exponent: i32,
                 signal: &AbortSignal,
             ) -> CheckedBlasResult<Self> {
+                crate::trace_dispatch!(
+                    "realistic_blas_matrix",
+                    "method",
+                    "powi-checked-with-abort"
+                );
                 let base = if exponent < 0 {
                     self.inverse_checked_with_abort(signal)?.0
                 } else {
@@ -1022,6 +1072,7 @@ macro_rules! impl_matrix {
 
             /// Divides every entry by `rhs` after rejecting unknown-zero divisors.
             pub fn div_scalar_checked(self, rhs: Scalar<B>) -> CheckedBlasResult<Self> {
+                crate::trace_dispatch!("realistic_blas_matrix", "method", "div-scalar-checked");
                 require_known_nonzero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
                 if B::MOVE_ELEMENTWISE {
@@ -1046,6 +1097,11 @@ macro_rules! impl_matrix {
                 rhs: Scalar<B>,
                 signal: &AbortSignal,
             ) -> CheckedBlasResult<Self> {
+                crate::trace_dispatch!(
+                    "realistic_blas_matrix",
+                    "method",
+                    "div-scalar-checked-with-abort"
+                );
                 let rhs = with_abort(rhs, signal);
                 require_known_nonzero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
@@ -1067,6 +1123,7 @@ macro_rules! impl_matrix {
 
             /// Divides by another matrix using checked inversion of the divisor.
             pub fn div_matrix_checked(self, rhs: Self) -> CheckedBlasResult<Self> {
+                crate::trace_dispatch!("realistic_blas_matrix", "method", "div-matrix-checked");
                 Ok(Self($div_checked_fn(self.0, rhs.0)?))
             }
 
@@ -1076,6 +1133,11 @@ macro_rules! impl_matrix {
                 rhs: Self,
                 signal: &AbortSignal,
             ) -> CheckedBlasResult<Self> {
+                crate::trace_dispatch!(
+                    "realistic_blas_matrix",
+                    "method",
+                    "div-matrix-checked-with-abort"
+                );
                 Ok(Self($div_checked_abort_fn(self.0, rhs.0, signal)?))
             }
         }
@@ -1122,6 +1184,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn add(self, rhs: Self) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "add-owned-owned");
                 if B::MOVE_ELEMENTWISE {
                     Self(map_matrix2(self.0, rhs.0, |lhs, rhs| lhs + rhs))
                 } else {
@@ -1136,6 +1199,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn add(self, rhs: &$name<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "add-owned-ref");
                 Self(map_matrix_ref(self.0, &rhs.0, Scalar::add_cached))
             }
         }
@@ -1144,6 +1208,7 @@ macro_rules! impl_matrix {
             type Output = $name<B>;
 
             fn add(self, rhs: $name<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "add-ref-owned");
                 $name(map_matrix_left_ref(&self.0, rhs.0, |lhs, rhs| lhs + rhs))
             }
         }
@@ -1152,6 +1217,7 @@ macro_rules! impl_matrix {
             type Output = $name<B>;
 
             fn add(self, rhs: &$name<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "add-ref-ref");
                 $name(from_fn(|row| {
                     from_fn(|col| &self.0[row][col] + &rhs.0[row][col])
                 }))
@@ -1162,6 +1228,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn add(self, rhs: Scalar<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "add-scalar-owned");
                 let rhs = &rhs;
                 if B::MOVE_ELEMENTWISE {
                     Self(self.0.map(|row| row.map(|value| value.add_cached(rhs))))
@@ -1181,6 +1248,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn add(self, rhs: &Scalar<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "add-scalar-ref");
                 Self(self.0.map(|row| row.map(|value| value.add_cached(rhs))))
             }
         }
@@ -1189,6 +1257,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn sub(self, rhs: Self) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "sub-owned-owned");
                 if B::MOVE_ELEMENTWISE {
                     Self(map_matrix2(self.0, rhs.0, |lhs, rhs| lhs - rhs))
                 } else {
@@ -1203,6 +1272,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn sub(self, rhs: &$name<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "sub-owned-ref");
                 Self(map_matrix_ref(self.0, &rhs.0, Scalar::sub_cached))
             }
         }
@@ -1211,6 +1281,7 @@ macro_rules! impl_matrix {
             type Output = $name<B>;
 
             fn sub(self, rhs: $name<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "sub-ref-owned");
                 $name(map_matrix_left_ref(&self.0, rhs.0, |lhs, rhs| lhs - rhs))
             }
         }
@@ -1219,6 +1290,7 @@ macro_rules! impl_matrix {
             type Output = $name<B>;
 
             fn sub(self, rhs: &$name<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "sub-ref-ref");
                 $name(from_fn(|row| {
                     from_fn(|col| &self.0[row][col] - &rhs.0[row][col])
                 }))
@@ -1229,6 +1301,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn sub(self, rhs: Scalar<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "sub-scalar-owned");
                 let rhs = &rhs;
                 if B::MOVE_ELEMENTWISE {
                     Self(self.0.map(|row| row.map(|value| value.sub_cached(rhs))))
@@ -1248,6 +1321,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn sub(self, rhs: &Scalar<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "sub-scalar-ref");
                 Self(self.0.map(|row| row.map(|value| value.sub_cached(rhs))))
             }
         }
@@ -1256,6 +1330,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn neg(self) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "neg-owned");
                 if B::MOVE_ELEMENTWISE {
                     Self(self.0.map(|row| row.map(|value| -value)))
                 } else {
@@ -1268,6 +1343,7 @@ macro_rules! impl_matrix {
             type Output = $name<B>;
 
             fn neg(self) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "neg-ref");
                 $name(from_fn(|row| from_fn(|col| -self.0[row][col].clone())))
             }
         }
@@ -1276,6 +1352,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn mul(self, rhs: Scalar<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "mul-scalar-owned");
                 let rhs = &rhs;
                 if B::MOVE_ELEMENTWISE {
                     Self(self.0.map(|row| row.map(|value| value.mul_cached(rhs))))
@@ -1295,6 +1372,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn mul(self, rhs: &Scalar<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "mul-scalar-ref");
                 Self(self.0.map(|row| row.map(|value| value.mul_cached(rhs))))
             }
         }
@@ -1303,6 +1381,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<Self>;
 
             fn div(self, rhs: Scalar<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "div-scalar-owned");
                 reject_definite_zero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
                 if B::MOVE_ELEMENTWISE {
@@ -1326,6 +1405,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<Self>;
 
             fn div(self, rhs: &Scalar<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "div-scalar-ref");
                 reject_definite_zero(rhs)?;
                 let inv_rhs = rhs.inverse_ref()?;
                 if B::MOVE_ELEMENTWISE {
@@ -1349,6 +1429,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn mul(self, rhs: Self) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "mul-owned-owned");
                 Self(multiply_arrays(self.0, rhs.0))
             }
         }
@@ -1357,6 +1438,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn mul(self, rhs: &$name<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "mul-owned-ref");
                 Self(multiply_arrays_rhs_ref(self.0, &rhs.0))
             }
         }
@@ -1365,6 +1447,7 @@ macro_rules! impl_matrix {
             type Output = $name<B>;
 
             fn mul(self, rhs: $name<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "mul-ref-owned");
                 $name(multiply_arrays_ref(&self.0, &rhs.0))
             }
         }
@@ -1373,6 +1456,7 @@ macro_rules! impl_matrix {
             type Output = $name<B>;
 
             fn mul(self, rhs: &$name<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "mul-ref-ref");
                 $name($mul_ref_fn(&self.0, &rhs.0))
             }
         }
@@ -1381,6 +1465,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<Self>;
 
             fn div(self, rhs: Self) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "div-owned-owned");
                 Ok(Self($div_fn(self.0, rhs.0)?))
             }
         }
@@ -1389,6 +1474,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<Self>;
 
             fn div(self, rhs: &$name<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "div-owned-ref");
                 self / rhs.clone()
             }
         }
@@ -1397,6 +1483,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<$name<B>>;
 
             fn div(self, rhs: $name<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "div-ref-owned");
                 self.clone() / rhs
             }
         }
@@ -1405,6 +1492,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<$name<B>>;
 
             fn div(self, rhs: &$name<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "div-ref-ref");
                 Ok($name($div_ref_fn(&self.0, &rhs.0)?))
             }
         }
@@ -1413,6 +1501,11 @@ macro_rules! impl_matrix {
             type Output = $vector<B>;
 
             fn mul(self, rhs: $vector<B>) -> Self::Output {
+                crate::trace_dispatch!(
+                    "realistic_blas_matrix",
+                    "op",
+                    "transform-vector-owned-owned"
+                );
                 $vector(from_fn(|row| {
                     let left = [&self.0[row][0], &self.0[row][1], &self.0[row][2]];
                     let right = [&rhs.0[0], &rhs.0[1], &rhs.0[2]];
@@ -1432,6 +1525,7 @@ macro_rules! impl_matrix {
             type Output = $vector<B>;
 
             fn mul(self, rhs: &$vector<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "transform-vector-owned-ref");
                 $vector(transform_vector_rhs_ref(&self.0, &rhs.0))
             }
         }
@@ -1440,6 +1534,7 @@ macro_rules! impl_matrix {
             type Output = $vector<B>;
 
             fn mul(self, rhs: $vector<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "transform-vector-ref-owned");
                 $vector(transform_vector_rhs_ref(&self.0, &rhs.0))
             }
         }
@@ -1448,6 +1543,7 @@ macro_rules! impl_matrix {
             type Output = $vector<B>;
 
             fn mul(self, rhs: &$vector<B>) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "transform-vector-ref-ref");
                 $vector(transform_vector_rhs_ref(&self.0, &rhs.0))
             }
         }
@@ -1456,6 +1552,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<Self>;
 
             fn bitxor(self, rhs: i32) -> Self::Output {
+                crate::trace_dispatch!("realistic_blas_matrix", "op", "bitxor-powi");
                 self.powi(rhs)
             }
         }
@@ -1489,21 +1586,29 @@ impl<B: Backend> Matrix3<B> {
     /// The ordinary path rejects a definite-zero determinant and otherwise
     /// propagates scalar arithmetic errors from the selected backend.
     pub fn inverse(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas_matrix", "method", "matrix3-inverse");
         Ok(Self(invert_matrix3(self.0)?))
     }
 
     /// Returns the matrix inverse after rejecting unknown-zero determinants.
     pub fn inverse_checked(self) -> CheckedBlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas_matrix", "method", "matrix3-inverse-checked");
         Ok(Self(invert_matrix3_checked(self.0)?))
     }
 
     /// Returns the checked matrix inverse after attaching an abort signal.
     pub fn inverse_checked_with_abort(self, signal: &AbortSignal) -> CheckedBlasResult<Self> {
+        crate::trace_dispatch!(
+            "realistic_blas_matrix",
+            "method",
+            "matrix3-inverse-checked-with-abort"
+        );
         Ok(Self(invert_matrix3_checked_with_abort(self.0, signal)?))
     }
 
     /// Returns the determinant.
     pub fn determinant(&self) -> Scalar<B> {
+        crate::trace_dispatch!("realistic_blas_matrix", "method", "matrix3-determinant");
         determinant3(&self.0)
     }
 }
@@ -1514,21 +1619,29 @@ impl<B: Backend> Matrix4<B> {
     /// The ordinary path rejects a definite-zero determinant and propagates
     /// scalar arithmetic errors from the selected backend.
     pub fn inverse(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas_matrix", "method", "matrix4-inverse");
         Ok(Self(invert_matrix4(self.0)?))
     }
 
     /// Returns the matrix inverse after rejecting unknown-zero determinants.
     pub fn inverse_checked(self) -> CheckedBlasResult<Self> {
+        crate::trace_dispatch!("realistic_blas_matrix", "method", "matrix4-inverse-checked");
         Ok(Self(invert_matrix4_checked(self.0)?))
     }
 
     /// Returns the checked matrix inverse after attaching an abort signal.
     pub fn inverse_checked_with_abort(self, signal: &AbortSignal) -> CheckedBlasResult<Self> {
+        crate::trace_dispatch!(
+            "realistic_blas_matrix",
+            "method",
+            "matrix4-inverse-checked-with-abort"
+        );
         Ok(Self(invert_matrix4_checked_with_abort(self.0, signal)?))
     }
 
     /// Returns the determinant.
     pub fn determinant(&self) -> Scalar<B> {
+        crate::trace_dispatch!("realistic_blas_matrix", "method", "matrix4-determinant");
         determinant4(&self.0)
     }
 }

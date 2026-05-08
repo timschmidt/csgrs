@@ -6,6 +6,21 @@ fn bench_blas_vectors<B: Backend>(
 ) {
     let blas_lhs_cases = lhs_cases.map(blas_vec3::<B>);
     let blas_rhs_cases = rhs_cases.map(blas_vec3::<B>);
+    trace_dispatch_row(format!("vectors/{label}/vec3 dot"), || {
+        for index in 0..blas_lhs_cases.len() {
+            black_box(black_box(&blas_lhs_cases[index]).dot(black_box(&blas_rhs_cases[index])));
+        }
+    });
+    trace_dispatch_row(format!("vectors/{label}/vec3 magnitude"), || {
+        for value in &blas_lhs_cases {
+            black_box(black_box(value).magnitude().unwrap());
+        }
+    });
+    trace_dispatch_row(format!("vectors/{label}/vec3 normalize"), || {
+        for value in &blas_lhs_cases {
+            black_box(black_box(value).normalize().unwrap());
+        }
+    });
     group.bench_function(format!("{label}/vec3 dot"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
@@ -47,6 +62,15 @@ fn bench_vectors(c: &mut Criterion) {
     {
         let rational_lhs = blas_vec3_rational();
         let rational_rhs = blas_vec3_b_rational();
+        trace_dispatch_row("vectors/hyperreal-rational/vec3 dot", || {
+            black_box(black_box(&rational_lhs).dot(black_box(&rational_rhs)));
+        });
+        trace_dispatch_row("vectors/hyperreal-rational/vec3 magnitude", || {
+            black_box(black_box(&rational_lhs).magnitude().unwrap());
+        });
+        trace_dispatch_row("vectors/hyperreal-rational/vec3 normalize", || {
+            black_box(black_box(&rational_lhs).normalize().unwrap());
+        });
         group.bench_function("hyperreal-rational/vec3 dot", |b| {
             b.iter(|| black_box(black_box(&rational_lhs).dot(black_box(&rational_rhs))))
         });
@@ -151,6 +175,31 @@ fn bench_blas_matrix3<B: Backend>(
     let blas_lhs_cases = lhs_cases.map(blas_mat3::<B>);
     let blas_rhs_cases = rhs_cases.map(blas_mat3::<B>);
     let blas_vector_cases = vector_cases.map(blas_vec3::<B>);
+    trace_dispatch_row(format!("matrix3/{label}/mat3 determinant"), || {
+        for value in &blas_lhs_cases {
+            black_box(black_box(value).determinant());
+        }
+    });
+    trace_dispatch_row(format!("matrix3/{label}/mat3 inverse"), || {
+        for value in &blas_lhs_cases {
+            black_box(black_box(value.clone()).inverse().unwrap());
+        }
+    });
+    trace_dispatch_row(format!("matrix3/{label}/mat3 mul mat3"), || {
+        for index in 0..blas_lhs_cases.len() {
+            black_box(
+                black_box(blas_lhs_cases[index].clone()) * black_box(blas_rhs_cases[index].clone()),
+            );
+        }
+    });
+    trace_dispatch_row(format!("matrix3/{label}/mat3 transform vec3"), || {
+        for index in 0..blas_lhs_cases.len() {
+            black_box(
+                black_box(blas_lhs_cases[index].clone())
+                    * black_box(blas_vector_cases[index].clone()),
+            );
+        }
+    });
     group.bench_function(format!("{label}/mat3 determinant"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| black_box(black_box(next_case(&blas_lhs_cases, &cursor)).determinant()))
@@ -207,6 +256,18 @@ fn bench_matrix3(c: &mut Criterion) {
         let rational_lhs = blas_mat3_rational();
         let rational_rhs = blas_mat3_b_rational();
         let rational_vector = blas_vec3_rational();
+        trace_dispatch_row("matrix3/hyperreal-rational/mat3 determinant", || {
+            black_box(black_box(&rational_lhs).determinant());
+        });
+        trace_dispatch_row("matrix3/hyperreal-rational/mat3 inverse", || {
+            black_box(black_box(rational_lhs.clone()).inverse().unwrap());
+        });
+        trace_dispatch_row("matrix3/hyperreal-rational/mat3 mul mat3", || {
+            black_box(black_box(rational_lhs.clone()) * black_box(rational_rhs.clone()));
+        });
+        trace_dispatch_row("matrix3/hyperreal-rational/mat3 transform vec3", || {
+            black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
+        });
         group.bench_function("hyperreal-rational/mat3 determinant", |b| {
             b.iter(|| black_box(black_box(&rational_lhs).determinant()))
         });
@@ -346,6 +407,31 @@ fn bench_blas_matrix4<B: Backend>(
     let blas_lhs_cases = lhs_cases.map(blas_mat4::<B>);
     let blas_rhs_cases = rhs_cases.map(blas_mat4::<B>);
     let blas_vector_cases = vector_cases.map(blas_vec4::<B>);
+    trace_dispatch_row(format!("matrix4/{label}/mat4 determinant"), || {
+        for value in &blas_lhs_cases {
+            black_box(black_box(value).determinant());
+        }
+    });
+    trace_dispatch_row(format!("matrix4/{label}/mat4 inverse"), || {
+        for value in &blas_lhs_cases {
+            black_box(black_box(value.clone()).inverse().unwrap());
+        }
+    });
+    trace_dispatch_row(format!("matrix4/{label}/mat4 mul mat4"), || {
+        for index in 0..blas_lhs_cases.len() {
+            black_box(
+                black_box(blas_lhs_cases[index].clone()) * black_box(blas_rhs_cases[index].clone()),
+            );
+        }
+    });
+    trace_dispatch_row(format!("matrix4/{label}/mat4 transform vec4"), || {
+        for index in 0..blas_lhs_cases.len() {
+            black_box(
+                black_box(blas_lhs_cases[index].clone())
+                    * black_box(blas_vector_cases[index].clone()),
+            );
+        }
+    });
     group.bench_function(format!("{label}/mat4 determinant"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| black_box(black_box(next_case(&blas_lhs_cases, &cursor)).determinant()))
@@ -402,6 +488,18 @@ fn bench_matrix4(c: &mut Criterion) {
         let rational_lhs = blas_mat4_rational();
         let rational_rhs = blas_mat4_b_rational();
         let rational_vector = blas_vec4_rational();
+        trace_dispatch_row("matrix4/hyperreal-rational/mat4 determinant", || {
+            black_box(black_box(&rational_lhs).determinant());
+        });
+        trace_dispatch_row("matrix4/hyperreal-rational/mat4 inverse", || {
+            black_box(black_box(rational_lhs.clone()).inverse().unwrap());
+        });
+        trace_dispatch_row("matrix4/hyperreal-rational/mat4 mul mat4", || {
+            black_box(black_box(rational_lhs.clone()) * black_box(rational_rhs.clone()));
+        });
+        trace_dispatch_row("matrix4/hyperreal-rational/mat4 transform vec4", || {
+            black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
+        });
         group.bench_function("hyperreal-rational/mat4 determinant", |b| {
             b.iter(|| black_box(black_box(&rational_lhs).determinant()))
         });
@@ -669,8 +767,14 @@ fn bench_blas_scalar_trig<B: Backend>(
 ) {
     for case in trig_cases() {
         let blas_value = s::<B>(case.value);
+        trace_dispatch_row(format!("scalar_trig/{label}/{}/sin", case.name), || {
+            let _ = black_box(realistic_blas::sin(black_box(blas_value.clone())));
+        });
         group.bench_function(format!("{label}/{}/sin", case.name), |b| {
             b.iter(|| black_box(realistic_blas::sin(black_box(blas_value.clone()))))
+        });
+        trace_dispatch_row(format!("scalar_trig/{label}/{}/cos", case.name), || {
+            let _ = black_box(realistic_blas::cos(black_box(blas_value.clone())));
         });
         group.bench_function(format!("{label}/{}/cos", case.name), |b| {
             b.iter(|| black_box(realistic_blas::cos(black_box(blas_value.clone()))))
@@ -678,11 +782,20 @@ fn bench_blas_scalar_trig<B: Backend>(
     }
     for case in inverse_unit_cases() {
         let blas_value = s::<B>(case.value);
+        trace_dispatch_row(format!("scalar_trig/{label}/{}/asin", case.name), || {
+            let _ = black_box(realistic_blas::asin(black_box(blas_value.clone())).unwrap());
+        });
         group.bench_function(format!("{label}/{}/asin", case.name), |b| {
             b.iter(|| black_box(realistic_blas::asin(black_box(blas_value.clone())).unwrap()))
         });
+        trace_dispatch_row(format!("scalar_trig/{label}/{}/acos", case.name), || {
+            let _ = black_box(realistic_blas::acos(black_box(blas_value.clone())).unwrap());
+        });
         group.bench_function(format!("{label}/{}/acos", case.name), |b| {
             b.iter(|| black_box(realistic_blas::acos(black_box(blas_value.clone())).unwrap()))
+        });
+        trace_dispatch_row(format!("scalar_trig/{label}/{}/atanh", case.name), || {
+            let _ = black_box(realistic_blas::atanh(black_box(blas_value.clone())).unwrap());
         });
         group.bench_function(format!("{label}/{}/atanh", case.name), |b| {
             b.iter(|| black_box(realistic_blas::atanh(black_box(blas_value.clone())).unwrap()))
@@ -690,8 +803,14 @@ fn bench_blas_scalar_trig<B: Backend>(
     }
     for case in inverse_real_cases() {
         let blas_value = s::<B>(case.value);
+        trace_dispatch_row(format!("scalar_trig/{label}/{}/atan", case.name), || {
+            let _ = black_box(realistic_blas::atan(black_box(blas_value.clone())).unwrap());
+        });
         group.bench_function(format!("{label}/{}/atan", case.name), |b| {
             b.iter(|| black_box(realistic_blas::atan(black_box(blas_value.clone())).unwrap()))
+        });
+        trace_dispatch_row(format!("scalar_trig/{label}/{}/asinh", case.name), || {
+            let _ = black_box(realistic_blas::asinh(black_box(blas_value.clone())).unwrap());
         });
         group.bench_function(format!("{label}/{}/asinh", case.name), |b| {
             b.iter(|| black_box(realistic_blas::asinh(black_box(blas_value.clone())).unwrap()))
@@ -699,6 +818,9 @@ fn bench_blas_scalar_trig<B: Backend>(
     }
     for case in inverse_acosh_cases() {
         let blas_value = s::<B>(case.value);
+        trace_dispatch_row(format!("scalar_trig/{label}/{}/acosh", case.name), || {
+            let _ = black_box(realistic_blas::acosh(black_box(blas_value.clone())).unwrap());
+        });
         group.bench_function(format!("{label}/{}/acosh", case.name), |b| {
             b.iter(|| black_box(realistic_blas::acosh(black_box(blas_value.clone())).unwrap()))
         });
@@ -713,36 +835,86 @@ fn bench_scalar_trig(c: &mut Criterion) {
 
     for case in trig_cases() {
         let rational_value = trig_rational(case);
+        trace_dispatch_row(
+            format!("scalar_trig/hyperreal-rational/{}/sin", case.name),
+            || {
+                let _ = black_box(realistic_blas::sin(black_box(rational_value.clone())));
+            },
+        );
         group.bench_function(format!("hyperreal-rational/{}/sin", case.name), |b| {
             b.iter(|| black_box(realistic_blas::sin(black_box(rational_value.clone()))))
         });
+        trace_dispatch_row(
+            format!("scalar_trig/hyperreal-rational/{}/cos", case.name),
+            || {
+                let _ = black_box(realistic_blas::cos(black_box(rational_value.clone())));
+            },
+        );
         group.bench_function(format!("hyperreal-rational/{}/cos", case.name), |b| {
             b.iter(|| black_box(realistic_blas::cos(black_box(rational_value.clone()))))
         });
     }
     for case in inverse_unit_cases() {
         let rational_value = inverse_rational(case);
+        trace_dispatch_row(
+            format!("scalar_trig/hyperreal-rational/{}/asin", case.name),
+            || {
+                let _ = black_box(realistic_blas::asin(black_box(rational_value.clone())).unwrap());
+            },
+        );
         group.bench_function(format!("hyperreal-rational/{}/asin", case.name), |b| {
             b.iter(|| black_box(realistic_blas::asin(black_box(rational_value.clone())).unwrap()))
         });
+        trace_dispatch_row(
+            format!("scalar_trig/hyperreal-rational/{}/acos", case.name),
+            || {
+                let _ = black_box(realistic_blas::acos(black_box(rational_value.clone())).unwrap());
+            },
+        );
         group.bench_function(format!("hyperreal-rational/{}/acos", case.name), |b| {
             b.iter(|| black_box(realistic_blas::acos(black_box(rational_value.clone())).unwrap()))
         });
+        trace_dispatch_row(
+            format!("scalar_trig/hyperreal-rational/{}/atanh", case.name),
+            || {
+                let _ = black_box(realistic_blas::atanh(black_box(rational_value.clone())).unwrap());
+            },
+        );
         group.bench_function(format!("hyperreal-rational/{}/atanh", case.name), |b| {
             b.iter(|| black_box(realistic_blas::atanh(black_box(rational_value.clone())).unwrap()))
         });
     }
     for case in inverse_real_cases() {
         let rational_value = inverse_rational(case);
+        trace_dispatch_row(
+            format!("scalar_trig/hyperreal-rational/{}/atan", case.name),
+            || {
+                let _ = black_box(realistic_blas::atan(black_box(rational_value.clone())).unwrap());
+            },
+        );
         group.bench_function(format!("hyperreal-rational/{}/atan", case.name), |b| {
             b.iter(|| black_box(realistic_blas::atan(black_box(rational_value.clone())).unwrap()))
         });
+        trace_dispatch_row(
+            format!("scalar_trig/hyperreal-rational/{}/asinh", case.name),
+            || {
+                let _ =
+                    black_box(realistic_blas::asinh(black_box(rational_value.clone())).unwrap());
+            },
+        );
         group.bench_function(format!("hyperreal-rational/{}/asinh", case.name), |b| {
             b.iter(|| black_box(realistic_blas::asinh(black_box(rational_value.clone())).unwrap()))
         });
     }
     for case in inverse_acosh_cases() {
         let rational_value = inverse_rational(case);
+        trace_dispatch_row(
+            format!("scalar_trig/hyperreal-rational/{}/acosh", case.name),
+            || {
+                let _ =
+                    black_box(realistic_blas::acosh(black_box(rational_value.clone())).unwrap());
+            },
+        );
         group.bench_function(format!("hyperreal-rational/{}/acosh", case.name), |b| {
             b.iter(|| black_box(realistic_blas::acosh(black_box(rational_value.clone())).unwrap()))
         });

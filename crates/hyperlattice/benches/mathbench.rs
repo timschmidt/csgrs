@@ -17,6 +17,7 @@ include!("mathbench/vector_ops.rs");
 include!("mathbench/matrix_ops.rs");
 include!("mathbench/borrowed_ops.rs");
 include!("mathbench/precision.rs");
+include!("mathbench/dispatch_trace.rs");
 include!("mathbench/report.rs");
 
 fn initialize_symbolica() {
@@ -54,7 +55,17 @@ fn main() {
 
     initialize_symbolica();
 
-    let mut criterion = Criterion::default().configure_from_args();
+    let trace_only = std::env::args()
+        .any(|arg| arg == "--write-dispatch-trace-md" || arg == "--dispatch-trace-only");
+    if trace_only {
+        begin_dispatch_trace_run();
+    }
+
+    let mut criterion = if trace_only {
+        Criterion::default().with_filter("$^")
+    } else {
+        Criterion::default().configure_from_args()
+    };
     bench_vectors(&mut criterion);
     bench_matrix3(&mut criterion);
     bench_matrix4(&mut criterion);
@@ -65,6 +76,10 @@ fn main() {
     bench_matrix_operations(&mut criterion);
     bench_borrowed_operations(&mut criterion);
     bench_precisions(&mut criterion);
-    criterion.final_summary();
-    update_benchmarks_doc();
+    if trace_only {
+        write_dispatch_trace_report();
+    } else {
+        criterion.final_summary();
+        update_benchmarks_doc();
+    }
 }

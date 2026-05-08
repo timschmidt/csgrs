@@ -24,6 +24,7 @@ symbolica = "1.5.0"
 default = ["hyperreal-backend", "approx-backend"]
 hyperreal-backend = ["dep:num", "dep:hyperreal"]
 approx-backend = []
+hyperreal-dispatch-trace = ["dep:num", "dep:hyperreal", "hyperreal/dispatch-trace"]
 
 [[bench]]
 name = "mathbench"

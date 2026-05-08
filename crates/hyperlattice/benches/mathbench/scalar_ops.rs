@@ -65,6 +65,146 @@ fn bench_scalar_operations_for<B, F>(
     ];
     let signal = abort_signal();
 
+    trace_dispatch_cases(format!("scalar_ops/{label}/pow"), &pow_cases, |(lhs, rhs)| {
+        let _ = black_box(realistic_blas::pow(lhs.clone(), rhs.clone()).unwrap());
+    });
+    trace_dispatch_cases(
+        format!("scalar_ops/{label}/powi"),
+        &reciprocal_cases,
+        |value| {
+            let _ = black_box(realistic_blas::powi(value.clone(), 5).unwrap());
+        },
+    );
+    trace_dispatch_cases(
+        format!("scalar_ops/{label}/exp"),
+        &unit_interval_cases,
+        |value| {
+            let _ = black_box(realistic_blas::exp(value.clone()).unwrap());
+        },
+    );
+    trace_dispatch_cases(format!("scalar_ops/{label}/ln"), &positive_cases, |value| {
+        let _ = black_box(realistic_blas::ln(value.clone()).unwrap());
+    });
+    trace_dispatch_cases(
+        format!("scalar_ops/{label}/log10"),
+        &positive_cases,
+        |value| {
+            let _ = black_box(realistic_blas::log10(value.clone()).unwrap());
+        },
+    );
+    trace_dispatch_cases(
+        format!("scalar_ops/{label}/log10_abort"),
+        &positive_cases,
+        |value| {
+            let _ = black_box(realistic_blas::log10_with_abort(value.clone(), &signal).unwrap());
+        },
+    );
+    trace_dispatch_cases(format!("scalar_ops/{label}/sqrt"), &positive_cases, |value| {
+        let _ = black_box(realistic_blas::sqrt(value.clone()).unwrap());
+    });
+    trace_dispatch_cases(format!("scalar_ops/{label}/sin"), &trig_cases, |value| {
+        let _ = black_box(realistic_blas::sin(value.clone()));
+    });
+    trace_dispatch_cases(format!("scalar_ops/{label}/cos"), &trig_cases, |value| {
+        let _ = black_box(realistic_blas::cos(value.clone()));
+    });
+    trace_dispatch_cases(format!("scalar_ops/{label}/tan"), &trig_cases, |value| {
+        let _ = black_box(realistic_blas::tan(value.clone()).unwrap());
+    });
+    trace_dispatch_cases(
+        format!("scalar_ops/{label}/sinh"),
+        &hyperbolic_cases,
+        |value| {
+            let _ = black_box(realistic_blas::sinh(value.clone()).unwrap());
+        },
+    );
+    trace_dispatch_cases(
+        format!("scalar_ops/{label}/cosh"),
+        &hyperbolic_cases,
+        |value| {
+            let _ = black_box(realistic_blas::cosh(value.clone()).unwrap());
+        },
+    );
+    trace_dispatch_cases(
+        format!("scalar_ops/{label}/tanh"),
+        &hyperbolic_cases,
+        |value| {
+            let _ = black_box(realistic_blas::tanh(value.clone()).unwrap());
+        },
+    );
+    trace_dispatch_cases(
+        format!("scalar_ops/{label}/asin"),
+        &unit_interval_cases,
+        |value| {
+            let _ = black_box(realistic_blas::asin(value.clone()).unwrap());
+        },
+    );
+    trace_dispatch_cases(
+        format!("scalar_ops/{label}/asin_abort"),
+        &unit_interval_cases,
+        |value| {
+            let _ = black_box(realistic_blas::asin_with_abort(value.clone(), &signal).unwrap());
+        },
+    );
+    trace_dispatch_cases(
+        format!("scalar_ops/{label}/acos"),
+        &unit_interval_cases,
+        |value| {
+            let _ = black_box(realistic_blas::acos(value.clone()).unwrap());
+        },
+    );
+    trace_dispatch_cases(
+        format!("scalar_ops/{label}/acos_abort"),
+        &unit_interval_cases,
+        |value| {
+            let _ = black_box(realistic_blas::acos_with_abort(value.clone(), &signal).unwrap());
+        },
+    );
+    trace_dispatch_cases(format!("scalar_ops/{label}/atan"), &trig_cases, |value| {
+        let _ = black_box(realistic_blas::atan(value.clone()).unwrap());
+    });
+    trace_dispatch_cases(
+        format!("scalar_ops/{label}/atan_abort"),
+        &trig_cases,
+        |value| {
+            let _ = black_box(realistic_blas::atan_with_abort(value.clone(), &signal).unwrap());
+        },
+    );
+    trace_dispatch_cases(format!("scalar_ops/{label}/asinh"), &trig_cases, |value| {
+        let _ = black_box(realistic_blas::asinh(value.clone()).unwrap());
+    });
+    trace_dispatch_cases(
+        format!("scalar_ops/{label}/asinh_abort"),
+        &trig_cases,
+        |value| {
+            let _ = black_box(realistic_blas::asinh_with_abort(value.clone(), &signal).unwrap());
+        },
+    );
+    trace_dispatch_cases(format!("scalar_ops/{label}/acosh"), &acosh_cases, |value| {
+        let _ = black_box(realistic_blas::acosh(value.clone()).unwrap());
+    });
+    trace_dispatch_cases(
+        format!("scalar_ops/{label}/acosh_abort"),
+        &acosh_cases,
+        |value| {
+            let _ = black_box(realistic_blas::acosh_with_abort(value.clone(), &signal).unwrap());
+        },
+    );
+    trace_dispatch_cases(
+        format!("scalar_ops/{label}/atanh"),
+        &unit_interval_cases,
+        |value| {
+            let _ = black_box(realistic_blas::atanh(value.clone()).unwrap());
+        },
+    );
+    trace_dispatch_cases(
+        format!("scalar_ops/{label}/atanh_abort"),
+        &unit_interval_cases,
+        |value| {
+            let _ = black_box(realistic_blas::atanh_with_abort(value.clone(), &signal).unwrap());
+        },
+    );
+
     group.bench_function(format!("{label}/zero"), |b| {
         b.iter(|| black_box(Scalar::<B>::zero()))
     });
