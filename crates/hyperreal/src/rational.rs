@@ -264,6 +264,16 @@ impl Rational {
         self.denominator == *ONE.deref()
     }
 
+    #[inline]
+    pub(crate) fn is_one(&self) -> bool {
+        self.sign == Plus && self.numerator == *ONE.deref() && self.denominator == *ONE.deref()
+    }
+
+    #[inline]
+    pub(crate) fn is_minus_one(&self) -> bool {
+        self.sign == Minus && self.numerator == *ONE.deref() && self.denominator == *ONE.deref()
+    }
+
     /// The integer part of this Rational.
     ///
     /// Non integer rationals will thus be truncated towards zero

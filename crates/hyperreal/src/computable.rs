@@ -464,6 +464,17 @@ static INVERSE_ENDPOINT_RATIONAL_THRESHOLD: LazyLock<Rational> =
     LazyLock::new(|| Rational::fraction(7, 8).unwrap());
 
 impl Computable {
+    /// Exactly zero.
+    pub fn zero() -> Computable {
+        Self {
+            internal: Box::new(Approximation::Int(BigInt::zero())),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Valid(BoundInfo::Zero)),
+            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::NoSign)),
+            signal: None,
+        }
+    }
+
     /// Exactly one.
     pub fn one() -> Computable {
         Self {
@@ -721,6 +732,18 @@ impl Computable {
 
     /// Any Rational.
     pub fn rational(r: Rational) -> Computable {
+        if r.sign() == Sign::NoSign {
+            // Canonicalize rational zero at construction time. This exposes
+            // exact sign/zero facts immediately and avoids a Ratio leaf in the
+            // many higher-level code paths that still call `rational(0)`.
+            return Self::zero();
+        }
+        if r.is_one() {
+            // Route rational one through the dedicated One node so callers that
+            // import exact f64/integer identities get the same cheap constructor
+            // and structural facts as `Computable::one()`.
+            return Self::one();
+        }
         Self {
             internal: Box::new(Approximation::Ratio(r)),
             cache: RefCell::new(Cache::Invalid),
@@ -733,7 +756,7 @@ impl Computable {
 
 impl Computable {
     pub(crate) fn exp_rational(r: Rational) -> Self {
-        if r == Rational::one() {
+        if r.is_one() {
             // e^1 is hot enough to route to the shared e cache.
             Self::e_constant()
         } else {
@@ -1383,11 +1406,7 @@ impl Computable {
 
     /// Natural Exponential function, raise Euler's Number to this number.
     pub fn exp(self) -> Computable {
-        if self
-            .exact_rational()
-            .as_ref()
-            .is_some_and(|r| *r == Rational::one())
-        {
+        if self.exact_rational().as_ref().is_some_and(Rational::is_one) {
             // e^1 is the shared cached constant, not a fresh PrescaledExp node.
             return Self::e_constant();
         }
@@ -1637,7 +1656,7 @@ impl Computable {
     pub fn sin(self) -> Computable {
         if let Some(rational) = self.exact_rational() {
             if rational.sign() == Sign::NoSign {
-                return Self::rational(Rational::zero());
+                return Self::zero();
             }
             if let Some(magnitude) = Self::exact_rational_half_pi_shortcut_magnitude(&rational) {
                 // sin(r) = +/-cos(pi/2 - |r|) in the same exact medium window
@@ -1724,7 +1743,7 @@ impl Computable {
             .exact_rational()
             .is_some_and(|r| r.sign() == Sign::NoSign)
         {
-            return Self::rational(Rational::zero());
+            return Self::zero();
         }
         if self.planning_sign_and_msd().0 == Some(Sign::Minus) {
             // Odd symmetry lets known-negative values reuse the positive reducer
@@ -1792,8 +1811,8 @@ impl Computable {
         // Internal exact-rational log constructor for reductions that already
         // have a positive rational argument. It reuses the shared small-log
         // constants instead of building fresh generic PrescaledLn trees.
-        if rational == Rational::one() {
-            return Self::rational(Rational::zero());
+        if rational.is_one() {
+            return Self::zero();
         }
         if rational.sign() == Sign::Minus || rational.sign() == Sign::NoSign {
             panic!("ArithmeticException");
@@ -1824,8 +1843,8 @@ impl Computable {
 
     /// Natural logarithm of this number.
     pub fn ln(self) -> Computable {
-        if self.exact_rational().is_some_and(|r| r == Rational::one()) {
-            return Self::rational(Rational::zero());
+        if self.exact_rational().is_some_and(|r| r.is_one()) {
+            return Self::zero();
         }
         if let Approximation::Ratio(r) = &*self.internal
             && r.sign() == Sign::Plus
@@ -1834,7 +1853,7 @@ impl Computable {
             if shift != 0 {
                 // ln(r * 2^k) = ln(r) + k ln(2). Pulling dyadic scale out keeps
                 // f64-derived rationals on a cheap symbolic/log path.
-                let reduced_ln = if reduced == Rational::one() {
+                let reduced_ln = if reduced.is_one() {
                     Self::integer(BigInt::zero())
                 } else {
                     Self::rational(reduced).ln()
@@ -1936,7 +1955,7 @@ impl Computable {
             match child.exact_sign() {
                 Some(Sign::Plus) => return child.clone(),
                 Some(Sign::Minus) => return child.clone().negate(),
-                Some(Sign::NoSign) => return Self::rational(Rational::zero()),
+                Some(Sign::NoSign) => return Self::zero(),
                 None => {}
             }
         }
@@ -1945,7 +1964,7 @@ impl Computable {
                 // Recognize c*x^2 where c is an exact square, preserving the symbolic x
                 // instead of introducing a generic sqrt node.
                 let (root, rest) = scale.extract_square_reduced();
-                if rest != Rational::one() {
+                if !rest.is_one() {
                     return None;
                 }
                 let Approximation::Square(child) = square_side.internal.as_ref() else {
@@ -1956,7 +1975,7 @@ impl Computable {
                     Some(Sign::Minus) => {
                         Some(child.clone().negate().multiply(Self::rational(root)))
                     }
-                    Some(Sign::NoSign) => Some(Self::rational(Rational::zero())),
+                    Some(Sign::NoSign) => Some(Self::zero()),
                     None => None,
                 }
             };
@@ -1978,7 +1997,7 @@ impl Computable {
         {
             // Perfect rational squares stay exact.
             let (root, rest) = rational.extract_square_reduced();
-            if rest == Rational::one() {
+            if rest.is_one() {
                 return Self::rational(root);
             }
         }
@@ -2007,7 +2026,7 @@ impl Computable {
     pub fn atan(self) -> Computable {
         if let Some(rational) = self.exact_rational() {
             if rational.sign() == Sign::NoSign {
-                return Self::rational(Rational::zero());
+                return Self::zero();
             }
             if rational.sign() == Sign::Plus
                 && let Some(msd) = rational.msd_exact()
@@ -2069,7 +2088,7 @@ impl Computable {
     pub fn asin(self) -> Computable {
         if let Some(rational) = self.exact_rational() {
             match rational.sign() {
-                Sign::NoSign => return Self::rational(Rational::zero()),
+                Sign::NoSign => return Self::zero(),
                 Sign::Minus => return self.negate().asin().negate(),
                 Sign::Plus => {
                     if rational.msd_exact().is_some_and(|msd| msd <= -4) {
@@ -2106,8 +2125,8 @@ impl Computable {
     /// Inverse cosine of this number.
     pub fn acos(self) -> Computable {
         if let Some(rational) = self.exact_rational() {
-            if rational == Rational::one() {
-                return Self::rational(Rational::zero());
+            if rational.is_one() {
+                return Self::zero();
             }
             if rational == Rational::new(-1) {
                 return Self::pi();
@@ -2147,7 +2166,7 @@ impl Computable {
             .as_ref()
             .is_some_and(|r| r.sign() == Sign::NoSign)
         {
-            return Self::rational(Rational::zero());
+            return Self::zero();
         }
         let (known_sign, planned_msd) = self.planning_sign_and_msd();
         if exact_rational
@@ -2190,16 +2209,16 @@ impl Computable {
     /// ensuring the input is in-domain.
     pub fn acosh(self) -> Computable {
         let exact_rational_msd = match self.internal.as_ref() {
-            Approximation::One => return Self::rational(Rational::zero()),
+            Approximation::One => return Self::zero(),
             Approximation::Ratio(r) => {
-                if r == &Rational::one() {
-                    return Self::rational(Rational::zero());
+                if r.is_one() {
+                    return Self::zero();
                 }
                 r.msd_exact()
             }
             Approximation::Int(n) => {
                 if n == signed::ONE.deref() {
-                    return Self::rational(Rational::zero());
+                    return Self::zero();
                 }
                 if n.sign() == Sign::NoSign {
                     None
@@ -2238,7 +2257,7 @@ impl Computable {
     pub fn atanh(self) -> Computable {
         if let Some(rational) = self.exact_rational() {
             match rational.sign() {
-                Sign::NoSign => return Self::rational(Rational::zero()),
+                Sign::NoSign => return Self::zero(),
                 Sign::Minus => return self.negate().atanh().negate(),
                 Sign::Plus => {
                     if rational.msd_exact().is_some_and(|msd| msd <= -4) {
@@ -2251,7 +2270,7 @@ impl Computable {
                             signal: None,
                         };
                     }
-                    if rational != Rational::one() {
+                    if !rational.is_one() {
                         // For exact rationals, atanh(x) is one exact ln ratio.
                         // That keeps common factors in the logarithm constructor
                         // instead of building a generic quotient Computable first.
@@ -2414,20 +2433,20 @@ impl Computable {
             || matches!(right_exact.as_ref(), Some(r) if r.sign() == Sign::NoSign)
         {
             // Zero annihilates without preserving the other expression tree.
-            return Self::rational(Rational::zero());
+            return Self::zero();
         }
-        if matches!(left_exact.as_ref(), Some(r) if *r == Rational::one()) {
+        if matches!(left_exact.as_ref(), Some(r) if r.is_one()) {
             // Multiplication by +/-1 stays as identity/negate so downstream exact-sign
             // queries still see the original structure.
             return other;
         }
-        if matches!(right_exact.as_ref(), Some(r) if *r == Rational::one()) {
+        if matches!(right_exact.as_ref(), Some(r) if r.is_one()) {
             return self;
         }
-        if matches!(left_exact.as_ref(), Some(r) if *r == Rational::one().neg()) {
+        if matches!(left_exact.as_ref(), Some(r) if r.is_minus_one()) {
             return other.negate();
         }
-        if matches!(right_exact.as_ref(), Some(r) if *r == Rational::one().neg()) {
+        if matches!(right_exact.as_ref(), Some(r) if r.is_minus_one()) {
             return self.negate();
         }
         if let Some((shift, sign)) = left_exact.as_ref().and_then(Rational::power_of_two_shift) {
@@ -2494,12 +2513,12 @@ impl Computable {
         if scale.sign() == Sign::NoSign {
             // Multiplying by zero drops the expression tree, including any
             // pending expensive approximation work.
-            return Self::rational(Rational::zero());
+            return Self::zero();
         }
-        if scale == Rational::one() {
+        if scale.is_one() {
             return self;
         }
-        if scale == Rational::one().neg() {
+        if scale.is_minus_one() {
             return self.negate();
         }
         if let Some((shift, sign)) = scale.power_of_two_shift() {
@@ -3135,6 +3154,22 @@ mod tests {
         assert_eq!(six, a.approx(-1));
         assert_eq!(thirteen, a.approx(-2));
         assert_eq!(Some((-7, four_zero_two)), a.cached());
+    }
+
+    #[test]
+    fn rational_zero_and_one_use_dedicated_nodes() {
+        let zero = Computable::rational(Rational::zero());
+        let one = Computable::rational(Rational::one());
+
+        // These identities are pervasive in higher-level constructors. Keep
+        // them on the dedicated nodes so structural facts are available without
+        // forcing the generic Ratio approximation path.
+        assert!(matches!(*zero.internal, Approximation::Int(ref value) if value.is_zero()));
+        assert!(matches!(*one.internal, Approximation::One));
+        assert_eq!(zero.zero_status(), ZeroKnowledge::Zero);
+        assert_eq!(one.zero_status(), ZeroKnowledge::NonZero);
+        assert_eq!(zero.exact_sign(), Some(Sign::NoSign));
+        assert_eq!(one.exact_sign(), Some(Sign::Plus));
     }
 
     #[test]

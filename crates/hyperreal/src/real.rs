@@ -954,7 +954,7 @@ impl Real {
         // Small rational multiples of pi have compact exact forms. Keep these symbolic so
         // later algebra and predicate queries avoid generic trig evaluation.
         if denominator == unsigned::TWO.deref() {
-            exact = Some(Self::new(Rational::one()));
+            exact = Some(Self::one());
         }
         if denominator == unsigned::THREE.deref() {
             exact = Some(constants::sqrt_three_over_two());
@@ -1283,7 +1283,7 @@ impl Real {
     /// Apply the exponential function to this Real parameter.
     pub fn exp(self) -> Result<Real, Problem> {
         if self.definitely_zero() {
-            return Ok(Self::new(Rational::one()));
+            return Ok(Self::one());
         }
         match &self.class {
             One => {
@@ -1533,7 +1533,7 @@ impl Real {
     /// The cosine of this Real.
     pub fn cos(self) -> Real {
         if self.definitely_zero() {
-            return Self::new(Rational::one());
+            return Self::one();
         }
         match &self.class {
             One => {
@@ -1600,7 +1600,7 @@ impl Real {
                     r = Some(constants::sqrt_three());
                 }
                 if d == unsigned::FOUR.deref() {
-                    r = Some(Self::new(Rational::one()));
+                    r = Some(Self::one());
                 }
                 if d == unsigned::SIX.deref() {
                     r = Some(constants::sqrt_three_over_three());
@@ -1789,7 +1789,7 @@ impl Real {
         }
 
         // Generic identity asin(x) = atan(x / sqrt(1-x^2)).
-        let one = Self::new(Rational::one());
+        let one = Self::one();
         let radicand = one.clone() - self.clone().powi(BigInt::from(2_u8))?;
         let denominator = radicand.sqrt().map_err(|problem| match problem {
             Problem::SqrtNegative => Problem::NotANumber,
@@ -1889,7 +1889,7 @@ impl Real {
                 return Err(Problem::NotANumber);
             }
         } else {
-            let one = Self::new(Rational::one());
+            let one = Self::one();
             if (self.clone() - one).best_sign() == Sign::Minus {
                 return Err(Problem::NotANumber);
             }
@@ -1911,7 +1911,7 @@ impl Real {
         if self.definitely_zero() {
             return Ok(Self::zero());
         }
-        let one_real = Self::new(Rational::one());
+        let one_real = Self::one();
         if self == one_real || self == -one_real.clone() {
             return Err(Problem::Infinity);
         }
@@ -1958,7 +1958,7 @@ impl Real {
             // factored radical can still be recognized by lower constructors.
             return Ok(self.make_computable(Computable::atanh));
         }
-        let one = Self::new(Rational::one());
+        let one = Self::one();
         let numerator = one.clone() + self.clone();
         let denominator = one - self;
         Ok((numerator / denominator)?.ln()? * Self::new(Rational::fraction(1, 2).unwrap()))
@@ -1967,7 +1967,7 @@ impl Real {
     fn recursive_powi(base: &Real, exp: &BigUint) -> Self {
         // Fallback for sign-unknown integer powers: repeated squaring is cheaper and more
         // exact than forcing ln/exp through a value whose sign cannot be certified.
-        let mut result = Self::new(Rational::one());
+        let mut result = Self::one();
         let mut factor = base.clone();
         let bits = exp.bits();
         for b in 0..bits {
@@ -2055,7 +2055,7 @@ impl Real {
             if self.definitely_zero() {
                 return Err(Problem::NotANumber);
             } else {
-                return Ok(Self::new(Rational::one()));
+                return Ok(Self::one());
             }
         }
         if exp.sign() == Sign::Minus && self.definitely_zero() {

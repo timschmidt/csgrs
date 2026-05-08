@@ -348,7 +348,7 @@ impl Simple {
                 }
                 let mut operands = self.operands.iter();
                 let Some(first) = operands.next() else {
-                    return Ok(Real::new(Rational::one()));
+                    return Ok(Real::one());
                 };
                 let mut value = first.value(names)?;
                 for operand in operands {
