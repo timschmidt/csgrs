@@ -678,6 +678,9 @@ mod matrix;
 mod scalar;
 mod vector;
 
+#[cfg(feature = "arbitrary")]
+mod arbitrary_impls;
+
 pub use complex::Complex;
 pub use matrix::{Matrix3, Matrix4};
 pub use scalar::*;

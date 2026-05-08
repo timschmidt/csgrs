@@ -1,0 +1,6 @@
+# cargo
+target
+Cargo.lock
+# fuzz
+corpus
+artifacts

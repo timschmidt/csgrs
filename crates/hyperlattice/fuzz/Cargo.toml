@@ -1,0 +1,41 @@
+[package]
+name = "realistic_blas-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+# Declare a standalone workspace so this crate is not included in the parent
+# workspace's dependency graph during normal builds.
+[workspace]
+
+[dependencies]
+libfuzzer-sys = "0.4"
+arbitrary = { version = "1", features = ["derive"] }
+realistic_blas = { path = "..", default-features = false, features = ["arbitrary", "approx-backend", "hyperreal-backend"] }
+
+[[bin]]
+name = "scalar_ops"
+path = "fuzz_targets/scalar_ops.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "complex_ops"
+path = "fuzz_targets/complex_ops.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "vector_ops"
+path = "fuzz_targets/vector_ops.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "matrix_ops"
+path = "fuzz_targets/matrix_ops.rs"
+test = false
+doc = false
