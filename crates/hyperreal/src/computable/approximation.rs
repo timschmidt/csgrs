@@ -60,6 +60,14 @@ pub(super) enum Approximation {
     // reductions without constructing a rational reciprocal node.
     IntegralAtan(BigInt),
     PrescaledAtan(Computable),
+    // Exact rational atan inputs are common in scalar benches. A single
+    // deferred node performs the same small/medium/large reductions as
+    // Computable::atan without allocating the intermediate add/divide graph.
+    AtanRational(Rational),
+    // Tiny exact rational asin inputs use the direct power series. Keeping the
+    // rational in the node avoids a child Computable::approx call before
+    // entering that series.
+    AsinRational(Rational),
     PrescaledAsin(Computable),
     AcosPositive(Computable),
     AcoshNearOne(Computable),
@@ -80,13 +88,17 @@ pub(super) enum Approximation {
     // approximation lazy until the caller asks for a precision.
     PrescaledCosHalfPiMinusRational(Rational),
     PrescaledSin(Computable),
-    // Same lazy large-rational policy as cosine. Standalone sine still enters
-    // the generic reducer because direct residual arithmetic did not benchmark
-    // faster unless tangent can reuse one reduction for both sin and cos.
+    // Same lazy large-rational policy as cosine. Approximation uses direct
+    // half-pi residual arithmetic so construction-included scalar benches do
+    // not pay for an eager reduced expression tree.
     SinLargeRational(Rational),
     // Sine shares the same exact residual representation as cosine so the
     // endpoint identities stay cheap without a generic subtraction node.
     PrescaledSinHalfPiMinusRational(Rational),
+    // Exact medium tangent inputs near pi/2 use cot(pi/2 - r). This direct
+    // residual node avoids allocating the complement before entering the local
+    // quotient kernel.
+    PrescaledCotHalfPiMinusRational(Rational),
     // Tangent gets its own large-rational node because the generic path first
     // builds a pi-reduced residual and then a quotient tree. The direct kernel
     // below reuses the same half-pi residual as sin/cos and divides locally.
@@ -153,6 +165,8 @@ impl Approximation {
             PrescaledLn(c) => ln(signal, c, p),
             IntegralAtan(i) => atan(signal, i, p),
             PrescaledAtan(c) => atan_computable(signal, c, p),
+            AtanRational(r) => atan_rational(signal, r, p),
+            AsinRational(r) => asin_rational(signal, r, p),
             PrescaledAsin(c) => asin_computable(signal, c, p),
             AcosPositive(c) => acos_positive(signal, c, p),
             AcoshNearOne(c) => acosh_near_one(signal, c, p),
@@ -168,6 +182,7 @@ impl Approximation {
             PrescaledSin(c) => sin(signal, c, p),
             SinLargeRational(r) => sin_large_rational(signal, r, p),
             PrescaledSinHalfPiMinusRational(r) => sin_half_pi_minus_rational(signal, r, p),
+            PrescaledCotHalfPiMinusRational(r) => cot_half_pi_minus_rational(signal, r, p),
             TanLargeRational(r) => tan_large_rational(signal, r, p),
             PrescaledTan(c) => tan(signal, c, p),
             PrescaledCot(c) => cot(signal, c, p),
@@ -829,12 +844,17 @@ fn sin_large_rational_residual(
 }
 
 fn cos_large_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
-    // Benchmarking showed that direct residual arithmetic is not faster for
-    // standalone large sin/cos nodes: the generic reducer's existing caches and
-    // correction path still win. Keep this node construction-lazy only.
-    Computable::rational(r.clone())
-        .cos()
-        .approx_signal(signal, p)
+    // Construction-included benches pay heavily for eager half-pi reduction on
+    // large exact rationals. Use the direct residual kernels here so the public
+    // constructor can stay lazy without recursing back through Computable::cos.
+    let multiple = large_rational_half_pi_multiple(signal, r);
+    match large_rational_quadrant(&multiple).to_u8() {
+        Some(0) => cos_large_rational_residual(signal, r, &multiple, p),
+        Some(1) => -sin_large_rational_residual(signal, r, &multiple, p),
+        Some(2) => -cos_large_rational_residual(signal, r, &multiple, p),
+        Some(3) => sin_large_rational_residual(signal, r, &multiple, p),
+        _ => unreachable!("quadrant reduction is modulo four"),
+    }
 }
 
 fn half_pi_minus_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
@@ -942,11 +962,17 @@ fn sin(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
 }
 
 fn sin_large_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
-    // See cos_large_rational: direct residual kernels are kept for tangent,
-    // where the quotient can reuse one reduction, but not for standalone sine.
-    Computable::rational(r.clone())
-        .sin()
-        .approx_signal(signal, p)
+    // Same lazy public-construction policy as cosine. The direct residual
+    // arithmetic avoids allocating the generic reduced expression tree while
+    // preserving the standard quadrant identities.
+    let multiple = large_rational_half_pi_multiple(signal, r);
+    match large_rational_quadrant(&multiple).to_u8() {
+        Some(0) => sin_large_rational_residual(signal, r, &multiple, p),
+        Some(1) => cos_large_rational_residual(signal, r, &multiple, p),
+        Some(2) => -sin_large_rational_residual(signal, r, &multiple, p),
+        Some(3) => -cos_large_rational_residual(signal, r, &multiple, p),
+        _ => unreachable!("quadrant reduction is modulo four"),
+    }
 }
 
 // Compute sine of pi/2 - r for exact 1 <= r < 3/2.
@@ -986,6 +1012,34 @@ fn sin_half_pi_minus_rational(signal: &Option<Signal>, r: &Rational, p: Precisio
         current_sum += &current_term;
     }
     scale(current_sum, calc_precision - p)
+}
+
+fn cot_half_pi_minus_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
+    // tan(r) near pi/2 is cot(pi/2-r). Reusing the direct exact-rational
+    // residual for both numerator and denominator avoids the generic
+    // PrescaledCot(Offset(pi/2, -r)) expression graph.
+    if p >= 1 {
+        return Zero::zero();
+    }
+
+    let working_prec = p - 8;
+    let sin_appr = sin_half_pi_minus_rational(signal, r, working_prec);
+    let cos_appr = cos_half_pi_minus_rational(signal, r, working_prec);
+    let abs_sin = sin_appr.abs();
+
+    if abs_sin.is_zero() {
+        panic!("ArithmeticException");
+    }
+
+    let scaled_numerator = cos_appr << -p;
+    let adjustment = &abs_sin >> 1;
+
+    if scaled_numerator.sign() == Sign::Minus {
+        let rounded: BigInt = ((-scaled_numerator) + adjustment) / abs_sin;
+        -rounded
+    } else {
+        (scaled_numerator + adjustment) / abs_sin
+    }
 }
 
 // Compute tangent of |c| < 1.
@@ -1246,6 +1300,120 @@ fn atan_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> Big
         current_term = scale(current_term * &op_squared, op_prec);
         current_term *= -(n - 2);
         current_term /= n;
+        sum += &current_term;
+    }
+
+    scale(sum, calc_precision - p)
+}
+
+fn atan_rational_small(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
+    // Same Taylor kernel as `atan_computable`, but exact rational leaves can
+    // provide the working approximation directly. This removes a Computable
+    // child approximation call from tiny and residual atan reductions.
+    if p >= 1 {
+        return Zero::zero();
+    }
+
+    let iterations_needed: i32 = -p / 2 + 4;
+    let calc_precision = p - bound_log2(2 * iterations_needed) - 5;
+    let op_prec = calc_precision - 3;
+    let op_appr = ratio(r, op_prec);
+    let op_squared = scale(&op_appr * &op_appr, op_prec);
+
+    let max_trunc_error = BigUint::one()
+        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
+    let mut current_term = scale(op_appr, op_prec - calc_precision);
+    let mut sum = current_term.clone();
+    let mut n = 1;
+
+    while current_term.magnitude() > &max_trunc_error {
+        if should_stop(signal) {
+            break;
+        }
+        n += 2;
+        current_term = scale(current_term * &op_squared, op_prec);
+        current_term *= -(n - 2);
+        current_term /= n;
+        sum += &current_term;
+    }
+
+    scale(sum, calc_precision - p)
+}
+
+fn atan_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
+    // Exact rational atan keeps the public constructor shallow and performs
+    // range reduction directly here. The identities are the same as
+    // Computable::atan: odd symmetry, atan(x)=pi/2-atan(1/x) for x>=2, and
+    // atan(x)=atan(1/2)+atan((x-1/2)/(1+x/2)) in the middle interval.
+    crate::trace_dispatch!("computable_approx", "atan", "exact-rational-reduction");
+    match r.sign() {
+        Sign::NoSign => return Zero::zero(),
+        Sign::Minus => return -atan_rational(signal, &(-r.clone()), p),
+        Sign::Plus => {}
+    }
+
+    if r.numerator() == &BigUint::one() {
+        let denominator = BigInt::from_biguint(Sign::Plus, r.denominator().clone());
+        if denominator > *signed::ONE.deref() {
+            return atan(signal, &denominator, p);
+        }
+    }
+
+    let half = Rational::fraction(1, 2).expect("1/2 is a valid rational");
+    if r <= &half {
+        return atan_rational_small(signal, r, p);
+    }
+
+    if r.msd_exact().is_some_and(|msd| msd >= 1) {
+        let extra = 3;
+        let work_precision = p - extra;
+        let half_pi = Computable::pi().approx_signal(signal, work_precision + 1);
+        let reciprocal = r.clone().inverse().expect("positive rational is nonzero");
+        let reduced = atan_rational(signal, &reciprocal, work_precision);
+        return scale(half_pi - reduced, -extra);
+    }
+
+    let extra = 3;
+    let work_precision = p - extra;
+    let anchor = atan(signal, &BigInt::from(2_u8), work_precision);
+    let numerator = r.clone() - half.clone();
+    let denominator = Rational::one() + r.clone() * half;
+    let residual = numerator / denominator;
+    let reduced = atan_rational_small(signal, &residual, work_precision);
+    scale(anchor + reduced, -extra)
+}
+
+fn asin_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
+    // Exact rational asin uses the same direct series as `asin_computable`, but
+    // bypasses the child Computable approximation. This is only selected after
+    // construction certifies a tiny/moderate positive input, so the series
+    // remains convergent enough to beat the generic sqrt/atan transform.
+    if p >= 1 {
+        return Zero::zero();
+    }
+
+    let iterations_needed: i32 = -p / 2 + 4;
+    let calc_precision = p - bound_log2(2 * iterations_needed) - 5;
+    let op_prec = calc_precision - 3;
+    let op_appr = ratio(r, op_prec);
+    let op_squared = scale(&op_appr * &op_appr, op_prec);
+
+    let max_trunc_error = BigUint::one()
+        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
+    let mut current_term = scale(op_appr, op_prec - calc_precision);
+    let mut sum = current_term.clone();
+    let mut n = 0_i32;
+
+    while current_term.magnitude() > &max_trunc_error {
+        if should_stop(signal) {
+            break;
+        }
+        n += 1;
+        current_term = scale(current_term * &op_squared, op_prec);
+        let numerator = (2 * n - 1) * (2 * n - 1);
+        let denominator = (2 * n) * (2 * n + 1);
+        current_term *= numerator;
+        current_term /= denominator;
         sum += &current_term;
     }
 
