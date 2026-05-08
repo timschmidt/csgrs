@@ -184,6 +184,8 @@ cargo bench --bench adversarial_transcendentals
 ```
 
 The generated benchmark summary is in [`benchmarks.md`](./benchmarks.md).
+Hand-maintained profiling anchors and regression goals for the `Rational`,
+`Real`, and `Computable` paths are in [`PERFORMANCE.md`](./PERFORMANCE.md).
 
 Run dispatch tracing separately:
 

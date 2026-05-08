@@ -567,6 +567,21 @@ impl Computable {
         }
     }
 
+    fn prescaled_cos_rational(rational: Rational) -> Computable {
+        // Small exact-rational cosine construction is a scalar hot path. Store
+        // the rational directly so construction avoids a child Ratio node; the
+        // approximation dispatcher materializes the same kernel input later if
+        // digits are requested.
+        crate::trace_dispatch!("computable", "constructor", "prescaled-cos-rational");
+        Self {
+            internal: Box::new(Approximation::PrescaledCosRational(rational)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            signal: None,
+        }
+    }
+
     pub(crate) fn cos_large_rational_deferred(rational: Rational) -> Computable {
         // Real::cos for large plain rationals defers the expensive half-pi
         // reduction until digits are requested. This keeps construction and
@@ -676,6 +691,34 @@ impl Computable {
             cache: RefCell::new(Cache::Invalid),
             bound: RefCell::new(BoundCache::Invalid),
             exact_sign: RefCell::new(ExactSignCache::Invalid),
+            signal: None,
+        }
+    }
+
+    fn prescaled_sin_rational(rational: Rational) -> Computable {
+        // Small exact-rational sine construction mirrors cosine and preserves
+        // the exact sign without allocating a child Computable.
+        crate::trace_dispatch!("computable", "constructor", "prescaled-sin-rational");
+        let sign = rational.sign();
+        Self {
+            internal: Box::new(Approximation::PrescaledSinRational(rational)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Valid(sign)),
+            signal: None,
+        }
+    }
+
+    fn prescaled_tan_rational(rational: Rational) -> Computable {
+        // Small exact-rational tangent uses the same construction shortcut as
+        // sine; sign follows the rational argument on the reduced interval.
+        crate::trace_dispatch!("computable", "constructor", "prescaled-tan-rational");
+        let sign = rational.sign();
+        Self {
+            internal: Box::new(Approximation::PrescaledTanRational(rational)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Valid(sign)),
             signal: None,
         }
     }
@@ -1071,6 +1114,12 @@ impl Computable {
             Approximation::Ratio(r) => Some(BoundInfo::from_rational(r)),
             Approximation::AtanRational(r) => Some(BoundInfo::with_sign_msd(r.sign(), None, false)),
             Approximation::AsinRational(r) => Some(BoundInfo::with_sign_msd(r.sign(), None, false)),
+            Approximation::PrescaledSinRational(r) | Approximation::PrescaledTanRational(r) => {
+                Some(BoundInfo::with_sign_msd(r.sign(), None, false))
+            }
+            Approximation::PrescaledCosRational(_) => {
+                Some(BoundInfo::with_sign_msd(Sign::Plus, None, false))
+            }
             Approximation::PrescaledCosHalfPiMinusRational(_)
             | Approximation::PrescaledSinHalfPiMinusRational(_)
             | Approximation::PrescaledCotHalfPiMinusRational(_) => {
@@ -1153,6 +1202,12 @@ impl Computable {
                 }
                 Approximation::AsinRational(r) => {
                     Some(BoundInfo::with_sign_msd(r.sign(), None, false))
+                }
+                Approximation::PrescaledSinRational(r) | Approximation::PrescaledTanRational(r) => {
+                    Some(BoundInfo::with_sign_msd(r.sign(), None, false))
+                }
+                Approximation::PrescaledCosRational(_) => {
+                    Some(BoundInfo::with_sign_msd(Sign::Plus, None, false))
                 }
                 Approximation::PrescaledCosHalfPiMinusRational(_)
                 | Approximation::PrescaledSinHalfPiMinusRational(_)
@@ -1334,6 +1389,10 @@ impl Computable {
                 Approximation::IntegralAtan(n) => Some(Some(n.sign())),
                 Approximation::AtanRational(r) => Some(Some(r.sign())),
                 Approximation::AsinRational(r) => Some(Some(r.sign())),
+                Approximation::PrescaledSinRational(r) | Approximation::PrescaledTanRational(r) => {
+                    Some(Some(r.sign()))
+                }
+                Approximation::PrescaledCosRational(_) => Some(Some(Sign::Plus)),
                 Approximation::PrescaledCosHalfPiMinusRational(_)
                 | Approximation::PrescaledSinHalfPiMinusRational(_)
                 | Approximation::PrescaledCotHalfPiMinusRational(_) => Some(Some(Sign::Plus)),
@@ -1990,6 +2049,88 @@ impl Computable {
             Self::pi().multiply(Self::rational(Rational::from_bigint(multiplier)).negate());
         crate::trace_dispatch!("computable", "tan", "generic-pi-reduction");
         self.add(adjustment).tan()
+    }
+
+    pub(crate) fn sin_rational(rational: Rational) -> Computable {
+        // Real-level rational trig already owns the Rational. Classify it here
+        // so hot scalar constructors skip Ratio allocation followed by the same
+        // exact-rational rediscovery inside Computable::sin.
+        if rational.sign() == Sign::NoSign {
+            crate::trace_dispatch!("computable", "sin", "exact-zero");
+            return Self::zero();
+        }
+        if rational.magnitude_at_least_power_of_two(3) {
+            crate::trace_dispatch!("computable", "sin", "large-rational-deferred");
+            return Self::sin_large_rational_deferred(rational);
+        }
+        if let Some(magnitude) = Self::exact_rational_half_pi_shortcut_magnitude(&rational) {
+            crate::trace_dispatch!("computable", "sin", "medium-rational-half-pi-rewrite");
+            let result = Self::prescaled_cos_half_pi_minus_rational(magnitude);
+            return if rational.sign() == Sign::Minus {
+                result.negate()
+            } else {
+                result
+            };
+        }
+        if rational.msd_exact().is_some_and(|msd| msd < 0) {
+            crate::trace_dispatch!("computable", "sin", "structural-small-prescaled");
+            return Self::prescaled_sin_rational(rational);
+        }
+        crate::trace_dispatch!("computable", "sin", "owned-rational-generic");
+        Self::rational(rational).sin()
+    }
+
+    pub(crate) fn cos_rational(rational: Rational) -> Computable {
+        // Owned rational cosine mirrors sin_rational. Keeping the branch table
+        // shared at this level removes a constructor-only Ratio node from every
+        // plain Real::cos(rational) call without changing approximation kernels.
+        if rational.sign() == Sign::NoSign {
+            crate::trace_dispatch!("computable", "cos", "exact-zero-one");
+            return Self::one();
+        }
+        if rational.magnitude_at_least_power_of_two(3) {
+            crate::trace_dispatch!("computable", "cos", "large-rational-deferred");
+            return Self::cos_large_rational_deferred(rational);
+        }
+        if let Some(magnitude) = Self::exact_rational_half_pi_shortcut_magnitude(&rational) {
+            crate::trace_dispatch!("computable", "cos", "medium-rational-half-pi-rewrite");
+            return Self::prescaled_sin_half_pi_minus_rational(magnitude);
+        }
+        if rational.msd_exact().is_some_and(|msd| msd < 0) {
+            crate::trace_dispatch!("computable", "cos", "structural-small-prescaled");
+            return Self::prescaled_cos_rational(rational);
+        }
+        crate::trace_dispatch!("computable", "cos", "owned-rational-generic");
+        Self::rational(rational).cos()
+    }
+
+    pub(crate) fn tan_rational(rational: Rational) -> Computable {
+        // Tangent benefits most from classifying before Ratio construction: the
+        // generic path probes sign/MSD and may build symmetry wrappers before it
+        // reaches the small or near-pole kernel.
+        if rational.sign() == Sign::NoSign {
+            crate::trace_dispatch!("computable", "tan", "exact-zero");
+            return Self::zero();
+        }
+        if let Some(magnitude) = Self::exact_rational_half_pi_shortcut_magnitude(&rational) {
+            crate::trace_dispatch!("computable", "tan", "medium-rational-half-pi-cotangent");
+            let result = Self::prescaled_cot_half_pi_minus_rational(magnitude);
+            return if rational.sign() == Sign::Minus {
+                result.negate()
+            } else {
+                result
+            };
+        }
+        if rational.magnitude_at_least_power_of_two(3) {
+            crate::trace_dispatch!("computable", "tan", "large-rational-deferred");
+            return Self::tan_large_rational_deferred(rational);
+        }
+        if rational.msd_exact().is_some_and(|msd| msd < 0) {
+            crate::trace_dispatch!("computable", "tan", "structural-small-prescaled");
+            return Self::prescaled_tan_rational(rational);
+        }
+        crate::trace_dispatch!("computable", "tan", "owned-rational-generic");
+        Self::rational(rational).tan()
     }
 
     fn ln2() -> Self {
@@ -3920,6 +4061,33 @@ mod tests {
                 2,
             );
             assert_close(value.clone().negate().cos(), value.cos(), -96, 2);
+        }
+    }
+
+    #[test]
+    fn owned_rational_trig_helpers_match_generic_paths() {
+        for rational in [
+            Rational::fraction(-1, 5).unwrap(),
+            Rational::fraction(1, 5).unwrap(),
+            Rational::fraction(6, 5).unwrap(),
+            Rational::fraction(7, 5).unwrap(),
+            Rational::new(1_000_000),
+        ] {
+            let generic = Computable::rational(rational.clone());
+
+            assert_close(
+                Computable::sin_rational(rational.clone()),
+                generic.clone().sin(),
+                -80,
+                8,
+            );
+            assert_close(
+                Computable::cos_rational(rational.clone()),
+                generic.clone().cos(),
+                -80,
+                8,
+            );
+            assert_close(Computable::tan_rational(rational), generic.tan(), -80, 16);
         }
     }
 

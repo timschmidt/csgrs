@@ -766,13 +766,17 @@ impl Clone for Real {
         // work. Rebuild exact symbolic computables from the compact class
         // certificate; keep opaque irrational payloads and abort-attached values
         // as true clones because their graph shape or signal cannot be inferred.
-        let computable = if self.signal.is_some() || matches!(self.class, Irrational) {
-            self.computable.clone()
-        } else if matches!(self.class, One) {
-            None
-        } else {
-            Some(self.class.computable_certificate())
-        };
+        let computable =
+            if self.signal.is_some() || matches!(self.class, Irrational | ConstOffset(_)) {
+                // ConstOffset payloads are shallow enough to clone and expensive
+                // enough to rebuild that scalar rows like 1000*pi+eps regress if
+                // every clone reconstructs cached pi plus a rational offset tree.
+                self.computable.clone()
+            } else if matches!(self.class, One) {
+                None
+            } else {
+                Some(self.class.computable_certificate())
+            };
 
         Self {
             rational: self.rational.clone(),
@@ -924,6 +928,17 @@ impl Real {
             One => Some(self.rational.clone()),
             _ => None,
         }
+    }
+
+    /// Returns true when this value is exactly rational with a dyadic denominator.
+    ///
+    /// This borrowed query exists for matrix and predicate kernels that need a
+    /// representation heuristic without cloning the exact rational. Dyadic
+    /// rationals reduce by shifts in `Rational`, so algorithms with more
+    /// multiplications but fewer shared inverses can be profitable only on this
+    /// structural class.
+    pub fn is_exact_dyadic_rational(&self) -> bool {
+        matches!(self.class, One) && self.rational.is_dyadic()
     }
 
     /// Conservatively inspect public structural facts about this value.
@@ -1082,6 +1097,33 @@ impl Real {
             computable: Some(computable),
             signal: None,
         }
+    }
+
+    fn irrational_from_computable(computable: Computable) -> Self {
+        Self {
+            rational: Rational::one(),
+            class: Irrational,
+            computable: Some(computable),
+            signal: None,
+        }
+    }
+
+    fn integer_pi_offset_residual(&self) -> Option<(bool, Rational)> {
+        // `ConstOffset` stores values as scale * (pi + offset). When the scale
+        // is an integer k, trig can use k*pi + r periodicity and evaluate only
+        // the tiny rational residual r. This is the hot 1000*pi+eps scalar
+        // family; falling through to generic computable reduction pays for a
+        // half-pi quotient, residual tree, and cached pi wrappers.
+        let ConstOffset(offset) = &self.class else {
+            return None;
+        };
+        if offset.pi_power != 1 || offset.exp_power != *rationals::ZERO {
+            return None;
+        }
+        let multiple = self.rational.to_big_integer()?;
+        let negate_for_odd_multiple = multiple.magnitude().bit(0);
+        let residual = &offset.offset * Rational::from_bigint(multiple);
+        Some((negate_for_odd_multiple, residual))
     }
 
     fn sin_pi_rational(rational: Rational) -> Real {
@@ -1667,24 +1709,19 @@ impl Real {
             One => {
                 // Plain rational trig still uses Computable, not SinPi/TanPi:
                 // those exact certificates are reserved for rational multiples
-                // of pi where algebra can later invert them.
+                // of pi where algebra can later invert them. The owned helper
+                // specializes before allocating a generic Ratio leaf.
                 let computable = if self.rational.magnitude_at_least_power_of_two(3) {
-                    // Large rational sin/cos construction used to pay the full
-                    // half-pi range-reduction cost immediately. Defer it for
-                    // plain Real scalars; approximation still enters the same
-                    // Computable reducer when digits are actually needed.
+                    // Keep the large-rational decision at the Real layer too:
+                    // this path is already below 100 ns, so avoiding a second
+                    // sign/MSD probe matters in Criterion.
                     crate::trace_dispatch!("real", "sin", "large-rational-deferred-node");
                     Computable::sin_large_rational_deferred(self.rational.clone())
                 } else {
-                    crate::trace_dispatch!("real", "sin", "rational-generic-computable");
-                    Computable::sin(Computable::rational(self.rational.clone()))
+                    crate::trace_dispatch!("real", "sin", "rational-specialized-computable");
+                    Computable::sin_rational(self.rational.clone())
                 };
-                return Self {
-                    rational: Rational::one(),
-                    class: Irrational,
-                    computable: Some(computable),
-                    signal: None,
-                };
+                return Self::irrational_from_computable(computable);
             }
             Pi => {
                 // sin(q*pi) has exact small-denominator and reusable SinPi handling.
@@ -1692,6 +1729,11 @@ impl Real {
                 return Self::sin_pi_rational(self.rational);
             }
             _ => (),
+        }
+        if let Some((negate, residual)) = self.integer_pi_offset_residual() {
+            crate::trace_dispatch!("real", "sin", "integer-pi-offset-rewrite");
+            let reduced = Self::irrational_from_computable(Computable::sin_rational(residual));
+            return if negate { reduced.neg() } else { reduced };
         }
 
         crate::trace_dispatch!("real", "sin", "generic-computable");
@@ -1706,24 +1748,16 @@ impl Real {
         }
         match &self.class {
             One => {
-                // Same policy as sine: generic rational cosine enters the
-                // computable trig reducer, while pi-multiple exactness is below.
+                // Same policy as sine: exact pi multiples stay symbolic, while
+                // plain rationals enter the specialized computable constructor.
                 let computable = if self.rational.magnitude_at_least_power_of_two(3) {
-                    // Mirror the sine lazy path for large exact rationals. This
-                    // removes eager quotient and residual construction from
-                    // scalar setup without adding a second numeric algorithm.
                     crate::trace_dispatch!("real", "cos", "large-rational-deferred-node");
                     Computable::cos_large_rational_deferred(self.rational.clone())
                 } else {
-                    crate::trace_dispatch!("real", "cos", "rational-generic-computable");
-                    Computable::cos(Computable::rational(self.rational.clone()))
+                    crate::trace_dispatch!("real", "cos", "rational-specialized-computable");
+                    Computable::cos_rational(self.rational.clone())
                 };
-                return Self {
-                    rational: Rational::one(),
-                    class: Irrational,
-                    computable: Some(computable),
-                    signal: None,
-                };
+                return Self::irrational_from_computable(computable);
             }
             Pi => {
                 // cos(q*pi) is represented through the same SinPi machinery with a
@@ -1732,6 +1766,11 @@ impl Real {
                 return Self::sin_pi_rational(self.rational + Rational::fraction(1, 2).unwrap());
             }
             _ => (),
+        }
+        if let Some((negate, residual)) = self.integer_pi_offset_residual() {
+            crate::trace_dispatch!("real", "cos", "integer-pi-offset-rewrite");
+            let reduced = Self::irrational_from_computable(Computable::cos_rational(residual));
+            return if negate { reduced.neg() } else { reduced };
         }
 
         crate::trace_dispatch!("real", "cos", "generic-computable");
@@ -1749,15 +1788,11 @@ impl Real {
             One => {
                 // For non-pi rational arguments there are no exact tangent
                 // certificates, but Computable::tan still applies small/medium
-                // argument reductions.
-                let new = Computable::rational(self.rational.clone());
-                crate::trace_dispatch!("real", "tan", "rational-generic-computable");
-                return Ok(Self {
-                    rational: Rational::one(),
-                    class: Irrational,
-                    computable: Some(Computable::tan(new)),
-                    signal: None,
-                });
+                // argument reductions without first allocating a Ratio leaf.
+                crate::trace_dispatch!("real", "tan", "rational-specialized-computable");
+                return Ok(Self::irrational_from_computable(Computable::tan_rational(
+                    self.rational.clone(),
+                )));
             }
             Pi => {
                 if self.rational.is_integer() {
@@ -1812,6 +1847,12 @@ impl Real {
                 }
             }
             _ => (),
+        }
+        if let Some((_negate, residual)) = self.integer_pi_offset_residual() {
+            crate::trace_dispatch!("real", "tan", "integer-pi-offset-rewrite");
+            return Ok(Self::irrational_from_computable(Computable::tan_rational(
+                residual,
+            )));
         }
 
         crate::trace_dispatch!("real", "tan", "generic-computable");

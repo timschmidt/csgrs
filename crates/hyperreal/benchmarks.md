@@ -311,32 +311,32 @@ Low-level approximation kernels and deep expression-tree stress cases.
 | `computable_transcendentals/sqrt_cold_p128` | 770.48 ns | 767.43 ns - 773.66 ns | Approximates sqrt(2). |
 | `computable_transcendentals/sqrt_cached_p128` | 38.50 ns | 38.34 ns - 38.69 ns | Repeats a cached sqrt(2) approximation. |
 | `computable_transcendentals/sqrt_single_scaled_square_cold_p128` | 1.162 us | 1.155 us - 1.171 us | Builds and approximates sqrt((7*pi/8)^2). |
-| `computable_transcendentals/sin_cold_p96` | 1.598 us | 1.590 us - 1.606 us | Approximates sin(7/5). |
-| `computable_transcendentals/sin_cached_p96` | 37.65 ns | 37.54 ns - 37.77 ns | Repeats a cached sin(7/5) approximation. |
-| `computable_transcendentals/cos_cold_p96` | 1.508 us | 1.501 us - 1.515 us | Approximates cos(7/5). |
-| `computable_transcendentals/sin_f64_cold_p96` | 1.721 us | 1.714 us - 1.728 us | Approximates sin(1.23456789 imported exactly from f64). |
-| `computable_transcendentals/cos_f64_cold_p96` | 1.733 us | 1.726 us - 1.740 us | Approximates cos(1.23456789 imported exactly from f64). |
-| `computable_transcendentals/sin_1e6_cold_p96` | 2.304 us | 2.293 us - 2.316 us | Approximates sin(1000000). |
-| `computable_transcendentals/cos_1e6_cold_p96` | 2.300 us | 2.291 us - 2.310 us | Approximates cos(1000000). |
-| `computable_transcendentals/sin_1e30_cold_p96` | 2.107 us | 2.094 us - 2.122 us | Approximates sin(10^30). |
-| `computable_transcendentals/cos_1e30_cold_p96` | 2.251 us | 2.238 us - 2.266 us | Approximates cos(10^30). |
-| `computable_transcendentals/cos_cached_p96` | 42.56 ns | 42.27 ns - 42.90 ns | Repeats a cached cos(7/5) approximation. |
-| `computable_transcendentals/tan_cold_p96` | 3.356 us | 3.340 us - 3.374 us | Approximates tan(7/5). |
-| `computable_transcendentals/tan_cached_p96` | 38.34 ns | 38.11 ns - 38.59 ns | Repeats a cached tan(7/5) approximation. |
-| `computable_transcendentals/sin_zero_cold_p96` | 33.09 ns | 32.90 ns - 33.31 ns | Approximates sin(0). |
-| `computable_transcendentals/cos_zero_cold_p96` | 75.83 ns | 75.05 ns - 76.74 ns | Approximates cos(0). |
-| `computable_transcendentals/tan_zero_cold_p96` | 33.82 ns | 33.41 ns - 34.29 ns | Approximates tan(0). |
-| `computable_transcendentals/tan_near_half_pi_cold_p96` | 2.942 us | 2.926 us - 2.959 us | Approximates tangent near pi/2. |
-| `computable_transcendentals/tan_near_half_pi_cached_p96` | 37.84 ns | 37.69 ns - 38.00 ns | Repeats cached tangent near pi/2. |
-| `computable_transcendentals/sin_huge_cold_p96` | 1.584 us | 1.577 us - 1.592 us | Approximates sine of a huge pi multiple plus offset. |
-| `computable_transcendentals/cos_huge_cold_p96` | 1.542 us | 1.534 us - 1.551 us | Approximates cosine of a huge pi multiple plus offset. |
-| `computable_transcendentals/tan_huge_cold_p96` | 3.310 us | 3.297 us - 3.325 us | Approximates tangent of a huge pi multiple plus offset. |
-| `computable_transcendentals/asin_cold_p96` | 10.709 us | 10.670 us - 10.749 us | Approximates a computable asin expression. |
+| `computable_transcendentals/sin_cold_p96` | 1.604 us | 1.596 us - 1.612 us | Approximates sin(7/5). |
+| `computable_transcendentals/sin_cached_p96` | 40.52 ns | 40.36 ns - 40.69 ns | Repeats a cached sin(7/5) approximation. |
+| `computable_transcendentals/cos_cold_p96` | 1.519 us | 1.502 us - 1.539 us | Approximates cos(7/5). |
+| `computable_transcendentals/sin_f64_cold_p96` | 1.756 us | 1.748 us - 1.765 us | Approximates sin(1.23456789 imported exactly from f64). |
+| `computable_transcendentals/cos_f64_cold_p96` | 1.715 us | 1.701 us - 1.729 us | Approximates cos(1.23456789 imported exactly from f64). |
+| `computable_transcendentals/sin_1e6_cold_p96` | 2.310 us | 2.298 us - 2.324 us | Approximates sin(1000000). |
+| `computable_transcendentals/cos_1e6_cold_p96` | 2.333 us | 2.318 us - 2.350 us | Approximates cos(1000000). |
+| `computable_transcendentals/sin_1e30_cold_p96` | 2.082 us | 2.070 us - 2.094 us | Approximates sin(10^30). |
+| `computable_transcendentals/cos_1e30_cold_p96` | 2.202 us | 2.183 us - 2.225 us | Approximates cos(10^30). |
+| `computable_transcendentals/cos_cached_p96` | 40.46 ns | 40.29 ns - 40.64 ns | Repeats a cached cos(7/5) approximation. |
+| `computable_transcendentals/tan_cold_p96` | 3.396 us | 3.378 us - 3.416 us | Approximates tan(7/5). |
+| `computable_transcendentals/tan_cached_p96` | 39.87 ns | 39.74 ns - 40.00 ns | Repeats a cached tan(7/5) approximation. |
+| `computable_transcendentals/sin_zero_cold_p96` | 34.40 ns | 34.23 ns - 34.60 ns | Approximates sin(0). |
+| `computable_transcendentals/cos_zero_cold_p96` | 76.62 ns | 75.75 ns - 77.62 ns | Approximates cos(0). |
+| `computable_transcendentals/tan_zero_cold_p96` | 34.27 ns | 34.02 ns - 34.61 ns | Approximates tan(0). |
+| `computable_transcendentals/tan_near_half_pi_cold_p96` | 3.665 us | 2.871 us - 5.238 us | Approximates tangent near pi/2. |
+| `computable_transcendentals/tan_near_half_pi_cached_p96` | 40.17 ns | 40.05 ns - 40.31 ns | Repeats cached tangent near pi/2. |
+| `computable_transcendentals/sin_huge_cold_p96` | 1.613 us | 1.604 us - 1.622 us | Approximates sine of a huge pi multiple plus offset. |
+| `computable_transcendentals/cos_huge_cold_p96` | 1.499 us | 1.492 us - 1.506 us | Approximates cosine of a huge pi multiple plus offset. |
+| `computable_transcendentals/tan_huge_cold_p96` | 3.338 us | 3.322 us - 3.356 us | Approximates tangent of a huge pi multiple plus offset. |
+| `computable_transcendentals/asin_cold_p96` | 6.901 us | 6.533 us - 7.610 us | Approximates a computable asin expression. |
 | `computable_transcendentals/asin_cached_p96` | 37.71 ns | 37.53 ns - 37.92 ns | Repeats a cached computable asin approximation. |
-| `computable_transcendentals/acos_cold_p96` | 8.996 us | 8.958 us - 9.042 us | Approximates a computable acos expression. |
+| `computable_transcendentals/acos_cold_p96` | 8.990 us | 8.947 us - 9.036 us | Approximates a computable acos expression. |
 | `computable_transcendentals/acos_cached_p96` | 37.65 ns | 37.38 ns - 37.97 ns | Repeats a cached computable acos approximation. |
-| `computable_transcendentals/asin_tiny_cold_p96` | 376.35 ns | 367.10 ns - 393.55 ns | Approximates asin(1e-12), exercising the tiny-input series. |
-| `computable_transcendentals/acos_tiny_cold_p96` | 714.82 ns | 709.92 ns - 720.66 ns | Approximates acos(1e-12), exercising the tiny-input complement. |
+| `computable_transcendentals/asin_tiny_cold_p96` | 379.78 ns | 376.14 ns - 384.04 ns | Approximates asin(1e-12), exercising the tiny-input series. |
+| `computable_transcendentals/acos_tiny_cold_p96` | 705.94 ns | 700.98 ns - 711.52 ns | Approximates acos(1e-12), exercising the tiny-input complement. |
 | `computable_transcendentals/asin_near_one_cold_p96` | 4.829 us | 4.801 us - 4.859 us | Approximates asin(0.999999), exercising the endpoint complement. |
 | `computable_transcendentals/acos_near_one_cold_p96` | 4.368 us | 4.343 us - 4.394 us | Approximates acos(0.999999), exercising the endpoint transform. |
 | `computable_transcendentals/atan_cold_p96` | 7.302 us | 7.264 us - 7.345 us | Approximates atan(7/10). |
@@ -344,9 +344,9 @@ Low-level approximation kernels and deep expression-tree stress cases.
 | `computable_transcendentals/atan_large_cold_p96` | 1.831 us | 1.811 us - 1.853 us | Approximates atan(8), exercising argument reduction. |
 | `computable_transcendentals/asin_zero_cold_p96` | 33.26 ns | 33.08 ns - 33.45 ns | Approximates asin(0) expression. |
 | `computable_transcendentals/atan_zero_cold_p96` | 34.79 ns | 34.30 ns - 35.38 ns | Approximates atan(0). |
-| `computable_transcendentals/asinh_cold_p128` | 7.967 us | 7.911 us - 8.037 us | Approximates a computable asinh expression. |
+| `computable_transcendentals/asinh_cold_p128` | 6.437 us | 6.389 us - 6.493 us | Approximates a computable asinh expression. |
 | `computable_transcendentals/asinh_cached_p128` | 37.59 ns | 37.44 ns - 37.77 ns | Repeats a cached computable asinh approximation. |
-| `computable_transcendentals/acosh_cold_p128` | 11.138 us | 11.094 us - 11.186 us | Approximates a computable acosh expression. |
+| `computable_transcendentals/acosh_cold_p128` | 9.586 us | 9.505 us - 9.685 us | Approximates a computable acosh expression. |
 | `computable_transcendentals/acosh_cached_p128` | 39.36 ns | 39.14 ns - 39.63 ns | Repeats a cached computable acosh approximation. |
 | `computable_transcendentals/atanh_cold_p128` | 184.04 ns | 181.95 ns - 186.19 ns | Approximates a computable atanh expression. |
 | `computable_transcendentals/atanh_cached_p128` | 37.77 ns | 37.63 ns - 37.92 ns | Repeats a cached computable atanh approximation. |

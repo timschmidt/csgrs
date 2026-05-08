@@ -61,9 +61,38 @@ static TWO: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&2).unwra
 static FIVE: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&5).unwrap());
 static TEN: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&10).unwrap());
 
+macro_rules! trace_rational_temporary {
+    () => {{
+        #[cfg(feature = "dispatch-trace")]
+        crate::dispatch_trace::record_rational_temporary();
+    }};
+}
+
+macro_rules! trace_rational_reduction {
+    ($numerator:expr, $denominator:expr) => {{
+        #[cfg(feature = "dispatch-trace")]
+        crate::dispatch_trace::record_rational_reduction($numerator, $denominator);
+    }};
+}
+
+macro_rules! trace_rational_gcd {
+    ($left:expr, $right:expr, $divisor:expr) => {{
+        #[cfg(feature = "dispatch-trace")]
+        crate::dispatch_trace::record_rational_gcd($left, $right, $divisor);
+    }};
+}
+
+macro_rules! trace_rational_power_of_two_common_factor {
+    ($shift:expr) => {{
+        #[cfg(feature = "dispatch-trace")]
+        crate::dispatch_trace::record_rational_power_of_two_common_factor($shift);
+    }};
+}
+
 impl Rational {
     /// Zero, the additive identity.
     pub fn zero() -> Self {
+        trace_rational_temporary!();
         Self {
             sign: NoSign,
             numerator: BigUint::ZERO,
@@ -73,6 +102,7 @@ impl Rational {
 
     /// One, the multiplicative identity.
     pub fn one() -> Self {
+        trace_rational_temporary!();
         Self {
             sign: Plus,
             numerator: BigUint::one(),
@@ -89,11 +119,14 @@ impl Rational {
         match n {
             0 => Self::zero(),
             1 => Self::one(),
-            -1 => Self {
-                sign: Minus,
-                numerator: BigUint::one(),
-                denominator: BigUint::one(),
-            },
+            -1 => {
+                trace_rational_temporary!();
+                Self {
+                    sign: Minus,
+                    numerator: BigUint::one(),
+                    denominator: BigUint::one(),
+                }
+            }
             _ => Self::from_bigint(ToBigInt::to_bigint(&n).unwrap()),
         }
     }
@@ -119,6 +152,7 @@ impl Rational {
         }
         let sign = n.sign();
         let numerator = n.magnitude().clone();
+        trace_rational_temporary!();
         let answer = Self {
             sign,
             numerator,
@@ -130,6 +164,7 @@ impl Rational {
     fn maybe_reduce(self) -> Self {
         if Self::is_power_of_two(&self.denominator) {
             let denominator = self.denominator.clone();
+            trace_rational_reduction!(&self.numerator, &self.denominator);
             // Dyadic rationals dominate f64 imports and trig reduction scales.  When the
             // denominator is a power of two, remove common factors with shifts instead of a
             // full BigInt gcd.
@@ -147,6 +182,7 @@ impl Rational {
             return self;
         }
 
+        trace_rational_reduction!(&self.numerator, &self.denominator);
         if Self::is_power_of_two(possible_divisor) {
             // Callers often already know a possible divisor from the operation they just
             // performed.  Preserve that hint for dyadic cases so reduction stays shift-only.
@@ -154,9 +190,11 @@ impl Rational {
         }
 
         let divisor = num::Integer::gcd(&self.numerator, possible_divisor);
+        trace_rational_gcd!(&self.numerator, possible_divisor, &divisor);
         if divisor == *ONE.deref() {
             self
         } else {
+            trace_rational_temporary!();
             Self {
                 sign: self.sign,
                 numerator: self.numerator / &divisor,
@@ -170,6 +208,7 @@ impl Rational {
             return self;
         }
 
+        trace_rational_reduction!(&self.numerator, &self.denominator);
         if Self::is_power_of_two(&self.denominator) {
             let denominator = self.denominator.clone();
             // Powers of two are common enough that avoiding gcd here shows up in scalar
@@ -178,11 +217,13 @@ impl Rational {
         }
 
         let divisor = num::Integer::gcd(&self.numerator, &self.denominator);
+        trace_rational_gcd!(&self.numerator, &self.denominator, &divisor);
         if divisor == *ONE.deref() {
             self
         } else {
             let numerator = self.numerator / &divisor;
             let denominator = self.denominator / &divisor;
+            trace_rational_temporary!();
             Self {
                 sign: self.sign,
                 numerator,
@@ -209,6 +250,7 @@ impl Rational {
             .trailing_zeros()
             .expect("non-zero numerator has trailing zeros");
         if numerator_shift == 0 {
+            trace_rational_power_of_two_common_factor!(0);
             return self;
         }
         let divisor_shift = possible_divisor
@@ -216,11 +258,14 @@ impl Rational {
             .expect("power-of-two divisor has trailing zeros");
         let shift = numerator_shift.min(divisor_shift);
         if shift == 0 {
+            trace_rational_power_of_two_common_factor!(0);
             return self;
         }
         let shift = usize::try_from(shift).expect("shift should fit in usize");
+        trace_rational_power_of_two_common_factor!(shift as u64);
         // Shift out common powers of two directly.  This is the hot reduction path for
         // exactly representable binary fractions.
+        trace_rational_temporary!();
         Self {
             sign: self.sign,
             numerator: self.numerator >> shift,
@@ -262,6 +307,15 @@ impl Rational {
     /// ```
     pub fn is_integer(&self) -> bool {
         self.denominator == *ONE.deref()
+    }
+
+    /// Returns true when this rational has a power-of-two denominator.
+    ///
+    /// This is a cheap structural query used by higher-level exact arithmetic
+    /// kernels to decide whether extra multiplication will stay on dyadic
+    /// shift-only reductions or will likely trigger full BigInt gcd work.
+    pub fn is_dyadic(&self) -> bool {
+        Self::is_power_of_two(&self.denominator)
     }
 
     #[inline]
@@ -842,6 +896,7 @@ impl<T: AsRef<Rational>> Add<T> for &Rational {
         }
 
         let common_denominator = num::Integer::gcd(&self.denominator, &other.denominator);
+        trace_rational_gcd!(&self.denominator, &other.denominator, &common_denominator);
         let left_scale = &other.denominator / &common_denominator;
         let right_scale = &self.denominator / &common_denominator;
         let denominator = &self.denominator * &left_scale;
@@ -858,6 +913,7 @@ impl<T: AsRef<Rational>> Add<T> for &Rational {
                 Less => (y, b - a),
             },
         };
+        trace_rational_temporary!();
         Self::Output {
             sign,
             numerator,
@@ -879,6 +935,7 @@ impl Neg for &Rational {
     type Output = Rational;
 
     fn neg(self) -> Self::Output {
+        trace_rational_temporary!();
         let mut ret = self.clone();
         ret.sign = -ret.sign;
         ret
@@ -909,6 +966,7 @@ impl<T: AsRef<Rational>> Sub<T> for &Rational {
         }
 
         let common_denominator = num::Integer::gcd(&self.denominator, &other.denominator);
+        trace_rational_gcd!(&self.denominator, &other.denominator, &common_denominator);
         let left_scale = &other.denominator / &common_denominator;
         let right_scale = &self.denominator / &common_denominator;
         let denominator = &self.denominator * &left_scale;
@@ -925,6 +983,7 @@ impl<T: AsRef<Rational>> Sub<T> for &Rational {
                 Less => (-y, b - a),
             },
         };
+        trace_rational_temporary!();
         Self::Output {
             sign,
             numerator,
@@ -950,6 +1009,7 @@ impl<T: AsRef<Rational>> Mul<T> for &Rational {
         let sign = self.sign * other.sign;
         let numerator = &self.numerator * &other.numerator;
         let denominator = &self.denominator * &other.denominator;
+        trace_rational_temporary!();
         Self::Output::maybe_reduce(Self::Output {
             sign,
             numerator,
@@ -981,6 +1041,7 @@ impl<T: AsRef<Rational>> Div<T> for &Rational {
         let sign = self.sign * other.sign;
         let numerator = &self.numerator * &other.denominator;
         let denominator = &self.denominator * &other.numerator;
+        trace_rational_temporary!();
         Self::Output::maybe_reduce(Self::Output {
             sign,
             numerator,

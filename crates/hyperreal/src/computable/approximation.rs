@@ -78,6 +78,11 @@ pub(super) enum Approximation {
     AtanhDirect(Computable),
     PrescaledAtanh(Computable),
     PrescaledCos(Computable),
+    // Small exact-rational Real::cos construction uses this leaf to avoid
+    // allocating a Ratio child when the caller only builds or structurally
+    // inspects the result. Approximation materializes the same rational series
+    // input used by PrescaledCos.
+    PrescaledCosRational(Rational),
     // Large exact-rational Real::cos construction is intentionally deferred:
     // range reduction needs cached pi plus BigInt quotient work, which is wasted
     // in scalar construction benchmarks and predicate-heavy code that never
@@ -88,6 +93,8 @@ pub(super) enum Approximation {
     // approximation lazy until the caller asks for a precision.
     PrescaledCosHalfPiMinusRational(Rational),
     PrescaledSin(Computable),
+    // Small exact-rational sine analogue of PrescaledCosRational.
+    PrescaledSinRational(Rational),
     // Same lazy large-rational policy as cosine. Approximation uses direct
     // half-pi residual arithmetic so construction-included scalar benches do
     // not pay for an eager reduced expression tree.
@@ -104,6 +111,9 @@ pub(super) enum Approximation {
     // below reuses the same half-pi residual as sin/cos and divides locally.
     TanLargeRational(Rational),
     PrescaledTan(Computable),
+    // Small exact-rational tangent keeps construction lightweight and enters
+    // the same local quotient kernel once digits are requested.
+    PrescaledTanRational(Rational),
     PrescaledCot(Computable),
 }
 
@@ -177,14 +187,17 @@ impl Approximation {
             AtanhDirect(c) => atanh_direct(signal, c, p),
             PrescaledAtanh(c) => atanh_computable(signal, c, p),
             PrescaledCos(c) => cos(signal, c, p),
+            PrescaledCosRational(r) => cos(signal, &Computable::rational(r.clone()), p),
             CosLargeRational(r) => cos_large_rational(signal, r, p),
             PrescaledCosHalfPiMinusRational(r) => cos_half_pi_minus_rational(signal, r, p),
             PrescaledSin(c) => sin(signal, c, p),
+            PrescaledSinRational(r) => sin(signal, &Computable::rational(r.clone()), p),
             SinLargeRational(r) => sin_large_rational(signal, r, p),
             PrescaledSinHalfPiMinusRational(r) => sin_half_pi_minus_rational(signal, r, p),
             PrescaledCotHalfPiMinusRational(r) => cot_half_pi_minus_rational(signal, r, p),
             TanLargeRational(r) => tan_large_rational(signal, r, p),
             PrescaledTan(c) => tan(signal, c, p),
+            PrescaledTanRational(r) => tan(signal, &Computable::rational(r.clone()), p),
             PrescaledCot(c) => cot(signal, c, p),
         }
     }

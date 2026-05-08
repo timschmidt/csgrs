@@ -292,6 +292,31 @@ mod tests {
     }
 
     #[test]
+    fn trig_integer_pi_offsets_reduce_to_residual() {
+        use crate::real::Class::ConstOffset;
+
+        let eps: Real = "0.00000000000000000001".parse().unwrap();
+        let even = Real::pi() * Real::from(1000_i32) + eps.clone();
+        assert!(matches!(even.class, ConstOffset(_)));
+
+        let expected_sin: f64 = eps.clone().sin().into();
+        let expected_cos: f64 = eps.clone().cos().into();
+        let expected_tan: f64 = eps.clone().tan().unwrap().into();
+
+        assert!(closest_f64(even.clone().sin(), expected_sin));
+        assert!(closest_f64(even.clone().cos(), expected_cos));
+        assert!(closest_f64(even.tan().unwrap(), expected_tan));
+
+        let odd = Real::pi() * Real::from(1001_i32) + eps.clone();
+        assert!(matches!(odd.class, ConstOffset(_)));
+        let expected_odd_sin: f64 = (-eps.clone().sin()).into();
+        let expected_odd_cos: f64 = (-eps.clone().cos()).into();
+
+        assert!(closest_f64(odd.clone().sin(), expected_odd_sin));
+        assert!(closest_f64(odd.cos(), expected_odd_cos));
+    }
+
+    #[test]
     fn tan_irrational_argument() {
         let sqrt_two = Real::new(Rational::new(2)).sqrt().unwrap();
         let answer = sqrt_two.tan().unwrap();
@@ -306,12 +331,18 @@ mod tests {
             value.exact_rational(),
             Some(Rational::fraction(1, 2).unwrap())
         );
+        assert!(value.is_exact_dyadic_rational());
+
+        let decimal = Real::new(Rational::fraction(1, 10).unwrap());
+        assert!(!decimal.is_exact_dyadic_rational());
 
         let sqrt_two = Real::new(Rational::new(2)).sqrt().unwrap();
         assert_eq!(sqrt_two.exact_rational(), None);
+        assert!(!sqrt_two.is_exact_dyadic_rational());
 
         let exp_ln_8 = Real::new(Rational::new(8)).ln().unwrap().exp().unwrap();
         assert_eq!(exp_ln_8.exact_rational(), Some(Rational::new(8)));
+        assert!(exp_ln_8.is_exact_dyadic_rational());
     }
 
     #[test]
