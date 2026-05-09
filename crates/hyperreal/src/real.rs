@@ -1806,10 +1806,50 @@ impl Real {
 
     /// The base 10 logarithm of this Real or Problem::NotANumber if this Real is negative.
     pub fn log10(self) -> Result<Real, Problem> {
+        if self.best_sign() != Sign::Plus {
+            crate::trace_dispatch!("real", "log10", "domain-not-positive");
+            return Err(Problem::NotANumber);
+        }
+        if let One = &self.class {
+            // Scalar construction benches hit exact rationals here heavily.
+            // Avoid building ln(x) and then simplifying ln(x)/ln(10).
+            return Self::log10_rational(self.rational);
+        }
         // Use the cached ln(10) symbolic constant. Division recognizes ln/ln10
         // and can return a lightweight Log10 class for exact log inputs.
         crate::trace_dispatch!("real", "log10", "ln-div-cached-ln10");
         self.ln()? / constants::scaled_ln(10, 1).unwrap()
+    }
+
+    fn log10_rational(r: Rational) -> Result<Real, Problem> {
+        use std::cmp::Ordering::*;
+
+        match r.partial_cmp(rationals::ONE.deref()) {
+            Some(Less) => {
+                let inv = r.inverse()?;
+                return Ok(-Self::log10_rational(inv)?);
+            }
+            Some(Equal) => return Ok(Self::zero()),
+            Some(Greater) => {}
+            _ => unreachable!(),
+        }
+
+        if let Some(n) = r.to_big_integer()
+            && let Some(log) = Self::integer_log(n.magnitude(), 10)
+        {
+            crate::trace_dispatch!("real", "log10", "rational-power-of-ten");
+            return Ok(Self::new(Rational::new(log as i64)));
+        }
+
+        crate::trace_dispatch!("real", "log10", "rational-log10-special-form");
+        let computable =
+            Class::ln_computable(&r).multiply(Class::ln_computable(&*rationals::TEN).inverse());
+        Ok(Self {
+            rational: Rational::one(),
+            class: Log10(r),
+            computable: Some(computable),
+            signal: None,
+        })
     }
 
     // Find Some(m) integral log with respect to this base or else None
@@ -1818,6 +1858,26 @@ impl Real {
         use num::Integer;
         use num::bigint::ToBigUint;
         // TODO weed out some large failure cases early and return None
+
+        if let Some(mut reduced) = n.to_u64() {
+            // The scalar log benches mostly use decimal-sized inputs such as
+            // 1e12. For values that fit in a machine word, repeated u64
+            // division is much cheaper than allocating BigUint power ladders.
+            if reduced <= 1 {
+                return None;
+            }
+            let base = u64::from(base);
+            let mut exponent = 0;
+            while reduced % base == 0 {
+                reduced /= base;
+                exponent += 1;
+            }
+            return if reduced == 1 && exponent > 0 {
+                Some(exponent)
+            } else {
+                None
+            };
+        }
 
         // Build powers by repeated squaring, divide by the largest usable power,
         // then walk back down. This recognizes n = base^k without trial-dividing
@@ -1879,7 +1939,9 @@ impl Real {
 
         // Recognize common integer powers so logs share cached scaled-ln constants
         // instead of creating many unrelated Ln nodes.
-        for base in [2, 3, 5, 6, 7, 10] {
+        // Check base 10 first because log10/ln scalar benches include 1e12 and
+        // 1e-12; probing 2, 3, 5, 6, and 7 first made those cases regress.
+        for base in [10, 2, 3, 5, 6, 7] {
             if let Some(n) = Self::integer_log(n, base) {
                 return constants::scaled_ln(base, n as i64);
             }
