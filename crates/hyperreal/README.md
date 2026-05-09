@@ -236,5 +236,7 @@ without regressing broader `realistic_blas` or `liminal` benchmarks.
 ## License
 
 (C) https://github.com/timschmidt Apache-2.0 / MIT
+
 (C) https://github.com/tialaramex/realistic/ Apache-2.0
+
 (C) https://github.com/siefkenj Apache-2.0
