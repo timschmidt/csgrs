@@ -1,4 +1,4 @@
-//! Adapter for the Rust-port branch of `geogram_predicates`.
+//! Adapter for `exact_geo_predicates`.
 
 use crate::backend::BackendCapabilities;
 use crate::orient::{Point2, Point3};

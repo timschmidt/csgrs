@@ -6,7 +6,7 @@ description = "Geometry-oriented robust predicates with structural scalar awaren
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-geogram_predicates = { git = "https://github.com/glennDittmann/geogram_predicates.git", branch = "dev-rust-port", default-features = false, optional = true }
+geogram_predicates = { package = "exact_geo_predicates", version = "0.3.0", default-features = false, optional = true }
 hyperreal = { path = "../hyperreal/", version = "0.10.5", optional = true }
 inari = { version = "2", default-features = false, optional = true }
 rayon = { version = "1.10", optional = true }
