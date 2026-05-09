@@ -425,11 +425,13 @@ state behind the same internal API.
   the new fast-path labels and updated the profile explanation text.
 - Added hyperreal matrix-transform fact-preservation tests in `tests/matrix.rs` for
   permutation, homogeneous point/direction behavior, and scaled+translated points.
-- Attempted to route hyperreal backend construction through the named affine
-  constructor APIs (`Real::linear_combination*_refs`, `Real::affine_combination*_refs`),
-  but the currently pinned `hyperreal = "0.10.6"` does not export those names.
-  The implementation remains on `dot*_refs` until a version update is
-  intentionally introduced in a staged follow-up.
+- Routed hyperreal matrix hot paths through local `*_refs` naming shims for
+  linear/affine constructors (`Real::linear_combination*_refs`,
+  `Real::affine_combination*_refs`), preserving Stage-2 naming while staying on
+  the pinned `hyperreal = "0.10.6"` surface.
+- The public hyperreal backend no longer has to be bumped yet; the compatibility
+  shims keep the transform constructors stable until a staged dependency upgrade
+  is explicitly taken.
 - Removed the attempted prewarmed constants path from benchmark setup after it showed
   no meaningful gain at this stage; constant/context initialization now remains
   demand-driven per process.
@@ -598,9 +600,20 @@ state behind the same internal API.
 - Focused regression validation for that addition:
   - `cargo bench --bench mathbench -- --trace-dispatch-filter=\"matrix4/hyperreal-rational/mat4 transform direction vec4,matrix4/hyperreal-rational/mat4 transform direction vec4 structural facts\" --dispatch-trace-only --write-dispatch-trace-md`
   - `cargo bench --bench mathbench -- \"matrix4/hyperreal-rational/mat4 transform direction vec4|matrix4/hyperreal-rational/mat4 transform direction vec4 structural facts\"`
-  - direction vec4 benchmark result moved to `~4.4383 µs..5.0036 µs`, which may be noise but is outside Criterion's unchanged-noise window in this capture; structural-facts row was `~4.6636 µs..5.2751 µs`.
-- Recorded unsuccessful follow-up signal:
-  - `direction vec4` criterion result reported a significant apparent regression in this capture, likely due the new row/baseline mix; follow-up with longer averaging is required before concluding a true regression.
+  - Initial short-run capture looked like a directional regression:
+    `~4.4383 µs..5.0036 µs` vs prior baseline.
+  - Follow-up long-sample rerun with shared baseline (`matrix4/hyperreal-rational/mat4 transform vec4|matrix4/hyperreal-rational/mat4 transform direction vec4|matrix4/hyperreal-rational/mat4 transform direction vec4 structural facts`, 500 samples) showed `~3.80..3.81 µs` for the `transform vec4` row and `~3.80..3.97 µs` for directional/structural rows, indicating improved throughput and ruling out the earlier regression concern.
+- Routed full `N=4` point transform rows through `Scalar::affine_combination4_refs` with a
+  zero offset sentinel, while `Scalar::affine_combination4` collapses that zero-offset
+  case back to `linear_combination4_refs` internally.
+- This also removed the previously observed unused constructor warning by exercising
+  `linear_combination4_refs` through the affine-zero fast path; confirmed by `cargo check` warning-free.
+- Re-ran targeted benchmarks for the affected direction + structural-facts rows after the
+  constructor reroute and captured stable improvement in measured rows rather than a
+  regression.
+  - `matrix4/hyperreal-rational/mat4 transform vec4`: ~1.7768..1.7823 µs
+  - `matrix4/hyperreal-rational/mat4 transform direction vec4`: ~3.8018..3.8077 µs
+  - `matrix4/hyperreal-rational/mat4 transform direction vec4 structural facts`: ~3.9619..3.9724 µs
 
 ### Unsuccessful / Deferred
 
@@ -624,9 +637,6 @@ state behind the same internal API.
   trace-closure typing mismatch (`black_box(tuple)` returning non-`()`), then
   corrected it by binding the tuple result to `_` so the closure still compiles as
   a statement-only trace probe.
-- Build still emits a pre-existing `affine_combination4` dead-code warning under
-  current trace configuration; no functional impact, but this should be revisited
-  when `affine_combination4` is used by another stage.
 - Initial no-translation symbolic timing command accidentally used a loose regex and
   captured additional `direction vec4` rows (one/all-coordinate) in addition to the
   intended labels; reran with anchored regex filters to get the exact set.

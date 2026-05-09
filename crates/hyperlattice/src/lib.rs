@@ -369,8 +369,15 @@ impl<B: Backend> Scalar<B> {
         values: [&Self; 4],
         offset: &Self,
     ) -> Self {
-        // This keeps the transform hot path explicit without forcing affine terms
-        // to be represented as repeated generic multiplications immediately.
+        // Keep affine intent explicit in the call graph. When the offset is
+        // known-zero, collapse to the linear fast path to avoid injecting
+        // redundant zero adds while preserving the current transformation shape.
+        if offset.zero_status() == ZeroStatus::Zero {
+            return Self::linear_combination4_refs(coefficients, values);
+        }
+
+        // Non-zero offsets still flow through the affine constructor so future
+        // fact-propagation work can specialize this shape directly.
         crate::trace_dispatch!(
             "realistic_blas",
             "scalar_fast_path",

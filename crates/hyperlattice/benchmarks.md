@@ -199,7 +199,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `mat4 determinant` | 35.77 ns | 2.32 us | 1.97 us | 4.59 us | 4.09 us | 96.24 us | 64.97x | 0.51x | 0.57x | 0.02x |
 | `mat4 inverse` | 144.94 ns | 24.61 us | 8.89 us | 11.15 us | 9.13 us | 350.09 us | 169.82x | 2.21x | 2.70x | 0.07x |
 | `mat4 mul mat4` | 78.46 ns | 5.52 us | 4.21 us | 6.42 us | 5.44 us | 143.77 us | 70.42x | 0.86x | 1.02x | 0.04x |
-| `mat4 transform vec4` | 26.67 ns | 2.18 us | 1.75 us | 1.91 us | 1.64 us | 36.24 us | 81.89x | 1.15x | 1.33x | 0.06x |
+| `mat4 transform vec4` | 26.67 ns | 2.18 us | 1.77 us | 1.91 us | 1.64 us | 36.24 us | 81.89x | 1.15x | 1.33x | 0.06x |
 
 #### Matrix API Operations
 

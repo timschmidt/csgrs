@@ -979,13 +979,12 @@ fn transform_vector_rhs_ref<B: Backend, const N: usize>(
             } else {
                 let matrix_terms = [&left[row][0], &left[row][1], &left[row][2], &left[row][3]];
                 let vector_terms = [&right[0], &right[1], &right[2], &right[3]];
-                // `Matrix4` transforms are 4-term linear combinations and keep
-                // the transform shape explicit. Keeping this as one fixed-arity
-                // linear hook preserves exact-rational structure through
-                // backend-specific constructors before any generic simplification.
-                // Use the Stage-2 `_refs` names here to minimize future API churn
-                // when hyperreal's dedicated constructors are introduced.
-                Scalar::linear_combination4_refs(matrix_terms, vector_terms)
+                // `Matrix4` transforms are 4-term affine combos; use the
+                // dedicated constructor name to keep future dedicated-4 affine
+                // fast paths visible, while the Scalar shim keeps zero-offset
+                // instances on the linear fast path today.
+                let offset = Scalar::zero();
+                Scalar::affine_combination4_refs(matrix_terms, vector_terms, &offset)
             }
         } else {
             let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
