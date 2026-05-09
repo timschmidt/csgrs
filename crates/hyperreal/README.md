@@ -21,11 +21,34 @@ roots, logarithms, and rational trig constants.
 - `Simple`: a small Lisp-like expression parser, enabled by the default
   `simple` feature.
 
+## Numeric Model
+
+`hyperreal` is built around three layers that deliberately keep exact and
+symbolic information available before approximation:
+
+- `Rational` is the exact arithmetic base. It stores arbitrary-precision
+  numerator/denominator values and performs exact reduction, dyadic detection,
+  square extraction, shared-denominator dot products, and exact IEEE-754 import.
+- `Computable` is the lazy approximation layer. It represents exact-real
+  expression graphs such as sums, products, inverses, roots, logs, trig kernels,
+  and shared constants. It approximates only when a caller asks for a binary
+  precision, then caches the result and conservative sign/magnitude facts.
+- `Real` is the public symbolic scalar. It stores an exact rational scale plus a
+  compact symbolic class and, when needed, a `Computable` certificate. Common
+  classes include exact one, powers/products of `pi` and `e`, selected square
+  roots, logarithms, trig forms, and factored constant products.
+
+The performance policy follows from that composition: reduce exact rational and
+symbolic structure first, retain reusable forms like `pi`, `e`, `sqrt(2)`, and
+small-log constants, defer numeric approximation until the final requested
+precision, and reuse cached approximations when repeated matrix, vector, or
+predicate workloads ask for digits.
+
 ## Relationship to Other Crates
 
 - `realistic_blas` uses `hyperreal::Real` as its default exact/symbolic scalar
   backend and forwards `hyperreal` structural facts through its `Scalar` type.
-- `predicated` can consume `hyperreal::Real` directly, using structural facts,
+- `liminal` can consume `hyperreal::Real` directly, using structural facts,
   finite `f64` approximations, and bounded sign refinement before robust
   fallback.
 
@@ -53,7 +76,8 @@ real ideas. Current implementation work includes:
   signals
 
 This is a scalar library for exact/symbolic experimentation, predicate filters,
-and small algebraic workloads. It is not a dense numeric BLAS replacement.
+and small algebraic workloads. It is active and benchmark-driven, but it is not
+a dense numeric BLAS replacement.
 
 ## Installation
 
@@ -170,7 +194,7 @@ them. The main techniques are:
   hyperbolic functions
 - answer structural queries from certificates before refining approximations
 - use borrowed arithmetic to reduce expression-graph cloning in callers such as
-  `realistic_blas` and `predicated`
+  `realistic_blas` and `liminal`
 
 Benchmark suites:
 
@@ -207,7 +231,7 @@ cargo bench --bench numerical_micro
 
 When adding a shortcut, add a focused correctness test and a benchmark row for
 the smallest affected surface. Keep the shortcut only if it improves the target
-without regressing broader `realistic_blas` or `predicated` benchmarks.
+without regressing broader `realistic_blas` or `liminal` benchmarks.
 
 ## License
 

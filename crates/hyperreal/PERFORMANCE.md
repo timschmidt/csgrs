@@ -59,7 +59,7 @@ Relevant path notes:
   sizes. Matrix regressions should be investigated with those counters before
   changing algebra code.
 - Exact f64 imports are intentionally kept rational/dyadic when possible so
-  `realistic_blas` and `predicated` can stay on structural paths.
+  `realistic_blas` and `liminal` can stay on structural paths.
 
 Goals:
 
@@ -129,7 +129,7 @@ Goals:
   `hyperreal-rational/pi_7_cos`, rational endpoint inverse trig, and
   `hyperreal-rational/e_acosh`.
 - Any new symbolic class must show wins in `scalar_micro`, `realistic_blas`, and
-  `predicated`; otherwise keep the representation simpler.
+  `liminal`; otherwise keep the representation simpler.
 
 ## Computable Path
 
@@ -191,7 +191,7 @@ When a scalar row regresses:
 3. If the trace path is unchanged, suspect code layout, extra clone/certificate
    rebuilds, or rational reduction counters before changing algorithms.
 4. Re-run the smallest affected Criterion filter, then one cross-crate guard
-   from `realistic_blas` and one from `predicated`.
+   from `realistic_blas` and one from `liminal`.
 
 For this snapshot, the most important regression sentinels are:
 
