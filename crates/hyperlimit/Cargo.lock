@@ -241,7 +241,9 @@ checksum = "fc0fef456e4baa96da950455cd02c081ca953b141298e41db3fc7e36b1da849c"
 
 [[package]]
 name = "hyperreal"
-version = "0.10.5"
+version = "0.10.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0fe064b82799a870de9d9a54e8029f37494b65a9e3f988604a907bc9ebd52002"
 dependencies = [
  "ciborium",
  "num",
@@ -305,7 +307,7 @@ checksum = "68ab91017fe16c622486840e4c83c9a37afeff978bd239b5293d61ece587de66"
 
 [[package]]
 name = "liminal"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "criterion",
  "exact_geo_predicates",
@@ -534,7 +536,9 @@ dependencies = [
 
 [[package]]
 name = "realistic_blas"
-version = "0.3.2"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b53f2b89b0fed26acc94ea2528b4d14051963227a21ae3a0ad66eca4efa614d8"
 dependencies = [
  "hyperreal",
  "num",

@@ -21,7 +21,7 @@ bounded refinement, or robust fallback.
 
 ## Current State
 
-Version `0.1.2` is an early, documented predicate crate with a small public API.
+Version `0.1.3` is an early, documented predicate crate with a small public API.
 It is not a mesh, polygon, BSP, CSG, or intersection library.
 
 Implemented:
@@ -47,7 +47,7 @@ available only when the policy explicitly allows them.
 
 ```toml
 [dependencies]
-liminal = "0.1.2"
+liminal = "0.1.3"
 ```
 
 From sibling checkouts:
@@ -62,7 +62,7 @@ Enable only the backends you need:
 ```toml
 [dependencies]
 liminal = {
-    version = "0.1.2",
+    version = "0.1.3",
     features = ["hyperreal", "robust"]
 }
 ```
