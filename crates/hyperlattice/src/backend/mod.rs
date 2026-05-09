@@ -284,6 +284,59 @@ pub trait BackendScalar:
         let p3 = left[3].clone().mul_ref(right[3]);
         p0.add_ref(&p1).add_ref(&p2.add_ref(&p3))
     }
+    /// Returns the three-lane linear combination `c0 * x0 + c1 * x1 + c2 * x2`.
+    ///
+    /// This default keeps existing dot-product behavior while giving matrix
+    /// transform kernels a named hook to preserve richer forms in future
+    /// backends.
+    #[inline]
+    fn linear_combination3(coeffs: [&Self; 3], values: [&Self; 3]) -> Self {
+        crate::trace_dispatch!(
+            "realistic_blas_backend_trait",
+            "op",
+            "linear-combination3-default"
+        );
+        Self::dot3(coeffs, values)
+    }
+    /// Returns the four-lane linear combination `c0 * x0 + c1 * x1 + c2 * x2 + c3 * x3`.
+    ///
+    /// This default keeps existing dot-product behavior while keeping the
+    /// transform kernel interface consistent for fixed-size affine upgrades.
+    #[inline]
+    fn linear_combination4(coeffs: [&Self; 4], values: [&Self; 4]) -> Self {
+        crate::trace_dispatch!(
+            "realistic_blas_backend_trait",
+            "op",
+            "linear-combination4-default"
+        );
+        Self::dot4(coeffs, values)
+    }
+    /// Returns the three-lane affine combination `offset + c0 * x0 + c1 * x1 + c2 * x2`.
+    ///
+    /// The default lowers to the linear combination plus one addition so
+    /// existing backends keep their current semantics while opening room for
+    /// dedicated affine constructors.
+    #[inline]
+    fn affine_combination3(coeffs: [&Self; 3], values: [&Self; 3], offset: &Self) -> Self {
+        crate::trace_dispatch!(
+            "realistic_blas_backend_trait",
+            "op",
+            "affine-combination3-default"
+        );
+        Self::linear_combination3(coeffs, values).add_ref(offset)
+    }
+    /// Returns the four-lane affine combination `offset + c0 * x0 + c1 * x1 + c2 * x2 + c3 * x3`.
+    ///
+    /// The default lowers to the linear combination plus one addition.
+    #[inline]
+    fn affine_combination4(coeffs: [&Self; 4], values: [&Self; 4], offset: &Self) -> Self {
+        crate::trace_dispatch!(
+            "realistic_blas_backend_trait",
+            "op",
+            "affine-combination4-default"
+        );
+        Self::linear_combination4(coeffs, values).add_ref(offset)
+    }
     /// Returns a fused signed sum of two-factor products.
     ///
     /// The default deliberately preserves the existing scalar operation order.

@@ -233,6 +233,66 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     #[inline]
+    fn linear_combination3(coeffs: [&Self; 3], values: [&Self; 3]) -> Self {
+        // Route through `Real`'s fixed-arity form to let affine-structure
+        // opportunities in symbolic form live longer than immediate expansion.
+        crate::trace_dispatch!(
+            "realistic_blas_hyperreal_backend",
+            "op",
+            "linear-combination3-specialized"
+        );
+        Self(hyperreal::Real::dot3_refs(
+            [&coeffs[0].0, &coeffs[1].0, &coeffs[2].0],
+            [&values[0].0, &values[1].0, &values[2].0],
+        ))
+    }
+
+    #[inline]
+    fn linear_combination4(coeffs: [&Self; 4], values: [&Self; 4]) -> Self {
+        // Same rationale as `dot4`; a dedicated 4-ary linear form can keep exact
+        // rational denominator factorizations aligned with the matrix row.
+        crate::trace_dispatch!(
+            "realistic_blas_hyperreal_backend",
+            "op",
+            "linear-combination4-specialized"
+        );
+        Self(hyperreal::Real::dot4_refs(
+            [&coeffs[0].0, &coeffs[1].0, &coeffs[2].0, &coeffs[3].0],
+            [&values[0].0, &values[1].0, &values[2].0, &values[3].0],
+        ))
+    }
+
+    #[inline]
+    fn affine_combination3(coeffs: [&Self; 3], values: [&Self; 3], offset: &Self) -> Self {
+        // Keep affine shape explicit so repeated matrix->vector geometry can be
+        // interpreted as one offset plus shared coefficients downstream.
+        // Current `hyperreal` does not expose a dedicated 3-ary affine
+        // constructor, so preserve this shape by keeping linear and offset stages
+        // separate.
+        crate::trace_dispatch!(
+            "realistic_blas_hyperreal_backend",
+            "op",
+            "affine-combination3-specialized"
+        );
+        Self(Self::linear_combination3(coeffs, values).0 + &offset.0)
+    }
+
+    #[inline]
+    fn affine_combination4(coeffs: [&Self; 4], values: [&Self; 4], offset: &Self) -> Self {
+        // Same as `affine_combination3`, extended to 4 operands for homogeneous
+        // matrix-vector kernels once the translation term is split out as an
+        // offset.
+        // Keep this as one linear stage plus one affine-offset addition to avoid
+        // changing coefficient/value operation order.
+        crate::trace_dispatch!(
+            "realistic_blas_hyperreal_backend",
+            "op",
+            "affine-combination4-specialized"
+        );
+        Self(Self::linear_combination4(coeffs, values).0 + &offset.0)
+    }
+
+    #[inline]
     fn signed_product_sum2<const TERMS: usize>(
         positive_terms: [bool; TERMS],
         terms: [[&Self; 2]; TERMS],

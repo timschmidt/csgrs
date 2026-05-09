@@ -10,6 +10,7 @@ mod enabled {
         OnceLock::new();
     static MATRIX_PROFILE_ROWS: OnceLock<Mutex<Vec<MatrixProfileRow>>> = OnceLock::new();
     static TRACE_RUN: AtomicBool = AtomicBool::new(false);
+    static TRACE_FILTER: OnceLock<Vec<String>> = OnceLock::new();
 
     #[derive(Clone, Debug, Default)]
     struct ScalarOpProfile {
@@ -39,7 +40,16 @@ mod enabled {
         MATRIX_PROFILE_ROWS.get_or_init(|| Mutex::new(Vec::new()))
     }
 
-    pub fn begin_trace_run() {
+    fn should_capture(name: &str) -> bool {
+        let filters = TRACE_FILTER.get_or_init(Vec::new);
+        if filters.is_empty() {
+            return true;
+        }
+
+        filters.iter().any(|filter| name.contains(filter))
+    }
+
+    pub fn begin_trace_run(filter: Option<&str>) {
         rows()
             .lock()
             .expect("dispatch trace rows lock poisoned")
@@ -48,11 +58,27 @@ mod enabled {
             .lock()
             .expect("matrix profile rows lock poisoned")
             .clear();
+        if let Some(raw_filter) = filter {
+            let filters = raw_filter
+                .split(',')
+                .map(str::trim)
+                .filter(|filter| !filter.is_empty())
+                .map(str::to_owned)
+                .collect::<Vec<String>>();
+            let _ = TRACE_FILTER.set(filters);
+        } else {
+            let _ = TRACE_FILTER.set(Vec::new());
+        }
         TRACE_RUN.store(true, Ordering::Relaxed);
     }
 
     pub fn trace_row(name: impl Into<String>, sample: impl FnOnce()) {
         if !TRACE_RUN.load(Ordering::Relaxed) {
+            return;
+        }
+
+        let name = name.into();
+        if !should_capture(&name) {
             return;
         }
 
@@ -72,6 +98,11 @@ mod enabled {
     }
 
     pub fn trace_cases<T>(name: impl Into<String>, cases: &[T], mut sample: impl FnMut(&T)) {
+        let name = name.into();
+        if !should_capture(&name) {
+            return;
+        }
+
         trace_row(name, || {
             for case in cases {
                 sample(black_box(case));
@@ -79,9 +110,7 @@ mod enabled {
         });
     }
 
-    fn scalar_op_profile(
-        counts: &[hyperreal::dispatch_trace::DispatchCount],
-    ) -> ScalarOpProfile {
+    fn scalar_op_profile(counts: &[hyperreal::dispatch_trace::DispatchCount]) -> ScalarOpProfile {
         let mut profile = ScalarOpProfile::default();
         for count in counts
             .iter()
@@ -105,6 +134,22 @@ mod enabled {
                 ("scalar_fast_path", "dot4-backend") => {
                     profile.muls += count.count * 4;
                     profile.adds += count.count * 3;
+                }
+                ("scalar_fast_path", "linear-combination3-specialized") => {
+                    profile.muls += count.count * 3;
+                    profile.adds += count.count * 2;
+                }
+                ("scalar_fast_path", "linear-combination4-specialized") => {
+                    profile.muls += count.count * 4;
+                    profile.adds += count.count * 3;
+                }
+                ("scalar_fast_path", "affine-combination3-specialized") => {
+                    profile.muls += count.count * 3;
+                    profile.adds += count.count * 3;
+                }
+                ("scalar_fast_path", "affine-combination4-specialized") => {
+                    profile.muls += count.count * 4;
+                    profile.adds += count.count * 4;
                 }
                 ("scalar_method", "inverse-owned" | "inverse-ref") => {
                     profile.inverses += count.count;
@@ -131,6 +176,11 @@ mod enabled {
         sample: impl FnOnce(),
     ) {
         if !TRACE_RUN.load(Ordering::Relaxed) {
+            return;
+        }
+
+        let name = format!("matrix_profile_row::{matrix}/{kernel}/{input}");
+        if !should_capture(&name) {
             return;
         }
 
@@ -208,7 +258,7 @@ mod enabled {
 
         if !matrix_rows.is_empty() {
             out.push_str("## Matrix Kernel Profile\n\n");
-            out.push_str("Per-call values are one unmeasured sample pass divided by the sampled calls. `dot3`/`dot4` fast paths are expanded into their scalar add/mul counts. Common-factor buckets are rational reduction events per call; `pow2` is the dyadic shift-only path.\n\n");
+            out.push_str("Per-call values are one unmeasured sample pass divided by the sampled calls. `dot3`/`dot4` and `linear`/`affine` fast paths are expanded into their scalar add/mul counts. Common-factor buckets are rational reduction events per call; `pow2` is the dyadic shift-only path.\n\n");
             out.push_str("| Matrix | Kernel | Input | Calls | Scalar +/call | Scalar -/call | Scalar */call | Scalar div/call | Scalar inv/call | Rational reductions/call | GCDs/call | Temps/ctors/call | Peak operand bits | Common factors/call |\n");
             out.push_str("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |\n");
             let mut rows = matrix_rows.clone();
@@ -269,7 +319,7 @@ mod enabled {
 
 #[cfg(not(feature = "hyperreal-dispatch-trace"))]
 mod enabled {
-    pub fn begin_trace_run() {}
+    pub fn begin_trace_run(_filter: Option<&str>) {}
 
     pub fn trace_row(name: impl Into<String>, sample: impl FnOnce()) {
         let _ = name;
@@ -300,12 +350,11 @@ mod enabled {
 }
 
 use enabled::{
-    trace_cases as trace_dispatch_cases, trace_matrix_profile_row,
-    trace_row as trace_dispatch_row,
+    trace_cases as trace_dispatch_cases, trace_matrix_profile_row, trace_row as trace_dispatch_row,
 };
 
-fn begin_dispatch_trace_run() {
-    enabled::begin_trace_run();
+fn begin_dispatch_trace_run(filter: Option<&str>) {
+    enabled::begin_trace_run(filter);
 }
 
 fn write_dispatch_trace_report() {

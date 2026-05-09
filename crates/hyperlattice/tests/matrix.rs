@@ -1,7 +1,9 @@
 mod common;
 
 use common::{abort_signal, frac, r, unknown_zero};
-use realistic_blas::{Matrix3, Matrix4, Problem, Vector4, zero};
+use realistic_blas::{
+    zero, Matrix3, Matrix4, Problem, Scalar, ScalarSign, Vector3, Vector4, ZeroStatus,
+};
 
 fn assert_singular_error<T: std::fmt::Debug>(result: Result<T, Problem>) {
     assert!(matches!(
@@ -283,4 +285,209 @@ fn ordinary_matrix_inverse_prefers_known_nonzero_pivots() {
     ]);
 
     assert!(matrix.inverse().is_ok());
+}
+
+#[cfg(feature = "hyperreal-backend")]
+#[test]
+fn hyperreal_matrix_transform_preserves_exact_rational_facts() {
+    let permutation = Matrix3::new([
+        [frac(0, 1), frac(1, 1), frac(0, 1)],
+        [frac(1, 1), frac(0, 1), frac(0, 1)],
+        [frac(0, 1), frac(0, 1), frac(1, 1)],
+    ]);
+    let input = Vector3::new([frac(1, 2), frac(-3, 4), frac(5, 6)]);
+    let output = permutation * input;
+
+    assert_eq!(output, Vector3::new([frac(-3, 4), frac(1, 2), frac(5, 6)]));
+    assert!(output[0].structural_facts().exact_rational);
+    assert!(output[1].structural_facts().exact_rational);
+    assert!(output[2].structural_facts().exact_rational);
+    assert_eq!(
+        output[0].structural_facts().sign,
+        Some(ScalarSign::Negative)
+    );
+    assert_eq!(
+        output[1].structural_facts().sign,
+        Some(ScalarSign::Positive)
+    );
+    assert_eq!(
+        output[2].structural_facts().sign,
+        Some(ScalarSign::Positive)
+    );
+    assert_eq!(output[0].zero_status(), ZeroStatus::NonZero);
+    assert_eq!(output[1].zero_status(), ZeroStatus::NonZero);
+}
+
+#[cfg(feature = "hyperreal-backend")]
+#[test]
+fn hyperreal_matrix_transform_identity_preserves_facts() {
+    let identity = Matrix3::new([
+        [frac(1, 1), frac(0, 1), frac(0, 1)],
+        [frac(0, 1), frac(1, 1), frac(0, 1)],
+        [frac(0, 1), frac(0, 1), frac(1, 1)],
+    ]);
+    let input = Vector3::new([frac(3, 4), frac(-2, 3), frac(0, 1)]);
+
+    let output = identity * input.clone();
+
+    assert_eq!(output, input);
+    assert!(output[0].structural_facts().exact_rational);
+    assert!(output[1].structural_facts().exact_rational);
+    assert!(output[2].structural_facts().exact_rational);
+    assert_eq!(output[0].structural_facts().sign, Some(ScalarSign::Positive));
+    assert_eq!(output[1].structural_facts().sign, Some(ScalarSign::Negative));
+    assert_eq!(output[2].structural_facts().sign, Some(ScalarSign::Zero));
+}
+
+#[cfg(feature = "hyperreal-backend")]
+#[test]
+fn hyperreal_matrix_transform_diagonal_and_translation_semantics() {
+    let scale_translate = Matrix4::new([
+        [frac(-3, 2), frac(0, 1), frac(0, 1), frac(0, 1)],
+        [frac(0, 1), frac(4, 1), frac(0, 1), frac(0, 1)],
+        [frac(0, 1), frac(0, 1), frac(0, 1), frac(0, 1)],
+        [frac(0, 1), frac(0, 1), frac(0, 1), frac(1, 1)],
+    ]);
+    let input = Vector4::new([frac(2, 3), frac(-1, 2), frac(-9, 1), frac(1, 1)]);
+
+    let output = scale_translate * input;
+
+    assert_eq!(
+        output,
+        Vector4::new([frac(-1, 1), frac(-2, 1), frac(0, 1), frac(1, 1)]),
+    );
+    assert!(output[0].structural_facts().exact_rational);
+    assert!(output[1].structural_facts().exact_rational);
+    assert!(output[2].structural_facts().exact_rational);
+    assert!(output[3].structural_facts().exact_rational);
+    assert_eq!(output[0].structural_facts().sign, Some(ScalarSign::Negative));
+    assert_eq!(output[1].structural_facts().sign, Some(ScalarSign::Negative));
+    assert_eq!(output[2].structural_facts().sign, Some(ScalarSign::Zero));
+    assert_eq!(output[3].structural_facts().sign, Some(ScalarSign::Positive));
+    assert_eq!(output[2].zero_status(), ZeroStatus::Zero);
+}
+
+#[cfg(feature = "hyperreal-backend")]
+#[test]
+fn hyperreal_matrix_transform_preserves_homogeneous_direction_points_semantics() {
+    let translation = Matrix4::new([
+        [frac(1, 1), frac(0, 1), frac(0, 1), frac(11, 10)],
+        [frac(0, 1), frac(1, 1), frac(0, 1), frac(-3, 2)],
+        [frac(0, 1), frac(0, 1), frac(1, 1), frac(7, 5)],
+        [frac(0, 1), frac(0, 1), frac(0, 1), frac(1, 1)],
+    ]);
+    let point = Vector4::new([frac(6, 1), frac(7, 1), frac(8, 1), frac(1, 1)]);
+    let direction = Vector4::new([frac(6, 1), frac(7, 1), frac(8, 1), frac(0, 1)]);
+
+    let translated_point = translation.clone() * point.clone();
+    let transformed_direction = translation * direction.clone();
+
+    assert_eq!(
+        translated_point,
+        Vector4::new([frac(71, 10), frac(11, 2), frac(47, 5), frac(1, 1)])
+    );
+    assert_eq!(transformed_direction, direction);
+    for index in 0..4 {
+        assert!(translated_point[index].structural_facts().exact_rational);
+        assert!(
+            transformed_direction[index]
+                .structural_facts()
+                .exact_rational
+        );
+    }
+    assert_eq!(
+        transformed_direction[3].structural_facts().zero,
+        ZeroStatus::Zero
+    );
+    assert_eq!(
+        translated_point[3].structural_facts().zero,
+        ZeroStatus::NonZero
+    );
+}
+
+#[cfg(feature = "hyperreal-backend")]
+#[test]
+fn hyperreal_matrix_transform_direction_zero_lane_facts() {
+    let linear_matrix = Matrix4::new([
+        [frac(-3, 2), frac(0, 1), frac(7, 2), frac(11, 10)],
+        [frac(0, 1), frac(0, 1), frac(0, 1), frac(-3, 2)],
+        [frac(0, 1), frac(4, 1), frac(0, 1), frac(7, 5)],
+        [frac(0, 1), frac(0, 1), frac(0, 1), frac(1, 1)],
+    ]);
+    let direction = Vector4::new([frac(0, 1), frac(7, 1), frac(0, 1), frac(0, 1)]);
+
+    let transformed_direction = linear_matrix * direction;
+
+    // Keep zero-lane intent explicit so future constructor refactors
+    // don’t silently broaden symbolic structure on known direction inputs.
+    assert_eq!(transformed_direction[0], frac(-3, 2) * frac(0, 1));
+    assert_eq!(transformed_direction[1], frac(0, 1));
+    assert_eq!(transformed_direction[2], frac(28, 1));
+    assert_eq!(transformed_direction[3], frac(0, 1));
+    assert_eq!(transformed_direction[0].zero_status(), ZeroStatus::Zero);
+    assert_eq!(transformed_direction[1].zero_status(), ZeroStatus::Zero);
+    assert_eq!(transformed_direction[3].zero_status(), ZeroStatus::Zero);
+    assert_eq!(transformed_direction[2].zero_status(), ZeroStatus::NonZero);
+}
+
+#[cfg(feature = "hyperreal-backend")]
+#[test]
+fn hyperreal_matrix_transform_symbolic_no_translation_zero_lane_facts() {
+    let symbolic_linear = Matrix4::new([
+        [Scalar::pi(), frac(0, 1), Scalar::e(), frac(0, 1)],
+        [frac(0, 1), frac(0, 1), frac(0, 1), frac(0, 1)],
+        [frac(0, 1), frac(-2, 1), frac(0, 1), frac(0, 1)],
+        [frac(0, 1), frac(0, 1), frac(0, 1), frac(1, 1)],
+    ]);
+    let symbolic_direction = Vector4::new([frac(3, 1), frac(7, 1), frac(0, 1), frac(0, 1)]);
+
+    let transformed = symbolic_linear * symbolic_direction;
+
+    // Symbolic no-translation path should keep this as a pure 3-term directional
+    // transform and preserve lane-level public facts.
+    // This guards against future constructor changes that would accidentally
+    // materialize symbolic terms as full 4-lane work and erase demand-driven
+    // zero/sign separation.
+    assert_eq!(transformed[0].zero_status(), ZeroStatus::NonZero);
+    assert_eq!(transformed[1].zero_status(), ZeroStatus::Zero);
+    assert_eq!(transformed[2].zero_status(), ZeroStatus::NonZero);
+    assert_eq!(transformed[3].zero_status(), ZeroStatus::Zero);
+    assert_eq!(transformed[0].structural_facts().sign, Some(ScalarSign::Positive));
+    assert_eq!(transformed[1].structural_facts().sign, Some(ScalarSign::Zero));
+    assert_eq!(transformed[2].structural_facts().sign, Some(ScalarSign::Negative));
+    assert!(!transformed[0].structural_facts().exact_rational);
+    assert!(transformed[2].structural_facts().exact_rational);
+}
+
+#[cfg(feature = "hyperreal-backend")]
+#[test]
+fn hyperreal_matrix_transform_propagates_zero_and_sign() {
+    let matrix = Matrix3::new([
+        [frac(-2, 1), frac(0, 1), frac(0, 1)],
+        [frac(0, 1), frac(0, 1), frac(0, 1)],
+        [frac(0, 1), frac(0, 1), frac(5, 2)],
+    ]);
+    let input = Vector3::new([frac(3, 1), frac(7, 1), frac(-4, 1)]);
+
+    let transformed = matrix * input;
+
+    assert_eq!(
+        transformed,
+        Vector3::new([frac(-6, 1), frac(0, 1), frac(-10, 1)])
+    );
+    assert_eq!(
+        transformed[0].structural_facts().sign,
+        Some(ScalarSign::Negative)
+    );
+    assert_eq!(
+        transformed[1].structural_facts().sign,
+        Some(ScalarSign::Zero)
+    );
+    assert_eq!(
+        transformed[2].structural_facts().sign,
+        Some(ScalarSign::Negative)
+    );
+    assert_eq!(transformed[0].zero_status(), ZeroStatus::NonZero);
+    assert_eq!(transformed[1].zero_status(), ZeroStatus::Zero);
+    assert_eq!(transformed[2].zero_status(), ZeroStatus::NonZero);
 }

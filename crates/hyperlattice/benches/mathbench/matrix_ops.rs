@@ -10,6 +10,8 @@ fn bench_matrix_operations_for<B, F>(
     let rhs3_cases = sample_mat3_b_cases().map(|value| blas_mat3_with(value, make_scalar));
     let lhs4_cases = sample_mat4_cases().map(|value| blas_mat4_with(value, make_scalar));
     let rhs4_cases = sample_mat4_b_cases().map(|value| blas_mat4_with(value, make_scalar));
+    let vector3_cases = sample_vec3_cases().map(|value| blas_vec3_with(value, make_scalar));
+    let vector4_cases = sample_vec4_cases().map(|value| blas_vec4_with(value, make_scalar));
     let scalar_cases = [
         make_scalar(2.0),
         make_scalar(1.0e-9),
@@ -47,6 +49,14 @@ fn bench_matrix_operations_for<B, F>(
                 black_box(black_box(value.clone()).powi(3).unwrap());
             }
         });
+        trace_matrix_profile_row("mat3", "transform_vec3", input, lhs3_cases.len(), || {
+            for index in 0..lhs3_cases.len() {
+                black_box(
+                    black_box(lhs3_cases[index].clone())
+                        * black_box(vector3_cases[index].clone()),
+                );
+            }
+        });
         trace_matrix_profile_row("mat3", "powi_negative", input, lhs3_cases.len(), || {
             for value in &lhs3_cases {
                 black_box(black_box(value.clone()).powi(-2).unwrap());
@@ -73,6 +83,14 @@ fn bench_matrix_operations_for<B, F>(
         trace_matrix_profile_row("mat4", "powi", input, lhs4_cases.len(), || {
             for value in &lhs4_cases {
                 black_box(black_box(value.clone()).powi(3).unwrap());
+            }
+        });
+        trace_matrix_profile_row("mat4", "transform_vec4", input, lhs4_cases.len(), || {
+            for index in 0..lhs4_cases.len() {
+                black_box(
+                    black_box(lhs4_cases[index].clone())
+                        * black_box(vector4_cases[index].clone()),
+                );
             }
         });
         trace_matrix_profile_row("mat4", "powi_negative", input, lhs4_cases.len(), || {

@@ -40,8 +40,8 @@
 use std::error::Error;
 use std::fmt;
 use std::ops::{Add, Div, Mul, Neg, Sub};
-use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
 
 #[cfg(feature = "hyperreal-backend")]
 pub use hyperreal::{Rational, Real};
@@ -281,6 +281,122 @@ impl<B: Backend> Scalar<B> {
             [&left[0].0, &left[1].0, &left[2].0, &left[3].0],
             [&right[0].0, &right[1].0, &right[2].0, &right[3].0],
         ))
+    }
+
+    #[inline]
+    pub(crate) fn linear_combination3(coefficients: [&Self; 3], values: [&Self; 3]) -> Self {
+        // Dedicated linear-combination hooks let hyperreal keep shared affine
+        // structure when transform kernels can preserve matrix row geometry.
+        crate::trace_dispatch!(
+            "realistic_blas",
+            "scalar_fast_path",
+            "linear-combination3-specialized"
+        );
+        Self(B::Repr::linear_combination3(
+            [&coefficients[0].0, &coefficients[1].0, &coefficients[2].0],
+            [&values[0].0, &values[1].0, &values[2].0],
+        ))
+    }
+
+    #[inline]
+    pub(crate) fn linear_combination3_refs(coefficients: [&Self; 3], values: [&Self; 3]) -> Self {
+        // Stage-2 constructor naming shim while the underlying hyperreal crate
+        // still exposes only the older fixed-arity methods.
+        Self::linear_combination3(coefficients, values)
+    }
+
+    #[inline]
+    pub(crate) fn linear_combination4(coefficients: [&Self; 4], values: [&Self; 4]) -> Self {
+        // Dedicated linear-combination hooks let hyperreal keep shared affine
+        // structure when transform kernels can preserve matrix row geometry.
+        crate::trace_dispatch!(
+            "realistic_blas",
+            "scalar_fast_path",
+            "linear-combination4-specialized"
+        );
+        Self(B::Repr::linear_combination4(
+            [
+                &coefficients[0].0,
+                &coefficients[1].0,
+                &coefficients[2].0,
+                &coefficients[3].0,
+            ],
+            [&values[0].0, &values[1].0, &values[2].0, &values[3].0],
+        ))
+    }
+
+    #[inline]
+    pub(crate) fn linear_combination4_refs(coefficients: [&Self; 4], values: [&Self; 4]) -> Self {
+        // Stage-2 constructor naming shim while the underlying hyperreal crate
+        // still exposes only the older fixed-arity methods.
+        Self::linear_combination4(coefficients, values)
+    }
+
+    #[inline]
+    pub(crate) fn affine_combination3(
+        coefficients: [&Self; 3],
+        values: [&Self; 3],
+        offset: &Self,
+    ) -> Self {
+        // This keeps the transform hot path explicit without forcing affine terms
+        // to be represented as repeated generic multiplications immediately.
+        crate::trace_dispatch!(
+            "realistic_blas",
+            "scalar_fast_path",
+            "affine-combination3-specialized"
+        );
+        Self(B::Repr::affine_combination3(
+            [&coefficients[0].0, &coefficients[1].0, &coefficients[2].0],
+            [&values[0].0, &values[1].0, &values[2].0],
+            &offset.0,
+        ))
+    }
+
+    #[inline]
+    pub(crate) fn affine_combination3_refs(
+        coefficients: [&Self; 3],
+        values: [&Self; 3],
+        offset: &Self,
+    ) -> Self {
+        // Stage-2 constructor naming shim while the underlying hyperreal crate
+        // still exposes only the older fixed-arity methods.
+        Self::affine_combination3(coefficients, values, offset)
+    }
+
+    #[inline]
+    pub(crate) fn affine_combination4(
+        coefficients: [&Self; 4],
+        values: [&Self; 4],
+        offset: &Self,
+    ) -> Self {
+        // This keeps the transform hot path explicit without forcing affine terms
+        // to be represented as repeated generic multiplications immediately.
+        crate::trace_dispatch!(
+            "realistic_blas",
+            "scalar_fast_path",
+            "affine-combination4-specialized"
+        );
+        Self(B::Repr::affine_combination4(
+            [
+                &coefficients[0].0,
+                &coefficients[1].0,
+                &coefficients[2].0,
+                &coefficients[3].0,
+            ],
+            [&values[0].0, &values[1].0, &values[2].0, &values[3].0],
+            &offset.0,
+        ))
+    }
+
+    #[inline]
+    pub(crate) fn affine_combination4_refs(
+        coefficients: [&Self; 4],
+        values: [&Self; 4],
+        offset: &Self,
+    ) -> Self {
+        // Stage-2 constructor naming shim while the underlying hyperreal crate
+        // still exposes only the older fixed-arity methods.
+        Self::affine_combination4(coefficients, values, offset)
     }
 
     #[inline]

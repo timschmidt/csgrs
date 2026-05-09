@@ -6,8 +6,8 @@ use std::mem;
 use std::ops::{Add, BitXor, Div, Index, IndexMut, Mul, Neg, Sub};
 
 use crate::scalar::{
-    ZeroStatus, clone_with_abort, reject_definite_zero, require_known_nonzero, with_abort,
-    zero_status, zero_status_with_abort,
+    clone_with_abort, reject_definite_zero, require_known_nonzero, with_abort, zero_status,
+    zero_status_with_abort, ZeroStatus,
 };
 use crate::vector::{Vector3, Vector4};
 use crate::{AbortSignal, Backend, BlasResult, CheckedBlasResult, DefaultBackend, Problem, Scalar};
@@ -63,12 +63,8 @@ fn transpose_array4<B: Backend>(matrix: [[Scalar<B>; 4]; 4]) -> [[Scalar<B>; 4];
     // hyperreal-rational mat4 div_matrix improved ~2% within noise, borrowed
     // hyperreal-rational mat4 div was neutral, and borrowed approx mat4 div
     // moved +1.25% inside the 2% noise threshold.
-    let [
-        [m00, m01, m02, m03],
-        [m10, m11, m12, m13],
-        [m20, m21, m22, m23],
-        [m30, m31, m32, m33],
-    ] = matrix;
+    let [[m00, m01, m02, m03], [m10, m11, m12, m13], [m20, m21, m22, m23], [m30, m31, m32, m33]] =
+        matrix;
     [
         [m00, m10, m20, m30],
         [m01, m11, m21, m31],
@@ -955,16 +951,57 @@ fn transform_vector_rhs_ref<B: Backend, const N: usize>(
     left: &[[Scalar<B>; N]; N],
     right: &[Scalar<B>; N],
 ) -> [Scalar<B>; N] {
+    let is_direction = if N == 4 {
+        // Cache the homogeneous-coordinate fact once so each output row does not
+        // repeat the same `zero_status` query.
+        right[3].zero_status() == ZeroStatus::Zero
+    } else {
+        false
+    };
+
     from_fn(|row| {
-        let left_terms = [&left[row][0], &left[row][1], &left[row][2]];
-        let right_terms = [&right[0], &right[1], &right[2]];
-        if let (Some(lhs), Some(rhs)) = (left[row].get(3), right.get(3)) {
-            Scalar::dot4(
-                [left_terms[0], left_terms[1], left_terms[2], lhs],
-                [right_terms[0], right_terms[1], right_terms[2], rhs],
-            )
+        if N == 4 {
+            let translation_zero = if is_direction {
+                true
+            } else {
+                left[row][3].zero_status() == ZeroStatus::Zero
+            };
+
+            // Direction vectors (homogeneous coordinate == 0) can skip the
+            // translation column; if that coefficient is also known-zero, point
+            // transforms keep the same 3-term shape.
+            // Both checks are facts-based and avoid constructing dead terms while
+            // preserving backend constructor shape for the remaining lanes.
+            if translation_zero {
+                let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
+                let vector_terms = [&right[0], &right[1], &right[2]];
+                Scalar::linear_combination3_refs(matrix_terms, vector_terms)
+            } else {
+                let matrix_terms = [&left[row][0], &left[row][1], &left[row][2], &left[row][3]];
+                let vector_terms = [&right[0], &right[1], &right[2], &right[3]];
+                // `Matrix4` transforms are 4-term linear combinations and keep
+                // the transform shape explicit. Keeping this as one fixed-arity
+                // linear hook preserves exact-rational structure through
+                // backend-specific constructors before any generic simplification.
+                // Use the Stage-2 `_refs` names here to minimize future API churn
+                // when hyperreal's dedicated constructors are introduced.
+                Scalar::linear_combination4_refs(matrix_terms, vector_terms)
+            }
         } else {
-            Scalar::dot3(left_terms, right_terms)
+            let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
+            let vector_terms = [&right[0], &right[1], &right[2]];
+            if let (Some(offset_term), Some(vector_term)) = (left[row].get(3), right.get(3)) {
+                // Matrix-vector transforms are affine in their inputs and spend most
+                // time on fixed-arity combinations. Splitting the homogeneous
+                // row's last term into an offset keeps structure visible in backend
+                // hooks and preserves exact-rational shape on hyperreal backends.
+                // `_refs` aliases keep the call sites aligned with the
+                // staged constructor naming.
+                let offset = offset_term * vector_term; // no division/approximation here
+                Scalar::affine_combination3_refs(matrix_terms, vector_terms, &offset)
+            } else {
+                Scalar::linear_combination3_refs(matrix_terms, vector_terms)
+            }
         }
     })
 }
@@ -1873,18 +1910,7 @@ macro_rules! impl_matrix {
                     "op",
                     "transform-vector-owned-owned"
                 );
-                $vector(from_fn(|row| {
-                    let left = [&self.0[row][0], &self.0[row][1], &self.0[row][2]];
-                    let right = [&rhs.0[0], &rhs.0[1], &rhs.0[2]];
-                    if let (Some(lhs), Some(rhs)) = (self.0[row].get(3), rhs.0.get(3)) {
-                        Scalar::dot4(
-                            [left[0], left[1], left[2], lhs],
-                            [right[0], right[1], right[2], rhs],
-                        )
-                    } else {
-                        Scalar::dot3(left, right)
-                    }
-                }))
+                $vector(transform_vector_rhs_ref(&self.0, &rhs.0))
             }
         }
 

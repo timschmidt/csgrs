@@ -256,6 +256,12 @@ fn bench_matrix3(c: &mut Criterion) {
         let rational_lhs = blas_mat3_rational();
         let rational_rhs = blas_mat3_b_rational();
         let rational_vector = blas_vec3_rational();
+        let symbolic_mat3 = Matrix3::new([
+            [HyperrealScalar::pi(), HyperrealScalar::e(), q(-5, 7)],
+            [q(13, 8), q(-3, 4), HyperrealScalar::pi()],
+            [q(7, 3), HyperrealScalar::e(), q(11, 5)],
+        ]);
+        let symbolic_vector = Vector3::new([HyperrealScalar::pi(), q(-2, 3), HyperrealScalar::e()]);
         trace_dispatch_row("matrix3/hyperreal-rational/mat3 determinant", || {
             black_box(black_box(&rational_lhs).determinant());
         });
@@ -268,6 +274,67 @@ fn bench_matrix3(c: &mut Criterion) {
         trace_dispatch_row("matrix3/hyperreal-rational/mat3 transform vec3", || {
             black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
         });
+        // Demand-driven approximation check: one requested component should not
+        // force all transformed coordinates to approximate.
+        trace_dispatch_row("matrix3/hyperreal-rational/mat3 transform vec3 one-coord approx", || {
+            let transformed =
+                black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
+            black_box(transformed[0].to_f64_approx());
+        });
+        trace_dispatch_row("matrix3/hyperreal-rational/mat3 transform vec3 all-coord approx", || {
+            let transformed =
+                black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
+            black_box((
+                transformed[0].to_f64_approx(),
+                transformed[1].to_f64_approx(),
+                transformed[2].to_f64_approx(),
+            ));
+        });
+        // Symbolic transform probes ensure the same fast path is used when matrix/point
+        // entries contain non-rational structure.
+        trace_dispatch_row("matrix3/hyperreal-symbolic/mat3 transform vec3", || {
+            black_box(black_box(symbolic_mat3.clone()) * black_box(symbolic_vector.clone()));
+        });
+        // Keep this one-coordinate probe to show demand-driven approximation for
+        // symbolic transforms does not drag every sibling coordinate.
+        trace_dispatch_row(
+            "matrix3/hyperreal-symbolic/mat3 transform vec3 one-coord approx",
+            || {
+                let transformed = black_box(
+                    black_box(symbolic_mat3.clone()) * black_box(symbolic_vector.clone()),
+                );
+                black_box(transformed[0].to_f64_approx());
+            },
+        );
+        trace_dispatch_row(
+            "matrix3/hyperreal-symbolic/mat3 transform vec3 all-coord approx",
+            || {
+                let transformed = black_box(
+                    black_box(symbolic_mat3.clone()) * black_box(symbolic_vector.clone()),
+                );
+                black_box((
+                    transformed[0].to_f64_approx(),
+                    transformed[1].to_f64_approx(),
+                    transformed[2].to_f64_approx(),
+                ));
+            },
+        );
+        // Predicate query only; no approximation requested here.
+        trace_dispatch_row(
+            "matrix3/hyperreal-rational/mat3 transform vec3 sign/zero facts",
+            || {
+                let transformed =
+                    black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
+                black_box((
+                    transformed[0].structural_facts().sign,
+                    transformed[1].structural_facts().sign,
+                    transformed[2].structural_facts().sign,
+                    transformed[0].zero_status(),
+                    transformed[1].zero_status(),
+                    transformed[2].zero_status(),
+                ));
+            },
+        );
         group.bench_function("hyperreal-rational/mat3 determinant", |b| {
             b.iter(|| black_box(black_box(&rational_lhs).determinant()))
         });
@@ -280,6 +347,49 @@ fn bench_matrix3(c: &mut Criterion) {
         group.bench_function("hyperreal-rational/mat3 transform vec3", |b| {
             b.iter(|| {
                 black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()))
+            })
+        });
+        group.bench_function("hyperreal-rational/mat3 transform vec3 one-coord approx", |b| {
+            b.iter(|| {
+                let transformed =
+                    black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
+                black_box(transformed[0].to_f64_approx())
+            })
+        });
+        group.bench_function("hyperreal-rational/mat3 transform vec3 all-coord approx", |b| {
+            b.iter(|| {
+                let transformed =
+                    black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
+                black_box((
+                    transformed[0].to_f64_approx(),
+                    transformed[1].to_f64_approx(),
+                    transformed[2].to_f64_approx(),
+                ))
+            })
+        });
+        // Timed symbolic benchmark to mirror rational behavior while exercising
+        // non-rational fact propagation.
+        group.bench_function("hyperreal-symbolic/mat3 transform vec3", |b| {
+            b.iter(|| {
+                black_box(black_box(symbolic_mat3.clone()) * black_box(symbolic_vector.clone()))
+            })
+        });
+        group.bench_function("hyperreal-symbolic/mat3 transform vec3 one-coord approx", |b| {
+            b.iter(|| {
+                let transformed =
+                    black_box(black_box(symbolic_mat3.clone()) * black_box(symbolic_vector.clone()));
+                black_box(transformed[0].to_f64_approx())
+            })
+        });
+        group.bench_function("hyperreal-symbolic/mat3 transform vec3 all-coord approx", |b| {
+            b.iter(|| {
+                let transformed =
+                    black_box(black_box(symbolic_mat3.clone()) * black_box(symbolic_vector.clone()));
+                black_box((
+                    transformed[0].to_f64_approx(),
+                    transformed[1].to_f64_approx(),
+                    transformed[2].to_f64_approx(),
+                ))
             })
         });
     }
@@ -488,6 +598,32 @@ fn bench_matrix4(c: &mut Criterion) {
         let rational_lhs = blas_mat4_rational();
         let rational_rhs = blas_mat4_b_rational();
         let rational_vector = blas_vec4_rational();
+        let symbolic_mat4 = Matrix4::new([
+            [HyperrealScalar::pi(), HyperrealScalar::e(), q(-5, 7), q(3, 2)],
+            [q(13, 8), q(-3, 4), HyperrealScalar::pi(), q(2, 5)],
+            [q(7, 3), HyperrealScalar::e(), q(-11, 13), q(1, 7)],
+            [q(5, 8), q(-4, 9), q(2, 3), q(1, 1)],
+        ]);
+        let symbolic_linear_lhs = Matrix4::new([
+            [HyperrealScalar::pi(), HyperrealScalar::e(), q(-5, 7), q(0, 1)],
+            [q(13, 8), q(-3, 4), HyperrealScalar::pi(), q(0, 1)],
+            [q(7, 3), HyperrealScalar::e(), q(-11, 13), q(0, 1)],
+            [q(5, 8), q(-4, 9), q(2, 3), q(0, 1)],
+        ]);
+        let rational_linear_lhs = Matrix4::new([
+            [q(2, 1), q(-1, 3), q(5, 6), q(0, 1)],
+            [q(-3, 2), q(7, 5), q(1, 4), q(0, 1)],
+            [q(9, 7), q(4, 3), q(11, 5), q(0, 1)],
+            [q(0, 1), q(0, 1), q(0, 1), q(0, 1)],
+        ]);
+        let symbolic_vector = Vector4::new([
+            HyperrealScalar::pi(),
+            q(-2, 3),
+            HyperrealScalar::e(),
+            q(9, 2),
+        ]);
+        let symbolic_point = Vector4::new([HyperrealScalar::pi(), q(5, 3), q(7, 2), q(1, 1)]);
+        let symbolic_direction = Vector4::new([q(3, 2), q(-11, 7), q(9, 4), q(0, 1)]);
         trace_dispatch_row("matrix4/hyperreal-rational/mat4 determinant", || {
             black_box(black_box(&rational_lhs).determinant());
         });
@@ -500,6 +636,199 @@ fn bench_matrix4(c: &mut Criterion) {
         trace_dispatch_row("matrix4/hyperreal-rational/mat4 transform vec4", || {
             black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
         });
+        trace_dispatch_row("matrix4/hyperreal-rational/mat4 transform vec4 no-translation", || {
+            black_box(
+                black_box(rational_linear_lhs.clone()) * black_box(rational_vector.clone()),
+            );
+        });
+        // Demand-driven approximation check for full transform outputs.
+        trace_dispatch_row(
+            "matrix4/hyperreal-rational/mat4 transform vec4 no-translation one-coord approx",
+            || {
+                let transformed = black_box(
+                    black_box(rational_linear_lhs.clone()) * black_box(rational_vector.clone()),
+                );
+                black_box(transformed[0].to_f64_approx());
+            },
+        );
+        trace_dispatch_row(
+            "matrix4/hyperreal-rational/mat4 transform vec4 no-translation all-coord approx",
+            || {
+                let transformed = black_box(
+                    black_box(rational_linear_lhs.clone()) * black_box(rational_vector.clone()),
+                );
+                black_box((
+                    transformed[0].to_f64_approx(),
+                    transformed[1].to_f64_approx(),
+                    transformed[2].to_f64_approx(),
+                    transformed[3].to_f64_approx(),
+                ));
+            },
+        );
+        // Structural fact extraction should not force full-coordinate approximation.
+        trace_dispatch_row(
+            "matrix4/hyperreal-rational/mat4 transform vec4 no-translation structural facts",
+            || {
+                let transformed =
+                    black_box(black_box(rational_linear_lhs.clone()) * black_box(rational_vector.clone()));
+                let _ = black_box((
+                    transformed[0].structural_facts().sign,
+                    transformed[1].structural_facts().sign,
+                    transformed[2].structural_facts().sign,
+                    transformed[3].structural_facts().sign,
+                    transformed[0].zero_status(),
+                    transformed[1].zero_status(),
+                    transformed[2].zero_status(),
+                    transformed[3].zero_status(),
+                ));
+            },
+        );
+        trace_dispatch_row(
+            "matrix4/hyperreal-rational/mat4 transform vec4 one-coord approx",
+            || {
+                let transformed =
+                    black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
+                black_box(transformed[0].to_f64_approx());
+            },
+        );
+        trace_dispatch_row("matrix4/hyperreal-rational/mat4 transform vec4 all-coord approx", || {
+            let transformed =
+                black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
+            black_box((
+                transformed[0].to_f64_approx(),
+                transformed[1].to_f64_approx(),
+                transformed[2].to_f64_approx(),
+                transformed[3].to_f64_approx(),
+            ));
+        });
+        // Symbolic matrix+vector probes exercise transform fast paths when
+        // coefficients and inputs carry non-rational fact metadata.
+        trace_dispatch_row("matrix4/hyperreal-symbolic/mat4 transform vec4", || {
+            black_box(black_box(symbolic_mat4.clone()) * black_box(symbolic_vector.clone()));
+        });
+        trace_dispatch_row(
+            "matrix4/hyperreal-symbolic/mat4 transform vec4 one-coord approx",
+            || {
+                let transformed = black_box(
+                    black_box(symbolic_mat4.clone()) * black_box(symbolic_vector.clone()),
+                );
+                black_box(transformed[0].to_f64_approx());
+            },
+        );
+        trace_dispatch_row(
+            "matrix4/hyperreal-symbolic/mat4 transform vec4 all-coord approx",
+            || {
+                let transformed = black_box(
+                    black_box(symbolic_mat4.clone()) * black_box(symbolic_vector.clone()),
+                );
+                black_box((
+                    transformed[0].to_f64_approx(),
+                    transformed[1].to_f64_approx(),
+                    transformed[2].to_f64_approx(),
+                    transformed[3].to_f64_approx(),
+                ));
+            },
+        );
+        // No-translation symbolic rows reuse the 3-term constructor path while
+        // preserving the same one-coordinate demand behavior as point/direction
+        // variants.
+        trace_dispatch_row("matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation", || {
+            black_box(black_box(symbolic_linear_lhs.clone()) * black_box(symbolic_vector.clone()));
+        });
+        trace_dispatch_row(
+            "matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation one-coord approx",
+            || {
+                let transformed = black_box(
+                    black_box(symbolic_linear_lhs.clone()) * black_box(symbolic_vector.clone()),
+                );
+                black_box(transformed[0].to_f64_approx());
+            },
+        );
+        trace_dispatch_row(
+            "matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation all-coord approx",
+            || {
+                let transformed = black_box(
+                    black_box(symbolic_linear_lhs.clone()) * black_box(symbolic_vector.clone()),
+                );
+                black_box((
+                    transformed[0].to_f64_approx(),
+                    transformed[1].to_f64_approx(),
+                    transformed[2].to_f64_approx(),
+                    transformed[3].to_f64_approx(),
+                ));
+            },
+        );
+        trace_dispatch_row(
+            "matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation structural facts",
+            || {
+                let transformed = black_box(
+                    black_box(symbolic_linear_lhs.clone()) * black_box(symbolic_vector.clone()),
+                );
+                let _ = black_box((
+                    transformed[0].structural_facts().sign,
+                    transformed[1].structural_facts().sign,
+                    transformed[2].structural_facts().sign,
+                    transformed[3].structural_facts().sign,
+                    transformed[0].zero_status(),
+                    transformed[1].zero_status(),
+                    transformed[2].zero_status(),
+                    transformed[3].zero_status(),
+                ));
+            },
+        );
+        // Point/direction semantics are predicate-relevant workloads in this stack.
+        trace_dispatch_row("matrix4/hyperreal-rational/mat4 transform point vec4", || {
+            black_box(black_box(rational_lhs.clone()) * black_box(symbolic_point.clone()));
+        });
+        trace_dispatch_row("matrix4/hyperreal-rational/mat4 transform direction vec4", || {
+            black_box(
+                black_box(rational_lhs.clone()) * black_box(symbolic_direction.clone()),
+            );
+        });
+        // Structural-facts direction probe keeps this fast path from forcing
+        // all-coordinate approximation on the predicate path.
+        trace_dispatch_row("matrix4/hyperreal-rational/mat4 transform direction vec4 structural facts", || {
+            let transformed = black_box(
+                black_box(rational_lhs.clone()) * black_box(symbolic_direction.clone()),
+            );
+            let _ = black_box((
+                transformed[0].structural_facts().sign,
+                transformed[1].structural_facts().sign,
+                transformed[2].structural_facts().sign,
+                transformed[3].structural_facts().sign,
+                transformed[0].zero_status(),
+                transformed[1].zero_status(),
+                transformed[2].zero_status(),
+                transformed[3].zero_status(),
+            ));
+        });
+        // Symbolic direction transform stays in the direction (w == 0) branch.
+        trace_dispatch_row("matrix4/hyperreal-symbolic/mat4 transform direction vec4", || {
+            black_box(black_box(symbolic_mat4.clone()) * black_box(symbolic_direction.clone()));
+        });
+        trace_dispatch_row(
+            "matrix4/hyperreal-symbolic/mat4 transform direction vec4 one-coord approx",
+            || {
+                let transformed = black_box(
+                    black_box(symbolic_mat4.clone()) * black_box(symbolic_direction.clone()),
+                );
+                black_box(transformed[0].to_f64_approx());
+            },
+        );
+        trace_dispatch_row(
+            "matrix4/hyperreal-symbolic/mat4 transform direction vec4 all-coord approx",
+            || {
+                let transformed = black_box(
+                    black_box(symbolic_mat4.clone()) * black_box(symbolic_direction.clone()),
+                );
+                black_box((
+                    transformed[0].to_f64_approx(),
+                    transformed[1].to_f64_approx(),
+                    transformed[2].to_f64_approx(),
+                    transformed[3].to_f64_approx(),
+                ));
+            },
+        );
         group.bench_function("hyperreal-rational/mat4 determinant", |b| {
             b.iter(|| black_box(black_box(&rational_lhs).determinant()))
         });
@@ -514,6 +843,226 @@ fn bench_matrix4(c: &mut Criterion) {
                 black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()))
             })
         });
+        group.bench_function("hyperreal-rational/mat4 transform vec4 no-translation", |b| {
+            b.iter(|| {
+                black_box(
+                    black_box(rational_linear_lhs.clone()) * black_box(rational_vector.clone()),
+                )
+            })
+        });
+        group.bench_function(
+            "hyperreal-rational/mat4 transform vec4 no-translation one-coord approx",
+            |b| {
+                b.iter(|| {
+                    let transformed = black_box(
+                        black_box(rational_linear_lhs.clone()) * black_box(rational_vector.clone()),
+                    );
+                    black_box(transformed[0].to_f64_approx())
+                })
+            },
+        );
+        group.bench_function(
+            "hyperreal-rational/mat4 transform vec4 no-translation all-coord approx",
+            |b| {
+                b.iter(|| {
+                    let transformed = black_box(
+                        black_box(rational_linear_lhs.clone()) * black_box(rational_vector.clone()),
+                    );
+                    black_box((
+                        transformed[0].to_f64_approx(),
+                        transformed[1].to_f64_approx(),
+                        transformed[2].to_f64_approx(),
+                        transformed[3].to_f64_approx(),
+                    ))
+                })
+            },
+        );
+        group.bench_function(
+            "hyperreal-rational/mat4 transform vec4 no-translation structural facts",
+            |b| {
+                b.iter(|| {
+                    let transformed =
+                        black_box(black_box(rational_linear_lhs.clone()) * black_box(rational_vector.clone()));
+                    black_box((
+                        transformed[0].structural_facts().sign,
+                        transformed[1].structural_facts().sign,
+                        transformed[2].structural_facts().sign,
+                        transformed[3].structural_facts().sign,
+                        transformed[0].zero_status(),
+                        transformed[1].zero_status(),
+                        transformed[2].zero_status(),
+                        transformed[3].zero_status(),
+                    ))
+                })
+            },
+        );
+        group.bench_function("hyperreal-rational/mat4 transform vec4 one-coord approx", |b| {
+            b.iter(|| {
+                let transformed =
+                    black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
+                black_box(transformed[0].to_f64_approx())
+            })
+        });
+        group.bench_function("hyperreal-rational/mat4 transform vec4 all-coord approx", |b| {
+            b.iter(|| {
+                let transformed =
+                    black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
+                black_box((
+                    transformed[0].to_f64_approx(),
+                    transformed[1].to_f64_approx(),
+                    transformed[2].to_f64_approx(),
+                    transformed[3].to_f64_approx(),
+                ))
+            })
+        });
+        // Timed symbolic no-translation row keeps parity with symbolic full-vector
+        // and validates demand-demotion behavior in the zero-translation branch.
+        group.bench_function("hyperreal-symbolic/mat4 transform vec4 no-translation", |b| {
+            b.iter(|| {
+                black_box(
+                    black_box(symbolic_linear_lhs.clone()) * black_box(symbolic_vector.clone()),
+                )
+            })
+        });
+        group.bench_function(
+            "hyperreal-symbolic/mat4 transform vec4 no-translation one-coord approx",
+            |b| {
+                b.iter(|| {
+                    let transformed = black_box(
+                        black_box(symbolic_linear_lhs.clone()) * black_box(symbolic_vector.clone()),
+                    );
+                    black_box(transformed[0].to_f64_approx())
+                })
+            },
+        );
+        group.bench_function(
+            "hyperreal-symbolic/mat4 transform vec4 no-translation all-coord approx",
+            |b| {
+                b.iter(|| {
+                    let transformed = black_box(
+                        black_box(symbolic_linear_lhs.clone()) * black_box(symbolic_vector.clone()),
+                    );
+                    black_box((
+                        transformed[0].to_f64_approx(),
+                        transformed[1].to_f64_approx(),
+                        transformed[2].to_f64_approx(),
+                        transformed[3].to_f64_approx(),
+                    ))
+                })
+            },
+        );
+        // Timed symbolic coverage for demand-driven approximation behavior.
+        group.bench_function("hyperreal-symbolic/mat4 transform vec4", |b| {
+            b.iter(|| {
+                black_box(black_box(symbolic_mat4.clone()) * black_box(symbolic_vector.clone()))
+            })
+        });
+        group.bench_function("hyperreal-symbolic/mat4 transform vec4 one-coord approx", |b| {
+            b.iter(|| {
+                let transformed =
+                    black_box(black_box(symbolic_mat4.clone()) * black_box(symbolic_vector.clone()));
+                black_box(transformed[0].to_f64_approx())
+            })
+        });
+        group.bench_function("hyperreal-symbolic/mat4 transform vec4 all-coord approx", |b| {
+            b.iter(|| {
+                let transformed =
+                    black_box(black_box(symbolic_mat4.clone()) * black_box(symbolic_vector.clone()));
+                black_box((
+                    transformed[0].to_f64_approx(),
+                    transformed[1].to_f64_approx(),
+                    transformed[2].to_f64_approx(),
+                    transformed[3].to_f64_approx(),
+                ))
+            })
+        });
+        group.bench_function(
+            "hyperreal-symbolic/mat4 transform vec4 no-translation structural facts",
+            |b| {
+                b.iter(|| {
+                    let transformed = black_box(
+                        black_box(symbolic_linear_lhs.clone()) * black_box(symbolic_vector.clone()),
+                    );
+                    black_box((
+                        transformed[0].structural_facts().sign,
+                        transformed[1].structural_facts().sign,
+                        transformed[2].structural_facts().sign,
+                        transformed[3].structural_facts().sign,
+                        transformed[0].zero_status(),
+                        transformed[1].zero_status(),
+                        transformed[2].zero_status(),
+                        transformed[3].zero_status(),
+                    ))
+                })
+            },
+        );
+        group.bench_function("hyperreal-symbolic/mat4 transform direction vec4", |b| {
+            b.iter(|| {
+                black_box(
+                    black_box(symbolic_mat4.clone()) * black_box(symbolic_direction.clone()),
+                )
+            })
+        });
+        group.bench_function(
+            "hyperreal-symbolic/mat4 transform direction vec4 one-coord approx",
+            |b| {
+                b.iter(|| {
+                    let transformed = black_box(
+                        black_box(symbolic_mat4.clone()) * black_box(symbolic_direction.clone()),
+                    );
+                    black_box(transformed[0].to_f64_approx())
+                })
+            },
+        );
+        group.bench_function(
+            "hyperreal-symbolic/mat4 transform direction vec4 all-coord approx",
+            |b| {
+                b.iter(|| {
+                    let transformed = black_box(
+                        black_box(symbolic_mat4.clone()) * black_box(symbolic_direction.clone()),
+                    );
+                    black_box((
+                        transformed[0].to_f64_approx(),
+                        transformed[1].to_f64_approx(),
+                        transformed[2].to_f64_approx(),
+                        transformed[3].to_f64_approx(),
+                    ))
+                })
+            },
+        );
+        // Directly benchmark point/direction transform semantics with one shared matrix.
+        group.bench_function("hyperreal-rational/mat4 transform point vec4", |b| {
+            b.iter(|| {
+                black_box(black_box(rational_lhs.clone()) * black_box(symbolic_point.clone()))
+            })
+        });
+        group.bench_function("hyperreal-rational/mat4 transform direction vec4", |b| {
+            b.iter(|| {
+                black_box(black_box(rational_lhs.clone()) * black_box(symbolic_direction.clone()))
+            })
+        });
+        // Benchmark structural-fact-only direction flow to guard demand-driven
+        // approximation behavior independent of to-f64 workloads.
+        group.bench_function(
+            "hyperreal-rational/mat4 transform direction vec4 structural facts",
+            |b| {
+                b.iter(|| {
+                    let transformed = black_box(
+                        black_box(rational_lhs.clone()) * black_box(symbolic_direction.clone()),
+                    );
+                    black_box((
+                        transformed[0].structural_facts().sign,
+                        transformed[1].structural_facts().sign,
+                        transformed[2].structural_facts().sign,
+                        transformed[3].structural_facts().sign,
+                        transformed[0].zero_status(),
+                        transformed[1].zero_status(),
+                        transformed[2].zero_status(),
+                        transformed[3].zero_status(),
+                    ))
+                })
+            },
+        );
     }
 
     let astro_ctx = astro_backend::Ctx::new(128);

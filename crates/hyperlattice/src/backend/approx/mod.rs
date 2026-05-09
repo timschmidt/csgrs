@@ -252,6 +252,54 @@ impl BackendScalarTrait for BackendScalar {
         Self { value, epsilon }
     }
 
+    #[inline]
+    fn linear_combination3(left: [&Self; 3], right: [&Self; 3]) -> Self {
+        // Keep approximate backend behavior as shared accumulation for the
+        // coefficient/value matrix-vector common case while avoiding additional
+        // temporary constructors.
+        crate::trace_dispatch!(
+            "realistic_blas_approx_backend",
+            "op",
+            "linear-combination3-specialized"
+        );
+        Self::dot3(left, right)
+    }
+
+    #[inline]
+    fn linear_combination4(left: [&Self; 4], right: [&Self; 4]) -> Self {
+        // Same shape as dot4; the dedicated hook keeps benchmarking and call
+        // sites stable without changing numeric behavior.
+        crate::trace_dispatch!(
+            "realistic_blas_approx_backend",
+            "op",
+            "linear-combination4-specialized"
+        );
+        Self::dot4(left, right)
+    }
+
+    #[inline]
+    fn affine_combination3(coeffs: [&Self; 3], values: [&Self; 3], offset: &Self) -> Self {
+        // `offset + coeffs dot values` mirrors the matrix/vector homogeneous
+        // split with one extra add over the linear case.
+        crate::trace_dispatch!(
+            "realistic_blas_approx_backend",
+            "op",
+            "affine-combination3-specialized"
+        );
+        Self::dot3(coeffs, values) + offset.clone()
+    }
+
+    #[inline]
+    fn affine_combination4(coeffs: [&Self; 4], values: [&Self; 4], offset: &Self) -> Self {
+        // Affine 4-arity is a linear 4-form plus pre-composed offset.
+        crate::trace_dispatch!(
+            "realistic_blas_approx_backend",
+            "op",
+            "affine-combination4-specialized"
+        );
+        Self::dot4(coeffs, values) + offset.clone()
+    }
+
     fn exp(self) -> BlasResult<Self> {
         crate::trace_dispatch!("realistic_blas_approx_backend", "method", "exp");
         Self::from_unary(self.value.exp(), self.epsilon)

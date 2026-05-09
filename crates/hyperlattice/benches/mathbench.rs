@@ -48,17 +48,36 @@ fn load_symbolica_license_key() -> Option<String> {
 }
 
 fn main() {
-    if std::env::args().any(|arg| arg == "--update-benchmarks-md") {
+    let args: Vec<String> = env::args().collect();
+    // Dispatch trace can be targeted with this comma-separated pattern list so
+    // we can measure narrow regression surfaces while avoiding a full trace
+    // run during normal iteration.
+    // Note: comma-delimited fragments are matched with substring checks by
+    // design to keep filter overhead low and stable in benchmark-driver code.
+    let trace_filter = args
+        .iter()
+        .enumerate()
+        .find_map(|(index, arg)| {
+            arg.strip_prefix("--trace-dispatch-filter=")
+                .map(std::string::ToString::to_string)
+                .or_else(|| {
+                    (arg == "--trace-dispatch-filter" && index + 1 < args.len())
+                        .then(|| args[index + 1].clone())
+                })
+        });
+
+    if args.iter().any(|arg| arg == "--update-benchmarks-md") {
         update_benchmarks_doc();
         return;
     }
 
     initialize_symbolica();
 
-    let trace_only = std::env::args()
+    let trace_only = args
+        .iter()
         .any(|arg| arg == "--write-dispatch-trace-md" || arg == "--dispatch-trace-only");
     if trace_only {
-        begin_dispatch_trace_run();
+        begin_dispatch_trace_run(trace_filter.as_deref());
     }
 
     let mut criterion = if trace_only {
