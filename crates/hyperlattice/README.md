@@ -28,7 +28,7 @@ or geometry topology.
 
 ## Current State
 
-Version `0.3.2` is experimental, benchmarked, and intended for small-object
+Version `0.3.3` is experimental, benchmarked, and intended for small-object
 algebra over rich scalar backends, not high-throughput dense BLAS.
 
 Implemented:
@@ -52,7 +52,7 @@ definite zero and unknown-zero divisors or pivots.
 
 ```toml
 [dependencies]
-realistic_blas = "0.3.2"
+realistic_blas = "0.3.3"
 ```
 
 From sibling checkouts:
@@ -71,7 +71,7 @@ Approx-only build:
 ```toml
 [dependencies]
 realistic_blas = {
-    version = "0.3.2",
+    version = "0.3.3",
     default-features = false,
     features = ["approx-backend"],
 }
