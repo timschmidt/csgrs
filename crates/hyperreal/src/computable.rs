@@ -428,6 +428,8 @@ mod signed {
     use num::{BigInt, One};
     use std::sync::LazyLock;
 
+    // Use the narrow primitive that holds each literal so `BigInt::from`
+    // dispatches directly instead of routing through the `ToBigInt` helper.
     pub(super) static MINUS_ONE: LazyLock<BigInt> = LazyLock::new(|| BigInt::from(-1));
     pub(super) static ONE: LazyLock<BigInt> = LazyLock::new(BigInt::one);
     pub(super) static TWO: LazyLock<BigInt> = LazyLock::new(|| BigInt::from(2_u8));
@@ -443,6 +445,8 @@ mod unsigned {
     use num::{BigUint, One};
     use std::sync::LazyLock;
 
+    // These are small non-negative constants, so `u8` is the exact source type
+    // and avoids the extra conversion trait path used before the bigint audit.
     pub(super) static ONE: LazyLock<BigUint> = LazyLock::new(BigUint::one);
     pub(super) static TWO: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(2_u8));
     pub(super) static TEN: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(10_u8));

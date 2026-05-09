@@ -15,6 +15,8 @@ macro_rules! impl_integer_conversion {
                 if n == 1 {
                     return Real::one();
                 }
+                // Let Rational pick the signed/unsigned primitive path; it
+                // avoids materializing a BigInt just to build Real::new.
                 Real::new(Rational::from(n))
             }
         }

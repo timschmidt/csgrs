@@ -713,6 +713,7 @@ mod signed {
     use num::{BigInt, One};
     use std::sync::LazyLock;
 
+    // The identity constructor is clearer and avoids a `ToBigInt` temporary.
     pub(super) static ONE: LazyLock<BigInt> = LazyLock::new(BigInt::one);
 }
 
@@ -721,6 +722,8 @@ mod unsigned {
     use num::One;
     use std::sync::LazyLock;
 
+    // Small exact constants use the narrow primitive that contains them; the
+    // bigint constructors can widen directly from there.
     pub(super) static ONE: LazyLock<BigUint> = LazyLock::new(BigUint::one);
     pub(super) static TWO: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(2_u8));
     pub(super) static THREE: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(3_u8));
@@ -1398,6 +1401,8 @@ impl Real {
         if offset.pi_power != 1 || offset.exp_power != *rationals::ZERO {
             return None;
         }
+        // Only the parity and magnitude are needed here, so borrowing the
+        // integer magnitude avoids constructing a temporary signed BigInt.
         let multiple_magnitude = self.rational.integer_magnitude()?;
         let negate_for_odd_multiple = multiple_magnitude.bit(0);
         let residual = &offset.offset
@@ -1484,6 +1489,8 @@ impl Real {
                 if let Some(sqrt) = sqrt.integer_magnitude() {
                     // Rationalize 1/(a*sqrt(n)) when n is integral, keeping a sqrt form
                     // instead of an opaque inverse node.
+                    // Radicands are non-negative, so the borrowed BigUint is
+                    // the exact type needed for the rational multiplier.
                     let rational = (self.rational * Rational::from_unsigned_integer(sqrt.clone()))
                         .inverse()?;
                     return Ok(Self {

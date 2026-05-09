@@ -58,6 +58,8 @@ pub struct Rational {
 }
 
 static ONE: LazyLock<BigUint> = LazyLock::new(BigUint::one);
+// Small positive constants use their narrow primitive source type; this keeps
+// construction direct and avoids the older `ToBigUint` conversion shim.
 static TWO: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(2_u8));
 static FIVE: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(5_u8));
 static TEN: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(10_u8));
@@ -134,6 +136,8 @@ impl Rational {
             return Err(Problem::DivideByZero);
         }
         let sign = if n < 0 { Minus } else { Plus };
+        // The storage type is already Sign+BigUint, so unsigned_abs gives the
+        // exact magnitude type and avoids a temporary signed BigInt.
         let numerator = BigUint::from(n.unsigned_abs());
         let denominator = BigUint::from(d);
         Ok(Self::from_fraction_parts(sign, numerator, denominator).reduce())
@@ -978,6 +982,8 @@ impl Rational {
     }
 
     pub(crate) fn integer_magnitude(&self) -> Option<&BigUint> {
+        // Integer-only callers usually need the non-negative magnitude. Return
+        // the borrowed BigUint so they can avoid constructing a signed BigInt.
         (self.denominator == *ONE.deref()).then_some(&self.numerator)
     }
 
@@ -1006,6 +1012,7 @@ impl Rational {
             (BigUint::from(5_u8), BigUint::from(25_u8)),
             (BigUint::from(7_u8), BigUint::from(49_u8)),
             (BigUint::from(11_u8), BigUint::from(121_u8)),
+            // 13 and 17 fit in u8; their squares need u16.
             (BigUint::from(13_u8), BigUint::from(169_u16)),
             (BigUint::from(17_u8), BigUint::from(289_u16)),
         ]
@@ -1045,6 +1052,7 @@ impl Rational {
 
         let divisors = if rest.bit(0) {
             // Odd number so dividing by an even number won't get a whole result
+            // `u8` covers this fixed probe table and converts straight to BigUint.
             [1_u8, 3, 5, 7, 11, 13, 15, 17, 19]
         } else {
             [1_u8, 2, 3, 5, 6, 7, 8, 10, 11]

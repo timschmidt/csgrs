@@ -7,6 +7,8 @@ macro_rules! impl_signed_integer_conversion {
         impl From<$T> for Rational {
             #[inline]
             fn from(n: $T) -> Rational {
+                // Split sign from unsigned_abs because Rational stores exactly
+                // that shape; no signed BigInt is needed for primitive inputs.
                 Self::from_integer_magnitude(
                     if n < 0 { Sign::Minus } else { Sign::Plus },
                     BigUint::from(n.unsigned_abs()),
@@ -33,6 +35,8 @@ macro_rules! impl_unsigned_integer_conversion {
         impl From<$T> for Rational {
             #[inline]
             fn from(n: $T) -> Rational {
+                // Unsigned primitives are already Rational magnitudes, so keep
+                // the conversion in BigUint rather than detouring through BigInt.
                 Self::from_unsigned_integer(BigUint::from(n))
             }
         }
@@ -63,6 +67,8 @@ impl_unsigned_integer_conversion!(u64);
 impl_unsigned_integer_conversion!(u128);
 
 fn integer_from_unsigned_magnitude(n: BigUint, neg: bool) -> Rational {
+    // Float decomposition produces an unsigned significand plus a sign bit,
+    // matching Rational's internal representation without signed bigint work.
     Rational::from_integer_magnitude(if neg { Sign::Minus } else { Sign::Plus }, n)
 }
 
