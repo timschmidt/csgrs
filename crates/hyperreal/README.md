@@ -18,7 +18,7 @@ roots, logarithms, and rational trig constants.
   structure when doing so helps arithmetic, predicates, or approximation.
 - `RealStructuralFacts`: conservative public facts about sign, zero status,
   magnitude, and exact-rational state.
-- `Simple`: a small Lisp-like expression parser, enabled by the default
+- `Simple`: a small Lisp-like expression parser, enabled by the optional
   `simple` feature.
 
 ## Numeric Model
@@ -86,18 +86,18 @@ a dense numeric BLAS replacement.
 hyperreal = "0.10.6"
 ```
 
-Without the `Simple` parser and calculator binary:
+With the `Simple` parser and calculator binary:
 
 ```toml
 [dependencies]
-hyperreal = { version = "0.10.6", default-features = false }
+hyperreal = { version = "0.10.6", features = ["simple"] }
 ```
 
 Feature flags:
 
 | Feature | Default | Purpose |
 | --- | --- | --- |
-| `simple` | yes | Enables `Simple` and the package calculator binary. |
+| `simple` | no | Enables `Simple` and the package calculator binary. |
 
 ## Examples
 
@@ -154,6 +154,8 @@ Facts are conservative. Missing sign or magnitude information means the fact
 was not proven cheaply.
 
 ### Simple Expressions
+
+Requires the `simple` feature.
 
 ```rust
 use hyperreal::Simple;

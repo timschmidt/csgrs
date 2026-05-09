@@ -8,7 +8,7 @@ edition = "2024"
 readme = "README.md"
 
 [features]
-default = ["simple"]
+default = []
 simple = []
 # Compile-time opt-in diagnostic hooks for benchmark path tracing. The
 # instrumentation macro compiles away unless this feature is enabled.
