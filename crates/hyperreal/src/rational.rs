@@ -3,6 +3,7 @@ use num::bigint::Sign::{self, *};
 use num::{BigInt, BigUint, ToPrimitive, bigint::ToBigInt, bigint::ToBigUint};
 use num::{One, Zero};
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
 use std::sync::LazyLock;
 
 pub(crate) mod convert;
@@ -232,13 +233,20 @@ impl Rational {
         }
     }
 
-    fn is_power_of_two(value: &BigUint) -> bool {
+    fn biguint_power_of_two_shift(value: &BigUint) -> Option<u64> {
         if value.is_zero() {
-            return false;
+            return None;
         }
         // BigUint has cheap trailing-zero and bit-length queries; together they identify a
         // dyadic denominator without allocating or dividing.
-        value.trailing_zeros() == Some(value.bits() - 1)
+        let shift = value
+            .trailing_zeros()
+            .expect("non-zero BigUint has trailing zeros");
+        (shift == value.bits() - 1).then_some(shift)
+    }
+
+    fn is_power_of_two(value: &BigUint) -> bool {
+        Self::biguint_power_of_two_shift(value).is_some()
     }
 
     fn reduce_by_power_of_two_divisor(self, possible_divisor: &BigUint) -> Self {
@@ -316,6 +324,389 @@ impl Rational {
     /// shift-only reductions or will likely trigger full BigInt gcd work.
     pub fn is_dyadic(&self) -> bool {
         Self::is_power_of_two(&self.denominator)
+    }
+
+    fn dyadic_denominator_shift(&self) -> Option<u64> {
+        Self::biguint_power_of_two_shift(&self.denominator)
+    }
+
+    fn from_signed_magnitude_difference(
+        positive: BigUint,
+        negative: BigUint,
+        denominator: BigUint,
+    ) -> Self {
+        let (sign, numerator) = match positive.cmp(&negative) {
+            Ordering::Greater => (Plus, positive - negative),
+            Ordering::Less => (Minus, negative - positive),
+            Ordering::Equal => return Self::zero(),
+        };
+        trace_rational_temporary!();
+        Self {
+            sign,
+            numerator,
+            denominator,
+        }
+        .maybe_reduce()
+    }
+
+    fn dot_products_dyadic<const N: usize>(left: [&Self; N], right: [&Self; N]) -> Option<Self> {
+        let mut max_shift = 0_u64;
+        let mut denominator_shifts = [0_u64; N];
+        let mut any_nonzero = false;
+        for i in 0..N {
+            if left[i].sign * right[i].sign == NoSign {
+                continue;
+            }
+            let shift =
+                left[i].dyadic_denominator_shift()? + right[i].dyadic_denominator_shift()?;
+            denominator_shifts[i] = shift;
+            max_shift = max_shift.max(shift);
+            any_nonzero = true;
+        }
+        if !any_nonzero {
+            return Some(Self::zero());
+        }
+
+        let mut positive = BigUint::ZERO;
+        let mut negative = BigUint::ZERO;
+        for i in 0..N {
+            let sign = left[i].sign * right[i].sign;
+            if sign == NoSign {
+                continue;
+            }
+            let scale_shift = usize::try_from(max_shift - denominator_shifts[i])
+                .expect("dyadic dot-product scale should fit in usize");
+            let mut magnitude = &left[i].numerator * &right[i].numerator;
+            if scale_shift != 0 {
+                magnitude <<= scale_shift;
+            }
+            match sign {
+                Plus => positive += magnitude,
+                Minus => negative += magnitude,
+                NoSign => {}
+            }
+        }
+
+        let denominator =
+            BigUint::one() << usize::try_from(max_shift).expect("shift should fit in usize");
+        Some(Self::from_signed_magnitude_difference(
+            positive,
+            negative,
+            denominator,
+        ))
+    }
+
+    fn dot_products_equal_denominator<const N: usize>(
+        left: [&Self; N],
+        right: [&Self; N],
+    ) -> Option<Self> {
+        let mut shared_denominator = None::<BigUint>;
+        for i in 0..N {
+            if left[i].sign * right[i].sign == NoSign {
+                continue;
+            }
+            let denominator = &left[i].denominator * &right[i].denominator;
+            match &shared_denominator {
+                None => shared_denominator = Some(denominator),
+                Some(shared) if *shared == denominator => {}
+                Some(_) => return None,
+            }
+        }
+
+        let Some(denominator) = shared_denominator else {
+            return Some(Self::zero());
+        };
+
+        let mut positive = BigUint::ZERO;
+        let mut negative = BigUint::ZERO;
+        for i in 0..N {
+            let sign = left[i].sign * right[i].sign;
+            if sign == NoSign {
+                continue;
+            }
+            let magnitude = &left[i].numerator * &right[i].numerator;
+            match sign {
+                Plus => positive += magnitude,
+                Minus => negative += magnitude,
+                NoSign => {}
+            }
+        }
+
+        Some(Self::from_signed_magnitude_difference(
+            positive,
+            negative,
+            denominator,
+        ))
+    }
+
+    fn product_term_denominator<const FACTORS: usize>(term: [&Self; FACTORS]) -> BigUint {
+        let mut denominator = BigUint::one();
+        for factor in term {
+            denominator *= &factor.denominator;
+        }
+        denominator
+    }
+
+    fn product_term_magnitude<const FACTORS: usize>(term: [&Self; FACTORS]) -> BigUint {
+        let mut magnitude = BigUint::one();
+        for factor in term {
+            magnitude *= &factor.numerator;
+        }
+        magnitude
+    }
+
+    fn product_term_sign<const FACTORS: usize>(positive: bool, term: [&Self; FACTORS]) -> Sign {
+        let mut sign = if positive { Plus } else { Minus };
+        for factor in term {
+            sign = sign * factor.sign;
+        }
+        sign
+    }
+
+    fn signed_product_sum_dyadic<const TERMS: usize, const FACTORS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Self; FACTORS]; TERMS],
+    ) -> Option<Self> {
+        let mut max_shift = 0_u64;
+        let mut denominator_shifts = [0_u64; TERMS];
+        let mut any_nonzero = false;
+        for i in 0..TERMS {
+            let sign = Self::product_term_sign(positive_terms[i], terms[i]);
+            if sign == NoSign {
+                continue;
+            }
+            let mut shift = 0_u64;
+            for factor in terms[i] {
+                shift += factor.dyadic_denominator_shift()?;
+            }
+            denominator_shifts[i] = shift;
+            max_shift = max_shift.max(shift);
+            any_nonzero = true;
+        }
+        if !any_nonzero {
+            return Some(Self::zero());
+        }
+
+        let mut positive = BigUint::ZERO;
+        let mut negative = BigUint::ZERO;
+        for i in 0..TERMS {
+            let sign = Self::product_term_sign(positive_terms[i], terms[i]);
+            if sign == NoSign {
+                continue;
+            }
+            let scale_shift = usize::try_from(max_shift - denominator_shifts[i])
+                .expect("dyadic product-sum scale should fit in usize");
+            let mut magnitude = Self::product_term_magnitude(terms[i]);
+            if scale_shift != 0 {
+                magnitude <<= scale_shift;
+            }
+            match sign {
+                Plus => positive += magnitude,
+                Minus => negative += magnitude,
+                NoSign => {}
+            }
+        }
+
+        let denominator =
+            BigUint::one() << usize::try_from(max_shift).expect("shift should fit in usize");
+        Some(Self::from_signed_magnitude_difference(
+            positive,
+            negative,
+            denominator,
+        ))
+    }
+
+    fn signed_product_sum_equal_denominator<const TERMS: usize, const FACTORS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Self; FACTORS]; TERMS],
+    ) -> Option<Self> {
+        let mut shared_denominator = None::<BigUint>;
+        for i in 0..TERMS {
+            if Self::product_term_sign(positive_terms[i], terms[i]) == NoSign {
+                continue;
+            }
+            let denominator = Self::product_term_denominator(terms[i]);
+            match &shared_denominator {
+                None => shared_denominator = Some(denominator),
+                Some(shared) if *shared == denominator => {}
+                Some(_) => return None,
+            }
+        }
+
+        let Some(denominator) = shared_denominator else {
+            return Some(Self::zero());
+        };
+
+        let mut positive = BigUint::ZERO;
+        let mut negative = BigUint::ZERO;
+        for i in 0..TERMS {
+            let sign = Self::product_term_sign(positive_terms[i], terms[i]);
+            if sign == NoSign {
+                continue;
+            }
+            let magnitude = Self::product_term_magnitude(terms[i]);
+            match sign {
+                Plus => positive += magnitude,
+                Minus => negative += magnitude,
+                NoSign => {}
+            }
+        }
+
+        Some(Self::from_signed_magnitude_difference(
+            positive,
+            negative,
+            denominator,
+        ))
+    }
+
+    pub(crate) fn signed_product_sum<const TERMS: usize, const FACTORS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Self; FACTORS]; TERMS],
+    ) -> Self {
+        // Short determinant and cofactor polynomials are exact rational sums of
+        // products. As with `dot_products`, build one denominator and reduce
+        // only the final row. This targets the trace rows where fixed 3x3/4x4
+        // inverse, division, and negative-powi kernels still paid repeated gcd
+        // work after dot products had already been fused. The algebraic
+        // strategy follows the same fraction-delay idea as Bareiss fraction
+        // free elimination (Bareiss, Math. Comp. 22(103), 1968,
+        // https://www.ams.org/mcom/1968-22-103/S0025-5718-1968-0226829-0/S0025-5718-1968-0226829-0.pdf)
+        // and common-factor exact matrix work
+        // (https://link.springer.com/article/10.1007/s11786-020-00495-9),
+        // but keeps the public fixed-size cofactor formulas division-free.
+        // 2026-05-09 targeted Criterion, 200 samples/8s: the realistic_blas
+        // opt-in hook kept approximate matrix reciprocal/division rows at
+        // 80-194 ns or better and kept borrowed approximate division unchanged,
+        // while hyperreal-rational mat3/mat4 reciprocal held near 26.0/44.1 us
+        // after the first fused run reported roughly 20-27% faster reciprocal
+        // rows against the pre-hook baseline. Treat those as regression guards.
+        debug_assert!(FACTORS > 0);
+        if let Some(dyadic) = Self::signed_product_sum_dyadic(positive_terms, terms) {
+            crate::trace_dispatch!("rational", "product_sum", "dyadic-shared-denominator");
+            return dyadic;
+        }
+        if let Some(equal_denominator) =
+            Self::signed_product_sum_equal_denominator(positive_terms, terms)
+        {
+            crate::trace_dispatch!("rational", "product_sum", "equal-product-denominator");
+            return equal_denominator;
+        }
+
+        crate::trace_dispatch!("rational", "product_sum", "lcm-shared-denominator");
+        let mut common_denominator = BigUint::one();
+        let mut any_nonzero = false;
+        for i in 0..TERMS {
+            if Self::product_term_sign(positive_terms[i], terms[i]) == NoSign {
+                continue;
+            }
+            let denominator = Self::product_term_denominator(terms[i]);
+            if denominator != *ONE.deref() {
+                let divisor = num::Integer::gcd(&common_denominator, &denominator);
+                trace_rational_gcd!(&common_denominator, &denominator, &divisor);
+                common_denominator *= denominator / &divisor;
+            }
+            any_nonzero = true;
+        }
+        if !any_nonzero {
+            return Self::zero();
+        }
+
+        let mut positive = BigUint::ZERO;
+        let mut negative = BigUint::ZERO;
+        for i in 0..TERMS {
+            let sign = Self::product_term_sign(positive_terms[i], terms[i]);
+            if sign == NoSign {
+                continue;
+            }
+            let denominator = Self::product_term_denominator(terms[i]);
+            let mut magnitude = Self::product_term_magnitude(terms[i]);
+            if denominator != common_denominator {
+                magnitude *= &common_denominator / denominator;
+            }
+            match sign {
+                Plus => positive += magnitude,
+                Minus => negative += magnitude,
+                NoSign => {}
+            }
+        }
+
+        Self::from_signed_magnitude_difference(positive, negative, common_denominator)
+    }
+
+    pub(crate) fn dot_products<const N: usize>(left: [&Self; N], right: [&Self; N]) -> Self {
+        // Dense vector and matrix dot products are exact rational linear
+        // forms when all inputs are rational. Build one shared denominator and
+        // canonicalize only the final sum instead of reducing every product
+        // and partial sum. This is the same "delay fractions until the end"
+        // idea used by fraction-free exact linear algebra; see Bareiss-style
+        // exact division/common-factor discussion in
+        // https://link.springer.com/article/10.1007/s11786-020-00495-9 and
+        // the pedagogical Gauss-Jordan fraction-delay variant at
+        // https://openjournals.libs.uga.edu/tme/article/view/1957/1862.
+        // Current 2026-05 trace goal: keep exact matrix rows at one rational
+        // constructor per output cell. This dropped mat4 powi from-f64 trace
+        // activity from 161.75 to 32 reductions/call and from 462.25 to 67.75
+        // temporaries/call; keep future changes within noise of those counts.
+        if let Some(dyadic) = Self::dot_products_dyadic(left, right) {
+            // Dyadic f64 imports are the hottest exact-rational matrix path.
+            // A common power-of-two denominator lets us scale numerators with
+            // shifts and lets `maybe_reduce` avoid a BigInt gcd.
+            crate::trace_dispatch!("rational", "dot_product", "dyadic-shared-denominator");
+            return dyadic;
+        }
+        if let Some(equal_denominator) = Self::dot_products_equal_denominator(left, right) {
+            // Decimal rational fixtures often enter with identical product
+            // denominators even after exact parsing. The LCM algorithm below is
+            // still the right general fallback, but this structural fact means
+            // there is no LCM to build and no per-term scale division. 2026-05
+            // tracing target: lower non-dyadic rational dot-product gcd counts
+            // without perturbing the dyadic fast path above. Targeted
+            // Criterion, 200 samples/8s: realistic_blas hyperreal-rational
+            // mat3 powi improved 2.83%, mat4 div_matrix improved 3.88%,
+            // mat3 inverse_checked and mat4 powi stayed within noise.
+            crate::trace_dispatch!("rational", "dot_product", "equal-product-denominator");
+            return equal_denominator;
+        }
+
+        crate::trace_dispatch!("rational", "dot_product", "lcm-shared-denominator");
+        let mut common_denominator = BigUint::one();
+        let mut any_nonzero = false;
+        for i in 0..N {
+            if left[i].sign * right[i].sign == NoSign {
+                continue;
+            }
+            let denominator = &left[i].denominator * &right[i].denominator;
+            if denominator != *ONE.deref() {
+                let divisor = num::Integer::gcd(&common_denominator, &denominator);
+                trace_rational_gcd!(&common_denominator, &denominator, &divisor);
+                common_denominator *= denominator / &divisor;
+            }
+            any_nonzero = true;
+        }
+        if !any_nonzero {
+            return Self::zero();
+        }
+
+        let mut positive = BigUint::ZERO;
+        let mut negative = BigUint::ZERO;
+        for i in 0..N {
+            let sign = left[i].sign * right[i].sign;
+            if sign == NoSign {
+                continue;
+            }
+            let denominator = &left[i].denominator * &right[i].denominator;
+            let mut magnitude = &left[i].numerator * &right[i].numerator;
+            if denominator != common_denominator {
+                magnitude *= &common_denominator / denominator;
+            }
+            match sign {
+                Plus => positive += magnitude,
+                Minus => negative += magnitude,
+                NoSign => {}
+            }
+        }
+
+        Self::from_signed_magnitude_difference(positive, negative, common_denominator)
     }
 
     #[inline]
@@ -1359,6 +1750,180 @@ mod tests {
             Rational::fraction(-1, 16).unwrap()
         );
         assert_eq!(&three_eighths - &three_eighths, Rational::zero());
+    }
+
+    #[test]
+    fn dot_products_match_pairwise_arithmetic() {
+        let left = [
+            Rational::fraction(3, 8).unwrap(),
+            Rational::fraction(-5, 16).unwrap(),
+            Rational::zero(),
+            Rational::fraction(7, 10).unwrap(),
+        ];
+        let right = [
+            Rational::fraction(11, 32).unwrap(),
+            Rational::fraction(13, 64).unwrap(),
+            Rational::fraction(17, 19).unwrap(),
+            Rational::fraction(-23, 25).unwrap(),
+        ];
+        let expected = &(&left[0] * &right[0])
+            + &(&left[1] * &right[1])
+            + &(&left[2] * &right[2])
+            + &(&left[3] * &right[3]);
+
+        assert_eq!(
+            Rational::dot_products(
+                [&left[0], &left[1], &left[2], &left[3]],
+                [&right[0], &right[1], &right[2], &right[3]],
+            ),
+            expected
+        );
+    }
+
+    #[test]
+    fn dot_products_preserve_dyadic_exactness() {
+        let left = [
+            Rational::fraction(1, 8).unwrap(),
+            Rational::fraction(3, 16).unwrap(),
+            Rational::fraction(-5, 32).unwrap(),
+        ];
+        let right = [
+            Rational::fraction(7, 4).unwrap(),
+            Rational::fraction(-11, 8).unwrap(),
+            Rational::fraction(13, 16).unwrap(),
+        ];
+
+        let dot = Rational::dot_products(
+            [&left[0], &left[1], &left[2]],
+            [&right[0], &right[1], &right[2]],
+        );
+        assert!(dot.is_dyadic());
+        assert_eq!(
+            dot,
+            &(&left[0] * &right[0]) + &(&left[1] * &right[1]) + &(&left[2] * &right[2])
+        );
+    }
+
+    #[test]
+    fn dot_products_handle_equal_non_dyadic_denominators() {
+        let left = [
+            Rational::fraction(7, 10).unwrap(),
+            Rational::fraction(-9, 10).unwrap(),
+            Rational::fraction(11, 10).unwrap(),
+        ];
+        let right = [
+            Rational::fraction(13, 7).unwrap(),
+            Rational::fraction(5, 7).unwrap(),
+            Rational::fraction(-3, 7).unwrap(),
+        ];
+
+        assert_eq!(
+            Rational::dot_products(
+                [&left[0], &left[1], &left[2]],
+                [&right[0], &right[1], &right[2]],
+            ),
+            &(&left[0] * &right[0]) + &(&left[1] * &right[1]) + &(&left[2] * &right[2])
+        );
+    }
+
+    #[test]
+    fn signed_product_sum_matches_pairwise_arithmetic() {
+        let terms = [
+            [
+                Rational::fraction(3, 8).unwrap(),
+                Rational::fraction(-5, 12).unwrap(),
+                Rational::fraction(7, 11).unwrap(),
+            ],
+            [
+                Rational::fraction(13, 9).unwrap(),
+                Rational::fraction(17, 25).unwrap(),
+                Rational::fraction(-19, 6).unwrap(),
+            ],
+            [
+                Rational::fraction(-23, 10).unwrap(),
+                Rational::fraction(29, 14).unwrap(),
+                Rational::fraction(31, 15).unwrap(),
+            ],
+        ];
+        let expected = &(&terms[0][0] * &terms[0][1] * &terms[0][2])
+            - &(&terms[1][0] * &terms[1][1] * &terms[1][2])
+            + &(&terms[2][0] * &terms[2][1] * &terms[2][2]);
+
+        assert_eq!(
+            Rational::signed_product_sum(
+                [true, false, true],
+                [
+                    [&terms[0][0], &terms[0][1], &terms[0][2]],
+                    [&terms[1][0], &terms[1][1], &terms[1][2]],
+                    [&terms[2][0], &terms[2][1], &terms[2][2]],
+                ],
+            ),
+            expected
+        );
+    }
+
+    #[test]
+    fn signed_product_sum_preserves_dyadic_exactness() {
+        let terms = [
+            [
+                Rational::fraction(1, 8).unwrap(),
+                Rational::fraction(3, 16).unwrap(),
+            ],
+            [
+                Rational::fraction(5, 32).unwrap(),
+                Rational::fraction(7, 64).unwrap(),
+            ],
+            [
+                Rational::fraction(-9, 4).unwrap(),
+                Rational::fraction(11, 8).unwrap(),
+            ],
+        ];
+        let sum = Rational::signed_product_sum(
+            [true, false, true],
+            [
+                [&terms[0][0], &terms[0][1]],
+                [&terms[1][0], &terms[1][1]],
+                [&terms[2][0], &terms[2][1]],
+            ],
+        );
+
+        assert!(sum.is_dyadic());
+        assert_eq!(
+            sum,
+            &(&terms[0][0] * &terms[0][1]) - &(&terms[1][0] * &terms[1][1])
+                + &(&terms[2][0] * &terms[2][1])
+        );
+    }
+
+    #[test]
+    fn signed_product_sum_handles_equal_non_dyadic_denominators() {
+        let terms = [
+            [
+                Rational::fraction(7, 10).unwrap(),
+                Rational::fraction(13, 7).unwrap(),
+            ],
+            [
+                Rational::fraction(9, 10).unwrap(),
+                Rational::fraction(5, 7).unwrap(),
+            ],
+            [
+                Rational::fraction(11, 10).unwrap(),
+                Rational::fraction(3, 7).unwrap(),
+            ],
+        ];
+
+        assert_eq!(
+            Rational::signed_product_sum(
+                [true, false, true],
+                [
+                    [&terms[0][0], &terms[0][1]],
+                    [&terms[1][0], &terms[1][1]],
+                    [&terms[2][0], &terms[2][1]],
+                ],
+            ),
+            &(&terms[0][0] * &terms[0][1]) - &(&terms[1][0] * &terms[1][1])
+                + &(&terms[2][0] * &terms[2][1])
+        );
     }
 
     #[test]

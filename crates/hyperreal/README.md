@@ -202,7 +202,6 @@ Common checks:
 ```sh
 cargo fmt --check
 cargo test
-cargo test --release trig_regression_speed_targets_release_only -- --ignored
 cargo bench --bench numerical_micro
 ```
 

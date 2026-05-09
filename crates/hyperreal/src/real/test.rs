@@ -184,6 +184,13 @@ mod tests {
     }
 
     #[test]
+    fn sqrt_scaled_squarefree_reuses_symbolic_residual() {
+        let answer = Real::from(18_i32).sqrt().unwrap();
+        let expected = Real::from(3_i32) * Real::from(2_i32).sqrt().unwrap();
+        assert_eq!(answer, expected);
+    }
+
+    #[test]
     fn square_sqrt() {
         let two: Real = 2.into();
         let three: Real = 3.into();
@@ -921,5 +928,119 @@ mod tests {
         assert_eq!(one_minus_tiny.acosh(), Err(Problem::NotANumber));
         assert_eq!(Real::new(Rational::one()).atanh(), Err(Problem::Infinity));
         assert_eq!(one_plus_tiny.atanh(), Err(Problem::NotANumber));
+    }
+
+    #[test]
+    fn dot_products_match_generic_real_arithmetic() {
+        let left = [
+            Real::new(Rational::fraction(6, 5).unwrap()),
+            Real::new(Rational::fraction(3, 10).unwrap()),
+            Real::new(Rational::fraction(-7, 10).unwrap()),
+            Real::new(Rational::new(2)),
+        ];
+        let right = [
+            Real::new(Rational::fraction(-4, 5).unwrap()),
+            Real::new(Rational::fraction(11, 10).unwrap()),
+            Real::new(Rational::fraction(1, 2).unwrap()),
+            Real::new(Rational::new(-3)),
+        ];
+        let expected = &(&left[0] * &right[0])
+            + &(&left[1] * &right[1])
+            + &(&left[2] * &right[2])
+            + &(&left[3] * &right[3]);
+
+        assert_eq!(
+            Real::dot4_refs(
+                [&left[0], &left[1], &left[2], &left[3]],
+                [&right[0], &right[1], &right[2], &right[3]],
+            ),
+            expected
+        );
+    }
+
+    #[test]
+    fn exact_rational_signed_product_sum_matches_generic_arithmetic() {
+        let terms = [
+            [
+                Real::new(Rational::fraction(3, 8).unwrap()),
+                Real::new(Rational::fraction(-5, 12).unwrap()),
+                Real::new(Rational::fraction(7, 11).unwrap()),
+            ],
+            [
+                Real::new(Rational::fraction(13, 9).unwrap()),
+                Real::new(Rational::fraction(17, 25).unwrap()),
+                Real::new(Rational::fraction(-19, 6).unwrap()),
+            ],
+            [
+                Real::new(Rational::fraction(-23, 10).unwrap()),
+                Real::new(Rational::fraction(29, 14).unwrap()),
+                Real::new(Rational::fraction(31, 15).unwrap()),
+            ],
+        ];
+        let expected = &(&terms[0][0] * &terms[0][1] * &terms[0][2])
+            - &(&terms[1][0] * &terms[1][1] * &terms[1][2])
+            + &(&terms[2][0] * &terms[2][1] * &terms[2][2]);
+
+        assert_eq!(
+            Real::exact_rational_signed_product_sum(
+                [true, false, true],
+                [
+                    [&terms[0][0], &terms[0][1], &terms[0][2]],
+                    [&terms[1][0], &terms[1][1], &terms[1][2]],
+                    [&terms[2][0], &terms[2][1], &terms[2][2]],
+                ],
+            ),
+            Some(expected)
+        );
+    }
+
+    #[test]
+    fn exact_rational_signed_product_sum_rejects_symbolic_terms() {
+        let one = Real::one();
+        let pi = Real::pi();
+        let two = Real::from(2_i32);
+        let three = Real::from(3_i32);
+
+        assert_eq!(
+            Real::exact_rational_signed_product_sum([true, false], [[&one, &two], [&pi, &three]]),
+            None
+        );
+    }
+
+    #[test]
+    fn dot_products_handle_mixed_symbolic_structural_terms() {
+        let left = [
+            Real::one(),
+            Real::zero(),
+            Real::from(2_i32),
+            Real::pi() * Real::new(Rational::fraction(5, 7).unwrap()),
+        ];
+        let right = [
+            Real::pi(),
+            Real::e(),
+            Real::e() * Real::new(Rational::fraction(3, 5).unwrap()),
+            Real::zero(),
+        ];
+        let expected = &(&left[0] * &right[0])
+            + &(&left[1] * &right[1])
+            + &(&left[2] * &right[2])
+            + &(&left[3] * &right[3]);
+
+        let actual = Real::dot4_refs(
+            [&left[0], &left[1], &left[2], &left[3]],
+            [&right[0], &right[1], &right[2], &right[3]],
+        );
+        assert!(
+            (actual.to_f64_approx().unwrap() - expected.to_f64_approx().unwrap()).abs() < 1e-12
+        );
+
+        let expected = &(&left[0] * &right[0]) + &(&left[1] * &right[1]) + &(&left[2] * &right[2]);
+        let actual = Real::dot3_refs(
+            [&left[0], &left[1], &left[2]],
+            [&right[0], &right[1], &right[2]],
+        );
+        assert!(
+            (actual.to_f64_approx().unwrap() - expected.to_f64_approx().unwrap()).abs() < 1e-12
+        );
     }
 }

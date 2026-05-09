@@ -1,6 +1,7 @@
 use crate::{
     Computable, MagnitudeBits, Problem, Rational, RealSign, RealStructuralFacts, ZeroKnowledge,
 };
+use num::ToPrimitive;
 use num::bigint::{BigInt, BigUint, Sign};
 
 mod convert;
@@ -357,6 +358,20 @@ impl Class {
         )
     }
 
+    fn const_product_sqrt_computable(radicand: &Rational) -> Computable {
+        // Composite `pi^n*e^q*sqrt(r)` values are often cloned through matrix
+        // rows. For the dominant square-free residuals 2 and 3, reuse the
+        // canonical shared sqrt computable so costly approximations are warmed
+        // once and then multiplied by the symbolic pi/e factors. Plain `sqrt(2)`
+        // and `pi*sqrt(2)` stay on their older direct constructors above; those
+        // tighter one-node paths benchmark faster for isolated scalar use.
+        radicand
+            .to_big_integer()
+            .and_then(|n| n.to_i64())
+            .and_then(Computable::sqrt_constant)
+            .unwrap_or_else(|| Computable::sqrt_rational(radicand.clone()))
+    }
+
     fn make_const_product_sqrt(
         pi_power: i16,
         exp_power: Rational,
@@ -376,7 +391,7 @@ impl Class {
             return Self::make_pi_sqrt(radicand);
         }
         let (_, constant) = Self::make_const_product(pi_power, exp_power.clone());
-        let computable = constant.multiply(Computable::sqrt_rational(radicand.clone()));
+        let computable = constant.multiply(Self::const_product_sqrt_computable(&radicand));
         (
             ConstProductSqrt(Box::new(ConstProductSqrtClass {
                 pi_power,
@@ -660,6 +675,19 @@ mod constants {
         SQRT_THREE_OVER_THREE.with(|real| real.clone())
     }
 
+    pub(super) fn sqrt_constant(n: i64) -> Option<Real> {
+        match n {
+            2 => Some(Real {
+                rational: Rational::one(),
+                class: Class::Sqrt(Rational::new(2)),
+                computable: Some(Computable::sqrt_constant(2).unwrap()),
+                signal: None,
+            }),
+            3 => Some(sqrt_three()),
+            _ => None,
+        }
+    }
+
     pub(super) fn scaled_ln(base: u32, coefficient: i64) -> Option<Real> {
         // Return clones of canonical cached ln constants with only the rational
         // scale adjusted. This is cheaper than constructing a fresh Ln class and
@@ -930,6 +958,47 @@ impl Real {
         }
     }
 
+    /// Return a borrowed exact rational when that is structurally known.
+    ///
+    /// Higher-level dense algebra kernels use this to batch exact rational
+    /// linear combinations without cloning every scalar. It deliberately
+    /// exposes only the already-public exact-rational shape; symbolic and
+    /// computable values still go through their normal arithmetic paths.
+    pub fn exact_rational_ref(&self) -> Option<&Rational> {
+        match self.class {
+            One => Some(&self.rational),
+            _ => None,
+        }
+    }
+
+    #[inline]
+    fn scaled_by_rational(&self, scale: &Rational) -> Real {
+        // Keep exact rational scaling as a structural operation. This is the
+        // same fast path used by multiplication when one side is rational, and
+        // the dot-product fallback below reuses it so mixed symbolic/rational
+        // lanes do not build a generic product just to recover the same shape.
+        if scale.sign() == Sign::NoSign || self.rational.sign() == Sign::NoSign {
+            return Real::zero();
+        }
+        if scale.is_one() {
+            return self.clone();
+        }
+        if scale.is_minus_one() {
+            return -self;
+        }
+
+        let rational = scale * &self.rational;
+        if matches!(self.class, One) {
+            return Real::new(rational);
+        }
+        Real {
+            rational,
+            class: self.class.clone(),
+            computable: self.computable.clone(),
+            signal: self.signal.clone(),
+        }
+    }
+
     /// Returns true when this value is exactly rational with a dyadic denominator.
     ///
     /// This borrowed query exists for matrix and predicate kernels that need a
@@ -939,6 +1008,31 @@ impl Real {
     /// structural class.
     pub fn is_exact_dyadic_rational(&self) -> bool {
         matches!(self.class, One) && self.rational.is_dyadic()
+    }
+
+    /// Return a fused sum of signed exact-rational products.
+    ///
+    /// This is intentionally narrower than generic symbolic simplification:
+    /// it succeeds only when every factor is already an exact rational. Dense
+    /// algebra callers use it for fixed determinant/cofactor polynomials where
+    /// reducing each product and partial sum dominates runtime. Non-rational
+    /// symbolic and computable values keep their existing arithmetic trees so
+    /// precision is still deferred in the established representation.
+    pub fn exact_rational_signed_product_sum<const TERMS: usize, const FACTORS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Real; FACTORS]; TERMS],
+    ) -> Option<Real> {
+        let mut rational_terms = [[rationals::ZERO.deref(); FACTORS]; TERMS];
+        for i in 0..TERMS {
+            for j in 0..FACTORS {
+                rational_terms[i][j] = terms[i][j].exact_rational_ref()?;
+            }
+        }
+        crate::trace_dispatch!("real", "product_sum", "exact-rational-shared-denom");
+        Some(Real::new(Rational::signed_product_sum(
+            positive_terms,
+            rational_terms,
+        )))
     }
 
     /// Conservatively inspect public structural facts about this value.
@@ -1047,6 +1141,192 @@ impl Real {
             Some(real_sign_from_num(self.rational.sign())),
             Some(computable_sign),
         )
+    }
+
+    /// Return the three-lane dot product of borrowed reals.
+    ///
+    /// Exact-rational lanes are accumulated with one shared denominator and a
+    /// single final canonicalization. This is the vector/matrix analogue of the
+    /// fraction-delaying exact linear-algebra algorithms discussed around
+    /// Bareiss elimination and common factors in
+    /// https://link.springer.com/article/10.1007/s11786-020-00495-9. The
+    /// fallback intentionally preserves the previous product-then-pairwise-add
+    /// tree for non-rational symbolic values; sharing that path with the
+    /// rational fast path regressed expression-heavy scalar rows. Mixed
+    /// symbolic/rational lanes use a narrower structural fallback: exact
+    /// rational scales are applied directly and exact-zero terms are omitted,
+    /// but dense symbolic lanes still take the original tree. 2026-05
+    /// scalar_micro, 200 samples/8s: mixed dot3/dot4 moved from ~848 ns/~1.006
+    /// us to ~697 ns/~753 ns; dense dot3/dot4 moved from ~4.01 us/~7.72 us
+    /// to ~3.95 us/~7.11 us.
+    pub fn dot3_refs(left: [&Real; 3], right: [&Real; 3]) -> Real {
+        if let (Some(l0), Some(l1), Some(l2), Some(r0), Some(r1), Some(r2)) = (
+            left[0].exact_rational_ref(),
+            left[1].exact_rational_ref(),
+            left[2].exact_rational_ref(),
+            right[0].exact_rational_ref(),
+            right[1].exact_rational_ref(),
+            right[2].exact_rational_ref(),
+        ) {
+            crate::trace_dispatch!("real", "dot_product", "dot3-exact-rational-shared-denom");
+            return Real::new(Rational::dot_products([l0, l1, l2], [r0, r1, r2]));
+        }
+
+        Self::dot3_refs_fallback(left, right)
+    }
+
+    #[inline(never)]
+    fn dot3_refs_fallback(left: [&Real; 3], right: [&Real; 3]) -> Real {
+        // Keep the symbolic fallback out of line so the matrix hot path that
+        // exits through the exact-rational branch above remains small enough
+        // for LLVM to inline consistently. An inline prototype improved mixed
+        // symbolic dots but regressed realistic_blas hyperreal mat4 borrowed
+        // multiply by ~2.6% through code layout alone.
+        if Self::dot_product_has_structural_term(left[0], right[0])
+            || Self::dot_product_has_structural_term(left[1], right[1])
+            || Self::dot_product_has_structural_term(left[2], right[2])
+        {
+            crate::trace_dispatch!("real", "dot_product", "dot3-structural-real-tree");
+            return Self::sum_dot3_terms(
+                Self::dot_product_term(left[0], right[0]),
+                Self::dot_product_term(left[1], right[1]),
+                Self::dot_product_term(left[2], right[2]),
+            );
+        }
+
+        crate::trace_dispatch!("real", "dot_product", "dot3-generic-real-tree");
+        let p0 = left[0] * right[0];
+        let p1 = left[1] * right[1];
+        let p2 = left[2] * right[2];
+        let sum01 = &p0 + &p1;
+        &sum01 + &p2
+    }
+
+    /// Return the four-lane dot product of borrowed reals.
+    ///
+    /// See [`Self::dot3_refs`] for the performance policy. Four-lane matrix
+    /// multiplication gets the largest win from delaying rational
+    /// canonicalization because each output cell otherwise builds four product
+    /// rationals plus three partial-sum rationals.
+    ///
+    /// 2026-05 realistic_blas benchmarks: mat4 mul refs on hyperreal moved
+    /// from roughly 10.46 us to 4.33 us after this path, and trace constructors
+    /// for one borrowed mat4 multiply dropped from 448 rational Reals to 64.
+    pub fn dot4_refs(left: [&Real; 4], right: [&Real; 4]) -> Real {
+        if let (Some(l0), Some(l1), Some(l2), Some(l3), Some(r0), Some(r1), Some(r2), Some(r3)) = (
+            left[0].exact_rational_ref(),
+            left[1].exact_rational_ref(),
+            left[2].exact_rational_ref(),
+            left[3].exact_rational_ref(),
+            right[0].exact_rational_ref(),
+            right[1].exact_rational_ref(),
+            right[2].exact_rational_ref(),
+            right[3].exact_rational_ref(),
+        ) {
+            crate::trace_dispatch!("real", "dot_product", "dot4-exact-rational-shared-denom");
+            return Real::new(Rational::dot_products([l0, l1, l2, l3], [r0, r1, r2, r3]));
+        }
+
+        Self::dot4_refs_fallback(left, right)
+    }
+
+    #[inline(never)]
+    fn dot4_refs_fallback(left: [&Real; 4], right: [&Real; 4]) -> Real {
+        // See `dot3_refs_fallback` for the code-layout rationale.
+        if Self::dot_product_has_structural_term(left[0], right[0])
+            || Self::dot_product_has_structural_term(left[1], right[1])
+            || Self::dot_product_has_structural_term(left[2], right[2])
+            || Self::dot_product_has_structural_term(left[3], right[3])
+        {
+            crate::trace_dispatch!("real", "dot_product", "dot4-structural-real-tree");
+            return Self::sum_dot4_terms(
+                Self::dot_product_term(left[0], right[0]),
+                Self::dot_product_term(left[1], right[1]),
+                Self::dot_product_term(left[2], right[2]),
+                Self::dot_product_term(left[3], right[3]),
+            );
+        }
+
+        crate::trace_dispatch!("real", "dot_product", "dot4-generic-real-tree");
+        let p0 = left[0] * right[0];
+        let p1 = left[1] * right[1];
+        let p2 = left[2] * right[2];
+        let p3 = left[3] * right[3];
+        let sum01 = &p0 + &p1;
+        let sum23 = &p2 + &p3;
+        &sum01 + &sum23
+    }
+
+    #[inline]
+    fn dot_product_has_structural_term(left: &Real, right: &Real) -> bool {
+        // Gate only on the symbolic class. A broader rational-sign precheck
+        // also caught malformed zero-scaled symbolic terms, but the extra
+        // field reads regressed the dense symbolic dot3 probe by about 4%.
+        // Normal `Real` constructors canonicalize exact zero as `Class::One`,
+        // so this still covers the practical zero-term shortcut.
+        matches!(left.class, One) || matches!(right.class, One)
+    }
+
+    #[inline]
+    fn dot_product_term(left: &Real, right: &Real) -> Option<Real> {
+        if left.rational.sign() == Sign::NoSign || right.rational.sign() == Sign::NoSign {
+            return None;
+        }
+        if matches!(left.class, One) {
+            return Some(right.scaled_by_rational(&left.rational));
+        }
+        if matches!(right.class, One) {
+            return Some(left.scaled_by_rational(&right.rational));
+        }
+        Some(left * right)
+    }
+
+    #[inline]
+    fn sum_dot3_terms(p0: Option<Real>, p1: Option<Real>, p2: Option<Real>) -> Real {
+        match (p0, p1, p2) {
+            (None, None, None) => Real::zero(),
+            (Some(p), None, None) | (None, Some(p), None) | (None, None, Some(p)) => p,
+            (Some(a), Some(b), None) | (Some(a), None, Some(b)) | (None, Some(a), Some(b)) => {
+                &a + &b
+            }
+            (Some(p0), Some(p1), Some(p2)) => {
+                let sum01 = &p0 + &p1;
+                &sum01 + &p2
+            }
+        }
+    }
+
+    #[inline]
+    fn sum_dot4_terms(
+        p0: Option<Real>,
+        p1: Option<Real>,
+        p2: Option<Real>,
+        p3: Option<Real>,
+    ) -> Real {
+        match (p0, p1, p2, p3) {
+            (None, None, None, None) => Real::zero(),
+            (Some(p0), Some(p1), Some(p2), Some(p3)) => {
+                let sum01 = &p0 + &p1;
+                let sum23 = &p2 + &p3;
+                &sum01 + &sum23
+            }
+            (p0, p1, p2, p3) => Self::sum_dot_terms([p0, p1, p2, p3]),
+        }
+    }
+
+    #[inline]
+    fn sum_dot_terms<const N: usize>(terms: [Option<Real>; N]) -> Real {
+        let mut total = None;
+        for term in terms {
+            let Some(term) = term else {
+                continue;
+            };
+            total = Some(match total.take() {
+                Some(total) => &total + &term,
+                None => term,
+            });
+        }
+        total.unwrap_or_else(Real::zero)
     }
 
     /// Are two Reals definitely unequal?
@@ -1422,6 +1702,24 @@ impl Real {
                         computable: None,
                         signal: None,
                     });
+                } else if square != *rationals::ONE
+                    && let Some(shared) = rest
+                        .to_big_integer()
+                        .and_then(|n| n.to_i64())
+                        .and_then(constants::sqrt_constant)
+                {
+                    // sqrt(a^2 * r) = a*sqrt(r). For scaled sqrt(2)/sqrt(3),
+                    // reuse the canonical shared computable so matrix/vector
+                    // clones do not rebuild the same expensive approximation.
+                    // Unscaled sqrt(2)/sqrt(3) keep the old local node because
+                    // repeated cached approximation of one node is faster.
+                    crate::trace_dispatch!("real", "sqrt", "scaled-shared-sqrt-constant");
+                    return Ok(Self {
+                        rational: square,
+                        class: shared.class,
+                        computable: shared.computable,
+                        signal: None,
+                    });
                 } else {
                     crate::trace_dispatch!("real", "sqrt", "rational-sqrt-special-form");
                     return Ok(Self {
@@ -1449,6 +1747,8 @@ impl Real {
             }
             Exp(exp) if self.rational.extract_square_will_succeed() => {
                 // sqrt(e^x) = e^(x/2) when the rational scale is also a square.
+                // Square-free residual scales fall through to the factored
+                // const-product sqrt path below.
                 let (square, rest) = self.rational.clone().extract_square_reduced();
                 if rest == *rationals::ONE {
                     let exp = exp.clone() / Rational::new(2);
@@ -1463,7 +1763,6 @@ impl Real {
             }
             _ => (),
         }
-
         crate::trace_dispatch!("real", "sqrt", "generic-computable");
         Ok(self.make_computable(Computable::sqrt))
     }
@@ -2894,28 +3193,10 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
             return Self::Output::zero();
         }
         if self.class == One {
-            let rational = &self.rational * &other.rational;
-            if other.class == One {
-                return Self::Output::new(rational);
-            }
-            return Self::Output {
-                rational,
-                class: other.class.clone(),
-                computable: other.computable.clone(),
-                signal: other.signal.clone(),
-            };
+            return other.scaled_by_rational(&self.rational);
         }
         if other.class == One {
-            let rational = &self.rational * &other.rational;
-            if self.class == One {
-                return Self::Output::new(rational);
-            }
-            return Self::Output {
-                rational,
-                class: self.class.clone(),
-                computable: self.computable.clone(),
-                signal: self.signal.clone(),
-            };
+            return self.scaled_by_rational(&other.rational);
         }
         // The table below is deliberately explicit. The generic fallback can
         // represent every product, but these hot symbolic arms preserve exact

@@ -169,6 +169,14 @@ const NUMERICAL_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Repeats a cached ln(11/7) approximation.",
             },
             BenchDoc {
+                name: "ln_smooth_rational_cold_p128",
+                description: "Approximates ln(45/14), which can decompose into shared prime-log constants.",
+            },
+            BenchDoc {
+                name: "ln_nonsmooth_rational_cold_p128",
+                description: "Approximates ln(11/13), guarding the generic exact-rational log fallback.",
+            },
+            BenchDoc {
                 name: "ln_large_cold_p128",
                 description: "Approximates ln(1024), exercising large-input reduction.",
             },
@@ -195,6 +203,10 @@ const NUMERICAL_MICRO_GROUPS: &[BenchGroupDoc] = &[
             BenchDoc {
                 name: "sqrt_cold_p128",
                 description: "Approximates sqrt(2).",
+            },
+            BenchDoc {
+                name: "sqrt_squarefree_scaled_cold_p128",
+                description: "Approximates sqrt(12), which can reduce to 2*sqrt(3).",
             },
             BenchDoc {
                 name: "sqrt_cached_p128",
@@ -920,6 +932,24 @@ fn bench_computable_transcendentals(c: &mut Criterion) {
         b.iter(|| black_box(ln_cached.approx(p)))
     });
 
+    let ln_smooth_input = Computable::rational(Rational::fraction(45, 14).unwrap());
+    group.bench_function("ln_smooth_rational_cold_p128", |b| {
+        b.iter_batched(
+            || ln_smooth_input.clone().ln(),
+            |value| black_box(value.approx(p)),
+            BatchSize::SmallInput,
+        )
+    });
+
+    let ln_nonsmooth_input = Computable::rational(Rational::fraction(11, 13).unwrap());
+    group.bench_function("ln_nonsmooth_rational_cold_p128", |b| {
+        b.iter_batched(
+            || ln_nonsmooth_input.clone().ln(),
+            |value| black_box(value.approx(p)),
+            BatchSize::SmallInput,
+        )
+    });
+
     let ln_large_input = Computable::rational(Rational::new(1024));
     group.bench_function("ln_large_cold_p128", |b| {
         b.iter_batched(
@@ -972,6 +1002,14 @@ fn bench_computable_transcendentals(c: &mut Criterion) {
     group.bench_function("sqrt_cold_p128", |b| {
         b.iter_batched(
             || sqrt_input.clone().sqrt(),
+            |value| black_box(value.approx(p)),
+            BatchSize::SmallInput,
+        )
+    });
+    let sqrt_squarefree_scaled_input = Computable::rational(Rational::new(12));
+    group.bench_function("sqrt_squarefree_scaled_cold_p128", |b| {
+        b.iter_batched(
+            || sqrt_squarefree_scaled_input.clone().sqrt(),
             |value| black_box(value.approx(p)),
             BatchSize::SmallInput,
         )

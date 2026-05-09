@@ -80,12 +80,12 @@ Cost of cold and cached `Computable::approx` calls for simple values.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `raw_cache_hit_cost/zero` | 47.78 ns | 47.54 ns - 48.06 ns | Cached approximation request for exact zero. |
-| `raw_cache_hit_cost/one` | 66.09 ns | 65.70 ns - 66.62 ns | Cached approximation request for exact one. |
+| `raw_cache_hit_cost/zero` | 46.85 ns | 46.62 ns - 47.10 ns | Cached approximation request for exact zero. |
+| `raw_cache_hit_cost/one` | 69.47 ns | 68.90 ns - 70.18 ns | Cached approximation request for exact one. |
 | `raw_cache_hit_cost/two` | 71.21 ns | 70.43 ns - 72.10 ns | Cached approximation request for exact two. |
-| `raw_cache_hit_cost/e` | 74.51 ns | 73.99 ns - 75.17 ns | Cached approximation request for Euler's constant. |
-| `raw_cache_hit_cost/pi` | 73.94 ns | 73.53 ns - 74.40 ns | Cached approximation request for pi. |
-| `raw_cache_hit_cost/tau` | 74.01 ns | 73.74 ns - 74.33 ns | Cached approximation request for two pi. |
+| `raw_cache_hit_cost/e` | 73.68 ns | 73.31 ns - 74.10 ns | Cached approximation request for Euler's constant. |
+| `raw_cache_hit_cost/pi` | 74.60 ns | 74.20 ns - 75.04 ns | Cached approximation request for pi. |
+| `raw_cache_hit_cost/tau` | 73.17 ns | 72.85 ns - 73.53 ns | Cached approximation request for two pi. |
 
 ### `structural_query_speed`
 
@@ -146,7 +146,7 @@ Core scalar algorithms that do not require high-precision transcendental approxi
 | `pure_scalar_algorithm_speed/real_exact_add` | 467.64 ns | 461.15 ns - 475.03 ns | Adds exact rational-backed `Real` values. |
 | `pure_scalar_algorithm_speed/real_exact_mul` | 188.73 ns | 187.72 ns - 189.86 ns | Multiplies exact rational-backed `Real` values. |
 | `pure_scalar_algorithm_speed/real_exact_div` | 669.34 ns | 665.86 ns - 673.13 ns | Divides exact rational-backed `Real` values. |
-| `pure_scalar_algorithm_speed/real_exact_sqrt_reduce` | 730.66 ns | 717.30 ns - 745.96 ns | Reduces an exact square-root expression. |
+| `pure_scalar_algorithm_speed/real_exact_sqrt_reduce` | 464.62 ns | 462.32 ns - 467.12 ns | Reduces an exact square-root expression. |
 | `pure_scalar_algorithm_speed/real_exact_ln_reduce` | 460.63 ns | 455.48 ns - 467.06 ns | Reduces an exact logarithm of a power of two. |
 
 ### `borrowed_op_overhead`
@@ -158,11 +158,15 @@ Borrowed versus owned operation overhead for rational and real operands.
 | `borrowed_op_overhead/rational_clone_pair` | 46.22 ns | 43.25 ns - 51.11 ns | Clones two rational values. |
 | `borrowed_op_overhead/rational_add_refs` | 448.17 ns | 384.22 ns - 523.09 ns | Adds rational references. |
 | `borrowed_op_overhead/rational_add_owned` | 1.006 us | 835.18 ns - 1.193 us | Adds owned rational values. |
-| `borrowed_op_overhead/real_clone_pair` | 654.27 ns | 650.47 ns - 658.63 ns | Clones two scaled transcendental `Real` values. |
-| `borrowed_op_overhead/real_unscaled_add_refs` | 174.89 ns | 173.07 ns - 177.22 ns | Adds borrowed unscaled transcendental `Real` values. |
+| `borrowed_op_overhead/real_clone_pair` | 282.22 ns | 281.30 ns - 283.24 ns | Clones two scaled transcendental `Real` values. |
+| `borrowed_op_overhead/real_unscaled_add_refs` | 167.37 ns | 166.72 ns - 168.12 ns | Adds borrowed unscaled transcendental `Real` values. |
 | `borrowed_op_overhead/real_unscaled_add_owned` | 222.18 ns | 219.08 ns - 225.57 ns | Adds owned unscaled transcendental `Real` values. |
-| `borrowed_op_overhead/real_add_refs` | 889.12 ns | 867.87 ns - 912.13 ns | Adds borrowed scaled transcendental `Real` values. |
+| `borrowed_op_overhead/real_add_refs` | 505.37 ns | 503.69 ns - 507.27 ns | Adds borrowed scaled transcendental `Real` values. |
 | `borrowed_op_overhead/real_add_owned` | 826.04 ns | 812.20 ns - 842.52 ns | Adds owned scaled transcendental `Real` values. |
+| `borrowed_op_overhead/real_dot3_refs_dense_symbolic` | 3.493 us | 3.479 us - 3.509 us | Computes a borrowed three-lane symbolic dot product with no rational shortcut terms. |
+| `borrowed_op_overhead/real_dot3_refs_mixed_structural` | 698.07 ns | 695.13 ns - 701.45 ns | Computes a borrowed three-lane symbolic dot product with exact zero and rational scale terms. |
+| `borrowed_op_overhead/real_dot4_refs_dense_symbolic` | 6.152 us | 6.127 us - 6.178 us | Computes a borrowed four-lane symbolic dot product with no rational shortcut terms. |
+| `borrowed_op_overhead/real_dot4_refs_mixed_structural` | 750.01 ns | 747.47 ns - 752.72 ns | Computes a borrowed four-lane symbolic dot product with exact zero and rational scale terms. |
 
 ### `dense_algebra`
 
@@ -170,10 +174,10 @@ Small dense algebra kernels that stress repeated exact and symbolic operations.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `dense_algebra/rational_dot_64` | 37.427 us | 36.065 us - 38.907 us | Computes a 64-element rational dot product. |
-| `dense_algebra/rational_matmul_8` | 237.989 us | 229.925 us - 249.364 us | Computes an 8x8 rational matrix multiply. |
-| `dense_algebra/real_dot_36` | 28.885 us | 27.840 us - 30.195 us | Computes a 36-element dot product over symbolic `Real` values. |
-| `dense_algebra/real_matmul_6` | 157.907 us | 153.698 us - 163.094 us | Computes a 6x6 matrix multiply over symbolic `Real` values. |
+| `dense_algebra/rational_dot_64` | 36.684 us | 36.363 us - 37.069 us | Computes a 64-element rational dot product. |
+| `dense_algebra/rational_matmul_8` | 233.879 us | 232.885 us - 234.970 us | Computes an 8x8 rational matrix multiply. |
+| `dense_algebra/real_dot_36` | 27.014 us | 26.893 us - 27.144 us | Computes a 36-element dot product over symbolic `Real` values. |
+| `dense_algebra/real_matmul_6` | 149.05 us | 148.47 us - 149.71 us | Computes a 6x6 matrix multiply over symbolic `Real` values. |
 
 ### `exact_transcendental_special_forms`
 
@@ -196,8 +200,9 @@ Existing symbolic constant algebra cases considered for additional reductions.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `symbolic_reductions/sqrt_pi_square` | 143.98 ns | 139.06 ns - 149.97 ns | Reduces sqrt(pi^2). |
-| `symbolic_reductions/sqrt_pi_e_square` | 181.06 ns | 178.38 ns - 184.62 ns | Reduces sqrt((pi * e)^2). |
+| `symbolic_reductions/sqrt_pi_square` | 132.06 ns | 131.34 ns - 132.85 ns | Reduces sqrt(pi^2). |
+| `symbolic_reductions/sqrt_pi_e_square` | 174.40 ns | 173.37 ns - 175.50 ns | Reduces sqrt((pi * e)^2). |
+| `symbolic_reductions/sqrt_scaled_exp_squarefree` | 781.80 ns | 777.99 ns - 786.04 ns | Guards the deferred generic sqrt path for scaled exponential square-free residuals after exact factoring regressed construction. |
 | `symbolic_reductions/ln_scaled_e` | 1.892 us | 1.847 us - 1.956 us | Reduces ln(2 * e). |
 | `symbolic_reductions/sub_pi_three` | 1.751 us | 1.729 us - 1.774 us | Builds the certified pi - 3 constant-offset form. |
 | `symbolic_reductions/pi_minus_three_facts` | 38.85 ns | 38.03 ns - 39.97 ns | Reads structural facts for the cached pi - 3 offset form. |
@@ -208,10 +213,10 @@ Existing symbolic constant algebra cases considered for additional reductions.
 | `symbolic_reductions/div_one_pi` | 284.28 ns | 276.33 ns - 292.77 ns | Reduces 1 / pi. |
 | `symbolic_reductions/div_e_pi` | 349.65 ns | 346.93 ns - 352.58 ns | Reduces e / pi. |
 | `symbolic_reductions/mul_pi_inverse_pi` | 275.41 ns | 265.87 ns - 285.37 ns | Multiplies pi by its reciprocal. |
-| `symbolic_reductions/mul_pi_e_sqrt_two` | 828.81 ns | 822.30 ns - 836.58 ns | Builds the factored pi * e * sqrt(2) form. |
-| `symbolic_reductions/mul_const_product_sqrt_sqrt` | 809.61 ns | 742.89 ns - 908.87 ns | Cancels sqrt(2) from (pi * e * sqrt(2)) * sqrt(2). |
-| `symbolic_reductions/div_const_product_sqrt_e` | 1.126 us | 1.100 us - 1.159 us | Reduces (pi * e * sqrt(2)) / e. |
-| `symbolic_reductions/inverse_const_product_sqrt` | 3.764 us | 3.732 us - 3.795 us | Builds a rationalized reciprocal of pi * e * sqrt(2). |
+| `symbolic_reductions/mul_pi_e_sqrt_two` | 483.96 ns | 480.71 ns - 487.44 ns | Builds the factored pi * e * sqrt(2) form. |
+| `symbolic_reductions/mul_const_product_sqrt_sqrt` | 665.87 ns | 661.72 ns - 670.62 ns | Cancels sqrt(2) from (pi * e * sqrt(2)) * sqrt(2). |
+| `symbolic_reductions/div_const_product_sqrt_e` | 1.060 us | 1.054 us - 1.067 us | Reduces (pi * e * sqrt(2)) / e. |
+| `symbolic_reductions/inverse_const_product_sqrt` | 3.211 us | 3.193 us - 3.231 us | Builds a rationalized reciprocal of pi * e * sqrt(2). |
 
 <!-- END scalar_micro -->
 
@@ -249,10 +254,10 @@ Cold versus cached approximation of basic `Computable` expressions.
 | --- | ---: | ---: | --- |
 | `computable_cache/ratio_approx_cold_p128` | 106.37 ns | 105.55 ns - 107.24 ns | Approximates a rational value at p=-128 from a fresh clone. |
 | `computable_cache/ratio_approx_cached_p128` | 40.70 ns | 40.60 ns - 40.81 ns | Repeats an already cached rational approximation at p=-128. |
-| `computable_cache/pi_approx_cold_p128` | 64.92 ns | 64.55 ns - 65.34 ns | Approximates pi at p=-128 from a fresh clone. |
-| `computable_cache/pi_approx_cached_p128` | 46.61 ns | 46.42 ns - 46.84 ns | Repeats an already cached pi approximation at p=-128. |
-| `computable_cache/pi_plus_tiny_cold_p128` | 265.85 ns | 261.09 ns - 272.28 ns | Approximates pi plus a tiny exact rational perturbation. |
-| `computable_cache/pi_minus_tiny_cold_p128` | 279.77 ns | 271.55 ns - 292.17 ns | Approximates pi minus a tiny exact rational perturbation. |
+| `computable_cache/pi_approx_cold_p128` | 61.04 ns | 60.64 ns - 61.47 ns | Approximates pi at p=-128 from a fresh clone. |
+| `computable_cache/pi_approx_cached_p128` | 45.89 ns | 45.75 ns - 46.05 ns | Repeats an already cached pi approximation at p=-128. |
+| `computable_cache/pi_plus_tiny_cold_p128` | 185.04 ns | 184.65 ns - 185.45 ns | Approximates pi plus a tiny exact rational perturbation. |
+| `computable_cache/pi_minus_tiny_cold_p128` | 264.29 ns | 262.01 ns - 267.97 ns | Approximates pi minus a tiny exact rational perturbation. |
 
 ### `computable_bounds`
 
@@ -263,9 +268,9 @@ Structural sign and bound discovery for deep or perturbed computable trees.
 | `computable_bounds/deep_scaled_product_sign` | 205.40 ns | 153.37 ns - 308.68 ns | Finds the sign of a deep scaled product. |
 | `computable_bounds/scaled_square_sign` | 738.87 ns | 336.18 ns - 1.543 us | Finds the sign of repeated squaring with exact scale factors. |
 | `computable_bounds/sqrt_scaled_square_sign` | 246.62 ns | 242.57 ns - 250.61 ns | Finds the sign after taking a square root of a scaled square. |
-| `computable_bounds/deep_structural_bound_sign` | 18.68 ns | 18.47 ns - 18.93 ns | Finds sign through repeated multiply/inverse/negate structural transformations. |
-| `computable_bounds/deep_structural_bound_sign_cached` | 3.86 ns | 3.84 ns - 3.89 ns | Reads the cached sign of the deep structural-bound chain. |
-| `computable_bounds/deep_structural_bound_facts_cached` | 14.19 ns | 14.16 ns - 14.22 ns | Reads cached structural facts for the deep structural-bound chain. |
+| `computable_bounds/deep_structural_bound_sign` | 18.19 ns | 17.99 ns - 18.41 ns | Finds sign through repeated multiply/inverse/negate structural transformations. |
+| `computable_bounds/deep_structural_bound_sign_cached` | 3.86 ns | 3.84 ns - 3.90 ns | Reads the cached sign of the deep structural-bound chain. |
+| `computable_bounds/deep_structural_bound_facts_cached` | 12.77 ns | 12.72 ns - 12.83 ns | Reads cached structural facts for the deep structural-bound chain. |
 | `computable_bounds/perturbed_scaled_product_sign` | 331.56 ns | 211.84 ns - 568.80 ns | Finds sign for a deeply scaled value with a tiny perturbation. |
 | `computable_bounds/perturbed_scaled_product_sign_until` | 309.67 ns | 215.72 ns - 494.45 ns | Refines sign for the perturbed scaled product only to p=-128. |
 | `computable_bounds/pi_minus_tiny_sign` | 71.02 ns | 70.15 ns - 71.82 ns | Finds sign for pi minus a tiny exact rational. |
@@ -293,42 +298,45 @@ Low-level approximation kernels and deep expression-tree stress cases.
 | `computable_transcendentals/e_constant_cold_p128` | 67.17 ns | 66.54 ns - 67.95 ns | Approximates the shared e constant from a fresh clone. |
 | `computable_transcendentals/e_constant_cached_p128` | 45.01 ns | 44.84 ns - 45.21 ns | Repeats a cached approximation of e. |
 | `computable_transcendentals/legacy_exp_half_p128` | 2.524 us | 2.514 us - 2.536 us | Runs the legacy direct exp series for input 1/2 at p=-128. |
-| `computable_transcendentals/exp_cold_p128` | 2.390 us | 2.382 us - 2.397 us | Approximates exp(7/5) from a fresh clone. |
+| `computable_transcendentals/exp_cold_p128` | 2.366 us | 2.357 us - 2.376 us | Approximates exp(7/5) from a fresh clone. |
 | `computable_transcendentals/exp_cached_p128` | 37.98 ns | 37.89 ns - 38.07 ns | Repeats a cached exp(7/5) approximation. |
-| `computable_transcendentals/exp_large_cold_p128` | 7.323 us | 7.273 us - 7.387 us | Approximates exp(128), exercising large-argument reduction. |
+| `computable_transcendentals/exp_large_cold_p128` | 7.179 us | 7.144 us - 7.216 us | Approximates exp(128), exercising large-argument reduction. |
 | `computable_transcendentals/exp_half_cold_p128` | 2.819 us | 2.811 us - 2.827 us | Approximates exp(1/2). |
 | `computable_transcendentals/exp_near_limit_cold_p128` | 2.808 us | 2.797 us - 2.819 us | Approximates exp near a prescaling threshold. |
 | `computable_transcendentals/exp_near_limit_cached_p128` | 37.60 ns | 37.43 ns - 37.78 ns | Repeats a cached near-threshold exp approximation. |
-| `computable_transcendentals/exp_zero_cold_p128` | 72.31 ns | 71.72 ns - 73.01 ns | Approximates exp(0). |
-| `computable_transcendentals/ln_cold_p128` | 4.485 us | 4.444 us - 4.544 us | Approximates ln(11/7). |
+| `computable_transcendentals/exp_zero_cold_p128` | 73.28 ns | 72.71 ns - 73.90 ns | Approximates exp(0). |
+| `computable_transcendentals/ln_cold_p128` | 4.447 us | 4.411 us - 4.494 us | Approximates ln(11/7). |
 | `computable_transcendentals/ln_cached_p128` | 37.75 ns | 37.62 ns - 37.89 ns | Repeats a cached ln(11/7) approximation. |
-| `computable_transcendentals/ln_large_cold_p128` | 307.90 ns | 305.22 ns - 311.43 ns | Approximates ln(1024), exercising large-input reduction. |
+| `computable_transcendentals/ln_smooth_rational_cold_p128` | 912.48 ns | 905.93 ns - 918.87 ns | Approximates ln(45/14), which can decompose into shared prime-log constants. |
+| `computable_transcendentals/ln_nonsmooth_rational_cold_p128` | 2.577 us | 2.567 us - 2.588 us | Approximates ln(11/13), guarding the generic exact-rational log fallback. |
+| `computable_transcendentals/ln_large_cold_p128` | 306.17 ns | 304.62 ns - 307.88 ns | Approximates ln(1024), exercising large-input reduction. |
 | `computable_transcendentals/ln_large_cached_p128` | 38.19 ns | 38.09 ns - 38.30 ns | Repeats a cached ln(1024) approximation. |
 | `computable_transcendentals/ln_tiny_cold_p128` | 240.10 ns | 237.93 ns - 242.38 ns | Approximates ln(2^-1024), exercising tiny-input reduction. |
 | `computable_transcendentals/ln_near_limit_cold_p128` | 4.541 us | 4.517 us - 4.571 us | Approximates ln near the prescaled-ln limit. |
 | `computable_transcendentals/ln_near_limit_cached_p128` | 37.62 ns | 37.47 ns - 37.79 ns | Repeats a cached near-limit ln approximation. |
 | `computable_transcendentals/ln_one_cold_p128` | 32.71 ns | 32.54 ns - 32.89 ns | Approximates ln(1). |
-| `computable_transcendentals/sqrt_cold_p128` | 770.48 ns | 767.43 ns - 773.66 ns | Approximates sqrt(2). |
-| `computable_transcendentals/sqrt_cached_p128` | 38.50 ns | 38.34 ns - 38.69 ns | Repeats a cached sqrt(2) approximation. |
-| `computable_transcendentals/sqrt_single_scaled_square_cold_p128` | 1.162 us | 1.155 us - 1.171 us | Builds and approximates sqrt((7*pi/8)^2). |
-| `computable_transcendentals/sin_cold_p96` | 1.604 us | 1.596 us - 1.612 us | Approximates sin(7/5). |
-| `computable_transcendentals/sin_cached_p96` | 40.52 ns | 40.36 ns - 40.69 ns | Repeats a cached sin(7/5) approximation. |
-| `computable_transcendentals/cos_cold_p96` | 1.519 us | 1.502 us - 1.539 us | Approximates cos(7/5). |
-| `computable_transcendentals/sin_f64_cold_p96` | 1.756 us | 1.748 us - 1.765 us | Approximates sin(1.23456789 imported exactly from f64). |
-| `computable_transcendentals/cos_f64_cold_p96` | 1.715 us | 1.701 us - 1.729 us | Approximates cos(1.23456789 imported exactly from f64). |
+| `computable_transcendentals/sqrt_cold_p128` | 758.54 ns | 754.48 ns - 763.01 ns | Approximates sqrt(2). |
+| `computable_transcendentals/sqrt_squarefree_scaled_cold_p128` | 181.71 ns | 180.35 ns - 183.15 ns | Approximates sqrt(12), which can reduce to 2*sqrt(3). |
+| `computable_transcendentals/sqrt_cached_p128` | 38.23 ns | 38.12 ns - 38.35 ns | Repeats a cached sqrt(2) approximation. |
+| `computable_transcendentals/sqrt_single_scaled_square_cold_p128` | 1.074 us | 1.069 us - 1.078 us | Builds and approximates sqrt((7*pi/8)^2). |
+| `computable_transcendentals/sin_cold_p96` | 1.539 us | 1.530 us - 1.549 us | Approximates sin(7/5). |
+| `computable_transcendentals/sin_cached_p96` | 37.96 ns | 37.73 ns - 38.32 ns | Repeats a cached sin(7/5) approximation. |
+| `computable_transcendentals/cos_cold_p96` | 1.491 us | 1.485 us - 1.497 us | Approximates cos(7/5). |
+| `computable_transcendentals/sin_f64_cold_p96` | 1.667 us | 1.662 us - 1.673 us | Approximates sin(1.23456789 imported exactly from f64). |
+| `computable_transcendentals/cos_f64_cold_p96` | 1.656 us | 1.651 us - 1.661 us | Approximates cos(1.23456789 imported exactly from f64). |
 | `computable_transcendentals/sin_1e6_cold_p96` | 2.310 us | 2.298 us - 2.324 us | Approximates sin(1000000). |
 | `computable_transcendentals/cos_1e6_cold_p96` | 2.333 us | 2.318 us - 2.350 us | Approximates cos(1000000). |
-| `computable_transcendentals/sin_1e30_cold_p96` | 2.082 us | 2.070 us - 2.094 us | Approximates sin(10^30). |
-| `computable_transcendentals/cos_1e30_cold_p96` | 2.202 us | 2.183 us - 2.225 us | Approximates cos(10^30). |
-| `computable_transcendentals/cos_cached_p96` | 40.46 ns | 40.29 ns - 40.64 ns | Repeats a cached cos(7/5) approximation. |
-| `computable_transcendentals/tan_cold_p96` | 3.396 us | 3.378 us - 3.416 us | Approximates tan(7/5). |
-| `computable_transcendentals/tan_cached_p96` | 39.87 ns | 39.74 ns - 40.00 ns | Repeats a cached tan(7/5) approximation. |
-| `computable_transcendentals/sin_zero_cold_p96` | 34.40 ns | 34.23 ns - 34.60 ns | Approximates sin(0). |
+| `computable_transcendentals/sin_1e30_cold_p96` | 2.078 us | 2.068 us - 2.089 us | Approximates sin(10^30). |
+| `computable_transcendentals/cos_1e30_cold_p96` | 2.209 us | 2.199 us - 2.219 us | Approximates cos(10^30). |
+| `computable_transcendentals/cos_cached_p96` | 37.36 ns | 37.28 ns - 37.45 ns | Repeats a cached cos(7/5) approximation. |
+| `computable_transcendentals/tan_cold_p96` | 3.278 us | 3.271 us - 3.286 us | Approximates tan(7/5). |
+| `computable_transcendentals/tan_cached_p96` | 37.18 ns | 37.13 ns - 37.24 ns | Repeats a cached tan(7/5) approximation. |
+| `computable_transcendentals/sin_zero_cold_p96` | 34.62 ns | 34.31 ns - 34.99 ns | Approximates sin(0). |
 | `computable_transcendentals/cos_zero_cold_p96` | 76.62 ns | 75.75 ns - 77.62 ns | Approximates cos(0). |
 | `computable_transcendentals/tan_zero_cold_p96` | 34.27 ns | 34.02 ns - 34.61 ns | Approximates tan(0). |
 | `computable_transcendentals/tan_near_half_pi_cold_p96` | 3.665 us | 2.871 us - 5.238 us | Approximates tangent near pi/2. |
-| `computable_transcendentals/tan_near_half_pi_cached_p96` | 40.17 ns | 40.05 ns - 40.31 ns | Repeats cached tangent near pi/2. |
-| `computable_transcendentals/sin_huge_cold_p96` | 1.613 us | 1.604 us - 1.622 us | Approximates sine of a huge pi multiple plus offset. |
+| `computable_transcendentals/tan_near_half_pi_cached_p96` | 40.52 ns | 40.22 ns - 40.88 ns | Repeats cached tangent near pi/2. |
+| `computable_transcendentals/sin_huge_cold_p96` | 1.621 us | 1.605 us - 1.639 us | Approximates sine of a huge pi multiple plus offset. |
 | `computable_transcendentals/cos_huge_cold_p96` | 1.499 us | 1.492 us - 1.506 us | Approximates cosine of a huge pi multiple plus offset. |
 | `computable_transcendentals/tan_huge_cold_p96` | 3.338 us | 3.322 us - 3.356 us | Approximates tangent of a huge pi multiple plus offset. |
 | `computable_transcendentals/asin_cold_p96` | 6.901 us | 6.533 us - 7.610 us | Approximates a computable asin expression. |
@@ -344,33 +352,33 @@ Low-level approximation kernels and deep expression-tree stress cases.
 | `computable_transcendentals/atan_large_cold_p96` | 1.831 us | 1.811 us - 1.853 us | Approximates atan(8), exercising argument reduction. |
 | `computable_transcendentals/asin_zero_cold_p96` | 33.26 ns | 33.08 ns - 33.45 ns | Approximates asin(0) expression. |
 | `computable_transcendentals/atan_zero_cold_p96` | 34.79 ns | 34.30 ns - 35.38 ns | Approximates atan(0). |
-| `computable_transcendentals/asinh_cold_p128` | 6.437 us | 6.389 us - 6.493 us | Approximates a computable asinh expression. |
-| `computable_transcendentals/asinh_cached_p128` | 37.59 ns | 37.44 ns - 37.77 ns | Repeats a cached computable asinh approximation. |
-| `computable_transcendentals/acosh_cold_p128` | 9.586 us | 9.505 us - 9.685 us | Approximates a computable acosh expression. |
+| `computable_transcendentals/asinh_cold_p128` | 6.381 us | 6.352 us - 6.413 us | Approximates a computable asinh expression. |
+| `computable_transcendentals/asinh_cached_p128` | 37.91 ns | 37.75 ns - 38.08 ns | Repeats a cached computable asinh approximation. |
+| `computable_transcendentals/acosh_cold_p128` | 9.576 us | 9.526 us - 9.639 us | Approximates a computable acosh expression. |
 | `computable_transcendentals/acosh_cached_p128` | 39.36 ns | 39.14 ns - 39.63 ns | Repeats a cached computable acosh approximation. |
-| `computable_transcendentals/atanh_cold_p128` | 184.04 ns | 181.95 ns - 186.19 ns | Approximates a computable atanh expression. |
-| `computable_transcendentals/atanh_cached_p128` | 37.77 ns | 37.63 ns - 37.92 ns | Repeats a cached computable atanh approximation. |
-| `computable_transcendentals/atanh_tiny_cold_p128` | 548.03 ns | 543.93 ns - 552.83 ns | Approximates atanh(1e-12), exercising the tiny-input series. |
+| `computable_transcendentals/atanh_cold_p128` | 274.82 ns | 192.47 ns - 437.95 ns | Approximates a computable atanh expression. |
+| `computable_transcendentals/atanh_cached_p128` | 37.71 ns | 37.59 ns - 37.84 ns | Repeats a cached computable atanh approximation. |
+| `computable_transcendentals/atanh_tiny_cold_p128` | 473.10 ns | 470.93 ns - 475.47 ns | Approximates atanh(1e-12), exercising the tiny-input series. |
 | `computable_transcendentals/atanh_near_one_cold_p128` | 2.898 us | 2.864 us - 2.938 us | Approximates atanh(0.999999), exercising the endpoint log transform. |
 | `computable_transcendentals/asinh_zero_cold_p128` | 33.60 ns | 33.32 ns - 33.91 ns | Approximates asinh(0) expression. |
 | `computable_transcendentals/atanh_zero_cold_p128` | 33.56 ns | 33.33 ns - 33.81 ns | Approximates atanh(0) expression. |
-| `computable_transcendentals/deep_add_chain_cold_p128` | 112.04 ns | 86.99 ns - 161.13 ns | Approximates a 5000-node addition chain. |
+| `computable_transcendentals/deep_add_chain_cold_p128` | 90.61 ns | 90.26 ns - 90.95 ns | Approximates a 5000-node addition chain. |
 | `computable_transcendentals/deep_multiply_chain_cold_p128` | 74.20 ns | 73.56 ns - 74.87 ns | Approximates a 5000-node multiply-by-one chain. |
 | `computable_transcendentals/deep_multiply_identity_chain_cold_p128` | 89.32 ns | 88.86 ns - 89.81 ns | Approximates a deep identity multiplication chain around pi. |
 | `computable_transcendentals/deep_scaled_product_chain_cold_p128` | 729.63 ns | 592.43 ns - 995.24 ns | Approximates a deep product of exact scale factors. |
-| `computable_transcendentals/perturbed_scaled_product_chain_cold_p128` | 1.112 us | 901.40 ns - 1.525 us | Approximates a deep scaled product with a tiny perturbation. |
+| `computable_transcendentals/perturbed_scaled_product_chain_cold_p128` | 839.66 ns | 834.97 ns - 844.33 ns | Approximates a deep scaled product with a tiny perturbation. |
 | `computable_transcendentals/scaled_square_chain_cold_p128` | 1.415 us | 1.400 us - 1.433 us | Approximates repeated squaring of a scaled irrational. |
 | `computable_transcendentals/asymmetric_product_bad_order_cold_p128` | 1.130 us | 932.65 ns - 1.521 us | Approximates an asymmetric product order stress case. |
 | `computable_transcendentals/sqrt_scaled_square_chain_cold_p128` | 1.087 us | 1.082 us - 1.094 us | Approximates sqrt of a scaled-square chain. |
-| `computable_transcendentals/warmed_zero_product_cold_p128` | 508.50 ns | 505.03 ns - 512.39 ns | Approximates a product involving a warmed zero sum. |
-| `computable_transcendentals/inverse_scaled_product_chain_cold_p128` | 789.81 ns | 782.04 ns - 798.20 ns | Approximates the inverse of a deep scaled product. |
-| `computable_transcendentals/deep_inverse_pair_chain_cold_p128` | 88.48 ns | 87.92 ns - 89.09 ns | Approximates a chain of inverse(inverse(x)) pairs. |
+| `computable_transcendentals/warmed_zero_product_cold_p128` | 502.57 ns | 501.40 ns - 503.96 ns | Approximates a product involving a warmed zero sum. |
+| `computable_transcendentals/inverse_scaled_product_chain_cold_p128` | 1.016 us | 763.66 ns - 1.472 us | Approximates the inverse of a deep scaled product. |
+| `computable_transcendentals/deep_inverse_pair_chain_cold_p128` | 90.70 ns | 90.14 ns - 91.31 ns | Approximates a chain of inverse(inverse(x)) pairs. |
 | `computable_transcendentals/deep_negated_square_chain_cold_p128` | 88.49 ns | 88.01 ns - 89.01 ns | Approximates repeated negate-square-sqrt transformations. |
 | `computable_transcendentals/deep_negative_one_product_chain_cold_p128` | 92.50 ns | 91.42 ns - 93.79 ns | Approximates repeated multiplication by -1. |
 | `computable_transcendentals/deep_half_product_chain_cold_p128` | 219.91 ns | 217.32 ns - 222.83 ns | Approximates repeated multiplication by 1/2. |
 | `computable_transcendentals/deep_half_square_chain_cold_p128` | 1.020 us | 1.010 us - 1.031 us | Approximates repeated squaring after scaling by 1/2. |
 | `computable_transcendentals/deep_sqrt_square_chain_cold_p128` | 128.71 ns | 85.12 ns - 215.07 ns | Approximates repeated sqrt-square simplification. |
-| `computable_transcendentals/inverse_half_product_chain_cold_p128` | 523.15 ns | 518.29 ns - 528.15 ns | Approximates the inverse of a deep half-product chain. |
+| `computable_transcendentals/inverse_half_product_chain_cold_p128` | 518.80 ns | 516.98 ns - 520.73 ns | Approximates the inverse of a deep half-product chain. |
 
 <!-- END numerical_micro -->
 
@@ -565,24 +573,24 @@ Cold approximation of sine, cosine, and tangent at exact, tiny, huge, and near-s
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `trig_adversarial_approx/sin_tiny_rational_p96` | 564.72 ns | 555.16 ns - 575.48 ns | Approximates sin(1e-12), stressing direct tiny-argument setup. |
-| `trig_adversarial_approx/cos_tiny_rational_p96` | 572.13 ns | 563.56 ns - 583.11 ns | Approximates cos(1e-12), stressing direct tiny-argument setup. |
-| `trig_adversarial_approx/tan_tiny_rational_p96` | 1.092 us | 1.057 us - 1.128 us | Approximates tan(1e-12), stressing direct tiny-argument setup. |
-| `trig_adversarial_approx/sin_medium_rational_p96` | 1.774 us | 1.759 us - 1.788 us | Approximates sin(7/5), a moderate non-pi rational. |
-| `trig_adversarial_approx/cos_medium_rational_p96` | 1.746 us | 1.740 us - 1.752 us | Approximates cos(7/5), a moderate non-pi rational. |
-| `trig_adversarial_approx/tan_medium_rational_p96` | 3.565 us | 3.545 us - 3.589 us | Approximates tan(7/5), a moderate non-pi rational. |
-| `trig_adversarial_approx/sin_f64_exact_p96` | 1.952 us | 1.932 us - 1.973 us | Approximates sin(1.23456789 imported as an exact dyadic rational). |
-| `trig_adversarial_approx/cos_f64_exact_p96` | 1.990 us | 1.944 us - 2.044 us | Approximates cos(1.23456789 imported as an exact dyadic rational). |
-| `trig_adversarial_approx/sin_1e6_p96` | 2.350 us | 2.332 us - 2.369 us | Approximates sin(1000000), stressing integer argument reduction. |
-| `trig_adversarial_approx/cos_1e6_p96` | 2.401 us | 2.388 us - 2.417 us | Approximates cos(1000000), stressing integer argument reduction. |
-| `trig_adversarial_approx/tan_1e6_p96` | 4.445 us | 4.423 us - 4.466 us | Approximates tan(1000000), stressing integer argument reduction. |
-| `trig_adversarial_approx/sin_1e30_p96` | 2.239 us | 2.204 us - 2.280 us | Approximates sin(10^30), stressing very large integer reduction. |
-| `trig_adversarial_approx/cos_1e30_p96` | 2.306 us | 2.275 us - 2.351 us | Approximates cos(10^30), stressing very large integer reduction. |
-| `trig_adversarial_approx/tan_1e30_p96` | 3.888 us | 3.865 us - 3.911 us | Approximates tan(10^30), stressing very large integer reduction. |
-| `trig_adversarial_approx/sin_huge_pi_plus_offset_p96` | 2.241 us | 2.225 us - 2.258 us | Approximates sin(2^512*pi + 7/5), stressing exact pi-multiple cancellation. |
-| `trig_adversarial_approx/cos_huge_pi_plus_offset_p96` | 2.107 us | 2.086 us - 2.127 us | Approximates cos(2^512*pi + 7/5), stressing exact pi-multiple cancellation. |
-| `trig_adversarial_approx/tan_huge_pi_plus_offset_p96` | 5.645 us | 5.631 us - 5.660 us | Approximates tan(2^512*pi + 7/5), stressing exact pi-multiple cancellation. |
-| `trig_adversarial_approx/tan_near_half_pi_p96` | 2.321 us | 2.307 us - 2.336 us | Approximates tan(pi/2 - 2^-40), stressing the cotangent complement path. |
+| `trig_adversarial_approx/sin_tiny_rational_p96` | 633.92 ns | 625.70 ns - 644.82 ns | Approximates sin(1e-12), stressing direct tiny-argument setup. |
+| `trig_adversarial_approx/cos_tiny_rational_p96` | 628.25 ns | 623.85 ns - 632.51 ns | Approximates cos(1e-12), stressing direct tiny-argument setup. |
+| `trig_adversarial_approx/tan_tiny_rational_p96` | 1.144 us | 1.125 us - 1.165 us | Approximates tan(1e-12), stressing direct tiny-argument setup. |
+| `trig_adversarial_approx/sin_medium_rational_p96` | 1.820 us | 1.809 us - 1.833 us | Approximates sin(7/5), a moderate non-pi rational. |
+| `trig_adversarial_approx/cos_medium_rational_p96` | 1.696 us | 1.686 us - 1.708 us | Approximates cos(7/5), a moderate non-pi rational. |
+| `trig_adversarial_approx/tan_medium_rational_p96` | 3.690 us | 3.623 us - 3.757 us | Approximates tan(7/5), a moderate non-pi rational. |
+| `trig_adversarial_approx/sin_f64_exact_p96` | 1.948 us | 1.937 us - 1.962 us | Approximates sin(1.23456789 imported as an exact dyadic rational). |
+| `trig_adversarial_approx/cos_f64_exact_p96` | 1.961 us | 1.933 us - 1.999 us | Approximates cos(1.23456789 imported as an exact dyadic rational). |
+| `trig_adversarial_approx/sin_1e6_p96` | 2.367 us | 2.331 us - 2.411 us | Approximates sin(1000000), stressing integer argument reduction. |
+| `trig_adversarial_approx/cos_1e6_p96` | 2.400 us | 2.365 us - 2.439 us | Approximates cos(1000000), stressing integer argument reduction. |
+| `trig_adversarial_approx/tan_1e6_p96` | 4.567 us | 4.518 us - 4.638 us | Approximates tan(1000000), stressing integer argument reduction. |
+| `trig_adversarial_approx/sin_1e30_p96` | 2.211 us | 2.188 us - 2.237 us | Approximates sin(10^30), stressing very large integer reduction. |
+| `trig_adversarial_approx/cos_1e30_p96` | 2.344 us | 2.328 us - 2.365 us | Approximates cos(10^30), stressing very large integer reduction. |
+| `trig_adversarial_approx/tan_1e30_p96` | 4.015 us | 3.980 us - 4.052 us | Approximates tan(10^30), stressing very large integer reduction. |
+| `trig_adversarial_approx/sin_huge_pi_plus_offset_p96` | 2.337 us | 2.328 us - 2.347 us | Approximates sin(2^512*pi + 7/5), stressing exact pi-multiple cancellation. |
+| `trig_adversarial_approx/cos_huge_pi_plus_offset_p96` | 2.239 us | 2.225 us - 2.256 us | Approximates cos(2^512*pi + 7/5), stressing exact pi-multiple cancellation. |
+| `trig_adversarial_approx/tan_huge_pi_plus_offset_p96` | 4.163 us | 4.111 us - 4.224 us | Approximates tan(2^512*pi + 7/5), stressing exact pi-multiple cancellation. |
+| `trig_adversarial_approx/tan_near_half_pi_p96` | 2.455 us | 2.437 us - 2.474 us | Approximates tan(pi/2 - 2^-40), stressing the cotangent complement path. |
 
 ### `inverse_trig_adversarial_approx`
 
@@ -590,21 +598,21 @@ Cold approximation of asin, acos, and atan near exact values, zero, endpoints, a
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `inverse_trig_adversarial_approx/asin_zero_p96` | 80.57 ns | 76.01 ns - 86.63 ns | Approximates asin(0), which should collapse before the generic inverse-trig path. |
-| `inverse_trig_adversarial_approx/acos_zero_p96` | 293.07 ns | 281.61 ns - 304.70 ns | Approximates acos(0), which should reduce to pi/2. |
-| `inverse_trig_adversarial_approx/atan_zero_p96` | 75.68 ns | 72.20 ns - 80.73 ns | Approximates atan(0), which should collapse to zero. |
-| `inverse_trig_adversarial_approx/asin_tiny_positive_p96` | 463.71 ns | 443.33 ns - 488.09 ns | Approximates asin(1e-12), stressing the tiny odd series. |
-| `inverse_trig_adversarial_approx/acos_tiny_positive_p96` | 872.11 ns | 862.92 ns - 881.30 ns | Approximates acos(1e-12), stressing pi/2 minus the tiny asin path. |
-| `inverse_trig_adversarial_approx/atan_tiny_positive_p96` | 348.62 ns | 343.17 ns - 354.81 ns | Approximates atan(1e-12), stressing direct tiny atan setup. |
-| `inverse_trig_adversarial_approx/asin_mid_positive_p96` | 10.892 us | 10.839 us - 10.947 us | Approximates asin(7/10), a generic in-domain value. |
-| `inverse_trig_adversarial_approx/acos_mid_positive_p96` | 8.999 us | 8.969 us - 9.026 us | Approximates acos(7/10), a generic in-domain value. |
-| `inverse_trig_adversarial_approx/atan_mid_positive_p96` | 7.839 us | 7.791 us - 7.888 us | Approximates atan(7/10), a generic in-domain value. |
-| `inverse_trig_adversarial_approx/asin_near_one_p96` | 5.040 us | 4.996 us - 5.094 us | Approximates asin(0.999999), stressing endpoint transforms. |
-| `inverse_trig_adversarial_approx/acos_near_one_p96` | 4.776 us | 4.698 us - 4.874 us | Approximates acos(0.999999), stressing endpoint transforms. |
-| `inverse_trig_adversarial_approx/asin_near_minus_one_p96` | 5.488 us | 5.307 us - 5.711 us | Approximates asin(-0.999999), stressing odd symmetry near the endpoint. |
-| `inverse_trig_adversarial_approx/acos_near_minus_one_p96` | 5.454 us | 5.430 us - 5.481 us | Approximates acos(-0.999999), stressing negative endpoint transforms. |
-| `inverse_trig_adversarial_approx/atan_large_p96` | 1.858 us | 1.824 us - 1.895 us | Approximates atan(8), stressing reciprocal reduction. |
-| `inverse_trig_adversarial_approx/atan_huge_p96` | 790.21 ns | 782.48 ns - 796.92 ns | Approximates atan(10^30), stressing very large reciprocal reduction. |
+| `inverse_trig_adversarial_approx/asin_zero_p96` | 76.15 ns | 73.17 ns - 80.73 ns | Approximates asin(0), which should collapse before the generic inverse-trig path. |
+| `inverse_trig_adversarial_approx/acos_zero_p96` | 305.44 ns | 293.66 ns - 315.80 ns | Approximates acos(0), which should reduce to pi/2. |
+| `inverse_trig_adversarial_approx/atan_zero_p96` | 77.48 ns | 73.71 ns - 84.21 ns | Approximates atan(0), which should collapse to zero. |
+| `inverse_trig_adversarial_approx/asin_tiny_positive_p96` | 446.42 ns | 438.98 ns - 457.41 ns | Approximates asin(1e-12), stressing the tiny odd series. |
+| `inverse_trig_adversarial_approx/acos_tiny_positive_p96` | 919.10 ns | 883.82 ns - 961.65 ns | Approximates acos(1e-12), stressing pi/2 minus the tiny asin path. |
+| `inverse_trig_adversarial_approx/atan_tiny_positive_p96` | 344.37 ns | 337.68 ns - 352.40 ns | Approximates atan(1e-12), stressing direct tiny atan setup. |
+| `inverse_trig_adversarial_approx/asin_mid_positive_p96` | 11.134 us | 11.016 us - 11.241 us | Approximates asin(7/10), a generic in-domain value. |
+| `inverse_trig_adversarial_approx/acos_mid_positive_p96` | 9.208 us | 9.138 us - 9.288 us | Approximates acos(7/10), a generic in-domain value. |
+| `inverse_trig_adversarial_approx/atan_mid_positive_p96` | 7.397 us | 7.309 us - 7.490 us | Approximates atan(7/10), a generic in-domain value. |
+| `inverse_trig_adversarial_approx/asin_near_one_p96` | 5.189 us | 5.114 us - 5.283 us | Approximates asin(0.999999), stressing endpoint transforms. |
+| `inverse_trig_adversarial_approx/acos_near_one_p96` | 4.431 us | 4.376 us - 4.501 us | Approximates acos(0.999999), stressing endpoint transforms. |
+| `inverse_trig_adversarial_approx/asin_near_minus_one_p96` | 5.353 us | 5.279 us - 5.441 us | Approximates asin(-0.999999), stressing odd symmetry near the endpoint. |
+| `inverse_trig_adversarial_approx/acos_near_minus_one_p96` | 5.552 us | 5.431 us - 5.699 us | Approximates acos(-0.999999), stressing negative endpoint transforms. |
+| `inverse_trig_adversarial_approx/atan_large_p96` | 1.880 us | 1.847 us - 1.932 us | Approximates atan(8), stressing reciprocal reduction. |
+| `inverse_trig_adversarial_approx/atan_huge_p96` | 870.97 ns | 832.66 ns - 911.31 ns | Approximates atan(10^30), stressing very large reciprocal reduction. |
 
 ### `inverse_hyperbolic_adversarial_approx`
 
@@ -612,18 +620,18 @@ Cold approximation of inverse hyperbolic functions at tiny, moderate, large, and
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `inverse_hyperbolic_adversarial_approx/asinh_tiny_positive_p128` | 645.59 ns | 634.61 ns - 659.02 ns | Approximates asinh(1e-12), stressing cancellation avoidance near zero. |
-| `inverse_hyperbolic_adversarial_approx/asinh_mid_positive_p128` | 7.919 us | 7.853 us - 8.005 us | Approximates asinh(1/2), a moderate positive value. |
-| `inverse_hyperbolic_adversarial_approx/asinh_large_positive_p128` | 7.715 us | 7.656 us - 7.781 us | Approximates asinh(10^6), stressing large-input logarithmic behavior. |
-| `inverse_hyperbolic_adversarial_approx/asinh_large_negative_p128` | 7.849 us | 7.738 us - 7.965 us | Approximates asinh(-10^6), stressing odd symmetry for large inputs. |
-| `inverse_hyperbolic_adversarial_approx/acosh_one_plus_tiny_p128` | 6.299 us | 6.251 us - 6.348 us | Approximates acosh(1 + 1e-12), stressing the near-one endpoint. |
-| `inverse_hyperbolic_adversarial_approx/acosh_sqrt_two_p128` | 9.089 us | 8.864 us - 9.366 us | Approximates acosh(sqrt(2)), a symbolic square-root input. |
-| `inverse_hyperbolic_adversarial_approx/acosh_two_p128` | 13.498 us | 13.236 us - 13.799 us | Approximates acosh(2), a moderate exact rational. |
-| `inverse_hyperbolic_adversarial_approx/acosh_large_positive_p128` | 8.349 us | 8.203 us - 8.584 us | Approximates acosh(10^6), stressing large-input logarithmic behavior. |
-| `inverse_hyperbolic_adversarial_approx/atanh_tiny_positive_p128` | 583.90 ns | 576.81 ns - 592.97 ns | Approximates atanh(1e-12), stressing the tiny odd series. |
-| `inverse_hyperbolic_adversarial_approx/atanh_mid_positive_p128` | 1.403 us | 1.388 us - 1.421 us | Approximates atanh(1/2), a moderate exact rational. |
-| `inverse_hyperbolic_adversarial_approx/atanh_near_one_p128` | 6.128 us | 6.063 us - 6.208 us | Approximates atanh(0.999999), stressing endpoint logarithmic behavior. |
-| `inverse_hyperbolic_adversarial_approx/atanh_near_minus_one_p128` | 6.554 us | 6.436 us - 6.701 us | Approximates atanh(-0.999999), stressing odd symmetry near the endpoint. |
+| `inverse_hyperbolic_adversarial_approx/asinh_tiny_positive_p128` | 587.03 ns | 579.69 ns - 597.74 ns | Approximates asinh(1e-12), stressing cancellation avoidance near zero. |
+| `inverse_hyperbolic_adversarial_approx/asinh_mid_positive_p128` | 10.514 us | 8.204 us - 12.974 us | Approximates asinh(1/2), a moderate positive value. |
+| `inverse_hyperbolic_adversarial_approx/asinh_large_positive_p128` | 7.653 us | 7.478 us - 7.842 us | Approximates asinh(10^6), stressing large-input logarithmic behavior. |
+| `inverse_hyperbolic_adversarial_approx/asinh_large_negative_p128` | 7.860 us | 7.710 us - 8.030 us | Approximates asinh(-10^6), stressing odd symmetry for large inputs. |
+| `inverse_hyperbolic_adversarial_approx/acosh_one_plus_tiny_p128` | 6.559 us | 6.446 us - 6.691 us | Approximates acosh(1 + 1e-12), stressing the near-one endpoint. |
+| `inverse_hyperbolic_adversarial_approx/acosh_sqrt_two_p128` | 8.839 us | 8.705 us - 9.054 us | Approximates acosh(sqrt(2)), a symbolic square-root input. |
+| `inverse_hyperbolic_adversarial_approx/acosh_two_p128` | 11.137 us | 11.074 us - 11.203 us | Approximates acosh(2), a moderate exact rational. |
+| `inverse_hyperbolic_adversarial_approx/acosh_large_positive_p128` | 7.941 us | 7.896 us - 7.992 us | Approximates acosh(10^6), stressing large-input logarithmic behavior. |
+| `inverse_hyperbolic_adversarial_approx/atanh_tiny_positive_p128` | 542.70 ns | 537.50 ns - 551.87 ns | Approximates atanh(1e-12), stressing the tiny odd series. |
+| `inverse_hyperbolic_adversarial_approx/atanh_mid_positive_p128` | 1.142 us | 1.106 us - 1.189 us | Approximates atanh(1/2), a moderate exact rational. |
+| `inverse_hyperbolic_adversarial_approx/atanh_near_one_p128` | 5.514 us | 5.411 us - 5.675 us | Approximates atanh(0.999999), stressing endpoint logarithmic behavior. |
+| `inverse_hyperbolic_adversarial_approx/atanh_near_minus_one_p128` | 5.668 us | 5.623 us - 5.724 us | Approximates atanh(-0.999999), stressing odd symmetry near the endpoint. |
 
 ### `real_shortcut_adversarial`
 
@@ -644,4 +652,3 @@ Public `Real` construction shortcuts and domain checks for the same transcendent
 | `real_shortcut_adversarial/acosh_domain_error` | 592.28 ns | 587.51 ns - 597.67 ns | Rejects acosh(1 - 1e-12). |
 
 <!-- END adversarial_transcendentals -->
-

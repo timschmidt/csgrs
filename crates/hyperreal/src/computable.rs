@@ -737,6 +737,35 @@ impl Computable {
         }
     }
 
+    fn asinh_rational_deferred(rational: Rational) -> Computable {
+        // Same series as `prescaled_asinh`, but exact rationals can skip the
+        // child Computable wrapper and feed the kernel directly.
+        crate::trace_dispatch!("computable", "constructor", "asinh-rational-deferred");
+        let sign = rational.sign();
+        Self {
+            internal: Box::new(Approximation::AsinhRational(rational)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Valid(sign)),
+            signal: None,
+        }
+    }
+
+    fn atanh_rational_deferred(rational: Rational) -> Computable {
+        // Tiny exact-rational atanh uses the odd series directly. Keeping the
+        // Rational payload avoids rebuilding a Ratio node in cold approximation
+        // benches while preserving the symbolic value until the final request.
+        crate::trace_dispatch!("computable", "constructor", "atanh-rational-deferred");
+        let sign = rational.sign();
+        Self {
+            internal: Box::new(Approximation::AtanhRational(rational)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Valid(sign)),
+            signal: None,
+        }
+    }
+
     fn acos_positive(value: Computable) -> Computable {
         // For x >= 0, acos(x) is reduced with 2*atan(sqrt((1-x)/(1+x))).
         // A single deferred node avoids allocating that whole formula during
@@ -1013,6 +1042,19 @@ impl Computable {
                 Self::store_shared_constant_cache_value(SharedConstant::Tau, p, cached.clone());
                 return Some(cached);
             }
+            if constant == SharedConstant::Pi
+                && let Some(cached) =
+                    Self::cached_shared_constant_at_precision(SharedConstant::Tau, p + 1)
+            {
+                // The same identity works in reverse: a tau approximation at
+                // precision p+1 is already a pi approximation at precision p.
+                // This matters for applications that use tau for trig
+                // construction and later format pi; reuse the costly Machin
+                // approximation instead of recomputing it under a different
+                // shared-constant key.
+                Self::store_shared_constant_cache_value(SharedConstant::Pi, p, cached.clone());
+                return Some(cached);
+            }
             return None;
         }
 
@@ -1114,6 +1156,9 @@ impl Computable {
             Approximation::Ratio(r) => Some(BoundInfo::from_rational(r)),
             Approximation::AtanRational(r) => Some(BoundInfo::with_sign_msd(r.sign(), None, false)),
             Approximation::AsinRational(r) => Some(BoundInfo::with_sign_msd(r.sign(), None, false)),
+            Approximation::AsinhRational(r) | Approximation::AtanhRational(r) => {
+                Some(BoundInfo::with_sign_msd(r.sign(), None, false))
+            }
             Approximation::PrescaledSinRational(r) | Approximation::PrescaledTanRational(r) => {
                 Some(BoundInfo::with_sign_msd(r.sign(), None, false))
             }
@@ -1201,6 +1246,9 @@ impl Computable {
                     Some(BoundInfo::with_sign_msd(r.sign(), None, false))
                 }
                 Approximation::AsinRational(r) => {
+                    Some(BoundInfo::with_sign_msd(r.sign(), None, false))
+                }
+                Approximation::AsinhRational(r) | Approximation::AtanhRational(r) => {
                     Some(BoundInfo::with_sign_msd(r.sign(), None, false))
                 }
                 Approximation::PrescaledSinRational(r) | Approximation::PrescaledTanRational(r) => {
@@ -1389,6 +1437,9 @@ impl Computable {
                 Approximation::IntegralAtan(n) => Some(Some(n.sign())),
                 Approximation::AtanRational(r) => Some(Some(r.sign())),
                 Approximation::AsinRational(r) => Some(Some(r.sign())),
+                Approximation::AsinhRational(r) | Approximation::AtanhRational(r) => {
+                    Some(Some(r.sign()))
+                }
                 Approximation::PrescaledSinRational(r) | Approximation::PrescaledTanRational(r) => {
                     Some(Some(r.sign()))
                 }
@@ -2137,6 +2188,95 @@ impl Computable {
         Self::shared_constant(SharedConstant::Ln2)
     }
 
+    fn factor_small_prime_power(value: &mut BigUint, prime: u32) -> i32 {
+        let prime_big = BigUint::from(prime);
+        let mut exponent = 0_i32;
+        while !value.is_zero() && (&*value % &prime_big).is_zero() {
+            *value /= &prime_big;
+            exponent = exponent
+                .checked_add(1)
+                .expect("small-prime factor exponent should fit in i32");
+        }
+        exponent
+    }
+
+    fn ln_smooth_rational(rational: &Rational) -> Option<Self> {
+        if rational.sign() != Sign::Plus {
+            return None;
+        }
+
+        let mut numerator = rational.numerator().clone();
+        let mut denominator = rational.denominator().clone();
+        let mut terms = Vec::with_capacity(4);
+        for base in [2_u32, 3, 5, 7] {
+            let exponent = Self::factor_small_prime_power(&mut numerator, base)
+                - Self::factor_small_prime_power(&mut denominator, base);
+            if exponent != 0 {
+                terms.push((base, exponent));
+            }
+        }
+        if numerator != BigUint::one() || denominator != BigUint::one() || terms.is_empty() {
+            return None;
+        }
+        if terms.len() == 1 && terms[0].1 == 1 {
+            // Shared log constants approximate themselves by evaluating the
+            // corresponding exact rational log. Do not rewrite ln(3) to the
+            // shared ln3 node here or that internal cache fill would recurse.
+            // Composite smooth values such as 9, 6, 45/14 still reduce below.
+            return None;
+        }
+
+        // ln(prod p_i^e_i) = sum e_i ln(p_i). Retaining this symbolic sum
+        // lets smooth exact rationals reuse shared log caches and delays all
+        // series evaluation until the final requested precision. This is the
+        // same argument-reduction principle used by the elementary kernels
+        // below, applied at construction time for common scalar/matrix constants.
+        let mut result = Self::zero();
+        for (base, exponent) in terms {
+            let magnitude = BigInt::from(exponent.abs());
+            let mut term = Self::ln_constant(base)
+                .expect("smooth-log bases are all shared")
+                .multiply(Self::integer(magnitude));
+            if exponent < 0 {
+                term = term.negate();
+            }
+            result = result.add(term);
+        }
+        Some(result)
+    }
+
+    fn ln_shared_or_smooth_rational(rational: &Rational) -> Option<Self> {
+        if rational == &Rational::new(2) {
+            crate::trace_dispatch!("computable", "ln", "shared-ln2");
+            return Some(Self::ln_constant(2).unwrap());
+        }
+        if rational == &Rational::new(3) {
+            crate::trace_dispatch!("computable", "ln", "shared-ln3");
+            return Some(Self::ln_constant(3).unwrap());
+        }
+        if rational == &Rational::new(5) {
+            crate::trace_dispatch!("computable", "ln", "shared-ln5");
+            return Some(Self::ln_constant(5).unwrap());
+        }
+        if rational == &Rational::new(6) {
+            crate::trace_dispatch!("computable", "ln", "shared-ln6");
+            return Some(Self::ln_constant(6).unwrap());
+        }
+        if rational == &Rational::new(7) {
+            crate::trace_dispatch!("computable", "ln", "shared-ln7");
+            return Some(Self::ln_constant(7).unwrap());
+        }
+        if rational == &Rational::new(10) {
+            crate::trace_dispatch!("computable", "ln", "shared-ln10");
+            return Some(Self::ln_constant(10).unwrap());
+        }
+        if let Some(reduced) = Self::ln_smooth_rational(rational) {
+            crate::trace_dispatch!("computable", "ln", "smooth-rational-shared-log-sum");
+            return Some(reduced);
+        }
+        None
+    }
+
     fn ln_exact_rational(rational: Rational) -> Self {
         // Internal exact-rational log constructor for reductions that already
         // have a positive rational argument. It reuses the shared small-log
@@ -2153,29 +2293,8 @@ impl Computable {
             crate::trace_dispatch!("computable", "ln", "exact-rational-inverse-rewrite");
             return Self::ln_exact_rational(rational.inverse().unwrap()).negate();
         }
-        if rational == Rational::new(2) {
-            crate::trace_dispatch!("computable", "ln", "shared-ln2");
-            return Self::ln_constant(2).unwrap();
-        }
-        if rational == Rational::new(3) {
-            crate::trace_dispatch!("computable", "ln", "shared-ln3");
-            return Self::ln_constant(3).unwrap();
-        }
-        if rational == Rational::new(5) {
-            crate::trace_dispatch!("computable", "ln", "shared-ln5");
-            return Self::ln_constant(5).unwrap();
-        }
-        if rational == Rational::new(6) {
-            crate::trace_dispatch!("computable", "ln", "shared-ln6");
-            return Self::ln_constant(6).unwrap();
-        }
-        if rational == Rational::new(7) {
-            crate::trace_dispatch!("computable", "ln", "shared-ln7");
-            return Self::ln_constant(7).unwrap();
-        }
-        if rational == Rational::new(10) {
-            crate::trace_dispatch!("computable", "ln", "shared-ln10");
-            return Self::ln_constant(10).unwrap();
+        if let Some(reduced) = Self::ln_shared_or_smooth_rational(&rational) {
+            return reduced;
         }
         crate::trace_dispatch!("computable", "ln", "exact-rational-generic");
         Self::rational(rational).ln()
@@ -2193,15 +2312,21 @@ impl Computable {
             let (shift, reduced) = r.factor_two_powers();
             if shift != 0 {
                 // ln(r * 2^k) = ln(r) + k ln(2). Pulling dyadic scale out keeps
-                // f64-derived rationals on a cheap symbolic/log path.
+                // f64-derived rationals on a cheap symbolic/log path. The
+                // reduced factor is routed through exact-rational log reduction
+                // so smooth values like 45/14 become cached prime-log sums
+                // instead of low-precision probing plus a fresh ln1p tree.
                 let reduced_ln = if reduced.is_one() {
                     Self::integer(BigInt::zero())
                 } else {
-                    Self::rational(reduced).ln()
+                    Self::ln_exact_rational(reduced)
                 };
                 let shift: BigInt = shift.into();
                 crate::trace_dispatch!("computable", "ln", "dyadic-scale-rewrite");
                 return reduced_ln.add(Self::integer(shift).multiply(Self::ln2()));
+            } else if let Some(reduced) = Self::ln_smooth_rational(r) {
+                crate::trace_dispatch!("computable", "ln", "smooth-rational-shared-log-sum");
+                return reduced;
             }
         }
 
@@ -2353,11 +2478,21 @@ impl Computable {
             && rational.sign() != Sign::Minus
             && rational.extract_square_will_succeed()
         {
-            // Perfect rational squares stay exact.
+            // Perfect rational squares stay exact. For scaled sqrt(2)/sqrt(3)
+            // residuals, keep the irrational part shared and the exact scale
+            // symbolic. Plain sqrt(2) and sqrt(3) deliberately stay on the old
+            // generic node because repeated cached approximation of a single
+            // node is faster than a thread-local shared-cache lookup.
             let (root, rest) = rational.extract_square_reduced();
             if rest.is_one() {
                 crate::trace_dispatch!("computable", "sqrt", "exact-rational-square");
                 return Self::rational(root);
+            }
+            if !root.is_one() && (rest == Rational::new(2) || rest == Rational::new(3)) {
+                crate::trace_dispatch!("computable", "sqrt", "shared-squarefree-rational");
+                let constant = Self::sqrt_constant(if rest == Rational::new(2) { 2 } else { 3 })
+                    .expect("sqrt(2) and sqrt(3) are shared constants");
+                return constant.multiply(Self::rational(root));
             }
         }
         crate::trace_dispatch!("computable", "sqrt", "generic-sqrt-node");
@@ -2578,6 +2713,9 @@ impl Computable {
             .is_some_and(|msd| msd >= 3);
         if exact_tiny {
             crate::trace_dispatch!("computable", "asinh", "exact-tiny-prescaled");
+            if let Some(rational) = exact_rational {
+                return Self::asinh_rational_deferred(rational);
+            }
             return Self::prescaled_asinh(self);
         }
         if exact_large {
@@ -2673,13 +2811,7 @@ impl Computable {
                     if rational.msd_exact().is_some_and(|msd| msd <= -4) {
                         // Tiny atanh(x) is best served by the direct odd series.
                         crate::trace_dispatch!("computable", "atanh", "exact-tiny-prescaled");
-                        return Self {
-                            internal: Box::new(Approximation::PrescaledAtanh(self)),
-                            cache: RefCell::new(Cache::Invalid),
-                            bound: RefCell::new(BoundCache::Invalid),
-                            exact_sign: RefCell::new(ExactSignCache::Invalid),
-                            signal: None,
-                        };
+                        return Self::atanh_rational_deferred(rational);
                     }
                     if !rational.is_one() {
                         // For exact rationals, atanh(x) is one exact ln ratio.
@@ -3773,6 +3905,27 @@ mod tests {
     }
 
     #[test]
+    fn pi_cache_reuses_warmed_tau_cache() {
+        std::thread::spawn(|| {
+            let tau = Computable::tau();
+            let _ = tau.approx(-65);
+            assert!(Computable::pi().cached().is_none());
+
+            let pi_appr = Computable::pi().approx(-64);
+            let tau_scaled_as_pi = Computable::tau().approx(-63);
+            assert_eq!(pi_appr, tau_scaled_as_pi);
+
+            let cached = Computable::pi()
+                .cached()
+                .expect("pi cache should be filled from tau cache");
+            assert_eq!(cached.0, -64);
+            assert_eq!(cached.1, pi_appr);
+        })
+        .join()
+        .expect("pi cache test thread should finish");
+    }
+
+    #[test]
     fn ln_constant_cache_is_shared() {
         let ln2 = Computable::ln_constant(2).unwrap();
         assert!(ln2.cached().is_none());
@@ -4391,6 +4544,15 @@ mod tests {
     }
 
     #[test]
+    fn sqrt_squarefree_two_three_reuses_shared_constants() {
+        let sqrt_twelve = Computable::rational(Rational::new(12)).sqrt();
+        let expected = Computable::sqrt_constant(3)
+            .unwrap()
+            .multiply(Computable::rational(Rational::new(2)));
+        assert_close(sqrt_twelve, expected, -60, 2);
+    }
+
+    #[test]
     fn square_of_sqrt_of_positive_value_collapses_at_construction() {
         let value = Computable::rational(Rational::new(2)).sqrt().square();
         let expected = Computable::rational(Rational::new(2));
@@ -4659,6 +4821,18 @@ mod tests {
             .ln()
             .add(Computable::rational(Rational::new(-10)).multiply(Computable::ln2()));
         assert_close(value.ln(), expected, -40, 2);
+    }
+
+    #[test]
+    fn ln_smooth_rational_reuses_shared_prime_logs() {
+        let value = Computable::rational(Rational::fraction(45, 14).unwrap());
+        let expected = Computable::ln_constant(3)
+            .unwrap()
+            .multiply(Computable::rational(Rational::new(2)))
+            .add(Computable::ln_constant(5).unwrap())
+            .add(Computable::ln_constant(2).unwrap().negate())
+            .add(Computable::ln_constant(7).unwrap().negate());
+        assert_close(value.ln(), expected, -50, 3);
     }
 
     #[test]

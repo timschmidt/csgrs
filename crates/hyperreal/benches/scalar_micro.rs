@@ -308,6 +308,22 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 name: "real_add_owned",
                 description: "Adds owned scaled transcendental `Real` values.",
             },
+            BenchDoc {
+                name: "real_dot3_refs_dense_symbolic",
+                description: "Computes a borrowed three-lane symbolic dot product with no rational shortcut terms.",
+            },
+            BenchDoc {
+                name: "real_dot3_refs_mixed_structural",
+                description: "Computes a borrowed three-lane symbolic dot product with exact zero and rational scale terms.",
+            },
+            BenchDoc {
+                name: "real_dot4_refs_dense_symbolic",
+                description: "Computes a borrowed four-lane symbolic dot product with no rational shortcut terms.",
+            },
+            BenchDoc {
+                name: "real_dot4_refs_mixed_structural",
+                description: "Computes a borrowed four-lane symbolic dot product with exact zero and rational scale terms.",
+            },
         ],
     },
     BenchGroupDoc {
@@ -653,6 +669,26 @@ fn bench_borrowed_op_overhead(c: &mut Criterion) {
     let real_unscaled_rhs = Real::e();
     let real_lhs = Real::pi() * real(7, 8);
     let real_rhs = Real::e() * real(5, 6);
+    let sqrt_two = Real::from(2_i32).sqrt().unwrap();
+    let dense_dot_left = [
+        Real::pi() * real(7, 8),
+        Real::e() * real(5, 6),
+        sqrt_two.clone() * real(11, 13),
+        (Real::pi() * Real::e()) * real(3, 5),
+    ];
+    let dense_dot_right = [
+        Real::e() * real(2, 7),
+        sqrt_two.clone() * real(17, 19),
+        Real::pi() * real(23, 29),
+        (Real::pi() * sqrt_two.clone()) * real(31, 37),
+    ];
+    let mixed_dot_left = [
+        Real::one(),
+        Real::zero(),
+        Real::from(2_i32),
+        Real::pi() * real(5, 7),
+    ];
+    let mixed_dot_right = [Real::pi(), Real::e(), Real::e() * real(3, 5), Real::zero()];
 
     group.bench_function("rational_clone_pair", |b| {
         b.iter(|| {
@@ -694,6 +730,74 @@ fn bench_borrowed_op_overhead(c: &mut Criterion) {
             |(left, right)| black_box(left + right),
             BatchSize::SmallInput,
         )
+    });
+    group.bench_function("real_dot3_refs_dense_symbolic", |b| {
+        b.iter(|| {
+            black_box(Real::dot3_refs(
+                [
+                    black_box(&dense_dot_left[0]),
+                    black_box(&dense_dot_left[1]),
+                    black_box(&dense_dot_left[2]),
+                ],
+                [
+                    black_box(&dense_dot_right[0]),
+                    black_box(&dense_dot_right[1]),
+                    black_box(&dense_dot_right[2]),
+                ],
+            ))
+        })
+    });
+    group.bench_function("real_dot3_refs_mixed_structural", |b| {
+        b.iter(|| {
+            black_box(Real::dot3_refs(
+                [
+                    black_box(&mixed_dot_left[0]),
+                    black_box(&mixed_dot_left[1]),
+                    black_box(&mixed_dot_left[2]),
+                ],
+                [
+                    black_box(&mixed_dot_right[0]),
+                    black_box(&mixed_dot_right[1]),
+                    black_box(&mixed_dot_right[2]),
+                ],
+            ))
+        })
+    });
+    group.bench_function("real_dot4_refs_dense_symbolic", |b| {
+        b.iter(|| {
+            black_box(Real::dot4_refs(
+                [
+                    black_box(&dense_dot_left[0]),
+                    black_box(&dense_dot_left[1]),
+                    black_box(&dense_dot_left[2]),
+                    black_box(&dense_dot_left[3]),
+                ],
+                [
+                    black_box(&dense_dot_right[0]),
+                    black_box(&dense_dot_right[1]),
+                    black_box(&dense_dot_right[2]),
+                    black_box(&dense_dot_right[3]),
+                ],
+            ))
+        })
+    });
+    group.bench_function("real_dot4_refs_mixed_structural", |b| {
+        b.iter(|| {
+            black_box(Real::dot4_refs(
+                [
+                    black_box(&mixed_dot_left[0]),
+                    black_box(&mixed_dot_left[1]),
+                    black_box(&mixed_dot_left[2]),
+                    black_box(&mixed_dot_left[3]),
+                ],
+                [
+                    black_box(&mixed_dot_right[0]),
+                    black_box(&mixed_dot_right[1]),
+                    black_box(&mixed_dot_right[2]),
+                    black_box(&mixed_dot_right[3]),
+                ],
+            ))
+        })
     });
 
     group.finish();
@@ -814,6 +918,8 @@ fn bench_symbolic_reductions(c: &mut Criterion) {
     let pi_e = &pi * &e;
     let pi_e_square = &pi_e * &pi_e;
     let scaled_e = Real::new(Rational::new(2)) * e.clone();
+    let scaled_exp_squarefree =
+        Real::new(Rational::new(18)) * Real::new(Rational::new(2)).exp().unwrap();
     let pi_minus_three = Real::pi() - Real::new(Rational::new(3));
     let sqrt_two = Real::new(Rational::new(2)).sqrt().unwrap();
     let pi_e_sqrt_two = &pi_e * &sqrt_two;
@@ -835,6 +941,13 @@ fn bench_symbolic_reductions(c: &mut Criterion) {
     group.bench_function("sqrt_pi_e_square", |b| {
         b.iter_batched(
             || pi_e_square.clone(),
+            |value| black_box(value.sqrt().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("sqrt_scaled_exp_squarefree", |b| {
+        b.iter_batched(
+            || scaled_exp_squarefree.clone(),
             |value| black_box(value.sqrt().unwrap()),
             BatchSize::SmallInput,
         )

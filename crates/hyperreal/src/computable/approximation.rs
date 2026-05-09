@@ -75,8 +75,13 @@ pub(super) enum Approximation {
     AsinhNearZero(Computable),
     AsinhDirect(Computable),
     PrescaledAsinh(Computable),
+    // Tiny exact-rational asinh/atanh inputs use odd-power series. Storing the
+    // rational directly avoids rebuilding a Ratio child for every cold
+    // approximation and keeps the exact value symbolic until the kernel rounds.
+    AsinhRational(Rational),
     AtanhDirect(Computable),
     PrescaledAtanh(Computable),
+    AtanhRational(Rational),
     PrescaledCos(Computable),
     // Small exact-rational Real::cos construction uses this leaf to avoid
     // allocating a Ratio child when the caller only builds or structurally
@@ -184,20 +189,22 @@ impl Approximation {
             AsinhNearZero(c) => asinh_near_zero(signal, c, p),
             AsinhDirect(c) => asinh_direct(signal, c, p),
             PrescaledAsinh(c) => asinh_computable(signal, c, p),
+            AsinhRational(r) => asinh_rational(signal, r, p),
             AtanhDirect(c) => atanh_direct(signal, c, p),
             PrescaledAtanh(c) => atanh_computable(signal, c, p),
+            AtanhRational(r) => atanh_rational(signal, r, p),
             PrescaledCos(c) => cos(signal, c, p),
-            PrescaledCosRational(r) => cos(signal, &Computable::rational(r.clone()), p),
+            PrescaledCosRational(r) => cos_rational(signal, r, p),
             CosLargeRational(r) => cos_large_rational(signal, r, p),
             PrescaledCosHalfPiMinusRational(r) => cos_half_pi_minus_rational(signal, r, p),
             PrescaledSin(c) => sin(signal, c, p),
-            PrescaledSinRational(r) => sin(signal, &Computable::rational(r.clone()), p),
+            PrescaledSinRational(r) => sin_rational(signal, r, p),
             SinLargeRational(r) => sin_large_rational(signal, r, p),
             PrescaledSinHalfPiMinusRational(r) => sin_half_pi_minus_rational(signal, r, p),
             PrescaledCotHalfPiMinusRational(r) => cot_half_pi_minus_rational(signal, r, p),
             TanLargeRational(r) => tan_large_rational(signal, r, p),
             PrescaledTan(c) => tan(signal, c, p),
-            PrescaledTanRational(r) => tan(signal, &Computable::rational(r.clone()), p),
+            PrescaledTanRational(r) => tan_rational(signal, r, p),
             PrescaledCot(c) => cot(signal, c, p),
         }
     }
@@ -731,6 +738,47 @@ fn cos(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     scale(current_sum, calc_precision - p)
 }
 
+// Compute cosine of an exact rational |r| < 1 without allocating a temporary
+// Ratio node. This preserves the same Taylor algorithm as `cos` while keeping
+// the stored rational symbolic until the final requested precision. 2026-05
+// numerical_micro targeted runs showed the direct rational feed removes cold
+// approximation setup from small exact-rational trig rows without changing the
+// cached path.
+fn cos_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
+    if p >= 1 {
+        return signed::ONE.deref().clone();
+    }
+    let iterations_needed = -p / 2 + 4;
+
+    if should_stop(signal) {
+        return signed::ONE.deref().clone();
+    }
+
+    let calc_precision = p - bound_log2(2 * iterations_needed) - 4;
+    let op_prec = p - 2;
+    let op_appr = ratio(r, op_prec);
+    let op_squared = scale(&op_appr * &op_appr, op_prec);
+
+    let max_trunc_error = BigUint::one()
+        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
+    let mut n = 0;
+    let mut current_term = signed::ONE.deref() << (-calc_precision);
+    let mut current_sum = current_term.clone();
+
+    while current_term.magnitude() > &max_trunc_error {
+        if should_stop(signal) {
+            break;
+        }
+        n += 2;
+
+        current_term = scale(current_term * &op_squared, op_prec);
+        current_term /= -(n * (n - 1));
+
+        current_sum += &current_term;
+    }
+    scale(current_sum, calc_precision - p)
+}
+
 fn large_rational_half_pi_multiple(signal: &Option<Signal>, r: &Rational) -> BigInt {
     // Deferred large-rational trig needs the same nearest-half-pi quotient as
     // Computable::sin/cos, but rebuilding a Ratio node just to call the generic
@@ -974,6 +1022,44 @@ fn sin(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     scale(current_sum, calc_precision - p)
 }
 
+fn sin_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
+    // Direct exact-rational variant of `sin`. It avoids allocating a temporary
+    // Computable leaf for PrescaledSinRational while still rounding the rational
+    // argument exactly once at the requested guard precision.
+    if p >= 1 {
+        return Zero::zero();
+    }
+    let iterations_needed = -p / 2 + 4;
+
+    if should_stop(signal) {
+        return Zero::zero();
+    }
+
+    let calc_precision = p - bound_log2(2 * iterations_needed) - 4;
+    let op_prec = p - 2;
+    let op_appr = ratio(r, op_prec);
+    let op_squared = scale(&op_appr * &op_appr, op_prec);
+
+    let max_trunc_error = BigUint::one()
+        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
+    let mut n = 1;
+    let mut current_term = scale(op_appr.clone(), op_prec - calc_precision);
+    let mut current_sum = current_term.clone();
+
+    while current_term.magnitude() > &max_trunc_error {
+        if should_stop(signal) {
+            break;
+        }
+        n += 2;
+
+        current_term = scale(current_term * &op_squared, op_prec);
+        current_term /= -(n * (n - 1));
+
+        current_sum += &current_term;
+    }
+    scale(current_sum, calc_precision - p)
+}
+
 fn sin_large_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
     // Same lazy public-construction policy as cosine. The direct residual
     // arithmetic avoids allocating the generic reduced expression tree while
@@ -1069,6 +1155,38 @@ fn tan(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     let working_prec = p - 8;
     let sin_appr = sin(signal, c, working_prec);
     let cos_appr = cos(signal, c, working_prec);
+    let abs_cos = cos_appr.abs();
+
+    if abs_cos.is_zero() {
+        panic!("ArithmeticException");
+    }
+
+    let scaled_numerator = if cos_appr.sign() == Sign::Minus {
+        -sin_appr << -p
+    } else {
+        sin_appr << -p
+    };
+    let adjustment = &abs_cos >> 1;
+
+    if scaled_numerator.sign() == Sign::Minus {
+        let rounded: BigInt = ((-scaled_numerator) + adjustment) / abs_cos;
+        -rounded
+    } else {
+        (scaled_numerator + adjustment) / abs_cos
+    }
+}
+
+fn tan_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
+    // Same local quotient as `tan`, but both numerator and denominator consume
+    // the stored exact rational directly. This keeps exact-rational tangent
+    // approximation lazy without rebuilding child Ratio nodes.
+    if p >= 1 {
+        return Zero::zero();
+    }
+
+    let working_prec = p - 8;
+    let sin_appr = sin_rational(signal, r, working_prec);
+    let cos_appr = cos_rational(signal, r, working_prec);
     let abs_cos = cos_appr.abs();
 
     if abs_cos.is_zero() {
@@ -1568,6 +1686,43 @@ fn asinh_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> Bi
     scale(sum, calc_precision - p)
 }
 
+fn asinh_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
+    // Direct exact-rational variant of the tiny asinh series. It is the same
+    // recurrence as `asinh_computable`, but it feeds the stored Rational
+    // straight to the final precision request instead of allocating a temporary
+    // Ratio node and child cache.
+    if p >= 1 {
+        return Zero::zero();
+    }
+
+    let iterations_needed: i32 = -p / 2 + 4;
+    let calc_precision = p - bound_log2(2 * iterations_needed) - 5;
+    let op_prec = calc_precision - 3;
+    let op_appr = ratio(r, op_prec);
+    let op_squared = scale(&op_appr * &op_appr, op_prec);
+
+    let max_trunc_error = BigUint::one()
+        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
+    let mut current_term = scale(op_appr, op_prec - calc_precision);
+    let mut sum = current_term.clone();
+    let mut n = 0_i32;
+
+    while current_term.magnitude() > &max_trunc_error {
+        if should_stop(signal) {
+            break;
+        }
+        n += 1;
+        current_term = scale(current_term * &op_squared, op_prec);
+        let numerator = -((2 * n - 1) * (2 * n - 1));
+        let denominator = (2 * n) * (2 * n + 1);
+        current_term *= numerator;
+        current_term /= denominator;
+        sum += &current_term;
+    }
+
+    scale(sum, calc_precision - p)
+}
+
 fn atanh_direct(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     // Endpoint atanh construction should not eagerly allocate the full exact
     // log-ratio graph. Approximation still uses the stable identity
@@ -1598,6 +1753,40 @@ fn atanh_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> Bi
 
     // Borrowed magnitude checks matter here because tiny inverse-hyperbolic
     // benches run many short series from cold caches.
+    let max_trunc_error = BigUint::one()
+        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
+    let mut current_power = scale(op_appr, op_prec - calc_precision);
+    let mut current_term = current_power.clone();
+    let mut sum = current_term.clone();
+    let mut n = 1_i32;
+
+    while current_term.magnitude() > &max_trunc_error {
+        if should_stop(signal) {
+            break;
+        }
+        n += 2;
+        current_power = scale(current_power * &op_squared, op_prec);
+        current_term = &current_power / n;
+        sum += &current_term;
+    }
+
+    scale(sum, calc_precision - p)
+}
+
+fn atanh_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
+    // Direct exact-rational variant of the tiny atanh series. This mirrors the
+    // direct rational trig kernels: preserve the symbolic rational payload and
+    // round only once at the requested working precision.
+    if p >= 1 {
+        return Zero::zero();
+    }
+
+    let iterations_needed: i32 = -p / 2 + 4;
+    let calc_precision = p - bound_log2(2 * iterations_needed) - 5;
+    let op_prec = calc_precision - 3;
+    let op_appr = ratio(r, op_prec);
+    let op_squared = scale(&op_appr * &op_appr, op_prec);
+
     let max_trunc_error = BigUint::one()
         << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
     let mut current_power = scale(op_appr, op_prec - calc_precision);
