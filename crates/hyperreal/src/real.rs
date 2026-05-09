@@ -1231,6 +1231,33 @@ impl Real {
         Self::dot4_refs_fallback(left, right)
     }
 
+    /// Return the three-lane affine combination `c0 * x0 + c1 * x1 + c2 * x2`.
+    ///
+    /// The first increment keeps the representation boundary: these forms are
+    /// currently delegates so existing transform callers can target a named
+    /// constructor before stronger symbolic preservation is introduced.
+    pub fn linear_combination3_refs(coeffs: [&Real; 3], values: [&Real; 3]) -> Real {
+        Self::dot3_refs(coeffs, values)
+    }
+
+    /// Return the four-lane affine combination `c0 * x0 + c1 * x1 + c2 * x2 + c3 * x3`.
+    ///
+    /// As with [`Self::linear_combination3_refs`], this is intentionally a
+    /// thin constructor for the representation slotting work.
+    pub fn linear_combination4_refs(coeffs: [&Real; 4], values: [&Real; 4]) -> Real {
+        Self::dot4_refs(coeffs, values)
+    }
+
+    /// Return the three-lane affine sum with an explicit offset.
+    pub fn affine_combination3_refs(coeffs: [&Real; 3], values: [&Real; 3], offset: &Real) -> Real {
+        offset + Self::linear_combination3_refs(coeffs, values)
+    }
+
+    /// Return the four-lane affine sum with an explicit offset.
+    pub fn affine_combination4_refs(coeffs: [&Real; 4], values: [&Real; 4], offset: &Real) -> Real {
+        offset + Self::linear_combination4_refs(coeffs, values)
+    }
+
     #[inline(never)]
     fn dot4_refs_fallback(left: [&Real; 4], right: [&Real; 4]) -> Real {
         // See `dot3_refs_fallback` for the code-layout rationale.
