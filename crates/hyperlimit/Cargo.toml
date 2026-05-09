@@ -1,5 +1,5 @@
 [package]
-name = "predicated"
+name = "liminal"
 version = "0.1.2"
 edition = "2024"
 description = "Geometry-oriented robust predicates with structural scalar awareness."

@@ -1,4 +1,4 @@
-use predicated::{
+use liminal::{
     Plane3, Point2, Point3, PredicatePolicy, classify_point_line, classify_point_line_batch,
     classify_point_oriented_plane, classify_point_oriented_plane_batch, classify_point_plane,
     classify_point_plane_batch, incircle2d, incircle2d_batch, insphere3d, insphere3d_batch,
@@ -120,8 +120,8 @@ fn batch_policy_is_applied_to_each_case() {
     )];
 
     assert_eq!(
-        predicated::orient2d_batch_with_policy(&cases, PredicatePolicy::APPROXIMATE),
-        vec![predicated::orient::orient2d_with_policy(
+        liminal::orient2d_batch_with_policy(&cases, PredicatePolicy::APPROXIMATE),
+        vec![liminal::orient::orient2d_with_policy(
             &cases[0].0,
             &cases[0].1,
             &cases[0].2,
@@ -145,7 +145,7 @@ fn parallel_batches_match_sequential_batches() {
         .collect::<Vec<_>>();
     assert_eq!(
         orient2d_batch(&orient2_cases),
-        predicated::orient2d_batch_parallel(&orient2_cases)
+        liminal::orient2d_batch_parallel(&orient2_cases)
     );
 
     let orient3_cases = (0..2048)
@@ -161,6 +161,6 @@ fn parallel_batches_match_sequential_batches() {
         .collect::<Vec<_>>();
     assert_eq!(
         orient3d_batch(&orient3_cases),
-        predicated::orient3d_batch_parallel(&orient3_cases)
+        liminal::orient3d_batch_parallel(&orient3_cases)
     );
 }

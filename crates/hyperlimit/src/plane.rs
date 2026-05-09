@@ -55,17 +55,17 @@ pub fn classify_point_plane_with_policy<S: BorrowedPredicateScalar>(
     // backend opts in.
     if S::prefer_f64_filter_before_arithmetic() {
         if let Some(outcome) = classify_point_plane_filter(point, plane) {
-            crate::trace_dispatch!("predicated", "classify_point_plane", "f64-point-filter-hit");
+            crate::trace_dispatch!("liminal", "classify_point_plane", "f64-point-filter-hit");
             return outcome;
         }
         crate::trace_dispatch!(
-            "predicated",
+            "liminal",
             "classify_point_plane",
             "f64-point-filter-miss"
         );
     }
 
-    crate::trace_dispatch!("predicated", "classify_point_plane", "scalar-dot");
+    crate::trace_dispatch!("liminal", "classify_point_plane", "scalar-dot");
     let x_term = mul(&plane.normal.x, &point.x);
     let y_term = mul(&plane.normal.y, &point.y);
     let z_term = mul(&plane.normal.z, &point.z);
@@ -108,7 +108,7 @@ pub fn classify_point_oriented_plane_with_policy<S: BorrowedPredicateScalar>(
     point: &Point3<S>,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<PlaneSide> {
-    crate::trace_dispatch!("predicated", "classify_point_oriented_plane", "orient3d");
+    crate::trace_dispatch!("liminal", "classify_point_oriented_plane", "orient3d");
     map_outcome(
         orient3d_with_policy(a, b, c, point, policy),
         PlaneSide::from,
@@ -150,7 +150,7 @@ fn classify_point_plane_filter<S: PredicateScalar>(
 
     match crate::filter::det_sign_filter(value, scale, 16.0) {
         SignKnowledge::Known { sign, certainty } => {
-            crate::trace_dispatch!("predicated", "classify_point_plane_filter", "decided");
+            crate::trace_dispatch!("liminal", "classify_point_plane_filter", "decided");
             Some(PredicateOutcome::decided(
                 PlaneSide::from(sign),
                 certainty,
@@ -159,14 +159,14 @@ fn classify_point_plane_filter<S: PredicateScalar>(
         }
         SignKnowledge::NonZero => {
             crate::trace_dispatch!(
-                "predicated",
+                "liminal",
                 "classify_point_plane_filter",
                 "nonzero-no-sign"
             );
             None
         }
         SignKnowledge::Unknown => {
-            crate::trace_dispatch!("predicated", "classify_point_plane_filter", "unknown");
+            crate::trace_dispatch!("liminal", "classify_point_plane_filter", "unknown");
             None
         }
     }

@@ -5,7 +5,7 @@ use criterion::{BenchmarkId, Criterion, black_box};
 #[cfg(feature = "parallel")]
 use dispatch_trace::trace_dispatch_row;
 use dispatch_trace::{begin_dispatch_trace_run, trace_dispatch_cases, write_dispatch_trace_report};
-use predicated::{
+use liminal::{
     BorrowedPredicateScalar, LineSide, Plane3, PlaneSide, Point2, Point3, PredicateOutcome, Sign,
     classify_point_line, classify_point_oriented_plane, classify_point_plane, incircle2d,
     insphere3d, orient2d, orient3d,
@@ -321,14 +321,14 @@ fn bench_parallel_batches(c: &mut Criterion) {
         trace_dispatch_row(
             format!("batch_orient3d/f64_sequential/{}", workload.name()),
             || {
-                let outcomes = predicated::orient3d_batch(black_box(&cases));
+                let outcomes = liminal::orient3d_batch(black_box(&cases));
                 black_box(outcomes.into_iter().map(sign_score).sum::<i64>());
             },
         );
         trace_dispatch_row(
             format!("batch_orient3d/f64_parallel/{}", workload.name()),
             || {
-                let outcomes = predicated::orient3d_batch_parallel(black_box(&cases));
+                let outcomes = liminal::orient3d_batch_parallel(black_box(&cases));
                 black_box(outcomes.into_iter().map(sign_score).sum::<i64>());
             },
         );
@@ -337,7 +337,7 @@ fn bench_parallel_batches(c: &mut Criterion) {
             &cases,
             |b, cases| {
                 b.iter(|| {
-                    let outcomes = predicated::orient3d_batch(black_box(cases));
+                    let outcomes = liminal::orient3d_batch(black_box(cases));
                     black_box(outcomes.into_iter().map(sign_score).sum::<i64>())
                 });
             },
@@ -347,7 +347,7 @@ fn bench_parallel_batches(c: &mut Criterion) {
             &cases,
             |b, cases| {
                 b.iter(|| {
-                    let outcomes = predicated::orient3d_batch_parallel(black_box(cases));
+                    let outcomes = liminal::orient3d_batch_parallel(black_box(cases));
                     black_box(outcomes.into_iter().map(sign_score).sum::<i64>())
                 });
             },
@@ -361,14 +361,14 @@ fn bench_parallel_batches(c: &mut Criterion) {
         trace_dispatch_row(
             format!("batch_incircle2d/f64_sequential/{}", workload.name()),
             || {
-                let outcomes = predicated::incircle2d_batch(black_box(&cases));
+                let outcomes = liminal::incircle2d_batch(black_box(&cases));
                 black_box(outcomes.into_iter().map(sign_score).sum::<i64>());
             },
         );
         trace_dispatch_row(
             format!("batch_incircle2d/f64_parallel/{}", workload.name()),
             || {
-                let outcomes = predicated::incircle2d_batch_parallel(black_box(&cases));
+                let outcomes = liminal::incircle2d_batch_parallel(black_box(&cases));
                 black_box(outcomes.into_iter().map(sign_score).sum::<i64>());
             },
         );
@@ -377,7 +377,7 @@ fn bench_parallel_batches(c: &mut Criterion) {
             &cases,
             |b, cases| {
                 b.iter(|| {
-                    let outcomes = predicated::incircle2d_batch(black_box(cases));
+                    let outcomes = liminal::incircle2d_batch(black_box(cases));
                     black_box(outcomes.into_iter().map(sign_score).sum::<i64>())
                 });
             },
@@ -387,7 +387,7 @@ fn bench_parallel_batches(c: &mut Criterion) {
             &cases,
             |b, cases| {
                 b.iter(|| {
-                    let outcomes = predicated::incircle2d_batch_parallel(black_box(cases));
+                    let outcomes = liminal::incircle2d_batch_parallel(black_box(cases));
                     black_box(outcomes.into_iter().map(sign_score).sum::<i64>())
                 });
             },
@@ -401,14 +401,14 @@ fn bench_parallel_batches(c: &mut Criterion) {
         trace_dispatch_row(
             format!("batch_insphere3d/f64_sequential/{}", workload.name()),
             || {
-                let outcomes = predicated::insphere3d_batch(black_box(&cases));
+                let outcomes = liminal::insphere3d_batch(black_box(&cases));
                 black_box(outcomes.into_iter().map(sign_score).sum::<i64>());
             },
         );
         trace_dispatch_row(
             format!("batch_insphere3d/f64_parallel/{}", workload.name()),
             || {
-                let outcomes = predicated::insphere3d_batch_parallel(black_box(&cases));
+                let outcomes = liminal::insphere3d_batch_parallel(black_box(&cases));
                 black_box(outcomes.into_iter().map(sign_score).sum::<i64>());
             },
         );
@@ -417,7 +417,7 @@ fn bench_parallel_batches(c: &mut Criterion) {
             &cases,
             |b, cases| {
                 b.iter(|| {
-                    let outcomes = predicated::insphere3d_batch(black_box(cases));
+                    let outcomes = liminal::insphere3d_batch(black_box(cases));
                     black_box(outcomes.into_iter().map(sign_score).sum::<i64>())
                 });
             },
@@ -427,7 +427,7 @@ fn bench_parallel_batches(c: &mut Criterion) {
             &cases,
             |b, cases| {
                 b.iter(|| {
-                    let outcomes = predicated::insphere3d_batch_parallel(black_box(cases));
+                    let outcomes = liminal::insphere3d_batch_parallel(black_box(cases));
                     black_box(outcomes.into_iter().map(sign_score).sum::<i64>())
                 });
             },
@@ -443,11 +443,11 @@ fn bench_interval_representation(c: &mut Criterion) {
     let mut orient = c.benchmark_group("orient2d");
     let cases = interval_orient2d_cells();
     trace_dispatch_cases("orient2d/interval_cells/strict", &cases, |(a, b, d)| {
-        black_box(sign_score(predicated::orient::orient2d_with_policy(
+        black_box(sign_score(liminal::orient::orient2d_with_policy(
             a,
             b,
             d,
-            predicated::PredicatePolicy::STRICT,
+            liminal::PredicatePolicy::STRICT,
         )));
     });
     orient.bench_with_input(
@@ -457,11 +457,11 @@ fn bench_interval_representation(c: &mut Criterion) {
             b.iter(|| {
                 let mut score = 0_i64;
                 for (a, b, d) in cases {
-                    score += sign_score(black_box(predicated::orient::orient2d_with_policy(
+                    score += sign_score(black_box(liminal::orient::orient2d_with_policy(
                         black_box(a),
                         black_box(b),
                         black_box(d),
-                        predicated::PredicatePolicy::STRICT,
+                        liminal::PredicatePolicy::STRICT,
                     )));
                 }
                 black_box(score)
@@ -476,12 +476,12 @@ fn bench_interval_representation(c: &mut Criterion) {
         "incircle2d/interval_cells/strict",
         &cases,
         |(a, b, c, d)| {
-            black_box(sign_score(predicated::orient::incircle2d_with_policy(
+            black_box(sign_score(liminal::orient::incircle2d_with_policy(
                 a,
                 b,
                 c,
                 d,
-                predicated::PredicatePolicy::STRICT,
+                liminal::PredicatePolicy::STRICT,
             )));
         },
     );
@@ -492,12 +492,12 @@ fn bench_interval_representation(c: &mut Criterion) {
             b.iter(|| {
                 let mut score = 0_i64;
                 for (a, b, c, d) in cases {
-                    score += sign_score(black_box(predicated::orient::incircle2d_with_policy(
+                    score += sign_score(black_box(liminal::orient::incircle2d_with_policy(
                         black_box(a),
                         black_box(b),
                         black_box(c),
                         black_box(d),
-                        predicated::PredicatePolicy::STRICT,
+                        liminal::PredicatePolicy::STRICT,
                     )));
                 }
                 black_box(score)

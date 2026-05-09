@@ -1,6 +1,6 @@
-# predicated
+# liminal
 
-`predicated` provides geometry predicates that report both the result and how
+`liminal` provides geometry predicates that report both the result and how
 the result was decided.
 
 It implements 2D/3D orientation, in-circle, in-sphere, line classification, and
@@ -13,11 +13,11 @@ bounded refinement, or robust fallback.
 - `hyperreal` supplies exact/symbolic scalar facts and bounded sign refinement
   through `hyperreal::Real`.
 - `realistic_blas` supplies `Scalar<B>` values for vector and matrix code and
-  forwards backend-neutral scalar facts to `predicated`.
-- `predicated` owns predicate policy, escalation order, fallback selection, and
+  forwards backend-neutral scalar facts to `liminal`.
+- `liminal` owns predicate policy, escalation order, fallback selection, and
   result provenance.
 
-`predicated` does not own scalar expression internals or linear algebra types.
+`liminal` does not own scalar expression internals or linear algebra types.
 
 ## Current State
 
@@ -47,21 +47,21 @@ available only when the policy explicitly allows them.
 
 ```toml
 [dependencies]
-predicated = "0.1.2"
+liminal = "0.1.2"
 ```
 
 From sibling checkouts:
 
 ```toml
 [dependencies]
-predicated = { path = "../predicated" }
+liminal = { path = "../liminal" }
 ```
 
 Enable only the backends you need:
 
 ```toml
 [dependencies]
-predicated = {
+liminal = {
     version = "0.1.2",
     features = ["hyperreal", "robust"]
 }
@@ -70,7 +70,7 @@ predicated = {
 ## Quick Start
 
 ```rust
-use predicated::{Point2, Sign, orient2d};
+use liminal::{Point2, Sign, orient2d};
 
 let a = Point2::new(0.0_f64, 0.0);
 let b = Point2::new(1.0_f64, 0.0);
@@ -83,7 +83,7 @@ assert_eq!(outcome.value(), Some(Sign::Positive));
 Line-side classification maps orientation signs into geometry names:
 
 ```rust
-use predicated::{LineSide, Point2, classify_point_line};
+use liminal::{LineSide, Point2, classify_point_line};
 
 let from = Point2::new(0.0_f64, 0.0);
 let to = Point2::new(1.0_f64, 0.0);
@@ -98,7 +98,7 @@ assert_eq!(
 Plane classification works with explicit plane equations:
 
 ```rust
-use predicated::{Plane3, PlaneSide, Point3, classify_point_plane};
+use liminal::{Plane3, PlaneSide, Point3, classify_point_plane};
 
 let plane = Plane3::new(Point3::new(0.0_f64, 0.0, 1.0), -2.0);
 let point = Point3::new(0.0_f64, 0.0, 3.0);
@@ -114,7 +114,7 @@ assert_eq!(
 Predicates return `PredicateOutcome<T>`:
 
 ```rust
-use predicated::{Point2, PredicateOutcome, orient2d};
+use liminal::{Point2, PredicateOutcome, orient2d};
 
 let a = Point2::new(0.0_f64, 0.0);
 let b = Point2::new(1.0_f64, 0.0);
@@ -159,7 +159,7 @@ The shared sign resolver attempts:
 Use policy-specific functions when the default strict behavior is not desired:
 
 ```rust
-use predicated::{Point2, PredicatePolicy, orient::orient2d_with_policy};
+use liminal::{Point2, PredicatePolicy, orient::orient2d_with_policy};
 
 let a = Point2::new(0.0_f64, 0.0);
 let b = Point2::new(1.0_f64, 1.0);

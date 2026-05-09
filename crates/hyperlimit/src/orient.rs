@@ -77,13 +77,13 @@ pub fn orient2d_with_policy<S: BorrowedPredicateScalar>(
     // avoid constructing subtraction/multiplication expression trees at all.
     if S::prefer_f64_filter_before_arithmetic() {
         if let Some(outcome) = orient2d_point_filter(a, b, c) {
-            crate::trace_dispatch!("predicated", "orient2d", "f64-point-filter-hit");
+            crate::trace_dispatch!("liminal", "orient2d", "f64-point-filter-hit");
             return outcome;
         }
-        crate::trace_dispatch!("predicated", "orient2d", "f64-point-filter-miss");
+        crate::trace_dispatch!("liminal", "orient2d", "f64-point-filter-miss");
     }
 
-    crate::trace_dispatch!("predicated", "orient2d", "scalar-determinant");
+    crate::trace_dispatch!("liminal", "orient2d", "scalar-determinant");
     let abx = sub(&b.x, &a.x);
     let aby = sub(&b.y, &a.y);
     let acx = sub(&c.x, &a.x);
@@ -126,13 +126,13 @@ pub fn orient3d_with_policy<S: BorrowedPredicateScalar>(
 ) -> PredicateOutcome<Sign> {
     if S::prefer_f64_filter_before_arithmetic() {
         if let Some(outcome) = orient3d_point_filter(a, b, c, d) {
-            crate::trace_dispatch!("predicated", "orient3d", "f64-point-filter-hit");
+            crate::trace_dispatch!("liminal", "orient3d", "f64-point-filter-hit");
             return outcome;
         }
-        crate::trace_dispatch!("predicated", "orient3d", "f64-point-filter-miss");
+        crate::trace_dispatch!("liminal", "orient3d", "f64-point-filter-miss");
     }
 
-    crate::trace_dispatch!("predicated", "orient3d", "scalar-determinant");
+    crate::trace_dispatch!("liminal", "orient3d", "scalar-determinant");
     let adx = sub(&a.x, &d.x);
     let ady = sub(&a.y, &d.y);
     let adz = sub(&a.z, &d.z);
@@ -225,13 +225,13 @@ pub fn incircle2d_with_policy<S: BorrowedPredicateScalar>(
 ) -> PredicateOutcome<Sign> {
     if S::prefer_f64_filter_before_arithmetic() {
         if let Some(outcome) = incircle2d_point_filter(a, b, c, d) {
-            crate::trace_dispatch!("predicated", "incircle2d", "f64-point-filter-hit");
+            crate::trace_dispatch!("liminal", "incircle2d", "f64-point-filter-hit");
             return outcome;
         }
-        crate::trace_dispatch!("predicated", "incircle2d", "f64-point-filter-miss");
+        crate::trace_dispatch!("liminal", "incircle2d", "f64-point-filter-miss");
     }
 
-    crate::trace_dispatch!("predicated", "incircle2d", "scalar-determinant");
+    crate::trace_dispatch!("liminal", "incircle2d", "scalar-determinant");
     let adx = sub(&a.x, &d.x);
     let ady = sub(&a.y, &d.y);
     let bdx = sub(&b.x, &d.x);
@@ -303,13 +303,13 @@ pub fn insphere3d_with_policy<S: BorrowedPredicateScalar>(
 ) -> PredicateOutcome<Sign> {
     if S::prefer_f64_filter_before_arithmetic() {
         if let Some(outcome) = insphere3d_point_filter(a, b, c, d, e) {
-            crate::trace_dispatch!("predicated", "insphere3d", "f64-point-filter-hit");
+            crate::trace_dispatch!("liminal", "insphere3d", "f64-point-filter-hit");
             return outcome;
         }
-        crate::trace_dispatch!("predicated", "insphere3d", "f64-point-filter-miss");
+        crate::trace_dispatch!("liminal", "insphere3d", "f64-point-filter-miss");
     }
 
-    crate::trace_dispatch!("predicated", "insphere3d", "scalar-determinant");
+    crate::trace_dispatch!("liminal", "insphere3d", "scalar-determinant");
     let aex = sub(&a.x, &e.x);
     let bex = sub(&b.x, &e.x);
     let cex = sub(&c.x, &e.x);
@@ -431,7 +431,7 @@ fn exact_orient2d<S: PredicateScalar>(
     _b: &Point2<S>,
     _c: &Point2<S>,
 ) -> Option<Sign> {
-    crate::trace_dispatch!("predicated", "exact_orient2d", "unimplemented");
+    crate::trace_dispatch!("liminal", "exact_orient2d", "unimplemented");
     None
 }
 
@@ -441,7 +441,7 @@ fn exact_orient3d<S: PredicateScalar>(
     _c: &Point3<S>,
     _d: &Point3<S>,
 ) -> Option<Sign> {
-    crate::trace_dispatch!("predicated", "exact_orient3d", "unimplemented");
+    crate::trace_dispatch!("liminal", "exact_orient3d", "unimplemented");
     None
 }
 
@@ -451,7 +451,7 @@ fn exact_incircle2d<S: PredicateScalar>(
     _c: &Point2<S>,
     _d: &Point2<S>,
 ) -> Option<Sign> {
-    crate::trace_dispatch!("predicated", "exact_incircle2d", "unimplemented");
+    crate::trace_dispatch!("liminal", "exact_incircle2d", "unimplemented");
     None
 }
 
@@ -462,7 +462,7 @@ fn exact_insphere3d<S: PredicateScalar>(
     _d: &Point3<S>,
     _e: &Point3<S>,
 ) -> Option<Sign> {
-    crate::trace_dispatch!("predicated", "exact_insphere3d", "unimplemented");
+    crate::trace_dispatch!("liminal", "exact_insphere3d", "unimplemented");
     None
 }
 
@@ -474,18 +474,18 @@ fn fallback_orient2d_if_allowed<S: PredicateScalar>(
     policy: PredicatePolicy,
 ) -> Option<PredicateOutcome<Sign>> {
     if !policy.allow_robust_fallback {
-        crate::trace_dispatch!("predicated", "fallback_orient2d", "disabled");
+        crate::trace_dispatch!("liminal", "fallback_orient2d", "disabled");
         return None;
     }
     #[cfg(feature = "geogram")]
     {
-        crate::trace_dispatch!("predicated", "fallback_orient2d", "geogram");
+        crate::trace_dispatch!("liminal", "fallback_orient2d", "geogram");
         return crate::backend::geogram::orient2d(a, b, c);
     }
 
     #[cfg(not(feature = "geogram"))]
     {
-        crate::trace_dispatch!("predicated", "fallback_orient2d", "robust");
+        crate::trace_dispatch!("liminal", "fallback_orient2d", "robust");
         return crate::backend::robust::orient2d(a, b, c);
     }
 }
@@ -498,10 +498,10 @@ fn fallback_orient2d_if_allowed<S: PredicateScalar>(
     policy: PredicatePolicy,
 ) -> Option<PredicateOutcome<Sign>> {
     if !policy.allow_robust_fallback {
-        crate::trace_dispatch!("predicated", "fallback_orient2d", "disabled");
+        crate::trace_dispatch!("liminal", "fallback_orient2d", "disabled");
         return None;
     }
-    crate::trace_dispatch!("predicated", "fallback_orient2d", "geogram");
+    crate::trace_dispatch!("liminal", "fallback_orient2d", "geogram");
     crate::backend::geogram::orient2d(a, b, c)
 }
 
@@ -513,7 +513,7 @@ fn fallback_orient2d_if_allowed<S: PredicateScalar>(
     _c: &Point2<S>,
     _policy: PredicatePolicy,
 ) -> Option<PredicateOutcome<Sign>> {
-    crate::trace_dispatch!("predicated", "fallback_orient2d", "no-backend");
+    crate::trace_dispatch!("liminal", "fallback_orient2d", "no-backend");
     None
 }
 
@@ -526,18 +526,18 @@ fn fallback_orient3d_if_allowed<S: PredicateScalar>(
     policy: PredicatePolicy,
 ) -> Option<PredicateOutcome<Sign>> {
     if !policy.allow_robust_fallback {
-        crate::trace_dispatch!("predicated", "fallback_orient3d", "disabled");
+        crate::trace_dispatch!("liminal", "fallback_orient3d", "disabled");
         return None;
     }
     #[cfg(feature = "geogram")]
     {
-        crate::trace_dispatch!("predicated", "fallback_orient3d", "geogram");
+        crate::trace_dispatch!("liminal", "fallback_orient3d", "geogram");
         return crate::backend::geogram::orient3d(a, b, c, d);
     }
 
     #[cfg(not(feature = "geogram"))]
     {
-        crate::trace_dispatch!("predicated", "fallback_orient3d", "robust");
+        crate::trace_dispatch!("liminal", "fallback_orient3d", "robust");
         return crate::backend::robust::orient3d(a, b, c, d);
     }
 }
@@ -551,18 +551,18 @@ fn fallback_incircle2d_if_allowed<S: PredicateScalar>(
     policy: PredicatePolicy,
 ) -> Option<PredicateOutcome<Sign>> {
     if !policy.allow_robust_fallback {
-        crate::trace_dispatch!("predicated", "fallback_incircle2d", "disabled");
+        crate::trace_dispatch!("liminal", "fallback_incircle2d", "disabled");
         return None;
     }
     #[cfg(feature = "geogram")]
     {
-        crate::trace_dispatch!("predicated", "fallback_incircle2d", "geogram");
+        crate::trace_dispatch!("liminal", "fallback_incircle2d", "geogram");
         return crate::backend::geogram::incircle2d(a, b, c, d);
     }
 
     #[cfg(not(feature = "geogram"))]
     {
-        crate::trace_dispatch!("predicated", "fallback_incircle2d", "robust");
+        crate::trace_dispatch!("liminal", "fallback_incircle2d", "robust");
         return crate::backend::robust::incircle2d(a, b, c, d);
     }
 }
@@ -576,10 +576,10 @@ fn fallback_incircle2d_if_allowed<S: PredicateScalar>(
     policy: PredicatePolicy,
 ) -> Option<PredicateOutcome<Sign>> {
     if !policy.allow_robust_fallback {
-        crate::trace_dispatch!("predicated", "fallback_incircle2d", "disabled");
+        crate::trace_dispatch!("liminal", "fallback_incircle2d", "disabled");
         return None;
     }
-    crate::trace_dispatch!("predicated", "fallback_incircle2d", "geogram");
+    crate::trace_dispatch!("liminal", "fallback_incircle2d", "geogram");
     crate::backend::geogram::incircle2d(a, b, c, d)
 }
 
@@ -592,7 +592,7 @@ fn fallback_incircle2d_if_allowed<S: PredicateScalar>(
     _d: &Point2<S>,
     _policy: PredicatePolicy,
 ) -> Option<PredicateOutcome<Sign>> {
-    crate::trace_dispatch!("predicated", "fallback_incircle2d", "no-backend");
+    crate::trace_dispatch!("liminal", "fallback_incircle2d", "no-backend");
     None
 }
 
@@ -606,18 +606,18 @@ fn fallback_insphere3d_if_allowed<S: PredicateScalar>(
     policy: PredicatePolicy,
 ) -> Option<PredicateOutcome<Sign>> {
     if !policy.allow_robust_fallback {
-        crate::trace_dispatch!("predicated", "fallback_insphere3d", "disabled");
+        crate::trace_dispatch!("liminal", "fallback_insphere3d", "disabled");
         return None;
     }
     #[cfg(feature = "geogram")]
     {
-        crate::trace_dispatch!("predicated", "fallback_insphere3d", "geogram");
+        crate::trace_dispatch!("liminal", "fallback_insphere3d", "geogram");
         return crate::backend::geogram::insphere3d(a, b, c, d, e);
     }
 
     #[cfg(not(feature = "geogram"))]
     {
-        crate::trace_dispatch!("predicated", "fallback_insphere3d", "robust");
+        crate::trace_dispatch!("liminal", "fallback_insphere3d", "robust");
         return crate::backend::robust::insphere3d(a, b, c, d, e);
     }
 }
@@ -632,10 +632,10 @@ fn fallback_insphere3d_if_allowed<S: PredicateScalar>(
     policy: PredicatePolicy,
 ) -> Option<PredicateOutcome<Sign>> {
     if !policy.allow_robust_fallback {
-        crate::trace_dispatch!("predicated", "fallback_insphere3d", "disabled");
+        crate::trace_dispatch!("liminal", "fallback_insphere3d", "disabled");
         return None;
     }
-    crate::trace_dispatch!("predicated", "fallback_insphere3d", "geogram");
+    crate::trace_dispatch!("liminal", "fallback_insphere3d", "geogram");
     crate::backend::geogram::insphere3d(a, b, c, d, e)
 }
 
@@ -649,7 +649,7 @@ fn fallback_insphere3d_if_allowed<S: PredicateScalar>(
     _e: &Point3<S>,
     _policy: PredicatePolicy,
 ) -> Option<PredicateOutcome<Sign>> {
-    crate::trace_dispatch!("predicated", "fallback_insphere3d", "no-backend");
+    crate::trace_dispatch!("liminal", "fallback_insphere3d", "no-backend");
     None
 }
 
@@ -662,10 +662,10 @@ fn fallback_orient3d_if_allowed<S: PredicateScalar>(
     policy: PredicatePolicy,
 ) -> Option<PredicateOutcome<Sign>> {
     if !policy.allow_robust_fallback {
-        crate::trace_dispatch!("predicated", "fallback_orient3d", "disabled");
+        crate::trace_dispatch!("liminal", "fallback_orient3d", "disabled");
         return None;
     }
-    crate::trace_dispatch!("predicated", "fallback_orient3d", "geogram");
+    crate::trace_dispatch!("liminal", "fallback_orient3d", "geogram");
     crate::backend::geogram::orient3d(a, b, c, d)
 }
 
@@ -678,7 +678,7 @@ fn fallback_orient3d_if_allowed<S: PredicateScalar>(
     _d: &Point3<S>,
     _policy: PredicatePolicy,
 ) -> Option<PredicateOutcome<Sign>> {
-    crate::trace_dispatch!("predicated", "fallback_orient3d", "no-backend");
+    crate::trace_dispatch!("liminal", "fallback_orient3d", "no-backend");
     None
 }
 
@@ -733,7 +733,7 @@ fn sign_filter_outcome(
     // weakening.
     match det_sign_filter(det, scale, epsilon_multiplier) {
         SignKnowledge::Known { sign, certainty } => {
-            crate::trace_dispatch!("predicated", "sign_filter_outcome", "decided");
+            crate::trace_dispatch!("liminal", "sign_filter_outcome", "decided");
             Some(PredicateOutcome::decided(
                 sign,
                 certainty,
@@ -741,11 +741,11 @@ fn sign_filter_outcome(
             ))
         }
         SignKnowledge::NonZero => {
-            crate::trace_dispatch!("predicated", "sign_filter_outcome", "nonzero-no-sign");
+            crate::trace_dispatch!("liminal", "sign_filter_outcome", "nonzero-no-sign");
             None
         }
         SignKnowledge::Unknown => {
-            crate::trace_dispatch!("predicated", "sign_filter_outcome", "unknown");
+            crate::trace_dispatch!("liminal", "sign_filter_outcome", "unknown");
             None
         }
     }

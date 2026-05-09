@@ -59,26 +59,26 @@ impl ScalarFacts {
 pub trait StructuralScalar: Sized {
     /// Return all cheap structural facts known for this scalar.
     fn scalar_facts(&self) -> ScalarFacts {
-        crate::trace_dispatch!("predicated", "structural_scalar", "default-facts");
+        crate::trace_dispatch!("liminal", "structural_scalar", "default-facts");
         ScalarFacts::default()
     }
 
     /// Return known sign information without forcing full evaluation.
     fn known_sign(&self) -> SignKnowledge {
-        crate::trace_dispatch!("predicated", "structural_scalar", "default-known-sign");
+        crate::trace_dispatch!("liminal", "structural_scalar", "default-known-sign");
         self.scalar_facts().sign_knowledge()
     }
 
     /// Return whether the scalar is exactly zero, if known.
     fn is_exact_zero(&self) -> Option<bool> {
-        crate::trace_dispatch!("predicated", "structural_scalar", "default-exact-zero");
+        crate::trace_dispatch!("liminal", "structural_scalar", "default-exact-zero");
         self.scalar_facts().exact_zero
     }
 
     /// Return whether the scalar is known not to be zero, if known.
     fn is_provably_nonzero(&self) -> Option<bool> {
         crate::trace_dispatch!(
-            "predicated",
+            "liminal",
             "structural_scalar",
             "default-provably-nonzero"
         );
@@ -87,19 +87,19 @@ pub trait StructuralScalar: Sized {
 
     /// Return whether the scalar is known to be rational-only, if known.
     fn is_rational_only(&self) -> Option<bool> {
-        crate::trace_dispatch!("predicated", "structural_scalar", "default-rational-only");
+        crate::trace_dispatch!("liminal", "structural_scalar", "default-rational-only");
         self.scalar_facts().rational_only
     }
 
     /// Return conservative magnitude bounds, if available.
     fn magnitude_bounds(&self) -> Option<MagnitudeBounds> {
-        crate::trace_dispatch!("predicated", "structural_scalar", "default-magnitude");
+        crate::trace_dispatch!("liminal", "structural_scalar", "default-magnitude");
         self.scalar_facts().magnitude
     }
 
     /// Try to refine the sign without going below `min_precision`.
     fn refine_sign_until(&self, _min_precision: i32) -> SignKnowledge {
-        crate::trace_dispatch!("predicated", "structural_scalar", "default-refine-unknown");
+        crate::trace_dispatch!("liminal", "structural_scalar", "default-refine-unknown");
         SignKnowledge::Unknown
     }
 }
@@ -123,7 +123,7 @@ pub trait PredicateScalar:
     /// scalar arithmetic expressions.
     #[inline]
     fn prefer_f64_filter_before_arithmetic() -> bool {
-        crate::trace_dispatch!("predicated", "predicate_scalar", "default-no-prefilter");
+        crate::trace_dispatch!("liminal", "predicate_scalar", "default-no-prefilter");
         false
     }
 }
@@ -151,17 +151,17 @@ where
     for<'a, 'b> &'a T: Add<&'b T, Output = T> + Sub<&'b T, Output = T> + Mul<&'b T, Output = T>,
 {
     fn add_ref(&self, rhs: &Self) -> Self {
-        crate::trace_dispatch!("predicated", "borrowed_scalar_op", "add-ref-default");
+        crate::trace_dispatch!("liminal", "borrowed_scalar_op", "add-ref-default");
         self + rhs
     }
 
     fn sub_ref(&self, rhs: &Self) -> Self {
-        crate::trace_dispatch!("predicated", "borrowed_scalar_op", "sub-ref-default");
+        crate::trace_dispatch!("liminal", "borrowed_scalar_op", "sub-ref-default");
         self - rhs
     }
 
     fn mul_ref(&self, rhs: &Self) -> Self {
-        crate::trace_dispatch!("predicated", "borrowed_scalar_op", "mul-ref-default");
+        crate::trace_dispatch!("liminal", "borrowed_scalar_op", "mul-ref-default");
         self * rhs
     }
 }
@@ -170,7 +170,7 @@ macro_rules! impl_float_scalar {
     ($ty:ty, $prefer_filter:expr) => {
         impl StructuralScalar for $ty {
             fn scalar_facts(&self) -> ScalarFacts {
-                crate::trace_dispatch!("predicated", "float_scalar", "structural-facts");
+                crate::trace_dispatch!("liminal", "float_scalar", "structural-facts");
                 ScalarFacts {
                     sign: None,
                     exact_zero: None,
@@ -190,17 +190,17 @@ macro_rules! impl_float_scalar {
             #[inline]
             fn to_f64(&self) -> Option<f64> {
                 if self.is_nan() {
-                    crate::trace_dispatch!("predicated", "float_scalar", "to-f64-nan");
+                    crate::trace_dispatch!("liminal", "float_scalar", "to-f64-nan");
                     None
                 } else {
-                    crate::trace_dispatch!("predicated", "float_scalar", "to-f64");
+                    crate::trace_dispatch!("liminal", "float_scalar", "to-f64");
                     Some(*self as f64)
                 }
             }
 
             #[inline(always)]
             fn prefer_f64_filter_before_arithmetic() -> bool {
-                crate::trace_dispatch!("predicated", "float_scalar", "prefilter-policy");
+                crate::trace_dispatch!("liminal", "float_scalar", "prefilter-policy");
                 $prefer_filter
             }
         }

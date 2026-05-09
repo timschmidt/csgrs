@@ -328,6 +328,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68ab91017fe16c622486840e4c83c9a37afeff978bd239b5293d61ece587de66"
 
 [[package]]
+name = "liminal"
+version = "0.1.2"
+dependencies = [
+ "criterion",
+ "geogram_predicates",
+ "hyperreal",
+ "inari",
+ "rayon",
+ "realistic_blas",
+ "robust",
+ "serde_json",
+]
+
+[[package]]
 name = "matrixmultiply"
 version = "0.3.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -496,20 +510,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "51bae2ac328883f7acdfea3d66a7c35751187f870bc81f94563733a154d7a670"
 dependencies = [
  "plotters-backend",
-]
-
-[[package]]
-name = "predicated"
-version = "0.1.2"
-dependencies = [
- "criterion",
- "geogram_predicates",
- "hyperreal",
- "inari",
- "rayon",
- "realistic_blas",
- "robust",
- "serde_json",
 ]
 
 [[package]]

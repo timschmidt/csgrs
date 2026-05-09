@@ -1,4 +1,4 @@
-predicated predicate plot demo
+liminal predicate plot demo
 size: 512x512
 backend selection: all
 colors: blue=positive/left/above, orange=negative/right/below, white=zero/on, black=unknown

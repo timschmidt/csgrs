@@ -16,15 +16,15 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
 #[cfg(any(feature = "hyperreal", feature = "realistic-blas"))]
-use predicated::BorrowedPredicateScalar;
-use predicated::orient::{
+use liminal::BorrowedPredicateScalar;
+use liminal::orient::{
     classify_point_line_with_policy, incircle2d_with_policy, insphere3d_with_policy,
     orient2d_with_policy,
 };
-use predicated::plane::{
+use liminal::plane::{
     Plane3, classify_point_oriented_plane_with_policy, classify_point_plane_with_policy,
 };
-use predicated::{
+use liminal::{
     Certainty, Escalation, LineSide, PlaneSide, Point2, Point3, PredicateOutcome, PredicatePolicy,
     Sign,
 };
@@ -78,7 +78,7 @@ fn main() -> io::Result<()> {
     fs::create_dir_all(&args.out_dir)?;
 
     let mut manifest = String::new();
-    manifest.push_str("predicated predicate plot demo\n");
+    manifest.push_str("liminal predicate plot demo\n");
     manifest.push_str(&format!("size: {}x{}\n", args.size, args.size));
     manifest.push_str(&format!("backend selection: {}\n", args.backend));
     manifest.push_str("colors: blue=positive/left/above, orange=negative/right/below, white=zero/on, black=unknown\n\n");

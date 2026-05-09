@@ -1,6 +1,6 @@
 //! Geometry-oriented robust predicates with structural scalar awareness.
 //!
-//! `predicated` is intentionally positioned between scalar semantics and
+//! `liminal` is intentionally positioned between scalar semantics and
 //! application geometry code. It asks backends for facts such as known sign,
 //! exact zero, magnitude bounds, and refinement capability before falling back
 //! to generic robust predicate machinery.
