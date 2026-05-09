@@ -37,6 +37,10 @@ impl Backend for HyperrealBackend {
     // Small integer powers appear in vector/matrix helpers; explicit low
     // exponents avoid clone-heavy generic exponentiation by squaring.
     const SPECIALIZE_SCALAR_POWI: bool = true;
+    // Exact rational cofactors are short signed product sums. Fusing them in
+    // hyperreal lets Rational share one denominator across the whole minor;
+    // approximate backends keep the direct arithmetic expression instead.
+    const FUSE_SIGNED_PRODUCT_SUM: bool = true;
 
     type Repr = BackendScalar;
 }
@@ -203,28 +207,64 @@ impl BackendScalarTrait for BackendScalar {
 
     #[inline]
     fn dot3(left: [&Self; 3], right: [&Self; 3]) -> Self {
-        // Build the three products first, then add by reference. This avoids
-        // cloning intermediate hyperreal products in dense matrix multiply.
+        // Delegate to hyperreal so exact-rational lanes can delay denominator
+        // canonicalization until the final dot-product result. Non-rational
+        // lanes still use the previous product/tree shape inside hyperreal.
+        // 2026-05 benches: borrowed mat3 mul refs moved from roughly 4.99 us
+        // to 2.29 us and vec3 dot from roughly 695 ns to 253 ns.
         crate::trace_dispatch!("realistic_blas_hyperreal_backend", "op", "dot3-specialized");
-        let p0 = &left[0].0 * &right[0].0;
-        let p1 = &left[1].0 * &right[1].0;
-        let p2 = &left[2].0 * &right[2].0;
-        let sum01 = &p0 + &p1;
-        Self(&sum01 + &p2)
+        Self(hyperreal::Real::dot3_refs(
+            [&left[0].0, &left[1].0, &left[2].0],
+            [&right[0].0, &right[1].0, &right[2].0],
+        ))
     }
 
     #[inline]
     fn dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
-        // Pairwise summation is both a small expression tree and a benchmarked
-        // win for 4-lane matrix/complex kernels.
+        // See `dot3`; this is the hottest matrix multiply shape and benefits
+        // most from hyperreal's shared-denominator exact-rational path. Keep
+        // this specialization unless traces show the exact-rational constructor
+        // count or benchmark time regressing beyond normal Criterion noise.
         crate::trace_dispatch!("realistic_blas_hyperreal_backend", "op", "dot4-specialized");
-        let p0 = &left[0].0 * &right[0].0;
-        let p1 = &left[1].0 * &right[1].0;
-        let p2 = &left[2].0 * &right[2].0;
-        let p3 = &left[3].0 * &right[3].0;
-        let sum01 = &p0 + &p1;
-        let sum23 = &p2 + &p3;
-        Self(&sum01 + &sum23)
+        Self(hyperreal::Real::dot4_refs(
+            [&left[0].0, &left[1].0, &left[2].0, &left[3].0],
+            [&right[0].0, &right[1].0, &right[2].0, &right[3].0],
+        ))
+    }
+
+    #[inline]
+    fn signed_product_sum2<const TERMS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Self; 2]; TERMS],
+    ) -> Self {
+        if let Some(sum) = hyperreal::Real::exact_rational_signed_product_sum(
+            positive_terms,
+            terms.map(|term| [&term[0].0, &term[1].0]),
+        ) {
+            crate::trace_dispatch!(
+                "realistic_blas_hyperreal_backend",
+                "op",
+                "signed-product-sum2-exact-rational"
+            );
+            return Self(sum);
+        }
+
+        crate::trace_dispatch!(
+            "realistic_blas_hyperreal_backend",
+            "op",
+            "signed-product-sum2-generic"
+        );
+        let mut total: Option<Self> = None;
+        for i in 0..TERMS {
+            let product = terms[i][0].clone().mul_ref(terms[i][1]);
+            total = Some(match total.take() {
+                Some(total) if positive_terms[i] => total.add_ref(&product),
+                Some(total) => total.sub_ref(&product),
+                None if positive_terms[i] => product,
+                None => -product,
+            });
+        }
+        total.unwrap_or_else(Self::zero)
     }
 
     fn exp(self) -> BlasResult<Self> {

@@ -24,29 +24,45 @@ fn identity_array<B: Backend, const N: usize>() -> [[Scalar<B>; N]; N] {
     })
 }
 
-fn transpose_array<B: Backend, const N: usize>(matrix: [[Scalar<B>; N]; N]) -> [[Scalar<B>; N]; N] {
-    let mut matrix = matrix.map(|row| row.map(Some));
-    from_fn(|row| {
-        from_fn(|col| {
-            matrix[col][row]
-                .take()
-                .expect("owned transpose visits each entry once")
-        })
-    })
+fn transpose_array3<B: Backend>(matrix: [[Scalar<B>; 3]; 3]) -> [[Scalar<B>; 3]; 3] {
+    // Right-division is implemented as a solve on transposes. Fixed-size
+    // transposes keep that wrapper from paying generic `Option::take` and
+    // `from_fn` overhead around the actual Gauss-Jordan work. 2026-05
+    // targeted Criterion, 200 samples/8s: approx mat3 div_matrix_checked
+    // improved ~40%, approx mat3 div_matrix improved ~22%, borrowed approx
+    // mat3 div improved ~18%, and hyperreal-rational mat3 div rows stayed
+    // neutral-to-slightly-better inside the 2% noise threshold.
+    let [[m00, m01, m02], [m10, m11, m12], [m20, m21, m22]] = matrix;
+    [[m00, m10, m20], [m01, m11, m21], [m02, m12, m22]]
 }
 
-fn transpose_array_ref<B: Backend, const N: usize>(
-    matrix: &[[Scalar<B>; N]; N],
-) -> [[Scalar<B>; N]; N] {
-    // Borrowed matrix division needs transposed working copies. Cloning
-    // directly into transposed layout avoids cloning whole matrices first and
-    // then running the owned transpose machinery.
-    from_fn(|row| from_fn(|col| matrix[col][row].clone()))
+fn transpose_array3_ref<B: Backend>(matrix: &[[Scalar<B>; 3]; 3]) -> [[Scalar<B>; 3]; 3] {
+    [
+        [
+            matrix[0][0].clone(),
+            matrix[1][0].clone(),
+            matrix[2][0].clone(),
+        ],
+        [
+            matrix[0][1].clone(),
+            matrix[1][1].clone(),
+            matrix[2][1].clone(),
+        ],
+        [
+            matrix[0][2].clone(),
+            matrix[1][2].clone(),
+            matrix[2][2].clone(),
+        ],
+    ]
 }
 
 fn transpose_array4<B: Backend>(matrix: [[Scalar<B>; 4]; 4]) -> [[Scalar<B>; 4]; 4] {
     // Hand-written 4x4 transpose avoids the generic `Option::take` owned
-    // transpose overhead in the borrowed right-division wrapper.
+    // transpose overhead in the right-division wrapper. 2026-05 targeted
+    // Criterion, 200 samples/8s: approx mat4 div_matrix improved ~20%,
+    // hyperreal-rational mat4 div_matrix improved ~2% within noise, borrowed
+    // hyperreal-rational mat4 div was neutral, and borrowed approx mat4 div
+    // moved +1.25% inside the 2% noise threshold.
     let [
         [m00, m01, m02, m03],
         [m10, m11, m12, m13],
@@ -181,23 +197,47 @@ where
     })
 }
 
-fn matrix_power<B: Backend, const N: usize>(
+#[inline]
+fn matrix_power_with<B: Backend, const N: usize, F>(
     base: [[Scalar<B>; N]; N],
     exponent: u32,
-) -> [[Scalar<B>; N]; N] {
+    mut multiply: F,
+) -> [[Scalar<B>; N]; N]
+where
+    F: FnMut([[Scalar<B>; N]; N], [[Scalar<B>; N]; N]) -> [[Scalar<B>; N]; N],
+{
+    // Alternative researched paths for fixed 3x3/4x4 powers included
+    // Cayley-Hamilton with Faddeev-LeVerrier characteristic coefficients and
+    // Berkowitz-style division-free characteristic polynomials
+    // (https://ncatlab.org/nlab/show/Faddeev-LeVerrier+algorithm,
+    // https://eudml.org/doc/122179). For the small exponents that dominate
+    // this crate's matrix benches, those approaches introduce trace/determinant
+    // reductions before they can save a multiply. Keep powers on repeated
+    // squaring and put the optimization budget into the fixed-size multiply
+    // kernels below. 2026-05 targeted Criterion: approx mat3/mat4 powi moved
+    // from ~144.6/240.8 ns to ~94.5/175.4 ns; hyperreal-from-f64 mat3/mat4
+    // powi moved from ~6.30/11.39 us to ~5.98/10.71 us. Hyperreal-rational
+    // powi stayed within the normal Criterion noise band, so this keeps
+    // hyperreal's per-cell exact-rational denominator schedule.
+    //
+    // Keep this helper and the fixed multiply helpers inline for downstream
+    // benchmark crates. A post-full-suite 200-sample/8s pass found approximate
+    // and symbolica borrowed matrix multiply neutral, while hyperreal mat3/mat4
+    // borrowed multiply improved by ~4.98%/~4.54% after inlining the helper
+    // layers.
     match exponent {
         0 => return identity_array(),
         1 => return base,
         // Low exponents dominate transform/matrix helper use. Unrolling them
         // avoids the generic squaring loop's extra clones and branch work.
-        2 => return multiply_arrays(base.clone(), base),
+        2 => return multiply(base.clone(), base),
         3 => {
-            let square = multiply_arrays(base.clone(), base.clone());
-            return multiply_arrays(square, base);
+            let square = multiply(base.clone(), base.clone());
+            return multiply(square, base);
         }
         4 => {
-            let square = multiply_arrays(base.clone(), base);
-            return multiply_arrays(square.clone(), square);
+            let square = multiply(base.clone(), base);
+            return multiply(square.clone(), square);
         }
         _ => {}
     }
@@ -209,17 +249,29 @@ fn matrix_power<B: Backend, const N: usize>(
     while exp > 0 {
         if exp & 1 == 1 {
             result = Some(match result {
-                Some(result) => multiply_arrays(result, factor.clone()),
+                Some(result) => multiply(result, factor.clone()),
                 None => factor.clone(),
             });
         }
         exp >>= 1;
         if exp > 0 {
-            factor = multiply_arrays(factor.clone(), factor);
+            factor = multiply(factor.clone(), factor);
         }
     }
 
     result.expect("positive exponent sets at least one result bit")
+}
+
+#[inline]
+fn matrix_power3<B: Backend>(base: [[Scalar<B>; 3]; 3], exponent: u32) -> [[Scalar<B>; 3]; 3] {
+    crate::trace_dispatch!("realistic_blas_matrix", "helper", "matrix-power3-fixed-mul");
+    matrix_power_with(base, exponent, multiply_arrays3::<B>)
+}
+
+#[inline]
+fn matrix_power4<B: Backend>(base: [[Scalar<B>; 4]; 4], exponent: u32) -> [[Scalar<B>; 4]; 4] {
+    crate::trace_dispatch!("realistic_blas_matrix", "helper", "matrix-power4-fixed-mul");
+    matrix_power_with(base, exponent, multiply_arrays4::<B>)
 }
 
 fn ordinary_pivot<B: Backend, const N: usize>(
@@ -508,6 +560,12 @@ fn prefer_shared_adjugate_right_division<B: Backend, const N: usize>(
     // regresses decimal rationals by creating many non-power-of-two gcds. Keep
     // the heuristic generic by asking the backend for this cheap structural
     // representation fact instead of depending on hyperreal internals here.
+    // Shared adjugate division trades fewer inverses for more products. The
+    // targeted `matrix_forms` run showed this remains correct for exact dyadic
+    // rationals, including f64-imported dyadics with large denominator shifts:
+    // a denominator-shift cutoff and an inverse-via-solve prototype both
+    // regressed those rows badly. Non-dyadic exact rationals still use the
+    // Gauss-Jordan path for right division.
     left.iter()
         .flat_map(|row| row.iter())
         .chain(right.iter().flat_map(|row| row.iter()))
@@ -524,9 +582,9 @@ fn right_divide_matrix3<B: Backend>(
             "helper",
             "right-divide3-gauss-jordan"
         );
-        return Ok(transpose_array(solve_left_system3(
-            transpose_array(right),
-            transpose_array(left),
+        return Ok(transpose_array3(solve_left_system3(
+            transpose_array3(right),
+            transpose_array3(left),
         )?));
     }
 
@@ -543,7 +601,7 @@ fn right_divide_matrix3<B: Backend>(
     // timings show wins.
     let (adjugate, det) = matrix3_adjugate_and_determinant(&right);
     let inv_det = det.inverse()?;
-    Ok(scale_matrix3(multiply_arrays(left, adjugate), &inv_det))
+    Ok(scale_matrix3(multiply_arrays3(left, adjugate), &inv_det))
 }
 
 fn right_divide_matrix3_ref<B: Backend>(
@@ -559,9 +617,9 @@ fn right_divide_matrix3_ref<B: Backend>(
         // Borrowed right-division is implemented as a left solve on transposes.
         // Clone directly into transposed working storage instead of cloning both
         // matrices and dispatching through the owned `/` implementation.
-        return Ok(transpose_array(solve_left_system3(
-            transpose_array_ref(right),
-            transpose_array_ref(left),
+        return Ok(transpose_array3(solve_left_system3(
+            transpose_array3_ref(right),
+            transpose_array3_ref(left),
         )?));
     }
 
@@ -577,7 +635,7 @@ fn right_divide_matrix3_ref<B: Backend>(
     let (adjugate, det) = matrix3_adjugate_and_determinant(right);
     let inv_det = det.inverse()?;
     Ok(scale_matrix3(
-        multiply_arrays_ref(left, &adjugate),
+        multiply_arrays3_ref(left, &adjugate),
         &inv_det,
     ))
 }
@@ -592,9 +650,9 @@ fn right_divide_matrix3_checked<B: Backend>(
             "helper",
             "right-divide3-checked-gauss-jordan"
         );
-        return Ok(transpose_array(solve_left_system3_checked(
-            transpose_array(right),
-            transpose_array(left),
+        return Ok(transpose_array3(solve_left_system3_checked(
+            transpose_array3(right),
+            transpose_array3(left),
         )?));
     }
 
@@ -606,7 +664,7 @@ fn right_divide_matrix3_checked<B: Backend>(
     let (adjugate, det) = matrix3_adjugate_and_determinant(&right);
     require_known_nonzero(&det)?;
     let inv_det = det.inverse()?;
-    Ok(scale_matrix3(multiply_arrays(left, adjugate), &inv_det))
+    Ok(scale_matrix3(multiply_arrays3(left, adjugate), &inv_det))
 }
 
 fn right_divide_matrix3_checked_with_abort<B: Backend>(
@@ -620,9 +678,9 @@ fn right_divide_matrix3_checked_with_abort<B: Backend>(
             "helper",
             "right-divide3-checked-abort-gauss-jordan"
         );
-        return Ok(transpose_array(solve_left_system3_checked_with_abort(
-            transpose_array(right),
-            transpose_array(left),
+        return Ok(transpose_array3(solve_left_system3_checked_with_abort(
+            transpose_array3(right),
+            transpose_array3(left),
             signal,
         )?));
     }
@@ -636,7 +694,7 @@ fn right_divide_matrix3_checked_with_abort<B: Backend>(
     let det = with_abort(det, signal);
     require_known_nonzero(&det)?;
     let inv_det = det.inverse()?;
-    Ok(scale_matrix3(multiply_arrays(left, adjugate), &inv_det))
+    Ok(scale_matrix3(multiply_arrays3(left, adjugate), &inv_det))
 }
 
 fn right_divide_matrix4<B: Backend>(
@@ -649,9 +707,9 @@ fn right_divide_matrix4<B: Backend>(
             "helper",
             "right-divide4-gauss-jordan"
         );
-        return Ok(transpose_array(solve_left_system4(
-            transpose_array(right),
-            transpose_array(left),
+        return Ok(transpose_array4(solve_left_system4(
+            transpose_array4(right),
+            transpose_array4(left),
         )?));
     }
 
@@ -664,7 +722,7 @@ fn right_divide_matrix4<B: Backend>(
     let det = determinant4_from_factors(&s, &c);
     let inv_det = det.inverse()?;
     let adjugate = matrix4_adjugate_from_factors(&right, &s, &c);
-    Ok(scale_matrix4(multiply_arrays(left, adjugate), &inv_det))
+    Ok(scale_matrix4(multiply_arrays4(left, adjugate), &inv_det))
 }
 
 fn right_divide_matrix4_ref<B: Backend>(
@@ -699,7 +757,7 @@ fn right_divide_matrix4_ref<B: Backend>(
     let inv_det = det.inverse()?;
     let adjugate = matrix4_adjugate_from_factors(right, &s, &c);
     Ok(scale_matrix4(
-        multiply_arrays_ref(left, &adjugate),
+        multiply_arrays4_ref(left, &adjugate),
         &inv_det,
     ))
 }
@@ -714,9 +772,9 @@ fn right_divide_matrix4_checked<B: Backend>(
             "helper",
             "right-divide4-checked-gauss-jordan"
         );
-        return Ok(transpose_array(solve_left_system4_checked(
-            transpose_array(right),
-            transpose_array(left),
+        return Ok(transpose_array4(solve_left_system4_checked(
+            transpose_array4(right),
+            transpose_array4(left),
         )?));
     }
 
@@ -730,7 +788,7 @@ fn right_divide_matrix4_checked<B: Backend>(
     require_known_nonzero(&det)?;
     let inv_det = det.inverse()?;
     let adjugate = matrix4_adjugate_from_factors(&right, &s, &c);
-    Ok(scale_matrix4(multiply_arrays(left, adjugate), &inv_det))
+    Ok(scale_matrix4(multiply_arrays4(left, adjugate), &inv_det))
 }
 
 fn right_divide_matrix4_checked_with_abort<B: Backend>(
@@ -744,9 +802,9 @@ fn right_divide_matrix4_checked_with_abort<B: Backend>(
             "helper",
             "right-divide4-checked-abort-gauss-jordan"
         );
-        return Ok(transpose_array(solve_left_system4_checked_with_abort(
-            transpose_array(right),
-            transpose_array(left),
+        return Ok(transpose_array4(solve_left_system4_checked_with_abort(
+            transpose_array4(right),
+            transpose_array4(left),
             signal,
         )?));
     }
@@ -762,105 +820,14 @@ fn right_divide_matrix4_checked_with_abort<B: Backend>(
     require_known_nonzero(&det)?;
     let inv_det = det.inverse()?;
     let adjugate = matrix4_adjugate_from_factors(&right, &s, &c);
-    Ok(scale_matrix4(multiply_arrays(left, adjugate), &inv_det))
+    Ok(scale_matrix4(multiply_arrays4(left, adjugate), &inv_det))
 }
 
-fn multiply_arrays<B: Backend, const N: usize>(
-    left: [[Scalar<B>; N]; N],
-    right: [[Scalar<B>; N]; N],
-) -> [[Scalar<B>; N]; N] {
-    crate::trace_dispatch!("realistic_blas_matrix", "helper", "multiply-owned-owned");
-    from_fn(|row| {
-        from_fn(|col| {
-            // One const-generic helper serves both 3x3 and 4x4 owned multiply.
-            // The borrowed variants below are separately unrolled because their
-            // benchmarks are more sensitive to this fourth-lane branch.
-            let left_terms = [&left[row][0], &left[row][1], &left[row][2]];
-            let right_terms = [&right[0][col], &right[1][col], &right[2][col]];
-            if let (Some(lhs), Some(rhs_row)) = (left[row].get(3), right.get(3)) {
-                Scalar::dot4(
-                    [left_terms[0], left_terms[1], left_terms[2], lhs],
-                    [
-                        right_terms[0],
-                        right_terms[1],
-                        right_terms[2],
-                        &rhs_row[col],
-                    ],
-                )
-            } else {
-                Scalar::dot3(left_terms, right_terms)
-            }
-        })
-    })
-}
-
-fn multiply_arrays_rhs_ref<B: Backend, const N: usize>(
-    left: [[Scalar<B>; N]; N],
-    right: &[[Scalar<B>; N]; N],
-) -> [[Scalar<B>; N]; N] {
-    crate::trace_dispatch!("realistic_blas_matrix", "helper", "multiply-owned-ref");
-    from_fn(|row| {
-        from_fn(|col| {
-            let left_terms = [&left[row][0], &left[row][1], &left[row][2]];
-            let right_terms = [&right[0][col], &right[1][col], &right[2][col]];
-            if let Some(lhs) = left[row].get(3) {
-                Scalar::dot4(
-                    [left_terms[0], left_terms[1], left_terms[2], lhs],
-                    [
-                        right_terms[0],
-                        right_terms[1],
-                        right_terms[2],
-                        &right[3][col],
-                    ],
-                )
-            } else {
-                Scalar::dot3(left_terms, right_terms)
-            }
-        })
-    })
-}
-
-fn multiply_arrays_ref<B: Backend, const N: usize>(
-    left: &[[Scalar<B>; N]; N],
-    right: &[[Scalar<B>; N]; N],
-) -> [[Scalar<B>; N]; N] {
-    crate::trace_dispatch!(
-        "realistic_blas_matrix",
-        "helper",
-        "multiply-ref-owned-or-generic"
-    );
-    from_fn(|row| {
-        from_fn(|col| {
-            let left_terms = [&left[row][0], &left[row][1], &left[row][2]];
-            let right_terms = [&right[0][col], &right[1][col], &right[2][col]];
-            if let Some(lhs) = left[row].get(3) {
-                Scalar::dot4(
-                    [left_terms[0], left_terms[1], left_terms[2], lhs],
-                    [
-                        right_terms[0],
-                        right_terms[1],
-                        right_terms[2],
-                        &right[3][col],
-                    ],
-                )
-            } else {
-                Scalar::dot3(left_terms, right_terms)
-            }
-        })
-    })
-}
-
-fn multiply_arrays3_ref<B: Backend>(
+#[inline]
+fn multiply_arrays3_borrowed<B: Backend>(
     left: &[[Scalar<B>; 3]; 3],
     right: &[[Scalar<B>; 3]; 3],
 ) -> [[Scalar<B>; 3]; 3] {
-    // Fixed 3x3 borrowed multiply avoids the const-generic helper's per-cell
-    // "is there a fourth lane?" branch and intermediate tiny arrays.
-    crate::trace_dispatch!(
-        "realistic_blas_matrix",
-        "helper",
-        "multiply3-ref-ref-specialized"
-    );
     let cell = |row: usize, col: usize| {
         Scalar::dot3(
             [&left[row][0], &left[row][1], &left[row][2]],
@@ -874,18 +841,11 @@ fn multiply_arrays3_ref<B: Backend>(
     ]
 }
 
-fn multiply_arrays4_ref<B: Backend>(
+#[inline]
+fn multiply_arrays4_borrowed<B: Backend>(
     left: &[[Scalar<B>; 4]; 4],
     right: &[[Scalar<B>; 4]; 4],
 ) -> [[Scalar<B>; 4]; 4] {
-    // Fixed 4x4 borrowed multiply is similarly unrolled. This is deliberately
-    // duplicated from the generic path because the branchless version wins in
-    // borrowed mat4 multiply benchmarks.
-    crate::trace_dispatch!(
-        "realistic_blas_matrix",
-        "helper",
-        "multiply4-ref-ref-specialized"
-    );
     let cell = |row: usize, col: usize| {
         Scalar::dot4(
             [&left[row][0], &left[row][1], &left[row][2], &left[row][3]],
@@ -903,6 +863,92 @@ fn multiply_arrays4_ref<B: Backend>(
         [cell(2, 0), cell(2, 1), cell(2, 2), cell(2, 3)],
         [cell(3, 0), cell(3, 1), cell(3, 2), cell(3, 3)],
     ]
+}
+
+#[inline]
+fn multiply_arrays3<B: Backend>(
+    left: [[Scalar<B>; 3]; 3],
+    right: [[Scalar<B>; 3]; 3],
+) -> [[Scalar<B>; 3]; 3] {
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "multiply3-owned-owned-specialized"
+    );
+    multiply_arrays3_borrowed(&left, &right)
+}
+
+#[inline]
+fn multiply_arrays4<B: Backend>(
+    left: [[Scalar<B>; 4]; 4],
+    right: [[Scalar<B>; 4]; 4],
+) -> [[Scalar<B>; 4]; 4] {
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "multiply4-owned-owned-specialized"
+    );
+    multiply_arrays4_borrowed(&left, &right)
+}
+
+#[inline]
+fn multiply_arrays3_rhs_ref<B: Backend>(
+    left: [[Scalar<B>; 3]; 3],
+    right: &[[Scalar<B>; 3]; 3],
+) -> [[Scalar<B>; 3]; 3] {
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "multiply3-owned-ref-specialized"
+    );
+    multiply_arrays3_borrowed(&left, right)
+}
+
+#[inline]
+fn multiply_arrays4_rhs_ref<B: Backend>(
+    left: [[Scalar<B>; 4]; 4],
+    right: &[[Scalar<B>; 4]; 4],
+) -> [[Scalar<B>; 4]; 4] {
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "multiply4-owned-ref-specialized"
+    );
+    multiply_arrays4_borrowed(&left, right)
+}
+
+#[inline]
+fn multiply_arrays3_ref<B: Backend>(
+    left: &[[Scalar<B>; 3]; 3],
+    right: &[[Scalar<B>; 3]; 3],
+) -> [[Scalar<B>; 3]; 3] {
+    // Fixed 3x3 multiply avoids the const-generic helper's per-cell "is there
+    // a fourth lane?" branch and intermediate tiny arrays. A row-dot prototype
+    // was traced and rejected because it regressed exact-rational powi despite
+    // fewer reduction events; keep the proven per-cell dot schedule here.
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "multiply3-ref-ref-specialized"
+    );
+    multiply_arrays3_borrowed(left, right)
+}
+
+#[inline]
+fn multiply_arrays4_ref<B: Backend>(
+    left: &[[Scalar<B>; 4]; 4],
+    right: &[[Scalar<B>; 4]; 4],
+) -> [[Scalar<B>; 4]; 4] {
+    // Fixed 4x4 borrowed multiply is similarly unrolled. This is deliberately
+    // duplicated from the generic path because the branchless version wins in
+    // borrowed mat4 multiply benchmarks while keeping per-cell exact-rational
+    // denominator schedules.
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "multiply4-ref-ref-specialized"
+    );
+    multiply_arrays4_borrowed(left, right)
 }
 
 fn transform_vector_rhs_ref<B: Backend, const N: usize>(
@@ -944,7 +990,11 @@ fn mul_sub<B: Backend>(
     left_b: &Scalar<B>,
     right_b: &Scalar<B>,
 ) -> Scalar<B> {
-    left_a * right_a - left_b * right_b
+    if B::FUSE_SIGNED_PRODUCT_SUM {
+        Scalar::signed_product_sum2([true, false], [[left_a, right_a], [left_b, right_b]])
+    } else {
+        left_a * right_a - left_b * right_b
+    }
 }
 
 #[inline]
@@ -954,7 +1004,11 @@ fn mul_add<B: Backend>(
     left_b: &Scalar<B>,
     right_b: &Scalar<B>,
 ) -> Scalar<B> {
-    left_a * right_a + left_b * right_b
+    if B::FUSE_SIGNED_PRODUCT_SUM {
+        Scalar::signed_product_sum2([true, true], [[left_a, right_a], [left_b, right_b]])
+    } else {
+        left_a * right_a + left_b * right_b
+    }
 }
 
 #[inline]
@@ -966,7 +1020,14 @@ fn mul_add_sub<B: Backend>(
     left_c: &Scalar<B>,
     right_c: &Scalar<B>,
 ) -> Scalar<B> {
-    mul_add(left_a, right_a, left_b, right_b) - left_c * right_c
+    if B::FUSE_SIGNED_PRODUCT_SUM {
+        Scalar::signed_product_sum2(
+            [true, true, false],
+            [[left_a, right_a], [left_b, right_b], [left_c, right_c]],
+        )
+    } else {
+        mul_add(left_a, right_a, left_b, right_b) - left_c * right_c
+    }
 }
 
 #[inline]
@@ -978,21 +1039,35 @@ fn mul_sub_add<B: Backend>(
     left_c: &Scalar<B>,
     right_c: &Scalar<B>,
 ) -> Scalar<B> {
-    left_a * right_a - mul_add(left_b, right_b, left_c, right_c)
+    if B::FUSE_SIGNED_PRODUCT_SUM {
+        Scalar::signed_product_sum2(
+            [true, false, false],
+            [[left_a, right_a], [left_b, right_b], [left_c, right_c]],
+        )
+    } else {
+        left_a * right_a - mul_add(left_b, right_b, left_c, right_c)
+    }
 }
 
+#[inline]
 fn determinant3<B: Backend>(m: &[[Scalar<B>; 3]; 3]) -> Scalar<B> {
     crate::trace_dispatch!("realistic_blas_matrix", "helper", "determinant3");
     // Keep determinant infallible and division-free. A Bareiss prototype would
     // need pivot divisions and a fallback for singular or unknown-zero pivots,
     // which does not match the public determinant contract and adds exact
-    // rational normalization work to the common 3x3 case.
+    // rational normalization work to the common 3x3 case. The algorithm was
+    // checked against Bareiss's integer-preserving elimination paper
+    // (https://www.ams.org/mcom/1968-22-103/S0025-5718-1968-0226829-0/S0025-5718-1968-0226829-0.pdf);
+    // for these fixed sizes, keeping cofactors division-free plus delaying dot
+    // canonicalization in hyperreal gave the measured wins without changing
+    // determinant semantics.
     let c00 = mul_sub(&m[1][1], &m[2][2], &m[1][2], &m[2][1]);
     let c10 = mul_sub(&m[1][2], &m[2][0], &m[1][0], &m[2][2]);
     let c20 = mul_sub(&m[1][0], &m[2][1], &m[1][1], &m[2][0]);
     Scalar::dot3([&m[0][0], &m[0][1], &m[0][2]], [&c00, &c10, &c20])
 }
 
+#[inline]
 fn matrix3_adjugate_and_determinant<B: Backend>(
     matrix: &[[Scalar<B>; 3]; 3],
 ) -> ([[Scalar<B>; 3]; 3], Scalar<B>) {
@@ -1015,6 +1090,7 @@ fn matrix3_adjugate_and_determinant<B: Backend>(
     ([[c00, c01, c02], [c10, c11, c12], [c20, c21, c22]], det)
 }
 
+#[inline]
 fn invert_matrix3<B: Backend>(matrix: [[Scalar<B>; 3]; 3]) -> BlasResult<[[Scalar<B>; 3]; 3]> {
     crate::trace_dispatch!("realistic_blas_matrix", "helper", "invert-matrix3");
     // Cofactor inversion is intentionally kept for 3x3 reciprocal/inverse.
@@ -1025,6 +1101,7 @@ fn invert_matrix3<B: Backend>(matrix: [[Scalar<B>; 3]; 3]) -> BlasResult<[[Scala
     Ok(scale_matrix3(adjugate, &inv_det))
 }
 
+#[inline]
 fn invert_matrix3_checked<B: Backend>(
     matrix: [[Scalar<B>; 3]; 3],
 ) -> CheckedBlasResult<[[Scalar<B>; 3]; 3]> {
@@ -1035,6 +1112,7 @@ fn invert_matrix3_checked<B: Backend>(
     Ok(scale_matrix3(adjugate, &inv_det))
 }
 
+#[inline]
 fn invert_matrix3_checked_with_abort<B: Backend>(
     matrix: [[Scalar<B>; 3]; 3],
     signal: &AbortSignal,
@@ -1051,8 +1129,14 @@ fn invert_matrix3_checked_with_abort<B: Backend>(
     Ok(scale_matrix3(adjugate, &inv_det))
 }
 
+#[inline]
 fn matrix4_factors<B: Backend>(m: &[[Scalar<B>; 4]; 4]) -> ([Scalar<B>; 6], [Scalar<B>; 6]) {
     crate::trace_dispatch!("realistic_blas_matrix", "helper", "matrix4-factors");
+    // Keep the cofactor inverse helpers inline across crate boundaries. The
+    // full suite exposed a mat4 reciprocal layout regression; after inlining
+    // the fixed inverse/cofactor layers, 200-sample/8s targeted reruns improved
+    // approximate mat4 reciprocal by ~2.79% and hyperreal mat4 reciprocal by
+    // ~3.99%, with astro128/numerica128 reciprocal staying inside noise.
     let s = [
         mul_sub(&m[0][0], &m[1][1], &m[1][0], &m[0][1]),
         mul_sub(&m[0][0], &m[1][2], &m[1][0], &m[0][2]),
@@ -1072,26 +1156,53 @@ fn matrix4_factors<B: Backend>(m: &[[Scalar<B>; 4]; 4]) -> ([Scalar<B>; 6], [Sca
     (s, c)
 }
 
+#[inline]
 fn determinant4_from_factors<B: Backend>(s: &[Scalar<B>; 6], c: &[Scalar<B>; 6]) -> Scalar<B> {
     crate::trace_dispatch!(
         "realistic_blas_matrix",
         "helper",
         "determinant4-from-factors"
     );
-    let positive = Scalar::dot3([&s[0], &s[2], &s[3]], [&c[5], &c[3], &c[2]]) + &s[5] * &c[0];
-    let negative = &s[1] * &c[4] + &s[4] * &c[1];
-    positive - negative
+    // This is the fixed six-minor determinant polynomial
+    //   s0*c5 - s1*c4 + s2*c3 + s3*c2 - s4*c1 + s5*c0.
+    // Route it as one signed product sum so hyperreal exact rationals can
+    // share a final denominator instead of reducing a dot product plus two
+    // extra products and a subtraction. Backends that do not opt in keep the
+    // direct expression below, preserving the approximate scalar expression
+    // shape measured in the regression guard benchmarks.
+    if B::FUSE_SIGNED_PRODUCT_SUM {
+        Scalar::signed_product_sum2(
+            [true, false, true, true, false, true],
+            [
+                [&s[0], &c[5]],
+                [&s[1], &c[4]],
+                [&s[2], &c[3]],
+                [&s[3], &c[2]],
+                [&s[4], &c[1]],
+                [&s[5], &c[0]],
+            ],
+        )
+    } else {
+        let positive = Scalar::dot3([&s[0], &s[2], &s[3]], [&c[5], &c[3], &c[2]]) + &s[5] * &c[0];
+        let negative = &s[1] * &c[4] + &s[4] * &c[1];
+        positive - negative
+    }
 }
 
+#[inline]
 fn determinant4<B: Backend>(m: &[[Scalar<B>; 4]; 4]) -> Scalar<B> {
     crate::trace_dispatch!("realistic_blas_matrix", "helper", "determinant4");
     // The six-minor formula shares the same division-free rationale as 3x3.
     // It is also reused by the cofactor inverse path, so determinant and
     // inverse stay aligned with the trace counters used for regression checks.
+    // Bareiss/Gauss-Jordan alternatives remain useful for larger or purely
+    // integer systems, but on this 4x4 public API the traced bottleneck was
+    // rational canonicalization inside dot products, not the minor schedule.
     let (s, c) = matrix4_factors(m);
     determinant4_from_factors(&s, &c)
 }
 
+#[inline]
 fn matrix4_scaled_adjugate_from_factors<B: Backend>(
     m: &[[Scalar<B>; 4]; 4],
     s: &[Scalar<B>; 6],
@@ -1126,6 +1237,7 @@ fn matrix4_scaled_adjugate_from_factors<B: Backend>(
     ]
 }
 
+#[inline]
 fn invert_matrix4<B: Backend>(matrix: [[Scalar<B>; 4]; 4]) -> BlasResult<[[Scalar<B>; 4]; 4]> {
     // The fixed cofactor formula also wins for 4x4 inverse despite doing more
     // arithmetic than elimination. It creates one shared determinant inverse,
@@ -1139,6 +1251,7 @@ fn invert_matrix4<B: Backend>(matrix: [[Scalar<B>; 4]; 4]) -> BlasResult<[[Scala
     ))
 }
 
+#[inline]
 fn invert_matrix4_checked<B: Backend>(
     matrix: [[Scalar<B>; 4]; 4],
 ) -> CheckedBlasResult<[[Scalar<B>; 4]; 4]> {
@@ -1151,6 +1264,7 @@ fn invert_matrix4_checked<B: Backend>(
     ))
 }
 
+#[inline]
 fn invert_matrix4_checked_with_abort<B: Backend>(
     matrix: [[Scalar<B>; 4]; 4],
     signal: &AbortSignal,
@@ -1165,6 +1279,7 @@ fn invert_matrix4_checked_with_abort<B: Backend>(
     ))
 }
 
+#[inline]
 fn matrix4_adjugate_from_factors<B: Backend>(
     m: &[[Scalar<B>; 4]; 4],
     s: &[Scalar<B>; 6],
@@ -1216,6 +1331,9 @@ macro_rules! impl_matrix {
         $n:expr,
         $div_fn:ident,
         $div_ref_fn:ident,
+        $power_fn:ident,
+        $mul_owned_fn:ident,
+        $mul_rhs_ref_fn:ident,
         $mul_ref_fn:ident,
         $div_checked_fn:ident,
         $div_checked_abort_fn:ident
@@ -1274,12 +1392,19 @@ macro_rules! impl_matrix {
             /// Negative exponents invert the matrix first.
             pub fn powi(self, exponent: i32) -> BlasResult<Self> {
                 crate::trace_dispatch!("realistic_blas_matrix", "method", "powi");
+                // Negative powers deliberately materialize A^-1 before
+                // repeated squaring. A delayed-scale prototype using
+                // A^-k = adj(A)^k * det(A)^-k looked structurally attractive,
+                // but 2026-05 targeted Criterion showed it regressed
+                // hyperreal-rational mat3/mat4 powi(-2) by roughly 6%/12%.
+                // The larger unscaled cofactors outweighed saving the common
+                // determinant scale, so keep the inverse-first schedule.
                 let base = if exponent < 0 {
                     self.inverse()?.0
                 } else {
                     self.0
                 };
-                Ok(Self(matrix_power(base, exponent.unsigned_abs())))
+                Ok(Self($power_fn(base, exponent.unsigned_abs())))
             }
 
             /// Raises the matrix to an integer power using checked inversion.
@@ -1290,7 +1415,7 @@ macro_rules! impl_matrix {
                 } else {
                     self.0
                 };
-                Ok(Self(matrix_power(base, exponent.unsigned_abs())))
+                Ok(Self($power_fn(base, exponent.unsigned_abs())))
             }
 
             /// Raises the matrix to an integer power after attaching an abort signal.
@@ -1309,7 +1434,7 @@ macro_rules! impl_matrix {
                 } else {
                     self.0
                 };
-                Ok(Self(matrix_power(base, exponent.unsigned_abs())))
+                Ok(Self($power_fn(base, exponent.unsigned_abs())))
             }
 
             /// Divides every entry by `rhs` after rejecting unknown-zero divisors.
@@ -1672,7 +1797,7 @@ macro_rules! impl_matrix {
 
             fn mul(self, rhs: Self) -> Self::Output {
                 crate::trace_dispatch!("realistic_blas_matrix", "op", "mul-owned-owned");
-                Self(multiply_arrays(self.0, rhs.0))
+                Self($mul_owned_fn(self.0, rhs.0))
             }
         }
 
@@ -1681,7 +1806,7 @@ macro_rules! impl_matrix {
 
             fn mul(self, rhs: &$name<B>) -> Self::Output {
                 crate::trace_dispatch!("realistic_blas_matrix", "op", "mul-owned-ref");
-                Self(multiply_arrays_rhs_ref(self.0, &rhs.0))
+                Self($mul_rhs_ref_fn(self.0, &rhs.0))
             }
         }
 
@@ -1690,7 +1815,7 @@ macro_rules! impl_matrix {
 
             fn mul(self, rhs: $name<B>) -> Self::Output {
                 crate::trace_dispatch!("realistic_blas_matrix", "op", "mul-ref-owned");
-                $name(multiply_arrays_ref(&self.0, &rhs.0))
+                $name($mul_ref_fn(&self.0, &rhs.0))
             }
         }
 
@@ -1807,6 +1932,9 @@ impl_matrix!(
     3,
     right_divide_matrix3,
     right_divide_matrix3_ref,
+    matrix_power3,
+    multiply_arrays3,
+    multiply_arrays3_rhs_ref,
     multiply_arrays3_ref,
     right_divide_matrix3_checked,
     right_divide_matrix3_checked_with_abort
@@ -1817,6 +1945,9 @@ impl_matrix!(
     4,
     right_divide_matrix4,
     right_divide_matrix4_ref,
+    matrix_power4,
+    multiply_arrays4,
+    multiply_arrays4_rhs_ref,
     multiply_arrays4_ref,
     right_divide_matrix4_checked,
     right_divide_matrix4_checked_with_abort

@@ -24,6 +24,14 @@ fn matrix3_inverse_and_power() {
 }
 
 #[test]
+fn matrix3_negative_power_matches_repeated_inverse_product() {
+    let matrix = Matrix3::new([[r(2), r(1), r(0)], [r(0), r(3), r(1)], [r(1), r(0), r(2)]]);
+    let inverse = matrix.clone().inverse().unwrap();
+
+    assert_eq!(matrix.powi(-2).unwrap(), inverse.clone() * inverse);
+}
+
+#[test]
 fn matrix4_identity_and_vector_multiply() {
     let vector = Vector4::new([r(1), r(2), r(3), r(4)]);
     assert_eq!(Matrix4::identity() * vector.clone(), vector);
@@ -41,6 +49,61 @@ fn matrix4_inverse_and_determinant_handle_general_integer_matrix() {
     assert_eq!(matrix.determinant(), r(-198));
     assert_eq!(
         matrix.clone() * matrix.inverse().unwrap(),
+        Matrix4::identity()
+    );
+}
+
+#[test]
+fn matrix4_negative_power_matches_repeated_inverse_product() {
+    let matrix = Matrix4::new([
+        [r(2), r(0), r(1), r(0)],
+        [r(1), r(3), r(0), r(1)],
+        [r(0), r(2), r(1), r(0)],
+        [r(1), r(0), r(0), r(2)],
+    ]);
+    let inverse = matrix.clone().inverse().unwrap();
+
+    assert_eq!(matrix.powi(-2).unwrap(), inverse.clone() * inverse);
+}
+
+#[cfg(feature = "hyperreal-backend")]
+#[test]
+fn targeted_fractional_matrix_forms_round_trip_exactly() {
+    let dyadic3 = Matrix3::new([
+        [frac(9, 8), frac(3, 16), frac(-5, 8)],
+        [frac(7, 4), frac(-11, 8), frac(13, 16)],
+        [frac(5, 8), frac(17, 16), frac(19, 8)],
+    ]);
+    let equal_den4 = Matrix4::new([
+        [frac(11, 10), frac(2, 10), frac(3, 10), frac(4, 10)],
+        [frac(5, 10), frac(17, 10), frac(7, 10), frac(-8, 10)],
+        [frac(9, 10), frac(-10, 10), frac(23, 10), frac(12, 10)],
+        [frac(-13, 10), frac(14, 10), frac(-15, 10), frac(19, 10)],
+    ]);
+    let mixed_prime4 = Matrix4::new([
+        [frac(7, 3), frac(-5, 7), frac(11, 13), frac(13, 5)],
+        [frac(17, 11), frac(-19, 17), frac(23, 19), frac(-29, 23)],
+        [frac(31, 29), frac(37, 31), frac(-41, 37), frac(43, 41)],
+        [frac(-47, 43), frac(53, 47), frac(59, 53), frac(61, 59)],
+    ]);
+
+    let dyadic3_inverse = dyadic3.clone().inverse().unwrap();
+    assert_eq!(dyadic3.clone() * dyadic3_inverse, Matrix3::identity());
+    assert_eq!(
+        dyadic3.clone().powi(-2).unwrap(),
+        dyadic3.clone().inverse().unwrap() * dyadic3.inverse().unwrap()
+    );
+
+    let equal_den4_inverse = equal_den4.clone().inverse().unwrap();
+    assert_eq!(equal_den4.clone() * equal_den4_inverse, Matrix4::identity());
+    assert_eq!(
+        equal_den4.clone().powi(-2).unwrap(),
+        equal_den4.clone().inverse().unwrap() * equal_den4.inverse().unwrap()
+    );
+
+    let mixed_prime4_inverse = mixed_prime4.clone().inverse().unwrap();
+    assert_eq!(
+        mixed_prime4.clone() * mixed_prime4_inverse,
         Matrix4::identity()
     );
 }

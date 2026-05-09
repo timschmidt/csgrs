@@ -283,6 +283,18 @@ impl<B: Backend> Scalar<B> {
         ))
     }
 
+    #[inline]
+    pub(crate) fn signed_product_sum2<const TERMS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Self; 2]; TERMS],
+    ) -> Self {
+        crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "signed-product-sum2");
+        Self(B::Repr::signed_product_sum2(
+            positive_terms,
+            terms.map(|term| [&term[0].0, &term[1].0]),
+        ))
+    }
+
     /// Raises this scalar to a scalar exponent.
     pub fn pow(self, exponent: Self) -> BlasResult<Self> {
         crate::trace_dispatch!("realistic_blas", "scalar_method", "pow");

@@ -8,22 +8,26 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 
 | Matrix | Kernel | Input | Calls | Scalar +/call | Scalar -/call | Scalar */call | Scalar div/call | Scalar inv/call | Rational reductions/call | GCDs/call | Temps/ctors/call | Peak operand bits | Common factors/call |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| `mat3` | `div_matrix` | `from-f64` | 4 | 20 | 9 | 57 | 0 | 1 | 74.75 | 36.50 | 193.25 | 323 | none=62.75, pow2=33, <=8b=0, <=64b=0, >64b=5 |
+| `mat3` | `div_matrix` | `from-f64` | 4 | 20 | 0 | 39 | 0 | 1 | 26 | 9 | 69 | 323 | none=13, pow2=8, <=8b=0, <=64b=0, >64b=5 |
 | `mat3` | `div_matrix` | `rational` | 4 | 0 | 22.25 | 34.25 | 0 | 3 | 47.25 | 61.25 | 319.50 | 338 | none=22, pow2=6.250, <=8b=7.750, <=64b=22.50, >64b=8.500 |
-| `mat3` | `inverse_checked` | `from-f64` | 4 | 2 | 9 | 30 | 0 | 1 | 35.50 | 20 | 93.25 | 274 | none=30.25, pow2=11.75, <=8b=1, <=64b=0, >64b=3.500 |
-| `mat3` | `inverse_checked` | `rational` | 4 | 2 | 9 | 30 | 0 | 1 | 35.25 | 38.75 | 102.75 | 286 | none=20.75, pow2=7, <=8b=2.500, <=64b=9, >64b=7 |
-| `mat3` | `powi` | `from-f64` | 4 | 36 | 0 | 54 | 0 | 0 | 75.25 | 36 | 187.50 | 240 | none=82.50, pow2=28.75, <=8b=0, <=64b=0, >64b=0 |
-| `mat3` | `powi` | `rational` | 4 | 36 | 0 | 54 | 0 | 0 | 75 | 94.75 | 211.25 | 176 | none=58.75, pow2=21, <=8b=3.750, <=64b=15.25, >64b=12.25 |
-| `mat3` | `reciprocal` | `from-f64` | 4 | 2 | 9 | 30 | 0 | 1 | 35.50 | 20 | 93.25 | 274 | none=30.25, pow2=11.75, <=8b=1, <=64b=0, >64b=3.500 |
-| `mat3` | `reciprocal` | `rational` | 4 | 2 | 9 | 30 | 0 | 1 | 35.25 | 38.75 | 102.75 | 286 | none=20.75, pow2=7, <=8b=2.500, <=64b=9, >64b=7 |
-| `mat4` | `div_matrix` | `from-f64` | 4 | 68 | 29 | 158 | 0 | 1 | 197.50 | 98.75 | 564.25 | 332 | none=177.75, pow2=75.75, <=8b=2.500, <=64b=0.500, >64b=9.500 |
-| `mat4` | `div_matrix` | `rational` | 4 | 17 | 49.25 | 98 | 0 | 3.250 | 119 | 131.25 | 661.25 | 261 | none=97.50, pow2=8.250, <=8b=10.75, <=64b=41.75, >64b=12.75 |
-| `mat4` | `inverse_checked` | `from-f64` | 4 | 20 | 29 | 94 | 0 | 1 | 109.25 | 56.75 | 312.25 | 305 | none=103.50, pow2=27.50, <=8b=2.750, <=64b=1, >64b=6.500 |
-| `mat4` | `inverse_checked` | `rational` | 4 | 20 | 29 | 94 | 0 | 1 | 107.25 | 102 | 323.75 | 293 | none=92, pow2=9.500, <=8b=8.500, <=64b=23.50, >64b=6.750 |
-| `mat4` | `powi` | `from-f64` | 4 | 96 | 0 | 128 | 0 | 0 | 161.75 | 90.25 | 462.25 | 240 | none=198.50, pow2=47.75, <=8b=0, <=64b=0, >64b=0 |
-| `mat4` | `powi` | `rational` | 4 | 96 | 0 | 128 | 0 | 0 | 161 | 179.25 | 487.50 | 184 | none=173.25, pow2=21.75, <=8b=11.25, <=64b=32.50, >64b=6.750 |
-| `mat4` | `reciprocal` | `from-f64` | 4 | 20 | 29 | 94 | 0 | 1 | 109.25 | 56.75 | 312.25 | 305 | none=103.50, pow2=27.50, <=8b=2.750, <=64b=1, >64b=6.500 |
-| `mat4` | `reciprocal` | `rational` | 4 | 20 | 29 | 94 | 0 | 1 | 107.25 | 102 | 323.75 | 293 | none=92, pow2=9.500, <=8b=8.500, <=64b=23.50, >64b=6.750 |
+| `mat3` | `inverse_checked` | `from-f64` | 4 | 2 | 0 | 12 | 0 | 1 | 18.50 | 9 | 47.25 | 274 | none=9.250, pow2=4.750, <=8b=1, <=64b=0, >64b=3.500 |
+| `mat3` | `inverse_checked` | `rational` | 4 | 2 | 0 | 12 | 0 | 1 | 18.50 | 24 | 53.25 | 286 | none=8, pow2=4.500, <=8b=2.250, <=64b=5, >64b=5.750 |
+| `mat3` | `powi` | `from-f64` | 4 | 36 | 0 | 54 | 0 | 0 | 18 | 0 | 40.50 | 240 | none=13.50, pow2=4.500, <=8b=0, <=64b=0, >64b=0 |
+| `mat3` | `powi` | `rational` | 4 | 36 | 0 | 54 | 0 | 0 | 18 | 48 | 49 | 176 | none=19.50, pow2=8.250, <=8b=1.250, <=64b=11.50, >64b=8.750 |
+| `mat3` | `powi_negative` | `from-f64` | 4 | 20 | 0 | 39 | 0 | 1 | 27.50 | 31.25 | 66.50 | 328 | none=21.75, pow2=4.750, <=8b=2.250, <=64b=0, >64b=12 |
+| `mat3` | `powi_negative` | `rational` | 4 | 20 | 0 | 39 | 0 | 1 | 27.50 | 52.25 | 73.75 | 345 | none=21.25, pow2=5, <=8b=4.250, <=64b=5, >64b=18.25 |
+| `mat3` | `reciprocal` | `from-f64` | 4 | 2 | 0 | 12 | 0 | 1 | 18.50 | 9 | 47.25 | 274 | none=9.250, pow2=4.750, <=8b=1, <=64b=0, >64b=3.500 |
+| `mat3` | `reciprocal` | `rational` | 4 | 2 | 0 | 12 | 0 | 1 | 18.50 | 24 | 53.25 | 286 | none=8, pow2=4.500, <=8b=2.250, <=64b=5, >64b=5.750 |
+| `mat4` | `div_matrix` | `from-f64` | 4 | 48 | 0 | 80 | 0 | 1 | 54.75 | 16 | 144.25 | 332 | none=32.50, pow2=9.750, <=8b=2.500, <=64b=0.500, >64b=9.500 |
+| `mat4` | `div_matrix` | `rational` | 4 | 12 | 42 | 78.50 | 0 | 3.250 | 94.75 | 111 | 563.50 | 261 | none=56.50, pow2=8.250, <=8b=10.75, <=64b=41.75, >64b=12.75 |
+| `mat4` | `inverse_checked` | `from-f64` | 4 | 0 | 0 | 16 | 0 | 1 | 42.25 | 16 | 107.75 | 305 | none=24.50, pow2=7.500, <=8b=2.750, <=64b=1, >64b=6.500 |
+| `mat4` | `inverse_checked` | `rational` | 4 | 0 | 0 | 16 | 0 | 1 | 42.25 | 58.75 | 115.75 | 293 | none=31.25, pow2=6.500, <=8b=5.500, <=64b=19.50, >64b=6.750 |
+| `mat4` | `powi` | `from-f64` | 4 | 96 | 0 | 128 | 0 | 0 | 32 | 0 | 67.75 | 240 | none=28.25, pow2=3.750, <=8b=0, <=64b=0, >64b=0 |
+| `mat4` | `powi` | `rational` | 4 | 96 | 0 | 128 | 0 | 0 | 32 | 78.25 | 81 | 185 | none=37.25, pow2=7.500, <=8b=5, <=64b=31.50, >64b=6.750 |
+| `mat4` | `powi_negative` | `from-f64` | 4 | 48 | 0 | 80 | 0 | 1 | 58.25 | 68 | 146.25 | 345 | none=43.75, pow2=7.500, <=8b=12.25, <=64b=10, >64b=20.75 |
+| `mat4` | `powi_negative` | `rational` | 4 | 48 | 0 | 80 | 0 | 1 | 58.25 | 110.75 | 152 | 293 | none=52.75, pow2=6.500, <=8b=12.75, <=64b=28.50, >64b=21 |
+| `mat4` | `reciprocal` | `from-f64` | 4 | 0 | 0 | 16 | 0 | 1 | 42.25 | 16 | 107.75 | 305 | none=24.50, pow2=7.500, <=8b=2.750, <=64b=1, >64b=6.500 |
+| `mat4` | `reciprocal` | `rational` | 4 | 0 | 0 | 16 | 0 | 1 | 42.25 | 58.75 | 115.75 | 293 | none=31.25, pow2=6.500, <=8b=5.500, <=64b=19.50, >64b=6.750 |
 
 ## Dispatch Counts
 
@@ -304,7 +308,11 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/hyperreal-rational/mat3 div_scalar_ref` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 36 |
 | `borrowed_ops/hyperreal-rational/mat3 div_scalar_ref` | `realistic_blas_hyperreal_backend` | `query` | `definitely-zero` | 4 |
 | `borrowed_ops/hyperreal-rational/mat3 div_scalar_ref` | `realistic_blas_matrix` | `op` | `div-scalar-ref` | 4 |
-| `borrowed_ops/hyperreal-rational/mat3 mul refs` | `real` | `constructor` | `rational` | 180 |
+| `borrowed_ops/hyperreal-rational/mat3 mul refs` | `rational` | `dot_product` | `dyadic-shared-denominator` | 5 |
+| `borrowed_ops/hyperreal-rational/mat3 mul refs` | `rational` | `dot_product` | `equal-product-denominator` | 9 |
+| `borrowed_ops/hyperreal-rational/mat3 mul refs` | `rational` | `dot_product` | `lcm-shared-denominator` | 22 |
+| `borrowed_ops/hyperreal-rational/mat3 mul refs` | `real` | `constructor` | `rational` | 36 |
+| `borrowed_ops/hyperreal-rational/mat3 mul refs` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 36 |
 | `borrowed_ops/hyperreal-rational/mat3 mul refs` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 36 |
 | `borrowed_ops/hyperreal-rational/mat3 mul refs` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 36 |
 | `borrowed_ops/hyperreal-rational/mat3 mul refs` | `realistic_blas_matrix` | `helper` | `multiply3-ref-ref-specialized` | 4 |
@@ -317,7 +325,11 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/hyperreal-rational/mat3 sub refs` | `realistic_blas` | `scalar_op` | `sub-ref-ref` | 36 |
 | `borrowed_ops/hyperreal-rational/mat3 sub refs` | `realistic_blas_hyperreal_backend` | `op` | `sub-ref-ref` | 36 |
 | `borrowed_ops/hyperreal-rational/mat3 sub refs` | `realistic_blas_matrix` | `op` | `sub-ref-ref` | 4 |
-| `borrowed_ops/hyperreal-rational/mat3 transform_vec refs` | `real` | `constructor` | `rational` | 60 |
+| `borrowed_ops/hyperreal-rational/mat3 transform_vec refs` | `rational` | `dot_product` | `dyadic-shared-denominator` | 2 |
+| `borrowed_ops/hyperreal-rational/mat3 transform_vec refs` | `rational` | `dot_product` | `equal-product-denominator` | 6 |
+| `borrowed_ops/hyperreal-rational/mat3 transform_vec refs` | `rational` | `dot_product` | `lcm-shared-denominator` | 4 |
+| `borrowed_ops/hyperreal-rational/mat3 transform_vec refs` | `real` | `constructor` | `rational` | 12 |
+| `borrowed_ops/hyperreal-rational/mat3 transform_vec refs` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 12 |
 | `borrowed_ops/hyperreal-rational/mat3 transform_vec refs` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 12 |
 | `borrowed_ops/hyperreal-rational/mat3 transform_vec refs` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 12 |
 | `borrowed_ops/hyperreal-rational/mat3 transform_vec refs` | `realistic_blas_matrix` | `op` | `transform-vector-ref-ref` | 4 |
@@ -326,20 +338,23 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/hyperreal-rational/mat4 add refs` | `realistic_blas` | `scalar_op` | `add-ref-ref` | 64 |
 | `borrowed_ops/hyperreal-rational/mat4 add refs` | `realistic_blas_hyperreal_backend` | `op` | `add-ref-ref` | 64 |
 | `borrowed_ops/hyperreal-rational/mat4 add refs` | `realistic_blas_matrix` | `op` | `add-ref-ref` | 4 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `rational` | `dot_product` | `dyadic-shared-denominator` | 16 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `real` | `constructor` | `one` | 12 |
-| `borrowed_ops/hyperreal-rational/mat4 div refs` | `real` | `constructor` | `rational` | 632 |
-| `borrowed_ops/hyperreal-rational/mat4 div refs` | `real` | `constructor` | `zero` | 289 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `real` | `constructor` | `rational` | 440 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `real` | `constructor` | `zero` | 287 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `real` | `definitely_zero` | `rational-sign` | 79 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 16 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `real` | `zero_status` | `symbolic-nonzero-scale` | 12 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas` | `scalar_constructor` | `one` | 12 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas` | `scalar_constructor` | `zero` | 264 |
-| `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 82 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas` | `scalar_method` | `inverse-owned` | 13 |
-| `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas` | `scalar_op` | `add-owned-owned` | 18 |
-| `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 243 |
-| `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 197 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 168 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 168 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas` | `scalar_query` | `definitely-zero` | 66 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 45 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas` | `scalar_query` | `zero-status` | 12 |
@@ -347,19 +362,18 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas_hyperreal_backend` | `constructor` | `one` | 12 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas_hyperreal_backend` | `constructor` | `zero` | 264 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 13 |
-| `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 1 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 16 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 82 |
-| `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 243 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 168 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas_hyperreal_backend` | `query` | `definitely-zero` | 66 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas_hyperreal_backend` | `query` | `exact-dyadic-rational` | 45 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas_hyperreal_backend` | `query` | `zero-status` | 12 |
-| `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas_hyperreal_backend` | `trait_op` | `add-owned-owned` | 18 |
-| `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 197 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 168 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas_matrix` | `helper` | `matrix4-unscaled-adjugate-from-factors` | 1 |
-| `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas_matrix` | `helper` | `multiply-ref-owned-or-generic` | 1 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas_matrix` | `helper` | `multiply4-ref-ref-specialized` | 1 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas_matrix` | `helper` | `right-divide4-ref-gauss-jordan` | 3 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas_matrix` | `helper` | `right-divide4-ref-shared-adjugate` | 1 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `realistic_blas_matrix` | `op` | `div-ref-ref` | 4 |
@@ -373,7 +387,10 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/hyperreal-rational/mat4 div_scalar_ref` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 64 |
 | `borrowed_ops/hyperreal-rational/mat4 div_scalar_ref` | `realistic_blas_hyperreal_backend` | `query` | `definitely-zero` | 4 |
 | `borrowed_ops/hyperreal-rational/mat4 div_scalar_ref` | `realistic_blas_matrix` | `op` | `div-scalar-ref` | 4 |
-| `borrowed_ops/hyperreal-rational/mat4 mul refs` | `real` | `constructor` | `rational` | 448 |
+| `borrowed_ops/hyperreal-rational/mat4 mul refs` | `rational` | `dot_product` | `dyadic-shared-denominator` | 23 |
+| `borrowed_ops/hyperreal-rational/mat4 mul refs` | `rational` | `dot_product` | `lcm-shared-denominator` | 41 |
+| `borrowed_ops/hyperreal-rational/mat4 mul refs` | `real` | `constructor` | `rational` | 64 |
+| `borrowed_ops/hyperreal-rational/mat4 mul refs` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 64 |
 | `borrowed_ops/hyperreal-rational/mat4 mul refs` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 64 |
 | `borrowed_ops/hyperreal-rational/mat4 mul refs` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 64 |
 | `borrowed_ops/hyperreal-rational/mat4 mul refs` | `realistic_blas_matrix` | `helper` | `multiply4-ref-ref-specialized` | 4 |
@@ -387,7 +404,11 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/hyperreal-rational/mat4 sub refs` | `realistic_blas` | `scalar_op` | `sub-ref-ref` | 64 |
 | `borrowed_ops/hyperreal-rational/mat4 sub refs` | `realistic_blas_hyperreal_backend` | `op` | `sub-ref-ref` | 64 |
 | `borrowed_ops/hyperreal-rational/mat4 sub refs` | `realistic_blas_matrix` | `op` | `sub-ref-ref` | 4 |
-| `borrowed_ops/hyperreal-rational/mat4 transform_vec refs` | `real` | `constructor` | `rational` | 112 |
+| `borrowed_ops/hyperreal-rational/mat4 transform_vec refs` | `rational` | `dot_product` | `dyadic-shared-denominator` | 6 |
+| `borrowed_ops/hyperreal-rational/mat4 transform_vec refs` | `rational` | `dot_product` | `equal-product-denominator` | 3 |
+| `borrowed_ops/hyperreal-rational/mat4 transform_vec refs` | `rational` | `dot_product` | `lcm-shared-denominator` | 7 |
+| `borrowed_ops/hyperreal-rational/mat4 transform_vec refs` | `real` | `constructor` | `rational` | 16 |
+| `borrowed_ops/hyperreal-rational/mat4 transform_vec refs` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 16 |
 | `borrowed_ops/hyperreal-rational/mat4 transform_vec refs` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
 | `borrowed_ops/hyperreal-rational/mat4 transform_vec refs` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 16 |
 | `borrowed_ops/hyperreal-rational/mat4 transform_vec refs` | `realistic_blas_matrix` | `op` | `transform-vector-ref-ref` | 4 |
@@ -493,23 +514,24 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/hyperreal/mat3 add refs` | `realistic_blas` | `scalar_op` | `add-ref-ref` | 36 |
 | `borrowed_ops/hyperreal/mat3 add refs` | `realistic_blas_hyperreal_backend` | `op` | `add-ref-ref` | 36 |
 | `borrowed_ops/hyperreal/mat3 add refs` | `realistic_blas_matrix` | `op` | `add-ref-ref` | 4 |
-| `borrowed_ops/hyperreal/mat3 div refs` | `real` | `constructor` | `rational` | 334 |
-| `borrowed_ops/hyperreal/mat3 div refs` | `real` | `constructor` | `zero` | 10 |
+| `borrowed_ops/hyperreal/mat3 div refs` | `rational` | `dot_product` | `dyadic-shared-denominator` | 40 |
+| `borrowed_ops/hyperreal/mat3 div refs` | `rational` | `product_sum` | `dyadic-shared-denominator` | 36 |
+| `borrowed_ops/hyperreal/mat3 div refs` | `real` | `constructor` | `rational` | 112 |
 | `borrowed_ops/hyperreal/mat3 div refs` | `real` | `definitely_zero` | `rational-sign` | 4 |
+| `borrowed_ops/hyperreal/mat3 div refs` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 40 |
+| `borrowed_ops/hyperreal/mat3 div refs` | `real` | `product_sum` | `exact-rational-shared-denom` | 36 |
 | `borrowed_ops/hyperreal/mat3 div refs` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 40 |
 | `borrowed_ops/hyperreal/mat3 div refs` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 36 |
+| `borrowed_ops/hyperreal/mat3 div refs` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 36 |
 | `borrowed_ops/hyperreal/mat3 div refs` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
-| `borrowed_ops/hyperreal/mat3 div refs` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 72 |
-| `borrowed_ops/hyperreal/mat3 div refs` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 36 |
 | `borrowed_ops/hyperreal/mat3 div refs` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 72 |
 | `borrowed_ops/hyperreal/mat3 div refs` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
 | `borrowed_ops/hyperreal/mat3 div refs` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 40 |
 | `borrowed_ops/hyperreal/mat3 div refs` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 36 |
-| `borrowed_ops/hyperreal/mat3 div refs` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 72 |
+| `borrowed_ops/hyperreal/mat3 div refs` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 36 |
 | `borrowed_ops/hyperreal/mat3 div refs` | `realistic_blas_hyperreal_backend` | `query` | `exact-dyadic-rational` | 72 |
-| `borrowed_ops/hyperreal/mat3 div refs` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 36 |
 | `borrowed_ops/hyperreal/mat3 div refs` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 4 |
-| `borrowed_ops/hyperreal/mat3 div refs` | `realistic_blas_matrix` | `helper` | `multiply-ref-owned-or-generic` | 4 |
+| `borrowed_ops/hyperreal/mat3 div refs` | `realistic_blas_matrix` | `helper` | `multiply3-ref-ref-specialized` | 4 |
 | `borrowed_ops/hyperreal/mat3 div refs` | `realistic_blas_matrix` | `helper` | `right-divide3-ref-shared-adjugate` | 4 |
 | `borrowed_ops/hyperreal/mat3 div refs` | `realistic_blas_matrix` | `op` | `div-ref-ref` | 4 |
 | `borrowed_ops/hyperreal/mat3 div_scalar_ref` | `real` | `constructor` | `rational` | 40 |
@@ -522,7 +544,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/hyperreal/mat3 div_scalar_ref` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 36 |
 | `borrowed_ops/hyperreal/mat3 div_scalar_ref` | `realistic_blas_hyperreal_backend` | `query` | `definitely-zero` | 4 |
 | `borrowed_ops/hyperreal/mat3 div_scalar_ref` | `realistic_blas_matrix` | `op` | `div-scalar-ref` | 4 |
-| `borrowed_ops/hyperreal/mat3 mul refs` | `real` | `constructor` | `rational` | 180 |
+| `borrowed_ops/hyperreal/mat3 mul refs` | `rational` | `dot_product` | `dyadic-shared-denominator` | 36 |
+| `borrowed_ops/hyperreal/mat3 mul refs` | `real` | `constructor` | `rational` | 36 |
+| `borrowed_ops/hyperreal/mat3 mul refs` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 36 |
 | `borrowed_ops/hyperreal/mat3 mul refs` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 36 |
 | `borrowed_ops/hyperreal/mat3 mul refs` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 36 |
 | `borrowed_ops/hyperreal/mat3 mul refs` | `realistic_blas_matrix` | `helper` | `multiply3-ref-ref-specialized` | 4 |
@@ -535,7 +559,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/hyperreal/mat3 sub refs` | `realistic_blas` | `scalar_op` | `sub-ref-ref` | 36 |
 | `borrowed_ops/hyperreal/mat3 sub refs` | `realistic_blas_hyperreal_backend` | `op` | `sub-ref-ref` | 36 |
 | `borrowed_ops/hyperreal/mat3 sub refs` | `realistic_blas_matrix` | `op` | `sub-ref-ref` | 4 |
-| `borrowed_ops/hyperreal/mat3 transform_vec refs` | `real` | `constructor` | `rational` | 60 |
+| `borrowed_ops/hyperreal/mat3 transform_vec refs` | `rational` | `dot_product` | `dyadic-shared-denominator` | 12 |
+| `borrowed_ops/hyperreal/mat3 transform_vec refs` | `real` | `constructor` | `rational` | 12 |
+| `borrowed_ops/hyperreal/mat3 transform_vec refs` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 12 |
 | `borrowed_ops/hyperreal/mat3 transform_vec refs` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 12 |
 | `borrowed_ops/hyperreal/mat3 transform_vec refs` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 12 |
 | `borrowed_ops/hyperreal/mat3 transform_vec refs` | `realistic_blas_matrix` | `op` | `transform-vector-ref-ref` | 4 |
@@ -544,29 +570,26 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/hyperreal/mat4 add refs` | `realistic_blas` | `scalar_op` | `add-ref-ref` | 64 |
 | `borrowed_ops/hyperreal/mat4 add refs` | `realistic_blas_hyperreal_backend` | `op` | `add-ref-ref` | 64 |
 | `borrowed_ops/hyperreal/mat4 add refs` | `realistic_blas_matrix` | `op` | `add-ref-ref` | 4 |
-| `borrowed_ops/hyperreal/mat4 div refs` | `real` | `constructor` | `rational` | 982 |
-| `borrowed_ops/hyperreal/mat4 div refs` | `real` | `constructor` | `zero` | 38 |
+| `borrowed_ops/hyperreal/mat4 div refs` | `rational` | `dot_product` | `dyadic-shared-denominator` | 64 |
+| `borrowed_ops/hyperreal/mat4 div refs` | `rational` | `product_sum` | `dyadic-shared-denominator` | 116 |
+| `borrowed_ops/hyperreal/mat4 div refs` | `real` | `constructor` | `rational` | 244 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `real` | `definitely_zero` | `rational-sign` | 4 |
-| `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
+| `borrowed_ops/hyperreal/mat4 div refs` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 64 |
+| `borrowed_ops/hyperreal/mat4 div refs` | `real` | `product_sum` | `exact-rational-shared-denom` | 116 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 64 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 64 |
+| `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 116 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
-| `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas` | `scalar_op` | `add-owned-owned` | 72 |
-| `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 300 |
-| `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 116 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 128 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
-| `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 4 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 64 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 64 |
-| `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 300 |
+| `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 116 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas_hyperreal_backend` | `query` | `exact-dyadic-rational` | 128 |
-| `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas_hyperreal_backend` | `trait_op` | `add-owned-owned` | 72 |
-| `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 116 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 4 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 4 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas_matrix` | `helper` | `matrix4-unscaled-adjugate-from-factors` | 4 |
-| `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas_matrix` | `helper` | `multiply-ref-owned-or-generic` | 4 |
+| `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas_matrix` | `helper` | `multiply4-ref-ref-specialized` | 4 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas_matrix` | `helper` | `right-divide4-ref-shared-adjugate` | 4 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `realistic_blas_matrix` | `op` | `div-ref-ref` | 4 |
 | `borrowed_ops/hyperreal/mat4 div_scalar_ref` | `real` | `constructor` | `rational` | 68 |
@@ -579,7 +602,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/hyperreal/mat4 div_scalar_ref` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 64 |
 | `borrowed_ops/hyperreal/mat4 div_scalar_ref` | `realistic_blas_hyperreal_backend` | `query` | `definitely-zero` | 4 |
 | `borrowed_ops/hyperreal/mat4 div_scalar_ref` | `realistic_blas_matrix` | `op` | `div-scalar-ref` | 4 |
-| `borrowed_ops/hyperreal/mat4 mul refs` | `real` | `constructor` | `rational` | 448 |
+| `borrowed_ops/hyperreal/mat4 mul refs` | `rational` | `dot_product` | `dyadic-shared-denominator` | 64 |
+| `borrowed_ops/hyperreal/mat4 mul refs` | `real` | `constructor` | `rational` | 64 |
+| `borrowed_ops/hyperreal/mat4 mul refs` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 64 |
 | `borrowed_ops/hyperreal/mat4 mul refs` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 64 |
 | `borrowed_ops/hyperreal/mat4 mul refs` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 64 |
 | `borrowed_ops/hyperreal/mat4 mul refs` | `realistic_blas_matrix` | `helper` | `multiply4-ref-ref-specialized` | 4 |
@@ -593,7 +618,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/hyperreal/mat4 sub refs` | `realistic_blas` | `scalar_op` | `sub-ref-ref` | 64 |
 | `borrowed_ops/hyperreal/mat4 sub refs` | `realistic_blas_hyperreal_backend` | `op` | `sub-ref-ref` | 64 |
 | `borrowed_ops/hyperreal/mat4 sub refs` | `realistic_blas_matrix` | `op` | `sub-ref-ref` | 4 |
-| `borrowed_ops/hyperreal/mat4 transform_vec refs` | `real` | `constructor` | `rational` | 112 |
+| `borrowed_ops/hyperreal/mat4 transform_vec refs` | `rational` | `dot_product` | `dyadic-shared-denominator` | 16 |
+| `borrowed_ops/hyperreal/mat4 transform_vec refs` | `real` | `constructor` | `rational` | 16 |
+| `borrowed_ops/hyperreal/mat4 transform_vec refs` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 16 |
 | `borrowed_ops/hyperreal/mat4 transform_vec refs` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
 | `borrowed_ops/hyperreal/mat4 transform_vec refs` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 16 |
 | `borrowed_ops/hyperreal/mat4 transform_vec refs` | `realistic_blas_matrix` | `op` | `transform-vector-ref-ref` | 4 |
@@ -687,75 +714,93 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix3/approx/mat3 inverse` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 4 |
 | `matrix3/approx/mat3 mul mat3` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 36 |
 | `matrix3/approx/mat3 mul mat3` | `realistic_blas_approx_backend` | `op` | `dot3-specialized` | 36 |
-| `matrix3/approx/mat3 mul mat3` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 4 |
+| `matrix3/approx/mat3 mul mat3` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 4 |
 | `matrix3/approx/mat3 mul mat3` | `realistic_blas_matrix` | `op` | `mul-owned-owned` | 4 |
 | `matrix3/approx/mat3 transform vec3` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 12 |
 | `matrix3/approx/mat3 transform vec3` | `realistic_blas_approx_backend` | `op` | `dot3-specialized` | 12 |
 | `matrix3/approx/mat3 transform vec3` | `realistic_blas_matrix` | `op` | `transform-vector-owned-owned` | 4 |
-| `matrix3/hyperreal-rational/mat3 determinant` | `real` | `constructor` | `rational` | 14 |
+| `matrix3/hyperreal-rational/mat3 determinant` | `rational` | `dot_product` | `lcm-shared-denominator` | 1 |
+| `matrix3/hyperreal-rational/mat3 determinant` | `rational` | `product_sum` | `equal-product-denominator` | 1 |
+| `matrix3/hyperreal-rational/mat3 determinant` | `rational` | `product_sum` | `lcm-shared-denominator` | 2 |
+| `matrix3/hyperreal-rational/mat3 determinant` | `real` | `constructor` | `rational` | 4 |
+| `matrix3/hyperreal-rational/mat3 determinant` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 1 |
+| `matrix3/hyperreal-rational/mat3 determinant` | `real` | `product_sum` | `exact-rational-shared-denom` | 3 |
 | `matrix3/hyperreal-rational/mat3 determinant` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
-| `matrix3/hyperreal-rational/mat3 determinant` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 6 |
-| `matrix3/hyperreal-rational/mat3 determinant` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 3 |
+| `matrix3/hyperreal-rational/mat3 determinant` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 3 |
 | `matrix3/hyperreal-rational/mat3 determinant` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 1 |
-| `matrix3/hyperreal-rational/mat3 determinant` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 6 |
-| `matrix3/hyperreal-rational/mat3 determinant` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 3 |
+| `matrix3/hyperreal-rational/mat3 determinant` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 3 |
 | `matrix3/hyperreal-rational/mat3 determinant` | `realistic_blas_matrix` | `helper` | `determinant3` | 1 |
 | `matrix3/hyperreal-rational/mat3 determinant` | `realistic_blas_matrix` | `method` | `matrix3-determinant` | 1 |
-| `matrix3/hyperreal-rational/mat3 inverse` | `real` | `constructor` | `rational` | 41 |
+| `matrix3/hyperreal-rational/mat3 inverse` | `rational` | `dot_product` | `lcm-shared-denominator` | 1 |
+| `matrix3/hyperreal-rational/mat3 inverse` | `rational` | `product_sum` | `equal-product-denominator` | 2 |
+| `matrix3/hyperreal-rational/mat3 inverse` | `rational` | `product_sum` | `lcm-shared-denominator` | 7 |
+| `matrix3/hyperreal-rational/mat3 inverse` | `real` | `constructor` | `rational` | 19 |
 | `matrix3/hyperreal-rational/mat3 inverse` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix3/hyperreal-rational/mat3 inverse` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 1 |
+| `matrix3/hyperreal-rational/mat3 inverse` | `real` | `product_sum` | `exact-rational-shared-denom` | 9 |
 | `matrix3/hyperreal-rational/mat3 inverse` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
 | `matrix3/hyperreal-rational/mat3 inverse` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix3/hyperreal-rational/mat3 inverse` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 9 |
 | `matrix3/hyperreal-rational/mat3 inverse` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
-| `matrix3/hyperreal-rational/mat3 inverse` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 18 |
-| `matrix3/hyperreal-rational/mat3 inverse` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 9 |
 | `matrix3/hyperreal-rational/mat3 inverse` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
 | `matrix3/hyperreal-rational/mat3 inverse` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 1 |
 | `matrix3/hyperreal-rational/mat3 inverse` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 9 |
-| `matrix3/hyperreal-rational/mat3 inverse` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 18 |
-| `matrix3/hyperreal-rational/mat3 inverse` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 9 |
+| `matrix3/hyperreal-rational/mat3 inverse` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 9 |
 | `matrix3/hyperreal-rational/mat3 inverse` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
 | `matrix3/hyperreal-rational/mat3 inverse` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
 | `matrix3/hyperreal-rational/mat3 inverse` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
-| `matrix3/hyperreal-rational/mat3 mul mat3` | `real` | `constructor` | `rational` | 45 |
+| `matrix3/hyperreal-rational/mat3 mul mat3` | `rational` | `dot_product` | `equal-product-denominator` | 1 |
+| `matrix3/hyperreal-rational/mat3 mul mat3` | `rational` | `dot_product` | `lcm-shared-denominator` | 8 |
+| `matrix3/hyperreal-rational/mat3 mul mat3` | `real` | `constructor` | `rational` | 9 |
+| `matrix3/hyperreal-rational/mat3 mul mat3` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 9 |
 | `matrix3/hyperreal-rational/mat3 mul mat3` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 9 |
 | `matrix3/hyperreal-rational/mat3 mul mat3` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 9 |
-| `matrix3/hyperreal-rational/mat3 mul mat3` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 1 |
+| `matrix3/hyperreal-rational/mat3 mul mat3` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 1 |
 | `matrix3/hyperreal-rational/mat3 mul mat3` | `realistic_blas_matrix` | `op` | `mul-owned-owned` | 1 |
-| `matrix3/hyperreal-rational/mat3 transform vec3` | `real` | `constructor` | `rational` | 15 |
+| `matrix3/hyperreal-rational/mat3 transform vec3` | `rational` | `dot_product` | `lcm-shared-denominator` | 3 |
+| `matrix3/hyperreal-rational/mat3 transform vec3` | `real` | `constructor` | `rational` | 3 |
+| `matrix3/hyperreal-rational/mat3 transform vec3` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 3 |
 | `matrix3/hyperreal-rational/mat3 transform vec3` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 3 |
 | `matrix3/hyperreal-rational/mat3 transform vec3` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 3 |
 | `matrix3/hyperreal-rational/mat3 transform vec3` | `realistic_blas_matrix` | `op` | `transform-vector-owned-owned` | 1 |
-| `matrix3/hyperreal/mat3 determinant` | `real` | `constructor` | `rational` | 56 |
+| `matrix3/hyperreal/mat3 determinant` | `rational` | `dot_product` | `dyadic-shared-denominator` | 4 |
+| `matrix3/hyperreal/mat3 determinant` | `rational` | `product_sum` | `dyadic-shared-denominator` | 12 |
+| `matrix3/hyperreal/mat3 determinant` | `real` | `constructor` | `rational` | 16 |
+| `matrix3/hyperreal/mat3 determinant` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 4 |
+| `matrix3/hyperreal/mat3 determinant` | `real` | `product_sum` | `exact-rational-shared-denom` | 12 |
 | `matrix3/hyperreal/mat3 determinant` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
-| `matrix3/hyperreal/mat3 determinant` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 24 |
-| `matrix3/hyperreal/mat3 determinant` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 12 |
+| `matrix3/hyperreal/mat3 determinant` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 12 |
 | `matrix3/hyperreal/mat3 determinant` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 4 |
-| `matrix3/hyperreal/mat3 determinant` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 24 |
-| `matrix3/hyperreal/mat3 determinant` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 12 |
+| `matrix3/hyperreal/mat3 determinant` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 12 |
 | `matrix3/hyperreal/mat3 determinant` | `realistic_blas_matrix` | `helper` | `determinant3` | 4 |
 | `matrix3/hyperreal/mat3 determinant` | `realistic_blas_matrix` | `method` | `matrix3-determinant` | 4 |
-| `matrix3/hyperreal/mat3 inverse` | `real` | `constructor` | `rational` | 162 |
-| `matrix3/hyperreal/mat3 inverse` | `real` | `constructor` | `zero` | 2 |
+| `matrix3/hyperreal/mat3 inverse` | `rational` | `dot_product` | `dyadic-shared-denominator` | 4 |
+| `matrix3/hyperreal/mat3 inverse` | `rational` | `product_sum` | `dyadic-shared-denominator` | 36 |
+| `matrix3/hyperreal/mat3 inverse` | `real` | `constructor` | `rational` | 76 |
 | `matrix3/hyperreal/mat3 inverse` | `real` | `definitely_zero` | `rational-sign` | 4 |
+| `matrix3/hyperreal/mat3 inverse` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 4 |
+| `matrix3/hyperreal/mat3 inverse` | `real` | `product_sum` | `exact-rational-shared-denom` | 36 |
 | `matrix3/hyperreal/mat3 inverse` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
 | `matrix3/hyperreal/mat3 inverse` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 36 |
+| `matrix3/hyperreal/mat3 inverse` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 36 |
 | `matrix3/hyperreal/mat3 inverse` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
-| `matrix3/hyperreal/mat3 inverse` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 72 |
-| `matrix3/hyperreal/mat3 inverse` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 36 |
 | `matrix3/hyperreal/mat3 inverse` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
 | `matrix3/hyperreal/mat3 inverse` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix3/hyperreal/mat3 inverse` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 36 |
-| `matrix3/hyperreal/mat3 inverse` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 72 |
-| `matrix3/hyperreal/mat3 inverse` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 36 |
+| `matrix3/hyperreal/mat3 inverse` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 36 |
 | `matrix3/hyperreal/mat3 inverse` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 4 |
 | `matrix3/hyperreal/mat3 inverse` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 4 |
 | `matrix3/hyperreal/mat3 inverse` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 4 |
-| `matrix3/hyperreal/mat3 mul mat3` | `real` | `constructor` | `rational` | 180 |
+| `matrix3/hyperreal/mat3 mul mat3` | `rational` | `dot_product` | `dyadic-shared-denominator` | 36 |
+| `matrix3/hyperreal/mat3 mul mat3` | `real` | `constructor` | `rational` | 36 |
+| `matrix3/hyperreal/mat3 mul mat3` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 36 |
 | `matrix3/hyperreal/mat3 mul mat3` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 36 |
 | `matrix3/hyperreal/mat3 mul mat3` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 36 |
-| `matrix3/hyperreal/mat3 mul mat3` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 4 |
+| `matrix3/hyperreal/mat3 mul mat3` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 4 |
 | `matrix3/hyperreal/mat3 mul mat3` | `realistic_blas_matrix` | `op` | `mul-owned-owned` | 4 |
-| `matrix3/hyperreal/mat3 transform vec3` | `real` | `constructor` | `rational` | 60 |
+| `matrix3/hyperreal/mat3 transform vec3` | `rational` | `dot_product` | `dyadic-shared-denominator` | 12 |
+| `matrix3/hyperreal/mat3 transform vec3` | `real` | `constructor` | `rational` | 12 |
+| `matrix3/hyperreal/mat3 transform vec3` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 12 |
 | `matrix3/hyperreal/mat3 transform vec3` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 12 |
 | `matrix3/hyperreal/mat3 transform vec3` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 12 |
 | `matrix3/hyperreal/mat3 transform vec3` | `realistic_blas_matrix` | `op` | `transform-vector-owned-owned` | 4 |
@@ -794,96 +839,1576 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix4/approx/mat4 inverse` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 4 |
 | `matrix4/approx/mat4 mul mat4` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 64 |
 | `matrix4/approx/mat4 mul mat4` | `realistic_blas_approx_backend` | `op` | `dot4-specialized` | 64 |
-| `matrix4/approx/mat4 mul mat4` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 4 |
+| `matrix4/approx/mat4 mul mat4` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 4 |
 | `matrix4/approx/mat4 mul mat4` | `realistic_blas_matrix` | `op` | `mul-owned-owned` | 4 |
 | `matrix4/approx/mat4 transform vec4` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
 | `matrix4/approx/mat4 transform vec4` | `realistic_blas_approx_backend` | `op` | `dot4-specialized` | 16 |
 | `matrix4/approx/mat4 transform vec4` | `realistic_blas_matrix` | `op` | `transform-vector-owned-owned` | 4 |
-| `matrix4/hyperreal-rational/mat4 determinant` | `real` | `constructor` | `rational` | 46 |
-| `matrix4/hyperreal-rational/mat4 determinant` | `real` | `constructor` | `zero` | 1 |
-| `matrix4/hyperreal-rational/mat4 determinant` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
-| `matrix4/hyperreal-rational/mat4 determinant` | `realistic_blas` | `scalar_op` | `add-owned-owned` | 2 |
-| `matrix4/hyperreal-rational/mat4 determinant` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 27 |
-| `matrix4/hyperreal-rational/mat4 determinant` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 13 |
-| `matrix4/hyperreal-rational/mat4 determinant` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 1 |
-| `matrix4/hyperreal-rational/mat4 determinant` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 27 |
-| `matrix4/hyperreal-rational/mat4 determinant` | `realistic_blas_hyperreal_backend` | `trait_op` | `add-owned-owned` | 2 |
-| `matrix4/hyperreal-rational/mat4 determinant` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 13 |
+| `matrix4/hyperreal-rational/mat4 determinant` | `rational` | `product_sum` | `dyadic-shared-denominator` | 13 |
+| `matrix4/hyperreal-rational/mat4 determinant` | `real` | `constructor` | `rational` | 13 |
+| `matrix4/hyperreal-rational/mat4 determinant` | `real` | `product_sum` | `exact-rational-shared-denom` | 13 |
+| `matrix4/hyperreal-rational/mat4 determinant` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 13 |
+| `matrix4/hyperreal-rational/mat4 determinant` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 13 |
 | `matrix4/hyperreal-rational/mat4 determinant` | `realistic_blas_matrix` | `helper` | `determinant4` | 1 |
 | `matrix4/hyperreal-rational/mat4 determinant` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
 | `matrix4/hyperreal-rational/mat4 determinant` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
 | `matrix4/hyperreal-rational/mat4 determinant` | `realistic_blas_matrix` | `method` | `matrix4-determinant` | 1 |
-| `matrix4/hyperreal-rational/mat4 inverse` | `real` | `constructor` | `rational` | 142 |
-| `matrix4/hyperreal-rational/mat4 inverse` | `real` | `constructor` | `zero` | 1 |
+| `matrix4/hyperreal-rational/mat4 inverse` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
+| `matrix4/hyperreal-rational/mat4 inverse` | `real` | `constructor` | `rational` | 45 |
 | `matrix4/hyperreal-rational/mat4 inverse` | `real` | `definitely_zero` | `rational-sign` | 1 |
-| `matrix4/hyperreal-rational/mat4 inverse` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
+| `matrix4/hyperreal-rational/mat4 inverse` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
 | `matrix4/hyperreal-rational/mat4 inverse` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix4/hyperreal-rational/mat4 inverse` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
 | `matrix4/hyperreal-rational/mat4 inverse` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
-| `matrix4/hyperreal-rational/mat4 inverse` | `realistic_blas` | `scalar_op` | `add-owned-owned` | 18 |
-| `matrix4/hyperreal-rational/mat4 inverse` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 75 |
-| `matrix4/hyperreal-rational/mat4 inverse` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 29 |
 | `matrix4/hyperreal-rational/mat4 inverse` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
-| `matrix4/hyperreal-rational/mat4 inverse` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 1 |
 | `matrix4/hyperreal-rational/mat4 inverse` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
-| `matrix4/hyperreal-rational/mat4 inverse` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 75 |
-| `matrix4/hyperreal-rational/mat4 inverse` | `realistic_blas_hyperreal_backend` | `trait_op` | `add-owned-owned` | 18 |
-| `matrix4/hyperreal-rational/mat4 inverse` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 29 |
+| `matrix4/hyperreal-rational/mat4 inverse` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
 | `matrix4/hyperreal-rational/mat4 inverse` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
 | `matrix4/hyperreal-rational/mat4 inverse` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
 | `matrix4/hyperreal-rational/mat4 inverse` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
-| `matrix4/hyperreal-rational/mat4 mul mat4` | `real` | `constructor` | `rational` | 112 |
+| `matrix4/hyperreal-rational/mat4 mul mat4` | `rational` | `dot_product` | `dyadic-shared-denominator` | 16 |
+| `matrix4/hyperreal-rational/mat4 mul mat4` | `real` | `constructor` | `rational` | 16 |
+| `matrix4/hyperreal-rational/mat4 mul mat4` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 16 |
 | `matrix4/hyperreal-rational/mat4 mul mat4` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
 | `matrix4/hyperreal-rational/mat4 mul mat4` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 16 |
-| `matrix4/hyperreal-rational/mat4 mul mat4` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 1 |
+| `matrix4/hyperreal-rational/mat4 mul mat4` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 1 |
 | `matrix4/hyperreal-rational/mat4 mul mat4` | `realistic_blas_matrix` | `op` | `mul-owned-owned` | 1 |
-| `matrix4/hyperreal-rational/mat4 transform vec4` | `real` | `constructor` | `rational` | 28 |
+| `matrix4/hyperreal-rational/mat4 transform vec4` | `rational` | `dot_product` | `dyadic-shared-denominator` | 4 |
+| `matrix4/hyperreal-rational/mat4 transform vec4` | `real` | `constructor` | `rational` | 4 |
+| `matrix4/hyperreal-rational/mat4 transform vec4` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 4 |
 | `matrix4/hyperreal-rational/mat4 transform vec4` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 4 |
 | `matrix4/hyperreal-rational/mat4 transform vec4` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 4 |
 | `matrix4/hyperreal-rational/mat4 transform vec4` | `realistic_blas_matrix` | `op` | `transform-vector-owned-owned` | 1 |
-| `matrix4/hyperreal/mat4 determinant` | `real` | `constructor` | `rational` | 183 |
-| `matrix4/hyperreal/mat4 determinant` | `real` | `constructor` | `zero` | 5 |
-| `matrix4/hyperreal/mat4 determinant` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
-| `matrix4/hyperreal/mat4 determinant` | `realistic_blas` | `scalar_op` | `add-owned-owned` | 8 |
-| `matrix4/hyperreal/mat4 determinant` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 108 |
-| `matrix4/hyperreal/mat4 determinant` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 52 |
-| `matrix4/hyperreal/mat4 determinant` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 4 |
-| `matrix4/hyperreal/mat4 determinant` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 108 |
-| `matrix4/hyperreal/mat4 determinant` | `realistic_blas_hyperreal_backend` | `trait_op` | `add-owned-owned` | 8 |
-| `matrix4/hyperreal/mat4 determinant` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 52 |
+| `matrix4/hyperreal/mat4 determinant` | `rational` | `product_sum` | `dyadic-shared-denominator` | 52 |
+| `matrix4/hyperreal/mat4 determinant` | `real` | `constructor` | `rational` | 52 |
+| `matrix4/hyperreal/mat4 determinant` | `real` | `product_sum` | `exact-rational-shared-denom` | 52 |
+| `matrix4/hyperreal/mat4 determinant` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 52 |
+| `matrix4/hyperreal/mat4 determinant` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 52 |
 | `matrix4/hyperreal/mat4 determinant` | `realistic_blas_matrix` | `helper` | `determinant4` | 4 |
 | `matrix4/hyperreal/mat4 determinant` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 4 |
 | `matrix4/hyperreal/mat4 determinant` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 4 |
 | `matrix4/hyperreal/mat4 determinant` | `realistic_blas_matrix` | `method` | `matrix4-determinant` | 4 |
-| `matrix4/hyperreal/mat4 inverse` | `real` | `constructor` | `rational` | 557 |
-| `matrix4/hyperreal/mat4 inverse` | `real` | `constructor` | `zero` | 15 |
+| `matrix4/hyperreal/mat4 inverse` | `rational` | `product_sum` | `dyadic-shared-denominator` | 116 |
+| `matrix4/hyperreal/mat4 inverse` | `real` | `constructor` | `rational` | 180 |
 | `matrix4/hyperreal/mat4 inverse` | `real` | `definitely_zero` | `rational-sign` | 4 |
-| `matrix4/hyperreal/mat4 inverse` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
+| `matrix4/hyperreal/mat4 inverse` | `real` | `product_sum` | `exact-rational-shared-denom` | 116 |
 | `matrix4/hyperreal/mat4 inverse` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 64 |
+| `matrix4/hyperreal/mat4 inverse` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 116 |
 | `matrix4/hyperreal/mat4 inverse` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
-| `matrix4/hyperreal/mat4 inverse` | `realistic_blas` | `scalar_op` | `add-owned-owned` | 72 |
-| `matrix4/hyperreal/mat4 inverse` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 300 |
-| `matrix4/hyperreal/mat4 inverse` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 116 |
 | `matrix4/hyperreal/mat4 inverse` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
-| `matrix4/hyperreal/mat4 inverse` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix4/hyperreal/mat4 inverse` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 64 |
-| `matrix4/hyperreal/mat4 inverse` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 300 |
-| `matrix4/hyperreal/mat4 inverse` | `realistic_blas_hyperreal_backend` | `trait_op` | `add-owned-owned` | 72 |
-| `matrix4/hyperreal/mat4 inverse` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 116 |
+| `matrix4/hyperreal/mat4 inverse` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 116 |
 | `matrix4/hyperreal/mat4 inverse` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 4 |
 | `matrix4/hyperreal/mat4 inverse` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 4 |
 | `matrix4/hyperreal/mat4 inverse` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 4 |
-| `matrix4/hyperreal/mat4 mul mat4` | `real` | `constructor` | `rational` | 448 |
+| `matrix4/hyperreal/mat4 mul mat4` | `rational` | `dot_product` | `dyadic-shared-denominator` | 64 |
+| `matrix4/hyperreal/mat4 mul mat4` | `real` | `constructor` | `rational` | 64 |
+| `matrix4/hyperreal/mat4 mul mat4` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 64 |
 | `matrix4/hyperreal/mat4 mul mat4` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 64 |
 | `matrix4/hyperreal/mat4 mul mat4` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 64 |
-| `matrix4/hyperreal/mat4 mul mat4` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 4 |
+| `matrix4/hyperreal/mat4 mul mat4` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 4 |
 | `matrix4/hyperreal/mat4 mul mat4` | `realistic_blas_matrix` | `op` | `mul-owned-owned` | 4 |
-| `matrix4/hyperreal/mat4 transform vec4` | `real` | `constructor` | `rational` | 112 |
+| `matrix4/hyperreal/mat4 transform vec4` | `rational` | `dot_product` | `dyadic-shared-denominator` | 16 |
+| `matrix4/hyperreal/mat4 transform vec4` | `real` | `constructor` | `rational` | 16 |
+| `matrix4/hyperreal/mat4 transform vec4` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 16 |
 | `matrix4/hyperreal/mat4 transform vec4` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
 | `matrix4/hyperreal/mat4 transform vec4` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 16 |
 | `matrix4/hyperreal/mat4 transform vec4` | `realistic_blas_matrix` | `op` | `transform-vector-owned-owned` | 4 |
+| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `realistic_blas` | `scalar_constructor` | `one` | 3 |
+| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `realistic_blas` | `scalar_constructor` | `zero` | 42 |
+| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 12 |
+| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 3 |
+| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 24 |
+| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 24 |
+| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `definitely-zero` | 6 |
+| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `zero-status` | 3 |
+| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `realistic_blas` | `zero_status` | `scalar-query` | 3 |
+| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `realistic_blas_approx_backend` | `constructor` | `new` | 3 |
+| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `realistic_blas_approx_backend` | `constructor` | `one` | 6 |
+| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `realistic_blas_approx_backend` | `constructor` | `zero` | 42 |
+| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 3 |
+| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 3 |
+| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 24 |
+| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 12 |
+| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `realistic_blas_approx_backend` | `query` | `zero-status` | 6 |
+| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 12 |
+| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 24 |
+| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 12 |
+| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide3-gauss-jordan` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 10 |
+| `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 18 |
+| `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 9 |
+| `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `realistic_blas_approx_backend` | `constructor` | `new` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `realistic_blas_approx_backend` | `constructor` | `one` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `realistic_blas_approx_backend` | `op` | `dot3-specialized` | 10 |
+| `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 18 |
+| `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `realistic_blas_approx_backend` | `query` | `zero-status` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 9 |
+| `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 9 |
+| `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 9 |
+| `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 18 |
+| `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 9 |
+| `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `realistic_blas_approx_backend` | `constructor` | `new` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `realistic_blas_approx_backend` | `constructor` | `one` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `realistic_blas_approx_backend` | `op` | `dot3-specialized` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 18 |
+| `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `realistic_blas_approx_backend` | `query` | `zero-status` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 9 |
+| `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 9 |
+| `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 9 |
+| `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `realistic_blas` | `scalar_constructor` | `one` | 4 |
+| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `realistic_blas` | `scalar_constructor` | `zero` | 100 |
+| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 22 |
+| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
+| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 66 |
+| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 66 |
+| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `definitely-zero` | 24 |
+| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `zero-status` | 4 |
+| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `realistic_blas` | `zero_status` | `scalar-query` | 4 |
+| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `realistic_blas_approx_backend` | `constructor` | `new` | 4 |
+| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `realistic_blas_approx_backend` | `constructor` | `one` | 8 |
+| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `realistic_blas_approx_backend` | `constructor` | `zero` | 100 |
+| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 4 |
+| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 4 |
+| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 66 |
+| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 32 |
+| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `realistic_blas_approx_backend` | `query` | `zero-status` | 8 |
+| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 22 |
+| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 66 |
+| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 22 |
+| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide4-gauss-jordan` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas` | `scalar_op` | `add-owned-owned` | 18 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 75 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 29 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas_approx_backend` | `constructor` | `new` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas_approx_backend` | `constructor` | `one` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas_approx_backend` | `op` | `dot3-specialized` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas_approx_backend` | `op` | `dot4-specialized` | 16 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 75 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas_approx_backend` | `query` | `zero-status` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `add-owned-owned` | 18 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 16 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 29 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 16 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power4-fixed-mul` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `realistic_blas` | `scalar_op` | `add-owned-owned` | 18 |
+| `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 75 |
+| `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 29 |
+| `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `realistic_blas_approx_backend` | `constructor` | `new` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `realistic_blas_approx_backend` | `constructor` | `one` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `realistic_blas_approx_backend` | `op` | `dot3-specialized` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 75 |
+| `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `realistic_blas_approx_backend` | `query` | `zero-status` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `realistic_blas_approx_backend` | `trait_op` | `add-owned-owned` | 18 |
+| `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 16 |
+| `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 29 |
+| `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 16 |
+| `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
+| `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `scalar_constructor` | `one` | 3 |
+| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `scalar_constructor` | `zero` | 42 |
+| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 12 |
+| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 3 |
+| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 24 |
+| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 24 |
+| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `definitely-zero` | 6 |
+| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `zero-status` | 3 |
+| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `zero_status` | `scalar-query` | 3 |
+| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `realistic_blas_approx_backend` | `constructor` | `new` | 3 |
+| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `realistic_blas_approx_backend` | `constructor` | `one` | 6 |
+| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `realistic_blas_approx_backend` | `constructor` | `zero` | 42 |
+| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 3 |
+| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 3 |
+| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 24 |
+| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 12 |
+| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `realistic_blas_approx_backend` | `query` | `zero-status` | 6 |
+| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 12 |
+| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 24 |
+| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 12 |
+| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide3-gauss-jordan` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 10 |
+| `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 18 |
+| `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 9 |
+| `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `realistic_blas_approx_backend` | `constructor` | `new` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `realistic_blas_approx_backend` | `constructor` | `one` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `realistic_blas_approx_backend` | `op` | `dot3-specialized` | 10 |
+| `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 18 |
+| `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `realistic_blas_approx_backend` | `query` | `zero-status` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 9 |
+| `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 9 |
+| `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 9 |
+| `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 18 |
+| `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 9 |
+| `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `realistic_blas_approx_backend` | `constructor` | `new` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `realistic_blas_approx_backend` | `constructor` | `one` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `realistic_blas_approx_backend` | `op` | `dot3-specialized` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 18 |
+| `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `realistic_blas_approx_backend` | `query` | `zero-status` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 9 |
+| `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 9 |
+| `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 9 |
+| `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `scalar_constructor` | `one` | 4 |
+| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `scalar_constructor` | `zero` | 100 |
+| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 22 |
+| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
+| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 66 |
+| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 66 |
+| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `definitely-zero` | 24 |
+| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `zero-status` | 4 |
+| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `zero_status` | `scalar-query` | 4 |
+| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `realistic_blas_approx_backend` | `constructor` | `new` | 4 |
+| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `realistic_blas_approx_backend` | `constructor` | `one` | 8 |
+| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `realistic_blas_approx_backend` | `constructor` | `zero` | 100 |
+| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 4 |
+| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 4 |
+| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 66 |
+| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 32 |
+| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `realistic_blas_approx_backend` | `query` | `zero-status` | 8 |
+| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 22 |
+| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 66 |
+| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 22 |
+| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide4-gauss-jordan` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas` | `scalar_op` | `add-owned-owned` | 18 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 75 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 29 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas_approx_backend` | `constructor` | `new` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas_approx_backend` | `constructor` | `one` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas_approx_backend` | `op` | `dot3-specialized` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas_approx_backend` | `op` | `dot4-specialized` | 16 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 75 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas_approx_backend` | `query` | `zero-status` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `add-owned-owned` | 18 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 16 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 29 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 16 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power4-fixed-mul` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `realistic_blas` | `scalar_op` | `add-owned-owned` | 18 |
+| `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 75 |
+| `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 29 |
+| `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `realistic_blas_approx_backend` | `constructor` | `new` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `realistic_blas_approx_backend` | `constructor` | `one` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `realistic_blas_approx_backend` | `op` | `dot3-specialized` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 75 |
+| `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `realistic_blas_approx_backend` | `query` | `zero-status` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `realistic_blas_approx_backend` | `trait_op` | `add-owned-owned` | 18 |
+| `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 16 |
+| `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 29 |
+| `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 16 |
+| `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
+| `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `scalar_constructor` | `one` | 3 |
+| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `scalar_constructor` | `zero` | 42 |
+| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 12 |
+| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 3 |
+| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 24 |
+| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 24 |
+| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `definitely-zero` | 6 |
+| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `zero-status` | 3 |
+| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `zero_status` | `scalar-query` | 3 |
+| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `realistic_blas_approx_backend` | `constructor` | `new` | 3 |
+| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `realistic_blas_approx_backend` | `constructor` | `one` | 6 |
+| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `realistic_blas_approx_backend` | `constructor` | `zero` | 42 |
+| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 3 |
+| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 3 |
+| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 24 |
+| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 12 |
+| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `realistic_blas_approx_backend` | `query` | `zero-status` | 6 |
+| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 12 |
+| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 24 |
+| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 12 |
+| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide3-gauss-jordan` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 10 |
+| `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 18 |
+| `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 9 |
+| `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `realistic_blas_approx_backend` | `constructor` | `new` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `realistic_blas_approx_backend` | `constructor` | `one` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `realistic_blas_approx_backend` | `op` | `dot3-specialized` | 10 |
+| `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 18 |
+| `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `realistic_blas_approx_backend` | `query` | `zero-status` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 9 |
+| `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 9 |
+| `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 9 |
+| `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 18 |
+| `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 9 |
+| `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `realistic_blas_approx_backend` | `constructor` | `new` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `realistic_blas_approx_backend` | `constructor` | `one` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `realistic_blas_approx_backend` | `op` | `dot3-specialized` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 18 |
+| `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `realistic_blas_approx_backend` | `query` | `zero-status` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 9 |
+| `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 9 |
+| `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 9 |
+| `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `scalar_constructor` | `one` | 4 |
+| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `scalar_constructor` | `zero` | 100 |
+| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 22 |
+| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
+| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 66 |
+| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 66 |
+| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `definitely-zero` | 24 |
+| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `zero-status` | 4 |
+| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `zero_status` | `scalar-query` | 4 |
+| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `realistic_blas_approx_backend` | `constructor` | `new` | 4 |
+| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `realistic_blas_approx_backend` | `constructor` | `one` | 8 |
+| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `realistic_blas_approx_backend` | `constructor` | `zero` | 100 |
+| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 4 |
+| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 4 |
+| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 66 |
+| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 32 |
+| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `realistic_blas_approx_backend` | `query` | `zero-status` | 8 |
+| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 22 |
+| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 66 |
+| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 22 |
+| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide4-gauss-jordan` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas` | `scalar_op` | `add-owned-owned` | 18 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 75 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 29 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas_approx_backend` | `constructor` | `new` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas_approx_backend` | `constructor` | `one` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas_approx_backend` | `op` | `dot3-specialized` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas_approx_backend` | `op` | `dot4-specialized` | 16 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 75 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas_approx_backend` | `query` | `zero-status` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `add-owned-owned` | 18 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 16 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 29 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 16 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power4-fixed-mul` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `realistic_blas` | `scalar_op` | `add-owned-owned` | 18 |
+| `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 75 |
+| `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 29 |
+| `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `realistic_blas_approx_backend` | `constructor` | `new` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `realistic_blas_approx_backend` | `constructor` | `one` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `realistic_blas_approx_backend` | `op` | `dot3-specialized` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 75 |
+| `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `realistic_blas_approx_backend` | `query` | `zero-status` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `realistic_blas_approx_backend` | `trait_op` | `add-owned-owned` | 18 |
+| `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 16 |
+| `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 29 |
+| `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 16 |
+| `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
+| `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `realistic_blas` | `scalar_constructor` | `one` | 3 |
+| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `realistic_blas` | `scalar_constructor` | `zero` | 37 |
+| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 12 |
+| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 3 |
+| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 19 |
+| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 19 |
+| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `definitely-zero` | 6 |
+| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `zero-status` | 3 |
+| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `realistic_blas` | `zero_status` | `scalar-query` | 3 |
+| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `realistic_blas_approx_backend` | `constructor` | `new` | 3 |
+| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `realistic_blas_approx_backend` | `constructor` | `one` | 6 |
+| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `realistic_blas_approx_backend` | `constructor` | `zero` | 37 |
+| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 3 |
+| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 3 |
+| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 19 |
+| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 12 |
+| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `realistic_blas_approx_backend` | `query` | `zero-status` | 6 |
+| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 12 |
+| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 19 |
+| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 12 |
+| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide3-gauss-jordan` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 10 |
+| `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 18 |
+| `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 9 |
+| `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `realistic_blas_approx_backend` | `constructor` | `new` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `realistic_blas_approx_backend` | `constructor` | `one` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `realistic_blas_approx_backend` | `op` | `dot3-specialized` | 10 |
+| `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 18 |
+| `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `realistic_blas_approx_backend` | `query` | `zero-status` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 9 |
+| `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 9 |
+| `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 9 |
+| `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 18 |
+| `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 9 |
+| `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `realistic_blas_approx_backend` | `constructor` | `new` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `realistic_blas_approx_backend` | `constructor` | `one` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `realistic_blas_approx_backend` | `op` | `dot3-specialized` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 18 |
+| `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `realistic_blas_approx_backend` | `query` | `zero-status` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 9 |
+| `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 9 |
+| `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 9 |
+| `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
+| `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `realistic_blas` | `scalar_constructor` | `one` | 4 |
+| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `realistic_blas` | `scalar_constructor` | `zero` | 65 |
+| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 22 |
+| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
+| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 36 |
+| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 36 |
+| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `definitely-zero` | 19 |
+| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `zero-status` | 4 |
+| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `realistic_blas` | `zero_status` | `scalar-query` | 4 |
+| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `realistic_blas_approx_backend` | `constructor` | `new` | 4 |
+| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `realistic_blas_approx_backend` | `constructor` | `one` | 8 |
+| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `realistic_blas_approx_backend` | `constructor` | `zero` | 65 |
+| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 4 |
+| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 4 |
+| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 36 |
+| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 27 |
+| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `realistic_blas_approx_backend` | `query` | `zero-status` | 8 |
+| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 22 |
+| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 36 |
+| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 22 |
+| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide4-gauss-jordan` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas` | `scalar_op` | `add-owned-owned` | 18 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 75 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 29 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas_approx_backend` | `constructor` | `new` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas_approx_backend` | `constructor` | `one` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas_approx_backend` | `op` | `dot3-specialized` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas_approx_backend` | `op` | `dot4-specialized` | 16 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 75 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas_approx_backend` | `query` | `zero-status` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `add-owned-owned` | 18 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 16 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 29 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 16 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power4-fixed-mul` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `realistic_blas` | `scalar_op` | `add-owned-owned` | 18 |
+| `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 75 |
+| `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 29 |
+| `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `realistic_blas_approx_backend` | `constructor` | `new` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `realistic_blas_approx_backend` | `constructor` | `one` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `realistic_blas_approx_backend` | `op` | `dot3-specialized` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 75 |
+| `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `realistic_blas_approx_backend` | `query` | `zero-status` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `realistic_blas_approx_backend` | `trait_op` | `add-owned-owned` | 18 |
+| `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 16 |
+| `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 29 |
+| `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 16 |
+| `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
+| `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 div_matrix` | `rational` | `dot_product` | `dyadic-shared-denominator` | 10 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 div_matrix` | `rational` | `product_sum` | `dyadic-shared-denominator` | 9 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 div_matrix` | `real` | `constructor` | `rational` | 28 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 div_matrix` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 10 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 9 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 10 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 9 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 18 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 10 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 9 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 9 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `exact-dyadic-rational` | 18 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide3-shared-adjugate` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `rational` | `dot_product` | `dyadic-shared-denominator` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `rational` | `dot_product` | `lcm-shared-denominator` | 9 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `rational` | `product_sum` | `dyadic-shared-denominator` | 9 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `real` | `constructor` | `rational` | 28 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 10 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `real` | `product_sum` | `exact-rational-shared-denom` | 9 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 10 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 9 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 10 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 9 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 9 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `rational` | `dot_product` | `dyadic-shared-denominator` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `rational` | `product_sum` | `dyadic-shared-denominator` | 9 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `real` | `constructor` | `rational` | 19 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `real` | `product_sum` | `exact-rational-shared-denom` | 9 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 9 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 9 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 9 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `rational` | `dot_product` | `dyadic-shared-denominator` | 16 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `real` | `constructor` | `rational` | 61 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 16 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 32 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 16 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `exact-dyadic-rational` | 32 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `matrix4-unscaled-adjugate-from-factors` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide4-shared-adjugate` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 powi_negative` | `rational` | `dot_product` | `lcm-shared-denominator` | 16 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 powi_negative` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 powi_negative` | `real` | `constructor` | `rational` | 61 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 powi_negative` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 powi_negative` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 16 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 powi_negative` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 16 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power4-fixed-mul` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 reciprocal` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 reciprocal` | `real` | `constructor` | `rational` | 45 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 reciprocal` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 reciprocal` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `real` | `constructor` | `one` | 3 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `real` | `constructor` | `rational` | 60 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `real` | `constructor` | `zero` | 42 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 9 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 3 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `scalar_constructor` | `one` | 3 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `scalar_constructor` | `zero` | 42 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 12 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 3 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 24 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 24 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `definitely-zero` | 6 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `zero-status` | 3 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `zero_status` | `scalar-query` | 3 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `constructor` | `one` | 3 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `constructor` | `zero` | 42 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 3 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 12 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 24 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `definitely-zero` | 6 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `exact-dyadic-rational` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `zero-status` | 3 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 24 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide3-gauss-jordan` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `rational` | `dot_product` | `equal-product-denominator` | 4 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `rational` | `dot_product` | `lcm-shared-denominator` | 6 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `rational` | `product_sum` | `equal-product-denominator` | 2 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `rational` | `product_sum` | `lcm-shared-denominator` | 7 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `real` | `constructor` | `rational` | 28 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 10 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `real` | `product_sum` | `exact-rational-shared-denom` | 9 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 10 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 9 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 10 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 9 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 9 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `rational` | `dot_product` | `lcm-shared-denominator` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `rational` | `product_sum` | `equal-product-denominator` | 2 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `rational` | `product_sum` | `lcm-shared-denominator` | 7 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `real` | `constructor` | `rational` | 19 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `real` | `product_sum` | `exact-rational-shared-denom` | 9 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 9 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 9 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 9 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `real` | `constructor` | `one` | 4 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `real` | `constructor` | `rational` | 154 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `real` | `constructor` | `zero` | 100 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 28 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 4 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `scalar_constructor` | `one` | 4 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `scalar_constructor` | `zero` | 100 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 22 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 66 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 66 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `definitely-zero` | 24 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `zero-status` | 4 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `zero_status` | `scalar-query` | 4 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `constructor` | `one` | 4 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `constructor` | `zero` | 100 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 22 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 66 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `definitely-zero` | 24 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `exact-dyadic-rational` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `zero-status` | 4 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 66 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide4-gauss-jordan` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 powi_negative` | `rational` | `dot_product` | `lcm-shared-denominator` | 16 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 powi_negative` | `rational` | `product_sum` | `equal-product-denominator` | 2 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 powi_negative` | `rational` | `product_sum` | `lcm-shared-denominator` | 27 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 powi_negative` | `real` | `constructor` | `rational` | 61 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 powi_negative` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 powi_negative` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 16 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 powi_negative` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 16 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power4-fixed-mul` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 reciprocal` | `rational` | `product_sum` | `equal-product-denominator` | 2 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 reciprocal` | `rational` | `product_sum` | `lcm-shared-denominator` | 27 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 reciprocal` | `real` | `constructor` | `rational` | 45 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 reciprocal` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 reciprocal` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `real` | `constructor` | `one` | 3 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `real` | `constructor` | `rational` | 60 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `real` | `constructor` | `zero` | 42 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 9 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 3 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `scalar_constructor` | `one` | 3 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `scalar_constructor` | `zero` | 42 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 12 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 3 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 24 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 24 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `definitely-zero` | 6 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `zero-status` | 3 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `zero_status` | `scalar-query` | 3 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `constructor` | `one` | 3 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `constructor` | `zero` | 42 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 3 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 12 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 24 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `definitely-zero` | 6 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `exact-dyadic-rational` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `zero-status` | 3 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 24 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide3-gauss-jordan` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `rational` | `dot_product` | `lcm-shared-denominator` | 10 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `rational` | `product_sum` | `lcm-shared-denominator` | 9 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `real` | `constructor` | `rational` | 28 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 10 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `real` | `product_sum` | `exact-rational-shared-denom` | 9 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 10 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 9 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 10 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 9 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 9 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `rational` | `dot_product` | `lcm-shared-denominator` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `rational` | `product_sum` | `lcm-shared-denominator` | 9 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `real` | `constructor` | `rational` | 19 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `real` | `product_sum` | `exact-rational-shared-denom` | 9 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 9 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 9 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 9 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `real` | `constructor` | `one` | 4 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `real` | `constructor` | `rational` | 154 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `real` | `constructor` | `zero` | 100 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 28 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 4 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `scalar_constructor` | `one` | 4 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `scalar_constructor` | `zero` | 100 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 22 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 66 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 66 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `definitely-zero` | 24 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `zero-status` | 4 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `zero_status` | `scalar-query` | 4 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `constructor` | `one` | 4 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `constructor` | `zero` | 100 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 22 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 66 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `definitely-zero` | 24 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `exact-dyadic-rational` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `zero-status` | 4 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 66 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide4-gauss-jordan` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 powi_negative` | `rational` | `dot_product` | `lcm-shared-denominator` | 16 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 powi_negative` | `rational` | `product_sum` | `lcm-shared-denominator` | 29 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 powi_negative` | `real` | `constructor` | `rational` | 61 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 powi_negative` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 powi_negative` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 16 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 powi_negative` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 16 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power4-fixed-mul` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 reciprocal` | `rational` | `product_sum` | `lcm-shared-denominator` | 29 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 reciprocal` | `real` | `constructor` | `rational` | 45 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 reciprocal` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 reciprocal` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 div_matrix` | `rational` | `dot_product` | `dyadic-shared-denominator` | 10 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 div_matrix` | `rational` | `product_sum` | `dyadic-shared-denominator` | 9 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 div_matrix` | `real` | `constructor` | `rational` | 28 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 div_matrix` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 10 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 9 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 10 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 9 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 18 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 10 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 9 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 9 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `exact-dyadic-rational` | 18 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide3-shared-adjugate` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 powi_negative` | `rational` | `dot_product` | `dyadic-shared-denominator` | 3 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 powi_negative` | `rational` | `dot_product` | `equal-product-denominator` | 7 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 powi_negative` | `rational` | `product_sum` | `dyadic-shared-denominator` | 9 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 powi_negative` | `real` | `constructor` | `rational` | 28 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 powi_negative` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 powi_negative` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 10 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 powi_negative` | `real` | `product_sum` | `exact-rational-shared-denom` | 9 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 10 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 9 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 10 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 9 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 9 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 reciprocal` | `rational` | `dot_product` | `dyadic-shared-denominator` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 reciprocal` | `rational` | `product_sum` | `dyadic-shared-denominator` | 9 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 reciprocal` | `real` | `constructor` | `rational` | 19 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 reciprocal` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 reciprocal` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 reciprocal` | `real` | `product_sum` | `exact-rational-shared-denom` | 9 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 9 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 9 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 9 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `rational` | `dot_product` | `dyadic-shared-denominator` | 16 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `real` | `constructor` | `rational` | 61 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 16 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 32 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 16 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `exact-dyadic-rational` | 32 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `matrix4-unscaled-adjugate-from-factors` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide4-shared-adjugate` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 powi_negative` | `rational` | `dot_product` | `equal-product-denominator` | 8 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 powi_negative` | `rational` | `dot_product` | `lcm-shared-denominator` | 8 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 powi_negative` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 powi_negative` | `real` | `constructor` | `rational` | 61 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 powi_negative` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 powi_negative` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 16 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 powi_negative` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 16 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power4-fixed-mul` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 reciprocal` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 reciprocal` | `real` | `constructor` | `rational` | 45 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 reciprocal` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 reciprocal` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 div_matrix` | `rational` | `dot_product` | `dyadic-shared-denominator` | 10 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 div_matrix` | `rational` | `product_sum` | `dyadic-shared-denominator` | 9 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 div_matrix` | `real` | `constructor` | `rational` | 28 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 div_matrix` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 10 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 9 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 10 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 9 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 18 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 10 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 9 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 9 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `exact-dyadic-rational` | 18 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide3-shared-adjugate` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `rational` | `dot_product` | `dyadic-shared-denominator` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `rational` | `dot_product` | `lcm-shared-denominator` | 9 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `rational` | `product_sum` | `dyadic-shared-denominator` | 9 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `real` | `constructor` | `rational` | 28 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 10 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `real` | `product_sum` | `exact-rational-shared-denom` | 9 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 10 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 9 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 10 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 9 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 9 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `rational` | `dot_product` | `dyadic-shared-denominator` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `rational` | `product_sum` | `dyadic-shared-denominator` | 9 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `real` | `constructor` | `rational` | 19 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `real` | `product_sum` | `exact-rational-shared-denom` | 9 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 9 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 9 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 9 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `rational` | `dot_product` | `dyadic-shared-denominator` | 16 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `real` | `constructor` | `rational` | 61 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 16 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 32 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 16 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `exact-dyadic-rational` | 32 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `matrix4-unscaled-adjugate-from-factors` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide4-shared-adjugate` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 powi_negative` | `rational` | `dot_product` | `lcm-shared-denominator` | 16 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 powi_negative` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 powi_negative` | `real` | `constructor` | `rational` | 61 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 powi_negative` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 powi_negative` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 16 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 powi_negative` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 16 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power4-fixed-mul` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 reciprocal` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 reciprocal` | `real` | `constructor` | `rational` | 45 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 reciprocal` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 reciprocal` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 div_matrix` | `rational` | `dot_product` | `dyadic-shared-denominator` | 10 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 div_matrix` | `rational` | `product_sum` | `dyadic-shared-denominator` | 9 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 div_matrix` | `real` | `constructor` | `rational` | 28 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 div_matrix` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 10 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 9 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 10 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 9 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 18 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 10 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 9 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 9 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `exact-dyadic-rational` | 18 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide3-shared-adjugate` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `rational` | `dot_product` | `dyadic-shared-denominator` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `rational` | `dot_product` | `lcm-shared-denominator` | 9 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `rational` | `product_sum` | `dyadic-shared-denominator` | 9 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `real` | `constructor` | `rational` | 28 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 10 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `real` | `product_sum` | `exact-rational-shared-denom` | 9 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 10 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 9 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 10 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 9 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 9 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `rational` | `dot_product` | `dyadic-shared-denominator` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `rational` | `product_sum` | `dyadic-shared-denominator` | 9 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `real` | `constructor` | `rational` | 19 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `real` | `product_sum` | `exact-rational-shared-denom` | 9 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 9 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 9 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 9 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `rational` | `dot_product` | `dyadic-shared-denominator` | 16 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `real` | `constructor` | `rational` | 61 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 16 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 32 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 16 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `exact-dyadic-rational` | 32 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `matrix4-unscaled-adjugate-from-factors` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide4-shared-adjugate` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | `rational` | `dot_product` | `equal-product-denominator` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | `rational` | `dot_product` | `lcm-shared-denominator` | 15 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | `real` | `constructor` | `rational` | 61 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 16 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 16 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power4-fixed-mul` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 reciprocal` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 reciprocal` | `real` | `constructor` | `rational` | 45 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 reciprocal` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 reciprocal` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 div_matrix` | `rational` | `dot_product` | `dyadic-shared-denominator` | 10 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 div_matrix` | `rational` | `product_sum` | `dyadic-shared-denominator` | 9 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 div_matrix` | `real` | `constructor` | `rational` | 28 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 div_matrix` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 10 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 9 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 10 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 9 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 18 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 10 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 9 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 9 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `exact-dyadic-rational` | 18 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide3-shared-adjugate` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `rational` | `dot_product` | `dyadic-shared-denominator` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `rational` | `dot_product` | `equal-product-denominator` | 2 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `rational` | `dot_product` | `lcm-shared-denominator` | 7 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `rational` | `product_sum` | `dyadic-shared-denominator` | 9 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `real` | `constructor` | `rational` | 28 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 10 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `real` | `product_sum` | `exact-rational-shared-denom` | 9 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 10 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 9 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 10 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 9 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 9 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `rational` | `dot_product` | `dyadic-shared-denominator` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `rational` | `product_sum` | `dyadic-shared-denominator` | 9 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `real` | `constructor` | `rational` | 19 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `real` | `product_sum` | `exact-rational-shared-denom` | 9 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 9 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 9 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 9 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `rational` | `dot_product` | `dyadic-shared-denominator` | 16 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `real` | `constructor` | `rational` | 61 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 16 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 32 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 16 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `exact-dyadic-rational` | 32 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `matrix4-unscaled-adjugate-from-factors` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide4-shared-adjugate` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | `rational` | `dot_product` | `equal-product-denominator` | 16 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | `real` | `constructor` | `rational` | 61 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 16 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 16 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power4-fixed-mul` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 reciprocal` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 reciprocal` | `real` | `constructor` | `rational` | 45 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 reciprocal` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 reciprocal` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 div_matrix` | `rational` | `dot_product` | `dyadic-shared-denominator` | 10 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 div_matrix` | `rational` | `product_sum` | `dyadic-shared-denominator` | 9 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 div_matrix` | `real` | `constructor` | `rational` | 28 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 div_matrix` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 10 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 9 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 10 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 9 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 18 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 10 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 9 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 9 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `exact-dyadic-rational` | 18 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide3-shared-adjugate` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 powi_negative` | `rational` | `dot_product` | `dyadic-shared-denominator` | 3 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 powi_negative` | `rational` | `dot_product` | `equal-product-denominator` | 7 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 powi_negative` | `rational` | `product_sum` | `dyadic-shared-denominator` | 9 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 powi_negative` | `real` | `constructor` | `rational` | 28 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 powi_negative` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 powi_negative` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 10 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 powi_negative` | `real` | `product_sum` | `exact-rational-shared-denom` | 9 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 10 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 9 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 10 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 9 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 9 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 reciprocal` | `rational` | `dot_product` | `dyadic-shared-denominator` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 reciprocal` | `rational` | `product_sum` | `dyadic-shared-denominator` | 9 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 reciprocal` | `real` | `constructor` | `rational` | 19 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 reciprocal` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 reciprocal` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 reciprocal` | `real` | `product_sum` | `exact-rational-shared-denom` | 9 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 9 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 9 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 9 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 9 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `rational` | `dot_product` | `dyadic-shared-denominator` | 16 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `real` | `constructor` | `rational` | 61 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 16 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 32 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 16 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `exact-dyadic-rational` | 32 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `matrix4-unscaled-adjugate-from-factors` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide4-shared-adjugate` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | `rational` | `dot_product` | `equal-product-denominator` | 8 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | `rational` | `dot_product` | `lcm-shared-denominator` | 8 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | `real` | `constructor` | `rational` | 61 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 16 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 16 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power4-fixed-mul` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 reciprocal` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 reciprocal` | `real` | `constructor` | `rational` | 45 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 reciprocal` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 reciprocal` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 16 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 1 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 1 |
 | `matrix_ops/approx/mat3 bitxor` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 72 |
 | `matrix_ops/approx/mat3 bitxor` | `realistic_blas_approx_backend` | `op` | `dot3-specialized` | 72 |
-| `matrix_ops/approx/mat3 bitxor` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 8 |
+| `matrix_ops/approx/mat3 bitxor` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 4 |
+| `matrix_ops/approx/mat3 bitxor` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 8 |
 | `matrix_ops/approx/mat3 bitxor` | `realistic_blas_matrix` | `method` | `powi` | 4 |
 | `matrix_ops/approx/mat3 bitxor` | `realistic_blas_matrix` | `op` | `bitxor-powi` | 4 |
 | `matrix_ops/approx/mat3 div_matrix` | `realistic_blas` | `scalar_constructor` | `one` | 12 |
@@ -1009,16 +2534,41 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 inverse_checked_abort` | `realistic_blas_matrix` | `method` | `matrix3-inverse-checked-with-abort` | 4 |
 | `matrix_ops/approx/mat3 powi` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 72 |
 | `matrix_ops/approx/mat3 powi` | `realistic_blas_approx_backend` | `op` | `dot3-specialized` | 72 |
-| `matrix_ops/approx/mat3 powi` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 8 |
+| `matrix_ops/approx/mat3 powi` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 4 |
+| `matrix_ops/approx/mat3 powi` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 8 |
 | `matrix_ops/approx/mat3 powi` | `realistic_blas_matrix` | `method` | `powi` | 4 |
 | `matrix_ops/approx/mat3 powi_checked` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 72 |
 | `matrix_ops/approx/mat3 powi_checked` | `realistic_blas_approx_backend` | `op` | `dot3-specialized` | 72 |
-| `matrix_ops/approx/mat3 powi_checked` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 8 |
+| `matrix_ops/approx/mat3 powi_checked` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 4 |
+| `matrix_ops/approx/mat3 powi_checked` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 8 |
 | `matrix_ops/approx/mat3 powi_checked` | `realistic_blas_matrix` | `method` | `powi-checked` | 4 |
 | `matrix_ops/approx/mat3 powi_checked_abort` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 72 |
 | `matrix_ops/approx/mat3 powi_checked_abort` | `realistic_blas_approx_backend` | `op` | `dot3-specialized` | 72 |
-| `matrix_ops/approx/mat3 powi_checked_abort` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 8 |
+| `matrix_ops/approx/mat3 powi_checked_abort` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 4 |
+| `matrix_ops/approx/mat3 powi_checked_abort` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 8 |
 | `matrix_ops/approx/mat3 powi_checked_abort` | `realistic_blas_matrix` | `method` | `powi-checked-with-abort` | 4 |
+| `matrix_ops/approx/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 40 |
+| `matrix_ops/approx/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 36 |
+| `matrix_ops/approx/mat3 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
+| `matrix_ops/approx/mat3 powi_negative` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 72 |
+| `matrix_ops/approx/mat3 powi_negative` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 36 |
+| `matrix_ops/approx/mat3 powi_negative` | `realistic_blas_approx_backend` | `constructor` | `new` | 4 |
+| `matrix_ops/approx/mat3 powi_negative` | `realistic_blas_approx_backend` | `constructor` | `one` | 4 |
+| `matrix_ops/approx/mat3 powi_negative` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 4 |
+| `matrix_ops/approx/mat3 powi_negative` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 4 |
+| `matrix_ops/approx/mat3 powi_negative` | `realistic_blas_approx_backend` | `op` | `dot3-specialized` | 40 |
+| `matrix_ops/approx/mat3 powi_negative` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 72 |
+| `matrix_ops/approx/mat3 powi_negative` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 4 |
+| `matrix_ops/approx/mat3 powi_negative` | `realistic_blas_approx_backend` | `query` | `zero-status` | 4 |
+| `matrix_ops/approx/mat3 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 36 |
+| `matrix_ops/approx/mat3 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 36 |
+| `matrix_ops/approx/mat3 powi_negative` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 36 |
+| `matrix_ops/approx/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 4 |
+| `matrix_ops/approx/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 4 |
+| `matrix_ops/approx/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 4 |
+| `matrix_ops/approx/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 4 |
+| `matrix_ops/approx/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 4 |
+| `matrix_ops/approx/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 4 |
 | `matrix_ops/approx/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
 | `matrix_ops/approx/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 36 |
 | `matrix_ops/approx/mat3 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
@@ -1064,7 +2614,8 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 reciprocal_checked` | `realistic_blas_matrix` | `method` | `reciprocal-checked` | 4 |
 | `matrix_ops/approx/mat4 bitxor` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 128 |
 | `matrix_ops/approx/mat4 bitxor` | `realistic_blas_approx_backend` | `op` | `dot4-specialized` | 128 |
-| `matrix_ops/approx/mat4 bitxor` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 8 |
+| `matrix_ops/approx/mat4 bitxor` | `realistic_blas_matrix` | `helper` | `matrix-power4-fixed-mul` | 4 |
+| `matrix_ops/approx/mat4 bitxor` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 8 |
 | `matrix_ops/approx/mat4 bitxor` | `realistic_blas_matrix` | `method` | `powi` | 4 |
 | `matrix_ops/approx/mat4 bitxor` | `realistic_blas_matrix` | `op` | `bitxor-powi` | 4 |
 | `matrix_ops/approx/mat4 div_matrix` | `realistic_blas` | `scalar_constructor` | `one` | 16 |
@@ -1116,12 +2667,40 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 inverse_checked` | `realistic_blas_matrix` | `method` | `matrix4-inverse-checked` | 4 |
 | `matrix_ops/approx/mat4 powi` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 128 |
 | `matrix_ops/approx/mat4 powi` | `realistic_blas_approx_backend` | `op` | `dot4-specialized` | 128 |
-| `matrix_ops/approx/mat4 powi` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 8 |
+| `matrix_ops/approx/mat4 powi` | `realistic_blas_matrix` | `helper` | `matrix-power4-fixed-mul` | 4 |
+| `matrix_ops/approx/mat4 powi` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 8 |
 | `matrix_ops/approx/mat4 powi` | `realistic_blas_matrix` | `method` | `powi` | 4 |
 | `matrix_ops/approx/mat4 powi_checked` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 128 |
 | `matrix_ops/approx/mat4 powi_checked` | `realistic_blas_approx_backend` | `op` | `dot4-specialized` | 128 |
-| `matrix_ops/approx/mat4 powi_checked` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 8 |
+| `matrix_ops/approx/mat4 powi_checked` | `realistic_blas_matrix` | `helper` | `matrix-power4-fixed-mul` | 4 |
+| `matrix_ops/approx/mat4 powi_checked` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 8 |
 | `matrix_ops/approx/mat4 powi_checked` | `realistic_blas_matrix` | `method` | `powi-checked` | 4 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 64 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 64 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas` | `scalar_op` | `add-owned-owned` | 72 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 300 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 116 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas_approx_backend` | `constructor` | `new` | 4 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas_approx_backend` | `constructor` | `one` | 4 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas_approx_backend` | `method` | `inverse-owned` | 4 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas_approx_backend` | `op` | `div-owned-owned` | 4 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas_approx_backend` | `op` | `dot3-specialized` | 4 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas_approx_backend` | `op` | `dot4-specialized` | 64 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas_approx_backend` | `op` | `mul-ref-ref` | 300 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas_approx_backend` | `query` | `definitely-zero` | 4 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas_approx_backend` | `query` | `zero-status` | 4 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `add-owned-owned` | 72 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `mul-owned-owned` | 64 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas_approx_backend` | `trait_op` | `sub-owned-owned` | 116 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas_backend_trait` | `op` | `mul-owned-ref-default` | 64 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 4 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power4-fixed-mul` | 4 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 4 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 4 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 4 |
+| `matrix_ops/approx/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 4 |
 | `matrix_ops/approx/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
 | `matrix_ops/approx/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 64 |
 | `matrix_ops/approx/mat4 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
@@ -1169,10 +2748,15 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 reciprocal_checked` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 4 |
 | `matrix_ops/approx/mat4 reciprocal_checked` | `realistic_blas_matrix` | `method` | `matrix4-inverse-checked` | 4 |
 | `matrix_ops/approx/mat4 reciprocal_checked` | `realistic_blas_matrix` | `method` | `reciprocal-checked` | 4 |
-| `matrix_ops/hyperreal-rational/mat3 bitxor` | `real` | `constructor` | `rational` | 360 |
+| `matrix_ops/hyperreal-rational/mat3 bitxor` | `rational` | `dot_product` | `dyadic-shared-denominator` | 5 |
+| `matrix_ops/hyperreal-rational/mat3 bitxor` | `rational` | `dot_product` | `equal-product-denominator` | 9 |
+| `matrix_ops/hyperreal-rational/mat3 bitxor` | `rational` | `dot_product` | `lcm-shared-denominator` | 58 |
+| `matrix_ops/hyperreal-rational/mat3 bitxor` | `real` | `constructor` | `rational` | 72 |
+| `matrix_ops/hyperreal-rational/mat3 bitxor` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 72 |
 | `matrix_ops/hyperreal-rational/mat3 bitxor` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 72 |
 | `matrix_ops/hyperreal-rational/mat3 bitxor` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 72 |
-| `matrix_ops/hyperreal-rational/mat3 bitxor` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 8 |
+| `matrix_ops/hyperreal-rational/mat3 bitxor` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 bitxor` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 8 |
 | `matrix_ops/hyperreal-rational/mat3 bitxor` | `realistic_blas_matrix` | `method` | `powi` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 bitxor` | `realistic_blas_matrix` | `op` | `bitxor-powi` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 div_matrix` | `real` | `constructor` | `one` | 12 |
@@ -1258,37 +2842,44 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 89 |
 | `matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort` | `realistic_blas_matrix` | `helper` | `right-divide3-checked-abort-gauss-jordan` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 div_matrix_checked_abort` | `realistic_blas_matrix` | `method` | `div-matrix-checked-with-abort` | 4 |
-| `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `real` | `constructor` | `rational` | 162 |
-| `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `real` | `constructor` | `zero` | 2 |
+| `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `rational` | `dot_product` | `lcm-shared-denominator` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `rational` | `product_sum` | `dyadic-shared-denominator` | 8 |
+| `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `rational` | `product_sum` | `equal-product-denominator` | 13 |
+| `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `rational` | `product_sum` | `lcm-shared-denominator` | 15 |
+| `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `real` | `constructor` | `rational` | 76 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `real` | `definitely_zero` | `rational-sign` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `real` | `product_sum` | `exact-rational-shared-denom` | 36 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 36 |
+| `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 36 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 72 |
-| `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 36 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `realistic_blas` | `scalar_query` | `zero-status` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `realistic_blas` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `realistic_blas` | `zero_status` | `scalar-query` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 36 |
-| `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 72 |
+| `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 36 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `realistic_blas_hyperreal_backend` | `query` | `zero-status` | 4 |
-| `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 36 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `realistic_blas_matrix` | `helper` | `invert-matrix3-checked` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked` | `realistic_blas_matrix` | `method` | `matrix3-inverse-checked` | 4 |
-| `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `real` | `constructor` | `rational` | 162 |
-| `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `real` | `constructor` | `zero` | 2 |
+| `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `rational` | `dot_product` | `lcm-shared-denominator` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `rational` | `product_sum` | `dyadic-shared-denominator` | 8 |
+| `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `rational` | `product_sum` | `equal-product-denominator` | 13 |
+| `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `rational` | `product_sum` | `lcm-shared-denominator` | 15 |
+| `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `real` | `constructor` | `rational` | 76 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `real` | `definitely_zero` | `rational-sign` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `real` | `product_sum` | `exact-rational-shared-denom` | 36 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `realistic_blas` | `abort` | `attach-owned-scalar` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 36 |
+| `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 36 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 72 |
-| `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 36 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `realistic_blas` | `scalar_query` | `attach-abort` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `realistic_blas` | `scalar_query` | `zero-status` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `realistic_blas` | `zero_guard` | `checked-nonzero` | 4 |
@@ -1296,88 +2887,137 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 36 |
-| `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 72 |
+| `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 36 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `realistic_blas_hyperreal_backend` | `query` | `attach-abort` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `realistic_blas_hyperreal_backend` | `query` | `zero-status` | 4 |
-| `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 36 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `realistic_blas_matrix` | `helper` | `invert-matrix3-checked-with-abort` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 inverse_checked_abort` | `realistic_blas_matrix` | `method` | `matrix3-inverse-checked-with-abort` | 4 |
-| `matrix_ops/hyperreal-rational/mat3 powi` | `real` | `constructor` | `rational` | 360 |
+| `matrix_ops/hyperreal-rational/mat3 powi` | `rational` | `dot_product` | `dyadic-shared-denominator` | 5 |
+| `matrix_ops/hyperreal-rational/mat3 powi` | `rational` | `dot_product` | `equal-product-denominator` | 9 |
+| `matrix_ops/hyperreal-rational/mat3 powi` | `rational` | `dot_product` | `lcm-shared-denominator` | 58 |
+| `matrix_ops/hyperreal-rational/mat3 powi` | `real` | `constructor` | `rational` | 72 |
+| `matrix_ops/hyperreal-rational/mat3 powi` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 72 |
 | `matrix_ops/hyperreal-rational/mat3 powi` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 72 |
 | `matrix_ops/hyperreal-rational/mat3 powi` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 72 |
-| `matrix_ops/hyperreal-rational/mat3 powi` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 8 |
+| `matrix_ops/hyperreal-rational/mat3 powi` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 powi` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 8 |
 | `matrix_ops/hyperreal-rational/mat3 powi` | `realistic_blas_matrix` | `method` | `powi` | 4 |
-| `matrix_ops/hyperreal-rational/mat3 powi_checked` | `real` | `constructor` | `rational` | 360 |
+| `matrix_ops/hyperreal-rational/mat3 powi_checked` | `rational` | `dot_product` | `dyadic-shared-denominator` | 5 |
+| `matrix_ops/hyperreal-rational/mat3 powi_checked` | `rational` | `dot_product` | `equal-product-denominator` | 9 |
+| `matrix_ops/hyperreal-rational/mat3 powi_checked` | `rational` | `dot_product` | `lcm-shared-denominator` | 58 |
+| `matrix_ops/hyperreal-rational/mat3 powi_checked` | `real` | `constructor` | `rational` | 72 |
+| `matrix_ops/hyperreal-rational/mat3 powi_checked` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 72 |
 | `matrix_ops/hyperreal-rational/mat3 powi_checked` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 72 |
 | `matrix_ops/hyperreal-rational/mat3 powi_checked` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 72 |
-| `matrix_ops/hyperreal-rational/mat3 powi_checked` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 8 |
+| `matrix_ops/hyperreal-rational/mat3 powi_checked` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 powi_checked` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 8 |
 | `matrix_ops/hyperreal-rational/mat3 powi_checked` | `realistic_blas_matrix` | `method` | `powi-checked` | 4 |
-| `matrix_ops/hyperreal-rational/mat3 powi_checked_abort` | `real` | `constructor` | `rational` | 360 |
+| `matrix_ops/hyperreal-rational/mat3 powi_checked_abort` | `rational` | `dot_product` | `dyadic-shared-denominator` | 5 |
+| `matrix_ops/hyperreal-rational/mat3 powi_checked_abort` | `rational` | `dot_product` | `equal-product-denominator` | 9 |
+| `matrix_ops/hyperreal-rational/mat3 powi_checked_abort` | `rational` | `dot_product` | `lcm-shared-denominator` | 58 |
+| `matrix_ops/hyperreal-rational/mat3 powi_checked_abort` | `real` | `constructor` | `rational` | 72 |
+| `matrix_ops/hyperreal-rational/mat3 powi_checked_abort` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 72 |
 | `matrix_ops/hyperreal-rational/mat3 powi_checked_abort` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 72 |
 | `matrix_ops/hyperreal-rational/mat3 powi_checked_abort` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 72 |
-| `matrix_ops/hyperreal-rational/mat3 powi_checked_abort` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 8 |
+| `matrix_ops/hyperreal-rational/mat3 powi_checked_abort` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 powi_checked_abort` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 8 |
 | `matrix_ops/hyperreal-rational/mat3 powi_checked_abort` | `realistic_blas_matrix` | `method` | `powi-checked-with-abort` | 4 |
-| `matrix_ops/hyperreal-rational/mat3 reciprocal` | `real` | `constructor` | `rational` | 162 |
-| `matrix_ops/hyperreal-rational/mat3 reciprocal` | `real` | `constructor` | `zero` | 2 |
+| `matrix_ops/hyperreal-rational/mat3 powi_negative` | `rational` | `dot_product` | `equal-product-denominator` | 9 |
+| `matrix_ops/hyperreal-rational/mat3 powi_negative` | `rational` | `dot_product` | `lcm-shared-denominator` | 31 |
+| `matrix_ops/hyperreal-rational/mat3 powi_negative` | `rational` | `product_sum` | `dyadic-shared-denominator` | 8 |
+| `matrix_ops/hyperreal-rational/mat3 powi_negative` | `rational` | `product_sum` | `equal-product-denominator` | 13 |
+| `matrix_ops/hyperreal-rational/mat3 powi_negative` | `rational` | `product_sum` | `lcm-shared-denominator` | 15 |
+| `matrix_ops/hyperreal-rational/mat3 powi_negative` | `real` | `constructor` | `rational` | 112 |
+| `matrix_ops/hyperreal-rational/mat3 powi_negative` | `real` | `definitely_zero` | `rational-sign` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 powi_negative` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 40 |
+| `matrix_ops/hyperreal-rational/mat3 powi_negative` | `real` | `product_sum` | `exact-rational-shared-denom` | 36 |
+| `matrix_ops/hyperreal-rational/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 40 |
+| `matrix_ops/hyperreal-rational/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 36 |
+| `matrix_ops/hyperreal-rational/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 36 |
+| `matrix_ops/hyperreal-rational/mat3 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 40 |
+| `matrix_ops/hyperreal-rational/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 36 |
+| `matrix_ops/hyperreal-rational/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 36 |
+| `matrix_ops/hyperreal-rational/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 reciprocal` | `rational` | `dot_product` | `lcm-shared-denominator` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 reciprocal` | `rational` | `product_sum` | `dyadic-shared-denominator` | 8 |
+| `matrix_ops/hyperreal-rational/mat3 reciprocal` | `rational` | `product_sum` | `equal-product-denominator` | 13 |
+| `matrix_ops/hyperreal-rational/mat3 reciprocal` | `rational` | `product_sum` | `lcm-shared-denominator` | 15 |
+| `matrix_ops/hyperreal-rational/mat3 reciprocal` | `real` | `constructor` | `rational` | 76 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal` | `real` | `definitely_zero` | `rational-sign` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 reciprocal` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 reciprocal` | `real` | `product_sum` | `exact-rational-shared-denom` | 36 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 36 |
+| `matrix_ops/hyperreal-rational/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 36 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal-rational/mat3 reciprocal` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 72 |
-| `matrix_ops/hyperreal-rational/mat3 reciprocal` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 36 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 36 |
-| `matrix_ops/hyperreal-rational/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 72 |
-| `matrix_ops/hyperreal-rational/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 36 |
+| `matrix_ops/hyperreal-rational/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 36 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 4 |
-| `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `real` | `constructor` | `rational` | 162 |
-| `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `real` | `constructor` | `zero` | 2 |
+| `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `rational` | `dot_product` | `lcm-shared-denominator` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `rational` | `product_sum` | `dyadic-shared-denominator` | 8 |
+| `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `rational` | `product_sum` | `equal-product-denominator` | 13 |
+| `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `rational` | `product_sum` | `lcm-shared-denominator` | 15 |
+| `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `real` | `constructor` | `rational` | 76 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `real` | `definitely_zero` | `rational-sign` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 4 |
+| `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `real` | `product_sum` | `exact-rational-shared-denom` | 36 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 36 |
+| `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 36 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 72 |
-| `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 36 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `realistic_blas` | `scalar_query` | `zero-status` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `realistic_blas` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `realistic_blas` | `zero_status` | `scalar-query` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 36 |
-| `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 72 |
+| `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 36 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `query` | `zero-status` | 4 |
-| `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 36 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `realistic_blas_matrix` | `helper` | `invert-matrix3-checked` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `realistic_blas_matrix` | `method` | `matrix3-inverse-checked` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal_checked` | `realistic_blas_matrix` | `method` | `reciprocal-checked` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 bitxor` | `real` | `constructor` | `rational` | 895 |
-| `matrix_ops/hyperreal-rational/mat4 bitxor` | `real` | `constructor` | `zero` | 1 |
+| `matrix_ops/hyperreal-rational/mat4 bitxor` | `rational` | `dot_product` | `dyadic-shared-denominator` | 39 |
+| `matrix_ops/hyperreal-rational/mat4 bitxor` | `rational` | `dot_product` | `lcm-shared-denominator` | 89 |
+| `matrix_ops/hyperreal-rational/mat4 bitxor` | `real` | `constructor` | `rational` | 128 |
+| `matrix_ops/hyperreal-rational/mat4 bitxor` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 128 |
 | `matrix_ops/hyperreal-rational/mat4 bitxor` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 128 |
 | `matrix_ops/hyperreal-rational/mat4 bitxor` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 128 |
-| `matrix_ops/hyperreal-rational/mat4 bitxor` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 8 |
+| `matrix_ops/hyperreal-rational/mat4 bitxor` | `realistic_blas_matrix` | `helper` | `matrix-power4-fixed-mul` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 bitxor` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 8 |
 | `matrix_ops/hyperreal-rational/mat4 bitxor` | `realistic_blas_matrix` | `method` | `powi` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 bitxor` | `realistic_blas_matrix` | `op` | `bitxor-powi` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `rational` | `dot_product` | `dyadic-shared-denominator` | 16 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `real` | `constructor` | `one` | 12 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `real` | `constructor` | `rational` | 632 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `real` | `constructor` | `zero` | 289 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `real` | `constructor` | `rational` | 440 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `real` | `constructor` | `zero` | 287 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 79 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 16 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas` | `scalar_constructor` | `one` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas` | `scalar_constructor` | `zero` | 264 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 16 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 82 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 29 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 13 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas` | `scalar_op` | `add-owned-owned` | 18 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 243 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 197 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 168 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 168 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `definitely-zero` | 66 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 45 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `zero-status` | 12 |
@@ -1385,134 +3025,159 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `constructor` | `one` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `constructor` | `zero` | 264 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 13 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 16 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 82 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 243 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 168 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 29 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `definitely-zero` | 66 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `exact-dyadic-rational` | 45 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `zero-status` | 12 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `trait_op` | `add-owned-owned` | 18 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 197 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 168 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `matrix4-unscaled-adjugate-from-factors` | 1 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 1 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide4-gauss-jordan` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide4-shared-adjugate` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `real` | `constructor` | `rational` | 557 |
-| `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `real` | `constructor` | `zero` | 15 |
+| `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `rational` | `product_sum` | `dyadic-shared-denominator` | 50 |
+| `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `rational` | `product_sum` | `equal-product-denominator` | 7 |
+| `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `rational` | `product_sum` | `lcm-shared-denominator` | 59 |
+| `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `real` | `constructor` | `rational` | 180 |
 | `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `real` | `definitely_zero` | `rational-sign` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `real` | `product_sum` | `exact-rational-shared-denom` | 116 |
 | `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 64 |
+| `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 116 |
 | `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `realistic_blas` | `scalar_op` | `add-owned-owned` | 72 |
-| `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 300 |
-| `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 116 |
 | `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `realistic_blas` | `scalar_query` | `zero-status` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `realistic_blas` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `realistic_blas` | `zero_status` | `scalar-query` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 64 |
-| `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 300 |
+| `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 116 |
 | `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `realistic_blas_hyperreal_backend` | `query` | `zero-status` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `realistic_blas_hyperreal_backend` | `trait_op` | `add-owned-owned` | 72 |
-| `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 116 |
 | `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 inverse_checked` | `realistic_blas_matrix` | `method` | `matrix4-inverse-checked` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 powi` | `real` | `constructor` | `rational` | 895 |
-| `matrix_ops/hyperreal-rational/mat4 powi` | `real` | `constructor` | `zero` | 1 |
+| `matrix_ops/hyperreal-rational/mat4 powi` | `rational` | `dot_product` | `dyadic-shared-denominator` | 39 |
+| `matrix_ops/hyperreal-rational/mat4 powi` | `rational` | `dot_product` | `lcm-shared-denominator` | 89 |
+| `matrix_ops/hyperreal-rational/mat4 powi` | `real` | `constructor` | `rational` | 128 |
+| `matrix_ops/hyperreal-rational/mat4 powi` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 128 |
 | `matrix_ops/hyperreal-rational/mat4 powi` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 128 |
 | `matrix_ops/hyperreal-rational/mat4 powi` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 128 |
-| `matrix_ops/hyperreal-rational/mat4 powi` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 8 |
+| `matrix_ops/hyperreal-rational/mat4 powi` | `realistic_blas_matrix` | `helper` | `matrix-power4-fixed-mul` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 powi` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 8 |
 | `matrix_ops/hyperreal-rational/mat4 powi` | `realistic_blas_matrix` | `method` | `powi` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 powi_checked` | `real` | `constructor` | `rational` | 895 |
-| `matrix_ops/hyperreal-rational/mat4 powi_checked` | `real` | `constructor` | `zero` | 1 |
+| `matrix_ops/hyperreal-rational/mat4 powi_checked` | `rational` | `dot_product` | `dyadic-shared-denominator` | 39 |
+| `matrix_ops/hyperreal-rational/mat4 powi_checked` | `rational` | `dot_product` | `lcm-shared-denominator` | 89 |
+| `matrix_ops/hyperreal-rational/mat4 powi_checked` | `real` | `constructor` | `rational` | 128 |
+| `matrix_ops/hyperreal-rational/mat4 powi_checked` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 128 |
 | `matrix_ops/hyperreal-rational/mat4 powi_checked` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 128 |
 | `matrix_ops/hyperreal-rational/mat4 powi_checked` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 128 |
-| `matrix_ops/hyperreal-rational/mat4 powi_checked` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 8 |
+| `matrix_ops/hyperreal-rational/mat4 powi_checked` | `realistic_blas_matrix` | `helper` | `matrix-power4-fixed-mul` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 powi_checked` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 8 |
 | `matrix_ops/hyperreal-rational/mat4 powi_checked` | `realistic_blas_matrix` | `method` | `powi-checked` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 reciprocal` | `real` | `constructor` | `rational` | 557 |
-| `matrix_ops/hyperreal-rational/mat4 reciprocal` | `real` | `constructor` | `zero` | 15 |
+| `matrix_ops/hyperreal-rational/mat4 powi_negative` | `rational` | `dot_product` | `equal-product-denominator` | 25 |
+| `matrix_ops/hyperreal-rational/mat4 powi_negative` | `rational` | `dot_product` | `lcm-shared-denominator` | 39 |
+| `matrix_ops/hyperreal-rational/mat4 powi_negative` | `rational` | `product_sum` | `dyadic-shared-denominator` | 50 |
+| `matrix_ops/hyperreal-rational/mat4 powi_negative` | `rational` | `product_sum` | `equal-product-denominator` | 7 |
+| `matrix_ops/hyperreal-rational/mat4 powi_negative` | `rational` | `product_sum` | `lcm-shared-denominator` | 59 |
+| `matrix_ops/hyperreal-rational/mat4 powi_negative` | `real` | `constructor` | `rational` | 244 |
+| `matrix_ops/hyperreal-rational/mat4 powi_negative` | `real` | `definitely_zero` | `rational-sign` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 powi_negative` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 64 |
+| `matrix_ops/hyperreal-rational/mat4 powi_negative` | `real` | `product_sum` | `exact-rational-shared-denom` | 116 |
+| `matrix_ops/hyperreal-rational/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 64 |
+| `matrix_ops/hyperreal-rational/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 64 |
+| `matrix_ops/hyperreal-rational/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 116 |
+| `matrix_ops/hyperreal-rational/mat4 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 64 |
+| `matrix_ops/hyperreal-rational/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 64 |
+| `matrix_ops/hyperreal-rational/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 116 |
+| `matrix_ops/hyperreal-rational/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power4-fixed-mul` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 reciprocal` | `rational` | `product_sum` | `dyadic-shared-denominator` | 50 |
+| `matrix_ops/hyperreal-rational/mat4 reciprocal` | `rational` | `product_sum` | `equal-product-denominator` | 7 |
+| `matrix_ops/hyperreal-rational/mat4 reciprocal` | `rational` | `product_sum` | `lcm-shared-denominator` | 59 |
+| `matrix_ops/hyperreal-rational/mat4 reciprocal` | `real` | `constructor` | `rational` | 180 |
 | `matrix_ops/hyperreal-rational/mat4 reciprocal` | `real` | `definitely_zero` | `rational-sign` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 reciprocal` | `real` | `product_sum` | `exact-rational-shared-denom` | 116 |
 | `matrix_ops/hyperreal-rational/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 64 |
+| `matrix_ops/hyperreal-rational/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 116 |
 | `matrix_ops/hyperreal-rational/mat4 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 reciprocal` | `realistic_blas` | `scalar_op` | `add-owned-owned` | 72 |
-| `matrix_ops/hyperreal-rational/mat4 reciprocal` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 300 |
-| `matrix_ops/hyperreal-rational/mat4 reciprocal` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 116 |
 | `matrix_ops/hyperreal-rational/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 64 |
-| `matrix_ops/hyperreal-rational/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 300 |
-| `matrix_ops/hyperreal-rational/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `trait_op` | `add-owned-owned` | 72 |
-| `matrix_ops/hyperreal-rational/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 116 |
+| `matrix_ops/hyperreal-rational/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 116 |
 | `matrix_ops/hyperreal-rational/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `real` | `constructor` | `rational` | 557 |
-| `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `real` | `constructor` | `zero` | 15 |
+| `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `rational` | `product_sum` | `dyadic-shared-denominator` | 50 |
+| `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `rational` | `product_sum` | `equal-product-denominator` | 7 |
+| `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `rational` | `product_sum` | `lcm-shared-denominator` | 59 |
+| `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `real` | `constructor` | `rational` | 180 |
 | `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `real` | `definitely_zero` | `rational-sign` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `real` | `product_sum` | `exact-rational-shared-denom` | 116 |
 | `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 64 |
+| `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 116 |
 | `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `realistic_blas` | `scalar_op` | `add-owned-owned` | 72 |
-| `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 300 |
-| `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 116 |
 | `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `realistic_blas` | `scalar_query` | `zero-status` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `realistic_blas` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `realistic_blas` | `zero_status` | `scalar-query` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 64 |
-| `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 300 |
+| `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 116 |
 | `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `query` | `zero-status` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `trait_op` | `add-owned-owned` | 72 |
-| `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 116 |
 | `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `realistic_blas_matrix` | `method` | `matrix4-inverse-checked` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 reciprocal_checked` | `realistic_blas_matrix` | `method` | `reciprocal-checked` | 4 |
-| `matrix_ops/hyperreal/mat3 bitxor` | `real` | `constructor` | `rational` | 360 |
+| `matrix_ops/hyperreal/mat3 bitxor` | `rational` | `dot_product` | `dyadic-shared-denominator` | 72 |
+| `matrix_ops/hyperreal/mat3 bitxor` | `real` | `constructor` | `rational` | 72 |
+| `matrix_ops/hyperreal/mat3 bitxor` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 72 |
 | `matrix_ops/hyperreal/mat3 bitxor` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 72 |
 | `matrix_ops/hyperreal/mat3 bitxor` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 72 |
-| `matrix_ops/hyperreal/mat3 bitxor` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 8 |
+| `matrix_ops/hyperreal/mat3 bitxor` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 4 |
+| `matrix_ops/hyperreal/mat3 bitxor` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 8 |
 | `matrix_ops/hyperreal/mat3 bitxor` | `realistic_blas_matrix` | `method` | `powi` | 4 |
 | `matrix_ops/hyperreal/mat3 bitxor` | `realistic_blas_matrix` | `op` | `bitxor-powi` | 4 |
-| `matrix_ops/hyperreal/mat3 div_matrix` | `real` | `constructor` | `rational` | 334 |
-| `matrix_ops/hyperreal/mat3 div_matrix` | `real` | `constructor` | `zero` | 10 |
+| `matrix_ops/hyperreal/mat3 div_matrix` | `rational` | `dot_product` | `dyadic-shared-denominator` | 40 |
+| `matrix_ops/hyperreal/mat3 div_matrix` | `rational` | `product_sum` | `dyadic-shared-denominator` | 36 |
+| `matrix_ops/hyperreal/mat3 div_matrix` | `real` | `constructor` | `rational` | 112 |
 | `matrix_ops/hyperreal/mat3 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 4 |
+| `matrix_ops/hyperreal/mat3 div_matrix` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 40 |
+| `matrix_ops/hyperreal/mat3 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 36 |
 | `matrix_ops/hyperreal/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 40 |
 | `matrix_ops/hyperreal/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 36 |
+| `matrix_ops/hyperreal/mat3 div_matrix` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 36 |
 | `matrix_ops/hyperreal/mat3 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal/mat3 div_matrix` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 72 |
-| `matrix_ops/hyperreal/mat3 div_matrix` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 36 |
 | `matrix_ops/hyperreal/mat3 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 72 |
 | `matrix_ops/hyperreal/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
 | `matrix_ops/hyperreal/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 40 |
 | `matrix_ops/hyperreal/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 36 |
-| `matrix_ops/hyperreal/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 72 |
+| `matrix_ops/hyperreal/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 36 |
 | `matrix_ops/hyperreal/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `exact-dyadic-rational` | 72 |
-| `matrix_ops/hyperreal/mat3 div_matrix` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 36 |
 | `matrix_ops/hyperreal/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 4 |
-| `matrix_ops/hyperreal/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 4 |
+| `matrix_ops/hyperreal/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 4 |
 | `matrix_ops/hyperreal/mat3 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide3-shared-adjugate` | 4 |
 | `matrix_ops/hyperreal/mat3 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 4 |
-| `matrix_ops/hyperreal/mat3 div_matrix_checked` | `real` | `constructor` | `rational` | 334 |
-| `matrix_ops/hyperreal/mat3 div_matrix_checked` | `real` | `constructor` | `zero` | 10 |
+| `matrix_ops/hyperreal/mat3 div_matrix_checked` | `rational` | `dot_product` | `dyadic-shared-denominator` | 40 |
+| `matrix_ops/hyperreal/mat3 div_matrix_checked` | `rational` | `product_sum` | `dyadic-shared-denominator` | 36 |
+| `matrix_ops/hyperreal/mat3 div_matrix_checked` | `real` | `constructor` | `rational` | 112 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked` | `real` | `definitely_zero` | `rational-sign` | 4 |
+| `matrix_ops/hyperreal/mat3 div_matrix_checked` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 40 |
+| `matrix_ops/hyperreal/mat3 div_matrix_checked` | `real` | `product_sum` | `exact-rational-shared-denom` | 36 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 4 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 40 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 36 |
+| `matrix_ops/hyperreal/mat3 div_matrix_checked` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 36 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal/mat3 div_matrix_checked` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 72 |
-| `matrix_ops/hyperreal/mat3 div_matrix_checked` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 36 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 72 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked` | `realistic_blas` | `scalar_query` | `zero-status` | 4 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked` | `realistic_blas` | `zero_guard` | `checked-nonzero` | 4 |
@@ -1520,24 +3185,25 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat3 div_matrix_checked` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 40 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 36 |
-| `matrix_ops/hyperreal/mat3 div_matrix_checked` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 72 |
+| `matrix_ops/hyperreal/mat3 div_matrix_checked` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 36 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked` | `realistic_blas_hyperreal_backend` | `query` | `exact-dyadic-rational` | 72 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked` | `realistic_blas_hyperreal_backend` | `query` | `zero-status` | 4 |
-| `matrix_ops/hyperreal/mat3 div_matrix_checked` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 36 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 4 |
-| `matrix_ops/hyperreal/mat3 div_matrix_checked` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 4 |
+| `matrix_ops/hyperreal/mat3 div_matrix_checked` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 4 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked` | `realistic_blas_matrix` | `helper` | `right-divide3-checked-shared-adjugate` | 4 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked` | `realistic_blas_matrix` | `method` | `div-matrix-checked` | 4 |
-| `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `real` | `constructor` | `rational` | 334 |
-| `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `real` | `constructor` | `zero` | 10 |
+| `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `rational` | `dot_product` | `dyadic-shared-denominator` | 40 |
+| `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `rational` | `product_sum` | `dyadic-shared-denominator` | 36 |
+| `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `real` | `constructor` | `rational` | 112 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `real` | `definitely_zero` | `rational-sign` | 4 |
+| `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 40 |
+| `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `real` | `product_sum` | `exact-rational-shared-denom` | 36 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 4 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `realistic_blas` | `abort` | `attach-owned-scalar` | 4 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 40 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 36 |
+| `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 36 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 72 |
-| `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 36 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `realistic_blas` | `scalar_query` | `attach-abort` | 4 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 72 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `realistic_blas` | `scalar_query` | `zero-status` | 4 |
@@ -1546,46 +3212,48 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 40 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 36 |
-| `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 72 |
+| `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 36 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `realistic_blas_hyperreal_backend` | `query` | `attach-abort` | 4 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `realistic_blas_hyperreal_backend` | `query` | `exact-dyadic-rational` | 72 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `realistic_blas_hyperreal_backend` | `query` | `zero-status` | 4 |
-| `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 36 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 4 |
-| `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 4 |
+| `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 4 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `realistic_blas_matrix` | `helper` | `right-divide3-checked-abort-shared-adjugate` | 4 |
 | `matrix_ops/hyperreal/mat3 div_matrix_checked_abort` | `realistic_blas_matrix` | `method` | `div-matrix-checked-with-abort` | 4 |
-| `matrix_ops/hyperreal/mat3 inverse_checked` | `real` | `constructor` | `rational` | 162 |
-| `matrix_ops/hyperreal/mat3 inverse_checked` | `real` | `constructor` | `zero` | 2 |
+| `matrix_ops/hyperreal/mat3 inverse_checked` | `rational` | `dot_product` | `dyadic-shared-denominator` | 4 |
+| `matrix_ops/hyperreal/mat3 inverse_checked` | `rational` | `product_sum` | `dyadic-shared-denominator` | 36 |
+| `matrix_ops/hyperreal/mat3 inverse_checked` | `real` | `constructor` | `rational` | 76 |
 | `matrix_ops/hyperreal/mat3 inverse_checked` | `real` | `definitely_zero` | `rational-sign` | 4 |
+| `matrix_ops/hyperreal/mat3 inverse_checked` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 4 |
+| `matrix_ops/hyperreal/mat3 inverse_checked` | `real` | `product_sum` | `exact-rational-shared-denom` | 36 |
 | `matrix_ops/hyperreal/mat3 inverse_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 4 |
 | `matrix_ops/hyperreal/mat3 inverse_checked` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
 | `matrix_ops/hyperreal/mat3 inverse_checked` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 36 |
+| `matrix_ops/hyperreal/mat3 inverse_checked` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 36 |
 | `matrix_ops/hyperreal/mat3 inverse_checked` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal/mat3 inverse_checked` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 72 |
-| `matrix_ops/hyperreal/mat3 inverse_checked` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 36 |
 | `matrix_ops/hyperreal/mat3 inverse_checked` | `realistic_blas` | `scalar_query` | `zero-status` | 4 |
 | `matrix_ops/hyperreal/mat3 inverse_checked` | `realistic_blas` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/hyperreal/mat3 inverse_checked` | `realistic_blas` | `zero_status` | `scalar-query` | 4 |
 | `matrix_ops/hyperreal/mat3 inverse_checked` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
 | `matrix_ops/hyperreal/mat3 inverse_checked` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/hyperreal/mat3 inverse_checked` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 36 |
-| `matrix_ops/hyperreal/mat3 inverse_checked` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 72 |
+| `matrix_ops/hyperreal/mat3 inverse_checked` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 36 |
 | `matrix_ops/hyperreal/mat3 inverse_checked` | `realistic_blas_hyperreal_backend` | `query` | `zero-status` | 4 |
-| `matrix_ops/hyperreal/mat3 inverse_checked` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 36 |
 | `matrix_ops/hyperreal/mat3 inverse_checked` | `realistic_blas_matrix` | `helper` | `invert-matrix3-checked` | 4 |
 | `matrix_ops/hyperreal/mat3 inverse_checked` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 4 |
 | `matrix_ops/hyperreal/mat3 inverse_checked` | `realistic_blas_matrix` | `method` | `matrix3-inverse-checked` | 4 |
-| `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `real` | `constructor` | `rational` | 162 |
-| `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `real` | `constructor` | `zero` | 2 |
+| `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `rational` | `dot_product` | `dyadic-shared-denominator` | 4 |
+| `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `rational` | `product_sum` | `dyadic-shared-denominator` | 36 |
+| `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `real` | `constructor` | `rational` | 76 |
 | `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `real` | `definitely_zero` | `rational-sign` | 4 |
+| `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 4 |
+| `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `real` | `product_sum` | `exact-rational-shared-denom` | 36 |
 | `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 4 |
 | `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `realistic_blas` | `abort` | `attach-owned-scalar` | 4 |
 | `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
 | `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 36 |
+| `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 36 |
 | `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 72 |
-| `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 36 |
 | `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `realistic_blas` | `scalar_query` | `attach-abort` | 4 |
 | `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `realistic_blas` | `scalar_query` | `zero-status` | 4 |
 | `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `realistic_blas` | `zero_guard` | `checked-nonzero` | 4 |
@@ -1593,173 +3261,214 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
 | `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 36 |
-| `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 72 |
+| `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 36 |
 | `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `realistic_blas_hyperreal_backend` | `query` | `attach-abort` | 4 |
 | `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `realistic_blas_hyperreal_backend` | `query` | `zero-status` | 4 |
-| `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 36 |
 | `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `realistic_blas_matrix` | `helper` | `invert-matrix3-checked-with-abort` | 4 |
 | `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 4 |
 | `matrix_ops/hyperreal/mat3 inverse_checked_abort` | `realistic_blas_matrix` | `method` | `matrix3-inverse-checked-with-abort` | 4 |
-| `matrix_ops/hyperreal/mat3 powi` | `real` | `constructor` | `rational` | 360 |
+| `matrix_ops/hyperreal/mat3 powi` | `rational` | `dot_product` | `dyadic-shared-denominator` | 72 |
+| `matrix_ops/hyperreal/mat3 powi` | `real` | `constructor` | `rational` | 72 |
+| `matrix_ops/hyperreal/mat3 powi` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 72 |
 | `matrix_ops/hyperreal/mat3 powi` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 72 |
 | `matrix_ops/hyperreal/mat3 powi` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 72 |
-| `matrix_ops/hyperreal/mat3 powi` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 8 |
+| `matrix_ops/hyperreal/mat3 powi` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 4 |
+| `matrix_ops/hyperreal/mat3 powi` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 8 |
 | `matrix_ops/hyperreal/mat3 powi` | `realistic_blas_matrix` | `method` | `powi` | 4 |
-| `matrix_ops/hyperreal/mat3 powi_checked` | `real` | `constructor` | `rational` | 360 |
+| `matrix_ops/hyperreal/mat3 powi_checked` | `rational` | `dot_product` | `dyadic-shared-denominator` | 72 |
+| `matrix_ops/hyperreal/mat3 powi_checked` | `real` | `constructor` | `rational` | 72 |
+| `matrix_ops/hyperreal/mat3 powi_checked` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 72 |
 | `matrix_ops/hyperreal/mat3 powi_checked` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 72 |
 | `matrix_ops/hyperreal/mat3 powi_checked` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 72 |
-| `matrix_ops/hyperreal/mat3 powi_checked` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 8 |
+| `matrix_ops/hyperreal/mat3 powi_checked` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 4 |
+| `matrix_ops/hyperreal/mat3 powi_checked` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 8 |
 | `matrix_ops/hyperreal/mat3 powi_checked` | `realistic_blas_matrix` | `method` | `powi-checked` | 4 |
-| `matrix_ops/hyperreal/mat3 powi_checked_abort` | `real` | `constructor` | `rational` | 360 |
+| `matrix_ops/hyperreal/mat3 powi_checked_abort` | `rational` | `dot_product` | `dyadic-shared-denominator` | 72 |
+| `matrix_ops/hyperreal/mat3 powi_checked_abort` | `real` | `constructor` | `rational` | 72 |
+| `matrix_ops/hyperreal/mat3 powi_checked_abort` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 72 |
 | `matrix_ops/hyperreal/mat3 powi_checked_abort` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 72 |
 | `matrix_ops/hyperreal/mat3 powi_checked_abort` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 72 |
-| `matrix_ops/hyperreal/mat3 powi_checked_abort` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 8 |
+| `matrix_ops/hyperreal/mat3 powi_checked_abort` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 4 |
+| `matrix_ops/hyperreal/mat3 powi_checked_abort` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 8 |
 | `matrix_ops/hyperreal/mat3 powi_checked_abort` | `realistic_blas_matrix` | `method` | `powi-checked-with-abort` | 4 |
-| `matrix_ops/hyperreal/mat3 reciprocal` | `real` | `constructor` | `rational` | 162 |
-| `matrix_ops/hyperreal/mat3 reciprocal` | `real` | `constructor` | `zero` | 2 |
+| `matrix_ops/hyperreal/mat3 powi_negative` | `rational` | `dot_product` | `dyadic-shared-denominator` | 4 |
+| `matrix_ops/hyperreal/mat3 powi_negative` | `rational` | `dot_product` | `equal-product-denominator` | 17 |
+| `matrix_ops/hyperreal/mat3 powi_negative` | `rational` | `dot_product` | `lcm-shared-denominator` | 19 |
+| `matrix_ops/hyperreal/mat3 powi_negative` | `rational` | `product_sum` | `dyadic-shared-denominator` | 36 |
+| `matrix_ops/hyperreal/mat3 powi_negative` | `real` | `constructor` | `rational` | 112 |
+| `matrix_ops/hyperreal/mat3 powi_negative` | `real` | `definitely_zero` | `rational-sign` | 4 |
+| `matrix_ops/hyperreal/mat3 powi_negative` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 40 |
+| `matrix_ops/hyperreal/mat3 powi_negative` | `real` | `product_sum` | `exact-rational-shared-denom` | 36 |
+| `matrix_ops/hyperreal/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 40 |
+| `matrix_ops/hyperreal/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 36 |
+| `matrix_ops/hyperreal/mat3 powi_negative` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 36 |
+| `matrix_ops/hyperreal/mat3 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
+| `matrix_ops/hyperreal/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
+| `matrix_ops/hyperreal/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 40 |
+| `matrix_ops/hyperreal/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 36 |
+| `matrix_ops/hyperreal/mat3 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 36 |
+| `matrix_ops/hyperreal/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 4 |
+| `matrix_ops/hyperreal/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power3-fixed-mul` | 4 |
+| `matrix_ops/hyperreal/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 4 |
+| `matrix_ops/hyperreal/mat3 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply3-owned-owned-specialized` | 4 |
+| `matrix_ops/hyperreal/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 4 |
+| `matrix_ops/hyperreal/mat3 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 4 |
+| `matrix_ops/hyperreal/mat3 reciprocal` | `rational` | `dot_product` | `dyadic-shared-denominator` | 4 |
+| `matrix_ops/hyperreal/mat3 reciprocal` | `rational` | `product_sum` | `dyadic-shared-denominator` | 36 |
+| `matrix_ops/hyperreal/mat3 reciprocal` | `real` | `constructor` | `rational` | 76 |
 | `matrix_ops/hyperreal/mat3 reciprocal` | `real` | `definitely_zero` | `rational-sign` | 4 |
+| `matrix_ops/hyperreal/mat3 reciprocal` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 4 |
+| `matrix_ops/hyperreal/mat3 reciprocal` | `real` | `product_sum` | `exact-rational-shared-denom` | 36 |
 | `matrix_ops/hyperreal/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
 | `matrix_ops/hyperreal/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 36 |
+| `matrix_ops/hyperreal/mat3 reciprocal` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 36 |
 | `matrix_ops/hyperreal/mat3 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal/mat3 reciprocal` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 72 |
-| `matrix_ops/hyperreal/mat3 reciprocal` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 36 |
 | `matrix_ops/hyperreal/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
 | `matrix_ops/hyperreal/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/hyperreal/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 36 |
-| `matrix_ops/hyperreal/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 72 |
-| `matrix_ops/hyperreal/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 36 |
+| `matrix_ops/hyperreal/mat3 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 36 |
 | `matrix_ops/hyperreal/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `invert-matrix3` | 4 |
 | `matrix_ops/hyperreal/mat3 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 4 |
 | `matrix_ops/hyperreal/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `matrix3-inverse` | 4 |
 | `matrix_ops/hyperreal/mat3 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 4 |
-| `matrix_ops/hyperreal/mat3 reciprocal_checked` | `real` | `constructor` | `rational` | 162 |
-| `matrix_ops/hyperreal/mat3 reciprocal_checked` | `real` | `constructor` | `zero` | 2 |
+| `matrix_ops/hyperreal/mat3 reciprocal_checked` | `rational` | `dot_product` | `dyadic-shared-denominator` | 4 |
+| `matrix_ops/hyperreal/mat3 reciprocal_checked` | `rational` | `product_sum` | `dyadic-shared-denominator` | 36 |
+| `matrix_ops/hyperreal/mat3 reciprocal_checked` | `real` | `constructor` | `rational` | 76 |
 | `matrix_ops/hyperreal/mat3 reciprocal_checked` | `real` | `definitely_zero` | `rational-sign` | 4 |
+| `matrix_ops/hyperreal/mat3 reciprocal_checked` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 4 |
+| `matrix_ops/hyperreal/mat3 reciprocal_checked` | `real` | `product_sum` | `exact-rational-shared-denom` | 36 |
 | `matrix_ops/hyperreal/mat3 reciprocal_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 4 |
 | `matrix_ops/hyperreal/mat3 reciprocal_checked` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
 | `matrix_ops/hyperreal/mat3 reciprocal_checked` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 36 |
+| `matrix_ops/hyperreal/mat3 reciprocal_checked` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 36 |
 | `matrix_ops/hyperreal/mat3 reciprocal_checked` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal/mat3 reciprocal_checked` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 72 |
-| `matrix_ops/hyperreal/mat3 reciprocal_checked` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 36 |
 | `matrix_ops/hyperreal/mat3 reciprocal_checked` | `realistic_blas` | `scalar_query` | `zero-status` | 4 |
 | `matrix_ops/hyperreal/mat3 reciprocal_checked` | `realistic_blas` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/hyperreal/mat3 reciprocal_checked` | `realistic_blas` | `zero_status` | `scalar-query` | 4 |
 | `matrix_ops/hyperreal/mat3 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
 | `matrix_ops/hyperreal/mat3 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/hyperreal/mat3 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 36 |
-| `matrix_ops/hyperreal/mat3 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 72 |
+| `matrix_ops/hyperreal/mat3 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 36 |
 | `matrix_ops/hyperreal/mat3 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `query` | `zero-status` | 4 |
-| `matrix_ops/hyperreal/mat3 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 36 |
 | `matrix_ops/hyperreal/mat3 reciprocal_checked` | `realistic_blas_matrix` | `helper` | `invert-matrix3-checked` | 4 |
 | `matrix_ops/hyperreal/mat3 reciprocal_checked` | `realistic_blas_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 4 |
 | `matrix_ops/hyperreal/mat3 reciprocal_checked` | `realistic_blas_matrix` | `method` | `matrix3-inverse-checked` | 4 |
 | `matrix_ops/hyperreal/mat3 reciprocal_checked` | `realistic_blas_matrix` | `method` | `reciprocal-checked` | 4 |
-| `matrix_ops/hyperreal/mat4 bitxor` | `real` | `constructor` | `rational` | 895 |
-| `matrix_ops/hyperreal/mat4 bitxor` | `real` | `constructor` | `zero` | 1 |
+| `matrix_ops/hyperreal/mat4 bitxor` | `rational` | `dot_product` | `dyadic-shared-denominator` | 128 |
+| `matrix_ops/hyperreal/mat4 bitxor` | `real` | `constructor` | `rational` | 128 |
+| `matrix_ops/hyperreal/mat4 bitxor` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 128 |
 | `matrix_ops/hyperreal/mat4 bitxor` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 128 |
 | `matrix_ops/hyperreal/mat4 bitxor` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 128 |
-| `matrix_ops/hyperreal/mat4 bitxor` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 8 |
+| `matrix_ops/hyperreal/mat4 bitxor` | `realistic_blas_matrix` | `helper` | `matrix-power4-fixed-mul` | 4 |
+| `matrix_ops/hyperreal/mat4 bitxor` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 8 |
 | `matrix_ops/hyperreal/mat4 bitxor` | `realistic_blas_matrix` | `method` | `powi` | 4 |
 | `matrix_ops/hyperreal/mat4 bitxor` | `realistic_blas_matrix` | `op` | `bitxor-powi` | 4 |
-| `matrix_ops/hyperreal/mat4 div_matrix` | `real` | `constructor` | `rational` | 982 |
-| `matrix_ops/hyperreal/mat4 div_matrix` | `real` | `constructor` | `zero` | 38 |
+| `matrix_ops/hyperreal/mat4 div_matrix` | `rational` | `dot_product` | `dyadic-shared-denominator` | 64 |
+| `matrix_ops/hyperreal/mat4 div_matrix` | `rational` | `product_sum` | `dyadic-shared-denominator` | 116 |
+| `matrix_ops/hyperreal/mat4 div_matrix` | `real` | `constructor` | `rational` | 244 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 4 |
-| `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
+| `matrix_ops/hyperreal/mat4 div_matrix` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 64 |
+| `matrix_ops/hyperreal/mat4 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 116 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 64 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 64 |
+| `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 116 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas` | `scalar_op` | `add-owned-owned` | 72 |
-| `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 300 |
-| `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 116 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas` | `scalar_query` | `exact-dyadic-rational` | 128 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 64 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 64 |
-| `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 300 |
+| `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 116 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `query` | `exact-dyadic-rational` | 128 |
-| `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `trait_op` | `add-owned-owned` | 72 |
-| `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 116 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 4 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 4 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `matrix4-unscaled-adjugate-from-factors` | 4 |
-| `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 4 |
+| `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 4 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas_matrix` | `helper` | `right-divide4-shared-adjugate` | 4 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `realistic_blas_matrix` | `op` | `div-owned-owned` | 4 |
-| `matrix_ops/hyperreal/mat4 inverse_checked` | `real` | `constructor` | `rational` | 557 |
-| `matrix_ops/hyperreal/mat4 inverse_checked` | `real` | `constructor` | `zero` | 15 |
+| `matrix_ops/hyperreal/mat4 inverse_checked` | `rational` | `product_sum` | `dyadic-shared-denominator` | 116 |
+| `matrix_ops/hyperreal/mat4 inverse_checked` | `real` | `constructor` | `rational` | 180 |
 | `matrix_ops/hyperreal/mat4 inverse_checked` | `real` | `definitely_zero` | `rational-sign` | 4 |
+| `matrix_ops/hyperreal/mat4 inverse_checked` | `real` | `product_sum` | `exact-rational-shared-denom` | 116 |
 | `matrix_ops/hyperreal/mat4 inverse_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 4 |
-| `matrix_ops/hyperreal/mat4 inverse_checked` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
 | `matrix_ops/hyperreal/mat4 inverse_checked` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 64 |
+| `matrix_ops/hyperreal/mat4 inverse_checked` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 116 |
 | `matrix_ops/hyperreal/mat4 inverse_checked` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal/mat4 inverse_checked` | `realistic_blas` | `scalar_op` | `add-owned-owned` | 72 |
-| `matrix_ops/hyperreal/mat4 inverse_checked` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 300 |
-| `matrix_ops/hyperreal/mat4 inverse_checked` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 116 |
 | `matrix_ops/hyperreal/mat4 inverse_checked` | `realistic_blas` | `scalar_query` | `zero-status` | 4 |
 | `matrix_ops/hyperreal/mat4 inverse_checked` | `realistic_blas` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/hyperreal/mat4 inverse_checked` | `realistic_blas` | `zero_status` | `scalar-query` | 4 |
 | `matrix_ops/hyperreal/mat4 inverse_checked` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal/mat4 inverse_checked` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/hyperreal/mat4 inverse_checked` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 64 |
-| `matrix_ops/hyperreal/mat4 inverse_checked` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 300 |
+| `matrix_ops/hyperreal/mat4 inverse_checked` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 116 |
 | `matrix_ops/hyperreal/mat4 inverse_checked` | `realistic_blas_hyperreal_backend` | `query` | `zero-status` | 4 |
-| `matrix_ops/hyperreal/mat4 inverse_checked` | `realistic_blas_hyperreal_backend` | `trait_op` | `add-owned-owned` | 72 |
-| `matrix_ops/hyperreal/mat4 inverse_checked` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 116 |
 | `matrix_ops/hyperreal/mat4 inverse_checked` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 4 |
 | `matrix_ops/hyperreal/mat4 inverse_checked` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 4 |
 | `matrix_ops/hyperreal/mat4 inverse_checked` | `realistic_blas_matrix` | `method` | `matrix4-inverse-checked` | 4 |
-| `matrix_ops/hyperreal/mat4 powi` | `real` | `constructor` | `rational` | 895 |
-| `matrix_ops/hyperreal/mat4 powi` | `real` | `constructor` | `zero` | 1 |
+| `matrix_ops/hyperreal/mat4 powi` | `rational` | `dot_product` | `dyadic-shared-denominator` | 128 |
+| `matrix_ops/hyperreal/mat4 powi` | `real` | `constructor` | `rational` | 128 |
+| `matrix_ops/hyperreal/mat4 powi` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 128 |
 | `matrix_ops/hyperreal/mat4 powi` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 128 |
 | `matrix_ops/hyperreal/mat4 powi` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 128 |
-| `matrix_ops/hyperreal/mat4 powi` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 8 |
+| `matrix_ops/hyperreal/mat4 powi` | `realistic_blas_matrix` | `helper` | `matrix-power4-fixed-mul` | 4 |
+| `matrix_ops/hyperreal/mat4 powi` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 8 |
 | `matrix_ops/hyperreal/mat4 powi` | `realistic_blas_matrix` | `method` | `powi` | 4 |
-| `matrix_ops/hyperreal/mat4 powi_checked` | `real` | `constructor` | `rational` | 895 |
-| `matrix_ops/hyperreal/mat4 powi_checked` | `real` | `constructor` | `zero` | 1 |
+| `matrix_ops/hyperreal/mat4 powi_checked` | `rational` | `dot_product` | `dyadic-shared-denominator` | 128 |
+| `matrix_ops/hyperreal/mat4 powi_checked` | `real` | `constructor` | `rational` | 128 |
+| `matrix_ops/hyperreal/mat4 powi_checked` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 128 |
 | `matrix_ops/hyperreal/mat4 powi_checked` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 128 |
 | `matrix_ops/hyperreal/mat4 powi_checked` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 128 |
-| `matrix_ops/hyperreal/mat4 powi_checked` | `realistic_blas_matrix` | `helper` | `multiply-owned-owned` | 8 |
+| `matrix_ops/hyperreal/mat4 powi_checked` | `realistic_blas_matrix` | `helper` | `matrix-power4-fixed-mul` | 4 |
+| `matrix_ops/hyperreal/mat4 powi_checked` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 8 |
 | `matrix_ops/hyperreal/mat4 powi_checked` | `realistic_blas_matrix` | `method` | `powi-checked` | 4 |
-| `matrix_ops/hyperreal/mat4 reciprocal` | `real` | `constructor` | `rational` | 557 |
-| `matrix_ops/hyperreal/mat4 reciprocal` | `real` | `constructor` | `zero` | 15 |
+| `matrix_ops/hyperreal/mat4 powi_negative` | `rational` | `dot_product` | `equal-product-denominator` | 25 |
+| `matrix_ops/hyperreal/mat4 powi_negative` | `rational` | `dot_product` | `lcm-shared-denominator` | 39 |
+| `matrix_ops/hyperreal/mat4 powi_negative` | `rational` | `product_sum` | `dyadic-shared-denominator` | 116 |
+| `matrix_ops/hyperreal/mat4 powi_negative` | `real` | `constructor` | `rational` | 244 |
+| `matrix_ops/hyperreal/mat4 powi_negative` | `real` | `definitely_zero` | `rational-sign` | 4 |
+| `matrix_ops/hyperreal/mat4 powi_negative` | `real` | `dot_product` | `dot4-exact-rational-shared-denom` | 64 |
+| `matrix_ops/hyperreal/mat4 powi_negative` | `real` | `product_sum` | `exact-rational-shared-denom` | 116 |
+| `matrix_ops/hyperreal/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `dot4-backend` | 64 |
+| `matrix_ops/hyperreal/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 64 |
+| `matrix_ops/hyperreal/mat4 powi_negative` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 116 |
+| `matrix_ops/hyperreal/mat4 powi_negative` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
+| `matrix_ops/hyperreal/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
+| `matrix_ops/hyperreal/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `dot4-specialized` | 64 |
+| `matrix_ops/hyperreal/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 64 |
+| `matrix_ops/hyperreal/mat4 powi_negative` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 116 |
+| `matrix_ops/hyperreal/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 4 |
+| `matrix_ops/hyperreal/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix-power4-fixed-mul` | 4 |
+| `matrix_ops/hyperreal/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 4 |
+| `matrix_ops/hyperreal/mat4 powi_negative` | `realistic_blas_matrix` | `helper` | `multiply4-owned-owned-specialized` | 4 |
+| `matrix_ops/hyperreal/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 4 |
+| `matrix_ops/hyperreal/mat4 powi_negative` | `realistic_blas_matrix` | `method` | `powi` | 4 |
+| `matrix_ops/hyperreal/mat4 reciprocal` | `rational` | `product_sum` | `dyadic-shared-denominator` | 116 |
+| `matrix_ops/hyperreal/mat4 reciprocal` | `real` | `constructor` | `rational` | 180 |
 | `matrix_ops/hyperreal/mat4 reciprocal` | `real` | `definitely_zero` | `rational-sign` | 4 |
-| `matrix_ops/hyperreal/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
+| `matrix_ops/hyperreal/mat4 reciprocal` | `real` | `product_sum` | `exact-rational-shared-denom` | 116 |
 | `matrix_ops/hyperreal/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 64 |
+| `matrix_ops/hyperreal/mat4 reciprocal` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 116 |
 | `matrix_ops/hyperreal/mat4 reciprocal` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal/mat4 reciprocal` | `realistic_blas` | `scalar_op` | `add-owned-owned` | 72 |
-| `matrix_ops/hyperreal/mat4 reciprocal` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 300 |
-| `matrix_ops/hyperreal/mat4 reciprocal` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 116 |
 | `matrix_ops/hyperreal/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/hyperreal/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 64 |
-| `matrix_ops/hyperreal/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 300 |
-| `matrix_ops/hyperreal/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `trait_op` | `add-owned-owned` | 72 |
-| `matrix_ops/hyperreal/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 116 |
+| `matrix_ops/hyperreal/mat4 reciprocal` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 116 |
 | `matrix_ops/hyperreal/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 4 |
 | `matrix_ops/hyperreal/mat4 reciprocal` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 4 |
 | `matrix_ops/hyperreal/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `matrix4-inverse` | 4 |
 | `matrix_ops/hyperreal/mat4 reciprocal` | `realistic_blas_matrix` | `method` | `reciprocal` | 4 |
-| `matrix_ops/hyperreal/mat4 reciprocal_checked` | `real` | `constructor` | `rational` | 557 |
-| `matrix_ops/hyperreal/mat4 reciprocal_checked` | `real` | `constructor` | `zero` | 15 |
+| `matrix_ops/hyperreal/mat4 reciprocal_checked` | `rational` | `product_sum` | `dyadic-shared-denominator` | 116 |
+| `matrix_ops/hyperreal/mat4 reciprocal_checked` | `real` | `constructor` | `rational` | 180 |
 | `matrix_ops/hyperreal/mat4 reciprocal_checked` | `real` | `definitely_zero` | `rational-sign` | 4 |
+| `matrix_ops/hyperreal/mat4 reciprocal_checked` | `real` | `product_sum` | `exact-rational-shared-denom` | 116 |
 | `matrix_ops/hyperreal/mat4 reciprocal_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 4 |
-| `matrix_ops/hyperreal/mat4 reciprocal_checked` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
 | `matrix_ops/hyperreal/mat4 reciprocal_checked` | `realistic_blas` | `scalar_fast_path` | `mul-cached` | 64 |
+| `matrix_ops/hyperreal/mat4 reciprocal_checked` | `realistic_blas` | `scalar_fast_path` | `signed-product-sum2` | 116 |
 | `matrix_ops/hyperreal/mat4 reciprocal_checked` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal/mat4 reciprocal_checked` | `realistic_blas` | `scalar_op` | `add-owned-owned` | 72 |
-| `matrix_ops/hyperreal/mat4 reciprocal_checked` | `realistic_blas` | `scalar_op` | `mul-ref-ref` | 300 |
-| `matrix_ops/hyperreal/mat4 reciprocal_checked` | `realistic_blas` | `scalar_op` | `sub-owned-owned` | 116 |
 | `matrix_ops/hyperreal/mat4 reciprocal_checked` | `realistic_blas` | `scalar_query` | `zero-status` | 4 |
 | `matrix_ops/hyperreal/mat4 reciprocal_checked` | `realistic_blas` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/hyperreal/mat4 reciprocal_checked` | `realistic_blas` | `zero_status` | `scalar-query` | 4 |
 | `matrix_ops/hyperreal/mat4 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/hyperreal/mat4 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/hyperreal/mat4 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `op` | `mul-owned-method-ref` | 64 |
-| `matrix_ops/hyperreal/mat4 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `op` | `mul-ref-ref` | 300 |
+| `matrix_ops/hyperreal/mat4 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 116 |
 | `matrix_ops/hyperreal/mat4 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `query` | `zero-status` | 4 |
-| `matrix_ops/hyperreal/mat4 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `trait_op` | `add-owned-owned` | 72 |
-| `matrix_ops/hyperreal/mat4 reciprocal_checked` | `realistic_blas_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 116 |
 | `matrix_ops/hyperreal/mat4 reciprocal_checked` | `realistic_blas_matrix` | `helper` | `determinant4-from-factors` | 4 |
 | `matrix_ops/hyperreal/mat4 reciprocal_checked` | `realistic_blas_matrix` | `helper` | `matrix4-factors` | 4 |
 | `matrix_ops/hyperreal/mat4 reciprocal_checked` | `realistic_blas_matrix` | `method` | `matrix4-inverse-checked` | 4 |
@@ -3378,15 +5087,19 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `vectors/approx/vec3 normalize` | `realistic_blas_vector` | `method` | `dot3` | 4 |
 | `vectors/approx/vec3 normalize` | `realistic_blas_vector` | `method` | `magnitude` | 4 |
 | `vectors/approx/vec3 normalize` | `realistic_blas_vector` | `method` | `normalize` | 4 |
-| `vectors/hyperreal-rational/vec3 dot` | `real` | `constructor` | `rational` | 5 |
+| `vectors/hyperreal-rational/vec3 dot` | `rational` | `dot_product` | `lcm-shared-denominator` | 1 |
+| `vectors/hyperreal-rational/vec3 dot` | `real` | `constructor` | `rational` | 1 |
+| `vectors/hyperreal-rational/vec3 dot` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 1 |
 | `vectors/hyperreal-rational/vec3 dot` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
 | `vectors/hyperreal-rational/vec3 dot` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 1 |
 | `vectors/hyperreal-rational/vec3 dot` | `realistic_blas_vector` | `method` | `dot3` | 1 |
 | `vectors/hyperreal-rational/vec3 magnitude` | `computable` | `constructor` | `rational-node` | 1 |
 | `vectors/hyperreal-rational/vec3 magnitude` | `computable` | `sqrt` | `generic-sqrt-node` | 1 |
+| `vectors/hyperreal-rational/vec3 magnitude` | `rational` | `dot_product` | `lcm-shared-denominator` | 1 |
 | `vectors/hyperreal-rational/vec3 magnitude` | `real` | `best_sign` | `symbolic-or-rational` | 1 |
-| `vectors/hyperreal-rational/vec3 magnitude` | `real` | `constructor` | `rational` | 5 |
+| `vectors/hyperreal-rational/vec3 magnitude` | `real` | `constructor` | `rational` | 1 |
 | `vectors/hyperreal-rational/vec3 magnitude` | `real` | `definitely_zero` | `rational-sign` | 1 |
+| `vectors/hyperreal-rational/vec3 magnitude` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 1 |
 | `vectors/hyperreal-rational/vec3 magnitude` | `real` | `sqrt` | `rational-sqrt-special-form` | 1 |
 | `vectors/hyperreal-rational/vec3 magnitude` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
 | `vectors/hyperreal-rational/vec3 magnitude` | `realistic_blas` | `scalar_method` | `sqrt` | 1 |
@@ -3396,9 +5109,11 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `vectors/hyperreal-rational/vec3 magnitude` | `realistic_blas_vector` | `method` | `magnitude` | 1 |
 | `vectors/hyperreal-rational/vec3 normalize` | `computable` | `constructor` | `rational-node` | 2 |
 | `vectors/hyperreal-rational/vec3 normalize` | `computable` | `sqrt` | `generic-sqrt-node` | 2 |
+| `vectors/hyperreal-rational/vec3 normalize` | `rational` | `dot_product` | `lcm-shared-denominator` | 1 |
 | `vectors/hyperreal-rational/vec3 normalize` | `real` | `best_sign` | `symbolic-or-rational` | 1 |
-| `vectors/hyperreal-rational/vec3 normalize` | `real` | `constructor` | `rational` | 5 |
+| `vectors/hyperreal-rational/vec3 normalize` | `real` | `constructor` | `rational` | 1 |
 | `vectors/hyperreal-rational/vec3 normalize` | `real` | `definitely_zero` | `rational-sign` | 9 |
+| `vectors/hyperreal-rational/vec3 normalize` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 1 |
 | `vectors/hyperreal-rational/vec3 normalize` | `real` | `sqrt` | `rational-sqrt-special-form` | 1 |
 | `vectors/hyperreal-rational/vec3 normalize` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 1 |
 | `vectors/hyperreal-rational/vec3 normalize` | `realistic_blas` | `scalar_method` | `inverse-owned` | 1 |
@@ -3414,15 +5129,19 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `vectors/hyperreal-rational/vec3 normalize` | `realistic_blas_vector` | `method` | `dot3` | 1 |
 | `vectors/hyperreal-rational/vec3 normalize` | `realistic_blas_vector` | `method` | `magnitude` | 1 |
 | `vectors/hyperreal-rational/vec3 normalize` | `realistic_blas_vector` | `method` | `normalize` | 1 |
-| `vectors/hyperreal/vec3 dot` | `real` | `constructor` | `rational` | 20 |
+| `vectors/hyperreal/vec3 dot` | `rational` | `dot_product` | `dyadic-shared-denominator` | 4 |
+| `vectors/hyperreal/vec3 dot` | `real` | `constructor` | `rational` | 4 |
+| `vectors/hyperreal/vec3 dot` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 4 |
 | `vectors/hyperreal/vec3 dot` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
 | `vectors/hyperreal/vec3 dot` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 4 |
 | `vectors/hyperreal/vec3 dot` | `realistic_blas_vector` | `method` | `dot3` | 4 |
 | `vectors/hyperreal/vec3 magnitude` | `computable` | `constructor` | `rational-node` | 4 |
 | `vectors/hyperreal/vec3 magnitude` | `computable` | `sqrt` | `generic-sqrt-node` | 4 |
+| `vectors/hyperreal/vec3 magnitude` | `rational` | `dot_product` | `dyadic-shared-denominator` | 4 |
 | `vectors/hyperreal/vec3 magnitude` | `real` | `best_sign` | `symbolic-or-rational` | 4 |
-| `vectors/hyperreal/vec3 magnitude` | `real` | `constructor` | `rational` | 20 |
+| `vectors/hyperreal/vec3 magnitude` | `real` | `constructor` | `rational` | 4 |
 | `vectors/hyperreal/vec3 magnitude` | `real` | `definitely_zero` | `rational-sign` | 4 |
+| `vectors/hyperreal/vec3 magnitude` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 4 |
 | `vectors/hyperreal/vec3 magnitude` | `real` | `sqrt` | `rational-sqrt-special-form` | 4 |
 | `vectors/hyperreal/vec3 magnitude` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
 | `vectors/hyperreal/vec3 magnitude` | `realistic_blas` | `scalar_method` | `sqrt` | 4 |
@@ -3430,11 +5149,13 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `vectors/hyperreal/vec3 magnitude` | `realistic_blas_hyperreal_backend` | `op` | `dot3-specialized` | 4 |
 | `vectors/hyperreal/vec3 magnitude` | `realistic_blas_vector` | `method` | `dot3` | 4 |
 | `vectors/hyperreal/vec3 magnitude` | `realistic_blas_vector` | `method` | `magnitude` | 4 |
-| `vectors/hyperreal/vec3 normalize` | `computable` | `constructor` | `rational-node` | 4 |
-| `vectors/hyperreal/vec3 normalize` | `computable` | `sqrt` | `generic-sqrt-node` | 4 |
+| `vectors/hyperreal/vec3 normalize` | `computable` | `constructor` | `rational-node` | 5 |
+| `vectors/hyperreal/vec3 normalize` | `computable` | `sqrt` | `generic-sqrt-node` | 5 |
+| `vectors/hyperreal/vec3 normalize` | `rational` | `dot_product` | `dyadic-shared-denominator` | 4 |
 | `vectors/hyperreal/vec3 normalize` | `real` | `best_sign` | `symbolic-or-rational` | 4 |
-| `vectors/hyperreal/vec3 normalize` | `real` | `constructor` | `rational` | 20 |
+| `vectors/hyperreal/vec3 normalize` | `real` | `constructor` | `rational` | 4 |
 | `vectors/hyperreal/vec3 normalize` | `real` | `definitely_zero` | `rational-sign` | 36 |
+| `vectors/hyperreal/vec3 normalize` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 4 |
 | `vectors/hyperreal/vec3 normalize` | `real` | `sqrt` | `rational-sqrt-special-form` | 4 |
 | `vectors/hyperreal/vec3 normalize` | `realistic_blas` | `scalar_fast_path` | `dot3-backend` | 4 |
 | `vectors/hyperreal/vec3 normalize` | `realistic_blas` | `scalar_method` | `inverse-owned` | 4 |

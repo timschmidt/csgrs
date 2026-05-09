@@ -48,6 +48,18 @@ pub trait Backend: Clone + fmt::Debug + PartialEq + 'static {
     /// construction, but can be slower for compact scalar representations.
     const SPECIALIZE_SCALAR_POWI: bool = false;
 
+    /// Whether fixed determinant/cofactor helpers should route short signed
+    /// product sums through the backend.
+    ///
+    /// This is deliberately opt-in. Compact approximate scalars benchmark
+    /// faster with the direct expression shape that LLVM already optimizes,
+    /// while hyperreal exact rationals can use this hook to delay BigInt
+    /// denominator canonicalization until the final cofactor row. 2026-05-09
+    /// guarded Criterion after adding the opt-in gate: approximate mat3/mat4
+    /// reciprocal, inverse, division, negative-powi, and borrowed division had
+    /// no regressions outside noise; owned rows were faster in the clean run.
+    const FUSE_SIGNED_PRODUCT_SUM: bool = false;
+
     /// Opaque scalar representation owned by the backend.
     type Repr: BackendScalar;
 }
@@ -271,6 +283,33 @@ pub trait BackendScalar:
         let p2 = left[2].clone().mul_ref(right[2]);
         let p3 = left[3].clone().mul_ref(right[3]);
         p0.add_ref(&p1).add_ref(&p2.add_ref(&p3))
+    }
+    /// Returns a fused signed sum of two-factor products.
+    ///
+    /// The default deliberately preserves the existing scalar operation order.
+    /// Expensive exact backends can override this to delay canonicalization
+    /// across determinant and cofactor polynomials.
+    #[inline]
+    fn signed_product_sum2<const TERMS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Self; 2]; TERMS],
+    ) -> Self {
+        crate::trace_dispatch!(
+            "realistic_blas_backend_trait",
+            "op",
+            "signed-product-sum2-default"
+        );
+        let mut total: Option<Self> = None;
+        for i in 0..TERMS {
+            let product = terms[i][0].clone().mul_ref(terms[i][1]);
+            total = Some(match total.take() {
+                Some(total) if positive_terms[i] => total.add_ref(&product),
+                Some(total) => total.sub_ref(&product),
+                None if positive_terms[i] => product,
+                None => -product,
+            });
+        }
+        total.unwrap_or_else(Self::zero)
     }
     /// Returns `e` raised to this value.
     fn exp(self) -> BlasResult<Self>;

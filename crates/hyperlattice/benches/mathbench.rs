@@ -74,6 +74,7 @@ fn main() {
     bench_complex_operations(&mut criterion);
     bench_vector_operations(&mut criterion);
     bench_matrix_operations(&mut criterion);
+    bench_targeted_matrix_forms(&mut criterion);
     bench_borrowed_operations(&mut criterion);
     bench_precisions(&mut criterion);
     if trace_only {

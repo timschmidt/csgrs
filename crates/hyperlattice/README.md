@@ -19,7 +19,7 @@ remains `HyperrealBackend`.
 - `hyperreal` supplies the default exact/symbolic scalar representation.
 - `realistic_blas` owns complex, vector, and matrix algebra over backend-neutral
   `Scalar<B>` values.
-- `predicated` can consume `realistic_blas::Scalar<B>` structural facts when
+- `liminal` can consume `realistic_blas::Scalar<B>` structural facts when
   geometry predicates need sign provenance, filtering, refinement, or robust
   fallback.
 
@@ -28,8 +28,8 @@ or geometry topology.
 
 ## Current State
 
-Version `0.3.2` is experimental and benchmarked. The focus is ergonomic
-small-object algebra over rich scalar backends, not high-throughput dense BLAS.
+Version `0.3.2` is experimental, benchmarked, and intended for small-object
+algebra over rich scalar backends, not high-throughput dense BLAS.
 
 Implemented:
 
@@ -203,7 +203,7 @@ The crate is optimized for small fixed-size algebra over rich scalars:
 - small scalar powers are specialized before exponentiation by squaring
 - 3x3 and 4x4 borrowed matrix multiplication is unrolled
 - matrix division and inversion use checked zero-status paths where requested
-- scalar facts are forwarded by borrow so `predicated` can query them cheaply
+- scalar facts are forwarded by borrow so `liminal` can query them cheaply
 - the approx backend mirrors the API with a lower-cost interval representation
 
 Run the benchmark suite:

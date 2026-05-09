@@ -412,3 +412,185 @@ fn blas_mat4_b_rational() -> Matrix4<HyperrealBackend> {
         [23.into(), 29.into(), 31.into(), 37.into()],
     ])
 }
+
+fn ratio_matrix3_with<B, F>(entries: [[(i64, u64); 3]; 3], make_ratio: F) -> Matrix3<B>
+where
+    B: Backend,
+    F: Copy + Fn(i64, u64) -> Scalar<B>,
+{
+    Matrix3::new(entries.map(|row| row.map(|(n, d)| make_ratio(n, d))))
+}
+
+fn ratio_matrix4_with<B, F>(entries: [[(i64, u64); 4]; 4], make_ratio: F) -> Matrix4<B>
+where
+    B: Backend,
+    F: Copy + Fn(i64, u64) -> Scalar<B>,
+{
+    Matrix4::new(entries.map(|row| row.map(|(n, d)| make_ratio(n, d))))
+}
+
+#[derive(Clone)]
+struct TargetedMatrixForm<B: Backend> {
+    name: &'static str,
+    lhs3: Matrix3<B>,
+    rhs3: Matrix3<B>,
+    lhs4: Matrix4<B>,
+    rhs4: Matrix4<B>,
+}
+
+fn targeted_matrix_forms_with<B, F>(make_ratio: F) -> [TargetedMatrixForm<B>; 4]
+where
+    B: Backend,
+    F: Copy + Fn(i64, u64) -> Scalar<B>,
+{
+    [
+        TargetedMatrixForm {
+            name: "dyadic_dense",
+            lhs3: ratio_matrix3_with(
+                [
+                    [(9, 8), (3, 16), (-5, 8)],
+                    [(7, 4), (-11, 8), (13, 16)],
+                    [(5, 8), (17, 16), (19, 8)],
+                ],
+                make_ratio,
+            ),
+            rhs3: ratio_matrix3_with(
+                [
+                    [(11, 8), (-3, 16), (7, 8)],
+                    [(5, 4), (13, 8), (-9, 16)],
+                    [(1, 8), (15, 16), (17, 8)],
+                ],
+                make_ratio,
+            ),
+            lhs4: ratio_matrix4_with(
+                [
+                    [(9, 8), (3, 16), (-5, 8), (7, 4)],
+                    [(11, 8), (-13, 16), (15, 8), (5, 16)],
+                    [(-7, 8), (17, 16), (19, 8), (-3, 4)],
+                    [(5, 8), (21, 16), (-11, 8), (23, 16)],
+                ],
+                make_ratio,
+            ),
+            rhs4: ratio_matrix4_with(
+                [
+                    [(13, 8), (5, 16), (7, 8), (-9, 4)],
+                    [(3, 8), (17, 16), (-5, 8), (11, 16)],
+                    [(19, 8), (-7, 16), (23, 8), (5, 4)],
+                    [(-1, 8), (9, 16), (15, 8), (25, 16)],
+                ],
+                make_ratio,
+            ),
+        },
+        TargetedMatrixForm {
+            name: "equal_decimal_den",
+            lhs3: ratio_matrix3_with(
+                [
+                    [(12, 10), (3, 10), (-7, 10)],
+                    [(21, 10), (-15, 10), (9, 10)],
+                    [(4, 10), (33, 10), (22, 10)],
+                ],
+                make_ratio,
+            ),
+            rhs3: ratio_matrix3_with(
+                [
+                    [(-8, 10), (11, 10), (5, 10)],
+                    [(27, 10), (6, 10), (-14, 10)],
+                    [(32, 10), (-9, 10), (18, 10)],
+                ],
+                make_ratio,
+            ),
+            lhs4: ratio_matrix4_with(
+                [
+                    [(11, 10), (2, 10), (3, 10), (4, 10)],
+                    [(5, 10), (17, 10), (7, 10), (-8, 10)],
+                    [(9, 10), (-10, 10), (23, 10), (12, 10)],
+                    [(-13, 10), (14, 10), (-15, 10), (19, 10)],
+                ],
+                make_ratio,
+            ),
+            rhs4: ratio_matrix4_with(
+                [
+                    [(20, 10), (3, 10), (5, 10), (-7, 10)],
+                    [(11, 10), (25, 10), (-13, 10), (17, 10)],
+                    [(-19, 10), (23, 10), (31, 10), (-29, 10)],
+                    [(31, 10), (-37, 10), (41, 10), (43, 10)],
+                ],
+                make_ratio,
+            ),
+        },
+        TargetedMatrixForm {
+            name: "mixed_prime_den",
+            lhs3: ratio_matrix3_with(
+                [
+                    [(7, 3), (-5, 7), (11, 13)],
+                    [(13, 5), (17, 11), (-19, 17)],
+                    [(-23, 19), (29, 23), (31, 29)],
+                ],
+                make_ratio,
+            ),
+            rhs3: ratio_matrix3_with(
+                [
+                    [(5, 3), (7, 5), (-11, 7)],
+                    [(13, 11), (-17, 13), (19, 17)],
+                    [(23, 19), (-29, 23), (37, 31)],
+                ],
+                make_ratio,
+            ),
+            lhs4: ratio_matrix4_with(
+                [
+                    [(7, 3), (-5, 7), (11, 13), (13, 5)],
+                    [(17, 11), (-19, 17), (23, 19), (-29, 23)],
+                    [(31, 29), (37, 31), (-41, 37), (43, 41)],
+                    [(-47, 43), (53, 47), (59, 53), (61, 59)],
+                ],
+                make_ratio,
+            ),
+            rhs4: ratio_matrix4_with(
+                [
+                    [(11, 3), (13, 5), (-17, 7), (19, 11)],
+                    [(23, 13), (-29, 17), (31, 19), (37, 23)],
+                    [(-41, 29), (43, 31), (47, 37), (-53, 41)],
+                    [(59, 43), (-61, 47), (67, 53), (71, 59)],
+                ],
+                make_ratio,
+            ),
+        },
+        TargetedMatrixForm {
+            name: "sparse_integer",
+            lhs3: ratio_matrix3_with(
+                [
+                    [(2, 1), (0, 1), (1, 1)],
+                    [(0, 1), (3, 1), (1, 1)],
+                    [(1, 1), (0, 1), (2, 1)],
+                ],
+                make_ratio,
+            ),
+            rhs3: ratio_matrix3_with(
+                [
+                    [(3, 1), (1, 1), (0, 1)],
+                    [(1, 1), (2, 1), (1, 1)],
+                    [(0, 1), (1, 1), (4, 1)],
+                ],
+                make_ratio,
+            ),
+            lhs4: ratio_matrix4_with(
+                [
+                    [(2, 1), (0, 1), (1, 1), (0, 1)],
+                    [(1, 1), (3, 1), (0, 1), (1, 1)],
+                    [(0, 1), (2, 1), (1, 1), (0, 1)],
+                    [(1, 1), (0, 1), (0, 1), (2, 1)],
+                ],
+                make_ratio,
+            ),
+            rhs4: ratio_matrix4_with(
+                [
+                    [(3, 1), (0, 1), (1, 1), (0, 1)],
+                    [(0, 1), (2, 1), (1, 1), (1, 1)],
+                    [(1, 1), (0, 1), (4, 1), (0, 1)],
+                    [(0, 1), (1, 1), (0, 1), (5, 1)],
+                ],
+                make_ratio,
+            ),
+        },
+    ]
+}

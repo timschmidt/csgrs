@@ -47,6 +47,11 @@ fn bench_matrix_operations_for<B, F>(
                 black_box(black_box(value.clone()).powi(3).unwrap());
             }
         });
+        trace_matrix_profile_row("mat3", "powi_negative", input, lhs3_cases.len(), || {
+            for value in &lhs3_cases {
+                black_box(black_box(value.clone()).powi(-2).unwrap());
+            }
+        });
         trace_matrix_profile_row("mat4", "reciprocal", input, lhs4_cases.len(), || {
             for value in &lhs4_cases {
                 black_box(black_box(value.clone()).reciprocal().unwrap());
@@ -68,6 +73,11 @@ fn bench_matrix_operations_for<B, F>(
         trace_matrix_profile_row("mat4", "powi", input, lhs4_cases.len(), || {
             for value in &lhs4_cases {
                 black_box(black_box(value.clone()).powi(3).unwrap());
+            }
+        });
+        trace_matrix_profile_row("mat4", "powi_negative", input, lhs4_cases.len(), || {
+            for value in &lhs4_cases {
+                black_box(black_box(value.clone()).powi(-2).unwrap());
             }
         });
     }
@@ -113,6 +123,11 @@ fn bench_matrix_operations_for<B, F>(
                     .powi_checked_with_abort(3, &signal)
                     .unwrap(),
             );
+        }
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 powi_negative"), || {
+        for value in &lhs3_cases {
+            black_box(black_box(value.clone()).powi(-2).unwrap());
         }
     });
     trace_dispatch_row(format!("matrix_ops/{label}/mat3 div_matrix_checked"), || {
@@ -172,6 +187,11 @@ fn bench_matrix_operations_for<B, F>(
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 powi_checked"), || {
         for value in &lhs4_cases {
             black_box(black_box(value.clone()).powi_checked(3).unwrap());
+        }
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 powi_negative"), || {
+        for value in &lhs4_cases {
+            black_box(black_box(value.clone()).powi(-2).unwrap());
         }
     });
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 div_matrix"), || {
@@ -269,6 +289,16 @@ fn bench_matrix_operations_for<B, F>(
             black_box(
                 black_box(next_case(&lhs3_cases, &cursor).clone())
                     .powi_checked_with_abort(3, &signal)
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat3 powi_negative"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(
+                black_box(next_case(&lhs3_cases, &cursor).clone())
+                    .powi(-2)
                     .unwrap(),
             )
         })
@@ -442,6 +472,16 @@ fn bench_matrix_operations_for<B, F>(
             )
         })
     });
+    group.bench_function(format!("{label}/mat4 powi_negative"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(
+                black_box(next_case(&lhs4_cases, &cursor).clone())
+                    .powi(-2)
+                    .unwrap(),
+            )
+        })
+    });
     group.bench_function(format!("{label}/mat4 add"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
@@ -526,6 +566,106 @@ fn bench_matrix_operations(c: &mut Criterion) {
     bench_astro_matrix_operations(&mut group, "astro128");
     bench_numerica_matrix_operations(&mut group, "numerica128");
     bench_symbolica_matrix_operations(&mut group, "symbolica");
+    group.finish();
+}
+
+fn bench_targeted_matrix_forms_for<B, F>(
+    group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
+    label: &str,
+    make_ratio: F,
+) where
+    B: Backend,
+    F: Copy + Fn(i64, u64) -> Scalar<B>,
+{
+    let forms = targeted_matrix_forms_with(make_ratio);
+    for form in forms {
+        let TargetedMatrixForm {
+            name,
+            lhs3,
+            rhs3,
+            lhs4,
+            rhs4,
+        } = form;
+
+        // These fixtures deliberately split the signed-product reducer into
+        // structural cases:
+        //
+        // - `dyadic_dense`: f64-origin and binary rationals should use the
+        //   shift-only dyadic denominator path.
+        // - `equal_decimal_den`: decimal exact rationals should use the
+        //   equal-product-denominator shortcut.
+        // - `mixed_prime_den`: varied prime denominators force the LCM path.
+        // - `sparse_integer`: zero cofactors test term skipping and the
+        //   integer/no-denominator path.
+        //
+        // The group is intentionally separate from `matrix_ops`; it exists to
+        // trace and benchmark reduction machinery choices without changing the
+        // stable comparison table.
+        //
+        // 2026-05-09 targeted Criterion, 150 samples/6s:
+        // hyperreal-rational mat4 reciprocal was dyadic 10.83 us, equal-den
+        // 26.61 us, mixed-prime 54.64 us, sparse-integer 7.21 us; mat4
+        // div_matrix was 16.08 us, 53.94 us, 102.48 us, and 10.47 us. The
+        // approximate guard stayed flat by shape, roughly 79-80 ns for mat3
+        // reciprocal and 145-146 ns for mat4 reciprocal, confirming the
+        // product-sum reducer remains gated away from compact scalars.
+        // Dispatch trace confirmed dyadic/sparse use `dyadic-shared-denominator`,
+        // mixed-prime uses `lcm-shared-denominator`, and decimal denominators
+        // mostly fall through to LCM after intermediate cofactors alter the
+        // exact product denominators.
+        trace_dispatch_row(format!("matrix_forms/{label}/{name}/mat3 reciprocal"), || {
+            black_box(black_box(lhs3.clone()).reciprocal().unwrap());
+        });
+        trace_dispatch_row(format!("matrix_forms/{label}/{name}/mat3 powi_negative"), || {
+            black_box(black_box(lhs3.clone()).powi(-2).unwrap());
+        });
+        trace_dispatch_row(format!("matrix_forms/{label}/{name}/mat3 div_matrix"), || {
+            black_box((black_box(lhs3.clone()) / black_box(rhs3.clone())).unwrap());
+        });
+        trace_dispatch_row(format!("matrix_forms/{label}/{name}/mat4 reciprocal"), || {
+            black_box(black_box(lhs4.clone()).reciprocal().unwrap());
+        });
+        trace_dispatch_row(format!("matrix_forms/{label}/{name}/mat4 powi_negative"), || {
+            black_box(black_box(lhs4.clone()).powi(-2).unwrap());
+        });
+        trace_dispatch_row(format!("matrix_forms/{label}/{name}/mat4 div_matrix"), || {
+            black_box((black_box(lhs4.clone()) / black_box(rhs4.clone())).unwrap());
+        });
+
+        group.bench_function(format!("{label}/{name}/mat3 reciprocal"), |b| {
+            b.iter(|| black_box(black_box(lhs3.clone()).reciprocal().unwrap()))
+        });
+        group.bench_function(format!("{label}/{name}/mat3 powi_negative"), |b| {
+            b.iter(|| black_box(black_box(lhs3.clone()).powi(-2).unwrap()))
+        });
+        group.bench_function(format!("{label}/{name}/mat3 div_matrix"), |b| {
+            b.iter(|| black_box((black_box(lhs3.clone()) / black_box(rhs3.clone())).unwrap()))
+        });
+        group.bench_function(format!("{label}/{name}/mat4 reciprocal"), |b| {
+            b.iter(|| black_box(black_box(lhs4.clone()).reciprocal().unwrap()))
+        });
+        group.bench_function(format!("{label}/{name}/mat4 powi_negative"), |b| {
+            b.iter(|| black_box(black_box(lhs4.clone()).powi(-2).unwrap()))
+        });
+        group.bench_function(format!("{label}/{name}/mat4 div_matrix"), |b| {
+            b.iter(|| black_box((black_box(lhs4.clone()) / black_box(rhs4.clone())).unwrap()))
+        });
+    }
+}
+
+fn approx_ratio<B: Backend>(numerator: i64, denominator: u64) -> Scalar<B> {
+    Scalar::try_from(numerator as f64 / denominator as f64).unwrap()
+}
+
+fn bench_targeted_matrix_forms(c: &mut Criterion) {
+    let mut group = c.benchmark_group("matrix_forms");
+    bench_targeted_matrix_forms_for::<ApproxBackend, _>(&mut group, "approx", approx_ratio);
+    bench_targeted_matrix_forms_for::<HyperrealBackend, _>(&mut group, "hyperreal", approx_ratio);
+    bench_targeted_matrix_forms_for::<HyperrealBackend, _>(
+        &mut group,
+        "hyperreal-rational",
+        q,
+    );
     group.finish();
 }
 

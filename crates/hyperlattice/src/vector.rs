@@ -3,6 +3,7 @@
 use std::array::from_fn;
 use std::fmt;
 use std::ops::{Add, Div, Index, IndexMut, Mul, Neg, Sub};
+use std::sync::atomic::Ordering;
 
 use crate::scalar::{clone_with_abort, reject_definite_zero, require_known_nonzero, with_abort};
 use crate::{AbortSignal, Backend, BlasResult, CheckedBlasResult, DefaultBackend, Scalar};
@@ -432,6 +433,15 @@ impl<B: Backend> Vector3<B> {
     /// Returns the dot product after attaching an abort signal to operands.
     pub fn dot_with_abort(&self, rhs: &Self, signal: &AbortSignal) -> Scalar<B> {
         crate::trace_dispatch!("realistic_blas_vector", "method", "dot3-with-abort");
+        if !signal.load(Ordering::Relaxed) {
+            // 2026-05 trace-guided shortcut: inactive abort signals are the
+            // common predicate benchmark case, and clone-and-attach bypasses
+            // hyperreal's shared-denominator exact-rational dot path. Reuse
+            // the ordinary dot unless a cancellation request is already set;
+            // the active path below preserves abort-aware operand attachment.
+            crate::trace_dispatch!("realistic_blas_vector", "abort", "dot3-inactive-signal");
+            return self.dot(rhs);
+        }
         let p0 = clone_with_abort(&self.0[0], signal) * clone_with_abort(&rhs.0[0], signal);
         let p1 = clone_with_abort(&self.0[1], signal) * clone_with_abort(&rhs.0[1], signal);
         let p2 = clone_with_abort(&self.0[2], signal) * clone_with_abort(&rhs.0[2], signal);
@@ -452,6 +462,13 @@ impl<B: Backend> Vector4<B> {
     /// Returns the dot product after attaching an abort signal to operands.
     pub fn dot_with_abort(&self, rhs: &Self, signal: &AbortSignal) -> Scalar<B> {
         crate::trace_dispatch!("realistic_blas_vector", "method", "dot4-with-abort");
+        if !signal.load(Ordering::Relaxed) {
+            // Same inactive-abort policy as `Vector3`: keep matrix/vector
+            // benches on the backend dot specialization unless cancellation is
+            // already requested.
+            crate::trace_dispatch!("realistic_blas_vector", "abort", "dot4-inactive-signal");
+            return self.dot(rhs);
+        }
         let p0 = clone_with_abort(&self.0[0], signal) * clone_with_abort(&rhs.0[0], signal);
         let p1 = clone_with_abort(&self.0[1], signal) * clone_with_abort(&rhs.0[1], signal);
         let p2 = clone_with_abort(&self.0[2], signal) * clone_with_abort(&rhs.0[2], signal);
