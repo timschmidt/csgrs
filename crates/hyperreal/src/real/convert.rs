@@ -1,6 +1,5 @@
 use crate::RealSign;
 use crate::{Computable, Problem, Rational, Real};
-use num::bigint::ToBigInt;
 
 macro_rules! impl_integer_conversion {
     ($T:ty) => {
@@ -16,7 +15,7 @@ macro_rules! impl_integer_conversion {
                 if n == 1 {
                     return Real::one();
                 }
-                Real::new(Rational::from_bigint(ToBigInt::to_bigint(&n).unwrap()))
+                Real::new(Rational::from(n))
             }
         }
     };

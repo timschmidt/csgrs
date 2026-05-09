@@ -1,13 +1,16 @@
 use crate::{Problem, Rational};
-use num::bigint::{Sign, ToBigInt};
-use num::{BigInt, BigUint, One};
+use num::bigint::Sign;
+use num::{BigUint, One};
 
-macro_rules! impl_integer_conversion {
+macro_rules! impl_signed_integer_conversion {
     ($T:ty) => {
         impl From<$T> for Rational {
             #[inline]
             fn from(n: $T) -> Rational {
-                Self::from_bigint(ToBigInt::to_bigint(&n).unwrap())
+                Self::from_integer_magnitude(
+                    if n < 0 { Sign::Minus } else { Sign::Plus },
+                    BigUint::from(n.unsigned_abs()),
+                )
             }
         }
 
@@ -25,19 +28,42 @@ macro_rules! impl_integer_conversion {
     };
 }
 
-impl_integer_conversion!(i8);
-impl_integer_conversion!(i16);
-impl_integer_conversion!(i32);
-impl_integer_conversion!(i64);
-impl_integer_conversion!(i128);
-impl_integer_conversion!(u8);
-impl_integer_conversion!(u16);
-impl_integer_conversion!(u32);
-impl_integer_conversion!(u64);
-impl_integer_conversion!(u128);
+macro_rules! impl_unsigned_integer_conversion {
+    ($T:ty) => {
+        impl From<$T> for Rational {
+            #[inline]
+            fn from(n: $T) -> Rational {
+                Self::from_unsigned_integer(BigUint::from(n))
+            }
+        }
 
-fn signed(n: Rational, neg: bool) -> Rational {
-    if neg { -n } else { n }
+        impl TryFrom<Rational> for $T {
+            type Error = Problem;
+
+            fn try_from(n: Rational) -> Result<$T, Self::Error> {
+                if let Some(i) = n.to_big_integer() {
+                    <$T>::try_from(i).map_err(|_| Problem::OutOfRange)
+                } else {
+                    Err(Problem::NotAnInteger)
+                }
+            }
+        }
+    };
+}
+
+impl_signed_integer_conversion!(i8);
+impl_signed_integer_conversion!(i16);
+impl_signed_integer_conversion!(i32);
+impl_signed_integer_conversion!(i64);
+impl_signed_integer_conversion!(i128);
+impl_unsigned_integer_conversion!(u8);
+impl_unsigned_integer_conversion!(u16);
+impl_unsigned_integer_conversion!(u32);
+impl_unsigned_integer_conversion!(u64);
+impl_unsigned_integer_conversion!(u128);
+
+fn integer_from_unsigned_magnitude(n: BigUint, neg: bool) -> Rational {
+    Rational::from_integer_magnitude(if neg { Sign::Minus } else { Sign::Plus }, n)
 }
 
 fn pow2_fraction_u32(numerator: u32, denominator_shift: u32, neg: bool) -> Rational {
@@ -101,9 +127,10 @@ impl TryFrom<f32> for Rational {
             }
             151..=254 => {
                 let n = SIG_BITS + 1 + sig;
-                let mut big: BigInt = n.into();
-                big <<= exp - 150;
-                Ok(signed(Rational::from_bigint(big), neg))
+                Ok(integer_from_unsigned_magnitude(
+                    BigUint::from(n) << (exp - 150),
+                    neg,
+                ))
             }
             255 => {
                 if sig == 0 {
@@ -148,9 +175,10 @@ impl TryFrom<f64> for Rational {
             }
             1076..=2046 => {
                 let n = SIG_BITS + 1 + sig;
-                let mut big: BigInt = n.into();
-                big <<= exp - 1075;
-                Ok(signed(Rational::from_bigint(big), neg))
+                Ok(integer_from_unsigned_magnitude(
+                    BigUint::from(n) << (exp - 1075),
+                    neg,
+                ))
             }
             2047 => {
                 if sig == 0 {
@@ -167,6 +195,7 @@ impl TryFrom<f64> for Rational {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use num::BigInt;
 
     #[test]
     fn signed_integers() {

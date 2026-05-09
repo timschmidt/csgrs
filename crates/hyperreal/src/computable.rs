@@ -425,37 +425,29 @@ pub struct Computable {
 }
 
 mod signed {
-    use num::One;
-    use num::{BigInt, bigint::ToBigInt};
+    use num::{BigInt, One};
     use std::sync::LazyLock;
 
-    pub(super) static MINUS_ONE: LazyLock<BigInt> =
-        LazyLock::new(|| ToBigInt::to_bigint(&-1).unwrap());
+    pub(super) static MINUS_ONE: LazyLock<BigInt> = LazyLock::new(|| BigInt::from(-1));
     pub(super) static ONE: LazyLock<BigInt> = LazyLock::new(BigInt::one);
-    pub(super) static TWO: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&2).unwrap());
-    pub(super) static FOUR: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&4).unwrap());
-    pub(super) static SIX: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&6).unwrap());
-    pub(super) static EIGHT: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&8).unwrap());
-    pub(super) static SIXTEEN: LazyLock<BigInt> =
-        LazyLock::new(|| ToBigInt::to_bigint(&16).unwrap());
-    pub(super) static TWENTY_FOUR: LazyLock<BigInt> =
-        LazyLock::new(|| ToBigInt::to_bigint(&24).unwrap());
-    pub(super) static SIXTY_FOUR: LazyLock<BigInt> =
-        LazyLock::new(|| ToBigInt::to_bigint(&64).unwrap());
+    pub(super) static TWO: LazyLock<BigInt> = LazyLock::new(|| BigInt::from(2_u8));
+    pub(super) static FOUR: LazyLock<BigInt> = LazyLock::new(|| BigInt::from(4_u8));
+    pub(super) static SIX: LazyLock<BigInt> = LazyLock::new(|| BigInt::from(6_u8));
+    pub(super) static EIGHT: LazyLock<BigInt> = LazyLock::new(|| BigInt::from(8_u8));
+    pub(super) static SIXTEEN: LazyLock<BigInt> = LazyLock::new(|| BigInt::from(16_u8));
+    pub(super) static TWENTY_FOUR: LazyLock<BigInt> = LazyLock::new(|| BigInt::from(24_u8));
+    pub(super) static SIXTY_FOUR: LazyLock<BigInt> = LazyLock::new(|| BigInt::from(64_u8));
 }
 
 mod unsigned {
-    use num::One;
-    use num::{BigUint, bigint::ToBigUint};
+    use num::{BigUint, One};
     use std::sync::LazyLock;
 
     pub(super) static ONE: LazyLock<BigUint> = LazyLock::new(BigUint::one);
-    pub(super) static TWO: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&2).unwrap());
-    pub(super) static TEN: LazyLock<BigUint> =
-        LazyLock::new(|| ToBigUint::to_biguint(&10).unwrap());
-    pub(super) static FIVE: LazyLock<BigUint> =
-        LazyLock::new(|| ToBigUint::to_biguint(&5).unwrap());
-    pub(super) static SIX: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&6).unwrap());
+    pub(super) static TWO: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(2_u8));
+    pub(super) static TEN: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(10_u8));
+    pub(super) static FIVE: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(5_u8));
+    pub(super) static SIX: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(6_u8));
 }
 
 static HALF_PI_SHORTCUT_RATIONAL_LIMIT: LazyLock<Rational> =

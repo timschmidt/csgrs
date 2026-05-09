@@ -1,6 +1,6 @@
 use crate::Problem;
 use num::bigint::Sign::{self, *};
-use num::{BigInt, BigUint, ToPrimitive, bigint::ToBigInt, bigint::ToBigUint};
+use num::{BigInt, BigUint, ToPrimitive};
 use num::{One, Zero};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -58,9 +58,9 @@ pub struct Rational {
 }
 
 static ONE: LazyLock<BigUint> = LazyLock::new(BigUint::one);
-static TWO: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&2).unwrap());
-static FIVE: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&5).unwrap());
-static TEN: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&10).unwrap());
+static TWO: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(2_u8));
+static FIVE: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(5_u8));
+static TEN: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(10_u8));
 
 macro_rules! trace_rational_temporary {
     () => {{
@@ -113,23 +113,13 @@ impl Rational {
 
     /// The non-negative Rational corresponding to the provided [`i64`].
     pub fn new(n: i64) -> Self {
-        // Identity rationals are pervasive in symbolic normalization. Build
-        // them directly instead of routing through BigInt conversion and
-        // reduction; benchmarks cover this path because higher crates construct
-        // matrix identities and scalar ones constantly.
-        match n {
-            0 => Self::zero(),
-            1 => Self::one(),
-            -1 => {
-                trace_rational_temporary!();
-                Self {
-                    sign: Minus,
-                    numerator: BigUint::one(),
-                    denominator: BigUint::one(),
-                }
-            }
-            _ => Self::from_bigint(ToBigInt::to_bigint(&n).unwrap()),
-        }
+        // Small scalar constructors are hot. Rational is stored as
+        // Sign+BigUint, so going through BigInt first only adds allocation and
+        // sign extraction work.
+        Self::from_integer_magnitude(
+            if n < 0 { Minus } else { Plus },
+            BigUint::from(n.unsigned_abs()),
+        )
     }
 
     /// The Rational corresponding to the provided [`BigInt`].
@@ -140,9 +130,13 @@ impl Rational {
     /// The non-negative Rational corresponding to the provided [`i64`]
     /// numerator and [`u64`] denominator as a fraction.
     pub fn fraction(n: i64, d: u64) -> Result<Self, Problem> {
-        let numerator = ToBigInt::to_bigint(&n).unwrap();
-        let denominator = ToBigUint::to_biguint(&d).unwrap();
-        Self::from_bigint_fraction(numerator, denominator)
+        if d == 0 {
+            return Err(Problem::DivideByZero);
+        }
+        let sign = if n < 0 { Minus } else { Plus };
+        let numerator = BigUint::from(n.unsigned_abs());
+        let denominator = BigUint::from(d);
+        Ok(Self::from_fraction_parts(sign, numerator, denominator).reduce())
     }
 
     /// The Rational corresponding to the provided [`BigInt`]
@@ -151,15 +145,28 @@ impl Rational {
         if denominator == BigUint::ZERO {
             return Err(Problem::DivideByZero);
         }
-        let sign = n.sign();
-        let numerator = n.magnitude().clone();
+        let answer = Self::from_fraction_parts(n.sign(), n.magnitude().clone(), denominator);
+        Ok(answer.reduce())
+    }
+
+    pub(crate) fn from_integer_magnitude(sign: Sign, numerator: BigUint) -> Self {
+        Self::from_fraction_parts(sign, numerator, BigUint::one())
+    }
+
+    pub(crate) fn from_unsigned_integer(numerator: BigUint) -> Self {
+        Self::from_integer_magnitude(Plus, numerator)
+    }
+
+    fn from_fraction_parts(sign: Sign, numerator: BigUint, denominator: BigUint) -> Self {
+        if sign == NoSign || numerator.is_zero() {
+            return Self::zero();
+        }
         trace_rational_temporary!();
-        let answer = Self {
+        Self {
             sign,
             numerator,
             denominator,
-        };
-        Ok(answer.reduce())
+        }
     }
 
     fn maybe_reduce(self) -> Self {
@@ -966,14 +973,19 @@ impl Rational {
 
     /// Either the corresponding [`BigInt`] or None if this value is not an integer.
     pub fn to_big_integer(&self) -> Option<BigInt> {
-        let whole = &self.numerator / &self.denominator;
-        let round = &whole * &self.denominator;
-        if self.numerator == round {
-            debug_assert!(self.denominator == *ONE.deref());
-            Some(BigInt::from_biguint(self.sign, whole))
-        } else {
-            debug_assert!(self.denominator != *ONE.deref());
-            None
+        self.integer_magnitude()
+            .map(|magnitude| BigInt::from_biguint(self.sign, magnitude.clone()))
+    }
+
+    pub(crate) fn integer_magnitude(&self) -> Option<&BigUint> {
+        (self.denominator == *ONE.deref()).then_some(&self.numerator)
+    }
+
+    pub(crate) fn to_integer_i64(&self) -> Option<i64> {
+        let magnitude = self.integer_magnitude()?.to_i64()?;
+        match self.sign {
+            Plus | NoSign => Some(magnitude),
+            Minus => magnitude.checked_neg(),
         }
     }
 
@@ -989,34 +1001,13 @@ impl Rational {
         // Tiny prime-square table covers the residuals that appear most often
         // in exact trig and matrix examples without running full factorization.
         vec![
-            (
-                ToBigUint::to_biguint(&2).unwrap(),
-                ToBigUint::to_biguint(&4).unwrap(),
-            ),
-            (
-                ToBigUint::to_biguint(&3).unwrap(),
-                ToBigUint::to_biguint(&9).unwrap(),
-            ),
-            (
-                ToBigUint::to_biguint(&5).unwrap(),
-                ToBigUint::to_biguint(&25).unwrap(),
-            ),
-            (
-                ToBigUint::to_biguint(&7).unwrap(),
-                ToBigUint::to_biguint(&49).unwrap(),
-            ),
-            (
-                ToBigUint::to_biguint(&11).unwrap(),
-                ToBigUint::to_biguint(&121).unwrap(),
-            ),
-            (
-                ToBigUint::to_biguint(&13).unwrap(),
-                ToBigUint::to_biguint(&169).unwrap(),
-            ),
-            (
-                ToBigUint::to_biguint(&17).unwrap(),
-                ToBigUint::to_biguint(&289).unwrap(),
-            ),
+            (BigUint::from(2_u8), BigUint::from(4_u8)),
+            (BigUint::from(3_u8), BigUint::from(9_u8)),
+            (BigUint::from(5_u8), BigUint::from(25_u8)),
+            (BigUint::from(7_u8), BigUint::from(49_u8)),
+            (BigUint::from(11_u8), BigUint::from(121_u8)),
+            (BigUint::from(13_u8), BigUint::from(169_u16)),
+            (BigUint::from(17_u8), BigUint::from(289_u16)),
         ]
     }
 
@@ -1054,13 +1045,13 @@ impl Rational {
 
         let divisors = if rest.bit(0) {
             // Odd number so dividing by an even number won't get a whole result
-            [1, 3, 5, 7, 11, 13, 15, 17, 19]
+            [1_u8, 3, 5, 7, 11, 13, 15, 17, 19]
         } else {
-            [1, 2, 3, 5, 6, 7, 8, 10, 11]
+            [1_u8, 2, 3, 5, 6, 7, 8, 10, 11]
         };
 
         for n in divisors {
-            let divisor = ToBigUint::to_biguint(&n).unwrap();
+            let divisor = BigUint::from(n);
             if rest == divisor {
                 return (root, rest);
             }
@@ -1647,7 +1638,7 @@ mod tests {
 
     #[test]
     fn power() {
-        let one_two_five = Rational::new(5).powi(ToBigInt::to_bigint(&-3).unwrap());
+        let one_two_five = Rational::new(5).powi(BigInt::from(-3));
         assert_eq!(one_two_five, Rational::fraction(1, 125));
         let more = Rational::new(7).powi(11i32.into()).unwrap();
         assert_eq!(more, Rational::new(1_977_326_743));

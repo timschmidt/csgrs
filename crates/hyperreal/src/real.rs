@@ -366,8 +366,7 @@ impl Class {
         // and `pi*sqrt(2)` stay on their older direct constructors above; those
         // tighter one-node paths benchmark faster for isolated scalar use.
         radicand
-            .to_big_integer()
-            .and_then(|n| n.to_i64())
+            .to_integer_i64()
             .and_then(Computable::sqrt_constant)
             .unwrap_or_else(|| Computable::sqrt_rational(radicand.clone()))
     }
@@ -711,23 +710,22 @@ mod constants {
 }
 
 mod signed {
-    use num::{BigInt, bigint::ToBigInt};
+    use num::{BigInt, One};
     use std::sync::LazyLock;
 
-    pub(super) static ONE: LazyLock<BigInt> = LazyLock::new(|| ToBigInt::to_bigint(&1).unwrap());
+    pub(super) static ONE: LazyLock<BigInt> = LazyLock::new(BigInt::one);
 }
 
 mod unsigned {
-    use num::{BigUint, bigint::ToBigUint};
+    use num::BigUint;
+    use num::One;
     use std::sync::LazyLock;
 
-    pub(super) static ONE: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&1).unwrap());
-    pub(super) static TWO: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&2).unwrap());
-    pub(super) static THREE: LazyLock<BigUint> =
-        LazyLock::new(|| ToBigUint::to_biguint(&3).unwrap());
-    pub(super) static FOUR: LazyLock<BigUint> =
-        LazyLock::new(|| ToBigUint::to_biguint(&4).unwrap());
-    pub(super) static SIX: LazyLock<BigUint> = LazyLock::new(|| ToBigUint::to_biguint(&6).unwrap());
+    pub(super) static ONE: LazyLock<BigUint> = LazyLock::new(BigUint::one);
+    pub(super) static TWO: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(2_u8));
+    pub(super) static THREE: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(3_u8));
+    pub(super) static FOUR: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(4_u8));
+    pub(super) static SIX: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(6_u8));
 }
 
 use std::sync::Arc;
@@ -1400,9 +1398,10 @@ impl Real {
         if offset.pi_power != 1 || offset.exp_power != *rationals::ZERO {
             return None;
         }
-        let multiple = self.rational.to_big_integer()?;
-        let negate_for_odd_multiple = multiple.magnitude().bit(0);
-        let residual = &offset.offset * Rational::from_bigint(multiple);
+        let multiple_magnitude = self.rational.integer_magnitude()?;
+        let negate_for_odd_multiple = multiple_magnitude.bit(0);
+        let residual = &offset.offset
+            * Rational::from_integer_magnitude(self.rational.sign(), multiple_magnitude.clone());
         Some((negate_for_odd_multiple, residual))
     }
 
@@ -1482,10 +1481,11 @@ impl Real {
                 });
             }
             Sqrt(sqrt) => {
-                if let Some(sqrt) = sqrt.to_big_integer() {
+                if let Some(sqrt) = sqrt.integer_magnitude() {
                     // Rationalize 1/(a*sqrt(n)) when n is integral, keeping a sqrt form
                     // instead of an opaque inverse node.
-                    let rational = (self.rational * Rational::from_bigint(sqrt)).inverse()?;
+                    let rational = (self.rational * Rational::from_unsigned_integer(sqrt.clone()))
+                        .inverse()?;
                     return Ok(Self {
                         rational,
                         class: self.class,
@@ -1588,10 +1588,11 @@ impl Real {
         match &self.class {
             One => Ok(Self::new(self.rational.clone().inverse()?)),
             Sqrt(sqrt) => {
-                if let Some(sqrt) = sqrt.to_big_integer() {
+                if let Some(sqrt) = sqrt.integer_magnitude() {
                     // Same rationalization as the owned path, but clone only the
                     // rational/computable pieces needed to leave `self` intact.
-                    let rational = (&self.rational * Rational::from_bigint(sqrt)).inverse()?;
+                    let rational = (&self.rational * Rational::from_unsigned_integer(sqrt.clone()))
+                        .inverse()?;
                     return Ok(Self {
                         rational,
                         class: self.class.clone(),
@@ -1703,10 +1704,7 @@ impl Real {
                         signal: None,
                     });
                 } else if square != *rationals::ONE
-                    && let Some(shared) = rest
-                        .to_big_integer()
-                        .and_then(|n| n.to_i64())
-                        .and_then(constants::sqrt_constant)
+                    && let Some(shared) = rest.to_integer_i64().and_then(constants::sqrt_constant)
                 {
                     // sqrt(a^2 * r) = a*sqrt(r). For scaled sqrt(2)/sqrt(3),
                     // reuse the canonical shared computable so matrix/vector
@@ -1834,8 +1832,8 @@ impl Real {
             _ => unreachable!(),
         }
 
-        if let Some(n) = r.to_big_integer()
-            && let Some(log) = Self::integer_log(n.magnitude(), 10)
+        if let Some(n) = r.integer_magnitude()
+            && let Some(log) = Self::integer_log(n, 10)
         {
             crate::trace_dispatch!("real", "log10", "rational-power-of-ten");
             return Ok(Self::new(Rational::new(log as i64)));
@@ -1856,7 +1854,6 @@ impl Real {
     // n should be positive (not zero) and base should be >= 2
     fn integer_log(n: &BigUint, base: u32) -> Option<u64> {
         use num::Integer;
-        use num::bigint::ToBigUint;
         // TODO weed out some large failure cases early and return None
 
         if let Some(mut reduced) = n.to_u64() {
@@ -1885,7 +1882,7 @@ impl Real {
         // Calculate base^2 base^4 base^8 base^16 and so on until it is bigger than next
         let mut result: Option<u64> = None;
         let mut powers: Vec<BigUint> = Vec::new();
-        let mut next = ToBigUint::to_biguint(&base).unwrap();
+        let mut next = BigUint::from(base);
         powers.push(next.clone());
 
         let mut reduced = n.clone();
@@ -1934,8 +1931,7 @@ impl Real {
     // Some(k ln(s)) where there is a small integer m such that r = s^k.
     // or None
     fn ln_small(r: &Rational) -> Option<Real> {
-        let n = r.to_big_integer()?;
-        let n = n.magnitude();
+        let n = r.integer_magnitude()?;
 
         // Recognize common integer powers so logs share cached scaled-ln constants
         // instead of creating many unrelated Ln nodes.
@@ -3754,13 +3750,14 @@ impl<T: AsRef<Real>> Div<T> for &Real {
             _ => {}
         }
         if let (Sqrt(left), Sqrt(right)) = (&self.class, &other.class)
-            && let Some(right_integer) = right.to_big_integer()
+            && let Some(right_integer) = right.integer_magnitude()
         {
             // Rationalize sqrt(a)/sqrt(b) as sqrt(a*b)/b when b is an integer.
             // This keeps simple radical quotients exact instead of using
             // `other.inverse()` and losing the radicand certificate.
             let square = Real::multiply_sqrts(left, right);
-            let denominator = &other.rational * Rational::from_bigint(right_integer);
+            let denominator =
+                &other.rational * Rational::from_unsigned_integer(right_integer.clone());
             return Ok(Real {
                 rational: &square.rational * &self.rational / denominator,
                 ..square
