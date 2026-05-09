@@ -83,14 +83,14 @@ a dense numeric BLAS replacement.
 
 ```toml
 [dependencies]
-hyperreal = "0.10.5"
+hyperreal = "0.10.6"
 ```
 
 Without the `Simple` parser and calculator binary:
 
 ```toml
 [dependencies]
-hyperreal = { version = "0.10.5", default-features = false }
+hyperreal = { version = "0.10.6", default-features = false }
 ```
 
 Feature flags:
