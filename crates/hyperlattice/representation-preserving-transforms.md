@@ -614,15 +614,144 @@ state behind the same internal API.
   - `matrix4/hyperreal-rational/mat4 transform vec4`: ~1.7768..1.7823 µs
   - `matrix4/hyperreal-rational/mat4 transform direction vec4`: ~3.8018..3.8077 µs
   - `matrix4/hyperreal-rational/mat4 transform direction vec4 structural facts`: ~3.9619..3.9724 µs
+- Added batch transform helpers to `Matrix3` and `Matrix4` for repeated-vector
+  workloads:
+  - `transform_vec3_batch` (all backends)
+  - `transform_vec4_batch` for 4x4 repeated-vector workloads
+  - Added `matrix4/hyperreal-rational/mat4 transform vec4 batch` trace/bench coverage.
+- `matrix4/hyperreal-rational/mat4 transform vec4 batch` now benchmarks at
+  ~6.15 µs (500 samples, long run), while scalar transform (`matrix4/hyperreal-rational/mat4 transform vec4`) remains near
+  ~1.85 µs in the same run; trace counts show the new row now goes through
+  `matrix`/`scalar` paths and `realistic_blas_matrix` `method`:
+  `transform-vector-vec4-batch`.
+- Closed the remaining shared-transform wrapper gap on 2026-05-09:
+  - Replaced `transform_vector3_rhs_ref_cached`'s redundant no-op affine
+    constructor probe with a direct branch-free `linear_combination3_refs` helper
+    so every Matrix3 lane stays on a single fixed-arity path.
+  - Added `matrix3/hyperreal-rational/mat3 transform vec3 batch` trace and bench
+    rows, giving direct visibility into `TransformedMatrix3` sharing behavior.
+  - Added `matrix_transform_handles_materialize_equivalent_to_transform` test to verify
+    `transform_vec3_with`/`transform_vec4_with` materialization matches direct
+    `transform_vector` and pointwise multiplication.
+- Ran focused guardrails after shared-handle completion:
+  - `cargo bench --bench mathbench -- \"hyperreal-rational/mat3 transform vec3 batch|hyperreal-rational/mat4 transform vec4 batch\"`
+  - `cargo bench --bench mathbench --features hyperreal-dispatch-trace -- --trace-dispatch-filter=\"matrix3/hyperreal-rational/mat3 transform vec3 batch\" --dispatch-trace-only --write-dispatch-trace-md`
+  - `matrix3/hyperreal-rational/mat3 transform vec3 batch` now maps to
+    `realistic_blas_matrix` `method` `transform-vector-vec3-batch` and does not
+    introduce new `to-f64-approx` demand during trace-only demand-free probes.
+  - Bench timing snapshot:
+    - `hyperreal-rational/mat3 transform vec3 batch`: ~16.18 µs
+    - `hyperreal-rational/mat4 transform vec4 batch`: ~6.26 µs
+- Added batch-coordinate demand instrumentation to validate approximation demand
+  on batch transforms:
+  - `matrix3/hyperreal-rational/mat3 transform vec3 batch one-coord approx`
+  - `matrix3/hyperreal-rational/mat3 transform vec3 batch all-coord approx`
+  - `matrix4/hyperreal-rational/mat4 transform vec4 batch one-coord approx`
+  - `matrix4/hyperreal-rational/mat4 transform vec4 batch all-coord approx`
+- Trace capture confirms these rows use `transform-vector-vec3-batch`/`transform-vector-vec4-batch`
+  plus `linear-combination*`/`affine-combination4` fast paths, with one-coordinate
+  rows emitting `scalar_query` `to-f64-approx` count = 1 and all-coordinate rows
+  emitting full counts (12 for `mat3`, 16 for `mat4` in exact-rational mode).
+  - Bench validation for batch demand demotion:
+  - `cargo bench --bench mathbench -- \"hyperreal-rational/mat3 transform vec3 batch|hyperreal-rational/mat3 transform vec3 batch one-coord approx|hyperreal-rational/mat3 transform vec3 batch all-coord approx|hyperreal-rational/mat4 transform vec4 batch|hyperreal-rational/mat4 transform vec4 batch one-coord approx|hyperreal-rational/mat4 transform vec4 batch all-coord approx\"`
+    - `mat3` batch:
+      - `~16.60 µs` (construction)
+      - `~16.46 µs` (batch one-coord approx)
+      - `~16.98 µs` (batch all-coord approx)
+    - `mat4` batch:
+      - `~6.13 µs` / `~6.18 µs` / `~6.65 µs` on 500-sample rerun for construction / one-coord / all-coord rows respectively.
+  - Follow-up 500-sample rerun removed initial concern and reports statistically
+    no consistent degradation for `mat4` batch one-coordinate row; all-coordinate
+    row remains higher due 16 approximation probes.
+- Added predicate/signature guard coverage for transform workloads:
+  - Trace rows:
+    - `matrix3/hyperreal-symbolic/mat3 transform vec3 sign refinement`
+    - `matrix3/hyperreal-rational/mat3 transform vec3 sign/zero facts`
+    - `matrix4/hyperreal-rational/mat4 transform vec4 sign/zero facts`
+    - `matrix4/hyperreal-symbolic/mat4 transform vec4 sign refinement`
+  - Bench rows:
+    - `hyperreal-symbolic/mat3 transform vec3 sign refinement`
+    - `hyperreal-rational/mat3 transform vec3 sign/zero facts`
+    - `hyperreal-rational/mat4 transform vec4 sign/zero facts`
+    - `hyperreal-symbolic/mat4 transform vec4 sign refinement`
+  - `cargo bench --bench mathbench -- "matrix3/hyperreal-symbolic/mat3 transform vec3 sign refinement|matrix3/hyperreal-rational/mat3 transform vec3 sign/zero facts|matrix4/hyperreal-rational/mat4 transform vec4 sign/zero facts|matrix4/hyperreal-symbolic/mat4 transform vec4 sign refinement"`
+    - `matrix3` sign/zero facts: ~4.74 µs
+  - `matrix3` symbolic sign refinement: ~7.05 µs
+  - `matrix4` sign/zero facts: ~1.90 µs
+  - `matrix4` symbolic sign refinement: ~18.73 µs
+- Added directional batch transform coverage (2026-05-09):
+  - `matrix4/hyperreal-rational/mat4 transform vec4 batch direction`
+  - `matrix4/hyperreal-rational/mat4 transform vec4 batch direction one-coord approx`
+  - `matrix4/hyperreal-rational/mat4 transform vec4 batch direction all-coord approx`
+  - `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction`
+  - `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx`
+  - `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction all-coord approx`
+  - Trace and timing captures were run for the 6-row set using:
+    - `cargo bench --bench mathbench --features hyperreal-dispatch-trace -- --trace-dispatch-filter="matrix4/hyperreal-rational/mat4 transform vec4 batch direction,matrix4/hyperreal-rational/mat4 transform vec4 batch direction one-coord approx,matrix4/hyperreal-rational/mat4 transform vec4 batch direction all-coord approx,matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction,matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx,matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction all-coord approx" --dispatch-trace-only --write-dispatch-trace-md`
+    - `cargo bench --bench mathbench -- "matrix4/hyperreal-rational/mat4 transform vec4 batch direction|matrix4/hyperreal-rational/mat4 transform vec4 batch direction one-coord approx|matrix4/hyperreal-rational/mat4 transform vec4 batch direction all-coord approx|matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction|matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx|matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction all-coord approx"`
+  - Timed row snapshots:
+    - `matrix4/hyperreal-rational/mat4 transform vec4 batch direction`: ~12.336..12.494 µs
+    - `matrix4/hyperreal-rational/mat4 transform vec4 batch direction one-coord approx`: ~12.409..12.494 µs
+    - `matrix4/hyperreal-rational/mat4 transform vec4 batch direction all-coord approx`: ~13.159..13.287 µs
+    - `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction`: ~33.171..33.430 µs
+    - `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx`: ~37.663..38.072 µs
+    - `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction all-coord approx`: ~62.225..63.022 µs
+  - Dispatch traces now show one-coordinate demand emits one `to-f64-approx` for each symbolic/rational direction-batch row set, while all-coordinate demand emits 16 `to-f64-approx`, confirming demand-driven approximation in shared-batch mode.
+- Added nearby comments near handle-based batch transform APIs in `src/matrix.rs` documenting:
+  - Why translation-row zero facts are cached on handle construction,
+  - Why 3-term affine layouts are kept for direction vectors,
+  - and why direction rows should drop homogeneous translation checks.
+- Completed structural-facts batch predicate coverage on both `mat3` and `mat4`:
+  - `matrix3/hyperreal-rational/mat3 transform vec3 batch structural facts`
+  - `matrix3/hyperreal-symbolic/mat3 transform vec3 batch structural facts`
+  - `matrix4/hyperreal-rational/mat4 transform vec4 batch structural facts`
+  - `matrix4/hyperreal-symbolic/mat4 transform vec4 batch structural facts`
+- Added missing trace rows in `benches/mathbench/comparisons.rs` for all four above
+  workloads, using predicate-only side effects to validate demand behavior for batch
+  structural extraction (`structural_facts().sign` + `zero_status()`).
+- Dispatch and timing guardrails run for this set:
+  - `cargo bench --bench mathbench --features hyperreal-dispatch-trace -- --trace-dispatch-filter="matrix3/hyperreal-rational/mat3 transform vec3 batch structural facts,matrix3/hyperreal-symbolic/mat3 transform vec3 batch structural facts,matrix4/hyperreal-rational/mat4 transform vec4 batch structural facts,matrix4/hyperreal-symbolic/mat4 transform vec4 batch structural facts" --dispatch-trace-only --write-dispatch-trace-md`
+  - `cargo bench --bench mathbench -- "hyperreal-rational/mat3 transform vec3 batch structural facts|hyperreal-symbolic/mat3 transform vec3 batch structural facts|hyperreal-rational/mat4 transform vec4 batch structural facts|hyperreal-symbolic/mat4 transform vec4 batch structural facts"`
+- Trace output confirms the shared batch dispatch method path is used:
+  - `realistic_blas_matrix` `method` `transform-vector-vec3-batch` for both mat3 rows.
+  - `realistic_blas_matrix` `method` `transform-vector-vec4-batch` for both mat4 rows.
+  - Only `scalar_query` `structural-facts` / `zero-status` paths appear for structural rows; no `to-f64-approx` demand was emitted.
+- Timing snapshots (100-sample baseline, not long-run):
+  - `matrix3/hyperreal-rational/mat3 transform vec3 batch structural facts`: ~16.77..16.93 µs
+  - `matrix3/hyperreal-symbolic/mat3 transform vec3 batch structural facts`: ~23.93..24.16 µs
+  - `matrix4/hyperreal-rational/mat4 transform vec4 batch structural facts`: ~6.52..6.59 µs
+  - `matrix4/hyperreal-symbolic/mat4 transform vec4 batch structural facts`: ~81.71..82.93 µs
+- Completed remaining direction-structural-facts matrix4 coverage:
+  - Added missing trace/bench rows:
+    - `matrix4/hyperreal-rational/mat4 transform vec4 batch direction structural facts`
+    - `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction structural facts`
+    - `matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts`
+  - Dispatch traces for these rows were added with:
+    - `cargo bench --bench mathbench --features hyperreal-dispatch-trace -- --trace-dispatch-filter="matrix4/hyperreal-rational/mat4 transform vec4 batch direction structural facts,matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction structural facts,matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts,matrix4/hyperreal-rational/mat4 transform direction vec4 structural facts" --dispatch-trace-only --write-dispatch-trace-md`
+  - Targeted benchmark run:
+    - `cargo bench --bench mathbench -- "hyperreal-rational/mat4 transform vec4 batch direction structural facts|hyperreal-symbolic/mat4 transform vec4 batch direction structural facts|hyperreal-symbolic/mat4 transform direction vec4 structural facts|hyperreal-rational/mat4 transform direction vec4 structural facts|hyperreal-rational/mat4 transform vec4 batch direction|hyperreal-symbolic/mat4 transform vec4 batch direction|hyperreal-symbolic/mat4 transform direction vec4|hyperreal-rational/mat4 transform direction vec4"`
+  - Trace output for new rows shows:
+    - `realistic_blas_matrix` `method` `transform-vector-vec4-batch` for both new batch structural rows.
+    - only `scalar_query` calls (`structural-facts`, `zero-status`) and no `to-f64-approx` rows in the new structural-facts probes.
+  - Timing snapshots:
+    - `matrix4/hyperreal-rational/mat4 transform vec4 batch direction structural facts`: ~12.795..12.904 µs
+    - `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction structural facts`: ~35.958..36.244 µs
+    - `matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts`: ~9.9253..10.011 µs
+    - `matrix4/hyperreal-rational/mat4 transform direction vec4 structural facts`: ~3.9526..3.9721 µs (no statistically significant change vs prior after rerun)
+  - Stability follow-up using a 300-sample run:
+    - `matrix4/hyperreal-rational/mat4 transform vec4 batch direction structural facts`: ~12.781..12.850 µs
+    - `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction structural facts`: ~35.681..36.067 µs
+    - `matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts`: ~9.8163..9.8827 µs
+    - `matrix4/hyperreal-rational/mat4 transform direction vec4 structural facts`: ~4.0049..4.0414 µs
+- Added nearby comments in `benches/mathbench/comparisons.rs` near new directional structural-facts traces/benches to document why these rows keep predicate-only dispatch and avoid one-time full approximation.
 
 ### Unsuccessful / Deferred
 
-- Did not introduce the optional shared transform object layer (`TransformedVector`,
-  batch transform handles) yet; that was deliberately deferred to keep this
-  change limited to Stage 1.
-- Did not implement new cache-sharing strategies yet (`-128`, `-256`, `-512`
-  matrix-level cache options) because this pass is focused on internal affine-form
-  plumbing and regression safety.
+- Initial compile attempt to expose `transform_vec3_with` / `transform_vec4_with`
+  through a temporary `transform_vec*_handle()` returned references to a
+  function-local temporary and triggered `E0515` borrow-check failures. This was
+  fixed by materializing borrowed matrix state directly inside the handle-return
+  methods.
 - Could not combine trace-only dispatch capture with measured benchmark timing in the same command because trace mode still forces Criterion to `$^`; collected trace and timing in separate invocations.
 - Initial attempt to add the one-vs-all coordinate comparison rows in
   `benches/mathbench/comparisons.rs` failed from stale patch context and was
@@ -630,6 +759,9 @@ state behind the same internal API.
 - Initial attempt at symbolic closure tracing failed with a tuple-return mismatch in
   `black_box` calls until I added explicit statement terminators (`;`) in those
   trace closures.
+- The first timing run for the four structural-facts batch rows used row labels with
+  a `matrix3/4/` prefix; that pattern matched no rows. Re-ran with the correct
+  benchmark names (`hyperreal-rational|hyperreal-symbolic/...`) and captured valid timings.
 - Criterion invocation initially failed with `--filter` passed as an option in
   the bench command; switched to positional regex filters after `--bench` command
   parsing rejected the former form.
@@ -640,3 +772,10 @@ state behind the same internal API.
 - Initial no-translation symbolic timing command accidentally used a loose regex and
   captured additional `direction vec4` rows (one/all-coordinate) in addition to the
   intended labels; reran with anchored regex filters to get the exact set.
+- Attempt to revisit the deferred cache-sharing branch for matrix-constant prewarming was
+  unnecessary in this pass; that branch was already removed, so no restore action was
+  required.
+- Benchmark-only trace verification still reports dead-code warnings for the new handle APIs
+  (`transform_vec3_handle`, `transform_vec4_handle`, `transform_vec*_with`, and related
+  materialization structs) when compiling `cargo bench` without tests enabled; this is a
+  current warning-only issue and does not affect runtime behavior.

@@ -491,3 +491,69 @@ fn hyperreal_matrix_transform_propagates_zero_and_sign() {
     assert_eq!(transformed[1].zero_status(), ZeroStatus::Zero);
     assert_eq!(transformed[2].zero_status(), ZeroStatus::NonZero);
 }
+
+#[test]
+fn matrix_transform_batch_matches_pointwise_transform() {
+    let matrix3 = Matrix3::new([
+        [r(1), r(2), r(3)],
+        [r(0), r(-2), r(1)],
+        [r(-1), r(4), r(2)],
+    ]);
+    let vectors3 = [
+        Vector3::new([r(3), r(0), r(-2)]),
+        Vector3::new([r(-4), r(5), r(7)]),
+    ];
+    let expected3 = [
+        matrix3.clone() * vectors3[0].clone(),
+        matrix3.clone() * vectors3[1].clone(),
+    ];
+
+    assert_eq!(matrix3.transform_vec3_batch(&vectors3), expected3);
+
+    let matrix4 = Matrix4::new([
+        [r(1), r(2), r(3), r(1)],
+        [r(0), r(-2), r(1), r(4)],
+        [r(-1), r(4), r(2), r(3)],
+        [r(0), r(0), r(0), r(1)],
+    ]);
+    let vectors4 = [
+        Vector4::new([r(3), r(0), r(-2), r(1)]),
+        Vector4::new([r(-4), r(5), r(7), r(1)]),
+        Vector4::new([r(2), r(7), r(-3), r(0)]),
+    ];
+    let expected4 = [
+        matrix4.clone() * vectors4[0].clone(),
+        matrix4.clone() * vectors4[1].clone(),
+        matrix4.clone() * vectors4[2].clone(),
+    ];
+
+    assert_eq!(matrix4.transform_vec4_batch(&vectors4), expected4);
+}
+
+#[test]
+fn matrix_transform_handles_materialize_equivalent_to_transform() {
+    let matrix3 = Matrix3::new([[r(1), r(2), r(3)], [r(0), r(-1), r(4)], [r(-2), r(5), r(7)]]);
+    let vector3 = Vector3::new([r(3), r(0), r(-2)]);
+    let matrix3_handle = matrix3.transform_vec3_handle();
+    let vector3_handle = matrix3_handle.vector(&vector3);
+
+    assert_eq!(matrix3_handle.transform_vector(&vector3), matrix3 * vector3.clone());
+    assert_eq!(vector3_handle.materialize(), matrix3 * vector3);
+    let vector3_with = matrix3.transform_vec3_with(&vector3);
+    assert_eq!(vector3_with.materialize(), matrix3 * vector3);
+
+    let matrix4 = Matrix4::new([
+        [r(1), r(2), r(3), r(4)],
+        [r(0), r(-1), r(5), r(6)],
+        [r(7), r(8), r(9), r(2)],
+        [r(0), r(0), r(0), r(1)],
+    ]);
+    let vector4 = Vector4::new([r(3), r(0), r(-2), r(1)]);
+    let matrix4_handle = matrix4.transform_vec4_handle();
+    let vector4_handle = matrix4_handle.vector(&vector4);
+
+    assert_eq!(matrix4_handle.transform_vector(&vector4), matrix4 * vector4.clone());
+    assert_eq!(vector4_handle.materialize(), matrix4 * vector4);
+    let vector4_with = matrix4.transform_vec4_with(&vector4);
+    assert_eq!(vector4_with.materialize(), matrix4 * vector4);
+}

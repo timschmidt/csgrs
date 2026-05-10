@@ -1005,6 +1005,152 @@ fn transform_vector_rhs_ref<B: Backend, const N: usize>(
     })
 }
 
+#[inline]
+fn transform_vector3_rhs_ref_cached<B: Backend>(
+    left: &[[Scalar<B>; 3]; 3],
+    right: &[Scalar<B>; 3],
+) -> [Scalar<B>; 3] {
+    // Matrix3 transforms never use a homogeneous column, so every output lane is
+    // a fixed 3-term linear combination and can keep this branch-free layout.
+    // Keeping a dedicated helper preserves a single shared handle path.
+    from_fn(|row| {
+        let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
+        let vector_terms = [&right[0], &right[1], &right[2]];
+        Scalar::linear_combination3_refs(matrix_terms, vector_terms)
+    })
+}
+
+#[inline]
+fn transform_vector4_rhs_ref_cached<B: Backend>(
+    left: &[[Scalar<B>; 4]; 4],
+    right: &[Scalar<B>; 4],
+    translation_is_zero: &[bool; 4],
+) -> [Scalar<B>; 4] {
+    // Batch transforms usually share one matrix; caching the translation column
+    // zero checks here removes repeated fact probes per-row for every vector in
+    // the batch while keeping branch behavior identical to scalar paths.
+    let is_direction = right[3].zero_status() == ZeroStatus::Zero;
+    from_fn(|row| {
+        if is_direction || translation_is_zero[row] {
+            let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
+            let vector_terms = [&right[0], &right[1], &right[2]];
+            Scalar::linear_combination3_refs(matrix_terms, vector_terms)
+        } else {
+            let matrix_terms = [
+                &left[row][0],
+                &left[row][1],
+                &left[row][2],
+                &left[row][3],
+            ];
+            let vector_terms = [&right[0], &right[1], &right[2], &right[3]];
+            Scalar::affine_combination4_refs(matrix_terms, vector_terms, &right[3])
+        }
+    })
+}
+
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct TransformedMatrix3<'a, B: Backend = DefaultBackend> {
+    matrix: &'a Matrix3<B>,
+}
+
+impl<'a, B: Backend> TransformedMatrix3<'a, B> {
+    fn new(matrix: &'a Matrix3<B>) -> Self {
+        Self { matrix }
+    }
+
+    pub(crate) fn transform_vector(&self, rhs: &Vector3<B>) -> Vector3<B> {
+        Vector3(transform_vector3_rhs_ref_cached(&self.matrix.0, &rhs.0))
+    }
+
+    pub(crate) fn vector(&self, rhs: &'a Vector3<B>) -> TransformedVector3<'a, B> {
+        TransformedVector3 {
+            matrix: self.matrix,
+            vector: rhs,
+        }
+    }
+
+    pub(crate) fn transform_vector_batch(&self, rhs: &[Vector3<B>]) -> Vec<Vector3<B>> {
+        let mut transformed = Vec::with_capacity(rhs.len());
+        for vector in rhs {
+            transformed.push(self.transform_vector(vector));
+        }
+        transformed
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct TransformedMatrix4<'a, B: Backend = DefaultBackend> {
+    matrix: &'a Matrix4<B>,
+    translation_is_zero: [bool; 4],
+}
+
+impl<'a, B: Backend> TransformedMatrix4<'a, B> {
+    fn new(matrix: &'a Matrix4<B>) -> Self {
+        // Cache the per-row homogeneous-column zero facts once; this avoids
+        // repeated `zero_status` calls for each input vector in batch transforms.
+        let translation_is_zero = from_fn(|row| matrix[row][3].zero_status() == ZeroStatus::Zero);
+        Self {
+            matrix,
+            translation_is_zero,
+        }
+    }
+
+    pub(crate) fn transform_vector(&self, rhs: &Vector4<B>) -> Vector4<B> {
+        Vector4(transform_vector4_rhs_ref_cached(
+            &self.matrix.0,
+            &rhs.0,
+            &self.translation_is_zero,
+        ))
+    }
+
+    pub(crate) fn vector(&self, rhs: &'a Vector4<B>) -> TransformedVector4<'a, B> {
+        TransformedVector4 {
+            matrix: self.matrix,
+            translation_is_zero: self.translation_is_zero,
+            vector: rhs,
+        }
+    }
+
+    pub(crate) fn transform_vector_batch(&self, rhs: &[Vector4<B>]) -> Vec<Vector4<B>> {
+        let mut transformed = Vec::with_capacity(rhs.len());
+        for vector in rhs {
+            transformed.push(self.transform_vector(vector));
+        }
+        transformed
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct TransformedVector3<'a, B: Backend = DefaultBackend> {
+    matrix: &'a Matrix3<B>,
+    vector: &'a Vector3<B>,
+}
+
+impl<'a, B: Backend> TransformedVector3<'a, B> {
+    #[inline]
+    pub(crate) fn materialize(self) -> Vector3<B> {
+        Vector3(transform_vector3_rhs_ref_cached(&self.matrix.0, &self.vector.0))
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct TransformedVector4<'a, B: Backend = DefaultBackend> {
+    matrix: &'a Matrix4<B>,
+    translation_is_zero: [bool; 4],
+    vector: &'a Vector4<B>,
+}
+
+impl<'a, B: Backend> TransformedVector4<'a, B> {
+    #[inline]
+    pub(crate) fn materialize(self) -> Vector4<B> {
+        Vector4(transform_vector4_rhs_ref_cached(
+            &self.matrix.0,
+            &self.vector.0,
+            &self.translation_is_zero,
+        ))
+    }
+}
+
 fn scale_matrix3<B: Backend>(
     matrix: [[Scalar<B>; 3]; 3],
     factor: &Scalar<B>,
@@ -1979,6 +2125,28 @@ impl_matrix!(
 );
 
 impl<B: Backend> Matrix3<B> {
+    /// Transforms all vectors in `rhs` using the same matrix.
+    ///
+    /// This is a convenience batch helper for repeated transformations with
+    /// shared matrix state in caller-owned loops.
+    pub fn transform_vec3_batch(&self, rhs: &[Vector3<B>]) -> Vec<Vector3<B>> {
+        crate::trace_dispatch!("realistic_blas_matrix", "method", "transform-vector-vec3-batch");
+        self.transform_vec3_handle().transform_vector_batch(rhs)
+    }
+
+    /// Returns a lightweight transform handle for a shared matrix.
+    pub(crate) fn transform_vec3_handle(&self) -> TransformedMatrix3<'_, B> {
+        TransformedMatrix3::new(self)
+    }
+
+    /// Returns a handle for a single vector transformation under this matrix.
+    ///
+    /// Reusing the matrix handle keeps the zero-translation and direction facts
+    /// in the same precomputed form used by batch transforms.
+    pub(crate) fn transform_vec3_with<'a>(&'a self, rhs: &'a Vector3<B>) -> TransformedVector3<'a, B> {
+        self.transform_vec3_handle().vector(rhs)
+    }
+
     /// Returns the matrix inverse using the adjugate and determinant.
     ///
     /// The ordinary path rejects a definite-zero determinant and otherwise
@@ -2012,6 +2180,29 @@ impl<B: Backend> Matrix3<B> {
 }
 
 impl<B: Backend> Matrix4<B> {
+    /// Returns a lightweight transform handle for repeated matrix-vector transforms.
+    pub(crate) fn transform_vec4_handle(&self) -> TransformedMatrix4<'_, B> {
+        TransformedMatrix4::new(self)
+    }
+
+    /// Returns a handle for a single vector transformation under this matrix.
+    ///
+    /// Reusing the same handle path keeps matrix-wide facts aligned with the
+    /// shared-batch transform path and avoids duplicating translation probes.
+    pub(crate) fn transform_vec4_with<'a>(&'a self, rhs: &'a Vector4<B>) -> TransformedVector4<'a, B> {
+        self.transform_vec4_handle().vector(rhs)
+    }
+
+    /// Transforms all vectors in `rhs` using the same matrix.
+    ///
+    /// For `4x4`, per-row homogeneous-coordinate facts are cached once so they
+    /// are reused for every vector in the batch without changing observable
+    /// affine structure.
+    pub fn transform_vec4_batch(&self, rhs: &[Vector4<B>]) -> Vec<Vector4<B>> {
+        crate::trace_dispatch!("realistic_blas_matrix", "method", "transform-vector-vec4-batch");
+        self.transform_vec4_handle().transform_vector_batch(rhs)
+    }
+
     /// Returns the matrix inverse using a fixed-size cofactor expansion.
     ///
     /// The ordinary path rejects a definite-zero determinant and propagates
