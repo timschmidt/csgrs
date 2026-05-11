@@ -1050,6 +1050,70 @@ fn bench_symbolic_reductions(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_exact_product_sums(c: &mut Criterion) {
+    let mut group = c.benchmark_group("exact_product_sums");
+    let zero = Real::zero();
+    let terms = [
+        [
+            Real::new(Rational::fraction(7, 11).unwrap()),
+            Real::new(Rational::fraction(13, 17).unwrap()),
+        ],
+        [
+            Real::new(Rational::fraction(19, 23).unwrap()),
+            Real::new(Rational::fraction(29, 31).unwrap()),
+        ],
+        [
+            Real::new(Rational::fraction(37, 41).unwrap()),
+            Real::new(Rational::fraction(43, 47).unwrap()),
+        ],
+        [
+            Real::new(Rational::fraction(53, 59).unwrap()),
+            Real::new(Rational::fraction(61, 67).unwrap()),
+        ],
+        [
+            Real::new(Rational::fraction(71, 73).unwrap()),
+            Real::new(Rational::fraction(79, 83).unwrap()),
+        ],
+        [
+            Real::new(Rational::fraction(89, 97).unwrap()),
+            Real::new(Rational::fraction(101, 103).unwrap()),
+        ],
+    ];
+
+    group.bench_function("signed_product_sum_lcm_6x2", |b| {
+        b.iter(|| {
+            black_box(Real::exact_rational_signed_product_sum(
+                [true, false, true, true, false, true],
+                [
+                    [&terms[0][0], &terms[0][1]],
+                    [&terms[1][0], &terms[1][1]],
+                    [&terms[2][0], &terms[2][1]],
+                    [&terms[3][0], &terms[3][1]],
+                    [&terms[4][0], &terms[4][1]],
+                    [&terms[5][0], &terms[5][1]],
+                ],
+            ))
+        })
+    });
+    group.bench_function("signed_product_sum_sparse_single_6x2", |b| {
+        b.iter(|| {
+            black_box(Real::exact_rational_signed_product_sum(
+                [true, false, true, true, false, true],
+                [
+                    [&zero, &terms[0][1]],
+                    [&terms[1][0], &zero],
+                    [&terms[2][0], &terms[2][1]],
+                    [&zero, &terms[3][1]],
+                    [&terms[4][0], &zero],
+                    [&zero, &terms[5][1]],
+                ],
+            ))
+        })
+    });
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_construction_speed,
@@ -1059,6 +1123,7 @@ criterion_group!(
     bench_borrowed_op_overhead,
     bench_dense_algebra,
     bench_exact_transcendental_special_forms,
-    bench_symbolic_reductions
+    bench_symbolic_reductions,
+    bench_exact_product_sums
 );
 criterion_main!(benches);

@@ -21,6 +21,23 @@ roots, logarithms, and rational trig constants.
 - `Simple`: a small Lisp-like expression parser, enabled by the optional
   `simple` feature.
 
+## Source Documentation
+
+The crate-level README is the public orientation. More detailed implementation
+notes live next to the source:
+
+- [`src/README.md`](./src/README.md): project layout, numerical expectations,
+  error model, tracing/benchmark expectations, and development constraints.
+- [`src/rational/README.md`](./src/rational/README.md): `Rational` storage,
+  reduction rules, conversion behavior, parser expectations, and exact
+  arithmetic fast paths.
+- [`src/real/README.md`](./src/real/README.md): `Real` representation,
+  symbolic classes, structural facts, API expectations, and an ASCII diagram of
+  the pieces stored in a `Real`.
+- [`src/computable/README.md`](./src/computable/README.md): `Computable`
+  expression graphs, lazy approximation, caches, precision expectations, and
+  kernel organization.
+
 ## Numeric Model
 
 `hyperreal` is built around three layers that deliberately keep exact and

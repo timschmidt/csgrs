@@ -478,15 +478,14 @@ impl Rational {
     }
 
     fn signed_product_sum_dyadic<const TERMS: usize, const FACTORS: usize>(
-        positive_terms: [bool; TERMS],
         terms: [[&Self; FACTORS]; TERMS],
+        signs: [Sign; TERMS],
     ) -> Option<Self> {
         let mut max_shift = 0_u64;
         let mut denominator_shifts = [0_u64; TERMS];
         let mut any_nonzero = false;
         for i in 0..TERMS {
-            let sign = Self::product_term_sign(positive_terms[i], terms[i]);
-            if sign == NoSign {
+            if signs[i] == NoSign {
                 continue;
             }
             let mut shift = 0_u64;
@@ -504,7 +503,7 @@ impl Rational {
         let mut positive = BigUint::ZERO;
         let mut negative = BigUint::ZERO;
         for i in 0..TERMS {
-            let sign = Self::product_term_sign(positive_terms[i], terms[i]);
+            let sign = signs[i];
             if sign == NoSign {
                 continue;
             }
@@ -531,12 +530,12 @@ impl Rational {
     }
 
     fn signed_product_sum_equal_denominator<const TERMS: usize, const FACTORS: usize>(
-        positive_terms: [bool; TERMS],
         terms: [[&Self; FACTORS]; TERMS],
+        signs: [Sign; TERMS],
     ) -> Option<Self> {
         let mut shared_denominator = None::<BigUint>;
         for i in 0..TERMS {
-            if Self::product_term_sign(positive_terms[i], terms[i]) == NoSign {
+            if signs[i] == NoSign {
                 continue;
             }
             let denominator = Self::product_term_denominator(terms[i]);
@@ -554,7 +553,7 @@ impl Rational {
         let mut positive = BigUint::ZERO;
         let mut negative = BigUint::ZERO;
         for i in 0..TERMS {
-            let sign = Self::product_term_sign(positive_terms[i], terms[i]);
+            let sign = signs[i];
             if sign == NoSign {
                 continue;
             }
@@ -595,22 +594,62 @@ impl Rational {
         // after the first fused run reported roughly 20-27% faster reciprocal
         // rows against the pre-hook baseline. Treat those as regression guards.
         debug_assert!(FACTORS > 0);
-        if let Some(dyadic) = Self::signed_product_sum_dyadic(positive_terms, terms) {
+        let mut signs = [NoSign; TERMS];
+        let mut nonzero_count = 0_usize;
+        for i in 0..TERMS {
+            // Term signs are pure structural facts from stored rational signs.
+            // Compute them once and reuse them across dyadic, equal-denominator,
+            // and LCM reducers. This preserves Bareiss-style delayed reduction
+            // while removing repeated sign walks from exact cofactor/determinant
+            // product sums.
+            let sign = Self::product_term_sign(positive_terms[i], terms[i]);
+            if sign != NoSign {
+                nonzero_count += 1;
+            }
+            signs[i] = sign;
+        }
+        if nonzero_count == 0 {
+            crate::trace_dispatch!("rational", "product_sum", "all-zero");
+            return Self::zero();
+        }
+        if nonzero_count == 1 {
+            for i in 0..TERMS {
+                let denominator = Self::product_term_denominator(terms[i]);
+                match signs[i] {
+                    Plus => {
+                        crate::trace_dispatch!("rational", "product_sum", "single-term-product");
+                        return Self::from_signed_magnitude_difference(
+                            Self::product_term_magnitude(terms[i]),
+                            BigUint::ZERO,
+                            denominator,
+                        );
+                    }
+                    Minus => {
+                        crate::trace_dispatch!("rational", "product_sum", "single-term-product");
+                        return Self::from_signed_magnitude_difference(
+                            BigUint::ZERO,
+                            Self::product_term_magnitude(terms[i]),
+                            denominator,
+                        );
+                    }
+                    NoSign => {}
+                }
+            }
+        }
+
+        if let Some(dyadic) = Self::signed_product_sum_dyadic(terms, signs) {
             crate::trace_dispatch!("rational", "product_sum", "dyadic-shared-denominator");
             return dyadic;
         }
-        if let Some(equal_denominator) =
-            Self::signed_product_sum_equal_denominator(positive_terms, terms)
-        {
+        if let Some(equal_denominator) = Self::signed_product_sum_equal_denominator(terms, signs) {
             crate::trace_dispatch!("rational", "product_sum", "equal-product-denominator");
             return equal_denominator;
         }
 
         crate::trace_dispatch!("rational", "product_sum", "lcm-shared-denominator");
         let mut common_denominator = BigUint::one();
-        let mut any_nonzero = false;
         for i in 0..TERMS {
-            if Self::product_term_sign(positive_terms[i], terms[i]) == NoSign {
+            if signs[i] == NoSign {
                 continue;
             }
             let denominator = Self::product_term_denominator(terms[i]);
@@ -619,16 +658,12 @@ impl Rational {
                 trace_rational_gcd!(&common_denominator, &denominator, &divisor);
                 common_denominator *= denominator / &divisor;
             }
-            any_nonzero = true;
-        }
-        if !any_nonzero {
-            return Self::zero();
         }
 
         let mut positive = BigUint::ZERO;
         let mut negative = BigUint::ZERO;
         for i in 0..TERMS {
-            let sign = Self::product_term_sign(positive_terms[i], terms[i]);
+            let sign = signs[i];
             if sign == NoSign {
                 continue;
             }
