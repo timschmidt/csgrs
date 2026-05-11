@@ -278,9 +278,8 @@ are part of the project's provenance and license history.
 
 ## References
 
-These are the papers and books cited by source comments in this crate. They are
-listed here in MLA style so implementation notes can point to one citeable
-reference list.
+These are the papers and books which contribute ideas or methods to this crate.
+They are listed here in MLA style for easy citation.
 
 - Bareiss, Erwin H. "[Sylvester's Identity and Multistep Integer-Preserving
   Gaussian Elimination](https://www.ams.org/mcom/1968-22-103/S0025-5718-1968-0226829-0/)."
