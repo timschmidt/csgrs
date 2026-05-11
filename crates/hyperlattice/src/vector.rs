@@ -442,9 +442,49 @@ impl<B: Backend> Vector3<B> {
             crate::trace_dispatch!("realistic_blas_vector", "abort", "dot3-inactive-signal");
             return self.dot(rhs);
         }
-        let p0 = clone_with_abort(&self.0[0], signal) * clone_with_abort(&rhs.0[0], signal);
-        let p1 = clone_with_abort(&self.0[1], signal) * clone_with_abort(&rhs.0[1], signal);
-        let p2 = clone_with_abort(&self.0[2], signal) * clone_with_abort(&rhs.0[2], signal);
+        let has0 = !self.0[0].definitely_zero() && !rhs.0[0].definitely_zero();
+        let has1 = !self.0[1].definitely_zero() && !rhs.0[1].definitely_zero();
+        let has2 = !self.0[2].definitely_zero() && !rhs.0[2].definitely_zero();
+
+        if !has0 && !has1 && !has2 {
+            crate::trace_dispatch!("realistic_blas_vector", "abort", "dot3-sparse-all-zero");
+            return Scalar::zero();
+        }
+
+        let product = |lhs: &Scalar<B>, rhs: &Scalar<B>, signal: &AbortSignal| {
+            clone_with_abort(lhs, signal) * clone_with_abort(rhs, signal)
+        };
+
+        if has0 as u8 + has1 as u8 + has2 as u8 == 1 {
+            crate::trace_dispatch!("realistic_blas_vector", "abort", "dot3-sparse-single");
+            return if has0 {
+                product(&self.0[0], &rhs.0[0], signal)
+            } else if has1 {
+                product(&self.0[1], &rhs.0[1], signal)
+            } else {
+                product(&self.0[2], &rhs.0[2], signal)
+            };
+        }
+
+        if has0 as u8 + has1 as u8 + has2 as u8 == 2 {
+            crate::trace_dispatch!("realistic_blas_vector", "abort", "dot3-sparse-two");
+            return if has0 && has1 {
+                product(&self.0[0], &rhs.0[0], signal) + product(&self.0[1], &rhs.0[1], signal)
+            } else if has0 && has2 {
+                product(&self.0[0], &rhs.0[0], signal) + product(&self.0[2], &rhs.0[2], signal)
+            } else {
+                product(&self.0[1], &rhs.0[1], signal) + product(&self.0[2], &rhs.0[2], signal)
+            };
+        }
+
+        crate::trace_dispatch!(
+            "realistic_blas_vector",
+            "abort",
+            "dot3-sparse-three-nonzero"
+        );
+        let p0 = product(&self.0[0], &rhs.0[0], signal);
+        let p1 = product(&self.0[1], &rhs.0[1], signal);
+        let p2 = product(&self.0[2], &rhs.0[2], signal);
         (p0 + p1) + p2
     }
 }
@@ -469,10 +509,105 @@ impl<B: Backend> Vector4<B> {
             crate::trace_dispatch!("realistic_blas_vector", "abort", "dot4-inactive-signal");
             return self.dot(rhs);
         }
-        let p0 = clone_with_abort(&self.0[0], signal) * clone_with_abort(&rhs.0[0], signal);
-        let p1 = clone_with_abort(&self.0[1], signal) * clone_with_abort(&rhs.0[1], signal);
-        let p2 = clone_with_abort(&self.0[2], signal) * clone_with_abort(&rhs.0[2], signal);
-        let p3 = clone_with_abort(&self.0[3], signal) * clone_with_abort(&rhs.0[3], signal);
+        let has0 = !self.0[0].definitely_zero() && !rhs.0[0].definitely_zero();
+        let has1 = !self.0[1].definitely_zero() && !rhs.0[1].definitely_zero();
+        let has2 = !self.0[2].definitely_zero() && !rhs.0[2].definitely_zero();
+        let has3 = !self.0[3].definitely_zero() && !rhs.0[3].definitely_zero();
+        let nonzero = has0 as u8 + has1 as u8 + has2 as u8 + has3 as u8;
+
+        if nonzero == 0 {
+            crate::trace_dispatch!("realistic_blas_vector", "abort", "dot4-sparse-all-zero");
+            return Scalar::zero();
+        }
+
+        let product = |lhs: &Scalar<B>, rhs: &Scalar<B>, signal: &AbortSignal| {
+            clone_with_abort(lhs, signal) * clone_with_abort(rhs, signal)
+        };
+
+        if nonzero == 1 {
+            crate::trace_dispatch!("realistic_blas_vector", "abort", "dot4-sparse-single");
+            return if has0 {
+                product(&self.0[0], &rhs.0[0], signal)
+            } else if has1 {
+                product(&self.0[1], &rhs.0[1], signal)
+            } else if has2 {
+                product(&self.0[2], &rhs.0[2], signal)
+            } else {
+                product(&self.0[3], &rhs.0[3], signal)
+            };
+        }
+
+        if nonzero == 2 {
+            let (p0, p1) = if has0 && has1 {
+                (
+                    product(&self.0[0], &rhs.0[0], signal),
+                    product(&self.0[1], &rhs.0[1], signal),
+                )
+            } else if has0 && has2 {
+                (
+                    product(&self.0[0], &rhs.0[0], signal),
+                    product(&self.0[2], &rhs.0[2], signal),
+                )
+            } else if has0 && has3 {
+                (
+                    product(&self.0[0], &rhs.0[0], signal),
+                    product(&self.0[3], &rhs.0[3], signal),
+                )
+            } else if has1 && has2 {
+                (
+                    product(&self.0[1], &rhs.0[1], signal),
+                    product(&self.0[2], &rhs.0[2], signal),
+                )
+            } else if has1 && has3 {
+                (
+                    product(&self.0[1], &rhs.0[1], signal),
+                    product(&self.0[3], &rhs.0[3], signal),
+                )
+            } else {
+                (
+                    product(&self.0[2], &rhs.0[2], signal),
+                    product(&self.0[3], &rhs.0[3], signal),
+                )
+            };
+            crate::trace_dispatch!("realistic_blas_vector", "abort", "dot4-sparse-two");
+            return p0 + p1;
+        }
+
+        if nonzero == 3 {
+            let (p0, p1, p2) = if !has0 {
+                (
+                    product(&self.0[1], &rhs.0[1], signal),
+                    product(&self.0[2], &rhs.0[2], signal),
+                    product(&self.0[3], &rhs.0[3], signal),
+                )
+            } else if !has1 {
+                (
+                    product(&self.0[0], &rhs.0[0], signal),
+                    product(&self.0[2], &rhs.0[2], signal),
+                    product(&self.0[3], &rhs.0[3], signal),
+                )
+            } else if !has2 {
+                (
+                    product(&self.0[0], &rhs.0[0], signal),
+                    product(&self.0[1], &rhs.0[1], signal),
+                    product(&self.0[3], &rhs.0[3], signal),
+                )
+            } else {
+                (
+                    product(&self.0[0], &rhs.0[0], signal),
+                    product(&self.0[1], &rhs.0[1], signal),
+                    product(&self.0[2], &rhs.0[2], signal),
+                )
+            };
+            crate::trace_dispatch!("realistic_blas_vector", "abort", "dot4-sparse-three");
+            return (p0 + p1) + p2;
+        }
+
+        crate::trace_dispatch!("realistic_blas_vector", "abort", "dot4-sparse-four");
+        let p0 = product(&self.0[0], &rhs.0[0], signal);
+        let p1 = product(&self.0[1], &rhs.0[1], signal);
+        let p2 = product(&self.0[2], &rhs.0[2], signal);
+        let p3 = product(&self.0[3], &rhs.0[3], signal);
         (p0 + p1) + (p2 + p3)
     }
 }

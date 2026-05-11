@@ -9,6 +9,7 @@ use crate::scalar::{
     clone_with_abort, reject_definite_zero, require_known_nonzero, with_abort, zero_status,
     zero_status_with_abort, ZeroStatus,
 };
+use crate::backend::BackendScalar;
 use crate::vector::{Vector3, Vector4};
 use crate::{AbortSignal, Backend, BlasResult, CheckedBlasResult, DefaultBackend, Problem, Scalar};
 
@@ -355,11 +356,14 @@ macro_rules! impl_solve_left_system_fixed {
                     right.swap(col, pivot);
                 }
 
-                let inv_pivot = left[col][col].clone().inverse()?;
+                // Move the pivot out once so the same matrix slot is already
+                // zeroed for row-elimination and we avoid an extra clone for
+                // the inverse path.
+                let pivot = mem::replace(&mut left[col][col], Scalar::one());
+                let inv_pivot = pivot.inverse()?;
                 for i in 0..$n {
                     scale_entry_in_place(&mut right[col][i], &inv_pivot);
                 }
-                left[col][col] = Scalar::one();
                 for i in (col + 1)..$n {
                     scale_entry_in_place(&mut left[col][i], &inv_pivot);
                 }
@@ -370,25 +374,12 @@ macro_rules! impl_solve_left_system_fixed {
                     if row == col {
                         continue;
                     }
-                    // In 4x4 elimination, exact zero factors occur often enough
-                    // to skip cloning and row updates. For 3x3 this extra query
-                    // regressed the borrowed div benchmark, so it is gated out.
-                    if $n != 3 && left[row][col].definitely_zero() {
+                    // Single precheck keeps one predicate per row; moved-out
+                    // factors avoid a redundant zero write for 3x3 and 4x4.
+                    if left[row][col].definitely_zero() {
                         continue;
                     }
-                    let factor = if $n == 3 {
-                        // 3x3 wins by moving the factor out of the slot instead
-                        // of cloning it; 4x4 kept the clone path after benches.
-                        mem::replace(&mut left[row][col], Scalar::zero())
-                    } else {
-                        left[row][col].clone()
-                    };
-                    if factor.definitely_zero() {
-                        continue;
-                    }
-                    if $n != 3 {
-                        left[row][col] = Scalar::zero();
-                    }
+                    let factor = mem::replace(&mut left[row][col], Scalar::zero());
                     for i in (col + 1)..$n {
                         subtract_scaled_entry_in_place(&mut left[row][i], &pivot_left[i], &factor);
                     }
@@ -419,11 +410,15 @@ macro_rules! impl_solve_left_system_fixed {
                     right.swap(col, pivot);
                 }
 
-                let inv_pivot = left[col][col].clone().inverse()?;
+                // Keep checked solve on the same move-based pivot schedule as the
+                // non-checked variant so checked kernels don’t pay extra slot
+                // churn. A failing checked inverse still returns before mutation
+                // of result rows beyond the local copy.
+                let pivot = mem::replace(&mut left[col][col], Scalar::one());
+                let inv_pivot = pivot.inverse()?;
                 for i in 0..$n {
                     scale_entry_in_place(&mut right[col][i], &inv_pivot);
                 }
-                left[col][col] = Scalar::one();
                 for i in (col + 1)..$n {
                     scale_entry_in_place(&mut left[col][i], &inv_pivot);
                 }
@@ -434,24 +429,11 @@ macro_rules! impl_solve_left_system_fixed {
                     if row == col {
                         continue;
                     }
-                    // See the ordinary solver branch above for the benchmark
-                    // rationale behind the 4x4-only zero precheck.
-                    if $n != 3 && left[row][col].definitely_zero() {
+                    // Shared pivot-factor handling avoids the 4x4 branch.
+                    if left[row][col].definitely_zero() {
                         continue;
                     }
-                    let factor = if $n == 3 {
-                        // 3x3-specific clone avoidance; 4x4 is left on the
-                        // older path because moving factors was slower there.
-                        mem::replace(&mut left[row][col], Scalar::zero())
-                    } else {
-                        left[row][col].clone()
-                    };
-                    if factor.definitely_zero() {
-                        continue;
-                    }
-                    if $n != 3 {
-                        left[row][col] = Scalar::zero();
-                    }
+                    let factor = mem::replace(&mut left[row][col], Scalar::zero());
                     for i in (col + 1)..$n {
                         subtract_scaled_entry_in_place(&mut left[row][i], &pivot_left[i], &factor);
                     }
@@ -484,11 +466,11 @@ macro_rules! impl_solve_left_system_fixed {
                     right.swap(col, pivot);
                 }
 
-                let inv_pivot = clone_with_abort(&left[col][col], signal).inverse()?;
+                let pivot = mem::replace(&mut left[col][col], Scalar::one());
+                let inv_pivot = clone_with_abort(&pivot, signal).inverse()?;
                 for i in 0..$n {
                     scale_entry_in_place(&mut right[col][i], &inv_pivot);
                 }
-                left[col][col] = Scalar::one();
                 for i in (col + 1)..$n {
                     scale_entry_in_place(&mut left[col][i], &inv_pivot);
                 }
@@ -499,23 +481,13 @@ macro_rules! impl_solve_left_system_fixed {
                     if row == col {
                         continue;
                     }
-                    // Abort-aware solver uses the same performance split as the
-                    // ordinary and checked paths.
-                    if $n != 3 && left[row][col].definitely_zero() {
+                    // Abort-aware path keeps the same precheck/move policy as
+                    // ordinary solve. The pivot factor is moved out only when a
+                    // full elimination update is needed.
+                    if left[row][col].definitely_zero() {
                         continue;
                     }
-                    let factor = if $n == 3 {
-                        // 3x3-specific clone avoidance; see ordinary path.
-                        mem::replace(&mut left[row][col], Scalar::zero())
-                    } else {
-                        left[row][col].clone()
-                    };
-                    if factor.definitely_zero() {
-                        continue;
-                    }
-                    if $n != 3 {
-                        left[row][col] = Scalar::zero();
-                    }
+                    let factor = mem::replace(&mut left[row][col], Scalar::zero());
                     for i in (col + 1)..$n {
                         subtract_scaled_entry_in_place(&mut left[row][i], &pivot_left[i], &factor);
                     }
@@ -824,12 +796,126 @@ fn multiply_arrays3_borrowed<B: Backend>(
     left: &[[Scalar<B>; 3]; 3],
     right: &[[Scalar<B>; 3]; 3],
 ) -> [[Scalar<B>; 3]; 3] {
+    let left_nonzero = [
+        [
+            !left[0][0].definitely_zero(),
+            !left[0][1].definitely_zero(),
+            !left[0][2].definitely_zero(),
+        ],
+        [
+            !left[1][0].definitely_zero(),
+            !left[1][1].definitely_zero(),
+            !left[1][2].definitely_zero(),
+        ],
+        [
+            !left[2][0].definitely_zero(),
+            !left[2][1].definitely_zero(),
+            !left[2][2].definitely_zero(),
+        ],
+    ];
+    let right_nonzero = [
+        [
+            !right[0][0].definitely_zero(),
+            !right[0][1].definitely_zero(),
+            !right[0][2].definitely_zero(),
+        ],
+        [
+            !right[1][0].definitely_zero(),
+            !right[1][1].definitely_zero(),
+            !right[1][2].definitely_zero(),
+        ],
+        [
+            !right[2][0].definitely_zero(),
+            !right[2][1].definitely_zero(),
+            !right[2][2].definitely_zero(),
+        ],
+    ];
+
+    let left_all_nonzero = left_nonzero[0][0]
+        && left_nonzero[0][1]
+        && left_nonzero[0][2]
+        && left_nonzero[1][0]
+        && left_nonzero[1][1]
+        && left_nonzero[1][2]
+        && left_nonzero[2][0]
+        && left_nonzero[2][1]
+        && left_nonzero[2][2];
+    let right_all_nonzero = right_nonzero[0][0]
+        && right_nonzero[0][1]
+        && right_nonzero[0][2]
+        && right_nonzero[1][0]
+        && right_nonzero[1][1]
+        && right_nonzero[1][2]
+        && right_nonzero[2][0]
+        && right_nonzero[2][1]
+        && right_nonzero[2][2];
+
+    if left_all_nonzero && right_all_nonzero {
+        crate::trace_dispatch!(
+            "realistic_blas_matrix",
+            "helper",
+            "multiply3-borrowed-dense"
+        );
+
+        let cell = |row: usize, col: usize| {
+            Scalar(B::Repr::dot3(
+                [&left[row][0].0, &left[row][1].0, &left[row][2].0],
+                [&right[0][col].0, &right[1][col].0, &right[2][col].0],
+            ))
+        };
+
+        return [
+            [cell(0, 0), cell(0, 1), cell(0, 2)],
+            [cell(1, 0), cell(1, 1), cell(1, 2)],
+            [cell(2, 0), cell(2, 1), cell(2, 2)],
+        ];
+    }
+
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "multiply3-borrowed-sparse"
+    );
+
     let cell = |row: usize, col: usize| {
-        Scalar::dot3(
-            [&left[row][0], &left[row][1], &left[row][2]],
-            [&right[0][col], &right[1][col], &right[2][col]],
-        )
+        let l0 = &left[row][0];
+        let l1 = &left[row][1];
+        let l2 = &left[row][2];
+        let r0 = &right[0][col];
+        let r1 = &right[1][col];
+        let r2 = &right[2][col];
+        let p0 = left_nonzero[row][0] && right_nonzero[0][col];
+        let p1 = left_nonzero[row][1] && right_nonzero[1][col];
+        let p2 = left_nonzero[row][2] && right_nonzero[2][col];
+        let nonzero_count = usize::from(p0) + usize::from(p1) + usize::from(p2);
+
+        match nonzero_count {
+            0 => Scalar::zero(),
+            1 => {
+                if p0 {
+                    l0 * r0
+                } else if p1 {
+                    l1 * r1
+                } else {
+                    l2 * r2
+                }
+            }
+            2 => {
+                if !p0 {
+                    l1 * r1 + l2 * r2
+                } else if !p1 {
+                    l0 * r0 + l2 * r2
+                } else {
+                    l0 * r0 + l1 * r1
+                }
+            }
+            _ => Scalar(B::Repr::dot3(
+                [&l0.0, &l1.0, &l2.0],
+                [&r0.0, &r1.0, &r2.0],
+            )),
+        }
     };
+
     [
         [cell(0, 0), cell(0, 1), cell(0, 2)],
         [cell(1, 0), cell(1, 1), cell(1, 2)],
@@ -842,17 +928,197 @@ fn multiply_arrays4_borrowed<B: Backend>(
     left: &[[Scalar<B>; 4]; 4],
     right: &[[Scalar<B>; 4]; 4],
 ) -> [[Scalar<B>; 4]; 4] {
+    let left_nonzero = [
+        [
+            !left[0][0].definitely_zero(),
+            !left[0][1].definitely_zero(),
+            !left[0][2].definitely_zero(),
+            !left[0][3].definitely_zero(),
+        ],
+        [
+            !left[1][0].definitely_zero(),
+            !left[1][1].definitely_zero(),
+            !left[1][2].definitely_zero(),
+            !left[1][3].definitely_zero(),
+        ],
+        [
+            !left[2][0].definitely_zero(),
+            !left[2][1].definitely_zero(),
+            !left[2][2].definitely_zero(),
+            !left[2][3].definitely_zero(),
+        ],
+        [
+            !left[3][0].definitely_zero(),
+            !left[3][1].definitely_zero(),
+            !left[3][2].definitely_zero(),
+            !left[3][3].definitely_zero(),
+        ],
+    ];
+    let right_nonzero = [
+        [
+            !right[0][0].definitely_zero(),
+            !right[0][1].definitely_zero(),
+            !right[0][2].definitely_zero(),
+            !right[0][3].definitely_zero(),
+        ],
+        [
+            !right[1][0].definitely_zero(),
+            !right[1][1].definitely_zero(),
+            !right[1][2].definitely_zero(),
+            !right[1][3].definitely_zero(),
+        ],
+        [
+            !right[2][0].definitely_zero(),
+            !right[2][1].definitely_zero(),
+            !right[2][2].definitely_zero(),
+            !right[2][3].definitely_zero(),
+        ],
+        [
+            !right[3][0].definitely_zero(),
+            !right[3][1].definitely_zero(),
+            !right[3][2].definitely_zero(),
+            !right[3][3].definitely_zero(),
+        ],
+    ];
+
+    let left_all_nonzero = left_nonzero[0][0]
+        && left_nonzero[0][1]
+        && left_nonzero[0][2]
+        && left_nonzero[0][3]
+        && left_nonzero[1][0]
+        && left_nonzero[1][1]
+        && left_nonzero[1][2]
+        && left_nonzero[1][3]
+        && left_nonzero[2][0]
+        && left_nonzero[2][1]
+        && left_nonzero[2][2]
+        && left_nonzero[2][3]
+        && left_nonzero[3][0]
+        && left_nonzero[3][1]
+        && left_nonzero[3][2]
+        && left_nonzero[3][3];
+    let right_all_nonzero = right_nonzero[0][0]
+        && right_nonzero[0][1]
+        && right_nonzero[0][2]
+        && right_nonzero[0][3]
+        && right_nonzero[1][0]
+        && right_nonzero[1][1]
+        && right_nonzero[1][2]
+        && right_nonzero[1][3]
+        && right_nonzero[2][0]
+        && right_nonzero[2][1]
+        && right_nonzero[2][2]
+        && right_nonzero[2][3]
+        && right_nonzero[3][0]
+        && right_nonzero[3][1]
+        && right_nonzero[3][2]
+        && right_nonzero[3][3];
+
+    if left_all_nonzero && right_all_nonzero {
+        crate::trace_dispatch!(
+            "realistic_blas_matrix",
+            "helper",
+            "multiply4-borrowed-dense"
+        );
+        let cell = |row: usize, col: usize| {
+            Scalar(B::Repr::dot4(
+                [&left[row][0].0, &left[row][1].0, &left[row][2].0, &left[row][3].0],
+                [
+                    &right[0][col].0,
+                    &right[1][col].0,
+                    &right[2][col].0,
+                    &right[3][col].0,
+                ],
+            ))
+        };
+
+        return [
+            [cell(0, 0), cell(0, 1), cell(0, 2), cell(0, 3)],
+            [cell(1, 0), cell(1, 1), cell(1, 2), cell(1, 3)],
+            [cell(2, 0), cell(2, 1), cell(2, 2), cell(2, 3)],
+            [cell(3, 0), cell(3, 1), cell(3, 2), cell(3, 3)],
+        ];
+    }
+
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "multiply4-borrowed-sparse"
+    );
+
     let cell = |row: usize, col: usize| {
-        Scalar::dot4(
-            [&left[row][0], &left[row][1], &left[row][2], &left[row][3]],
-            [
-                &right[0][col],
-                &right[1][col],
-                &right[2][col],
-                &right[3][col],
-            ],
-        )
+        let l0 = &left[row][0];
+        let l1 = &left[row][1];
+        let l2 = &left[row][2];
+        let l3 = &left[row][3];
+        let r0 = &right[0][col];
+        let r1 = &right[1][col];
+        let r2 = &right[2][col];
+        let r3 = &right[3][col];
+
+        let left_row = left_nonzero[row];
+        let p0 = left_row[0] && right_nonzero[0][col];
+        let p1 = left_row[1] && right_nonzero[1][col];
+        let p2 = left_row[2] && right_nonzero[2][col];
+        let p3 = left_row[3] && right_nonzero[3][col];
+        let nonzero_count = usize::from(p0) + usize::from(p1) + usize::from(p2) + usize::from(p3);
+
+        match nonzero_count {
+            0 => Scalar::zero(),
+            1 => {
+                if p0 {
+                    l0 * r0
+                } else if p1 {
+                    l1 * r1
+                } else if p2 {
+                    l2 * r2
+                } else {
+                    l3 * r3
+                }
+            }
+            2 => {
+                if p0 {
+                    if p1 {
+                        if p2 {
+                            l0 * r0 + l1 * r1
+                        } else {
+                            l0 * r0 + l3 * r3
+                        }
+                    } else if p2 {
+                        l0 * r0 + l2 * r2
+                    } else {
+                        l0 * r0 + l3 * r3
+                    }
+                } else if p1 {
+                    if p2 {
+                        l1 * r1 + l2 * r2
+                    } else {
+                        l1 * r1 + l3 * r3
+                    }
+                } else if p2 {
+                    l2 * r2 + l3 * r3
+                } else {
+                    unreachable!("matrix multiply sparse branch expects exactly two active terms")
+                }
+            }
+            3 => {
+                if !p0 {
+                    l1 * r1 + l2 * r2 + l3 * r3
+                } else if !p1 {
+                    l0 * r0 + l2 * r2 + l3 * r3
+                } else if !p2 {
+                    l0 * r0 + l1 * r1 + l3 * r3
+                } else {
+                    l0 * r0 + l1 * r1 + l2 * r2
+                }
+            }
+            _ => Scalar(B::Repr::dot4(
+                [&l0.0, &l1.0, &l2.0, &l3.0],
+                [&r0.0, &r1.0, &r2.0, &r3.0],
+            )),
+        }
     };
+
     [
         [cell(0, 0), cell(0, 1), cell(0, 2), cell(0, 3)],
         [cell(1, 0), cell(1, 1), cell(1, 2), cell(1, 3)],
@@ -951,58 +1217,64 @@ fn transform_vector_rhs_ref<B: Backend, const N: usize>(
     left: &[[Scalar<B>; N]; N],
     right: &[Scalar<B>; N],
 ) -> [Scalar<B>; N] {
-    let is_direction = if N == 4 {
-        // Cache the homogeneous-coordinate fact once so each output row does not
-        // repeat the same `zero_status` query.
-        right[3].zero_status() == ZeroStatus::Zero
-    } else {
-        false
-    };
-
-    from_fn(|row| {
-        if N == 4 {
-            let translation_zero = if is_direction {
-                true
-            } else {
-                left[row][3].zero_status() == ZeroStatus::Zero
-            };
-
-            // Direction vectors (homogeneous coordinate == 0) can skip the
-            // translation column; if that coefficient is also known-zero, point
-            // transforms keep the same 3-term shape.
-            // Both checks are facts-based and avoid constructing dead terms while
-            // preserving backend constructor shape for the remaining lanes.
-            if translation_zero {
+    if N == 4 {
+        // Cache exact-zero direction predicates once so each output row does not
+        // repeat the same probe.
+        let is_direction = right[3].definitely_zero();
+        if is_direction {
+            crate::trace_dispatch!("realistic_blas_matrix", "helper", "transform-vector-direction");
+            return from_fn(|row| {
                 let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
                 let vector_terms = [&right[0], &right[1], &right[2]];
-                Scalar::linear_combination3_refs(matrix_terms, vector_terms)
+                Scalar::linear_combination3(matrix_terms, vector_terms)
+            });
+        }
+
+        // Cache exact-one predicates once for point-style vectors.
+        let is_point = right[3].definitely_one();
+        if is_point {
+            crate::trace_dispatch!("realistic_blas_matrix", "helper", "transform-vector-point");
+            return from_fn(|row| {
+                let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
+                let vector_terms = [&right[0], &right[1], &right[2]];
+                // Point transforms preserve homogeneous offsets as affine sums to
+                // avoid forcing extra zero-like terms into a four-term form.
+                Scalar::affine_combination3(matrix_terms, vector_terms, &left[row][3])
+            });
+        }
+
+        // Cache per-row translation entries once for non-direction/non-point rows to
+        // avoid repeated fact probing inside the hot map loop.
+        let translation_is_zero: [bool; N] = from_fn(|row| left[row][3].definitely_zero());
+        crate::trace_dispatch!("realistic_blas_matrix", "helper", "transform-vector-full");
+        from_fn(|row| {
+            if translation_is_zero[row] {
+                let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
+                let vector_terms = [&right[0], &right[1], &right[2]];
+                Scalar::linear_combination3(matrix_terms, vector_terms)
             } else {
-                let matrix_terms = [&left[row][0], &left[row][1], &left[row][2], &left[row][3]];
+                let matrix_terms = [
+                    &left[row][0],
+                    &left[row][1],
+                    &left[row][2],
+                    &left[row][3],
+                ];
                 let vector_terms = [&right[0], &right[1], &right[2], &right[3]];
-                // `Matrix4` transforms are 4-term affine combos; use the
-                // dedicated constructor name to keep future dedicated-4 affine
-                // fast paths visible, while the Scalar shim keeps zero-offset
-                // instances on the linear fast path today.
-                let offset = Scalar::zero();
-                Scalar::affine_combination4_refs(matrix_terms, vector_terms, &offset)
+                // `Matrix4` transforms already encode translation in `left[row][3]`,
+                // so this branch is a pure 4-term linear form. Keeping it on the
+                // linear path avoids a redundant offset check and construction.
+                Scalar::linear_combination4(matrix_terms, vector_terms)
             }
-        } else {
+        })
+    } else {
+        from_fn(|row| {
             let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
             let vector_terms = [&right[0], &right[1], &right[2]];
-            if let (Some(offset_term), Some(vector_term)) = (left[row].get(3), right.get(3)) {
-                // Matrix-vector transforms are affine in their inputs and spend most
-                // time on fixed-arity combinations. Splitting the homogeneous
-                // row's last term into an offset keeps structure visible in backend
-                // hooks and preserves exact-rational shape on hyperreal backends.
-                // `_refs` aliases keep the call sites aligned with the
-                // staged constructor naming.
-                let offset = offset_term * vector_term; // no division/approximation here
-                Scalar::affine_combination3_refs(matrix_terms, vector_terms, &offset)
-            } else {
-                Scalar::linear_combination3_refs(matrix_terms, vector_terms)
-            }
-        }
-    })
+            // `N != 4` for current matrix-vector callers means 3-lane
+            // geometry, so only the pure linear form is valid here.
+            Scalar::linear_combination3(matrix_terms, vector_terms)
+        })
+    }
 }
 
 #[inline]
@@ -1016,7 +1288,7 @@ fn transform_vector3_rhs_ref_cached<B: Backend>(
     from_fn(|row| {
         let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
         let vector_terms = [&right[0], &right[1], &right[2]];
-        Scalar::linear_combination3_refs(matrix_terms, vector_terms)
+        Scalar::linear_combination3(matrix_terms, vector_terms)
     })
 }
 
@@ -1029,12 +1301,35 @@ fn transform_vector4_rhs_ref_cached<B: Backend>(
     // Batch transforms usually share one matrix; caching the translation column
     // zero checks here removes repeated fact probes per-row for every vector in
     // the batch while keeping branch behavior identical to scalar paths.
-    let is_direction = right[3].zero_status() == ZeroStatus::Zero;
-    from_fn(|row| {
-        if is_direction || translation_is_zero[row] {
+    // A direction check is purely a definite-zero predicate; unknown/nonzero
+    // branches stay on the full 4-term form.
+    let is_direction = right[3].definitely_zero();
+    if is_direction {
+        crate::trace_dispatch!("realistic_blas_matrix", "helper", "transform-vector4-direction");
+        return from_fn(|row| {
             let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
             let vector_terms = [&right[0], &right[1], &right[2]];
-            Scalar::linear_combination3_refs(matrix_terms, vector_terms)
+            Scalar::linear_combination3(matrix_terms, vector_terms)
+        });
+    }
+
+    // Point-style vectors can use affine reconstruction while preserving symbolic
+    // exactness in the matrix offset term.
+    if right[3].definitely_one() {
+        crate::trace_dispatch!("realistic_blas_matrix", "helper", "transform-vector4-point");
+        return from_fn(|row| {
+            let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
+            let vector_terms = [&right[0], &right[1], &right[2]];
+            Scalar::affine_combination3(matrix_terms, vector_terms, &left[row][3])
+        });
+    }
+
+    crate::trace_dispatch!("realistic_blas_matrix", "helper", "transform-vector4-full");
+    from_fn(|row| {
+        if translation_is_zero[row] {
+            let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
+            let vector_terms = [&right[0], &right[1], &right[2]];
+            Scalar::linear_combination3(matrix_terms, vector_terms)
         } else {
             let matrix_terms = [
                 &left[row][0],
@@ -1043,13 +1338,16 @@ fn transform_vector4_rhs_ref_cached<B: Backend>(
                 &left[row][3],
             ];
             let vector_terms = [&right[0], &right[1], &right[2], &right[3]];
-            Scalar::affine_combination4_refs(matrix_terms, vector_terms, &right[3])
+            // Keep cached batch transforms aligned with the non-cached path:
+            // all homogeneous translation is already part of the 4-term linear
+            // form, so no extra offset term is required.
+            Scalar::linear_combination4(matrix_terms, vector_terms)
         }
     })
 }
 
 #[derive(Clone, Copy, Debug)]
-pub(crate) struct TransformedMatrix3<'a, B: Backend = DefaultBackend> {
+pub struct TransformedMatrix3<'a, B: Backend = DefaultBackend> {
     matrix: &'a Matrix3<B>,
 }
 
@@ -1058,18 +1356,18 @@ impl<'a, B: Backend> TransformedMatrix3<'a, B> {
         Self { matrix }
     }
 
-    pub(crate) fn transform_vector(&self, rhs: &Vector3<B>) -> Vector3<B> {
+    pub fn transform_vector(&self, rhs: &Vector3<B>) -> Vector3<B> {
         Vector3(transform_vector3_rhs_ref_cached(&self.matrix.0, &rhs.0))
     }
 
-    pub(crate) fn vector(&self, rhs: &'a Vector3<B>) -> TransformedVector3<'a, B> {
+    pub fn vector(&self, rhs: &'a Vector3<B>) -> TransformedVector3<'a, B> {
         TransformedVector3 {
             matrix: self.matrix,
             vector: rhs,
         }
     }
 
-    pub(crate) fn transform_vector_batch(&self, rhs: &[Vector3<B>]) -> Vec<Vector3<B>> {
+    pub fn transform_vector_batch(&self, rhs: &[Vector3<B>]) -> Vec<Vector3<B>> {
         let mut transformed = Vec::with_capacity(rhs.len());
         for vector in rhs {
             transformed.push(self.transform_vector(vector));
@@ -1079,23 +1377,24 @@ impl<'a, B: Backend> TransformedMatrix3<'a, B> {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub(crate) struct TransformedMatrix4<'a, B: Backend = DefaultBackend> {
+pub struct TransformedMatrix4<'a, B: Backend = DefaultBackend> {
     matrix: &'a Matrix4<B>,
     translation_is_zero: [bool; 4],
 }
 
 impl<'a, B: Backend> TransformedMatrix4<'a, B> {
     fn new(matrix: &'a Matrix4<B>) -> Self {
-        // Cache the per-row homogeneous-column zero facts once; this avoids
-        // repeated `zero_status` calls for each input vector in batch transforms.
-        let translation_is_zero = from_fn(|row| matrix[row][3].zero_status() == ZeroStatus::Zero);
+        // Cache the per-row homogeneous-column definitely-zero facts once; this
+        // keeps batch direction/path selection on the fast linear form when the
+        // translation coefficient is structurally impossible to be non-zero.
+        let translation_is_zero = from_fn(|row| matrix[row][3].definitely_zero());
         Self {
             matrix,
             translation_is_zero,
         }
     }
 
-    pub(crate) fn transform_vector(&self, rhs: &Vector4<B>) -> Vector4<B> {
+    pub fn transform_vector(&self, rhs: &Vector4<B>) -> Vector4<B> {
         Vector4(transform_vector4_rhs_ref_cached(
             &self.matrix.0,
             &rhs.0,
@@ -1103,7 +1402,7 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
         ))
     }
 
-    pub(crate) fn vector(&self, rhs: &'a Vector4<B>) -> TransformedVector4<'a, B> {
+    pub fn vector(&self, rhs: &'a Vector4<B>) -> TransformedVector4<'a, B> {
         TransformedVector4 {
             matrix: self.matrix,
             translation_is_zero: self.translation_is_zero,
@@ -1111,7 +1410,7 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
         }
     }
 
-    pub(crate) fn transform_vector_batch(&self, rhs: &[Vector4<B>]) -> Vec<Vector4<B>> {
+    pub fn transform_vector_batch(&self, rhs: &[Vector4<B>]) -> Vec<Vector4<B>> {
         let mut transformed = Vec::with_capacity(rhs.len());
         for vector in rhs {
             transformed.push(self.transform_vector(vector));
@@ -1121,20 +1420,20 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub(crate) struct TransformedVector3<'a, B: Backend = DefaultBackend> {
+pub struct TransformedVector3<'a, B: Backend = DefaultBackend> {
     matrix: &'a Matrix3<B>,
     vector: &'a Vector3<B>,
 }
 
 impl<'a, B: Backend> TransformedVector3<'a, B> {
     #[inline]
-    pub(crate) fn materialize(self) -> Vector3<B> {
+    pub fn materialize(self) -> Vector3<B> {
         Vector3(transform_vector3_rhs_ref_cached(&self.matrix.0, &self.vector.0))
     }
 }
 
 #[derive(Clone, Copy, Debug)]
-pub(crate) struct TransformedVector4<'a, B: Backend = DefaultBackend> {
+pub struct TransformedVector4<'a, B: Backend = DefaultBackend> {
     matrix: &'a Matrix4<B>,
     translation_is_zero: [bool; 4],
     vector: &'a Vector4<B>,
@@ -1142,7 +1441,7 @@ pub(crate) struct TransformedVector4<'a, B: Backend = DefaultBackend> {
 
 impl<'a, B: Backend> TransformedVector4<'a, B> {
     #[inline]
-    pub(crate) fn materialize(self) -> Vector4<B> {
+    pub fn materialize(self) -> Vector4<B> {
         Vector4(transform_vector4_rhs_ref_cached(
             &self.matrix.0,
             &self.vector.0,
@@ -1173,6 +1472,19 @@ fn mul_sub<B: Backend>(
     right_b: &Scalar<B>,
 ) -> Scalar<B> {
     if B::FUSE_SIGNED_PRODUCT_SUM {
+        let first_zero = left_a.definitely_zero() || right_a.definitely_zero();
+        let second_zero = left_b.definitely_zero() || right_b.definitely_zero();
+
+        if first_zero || second_zero {
+            crate::trace_dispatch!("realistic_blas_matrix", "helper", "mul-sub-pruned");
+            if first_zero && second_zero {
+                return Scalar::zero();
+            }
+            if first_zero {
+                return -(left_b * right_b);
+            }
+            return left_a * right_a;
+        }
         Scalar::signed_product_sum2([true, false], [[left_a, right_a], [left_b, right_b]])
     } else {
         left_a * right_a - left_b * right_b
@@ -1187,6 +1499,19 @@ fn mul_add<B: Backend>(
     right_b: &Scalar<B>,
 ) -> Scalar<B> {
     if B::FUSE_SIGNED_PRODUCT_SUM {
+        let first_zero = left_a.definitely_zero() || right_a.definitely_zero();
+        let second_zero = left_b.definitely_zero() || right_b.definitely_zero();
+
+        if first_zero || second_zero {
+            crate::trace_dispatch!("realistic_blas_matrix", "helper", "mul-add-pruned");
+            if first_zero && second_zero {
+                return Scalar::zero();
+            }
+            if first_zero {
+                return left_b * right_b;
+            }
+            return left_a * right_a;
+        }
         Scalar::signed_product_sum2([true, true], [[left_a, right_a], [left_b, right_b]])
     } else {
         left_a * right_a + left_b * right_b
@@ -1203,6 +1528,36 @@ fn mul_add_sub<B: Backend>(
     right_c: &Scalar<B>,
 ) -> Scalar<B> {
     if B::FUSE_SIGNED_PRODUCT_SUM {
+        let first_zero = left_a.definitely_zero() || right_a.definitely_zero();
+        let second_zero = left_b.definitely_zero() || right_b.definitely_zero();
+        let third_zero = left_c.definitely_zero() || right_c.definitely_zero();
+        let nonzero_count = (!first_zero) as u8 + (!second_zero) as u8 + (!third_zero) as u8;
+
+        if nonzero_count <= 2 {
+            crate::trace_dispatch!("realistic_blas_matrix", "helper", "mul-add-sub-pruned");
+            return match nonzero_count {
+                0 => Scalar::zero(),
+                1 => {
+                    if !first_zero {
+                        left_a * right_a
+                    } else if !second_zero {
+                        left_b * right_b
+                    } else {
+                        -(left_c * right_c)
+                    }
+                }
+                2 => {
+                    if first_zero {
+                        left_b * right_b - left_c * right_c
+                    } else if second_zero {
+                        left_a * right_a - left_c * right_c
+                    } else {
+                        left_a * right_a + left_b * right_b
+                    }
+                }
+                _ => unreachable!(),
+            };
+        }
         Scalar::signed_product_sum2(
             [true, true, false],
             [[left_a, right_a], [left_b, right_b], [left_c, right_c]],
@@ -1222,6 +1577,40 @@ fn mul_sub_add<B: Backend>(
     right_c: &Scalar<B>,
 ) -> Scalar<B> {
     if B::FUSE_SIGNED_PRODUCT_SUM {
+        let first_zero = left_a.definitely_zero() || right_a.definitely_zero();
+        let second_zero = left_b.definitely_zero() || right_b.definitely_zero();
+        let third_zero = left_c.definitely_zero() || right_c.definitely_zero();
+        let nonzero_count = (!first_zero) as u8 + (!second_zero) as u8 + (!third_zero) as u8;
+
+        if nonzero_count <= 2 {
+            crate::trace_dispatch!(
+                "realistic_blas_matrix",
+                "helper",
+                "mul-sub-add-pruned"
+            );
+            return match nonzero_count {
+                0 => Scalar::zero(),
+                1 => {
+                    if !first_zero {
+                        left_a * right_a
+                    } else if !second_zero {
+                        -(left_b * right_b)
+                    } else {
+                        -(left_c * right_c)
+                    }
+                }
+                2 => {
+                    if first_zero {
+                        -(left_b * right_b + left_c * right_c)
+                    } else if second_zero {
+                        left_a * right_a - left_c * right_c
+                    } else {
+                        left_a * right_a - left_b * right_b
+                    }
+                }
+                _ => unreachable!(),
+            };
+        }
         Scalar::signed_product_sum2(
             [true, false, false],
             [[left_a, right_a], [left_b, right_b], [left_c, right_c]],
@@ -2135,7 +2524,7 @@ impl<B: Backend> Matrix3<B> {
     }
 
     /// Returns a lightweight transform handle for a shared matrix.
-    pub(crate) fn transform_vec3_handle(&self) -> TransformedMatrix3<'_, B> {
+    pub fn transform_vec3_handle(&self) -> TransformedMatrix3<'_, B> {
         TransformedMatrix3::new(self)
     }
 
@@ -2143,7 +2532,7 @@ impl<B: Backend> Matrix3<B> {
     ///
     /// Reusing the matrix handle keeps the zero-translation and direction facts
     /// in the same precomputed form used by batch transforms.
-    pub(crate) fn transform_vec3_with<'a>(&'a self, rhs: &'a Vector3<B>) -> TransformedVector3<'a, B> {
+    pub fn transform_vec3_with<'a>(&'a self, rhs: &'a Vector3<B>) -> TransformedVector3<'a, B> {
         self.transform_vec3_handle().vector(rhs)
     }
 
@@ -2181,7 +2570,7 @@ impl<B: Backend> Matrix3<B> {
 
 impl<B: Backend> Matrix4<B> {
     /// Returns a lightweight transform handle for repeated matrix-vector transforms.
-    pub(crate) fn transform_vec4_handle(&self) -> TransformedMatrix4<'_, B> {
+    pub fn transform_vec4_handle(&self) -> TransformedMatrix4<'_, B> {
         TransformedMatrix4::new(self)
     }
 
@@ -2189,7 +2578,7 @@ impl<B: Backend> Matrix4<B> {
     ///
     /// Reusing the same handle path keeps matrix-wide facts aligned with the
     /// shared-batch transform path and avoids duplicating translation probes.
-    pub(crate) fn transform_vec4_with<'a>(&'a self, rhs: &'a Vector4<B>) -> TransformedVector4<'a, B> {
+    pub fn transform_vec4_with<'a>(&'a self, rhs: &'a Vector4<B>) -> TransformedVector4<'a, B> {
         self.transform_vec4_handle().vector(rhs)
     }
 

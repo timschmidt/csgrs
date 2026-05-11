@@ -37,108 +37,17 @@
 
 #![warn(missing_docs)]
 
-use std::error::Error;
 use std::fmt;
 use std::ops::{Add, Div, Mul, Neg, Sub};
-use std::sync::atomic::AtomicBool;
-use std::sync::Arc;
 
 #[cfg(feature = "hyperreal-backend")]
 pub use hyperreal::{Rational, Real};
 
-#[cfg(feature = "hyperreal-dispatch-trace")]
-macro_rules! trace_dispatch {
-    ($layer:expr, $operation:expr, $path:expr) => {
-        ::hyperreal::dispatch_trace::record($layer, $operation, $path);
-    };
-}
+mod trace;
+pub(crate) use trace::trace_dispatch;
 
-#[cfg(not(feature = "hyperreal-dispatch-trace"))]
-macro_rules! trace_dispatch {
-    ($layer:expr, $operation:expr, $path:expr) => {};
-}
-
-pub(crate) use trace_dispatch;
-
-/// Shared cancellation signal used by abort-aware APIs.
-///
-/// With the hyperreal backend, the signal is attached to cloned `Real` values
-/// before operations that may evaluate unknown computable reals. The approx
-/// backend accepts the same API as a no-op.
-pub type AbortSignal = Arc<AtomicBool>;
-
-/// Error type returned by fallible scalar, complex, vector, and matrix APIs.
-///
-/// Most variants mirror errors from `hyperreal::Problem`; `UnknownZero` is
-/// crate-owned and indicates that a checked operation could not prove a divisor
-/// or pivot was non-zero.
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum Problem {
-    /// Parsing a numeric value failed.
-    ParseError,
-    /// A square root was requested for a definitely negative value.
-    SqrtNegative,
-    /// Division by a definitely zero value was requested.
-    DivideByZero,
-    /// A requested value could not be found.
-    NotFound,
-    /// A numeric operation did not receive enough parameters.
-    InsufficientParameters,
-    /// A conversion or operation produced a NaN.
-    NotANumber,
-    /// A conversion or operation produced infinity.
-    Infinity,
-    /// Fraction construction failed.
-    BadFraction,
-    /// Decimal construction failed.
-    BadDecimal,
-    /// Integer construction or conversion failed.
-    BadInteger,
-    /// A conversion was outside the supported numeric range.
-    OutOfRange,
-    /// An integer-only operation received a non-integer value.
-    NotAnInteger,
-    /// Evaluation exhausted the available precision or work budget.
-    Exhausted,
-    /// A checked operation could not determine whether a value was zero.
-    UnknownZero,
-}
-
-#[cfg(feature = "hyperreal-backend")]
-impl From<hyperreal::Problem> for Problem {
-    fn from(problem: hyperreal::Problem) -> Self {
-        match problem {
-            hyperreal::Problem::ParseError => Self::ParseError,
-            hyperreal::Problem::SqrtNegative => Self::SqrtNegative,
-            hyperreal::Problem::DivideByZero => Self::DivideByZero,
-            hyperreal::Problem::NotFound => Self::NotFound,
-            hyperreal::Problem::InsufficientParameters => Self::InsufficientParameters,
-            hyperreal::Problem::NotANumber => Self::NotANumber,
-            hyperreal::Problem::Infinity => Self::Infinity,
-            hyperreal::Problem::BadFraction => Self::BadFraction,
-            hyperreal::Problem::BadDecimal => Self::BadDecimal,
-            hyperreal::Problem::BadInteger => Self::BadInteger,
-            hyperreal::Problem::OutOfRange => Self::OutOfRange,
-            hyperreal::Problem::NotAnInteger => Self::NotAnInteger,
-            hyperreal::Problem::Exhausted => Self::Exhausted,
-            _ => Self::Exhausted,
-        }
-    }
-}
-
-impl fmt::Display for Problem {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Debug::fmt(self, f)
-    }
-}
-
-impl Error for Problem {}
-
-/// Result type used by fallible operations in this crate.
-pub type BlasResult<T> = Result<T, Problem>;
-
-/// Result type used by APIs that reject unknown-zero conditions.
-pub type CheckedBlasResult<T> = BlasResult<T>;
+mod error;
+pub use error::{AbortSignal, BlasResult, CheckedBlasResult, Problem};
 
 mod backend;
 
@@ -263,7 +172,46 @@ impl<B: Backend> Scalar<B> {
 
     #[inline]
     pub(crate) fn dot3(left: [&Self; 3], right: [&Self; 3]) -> Self {
-        // Route fixed-size dot products through the backend so expensive
+        // Avoid introducing symbolic products when a lane is definitely zero:
+        // this preserves deferred exact-rational constructors and skips both
+        // clone and multiplication work on sparse rows/columns.
+        let left0_zero = left[0].definitely_zero() || right[0].definitely_zero();
+        let left1_zero = left[1].definitely_zero() || right[1].definitely_zero();
+        let left2_zero = left[2].definitely_zero() || right[2].definitely_zero();
+        let nonzero_lanes = usize::from(!left0_zero)
+            + usize::from(!left1_zero)
+            + usize::from(!left2_zero);
+
+        if nonzero_lanes == 0 {
+            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot3-all-zero");
+            return Self::zero();
+        }
+
+        if nonzero_lanes == 1 {
+            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot3-single-term");
+            return if !left0_zero {
+                left[0] * right[0]
+            } else if !left1_zero {
+                left[1] * right[1]
+            } else {
+                left[2] * right[2]
+            };
+        }
+
+        if nonzero_lanes == 2 {
+            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot3-sparse");
+            return if left0_zero {
+                left[1] * right[1] + left[2] * right[2]
+            } else if left1_zero {
+                left[0] * right[0] + left[2] * right[2]
+            } else if left2_zero {
+                left[0] * right[0] + left[1] * right[1]
+            } else {
+                unreachable!("nonzero lane count checked")
+            };
+        }
+
+        // Route full 3-lane dots through the backend so expensive
         // representations can choose a better add/mul ordering than the
         // default trait methods.
         crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot3-backend");
@@ -276,6 +224,75 @@ impl<B: Backend> Scalar<B> {
     #[inline]
     pub(crate) fn dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
         // See `dot3`; matrix and complex kernels hit this path heavily.
+        // Keep sparse rows sparse with early product elimination so exact
+        // symbolic constructors do not absorb zero operands during reduction.
+        let left0_zero = left[0].definitely_zero() || right[0].definitely_zero();
+        let left1_zero = left[1].definitely_zero() || right[1].definitely_zero();
+        let left2_zero = left[2].definitely_zero() || right[2].definitely_zero();
+        let left3_zero = left[3].definitely_zero() || right[3].definitely_zero();
+        let nonzero_lanes = usize::from(!left0_zero)
+            + usize::from(!left1_zero)
+            + usize::from(!left2_zero)
+            + usize::from(!left3_zero);
+
+        if nonzero_lanes == 0 {
+            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-all-zero");
+            return Self::zero();
+        }
+
+        if nonzero_lanes == 1 {
+            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-single-term");
+            return if !left0_zero {
+                left[0] * right[0]
+            } else if !left1_zero {
+                left[1] * right[1]
+            } else if !left2_zero {
+                left[2] * right[2]
+            } else {
+                left[3] * right[3]
+            };
+        }
+
+        if nonzero_lanes == 2 {
+            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-sparse-two");
+            if left0_zero {
+                if left1_zero {
+                    return left[2] * right[2] + left[3] * right[3];
+                }
+                if left2_zero {
+                    return left[1] * right[1] + left[3] * right[3];
+                }
+                return left[1] * right[1] + left[2] * right[2];
+            }
+            if left1_zero {
+                return left[0] * right[0] + if left2_zero {
+                    left[3] * right[3]
+                } else {
+                    left[2] * right[2]
+                };
+            }
+            if left2_zero {
+                return left[0] * right[0] + left[3] * right[3];
+            }
+            return left[0] * right[0] + left[1] * right[1];
+        }
+
+        if nonzero_lanes == 3 {
+            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-sparse-three");
+            if left0_zero {
+                return left[1] * right[1] + left[2] * right[2] + left[3] * right[3];
+            }
+            if left1_zero {
+                return left[0] * right[0] + left[2] * right[2] + left[3] * right[3];
+            }
+            if left2_zero {
+                return left[0] * right[0] + left[1] * right[1] + left[3] * right[3];
+            }
+            return left[0] * right[0] + left[1] * right[1] + left[2] * right[2];
+        }
+
+        // Full 4-lane case remains specialized so backends can choose optimal
+        // denominator sharing and shared reduction order.
         crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-backend");
         Self(B::Repr::dot4(
             [&left[0].0, &left[1].0, &left[2].0, &left[3].0],
@@ -287,6 +304,50 @@ impl<B: Backend> Scalar<B> {
     pub(crate) fn linear_combination3(coefficients: [&Self; 3], values: [&Self; 3]) -> Self {
         // Dedicated linear-combination hooks let hyperreal keep shared affine
         // structure when transform kernels can preserve matrix row geometry.
+        let zero0 = coefficients[0].definitely_zero() || values[0].definitely_zero();
+        let zero1 = coefficients[1].definitely_zero() || values[1].definitely_zero();
+        let zero2 = coefficients[2].definitely_zero() || values[2].definitely_zero();
+        let nonzero_lanes = usize::from(!zero0) + usize::from(!zero1) + usize::from(!zero2);
+
+        if nonzero_lanes == 0 {
+            crate::trace_dispatch!(
+                "realistic_blas",
+                "scalar_fast_path",
+                "linear-combination3-all-zero"
+            );
+            return Self::zero();
+        }
+
+        if nonzero_lanes == 1 {
+            crate::trace_dispatch!(
+                "realistic_blas",
+                "scalar_fast_path",
+                "linear-combination3-single-term"
+            );
+            return if !zero0 {
+                coefficients[0] * values[0]
+            } else if !zero1 {
+                coefficients[1] * values[1]
+            } else {
+                coefficients[2] * values[2]
+            };
+        }
+
+        if nonzero_lanes == 2 {
+            crate::trace_dispatch!(
+                "realistic_blas",
+                "scalar_fast_path",
+                "linear-combination3-sparse"
+            );
+            return if zero0 {
+                coefficients[1] * values[1] + coefficients[2] * values[2]
+            } else if zero1 {
+                coefficients[0] * values[0] + coefficients[2] * values[2]
+            } else {
+                coefficients[0] * values[0] + coefficients[1] * values[1]
+            };
+        }
+
         crate::trace_dispatch!(
             "realistic_blas",
             "scalar_fast_path",
@@ -299,16 +360,109 @@ impl<B: Backend> Scalar<B> {
     }
 
     #[inline]
-    pub(crate) fn linear_combination3_refs(coefficients: [&Self; 3], values: [&Self; 3]) -> Self {
-        // Stage-2 constructor naming shim while the underlying hyperreal crate
-        // still exposes only the older fixed-arity methods.
-        Self::linear_combination3(coefficients, values)
+    pub(crate) fn affine_combination3(
+        coefficients: [&Self; 3],
+        values: [&Self; 3],
+        offset: &Self,
+    ) -> Self {
+        // Dedicated affine hooks preserve homogeneous-offset structure in matrix
+        // transforms without forcing symbolic unpacking before combining.
+        crate::trace_dispatch!(
+            "realistic_blas",
+            "scalar_fast_path",
+            "affine-combination3-specialized"
+        );
+        Self(B::Repr::affine_combination3(
+            [&coefficients[0].0, &coefficients[1].0, &coefficients[2].0],
+            [&values[0].0, &values[1].0, &values[2].0],
+            &offset.0,
+        ))
     }
 
     #[inline]
     pub(crate) fn linear_combination4(coefficients: [&Self; 4], values: [&Self; 4]) -> Self {
         // Dedicated linear-combination hooks let hyperreal keep shared affine
         // structure when transform kernels can preserve matrix row geometry.
+        let zero0 = coefficients[0].definitely_zero() || values[0].definitely_zero();
+        let zero1 = coefficients[1].definitely_zero() || values[1].definitely_zero();
+        let zero2 = coefficients[2].definitely_zero() || values[2].definitely_zero();
+        let zero3 = coefficients[3].definitely_zero() || values[3].definitely_zero();
+        let nonzero_lanes = usize::from(!zero0)
+            + usize::from(!zero1)
+            + usize::from(!zero2)
+            + usize::from(!zero3);
+
+        if nonzero_lanes == 0 {
+            crate::trace_dispatch!(
+                "realistic_blas",
+                "scalar_fast_path",
+                "linear-combination4-all-zero"
+            );
+            return Self::zero();
+        }
+
+        if nonzero_lanes == 1 {
+            crate::trace_dispatch!(
+                "realistic_blas",
+                "scalar_fast_path",
+                "linear-combination4-single-term"
+            );
+            return if !zero0 {
+                coefficients[0] * values[0]
+            } else if !zero1 {
+                coefficients[1] * values[1]
+            } else if !zero2 {
+                coefficients[2] * values[2]
+            } else {
+                coefficients[3] * values[3]
+            };
+        }
+
+        if nonzero_lanes == 2 {
+            crate::trace_dispatch!(
+                "realistic_blas",
+                "scalar_fast_path",
+                "linear-combination4-sparse-two"
+            );
+            if zero0 {
+                if zero1 {
+                    return coefficients[2] * values[2] + coefficients[3] * values[3];
+                }
+                if zero2 {
+                    return coefficients[1] * values[1] + coefficients[3] * values[3];
+                }
+                return coefficients[1] * values[1] + coefficients[2] * values[2];
+            }
+            if zero1 {
+                if zero2 {
+                    return coefficients[0] * values[0] + coefficients[3] * values[3];
+                }
+                return coefficients[0] * values[0] + coefficients[2] * values[2];
+            }
+            if zero2 {
+                return coefficients[0] * values[0] + coefficients[3] * values[3];
+            }
+            return coefficients[1] * values[1] + coefficients[3] * values[3];
+        }
+
+        if nonzero_lanes == 3 {
+            crate::trace_dispatch!(
+                "realistic_blas",
+                "scalar_fast_path",
+                "linear-combination4-sparse-three"
+            );
+            if zero0 {
+                return coefficients[1] * values[1] + coefficients[2] * values[2] + coefficients[3] * values[3];
+            }
+            if zero1 {
+                return coefficients[0] * values[0] + coefficients[2] * values[2] + coefficients[3] * values[3];
+            }
+            if zero2 {
+                return coefficients[0] * values[0] + coefficients[1] * values[1] + coefficients[3] * values[3];
+            }
+            return coefficients[0] * values[0] + coefficients[1] * values[1] + coefficients[2] * values[2];
+        }
+
         crate::trace_dispatch!(
             "realistic_blas",
             "scalar_fast_path",
@@ -326,92 +480,68 @@ impl<B: Backend> Scalar<B> {
     }
 
     #[inline]
-    pub(crate) fn linear_combination4_refs(coefficients: [&Self; 4], values: [&Self; 4]) -> Self {
-        // Stage-2 constructor naming shim while the underlying hyperreal crate
-        // still exposes only the older fixed-arity methods.
-        Self::linear_combination4(coefficients, values)
-    }
-
-    #[inline]
-    pub(crate) fn affine_combination3(
-        coefficients: [&Self; 3],
-        values: [&Self; 3],
-        offset: &Self,
-    ) -> Self {
-        // This keeps the transform hot path explicit without forcing affine terms
-        // to be represented as repeated generic multiplications immediately.
-        crate::trace_dispatch!(
-            "realistic_blas",
-            "scalar_fast_path",
-            "affine-combination3-specialized"
-        );
-        Self(B::Repr::affine_combination3(
-            [&coefficients[0].0, &coefficients[1].0, &coefficients[2].0],
-            [&values[0].0, &values[1].0, &values[2].0],
-            &offset.0,
-        ))
-    }
-
-    #[inline]
-    pub(crate) fn affine_combination3_refs(
-        coefficients: [&Self; 3],
-        values: [&Self; 3],
-        offset: &Self,
-    ) -> Self {
-        // Stage-2 constructor naming shim while the underlying hyperreal crate
-        // still exposes only the older fixed-arity methods.
-        Self::affine_combination3(coefficients, values, offset)
-    }
-
-    #[inline]
-    pub(crate) fn affine_combination4(
-        coefficients: [&Self; 4],
-        values: [&Self; 4],
-        offset: &Self,
-    ) -> Self {
-        // Keep affine intent explicit in the call graph. When the offset is
-        // known-zero, collapse to the linear fast path to avoid injecting
-        // redundant zero adds while preserving the current transformation shape.
-        if offset.zero_status() == ZeroStatus::Zero {
-            return Self::linear_combination4_refs(coefficients, values);
-        }
-
-        // Non-zero offsets still flow through the affine constructor so future
-        // fact-propagation work can specialize this shape directly.
-        crate::trace_dispatch!(
-            "realistic_blas",
-            "scalar_fast_path",
-            "affine-combination4-specialized"
-        );
-        Self(B::Repr::affine_combination4(
-            [
-                &coefficients[0].0,
-                &coefficients[1].0,
-                &coefficients[2].0,
-                &coefficients[3].0,
-            ],
-            [&values[0].0, &values[1].0, &values[2].0, &values[3].0],
-            &offset.0,
-        ))
-    }
-
-    #[inline]
-    pub(crate) fn affine_combination4_refs(
-        coefficients: [&Self; 4],
-        values: [&Self; 4],
-        offset: &Self,
-    ) -> Self {
-        // Stage-2 constructor naming shim while the underlying hyperreal crate
-        // still exposes only the older fixed-arity methods.
-        Self::affine_combination4(coefficients, values, offset)
-    }
-
-    #[inline]
     pub(crate) fn signed_product_sum2<const TERMS: usize>(
         positive_terms: [bool; TERMS],
         terms: [[&Self; 2]; TERMS],
     ) -> Self {
-        crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "signed-product-sum2");
+        let mut nonzero_count = 0usize;
+        let mut first_term: Option<([&Self; 2], bool)> = None;
+        let mut second_term: Option<([&Self; 2], bool)> = None;
+
+        for i in 0..TERMS {
+            if terms[i][0].definitely_zero() || terms[i][1].definitely_zero() {
+                continue;
+            }
+
+            let term = (terms[i], positive_terms[i]);
+            nonzero_count += 1;
+            if nonzero_count == 1 {
+                first_term = Some(term);
+            } else if nonzero_count == 2 {
+                second_term = Some(term);
+            }
+        }
+
+        match nonzero_count {
+            0 => {
+                crate::trace_dispatch!(
+                    "realistic_blas",
+                    "scalar_fast_path",
+                    "signed-product-sum2-all-zero"
+                );
+                return Self::zero();
+            }
+            1 => {
+                let (term, positive) = first_term.expect("first term tracked for nonzero count");
+                let product = term[0] * term[1];
+                crate::trace_dispatch!(
+                    "realistic_blas",
+                    "scalar_fast_path",
+                    "signed-product-sum2-single-term"
+                );
+                return if positive { product } else { -product };
+            }
+            2 => {
+                let (left, left_positive) = first_term.expect("first term tracked for nonzero count");
+                let (right, right_positive) =
+                    second_term.expect("second term tracked for nonzero count");
+                let left_product = left[0] * left[1];
+                let right_product = right[0] * right[1];
+                crate::trace_dispatch!(
+                    "realistic_blas",
+                    "scalar_fast_path",
+                    "signed-product-sum2-sparse-two"
+                );
+                return match (left_positive, right_positive) {
+                    (true, true) => left_product + right_product,
+                    (true, false) => left_product - right_product,
+                    (false, true) => -left_product + right_product,
+                    (false, false) => -(left_product + right_product),
+                };
+            }
+            _ => {}
+        }
+
         Self(B::Repr::signed_product_sum2(
             positive_terms,
             terms.map(|term| [&term[0].0, &term[1].0]),
@@ -506,18 +636,28 @@ impl<B: Backend> Scalar<B> {
     ///
     /// This is an optimistic predicate. Use [`Scalar::zero_status`] or
     /// [`zero_status`] when unknown-zero conditions must be distinguished.
+    #[inline(always)]
     pub fn definitely_zero(&self) -> bool {
         crate::trace_dispatch!("realistic_blas", "scalar_query", "definitely-zero");
         self.0.definitely_zero()
     }
 
     /// Classifies this scalar as zero, non-zero, or unknown.
+    #[inline(always)]
     pub fn zero_status(&self) -> ZeroStatus {
         crate::trace_dispatch!("realistic_blas", "scalar_query", "zero-status");
         self.0.zero_status()
     }
 
+    /// Returns whether this scalar is definitely one.
+    #[inline(always)]
+    pub fn definitely_one(&self) -> bool {
+        crate::trace_dispatch!("realistic_blas", "scalar_query", "definitely-one");
+        self.0.definitely_one()
+    }
+
     /// Returns conservative structural facts exposed by this scalar's backend.
+    #[inline(always)]
     pub fn structural_facts(&self) -> ScalarFacts {
         crate::trace_dispatch!("realistic_blas", "scalar_query", "structural-facts");
         self.0.structural_facts()
@@ -527,12 +667,14 @@ impl<B: Backend> Scalar<B> {
     ///
     /// Backends without refinement support return only signs already known from
     /// structural facts.
+    #[inline(always)]
     pub fn refine_sign_until(&self, min_precision: i32) -> Option<ScalarSign> {
         crate::trace_dispatch!("realistic_blas", "scalar_query", "refine-sign-until");
         self.0.refine_sign_until(min_precision)
     }
 
     /// Returns a borrowed finite `f64` approximation when one is available.
+    #[inline(always)]
     pub fn to_f64_approx(&self) -> Option<f64> {
         crate::trace_dispatch!("realistic_blas", "scalar_query", "to-f64-approx");
         self.0.to_f64_approx()

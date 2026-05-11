@@ -814,6 +814,9 @@ fn bench_blas_matrix4<B: Backend>(
     let blas_lhs_cases = lhs_cases.map(blas_mat4::<B>);
     let blas_rhs_cases = rhs_cases.map(blas_mat4::<B>);
     let blas_vector_cases = vector_cases.map(blas_vec4::<B>);
+    let sparse_mat4_cases = sample_mat4_sparse_cases();
+    let blas_sparse_cases = sparse_mat4_cases.map(blas_mat4::<B>);
+    let blas_sparse_rhs_cases = sparse_mat4_cases.map(blas_mat4::<B>);
     trace_dispatch_row(format!("matrix4/{label}/mat4 determinant"), || {
         for value in &blas_lhs_cases {
             black_box(black_box(value).determinant());
@@ -831,12 +834,30 @@ fn bench_blas_matrix4<B: Backend>(
             );
         }
     });
+    trace_dispatch_row(format!("matrix4/{label}/mat4 mul mat4 sparse"), || {
+        for index in 0..blas_sparse_cases.len() {
+            black_box(
+                black_box(blas_sparse_cases[index].clone())
+                    * black_box(blas_sparse_rhs_cases[index].clone()),
+            );
+        }
+    });
     trace_dispatch_row(format!("matrix4/{label}/mat4 transform vec4"), || {
         for index in 0..blas_lhs_cases.len() {
             black_box(
                 black_box(blas_lhs_cases[index].clone())
                     * black_box(blas_vector_cases[index].clone()),
             );
+        }
+    });
+    trace_dispatch_row(format!("matrix4/{label}/mat4 determinant sparse"), || {
+        for value in &blas_sparse_cases {
+            black_box(black_box(value).determinant());
+        }
+    });
+    trace_dispatch_row(format!("matrix4/{label}/mat4 inverse sparse"), || {
+        for value in &blas_sparse_cases {
+            black_box(black_box(value.clone()).inverse().unwrap());
         }
     });
     group.bench_function(format!("{label}/mat4 determinant"), |b| {
@@ -853,6 +874,22 @@ fn bench_blas_matrix4<B: Backend>(
             )
         })
     });
+    group.bench_function(format!("{label}/mat4 determinant sparse"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(black_box(next_case(&blas_sparse_cases, &cursor)).determinant())
+        })
+    });
+    group.bench_function(format!("{label}/mat4 inverse sparse"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(
+                black_box(next_case(&blas_sparse_cases, &cursor).clone())
+                    .inverse()
+                    .unwrap(),
+            )
+        })
+    });
     group.bench_function(format!("{label}/mat4 mul mat4"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
@@ -860,6 +897,17 @@ fn bench_blas_matrix4<B: Backend>(
             cursor.set((index + 1) % blas_lhs_cases.len());
             black_box(
                 black_box(blas_lhs_cases[index].clone()) * black_box(blas_rhs_cases[index].clone()),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat4 mul mat4 sparse"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % blas_sparse_cases.len());
+            black_box(
+                black_box(blas_sparse_cases[index].clone())
+                    * black_box(blas_sparse_rhs_cases[index].clone()),
             )
         })
     });

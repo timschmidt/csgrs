@@ -81,6 +81,56 @@ fn sample_vec3_b_cases() -> [SampleVec3; 4] {
     ]
 }
 
+fn sample_vec3_sparse_cases() -> [SampleVec3; 4] {
+    [
+        SampleVec3 {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        },
+        SampleVec3 {
+            x: 3.0,
+            y: 0.0,
+            z: 0.0,
+        },
+        SampleVec3 {
+            x: 0.0,
+            y: -4.0,
+            z: 7.0,
+        },
+        SampleVec3 {
+            x: 1.0,
+            y: 2.0,
+            z: 0.0,
+        },
+    ]
+}
+
+fn sample_vec3_sparse_b_cases() -> [SampleVec3; 4] {
+    [
+        SampleVec3 {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        },
+        SampleVec3 {
+            x: -8.0,
+            y: 0.0,
+            z: 0.0,
+        },
+        SampleVec3 {
+            x: 0.0,
+            y: 9.0,
+            z: -11.0,
+        },
+        SampleVec3 {
+            x: 0.0,
+            y: 5.0,
+            z: 0.0,
+        },
+    ]
+}
+
 fn sample_vec4() -> SampleVec4 {
     SampleVec4 {
         x: 3.0,
@@ -110,6 +160,64 @@ fn sample_vec4_cases() -> [SampleVec4; 4] {
             y: -std::f64::consts::E,
             z: std::f64::consts::SQRT_2,
             w: 1.0e-12,
+        },
+    ]
+}
+
+fn sample_vec4_sparse_cases() -> [SampleVec4; 4] {
+    [
+        SampleVec4 {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+            w: 0.0,
+        },
+        SampleVec4 {
+            x: 2.0,
+            y: 0.0,
+            z: 0.0,
+            w: 0.0,
+        },
+        SampleVec4 {
+            x: 0.0,
+            y: 3.0,
+            z: 0.0,
+            w: -4.0,
+        },
+        SampleVec4 {
+            x: 1.0,
+            y: 2.0,
+            z: 3.0,
+            w: 4.0,
+        },
+    ]
+}
+
+fn sample_vec4_sparse_b_cases() -> [SampleVec4; 4] {
+    [
+        SampleVec4 {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+            w: 0.0,
+        },
+        SampleVec4 {
+            x: 2.0,
+            y: 0.0,
+            z: 0.0,
+            w: 0.0,
+        },
+        SampleVec4 {
+            x: 0.0,
+            y: -3.0,
+            z: 0.0,
+            w: 1.0,
+        },
+        SampleVec4 {
+            x: 7.0,
+            y: 0.0,
+            z: -8.0,
+            w: 9.0,
         },
     ]
 }
@@ -291,6 +399,43 @@ fn sample_mat4_b_cases() -> [SampleMat4; 4] {
                 [std::f64::consts::FRAC_2_SQRT_PI, -1.0, 2.0, -3.0],
                 [-5.0, 8.0, -13.0, 21.0],
                 [-34.0, 55.0, -89.0, -144.0],
+            ],
+        },
+    ]
+}
+
+fn sample_mat4_sparse_cases() -> [SampleMat4; 4] {
+    [
+        SampleMat4 {
+            m: [
+                [1.0, 0.0, 0.0, 0.0],
+                [0.0, 2.0, 0.0, 0.0],
+                [0.0, 0.0, 3.0, 0.0],
+                [0.0, 0.0, 0.0, 4.0],
+            ],
+        },
+        SampleMat4 {
+            m: [
+                [2.0, 5.0, 0.0, 0.0],
+                [0.0, -3.0, 0.0, 0.0],
+                [0.0, 0.0, 7.0, 0.0],
+                [0.0, 0.0, 0.0, 11.0],
+            ],
+        },
+        SampleMat4 {
+            m: [
+                [1.0, 0.0, 0.0, 0.0],
+                [4.0, 1.0, 0.0, 0.0],
+                [0.0, 8.0, 1.0, 0.0],
+                [0.0, 0.0, 12.0, 1.0],
+            ],
+        },
+        SampleMat4 {
+            m: [
+                [3.0, 0.0, 0.0, 0.0],
+                [0.0, 5.0, 0.0, 0.0],
+                [0.0, 0.0, 7.0, 0.0],
+                [0.0, 1.0, 0.0, 11.0],
             ],
         },
     ]

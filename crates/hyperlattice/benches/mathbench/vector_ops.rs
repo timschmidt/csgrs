@@ -10,6 +10,10 @@ fn bench_vector_operations_for<B, F>(
     let rhs3_cases = sample_vec3_b_cases().map(|value| blas_vec3_with(value, make_scalar));
     let lhs4_cases = sample_vec4_cases().map(|value| blas_vec4_with(value, make_scalar));
     let rhs4_cases = sample_vec4_b_cases().map(|value| blas_vec4_with(value, make_scalar));
+    let sparse_lhs3_cases = sample_vec3_sparse_cases().map(|value| blas_vec3_with(value, make_scalar));
+    let sparse_rhs3_cases = sample_vec3_sparse_b_cases().map(|value| blas_vec3_with(value, make_scalar));
+    let sparse_lhs4_cases = sample_vec4_sparse_cases().map(|value| blas_vec4_with(value, make_scalar));
+    let sparse_rhs4_cases = sample_vec4_sparse_b_cases().map(|value| blas_vec4_with(value, make_scalar));
     let scalar_cases = [
         make_scalar(2.0),
         make_scalar(1.0e-9),
@@ -17,6 +21,55 @@ fn bench_vector_operations_for<B, F>(
         make_scalar(std::f64::consts::PI),
     ];
     let signal = abort_signal();
+    let active_signal = abort_signal();
+    active_signal.store(true, std::sync::atomic::Ordering::Relaxed);
+
+    trace_dispatch_row(format!("vector_ops/{label}/vec3 dot_sparse"), || {
+        for index in 0..sparse_lhs3_cases.len() {
+            black_box(
+                black_box(&sparse_lhs3_cases[index]).dot(black_box(&sparse_rhs3_cases[index])),
+            );
+        }
+    });
+    trace_dispatch_row(format!("vector_ops/{label}/vec3 dot_abort_sparse"), || {
+        for index in 0..sparse_lhs3_cases.len() {
+            black_box(
+                black_box(&sparse_lhs3_cases[index])
+                    .dot_with_abort(black_box(&sparse_rhs3_cases[index]), &active_signal),
+            );
+        }
+    });
+    trace_dispatch_row(format!("vector_ops/{label}/vec3 dot_abort_dense"), || {
+        for index in 0..lhs3_cases.len() {
+            black_box(
+                black_box(&lhs3_cases[index])
+                    .dot_with_abort(black_box(&rhs3_cases[index]), &active_signal),
+            );
+        }
+    });
+    trace_dispatch_row(format!("vector_ops/{label}/vec4 dot_sparse"), || {
+        for index in 0..sparse_lhs4_cases.len() {
+            black_box(
+                black_box(&sparse_lhs4_cases[index]).dot(black_box(&sparse_rhs4_cases[index])),
+            );
+        }
+    });
+    trace_dispatch_row(format!("vector_ops/{label}/vec4 dot_abort_sparse"), || {
+        for index in 0..sparse_lhs4_cases.len() {
+            black_box(
+                black_box(&sparse_lhs4_cases[index])
+                    .dot_with_abort(black_box(&sparse_rhs4_cases[index]), &active_signal),
+            );
+        }
+    });
+    trace_dispatch_row(format!("vector_ops/{label}/vec4 dot_abort_dense"), || {
+        for index in 0..lhs4_cases.len() {
+            black_box(
+                black_box(&lhs4_cases[index])
+                    .dot_with_abort(black_box(&rhs4_cases[index]), &active_signal),
+            );
+        }
+    });
 
     group.bench_function(format!("{label}/vec3 new"), |b| {
         let raw_cases = sample_vec3_cases();
@@ -34,6 +87,41 @@ fn bench_vector_operations_for<B, F>(
             black_box(
                 black_box(&lhs3_cases[index])
                     .dot_with_abort(black_box(&rhs3_cases[index]), &signal),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/vec3 dot_sparse"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % sparse_lhs3_cases.len());
+            black_box(
+                black_box(&sparse_lhs3_cases[index])
+                    .dot(black_box(&sparse_rhs3_cases[index])),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/vec3 dot_abort_sparse"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % sparse_lhs3_cases.len());
+            black_box(
+                black_box(&sparse_lhs3_cases[index])
+                    .dot_with_abort(black_box(&sparse_rhs3_cases[index]), &active_signal),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/vec3 dot_abort_dense"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs3_cases.len());
+            black_box(
+                black_box(&lhs3_cases[index]).dot_with_abort(
+                    black_box(&rhs3_cases[index]),
+                    &active_signal,
+                ),
             )
         })
     });
@@ -153,6 +241,41 @@ fn bench_vector_operations_for<B, F>(
             let index = cursor.get();
             cursor.set((index + 1) % lhs4_cases.len());
             black_box(black_box(&lhs4_cases[index]).dot(black_box(&rhs4_cases[index])))
+        })
+    });
+    group.bench_function(format!("{label}/vec4 dot_sparse"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % sparse_lhs4_cases.len());
+            black_box(
+                black_box(&sparse_lhs4_cases[index])
+                    .dot(black_box(&sparse_rhs4_cases[index])),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/vec4 dot_abort_sparse"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % sparse_lhs4_cases.len());
+            black_box(
+                black_box(&sparse_lhs4_cases[index])
+                    .dot_with_abort(black_box(&sparse_rhs4_cases[index]), &active_signal),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/vec4 dot_abort_dense"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs4_cases.len());
+            black_box(
+                black_box(&lhs4_cases[index]).dot_with_abort(
+                    black_box(&rhs4_cases[index]),
+                    &active_signal,
+                ),
+            )
         })
     });
     group.bench_function(format!("{label}/vec4 magnitude"), |b| {

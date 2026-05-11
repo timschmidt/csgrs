@@ -347,22 +347,113 @@ pub trait BackendScalar:
         positive_terms: [bool; TERMS],
         terms: [[&Self; 2]; TERMS],
     ) -> Self {
-        crate::trace_dispatch!(
-            "realistic_blas_backend_trait",
-            "op",
-            "signed-product-sum2-default"
-        );
+        // Keep dense exact-rational paths delayed: eliminate zero factors before
+        // combining to avoid constructing products that can never contribute.
+        let mut first_term: Option<([&Self; 2], bool)> = None;
+        let mut second_term: Option<([&Self; 2], bool)> = None;
         let mut total: Option<Self> = None;
+        let mut nonzero_count = 0usize;
+
         for i in 0..TERMS {
-            let product = terms[i][0].clone().mul_ref(terms[i][1]);
-            total = Some(match total.take() {
-                Some(total) if positive_terms[i] => total.add_ref(&product),
-                Some(total) => total.sub_ref(&product),
-                None if positive_terms[i] => product,
-                None => -product,
-            });
+            if terms[i][0].definitely_zero() || terms[i][1].definitely_zero() {
+                continue;
+            }
+
+            let term = (terms[i], positive_terms[i]);
+            nonzero_count += 1;
+
+            match nonzero_count {
+                1 => {
+                    first_term = Some(term);
+                }
+                2 => {
+                    second_term = Some(term);
+                }
+                _ => {
+                    if nonzero_count == 3 {
+                        let (left_term, left_positive) = first_term.expect(
+                            "first non-zero term should have been recorded before dense accumulation",
+                        );
+                        let (right_term, right_positive) = second_term.expect(
+                            "second non-zero term should have been recorded before dense accumulation",
+                        );
+                        let left_product = left_term[0].clone().mul_ref(left_term[1]);
+                        let right_product = right_term[0].clone().mul_ref(right_term[1]);
+
+                        total = Some(match (left_positive, right_positive) {
+                            (true, true) => left_product + right_product,
+                            (true, false) => left_product - right_product,
+                            (false, true) => -left_product + right_product,
+                            (false, false) => -(left_product + right_product),
+                        });
+                    }
+
+                    let product = term.0[0].clone().mul_ref(term.0[1]);
+                    total = Some(match total.take() {
+                        Some(total) if term.1 => total.add_ref(&product),
+                        Some(total) => total.sub_ref(&product),
+                        None => {
+                            if term.1 {
+                                product
+                            } else {
+                                -product
+                            }
+                        }
+                    });
+                }
+            }
         }
-        total.unwrap_or_else(Self::zero)
+
+        match nonzero_count {
+            0 => {
+                crate::trace_dispatch!(
+                    "realistic_blas_backend_trait",
+                    "op",
+                    "signed-product-sum2-all-zero"
+                );
+                Self::zero()
+            }
+            1 => {
+                let (term, positive) = first_term.expect("single non-zero term tracked");
+                crate::trace_dispatch!(
+                    "realistic_blas_backend_trait",
+                    "op",
+                    "signed-product-sum2-single-term"
+                );
+                let product = term[0].clone().mul_ref(term[1]);
+                if positive {
+                    product
+                } else {
+                    -product
+                }
+            }
+            2 => {
+                let (left_term, left_positive) = first_term.expect("first non-zero term tracked");
+                let (right_term, right_positive) =
+                    second_term.expect("second non-zero term tracked");
+                crate::trace_dispatch!(
+                    "realistic_blas_backend_trait",
+                    "op",
+                    "signed-product-sum2-sparse-two"
+                );
+                let left_product = left_term[0].clone().mul_ref(left_term[1]);
+                let right_product = right_term[0].clone().mul_ref(right_term[1]);
+                match (left_positive, right_positive) {
+                    (true, true) => left_product + right_product,
+                    (true, false) => left_product - right_product,
+                    (false, true) => -left_product + right_product,
+                    (false, false) => -(left_product + right_product),
+                }
+            }
+            _ => {
+                crate::trace_dispatch!(
+                    "realistic_blas_backend_trait",
+                    "op",
+                    "signed-product-sum2-dense"
+                );
+                total.expect("dense signed-product-sum2 should accumulate at least one value")
+            }
+        }
     }
     /// Returns `e` raised to this value.
     fn exp(self) -> BlasResult<Self>;
@@ -394,9 +485,19 @@ pub trait BackendScalar:
     fn div(self, rhs: Self) -> BlasResult<Self>;
     /// Returns whether this value is definitely zero.
     fn definitely_zero(&self) -> bool;
+    /// Returns whether this value is definitely one.
+    ///
+    /// The default conservative check is `false`; exact backends should
+    /// override this when they can prove a constant one exactly.
+    #[inline]
+    fn definitely_one(&self) -> bool {
+        crate::trace_dispatch!("realistic_blas_backend_trait", "query", "definitely-one");
+        false
+    }
     /// Classifies whether this value is zero.
     fn zero_status(&self) -> ZeroStatus;
     /// Returns conservative structural facts about this value.
+    #[inline]
     fn structural_facts(&self) -> ScalarFacts {
         let zero = self.zero_status();
         let sign = match zero {
@@ -420,6 +521,7 @@ pub trait BackendScalar:
         false
     }
     /// Tries to prove the sign without refining beyond the requested precision.
+    #[inline]
     fn refine_sign_until(&self, _min_precision: i32) -> Option<ScalarSign> {
         self.structural_facts().sign
     }

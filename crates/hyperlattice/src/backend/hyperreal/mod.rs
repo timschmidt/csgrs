@@ -266,6 +266,37 @@ impl BackendScalarTrait for BackendScalar {
     fn affine_combination3(coeffs: [&Self; 3], values: [&Self; 3], offset: &Self) -> Self {
         // Keep affine shape explicit so repeated matrix->vector geometry can be
         // interpreted as one offset plus shared coefficients downstream.
+        let zero0 = coeffs[0].definitely_zero() || values[0].definitely_zero();
+        let zero1 = coeffs[1].definitely_zero() || values[1].definitely_zero();
+        let zero2 = coeffs[2].definitely_zero() || values[2].definitely_zero();
+        if zero0 && zero1 && zero2 {
+            if offset.definitely_zero() {
+                crate::trace_dispatch!(
+                    "realistic_blas_hyperreal_backend",
+                    "op",
+                    "affine-combination3-all-zero"
+                );
+                return Self::zero();
+            }
+            crate::trace_dispatch!(
+                "realistic_blas_hyperreal_backend",
+                "op",
+                "affine-combination3-all-zero-offset"
+            );
+            return offset.clone();
+        }
+
+        if offset.definitely_zero() {
+            // Preserve the dedicated linear constructor when translation is
+            // definitely zero to avoid materializing one extra addition node.
+            crate::trace_dispatch!(
+                "realistic_blas_hyperreal_backend",
+                "op",
+                "affine-combination3-offset-zero"
+            );
+            return Self::linear_combination3(coeffs, values);
+        }
+
         // Current `hyperreal` does not expose a dedicated 3-ary affine
         // constructor, so preserve this shape by keeping linear and offset stages
         // separate.
@@ -274,7 +305,11 @@ impl BackendScalarTrait for BackendScalar {
             "op",
             "affine-combination3-specialized"
         );
-        Self(Self::linear_combination3(coeffs, values).0 + &offset.0)
+        let linear = hyperreal::Real::dot3_refs(
+            [&coeffs[0].0, &coeffs[1].0, &coeffs[2].0],
+            [&values[0].0, &values[1].0, &values[2].0],
+        );
+        Self(linear + &offset.0)
     }
 
     #[inline]
@@ -282,6 +317,37 @@ impl BackendScalarTrait for BackendScalar {
         // Same as `affine_combination3`, extended to 4 operands for homogeneous
         // matrix-vector kernels once the translation term is split out as an
         // offset.
+        let zero0 = coeffs[0].definitely_zero() || values[0].definitely_zero();
+        let zero1 = coeffs[1].definitely_zero() || values[1].definitely_zero();
+        let zero2 = coeffs[2].definitely_zero() || values[2].definitely_zero();
+        let zero3 = coeffs[3].definitely_zero() || values[3].definitely_zero();
+        if zero0 && zero1 && zero2 && zero3 {
+            if offset.definitely_zero() {
+                crate::trace_dispatch!(
+                    "realistic_blas_hyperreal_backend",
+                    "op",
+                    "affine-combination4-all-zero"
+                );
+                return Self::zero();
+            }
+            crate::trace_dispatch!(
+                "realistic_blas_hyperreal_backend",
+                "op",
+                "affine-combination4-all-zero-offset"
+            );
+            return offset.clone();
+        }
+
+        if offset.definitely_zero() {
+            // Same zero-offset shortcut as the 3-ary helper.
+            crate::trace_dispatch!(
+                "realistic_blas_hyperreal_backend",
+                "op",
+                "affine-combination4-offset-zero"
+            );
+            return Self::linear_combination4(coeffs, values);
+        }
+
         // Keep this as one linear stage plus one affine-offset addition to avoid
         // changing coefficient/value operation order.
         crate::trace_dispatch!(
@@ -289,7 +355,16 @@ impl BackendScalarTrait for BackendScalar {
             "op",
             "affine-combination4-specialized"
         );
-        Self(Self::linear_combination4(coeffs, values).0 + &offset.0)
+        let linear = hyperreal::Real::dot4_refs(
+            [
+                &coeffs[0].0,
+                &coeffs[1].0,
+                &coeffs[2].0,
+                &coeffs[3].0,
+            ],
+            [&values[0].0, &values[1].0, &values[2].0, &values[3].0],
+        );
+        Self(linear + &offset.0)
     }
 
     #[inline]
@@ -297,6 +372,68 @@ impl BackendScalarTrait for BackendScalar {
         positive_terms: [bool; TERMS],
         terms: [[&Self; 2]; TERMS],
     ) -> Self {
+        // Keep exact-rational accumulation shape sparse-aware before building any
+        // shared-denominator form in the backend.
+        let mut first_term: Option<([&Self; 2], bool)> = None;
+        let mut second_term: Option<([&Self; 2], bool)> = None;
+        let mut nonzero_count = 0usize;
+
+        for i in 0..TERMS {
+            if terms[i][0].definitely_zero() || terms[i][1].definitely_zero() {
+                continue;
+            }
+
+            let term = (terms[i], positive_terms[i]);
+            nonzero_count += 1;
+            if nonzero_count == 1 {
+                first_term = Some(term);
+            } else if nonzero_count == 2 {
+                second_term = Some(term);
+            } else if nonzero_count > 2 {
+                break;
+            }
+        }
+
+        match nonzero_count {
+            0 => {
+                crate::trace_dispatch!(
+                    "realistic_blas_hyperreal_backend",
+                    "op",
+                    "signed-product-sum2-all-zero"
+                );
+                return Self::zero();
+            }
+            1 => {
+                let (term, positive) = first_term.expect("single non-zero term tracked");
+                let product = term[0].clone().mul_ref(term[1]);
+                crate::trace_dispatch!(
+                    "realistic_blas_hyperreal_backend",
+                    "op",
+                    "signed-product-sum2-single-term"
+                );
+                return if positive { product } else { -product };
+            }
+            2 => {
+                let (left_term, left_positive) = first_term.expect("first non-zero term tracked");
+                let (right_term, right_positive) =
+                    second_term.expect("second non-zero term tracked");
+                let left_product = left_term[0].clone().mul_ref(left_term[1]);
+                let right_product = right_term[0].clone().mul_ref(right_term[1]);
+                crate::trace_dispatch!(
+                    "realistic_blas_hyperreal_backend",
+                    "op",
+                    "signed-product-sum2-sparse-two"
+                );
+                return match (left_positive, right_positive) {
+                    (true, true) => left_product + right_product,
+                    (true, false) => left_product - right_product,
+                    (false, true) => -left_product + right_product,
+                    (false, false) => -(left_product + right_product),
+                };
+            }
+            _ => {}
+        }
+
         if let Some(sum) = hyperreal::Real::exact_rational_signed_product_sum(
             positive_terms,
             terms.map(|term| [&term[0].0, &term[1].0]),
@@ -397,6 +534,7 @@ impl BackendScalarTrait for BackendScalar {
         (self.0 / rhs.0).map(Self).map_err(Problem::from)
     }
 
+    #[inline(always)]
     fn definitely_zero(&self) -> bool {
         crate::trace_dispatch!(
             "realistic_blas_hyperreal_backend",
@@ -406,11 +544,23 @@ impl BackendScalarTrait for BackendScalar {
         self.0.definitely_zero()
     }
 
+    #[inline(always)]
+    fn definitely_one(&self) -> bool {
+        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "query", "definitely-one");
+        self.0
+            .exact_rational_ref()
+            .is_some_and(|exact_rational| {
+                exact_rational == &hyperreal::Rational::from(1_i8)
+            })
+    }
+
+    #[inline(always)]
     fn zero_status(&self) -> ZeroStatus {
         crate::trace_dispatch!("realistic_blas_hyperreal_backend", "query", "zero-status");
         map_zero(self.0.zero_status())
     }
 
+    #[inline(always)]
     fn structural_facts(&self) -> ScalarFacts {
         crate::trace_dispatch!(
             "realistic_blas_hyperreal_backend",
@@ -429,6 +579,7 @@ impl BackendScalarTrait for BackendScalar {
         }
     }
 
+    #[inline(always)]
     fn is_exact_dyadic_rational(&self) -> bool {
         crate::trace_dispatch!(
             "realistic_blas_hyperreal_backend",
@@ -438,6 +589,7 @@ impl BackendScalarTrait for BackendScalar {
         self.0.is_exact_dyadic_rational()
     }
 
+    #[inline(always)]
     fn refine_sign_until(&self, min_precision: i32) -> Option<ScalarSign> {
         crate::trace_dispatch!(
             "realistic_blas_hyperreal_backend",
@@ -452,11 +604,13 @@ impl BackendScalarTrait for BackendScalar {
         self.0.abort(signal);
     }
 
+    #[inline(always)]
     fn into_f64(self) -> f64 {
         crate::trace_dispatch!("realistic_blas_hyperreal_backend", "conversion", "into-f64");
         f64::from(self.0)
     }
 
+    #[inline(always)]
     fn to_f64_approx(&self) -> Option<f64> {
         crate::trace_dispatch!(
             "realistic_blas_hyperreal_backend",

@@ -60,18 +60,21 @@ pub(crate) fn two<B: Backend>() -> Scalar<B> {
     2.into()
 }
 
+#[inline(always)]
 pub(crate) fn with_abort<B: Backend>(mut value: Scalar<B>, signal: &AbortSignal) -> Scalar<B> {
     crate::trace_dispatch!("realistic_blas", "abort", "attach-owned-scalar");
     value.abort(signal.clone());
     value
 }
 
+#[inline(always)]
 pub(crate) fn clone_with_abort<B: Backend>(value: &Scalar<B>, signal: &AbortSignal) -> Scalar<B> {
     crate::trace_dispatch!("realistic_blas", "abort", "clone-and-attach");
     with_abort(value.clone(), signal)
 }
 
 /// Classifies a scalar as zero, non-zero, or unknown.
+#[inline(always)]
 pub fn zero_status<B: Backend>(value: &Scalar<B>) -> ZeroStatus {
     crate::trace_dispatch!("realistic_blas", "zero_status", "scalar-query");
     value.zero_status()
@@ -81,6 +84,7 @@ pub fn zero_status<B: Backend>(value: &Scalar<B>) -> ZeroStatus {
 ///
 /// With the hyperreal backend, this allows long-running zero checks to observe
 /// cancellation. With the approx backend, the signal is accepted as a no-op.
+#[inline(always)]
 pub fn zero_status_with_abort<B: Backend>(value: &Scalar<B>, signal: &AbortSignal) -> ZeroStatus {
     let status = zero_status(value);
     if status != ZeroStatus::Unknown || !signal.load(Ordering::Relaxed) {
@@ -98,6 +102,7 @@ pub fn zero_status_with_abort<B: Backend>(value: &Scalar<B>, signal: &AbortSigna
     zero_status(&clone_with_abort(value, signal))
 }
 
+#[inline(always)]
 pub(crate) fn reject_definite_zero<B: Backend>(value: &Scalar<B>) -> BlasResult<()> {
     if value.definitely_zero() {
         crate::trace_dispatch!("realistic_blas", "zero_guard", "definite-zero-rejected");
@@ -108,6 +113,7 @@ pub(crate) fn reject_definite_zero<B: Backend>(value: &Scalar<B>) -> BlasResult<
     }
 }
 
+#[inline(always)]
 pub(crate) fn require_known_nonzero<B: Backend>(value: &Scalar<B>) -> CheckedBlasResult<()> {
     match zero_status(value) {
         ZeroStatus::Zero => {
@@ -125,6 +131,7 @@ pub(crate) fn require_known_nonzero<B: Backend>(value: &Scalar<B>) -> CheckedBla
     }
 }
 
+#[inline(always)]
 pub(crate) fn require_known_nonzero_with_abort<B: Backend>(
     value: &Scalar<B>,
     signal: &AbortSignal,
