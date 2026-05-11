@@ -1,15 +1,22 @@
 //! Fixed-size row-major matrices over [`Scalar`](crate::Scalar).
+//!
+//! Implementation map:
+//! - type layout and generic array helpers
+//! - powers, right-division, and fixed-size multiply kernels
+//! - matrix-vector transforms and reusable transform handles
+//! - determinant, adjugate, and inverse kernels
+//! - public Matrix3/Matrix4 methods and operator impls
 
 use std::array::from_fn;
 use std::fmt;
 use std::mem;
 use std::ops::{Add, BitXor, Div, Index, IndexMut, Mul, Neg, Sub};
 
-use crate::scalar::{
-    clone_with_abort, reject_definite_zero, require_known_nonzero, with_abort, zero_status,
-    zero_status_with_abort, ZeroStatus,
-};
 use crate::backend::BackendScalar;
+use crate::scalar::{
+    ZeroStatus, clone_with_abort, reject_definite_zero, require_known_nonzero, with_abort,
+    zero_status, zero_status_with_abort,
+};
 use crate::vector::{Vector3, Vector4};
 use crate::{AbortSignal, Backend, BlasResult, CheckedBlasResult, DefaultBackend, Problem, Scalar};
 
@@ -64,8 +71,12 @@ fn transpose_array4<B: Backend>(matrix: [[Scalar<B>; 4]; 4]) -> [[Scalar<B>; 4];
     // hyperreal-rational mat4 div_matrix improved ~2% within noise, borrowed
     // hyperreal-rational mat4 div was neutral, and borrowed approx mat4 div
     // moved +1.25% inside the 2% noise threshold.
-    let [[m00, m01, m02, m03], [m10, m11, m12, m13], [m20, m21, m22, m23], [m30, m31, m32, m33]] =
-        matrix;
+    let [
+        [m00, m01, m02, m03],
+        [m10, m11, m12, m13],
+        [m20, m21, m22, m23],
+        [m30, m31, m32, m33],
+    ] = matrix;
     [
         [m00, m10, m20, m30],
         [m01, m11, m21, m31],
@@ -204,15 +215,16 @@ where
     F: FnMut([[Scalar<B>; N]; N], [[Scalar<B>; N]; N]) -> [[Scalar<B>; N]; N],
 {
     // Alternative researched paths for fixed 3x3/4x4 powers included
-    // Cayley-Hamilton with Faddeev-LeVerrier characteristic coefficients and
-    // Berkowitz-style division-free characteristic polynomials
-    // (https://ncatlab.org/nlab/show/Faddeev-LeVerrier+algorithm,
-    // https://eudml.org/doc/122179). For the small exponents that dominate
-    // this crate's matrix benches, those approaches introduce trace/determinant
-    // reductions before they can save a multiply. Keep powers on repeated
-    // squaring and put the optimization budget into the fixed-size multiply
-    // kernels below. 2026-05 targeted Criterion: approx mat3/mat4 powi moved
-    // from ~144.6/240.8 ns to ~94.5/175.4 ns; hyperreal-from-f64 mat3/mat4
+    // Cayley-Hamilton with Faddeev-LeVerrier characteristic coefficients
+    // (Hou, SIAM Review 40(3), 1998, https://doi.org/10.1137/S003614459732076X)
+    // and Berkowitz-style division-free characteristic polynomials
+    // (Berkowitz, Information Processing Letters 18(3), 1984,
+    // https://doi.org/10.1016/0020-0190(84)90018-8). For the small exponents
+    // that dominate this crate's matrix benches, those approaches introduce
+    // trace/determinant reductions before they can save a multiply. Keep powers
+    // on repeated squaring and put the optimization budget into the fixed-size
+    // multiply kernels below. 2026-05 targeted Criterion: approx mat3/mat4
+    // powi moved from ~144.6/240.8 ns to ~94.5/175.4 ns; hyperreal-from-f64 mat3/mat4
     // powi moved from ~6.30/11.39 us to ~5.98/10.71 us. Hyperreal-rational
     // powi stayed within the normal Criterion noise band, so this keeps
     // hyperreal's per-cell exact-rational denominator schedule.
@@ -528,12 +540,11 @@ fn prefer_shared_adjugate_right_division<B: Backend, const N: usize>(
     // regresses decimal rationals by creating many non-power-of-two gcds. Keep
     // the heuristic generic by asking the backend for this cheap structural
     // representation fact instead of depending on hyperreal internals here.
-    // Shared adjugate division trades fewer inverses for more products. The
-    // targeted `matrix_forms` run showed this remains correct for exact dyadic
-    // rationals, including f64-imported dyadics with large denominator shifts:
-    // a denominator-shift cutoff and an inverse-via-solve prototype both
-    // regressed those rows badly. Non-dyadic exact rationals still use the
-    // Gauss-Jordan path for right division.
+    // This is the same "delay the common scale" idea as fraction-free exact
+    // linear algebra (Bareiss, Math. Comp. 22(103), 1968,
+    // https://doi.org/10.2307/2004533), but applied only when traces show the
+    // extra products are cheaper than repeated inverses. Non-dyadic exact
+    // rationals still use the Gauss-Jordan path for right division.
     left.iter()
         .flat_map(|row| row.iter())
         .chain(right.iter().flat_map(|row| row.iter()))
@@ -909,10 +920,7 @@ fn multiply_arrays3_borrowed<B: Backend>(
                     l0 * r0 + l1 * r1
                 }
             }
-            _ => Scalar(B::Repr::dot3(
-                [&l0.0, &l1.0, &l2.0],
-                [&r0.0, &r1.0, &r2.0],
-            )),
+            _ => Scalar(B::Repr::dot3([&l0.0, &l1.0, &l2.0], [&r0.0, &r1.0, &r2.0])),
         }
     };
 
@@ -1022,7 +1030,12 @@ fn multiply_arrays4_borrowed<B: Backend>(
         );
         let cell = |row: usize, col: usize| {
             Scalar(B::Repr::dot4(
-                [&left[row][0].0, &left[row][1].0, &left[row][2].0, &left[row][3].0],
+                [
+                    &left[row][0].0,
+                    &left[row][1].0,
+                    &left[row][2].0,
+                    &left[row][3].0,
+                ],
                 [
                     &right[0][col].0,
                     &right[1][col].0,
@@ -1218,29 +1231,40 @@ fn transform_vector_rhs_ref<B: Backend, const N: usize>(
     right: &[Scalar<B>; N],
 ) -> [Scalar<B>; N] {
     if N == 4 {
-        // Cache exact-zero direction predicates once so each output row does not
-        // repeat the same probe.
-        let is_direction = right[3].definitely_zero();
-        if is_direction {
-            crate::trace_dispatch!("realistic_blas_matrix", "helper", "transform-vector-direction");
-            return from_fn(|row| {
-                let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
-                let vector_terms = [&right[0], &right[1], &right[2]];
-                Scalar::linear_combination3(matrix_terms, vector_terms)
-            });
-        }
-
-        // Cache exact-one predicates once for point-style vectors.
-        let is_point = right[3].definitely_one();
-        if is_point {
-            crate::trace_dispatch!("realistic_blas_matrix", "helper", "transform-vector-point");
-            return from_fn(|row| {
-                let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
-                let vector_terms = [&right[0], &right[1], &right[2]];
-                // Point transforms preserve homogeneous offsets as affine sums to
-                // avoid forcing extra zero-like terms into a four-term form.
-                Scalar::affine_combination3(matrix_terms, vector_terms, &left[row][3])
-            });
+        // Classify the homogeneous coordinate once; zero/one specializations
+        // cover direction/point transforms and are left unchanged for unknown
+        // homogeneous entries.
+        match right[3].zero_or_one() {
+            Some(false) => {
+                crate::trace_dispatch!(
+                    "realistic_blas_matrix",
+                    "helper",
+                    "transform-vector-direction"
+                );
+                return from_fn(|row| {
+                    let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
+                    let vector_terms = [&right[0], &right[1], &right[2]];
+                    Scalar::linear_combination3(matrix_terms, vector_terms)
+                });
+            }
+            Some(true) => {
+                crate::trace_dispatch!("realistic_blas_matrix", "helper", "transform-vector-point");
+                let translation_is_zero: [bool; N] = from_fn(|row| left[row][3].definitely_zero());
+                return from_fn(|row| {
+                    let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
+                    let vector_terms = [&right[0], &right[1], &right[2]];
+                    // Point transforms preserve homogeneous offsets as affine sums
+                    // to avoid forcing extra zero-like terms into a four-term
+                    // form.
+                    let mapped = Scalar::linear_combination3(matrix_terms, vector_terms);
+                    if translation_is_zero[row] {
+                        mapped
+                    } else {
+                        mapped + &left[row][3]
+                    }
+                });
+            }
+            None => {}
         }
 
         // Cache per-row translation entries once for non-direction/non-point rows to
@@ -1253,12 +1277,7 @@ fn transform_vector_rhs_ref<B: Backend, const N: usize>(
                 let vector_terms = [&right[0], &right[1], &right[2]];
                 Scalar::linear_combination3(matrix_terms, vector_terms)
             } else {
-                let matrix_terms = [
-                    &left[row][0],
-                    &left[row][1],
-                    &left[row][2],
-                    &left[row][3],
-                ];
+                let matrix_terms = [&left[row][0], &left[row][1], &left[row][2], &left[row][3]];
                 let vector_terms = [&right[0], &right[1], &right[2], &right[3]];
                 // `Matrix4` transforms already encode translation in `left[row][3]`,
                 // so this branch is a pure 4-term linear form. Keeping it on the
@@ -1301,27 +1320,29 @@ fn transform_vector4_rhs_ref_cached<B: Backend>(
     // Batch transforms usually share one matrix; caching the translation column
     // zero checks here removes repeated fact probes per-row for every vector in
     // the batch while keeping branch behavior identical to scalar paths.
-    // A direction check is purely a definite-zero predicate; unknown/nonzero
-    // branches stay on the full 4-term form.
-    let is_direction = right[3].definitely_zero();
-    if is_direction {
-        crate::trace_dispatch!("realistic_blas_matrix", "helper", "transform-vector4-direction");
-        return from_fn(|row| {
-            let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
-            let vector_terms = [&right[0], &right[1], &right[2]];
-            Scalar::linear_combination3(matrix_terms, vector_terms)
-        });
-    }
-
-    // Point-style vectors can use affine reconstruction while preserving symbolic
-    // exactness in the matrix offset term.
-    if right[3].definitely_one() {
-        crate::trace_dispatch!("realistic_blas_matrix", "helper", "transform-vector4-point");
-        return from_fn(|row| {
-            let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
-            let vector_terms = [&right[0], &right[1], &right[2]];
-            Scalar::affine_combination3(matrix_terms, vector_terms, &left[row][3])
-        });
+    // Direction/point checks are merged into one classifier to avoid doing two
+    // separate predicate trips for the common unknown-`w` path.
+    match right[3].zero_or_one() {
+        Some(false) => {
+            // A direction vector keeps the row-local 3-term linear form.
+            crate::trace_dispatch!(
+                "realistic_blas_matrix",
+                "helper",
+                "transform-vector4-direction"
+            );
+            return from_fn(|row| {
+                let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
+                let vector_terms = [&right[0], &right[1], &right[2]];
+                Scalar::linear_combination3(matrix_terms, vector_terms)
+            });
+        }
+        Some(true) => {
+            // Point vectors can reuse exact translation offsets as an explicit
+            // addition after the shared 3-term linear body.
+            crate::trace_dispatch!("realistic_blas_matrix", "helper", "transform-vector4-point");
+            return transform_vector4_rhs_point_ref_cached(left, right, translation_is_zero);
+        }
+        None => {}
     }
 
     crate::trace_dispatch!("realistic_blas_matrix", "helper", "transform-vector4-full");
@@ -1331,18 +1352,91 @@ fn transform_vector4_rhs_ref_cached<B: Backend>(
             let vector_terms = [&right[0], &right[1], &right[2]];
             Scalar::linear_combination3(matrix_terms, vector_terms)
         } else {
-            let matrix_terms = [
-                &left[row][0],
-                &left[row][1],
-                &left[row][2],
-                &left[row][3],
-            ];
+            let matrix_terms = [&left[row][0], &left[row][1], &left[row][2], &left[row][3]];
             let vector_terms = [&right[0], &right[1], &right[2], &right[3]];
             // Keep cached batch transforms aligned with the non-cached path:
             // all homogeneous translation is already part of the 4-term linear
             // form, so no extra offset term is required.
             Scalar::linear_combination4(matrix_terms, vector_terms)
         }
+    })
+}
+
+#[inline]
+fn transform_vector4_rhs_direction_ref_cached<B: Backend>(
+    left: &[[Scalar<B>; 4]; 4],
+    right: &[Scalar<B>; 4],
+) -> [Scalar<B>; 4] {
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "transform-vector4-batch-direction"
+    );
+    from_fn(|row| {
+        let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
+        let vector_terms = [&right[0], &right[1], &right[2]];
+        Scalar::linear_combination3(matrix_terms, vector_terms)
+    })
+}
+
+#[inline]
+fn transform_vector4_rhs_point_ref_cached<B: Backend>(
+    left: &[[Scalar<B>; 4]; 4],
+    right: &[Scalar<B>; 4],
+    translation_is_zero: &[bool; 4],
+) -> [Scalar<B>; 4] {
+    // Keep point transforms on the 3-term linear form and only add offsets
+    // when needed according to cached structural translation facts.
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "transform-vector4-batch-point"
+    );
+    from_fn(|row| {
+        let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
+        let vector_terms = [&right[0], &right[1], &right[2]];
+        let mapped = Scalar::linear_combination3(matrix_terms, vector_terms);
+        if translation_is_zero[row] {
+            mapped
+        } else {
+            mapped + &left[row][3]
+        }
+    })
+}
+
+#[inline]
+fn transform_vector4_rhs_point_all_nonzero_ref_cached<B: Backend>(
+    left: &[[Scalar<B>; 4]; 4],
+    right: &[Scalar<B>; 4],
+) -> [Scalar<B>; 4] {
+    // Point transforms with guaranteed non-zero translation entries in every row
+    // use a compact 3-term affine core and explicit offset for the same reason.
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "transform-vector4-point-all-nonzero"
+    );
+    from_fn(|row| {
+        let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
+        let vector_terms = [&right[0], &right[1], &right[2]];
+        Scalar::linear_combination3(matrix_terms, vector_terms) + &left[row][3]
+    })
+}
+
+#[inline]
+fn transform_vector4_rhs_full_no_translation_ref_cached<B: Backend>(
+    left: &[[Scalar<B>; 4]; 4],
+    right: &[Scalar<B>; 4],
+) -> [Scalar<B>; 4] {
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "transform-vector4-batch-full-no-translation"
+    );
+    from_fn(|row| {
+        let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
+        let vector_terms = [&right[0], &right[1], &right[2]];
+        Scalar::linear_combination3(matrix_terms, vector_terms)
     })
 }
 
@@ -1380,6 +1474,8 @@ impl<'a, B: Backend> TransformedMatrix3<'a, B> {
 pub struct TransformedMatrix4<'a, B: Backend = DefaultBackend> {
     matrix: &'a Matrix4<B>,
     translation_is_zero: [bool; 4],
+    all_translation_zero: bool,
+    all_translation_nonzero: bool,
 }
 
 impl<'a, B: Backend> TransformedMatrix4<'a, B> {
@@ -1388,18 +1484,80 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
         // keeps batch direction/path selection on the fast linear form when the
         // translation coefficient is structurally impossible to be non-zero.
         let translation_is_zero = from_fn(|row| matrix[row][3].definitely_zero());
+        let all_translation_zero = translation_is_zero.iter().all(|value| *value);
+        let all_translation_nonzero = translation_is_zero.iter().all(|value| !*value);
         Self {
             matrix,
             translation_is_zero,
+            all_translation_zero,
+            all_translation_nonzero,
         }
     }
 
     pub fn transform_vector(&self, rhs: &Vector4<B>) -> Vector4<B> {
+        match rhs.0[3].zero_or_one() {
+            Some(false) => {
+                return Vector4(transform_vector4_rhs_direction_ref_cached(
+                    &self.matrix.0,
+                    &rhs.0,
+                ));
+            }
+            Some(true) => {
+                if self.all_translation_zero {
+                    return Vector4(transform_vector4_rhs_full_no_translation_ref_cached(
+                        &self.matrix.0,
+                        &rhs.0,
+                    ));
+                }
+                if self.all_translation_nonzero {
+                    return Vector4(transform_vector4_rhs_point_all_nonzero_ref_cached(
+                        &self.matrix.0,
+                        &rhs.0,
+                    ));
+                }
+                return Vector4(transform_vector4_rhs_point_ref_cached(
+                    &self.matrix.0,
+                    &rhs.0,
+                    &self.translation_is_zero,
+                ));
+            }
+            None => {}
+        }
+
         Vector4(transform_vector4_rhs_ref_cached(
             &self.matrix.0,
             &rhs.0,
             &self.translation_is_zero,
         ))
+    }
+
+    #[inline]
+    pub fn transform_direction_vector(&self, rhs: &Vector4<B>) -> Vector4<B> {
+        Vector4(transform_vector4_rhs_direction_ref_cached(
+            &self.matrix.0,
+            &rhs.0,
+        ))
+    }
+
+    #[inline]
+    pub fn transform_point_vector(&self, rhs: &Vector4<B>) -> Vector4<B> {
+        if self.all_translation_zero {
+            Vector4(transform_vector4_rhs_full_no_translation_ref_cached(
+                &self.matrix.0,
+                &rhs.0,
+            ))
+        } else if self.all_translation_nonzero {
+            Vector4(transform_vector4_rhs_point_all_nonzero_ref_cached(
+                &self.matrix.0,
+                &rhs.0,
+            ))
+        } else {
+            Vector4(transform_vector4_rhs_point_ref_cached(
+                &self.matrix.0,
+                &rhs.0,
+                &self.translation_is_zero,
+            ))
+        }
     }
 
     pub fn vector(&self, rhs: &'a Vector4<B>) -> TransformedVector4<'a, B> {
@@ -1412,6 +1570,98 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
 
     pub fn transform_vector_batch(&self, rhs: &[Vector4<B>]) -> Vec<Vector4<B>> {
         let mut transformed = Vec::with_capacity(rhs.len());
+
+        let mut all_direction = true;
+        let mut all_point = true;
+        for vector in rhs {
+            match vector[3].zero_or_one() {
+                Some(false) => all_point = false,
+                Some(true) => all_direction = false,
+                None => {
+                    all_direction = false;
+                    all_point = false;
+                    break;
+                }
+            }
+        }
+
+        // Common batch shapes (all directions or all points) avoid repeating the
+        // same classifier path inside each element transform.
+        if all_direction {
+            crate::trace_dispatch!(
+                "realistic_blas_matrix",
+                "helper",
+                "transform-vector4-batch-direction"
+            );
+            for vector in rhs {
+                transformed.push(Vector4(transform_vector4_rhs_direction_ref_cached(
+                    &self.matrix.0,
+                    &vector.0,
+                )));
+            }
+            return transformed;
+        }
+
+        if all_point {
+            if self.all_translation_nonzero {
+                crate::trace_dispatch!(
+                    "realistic_blas_matrix",
+                    "helper",
+                    "transform-vector4-batch-point-all-nonzero"
+                );
+                for vector in rhs {
+                    transformed.push(Vector4(transform_vector4_rhs_point_all_nonzero_ref_cached(
+                        &self.matrix.0,
+                        &vector.0,
+                    )));
+                }
+            } else if self.all_translation_zero {
+                crate::trace_dispatch!(
+                    "realistic_blas_matrix",
+                    "helper",
+                    "transform-vector4-batch-full-no-translation"
+                );
+                for vector in rhs {
+                    transformed.push(Vector4(
+                        transform_vector4_rhs_full_no_translation_ref_cached(
+                            &self.matrix.0,
+                            &vector.0,
+                        ),
+                    ));
+                }
+            } else {
+                crate::trace_dispatch!(
+                    "realistic_blas_matrix",
+                    "helper",
+                    "transform-vector4-batch-point"
+                );
+                for vector in rhs {
+                    transformed.push(Vector4(transform_vector4_rhs_point_ref_cached(
+                        &self.matrix.0,
+                        &vector.0,
+                        &self.translation_is_zero,
+                    )));
+                }
+            }
+            return transformed;
+        }
+
+        // Fully mixed or symbolic `w` batches currently keep the existing scalar
+        // classifier while still using the precomputed translation facts.
+        if self.all_translation_zero {
+            crate::trace_dispatch!(
+                "realistic_blas_matrix",
+                "helper",
+                "transform-vector4-batch-full-no-translation"
+            );
+            for vector in rhs {
+                transformed.push(Vector4(
+                    transform_vector4_rhs_full_no_translation_ref_cached(&self.matrix.0, &vector.0),
+                ));
+            }
+            return transformed;
+        }
+
         for vector in rhs {
             transformed.push(self.transform_vector(vector));
         }
@@ -1428,7 +1678,10 @@ pub struct TransformedVector3<'a, B: Backend = DefaultBackend> {
 impl<'a, B: Backend> TransformedVector3<'a, B> {
     #[inline]
     pub fn materialize(self) -> Vector3<B> {
-        Vector3(transform_vector3_rhs_ref_cached(&self.matrix.0, &self.vector.0))
+        Vector3(transform_vector3_rhs_ref_cached(
+            &self.matrix.0,
+            &self.vector.0,
+        ))
     }
 }
 
@@ -1583,11 +1836,7 @@ fn mul_sub_add<B: Backend>(
         let nonzero_count = (!first_zero) as u8 + (!second_zero) as u8 + (!third_zero) as u8;
 
         if nonzero_count <= 2 {
-            crate::trace_dispatch!(
-                "realistic_blas_matrix",
-                "helper",
-                "mul-sub-add-pruned"
-            );
+            crate::trace_dispatch!("realistic_blas_matrix", "helper", "mul-sub-add-pruned");
             return match nonzero_count {
                 0 => Scalar::zero(),
                 1 => {
@@ -2519,7 +2768,11 @@ impl<B: Backend> Matrix3<B> {
     /// This is a convenience batch helper for repeated transformations with
     /// shared matrix state in caller-owned loops.
     pub fn transform_vec3_batch(&self, rhs: &[Vector3<B>]) -> Vec<Vector3<B>> {
-        crate::trace_dispatch!("realistic_blas_matrix", "method", "transform-vector-vec3-batch");
+        crate::trace_dispatch!(
+            "realistic_blas_matrix",
+            "method",
+            "transform-vector-vec3-batch"
+        );
         self.transform_vec3_handle().transform_vector_batch(rhs)
     }
 
@@ -2582,13 +2835,30 @@ impl<B: Backend> Matrix4<B> {
         self.transform_vec4_handle().vector(rhs)
     }
 
+    /// Transforms a point vector assuming `rhs[3] == 1`, which keeps a single
+    /// guaranteed affine helper shape and avoids probing point/direction
+    /// predicates.
+    pub fn transform_vec4_point(&self, rhs: &Vector4<B>) -> Vector4<B> {
+        self.transform_vec4_handle().transform_point_vector(rhs)
+    }
+
+    /// Transforms a direction vector assuming `rhs[3] == 0`, keeping the fast
+    /// 3-term affine-less form.
+    pub fn transform_vec4_direction(&self, rhs: &Vector4<B>) -> Vector4<B> {
+        self.transform_vec4_handle().transform_direction_vector(rhs)
+    }
+
     /// Transforms all vectors in `rhs` using the same matrix.
     ///
     /// For `4x4`, per-row homogeneous-coordinate facts are cached once so they
     /// are reused for every vector in the batch without changing observable
     /// affine structure.
     pub fn transform_vec4_batch(&self, rhs: &[Vector4<B>]) -> Vec<Vector4<B>> {
-        crate::trace_dispatch!("realistic_blas_matrix", "method", "transform-vector-vec4-batch");
+        crate::trace_dispatch!(
+            "realistic_blas_matrix",
+            "method",
+            "transform-vector-vec4-batch"
+        );
         self.transform_vec4_handle().transform_vector_batch(rhs)
     }
 

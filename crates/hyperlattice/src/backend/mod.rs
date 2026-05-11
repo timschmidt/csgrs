@@ -311,20 +311,6 @@ pub trait BackendScalar:
         );
         Self::dot4(coeffs, values)
     }
-    /// Returns the three-lane affine combination `offset + c0 * x0 + c1 * x1 + c2 * x2`.
-    ///
-    /// The default lowers to the linear combination plus one addition so
-    /// existing backends keep their current semantics while opening room for
-    /// dedicated affine constructors.
-    #[inline]
-    fn affine_combination3(coeffs: [&Self; 3], values: [&Self; 3], offset: &Self) -> Self {
-        crate::trace_dispatch!(
-            "realistic_blas_backend_trait",
-            "op",
-            "affine-combination3-default"
-        );
-        Self::linear_combination3(coeffs, values).add_ref(offset)
-    }
     /// Returns the four-lane affine combination `offset + c0 * x0 + c1 * x1 + c2 * x2 + c3 * x3`.
     ///
     /// The default lowers to the linear combination plus one addition.
@@ -421,11 +407,7 @@ pub trait BackendScalar:
                     "signed-product-sum2-single-term"
                 );
                 let product = term[0].clone().mul_ref(term[1]);
-                if positive {
-                    product
-                } else {
-                    -product
-                }
+                if positive { product } else { -product }
             }
             2 => {
                 let (left_term, left_positive) = first_term.expect("first non-zero term tracked");
@@ -493,6 +475,22 @@ pub trait BackendScalar:
     fn definitely_one(&self) -> bool {
         crate::trace_dispatch!("realistic_blas_backend_trait", "query", "definitely-one");
         false
+    }
+    /// Returns whether this value is definitely one or zero.
+    ///
+    /// `None` means the value is neither definitely zero nor definitely one.
+    /// This specialization keeps point/direction branching to one query in
+    /// vector transforms where both tests are otherwise needed.
+    #[inline]
+    fn zero_or_one(&self) -> Option<bool> {
+        crate::trace_dispatch!("realistic_blas_backend_trait", "query", "zero-or-one");
+        if self.definitely_zero() {
+            Some(false)
+        } else if self.definitely_one() {
+            Some(true)
+        } else {
+            None
+        }
     }
     /// Classifies whether this value is zero.
     fn zero_status(&self) -> ZeroStatus;

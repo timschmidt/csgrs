@@ -1,3 +1,17 @@
-mod matrix_old;
+//! Fixed-size matrix support.
+//!
+//! The performance-sensitive implementation is kept in [`core`]. The sibling
+//! modules document the semantic areas of that implementation so the matrix
+//! directory remains navigable without moving hot kernels across more module
+//! boundaries than necessary.
 
-pub use matrix_old::{Matrix3, Matrix4};
+mod core;
+
+mod batch;
+mod determinant;
+mod inverse;
+mod ops;
+mod transform;
+mod types;
+
+pub use core::{Matrix3, Matrix4};

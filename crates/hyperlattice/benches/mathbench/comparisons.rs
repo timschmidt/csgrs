@@ -1517,7 +1517,9 @@ fn bench_matrix4(c: &mut Criterion) {
         );
         // Point/direction semantics are predicate-relevant workloads in this stack.
         trace_dispatch_row("matrix4/hyperreal-rational/mat4 transform point vec4", || {
-            black_box(black_box(rational_lhs.clone()) * black_box(symbolic_point.clone()));
+            black_box(
+                black_box(rational_lhs.clone()).transform_vec4_point(black_box(&symbolic_point)),
+            );
         });
         trace_dispatch_row("matrix4/hyperreal-rational/mat4 transform direction vec4", || {
             black_box(
@@ -2197,7 +2199,10 @@ fn bench_matrix4(c: &mut Criterion) {
         // Directly benchmark point/direction transform semantics with one shared matrix.
         group.bench_function("hyperreal-rational/mat4 transform point vec4", |b| {
             b.iter(|| {
-                black_box(black_box(rational_lhs.clone()) * black_box(symbolic_point.clone()))
+                black_box(
+                    black_box(rational_lhs.clone())
+                        .transform_vec4_point(black_box(&symbolic_point)),
+                )
             })
         });
         group.bench_function("hyperreal-rational/mat4 transform direction vec4", |b| {

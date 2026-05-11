@@ -178,9 +178,8 @@ impl<B: Backend> Scalar<B> {
         let left0_zero = left[0].definitely_zero() || right[0].definitely_zero();
         let left1_zero = left[1].definitely_zero() || right[1].definitely_zero();
         let left2_zero = left[2].definitely_zero() || right[2].definitely_zero();
-        let nonzero_lanes = usize::from(!left0_zero)
-            + usize::from(!left1_zero)
-            + usize::from(!left2_zero);
+        let nonzero_lanes =
+            usize::from(!left0_zero) + usize::from(!left1_zero) + usize::from(!left2_zero);
 
         if nonzero_lanes == 0 {
             crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot3-all-zero");
@@ -265,11 +264,12 @@ impl<B: Backend> Scalar<B> {
                 return left[1] * right[1] + left[2] * right[2];
             }
             if left1_zero {
-                return left[0] * right[0] + if left2_zero {
-                    left[3] * right[3]
-                } else {
-                    left[2] * right[2]
-                };
+                return left[0] * right[0]
+                    + if left2_zero {
+                        left[3] * right[3]
+                    } else {
+                        left[2] * right[2]
+                    };
             }
             if left2_zero {
                 return left[0] * right[0] + left[3] * right[3];
@@ -360,26 +360,6 @@ impl<B: Backend> Scalar<B> {
     }
 
     #[inline]
-    pub(crate) fn affine_combination3(
-        coefficients: [&Self; 3],
-        values: [&Self; 3],
-        offset: &Self,
-    ) -> Self {
-        // Dedicated affine hooks preserve homogeneous-offset structure in matrix
-        // transforms without forcing symbolic unpacking before combining.
-        crate::trace_dispatch!(
-            "realistic_blas",
-            "scalar_fast_path",
-            "affine-combination3-specialized"
-        );
-        Self(B::Repr::affine_combination3(
-            [&coefficients[0].0, &coefficients[1].0, &coefficients[2].0],
-            [&values[0].0, &values[1].0, &values[2].0],
-            &offset.0,
-        ))
-    }
-
-    #[inline]
     pub(crate) fn linear_combination4(coefficients: [&Self; 4], values: [&Self; 4]) -> Self {
         // Dedicated linear-combination hooks let hyperreal keep shared affine
         // structure when transform kernels can preserve matrix row geometry.
@@ -387,10 +367,8 @@ impl<B: Backend> Scalar<B> {
         let zero1 = coefficients[1].definitely_zero() || values[1].definitely_zero();
         let zero2 = coefficients[2].definitely_zero() || values[2].definitely_zero();
         let zero3 = coefficients[3].definitely_zero() || values[3].definitely_zero();
-        let nonzero_lanes = usize::from(!zero0)
-            + usize::from(!zero1)
-            + usize::from(!zero2)
-            + usize::from(!zero3);
+        let nonzero_lanes =
+            usize::from(!zero0) + usize::from(!zero1) + usize::from(!zero2) + usize::from(!zero3);
 
         if nonzero_lanes == 0 {
             crate::trace_dispatch!(
@@ -452,15 +430,23 @@ impl<B: Backend> Scalar<B> {
                 "linear-combination4-sparse-three"
             );
             if zero0 {
-                return coefficients[1] * values[1] + coefficients[2] * values[2] + coefficients[3] * values[3];
+                return coefficients[1] * values[1]
+                    + coefficients[2] * values[2]
+                    + coefficients[3] * values[3];
             }
             if zero1 {
-                return coefficients[0] * values[0] + coefficients[2] * values[2] + coefficients[3] * values[3];
+                return coefficients[0] * values[0]
+                    + coefficients[2] * values[2]
+                    + coefficients[3] * values[3];
             }
             if zero2 {
-                return coefficients[0] * values[0] + coefficients[1] * values[1] + coefficients[3] * values[3];
+                return coefficients[0] * values[0]
+                    + coefficients[1] * values[1]
+                    + coefficients[3] * values[3];
             }
-            return coefficients[0] * values[0] + coefficients[1] * values[1] + coefficients[2] * values[2];
+            return coefficients[0] * values[0]
+                + coefficients[1] * values[1]
+                + coefficients[2] * values[2];
         }
 
         crate::trace_dispatch!(
@@ -522,7 +508,8 @@ impl<B: Backend> Scalar<B> {
                 return if positive { product } else { -product };
             }
             2 => {
-                let (left, left_positive) = first_term.expect("first term tracked for nonzero count");
+                let (left, left_positive) =
+                    first_term.expect("first term tracked for nonzero count");
                 let (right, right_positive) =
                     second_term.expect("second term tracked for nonzero count");
                 let left_product = left[0] * left[1];
@@ -654,6 +641,16 @@ impl<B: Backend> Scalar<B> {
     pub fn definitely_one(&self) -> bool {
         crate::trace_dispatch!("realistic_blas", "scalar_query", "definitely-one");
         self.0.definitely_one()
+    }
+
+    /// Classifies this scalar as definitely one/zero when provable.
+    ///
+    /// Returns `Some(false)` for zero, `Some(true)` for one, and `None` when
+    /// neither can be proven without approximation.
+    #[inline(always)]
+    pub fn zero_or_one(&self) -> Option<bool> {
+        crate::trace_dispatch!("realistic_blas", "scalar_query", "zero-or-one");
+        self.0.zero_or_one()
     }
 
     /// Returns conservative structural facts exposed by this scalar's backend.

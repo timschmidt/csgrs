@@ -278,51 +278,6 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     #[inline]
-    fn affine_combination3(coeffs: [&Self; 3], values: [&Self; 3], offset: &Self) -> Self {
-        let zero0 = coeffs[0].definitely_zero() || values[0].definitely_zero();
-        let zero1 = coeffs[1].definitely_zero() || values[1].definitely_zero();
-        let zero2 = coeffs[2].definitely_zero() || values[2].definitely_zero();
-        if zero0 && zero1 && zero2 {
-            if offset.definitely_zero() {
-                crate::trace_dispatch!(
-                    "realistic_blas_approx_backend",
-                    "op",
-                    "affine-combination3-all-zero"
-                );
-                return Self::zero();
-            }
-            crate::trace_dispatch!(
-                "realistic_blas_approx_backend",
-                "op",
-                "affine-combination3-all-zero-offset"
-            );
-            return offset.clone();
-        }
-
-        // `offset + coeffs dot values` mirrors the matrix/vector homogeneous
-        // split with one extra add over the linear case.
-        if offset.definitely_zero() {
-            // Keep zero-offset as the fastest path and avoid one rounding
-            // update that is still observable in vector->matrix kernels.
-            crate::trace_dispatch!(
-                "realistic_blas_approx_backend",
-                "op",
-                "affine-combination3-offset-zero"
-            );
-            return Self::dot3(coeffs, values);
-        }
-
-        // Avoid adding a borrowed zero offset into the shared-precision
-        // accumulator in common "vector direction" cases.
-        crate::trace_dispatch!(
-            "realistic_blas_approx_backend",
-            "op",
-            "affine-combination3-specialized"
-        );
-        Self::dot3(coeffs, values).add_ref(offset)
-    }
-
-    #[inline]
     fn affine_combination4(coeffs: [&Self; 4], values: [&Self; 4], offset: &Self) -> Self {
         let zero0 = coeffs[0].definitely_zero() || values[0].definitely_zero();
         let zero1 = coeffs[1].definitely_zero() || values[1].definitely_zero();
@@ -551,6 +506,18 @@ impl BackendScalarTrait for BackendScalar {
     fn definitely_one(&self) -> bool {
         crate::trace_dispatch!("realistic_blas_approx_backend", "query", "definitely-one");
         self.value == 1.0 && self.epsilon == 0.0
+    }
+
+    #[inline(always)]
+    fn zero_or_one(&self) -> Option<bool> {
+        crate::trace_dispatch!("realistic_blas_approx_backend", "query", "zero-or-one");
+        if self.value == 0.0 && self.epsilon == 0.0 {
+            Some(false)
+        } else if self.value == 1.0 && self.epsilon == 0.0 {
+            Some(true)
+        } else {
+            None
+        }
     }
 
     #[inline]

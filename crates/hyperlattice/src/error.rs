@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::fmt;
-use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
 
 /// Shared cancellation signal used by abort-aware APIs.
 ///

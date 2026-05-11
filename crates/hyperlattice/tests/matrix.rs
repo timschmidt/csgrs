@@ -2,7 +2,7 @@ mod common;
 
 use common::{abort_signal, frac, r, unknown_zero};
 use realistic_blas::{
-    zero, Matrix3, Matrix4, Problem, Scalar, ScalarSign, Vector3, Vector4, ZeroStatus,
+    Matrix3, Matrix4, Problem, Scalar, ScalarSign, Vector3, Vector4, ZeroStatus, zero,
 };
 
 fn assert_singular_error<T: std::fmt::Debug>(result: Result<T, Problem>) {
@@ -334,8 +334,14 @@ fn hyperreal_matrix_transform_identity_preserves_facts() {
     assert!(output[0].structural_facts().exact_rational);
     assert!(output[1].structural_facts().exact_rational);
     assert!(output[2].structural_facts().exact_rational);
-    assert_eq!(output[0].structural_facts().sign, Some(ScalarSign::Positive));
-    assert_eq!(output[1].structural_facts().sign, Some(ScalarSign::Negative));
+    assert_eq!(
+        output[0].structural_facts().sign,
+        Some(ScalarSign::Positive)
+    );
+    assert_eq!(
+        output[1].structural_facts().sign,
+        Some(ScalarSign::Negative)
+    );
     assert_eq!(output[2].structural_facts().sign, Some(ScalarSign::Zero));
 }
 
@@ -360,10 +366,19 @@ fn hyperreal_matrix_transform_diagonal_and_translation_semantics() {
     assert!(output[1].structural_facts().exact_rational);
     assert!(output[2].structural_facts().exact_rational);
     assert!(output[3].structural_facts().exact_rational);
-    assert_eq!(output[0].structural_facts().sign, Some(ScalarSign::Negative));
-    assert_eq!(output[1].structural_facts().sign, Some(ScalarSign::Negative));
+    assert_eq!(
+        output[0].structural_facts().sign,
+        Some(ScalarSign::Negative)
+    );
+    assert_eq!(
+        output[1].structural_facts().sign,
+        Some(ScalarSign::Negative)
+    );
     assert_eq!(output[2].structural_facts().sign, Some(ScalarSign::Zero));
-    assert_eq!(output[3].structural_facts().sign, Some(ScalarSign::Positive));
+    assert_eq!(
+        output[3].structural_facts().sign,
+        Some(ScalarSign::Positive)
+    );
     assert_eq!(output[2].zero_status(), ZeroStatus::Zero);
 }
 
@@ -452,9 +467,18 @@ fn hyperreal_matrix_transform_symbolic_no_translation_zero_lane_facts() {
     assert_eq!(transformed[1].zero_status(), ZeroStatus::Zero);
     assert_eq!(transformed[2].zero_status(), ZeroStatus::NonZero);
     assert_eq!(transformed[3].zero_status(), ZeroStatus::Zero);
-    assert_eq!(transformed[0].structural_facts().sign, Some(ScalarSign::Positive));
-    assert_eq!(transformed[1].structural_facts().sign, Some(ScalarSign::Zero));
-    assert_eq!(transformed[2].structural_facts().sign, Some(ScalarSign::Negative));
+    assert_eq!(
+        transformed[0].structural_facts().sign,
+        Some(ScalarSign::Positive)
+    );
+    assert_eq!(
+        transformed[1].structural_facts().sign,
+        Some(ScalarSign::Zero)
+    );
+    assert_eq!(
+        transformed[2].structural_facts().sign,
+        Some(ScalarSign::Negative)
+    );
     assert!(!transformed[0].structural_facts().exact_rational);
     assert!(transformed[2].structural_facts().exact_rational);
 }
@@ -494,11 +518,7 @@ fn hyperreal_matrix_transform_propagates_zero_and_sign() {
 
 #[test]
 fn matrix_transform_batch_matches_pointwise_transform() {
-    let matrix3 = Matrix3::new([
-        [r(1), r(2), r(3)],
-        [r(0), r(-2), r(1)],
-        [r(-1), r(4), r(2)],
-    ]);
+    let matrix3 = Matrix3::new([[r(1), r(2), r(3)], [r(0), r(-2), r(1)], [r(-1), r(4), r(2)]]);
     let vectors3 = [
         Vector3::new([r(3), r(0), r(-2)]),
         Vector3::new([r(-4), r(5), r(7)]),
@@ -537,7 +557,10 @@ fn matrix_transform_handles_materialize_equivalent_to_transform() {
     let matrix3_handle = matrix3.transform_vec3_handle();
     let vector3_handle = matrix3_handle.vector(&vector3);
 
-    assert_eq!(matrix3_handle.transform_vector(&vector3), matrix3 * vector3.clone());
+    assert_eq!(
+        matrix3_handle.transform_vector(&vector3),
+        matrix3 * vector3.clone()
+    );
     assert_eq!(vector3_handle.materialize(), matrix3 * vector3);
     let vector3_with = matrix3.transform_vec3_with(&vector3);
     assert_eq!(vector3_with.materialize(), matrix3 * vector3);
@@ -552,7 +575,10 @@ fn matrix_transform_handles_materialize_equivalent_to_transform() {
     let matrix4_handle = matrix4.transform_vec4_handle();
     let vector4_handle = matrix4_handle.vector(&vector4);
 
-    assert_eq!(matrix4_handle.transform_vector(&vector4), matrix4 * vector4.clone());
+    assert_eq!(
+        matrix4_handle.transform_vector(&vector4),
+        matrix4 * vector4.clone()
+    );
     assert_eq!(vector4_handle.materialize(), matrix4 * vector4);
     let vector4_with = matrix4.transform_vec4_with(&vector4);
     assert_eq!(vector4_with.materialize(), matrix4 * vector4);

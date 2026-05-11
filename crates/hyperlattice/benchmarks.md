@@ -193,13 +193,13 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | Benchmark | Approx | Hyperreal from f64 | Hyperreal rational | astro-float 128 | numerica128 | symbolica | Hyperreal f64 / approx | Hyperreal f64 / astro | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `mat3 determinant` | 19.22 ns | 1.16 us | 2.65 us | 952.95 ns | 848.70 ns | 21.93 us | 60.14x | 1.21x | 1.36x | 0.05x |
-| `mat3 inverse` | 95.04 ns | 16.27 us | 9.78 us | 3.26 us | 2.44 us | 81.33 us | 171.22x | 5.00x | 6.68x | 0.20x |
-| `mat3 mul mat3` | 52.61 ns | 2.99 us | 6.94 us | 2.87 us | 2.35 us | 60.46 us | 56.90x | 1.04x | 1.28x | 0.05x |
+| `mat3 inverse` | 95.04 ns | 16.27 us | 9.87 us | 3.26 us | 2.44 us | 81.33 us | 171.22x | 5.00x | 6.68x | 0.20x |
+| `mat3 mul mat3` | 52.27 ns | 2.99 us | 7.17 us | 2.87 us | 2.35 us | 60.46 us | 57.27x | 1.04x | 1.28x | 0.05x |
 | `mat3 transform vec3` | 23.12 ns | 1.39 us | 4.52 us | 1.03 us | 887.52 ns | 19.82 us | 60.08x | 1.34x | 1.56x | 0.07x |
 | `mat4 determinant` | 45.95 ns | 3.33 us | 2.13 us | 4.59 us | 4.16 us | 93.49 us | 72.45x | 0.72x | 0.80x | 0.04x |
-| `mat4 inverse` | 170.98 ns | 27.45 us | 10.75 us | 11.58 us | 9.32 us | 333.89 us | 160.55x | 2.37x | 2.94x | 0.08x |
-| `mat4 mul mat4` | 112.50 ns | 6.55 us | 7.67 us | 6.42 us | 5.40 us | 139.68 us | 58.25x | 1.02x | 1.21x | 0.05x |
-| `mat4 transform vec4` | 40.07 ns | 2.32 us | 2.17 us | 1.95 us | 1.66 us | 34.60 us | 57.97x | 1.19x | 1.40x | 0.07x |
+| `mat4 inverse` | 170.98 ns | 27.45 us | 10.11 us | 11.58 us | 9.32 us | 333.89 us | 160.55x | 2.37x | 2.94x | 0.08x |
+| `mat4 mul mat4` | 108.94 ns | 6.55 us | 7.08 us | 6.42 us | 5.40 us | 139.68 us | 60.16x | 1.02x | 1.21x | 0.05x |
+| `mat4 transform vec4` | 41.19 ns | 2.32 us | 2.57 us | 1.95 us | 1.66 us | 34.60 us | 56.39x | 1.19x | 1.40x | 0.07x |
 
 #### Matrix API Operations
 

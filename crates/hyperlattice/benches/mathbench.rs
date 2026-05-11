@@ -54,17 +54,14 @@ fn main() {
     // run during normal iteration.
     // Note: comma-delimited fragments are matched with substring checks by
     // design to keep filter overhead low and stable in benchmark-driver code.
-    let trace_filter = args
-        .iter()
-        .enumerate()
-        .find_map(|(index, arg)| {
-            arg.strip_prefix("--trace-dispatch-filter=")
-                .map(std::string::ToString::to_string)
-                .or_else(|| {
-                    (arg == "--trace-dispatch-filter" && index + 1 < args.len())
-                        .then(|| args[index + 1].clone())
-                })
-        });
+    let trace_filter = args.iter().enumerate().find_map(|(index, arg)| {
+        arg.strip_prefix("--trace-dispatch-filter=")
+            .map(std::string::ToString::to_string)
+            .or_else(|| {
+                (arg == "--trace-dispatch-filter" && index + 1 < args.len())
+                    .then(|| args[index + 1].clone())
+            })
+    });
 
     if args.iter().any(|arg| arg == "--update-benchmarks-md") {
         update_benchmarks_doc();

@@ -263,56 +263,6 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     #[inline]
-    fn affine_combination3(coeffs: [&Self; 3], values: [&Self; 3], offset: &Self) -> Self {
-        // Keep affine shape explicit so repeated matrix->vector geometry can be
-        // interpreted as one offset plus shared coefficients downstream.
-        let zero0 = coeffs[0].definitely_zero() || values[0].definitely_zero();
-        let zero1 = coeffs[1].definitely_zero() || values[1].definitely_zero();
-        let zero2 = coeffs[2].definitely_zero() || values[2].definitely_zero();
-        if zero0 && zero1 && zero2 {
-            if offset.definitely_zero() {
-                crate::trace_dispatch!(
-                    "realistic_blas_hyperreal_backend",
-                    "op",
-                    "affine-combination3-all-zero"
-                );
-                return Self::zero();
-            }
-            crate::trace_dispatch!(
-                "realistic_blas_hyperreal_backend",
-                "op",
-                "affine-combination3-all-zero-offset"
-            );
-            return offset.clone();
-        }
-
-        if offset.definitely_zero() {
-            // Preserve the dedicated linear constructor when translation is
-            // definitely zero to avoid materializing one extra addition node.
-            crate::trace_dispatch!(
-                "realistic_blas_hyperreal_backend",
-                "op",
-                "affine-combination3-offset-zero"
-            );
-            return Self::linear_combination3(coeffs, values);
-        }
-
-        // Current `hyperreal` does not expose a dedicated 3-ary affine
-        // constructor, so preserve this shape by keeping linear and offset stages
-        // separate.
-        crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
-            "op",
-            "affine-combination3-specialized"
-        );
-        let linear = hyperreal::Real::dot3_refs(
-            [&coeffs[0].0, &coeffs[1].0, &coeffs[2].0],
-            [&values[0].0, &values[1].0, &values[2].0],
-        );
-        Self(linear + &offset.0)
-    }
-
-    #[inline]
     fn affine_combination4(coeffs: [&Self; 4], values: [&Self; 4], offset: &Self) -> Self {
         // Same as `affine_combination3`, extended to 4 operands for homogeneous
         // matrix-vector kernels once the translation term is split out as an
@@ -356,12 +306,7 @@ impl BackendScalarTrait for BackendScalar {
             "affine-combination4-specialized"
         );
         let linear = hyperreal::Real::dot4_refs(
-            [
-                &coeffs[0].0,
-                &coeffs[1].0,
-                &coeffs[2].0,
-                &coeffs[3].0,
-            ],
+            [&coeffs[0].0, &coeffs[1].0, &coeffs[2].0, &coeffs[3].0],
             [&values[0].0, &values[1].0, &values[2].0, &values[3].0],
         );
         Self(linear + &offset.0)
@@ -546,12 +491,28 @@ impl BackendScalarTrait for BackendScalar {
 
     #[inline(always)]
     fn definitely_one(&self) -> bool {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "query", "definitely-one");
+        crate::trace_dispatch!(
+            "realistic_blas_hyperreal_backend",
+            "query",
+            "definitely-one"
+        );
         self.0
             .exact_rational_ref()
-            .is_some_and(|exact_rational| {
-                exact_rational == &hyperreal::Rational::from(1_i8)
-            })
+            .is_some_and(|exact_rational| exact_rational == &hyperreal::Rational::from(1_i8))
+    }
+
+    #[inline(always)]
+    fn zero_or_one(&self) -> Option<bool> {
+        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "query", "zero-or-one");
+        self.0.exact_rational_ref().and_then(|exact_rational| {
+            if exact_rational == &hyperreal::Rational::from(0_i8) {
+                Some(false)
+            } else if exact_rational == &hyperreal::Rational::from(1_i8) {
+                Some(true)
+            } else {
+                None
+            }
+        })
     }
 
     #[inline(always)]

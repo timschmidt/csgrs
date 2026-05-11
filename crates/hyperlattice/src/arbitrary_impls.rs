@@ -2,7 +2,7 @@
 //!
 //! Enable the `arbitrary` crate feature to activate these.
 
-use arbitrary::{Arbitrary, Unstructured, Error};
+use arbitrary::{Arbitrary, Error, Unstructured};
 
 use crate::{Backend as NumBackend, Scalar};
 use crate::{Complex, Matrix3, Matrix4, Vector3, Vector4};
@@ -60,9 +60,10 @@ mod arbitrary_hyperreal {
                     .map_err(|_| Error::IncorrectFormat)?;
                 Ok(Self::new(rational))
             } else {
-                Ok(Self::new(Rational::from_bigint(
-                    BigInt::from_bytes_le(arbitrary_sign(u)?, u.arbitrary()?)
-                )))
+                Ok(Self::new(Rational::from_bigint(BigInt::from_bytes_le(
+                    arbitrary_sign(u)?,
+                    u.arbitrary()?,
+                ))))
             }
         }
 
@@ -72,16 +73,19 @@ mod arbitrary_hyperreal {
     }
 }
 
-impl<'a, Backend: NumBackend> Arbitrary<'a> for Complex<Backend> where Scalar<Backend>: Arbitrary<'a> {
+impl<'a, Backend: NumBackend> Arbitrary<'a> for Complex<Backend>
+where
+    Scalar<Backend>: Arbitrary<'a>,
+{
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self::new(
-            Scalar::arbitrary(u)?,
-            Scalar::arbitrary(u)?,
-        ))
+        Ok(Self::new(Scalar::arbitrary(u)?, Scalar::arbitrary(u)?))
     }
 }
 
-impl<'a, Backend: NumBackend> Arbitrary<'a> for Vector3<Backend> where Scalar<Backend>: Arbitrary<'a> {
+impl<'a, Backend: NumBackend> Arbitrary<'a> for Vector3<Backend>
+where
+    Scalar<Backend>: Arbitrary<'a>,
+{
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self::new([
             Scalar::arbitrary(u)?,
@@ -91,7 +95,10 @@ impl<'a, Backend: NumBackend> Arbitrary<'a> for Vector3<Backend> where Scalar<Ba
     }
 }
 
-impl<'a, Backend: NumBackend> Arbitrary<'a> for Vector4<Backend> where Scalar<Backend>: Arbitrary<'a> {
+impl<'a, Backend: NumBackend> Arbitrary<'a> for Vector4<Backend>
+where
+    Scalar<Backend>: Arbitrary<'a>,
+{
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self::new([
             Scalar::arbitrary(u)?,
@@ -102,23 +109,61 @@ impl<'a, Backend: NumBackend> Arbitrary<'a> for Vector4<Backend> where Scalar<Ba
     }
 }
 
-impl<'a, Backend: NumBackend> Arbitrary<'a> for Matrix3<Backend> where Scalar<Backend>: Arbitrary<'a> {
+impl<'a, Backend: NumBackend> Arbitrary<'a> for Matrix3<Backend>
+where
+    Scalar<Backend>: Arbitrary<'a>,
+{
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self::new([
-            [Scalar::arbitrary(u)?, Scalar::arbitrary(u)?, Scalar::arbitrary(u)?],
-            [Scalar::arbitrary(u)?, Scalar::arbitrary(u)?, Scalar::arbitrary(u)?],
-            [Scalar::arbitrary(u)?, Scalar::arbitrary(u)?, Scalar::arbitrary(u)?],
+            [
+                Scalar::arbitrary(u)?,
+                Scalar::arbitrary(u)?,
+                Scalar::arbitrary(u)?,
+            ],
+            [
+                Scalar::arbitrary(u)?,
+                Scalar::arbitrary(u)?,
+                Scalar::arbitrary(u)?,
+            ],
+            [
+                Scalar::arbitrary(u)?,
+                Scalar::arbitrary(u)?,
+                Scalar::arbitrary(u)?,
+            ],
         ]))
     }
 }
 
-impl<'a, Backend: NumBackend> Arbitrary<'a> for Matrix4<Backend> where Scalar<Backend>: Arbitrary<'a> {
+impl<'a, Backend: NumBackend> Arbitrary<'a> for Matrix4<Backend>
+where
+    Scalar<Backend>: Arbitrary<'a>,
+{
     fn arbitrary(u: &mut Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self::new([
-            [Scalar::arbitrary(u)?, Scalar::arbitrary(u)?, Scalar::arbitrary(u)?, Scalar::arbitrary(u)?],
-            [Scalar::arbitrary(u)?, Scalar::arbitrary(u)?, Scalar::arbitrary(u)?, Scalar::arbitrary(u)?],
-            [Scalar::arbitrary(u)?, Scalar::arbitrary(u)?, Scalar::arbitrary(u)?, Scalar::arbitrary(u)?],
-            [Scalar::arbitrary(u)?, Scalar::arbitrary(u)?, Scalar::arbitrary(u)?, Scalar::arbitrary(u)?],
+            [
+                Scalar::arbitrary(u)?,
+                Scalar::arbitrary(u)?,
+                Scalar::arbitrary(u)?,
+                Scalar::arbitrary(u)?,
+            ],
+            [
+                Scalar::arbitrary(u)?,
+                Scalar::arbitrary(u)?,
+                Scalar::arbitrary(u)?,
+                Scalar::arbitrary(u)?,
+            ],
+            [
+                Scalar::arbitrary(u)?,
+                Scalar::arbitrary(u)?,
+                Scalar::arbitrary(u)?,
+                Scalar::arbitrary(u)?,
+            ],
+            [
+                Scalar::arbitrary(u)?,
+                Scalar::arbitrary(u)?,
+                Scalar::arbitrary(u)?,
+                Scalar::arbitrary(u)?,
+            ],
         ]))
     }
 }
