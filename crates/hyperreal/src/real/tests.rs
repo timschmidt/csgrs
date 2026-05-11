@@ -2,7 +2,9 @@
 mod tests {
     use crate::real::arithmetic::curve;
     use crate::{
-        MagnitudeBits, Problem, Rational, Real, RealSign, RealStructuralFacts, ZeroKnowledge,
+        DomainStatus, MagnitudeBits, Problem, Rational, Real, RealSign, RealStructuralFacts,
+        PrimitiveFloatStatus, RationalStorageClass, StructuralComparison, StructuralKind,
+        ZeroKnowledge,
     };
 
     #[test]
@@ -377,6 +379,36 @@ mod tests {
         let e = Real::e().structural_facts();
         assert_eq!(e.sign, Some(RealSign::Positive));
         assert_eq!(e.zero, ZeroKnowledge::NonZero);
+    }
+
+    #[test]
+    fn real_detailed_facts_report_cheap_rational_and_symbolic_structure() {
+        let half = Real::new(Rational::fraction(1, 2).unwrap()).detailed_facts();
+        assert!(half.base.exact_rational);
+        assert!(half.rational.exact_dyadic);
+        assert!(!half.rational.exact_integer);
+        assert_eq!(half.ordering.abs_cmp_one, StructuralComparison::Less);
+        assert_eq!(half.domains.unit_interval_closed, DomainStatus::Valid);
+        assert_eq!(half.domains.unit_interval_open, DomainStatus::Valid);
+        assert_eq!(half.primitive.f64, PrimitiveFloatStatus::NormalFinite);
+        assert_eq!(half.symbolic.kind, StructuralKind::ExactRational);
+
+        let two = Real::new(Rational::new(2)).detailed_facts();
+        assert!(two.rational.exact_integer);
+        assert!(two.rational.exact_small_integer_i64);
+        assert!(two.rational.power_of_two);
+        assert_eq!(two.rational.storage, RationalStorageClass::WordSized);
+        assert_eq!(two.primitive.f32, PrimitiveFloatStatus::NormalFinite);
+        assert_eq!(two.ordering.cmp_one, StructuralComparison::Greater);
+        assert_eq!(two.domains.unit_interval_closed, DomainStatus::Invalid);
+        assert_eq!(two.domains.acosh, DomainStatus::Valid);
+
+        let pi_sqrt_two = Real::pi() * Real::from(2_i32).sqrt().unwrap();
+        let symbolic = pi_sqrt_two.detailed_facts();
+        assert_eq!(symbolic.symbolic.kind, StructuralKind::SqrtLike);
+        assert!(symbolic.symbolic.has_pi_factor);
+        assert!(symbolic.symbolic.has_sqrt_factor);
+        assert_eq!(symbolic.base.sign, Some(RealSign::Positive));
     }
 
     #[test]

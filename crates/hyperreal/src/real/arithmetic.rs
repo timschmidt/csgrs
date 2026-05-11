@@ -1,5 +1,8 @@
 use crate::{
-    Computable, MagnitudeBits, Problem, Rational, RealSign, RealStructuralFacts, ZeroKnowledge,
+    Computable, DomainFacts, DomainStatus, IdentityFacts, MagnitudeBits, OrderingFacts, Problem,
+    PrimitiveFacts, PrimitiveFloatStatus, Rational, RationalFacts, RationalStorageClass,
+    RealDetailedFacts, RealSign, RealStructuralFacts, StructuralComparison, StructuralKind,
+    SymbolicFacts, ZeroKnowledge, ZeroOneStatus,
 };
 use num::ToPrimitive;
 use num::bigint::{BigInt, BigUint, Sign};
@@ -424,21 +427,18 @@ impl Class {
         // Common logarithm constants share Computable caches. Dense symbolic
         // expressions repeatedly build ln(2), ln(3), etc.; routing them here
         // avoids independent approximation caches for the same mathematical value.
-        if base == &Rational::new(2) {
-            Computable::ln_constant(2).unwrap()
-        } else if base == &Rational::new(3) {
-            Computable::ln_constant(3).unwrap()
-        } else if base == &Rational::new(5) {
-            Computable::ln_constant(5).unwrap()
-        } else if base == &Rational::new(6) {
-            Computable::ln_constant(6).unwrap()
-        } else if base == &Rational::new(7) {
-            Computable::ln_constant(7).unwrap()
-        } else if base == &Rational::new(10) {
-            Computable::ln_constant(10).unwrap()
-        } else {
-            Computable::rational(base.clone()).ln()
+        // The integer extraction is deliberately structural and non-approximating:
+        // keep exact reduction in front of numerical refinement, following the
+        // exact-real model in Boehm, Cartwright, Riggle, and O'Donnell,
+        // "Exact Real Arithmetic: A Case Study in Higher Order Programming",
+        // LFP 1986, https://doi.org/10.1145/319838.319860.
+        if let Some(base) = base.to_integer_i64() {
+            match base {
+                2 | 3 | 5 | 6 | 7 | 10 => return Computable::ln_constant(base as u32).unwrap(),
+                _ => {}
+            }
         }
+        Computable::rational(base.clone()).ln()
     }
 
     fn make_ln_affine(offset: Rational, base: Rational) -> Option<(Class, Computable)> {
@@ -549,6 +549,19 @@ pub(crate) mod rationals {
     pub(crate) static HALF: LazyLock<Rational> =
         LazyLock::new(|| Rational::fraction(1, 2).unwrap());
     pub(crate) static ONE: LazyLock<Rational> = LazyLock::new(|| Rational::new(1));
+    pub(crate) static THIRD: LazyLock<Rational> =
+        LazyLock::new(|| Rational::fraction(1, 3).unwrap());
+    // These tiny rationals sit on exact trig/inverse-trig hot paths. Reusing
+    // them avoids repeated BigUint construction while preserving exact symbolic
+    // dispatch. This is the same "cheap certificate before refinement" pattern
+    // used by exact geometric predicates; see Shewchuk, "Adaptive Precision
+    // Floating-Point Arithmetic and Fast Robust Geometric Predicates",
+    // Discrete & Computational Geometry 1997.
+    pub(crate) static QUARTER: LazyLock<Rational> =
+        LazyLock::new(|| Rational::fraction(1, 4).unwrap());
+    pub(crate) static SIXTH: LazyLock<Rational> =
+        LazyLock::new(|| Rational::fraction(1, 6).unwrap());
+    pub(crate) static SIX: LazyLock<Rational> = LazyLock::new(|| Rational::new(6));
     pub(crate) static SEVEN_EIGHTHS: LazyLock<Rational> =
         LazyLock::new(|| Rational::fraction(7, 8).unwrap());
     pub(crate) static ZERO: LazyLock<Rational> = LazyLock::new(Rational::zero);
@@ -561,7 +574,10 @@ mod constants {
     thread_local! {
         // These are the canonical internal constants. Public constructors clone
         // these symbolic/computable forms instead of rebuilding exact classes and
-        // caches on every call.
+        // caches on every call. This keeps common pi/log/sqrt certificates in
+        // the symbolic layer and delays approximation until `Computable::approx`,
+        // matching the lazy exact-real architecture described by Boehm et al.,
+        // LFP 1986, https://doi.org/10.1145/319838.319860.
         static PI: Real = Real {
             rational: Rational::one(),
             class: Class::Pi,
@@ -570,6 +586,30 @@ mod constants {
         };
         static TAU: Real = Real {
             rational: Rational::new(2),
+            class: Class::Pi,
+            computable: Some(Computable::pi()),
+            signal: None,
+        };
+        static PI_OVER_TWO: Real = Real {
+            rational: Rational::fraction(1, 2).unwrap(),
+            class: Class::Pi,
+            computable: Some(Computable::pi()),
+            signal: None,
+        };
+        static PI_OVER_THREE: Real = Real {
+            rational: Rational::fraction(1, 3).unwrap(),
+            class: Class::Pi,
+            computable: Some(Computable::pi()),
+            signal: None,
+        };
+        static PI_OVER_FOUR: Real = Real {
+            rational: Rational::fraction(1, 4).unwrap(),
+            class: Class::Pi,
+            computable: Some(Computable::pi()),
+            signal: None,
+        };
+        static PI_OVER_SIX: Real = Real {
+            rational: Rational::fraction(1, 6).unwrap(),
             class: Class::Pi,
             computable: Some(Computable::pi()),
             signal: None,
@@ -649,6 +689,23 @@ mod constants {
 
     pub(super) fn pi() -> Real {
         PI.with(|real| real.clone())
+    }
+
+    pub(super) fn pi_fraction(n: i64, d: u64) -> Option<Real> {
+        // Exact inverse trig repeatedly returns these pi fractions. Reusing the
+        // cached symbolic Real avoids rational construction and a multiply by pi
+        // on the dispatch path while preserving the public representation.
+        match (n, d) {
+            (1, 2) => Some(PI_OVER_TWO.with(|real| real.clone())),
+            (-1, 2) => Some(PI_OVER_TWO.with(|real| -real.clone())),
+            (1, 3) => Some(PI_OVER_THREE.with(|real| real.clone())),
+            (-1, 3) => Some(PI_OVER_THREE.with(|real| -real.clone())),
+            (1, 4) => Some(PI_OVER_FOUR.with(|real| real.clone())),
+            (-1, 4) => Some(PI_OVER_FOUR.with(|real| -real.clone())),
+            (1, 6) => Some(PI_OVER_SIX.with(|real| real.clone())),
+            (-1, 6) => Some(PI_OVER_SIX.with(|real| -real.clone())),
+            _ => None,
+        }
     }
 
     pub(super) fn tau() -> Real {
@@ -1099,6 +1156,108 @@ impl Real {
             zero,
             exact_rational: false,
             magnitude,
+        }
+    }
+
+    /// Return richer opt-in structural facts for dispatch-heavy callers.
+    ///
+    /// This intentionally does not run approximation or refinement. It is
+    /// derived from the same stored rational/class metadata as
+    /// `structural_facts`, plus bit-length and denominator-shape checks. Keep
+    /// expensive decomposition out of this query so solvers and matrix kernels
+    /// can call it speculatively.
+    #[inline]
+    pub fn detailed_facts(&self) -> RealDetailedFacts {
+        let base = self.structural_facts();
+        let exact_rational = matches!(self.class, One);
+        let cmp_one = if exact_rational {
+            structural_cmp_from_ordering(self.rational.cmp_one_structural())
+        } else {
+            StructuralComparison::Unknown
+        };
+        let abs_cmp_one = if exact_rational {
+            structural_cmp_from_ordering(self.rational.abs_cmp_one_structural())
+        } else {
+            StructuralComparison::Unknown
+        };
+        let identity = IdentityFacts {
+            known_one: exact_rational && self.rational.is_one(),
+            known_minus_one: exact_rational && self.rational.is_minus_one(),
+            zero_or_one: if self.rational.sign() == Sign::NoSign {
+                ZeroOneStatus::Zero
+            } else if exact_rational && self.rational.is_one() {
+                ZeroOneStatus::One
+            } else {
+                ZeroOneStatus::NeitherOrUnknown
+            },
+        };
+        let rational = if exact_rational {
+            self.rational.detailed_rational_facts()
+        } else {
+            RationalFacts {
+                exact_integer: false,
+                exact_small_integer_i64: false,
+                exact_dyadic: false,
+                power_of_two: false,
+                storage: RationalStorageClass::VeryLarge,
+            }
+        };
+        let ordering = OrderingFacts {
+            cmp_one,
+            abs_cmp_one,
+        };
+        let primitive = primitive_facts_from_base(&base);
+        let domains = DomainFacts {
+            sqrt: domain_from_sign_nonnegative(base.sign),
+            log: domain_from_sign_positive(base.sign),
+            unit_interval_closed: domain_abs_cmp_one(abs_cmp_one, true),
+            unit_interval_open: domain_abs_cmp_one(abs_cmp_one, false),
+            acosh: domain_cmp_one_ge(cmp_one),
+        };
+        let symbolic = SymbolicFacts {
+            kind: structural_kind_for_class(&self.class),
+            has_sqrt_factor: matches!(self.class, Sqrt(_) | PiSqrt(_) | ConstProductSqrt(_)),
+            has_pi_factor: matches!(
+                self.class,
+                Pi | PiPow(_)
+                    | PiInv
+                    | PiExp(_)
+                    | PiInvExp(_)
+                    | PiSqrt(_)
+                    | ConstProduct(_)
+                    | ConstOffset(_)
+                    | ConstProductSqrt(_)
+            ),
+            has_exp_factor: matches!(
+                self.class,
+                Exp(_) | PiExp(_) | PiInvExp(_) | ConstProduct(_) | ConstOffset(_) | ConstProductSqrt(_)
+            ),
+            computable_required: self.computable.is_some() || matches!(self.class, Irrational),
+        };
+
+        crate::trace_dispatch!(
+            "real",
+            "detailed_facts",
+            match symbolic.kind {
+                StructuralKind::ExactRational => "exact-rational",
+                StructuralKind::PiLike => "pi-like",
+                StructuralKind::ExpLike => "exp-like",
+                StructuralKind::SqrtLike => "sqrt-like",
+                StructuralKind::LogLike => "log-like",
+                StructuralKind::TrigExact => "trig-exact",
+                StructuralKind::ProductConstant => "product-constant",
+                StructuralKind::ComputableOpaque => "computable-opaque",
+            }
+        );
+
+        RealDetailedFacts {
+            base,
+            identity,
+            rational,
+            primitive,
+            ordering,
+            domains,
+            symbolic,
         }
     }
 
@@ -1873,19 +2032,22 @@ impl Real {
     /// The square root of this Real, or a [`Problem`] if that's impossible,
     /// in particular Problem::SqrtNegative if this Real is negative.
     pub fn sqrt(self) -> Result<Real, Problem> {
-        if self.best_sign() == Sign::Minus {
-            crate::trace_dispatch!("real", "sqrt", "domain-negative");
-            return Err(Problem::SqrtNegative);
-        }
-        if self.definitely_zero() {
-            crate::trace_dispatch!("real", "sqrt", "exact-zero");
-            return Ok(Self::zero());
+        match self.best_sign() {
+            Sign::Minus => {
+                crate::trace_dispatch!("real", "sqrt", "domain-negative");
+                return Err(Problem::SqrtNegative);
+            }
+            Sign::NoSign => {
+                crate::trace_dispatch!("real", "sqrt", "exact-zero");
+                return Ok(Self::zero());
+            }
+            Sign::Plus => {}
         }
         match &self.class {
             One if self.rational.extract_square_will_succeed() => {
                 // Extract rational square factors before creating sqrt nodes.
                 let (square, rest) = self.rational.extract_square_reduced();
-                if rest == *rationals::ONE {
+                if rest.is_one() {
                     crate::trace_dispatch!("real", "sqrt", "rational-perfect-square");
                     return Ok(Self {
                         rational: square,
@@ -1893,7 +2055,7 @@ impl Real {
                         computable: None,
                         signal: None,
                     });
-                } else if square != *rationals::ONE
+                } else if !square.is_one()
                     && let Some(shared) = rest.to_integer_i64().and_then(constants::sqrt_constant)
                 {
                     // sqrt(a^2 * r) = a*sqrt(r). For scaled sqrt(2)/sqrt(3),
@@ -1923,7 +2085,7 @@ impl Real {
                 // computable sqrt rather than inventing a symbolic sqrt-pi class
                 // that has not shown benchmark wins.
                 let (square, rest) = self.rational.clone().extract_square_reduced();
-                if rest == *rationals::ONE {
+                if rest.is_one() {
                     crate::trace_dispatch!("real", "sqrt", "pi-scale-computable-sqrt");
                     return Ok(Self {
                         rational: square,
@@ -1938,7 +2100,7 @@ impl Real {
                 // Square-free residual scales fall through to the factored
                 // const-product sqrt path below.
                 let (square, rest) = self.rational.clone().extract_square_reduced();
-                if rest == *rationals::ONE {
+                if rest.is_one() {
                     let exp = exp.clone() / Rational::new(2);
                     crate::trace_dispatch!("real", "sqrt", "exp-half-special-form");
                     return Ok(Self {
@@ -2010,16 +2172,13 @@ impl Real {
     }
 
     fn log10_rational(r: Rational) -> Result<Real, Problem> {
-        use std::cmp::Ordering::*;
-
-        match r.partial_cmp(rationals::ONE.deref()) {
-            Some(Less) => {
+        match r.cmp_one_structural() {
+            std::cmp::Ordering::Less => {
                 let inv = r.inverse()?;
                 return Ok(-Self::log10_rational(inv)?);
             }
-            Some(Equal) => return Ok(Self::zero()),
-            Some(Greater) => {}
-            _ => unreachable!(),
+            std::cmp::Ordering::Equal => return Ok(Self::zero()),
+            std::cmp::Ordering::Greater => {}
         }
 
         if let Some(n) = r.integer_magnitude()
@@ -2141,10 +2300,8 @@ impl Real {
     // e.g. use Ln(2) rather than Ln(0.5)
     // Must be called with r > 0
     fn ln_rational(r: Rational) -> Result<Real, Problem> {
-        use std::cmp::Ordering::*;
-
-        match r.partial_cmp(rationals::ONE.deref()) {
-            Some(Less) => {
+        match r.cmp_one_structural() {
+            std::cmp::Ordering::Less => {
                 let inv = r.inverse()?;
                 if let Some(answer) = Self::ln_small(&inv) {
                     crate::trace_dispatch!("real", "ln", "rational-inverse-shared-log");
@@ -2160,11 +2317,11 @@ impl Real {
                     signal: None,
                 })
             }
-            Some(Equal) => {
+            std::cmp::Ordering::Equal => {
                 crate::trace_dispatch!("real", "ln", "rational-one-zero");
                 Ok(Self::zero())
             }
-            Some(Greater) => {
+            std::cmp::Ordering::Greater => {
                 if let Some(answer) = Self::ln_small(&r) {
                     crate::trace_dispatch!("real", "ln", "rational-shared-log");
                     return Ok(answer);
@@ -2179,7 +2336,6 @@ impl Real {
                     signal: None,
                 })
             }
-            _ => unreachable!(),
         }
     }
 
@@ -2218,7 +2374,7 @@ impl Real {
         match &self.class {
             One => return Self::ln_rational(self.rational),
             Exp(exp) => {
-                if self.rational == *rationals::ONE {
+                if self.rational.is_one() {
                     // ln(e^x) collapses exactly for the pure exponential class.
                     crate::trace_dispatch!("real", "ln", "pure-exp-collapse");
                     return Ok(Self {
@@ -2310,7 +2466,7 @@ impl Real {
                 // cos(q*pi) is represented through the same SinPi machinery with a
                 // half-turn shift, keeping exact identities in one place.
                 crate::trace_dispatch!("real", "cos", "pi-rational-sinpi-rewrite");
-                return Self::sin_pi_rational(self.rational + Rational::fraction(1, 2).unwrap());
+                return Self::sin_pi_rational(self.rational + rationals::HALF.clone());
             }
             _ => (),
         }
@@ -2407,6 +2563,11 @@ impl Real {
     }
 
     fn pi_fraction(n: i64, d: u64) -> Real {
+        if let Some(real) = constants::pi_fraction(n, d) {
+            crate::trace_dispatch!("real", "pi_fraction", "cached-special-form");
+            return real;
+        }
+        crate::trace_dispatch!("real", "pi_fraction", "constructed-generic");
         Self::new(Rational::fraction(n, d).unwrap()) * Self::pi()
     }
 
@@ -2418,13 +2579,16 @@ impl Real {
         match &self.class {
             One => {
                 // Exact inverse-trig table for rational endpoints and half-angle values.
-                if self.rational == *rationals::ONE {
+                if self.rational.is_one() {
                     Some(Self::pi_fraction(1, 2))
-                } else if self.rational == Rational::new(-1) {
+                } else if self.rational.is_minus_one() {
                     Some(Self::pi_fraction(-1, 2))
                 } else if self.rational == *rationals::HALF {
                     Some(Self::pi_fraction(1, 6))
-                } else if self.rational == -rationals::HALF.clone() {
+                } else if self.rational.sign() == Sign::Minus
+                    && self.rational.compare_magnitude(&*rationals::HALF)
+                        == std::cmp::Ordering::Equal
+                {
                     Some(Self::pi_fraction(-1, 6))
                 } else {
                     None
@@ -2432,19 +2596,20 @@ impl Real {
             }
             Sqrt(r) => {
                 // Recognize sqrt(2)/2 and sqrt(3)/2 forms produced by exact trig.
+                // This is a structural table lookup, not a numerical comparison:
+                // the radicand must be an exact small integer and the rational
+                // scale must have exact magnitude 1/2.
                 let sign = self.rational.sign();
-                let magnitude = if sign == Sign::Minus {
-                    self.rational.clone().neg()
-                } else {
-                    self.rational.clone()
+                let half_magnitude = self.rational.compare_magnitude(&*rationals::HALF)
+                    == std::cmp::Ordering::Equal;
+                if !half_magnitude {
+                    return None;
+                }
+                let angle = match r.to_integer_i64()? {
+                    2 => rationals::QUARTER.clone(),
+                    3 => rationals::THIRD.clone(),
+                    _ => return None,
                 };
-                let angle = if *r == Rational::new(2) && magnitude == *rationals::HALF {
-                    Some(Rational::fraction(1, 4).unwrap())
-                } else if *r == Rational::new(3) && magnitude == *rationals::HALF {
-                    Some(Rational::fraction(1, 3).unwrap())
-                } else {
-                    None
-                }?;
 
                 let angle = if sign == Sign::Minus {
                     angle.neg()
@@ -2456,9 +2621,9 @@ impl Real {
             SinPi(r) => {
                 // asin(sin(q*pi)) can reuse the stored angle when it is already in the
                 // principal branch represented by SinPi.
-                if self.rational == *rationals::ONE {
+                if self.rational.is_one() {
                     Some(Self::new(r.clone()) * Self::pi())
-                } else if self.rational == Rational::new(-1) {
+                } else if self.rational.is_minus_one() {
                     Some(Self::new(r.clone().neg()) * Self::pi())
                 } else {
                     None
@@ -2477,29 +2642,30 @@ impl Real {
             One => {
                 // atan(+/-1) is one of the few rational inputs with an exact
                 // pi-fraction result; catching it avoids constructing an atan node.
-                if self.rational == *rationals::ONE {
+                if self.rational.is_one() {
                     Some(Self::pi_fraction(1, 4))
-                } else if self.rational == Rational::new(-1) {
+                } else if self.rational.is_minus_one() {
                     Some(Self::pi_fraction(-1, 4))
                 } else {
                     None
                 }
             }
             Sqrt(r) => {
-                if *r != Rational::new(3) {
+                if r.to_integer_i64() != Some(3) {
                     return None;
                 }
                 // atan(sqrt(3)) and atan(sqrt(3)/3) have exact pi-fraction answers.
                 let sign = self.rational.sign();
-                let magnitude = if sign == Sign::Minus {
-                    self.rational.clone().neg()
-                } else {
-                    self.rational.clone()
-                };
-                let angle = if magnitude == *rationals::ONE {
-                    Some(Rational::fraction(1, 3).unwrap())
-                } else if magnitude == Rational::fraction(1, 3).unwrap() {
-                    Some(Rational::fraction(1, 6).unwrap())
+                let angle = if self.rational.abs_cmp_one_structural()
+                    == std::cmp::Ordering::Equal
+                {
+                    Some(rationals::THIRD.clone())
+                } else if self
+                    .rational
+                    .compare_magnitude(&*rationals::THIRD)
+                    == std::cmp::Ordering::Equal
+                {
+                    Some(rationals::SIXTH.clone())
                 } else {
                     None
                 }?;
@@ -2514,9 +2680,9 @@ impl Real {
             TanPi(r) => {
                 // Preserve exact inverse for TanPi certificates instead of going through
                 // the generic atan kernel.
-                if self.rational == *rationals::ONE {
+                if self.rational.is_one() {
                     Some(Self::new(r.clone()) * Self::pi())
-                } else if self.rational == Rational::new(-1) {
+                } else if self.rational.is_minus_one() {
                     Some(Self::new(r.clone().neg()) * Self::pi())
                 } else {
                     None
@@ -2535,12 +2701,7 @@ impl Real {
         if self.class == One {
             // Plain rationals use the computable asin kernel after cheap domain checks; it
             // has tiny/endpoint specializations that would be obscured by the atan formula.
-            let magnitude = if self.rational.sign() == Sign::Minus {
-                self.rational.clone().neg()
-            } else {
-                self.rational.clone()
-            };
-            if magnitude > *rationals::ONE {
+            if self.rational.abs_cmp_one_structural() == std::cmp::Ordering::Greater {
                 crate::trace_dispatch!("real", "asin", "rational-domain-error");
                 return Err(Problem::NotANumber);
             }
@@ -2549,7 +2710,8 @@ impl Real {
             return Ok(self.make_computable(|value| value.asin()));
         }
         if let Sqrt(r) = &self.class
-            && self.rational.clone() * self.rational.clone() * r.clone() > *rationals::ONE
+            && self.rational.compare_magnitude_squared_times(r, &*rationals::ONE)
+                == std::cmp::Ordering::Greater
         {
             crate::trace_dispatch!("real", "asin", "sqrt-domain-error");
             return Err(Problem::NotANumber);
@@ -2575,22 +2737,17 @@ impl Real {
     /// The inverse cosine of this Real, or [`Problem::NotANumber`] outside [-1, 1].
     pub fn acos(self) -> Result<Real, Problem> {
         if self.class == One {
-            if self.rational == *rationals::ONE {
+            if self.rational.is_one() {
                 // acos(1) is exactly zero and must not enter the generic kernel.
                 crate::trace_dispatch!("real", "acos", "exact-one-zero");
                 return Ok(Self::zero());
             }
-            if self.rational == Rational::new(-1) {
+            if self.rational.is_minus_one() {
                 // acos(-1) is exactly pi, using the cached internal constant.
                 crate::trace_dispatch!("real", "acos", "exact-minus-one-pi");
                 return Ok(Self::pi());
             }
-            let magnitude = if self.rational.sign() == Sign::Minus {
-                self.rational.clone().neg()
-            } else {
-                self.rational.clone()
-            };
-            if magnitude > *rationals::ONE {
+            if self.rational.abs_cmp_one_structural() == std::cmp::Ordering::Greater {
                 // Exact rational domain failures are rejected before any
                 // approximation machinery is constructed.
                 crate::trace_dispatch!("real", "acos", "rational-domain-error");
@@ -2603,7 +2760,8 @@ impl Real {
             return Ok(Self::pi_fraction(1, 2) - asin);
         }
         if let Sqrt(r) = &self.class
-            && self.rational.clone() * self.rational.clone() * r.clone() > *rationals::ONE
+            && self.rational.compare_magnitude_squared_times(r, &*rationals::ONE)
+                == std::cmp::Ordering::Greater
         {
             crate::trace_dispatch!("real", "acos", "sqrt-domain-error");
             return Err(Problem::NotANumber);
@@ -2666,13 +2824,16 @@ impl Real {
     /// The inverse hyperbolic cosine of this Real, or [`Problem::NotANumber`] for values < 1.
     pub fn acosh(self) -> Result<Real, Problem> {
         if self.class == One {
-            if self.rational == *rationals::ONE {
-                crate::trace_dispatch!("real", "acosh", "exact-one-zero");
-                return Ok(Self::zero());
-            }
-            if self.rational < *rationals::ONE {
-                crate::trace_dispatch!("real", "acosh", "rational-domain-error");
-                return Err(Problem::NotANumber);
+            match self.rational.cmp_one_structural() {
+                std::cmp::Ordering::Equal => {
+                    crate::trace_dispatch!("real", "acosh", "exact-one-zero");
+                    return Ok(Self::zero());
+                }
+                std::cmp::Ordering::Less => {
+                    crate::trace_dispatch!("real", "acosh", "rational-domain-error");
+                    return Err(Problem::NotANumber);
+                }
+                std::cmp::Ordering::Greater => {}
             }
             if self.rational.msd_exact().is_some_and(|msd| msd >= 3) {
                 // Large exact rationals cannot be in the cancellation-prone
@@ -2685,7 +2846,8 @@ impl Real {
         } else if let Sqrt(r) = &self.class {
             // Domain-check factored sqrt values exactly: (a*sqrt(r))^2 = a^2*r.
             if self.rational.sign() == Sign::Minus
-                || self.rational.clone() * self.rational.clone() * r.clone() < *rationals::ONE
+                || self.rational.compare_magnitude_squared_times(r, &*rationals::ONE)
+                    == std::cmp::Ordering::Less
             {
                 crate::trace_dispatch!("real", "acosh", "sqrt-domain-error");
                 return Err(Problem::NotANumber);
@@ -2723,28 +2885,24 @@ impl Real {
             crate::trace_dispatch!("real", "atanh", "exact-zero");
             return Ok(Self::zero());
         }
-        let one_real = Self::one();
-        if self == one_real || self == -one_real.clone() {
-            crate::trace_dispatch!("real", "atanh", "endpoint-infinity");
-            return Err(Problem::Infinity);
-        }
         if self.class == One {
-            let magnitude = if self.rational.sign() == Sign::Minus {
-                self.rational.clone().neg()
-            } else {
-                self.rational.clone()
-            };
-            if magnitude > *rationals::ONE {
+            if self.rational.is_one() || self.rational.is_minus_one() {
+                crate::trace_dispatch!("real", "atanh", "endpoint-infinity");
+                return Err(Problem::Infinity);
+            }
+            if self.rational.abs_cmp_one_structural() == std::cmp::Ordering::Greater {
                 crate::trace_dispatch!("real", "atanh", "rational-domain-error");
                 return Err(Problem::NotANumber);
             }
-            if magnitude.msd_exact().is_some_and(|msd| msd <= -4) {
+            if self.rational.msd_exact().is_some_and(|msd| msd <= -4) {
                 // Tiny rational atanh is faster in the dedicated computable kernel than
                 // building ln((1+x)/(1-x))/2.
                 crate::trace_dispatch!("real", "atanh", "tiny-rational-computable");
                 return Ok(self.make_computable(Computable::atanh));
             }
-            if magnitude >= *rationals::SEVEN_EIGHTHS {
+            if self.rational.compare_magnitude(&*rationals::SEVEN_EIGHTHS)
+                != std::cmp::Ordering::Less
+            {
                 // Endpoint-adjacent rationals are hot in scalar predicates and
                 // benchmarks; a deferred computable ln-ratio avoids eagerly
                 // allocating the exact logarithm tree.
@@ -2756,17 +2914,24 @@ impl Real {
             let ratio = (one.clone() + self.rational.clone()) / (one - self.rational);
             // Non-tiny rationals can remain an exact logarithm ratio.
             crate::trace_dispatch!("real", "atanh", "rational-log-ratio-special-form");
-            return Ok(Self::ln_rational(ratio)? * Self::new(Rational::fraction(1, 2).unwrap()));
+            return Ok(Self::ln_rational(ratio)? * constants::half());
+        }
+        let one_real = Self::one();
+        if self == one_real || self == -one_real.clone() {
+            crate::trace_dispatch!("real", "atanh", "endpoint-infinity");
+            return Err(Problem::Infinity);
         }
         if let Sqrt(r) = &self.class
-            && self.rational.clone() * self.rational.clone() * r.clone() == *rationals::ONE
+            && self.rational.compare_magnitude_squared_times(r, &*rationals::ONE)
+                == std::cmp::Ordering::Equal
         {
             // Exact sqrt endpoint, e.g. sqrt(2)/2 scaled to magnitude one.
             crate::trace_dispatch!("real", "atanh", "sqrt-endpoint-infinity");
             return Err(Problem::Infinity);
         }
         if let Sqrt(r) = &self.class
-            && self.rational.clone() * self.rational.clone() * r.clone() > *rationals::ONE
+            && self.rational.compare_magnitude_squared_times(r, &*rationals::ONE)
+                == std::cmp::Ordering::Greater
         {
             // Exact sqrt domain failure avoids an approximation sign query.
             crate::trace_dispatch!("real", "atanh", "sqrt-domain-error");
@@ -2782,7 +2947,7 @@ impl Real {
         let one = Self::one();
         let numerator = one.clone() + self.clone();
         let denominator = one - self;
-        Ok((numerator / denominator)?.ln()? * Self::new(Rational::fraction(1, 2).unwrap()))
+        Ok((numerator / denominator)?.ln()? * constants::half())
     }
 
     fn recursive_powi(base: &Real, exp: &BigUint) -> Self {
@@ -2992,7 +3157,7 @@ impl Real {
         if let Exp(ref n) = self.class
             && n == rationals::ONE.deref()
         {
-            if self.rational == *rationals::ONE {
+            if self.rational.is_one() {
                 // e^x with unit scale is just exp(x), preserving the symbolic exp path.
                 crate::trace_dispatch!("real", "pow", "e-base-exp");
                 return exponent.exp();
@@ -3058,6 +3223,107 @@ fn multiply_public_sign(left: Option<RealSign>, right: Option<RealSign>) -> Opti
         (RealSign::Positive, RealSign::Negative) | (RealSign::Negative, RealSign::Positive) => {
             Some(RealSign::Negative)
         }
+    }
+}
+
+fn structural_cmp_from_ordering(ordering: std::cmp::Ordering) -> StructuralComparison {
+    match ordering {
+        std::cmp::Ordering::Less => StructuralComparison::Less,
+        std::cmp::Ordering::Equal => StructuralComparison::Equal,
+        std::cmp::Ordering::Greater => StructuralComparison::Greater,
+    }
+}
+
+fn domain_from_sign_nonnegative(sign: Option<RealSign>) -> DomainStatus {
+    match sign {
+        Some(RealSign::Positive | RealSign::Zero) => DomainStatus::Valid,
+        Some(RealSign::Negative) => DomainStatus::Invalid,
+        None => DomainStatus::Unknown,
+    }
+}
+
+fn domain_from_sign_positive(sign: Option<RealSign>) -> DomainStatus {
+    match sign {
+        Some(RealSign::Positive) => DomainStatus::Valid,
+        Some(RealSign::Negative | RealSign::Zero) => DomainStatus::Invalid,
+        None => DomainStatus::Unknown,
+    }
+}
+
+fn domain_abs_cmp_one(comparison: StructuralComparison, closed: bool) -> DomainStatus {
+    match (comparison, closed) {
+        (StructuralComparison::Less, _) => DomainStatus::Valid,
+        (StructuralComparison::Equal, true) => DomainStatus::Valid,
+        (StructuralComparison::Equal, false) | (StructuralComparison::Greater, _) => {
+            DomainStatus::Invalid
+        }
+        (StructuralComparison::Unknown, _) => DomainStatus::Unknown,
+    }
+}
+
+fn domain_cmp_one_ge(comparison: StructuralComparison) -> DomainStatus {
+    match comparison {
+        StructuralComparison::Equal | StructuralComparison::Greater => DomainStatus::Valid,
+        StructuralComparison::Less => DomainStatus::Invalid,
+        StructuralComparison::Unknown => DomainStatus::Unknown,
+    }
+}
+
+#[inline]
+fn primitive_facts_from_base(facts: &RealStructuralFacts) -> PrimitiveFacts {
+    if facts.zero == ZeroKnowledge::Zero {
+        return PrimitiveFacts {
+            f32: PrimitiveFloatStatus::Zero,
+            f64: PrimitiveFloatStatus::Zero,
+        };
+    }
+    let Some(magnitude) = facts.magnitude else {
+        return PrimitiveFacts {
+            f32: PrimitiveFloatStatus::Unknown,
+            f64: PrimitiveFloatStatus::Unknown,
+        };
+    };
+    if !magnitude.exact_msd {
+        return PrimitiveFacts {
+            f32: PrimitiveFloatStatus::Unknown,
+            f64: PrimitiveFloatStatus::Unknown,
+        };
+    }
+
+    PrimitiveFacts {
+        f32: primitive_float_status_from_msd(magnitude.msd, -150, -126, 127),
+        f64: primitive_float_status_from_msd(magnitude.msd, -1075, -1022, 1023),
+    }
+}
+
+#[inline]
+fn primitive_float_status_from_msd(
+    msd: i32,
+    underflow_floor: i32,
+    normal_floor: i32,
+    overflow_ceiling: i32,
+) -> PrimitiveFloatStatus {
+    if msd < underflow_floor {
+        PrimitiveFloatStatus::SubnormalOrUnderflows
+    } else if msd > overflow_ceiling {
+        PrimitiveFloatStatus::Overflows
+    } else if msd < normal_floor {
+        PrimitiveFloatStatus::SubnormalOrUnderflows
+    } else {
+        PrimitiveFloatStatus::NormalFinite
+    }
+}
+
+fn structural_kind_for_class(class: &Class) -> StructuralKind {
+    match class {
+        One => StructuralKind::ExactRational,
+        Pi | PiPow(_) | PiInv => StructuralKind::PiLike,
+        Exp(_) | PiExp(_) | PiInvExp(_) => StructuralKind::ExpLike,
+        Sqrt(_) | PiSqrt(_) => StructuralKind::SqrtLike,
+        Ln(_) | LnAffine(_) | LnProduct(_) | Log10(_) => StructuralKind::LogLike,
+        SinPi(_) | TanPi(_) => StructuralKind::TrigExact,
+        ConstProduct(_) | ConstOffset(_) | ConstProductSqrt(_) => StructuralKind::ProductConstant,
+        Irrational => StructuralKind::ComputableOpaque,
     }
 }
 
@@ -3404,15 +3670,20 @@ impl Real {
                 computable: None,
                 signal: None,
             }
-        } else if (x == &Rational::new(2) && y == &Rational::new(3))
-            || (x == &Rational::new(3) && y == &Rational::new(2))
+        } else if matches!(
+            (x.to_integer_i64(), y.to_integer_i64()),
+            (Some(2), Some(3)) | (Some(3), Some(2))
+        )
         {
             // sqrt(2)*sqrt(3) is common enough in trig-derived matrices to keep
             // as sqrt(6) without running the general square-extraction code.
+            // The small-integer test is structural and allocation-light; the
+            // general path still handles arbitrary radicands exactly when this
+            // cheap certificate does not apply.
             Self {
                 rational: Rational::one(),
-                class: Sqrt(Rational::new(6)),
-                computable: Some(Computable::sqrt_rational(Rational::new(6))),
+                class: Sqrt(rationals::SIX.clone()),
+                computable: Some(Computable::sqrt_rational(rationals::SIX.clone())),
                 signal: None,
             }
         } else {
@@ -3426,7 +3697,7 @@ impl Real {
                 };
             }
             let (a, b) = product.extract_square_reduced();
-            if b == *rationals::ONE {
+            if b.is_one() {
                 // The product contains a full square, so return only the exact
                 // rational factor and keep subsequent sign/equality checks cheap.
                 return Self {

@@ -65,12 +65,12 @@ impl TryFrom<f64> for Real {
 impl Real {
     #[inline]
     pub(crate) fn fold_ref(&self) -> Computable {
-        use crate::real::{Class, rationals};
+        use crate::real::Class;
 
         // Keep the rational scale separate until a generic computable kernel is
         // unavoidable. Folding `a * class` eagerly would erase exact classes
         // that sign, sqrt, log, and trig shortcuts can still exploit.
-        let mut c = if self.rational == *rationals::ONE {
+        let mut c = if self.rational.is_one() {
             self.computable_clone()
         } else if self.class == Class::One {
             Computable::rational(self.rational.clone())
@@ -87,8 +87,6 @@ impl Real {
 
     #[inline]
     pub(crate) fn fold(self) -> Computable {
-        use crate::real::rationals;
-
         // Owned folding mirrors `fold_ref` but moves the computable when the
         // rational scale is one; scalar transcendental kernels hit this path.
         let crate::Real {
@@ -97,7 +95,7 @@ impl Real {
             computable,
             signal,
         } = self;
-        if rational == *rationals::ONE {
+        if rational.is_one() {
             let mut c = computable.unwrap_or_else(Computable::one);
             if let Some(s) = signal {
                 c.abort(s.clone());

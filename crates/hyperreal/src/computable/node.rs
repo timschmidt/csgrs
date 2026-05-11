@@ -467,8 +467,20 @@ static HALF_PI_SHORTCUT_RATIONAL_LIMIT: LazyLock<Rational> =
     LazyLock::new(|| Rational::fraction(3, 2).unwrap());
 static INVERSE_ENDPOINT_RATIONAL_THRESHOLD: LazyLock<Rational> =
     LazyLock::new(|| Rational::fraction(7, 8).unwrap());
+static HALF_RATIONAL: LazyLock<Rational> = LazyLock::new(|| Rational::fraction(1, 2).unwrap());
 
 impl Computable {
+    #[inline]
+    fn half() -> Self {
+        // atanh/log-ratio reductions multiply by 1/2 after exact symbolic
+        // simplification. Keeping the half rational cached avoids rebuilding a
+        // tiny exact leaf on every construction, and still delays approximation
+        // to the final Computable graph. This follows Boehm et al.'s exact-real
+        // separation of symbolic construction from numerical refinement:
+        // https://doi.org/10.1145/319838.319860.
+        Self::rational(HALF_RATIONAL.clone())
+    }
+
     fn internal_structural_eq(left: &Self, right: &Self) -> bool {
         fn compare_nodes(left: &Approximation, right: &Approximation) -> bool {
             match (left, right) {
@@ -2541,29 +2553,38 @@ impl Computable {
     }
 
     fn ln_shared_or_smooth_rational(rational: &Rational) -> Option<Self> {
-        if rational == &Rational::new(2) {
-            crate::trace_dispatch!("computable", "ln", "shared-ln2");
-            return Some(Self::ln_constant(2).unwrap());
-        }
-        if rational == &Rational::new(3) {
-            crate::trace_dispatch!("computable", "ln", "shared-ln3");
-            return Some(Self::ln_constant(3).unwrap());
-        }
-        if rational == &Rational::new(5) {
-            crate::trace_dispatch!("computable", "ln", "shared-ln5");
-            return Some(Self::ln_constant(5).unwrap());
-        }
-        if rational == &Rational::new(6) {
-            crate::trace_dispatch!("computable", "ln", "shared-ln6");
-            return Some(Self::ln_constant(6).unwrap());
-        }
-        if rational == &Rational::new(7) {
-            crate::trace_dispatch!("computable", "ln", "shared-ln7");
-            return Some(Self::ln_constant(7).unwrap());
-        }
-        if rational == &Rational::new(10) {
-            crate::trace_dispatch!("computable", "ln", "shared-ln10");
-            return Some(Self::ln_constant(10).unwrap());
+        // Shared logs for small smooth bases reuse one approximation cache
+        // across all expressions. Extracting the integer once prevents the
+        // older pattern of constructing several candidate rationals just to
+        // reject them. Smooth-factor decomposition below remains exact.
+        if let Some(integer) = rational.to_integer_i64() {
+            match integer {
+                2 => {
+                    crate::trace_dispatch!("computable", "ln", "shared-ln2");
+                    return Some(Self::ln_constant(2).unwrap());
+                }
+                3 => {
+                    crate::trace_dispatch!("computable", "ln", "shared-ln3");
+                    return Some(Self::ln_constant(3).unwrap());
+                }
+                5 => {
+                    crate::trace_dispatch!("computable", "ln", "shared-ln5");
+                    return Some(Self::ln_constant(5).unwrap());
+                }
+                6 => {
+                    crate::trace_dispatch!("computable", "ln", "shared-ln6");
+                    return Some(Self::ln_constant(6).unwrap());
+                }
+                7 => {
+                    crate::trace_dispatch!("computable", "ln", "shared-ln7");
+                    return Some(Self::ln_constant(7).unwrap());
+                }
+                10 => {
+                    crate::trace_dispatch!("computable", "ln", "shared-ln10");
+                    return Some(Self::ln_constant(10).unwrap());
+                }
+                _ => {}
+            }
         }
         if let Some(reduced) = Self::ln_smooth_rational(rational) {
             crate::trace_dispatch!("computable", "ln", "smooth-rational-shared-log-sum");
@@ -2823,9 +2844,16 @@ impl Computable {
                 crate::trace_dispatch!("computable", "sqrt", "exact-rational-square");
                 return Self::rational(root);
             }
-            if !root.is_one() && (rest == Rational::new(2) || rest == Rational::new(3)) {
+            if !root.is_one()
+                && let Some(shared_radicand @ (2 | 3)) = rest.to_integer_i64()
+            {
+                // For scaled sqrt(2)/sqrt(3), reuse the shared constant cache
+                // for the irrational factor and keep the exact rational scale
+                // separate. This is a measured construction-time win for scaled
+                // square-free inputs without changing the single-node path for
+                // plain sqrt(2)/sqrt(3).
                 crate::trace_dispatch!("computable", "sqrt", "shared-squarefree-rational");
-                let constant = Self::sqrt_constant(if rest == Rational::new(2) { 2 } else { 3 })
+                let constant = Self::sqrt_constant(shared_radicand)
                     .expect("sqrt(2) and sqrt(3) are shared constants");
                 return constant.multiply(Self::rational(root));
             }
@@ -3013,7 +3041,7 @@ impl Computable {
                 crate::trace_dispatch!("computable", "acos", "exact-one-zero");
                 return Self::zero();
             }
-            if rational == Rational::new(-1) {
+            if rational.is_minus_one() {
                 crate::trace_dispatch!("computable", "acos", "exact-minus-one-pi");
                 return Self::pi();
             }
@@ -3191,11 +3219,13 @@ impl Computable {
                         // For exact rationals, atanh(x) is one exact ln ratio.
                         // That keeps common factors in the logarithm constructor
                         // instead of building a generic quotient Computable first.
+                        // The final multiply uses the cached exact 1/2 leaf so
+                        // construction does not allocate a new rational after
+                        // the symbolic reduction has already succeeded.
                         let one = Rational::one();
                         let ratio = (one.clone() + rational.clone()) / (one - rational);
                         crate::trace_dispatch!("computable", "atanh", "exact-log-ratio");
-                        return Self::ln_exact_rational(ratio)
-                            .multiply(Self::rational(Rational::fraction(1, 2).unwrap()));
+                        return Self::ln_exact_rational(ratio).multiply(Self::half());
                     }
                 }
             }
@@ -3214,7 +3244,7 @@ impl Computable {
         numerator
             .multiply(denominator.inverse())
             .ln()
-            .multiply(Self::rational(Rational::fraction(1, 2).unwrap()))
+            .multiply(Self::half())
     }
 
     /// Negate this number.

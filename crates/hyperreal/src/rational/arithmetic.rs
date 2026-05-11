@@ -1,4 +1,5 @@
 use crate::Problem;
+use crate::structural::{RationalFacts, RationalStorageClass};
 use num::bigint::Sign::{self, *};
 use num::{BigInt, BigUint, ToPrimitive};
 use num::{One, Zero};
@@ -811,6 +812,19 @@ impl Rational {
         self.sign == Minus && self.numerator == *ONE.deref() && self.denominator == *ONE.deref()
     }
 
+    #[inline]
+    pub(crate) fn cmp_one_structural(&self) -> Ordering {
+        match self.sign {
+            Minus | NoSign => Ordering::Less,
+            Plus => self.numerator.cmp(&self.denominator),
+        }
+    }
+
+    #[inline]
+    pub(crate) fn abs_cmp_one_structural(&self) -> Ordering {
+        self.numerator.cmp(&self.denominator)
+    }
+
     /// The integer part of this Rational.
     ///
     /// Non integer rationals will thus be truncated towards zero
@@ -1066,6 +1080,47 @@ impl Rational {
             return self.numerator.cmp(&other.numerator);
         }
         (&self.numerator * &other.denominator).cmp(&(&other.numerator * &self.denominator))
+    }
+
+    /// Compare `|self|^2 * factor` with `other` without constructing an
+    /// intermediate Rational.
+    ///
+    /// This is a structural predicate for sqrt-domain gates such as
+    /// `|a*sqrt(r)| <= 1`. Avoiding canonicalization here keeps inverse
+    /// trigonometric and hyperbolic dispatch in the exact-rational layer until
+    /// a real approximation is actually required.
+    #[inline]
+    pub(crate) fn compare_magnitude_squared_times(&self, factor: &Self, other: &Self) -> Ordering {
+        let left = &self.numerator * &self.numerator * &factor.numerator * &other.denominator;
+        let right = &self.denominator * &self.denominator * &factor.denominator * &other.numerator;
+        left.cmp(&right)
+    }
+
+    #[inline]
+    pub(crate) fn detailed_rational_facts(&self) -> RationalFacts {
+        let denominator_is_one = self.denominator == *ONE.deref();
+        let numerator_bits = self.numerator.bits();
+        let denominator_bits = self.denominator.bits();
+        let denominator_is_power_of_two = Self::is_power_of_two(&self.denominator);
+        let numerator_is_power_of_two = self.sign != NoSign && Self::is_power_of_two(&self.numerator);
+        let storage = if self.sign == NoSign {
+            RationalStorageClass::Zero
+        } else if numerator_bits <= 64 && denominator_bits <= 64 {
+            RationalStorageClass::WordSized
+        } else if numerator_bits.saturating_add(denominator_bits) <= 4096 {
+            RationalStorageClass::MultiLimb
+        } else {
+            RationalStorageClass::VeryLarge
+        };
+
+        RationalFacts {
+            exact_integer: denominator_is_one,
+            exact_small_integer_i64: denominator_is_one
+                && (self.sign == NoSign || numerator_bits <= 63),
+            exact_dyadic: denominator_is_power_of_two,
+            power_of_two: numerator_is_power_of_two && denominator_is_power_of_two,
+            storage,
+        }
     }
 
     /// Either the corresponding [`BigInt`] or None if this value is not an integer.

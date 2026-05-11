@@ -1,0 +1,631 @@
+# Candidate structural facts for hyperreal
+
+This note collects inexpensive facts that could be exposed by `hyperreal`
+without forcing approximation. The goal is to help callers choose fast paths,
+domain checks, simplifications, solver predicates, and matrix/vector kernels
+without paying for high-precision evaluation.
+
+## Strict rule
+
+A structural fact should be cheap and representation-derived.
+
+Allowed sources:
+
+- stored rational sign, numerator, denominator, and bit lengths
+- stored `Real` class/certificate
+- cached exact constants and symbolic class invariants
+- already-known sign/zero/magnitude facts
+- dependency metadata in a future expression layer
+
+Avoid in structural facts:
+
+- approximation
+- bounded refinement
+- full GCD unless already needed by the operation
+- allocation-heavy decomposition
+- recursive graph traversal beyond shallow cached facts
+- semantic equality proving
+
+If a query needs those costs, keep it as an explicit method rather than adding
+it to always-computed structural facts.
+
+## Existing public facts
+
+Current `RealStructuralFacts` includes:
+
+- known sign: positive, negative, zero, or unknown
+- zero status: zero, nonzero, or unknown
+- exact rational availability
+- magnitude bits for known nonzero values
+
+These should remain the minimal fast fact set.
+
+## Recommended shape
+
+Avoid bloating `RealStructuralFacts` if all callers do not need the extra data.
+Prefer a second detailed structure:
+
+```rust
+pub struct RealDetailedFacts {
+    pub base: RealStructuralFacts,
+    pub identity: IdentityFacts,
+    pub rational: RationalFacts,
+    pub domains: DomainFacts,
+    pub ordering: OrderingFacts,
+    pub symbolic: SymbolicFacts,
+}
+```
+
+The minimal facts stay cheap for hot predicates. Detailed facts can be requested
+by solvers, matrix kernels, and diagnostic tooling.
+
+## Identity facts
+
+### known one
+
+Whether the value is exactly `1`.
+
+Uses:
+
+- skip multiplication and division
+- identity matrix/vector transforms
+- matrix powers
+- normalization
+- solver residual simplification
+
+Cost:
+
+- exact rational: numerator `1`, denominator `1`, positive sign
+- symbolic class: rational scale and `Class::One`
+
+### known minus one
+
+Whether the value is exactly `-1`.
+
+Uses:
+
+- replace multiplication by negation
+- simplify inverse and division
+- detect reflections/sign flips in geometry
+
+Cost:
+
+- same as known one, with negative sign
+
+### known small integer
+
+Exact value is an integer that fits in a small primitive range such as `i32` or
+`i64`.
+
+Uses:
+
+- power simplification
+- polynomial constraints
+- trig/log special cases
+- solver diagnostic formatting
+
+Cost:
+
+- denominator equals one and numerator bit length fits the target range
+
+### known zero-or-one
+
+Compact enum for exactly zero, exactly one, or neither/unknown.
+
+Uses:
+
+- branch dispatch where separate zero and one calls would duplicate work
+- sparse matrix/vector kernels
+
+Cost:
+
+- already available from rational/class facts
+
+## Rational facts
+
+### exact integer
+
+Whether the value is exactly rational with denominator one.
+
+Uses:
+
+- exact powers
+- polynomial simplification
+- domain shortcuts
+- constraints over integer-like values
+
+Cost:
+
+- exact rational class and denominator equals one
+
+### exact dyadic
+
+Whether the value is exactly rational with power-of-two denominator.
+
+Uses:
+
+- shift-only rational reduction
+- exact imported float handling
+- matrix/vector kernels that want to avoid general denominator work
+- geometry filters with exact binary inputs
+
+Cost:
+
+- denominator bit-length and trailing-zero test
+
+### power-of-two value
+
+Whether the whole value is exactly `+/- 2^k`.
+
+Uses:
+
+- computable scale/offset nodes
+- fast multiplication/division by shifts
+- magnitude reasoning
+
+Cost:
+
+- numerator and denominator are both powers of two, plus sign
+
+### decimal power value
+
+Whether the value is exactly `+/- 10^k`.
+
+Uses:
+
+- `log10` exact shortcuts
+- decimal-unit scaling
+- diagnostic formatting
+
+Cost:
+
+- can be cheap only when already recognized during construction or cached
+- should not require repeated factorization in general structural facts
+
+### numerator/denominator size class
+
+Small enum for approximate storage cost, for example:
+
+- zero
+- word-sized
+- multi-limb
+- very-large
+
+Uses:
+
+- choose exact versus approximate path in solvers
+- avoid unexpectedly expensive rational arithmetic in inner loops
+- benchmark diagnostics
+
+Cost:
+
+- `BigUint::bits()`
+
+## Ordering and magnitude facts
+
+### compare absolute value with one
+
+Known relation of `|x|` to `1`:
+
+- less than
+- equal
+- greater than
+- unknown
+
+Uses:
+
+- `asin` / `acos`
+- `atanh`
+- normalization
+- solver trust regions
+- predicates and domain filters
+
+Cost:
+
+- exact rational numerator/denominator comparison
+- symbolic class invariants where obvious
+- no approximation
+
+### compare value with zero
+
+Already mostly covered by sign and zero facts, but a compact ordering enum may
+be easier for predicate APIs:
+
+- less than zero
+- equal zero
+- greater than zero
+- unknown
+
+Uses:
+
+- liminal predicate integration
+- active-set decisions
+
+Cost:
+
+- current sign fact
+
+### compare value with one
+
+Known relation of `x` to `1`.
+
+Uses:
+
+- `acosh`
+- log/exponential simplification
+- geometry scale checks
+- solver bounds
+
+Cost:
+
+- exact rational comparison
+- known positive symbolic classes when simple
+
+### known finite primitive range
+
+Whether a finite `f64` approximation is structurally guaranteed to exist
+without overflow or underflow surprises.
+
+Uses:
+
+- filters that need `f64`
+- solver numeric inner loops
+- `realistic_blas` approximate fallback decisions
+
+Cost:
+
+- exact magnitude bits and known finite representation
+- should report unknown if it would require approximation
+
+### known tiny / known huge buckets
+
+Coarse magnitude buckets such as:
+
+- definitely subnormal in `f64`
+- definitely normal in `f64`
+- definitely overflows `f64`
+
+Uses:
+
+- decide when primitive filters are unsafe
+- select scaled formulas for kernels
+
+Cost:
+
+- bit-length magnitude facts
+
+## Domain facts
+
+Domain facts should be conservative and explicit. They should not approximate.
+
+### sqrt domain
+
+Known:
+
+- valid: `x >= 0`
+- invalid: `x < 0`
+- unknown
+
+Uses:
+
+- skip repeated domain checks
+- solver constraint validation
+
+Cost:
+
+- sign/zero facts
+
+### log domain
+
+Known:
+
+- valid: `x > 0`
+- invalid: `x <= 0`
+- unknown
+
+Uses:
+
+- `ln`, `log10`
+- constraints involving positive scales
+
+Cost:
+
+- sign/zero facts
+
+### unit interval domain
+
+Known relation to `[-1, 1]`.
+
+Uses:
+
+- `asin`
+- `acos`
+- normalized dot products
+- geometry angle constraints
+
+Cost:
+
+- exact rational absolute comparison
+- symbolic class invariants only when obvious
+
+### open unit interval domain
+
+Known relation to `(-1, 1)`.
+
+Uses:
+
+- `atanh`
+- barrier functions
+
+Cost:
+
+- exact rational absolute comparison
+
+### acosh domain
+
+Known relation to `[1, infinity)`.
+
+Uses:
+
+- `acosh`
+- hyperbolic constraints
+
+Cost:
+
+- exact rational comparison with one
+- obvious symbolic class facts
+
+### denominator nonzero
+
+For future expression values, whether an expression used as a denominator is
+known nonzero.
+
+Uses:
+
+- division simplification
+- solver residual validation
+
+Cost:
+
+- current zero/nonzero facts
+
+## Symbolic facts
+
+### structural kind
+
+Coarse public category that does not expose private `Class` internals:
+
+- exact rational
+- pi-like
+- exp-like
+- sqrt-like
+- log-like
+- trig-exact
+- product constant
+- computable opaque
+
+Uses:
+
+- dispatch without leaking representation internals
+- diagnostics
+- solver simplification strategy
+
+Cost:
+
+- current `Class` tag
+
+### has sqrt factor
+
+Whether the value contains a factored square-root certificate.
+
+Uses:
+
+- simplify products and quotients involving roots
+- geometry distances
+- norm expressions
+
+Cost:
+
+- current symbolic class tag
+
+### has pi factor
+
+Whether the value is structurally known to include a pi power.
+
+Uses:
+
+- trig/log simplification
+- angle constraints
+- exact symbolic diagnostics
+
+Cost:
+
+- current symbolic class tag
+
+### has exp factor
+
+Whether the value is structurally known to include an exponential factor.
+
+Uses:
+
+- exponential/log simplification
+- positive-domain checks
+
+Cost:
+
+- current symbolic class tag
+
+### known positive symbolic class
+
+Whether the non-rational class component is known positive before applying the
+rational scale.
+
+Uses:
+
+- sign facts
+- domain checks
+- multiplication/division simplification
+
+Cost:
+
+- already an invariant of most current classes
+
+### computable required
+
+Whether answering numeric approximation requires entering the `Computable`
+layer.
+
+Uses:
+
+- solver evaluation planning
+- trace/debug reports
+- decide when exact filters are enough
+
+Cost:
+
+- class/computable option
+
+## Computable/cache facts
+
+These are useful, but they are performance state rather than mathematical
+structure. Consider a separate cache-status API instead of mixing them into
+`RealStructuralFacts`.
+
+### approximation cache available
+
+Whether an approximation at or near a requested precision is already cached.
+
+Uses:
+
+- solver refinement scheduling
+- avoiding redundant warmups
+
+Cost:
+
+- cache metadata lookup
+
+### sign cache available
+
+Whether the computable graph has already cached an exact or refined sign result.
+
+Uses:
+
+- predicate planning
+- active-set decisions
+
+Cost:
+
+- cache metadata lookup
+
+### magnitude cache available
+
+Whether magnitude/most-significant-digit information is already cached.
+
+Uses:
+
+- precision planning
+- primitive conversion filters
+
+Cost:
+
+- cache metadata lookup
+
+## Future expression-layer facts
+
+These should probably live on a future variable-aware `Expr`, not on `Real`.
+
+### dependency set
+
+Set of variables an expression depends on.
+
+Uses:
+
+- sparse Jacobians
+- cache invalidation
+- active-set updates
+
+Cost:
+
+- expression arena metadata
+
+### independent of active variables
+
+Whether an expression can be treated as constant for a solve block.
+
+Uses:
+
+- skip residual/Jacobian recomputation
+- reduce expressions before substitution
+
+Cost:
+
+- dependency set comparison
+
+### dependency count
+
+Number of variables used by an expression.
+
+Uses:
+
+- dense versus sparse evaluation strategy
+- block solver selection
+
+Cost:
+
+- expression arena metadata
+
+### linearity hints
+
+Whether an expression is known constant, linear, affine, quadratic, or nonlinear
+with respect to a variable set.
+
+Uses:
+
+- exact linear solve paths
+- Jacobian caching
+- solver algorithm selection
+
+Cost:
+
+- should be cached during expression construction/reduction
+
+### polynomial degree hint
+
+Known low polynomial degree with respect to variables.
+
+Uses:
+
+- choose direct polynomial solves or better initialization
+- detect quadratic distance constraints
+
+Cost:
+
+- expression metadata, not repeated traversal
+
+### separability/block structure
+
+Whether an expression depends on disjoint variable blocks.
+
+Uses:
+
+- block solvers
+- PCB/toolpath local repair
+
+Cost:
+
+- dependency metadata
+
+## Implementation caution
+
+Adding facts can improve performance only if callers avoid repeated work. The
+wrong shape can slow hot paths by making every structural query heavier.
+
+Recommended approach:
+
+1. Keep `RealStructuralFacts` small and stable.
+2. Add `RealDetailedFacts` or targeted explicit queries for richer facts.
+3. Derive detailed facts lazily and benchmark callers that use them.
+4. Add trace counters for detailed-fact requests.
+5. Keep a fact only if targeted benches show it prevents more expensive work
+   than it adds.
+

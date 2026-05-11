@@ -611,6 +611,12 @@ fn bench_structural_query_speed(c: &mut Criterion) {
         group.bench_function(format!("{name}_structural_facts"), |b| {
             b.iter(|| black_box(black_box(&value).structural_facts()))
         });
+        group.bench_function(format!("{name}_detailed_facts"), |b| {
+            b.iter(|| black_box(black_box(&value).detailed_facts()))
+        });
+        group.bench_function(format!("{name}_to_f64_approx"), |b| {
+            b.iter(|| black_box(black_box(&value).to_f64_approx()))
+        });
     }
 
     group.finish();

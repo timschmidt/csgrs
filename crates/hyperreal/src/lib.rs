@@ -12,7 +12,12 @@ mod rational;
 pub use crate::rational::Rational;
 
 mod structural;
-pub use crate::structural::{MagnitudeBits, RealSign, RealStructuralFacts, ZeroKnowledge};
+pub use crate::structural::{
+    DomainFacts, DomainStatus, IdentityFacts, MagnitudeBits, OrderingFacts, PrimitiveFacts,
+    PrimitiveFloatStatus, RationalFacts, RationalStorageClass, RealDetailedFacts, RealSign,
+    RealStructuralFacts, StructuralComparison, StructuralKind, SymbolicFacts, ZeroKnowledge,
+    ZeroOneStatus,
+};
 
 mod trace;
 pub(crate) use trace::trace_dispatch;
