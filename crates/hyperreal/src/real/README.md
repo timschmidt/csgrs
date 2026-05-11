@@ -11,27 +11,27 @@ abort signal.
 | Real                                                                  |
 |                                                                       |
 |  rational: Rational                                                   |
-|  + exact signed scale                                                  |
-|  + zero is represented here                                            |
-|  + multiplies every nonzero symbolic/computable class                  |
+|  + exact signed scale                                                 |
+|  + zero is represented here                                           |
+|  + multiplies every nonzero symbolic/computable class                 |
 |                                                                       |
 |  class: Class                                                         |
-|  + One                         exact rational only                     |
-|  + Pi, PiPow, PiInv            pi-family certificates                  |
-|  + Exp, PiExp, ConstProduct    e/pi product certificates               |
-|  + Sqrt, PiSqrt, ...Sqrt       factored square-root certificates       |
-|  + Ln, LnAffine, LnProduct     logarithm certificates                  |
-|  + Log10                       base-10 logarithm certificate           |
-|  + SinPi, TanPi                rational trig certificates              |
-|  + Irrational                  opaque computable value                 |
+|  + One                         exact rational only                    |
+|  + Pi, PiPow, PiInv            pi-family certificates                 |
+|  + Exp, PiExp, ConstProduct    e/pi product certificates              |
+|  + Sqrt, PiSqrt, ...Sqrt       factored square-root certificates      |
+|  + Ln, LnAffine, LnProduct     logarithm certificates                 |
+|  + Log10                       base-10 logarithm certificate          |
+|  + SinPi, TanPi                rational trig certificates             |
+|  + Irrational                  opaque computable value                |
 |                                                                       |
 |  computable: Option<Computable>                                       |
-|  + lazy approximation graph                                            |
-|  + shared constants and cached approximations live inside Computable   |
-|  + absent only when the rational/class certificate is sufficient       |
+|  + lazy approximation graph                                           |
+|  + shared constants and cached approximations live inside Computable  |
+|  + absent only when the rational/class certificate is sufficient      |
 |                                                                       |
 |  signal: Option<Signal>                                               |
-|  + optional abort hook for bounded/refinement callers                  |
+|  + optional abort hook for bounded/refinement callers                 |
 +-----------------------------------------------------------------------+
 ```
 
