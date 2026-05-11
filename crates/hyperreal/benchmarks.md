@@ -45,7 +45,8 @@ Ordering and absolute-comparison shortcuts.
 | --- | ---: | ---: | --- |
 | `computable_compare/compare_to_opposite_sign` | 12.29 ns | 12.20 ns - 12.41 ns | Compares values with known opposite signs. |
 | `computable_compare/compare_to_exact_msd_gap` | 18.72 ns | 18.63 ns - 18.82 ns | Compares values with a large exact magnitude gap. |
-| `computable_compare/compare_absolute_exact_rational` | 3.90 ns | 3.89 ns - 3.92 ns | Compares absolute values of exact rationals. |
+| `computable_compare/compare_absolute_exact_rational` | 4.06 ns | 4.04 ns - 4.08 ns | Compares absolute values of exact rationals. |
+| `computable_compare/compare_absolute_exact_rational_same_numerator` | 4.01 ns | 4.01 ns - 4.02 ns | Compares exact rational magnitudes with matching numerators. |
 | `computable_compare/compare_absolute_dominant_add` | 14.94 ns | 14.86 ns - 15.03 ns | Compares a dominant term against the same term plus a tiny addend. |
 | `computable_compare/compare_absolute_exact_msd_gap` | 18.87 ns | 18.76 ns - 19.00 ns | Compares absolute values with a large exact magnitude gap. |
 
@@ -68,7 +69,7 @@ Low-level approximation kernels and deep expression-tree stress cases.
 | `computable_transcendentals/exp_zero_cold_p128` | 72.58 ns | 71.95 ns - 73.33 ns | Approximates exp(0). |
 | `computable_transcendentals/ln_cold_p128` | 4.240 us | 4.229 us - 4.252 us | Approximates ln(11/7). |
 | `computable_transcendentals/ln_cached_p128` | 20.93 ns | 20.82 ns - 21.05 ns | Repeats a cached ln(11/7) approximation. |
-| `computable_transcendentals/ln_smooth_rational_cold_p128` | 830.71 ns | 795.38 ns - 869.86 ns | Approximates ln(45/14), which can decompose into shared prime-log constants. |
+| `computable_transcendentals/ln_smooth_rational_cold_p128` | 751.23 ns | 746.43 ns - 755.43 ns | Approximates ln(45/14), which can decompose into shared prime-log constants. |
 | `computable_transcendentals/ln_nonsmooth_rational_cold_p128` | 2.520 us | 2.507 us - 2.535 us | Approximates ln(11/13), guarding the generic exact-rational log fallback. |
 | `computable_transcendentals/ln_large_cold_p128` | 339.12 ns | 322.20 ns - 357.96 ns | Approximates ln(1024), exercising large-input reduction. |
 | `computable_transcendentals/ln_large_cached_p128` | 21.37 ns | 21.25 ns - 21.51 ns | Repeats a cached ln(1024) approximation. |
@@ -77,7 +78,7 @@ Low-level approximation kernels and deep expression-tree stress cases.
 | `computable_transcendentals/ln_near_limit_cached_p128` | 21.49 ns | 21.23 ns - 21.78 ns | Repeats a cached near-limit ln approximation. |
 | `computable_transcendentals/ln_one_cold_p128` | 33.96 ns | 33.72 ns - 34.24 ns | Approximates ln(1). |
 | `computable_transcendentals/sqrt_cold_p128` | 753.80 ns | 747.48 ns - 760.92 ns | Approximates sqrt(2). |
-| `computable_transcendentals/sqrt_squarefree_scaled_cold_p128` | 107.89 ns | 105.05 ns - 111.19 ns | Approximates sqrt(12), which can reduce to 2*sqrt(3). |
+| `computable_transcendentals/sqrt_squarefree_scaled_cold_p128` | 100.36 ns | 99.81 ns - 100.93 ns | Approximates sqrt(12), which can reduce to 2*sqrt(3). |
 | `computable_transcendentals/sqrt_cached_p128` | 21.46 ns | 21.37 ns - 21.60 ns | Repeats a cached sqrt(2) approximation. |
 | `computable_transcendentals/sqrt_single_scaled_square_cold_p128` | 1.066 us | 1.063 us - 1.070 us | Builds and approximates sqrt((7*pi/8)^2). |
 | `computable_transcendentals/sin_cold_p96` | 1.584 us | 1.578 us - 1.591 us | Approximates sin(7/5). |
@@ -117,7 +118,7 @@ Low-level approximation kernels and deep expression-tree stress cases.
 | `computable_transcendentals/asinh_cached_p128` | 21.26 ns | 21.17 ns - 21.37 ns | Repeats a cached computable asinh approximation. |
 | `computable_transcendentals/acosh_cold_p128` | 9.287 us | 9.247 us - 9.332 us | Approximates a computable acosh expression. |
 | `computable_transcendentals/acosh_cached_p128` | 21.29 ns | 21.22 ns - 21.37 ns | Repeats a cached computable acosh approximation. |
-| `computable_transcendentals/atanh_cold_p128` | 225.26 ns | 150.03 ns - 372.67 ns | Approximates a computable atanh expression. |
+| `computable_transcendentals/atanh_cold_p128` | 206.18 ns | 141.40 ns - 334.88 ns | Approximates a computable atanh expression. |
 | `computable_transcendentals/atanh_cached_p128` | 20.94 ns | 20.88 ns - 21.00 ns | Repeats a cached computable atanh approximation. |
 | `computable_transcendentals/atanh_tiny_cold_p128` | 472.50 ns | 471.90 ns - 473.12 ns | Approximates atanh(1e-12), exercising the tiny-input series. |
 | `computable_transcendentals/atanh_near_one_cold_p128` | 2.798 us | 2.637 us - 3.112 us | Approximates atanh(0.999999), exercising the endpoint log transform. |
@@ -234,7 +235,8 @@ Core scalar algorithms that do not require high-precision transcendental approxi
 | `pure_scalar_algorithm_speed/real_exact_mul` | 209.40 ns | 201.90 ns - 217.89 ns | Multiplies exact rational-backed `Real` values. |
 | `pure_scalar_algorithm_speed/real_exact_div` | 722.32 ns | 694.58 ns - 754.91 ns | Divides exact rational-backed `Real` values. |
 | `pure_scalar_algorithm_speed/real_exact_sqrt_reduce` | 409.01 ns | 408.35 ns - 409.73 ns | Reduces an exact square-root expression. |
-| `pure_scalar_algorithm_speed/real_exact_ln_reduce` | 228.47 ns | 228.06 ns - 228.95 ns | Reduces an exact logarithm of a power of two. |
+| `pure_scalar_algorithm_speed/real_exact_ln_reduce` | 208.30 ns | 206.98 ns - 209.72 ns | Reduces an exact logarithm of a power of two. |
+| `pure_scalar_algorithm_speed/real_pow_small_integer_exponent` | 2.075 us | 2.063 us - 2.090 us | Dispatches `Real::pow` with an exact small-integer exponent. |
 
 ### `borrowed_op_overhead`
 
@@ -279,7 +281,7 @@ Construction-time shortcuts for exact rational multiples of pi and inverse compo
 | `exact_transcendental_special_forms/acos_cos_9pi_7` | 1.853 us | 1.780 us - 1.934 us | Recognizes the principal branch of acos(cos(9pi/7)). |
 | `exact_transcendental_special_forms/atan_tan_6pi_7` | 1.022 us | 975.08 ns - 1.072 us | Recognizes the principal branch of atan(tan(6pi/7)). |
 | `exact_transcendental_special_forms/asinh_large` | 385.09 ns | 370.30 ns - 401.07 ns | Builds a large inverse hyperbolic sine without exact intermediate Reals. |
-| `exact_transcendental_special_forms/atanh_sqrt_half` | 5.605 us | 4.822 us - 7.037 us | Builds atanh(sqrt(2)/2) after exact structural domain checks. |
+| `exact_transcendental_special_forms/atanh_sqrt_half` | 4.726 us | 4.558 us - 4.915 us | Builds atanh(sqrt(2)/2) after exact structural domain checks. |
 
 ### `symbolic_reductions`
 
@@ -301,8 +303,10 @@ Existing symbolic constant algebra cases considered for additional reductions.
 | `symbolic_reductions/mul_pi_inverse_pi` | 249.97 ns | 248.46 ns - 251.69 ns | Multiplies pi by its reciprocal. |
 | `symbolic_reductions/mul_pi_e_sqrt_two` | 456.69 ns | 454.14 ns - 459.34 ns | Builds the factored pi * e * sqrt(2) form. |
 | `symbolic_reductions/mul_const_product_sqrt_sqrt` | 673.02 ns | 668.60 ns - 677.76 ns | Cancels sqrt(2) from (pi * e * sqrt(2)) * sqrt(2). |
-| `symbolic_reductions/div_const_product_sqrt_e` | 1.078 us | 1.063 us - 1.098 us | Reduces (pi * e * sqrt(2)) / e. |
-| `symbolic_reductions/inverse_const_product_sqrt` | 558.37 ns | 556.18 ns - 560.83 ns | Builds a rationalized reciprocal of pi * e * sqrt(2). |
+| `symbolic_reductions/div_const_product_sqrt_e` | 983.94 ns | 980.11 ns - 987.99 ns | Reduces (pi * e * sqrt(2)) / e. |
+| `symbolic_reductions/inverse_const_product_sqrt` | 472.30 ns | 471.22 ns - 473.45 ns | Builds a rationalized reciprocal of pi * e * sqrt(2). |
+| `symbolic_reductions/inverse_sqrt_two` | 101.27 ns | 100.94 ns - 101.60 ns | Builds the rationalized reciprocal of unit-scaled sqrt(2). |
+| `symbolic_reductions/div_sqrt_two_sqrt_three` | 1.129 us | 1.126 us - 1.132 us | Rationalizes a quotient of two unit-scaled square roots. |
 
 <!-- END scalar_micro -->
 
@@ -386,7 +390,7 @@ Exact inverse trig shortcuts and symbolic inverse trig recognition.
 | --- | ---: | ---: | --- |
 | `real_exact_inverse_trig/asin_1_2` | not run | not run | Recognizes asin(1/2) as pi/6. |
 | `real_exact_inverse_trig/asin_minus_1_2` | not run | not run | Recognizes asin(-1/2) as -pi/6. |
-| `real_exact_inverse_trig/asin_sqrt_2_over_2` | 267.03 ns | 266.25 ns - 267.84 ns | Recognizes asin(sqrt(2)/2) as pi/4. |
+| `real_exact_inverse_trig/asin_sqrt_2_over_2` | 271.12 ns | 270.18 ns - 272.08 ns | Recognizes asin(sqrt(2)/2) as pi/4. |
 | `real_exact_inverse_trig/asin_sin_pi_5` | not run | not run | Inverts a symbolic sin(pi/5). |
 | `real_exact_inverse_trig/acos_1` | not run | not run | Recognizes acos(1) as zero. |
 | `real_exact_inverse_trig/acos_minus_1` | not run | not run | Recognizes acos(-1) as pi. |
@@ -423,12 +427,12 @@ Inverse hyperbolic construction, exact exits, stable ln1p forms, and domain erro
 | `real_inverse_hyperbolic/asinh_1_000_000` | not run | not run | Builds asinh for a large positive rational. |
 | `real_inverse_hyperbolic/acosh_1` | not run | not run | Recognizes acosh(1) as zero. |
 | `real_inverse_hyperbolic/acosh_2` | not run | not run | Builds acosh(2) through the stable moderate-input path. |
-| `real_inverse_hyperbolic/acosh_sqrt_2` | 292.34 ns | 291.46 ns - 293.28 ns | Builds acosh(sqrt(2)) through square-root domain specialization. |
+| `real_inverse_hyperbolic/acosh_sqrt_2` | 293.58 ns | 292.75 ns - 294.46 ns | Builds acosh(sqrt(2)) through square-root domain specialization. |
 | `real_inverse_hyperbolic/acosh_1_000_000` | not run | not run | Builds acosh for a large positive rational. |
 | `real_inverse_hyperbolic/atanh_0` | not run | not run | Recognizes atanh(0) as zero. |
-| `real_inverse_hyperbolic/atanh_1_2` | 1.025 us | 1.017 us - 1.038 us | Builds exact-rational atanh(1/2). |
-| `real_inverse_hyperbolic/atanh_minus_1_2` | 1.211 us | 1.170 us - 1.258 us | Builds exact-rational atanh(-1/2). |
-| `real_inverse_hyperbolic/atanh_9_10` | 227.95 ns | 218.52 ns - 238.89 ns | Builds exact-rational atanh near the upper domain boundary. |
+| `real_inverse_hyperbolic/atanh_1_2` | 1.026 us | 991.81 ns - 1.065 us | Builds exact-rational atanh(1/2). |
+| `real_inverse_hyperbolic/atanh_minus_1_2` | 1.069 us | 1.063 us - 1.075 us | Builds exact-rational atanh(-1/2). |
+| `real_inverse_hyperbolic/atanh_9_10` | 208.10 ns | 207.08 ns - 209.36 ns | Builds exact-rational atanh near the upper domain boundary. |
 | `real_inverse_hyperbolic/atanh_1_error` | not run | not run | Rejects atanh(1) at the rational domain boundary. |
 
 ### `simple_inverse_functions`
@@ -479,7 +483,7 @@ Exact inverse relationships among exp, ln, and log10.
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `real_exact_exp_log10/exp_ln_1000` | 344.84 ns | 343.97 ns - 345.69 ns | Simplifies exp(ln(1000)) back to 1000. |
+| `real_exact_exp_log10/exp_ln_1000` | 340.14 ns | 329.16 ns - 353.55 ns | Simplifies exp(ln(1000)) back to 1000. |
 | `real_exact_exp_log10/exp_ln_1_8` | 362.09 ns | 361.60 ns - 362.63 ns | Simplifies exp(ln(1/8)) back to 1/8. |
 | `real_exact_exp_log10/log10_1000` | 103.36 ns | 103.09 ns - 103.72 ns | Recognizes log10(1000) as 3. |
 | `real_exact_exp_log10/log10_1_1000` | 125.70 ns | 124.55 ns - 127.24 ns | Recognizes log10(1/1000) as -3. |

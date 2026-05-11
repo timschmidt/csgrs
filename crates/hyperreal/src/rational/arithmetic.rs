@@ -1079,6 +1079,19 @@ impl Rational {
         if self.denominator == other.denominator {
             return self.numerator.cmp(&other.numerator);
         }
+        if self.numerator.bits() > 64 && self.numerator == other.numerator {
+            // Equal numerators let absolute order be decided by the reciprocal
+            // denominator order: |n/d1| > |n/d2| iff d1 < d2. Keep this guarded
+            // to multi-limb numerators: benchmarks showed the extra equality
+            // check regresses tiny exact-rational compares, while large
+            // numerators avoid two BigUint products. This mirrors the adaptive
+            // "cheap predicate first only when it is actually cheap" strategy
+            // used in exact geometric computation; see Shewchuk, "Adaptive
+            // Precision Floating-Point Arithmetic and Fast Robust Geometric
+            // Predicates" (1997), and Yap, "Towards Exact Geometric
+            // Computation" (1997).
+            return other.denominator.cmp(&self.denominator);
+        }
         (&self.numerator * &other.denominator).cmp(&(&other.numerator * &self.denominator))
     }
 

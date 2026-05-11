@@ -270,6 +270,10 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 name: "real_exact_ln_reduce",
                 description: "Reduces an exact logarithm of a power of two.",
             },
+            BenchDoc {
+                name: "real_pow_small_integer_exponent",
+                description: "Dispatches `Real::pow` with an exact small-integer exponent.",
+            },
         ],
     },
     BenchGroupDoc {
@@ -454,6 +458,14 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 name: "inverse_const_product_sqrt",
                 description: "Builds a rationalized reciprocal of pi * e * sqrt(2).",
             },
+            BenchDoc {
+                name: "inverse_sqrt_two",
+                description: "Builds the rationalized reciprocal of unit-scaled sqrt(2).",
+            },
+            BenchDoc {
+                name: "div_sqrt_two_sqrt_three",
+                description: "Rationalizes a quotient of two unit-scaled square roots.",
+            },
         ],
     },
 ];
@@ -630,6 +642,8 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
     let exact_real_rhs = Real::new(rhs.clone());
     let sqrt_input = Real::new(Rational::new(18));
     let ln_input = Real::new(Rational::new(1024));
+    let pow_base = Real::new(rational(7, 5));
+    let pow_exponent = Real::new(Rational::new(17));
 
     group.bench_function("rational_add", |b| {
         b.iter(|| black_box(black_box(&lhs) + black_box(&rhs)))
@@ -660,6 +674,13 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
         b.iter_batched(
             || ln_input.clone(),
             |value| black_box(value.ln().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("real_pow_small_integer_exponent", |b| {
+        b.iter_batched(
+            || (pow_base.clone(), pow_exponent.clone()),
+            |(base, exponent)| black_box(base.pow(exponent).unwrap()),
             BatchSize::SmallInput,
         )
     });
@@ -928,6 +949,7 @@ fn bench_symbolic_reductions(c: &mut Criterion) {
         Real::new(Rational::new(18)) * Real::new(Rational::new(2)).exp().unwrap();
     let pi_minus_three = Real::pi() - Real::new(Rational::new(3));
     let sqrt_two = Real::new(Rational::new(2)).sqrt().unwrap();
+    let sqrt_three = Real::new(Rational::new(3)).sqrt().unwrap();
     let pi_e_sqrt_two = &pi_e * &sqrt_two;
     let e_three = Real::new(Rational::new(3)).exp().unwrap();
     let pi_square_over_e_left = pi_square.clone();
@@ -1049,6 +1071,20 @@ fn bench_symbolic_reductions(c: &mut Criterion) {
         b.iter_batched(
             || pi_e_sqrt_two.clone(),
             |value| black_box(value.inverse().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("inverse_sqrt_two", |b| {
+        b.iter_batched(
+            || sqrt_two.clone(),
+            |value| black_box(value.inverse().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("div_sqrt_two_sqrt_three", |b| {
+        b.iter_batched(
+            || (sqrt_two.clone(), sqrt_three.clone()),
+            |(left, right)| black_box((left / right).unwrap()),
             BatchSize::SmallInput,
         )
     });

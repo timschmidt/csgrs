@@ -111,6 +111,10 @@ const NUMERICAL_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Compares absolute values of exact rationals.",
             },
             BenchDoc {
+                name: "compare_absolute_exact_rational_same_numerator",
+                description: "Compares exact rational magnitudes with matching numerators.",
+            },
+            BenchDoc {
                 name: "compare_absolute_dominant_add",
                 description: "Compares a dominant term against the same term plus a tiny addend.",
             },
@@ -842,6 +846,16 @@ fn bench_computable_compare(c: &mut Criterion) {
     let right = Computable::rational(Rational::fraction(9, 10).unwrap());
     group.bench_function("compare_absolute_exact_rational", |b| {
         b.iter(|| black_box(left.compare_absolute(&right, -40)))
+    });
+    let same_num: BigInt = BigInt::from(1_u8) << 130;
+    let same_num_left = Computable::rational(
+        Rational::from_bigint_fraction(same_num.clone(), BigUint::from(8_u8)).unwrap(),
+    );
+    let same_num_right = Computable::rational(
+        Rational::from_bigint_fraction(-same_num, BigUint::from(10_u8)).unwrap(),
+    );
+    group.bench_function("compare_absolute_exact_rational_same_numerator", |b| {
+        b.iter(|| black_box(same_num_left.compare_absolute(&same_num_right, -40)))
     });
 
     let big = Computable::pi();

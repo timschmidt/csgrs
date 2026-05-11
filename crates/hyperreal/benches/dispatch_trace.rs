@@ -142,6 +142,11 @@ fn collect_rows(
         black_box(&lhs * &rhs);
         black_box((&lhs / &rhs).unwrap());
     });
+    trace_row(&mut rows, filters, "real/pow/small_integer_exponent", || {
+        let base = Real::new(rational(7, 5));
+        let exponent = Real::from(17);
+        black_box(base.pow(exponent).unwrap());
+    });
     trace_row(
         &mut rows,
         filters,
@@ -451,6 +456,22 @@ fn collect_rows(
             black_box(rhs.compare_absolute(&lhs, -40));
             black_box(lhs.compare_absolute(&rhs, -40));
             black_box(lhs.compare_absolute(&lhs, -40));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/compare_absolute/exact_rational_same_numerator",
+        || {
+            let numerator: BigInt = BigInt::from(1_u8) << 130;
+            let lhs = Computable::rational(
+                Rational::from_bigint_fraction(numerator.clone(), BigUint::from(8_u8)).unwrap(),
+            );
+            let rhs = Computable::rational(
+                Rational::from_bigint_fraction(-numerator, BigUint::from(10_u8)).unwrap(),
+            );
+            black_box(lhs.compare_absolute(&rhs, -40));
+            black_box(rhs.compare_absolute(&lhs, -40));
         },
     );
     trace_row(

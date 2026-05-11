@@ -1802,8 +1802,17 @@ impl Real {
                     // instead of an opaque inverse node.
                     // Radicands are non-negative, so the borrowed BigUint is
                     // the exact type needed for the rational multiplier.
-                    let rational = (self.rational * Rational::from_unsigned_integer(sqrt.clone()))
-                        .inverse()?;
+                    let rational = if self.rational.is_one() {
+                        // Unit-scaled radicals are the hot path from sqrt table
+                        // reductions. Avoid multiplying by one and then
+                        // canonicalizing before inversion; see Yap, "Towards
+                        // Exact Geometric Computation" (1997), on preserving
+                        // exact algebraic structure to avoid unnecessary
+                        // refinement/canonicalization work.
+                        Rational::from_unsigned_integer(sqrt.clone()).inverse()?
+                    } else {
+                        (self.rational * Rational::from_unsigned_integer(sqrt.clone())).inverse()?
+                    };
                     return Ok(Self {
                         rational,
                         class: self.class,
@@ -1874,7 +1883,16 @@ impl Real {
             // Keeping the sqrt attached to the constant product lets later
             // multiplication cancel it without creating an opaque inverse node.
             crate::trace_dispatch!("real", "inverse", "const-product-sqrt");
-            let rational = (self.rational * radicand.clone()).inverse()?;
+            let rational = if self.rational.is_one() {
+                // Most factored pi/e/sqrt products are unit-scaled. Skipping the
+                // `1 * radicand` rational construction avoids one gcd while
+                // preserving the exact rationalization identity above; see Yap
+                // (1997) on delaying expensive exact-number normalization until
+                // it is structurally required.
+                radicand.clone().inverse()?
+            } else {
+                (self.rational * radicand.clone()).inverse()?
+            };
             let (class, computable) =
                 Class::make_const_product_sqrt(-pi_power, exp_power.neg(), radicand);
             return Ok(Self {
@@ -1923,8 +1941,15 @@ impl Real {
                     // Same rationalization as the owned path, but clone only the
                     // rational/computable pieces needed to leave `self` intact.
                     crate::trace_dispatch!("real", "inverse_ref", "sqrt-rational-radical");
-                    let rational = (&self.rational * Rational::from_unsigned_integer(sqrt.clone()))
-                        .inverse()?;
+                    let rational = if self.rational.is_one() {
+                        // Borrowed unit-scaled sqrt inverses are common in
+                        // vector normalization and matrix scalar division. The
+                        // structural one fact lets us skip a rational multiply
+                        // before exact inversion; see Yap (1997).
+                        Rational::from_unsigned_integer(sqrt.clone()).inverse()?
+                    } else {
+                        (&self.rational * Rational::from_unsigned_integer(sqrt.clone())).inverse()?
+                    };
                     return Ok(Self {
                         rational,
                         class: self.class.clone(),
@@ -1996,7 +2021,15 @@ impl Real {
                     // Borrowed path mirrors owned rationalization while cloning
                     // only the reduced rational radicand and symbolic powers.
                     crate::trace_dispatch!("real", "inverse_ref", "const-product-sqrt");
-                    let rational = (&self.rational * radicand.clone()).inverse()?;
+                    let rational = if self.rational.is_one() {
+                        // Preserve the same symbolic rationalization but avoid
+                        // constructing `1 * radicand` on the hot borrowed path;
+                        // this follows the exact-structure-first strategy
+                        // described by Yap (1997).
+                        radicand.clone().inverse()?
+                    } else {
+                        (&self.rational * radicand.clone()).inverse()?
+                    };
                     let (class, computable) =
                         Class::make_const_product_sqrt(-pi_power, exp_power.neg(), radicand);
                     return Ok(Self {
@@ -2910,7 +2943,14 @@ impl Real {
                 return Ok(self.make_computable(Computable::atanh_direct_deferred));
             }
 
-            let one = Rational::one();
+            // This path deliberately keeps atanh(x) as the exact symbolic
+            // `ln((1+x)/(1-x))/2` instead of approximating. Reuse the cached
+            // unit rational so each construction only clones a tiny exact leaf
+            // and does not rebuild/canonicalize it before the two rational
+            // additions. This follows Boehm et al., "Exact Real Arithmetic: A
+            // Case Study in Higher Order Programming" (1986), where symbolic
+            // construction is kept separate from later numerical refinement.
+            let one = rationals::ONE.clone();
             let ratio = (one.clone() + self.rational.clone()) / (one - self.rational);
             // Non-tiny rationals can remain an exact logarithm ratio.
             crate::trace_dispatch!("real", "atanh", "rational-log-ratio-special-form");
@@ -3171,16 +3211,26 @@ impl Real {
         /* could handle self == 10 =>  10 ^ log10(exponent) specially */
         if exponent.class == One {
             let r = exponent.rational;
-            match r.to_big_integer() {
-                Some(n) => {
+            if r.is_integer() {
+                if let Some(n) = r.to_integer_i64() {
+                    // Small integer exponents are a structural fact, not an
+                    // approximation. Dispatching them before materializing the
+                    // full BigInt avoids cloning arbitrary-precision storage on
+                    // the common pow(x, 2/3/17) path while preserving exact
+                    // repeated-squaring semantics; see Boehm et al.,
+                    // "Exact Real Arithmetic: A Case Study in Higher Order
+                    // Programming" (1986) on keeping exact symbolic structure
+                    // ahead of numeric refinement.
+                    crate::trace_dispatch!("real", "pow", "small-integer-exponent");
+                    return self.powi(BigInt::from(n));
+                }
+                if let Some(n) = r.to_big_integer() {
                     crate::trace_dispatch!("real", "pow", "integer-exponent");
                     return self.powi(n);
                 }
-                None => {
-                    crate::trace_dispatch!("real", "pow", "rational-exponent");
-                    return self.pow_fraction(r);
-                }
             }
+            crate::trace_dispatch!("real", "pow", "rational-exponent");
+            return self.pow_fraction(r);
         }
         if exponent.definitely_zero() {
             crate::trace_dispatch!("real", "pow", "zero-exponent");
@@ -4244,8 +4294,15 @@ impl<T: AsRef<Real>> Div<T> for &Real {
             // This keeps simple radical quotients exact instead of using
             // `other.inverse()` and losing the radicand certificate.
             let square = Real::multiply_sqrts(left, right);
-            let denominator =
-                &other.rational * Rational::from_unsigned_integer(right_integer.clone());
+            let denominator = if other.rational.is_one() {
+                // Unit-scaled denominator radicals should not pay a rational
+                // multiply/gcd just to form `1*b`; keep only the structural
+                // radicand denominator. This is the same normalization-avoidance
+                // principle used for exact geometric predicates in Yap (1997).
+                Rational::from_unsigned_integer(right_integer.clone())
+            } else {
+                &other.rational * Rational::from_unsigned_integer(right_integer.clone())
+            };
             return Ok(Real {
                 rational: &square.rational * &self.rational / denominator,
                 ..square
@@ -4263,7 +4320,15 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     // This keeps `(pi*e*sqrt(2))/(e*sqrt(3))` as one factored sqrt
                     // product instead of an opaque division graph.
                     let square = Real::multiply_sqrts(&left_rad, &right_rad);
-                    let denominator = &other.rational * right_rad;
+                    let denominator = if other.rational.is_one() {
+                        // Preserve the factored sqrt quotient while skipping
+                        // exact multiplication by one. Avoiding this gcd matters
+                        // in matrix/vector scalar paths that divide by cached
+                        // unit-scaled symbolic constants; see Yap (1997).
+                        right_rad.clone()
+                    } else {
+                        &other.rational * right_rad
+                    };
                     let rational = &square.rational * &self.rational / denominator;
                     let exp_power = left_exp - right_exp;
                     return Ok(match square.class {
@@ -4315,7 +4380,15 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                 if let Some(pi_power) = product_pi.checked_sub(sqrt_pi) {
                     // Dividing by sqrt(r) multiplies numerator and denominator
                     // by sqrt(r); keep the remaining sqrt(r) factored.
-                    let denominator = &other.rational * radicand.clone();
+                    let denominator = if other.rational.is_one() {
+                        // The denominator is just the exact radicand for
+                        // unit-scaled sqrt factors. Bypassing `1 * r` preserves
+                        // the delayed-canonicalization invariant from Yap
+                        // (1997) and keeps hot quotient paths flatter.
+                        radicand.clone()
+                    } else {
+                        &other.rational * radicand.clone()
+                    };
                     let rational = &self.rational / denominator;
                     let (class, computable) =
                         Class::make_const_product_sqrt(pi_power, product_exp - sqrt_exp, radicand);
