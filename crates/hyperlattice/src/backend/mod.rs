@@ -327,7 +327,10 @@ pub trait BackendScalar:
     ///
     /// The default deliberately preserves the existing scalar operation order.
     /// Expensive exact backends can override this to delay canonicalization
-    /// across determinant and cofactor polynomials.
+    /// across determinant and cofactor polynomials. The performance model is
+    /// the same one behind fraction-free exact linear algebra: delay expensive
+    /// denominator work until a whole short polynomial has been assembled
+    /// (Bareiss, Math. Comp. 22(103), 1968, https://doi.org/10.2307/2004533).
     #[inline]
     fn signed_product_sum2<const TERMS: usize>(
         positive_terms: [bool; TERMS],

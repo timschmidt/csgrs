@@ -19,6 +19,7 @@ mod enabled {
         muls: u64,
         divs: u64,
         inverses: u64,
+        signed_product_sums: u64,
     }
 
     #[derive(Clone, Debug)]
@@ -154,7 +155,30 @@ mod enabled {
                 ("scalar_method", "inverse-owned" | "inverse-ref") => {
                     profile.inverses += count.count;
                 }
+                ("scalar_fast_path", path) if path.starts_with("signed-product-sum2-") => {
+                    profile.signed_product_sums += count.count;
+                    match path {
+                        "signed-product-sum2-single-term" => profile.muls += count.count,
+                        "signed-product-sum2-sparse-two" => {
+                            profile.muls += count.count * 2;
+                            profile.adds += count.count;
+                        }
+                        _ => {}
+                    }
+                }
                 _ => {}
+            }
+        }
+        for count in counts.iter().filter(|count| {
+            matches!(
+                count.layer,
+                "realistic_blas_backend_trait"
+                    | "realistic_blas_hyperreal_backend"
+                    | "realistic_blas_approx_backend"
+            )
+        }) {
+            if count.operation == "op" && count.path.starts_with("signed-product-sum2-") {
+                profile.signed_product_sums += count.count;
             }
         }
         profile
@@ -258,9 +282,9 @@ mod enabled {
 
         if !matrix_rows.is_empty() {
             out.push_str("## Matrix Kernel Profile\n\n");
-            out.push_str("Per-call values are one unmeasured sample pass divided by the sampled calls. `dot3`/`dot4` and `linear`/`affine` fast paths are expanded into their scalar add/mul counts. Common-factor buckets are rational reduction events per call; `pow2` is the dyadic shift-only path.\n\n");
-            out.push_str("| Matrix | Kernel | Input | Calls | Scalar +/call | Scalar -/call | Scalar */call | Scalar div/call | Scalar inv/call | Rational reductions/call | GCDs/call | Temps/ctors/call | Peak operand bits | Common factors/call |\n");
-            out.push_str("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |\n");
+            out.push_str("Per-call values are one unmeasured sample pass divided by the sampled calls. `dot3`/`dot4` and `linear`/`affine` fast paths are expanded into their scalar add/mul counts. `Signed product sums` counts the short determinant/cofactor polynomial hooks that delay exact-rational canonicalization. Common-factor buckets are rational reduction events per call; `pow2` is the dyadic shift-only path.\n\n");
+            out.push_str("| Matrix | Kernel | Input | Calls | Scalar +/call | Scalar -/call | Scalar */call | Scalar div/call | Scalar inv/call | Signed product sums/call | Rational reductions/call | GCDs/call | Temps/ctors/call | Peak operand bits | Common factors/call |\n");
+            out.push_str("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |\n");
             let mut rows = matrix_rows.clone();
             rows.sort_by(|left, right| {
                 (
@@ -277,7 +301,7 @@ mod enabled {
             for row in rows {
                 let temp_events = row.constructor_events + row.rational_stats.temporary_rationals;
                 out.push_str(&format!(
-                    "| `{}` | `{}` | `{}` | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |\n",
+                    "| `{}` | `{}` | `{}` | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |\n",
                     row.matrix,
                     row.kernel,
                     row.input,
@@ -287,6 +311,7 @@ mod enabled {
                     per_call(row.scalar_ops.muls, row.calls),
                     per_call(row.scalar_ops.divs, row.calls),
                     per_call(row.scalar_ops.inverses, row.calls),
+                    per_call(row.scalar_ops.signed_product_sums, row.calls),
                     per_call(row.rational_stats.reductions, row.calls),
                     per_call(row.rational_stats.gcds, row.calls),
                     per_call(temp_events, row.calls),

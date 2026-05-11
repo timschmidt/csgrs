@@ -166,6 +166,10 @@ impl<B: Backend> Scalar<B> {
 
     #[inline]
     pub(crate) fn is_exact_dyadic_rational(&self) -> bool {
+        // Matrix right-division uses this representation fact to choose between
+        // shared-adjugate scaling and Gauss-Jordan solving. Dyadic exact
+        // rationals reduce by shifts, so extra products can be cheaper than
+        // repeated pivot inverses; non-dyadic rationals usually need BigInt gcds.
         crate::trace_dispatch!("realistic_blas", "scalar_query", "exact-dyadic-rational");
         self.0.is_exact_dyadic_rational()
     }
@@ -470,6 +474,12 @@ impl<B: Backend> Scalar<B> {
         positive_terms: [bool; TERMS],
         terms: [[&Self; 2]; TERMS],
     ) -> Self {
+        // Fixed determinant and cofactor formulas are short signed sums of
+        // products. Prune zero terms before handing dense cases to the backend
+        // so exact implementations can delay normalization in the same spirit
+        // as fraction-free elimination (Bareiss, Math. Comp. 22(103), 1968,
+        // https://doi.org/10.2307/2004533), while sparse cases avoid building
+        // a shared-denominator accumulator at all.
         let mut nonzero_count = 0usize;
         let mut first_term: Option<([&Self; 2], bool)> = None;
         let mut second_term: Option<([&Self; 2], bool)> = None;

@@ -318,7 +318,12 @@ impl BackendScalarTrait for BackendScalar {
         terms: [[&Self; 2]; TERMS],
     ) -> Self {
         // Keep exact-rational accumulation shape sparse-aware before building any
-        // shared-denominator form in the backend.
+        // shared-denominator form in the backend. Dense exact-rational cases
+        // then delegate to hyperreal's fused polynomial reducer, which keeps
+        // determinant/cofactor terms uncanonicalized until the final sum; this
+        // follows the fraction-delay idea in Bareiss elimination
+        // (https://doi.org/10.2307/2004533) without changing the public
+        // fixed-size cofactor formulas.
         let mut first_term: Option<([&Self; 2], bool)> = None;
         let mut second_term: Option<([&Self; 2], bool)> = None;
         let mut nonzero_count = 0usize;
