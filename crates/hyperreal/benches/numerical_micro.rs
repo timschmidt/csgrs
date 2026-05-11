@@ -84,6 +84,14 @@ const NUMERICAL_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 name: "pi_minus_tiny_sign_cached",
                 description: "Reads cached sign for pi minus a tiny exact rational.",
             },
+            BenchDoc {
+                name: "exp_unknown_sign_arg_sign",
+                description: "Finds sign for exp(1 - pi), where exp can prove positivity structurally.",
+            },
+            BenchDoc {
+                name: "exp_unknown_sign_arg_sign_cached",
+                description: "Reads cached sign for exp(1 - pi).",
+            },
         ],
     },
     BenchGroupDoc {
@@ -792,6 +800,20 @@ fn bench_computable_bounds(c: &mut Criterion) {
     pi_minus_tiny_cached.sign();
     group.bench_function("pi_minus_tiny_sign_cached", |b| {
         b.iter(|| black_box(pi_minus_tiny_cached.sign()))
+    });
+
+    let exp_unknown_sign_arg = Computable::one().add(Computable::pi().negate()).exp();
+    group.bench_function("exp_unknown_sign_arg_sign", |b| {
+        b.iter_batched(
+            || exp_unknown_sign_arg.clone(),
+            |value| black_box(value.sign()),
+            BatchSize::SmallInput,
+        )
+    });
+    let exp_unknown_sign_arg_cached = Computable::one().add(Computable::pi().negate()).exp();
+    exp_unknown_sign_arg_cached.sign();
+    group.bench_function("exp_unknown_sign_arg_sign_cached", |b| {
+        b.iter(|| black_box(exp_unknown_sign_arg_cached.sign()))
     });
 
     group.finish();

@@ -14,22 +14,11 @@ pub use crate::rational::Rational;
 mod structural;
 pub use crate::structural::{MagnitudeBits, RealSign, RealStructuralFacts, ZeroKnowledge};
 
+mod trace;
+pub(crate) use trace::trace_dispatch;
+
 #[cfg(feature = "dispatch-trace")]
 pub mod dispatch_trace;
-
-#[cfg(feature = "dispatch-trace")]
-macro_rules! trace_dispatch {
-    ($layer:expr, $operation:expr, $path:expr) => {
-        $crate::dispatch_trace::record($layer, $operation, $path);
-    };
-}
-
-#[cfg(not(feature = "dispatch-trace"))]
-macro_rules! trace_dispatch {
-    ($layer:expr, $operation:expr, $path:expr) => {};
-}
-
-pub(crate) use trace_dispatch;
 
 mod computable;
 pub use crate::computable::Computable;

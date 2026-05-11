@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use super::super::curve;
+    use crate::real::arithmetic::curve;
     use crate::{
         MagnitudeBits, Problem, Rational, Real, RealSign, RealStructuralFacts, ZeroKnowledge,
     };

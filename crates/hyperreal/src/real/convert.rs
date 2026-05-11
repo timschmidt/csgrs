@@ -276,6 +276,7 @@ impl From<Real> for f64 {
 
 impl Real {
     /// Return a finite borrowed `f64` approximation, or `None` on overflow.
+    #[inline]
     pub fn to_f64_approx(&self) -> Option<f64> {
         const NEG_BITS: u64 = 0x8000_0000_0000_0000;
         const EXP_BITS: u64 = 0x7ff0_0000_0000_0000;

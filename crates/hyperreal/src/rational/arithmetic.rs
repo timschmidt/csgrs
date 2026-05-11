@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::sync::LazyLock;
 
-pub(crate) mod convert;
 
 /// Ratio of two integers
 ///
@@ -360,12 +359,16 @@ impl Rational {
         .maybe_reduce()
     }
 
-    fn dot_products_dyadic<const N: usize>(left: [&Self; N], right: [&Self; N]) -> Option<Self> {
+    fn dot_products_dyadic<const N: usize>(
+        left: [&Self; N],
+        right: [&Self; N],
+        signs: [Sign; N],
+    ) -> Option<Self> {
         let mut max_shift = 0_u64;
         let mut denominator_shifts = [0_u64; N];
         let mut any_nonzero = false;
         for i in 0..N {
-            if left[i].sign * right[i].sign == NoSign {
+            if signs[i] == NoSign {
                 continue;
             }
             let shift =
@@ -381,7 +384,7 @@ impl Rational {
         let mut positive = BigUint::ZERO;
         let mut negative = BigUint::ZERO;
         for i in 0..N {
-            let sign = left[i].sign * right[i].sign;
+            let sign = signs[i];
             if sign == NoSign {
                 continue;
             }
@@ -410,10 +413,11 @@ impl Rational {
     fn dot_products_equal_denominator<const N: usize>(
         left: [&Self; N],
         right: [&Self; N],
+        signs: [Sign; N],
     ) -> Option<Self> {
         let mut shared_denominator = None::<BigUint>;
         for i in 0..N {
-            if left[i].sign * right[i].sign == NoSign {
+            if signs[i] == NoSign {
                 continue;
             }
             let denominator = &left[i].denominator * &right[i].denominator;
@@ -431,7 +435,7 @@ impl Rational {
         let mut positive = BigUint::ZERO;
         let mut negative = BigUint::ZERO;
         for i in 0..N {
-            let sign = left[i].sign * right[i].sign;
+            let sign = signs[i];
             if sign == NoSign {
                 continue;
             }
@@ -658,14 +662,65 @@ impl Rational {
         // constructor per output cell. This dropped mat4 powi from-f64 trace
         // activity from 161.75 to 32 reductions/call and from 462.25 to 67.75
         // temporaries/call; keep future changes within noise of those counts.
-        if let Some(dyadic) = Self::dot_products_dyadic(left, right) {
+        let mut signs = [NoSign; N];
+        let mut nonzero_count = 0_usize;
+        for i in 0..N {
+            let sign = left[i].sign * right[i].sign;
+            if sign != NoSign {
+                nonzero_count += 1;
+            }
+            signs[i] = sign;
+        }
+        if nonzero_count == 0 {
+            crate::trace_dispatch!("rational", "dot_product", "all-zero");
+            return Self::zero();
+        }
+        if nonzero_count == 1 {
+            let mut positive = BigUint::ZERO;
+            let mut negative = BigUint::ZERO;
+            for i in 0..N {
+                let denominator = &left[i].denominator * &right[i].denominator;
+                match signs[i] {
+                    Plus => {
+                        positive = &left[i].numerator * &right[i].numerator;
+                        crate::trace_dispatch!(
+                            "rational",
+                            "dot_product",
+                            "single-term-product"
+                        );
+                        return Self::from_signed_magnitude_difference(
+                            positive,
+                            negative,
+                            denominator,
+                        );
+                    }
+                    Minus => {
+                        negative = &left[i].numerator * &right[i].numerator;
+                        crate::trace_dispatch!(
+                            "rational",
+                            "dot_product",
+                            "single-term-product"
+                        );
+                        return Self::from_signed_magnitude_difference(
+                            positive,
+                            negative,
+                            denominator,
+                        );
+                    }
+                    NoSign => {}
+                }
+            }
+            return Self::zero();
+        }
+
+        if let Some(dyadic) = Self::dot_products_dyadic(left, right, signs) {
             // Dyadic f64 imports are the hottest exact-rational matrix path.
             // A common power-of-two denominator lets us scale numerators with
             // shifts and lets `maybe_reduce` avoid a BigInt gcd.
             crate::trace_dispatch!("rational", "dot_product", "dyadic-shared-denominator");
             return dyadic;
         }
-        if let Some(equal_denominator) = Self::dot_products_equal_denominator(left, right) {
+        if let Some(equal_denominator) = Self::dot_products_equal_denominator(left, right, signs) {
             // Decimal rational fixtures often enter with identical product
             // denominators even after exact parsing. The LCM algorithm below is
             // still the right general fallback, but this structural fact means
@@ -683,7 +738,7 @@ impl Rational {
         let mut common_denominator = BigUint::one();
         let mut any_nonzero = false;
         for i in 0..N {
-            if left[i].sign * right[i].sign == NoSign {
+            if signs[i] == NoSign {
                 continue;
             }
             let denominator = &left[i].denominator * &right[i].denominator;
@@ -701,7 +756,7 @@ impl Rational {
         let mut positive = BigUint::ZERO;
         let mut negative = BigUint::ZERO;
         for i in 0..N {
-            let sign = left[i].sign * right[i].sign;
+            let sign = signs[i];
             if sign == NoSign {
                 continue;
             }
@@ -973,6 +1028,20 @@ impl Rational {
     pub fn shifted_big_integer(&self, shift: i32) -> BigInt {
         let whole = (&self.numerator << shift) / &self.denominator;
         BigInt::from_biguint(self.sign, whole)
+    }
+
+    /// Compare the magnitudes of two rationals without flipping signs.
+    ///
+    /// This keeps exact-rational absolute comparisons in `Computable` on
+    /// pre-normalized magnitude fields and avoids temporary allocations.
+    #[inline]
+    pub(crate) fn compare_magnitude(&self, other: &Self) -> Ordering {
+        if self.denominator == other.denominator {
+            return self
+                .numerator
+                .cmp(&other.numerator);
+        }
+        (&self.numerator * &other.denominator).cmp(&(&other.numerator * &self.denominator))
     }
 
     /// Either the corresponding [`BigInt`] or None if this value is not an integer.

@@ -73,6 +73,42 @@ fn near_half_pi() -> Computable {
         .add(computable(offset).negate())
 }
 
+fn deep_scaled_product_chain(depth: usize) -> Computable {
+    let scale = computable(Rational::fraction(7, 8).unwrap());
+    let mut value = Computable::pi();
+    for _ in 0..depth {
+        value = value.multiply(scale.clone());
+    }
+    value
+}
+
+fn perturbed_scaled_product_chain(depth: usize) -> Computable {
+    let scale = computable(Rational::fraction(7, 8).unwrap());
+    let epsilon = computable(Rational::fraction(1, 1024).unwrap());
+    let mut value = Computable::pi().add(epsilon);
+    value.approx(-16);
+    for _ in 0..depth {
+        value = value.multiply(scale.clone());
+    }
+    value
+}
+
+fn deep_half_product_chain(depth: usize) -> Computable {
+    let half = computable(Rational::fraction(1, 2).unwrap());
+    let mut value = Computable::pi();
+    for _ in 0..depth {
+        value = value.multiply(half.clone());
+    }
+    value
+}
+
+fn exp_unknown_sign_arg_chain() -> Computable {
+    // 1 - pi keeps the exponent argument sign-ambiguous in exact structural
+    // terms, which is useful for validating that exp always caches a
+    // positive sign without probing the child sign.
+    Computable::one().add(Computable::pi().negate()).exp()
+}
+
 fn trace_computable_approx(
     rows: &mut BTreeMap<String, Vec<hyperreal::dispatch_trace::DispatchCount>>,
     filters: &[String],
@@ -105,6 +141,21 @@ fn collect_rows(
         black_box(&lhs - &rhs);
         black_box(&lhs * &rhs);
         black_box((&lhs / &rhs).unwrap());
+    });
+    trace_row(&mut rows, filters, "real/div/div_const_product_sqrt", || {
+        let lhs = Real::pi() * Real::e() * Real::new(Rational::new(2)).sqrt().unwrap();
+        let rhs = Real::e() * Real::new(Rational::new(3)).sqrt().unwrap();
+        black_box((&lhs / &rhs).unwrap());
+    });
+    trace_row(&mut rows, filters, "real/div/div_const_products", || {
+        black_box((&Real::e() / &Real::pi()).unwrap());
+        black_box((&Real::pi() / &Real::e()).unwrap());
+    });
+    trace_row(&mut rows, filters, "real/inverse/inverse_generic", || {
+        let value = Real::new(Rational::fraction(7, 13).unwrap());
+        black_box(value.inverse().unwrap());
+        let irrational = Real::new(Rational::fraction(2, 1).unwrap()).sqrt().unwrap();
+        black_box(irrational.inverse_ref().unwrap());
     });
     trace_row(&mut rows, filters, "real/trig/general", || {
         let x = real_from_f64(1.23456789);
@@ -162,6 +213,252 @@ fn collect_rows(
         black_box(pi_minus_three.zero_status());
         black_box(pi_minus_three.structural_facts());
     });
+    trace_row(&mut rows, filters, "real/dot_product/dot3_dense_symbolic", || {
+        let left = [
+            Real::pi() * Real::new(Rational::new(3)),
+            Real::e() * Real::new(Rational::new(5)),
+            Real::pi() * Real::new(Rational::new(7)),
+        ];
+        let right = [
+            Real::e() * Real::new(Rational::new(11)),
+            Real::pi() * Real::new(Rational::new(13)),
+            Real::e() * Real::new(Rational::new(17)),
+        ];
+        black_box(Real::dot3_refs(
+            [&left[0], &left[1], &left[2]],
+            [&right[0], &right[1], &right[2]],
+        ));
+    });
+    trace_row(&mut rows, filters, "real/dot_product/dot3_mixed_structural", || {
+        let left = [Real::one(), Real::zero(), Real::from(2_i32)];
+        let right = [
+            Real::pi(),
+            Real::from(2_i32),
+            Real::e() * Real::new(Rational::fraction(3, 5).unwrap()),
+        ];
+        black_box(Real::dot3_refs(
+            [&left[0], &left[1], &left[2]],
+            [&right[0], &right[1], &right[2]],
+        ));
+    });
+    trace_row(&mut rows, filters, "real/dot_product/dot3_all_zero", || {
+        let left = [Real::zero(), Real::zero(), Real::zero()];
+        let right = [Real::pi(), Real::e(), Real::from(2_i32)];
+        black_box(Real::dot3_refs(
+            [&left[0], &left[1], &left[2]],
+            [&right[0], &right[1], &right[2]],
+        ));
+    });
+    trace_row(&mut rows, filters, "real/dot_product/dot4_dense_symbolic", || {
+        let left = [
+            Real::pi() * Real::new(Rational::new(3)),
+            Real::e() * Real::new(Rational::new(5)),
+            Real::pi() * Real::new(Rational::new(7)),
+            Real::new(Rational::new(11)),
+        ];
+        let right = [
+            Real::e() * Real::new(Rational::new(13)),
+            Real::pi() * Real::new(Rational::new(17)),
+            Real::e() * Real::new(Rational::new(19)),
+            Real::new(Rational::new(23)),
+        ];
+        black_box(Real::dot4_refs(
+            [
+                &left[0],
+                &left[1],
+                &left[2],
+                &left[3]
+            ],
+            [
+                &right[0],
+                &right[1],
+                &right[2],
+                &right[3]
+            ],
+        ));
+    });
+    trace_row(&mut rows, filters, "real/dot_product/dot4_mixed_structural", || {
+        let left = [
+            Real::one(),
+            Real::zero(),
+            Real::from(2_i32),
+            Real::e() * Real::new(Rational::fraction(3, 5).unwrap()),
+        ];
+        let right = [Real::pi(), Real::from(2_i32), Real::one(), Real::zero()];
+        black_box(Real::dot4_refs(
+            [&left[0], &left[1], &left[2], &left[3]],
+            [&right[0], &right[1], &right[2], &right[3]],
+        ));
+    });
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/sign/deep_scaled_product_sign",
+        || {
+            black_box(deep_scaled_product_chain(200).sign());
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/sign/perturbed_scaled_product_sign",
+        || {
+            black_box(perturbed_scaled_product_chain(200).sign());
+        },
+    );
+    trace_row(&mut rows, filters, "computable/sign/pi_minus_one", || {
+        let value = Computable::pi().add(Computable::one().negate());
+        black_box(value.sign());
+    });
+    trace_row(&mut rows, filters, "computable/sign/pi_minus_one_sign_until", || {
+        let value = Computable::pi().add(Computable::one().negate());
+        black_box(value.sign_until(-128));
+    });
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/sign/deep_scaled_product_sign_until",
+        || {
+            black_box(deep_scaled_product_chain(200).sign_until(-128));
+        },
+    );
+    let cached_scaled_product = {
+        let value = deep_scaled_product_chain(200);
+        let _ = value.sign();
+        value
+    };
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/sign/deep_scaled_product_sign_cached",
+        || {
+            black_box(cached_scaled_product.sign());
+        },
+    );
+    let cached_half_product = {
+        let value = deep_half_product_chain(200);
+        let _ = value.sign();
+        value
+    };
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/sign/deep_half_product_sign_cached",
+        || {
+            black_box(cached_half_product.sign());
+        },
+    );
+    let pi_minus_one_cached = {
+        let value = Computable::pi().add(Computable::one().negate());
+        let _ = value.sign();
+        value
+    };
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/sign/pi_minus_one_cached",
+        || {
+            black_box(pi_minus_one_cached.sign());
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/sign/exp_unknown_sign_arg",
+        || {
+            black_box(exp_unknown_sign_arg_chain().sign());
+        },
+    );
+    let exp_unknown_sign_arg_cached = {
+        let value = exp_unknown_sign_arg_chain();
+        let _ = value.sign();
+        value
+    };
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/sign/exp_unknown_sign_arg_cached",
+        || {
+            black_box(exp_unknown_sign_arg_cached.sign());
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/compare/opposite_sign",
+        || {
+            let minus_pi = Computable::pi().negate();
+            let pi = Computable::pi();
+            black_box(minus_pi.compare_to(&pi));
+            black_box(pi.compare_to(&minus_pi));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/compare/exact_msd_gap",
+        || {
+            let base = Computable::pi();
+            let huge = base
+                .clone()
+                .multiply(Computable::rational(Rational::from_bigint(
+                    BigInt::from(1_u8) << 200,
+                )));
+            black_box(huge.compare_to(&base));
+            black_box(base.compare_to(&huge));
+            black_box(huge.negate().compare_to(&base.negate()));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/compare/exact_rational",
+        || {
+            let lhs = Computable::rational(rational(3, 7));
+            let rhs = Computable::rational(rational(2, 7));
+            black_box(rhs.compare_to(&lhs));
+            black_box(lhs.compare_to(&rhs));
+            black_box(lhs.compare_to(&lhs));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/compare_absolute/exact_rational",
+        || {
+            let lhs = Computable::rational(rational(3, 7));
+            let rhs = Computable::rational(rational(2, 7));
+            black_box(rhs.compare_absolute(&lhs, -40));
+            black_box(lhs.compare_absolute(&rhs, -40));
+            black_box(lhs.compare_absolute(&lhs, -40));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/compare_absolute/exact_msd_gap",
+        || {
+            let base = Computable::pi();
+            let huge = base
+                .clone()
+                .multiply(Computable::rational(Rational::from_bigint(
+                    BigInt::from(1_u8) << 200,
+                )));
+            black_box(huge.compare_absolute(&base, -40));
+            black_box(base.compare_absolute(&huge, -40));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/compare_absolute/dominant_add",
+        || {
+            let tiny = Computable::rational(Rational::fraction(1, 1_000_000).unwrap());
+            let dominant = Computable::pi().add(tiny.clone());
+            black_box(dominant.compare_absolute(&Computable::pi(), -40));
+            black_box(Computable::pi().compare_absolute(&dominant, -40));
+        },
+    );
     trace_row(&mut rows, filters, "computable/constants", || {
         black_box(Computable::pi());
         black_box(Computable::tau());
@@ -227,6 +524,25 @@ fn collect_rows(
                 .approx(-128),
             );
             black_box(computable(Rational::new(2)).sqrt().approx(-128));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/exp_large_rational",
+        || {
+            black_box(computable(Rational::new(128)).exp().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/exp_cached_probe",
+        || {
+            let input = computable(rational(7, 5));
+            let cached = input.exp();
+            let _ = cached.approx(-96);
+            black_box(cached.approx(-96));
         },
     );
     trace_row(&mut rows, filters, "computable/ln_smooth_rational", || {

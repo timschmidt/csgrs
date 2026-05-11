@@ -4,11 +4,8 @@ use crate::{
 use num::ToPrimitive;
 use num::bigint::{BigInt, BigUint, Sign};
 
-mod convert;
-mod test;
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
-struct ConstProductClass {
+pub(crate) struct ConstProductClass {
     // Signed pi power lets reciprocal products such as 1/pi and e^q/pi remain
     // symbolic instead of falling into a generic inverse node.
     pi_power: i16,
@@ -16,7 +13,7 @@ struct ConstProductClass {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-struct ConstOffsetClass {
+pub(crate) struct ConstOffsetClass {
     // Invariant: the inner value pi^n*e^q + offset is constructed only when
     // cheaply certified positive. The outer Real.rational carries any sign.
     pi_power: i16,
@@ -25,7 +22,7 @@ struct ConstOffsetClass {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-struct ConstProductSqrtClass {
+pub(crate) struct ConstProductSqrtClass {
     // Factored sqrt products are positive internally. Keeping the sqrt separate
     // allows later multiplication/division to cancel it exactly.
     pi_power: i16,
@@ -34,7 +31,7 @@ struct ConstProductSqrtClass {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-struct LnAffineClass {
+pub(crate) struct LnAffineClass {
     // Constructed only for positive offset + ln(base). This preserves the
     // nonzero/sign invariant shared by all non-Irrational classes.
     offset: Rational,
@@ -42,7 +39,7 @@ struct LnAffineClass {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-struct LnProductClass {
+pub(crate) struct LnProductClass {
     // Bases are sorted at construction so products compare and combine without
     // considering operand order.
     left: Rational,
@@ -50,7 +47,7 @@ struct LnProductClass {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-enum Class {
+pub(crate) enum Class {
     // `Class` is a certificate, not the whole value: `Real.rational` scales the
     // mathematical value represented here. All variants except `Irrational` are
     // exact, nonzero, and positive internally unless a comment says otherwise.
@@ -545,21 +542,21 @@ impl Class {
     }
 }
 
-mod rationals {
+pub(crate) mod rationals {
     use crate::Rational;
     use std::sync::LazyLock;
 
-    pub(super) static HALF: LazyLock<Rational> =
+    pub(crate) static HALF: LazyLock<Rational> =
         LazyLock::new(|| Rational::fraction(1, 2).unwrap());
-    pub(super) static ONE: LazyLock<Rational> = LazyLock::new(|| Rational::new(1));
-    pub(super) static SEVEN_EIGHTHS: LazyLock<Rational> =
+    pub(crate) static ONE: LazyLock<Rational> = LazyLock::new(|| Rational::new(1));
+    pub(crate) static SEVEN_EIGHTHS: LazyLock<Rational> =
         LazyLock::new(|| Rational::fraction(7, 8).unwrap());
-    pub(super) static ZERO: LazyLock<Rational> = LazyLock::new(Rational::zero);
-    pub(super) static TEN: LazyLock<Rational> = LazyLock::new(|| Rational::new(10));
+    pub(crate) static ZERO: LazyLock<Rational> = LazyLock::new(Rational::zero);
+    pub(crate) static TEN: LazyLock<Rational> = LazyLock::new(|| Rational::new(10));
 }
 
 mod constants {
-    use crate::real::Class;
+    use super::Class;
     use crate::{Computable, Rational, Real};
     thread_local! {
         // These are the canonical internal constants. Public constructors clone
@@ -776,15 +773,15 @@ pub type Signal = Arc<AtomicBool>;
 /// ```
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Real {
-    rational: Rational,
-    class: Class,
+    pub(super) rational: Rational,
+    pub(super) class: Class,
     // Pure exact rationals do not need a computable payload. Leaving this empty
     // avoids allocating a fresh Computable::one() sentinel for every rational
     // scalar produced by dense algebra and matrix kernels; folding materializes
     // the rational leaf only when a generic approximation kernel actually needs it.
-    computable: Option<Computable>,
+    pub(super) computable: Option<Computable>,
     #[serde(skip)]
-    signal: Option<Signal>,
+    pub(super) signal: Option<Signal>,
 }
 
 impl Clone for Real {
@@ -832,13 +829,13 @@ impl Real {
             .expect("non-rational Real classes carry a computable payload")
     }
 
-    fn computable_clone(&self) -> Computable {
+    pub(super) fn computable_clone(&self) -> Computable {
         self.computable
             .clone()
             .unwrap_or_else(|| self.class.computable_certificate())
     }
 
-    fn into_computable(self) -> Computable {
+    pub(super) fn into_computable(self) -> Computable {
         self.computable
             .unwrap_or_else(|| self.class.computable_certificate())
     }
@@ -918,7 +915,7 @@ fn tan_curve(r: Rational) -> (bool, Rational) {
 // returns whether to negate, and the (if necessary reflected) fraction
 // 0 < r < 0.5
 // Never actually used for exact zero or half
-fn curve(r: Rational) -> (bool, Rational) {
+pub(crate) fn curve(r: Rational) -> (bool, Rational) {
     // Reduce rational multiples of pi to the first half-turn and record the
     // sign separately. SinPi/TanPi classes depend on this canonical argument so
     // equivalent exact trig values compare cheaply.
@@ -952,6 +949,7 @@ impl Real {
     }
 
     /// Return this value as an owned exact rational when that is structurally known.
+    #[inline]
     pub fn exact_rational(&self) -> Option<Rational> {
         match self.class {
             One => Some(self.rational.clone()),
@@ -965,6 +963,7 @@ impl Real {
     /// linear combinations without cloning every scalar. It deliberately
     /// exposes only the already-public exact-rational shape; symbolic and
     /// computable values still go through their normal arithmetic paths.
+    #[inline]
     pub fn exact_rational_ref(&self) -> Option<&Rational> {
         match self.class {
             One => Some(&self.rational),
@@ -1007,6 +1006,7 @@ impl Real {
     /// rationals reduce by shifts in `Rational`, so algorithms with more
     /// multiplications but fewer shared inverses can be profitable only on this
     /// structural class.
+    #[inline]
     pub fn is_exact_dyadic_rational(&self) -> bool {
         matches!(self.class, One) && self.rational.is_dyadic()
     }
@@ -1126,6 +1126,7 @@ impl Real {
     }
 
     /// Try to prove the sign without refining past `min_precision`.
+    #[inline]
     pub fn refine_sign_until(&self, min_precision: i32) -> Option<RealSign> {
         let facts = self.structural_facts();
         if let Some(sign) = facts.sign {
@@ -1183,6 +1184,8 @@ impl Real {
         // for LLVM to inline consistently. An inline prototype improved mixed
         // symbolic dots but regressed realistic_blas hyperreal mat4 borrowed
         // multiply by ~2.6% through code layout alone.
+        // Keep zero-sparse symbolic rows fast by skipping exact-zero lanes
+        // before building intermediate symbolic terms.
         if Self::dot_product_has_structural_term(left[0], right[0])
             || Self::dot_product_has_structural_term(left[1], right[1])
             || Self::dot_product_has_structural_term(left[2], right[2])
@@ -1195,10 +1198,43 @@ impl Real {
             );
         }
 
-        crate::trace_dispatch!("real", "dot_product", "dot3-generic-real-tree");
+        if left[0].rational.sign() == Sign::NoSign
+            || right[0].rational.sign() == Sign::NoSign
+            || left[1].rational.sign() == Sign::NoSign
+            || right[1].rational.sign() == Sign::NoSign
+            || left[2].rational.sign() == Sign::NoSign
+            || right[2].rational.sign() == Sign::NoSign
+        {
+            let p0 = Self::dot_product_term(left[0], right[0]);
+            let p1 = Self::dot_product_term(left[1], right[1]);
+            let p2 = Self::dot_product_term(left[2], right[2]);
+            let active_terms =
+                usize::from(p0.is_some()) + usize::from(p1.is_some()) + usize::from(p2.is_some());
+
+            match active_terms {
+                0 => {
+                    crate::trace_dispatch!("real", "dot_product", "dot3-all-zero-real-tree");
+                    return Real::zero();
+                }
+                1..=2 => {
+                    crate::trace_dispatch!(
+                        "real",
+                        "dot_product",
+                        "dot3-generic-real-tree-sparse"
+                    );
+                    return Self::sum_dot3_terms(p0, p1, p2);
+                }
+                _ => {
+                    crate::trace_dispatch!("real", "dot_product", "dot3-generic-real-tree");
+                    return Self::sum_dot3_terms(p0, p1, p2);
+                }
+            }
+        }
+
         let p0 = left[0] * right[0];
         let p1 = left[1] * right[1];
         let p2 = left[2] * right[2];
+        crate::trace_dispatch!("real", "dot_product", "dot3-generic-real-tree");
         let sum01 = &p0 + &p1;
         &sum01 + &p2
     }
@@ -1250,12 +1286,85 @@ impl Real {
 
     /// Return the three-lane affine sum with an explicit offset.
     pub fn affine_combination3_refs(coeffs: [&Real; 3], values: [&Real; 3], offset: &Real) -> Real {
-        offset + Self::linear_combination3_refs(coeffs, values)
+        let zero0 = coeffs[0].definitely_zero() || values[0].definitely_zero();
+        let zero1 = coeffs[1].definitely_zero() || values[1].definitely_zero();
+        let zero2 = coeffs[2].definitely_zero() || values[2].definitely_zero();
+        if zero0 && zero1 && zero2 {
+            crate::trace_dispatch!(
+                "real",
+                "affine_combination",
+                "affine-combination3-all-zero"
+            );
+            return offset.clone();
+        }
+
+        if offset.definitely_zero() {
+            crate::trace_dispatch!(
+                "real",
+                "affine_combination",
+                "affine-combination3-offset-zero"
+            );
+            return Self::linear_combination3_refs(coeffs, values);
+        }
+
+        let linear = Self::linear_combination3_refs(coeffs, values);
+        if linear.definitely_zero() {
+            crate::trace_dispatch!(
+                "real",
+                "affine_combination",
+                "affine-combination3-linear-zero"
+            );
+            return offset.clone();
+        }
+
+        crate::trace_dispatch!(
+            "real",
+            "affine_combination",
+            "affine-combination3"
+        );
+        offset + linear
     }
 
     /// Return the four-lane affine sum with an explicit offset.
     pub fn affine_combination4_refs(coeffs: [&Real; 4], values: [&Real; 4], offset: &Real) -> Real {
-        offset + Self::linear_combination4_refs(coeffs, values)
+        let zero0 = coeffs[0].definitely_zero() || values[0].definitely_zero();
+        let zero1 = coeffs[1].definitely_zero() || values[1].definitely_zero();
+        let zero2 = coeffs[2].definitely_zero() || values[2].definitely_zero();
+        let zero3 = coeffs[3].definitely_zero() || values[3].definitely_zero();
+        if zero0 && zero1 && zero2 && zero3 {
+            crate::trace_dispatch!(
+                "real",
+                "affine_combination",
+                "affine-combination4-all-zero"
+            );
+            return offset.clone();
+        }
+
+        if offset.definitely_zero() {
+            crate::trace_dispatch!(
+                "real",
+                "affine_combination",
+                "affine-combination4-offset-zero"
+            );
+            return Self::linear_combination4_refs(coeffs, values);
+        }
+
+        let linear = Self::linear_combination4_refs(coeffs, values);
+        if linear.definitely_zero() {
+            crate::trace_dispatch!(
+                "real",
+                "affine_combination",
+                "affine-combination4-linear-zero"
+            );
+            return offset.clone();
+        }
+
+        crate::trace_dispatch!(
+            "real",
+            "affine_combination",
+            "affine-combination4"
+        );
+        offset + linear
     }
 
     #[inline(never)]
@@ -1275,13 +1384,50 @@ impl Real {
             );
         }
 
-        crate::trace_dispatch!("real", "dot_product", "dot4-generic-real-tree");
+        if left[0].rational.sign() == Sign::NoSign
+            || right[0].rational.sign() == Sign::NoSign
+            || left[1].rational.sign() == Sign::NoSign
+            || right[1].rational.sign() == Sign::NoSign
+            || left[2].rational.sign() == Sign::NoSign
+            || right[2].rational.sign() == Sign::NoSign
+            || left[3].rational.sign() == Sign::NoSign
+            || right[3].rational.sign() == Sign::NoSign
+        {
+            let p0 = Self::dot_product_term(left[0], right[0]);
+            let p1 = Self::dot_product_term(left[1], right[1]);
+            let p2 = Self::dot_product_term(left[2], right[2]);
+            let p3 = Self::dot_product_term(left[3], right[3]);
+            let active_terms = usize::from(p0.is_some())
+                + usize::from(p1.is_some())
+                + usize::from(p2.is_some())
+                + usize::from(p3.is_some());
+
+            match active_terms {
+                0 => {
+                    crate::trace_dispatch!("real", "dot_product", "dot4-all-zero-real-tree");
+                    return Real::zero();
+                }
+                1..=3 => {
+                    crate::trace_dispatch!(
+                        "real",
+                        "dot_product",
+                        "dot4-generic-real-tree-sparse"
+                    );
+                    return Self::sum_dot4_terms(p0, p1, p2, p3);
+                }
+                _ => {
+                    crate::trace_dispatch!("real", "dot_product", "dot4-generic-real-tree");
+                    return Self::sum_dot4_terms(p0, p1, p2, p3);
+                }
+            }
+        }
         let p0 = left[0] * right[0];
         let p1 = left[1] * right[1];
         let p2 = left[2] * right[2];
         let p3 = left[3] * right[3];
         let sum01 = &p0 + &p1;
         let sum23 = &p2 + &p3;
+        crate::trace_dispatch!("real", "dot_product", "dot4-generic-real-tree");
         &sum01 + &sum23
     }
 
@@ -1500,11 +1646,13 @@ impl Real {
     /// ```
     pub fn inverse(self) -> Result<Self, Problem> {
         if self.definitely_zero() {
+            crate::trace_dispatch!("real", "inverse", "div-by-zero");
             return Err(Problem::DivideByZero);
         }
         match &self.class {
             One => {
                 // Rational reciprocals remain exact.
+                crate::trace_dispatch!("real", "inverse", "one");
                 return Ok(Self {
                     rational: self.rational.clone().inverse()?,
                     class: One,
@@ -1514,6 +1662,7 @@ impl Real {
             }
             Sqrt(sqrt) => {
                 if let Some(sqrt) = sqrt.integer_magnitude() {
+                    crate::trace_dispatch!("real", "inverse", "sqrt-rational-radical");
                     // Rationalize 1/(a*sqrt(n)) when n is integral, keeping a sqrt form
                     // instead of an opaque inverse node.
                     // Radicands are non-negative, so the borrowed BigUint is
@@ -1531,6 +1680,7 @@ impl Real {
             Pi => {
                 // Consume the existing pi computable and only swap the lightweight class.
                 // Rebuilding through `make_const_product` is measurably slower for `1/pi`.
+                crate::trace_dispatch!("real", "inverse", "pi");
                 return Ok(Self {
                     rational: self.rational.clone().inverse()?,
                     class: PiInv,
@@ -1541,6 +1691,7 @@ impl Real {
             PiInv => {
                 // Reciprocal-pi is its own class; inverting it restores the
                 // canonical cached pi class without generic const-product setup.
+                crate::trace_dispatch!("real", "inverse", "pi-inverse");
                 return Ok(Self {
                     rational: self.rational.clone().inverse()?,
                     class: Pi,
@@ -1551,6 +1702,7 @@ impl Real {
             Exp(exp) => {
                 // e^x inverts to e^-x symbolically.
                 let exp = Neg::neg(exp.clone());
+                crate::trace_dispatch!("real", "inverse", "exp");
                 return Ok(Self {
                     rational: self.rational.clone().inverse()?,
                     class: Exp(exp.clone()),
@@ -1561,6 +1713,7 @@ impl Real {
             PiExp(exp) => {
                 // pi*e^x inverts to e^-x/pi, preserving the one-pi-factor class
                 // used by division/multiplication fast arms.
+                crate::trace_dispatch!("real", "inverse", "pi-exp");
                 return Ok(Self {
                     rational: self.rational.clone().inverse()?,
                     class: PiInvExp(exp.clone().neg()),
@@ -1570,6 +1723,7 @@ impl Real {
             }
             PiInvExp(exp) => {
                 // The reciprocal of e^x/pi is pi*e^-x.
+                crate::trace_dispatch!("real", "inverse", "pi-inv-exp");
                 return Ok(Self {
                     rational: self.rational.clone().inverse()?,
                     class: PiExp(exp.clone().neg()),
@@ -1584,6 +1738,7 @@ impl Real {
             // 1 / (a*pi^n*e^q*sqrt(r)) = pi^-n*e^-q*sqrt(r) / (a*r).
             // Keeping the sqrt attached to the constant product lets later
             // multiplication cancel it without creating an opaque inverse node.
+            crate::trace_dispatch!("real", "inverse", "const-product-sqrt");
             let rational = (self.rational * radicand.clone()).inverse()?;
             let (class, computable) =
                 Class::make_const_product_sqrt(-pi_power, exp_power.neg(), radicand);
@@ -1598,6 +1753,7 @@ impl Real {
             // Keep reciprocal constant products symbolic as pi^-n * e^-q. This matters
             // for scalar and matrix division by pi-heavy constants because the product
             // can later collapse back to `One`, `Exp`, `Pi`, or `PiExp`.
+            crate::trace_dispatch!("real", "inverse", "const-product");
             let (class, computable) = Class::make_const_product(-pi_power, exp_power.neg());
             return Ok(Self {
                 rational: self.rational.inverse()?,
@@ -1606,6 +1762,7 @@ impl Real {
                 signal: None,
             });
         }
+        crate::trace_dispatch!("real", "inverse", "generic");
         Ok(Self {
             rational: self.rational.clone().inverse()?,
             class: Irrational,
@@ -1617,14 +1774,20 @@ impl Real {
     /// The multiplicative inverse of this Real without consuming it.
     pub fn inverse_ref(&self) -> Result<Self, Problem> {
         if self.definitely_zero() {
+            crate::trace_dispatch!("real", "inverse_ref", "div-by-zero");
             return Err(Problem::DivideByZero);
         }
         match &self.class {
-            One => Ok(Self::new(self.rational.clone().inverse()?)),
+            One => {
+                // Borrowed one-inverse keeps exact rational form and no extra cache.
+                crate::trace_dispatch!("real", "inverse_ref", "one");
+                Ok(Self::new(self.rational.clone().inverse()?))
+            }
             Sqrt(sqrt) => {
                 if let Some(sqrt) = sqrt.integer_magnitude() {
                     // Same rationalization as the owned path, but clone only the
                     // rational/computable pieces needed to leave `self` intact.
+                    crate::trace_dispatch!("real", "inverse_ref", "sqrt-rational-radical");
                     let rational = (&self.rational * Rational::from_unsigned_integer(sqrt.clone()))
                         .inverse()?;
                     return Ok(Self {
@@ -1634,6 +1797,7 @@ impl Real {
                         signal: None,
                     });
                 }
+                crate::trace_dispatch!("real", "inverse_ref", "sqrt-generic");
                 Ok(Self {
                     rational: self.rational.clone().inverse()?,
                     class: Irrational,
@@ -1641,24 +1805,31 @@ impl Real {
                     signal: None,
                 })
             }
-            Pi => Ok(Self {
+            Pi => {
                 // Preserve the dedicated reciprocal-pi class for borrowed scalar
                 // division; rebuilding through the generic constant product costs more.
-                rational: self.rational.clone().inverse()?,
-                class: PiInv,
-                computable: Some(self.computable_clone().inverse()),
-                signal: None,
-            }),
-            PiInv => Ok(Self {
-                rational: self.rational.clone().inverse()?,
-                class: Pi,
-                computable: Some(self.computable_clone().inverse()),
-                signal: None,
-            }),
+                crate::trace_dispatch!("real", "inverse_ref", "pi");
+                Ok(Self {
+                    rational: self.rational.clone().inverse()?,
+                    class: PiInv,
+                    computable: Some(self.computable_clone().inverse()),
+                    signal: None,
+                })
+            }
+            PiInv => {
+                crate::trace_dispatch!("real", "inverse_ref", "pi-inverse");
+                Ok(Self {
+                    rational: self.rational.clone().inverse()?,
+                    class: Pi,
+                    computable: Some(self.computable_clone().inverse()),
+                    signal: None,
+                })
+            }
             Exp(exp) => {
                 // Borrowed inverse keeps e^x symbolic as e^-x, avoiding a generic
                 // reciprocal node in matrix/vector scalar division.
                 let exp = exp.clone().neg();
+                crate::trace_dispatch!("real", "inverse_ref", "exp");
                 Ok(Self {
                     rational: self.rational.clone().inverse()?,
                     class: Exp(exp.clone()),
@@ -1666,23 +1837,30 @@ impl Real {
                     signal: None,
                 })
             }
-            PiExp(exp) => Ok(Self {
+            PiExp(exp) => {
+                crate::trace_dispatch!("real", "inverse_ref", "pi-exp");
+                Ok(Self {
                 rational: self.rational.clone().inverse()?,
                 class: PiInvExp(exp.clone().neg()),
                 computable: Some(self.computable_clone().inverse()),
                 signal: None,
-            }),
-            PiInvExp(exp) => Ok(Self {
+            })
+            }
+            PiInvExp(exp) => {
+                crate::trace_dispatch!("real", "inverse_ref", "pi-inv-exp");
+                Ok(Self {
                 rational: self.rational.clone().inverse()?,
                 class: PiExp(exp.clone().neg()),
                 computable: Some(self.computable_clone().inverse()),
                 signal: None,
-            }),
+            })
+            }
             _ => {
                 if let Some((pi_power, exp_power, radicand)) = self.class.const_product_sqrt_parts()
                 {
                     // Borrowed path mirrors owned rationalization while cloning
                     // only the reduced rational radicand and symbolic powers.
+                    crate::trace_dispatch!("real", "inverse_ref", "const-product-sqrt");
                     let rational = (&self.rational * radicand.clone()).inverse()?;
                     let (class, computable) =
                         Class::make_const_product_sqrt(-pi_power, exp_power.neg(), radicand);
@@ -1696,6 +1874,7 @@ impl Real {
                 if let Some((pi_power, exp_power)) = self.class.const_product_parts() {
                     // Rare constant products still stay symbolic in the borrowed
                     // path so `a / (pi^n e^q)` can cancel in the following multiply.
+                    crate::trace_dispatch!("real", "inverse_ref", "const-product");
                     let (class, computable) = Class::make_const_product(-pi_power, exp_power.neg());
                     return Ok(Self {
                         rational: self.rational.clone().inverse()?,
@@ -1704,6 +1883,7 @@ impl Real {
                         signal: None,
                     });
                 }
+                crate::trace_dispatch!("real", "inverse_ref", "generic");
                 Ok(Self {
                     rational: self.rational.clone().inverse()?,
                     class: Irrational,
@@ -2481,11 +2661,22 @@ impl Real {
             crate::trace_dispatch!("real", "asinh", "tiny-rational-computable");
             return Ok(self.make_computable(Computable::asinh));
         }
-        if self.best_sign() == Sign::Minus {
+        let folded = self.fold_ref();
+        let (known_sign, planning_msd) = folded.planning_sign_and_msd();
+        if known_sign == Some(Sign::Minus) {
             crate::trace_dispatch!("real", "asinh", "negative-symmetry");
             return Ok(self.neg().asinh()?.neg());
+        } else if known_sign.is_none() && self.best_sign() == Sign::Minus {
+            // Fall back to the slower exact sign check only when the planning
+            // layer cannot determine sign from symbolic structure.
+            crate::trace_dispatch!("real", "asinh", "negative-symmetry-fallback");
+            return Ok(self.neg().asinh()?.neg());
         }
-        if self.fold_ref().approx(-4) <= BigInt::from(64_u8) {
+        let is_near_zero = match planning_msd.flatten() {
+            Some(msd) => msd < 3,
+            None => folded.approx(-4) <= BigInt::from(64_u8),
+        };
+        if is_near_zero {
             // Near zero, delegate to the deferred computable ln1p reduction so
             // public construction stays cheap without giving up the stable
             // approximation identity.
@@ -2530,7 +2721,13 @@ impl Real {
                 return Err(Problem::NotANumber);
             }
         }
-        if self.fold_ref().approx(-4) <= BigInt::from(64_u8) {
+        let folded = self.fold_ref();
+        let planned_acosh_msd = folded.planning_sign_and_msd().1;
+        let is_near_one = match planned_acosh_msd.flatten() {
+            Some(msd) => msd < 3,
+            None => folded.approx(-4) <= BigInt::from(64_u8),
+        };
+        if is_near_one {
             // Near one, delegate to the deferred computable ln1p/sqrt
             // reduction so public construction does not allocate the full
             // approximation graph.
@@ -3708,18 +3905,23 @@ impl<T: AsRef<Real>> Div<T> for &Real {
     fn div(self, other: T) -> Self::Output {
         let other = other.as_ref();
         if other.definitely_zero() {
+            crate::trace_dispatch!("real", "div", "div-by-zero");
             return Err(Problem::DivideByZero);
         }
         if self.definitely_zero() {
+            crate::trace_dispatch!("real", "div", "zero");
             return Ok(Real::zero());
         }
         if self.class == other.class {
+            crate::trace_dispatch!("real", "div", "same-class");
             let rational = &self.rational / &other.rational;
             return Ok(Real::new(rational));
         }
         if other.class == One {
+            crate::trace_dispatch!("real", "div", "rhs-one");
             let rational = &self.rational / &other.rational;
             if self.class == One {
+                crate::trace_dispatch!("real", "div", "rhs-one-class-one");
                 return Ok(Real::new(rational));
             }
             return Ok(Real {
@@ -3735,6 +3937,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
         // `e / pi`, so keep the fast arms for one-step pi/e reductions.
         match (&self.class, &other.class) {
             (PiPow(power), Pi) if *power > 1 => {
+                crate::trace_dispatch!("real", "div", "pow-over-pi");
                 let (class, computable) = Class::make_pi_power(power - 1);
                 return Ok(Real {
                     rational: &self.rational / &other.rational,
@@ -3744,6 +3947,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                 });
             }
             (ConstProduct(product), Exp(exp)) => {
+                crate::trace_dispatch!("real", "div", "const-product-over-exp");
                 let (class, computable) =
                     Class::make_const_product(product.pi_power, &product.exp_power - exp);
                 return Ok(Real {
@@ -3754,6 +3958,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                 });
             }
             (ConstProduct(product), Pi) if product.pi_power > 0 => {
+                crate::trace_dispatch!("real", "div", "const-product-over-pi");
                 let (class, computable) =
                     Class::make_const_product(product.pi_power - 1, product.exp_power.clone());
                 return Ok(Real {
@@ -3764,6 +3969,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                 });
             }
             (PiExp(exp), Exp(divisor_exp)) => {
+                crate::trace_dispatch!("real", "div", "pi-exp-over-exp");
                 let (class, computable) = Class::make_pi_exp(exp - divisor_exp);
                 return Ok(Real {
                     rational: &self.rational / &other.rational,
@@ -3773,6 +3979,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                 });
             }
             (PiExp(exp), Pi) => {
+                crate::trace_dispatch!("real", "div", "pi-exp-over-pi");
                 let (class, computable) = Class::make_exp(exp.clone());
                 return Ok(Real {
                     rational: &self.rational / &other.rational,
@@ -3797,19 +4004,8 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                 ..square
             });
         }
-        if let Some((class, computable)) = Class::divide_const_products(&self.class, &other.class) {
-            // Keep the signed pi^n * e^q quotient ahead of the general sqrt
-            // fallback. Tiny hot divisions such as `1 / pi` and `e / pi`
-            // are more common than factored sqrt quotients in matrix kernels.
-            return Ok(Real {
-                rational: &self.rational / &other.rational,
-                class,
-                computable: Some(computable),
-                signal: None,
-            });
-        }
-        if self.class.has_const_product_sqrt_factor() || other.class.has_const_product_sqrt_factor()
-        {
+        if self.class.has_const_product_sqrt_factor() || other.class.has_const_product_sqrt_factor() {
+            crate::trace_dispatch!("real", "div", "const-product-sqrt");
             if let (Some((left_pi, left_exp, left_rad)), Some((right_pi, right_exp, right_rad))) = (
                 self.class.const_product_sqrt_parts(),
                 other.class.const_product_sqrt_parts(),
@@ -3883,6 +4079,18 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     });
                 }
             }
+        }
+        if let Some((class, computable)) = Class::divide_const_products(&self.class, &other.class) {
+            // Keep the signed pi^n * e^q quotient after const-product-sqrt
+            // simplification. This avoids unnecessary sqrt factor
+            // decomposition for cases where radical structure can be preserved.
+            crate::trace_dispatch!("real", "div", "const-products");
+            return Ok(Real {
+                rational: &self.rational / &other.rational,
+                class,
+                computable: Some(computable),
+                signal: None,
+            });
         }
         // Simplify ln(x) / ln(10) to just log10(x)
         if other.class.is_ln() && self.class.is_ln() {

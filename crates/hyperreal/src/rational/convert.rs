@@ -1,6 +1,6 @@
 use crate::{Problem, Rational};
 use num::bigint::Sign;
-use num::{BigUint, One};
+use num::{BigInt, BigUint, One};
 
 macro_rules! impl_signed_integer_conversion {
     ($T:ty) => {
@@ -81,11 +81,9 @@ fn pow2_fraction_u32(numerator: u32, denominator_shift: u32, neg: bool) -> Ratio
     let shift = numerator.trailing_zeros().min(denominator_shift);
     let numerator = numerator >> shift;
     let denominator_shift = denominator_shift - shift;
-    Rational {
-        sign: if neg { Sign::Minus } else { Sign::Plus },
-        numerator: BigUint::from(numerator),
-        denominator: BigUint::one() << denominator_shift,
-    }
+    let numerator = BigInt::from(BigUint::from(numerator));
+    let numerator = if neg { -numerator } else { numerator };
+    Rational::from_bigint_fraction(numerator, BigUint::one() << denominator_shift).unwrap()
 }
 
 fn pow2_fraction_u64(numerator: u64, denominator_shift: u32, neg: bool) -> Rational {
@@ -97,11 +95,9 @@ fn pow2_fraction_u64(numerator: u64, denominator_shift: u32, neg: bool) -> Ratio
     let shift = numerator.trailing_zeros().min(denominator_shift);
     let numerator = numerator >> shift;
     let denominator_shift = denominator_shift - shift;
-    Rational {
-        sign: if neg { Sign::Minus } else { Sign::Plus },
-        numerator: BigUint::from(numerator),
-        denominator: BigUint::one() << denominator_shift,
-    }
+    let numerator = BigInt::from(BigUint::from(numerator));
+    let numerator = if neg { -numerator } else { numerator };
+    Rational::from_bigint_fraction(numerator, BigUint::one() << denominator_shift).unwrap()
 }
 
 impl TryFrom<f32> for Rational {
@@ -304,8 +300,8 @@ mod tests {
     fn reduced_binary_fraction_f64() {
         let value: Rational = 0.75_f64.try_into().unwrap();
         assert_eq!(value, Rational::fraction(3, 4).unwrap());
-        assert_eq!(value.numerator, BigUint::from(3_u8));
-        assert_eq!(value.denominator, BigUint::from(4_u8));
+        assert_eq!(*value.numerator(), BigUint::from(3_u8));
+        assert_eq!(*value.denominator(), BigUint::from(4_u8));
     }
 
     #[test]

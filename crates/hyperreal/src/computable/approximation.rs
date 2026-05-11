@@ -361,10 +361,15 @@ fn e(p: Precision) -> BigInt {
 }
 
 fn inverse(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
-    // Plan reciprocal precision from the operand MSD. This avoids evaluating
-    // the denominator far more accurately than the final rounded quotient can
-    // use, which was a hotspot in scalar division and matrix inverse paths.
-    let msd = c.iter_msd();
+    // Plan reciprocal precision from planning facts when available, otherwise fall
+    // back to iterative probing. This keeps exact zero short-circuited and avoids
+    // a full iterative MSD pass for structural operands that already expose a
+    // useful magnitude envelope.
+    let (sign, planned_msd) = c.planning_sign_and_msd();
+    if sign == Some(Sign::NoSign) {
+        return Zero::zero();
+    }
+    let msd = planned_msd.flatten().unwrap_or_else(|| c.iter_msd());
     let inv_msd = 1 - msd;
     let digits_needed = inv_msd - p + 3;
     let mut prec_needed = msd - digits_needed;
@@ -412,16 +417,16 @@ fn add(signal: &Option<Signal>, c1: &Computable, c2: &Computable, p: Precision) 
     // tiny terms when signs/MSDs are already known.
     let extra = 4;
     let cutoff = p - extra;
-    let (sign1, msd1) = c1.planning_sign_and_msd();
-    let (sign2, msd2) = c2.planning_sign_and_msd();
+    let (sign1, planning_msd1) = c1.planning_sign_and_msd();
+    let (sign2, planning_msd2) = c2.planning_sign_and_msd();
     if sign1 == Some(Sign::NoSign) {
         return c2.approx_signal(signal, p);
     }
     if sign2 == Some(Sign::NoSign) {
         return c1.approx_signal(signal, p);
     }
-    let msd1 = msd1.unwrap_or_else(|| c1.msd(cutoff));
-    let msd2 = msd2.unwrap_or_else(|| c2.msd(cutoff));
+    let msd1 = planning_msd1.unwrap_or_else(|| c1.msd(cutoff));
+    let msd2 = planning_msd2.unwrap_or_else(|| c2.msd(cutoff));
 
     match (msd1, msd2) {
         (None, None) => return Zero::zero(),
