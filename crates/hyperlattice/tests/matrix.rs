@@ -559,9 +559,9 @@ fn matrix_transform_handles_materialize_equivalent_to_transform() {
 
     assert_eq!(
         matrix3_handle.transform_vector(&vector3),
-        matrix3 * vector3.clone()
+        matrix3.clone() * vector3.clone()
     );
-    assert_eq!(vector3_handle.materialize(), matrix3 * vector3);
+    assert_eq!(vector3_handle.materialize(), matrix3.clone() * vector3.clone());
     let vector3_with = matrix3.transform_vec3_with(&vector3);
     assert_eq!(vector3_with.materialize(), matrix3 * vector3);
 
@@ -577,9 +577,9 @@ fn matrix_transform_handles_materialize_equivalent_to_transform() {
 
     assert_eq!(
         matrix4_handle.transform_vector(&vector4),
-        matrix4 * vector4.clone()
+        matrix4.clone() * vector4.clone()
     );
-    assert_eq!(vector4_handle.materialize(), matrix4 * vector4);
+    assert_eq!(vector4_handle.materialize(), matrix4.clone() * vector4.clone());
     let vector4_with = matrix4.transform_vec4_with(&vector4);
     assert_eq!(vector4_with.materialize(), matrix4 * vector4);
 }

@@ -522,6 +522,25 @@ impl<B: Backend> Scalar<B> {
                     first_term.expect("first term tracked for nonzero count");
                 let (right, right_positive) =
                     second_term.expect("second term tracked for nonzero count");
+                if B::FUSE_SIGNED_PRODUCT_SUM {
+                    // Keep two surviving terms on the backend reducer for
+                    // exact backends. Matrix cofactors often prune one term
+                    // out of a 3-term polynomial; routing the remaining pair
+                    // through hyperreal preserves the shared-denominator path
+                    // instead of immediately materializing two reduced
+                    // products and an add/subtract. Compact approximate
+                    // backends do not opt in, preserving their direct LLVM
+                    // expression shape.
+                    crate::trace_dispatch!(
+                        "realistic_blas",
+                        "scalar_fast_path",
+                        "signed-product-sum2-sparse-two-fused"
+                    );
+                    return Self(B::Repr::signed_product_sum2(
+                        [left_positive, right_positive],
+                        [[&left[0].0, &left[1].0], [&right[0].0, &right[1].0]],
+                    ));
+                }
                 let left_product = left[0] * left[1];
                 let right_product = right[0] * right[1];
                 crate::trace_dispatch!(

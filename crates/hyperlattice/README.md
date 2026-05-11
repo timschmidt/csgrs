@@ -176,6 +176,18 @@ The hyperreal backend forwards `Real::structural_facts`,
 `Real::refine_sign_until`, and `Real::to_f64_approx`. The approx backend derives
 facts from its stored interval.
 
+Two backend details are intentionally visible at the type boundary:
+
+- `Scalar<HyperrealBackend>` inherits `hyperreal::Real` structural equality.
+  `PartialEq` is not a full symbolic-equivalence prover, so borrowed and owned
+  operations that build semantically equivalent computable expressions can
+  differ structurally for symbolic values. Exact rationals and dyadic imports
+  are the right inputs for strict borrowed/owned equality tests; use facts or
+  approximation when comparing symbolic construction histories.
+- `Scalar::try_from(-0.0_f32)` and `Scalar::try_from(-0.0_f64)` import through
+  exact rational zero on the hyperreal backend. The numeric value round-trips,
+  but the IEEE signed-zero bit is intentionally not represented.
+
 ### Abort-Aware Checked Operations
 
 ```rust

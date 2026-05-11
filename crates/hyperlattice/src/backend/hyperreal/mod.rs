@@ -367,6 +367,27 @@ impl BackendScalarTrait for BackendScalar {
                 let (left_term, left_positive) = first_term.expect("first non-zero term tracked");
                 let (right_term, right_positive) =
                     second_term.expect("second non-zero term tracked");
+                if let Some(sum) = hyperreal::Real::exact_rational_signed_product_sum(
+                    [left_positive, right_positive],
+                    [
+                        [&left_term[0].0, &left_term[1].0],
+                        [&right_term[0].0, &right_term[1].0],
+                    ],
+                ) {
+                    // Sparse cofactors still benefit from exact-rational
+                    // denominator sharing. This is the same delayed
+                    // canonicalization principle as the dense path below and
+                    // Bareiss-style fraction-free elimination (Bareiss, Math.
+                    // Comp. 22(103), 1968, https://doi.org/10.2307/2004533),
+                    // but bounded to the two surviving products already found
+                    // by the structural zero scan.
+                    crate::trace_dispatch!(
+                        "realistic_blas_hyperreal_backend",
+                        "op",
+                        "signed-product-sum2-sparse-two-exact-rational"
+                    );
+                    return Self(sum);
+                }
                 let left_product = left_term[0].clone().mul_ref(left_term[1]);
                 let right_product = right_term[0].clone().mul_ref(right_term[1]);
                 crate::trace_dispatch!(

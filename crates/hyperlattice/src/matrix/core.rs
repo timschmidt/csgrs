@@ -1092,11 +1092,14 @@ fn multiply_arrays4_borrowed<B: Backend>(
             2 => {
                 if p0 {
                     if p1 {
-                        if p2 {
-                            l0 * r0 + l1 * r1
-                        } else {
-                            l0 * r0 + l3 * r3
-                        }
+                        // Sparse mat4 multiply is performance-sensitive for
+                        // affine and inverse kernels because exact backends
+                        // avoid constructing zero products. Keep each active
+                        // lane explicit: a previous hand-unrolled branch used
+                        // lane 3 for the `p0 && p1` case, which broke
+                        // upper-triangular inverse products while preserving
+                        // most dense benchmark rows.
+                        l0 * r0 + l1 * r1
                     } else if p2 {
                         l0 * r0 + l2 * r2
                     } else {
