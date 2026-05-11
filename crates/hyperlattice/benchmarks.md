@@ -40,111 +40,111 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 
 | Benchmark | Approx | Hyperreal from f64 | Hyperreal rational | astro-float 128 | numerica128 | symbolica | Hyperreal f64 / approx | Hyperreal f64 / astro | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `sin 0.1` | 10.84 ns | 147.30 ns | 147.12 ns | 10.61 us | 753.37 ns | 1.82 us | 13.58x | 0.01x | 0.20x | 0.08x |
-| `cos 0.1` | 11.54 ns | 146.88 ns | 147.00 ns | 10.30 us | 491.68 ns | 1.67 us | 12.72x | 0.01x | 0.30x | 0.09x |
-| `sin 1.23456789` | 11.73 ns | 201.59 ns | 189.00 ns | 12.17 us | 800.69 ns | 1.79 us | 17.18x | 0.02x | 0.25x | 0.11x |
-| `cos 1.23456789` | 11.94 ns | 194.46 ns | 182.49 ns | 10.39 us | 586.84 ns | 1.62 us | 16.28x | 0.02x | 0.33x | 0.12x |
-| `sin 1e6` | 12.38 ns | 89.66 ns | 89.47 ns | 15.78 us | 1.09 us | 2.01 us | 7.24x | 0.01x | 0.08x | 0.04x |
-| `cos 1e6` | 12.43 ns | 97.45 ns | 91.15 ns | 13.45 us | 820.74 ns | 1.80 us | 7.84x | 0.01x | 0.12x | 0.05x |
-| `sin 1e30` | 67.09 ns | 90.37 ns | 91.38 ns | 18.25 us | 2.85 us | 3.65 us | 1.35x | 0.00x | 0.03x | 0.02x |
-| `cos 1e30` | 67.83 ns | 92.48 ns | 92.86 ns | 15.06 us | 975.90 ns | 3.09 us | 1.36x | 0.01x | 0.09x | 0.03x |
-| `sin pi_7` | 11.67 ns | 147.65 ns | 340.64 ns | 11.78 us | 730.37 ns | 1.88 us | 12.65x | 0.01x | 0.20x | 0.08x |
-| `cos pi_7` | 11.55 ns | 146.26 ns | 738.79 ns | 10.63 us | 533.17 ns | 1.70 us | 12.66x | 0.01x | 0.27x | 0.09x |
-| `sin 1000pi_eps` | 11.64 ns | 88.92 ns | 776.54 ns | 15.80 us | 2.28 us | 2.82 us | 7.64x | 0.01x | 0.04x | 0.03x |
-| `cos 1000pi_eps` | 12.56 ns | 91.16 ns | 777.92 ns | 13.48 us | 558.91 ns | 1.68 us | 7.26x | 0.01x | 0.16x | 0.05x |
-| `asin 0.5` | 10.91 ns | 445.75 ns | 444.97 ns | 49.15 us | 2.94 us | 13.12 us | 40.84x | 0.01x | 0.15x | 0.03x |
-| `acos 0.5` | 11.33 ns | 978.54 ns | 994.25 ns | 58.68 us | 2.93 us | 12.99 us | 86.38x | 0.02x | 0.33x | 0.08x |
-| `atanh 0.5` | 14.41 ns | 1.42 us | 1.40 us | 34.71 us | 1.63 us | 12.73 us | 98.27x | 0.04x | 0.87x | 0.11x |
-| `asin neg_0.999999` | 13.92 ns | 756.75 ns | 1.18 us | 13.59 us | 2.55 us | 12.78 us | 54.35x | 0.06x | 0.30x | 0.06x |
-| `acos neg_0.999999` | 15.25 ns | 839.81 ns | 1.67 us | 17.93 us | 2.70 us | 12.88 us | 55.06x | 0.05x | 0.31x | 0.07x |
-| `atanh neg_0.999999` | 14.29 ns | 385.39 ns | 575.70 ns | 36.21 us | 1.56 us | 12.57 us | 26.96x | 0.01x | 0.25x | 0.03x |
-| `asin 0.999999` | 13.92 ns | 723.68 ns | 1.36 us | 13.70 us | 2.55 us | 12.92 us | 52.00x | 0.05x | 0.28x | 0.06x |
-| `acos 0.999999` | 14.15 ns | 612.38 ns | 1.50 us | 17.99 us | 2.74 us | 12.90 us | 43.29x | 0.03x | 0.22x | 0.05x |
-| `atanh 0.999999` | 14.41 ns | 449.58 ns | 855.14 ns | 31.19 us | 1.56 us | 12.42 us | 31.20x | 0.01x | 0.29x | 0.04x |
-| `asin 1e-12` | 9.35 ns | 450.42 ns | 1.08 us | 7.89 us | 1.42 us | 14.98 us | 48.19x | 0.06x | 0.32x | 0.03x |
-| `acos 1e-12` | 10.06 ns | 723.47 ns | 1.51 us | 9.62 us | 1.43 us | 14.92 us | 71.88x | 0.08x | 0.51x | 0.05x |
-| `atanh 1e-12` | 9.79 ns | 434.48 ns | 829.75 ns | 36.10 us | 168.06 ns | 19.74 us | 44.39x | 0.01x | 2.59x | 0.02x |
-| `atan 0.5` | 14.68 ns | 297.37 ns | 298.27 ns | 35.17 us | 2.79 us | 17.52 us | 20.26x | 0.01x | 0.11x | 0.02x |
-| `asinh 0.5` | 26.79 ns | 429.00 ns | 430.17 ns | 38.75 us | 1.60 us | 7.41 us | 16.02x | 0.01x | 0.27x | 0.06x |
-| `atan neg_1e-12` | 14.29 ns | 332.60 ns | 542.41 ns | 1.59 us | 1.14 us | 15.10 us | 23.28x | 0.21x | 0.29x | 0.02x |
-| `asinh neg_1e-12` | 15.56 ns | 478.45 ns | 382.68 ns | 41.40 us | 8.49 us | 11.78 us | 30.75x | 0.01x | 0.06x | 0.04x |
-| `atan 1e6` | 15.33 ns | 183.09 ns | 183.16 ns | 2.83 us | 1.44 us | 17.73 us | 11.95x | 0.06x | 0.13x | 0.01x |
-| `asinh 1e6` | 26.39 ns | 306.57 ns | 309.19 ns | 36.30 us | 1.59 us | 7.13 us | 11.62x | 0.01x | 0.19x | 0.04x |
-| `atan neg_1e6` | 15.47 ns | 284.35 ns | 287.30 ns | 2.91 us | 1.45 us | 17.82 us | 18.38x | 0.10x | 0.20x | 0.02x |
-| `asinh neg_1e6` | 26.34 ns | 347.48 ns | 348.65 ns | 36.69 us | 1.60 us | 6.95 us | 13.19x | 0.01x | 0.22x | 0.05x |
-| `acosh 9` | 13.12 ns | 173.14 ns | 171.53 ns | 42.01 us | 1.59 us | 9.70 us | 13.20x | 0.00x | 0.11x | 0.02x |
-| `acosh 1_plus_1e-12` | 12.18 ns | 512.31 ns | 1.37 us | 41.59 us | 8.32 us | 11.23 us | 42.05x | 0.01x | 0.06x | 0.05x |
-| `acosh 1e6` | 13.12 ns | 172.57 ns | 172.50 ns | 36.90 us | 1.59 us | 9.81 us | 13.15x | 0.00x | 0.11x | 0.02x |
-| `acosh e` | 12.93 ns | 511.33 ns | 2.33 us | 41.01 us | 1.63 us | 9.67 us | 39.55x | 0.01x | 0.31x | 0.05x |
+| `sin 0.1` | 10.77 ns | 143.91 ns | 143.88 ns | 10.65 us | 734.94 ns | 1.80 us | 13.37x | 0.01x | 0.20x | 0.08x |
+| `cos 0.1` | 11.55 ns | 141.33 ns | 142.07 ns | 10.11 us | 482.50 ns | 1.64 us | 12.23x | 0.01x | 0.29x | 0.09x |
+| `sin 1.23456789` | 11.57 ns | 198.37 ns | 183.66 ns | 12.18 us | 786.89 ns | 1.77 us | 17.15x | 0.02x | 0.25x | 0.11x |
+| `cos 1.23456789` | 11.83 ns | 190.53 ns | 175.17 ns | 10.22 us | 574.86 ns | 1.62 us | 16.10x | 0.02x | 0.33x | 0.12x |
+| `sin 1e6` | 12.18 ns | 88.15 ns | 88.11 ns | 15.89 us | 1.08 us | 1.99 us | 7.24x | 0.01x | 0.08x | 0.04x |
+| `cos 1e6` | 12.11 ns | 88.86 ns | 88.42 ns | 13.48 us | 798.03 ns | 1.81 us | 7.34x | 0.01x | 0.11x | 0.05x |
+| `sin 1e30` | 65.27 ns | 88.34 ns | 88.35 ns | 18.09 us | 2.82 us | 3.51 us | 1.35x | 0.00x | 0.03x | 0.03x |
+| `cos 1e30` | 67.27 ns | 88.73 ns | 88.90 ns | 15.17 us | 961.05 ns | 3.01 us | 1.32x | 0.01x | 0.09x | 0.03x |
+| `sin pi_7` | 11.55 ns | 144.47 ns | 346.16 ns | 11.66 us | 724.68 ns | 1.84 us | 12.51x | 0.01x | 0.20x | 0.08x |
+| `cos pi_7` | 11.41 ns | 142.45 ns | 754.91 ns | 10.52 us | 521.44 ns | 1.68 us | 12.49x | 0.01x | 0.27x | 0.08x |
+| `sin 1000pi_eps` | 11.37 ns | 88.26 ns | 780.65 ns | 15.70 us | 2.24 us | 2.79 us | 7.76x | 0.01x | 0.04x | 0.03x |
+| `cos 1000pi_eps` | 12.11 ns | 88.68 ns | 776.89 ns | 13.55 us | 556.75 ns | 1.67 us | 7.33x | 0.01x | 0.16x | 0.05x |
+| `asin 0.5` | 10.72 ns | 441.13 ns | 441.49 ns | 49.13 us | 2.85 us | 12.90 us | 41.13x | 0.01x | 0.16x | 0.03x |
+| `acos 0.5` | 10.90 ns | 983.09 ns | 978.62 ns | 56.89 us | 2.84 us | 12.87 us | 90.21x | 0.02x | 0.35x | 0.08x |
+| `atanh 0.5` | 14.17 ns | 1.43 us | 1.41 us | 33.54 us | 1.63 us | 12.69 us | 101.13x | 0.04x | 0.88x | 0.11x |
+| `asin neg_0.999999` | 13.90 ns | 755.51 ns | 1.18 us | 13.60 us | 2.42 us | 12.75 us | 54.36x | 0.06x | 0.31x | 0.06x |
+| `acos neg_0.999999` | 14.91 ns | 873.84 ns | 1.71 us | 17.89 us | 2.61 us | 12.76 us | 58.61x | 0.05x | 0.34x | 0.07x |
+| `atanh neg_0.999999` | 14.03 ns | 387.55 ns | 567.89 ns | 35.47 us | 1.56 us | 12.39 us | 27.63x | 0.01x | 0.25x | 0.03x |
+| `asin 0.999999` | 13.50 ns | 728.97 ns | 1.37 us | 13.48 us | 2.44 us | 12.55 us | 53.99x | 0.05x | 0.30x | 0.06x |
+| `acos 0.999999` | 13.99 ns | 612.95 ns | 1.48 us | 17.69 us | 2.65 us | 12.70 us | 43.81x | 0.03x | 0.23x | 0.05x |
+| `atanh 0.999999` | 14.26 ns | 448.47 ns | 838.27 ns | 30.52 us | 1.57 us | 12.28 us | 31.45x | 0.01x | 0.29x | 0.04x |
+| `asin 1e-12` | 9.19 ns | 463.54 ns | 1.06 us | 7.82 us | 1.37 us | 14.79 us | 50.47x | 0.06x | 0.34x | 0.03x |
+| `acos 1e-12` | 9.69 ns | 717.67 ns | 1.52 us | 9.31 us | 1.39 us | 14.82 us | 74.03x | 0.08x | 0.52x | 0.05x |
+| `atanh 1e-12` | 9.63 ns | 456.45 ns | 829.29 ns | 35.75 us | 165.36 ns | 19.53 us | 47.40x | 0.01x | 2.76x | 0.02x |
+| `atan 0.5` | 14.52 ns | 291.03 ns | 288.77 ns | 34.04 us | 2.67 us | 17.43 us | 20.05x | 0.01x | 0.11x | 0.02x |
+| `asinh 0.5` | 26.25 ns | 419.13 ns | 419.13 ns | 38.58 us | 1.56 us | 7.23 us | 15.97x | 0.01x | 0.27x | 0.06x |
+| `atan neg_1e-12` | 14.38 ns | 369.63 ns | 584.76 ns | 1.52 us | 1.09 us | 15.18 us | 25.71x | 0.24x | 0.34x | 0.02x |
+| `asinh neg_1e-12` | 15.36 ns | 473.43 ns | 379.00 ns | 41.31 us | 8.34 us | 11.48 us | 30.83x | 0.01x | 0.06x | 0.04x |
+| `atan 1e6` | 14.86 ns | 180.24 ns | 178.41 ns | 2.69 us | 1.40 us | 17.54 us | 12.13x | 0.07x | 0.13x | 0.01x |
+| `asinh 1e6` | 26.12 ns | 297.21 ns | 299.41 ns | 35.95 us | 1.59 us | 6.99 us | 11.38x | 0.01x | 0.19x | 0.04x |
+| `atan neg_1e6` | 15.23 ns | 317.92 ns | 317.93 ns | 2.74 us | 1.39 us | 17.71 us | 20.88x | 0.12x | 0.23x | 0.02x |
+| `asinh neg_1e6` | 26.38 ns | 335.23 ns | 336.62 ns | 36.10 us | 1.57 us | 6.83 us | 12.71x | 0.01x | 0.21x | 0.05x |
+| `acosh 9` | 12.90 ns | 171.66 ns | 172.21 ns | 40.79 us | 1.56 us | 9.52 us | 13.31x | 0.00x | 0.11x | 0.02x |
+| `acosh 1_plus_1e-12` | 11.86 ns | 515.88 ns | 1.39 us | 40.36 us | 8.12 us | 11.07 us | 43.50x | 0.01x | 0.06x | 0.05x |
+| `acosh 1e6` | 12.72 ns | 174.15 ns | 172.87 ns | 35.62 us | 1.58 us | 9.56 us | 13.69x | 0.00x | 0.11x | 0.02x |
+| `acosh e` | 12.72 ns | 515.11 ns | 2.34 us | 39.54 us | 1.58 us | 9.40 us | 40.49x | 0.01x | 0.33x | 0.05x |
 
 #### Scalar API Operations
 
 | Benchmark | Approx | Hyperreal from f64 | Hyperreal rational | astro-float 128 | numerica128 | symbolica | Hyperreal f64 / approx | Hyperreal f64 / astro | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `zero` | 0.48 ns | 19.71 ns | 18.65 ns | 25.03 ns | 15.56 ns | 0.94 ns | 41.20x | 0.79x | 1.27x | 20.86x |
-| `one` | 0.47 ns | 24.95 ns | 23.55 ns | 41.76 ns | 30.32 ns | 29.90 ns | 52.82x | 0.60x | 0.82x | 0.83x |
-| `e` | 0.48 ns | 90.62 ns | 89.28 ns | 53.69 ns | 1.07 us | 225.08 ns | 189.07x | 1.69x | 0.08x | 0.40x |
-| `pi` | 0.48 ns | 49.83 ns | 50.92 ns | 45.08 ns | 48.57 ns | 225.57 ns | 104.76x | 1.11x | 1.03x | 0.22x |
-| `tau` | 0.47 ns | 49.99 ns | 50.74 ns | 118.73 ns | 99.69 ns | 1.86 us | 105.74x | 0.42x | 0.50x | 0.03x |
-| `add` | 5.12 ns | 232.53 ns | 317.76 ns | 52.48 ns | 42.38 ns | 1.26 us | 45.46x | 4.43x | 5.49x | 0.18x |
-| `sub` | 5.15 ns | 235.38 ns | 375.29 ns | 56.62 ns | 45.18 ns | 2.38 us | 45.71x | 4.16x | 5.21x | 0.10x |
-| `neg` | 5.04 ns | 39.15 ns | 39.40 ns | 23.71 ns | 21.51 ns | 1.05 us | 7.76x | 1.65x | 1.82x | 0.04x |
-| `mul` | 5.47 ns | 160.67 ns | 402.55 ns | 57.52 ns | 46.49 ns | 1.53 us | 29.39x | 2.79x | 3.46x | 0.11x |
-| `div` | 8.34 ns | 316.48 ns | 383.39 ns | 136.10 ns | 64.25 ns | 2.51 us | 37.94x | 2.33x | 4.93x | 0.13x |
-| `reciprocal` | 8.69 ns | 94.57 ns | 82.69 ns | 162.58 ns | 59.98 ns | 1.53 us | 10.89x | 0.58x | 1.58x | 0.06x |
-| `reciprocal checked` | 8.99 ns | 84.10 ns | 80.96 ns | 163.28 ns | 59.59 ns | 1.54 us | 9.36x | 0.52x | 1.41x | 0.05x |
-| `reciprocal checked abort` | 23.79 ns | 107.98 ns | 88.29 ns | 162.46 ns | 59.90 ns | 1.55 us | 4.54x | 0.66x | 1.80x | 0.07x |
-| `pow` | 19.97 ns | 8.41 us | 7.41 us | 54.56 us | 2.87 us | 2.35 us | 421.12x | 0.15x | 2.93x | 3.58x |
-| `powi` | 5.78 ns | 390.20 ns | 2.58 us | 281.75 ns | 85.42 ns | 1.58 us | 67.53x | 1.38x | 4.57x | 0.25x |
-| `exp` | 19.60 ns | 1.53 us | 2.14 us | 13.91 us | 932.64 ns | 1.87 us | 78.15x | 0.11x | 1.64x | 0.82x |
-| `ln` | 10.63 ns | 1.63 us | 2.43 us | 29.46 us | 1.31 us | 1.80 us | 153.55x | 0.06x | 1.25x | 0.90x |
-| `log10` | 13.34 ns | 4.65 us | 5.79 us | 34.98 us | 2.74 us | 6.59 us | 348.82x | 0.13x | 1.70x | 0.71x |
-| `log10 abort` | 16.92 ns | 4.68 us | 5.80 us | 35.03 us | 2.73 us | 6.63 us | 276.48x | 0.13x | 1.71x | 0.71x |
-| `sqrt` | 20.00 ns | 1.61 us | 1.59 us | 4.98 us | 95.35 ns | 1.44 us | 80.69x | 0.32x | 16.93x | 1.12x |
-| `sin` | 15.20 ns | 134.46 ns | 121.64 ns | 13.72 us | 1.24 us | 2.21 us | 8.85x | 0.01x | 0.11x | 0.06x |
-| `cos` | 18.24 ns | 133.77 ns | 123.01 ns | 11.99 us | 628.05 ns | 1.74 us | 7.33x | 0.01x | 0.21x | 0.08x |
-| `tan` | 24.68 ns | 181.69 ns | 176.96 ns | 29.33 us | 1.59 us | 6.59 us | 7.36x | 0.01x | 0.11x | 0.03x |
-| `sinh` | 18.11 ns | 4.14 us | 4.21 us | 3.29 us | 1.15 us | 10.52 us | 228.77x | 1.26x | 3.61x | 0.39x |
-| `cosh` | 18.11 ns | 4.10 us | 4.16 us | 7.92 us | 1.07 us | 9.47 us | 226.23x | 0.52x | 3.82x | 0.43x |
-| `tanh` | 23.09 ns | 8.32 us | 8.33 us | 3.35 us | 1.21 us | 22.84 us | 360.57x | 2.48x | 6.88x | 0.36x |
-| `asin` | 13.15 ns | 640.46 ns | 1.47 us | 20.93 us | 2.42 us | 13.64 us | 48.69x | 0.03x | 0.26x | 0.05x |
-| `asin abort` | 17.10 ns | 635.77 ns | 1.48 us | 21.05 us | 2.43 us | 14.05 us | 37.18x | 0.03x | 0.26x | 0.05x |
-| `acos` | 15.74 ns | 850.99 ns | 2.14 us | 26.30 us | 2.52 us | 13.76 us | 54.05x | 0.03x | 0.34x | 0.06x |
-| `acos abort` | 17.67 ns | 854.20 ns | 2.15 us | 26.34 us | 2.53 us | 13.79 us | 48.33x | 0.03x | 0.34x | 0.06x |
-| `atan` | 14.85 ns | 290.11 ns | 931.60 ns | 18.39 us | 2.24 us | 18.71 us | 19.54x | 0.02x | 0.13x | 0.02x |
-| `atan abort` | 21.08 ns | 302.00 ns | 941.08 ns | 18.47 us | 2.27 us | 18.87 us | 14.33x | 0.02x | 0.13x | 0.02x |
-| `asinh` | 33.81 ns | 431.83 ns | 1.07 us | 38.55 us | 1.65 us | 7.46 us | 12.77x | 0.01x | 0.26x | 0.06x |
-| `asinh abort` | 31.25 ns | 435.37 ns | 1.08 us | 38.52 us | 1.64 us | 7.40 us | 13.93x | 0.01x | 0.27x | 0.06x |
-| `acosh` | 12.76 ns | 357.71 ns | 1.12 us | 39.88 us | 3.31 us | 10.34 us | 28.03x | 0.01x | 0.11x | 0.03x |
-| `acosh abort` | 16.04 ns | 374.27 ns | 1.13 us | 40.24 us | 3.30 us | 10.50 us | 23.33x | 0.01x | 0.11x | 0.04x |
-| `atanh` | 13.61 ns | 708.34 ns | 1.37 us | 34.74 us | 1.27 us | 14.80 us | 52.04x | 0.02x | 0.56x | 0.05x |
-| `atanh abort` | 17.11 ns | 716.27 ns | 1.34 us | 34.32 us | 1.25 us | 14.71 us | 41.86x | 0.02x | 0.57x | 0.05x |
-| `zero status` | 1.20 ns | 1.07 ns | 1.04 ns | 1.03 ns | 6.75 ns | 8.22 ns | 0.89x | 1.05x | 0.16x | 0.13x |
-| `zero status abort` | 1.42 ns | 1.12 ns | 1.11 ns | 1.05 ns | 6.74 ns | 8.17 ns | 0.79x | 1.08x | 0.17x | 0.14x |
+| `zero` | 0.47 ns | 18.00 ns | 17.97 ns | 24.57 ns | 15.44 ns | 0.92 ns | 38.52x | 0.73x | 1.17x | 19.51x |
+| `one` | 0.46 ns | 26.27 ns | 26.36 ns | 40.64 ns | 30.47 ns | 32.36 ns | 56.66x | 0.65x | 0.86x | 0.81x |
+| `e` | 0.47 ns | 87.34 ns | 90.28 ns | 52.21 ns | 1.04 us | 226.33 ns | 185.88x | 1.67x | 0.08x | 0.39x |
+| `pi` | 0.46 ns | 49.30 ns | 50.50 ns | 42.99 ns | 49.37 ns | 225.89 ns | 106.85x | 1.15x | 1.00x | 0.22x |
+| `tau` | 0.47 ns | 49.04 ns | 50.52 ns | 116.95 ns | 104.90 ns | 1.85 us | 104.15x | 0.42x | 0.47x | 0.03x |
+| `add` | 5.04 ns | 205.50 ns | 309.28 ns | 51.08 ns | 41.93 ns | 1.24 us | 40.80x | 4.02x | 4.90x | 0.17x |
+| `sub` | 5.10 ns | 210.82 ns | 366.12 ns | 55.30 ns | 44.90 ns | 2.39 us | 41.32x | 3.81x | 4.69x | 0.09x |
+| `neg` | 5.04 ns | 40.02 ns | 39.51 ns | 23.35 ns | 19.76 ns | 1.03 us | 7.94x | 1.71x | 2.03x | 0.04x |
+| `mul` | 5.35 ns | 133.77 ns | 390.69 ns | 57.11 ns | 44.34 ns | 1.52 us | 25.02x | 2.34x | 3.02x | 0.09x |
+| `div` | 8.69 ns | 312.32 ns | 353.67 ns | 133.33 ns | 61.59 ns | 2.50 us | 35.92x | 2.34x | 5.07x | 0.12x |
+| `reciprocal` | 8.61 ns | 77.38 ns | 79.53 ns | 155.00 ns | 58.34 ns | 1.49 us | 8.99x | 0.50x | 1.33x | 0.05x |
+| `reciprocal checked` | 8.67 ns | 75.15 ns | 77.22 ns | 157.05 ns | 58.16 ns | 1.51 us | 8.67x | 0.48x | 1.29x | 0.05x |
+| `reciprocal checked abort` | 24.19 ns | 90.27 ns | 89.54 ns | 154.44 ns | 58.09 ns | 1.51 us | 3.73x | 0.58x | 1.55x | 0.06x |
+| `pow` | 19.68 ns | 8.24 us | 7.29 us | 52.65 us | 2.79 us | 2.34 us | 418.65x | 0.16x | 2.96x | 3.52x |
+| `powi` | 5.66 ns | 367.33 ns | 2.54 us | 279.49 ns | 85.71 ns | 1.56 us | 64.94x | 1.31x | 4.29x | 0.24x |
+| `exp` | 19.36 ns | 1.49 us | 2.07 us | 13.84 us | 922.68 ns | 1.84 us | 77.01x | 0.11x | 1.62x | 0.81x |
+| `ln` | 10.57 ns | 1.56 us | 2.37 us | 28.66 us | 1.29 us | 1.79 us | 147.42x | 0.05x | 1.21x | 0.87x |
+| `log10` | 13.30 ns | 4.60 us | 5.72 us | 34.72 us | 2.68 us | 6.54 us | 346.10x | 0.13x | 1.72x | 0.70x |
+| `log10 abort` | 16.85 ns | 4.53 us | 5.77 us | 34.55 us | 2.69 us | 6.52 us | 269.03x | 0.13x | 1.69x | 0.70x |
+| `sqrt` | 8.06 ns | 1.53 us | 1.54 us | 4.96 us | 94.56 ns | 1.43 us | 190.29x | 0.31x | 16.22x | 1.07x |
+| `sin` | 14.78 ns | 118.45 ns | 122.85 ns | 13.57 us | 1.22 us | 2.19 us | 8.01x | 0.01x | 0.10x | 0.05x |
+| `cos` | 18.22 ns | 121.48 ns | 118.96 ns | 11.76 us | 613.92 ns | 1.73 us | 6.67x | 0.01x | 0.20x | 0.07x |
+| `tan` | 24.08 ns | 162.82 ns | 165.68 ns | 29.63 us | 1.55 us | 6.53 us | 6.76x | 0.01x | 0.10x | 0.02x |
+| `sinh` | 17.88 ns | 3.98 us | 4.00 us | 3.21 us | 1.11 us | 10.62 us | 222.83x | 1.24x | 3.59x | 0.38x |
+| `cosh` | 17.81 ns | 3.92 us | 3.99 us | 7.80 us | 1.04 us | 9.55 us | 220.06x | 0.50x | 3.76x | 0.41x |
+| `tanh` | 23.28 ns | 8.20 us | 8.22 us | 3.26 us | 1.17 us | 22.76 us | 352.42x | 2.52x | 7.04x | 0.36x |
+| `asin` | 12.93 ns | 614.76 ns | 1.45 us | 20.77 us | 2.34 us | 13.66 us | 47.54x | 0.03x | 0.26x | 0.04x |
+| `asin abort` | 17.04 ns | 640.20 ns | 1.45 us | 20.81 us | 2.37 us | 13.62 us | 37.57x | 0.03x | 0.27x | 0.05x |
+| `acos` | 13.84 ns | 838.63 ns | 2.09 us | 25.62 us | 2.49 us | 13.43 us | 60.60x | 0.03x | 0.34x | 0.06x |
+| `acos abort` | 17.57 ns | 850.58 ns | 2.07 us | 25.73 us | 2.48 us | 13.68 us | 48.40x | 0.03x | 0.34x | 0.06x |
+| `atan` | 14.69 ns | 269.59 ns | 912.90 ns | 17.93 us | 2.18 us | 18.78 us | 18.36x | 0.02x | 0.12x | 0.01x |
+| `atan abort` | 21.22 ns | 278.20 ns | 925.10 ns | 17.57 us | 2.18 us | 18.59 us | 13.11x | 0.02x | 0.13x | 0.01x |
+| `asinh` | 33.49 ns | 416.96 ns | 1.07 us | 38.28 us | 1.60 us | 7.32 us | 12.45x | 0.01x | 0.26x | 0.06x |
+| `asinh abort` | 30.45 ns | 416.48 ns | 1.06 us | 38.36 us | 1.58 us | 7.35 us | 13.68x | 0.01x | 0.26x | 0.06x |
+| `acosh` | 12.35 ns | 343.30 ns | 1.09 us | 38.67 us | 3.23 us | 10.16 us | 27.80x | 0.01x | 0.11x | 0.03x |
+| `acosh abort` | 16.23 ns | 344.87 ns | 1.11 us | 39.12 us | 3.22 us | 10.11 us | 21.25x | 0.01x | 0.11x | 0.03x |
+| `atanh` | 13.51 ns | 674.80 ns | 1.34 us | 33.66 us | 1.22 us | 14.40 us | 49.94x | 0.02x | 0.55x | 0.05x |
+| `atanh abort` | 16.84 ns | 690.51 ns | 1.33 us | 33.97 us | 1.22 us | 14.45 us | 41.01x | 0.02x | 0.57x | 0.05x |
+| `zero status` | 1.19 ns | 1.06 ns | 1.04 ns | 1.04 ns | 6.66 ns | 7.93 ns | 0.89x | 1.01x | 0.16x | 0.13x |
+| `zero status abort` | 1.39 ns | 1.16 ns | 1.09 ns | 0.99 ns | 6.66 ns | 7.94 ns | 0.83x | 1.17x | 0.17x | 0.15x |
 
 ### Complex Operations
 
 | Benchmark | Approx | Hyperreal from f64 | Hyperreal rational | astro-float 128 | numerica128 | symbolica | Hyperreal f64 / approx | Hyperreal f64 / astro | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `zero` | 0.93 ns | 36.39 ns | 36.36 ns | 51.26 ns | - | 1.91 ns | 38.94x | 0.71x | - | 19.08x |
-| `one` | 5.38 ns | 39.60 ns | 39.41 ns | 66.02 ns | - | 33.29 ns | 7.36x | 0.60x | - | 1.19x |
-| `i` | 0.94 ns | 41.92 ns | 41.44 ns | 65.85 ns | - | 29.49 ns | 44.37x | 0.64x | - | 1.42x |
-| `free i` | 0.94 ns | 41.47 ns | 41.14 ns | 65.86 ns | - | 30.26 ns | 44.03x | 0.63x | - | 1.37x |
-| `conjugate` | 2.14 ns | 85.50 ns | 84.82 ns | 41.07 ns | - | 1.06 us | 40.01x | 2.08x | - | 0.08x |
-| `norm squared` | 5.76 ns | 320.00 ns | 1.42 us | 151.64 ns | - | 4.25 us | 55.52x | 2.11x | - | 0.08x |
-| `reciprocal` | 14.37 ns | 1.74 us | 2.77 us | 447.21 ns | - | 10.67 us | 120.93x | 3.89x | - | 0.16x |
-| `reciprocal checked` | 14.39 ns | 1.74 us | 2.79 us | 449.57 ns | - | 10.63 us | 121.25x | 3.88x | - | 0.16x |
-| `powi` | 18.14 ns | 2.06 us | 13.21 us | 1.44 us | - | 42.92 us | 113.58x | 1.43x | - | 0.05x |
-| `powi checked` | 18.30 ns | 2.06 us | 13.30 us | 1.48 us | - | 43.59 us | 112.76x | 1.40x | - | 0.05x |
-| `div checked` | 20.44 ns | 2.66 us | 6.17 us | 793.48 ns | - | 21.41 us | 130.06x | 3.35x | - | 0.12x |
-| `div real checked` | 9.35 ns | 718.68 ns | 668.96 ns | 265.26 ns | - | 5.24 us | 76.85x | 2.71x | - | 0.14x |
-| `from scalar` | 1.41 ns | 57.21 ns | 55.69 ns | 45.27 ns | - | 9.96 ns | 40.56x | 1.26x | - | 5.74x |
-| `add` | 5.90 ns | 473.39 ns | 834.81 ns | 108.06 ns | - | 2.52 us | 80.23x | 4.38x | - | 0.19x |
-| `sub` | 5.86 ns | 477.66 ns | 846.21 ns | 117.70 ns | - | 4.70 us | 81.57x | 4.06x | - | 0.10x |
-| `neg` | 2.59 ns | 87.13 ns | 85.99 ns | 42.01 ns | - | 2.12 us | 33.70x | 2.07x | - | 0.04x |
-| `mul` | 7.63 ns | 876.88 ns | 3.15 us | 312.61 ns | - | 10.33 us | 114.90x | 2.80x | - | 0.08x |
-| `div` | 18.42 ns | 2.73 us | 6.16 us | 792.97 ns | - | 21.35 us | 148.19x | 3.44x | - | 0.13x |
-| `div real` | 9.86 ns | 653.78 ns | 630.73 ns | 266.11 ns | - | 5.05 us | 66.30x | 2.46x | - | 0.13x |
+| `zero` | 0.92 ns | 30.87 ns | 30.81 ns | 46.75 ns | - | 1.87 ns | 33.61x | 0.66x | - | 16.51x |
+| `one` | 5.02 ns | 37.84 ns | 37.78 ns | 63.33 ns | - | 29.51 ns | 7.54x | 0.60x | - | 1.28x |
+| `i` | 0.93 ns | 38.37 ns | 38.25 ns | 64.15 ns | - | 31.68 ns | 41.34x | 0.60x | - | 1.21x |
+| `free i` | 0.93 ns | 39.91 ns | 38.51 ns | 64.49 ns | - | 31.21 ns | 42.95x | 0.62x | - | 1.28x |
+| `conjugate` | 2.12 ns | 84.61 ns | 83.81 ns | 44.43 ns | - | 1.06 us | 40.00x | 1.90x | - | 0.08x |
+| `norm squared` | 5.69 ns | 154.67 ns | 540.62 ns | 148.80 ns | - | 4.19 us | 27.16x | 1.04x | - | 0.04x |
+| `reciprocal` | 18.09 ns | 1.71 us | 2.75 us | 440.48 ns | - | 10.47 us | 94.73x | 3.89x | - | 0.16x |
+| `reciprocal checked` | 14.89 ns | 1.73 us | 2.78 us | 440.27 ns | - | 10.54 us | 116.23x | 3.93x | - | 0.16x |
+| `powi` | 17.45 ns | 2.02 us | 13.14 us | 1.45 us | - | 43.77 us | 115.80x | 1.39x | - | 0.05x |
+| `powi checked` | 17.83 ns | 2.04 us | 13.00 us | 1.44 us | - | 43.65 us | 114.56x | 1.42x | - | 0.05x |
+| `div checked` | 23.32 ns | 2.63 us | 6.05 us | 775.81 ns | - | 21.40 us | 112.81x | 3.39x | - | 0.12x |
+| `div real checked` | 9.28 ns | 665.49 ns | 617.99 ns | 260.57 ns | - | 5.16 us | 71.72x | 2.55x | - | 0.13x |
+| `from scalar` | 1.38 ns | 57.98 ns | 57.42 ns | 47.22 ns | - | 11.45 ns | 41.92x | 1.23x | - | 5.06x |
+| `add` | 6.15 ns | 459.94 ns | 824.17 ns | 105.91 ns | - | 2.51 us | 74.74x | 4.34x | - | 0.18x |
+| `sub` | 6.13 ns | 460.97 ns | 847.74 ns | 114.26 ns | - | 4.71 us | 75.24x | 4.03x | - | 0.10x |
+| `neg` | 2.57 ns | 88.62 ns | 87.27 ns | 46.01 ns | - | 2.13 us | 34.50x | 1.93x | - | 0.04x |
+| `mul` | 7.53 ns | 857.95 ns | 3.11 us | 298.37 ns | - | 9.93 us | 113.96x | 2.88x | - | 0.09x |
+| `div` | 18.04 ns | 2.64 us | 6.12 us | 764.66 ns | - | 21.43 us | 146.57x | 3.46x | - | 0.12x |
+| `div real` | 9.80 ns | 653.45 ns | 618.60 ns | 259.51 ns | - | 5.16 us | 66.68x | 2.52x | - | 0.13x |
 
 ### Vector Operations
 
@@ -152,39 +152,39 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 
 | Benchmark | Approx | Hyperreal from f64 | Hyperreal rational | astro-float 128 | numerica128 | symbolica | Hyperreal f64 / approx | Hyperreal f64 / astro | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `vec3 dot` | 8.90 ns | 223.15 ns | 2.44 us | 307.92 ns | 253.15 ns | 7.15 us | 25.07x | 0.72x | 0.88x | 0.03x |
-| `vec3 magnitude` | 16.10 ns | 4.15 us | 5.82 us | 5.47 us | 342.27 ns | 8.66 us | 257.46x | 0.76x | 12.11x | 0.48x |
-| `vec3 normalize` | 27.58 ns | 8.24 us | 11.61 us | 6.00 us | 593.04 ns | 16.54 us | 298.74x | 1.37x | 13.89x | 0.50x |
+| `vec3 dot` | 8.47 ns | 206.56 ns | 2.34 us | 302.89 ns | 246.97 ns | 7.12 us | 24.38x | 0.68x | 0.84x | 0.03x |
+| `vec3 magnitude` | 15.88 ns | 3.95 us | 5.72 us | 5.27 us | 341.17 ns | 8.65 us | 248.75x | 0.75x | 11.57x | 0.46x |
+| `vec3 normalize` | 26.93 ns | 8.19 us | 11.37 us | 5.92 us | 569.98 ns | 16.54 us | 304.08x | 1.38x | 14.37x | 0.50x |
 
 #### Vector API Operations
 
 | Benchmark | Approx | Hyperreal from f64 | Hyperreal rational | astro-float 128 | numerica128 | symbolica | Hyperreal f64 / approx | Hyperreal f64 / astro | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `vec3 new` | 3.12 ns | 213.07 ns | 1.46 us | 78.94 ns | 56.60 ns | 741.28 ns | 68.27x | 2.70x | 3.76x | 0.29x |
-| `vec3 zero` | 1.41 ns | 155.94 ns | 154.05 ns | 60.31 ns | 30.86 ns | 2.83 ns | 110.39x | 2.59x | 5.05x | 55.14x |
-| `vec3 dot abort` | 9.27 ns | 215.73 ns | 889.53 ns | 255.06 ns | 204.98 ns | 7.06 us | 23.26x | 0.85x | 1.05x | 0.03x |
-| `vec3 magnitude abort` | 18.05 ns | 4.10 us | 3.50 us | 5.46 us | 321.48 ns | 8.65 us | 227.15x | 0.75x | 12.75x | 0.47x |
-| `vec3 normalize checked` | 28.59 ns | 8.28 us | 7.54 us | 5.85 us | 542.78 ns | 16.69 us | 289.57x | 1.41x | 15.25x | 0.50x |
-| `vec3 normalize checked abort` | 30.66 ns | 8.38 us | 7.55 us | 5.85 us | 544.13 ns | 16.56 us | 273.48x | 1.43x | 15.41x | 0.51x |
-| `vec3 div scalar checked` | 10.43 ns | 1.30 us | 1.56 us | 394.64 ns | - | - | 124.92x | 3.30x | - | - |
-| `vec3 div scalar checked abort` | 18.17 ns | 1.31 us | 1.56 us | 392.65 ns | - | - | 72.15x | 3.34x | - | - |
-| `vec3 add` | 6.63 ns | 951.53 ns | 1.70 us | 155.08 ns | 126.35 ns | 3.87 us | 143.55x | 6.14x | 7.53x | 0.25x |
-| `vec3 add scalar` | 6.43 ns | 824.75 ns | 1.50 us | 155.84 ns | 132.66 ns | 3.73 us | 128.24x | 5.29x | 6.22x | 0.22x |
-| `vec3 sub` | 6.54 ns | 956.74 ns | 1.74 us | 167.30 ns | 135.89 ns | 7.19 us | 146.35x | 5.72x | 7.04x | 0.13x |
-| `vec3 sub scalar` | 6.43 ns | 816.81 ns | 1.28 us | 148.02 ns | 123.96 ns | 6.93 us | 127.05x | 5.52x | 6.59x | 0.12x |
-| `vec3 neg` | 3.78 ns | 162.74 ns | 161.47 ns | 58.20 ns | 46.49 ns | 3.07 us | 43.08x | 2.80x | 3.50x | 0.05x |
-| `vec3 mul scalar` | 6.94 ns | 603.82 ns | 2.05 us | 162.55 ns | 119.29 ns | 4.34 us | 86.95x | 3.71x | 5.06x | 0.14x |
-| `vec3 div scalar` | 10.09 ns | 1.37 us | 1.62 us | 402.33 ns | 170.02 ns | 7.47 us | 136.03x | 3.41x | 8.07x | 0.18x |
-| `vec4 dot` | 9.69 ns | 298.79 ns | 712.89 ns | 429.71 ns | 323.36 ns | 9.55 us | 30.82x | 0.70x | 0.92x | 0.03x |
-| `vec4 magnitude` | 17.67 ns | 3.86 us | 2.88 us | 5.48 us | 406.37 ns | 11.17 us | 218.22x | 0.70x | 9.49x | 0.35x |
-| `vec4 normalize` | 33.71 ns | 8.57 us | 6.70 us | 6.09 us | 691.56 ns | 22.24 us | 254.17x | 1.41x | 12.39x | 0.39x |
-| `vec4 add` | 7.84 ns | 1.20 us | 1.82 us | 205.51 ns | 171.42 ns | 5.16 us | 153.15x | 5.84x | 7.00x | 0.23x |
-| `vec4 add scalar` | 6.80 ns | 981.42 ns | 1.71 us | 215.32 ns | 179.05 ns | 4.98 us | 144.29x | 4.56x | 5.48x | 0.20x |
-| `vec4 sub` | 5.20 ns | 1.19 us | 1.70 us | 215.09 ns | 176.68 ns | 9.47 us | 227.88x | 5.51x | 6.71x | 0.13x |
-| `vec4 sub scalar` | 4.45 ns | 968.23 ns | 1.45 us | 206.31 ns | 170.09 ns | 9.29 us | 217.59x | 4.69x | 5.69x | 0.10x |
-| `vec4 neg` | 4.93 ns | 186.16 ns | 187.38 ns | 78.16 ns | 64.92 ns | 3.97 us | 37.74x | 2.38x | 2.87x | 0.05x |
-| `vec4 mul scalar` | 7.27 ns | 661.05 ns | 2.02 us | 223.98 ns | 163.05 ns | 5.60 us | 90.93x | 2.95x | 4.05x | 0.12x |
-| `vec4 div scalar` | 14.14 ns | 1.72 us | 1.54 us | 524.70 ns | 230.35 ns | 9.88 us | 121.58x | 3.28x | 7.47x | 0.17x |
+| `vec3 new` | 3.06 ns | 223.01 ns | 1.43 us | 66.93 ns | 58.01 ns | 700.83 ns | 72.99x | 3.33x | 3.84x | 0.32x |
+| `vec3 zero` | 1.40 ns | 131.58 ns | 131.45 ns | 63.70 ns | 30.30 ns | 2.76 ns | 94.24x | 2.07x | 4.34x | 47.62x |
+| `vec3 dot abort` | 9.12 ns | 215.90 ns | 873.72 ns | 250.68 ns | 197.49 ns | 7.08 us | 23.66x | 0.86x | 1.09x | 0.03x |
+| `vec3 magnitude abort` | 18.00 ns | 4.08 us | 3.51 us | 5.63 us | 319.54 ns | 8.60 us | 226.46x | 0.72x | 12.76x | 0.47x |
+| `vec3 normalize checked` | 27.75 ns | 8.25 us | 7.56 us | 5.81 us | 532.32 ns | 16.51 us | 297.43x | 1.42x | 15.51x | 0.50x |
+| `vec3 normalize checked abort` | 30.76 ns | 8.27 us | 7.56 us | 5.91 us | 530.10 ns | 16.56 us | 269.03x | 1.40x | 15.61x | 0.50x |
+| `vec3 div scalar checked` | 10.43 ns | 1.33 us | 1.60 us | 390.82 ns | - | - | 127.70x | 3.41x | - | - |
+| `vec3 div scalar checked abort` | 18.58 ns | 1.36 us | 1.56 us | 388.11 ns | - | - | 73.19x | 3.50x | - | - |
+| `vec3 add` | 6.79 ns | 933.92 ns | 1.70 us | 148.14 ns | 124.56 ns | 3.83 us | 137.45x | 6.30x | 7.50x | 0.24x |
+| `vec3 add scalar` | 6.28 ns | 749.39 ns | 1.45 us | 147.52 ns | 129.59 ns | 3.65 us | 119.30x | 5.08x | 5.78x | 0.21x |
+| `vec3 sub` | 6.74 ns | 941.66 ns | 1.75 us | 162.70 ns | 135.16 ns | 7.14 us | 139.67x | 5.79x | 6.97x | 0.13x |
+| `vec3 sub scalar` | 6.31 ns | 746.40 ns | 1.24 us | 142.65 ns | 121.63 ns | 6.96 us | 118.28x | 5.23x | 6.14x | 0.11x |
+| `vec3 neg` | 3.74 ns | 141.33 ns | 140.25 ns | 57.08 ns | 49.83 ns | 3.08 us | 37.80x | 2.48x | 2.84x | 0.05x |
+| `vec3 mul scalar` | 6.90 ns | 523.54 ns | 1.98 us | 163.98 ns | 124.61 ns | 4.32 us | 75.87x | 3.19x | 4.20x | 0.12x |
+| `vec3 div scalar` | 18.42 ns | 1.33 us | 1.60 us | 386.15 ns | 177.70 ns | 7.61 us | 72.05x | 3.44x | 7.47x | 0.17x |
+| `vec4 dot` | 9.56 ns | 245.65 ns | 619.78 ns | 433.68 ns | 313.56 ns | 9.49 us | 25.69x | 0.57x | 0.78x | 0.03x |
+| `vec4 magnitude` | 17.40 ns | 3.84 us | 2.75 us | 5.48 us | 412.13 ns | 11.06 us | 220.65x | 0.70x | 9.32x | 0.35x |
+| `vec4 normalize` | 33.74 ns | 8.54 us | 6.59 us | 6.14 us | 674.10 ns | 21.66 us | 253.15x | 1.39x | 12.67x | 0.39x |
+| `vec4 add` | 7.21 ns | 1.15 us | 1.74 us | 198.28 ns | 169.56 ns | 5.12 us | 159.04x | 5.78x | 6.76x | 0.22x |
+| `vec4 add scalar` | 6.92 ns | 1.01 us | 1.68 us | 206.15 ns | 173.44 ns | 4.97 us | 145.79x | 4.89x | 5.81x | 0.20x |
+| `vec4 sub` | 5.08 ns | 1.14 us | 1.65 us | 206.29 ns | 171.92 ns | 9.47 us | 223.90x | 5.52x | 6.62x | 0.12x |
+| `vec4 sub scalar` | 4.56 ns | 998.17 ns | 1.45 us | 198.90 ns | 167.27 ns | 9.23 us | 219.06x | 5.02x | 5.97x | 0.11x |
+| `vec4 neg` | 4.96 ns | 197.49 ns | 194.10 ns | 77.83 ns | 59.49 ns | 3.99 us | 39.80x | 2.54x | 3.32x | 0.05x |
+| `vec4 mul scalar` | 7.32 ns | 690.59 ns | 2.04 us | 213.93 ns | 154.42 ns | 5.50 us | 94.34x | 3.23x | 4.47x | 0.13x |
+| `vec4 div scalar` | 14.30 ns | 1.71 us | 1.53 us | 521.66 ns | 222.40 ns | 9.89 us | 119.41x | 3.27x | 7.68x | 0.17x |
 
 ### Matrix Operations
 
@@ -192,130 +192,130 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 
 | Benchmark | Approx | Hyperreal from f64 | Hyperreal rational | astro-float 128 | numerica128 | symbolica | Hyperreal f64 / approx | Hyperreal f64 / astro | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `mat3 determinant` | 19.22 ns | 1.16 us | 2.65 us | 952.95 ns | 848.70 ns | 21.93 us | 60.14x | 1.21x | 1.36x | 0.05x |
-| `mat3 inverse` | 95.04 ns | 16.27 us | 9.87 us | 3.26 us | 2.44 us | 81.33 us | 171.22x | 5.00x | 6.68x | 0.20x |
-| `mat3 mul mat3` | 52.27 ns | 2.99 us | 7.17 us | 2.87 us | 2.35 us | 60.46 us | 57.27x | 1.04x | 1.28x | 0.05x |
-| `mat3 transform vec3` | 23.12 ns | 1.39 us | 4.52 us | 1.03 us | 887.52 ns | 19.82 us | 60.08x | 1.34x | 1.56x | 0.07x |
-| `mat4 determinant` | 45.95 ns | 3.33 us | 2.13 us | 4.59 us | 4.16 us | 93.49 us | 72.45x | 0.72x | 0.80x | 0.04x |
-| `mat4 inverse` | 170.98 ns | 27.45 us | 10.11 us | 11.58 us | 9.32 us | 333.89 us | 160.55x | 2.37x | 2.94x | 0.08x |
-| `mat4 mul mat4` | 108.94 ns | 6.55 us | 7.08 us | 6.42 us | 5.40 us | 139.68 us | 60.16x | 1.02x | 1.21x | 0.05x |
-| `mat4 transform vec4` | 41.19 ns | 2.32 us | 2.57 us | 1.95 us | 1.66 us | 34.60 us | 56.39x | 1.19x | 1.40x | 0.07x |
+| `mat3 determinant` | 19.21 ns | 683.01 ns | 2.11 us | 944.86 ns | 827.68 ns | 21.97 us | 35.55x | 0.72x | 0.83x | 0.03x |
+| `mat3 inverse` | 95.90 ns | 14.56 us | 8.57 us | 3.11 us | 2.47 us | 80.45 us | 151.87x | 4.68x | 5.91x | 0.18x |
+| `mat3 mul mat3` | 51.48 ns | 2.91 us | 6.78 us | 2.67 us | 2.33 us | 59.97 us | 56.58x | 1.09x | 1.25x | 0.05x |
+| `mat3 transform vec3` | 23.19 ns | 1.35 us | 4.41 us | 988.18 ns | 861.16 ns | 19.68 us | 58.10x | 1.36x | 1.56x | 0.07x |
+| `mat4 determinant` | 42.02 ns | 2.05 us | 1.48 us | 4.47 us | 4.01 us | 93.30 us | 48.76x | 0.46x | 0.51x | 0.02x |
+| `mat4 inverse` | 163.08 ns | 25.31 us | 9.32 us | 11.01 us | 8.82 us | 334.21 us | 155.22x | 2.30x | 2.87x | 0.08x |
+| `mat4 mul mat4` | 112.32 ns | 5.98 us | 6.60 us | 6.30 us | 5.22 us | 138.50 us | 53.23x | 0.95x | 1.15x | 0.04x |
+| `mat4 transform vec4` | 39.78 ns | 2.39 us | 2.64 us | 1.85 us | 1.63 us | 34.44 us | 59.97x | 1.29x | 1.46x | 0.07x |
 
 #### Matrix API Operations
 
 | Benchmark | Approx | Hyperreal from f64 | Hyperreal rational | astro-float 128 | numerica128 | symbolica | Hyperreal f64 / approx | Hyperreal f64 / astro | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `mat3 new` | 34.66 ns | 1.14 us | 4.27 us | 220.70 ns | 230.88 ns | 2.11 us | 32.91x | 5.17x | 4.94x | 0.54x |
-| `mat3 zero` | 16.22 ns | 561.23 ns | 566.56 ns | 250.47 ns | 205.10 ns | 12.16 ns | 34.60x | 2.24x | 2.74x | 46.15x |
-| `mat3 identity` | 10.27 ns | 611.94 ns | 615.64 ns | 307.69 ns | 236.20 ns | 144.18 ns | 59.59x | 1.99x | 2.59x | 4.24x |
-| `mat3 transpose` | 8.90 ns | 709.35 ns | 697.40 ns | 239.62 ns | 205.48 ns | 118.40 ns | 79.66x | 2.96x | 3.45x | 5.99x |
-| `mat3 reciprocal` | 109.19 ns | 15.72 us | 26.60 us | 2.95 us | 2.30 us | 82.14 us | 143.95x | 5.32x | 6.82x | 0.19x |
-| `mat3 reciprocal checked` | 109.75 ns | 15.59 us | 26.47 us | 2.95 us | 2.30 us | 81.22 us | 142.07x | 5.29x | 6.77x | 0.19x |
-| `mat3 inverse checked` | 126.20 ns | 16.24 us | 31.52 us | 2.93 us | 2.34 us | 80.88 us | 128.68x | 5.54x | 6.95x | 0.20x |
-| `mat3 inverse checked abort` | 132.94 ns | 16.29 us | 31.76 us | 2.95 us | 2.32 us | 80.97 us | 122.51x | 5.53x | 7.02x | 0.20x |
-| `mat3 powi` | 101.94 ns | 5.54 us | 39.41 us | 6.95 us | 6.18 us | 146.88 us | 54.32x | 0.80x | 0.90x | 0.04x |
-| `mat3 powi checked` | 102.63 ns | 5.56 us | 39.32 us | 6.99 us | 6.17 us | 147.54 us | 54.19x | 0.80x | 0.90x | 0.04x |
-| `mat3 powi checked abort` | 104.26 ns | 5.54 us | 39.27 us | 6.96 us | 6.15 us | 150.36 us | 53.15x | 0.80x | 0.90x | 0.04x |
-| `mat3 div scalar checked` | 24.42 ns | 4.33 us | 5.68 us | 1.45 us | 830.35 ns | 21.85 us | 177.14x | 2.97x | 5.21x | 0.20x |
-| `mat3 div scalar checked abort` | 29.64 ns | 4.21 us | 5.65 us | 1.45 us | 830.33 ns | 21.69 us | 142.05x | 2.91x | 5.07x | 0.19x |
-| `mat3 div matrix checked` | 118.71 ns | 19.97 us | 63.78 us | 5.40 us | 4.47 us | 156.10 us | 168.22x | 3.70x | 4.47x | 0.13x |
-| `mat3 div matrix checked abort` | 131.85 ns | 19.98 us | 63.99 us | 5.46 us | 4.49 us | 156.90 us | 151.56x | 3.66x | 4.45x | 0.13x |
-| `mat3 add` | 14.56 ns | 3.13 us | 5.25 us | 519.04 ns | 484.14 ns | 11.33 us | 214.79x | 6.03x | 6.46x | 0.28x |
-| `mat3 add scalar` | 12.15 ns | 2.39 us | 4.53 us | 780.79 ns | 702.86 ns | 11.74 us | 196.67x | 3.06x | 3.40x | 0.20x |
-| `mat3 sub` | 13.09 ns | 3.14 us | 5.25 us | 540.99 ns | 513.81 ns | 20.82 us | 240.21x | 5.81x | 6.12x | 0.15x |
-| `mat3 sub scalar` | 10.94 ns | 2.37 us | 4.31 us | 796.54 ns | 704.59 ns | 21.03 us | 216.26x | 2.97x | 3.36x | 0.11x |
-| `mat3 neg` | 10.16 ns | 603.77 ns | 604.09 ns | 479.11 ns | 455.26 ns | 8.76 us | 59.43x | 1.26x | 1.33x | 0.07x |
-| `mat3 mul scalar` | 13.82 ns | 1.75 us | 5.68 us | 770.65 ns | 663.65 ns | 11.99 us | 126.41x | 2.27x | 2.63x | 0.15x |
-| `mat3 div scalar` | 24.08 ns | 4.26 us | 5.57 us | 1.45 us | 822.24 ns | 21.63 us | 177.12x | 2.94x | 5.19x | 0.20x |
-| `mat3 div matrix` | 129.30 ns | 19.97 us | 63.44 us | 5.40 us | 4.46 us | 156.45 us | 154.49x | 3.70x | 4.48x | 0.13x |
-| `mat3 bitxor` | 103.60 ns | 5.57 us | 39.20 us | 6.97 us | 6.25 us | 146.68 us | 53.73x | 0.80x | 0.89x | 0.04x |
-| `mat4 zero` | 11.32 ns | 901.88 ns | 912.06 ns | 469.04 ns | 354.39 ns | 14.77 ns | 79.69x | 1.92x | 2.54x | 61.04x |
-| `mat4 identity` | 11.35 ns | 1.08 us | 1.08 us | 563.70 ns | 412.78 ns | 217.94 ns | 95.40x | 1.92x | 2.62x | 4.97x |
-| `mat4 transpose` | 9.29 ns | 1.10 us | 1.09 us | 424.65 ns | 368.25 ns | 186.51 ns | 118.33x | 2.59x | 2.99x | 5.90x |
-| `mat4 reciprocal` | 176.36 ns | 26.27 us | 46.82 us | 16.52 us | 9.07 us | 338.37 us | 148.93x | 1.59x | 2.90x | 0.08x |
-| `mat4 reciprocal checked` | 174.85 ns | 25.84 us | 46.60 us | 10.89 us | 9.09 us | 341.10 us | 147.77x | 2.37x | 2.84x | 0.08x |
-| `mat4 powi` | 222.85 ns | 11.85 us | 54.68 us | 15.50 us | 14.10 us | 338.90 us | 53.19x | 0.76x | 0.84x | 0.03x |
-| `mat4 powi checked` | 217.89 ns | 11.89 us | 54.95 us | 15.63 us | 14.14 us | 344.64 us | 54.55x | 0.76x | 0.84x | 0.03x |
-| `mat4 add` | 51.73 ns | 5.01 us | 5.89 us | 917.15 ns | 864.45 ns | 19.29 us | 96.86x | 5.46x | 5.80x | 0.26x |
-| `mat4 add scalar` | 20.94 ns | 4.01 us | 6.61 us | 1.44 us | 1.21 us | 20.34 us | 191.68x | 2.79x | 3.32x | 0.20x |
-| `mat4 sub` | 38.95 ns | 5.00 us | 5.88 us | 965.46 ns | 906.68 ns | 35.44 us | 128.33x | 5.18x | 5.51x | 0.14x |
-| `mat4 sub scalar` | 15.18 ns | 4.05 us | 6.45 us | 1.47 us | 1.21 us | 37.41 us | 267.09x | 2.77x | 3.36x | 0.11x |
-| `mat4 neg` | 14.40 ns | 1.01 us | 1.00 us | 904.46 ns | 774.15 ns | 13.90 us | 70.04x | 1.11x | 1.30x | 0.07x |
-| `mat4 mul scalar` | 24.63 ns | 2.95 us | 7.34 us | 1.43 us | 1.14 us | 20.09 us | 119.82x | 2.06x | 2.58x | 0.15x |
-| `mat4 div scalar` | 34.04 ns | 7.36 us | 7.65 us | 2.68 us | 1.41 us | 37.54 us | 216.30x | 2.75x | 5.24x | 0.20x |
-| `mat4 div matrix` | 187.49 ns | 31.97 us | 89.16 us | 17.04 us | 14.50 us | 526.18 us | 170.54x | 1.88x | 2.21x | 0.06x |
-| `mat4 bitxor` | 218.79 ns | 12.04 us | 54.47 us | 15.48 us | 14.76 us | 343.44 us | 55.01x | 0.78x | 0.82x | 0.04x |
+| `mat3 new` | 34.16 ns | 1.06 us | 4.10 us | 212.71 ns | 233.50 ns | 2.03 us | 31.02x | 4.98x | 4.54x | 0.52x |
+| `mat3 zero` | 15.76 ns | 504.68 ns | 505.37 ns | 245.16 ns | 202.70 ns | 11.47 ns | 32.02x | 2.06x | 2.49x | 44.01x |
+| `mat3 identity` | 9.74 ns | 603.06 ns | 603.22 ns | 301.76 ns | 240.25 ns | 138.80 ns | 61.92x | 2.00x | 2.51x | 4.34x |
+| `mat3 transpose` | 8.87 ns | 661.95 ns | 652.79 ns | 236.04 ns | 208.07 ns | 125.48 ns | 74.66x | 2.80x | 3.18x | 5.28x |
+| `mat3 reciprocal` | 95.54 ns | 14.68 us | 24.57 us | 2.83 us | 2.29 us | 80.77 us | 153.65x | 5.18x | 6.42x | 0.18x |
+| `mat3 reciprocal checked` | 126.07 ns | 14.64 us | 24.60 us | 2.84 us | 2.28 us | 81.21 us | 116.10x | 5.15x | 6.41x | 0.18x |
+| `mat3 inverse checked` | 126.05 ns | 14.69 us | 24.43 us | 2.85 us | 2.27 us | 80.60 us | 116.52x | 5.15x | 6.46x | 0.18x |
+| `mat3 inverse checked abort` | 130.85 ns | 14.72 us | 24.92 us | 2.86 us | 2.27 us | 80.97 us | 112.47x | 5.14x | 6.48x | 0.18x |
+| `mat3 powi` | 101.88 ns | 5.51 us | 38.76 us | 6.56 us | 6.11 us | 147.55 us | 54.03x | 0.84x | 0.90x | 0.04x |
+| `mat3 powi checked` | 101.05 ns | 5.51 us | 38.52 us | 6.55 us | 6.10 us | 144.98 us | 54.57x | 0.84x | 0.90x | 0.04x |
+| `mat3 powi checked abort` | 102.86 ns | 5.45 us | 38.52 us | 6.59 us | 6.13 us | 148.11 us | 53.03x | 0.83x | 0.89x | 0.04x |
+| `mat3 div scalar checked` | 24.10 ns | 4.20 us | 5.44 us | 1.41 us | 805.54 ns | 21.63 us | 174.28x | 2.99x | 5.21x | 0.19x |
+| `mat3 div scalar checked abort` | 28.86 ns | 4.15 us | 5.47 us | 1.41 us | 802.62 ns | 21.63 us | 143.67x | 2.94x | 5.17x | 0.19x |
+| `mat3 div matrix checked` | 118.18 ns | 18.80 us | 56.64 us | 5.23 us | 4.46 us | 157.47 us | 159.10x | 3.59x | 4.21x | 0.12x |
+| `mat3 div matrix checked abort` | 130.21 ns | 18.52 us | 56.99 us | 5.24 us | 4.42 us | 157.00 us | 142.20x | 3.53x | 4.19x | 0.12x |
+| `mat3 add` | 14.46 ns | 3.19 us | 5.23 us | 493.50 ns | 487.60 ns | 11.35 us | 220.22x | 6.45x | 6.53x | 0.28x |
+| `mat3 add scalar` | 11.99 ns | 2.39 us | 4.52 us | 748.91 ns | 694.70 ns | 11.61 us | 199.61x | 3.20x | 3.45x | 0.21x |
+| `mat3 sub` | 12.66 ns | 3.22 us | 5.12 us | 515.87 ns | 510.38 ns | 20.97 us | 254.30x | 6.24x | 6.31x | 0.15x |
+| `mat3 sub scalar` | 10.79 ns | 2.40 us | 4.36 us | 770.69 ns | 696.78 ns | 21.03 us | 222.25x | 3.11x | 3.44x | 0.11x |
+| `mat3 neg` | 10.17 ns | 595.27 ns | 587.16 ns | 466.54 ns | 459.34 ns | 8.47 us | 58.54x | 1.28x | 1.30x | 0.07x |
+| `mat3 mul scalar` | 13.62 ns | 1.76 us | 5.58 us | 753.95 ns | 684.35 ns | 12.02 us | 129.44x | 2.34x | 2.58x | 0.15x |
+| `mat3 div scalar` | 23.68 ns | 4.13 us | 5.40 us | 1.41 us | 799.47 ns | 21.76 us | 174.46x | 2.94x | 5.17x | 0.19x |
+| `mat3 div matrix` | 127.45 ns | 18.40 us | 56.67 us | 5.27 us | 4.45 us | 155.27 us | 144.38x | 3.49x | 4.14x | 0.12x |
+| `mat3 bitxor` | 101.69 ns | 5.51 us | 38.51 us | 6.58 us | 6.13 us | 147.58 us | 54.14x | 0.84x | 0.90x | 0.04x |
+| `mat4 zero` | 11.34 ns | 979.63 ns | 992.44 ns | 466.11 ns | 349.19 ns | 14.54 ns | 86.36x | 2.10x | 2.81x | 67.36x |
+| `mat4 identity` | 10.94 ns | 1.15 us | 1.16 us | 551.71 ns | 429.71 ns | 214.29 ns | 105.51x | 2.09x | 2.69x | 5.39x |
+| `mat4 transpose` | 9.26 ns | 1.14 us | 1.14 us | 416.56 ns | 369.73 ns | 179.06 ns | 123.57x | 2.75x | 3.09x | 6.39x |
+| `mat4 reciprocal` | 160.58 ns | 25.15 us | 43.80 us | 10.70 us | 8.89 us | 331.92 us | 156.63x | 2.35x | 2.83x | 0.08x |
+| `mat4 reciprocal checked` | 163.73 ns | 24.96 us | 43.85 us | 10.61 us | 8.93 us | 333.06 us | 152.43x | 2.35x | 2.79x | 0.07x |
+| `mat4 powi` | 224.57 ns | 11.78 us | 53.33 us | 15.23 us | 14.15 us | 339.31 us | 52.46x | 0.77x | 0.83x | 0.03x |
+| `mat4 powi checked` | 223.31 ns | 11.74 us | 53.44 us | 15.18 us | 13.97 us | 337.95 us | 52.59x | 0.77x | 0.84x | 0.03x |
+| `mat4 add` | 50.81 ns | 4.95 us | 5.72 us | 872.46 ns | 863.28 ns | 18.97 us | 97.39x | 5.67x | 5.73x | 0.26x |
+| `mat4 add scalar` | 20.30 ns | 3.96 us | 6.56 us | 1.40 us | 1.20 us | 19.84 us | 194.98x | 2.84x | 3.29x | 0.20x |
+| `mat4 sub` | 38.03 ns | 4.92 us | 5.81 us | 932.08 ns | 905.98 ns | 35.54 us | 129.48x | 5.28x | 5.44x | 0.14x |
+| `mat4 sub scalar` | 15.00 ns | 4.01 us | 6.53 us | 1.43 us | 1.19 us | 36.70 us | 267.61x | 2.82x | 3.37x | 0.11x |
+| `mat4 neg` | 14.26 ns | 986.89 ns | 998.62 ns | 887.98 ns | 757.95 ns | 13.72 us | 69.20x | 1.11x | 1.30x | 0.07x |
+| `mat4 mul scalar` | 24.08 ns | 2.93 us | 7.35 us | 1.42 us | 1.13 us | 20.00 us | 121.74x | 2.07x | 2.59x | 0.15x |
+| `mat4 div scalar` | 33.52 ns | 7.31 us | 7.55 us | 2.59 us | 1.37 us | 37.30 us | 217.97x | 2.82x | 5.32x | 0.20x |
+| `mat4 div matrix` | 186.25 ns | 29.87 us | 84.01 us | 16.48 us | 14.28 us | 520.84 us | 160.37x | 1.81x | 2.09x | 0.06x |
+| `mat4 bitxor` | 226.59 ns | 11.80 us | 54.20 us | 15.47 us | 14.06 us | 340.33 us | 52.06x | 0.76x | 0.84x | 0.03x |
 
 ### Borrowed API Operations
 
 | Benchmark | Approx | Hyperreal from f64 | Hyperreal rational | astro-float 128 | numerica128 | symbolica | Hyperreal f64 / approx | Hyperreal f64 / astro | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `scalar add owned_ref` | 3.64 ns | 171.53 ns | 275.69 ns | - | - | 1.26 us | 47.12x | - | - | 0.14x |
-| `scalar add ref_owned` | 12.47 ns | 172.73 ns | 269.94 ns | - | - | 1.27 us | 13.85x | - | - | 0.14x |
-| `scalar add refs` | 5.33 ns | 154.79 ns | 256.29 ns | - | - | 1.28 us | 29.05x | - | - | 0.12x |
-| `scalar add owned_ref_with_clone` | 8.97 ns | 211.30 ns | 294.36 ns | - | - | - | 23.55x | - | - | - |
-| `scalar add ref_owned_with_clone` | 5.47 ns | 196.04 ns | 281.77 ns | - | - | - | 35.82x | - | - | - |
-| `scalar sub owned_ref` | 3.91 ns | 177.05 ns | 329.76 ns | - | - | 2.39 us | 45.27x | - | - | 0.07x |
-| `scalar sub ref_owned` | 12.66 ns | 178.29 ns | 333.30 ns | - | - | 2.40 us | 14.09x | - | - | 0.07x |
-| `scalar sub refs` | 5.67 ns | 162.27 ns | 320.19 ns | - | - | 2.40 us | 28.63x | - | - | 0.07x |
-| `scalar sub owned_ref_with_clone` | 9.03 ns | 221.08 ns | 343.87 ns | - | - | - | 24.48x | - | - | - |
-| `scalar sub ref_owned_with_clone` | 5.69 ns | 203.79 ns | 342.41 ns | - | - | - | 35.81x | - | - | - |
-| `scalar mul owned_ref` | 4.53 ns | 97.22 ns | 362.88 ns | - | - | 1.52 us | 21.46x | - | - | 0.06x |
-| `scalar mul ref_owned` | 13.69 ns | 98.29 ns | 370.60 ns | - | - | 1.52 us | 7.18x | - | - | 0.06x |
-| `scalar mul refs` | 6.32 ns | 82.71 ns | 351.73 ns | - | - | 1.54 us | 13.08x | - | - | 0.05x |
-| `scalar mul owned_ref_with_clone` | 9.68 ns | 129.82 ns | 380.35 ns | - | - | - | 13.41x | - | - | - |
-| `scalar mul ref_owned_with_clone` | 6.16 ns | 125.57 ns | 377.32 ns | - | - | - | 20.40x | - | - | - |
-| `scalar div owned_ref` | 5.81 ns | 255.29 ns | 308.96 ns | - | - | 2.51 us | 43.90x | - | - | 0.10x |
-| `scalar div ref_owned` | 17.39 ns | 255.87 ns | 308.79 ns | - | - | 2.52 us | 14.72x | - | - | 0.10x |
-| `scalar div refs` | 6.82 ns | 243.22 ns | 297.16 ns | - | - | 2.52 us | 35.68x | - | - | 0.10x |
-| `scalar div owned_ref_with_clone` | 13.13 ns | 287.15 ns | 327.44 ns | - | - | - | 21.87x | - | - | - |
-| `scalar div ref_owned_with_clone` | 15.50 ns | 289.11 ns | 333.53 ns | - | - | - | 18.65x | - | - | - |
-| `vec3 add refs` | 6.13 ns | 617.35 ns | 1.38 us | - | - | 3.90 us | 100.79x | - | - | 0.16x |
-| `vec3 sub refs` | 6.06 ns | 608.59 ns | 1.48 us | - | - | 7.30 us | 100.36x | - | - | 0.08x |
-| `vec3 neg ref` | 3.31 ns | 160.00 ns | 172.24 ns | - | - | 3.08 us | 48.38x | - | - | 0.05x |
-| `vec3 add_scalar_ref` | 6.44 ns | 757.77 ns | 1.54 us | - | - | 3.73 us | 117.72x | - | - | 0.20x |
-| `vec3 sub_scalar_ref` | 6.51 ns | 744.87 ns | 1.24 us | - | - | 6.99 us | 114.40x | - | - | 0.11x |
-| `vec3 mul_scalar_ref` | 6.86 ns | 510.52 ns | 2.02 us | - | - | 4.35 us | 74.37x | - | - | 0.12x |
-| `vec3 div_scalar_ref` | 8.08 ns | 1.32 us | 1.53 us | - | - | 7.50 us | 163.60x | - | - | 0.18x |
-| `vec4 add refs` | 6.64 ns | 780.61 ns | 1.37 us | - | - | 5.17 us | 117.51x | - | - | 0.15x |
-| `vec4 sub refs` | 3.07 ns | 746.47 ns | 1.26 us | - | - | 10.18 us | 243.54x | - | - | 0.07x |
-| `vec4 neg ref` | 4.23 ns | 213.84 ns | 201.65 ns | - | - | 4.01 us | 50.59x | - | - | 0.05x |
-| `vec4 add_scalar_ref` | 6.93 ns | 1.02 us | 1.71 us | - | - | 4.95 us | 147.89x | - | - | 0.21x |
-| `vec4 sub_scalar_ref` | 4.22 ns | 1.03 us | 1.48 us | - | - | 9.78 us | 242.99x | - | - | 0.10x |
-| `vec4 mul_scalar_ref` | 7.31 ns | 687.75 ns | 2.07 us | - | - | 5.58 us | 94.02x | - | - | 0.12x |
-| `vec4 div_scalar_ref` | 11.51 ns | 1.74 us | 1.47 us | - | - | 9.77 us | 151.06x | - | - | 0.18x |
-| `mat3 add refs` | 10.92 ns | 1.67 us | 3.69 us | - | - | 11.42 us | 153.19x | - | - | 0.15x |
-| `mat3 sub refs` | 10.51 ns | 1.68 us | 3.67 us | - | - | 20.98 us | 159.88x | - | - | 0.08x |
-| `mat3 mul refs` | 39.01 ns | 1.93 us | 12.51 us | - | - | 60.69 us | 49.52x | - | - | 0.03x |
-| `mat3 div refs` | 117.86 ns | 19.13 us | 56.78 us | - | - | 157.28 us | 162.30x | - | - | 0.12x |
-| `mat3 neg ref` | 9.72 ns | 487.02 ns | 487.99 ns | - | - | 8.40 us | 50.13x | - | - | 0.06x |
-| `mat3 add_scalar_ref` | 44.79 ns | 2.51 us | 4.52 us | - | - | 11.68 us | 56.03x | - | - | 0.21x |
-| `mat3 sub_scalar_ref` | 43.96 ns | 2.40 us | 4.33 us | - | - | 21.03 us | 54.59x | - | - | 0.11x |
-| `mat3 mul_scalar_ref` | 47.22 ns | 1.78 us | 5.68 us | - | - | 11.94 us | 37.63x | - | - | 0.15x |
-| `mat3 div_scalar_ref` | 21.53 ns | 4.27 us | 5.62 us | - | - | 21.53 us | 198.10x | - | - | 0.20x |
-| `mat4 add refs` | 17.58 ns | 2.65 us | 3.46 us | - | - | 18.57 us | 150.97x | - | - | 0.14x |
-| `mat4 sub refs` | 16.34 ns | 2.64 us | 3.54 us | - | - | 35.20 us | 161.45x | - | - | 0.07x |
-| `mat4 mul refs` | 95.40 ns | 4.29 us | 18.42 us | - | - | 139.25 us | 44.93x | - | - | 0.03x |
-| `mat4 div refs` | 186.32 ns | 30.57 us | 83.69 us | - | - | 521.41 us | 164.10x | - | - | 0.06x |
-| `mat4 neg ref` | 12.49 ns | 839.82 ns | 854.73 ns | - | - | 13.82 us | 67.25x | - | - | 0.06x |
-| `mat4 add_scalar_ref` | 52.81 ns | 4.05 us | 6.63 us | - | - | 19.97 us | 76.66x | - | - | 0.20x |
-| `mat4 sub_scalar_ref` | 39.17 ns | 4.10 us | 6.50 us | - | - | 36.49 us | 104.61x | - | - | 0.11x |
-| `mat4 mul_scalar_ref` | 56.23 ns | 2.96 us | 7.44 us | - | - | 19.73 us | 52.67x | - | - | 0.15x |
-| `mat4 div_scalar_ref` | 28.57 ns | 7.48 us | 7.68 us | - | - | 36.81 us | 261.77x | - | - | 0.20x |
-| `mat3 transform_vec refs` | 21.45 ns | 736.75 ns | 3.94 us | - | - | 19.65 us | 34.35x | - | - | 0.04x |
-| `mat4 transform_vec refs` | 31.83 ns | 1.28 us | 5.02 us | - | - | 34.74 us | 40.14x | - | - | 0.04x |
-| `complex add refs` | 7.80 ns | 321.00 ns | 685.33 ns | - | - | 2.51 us | 41.17x | - | - | 0.13x |
-| `complex sub refs` | 8.02 ns | 326.93 ns | 703.96 ns | - | - | 4.67 us | 40.78x | - | - | 0.07x |
-| `complex mul refs` | 8.04 ns | 722.46 ns | 3.00 us | - | - | 9.75 us | 89.86x | - | - | 0.07x |
-| `complex div refs` | 16.46 ns | 2.50 us | 6.10 us | - | - | 21.40 us | 151.76x | - | - | 0.12x |
-| `complex neg ref` | 2.35 ns | 78.19 ns | 70.71 ns | - | - | 2.11 us | 33.31x | - | - | 0.04x |
-| `complex div_real_ref` | 7.25 ns | 622.52 ns | 586.23 ns | - | - | 5.02 us | 85.90x | - | - | 0.12x |
+| `scalar add owned_ref` | 3.61 ns | 171.67 ns | 276.77 ns | - | - | 1.27 us | 47.59x | - | - | 0.14x |
+| `scalar add ref_owned` | 12.07 ns | 170.40 ns | 281.59 ns | - | - | 1.26 us | 14.12x | - | - | 0.14x |
+| `scalar add refs` | 5.29 ns | 152.45 ns | 258.25 ns | - | - | 1.25 us | 28.82x | - | - | 0.12x |
+| `scalar add owned_ref_with_clone` | 8.90 ns | 189.86 ns | 287.05 ns | - | - | - | 21.34x | - | - | - |
+| `scalar add ref_owned_with_clone` | 5.40 ns | 185.33 ns | 284.53 ns | - | - | - | 34.29x | - | - | - |
+| `scalar sub owned_ref` | 3.84 ns | 176.85 ns | 333.79 ns | - | - | 2.41 us | 46.02x | - | - | 0.07x |
+| `scalar sub ref_owned` | 12.24 ns | 173.99 ns | 331.82 ns | - | - | 2.37 us | 14.21x | - | - | 0.07x |
+| `scalar sub refs` | 5.55 ns | 158.94 ns | 310.96 ns | - | - | 2.38 us | 28.62x | - | - | 0.07x |
+| `scalar sub owned_ref_with_clone` | 8.90 ns | 194.86 ns | 344.45 ns | - | - | - | 21.91x | - | - | - |
+| `scalar sub ref_owned_with_clone` | 5.59 ns | 184.18 ns | 342.56 ns | - | - | - | 32.97x | - | - | - |
+| `scalar mul owned_ref` | 4.57 ns | 96.44 ns | 357.25 ns | - | - | 1.50 us | 21.12x | - | - | 0.06x |
+| `scalar mul ref_owned` | 13.29 ns | 93.18 ns | 364.27 ns | - | - | 1.51 us | 7.01x | - | - | 0.06x |
+| `scalar mul refs` | 6.21 ns | 81.28 ns | 339.96 ns | - | - | 1.50 us | 13.09x | - | - | 0.05x |
+| `scalar mul owned_ref_with_clone` | 9.72 ns | 107.72 ns | 368.74 ns | - | - | - | 11.08x | - | - | - |
+| `scalar mul ref_owned_with_clone` | 7.62 ns | 105.37 ns | 368.38 ns | - | - | - | 13.82x | - | - | - |
+| `scalar div owned_ref` | 5.80 ns | 258.88 ns | 308.50 ns | - | - | 2.51 us | 44.64x | - | - | 0.10x |
+| `scalar div ref_owned` | 17.06 ns | 255.84 ns | 307.62 ns | - | - | 2.52 us | 15.00x | - | - | 0.10x |
+| `scalar div refs` | 6.80 ns | 239.02 ns | 294.55 ns | - | - | 2.53 us | 35.15x | - | - | 0.09x |
+| `scalar div owned_ref_with_clone` | 13.04 ns | 265.11 ns | 318.96 ns | - | - | - | 20.33x | - | - | - |
+| `scalar div ref_owned_with_clone` | 7.90 ns | 267.27 ns | 322.81 ns | - | - | - | 33.84x | - | - | - |
+| `vec3 add refs` | 6.26 ns | 609.70 ns | 1.36 us | - | - | 3.88 us | 97.37x | - | - | 0.16x |
+| `vec3 sub refs` | 6.21 ns | 617.73 ns | 1.40 us | - | - | 7.17 us | 99.50x | - | - | 0.09x |
+| `vec3 neg ref` | 3.24 ns | 152.31 ns | 156.76 ns | - | - | 3.12 us | 47.07x | - | - | 0.05x |
+| `vec3 add_scalar_ref` | 6.40 ns | 733.98 ns | 1.42 us | - | - | 3.71 us | 114.77x | - | - | 0.20x |
+| `vec3 sub_scalar_ref` | 6.50 ns | 719.14 ns | 1.22 us | - | - | 6.97 us | 110.67x | - | - | 0.10x |
+| `vec3 mul_scalar_ref` | 6.81 ns | 491.34 ns | 1.94 us | - | - | 4.28 us | 72.17x | - | - | 0.11x |
+| `vec3 div_scalar_ref` | 8.03 ns | 1.27 us | 1.52 us | - | - | 7.54 us | 158.35x | - | - | 0.17x |
+| `vec4 add refs` | 6.44 ns | 735.89 ns | 1.34 us | - | - | 5.08 us | 114.30x | - | - | 0.14x |
+| `vec4 sub refs` | 3.05 ns | 732.94 ns | 1.23 us | - | - | 9.51 us | 240.70x | - | - | 0.08x |
+| `vec4 neg ref` | 4.16 ns | 221.15 ns | 219.81 ns | - | - | 3.96 us | 53.13x | - | - | 0.06x |
+| `vec4 add_scalar_ref` | 6.90 ns | 990.90 ns | 1.64 us | - | - | 4.94 us | 143.68x | - | - | 0.20x |
+| `vec4 sub_scalar_ref` | 4.16 ns | 979.10 ns | 1.41 us | - | - | 9.23 us | 235.37x | - | - | 0.11x |
+| `vec4 mul_scalar_ref` | 7.35 ns | 640.67 ns | 2.00 us | - | - | 5.51 us | 87.15x | - | - | 0.12x |
+| `vec4 div_scalar_ref` | 11.75 ns | 1.70 us | 1.49 us | - | - | 9.85 us | 144.83x | - | - | 0.17x |
+| `mat3 add refs` | 10.84 ns | 1.67 us | 3.67 us | - | - | 11.38 us | 153.56x | - | - | 0.15x |
+| `mat3 sub refs` | 10.26 ns | 1.66 us | 3.66 us | - | - | 20.83 us | 161.68x | - | - | 0.08x |
+| `mat3 mul refs` | 38.07 ns | 1.84 us | 12.28 us | - | - | 60.22 us | 48.43x | - | - | 0.03x |
+| `mat3 div refs` | 116.82 ns | 17.53 us | 56.09 us | - | - | 155.69 us | 150.08x | - | - | 0.11x |
+| `mat3 neg ref` | 9.81 ns | 497.25 ns | 475.25 ns | - | - | 8.39 us | 50.70x | - | - | 0.06x |
+| `mat3 add_scalar_ref` | 43.88 ns | 2.34 us | 4.47 us | - | - | 11.54 us | 53.29x | - | - | 0.20x |
+| `mat3 sub_scalar_ref` | 44.31 ns | 2.32 us | 4.38 us | - | - | 21.15 us | 52.46x | - | - | 0.11x |
+| `mat3 mul_scalar_ref` | 47.40 ns | 1.71 us | 5.56 us | - | - | 11.92 us | 36.10x | - | - | 0.14x |
+| `mat3 div_scalar_ref` | 22.09 ns | 4.22 us | 5.59 us | - | - | 21.51 us | 190.99x | - | - | 0.20x |
+| `mat4 add refs` | 17.61 ns | 2.69 us | 3.50 us | - | - | 18.94 us | 152.70x | - | - | 0.14x |
+| `mat4 sub refs` | 16.92 ns | 2.70 us | 3.62 us | - | - | 35.18 us | 159.33x | - | - | 0.08x |
+| `mat4 mul refs` | 98.39 ns | 4.24 us | 17.78 us | - | - | 139.83 us | 43.06x | - | - | 0.03x |
+| `mat4 div refs` | 174.22 ns | 28.43 us | 83.30 us | - | - | 518.01 us | 163.18x | - | - | 0.05x |
+| `mat4 neg ref` | 12.91 ns | 717.83 ns | 727.43 ns | - | - | 13.82 us | 55.58x | - | - | 0.05x |
+| `mat4 add_scalar_ref` | 48.19 ns | 4.18 us | 6.69 us | - | - | 19.89 us | 86.77x | - | - | 0.21x |
+| `mat4 sub_scalar_ref` | 36.02 ns | 4.20 us | 6.58 us | - | - | 36.43 us | 116.61x | - | - | 0.12x |
+| `mat4 mul_scalar_ref` | 51.69 ns | 2.98 us | 7.44 us | - | - | 19.74 us | 57.62x | - | - | 0.15x |
+| `mat4 div_scalar_ref` | 27.56 ns | 7.38 us | 7.54 us | - | - | 37.04 us | 267.77x | - | - | 0.20x |
+| `mat3 transform_vec refs` | 21.25 ns | 713.58 ns | 3.84 us | - | - | 19.53 us | 33.57x | - | - | 0.04x |
+| `mat4 transform_vec refs` | 34.46 ns | 1.36 us | 5.00 us | - | - | 34.36 us | 39.54x | - | - | 0.04x |
+| `complex add refs` | 7.65 ns | 317.10 ns | 681.34 ns | - | - | 2.47 us | 41.47x | - | - | 0.13x |
+| `complex sub refs` | 7.94 ns | 319.37 ns | 710.54 ns | - | - | 4.72 us | 40.20x | - | - | 0.07x |
+| `complex mul refs` | 7.84 ns | 721.28 ns | 3.06 us | - | - | 9.80 us | 91.98x | - | - | 0.07x |
+| `complex div refs` | 17.20 ns | 2.51 us | 5.92 us | - | - | 21.27 us | 146.10x | - | - | 0.12x |
+| `complex neg ref` | 2.31 ns | 70.44 ns | 70.37 ns | - | - | 2.09 us | 30.55x | - | - | 0.03x |
+| `complex div_real_ref` | 7.18 ns | 631.33 ns | 593.69 ns | - | - | 5.05 us | 87.89x | - | - | 0.12x |
 
 ### Precision Scaling
 
 | Benchmark | Median |
 | --- | ---: |
-| `astro sin 128` | 12.27 us |
-| `astro sin 160` | 14.05 us |
-| `astro sin 192` | 14.00 us |
-| `astro sin 256` | 15.87 us |
+| `astro sin 128` | 11.98 us |
+| `astro sin 160` | 13.31 us |
+| `astro sin 192` | 13.33 us |
+| `astro sin 256` | 15.73 us |

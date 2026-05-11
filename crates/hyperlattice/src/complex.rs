@@ -49,13 +49,26 @@ impl<B: Backend> Complex<B> {
     /// Returns `re^2 + im^2`.
     pub fn norm_squared(&self) -> Scalar<B> {
         crate::trace_dispatch!("realistic_blas_complex", "method", "norm-squared");
-        &self.re * &self.re + &self.im * &self.im
+        if B::FUSE_SIGNED_PRODUCT_SUM {
+            // Isolated exact complex norms are two positive product terms. Fuse
+            // only this public norm query so exact-rational hyperreal backends
+            // can share one denominator and reduce once, following the same
+            // fraction-delaying principle as Bareiss fraction-free elimination
+            // (Bareiss, Math. Comp. 22(103), 1968,
+            // https://doi.org/10.2307/2004533). Reciprocal/division deliberately
+            // use `norm_squared_direct`; targeted Criterion showed their larger
+            // arithmetic kernels regress when this fused expression is inlined
+            // into denominator construction.
+            Scalar::signed_product_sum2([true, true], [[&self.re, &self.re], [&self.im, &self.im]])
+        } else {
+            &self.re * &self.re + &self.im * &self.im
+        }
     }
 
     /// Returns the multiplicative inverse.
     pub fn reciprocal(self) -> BlasResult<Self> {
         crate::trace_dispatch!("realistic_blas_complex", "method", "reciprocal");
-        let inv_denom = self.norm_squared().inverse()?;
+        let inv_denom = (&self.re * &self.re + &self.im * &self.im).inverse()?;
         // Apply the shared denominator by borrowed cached multiplication; cloning it for
         // both real and imaginary components is visible with symbolic scalar backends.
         Ok(Self::new(
@@ -67,7 +80,7 @@ impl<B: Backend> Complex<B> {
     /// Returns the multiplicative inverse after rejecting unknown-zero norms.
     pub fn reciprocal_checked(self) -> CheckedBlasResult<Self> {
         crate::trace_dispatch!("realistic_blas_complex", "method", "reciprocal-checked");
-        let denom = self.norm_squared();
+        let denom = &self.re * &self.re + &self.im * &self.im;
         require_known_nonzero(&denom)?;
         let inv_denom = denom.inverse()?;
         // Same cached-denominator path as `reciprocal`, after the checked zero gate.
@@ -119,7 +132,7 @@ impl<B: Backend> Complex<B> {
     /// Divides by another complex value after rejecting unknown-zero norms.
     pub fn div_checked(self, rhs: Self) -> CheckedBlasResult<Self> {
         crate::trace_dispatch!("realistic_blas_complex", "method", "div-checked");
-        let denom = rhs.norm_squared();
+        let denom = &rhs.re * &rhs.re + &rhs.im * &rhs.im;
         require_known_nonzero(&denom)?;
         let inv_denom = denom.inverse()?;
         let re = &self.re * &rhs.re + &self.im * &rhs.im;
@@ -355,7 +368,7 @@ impl<B: Backend> Div for Complex<B> {
 
     fn div(self, rhs: Self) -> Self::Output {
         crate::trace_dispatch!("realistic_blas_complex", "op", "div-owned-owned");
-        let inv_denom = rhs.norm_squared().inverse()?;
+        let inv_denom = (&rhs.re * &rhs.re + &rhs.im * &rhs.im).inverse()?;
         let re = &self.re * &rhs.re + &self.im * &rhs.im;
         let im = &self.im * &rhs.re - &self.re * &rhs.im;
         Ok(Self::new(
@@ -370,7 +383,7 @@ impl<B: Backend> Div<&Complex<B>> for Complex<B> {
 
     fn div(self, rhs: &Complex<B>) -> Self::Output {
         crate::trace_dispatch!("realistic_blas_complex", "op", "div-owned-ref");
-        let inv_denom = rhs.norm_squared().inverse()?;
+        let inv_denom = (&rhs.re * &rhs.re + &rhs.im * &rhs.im).inverse()?;
         let re = &self.re * &rhs.re + &self.im * &rhs.im;
         let im = &self.im * &rhs.re - &self.re * &rhs.im;
         Ok(Self::new(
@@ -385,7 +398,7 @@ impl<B: Backend> Div<Complex<B>> for &Complex<B> {
 
     fn div(self, rhs: Complex<B>) -> Self::Output {
         crate::trace_dispatch!("realistic_blas_complex", "op", "div-ref-owned");
-        let inv_denom = rhs.norm_squared().inverse()?;
+        let inv_denom = (&rhs.re * &rhs.re + &rhs.im * &rhs.im).inverse()?;
         let re = &self.re * &rhs.re + &self.im * &rhs.im;
         let im = &self.im * &rhs.re - &self.re * &rhs.im;
         Ok(Complex::new(
@@ -400,7 +413,7 @@ impl<B: Backend> Div<&Complex<B>> for &Complex<B> {
 
     fn div(self, rhs: &Complex<B>) -> Self::Output {
         crate::trace_dispatch!("realistic_blas_complex", "op", "div-ref-ref");
-        let inv_denom = rhs.norm_squared().inverse()?;
+        let inv_denom = (&rhs.re * &rhs.re + &rhs.im * &rhs.im).inverse()?;
         let re = &self.re * &rhs.re + &self.im * &rhs.im;
         let im = &self.im * &rhs.re - &self.re * &rhs.im;
         Ok(Complex::new(
