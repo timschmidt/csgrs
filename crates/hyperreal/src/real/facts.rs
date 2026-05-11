@@ -1,3 +1,6 @@
 //! Structural fact and zero/sign queries for [`Real`].
 //!
-//! This file remains a compatibility split target.
+//! The implementations currently live in [`super::arithmetic`] because fact
+//! queries read the same representation invariants that arithmetic constructors
+//! maintain. Keeping them adjacent avoids accidental approximation and keeps
+//! predicate-only callers on cheap symbolic paths.

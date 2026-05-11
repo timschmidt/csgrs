@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::sync::LazyLock;
 
-
 /// Ratio of two integers
 ///
 /// This type is functionally a [`Sign`] with a ratio between two [`BigUint`]
@@ -683,11 +682,7 @@ impl Rational {
                 match signs[i] {
                     Plus => {
                         positive = &left[i].numerator * &right[i].numerator;
-                        crate::trace_dispatch!(
-                            "rational",
-                            "dot_product",
-                            "single-term-product"
-                        );
+                        crate::trace_dispatch!("rational", "dot_product", "single-term-product");
                         return Self::from_signed_magnitude_difference(
                             positive,
                             negative,
@@ -696,11 +691,7 @@ impl Rational {
                     }
                     Minus => {
                         negative = &left[i].numerator * &right[i].numerator;
-                        crate::trace_dispatch!(
-                            "rational",
-                            "dot_product",
-                            "single-term-product"
-                        );
+                        crate::trace_dispatch!("rational", "dot_product", "single-term-product");
                         return Self::from_signed_magnitude_difference(
                             positive,
                             negative,
@@ -1037,9 +1028,7 @@ impl Rational {
     #[inline]
     pub(crate) fn compare_magnitude(&self, other: &Self) -> Ordering {
         if self.denominator == other.denominator {
-            return self
-                .numerator
-                .cmp(&other.numerator);
+            return self.numerator.cmp(&other.numerator);
         }
         (&self.numerator * &other.denominator).cmp(&(&other.numerator * &self.denominator))
     }

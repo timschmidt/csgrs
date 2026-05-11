@@ -1,3 +1,15 @@
+//! Core computable expression graph.
+//!
+//! This file owns node layout, caches, structural facts, and constructor-time
+//! rewrites. Those concerns are intentionally adjacent: the hot path is usually
+//! "construct a symbolic expression, prove a cheap fact, and avoid requesting
+//! approximation." Splitting individual node families into separate modules was
+//! deferred until benchmarks show no cost from crossing those boundaries.
+//!
+//! The exact-real model follows Boehm, Cartwright, Riggle, and O'Donnell,
+//! "Exact real arithmetic: a case study in higher order programming",
+//! LFP 1986, https://doi.org/10.1145/319838.319860.
+
 use crate::computable::approximation::{Approximation, SharedConstant};
 use crate::{MagnitudeBits, Rational, RealSign, RealStructuralFacts, ZeroKnowledge};
 use core::cmp::Ordering;
@@ -484,9 +496,10 @@ impl Computable {
                     Computable::internal_structural_eq(left, right)
                 }
                 (Approximation::Ratio(left), Approximation::Ratio(right)) => left == right,
-                (Approximation::Offset(left, left_shift), Approximation::Offset(right, right_shift)) => {
-                    left_shift == right_shift && Computable::internal_structural_eq(left, right)
-                }
+                (
+                    Approximation::Offset(left, left_shift),
+                    Approximation::Offset(right, right_shift),
+                ) => left_shift == right_shift && Computable::internal_structural_eq(left, right),
                 (Approximation::PrescaledExp(left), Approximation::PrescaledExp(right)) => {
                     Computable::internal_structural_eq(left, right)
                 }
@@ -544,9 +557,10 @@ impl Computable {
                 (Approximation::PrescaledCos(left), Approximation::PrescaledCos(right)) => {
                     Computable::internal_structural_eq(left, right)
                 }
-                (Approximation::PrescaledCosRational(left), Approximation::PrescaledCosRational(right)) => {
-                    left == right
-                }
+                (
+                    Approximation::PrescaledCosRational(left),
+                    Approximation::PrescaledCosRational(right),
+                ) => left == right,
                 (Approximation::CosLargeRational(left), Approximation::CosLargeRational(right)) => {
                     left == right
                 }
@@ -557,9 +571,10 @@ impl Computable {
                 (Approximation::PrescaledSin(left), Approximation::PrescaledSin(right)) => {
                     Computable::internal_structural_eq(left, right)
                 }
-                (Approximation::PrescaledSinRational(left), Approximation::PrescaledSinRational(right)) => {
-                    left == right
-                }
+                (
+                    Approximation::PrescaledSinRational(left),
+                    Approximation::PrescaledSinRational(right),
+                ) => left == right,
                 (Approximation::SinLargeRational(left), Approximation::SinLargeRational(right)) => {
                     left == right
                 }
@@ -577,9 +592,10 @@ impl Computable {
                 (Approximation::PrescaledTan(left), Approximation::PrescaledTan(right)) => {
                     Computable::internal_structural_eq(left, right)
                 }
-                (Approximation::PrescaledTanRational(left), Approximation::PrescaledTanRational(right)) => {
-                    left == right
-                }
+                (
+                    Approximation::PrescaledTanRational(left),
+                    Approximation::PrescaledTanRational(right),
+                ) => left == right,
                 (Approximation::PrescaledCot(left), Approximation::PrescaledCot(right)) => {
                     Computable::internal_structural_eq(left, right)
                 }
@@ -1856,9 +1872,9 @@ impl Computable {
         let mut multiple = self.integer_ratio_nearest(divisor.clone());
 
         for _ in 0..max_attempts {
-            let adjustment = divisor.clone().multiply(
-                Self::rational(Rational::from_bigint(multiple.clone())).negate(),
-            );
+            let adjustment = divisor
+                .clone()
+                .multiply(Self::rational(Rational::from_bigint(multiple.clone())).negate());
             let reduced = self.clone().add(adjustment);
             let reduced_appr = reduced.approx(low_prec);
 
@@ -1922,9 +1938,7 @@ impl Computable {
                     self.reduce_by_divisor(&ln2, low_prec, REDUCTION_MAX_ATTEMPTS)
                 {
                     crate::trace_dispatch!("computable", "exp", "ln2-range-reduction");
-                    return reduced
-                        .prescaled_exp()
-                        .shift_left(
+                    return reduced.prescaled_exp().shift_left(
                         multiple
                             .try_into()
                             .expect("binary exponent should fit in i32"),
@@ -1953,9 +1967,7 @@ impl Computable {
                 self.reduce_by_divisor(&ln2, low_prec, REDUCTION_MAX_ATTEMPTS)
             {
                 crate::trace_dispatch!("computable", "exp", "ln2-range-reduction");
-                return reduced
-                    .prescaled_exp()
-                    .shift_left(
+                return reduced.prescaled_exp().shift_left(
                     multiple
                         .try_into()
                         .expect("binary exponent should fit in i32"),
@@ -2072,9 +2084,10 @@ impl Computable {
             Approximation::Ratio(r) => Some(r.msd_exact()),
             Approximation::Constant(constant) => constant.bound_info().known_msd(),
             Approximation::Negate(child) => child.cheap_bound().known_msd(),
-            Approximation::Offset(child, n) => {
-                child.cheap_bound().known_msd().map(|msd| msd.map(|value| value + *n))
-            }
+            Approximation::Offset(child, n) => child
+                .cheap_bound()
+                .known_msd()
+                .map(|msd| msd.map(|value| value + *n)),
             _ => self.cheap_bound().known_msd(),
         }
     }
@@ -2637,11 +2650,9 @@ impl Computable {
             if known_sign == Some(Sign::Plus) && msd >= 7 {
                 // |x| >= 128 always exceeds the rough high-magnitude branch,
                 // so scale first and skip the initial rough probe.
-                let mut extra_bits: i32 = (msd as i32 - 5)
-                    .try_into()
-                    .expect(
-                        "Approximation should have few enough bits to fit in a 32-bit signed integer",
-                    );
+                let mut extra_bits: i32 = (msd as i32 - 5).try_into().expect(
+                    "Approximation should have few enough bits to fit in a 32-bit signed integer",
+                );
 
                 let mut scaled = self.clone().shift_right(extra_bits);
                 let mut scaled_rough = scaled.approx(low_prec);
@@ -3304,9 +3315,7 @@ impl Computable {
         let exact_sign = match *self.exact_sign.borrow() {
             // Reciprocal preserves sign for structurally nonzero values and lets
             // sign queries remain structural through inverse chains.
-            ExactSignCache::Valid(sign) if sign != Sign::NoSign => {
-                ExactSignCache::Valid(sign)
-            }
+            ExactSignCache::Valid(sign) if sign != Sign::NoSign => ExactSignCache::Valid(sign),
             _ => ExactSignCache::Invalid,
         };
         Self {
@@ -3428,31 +3437,27 @@ impl Computable {
             return self.negate();
         }
         let exact_sign = {
-            let left_sign = left_exact
-                .as_ref()
-                .map(Rational::sign)
-                .or_else(|| match *self.exact_sign.borrow() {
+            let left_sign = left_exact.as_ref().map(Rational::sign).or_else(|| {
+                match *self.exact_sign.borrow() {
                     ExactSignCache::Valid(sign) => Some(sign),
                     _ => None,
-                });
-            let right_sign = right_exact
-                .as_ref()
-                .map(Rational::sign)
-                .or_else(|| match *other.exact_sign.borrow() {
+                }
+            });
+            let right_sign = right_exact.as_ref().map(Rational::sign).or_else(|| {
+                match *other.exact_sign.borrow() {
                     ExactSignCache::Valid(sign) => Some(sign),
                     _ => None,
-                });
+                }
+            });
             match (left_sign, right_sign) {
                 (Some(Sign::NoSign), Some(_)) | (Some(_), Some(Sign::NoSign)) => {
                     ExactSignCache::Valid(Sign::NoSign)
                 }
-                (Some(left), Some(right)) => {
-                    ExactSignCache::Valid(if left == right {
-                        Sign::Plus
-                    } else {
-                        Sign::Minus
-                    })
-                }
+                (Some(left), Some(right)) => ExactSignCache::Valid(if left == right {
+                    Sign::Plus
+                } else {
+                    Sign::Minus
+                }),
                 _ => ExactSignCache::Invalid,
             }
         };
@@ -3560,9 +3565,7 @@ impl Computable {
             (ExactSignCache::Valid(Sign::Plus), Sign::Plus) => ExactSignCache::Valid(Sign::Plus),
             (ExactSignCache::Valid(Sign::Plus), Sign::Minus) => ExactSignCache::Valid(Sign::Minus),
             (ExactSignCache::Valid(Sign::Minus), Sign::Plus) => ExactSignCache::Valid(Sign::Minus),
-            (ExactSignCache::Valid(Sign::Minus), Sign::Minus) => {
-                ExactSignCache::Valid(Sign::Plus)
-            }
+            (ExactSignCache::Valid(Sign::Minus), Sign::Minus) => ExactSignCache::Valid(Sign::Plus),
             _ => ExactSignCache::Invalid,
         };
         Self {
@@ -3609,20 +3612,18 @@ impl Computable {
         // still falls back to a generic sum, but structural sign/fact queries
         // can answer from the certificate.
         let child_sign = {
-            let left_sign = left_exact
-                .as_ref()
-                .map(Rational::sign)
-                .or_else(|| match *self.exact_sign.borrow() {
+            let left_sign = left_exact.as_ref().map(Rational::sign).or_else(|| {
+                match *self.exact_sign.borrow() {
                     ExactSignCache::Valid(sign) => Some(sign),
                     _ => None,
-                });
-            let right_sign = right_exact
-                .as_ref()
-                .map(Rational::sign)
-                .or_else(|| match *other.exact_sign.borrow() {
+                }
+            });
+            let right_sign = right_exact.as_ref().map(Rational::sign).or_else(|| {
+                match *other.exact_sign.borrow() {
                     ExactSignCache::Valid(sign) => Some(sign),
                     _ => None,
-                });
+                }
+            });
             let (left_planning_sign, left_planning_msd) = self.planning_sign_and_msd();
             let (right_planning_sign, right_planning_msd) = other.planning_sign_and_msd();
             let left_planning_msd = left_planning_msd.flatten();
@@ -4097,10 +4098,8 @@ impl Computable {
                 _ => {}
             }
             if left == right
-                && let (Some(Some(left_msd)), Some(Some(right_msd))) = (
-                    self_bound.known_msd(),
-                    other_bound.known_msd(),
-                )
+                && let (Some(Some(left_msd)), Some(Some(right_msd))) =
+                    (self_bound.known_msd(), other_bound.known_msd())
                 && left_msd != right_msd
             {
                 // Same-sign structural bounds can decide exact ordering
@@ -4135,10 +4134,18 @@ impl Computable {
 
         if let Approximation::Add(left, right) = &*self.internal {
             if let Some(order) = if Self::internal_structural_eq(left, other) {
-                crate::trace_dispatch!("computable", "compare_absolute", "dominant-perturbation-self");
+                crate::trace_dispatch!(
+                    "computable",
+                    "compare_absolute",
+                    "dominant-perturbation-self"
+                );
                 Self::compare_absolute_dominant_perturbation(left, right, other, tolerance)
             } else if Self::internal_structural_eq(right, other) {
-                crate::trace_dispatch!("computable", "compare_absolute", "dominant-perturbation-self-reversed");
+                crate::trace_dispatch!(
+                    "computable",
+                    "compare_absolute",
+                    "dominant-perturbation-self-reversed"
+                );
                 Self::compare_absolute_dominant_perturbation(right, left, other, tolerance)
             } else {
                 None
@@ -4148,10 +4155,18 @@ impl Computable {
         }
         if let Approximation::Add(left, right) = &*other.internal {
             if let Some(order) = if Self::internal_structural_eq(left, self) {
-                crate::trace_dispatch!("computable", "compare_absolute", "dominant-perturbation-other");
+                crate::trace_dispatch!(
+                    "computable",
+                    "compare_absolute",
+                    "dominant-perturbation-other"
+                );
                 Self::compare_absolute_dominant_perturbation(left, right, self, tolerance)
             } else if Self::internal_structural_eq(right, self) {
-                crate::trace_dispatch!("computable", "compare_absolute", "dominant-perturbation-other-reversed");
+                crate::trace_dispatch!(
+                    "computable",
+                    "compare_absolute",
+                    "dominant-perturbation-other-reversed"
+                );
                 Self::compare_absolute_dominant_perturbation(right, left, self, tolerance)
             } else {
                 None
@@ -4225,11 +4240,19 @@ impl Computable {
                 if left_msd > tolerance && right_msd < tolerance {
                     // Cheap MSD bounds can prove a tolerance-separated absolute ordering
                     // before allocating fresh approximations.
-                    crate::trace_dispatch!("computable", "compare_absolute", "exact-sign-tolerance-gap");
+                    crate::trace_dispatch!(
+                        "computable",
+                        "compare_absolute",
+                        "exact-sign-tolerance-gap"
+                    );
                     return Ordering::Greater;
                 }
                 if right_msd > tolerance && left_msd < tolerance {
-                    crate::trace_dispatch!("computable", "compare_absolute", "exact-sign-tolerance-gap");
+                    crate::trace_dispatch!(
+                        "computable",
+                        "compare_absolute",
+                        "exact-sign-tolerance-gap"
+                    );
                     return Ordering::Less;
                 }
             }
@@ -4241,7 +4264,11 @@ impl Computable {
             {
                 if let (Some(left_sign), Some(right_sign)) = (self_sign, other_sign) {
                     if left_sign == right_sign && self_msd != other_msd {
-                        crate::trace_dispatch!("computable", "compare_absolute", "exact-sign-msd-gap");
+                        crate::trace_dispatch!(
+                            "computable",
+                            "compare_absolute",
+                            "exact-sign-msd-gap"
+                        );
                         return match (left_sign, right_sign) {
                             (Sign::Plus, Sign::Plus) => self_msd.cmp(&other_msd),
                             (Sign::Minus, Sign::Minus) => other_msd.cmp(&self_msd),

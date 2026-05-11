@@ -142,11 +142,16 @@ fn collect_rows(
         black_box(&lhs * &rhs);
         black_box((&lhs / &rhs).unwrap());
     });
-    trace_row(&mut rows, filters, "real/div/div_const_product_sqrt", || {
-        let lhs = Real::pi() * Real::e() * Real::new(Rational::new(2)).sqrt().unwrap();
-        let rhs = Real::e() * Real::new(Rational::new(3)).sqrt().unwrap();
-        black_box((&lhs / &rhs).unwrap());
-    });
+    trace_row(
+        &mut rows,
+        filters,
+        "real/div/div_const_product_sqrt",
+        || {
+            let lhs = Real::pi() * Real::e() * Real::new(Rational::new(2)).sqrt().unwrap();
+            let rhs = Real::e() * Real::new(Rational::new(3)).sqrt().unwrap();
+            black_box((&lhs / &rhs).unwrap());
+        },
+    );
     trace_row(&mut rows, filters, "real/div/div_const_products", || {
         black_box((&Real::e() / &Real::pi()).unwrap());
         black_box((&Real::pi() / &Real::e()).unwrap());
@@ -213,34 +218,44 @@ fn collect_rows(
         black_box(pi_minus_three.zero_status());
         black_box(pi_minus_three.structural_facts());
     });
-    trace_row(&mut rows, filters, "real/dot_product/dot3_dense_symbolic", || {
-        let left = [
-            Real::pi() * Real::new(Rational::new(3)),
-            Real::e() * Real::new(Rational::new(5)),
-            Real::pi() * Real::new(Rational::new(7)),
-        ];
-        let right = [
-            Real::e() * Real::new(Rational::new(11)),
-            Real::pi() * Real::new(Rational::new(13)),
-            Real::e() * Real::new(Rational::new(17)),
-        ];
-        black_box(Real::dot3_refs(
-            [&left[0], &left[1], &left[2]],
-            [&right[0], &right[1], &right[2]],
-        ));
-    });
-    trace_row(&mut rows, filters, "real/dot_product/dot3_mixed_structural", || {
-        let left = [Real::one(), Real::zero(), Real::from(2_i32)];
-        let right = [
-            Real::pi(),
-            Real::from(2_i32),
-            Real::e() * Real::new(Rational::fraction(3, 5).unwrap()),
-        ];
-        black_box(Real::dot3_refs(
-            [&left[0], &left[1], &left[2]],
-            [&right[0], &right[1], &right[2]],
-        ));
-    });
+    trace_row(
+        &mut rows,
+        filters,
+        "real/dot_product/dot3_dense_symbolic",
+        || {
+            let left = [
+                Real::pi() * Real::new(Rational::new(3)),
+                Real::e() * Real::new(Rational::new(5)),
+                Real::pi() * Real::new(Rational::new(7)),
+            ];
+            let right = [
+                Real::e() * Real::new(Rational::new(11)),
+                Real::pi() * Real::new(Rational::new(13)),
+                Real::e() * Real::new(Rational::new(17)),
+            ];
+            black_box(Real::dot3_refs(
+                [&left[0], &left[1], &left[2]],
+                [&right[0], &right[1], &right[2]],
+            ));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "real/dot_product/dot3_mixed_structural",
+        || {
+            let left = [Real::one(), Real::zero(), Real::from(2_i32)];
+            let right = [
+                Real::pi(),
+                Real::from(2_i32),
+                Real::e() * Real::new(Rational::fraction(3, 5).unwrap()),
+            ];
+            black_box(Real::dot3_refs(
+                [&left[0], &left[1], &left[2]],
+                [&right[0], &right[1], &right[2]],
+            ));
+        },
+    );
     trace_row(&mut rows, filters, "real/dot_product/dot3_all_zero", || {
         let left = [Real::zero(), Real::zero(), Real::zero()];
         let right = [Real::pi(), Real::e(), Real::from(2_i32)];
@@ -249,47 +264,47 @@ fn collect_rows(
             [&right[0], &right[1], &right[2]],
         ));
     });
-    trace_row(&mut rows, filters, "real/dot_product/dot4_dense_symbolic", || {
-        let left = [
-            Real::pi() * Real::new(Rational::new(3)),
-            Real::e() * Real::new(Rational::new(5)),
-            Real::pi() * Real::new(Rational::new(7)),
-            Real::new(Rational::new(11)),
-        ];
-        let right = [
-            Real::e() * Real::new(Rational::new(13)),
-            Real::pi() * Real::new(Rational::new(17)),
-            Real::e() * Real::new(Rational::new(19)),
-            Real::new(Rational::new(23)),
-        ];
-        black_box(Real::dot4_refs(
-            [
-                &left[0],
-                &left[1],
-                &left[2],
-                &left[3]
-            ],
-            [
-                &right[0],
-                &right[1],
-                &right[2],
-                &right[3]
-            ],
-        ));
-    });
-    trace_row(&mut rows, filters, "real/dot_product/dot4_mixed_structural", || {
-        let left = [
-            Real::one(),
-            Real::zero(),
-            Real::from(2_i32),
-            Real::e() * Real::new(Rational::fraction(3, 5).unwrap()),
-        ];
-        let right = [Real::pi(), Real::from(2_i32), Real::one(), Real::zero()];
-        black_box(Real::dot4_refs(
-            [&left[0], &left[1], &left[2], &left[3]],
-            [&right[0], &right[1], &right[2], &right[3]],
-        ));
-    });
+    trace_row(
+        &mut rows,
+        filters,
+        "real/dot_product/dot4_dense_symbolic",
+        || {
+            let left = [
+                Real::pi() * Real::new(Rational::new(3)),
+                Real::e() * Real::new(Rational::new(5)),
+                Real::pi() * Real::new(Rational::new(7)),
+                Real::new(Rational::new(11)),
+            ];
+            let right = [
+                Real::e() * Real::new(Rational::new(13)),
+                Real::pi() * Real::new(Rational::new(17)),
+                Real::e() * Real::new(Rational::new(19)),
+                Real::new(Rational::new(23)),
+            ];
+            black_box(Real::dot4_refs(
+                [&left[0], &left[1], &left[2], &left[3]],
+                [&right[0], &right[1], &right[2], &right[3]],
+            ));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "real/dot_product/dot4_mixed_structural",
+        || {
+            let left = [
+                Real::one(),
+                Real::zero(),
+                Real::from(2_i32),
+                Real::e() * Real::new(Rational::fraction(3, 5).unwrap()),
+            ];
+            let right = [Real::pi(), Real::from(2_i32), Real::one(), Real::zero()];
+            black_box(Real::dot4_refs(
+                [&left[0], &left[1], &left[2], &left[3]],
+                [&right[0], &right[1], &right[2], &right[3]],
+            ));
+        },
+    );
     trace_row(
         &mut rows,
         filters,
@@ -310,10 +325,15 @@ fn collect_rows(
         let value = Computable::pi().add(Computable::one().negate());
         black_box(value.sign());
     });
-    trace_row(&mut rows, filters, "computable/sign/pi_minus_one_sign_until", || {
-        let value = Computable::pi().add(Computable::one().negate());
-        black_box(value.sign_until(-128));
-    });
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/sign/pi_minus_one_sign_until",
+        || {
+            let value = Computable::pi().add(Computable::one().negate());
+            black_box(value.sign_until(-128));
+        },
+    );
     trace_row(
         &mut rows,
         filters,
@@ -526,25 +546,15 @@ fn collect_rows(
             black_box(computable(Rational::new(2)).sqrt().approx(-128));
         },
     );
-    trace_row(
-        &mut rows,
-        filters,
-        "computable/exp_large_rational",
-        || {
-            black_box(computable(Rational::new(128)).exp().approx(-96));
-        },
-    );
-    trace_row(
-        &mut rows,
-        filters,
-        "computable/exp_cached_probe",
-        || {
-            let input = computable(rational(7, 5));
-            let cached = input.exp();
-            let _ = cached.approx(-96);
-            black_box(cached.approx(-96));
-        },
-    );
+    trace_row(&mut rows, filters, "computable/exp_large_rational", || {
+        black_box(computable(Rational::new(128)).exp().approx(-96));
+    });
+    trace_row(&mut rows, filters, "computable/exp_cached_probe", || {
+        let input = computable(rational(7, 5));
+        let cached = input.exp();
+        let _ = cached.approx(-96);
+        black_box(cached.approx(-96));
+    });
     trace_row(&mut rows, filters, "computable/ln_smooth_rational", || {
         black_box(computable(rational(45, 14)).ln().approx(-128));
     });

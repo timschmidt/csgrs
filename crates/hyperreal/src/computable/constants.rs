@@ -1,4 +1,6 @@
 //! Constant-value constructors and cached nodes for [`Computable`].
 //!
-//! This module is a compatibility placeholder that keeps the planned layout
-//! intact. Constants remain implemented in the shared `node` module.
+//! Constants remain implemented in [`super::node`] because the constructors
+//! share representation caches with the core expression enum. Keeping those
+//! constructors adjacent avoids extra module boundaries in cold approximation
+//! setup while still documenting this semantic area.

@@ -1217,11 +1217,7 @@ impl Real {
                     return Real::zero();
                 }
                 1..=2 => {
-                    crate::trace_dispatch!(
-                        "real",
-                        "dot_product",
-                        "dot3-generic-real-tree-sparse"
-                    );
+                    crate::trace_dispatch!("real", "dot_product", "dot3-generic-real-tree-sparse");
                     return Self::sum_dot3_terms(p0, p1, p2);
                 }
                 _ => {
@@ -1290,11 +1286,7 @@ impl Real {
         let zero1 = coeffs[1].definitely_zero() || values[1].definitely_zero();
         let zero2 = coeffs[2].definitely_zero() || values[2].definitely_zero();
         if zero0 && zero1 && zero2 {
-            crate::trace_dispatch!(
-                "real",
-                "affine_combination",
-                "affine-combination3-all-zero"
-            );
+            crate::trace_dispatch!("real", "affine_combination", "affine-combination3-all-zero");
             return offset.clone();
         }
 
@@ -1317,11 +1309,7 @@ impl Real {
             return offset.clone();
         }
 
-        crate::trace_dispatch!(
-            "real",
-            "affine_combination",
-            "affine-combination3"
-        );
+        crate::trace_dispatch!("real", "affine_combination", "affine-combination3");
         offset + linear
     }
 
@@ -1332,11 +1320,7 @@ impl Real {
         let zero2 = coeffs[2].definitely_zero() || values[2].definitely_zero();
         let zero3 = coeffs[3].definitely_zero() || values[3].definitely_zero();
         if zero0 && zero1 && zero2 && zero3 {
-            crate::trace_dispatch!(
-                "real",
-                "affine_combination",
-                "affine-combination4-all-zero"
-            );
+            crate::trace_dispatch!("real", "affine_combination", "affine-combination4-all-zero");
             return offset.clone();
         }
 
@@ -1359,11 +1343,7 @@ impl Real {
             return offset.clone();
         }
 
-        crate::trace_dispatch!(
-            "real",
-            "affine_combination",
-            "affine-combination4"
-        );
+        crate::trace_dispatch!("real", "affine_combination", "affine-combination4");
         offset + linear
     }
 
@@ -1408,11 +1388,7 @@ impl Real {
                     return Real::zero();
                 }
                 1..=3 => {
-                    crate::trace_dispatch!(
-                        "real",
-                        "dot_product",
-                        "dot4-generic-real-tree-sparse"
-                    );
+                    crate::trace_dispatch!("real", "dot_product", "dot4-generic-real-tree-sparse");
                     return Self::sum_dot4_terms(p0, p1, p2, p3);
                 }
                 _ => {
@@ -1840,20 +1816,20 @@ impl Real {
             PiExp(exp) => {
                 crate::trace_dispatch!("real", "inverse_ref", "pi-exp");
                 Ok(Self {
-                rational: self.rational.clone().inverse()?,
-                class: PiInvExp(exp.clone().neg()),
-                computable: Some(self.computable_clone().inverse()),
-                signal: None,
-            })
+                    rational: self.rational.clone().inverse()?,
+                    class: PiInvExp(exp.clone().neg()),
+                    computable: Some(self.computable_clone().inverse()),
+                    signal: None,
+                })
             }
             PiInvExp(exp) => {
                 crate::trace_dispatch!("real", "inverse_ref", "pi-inv-exp");
                 Ok(Self {
-                rational: self.rational.clone().inverse()?,
-                class: PiExp(exp.clone().neg()),
-                computable: Some(self.computable_clone().inverse()),
-                signal: None,
-            })
+                    rational: self.rational.clone().inverse()?,
+                    class: PiExp(exp.clone().neg()),
+                    computable: Some(self.computable_clone().inverse()),
+                    signal: None,
+                })
             }
             _ => {
                 if let Some((pi_power, exp_power, radicand)) = self.class.const_product_sqrt_parts()
@@ -4004,7 +3980,8 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                 ..square
             });
         }
-        if self.class.has_const_product_sqrt_factor() || other.class.has_const_product_sqrt_factor() {
+        if self.class.has_const_product_sqrt_factor() || other.class.has_const_product_sqrt_factor()
+        {
             crate::trace_dispatch!("real", "div", "const-product-sqrt");
             if let (Some((left_pi, left_exp, left_rad)), Some((right_pi, right_exp, right_rad))) = (
                 self.class.const_product_sqrt_parts(),
