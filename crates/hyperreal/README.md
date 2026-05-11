@@ -274,7 +274,7 @@ the scalar model with exact rational structure, symbolic reductions, structural
 facts, and benchmark-driven integration with `realistic_blas` and `liminal`.
 
 Special thanks to [siefkenj](https://github.com/siefkenj), whose contributions
-are part of the project's provenance and license history.
+improved realistic and hyperreal.
 
 ## References
 
