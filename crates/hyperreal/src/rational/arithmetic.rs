@@ -802,8 +802,27 @@ impl Rational {
         Self::from_signed_magnitude_difference(positive, negative, common_denominator)
     }
 
-    #[inline]
-    pub(crate) fn is_one(&self) -> bool {
+    /// Returns whether this rational is exactly zero.
+    ///
+    /// This is a stored-sign structural predicate. It deliberately avoids
+    /// constructing a comparison value so downstream numeric kernels can ask
+    /// identity questions without allocating or canonicalizing. This keeps
+    /// algebraic simplification ahead of approximation, matching the exact-real
+    /// arithmetic strategy described by Boehm, Cartwright, Riggle, and
+    /// O'Donnell, "Exact Real Arithmetic: A Case Study in Higher Order
+    /// Programming", LFP 1986, https://doi.org/10.1145/319838.319860.
+    #[inline(always)]
+    pub fn is_zero(&self) -> bool {
+        self.sign == NoSign
+    }
+
+    /// Returns whether this rational is exactly one.
+    ///
+    /// Kept as a structural identity predicate so matrix/vector callers can
+    /// specialize common homogeneous coordinates without constructing
+    /// `Rational::one()` in hot paths.
+    #[inline(always)]
+    pub fn is_one(&self) -> bool {
         self.sign == Plus && self.numerator == *ONE.deref() && self.denominator == *ONE.deref()
     }
 

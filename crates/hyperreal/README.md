@@ -265,6 +265,62 @@ When adding a shortcut, add a focused correctness test and a benchmark row for
 the smallest affected surface. Keep the shortcut only if it improves the target
 without regressing broader `realistic_blas` or `liminal` benchmarks.
 
+## Provenance and Acknowledgements
+
+`hyperreal` descends from the
+[`realistic`](https://github.com/tialaramex/realistic/) project and continues
+that project's interest in practical computable real arithmetic while extending
+the scalar model with exact rational structure, symbolic reductions, structural
+facts, and benchmark-driven integration with `realistic_blas` and `liminal`.
+
+Special thanks to [siefkenj](https://github.com/siefkenj), whose contributions
+are part of the project's provenance and license history.
+
+## References
+
+These are the papers and books cited by source comments in this crate. They are
+listed here in MLA style so implementation notes can point to one citeable
+reference list.
+
+- Bareiss, Erwin H. "[Sylvester's Identity and Multistep Integer-Preserving
+  Gaussian Elimination](https://www.ams.org/mcom/1968-22-103/S0025-5718-1968-0226829-0/)."
+  *Mathematics of Computation*, vol. 22, no. 103, 1968, pp. 565-578.
+  American Mathematical Society, https://doi.org/10.1090/S0025-5718-1968-0226829-0.
+- Boehm, Hans-Juergen, Robert Cartwright, Mark Riggle, and Michael J.
+  O'Donnell. "[Exact Real Arithmetic: A Case Study in Higher Order
+  Programming](https://doi.org/10.1145/319838.319860)." *Proceedings of the
+  1986 ACM Conference on LISP and Functional Programming*, ACM, 1986,
+  pp. 162-173.
+- Boehm, Hans-J. "[Towards an API for the Real
+  Numbers](https://doi.org/10.1145/3385412.3386037)." *Proceedings of the
+  41st ACM SIGPLAN International Conference on Programming Language Design and
+  Implementation*, ACM, 2020, pp. 562-576.
+- Brent, Richard P. "[Fast Multiple-Precision Evaluation of Elementary
+  Functions](https://doi.org/10.1145/321941.321944)." *Journal of the ACM*,
+  vol. 23, no. 2, 1976, pp. 242-251.
+- Brent, Richard P., and Paul Zimmermann.
+  "[Modern Computer Arithmetic](https://doi.org/10.1017/CBO9780511921698)."
+  Cambridge University Press, 2010.
+- Middeke, Johannes, David J. Jeffrey, and Christoph Koutschan.
+  "[Common Factors in Fraction-Free Matrix
+  Decompositions](https://doi.org/10.1007/s11786-020-00495-9)."
+  *Mathematics in Computer Science*, vol. 15, 2021, pp. 589-608.
+- Payne, Mary H., and Robert N. Hanek.
+  "[Radian Reduction for Trigonometric
+  Functions](https://doi.org/10.1145/1057600.1057602)." *ACM SIGNUM
+  Newsletter*, vol. 18, no. 1, 1983, pp. 19-24.
+- Shewchuk, Jonathan Richard. "[Adaptive Precision Floating-Point Arithmetic
+  and Fast Robust Geometric
+  Predicates](https://doi.org/10.1007/PL00009321)." *Discrete &
+  Computational Geometry*, vol. 18, no. 3, 1997, pp. 305-363.
+- Smith, Luke, and Joan Powell. "[An Alternative Method to Gauss-Jordan
+  Elimination: Minimizing Fraction
+  Arithmetic](https://doi.org/10.63301/tme.v20i2.1957)." *The Mathematics
+  Educator*, vol. 20, no. 2, 2011, pp. 44-50.
+- Yap, Chee-Keng. "[Towards Exact Geometric
+  Computation](https://doi.org/10.1016/0925-7721(95)00040-2)." *Computational
+  Geometry*, vol. 7, nos. 1-2, 1997, pp. 3-23.
+
 ## License
 
 (C) https://github.com/timschmidt Apache-2.0 / MIT
