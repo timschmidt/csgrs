@@ -37,6 +37,12 @@ impl Backend for HyperrealBackend {
     // Small integer powers appear in vector/matrix helpers; explicit low
     // exponents avoid clone-heavy generic exponentiation by squaring.
     const SPECIALIZE_SCALAR_POWI: bool = true;
+    // Matrix inverse/division applies one determinant reciprocal across every
+    // cofactor. Borrowing that shared factor avoids cloning exact/symbolic
+    // hyperreal state for each lane; compact approximate backends intentionally
+    // leave the default off because their direct owned multiply benchmarks
+    // faster.
+    const BORROW_SHARED_SCALE_FACTOR: bool = true;
     // Exact rational cofactors are short signed product sums. Fusing them in
     // hyperreal lets Rational share one denominator across the whole minor;
     // approximate backends keep the direct arithmetic expression instead.

@@ -370,7 +370,10 @@ macro_rules! impl_solve_left_system_fixed {
 
                 // Move the pivot out once so the same matrix slot is already
                 // zeroed for row-elimination and we avoid an extra clone for
-                // the inverse path.
+                // the inverse path. A structural unit-pivot bypass was tested
+                // here and reverted: the extra `definitely_one` query regressed
+                // mat3/mat4 right-division rows more than it saved in skipped
+                // inverses. Keep the straight-line normalization schedule.
                 let pivot = mem::replace(&mut left[col][col], Scalar::one());
                 let inv_pivot = pivot.inverse()?;
                 for i in 0..$n {
@@ -545,9 +548,14 @@ fn prefer_shared_adjugate_right_division<B: Backend, const N: usize>(
     // https://doi.org/10.2307/2004533), but applied only when traces show the
     // extra products are cheaper than repeated inverses. Non-dyadic exact
     // rationals still use the Gauss-Jordan path for right division.
-    left.iter()
+    // Check the divisor first. The shared-adjugate branch is only useful when
+    // `det(right)` and all adjugate cofactors stay dyadic; decimal divisors can
+    // reject the path before scanning the dividend. This preserves the exact
+    // same predicate but moves the cheapest likely rejection earlier.
+    right
+        .iter()
         .flat_map(|row| row.iter())
-        .chain(right.iter().flat_map(|row| row.iter()))
+        .chain(left.iter().flat_map(|row| row.iter()))
         .all(Scalar::is_exact_dyadic_rational)
 }
 
@@ -1706,18 +1714,98 @@ impl<'a, B: Backend> TransformedVector4<'a, B> {
     }
 }
 
+#[inline]
+fn scale_by_shared_factor<B: Backend>(value: Scalar<B>, factor: &Scalar<B>) -> Scalar<B> {
+    // The determinant reciprocal is a common scale applied to every cofactor.
+    // Hyperreal opts into borrowing that scale so exact/symbolic state is not
+    // cloned per lane; compact approximate backends stay on owned multiply
+    // because their two-f64 representation benchmarks faster after LLVM
+    // scalarization. This is the fixed-size analogue of delaying the common
+    // denominator in fraction-free elimination:
+    // Bareiss, Math. Comp. 22(103), 1968, https://doi.org/10.2307/2004533.
+    if B::BORROW_SHARED_SCALE_FACTOR {
+        value.mul_cached(factor)
+    } else {
+        value * factor.clone()
+    }
+}
+
 fn scale_matrix3<B: Backend>(
     matrix: [[Scalar<B>; 3]; 3],
     factor: &Scalar<B>,
 ) -> [[Scalar<B>; 3]; 3] {
-    matrix.map(|row| row.map(|value| value.mul_cached(factor)))
+    // Keep the shared determinant inverse borrowed and unroll the fixed 3x3
+    // scale. The cofactor inverse/division kernels follow the fraction-free
+    // principle of delaying the common denominator until the last pass
+    // (Bareiss, Math. Comp. 22(103), 1968, https://doi.org/10.2307/2004533);
+    // spelling out the final pass avoids nested `array::map` closure layout for
+    // hyperreal reciprocal/div_matrix rows while preserving that single shared
+    // inverse. `scale_by_shared_factor` deliberately keeps compact approximate
+    // backends on owned multiplication; their scalar is two f64s, so clone
+    // avoidance loses to the simpler optimized expression.
+    let [
+        [m00, m01, m02],
+        [m10, m11, m12],
+        [m20, m21, m22],
+    ] = matrix;
+    [
+        [
+            scale_by_shared_factor(m00, factor),
+            scale_by_shared_factor(m01, factor),
+            scale_by_shared_factor(m02, factor),
+        ],
+        [
+            scale_by_shared_factor(m10, factor),
+            scale_by_shared_factor(m11, factor),
+            scale_by_shared_factor(m12, factor),
+        ],
+        [
+            scale_by_shared_factor(m20, factor),
+            scale_by_shared_factor(m21, factor),
+            scale_by_shared_factor(m22, factor),
+        ],
+    ]
 }
 
 fn scale_matrix4<B: Backend>(
     matrix: [[Scalar<B>; 4]; 4],
     factor: &Scalar<B>,
 ) -> [[Scalar<B>; 4]; 4] {
-    matrix.map(|row| row.map(|value| value.mul_cached(factor)))
+    // Same shared-scale rationale as `scale_matrix3`, but for right-division's
+    // unscaled 4x4 adjugate. `invert_matrix4` has its own fused cofactor-scale
+    // schedule, so this helper stays focused on matrix division.
+    let [
+        [m00, m01, m02, m03],
+        [m10, m11, m12, m13],
+        [m20, m21, m22, m23],
+        [m30, m31, m32, m33],
+    ] = matrix;
+    [
+        [
+            scale_by_shared_factor(m00, factor),
+            scale_by_shared_factor(m01, factor),
+            scale_by_shared_factor(m02, factor),
+            scale_by_shared_factor(m03, factor),
+        ],
+        [
+            scale_by_shared_factor(m10, factor),
+            scale_by_shared_factor(m11, factor),
+            scale_by_shared_factor(m12, factor),
+            scale_by_shared_factor(m13, factor),
+        ],
+        [
+            scale_by_shared_factor(m20, factor),
+            scale_by_shared_factor(m21, factor),
+            scale_by_shared_factor(m22, factor),
+            scale_by_shared_factor(m23, factor),
+        ],
+        [
+            scale_by_shared_factor(m30, factor),
+            scale_by_shared_factor(m31, factor),
+            scale_by_shared_factor(m32, factor),
+            scale_by_shared_factor(m33, factor),
+        ],
+    ]
 }
 
 #[inline]
@@ -1728,6 +1816,13 @@ fn mul_sub<B: Backend>(
     right_b: &Scalar<B>,
 ) -> Scalar<B> {
     if B::FUSE_SIGNED_PRODUCT_SUM {
+        // Structural zero pruning is intentionally done before forming exact
+        // products. In hyperreal this avoids allocating symbolic/rational terms
+        // that would later canonicalize to zero; in approximate backends this
+        // helper is bypassed to keep LLVM's compact direct expression shape.
+        // The sparse-kernel idea follows Gustavson's observation that skipping
+        // known-zero products is the central win in sparse matrix arithmetic:
+        // Gustavson, ACM TOMS 4(3), 1978, https://doi.org/10.1145/355791.355796.
         let first_zero = left_a.definitely_zero() || right_a.definitely_zero();
         let second_zero = left_b.definitely_zero() || right_b.definitely_zero();
 
@@ -1755,6 +1850,12 @@ fn mul_add<B: Backend>(
     right_b: &Scalar<B>,
 ) -> Scalar<B> {
     if B::FUSE_SIGNED_PRODUCT_SUM {
+        // Same structural-zero gate as `mul_sub`: delay exact product
+        // construction until after cheap zero facts decide which lanes can
+        // contribute. The surviving nonzero lanes are then passed to the
+        // backend fused product-sum path so exact rationals can share one
+        // denominator, mirroring Bareiss's delayed-canonicalization principle
+        // (Math. Comp. 22(103), 1968, https://doi.org/10.2307/2004533).
         let first_zero = left_a.definitely_zero() || right_a.definitely_zero();
         let second_zero = left_b.definitely_zero() || right_b.definitely_zero();
 
@@ -1784,6 +1885,11 @@ fn mul_add_sub<B: Backend>(
     right_c: &Scalar<B>,
 ) -> Scalar<B> {
     if B::FUSE_SIGNED_PRODUCT_SUM {
+        // Three-term cofactors are the hottest inverse path. Check inexpensive
+        // structural zero facts before building any products so sparse minors
+        // collapse without approximation or BigInt gcd work. Dense minors still
+        // use the fused exact-rational product-sum path to defer denominator
+        // canonicalization until the backend sees all signed terms together.
         let first_zero = left_a.definitely_zero() || right_a.definitely_zero();
         let second_zero = left_b.definitely_zero() || right_b.definitely_zero();
         let third_zero = left_c.definitely_zero() || right_c.definitely_zero();
@@ -1833,6 +1939,10 @@ fn mul_sub_add<B: Backend>(
     right_c: &Scalar<B>,
 ) -> Scalar<B> {
     if B::FUSE_SIGNED_PRODUCT_SUM {
+        // Keep the sign pattern separate from the zero-pruning decision. This
+        // lets structural facts remove zero lanes before the exact backend sees
+        // the signed product sum, reducing unnecessary symbolic nodes while
+        // preserving the same determinant/cofactor polynomial.
         let first_zero = left_a.definitely_zero() || right_a.definitely_zero();
         let second_zero = left_b.definitely_zero() || right_b.definitely_zero();
         let third_zero = left_c.definitely_zero() || right_c.definitely_zero();
@@ -1914,14 +2024,60 @@ fn matrix3_adjugate_and_determinant<B: Backend>(
 }
 
 #[inline]
+fn matrix3_scaled_adjugate<B: Backend>(
+    matrix: &[[Scalar<B>; 3]; 3],
+) -> BlasResult<[[Scalar<B>; 3]; 3]> {
+    crate::trace_dispatch!(
+        "realistic_blas_matrix",
+        "helper",
+        "matrix3-scaled-adjugate"
+    );
+    let m = &matrix;
+    let c00 = mul_sub(&m[1][1], &m[2][2], &m[1][2], &m[2][1]);
+    let c01 = mul_sub(&m[0][2], &m[2][1], &m[0][1], &m[2][2]);
+    let c02 = mul_sub(&m[0][1], &m[1][2], &m[0][2], &m[1][1]);
+    let c10 = mul_sub(&m[1][2], &m[2][0], &m[1][0], &m[2][2]);
+    let c11 = mul_sub(&m[0][0], &m[2][2], &m[0][2], &m[2][0]);
+    let c12 = mul_sub(&m[0][2], &m[1][0], &m[0][0], &m[1][2]);
+    let c20 = mul_sub(&m[1][0], &m[2][1], &m[1][1], &m[2][0]);
+    let c21 = mul_sub(&m[0][1], &m[2][0], &m[0][0], &m[2][1]);
+    let c22 = mul_sub(&m[0][0], &m[1][1], &m[0][1], &m[1][0]);
+    let det = Scalar::dot3([&m[0][0], &m[0][1], &m[0][2]], [&c00, &c10, &c20]);
+    let inv_det = det.clone().inverse()?;
+    // Mat3 reciprocal is hot enough to keep a scaled-cofactor schedule separate
+    // from right-division's unscaled-adjugate path. This avoids constructing an
+    // intermediate matrix only to immediately rescale it, while preserving one
+    // shared determinant reciprocal. The delayed common-scale principle follows
+    // Bareiss's fraction-free exact linear algebra work, Math. Comp. 22(103),
+    // 1968, https://doi.org/10.2307/2004533.
+    Ok(
+        [
+            [
+                scale_by_shared_factor(c00, &inv_det),
+                scale_by_shared_factor(c01, &inv_det),
+                scale_by_shared_factor(c02, &inv_det),
+            ],
+            [
+                scale_by_shared_factor(c10, &inv_det),
+                scale_by_shared_factor(c11, &inv_det),
+                scale_by_shared_factor(c12, &inv_det),
+            ],
+            [
+                scale_by_shared_factor(c20, &inv_det),
+                scale_by_shared_factor(c21, &inv_det),
+                scale_by_shared_factor(c22, &inv_det),
+            ],
+        ]
+    )
+}
+
+#[inline]
 fn invert_matrix3<B: Backend>(matrix: [[Scalar<B>; 3]; 3]) -> BlasResult<[[Scalar<B>; 3]; 3]> {
     crate::trace_dispatch!("realistic_blas_matrix", "helper", "invert-matrix3");
     // Cofactor inversion is intentionally kept for 3x3 reciprocal/inverse.
     // A Gauss-Jordan solve against the identity was benchmarked on the matrix
     // suite and was much slower because it pays one pivot inverse per column.
-    let (adjugate, det) = matrix3_adjugate_and_determinant(&matrix);
-    let inv_det = det.inverse()?;
-    Ok(scale_matrix3(adjugate, &inv_det))
+    matrix3_scaled_adjugate(&matrix)
 }
 
 #[inline]
@@ -2034,28 +2190,28 @@ fn matrix4_scaled_adjugate_from_factors<B: Backend>(
 ) -> [[Scalar<B>; 4]; 4] {
     [
         [
-            mul_add_sub(&m[1][1], &c[5], &m[1][3], &c[3], &m[1][2], &c[4]).mul_cached(inv_det),
-            mul_sub_add(&m[0][2], &c[4], &m[0][1], &c[5], &m[0][3], &c[3]).mul_cached(inv_det),
-            mul_add_sub(&m[3][1], &s[5], &m[3][3], &s[3], &m[3][2], &s[4]).mul_cached(inv_det),
-            mul_sub_add(&m[2][2], &s[4], &m[2][1], &s[5], &m[2][3], &s[3]).mul_cached(inv_det),
+            scale_by_shared_factor(mul_add_sub(&m[1][1], &c[5], &m[1][3], &c[3], &m[1][2], &c[4]), inv_det),
+            scale_by_shared_factor(mul_sub_add(&m[0][2], &c[4], &m[0][1], &c[5], &m[0][3], &c[3]), inv_det),
+            scale_by_shared_factor(mul_add_sub(&m[3][1], &s[5], &m[3][3], &s[3], &m[3][2], &s[4]), inv_det),
+            scale_by_shared_factor(mul_sub_add(&m[2][2], &s[4], &m[2][1], &s[5], &m[2][3], &s[3]), inv_det),
         ],
         [
-            mul_sub_add(&m[1][2], &c[2], &m[1][0], &c[5], &m[1][3], &c[1]).mul_cached(inv_det),
-            mul_add_sub(&m[0][0], &c[5], &m[0][3], &c[1], &m[0][2], &c[2]).mul_cached(inv_det),
-            mul_sub_add(&m[3][2], &s[2], &m[3][0], &s[5], &m[3][3], &s[1]).mul_cached(inv_det),
-            mul_add_sub(&m[2][0], &s[5], &m[2][3], &s[1], &m[2][2], &s[2]).mul_cached(inv_det),
+            scale_by_shared_factor(mul_sub_add(&m[1][2], &c[2], &m[1][0], &c[5], &m[1][3], &c[1]), inv_det),
+            scale_by_shared_factor(mul_add_sub(&m[0][0], &c[5], &m[0][3], &c[1], &m[0][2], &c[2]), inv_det),
+            scale_by_shared_factor(mul_sub_add(&m[3][2], &s[2], &m[3][0], &s[5], &m[3][3], &s[1]), inv_det),
+            scale_by_shared_factor(mul_add_sub(&m[2][0], &s[5], &m[2][3], &s[1], &m[2][2], &s[2]), inv_det),
         ],
         [
-            mul_add_sub(&m[1][0], &c[4], &m[1][3], &c[0], &m[1][1], &c[2]).mul_cached(inv_det),
-            mul_sub_add(&m[0][1], &c[2], &m[0][0], &c[4], &m[0][3], &c[0]).mul_cached(inv_det),
-            mul_add_sub(&m[3][0], &s[4], &m[3][3], &s[0], &m[3][1], &s[2]).mul_cached(inv_det),
-            mul_sub_add(&m[2][1], &s[2], &m[2][0], &s[4], &m[2][3], &s[0]).mul_cached(inv_det),
+            scale_by_shared_factor(mul_add_sub(&m[1][0], &c[4], &m[1][3], &c[0], &m[1][1], &c[2]), inv_det),
+            scale_by_shared_factor(mul_sub_add(&m[0][1], &c[2], &m[0][0], &c[4], &m[0][3], &c[0]), inv_det),
+            scale_by_shared_factor(mul_add_sub(&m[3][0], &s[4], &m[3][3], &s[0], &m[3][1], &s[2]), inv_det),
+            scale_by_shared_factor(mul_sub_add(&m[2][1], &s[2], &m[2][0], &s[4], &m[2][3], &s[0]), inv_det),
         ],
         [
-            mul_sub_add(&m[1][1], &c[1], &m[1][0], &c[3], &m[1][2], &c[0]).mul_cached(inv_det),
-            mul_add_sub(&m[0][0], &c[3], &m[0][2], &c[0], &m[0][1], &c[1]).mul_cached(inv_det),
-            mul_sub_add(&m[3][1], &s[1], &m[3][0], &s[3], &m[3][2], &s[0]).mul_cached(inv_det),
-            mul_add_sub(&m[2][0], &s[3], &m[2][2], &s[0], &m[2][1], &s[1]).mul_cached(inv_det),
+            scale_by_shared_factor(mul_sub_add(&m[1][1], &c[1], &m[1][0], &c[3], &m[1][2], &c[0]), inv_det),
+            scale_by_shared_factor(mul_add_sub(&m[0][0], &c[3], &m[0][2], &c[0], &m[0][1], &c[1]), inv_det),
+            scale_by_shared_factor(mul_sub_add(&m[3][1], &s[1], &m[3][0], &s[3], &m[3][2], &s[0]), inv_det),
+            scale_by_shared_factor(mul_add_sub(&m[2][0], &s[3], &m[2][2], &s[0], &m[2][1], &s[1]), inv_det),
         ],
     ]
 }

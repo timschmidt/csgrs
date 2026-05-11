@@ -48,6 +48,15 @@ pub trait Backend: Clone + fmt::Debug + PartialEq + 'static {
     /// construction, but can be slower for compact scalar representations.
     const SPECIALIZE_SCALAR_POWI: bool = false;
 
+    /// Whether repeated scaling by one shared scalar should borrow the factor.
+    ///
+    /// Borrowing the factor is a performance feature for symbolic/exact
+    /// backends because it avoids cloning expression graphs or exact rational
+    /// denominator state for every lane. Compact approximate scalars benchmark
+    /// faster through the ordinary owned multiply expression that LLVM can
+    /// inline and scalarize aggressively.
+    const BORROW_SHARED_SCALE_FACTOR: bool = false;
+
     /// Whether fixed determinant/cofactor helpers should route short signed
     /// product sums through the backend.
     ///
