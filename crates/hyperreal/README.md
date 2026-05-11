@@ -182,6 +182,19 @@ Supported conversions include:
 Float import rejects `NaN` and infinities. `to_f64_approx()` returns `None`
 when no finite `f64` approximation can be produced.
 
+Finite decimal and fraction strings parse losslessly through `Rational`; the
+parser also accepts leading `+` signs and digit separators where the rational
+parser supports them. Scientific notation is not a supported exact text format.
+`-0.0` imports as exact rational zero, so IEEE signed-zero information is not
+preserved.
+
+`PartialEq` on `Real` is structural, not a full computer-algebra equality
+proof. Two expressions may print/debug similarly and approximate identically
+while still comparing unequal if they were built through different computable
+expression histories. Use structural facts, exact-rational extraction, or
+explicit approximation/refinement when semantic equivalence rather than
+representation identity is the question.
+
 ## Performance Notes
 
 Performance shortcuts are intentionally documented next to the code that uses
