@@ -269,9 +269,7 @@ without regressing broader `realistic_blas` or `liminal` benchmarks.
 
 `hyperreal` descends from the
 [`realistic`](https://github.com/tialaramex/realistic/) project and continues
-that project's interest in practical computable real arithmetic while extending
-the scalar model with exact rational structure, symbolic reductions, structural
-facts, and benchmark-driven integration with `realistic_blas` and `liminal`.
+that project's interest in practical computable real arithmetic.
 
 Special thanks to [siefkenj](https://github.com/siefkenj), whose contributions
 improved realistic and hyperreal.
