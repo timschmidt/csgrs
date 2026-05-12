@@ -7,38 +7,52 @@ pub enum Check {
     MaskIslandKeepout,
     CopperOverlap,
     BoardEdgeClearance,
+    BoardOutlineSanity,
     PasteOverhang,
+    PasteApertureCoverage,
     ExposedCopper,
+    SolderMaskOpeningCoverage,
     SilkscreenOverlap,
+    SilkscreenMinWidth,
     MinCopperNeck,
     AcidTrap,
     LayerSanity,
+    MechanicalLayerGeometry,
     SolderMaskSliver,
     AnnularRing,
     DrillCopperClearance,
+    DrillSpacing,
     NetSpacing,
     RegistrationTolerance,
     PanelizationClearance,
     Ipc356Coverage,
+    Ipc356DrillDiameter,
 }
 
 pub const DEFAULT_CHECKS: &[Check] = &[
     Check::MaskIslandKeepout,
     Check::CopperOverlap,
     Check::BoardEdgeClearance,
+    Check::BoardOutlineSanity,
     Check::PasteOverhang,
+    Check::PasteApertureCoverage,
     Check::ExposedCopper,
+    Check::SolderMaskOpeningCoverage,
     Check::SilkscreenOverlap,
+    Check::SilkscreenMinWidth,
     Check::MinCopperNeck,
     Check::AcidTrap,
     Check::LayerSanity,
+    Check::MechanicalLayerGeometry,
     Check::SolderMaskSliver,
     Check::AnnularRing,
     Check::DrillCopperClearance,
+    Check::DrillSpacing,
     Check::NetSpacing,
     Check::RegistrationTolerance,
     Check::PanelizationClearance,
     Check::Ipc356Coverage,
+    Check::Ipc356DrillDiameter,
 ];
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, ValueEnum)]
@@ -114,6 +128,10 @@ pub struct Cli {
     /// Silkscreen-to-blocker layer pairs for silkscreen overlap checks, written as SILK:BLOCKER.
     #[arg(long = "silk-pair")]
     pub silk_pairs: Vec<String>,
+
+    /// Silkscreen layer index. Repeat to run silkscreen width checks on Gerber layers.
+    #[arg(long = "silk-layer")]
+    pub silk_layers: Vec<usize>,
 
     /// Clearance distance for board-edge checks, in Gerber units.
     #[arg(long)]
@@ -198,13 +216,40 @@ mod tests {
             "copper-overlap",
             "--check",
             "acid-trap",
+            "--check",
+            "drill-spacing",
+            "--check",
+            "solder-mask-opening-coverage",
+            "--check",
+            "paste-aperture-coverage",
+            "--check",
+            "ipc356-drill-diameter",
             "--format",
             "json",
+            "--check",
+            "mechanical-layer-geometry",
+            "--check",
+            "board-outline-sanity",
+            "--silk-layer",
+            "1",
             "top.gbr",
             "bottom.gbr",
         ]);
 
-        assert_eq!(cli.checks, vec![Check::CopperOverlap, Check::AcidTrap]);
+        assert_eq!(
+            cli.checks,
+            vec![
+                Check::CopperOverlap,
+                Check::AcidTrap,
+                Check::DrillSpacing,
+                Check::SolderMaskOpeningCoverage,
+                Check::PasteApertureCoverage,
+                Check::Ipc356DrillDiameter,
+                Check::MechanicalLayerGeometry,
+                Check::BoardOutlineSanity
+            ]
+        );
+        assert_eq!(cli.silk_layers, vec![1]);
         assert_eq!(cli.format, OutputFormat::Json);
         assert_eq!(cli.files.len(), 2);
     }

@@ -189,12 +189,12 @@ fn parse_footprints(
                 }
             }
 
-            if let Some(drill) = pad.named_child("drill").and_then(|drill| drill.f64_at(1)) {
+            if let Some(drill) = pad.named_child("drill").and_then(drill_diameter) {
                 drills.push(DrillFeature {
                     location,
                     diameter: drill,
                     net,
-                    plated: pad.atom_at(1) != Some("np_thru_hole"),
+                    plated: pad.atom_at(2) != Some("np_thru_hole"),
                 });
             }
         }
@@ -360,7 +360,7 @@ fn parse_tracks_and_vias(
             .unwrap_or(0.0);
         let drill = via
             .named_child("drill")
-            .and_then(|drill| drill.f64_at(1))
+            .and_then(drill_diameter)
             .unwrap_or(size);
         let net = net_name(via, nets);
         let layers = atom_values(via.named_child("layers"))
@@ -388,6 +388,14 @@ fn parse_tracks_and_vias(
             plated: true,
         });
     }
+}
+
+fn drill_diameter(drill: &Sexp) -> Option<f64> {
+    if drill.atom_at(1) == Some("oval") || drill.atom_at(1) == Some("rect") {
+        return Some(drill.f64_at(2)?.max(drill.f64_at(3)?));
+    }
+
+    drill.f64_at(1)
 }
 
 fn parse_zones(root: &Sexp, nets: &HashMap<i32, String>, copper: &mut Vec<CopperFeature>) {
@@ -680,7 +688,17 @@ fn is_edge_cuts(item: &Sexp) -> bool {
 fn is_panel_layer(item: &Sexp) -> bool {
     item.named_child("layer")
         .and_then(|layer| layer.atom_at(1))
-        .is_some_and(|layer| layer.contains("VScore") || layer.contains("Panel"))
+        .is_some_and(|layer| {
+            layer.contains("Panel")
+                || layer.contains("VScore")
+                || layer.contains("V-Score")
+                || layer.contains("TabRoute")
+                || layer.contains("Tab.Route")
+                || layer.contains("Castellated")
+                || layer.contains("Castellation")
+                || layer.contains("EdgePlating")
+                || layer.contains("Edge.Plating")
+        })
 }
 
 fn rotate_translate(point: [f64; 2], origin: [f64; 2], angle_degrees: f64) -> [f64; 2] {
@@ -787,6 +805,85 @@ mod tests {
 
         let board = load_kicad_pcb(&path).unwrap();
         assert!(board.panel_features.is_some());
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn parses_oval_and_rect_drills_as_slot_keepouts() {
+        let path = std::env::temp_dir().join("hyperdrc-slot-drills.kicad_pcb");
+        fs::write(
+            &path,
+            r#"
+            (kicad_pcb
+              (net 1 "GND")
+              (footprint "SLOT"
+                (at 0 0 0)
+                (pad "1" np_thru_hole oval
+                  (at 1 2)
+                  (size 1.2 2.0)
+                  (drill oval 0.6 1.8)
+                  (layers "*.Cu" "*.Mask")
+                  (net 1 "GND"))
+                (pad "2" np_thru_hole rect
+                  (at 3 2)
+                  (size 1.1 2.4)
+                  (drill rect 0.5 2.1)
+                  (layers "*.Cu" "*.Mask")
+                  (net 1 "GND")))
+              (via
+                (at 5 5)
+                (size 1.2)
+                (drill oval 0.4 0.9)
+                (layers "F.Cu" "B.Cu")
+                (net 1)))
+            "#,
+        )
+        .unwrap();
+
+        let board = load_kicad_pcb(&path).unwrap();
+
+        assert_eq!(board.drills.len(), 3);
+        assert_eq!(board.drills[0].diameter, 1.8);
+        assert!(!board.drills[0].plated);
+        assert_eq!(board.drills[1].diameter, 2.1);
+        assert!(!board.drills[1].plated);
+        assert_eq!(board.drills[2].diameter, 0.9);
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn parses_common_panelization_layer_names() {
+        let path = std::env::temp_dir().join("hyperdrc-panel-layer-names.kicad_pcb");
+        fs::write(
+            &path,
+            r#"
+            (kicad_pcb
+              (gr_line
+                (start 0 0)
+                (end 10 0)
+                (layer "User.TabRoute")
+                (width 0.2))
+              (gr_line
+                (start 0 1)
+                (end 10 1)
+                (layer "User.V-Score")
+                (width 0.2))
+              (gr_circle
+                (center 1 1)
+                (end 1.5 1)
+                (layer "User.Castellated"))
+              (gr_rect
+                (start 2 2)
+                (end 3 3)
+                (layer "User.Edge.Plating")))
+            "#,
+        )
+        .unwrap();
+
+        let board = load_kicad_pcb(&path).unwrap();
+        let panel_features = board.panel_features.unwrap();
+
+        assert!(panel_features.to_multipolygon().0.len() >= 4);
         let _ = fs::remove_file(path);
     }
 

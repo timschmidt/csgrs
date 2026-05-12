@@ -1,5 +1,5 @@
 use csgrs::csg::CSG;
-use geo::{Area, BoundingRect, Coord, LineString};
+use geo::{Area, BoundingRect, Coord, LineString, MultiPolygon, Polygon};
 
 use crate::geometry::{multipolygon_to_shapes, polygon_to_sketch, polygons_to_sketch};
 use crate::report::{Severity, Violation};
@@ -120,6 +120,24 @@ pub fn paste_overhang(
     )
 }
 
+pub fn paste_aperture_coverage(
+    paste_name: &str,
+    paste: &PcbSketch,
+    copper_name: &str,
+    copper: &PcbSketch,
+    min_area: f64,
+) -> Vec<Violation> {
+    let uncovered_copper = copper.difference(paste);
+    shapes_violation(
+        "paste-aperture-coverage",
+        Severity::Warning,
+        vec![paste_name.to_string(), copper_name.to_string()],
+        uncovered_copper,
+        min_area,
+        "copper is not covered by a paste aperture".to_string(),
+    )
+}
+
 pub fn exposed_copper(
     copper_name: &str,
     copper: &PcbSketch,
@@ -138,6 +156,24 @@ pub fn exposed_copper(
         mask_name,
         mask_openings,
         min_area,
+    )
+}
+
+pub fn solder_mask_opening_coverage(
+    copper_name: &str,
+    copper: &PcbSketch,
+    mask_name: &str,
+    mask_openings: &PcbSketch,
+    min_area: f64,
+) -> Vec<Violation> {
+    let covered_copper = copper.difference(mask_openings);
+    shapes_violation(
+        "solder-mask-opening-coverage",
+        Severity::Error,
+        vec![copper_name.to_string(), mask_name.to_string()],
+        covered_copper,
+        min_area,
+        "copper is not covered by a solder mask opening".to_string(),
     )
 }
 
@@ -162,6 +198,25 @@ pub fn silkscreen_overlap(
     )
 }
 
+pub fn silkscreen_min_width(
+    silk_name: &str,
+    silk: &PcbSketch,
+    min_width: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    let radius = min_width / 2.0;
+    let reconstructed = silk.offset(-radius).offset(radius);
+    let thin_features = silk.difference(&reconstructed);
+    shapes_violation(
+        "silkscreen-min-width",
+        Severity::Warning,
+        vec![silk_name.to_string()],
+        thin_features,
+        min_area,
+        format!("silkscreen features are removed by opening with width {min_width}"),
+    )
+}
+
 pub fn min_copper_neck_width(
     copper_name: &str,
     copper: &PcbSketch,
@@ -177,14 +232,55 @@ pub fn min_copper_neck_width(
     // Computer Vision, Graphics, and Image Processing, 1990.
     let reconstructed = copper.offset(-radius).offset(radius);
     let thin_features = copper.difference(&reconstructed);
-    shapes_violation(
+    let source = copper.to_multipolygon();
+    let thin = thin_features.to_multipolygon();
+    let shapes = multipolygon_to_shapes(&thin, min_area);
+
+    if shapes.is_empty() || whole_feature_removal_is_width_compliant(&source, &thin, min_width) {
+        return Vec::new();
+    }
+
+    vec![Violation::new(
         "minimum-copper-neck-width",
         Severity::Warning,
         vec![copper_name.to_string()],
-        thin_features,
-        min_area,
-        format!("copper features are removed by opening with width {min_width}"),
-    )
+        None,
+        shapes,
+        Vec::new(),
+        Some(format!(
+            "copper features are removed by opening with width {min_width}"
+        )),
+    )]
+}
+
+fn whole_feature_removal_is_width_compliant(
+    source: &MultiPolygon<f64>,
+    removed: &MultiPolygon<f64>,
+    min_width: f64,
+) -> bool {
+    let source_area = source.unsigned_area();
+    if source_area == 0.0 || (removed.unsigned_area() - source_area).abs() > source_area * 1.0e-6 {
+        return false;
+    }
+
+    source
+        .0
+        .iter()
+        .all(|polygon| shortest_exterior_segment(polygon) >= min_width)
+}
+
+fn shortest_exterior_segment(polygon: &Polygon<f64>) -> f64 {
+    polygon
+        .exterior()
+        .0
+        .windows(2)
+        .map(|segment| {
+            let dx = segment[1].x - segment[0].x;
+            let dy = segment[1].y - segment[0].y;
+            (dx * dx + dy * dy).sqrt()
+        })
+        .filter(|length| *length > 1.0e-12)
+        .fold(f64::INFINITY, f64::min)
 }
 
 pub fn solder_mask_sliver(
@@ -293,6 +389,52 @@ pub fn layer_sanity(
     violations
 }
 
+pub fn mechanical_layer_geometry(
+    layer_name: &str,
+    sketch: &PcbSketch,
+    min_area: f64,
+) -> Vec<Violation> {
+    if !looks_like_mechanical_layer(layer_name) {
+        return Vec::new();
+    }
+
+    let shapes = multipolygon_to_shapes(&sketch.to_multipolygon(), min_area);
+    if shapes.is_empty() {
+        return Vec::new();
+    }
+
+    vec![Violation::new(
+        "mechanical-layer-geometry",
+        Severity::Warning,
+        vec![layer_name.to_string()],
+        None,
+        shapes,
+        Vec::new(),
+        Some("geometry is present on a mechanical/user layer".to_string()),
+    )]
+}
+
+pub fn board_outline_sanity(
+    layer_name: &str,
+    outline: &PcbSketch,
+    min_area: f64,
+) -> Vec<Violation> {
+    let shapes = multipolygon_to_shapes(&outline.to_multipolygon(), min_area);
+    if !shapes.is_empty() {
+        return Vec::new();
+    }
+
+    vec![Violation::new(
+        "board-outline-sanity",
+        Severity::Warning,
+        vec![layer_name.to_string()],
+        None,
+        Vec::new(),
+        Vec::new(),
+        Some("board outline layer has no closed polygon area".to_string()),
+    )]
+}
+
 fn intersection_violation(
     spec: PairCheck<'_>,
     left_name: &str,
@@ -394,6 +536,18 @@ fn angle_degrees(previous: Coord<f64>, current: Coord<f64>, next: Coord<f64>) ->
     cos.acos().to_degrees()
 }
 
+fn looks_like_mechanical_layer(layer_name: &str) -> bool {
+    let lower = layer_name.to_ascii_lowercase();
+    lower.contains("mechanical")
+        || lower.contains("mech")
+        || lower.contains("user.")
+        || lower.contains("dwgs.user")
+        || lower.contains("cmts.user")
+        || lower.contains("fab")
+        || lower.contains("eco")
+        || lower.contains("margin")
+}
+
 fn metadata(layer_name: &str) -> LayerMetadata {
     LayerMetadata {
         name: layer_name.to_string(),
@@ -405,11 +559,13 @@ mod tests {
     use geo::{Coord, LineString, Polygon};
 
     use super::{
-        acid_trap_candidates, board_edge_clearance, copper_overlap, mask_island_keepout,
-        paste_overhang, solder_mask_sliver,
+        acid_trap_candidates, board_edge_clearance, board_outline_sanity, copper_overlap,
+        exposed_copper, layer_sanity, mask_island_keepout, mechanical_layer_geometry,
+        min_copper_neck_width, paste_aperture_coverage, paste_overhang, silkscreen_min_width,
+        silkscreen_overlap, solder_mask_opening_coverage, solder_mask_sliver,
     };
     use crate::LayerMetadata;
-    use crate::geometry::polygons_to_sketch;
+    use crate::geometry::{empty_sketch, line_polygon, polygons_to_sketch};
 
     #[test]
     fn mask_island_keepout_reports_expanded_island_collision() {
@@ -473,12 +629,280 @@ mod tests {
     }
 
     #[test]
+    fn paste_aperture_coverage_reports_undersized_or_missing_apertures() {
+        let copper = sketch(
+            "top",
+            vec![square(0.0, 0.0, 1.0, 1.0), square(2.0, 0.0, 3.0, 1.0)],
+        );
+        let paste = sketch("paste", vec![square(0.1, 0.1, 0.9, 0.9)]);
+
+        let violations = paste_aperture_coverage("paste", &paste, "top", &copper, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "paste-aperture-coverage");
+    }
+
+    #[test]
+    fn paste_aperture_coverage_allows_full_apertures() {
+        let copper = sketch("top", vec![square(0.0, 0.0, 1.0, 1.0)]);
+        let paste = sketch("paste", vec![square(-0.1, -0.1, 1.1, 1.1)]);
+
+        let violations = paste_aperture_coverage("paste", &paste, "top", &copper, 1.0e-9);
+
+        assert!(violations.is_empty());
+    }
+
+    #[test]
     fn solder_mask_sliver_reports_thin_mask_webs() {
         let mask = sketch("mask", vec![square(0.0, 0.0, 0.05, 2.0)]);
 
         let violations = solder_mask_sliver("mask", &mask, 0.1, 1.0e-9);
 
         assert_eq!(violations.len(), 1);
+    }
+
+    #[test]
+    fn minimum_line_width_flags_trace_below_three_mil_threshold() {
+        let three_mil_mm = 0.0762;
+        let narrow_trace = sketch(
+            "top",
+            vec![line_polygon([0.0, 0.0], [1.0, 0.0], three_mil_mm * 0.8).unwrap()],
+        );
+
+        assert_eq!(
+            min_copper_neck_width("top", &narrow_trace, three_mil_mm, 1.0e-9).len(),
+            1
+        );
+    }
+
+    #[test]
+    fn minimum_line_width_allows_six_mil_preferred_trace() {
+        let three_mil_mm = 0.0762;
+        let six_mil_mm = 0.1524;
+        let preferred_trace = sketch(
+            "top",
+            vec![line_polygon([0.0, 0.0], [2.0, 0.0], six_mil_mm).unwrap()],
+        );
+
+        let violations = min_copper_neck_width("top", &preferred_trace, three_mil_mm, 1.0e-9);
+
+        assert!(
+            violations.is_empty(),
+            "unexpected six mil trace violation area: {:?}",
+            violations
+                .iter()
+                .map(|violation| violation.total_area)
+                .collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn board_edge_clearance_covers_trace_below_point_two_mm() {
+        let board = sketch("edge", vec![square(0.0, 0.0, 10.0, 10.0)]);
+        let too_close_trace = sketch(
+            "top",
+            vec![line_polygon([0.10, 1.0], [0.10, 9.0], 0.05).unwrap()],
+        );
+        let compliant_trace = sketch(
+            "top",
+            vec![line_polygon([0.35, 1.0], [0.35, 9.0], 0.05).unwrap()],
+        );
+
+        assert_eq!(
+            board_edge_clearance("top", &too_close_trace, "edge", &board, 0.20, 1.0e-9).len(),
+            1
+        );
+        assert!(
+            board_edge_clearance("top", &compliant_trace, "edge", &board, 0.20, 1.0e-9).is_empty()
+        );
+    }
+
+    #[test]
+    fn board_edge_clearance_reports_pad_crossing_outline() {
+        let board = sketch("edge", vec![square(0.0, 0.0, 10.0, 10.0)]);
+        let pad = sketch("top", vec![square(9.8, 4.0, 10.2, 4.4)]);
+
+        let violations = board_edge_clearance("top", &pad, "edge", &board, 0.0, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+    }
+
+    #[test]
+    fn board_outline_sanity_reports_empty_outline_layers() {
+        let outline = empty_sketch(Some(LayerMetadata {
+            name: "edge".to_string(),
+        }));
+
+        let violations = board_outline_sanity("edge", &outline, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+    }
+
+    #[test]
+    fn board_outline_sanity_accepts_closed_outline_area() {
+        let outline = sketch("edge", vec![square(0.0, 0.0, 10.0, 10.0)]);
+
+        assert!(board_outline_sanity("edge", &outline, 1.0e-9).is_empty());
+    }
+
+    #[test]
+    fn exposed_copper_reports_oversized_mask_opening_touching_neighbor() {
+        let copper = sketch(
+            "top",
+            vec![square(0.0, 0.0, 1.0, 1.0), square(1.2, 0.0, 2.2, 1.0)],
+        );
+        let mask_opening = sketch("mask", vec![square(-0.1, -0.1, 1.35, 1.1)]);
+
+        let violations = exposed_copper("top", &copper, "mask", &mask_opening, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+    }
+
+    #[test]
+    fn solder_mask_opening_coverage_reports_undersized_or_missing_openings() {
+        let copper = sketch(
+            "top",
+            vec![square(0.0, 0.0, 1.0, 1.0), square(2.0, 0.0, 3.0, 1.0)],
+        );
+        let mask_openings = sketch("mask", vec![square(0.1, 0.1, 0.9, 0.9)]);
+
+        let violations =
+            solder_mask_opening_coverage("top", &copper, "mask", &mask_openings, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "solder-mask-opening-coverage");
+    }
+
+    #[test]
+    fn solder_mask_opening_coverage_allows_full_openings() {
+        let copper = sketch("top", vec![square(0.0, 0.0, 1.0, 1.0)]);
+        let mask_openings = sketch("mask", vec![square(-0.1, -0.1, 1.1, 1.1)]);
+
+        let violations =
+            solder_mask_opening_coverage("top", &copper, "mask", &mask_openings, 1.0e-9);
+
+        assert!(violations.is_empty());
+    }
+
+    #[test]
+    fn silkscreen_overlap_reports_legend_over_pad_or_slot() {
+        let pad_opening = sketch("mask", vec![square(0.0, 0.0, 1.0, 1.0)]);
+        let silk_text_stroke = sketch(
+            "silk",
+            vec![line_polygon([-0.2, 0.5], [1.2, 0.5], 0.08).unwrap()],
+        );
+
+        let violations =
+            silkscreen_overlap("silk", &silk_text_stroke, "mask", &pad_opening, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+    }
+
+    #[test]
+    fn silkscreen_overlap_reports_legend_over_v_score_or_slot_geometry() {
+        let panel_feature = sketch(
+            "V-Score",
+            vec![line_polygon([0.5, -1.0], [0.5, 1.0], 0.12).unwrap()],
+        );
+        let silk_text_stroke = sketch(
+            "B.SilkS",
+            vec![line_polygon([0.0, 0.0], [1.0, 0.0], 0.08).unwrap()],
+        );
+
+        let violations = silkscreen_overlap(
+            "B.SilkS",
+            &silk_text_stroke,
+            "V-Score",
+            &panel_feature,
+            1.0e-9,
+        );
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "silkscreen-overlap");
+    }
+
+    #[test]
+    fn silkscreen_min_width_reports_thin_legend_strokes() {
+        let silk = sketch(
+            "silk",
+            vec![line_polygon([0.0, 0.0], [2.0, 0.0], 0.08).unwrap()],
+        );
+
+        let violations = silkscreen_min_width("silk", &silk, 0.12, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+    }
+
+    #[test]
+    fn silkscreen_min_width_allows_wide_legend_strokes() {
+        let silk = sketch("silk", vec![square(0.0, 0.0, 1.0, 1.0)]);
+
+        let violations = silkscreen_min_width("silk", &silk, 0.12, 1.0e-9);
+
+        assert!(violations.is_empty());
+    }
+
+    #[test]
+    fn layer_sanity_reports_empty_or_unbounded_layers() {
+        let empty = empty_sketch(Some(LayerMetadata {
+            name: "empty mask".to_string(),
+        }));
+
+        let violations = layer_sanity("empty mask", &empty, None);
+
+        assert_eq!(violations.len(), 2);
+        assert!(
+            violations.iter().any(|violation| violation
+                .message
+                .as_deref()
+                .unwrap()
+                .contains("empty"))
+        );
+        assert!(
+            violations.iter().any(|violation| violation
+                .message
+                .as_deref()
+                .unwrap()
+                .contains("bounding"))
+        );
+    }
+
+    #[test]
+    fn layer_sanity_reports_area_excursions() {
+        let flood = sketch("inner", vec![square(0.0, 0.0, 20.0, 20.0)]);
+
+        let violations = layer_sanity("inner", &flood, Some(100.0));
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .unwrap()
+                .contains("exceeds maximum")
+        );
+    }
+
+    #[test]
+    fn mechanical_layer_geometry_reports_shapes_on_user_or_mechanical_layers() {
+        let user = sketch("Dwgs.User", vec![square(0.0, 0.0, 1.0, 1.0)]);
+        let mechanical = sketch("board-Mechanical.gbr", vec![square(2.0, 0.0, 3.0, 1.0)]);
+
+        assert_eq!(
+            mechanical_layer_geometry("Dwgs.User", &user, 1.0e-9).len(),
+            1
+        );
+        assert_eq!(
+            mechanical_layer_geometry("board-Mechanical.gbr", &mechanical, 1.0e-9).len(),
+            1
+        );
+    }
+
+    #[test]
+    fn mechanical_layer_geometry_ignores_normal_copper_layers() {
+        let copper = sketch("F.Cu", vec![square(0.0, 0.0, 1.0, 1.0)]);
+
+        assert!(mechanical_layer_geometry("F.Cu", &copper, 1.0e-9).is_empty());
     }
 
     #[test]

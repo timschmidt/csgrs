@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use csgrs::csg::CSG;
-use geo::Area;
+use geo::{Area, Coord, LineString, MultiPolygon, Polygon};
 
 use crate::geometry::{circle_polygon, multipolygon_to_shapes, polygons_to_sketch};
 use crate::ipc356::Ipc356Point;
@@ -74,7 +74,7 @@ pub fn drill_to_copper_clearance(
         );
 
         for copper in &copper_features {
-            if drill.net.is_some() && drill.net == copper.net {
+            if drill.plated && drill.net.is_some() && drill.net == copper.net {
                 continue;
             }
 
@@ -93,6 +93,42 @@ pub fn drill_to_copper_clearance(
                 vec![drill.location],
                 Some(format!(
                     "drill keepout with clearance {clearance} intersects copper"
+                )),
+            ));
+        }
+    }
+
+    violations
+}
+
+pub fn drill_spacing(
+    board_drills: &[DrillFeature],
+    extra_drills: &[DrillFeature],
+    clearance: f64,
+) -> Vec<Violation> {
+    let mut drills = board_drills.to_vec();
+    drills.extend_from_slice(extra_drills);
+    let mut violations = Vec::new();
+
+    for left_index in 0..drills.len() {
+        let left = &drills[left_index];
+        for right in &drills[(left_index + 1)..] {
+            let edge_gap = distance(left.location, right.location)
+                - left.diameter / 2.0
+                - right.diameter / 2.0;
+            if edge_gap >= clearance {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "drill-spacing",
+                Severity::Error,
+                vec!["drills".to_string()],
+                None,
+                Vec::new(),
+                vec![left.location, right.location],
+                Some(format!(
+                    "drill edge spacing {edge_gap:.6} is below clearance {clearance:.6}"
                 )),
             ));
         }
@@ -124,7 +160,17 @@ pub fn net_spacing(
             // Preparata, "Computational Geometry - A Survey", IEEE TC, 1984.
             let overlap = left.sketch.offset(clearance).intersection(&right.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
-            if shapes.is_empty() {
+            let locations = if shapes.is_empty()
+                && polygon_boundary_distance(
+                    &left.sketch.to_multipolygon(),
+                    &right.sketch.to_multipolygon(),
+                ) <= clearance
+            {
+                vec![left.location, right.location]
+            } else {
+                Vec::new()
+            };
+            if shapes.is_empty() && locations.is_empty() {
                 continue;
             }
 
@@ -134,7 +180,7 @@ pub fn net_spacing(
                 vec![left.layer.clone()],
                 None,
                 shapes,
-                vec![left.location, right.location],
+                locations,
                 Some(format!(
                     "net {:?} is within {clearance} of net {:?}",
                     left.net, right.net
@@ -208,7 +254,10 @@ pub fn panelization_clearance(
     for blocker in blockers {
         let overlap = blocker.offset(clearance).intersection(&copper);
         let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
-        if shapes.is_empty() {
+        let fallback_hit = shapes.is_empty()
+            && polygon_boundary_distance(&blocker.to_multipolygon(), &copper.to_multipolygon())
+                <= clearance;
+        if shapes.is_empty() && !fallback_hit {
             continue;
         }
 
@@ -286,6 +335,43 @@ pub fn ipc356_coverage(
     violations
 }
 
+pub fn ipc356_drill_diameter(
+    board: &BoardModel,
+    points: &[Ipc356Point],
+    tolerance: f64,
+) -> Vec<Violation> {
+    let mut violations = Vec::new();
+
+    for point in points {
+        let Some(ipc_diameter) = point.diameter else {
+            continue;
+        };
+        for drill in &board.drills {
+            if distance(drill.location, point.location) > tolerance {
+                continue;
+            }
+            if drill.diameter == 0.0 || (drill.diameter - ipc_diameter).abs() <= tolerance {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "ipc356-drill-diameter",
+                Severity::Warning,
+                vec![point.net.clone()],
+                None,
+                Vec::new(),
+                vec![drill.location, point.location],
+                Some(format!(
+                    "drill diameter {:.6} differs from IPC-D-356 diameter {:.6}",
+                    drill.diameter, ipc_diameter
+                )),
+            ));
+        }
+    }
+
+    violations
+}
+
 pub fn drills_to_sketch(drills: &[DrillFeature], name: &str) -> PcbSketch {
     let polygons = drills
         .iter()
@@ -342,6 +428,119 @@ fn distance(left: [f64; 2], right: [f64; 2]) -> f64 {
     (dx * dx + dy * dy).sqrt()
 }
 
+fn polygon_boundary_distance(left: &MultiPolygon<f64>, right: &MultiPolygon<f64>) -> f64 {
+    let mut minimum = f64::INFINITY;
+    for left_polygon in &left.0 {
+        for right_polygon in &right.0 {
+            minimum = minimum.min(single_polygon_boundary_distance(
+                left_polygon,
+                right_polygon,
+            ));
+        }
+    }
+    minimum
+}
+
+fn single_polygon_boundary_distance(left: &Polygon<f64>, right: &Polygon<f64>) -> f64 {
+    let mut minimum = ring_boundary_distance(left.exterior(), right.exterior());
+
+    for left_hole in left.interiors() {
+        minimum = minimum.min(ring_boundary_distance(left_hole, right.exterior()));
+        for right_hole in right.interiors() {
+            minimum = minimum.min(ring_boundary_distance(left_hole, right_hole));
+        }
+    }
+
+    for right_hole in right.interiors() {
+        minimum = minimum.min(ring_boundary_distance(left.exterior(), right_hole));
+    }
+
+    minimum
+}
+
+fn ring_boundary_distance(left: &LineString<f64>, right: &LineString<f64>) -> f64 {
+    let mut minimum = f64::INFINITY;
+    for left_segment in left.0.windows(2) {
+        for right_segment in right.0.windows(2) {
+            minimum = minimum.min(segment_distance(
+                left_segment[0],
+                left_segment[1],
+                right_segment[0],
+                right_segment[1],
+            ));
+        }
+    }
+    minimum
+}
+
+fn segment_distance(
+    a_start: Coord<f64>,
+    a_end: Coord<f64>,
+    b_start: Coord<f64>,
+    b_end: Coord<f64>,
+) -> f64 {
+    if segments_intersect(a_start, a_end, b_start, b_end) {
+        return 0.0;
+    }
+
+    point_segment_distance(a_start, b_start, b_end)
+        .min(point_segment_distance(a_end, b_start, b_end))
+        .min(point_segment_distance(b_start, a_start, a_end))
+        .min(point_segment_distance(b_end, a_start, a_end))
+}
+
+fn point_segment_distance(point: Coord<f64>, start: Coord<f64>, end: Coord<f64>) -> f64 {
+    let dx = end.x - start.x;
+    let dy = end.y - start.y;
+    let length_squared = dx * dx + dy * dy;
+    if length_squared == 0.0 {
+        return distance([point.x, point.y], [start.x, start.y]);
+    }
+
+    let t =
+        (((point.x - start.x) * dx + (point.y - start.y) * dy) / length_squared).clamp(0.0, 1.0);
+    distance([point.x, point.y], [start.x + t * dx, start.y + t * dy])
+}
+
+fn segments_intersect(
+    a_start: Coord<f64>,
+    a_end: Coord<f64>,
+    b_start: Coord<f64>,
+    b_end: Coord<f64>,
+) -> bool {
+    let d1 = orientation(a_start, a_end, b_start);
+    let d2 = orientation(a_start, a_end, b_end);
+    let d3 = orientation(b_start, b_end, a_start);
+    let d4 = orientation(b_start, b_end, a_end);
+
+    if d1 == 0.0 && point_on_segment(b_start, a_start, a_end) {
+        return true;
+    }
+    if d2 == 0.0 && point_on_segment(b_end, a_start, a_end) {
+        return true;
+    }
+    if d3 == 0.0 && point_on_segment(a_start, b_start, b_end) {
+        return true;
+    }
+    if d4 == 0.0 && point_on_segment(a_end, b_start, b_end) {
+        return true;
+    }
+
+    (d1 > 0.0) != (d2 > 0.0) && (d3 > 0.0) != (d4 > 0.0)
+}
+
+fn orientation(a: Coord<f64>, b: Coord<f64>, c: Coord<f64>) -> f64 {
+    let cross = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+    if cross.abs() < 1.0e-12 { 0.0 } else { cross }
+}
+
+fn point_on_segment(point: Coord<f64>, start: Coord<f64>, end: Coord<f64>) -> bool {
+    point.x >= start.x.min(end.x) - 1.0e-12
+        && point.x <= start.x.max(end.x) + 1.0e-12
+        && point.y >= start.y.min(end.y) - 1.0e-12
+        && point.y <= start.y.max(end.y) + 1.0e-12
+}
+
 pub fn layer_names_csv(board: &BoardModel) -> String {
     let mut counts = HashMap::new();
     for feature in &board.copper {
@@ -373,12 +572,15 @@ impl CopperKind {
 #[cfg(test)]
 mod tests {
     use crate::LayerMetadata;
-    use crate::geometry::{circle_polygon, polygons_to_sketch};
+    use crate::geometry::{circle_polygon, line_polygon, polygons_to_sketch};
     use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 
     use crate::ipc356::Ipc356Point;
 
-    use super::{annular_ring, apply_ipc356_nets, ipc356_coverage, net_spacing};
+    use super::{
+        annular_ring, apply_ipc356_nets, drill_spacing, drill_to_copper_clearance, ipc356_coverage,
+        ipc356_drill_diameter, net_spacing, panelization_clearance, registration_tolerance,
+    };
 
     #[test]
     fn annular_ring_flags_small_pad() {
@@ -410,6 +612,35 @@ mod tests {
     }
 
     #[test]
+    fn annular_ring_allows_via_at_minimum_ring() {
+        let board = BoardModel {
+            source: "test".to_string(),
+            copper: vec![CopperFeature {
+                layer: "F.Cu".to_string(),
+                net: Some("GND".to_string()),
+                kind: CopperKind::Via,
+                location: [0.0, 0.0],
+                sketch: polygons_to_sketch(
+                    vec![circle_polygon([0.0, 0.0], 0.5, 64)],
+                    Some(LayerMetadata {
+                        name: "via".to_string(),
+                    }),
+                ),
+            }],
+            drills: vec![DrillFeature {
+                location: [0.0, 0.0],
+                diameter: 0.6,
+                net: Some("GND".to_string()),
+                plated: true,
+            }],
+            board_outline: None,
+            panel_features: None,
+        };
+
+        assert!(annular_ring(&board, 0.1, &[]).is_empty());
+    }
+
+    #[test]
     fn net_spacing_flags_close_different_nets() {
         let board = BoardModel {
             source: "test".to_string(),
@@ -420,6 +651,316 @@ mod tests {
         };
 
         assert_eq!(net_spacing(&board, 0.2, &[], 1.0e-9).len(), 1);
+    }
+
+    #[test]
+    fn net_spacing_covers_pad_via_and_via_spacing() {
+        let selected_layers = vec!["F.Cu".to_string()];
+        let pad = copper_disc("PAD", CopperKind::Pad, [0.0, 0.0], 0.12);
+        let via_a = copper_disc("VIA_A", CopperKind::Via, [0.28, 0.0], 0.12);
+        let via_b = copper_disc("VIA_B", CopperKind::Via, [0.56, 0.0], 0.12);
+        let board = BoardModel {
+            source: "test".to_string(),
+            copper: vec![pad, via_a, via_b],
+            drills: Vec::new(),
+            board_outline: None,
+            panel_features: None,
+        };
+
+        let violations = net_spacing(&board, 0.20, &selected_layers, 1.0e-9);
+
+        assert_eq!(violations.len(), 2);
+    }
+
+    #[test]
+    fn net_spacing_distance_fallback_covers_trace_clearances() {
+        assert_eq!(
+            net_spacing(
+                &board_with_copper(vec![
+                    copper_line("A", CopperKind::Segment, [0.0, 0.0], [1.0, 0.0], 0.1),
+                    copper_line("B", CopperKind::Segment, [0.0, 0.18], [1.0, 0.18], 0.1),
+                ]),
+                0.10,
+                &[],
+                1.0e-9,
+            )
+            .len(),
+            1
+        );
+
+        assert_eq!(
+            net_spacing(
+                &board_with_copper(vec![
+                    copper_line("A", CopperKind::Segment, [0.0, 0.0], [1.0, 0.0], 0.1),
+                    copper_disc("B", CopperKind::Pad, [1.15, 0.0], 0.06),
+                ]),
+                0.10,
+                &[],
+                1.0e-9,
+            )
+            .len(),
+            1
+        );
+
+        assert_eq!(
+            net_spacing(
+                &board_with_copper(vec![
+                    copper_line("A", CopperKind::Segment, [0.0, 0.0], [1.0, 0.0], 0.1),
+                    copper_disc("B", CopperKind::Via, [0.5, 0.20], 0.06),
+                ]),
+                0.10,
+                &[],
+                1.0e-9,
+            )
+            .len(),
+            1
+        );
+    }
+
+    #[test]
+    fn net_spacing_allows_trace_clearances_above_threshold() {
+        let board = board_with_copper(vec![
+            copper_line("A", CopperKind::Segment, [0.0, 0.0], [1.0, 0.0], 0.1),
+            copper_line("B", CopperKind::Segment, [0.0, 0.30], [1.0, 0.30], 0.1),
+        ]);
+
+        assert!(net_spacing(&board, 0.10, &[], 1.0e-9).is_empty());
+    }
+
+    #[test]
+    fn drill_to_copper_clearance_flags_hole_trace_and_slot_trace_cases() {
+        let trace = copper_line("SIG", CopperKind::Segment, [0.0, 0.0], [2.0, 0.0], 0.1);
+        let board = BoardModel {
+            source: "test".to_string(),
+            copper: vec![trace],
+            drills: Vec::new(),
+            board_outline: None,
+            panel_features: None,
+        };
+        let extra_drills = vec![
+            DrillFeature {
+                location: [0.5, 0.18],
+                diameter: 0.2,
+                net: None,
+                plated: false,
+            },
+            DrillFeature {
+                location: [1.5, 0.32],
+                diameter: 0.2,
+                net: None,
+                plated: false,
+            },
+        ];
+
+        let violations = drill_to_copper_clearance(&board, &extra_drills, 0.15, &[], 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+    }
+
+    #[test]
+    fn drill_to_copper_clearance_ignores_same_net_plated_drills() {
+        let trace = copper_line("GND", CopperKind::Segment, [0.0, 0.0], [2.0, 0.0], 0.1);
+        let board = BoardModel {
+            source: "test".to_string(),
+            copper: vec![trace],
+            drills: vec![DrillFeature {
+                location: [1.0, 0.0],
+                diameter: 0.3,
+                net: Some("GND".to_string()),
+                plated: true,
+            }],
+            board_outline: None,
+            panel_features: None,
+        };
+
+        let violations = drill_to_copper_clearance(&board, &[], 0.15, &[], 1.0e-9);
+
+        assert!(violations.is_empty());
+    }
+
+    #[test]
+    fn drill_to_copper_clearance_flags_same_net_npth_drills() {
+        let trace = copper_line("GND", CopperKind::Segment, [0.0, 0.0], [2.0, 0.0], 0.1);
+        let board = BoardModel {
+            source: "test".to_string(),
+            copper: vec![trace],
+            drills: vec![DrillFeature {
+                location: [1.0, 0.0],
+                diameter: 0.3,
+                net: Some("GND".to_string()),
+                plated: false,
+            }],
+            board_outline: None,
+            panel_features: None,
+        };
+
+        let violations = drill_to_copper_clearance(&board, &[], 0.15, &[], 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "drill-to-copper-clearance");
+    }
+
+    #[test]
+    fn drill_spacing_flags_close_holes_and_allows_compliant_holes() {
+        let drills = vec![
+            DrillFeature {
+                location: [0.0, 0.0],
+                diameter: 0.4,
+                net: None,
+                plated: false,
+            },
+            DrillFeature {
+                location: [0.55, 0.0],
+                diameter: 0.4,
+                net: None,
+                plated: false,
+            },
+            DrillFeature {
+                location: [2.0, 0.0],
+                diameter: 0.4,
+                net: None,
+                plated: false,
+            },
+        ];
+
+        let violations = drill_spacing(&drills, &[], 0.20);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .unwrap()
+                .contains("below clearance")
+        );
+    }
+
+    #[test]
+    fn drill_spacing_includes_excellon_sidecar_hits() {
+        let board_drills = vec![DrillFeature {
+            location: [0.0, 0.0],
+            diameter: 0.4,
+            net: Some("GND".to_string()),
+            plated: true,
+        }];
+        let excellon_drills = vec![DrillFeature {
+            location: [0.5, 0.0],
+            diameter: 0.3,
+            net: None,
+            plated: false,
+        }];
+
+        let violations = drill_spacing(&board_drills, &excellon_drills, 0.20);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].locations.len(), 2);
+    }
+
+    #[test]
+    fn drill_spacing_flags_conservative_slot_keepouts() {
+        let rectangular_slots = vec![
+            DrillFeature {
+                location: [0.0, 0.0],
+                diameter: 1.8,
+                net: None,
+                plated: false,
+            },
+            DrillFeature {
+                location: [2.0, 0.0],
+                diameter: 1.7,
+                net: None,
+                plated: false,
+            },
+            DrillFeature {
+                location: [5.0, 0.0],
+                diameter: 1.0,
+                net: None,
+                plated: false,
+            },
+        ];
+
+        let violations = drill_spacing(&rectangular_slots, &[], 0.30);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "drill-spacing");
+    }
+
+    #[test]
+    fn panelization_clearance_flags_copper_near_panel_features_and_stamp_holes() {
+        let board = BoardModel {
+            source: "test".to_string(),
+            copper: vec![copper_disc("SIG", CopperKind::Pad, [0.12, 0.0], 0.08)],
+            drills: vec![DrillFeature {
+                location: [1.0, 0.0],
+                diameter: 0.2,
+                net: None,
+                plated: false,
+            }],
+            board_outline: None,
+            panel_features: Some(polygons_to_sketch(
+                vec![line_polygon([0.0, -1.0], [0.0, 1.0], 0.05).unwrap()],
+                Some(LayerMetadata {
+                    name: "KiCad Panel".to_string(),
+                }),
+            )),
+        };
+        let extra_drills = vec![DrillFeature {
+            location: [0.2, 0.0],
+            diameter: 0.2,
+            net: None,
+            plated: false,
+        }];
+
+        let violations = panelization_clearance(&board, &extra_drills, 0.25, 1.0e-9);
+
+        assert_eq!(violations.len(), 2);
+    }
+
+    #[test]
+    fn panelization_clearance_flags_copper_near_tab_route_and_v_score() {
+        let board = BoardModel {
+            source: "test".to_string(),
+            copper: vec![
+                copper_disc("TAB", CopperKind::Pad, [0.0, 0.0], 0.08),
+                copper_disc("VSCORE", CopperKind::Pad, [2.0, 0.0], 0.08),
+            ],
+            drills: Vec::new(),
+            board_outline: None,
+            panel_features: Some(polygons_to_sketch(
+                vec![
+                    line_polygon([0.0, -1.0], [0.0, 1.0], 0.05).unwrap(),
+                    line_polygon([2.0, -1.0], [2.0, 1.0], 0.05).unwrap(),
+                ],
+                Some(LayerMetadata {
+                    name: "KiCad panel features".to_string(),
+                }),
+            )),
+        };
+
+        let violations = panelization_clearance(&board, &[], 0.25, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "panelization-clearance");
+    }
+
+    #[test]
+    fn registration_tolerance_flags_close_features_on_different_layers() {
+        let board = BoardModel {
+            source: "test".to_string(),
+            copper: vec![
+                copper_disc_on_layer("TOP", CopperKind::Pad, "F.Cu", [0.0, 0.0], 0.2),
+                copper_disc_on_layer("BOT", CopperKind::Pad, "B.Cu", [0.3, 0.0], 0.2),
+                copper_disc_on_layer("INNER", CopperKind::Pad, "In1.Cu", [2.0, 0.0], 0.2),
+            ],
+            drills: Vec::new(),
+            board_outline: None,
+            panel_features: None,
+        };
+
+        let violations = registration_tolerance(&board, 0.15, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].layers, vec!["B.Cu", "F.Cu"]);
     }
 
     #[test]
@@ -456,14 +997,163 @@ mod tests {
         assert!(ipc356_coverage(&board, &points, 0.1).is_empty());
     }
 
+    #[test]
+    fn ipc356_points_recover_missing_drill_net_and_diameter() {
+        let mut board = BoardModel {
+            source: "test".to_string(),
+            copper: Vec::new(),
+            drills: vec![DrillFeature {
+                location: [1.0, 2.0],
+                diameter: 0.0,
+                net: None,
+                plated: true,
+            }],
+            board_outline: None,
+            panel_features: None,
+        };
+        let points = vec![Ipc356Point {
+            net: "PWR".to_string(),
+            reference: Some("TP1".to_string()),
+            pin: None,
+            location: [1.01, 2.0],
+            diameter: Some(0.45),
+        }];
+
+        apply_ipc356_nets(&mut board, &points, 0.1);
+
+        assert_eq!(board.drills[0].net.as_deref(), Some("PWR"));
+        assert_eq!(board.drills[0].diameter, 0.45);
+    }
+
+    #[test]
+    fn ipc356_coverage_reports_missing_test_record_copper() {
+        let board = BoardModel {
+            source: "test".to_string(),
+            copper: Vec::new(),
+            drills: Vec::new(),
+            board_outline: None,
+            panel_features: None,
+        };
+        let points = vec![Ipc356Point {
+            net: "N/C".to_string(),
+            reference: Some("J1".to_string()),
+            pin: Some("2".to_string()),
+            location: [10.0, 20.0],
+            diameter: None,
+        }];
+
+        let violations = ipc356_coverage(&board, &points, 0.1);
+
+        assert_eq!(violations.len(), 1);
+        assert!(violations[0].message.as_deref().unwrap().contains("J1.2"));
+    }
+
+    #[test]
+    fn ipc356_drill_diameter_reports_conflicting_drill_table_data() {
+        let board = BoardModel {
+            source: "test".to_string(),
+            copper: Vec::new(),
+            drills: vec![DrillFeature {
+                location: [1.0, 2.0],
+                diameter: 0.30,
+                net: Some("GND".to_string()),
+                plated: true,
+            }],
+            board_outline: None,
+            panel_features: None,
+        };
+        let points = vec![Ipc356Point {
+            net: "GND".to_string(),
+            reference: Some("V1".to_string()),
+            pin: None,
+            location: [1.01, 2.0],
+            diameter: Some(0.50),
+        }];
+
+        let violations = ipc356_drill_diameter(&board, &points, 0.05);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "ipc356-drill-diameter");
+    }
+
+    #[test]
+    fn ipc356_drill_diameter_allows_matching_drills_within_tolerance() {
+        let board = BoardModel {
+            source: "test".to_string(),
+            copper: Vec::new(),
+            drills: vec![DrillFeature {
+                location: [1.0, 2.0],
+                diameter: 0.30,
+                net: Some("GND".to_string()),
+                plated: true,
+            }],
+            board_outline: None,
+            panel_features: None,
+        };
+        let points = vec![Ipc356Point {
+            net: "GND".to_string(),
+            reference: Some("V1".to_string()),
+            pin: None,
+            location: [1.01, 2.0],
+            diameter: Some(0.31),
+        }];
+
+        assert!(ipc356_drill_diameter(&board, &points, 0.05).is_empty());
+    }
+
     fn feature(net: &str, location: [f64; 2]) -> CopperFeature {
+        copper_disc(net, CopperKind::Pad, location, 0.5)
+    }
+
+    fn board_with_copper(copper: Vec<CopperFeature>) -> BoardModel {
+        BoardModel {
+            source: "test".to_string(),
+            copper,
+            drills: Vec::new(),
+            board_outline: None,
+            panel_features: None,
+        }
+    }
+
+    fn copper_disc(net: &str, kind: CopperKind, location: [f64; 2], radius: f64) -> CopperFeature {
+        copper_disc_on_layer(net, kind, "F.Cu", location, radius)
+    }
+
+    fn copper_disc_on_layer(
+        net: &str,
+        kind: CopperKind,
+        layer: &str,
+        location: [f64; 2],
+        radius: f64,
+    ) -> CopperFeature {
+        CopperFeature {
+            layer: layer.to_string(),
+            net: Some(net.to_string()),
+            kind,
+            location,
+            sketch: polygons_to_sketch(
+                vec![circle_polygon(location, radius, 32)],
+                Some(LayerMetadata {
+                    name: "feature".to_string(),
+                }),
+            ),
+        }
+    }
+
+    fn copper_line(
+        net: &str,
+        kind: CopperKind,
+        start: [f64; 2],
+        end: [f64; 2],
+        width: f64,
+    ) -> CopperFeature {
         CopperFeature {
             layer: "F.Cu".to_string(),
             net: Some(net.to_string()),
-            kind: CopperKind::Pad,
-            location,
+            kind,
+            location: [(start[0] + end[0]) / 2.0, (start[1] + end[1]) / 2.0],
             sketch: polygons_to_sketch(
-                vec![circle_polygon(location, 0.5, 32)],
+                vec![line_polygon(start, end, width).unwrap()],
                 Some(LayerMetadata {
                     name: "feature".to_string(),
                 }),

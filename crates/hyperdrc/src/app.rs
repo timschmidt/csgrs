@@ -74,6 +74,14 @@ pub fn run(cli: Cli) -> Result<()> {
     validate_layer_index(layers.len(), cli.board_outline, "--board-outline")?;
     validate_layer_indexes(layers.len(), &cli.copper_layers, "--copper-layer")?;
     validate_layer_indexes(layers.len(), &cli.mask_layers, "--mask-layer")?;
+    validate_layer_indexes(layers.len(), &cli.silk_layers, "--silk-layer")?;
+    validate_board_outline_role(
+        cli.board_outline,
+        &cli.copper_layers,
+        &cli.mask_layers,
+        &cli.silk_layers,
+    )?;
+    validate_silk_layer_roles(layers.len(), &cli.silk_layers)?;
 
     let checks = if cli.checks.is_empty() {
         DEFAULT_CHECKS.to_vec()
@@ -183,6 +191,34 @@ fn run_checks(
                 layers,
                 boards,
             ),
+            Check::BoardOutlineSanity => {
+                if let Some(board_index) = cli.board_outline {
+                    let board = &layers[board_index];
+                    violations.extend(checks::board_outline_sanity(
+                        &layer_name(board),
+                        &board.sketch,
+                        rules.min_area,
+                    ));
+                }
+                for board in boards {
+                    match &board.board_outline {
+                        Some(outline) => violations.extend(checks::board_outline_sanity(
+                            "KiCad Edge.Cuts",
+                            outline,
+                            rules.min_area,
+                        )),
+                        None => violations.push(Violation::new(
+                            "board-outline-sanity",
+                            crate::report::Severity::Warning,
+                            vec![board.source.clone()],
+                            None,
+                            Vec::new(),
+                            Vec::new(),
+                            Some("KiCad board has no parsed Edge.Cuts outline".to_string()),
+                        )),
+                    }
+                }
+            }
             Check::PasteOverhang => {
                 for (paste_index, copper_index) in
                     explicit_layer_pairs(layers.len(), &cli.paste_pairs)?
@@ -195,6 +231,21 @@ fn run_checks(
                         &layer_name(copper),
                         &copper.sketch,
                         rules.paste_tolerance,
+                        rules.min_area,
+                    ));
+                }
+            }
+            Check::PasteApertureCoverage => {
+                for (paste_index, copper_index) in
+                    explicit_layer_pairs(layers.len(), &cli.paste_pairs)?
+                {
+                    let paste = &layers[paste_index];
+                    let copper = &layers[copper_index];
+                    violations.extend(checks::paste_aperture_coverage(
+                        &layer_name(paste),
+                        &paste.sketch,
+                        &layer_name(copper),
+                        &copper.sketch,
                         rules.min_area,
                     ));
                 }
@@ -214,6 +265,21 @@ fn run_checks(
                     ));
                 }
             }
+            Check::SolderMaskOpeningCoverage => {
+                for (copper_index, mask_index) in
+                    explicit_layer_pairs(layers.len(), &cli.mask_pairs)?
+                {
+                    let copper = &layers[copper_index];
+                    let mask = &layers[mask_index];
+                    violations.extend(checks::solder_mask_opening_coverage(
+                        &layer_name(copper),
+                        &copper.sketch,
+                        &layer_name(mask),
+                        &mask.sketch,
+                        rules.min_area,
+                    ));
+                }
+            }
             Check::SilkscreenOverlap => {
                 for (silk_index, blocker_index) in
                     explicit_layer_pairs(layers.len(), &cli.silk_pairs)?
@@ -225,6 +291,17 @@ fn run_checks(
                         &silk.sketch,
                         &layer_name(blocker),
                         &blocker.sketch,
+                        rules.min_area,
+                    ));
+                }
+            }
+            Check::SilkscreenMinWidth => {
+                for silk_index in selected_layers(layers.len(), &cli.silk_layers) {
+                    let silk = &layers[silk_index];
+                    violations.extend(checks::silkscreen_min_width(
+                        &layer_name(silk),
+                        &silk.sketch,
+                        rules.min_width,
                         rules.min_area,
                     ));
                 }
@@ -287,6 +364,15 @@ fn run_checks(
                     }
                 }
             }
+            Check::MechanicalLayerGeometry => {
+                for layer in layers {
+                    violations.extend(checks::mechanical_layer_geometry(
+                        &layer_name(layer),
+                        &layer.sketch,
+                        rules.min_area,
+                    ));
+                }
+            }
             Check::SolderMaskSliver => {
                 for mask_index in selected_layers(layers.len(), &cli.mask_layers) {
                     let mask = &layers[mask_index];
@@ -316,6 +402,23 @@ fn run_checks(
                         kicad_copper_layers,
                         rules.min_area,
                     ));
+                }
+            }
+            Check::DrillSpacing => {
+                if boards.is_empty() {
+                    violations.extend(checks::drill_spacing(
+                        &[],
+                        excellon_drills,
+                        rules.drill_clearance,
+                    ));
+                } else {
+                    for board in boards {
+                        violations.extend(checks::drill_spacing(
+                            &board.drills,
+                            excellon_drills,
+                            rules.drill_clearance,
+                        ));
+                    }
                 }
             }
             Check::NetSpacing => {
@@ -350,6 +453,15 @@ fn run_checks(
             Check::Ipc356Coverage => {
                 for board in boards {
                     violations.extend(checks::ipc356_coverage(
+                        board,
+                        ipc356_points,
+                        rules.ipc356_tolerance,
+                    ));
+                }
+            }
+            Check::Ipc356DrillDiameter => {
+                for board in boards {
+                    violations.extend(checks::ipc356_drill_diameter(
                         board,
                         ipc356_points,
                         rules.ipc356_tolerance,
@@ -465,8 +577,12 @@ fn load_waivers(files: &[PathBuf]) -> Result<Vec<waiver::Waiver>> {
 }
 
 fn validate_layer_indexes(layer_count: usize, indexes: &[usize], flag: &str) -> Result<()> {
+    let mut seen = std::collections::HashSet::new();
     for index in indexes {
         validate_layer_index(layer_count, Some(*index), flag)?;
+        if !seen.insert(*index) {
+            return Err(anyhow!("{flag} index {index} is listed more than once"));
+        }
     }
     Ok(())
 }
@@ -479,6 +595,44 @@ fn validate_layer_index(layer_count: usize, index: Option<usize>, flag: &str) ->
             "{flag} index {index} is out of range for {layer_count} input file(s)"
         ));
     }
+    Ok(())
+}
+
+fn validate_silk_layer_roles(layer_count: usize, silk_layers: &[usize]) -> Result<()> {
+    if layer_count > 1 && silk_layers.len() == layer_count {
+        return Err(anyhow!(
+            "--silk-layer marks every Gerber input as silkscreen; check layer role mapping"
+        ));
+    }
+    Ok(())
+}
+
+fn validate_board_outline_role(
+    board_outline: Option<usize>,
+    copper_layers: &[usize],
+    mask_layers: &[usize],
+    silk_layers: &[usize],
+) -> Result<()> {
+    let Some(board_outline) = board_outline else {
+        return Ok(());
+    };
+
+    if copper_layers.contains(&board_outline) {
+        return Err(anyhow!(
+            "--board-outline index {board_outline} is also listed as --copper-layer"
+        ));
+    }
+    if mask_layers.contains(&board_outline) {
+        return Err(anyhow!(
+            "--board-outline index {board_outline} is also listed as --mask-layer"
+        ));
+    }
+    if silk_layers.contains(&board_outline) {
+        return Err(anyhow!(
+            "--board-outline index {board_outline} is also listed as --silk-layer"
+        ));
+    }
+
     Ok(())
 }
 
@@ -501,6 +655,7 @@ fn layer_pairs(layer_count: usize, raw_pairs: &[String]) -> Result<Vec<(usize, u
         return Ok(pairs);
     }
 
+    let mut seen = std::collections::HashSet::new();
     raw_pairs
         .iter()
         .map(|raw| {
@@ -518,6 +673,9 @@ fn layer_pairs(layer_count: usize, raw_pairs: &[String]) -> Result<Vec<(usize, u
                 return Err(anyhow!(
                     "layer pair '{raw}' references the same layer twice"
                 ));
+            }
+            if !seen.insert((left, right)) {
+                return Err(anyhow!("layer pair '{raw}' is listed more than once"));
             }
             Ok((left, right))
         })
@@ -594,7 +752,17 @@ fn print_violation(index: usize, violation: &Violation) {
 
 #[cfg(test)]
 mod tests {
-    use super::{explicit_layer_pairs, layer_pairs, validate_layer_index};
+    use std::path::PathBuf;
+
+    use clap::Parser;
+
+    use crate::cli::Cli;
+
+    use super::{
+        explicit_layer_pairs, layer_pairs, load_boards, load_excellon_drills, load_ipc356_points,
+        load_layers, run, validate_board_outline_role, validate_layer_index,
+        validate_layer_indexes, validate_silk_layer_roles,
+    };
 
     #[test]
     fn layer_pairs_defaults_to_unique_pairs() {
@@ -611,11 +779,69 @@ mod tests {
         assert!(layer_pairs(2, &["bad".to_string()]).is_err());
         assert!(layer_pairs(2, &["0:0".to_string()]).is_err());
         assert!(layer_pairs(2, &["0:2".to_string()]).is_err());
+        assert!(layer_pairs(2, &["0:1".to_string(), "0:1".to_string()]).is_err());
     }
 
     #[test]
     fn layer_index_validation_rejects_out_of_range_indexes() {
         assert!(validate_layer_index(2, Some(1), "--layer").is_ok());
         assert!(validate_layer_index(2, Some(2), "--layer").is_err());
+        assert!(validate_layer_indexes(2, &[0, 1], "--layer").is_ok());
+        assert!(validate_layer_indexes(2, &[0, 2], "--layer").is_err());
+        assert!(validate_layer_indexes(2, &[1, 1], "--layer").is_err());
+    }
+
+    #[test]
+    fn silk_layer_validation_rejects_every_gerber_layer_as_silkscreen() {
+        assert!(validate_silk_layer_roles(3, &[0, 1]).is_ok());
+        assert!(validate_silk_layer_roles(1, &[0]).is_ok());
+        assert!(validate_silk_layer_roles(3, &[0, 1, 2]).is_err());
+    }
+
+    #[test]
+    fn board_outline_validation_rejects_conflicting_explicit_roles() {
+        assert!(validate_board_outline_role(Some(0), &[1], &[2], &[3]).is_ok());
+        assert!(validate_board_outline_role(Some(0), &[0], &[], &[]).is_err());
+        assert!(validate_board_outline_role(Some(0), &[], &[0], &[]).is_err());
+        assert!(validate_board_outline_role(Some(0), &[], &[], &[0]).is_err());
+    }
+
+    #[test]
+    fn run_rejects_empty_input_set() {
+        let cli = Cli::parse_from(["hyperdrc"]);
+
+        let error = run(cli).unwrap_err().to_string();
+
+        assert!(error.contains("provide at least one"));
+    }
+
+    #[test]
+    fn loaders_report_missing_sidecar_files() {
+        let missing = PathBuf::from("/tmp/hyperdrc-definitely-missing-input-file");
+
+        assert!(
+            load_layers(std::slice::from_ref(&missing))
+                .unwrap_err()
+                .to_string()
+                .contains("failed to read")
+        );
+        assert!(
+            load_boards(std::slice::from_ref(&missing))
+                .unwrap_err()
+                .to_string()
+                .contains("failed to read")
+        );
+        assert!(
+            load_excellon_drills(std::slice::from_ref(&missing))
+                .unwrap_err()
+                .to_string()
+                .contains("failed to read")
+        );
+        assert!(
+            load_ipc356_points(&[missing])
+                .unwrap_err()
+                .to_string()
+                .contains("failed to read")
+        );
     }
 }
