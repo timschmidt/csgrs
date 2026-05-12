@@ -1,6 +1,6 @@
 <h1>
   hyperdrc
-  <img src="./doc/hyperdrc.png" alt="Hyper, a clever math thief" width="144" align="right">
+  <img src="./docs/hyperdrc.png" alt="Hyper, a clever math thief" width="144" align="right">
 </h1>
 
 `hyperdrc` is a Rust command line tool for design readiness checks on PCB
