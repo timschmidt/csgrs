@@ -1,0 +1,17 @@
+{
+  "keepout": 0.15,
+  "clearance": 0.25,
+  "paste_tolerance": 0.0,
+  "min_width": 0.15,
+  "min_mask_width": 0.1,
+  "acid_trap_angle": 30.0,
+  "annular_ring": 0.15,
+  "drill_clearance": 0.25,
+  "net_clearance": 0.15,
+  "registration_tolerance": 0.1,
+  "panel_clearance": 0.5,
+  "ipc356_tolerance": 0.1,
+  "min_area": 1.0e-9,
+  "max_layer_area": null,
+  "kicad_copper_layers": ["F.Cu", "B.Cu"]
+}
