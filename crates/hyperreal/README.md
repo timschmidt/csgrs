@@ -16,14 +16,14 @@ roots, logarithms, and rational trig constants.
 `hyperreal` is built around three layers that deliberately keep exact and
 symbolic information available before approximation:
 
-- [`src/rational/README.md`](./src/rational/README.md): `Rational` is the exact arithmetic base. It stores arbitrary-precision
+- [`src/rational/README.md`](`Rational`): is the exact arithmetic base. It stores arbitrary-precision
   numerator/denominator values and performs exact reduction, dyadic detection,
   square extraction, shared-denominator dot products, and exact IEEE-754 import.
-- [`src/computable/README.md`](./src/computable/README.md): `Computable` is the lazy approximation layer. It represents exact-real
+- [`src/computable/README.md`](`Computable`): is the lazy approximation layer. It represents exact-real
   expression graphs such as sums, products, inverses, roots, logs, trig kernels,
   and shared constants. It approximates only when a caller asks for a binary
   precision, then caches the result and conservative sign/magnitude facts.
-- [`src/real/README.md`](./src/real/README.md): `Real` is the public symbolic scalar. It stores an exact rational scale plus a
+- [`src/real/README.md`](`Real`): is the public symbolic scalar. It stores an exact rational scale plus a
   compact symbolic class and, when needed, a `Computable` certificate. Common
   classes include exact one, powers/products of `pi` and `e`, selected square
   roots, logarithms, trig forms, and factored constant products.
