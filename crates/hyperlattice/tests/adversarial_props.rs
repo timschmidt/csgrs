@@ -31,8 +31,11 @@ fn small_exact_scalar() -> impl Strategy<Value = Scalar> {
 
 fn upper_triangular3() -> impl Strategy<Value = Matrix3> {
     (
-        nonzero_i32(), -8_i32..=8, -8_i32..=8,
-        nonzero_i32(), -8_i32..=8,
+        nonzero_i32(),
+        -8_i32..=8,
+        -8_i32..=8,
+        nonzero_i32(),
+        -8_i32..=8,
         nonzero_i32(),
     )
         .prop_map(|(d0, a01, a02, d1, a12, d2)| {
@@ -46,9 +49,15 @@ fn upper_triangular3() -> impl Strategy<Value = Matrix3> {
 
 fn upper_triangular4() -> impl Strategy<Value = Matrix4> {
     (
-        nonzero_i32(), -4_i32..=4, -4_i32..=4, -4_i32..=4,
-        nonzero_i32(), -4_i32..=4, -4_i32..=4,
-        nonzero_i32(), -4_i32..=4,
+        nonzero_i32(),
+        -4_i32..=4,
+        -4_i32..=4,
+        -4_i32..=4,
+        nonzero_i32(),
+        -4_i32..=4,
+        -4_i32..=4,
+        nonzero_i32(),
+        -4_i32..=4,
         nonzero_i32(),
     )
         .prop_map(|(d0, a01, a02, a03, d1, a12, a13, d2, a23, d3)| {

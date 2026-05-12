@@ -14,4 +14,4 @@ mod ops;
 mod transform;
 mod types;
 
-pub use core::{Matrix3, Matrix4};
+pub use core::{Matrix3, Matrix4, PreparedRightDivisor3, PreparedRightDivisor4};

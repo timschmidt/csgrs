@@ -10,7 +10,10 @@ fn assert_matrix3_inverse_invariants(matrix: Matrix3) {
     assert_eq!(matrix.transpose().transpose(), matrix);
     assert_eq!(matrix.clone() * inverse.clone(), Matrix3::identity());
     assert_eq!(inverse * matrix.clone(), Matrix3::identity());
-    assert_eq!((matrix.clone() / matrix.clone()).unwrap(), Matrix3::identity());
+    assert_eq!(
+        (matrix.clone() / matrix.clone()).unwrap(),
+        Matrix3::identity()
+    );
     assert_eq!(matrix.clone().powi(0).unwrap(), Matrix3::identity());
     assert_eq!(matrix.clone().powi(1).unwrap(), matrix);
     assert_eq!(matrix.clone().powi(-1).unwrap(), matrix.inverse().unwrap());
@@ -23,7 +26,10 @@ fn assert_matrix4_inverse_invariants(matrix: Matrix4) {
     assert_eq!(matrix.transpose().transpose(), matrix);
     assert_eq!(matrix.clone() * inverse.clone(), Matrix4::identity());
     assert_eq!(inverse * matrix.clone(), Matrix4::identity());
-    assert_eq!((matrix.clone() / matrix.clone()).unwrap(), Matrix4::identity());
+    assert_eq!(
+        (matrix.clone() / matrix.clone()).unwrap(),
+        Matrix4::identity()
+    );
     assert_eq!(matrix.clone().powi(0).unwrap(), Matrix4::identity());
     assert_eq!(matrix.clone().powi(1).unwrap(), matrix);
     assert_eq!(matrix.clone().powi(-1).unwrap(), matrix.inverse().unwrap());
@@ -57,8 +63,15 @@ fn matrix4_adversarial_exact_kernels_obey_algebra() {
 #[test]
 fn determinant_product_identity_holds_for_mixed_matrices() {
     let a = Matrix3::new([[r(2), r(0), r(0)], [r(0), r(3), r(0)], [r(0), r(0), r(5)]]);
-    let b = Matrix3::new([[frac(5, 3), r(0), r(0)], [r(0), frac(7, 5), r(0)], [r(0), r(0), frac(11, 7)]]);
-    assert_eq!((a.clone() * b.clone()).determinant(), a.determinant() * b.determinant());
+    let b = Matrix3::new([
+        [frac(5, 3), r(0), r(0)],
+        [r(0), frac(7, 5), r(0)],
+        [r(0), r(0), frac(11, 7)],
+    ]);
+    assert_eq!(
+        (a.clone() * b.clone()).determinant(),
+        a.determinant() * b.determinant()
+    );
 
     let c = Matrix4::new([
         [r(2), r(0), r(0), r(0)],
@@ -72,7 +85,10 @@ fn determinant_product_identity_holds_for_mixed_matrices() {
         [r(0), r(0), frac(7, 5), r(0)],
         [r(0), r(0), r(0), frac(11, 7)],
     ]);
-    assert_eq!((c.clone() * d.clone()).determinant(), c.determinant() * d.determinant());
+    assert_eq!(
+        (c.clone() * d.clone()).determinant(),
+        c.determinant() * d.determinant()
+    );
 }
 
 #[test]

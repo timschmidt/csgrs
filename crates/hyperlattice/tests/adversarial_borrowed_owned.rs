@@ -9,7 +9,10 @@ fn scalar_owned_and_borrowed_paths_match_for_adversarial_values() {
         (frac(1, 3), frac(5, 7)),
         (frac(-11, 13), frac(17, 19)),
         (frac(1 << 20, 3), frac(-99, 70)),
-        (Scalar::try_from(0.125).unwrap(), Scalar::try_from(-0.25).unwrap()),
+        (
+            Scalar::try_from(0.125).unwrap(),
+            Scalar::try_from(-0.25).unwrap(),
+        ),
         (r(-64), r(8)),
     ];
 
@@ -18,7 +21,10 @@ fn scalar_owned_and_borrowed_paths_match_for_adversarial_values() {
         assert_eq!(&left - &right, left.clone() - right.clone());
         assert_eq!(&left * &right, left.clone() * right.clone());
         if right.zero_status() == realistic_blas::ZeroStatus::NonZero {
-            assert_eq!((&left / &right).unwrap(), (left.clone() / right.clone()).unwrap());
+            assert_eq!(
+                (&left / &right).unwrap(),
+                (left.clone() / right.clone()).unwrap()
+            );
         }
     }
 }
@@ -63,11 +69,7 @@ fn matrix_owned_borrowed_and_checked_paths_match_on_mixed_forms() {
         [r(0), frac(17, 11), frac(-5, 7)],
         [frac(13, 5), r(0), frac(9, 4)],
     ]);
-    let rhs = Matrix3::new([
-        [r(2), r(0), r(1)],
-        [r(1), r(3), r(0)],
-        [r(0), r(2), r(1)],
-    ]);
+    let rhs = Matrix3::new([[r(2), r(0), r(1)], [r(1), r(3), r(0)], [r(0), r(2), r(1)]]);
     let vector = Vector3::new([frac(2, 3), Scalar::pi(), r(-1)]);
     let scalar = frac(7, 3);
 
@@ -81,8 +83,14 @@ fn matrix_owned_borrowed_and_checked_paths_match_on_mixed_forms() {
     assert_eq!(lhs.clone() + &scalar, lhs.clone() + scalar.clone());
     assert_eq!(lhs.clone() - &scalar, lhs.clone() - scalar.clone());
     assert_eq!(lhs.clone() * &scalar, lhs.clone() * scalar.clone());
-    assert_eq!((lhs.clone() / &scalar).unwrap(), (lhs.clone() / scalar.clone()).unwrap());
-    assert_eq!(lhs.clone().div_matrix_checked(rhs.clone()).unwrap(), (lhs / rhs).unwrap());
+    assert_eq!(
+        (lhs.clone() / &scalar).unwrap(),
+        (lhs.clone() / scalar.clone()).unwrap()
+    );
+    assert_eq!(
+        lhs.clone().div_matrix_checked(rhs.clone()).unwrap(),
+        (lhs / rhs).unwrap()
+    );
 }
 
 #[test]
@@ -104,7 +112,10 @@ fn matrix4_checked_abort_paths_match_non_abort_paths() {
         matrix.clone().powi_checked(-2).unwrap()
     );
     assert_eq!(
-        matrix.clone().div_matrix_checked_with_abort(matrix.clone(), &signal).unwrap(),
+        matrix
+            .clone()
+            .div_matrix_checked_with_abort(matrix.clone(), &signal)
+            .unwrap(),
         Matrix4::identity()
     );
 }

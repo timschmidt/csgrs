@@ -204,11 +204,26 @@ impl<B: Backend> Scalar<B> {
         if nonzero_lanes == 2 {
             crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot3-sparse");
             return if left0_zero {
-                left[1] * right[1] + left[2] * right[2]
+                // The two surviving lanes are known nonzero by the structural
+                // scan above. Keep them as one product-sum so exact backends can
+                // share denominator/canonicalization work instead of expanding
+                // two independent products. This mirrors the delayed
+                // normalization idea used in Bareiss fraction-free elimination
+                // (Math. Comp. 22(103), 1968, https://doi.org/10.2307/2004533).
+                Self::active_signed_product_sum2(
+                    [true, true],
+                    [[left[1], right[1]], [left[2], right[2]]],
+                )
             } else if left1_zero {
-                left[0] * right[0] + left[2] * right[2]
+                Self::active_signed_product_sum2(
+                    [true, true],
+                    [[left[0], right[0]], [left[2], right[2]]],
+                )
             } else if left2_zero {
-                left[0] * right[0] + left[1] * right[1]
+                Self::active_signed_product_sum2(
+                    [true, true],
+                    [[left[0], right[0]], [left[1], right[1]]],
+                )
             } else {
                 unreachable!("nonzero lane count checked")
             };
@@ -260,39 +275,87 @@ impl<B: Backend> Scalar<B> {
             crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-sparse-two");
             if left0_zero {
                 if left1_zero {
-                    return left[2] * right[2] + left[3] * right[3];
+                    return Self::active_signed_product_sum2(
+                        [true, true],
+                        [[left[2], right[2]], [left[3], right[3]]],
+                    );
                 }
                 if left2_zero {
-                    return left[1] * right[1] + left[3] * right[3];
+                    return Self::active_signed_product_sum2(
+                        [true, true],
+                        [[left[1], right[1]], [left[3], right[3]]],
+                    );
                 }
-                return left[1] * right[1] + left[2] * right[2];
+                return Self::active_signed_product_sum2(
+                    [true, true],
+                    [[left[1], right[1]], [left[2], right[2]]],
+                );
             }
             if left1_zero {
-                return left[0] * right[0]
-                    + if left2_zero {
-                        left[3] * right[3]
-                    } else {
-                        left[2] * right[2]
-                    };
+                return if left2_zero {
+                    Self::active_signed_product_sum2(
+                        [true, true],
+                        [[left[0], right[0]], [left[3], right[3]]],
+                    )
+                } else {
+                    Self::active_signed_product_sum2(
+                        [true, true],
+                        [[left[0], right[0]], [left[2], right[2]]],
+                    )
+                };
             }
             if left2_zero {
-                return left[0] * right[0] + left[3] * right[3];
+                return Self::active_signed_product_sum2(
+                    [true, true],
+                    [[left[0], right[0]], [left[3], right[3]]],
+                );
             }
-            return left[0] * right[0] + left[1] * right[1];
+            return Self::active_signed_product_sum2(
+                [true, true],
+                [[left[0], right[0]], [left[1], right[1]]],
+            );
         }
 
         if nonzero_lanes == 3 {
             crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-sparse-three");
             if left0_zero {
-                return left[1] * right[1] + left[2] * right[2] + left[3] * right[3];
+                return Self::active_signed_product_sum2(
+                    [true, true, true],
+                    [
+                        [left[1], right[1]],
+                        [left[2], right[2]],
+                        [left[3], right[3]],
+                    ],
+                );
             }
             if left1_zero {
-                return left[0] * right[0] + left[2] * right[2] + left[3] * right[3];
+                return Self::active_signed_product_sum2(
+                    [true, true, true],
+                    [
+                        [left[0], right[0]],
+                        [left[2], right[2]],
+                        [left[3], right[3]],
+                    ],
+                );
             }
             if left2_zero {
-                return left[0] * right[0] + left[1] * right[1] + left[3] * right[3];
+                return Self::active_signed_product_sum2(
+                    [true, true, true],
+                    [
+                        [left[0], right[0]],
+                        [left[1], right[1]],
+                        [left[3], right[3]],
+                    ],
+                );
             }
-            return left[0] * right[0] + left[1] * right[1] + left[2] * right[2];
+            return Self::active_signed_product_sum2(
+                [true, true, true],
+                [
+                    [left[0], right[0]],
+                    [left[1], right[1]],
+                    [left[2], right[2]],
+                ],
+            );
         }
 
         // Full 4-lane case remains specialized so backends can choose optimal
@@ -305,9 +368,205 @@ impl<B: Backend> Scalar<B> {
     }
 
     #[inline]
+    pub(crate) fn dot3_same(values: [&Self; 3]) -> Self {
+        // Norm kernels compute dot(v, v). Query each lane's structural zero
+        // fact once, then keep the same sparse-product pruning used by `dot3`.
+        // This applies Gustavson's sparse product idea to fixed-size vectors
+        // (Gustavson, "Two fast algorithms for sparse matrices: multiplication
+        // and permuted transposition", ACM TOMS 4(3), 1978) while preserving
+        // the backend dense dot hook so hyperreal can delay rational
+        // canonicalization as in Boehm et al.'s exact-real model
+        // (https://doi.org/10.1145/319838.319860).
+        let zero0 = values[0].definitely_zero();
+        let zero1 = values[1].definitely_zero();
+        let zero2 = values[2].definitely_zero();
+        let nonzero_lanes = usize::from(!zero0) + usize::from(!zero1) + usize::from(!zero2);
+
+        if nonzero_lanes == 0 {
+            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot3-same-all-zero");
+            return Self::zero();
+        }
+
+        if nonzero_lanes == 1 {
+            crate::trace_dispatch!(
+                "realistic_blas",
+                "scalar_fast_path",
+                "dot3-same-single-term"
+            );
+            return if !zero0 {
+                values[0] * values[0]
+            } else if !zero1 {
+                values[1] * values[1]
+            } else {
+                values[2] * values[2]
+            };
+        }
+
+        if nonzero_lanes == 2 {
+            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot3-same-sparse");
+            return if zero0 {
+                // Self-dot sparse-two has the same normalization shape as a
+                // two-lane dot. Keep both squares in one product-sum so exact
+                // backends can share denominator/canonicalization work instead
+                // of expanding two independent squares and an add. This follows
+                // Bareiss-style delayed normalization (Math. Comp. 22(103),
+                // 1968, <https://doi.org/10.2307/2004533>).
+                Self::active_signed_product_sum2(
+                    [true, true],
+                    [[values[1], values[1]], [values[2], values[2]]],
+                )
+            } else if zero1 {
+                Self::active_signed_product_sum2(
+                    [true, true],
+                    [[values[0], values[0]], [values[2], values[2]]],
+                )
+            } else {
+                Self::active_signed_product_sum2(
+                    [true, true],
+                    [[values[0], values[0]], [values[1], values[1]]],
+                )
+            };
+        }
+
+        crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot3-same-backend");
+        Self(B::Repr::dot3(
+            [&values[0].0, &values[1].0, &values[2].0],
+            [&values[0].0, &values[1].0, &values[2].0],
+        ))
+    }
+
+    #[inline]
+    pub(crate) fn dot4_same(values: [&Self; 4]) -> Self {
+        // Same self-dot specialization as `dot3_same`, extended to 4 lanes for
+        // homogeneous vectors. Keeping dense inputs on `B::Repr::dot4` avoids
+        // the earlier normalize regression from forcing a generic shared-scale
+        // path while still halving structural zero probes before sparse exits.
+        let zero0 = values[0].definitely_zero();
+        let zero1 = values[1].definitely_zero();
+        let zero2 = values[2].definitely_zero();
+        let zero3 = values[3].definitely_zero();
+        let nonzero_lanes =
+            usize::from(!zero0) + usize::from(!zero1) + usize::from(!zero2) + usize::from(!zero3);
+
+        if nonzero_lanes == 0 {
+            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-same-all-zero");
+            return Self::zero();
+        }
+
+        if nonzero_lanes == 1 {
+            crate::trace_dispatch!(
+                "realistic_blas",
+                "scalar_fast_path",
+                "dot4-same-single-term"
+            );
+            return if !zero0 {
+                values[0] * values[0]
+            } else if !zero1 {
+                values[1] * values[1]
+            } else if !zero2 {
+                values[2] * values[2]
+            } else {
+                values[3] * values[3]
+            };
+        }
+
+        if nonzero_lanes == 2 {
+            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-same-sparse-two");
+            return if zero0 && zero1 {
+                Self::active_signed_product_sum2(
+                    [true, true],
+                    [[values[2], values[2]], [values[3], values[3]]],
+                )
+            } else if zero0 && zero2 {
+                Self::active_signed_product_sum2(
+                    [true, true],
+                    [[values[1], values[1]], [values[3], values[3]]],
+                )
+            } else if zero0 && zero3 {
+                Self::active_signed_product_sum2(
+                    [true, true],
+                    [[values[1], values[1]], [values[2], values[2]]],
+                )
+            } else if zero1 && zero2 {
+                Self::active_signed_product_sum2(
+                    [true, true],
+                    [[values[0], values[0]], [values[3], values[3]]],
+                )
+            } else if zero1 && zero3 {
+                Self::active_signed_product_sum2(
+                    [true, true],
+                    [[values[0], values[0]], [values[2], values[2]]],
+                )
+            } else {
+                Self::active_signed_product_sum2(
+                    [true, true],
+                    [[values[0], values[0]], [values[1], values[1]]],
+                )
+            };
+        }
+
+        if nonzero_lanes == 3 {
+            crate::trace_dispatch!(
+                "realistic_blas",
+                "scalar_fast_path",
+                "dot4-same-sparse-three"
+            );
+            return if zero0 {
+                Self::active_signed_product_sum2(
+                    [true, true, true],
+                    [
+                        [values[1], values[1]],
+                        [values[2], values[2]],
+                        [values[3], values[3]],
+                    ],
+                )
+            } else if zero1 {
+                Self::active_signed_product_sum2(
+                    [true, true, true],
+                    [
+                        [values[0], values[0]],
+                        [values[2], values[2]],
+                        [values[3], values[3]],
+                    ],
+                )
+            } else if zero2 {
+                Self::active_signed_product_sum2(
+                    [true, true, true],
+                    [
+                        [values[0], values[0]],
+                        [values[1], values[1]],
+                        [values[3], values[3]],
+                    ],
+                )
+            } else {
+                Self::active_signed_product_sum2(
+                    [true, true, true],
+                    [
+                        [values[0], values[0]],
+                        [values[1], values[1]],
+                        [values[2], values[2]],
+                    ],
+                )
+            };
+        }
+
+        crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-same-backend");
+        Self(B::Repr::dot4(
+            [&values[0].0, &values[1].0, &values[2].0, &values[3].0],
+            [&values[0].0, &values[1].0, &values[2].0, &values[3].0],
+        ))
+    }
+
+    #[inline]
     pub(crate) fn linear_combination3(coefficients: [&Self; 3], values: [&Self; 3]) -> Self {
-        // Dedicated linear-combination hooks let hyperreal keep shared affine
-        // structure when transform kernels can preserve matrix row geometry.
+        // Row-local sparse pruning is intentionally retained here instead of
+        // hoisting cached RHS zero facts in transform kernels. A cached-RHS
+        // prototype reduced repeated structural queries but regressed targeted
+        // mat3/mat4 hyperreal transform rows by roughly 2-8%; the per-row
+        // checks preserve the inlined Gustavson-style sparse dot-product shape
+        // that realistic_blas depends on for small fixed matrices. See
+        // Gustavson, "Two fast algorithms for sparse matrices: multiplication
+        // and permuted transposition", ACM TOMS 4(3), 1978.
         let zero0 = coefficients[0].definitely_zero() || values[0].definitely_zero();
         let zero1 = coefficients[1].definitely_zero() || values[1].definitely_zero();
         let zero2 = coefficients[2].definitely_zero() || values[2].definitely_zero();
@@ -344,11 +603,20 @@ impl<B: Backend> Scalar<B> {
                 "linear-combination3-sparse"
             );
             return if zero0 {
-                coefficients[1] * values[1] + coefficients[2] * values[2]
+                Self::active_signed_product_sum2(
+                    [true, true],
+                    [[coefficients[1], values[1]], [coefficients[2], values[2]]],
+                )
             } else if zero1 {
-                coefficients[0] * values[0] + coefficients[2] * values[2]
+                Self::active_signed_product_sum2(
+                    [true, true],
+                    [[coefficients[0], values[0]], [coefficients[2], values[2]]],
+                )
             } else {
-                coefficients[0] * values[0] + coefficients[1] * values[1]
+                Self::active_signed_product_sum2(
+                    [true, true],
+                    [[coefficients[0], values[0]], [coefficients[1], values[1]]],
+                )
             };
         }
 
@@ -408,23 +676,51 @@ impl<B: Backend> Scalar<B> {
             );
             if zero0 {
                 if zero1 {
-                    return coefficients[2] * values[2] + coefficients[3] * values[3];
+                    return Self::active_signed_product_sum2(
+                        [true, true],
+                        [[coefficients[2], values[2]], [coefficients[3], values[3]]],
+                    );
                 }
                 if zero2 {
-                    return coefficients[1] * values[1] + coefficients[3] * values[3];
+                    return Self::active_signed_product_sum2(
+                        [true, true],
+                        [[coefficients[1], values[1]], [coefficients[3], values[3]]],
+                    );
                 }
-                return coefficients[1] * values[1] + coefficients[2] * values[2];
+                return Self::active_signed_product_sum2(
+                    [true, true],
+                    [[coefficients[1], values[1]], [coefficients[2], values[2]]],
+                );
             }
             if zero1 {
                 if zero2 {
-                    return coefficients[0] * values[0] + coefficients[3] * values[3];
+                    return Self::active_signed_product_sum2(
+                        [true, true],
+                        [[coefficients[0], values[0]], [coefficients[3], values[3]]],
+                    );
                 }
-                return coefficients[0] * values[0] + coefficients[2] * values[2];
+                return Self::active_signed_product_sum2(
+                    [true, true],
+                    [[coefficients[0], values[0]], [coefficients[2], values[2]]],
+                );
             }
             if zero2 {
-                return coefficients[0] * values[0] + coefficients[3] * values[3];
+                return Self::active_signed_product_sum2(
+                    [true, true],
+                    [[coefficients[0], values[0]], [coefficients[3], values[3]]],
+                );
             }
-            return coefficients[1] * values[1] + coefficients[3] * values[3];
+            // With `nonzero_lanes == 2` and zero0/zero1/zero2 all false, lane
+            // 3 is the zero lane and the active pair is lanes 0 and 1. Keep the
+            // sparse structural path explicit instead of falling back to the
+            // dense reducer: it avoids constructing zero products in affine
+            // matrix/vector kernels, the same sparse-product principle
+            // described by Gustavson, ACM TOMS 4(3), 1978,
+            // https://doi.org/10.1145/355791.355796.
+            return Self::active_signed_product_sum2(
+                [true, true],
+                [[coefficients[0], values[0]], [coefficients[1], values[1]]],
+            );
         }
 
         if nonzero_lanes == 3 {
@@ -434,23 +730,43 @@ impl<B: Backend> Scalar<B> {
                 "linear-combination4-sparse-three"
             );
             if zero0 {
-                return coefficients[1] * values[1]
-                    + coefficients[2] * values[2]
-                    + coefficients[3] * values[3];
+                return Self::active_signed_product_sum2(
+                    [true, true, true],
+                    [
+                        [coefficients[1], values[1]],
+                        [coefficients[2], values[2]],
+                        [coefficients[3], values[3]],
+                    ],
+                );
             }
             if zero1 {
-                return coefficients[0] * values[0]
-                    + coefficients[2] * values[2]
-                    + coefficients[3] * values[3];
+                return Self::active_signed_product_sum2(
+                    [true, true, true],
+                    [
+                        [coefficients[0], values[0]],
+                        [coefficients[2], values[2]],
+                        [coefficients[3], values[3]],
+                    ],
+                );
             }
             if zero2 {
-                return coefficients[0] * values[0]
-                    + coefficients[1] * values[1]
-                    + coefficients[3] * values[3];
+                return Self::active_signed_product_sum2(
+                    [true, true, true],
+                    [
+                        [coefficients[0], values[0]],
+                        [coefficients[1], values[1]],
+                        [coefficients[3], values[3]],
+                    ],
+                );
             }
-            return coefficients[0] * values[0]
-                + coefficients[1] * values[1]
-                + coefficients[2] * values[2];
+            return Self::active_signed_product_sum2(
+                [true, true, true],
+                [
+                    [coefficients[0], values[0]],
+                    [coefficients[1], values[1]],
+                    [coefficients[2], values[2]],
+                ],
+            );
         }
 
         crate::trace_dispatch!(
@@ -536,7 +852,7 @@ impl<B: Backend> Scalar<B> {
                         "scalar_fast_path",
                         "signed-product-sum2-sparse-two-fused"
                     );
-                    return Self(B::Repr::signed_product_sum2(
+                    return Self(B::Repr::active_signed_product_sum2(
                         [left_positive, right_positive],
                         [[&left[0].0, &left[1].0], [&right[0].0, &right[1].0]],
                     ));
@@ -559,6 +875,22 @@ impl<B: Backend> Scalar<B> {
         }
 
         Self(B::Repr::signed_product_sum2(
+            positive_terms,
+            terms.map(|term| [&term[0].0, &term[1].0]),
+        ))
+    }
+
+    #[inline]
+    pub(crate) fn active_signed_product_sum2<const TERMS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Self; 2]; TERMS],
+    ) -> Self {
+        crate::trace_dispatch!(
+            "realistic_blas",
+            "scalar_fast_path",
+            "active-signed-product-sum2"
+        );
+        Self(B::Repr::active_signed_product_sum2(
             positive_terms,
             terms.map(|term| [&term[0].0, &term[1].0]),
         ))
@@ -985,6 +1317,6 @@ mod vector;
 mod arbitrary_impls;
 
 pub use complex::Complex;
-pub use matrix::{Matrix3, Matrix4};
+pub use matrix::{Matrix3, Matrix4, PreparedRightDivisor3, PreparedRightDivisor4};
 pub use scalar::*;
 pub use vector::{Vector3, Vector4};

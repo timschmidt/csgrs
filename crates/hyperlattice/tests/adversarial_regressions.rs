@@ -7,7 +7,10 @@ use realistic_blas::{Complex, Matrix3, Matrix4, Problem, Scalar, Vector3, Vector
 fn complex_zero_and_unknown_norms_are_rejected_by_checked_division() {
     let zero = Complex::zero();
     let numerator = Complex::new(r(1), r(2));
-    assert_eq!(numerator.clone().div_checked(zero), Err(Problem::DivideByZero));
+    assert_eq!(
+        numerator.clone().div_checked(zero),
+        Err(Problem::DivideByZero)
+    );
 
     let unknown = Complex::new(unknown_zero(), r(0));
     assert_eq!(numerator.div_checked(unknown), Err(Problem::UnknownZero));
@@ -15,11 +18,7 @@ fn complex_zero_and_unknown_norms_are_rejected_by_checked_division() {
 
 #[test]
 fn matrix_power_edges_do_not_hide_domain_errors() {
-    let singular = Matrix3::new([
-        [r(1), r(2), r(3)],
-        [r(1), r(2), r(3)],
-        [r(0), r(0), r(1)],
-    ]);
+    let singular = Matrix3::new([[r(1), r(2), r(3)], [r(1), r(2), r(3)], [r(0), r(0), r(1)]]);
 
     assert_eq!(singular.clone().powi(0).unwrap(), Matrix3::identity());
     assert!(matches!(
@@ -59,7 +58,10 @@ fn matrix_division_and_inverse_are_consistent_under_cached_determinant_warming()
     let warmed_det = matrix.determinant();
     let _ = warmed_det.to_f64_approx();
 
-    assert_eq!(matrix.clone() * matrix.clone().inverse_checked().unwrap(), Matrix4::identity());
+    assert_eq!(
+        matrix.clone() * matrix.clone().inverse_checked().unwrap(),
+        Matrix4::identity()
+    );
     assert_eq!(
         matrix.clone().div_matrix_checked(matrix.clone()).unwrap(),
         Matrix4::identity()
@@ -77,12 +79,18 @@ fn homogeneous_transform_helpers_match_direct_multiplication_for_points_and_dire
     let point = Vector4::new([r(13), r(-17), r(19), r(1)]);
     let direction = Vector4::new([r(13), r(-17), r(19), r(0)]);
 
-    assert_eq!(transform.transform_vec4_point(&point), transform.clone() * point);
+    assert_eq!(
+        transform.transform_vec4_point(&point),
+        transform.clone() * point
+    );
     assert_eq!(
         transform.transform_vec4_direction(&direction),
         transform.clone() * direction.clone()
     );
-    assert_eq!(transform.transform_vec4_direction(&direction)[3].zero_status(), ZeroStatus::Zero);
+    assert_eq!(
+        transform.transform_vec4_direction(&direction)[3].zero_status(),
+        ZeroStatus::Zero
+    );
 }
 
 #[test]
@@ -93,4 +101,3 @@ fn normalization_checked_rejects_unknown_zero_norm_but_preserves_exact_unit_vect
     let exact = Vector3::new([frac(3, 5), frac(4, 5), r(0)]);
     assert_eq!(exact.normalize_checked().unwrap(), exact);
 }
-

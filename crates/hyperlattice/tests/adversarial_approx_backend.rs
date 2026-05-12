@@ -32,8 +32,14 @@ fn approximate_intervals_preserve_unknown_zero_through_checked_guards() {
     assert_eq!(touching.zero_status(), ZeroStatus::Unknown);
     assert_eq!(positive.zero_status(), ZeroStatus::NonZero);
     assert_eq!(negative.zero_status(), ZeroStatus::NonZero);
-    assert_eq!(realistic_blas::reciprocal_checked(unknown), Err(Problem::UnknownZero));
-    assert_eq!(realistic_blas::reciprocal_checked(touching), Err(Problem::UnknownZero));
+    assert_eq!(
+        realistic_blas::reciprocal_checked(unknown),
+        Err(Problem::UnknownZero)
+    );
+    assert_eq!(
+        realistic_blas::reciprocal_checked(touching),
+        Err(Problem::UnknownZero)
+    );
 }
 
 #[test]

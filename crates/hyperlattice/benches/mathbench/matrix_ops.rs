@@ -8,10 +8,100 @@ fn bench_matrix_operations_for<B, F>(
 {
     let lhs3_cases = sample_mat3_cases().map(|value| blas_mat3_with(value, make_scalar));
     let rhs3_cases = sample_mat3_b_cases().map(|value| blas_mat3_with(value, make_scalar));
+    let lhs3_affine_cases = sample_mat3_affine_cases().map(|value| blas_mat3_with(value, make_scalar));
+    let rhs3_affine_cases = sample_mat3_affine_b_cases().map(|value| blas_mat3_with(value, make_scalar));
+    let lhs3_affine_translation_cases =
+        sample_mat3_affine_translation_cases().map(|value| blas_mat3_with(value, make_scalar));
+    let rhs3_affine_translation_cases =
+        sample_mat3_affine_translation_b_cases().map(|value| blas_mat3_with(value, make_scalar));
     let lhs4_cases = sample_mat4_cases().map(|value| blas_mat4_with(value, make_scalar));
     let rhs4_cases = sample_mat4_b_cases().map(|value| blas_mat4_with(value, make_scalar));
+    let lhs4_affine_cases = sample_mat4_affine_cases().map(|value| blas_mat4_with(value, make_scalar));
+    let rhs4_affine_cases = sample_mat4_affine_b_cases().map(|value| blas_mat4_with(value, make_scalar));
+    let lhs4_affine_translation_cases =
+        sample_mat4_affine_translation_cases().map(|value| blas_mat4_with(value, make_scalar));
+    let rhs4_affine_translation_cases =
+        sample_mat4_affine_translation_b_cases().map(|value| blas_mat4_with(value, make_scalar));
     let vector3_cases = sample_vec3_cases().map(|value| blas_vec3_with(value, make_scalar));
     let vector4_cases = sample_vec4_cases().map(|value| blas_vec4_with(value, make_scalar));
+    let uniform_scale_matrix3 = Matrix3::new([
+        [make_scalar(2.0), make_scalar(0.0), make_scalar(0.0)],
+        [make_scalar(0.0), make_scalar(2.0), make_scalar(0.0)],
+        [make_scalar(0.0), make_scalar(0.0), make_scalar(2.0)],
+    ]);
+    let upper_triangular_matrix3 = Matrix3::new([
+        [make_scalar(2.0), make_scalar(3.0), make_scalar(5.0)],
+        [make_scalar(0.0), make_scalar(7.0), make_scalar(11.0)],
+        [make_scalar(0.0), make_scalar(0.0), make_scalar(13.0)],
+    ]);
+    let lower_triangular_matrix3 = Matrix3::new([
+        [make_scalar(2.0), make_scalar(0.0), make_scalar(0.0)],
+        [make_scalar(3.0), make_scalar(5.0), make_scalar(0.0)],
+        [make_scalar(7.0), make_scalar(11.0), make_scalar(13.0)],
+    ]);
+    let upper_triangular_matrix4 = Matrix4::new([
+        [make_scalar(2.0), make_scalar(3.0), make_scalar(5.0), make_scalar(7.0)],
+        [make_scalar(0.0), make_scalar(11.0), make_scalar(13.0), make_scalar(17.0)],
+        [make_scalar(0.0), make_scalar(0.0), make_scalar(19.0), make_scalar(23.0)],
+        [make_scalar(0.0), make_scalar(0.0), make_scalar(0.0), make_scalar(29.0)],
+    ]);
+    let lower_triangular_matrix4 = Matrix4::new([
+        [make_scalar(2.0), make_scalar(0.0), make_scalar(0.0), make_scalar(0.0)],
+        [make_scalar(3.0), make_scalar(11.0), make_scalar(0.0), make_scalar(0.0)],
+        [make_scalar(5.0), make_scalar(13.0), make_scalar(19.0), make_scalar(0.0)],
+        [make_scalar(7.0), make_scalar(17.0), make_scalar(23.0), make_scalar(29.0)],
+    ]);
+    let diagonal_values3 = [make_scalar(2.0), make_scalar(3.0), make_scalar(5.0)];
+    let translated_diagonal_direction_matrix = Matrix4::new([
+        [make_scalar(2.0), make_scalar(0.0), make_scalar(0.0), make_scalar(100.0)],
+        [make_scalar(0.0), make_scalar(3.0), make_scalar(0.0), make_scalar(200.0)],
+        [make_scalar(0.0), make_scalar(0.0), make_scalar(4.0), make_scalar(300.0)],
+        [make_scalar(0.0), make_scalar(0.0), make_scalar(0.0), make_scalar(1.0)],
+    ]);
+    let diagonal_affine_matrix = Matrix4::new([
+        [make_scalar(2.0), make_scalar(0.0), make_scalar(0.0), make_scalar(0.0)],
+        [make_scalar(0.0), make_scalar(3.0), make_scalar(0.0), make_scalar(0.0)],
+        [make_scalar(0.0), make_scalar(0.0), make_scalar(4.0), make_scalar(0.0)],
+        [make_scalar(0.0), make_scalar(0.0), make_scalar(0.0), make_scalar(1.0)],
+    ]);
+    let uniform_scale_matrix4 = Matrix4::new([
+        [make_scalar(2.0), make_scalar(0.0), make_scalar(0.0), make_scalar(0.0)],
+        [make_scalar(0.0), make_scalar(2.0), make_scalar(0.0), make_scalar(0.0)],
+        [make_scalar(0.0), make_scalar(0.0), make_scalar(2.0), make_scalar(0.0)],
+        [make_scalar(0.0), make_scalar(0.0), make_scalar(0.0), make_scalar(2.0)],
+    ]);
+    let uniform_scale_value = make_scalar(2.0);
+    let diagonal_values4 = [
+        make_scalar(2.0),
+        make_scalar(3.0),
+        make_scalar(5.0),
+        make_scalar(7.0),
+    ];
+    let identity_matrix4 = Matrix4::identity();
+    let translated_diagonal_direction = Vector4::new([
+        make_scalar(5.0),
+        make_scalar(7.0),
+        make_scalar(11.0),
+        make_scalar(0.0),
+    ]);
+    let translated_diagonal_point = Vector4::new([
+        make_scalar(5.0),
+        make_scalar(7.0),
+        make_scalar(11.0),
+        make_scalar(1.0),
+    ]);
+    let translated_diagonal_direction_batch = [
+        Vector4::new([make_scalar(5.0), make_scalar(7.0), make_scalar(11.0), make_scalar(0.0)]),
+        Vector4::new([make_scalar(13.0), make_scalar(17.0), make_scalar(19.0), make_scalar(0.0)]),
+        Vector4::new([make_scalar(23.0), make_scalar(29.0), make_scalar(31.0), make_scalar(0.0)]),
+        Vector4::new([make_scalar(37.0), make_scalar(41.0), make_scalar(43.0), make_scalar(0.0)]),
+    ];
+    let translated_diagonal_point_batch = [
+        Vector4::new([make_scalar(5.0), make_scalar(7.0), make_scalar(11.0), make_scalar(1.0)]),
+        Vector4::new([make_scalar(13.0), make_scalar(17.0), make_scalar(19.0), make_scalar(1.0)]),
+        Vector4::new([make_scalar(23.0), make_scalar(29.0), make_scalar(31.0), make_scalar(1.0)]),
+        Vector4::new([make_scalar(37.0), make_scalar(41.0), make_scalar(43.0), make_scalar(1.0)]),
+    ];
     let scalar_cases = [
         make_scalar(2.0),
         make_scalar(1.0e-9),
@@ -30,6 +120,85 @@ fn bench_matrix_operations_for<B, F>(
             for value in &lhs3_cases {
                 black_box(black_box(value.clone()).reciprocal().unwrap());
             }
+        });
+        trace_matrix_profile_row("mat3", "uniform_scale_reciprocal", input, 1, || {
+            black_box(black_box(uniform_scale_matrix3.clone()).reciprocal().unwrap());
+        });
+        trace_matrix_profile_row("mat3", "known_uniform_scale_inverse", input, 1, || {
+            black_box(
+                Matrix3::<B>::uniform_scale_inverse(black_box(uniform_scale_value.clone()))
+                    .unwrap(),
+            );
+        });
+        trace_matrix_profile_row("mat3", "known_diagonal_inverse", input, 1, || {
+            black_box(Matrix3::<B>::diagonal_inverse(black_box(diagonal_values3.clone())).unwrap());
+        });
+        trace_matrix_profile_row("mat3", "known_upper_triangular_inverse", input, 1, || {
+            black_box(black_box(upper_triangular_matrix3.clone()).reciprocal().unwrap());
+        });
+        trace_matrix_profile_row("mat3", "known_lower_triangular_inverse", input, 1, || {
+            black_box(black_box(lower_triangular_matrix3.clone()).reciprocal().unwrap());
+        });
+        // Keep checked triangular inverse rows in the same structural dispatch family
+        // so we can validate the O(n²) branch under error-aware APIs.
+        // See Golub and Van Loan, *Matrix Computations*; Yap, "Towards Exact
+        // Geometric Computation", 1997.
+        trace_matrix_profile_row("mat3", "known_upper_triangular_inverse_checked", input, 1, || {
+            black_box(
+                black_box(upper_triangular_matrix3.clone())
+                    .inverse_checked()
+                    .unwrap(),
+            );
+        });
+        trace_matrix_profile_row(
+            "mat3",
+            "known_upper_triangular_inverse_checked_abort",
+            input,
+            1,
+            || {
+                black_box(
+                    black_box(upper_triangular_matrix3.clone())
+                        .inverse_checked_with_abort(&signal)
+                        .unwrap(),
+                );
+            },
+        );
+        trace_matrix_profile_row("mat3", "known_lower_triangular_inverse_checked", input, 1, || {
+            black_box(
+                black_box(lower_triangular_matrix3.clone())
+                    .inverse_checked()
+                    .unwrap(),
+            );
+        });
+        trace_matrix_profile_row(
+            "mat3",
+            "known_lower_triangular_inverse_checked_abort",
+            input,
+            1,
+            || {
+                black_box(
+                    black_box(lower_triangular_matrix3.clone())
+                        .inverse_checked_with_abort(&signal)
+                        .unwrap(),
+                );
+            },
+        );
+        trace_matrix_profile_row("mat3", "known_diagonal_div_matrix", input, 1, || {
+            black_box(
+                black_box(lhs3_cases[0].clone())
+                    .div_diagonal(black_box(diagonal_values3.clone()))
+                    .unwrap(),
+            );
+        });
+        trace_matrix_profile_row("mat3", "known_diagonal_div_vector", input, 1, || {
+            black_box(
+                black_box(&lhs3_cases[0])
+                    .div_diagonal_vector(
+                        black_box(diagonal_values3.clone()),
+                        black_box(&vector3_cases[0]),
+                    )
+                    .unwrap(),
+            );
         });
         trace_matrix_profile_row("mat3", "reciprocal_checked", input, lhs3_cases.len(), || {
             for value in &lhs3_cases {
@@ -91,6 +260,92 @@ fn bench_matrix_operations_for<B, F>(
                 }
             },
         );
+        trace_matrix_profile_row("mat3", "prepared_div_matrix", input, lhs3_cases.len(), || {
+            let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+            for index in 0..lhs3_cases.len() {
+                black_box(
+                    black_box(lhs3_cases[index].clone())
+                        .div_matrix_with_prepared(&mut prepared)
+                        .unwrap(),
+                );
+            }
+        });
+        trace_matrix_profile_row(
+            "mat3",
+            "prepared_div_matrix_checked",
+            input,
+            lhs3_cases.len(),
+            || {
+                let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+                for index in 0..lhs3_cases.len() {
+                    black_box(
+                        black_box(lhs3_cases[index].clone())
+                            .div_matrix_checked_with_prepared(&mut prepared)
+                            .unwrap(),
+                    );
+                }
+            },
+        );
+        trace_matrix_profile_row(
+            "mat3",
+            "prepared_div_matrix_checked_abort",
+            input,
+            lhs3_cases.len(),
+            || {
+                let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+                for index in 0..lhs3_cases.len() {
+                    black_box(
+                        black_box(lhs3_cases[index].clone())
+                            .div_matrix_checked_with_prepared_with_abort(
+                                &mut prepared,
+                                &signal,
+                            )
+                            .unwrap(),
+                    );
+                }
+            },
+        );
+        trace_matrix_profile_row(
+            "mat3",
+            "inverse_checked_affine",
+            input,
+            lhs3_affine_cases.len(),
+            || {
+                for value in &lhs3_affine_cases {
+                    black_box(black_box(value.clone()).inverse_checked().unwrap());
+                }
+            },
+        );
+        trace_matrix_profile_row(
+            "mat3",
+            "div_matrix_affine",
+            input,
+            lhs3_affine_cases.len(),
+            || {
+                for index in 0..lhs3_affine_cases.len() {
+                    black_box(
+                        (black_box(lhs3_affine_cases[index].clone())
+                            / black_box(rhs3_affine_cases[index].clone()))
+                        .unwrap(),
+                    );
+                }
+            },
+        );
+        trace_matrix_profile_row(
+            "mat3",
+            "affine_div_matrix_translation",
+            input,
+            lhs3_affine_translation_cases.len(),
+            || {
+                for index in 0..lhs3_affine_translation_cases.len() {
+                    black_box(
+                        (black_box(lhs3_affine_translation_cases[index].clone())
+                            / black_box(rhs3_affine_translation_cases[index].clone()))
+                        .unwrap(),
+                    );
+                }
+            },
+        );
         trace_matrix_profile_row("mat3", "powi", input, lhs3_cases.len(), || {
             for value in &lhs3_cases {
                 black_box(black_box(value.clone()).powi(3).unwrap());
@@ -108,6 +363,16 @@ fn bench_matrix_operations_for<B, F>(
                         * black_box(vector3_cases[index].clone()),
                 );
             }
+        });
+        trace_matrix_profile_row("mat3", "transform_vec3_handle", input, lhs3_cases.len(), || {
+            for index in 0..lhs3_cases.len() {
+                let handle = black_box(&lhs3_cases[index]).transform_vec3_handle();
+                black_box(handle.transform_vector(black_box(&vector3_cases[index])));
+            }
+        });
+        trace_matrix_profile_row("mat3", "transform_vec3_batch", input, vector3_cases.len(), || {
+            let handle = black_box(&lhs3_cases[0]).transform_vec3_handle();
+            black_box(handle.transform_vector_batch(black_box(&vector3_cases)));
         });
         trace_matrix_profile_row("mat3", "powi_negative", input, lhs3_cases.len(), || {
             for value in &lhs3_cases {
@@ -129,6 +394,128 @@ fn bench_matrix_operations_for<B, F>(
             for value in &lhs4_cases {
                 black_box(black_box(value.clone()).reciprocal().unwrap());
             }
+        });
+        trace_matrix_profile_row("mat4", "diagonal_reciprocal", input, 1, || {
+            black_box(black_box(diagonal_affine_matrix.clone()).reciprocal().unwrap());
+        });
+        trace_matrix_profile_row("mat4", "uniform_scale_reciprocal", input, 1, || {
+            black_box(black_box(uniform_scale_matrix4.clone()).reciprocal().unwrap());
+        });
+        trace_matrix_profile_row("mat4", "known_uniform_scale_inverse", input, 1, || {
+            black_box(
+                Matrix4::<B>::uniform_scale_inverse(black_box(uniform_scale_value.clone()))
+                    .unwrap(),
+            );
+        });
+        trace_matrix_profile_row("mat4", "known_diagonal_inverse", input, 1, || {
+            black_box(Matrix4::<B>::diagonal_inverse(black_box(diagonal_values4.clone())).unwrap());
+        });
+        trace_matrix_profile_row("mat4", "known_upper_triangular_inverse", input, 1, || {
+            black_box(black_box(upper_triangular_matrix4.clone()).reciprocal().unwrap());
+        });
+        trace_matrix_profile_row("mat4", "known_lower_triangular_inverse", input, 1, || {
+            black_box(black_box(lower_triangular_matrix4.clone()).reciprocal().unwrap());
+        });
+        // Keep checked triangular inverse rows in the same structural dispatch family
+        // so we can validate the O(n²) branch under error-aware APIs.
+        // See Golub and Van Loan, *Matrix Computations*; Yap, "Towards Exact
+        // Geometric Computation", 1997.
+        trace_matrix_profile_row("mat4", "known_upper_triangular_inverse_checked", input, 1, || {
+            black_box(
+                black_box(upper_triangular_matrix4.clone())
+                    .inverse_checked()
+                    .unwrap(),
+            );
+        });
+        trace_matrix_profile_row(
+            "mat4",
+            "known_upper_triangular_inverse_checked_abort",
+            input,
+            1,
+            || {
+                black_box(
+                    black_box(upper_triangular_matrix4.clone())
+                        .inverse_checked_with_abort(&signal)
+                        .unwrap(),
+                );
+            },
+        );
+        trace_matrix_profile_row("mat4", "known_lower_triangular_inverse_checked", input, 1, || {
+            black_box(
+                black_box(lower_triangular_matrix4.clone())
+                    .inverse_checked()
+                    .unwrap(),
+            );
+        });
+        trace_matrix_profile_row(
+            "mat4",
+            "known_lower_triangular_inverse_checked_abort",
+            input,
+            1,
+            || {
+                black_box(
+                    black_box(lower_triangular_matrix4.clone())
+                        .inverse_checked_with_abort(&signal)
+                        .unwrap(),
+                );
+            },
+        );
+        trace_matrix_profile_row("mat4", "known_diagonal_div_matrix", input, 1, || {
+            black_box(
+                black_box(lhs4_cases[0].clone())
+                    .div_diagonal(black_box(diagonal_values4.clone()))
+                    .unwrap(),
+            );
+        });
+        trace_matrix_profile_row("mat4", "known_upper_triangular_div_matrix", input, 1, || {
+            black_box(
+                black_box(lhs4_cases[0].clone())
+                    / black_box(upper_triangular_matrix4.clone()),
+            )
+            .unwrap();
+        });
+        trace_matrix_profile_row("mat4", "known_lower_triangular_div_matrix", input, 1, || {
+            black_box(
+                black_box(lhs4_cases[0].clone())
+                    / black_box(lower_triangular_matrix4.clone()),
+            )
+            .unwrap();
+        });
+        trace_matrix_profile_row("mat4", "known_diagonal_div_vector", input, 1, || {
+            black_box(
+                black_box(&lhs4_cases[0])
+                    .div_diagonal_vector(
+                        black_box(diagonal_values4.clone()),
+                        black_box(&vector4_cases[0]),
+                    )
+                    .unwrap(),
+            );
+        });
+        trace_matrix_profile_row(
+            "mat4",
+            "known_diagonal_div_vector_direction",
+            input,
+            1,
+            || {
+                black_box(
+                    black_box(&lhs4_cases[0])
+                        .div_diagonal_vector(
+                            black_box(diagonal_values4.clone()),
+                            black_box(&translated_diagonal_direction),
+                        )
+                        .unwrap(),
+                );
+            },
+        );
+        trace_matrix_profile_row("mat4", "known_diagonal_div_vector_point", input, 1, || {
+            black_box(
+                black_box(&lhs4_cases[0])
+                    .div_diagonal_vector(
+                        black_box(diagonal_values4.clone()),
+                        black_box(&translated_diagonal_point),
+                    )
+                    .unwrap(),
+            );
         });
         trace_matrix_profile_row("mat4", "reciprocal_checked", input, lhs4_cases.len(), || {
             for value in &lhs4_cases {
@@ -190,6 +577,159 @@ fn bench_matrix_operations_for<B, F>(
                 }
             },
         );
+        trace_matrix_profile_row("mat4", "prepared_div_matrix", input, lhs4_cases.len(), || {
+            let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+            for index in 0..lhs4_cases.len() {
+                black_box(
+                    black_box(lhs4_cases[index].clone())
+                        .div_matrix_with_prepared(&mut prepared)
+                        .unwrap(),
+                );
+            }
+        });
+        trace_matrix_profile_row(
+            "mat4",
+            "prepared_div_matrix_checked",
+            input,
+            lhs4_cases.len(),
+            || {
+                let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+                for index in 0..lhs4_cases.len() {
+                    black_box(
+                        black_box(lhs4_cases[index].clone())
+                            .div_matrix_checked_with_prepared(&mut prepared)
+                            .unwrap(),
+                    );
+                }
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "prepared_div_matrix_checked_abort",
+            input,
+            lhs4_cases.len(),
+            || {
+                let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+                for index in 0..lhs4_cases.len() {
+                    black_box(
+                        black_box(lhs4_cases[index].clone())
+                            .div_matrix_checked_with_prepared_with_abort(
+                                &mut prepared,
+                                &signal,
+                            )
+                            .unwrap(),
+                    );
+                }
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "inverse_checked_affine",
+            input,
+            lhs4_affine_cases.len(),
+            || {
+                for value in &lhs4_affine_cases {
+                    black_box(black_box(value.clone()).inverse_checked().unwrap());
+                }
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "div_matrix_affine",
+            input,
+            lhs4_affine_cases.len(),
+            || {
+                for index in 0..lhs4_affine_cases.len() {
+                    black_box(
+                        (black_box(lhs4_affine_cases[index].clone()) / black_box(rhs4_affine_cases[index].clone()))
+                        .unwrap(),
+                    );
+                }
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "affine_div_matrix_translation",
+            input,
+            lhs4_affine_translation_cases.len(),
+            || {
+                for index in 0..lhs4_affine_translation_cases.len() {
+                    black_box(
+                        (black_box(lhs4_affine_translation_cases[index].clone())
+                            / black_box(rhs4_affine_translation_cases[index].clone()))
+                        .unwrap(),
+                    );
+                }
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "affine_div_matrix_checked",
+            input,
+            lhs4_affine_cases.len(),
+            || {
+                for index in 0..lhs4_affine_cases.len() {
+                    black_box(
+                        black_box(lhs4_affine_cases[index].clone())
+                            .div_matrix_checked(black_box(rhs4_affine_cases[index].clone()))
+                            .unwrap(),
+                    );
+                }
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "affine_div_matrix_checked_abort",
+            input,
+            lhs4_affine_cases.len(),
+            || {
+                for index in 0..lhs4_affine_cases.len() {
+                    black_box(
+                        black_box(lhs4_affine_cases[index].clone())
+                            .div_matrix_checked_with_abort(
+                                black_box(rhs4_affine_cases[index].clone()),
+                                &signal,
+                            )
+                            .unwrap(),
+                    );
+                }
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "affine_div_matrix_translation_checked",
+            input,
+            lhs4_affine_translation_cases.len(),
+            || {
+                for index in 0..lhs4_affine_translation_cases.len() {
+                    black_box(
+                        black_box(lhs4_affine_translation_cases[index].clone())
+                            .div_matrix_checked(
+                                black_box(rhs4_affine_translation_cases[index].clone()),
+                            )
+                            .unwrap(),
+                    );
+                }
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "affine_div_matrix_translation_checked_abort",
+            input,
+            lhs4_affine_translation_cases.len(),
+            || {
+                for index in 0..lhs4_affine_translation_cases.len() {
+                    black_box(
+                        black_box(lhs4_affine_translation_cases[index].clone())
+                            .div_matrix_checked_with_abort(
+                                black_box(rhs4_affine_translation_cases[index].clone()),
+                                &signal,
+                            )
+                            .unwrap(),
+                    );
+                }
+            },
+        );
         trace_matrix_profile_row("mat4", "powi", input, lhs4_cases.len(), || {
             for value in &lhs4_cases {
                 black_box(black_box(value.clone()).powi(3).unwrap());
@@ -208,6 +748,194 @@ fn bench_matrix_operations_for<B, F>(
                 );
             }
         });
+        trace_matrix_profile_row(
+            "mat4",
+            "translated_diagonal_direction_transform",
+            input,
+            1,
+            || {
+                black_box(
+                    black_box(&translated_diagonal_direction_matrix)
+                        .transform_vec4_direction(black_box(&translated_diagonal_direction)),
+                );
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "translated_diagonal_point_transform",
+            input,
+            1,
+            || {
+                black_box(
+                    black_box(&translated_diagonal_direction_matrix)
+                        .transform_vec4_point(black_box(&translated_diagonal_point)),
+                );
+            },
+        );
+        trace_matrix_profile_row("mat4", "identity_direction_transform", input, 1, || {
+            black_box(
+                black_box(&identity_matrix4)
+                    .transform_vec4_direction(black_box(&translated_diagonal_direction)),
+            );
+        });
+        trace_matrix_profile_row("mat4", "identity_point_transform", input, 1, || {
+            black_box(
+                black_box(&identity_matrix4)
+                    .transform_vec4_point(black_box(&translated_diagonal_point)),
+            );
+        });
+        trace_matrix_profile_row("mat4", "identity_direction_transform_handle", input, 1, || {
+            let handle = black_box(&identity_matrix4).transform_vec4_handle();
+            black_box(handle.transform_direction_vector(black_box(&translated_diagonal_direction)));
+        });
+        trace_matrix_profile_row("mat4", "identity_point_transform_handle", input, 1, || {
+            let handle = black_box(&identity_matrix4).transform_vec4_handle();
+            black_box(handle.transform_point_vector(black_box(&translated_diagonal_point)));
+        });
+        trace_matrix_profile_row("mat4", "identity_direction_materialize", input, 1, || {
+            black_box(
+                black_box(&identity_matrix4)
+                    .transform_vec4_with(black_box(&translated_diagonal_direction))
+                    .materialize(),
+            );
+        });
+        trace_matrix_profile_row("mat4", "identity_point_materialize", input, 1, || {
+            black_box(
+                black_box(&identity_matrix4)
+                    .transform_vec4_with(black_box(&translated_diagonal_point))
+                    .materialize(),
+            );
+        });
+        trace_matrix_profile_row(
+            "mat4",
+            "translated_diagonal_direction_materialize",
+            input,
+            1,
+            || {
+                black_box(
+                    black_box(&translated_diagonal_direction_matrix)
+                        .transform_vec4_with(black_box(&translated_diagonal_direction))
+                        .materialize(),
+                );
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "translated_diagonal_point_materialize",
+            input,
+            1,
+            || {
+                black_box(
+                    black_box(&translated_diagonal_direction_matrix)
+                        .transform_vec4_with(black_box(&translated_diagonal_point))
+                        .materialize(),
+                );
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "translated_diagonal_direction_batch",
+            input,
+            translated_diagonal_direction_batch.len(),
+            || {
+                let handle = black_box(&translated_diagonal_direction_matrix).transform_vec4_handle();
+                black_box(handle.transform_vector_batch(black_box(&translated_diagonal_direction_batch)));
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "translated_diagonal_point_batch",
+            input,
+            translated_diagonal_point_batch.len(),
+            || {
+                let handle = black_box(&translated_diagonal_direction_matrix).transform_vec4_handle();
+                black_box(handle.transform_vector_batch(black_box(&translated_diagonal_point_batch)));
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "translated_diagonal_direction_batch_assumed",
+            input,
+            translated_diagonal_direction_batch.len(),
+            || {
+                let handle = black_box(&translated_diagonal_direction_matrix).transform_vec4_handle();
+                black_box(handle.transform_direction_batch(black_box(&translated_diagonal_direction_batch)));
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "translated_diagonal_direction_batch_public_assumed",
+            input,
+            translated_diagonal_direction_batch.len(),
+            || {
+                black_box(
+                    black_box(&translated_diagonal_direction_matrix)
+                        .transform_vec4_direction_batch(black_box(&translated_diagonal_direction_batch)),
+                );
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "translated_diagonal_point_batch_assumed",
+            input,
+            translated_diagonal_point_batch.len(),
+            || {
+                let handle = black_box(&translated_diagonal_direction_matrix).transform_vec4_handle();
+                black_box(handle.transform_point_batch(black_box(&translated_diagonal_point_batch)));
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "translated_diagonal_point_batch_public_assumed",
+            input,
+            translated_diagonal_point_batch.len(),
+            || {
+                black_box(
+                    black_box(&translated_diagonal_direction_matrix)
+                        .transform_vec4_point_batch(black_box(&translated_diagonal_point_batch)),
+                );
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "diagonal_direction_batch",
+            input,
+            translated_diagonal_direction_batch.len(),
+            || {
+                let handle = black_box(&diagonal_affine_matrix).transform_vec4_handle();
+                black_box(handle.transform_vector_batch(black_box(&translated_diagonal_direction_batch)));
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "diagonal_point_batch",
+            input,
+            translated_diagonal_point_batch.len(),
+            || {
+                let handle = black_box(&diagonal_affine_matrix).transform_vec4_handle();
+                black_box(handle.transform_vector_batch(black_box(&translated_diagonal_point_batch)));
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "identity_direction_batch_assumed",
+            input,
+            translated_diagonal_direction_batch.len(),
+            || {
+                let handle = black_box(&identity_matrix4).transform_vec4_handle();
+                black_box(handle.transform_direction_batch(black_box(&translated_diagonal_direction_batch)));
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "identity_point_batch_assumed",
+            input,
+            translated_diagonal_point_batch.len(),
+            || {
+                let handle = black_box(&identity_matrix4).transform_vec4_handle();
+                black_box(handle.transform_point_batch(black_box(&translated_diagonal_point_batch)));
+            },
+        );
         trace_matrix_profile_row("mat4", "powi_negative", input, lhs4_cases.len(), || {
             for value in &lhs4_cases {
                 black_box(black_box(value.clone()).powi(-2).unwrap());
@@ -230,6 +958,80 @@ fn bench_matrix_operations_for<B, F>(
         for value in &lhs3_cases {
             black_box(black_box(value.clone()).reciprocal().unwrap());
         }
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 uniform_scale_reciprocal"), || {
+        black_box(black_box(uniform_scale_matrix3.clone()).reciprocal().unwrap());
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 known_uniform_scale_inverse"), || {
+        black_box(
+            Matrix3::<B>::uniform_scale_inverse(black_box(uniform_scale_value.clone())).unwrap(),
+        );
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 known_diagonal_inverse"), || {
+        black_box(Matrix3::<B>::diagonal_inverse(black_box(diagonal_values3.clone())).unwrap());
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 known_upper_triangular_inverse"), || {
+        black_box(black_box(upper_triangular_matrix3.clone()).reciprocal().unwrap());
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 known_lower_triangular_inverse"), || {
+        black_box(black_box(lower_triangular_matrix3.clone()).reciprocal().unwrap());
+    });
+    // Keep checked triangular inverse rows in the trace profile to validate the same
+    // dispatch branch under `inverse_checked` semantics.
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 known_upper_triangular_inverse_checked"), || {
+        black_box(black_box(upper_triangular_matrix3.clone()).inverse_checked().unwrap());
+    });
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat3 known_upper_triangular_inverse_checked_abort"),
+        || {
+            black_box(
+                black_box(upper_triangular_matrix3.clone())
+                    .inverse_checked_with_abort(&signal)
+                    .unwrap(),
+            );
+        },
+    );
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 known_lower_triangular_inverse_checked"), || {
+        black_box(black_box(lower_triangular_matrix3.clone()).inverse_checked().unwrap());
+    });
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat3 known_lower_triangular_inverse_checked_abort"),
+        || {
+            black_box(
+                black_box(lower_triangular_matrix3.clone())
+                    .inverse_checked_with_abort(&signal)
+                    .unwrap(),
+            );
+        },
+    );
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 known_diagonal_div_matrix"), || {
+        black_box(
+            black_box(lhs3_cases[0].clone())
+                .div_diagonal(black_box(diagonal_values3.clone()))
+                .unwrap(),
+        );
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 known_upper_triangular_div_matrix"), || {
+        black_box(
+            black_box(lhs3_cases[0].clone()) / black_box(upper_triangular_matrix3.clone()),
+        )
+        .unwrap();
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 known_lower_triangular_div_matrix"), || {
+        black_box(
+            black_box(lhs3_cases[0].clone()) / black_box(lower_triangular_matrix3.clone()),
+        )
+        .unwrap();
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 known_diagonal_div_vector"), || {
+        black_box(
+            black_box(&lhs3_cases[0])
+                .div_diagonal_vector(
+                    black_box(diagonal_values3.clone()),
+                    black_box(&vector3_cases[0]),
+                )
+                .unwrap(),
+        );
     });
     trace_dispatch_row(format!("matrix_ops/{label}/mat3 reciprocal_checked"), || {
         for value in &lhs3_cases {
@@ -279,6 +1081,16 @@ fn bench_matrix_operations_for<B, F>(
             black_box(black_box(value.clone()).powi_checked(-2).unwrap());
         }
     });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 transform_vec3_handle"), || {
+        for index in 0..lhs3_cases.len() {
+            let handle = black_box(&lhs3_cases[index]).transform_vec3_handle();
+            black_box(handle.transform_vector(black_box(&vector3_cases[index])));
+        }
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 transform_vec3_batch"), || {
+        let handle = black_box(&lhs3_cases[0]).transform_vec3_handle();
+        black_box(handle.transform_vector_batch(black_box(&vector3_cases)));
+    });
     trace_dispatch_row(format!("matrix_ops/{label}/mat3 div_matrix_checked"), || {
         for index in 0..lhs3_cases.len() {
             black_box(
@@ -300,10 +1112,69 @@ fn bench_matrix_operations_for<B, F>(
             }
         },
     );
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 prepared_div_matrix"), || {
+        let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+        for index in 0..lhs3_cases.len() {
+            black_box(
+                black_box(lhs3_cases[index].clone())
+                    .div_matrix_with_prepared(&mut prepared)
+                    .unwrap(),
+            );
+        }
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 prepared_div_matrix_checked"), || {
+        let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+        for index in 0..lhs3_cases.len() {
+            black_box(
+                black_box(lhs3_cases[index].clone())
+                    .div_matrix_checked_with_prepared(&mut prepared)
+                    .unwrap(),
+            );
+        }
+    });
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat3 prepared_div_matrix_checked_abort"),
+        || {
+            let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+            for index in 0..lhs3_cases.len() {
+                black_box(
+                    black_box(lhs3_cases[index].clone())
+                        .div_matrix_checked_with_prepared_with_abort(
+                            &mut prepared,
+                            &signal,
+                        )
+                        .unwrap(),
+                );
+            }
+        },
+    );
     trace_dispatch_row(format!("matrix_ops/{label}/mat3 div_matrix"), || {
         for index in 0..lhs3_cases.len() {
             black_box(
                 (black_box(lhs3_cases[index].clone()) / black_box(rhs3_cases[index].clone()))
+                    .unwrap(),
+            );
+        }
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 affine_inverse"), || {
+        for value in &lhs3_affine_cases {
+            black_box(black_box(value.clone()).inverse_checked().unwrap());
+        }
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 affine_div_matrix"), || {
+        for index in 0..lhs3_affine_cases.len() {
+            black_box(
+                (black_box(lhs3_affine_cases[index].clone())
+                    / black_box(rhs3_affine_cases[index].clone()))
+                    .unwrap(),
+            );
+        }
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 affine_div_matrix_translation"), || {
+        for index in 0..lhs3_affine_translation_cases.len() {
+            black_box(
+                (black_box(lhs3_affine_translation_cases[index].clone())
+                    / black_box(rhs3_affine_translation_cases[index].clone()))
                     .unwrap(),
             );
         }
@@ -317,6 +1188,119 @@ fn bench_matrix_operations_for<B, F>(
         for value in &lhs4_cases {
             black_box(black_box(value.clone()).reciprocal().unwrap());
         }
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 diagonal_reciprocal"), || {
+        black_box(black_box(diagonal_affine_matrix.clone()).reciprocal().unwrap());
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 uniform_scale_reciprocal"), || {
+        black_box(black_box(uniform_scale_matrix4.clone()).reciprocal().unwrap());
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_uniform_scale_inverse"), || {
+        black_box(
+            Matrix4::<B>::uniform_scale_inverse(black_box(uniform_scale_value.clone())).unwrap(),
+        );
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_diagonal_inverse"), || {
+        black_box(Matrix4::<B>::diagonal_inverse(black_box(diagonal_values4.clone())).unwrap());
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_upper_triangular_inverse"), || {
+        black_box(black_box(upper_triangular_matrix4.clone()).reciprocal().unwrap());
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_lower_triangular_inverse"), || {
+        black_box(black_box(lower_triangular_matrix4.clone()).reciprocal().unwrap());
+    });
+    // Keep checked triangular inverse rows in the trace profile to validate the same
+    // dispatch branch under `inverse_checked` semantics.
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_upper_triangular_inverse_checked"), || {
+        black_box(black_box(upper_triangular_matrix4.clone()).inverse_checked().unwrap());
+    });
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 known_upper_triangular_inverse_checked_abort"),
+        || {
+            black_box(
+                black_box(upper_triangular_matrix4.clone())
+                    .inverse_checked_with_abort(&signal)
+                    .unwrap(),
+            );
+        },
+    );
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_lower_triangular_inverse_checked"), || {
+        black_box(black_box(lower_triangular_matrix4.clone()).inverse_checked().unwrap());
+    });
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 known_lower_triangular_inverse_checked_abort"),
+        || {
+            black_box(
+                black_box(lower_triangular_matrix4.clone())
+                    .inverse_checked_with_abort(&signal)
+                    .unwrap(),
+            );
+        },
+    );
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_diagonal_div_matrix"), || {
+        black_box(
+            black_box(lhs4_cases[0].clone())
+                .div_diagonal(black_box(diagonal_values4.clone()))
+                .unwrap(),
+        );
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_upper_triangular_div_matrix"), || {
+        black_box(
+            black_box(lhs4_cases[0].clone()) / black_box(upper_triangular_matrix4.clone()),
+        )
+        .unwrap();
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_lower_triangular_div_matrix"), || {
+        black_box(
+            black_box(lhs4_cases[0].clone()) / black_box(lower_triangular_matrix4.clone()),
+        )
+        .unwrap();
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_diagonal_div_vector"), || {
+        black_box(
+            black_box(&lhs4_cases[0])
+                .div_diagonal_vector(
+                    black_box(diagonal_values4.clone()),
+                    black_box(&vector4_cases[0]),
+                )
+                .unwrap(),
+        );
+    });
+    trace_dispatch_row(format!(
+        "matrix_ops/{label}/mat4 known_diagonal_div_vector_direction",
+    ), || {
+        black_box(
+            black_box(&lhs4_cases[0])
+                .div_diagonal_vector(
+                    black_box(diagonal_values4.clone()),
+                    black_box(&translated_diagonal_direction),
+                )
+                .unwrap(),
+        );
+    });
+    trace_dispatch_row(format!(
+        "matrix_ops/{label}/mat4 known_diagonal_div_vector_direction_only",
+    ), || {
+        black_box(
+            black_box(&lhs4_cases[0])
+                .div_diagonal_direction_vector(
+                    black_box(diagonal_values4.clone()),
+                    black_box(&translated_diagonal_direction),
+                )
+                .unwrap(),
+        );
+    });
+    trace_dispatch_row(format!(
+        "matrix_ops/{label}/mat4 known_diagonal_div_vector_point",
+    ), || {
+        black_box(
+            black_box(&lhs4_cases[0])
+                .div_diagonal_vector(
+                    black_box(diagonal_values4.clone()),
+                    black_box(&translated_diagonal_point),
+                )
+                .unwrap(),
+        );
     });
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 reciprocal_checked"), || {
         for value in &lhs4_cases {
@@ -390,6 +1374,42 @@ fn bench_matrix_operations_for<B, F>(
             }
         },
     );
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 prepared_div_matrix"), || {
+        let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+        for index in 0..lhs4_cases.len() {
+            black_box(
+                black_box(lhs4_cases[index].clone())
+                    .div_matrix_with_prepared(&mut prepared)
+                    .unwrap(),
+            );
+        }
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 prepared_div_matrix_checked"), || {
+        let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+        for index in 0..lhs4_cases.len() {
+            black_box(
+                black_box(lhs4_cases[index].clone())
+                    .div_matrix_checked_with_prepared(&mut prepared)
+                    .unwrap(),
+            );
+        }
+    });
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 prepared_div_matrix_checked_abort"),
+        || {
+            let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+            for index in 0..lhs4_cases.len() {
+                black_box(
+                    black_box(lhs4_cases[index].clone())
+                        .div_matrix_checked_with_prepared_with_abort(
+                            &mut prepared,
+                            &signal,
+                        )
+                        .unwrap(),
+                );
+            }
+        },
+    );
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 div_matrix"), || {
         for index in 0..lhs4_cases.len() {
             black_box(
@@ -398,6 +1418,244 @@ fn bench_matrix_operations_for<B, F>(
             );
         }
     });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 affine_inverse"), || {
+        for value in &lhs4_affine_cases {
+            black_box(black_box(value.clone()).inverse_checked().unwrap());
+        }
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 affine_div_matrix"), || {
+        for index in 0..lhs4_affine_cases.len() {
+            black_box(
+                (black_box(lhs4_affine_cases[index].clone())
+                    / black_box(rhs4_affine_cases[index].clone()))
+                    .unwrap(),
+            );
+        }
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 affine_div_matrix_checked"), || {
+        for index in 0..lhs4_affine_cases.len() {
+            black_box(
+                black_box(lhs4_affine_cases[index].clone())
+                    .div_matrix_checked(black_box(rhs4_affine_cases[index].clone()))
+                    .unwrap(),
+            );
+        }
+    });
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 affine_div_matrix_checked_abort"),
+        || {
+            for index in 0..lhs4_affine_cases.len() {
+                black_box(
+                    black_box(lhs4_affine_cases[index].clone())
+                        .div_matrix_checked_with_abort(
+                            black_box(rhs4_affine_cases[index].clone()),
+                            &signal,
+                        )
+                        .unwrap(),
+                );
+            }
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 affine_div_matrix_translation_checked"),
+        || {
+            for index in 0..lhs4_affine_translation_cases.len() {
+                black_box(
+                    black_box(lhs4_affine_translation_cases[index].clone())
+                        .div_matrix_checked(black_box(rhs4_affine_translation_cases[index].clone()))
+                        .unwrap(),
+                );
+            }
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 affine_div_matrix_translation_checked_abort"),
+        || {
+            for index in 0..lhs4_affine_translation_cases.len() {
+                black_box(
+                    black_box(lhs4_affine_translation_cases[index].clone())
+                        .div_matrix_checked_with_abort(
+                            black_box(rhs4_affine_translation_cases[index].clone()),
+                            &signal,
+                        )
+                        .unwrap(),
+                );
+            }
+        },
+    );
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 affine_div_matrix_translation"), || {
+        for index in 0..lhs4_affine_translation_cases.len() {
+            black_box(
+                (black_box(lhs4_affine_translation_cases[index].clone())
+                    / black_box(rhs4_affine_translation_cases[index].clone()))
+                    .unwrap(),
+            );
+        }
+    });
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 translated_diagonal_direction_transform"),
+        || {
+            black_box(
+                black_box(&translated_diagonal_direction_matrix)
+                    .transform_vec4_direction(black_box(&translated_diagonal_direction)),
+            );
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 translated_diagonal_point_transform"),
+        || {
+            black_box(
+                black_box(&translated_diagonal_direction_matrix)
+                    .transform_vec4_point(black_box(&translated_diagonal_point)),
+            );
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 identity_direction_transform"),
+        || {
+            black_box(
+                black_box(&identity_matrix4)
+                    .transform_vec4_direction(black_box(&translated_diagonal_direction)),
+            );
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 identity_point_transform"),
+        || {
+            black_box(
+                black_box(&identity_matrix4)
+                    .transform_vec4_point(black_box(&translated_diagonal_point)),
+            );
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 identity_direction_transform_handle"),
+        || {
+            let handle = black_box(&identity_matrix4).transform_vec4_handle();
+            black_box(handle.transform_direction_vector(black_box(&translated_diagonal_direction)));
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 identity_point_transform_handle"),
+        || {
+            let handle = black_box(&identity_matrix4).transform_vec4_handle();
+            black_box(handle.transform_point_vector(black_box(&translated_diagonal_point)));
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 identity_direction_materialize"),
+        || {
+            black_box(
+                black_box(&identity_matrix4)
+                    .transform_vec4_with(black_box(&translated_diagonal_direction))
+                    .materialize(),
+            );
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 identity_point_materialize"),
+        || {
+            black_box(
+                black_box(&identity_matrix4)
+                    .transform_vec4_with(black_box(&translated_diagonal_point))
+                .materialize(),
+            );
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 translated_diagonal_direction_materialize"),
+        || {
+            black_box(
+                black_box(&translated_diagonal_direction_matrix)
+                    .transform_vec4_with(black_box(&translated_diagonal_direction))
+                    .materialize(),
+            );
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 translated_diagonal_point_materialize"),
+        || {
+            black_box(
+                black_box(&translated_diagonal_direction_matrix)
+                    .transform_vec4_with(black_box(&translated_diagonal_point))
+                    .materialize(),
+            );
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 translated_diagonal_direction_batch"),
+        || {
+            let handle = black_box(&translated_diagonal_direction_matrix).transform_vec4_handle();
+            black_box(handle.transform_vector_batch(black_box(&translated_diagonal_direction_batch)));
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 translated_diagonal_point_batch"),
+        || {
+            let handle = black_box(&translated_diagonal_direction_matrix).transform_vec4_handle();
+            black_box(handle.transform_vector_batch(black_box(&translated_diagonal_point_batch)));
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 translated_diagonal_direction_batch_assumed"),
+        || {
+            let handle = black_box(&translated_diagonal_direction_matrix).transform_vec4_handle();
+            black_box(handle.transform_direction_batch(black_box(&translated_diagonal_direction_batch)));
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 translated_diagonal_direction_batch_public_assumed"),
+        || {
+            black_box(
+                black_box(&translated_diagonal_direction_matrix)
+                    .transform_vec4_direction_batch(black_box(&translated_diagonal_direction_batch)),
+            );
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 translated_diagonal_point_batch_assumed"),
+        || {
+            let handle = black_box(&translated_diagonal_direction_matrix).transform_vec4_handle();
+            black_box(handle.transform_point_batch(black_box(&translated_diagonal_point_batch)));
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 translated_diagonal_point_batch_public_assumed"),
+        || {
+            black_box(
+                black_box(&translated_diagonal_direction_matrix)
+                    .transform_vec4_point_batch(black_box(&translated_diagonal_point_batch)),
+            );
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 diagonal_direction_batch"),
+        || {
+            let handle = black_box(&diagonal_affine_matrix).transform_vec4_handle();
+            black_box(handle.transform_vector_batch(black_box(&translated_diagonal_direction_batch)));
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 diagonal_point_batch"),
+        || {
+            let handle = black_box(&diagonal_affine_matrix).transform_vec4_handle();
+            black_box(handle.transform_vector_batch(black_box(&translated_diagonal_point_batch)));
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 identity_direction_batch_assumed"),
+        || {
+            let handle = black_box(&identity_matrix4).transform_vec4_handle();
+            black_box(handle.transform_direction_batch(black_box(&translated_diagonal_direction_batch)));
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 identity_point_batch_assumed"),
+        || {
+            let handle = black_box(&identity_matrix4).transform_vec4_handle();
+            black_box(handle.transform_point_batch(black_box(&translated_diagonal_point_batch)));
+        },
+    );
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 bitxor"), || {
         for value in &lhs4_cases {
             black_box((black_box(value.clone()) ^ 3).unwrap());
@@ -425,6 +1683,104 @@ fn bench_matrix_operations_for<B, F>(
             black_box(
                 black_box(next_case(&lhs3_cases, &cursor).clone())
                     .reciprocal()
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat3 uniform_scale_reciprocal"), |b| {
+        b.iter(|| black_box(black_box(uniform_scale_matrix3.clone()).reciprocal().unwrap()))
+    });
+    group.bench_function(format!("{label}/mat3 known_uniform_scale_inverse"), |b| {
+        b.iter(|| {
+            black_box(
+                Matrix3::<B>::uniform_scale_inverse(black_box(uniform_scale_value.clone()))
+                    .unwrap(),
+            )
+        })
+    });
+        group.bench_function(format!("{label}/mat3 known_diagonal_inverse"), |b| {
+            b.iter(|| {
+                black_box(Matrix3::<B>::diagonal_inverse(black_box(diagonal_values3.clone())).unwrap())
+            })
+        });
+    group.bench_function(format!("{label}/mat3 known_upper_triangular_inverse"), |b| {
+        b.iter(|| black_box(black_box(upper_triangular_matrix3.clone()).reciprocal().unwrap()))
+    });
+    group.bench_function(format!("{label}/mat3 known_lower_triangular_inverse"), |b| {
+        b.iter(|| black_box(black_box(lower_triangular_matrix3.clone()).reciprocal().unwrap()))
+    });
+    // Bench checked/abort triangular inverse variants to keep error-aware structural
+    // dispatch observable at steady state.
+    // Golub & Van Loan, *Matrix Computations* (4th ed.); Yap, 1997.
+    group.bench_function(format!("{label}/mat3 known_upper_triangular_inverse_checked"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(upper_triangular_matrix3.clone())
+                    .inverse_checked()
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(
+        format!("{label}/mat3 known_upper_triangular_inverse_checked_abort"),
+        |b| {
+            b.iter(|| {
+                black_box(
+                    black_box(upper_triangular_matrix3.clone())
+                        .inverse_checked_with_abort(&signal)
+                        .unwrap(),
+                )
+            })
+        },
+    );
+    group.bench_function(format!("{label}/mat3 known_lower_triangular_inverse_checked"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(lower_triangular_matrix3.clone())
+                    .inverse_checked()
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(
+        format!("{label}/mat3 known_lower_triangular_inverse_checked_abort"),
+        |b| {
+            b.iter(|| {
+                black_box(
+                    black_box(lower_triangular_matrix3.clone())
+                        .inverse_checked_with_abort(&signal)
+                        .unwrap(),
+                )
+            })
+        },
+    );
+    group.bench_function(format!("{label}/mat3 known_diagonal_div_matrix"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(lhs3_cases[0].clone())
+                    .div_diagonal(black_box(diagonal_values3.clone()))
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat3 known_upper_triangular_div_matrix"), |b| {
+        b.iter(|| {
+            black_box(black_box(lhs3_cases[0].clone()) / black_box(upper_triangular_matrix3.clone())).unwrap()
+        })
+    });
+    group.bench_function(format!("{label}/mat3 known_lower_triangular_div_matrix"), |b| {
+        b.iter(|| {
+            black_box(black_box(lhs3_cases[0].clone()) / black_box(lower_triangular_matrix3.clone())).unwrap()
+        })
+    });
+    group.bench_function(format!("{label}/mat3 known_diagonal_div_vector"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(&lhs3_cases[0])
+                    .div_diagonal_vector(
+                        black_box(diagonal_values3.clone()),
+                        black_box(&vector3_cases[0]),
+                    )
                     .unwrap(),
             )
         })
@@ -557,6 +1913,81 @@ fn bench_matrix_operations_for<B, F>(
             )
         })
     });
+    group.bench_function(format!("{label}/mat3 prepared_div_matrix"), |b| {
+        let cursor = Cell::new(0);
+        let mut prepared = rhs3_cases[0].prepare_right_divisor();
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs3_cases.len());
+            black_box(
+                black_box(lhs3_cases[index].clone())
+                    .div_matrix_with_prepared(&mut prepared)
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat3 prepared_div_matrix_checked"), |b| {
+        let cursor = Cell::new(0);
+        let mut prepared = rhs3_cases[0].prepare_right_divisor();
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs3_cases.len());
+            black_box(
+                black_box(lhs3_cases[index].clone())
+                    .div_matrix_checked_with_prepared(&mut prepared)
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat3 prepared_div_matrix_checked_abort"), |b| {
+        let cursor = Cell::new(0);
+        let mut prepared = rhs3_cases[0].prepare_right_divisor();
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs3_cases.len());
+            black_box(
+                black_box(lhs3_cases[index].clone())
+                    .div_matrix_checked_with_prepared_with_abort(
+                        &mut prepared,
+                        &signal,
+                    )
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat3 affine_div_matrix_translation"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs3_affine_translation_cases.len());
+            black_box(
+                (black_box(lhs3_affine_translation_cases[index].clone())
+                    / black_box(rhs3_affine_translation_cases[index].clone()))
+                    .unwrap(),
+            );
+        })
+    });
+    group.bench_function(format!("{label}/mat3 affine_div_matrix"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs3_affine_cases.len());
+            black_box(
+                (black_box(lhs3_affine_cases[index].clone()) / black_box(rhs3_affine_cases[index].clone()))
+                    .unwrap(),
+            );
+        })
+    });
+    group.bench_function(format!("{label}/mat3 affine_inverse"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(
+                black_box(next_case(&lhs3_affine_cases, &cursor).clone())
+                    .inverse_checked()
+                    .unwrap(),
+            )
+        })
+    });
     group.bench_function(format!("{label}/mat3 add"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
@@ -644,6 +2075,163 @@ fn bench_matrix_operations_for<B, F>(
             black_box(
                 black_box(next_case(&lhs4_cases, &cursor).clone())
                     .reciprocal()
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat4 diagonal_reciprocal"), |b| {
+        b.iter(|| black_box(black_box(diagonal_affine_matrix.clone()).reciprocal().unwrap()))
+    });
+    group.bench_function(format!("{label}/mat4 uniform_scale_reciprocal"), |b| {
+        b.iter(|| black_box(black_box(uniform_scale_matrix4.clone()).reciprocal().unwrap()))
+    });
+    group.bench_function(format!("{label}/mat4 known_uniform_scale_inverse"), |b| {
+        b.iter(|| {
+            black_box(
+                Matrix4::<B>::uniform_scale_inverse(black_box(uniform_scale_value.clone()))
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat4 known_diagonal_inverse"), |b| {
+        b.iter(|| {
+            black_box(Matrix4::<B>::diagonal_inverse(black_box(diagonal_values4.clone())).unwrap())
+        })
+    });
+    group.bench_function(format!("{label}/mat4 known_upper_triangular_inverse"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(upper_triangular_matrix4.clone())
+                    .reciprocal()
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat4 known_lower_triangular_inverse"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(lower_triangular_matrix4.clone())
+                    .reciprocal()
+                    .unwrap(),
+            )
+        })
+    });
+    // Bench checked/abort triangular inverse variants to keep error-aware structural
+    // dispatch observable at steady state.
+    // Golub & Van Loan, *Matrix Computations* (4th ed.); Yap, 1997.
+    group.bench_function(format!("{label}/mat4 known_upper_triangular_inverse_checked"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(upper_triangular_matrix4.clone())
+                    .inverse_checked()
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(
+        format!("{label}/mat4 known_upper_triangular_inverse_checked_abort"),
+        |b| {
+            b.iter(|| {
+                black_box(
+                    black_box(upper_triangular_matrix4.clone())
+                        .inverse_checked_with_abort(&signal)
+                        .unwrap(),
+                )
+            })
+        },
+    );
+    group.bench_function(format!("{label}/mat4 known_lower_triangular_inverse_checked"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(lower_triangular_matrix4.clone())
+                    .inverse_checked()
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(
+        format!("{label}/mat4 known_lower_triangular_inverse_checked_abort"),
+        |b| {
+            b.iter(|| {
+                black_box(
+                    black_box(lower_triangular_matrix4.clone())
+                        .inverse_checked_with_abort(&signal)
+                        .unwrap(),
+                )
+            })
+        },
+    );
+    group.bench_function(format!("{label}/mat4 known_diagonal_div_matrix"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(lhs4_cases[0].clone())
+                    .div_diagonal(black_box(diagonal_values4.clone()))
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat4 known_upper_triangular_div_matrix"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(lhs4_cases[0].clone())
+                    / black_box(upper_triangular_matrix4.clone()),
+            )
+            .unwrap()
+        })
+    });
+    group.bench_function(format!("{label}/mat4 known_lower_triangular_div_matrix"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(lhs4_cases[0].clone())
+                    / black_box(lower_triangular_matrix4.clone()),
+            )
+            .unwrap()
+        })
+    });
+    group.bench_function(format!("{label}/mat4 known_diagonal_div_vector"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(&lhs4_cases[0])
+                    .div_diagonal_vector(
+                        black_box(diagonal_values4.clone()),
+                        black_box(&vector4_cases[0]),
+                    )
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat4 known_diagonal_div_vector_direction"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(&lhs4_cases[0])
+                    .div_diagonal_vector(
+                        black_box(diagonal_values4.clone()),
+                        black_box(&translated_diagonal_direction),
+                    )
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat4 known_diagonal_div_vector_direction_only"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(&lhs4_cases[0])
+                    .div_diagonal_direction_vector(
+                        black_box(diagonal_values4.clone()),
+                        black_box(&translated_diagonal_direction),
+                    )
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat4 known_diagonal_div_vector_point"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(&lhs4_cases[0])
+                    .div_diagonal_vector(
+                        black_box(diagonal_values4.clone()),
+                        black_box(&translated_diagonal_point),
+                    )
                     .unwrap(),
             )
         })
@@ -818,6 +2406,75 @@ fn bench_matrix_operations_for<B, F>(
             )
         })
     });
+    group.bench_function(format!("{label}/mat4 affine_div_matrix_translation"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs4_affine_translation_cases.len());
+            black_box(
+                (black_box(lhs4_affine_translation_cases[index].clone())
+                    / black_box(rhs4_affine_translation_cases[index].clone()))
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat4 affine_div_matrix_checked"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs4_affine_cases.len());
+            black_box(
+                black_box(lhs4_affine_cases[index].clone())
+                    .div_matrix_checked(black_box(rhs4_affine_cases[index].clone()))
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat4 affine_div_matrix_checked_abort"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs4_affine_cases.len());
+            black_box(
+                black_box(lhs4_affine_cases[index].clone())
+                    .div_matrix_checked_with_abort(
+                        black_box(rhs4_affine_cases[index].clone()),
+                        &signal,
+                    )
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat4 affine_div_matrix_translation_checked"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs4_affine_translation_cases.len());
+            black_box(
+                black_box(lhs4_affine_translation_cases[index].clone())
+                    .div_matrix_checked(black_box(rhs4_affine_translation_cases[index].clone()))
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(
+        format!("{label}/mat4 affine_div_matrix_translation_checked_abort"),
+        |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let index = cursor.get();
+                cursor.set((index + 1) % lhs4_affine_translation_cases.len());
+                black_box(
+                    black_box(lhs4_affine_translation_cases[index].clone())
+                        .div_matrix_checked_with_abort(
+                            black_box(rhs4_affine_translation_cases[index].clone()),
+                            &signal,
+                        )
+                        .unwrap(),
+                )
+            })
+        },
+    );
     group.bench_function(format!("{label}/mat4 div_matrix_checked"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
@@ -841,6 +2498,162 @@ fn bench_matrix_operations_for<B, F>(
                     .unwrap(),
             )
         })
+    });
+    group.bench_function(format!("{label}/mat4 prepared_div_matrix"), |b| {
+        let cursor = Cell::new(0);
+        let mut prepared = rhs4_cases[0].prepare_right_divisor();
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs4_cases.len());
+            black_box(
+                black_box(lhs4_cases[index].clone())
+                    .div_matrix_with_prepared(&mut prepared)
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat4 prepared_div_matrix_checked"), |b| {
+        let cursor = Cell::new(0);
+        let mut prepared = rhs4_cases[0].prepare_right_divisor();
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs4_cases.len());
+            black_box(
+                black_box(lhs4_cases[index].clone())
+                    .div_matrix_checked_with_prepared(&mut prepared)
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat4 prepared_div_matrix_checked_abort"), |b| {
+        let cursor = Cell::new(0);
+        let mut prepared = rhs4_cases[0].prepare_right_divisor();
+        b.iter(|| {
+            let index = cursor.get();
+            cursor.set((index + 1) % lhs4_cases.len());
+            black_box(
+                black_box(lhs4_cases[index].clone())
+                    .div_matrix_checked_with_prepared_with_abort(
+                        &mut prepared,
+                        &signal,
+                    )
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat4 translated_diagonal_direction_batch"), |b| {
+        let handle = translated_diagonal_direction_matrix.transform_vec4_handle();
+        b.iter(|| black_box(handle.transform_vector_batch(black_box(&translated_diagonal_direction_batch))))
+    });
+    group.bench_function(format!("{label}/mat4 translated_diagonal_direction_batch_assumed"), |b| {
+        let handle = translated_diagonal_direction_matrix.transform_vec4_handle();
+        b.iter(|| black_box(handle.transform_direction_batch(black_box(&translated_diagonal_direction_batch))))
+    });
+    group.bench_function(
+        format!("{label}/mat4 translated_diagonal_direction_batch_public_assumed"),
+        |b| {
+            b.iter(|| {
+                black_box(
+                    translated_diagonal_direction_matrix
+                        .transform_vec4_direction_batch(black_box(&translated_diagonal_direction_batch)),
+                )
+            })
+        },
+    );
+    group.bench_function(format!("{label}/mat4 identity_direction_transform"), |b| {
+        b.iter(|| {
+            black_box(
+                identity_matrix4.transform_vec4_direction(black_box(&translated_diagonal_direction)),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat4 identity_direction_transform_handle"), |b| {
+        let handle = identity_matrix4.transform_vec4_handle();
+        b.iter(|| {
+            black_box(handle.transform_direction_vector(black_box(
+                &translated_diagonal_direction,
+            )))
+        })
+    });
+    group.bench_function(format!("{label}/mat4 identity_point_transform"), |b| {
+        b.iter(|| {
+            black_box(identity_matrix4.transform_vec4_point(black_box(
+                &translated_diagonal_point,
+            )))
+        })
+    });
+    group.bench_function(format!("{label}/mat4 identity_point_transform_handle"), |b| {
+        let handle = identity_matrix4.transform_vec4_handle();
+        b.iter(|| black_box(handle.transform_point_vector(black_box(&translated_diagonal_point))))
+    });
+    group.bench_function(format!("{label}/mat4 identity_direction_materialize"), |b| {
+        b.iter(|| {
+            black_box(
+                identity_matrix4
+                    .transform_vec4_with(black_box(&translated_diagonal_direction))
+                    .materialize(),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat4 identity_point_materialize"), |b| {
+        b.iter(|| {
+            black_box(
+                identity_matrix4
+                    .transform_vec4_with(black_box(&translated_diagonal_point))
+                    .materialize(),
+            )
+        })
+    });
+    group.bench_function(
+        format!("{label}/mat4 translated_diagonal_direction_materialize"),
+        |b| {
+            b.iter(|| {
+                black_box(
+                    translated_diagonal_direction_matrix
+                        .transform_vec4_with(black_box(&translated_diagonal_direction))
+                        .materialize(),
+                )
+            })
+        },
+    );
+    group.bench_function(
+        format!("{label}/mat4 translated_diagonal_point_materialize"),
+        |b| {
+            b.iter(|| {
+                black_box(
+                    translated_diagonal_direction_matrix
+                        .transform_vec4_with(black_box(&translated_diagonal_point))
+                        .materialize(),
+                )
+            })
+        },
+    );
+    group.bench_function(format!("{label}/mat4 translated_diagonal_point_batch"), |b| {
+        let handle = translated_diagonal_direction_matrix.transform_vec4_handle();
+        b.iter(|| black_box(handle.transform_vector_batch(black_box(&translated_diagonal_point_batch))))
+    });
+    group.bench_function(format!("{label}/mat4 translated_diagonal_point_batch_assumed"), |b| {
+        let handle = translated_diagonal_direction_matrix.transform_vec4_handle();
+        b.iter(|| black_box(handle.transform_point_batch(black_box(&translated_diagonal_point_batch))))
+    });
+    group.bench_function(
+        format!("{label}/mat4 translated_diagonal_point_batch_public_assumed"),
+        |b| {
+            b.iter(|| {
+                black_box(
+                    translated_diagonal_direction_matrix
+                        .transform_vec4_point_batch(black_box(&translated_diagonal_point_batch)),
+                )
+            })
+        },
+    );
+    group.bench_function(format!("{label}/mat4 identity_direction_batch_assumed"), |b| {
+        let handle = identity_matrix4.transform_vec4_handle();
+        b.iter(|| black_box(handle.transform_direction_batch(black_box(&translated_diagonal_direction_batch))))
+    });
+    group.bench_function(format!("{label}/mat4 identity_point_batch_assumed"), |b| {
+        let handle = identity_matrix4.transform_vec4_handle();
+        b.iter(|| black_box(handle.transform_point_batch(black_box(&translated_diagonal_point_batch))))
     });
     group.bench_function(format!("{label}/mat4 bitxor"), |b| {
         let cursor = Cell::new(0);

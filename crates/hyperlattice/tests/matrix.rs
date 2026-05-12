@@ -40,6 +40,140 @@ fn matrix4_identity_and_vector_multiply() {
 }
 
 #[test]
+fn matrix4_translated_diagonal_affine_preserves_point_direction_semantics() {
+    let transform = Matrix4::new([
+        [r(2), r(0), r(0), r(100)],
+        [r(0), r(3), r(0), r(200)],
+        [r(0), r(0), r(4), r(300)],
+        [r(0), r(0), r(0), r(1)],
+    ]);
+    let direction = Vector4::new([r(5), r(7), r(11), r(0)]);
+    let point = Vector4::new([r(5), r(7), r(11), r(1)]);
+
+    let transformed_direction = Vector4::new([r(10), r(21), r(44), r(0)]);
+    let transformed_point = Vector4::new([r(110), r(221), r(344), r(1)]);
+
+    assert_eq!(transform.clone() * direction.clone(), transformed_direction);
+    assert_eq!(
+        transform.clone().transform_vec4_direction(&direction),
+        transformed_direction
+    );
+    assert_eq!(transform.clone() * point.clone(), transformed_point);
+    assert_eq!(transform.transform_vec4_point(&point), transformed_point);
+
+    assert_eq!(
+        transform
+            .transform_vec4_batch(&[direction.clone(), Vector4::new([r(13), r(17), r(19), r(0)])]),
+        vec![
+            transformed_direction.clone(),
+            Vector4::new([r(26), r(51), r(76), r(0)]),
+        ]
+    );
+    assert_eq!(
+        transform.transform_vec4_batch(&[point.clone(), Vector4::new([r(13), r(17), r(19), r(1)])]),
+        vec![
+            transformed_point.clone(),
+            Vector4::new([r(126), r(251), r(376), r(1)]),
+        ]
+    );
+
+    let handle = transform.transform_vec4_handle();
+    assert_eq!(
+        handle.transform_vector_batch(&[
+            direction.clone(),
+            Vector4::new([r(13), r(17), r(19), r(0)])
+        ]),
+        vec![
+            transformed_direction,
+            Vector4::new([r(26), r(51), r(76), r(0)]),
+        ]
+    );
+    assert_eq!(
+        handle.transform_vector_batch(&[point.clone(), Vector4::new([r(13), r(17), r(19), r(1)])]),
+        vec![
+            transformed_point,
+            Vector4::new([r(126), r(251), r(376), r(1)]),
+        ]
+    );
+}
+
+#[test]
+fn matrix4_assumed_homogeneous_batches_match_single_lane_transforms() {
+    let transform = Matrix4::new([
+        [r(2), r(0), r(0), r(100)],
+        [r(0), r(3), r(0), r(200)],
+        [r(0), r(0), r(4), r(300)],
+        [r(0), r(0), r(0), r(1)],
+    ]);
+    let directions = [
+        Vector4::new([r(5), r(7), r(11), r(0)]),
+        Vector4::new([r(13), r(17), r(19), r(0)]),
+        Vector4::new([r(23), r(29), r(31), r(0)]),
+    ];
+    let points = [
+        Vector4::new([r(5), r(7), r(11), r(1)]),
+        Vector4::new([r(13), r(17), r(19), r(1)]),
+        Vector4::new([r(23), r(29), r(31), r(1)]),
+    ];
+
+    let expected_directions = directions
+        .iter()
+        .map(|vector| transform.transform_vec4_direction(vector))
+        .collect::<Vec<_>>();
+    let expected_points = points
+        .iter()
+        .map(|vector| transform.transform_vec4_point(vector))
+        .collect::<Vec<_>>();
+    let handle = transform.transform_vec4_handle();
+
+    assert_eq!(
+        handle.transform_direction_batch(&directions),
+        expected_directions
+    );
+    assert_eq!(
+        transform.transform_vec4_direction_batch(&directions),
+        expected_directions
+    );
+    assert_eq!(handle.transform_point_batch(&points), expected_points);
+    assert_eq!(
+        transform.transform_vec4_point_batch(&points),
+        expected_points
+    );
+
+    let identity = Matrix4::identity();
+    let identity_handle = identity.transform_vec4_handle();
+    assert_eq!(
+        identity.transform_vec4_direction(&directions[0]),
+        directions[0]
+    );
+    assert_eq!(identity.transform_vec4_point(&points[0]), points[0]);
+    assert_eq!(
+        identity_handle.transform_direction_vector(&directions[1]),
+        directions[1]
+    );
+    assert_eq!(
+        identity_handle.transform_point_vector(&points[1]),
+        points[1]
+    );
+    assert_eq!(
+        identity.transform_vec4_with(&directions[2]).materialize(),
+        directions[2]
+    );
+    assert_eq!(
+        identity.transform_vec4_with(&points[2]).materialize(),
+        points[2]
+    );
+    assert_eq!(
+        identity_handle.transform_direction_batch(&directions),
+        directions.to_vec()
+    );
+    assert_eq!(
+        identity_handle.transform_point_batch(&points),
+        points.to_vec()
+    );
+}
+
+#[test]
 fn matrix4_inverse_and_determinant_handle_general_integer_matrix() {
     let matrix = Matrix4::new([
         [r(1), r(2), r(3), r(4)],
@@ -181,6 +315,579 @@ fn checked_matrix_inverse_rejects_singular_matrices() {
 }
 
 #[test]
+fn matrix4_diagonal_inverse_uses_only_diagonal_reciprocals() {
+    let matrix = Matrix4::new([
+        [r(2), r(0), r(0), r(0)],
+        [r(0), r(4), r(0), r(0)],
+        [r(0), r(0), r(5), r(0)],
+        [r(0), r(0), r(0), r(1)],
+    ]);
+    let expected = Matrix4::new([
+        [frac(1, 2), r(0), r(0), r(0)],
+        [r(0), frac(1, 4), r(0), r(0)],
+        [r(0), r(0), frac(1, 5), r(0)],
+        [r(0), r(0), r(0), r(1)],
+    ]);
+
+    assert_eq!(matrix.clone().reciprocal().unwrap(), expected);
+    assert_eq!(matrix.clone().inverse_checked().unwrap(), expected);
+    assert_eq!(
+        matrix.inverse_checked_with_abort(&abort_signal()).unwrap(),
+        expected
+    );
+}
+
+#[test]
+fn matrix4_uniform_scale_inverse_reuses_one_reciprocal_semantics() {
+    let matrix = Matrix4::new([
+        [r(6), r(0), r(0), r(0)],
+        [r(0), r(6), r(0), r(0)],
+        [r(0), r(0), r(6), r(0)],
+        [r(0), r(0), r(0), r(6)],
+    ]);
+    let expected = Matrix4::new([
+        [frac(1, 6), r(0), r(0), r(0)],
+        [r(0), frac(1, 6), r(0), r(0)],
+        [r(0), r(0), frac(1, 6), r(0)],
+        [r(0), r(0), r(0), frac(1, 6)],
+    ]);
+
+    assert_eq!(matrix.clone().reciprocal().unwrap(), expected);
+    assert_eq!(matrix.clone().inverse_checked().unwrap(), expected);
+    assert_eq!(
+        matrix.inverse_checked_with_abort(&abort_signal()).unwrap(),
+        expected
+    );
+}
+
+#[test]
+fn matrix4_known_uniform_scale_inverse_matches_matrix_inverse() {
+    let scale = r(6);
+    let matrix = Matrix4::uniform_scale(scale);
+    let expected = Matrix4::new([
+        [frac(1, 6), r(0), r(0), r(0)],
+        [r(0), frac(1, 6), r(0), r(0)],
+        [r(0), r(0), frac(1, 6), r(0)],
+        [r(0), r(0), r(0), frac(1, 6)],
+    ]);
+
+    assert_eq!(matrix.clone().reciprocal().unwrap(), expected);
+    assert_eq!(Matrix4::uniform_scale_inverse(r(6)).unwrap(), expected);
+}
+
+#[test]
+fn matrix4_known_diagonal_inverse_matches_matrix_inverse() {
+    let diagonal = [r(2), r(3), r(5), r(7)];
+    let matrix = Matrix4::diagonal(diagonal);
+    let expected = Matrix4::new([
+        [frac(1, 2), r(0), r(0), r(0)],
+        [r(0), frac(1, 3), r(0), r(0)],
+        [r(0), r(0), frac(1, 5), r(0)],
+        [r(0), r(0), r(0), frac(1, 7)],
+    ]);
+
+    assert_eq!(matrix.clone().reciprocal().unwrap(), expected);
+    assert_eq!(
+        Matrix4::diagonal_inverse([r(2), r(3), r(5), r(7)]).unwrap(),
+        expected
+    );
+}
+
+#[test]
+fn matrix4_known_diagonal_division_matches_matrix_division() {
+    let numerator = Matrix4::new([
+        [r(2), r(6), r(15), r(28)],
+        [r(10), r(12), r(25), r(42)],
+        [r(14), r(18), r(35), r(56)],
+        [r(22), r(24), r(45), r(70)],
+    ]);
+    let diagonal = [r(2), r(3), r(5), r(7)];
+    let divisor = Matrix4::diagonal(diagonal.clone());
+
+    assert_eq!(
+        numerator.clone().div_diagonal(diagonal).unwrap(),
+        (numerator / divisor).unwrap()
+    );
+}
+
+#[test]
+fn matrix4_known_diagonal_div_vector_matches_matrix_division() {
+    let numerator = Matrix4::new([
+        [r(2), r(6), r(15), r(28)],
+        [r(10), r(12), r(25), r(42)],
+        [r(14), r(18), r(35), r(56)],
+        [r(22), r(24), r(45), r(70)],
+    ]);
+    let diagonal = [r(2), r(3), r(5), r(7)];
+    let vector = Vector4::new([r(5), r(7), r(11), r(13)]);
+    let divisor = Matrix4::diagonal(diagonal.clone());
+
+    assert_eq!(
+        numerator.div_diagonal_vector(diagonal, &vector).unwrap(),
+        (numerator / divisor).unwrap() * vector
+    );
+}
+
+#[test]
+fn matrix4_known_diagonal_div_vector_direction_matches_matrix_division() {
+    let numerator = Matrix4::new([
+        [r(2), r(6), r(15), r(28)],
+        [r(10), r(12), r(25), r(42)],
+        [r(14), r(18), r(35), r(56)],
+        [r(22), r(24), r(45), r(70)],
+    ]);
+    let diagonal = [r(2), r(3), r(5), r(7)];
+    let vector = Vector4::new([r(5), r(7), r(11), r(0)]);
+    let divisor = Matrix4::diagonal(diagonal.clone());
+
+    assert_eq!(
+        numerator.div_diagonal_vector(diagonal, &vector).unwrap(),
+        (numerator / divisor).unwrap() * vector
+    );
+}
+
+#[test]
+fn matrix4_known_diagonal_div_vector_direction_only_matches_matrix_division() {
+    let numerator = Matrix4::new([
+        [r(2), r(6), r(15), r(28)],
+        [r(10), r(12), r(25), r(42)],
+        [r(14), r(18), r(35), r(56)],
+        [r(22), r(24), r(45), r(70)],
+    ]);
+    let diagonal = [r(2), r(3), r(5), r(7)];
+    let vector = Vector4::new([r(5), r(7), r(11), r(0)]);
+    let divisor = Matrix4::diagonal(diagonal.clone());
+
+    assert_eq!(
+        numerator
+            .div_diagonal_direction_vector(diagonal, &vector)
+            .unwrap(),
+        (numerator / divisor).unwrap() * vector
+    );
+}
+
+#[test]
+fn matrix4_known_diagonal_div_vector_point_matches_matrix_division() {
+    let numerator = Matrix4::new([
+        [r(2), r(6), r(15), r(28)],
+        [r(10), r(12), r(25), r(42)],
+        [r(14), r(18), r(35), r(56)],
+        [r(22), r(24), r(45), r(70)],
+    ]);
+    let diagonal = [r(2), r(3), r(5), r(1)];
+    let vector = Vector4::new([r(5), r(7), r(11), r(1)]);
+    let divisor = Matrix4::diagonal(diagonal.clone());
+
+    assert_eq!(
+        numerator.div_diagonal_vector(diagonal, &vector).unwrap(),
+        (numerator / divisor).unwrap() * vector
+    );
+}
+
+#[test]
+fn matrix4_known_diagonal_div_vector_point_scaled_w() {
+    let numerator = Matrix4::new([
+        [r(2), r(6), r(15), r(28)],
+        [r(10), r(12), r(25), r(42)],
+        [r(14), r(18), r(35), r(56)],
+        [r(22), r(24), r(45), r(70)],
+    ]);
+    let diagonal = [r(2), r(3), r(5), r(7)];
+    let vector = Vector4::new([r(5), r(7), r(11), r(1)]);
+    let divisor = Matrix4::diagonal(diagonal.clone());
+
+    assert_eq!(
+        numerator.div_diagonal_vector(diagonal, &vector).unwrap(),
+        (numerator / divisor).unwrap() * vector
+    );
+}
+
+#[test]
+fn matrix4_known_upper_triangular_inverse_matches_matrix_inverse() {
+    let matrix = Matrix4::new([
+        [r(2), r(3), r(5), r(7)],
+        [r(0), r(11), r(13), r(17)],
+        [r(0), r(0), r(19), r(23)],
+        [r(0), r(0), r(0), r(29)],
+    ]);
+    let inverse = matrix.clone().reciprocal().unwrap();
+
+    assert_eq!(matrix.clone() * inverse.clone(), Matrix4::identity());
+    assert_eq!(matrix.clone().inverse_checked().unwrap(), inverse);
+    assert_eq!(
+        matrix.inverse_checked_with_abort(&abort_signal()).unwrap(),
+        inverse
+    );
+}
+
+#[test]
+fn matrix4_known_lower_triangular_inverse_matches_matrix_inverse() {
+    let matrix = Matrix4::new([
+        [r(2), r(0), r(0), r(0)],
+        [r(3), r(11), r(0), r(0)],
+        [r(5), r(13), r(19), r(0)],
+        [r(7), r(17), r(23), r(29)],
+    ]);
+    let inverse = matrix.clone().reciprocal().unwrap();
+
+    assert_eq!(matrix.clone() * inverse.clone(), Matrix4::identity());
+    assert_eq!(matrix.clone().inverse_checked().unwrap(), inverse);
+    assert_eq!(
+        matrix.inverse_checked_with_abort(&abort_signal()).unwrap(),
+        inverse
+    );
+}
+
+#[test]
+fn matrix4_known_upper_triangular_inverse_checked_rejects_singular_divisor() {
+    let matrix = Matrix4::new([
+        [r(2), r(3), r(5), r(7)],
+        [r(0), r(0), r(13), r(17)],
+        [r(0), r(0), r(19), r(23)],
+        [r(0), r(0), r(0), r(29)],
+    ]);
+
+    assert_singular_error(matrix.clone().inverse_checked());
+    assert_singular_error(matrix.inverse_checked_with_abort(&abort_signal()));
+}
+
+#[test]
+fn matrix4_known_lower_triangular_inverse_checked_rejects_singular_divisor() {
+    let matrix = Matrix4::new([
+        [r(2), r(0), r(0), r(0)],
+        [r(3), r(11), r(0), r(0)],
+        [r(5), r(13), r(0), r(0)],
+        [r(7), r(17), r(23), r(29)],
+    ]);
+
+    assert_singular_error(matrix.clone().inverse_checked());
+    assert_singular_error(matrix.inverse_checked_with_abort(&abort_signal()));
+}
+
+#[test]
+fn matrix4_known_upper_triangular_div_matrix_matches_matrix_division() {
+    let numerator = Matrix4::new([
+        [r(2), r(6), r(15), r(28)],
+        [r(10), r(12), r(25), r(42)],
+        [r(14), r(18), r(35), r(56)],
+        [r(22), r(24), r(45), r(70)],
+    ]);
+    let divisor = Matrix4::new([
+        [r(2), r(3), r(5), r(7)],
+        [r(0), r(11), r(13), r(17)],
+        [r(0), r(0), r(19), r(23)],
+        [r(0), r(0), r(0), r(29)],
+    ]);
+
+    let expected = numerator.clone() * divisor.clone().reciprocal().unwrap();
+    assert_eq!(numerator.clone() / divisor.clone(), Ok(expected));
+}
+
+#[test]
+fn matrix4_known_lower_triangular_div_matrix_matches_matrix_division() {
+    let numerator = Matrix4::new([
+        [r(2), r(6), r(15), r(28)],
+        [r(10), r(12), r(25), r(42)],
+        [r(14), r(18), r(35), r(56)],
+        [r(22), r(24), r(45), r(70)],
+    ]);
+    let divisor = Matrix4::new([
+        [r(2), r(0), r(0), r(0)],
+        [r(3), r(11), r(0), r(0)],
+        [r(5), r(13), r(19), r(0)],
+        [r(7), r(17), r(23), r(29)],
+    ]);
+
+    let expected = numerator.clone() * divisor.clone().reciprocal().unwrap();
+    assert_eq!(numerator.clone() / divisor.clone(), Ok(expected));
+}
+
+#[test]
+fn matrix4_known_upper_triangular_div_matrix_checked_matches_ordinary() {
+    let numerator = Matrix4::new([
+        [r(2), r(6), r(15), r(28)],
+        [r(10), r(12), r(25), r(42)],
+        [r(14), r(18), r(35), r(56)],
+        [r(22), r(24), r(45), r(70)],
+    ]);
+    let divisor = Matrix4::new([
+        [r(2), r(3), r(5), r(7)],
+        [r(0), r(11), r(13), r(17)],
+        [r(0), r(0), r(19), r(23)],
+        [r(0), r(0), r(0), r(29)],
+    ]);
+    let expected = (numerator.clone() / divisor.clone()).unwrap();
+
+    assert_eq!(
+        numerator
+            .clone()
+            .div_matrix_checked(divisor.clone())
+            .unwrap(),
+        expected
+    );
+    assert_eq!(
+        numerator
+            .clone()
+            .div_matrix_checked_with_abort(divisor, &abort_signal())
+            .unwrap(),
+        expected
+    );
+}
+
+#[test]
+fn matrix4_known_upper_triangular_div_matrix_checked_with_prepared_matches_ordinary() {
+    let numerator = Matrix4::new([
+        [r(4), r(2), r(7), r(11)],
+        [r(1), r(3), r(0), r(13)],
+        [r(5), r(8), r(6), r(17)],
+        [r(7), r(9), r(11), r(19)],
+    ]);
+    let divisor = Matrix4::new([
+        [r(2), r(3), r(5), r(7)],
+        [r(0), r(11), r(13), r(17)],
+        [r(0), r(0), r(19), r(23)],
+        [r(0), r(0), r(0), r(29)],
+    ]);
+    let expected = (numerator.clone() / divisor.clone()).unwrap();
+    let mut prepared = divisor.prepare_right_divisor();
+
+    assert_eq!(
+        numerator
+            .clone()
+            .div_matrix_with_prepared(&mut prepared)
+            .unwrap(),
+        expected
+    );
+    let mut prepared = divisor.prepare_right_divisor();
+    assert_eq!(
+        numerator
+            .clone()
+            .div_matrix_checked_with_prepared_with_abort(&mut prepared, &abort_signal())
+            .unwrap(),
+        expected
+    );
+}
+
+#[test]
+fn matrix4_known_lower_triangular_div_matrix_checked_with_prepared_matches_ordinary() {
+    let numerator = Matrix4::new([
+        [r(4), r(2), r(7), r(11)],
+        [r(1), r(3), r(0), r(13)],
+        [r(5), r(8), r(6), r(17)],
+        [r(7), r(9), r(11), r(19)],
+    ]);
+    let divisor = Matrix4::new([
+        [r(2), r(0), r(0), r(0)],
+        [r(3), r(11), r(0), r(0)],
+        [r(5), r(13), r(19), r(0)],
+        [r(7), r(17), r(23), r(29)],
+    ]);
+    let expected = (numerator.clone() / divisor.clone()).unwrap();
+    let mut prepared = divisor.prepare_right_divisor();
+
+    assert_eq!(
+        numerator
+            .clone()
+            .div_matrix_with_prepared(&mut prepared)
+            .unwrap(),
+        expected
+    );
+    let mut prepared = divisor.prepare_right_divisor();
+    assert_eq!(
+        numerator
+            .clone()
+            .div_matrix_checked_with_prepared_with_abort(&mut prepared, &abort_signal())
+            .unwrap(),
+        expected
+    );
+}
+
+#[test]
+fn matrix3_known_uniform_scale_inverse_matches_matrix_inverse() {
+    let scale = r(6);
+    let matrix = Matrix3::uniform_scale(scale);
+    let expected = Matrix3::new([
+        [frac(1, 6), r(0), r(0)],
+        [r(0), frac(1, 6), r(0)],
+        [r(0), r(0), frac(1, 6)],
+    ]);
+
+    assert_eq!(matrix.clone().reciprocal().unwrap(), expected);
+    assert_eq!(Matrix3::uniform_scale_inverse(r(6)).unwrap(), expected);
+}
+
+#[test]
+fn matrix3_known_diagonal_inverse_matches_matrix_inverse() {
+    let diagonal = [r(2), r(3), r(5)];
+    let matrix = Matrix3::diagonal(diagonal);
+    let expected = Matrix3::new([
+        [frac(1, 2), r(0), r(0)],
+        [r(0), frac(1, 3), r(0)],
+        [r(0), r(0), frac(1, 5)],
+    ]);
+
+    assert_eq!(matrix.clone().reciprocal().unwrap(), expected);
+    assert_eq!(
+        Matrix3::diagonal_inverse([r(2), r(3), r(5)]).unwrap(),
+        expected
+    );
+}
+
+#[test]
+fn matrix3_known_upper_triangular_inverse_matches_matrix_inverse() {
+    let matrix = Matrix3::new([[r(2), r(3), r(5)], [r(0), r(7), r(11)], [r(0), r(0), r(13)]]);
+    let expected = Matrix3::new([
+        [frac(1, 2), frac(-3, 14), frac(-1, 91)],
+        [r(0), frac(1, 7), frac(-11, 91)],
+        [r(0), r(0), frac(1, 13)],
+    ]);
+
+    assert_eq!(matrix.clone().reciprocal().unwrap(), expected);
+    assert_eq!(matrix.clone().inverse_checked().unwrap(), expected);
+    assert_eq!(
+        matrix.inverse_checked_with_abort(&abort_signal()).unwrap(),
+        expected
+    );
+}
+
+#[test]
+fn matrix3_known_lower_triangular_inverse_matches_matrix_inverse() {
+    let matrix = Matrix3::new([[r(2), r(0), r(0)], [r(3), r(5), r(0)], [r(7), r(11), r(13)]]);
+    let expected = Matrix3::new([
+        [frac(1, 2), r(0), r(0)],
+        [frac(-3, 10), frac(1, 5), r(0)],
+        [frac(-1, 65), frac(-11, 65), frac(1, 13)],
+    ]);
+
+    assert_eq!(matrix.clone().reciprocal().unwrap(), expected);
+    assert_eq!(matrix.clone().inverse_checked().unwrap(), expected);
+    assert_eq!(
+        matrix.inverse_checked_with_abort(&abort_signal()).unwrap(),
+        expected
+    );
+}
+
+#[test]
+fn matrix3_known_upper_triangular_inverse_checked_rejects_singular_divisor() {
+    let matrix = Matrix3::new([[r(2), r(3), r(5)], [r(0), r(0), r(11)], [r(0), r(0), r(13)]]);
+
+    assert_singular_error(matrix.clone().inverse_checked());
+    assert_singular_error(matrix.inverse_checked_with_abort(&abort_signal()));
+}
+
+#[test]
+fn matrix3_known_lower_triangular_inverse_checked_rejects_singular_divisor() {
+    let matrix = Matrix3::new([[r(2), r(0), r(0)], [r(3), r(11), r(0)], [r(5), r(13), r(0)]]);
+
+    assert_singular_error(matrix.clone().inverse_checked());
+    assert_singular_error(matrix.inverse_checked_with_abort(&abort_signal()));
+}
+
+#[test]
+fn matrix3_known_upper_triangular_div_matrix_matches_matrix_division() {
+    let numerator = Matrix3::new([
+        [r(2), r(6), r(15)],
+        [r(10), r(12), r(25)],
+        [r(14), r(18), r(35)],
+    ]);
+    let divisor = Matrix3::new([[r(2), r(3), r(5)], [r(0), r(7), r(11)], [r(0), r(0), r(13)]]);
+    let expected = numerator.clone() * divisor.clone().reciprocal().unwrap();
+
+    assert_eq!(numerator.clone() / divisor.clone(), Ok(expected));
+}
+
+#[test]
+fn matrix3_known_lower_triangular_div_matrix_matches_matrix_division() {
+    let numerator = Matrix3::new([
+        [r(2), r(6), r(15)],
+        [r(10), r(12), r(25)],
+        [r(14), r(18), r(35)],
+    ]);
+    let divisor = Matrix3::new([[r(2), r(0), r(0)], [r(3), r(5), r(0)], [r(7), r(11), r(13)]]);
+    let expected = numerator.clone() * divisor.clone().reciprocal().unwrap();
+
+    assert_eq!(numerator.clone() / divisor.clone(), Ok(expected));
+}
+
+#[test]
+fn matrix3_known_upper_triangular_div_matrix_checked_matches_ordinary() {
+    let numerator = Matrix3::new([[r(3), r(1), r(4)], [r(1), r(5), r(9)], [r(2), r(6), r(5)]]);
+    let divisor = Matrix3::new([[r(2), r(3), r(5)], [r(0), r(7), r(11)], [r(0), r(0), r(13)]]);
+    let expected = numerator
+        .clone()
+        .div_matrix_checked(divisor.clone())
+        .unwrap();
+    let signal = abort_signal();
+
+    let ordinary = (numerator.clone() / divisor.clone()).unwrap();
+    assert_eq!(expected, ordinary);
+    assert_eq!(
+        numerator
+            .div_matrix_checked_with_abort(divisor, &signal)
+            .unwrap(),
+        ordinary,
+    );
+}
+
+#[test]
+fn matrix3_known_upper_triangular_div_matrix_checked_with_prepared_matches_ordinary() {
+    let numerator = Matrix3::new([[r(4), r(2), r(7)], [r(1), r(3), r(0)], [r(5), r(8), r(6)]]);
+    let divisor = Matrix3::new([[r(2), r(3), r(5)], [r(0), r(7), r(11)], [r(0), r(0), r(13)]]);
+    let mut prepared = divisor.prepare_right_divisor();
+    let expected = (numerator.clone() / divisor.clone()).unwrap();
+
+    assert_eq!(
+        numerator
+            .clone()
+            .div_matrix_with_prepared(&mut prepared)
+            .unwrap(),
+        expected
+    );
+    let mut prepared = divisor.prepare_right_divisor();
+    let signal = abort_signal();
+    assert_eq!(
+        numerator
+            .clone()
+            .div_matrix_checked_with_prepared_with_abort(&mut prepared, &signal)
+            .unwrap(),
+        expected
+    );
+}
+
+#[test]
+fn matrix3_known_diagonal_division_matches_matrix_division() {
+    let numerator = Matrix3::new([
+        [r(2), r(6), r(15)],
+        [r(10), r(12), r(25)],
+        [r(14), r(18), r(35)],
+    ]);
+    let diagonal = [r(2), r(3), r(5)];
+    let divisor = Matrix3::diagonal(diagonal.clone());
+
+    assert_eq!(
+        numerator.clone().div_diagonal(diagonal).unwrap(),
+        (numerator / divisor).unwrap()
+    );
+}
+
+#[test]
+fn matrix3_known_diagonal_div_vector_matches_matrix_division() {
+    let numerator = Matrix3::new([
+        [r(2), r(6), r(15)],
+        [r(10), r(12), r(25)],
+        [r(14), r(18), r(35)],
+    ]);
+    let diagonal = [r(2), r(3), r(5)];
+    let vector = Vector3::new([r(5), r(7), r(11)]);
+    let divisor = Matrix3::diagonal(diagonal.clone());
+
+    assert_eq!(
+        numerator.div_diagonal_vector(diagonal, &vector).unwrap(),
+        (numerator / divisor).unwrap() * vector
+    );
+}
+
+#[test]
 fn matrix3_division_solves_right_division() {
     let numerator = Matrix3::new([[r(3), r(1), r(4)], [r(1), r(5), r(9)], [r(2), r(6), r(5)]]);
     let divisor = Matrix3::new([[r(2), r(0), r(1)], [r(1), r(3), r(0)], [r(0), r(2), r(1)]]);
@@ -214,6 +921,54 @@ fn checked_matrix3_division_matches_ordinary_right_division() {
 }
 
 #[test]
+fn matrix3_division_with_prepared_divisor_reuses_cache() {
+    let numerator1 = Matrix3::new([[r(3), r(1), r(4)], [r(1), r(5), r(9)], [r(2), r(6), r(5)]]);
+    let numerator2 = Matrix3::new([[r(2), r(7), r(1)], [r(8), r(2), r(8)], [r(1), r(8), r(2)]]);
+    let divisor = Matrix3::new([[r(2), r(0), r(1)], [r(1), r(3), r(0)], [r(0), r(2), r(1)]]);
+    let expected1 = (numerator1.clone() / divisor.clone()).unwrap();
+    let expected2 = (numerator2.clone() / divisor.clone()).unwrap();
+    let mut prepared = divisor.prepare_right_divisor();
+
+    assert_eq!(
+        numerator1.div_matrix_with_prepared(&mut prepared).unwrap(),
+        expected1
+    );
+    assert_eq!(
+        numerator2.div_matrix_with_prepared(&mut prepared).unwrap(),
+        expected2
+    );
+}
+
+#[test]
+fn matrix3_division_checked_and_checked_abort_with_prepared_divisor_match_ordinary() {
+    let numerator = Matrix3::new([[r(4), r(2), r(7)], [r(0), r(3), r(1)], [r(5), r(8), r(6)]]);
+    let divisor = Matrix3::new([[r(1), r(2), r(0)], [r(0), r(1), r(3)], [r(2), r(0), r(1)]]);
+    let signal = abort_signal();
+    let expected = (numerator.clone() / divisor.clone()).unwrap();
+    let expected_checked = numerator
+        .clone()
+        .div_matrix_checked(divisor.clone())
+        .unwrap();
+    assert_eq!(expected, expected_checked);
+
+    let mut prepared = divisor.prepare_right_divisor();
+    assert_eq!(
+        numerator
+            .clone()
+            .div_matrix_checked_with_prepared(&mut prepared)
+            .unwrap(),
+        expected
+    );
+    assert_eq!(
+        numerator
+            .clone()
+            .div_matrix_checked_with_prepared_with_abort(&mut prepared, &signal)
+            .unwrap(),
+        expected_checked
+    );
+}
+
+#[test]
 fn matrix4_division_solves_right_division() {
     let numerator = Matrix4::new([
         [r(1), r(3), r(5), r(7)],
@@ -231,6 +986,79 @@ fn matrix4_division_solves_right_division() {
     let quotient = (numerator.clone() / divisor.clone()).unwrap();
 
     assert_eq!(quotient * divisor, numerator);
+}
+
+#[test]
+fn matrix4_division_with_prepared_divisor_reuses_cache() {
+    let numerator1 = Matrix4::new([
+        [r(1), r(2), r(3), r(4)],
+        [r(5), r(6), r(7), r(8)],
+        [r(9), r(10), r(11), r(12)],
+        [r(13), r(14), r(15), r(16)],
+    ]);
+    let numerator2 = Matrix4::new([
+        [r(2), r(4), r(6), r(8)],
+        [r(10), r(12), r(14), r(16)],
+        [r(18), r(20), r(22), r(24)],
+        [r(26), r(28), r(30), r(32)],
+    ]);
+    let divisor = Matrix4::new([
+        [r(2), r(0), r(1), r(0)],
+        [r(1), r(3), r(0), r(1)],
+        [r(0), r(2), r(1), r(0)],
+        [r(1), r(0), r(0), r(2)],
+    ]);
+    let expected1 = (numerator1.clone() / divisor.clone()).unwrap();
+    let expected2 = (numerator2.clone() / divisor.clone()).unwrap();
+    let mut prepared = divisor.prepare_right_divisor();
+
+    assert_eq!(
+        numerator1.div_matrix_with_prepared(&mut prepared).unwrap(),
+        expected1
+    );
+    assert_eq!(
+        numerator2.div_matrix_with_prepared(&mut prepared).unwrap(),
+        expected2
+    );
+}
+
+#[test]
+fn matrix4_division_checked_and_checked_abort_with_prepared_divisor_match_ordinary() {
+    let numerator = Matrix4::new([
+        [r(1), r(3), r(5), r(7)],
+        [r(2), r(4), r(6), r(8)],
+        [r(9), r(7), r(5), r(3)],
+        [r(8), r(6), r(4), r(2)],
+    ]);
+    let divisor = Matrix4::new([
+        [r(2), r(0), r(1), r(0)],
+        [r(1), r(3), r(0), r(1)],
+        [r(0), r(2), r(1), r(0)],
+        [r(1), r(0), r(0), r(2)],
+    ]);
+    let signal = abort_signal();
+    let expected = (numerator.clone() / divisor.clone()).unwrap();
+    let expected_checked = numerator
+        .clone()
+        .div_matrix_checked(divisor.clone())
+        .unwrap();
+    assert_eq!(expected, expected_checked);
+
+    let mut prepared = divisor.prepare_right_divisor();
+    assert_eq!(
+        numerator
+            .clone()
+            .div_matrix_checked_with_prepared(&mut prepared)
+            .unwrap(),
+        expected
+    );
+    assert_eq!(
+        numerator
+            .clone()
+            .div_matrix_checked_with_prepared_with_abort(&mut prepared, &signal)
+            .unwrap(),
+        expected_checked
+    );
 }
 
 #[test]
@@ -561,7 +1389,10 @@ fn matrix_transform_handles_materialize_equivalent_to_transform() {
         matrix3_handle.transform_vector(&vector3),
         matrix3.clone() * vector3.clone()
     );
-    assert_eq!(vector3_handle.materialize(), matrix3.clone() * vector3.clone());
+    assert_eq!(
+        vector3_handle.materialize(),
+        matrix3.clone() * vector3.clone()
+    );
     let vector3_with = matrix3.transform_vec3_with(&vector3);
     assert_eq!(vector3_with.materialize(), matrix3 * vector3);
 
@@ -579,7 +1410,10 @@ fn matrix_transform_handles_materialize_equivalent_to_transform() {
         matrix4_handle.transform_vector(&vector4),
         matrix4.clone() * vector4.clone()
     );
-    assert_eq!(vector4_handle.materialize(), matrix4.clone() * vector4.clone());
+    assert_eq!(
+        vector4_handle.materialize(),
+        matrix4.clone() * vector4.clone()
+    );
     let vector4_with = matrix4.transform_vec4_with(&vector4);
     assert_eq!(vector4_with.materialize(), matrix4 * vector4);
 }

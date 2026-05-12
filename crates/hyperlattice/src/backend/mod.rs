@@ -339,7 +339,7 @@ pub trait BackendScalar:
     /// across determinant and cofactor polynomials. The performance model is
     /// the same one behind fraction-free exact linear algebra: delay expensive
     /// denominator work until a whole short polynomial has been assembled
-    /// (Bareiss, Math. Comp. 22(103), 1968, https://doi.org/10.2307/2004533).
+    /// (Bareiss, Math. Comp. 22(103), 1968, <https://doi.org/10.2307/2004533>).
     #[inline]
     fn signed_product_sum2<const TERMS: usize>(
         positive_terms: [bool; TERMS],
@@ -448,6 +448,33 @@ pub trait BackendScalar:
                 total.expect("dense signed-product-sum2 should accumulate at least one value")
             }
         }
+    }
+    /// Returns a fused signed sum of already-active two-factor products.
+    ///
+    /// Callers use this only after they have already classified zero lanes.
+    /// Unlike [`BackendScalar::signed_product_sum2`], the default deliberately
+    /// does not issue fresh zero probes.
+    #[inline]
+    fn active_signed_product_sum2<const TERMS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Self; 2]; TERMS],
+    ) -> Self {
+        crate::trace_dispatch!(
+            "realistic_blas_backend_trait",
+            "op",
+            "active-signed-product-sum2"
+        );
+        let mut total: Option<Self> = None;
+        for i in 0..TERMS {
+            let product = terms[i][0].clone().mul_ref(terms[i][1]);
+            total = Some(match total.take() {
+                Some(total) if positive_terms[i] => total.add_ref(&product),
+                Some(total) => total.sub_ref(&product),
+                None if positive_terms[i] => product,
+                None => -product,
+            });
+        }
+        total.unwrap_or_else(Self::zero)
     }
     /// Returns `e` raised to this value.
     fn exp(self) -> BlasResult<Self>;

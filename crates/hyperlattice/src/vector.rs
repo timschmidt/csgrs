@@ -22,6 +22,37 @@ pub struct Vector4<B: Backend = DefaultBackend>(
     pub [Scalar<B>; 4],
 );
 
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum Vector4HomogeneousKind {
+    /// A vector lies on the implicit vector subspace in homogeneous coordinates.
+    Direction,
+    /// A point has unit homogeneous coordinate in projective form.
+    Point,
+    /// `w` is neither provably zero nor one from structural facts.
+    Unknown,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct Vector4GeometricFacts {
+    /// Whether this 4-vector is structurally a point, direction, or unknown.
+    pub(crate) homogeneous: Vector4HomogeneousKind,
+}
+
+#[inline]
+fn vector4_geometric_facts<B: Backend>(values: &[Scalar<B>; 4]) -> Vector4GeometricFacts {
+    // Homogeneous geometry kernels in exact computation benefit from keeping
+    // `w`-classification as retained structure; this is the projective split
+    // used throughout 3D affine pipelines, and mirrors the direction/point
+    // specialization logic that precedes exact reductions in robust kernels
+    // (Yap, “Towards Exact Geometric Computation”, 1997).
+    let homogeneous = match values[3].zero_or_one() {
+        Some(false) => Vector4HomogeneousKind::Direction,
+        Some(true) => Vector4HomogeneousKind::Point,
+        None => Vector4HomogeneousKind::Unknown,
+    };
+    Vector4GeometricFacts { homogeneous }
+}
+
 fn map_array2<B: Backend, const N: usize, F>(
     left: [Scalar<B>; N],
     right: [Scalar<B>; N],
@@ -64,13 +95,27 @@ macro_rules! impl_vector {
             /// Returns the Euclidean magnitude.
             pub fn magnitude(&self) -> BlasResult<Scalar<B>> {
                 crate::trace_dispatch!("realistic_blas_vector", "method", "magnitude");
-                self.dot(self).sqrt()
+                self.magnitude_squared_fast().sqrt()
             }
 
             /// Returns the Euclidean magnitude after attaching an abort signal.
             pub fn magnitude_with_abort(&self, signal: &AbortSignal) -> BlasResult<Scalar<B>> {
                 crate::trace_dispatch!("realistic_blas_vector", "method", "magnitude-with-abort");
                 with_abort(self.dot_with_abort(self, signal), signal).sqrt()
+            }
+
+            #[inline]
+            fn magnitude_squared_fast(&self) -> Scalar<B> {
+                // Magnitude is a self-dot, so each structural zero fact is
+                // shared by both multiplicands. Use the dedicated self-dot
+                // kernels to avoid redundant fact probes while keeping dense
+                // inputs on the backend dot hook; that preserves hyperreal's
+                // deferred exact-rational reduction strategy.
+                if $n == 3 {
+                    Scalar::dot3_same([&self.0[0], &self.0[1], &self.0[2]])
+                } else {
+                    Scalar::dot4_same([&self.0[0], &self.0[1], &self.0[2], &self.0[3]])
+                }
             }
 
             /// Returns a unit vector in the same direction.
@@ -83,15 +128,25 @@ macro_rules! impl_vector {
                 let mag = self.magnitude()?;
                 reject_definite_zero(&mag)?;
                 let inv_mag = mag.inverse()?;
+                // Keep the borrowed `Mul` form here. A `mul_cached` prototype
+                // reused the reciprocal magnitude like matrix inverse scaling,
+                // but Criterion regressed approx, hyperreal, and
+                // hyperreal-rational normalize rows. For 3/4 component vectors,
+                // preserving the backend's direct borrowed multiply is cheaper
+                // than forcing the matrix shared-scale path.
                 Ok(Self(from_fn(|i| &self.0[i] * &inv_mag)))
             }
 
             /// Returns a unit vector after rejecting zero and unknown-zero magnitudes.
             pub fn normalize_checked(&self) -> CheckedBlasResult<Self> {
                 crate::trace_dispatch!("realistic_blas_vector", "method", "normalize-checked");
-                let mag = self.magnitude()?;
+                let mag_squared = self.magnitude_squared_fast();
+                require_known_nonzero(&mag_squared)?;
+                let mag = mag_squared.sqrt()?;
                 require_known_nonzero(&mag)?;
                 let inv_mag = mag.inverse()?;
+                // See `normalize`: direct borrowed multiply benchmarks faster
+                // than forcing the matrix shared-scale helper for vectors.
                 Ok(Self(from_fn(|i| &self.0[i] * &inv_mag)))
             }
 
@@ -105,9 +160,13 @@ macro_rules! impl_vector {
                     "method",
                     "normalize-checked-with-abort"
                 );
-                let mag = self.magnitude_with_abort(signal)?;
+                let mag_squared = with_abort(self.dot_with_abort(self, signal), signal);
+                require_known_nonzero(&mag_squared)?;
+                let mag = mag_squared.sqrt()?;
                 require_known_nonzero(&mag)?;
                 let inv_mag = mag.inverse()?;
+                // See `normalize`: direct borrowed multiply keeps this vector
+                // path faster after abort-aware magnitude construction.
                 Ok(Self(from_fn(|i| &self.0[i] * &inv_mag)))
             }
 
@@ -420,6 +479,15 @@ macro_rules! impl_vector {
 impl_vector!(Vector3, 3);
 impl_vector!(Vector4, 4);
 
+impl<B: Backend> Vector4<B> {
+    #[inline]
+    pub(crate) fn geometric_facts(&self) -> Vector4GeometricFacts {
+        // Keep geometric classification on the vector object itself so matrix
+        // handles can avoid re-reading `zero_or_one` for mixed batches.
+        vector4_geometric_facts(&self.0)
+    }
+}
+
 impl<B: Backend> Vector3<B> {
     /// Returns the dot product with `rhs`.
     pub fn dot(&self, rhs: &Self) -> Scalar<B> {
@@ -454,7 +522,49 @@ impl<B: Backend> Vector3<B> {
         let product = |lhs: &Scalar<B>, rhs: &Scalar<B>, signal: &AbortSignal| {
             clone_with_abort(lhs, signal) * clone_with_abort(rhs, signal)
         };
-
+        let product_sum2 = |lhs0: &Scalar<B>,
+                            rhs0: &Scalar<B>,
+                            lhs1: &Scalar<B>,
+                            rhs1: &Scalar<B>,
+                            signal: &AbortSignal| {
+            // The structural scan above has already reduced this active-abort
+            // dot to exactly two contributing lanes. Attach the abort signal
+            // once per surviving operand, then keep the pair as a product-sum
+            // so exact backends can reuse denominator/canonicalization work
+            // rather than materializing two independent products plus an add.
+            // This is the same delayed-normalization principle as Bareiss,
+            // Math. Comp. 22(103), 1968, <https://doi.org/10.2307/2004533>.
+            let lhs0 = clone_with_abort(lhs0, signal);
+            let rhs0 = clone_with_abort(rhs0, signal);
+            let lhs1 = clone_with_abort(lhs1, signal);
+            let rhs1 = clone_with_abort(rhs1, signal);
+            Scalar::active_signed_product_sum2([true, true], [[&lhs0, &rhs0], [&lhs1, &rhs1]])
+        };
+        let product_sum3 = |lhs0: &Scalar<B>,
+                            rhs0: &Scalar<B>,
+                            lhs1: &Scalar<B>,
+                            rhs1: &Scalar<B>,
+                            lhs2: &Scalar<B>,
+                            rhs2: &Scalar<B>,
+                            signal: &AbortSignal| {
+            // All three lanes survived cheap structural-zero pruning. Keep the
+            // active-abort dot as one exact product polynomial after operand
+            // attachment instead of reducing three independent products. This
+            // mirrors the vec4 sparse-three fast path and follows Bareiss-style
+            // delayed normalization for short exact sums:
+            // Bareiss, Math. Comp. 22(103), 1968,
+            // <https://doi.org/10.2307/2004533>.
+            let lhs0 = clone_with_abort(lhs0, signal);
+            let rhs0 = clone_with_abort(rhs0, signal);
+            let lhs1 = clone_with_abort(lhs1, signal);
+            let rhs1 = clone_with_abort(rhs1, signal);
+            let lhs2 = clone_with_abort(lhs2, signal);
+            let rhs2 = clone_with_abort(rhs2, signal);
+            Scalar::active_signed_product_sum2(
+                [true, true, true],
+                [[&lhs0, &rhs0], [&lhs1, &rhs1], [&lhs2, &rhs2]],
+            )
+        };
         if has0 as u8 + has1 as u8 + has2 as u8 == 1 {
             crate::trace_dispatch!("realistic_blas_vector", "abort", "dot3-sparse-single");
             return if has0 {
@@ -469,11 +579,11 @@ impl<B: Backend> Vector3<B> {
         if has0 as u8 + has1 as u8 + has2 as u8 == 2 {
             crate::trace_dispatch!("realistic_blas_vector", "abort", "dot3-sparse-two");
             return if has0 && has1 {
-                product(&self.0[0], &rhs.0[0], signal) + product(&self.0[1], &rhs.0[1], signal)
+                product_sum2(&self.0[0], &rhs.0[0], &self.0[1], &rhs.0[1], signal)
             } else if has0 && has2 {
-                product(&self.0[0], &rhs.0[0], signal) + product(&self.0[2], &rhs.0[2], signal)
+                product_sum2(&self.0[0], &rhs.0[0], &self.0[2], &rhs.0[2], signal)
             } else {
-                product(&self.0[1], &rhs.0[1], signal) + product(&self.0[2], &rhs.0[2], signal)
+                product_sum2(&self.0[1], &rhs.0[1], &self.0[2], &rhs.0[2], signal)
             };
         }
 
@@ -482,10 +592,9 @@ impl<B: Backend> Vector3<B> {
             "abort",
             "dot3-sparse-three-nonzero"
         );
-        let p0 = product(&self.0[0], &rhs.0[0], signal);
-        let p1 = product(&self.0[1], &rhs.0[1], signal);
-        let p2 = product(&self.0[2], &rhs.0[2], signal);
-        (p0 + p1) + p2
+        product_sum3(
+            &self.0[0], &rhs.0[0], &self.0[1], &rhs.0[1], &self.0[2], &rhs.0[2], signal,
+        )
     }
 }
 
@@ -523,6 +632,83 @@ impl<B: Backend> Vector4<B> {
         let product = |lhs: &Scalar<B>, rhs: &Scalar<B>, signal: &AbortSignal| {
             clone_with_abort(lhs, signal) * clone_with_abort(rhs, signal)
         };
+        let product_sum2 = |lhs0: &Scalar<B>,
+                            rhs0: &Scalar<B>,
+                            lhs1: &Scalar<B>,
+                            rhs1: &Scalar<B>,
+                            signal: &AbortSignal| {
+            // Keep the two active-abort lanes as one product-sum after operand
+            // attachment. This mirrors the non-abort sparse-dot fast path and
+            // preserves exact-rational sharing where abort wrappers still allow
+            // the backend to see through to exact structure, following the
+            // delayed-normalization principle in Bareiss, Math. Comp. 22(103),
+            // 1968, <https://doi.org/10.2307/2004533>.
+            let lhs0 = clone_with_abort(lhs0, signal);
+            let rhs0 = clone_with_abort(rhs0, signal);
+            let lhs1 = clone_with_abort(lhs1, signal);
+            let rhs1 = clone_with_abort(rhs1, signal);
+            Scalar::active_signed_product_sum2([true, true], [[&lhs0, &rhs0], [&lhs1, &rhs1]])
+        };
+        let product_sum3 = |lhs0: &Scalar<B>,
+                            rhs0: &Scalar<B>,
+                            lhs1: &Scalar<B>,
+                            rhs1: &Scalar<B>,
+                            lhs2: &Scalar<B>,
+                            rhs2: &Scalar<B>,
+                            signal: &AbortSignal| {
+            // Three active sparse lanes are still a short exact polynomial, so
+            // attach abort guards once per operand and keep the sum in the
+            // backend's fixed-product reducer instead of materializing three
+            // products plus two adds. This follows the same delayed
+            // normalization rationale as Bareiss fraction-free elimination:
+            // keep exact products grouped until the last responsible moment.
+            // Bareiss, Math. Comp. 22(103), 1968,
+            // <https://doi.org/10.2307/2004533>.
+            let lhs0 = clone_with_abort(lhs0, signal);
+            let rhs0 = clone_with_abort(rhs0, signal);
+            let lhs1 = clone_with_abort(lhs1, signal);
+            let rhs1 = clone_with_abort(rhs1, signal);
+            let lhs2 = clone_with_abort(lhs2, signal);
+            let rhs2 = clone_with_abort(rhs2, signal);
+            Scalar::active_signed_product_sum2(
+                [true, true, true],
+                [[&lhs0, &rhs0], [&lhs1, &rhs1], [&lhs2, &rhs2]],
+            )
+        };
+        let product_sum4 = |lhs0: &Scalar<B>,
+                            rhs0: &Scalar<B>,
+                            lhs1: &Scalar<B>,
+                            rhs1: &Scalar<B>,
+                            lhs2: &Scalar<B>,
+                            rhs2: &Scalar<B>,
+                            lhs3: &Scalar<B>,
+                            rhs3: &Scalar<B>,
+                            signal: &AbortSignal| {
+            // The dense active-abort vec4 dot is a four-term exact polynomial.
+            // Keeping all terms in the backend reducer avoids four separate
+            // guarded products and three immediate additions, preserving shared
+            // denominator/canonicalization work until the fused sum. This is the
+            // same fraction-free/delayed-normalization idea used by Bareiss,
+            // Math. Comp. 22(103), 1968,
+            // <https://doi.org/10.2307/2004533>.
+            let lhs0 = clone_with_abort(lhs0, signal);
+            let rhs0 = clone_with_abort(rhs0, signal);
+            let lhs1 = clone_with_abort(lhs1, signal);
+            let rhs1 = clone_with_abort(rhs1, signal);
+            let lhs2 = clone_with_abort(lhs2, signal);
+            let rhs2 = clone_with_abort(rhs2, signal);
+            let lhs3 = clone_with_abort(lhs3, signal);
+            let rhs3 = clone_with_abort(rhs3, signal);
+            Scalar::active_signed_product_sum2(
+                [true, true, true, true],
+                [
+                    [&lhs0, &rhs0],
+                    [&lhs1, &rhs1],
+                    [&lhs2, &rhs2],
+                    [&lhs3, &rhs3],
+                ],
+            )
+        };
 
         if nonzero == 1 {
             crate::trace_dispatch!("realistic_blas_vector", "abort", "dot4-sparse-single");
@@ -538,76 +724,47 @@ impl<B: Backend> Vector4<B> {
         }
 
         if nonzero == 2 {
-            let (p0, p1) = if has0 && has1 {
-                (
-                    product(&self.0[0], &rhs.0[0], signal),
-                    product(&self.0[1], &rhs.0[1], signal),
-                )
-            } else if has0 && has2 {
-                (
-                    product(&self.0[0], &rhs.0[0], signal),
-                    product(&self.0[2], &rhs.0[2], signal),
-                )
-            } else if has0 && has3 {
-                (
-                    product(&self.0[0], &rhs.0[0], signal),
-                    product(&self.0[3], &rhs.0[3], signal),
-                )
-            } else if has1 && has2 {
-                (
-                    product(&self.0[1], &rhs.0[1], signal),
-                    product(&self.0[2], &rhs.0[2], signal),
-                )
-            } else if has1 && has3 {
-                (
-                    product(&self.0[1], &rhs.0[1], signal),
-                    product(&self.0[3], &rhs.0[3], signal),
-                )
-            } else {
-                (
-                    product(&self.0[2], &rhs.0[2], signal),
-                    product(&self.0[3], &rhs.0[3], signal),
-                )
-            };
             crate::trace_dispatch!("realistic_blas_vector", "abort", "dot4-sparse-two");
-            return p0 + p1;
+            return if has0 && has1 {
+                product_sum2(&self.0[0], &rhs.0[0], &self.0[1], &rhs.0[1], signal)
+            } else if has0 && has2 {
+                product_sum2(&self.0[0], &rhs.0[0], &self.0[2], &rhs.0[2], signal)
+            } else if has0 && has3 {
+                product_sum2(&self.0[0], &rhs.0[0], &self.0[3], &rhs.0[3], signal)
+            } else if has1 && has2 {
+                product_sum2(&self.0[1], &rhs.0[1], &self.0[2], &rhs.0[2], signal)
+            } else if has1 && has3 {
+                product_sum2(&self.0[1], &rhs.0[1], &self.0[3], &rhs.0[3], signal)
+            } else {
+                product_sum2(&self.0[2], &rhs.0[2], &self.0[3], &rhs.0[3], signal)
+            };
         }
 
         if nonzero == 3 {
-            let (p0, p1, p2) = if !has0 {
-                (
-                    product(&self.0[1], &rhs.0[1], signal),
-                    product(&self.0[2], &rhs.0[2], signal),
-                    product(&self.0[3], &rhs.0[3], signal),
+            crate::trace_dispatch!("realistic_blas_vector", "abort", "dot4-sparse-three");
+            return if !has0 {
+                product_sum3(
+                    &self.0[1], &rhs.0[1], &self.0[2], &rhs.0[2], &self.0[3], &rhs.0[3], signal,
                 )
             } else if !has1 {
-                (
-                    product(&self.0[0], &rhs.0[0], signal),
-                    product(&self.0[2], &rhs.0[2], signal),
-                    product(&self.0[3], &rhs.0[3], signal),
+                product_sum3(
+                    &self.0[0], &rhs.0[0], &self.0[2], &rhs.0[2], &self.0[3], &rhs.0[3], signal,
                 )
             } else if !has2 {
-                (
-                    product(&self.0[0], &rhs.0[0], signal),
-                    product(&self.0[1], &rhs.0[1], signal),
-                    product(&self.0[3], &rhs.0[3], signal),
+                product_sum3(
+                    &self.0[0], &rhs.0[0], &self.0[1], &rhs.0[1], &self.0[3], &rhs.0[3], signal,
                 )
             } else {
-                (
-                    product(&self.0[0], &rhs.0[0], signal),
-                    product(&self.0[1], &rhs.0[1], signal),
-                    product(&self.0[2], &rhs.0[2], signal),
+                product_sum3(
+                    &self.0[0], &rhs.0[0], &self.0[1], &rhs.0[1], &self.0[2], &rhs.0[2], signal,
                 )
             };
-            crate::trace_dispatch!("realistic_blas_vector", "abort", "dot4-sparse-three");
-            return (p0 + p1) + p2;
         }
 
         crate::trace_dispatch!("realistic_blas_vector", "abort", "dot4-sparse-four");
-        let p0 = product(&self.0[0], &rhs.0[0], signal);
-        let p1 = product(&self.0[1], &rhs.0[1], signal);
-        let p2 = product(&self.0[2], &rhs.0[2], signal);
-        let p3 = product(&self.0[3], &rhs.0[3], signal);
-        (p0 + p1) + (p2 + p3)
+        product_sum4(
+            &self.0[0], &rhs.0[0], &self.0[1], &rhs.0[1], &self.0[2], &rhs.0[2], &self.0[3],
+            &rhs.0[3], signal,
+        )
     }
 }

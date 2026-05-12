@@ -67,10 +67,7 @@ fn structural_equivalents_built_by_different_histories_agree() {
         (((pi() * e()) * sqrt(r(2)).unwrap()) / e()).unwrap(),
         pi() * sqrt(r(2)).unwrap(),
     );
-    assert_same_semantics(
-        ln(r(1024)).unwrap(),
-        r(10) * ln(r(2)).unwrap(),
-    );
+    assert_same_semantics(ln(r(1024)).unwrap(), r(10) * ln(r(2)).unwrap());
 }
 
 #[test]
@@ -83,7 +80,10 @@ fn exact_special_forms_and_principal_branches_are_guarded() {
     assert_same_semantics(sin(seven_pi_six), frac(-1, 2));
 
     let five_pi_four = (r(5) * pi() / r(4)).unwrap();
-    assert_same_semantics(realistic_blas::atan(tan(five_pi_four).unwrap()).unwrap(), (pi() / r(4)).unwrap());
+    assert_same_semantics(
+        realistic_blas::atan(tan(five_pi_four).unwrap()).unwrap(),
+        (pi() / r(4)).unwrap(),
+    );
 }
 
 #[test]
@@ -111,7 +111,10 @@ fn domain_boundary_errors_do_not_stale_cache_valid_neighbors() {
 fn checked_reciprocal_distinguishes_zero_nonzero_and_unknown_zero() {
     assert_eq!(reciprocal_checked(zero()), Err(Problem::DivideByZero));
     assert_eq!(reciprocal_ref_checked(&r(4)).unwrap(), frac(1, 4));
-    assert_eq!(reciprocal_checked(unknown_zero()), Err(Problem::UnknownZero));
+    assert_eq!(
+        reciprocal_checked(unknown_zero()),
+        Err(Problem::UnknownZero)
+    );
 }
 
 #[test]

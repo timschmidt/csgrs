@@ -11,7 +11,9 @@ fn point3() -> impl Strategy<Value = Vector3> {
 }
 
 fn nonzero_direction3() -> impl Strategy<Value = Vector3> {
-    point3().prop_filter("nonzero direction", |value| value.dot(value).zero_status() == ZeroStatus::NonZero)
+    point3().prop_filter("nonzero direction", |value| {
+        value.dot(value).zero_status() == ZeroStatus::NonZero
+    })
 }
 
 fn squared_distance(a: &Vector3, b: &Vector3) -> Scalar {

@@ -247,7 +247,7 @@ impl BackendScalarTrait for BackendScalar {
             "op",
             "linear-combination3-specialized"
         );
-        Self(hyperreal::Real::dot3_refs(
+        Self(hyperreal::Real::linear_combination3_refs(
             [&coeffs[0].0, &coeffs[1].0, &coeffs[2].0],
             [&values[0].0, &values[1].0, &values[2].0],
         ))
@@ -262,7 +262,7 @@ impl BackendScalarTrait for BackendScalar {
             "op",
             "linear-combination4-specialized"
         );
-        Self(hyperreal::Real::dot4_refs(
+        Self(hyperreal::Real::linear_combination4_refs(
             [&coeffs[0].0, &coeffs[1].0, &coeffs[2].0, &coeffs[3].0],
             [&values[0].0, &values[1].0, &values[2].0, &values[3].0],
         ))
@@ -311,11 +311,46 @@ impl BackendScalarTrait for BackendScalar {
             "op",
             "affine-combination4-specialized"
         );
-        let linear = hyperreal::Real::dot4_refs(
+        let linear = hyperreal::Real::linear_combination4_refs(
             [&coeffs[0].0, &coeffs[1].0, &coeffs[2].0, &coeffs[3].0],
             [&values[0].0, &values[1].0, &values[2].0, &values[3].0],
         );
         Self(linear + &offset.0)
+    }
+
+    #[inline]
+    fn active_signed_product_sum2<const TERMS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Self; 2]; TERMS],
+    ) -> Self {
+        if let Some(sum) = hyperreal::Real::exact_rational_signed_product_sum(
+            positive_terms,
+            terms.map(|term| [&term[0].0, &term[1].0]),
+        ) {
+            crate::trace_dispatch!(
+                "realistic_blas_hyperreal_backend",
+                "op",
+                "active-signed-product-sum2-exact-rational"
+            );
+            return Self(sum);
+        }
+
+        crate::trace_dispatch!(
+            "realistic_blas_hyperreal_backend",
+            "op",
+            "active-signed-product-sum2-generic"
+        );
+        let mut total: Option<Self> = None;
+        for i in 0..TERMS {
+            let product = terms[i][0].clone().mul_ref(terms[i][1]);
+            total = Some(match total.take() {
+                Some(total) if positive_terms[i] => total.add_ref(&product),
+                Some(total) => total.sub_ref(&product),
+                None if positive_terms[i] => product,
+                None => -product,
+            });
+        }
+        total.unwrap_or_else(Self::zero)
     }
 
     #[inline]
@@ -536,15 +571,33 @@ impl BackendScalarTrait for BackendScalar {
     #[inline(always)]
     fn zero_or_one(&self) -> Option<bool> {
         crate::trace_dispatch!("realistic_blas_hyperreal_backend", "query", "zero-or-one");
-        self.0.exact_rational_ref().and_then(|exact_rational| {
-            if exact_rational == &hyperreal::Rational::from(0_i8) {
-                Some(false)
-            } else if exact_rational == &hyperreal::Rational::from(1_i8) {
-                Some(true)
-            } else {
-                None
-            }
-        })
+        // Transform kernels use this to distinguish direction vectors (`w=0`)
+        // from points (`w=1`). Preserve the exact-rational fast path first:
+        // moving a broader structural-zero probe ahead of it regressed symbolic
+        // transform rows. Only fall back to `Real::definitely_zero` after the
+        // exact identity check so scaled symbolic zeros are still classified
+        // without approximation. This follows the exact-real guideline of
+        // resolving algebraic/domain facts before numerical refinement; see
+        // Boehm, Cartwright, Riggle, and O'Donnell, "Exact Real Arithmetic: A
+        // Case Study in Higher Order Programming", LFP 1986.
+        self.0
+            .exact_rational_ref()
+            .and_then(|exact_rational| {
+                if exact_rational.is_zero() {
+                    Some(false)
+                } else if exact_rational.is_one() {
+                    Some(true)
+                } else {
+                    None
+                }
+            })
+            .or_else(|| {
+                if self.0.definitely_zero() {
+                    Some(false)
+                } else {
+                    None
+                }
+            })
     }
 
     #[inline(always)]
