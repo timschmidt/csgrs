@@ -8,6 +8,7 @@
 //! - **f64**: use f64 as Real
 //! - [**stl-io**](https://en.wikipedia.org/wiki/STL_(file_format)): `.stl` import/export
 //! - [**dxf-io**](https://en.wikipedia.org/wiki/AutoCAD_DXF): `.dxf` import/export
+//! - **gerber-io**: Gerber/RS-274X import/export for 2D `Sketch` geometry
 //! - **chull-io**: convex hull and minkowski sum
 //! - **metaballs**: enables an implementation of [metaballs](https://en.wikipedia.org/wiki/Metaballs)
 //! - **sdf**: signed distance fields ([sdf](https://en.wikipedia.org/wiki/Signed_distance_function)) using [fast-surface-nets](https://crates.io/crates/fast-surface-nets)
@@ -18,6 +19,7 @@
 //! - **f32**: use f32 as Real, this conflicts with f64
 //! - **parallel**: use rayon for multithreading
 //! - **svg-io**: create `Sketch`s from and convert `Sketch`s to SVG's
+//! - **gerber-io**: create `Sketch`s from and convert `Sketch`s to Gerber files
 //! - **truetype-text**: create `Sketch`s using TrueType fonts `.ttf`
 //! - **hershey-text**: create `Sketch`s using Hershey fonts (`.jhf`)
 //! - **image-io**: make `Sketch`s from images
