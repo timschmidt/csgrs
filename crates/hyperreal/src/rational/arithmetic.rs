@@ -9,13 +9,13 @@ use std::sync::LazyLock;
 
 /// Ratio of two integers
 ///
-/// This type is functionally a [`Sign`] with a ratio between two [`BigUint`]
+/// This type is a [`Sign`]ed ratio between two [`BigUint`]
 /// (the numerator and denominator). The numerator and denominator are finite.
 ///
 /// The "ordinary" floating point numbers are rationals, but when converted
 /// the exact rational may not be what you intuitively expected. It's obvious
 /// that one third isn't represented exactly as an f64, but not everybody
-/// will realise that 0.3 isn't either.
+/// will realize that 0.3 isn't either.
 ///
 /// # Examples
 ///
@@ -615,10 +615,10 @@ impl Rational {
         }
         if nonzero_count == 1 {
             for i in 0..TERMS {
-                let denominator = Self::product_term_denominator(terms[i]);
                 match signs[i] {
                     Plus => {
                         crate::trace_dispatch!("rational", "product_sum", "single-term-product");
+                        let denominator = Self::product_term_denominator(terms[i]);
                         return Self::from_signed_magnitude_difference(
                             Self::product_term_magnitude(terms[i]),
                             BigUint::ZERO,
@@ -627,6 +627,7 @@ impl Rational {
                     }
                     Minus => {
                         crate::trace_dispatch!("rational", "product_sum", "single-term-product");
+                        let denominator = Self::product_term_denominator(terms[i]);
                         return Self::from_signed_magnitude_difference(
                             BigUint::ZERO,
                             Self::product_term_magnitude(terms[i]),
@@ -714,9 +715,9 @@ impl Rational {
             let mut positive = BigUint::ZERO;
             let mut negative = BigUint::ZERO;
             for i in 0..N {
-                let denominator = &left[i].denominator * &right[i].denominator;
                 match signs[i] {
                     Plus => {
+                        let denominator = &left[i].denominator * &right[i].denominator;
                         positive = &left[i].numerator * &right[i].numerator;
                         crate::trace_dispatch!("rational", "dot_product", "single-term-product");
                         return Self::from_signed_magnitude_difference(
@@ -726,6 +727,7 @@ impl Rational {
                         );
                     }
                     Minus => {
+                        let denominator = &left[i].denominator * &right[i].denominator;
                         negative = &left[i].numerator * &right[i].numerator;
                         crate::trace_dispatch!("rational", "dot_product", "single-term-product");
                         return Self::from_signed_magnitude_difference(
@@ -1306,7 +1308,7 @@ impl Rational {
         result
     }
 
-    /// Integer exponeniation. Raise this Rational to an integer exponent.
+    /// Integer exponentiation. Raise this Rational to an integer exponent.
     pub fn powi(self, exp: BigInt) -> Result<Self, Problem> {
         const TOO_MANY_BITS: u64 = 1000;
         // Arguably wrong if self is also zero
@@ -1578,6 +1580,9 @@ impl<T: AsRef<Rational>> Mul<T> for &Rational {
     fn mul(self, other: T) -> Self::Output {
         let other = other.as_ref();
         let sign = self.sign * other.sign;
+        if sign == NoSign {
+            return Self::Output::zero();
+        }
         let numerator = &self.numerator * &other.numerator;
         let denominator = &self.denominator * &other.denominator;
         trace_rational_temporary!();
@@ -1610,6 +1615,9 @@ impl<T: AsRef<Rational>> Div<T> for &Rational {
         let other = other.as_ref();
         assert_ne!(other.numerator, BigUint::ZERO);
         let sign = self.sign * other.sign;
+        if sign == NoSign {
+            return Self::Output::zero();
+        }
         let numerator = &self.numerator * &other.denominator;
         let denominator = &self.denominator * &other.numerator;
         trace_rational_temporary!();

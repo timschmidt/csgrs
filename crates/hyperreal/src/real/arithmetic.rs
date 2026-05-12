@@ -551,6 +551,8 @@ pub(crate) mod rationals {
     pub(crate) static ONE: LazyLock<Rational> = LazyLock::new(|| Rational::new(1));
     pub(crate) static THIRD: LazyLock<Rational> =
         LazyLock::new(|| Rational::fraction(1, 3).unwrap());
+    pub(crate) static THREE: LazyLock<Rational> = LazyLock::new(|| Rational::new(3));
+    pub(crate) static TWO: LazyLock<Rational> = LazyLock::new(|| Rational::new(2));
     // These tiny rationals sit on exact trig/inverse-trig hot paths. Reusing
     // them avoids repeated BigUint construction while preserving exact symbolic
     // dispatch. This is the same "cheap certificate before refinement" pattern
@@ -569,7 +571,7 @@ pub(crate) mod rationals {
 }
 
 mod constants {
-    use super::Class;
+    use super::{Class, ConstOffsetClass, LnAffineClass};
     use crate::{Computable, Rational, Real};
     thread_local! {
         // These are the canonical internal constants. Public constructors clone
@@ -639,6 +641,21 @@ mod constants {
             computable: Some(Computable::sqrt_constant(3).unwrap()),
             signal: None,
         };
+        static SQRT_SIX_OVER_THREE: Real = Real {
+            rational: Rational::fraction(1, 3).unwrap(),
+            class: Class::Sqrt(Rational::new(6)),
+            computable: Some(Computable::sqrt_rational(Rational::new(6))),
+            signal: None,
+        };
+        static PI_SQRT_TWO: Real = Real {
+            rational: Rational::one(),
+            class: Class::PiSqrt(Rational::new(2)),
+            computable: Some(Computable::multiply(
+                Computable::pi(),
+                Computable::sqrt_constant(2).unwrap(),
+            )),
+            signal: None,
+        };
         static LN2: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(2)),
@@ -647,6 +664,12 @@ mod constants {
         };
         static LN3: Real = Real {
             rational: Rational::one(),
+            class: Class::Ln(Rational::new(3)),
+            computable: Some(Computable::ln_constant(3).unwrap()),
+            signal: None,
+        };
+        static HALF_LN3: Real = Real {
+            rational: Rational::fraction(1, 2).unwrap(),
             class: Class::Ln(Rational::new(3)),
             computable: Some(Computable::ln_constant(3).unwrap()),
             signal: None,
@@ -675,6 +698,31 @@ mod constants {
             computable: Some(Computable::ln_constant(10).unwrap()),
             signal: None,
         };
+        static PI_MINUS_THREE: Real = Real {
+            rational: Rational::one(),
+            class: Class::ConstOffset(Box::new(ConstOffsetClass {
+                pi_power: 1,
+                exp_power: Rational::zero(),
+                offset: Rational::new(-3),
+            })),
+            computable: Some(Computable::add(
+                Computable::pi(),
+                Computable::rational(Rational::new(-3)),
+            )),
+            signal: None,
+        };
+        static ONE_PLUS_LN2: Real = Real {
+            rational: Rational::one(),
+            class: Class::LnAffine(Box::new(LnAffineClass {
+                offset: Rational::one(),
+                base: Rational::new(2),
+            })),
+            computable: Some(Computable::add(
+                Computable::one(),
+                Computable::ln_constant(2).unwrap(),
+            )),
+            signal: None,
+        };
         static E: Real = Real {
             rational: Rational::one(),
             class: Class::Exp(Rational::one()),
@@ -685,6 +733,10 @@ mod constants {
 
     pub(super) fn half() -> Real {
         HALF.with(|real| real.clone())
+    }
+
+    pub(super) fn half_ln3() -> Real {
+        HALF_LN3.with(|real| real.clone())
     }
 
     pub(super) fn pi() -> Real {
@@ -728,6 +780,14 @@ mod constants {
         SQRT_THREE_OVER_THREE.with(|real| real.clone())
     }
 
+    pub(super) fn sqrt_six_over_three() -> Real {
+        SQRT_SIX_OVER_THREE.with(|real| real.clone())
+    }
+
+    pub(super) fn pi_sqrt_two() -> Real {
+        PI_SQRT_TWO.with(|real| real.clone())
+    }
+
     pub(super) fn sqrt_constant(n: i64) -> Option<Real> {
         match n {
             2 => Some(Real {
@@ -756,6 +816,14 @@ mod constants {
         };
         value.rational = Rational::new(coefficient);
         Some(value)
+    }
+
+    pub(super) fn pi_minus_three() -> Real {
+        PI_MINUS_THREE.with(|real| real.clone())
+    }
+
+    pub(super) fn one_plus_ln2() -> Real {
+        ONE_PLUS_LN2.with(|real| real.clone())
     }
 
     pub(super) fn e() -> Real {
@@ -1341,6 +1409,32 @@ impl Real {
         Self::dot3_refs_fallback(left, right)
     }
 
+    /// Return a three-lane dot product whose lanes were already classified active.
+    ///
+    /// This is for callers that already paid for zero-lane facts. It preserves
+    /// the shared-denominator exact-rational reducer while avoiding fresh
+    /// scalar zero probes in fixed-size matrix lanes.
+    pub fn active_dot3_refs(left: [&Real; 3], right: [&Real; 3]) -> Real {
+        if let (Some(l0), Some(l1), Some(l2), Some(r0), Some(r1), Some(r2)) = (
+            left[0].exact_rational_ref(),
+            left[1].exact_rational_ref(),
+            left[2].exact_rational_ref(),
+            right[0].exact_rational_ref(),
+            right[1].exact_rational_ref(),
+            right[2].exact_rational_ref(),
+        ) {
+            crate::trace_dispatch!("real", "dot_product", "active-dot3-exact-rational");
+            return Real::new(Rational::dot_products([l0, l1, l2], [r0, r1, r2]));
+        }
+
+        crate::trace_dispatch!("real", "dot_product", "active-dot3-real-tree");
+        Self::sum_dot3_terms(
+            Some(Self::dot_product_active_term(left[0], right[0])),
+            Some(Self::dot_product_active_term(left[1], right[1])),
+            Some(Self::dot_product_active_term(left[2], right[2])),
+        )
+    }
+
     #[inline(never)]
     fn dot3_refs_fallback(left: [&Real; 3], right: [&Real; 3]) -> Real {
         // Keep the symbolic fallback out of line so the matrix hot path that
@@ -1427,6 +1521,33 @@ impl Real {
         Self::dot4_refs_fallback(left, right)
     }
 
+    /// Return a four-lane dot product whose lanes were already classified active.
+    ///
+    /// See [`Self::active_dot3_refs`].
+    pub fn active_dot4_refs(left: [&Real; 4], right: [&Real; 4]) -> Real {
+        if let (Some(l0), Some(l1), Some(l2), Some(l3), Some(r0), Some(r1), Some(r2), Some(r3)) = (
+            left[0].exact_rational_ref(),
+            left[1].exact_rational_ref(),
+            left[2].exact_rational_ref(),
+            left[3].exact_rational_ref(),
+            right[0].exact_rational_ref(),
+            right[1].exact_rational_ref(),
+            right[2].exact_rational_ref(),
+            right[3].exact_rational_ref(),
+        ) {
+            crate::trace_dispatch!("real", "dot_product", "active-dot4-exact-rational");
+            return Real::new(Rational::dot_products([l0, l1, l2, l3], [r0, r1, r2, r3]));
+        }
+
+        crate::trace_dispatch!("real", "dot_product", "active-dot4-real-tree");
+        Self::sum_dot4_terms(
+            Some(Self::dot_product_active_term(left[0], right[0])),
+            Some(Self::dot_product_active_term(left[1], right[1])),
+            Some(Self::dot_product_active_term(left[2], right[2])),
+            Some(Self::dot_product_active_term(left[3], right[3])),
+        )
+    }
+
     /// Return the three-lane affine combination `c0 * x0 + c1 * x1 + c2 * x2`.
     ///
     /// The first increment keeps the representation boundary: these forms are
@@ -1436,12 +1557,22 @@ impl Real {
         Self::dot3_refs(coeffs, values)
     }
 
+    /// Return a three-lane linear combination whose lanes were already classified active.
+    pub fn active_linear_combination3_refs(coeffs: [&Real; 3], values: [&Real; 3]) -> Real {
+        Self::active_dot3_refs(coeffs, values)
+    }
+
     /// Return the four-lane affine combination `c0 * x0 + c1 * x1 + c2 * x2 + c3 * x3`.
     ///
     /// As with [`Self::linear_combination3_refs`], this is intentionally a
     /// thin constructor for the representation slotting work.
     pub fn linear_combination4_refs(coeffs: [&Real; 4], values: [&Real; 4]) -> Real {
         Self::dot4_refs(coeffs, values)
+    }
+
+    /// Return a four-lane linear combination whose lanes were already classified active.
+    pub fn active_linear_combination4_refs(coeffs: [&Real; 4], values: [&Real; 4]) -> Real {
+        Self::active_dot4_refs(coeffs, values)
     }
 
     /// Return the three-lane affine sum with an explicit offset.
@@ -1460,19 +1591,10 @@ impl Real {
                 "affine_combination",
                 "affine-combination3-offset-zero"
             );
-            return Self::linear_combination3_refs(coeffs, values);
+            return Self::masked_linear_combination3_refs(coeffs, values, [zero0, zero1, zero2]);
         }
 
-        let linear = Self::linear_combination3_refs(coeffs, values);
-        if linear.definitely_zero() {
-            crate::trace_dispatch!(
-                "real",
-                "affine_combination",
-                "affine-combination3-linear-zero"
-            );
-            return offset.clone();
-        }
-
+        let linear = Self::masked_linear_combination3_refs(coeffs, values, [zero0, zero1, zero2]);
         crate::trace_dispatch!("real", "affine_combination", "affine-combination3");
         offset + linear
     }
@@ -1494,21 +1616,62 @@ impl Real {
                 "affine_combination",
                 "affine-combination4-offset-zero"
             );
-            return Self::linear_combination4_refs(coeffs, values);
-        }
-
-        let linear = Self::linear_combination4_refs(coeffs, values);
-        if linear.definitely_zero() {
-            crate::trace_dispatch!(
-                "real",
-                "affine_combination",
-                "affine-combination4-linear-zero"
+            return Self::masked_linear_combination4_refs(
+                coeffs,
+                values,
+                [zero0, zero1, zero2, zero3],
             );
-            return offset.clone();
         }
 
+        let linear =
+            Self::masked_linear_combination4_refs(coeffs, values, [zero0, zero1, zero2, zero3]);
         crate::trace_dispatch!("real", "affine_combination", "affine-combination4");
         offset + linear
+    }
+
+    #[inline]
+    fn masked_linear_combination3_refs(
+        coeffs: [&Real; 3],
+        values: [&Real; 3],
+        zero: [bool; 3],
+    ) -> Real {
+        if !zero[0] && !zero[1] && !zero[2] {
+            return Self::active_linear_combination3_refs(coeffs, values);
+        }
+
+        crate::trace_dispatch!(
+            "real",
+            "affine_combination",
+            "active-linear-combination3-sparse"
+        );
+        Self::sum_dot3_terms(
+            (!zero[0]).then(|| Self::dot_product_active_term(coeffs[0], values[0])),
+            (!zero[1]).then(|| Self::dot_product_active_term(coeffs[1], values[1])),
+            (!zero[2]).then(|| Self::dot_product_active_term(coeffs[2], values[2])),
+        )
+    }
+
+    #[inline]
+    fn masked_linear_combination4_refs(
+        coeffs: [&Real; 4],
+        values: [&Real; 4],
+        zero: [bool; 4],
+    ) -> Real {
+        if !zero[0] && !zero[1] && !zero[2] && !zero[3] {
+            return Self::active_linear_combination4_refs(coeffs, values);
+        }
+
+        crate::trace_dispatch!(
+            "real",
+            "affine_combination",
+            "active-linear-combination4-sparse"
+        );
+        Self::sum_dot4_terms(
+            (!zero[0]).then(|| Self::dot_product_active_term(coeffs[0], values[0])),
+            (!zero[1]).then(|| Self::dot_product_active_term(coeffs[1], values[1])),
+            (!zero[2]).then(|| Self::dot_product_active_term(coeffs[2], values[2])),
+            (!zero[3]).then(|| Self::dot_product_active_term(coeffs[3], values[3])),
+        )
     }
 
     #[inline(never)]
@@ -1586,13 +1749,18 @@ impl Real {
         if left.rational.sign() == Sign::NoSign || right.rational.sign() == Sign::NoSign {
             return None;
         }
+        Some(Self::dot_product_active_term(left, right))
+    }
+
+    #[inline]
+    fn dot_product_active_term(left: &Real, right: &Real) -> Real {
         if matches!(left.class, One) {
-            return Some(right.scaled_by_rational(&left.rational));
+            return right.scaled_by_rational(&left.rational);
         }
         if matches!(right.class, One) {
-            return Some(left.scaled_by_rational(&right.rational));
+            return left.scaled_by_rational(&right.rational);
         }
-        Some(left * right)
+        left * right
     }
 
     #[inline]
@@ -2423,6 +2591,10 @@ impl Real {
                         signal: None,
                     });
                 }
+                if exp == &*rationals::ONE && self.rational == *rationals::TWO {
+                    crate::trace_dispatch!("real", "ln", "cached-one-plus-ln2");
+                    return Ok(constants::one_plus_ln2());
+                }
                 // ln(a * e^x) = ln(a) + x for positive rational scale `a`.
                 // The positive-offset case is stored as one factored `ln` class
                 // so repeated predicates do not traverse a generic add graph.
@@ -2958,8 +3130,24 @@ impl Real {
             // additions. This follows Boehm et al., "Exact Real Arithmetic: A
             // Case Study in Higher Order Programming" (1986), where symbolic
             // construction is kept separate from later numerical refinement.
+            if self.rational == *rationals::HALF {
+                crate::trace_dispatch!("real", "atanh", "rational-half-ln3-special-form");
+                return Ok(constants::half_ln3());
+            }
+            if -&self.rational == *rationals::HALF {
+                crate::trace_dispatch!("real", "atanh", "rational-minus-half-ln3-special-form");
+                return Ok(-constants::half_ln3());
+            }
             let one = rationals::ONE.clone();
             let ratio = (one.clone() + self.rational.clone()) / (one - self.rational);
+            if ratio == *rationals::THREE {
+                crate::trace_dispatch!("real", "atanh", "rational-half-ln3-special-form");
+                return Ok(constants::half_ln3());
+            }
+            if ratio == *rationals::THIRD {
+                crate::trace_dispatch!("real", "atanh", "rational-minus-half-ln3-special-form");
+                return Ok(-constants::half_ln3());
+            }
             // Non-tiny rationals can remain an exact logarithm ratio.
             crate::trace_dispatch!("real", "atanh", "rational-log-ratio-special-form");
             return Ok(Self::ln_rational(ratio)? * constants::half());
@@ -3647,6 +3835,18 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
 
     fn sub(self, other: T) -> Self::Output {
         let other = other.as_ref();
+        if self.class == Pi && self.rational.is_one() && other.class == One {
+            if other.rational == *rationals::THREE {
+                crate::trace_dispatch!("real", "sub", "cached-pi-minus-three");
+                return constants::pi_minus_three();
+            }
+        }
+        if self.class == One && self.rational == *rationals::THREE && other.class == Pi {
+            if other.rational.is_one() {
+                crate::trace_dispatch!("real", "sub", "cached-three-minus-pi");
+                return -constants::pi_minus_three();
+            }
+        }
         if self.class == other.class {
             // Same symbolic basis subtraction mirrors addition: update the scale only.
             let rational = &self.rational - &other.rational;
@@ -4301,6 +4501,14 @@ impl<T: AsRef<Real>> Div<T> for &Real {
         if let (Sqrt(left), Sqrt(right)) = (&self.class, &other.class)
             && let Some(right_integer) = right.integer_magnitude()
         {
+            if self.rational.is_one()
+                && other.rational.is_one()
+                && left == &*rationals::TWO
+                && right == &*rationals::THREE
+            {
+                crate::trace_dispatch!("real", "div", "cached-sqrt-six-over-three");
+                return Ok(constants::sqrt_six_over_three());
+            }
             // Rationalize sqrt(a)/sqrt(b) as sqrt(a*b)/b when b is an integer.
             // This keeps simple radical quotients exact instead of using
             // `other.inverse()` and losing the radicand certificate.
@@ -4371,6 +4579,17 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                 self.class.const_product_sqrt_parts(),
                 other.class.const_product_parts(),
             ) {
+                if self.rational.is_one()
+                    && other.rational.is_one()
+                    && sqrt_pi == 1
+                    && sqrt_exp == *rationals::ONE
+                    && radicand == *rationals::TWO
+                    && product_pi == 0
+                    && product_exp == *rationals::ONE
+                {
+                    crate::trace_dispatch!("real", "div", "cached-pi-sqrt-two");
+                    return Ok(constants::pi_sqrt_two());
+                }
                 if let Some(pi_power) = sqrt_pi.checked_sub(product_pi) {
                     // Divide out only the pi/e product and leave the sqrt factor
                     // intact for later exact radical products.

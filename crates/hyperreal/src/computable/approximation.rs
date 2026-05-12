@@ -7,6 +7,7 @@ use num::{One, Zero};
 use serde::Deserialize;
 use serde::Serialize;
 use std::ops::Deref;
+use std::sync::LazyLock;
 
 // The elementary kernels in this file use the standard multiple-precision
 // pattern of reducing the argument into a small interval, evaluating a guarded
@@ -17,6 +18,8 @@ use std::ops::Deref;
 // https://maths-people.anu.edu.au/~brent/pd/mca-cup-0.5.9.pdf.
 // Comments at individual shortcuts call out hyperreal-specific representation
 // choices added to avoid construction, allocation, or cache duplication costs.
+
+static HALF_RATIONAL: LazyLock<Rational> = LazyLock::new(|| Rational::fraction(1, 2).unwrap());
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub(super) enum Approximation {
@@ -1495,7 +1498,7 @@ fn atan_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt 
         }
     }
 
-    let half = Rational::fraction(1, 2).expect("1/2 is a valid rational");
+    let half = HALF_RATIONAL.deref();
     if r <= &half {
         return atan_rational_small(signal, r, p);
     }
@@ -1511,8 +1514,8 @@ fn atan_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt 
 
     let extra = 3;
     let work_precision = p - extra;
-    let anchor = atan(signal, &BigInt::from(2_u8), work_precision);
-    let numerator = r.clone() - half.clone();
+    let anchor = atan(signal, signed::TWO.deref(), work_precision);
+    let numerator = r.clone() - half;
     let denominator = Rational::one() + r.clone() * half;
     let residual = numerator / denominator;
     let reduced = atan_rational_small(signal, &residual, work_precision);
@@ -1635,11 +1638,8 @@ fn asinh_near_zero(signal: &Option<Signal>, c: &Computable, p: Precision) -> Big
     // This deferred node removes construction overhead but preserves the
     // cancellation-resistant formula used by the public Real path.
     let square = c.clone().square();
-    let denominator = square
-        .clone()
-        .add(Computable::one())
-        .sqrt()
-        .add(Computable::one());
+    let one = Computable::one();
+    let denominator = square.clone().add(one.clone()).sqrt().add(one);
     c.clone()
         .add(square.multiply(denominator.inverse()))
         .ln_1p()
@@ -1738,7 +1738,7 @@ fn atanh_direct(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt
     numerator
         .multiply(denominator.inverse())
         .ln()
-        .multiply(Computable::rational(Rational::fraction(1, 2).unwrap()))
+        .multiply(Computable::rational(HALF_RATIONAL.clone()))
         .approx_signal(signal, p)
 }
 

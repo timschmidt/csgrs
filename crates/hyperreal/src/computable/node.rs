@@ -644,13 +644,13 @@ impl Computable {
                     Some(Ordering::Greater)
                 }
             }
-            (base_sign, perturb_sign) if base_sign == perturb_sign => {
-                Some(if perturb_sign == Sign::NoSign {
+            (base_sign, perturb_sign) if base_sign == perturb_sign => Some(
+                if perturb_sign == Sign::NoSign || perturb_msd.is_some_and(|msd| msd < tolerance) {
                     Ordering::Equal
                 } else {
                     Ordering::Greater
-                })
-            }
+                },
+            ),
             (base_sign, perturb_sign) if base_sign != perturb_sign => {
                 if perturb_msd.is_some_and(|msd| msd < tolerance) {
                     Some(Ordering::Equal)
@@ -2940,7 +2940,7 @@ impl Computable {
             return self.negate().atan().negate();
         }
         if let Some(msd) = planning_msd.flatten() {
-            if msd < 3 {
+            if msd < -1 {
                 crate::trace_dispatch!("computable", "atan", "structural-small-prescaled");
                 return Self {
                     internal: Box::new(Approximation::PrescaledAtan(self)),
@@ -3127,7 +3127,8 @@ impl Computable {
             // the measured work, and the eager graph caches its children better
             // than a deferred Real-only wrapper.
             let square = self.clone().square();
-            let denominator = square.clone().add(Self::one()).sqrt().add(Self::one());
+            let one = Self::one();
+            let denominator = square.clone().add(one.clone()).sqrt().add(one);
             crate::trace_dispatch!("computable", "asinh", "near-zero-ln1p-transform");
             return self.add(square.multiply(denominator.inverse())).ln_1p();
         }
@@ -3718,7 +3719,10 @@ impl Computable {
         self.signal = Some(s);
     }
 
-    /// An approximation of this Computable scaled to a specific precision
+    /// An approximation of this Computable scaled to a specific precision.
+    ///
+    /// Since the value is scaled, the approximation is roughly `value * 2^p`.
+    /// Negative values of `p` request more precision.
     ///
     /// The approximation is scaled (thus, a larger value for more negative p)
     /// and should be accurate to within +/- 1 at the scale provided.
@@ -4335,7 +4339,7 @@ impl Computable {
         }
     }
 
-    /// Most Significant Digit (Bit) ?
+    /// Most Significant Digit (Bit).
     /// May panic or give incorrect answers if not yet discovered.
     fn known_msd(&self) -> Precision {
         if let Some((prec, appr)) = self.cached() {

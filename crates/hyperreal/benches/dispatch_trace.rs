@@ -162,6 +162,25 @@ fn collect_rows(
             black_box((&lhs / &rhs).unwrap());
         },
     );
+    trace_row(
+        &mut rows,
+        filters,
+        "real/div/const_product_sqrt_over_e",
+        || {
+            let lhs = Real::pi() * Real::e() * Real::new(Rational::new(2)).sqrt().unwrap();
+            black_box((&lhs / &Real::e()).unwrap());
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "real/div/sqrt_two_over_sqrt_three",
+        || {
+            let lhs = Real::new(Rational::new(2)).sqrt().unwrap();
+            let rhs = Real::new(Rational::new(3)).sqrt().unwrap();
+            black_box((&lhs / &rhs).unwrap());
+        },
+    );
     trace_row(&mut rows, filters, "real/div/div_const_products", || {
         black_box((&Real::e() / &Real::pi()).unwrap());
         black_box((&Real::pi() / &Real::e()).unwrap());
@@ -216,6 +235,22 @@ fn collect_rows(
         black_box(x.clone().asinh().unwrap());
         black_box(x.clone().acosh().unwrap());
     });
+    trace_row(&mut rows, filters, "real/log/scaled_e", || {
+        let scaled_e = Real::from(2) * Real::e();
+        black_box(scaled_e.ln().unwrap());
+    });
+    trace_row(
+        &mut rows,
+        filters,
+        "real/inverse_hyperbolic/exact_rational",
+        || {
+            let half = Real::new(Rational::fraction(1, 2).unwrap());
+            let near_one = Real::new(Rational::fraction(9, 10).unwrap());
+            black_box(half.clone().atanh().unwrap());
+            black_box((-half).atanh().unwrap());
+            black_box(near_one.atanh().unwrap());
+        },
+    );
     trace_row(&mut rows, filters, "real/sqrt_scaled_rational", || {
         black_box(Real::new(Rational::new(18)).sqrt().unwrap());
     });
@@ -244,6 +279,27 @@ fn collect_rows(
                 Real::e() * Real::new(Rational::new(17)),
             ];
             black_box(Real::dot3_refs(
+                [&left[0], &left[1], &left[2]],
+                [&right[0], &right[1], &right[2]],
+            ));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "real/dot_product/active_dot3_dense_symbolic",
+        || {
+            let left = [
+                Real::pi() * Real::new(Rational::new(3)),
+                Real::e() * Real::new(Rational::new(5)),
+                Real::pi() * Real::new(Rational::new(7)),
+            ];
+            let right = [
+                Real::e() * Real::new(Rational::new(11)),
+                Real::pi() * Real::new(Rational::new(13)),
+                Real::e() * Real::new(Rational::new(17)),
+            ];
+            black_box(Real::active_dot3_refs(
                 [&left[0], &left[1], &left[2]],
                 [&right[0], &right[1], &right[2]],
             ));
@@ -292,6 +348,29 @@ fn collect_rows(
                 Real::new(Rational::new(23)),
             ];
             black_box(Real::dot4_refs(
+                [&left[0], &left[1], &left[2], &left[3]],
+                [&right[0], &right[1], &right[2], &right[3]],
+            ));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "real/dot_product/active_dot4_dense_symbolic",
+        || {
+            let left = [
+                Real::pi() * Real::new(Rational::new(3)),
+                Real::e() * Real::new(Rational::new(5)),
+                Real::pi() * Real::new(Rational::new(7)),
+                Real::new(Rational::new(11)),
+            ];
+            let right = [
+                Real::e() * Real::new(Rational::new(13)),
+                Real::pi() * Real::new(Rational::new(17)),
+                Real::e() * Real::new(Rational::new(19)),
+                Real::new(Rational::new(23)),
+            ];
+            black_box(Real::active_dot4_refs(
                 [&left[0], &left[1], &left[2], &left[3]],
                 [&right[0], &right[1], &right[2], &right[3]],
             ));

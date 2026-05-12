@@ -317,12 +317,20 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Computes a borrowed three-lane symbolic dot product with no rational shortcut terms.",
             },
             BenchDoc {
+                name: "real_active_dot3_refs_dense_symbolic",
+                description: "Computes a borrowed three-lane symbolic dot product after the caller has already classified every lane active.",
+            },
+            BenchDoc {
                 name: "real_dot3_refs_mixed_structural",
                 description: "Computes a borrowed three-lane symbolic dot product with exact zero and rational scale terms.",
             },
             BenchDoc {
                 name: "real_dot4_refs_dense_symbolic",
                 description: "Computes a borrowed four-lane symbolic dot product with no rational shortcut terms.",
+            },
+            BenchDoc {
+                name: "real_active_dot4_refs_dense_symbolic",
+                description: "Computes a borrowed four-lane symbolic dot product after the caller has already classified every lane active.",
             },
             BenchDoc {
                 name: "real_dot4_refs_mixed_structural",
@@ -774,6 +782,22 @@ fn bench_borrowed_op_overhead(c: &mut Criterion) {
             ))
         })
     });
+    group.bench_function("real_active_dot3_refs_dense_symbolic", |b| {
+        b.iter(|| {
+            black_box(Real::active_dot3_refs(
+                [
+                    black_box(&dense_dot_left[0]),
+                    black_box(&dense_dot_left[1]),
+                    black_box(&dense_dot_left[2]),
+                ],
+                [
+                    black_box(&dense_dot_right[0]),
+                    black_box(&dense_dot_right[1]),
+                    black_box(&dense_dot_right[2]),
+                ],
+            ))
+        })
+    });
     group.bench_function("real_dot3_refs_mixed_structural", |b| {
         b.iter(|| {
             black_box(Real::dot3_refs(
@@ -793,6 +817,24 @@ fn bench_borrowed_op_overhead(c: &mut Criterion) {
     group.bench_function("real_dot4_refs_dense_symbolic", |b| {
         b.iter(|| {
             black_box(Real::dot4_refs(
+                [
+                    black_box(&dense_dot_left[0]),
+                    black_box(&dense_dot_left[1]),
+                    black_box(&dense_dot_left[2]),
+                    black_box(&dense_dot_left[3]),
+                ],
+                [
+                    black_box(&dense_dot_right[0]),
+                    black_box(&dense_dot_right[1]),
+                    black_box(&dense_dot_right[2]),
+                    black_box(&dense_dot_right[3]),
+                ],
+            ))
+        })
+    });
+    group.bench_function("real_active_dot4_refs_dense_symbolic", |b| {
+        b.iter(|| {
+            black_box(Real::active_dot4_refs(
                 [
                     black_box(&dense_dot_left[0]),
                     black_box(&dense_dot_left[1]),
