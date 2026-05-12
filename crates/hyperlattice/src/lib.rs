@@ -229,7 +229,18 @@ impl<B: Backend> Scalar<B> {
             };
         }
 
-        // Route full 3-lane dots through the backend so expensive
+        if B::FUSE_SIGNED_PRODUCT_SUM {
+            // The scan above has already proved every lane active. Exact
+            // backends can use the active dot hook without re-entering scalar
+            // zero classification inside the dot-product hook.
+            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot3-active");
+            return Self(B::Repr::active_dot3(
+                [&left[0].0, &left[1].0, &left[2].0],
+                [&right[0].0, &right[1].0, &right[2].0],
+            ));
+        }
+
+        // Route full 3-lane approximate dots through the backend so compact
         // representations can choose a better add/mul ordering than the
         // default trait methods.
         crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot3-backend");
@@ -358,8 +369,19 @@ impl<B: Backend> Scalar<B> {
             );
         }
 
-        // Full 4-lane case remains specialized so backends can choose optimal
-        // denominator sharing and shared reduction order.
+        if B::FUSE_SIGNED_PRODUCT_SUM {
+            // The zero scan above already established four active lanes. Reuse
+            // that fact for exact backends instead of asking the scalar layer to
+            // rediscover it in a hot matrix lane.
+            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-active");
+            return Self(B::Repr::active_dot4(
+                [&left[0].0, &left[1].0, &left[2].0, &left[3].0],
+                [&right[0].0, &right[1].0, &right[2].0, &right[3].0],
+            ));
+        }
+
+        // Full 4-lane approximate case remains specialized so backends can
+        // choose optimal reduction order.
         crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-backend");
         Self(B::Repr::dot4(
             [&left[0].0, &left[1].0, &left[2].0, &left[3].0],
@@ -426,6 +448,14 @@ impl<B: Backend> Scalar<B> {
                     [[values[0], values[0]], [values[1], values[1]]],
                 )
             };
+        }
+
+        if B::FUSE_SIGNED_PRODUCT_SUM {
+            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot3-same-active");
+            return Self(B::Repr::active_dot3(
+                [&values[0].0, &values[1].0, &values[2].0],
+                [&values[0].0, &values[1].0, &values[2].0],
+            ));
         }
 
         crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot3-same-backend");
@@ -550,6 +580,14 @@ impl<B: Backend> Scalar<B> {
             };
         }
 
+        if B::FUSE_SIGNED_PRODUCT_SUM {
+            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-same-active");
+            return Self(B::Repr::active_dot4(
+                [&values[0].0, &values[1].0, &values[2].0, &values[3].0],
+                [&values[0].0, &values[1].0, &values[2].0, &values[3].0],
+            ));
+        }
+
         crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-same-backend");
         Self(B::Repr::dot4(
             [&values[0].0, &values[1].0, &values[2].0, &values[3].0],
@@ -618,6 +656,18 @@ impl<B: Backend> Scalar<B> {
                     [[coefficients[0], values[0]], [coefficients[1], values[1]]],
                 )
             };
+        }
+
+        if B::FUSE_SIGNED_PRODUCT_SUM {
+            crate::trace_dispatch!(
+                "realistic_blas",
+                "scalar_fast_path",
+                "linear-combination3-active"
+            );
+            return Self(B::Repr::active_linear_combination3(
+                [&coefficients[0].0, &coefficients[1].0, &coefficients[2].0],
+                [&values[0].0, &values[1].0, &values[2].0],
+            ));
         }
 
         crate::trace_dispatch!(
@@ -767,6 +817,23 @@ impl<B: Backend> Scalar<B> {
                     [coefficients[2], values[2]],
                 ],
             );
+        }
+
+        if B::FUSE_SIGNED_PRODUCT_SUM {
+            crate::trace_dispatch!(
+                "realistic_blas",
+                "scalar_fast_path",
+                "linear-combination4-active"
+            );
+            return Self(B::Repr::active_linear_combination4(
+                [
+                    &coefficients[0].0,
+                    &coefficients[1].0,
+                    &coefficients[2].0,
+                    &coefficients[3].0,
+                ],
+                [&values[0].0, &values[1].0, &values[2].0, &values[3].0],
+            ));
         }
 
         crate::trace_dispatch!(

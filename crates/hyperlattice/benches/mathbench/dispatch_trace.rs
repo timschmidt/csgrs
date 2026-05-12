@@ -132,17 +132,37 @@ mod enabled {
                     profile.muls += count.count * 3;
                     profile.adds += count.count * 2;
                 }
+                ("scalar_fast_path", "dot3-active" | "dot3-same-active") => {
+                    profile.muls += count.count * 3;
+                    profile.adds += count.count * 2;
+                    profile.signed_product_sums += count.count;
+                }
                 ("scalar_fast_path", "dot4-backend") => {
                     profile.muls += count.count * 4;
                     profile.adds += count.count * 3;
+                }
+                ("scalar_fast_path", "dot4-active" | "dot4-same-active") => {
+                    profile.muls += count.count * 4;
+                    profile.adds += count.count * 3;
+                    profile.signed_product_sums += count.count;
                 }
                 ("scalar_fast_path", "linear-combination3-specialized") => {
                     profile.muls += count.count * 3;
                     profile.adds += count.count * 2;
                 }
+                ("scalar_fast_path", "linear-combination3-active") => {
+                    profile.muls += count.count * 3;
+                    profile.adds += count.count * 2;
+                    profile.signed_product_sums += count.count;
+                }
                 ("scalar_fast_path", "linear-combination4-specialized") => {
                     profile.muls += count.count * 4;
                     profile.adds += count.count * 3;
+                }
+                ("scalar_fast_path", "linear-combination4-active") => {
+                    profile.muls += count.count * 4;
+                    profile.adds += count.count * 3;
+                    profile.signed_product_sums += count.count;
                 }
                 ("scalar_fast_path", "affine-combination3-specialized") => {
                     profile.muls += count.count * 3;

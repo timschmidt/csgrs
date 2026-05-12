@@ -226,6 +226,15 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     #[inline]
+    fn active_dot3(left: [&Self; 3], right: [&Self; 3]) -> Self {
+        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "op", "active-dot3");
+        Self(hyperreal::Real::active_dot3_refs(
+            [&left[0].0, &left[1].0, &left[2].0],
+            [&right[0].0, &right[1].0, &right[2].0],
+        ))
+    }
+
+    #[inline]
     fn dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
         // See `dot3`; this is the hottest matrix multiply shape and benefits
         // most from hyperreal's shared-denominator exact-rational path. Keep
@@ -233,6 +242,15 @@ impl BackendScalarTrait for BackendScalar {
         // count or benchmark time regressing beyond normal Criterion noise.
         crate::trace_dispatch!("realistic_blas_hyperreal_backend", "op", "dot4-specialized");
         Self(hyperreal::Real::dot4_refs(
+            [&left[0].0, &left[1].0, &left[2].0, &left[3].0],
+            [&right[0].0, &right[1].0, &right[2].0, &right[3].0],
+        ))
+    }
+
+    #[inline]
+    fn active_dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
+        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "op", "active-dot4");
+        Self(hyperreal::Real::active_dot4_refs(
             [&left[0].0, &left[1].0, &left[2].0, &left[3].0],
             [&right[0].0, &right[1].0, &right[2].0, &right[3].0],
         ))
@@ -254,6 +272,19 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     #[inline]
+    fn active_linear_combination3(coeffs: [&Self; 3], values: [&Self; 3]) -> Self {
+        crate::trace_dispatch!(
+            "realistic_blas_hyperreal_backend",
+            "op",
+            "active-linear-combination3"
+        );
+        Self(hyperreal::Real::active_linear_combination3_refs(
+            [&coeffs[0].0, &coeffs[1].0, &coeffs[2].0],
+            [&values[0].0, &values[1].0, &values[2].0],
+        ))
+    }
+
+    #[inline]
     fn linear_combination4(coeffs: [&Self; 4], values: [&Self; 4]) -> Self {
         // Same rationale as `dot4`; a dedicated 4-ary linear form can keep exact
         // rational denominator factorizations aligned with the matrix row.
@@ -263,6 +294,19 @@ impl BackendScalarTrait for BackendScalar {
             "linear-combination4-specialized"
         );
         Self(hyperreal::Real::linear_combination4_refs(
+            [&coeffs[0].0, &coeffs[1].0, &coeffs[2].0, &coeffs[3].0],
+            [&values[0].0, &values[1].0, &values[2].0, &values[3].0],
+        ))
+    }
+
+    #[inline]
+    fn active_linear_combination4(coeffs: [&Self; 4], values: [&Self; 4]) -> Self {
+        crate::trace_dispatch!(
+            "realistic_blas_hyperreal_backend",
+            "op",
+            "active-linear-combination4"
+        );
+        Self(hyperreal::Real::active_linear_combination4_refs(
             [&coeffs[0].0, &coeffs[1].0, &coeffs[2].0, &coeffs[3].0],
             [&values[0].0, &values[1].0, &values[2].0, &values[3].0],
         ))

@@ -283,6 +283,15 @@ pub trait BackendScalar:
         let p2 = left[2].clone().mul_ref(right[2]);
         p0.add_ref(&p1).add_ref(&p2)
     }
+    /// Returns a three-lane dot product whose lanes were already classified active.
+    ///
+    /// The default preserves the ordinary backend dot shape. Exact backends can
+    /// override this to reuse caller zero facts without rechecking them.
+    #[inline]
+    fn active_dot3(left: [&Self; 3], right: [&Self; 3]) -> Self {
+        crate::trace_dispatch!("realistic_blas_backend_trait", "op", "active-dot3-default");
+        Self::dot3(left, right)
+    }
     /// Returns the four-lane dot product.
     #[inline]
     fn dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
@@ -292,6 +301,12 @@ pub trait BackendScalar:
         let p2 = left[2].clone().mul_ref(right[2]);
         let p3 = left[3].clone().mul_ref(right[3]);
         p0.add_ref(&p1).add_ref(&p2.add_ref(&p3))
+    }
+    /// Returns a four-lane dot product whose lanes were already classified active.
+    #[inline]
+    fn active_dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
+        crate::trace_dispatch!("realistic_blas_backend_trait", "op", "active-dot4-default");
+        Self::dot4(left, right)
     }
     /// Returns the three-lane linear combination `c0 * x0 + c1 * x1 + c2 * x2`.
     ///
@@ -307,6 +322,16 @@ pub trait BackendScalar:
         );
         Self::dot3(coeffs, values)
     }
+    /// Returns a three-lane linear combination whose lanes were already classified active.
+    #[inline]
+    fn active_linear_combination3(coeffs: [&Self; 3], values: [&Self; 3]) -> Self {
+        crate::trace_dispatch!(
+            "realistic_blas_backend_trait",
+            "op",
+            "active-linear-combination3-default"
+        );
+        Self::active_dot3(coeffs, values)
+    }
     /// Returns the four-lane linear combination `c0 * x0 + c1 * x1 + c2 * x2 + c3 * x3`.
     ///
     /// This default keeps existing dot-product behavior while keeping the
@@ -319,6 +344,16 @@ pub trait BackendScalar:
             "linear-combination4-default"
         );
         Self::dot4(coeffs, values)
+    }
+    /// Returns a four-lane linear combination whose lanes were already classified active.
+    #[inline]
+    fn active_linear_combination4(coeffs: [&Self; 4], values: [&Self; 4]) -> Self {
+        crate::trace_dispatch!(
+            "realistic_blas_backend_trait",
+            "op",
+            "active-linear-combination4-default"
+        );
+        Self::active_dot4(coeffs, values)
     }
     /// Returns the four-lane affine combination `offset + c0 * x0 + c1 * x1 + c2 * x2 + c3 * x3`.
     ///

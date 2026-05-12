@@ -1,6 +1,9 @@
-# realistic_blas
+<h1>
+  hyperlattice
+  <img src="./doc/hyperlattice.png" alt="Hyper, a clever mathematician" width="144" align="right">
+</h1>
 
-`realistic_blas` provides small fixed-size linear algebra over a crate-owned
+`hyperlattice` provides small fixed-size linear algebra over a crate-owned
 `Scalar` type.
 
 It includes scalars, complex numbers, 3D/4D vectors, and 3x3/4x4 matrices. The
@@ -17,13 +20,13 @@ remains `HyperrealBackend`.
 ## Relationship to Other Crates
 
 - `hyperreal` supplies the default exact/symbolic scalar representation.
-- `realistic_blas` owns complex, vector, and matrix algebra over backend-neutral
+- `hyperlattice` owns complex, vector, and matrix algebra over backend-neutral
   `Scalar<B>` values.
-- `liminal` can consume `realistic_blas::Scalar<B>` structural facts when
+- `liminal` can consume `hyperlattice::Scalar<B>` structural facts when
   geometry predicates need sign provenance, filtering, refinement, or robust
   fallback.
 
-`realistic_blas` forwards scalar facts. It does not own robust predicate policy
+`hyperlattice` forwards scalar facts. It does not own robust predicate policy
 or geometry topology.
 
 ## Current State
@@ -52,25 +55,25 @@ definite zero and unknown-zero divisors or pivots.
 
 ```toml
 [dependencies]
-realistic_blas = "0.3.3"
+hyperlattice = "0.3.3"
 ```
 
 From sibling checkouts:
 
 ```toml
 [dependencies]
-realistic_blas = { path = "../realistic_blas" }
+hyperlattice = { path = "../hyperlattice" }
 ```
 
 The hyperreal-backed feature pulls in the matching `hyperreal` and `num`
 dependencies. Applications only need direct `hyperreal` or `num` dependencies
-when they use those crates outside `realistic_blas`.
+when they use those crates outside `hyperlattice`.
 
 Approx-only build:
 
 ```toml
 [dependencies]
-realistic_blas = {
+hyperlattice = {
     version = "0.3.3",
     default-features = false,
     features = ["approx-backend"],
@@ -89,7 +92,7 @@ Features:
 ### Scalars
 
 ```rust
-use realistic_blas::{Scalar, ln, log10, pi, sqrt, tau};
+use hyperlattice::{Scalar, ln, log10, pi, sqrt, tau};
 
 fn s(value: i32) -> Scalar {
     value.into()
@@ -98,14 +101,14 @@ fn s(value: i32) -> Scalar {
 let nine: Scalar = 9.into();
 assert_eq!(sqrt(nine).unwrap(), s(3));
 assert_eq!(tau(), s(2) * pi());
-assert_eq!(ln(realistic_blas::e()).unwrap(), s(1));
+assert_eq!(ln(hyperlattice::e()).unwrap(), s(1));
 assert_eq!(log10(s(100)).unwrap(), s(2));
 ```
 
 ### Explicit Backends
 
 ```rust
-use realistic_blas::{ApproxBackend, HyperrealBackend, Scalar, Vector3};
+use hyperlattice::{ApproxBackend, HyperrealBackend, Scalar, Vector3};
 
 let exact: Scalar<HyperrealBackend> = Scalar::try_from(1.25).unwrap();
 let approx: Scalar<ApproxBackend> = Scalar::<ApproxBackend>::approx(1.25, 0.01).unwrap();
@@ -119,7 +122,7 @@ assert_eq!(exact_vector.0.len(), approx_vector.0.len());
 ### Vectors
 
 ```rust
-use realistic_blas::{Rational, Scalar, Vector3, one};
+use hyperlattice::{Rational, Scalar, Vector3, one};
 
 fn s(value: i32) -> Scalar {
     value.into()
@@ -141,7 +144,7 @@ assert_eq!(format!("{displayed:#}"), "[0.5, 2, 3]");
 ### Matrices
 
 ```rust
-use realistic_blas::{Matrix3, Scalar};
+use hyperlattice::{Matrix3, Scalar};
 
 fn s(value: i32) -> Scalar {
     value.into()
@@ -161,7 +164,7 @@ assert_eq!((matrix ^ 0).unwrap(), Matrix3::identity());
 ### Structural Facts
 
 ```rust
-use realistic_blas::{ScalarSign, ZeroStatus, pi};
+use hyperlattice::{ScalarSign, ZeroStatus, pi};
 
 let facts = pi().structural_facts();
 assert_eq!(facts.sign, Some(ScalarSign::Positive));
@@ -191,7 +194,7 @@ Two backend details are intentionally visible at the type boundary:
 ### Abort-Aware Checked Operations
 
 ```rust
-use realistic_blas::{AbortSignal, Vector3};
+use hyperlattice::{AbortSignal, Vector3};
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 

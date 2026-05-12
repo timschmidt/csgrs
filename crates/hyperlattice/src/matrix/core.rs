@@ -6332,20 +6332,25 @@ fn multiply_arrays4_borrowed<B: Backend>(
             "multiply4-borrowed-dense"
         );
         let cell = |row: usize, col: usize| {
-            Scalar(B::Repr::dot4(
-                [
-                    &left[row][0].0,
-                    &left[row][1].0,
-                    &left[row][2].0,
-                    &left[row][3].0,
-                ],
-                [
-                    &right[0][col].0,
-                    &right[1][col].0,
-                    &right[2][col].0,
-                    &right[3][col].0,
-                ],
-            ))
+            let l0 = &left[row][0];
+            let l1 = &left[row][1];
+            let l2 = &left[row][2];
+            let l3 = &left[row][3];
+            let r0 = &right[0][col];
+            let r1 = &right[1][col];
+            let r2 = &right[2][col];
+            let r3 = &right[3][col];
+            if B::FUSE_SIGNED_PRODUCT_SUM {
+                Scalar(B::Repr::active_dot4(
+                    [&l0.0, &l1.0, &l2.0, &l3.0],
+                    [&r0.0, &r1.0, &r2.0, &r3.0],
+                ))
+            } else {
+                Scalar(B::Repr::dot4(
+                    [&l0.0, &l1.0, &l2.0, &l3.0],
+                    [&r0.0, &r1.0, &r2.0, &r3.0],
+                ))
+            }
         };
 
         return [
@@ -6443,6 +6448,10 @@ fn multiply_arrays4_borrowed<B: Backend>(
                     )
                 }
             }
+            _ if B::FUSE_SIGNED_PRODUCT_SUM => Scalar(B::Repr::active_dot4(
+                [&l0.0, &l1.0, &l2.0, &l3.0],
+                [&r0.0, &r1.0, &r2.0, &r3.0],
+            )),
             _ => Scalar(B::Repr::dot4(
                 [&l0.0, &l1.0, &l2.0, &l3.0],
                 [&r0.0, &r1.0, &r2.0, &r3.0],
