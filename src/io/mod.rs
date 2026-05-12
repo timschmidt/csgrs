@@ -19,6 +19,9 @@ mod amf;
 #[cfg(feature = "gltf-io")]
 mod gltf;
 
+#[cfg(feature = "gerber-io")]
+pub mod gerber;
+
 /// Generic I/O and format‑conversion errors.
 ///
 /// Many I/O features are behind cargo feature‑flags.  
@@ -48,6 +51,14 @@ pub enum IoError {
     #[cfg(feature = "amf-io")]
     /// Error during AMF file processing.
     AmfParsing(String),
+
+    #[cfg(feature = "gerber-io")]
+    /// Error during Gerber file processing.
+    GerberParsing(String),
+
+    #[cfg(feature = "gerber-io")]
+    /// Error during Gerber code generation.
+    GerberCodegen(::gerber_types::GerberError),
 }
 
 impl std::fmt::Display for IoError {
@@ -73,6 +84,12 @@ impl std::fmt::Display for IoError {
 
             #[cfg(feature = "amf-io")]
             AmfParsing(error) => write!(f, "AMF Parsing error: {error}"),
+
+            #[cfg(feature = "gerber-io")]
+            GerberParsing(error) => write!(f, "Gerber Parsing error: {error}"),
+
+            #[cfg(feature = "gerber-io")]
+            GerberCodegen(error) => write!(f, "Gerber code generation error: {error}"),
         }
     }
 }
@@ -102,5 +119,12 @@ impl From<::svg::parser::Error> for IoError {
 impl From<String> for IoError {
     fn from(value: String) -> Self {
         Self::ObjParsing(value)
+    }
+}
+
+#[cfg(feature = "gerber-io")]
+impl From<::gerber_types::GerberError> for IoError {
+    fn from(value: ::gerber_types::GerberError) -> Self {
+        Self::GerberCodegen(value)
     }
 }

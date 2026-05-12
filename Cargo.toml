@@ -70,6 +70,8 @@ stl_io = { version = "0.8", optional = true }
 image = { version = "0.25", optional = true }
 svg = { version = "0.18", optional = true }
 nom = { version = "7.1", optional = true }
+gerber-types = { version = "0.7.0", optional = true }
+gerber_parser = { version = "0.4.0", optional = true }
 
 # font
 ttf-utils = { version = "0.1", optional = true, package = "ttf-parser-utils"}
@@ -90,7 +92,7 @@ serde = { version = "1.0.228", optional = true }
 uuid = { version = "1.18", features = ["js"] }
 
 [features]
-default = ["f64", "bmesh", "mesh", "sketch", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "chull-io", "image-io", "metaballs", "sdf", "offset", "delaunay", "truetype-text", "hershey-text"]
+default = ["f64", "bmesh", "mesh", "sketch", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "gerber-io", "chull-io", "image-io", "metaballs", "sdf", "offset", "delaunay", "truetype-text", "hershey-text"]
 parallel = [
   "rayon",
   "geo/multithreading",
@@ -145,6 +147,10 @@ amf-io = [
 ]
 gltf-io = [
   "base64",
+]
+gerber-io = [
+  "gerber-types",
+  "gerber_parser",
 ]
 truetype-text = [
   "ttf-parser",
