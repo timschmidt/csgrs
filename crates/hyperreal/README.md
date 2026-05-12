@@ -1,6 +1,6 @@
 <h1>
   hyperreal
-  <img src="./doc/hyper.png" alt="hyperreal project mark" width="144" align="right">
+  <img src="./doc/hyper.png" alt="Hyper, a clever math thief" width="144" align="right">
 </h1>
 
 `hyperreal` provides exact rational arithmetic, symbolic real values, and lazy
