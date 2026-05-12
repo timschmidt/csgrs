@@ -142,11 +142,16 @@ fn collect_rows(
         black_box(&lhs * &rhs);
         black_box((&lhs / &rhs).unwrap());
     });
-    trace_row(&mut rows, filters, "real/pow/small_integer_exponent", || {
-        let base = Real::new(rational(7, 5));
-        let exponent = Real::from(17);
-        black_box(base.pow(exponent).unwrap());
-    });
+    trace_row(
+        &mut rows,
+        filters,
+        "real/pow/small_integer_exponent",
+        || {
+            let base = Real::new(rational(7, 5));
+            let exponent = Real::from(17);
+            black_box(base.pow(exponent).unwrap());
+        },
+    );
     trace_row(
         &mut rows,
         filters,

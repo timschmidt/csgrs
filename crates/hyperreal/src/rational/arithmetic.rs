@@ -1134,7 +1134,8 @@ impl Rational {
         let numerator_bits = self.numerator.bits();
         let denominator_bits = self.denominator.bits();
         let denominator_is_power_of_two = Self::is_power_of_two(&self.denominator);
-        let numerator_is_power_of_two = self.sign != NoSign && Self::is_power_of_two(&self.numerator);
+        let numerator_is_power_of_two =
+            self.sign != NoSign && Self::is_power_of_two(&self.numerator);
         let storage = if self.sign == NoSign {
             RationalStorageClass::Zero
         } else if numerator_bits <= 64 && denominator_bits <= 64 {

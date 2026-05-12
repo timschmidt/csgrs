@@ -79,13 +79,19 @@ fn equivalent_structural_forms_keep_same_public_semantics() {
 
 #[test]
 fn domain_boundaries_do_not_poison_later_valid_queries() {
-    assert_eq!(Real::new(Rational::new(-1)).sqrt(), Err(Problem::SqrtNegative));
+    assert_eq!(
+        Real::new(Rational::new(-1)).sqrt(),
+        Err(Problem::SqrtNegative)
+    );
     assert_eq!(Real::zero().ln(), Err(Problem::NotANumber));
     assert_eq!(Real::new(Rational::new(-1)).ln(), Err(Problem::NotANumber));
     assert_eq!(Real::new(Rational::new(2)).asin(), Err(Problem::NotANumber));
     assert_eq!(Real::new(Rational::new(2)).acos(), Err(Problem::NotANumber));
     assert_eq!(Real::one().atanh(), Err(Problem::Infinity));
-    assert_eq!(Real::new(Rational::new(-1)).acosh(), Err(Problem::NotANumber));
+    assert_eq!(
+        Real::new(Rational::new(-1)).acosh(),
+        Err(Problem::NotANumber)
+    );
 
     assert_stable_facts(&Real::zero().sqrt().unwrap());
     assert_stable_facts(&r(1, 1_000_000).sqrt().unwrap());

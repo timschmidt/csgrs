@@ -2,9 +2,8 @@
 mod tests {
     use crate::real::arithmetic::curve;
     use crate::{
-        DomainStatus, MagnitudeBits, Problem, Rational, Real, RealSign, RealStructuralFacts,
-        PrimitiveFloatStatus, RationalStorageClass, StructuralComparison, StructuralKind,
-        ZeroKnowledge,
+        DomainStatus, MagnitudeBits, PrimitiveFloatStatus, Problem, Rational, RationalStorageClass,
+        Real, RealSign, RealStructuralFacts, StructuralComparison, StructuralKind, ZeroKnowledge,
     };
 
     #[test]

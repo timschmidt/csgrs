@@ -42,11 +42,24 @@ fn inverse_inverse_and_division_identities_preserve_exact_rationals() {
 #[test]
 fn exact_trig_special_forms_and_neighbors_are_distinguished() {
     assert_eq!(Real::pi().sin(), Real::zero());
-    assert_eq!((Real::pi() / Real::new(Rational::new(6))).unwrap().sin(), r(1, 2));
-    assert_eq!((Real::pi() / Real::new(Rational::new(3))).unwrap().cos(), r(1, 2));
-    assert_eq!((Real::pi() / Real::new(Rational::new(4))).unwrap().tan().unwrap(), Real::one());
+    assert_eq!(
+        (Real::pi() / Real::new(Rational::new(6))).unwrap().sin(),
+        r(1, 2)
+    );
+    assert_eq!(
+        (Real::pi() / Real::new(Rational::new(3))).unwrap().cos(),
+        r(1, 2)
+    );
+    assert_eq!(
+        (Real::pi() / Real::new(Rational::new(4)))
+            .unwrap()
+            .tan()
+            .unwrap(),
+        Real::one()
+    );
 
-    let neighbor = ((Real::pi() / Real::new(Rational::new(6))).unwrap()) + Real::new(q(1, 1_000_000));
+    let neighbor =
+        ((Real::pi() / Real::new(Rational::new(6))).unwrap()) + Real::new(q(1, 1_000_000));
     assert_ne!(neighbor.sin(), r(1, 2));
 }
 

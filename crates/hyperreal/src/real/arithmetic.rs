@@ -1,6 +1,6 @@
 use crate::{
-    Computable, DomainFacts, DomainStatus, IdentityFacts, MagnitudeBits, OrderingFacts, Problem,
-    PrimitiveFacts, PrimitiveFloatStatus, Rational, RationalFacts, RationalStorageClass,
+    Computable, DomainFacts, DomainStatus, IdentityFacts, MagnitudeBits, OrderingFacts,
+    PrimitiveFacts, PrimitiveFloatStatus, Problem, Rational, RationalFacts, RationalStorageClass,
     RealDetailedFacts, RealSign, RealStructuralFacts, StructuralComparison, StructuralKind,
     SymbolicFacts, ZeroKnowledge, ZeroOneStatus,
 };
@@ -1230,7 +1230,12 @@ impl Real {
             ),
             has_exp_factor: matches!(
                 self.class,
-                Exp(_) | PiExp(_) | PiInvExp(_) | ConstProduct(_) | ConstOffset(_) | ConstProductSqrt(_)
+                Exp(_)
+                    | PiExp(_)
+                    | PiInvExp(_)
+                    | ConstProduct(_)
+                    | ConstOffset(_)
+                    | ConstProductSqrt(_)
             ),
             computable_required: self.computable.is_some() || matches!(self.class, Irrational),
         };
@@ -1948,7 +1953,8 @@ impl Real {
                         // before exact inversion; see Yap (1997).
                         Rational::from_unsigned_integer(sqrt.clone()).inverse()?
                     } else {
-                        (&self.rational * Rational::from_unsigned_integer(sqrt.clone())).inverse()?
+                        (&self.rational * Rational::from_unsigned_integer(sqrt.clone()))
+                            .inverse()?
                     };
                     return Ok(Self {
                         rational,
@@ -2633,8 +2639,8 @@ impl Real {
                 // the radicand must be an exact small integer and the rational
                 // scale must have exact magnitude 1/2.
                 let sign = self.rational.sign();
-                let half_magnitude = self.rational.compare_magnitude(&*rationals::HALF)
-                    == std::cmp::Ordering::Equal;
+                let half_magnitude =
+                    self.rational.compare_magnitude(&*rationals::HALF) == std::cmp::Ordering::Equal;
                 if !half_magnitude {
                     return None;
                 }
@@ -2689,13 +2695,9 @@ impl Real {
                 }
                 // atan(sqrt(3)) and atan(sqrt(3)/3) have exact pi-fraction answers.
                 let sign = self.rational.sign();
-                let angle = if self.rational.abs_cmp_one_structural()
-                    == std::cmp::Ordering::Equal
-                {
+                let angle = if self.rational.abs_cmp_one_structural() == std::cmp::Ordering::Equal {
                     Some(rationals::THIRD.clone())
-                } else if self
-                    .rational
-                    .compare_magnitude(&*rationals::THIRD)
+                } else if self.rational.compare_magnitude(&*rationals::THIRD)
                     == std::cmp::Ordering::Equal
                 {
                     Some(rationals::SIXTH.clone())
@@ -2743,7 +2745,9 @@ impl Real {
             return Ok(self.make_computable(|value| value.asin()));
         }
         if let Sqrt(r) = &self.class
-            && self.rational.compare_magnitude_squared_times(r, &*rationals::ONE)
+            && self
+                .rational
+                .compare_magnitude_squared_times(r, &*rationals::ONE)
                 == std::cmp::Ordering::Greater
         {
             crate::trace_dispatch!("real", "asin", "sqrt-domain-error");
@@ -2793,7 +2797,9 @@ impl Real {
             return Ok(Self::pi_fraction(1, 2) - asin);
         }
         if let Sqrt(r) = &self.class
-            && self.rational.compare_magnitude_squared_times(r, &*rationals::ONE)
+            && self
+                .rational
+                .compare_magnitude_squared_times(r, &*rationals::ONE)
                 == std::cmp::Ordering::Greater
         {
             crate::trace_dispatch!("real", "acos", "sqrt-domain-error");
@@ -2879,7 +2885,9 @@ impl Real {
         } else if let Sqrt(r) = &self.class {
             // Domain-check factored sqrt values exactly: (a*sqrt(r))^2 = a^2*r.
             if self.rational.sign() == Sign::Minus
-                || self.rational.compare_magnitude_squared_times(r, &*rationals::ONE)
+                || self
+                    .rational
+                    .compare_magnitude_squared_times(r, &*rationals::ONE)
                     == std::cmp::Ordering::Less
             {
                 crate::trace_dispatch!("real", "acosh", "sqrt-domain-error");
@@ -2962,7 +2970,9 @@ impl Real {
             return Err(Problem::Infinity);
         }
         if let Sqrt(r) = &self.class
-            && self.rational.compare_magnitude_squared_times(r, &*rationals::ONE)
+            && self
+                .rational
+                .compare_magnitude_squared_times(r, &*rationals::ONE)
                 == std::cmp::Ordering::Equal
         {
             // Exact sqrt endpoint, e.g. sqrt(2)/2 scaled to magnitude one.
@@ -2970,7 +2980,9 @@ impl Real {
             return Err(Problem::Infinity);
         }
         if let Sqrt(r) = &self.class
-            && self.rational.compare_magnitude_squared_times(r, &*rationals::ONE)
+            && self
+                .rational
+                .compare_magnitude_squared_times(r, &*rationals::ONE)
                 == std::cmp::Ordering::Greater
         {
             // Exact sqrt domain failure avoids an approximation sign query.
@@ -3723,8 +3735,7 @@ impl Real {
         } else if matches!(
             (x.to_integer_i64(), y.to_integer_i64()),
             (Some(2), Some(3)) | (Some(3), Some(2))
-        )
-        {
+        ) {
             // sqrt(2)*sqrt(3) is common enough in trig-derived matrices to keep
             // as sqrt(6) without running the general square-extraction code.
             // The small-integer test is structural and allocation-light; the

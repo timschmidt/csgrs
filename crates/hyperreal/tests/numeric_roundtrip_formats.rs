@@ -57,8 +57,14 @@ fn supported_numeric_text_forms_parse_losslessly() {
     let cases = [
         ("0", Rational::zero()),
         ("-0", Rational::zero()),
-        ("123456789012345678901234567890", "123456789012345678901234567890".parse().unwrap()),
-        ("-98765432109876543210987654321", "-98765432109876543210987654321".parse().unwrap()),
+        (
+            "123456789012345678901234567890",
+            "123456789012345678901234567890".parse().unwrap(),
+        ),
+        (
+            "-98765432109876543210987654321",
+            "-98765432109876543210987654321".parse().unwrap(),
+        ),
         ("1/2", q(1, 2)),
         ("-7/13", q(-7, 13)),
         ("98760/123450", q(4, 5)),
@@ -110,8 +116,14 @@ fn cbor_value_numeric_forms_roundtrip_losslessly() {
     let text = Value::Text("-7/11".to_string());
     assert_eq!(Real::try_from(&text).unwrap(), Real::new(q(-7, 11)));
 
-    let rational_pair = Value::Array(vec![Value::Integer((-9_i64).into()), Value::Integer(14_i64.into())]);
-    assert_eq!(Real::try_from(&rational_pair).unwrap(), Real::new(q(-9, 14)));
+    let rational_pair = Value::Array(vec![
+        Value::Integer((-9_i64).into()),
+        Value::Integer(14_i64.into()),
+    ]);
+    assert_eq!(
+        Real::try_from(&rational_pair).unwrap(),
+        Real::new(q(-9, 14))
+    );
 }
 
 fn finite_f32_bits() -> impl Strategy<Value = u32> {
