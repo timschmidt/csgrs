@@ -1057,6 +1057,8 @@ dependencies = [
  "fast-surface-nets",
  "geo",
  "geo-buf",
+ "gerber-types",
+ "gerber_parser",
  "hashbrown 0.15.5",
  "hershey",
  "image",
@@ -1551,6 +1553,35 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c5a7f08910fd98737a6eda7568e7c5e645093e073328eeef49758cfe8b0489c7"
 dependencies = [
  "libm",
+]
+
+[[package]]
+name = "gerber-types"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42103f088f731446755617a73b8d3a80633bd447317e6e1661195abac35150aa"
+dependencies = [
+ "chrono",
+ "num-rational",
+ "strum",
+ "strum_macros",
+ "thiserror 2.0.18",
+ "uuid",
+]
+
+[[package]]
+name = "gerber_parser"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a3767d5cdca2992d9dcae6bcebfa2ae9102d6f3092b0d65a79b91b6e6ab8d7a7"
+dependencies = [
+ "anyhow",
+ "gerber-types",
+ "lazy-regex",
+ "log",
+ "regex",
+ "strum",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -2161,6 +2192,29 @@ dependencies = [
  "num-bigint 0.4.6",
  "num-rational",
  "num-traits 0.2.19",
+]
+
+[[package]]
+name = "lazy-regex"
+version = "3.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6bae91019476d3ec7147de9aa291cadb6d870abf2f3015d2da73a90325ac1496"
+dependencies = [
+ "lazy-regex-proc_macros",
+ "once_cell",
+ "regex",
+]
+
+[[package]]
+name = "lazy-regex-proc_macros"
+version = "3.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4de9c1e1439d8b7b3061b2d209809f447ca33241733d9a3c01eabf2dc8d94358"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "regex",
+ "syn",
 ]
 
 [[package]]
@@ -3066,6 +3120,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "regex"
+version = "1.12.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e10754a14b9137dd7b1e3e5b0493cc9171fdd105e0ab477f51b72e7f3ac0e276"
+dependencies = [
+ "aho-corasick",
+ "memchr",
+ "regex-automata",
+ "regex-syntax",
+]
+
+[[package]]
 name = "regex-automata"
 version = "0.4.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3439,6 +3505,24 @@ checksum = "4a101fb44c7bbb34473ee14a0a9e2c06ad4b1aa22501b18223279fd21f0affd6"
 dependencies = [
  "byteorder",
  "float-cmp",
+]
+
+[[package]]
+name = "strum"
+version = "0.27.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "af23d6f6c1a224baef9d3f61e287d2761385a5b88fdab4eb4c6f11aeb54c4bcf"
+
+[[package]]
+name = "strum_macros"
+version = "0.27.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7695ce3845ea4b33927c055a39dc438a45b059f7c1b3d91d38d10355fb8cbca7"
+dependencies = [
+ "heck",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
