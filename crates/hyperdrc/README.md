@@ -119,6 +119,10 @@ Output formats are `text`, `json`, `jsonl`, `geojson`, `sarif`,
 `github-annotations`, `html`, and `junit`. JSON reports include stable violation
 IDs, severity, layers, polygon coordinates, point locations where applicable,
 short messages, structured parser diagnostics, and a structured input manifest.
+During a run, `hyperdrc` writes start/end status lines for runtime phases and
+per-check execution to stderr with elapsed time; each completed check also
+reports its new finding count. This leaves stdout safe for the selected report
+format.
 JSON Lines emits one run/input/diagnostic/violation object per line for
 streaming analytics. SARIF output preserves stable hyperdrc finding IDs and PCB
 geometry in result properties for CI/code-review systems. GitHub annotation
@@ -160,13 +164,14 @@ The default suite covers the main `hyperdrc` readiness surfaces:
   clearance, routed-slot readiness, castellation intent, aspect ratio, and
   cross-source drill-table consistency.
 - KiCad board context: net intent, high-speed and high-current heuristics,
-  reference-plane and return-path coverage, gold fingers, ESD proximity,
+  reference-plane and return-path coverage, RF via-fence review, gold fingers, ESD proximity,
   panelization clearance, component edge/hole clearance, dense-pad escape, and
   config-driven stackup/net-class constraints for material, surface finish,
   laminate Dk/Df/Tg, soldermask process/color, IPC/fabricator class,
   fabrication capability thresholds, width, clearance, current, voltage,
   reference-plane, layer-count, via-count, approximate length/skew,
-  differential-pair spacing, and impedance-control target/tolerance intent.
+  differential-pair spacing, differential-pair return/guard proximity, and
+  impedance-control target/tolerance intent.
 - Assembly and test readiness: profile-driven component edge/hole clearance,
   connector rework spacing, fiducials, tooling holes, mouse bites, testpoint
   coverage/accessibility including IPC-D-356 access-side, soldermask, and

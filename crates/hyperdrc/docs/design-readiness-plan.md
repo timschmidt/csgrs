@@ -161,6 +161,9 @@ sidecar input where possible.
   KiCad copper sides are farther apart than the configured review threshold.
 - `differential-pair-via-symmetry-readiness`: warn when one side of a likely
   differential pair has an asymmetric via count or via layer set.
+- `differential-pair-return-readiness`: warn when likely differential-pair
+  copper has no parsed same-layer ground copper inside the guard/return review
+  distance.
 - `reference-plane-readiness`: warn when likely high-speed KiCad nets are
   present without a parsed ground zone on selected copper layers.
 - `reference-plane-void-readiness`: warn when likely high-speed KiCad copper
@@ -190,6 +193,8 @@ sidecar input where possible.
   nets have no parsed same-layer ground copper nearby.
 - `rf-keepout-readiness`: warn when likely RF or antenna KiCad nets are close
   to non-ground copper on the same selected layer.
+- `rf-via-fence-readiness`: warn when likely RF or antenna KiCad copper has no
+  parsed same-layer ground via inside the configured via-fence review distance.
 - `chassis-stitching-readiness`: warn when likely chassis or shield KiCad nets
   have no parsed ground stitching via nearby.
 - `gold-finger-readiness`: warn when likely gold-finger or edge-connector KiCad
@@ -502,9 +507,10 @@ example before it is considered production-ready.
   `differential_pair`, `differential_role`, pair spacing bounds, and pair-skew
   limits. Initial
   checks verify both sides are present, side layer sets agree, and same-layer
-  copper spacing is inside the configured range. Configured length/skew checks
-  use parsed segment bounding-box estimates; true routed length/skew extraction
-  is still future work.
+  copper spacing is inside the configured range. KiCad geometry checks also warn
+  when pair-side copper lacks nearby same-layer ground copper for guard/return
+  intent. Configured length/skew checks use parsed segment bounding-box
+  estimates; true routed length/skew extraction is still future work.
 
 ### Solder Mask, Paste, and Finish Checks
 
@@ -695,7 +701,8 @@ example before it is considered production-ready.
   neck-downs, pair-to-pair spacing, layer-change symmetry, and reference plane
   continuity. Initial KiCad checks infer common pair suffixes and warn when one
   side is missing, the pair sides occupy different selected copper layers, or
-  the nearest parsed pair-side spacing exceeds the configured review threshold.
+  the nearest parsed pair-side spacing exceeds the configured review threshold,
+  and when pair-side copper lacks nearby same-layer ground guard/return copper.
 - High-speed return paths: reference-plane void crossings, split-plane
   crossings, missing stitching vias at layer changes, and loop-area excursions.
   Initial KiCad checks warn on likely high-speed copper outside parsed
@@ -710,8 +717,9 @@ example before it is considered production-ready.
   traces, via fences, antenna keepouts, and copper-free regions under inductors
   or antennas. Initial KiCad checks warn when likely analog, RF, or sensor nets
   run close to likely noisy power, switching, motor, or high-speed nets; when
-  those sensitive nets lack nearby same-layer ground copper; and when likely RF
-  or antenna nets are close to non-ground copper.
+  those sensitive nets lack nearby same-layer ground copper; when likely RF or
+  antenna nets are close to non-ground copper; and when likely RF or antenna
+  copper lacks a nearby same-layer ground via fence.
 - ESD/safety: creepage and clearance by voltage class, slot barriers, spark-gap
   geometry, protective earth spacing, fuse/MOV keepouts, and high-voltage
   silkscreen warnings. Initial KiCad checks warn when likely high-voltage nets

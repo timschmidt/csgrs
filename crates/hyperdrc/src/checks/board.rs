@@ -769,6 +769,60 @@ pub fn differential_pair_via_symmetry_readiness(
     violations
 }
 
+/// Warn when likely differential-pair copper lacks nearby same-layer ground.
+///
+/// This is a guard/return-path readiness check, not a field solver. IPC-2221B
+/// treats conductor spacing and return-path planning as board-design concerns;
+/// here we simply require some parsed ground copper near each differential side
+/// so missing guard/coplanar/reference intent is visible before release.
+pub fn differential_pair_return_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    guard_distance: f64,
+) -> Vec<Violation> {
+    let features = selected_copper_features(board, selected_layers);
+    let ground_features = features
+        .iter()
+        .copied()
+        .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
+        .collect::<Vec<_>>();
+    let mut violations = Vec::new();
+
+    for feature in features {
+        let Some(net) = &feature.net else {
+            continue;
+        };
+        let Some((pair, side)) = differential_pair_key(net) else {
+            continue;
+        };
+
+        let has_guard = ground_features.iter().any(|ground| {
+            ground.layer == feature.layer && copper_features_touch(feature, ground, guard_distance)
+        });
+        if has_guard {
+            continue;
+        }
+
+        let side_label = match side {
+            DifferentialSide::Positive => "positive",
+            DifferentialSide::Negative => "negative",
+        };
+        violations.push(Violation::new(
+            "differential-pair-return-readiness",
+            Severity::Warning,
+            vec![feature.layer.clone()],
+            None,
+            Vec::new(),
+            vec![feature.location],
+            Some(format!(
+                "likely differential pair {pair} {side_label} side on net {net} has no parsed same-layer ground copper within {guard_distance:.6}; review guard, reference, and return-path intent"
+            )),
+        ));
+    }
+
+    violations
+}
+
 pub fn reference_plane_readiness(board: &BoardModel, selected_layers: &[String]) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
     let has_ground_zone = features.iter().any(|feature| {
@@ -1347,6 +1401,60 @@ pub fn rf_keepout_readiness(
                 )),
             ));
         }
+    }
+
+    violations
+}
+
+/// Warn when likely RF/antenna copper has no nearby ground via fence.
+///
+/// This is a deliberately conservative readiness heuristic: it does not try to
+/// solve an RF launch or antenna structure, but it does catch the common handoff
+/// gap where an RF trace/connector is present and there is no parsed ground-via
+/// stitching nearby for shielding or return-current review. This follows the
+/// same practical DFM/EMC framing as IPC-2221B board-design guidance: geometry
+/// gets reviewed as evidence of intent before production release.
+pub fn rf_via_fence_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    fence_distance: f64,
+) -> Vec<Violation> {
+    let features = selected_copper_features(board, selected_layers);
+    let ground_vias = features
+        .iter()
+        .copied()
+        .filter(|feature| feature.kind == CopperKind::Via)
+        .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
+        .collect::<Vec<_>>();
+    let mut violations = Vec::new();
+
+    for feature in features {
+        let Some(net) = &feature.net else {
+            continue;
+        };
+        if !looks_rf_or_antenna_net(net) || feature.kind == CopperKind::Via {
+            continue;
+        }
+
+        let has_fence = ground_vias.iter().any(|ground| {
+            ground.layer == feature.layer
+                && distance(feature.location, ground.location) <= fence_distance
+        });
+        if has_fence {
+            continue;
+        }
+
+        violations.push(Violation::new(
+            "rf-via-fence-readiness",
+            Severity::Warning,
+            vec![feature.layer.clone()],
+            None,
+            Vec::new(),
+            vec![feature.location],
+            Some(format!(
+                "likely RF or antenna net {net} has no parsed same-layer ground via within {fence_distance:.6}; review via fence, coplanar ground, and launch shielding intent"
+            )),
+        ));
     }
 
     violations
@@ -2728,15 +2836,16 @@ mod tests {
         apply_ipc356_nets, board_edge_exposure, chassis_stitching_readiness,
         connector_return_path_readiness, controlled_impedance_readiness, copper_net_intent,
         copper_width_readiness, decoupling_proximity_readiness, differential_pair_readiness,
-        differential_pair_spacing_readiness, differential_pair_via_symmetry_readiness,
-        edge_copper_pullback_readiness, edge_stitching_readiness, esd_protection_readiness,
-        gold_finger_drill_keepout_readiness, gold_finger_edge_readiness, gold_finger_readiness,
-        gold_finger_spacing_readiness, high_current_neck_readiness, high_current_readiness,
-        high_speed_edge_readiness, high_voltage_edge_readiness, hot_component_spacing_readiness,
-        ipc356_coverage, ipc356_drill_diameter, net_spacing, orphaned_zone_readiness,
-        panelization_clearance, plane_clearance_readiness, power_plane_readiness,
-        power_via_array_readiness, reference_plane_readiness, reference_plane_void_readiness,
-        registration_tolerance, return_path_readiness, rf_keepout_readiness,
+        differential_pair_return_readiness, differential_pair_spacing_readiness,
+        differential_pair_via_symmetry_readiness, edge_copper_pullback_readiness,
+        edge_stitching_readiness, esd_protection_readiness, gold_finger_drill_keepout_readiness,
+        gold_finger_edge_readiness, gold_finger_readiness, gold_finger_spacing_readiness,
+        high_current_neck_readiness, high_current_readiness, high_speed_edge_readiness,
+        high_voltage_edge_readiness, hot_component_spacing_readiness, ipc356_coverage,
+        ipc356_drill_diameter, net_spacing, orphaned_zone_readiness, panelization_clearance,
+        plane_clearance_readiness, power_plane_readiness, power_via_array_readiness,
+        reference_plane_readiness, reference_plane_void_readiness, registration_tolerance,
+        return_path_readiness, rf_keepout_readiness, rf_via_fence_readiness,
         same_net_island_readiness, sensitive_net_spacing_readiness, sensitive_return_readiness,
         switch_node_keepout_readiness, teardrop_readiness, thermal_copper_area_readiness,
         thermal_mechanical_keepout_readiness, thermal_pad_via_readiness, thermal_relief_readiness,
@@ -4063,6 +4172,66 @@ mod tests {
     }
 
     #[test]
+    fn differential_pair_return_readiness_reports_pair_without_same_layer_ground_guard() {
+        let board = board_with_copper(vec![
+            copper_line("USB_D+", CopperKind::Segment, [0.0, 0.0], [1.0, 0.0], 0.10),
+            copper_line(
+                "USB_D-",
+                CopperKind::Segment,
+                [0.0, 0.20],
+                [1.0, 0.20],
+                0.10,
+            ),
+        ]);
+
+        let violations = differential_pair_return_readiness(&board, &[], 0.30);
+
+        assert_eq!(violations.len(), 2);
+        assert!(
+            violations
+                .iter()
+                .all(|violation| violation.check == "differential-pair-return-readiness")
+        );
+    }
+
+    #[test]
+    fn differential_pair_return_readiness_allows_guarded_or_unpaired_copper() {
+        let board = board_with_copper(vec![
+            copper_line("USB_D+", CopperKind::Segment, [0.0, 0.0], [1.0, 0.0], 0.10),
+            copper_line(
+                "USB_D-",
+                CopperKind::Segment,
+                [0.0, 0.20],
+                [1.0, 0.20],
+                0.10,
+            ),
+            copper_line("GND", CopperKind::Segment, [0.0, -0.20], [1.0, -0.20], 0.10),
+            copper_line("GND", CopperKind::Segment, [0.0, 0.40], [1.0, 0.40], 0.10),
+            copper_line("GPIO1", CopperKind::Segment, [2.0, 0.0], [3.0, 0.0], 0.10),
+        ]);
+
+        assert!(differential_pair_return_readiness(&board, &[], 0.30).is_empty());
+    }
+
+    #[test]
+    fn differential_pair_return_readiness_respects_selected_layers() {
+        let board = board_with_copper(vec![copper_line_on_layer(
+            "LVDS_CLK_P",
+            CopperKind::Segment,
+            "B.Cu",
+            [0.0, 0.0],
+            [1.0, 0.0],
+            0.10,
+        )]);
+
+        assert!(differential_pair_return_readiness(&board, &["F.Cu".to_string()], 0.30).is_empty());
+        assert_eq!(
+            differential_pair_return_readiness(&board, &["B.Cu".to_string()], 0.30).len(),
+            1
+        );
+    }
+
+    #[test]
     fn reference_plane_readiness_reports_high_speed_without_ground_zone() {
         let board = board_with_copper(vec![copper_line(
             "USB_D+",
@@ -4745,6 +4914,51 @@ mod tests {
         assert!(rf_keepout_readiness(&board, 0.60, &["F.Cu".to_string()], 1.0e-9).is_empty());
         assert_eq!(
             rf_keepout_readiness(&board, 0.60, &["B.Cu".to_string()], 1.0e-9).len(),
+            1
+        );
+    }
+
+    #[test]
+    fn rf_via_fence_readiness_reports_rf_copper_without_nearby_ground_via() {
+        let board = board_with_copper(vec![copper_line(
+            "RF_ANT",
+            CopperKind::Segment,
+            [0.0, 0.0],
+            [1.0, 0.0],
+            0.10,
+        )]);
+
+        let violations = rf_via_fence_readiness(&board, &[], 0.60);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "rf-via-fence-readiness");
+    }
+
+    #[test]
+    fn rf_via_fence_readiness_allows_nearby_ground_via_or_non_rf_copper() {
+        let board = board_with_copper(vec![
+            copper_line("RF_ANT", CopperKind::Segment, [0.0, 0.0], [1.0, 0.0], 0.10),
+            copper_disc("GND", CopperKind::Via, [0.2, 0.2], 0.12),
+            copper_line("GPIO1", CopperKind::Segment, [3.0, 0.0], [4.0, 0.0], 0.10),
+        ]);
+
+        assert!(rf_via_fence_readiness(&board, &[], 0.60).is_empty());
+    }
+
+    #[test]
+    fn rf_via_fence_readiness_respects_selected_layers() {
+        let board = board_with_copper(vec![copper_line_on_layer(
+            "RF_FEED",
+            CopperKind::Segment,
+            "B.Cu",
+            [0.0, 0.0],
+            [1.0, 0.0],
+            0.10,
+        )]);
+
+        assert!(rf_via_fence_readiness(&board, &["F.Cu".to_string()], 0.60).is_empty());
+        assert_eq!(
+            rf_via_fence_readiness(&board, &["B.Cu".to_string()], 0.60).len(),
             1
         );
     }

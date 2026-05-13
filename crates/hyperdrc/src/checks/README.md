@@ -134,6 +134,7 @@ panel features:
 - `differential-pair-readiness`
 - `differential-pair-spacing-readiness`
 - `differential-pair-via-symmetry-readiness`
+- `differential-pair-return-readiness`
 - `reference-plane-readiness`
 - `reference-plane-void-readiness`
 - `orphaned-zone-readiness`
@@ -148,6 +149,7 @@ panel features:
 - `sensitive-net-spacing-readiness`
 - `sensitive-return-readiness`
 - `rf-keepout-readiness`
+- `rf-via-fence-readiness`
 - `chassis-stitching-readiness`
 - `gold-finger-readiness`
 - `gold-finger-edge-readiness`
@@ -177,7 +179,8 @@ Board checks use the parsed KiCad model and sidecars. They can reason about
 same-net versus different-net copper, nearby IPC-D-356 test records,
 gold-finger edge, spacing, and drill keepout risk, connector return-path
 signals, power decoupling proximity, ESD protection proximity, switching-node
-keepout risk, thermal copper-area support, hot-component spacing,
+keepout risk, differential-pair return/guard proximity, RF via-fence proximity,
+thermal copper-area support, hot-component spacing,
 thermal/mechanical hole keepouts, likely thermal-pad via coverage, and panel
 geometry that is not visible from a single Gerber layer alone.
 

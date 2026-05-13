@@ -129,15 +129,16 @@ drills, outlines, zones, nets, and sidecars:
   layer filtering, and trace-distance fallback behavior.
 - High-speed, differential-pair, reference-plane, return-path, and stitching
   tests use net-name heuristics plus nearby ground copper/vias to check signal
-  integrity readiness.
+  integrity readiness, including pair-side return/guard proximity.
 - High-current, power-plane, power-via-array, thermal-via, thermal-pad, and
   thermal-copper tests verify power and heat-spreading heuristics around zones,
   vias, and large pads.
 - Gold-finger tests verify finger identification, edge proximity, spacing,
   via-on-finger risk, and drill keepout.
-- Edge, high-voltage, edge-copper pullback, chassis, RF, sensitive-net, ESD,
-  switch-node, connector, decoupling, and hot-component tests verify proximity
-  heuristics using board outlines, same-layer ground, or protection copper.
+- Edge, high-voltage, edge-copper pullback, chassis, RF, RF via-fence,
+  sensitive-net, ESD, switch-node, connector, decoupling, and hot-component
+  tests verify proximity heuristics using board outlines, same-layer ground,
+  ground vias, or protection copper.
 - Component, mechanical-hole, panelization, mouse-bite, tooling-hole, fiducial,
   local-fiducial, and dense-pad tests verify DFA/manufacturing geometry around
   pads, holes, panel graphics, and dense clusters.
