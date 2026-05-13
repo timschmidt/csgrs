@@ -282,7 +282,9 @@ When adding a new `hyperdrc` check:
    [`../app.rs`](../app.rs).
 4. Add rule thresholds to [`../config.rs`](../config.rs) if the check needs
    tunable values.
-5. Update the root [README](../../README.md) and the design readiness plan in
-   [`../../docs`](../../docs/README.md).
+5. Update this README, the root [README](../../README.md), the design readiness
+   plan in [`../../docs`](../../docs/README.md), and the
+   [test guide](../../docs/testing.md) so check ownership and coverage stay
+   discoverable.
 
 Return to the [source tree README](../README.md).

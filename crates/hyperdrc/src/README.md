@@ -94,5 +94,7 @@ application orchestration, while subfolders hold the larger semantic areas.
 
 Most `hyperdrc` behavior is covered by focused unit tests in the module that
 owns the behavior. Parser fuzz/property regressions are persisted under
-[`../proptest-regressions`](../proptest-regressions/README.md). The root
-[README](../README.md) covers user-facing commands and repository navigation.
+[`../proptest-regressions`](../proptest-regressions/README.md). The
+[test guide](../docs/testing.md) explains what each suite looks for and how the
+tests exercise the crate. The root [README](../README.md) covers user-facing
+commands and repository navigation.

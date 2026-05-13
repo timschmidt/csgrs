@@ -130,108 +130,35 @@ Rule thresholds can be placed in a JSON config file and loaded with `--config`.
 CLI flags override config values. See
 [examples/hyperdrc-config.json](examples/hyperdrc-config.json).
 
-## Default Readiness Checks
+## Readiness Coverage
 
-The default suite includes geometry, drill, sidecar, package, and provenance
-checks:
+The default suite covers the main `hyperdrc` readiness surfaces:
 
-- `mask-island-keepout`, `copper-overlap`, `board-edge-clearance`,
-  `board-outline-sanity`, `board-outline-fragments`,
-  `board-outline-self-intersection-readiness`, `board-outline-notch-readiness`,
-  `board-outline-duplicate-readiness`, `board-outline-nesting-readiness`,
-  `board-outline-cutout-clearance`,
-  `paste-overhang`,
-  `paste-aperture-coverage`, `paste-aperture-ratio`,
-  `thermal-pad-paste-windowpane-readiness`,
-  `stencil-area-ratio-readiness`,
-  `paste-aperture-aspect-ratio-readiness`, `tombstone-paste-imbalance-readiness`,
-  `paste-via-exposure-readiness`,
-  `minimum-paste-aperture`, `paste-aperture-spacing`,
-  `paste-mask-alignment`, `exposed-copper`, `solder-mask-opening-coverage`,
-  `solder-mask-expansion`, `solder-mask-overlap-clearance`,
-  `solder-mask-board-edge-clearance`, `silkscreen-overlap`, `silkscreen-clearance`,
-  `silkscreen-board-edge-clearance`, `silkscreen-min-width`,
-  `min-copper-neck`, `acid-trap`, `layer-sanity`, `copper-balance`,
-  `mechanical-layer-geometry`, `solder-mask-sliver`, and
-  `minimum-mask-opening`, and `solder-mask-opening-spacing`.
-- `annular-ring`, `annular-ring-tolerance`, `plating-intent`, `routed-slot-readiness`,
-  `castellation-intent`, `castellation-hole-readiness`,
-  `drill-copper-clearance`, `via-in-pad-readiness`,
-  `board-outline-drill-clearance`, `drill-spacing`, `drill-aspect-ratio`,
-  `drill-table-consistency`, `copper-width-readiness`, `copper-net-intent`,
-  `teardrop-readiness`, `thermal-relief-readiness`, `plane-clearance-readiness`,
-  `board-edge-exposure`, `high-speed-edge-readiness`,
-  `edge-copper-pullback-readiness`,
-  `high-voltage-edge-readiness`,
-  `controlled-impedance-readiness`,
-  `edge-stitching-readiness`, `differential-pair-readiness`,
-  `differential-pair-spacing-readiness`,
-  `differential-pair-via-symmetry-readiness`,
-  `reference-plane-readiness`,
-  `reference-plane-void-readiness`, `orphaned-zone-readiness`,
-  `same-net-island-readiness`, `return-path-readiness`,
-  `high-current-readiness`, `power-via-array-readiness`, `thermal-via-readiness`,
-  `power-plane-readiness`, `high-current-neck-readiness`, `voltage-clearance-readiness`,
-  `sensitive-net-spacing-readiness`, `sensitive-return-readiness`,
-  `rf-keepout-readiness`, `chassis-stitching-readiness`, `gold-finger-readiness`,
-  `gold-finger-edge-readiness`, `gold-finger-spacing-readiness`,
-  `gold-finger-drill-keepout-readiness`,
-  `component-edge-clearance-readiness`, `component-hole-clearance-readiness`,
-  `connector-rework-clearance-readiness`, `pad-pair-asymmetry-readiness`,
-  `connector-return-path-readiness`,
-  `decoupling-proximity-readiness`, `esd-protection-readiness`,
-  `switch-node-keepout-readiness`,
-  `testpoint-coverage-readiness`, `testpoint-accessibility-readiness`,
-  `tooling-hole-readiness`, `mouse-bite-readiness`, `fiducial-readiness`,
-  `local-fiducial-readiness`, `dense-pad-escape-readiness`,
-  `thermal-pad-via-readiness`, `thermal-copper-area-readiness`,
-  `hot-component-spacing-readiness`, `thermal-mechanical-keepout-readiness`,
-  `net-spacing`, `registration-tolerance`, and
-  `panelization-clearance`.
-- `excellon-readiness`, `file-manifest-readiness`, `ipc356-coverage`,
-  `ipc356-drill-diameter`, `production-artifact-readiness`.
-  `file-manifest-readiness` (now validating BOM/centroid/netlist/fab drawing/
-  assembly/readme/rout-drawing availability, optional declared copper-layer count,
-  KiCad-to-Gerber copper stack parity, odd copper stack counts, orphaned
-  companion layers, mixed project/revision/date tags, stale-looking package
-  filenames, and sidecars discovered from `--gerber-dir`).
-  `production-artifact-readiness` validates common BOM, centroid, netlist,
-  README, fabrication drawing, assembly drawing, and rout drawing sidecars for
-  required structure, BOM procurement metadata, BOM value/footprint coverage, BOM
-  lifecycle/status review, broader lifecycle-risk vocabulary, distinct approved
-  alternate coverage, optional unit-cost/price sanity, procurement consistency
-  across manufacturer/supplier/lifecycle fields, placeholder release metadata,
-  semicolon- and whitespace-delimited BOM/placement tables, quantity/refdes
-  agreement, zero-quantity population intent, assembly/build variant handoff,
-  grouped reference expansion,
-  DNP/DNI parity handling, BOM/centroid
-  assembly-side, value, footprint, and rotation parity, unusual reference
-  designators, duplicate reference designators, conflicting part metadata,
-  polarity/MSL/component-height handoff metadata, malformed placement
-  coordinates, unusually large placement coordinates, centroid/netlist
-  placeholder metadata, out-of-range rotations, side values, duplicate placement
-  coordinates, conflicting centroid metadata, pin/net conflicts, repeated
-  netlist rows, one-pin net review, reference parity, DNP/DNI placement
-  conflicts, release/manufacturing notes, order-parameter intent, contradictory
-  fabrication, layer-count, assembly, coating, programming, and test-fixture
-  notes, panel/rout drawing parity, BOM/centroid double-sided assembly
-  handoff evidence, BOM-driven through-hole solder, BGA/CSP/LGA inspection, and
-  programmable-device handoff evidence, firmware traceability, programming
-  method, functional-test acceptance criteria, serialization/barcode handoff,
-  fabrication marking zones, packaging/ESD/moisture notes, surface-finish
-  compatibility notes for edge contacts, fine-pitch packages, press-fit, and
-  wire bonding, selective/wave solder and conformal-coating process notes, fab/assembly
-  drawing parity for special fabrication and assembly handoffs, preflight
-  evidence, release revision/date consistency, text/drawing role names, empty
-  sidecar tables, empty or
-  placeholder-sized drawings, and common sidecar extensions.
+- Layer geometry: copper overlap, edge clearance, mask and paste alignment,
+  silkscreen clearance, minimum feature width, acid traps, copper balance, and
+  board-outline sanity.
+- Drill and fabrication context: annular ring, drill spacing, drill-to-copper
+  clearance, routed-slot readiness, castellation intent, aspect ratio, and
+  cross-source drill-table consistency.
+- KiCad board context: net intent, high-speed and high-current heuristics,
+  reference-plane and return-path coverage, gold fingers, ESD proximity,
+  panelization clearance, component edge/hole clearance, and dense-pad escape.
+- Assembly and test readiness: fiducials, tooling holes, mouse bites,
+  testpoint coverage/accessibility, pad-pair asymmetry, and IPC-D-356 coverage.
+- Production package readiness: Gerber package completeness, sidecar discovery,
+  BOM/centroid/netlist structure, README release notes, fabrication and assembly
+  drawings, rout drawings, order-parameter consistency, and surface-finish
+  handoff notes.
+
+The check implementations and exact ownership are documented in
+[src/checks](src/checks/README.md). The roadmap and remaining gaps are tracked
+in [docs/design-readiness-plan.md](docs/design-readiness-plan.md).
 
 Important tunables include `--keepout`, `--clearance`, `--min-width`,
 `--min-mask-width`, `--acid-trap-angle`, `--annular-ring`,
 `--drill-clearance`, `--board-thickness`, `--max-drill-aspect-ratio`,
-`--min-paste-area-ratio`, `--max-paste-area-ratio`,
-`--stencil-thickness`, `--min-stencil-area-ratio`,
-`--max-copper-imbalance-ratio`, `--net-clearance`,
+`--min-paste-area-ratio`, `--max-paste-area-ratio`, `--stencil-thickness`,
+`--min-stencil-area-ratio`, `--max-copper-imbalance-ratio`, `--net-clearance`,
 `--registration-tolerance`, `--panel-clearance`, `--ipc356-tolerance`,
 `--min-area`, and `--max-layer-area`.
 
@@ -283,6 +210,8 @@ details for that part of the tree:
 - [src/kicad](src/kicad/README.md): KiCad board model, S-expression parsing,
   graphics parsing, and current parser scope.
 - [docs](docs/README.md): roadmap, design-readiness backlog, and visual assets.
+- [docs/testing.md](docs/testing.md): test-suite guide explaining what the
+  current tests look for and how they exercise `hyperdrc`.
 - [examples](examples/README.md): runnable configuration examples.
 - [benches](benches/README.md): benchmark and smoke-performance entry points.
 - [proptest-regressions](proptest-regressions/README.md): persisted fuzz and
