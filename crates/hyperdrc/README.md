@@ -103,19 +103,26 @@ The default suite includes geometry, drill, sidecar, package, and provenance
 checks:
 
 - `mask-island-keepout`, `copper-overlap`, `board-edge-clearance`,
-  `board-outline-sanity`, `paste-overhang`, `paste-aperture-coverage`,
-  `exposed-copper`, `solder-mask-opening-coverage`, `silkscreen-overlap`,
-  `silkscreen-min-width`, `min-copper-neck`, `acid-trap`, `layer-sanity`,
-  `copper-balance`, `mechanical-layer-geometry`, and `solder-mask-sliver`.
-- `annular-ring`, `drill-copper-clearance`, `drill-spacing`,
-  `drill-aspect-ratio`, `drill-table-consistency`, `copper-net-intent`,
-  `net-spacing`, `registration-tolerance`, and `panelization-clearance`.
+  `board-outline-sanity`, `board-outline-fragments`, `paste-overhang`,
+  `paste-aperture-coverage`, `paste-aperture-ratio`,
+  `minimum-paste-aperture`, `paste-mask-alignment`, `exposed-copper`,
+  `solder-mask-opening-coverage`, `solder-mask-overlap-clearance`,
+  `solder-mask-board-edge-clearance`, `silkscreen-overlap`,
+  `silkscreen-board-edge-clearance`, `silkscreen-min-width`,
+  `min-copper-neck`, `acid-trap`, `layer-sanity`, `copper-balance`,
+  `mechanical-layer-geometry`, `solder-mask-sliver`, and
+  `minimum-mask-opening`.
+- `annular-ring`, `plating-intent`, `drill-copper-clearance`,
+  `board-outline-drill-clearance`, `drill-spacing`, `drill-aspect-ratio`,
+  `drill-table-consistency`, `copper-net-intent`, `net-spacing`,
+  `registration-tolerance`, and `panelization-clearance`.
 - `ipc356-coverage`, `ipc356-drill-diameter`, and
   `file-manifest-readiness`.
 
 Important tunables include `--keepout`, `--clearance`, `--min-width`,
 `--min-mask-width`, `--acid-trap-angle`, `--annular-ring`,
 `--drill-clearance`, `--board-thickness`, `--max-drill-aspect-ratio`,
+`--min-paste-area-ratio`, `--max-paste-area-ratio`,
 `--max-copper-imbalance-ratio`, `--net-clearance`,
 `--registration-tolerance`, `--panel-clearance`, `--ipc356-tolerance`,
 `--min-area`, and `--max-layer-area`.

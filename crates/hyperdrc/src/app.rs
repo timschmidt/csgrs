@@ -28,6 +28,8 @@ pub fn run(cli: Cli) -> Result<()> {
             keepout: cli.keepout,
             clearance: cli.clearance,
             paste_tolerance: cli.paste_tolerance,
+            min_paste_area_ratio: cli.min_paste_area_ratio,
+            max_paste_area_ratio: cli.max_paste_area_ratio,
             min_width: cli.min_width,
             min_mask_width: cli.min_mask_width,
             acid_trap_angle: cli.acid_trap_angle,
@@ -230,6 +232,25 @@ fn run_checks(
                     }
                 }
             }
+            Check::BoardOutlineFragments => {
+                if let Some(board_index) = cli.board_outline {
+                    let board = &layers[board_index];
+                    violations.extend(checks::board_outline_fragments(
+                        &layer_name(board),
+                        &board.sketch,
+                        rules.min_area,
+                    ));
+                }
+                for board in boards {
+                    if let Some(outline) = &board.board_outline {
+                        violations.extend(checks::board_outline_fragments(
+                            "KiCad Edge.Cuts",
+                            outline,
+                            rules.min_area,
+                        ));
+                    }
+                }
+            }
             Check::PasteOverhang => {
                 for (paste_index, copper_index) in
                     explicit_layer_pairs(layers.len(), &cli.paste_pairs)?
@@ -259,6 +280,58 @@ fn run_checks(
                         &copper.sketch,
                         rules.min_area,
                     ));
+                }
+            }
+            Check::PasteApertureRatio => {
+                for (paste_index, copper_index) in
+                    explicit_layer_pairs(layers.len(), &cli.paste_pairs)?
+                {
+                    let paste = &layers[paste_index];
+                    let copper = &layers[copper_index];
+                    violations.extend(checks::paste_aperture_ratio(
+                        &layer_name(paste),
+                        &paste.sketch,
+                        &layer_name(copper),
+                        &copper.sketch,
+                        rules.min_paste_area_ratio,
+                        rules.max_paste_area_ratio,
+                        rules.min_area,
+                    ));
+                }
+            }
+            Check::MinimumPasteAperture => {
+                let paste_layers = explicit_layer_pairs(layers.len(), &cli.paste_pairs)?
+                    .into_iter()
+                    .map(|(paste_index, _)| paste_index)
+                    .collect::<std::collections::BTreeSet<_>>();
+                for paste_index in paste_layers {
+                    let paste = &layers[paste_index];
+                    violations.extend(checks::minimum_paste_aperture(
+                        &layer_name(paste),
+                        &paste.sketch,
+                        rules.min_width,
+                        rules.min_area,
+                    ));
+                }
+            }
+            Check::PasteMaskAlignment => {
+                let paste_pairs = explicit_layer_pairs(layers.len(), &cli.paste_pairs)?;
+                let mask_pairs = explicit_layer_pairs(layers.len(), &cli.mask_pairs)?;
+                for (paste_index, paste_copper_index) in paste_pairs {
+                    for (mask_copper_index, mask_index) in &mask_pairs {
+                        if paste_copper_index != *mask_copper_index {
+                            continue;
+                        }
+                        let paste = &layers[paste_index];
+                        let mask = &layers[*mask_index];
+                        violations.extend(checks::paste_mask_alignment(
+                            &layer_name(paste),
+                            &paste.sketch,
+                            &layer_name(mask),
+                            &mask.sketch,
+                            rules.min_area,
+                        ));
+                    }
                 }
             }
             Check::ExposedCopper => {
@@ -291,6 +364,38 @@ fn run_checks(
                     ));
                 }
             }
+            Check::SolderMaskOverlapClearance => {
+                for (copper_index, mask_index) in
+                    explicit_layer_pairs(layers.len(), &cli.mask_pairs)?
+                {
+                    let copper = &layers[copper_index];
+                    let mask = &layers[mask_index];
+                    violations.extend(checks::solder_mask_overlap_clearance(
+                        &layer_name(copper),
+                        &copper.sketch,
+                        &layer_name(mask),
+                        &mask.sketch,
+                        rules.clearance,
+                        rules.min_area,
+                    ));
+                }
+            }
+            Check::SolderMaskBoardEdgeClearance => {
+                if let Some(board_index) = cli.board_outline {
+                    let board = &layers[board_index];
+                    for mask_index in &cli.mask_layers {
+                        let mask = &layers[*mask_index];
+                        violations.extend(checks::solder_mask_board_edge_clearance(
+                            &layer_name(mask),
+                            &mask.sketch,
+                            &layer_name(board),
+                            &board.sketch,
+                            rules.clearance,
+                            rules.min_area,
+                        ));
+                    }
+                }
+            }
             Check::SilkscreenOverlap => {
                 for (silk_index, blocker_index) in
                     explicit_layer_pairs(layers.len(), &cli.silk_pairs)?
@@ -304,6 +409,22 @@ fn run_checks(
                         &blocker.sketch,
                         rules.min_area,
                     ));
+                }
+            }
+            Check::SilkscreenBoardEdgeClearance => {
+                if let Some(board_index) = cli.board_outline {
+                    let board = &layers[board_index];
+                    for silk_index in &cli.silk_layers {
+                        let silk = &layers[*silk_index];
+                        violations.extend(checks::silkscreen_board_edge_clearance(
+                            &layer_name(silk),
+                            &silk.sketch,
+                            &layer_name(board),
+                            &board.sketch,
+                            rules.clearance,
+                            rules.min_area,
+                        ));
+                    }
                 }
             }
             Check::SilkscreenMinWidth => {
@@ -426,12 +547,32 @@ fn run_checks(
                     ));
                 }
             }
+            Check::MinimumMaskOpening => {
+                for mask_index in &cli.mask_layers {
+                    let mask = &layers[*mask_index];
+                    violations.extend(checks::minimum_mask_opening(
+                        &layer_name(mask),
+                        &mask.sketch,
+                        rules.min_mask_width,
+                        rules.min_area,
+                    ));
+                }
+            }
             Check::AnnularRing => {
                 for board in boards {
                     violations.extend(checks::annular_ring(
                         board,
                         rules.annular_ring,
                         kicad_copper_layers,
+                    ));
+                }
+            }
+            Check::PlatingIntent => {
+                for board in boards {
+                    violations.extend(checks::plating_intent(
+                        board,
+                        kicad_copper_layers,
+                        rules.ipc356_tolerance,
                     ));
                 }
             }
@@ -444,6 +585,21 @@ fn run_checks(
                         kicad_copper_layers,
                         rules.min_area,
                     ));
+                }
+            }
+            Check::BoardOutlineDrillClearance => {
+                for board in boards {
+                    if let Some(outline) = &board.board_outline {
+                        violations.extend(checks::board_outline_drill_clearance(
+                            &format!("{} drills", board.source),
+                            "KiCad Edge.Cuts",
+                            outline,
+                            &board.drills,
+                            excellon_drills,
+                            rules.drill_clearance,
+                            rules.min_area,
+                        ));
+                    }
                 }
             }
             Check::DrillSpacing => {

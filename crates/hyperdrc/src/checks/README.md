@@ -28,17 +28,25 @@ by the data model they need.
 - `board-edge-clearance`
 - `paste-overhang`
 - `paste-aperture-coverage`
+- `paste-aperture-ratio`
+- `minimum-paste-aperture`
+- `paste-mask-alignment`
 - `exposed-copper`
 - `solder-mask-opening-coverage`
+- `solder-mask-overlap-clearance`
+- `solder-mask-board-edge-clearance`
 - `silkscreen-overlap`
+- `silkscreen-board-edge-clearance`
 - `silkscreen-min-width`
 - `minimum-copper-neck-width`
 - `solder-mask-sliver`
+- `minimum-mask-opening`
 - `acid-trap-candidate`
 - `layer-sanity`
 - `copper-balance-readiness`
 - `mechanical-layer-geometry`
 - `board-outline-sanity`
+- `board-outline-fragments`
 
 These checks mostly work by combining `csgrs` boolean operations with small
 role-specific heuristics. Morphological checks use an erode-and-grow pattern to
@@ -49,7 +57,9 @@ detect thin copper, mask, and silkscreen features.
 [`board.rs`](board.rs) owns:
 
 - `annular-ring-readiness`
+- `plating-intent`
 - `drill-to-copper-clearance`
+- `board-outline-drill-clearance`
 - `drill-spacing`
 - `drill-aspect-ratio`
 - `drill-table-consistency`

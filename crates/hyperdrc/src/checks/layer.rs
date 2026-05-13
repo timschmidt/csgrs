@@ -105,6 +105,48 @@ pub fn board_edge_clearance(
     )]
 }
 
+pub fn silkscreen_board_edge_clearance(
+    silk_name: &str,
+    silk: &PcbSketch,
+    board_name: &str,
+    board: &PcbSketch,
+    clearance: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    let allowed = board.offset(-clearance);
+    let intrusion = silk.difference(&allowed);
+    shapes_violation(
+        "silkscreen-to-board-edge-clearance",
+        Severity::Warning,
+        vec![silk_name.to_string(), board_name.to_string()],
+        intrusion,
+        min_area,
+        format!("silkscreen falls outside the board outline eroded by clearance {clearance}"),
+    )
+}
+
+pub fn solder_mask_board_edge_clearance(
+    mask_name: &str,
+    mask: &PcbSketch,
+    board_name: &str,
+    board: &PcbSketch,
+    clearance: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    let allowed = board.offset(-clearance);
+    let intrusion = mask.difference(&allowed);
+    shapes_violation(
+        "solder-mask-to-board-edge-clearance",
+        Severity::Warning,
+        vec![mask_name.to_string(), board_name.to_string()],
+        intrusion,
+        min_area,
+        format!(
+            "solder mask opening falls outside the board outline eroded by clearance {clearance}"
+        ),
+    )
+}
+
 pub fn paste_overhang(
     paste_name: &str,
     paste: &PcbSketch,
@@ -140,6 +182,135 @@ pub fn paste_aperture_coverage(
         uncovered_copper,
         min_area,
         "copper is not covered by a paste aperture".to_string(),
+    )
+}
+
+pub fn solder_mask_overlap_clearance(
+    copper_name: &str,
+    copper: &PcbSketch,
+    mask_name: &str,
+    mask: &PcbSketch,
+    clearance: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    let mask_clearance_band = mask.offset(clearance).difference(mask);
+    let vulnerable_copper = copper.intersection(&mask_clearance_band);
+    shapes_violation(
+        "solder-mask-overlap-clearance",
+        Severity::Warning,
+        vec![copper_name.to_string(), mask_name.to_string()],
+        vulnerable_copper,
+        min_area,
+        format!("covered copper is within mask opening clearance {clearance}"),
+    )
+}
+
+pub fn paste_aperture_ratio(
+    paste_name: &str,
+    paste: &PcbSketch,
+    copper_name: &str,
+    copper: &PcbSketch,
+    min_ratio: f64,
+    max_ratio: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    let mut violations = Vec::new();
+    let paste_polygons = paste.to_multipolygon().0;
+
+    for (island_index, copper_polygon) in copper.to_multipolygon().0.into_iter().enumerate() {
+        let copper_area = copper_polygon.unsigned_area();
+        if copper_area <= min_area {
+            continue;
+        }
+
+        let island = polygon_to_sketch(copper_polygon, Some(metadata(copper_name)));
+        let paste_area = paste_polygons
+            .iter()
+            .filter(|paste_polygon| {
+                let paste_island =
+                    polygon_to_sketch((*paste_polygon).clone(), Some(metadata(paste_name)));
+                island
+                    .intersection(&paste_island)
+                    .to_multipolygon()
+                    .unsigned_area()
+                    > min_area
+            })
+            .map(Polygon::unsigned_area)
+            .sum::<f64>();
+        let ratio = paste_area / copper_area;
+
+        if ratio >= min_ratio && ratio <= max_ratio {
+            continue;
+        }
+
+        violations.push(Violation::new(
+            "paste-aperture-ratio",
+            Severity::Warning,
+            vec![paste_name.to_string(), copper_name.to_string()],
+            Some(island_index),
+            multipolygon_to_shapes(&island.to_multipolygon(), min_area),
+            Vec::new(),
+            Some(format!(
+                "paste-to-copper area ratio {ratio:.3} is outside configured range {min_ratio:.3}..{max_ratio:.3}"
+            )),
+        ));
+    }
+
+    violations
+}
+
+pub fn minimum_paste_aperture(
+    paste_name: &str,
+    paste: &PcbSketch,
+    min_width: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    let mut violations = Vec::new();
+
+    for (island_index, polygon) in paste.to_multipolygon().0.into_iter().enumerate() {
+        let Some(bounds) = polygon.bounding_rect() else {
+            continue;
+        };
+        let width = bounds.max().x - bounds.min().x;
+        let height = bounds.max().y - bounds.min().y;
+        let smallest_dimension = width.min(height);
+
+        if smallest_dimension >= min_width || polygon.unsigned_area() <= min_area {
+            continue;
+        }
+
+        let aperture = polygon_to_sketch(polygon, Some(metadata(paste_name)));
+        violations.push(Violation::new(
+            "minimum-paste-aperture",
+            Severity::Warning,
+            vec![paste_name.to_string()],
+            Some(island_index),
+            multipolygon_to_shapes(&aperture.to_multipolygon(), min_area),
+            Vec::new(),
+            Some(format!(
+                "paste aperture minimum dimension {smallest_dimension:.6} is below {min_width:.6}"
+            )),
+        ));
+    }
+
+    violations
+}
+
+pub fn paste_mask_alignment(
+    paste_name: &str,
+    paste: &PcbSketch,
+    mask_name: &str,
+    mask: &PcbSketch,
+    min_area: f64,
+) -> Vec<Violation> {
+    let outside_mask_opening = paste.difference(mask);
+    shapes_violation(
+        "paste-mask-alignment",
+        Severity::Warning,
+        vec![paste_name.to_string(), mask_name.to_string()],
+        outside_mask_opening,
+        min_area,
+        "paste aperture extends outside the paired solder mask opening".to_string(),
     )
 }
 
@@ -308,6 +479,43 @@ pub fn solder_mask_sliver(
         min_area,
         format!("solder mask geometry is removed by opening with width {min_width}"),
     )
+}
+
+pub fn minimum_mask_opening(
+    mask_name: &str,
+    mask: &PcbSketch,
+    min_opening: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    let mut violations = Vec::new();
+
+    for (island_index, polygon) in mask.to_multipolygon().0.into_iter().enumerate() {
+        let Some(bounds) = polygon.bounding_rect() else {
+            continue;
+        };
+        let width = bounds.max().x - bounds.min().x;
+        let height = bounds.max().y - bounds.min().y;
+        let smallest_dimension = width.min(height);
+
+        if smallest_dimension >= min_opening || polygon.unsigned_area() <= min_area {
+            continue;
+        }
+
+        let opening = polygon_to_sketch(polygon, Some(metadata(mask_name)));
+        violations.push(Violation::new(
+            "minimum-mask-opening",
+            Severity::Warning,
+            vec![mask_name.to_string()],
+            Some(island_index),
+            multipolygon_to_shapes(&opening.to_multipolygon(), min_area),
+            Vec::new(),
+            Some(format!(
+                "solder mask opening minimum dimension {smallest_dimension:.6} is below {min_opening:.6}"
+            )),
+        ));
+    }
+
+    violations
 }
 
 pub fn acid_trap_candidates(
@@ -483,6 +691,27 @@ pub fn board_outline_sanity(
     )]
 }
 
+pub fn board_outline_fragments(
+    layer_name: &str,
+    outline: &PcbSketch,
+    min_area: f64,
+) -> Vec<Violation> {
+    let shapes = multipolygon_to_shapes(&outline.to_multipolygon(), min_area);
+    if shapes.len() <= 1 {
+        return Vec::new();
+    }
+
+    vec![Violation::new(
+        "board-outline-fragments",
+        Severity::Warning,
+        vec![layer_name.to_string()],
+        None,
+        shapes,
+        Vec::new(),
+        Some("board outline parsed to multiple disconnected regions".to_string()),
+    )]
+}
+
 fn intersection_violation(
     spec: PairCheck<'_>,
     left_name: &str,
@@ -607,10 +836,13 @@ mod tests {
     use geo::{Coord, LineString, Polygon};
 
     use super::{
-        acid_trap_candidates, board_edge_clearance, board_outline_sanity, copper_balance,
-        copper_overlap, exposed_copper, layer_sanity, mask_island_keepout,
-        mechanical_layer_geometry, min_copper_neck_width, paste_aperture_coverage, paste_overhang,
-        silkscreen_min_width, silkscreen_overlap, solder_mask_opening_coverage, solder_mask_sliver,
+        acid_trap_candidates, board_edge_clearance, board_outline_fragments, board_outline_sanity,
+        copper_balance, copper_overlap, exposed_copper, layer_sanity, mask_island_keepout,
+        mechanical_layer_geometry, min_copper_neck_width, minimum_mask_opening,
+        minimum_paste_aperture, paste_aperture_coverage, paste_aperture_ratio,
+        paste_mask_alignment, paste_overhang, silkscreen_board_edge_clearance,
+        silkscreen_min_width, silkscreen_overlap, solder_mask_board_edge_clearance,
+        solder_mask_opening_coverage, solder_mask_overlap_clearance, solder_mask_sliver,
     };
     use crate::LayerMetadata;
     use crate::geometry::{empty_sketch, line_polygon, polygons_to_sketch};
@@ -707,6 +939,51 @@ mod tests {
     }
 
     #[test]
+    fn silkscreen_board_edge_clearance_reports_legend_near_edge() {
+        let board = sketch("edge", vec![square(0.0, 0.0, 10.0, 10.0)]);
+        let silk = sketch("silk", vec![square(0.1, 0.1, 1.0, 1.0)]);
+
+        let violations =
+            silkscreen_board_edge_clearance("silk", &silk, "edge", &board, 0.25, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "silkscreen-to-board-edge-clearance");
+    }
+
+    #[test]
+    fn silkscreen_board_edge_clearance_allows_inset_legend() {
+        let board = sketch("edge", vec![square(0.0, 0.0, 10.0, 10.0)]);
+        let silk = sketch("silk", vec![square(1.0, 1.0, 2.0, 2.0)]);
+
+        assert!(
+            silkscreen_board_edge_clearance("silk", &silk, "edge", &board, 0.25, 1.0e-9).is_empty()
+        );
+    }
+
+    #[test]
+    fn solder_mask_board_edge_clearance_reports_opening_near_edge() {
+        let board = sketch("edge", vec![square(0.0, 0.0, 10.0, 10.0)]);
+        let mask = sketch("mask", vec![square(0.1, 0.1, 1.0, 1.0)]);
+
+        let violations =
+            solder_mask_board_edge_clearance("mask", &mask, "edge", &board, 0.25, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "solder-mask-to-board-edge-clearance");
+    }
+
+    #[test]
+    fn solder_mask_board_edge_clearance_allows_inset_opening() {
+        let board = sketch("edge", vec![square(0.0, 0.0, 10.0, 10.0)]);
+        let mask = sketch("mask", vec![square(1.0, 1.0, 2.0, 2.0)]);
+
+        assert!(
+            solder_mask_board_edge_clearance("mask", &mask, "edge", &board, 0.25, 1.0e-9)
+                .is_empty()
+        );
+    }
+
+    #[test]
     fn paste_overhang_reports_paste_outside_copper() {
         let copper = sketch("top", vec![square(0.0, 0.0, 1.0, 1.0)]);
         let paste = sketch("paste", vec![square(-0.1, 0.0, 1.0, 1.0)]);
@@ -741,12 +1018,94 @@ mod tests {
     }
 
     #[test]
+    fn paste_aperture_ratio_reports_under_and_over_pasted_islands() {
+        let copper = sketch(
+            "top",
+            vec![square(0.0, 0.0, 1.0, 1.0), square(2.0, 0.0, 3.0, 1.0)],
+        );
+        let paste = sketch(
+            "paste",
+            vec![square(0.0, 0.0, 0.25, 1.0), square(1.9, -0.1, 3.1, 1.1)],
+        );
+
+        let violations = paste_aperture_ratio("paste", &paste, "top", &copper, 0.5, 1.2, 1.0e-9);
+
+        assert_eq!(violations.len(), 2);
+        assert!(
+            violations
+                .iter()
+                .all(|violation| violation.check == "paste-aperture-ratio")
+        );
+    }
+
+    #[test]
+    fn paste_aperture_ratio_allows_configured_ratio_range() {
+        let copper = sketch("top", vec![square(0.0, 0.0, 1.0, 1.0)]);
+        let paste = sketch("paste", vec![square(0.0, 0.0, 0.8, 1.0)]);
+
+        assert!(paste_aperture_ratio("paste", &paste, "top", &copper, 0.5, 1.2, 1.0e-9).is_empty());
+    }
+
+    #[test]
+    fn minimum_paste_aperture_reports_too_narrow_apertures() {
+        let paste = sketch("paste", vec![square(0.0, 0.0, 0.05, 0.3)]);
+
+        let violations = minimum_paste_aperture("paste", &paste, 0.1, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "minimum-paste-aperture");
+    }
+
+    #[test]
+    fn minimum_paste_aperture_allows_large_apertures() {
+        let paste = sketch("paste", vec![square(0.0, 0.0, 0.2, 0.3)]);
+
+        assert!(minimum_paste_aperture("paste", &paste, 0.1, 1.0e-9).is_empty());
+    }
+
+    #[test]
+    fn paste_mask_alignment_reports_paste_outside_mask_opening() {
+        let paste = sketch("paste", vec![square(0.0, 0.0, 1.0, 1.0)]);
+        let mask = sketch("mask", vec![square(0.1, 0.0, 1.0, 1.0)]);
+
+        let violations = paste_mask_alignment("paste", &paste, "mask", &mask, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "paste-mask-alignment");
+    }
+
+    #[test]
+    fn paste_mask_alignment_allows_paste_inside_mask_opening() {
+        let paste = sketch("paste", vec![square(0.1, 0.1, 0.9, 0.9)]);
+        let mask = sketch("mask", vec![square(0.0, 0.0, 1.0, 1.0)]);
+
+        assert!(paste_mask_alignment("paste", &paste, "mask", &mask, 1.0e-9).is_empty());
+    }
+
+    #[test]
     fn solder_mask_sliver_reports_thin_mask_webs() {
         let mask = sketch("mask", vec![square(0.0, 0.0, 0.05, 2.0)]);
 
         let violations = solder_mask_sliver("mask", &mask, 0.1, 1.0e-9);
 
         assert_eq!(violations.len(), 1);
+    }
+
+    #[test]
+    fn minimum_mask_opening_reports_too_small_openings() {
+        let mask = sketch("mask", vec![square(0.0, 0.0, 0.05, 0.2)]);
+
+        let violations = minimum_mask_opening("mask", &mask, 0.1, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "minimum-mask-opening");
+    }
+
+    #[test]
+    fn minimum_mask_opening_allows_large_openings() {
+        let mask = sketch("mask", vec![square(0.0, 0.0, 0.2, 0.2)]);
+
+        assert!(minimum_mask_opening("mask", &mask, 0.1, 1.0e-9).is_empty());
     }
 
     #[test]
@@ -834,6 +1193,26 @@ mod tests {
     }
 
     #[test]
+    fn board_outline_fragments_reports_multiple_disconnected_regions() {
+        let outline = sketch(
+            "edge",
+            vec![square(0.0, 0.0, 1.0, 1.0), square(2.0, 0.0, 3.0, 1.0)],
+        );
+
+        let violations = board_outline_fragments("edge", &outline, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "board-outline-fragments");
+    }
+
+    #[test]
+    fn board_outline_fragments_allows_single_region() {
+        let outline = sketch("edge", vec![square(0.0, 0.0, 1.0, 1.0)]);
+
+        assert!(board_outline_fragments("edge", &outline, 1.0e-9).is_empty());
+    }
+
+    #[test]
     fn exposed_copper_reports_oversized_mask_opening_touching_neighbor() {
         let copper = sketch(
             "top",
@@ -870,6 +1249,40 @@ mod tests {
             solder_mask_opening_coverage("top", &copper, "mask", &mask_openings, 1.0e-9);
 
         assert!(violations.is_empty());
+    }
+
+    #[test]
+    fn solder_mask_overlap_clearance_reports_adjacent_covered_copper() {
+        let copper = sketch("top", vec![square(1.05, 0.0, 1.20, 1.0)]);
+        let mask_openings = sketch("mask", vec![square(0.0, 0.0, 1.0, 1.0)]);
+
+        let violations =
+            solder_mask_overlap_clearance("top", &copper, "mask", &mask_openings, 0.1, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "solder-mask-overlap-clearance");
+    }
+
+    #[test]
+    fn solder_mask_overlap_clearance_ignores_intentionally_open_copper() {
+        let copper = sketch("top", vec![square(0.1, 0.1, 0.9, 0.9)]);
+        let mask_openings = sketch("mask", vec![square(0.0, 0.0, 1.0, 1.0)]);
+
+        assert!(
+            solder_mask_overlap_clearance("top", &copper, "mask", &mask_openings, 0.1, 1.0e-9)
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn solder_mask_overlap_clearance_allows_distant_covered_copper() {
+        let copper = sketch("top", vec![square(1.2, 0.0, 1.4, 1.0)]);
+        let mask_openings = sketch("mask", vec![square(0.0, 0.0, 1.0, 1.0)]);
+
+        assert!(
+            solder_mask_overlap_clearance("top", &copper, "mask", &mask_openings, 0.1, 1.0e-9)
+                .is_empty()
+        );
     }
 
     #[test]
