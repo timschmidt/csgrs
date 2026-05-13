@@ -3305,35 +3305,13 @@ impl Computable {
                 // 1/(q*x) = (1/q)/x. Peeling the exact scale lets chains like
                 // negate(inverse(x * -7/8)) collapse every other step instead
                 // of building deep multiply/inverse/negate stacks.
-                let scale_sign = inverse_scale.sign();
-                let magnitude = if scale_sign == Sign::Minus {
-                    inverse_scale.neg()
-                } else {
-                    inverse_scale
-                };
-                let scaled_inverse = right.clone().inverse().multiply(Self::rational(magnitude));
-                return if scale_sign == Sign::Minus {
-                    scaled_inverse.negate()
-                } else {
-                    scaled_inverse
-                };
+                return right.clone().inverse().multiply_rational(inverse_scale);
             }
             if let Some(scale) = right.exact_rational()
                 && let Ok(inverse_scale) = scale.inverse()
                 && left.exact_sign().is_some_and(|sign| sign != Sign::NoSign)
             {
-                let scale_sign = inverse_scale.sign();
-                let magnitude = if scale_sign == Sign::Minus {
-                    inverse_scale.neg()
-                } else {
-                    inverse_scale
-                };
-                let scaled_inverse = left.clone().inverse().multiply(Self::rational(magnitude));
-                return if scale_sign == Sign::Minus {
-                    scaled_inverse.negate()
-                } else {
-                    scaled_inverse
-                };
+                return left.clone().inverse().multiply_rational(inverse_scale);
             }
         }
         if let Approximation::Inverse(child) = self.internal.as_ref()

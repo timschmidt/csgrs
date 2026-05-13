@@ -118,10 +118,10 @@ Low-level approximation kernels and deep expression-tree stress cases.
 | `computable_transcendentals/asinh_cached_p128` | 21.26 ns | 21.17 ns - 21.37 ns | Repeats a cached computable asinh approximation. |
 | `computable_transcendentals/acosh_cold_p128` | 9.287 us | 9.247 us - 9.332 us | Approximates a computable acosh expression. |
 | `computable_transcendentals/acosh_cached_p128` | 21.29 ns | 21.22 ns - 21.37 ns | Repeats a cached computable acosh approximation. |
-| `computable_transcendentals/atanh_cold_p128` | 206.18 ns | 141.40 ns - 334.88 ns | Approximates a computable atanh expression. |
+| `computable_transcendentals/atanh_cold_p128` | 183.60 ns | 93.65 ns - 361.67 ns | Approximates a computable atanh expression. |
 | `computable_transcendentals/atanh_cached_p128` | 20.94 ns | 20.88 ns - 21.00 ns | Repeats a cached computable atanh approximation. |
-| `computable_transcendentals/atanh_tiny_cold_p128` | 472.50 ns | 471.90 ns - 473.12 ns | Approximates atanh(1e-12), exercising the tiny-input series. |
-| `computable_transcendentals/atanh_near_one_cold_p128` | 2.798 us | 2.637 us - 3.112 us | Approximates atanh(0.999999), exercising the endpoint log transform. |
+| `computable_transcendentals/atanh_tiny_cold_p128` | 471.03 ns | 469.30 ns - 473.09 ns | Approximates atanh(1e-12), exercising the tiny-input series. |
+| `computable_transcendentals/atanh_near_one_cold_p128` | 3.012 us | 2.656 us - 3.714 us | Approximates atanh(0.999999), exercising the endpoint log transform. |
 | `computable_transcendentals/asinh_zero_cold_p128` | 37.07 ns | 35.58 ns - 38.75 ns | Approximates asinh(0) expression. |
 | `computable_transcendentals/atanh_zero_cold_p128` | 33.60 ns | 33.45 ns - 33.78 ns | Approximates atanh(0) expression. |
 | `computable_transcendentals/deep_add_chain_cold_p128` | 108.58 ns | 83.24 ns - 158.62 ns | Approximates a 5000-node addition chain. |
@@ -133,14 +133,14 @@ Low-level approximation kernels and deep expression-tree stress cases.
 | `computable_transcendentals/asymmetric_product_bad_order_cold_p128` | 906.02 ns | 870.56 ns - 963.80 ns | Approximates an asymmetric product order stress case. |
 | `computable_transcendentals/sqrt_scaled_square_chain_cold_p128` | 1.087 us | 1.077 us - 1.098 us | Approximates sqrt of a scaled-square chain. |
 | `computable_transcendentals/warmed_zero_product_cold_p128` | 450.93 ns | 449.70 ns - 452.45 ns | Approximates a product involving a warmed zero sum. |
-| `computable_transcendentals/inverse_scaled_product_chain_cold_p128` | 860.83 ns | 757.13 ns - 1.066 us | Approximates the inverse of a deep scaled product. |
+| `computable_transcendentals/inverse_scaled_product_chain_cold_p128` | 721.53 ns | 718.11 ns - 725.22 ns | Approximates the inverse of a deep scaled product. |
 | `computable_transcendentals/deep_inverse_pair_chain_cold_p128` | 87.23 ns | 86.96 ns - 87.62 ns | Approximates a chain of inverse(inverse(x)) pairs. |
 | `computable_transcendentals/deep_negated_square_chain_cold_p128` | 87.23 ns | 87.07 ns - 87.45 ns | Approximates repeated negate-square-sqrt transformations. |
 | `computable_transcendentals/deep_negative_one_product_chain_cold_p128` | 88.33 ns | 87.71 ns - 89.30 ns | Approximates repeated multiplication by -1. |
 | `computable_transcendentals/deep_half_product_chain_cold_p128` | 149.81 ns | 148.82 ns - 150.86 ns | Approximates repeated multiplication by 1/2. |
 | `computable_transcendentals/deep_half_square_chain_cold_p128` | 933.55 ns | 928.33 ns - 938.47 ns | Approximates repeated squaring after scaling by 1/2. |
 | `computable_transcendentals/deep_sqrt_square_chain_cold_p128` | 107.00 ns | 81.89 ns - 156.60 ns | Approximates repeated sqrt-square simplification. |
-| `computable_transcendentals/inverse_half_product_chain_cold_p128` | 467.26 ns | 464.75 ns - 469.62 ns | Approximates the inverse of a deep half-product chain. |
+| `computable_transcendentals/inverse_half_product_chain_cold_p128` | 471.47 ns | 468.72 ns - 475.41 ns | Approximates the inverse of a deep half-product chain. |
 
 <!-- END numerical_micro -->
 

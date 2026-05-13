@@ -1962,7 +1962,7 @@ impl Real {
                 // Rational reciprocals remain exact.
                 crate::trace_dispatch!("real", "inverse", "one");
                 return Ok(Self {
-                    rational: self.rational.clone().inverse()?,
+                    rational: self.rational.inverse()?,
                     class: One,
                     computable: None,
                     signal: None,

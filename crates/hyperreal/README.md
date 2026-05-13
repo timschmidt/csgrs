@@ -51,45 +51,49 @@ or matrix algebra, and it does not decide geometry topology. The stack is
 layered intentionally: scalar facts live here, object-level facts live in
 `realistic_blas`/geometry layers, and decision procedures live above them.
 
-## Problems This Stack Targets
+## Why Exact Reals?
 
-`hyperreal` and the surrounding stack are aimed at problems where ordinary
-floating-point arithmetic is fast but loses too much information too early.
-The target workloads tend to have many cheap structural decisions, a smaller
-number of expensive exact or high-precision decisions, and repeated kernels
-where cached structure can be reused.
+Most numerical programs live between two useful but incomplete models:
+integers and floating-point numbers.
 
-Representative problem families include:
+Integers are exact and composable. Addition, multiplication, equality, and
+ordering have clear mathematical meaning, and arbitrary-precision integer
+libraries can grow as needed. But integer arithmetic cannot directly represent
+division, roots, `pi`, logarithms, rotations, or most geometric coordinates
+without adding another representation around it.
 
-- robust geometric predicates such as orientation, sidedness, intersection, and
-  clearance tests
-- CAD-style geometric constraint solving, where many residuals share variables,
-  transforms, and symbolic subexpressions
-- PCB routing and autorouting constraints, where exact topology and clearance
-  decisions matter before approximate coordinates are useful
-- toolpath planning and manufacturing geometry, where small sign or ordering
-  errors can change topology
-- matrix/vector transform stacks with many affine, diagonal, triangular,
-  homogeneous, point, or direction-specialized cases
-- exact-rational or symbolic scalar workloads that should remain exact until a
-  caller explicitly asks for digits
+Rationals extend integers with exact division. They can represent values such
+as `1/10`, imported finite floats, and many determinant or dot-product results
+without rounding. Their cost is canonicalization: numerators and denominators
+grow, greatest-common-divisor reduction is not free, and naive repeated
+arithmetic can spend most of its time reducing intermediate fractions that
+later cancel.
 
-The implementation strategy is intentionally thin:
+Floats solve a different problem. They are fixed-size, fast, cache-friendly,
+and supported directly by hardware. They are excellent for simulation,
+graphics, statistics, and many approximation tasks. Their limitation is that
+they approximate almost every real value, and that approximation is part of the
+value. `0.1` is rounded, algebraic identities can fail after cancellation,
+near-zero signs can be artifacts of previous operations, and equality answers a
+machine-representation question rather than a mathematical one. In geometric
+or constraint code, one wrong sign can change topology: a point can move to the
+wrong side of a line, an intersection can appear or disappear, or a solver can
+choose the wrong branch.
 
-- Preserve exact rational, dyadic, symbolic, sign, zero, magnitude, and
-  approximation-cache facts at the scalar layer.
-- Carry inexpensive object facts at higher layers, such as known point/direction
-  `w`, affine form, diagonal or triangular matrix structure, retained transform
-  facts, shared determinant/cofactor work, and known coordinate zeros.
-- Reduce symbolically before approximating. Common forms such as exact
-  rationals, `pi`, `e`, roots, logarithms, and selected trig constants should
-  simplify or classify without entering a generic approximation kernel.
-- Defer approximation until a decision or output precision requires it, then
-  cache the result and any conservative sign or magnitude information.
-- Prefer deterministic fast paths guarded by cheap facts over speculative
-  probing inside dense loops.
-- Keep similar functions flat: a fast path should improve the family it targets
-  without making neighboring functions erratic.
+`hyperreal` takes a third route. It keeps exact and symbolic structure alive
+for as long as it is useful, then approximates only when a caller asks for a
+precision or a decision cannot be answered structurally. Exact rationals remain
+rationals. Dyadic values retain cheap denominator structure. Common constants
+and forms such as `pi`, `e`, selected roots, logarithms, and trig constants
+carry symbolic classes. Computable expression graphs provide lazy
+approximation when symbolic structure is no longer enough.
+
+This does not make real arithmetic free, and it is not a full computer algebra
+system. Some equality questions remain undecidable without more context, and
+some expressions eventually require refinement. The difference is that callers
+can ask better questions before rounding: known zero or nonzero, structural
+sign, exact-rational access, conservative magnitude, or bounded sign
+refinement. That is the niche this stack targets.
 
 ## Current State
 
@@ -333,10 +337,22 @@ representation identity is the question.
 
 ## Performance Notes
 
-Performance shortcuts are intentionally documented next to the code that uses
-them. The main techniques are:
+The implementation strategy is intentionally thin: preserve facts that are
+already known, reduce before approximating, and avoid hiding expensive scalar
+queries inside hot algebra loops. Performance shortcuts are documented next to
+the code that uses them, but the recurring rules are:
 
 - keep exact rational and dyadic values outside generic computable graphs
+- preserve exact rational, dyadic, symbolic, sign, zero, magnitude, and
+  approximation-cache facts at the scalar layer
+- carry object-level facts in higher layers, such as known point/direction `w`,
+  affine form, diagonal or triangular matrix structure, retained transform
+  facts, shared determinant/cofactor work, and known coordinate zeros
+- reduce symbolically before approximating; exact rationals, `pi`, `e`, roots,
+  logarithms, and selected trig constants should simplify or classify without
+  entering generic approximation kernels
+- defer approximation until a decision or output precision requires it, then
+  cache the result and conservative sign or magnitude information
 - build identity values through dedicated constructors and clone cached named
   constants instead of rebuilding them
 - preserve lightweight symbolic classes only where benchmarks show value
@@ -346,6 +362,10 @@ them. The main techniques are:
 - answer structural queries from certificates before refining approximations
 - use borrowed arithmetic to reduce expression-graph cloning in callers such as
   `realistic_blas` and `liminal`
+- prefer deterministic fast paths guarded by cheap facts over speculative
+  probing inside dense loops
+- keep similar functions flat: a fast path should improve the family it targets
+  without making neighboring functions erratic
 
 Benchmark suites:
 
