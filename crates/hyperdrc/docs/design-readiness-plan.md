@@ -211,8 +211,8 @@ sidecar input where possible.
     contain bottom-side outputs;
   - checks Gerber-recognized copper layer counts against KiCad-declared copper
     layer counts and optional order-declared layer-count metadata;
-  - warns when filenames appear to mix revision or generated-date tags across
-    Gerbers and package artifacts; and
+  - warns when filenames appear to mix project/job names, revision tags, or
+    generated-date tags across Gerbers and package artifacts; and
   - warns when package filenames include stale/archive tokens such as backup,
     old, previous, or obsolete.
 - `production-artifact-readiness`: validate common BOM, centroid, netlist,
@@ -470,17 +470,23 @@ example before it is considered production-ready.
   silkscreen obstruction. Initial KiCad/IPC-D-356 checks warn when likely
   critical nets have no matching IPC-D-356 test record.
 - BOM, centroid, netlist, README, and drawing readiness: required columns,
-  manufacturer/supplier metadata, value/footprint coverage, quantity/refdes
-  agreement, grouped reference expansion, DNP/DNI placement parity handling,
-  unusual reference designators, duplicate reference designators, conflicting
-  MPN value/footprint metadata, malformed placement coordinates,
+  manufacturer/supplier metadata, lifecycle/status review, approved alternate
+  coverage, value/footprint coverage, quantity/refdes agreement, grouped
+  reference expansion, DNP/DNI placement parity handling, unusual reference
+  designators, duplicate reference designators, conflicting MPN value/footprint
+  metadata, polarity/MSL/component-height handoff metadata, malformed placement coordinates,
   out-of-range rotations, invalid side values, duplicate centroid coordinates,
   duplicate pin-to-net assignments, repeated netlist rows, one-pin net review,
-  release revision notes, drawing role naming, text sidecar naming/extensions,
-  drawing file size, placeholder drawing detection, order-parameter intent,
-  contradictory order notes, assembly handoff evidence, release preflight
-  evidence, DNP/DNI placement conflicts, and package parity between purchase,
-  placement, and netlist files. Initial CSV/TSV, text, and
+  BOM/centroid assembly-side, value, footprint, and rotation parity, conflicting
+  centroid value/footprint/rotation metadata, release revision notes, drawing
+  role naming, text sidecar naming/extensions, drawing file size, placeholder
+  drawing detection, order-parameter intent, contradictory order notes including
+  conflicting finish, mask, thickness, copper-weight, and via-treatment values,
+  panel/rout drawing parity, double-sided assembly handoff evidence, release
+  preflight evidence, selective/wave solder and conformal-coating process notes,
+  fab/assembly drawing parity for special fabrication and assembly handoffs,
+  DNP/DNI placement conflicts, and package parity between purchase, placement,
+  and netlist files. Initial CSV/TSV, text, and
   path/metadata checks are implemented by
   `production-artifact-readiness`.
 - Fiducials: global/local count, symmetry, copper diameter, mask opening,
@@ -489,11 +495,17 @@ example before it is considered production-ready.
 - Panel fiducials/tooling: panel-level fiducials, tooling holes, rails, bad-board
   marks, breakaway tabs, mouse bite hole size/spacing, and V-score residual web.
 - Double-sided assembly: heavy parts on second side, reflow shadowing, adhesive
-  requirements, and through-hole/wave conflicts.
+  requirements, and through-hole/wave conflicts. Initial artifact checks require
+  README handoff evidence and an assembly drawing when centroid data or release
+  notes indicate bottom-side placements.
 - Selective or wave solder readiness: component side, solder thieves, keepouts,
-  orientation, shadowing, and thermal relief around through-hole pins.
+  orientation, shadowing, and thermal relief around through-hole pins. Initial
+  README checks require selective/wave process notes when through-hole, wave, or
+  selective assembly is mentioned.
 - Moisture/cleanliness/coating: conformal coating keepouts, no-clean flux risk
-  under low-standoff packages, and unmasked test pads in coated areas.
+  under low-standoff packages, and unmasked test pads in coated areas. Initial
+  BOM/README checks require MSL metadata for likely moisture-sensitive packages
+  and coating keepout/cleanliness notes when conformal coating is mentioned.
 
 ### Electrical and Functional Validation Checks
 
@@ -561,8 +573,9 @@ example before it is considered production-ready.
   depth, and panelization options match file content.
 - Revision consistency: board revision appears consistently in fab drawing,
   silkscreen, README, filename, BOM, placement file, and source metadata.
-  Initial manifest checks compare recognizable revision tags across Gerber and
-  sidecar filenames and warn on stale/archive filename tokens.
+  Initial manifest checks compare recognizable project/job prefixes, revision
+  tags, and generated-date tags across Gerber and sidecar filenames and warn on
+  stale/archive filename tokens.
 - Preflight sequence: refill zones, run EDA DRC/ERC, generate fresh fabrication
   outputs, reload outputs into independent viewer/parser, run HyperDRC, generate
   overlay artifacts, review waiver diff, and archive exact submitted package.

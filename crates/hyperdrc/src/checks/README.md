@@ -130,16 +130,24 @@ single Gerber layer alone.
 [`artifacts.rs`](artifacts.rs) owns `production-artifact-readiness`. It validates
 common BOM, centroid, and netlist CSV/TSV content for required headers,
 manufacturer/supplier procurement metadata, value/description and
-footprint/package coverage, quantity/refdes agreement, common grouped reference
-notation, DNP/DNI parity handling, unusual reference designators, duplicate
-reference designators, conflicting MPN value/footprint metadata, malformed
-centroid coordinates, out-of-range rotations, invalid side values, duplicate
-centroid coordinates, duplicate pin/net assignments, repeated netlist pin rows,
-one-pin net review, reference parity between purchase, placement, and netlist
-artifacts, and DNP/DNI references that still appear in placement data. It also
-checks README artifacts for basic revision/version, manufacturing-note content,
-order parameters, contradictory order notes, release preflight evidence, and
-assembly handoff evidence. It validates text sidecar filenames/extensions for
+footprint/package coverage, lifecycle/status review, approved alternate
+coverage, quantity/refdes agreement, common grouped reference notation, DNP/DNI
+parity handling, unusual reference designators, duplicate reference designators,
+conflicting MPN value/footprint metadata, malformed centroid coordinates,
+out-of-range rotations, invalid side values, duplicate centroid coordinates,
+duplicate pin/net assignments, repeated netlist pin rows, one-pin net review,
+reference parity between purchase, placement, and netlist artifacts, BOM versus
+centroid assembly-side, value, footprint, and rotation parity, conflicting
+centroid value/footprint/rotation metadata, polarity/MSL/component-height handoff
+metadata for likely sensitive BOM rows, and DNP/DNI references that still appear
+in placement data. It also checks README artifacts for basic revision/version,
+manufacturing-note content, order parameters, contradictory order notes, rout
+drawing parity for panelized jobs, release preflight evidence, assembly handoff
+evidence for double-sided placement data, and conditional process notes for
+selective/wave solder or conformal coating. It cross-checks README requests for
+controlled impedance, edge plating, castellations, double-sided assembly, and
+special assembly processes against the presence of fabrication or assembly
+drawing sidecars. It validates text sidecar filenames/extensions for
 recognizable BOM, centroid, netlist, and README roles, and checks
 fabrication/assembly/rout drawing files for common extensions, empty or
 placeholder-sized content, and role-specific filename tokens.
@@ -159,8 +167,9 @@ layer-stack mismatches before downstream checks. It reports inner copper without
 both outer copper layers, odd recognized copper layer counts, side-specific
 mask/paste/silkscreen files without matching copper, and single-copper packages
 that also contain bottom-side outputs. It also compares recognizable revision
-and generated-date tokens across Gerber and package artifact filenames and warns
-on stale-looking backup/archive filename tokens.
+and generated-date tokens across Gerber and package artifact filenames, warns
+when files appear to mix project/job name prefixes, and warns on stale-looking
+backup/archive filename tokens.
 
 ## Excellon Checks
 

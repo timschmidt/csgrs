@@ -166,18 +166,25 @@ checks:
   `file-manifest-readiness` (now validating BOM/centroid/netlist/fab drawing/
   assembly/readme/rout-drawing availability, optional declared copper-layer count,
   KiCad-to-Gerber copper stack parity, odd copper stack counts, orphaned
-  companion layers, mixed revision/date tags, and stale-looking package filenames).
+  companion layers, mixed project/revision/date tags, and stale-looking package
+  filenames).
   `production-artifact-readiness` validates common BOM, centroid, netlist,
   README, fabrication drawing, assembly drawing, and rout drawing sidecars for
   required structure, BOM procurement metadata, BOM value/footprint coverage, BOM
-  quantity/refdes agreement, grouped reference expansion, DNP/DNI parity
-  handling, unusual reference designators, duplicate reference designators,
-  conflicting part metadata, malformed placement coordinates, out-of-range
-  rotations, side values, duplicate placement coordinates, pin/net conflicts,
-  repeated netlist rows, one-pin net review, reference parity, DNP/DNI placement
+  lifecycle/status review, approved alternate coverage, quantity/refdes
+  agreement, grouped reference expansion, DNP/DNI parity handling, BOM/centroid
+  assembly-side, value, footprint, and rotation parity, unusual reference
+  designators, duplicate reference designators, conflicting part metadata,
+  polarity/MSL/component-height handoff metadata, malformed placement
+  coordinates, out-of-range rotations, side values, duplicate placement
+  coordinates, conflicting centroid metadata, pin/net conflicts, repeated
+  netlist rows, one-pin net review, reference parity, DNP/DNI placement
   conflicts, release/manufacturing notes, order-parameter intent, contradictory
-  order notes, assembly handoff evidence, preflight evidence, text/drawing role
-  names, empty or placeholder-sized drawings, and common sidecar extensions.
+  order notes, panel/rout drawing parity, double-sided assembly handoff evidence,
+  selective/wave solder and conformal-coating process notes, fab/assembly
+  drawing parity for special fabrication and assembly handoffs, preflight
+  evidence, text/drawing role names, empty or placeholder-sized drawings, and
+  common sidecar extensions.
 
 Important tunables include `--keepout`, `--clearance`, `--min-width`,
 `--min-mask-width`, `--acid-trap-angle`, `--annular-ring`,

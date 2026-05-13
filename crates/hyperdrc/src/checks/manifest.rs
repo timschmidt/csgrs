@@ -261,6 +261,7 @@ pub fn file_manifest_readiness(input: &ManifestInput) -> Vec<Violation> {
     );
     check_revision_consistency(input, &mut violations);
     check_generated_date_consistency(input, &mut violations);
+    check_project_name_consistency(input, &mut violations);
     check_stale_artifact_names(input, &mut violations);
 
     violations
@@ -494,6 +495,36 @@ fn check_generated_date_consistency(input: &ManifestInput, violations: &mut Vec<
     ));
 }
 
+fn check_project_name_consistency(input: &ManifestInput, violations: &mut Vec<Violation>) {
+    let mut names = std::collections::BTreeMap::<String, Vec<String>>::new();
+    for path in manifest_paths(input) {
+        if let Some(name) = project_name_tag(&path) {
+            names.entry(name).or_default().push(path);
+        }
+    }
+
+    if names.len() <= 1 {
+        return;
+    }
+
+    let summary = names
+        .into_iter()
+        .map(|(name, paths)| format!("{name}: {}", paths.join(", ")))
+        .collect::<Vec<_>>()
+        .join("; ");
+    violations.push(Violation::new(
+        "file-manifest-readiness",
+        Severity::Warning,
+        vec!["package:mixed-project-names".to_string()],
+        None,
+        Vec::new(),
+        Vec::new(),
+        Some(format!(
+            "input package appears to mix project or job name tags across files: {summary}"
+        )),
+    ));
+}
+
 fn check_stale_artifact_names(input: &ManifestInput, violations: &mut Vec<Violation>) {
     let stale_paths = manifest_paths(input)
         .into_iter()
@@ -607,6 +638,78 @@ fn generated_date_tag(path: &str) -> Option<String> {
     }
 
     None
+}
+
+fn project_name_tag(path: &str) -> Option<String> {
+    let stem = std::path::Path::new(path)
+        .file_stem()
+        .and_then(|stem| stem.to_str())
+        .unwrap_or(path);
+    stem.split(|ch: char| !ch.is_ascii_alphanumeric())
+        .filter(|token| !token.is_empty())
+        .find_map(|token| {
+            let normalized = token.to_ascii_lowercase();
+            (!is_manifest_noise_token(&normalized) && !normalize_date_token(&normalized).is_some())
+                .then_some(normalized)
+        })
+}
+
+fn is_manifest_noise_token(token: &str) -> bool {
+    token.len() <= 2
+        || token.contains("copper")
+        || token.contains("mask")
+        || token.contains("paste")
+        || token.contains("silk")
+        || token.contains("soldermask")
+        || token.contains("silkscreen")
+        || token.contains("outline")
+        || token.contains("profile")
+        || token.starts_with("inner")
+        || matches!(
+            token,
+            "gerber"
+                | "top"
+                | "bottom"
+                | "front"
+                | "back"
+                | "copper"
+                | "cu"
+                | "mask"
+                | "soldermask"
+                | "paste"
+                | "silk"
+                | "silkscreen"
+                | "outline"
+                | "profile"
+                | "edge"
+                | "cuts"
+                | "board"
+                | "layer"
+                | "inner"
+                | "fab"
+                | "fabrication"
+                | "assembly"
+                | "assy"
+                | "drawing"
+                | "bom"
+                | "centroid"
+                | "placement"
+                | "positions"
+                | "pnp"
+                | "netlist"
+                | "readme"
+                | "release"
+                | "notes"
+                | "rout"
+                | "route"
+                | "routing"
+                | "panel"
+                | "tooling"
+                | "rev"
+                | "revision"
+                | "version"
+        )
+        || token.starts_with("rev")
 }
 
 fn normalize_date_token(token: &str) -> Option<String> {
@@ -1284,6 +1387,67 @@ mod tests {
         let slugs = violation_slugs(&file_manifest_readiness(&input));
 
         assert!(!slugs.contains(&"package:mixed-generated-dates".to_string()));
+    }
+
+    #[test]
+    fn mixed_project_name_tags_are_reported_across_layers_and_artifacts() {
+        let input = ManifestInput {
+            gerber_layers: vec![
+                layer("Widget_revA_20260501_F_Cu.gtl"),
+                layer("Widget_revA_20260501_B_Cu.gbl"),
+            ],
+            artifact_paths: vec![
+                "Gizmo_revA_20260501_bom.csv".to_string(),
+                "Widget_revA_20260501_centroid.csv".to_string(),
+            ],
+            has_board_outline: true,
+            has_drill_data: true,
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            ..Default::default()
+        };
+        let violations = file_manifest_readiness(&input);
+
+        assert!(violations.iter().any(|violation| {
+            violation
+                .layers
+                .contains(&"package:mixed-project-names".to_string())
+        }));
+        assert!(violations.iter().any(|violation| {
+            violation
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("widget") && message.contains("gizmo"))
+        }));
+    }
+
+    #[test]
+    fn matching_project_name_tags_do_not_warn() {
+        let input = ManifestInput {
+            gerber_layers: vec![layer("Widget_revA_F_Cu.gtl"), layer("Widget_revA_B_Cu.gbl")],
+            artifact_paths: vec![
+                "Widget_revA_bom.csv".to_string(),
+                "Widget_revA_centroid.csv".to_string(),
+            ],
+            has_board_outline: true,
+            has_drill_data: true,
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            ..Default::default()
+        };
+        let slugs = violation_slugs(&file_manifest_readiness(&input));
+
+        assert!(!slugs.contains(&"package:mixed-project-names".to_string()));
     }
 
     #[test]
