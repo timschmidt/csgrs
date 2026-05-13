@@ -20,6 +20,8 @@ by the data model they need.
   mouse-bite, and fine-pitch assembly-readiness checks.
 - [`artifacts.rs`](artifacts.rs) contains BOM, centroid, netlist, README, and
   drawing sidecar checks for assembly/pre-production package readiness.
+- [`surface_finish.rs`](surface_finish.rs) contains README/order-note surface
+  finish compatibility heuristics used by `production-artifact-readiness`.
 - [`excellon.rs`](excellon.rs) contains Excellon-sidecar readiness checks that
   validate tool tables, unit declarations, and drill hit integrity.
 - [`manifest.rs`](manifest.rs) contains package-level readiness checks over the
@@ -233,6 +235,8 @@ plating, castellations, fabrication markings, double-sided assembly, and special
 assembly processes against the presence of fabrication or assembly drawing
 sidecars. It also checks serialization/barcode handoff and packaging/ESD/
 moisture notes when README release notes mention those workflows. It checks
+surface-finish compatibility notes for edge contacts, fine-pitch packages,
+press-fit hardware, and wire bonding. It checks
 revision and generated/release date markers across sidecar filenames and README
 content so mixed release packages are caught before handoff. It validates text
 sidecar filenames/extensions for
@@ -247,10 +251,11 @@ Gerber-like input names into core manufacturing roles and warns when a package
 is missing recognizable copper, outline/profile, drill data, or matching solder
 mask layers. It also warns on duplicated core roles such as multiple top copper
 files. In addition, `file-manifest-readiness` validates pre-production package
-artifacts and now expects one of each: BOM, centroid, netlist, fabrication
-drawing, assembly drawing, readme, and rout drawing. If KiCad input is provided
-the check also compares the count of KiCad copper layers and an optional declared
-manifest copper count against Gerber-recognized copper roles to catch probable
+artifacts from explicit sidecar flags and from `--gerber-dir` sidecar discovery.
+It expects one of each: BOM, centroid, netlist, fabrication drawing, assembly
+drawing, readme, and rout drawing. If KiCad input is provided the check also
+compares the count of KiCad copper layers and an optional declared manifest
+copper count against Gerber-recognized copper roles to catch probable
 layer-stack mismatches before downstream checks. It reports inner copper without
 both outer copper layers, odd recognized copper layer counts, side-specific
 mask/paste/silkscreen files without matching copper, and single-copper packages

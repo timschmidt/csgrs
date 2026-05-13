@@ -70,6 +70,19 @@ pub struct DiscoveredFile {
     pub source: SourceRecord,
 }
 
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub struct PackageSidecars {
+    pub excellon_files: Vec<DiscoveredFile>,
+    pub ipc356_files: Vec<DiscoveredFile>,
+    pub bom_files: Vec<DiscoveredFile>,
+    pub centroid_files: Vec<DiscoveredFile>,
+    pub netlist_files: Vec<DiscoveredFile>,
+    pub fab_drawing_files: Vec<DiscoveredFile>,
+    pub assembly_drawing_files: Vec<DiscoveredFile>,
+    pub readme_files: Vec<DiscoveredFile>,
+    pub rout_drawing_files: Vec<DiscoveredFile>,
+}
+
 pub fn direct_gerber_file(path: PathBuf) -> DiscoveredFile {
     DiscoveredFile {
         source: SourceRecord::new(
@@ -118,6 +131,52 @@ pub fn discover_gerber_dir(directory: &Path) -> Result<Vec<DiscoveredFile>> {
     Ok(files)
 }
 
+pub fn discover_package_sidecars(directories: &[PathBuf]) -> Result<PackageSidecars> {
+    let mut sidecars = PackageSidecars::default();
+    for directory in directories {
+        for entry in std::fs::read_dir(directory).with_context(|| {
+            format!(
+                "failed to read package sidecar directory {}",
+                directory.display()
+            )
+        })? {
+            let entry = entry
+                .with_context(|| format!("failed to read entry in {}", directory.display()))?;
+            let path = entry.path();
+            if !path.is_file() {
+                continue;
+            }
+
+            let Some(role) = classify_package_sidecar(&path) else {
+                continue;
+            };
+            let discovered = DiscoveredFile {
+                source: SourceRecord::new(
+                    IoAdapter::GerberDirectory,
+                    role.clone(),
+                    &path,
+                    Some(directory),
+                ),
+                path,
+            };
+            match role {
+                IoRole::DrillSidecar => sidecars.excellon_files.push(discovered),
+                IoRole::NetlistSidecar => sidecars.ipc356_files.push(discovered),
+                IoRole::BomFile => sidecars.bom_files.push(discovered),
+                IoRole::CentroidFile => sidecars.centroid_files.push(discovered),
+                IoRole::NetlistFile => sidecars.netlist_files.push(discovered),
+                IoRole::FabDrawing => sidecars.fab_drawing_files.push(discovered),
+                IoRole::AssemblyDrawing => sidecars.assembly_drawing_files.push(discovered),
+                IoRole::ReadmeFile => sidecars.readme_files.push(discovered),
+                IoRole::RoutDrawingFile => sidecars.rout_drawing_files.push(discovered),
+                IoRole::GerberLayer | IoRole::KiCadBoard | IoRole::Waiver => {}
+            }
+        }
+    }
+    sidecars.sort();
+    Ok(sidecars)
+}
+
 pub fn is_gerber_path(path: &Path) -> bool {
     let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
         return false;
@@ -152,13 +211,128 @@ pub fn is_gerber_path(path: &Path) -> bool {
         || lower.contains("outline")
 }
 
+fn classify_package_sidecar(path: &Path) -> Option<IoRole> {
+    if is_gerber_path(path) {
+        return None;
+    }
+
+    let name = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    let extension = path
+        .extension()
+        .and_then(|extension| extension.to_str())
+        .unwrap_or("")
+        .to_ascii_lowercase();
+
+    if matches!(extension.as_str(), "drl" | "xln" | "exc" | "drill")
+        || has_any(&name, &["excellon", "pth", "npth"])
+            && matches!(extension.as_str(), "txt" | "tap")
+    {
+        return Some(IoRole::DrillSidecar);
+    }
+    if matches!(extension.as_str(), "356" | "ipc")
+        || has_any(&name, &["ipc356", "ipc-356", "d-356", "d356"])
+    {
+        return Some(IoRole::NetlistSidecar);
+    }
+    if has_any(&name, &["bom", "bill-of-materials", "bill_of_materials"])
+        && matches!(extension.as_str(), "csv" | "tsv" | "txt" | "xlsx" | "xls")
+    {
+        return Some(IoRole::BomFile);
+    }
+    if has_any(
+        &name,
+        &[
+            "centroid",
+            "placement",
+            "positions",
+            "pick-place",
+            "pick_place",
+            "pnp",
+            "cpl",
+        ],
+    ) && matches!(extension.as_str(), "csv" | "tsv" | "txt" | "pos")
+    {
+        return Some(IoRole::CentroidFile);
+    }
+    if has_any(&name, &["readme", "release", "notes", "fabrication-notes"])
+        && matches!(extension.as_str(), "md" | "markdown" | "txt")
+    {
+        return Some(IoRole::ReadmeFile);
+    }
+    if has_any(&name, &["netlist", "nets"])
+        && matches!(extension.as_str(), "csv" | "tsv" | "txt" | "net")
+    {
+        return Some(IoRole::NetlistFile);
+    }
+    if has_any(
+        &name,
+        &[
+            "rout", "route", "routing", "vscore", "v-score", "panel", "tool",
+        ],
+    ) && matches!(
+        extension.as_str(),
+        "pdf" | "dxf" | "svg" | "dwg" | "png" | "jpg" | "jpeg"
+    ) {
+        return Some(IoRole::RoutDrawingFile);
+    }
+    if has_any(&name, &["fab", "fabrication", "fabricator"])
+        && matches!(extension.as_str(), "pdf" | "dxf" | "svg" | "dwg")
+    {
+        return Some(IoRole::FabDrawing);
+    }
+    if has_any(&name, &["assy", "assembly", "placement"])
+        && matches!(
+            extension.as_str(),
+            "pdf" | "dxf" | "svg" | "png" | "jpg" | "jpeg"
+        )
+    {
+        return Some(IoRole::AssemblyDrawing);
+    }
+
+    None
+}
+
+impl PackageSidecars {
+    fn sort(&mut self) {
+        self.excellon_files
+            .sort_by(|left, right| left.path.cmp(&right.path));
+        self.ipc356_files
+            .sort_by(|left, right| left.path.cmp(&right.path));
+        self.bom_files
+            .sort_by(|left, right| left.path.cmp(&right.path));
+        self.centroid_files
+            .sort_by(|left, right| left.path.cmp(&right.path));
+        self.netlist_files
+            .sort_by(|left, right| left.path.cmp(&right.path));
+        self.fab_drawing_files
+            .sort_by(|left, right| left.path.cmp(&right.path));
+        self.assembly_drawing_files
+            .sort_by(|left, right| left.path.cmp(&right.path));
+        self.readme_files
+            .sort_by(|left, right| left.path.cmp(&right.path));
+        self.rout_drawing_files
+            .sort_by(|left, right| left.path.cmp(&right.path));
+    }
+}
+
+fn has_any(haystack: &str, needles: &[&str]) -> bool {
+    needles.iter().any(|needle| haystack.contains(needle))
+}
+
 #[cfg(test)]
 mod tests {
     use std::fs::{create_dir_all, remove_dir_all, write};
     use std::path::PathBuf;
     use std::process::id;
 
-    use super::{IoAdapter, IoRole, SourceRecord, discover_gerber_dir, is_gerber_path};
+    use super::{
+        IoAdapter, IoRole, SourceRecord, discover_gerber_dir, discover_package_sidecars,
+        is_gerber_path,
+    };
 
     #[test]
     fn gerber_path_detection_covers_extensions_and_jlc_style_names() {
@@ -218,6 +392,50 @@ mod tests {
 
         assert!(err.contains("failed to read Gerber directory"));
         assert!(err.contains(dir.to_string_lossy().as_ref()));
+    }
+
+    #[test]
+    fn package_sidecar_discovery_classifies_common_release_files() {
+        let dir = std::env::temp_dir().join(format!("hyperdrc-sidecars-{}", id()));
+        let _ = remove_dir_all(&dir);
+        create_dir_all(&dir).unwrap();
+        for name in [
+            "board-top.gtl",
+            "board.drl",
+            "ipc356.ipc",
+            "project_bom.csv",
+            "project_cpl.csv",
+            "netlist.net",
+            "fab_drawing.pdf",
+            "assembly_drawing.pdf",
+            "README.md",
+            "panel_route.dxf",
+            "unrelated.log",
+        ] {
+            write(dir.join(name), "x").unwrap();
+        }
+
+        let sidecars = discover_package_sidecars(std::slice::from_ref(&dir)).unwrap();
+
+        assert_eq!(sidecars.excellon_files.len(), 1);
+        assert_eq!(sidecars.ipc356_files.len(), 1);
+        assert_eq!(sidecars.bom_files.len(), 1);
+        assert_eq!(sidecars.centroid_files.len(), 1);
+        assert_eq!(sidecars.netlist_files.len(), 1);
+        assert_eq!(sidecars.fab_drawing_files.len(), 1);
+        assert_eq!(sidecars.assembly_drawing_files.len(), 1);
+        assert_eq!(sidecars.readme_files.len(), 1);
+        assert_eq!(sidecars.rout_drawing_files.len(), 1);
+        assert_eq!(
+            sidecars.bom_files[0].source.adapter,
+            IoAdapter::GerberDirectory
+        );
+        assert_eq!(sidecars.bom_files[0].source.role, IoRole::BomFile);
+        assert_eq!(
+            sidecars.bom_files[0].source.origin.as_deref(),
+            Some(dir.to_str().unwrap())
+        );
+        let _ = remove_dir_all(dir);
     }
 
     #[test]

@@ -14,6 +14,7 @@ mod excellon;
 pub mod layer;
 pub mod manifest;
 pub mod stencil;
+mod surface_finish;
 
 pub use artifacts::*;
 pub use assembly::*;

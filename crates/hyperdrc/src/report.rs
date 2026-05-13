@@ -11,10 +11,22 @@ pub struct Report {
     pub files: Vec<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub inputs: Vec<SourceRecord>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub diagnostics: Vec<Diagnostic>,
     pub violation_count: usize,
     pub waived_count: usize,
     pub summary: ReportSummary,
     pub violations: Vec<Violation>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct Diagnostic {
+    pub source: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub line: Option<usize>,
+    pub severity: Severity,
+    pub code: String,
+    pub message: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -264,6 +276,7 @@ mod tests {
         let report = Report {
             files: Vec::new(),
             inputs: Vec::new(),
+            diagnostics: Vec::new(),
             violation_count: violations.len(),
             waived_count: 0,
             summary: report_summary(&violations, 0),

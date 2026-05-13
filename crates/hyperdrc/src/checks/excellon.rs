@@ -8,7 +8,7 @@ pub fn excellon_readiness(report: &ExcellonReport) -> Vec<Violation> {
     for issue in &report.issues {
         violations.push(Violation::new(
             "excellon-readiness",
-            issue_severity(&issue.kind),
+            excellon_issue_severity(&issue.kind),
             vec![layer.clone()],
             None,
             Vec::new(),
@@ -88,7 +88,7 @@ pub fn excellon_batch_readiness(reports: &[ExcellonReport]) -> Vec<Violation> {
     violations
 }
 
-fn issue_severity(kind: &ExcellonIssueKind) -> Severity {
+pub fn excellon_issue_severity(kind: &ExcellonIssueKind) -> Severity {
     match kind {
         ExcellonIssueKind::MissingUnitDeclaration
         | ExcellonIssueKind::UnitConflict { .. }

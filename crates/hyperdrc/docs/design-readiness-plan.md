@@ -491,6 +491,10 @@ example before it is considered production-ready.
   openings.
 - Surface finish compatibility: ENIG/ENEPIG/hard gold/HASL constraints for
   fine-pitch, press-fit, gold fingers, wire bonding, and high-voltage creepage.
+  Initial README/order-note checks warn when edge contacts lack hard/electrolytic
+  gold or ENEPIG intent, when HASL is paired with fine-pitch or array-package
+  assembly language, and when press-fit or wire-bond language lacks compatible
+  surface-finish context.
 
 ### Silkscreen, Legend, and Marking Checks
 
@@ -575,6 +579,8 @@ example before it is considered production-ready.
   handoff evidence, firmware traceability, programming method, functional-test
   acceptance criteria, serialization/barcode handoff, fabrication marking-zone
   drawing parity, packaging/ESD/moisture notes, release preflight evidence,
+  surface-finish compatibility notes for edge contacts, fine-pitch packages,
+  press-fit hardware, and wire bonding,
   selective/wave solder and conformal-coating process notes,
   fab/assembly drawing parity for special fabrication and assembly handoffs,
   release revision/date consistency, DNP/DNI placement conflicts, and package
@@ -661,6 +667,9 @@ example before it is considered production-ready.
 
 - File completeness: expected copper, soldermask, paste, silkscreen, drill,
   rout, fab drawing, assembly drawing, centroid, BOM, netlist, and readme files.
+  `--gerber-dir` now discovers common drill, IPC-D-356, BOM, centroid, netlist,
+  README, fabrication drawing, assembly drawing, and rout/panel sidecars in the
+  same package directory and preserves them in report provenance.
 - Layer count parity: declared order layer count, stackup, Gerber set, KiCad
   stackup, and filename conventions agree.
 - Layer role inference: Gerber X2 attributes, file extensions, JLC-style names,
@@ -799,9 +808,13 @@ Gerber/KiCad fixtures with one clear violation and one matching non-violation.
 
 - Stable violation IDs derived from check name, layer names, island index, and
   rounded coordinates.
-- Text, JSON, and GeoJSON output.
+- Text, JSON, JSON Lines, GeoJSON, SARIF, GitHub Actions annotation, HTML, and
+  JUnit XML output.
 - SVG violation overlays for quick local or CI artifact review.
 - Severity on each violation.
+- Structured parser diagnostics separated from active DRC violations. Excellon
+  reports contribute unit/tool/coordinate diagnostics and IPC-D-356 reports
+  contribute malformed recognized-record diagnostics.
 - Structured JSON input manifest entries with adapter, role, path, and
   conversion-origin provenance.
 - JSON waiver files that suppress findings by ID, check name, layers, or message
@@ -813,7 +826,8 @@ Gerber/KiCad fixtures with one clear violation and one matching non-violation.
 ## Reporting Roadmap
 
 - Export violation overlays as Gerber for direct review in board viewers.
-- Record parser warnings separately from DRC violations.
+- Expand parser diagnostics beyond Excellon and IPC-D-356 to Gerber, KiCad,
+  BOM/centroid/netlist table parsing, and converter adapters.
 
 ## Input Roadmap
 
@@ -936,12 +950,16 @@ well-maintained exporter.
 - DXF/SVG/PDF overlays: produce human-review artifacts for mechanical, fab, and
   assembly teams. SVG already exists; DXF/PDF would make review easier in CAD
   and document workflows.
-- HTML report bundle: self-contained interactive report with SVG/canvas
-  overlays, layer toggles, waiver state, and source file manifest.
-- SARIF/JUnit/GitHub annotations: CI-native sinks so DRC findings appear in code
-  review tools, dashboards, and quality gates.
-- JSON Lines / SQLite / Parquet: structured machine-readable sinks for trend
-  analysis across many boards, vendors, revisions, and rule decks.
+- HTML report bundle: initial self-contained HTML output is implemented with an
+  embedded SVG overlay, source manifest, summary table, and finding cards. Layer
+  toggles and waiver-state interaction remain future enhancements.
+- SARIF/JUnit/GitHub annotations: SARIF output is implemented with stable
+  finding IDs and PCB geometry properties; GitHub Actions annotation output is
+  implemented for CI log annotations; JUnit XML output is implemented for CI
+  systems with test-report publishers.
+- JSON Lines / SQLite / Parquet: JSON Lines output is implemented for streaming
+  analysis across many boards, vendors, revisions, and rule decks. SQLite and
+  Parquet remain future structured stores.
 - Waiver and baseline update sinks: generate proposed waiver stubs, expired
   waiver reports, and geometry-hash baselines for controlled production
   exceptions.
@@ -956,7 +974,8 @@ well-maintained exporter.
 - Preserve provenance for every loaded object: source file, adapter, layer,
   units, original identifier, and transformation history. Initial report-level
   provenance is implemented for direct Gerbers, Gerber directories, converted
-  Gerbers, KiCad boards, Excellon drills, IPC-D-356 netlists, and waivers.
+  Gerbers, KiCad boards, Excellon drills, IPC-D-356 netlists, explicit
+  pre-production sidecars, Gerber-directory-discovered sidecars, and waivers.
 - Treat external tools as hermetic conversion steps with captured command line,
   version output, stdout/stderr, input hash, and output manifest.
 - Prefer optional Cargo features for heavy or license-sensitive integrations:

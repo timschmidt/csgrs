@@ -13,8 +13,8 @@ application orchestration, while subfolders hold the larger semantic areas.
 - [`app.rs`](app.rs) is the runtime pipeline. It loads configuration, converts
   requested input packages, discovers and parses inputs, applies IPC-D-356 net
   annotations, validates explicit layer roles, runs selected checks, applies
-  waivers, emits summaries, writes SVG overlays, and exits nonzero when active
-  violations remain.
+  waivers, collects parser diagnostics, emits summaries, writes SVG overlays,
+  and exits nonzero when active violations remain.
 
 ## User-Facing Configuration
 
@@ -32,31 +32,52 @@ application orchestration, while subfolders hold the larger semantic areas.
 
 - [`io.rs`](io.rs) centralizes input discovery and provenance. It records which
   adapter loaded each input, the input role, the path, and optional conversion
-  origin. Report manifests use these records.
+  origin. Report manifests use these records. `--gerber-dir` now discovers
+  common package sidecars in the same directory, including Excellon, IPC-D-356,
+  BOM, centroid, netlist, README, fabrication drawing, assembly drawing, and
+  rout/panel drawing files.
 - Production manifest-sidecar flags are now tracked through the same provenance model:
   `--bom`, `--centroid`, `--netlist`, `--fab-drawing`, `--assembly-drawing`,
   `--readme`, and `--rout-drawing` are surfaced in the report input list and
-  `file-manifest-readiness`. BOM, centroid, netlist, README, fabrication
-  drawing, assembly drawing, and rout drawing files are also consumed by
-  `production-artifact-readiness` for assembly-sidecar structure, reference
-  parity, grouped BOM references, DNP/DNI handling, drawing role, and
-  release-note/order-preflight checks.
+  `file-manifest-readiness`; discovered directory sidecars use the same path.
+  BOM, centroid, netlist, README, fabrication drawing, assembly drawing, and
+  rout drawing files are also consumed by `production-artifact-readiness` for
+  assembly-sidecar structure, reference parity, grouped BOM references, DNP/DNI
+  handling, drawing role, and release-note/order-preflight checks. Binary
+  spreadsheet-like text sidecars are loaded lossily for now so the check can
+  report missing structure instead of aborting the run.
 - [`conversion.rs`](conversion.rs) owns external converter integration. The
   current backend shells out to TransJLC and then feeds the converted Gerber
   directory back through the normal Gerber loading path. `--conversion-arg`
   provides backend-specific pass-through flags so additional converter options can
   be surfaced without redesigning the adapter surface.
 - [`excellon.rs`](excellon.rs) parses common Excellon drill files into drill
-  features used by spacing, clearance, aspect-ratio, panel, and table checks.
-- [`ipc356.rs`](ipc356.rs) parses common IPC-D-356 electrical-test records.
-  Parsed points can annotate nearby KiCad copper and drills, support coverage
-  checks, and cross-check drill diameters.
+  features and parser diagnostics used by spacing, clearance, aspect-ratio,
+  panel, and table checks.
+- [`ipc356.rs`](ipc356.rs) parses common IPC-D-356 electrical-test records into
+  point reports. Parsed points can annotate nearby KiCad copper and drills,
+  support coverage checks, and cross-check drill diameters; malformed recognized
+  test records are surfaced as parser diagnostics instead of being silently
+  dropped.
 - [`sexp.rs`](sexp.rs) is a small S-expression parser used by the KiCad loader.
 
 ## Reports And Artifacts
 
-- [`report.rs`](report.rs) defines violation data, stable violation IDs,
-  summaries, and GeoJSON conversion.
+- [`github_annotations.rs`](github_annotations.rs) renders GitHub Actions
+  workflow-command annotations so CI logs can surface active findings without a
+  separate upload step.
+- [`html_report.rs`](html_report.rs) renders a self-contained browser report
+  with the SVG overlay, summary table, input manifest, and finding cards.
+- [`jsonl.rs`](jsonl.rs) renders JSON Lines output with one run, input,
+  diagnostic, or violation record per line for streaming analytics and long-term
+  trend stores.
+- [`junit.rs`](junit.rs) renders a conservative JUnit XML subset for CI systems
+  that expose test report publishers but not SARIF ingestion.
+- [`report.rs`](report.rs) defines violation data, parser diagnostics, stable
+  violation IDs, summaries, and GeoJSON conversion.
+- [`sarif.rs`](sarif.rs) renders SARIF 2.1.0 output for CI and code review
+  systems, keeping PCB coordinates and polygons in result properties because
+  DRC findings are geometric rather than line-based.
 - [`svg_overlay.rs`](svg_overlay.rs) renders active findings into SVG review
   overlays for local review or CI artifacts.
 
@@ -64,7 +85,7 @@ application orchestration, while subfolders hold the larger semantic areas.
 
 - [checks](checks/README.md) contains the design-readiness checks, now split
   across generic layer, drill fabrication, board-context, stencil, assembly,
-  manifest, and artifact modules.
+  manifest, artifact, and surface-finish helper modules.
 - [geometry](geometry/README.md) contains geometry construction and conversion
   helpers around `csgrs` and `geo`.
 - [kicad](kicad/README.md) contains the KiCad board model and parser helpers.

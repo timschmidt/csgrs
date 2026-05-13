@@ -13,8 +13,10 @@ offsets, and boolean geometry.
 `hyperdrc` is an active prototype with a broad regression suite for
 fabrication-readiness rules. It supports layer-level Gerber checks, net-aware
 KiCad checks, Excellon drill sidecars, IPC-D-356 electrical-test sidecars,
-JSON/GeoJSON/text reports, SVG review overlays, JSON waivers, JSON rule
-configuration, TransJLC conversion, and structured input provenance.
+JSON/JSON Lines/GeoJSON/SARIF/HTML/JUnit/text reports, GitHub Actions
+annotations, SVG review overlays, JSON waivers, JSON rule configuration,
+TransJLC conversion, Gerber-directory sidecar discovery, and structured input
+provenance with parser diagnostics.
 
 The implemented checks are useful for CI and local design review, but they are
 not a replacement for a fabricator's final DFM/DRC pass. Some geometry is still
@@ -31,7 +33,9 @@ Run all default checks against one or more Gerber layers:
 cargo run -- path/to/top.gbr path/to/bottom.gbr
 ```
 
-Load every Gerber-like file from a directory:
+Load every Gerber-like file from a directory. The same directory is also scanned
+for common Excellon, IPC-D-356, BOM, centroid, netlist, README, fabrication
+drawing, assembly drawing, and rout/panel drawing sidecars:
 
 ```sh
 cargo run -- --gerber-dir path/to/gerber-package
@@ -109,10 +113,18 @@ cargo run -- \
   top.gbr bottom.gbr edge.gbr paste.gbr mask.gbr silk.gbr
 ```
 
-Output formats are `text`, `json`, and `geojson`. JSON reports include stable
-violation IDs, severity, layers, polygon coordinates, point locations where
-applicable, short messages, and a structured input manifest. SVG review overlays
-can be written with `--svg-overlay violations.svg`.
+Output formats are `text`, `json`, `jsonl`, `geojson`, `sarif`,
+`github-annotations`, `html`, and `junit`. JSON reports include stable violation
+IDs, severity, layers, polygon coordinates, point locations where applicable,
+short messages, structured parser diagnostics, and a structured input manifest.
+JSON Lines emits one run/input/diagnostic/violation object per line for
+streaming analytics. SARIF output preserves stable hyperdrc finding IDs and PCB
+geometry in result properties for CI/code-review systems. GitHub annotation
+output emits workflow commands that surface findings in Actions logs. HTML
+output embeds the SVG overlay with summary, parser diagnostic, input, and
+finding tables for review packets. JUnit XML output maps active findings into
+testcase failures for CI systems with JUnit publishers. SVG review overlays can
+be written with `--svg-overlay violations.svg`.
 
 Rule thresholds can be placed in a JSON config file and loaded with `--config`.
 CLI flags override config values. See
@@ -181,8 +193,8 @@ checks:
   `file-manifest-readiness` (now validating BOM/centroid/netlist/fab drawing/
   assembly/readme/rout-drawing availability, optional declared copper-layer count,
   KiCad-to-Gerber copper stack parity, odd copper stack counts, orphaned
-  companion layers, mixed project/revision/date tags, and stale-looking package
-  filenames).
+  companion layers, mixed project/revision/date tags, stale-looking package
+  filenames, and sidecars discovered from `--gerber-dir`).
   `production-artifact-readiness` validates common BOM, centroid, netlist,
   README, fabrication drawing, assembly drawing, and rout drawing sidecars for
   required structure, BOM procurement metadata, BOM value/footprint coverage, BOM
@@ -206,8 +218,9 @@ checks:
   handoff evidence, BOM-driven through-hole solder, BGA/CSP/LGA inspection, and
   programmable-device handoff evidence, firmware traceability, programming
   method, functional-test acceptance criteria, serialization/barcode handoff,
-  fabrication marking zones, packaging/ESD/moisture notes, selective/wave solder
-  and conformal-coating process notes, fab/assembly
+  fabrication marking zones, packaging/ESD/moisture notes, surface-finish
+  compatibility notes for edge contacts, fine-pitch packages, press-fit, and
+  wire bonding, selective/wave solder and conformal-coating process notes, fab/assembly
   drawing parity for special fabrication and assembly handoffs, preflight
   evidence, release revision/date consistency, text/drawing role names, empty
   sidecar tables, empty or
@@ -263,8 +276,8 @@ details for that part of the tree:
 - [src](src/README.md): Rust crate structure, runtime pipeline, parsers,
   reports, configuration, and submodule map.
 - [src/checks](src/checks/README.md): all design-readiness checks grouped by
-  layer, drill, board, stencil, assembly, manifest, artifact, and helper
-  responsibilities.
+  layer, drill, board, stencil, assembly, manifest, artifact, surface-finish,
+  and helper responsibilities.
 - [src/geometry](src/geometry/README.md): polygon construction, sketch
   conversion, shape extraction, and geometry-test expectations.
 - [src/kicad](src/kicad/README.md): KiCad board model, S-expression parsing,
@@ -279,8 +292,9 @@ details for that part of the tree:
 
 Not yet modeled: exact routed slot shapes, plated-slot/edge-plating electrical
 semantics, KiCad silkscreen text side/mirroring, per-pad paste or mask
-attributes, fabricator-specific rule decks, stackup/net-class constraints, and
-ODB++/IPC-2581 input.
+attributes, fabricator-specific rule decks, stackup/net-class constraints,
+semantic XLS/XLSX spreadsheet parsing, richer parser diagnostics for all input
+formats, and ODB++/IPC-2581 input.
 
 See [docs/design-readiness-plan.md](docs/design-readiness-plan.md) for the
 long-form design-readiness roadmap.
@@ -288,13 +302,20 @@ long-form design-readiness roadmap.
 ## References
 
 hyperdrc comments and readiness heuristics cite these design and manufacturing
-references where the code implements related checks:
+references where the code implements related checks. Entries are kept in MLA
+style so they can be copied into engineering review notes.
 
-- [IPC-7525B Stencil Design Guidelines table of contents](https://www.ipc.org/TOC/IPC-7525B.pdf).
-- [IPC-2221B Generic Standard on Printed Board Design table of contents](https://www.ipc.org/TOC/IPC-2221B.pdf).
-- [IPC-6012D Qualification and Performance Specification for Rigid Printed Boards table of contents](https://www.ipc.org/TOC/IPC-6012D.pdf).
-- Ross Wilcoxon, Tim Pearson, and David Hillman, "Modeling the Effects of Thermal Pad Voiding on Quad Flatpack No-lead (QFN) Components," *Journal of Surface Mount Technology*, 2023. https://doi.org/10.37665/smt.v36i2.37
-- Stefan Harter, Jens Niemann, Jorg Franke, Jeff Schake, and Mark Whitmore, "The Effect of Area Shape and Area Ratio on Solder Paste Printing Performance," SMTA International, 2016. https://www.circuitnet.com/programs/55115.html
-- F. A. Areny et al., "A study of SnAgCu solder paste transfer efficiency and effects of optimal reflow profile on solder deposits," *Microelectronic Engineering*, 2011. https://doi.org/10.1016/j.mee.2011.02.104
-- [Eurocircuits Tombstoning assembly guideline](https://www.eurocircuits.com/technical-guidelines/pcb-assembly-guidelines/tombstoning/).
-- [FixturFab design-for-test and SMD test point guidelines](https://fixturfab.com/resources/how-to-test/design-for-test).
+- Areny, F. A., et al. "A Study of SnAgCu Solder Paste Transfer Efficiency and Effects of Optimal Reflow Profile on Solder Deposits." *Microelectronic Engineering*, 2011, https://doi.org/10.1016/j.mee.2011.02.104.
+- Eurocircuits. "Tombstoning." *Eurocircuits Technical Guidelines*, https://www.eurocircuits.com/technical-guidelines/pcb-assembly-guidelines/tombstoning/. Accessed 13 May 2026.
+- FixturFab. "Design for Test: How to Design Test Points for PCB Testing." *FixturFab Resources*, https://fixturfab.com/resources/how-to-test/design-for-test. Accessed 13 May 2026.
+- GitHub. "Workflow Commands for GitHub Actions." *GitHub Docs*, https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands. Accessed 13 May 2026.
+- Harter, Stefan, et al. "The Effect of Area Shape and Area Ratio on Solder Paste Printing Performance." *SMTA International*, 2016, https://www.circuitnet.com/programs/55115.html.
+- IPC. *Generic Standard on Printed Board Design: IPC-2221B*. IPC, https://www.ipc.org/TOC/IPC-2221B.pdf. Accessed 13 May 2026.
+- IPC. *Bare Substrate Electrical Test Data Format: IPC-D-356B*. IPC, 1 Oct. 2002, https://shop.electronics.org/ipc-d-356/ipc-d-356-standard-only.
+- IPC. *Performance Specification for Electroless Nickel/Immersion Gold (ENIG) Plating for Printed Boards: IPC-4552B*. IPC, Apr. 2021, https://www.ipc.org/TOC/IPC-4552B-toc.pdf.
+- IPC. *Qualification and Performance Specification for Rigid Printed Boards: IPC-6012D*. IPC, https://www.ipc.org/TOC/IPC-6012D.pdf. Accessed 13 May 2026.
+- IPC. *Specification for Electroless Nickel/Electroless Palladium/Immersion Gold (ENEPIG) Plating for Printed Circuit Boards: IPC-4556*. IPC, 5 Feb. 2013, https://shop.electronics.org/ipc-4556/ipc-4556-standard-only/Revision-0/english.
+- IPC. *Specification for Immersion Silver Plating for Printed Boards: IPC-4553A*. IPC, 16 June 2009, https://webstore.ansi.org/standards/ipc/ipc4553a2009.
+- IPC. *Stencil Design Guidelines: IPC-7525B*. IPC, https://www.ipc.org/TOC/IPC-7525B.pdf. Accessed 13 May 2026.
+- OASIS. *Static Analysis Results Interchange Format (SARIF) Version 2.1.0*. Edited by Michael C. Fanning and Laurence J. Golding, OASIS Committee Specification 01, 23 July 2019, https://docs.oasis-open.org/sarif/sarif/v2.1.0/cs01/sarif-v2.1.0-cs01.html.
+- Wilcoxon, Ross, Tim Pearson, and David Hillman. "Modeling the Effects of Thermal Pad Voiding on Quad Flatpack No-Lead (QFN) Components." *Journal of Surface Mount Technology*, vol. 36, no. 2, 2023, https://doi.org/10.37665/smt.v36i2.37.

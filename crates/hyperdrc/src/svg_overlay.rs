@@ -214,6 +214,7 @@ mod tests {
         let report = Report {
             files: Vec::new(),
             inputs: Vec::new(),
+            diagnostics: Vec::new(),
             violation_count: violations.len(),
             waived_count: 0,
             summary: report_summary(&violations, 0),
@@ -241,6 +242,7 @@ mod tests {
         let report = Report {
             files: Vec::new(),
             inputs: Vec::new(),
+            diagnostics: Vec::new(),
             violation_count: violations.len(),
             waived_count: 0,
             summary: report_summary(&violations, 0),
@@ -261,6 +263,7 @@ mod tests {
         let report = Report {
             files: Vec::new(),
             inputs: Vec::new(),
+            diagnostics: Vec::new(),
             violation_count: 0,
             waived_count: 0,
             summary: report_summary(&[], 0),

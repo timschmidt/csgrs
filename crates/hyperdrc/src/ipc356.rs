@@ -1,3 +1,11 @@
+//! IPC-D-356 electrical-test netlist parsing.
+//!
+//! IPC-D-356B describes a bare-substrate electrical test data format rather
+//! than an artwork format. hyperdrc therefore treats records as net/test access
+//! evidence and records malformed recognized test records as parser diagnostics
+//! instead of guessing geometry. See IPC-D-356B, *Bare Substrate Electrical Test
+//! Data Format* (IPC, 2002).
+
 use std::path::Path;
 
 use anyhow::{Context, Result};
@@ -11,31 +19,93 @@ pub struct Ipc356Point {
     pub diameter: Option<f64>,
 }
 
-pub fn load_ipc356(path: &Path) -> Result<Vec<Ipc356Point>> {
-    let text = std::fs::read_to_string(path)
-        .with_context(|| format!("failed to read {}", path.display()))?;
-    Ok(parse_ipc356(&text))
+#[derive(Clone, Debug)]
+pub struct Ipc356Issue {
+    pub line: usize,
+    pub kind: Ipc356IssueKind,
+    pub detail: String,
 }
 
-fn parse_ipc356(input: &str) -> Vec<Ipc356Point> {
-    input.lines().filter_map(parse_record).collect()
+#[derive(Clone, Debug)]
+pub enum Ipc356IssueKind {
+    MalformedTestRecord,
+}
+
+#[derive(Clone, Debug)]
+pub struct Ipc356Report {
+    pub source: String,
+    pub points: Vec<Ipc356Point>,
+    pub issues: Vec<Ipc356Issue>,
+}
+
+impl Ipc356Issue {
+    pub fn message(&self) -> String {
+        match self.kind {
+            Ipc356IssueKind::MalformedTestRecord => format!(
+                "line {}: recognized IPC-D-356 test record could not be parsed",
+                self.line
+            ),
+        }
+    }
+}
+
+pub fn load_ipc356_report(path: &Path) -> Result<Ipc356Report> {
+    let text = std::fs::read_to_string(path)
+        .with_context(|| format!("failed to read {}", path.display()))?;
+    Ok(parse_ipc356_report(&text, path))
+}
+
+pub fn load_ipc356(path: &Path) -> Result<Vec<Ipc356Point>> {
+    Ok(load_ipc356_report(path)?.points)
+}
+
+pub fn parse_ipc356(input: &str) -> Vec<Ipc356Point> {
+    parse_ipc356_report(input, Path::new("<inline-ipc356>")).points
+}
+
+pub fn parse_ipc356_report(input: &str, source: &Path) -> Ipc356Report {
+    let mut points = Vec::new();
+    let mut issues = Vec::new();
+    for (index, raw_line) in input.lines().enumerate() {
+        let line = raw_line.trim();
+        if line.is_empty()
+            || line.starts_with('C')
+            || line.starts_with('P')
+            || line.starts_with('9')
+        {
+            continue;
+        }
+        if !is_test_record(line) {
+            continue;
+        }
+        match parse_record(line) {
+            Some(point) => points.push(point),
+            None => issues.push(Ipc356Issue {
+                line: index + 1,
+                kind: Ipc356IssueKind::MalformedTestRecord,
+                detail: line.to_string(),
+            }),
+        }
+    }
+
+    Ipc356Report {
+        source: source.display().to_string(),
+        points,
+        issues,
+    }
 }
 
 fn parse_record(raw_line: &str) -> Option<Ipc356Point> {
     let line = raw_line.trim();
-    if line.is_empty() || line.starts_with('C') || line.starts_with('P') || line.starts_with('9') {
-        return None;
-    }
-
-    if !line.starts_with("327") && !line.starts_with("317") && !line.starts_with("367") {
-        return None;
-    }
-
     if line.contains(' ') {
         parse_loose_record(line).or_else(|| parse_fixed_record(line))
     } else {
         parse_fixed_record(line)
     }
+}
+
+fn is_test_record(line: &str) -> bool {
+    line.starts_with("327") || line.starts_with("317") || line.starts_with("367")
 }
 
 fn parse_fixed_record(line: &str) -> Option<Ipc356Point> {
@@ -156,7 +226,7 @@ fn parse_ipc_number(value: &str) -> Option<f64> {
 mod tests {
     use proptest::prelude::*;
 
-    use super::parse_ipc356;
+    use super::{Ipc356IssueKind, parse_ipc356, parse_ipc356_report};
 
     #[test]
     fn parses_loose_ipc356_test_record() {
@@ -180,6 +250,26 @@ mod tests {
         );
 
         assert!(points.is_empty());
+    }
+
+    #[test]
+    fn reports_malformed_recognized_records() {
+        let report = parse_ipc356_report(
+            r#"
+            C comment
+            999 /GND X010000Y020000
+            327 missing-coordinates
+            "#,
+            std::path::Path::new("board.ipc"),
+        );
+
+        assert!(report.points.is_empty());
+        assert_eq!(report.issues.len(), 1);
+        assert!(matches!(
+            report.issues[0].kind,
+            Ipc356IssueKind::MalformedTestRecord
+        ));
+        assert!(report.issues[0].message().contains("line 4"));
     }
 
     #[test]

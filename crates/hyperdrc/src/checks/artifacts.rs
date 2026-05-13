@@ -7,6 +7,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
+use super::surface_finish::readme_surface_finish_compatibility;
 use crate::report::{Severity, Violation};
 
 #[derive(Clone, Debug)]
@@ -1848,6 +1849,10 @@ fn analyze_readme(artifact: &TextArtifact) -> Vec<Violation> {
         ));
     }
 
+    violations.extend(readme_surface_finish_compatibility(
+        &artifact.path,
+        &normalized,
+    ));
     violations.extend(readme_contradictions(&artifact.path, &normalized));
 
     violations
@@ -4513,6 +4518,79 @@ mod tests {
                 "missing contradiction for {label}"
             );
         }
+    }
+
+    #[test]
+    fn readme_readiness_flags_surface_finish_compatibility_risks() {
+        let readme = artifact(
+            "README.md",
+            "Revision SF. Fabrication package. Stackup 4 layer, thickness 1.6mm, copper weight 1 oz, \
+             HASL finish, soldermask green. No impedance. Panelization none. Tented vias. \
+             No edge plating, no castellation. Assembly includes BGA and QFN packages plus card edge \
+             gold fingers, press-fit pins, and wire bond pads. DRC/ERC passed, zones refilled, outputs \
+             generated, Gerber viewer checked, HyperDRC reviewed, no waivers, archive created. Pin-1 and \
+             polarity reviewed. Test fixture/programming handoff complete.\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[],
+            &[],
+        ));
+
+        for expected in [
+            "edge contacts",
+            "fine-pitch, BGA",
+            "press-fit hardware",
+            "wire bonding",
+        ] {
+            assert!(
+                messages.iter().any(|message| message.contains(expected)),
+                "missing surface-finish warning containing {expected}: {messages:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn readme_readiness_accepts_explicit_surface_finish_handoffs() {
+        let readme = artifact(
+            "README.md",
+            "Revision SG. Fabrication package. Stackup 4 layer, thickness 1.6mm, copper weight 1 oz, \
+             ENEPIG finish with hard gold contact fingers, soldermask green. No impedance. Panelization none. \
+             Tented vias. No edge plating, no castellation. Assembly includes BGA and QFN packages, press-fit pins, \
+             and wire bond pads. DRC/ERC passed, zones refilled, outputs generated, Gerber viewer checked, \
+             HyperDRC reviewed, no waivers, archive created. Pin-1 and polarity reviewed. \
+             Test fixture/programming handoff complete.\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[],
+            &[],
+        ));
+
+        assert!(
+            !messages
+                .iter()
+                .any(|message| message.contains("finish compatibility")
+                    || message.contains("finish with"))
+        );
+        assert!(
+            !messages
+                .iter()
+                .any(|message| message.contains("edge contacts")
+                    || message.contains("fine-pitch")
+                    || message.contains("press-fit hardware")
+                    || message.contains("wire bonding"))
+        );
     }
 
     #[test]

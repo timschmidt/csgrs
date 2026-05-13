@@ -233,7 +233,12 @@ pub const DEFAULT_CHECKS: &[Check] = &[
 pub enum OutputFormat {
     Text,
     Json,
+    Jsonl,
     Geojson,
+    Sarif,
+    GithubAnnotations,
+    Html,
+    Junit,
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, ValueEnum)]
@@ -882,6 +887,26 @@ mod tests {
         assert_eq!(cli.readme_files, vec![PathBuf::from("README.md")]);
         assert_eq!(cli.rout_drawing_files, vec![PathBuf::from("panel.dxf")]);
         assert_eq!(cli.declared_copper_layer_count, Some(4));
+    }
+
+    #[test]
+    fn parses_sarif_output_format() {
+        let cli = Cli::parse_from(["hyperdrc", "--format", "sarif", "top.gbr"]);
+
+        assert_eq!(cli.format, OutputFormat::Sarif);
+    }
+
+    #[test]
+    fn parses_streaming_and_ci_output_formats() {
+        let jsonl = Cli::parse_from(["hyperdrc", "--format", "jsonl", "top.gbr"]);
+        let github = Cli::parse_from(["hyperdrc", "--format", "github-annotations", "top.gbr"]);
+        let html = Cli::parse_from(["hyperdrc", "--format", "html", "top.gbr"]);
+        let junit = Cli::parse_from(["hyperdrc", "--format", "junit", "top.gbr"]);
+
+        assert_eq!(jsonl.format, OutputFormat::Jsonl);
+        assert_eq!(github.format, OutputFormat::GithubAnnotations);
+        assert_eq!(html.format, OutputFormat::Html);
+        assert_eq!(junit.format, OutputFormat::Junit);
     }
 
     #[test]

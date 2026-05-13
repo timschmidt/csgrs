@@ -6,15 +6,31 @@ use csgrs::io::gerber::FromGerber;
 use crate::cli::{Check, Cli, DEFAULT_CHECKS, OutputFormat};
 use crate::config::{self, EffectiveRules};
 use crate::io::{self, SourceRecord};
-use crate::report::{Report, Violation, report_summary, report_to_geojson};
+use crate::report::{Diagnostic, Report, Severity, Violation, report_summary, report_to_geojson};
 use crate::{LayerMetadata, PcbSketch};
-use crate::{checks, conversion, excellon, ipc356, kicad, svg_overlay, waiver};
+use crate::{
+    checks, conversion, excellon, github_annotations, html_report, ipc356, jsonl, junit, kicad,
+    sarif, svg_overlay, waiver,
+};
 
 #[derive(Clone, Debug)]
 struct Layer {
     path: PathBuf,
     source: SourceRecord,
     sketch: PcbSketch,
+}
+
+#[derive(Clone, Debug, Default)]
+struct PackageInputs {
+    excellon_files: Vec<io::DiscoveredFile>,
+    ipc356_files: Vec<io::DiscoveredFile>,
+    bom_files: Vec<io::DiscoveredFile>,
+    centroid_files: Vec<io::DiscoveredFile>,
+    netlist_files: Vec<io::DiscoveredFile>,
+    fab_drawing_files: Vec<io::DiscoveredFile>,
+    assembly_drawing_files: Vec<io::DiscoveredFile>,
+    readme_files: Vec<io::DiscoveredFile>,
+    rout_drawing_files: Vec<io::DiscoveredFile>,
 }
 
 pub fn run(cli: Cli) -> Result<()> {
@@ -76,13 +92,21 @@ pub fn run(cli: Cli) -> Result<()> {
     let conversion_outputs = run_conversions(&cli)?;
     let layers = load_all_layers(&cli.files, &cli.gerber_dirs, &conversion_outputs)?;
     let mut boards = load_boards(&cli.kicad_pcbs)?;
-    let excellon_reports = load_excellon_reports(&cli.excellon_files)?;
+    let discovered_sidecars = io::discover_package_sidecars(&cli.gerber_dirs)?;
+    let package_inputs = package_inputs(&cli, discovered_sidecars);
+    let excellon_reports =
+        load_excellon_reports(&package_input_paths(&package_inputs.excellon_files))?;
     let excellon_drills = excellon_reports
         .iter()
         .flat_map(|report| report.drills.iter())
         .cloned()
         .collect::<Vec<_>>();
-    let ipc356_points = load_ipc356_points(&cli.ipc356_files)?;
+    let ipc356_reports = load_ipc356_reports(&package_input_paths(&package_inputs.ipc356_files))?;
+    let ipc356_points = ipc356_reports
+        .iter()
+        .flat_map(|report| report.points.iter())
+        .cloned()
+        .collect::<Vec<_>>();
     let waivers = load_waivers(&cli.waiver_files)?;
 
     for board in &mut boards {
@@ -122,6 +146,7 @@ pub fn run(cli: Cli) -> Result<()> {
         &excellon_reports,
         &excellon_drills,
         &ipc356_points,
+        &package_inputs,
     )?;
 
     let (active_violations, waived) = waiver::apply_waivers(violations, &waivers);
@@ -141,19 +166,12 @@ pub fn run(cli: Cli) -> Result<()> {
             .chain(cli.gerber_dirs.iter())
             .chain(cli.conversion_inputs.iter())
             .chain(cli.kicad_pcbs.iter())
-            .chain(cli.excellon_files.iter())
-            .chain(cli.ipc356_files.iter())
-            .chain(cli.bom_files.iter())
-            .chain(cli.centroid_files.iter())
-            .chain(cli.netlist_files.iter())
-            .chain(cli.fab_drawing_files.iter())
-            .chain(cli.assembly_drawing_files.iter())
-            .chain(cli.readme_files.iter())
-            .chain(cli.rout_drawing_files.iter())
             .chain(cli.waiver_files.iter())
             .map(|path| path.display().to_string())
+            .chain(package_input_paths_flat(&package_inputs))
             .collect(),
-        inputs: input_manifest(&cli, &layers),
+        inputs: input_manifest(&cli, &layers, &package_inputs),
+        diagnostics: parser_diagnostics(&excellon_reports, &ipc356_reports),
         violation_count: violations.len(),
         waived_count: waived.len(),
         summary,
@@ -168,10 +186,23 @@ pub fn run(cli: Cli) -> Result<()> {
     match cli.format {
         OutputFormat::Text => print_text_report(&report),
         OutputFormat::Json => println!("{}", serde_json::to_string_pretty(&report)?),
+        OutputFormat::Jsonl => print!("{}", jsonl::report_to_jsonl(&report)?),
         OutputFormat::Geojson => println!(
             "{}",
             serde_json::to_string_pretty(&report_to_geojson(&report))?
         ),
+        OutputFormat::Sarif => println!(
+            "{}",
+            serde_json::to_string_pretty(&sarif::report_to_sarif(&report))?
+        ),
+        OutputFormat::GithubAnnotations => {
+            print!(
+                "{}",
+                github_annotations::report_to_github_annotations(&report)
+            );
+        }
+        OutputFormat::Html => print!("{}", html_report::report_to_html(&report)),
+        OutputFormat::Junit => print!("{}", junit::report_to_junit(&report)),
     }
 
     if report.violation_count > 0 {
@@ -192,6 +223,7 @@ fn run_checks(
     excellon_reports: &[excellon::ExcellonReport],
     excellon_drills: &[kicad::DrillFeature],
     ipc356_points: &[ipc356::Ipc356Point],
+    package_inputs: &PackageInputs,
 ) -> Result<Vec<Violation>> {
     let mut violations = Vec::new();
 
@@ -1498,20 +1530,31 @@ fn run_checks(
             }
             Check::FileManifestReadiness => {
                 violations.extend(checks::file_manifest_readiness(&manifest_input(
-                    cli, layers, boards,
+                    cli,
+                    layers,
+                    boards,
+                    package_inputs,
                 )));
             }
             Check::ExcellonReadiness => {
                 violations.extend(checks::excellon_batch_readiness(excellon_reports));
             }
             Check::ProductionArtifactReadiness => {
-                let bom_files = load_text_artifacts(&cli.bom_files)?;
-                let centroid_files = load_text_artifacts(&cli.centroid_files)?;
-                let netlist_files = load_text_artifacts(&cli.netlist_files)?;
-                let readme_files = load_text_artifacts(&cli.readme_files)?;
-                let fab_drawing_files = load_file_artifacts(&cli.fab_drawing_files)?;
-                let assembly_drawing_files = load_file_artifacts(&cli.assembly_drawing_files)?;
-                let rout_drawing_files = load_file_artifacts(&cli.rout_drawing_files)?;
+                let bom_files =
+                    load_text_artifacts(&package_input_paths(&package_inputs.bom_files))?;
+                let centroid_files =
+                    load_text_artifacts(&package_input_paths(&package_inputs.centroid_files))?;
+                let netlist_files =
+                    load_text_artifacts(&package_input_paths(&package_inputs.netlist_files))?;
+                let readme_files =
+                    load_text_artifacts(&package_input_paths(&package_inputs.readme_files))?;
+                let fab_drawing_files =
+                    load_file_artifacts(&package_input_paths(&package_inputs.fab_drawing_files))?;
+                let assembly_drawing_files = load_file_artifacts(&package_input_paths(
+                    &package_inputs.assembly_drawing_files,
+                ))?;
+                let rout_drawing_files =
+                    load_file_artifacts(&package_input_paths(&package_inputs.rout_drawing_files))?;
                 violations.extend(checks::production_artifact_readiness(
                     &bom_files,
                     &centroid_files,
@@ -1528,12 +1571,174 @@ fn run_checks(
     Ok(violations)
 }
 
+fn package_inputs(cli: &Cli, discovered: io::PackageSidecars) -> PackageInputs {
+    let mut inputs = PackageInputs::default();
+    extend_package_inputs(
+        &mut inputs.excellon_files,
+        explicit_package_inputs(
+            &cli.excellon_files,
+            io::IoAdapter::Excellon,
+            io::IoRole::DrillSidecar,
+        ),
+    );
+    extend_package_inputs(
+        &mut inputs.ipc356_files,
+        explicit_package_inputs(
+            &cli.ipc356_files,
+            io::IoAdapter::Ipc356,
+            io::IoRole::NetlistSidecar,
+        ),
+    );
+    extend_package_inputs(
+        &mut inputs.bom_files,
+        explicit_package_inputs(
+            &cli.bom_files,
+            io::IoAdapter::DirectFile,
+            io::IoRole::BomFile,
+        ),
+    );
+    extend_package_inputs(
+        &mut inputs.centroid_files,
+        explicit_package_inputs(
+            &cli.centroid_files,
+            io::IoAdapter::DirectFile,
+            io::IoRole::CentroidFile,
+        ),
+    );
+    extend_package_inputs(
+        &mut inputs.netlist_files,
+        explicit_package_inputs(
+            &cli.netlist_files,
+            io::IoAdapter::DirectFile,
+            io::IoRole::NetlistFile,
+        ),
+    );
+    extend_package_inputs(
+        &mut inputs.fab_drawing_files,
+        explicit_package_inputs(
+            &cli.fab_drawing_files,
+            io::IoAdapter::DirectFile,
+            io::IoRole::FabDrawing,
+        ),
+    );
+    extend_package_inputs(
+        &mut inputs.assembly_drawing_files,
+        explicit_package_inputs(
+            &cli.assembly_drawing_files,
+            io::IoAdapter::DirectFile,
+            io::IoRole::AssemblyDrawing,
+        ),
+    );
+    extend_package_inputs(
+        &mut inputs.readme_files,
+        explicit_package_inputs(
+            &cli.readme_files,
+            io::IoAdapter::DirectFile,
+            io::IoRole::ReadmeFile,
+        ),
+    );
+    extend_package_inputs(
+        &mut inputs.rout_drawing_files,
+        explicit_package_inputs(
+            &cli.rout_drawing_files,
+            io::IoAdapter::DirectFile,
+            io::IoRole::RoutDrawingFile,
+        ),
+    );
+
+    extend_package_inputs(&mut inputs.excellon_files, discovered.excellon_files);
+    extend_package_inputs(&mut inputs.ipc356_files, discovered.ipc356_files);
+    extend_package_inputs(&mut inputs.bom_files, discovered.bom_files);
+    extend_package_inputs(&mut inputs.centroid_files, discovered.centroid_files);
+    extend_package_inputs(&mut inputs.netlist_files, discovered.netlist_files);
+    extend_package_inputs(&mut inputs.fab_drawing_files, discovered.fab_drawing_files);
+    extend_package_inputs(
+        &mut inputs.assembly_drawing_files,
+        discovered.assembly_drawing_files,
+    );
+    extend_package_inputs(&mut inputs.readme_files, discovered.readme_files);
+    extend_package_inputs(
+        &mut inputs.rout_drawing_files,
+        discovered.rout_drawing_files,
+    );
+    inputs
+}
+
+fn explicit_package_inputs(
+    paths: &[PathBuf],
+    adapter: io::IoAdapter,
+    role: io::IoRole,
+) -> Vec<io::DiscoveredFile> {
+    paths
+        .iter()
+        .cloned()
+        .map(|path| io::DiscoveredFile {
+            source: SourceRecord::new(
+                adapter.clone(),
+                role.clone(),
+                &path,
+                Option::<&std::path::Path>::None,
+            ),
+            path,
+        })
+        .collect()
+}
+
+fn extend_package_inputs(target: &mut Vec<io::DiscoveredFile>, inputs: Vec<io::DiscoveredFile>) {
+    for input in inputs {
+        if !target.iter().any(|existing| existing.path == input.path) {
+            target.push(input);
+        }
+    }
+}
+
+fn package_input_paths(inputs: &[io::DiscoveredFile]) -> Vec<PathBuf> {
+    inputs.iter().map(|input| input.path.clone()).collect()
+}
+
+fn package_input_paths_flat(inputs: &PackageInputs) -> impl Iterator<Item = String> + '_ {
+    inputs
+        .excellon_files
+        .iter()
+        .chain(inputs.ipc356_files.iter())
+        .chain(inputs.bom_files.iter())
+        .chain(inputs.centroid_files.iter())
+        .chain(inputs.netlist_files.iter())
+        .chain(inputs.fab_drawing_files.iter())
+        .chain(inputs.assembly_drawing_files.iter())
+        .chain(inputs.readme_files.iter())
+        .chain(inputs.rout_drawing_files.iter())
+        .map(|input| input.path.display().to_string())
+}
+
+fn package_sources(inputs: &PackageInputs) -> impl Iterator<Item = SourceRecord> + '_ {
+    inputs
+        .excellon_files
+        .iter()
+        .chain(inputs.ipc356_files.iter())
+        .chain(inputs.bom_files.iter())
+        .chain(inputs.centroid_files.iter())
+        .chain(inputs.netlist_files.iter())
+        .chain(inputs.fab_drawing_files.iter())
+        .chain(inputs.assembly_drawing_files.iter())
+        .chain(inputs.readme_files.iter())
+        .chain(inputs.rout_drawing_files.iter())
+        .map(|input| input.source.clone())
+}
+
 fn load_text_artifacts(files: &[PathBuf]) -> Result<Vec<checks::TextArtifact>> {
     files
         .iter()
         .map(|path| {
-            let text = std::fs::read_to_string(path)
+            let bytes = std::fs::read(path)
                 .with_context(|| format!("failed to read {}", path.display()))?;
+            // BOM and placement spreadsheets are often binary formats. Until a
+            // typed spreadsheet adapter is added, keep the run non-fatal and let
+            // production-artifact-readiness report missing table structure.
+            let text = match String::from_utf8(bytes) {
+                Ok(text) => text,
+                Err(error) => String::from_utf8_lossy(error.as_bytes()).into_owned(),
+            };
             Ok(checks::TextArtifact {
                 path: path.display().to_string(),
                 text,
@@ -1736,7 +1941,11 @@ fn load_boards(files: &[PathBuf]) -> Result<Vec<kicad::BoardModel>> {
         .collect()
 }
 
-fn input_manifest(cli: &Cli, layers: &[Layer]) -> Vec<SourceRecord> {
+fn input_manifest(
+    cli: &Cli,
+    layers: &[Layer],
+    package_inputs: &PackageInputs,
+) -> Vec<SourceRecord> {
     let mut inputs = layers
         .iter()
         .map(|layer| layer.source.clone())
@@ -1749,22 +1958,6 @@ fn input_manifest(cli: &Cli, layers: &[Layer]) -> Vec<SourceRecord> {
             Option::<&std::path::Path>::None,
         )
     }));
-    inputs.extend(cli.excellon_files.iter().map(|path| {
-        SourceRecord::new(
-            io::IoAdapter::Excellon,
-            io::IoRole::DrillSidecar,
-            path,
-            Option::<&std::path::Path>::None,
-        )
-    }));
-    inputs.extend(cli.ipc356_files.iter().map(|path| {
-        SourceRecord::new(
-            io::IoAdapter::Ipc356,
-            io::IoRole::NetlistSidecar,
-            path,
-            Option::<&std::path::Path>::None,
-        )
-    }));
     inputs.extend(cli.waiver_files.iter().map(|path| {
         SourceRecord::new(
             io::IoAdapter::Waiver,
@@ -1773,62 +1966,7 @@ fn input_manifest(cli: &Cli, layers: &[Layer]) -> Vec<SourceRecord> {
             Option::<&std::path::Path>::None,
         )
     }));
-    inputs.extend(cli.bom_files.iter().map(|path| {
-        SourceRecord::new(
-            io::IoAdapter::DirectFile,
-            io::IoRole::BomFile,
-            path,
-            Option::<&std::path::Path>::None,
-        )
-    }));
-    inputs.extend(cli.centroid_files.iter().map(|path| {
-        SourceRecord::new(
-            io::IoAdapter::DirectFile,
-            io::IoRole::CentroidFile,
-            path,
-            Option::<&std::path::Path>::None,
-        )
-    }));
-    inputs.extend(cli.netlist_files.iter().map(|path| {
-        SourceRecord::new(
-            io::IoAdapter::DirectFile,
-            io::IoRole::NetlistFile,
-            path,
-            Option::<&std::path::Path>::None,
-        )
-    }));
-    inputs.extend(cli.fab_drawing_files.iter().map(|path| {
-        SourceRecord::new(
-            io::IoAdapter::DirectFile,
-            io::IoRole::FabDrawing,
-            path,
-            Option::<&std::path::Path>::None,
-        )
-    }));
-    inputs.extend(cli.assembly_drawing_files.iter().map(|path| {
-        SourceRecord::new(
-            io::IoAdapter::DirectFile,
-            io::IoRole::AssemblyDrawing,
-            path,
-            Option::<&std::path::Path>::None,
-        )
-    }));
-    inputs.extend(cli.readme_files.iter().map(|path| {
-        SourceRecord::new(
-            io::IoAdapter::DirectFile,
-            io::IoRole::ReadmeFile,
-            path,
-            Option::<&std::path::Path>::None,
-        )
-    }));
-    inputs.extend(cli.rout_drawing_files.iter().map(|path| {
-        SourceRecord::new(
-            io::IoAdapter::DirectFile,
-            io::IoRole::RoutDrawingFile,
-            path,
-            Option::<&std::path::Path>::None,
-        )
-    }));
+    inputs.extend(package_sources(package_inputs));
     inputs
 }
 
@@ -1836,6 +1974,7 @@ fn manifest_input(
     cli: &Cli,
     layers: &[Layer],
     boards: &[kicad::BoardModel],
+    package_inputs: &PackageInputs,
 ) -> checks::ManifestInput {
     let mut kicad_copper_layers = std::collections::HashSet::new();
     for board in boards {
@@ -1853,30 +1992,22 @@ fn manifest_input(
             })
             .collect(),
         artifact_paths: cli
-            .bom_files
+            .kicad_pcbs
             .iter()
-            .chain(cli.centroid_files.iter())
-            .chain(cli.netlist_files.iter())
-            .chain(cli.fab_drawing_files.iter())
-            .chain(cli.assembly_drawing_files.iter())
-            .chain(cli.readme_files.iter())
-            .chain(cli.rout_drawing_files.iter())
-            .chain(cli.kicad_pcbs.iter())
-            .chain(cli.excellon_files.iter())
-            .chain(cli.ipc356_files.iter())
             .map(|path| path.display().to_string())
+            .chain(package_input_paths_flat(package_inputs))
             .collect(),
-        bom_file_count: cli.bom_files.len(),
-        centroid_file_count: cli.centroid_files.len(),
-        netlist_file_count: cli.netlist_files.len(),
-        fab_drawing_file_count: cli.fab_drawing_files.len(),
-        assembly_drawing_file_count: cli.assembly_drawing_files.len(),
-        readme_file_count: cli.readme_files.len(),
-        rout_drawing_file_count: cli.rout_drawing_files.len(),
+        bom_file_count: package_inputs.bom_files.len(),
+        centroid_file_count: package_inputs.centroid_files.len(),
+        netlist_file_count: package_inputs.netlist_files.len(),
+        fab_drawing_file_count: package_inputs.fab_drawing_files.len(),
+        assembly_drawing_file_count: package_inputs.assembly_drawing_files.len(),
+        readme_file_count: package_inputs.readme_files.len(),
+        rout_drawing_file_count: package_inputs.rout_drawing_files.len(),
         declared_copper_layer_count: cli.declared_copper_layer_count.filter(|count| *count > 0),
         kicad_copper_layer_count: Some(kicad_copper_layers.len()).filter(|count| *count > 0),
         has_board_outline: boards.iter().any(|board| board.board_outline.is_some()),
-        has_drill_data: !cli.excellon_files.is_empty()
+        has_drill_data: !package_inputs.excellon_files.is_empty()
             || boards.iter().any(|board| !board.drills.is_empty()),
     }
 }
@@ -1897,12 +2028,82 @@ fn load_excellon_reports(files: &[PathBuf]) -> Result<Vec<excellon::ExcellonRepo
     Ok(reports)
 }
 
-fn load_ipc356_points(files: &[PathBuf]) -> Result<Vec<ipc356::Ipc356Point>> {
-    let mut points = Vec::new();
+fn load_ipc356_reports(files: &[PathBuf]) -> Result<Vec<ipc356::Ipc356Report>> {
+    let mut reports = Vec::new();
     for path in files {
-        points.extend(ipc356::load_ipc356(path)?);
+        reports.push(ipc356::load_ipc356_report(path)?);
     }
-    Ok(points)
+    Ok(reports)
+}
+
+#[cfg(test)]
+fn load_ipc356_points(files: &[PathBuf]) -> Result<Vec<ipc356::Ipc356Point>> {
+    Ok(load_ipc356_reports(files)?
+        .into_iter()
+        .flat_map(|report| report.points.into_iter())
+        .collect())
+}
+
+fn parser_diagnostics(
+    excellon_reports: &[excellon::ExcellonReport],
+    ipc356_reports: &[ipc356::Ipc356Report],
+) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+    for report in excellon_reports {
+        diagnostics.extend(report.issues.iter().map(|issue| Diagnostic {
+            source: report.source.clone(),
+            line: Some(issue.line),
+            severity: checks::excellon_issue_severity(&issue.kind),
+            code: excellon_issue_code(&issue.kind).to_string(),
+            message: issue.message(),
+        }));
+    }
+    for report in ipc356_reports {
+        diagnostics.extend(report.issues.iter().map(|issue| Diagnostic {
+            source: report.source.clone(),
+            line: Some(issue.line),
+            severity: Severity::Warning,
+            code: ipc356_issue_code(&issue.kind).to_string(),
+            message: issue.message(),
+        }));
+    }
+    diagnostics
+}
+
+fn excellon_issue_code(kind: &excellon::ExcellonIssueKind) -> &'static str {
+    match kind {
+        excellon::ExcellonIssueKind::MissingUnitDeclaration => "excellon::missing-unit",
+        excellon::ExcellonIssueKind::UnitConflict { .. } => "excellon::unit-conflict",
+        excellon::ExcellonIssueKind::InvalidToolDefinition { .. } => {
+            "excellon::invalid-tool-definition"
+        }
+        excellon::ExcellonIssueKind::ToolDiameterNotPositive { .. } => {
+            "excellon::non-positive-tool-diameter"
+        }
+        excellon::ExcellonIssueKind::DuplicateToolDefinition { .. } => {
+            "excellon::duplicate-tool-definition"
+        }
+        excellon::ExcellonIssueKind::ToolRedefinition { .. } => "excellon::tool-redefinition",
+        excellon::ExcellonIssueKind::UnknownToolSelection { .. } => {
+            "excellon::unknown-tool-selection"
+        }
+        excellon::ExcellonIssueKind::DrillHitWithoutActiveTool => {
+            "excellon::hit-without-active-tool"
+        }
+        excellon::ExcellonIssueKind::DrillHitWithUnknownTool { .. } => {
+            "excellon::hit-with-unknown-tool"
+        }
+        excellon::ExcellonIssueKind::DrillHitWithoutDiameter { .. } => {
+            "excellon::hit-without-diameter"
+        }
+        excellon::ExcellonIssueKind::InvalidCoordinate { .. } => "excellon::invalid-coordinate",
+    }
+}
+
+fn ipc356_issue_code(kind: &ipc356::Ipc356IssueKind) -> &'static str {
+    match kind {
+        ipc356::Ipc356IssueKind::MalformedTestRecord => "ipc356::malformed-test-record",
+    }
 }
 
 fn load_waivers(files: &[PathBuf]) -> Result<Vec<waiver::Waiver>> {
@@ -2037,6 +2238,7 @@ fn print_text_report(report: &Report) {
                 report.waived_count
             );
         }
+        print_diagnostics(report);
         return;
     }
 
@@ -2046,6 +2248,24 @@ fn print_text_report(report: &Report) {
     );
     for (index, violation) in report.violations.iter().enumerate() {
         print_violation(index + 1, violation);
+    }
+    print_diagnostics(report);
+}
+
+fn print_diagnostics(report: &Report) {
+    if report.diagnostics.is_empty() {
+        return;
+    }
+    println!("{} parser diagnostic(s):", report.diagnostics.len());
+    for diagnostic in &report.diagnostics {
+        let line = diagnostic
+            .line
+            .map(|line| format!(":{line}"))
+            .unwrap_or_default();
+        println!(
+            "   [{:?}] {}{} {}: {}",
+            diagnostic.severity, diagnostic.source, line, diagnostic.code, diagnostic.message
+        );
     }
 }
 
@@ -2096,14 +2316,17 @@ mod tests {
 
     use crate::cli::Cli;
     use crate::geometry::empty_sketch;
-    use crate::io::{IoAdapter, IoRole, SourceRecord, discover_gerber_dir, is_gerber_path};
+    use crate::io::{
+        IoAdapter, IoRole, SourceRecord, discover_gerber_dir, discover_package_sidecars,
+        is_gerber_path,
+    };
     use crate::kicad;
 
     use super::{
         Layer, explicit_layer_pairs, input_manifest, layer_pairs, load_all_layers, load_boards,
-        load_excellon_drills, load_ipc356_points, load_layers, manifest_input, run,
-        validate_board_outline_role, validate_layer_index, validate_layer_indexes,
-        validate_silk_layer_roles,
+        load_excellon_drills, load_ipc356_points, load_layers, load_text_artifacts, manifest_input,
+        package_inputs, parser_diagnostics, run, validate_board_outline_role, validate_layer_index,
+        validate_layer_indexes, validate_silk_layer_roles,
     };
 
     const VALID_GERBER: &str =
@@ -2273,6 +2496,39 @@ mod tests {
     }
 
     #[test]
+    fn parser_diagnostics_collect_excellon_and_ipc356_issues() {
+        let excellon_report =
+            crate::excellon::parse_excellon_report("T01\nXbadY0200\n", Path::new("panel.drl"));
+        let ipc356_report =
+            crate::ipc356::parse_ipc356_report("327 missing-coordinates\n", Path::new("board.ipc"));
+
+        let diagnostics = parser_diagnostics(&[excellon_report], &[ipc356_report]);
+
+        assert!(diagnostics.iter().any(|diagnostic| {
+            diagnostic.code == "excellon::unknown-tool-selection"
+                || diagnostic.code == "excellon::invalid-coordinate"
+        }));
+        assert!(
+            diagnostics
+                .iter()
+                .any(|diagnostic| diagnostic.code == "ipc356::malformed-test-record")
+        );
+    }
+
+    #[test]
+    fn text_artifact_loader_keeps_binary_spreadsheets_non_fatal() {
+        let path =
+            std::env::temp_dir().join(format!("hyperdrc-binary-bom-{}.xlsx", std::process::id()));
+        std::fs::write(&path, [0xff, 0xfe, b'B', b'O', b'M']).unwrap();
+
+        let artifacts = load_text_artifacts(std::slice::from_ref(&path)).unwrap();
+
+        assert_eq!(artifacts[0].path, path.display().to_string());
+        assert!(artifacts[0].text.contains("BOM"));
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
     fn input_manifest_records_readiness_artifacts() {
         let cli = Cli::parse_from([
             "hyperdrc",
@@ -2292,7 +2548,8 @@ mod tests {
             "rout.dxf",
             "top.gbr",
         ]);
-        let manifest = input_manifest(&cli, &[]);
+        let package_inputs = package_inputs(&cli, Default::default());
+        let manifest = input_manifest(&cli, &[], &package_inputs);
         let roles = manifest
             .iter()
             .map(|source| source.role.clone())
@@ -2334,7 +2591,8 @@ mod tests {
 
         let layers = vec![make_layer("top.gbr"), make_layer("bottom.gbr")];
         let boards = vec![make_board_model(&["F.Cu", "B.Cu", "F.Cu"], true, true)];
-        let manifest = manifest_input(&cli, &layers, &boards);
+        let package_inputs = package_inputs(&cli, Default::default());
+        let manifest = manifest_input(&cli, &layers, &boards, &package_inputs);
 
         assert_eq!(manifest.gerber_layers.len(), 2);
         assert!(manifest.artifact_paths.contains(&"bom.csv".to_string()));
@@ -2357,13 +2615,47 @@ mod tests {
         let cli = Cli::parse_from(["hyperdrc", "--declared-copper-layer-count", "0", "top.gbr"]);
         let layers = vec![make_layer("top.gbr")];
         let boards = vec![make_board_model(&[], false, false)];
-        let manifest = manifest_input(&cli, &layers, &boards);
+        let package_inputs = package_inputs(&cli, Default::default());
+        let manifest = manifest_input(&cli, &layers, &boards, &package_inputs);
 
         assert_eq!(manifest.gerber_layers.len(), 1);
         assert_eq!(manifest.declared_copper_layer_count, None);
         assert_eq!(manifest.kicad_copper_layer_count, None);
         assert!(!manifest.has_board_outline);
         assert!(!manifest.has_drill_data);
+    }
+
+    #[test]
+    fn gerber_directory_sidecars_feed_manifest_and_provenance() {
+        let dir =
+            std::env::temp_dir().join(format!("hyperdrc-package-sidecars-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(
+            dir.join("board.drl"),
+            "M48\nMETRIC\nT01C0.6\n%\nT01\nX0Y0\nM30\n",
+        )
+        .unwrap();
+        std::fs::write(dir.join("release_bom.csv"), "Ref,MPN\nR1,RC0603\n").unwrap();
+        std::fs::write(dir.join("README.md"), "Revision A fabrication notes\n").unwrap();
+
+        let cli = Cli::parse_from(["hyperdrc", "--gerber-dir", dir.to_str().unwrap()]);
+        let discovered = discover_package_sidecars(std::slice::from_ref(&dir)).unwrap();
+        let package_inputs = package_inputs(&cli, discovered);
+        let sources = input_manifest(&cli, &[], &package_inputs);
+        let manifest = manifest_input(&cli, &[], &[], &package_inputs);
+
+        assert_eq!(package_inputs.excellon_files.len(), 1);
+        assert_eq!(manifest.bom_file_count, 1);
+        assert_eq!(manifest.readme_file_count, 1);
+        assert!(manifest.has_drill_data);
+        assert!(sources.iter().any(|source| {
+            source.role == IoRole::BomFile
+                && source.adapter == IoAdapter::GerberDirectory
+                && source.origin.as_deref() == Some(dir.to_str().unwrap())
+        }));
+
+        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
