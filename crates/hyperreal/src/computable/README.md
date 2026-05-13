@@ -51,6 +51,23 @@ Approximation kernels should:
 - keep approximation precision explicit rather than silently falling back to
   primitive floating point
 
+## Numerical explosion controls
+
+`Computable` growth is controlled by refinement discipline:
+
+- constructors should fold identities, exact endpoints, inverse pairs, and
+  known-zero branches before adding graph nodes
+- transcendental kernels should reduce arguments and use prescaled forms before
+  entering long series
+- cancellation-sensitive paths should prefer stable transforms over subtracting
+  nearly equal high-precision approximations
+- shared constants and node caches should be reused instead of rebuilding the
+  same subgraph or approximation at each use site
+- sign, magnitude, and exact/symbolic facts propagated from `Real` should be
+  checked before requesting a new scalar approximation
+- lower-precision cache hits may accelerate refinement, but must not become
+  certificates for higher precision than they actually justify
+
 ## Complex graph examples
 
 The generator in [`../../examples/computable_graphs.rs`](../../examples/computable_graphs.rs)

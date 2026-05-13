@@ -127,20 +127,20 @@ Low-level approximation kernels and deep expression-tree stress cases.
 | `computable_transcendentals/deep_add_chain_cold_p128` | 108.58 ns | 83.24 ns - 158.62 ns | Approximates a 5000-node addition chain. |
 | `computable_transcendentals/deep_multiply_chain_cold_p128` | 80.88 ns | 77.29 ns - 84.80 ns | Approximates a 5000-node multiply-by-one chain. |
 | `computable_transcendentals/deep_multiply_identity_chain_cold_p128` | 90.36 ns | 89.25 ns - 91.83 ns | Approximates a deep identity multiplication chain around pi. |
-| `computable_transcendentals/deep_scaled_product_chain_cold_p128` | 672.89 ns | 574.16 ns - 868.53 ns | Approximates a deep product of exact scale factors. |
-| `computable_transcendentals/perturbed_scaled_product_chain_cold_p128` | 844.04 ns | 839.99 ns - 847.57 ns | Approximates a deep scaled product with a tiny perturbation. |
-| `computable_transcendentals/scaled_square_chain_cold_p128` | 1.286 us | 1.282 us - 1.289 us | Approximates repeated squaring of a scaled irrational. |
+| `computable_transcendentals/deep_scaled_product_chain_cold_p128` | 661.62 ns | 547.31 ns - 888.10 ns | Approximates a deep product of exact scale factors. |
+| `computable_transcendentals/perturbed_scaled_product_chain_cold_p128` | 823.89 ns | 819.01 ns - 828.91 ns | Approximates a deep scaled product with a tiny perturbation. |
+| `computable_transcendentals/scaled_square_chain_cold_p128` | 1.245 us | 1.243 us - 1.248 us | Approximates repeated squaring of a scaled irrational. |
 | `computable_transcendentals/asymmetric_product_bad_order_cold_p128` | 906.02 ns | 870.56 ns - 963.80 ns | Approximates an asymmetric product order stress case. |
-| `computable_transcendentals/sqrt_scaled_square_chain_cold_p128` | 1.087 us | 1.077 us - 1.098 us | Approximates sqrt of a scaled-square chain. |
+| `computable_transcendentals/sqrt_scaled_square_chain_cold_p128` | 1.061 us | 1.056 us - 1.068 us | Approximates sqrt of a scaled-square chain. |
 | `computable_transcendentals/warmed_zero_product_cold_p128` | 450.93 ns | 449.70 ns - 452.45 ns | Approximates a product involving a warmed zero sum. |
-| `computable_transcendentals/inverse_scaled_product_chain_cold_p128` | 721.53 ns | 718.11 ns - 725.22 ns | Approximates the inverse of a deep scaled product. |
-| `computable_transcendentals/deep_inverse_pair_chain_cold_p128` | 87.23 ns | 86.96 ns - 87.62 ns | Approximates a chain of inverse(inverse(x)) pairs. |
+| `computable_transcendentals/inverse_scaled_product_chain_cold_p128` | 933.11 ns | 722.36 ns - 1.353 us | Approximates the inverse of a deep scaled product. |
+| `computable_transcendentals/deep_inverse_pair_chain_cold_p128` | 89.19 ns | 88.70 ns - 89.83 ns | Approximates a chain of inverse(inverse(x)) pairs. |
 | `computable_transcendentals/deep_negated_square_chain_cold_p128` | 87.23 ns | 87.07 ns - 87.45 ns | Approximates repeated negate-square-sqrt transformations. |
-| `computable_transcendentals/deep_negative_one_product_chain_cold_p128` | 88.33 ns | 87.71 ns - 89.30 ns | Approximates repeated multiplication by -1. |
-| `computable_transcendentals/deep_half_product_chain_cold_p128` | 149.81 ns | 148.82 ns - 150.86 ns | Approximates repeated multiplication by 1/2. |
+| `computable_transcendentals/deep_negative_one_product_chain_cold_p128` | 88.13 ns | 88.03 ns - 88.24 ns | Approximates repeated multiplication by -1. |
+| `computable_transcendentals/deep_half_product_chain_cold_p128` | 127.10 ns | 126.21 ns - 128.14 ns | Approximates repeated multiplication by 1/2. |
 | `computable_transcendentals/deep_half_square_chain_cold_p128` | 933.55 ns | 928.33 ns - 938.47 ns | Approximates repeated squaring after scaling by 1/2. |
 | `computable_transcendentals/deep_sqrt_square_chain_cold_p128` | 107.00 ns | 81.89 ns - 156.60 ns | Approximates repeated sqrt-square simplification. |
-| `computable_transcendentals/inverse_half_product_chain_cold_p128` | 471.47 ns | 468.72 ns - 475.41 ns | Approximates the inverse of a deep half-product chain. |
+| `computable_transcendentals/inverse_half_product_chain_cold_p128` | 476.10 ns | 471.64 ns - 481.11 ns | Approximates the inverse of a deep half-product chain. |
 
 <!-- END numerical_micro -->
 

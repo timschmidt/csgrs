@@ -95,6 +95,34 @@ can ask better questions before rounding: known zero or nonzero, structural
 sign, exact-rational access, conservative magnitude, or bounded sign
 refinement. That is the niche this stack targets.
 
+## Avoiding Numerical Explosion
+
+`hyperreal` treats uncontrolled growth as a representation problem first, not
+as something to repair later with wider approximations. The stack uses several
+small controls together:
+
+- Keep exact structure factored. Rationals, dyadics, named constants, roots,
+  logarithms, and selected trig forms stay in classified representations so
+  later identities can cancel them before any large numerator, denominator, or
+  expression graph is expanded.
+- Normalize at useful boundaries. Dyadic denominators reduce by shifts, exact
+  product sums share denominators, and matrix/vector reducers delay full
+  rational canonicalization until accumulated terms have had a chance to
+  combine.
+- Remove trivial work early. Canonical zeros, ones, identity constructors,
+  all-zero sums, single-term sums, exact endpoints, and known domain facts
+  avoid constructing larger intermediate values.
+- Use structural facts before scalar probing. Sign, zero, nonzero, magnitude,
+  exact-rational, dyadic, and symbolic-class facts can answer many branch
+  questions without inserting fresh approximation queries into hot loops.
+- Approximate only at the requested precision. `Computable` nodes use argument
+  reduction, prescaled kernels, cancellation-avoiding transforms, shared
+  constants, and precision-aware caches so refinement grows with the caller's
+  demand instead of with incidental expression size.
+- Measure growth directly. Dispatch traces and targeted benchmarks watch for
+  extra GCDs, rational temporaries, peak operand sizes, repeated approximation,
+  and regressions in reciprocal, inverse, division, and negative-power paths.
+
 ## Current State
 
 The crate is active, benchmark-driven, and no longer just a direct port of

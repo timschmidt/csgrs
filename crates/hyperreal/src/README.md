@@ -38,6 +38,24 @@ cache approximations/facts that are expensive to rediscover.
   false.
 - `Real` equality is structural, not a complete computer-algebra theorem prover.
 
+## Numerical explosion controls
+
+The implementation should prevent growth at the earliest layer that has enough
+information:
+
+- `Rational` keeps signs separate, recognizes dyadic denominators, canonicalizes
+  zeros, and gives reducers shared-denominator/product-sum paths so repeated
+  GCD work is not forced into every term.
+- `Real` keeps exact rational parts and symbolic classes separate, preserving
+  `pi`, `e`, roots, logarithms, and recognized trig endpoints until they can
+  simplify, cancel, or provide structural facts.
+- `Computable` is the fallback for values that need refinement, not the default
+  container for every expression. Kernels reduce arguments, use stable forms
+  near cancellation points, and cache precision-indexed approximations without
+  weakening later higher-precision requests.
+- Higher layers should pass retained facts into reducers instead of issuing
+  scalar sign or approximation probes inside dense matrix/vector lanes.
+
 ## Error model
 
 Public fallible operations return `Problem` rather than panicking for ordinary
@@ -80,4 +98,3 @@ improvements are not enough.
 - [`Real`](./real/README.md): public symbolic scalar and structural fact layer.
 - [`Computable`](./computable/README.md): lazy expression graph and numeric
   approximation layer.
-

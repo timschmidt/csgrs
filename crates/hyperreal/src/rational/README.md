@@ -48,9 +48,22 @@ the needed facts:
 These optimizations support the higher-level `Real` and `hyperlattice`
 matrix/vector kernels, where repeated rational reduction can dominate runtime.
 
+## Numerical explosion controls
+
+`Rational` is the first line of defense against exact-value growth:
+
+- canonical zero and separate sign storage keep common identities small
+- finite float imports become exact dyadics, preserving shift-only denominator
+  reduction where possible
+- shared-denominator dot products and signed product sums accumulate related
+  terms before the final reduction
+- all-zero and single-term exits avoid building denominators that will be
+  discarded immediately
+- reducers should use already-known signs, zero checks, and denominator facts
+  instead of re-querying scalar properties inside hot accumulation loops
+
 ## Error expectations
 
 `Rational` reports divide-by-zero construction or inversion through `Problem`.
 Ordinary arithmetic on valid rationals is exact and total except for operations
 that explicitly require a non-zero denominator or divisor.
-

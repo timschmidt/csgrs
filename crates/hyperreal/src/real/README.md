@@ -81,6 +81,22 @@ shape unless benchmarks show no cost.
 This is why many methods contain special cases for exact rationals, dyadics,
 pi/e products, square roots, logarithms, and rational trig endpoints.
 
+## Numerical explosion controls
+
+`Real` delays expansion by keeping scale, symbolic class, and computable
+fallback separate:
+
+- exact rational and dyadic values stay accessible for reducers and primitive
+  conversions
+- symbolic constants and factored forms are preserved so later operations can
+  cancel, classify, or answer sign/domain questions structurally
+- endpoint, identity, inverse, and small-argument rewrites shrink expressions
+  before a generic computable graph is built
+- borrowed arithmetic should reuse existing structure rather than cloning graph
+  nodes solely to ask scalar questions
+- bounded sign and magnitude refinement is used only when retained facts cannot
+  decide a branch
+
 ## Error expectations
 
 Errors are semantic domain failures, not "could not prove cheaply" failures.
@@ -99,4 +115,3 @@ kept. Typical reasons:
 - using cached computable constants rather than rebuilding kernels
 - avoiding generic computable graphs for exact endpoints
 - keeping direct expression shapes when Criterion shows they inline better
-

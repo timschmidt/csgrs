@@ -3260,6 +3260,20 @@ impl Computable {
             // and approximation stacks stay shallow.
             return child.clone();
         }
+        if let Approximation::Multiply(left, right) = self.internal.as_ref() {
+            if let Some(scale) = left.exact_rational()
+                && scale.sign() == Sign::Minus
+            {
+                crate::trace_dispatch!("computable", "negate", "exact-scale-fold");
+                return right.clone().multiply_rational(scale.neg());
+            }
+            if let Some(scale) = right.exact_rational()
+                && scale.sign() == Sign::Minus
+            {
+                crate::trace_dispatch!("computable", "negate", "exact-scale-fold");
+                return left.clone().multiply_rational(scale.neg());
+            }
+        }
         let exact_sign = match *self.exact_sign.borrow() {
             // Preserve known exact signs for the cheap sign-first path in
             // predicates; this avoids a recursive sign walk on first query.
