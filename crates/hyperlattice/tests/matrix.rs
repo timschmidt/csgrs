@@ -513,7 +513,19 @@ fn matrix4_known_upper_triangular_inverse_matches_matrix_inverse() {
     let inverse = matrix.clone().reciprocal().unwrap();
 
     assert_eq!(matrix.clone() * inverse.clone(), Matrix4::identity());
+    assert_eq!(matrix.clone().upper_triangular_inverse().unwrap(), inverse);
+    assert_eq!(
+        matrix.clone().upper_triangular_inverse_checked().unwrap(),
+        inverse
+    );
     assert_eq!(matrix.clone().inverse_checked().unwrap(), inverse);
+    assert_eq!(
+        matrix
+            .clone()
+            .upper_triangular_inverse_checked_with_abort(&abort_signal())
+            .unwrap(),
+        inverse
+    );
     assert_eq!(
         matrix.inverse_checked_with_abort(&abort_signal()).unwrap(),
         inverse
@@ -531,7 +543,19 @@ fn matrix4_known_lower_triangular_inverse_matches_matrix_inverse() {
     let inverse = matrix.clone().reciprocal().unwrap();
 
     assert_eq!(matrix.clone() * inverse.clone(), Matrix4::identity());
+    assert_eq!(matrix.clone().lower_triangular_inverse().unwrap(), inverse);
+    assert_eq!(
+        matrix.clone().lower_triangular_inverse_checked().unwrap(),
+        inverse
+    );
     assert_eq!(matrix.clone().inverse_checked().unwrap(), inverse);
+    assert_eq!(
+        matrix
+            .clone()
+            .lower_triangular_inverse_checked_with_abort(&abort_signal())
+            .unwrap(),
+        inverse
+    );
     assert_eq!(
         matrix.inverse_checked_with_abort(&abort_signal()).unwrap(),
         inverse
@@ -547,6 +571,12 @@ fn matrix4_known_upper_triangular_inverse_checked_rejects_singular_divisor() {
         [r(0), r(0), r(0), r(29)],
     ]);
 
+    assert_singular_error(matrix.clone().upper_triangular_inverse_checked());
+    assert_singular_error(
+        matrix
+            .clone()
+            .upper_triangular_inverse_checked_with_abort(&abort_signal()),
+    );
     assert_singular_error(matrix.clone().inverse_checked());
     assert_singular_error(matrix.inverse_checked_with_abort(&abort_signal()));
 }
@@ -560,6 +590,12 @@ fn matrix4_known_lower_triangular_inverse_checked_rejects_singular_divisor() {
         [r(7), r(17), r(23), r(29)],
     ]);
 
+    assert_singular_error(matrix.clone().lower_triangular_inverse_checked());
+    assert_singular_error(
+        matrix
+            .clone()
+            .lower_triangular_inverse_checked_with_abort(&abort_signal()),
+    );
     assert_singular_error(matrix.clone().inverse_checked());
     assert_singular_error(matrix.inverse_checked_with_abort(&abort_signal()));
 }
@@ -580,6 +616,13 @@ fn matrix4_known_upper_triangular_div_matrix_matches_matrix_division() {
     ]);
 
     let expected = numerator.clone() * divisor.clone().reciprocal().unwrap();
+    assert_eq!(
+        numerator
+            .clone()
+            .div_upper_triangular(divisor.clone())
+            .unwrap(),
+        expected
+    );
     assert_eq!(numerator.clone() / divisor.clone(), Ok(expected));
 }
 
@@ -599,6 +642,13 @@ fn matrix4_known_lower_triangular_div_matrix_matches_matrix_division() {
     ]);
 
     let expected = numerator.clone() * divisor.clone().reciprocal().unwrap();
+    assert_eq!(
+        numerator
+            .clone()
+            .div_lower_triangular(divisor.clone())
+            .unwrap(),
+        expected
+    );
     assert_eq!(numerator.clone() / divisor.clone(), Ok(expected));
 }
 
@@ -743,7 +793,19 @@ fn matrix3_known_upper_triangular_inverse_matches_matrix_inverse() {
     ]);
 
     assert_eq!(matrix.clone().reciprocal().unwrap(), expected);
+    assert_eq!(matrix.clone().upper_triangular_inverse().unwrap(), expected);
+    assert_eq!(
+        matrix.clone().upper_triangular_inverse_checked().unwrap(),
+        expected
+    );
     assert_eq!(matrix.clone().inverse_checked().unwrap(), expected);
+    assert_eq!(
+        matrix
+            .clone()
+            .upper_triangular_inverse_checked_with_abort(&abort_signal())
+            .unwrap(),
+        expected
+    );
     assert_eq!(
         matrix.inverse_checked_with_abort(&abort_signal()).unwrap(),
         expected
@@ -760,7 +822,19 @@ fn matrix3_known_lower_triangular_inverse_matches_matrix_inverse() {
     ]);
 
     assert_eq!(matrix.clone().reciprocal().unwrap(), expected);
+    assert_eq!(matrix.clone().lower_triangular_inverse().unwrap(), expected);
+    assert_eq!(
+        matrix.clone().lower_triangular_inverse_checked().unwrap(),
+        expected
+    );
     assert_eq!(matrix.clone().inverse_checked().unwrap(), expected);
+    assert_eq!(
+        matrix
+            .clone()
+            .lower_triangular_inverse_checked_with_abort(&abort_signal())
+            .unwrap(),
+        expected
+    );
     assert_eq!(
         matrix.inverse_checked_with_abort(&abort_signal()).unwrap(),
         expected
@@ -771,6 +845,12 @@ fn matrix3_known_lower_triangular_inverse_matches_matrix_inverse() {
 fn matrix3_known_upper_triangular_inverse_checked_rejects_singular_divisor() {
     let matrix = Matrix3::new([[r(2), r(3), r(5)], [r(0), r(0), r(11)], [r(0), r(0), r(13)]]);
 
+    assert_singular_error(matrix.clone().upper_triangular_inverse_checked());
+    assert_singular_error(
+        matrix
+            .clone()
+            .upper_triangular_inverse_checked_with_abort(&abort_signal()),
+    );
     assert_singular_error(matrix.clone().inverse_checked());
     assert_singular_error(matrix.inverse_checked_with_abort(&abort_signal()));
 }
@@ -779,6 +859,12 @@ fn matrix3_known_upper_triangular_inverse_checked_rejects_singular_divisor() {
 fn matrix3_known_lower_triangular_inverse_checked_rejects_singular_divisor() {
     let matrix = Matrix3::new([[r(2), r(0), r(0)], [r(3), r(11), r(0)], [r(5), r(13), r(0)]]);
 
+    assert_singular_error(matrix.clone().lower_triangular_inverse_checked());
+    assert_singular_error(
+        matrix
+            .clone()
+            .lower_triangular_inverse_checked_with_abort(&abort_signal()),
+    );
     assert_singular_error(matrix.clone().inverse_checked());
     assert_singular_error(matrix.inverse_checked_with_abort(&abort_signal()));
 }
@@ -793,6 +879,13 @@ fn matrix3_known_upper_triangular_div_matrix_matches_matrix_division() {
     let divisor = Matrix3::new([[r(2), r(3), r(5)], [r(0), r(7), r(11)], [r(0), r(0), r(13)]]);
     let expected = numerator.clone() * divisor.clone().reciprocal().unwrap();
 
+    assert_eq!(
+        numerator
+            .clone()
+            .div_upper_triangular(divisor.clone())
+            .unwrap(),
+        expected
+    );
     assert_eq!(numerator.clone() / divisor.clone(), Ok(expected));
 }
 
@@ -806,6 +899,13 @@ fn matrix3_known_lower_triangular_div_matrix_matches_matrix_division() {
     let divisor = Matrix3::new([[r(2), r(0), r(0)], [r(3), r(5), r(0)], [r(7), r(11), r(13)]]);
     let expected = numerator.clone() * divisor.clone().reciprocal().unwrap();
 
+    assert_eq!(
+        numerator
+            .clone()
+            .div_lower_triangular(divisor.clone())
+            .unwrap(),
+        expected
+    );
     assert_eq!(numerator.clone() / divisor.clone(), Ok(expected));
 }
 
@@ -823,7 +923,14 @@ fn matrix3_known_upper_triangular_div_matrix_checked_matches_ordinary() {
     assert_eq!(expected, ordinary);
     assert_eq!(
         numerator
-            .div_matrix_checked_with_abort(divisor, &signal)
+            .clone()
+            .div_upper_triangular_checked(divisor.clone())
+            .unwrap(),
+        ordinary
+    );
+    assert_eq!(
+        numerator
+            .div_upper_triangular_checked_with_abort(divisor, &signal)
             .unwrap(),
         ordinary,
     );

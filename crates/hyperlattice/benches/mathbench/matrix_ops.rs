@@ -134,10 +134,10 @@ fn bench_matrix_operations_for<B, F>(
             black_box(Matrix3::<B>::diagonal_inverse(black_box(diagonal_values3.clone())).unwrap());
         });
         trace_matrix_profile_row("mat3", "known_upper_triangular_inverse", input, 1, || {
-            black_box(black_box(upper_triangular_matrix3.clone()).reciprocal().unwrap());
+            black_box(black_box(upper_triangular_matrix3.clone()).upper_triangular_inverse().unwrap());
         });
         trace_matrix_profile_row("mat3", "known_lower_triangular_inverse", input, 1, || {
-            black_box(black_box(lower_triangular_matrix3.clone()).reciprocal().unwrap());
+            black_box(black_box(lower_triangular_matrix3.clone()).lower_triangular_inverse().unwrap());
         });
         // Keep checked triangular inverse rows in the same structural dispatch family
         // so we can validate the O(n²) branch under error-aware APIs.
@@ -146,7 +146,7 @@ fn bench_matrix_operations_for<B, F>(
         trace_matrix_profile_row("mat3", "known_upper_triangular_inverse_checked", input, 1, || {
             black_box(
                 black_box(upper_triangular_matrix3.clone())
-                    .inverse_checked()
+                    .upper_triangular_inverse_checked()
                     .unwrap(),
             );
         });
@@ -158,7 +158,7 @@ fn bench_matrix_operations_for<B, F>(
             || {
                 black_box(
                     black_box(upper_triangular_matrix3.clone())
-                        .inverse_checked_with_abort(&signal)
+                        .upper_triangular_inverse_checked_with_abort(&signal)
                         .unwrap(),
                 );
             },
@@ -166,7 +166,7 @@ fn bench_matrix_operations_for<B, F>(
         trace_matrix_profile_row("mat3", "known_lower_triangular_inverse_checked", input, 1, || {
             black_box(
                 black_box(lower_triangular_matrix3.clone())
-                    .inverse_checked()
+                    .lower_triangular_inverse_checked()
                     .unwrap(),
             );
         });
@@ -178,7 +178,7 @@ fn bench_matrix_operations_for<B, F>(
             || {
                 black_box(
                     black_box(lower_triangular_matrix3.clone())
-                        .inverse_checked_with_abort(&signal)
+                        .lower_triangular_inverse_checked_with_abort(&signal)
                         .unwrap(),
                 );
             },
@@ -411,10 +411,10 @@ fn bench_matrix_operations_for<B, F>(
             black_box(Matrix4::<B>::diagonal_inverse(black_box(diagonal_values4.clone())).unwrap());
         });
         trace_matrix_profile_row("mat4", "known_upper_triangular_inverse", input, 1, || {
-            black_box(black_box(upper_triangular_matrix4.clone()).reciprocal().unwrap());
+            black_box(black_box(upper_triangular_matrix4.clone()).upper_triangular_inverse().unwrap());
         });
         trace_matrix_profile_row("mat4", "known_lower_triangular_inverse", input, 1, || {
-            black_box(black_box(lower_triangular_matrix4.clone()).reciprocal().unwrap());
+            black_box(black_box(lower_triangular_matrix4.clone()).lower_triangular_inverse().unwrap());
         });
         // Keep checked triangular inverse rows in the same structural dispatch family
         // so we can validate the O(n²) branch under error-aware APIs.
@@ -423,7 +423,7 @@ fn bench_matrix_operations_for<B, F>(
         trace_matrix_profile_row("mat4", "known_upper_triangular_inverse_checked", input, 1, || {
             black_box(
                 black_box(upper_triangular_matrix4.clone())
-                    .inverse_checked()
+                    .upper_triangular_inverse_checked()
                     .unwrap(),
             );
         });
@@ -435,7 +435,7 @@ fn bench_matrix_operations_for<B, F>(
             || {
                 black_box(
                     black_box(upper_triangular_matrix4.clone())
-                        .inverse_checked_with_abort(&signal)
+                        .upper_triangular_inverse_checked_with_abort(&signal)
                         .unwrap(),
                 );
             },
@@ -443,7 +443,7 @@ fn bench_matrix_operations_for<B, F>(
         trace_matrix_profile_row("mat4", "known_lower_triangular_inverse_checked", input, 1, || {
             black_box(
                 black_box(lower_triangular_matrix4.clone())
-                    .inverse_checked()
+                    .lower_triangular_inverse_checked()
                     .unwrap(),
             );
         });
@@ -455,7 +455,7 @@ fn bench_matrix_operations_for<B, F>(
             || {
                 black_box(
                     black_box(lower_triangular_matrix4.clone())
-                        .inverse_checked_with_abort(&signal)
+                        .lower_triangular_inverse_checked_with_abort(&signal)
                         .unwrap(),
                 );
             },
@@ -469,17 +469,17 @@ fn bench_matrix_operations_for<B, F>(
         });
         trace_matrix_profile_row("mat4", "known_upper_triangular_div_matrix", input, 1, || {
             black_box(
-                black_box(lhs4_cases[0].clone())
-                    / black_box(upper_triangular_matrix4.clone()),
-            )
-            .unwrap();
+            black_box(lhs4_cases[0].clone())
+                .div_upper_triangular(black_box(upper_triangular_matrix4.clone()))
+                .unwrap(),
+        );
         });
         trace_matrix_profile_row("mat4", "known_lower_triangular_div_matrix", input, 1, || {
             black_box(
-                black_box(lhs4_cases[0].clone())
-                    / black_box(lower_triangular_matrix4.clone()),
-            )
-            .unwrap();
+            black_box(lhs4_cases[0].clone())
+                .div_lower_triangular(black_box(lower_triangular_matrix4.clone()))
+                .unwrap(),
+        );
         });
         trace_matrix_profile_row("mat4", "known_diagonal_div_vector", input, 1, || {
             black_box(
@@ -971,37 +971,37 @@ fn bench_matrix_operations_for<B, F>(
         black_box(Matrix3::<B>::diagonal_inverse(black_box(diagonal_values3.clone())).unwrap());
     });
     trace_dispatch_row(format!("matrix_ops/{label}/mat3 known_upper_triangular_inverse"), || {
-        black_box(black_box(upper_triangular_matrix3.clone()).reciprocal().unwrap());
+        black_box(black_box(upper_triangular_matrix3.clone()).upper_triangular_inverse().unwrap());
     });
     trace_dispatch_row(format!("matrix_ops/{label}/mat3 known_lower_triangular_inverse"), || {
-        black_box(black_box(lower_triangular_matrix3.clone()).reciprocal().unwrap());
+        black_box(black_box(lower_triangular_matrix3.clone()).lower_triangular_inverse().unwrap());
     });
     // Keep checked triangular inverse rows in the trace profile to validate the same
     // dispatch branch under `inverse_checked` semantics.
     trace_dispatch_row(format!("matrix_ops/{label}/mat3 known_upper_triangular_inverse_checked"), || {
-        black_box(black_box(upper_triangular_matrix3.clone()).inverse_checked().unwrap());
+        black_box(black_box(upper_triangular_matrix3.clone()).upper_triangular_inverse_checked().unwrap());
     });
     trace_dispatch_row(
         format!("matrix_ops/{label}/mat3 known_upper_triangular_inverse_checked_abort"),
         || {
-            black_box(
-                black_box(upper_triangular_matrix3.clone())
-                    .inverse_checked_with_abort(&signal)
+                black_box(
+                    black_box(upper_triangular_matrix3.clone())
+                    .upper_triangular_inverse_checked_with_abort(&signal)
                     .unwrap(),
-            );
+                );
         },
     );
     trace_dispatch_row(format!("matrix_ops/{label}/mat3 known_lower_triangular_inverse_checked"), || {
-        black_box(black_box(lower_triangular_matrix3.clone()).inverse_checked().unwrap());
+        black_box(black_box(lower_triangular_matrix3.clone()).lower_triangular_inverse_checked().unwrap());
     });
     trace_dispatch_row(
         format!("matrix_ops/{label}/mat3 known_lower_triangular_inverse_checked_abort"),
         || {
-            black_box(
-                black_box(lower_triangular_matrix3.clone())
-                    .inverse_checked_with_abort(&signal)
+                black_box(
+                    black_box(lower_triangular_matrix3.clone())
+                    .lower_triangular_inverse_checked_with_abort(&signal)
                     .unwrap(),
-            );
+                );
         },
     );
     trace_dispatch_row(format!("matrix_ops/{label}/mat3 known_diagonal_div_matrix"), || {
@@ -1013,15 +1013,17 @@ fn bench_matrix_operations_for<B, F>(
     });
     trace_dispatch_row(format!("matrix_ops/{label}/mat3 known_upper_triangular_div_matrix"), || {
         black_box(
-            black_box(lhs3_cases[0].clone()) / black_box(upper_triangular_matrix3.clone()),
-        )
-        .unwrap();
+            black_box(lhs3_cases[0].clone())
+                .div_upper_triangular(black_box(upper_triangular_matrix3.clone()))
+                .unwrap(),
+        );
     });
     trace_dispatch_row(format!("matrix_ops/{label}/mat3 known_lower_triangular_div_matrix"), || {
         black_box(
-            black_box(lhs3_cases[0].clone()) / black_box(lower_triangular_matrix3.clone()),
-        )
-        .unwrap();
+            black_box(lhs3_cases[0].clone())
+                .div_lower_triangular(black_box(lower_triangular_matrix3.clone()))
+                .unwrap(),
+        );
     });
     trace_dispatch_row(format!("matrix_ops/{label}/mat3 known_diagonal_div_vector"), || {
         black_box(
@@ -1204,37 +1206,37 @@ fn bench_matrix_operations_for<B, F>(
         black_box(Matrix4::<B>::diagonal_inverse(black_box(diagonal_values4.clone())).unwrap());
     });
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_upper_triangular_inverse"), || {
-        black_box(black_box(upper_triangular_matrix4.clone()).reciprocal().unwrap());
+        black_box(black_box(upper_triangular_matrix4.clone()).upper_triangular_inverse().unwrap());
     });
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_lower_triangular_inverse"), || {
-        black_box(black_box(lower_triangular_matrix4.clone()).reciprocal().unwrap());
+        black_box(black_box(lower_triangular_matrix4.clone()).lower_triangular_inverse().unwrap());
     });
     // Keep checked triangular inverse rows in the trace profile to validate the same
     // dispatch branch under `inverse_checked` semantics.
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_upper_triangular_inverse_checked"), || {
-        black_box(black_box(upper_triangular_matrix4.clone()).inverse_checked().unwrap());
+        black_box(black_box(upper_triangular_matrix4.clone()).upper_triangular_inverse_checked().unwrap());
     });
     trace_dispatch_row(
         format!("matrix_ops/{label}/mat4 known_upper_triangular_inverse_checked_abort"),
         || {
-            black_box(
-                black_box(upper_triangular_matrix4.clone())
-                    .inverse_checked_with_abort(&signal)
+                black_box(
+                    black_box(upper_triangular_matrix4.clone())
+                    .upper_triangular_inverse_checked_with_abort(&signal)
                     .unwrap(),
-            );
+                );
         },
     );
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_lower_triangular_inverse_checked"), || {
-        black_box(black_box(lower_triangular_matrix4.clone()).inverse_checked().unwrap());
+        black_box(black_box(lower_triangular_matrix4.clone()).lower_triangular_inverse_checked().unwrap());
     });
     trace_dispatch_row(
         format!("matrix_ops/{label}/mat4 known_lower_triangular_inverse_checked_abort"),
         || {
-            black_box(
-                black_box(lower_triangular_matrix4.clone())
-                    .inverse_checked_with_abort(&signal)
+                black_box(
+                    black_box(lower_triangular_matrix4.clone())
+                    .lower_triangular_inverse_checked_with_abort(&signal)
                     .unwrap(),
-            );
+                );
         },
     );
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_diagonal_div_matrix"), || {
@@ -1246,15 +1248,17 @@ fn bench_matrix_operations_for<B, F>(
     });
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_upper_triangular_div_matrix"), || {
         black_box(
-            black_box(lhs4_cases[0].clone()) / black_box(upper_triangular_matrix4.clone()),
-        )
-        .unwrap();
+            black_box(lhs4_cases[0].clone())
+                .div_upper_triangular(black_box(upper_triangular_matrix4.clone()))
+                .unwrap(),
+        );
     });
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_lower_triangular_div_matrix"), || {
         black_box(
-            black_box(lhs4_cases[0].clone()) / black_box(lower_triangular_matrix4.clone()),
-        )
-        .unwrap();
+            black_box(lhs4_cases[0].clone())
+                .div_lower_triangular(black_box(lower_triangular_matrix4.clone()))
+                .unwrap(),
+        );
     });
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_diagonal_div_vector"), || {
         black_box(
@@ -1704,10 +1708,10 @@ fn bench_matrix_operations_for<B, F>(
             })
         });
     group.bench_function(format!("{label}/mat3 known_upper_triangular_inverse"), |b| {
-        b.iter(|| black_box(black_box(upper_triangular_matrix3.clone()).reciprocal().unwrap()))
+        b.iter(|| black_box(black_box(upper_triangular_matrix3.clone()).upper_triangular_inverse().unwrap()))
     });
     group.bench_function(format!("{label}/mat3 known_lower_triangular_inverse"), |b| {
-        b.iter(|| black_box(black_box(lower_triangular_matrix3.clone()).reciprocal().unwrap()))
+        b.iter(|| black_box(black_box(lower_triangular_matrix3.clone()).lower_triangular_inverse().unwrap()))
     });
     // Bench checked/abort triangular inverse variants to keep error-aware structural
     // dispatch observable at steady state.
@@ -1716,7 +1720,7 @@ fn bench_matrix_operations_for<B, F>(
         b.iter(|| {
             black_box(
                 black_box(upper_triangular_matrix3.clone())
-                    .inverse_checked()
+                    .upper_triangular_inverse_checked()
                     .unwrap(),
             )
         })
@@ -1727,7 +1731,7 @@ fn bench_matrix_operations_for<B, F>(
             b.iter(|| {
                 black_box(
                     black_box(upper_triangular_matrix3.clone())
-                        .inverse_checked_with_abort(&signal)
+                        .upper_triangular_inverse_checked_with_abort(&signal)
                         .unwrap(),
                 )
             })
@@ -1737,7 +1741,7 @@ fn bench_matrix_operations_for<B, F>(
         b.iter(|| {
             black_box(
                 black_box(lower_triangular_matrix3.clone())
-                    .inverse_checked()
+                    .lower_triangular_inverse_checked()
                     .unwrap(),
             )
         })
@@ -1748,7 +1752,7 @@ fn bench_matrix_operations_for<B, F>(
             b.iter(|| {
                 black_box(
                     black_box(lower_triangular_matrix3.clone())
-                        .inverse_checked_with_abort(&signal)
+                        .lower_triangular_inverse_checked_with_abort(&signal)
                         .unwrap(),
                 )
             })
@@ -1765,12 +1769,20 @@ fn bench_matrix_operations_for<B, F>(
     });
     group.bench_function(format!("{label}/mat3 known_upper_triangular_div_matrix"), |b| {
         b.iter(|| {
-            black_box(black_box(lhs3_cases[0].clone()) / black_box(upper_triangular_matrix3.clone())).unwrap()
+            black_box(
+                black_box(lhs3_cases[0].clone())
+                    .div_upper_triangular(black_box(upper_triangular_matrix3.clone()))
+                    .unwrap(),
+            )
         })
     });
     group.bench_function(format!("{label}/mat3 known_lower_triangular_div_matrix"), |b| {
         b.iter(|| {
-            black_box(black_box(lhs3_cases[0].clone()) / black_box(lower_triangular_matrix3.clone())).unwrap()
+            black_box(
+                black_box(lhs3_cases[0].clone())
+                    .div_lower_triangular(black_box(lower_triangular_matrix3.clone()))
+                    .unwrap(),
+            )
         })
     });
     group.bench_function(format!("{label}/mat3 known_diagonal_div_vector"), |b| {
@@ -2102,7 +2114,7 @@ fn bench_matrix_operations_for<B, F>(
         b.iter(|| {
             black_box(
                 black_box(upper_triangular_matrix4.clone())
-                    .reciprocal()
+                    .upper_triangular_inverse()
                     .unwrap(),
             )
         })
@@ -2111,7 +2123,7 @@ fn bench_matrix_operations_for<B, F>(
         b.iter(|| {
             black_box(
                 black_box(lower_triangular_matrix4.clone())
-                    .reciprocal()
+                    .lower_triangular_inverse()
                     .unwrap(),
             )
         })
@@ -2123,7 +2135,7 @@ fn bench_matrix_operations_for<B, F>(
         b.iter(|| {
             black_box(
                 black_box(upper_triangular_matrix4.clone())
-                    .inverse_checked()
+                    .upper_triangular_inverse_checked()
                     .unwrap(),
             )
         })
@@ -2134,7 +2146,7 @@ fn bench_matrix_operations_for<B, F>(
             b.iter(|| {
                 black_box(
                     black_box(upper_triangular_matrix4.clone())
-                        .inverse_checked_with_abort(&signal)
+                        .upper_triangular_inverse_checked_with_abort(&signal)
                         .unwrap(),
                 )
             })
@@ -2144,7 +2156,7 @@ fn bench_matrix_operations_for<B, F>(
         b.iter(|| {
             black_box(
                 black_box(lower_triangular_matrix4.clone())
-                    .inverse_checked()
+                    .lower_triangular_inverse_checked()
                     .unwrap(),
             )
         })
@@ -2155,7 +2167,7 @@ fn bench_matrix_operations_for<B, F>(
             b.iter(|| {
                 black_box(
                     black_box(lower_triangular_matrix4.clone())
-                        .inverse_checked_with_abort(&signal)
+                        .lower_triangular_inverse_checked_with_abort(&signal)
                         .unwrap(),
                 )
             })
@@ -2174,18 +2186,18 @@ fn bench_matrix_operations_for<B, F>(
         b.iter(|| {
             black_box(
                 black_box(lhs4_cases[0].clone())
-                    / black_box(upper_triangular_matrix4.clone()),
+                    .div_upper_triangular(black_box(upper_triangular_matrix4.clone()))
+                    .unwrap(),
             )
-            .unwrap()
         })
     });
     group.bench_function(format!("{label}/mat4 known_lower_triangular_div_matrix"), |b| {
         b.iter(|| {
             black_box(
                 black_box(lhs4_cases[0].clone())
-                    / black_box(lower_triangular_matrix4.clone()),
+                    .div_lower_triangular(black_box(lower_triangular_matrix4.clone()))
+                    .unwrap(),
             )
-            .unwrap()
         })
     });
     group.bench_function(format!("{label}/mat4 known_diagonal_div_vector"), |b| {

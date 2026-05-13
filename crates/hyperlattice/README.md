@@ -22,7 +22,7 @@ remains `HyperrealBackend`.
 - `hyperreal` supplies the default exact/symbolic scalar representation.
 - `hyperlattice` owns complex, vector, and matrix algebra over backend-neutral
   `Scalar<B>` values.
-- `liminal` can consume `hyperlattice::Scalar<B>` structural facts when
+- `hyperlimit` can consume `hyperlattice::Scalar<B>` structural facts when
   geometry predicates need sign provenance, filtering, refinement, or robust
   fallback.
 
@@ -218,8 +218,12 @@ The crate is optimized for small fixed-size algebra over rich scalars:
 - small scalar powers are specialized before exponentiation by squaring
 - 3x3 and 4x4 borrowed matrix multiplication is unrolled
 - matrix division and inversion use checked zero-status paths where requested
-- scalar facts are forwarded by borrow so `liminal` can query them cheaply
+- scalar facts are forwarded by borrow so `hyperlimit` can query them cheaply
 - the approx backend mirrors the API with a lower-cost interval representation
+- backend-specific loop shape is allowed when benchmarks justify it: first try
+  to gate exact/symbolic wins away from approx with a narrow backend capability;
+  if a split is not practical, favor measured hyperreal performance while
+  keeping approx regressions visible in targeted guards
 
 Run the benchmark suite:
 

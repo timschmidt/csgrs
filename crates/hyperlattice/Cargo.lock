@@ -554,7 +554,7 @@ checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
 name = "hyperlattice"
-version = "0.3.3"
+version = "0.4.0"
 dependencies = [
  "arbitrary",
  "astro-float",
@@ -568,7 +568,9 @@ dependencies = [
 
 [[package]]
 name = "hyperreal"
-version = "0.11.0"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b3dd0eb57c71c1a2ba07ad2c6d06055aa1fb84cc4db46da3a3423e88e0054624"
 dependencies = [
  "ciborium",
  "num",

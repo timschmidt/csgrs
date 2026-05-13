@@ -680,6 +680,19 @@ impl<B: Backend> Scalar<B> {
     }
 
     #[inline]
+    pub(crate) fn active_linear_combination3(coefficients: [&Self; 3], values: [&Self; 3]) -> Self {
+        crate::trace_dispatch!(
+            "hyperlattice",
+            "scalar_fast_path",
+            "active-linear-combination3"
+        );
+        Self(B::Repr::active_linear_combination3(
+            [&coefficients[0].0, &coefficients[1].0, &coefficients[2].0],
+            [&values[0].0, &values[1].0, &values[2].0],
+        ))
+    }
+
+    #[inline]
     pub(crate) fn linear_combination4(coefficients: [&Self; 4], values: [&Self; 4]) -> Self {
         // Dedicated linear-combination hooks let hyperreal keep shared affine
         // structure when transform kernels can preserve matrix row geometry.
