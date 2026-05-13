@@ -365,7 +365,7 @@ that uses them, but most of them follow the same themes:
   symbolic shortcuts when benchmarks show a real win.
 - Benchmark families, not isolated rows. A shortcut should improve the target
   surface without making nearby functions or stack-facing `hyperlattice` and
-  `liminal` paths erratic.
+  `hyperlimit` paths erratic.
 
 Benchmark suites:
 
