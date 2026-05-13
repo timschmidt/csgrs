@@ -125,6 +125,11 @@ output embeds the SVG overlay with summary, parser diagnostic, input, and
 finding tables for review packets. JUnit XML output maps active findings into
 testcase failures for CI systems with JUnit publishers. SVG review overlays can
 be written with `--svg-overlay violations.svg`.
+Active-finding waiver stubs and baselines can be written with `--waiver-stubs
+waiver-stubs.json` and `--baseline-file baseline.json`. A current run can also
+be compared to a saved baseline with `--baseline-reference previous.json` and
+`--baseline-diff-file baseline-diff.json`, producing new, resolved, and unchanged
+finding buckets for release review.
 
 Rule thresholds can be placed in a JSON config file and loaded with `--config`.
 CLI flags override config values. See
@@ -142,13 +147,14 @@ The default suite covers the main `hyperdrc` readiness surfaces:
   cross-source drill-table consistency.
 - KiCad board context: net intent, high-speed and high-current heuristics,
   reference-plane and return-path coverage, gold fingers, ESD proximity,
-  panelization clearance, component edge/hole clearance, and dense-pad escape.
+  panelization clearance, component edge/hole clearance, dense-pad escape, and
+  config-driven stackup/net-class constraints.
 - Assembly and test readiness: fiducials, tooling holes, mouse bites,
   testpoint coverage/accessibility, pad-pair asymmetry, and IPC-D-356 coverage.
 - Production package readiness: Gerber package completeness, sidecar discovery,
   BOM/centroid/netlist structure, README release notes, fabrication and assembly
-  drawings, rout drawings, order-parameter consistency, and surface-finish
-  handoff notes.
+  drawings, rout drawings, order-parameter consistency, generated-date freshness,
+  and surface-finish handoff notes.
 
 The check implementations and exact ownership are documented in
 [src/checks](src/checks/README.md). The roadmap and remaining gaps are tracked
@@ -160,15 +166,20 @@ Important tunables include `--keepout`, `--clearance`, `--min-width`,
 `--min-paste-area-ratio`, `--max-paste-area-ratio`, `--stencil-thickness`,
 `--min-stencil-area-ratio`, `--max-copper-imbalance-ratio`, `--net-clearance`,
 `--registration-tolerance`, `--panel-clearance`, `--ipc356-tolerance`,
-`--min-area`, and `--max-layer-area`.
+`--min-area`, `--max-layer-area`, and `--generated-date-stale-days`.
 
 ## Waivers And CI
 
 Waiver files are JSON and can suppress findings by `id`, `check`, `layers`, and
 message text. The system also emits readiness warnings for incomplete waiver
 metadata so production waivers remain auditable: `reason`, `owner`,
-`review_date`, `source`, and `geometry_hash` are expected. A compact CI summary
-can be written with `--summary-file`:
+`review_date`, `source`, and `geometry_hash` are expected. `review_date` must be
+an ISO `YYYY-MM-DD` date and is warned when it has expired, so standing
+exceptions stay visible in pre-production review. A compact CI summary can be
+written with `--summary-file`. Proposed waiver stubs and active-finding
+baselines can be generated without suppressing anything. Baseline comparison is
+an audit artifact: it classifies drift in the active finding set, but waivers
+remain the mechanism for intentionally suppressing accepted findings.
 
 ```json
 {
@@ -179,7 +190,7 @@ can be written with `--summary-file`:
       "message_contains": "below 30",
       "reason": "accepted connector footprint geometry",
       "owner": "DRC reviewer",
-      "review_date": "2026-05-01",
+      "review_date": "2027-05-01",
       "source": "https://jira.example/issues/123",
       "geometry_hash": "sha256:0000"
     }
@@ -192,7 +203,11 @@ cargo run -- \
   --kicad-pcb board.kicad_pcb \
   --waiver waivers.json \
   --summary-file summary.json \
-  --svg-overlay violations.svg
+  --svg-overlay violations.svg \
+  --waiver-stubs waiver-stubs.json \
+  --baseline-file baseline.json \
+  --baseline-reference previous-baseline.json \
+  --baseline-diff-file baseline-diff.json
 ```
 
 ## Repository Map
@@ -221,9 +236,10 @@ details for that part of the tree:
 
 Not yet modeled: exact routed slot shapes, plated-slot/edge-plating electrical
 semantics, KiCad silkscreen text side/mirroring, per-pad paste or mask
-attributes, fabricator-specific rule decks, stackup/net-class constraints,
-semantic XLS/XLSX spreadsheet parsing, richer parser diagnostics for all input
-formats, and ODB++/IPC-2581 input.
+attributes, fabricator-specific rule-deck libraries, deeper stackup/net-class
+semantics such as impedance and length matching, semantic XLS/XLSX spreadsheet
+parsing, richer parser diagnostics for all input formats, and ODB++/IPC-2581
+input.
 
 See [docs/design-readiness-plan.md](docs/design-readiness-plan.md) for the
 long-form design-readiness roadmap.
@@ -239,6 +255,7 @@ style so they can be copied into engineering review notes.
 - FixturFab. "Design for Test: How to Design Test Points for PCB Testing." *FixturFab Resources*, https://fixturfab.com/resources/how-to-test/design-for-test. Accessed 13 May 2026.
 - GitHub. "Workflow Commands for GitHub Actions." *GitHub Docs*, https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands. Accessed 13 May 2026.
 - Harter, Stefan, et al. "The Effect of Area Shape and Area Ratio on Solder Paste Printing Performance." *SMTA International*, 2016, https://www.circuitnet.com/programs/55115.html.
+- Hinnant, Howard. "chrono-Compatible Low-Level Date Algorithms." *Howard Hinnant's Date Algorithms*, https://howardhinnant.github.io/date_algorithms.html. Accessed 13 May 2026.
 - IPC. *Generic Standard on Printed Board Design: IPC-2221B*. IPC, https://www.ipc.org/TOC/IPC-2221B.pdf. Accessed 13 May 2026.
 - IPC. *Bare Substrate Electrical Test Data Format: IPC-D-356B*. IPC, 1 Oct. 2002, https://shop.electronics.org/ipc-d-356/ipc-d-356-standard-only.
 - IPC. *Performance Specification for Electroless Nickel/Immersion Gold (ENIG) Plating for Printed Boards: IPC-4552B*. IPC, Apr. 2021, https://www.ipc.org/TOC/IPC-4552B-toc.pdf.

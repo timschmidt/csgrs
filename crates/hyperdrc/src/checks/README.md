@@ -16,6 +16,9 @@ by the data model they need.
 - [`board.rs`](board.rs) contains checks that need richer board context:
   KiCad nets, pads, vias, panel graphics, Excellon drills, and
   IPC-D-356 points.
+- [`constraints.rs`](constraints.rs) contains config-driven stackup and
+  net-class checks that compare parsed KiCad copper against explicit project
+  constraints.
 - [`assembly.rs`](assembly.rs) contains component, fiducial, testpoint, tooling,
   mouse-bite, and fine-pitch assembly-readiness checks.
 - [`artifacts.rs`](artifacts.rs) contains BOM, centroid, netlist, README, and
@@ -167,6 +170,8 @@ panel features:
 - `panelization-clearance`
 - `ipc356-coverage`
 - `ipc356-drill-diameter`
+- `stackup-readiness`
+- `net-constraint-readiness`
 
 Board checks use the parsed KiCad model and sidecars. They can reason about
 same-net versus different-net copper, nearby IPC-D-356 test records,
@@ -175,6 +180,24 @@ signals, power decoupling proximity, ESD protection proximity, switching-node
 keepout risk, thermal copper-area support, hot-component spacing,
 thermal/mechanical hole keepouts, likely thermal-pad via coverage, and panel
 geometry that is not visible from a single Gerber layer alone.
+
+## Constraint Checks
+
+[`constraints.rs`](constraints.rs) owns config-driven checks:
+
+- `stackup-readiness`
+- `net-constraint-readiness`
+
+`stackup-readiness` compares the optional JSON `stackup` section against parsed
+KiCad copper layers. It reports declared layer-count mismatches, listed copper
+layers that are missing from parsed copper, copper layers with no
+`copper_weight_oz`, and finished-thickness declarations that have no
+dielectric/core/prepreg thickness entries.
+
+`net-constraint-readiness` applies optional JSON `net_classes` entries. It
+matches nets by exact name or simple `*` wildcard pattern, then checks configured
+minimum width, minimum clearance to different nets, maximum layer count, and
+minimum via count for layer-changing nets.
 
 ## Assembly Checks
 
@@ -261,8 +284,11 @@ both outer copper layers, odd recognized copper layer counts, side-specific
 mask/paste/silkscreen files without matching copper, and single-copper packages
 that also contain bottom-side outputs. It also compares recognizable revision
 and generated-date tokens across Gerber and package artifact filenames, warns
-when files appear to mix project/job name prefixes, and warns on stale-looking
-backup/archive filename tokens.
+when generated-date tags are older than the package freshness window or later
+than the current run date. The freshness window defaults to 90 days and can be
+set with `generated_date_stale_days` or `--generated-date-stale-days`. It also
+warns when files appear to mix project/job name prefixes, and warns on
+stale-looking backup/archive filename tokens.
 
 ## Excellon Checks
 

@@ -22,11 +22,16 @@ application orchestration, while subfolders hold the larger semantic areas.
   New checks should be added to the `Check` enum and `DEFAULT_CHECKS` here when
   they are intended to run by default.
 - [`config.rs`](config.rs) defines JSON rule-deck loading and merge behavior
-  between config-file values, CLI overrides, and built-in defaults.
+  between config-file values, CLI overrides, and built-in defaults. It also
+  defines the optional stackup and net-class sections consumed by config-driven
+  readiness checks, plus manifest freshness settings such as
+  `generated_date_stale_days`.
+- [`date.rs`](date.rs) contains day-level Gregorian parsing/comparison helpers
+  shared by waiver governance and manifest freshness checks.
 - [`waiver.rs`](waiver.rs) defines JSON waiver parsing, matching by stable
   violation ID, check name, layer list, and message text, plus governance
-  validation for waiver metadata completeness (reason, owner, review date, source,
-  and geometry hash).
+  validation for waiver metadata completeness and freshness (reason, owner,
+  ISO `YYYY-MM-DD` review date, source, and geometry hash).
 
 ## Input And Conversion
 
@@ -63,6 +68,10 @@ application orchestration, while subfolders hold the larger semantic areas.
 
 ## Reports And Artifacts
 
+- [`baseline.rs`](baseline.rs) renders proposed waiver-stub JSON,
+  active-finding baseline JSON, and baseline comparison JSON. Baseline
+  comparison buckets current findings into new, resolved, and unchanged groups so
+  release review can track drift without using baselines as suppressions.
 - [`github_annotations.rs`](github_annotations.rs) renders GitHub Actions
   workflow-command annotations so CI logs can surface active findings without a
   separate upload step.
@@ -85,7 +94,7 @@ application orchestration, while subfolders hold the larger semantic areas.
 
 - [checks](checks/README.md) contains the design-readiness checks, now split
   across generic layer, drill fabrication, board-context, stencil, assembly,
-  manifest, artifact, and surface-finish helper modules.
+  manifest, artifact, stackup/net-constraint, and surface-finish helper modules.
 - [geometry](geometry/README.md) contains geometry construction and conversion
   helpers around `csgrs` and `geo`.
 - [kicad](kicad/README.md) contains the KiCad board model and parser helpers.

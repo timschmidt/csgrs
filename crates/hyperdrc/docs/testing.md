@@ -50,7 +50,10 @@ These tests exercise the runtime pipeline around the checks:
   preserves useful path context instead of failing opaquely.
 - Manifest tests build synthetic layers and KiCad board models to verify
   declared copper count, KiCad copper layer count, board outline presence, and
-  drill availability are passed into `file-manifest-readiness`.
+  drill availability are passed into `file-manifest-readiness`. Manifest unit
+  tests also verify revision/date/project token consistency, invalid generated
+  dates, stale generated dates, future generated dates, and backup/archive name
+  detection, including the configurable generated-date freshness window.
 - Parser diagnostic tests feed malformed Excellon and IPC-D-356 sidecars and
   verify their parser issues are collected separately from active DRC
   violations.
@@ -139,6 +142,22 @@ drills, outlines, zones, nets, and sidecars:
 - IPC-D-356 tests verify test records annotate nearby copper, recover missing
   drill net/diameter metadata, report missing coverage, and detect drill
   diameter conflicts.
+
+### Stackup And Net Constraints
+
+Location: [`../src/checks/constraints.rs`](../src/checks/constraints.rs)
+
+Constraint tests use typed config structures and synthetic KiCad copper:
+
+- Stackup tests compare configured copper-layer counts and layer lists against
+  parsed KiCad copper layers, then check missing copper weights and missing
+  dielectric/core/prepreg thickness entries when a finished thickness is
+  declared.
+- Net-class tests match exact nets and simple `*` wildcard patterns, then verify
+  configured minimum trace width, different-net clearance, maximum layer count,
+  and minimum via count for layer-changing nets.
+- Passing tests build compliant or unmatched nets to ensure explicit config
+  constraints do not affect unrelated copper.
 
 ### Assembly
 
@@ -303,10 +322,13 @@ These tests protect user-facing behavior around the check engine:
 - Report tests verify stable violation IDs, summary counts, GeoJSON point and
   polygon features, SARIF rule/result/geometry properties, JSON Lines
   run/input/diagnostic/violation records, GitHub annotation escaping, HTML
-  escaping/overlay embedding, JUnit XML escaping, and SVG overlay behavior.
+  escaping/overlay embedding, JUnit XML escaping, SVG overlay behavior, waiver
+  stub generation, active-finding baseline records, and baseline diff bucketing
+  for new/resolved/unchanged findings.
 - Waiver tests verify malformed waiver rejection, matching by ID/check/layer/
   message scope, non-matching waivers leaving findings active, and governance
   warnings for missing reason, owner, review date, source, or geometry hash.
+  They also cover malformed ISO review dates and expired review dates.
 
 ## Bench Smoke Target
 

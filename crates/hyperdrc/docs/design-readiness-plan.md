@@ -80,7 +80,8 @@ sidecar input where possible.
 - `waiver-governance`: warn when waiver entries are underspecified. Scope
   checks require at least one of `id`, `check`, `layers`, or `message_contains`;
   metadata checks require non-empty `reason`, `owner`, `review_date`, `source`,
-  and `geometry_hash`.
+  and `geometry_hash`; review dates must be valid ISO `YYYY-MM-DD` dates that
+  have not expired.
 - `silkscreen-min-width`: approximate thin silkscreen strokes and text geometry
   by eroding and re-growing silkscreen with half the requested minimum width.
 - `min-copper-neck`: approximate thin copper features by eroding and re-growing
@@ -274,7 +275,10 @@ sidecar input where possible.
   - checks Gerber-recognized copper layer counts against KiCad-declared copper
     layer counts and optional order-declared layer-count metadata;
   - warns when filenames appear to mix project/job names, revision tags, or
-    generated-date tags across Gerbers and package artifacts; and
+    generated-date tags across Gerbers and package artifacts;
+  - warns when generated-date tags are older than the current freshness window
+    or later than the run date, with the freshness window configurable from the
+    rule deck or CLI; and
   - warns when package filenames include stale/archive tokens such as backup,
     old, previous, or obsolete.
 - `production-artifact-readiness`: validate common BOM, centroid, netlist,
@@ -325,11 +329,14 @@ example before it is considered production-ready.
 - Unit model: preserve source units, normalize internal distances, and report
   both source and normalized units. Avoid comparing mil/mm thresholds against
   untagged parser output.
-- Board stackup model: layer count, copper weight, dielectric thickness,
-  material family, finish, soldermask process, soldermask color, board
-  thickness, controlled-impedance requirements, and target IPC/fabricator class.
-- Net-class model: per-net and per-class trace width, clearance, differential
-  pair, length, impedance, via, current, and voltage constraints.
+- Board stackup model: layer count, copper weight, and dielectric/core/prepreg
+  thickness config is implemented for readiness review. Remaining stackup work:
+  material family, finish, soldermask process, soldermask color, controlled-
+  impedance requirements, and target IPC/fabricator class.
+- Net-class model: exact-name and simple wildcard net-class config is
+  implemented for minimum width, minimum clearance, maximum layer count, and
+  minimum via-count review. Remaining net-class work: differential pair, length,
+  impedance, current, voltage, and richer class inheritance constraints.
 - Manufacturing capability profiles: JLCPCB, PCBWay, Eurocircuits-style
   service classes, and custom JSON decks. Profiles should separate hard minimum,
   preferred minimum, and cost-escalation thresholds.
@@ -691,15 +698,19 @@ example before it is considered production-ready.
   silkscreen, README, filename, BOM, placement file, and source metadata.
   Initial manifest checks compare recognizable project/job prefixes, revision
   tags, and generated-date tags across Gerber and sidecar filenames and warn on
-  stale/archive filename tokens.
+  stale/archive filename tokens. They also flag generated-date tags that are
+  stale or later than the current run date, using configurable freshness days.
 - Preflight sequence: refill zones, run EDA DRC/ERC, generate fresh fabrication
   outputs, reload outputs into independent viewer/parser, run HyperDRC, generate
   overlay artifacts, review waiver diff, and archive exact submitted package.
 - Waiver governance: require reason, owner, expiry/review date, source link,
-  and unchanged geometry hash for production waivers.
+  unchanged geometry hash, and non-expired ISO review dates for production
+  waivers.
 - CI gating: fail on errors, warn on fabricator-cost escalations, attach SVG and
-  GeoJSON artifacts, compare violation count against baseline, and block stale
-  generated outputs.
+  GeoJSON artifacts, compare active findings against a saved baseline, and block
+  stale generated outputs. Initial generated-date freshness warnings are
+  implemented in `file-manifest-readiness` and can be tuned by
+  `generated_date_stale_days` or `--generated-date-stale-days`.
 - Engineering review packet: checklist summary, stackup, rule deck, plots,
   DRC/ERC reports, BOM/centroid checks, and open manufacturing questions.
 
@@ -818,7 +829,8 @@ Gerber/KiCad fixtures with one clear violation and one matching non-violation.
 - Structured JSON input manifest entries with adapter, role, path, and
   conversion-origin provenance.
 - JSON waiver files that suppress findings by ID, check name, layers, or message
-  text.
+  text, with governance warnings for incomplete, malformed, or expired
+  production-review metadata.
 - Compact JSON CI summaries with error, warning, waiver, and per-check counts.
 - JSON rule configuration with CLI overrides for clearance thresholds, area
   thresholds, and KiCad copper layer selection.
@@ -835,7 +847,9 @@ Gerber/KiCad fixtures with one clear violation and one matching non-violation.
 - Accept explicit layer-role flags for ambiguous files. Initial flags are present
   for board outline, copper, paste/copper pairs, copper/mask pairs, and
   silkscreen/blocker pairs.
-- Add stackup and net-class sections to the project config file.
+- Expand the implemented stackup and net-class project config sections with
+  impedance, differential-pair, length, via-span, current, voltage, and material
+  constraints.
 - Add IPC-356 netlist ingestion so copper overlap can distinguish intended from
   unintended coupling.
 - Add IPC-2581 and ODB++ importers if licensing and available crate support make
@@ -960,9 +974,10 @@ well-maintained exporter.
 - JSON Lines / SQLite / Parquet: JSON Lines output is implemented for streaming
   analysis across many boards, vendors, revisions, and rule decks. SQLite and
   Parquet remain future structured stores.
-- Waiver and baseline update sinks: generate proposed waiver stubs, expired
-  waiver reports, and geometry-hash baselines for controlled production
-  exceptions.
+- Waiver and baseline update sinks: proposed waiver stubs, active-finding
+  baselines, and baseline diff JSON are implemented for controlled production
+  exceptions and release drift review. Waiver governance reports expired review
+  dates. Richer geometry fingerprints remain future work.
 
 ### Adapter Architecture Notes
 

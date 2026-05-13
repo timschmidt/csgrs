@@ -114,6 +114,8 @@ pub enum Check {
     ExcellonReadiness,
     FileManifestReadiness,
     ProductionArtifactReadiness,
+    StackupReadiness,
+    NetConstraintReadiness,
 }
 
 pub const DEFAULT_CHECKS: &[Check] = &[
@@ -227,6 +229,8 @@ pub const DEFAULT_CHECKS: &[Check] = &[
     Check::ExcellonReadiness,
     Check::FileManifestReadiness,
     Check::ProductionArtifactReadiness,
+    Check::StackupReadiness,
+    Check::NetConstraintReadiness,
 ];
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, ValueEnum)]
@@ -492,6 +496,10 @@ pub struct Cli {
     #[arg(long)]
     pub max_layer_area: Option<f64>,
 
+    /// Maximum allowed age for generated-date filename tags before manifest freshness warnings.
+    #[arg(long = "generated-date-stale-days")]
+    pub generated_date_stale_days: Option<usize>,
+
     /// Output format.
     #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
     pub format: OutputFormat,
@@ -507,6 +515,22 @@ pub struct Cli {
     /// Write an SVG overlay of active violations to this path.
     #[arg(long = "svg-overlay")]
     pub svg_overlay: Option<PathBuf>,
+
+    /// Write proposed waiver stubs for active findings to this JSON path.
+    #[arg(long = "waiver-stubs")]
+    pub waiver_stubs: Option<PathBuf>,
+
+    /// Write an active-finding baseline to this JSON path.
+    #[arg(long = "baseline-file")]
+    pub baseline_file: Option<PathBuf>,
+
+    /// Existing active-finding baseline used to classify new, resolved, and unchanged findings.
+    #[arg(long = "baseline-reference")]
+    pub baseline_reference: Option<PathBuf>,
+
+    /// Write baseline comparison results to this JSON path.
+    #[arg(long = "baseline-diff-file")]
+    pub baseline_diff_file: Option<PathBuf>,
 }
 
 #[cfg(test)]
@@ -692,6 +716,10 @@ mod tests {
             "--format",
             "json",
             "--check",
+            "stackup-readiness",
+            "--check",
+            "net-constraint-readiness",
+            "--check",
             "file-manifest-readiness",
             "--check",
             "production-artifact-readiness",
@@ -804,6 +832,8 @@ mod tests {
                 Check::MinimumMaskOpening,
                 Check::SolderMaskOpeningSpacing,
                 Check::Ipc356DrillDiameter,
+                Check::StackupReadiness,
+                Check::NetConstraintReadiness,
                 Check::FileManifestReadiness,
                 Check::ProductionArtifactReadiness,
                 Check::MechanicalLayerGeometry,
@@ -871,6 +901,16 @@ mod tests {
             "README.md",
             "--rout-drawing",
             "panel.dxf",
+            "--waiver-stubs",
+            "waiver-stubs.json",
+            "--baseline-file",
+            "baseline.json",
+            "--baseline-reference",
+            "previous-baseline.json",
+            "--baseline-diff-file",
+            "baseline-diff.json",
+            "--generated-date-stale-days",
+            "14",
             "--declared-copper-layer-count",
             "4",
             "top.gbr",
@@ -886,6 +926,17 @@ mod tests {
         );
         assert_eq!(cli.readme_files, vec![PathBuf::from("README.md")]);
         assert_eq!(cli.rout_drawing_files, vec![PathBuf::from("panel.dxf")]);
+        assert_eq!(cli.waiver_stubs, Some(PathBuf::from("waiver-stubs.json")));
+        assert_eq!(cli.baseline_file, Some(PathBuf::from("baseline.json")));
+        assert_eq!(
+            cli.baseline_reference,
+            Some(PathBuf::from("previous-baseline.json"))
+        );
+        assert_eq!(
+            cli.baseline_diff_file,
+            Some(PathBuf::from("baseline-diff.json"))
+        );
+        assert_eq!(cli.generated_date_stale_days, Some(14));
         assert_eq!(cli.declared_copper_layer_count, Some(4));
     }
 

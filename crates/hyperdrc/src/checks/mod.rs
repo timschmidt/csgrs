@@ -8,6 +8,7 @@
 mod artifacts;
 pub mod assembly;
 pub mod board;
+mod constraints;
 mod distance;
 pub mod drill;
 mod excellon;
@@ -19,6 +20,7 @@ mod surface_finish;
 pub use artifacts::*;
 pub use assembly::*;
 pub use board::*;
+pub use constraints::*;
 pub use drill::*;
 pub use excellon::*;
 pub use layer::*;

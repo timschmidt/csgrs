@@ -5,7 +5,8 @@ This folder contains small user-facing examples for configuring `hyperdrc`.
 ## Contents
 
 - [`hyperdrc-config.json`](hyperdrc-config.json) demonstrates rule thresholds
-  and KiCad copper-layer selection that can be loaded with `--config`.
+  KiCad copper-layer selection, generated-output freshness, stackup metadata,
+  and net-class constraints that can be loaded with `--config`.
 
 ## Usage
 

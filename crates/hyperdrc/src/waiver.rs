@@ -3,6 +3,7 @@ use std::path::Path;
 use anyhow::{Context, Result};
 use serde::Deserialize;
 
+use crate::date::{current_day_number, parse_iso_day};
 use crate::report::{Severity, Violation};
 
 #[derive(Debug, Deserialize)]
@@ -62,6 +63,10 @@ pub fn apply_waivers(
 /// These checks generate non-fatal warnings that are always run when waivers are
 /// provided, even if the waivers are not used.
 pub fn governance_violations(waivers: &[Waiver]) -> Vec<Violation> {
+    governance_violations_on(waivers, current_day_number())
+}
+
+fn governance_violations_on(waivers: &[Waiver], today: Option<i64>) -> Vec<Violation> {
     let mut violations = Vec::new();
 
     for (index, waiver) in waivers.iter().enumerate() {
@@ -105,16 +110,43 @@ pub fn governance_violations(waivers: &[Waiver]) -> Vec<Violation> {
             ));
         }
 
-        if !waiver.has_text(&waiver.review_date) {
-            violations.push(Violation::new(
-                "waiver-governance-review-date",
-                Severity::Warning,
-                vec!["waiver".to_string()],
-                None,
-                Vec::new(),
-                Vec::new(),
-                Some(format!("{label} is missing a review_date")),
-            ));
+        match waiver.review_date_status(today) {
+            ReviewDateStatus::Missing => {
+                violations.push(Violation::new(
+                    "waiver-governance-review-date",
+                    Severity::Warning,
+                    vec!["waiver".to_string()],
+                    None,
+                    Vec::new(),
+                    Vec::new(),
+                    Some(format!("{label} is missing a review_date")),
+                ));
+            }
+            ReviewDateStatus::Malformed(value) => {
+                violations.push(Violation::new(
+                    "waiver-governance-review-date-format",
+                    Severity::Warning,
+                    vec!["waiver".to_string()],
+                    None,
+                    Vec::new(),
+                    Vec::new(),
+                    Some(format!(
+                        "{label} has invalid review_date {value:?}; use YYYY-MM-DD"
+                    )),
+                ));
+            }
+            ReviewDateStatus::Expired(value) => {
+                violations.push(Violation::new(
+                    "waiver-governance-review-date-expired",
+                    Severity::Warning,
+                    vec!["waiver".to_string()],
+                    None,
+                    Vec::new(),
+                    Vec::new(),
+                    Some(format!("{label} review_date {value} has expired")),
+                ));
+            }
+            ReviewDateStatus::Current => {}
         }
 
         if !waiver.has_text(&waiver.source) {
@@ -143,6 +175,13 @@ pub fn governance_violations(waivers: &[Waiver]) -> Vec<Violation> {
     }
 
     violations
+}
+
+enum ReviewDateStatus {
+    Current,
+    Expired(String),
+    Malformed(String),
+    Missing,
 }
 
 impl Waiver {
@@ -192,6 +231,23 @@ impl Waiver {
     fn has_text(&self, text: &Option<String>) -> bool {
         text.as_ref().is_some_and(|value| !value.trim().is_empty())
     }
+
+    fn review_date_status(&self, today: Option<i64>) -> ReviewDateStatus {
+        let Some(review_date) = self.review_date.as_deref().map(str::trim) else {
+            return ReviewDateStatus::Missing;
+        };
+        if review_date.is_empty() {
+            return ReviewDateStatus::Missing;
+        }
+        let Some(review_day) = parse_iso_day(review_date) else {
+            return ReviewDateStatus::Malformed(review_date.to_string());
+        };
+        if today.is_some_and(|today| review_day < today) {
+            return ReviewDateStatus::Expired(review_date.to_string());
+        }
+
+        ReviewDateStatus::Current
+    }
 }
 
 fn waiver_scope_label(index: usize, waiver: &Waiver) -> String {
@@ -217,7 +273,11 @@ mod tests {
 
     use crate::report::{Severity, Violation};
 
-    use super::{Waiver, apply_waivers, governance_violations, load_waivers};
+    use crate::date::parse_iso_day;
+
+    use super::{
+        Waiver, apply_waivers, governance_violations, governance_violations_on, load_waivers,
+    };
 
     #[test]
     fn applies_check_and_layer_waivers() {
@@ -347,12 +407,40 @@ mod tests {
             message_contains: None,
             reason: Some("accept known DNP footprint".to_string()),
             owner: Some("PCB platform team".to_string()),
-            review_date: Some("2026-05-01".to_string()),
+            review_date: Some("2027-05-01".to_string()),
             source: Some("https://jira.example/issues/123".to_string()),
             geometry_hash: Some("sha256:0000".to_string()),
         }];
 
         assert!(governance_violations(&waivers).is_empty());
+    }
+
+    #[test]
+    fn governance_violations_report_malformed_and_expired_review_dates() {
+        let waivers = vec![
+            complete_waiver_with_review_date("2026-05-12"),
+            complete_waiver_with_review_date("2026-02-30"),
+            complete_waiver_with_review_date("2026/05/14"),
+            complete_waiver_with_review_date("2026-05-13"),
+            complete_waiver_with_review_date("2026-05-14"),
+        ];
+
+        let today = parse_iso_day("2026-05-13");
+        let violations = governance_violations_on(&waivers, today);
+
+        assert_eq!(violations.len(), 3);
+        assert!(
+            violations
+                .iter()
+                .any(|violation| violation.check == "waiver-governance-review-date-expired")
+        );
+        assert_eq!(
+            violations
+                .iter()
+                .filter(|violation| violation.check == "waiver-governance-review-date-format")
+                .count(),
+            2
+        );
     }
 
     #[test]
@@ -402,5 +490,19 @@ mod tests {
                 .iter()
                 .any(|violation| violation.check == "waiver-governance-scope")
         );
+    }
+
+    fn complete_waiver_with_review_date(review_date: &str) -> Waiver {
+        Waiver {
+            id: Some("acid-trap-candidate".to_string()),
+            check: None,
+            layers: Vec::new(),
+            message_contains: None,
+            reason: Some("accept known footprint".to_string()),
+            owner: Some("PCB platform team".to_string()),
+            review_date: Some(review_date.to_string()),
+            source: Some("https://jira.example/issues/123".to_string()),
+            geometry_hash: Some("sha256:0000".to_string()),
+        }
     }
 }

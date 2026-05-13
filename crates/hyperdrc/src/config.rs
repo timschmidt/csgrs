@@ -27,7 +27,52 @@ pub struct RuleConfig {
     pub ipc356_tolerance: Option<f64>,
     pub min_area: Option<f64>,
     pub max_layer_area: Option<f64>,
+    pub generated_date_stale_days: Option<usize>,
     pub kicad_copper_layers: Vec<String>,
+    pub stackup: Option<StackupConfig>,
+    pub net_classes: Vec<NetClassConfig>,
+}
+
+#[derive(Clone, Debug, Deserialize, Default)]
+#[serde(default)]
+pub struct StackupConfig {
+    pub copper_layer_count: Option<usize>,
+    pub finished_thickness: Option<f64>,
+    pub layers: Vec<StackupLayerConfig>,
+}
+
+#[derive(Clone, Debug, Deserialize, Default)]
+#[serde(default)]
+pub struct StackupLayerConfig {
+    pub name: String,
+    pub kind: StackupLayerKind,
+    pub copper_weight_oz: Option<f64>,
+    pub dielectric_thickness: Option<f64>,
+}
+
+#[derive(Copy, Clone, Debug, Deserialize, Default, Eq, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub enum StackupLayerKind {
+    Copper,
+    Dielectric,
+    SolderMask,
+    Silkscreen,
+    Core,
+    Prepreg,
+    #[default]
+    Other,
+}
+
+#[derive(Clone, Debug, Deserialize, Default)]
+#[serde(default)]
+pub struct NetClassConfig {
+    pub name: String,
+    pub nets: Vec<String>,
+    pub net_patterns: Vec<String>,
+    pub min_width: Option<f64>,
+    pub min_clearance: Option<f64>,
+    pub max_layer_count: Option<usize>,
+    pub min_via_count: Option<usize>,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -53,6 +98,7 @@ pub struct EffectiveRules {
     pub ipc356_tolerance: f64,
     pub min_area: f64,
     pub max_layer_area: Option<f64>,
+    pub generated_date_stale_days: usize,
 }
 
 impl RuleConfig {
@@ -86,6 +132,7 @@ pub struct RuleOverrides {
     pub ipc356_tolerance: Option<f64>,
     pub min_area: Option<f64>,
     pub max_layer_area: Option<f64>,
+    pub generated_date_stale_days: Option<usize>,
 }
 
 pub fn effective_rules(config: &RuleConfig, overrides: RuleOverrides) -> EffectiveRules {
@@ -135,6 +182,10 @@ pub fn effective_rules(config: &RuleConfig, overrides: RuleOverrides) -> Effecti
         ipc356_tolerance: pick(overrides.ipc356_tolerance, config.ipc356_tolerance, 0.1),
         min_area: pick(overrides.min_area, config.min_area, 1.0e-9),
         max_layer_area: overrides.max_layer_area.or(config.max_layer_area),
+        generated_date_stale_days: overrides
+            .generated_date_stale_days
+            .or(config.generated_date_stale_days)
+            .unwrap_or(90),
     }
 }
 
@@ -179,12 +230,14 @@ mod tests {
                 ipc356_tolerance: None,
                 min_area: None,
                 max_layer_area: None,
+                generated_date_stale_days: Some(30),
             },
         );
 
         assert_eq!(rules.keepout, 0.3);
         assert_eq!(rules.min_area, 0.01);
         assert_eq!(rules.clearance, 0.25);
+        assert_eq!(rules.generated_date_stale_days, 30);
     }
 
     #[test]
@@ -205,14 +258,56 @@ mod tests {
             std::env::temp_dir().join(format!("hyperdrc-config-{}.json", std::process::id()));
         fs::write(
             &path,
-            r#"{"keepout":0.42,"kicad_copper_layers":["F.Cu"],"unknown":true}"#,
+            r#"{"keepout":0.42,"generated_date_stale_days":45,"kicad_copper_layers":["F.Cu"],"unknown":true}"#,
         )
         .unwrap();
 
         let config = RuleConfig::load(&path).unwrap();
 
         assert_eq!(config.keepout, Some(0.42));
+        assert_eq!(config.generated_date_stale_days, Some(45));
         assert_eq!(config.kicad_copper_layers, vec!["F.Cu"]);
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn loads_stackup_and_net_class_sections() {
+        let path = std::env::temp_dir().join(format!(
+            "hyperdrc-constraints-config-{}.json",
+            std::process::id()
+        ));
+        fs::write(
+            &path,
+            r#"{
+              "stackup": {
+                "copper_layer_count": 2,
+                "finished_thickness": 1.6,
+                "layers": [
+                  {"name":"F.Cu","kind":"copper","copper_weight_oz":1.0},
+                  {"name":"dielectric","kind":"dielectric","dielectric_thickness":1.5},
+                  {"name":"B.Cu","kind":"copper","copper_weight_oz":1.0}
+                ]
+              },
+              "net_classes": [
+                {
+                  "name": "power",
+                  "nets": ["VBUS"],
+                  "net_patterns": ["PWR_*"],
+                  "min_width": 0.5,
+                  "min_clearance": 0.25,
+                  "max_layer_count": 1,
+                  "min_via_count": 2
+                }
+              ]
+            }"#,
+        )
+        .unwrap();
+
+        let config = RuleConfig::load(&path).unwrap();
+
+        assert_eq!(config.stackup.unwrap().copper_layer_count, Some(2));
+        assert_eq!(config.net_classes[0].name, "power");
+        assert_eq!(config.net_classes[0].net_patterns, vec!["PWR_*"]);
         let _ = fs::remove_file(path);
     }
 }

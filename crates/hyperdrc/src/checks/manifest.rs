@@ -6,7 +6,10 @@
 //! role inference. The goal is to catch file-set mismatches before geometry and
 //! electrical checks begin.
 
+use crate::date::{current_day_number, parse_compact_day};
 use crate::report::{Severity, Violation};
+
+const DEFAULT_GENERATED_DATE_STALE_DAYS: i64 = 90;
 
 #[derive(Clone, Debug)]
 pub struct ManifestGerberLayer {
@@ -26,6 +29,7 @@ pub struct ManifestInput {
     pub readme_file_count: usize,
     pub rout_drawing_file_count: usize,
     pub declared_copper_layer_count: Option<usize>,
+    pub generated_date_stale_days: Option<usize>,
     pub kicad_copper_layer_count: Option<usize>,
     pub has_board_outline: bool,
     pub has_drill_data: bool,
@@ -261,10 +265,80 @@ pub fn file_manifest_readiness(input: &ManifestInput) -> Vec<Violation> {
     );
     check_revision_consistency(input, &mut violations);
     check_generated_date_consistency(input, &mut violations);
+    check_generated_date_age(
+        input,
+        current_day_number(),
+        generated_date_stale_days(input),
+        &mut violations,
+    );
     check_project_name_consistency(input, &mut violations);
     check_stale_artifact_names(input, &mut violations);
 
     violations
+}
+
+fn check_generated_date_age(
+    input: &ManifestInput,
+    today: Option<i64>,
+    stale_days: i64,
+    violations: &mut Vec<Violation>,
+) {
+    let Some(today) = today else {
+        return;
+    };
+
+    let dated_paths = manifest_paths(input)
+        .into_iter()
+        .filter_map(|path| generated_date_tag(&path).map(|date| (path, date)))
+        .collect::<Vec<_>>();
+    let stale = dated_paths
+        .iter()
+        .filter(|(_, date)| parse_compact_day(date).is_some_and(|day| today - day > stale_days))
+        .map(|(path, date)| format!("{path} ({date})"))
+        .collect::<Vec<_>>();
+    let future = dated_paths
+        .iter()
+        .filter(|(_, date)| parse_compact_day(date).is_some_and(|day| day > today))
+        .map(|(path, date)| format!("{path} ({date})"))
+        .collect::<Vec<_>>();
+
+    if !stale.is_empty() {
+        violations.push(Violation::new(
+            "file-manifest-readiness",
+            Severity::Warning,
+            vec!["package:stale-generated-date".to_string()],
+            None,
+            Vec::new(),
+            Vec::new(),
+            Some(format!(
+                "input package contains generated-date tags older than {stale_days} days: {}",
+                stale.join(", ")
+            )),
+        ));
+    }
+
+    if !future.is_empty() {
+        violations.push(Violation::new(
+            "file-manifest-readiness",
+            Severity::Warning,
+            vec!["package:future-generated-date".to_string()],
+            None,
+            Vec::new(),
+            Vec::new(),
+            Some(format!(
+                "input package contains generated-date tags later than the current run date: {}",
+                future.join(", ")
+            )),
+        ));
+    }
+}
+
+fn generated_date_stale_days(input: &ManifestInput) -> i64 {
+    input
+        .generated_date_stale_days
+        .and_then(|days| i64::try_from(days).ok())
+        .filter(|days| *days > 0)
+        .unwrap_or(DEFAULT_GENERATED_DATE_STALE_DAYS)
 }
 
 fn verify_kicad_copper_layer_count(
@@ -717,9 +791,7 @@ fn normalize_date_token(token: &str) -> Option<String> {
         return None;
     }
     let year = token[0..4].parse::<u16>().ok()?;
-    let month = token[4..6].parse::<u8>().ok()?;
-    let day = token[6..8].parse::<u8>().ok()?;
-    if !(2000..=2099).contains(&year) || !(1..=12).contains(&month) || !(1..=31).contains(&day) {
+    if !(2000..=2099).contains(&year) || parse_compact_day(token).is_none() {
         return None;
     }
     Some(token.to_string())
@@ -906,9 +978,11 @@ fn package_violation(slug: &str, severity: Severity, message: &str) -> Violation
 
 #[cfg(test)]
 mod tests {
+    use crate::date::parse_iso_day;
+
     use super::{
-        GerberRole, ManifestGerberLayer, ManifestInput, classify_gerber_role,
-        file_manifest_readiness,
+        GerberRole, ManifestGerberLayer, ManifestInput, check_generated_date_age,
+        classify_gerber_role, file_manifest_readiness, normalize_date_token,
     };
 
     #[test]
@@ -1387,6 +1461,72 @@ mod tests {
         let slugs = violation_slugs(&file_manifest_readiness(&input));
 
         assert!(!slugs.contains(&"package:mixed-generated-dates".to_string()));
+    }
+
+    #[test]
+    fn impossible_generated_date_tags_are_ignored_as_dates() {
+        assert_eq!(normalize_date_token("20260229"), None);
+        assert_eq!(
+            normalize_date_token("20240229"),
+            Some("20240229".to_string())
+        );
+    }
+
+    #[test]
+    fn stale_and_future_generated_dates_are_reported() {
+        let input = ManifestInput {
+            gerber_layers: vec![
+                layer("Widget_20260101_F_Cu.gtl"),
+                layer("Widget_20260514_B_Cu.gbl"),
+                layer("Widget_20260513_GKO.gko"),
+            ],
+            has_board_outline: true,
+            has_drill_data: true,
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            ..Default::default()
+        };
+        let mut violations = Vec::new();
+
+        check_generated_date_age(&input, parse_iso_day("2026-05-13"), 90, &mut violations);
+        let slugs = violation_slugs(&violations);
+
+        assert!(slugs.contains(&"package:stale-generated-date".to_string()));
+        assert!(slugs.contains(&"package:future-generated-date".to_string()));
+        assert!(violations.iter().any(|violation| {
+            violation
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("20260101"))
+        }));
+    }
+
+    #[test]
+    fn configured_generated_date_freshness_window_is_applied() {
+        let input = ManifestInput {
+            gerber_layers: vec![layer("Widget_20260501_F_Cu.gtl")],
+            has_board_outline: true,
+            has_drill_data: true,
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            ..Default::default()
+        };
+        let mut violations = Vec::new();
+
+        check_generated_date_age(&input, parse_iso_day("2026-05-13"), 7, &mut violations);
+        let slugs = violation_slugs(&violations);
+
+        assert!(slugs.contains(&"package:stale-generated-date".to_string()));
     }
 
     #[test]

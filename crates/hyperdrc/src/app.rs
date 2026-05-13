@@ -9,8 +9,8 @@ use crate::io::{self, SourceRecord};
 use crate::report::{Diagnostic, Report, Severity, Violation, report_summary, report_to_geojson};
 use crate::{LayerMetadata, PcbSketch};
 use crate::{
-    checks, conversion, excellon, github_annotations, html_report, ipc356, jsonl, junit, kicad,
-    sarif, svg_overlay, waiver,
+    baseline, checks, conversion, excellon, github_annotations, html_report, ipc356, jsonl, junit,
+    kicad, sarif, svg_overlay, waiver,
 };
 
 #[derive(Clone, Debug)]
@@ -62,6 +62,7 @@ pub fn run(cli: Cli) -> Result<()> {
             ipc356_tolerance: cli.ipc356_tolerance,
             min_area: cli.min_area,
             max_layer_area: cli.max_layer_area,
+            generated_date_stale_days: cli.generated_date_stale_days,
         },
     );
     let kicad_copper_layers = if cli.kicad_copper_layers.is_empty() {
@@ -138,6 +139,7 @@ pub fn run(cli: Cli) -> Result<()> {
     };
     let violations = run_checks(
         &checks,
+        &config,
         &rules,
         &kicad_copper_layers,
         &cli,
@@ -182,6 +184,51 @@ pub fn run(cli: Cli) -> Result<()> {
         std::fs::write(svg_overlay, svg_overlay::report_to_svg(&report))
             .with_context(|| format!("failed to write {}", svg_overlay.display()))?;
     }
+    let current_baseline = if cli.baseline_file.is_some()
+        || cli.baseline_reference.is_some()
+        || cli.baseline_diff_file.is_some()
+    {
+        Some(baseline::report_to_baseline(&report))
+    } else {
+        None
+    };
+    if let Some(waiver_stubs) = &cli.waiver_stubs {
+        std::fs::write(
+            waiver_stubs,
+            serde_json::to_vec_pretty(&baseline::report_to_waiver_stubs(&report))?,
+        )
+        .with_context(|| format!("failed to write {}", waiver_stubs.display()))?;
+    }
+    if let Some(baseline_file) = &cli.baseline_file {
+        std::fs::write(
+            baseline_file,
+            serde_json::to_vec_pretty(
+                current_baseline
+                    .as_ref()
+                    .expect("current baseline is created when baseline output is requested"),
+            )?,
+        )
+        .with_context(|| format!("failed to write {}", baseline_file.display()))?;
+    }
+    match (&cli.baseline_reference, &cli.baseline_diff_file) {
+        (Some(reference_path), Some(diff_path)) => {
+            let reference = baseline::load_baseline(reference_path)?;
+            let diff = baseline::compare_baselines(
+                &reference,
+                current_baseline
+                    .as_ref()
+                    .expect("current baseline is created when baseline diff is requested"),
+            );
+            std::fs::write(diff_path, serde_json::to_vec_pretty(&diff)?)
+                .with_context(|| format!("failed to write {}", diff_path.display()))?;
+        }
+        (None, Some(_)) => {
+            return Err(anyhow!(
+                "--baseline-diff-file requires --baseline-reference so hyperdrc has a previous finding set to compare"
+            ));
+        }
+        (Some(_), None) | (None, None) => {}
+    }
 
     match cli.format {
         OutputFormat::Text => print_text_report(&report),
@@ -215,6 +262,7 @@ pub fn run(cli: Cli) -> Result<()> {
 #[allow(clippy::too_many_arguments)]
 fn run_checks(
     selected_checks: &[Check],
+    config: &config::RuleConfig,
     rules: &EffectiveRules,
     kicad_copper_layers: &[String],
     cli: &Cli,
@@ -1531,6 +1579,7 @@ fn run_checks(
             Check::FileManifestReadiness => {
                 violations.extend(checks::file_manifest_readiness(&manifest_input(
                     cli,
+                    rules,
                     layers,
                     boards,
                     package_inputs,
@@ -1563,6 +1612,16 @@ fn run_checks(
                     &fab_drawing_files,
                     &assembly_drawing_files,
                     &rout_drawing_files,
+                ));
+            }
+            Check::StackupReadiness => {
+                violations.extend(checks::stackup_readiness(config.stackup.as_ref(), boards));
+            }
+            Check::NetConstraintReadiness => {
+                violations.extend(checks::net_constraint_readiness(
+                    &config.net_classes,
+                    boards,
+                    kicad_copper_layers,
                 ));
             }
         }
@@ -1972,6 +2031,7 @@ fn input_manifest(
 
 fn manifest_input(
     cli: &Cli,
+    rules: &EffectiveRules,
     layers: &[Layer],
     boards: &[kicad::BoardModel],
     package_inputs: &PackageInputs,
@@ -2005,6 +2065,7 @@ fn manifest_input(
         readme_file_count: package_inputs.readme_files.len(),
         rout_drawing_file_count: package_inputs.rout_drawing_files.len(),
         declared_copper_layer_count: cli.declared_copper_layer_count.filter(|count| *count > 0),
+        generated_date_stale_days: Some(rules.generated_date_stale_days).filter(|days| *days > 0),
         kicad_copper_layer_count: Some(kicad_copper_layers.len()).filter(|count| *count > 0),
         has_board_outline: boards.iter().any(|board| board.board_outline.is_some()),
         has_drill_data: !package_inputs.excellon_files.is_empty()
@@ -2315,6 +2376,7 @@ mod tests {
     use clap::Parser;
 
     use crate::cli::Cli;
+    use crate::config::{self, RuleOverrides};
     use crate::geometry::empty_sketch;
     use crate::io::{
         IoAdapter, IoRole, SourceRecord, discover_gerber_dir, discover_package_sidecars,
@@ -2385,6 +2447,36 @@ mod tests {
             },
             panel_features: None,
         }
+    }
+
+    fn default_rules() -> config::EffectiveRules {
+        config::effective_rules(
+            &config::RuleConfig::default(),
+            RuleOverrides {
+                keepout: None,
+                clearance: None,
+                paste_tolerance: None,
+                min_paste_area_ratio: None,
+                max_paste_area_ratio: None,
+                stencil_thickness: None,
+                min_stencil_area_ratio: None,
+                min_width: None,
+                min_mask_width: None,
+                acid_trap_angle: None,
+                max_copper_imbalance_ratio: None,
+                annular_ring: None,
+                drill_clearance: None,
+                board_thickness: None,
+                max_drill_aspect_ratio: None,
+                net_clearance: None,
+                registration_tolerance: None,
+                panel_clearance: None,
+                ipc356_tolerance: None,
+                min_area: None,
+                max_layer_area: None,
+                generated_date_stale_days: None,
+            },
+        )
     }
 
     #[test]
@@ -2592,7 +2684,8 @@ mod tests {
         let layers = vec![make_layer("top.gbr"), make_layer("bottom.gbr")];
         let boards = vec![make_board_model(&["F.Cu", "B.Cu", "F.Cu"], true, true)];
         let package_inputs = package_inputs(&cli, Default::default());
-        let manifest = manifest_input(&cli, &layers, &boards, &package_inputs);
+        let rules = default_rules();
+        let manifest = manifest_input(&cli, &rules, &layers, &boards, &package_inputs);
 
         assert_eq!(manifest.gerber_layers.len(), 2);
         assert!(manifest.artifact_paths.contains(&"bom.csv".to_string()));
@@ -2605,6 +2698,7 @@ mod tests {
         assert_eq!(manifest.readme_file_count, 1);
         assert_eq!(manifest.rout_drawing_file_count, 1);
         assert_eq!(manifest.declared_copper_layer_count, Some(4));
+        assert_eq!(manifest.generated_date_stale_days, Some(90));
         assert_eq!(manifest.kicad_copper_layer_count, Some(2));
         assert!(manifest.has_board_outline);
         assert!(manifest.has_drill_data);
@@ -2616,7 +2710,8 @@ mod tests {
         let layers = vec![make_layer("top.gbr")];
         let boards = vec![make_board_model(&[], false, false)];
         let package_inputs = package_inputs(&cli, Default::default());
-        let manifest = manifest_input(&cli, &layers, &boards, &package_inputs);
+        let rules = default_rules();
+        let manifest = manifest_input(&cli, &rules, &layers, &boards, &package_inputs);
 
         assert_eq!(manifest.gerber_layers.len(), 1);
         assert_eq!(manifest.declared_copper_layer_count, None);
@@ -2643,7 +2738,8 @@ mod tests {
         let discovered = discover_package_sidecars(std::slice::from_ref(&dir)).unwrap();
         let package_inputs = package_inputs(&cli, discovered);
         let sources = input_manifest(&cli, &[], &package_inputs);
-        let manifest = manifest_input(&cli, &[], &[], &package_inputs);
+        let rules = default_rules();
+        let manifest = manifest_input(&cli, &rules, &[], &[], &package_inputs);
 
         assert_eq!(package_inputs.excellon_files.len(), 1);
         assert_eq!(manifest.bom_file_count, 1);

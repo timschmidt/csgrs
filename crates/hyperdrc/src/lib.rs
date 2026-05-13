@@ -1,8 +1,10 @@
 pub mod app;
+pub mod baseline;
 pub mod checks;
 pub mod cli;
 pub mod config;
 pub mod conversion;
+pub mod date;
 pub mod excellon;
 pub mod geometry;
 pub mod github_annotations;

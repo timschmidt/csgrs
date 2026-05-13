@@ -13,5 +13,38 @@
   "ipc356_tolerance": 0.1,
   "min_area": 1.0e-9,
   "max_layer_area": null,
-  "kicad_copper_layers": ["F.Cu", "B.Cu"]
+  "generated_date_stale_days": 90,
+  "kicad_copper_layers": ["F.Cu", "B.Cu"],
+  "stackup": {
+    "copper_layer_count": 2,
+    "finished_thickness": 1.6,
+    "layers": [
+      {
+        "name": "F.Cu",
+        "kind": "copper",
+        "copper_weight_oz": 1.0
+      },
+      {
+        "name": "Core",
+        "kind": "core",
+        "dielectric_thickness": 1.5
+      },
+      {
+        "name": "B.Cu",
+        "kind": "copper",
+        "copper_weight_oz": 1.0
+      }
+    ]
+  },
+  "net_classes": [
+    {
+      "name": "power",
+      "nets": ["VBUS"],
+      "net_patterns": ["PWR_*"],
+      "min_width": 0.5,
+      "min_clearance": 0.25,
+      "max_layer_count": 2,
+      "min_via_count": 2
+    }
+  ]
 }
