@@ -1,6 +1,6 @@
 //! Scalar-centered linear algebra primitives with selectable numeric backends.
 //!
-//! `realistic_blas` exposes a crate-owned [`Scalar`] type, complex numbers,
+//! `hyperlattice` exposes a crate-owned [`Scalar`] type, complex numbers,
 //! 3D/4D vectors, and 3x3/4x4 matrices. These types are generic over a backend
 //! marker and default to [`DefaultBackend`]. The default `hyperreal-backend`
 //! stores scalars as `hyperreal::Real` values and re-exports `Real` and
@@ -21,7 +21,7 @@
 //! # Examples
 //!
 //! ```
-//! use realistic_blas::{Matrix3, Scalar, Vector3, sqrt};
+//! use hyperlattice::{Matrix3, Scalar, Vector3, sqrt};
 //!
 //! fn s(value: i32) -> Scalar {
 //!     value.into()
@@ -100,43 +100,43 @@ impl PartialEq<Scalar<HyperrealBackend>> for Rational {
 impl<B: Backend> Scalar<B> {
     /// Returns the additive identity.
     pub fn zero() -> Self {
-        crate::trace_dispatch!("realistic_blas", "scalar_constructor", "zero");
+        crate::trace_dispatch!("hyperlattice", "scalar_constructor", "zero");
         Self(B::Repr::zero())
     }
 
     /// Returns the multiplicative identity.
     pub fn one() -> Self {
-        crate::trace_dispatch!("realistic_blas", "scalar_constructor", "one");
+        crate::trace_dispatch!("hyperlattice", "scalar_constructor", "one");
         Self(B::Repr::one())
     }
 
     /// Returns Euler's number.
     pub fn e() -> Self {
-        crate::trace_dispatch!("realistic_blas", "scalar_constructor", "e");
+        crate::trace_dispatch!("hyperlattice", "scalar_constructor", "e");
         Self(B::Repr::e())
     }
 
     /// Returns pi.
     pub fn pi() -> Self {
-        crate::trace_dispatch!("realistic_blas", "scalar_constructor", "pi");
+        crate::trace_dispatch!("hyperlattice", "scalar_constructor", "pi");
         Self(B::Repr::pi())
     }
 
     /// Returns tau, equal to `2 * pi`.
     pub fn tau() -> Self {
-        crate::trace_dispatch!("realistic_blas", "scalar_constructor", "tau");
+        crate::trace_dispatch!("hyperlattice", "scalar_constructor", "tau");
         Self(B::Repr::tau())
     }
 
     /// Returns the multiplicative inverse of this scalar.
     pub fn inverse(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas", "scalar_method", "inverse-owned");
+        crate::trace_dispatch!("hyperlattice", "scalar_method", "inverse-owned");
         self.0.inverse().map(Self)
     }
 
     /// Returns the multiplicative inverse without consuming this scalar.
     pub fn inverse_ref(&self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas", "scalar_method", "inverse-ref");
+        crate::trace_dispatch!("hyperlattice", "scalar_method", "inverse-ref");
         self.0.inverse_ref().map(Self)
     }
 
@@ -145,7 +145,7 @@ impl<B: Backend> Scalar<B> {
         // Hot elementwise kernels often reuse one scalar factor across an
         // entire vector/matrix. Keeping the factor borrowed avoids cloning
         // hyperreal expression graphs for every lane.
-        crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "mul-cached");
+        crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "mul-cached");
         Self(self.0.mul_ref(&factor.0))
     }
 
@@ -153,14 +153,14 @@ impl<B: Backend> Scalar<B> {
     pub(crate) fn add_cached(self, rhs: &Self) -> Self {
         // Same borrowed-factor pattern as `mul_cached`; this is intentionally
         // tiny but centralizes the "owned lhs, borrowed rhs" fast path.
-        crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "add-cached");
+        crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "add-cached");
         Self(self.0.add_ref(&rhs.0))
     }
 
     #[inline]
     pub(crate) fn sub_cached(self, rhs: &Self) -> Self {
         // Avoid cloning the scalar subtrahend in repeated elementwise kernels.
-        crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "sub-cached");
+        crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "sub-cached");
         Self(self.0.sub_ref(&rhs.0))
     }
 
@@ -170,8 +170,18 @@ impl<B: Backend> Scalar<B> {
         // shared-adjugate scaling and Gauss-Jordan solving. Dyadic exact
         // rationals reduce by shifts, so extra products can be cheaper than
         // repeated pivot inverses; non-dyadic rationals usually need BigInt gcds.
-        crate::trace_dispatch!("realistic_blas", "scalar_query", "exact-dyadic-rational");
+        crate::trace_dispatch!("hyperlattice", "scalar_query", "exact-dyadic-rational");
         self.0.is_exact_dyadic_rational()
+    }
+
+    #[inline]
+    pub(crate) fn is_exact_rational(&self) -> bool {
+        // Reuse the backend's existing structural certificate. This is a
+        // representation fact, not an approximate scalar query, so matrix
+        // dispatch can decide between reduction schedules before entering dense
+        // arithmetic lanes.
+        crate::trace_dispatch!("hyperlattice", "scalar_query", "exact-rational");
+        self.0.is_exact_rational()
     }
 
     #[inline]
@@ -186,12 +196,12 @@ impl<B: Backend> Scalar<B> {
             usize::from(!left0_zero) + usize::from(!left1_zero) + usize::from(!left2_zero);
 
         if nonzero_lanes == 0 {
-            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot3-all-zero");
+            crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot3-all-zero");
             return Self::zero();
         }
 
         if nonzero_lanes == 1 {
-            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot3-single-term");
+            crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot3-single-term");
             return if !left0_zero {
                 left[0] * right[0]
             } else if !left1_zero {
@@ -202,7 +212,7 @@ impl<B: Backend> Scalar<B> {
         }
 
         if nonzero_lanes == 2 {
-            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot3-sparse");
+            crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot3-sparse");
             return if left0_zero {
                 // The two surviving lanes are known nonzero by the structural
                 // scan above. Keep them as one product-sum so exact backends can
@@ -233,7 +243,7 @@ impl<B: Backend> Scalar<B> {
             // The scan above has already proved every lane active. Exact
             // backends can use the active dot hook without re-entering scalar
             // zero classification inside the dot-product hook.
-            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot3-active");
+            crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot3-active");
             return Self(B::Repr::active_dot3(
                 [&left[0].0, &left[1].0, &left[2].0],
                 [&right[0].0, &right[1].0, &right[2].0],
@@ -243,7 +253,7 @@ impl<B: Backend> Scalar<B> {
         // Route full 3-lane approximate dots through the backend so compact
         // representations can choose a better add/mul ordering than the
         // default trait methods.
-        crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot3-backend");
+        crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot3-backend");
         Self(B::Repr::dot3(
             [&left[0].0, &left[1].0, &left[2].0],
             [&right[0].0, &right[1].0, &right[2].0],
@@ -265,12 +275,12 @@ impl<B: Backend> Scalar<B> {
             + usize::from(!left3_zero);
 
         if nonzero_lanes == 0 {
-            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-all-zero");
+            crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot4-all-zero");
             return Self::zero();
         }
 
         if nonzero_lanes == 1 {
-            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-single-term");
+            crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot4-single-term");
             return if !left0_zero {
                 left[0] * right[0]
             } else if !left1_zero {
@@ -283,7 +293,7 @@ impl<B: Backend> Scalar<B> {
         }
 
         if nonzero_lanes == 2 {
-            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-sparse-two");
+            crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot4-sparse-two");
             if left0_zero {
                 if left1_zero {
                     return Self::active_signed_product_sum2(
@@ -328,7 +338,7 @@ impl<B: Backend> Scalar<B> {
         }
 
         if nonzero_lanes == 3 {
-            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-sparse-three");
+            crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot4-sparse-three");
             if left0_zero {
                 return Self::active_signed_product_sum2(
                     [true, true, true],
@@ -373,7 +383,7 @@ impl<B: Backend> Scalar<B> {
             // The zero scan above already established four active lanes. Reuse
             // that fact for exact backends instead of asking the scalar layer to
             // rediscover it in a hot matrix lane.
-            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-active");
+            crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot4-active");
             return Self(B::Repr::active_dot4(
                 [&left[0].0, &left[1].0, &left[2].0, &left[3].0],
                 [&right[0].0, &right[1].0, &right[2].0, &right[3].0],
@@ -382,7 +392,7 @@ impl<B: Backend> Scalar<B> {
 
         // Full 4-lane approximate case remains specialized so backends can
         // choose optimal reduction order.
-        crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-backend");
+        crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot4-backend");
         Self(B::Repr::dot4(
             [&left[0].0, &left[1].0, &left[2].0, &left[3].0],
             [&right[0].0, &right[1].0, &right[2].0, &right[3].0],
@@ -405,16 +415,12 @@ impl<B: Backend> Scalar<B> {
         let nonzero_lanes = usize::from(!zero0) + usize::from(!zero1) + usize::from(!zero2);
 
         if nonzero_lanes == 0 {
-            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot3-same-all-zero");
+            crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot3-same-all-zero");
             return Self::zero();
         }
 
         if nonzero_lanes == 1 {
-            crate::trace_dispatch!(
-                "realistic_blas",
-                "scalar_fast_path",
-                "dot3-same-single-term"
-            );
+            crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot3-same-single-term");
             return if !zero0 {
                 values[0] * values[0]
             } else if !zero1 {
@@ -425,7 +431,7 @@ impl<B: Backend> Scalar<B> {
         }
 
         if nonzero_lanes == 2 {
-            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot3-same-sparse");
+            crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot3-same-sparse");
             return if zero0 {
                 // Self-dot sparse-two has the same normalization shape as a
                 // two-lane dot. Keep both squares in one product-sum so exact
@@ -451,14 +457,14 @@ impl<B: Backend> Scalar<B> {
         }
 
         if B::FUSE_SIGNED_PRODUCT_SUM {
-            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot3-same-active");
+            crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot3-same-active");
             return Self(B::Repr::active_dot3(
                 [&values[0].0, &values[1].0, &values[2].0],
                 [&values[0].0, &values[1].0, &values[2].0],
             ));
         }
 
-        crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot3-same-backend");
+        crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot3-same-backend");
         Self(B::Repr::dot3(
             [&values[0].0, &values[1].0, &values[2].0],
             [&values[0].0, &values[1].0, &values[2].0],
@@ -479,16 +485,12 @@ impl<B: Backend> Scalar<B> {
             usize::from(!zero0) + usize::from(!zero1) + usize::from(!zero2) + usize::from(!zero3);
 
         if nonzero_lanes == 0 {
-            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-same-all-zero");
+            crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot4-same-all-zero");
             return Self::zero();
         }
 
         if nonzero_lanes == 1 {
-            crate::trace_dispatch!(
-                "realistic_blas",
-                "scalar_fast_path",
-                "dot4-same-single-term"
-            );
+            crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot4-same-single-term");
             return if !zero0 {
                 values[0] * values[0]
             } else if !zero1 {
@@ -501,7 +503,7 @@ impl<B: Backend> Scalar<B> {
         }
 
         if nonzero_lanes == 2 {
-            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-same-sparse-two");
+            crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot4-same-sparse-two");
             return if zero0 && zero1 {
                 Self::active_signed_product_sum2(
                     [true, true],
@@ -536,11 +538,7 @@ impl<B: Backend> Scalar<B> {
         }
 
         if nonzero_lanes == 3 {
-            crate::trace_dispatch!(
-                "realistic_blas",
-                "scalar_fast_path",
-                "dot4-same-sparse-three"
-            );
+            crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot4-same-sparse-three");
             return if zero0 {
                 Self::active_signed_product_sum2(
                     [true, true, true],
@@ -581,14 +579,14 @@ impl<B: Backend> Scalar<B> {
         }
 
         if B::FUSE_SIGNED_PRODUCT_SUM {
-            crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-same-active");
+            crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot4-same-active");
             return Self(B::Repr::active_dot4(
                 [&values[0].0, &values[1].0, &values[2].0, &values[3].0],
                 [&values[0].0, &values[1].0, &values[2].0, &values[3].0],
             ));
         }
 
-        crate::trace_dispatch!("realistic_blas", "scalar_fast_path", "dot4-same-backend");
+        crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot4-same-backend");
         Self(B::Repr::dot4(
             [&values[0].0, &values[1].0, &values[2].0, &values[3].0],
             [&values[0].0, &values[1].0, &values[2].0, &values[3].0],
@@ -602,7 +600,7 @@ impl<B: Backend> Scalar<B> {
         // prototype reduced repeated structural queries but regressed targeted
         // mat3/mat4 hyperreal transform rows by roughly 2-8%; the per-row
         // checks preserve the inlined Gustavson-style sparse dot-product shape
-        // that realistic_blas depends on for small fixed matrices. See
+        // that hyperlattice depends on for small fixed matrices. See
         // Gustavson, "Two fast algorithms for sparse matrices: multiplication
         // and permuted transposition", ACM TOMS 4(3), 1978.
         let zero0 = coefficients[0].definitely_zero() || values[0].definitely_zero();
@@ -612,7 +610,7 @@ impl<B: Backend> Scalar<B> {
 
         if nonzero_lanes == 0 {
             crate::trace_dispatch!(
-                "realistic_blas",
+                "hyperlattice",
                 "scalar_fast_path",
                 "linear-combination3-all-zero"
             );
@@ -621,7 +619,7 @@ impl<B: Backend> Scalar<B> {
 
         if nonzero_lanes == 1 {
             crate::trace_dispatch!(
-                "realistic_blas",
+                "hyperlattice",
                 "scalar_fast_path",
                 "linear-combination3-single-term"
             );
@@ -636,7 +634,7 @@ impl<B: Backend> Scalar<B> {
 
         if nonzero_lanes == 2 {
             crate::trace_dispatch!(
-                "realistic_blas",
+                "hyperlattice",
                 "scalar_fast_path",
                 "linear-combination3-sparse"
             );
@@ -660,7 +658,7 @@ impl<B: Backend> Scalar<B> {
 
         if B::FUSE_SIGNED_PRODUCT_SUM {
             crate::trace_dispatch!(
-                "realistic_blas",
+                "hyperlattice",
                 "scalar_fast_path",
                 "linear-combination3-active"
             );
@@ -671,7 +669,7 @@ impl<B: Backend> Scalar<B> {
         }
 
         crate::trace_dispatch!(
-            "realistic_blas",
+            "hyperlattice",
             "scalar_fast_path",
             "linear-combination3-specialized"
         );
@@ -694,7 +692,7 @@ impl<B: Backend> Scalar<B> {
 
         if nonzero_lanes == 0 {
             crate::trace_dispatch!(
-                "realistic_blas",
+                "hyperlattice",
                 "scalar_fast_path",
                 "linear-combination4-all-zero"
             );
@@ -703,7 +701,7 @@ impl<B: Backend> Scalar<B> {
 
         if nonzero_lanes == 1 {
             crate::trace_dispatch!(
-                "realistic_blas",
+                "hyperlattice",
                 "scalar_fast_path",
                 "linear-combination4-single-term"
             );
@@ -720,7 +718,7 @@ impl<B: Backend> Scalar<B> {
 
         if nonzero_lanes == 2 {
             crate::trace_dispatch!(
-                "realistic_blas",
+                "hyperlattice",
                 "scalar_fast_path",
                 "linear-combination4-sparse-two"
             );
@@ -775,7 +773,7 @@ impl<B: Backend> Scalar<B> {
 
         if nonzero_lanes == 3 {
             crate::trace_dispatch!(
-                "realistic_blas",
+                "hyperlattice",
                 "scalar_fast_path",
                 "linear-combination4-sparse-three"
             );
@@ -821,7 +819,7 @@ impl<B: Backend> Scalar<B> {
 
         if B::FUSE_SIGNED_PRODUCT_SUM {
             crate::trace_dispatch!(
-                "realistic_blas",
+                "hyperlattice",
                 "scalar_fast_path",
                 "linear-combination4-active"
             );
@@ -837,7 +835,7 @@ impl<B: Backend> Scalar<B> {
         }
 
         crate::trace_dispatch!(
-            "realistic_blas",
+            "hyperlattice",
             "scalar_fast_path",
             "linear-combination4-specialized"
         );
@@ -884,7 +882,7 @@ impl<B: Backend> Scalar<B> {
         match nonzero_count {
             0 => {
                 crate::trace_dispatch!(
-                    "realistic_blas",
+                    "hyperlattice",
                     "scalar_fast_path",
                     "signed-product-sum2-all-zero"
                 );
@@ -894,7 +892,7 @@ impl<B: Backend> Scalar<B> {
                 let (term, positive) = first_term.expect("first term tracked for nonzero count");
                 let product = term[0] * term[1];
                 crate::trace_dispatch!(
-                    "realistic_blas",
+                    "hyperlattice",
                     "scalar_fast_path",
                     "signed-product-sum2-single-term"
                 );
@@ -915,7 +913,7 @@ impl<B: Backend> Scalar<B> {
                     // backends do not opt in, preserving their direct LLVM
                     // expression shape.
                     crate::trace_dispatch!(
-                        "realistic_blas",
+                        "hyperlattice",
                         "scalar_fast_path",
                         "signed-product-sum2-sparse-two-fused"
                     );
@@ -927,7 +925,7 @@ impl<B: Backend> Scalar<B> {
                 let left_product = left[0] * left[1];
                 let right_product = right[0] * right[1];
                 crate::trace_dispatch!(
-                    "realistic_blas",
+                    "hyperlattice",
                     "scalar_fast_path",
                     "signed-product-sum2-sparse-two"
                 );
@@ -953,7 +951,7 @@ impl<B: Backend> Scalar<B> {
         terms: [[&Self; 2]; TERMS],
     ) -> Self {
         crate::trace_dispatch!(
-            "realistic_blas",
+            "hyperlattice",
             "scalar_fast_path",
             "active-signed-product-sum2"
         );
@@ -965,85 +963,85 @@ impl<B: Backend> Scalar<B> {
 
     /// Raises this scalar to a scalar exponent.
     pub fn pow(self, exponent: Self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas", "scalar_method", "pow");
+        crate::trace_dispatch!("hyperlattice", "scalar_method", "pow");
         self.0.pow(exponent.0).map(Self)
     }
 
     /// Returns `e` raised to this scalar.
     pub fn exp(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas", "scalar_method", "exp");
+        crate::trace_dispatch!("hyperlattice", "scalar_method", "exp");
         self.0.exp().map(Self)
     }
 
     /// Returns the natural logarithm.
     pub fn ln(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas", "scalar_method", "ln");
+        crate::trace_dispatch!("hyperlattice", "scalar_method", "ln");
         self.0.ln().map(Self)
     }
 
     /// Returns the base-10 logarithm.
     pub fn log10(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas", "scalar_method", "log10");
+        crate::trace_dispatch!("hyperlattice", "scalar_method", "log10");
         self.0.log10().map(Self)
     }
 
     /// Returns the principal square root.
     pub fn sqrt(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas", "scalar_method", "sqrt");
+        crate::trace_dispatch!("hyperlattice", "scalar_method", "sqrt");
         self.0.sqrt().map(Self)
     }
 
     /// Returns the sine.
     pub fn sin(self) -> Self {
-        crate::trace_dispatch!("realistic_blas", "scalar_method", "sin");
+        crate::trace_dispatch!("hyperlattice", "scalar_method", "sin");
         Self(self.0.sin())
     }
 
     /// Returns the cosine.
     pub fn cos(self) -> Self {
-        crate::trace_dispatch!("realistic_blas", "scalar_method", "cos");
+        crate::trace_dispatch!("hyperlattice", "scalar_method", "cos");
         Self(self.0.cos())
     }
 
     /// Returns the tangent.
     pub fn tan(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas", "scalar_method", "tan");
+        crate::trace_dispatch!("hyperlattice", "scalar_method", "tan");
         self.0.tan().map(Self)
     }
 
     /// Returns the inverse sine.
     pub fn asin(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas", "scalar_method", "asin");
+        crate::trace_dispatch!("hyperlattice", "scalar_method", "asin");
         self.0.asin().map(Self)
     }
 
     /// Returns the inverse cosine.
     pub fn acos(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas", "scalar_method", "acos");
+        crate::trace_dispatch!("hyperlattice", "scalar_method", "acos");
         self.0.acos().map(Self)
     }
 
     /// Returns the inverse tangent.
     pub fn atan(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas", "scalar_method", "atan");
+        crate::trace_dispatch!("hyperlattice", "scalar_method", "atan");
         self.0.atan().map(Self)
     }
 
     /// Returns the inverse hyperbolic sine.
     pub fn asinh(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas", "scalar_method", "asinh");
+        crate::trace_dispatch!("hyperlattice", "scalar_method", "asinh");
         self.0.asinh().map(Self)
     }
 
     /// Returns the inverse hyperbolic cosine.
     pub fn acosh(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas", "scalar_method", "acosh");
+        crate::trace_dispatch!("hyperlattice", "scalar_method", "acosh");
         self.0.acosh().map(Self)
     }
 
     /// Returns the inverse hyperbolic tangent.
     pub fn atanh(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas", "scalar_method", "atanh");
+        crate::trace_dispatch!("hyperlattice", "scalar_method", "atanh");
         self.0.atanh().map(Self)
     }
 
@@ -1053,21 +1051,21 @@ impl<B: Backend> Scalar<B> {
     /// [`zero_status`] when unknown-zero conditions must be distinguished.
     #[inline(always)]
     pub fn definitely_zero(&self) -> bool {
-        crate::trace_dispatch!("realistic_blas", "scalar_query", "definitely-zero");
+        crate::trace_dispatch!("hyperlattice", "scalar_query", "definitely-zero");
         self.0.definitely_zero()
     }
 
     /// Classifies this scalar as zero, non-zero, or unknown.
     #[inline(always)]
     pub fn zero_status(&self) -> ZeroStatus {
-        crate::trace_dispatch!("realistic_blas", "scalar_query", "zero-status");
+        crate::trace_dispatch!("hyperlattice", "scalar_query", "zero-status");
         self.0.zero_status()
     }
 
     /// Returns whether this scalar is definitely one.
     #[inline(always)]
     pub fn definitely_one(&self) -> bool {
-        crate::trace_dispatch!("realistic_blas", "scalar_query", "definitely-one");
+        crate::trace_dispatch!("hyperlattice", "scalar_query", "definitely-one");
         self.0.definitely_one()
     }
 
@@ -1077,14 +1075,14 @@ impl<B: Backend> Scalar<B> {
     /// neither can be proven without approximation.
     #[inline(always)]
     pub fn zero_or_one(&self) -> Option<bool> {
-        crate::trace_dispatch!("realistic_blas", "scalar_query", "zero-or-one");
+        crate::trace_dispatch!("hyperlattice", "scalar_query", "zero-or-one");
         self.0.zero_or_one()
     }
 
     /// Returns conservative structural facts exposed by this scalar's backend.
     #[inline(always)]
     pub fn structural_facts(&self) -> ScalarFacts {
-        crate::trace_dispatch!("realistic_blas", "scalar_query", "structural-facts");
+        crate::trace_dispatch!("hyperlattice", "scalar_query", "structural-facts");
         self.0.structural_facts()
     }
 
@@ -1094,14 +1092,14 @@ impl<B: Backend> Scalar<B> {
     /// structural facts.
     #[inline(always)]
     pub fn refine_sign_until(&self, min_precision: i32) -> Option<ScalarSign> {
-        crate::trace_dispatch!("realistic_blas", "scalar_query", "refine-sign-until");
+        crate::trace_dispatch!("hyperlattice", "scalar_query", "refine-sign-until");
         self.0.refine_sign_until(min_precision)
     }
 
     /// Returns a borrowed finite `f64` approximation when one is available.
     #[inline(always)]
     pub fn to_f64_approx(&self) -> Option<f64> {
-        crate::trace_dispatch!("realistic_blas", "scalar_query", "to-f64-approx");
+        crate::trace_dispatch!("hyperlattice", "scalar_query", "to-f64-approx");
         self.0.to_f64_approx()
     }
 
@@ -1110,7 +1108,7 @@ impl<B: Backend> Scalar<B> {
     /// This affects hyperreal backend evaluation. It is a no-op on the approx
     /// backend.
     pub fn abort(&mut self, signal: AbortSignal) {
-        crate::trace_dispatch!("realistic_blas", "scalar_query", "attach-abort");
+        crate::trace_dispatch!("hyperlattice", "scalar_query", "attach-abort");
         self.0.abort(signal);
     }
 }
@@ -1184,7 +1182,7 @@ impl<B: Backend> TryFrom<f32> for Scalar<B> {
     type Error = Problem;
 
     fn try_from(value: f32) -> Result<Self, Self::Error> {
-        crate::trace_dispatch!("realistic_blas", "scalar_constructor", "try-from-f32");
+        crate::trace_dispatch!("hyperlattice", "scalar_constructor", "try-from-f32");
         B::Repr::try_from(value).map(Self)
     }
 }
@@ -1193,14 +1191,14 @@ impl<B: Backend> TryFrom<f64> for Scalar<B> {
     type Error = Problem;
 
     fn try_from(value: f64) -> Result<Self, Self::Error> {
-        crate::trace_dispatch!("realistic_blas", "scalar_constructor", "try-from-f64");
+        crate::trace_dispatch!("hyperlattice", "scalar_constructor", "try-from-f64");
         B::Repr::try_from(value).map(Self)
     }
 }
 
 impl<B: Backend> From<Scalar<B>> for f64 {
     fn from(value: Scalar<B>) -> Self {
-        crate::trace_dispatch!("realistic_blas", "scalar_conversion", "into-f64");
+        crate::trace_dispatch!("hyperlattice", "scalar_conversion", "into-f64");
         value.0.into_f64()
     }
 }
@@ -1210,7 +1208,7 @@ impl<B: Backend> Add for Scalar<B> {
 
     #[inline]
     fn add(self, rhs: Self) -> Self::Output {
-        crate::trace_dispatch!("realistic_blas", "scalar_op", "add-owned-owned");
+        crate::trace_dispatch!("hyperlattice", "scalar_op", "add-owned-owned");
         Self(self.0 + rhs.0)
     }
 }
@@ -1220,7 +1218,7 @@ impl<B: Backend> Sub for Scalar<B> {
 
     #[inline]
     fn sub(self, rhs: Self) -> Self::Output {
-        crate::trace_dispatch!("realistic_blas", "scalar_op", "sub-owned-owned");
+        crate::trace_dispatch!("hyperlattice", "scalar_op", "sub-owned-owned");
         Self(self.0 - rhs.0)
     }
 }
@@ -1230,7 +1228,7 @@ impl<B: Backend> Neg for Scalar<B> {
 
     #[inline]
     fn neg(self) -> Self::Output {
-        crate::trace_dispatch!("realistic_blas", "scalar_op", "neg-owned");
+        crate::trace_dispatch!("hyperlattice", "scalar_op", "neg-owned");
         Self(-self.0)
     }
 }
@@ -1240,7 +1238,7 @@ impl<B: Backend> Mul for Scalar<B> {
 
     #[inline]
     fn mul(self, rhs: Self) -> Self::Output {
-        crate::trace_dispatch!("realistic_blas", "scalar_op", "mul-owned-owned");
+        crate::trace_dispatch!("hyperlattice", "scalar_op", "mul-owned-owned");
         Self(self.0 * rhs.0)
     }
 }
@@ -1250,7 +1248,7 @@ impl<B: Backend> Div for Scalar<B> {
 
     #[inline]
     fn div(self, rhs: Self) -> Self::Output {
-        crate::trace_dispatch!("realistic_blas", "scalar_op", "div-owned-owned");
+        crate::trace_dispatch!("hyperlattice", "scalar_op", "div-owned-owned");
         self.0.div(rhs.0).map(Self)
     }
 }
@@ -1260,7 +1258,7 @@ impl<B: Backend> Add<&Scalar<B>> for Scalar<B> {
 
     #[inline]
     fn add(self, rhs: &Scalar<B>) -> Self::Output {
-        crate::trace_dispatch!("realistic_blas", "scalar_op", "add-owned-ref");
+        crate::trace_dispatch!("hyperlattice", "scalar_op", "add-owned-ref");
         Self(B::Repr::add_owned_ref(self.0, &rhs.0))
     }
 }
@@ -1270,7 +1268,7 @@ impl<B: Backend> Add<Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn add(self, rhs: Scalar<B>) -> Self::Output {
-        crate::trace_dispatch!("realistic_blas", "scalar_op", "add-ref-owned");
+        crate::trace_dispatch!("hyperlattice", "scalar_op", "add-ref-owned");
         Scalar(B::Repr::add_ref_owned(&self.0, rhs.0))
     }
 }
@@ -1280,7 +1278,7 @@ impl<B: Backend> Add<&Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn add(self, rhs: &Scalar<B>) -> Self::Output {
-        crate::trace_dispatch!("realistic_blas", "scalar_op", "add-ref-ref");
+        crate::trace_dispatch!("hyperlattice", "scalar_op", "add-ref-ref");
         Scalar(B::Repr::add_refs(&self.0, &rhs.0))
     }
 }
@@ -1290,7 +1288,7 @@ impl<B: Backend> Sub<&Scalar<B>> for Scalar<B> {
 
     #[inline]
     fn sub(self, rhs: &Scalar<B>) -> Self::Output {
-        crate::trace_dispatch!("realistic_blas", "scalar_op", "sub-owned-ref");
+        crate::trace_dispatch!("hyperlattice", "scalar_op", "sub-owned-ref");
         Self(B::Repr::sub_owned_ref(self.0, &rhs.0))
     }
 }
@@ -1300,7 +1298,7 @@ impl<B: Backend> Sub<Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn sub(self, rhs: Scalar<B>) -> Self::Output {
-        crate::trace_dispatch!("realistic_blas", "scalar_op", "sub-ref-owned");
+        crate::trace_dispatch!("hyperlattice", "scalar_op", "sub-ref-owned");
         Scalar(B::Repr::sub_ref_owned(&self.0, rhs.0))
     }
 }
@@ -1310,7 +1308,7 @@ impl<B: Backend> Sub<&Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn sub(self, rhs: &Scalar<B>) -> Self::Output {
-        crate::trace_dispatch!("realistic_blas", "scalar_op", "sub-ref-ref");
+        crate::trace_dispatch!("hyperlattice", "scalar_op", "sub-ref-ref");
         Scalar(B::Repr::sub_refs(&self.0, &rhs.0))
     }
 }
@@ -1320,7 +1318,7 @@ impl<B: Backend> Mul<&Scalar<B>> for Scalar<B> {
 
     #[inline]
     fn mul(self, rhs: &Scalar<B>) -> Self::Output {
-        crate::trace_dispatch!("realistic_blas", "scalar_op", "mul-owned-ref");
+        crate::trace_dispatch!("hyperlattice", "scalar_op", "mul-owned-ref");
         Self(B::Repr::mul_owned_ref(self.0, &rhs.0))
     }
 }
@@ -1330,7 +1328,7 @@ impl<B: Backend> Mul<Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn mul(self, rhs: Scalar<B>) -> Self::Output {
-        crate::trace_dispatch!("realistic_blas", "scalar_op", "mul-ref-owned");
+        crate::trace_dispatch!("hyperlattice", "scalar_op", "mul-ref-owned");
         Scalar(B::Repr::mul_ref_owned(&self.0, rhs.0))
     }
 }
@@ -1340,7 +1338,7 @@ impl<B: Backend> Mul<&Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn mul(self, rhs: &Scalar<B>) -> Self::Output {
-        crate::trace_dispatch!("realistic_blas", "scalar_op", "mul-ref-ref");
+        crate::trace_dispatch!("hyperlattice", "scalar_op", "mul-ref-ref");
         Scalar(B::Repr::mul_refs(&self.0, &rhs.0))
     }
 }
@@ -1350,7 +1348,7 @@ impl<B: Backend> Div<&Scalar<B>> for Scalar<B> {
 
     #[inline]
     fn div(self, rhs: &Scalar<B>) -> Self::Output {
-        crate::trace_dispatch!("realistic_blas", "scalar_op", "div-owned-ref");
+        crate::trace_dispatch!("hyperlattice", "scalar_op", "div-owned-ref");
         B::Repr::div_owned_ref(self.0, &rhs.0).map(Self)
     }
 }
@@ -1360,7 +1358,7 @@ impl<B: Backend> Div<Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn div(self, rhs: Scalar<B>) -> Self::Output {
-        crate::trace_dispatch!("realistic_blas", "scalar_op", "div-ref-owned");
+        crate::trace_dispatch!("hyperlattice", "scalar_op", "div-ref-owned");
         B::Repr::div_ref_owned(&self.0, rhs.0).map(Scalar)
     }
 }
@@ -1370,7 +1368,7 @@ impl<B: Backend> Div<&Scalar<B>> for &Scalar<B> {
 
     #[inline]
     fn div(self, rhs: &Scalar<B>) -> Self::Output {
-        crate::trace_dispatch!("realistic_blas", "scalar_op", "div-ref-ref");
+        crate::trace_dispatch!("hyperlattice", "scalar_op", "div-ref-ref");
         B::Repr::div_refs(&self.0, &rhs.0).map(Scalar)
     }
 }

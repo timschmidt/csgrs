@@ -1,7 +1,7 @@
 mod common;
 
 use common::{frac, r};
-use realistic_blas::{Complex, Matrix3, Scalar, Vector3};
+use hyperlattice::{Complex, Matrix3, Scalar, Vector3};
 
 #[test]
 fn borrowed_scalar_ops_match_owned_ops() {

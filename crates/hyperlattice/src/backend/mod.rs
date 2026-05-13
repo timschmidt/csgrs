@@ -113,7 +113,7 @@ pub trait BackendScalar:
     /// Backends can override this when they have a cached or symbolic `2*pi`.
     /// The default keeps compact approximate backends simple.
     fn tau() -> Self {
-        crate::trace_dispatch!("realistic_blas_backend_trait", "constructor", "tau-default");
+        crate::trace_dispatch!("hyperlattice_backend_trait", "constructor", "tau-default");
         Self::from(2_i8) * Self::pi()
     }
     /// Returns the multiplicative inverse.
@@ -122,7 +122,7 @@ pub trait BackendScalar:
     #[inline]
     fn inverse_ref(&self) -> BlasResult<Self> {
         crate::trace_dispatch!(
-            "realistic_blas_backend_trait",
+            "hyperlattice_backend_trait",
             "method",
             "inverse-ref-default"
         );
@@ -133,151 +133,103 @@ pub trait BackendScalar:
     /// Adds a borrowed right-hand operand.
     #[inline]
     fn add_ref(self, rhs: &Self) -> Self {
-        crate::trace_dispatch!(
-            "realistic_blas_backend_trait",
-            "op",
-            "add-owned-ref-default"
-        );
+        crate::trace_dispatch!("hyperlattice_backend_trait", "op", "add-owned-ref-default");
         self + rhs.clone()
     }
     /// Adds an owned left-hand operand and a borrowed right-hand operand.
     #[inline]
     fn add_owned_ref(left: Self, right: &Self) -> Self {
-        crate::trace_dispatch!(
-            "realistic_blas_backend_trait",
-            "op",
-            "add-owned-ref-default"
-        );
+        crate::trace_dispatch!("hyperlattice_backend_trait", "op", "add-owned-ref-default");
         left.add_ref(right)
     }
     /// Adds a borrowed left-hand operand and an owned right-hand operand.
     #[inline]
     fn add_ref_owned(left: &Self, right: Self) -> Self {
-        crate::trace_dispatch!(
-            "realistic_blas_backend_trait",
-            "op",
-            "add-ref-owned-default"
-        );
+        crate::trace_dispatch!("hyperlattice_backend_trait", "op", "add-ref-owned-default");
         Self::add_refs(left, &right)
     }
     /// Adds two borrowed operands.
     #[inline]
     fn add_refs(left: &Self, right: &Self) -> Self {
-        crate::trace_dispatch!("realistic_blas_backend_trait", "op", "add-ref-ref-default");
+        crate::trace_dispatch!("hyperlattice_backend_trait", "op", "add-ref-ref-default");
         left.clone().add_ref(right)
     }
     /// Subtracts a borrowed right-hand operand.
     #[inline]
     fn sub_ref(self, rhs: &Self) -> Self {
-        crate::trace_dispatch!(
-            "realistic_blas_backend_trait",
-            "op",
-            "sub-owned-ref-default"
-        );
+        crate::trace_dispatch!("hyperlattice_backend_trait", "op", "sub-owned-ref-default");
         self - rhs.clone()
     }
     /// Subtracts a borrowed right-hand operand from an owned left-hand operand.
     #[inline]
     fn sub_owned_ref(left: Self, right: &Self) -> Self {
-        crate::trace_dispatch!(
-            "realistic_blas_backend_trait",
-            "op",
-            "sub-owned-ref-default"
-        );
+        crate::trace_dispatch!("hyperlattice_backend_trait", "op", "sub-owned-ref-default");
         left.sub_ref(right)
     }
     /// Subtracts an owned right-hand operand from a borrowed left-hand operand.
     #[inline]
     fn sub_ref_owned(left: &Self, right: Self) -> Self {
-        crate::trace_dispatch!(
-            "realistic_blas_backend_trait",
-            "op",
-            "sub-ref-owned-default"
-        );
+        crate::trace_dispatch!("hyperlattice_backend_trait", "op", "sub-ref-owned-default");
         Self::sub_refs(left, &right)
     }
     /// Subtracts two borrowed operands.
     #[inline]
     fn sub_refs(left: &Self, right: &Self) -> Self {
-        crate::trace_dispatch!("realistic_blas_backend_trait", "op", "sub-ref-ref-default");
+        crate::trace_dispatch!("hyperlattice_backend_trait", "op", "sub-ref-ref-default");
         left.clone().sub_ref(right)
     }
     /// Multiplies by a borrowed right-hand operand.
     #[inline]
     fn mul_ref(self, rhs: &Self) -> Self {
-        crate::trace_dispatch!(
-            "realistic_blas_backend_trait",
-            "op",
-            "mul-owned-ref-default"
-        );
+        crate::trace_dispatch!("hyperlattice_backend_trait", "op", "mul-owned-ref-default");
         self * rhs.clone()
     }
     /// Multiplies an owned left-hand operand by a borrowed right-hand operand.
     #[inline]
     fn mul_owned_ref(left: Self, right: &Self) -> Self {
-        crate::trace_dispatch!(
-            "realistic_blas_backend_trait",
-            "op",
-            "mul-owned-ref-default"
-        );
+        crate::trace_dispatch!("hyperlattice_backend_trait", "op", "mul-owned-ref-default");
         left.mul_ref(right)
     }
     /// Multiplies a borrowed left-hand operand by an owned right-hand operand.
     #[inline]
     fn mul_ref_owned(left: &Self, right: Self) -> Self {
-        crate::trace_dispatch!(
-            "realistic_blas_backend_trait",
-            "op",
-            "mul-ref-owned-default"
-        );
+        crate::trace_dispatch!("hyperlattice_backend_trait", "op", "mul-ref-owned-default");
         Self::mul_refs(left, &right)
     }
     /// Multiplies two borrowed operands.
     #[inline]
     fn mul_refs(left: &Self, right: &Self) -> Self {
-        crate::trace_dispatch!("realistic_blas_backend_trait", "op", "mul-ref-ref-default");
+        crate::trace_dispatch!("hyperlattice_backend_trait", "op", "mul-ref-ref-default");
         left.clone().mul_ref(right)
     }
     /// Divides by a borrowed right-hand operand.
     #[inline]
     fn div_ref(self, rhs: &Self) -> BlasResult<Self> {
-        crate::trace_dispatch!(
-            "realistic_blas_backend_trait",
-            "op",
-            "div-owned-ref-default"
-        );
+        crate::trace_dispatch!("hyperlattice_backend_trait", "op", "div-owned-ref-default");
         self.div(rhs.clone())
     }
     /// Divides an owned left-hand operand by a borrowed right-hand operand.
     #[inline]
     fn div_owned_ref(left: Self, right: &Self) -> BlasResult<Self> {
-        crate::trace_dispatch!(
-            "realistic_blas_backend_trait",
-            "op",
-            "div-owned-ref-default"
-        );
+        crate::trace_dispatch!("hyperlattice_backend_trait", "op", "div-owned-ref-default");
         left.div_ref(right)
     }
     /// Divides a borrowed left-hand operand by an owned right-hand operand.
     #[inline]
     fn div_ref_owned(left: &Self, right: Self) -> BlasResult<Self> {
-        crate::trace_dispatch!(
-            "realistic_blas_backend_trait",
-            "op",
-            "div-ref-owned-default"
-        );
+        crate::trace_dispatch!("hyperlattice_backend_trait", "op", "div-ref-owned-default");
         Self::div_refs(left, &right)
     }
     /// Divides two borrowed operands.
     #[inline]
     fn div_refs(left: &Self, right: &Self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_backend_trait", "op", "div-ref-ref-default");
+        crate::trace_dispatch!("hyperlattice_backend_trait", "op", "div-ref-ref-default");
         left.clone().div_ref(right)
     }
     /// Returns the three-lane dot product.
     #[inline]
     fn dot3(left: [&Self; 3], right: [&Self; 3]) -> Self {
-        crate::trace_dispatch!("realistic_blas_backend_trait", "op", "dot3-default");
+        crate::trace_dispatch!("hyperlattice_backend_trait", "op", "dot3-default");
         let p0 = left[0].clone().mul_ref(right[0]);
         let p1 = left[1].clone().mul_ref(right[1]);
         let p2 = left[2].clone().mul_ref(right[2]);
@@ -289,13 +241,13 @@ pub trait BackendScalar:
     /// override this to reuse caller zero facts without rechecking them.
     #[inline]
     fn active_dot3(left: [&Self; 3], right: [&Self; 3]) -> Self {
-        crate::trace_dispatch!("realistic_blas_backend_trait", "op", "active-dot3-default");
+        crate::trace_dispatch!("hyperlattice_backend_trait", "op", "active-dot3-default");
         Self::dot3(left, right)
     }
     /// Returns the four-lane dot product.
     #[inline]
     fn dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
-        crate::trace_dispatch!("realistic_blas_backend_trait", "op", "dot4-default");
+        crate::trace_dispatch!("hyperlattice_backend_trait", "op", "dot4-default");
         let p0 = left[0].clone().mul_ref(right[0]);
         let p1 = left[1].clone().mul_ref(right[1]);
         let p2 = left[2].clone().mul_ref(right[2]);
@@ -305,7 +257,7 @@ pub trait BackendScalar:
     /// Returns a four-lane dot product whose lanes were already classified active.
     #[inline]
     fn active_dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
-        crate::trace_dispatch!("realistic_blas_backend_trait", "op", "active-dot4-default");
+        crate::trace_dispatch!("hyperlattice_backend_trait", "op", "active-dot4-default");
         Self::dot4(left, right)
     }
     /// Returns the three-lane linear combination `c0 * x0 + c1 * x1 + c2 * x2`.
@@ -316,7 +268,7 @@ pub trait BackendScalar:
     #[inline]
     fn linear_combination3(coeffs: [&Self; 3], values: [&Self; 3]) -> Self {
         crate::trace_dispatch!(
-            "realistic_blas_backend_trait",
+            "hyperlattice_backend_trait",
             "op",
             "linear-combination3-default"
         );
@@ -326,7 +278,7 @@ pub trait BackendScalar:
     #[inline]
     fn active_linear_combination3(coeffs: [&Self; 3], values: [&Self; 3]) -> Self {
         crate::trace_dispatch!(
-            "realistic_blas_backend_trait",
+            "hyperlattice_backend_trait",
             "op",
             "active-linear-combination3-default"
         );
@@ -339,7 +291,7 @@ pub trait BackendScalar:
     #[inline]
     fn linear_combination4(coeffs: [&Self; 4], values: [&Self; 4]) -> Self {
         crate::trace_dispatch!(
-            "realistic_blas_backend_trait",
+            "hyperlattice_backend_trait",
             "op",
             "linear-combination4-default"
         );
@@ -349,7 +301,7 @@ pub trait BackendScalar:
     #[inline]
     fn active_linear_combination4(coeffs: [&Self; 4], values: [&Self; 4]) -> Self {
         crate::trace_dispatch!(
-            "realistic_blas_backend_trait",
+            "hyperlattice_backend_trait",
             "op",
             "active-linear-combination4-default"
         );
@@ -361,7 +313,7 @@ pub trait BackendScalar:
     #[inline]
     fn affine_combination4(coeffs: [&Self; 4], values: [&Self; 4], offset: &Self) -> Self {
         crate::trace_dispatch!(
-            "realistic_blas_backend_trait",
+            "hyperlattice_backend_trait",
             "op",
             "affine-combination4-default"
         );
@@ -440,7 +392,7 @@ pub trait BackendScalar:
         match nonzero_count {
             0 => {
                 crate::trace_dispatch!(
-                    "realistic_blas_backend_trait",
+                    "hyperlattice_backend_trait",
                     "op",
                     "signed-product-sum2-all-zero"
                 );
@@ -449,7 +401,7 @@ pub trait BackendScalar:
             1 => {
                 let (term, positive) = first_term.expect("single non-zero term tracked");
                 crate::trace_dispatch!(
-                    "realistic_blas_backend_trait",
+                    "hyperlattice_backend_trait",
                     "op",
                     "signed-product-sum2-single-term"
                 );
@@ -461,7 +413,7 @@ pub trait BackendScalar:
                 let (right_term, right_positive) =
                     second_term.expect("second non-zero term tracked");
                 crate::trace_dispatch!(
-                    "realistic_blas_backend_trait",
+                    "hyperlattice_backend_trait",
                     "op",
                     "signed-product-sum2-sparse-two"
                 );
@@ -476,7 +428,7 @@ pub trait BackendScalar:
             }
             _ => {
                 crate::trace_dispatch!(
-                    "realistic_blas_backend_trait",
+                    "hyperlattice_backend_trait",
                     "op",
                     "signed-product-sum2-dense"
                 );
@@ -495,7 +447,7 @@ pub trait BackendScalar:
         terms: [[&Self; 2]; TERMS],
     ) -> Self {
         crate::trace_dispatch!(
-            "realistic_blas_backend_trait",
+            "hyperlattice_backend_trait",
             "op",
             "active-signed-product-sum2"
         );
@@ -547,7 +499,7 @@ pub trait BackendScalar:
     /// override this when they can prove a constant one exactly.
     #[inline]
     fn definitely_one(&self) -> bool {
-        crate::trace_dispatch!("realistic_blas_backend_trait", "query", "definitely-one");
+        crate::trace_dispatch!("hyperlattice_backend_trait", "query", "definitely-one");
         false
     }
     /// Returns whether this value is definitely one or zero.
@@ -557,7 +509,7 @@ pub trait BackendScalar:
     /// vector transforms where both tests are otherwise needed.
     #[inline]
     fn zero_or_one(&self) -> Option<bool> {
-        crate::trace_dispatch!("realistic_blas_backend_trait", "query", "zero-or-one");
+        crate::trace_dispatch!("hyperlattice_backend_trait", "query", "zero-or-one");
         if self.definitely_zero() {
             Some(false)
         } else if self.definitely_one() {
@@ -582,6 +534,12 @@ pub trait BackendScalar:
             exact_rational: false,
             magnitude: None,
         }
+    }
+    /// Returns true when the value has an exact rational representation
+    /// available without refinement.
+    #[inline]
+    fn is_exact_rational(&self) -> bool {
+        self.structural_facts().exact_rational
     }
     /// Returns true when the value is exactly rational and dyadic.
     ///

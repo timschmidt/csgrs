@@ -1,7 +1,7 @@
 mod common;
 
 use common::{frac, r};
-use realistic_blas::{Complex, Problem, i, zero};
+use hyperlattice::{Complex, Problem, i, zero};
 
 #[test]
 fn complex_i_squared() {

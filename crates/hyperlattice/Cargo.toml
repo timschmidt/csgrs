@@ -1,11 +1,11 @@
 [package]
-name = "realistic_blas"
+name = "hyperlattice"
 version = "0.3.3"
 edition = "2024"
 description = "A small Rust linear algebra library with a crate-owned Scalar type and realistic or approximate backends."
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
 license = "MIT"
-repository = "https://github.com/timschmidt/realistic_blas"
+repository = "https://github.com/timschmidt/hyperlattice"
 readme = "README.md"
 keywords = ["math", "blas", "matrices", "vectors", "linear-algebra"]
 categories = ["mathematics"]

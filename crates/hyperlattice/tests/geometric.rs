@@ -1,7 +1,7 @@
 mod common;
 
 use common::{frac, r};
-use realistic_blas::{Matrix3, Matrix4, Vector3, Vector4};
+use hyperlattice::{Matrix3, Matrix4, Vector3, Vector4};
 
 fn translation_2d(x: i32, y: i32) -> Matrix3 {
     Matrix3::new([[r(1), r(0), r(x)], [r(0), r(1), r(y)], [r(0), r(0), r(1)]])

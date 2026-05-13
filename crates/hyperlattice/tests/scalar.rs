@@ -1,7 +1,7 @@
 mod common;
 
 use common::{abort_signal, frac, r, unknown_zero};
-use realistic_blas::{
+use hyperlattice::{
     Problem, ScalarFacts, ScalarSign, ZeroStatus, acos, acosh, asin, asin_with_abort, atanh, ln,
     log10, log10_with_abort, one, pi, powi, reciprocal, reciprocal_checked,
     reciprocal_checked_with_abort, reciprocal_ref, reciprocal_ref_checked, sin, sqrt, tan, tau,
@@ -13,7 +13,7 @@ fn scalar_functions() {
     assert_eq!(tau(), r(2) * pi());
     assert_eq!(sqrt(9.into()).unwrap(), r(3));
     assert_eq!(sin(pi()), zero());
-    assert_eq!(ln(realistic_blas::e()).unwrap(), one());
+    assert_eq!(ln(hyperlattice::e()).unwrap(), one());
     assert_eq!(log10(r(100)).unwrap(), r(2));
 
     let signal = abort_signal();
@@ -121,7 +121,7 @@ fn hyperreal_scalar_keeps_unknown_structural_facts_unknown() {
 fn hyperreal_inverse_trig_helpers_preserve_exact_paths() {
     assert_eq!(asin(frac(1, 2)).unwrap(), (pi() / r(6)).unwrap());
     assert_eq!(acos(frac(1, 2)).unwrap(), (pi() / r(3)).unwrap());
-    assert_eq!(realistic_blas::atan(one()).unwrap(), (pi() / r(4)).unwrap());
+    assert_eq!(hyperlattice::atan(one()).unwrap(), (pi() / r(4)).unwrap());
 
     assert_eq!(one().atan().unwrap(), (pi() / r(4)).unwrap());
 }
@@ -157,27 +157,27 @@ fn checked_scalar_reciprocal_rejects_unknown_zero() {
 #[cfg(not(feature = "hyperreal-backend"))]
 #[test]
 fn approx_scalar_tracks_unknown_zero_intervals() {
-    let near_zero = realistic_blas::Scalar::approx(0.0, 0.25).unwrap();
-    let nonzero = realistic_blas::Scalar::approx(1.0, 0.25).unwrap();
-    let negative_interval = realistic_blas::Scalar::approx(-4.0, 1.0).unwrap();
-    let mixed_interval = realistic_blas::Scalar::approx(1.0, 2.0).unwrap();
-    let touching_zero = realistic_blas::Scalar::approx(0.25, 0.25).unwrap();
-    let half = realistic_blas::Scalar::try_from(0.5).unwrap();
+    let near_zero = hyperlattice::Scalar::approx(0.0, 0.25).unwrap();
+    let nonzero = hyperlattice::Scalar::approx(1.0, 0.25).unwrap();
+    let negative_interval = hyperlattice::Scalar::approx(-4.0, 1.0).unwrap();
+    let mixed_interval = hyperlattice::Scalar::approx(1.0, 2.0).unwrap();
+    let touching_zero = hyperlattice::Scalar::approx(0.25, 0.25).unwrap();
+    let half = hyperlattice::Scalar::try_from(0.5).unwrap();
 
     assert_eq!(zero_status(&near_zero), ZeroStatus::Unknown);
     assert_eq!(zero_status(&nonzero), ZeroStatus::NonZero);
     assert_eq!(reciprocal_checked(near_zero), Err(Problem::UnknownZero));
     assert_eq!(
-        realistic_blas::pow(negative_interval, half.clone()),
+        hyperlattice::pow(negative_interval, half.clone()),
         Err(Problem::NotANumber)
     );
     assert_eq!(
-        realistic_blas::pow(mixed_interval, half),
+        hyperlattice::pow(mixed_interval, half),
         Err(Problem::UnknownZero)
     );
 
     assert_eq!(
-        zero_status(&realistic_blas::sqrt(touching_zero).unwrap()),
+        zero_status(&hyperlattice::sqrt(touching_zero).unwrap()),
         ZeroStatus::Unknown
     );
 }
@@ -185,9 +185,9 @@ fn approx_scalar_tracks_unknown_zero_intervals() {
 #[cfg(not(feature = "hyperreal-backend"))]
 #[test]
 fn approx_scalar_structural_facts_track_intervals() {
-    let near_zero = realistic_blas::Scalar::approx(0.0, 0.25).unwrap();
-    let positive = realistic_blas::Scalar::approx(4.0, 0.25).unwrap();
-    let negative = realistic_blas::Scalar::approx(-4.0, 0.25).unwrap();
+    let near_zero = hyperlattice::Scalar::approx(0.0, 0.25).unwrap();
+    let positive = hyperlattice::Scalar::approx(4.0, 0.25).unwrap();
+    let negative = hyperlattice::Scalar::approx(-4.0, 0.25).unwrap();
 
     assert_eq!(
         near_zero.structural_facts(),
@@ -218,7 +218,7 @@ fn approx_scalar_structural_facts_track_intervals() {
 #[cfg(feature = "approx-backend")]
 #[test]
 fn approx_scalar_partial_eq_handles_overflowed_infinities() {
-    let huge = realistic_blas::Scalar::<realistic_blas::ApproxBackend>::try_from(1.0e308).unwrap();
+    let huge = hyperlattice::Scalar::<hyperlattice::ApproxBackend>::try_from(1.0e308).unwrap();
     let positive_inf = huge.clone() * huge.clone();
     let same_positive_inf = huge.clone() * huge.clone();
     let negative_inf = -positive_inf.clone();

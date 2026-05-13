@@ -115,7 +115,7 @@ mod enabled {
         let mut profile = ScalarOpProfile::default();
         for count in counts
             .iter()
-            .filter(|count| count.layer == "realistic_blas")
+            .filter(|count| count.layer == "hyperlattice")
         {
             match (count.operation, count.path) {
                 ("scalar_op", path) if path.starts_with("add-") => profile.adds += count.count,
@@ -192,9 +192,9 @@ mod enabled {
         for count in counts.iter().filter(|count| {
             matches!(
                 count.layer,
-                "realistic_blas_backend_trait"
-                    | "realistic_blas_hyperreal_backend"
-                    | "realistic_blas_approx_backend"
+                "hyperlattice_backend_trait"
+                    | "hyperlattice_hyperreal_backend"
+                    | "hyperlattice_approx_backend"
             )
         }) {
             if count.operation == "op" && count.path.starts_with("signed-product-sum2-") {

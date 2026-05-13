@@ -1,9 +1,9 @@
 #![cfg(feature = "approx-backend")]
 
-use proptest::prelude::*;
-use realistic_blas::{
+use hyperlattice::{
     ApproxBackend, Matrix3, Problem, Scalar, ScalarFacts, ScalarSign, Vector3, ZeroStatus,
 };
+use proptest::prelude::*;
 
 type AScalar = Scalar<ApproxBackend>;
 type AMatrix3 = Matrix3<ApproxBackend>;
@@ -33,11 +33,11 @@ fn approximate_intervals_preserve_unknown_zero_through_checked_guards() {
     assert_eq!(positive.zero_status(), ZeroStatus::NonZero);
     assert_eq!(negative.zero_status(), ZeroStatus::NonZero);
     assert_eq!(
-        realistic_blas::reciprocal_checked(unknown),
+        hyperlattice::reciprocal_checked(unknown),
         Err(Problem::UnknownZero)
     );
     assert_eq!(
-        realistic_blas::reciprocal_checked(touching),
+        hyperlattice::reciprocal_checked(touching),
         Err(Problem::UnknownZero)
     );
 }

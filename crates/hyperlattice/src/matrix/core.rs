@@ -145,6 +145,7 @@ pub struct PreparedRightDivisor3<'a, B: Backend = DefaultBackend> {
     divisor: &'a Matrix3<B>,
     facts: Matrix3Facts,
     right_is_exact_dyadic: bool,
+    right_is_exact_rational: bool,
     adjugate: Option<[[Scalar<B>; 3]; 3]>,
     determinant: Option<Scalar<B>>,
     reciprocal_determinant: Option<Scalar<B>>,
@@ -162,6 +163,7 @@ pub struct PreparedRightDivisor4<'a, B: Backend = DefaultBackend> {
     divisor: &'a Matrix4<B>,
     facts: Matrix4Facts,
     right_is_exact_dyadic: bool,
+    right_is_exact_rational: bool,
     factors: Option<([Scalar<B>; 6], [Scalar<B>; 6])>,
     adjugate: Option<[[Scalar<B>; 4]; 4]>,
     determinant: Option<Scalar<B>>,
@@ -199,20 +201,35 @@ fn matrix4_all_exact_dyadic_rational<B: Backend>(matrix: &[[Scalar<B>; 4]; 4]) -
         .all(|row| row.iter().all(|value| value.is_exact_dyadic_rational()))
 }
 
+fn matrix3_all_exact_rational<B: Backend>(matrix: &[[Scalar<B>; 3]; 3]) -> bool {
+    matrix
+        .iter()
+        .all(|row| row.iter().all(|value| value.is_exact_rational()))
+}
+
+fn matrix4_all_exact_rational<B: Backend>(matrix: &[[Scalar<B>; 4]; 4]) -> bool {
+    matrix
+        .iter()
+        .all(|row| row.iter().all(|value| value.is_exact_rational()))
+}
+
 impl<'a, B: Backend> PreparedRightDivisor3<'a, B> {
     /// Build a reusable cache for repeated right-division against this divisor.
     pub fn new(divisor: &'a Matrix3<B>) -> Self {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "method",
             "prepared-right-divisor3-new"
         );
         let facts = matrix3_facts(&divisor.0);
         let right_is_exact_dyadic = matrix3_all_exact_dyadic_rational(&divisor.0);
+        let right_is_exact_rational =
+            right_is_exact_dyadic || matrix3_all_exact_rational(&divisor.0);
         Self {
             divisor,
             facts,
             right_is_exact_dyadic,
+            right_is_exact_rational,
             adjugate: None,
             determinant: None,
             reciprocal_determinant: None,
@@ -229,21 +246,24 @@ impl<'a, B: Backend> PreparedRightDivisor3<'a, B> {
 
     #[inline]
     fn can_use_shared_adjugate(&self, left: &[[Scalar<B>; 3]; 3]) -> bool {
-        if !self.right_is_exact_dyadic {
+        if self.right_is_exact_dyadic {
+            return matrix3_all_exact_dyadic_rational(left);
+        }
+        if !self.right_is_exact_rational {
             return false;
         }
-        matrix3_all_exact_dyadic_rational(left)
+        matrix3_all_exact_rational(left)
     }
 
     fn prepare_shared_adjugate(&mut self) -> BlasResult<&[[Scalar<B>; 3]; 3]> {
         if self.adjugate.is_none() {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "method",
                 "prepared-right-divisor3-cache-shared-adjugate"
             );
             let (adjugate, determinant) = matrix3_adjugate_and_determinant(&self.divisor.0);
-            let reciprocal_determinant = determinant.clone().inverse()?;
+            let reciprocal_determinant = determinant.inverse_ref()?;
             self.adjugate = Some(adjugate);
             self.determinant = Some(determinant);
             self.reciprocal_determinant = Some(reciprocal_determinant);
@@ -257,13 +277,13 @@ impl<'a, B: Backend> PreparedRightDivisor3<'a, B> {
     fn prepare_shared_adjugate_checked(&mut self) -> CheckedBlasResult<&[[Scalar<B>; 3]; 3]> {
         if self.adjugate.is_none() {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "method",
                 "prepared-right-divisor3-cache-shared-adjugate-checked"
             );
             let (adjugate, determinant) = matrix3_adjugate_and_determinant(&self.divisor.0);
             require_known_nonzero(&determinant)?;
-            let reciprocal_determinant = determinant.clone().inverse()?;
+            let reciprocal_determinant = determinant.inverse_ref()?;
             self.adjugate = Some(adjugate);
             self.determinant = Some(determinant);
             self.reciprocal_determinant = Some(reciprocal_determinant);
@@ -280,14 +300,14 @@ impl<'a, B: Backend> PreparedRightDivisor3<'a, B> {
     ) -> CheckedBlasResult<&[[Scalar<B>; 3]; 3]> {
         if self.adjugate.is_none() {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "method",
                 "prepared-right-divisor3-cache-shared-adjugate-checked-abort"
             );
             let (adjugate, determinant) = matrix3_adjugate_and_determinant(&self.divisor.0);
             let determinant = with_abort(determinant, signal);
             require_known_nonzero(&determinant)?;
-            let reciprocal_determinant = determinant.clone().inverse()?;
+            let reciprocal_determinant = determinant.inverse_ref()?;
             self.adjugate = Some(adjugate);
             // Keep the shared determinant cache exact for future abort-aware or
             // checked calls; this aligns with Yap's repeated-object reuse
@@ -311,7 +331,7 @@ impl<'a, B: Backend> PreparedRightDivisor3<'a, B> {
     /// calls when the object is reused.
     pub fn divide(&mut self, left: [[Scalar<B>; 3]; 3]) -> BlasResult<[[Scalar<B>; 3]; 3]> {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "method",
             "prepared-right-divisor3-divide"
         );
@@ -328,7 +348,7 @@ impl<'a, B: Backend> PreparedRightDivisor3<'a, B> {
         left: [[Scalar<B>; 3]; 3],
     ) -> CheckedBlasResult<[[Scalar<B>; 3]; 3]> {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "method",
             "prepared-right-divisor3-divide-checked"
         );
@@ -346,7 +366,7 @@ impl<'a, B: Backend> PreparedRightDivisor3<'a, B> {
         signal: &AbortSignal,
     ) -> CheckedBlasResult<[[Scalar<B>; 3]; 3]> {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "method",
             "prepared-right-divisor3-divide-checked-abort"
         );
@@ -358,16 +378,19 @@ impl<'a, B: Backend> PreparedRightDivisor4<'a, B> {
     /// Build a reusable cache for repeated right-division against this divisor.
     pub fn new(divisor: &'a Matrix4<B>) -> Self {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "method",
             "prepared-right-divisor4-new"
         );
         let facts = matrix4_facts(&divisor.0);
         let right_is_exact_dyadic = matrix4_all_exact_dyadic_rational(&divisor.0);
+        let right_is_exact_rational =
+            right_is_exact_dyadic || matrix4_all_exact_rational(&divisor.0);
         Self {
             divisor,
             facts,
             right_is_exact_dyadic,
+            right_is_exact_rational,
             factors: None,
             adjugate: None,
             determinant: None,
@@ -385,16 +408,19 @@ impl<'a, B: Backend> PreparedRightDivisor4<'a, B> {
 
     #[inline]
     fn can_use_shared_adjugate(&self, left: &[[Scalar<B>; 4]; 4]) -> bool {
-        if !self.right_is_exact_dyadic {
+        if self.right_is_exact_dyadic {
+            return matrix4_all_exact_dyadic_rational(left);
+        }
+        if !self.right_is_exact_rational {
             return false;
         }
-        matrix4_all_exact_dyadic_rational(left)
+        matrix4_all_exact_rational(left)
     }
 
     fn prepare_shared_adjugate(&mut self) -> BlasResult<&[[Scalar<B>; 4]; 4]> {
         if self.adjugate.is_none() {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "method",
                 "prepared-right-divisor4-cache-shared-adjugate"
             );
@@ -407,7 +433,7 @@ impl<'a, B: Backend> PreparedRightDivisor4<'a, B> {
                 matrix4_factors(&self.divisor.0)
             });
             let determinant = determinant4_from_factors(&factors.0, &factors.1);
-            let reciprocal_determinant = determinant.clone().inverse()?;
+            let reciprocal_determinant = determinant.inverse_ref()?;
             let adjugate = matrix4_adjugate_from_factors(&self.divisor.0, &factors.0, &factors.1);
             self.adjugate = Some(adjugate);
             self.determinant = Some(determinant);
@@ -422,7 +448,7 @@ impl<'a, B: Backend> PreparedRightDivisor4<'a, B> {
     fn prepare_shared_adjugate_checked(&mut self) -> CheckedBlasResult<&[[Scalar<B>; 4]; 4]> {
         if self.adjugate.is_none() {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "method",
                 "prepared-right-divisor4-cache-shared-adjugate-checked"
             );
@@ -436,7 +462,7 @@ impl<'a, B: Backend> PreparedRightDivisor4<'a, B> {
             });
             let determinant = determinant4_from_factors(&factors.0, &factors.1);
             require_known_nonzero(&determinant)?;
-            let reciprocal_determinant = determinant.clone().inverse()?;
+            let reciprocal_determinant = determinant.inverse_ref()?;
             let adjugate = matrix4_adjugate_from_factors(&self.divisor.0, &factors.0, &factors.1);
             self.adjugate = Some(adjugate);
             self.determinant = Some(determinant);
@@ -454,7 +480,7 @@ impl<'a, B: Backend> PreparedRightDivisor4<'a, B> {
     ) -> CheckedBlasResult<&[[Scalar<B>; 4]; 4]> {
         if self.adjugate.is_none() {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "method",
                 "prepared-right-divisor4-cache-shared-adjugate-checked-abort"
             );
@@ -466,7 +492,7 @@ impl<'a, B: Backend> PreparedRightDivisor4<'a, B> {
             });
             let determinant = with_abort(determinant4_from_factors(&factors.0, &factors.1), signal);
             require_known_nonzero(&determinant)?;
-            let reciprocal_determinant = determinant.clone().inverse()?;
+            let reciprocal_determinant = determinant.inverse_ref()?;
             let adjugate = matrix4_adjugate_from_factors(&self.divisor.0, &factors.0, &factors.1);
             self.adjugate = Some(adjugate);
             self.determinant = Some(determinant);
@@ -487,7 +513,7 @@ impl<'a, B: Backend> PreparedRightDivisor4<'a, B> {
     /// calls when the object is reused.
     pub fn divide(&mut self, left: [[Scalar<B>; 4]; 4]) -> BlasResult<[[Scalar<B>; 4]; 4]> {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "method",
             "prepared-right-divisor4-divide"
         );
@@ -504,7 +530,7 @@ impl<'a, B: Backend> PreparedRightDivisor4<'a, B> {
         left: [[Scalar<B>; 4]; 4],
     ) -> CheckedBlasResult<[[Scalar<B>; 4]; 4]> {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "method",
             "prepared-right-divisor4-divide-checked"
         );
@@ -522,7 +548,7 @@ impl<'a, B: Backend> PreparedRightDivisor4<'a, B> {
         signal: &AbortSignal,
     ) -> CheckedBlasResult<[[Scalar<B>; 4]; 4]> {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "method",
             "prepared-right-divisor4-divide-checked-abort"
         );
@@ -904,13 +930,69 @@ where
 
 #[inline]
 fn matrix_power3<B: Backend>(base: [[Scalar<B>; 3]; 3], exponent: u32) -> [[Scalar<B>; 3]; 3] {
-    crate::trace_dispatch!("realistic_blas_matrix", "helper", "matrix-power3-fixed-mul");
+    crate::trace_dispatch!("hyperlattice_matrix", "helper", "matrix-power3-fixed-mul");
+    // The hot small positive powers can square the existing base by reference,
+    // then consume only the fresh square. This keeps exact matrix powers on
+    // object-level reuse instead of cloning the base into hot multiply lanes.
+    if exponent == 2 {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "helper",
+            "matrix-power3-borrowed-square"
+        );
+        if B::FUSE_SIGNED_PRODUCT_SUM && matrix3_has_dense_multiply_certificate(&base) {
+            crate::trace_dispatch!(
+                "hyperlattice_matrix",
+                "helper",
+                "matrix-power3-dense-certified-square"
+            );
+            return multiply_arrays3_dense_ref(&base, &base);
+        }
+        return multiply_arrays3_ref(&base, &base);
+    }
+    if exponent == 3 {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "helper",
+            "matrix-power3-borrowed-cube"
+        );
+        let square = multiply_arrays3_ref(&base, &base);
+        return multiply_arrays3_rhs_ref(square, &base);
+    }
     matrix_power_with(base, exponent, multiply_arrays3::<B>)
 }
 
 #[inline]
 fn matrix_power4<B: Backend>(base: [[Scalar<B>; 4]; 4], exponent: u32) -> [[Scalar<B>; 4]; 4] {
-    crate::trace_dispatch!("realistic_blas_matrix", "helper", "matrix-power4-fixed-mul");
+    crate::trace_dispatch!("hyperlattice_matrix", "helper", "matrix-power4-fixed-mul");
+    // Same borrowed square/cube schedule as 3x3; the mat4 powi benchmark is
+    // particularly sensitive to avoiding owned base duplication before the
+    // fixed multiply kernel has a chance to reuse structural facts.
+    if exponent == 2 {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "helper",
+            "matrix-power4-borrowed-square"
+        );
+        if B::FUSE_SIGNED_PRODUCT_SUM && matrix4_has_dense_multiply_certificate(&base) {
+            crate::trace_dispatch!(
+                "hyperlattice_matrix",
+                "helper",
+                "matrix-power4-dense-certified-square"
+            );
+            return multiply_arrays4_dense_ref(&base, &base);
+        }
+        return multiply_arrays4_ref(&base, &base);
+    }
+    if exponent == 3 {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "helper",
+            "matrix-power4-borrowed-cube"
+        );
+        let square = multiply_arrays4_ref(&base, &base);
+        return multiply_arrays4_rhs_ref(square, &base);
+    }
     matrix_power_with(base, exponent, multiply_arrays4::<B>)
 }
 
@@ -1170,24 +1252,45 @@ fn prefer_shared_adjugate_right_division<B: Backend, const N: usize>(
     right: &[[Scalar<B>; N]; N],
 ) -> bool {
     // Shared adjugate division trades fewer inverses for more products. That
-    // wins for dyadic hyperreal inputs because reduction is shift-only, but it
-    // regresses decimal rationals by creating many non-power-of-two gcds. Keep
-    // the heuristic generic by asking the backend for this cheap structural
-    // representation fact instead of depending on hyperreal internals here.
+    // wins for dyadic hyperreal inputs because reduction is shift-only. Modern
+    // hyperreal exact-rational reducers also handle some non-dyadic matrix
+    // forms with one shared denominator, so keep dyadic as the hot first
+    // predicate and isolate the broader exact-rational fallback below.
     // This is the same "delay the common scale" idea as fraction-free exact
     // linear algebra (Bareiss, Math. Comp. 22(103), 1968,
     // https://doi.org/10.2307/2004533), but applied only when traces show the
-    // extra products are cheaper than repeated inverses. Non-dyadic exact
-    // rationals still use the Gauss-Jordan path for right division.
+    // extra products are cheaper than repeated inverses.
     // Check the divisor first. The shared-adjugate branch is only useful when
     // `det(right)` and all adjugate cofactors stay dyadic; decimal divisors can
     // reject the path before scanning the dividend. This preserves the exact
     // same predicate but moves the cheapest likely rejection earlier.
-    right
+    if right
         .iter()
         .flat_map(|row| row.iter())
         .chain(left.iter().flat_map(|row| row.iter()))
         .all(Scalar::is_exact_dyadic_rational)
+    {
+        return true;
+    }
+
+    prefer_shared_adjugate_exact_rational_right_division(left, right)
+}
+
+#[inline(never)]
+fn prefer_shared_adjugate_exact_rational_right_division<B: Backend, const N: usize>(
+    left: &[[Scalar<B>; N]; N],
+    right: &[[Scalar<B>; N]; N],
+) -> bool {
+    // This deliberately uses already-exposed structural facts rather than
+    // probing scalar values inside the matrix arithmetic lanes. Targeted
+    // Criterion after adding this fallback showed large wins for non-dyadic
+    // hyperreal-rational right-division, while the dyadic path above stayed on
+    // its small reduction-friendly primitive.
+    right
+        .iter()
+        .flat_map(|row| row.iter())
+        .chain(left.iter().flat_map(|row| row.iter()))
+        .all(Scalar::is_exact_rational)
 }
 
 #[inline]
@@ -1260,6 +1363,48 @@ fn matrix4_is_definitely_dense_for_inverse<B: Backend>(matrix: &[[Scalar<B>; 4];
 }
 
 #[inline]
+fn matrix3_has_dense_multiply_certificate<B: Backend>(matrix: &[[Scalar<B>; 3]; 3]) -> bool {
+    // A dense cofactor inverse followed by `powi(-2)` is already known at the
+    // object level to be on the dense route. Reuse the same three nonzero
+    // certificates as the inverse dense guard to select a direct fixed multiply
+    // and avoid a full per-lane zero scan. If any certificate is absent, fall
+    // back to the sparse-aware multiply.
+    matches!(matrix[1][0].zero_status(), ZeroStatus::NonZero)
+        && matches!(matrix[0][1].zero_status(), ZeroStatus::NonZero)
+        && matches!(matrix[2][0].zero_status(), ZeroStatus::NonZero)
+}
+
+#[inline]
+fn matrix4_has_dense_multiply_certificate<B: Backend>(matrix: &[[Scalar<B>; 4]; 4]) -> bool {
+    // Same narrow certificate as `matrix4_is_definitely_dense_for_inverse`.
+    // It is intentionally not a proof that every product lane is nonzero; it is
+    // a cheap signal that sparse probing is unlikely to pay for the exact
+    // backend's dense inverse square.
+    matches!(matrix[1][0].zero_status(), ZeroStatus::NonZero)
+        && matches!(matrix[0][1].zero_status(), ZeroStatus::NonZero)
+        && matches!(matrix[3][0].zero_status(), ZeroStatus::NonZero)
+}
+
+#[inline]
+fn multiply_arrays4_ref_with_dense_certificate<B: Backend>(
+    left: &[[Scalar<B>; 4]; 4],
+    right: &[[Scalar<B>; 4]; 4],
+) -> [[Scalar<B>; 4]; 4] {
+    if B::FUSE_SIGNED_PRODUCT_SUM
+        && matrix4_has_dense_multiply_certificate(left)
+        && matrix4_has_dense_multiply_certificate(right)
+    {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "helper",
+            "multiply4-dense-certified-ref"
+        );
+        return multiply_arrays4_dense_ref(left, right);
+    }
+    multiply_arrays4_ref(left, right)
+}
+
+#[inline]
 fn invert_matrix4_affine_linear_diagonal<B: Backend>(
     matrix: &[[Scalar<B>; 4]; 4],
 ) -> BlasResult<[[Scalar<B>; 4]; 4]> {
@@ -1322,7 +1467,7 @@ fn invert_matrix4_affine<B: Backend>(
     // after the caller proves affine form.
     if linear_is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix4-affine-linear-diagonal"
         );
@@ -1330,7 +1475,7 @@ fn invert_matrix4_affine<B: Backend>(
     }
     if is_affine_translation {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix4-affine-translation"
         );
@@ -1440,7 +1585,7 @@ fn invert_matrix4_affine_checked<B: Backend>(
 ) -> CheckedBlasResult<[[Scalar<B>; 4]; 4]> {
     if linear_is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix4-checked-affine-linear-diagonal"
         );
@@ -1448,7 +1593,7 @@ fn invert_matrix4_affine_checked<B: Backend>(
     }
     if is_affine_translation {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix4-checked-affine-translation"
         );
@@ -1561,7 +1706,7 @@ fn invert_matrix4_affine_checked_with_abort<B: Backend>(
 ) -> CheckedBlasResult<[[Scalar<B>; 4]; 4]> {
     if linear_is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix4-checked-with-abort-affine-linear-diagonal"
         );
@@ -1569,7 +1714,7 @@ fn invert_matrix4_affine_checked_with_abort<B: Backend>(
     }
     if is_affine_translation {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix4-checked-affine-translation"
         );
@@ -2163,7 +2308,7 @@ fn divide_matrix4_by_affine_checked_assuming_affine_translation<B: Backend>(
     // Structural fact is already established by caller to avoid duplicate checks in
     // this checked hot path.
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "right-divide4-checked-by-affine-translation"
     );
@@ -2203,7 +2348,7 @@ fn divide_matrix4_affine_by_affine_checked_assuming_affine_translation<B: Backen
     // Right divisor is known translation-only affine; skip repeated structural checks.
     // This follows standard affine composition algebra for translation-only linear maps.
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "right-divide4-checked-affine-by-affine-translation"
     );
@@ -2312,7 +2457,7 @@ fn divide_matrix4_by_affine_checked_with_abort_assuming_affine_translation<B: Ba
     // Abort signal is unused because translation-only affine divisors are
     // guaranteed nonsingular (determinant = 1), so early abort is never needed.
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "right-divide4-checked-abort-by-affine-translation"
     );
@@ -2359,7 +2504,7 @@ fn divide_matrix4_affine_by_affine_checked_with_abort_assuming_affine_translatio
     // Same structural optimization as above; no abort checks are needed when the
     // right affine divisor is guaranteed to be translation-only.
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "right-divide4-checked-abort-affine-by-affine-translation"
     );
@@ -2458,7 +2603,7 @@ fn divide_matrix4_by_affine_ref_translation<B: Backend>(
     // translation column for the non-affine path and keeps this helper on the
     // same arithmetic schedule as the owned version.
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "right-divide4-ref-by-affine-translation"
     );
@@ -2790,7 +2935,7 @@ fn invert_matrix3_affine<B: Backend>(
     // Geometric Computation", 1997.
     if linear_is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix3-affine-linear-diagonal"
         );
@@ -2805,7 +2950,7 @@ fn invert_matrix3_affine<B: Backend>(
     let ty = matrix[1][2].clone();
 
     let det = (&a * &d) - (&b * &c);
-    let inv_det = det.inverse()?;
+    let inv_det = det.clone().inverse()?;
     let inv_a00 = scale_by_shared_factor(d, &inv_det);
     let inv_a01 = scale_by_shared_factor(Scalar::zero() - &b, &inv_det);
     let inv_a10 = scale_by_shared_factor(Scalar::zero() - &c, &inv_det);
@@ -3079,7 +3224,7 @@ fn invert_matrix3_affine_checked<B: Backend>(
 ) -> CheckedBlasResult<[[Scalar<B>; 3]; 3]> {
     if linear_is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix3-checked-affine-linear-diagonal"
         );
@@ -3118,7 +3263,7 @@ fn invert_matrix3_affine_checked_with_abort<B: Backend>(
 ) -> CheckedBlasResult<[[Scalar<B>; 3]; 3]> {
     if linear_is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix3-checked-with-abort-affine-linear-diagonal"
         );
@@ -4439,16 +4584,16 @@ fn right_divide_matrix3<B: Backend>(
     let right_facts = matrix3_facts(&right);
 
     if right_facts.is_identity {
-        crate::trace_dispatch!("realistic_blas_matrix", "helper", "right-divide3-identity");
+        crate::trace_dispatch!("hyperlattice_matrix", "helper", "right-divide3-identity");
         return Ok(left);
     }
     if right_facts.is_diagonal {
-        crate::trace_dispatch!("realistic_blas_matrix", "helper", "right-divide3-diagonal");
+        crate::trace_dispatch!("hyperlattice_matrix", "helper", "right-divide3-diagonal");
         return divide_matrix3_by_diagonal(left, &right);
     }
     if right_facts.is_upper_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-upper-triangular"
         );
@@ -4459,7 +4604,7 @@ fn right_divide_matrix3<B: Backend>(
     }
     if right_facts.is_lower_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-lower-triangular"
         );
@@ -4476,13 +4621,13 @@ fn right_divide_matrix3<B: Backend>(
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
         let right_is_affine_translation = right_facts.is_affine_translation;
-        crate::trace_dispatch!("realistic_blas_matrix", "helper", "right-divide3-affine");
+        crate::trace_dispatch!("hyperlattice_matrix", "helper", "right-divide3-affine");
         // Reuse the known structural fact for both left- and right-signed
         // branches to avoid rescanning the same affine predicate.
         if left_is_affine {
             if right_is_affine_translation {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "helper",
                     "right-divide3-affine-left-affine-translation"
                 );
@@ -4490,14 +4635,14 @@ fn right_divide_matrix3<B: Backend>(
             }
             if right_linear_is_diagonal {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "helper",
                     "right-divide3-affine-left-affine-linear-diagonal"
                 );
                 return divide_matrix3_affine_by_affine_linear_diagonal(left, &right);
             }
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide3-affine-left-affine"
             );
@@ -4505,7 +4650,7 @@ fn right_divide_matrix3<B: Backend>(
         }
         if right_is_affine_translation {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide3-affine-by-translation"
             );
@@ -4513,7 +4658,7 @@ fn right_divide_matrix3<B: Backend>(
         }
         if right_linear_is_diagonal {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide3-affine-linear-diagonal"
             );
@@ -4523,7 +4668,7 @@ fn right_divide_matrix3<B: Backend>(
     }
     if !prefer_shared_adjugate_right_division(&left, &right) {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-gauss-jordan"
         );
@@ -4534,7 +4679,7 @@ fn right_divide_matrix3<B: Backend>(
     }
 
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "right-divide3-shared-adjugate"
     );
@@ -4557,7 +4702,7 @@ fn right_divide_matrix3_ref<B: Backend>(
 
     if right_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-ref-identity"
         );
@@ -4565,7 +4710,7 @@ fn right_divide_matrix3_ref<B: Backend>(
     }
     if right_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-ref-diagonal"
         );
@@ -4573,7 +4718,7 @@ fn right_divide_matrix3_ref<B: Backend>(
     }
     if right_facts.is_upper_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-ref-upper-triangular"
         );
@@ -4581,7 +4726,7 @@ fn right_divide_matrix3_ref<B: Backend>(
     }
     if right_facts.is_lower_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-ref-lower-triangular"
         );
@@ -4594,17 +4739,13 @@ fn right_divide_matrix3_ref<B: Backend>(
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
         let right_is_affine_translation = right_facts.is_affine_translation;
-        crate::trace_dispatch!(
-            "realistic_blas_matrix",
-            "helper",
-            "right-divide3-ref-affine"
-        );
+        crate::trace_dispatch!("hyperlattice_matrix", "helper", "right-divide3-ref-affine");
         // Same affine-flag reuse as owned division, preserving borrowed
         // dispatch shapes while avoiding duplicate `matrix3_is_affine` scans.
         if left_is_affine {
             if right_is_affine_translation {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "helper",
                     "right-divide3-ref-affine-left-affine-translation"
                 );
@@ -4612,14 +4753,14 @@ fn right_divide_matrix3_ref<B: Backend>(
             }
             if right_linear_is_diagonal {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "helper",
                     "right-divide3-ref-affine-left-affine-linear-diagonal"
                 );
                 return divide_matrix3_affine_by_affine_ref_linear_diagonal(left, right);
             }
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide3-ref-affine-left-affine"
             );
@@ -4627,7 +4768,7 @@ fn right_divide_matrix3_ref<B: Backend>(
         }
         if right_is_affine_translation {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide3-ref-affine-by-translation"
             );
@@ -4635,7 +4776,7 @@ fn right_divide_matrix3_ref<B: Backend>(
         }
         if right_linear_is_diagonal {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide3-ref-affine-linear-diagonal"
             );
@@ -4645,7 +4786,7 @@ fn right_divide_matrix3_ref<B: Backend>(
     }
     if !prefer_shared_adjugate_right_division(left, right) {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-ref-gauss-jordan"
         );
@@ -4659,7 +4800,7 @@ fn right_divide_matrix3_ref<B: Backend>(
     }
 
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "right-divide3-ref-shared-adjugate"
     );
@@ -4683,7 +4824,7 @@ fn right_divide_matrix3_checked<B: Backend>(
 
     if right_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-checked-identity"
         );
@@ -4691,7 +4832,7 @@ fn right_divide_matrix3_checked<B: Backend>(
     }
     if right_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-checked-diagonal"
         );
@@ -4699,7 +4840,7 @@ fn right_divide_matrix3_checked<B: Backend>(
     }
     if right_facts.is_upper_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-checked-upper-triangular"
         );
@@ -4707,7 +4848,7 @@ fn right_divide_matrix3_checked<B: Backend>(
     }
     if right_facts.is_lower_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-checked-lower-triangular"
         );
@@ -4722,7 +4863,7 @@ fn right_divide_matrix3_checked<B: Backend>(
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-checked-affine"
         );
@@ -4732,14 +4873,14 @@ fn right_divide_matrix3_checked<B: Backend>(
         if left_is_affine {
             if right_linear_is_diagonal {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "helper",
                     "right-divide3-checked-affine-left-affine-linear-diagonal"
                 );
                 return divide_matrix3_affine_by_affine_linear_diagonal_checked(left, &right);
             }
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide3-checked-affine-left-affine"
             );
@@ -4747,7 +4888,7 @@ fn right_divide_matrix3_checked<B: Backend>(
         }
         if right_linear_is_diagonal {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide3-checked-affine-linear-diagonal"
             );
@@ -4757,7 +4898,7 @@ fn right_divide_matrix3_checked<B: Backend>(
     }
     if !prefer_shared_adjugate_right_division(&left, &right) {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-checked-gauss-jordan"
         );
@@ -4768,7 +4909,7 @@ fn right_divide_matrix3_checked<B: Backend>(
     }
 
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "right-divide3-checked-shared-adjugate"
     );
@@ -4787,7 +4928,7 @@ fn right_divide_matrix3_checked_with_abort<B: Backend>(
 
     if right_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-checked-abort-identity"
         );
@@ -4795,7 +4936,7 @@ fn right_divide_matrix3_checked_with_abort<B: Backend>(
     }
     if right_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-checked-abort-diagonal"
         );
@@ -4803,7 +4944,7 @@ fn right_divide_matrix3_checked_with_abort<B: Backend>(
     }
     if right_facts.is_upper_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-checked-abort-upper-triangular"
         );
@@ -4811,7 +4952,7 @@ fn right_divide_matrix3_checked_with_abort<B: Backend>(
     }
     if right_facts.is_lower_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-checked-abort-lower-triangular"
         );
@@ -4824,7 +4965,7 @@ fn right_divide_matrix3_checked_with_abort<B: Backend>(
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-checked-abort-affine"
         );
@@ -4833,7 +4974,7 @@ fn right_divide_matrix3_checked_with_abort<B: Backend>(
         if left_is_affine {
             if right_linear_is_diagonal {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "helper",
                     "right-divide3-checked-abort-affine-left-affine-linear-diagonal"
                 );
@@ -4842,7 +4983,7 @@ fn right_divide_matrix3_checked_with_abort<B: Backend>(
                 );
             }
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide3-checked-abort-affine-left-affine"
             );
@@ -4850,7 +4991,7 @@ fn right_divide_matrix3_checked_with_abort<B: Backend>(
         }
         if right_linear_is_diagonal {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide3-checked-abort-affine-linear-diagonal"
             );
@@ -4862,7 +5003,7 @@ fn right_divide_matrix3_checked_with_abort<B: Backend>(
     }
     if !prefer_shared_adjugate_right_division(&left, &right) {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-checked-abort-gauss-jordan"
         );
@@ -4874,7 +5015,7 @@ fn right_divide_matrix3_checked_with_abort<B: Backend>(
     }
 
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "right-divide3-checked-abort-shared-adjugate"
     );
@@ -4893,7 +5034,7 @@ fn right_divide_matrix3_prepared<B: Backend>(
 
     if right_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-prepared-identity"
         );
@@ -4901,7 +5042,7 @@ fn right_divide_matrix3_prepared<B: Backend>(
     }
     if right_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-prepared-diagonal"
         );
@@ -4909,7 +5050,7 @@ fn right_divide_matrix3_prepared<B: Backend>(
     }
     if right_facts.is_upper_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-prepared-upper-triangular"
         );
@@ -4917,7 +5058,7 @@ fn right_divide_matrix3_prepared<B: Backend>(
     }
     if right_facts.is_lower_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-prepared-lower-triangular"
         );
@@ -4931,14 +5072,14 @@ fn right_divide_matrix3_prepared<B: Backend>(
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
         let right_is_affine_translation = right_facts.is_affine_translation;
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-prepared-affine"
         );
         if left_is_affine {
             if right_is_affine_translation {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "helper",
                     "right-divide3-prepared-affine-left-affine-translation"
                 );
@@ -4946,14 +5087,14 @@ fn right_divide_matrix3_prepared<B: Backend>(
             }
             if right_linear_is_diagonal {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "helper",
                     "right-divide3-prepared-affine-left-affine-linear-diagonal"
                 );
                 return divide_matrix3_affine_by_affine_linear_diagonal(left, &prepared.divisor.0);
             }
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide3-prepared-affine-left-affine"
             );
@@ -4961,7 +5102,7 @@ fn right_divide_matrix3_prepared<B: Backend>(
         }
         if right_is_affine_translation {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide3-prepared-affine-by-translation"
             );
@@ -4969,7 +5110,7 @@ fn right_divide_matrix3_prepared<B: Backend>(
         }
         if right_linear_is_diagonal {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide3-prepared-affine-linear-diagonal"
             );
@@ -4979,7 +5120,7 @@ fn right_divide_matrix3_prepared<B: Backend>(
     }
     if !prepared.can_use_shared_adjugate(&left) {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-prepared-gauss-jordan"
         );
@@ -4994,7 +5135,7 @@ fn right_divide_matrix3_prepared<B: Backend>(
     // one reciprocal and fixed-size matrix products. This is the same "delay common
     // scale" idea used in fraction-free elimination (Bareiss, 1968).
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "right-divide3-prepared-shared-adjugate"
     );
@@ -5021,7 +5162,7 @@ fn right_divide_matrix3_prepared_checked<B: Backend>(
 
     if right_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-prepared-checked-identity"
         );
@@ -5029,7 +5170,7 @@ fn right_divide_matrix3_prepared_checked<B: Backend>(
     }
     if right_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-prepared-checked-diagonal"
         );
@@ -5037,7 +5178,7 @@ fn right_divide_matrix3_prepared_checked<B: Backend>(
     }
     if right_facts.is_upper_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-prepared-checked-upper-triangular"
         );
@@ -5045,7 +5186,7 @@ fn right_divide_matrix3_prepared_checked<B: Backend>(
     }
     if right_facts.is_lower_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-prepared-checked-lower-triangular"
         );
@@ -5058,14 +5199,14 @@ fn right_divide_matrix3_prepared_checked<B: Backend>(
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-prepared-checked-affine"
         );
         if left_is_affine {
             if right_linear_is_diagonal {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "helper",
                     "right-divide3-prepared-checked-affine-left-affine-linear-diagonal"
                 );
@@ -5075,7 +5216,7 @@ fn right_divide_matrix3_prepared_checked<B: Backend>(
                 );
             }
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide3-prepared-checked-affine-left-affine"
             );
@@ -5083,7 +5224,7 @@ fn right_divide_matrix3_prepared_checked<B: Backend>(
         }
         if right_linear_is_diagonal {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide3-prepared-checked-affine-linear-diagonal"
             );
@@ -5093,7 +5234,7 @@ fn right_divide_matrix3_prepared_checked<B: Backend>(
     }
     if !prepared.can_use_shared_adjugate(&left) {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-prepared-checked-gauss-jordan"
         );
@@ -5104,7 +5245,7 @@ fn right_divide_matrix3_prepared_checked<B: Backend>(
     }
 
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "right-divide3-prepared-checked-shared-adjugate"
     );
@@ -5132,7 +5273,7 @@ fn right_divide_matrix3_prepared_checked_with_abort<B: Backend>(
 
     if right_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-prepared-checked-abort-identity"
         );
@@ -5140,7 +5281,7 @@ fn right_divide_matrix3_prepared_checked_with_abort<B: Backend>(
     }
     if right_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-prepared-checked-abort-diagonal"
         );
@@ -5148,7 +5289,7 @@ fn right_divide_matrix3_prepared_checked_with_abort<B: Backend>(
     }
     if right_facts.is_upper_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-prepared-checked-abort-upper-triangular"
         );
@@ -5160,7 +5301,7 @@ fn right_divide_matrix3_prepared_checked_with_abort<B: Backend>(
     }
     if right_facts.is_lower_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-prepared-checked-abort-lower-triangular"
         );
@@ -5178,14 +5319,14 @@ fn right_divide_matrix3_prepared_checked_with_abort<B: Backend>(
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-prepared-checked-abort-affine"
         );
         if left_is_affine {
             if right_linear_is_diagonal {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "helper",
                     "right-divide3-prepared-checked-abort-affine-left-affine-linear-diagonal"
                 );
@@ -5196,7 +5337,7 @@ fn right_divide_matrix3_prepared_checked_with_abort<B: Backend>(
                 );
             }
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide3-prepared-checked-abort-affine-left-affine"
             );
@@ -5208,7 +5349,7 @@ fn right_divide_matrix3_prepared_checked_with_abort<B: Backend>(
         }
         if right_linear_is_diagonal {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide3-prepared-checked-abort-affine-linear-diagonal"
             );
@@ -5222,7 +5363,7 @@ fn right_divide_matrix3_prepared_checked_with_abort<B: Backend>(
     }
     if !prepared.can_use_shared_adjugate(&left) {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide3-prepared-checked-abort-gauss-jordan"
         );
@@ -5234,7 +5375,7 @@ fn right_divide_matrix3_prepared_checked_with_abort<B: Backend>(
     }
 
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "right-divide3-prepared-checked-abort-shared-adjugate"
     );
@@ -5259,11 +5400,11 @@ fn right_divide_matrix4<B: Backend>(
 ) -> BlasResult<[[Scalar<B>; 4]; 4]> {
     let right_facts = matrix4_facts(&right);
     if right_facts.is_identity {
-        crate::trace_dispatch!("realistic_blas_matrix", "helper", "right-divide4-identity");
+        crate::trace_dispatch!("hyperlattice_matrix", "helper", "right-divide4-identity");
         return Ok(left);
     }
     if right_facts.is_diagonal {
-        crate::trace_dispatch!("realistic_blas_matrix", "helper", "right-divide4-diagonal");
+        crate::trace_dispatch!("hyperlattice_matrix", "helper", "right-divide4-diagonal");
         return divide_matrix4_by_diagonal(left, &right);
     }
     if right_facts.is_upper_triangular {
@@ -5273,7 +5414,7 @@ fn right_divide_matrix4<B: Backend>(
         // policy used in triangular dense linear algebra kernels
         // (Golub & Van Loan, *Matrix Computations*, 4th ed., §4.2).
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-upper-triangular"
         );
@@ -5283,7 +5424,7 @@ fn right_divide_matrix4<B: Backend>(
         // The lower-triangular branch is symmetric to the upper case and keeps
         // one-pass recurrence structure with cached diagonal reciprocals.
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-lower-triangular"
         );
@@ -5298,20 +5439,20 @@ fn right_divide_matrix4<B: Backend>(
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
         let right_is_affine_translation = right_facts.is_affine_translation;
-        crate::trace_dispatch!("realistic_blas_matrix", "helper", "right-divide4-affine");
+        crate::trace_dispatch!("hyperlattice_matrix", "helper", "right-divide4-affine");
         // Reusing both affine flags cuts duplicate structural scans in mixed
         // geometric workloads. This follows the standard dispatcher pattern:
         // preserve expensive checks for once and reuse them across nearby
         // specializations (Golub & Van Loan, *Matrix Computations*).
         if left_is_affine {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide4-affine-left-affine"
             );
             if right_is_affine_translation {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "helper",
                     "right-divide4-affine-left-affine-translation"
                 );
@@ -5319,7 +5460,7 @@ fn right_divide_matrix4<B: Backend>(
             }
             if right_linear_is_diagonal {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "helper",
                     "right-divide4-affine-left-affine-linear-diagonal"
                 );
@@ -5329,7 +5470,7 @@ fn right_divide_matrix4<B: Backend>(
         }
         if right_is_affine_translation {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide4-affine-by-translation"
             );
@@ -5337,7 +5478,7 @@ fn right_divide_matrix4<B: Backend>(
         }
         if right_linear_is_diagonal {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide4-affine-linear-diagonal"
             );
@@ -5347,7 +5488,7 @@ fn right_divide_matrix4<B: Backend>(
     }
     if !prefer_shared_adjugate_right_division(&left, &right) {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-gauss-jordan"
         );
@@ -5358,7 +5499,7 @@ fn right_divide_matrix4<B: Backend>(
     }
 
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "right-divide4-shared-adjugate"
     );
@@ -5366,7 +5507,10 @@ fn right_divide_matrix4<B: Backend>(
     let det = determinant4_from_factors(&s, &c);
     let inv_det = det.inverse()?;
     let adjugate = matrix4_adjugate_from_factors(&right, &s, &c);
-    Ok(scale_matrix4(multiply_arrays4(left, adjugate), &inv_det))
+    Ok(scale_matrix4(
+        multiply_arrays4_ref_with_dense_certificate(&left, &adjugate),
+        &inv_det,
+    ))
 }
 
 fn right_divide_matrix4_prepared<B: Backend>(
@@ -5377,7 +5521,7 @@ fn right_divide_matrix4_prepared<B: Backend>(
 
     if right_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-prepared-identity"
         );
@@ -5385,7 +5529,7 @@ fn right_divide_matrix4_prepared<B: Backend>(
     }
     if right_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-prepared-diagonal"
         );
@@ -5393,7 +5537,7 @@ fn right_divide_matrix4_prepared<B: Backend>(
     }
     if right_facts.is_upper_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-prepared-upper-triangular"
         );
@@ -5401,7 +5545,7 @@ fn right_divide_matrix4_prepared<B: Backend>(
     }
     if right_facts.is_lower_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-prepared-lower-triangular"
         );
@@ -5415,14 +5559,14 @@ fn right_divide_matrix4_prepared<B: Backend>(
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
         let right_is_affine_translation = right_facts.is_affine_translation;
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-prepared-affine"
         );
         if left_is_affine {
             if right_is_affine_translation {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "helper",
                     "right-divide4-prepared-affine-left-affine-translation"
                 );
@@ -5430,7 +5574,7 @@ fn right_divide_matrix4_prepared<B: Backend>(
             }
             if right_linear_is_diagonal {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "helper",
                     "right-divide4-prepared-affine-left-affine-linear-diagonal"
                 );
@@ -5440,7 +5584,7 @@ fn right_divide_matrix4_prepared<B: Backend>(
         }
         if right_is_affine_translation {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide4-prepared-affine-by-translation"
             );
@@ -5448,7 +5592,7 @@ fn right_divide_matrix4_prepared<B: Backend>(
         }
         if right_linear_is_diagonal {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide4-prepared-affine-linear-diagonal"
             );
@@ -5458,7 +5602,7 @@ fn right_divide_matrix4_prepared<B: Backend>(
     }
     if !prepared.can_use_shared_adjugate(&left) {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-prepared-gauss-jordan"
         );
@@ -5473,7 +5617,7 @@ fn right_divide_matrix4_prepared<B: Backend>(
     // divisons against the same 4×4 divisor. See Bareiss, "Sylvester's
     // identity and fraction-free Gaussian elimination" lineage, and Yap 1997.
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "right-divide4-prepared-shared-adjugate"
     );
@@ -5500,7 +5644,7 @@ fn right_divide_matrix4_prepared_checked<B: Backend>(
 
     if right_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-prepared-checked-identity"
         );
@@ -5508,7 +5652,7 @@ fn right_divide_matrix4_prepared_checked<B: Backend>(
     }
     if right_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-prepared-checked-diagonal"
         );
@@ -5516,7 +5660,7 @@ fn right_divide_matrix4_prepared_checked<B: Backend>(
     }
     if right_facts.is_upper_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-prepared-checked-upper-triangular"
         );
@@ -5524,7 +5668,7 @@ fn right_divide_matrix4_prepared_checked<B: Backend>(
     }
     if right_facts.is_lower_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-prepared-checked-lower-triangular"
         );
@@ -5538,7 +5682,7 @@ fn right_divide_matrix4_prepared_checked<B: Backend>(
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
         let right_is_affine_translation = right_facts.is_affine_translation;
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-prepared-checked-affine"
         );
@@ -5570,7 +5714,7 @@ fn right_divide_matrix4_prepared_checked<B: Backend>(
     }
     if !prepared.can_use_shared_adjugate(&left) {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-prepared-checked-gauss-jordan"
         );
@@ -5581,7 +5725,7 @@ fn right_divide_matrix4_prepared_checked<B: Backend>(
     }
 
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "right-divide4-prepared-checked-shared-adjugate"
     );
@@ -5609,7 +5753,7 @@ fn right_divide_matrix4_prepared_checked_with_abort<B: Backend>(
 
     if right_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-prepared-checked-abort-identity"
         );
@@ -5617,7 +5761,7 @@ fn right_divide_matrix4_prepared_checked_with_abort<B: Backend>(
     }
     if right_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-prepared-checked-abort-diagonal"
         );
@@ -5625,7 +5769,7 @@ fn right_divide_matrix4_prepared_checked_with_abort<B: Backend>(
     }
     if right_facts.is_upper_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-prepared-checked-abort-upper-triangular"
         );
@@ -5637,7 +5781,7 @@ fn right_divide_matrix4_prepared_checked_with_abort<B: Backend>(
     }
     if right_facts.is_lower_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-prepared-checked-abort-lower-triangular"
         );
@@ -5655,7 +5799,7 @@ fn right_divide_matrix4_prepared_checked_with_abort<B: Backend>(
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
         let right_is_affine_translation = right_facts.is_affine_translation;
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-prepared-checked-abort-affine"
         );
@@ -5698,7 +5842,7 @@ fn right_divide_matrix4_prepared_checked_with_abort<B: Backend>(
     }
     if !prepared.can_use_shared_adjugate(&left) {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-prepared-checked-abort-gauss-jordan"
         );
@@ -5710,7 +5854,7 @@ fn right_divide_matrix4_prepared_checked_with_abort<B: Backend>(
     }
 
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "right-divide4-prepared-checked-abort-shared-adjugate"
     );
@@ -5736,7 +5880,7 @@ fn right_divide_matrix4_ref<B: Backend>(
     let right_facts = matrix4_facts(right);
     if right_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-ref-identity"
         );
@@ -5744,7 +5888,7 @@ fn right_divide_matrix4_ref<B: Backend>(
     }
     if right_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-ref-diagonal"
         );
@@ -5752,7 +5896,7 @@ fn right_divide_matrix4_ref<B: Backend>(
     }
     if right_facts.is_upper_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-ref-upper-triangular"
         );
@@ -5760,7 +5904,7 @@ fn right_divide_matrix4_ref<B: Backend>(
     }
     if right_facts.is_lower_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-ref-lower-triangular"
         );
@@ -5775,20 +5919,16 @@ fn right_divide_matrix4_ref<B: Backend>(
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
         let right_is_affine_translation = right_facts.is_affine_translation;
-        crate::trace_dispatch!(
-            "realistic_blas_matrix",
-            "helper",
-            "right-divide4-ref-affine"
-        );
+        crate::trace_dispatch!("hyperlattice_matrix", "helper", "right-divide4-ref-affine");
         if left_is_affine {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide4-ref-affine-left-affine"
             );
             if right_is_affine_translation {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "helper",
                     "right-divide4-ref-affine-by-affine-translation"
                 );
@@ -5796,7 +5936,7 @@ fn right_divide_matrix4_ref<B: Backend>(
             }
             if right_linear_is_diagonal {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "helper",
                     "right-divide4-ref-affine-left-affine-linear-diagonal"
                 );
@@ -5806,7 +5946,7 @@ fn right_divide_matrix4_ref<B: Backend>(
         }
         if right_is_affine_translation {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide4-ref-by-affine-translation"
             );
@@ -5814,7 +5954,7 @@ fn right_divide_matrix4_ref<B: Backend>(
         }
         if right_linear_is_diagonal {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide4-ref-affine-linear-diagonal"
             );
@@ -5824,7 +5964,7 @@ fn right_divide_matrix4_ref<B: Backend>(
     }
     if !prefer_shared_adjugate_right_division(left, right) {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-ref-gauss-jordan"
         );
@@ -5837,7 +5977,7 @@ fn right_divide_matrix4_ref<B: Backend>(
     }
 
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "right-divide4-ref-shared-adjugate"
     );
@@ -5850,7 +5990,7 @@ fn right_divide_matrix4_ref<B: Backend>(
     let inv_det = det.inverse()?;
     let adjugate = matrix4_adjugate_from_factors(right, &s, &c);
     Ok(scale_matrix4(
-        multiply_arrays4_ref(left, &adjugate),
+        multiply_arrays4_ref_with_dense_certificate(left, &adjugate),
         &inv_det,
     ))
 }
@@ -5862,7 +6002,7 @@ fn right_divide_matrix4_checked<B: Backend>(
     let right_facts = matrix4_facts(&right);
     if right_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-checked-identity"
         );
@@ -5870,7 +6010,7 @@ fn right_divide_matrix4_checked<B: Backend>(
     }
     if right_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-checked-diagonal"
         );
@@ -5878,7 +6018,7 @@ fn right_divide_matrix4_checked<B: Backend>(
     }
     if right_facts.is_upper_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-checked-upper-triangular"
         );
@@ -5886,7 +6026,7 @@ fn right_divide_matrix4_checked<B: Backend>(
     }
     if right_facts.is_lower_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-checked-lower-triangular"
         );
@@ -5902,19 +6042,19 @@ fn right_divide_matrix4_checked<B: Backend>(
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
         let right_is_affine_translation = right_facts.is_affine_translation;
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-checked-affine"
         );
         if left_is_affine {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide4-checked-affine-left-affine"
             );
             if right_is_affine_translation {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "helper",
                     "right-divide4-checked-affine-by-affine-translation"
                 );
@@ -5924,7 +6064,7 @@ fn right_divide_matrix4_checked<B: Backend>(
             }
             if right_linear_is_diagonal {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "helper",
                     "right-divide4-checked-affine-left-affine-linear-diagonal"
                 );
@@ -5934,7 +6074,7 @@ fn right_divide_matrix4_checked<B: Backend>(
         }
         if right_is_affine_translation {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide4-checked-by-affine-translation"
             );
@@ -5942,7 +6082,7 @@ fn right_divide_matrix4_checked<B: Backend>(
         }
         if right_linear_is_diagonal {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide4-checked-affine-linear-diagonal"
             );
@@ -5952,7 +6092,7 @@ fn right_divide_matrix4_checked<B: Backend>(
     }
     if !prefer_shared_adjugate_right_division(&left, &right) {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-checked-gauss-jordan"
         );
@@ -5963,7 +6103,7 @@ fn right_divide_matrix4_checked<B: Backend>(
     }
 
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "right-divide4-checked-shared-adjugate"
     );
@@ -5972,7 +6112,10 @@ fn right_divide_matrix4_checked<B: Backend>(
     require_known_nonzero(&det)?;
     let inv_det = det.inverse()?;
     let adjugate = matrix4_adjugate_from_factors(&right, &s, &c);
-    Ok(scale_matrix4(multiply_arrays4(left, adjugate), &inv_det))
+    Ok(scale_matrix4(
+        multiply_arrays4_ref_with_dense_certificate(&left, &adjugate),
+        &inv_det,
+    ))
 }
 
 fn right_divide_matrix4_checked_with_abort<B: Backend>(
@@ -5983,7 +6126,7 @@ fn right_divide_matrix4_checked_with_abort<B: Backend>(
     let right_facts = matrix4_facts(&right);
     if right_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-checked-abort-identity"
         );
@@ -5991,7 +6134,7 @@ fn right_divide_matrix4_checked_with_abort<B: Backend>(
     }
     if right_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-checked-abort-diagonal"
         );
@@ -5999,7 +6142,7 @@ fn right_divide_matrix4_checked_with_abort<B: Backend>(
     }
     if right_facts.is_upper_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-checked-abort-upper-triangular"
         );
@@ -6007,7 +6150,7 @@ fn right_divide_matrix4_checked_with_abort<B: Backend>(
     }
     if right_facts.is_lower_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-checked-abort-lower-triangular"
         );
@@ -6022,19 +6165,19 @@ fn right_divide_matrix4_checked_with_abort<B: Backend>(
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
         let right_is_affine_translation = right_facts.is_affine_translation;
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-checked-abort-affine"
         );
         if left_is_affine {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide4-checked-abort-affine-left-affine"
             );
             if right_is_affine_translation {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "helper",
                     "right-divide4-checked-abort-affine-by-affine-translation"
                 );
@@ -6046,7 +6189,7 @@ fn right_divide_matrix4_checked_with_abort<B: Backend>(
             }
             if right_linear_is_diagonal {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "helper",
                     "right-divide4-checked-abort-affine-left-affine-linear-diagonal"
                 );
@@ -6058,7 +6201,7 @@ fn right_divide_matrix4_checked_with_abort<B: Backend>(
         }
         if right_is_affine_translation {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide4-checked-abort-by-affine-translation"
             );
@@ -6068,7 +6211,7 @@ fn right_divide_matrix4_checked_with_abort<B: Backend>(
         }
         if right_linear_is_diagonal {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "right-divide4-checked-abort-affine-linear-diagonal"
             );
@@ -6080,7 +6223,7 @@ fn right_divide_matrix4_checked_with_abort<B: Backend>(
     }
     if !prefer_shared_adjugate_right_division(&left, &right) {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "right-divide4-checked-abort-gauss-jordan"
         );
@@ -6092,7 +6235,7 @@ fn right_divide_matrix4_checked_with_abort<B: Backend>(
     }
 
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "right-divide4-checked-abort-shared-adjugate"
     );
@@ -6102,7 +6245,10 @@ fn right_divide_matrix4_checked_with_abort<B: Backend>(
     require_known_nonzero(&det)?;
     let inv_det = det.inverse()?;
     let adjugate = matrix4_adjugate_from_factors(&right, &s, &c);
-    Ok(scale_matrix4(multiply_arrays4(left, adjugate), &inv_det))
+    Ok(scale_matrix4(
+        multiply_arrays4_ref_with_dense_certificate(&left, &adjugate),
+        &inv_det,
+    ))
 }
 
 #[inline]
@@ -6165,11 +6311,7 @@ fn multiply_arrays3_borrowed<B: Backend>(
         && right_nonzero[2][2];
 
     if left_all_nonzero && right_all_nonzero {
-        crate::trace_dispatch!(
-            "realistic_blas_matrix",
-            "helper",
-            "multiply3-borrowed-dense"
-        );
+        crate::trace_dispatch!("hyperlattice_matrix", "helper", "multiply3-borrowed-dense");
 
         let cell = |row: usize, col: usize| {
             Scalar(B::Repr::dot3(
@@ -6185,11 +6327,7 @@ fn multiply_arrays3_borrowed<B: Backend>(
         ];
     }
 
-    crate::trace_dispatch!(
-        "realistic_blas_matrix",
-        "helper",
-        "multiply3-borrowed-sparse"
-    );
+    crate::trace_dispatch!("hyperlattice_matrix", "helper", "multiply3-borrowed-sparse");
 
     let cell = |row: usize, col: usize| {
         let l0 = &left[row][0];
@@ -6225,6 +6363,26 @@ fn multiply_arrays3_borrowed<B: Backend>(
             }
             _ => Scalar(B::Repr::dot3([&l0.0, &l1.0, &l2.0], [&r0.0, &r1.0, &r2.0])),
         }
+    };
+
+    [
+        [cell(0, 0), cell(0, 1), cell(0, 2)],
+        [cell(1, 0), cell(1, 1), cell(1, 2)],
+        [cell(2, 0), cell(2, 1), cell(2, 2)],
+    ]
+}
+
+#[inline]
+fn multiply_arrays3_dense_ref<B: Backend>(
+    left: &[[Scalar<B>; 3]; 3],
+    right: &[[Scalar<B>; 3]; 3],
+) -> [[Scalar<B>; 3]; 3] {
+    crate::trace_dispatch!("hyperlattice_matrix", "helper", "multiply3-dense-ref");
+    let cell = |row: usize, col: usize| {
+        Scalar(B::Repr::dot3(
+            [&left[row][0].0, &left[row][1].0, &left[row][2].0],
+            [&right[0][col].0, &right[1][col].0, &right[2][col].0],
+        ))
     };
 
     [
@@ -6326,11 +6484,7 @@ fn multiply_arrays4_borrowed<B: Backend>(
         && right_nonzero[3][3];
 
     if left_all_nonzero && right_all_nonzero {
-        crate::trace_dispatch!(
-            "realistic_blas_matrix",
-            "helper",
-            "multiply4-borrowed-dense"
-        );
+        crate::trace_dispatch!("hyperlattice_matrix", "helper", "multiply4-borrowed-dense");
         let cell = |row: usize, col: usize| {
             let l0 = &left[row][0];
             let l1 = &left[row][1];
@@ -6361,11 +6515,7 @@ fn multiply_arrays4_borrowed<B: Backend>(
         ];
     }
 
-    crate::trace_dispatch!(
-        "realistic_blas_matrix",
-        "helper",
-        "multiply4-borrowed-sparse"
-    );
+    crate::trace_dispatch!("hyperlattice_matrix", "helper", "multiply4-borrowed-sparse");
 
     let cell = |row: usize, col: usize| {
         let l0 = &left[row][0];
@@ -6468,6 +6618,42 @@ fn multiply_arrays4_borrowed<B: Backend>(
 }
 
 #[inline]
+fn multiply_arrays4_dense_ref<B: Backend>(
+    left: &[[Scalar<B>; 4]; 4],
+    right: &[[Scalar<B>; 4]; 4],
+) -> [[Scalar<B>; 4]; 4] {
+    crate::trace_dispatch!("hyperlattice_matrix", "helper", "multiply4-dense-ref");
+    let cell = |row: usize, col: usize| {
+        let l0 = &left[row][0];
+        let l1 = &left[row][1];
+        let l2 = &left[row][2];
+        let l3 = &left[row][3];
+        let r0 = &right[0][col];
+        let r1 = &right[1][col];
+        let r2 = &right[2][col];
+        let r3 = &right[3][col];
+        if B::FUSE_SIGNED_PRODUCT_SUM {
+            Scalar(B::Repr::active_dot4(
+                [&l0.0, &l1.0, &l2.0, &l3.0],
+                [&r0.0, &r1.0, &r2.0, &r3.0],
+            ))
+        } else {
+            Scalar(B::Repr::dot4(
+                [&l0.0, &l1.0, &l2.0, &l3.0],
+                [&r0.0, &r1.0, &r2.0, &r3.0],
+            ))
+        }
+    };
+
+    [
+        [cell(0, 0), cell(0, 1), cell(0, 2), cell(0, 3)],
+        [cell(1, 0), cell(1, 1), cell(1, 2), cell(1, 3)],
+        [cell(2, 0), cell(2, 1), cell(2, 2), cell(2, 3)],
+        [cell(3, 0), cell(3, 1), cell(3, 2), cell(3, 3)],
+    ]
+}
+
+#[inline]
 fn multiply_arrays3<B: Backend>(
     left: [[Scalar<B>; 3]; 3],
     right: [[Scalar<B>; 3]; 3],
@@ -6480,7 +6666,7 @@ fn multiply_arrays3<B: Backend>(
     let right_facts = matrix3_facts(&right);
     if left_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "multiply3-owned-owned-identity-left"
         );
@@ -6488,7 +6674,7 @@ fn multiply_arrays3<B: Backend>(
     }
     if right_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "multiply3-owned-owned-identity-right"
         );
@@ -6496,7 +6682,7 @@ fn multiply_arrays3<B: Backend>(
     }
     if left_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "multiply3-owned-owned-diagonal-left"
         );
@@ -6504,7 +6690,7 @@ fn multiply_arrays3<B: Backend>(
     }
     if right_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "multiply3-owned-owned-diagonal-right"
         );
@@ -6512,7 +6698,7 @@ fn multiply_arrays3<B: Backend>(
     }
 
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "multiply3-owned-owned-specialized"
     );
@@ -6528,7 +6714,7 @@ fn multiply_arrays4<B: Backend>(
     let right_facts = matrix4_facts(&right);
     if left_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "multiply4-owned-owned-identity-left"
         );
@@ -6536,7 +6722,7 @@ fn multiply_arrays4<B: Backend>(
     }
     if right_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "multiply4-owned-owned-identity-right"
         );
@@ -6544,7 +6730,7 @@ fn multiply_arrays4<B: Backend>(
     }
     if left_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "multiply4-owned-owned-diagonal-left"
         );
@@ -6552,7 +6738,7 @@ fn multiply_arrays4<B: Backend>(
     }
     if right_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "multiply4-owned-owned-diagonal-right"
         );
@@ -6560,7 +6746,7 @@ fn multiply_arrays4<B: Backend>(
     }
 
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "multiply4-owned-owned-specialized"
     );
@@ -6576,7 +6762,7 @@ fn multiply_arrays3_rhs_ref<B: Backend>(
     let right_facts = matrix3_facts(right);
     if left_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "multiply3-owned-ref-identity-left"
         );
@@ -6584,7 +6770,7 @@ fn multiply_arrays3_rhs_ref<B: Backend>(
     }
     if right_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "multiply3-owned-ref-identity-right"
         );
@@ -6592,7 +6778,7 @@ fn multiply_arrays3_rhs_ref<B: Backend>(
     }
     if left_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "multiply3-owned-ref-diagonal-left"
         );
@@ -6600,7 +6786,7 @@ fn multiply_arrays3_rhs_ref<B: Backend>(
     }
     if right_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "multiply3-owned-ref-diagonal-right"
         );
@@ -6608,7 +6794,7 @@ fn multiply_arrays3_rhs_ref<B: Backend>(
     }
 
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "multiply3-owned-ref-specialized"
     );
@@ -6624,7 +6810,7 @@ fn multiply_arrays4_rhs_ref<B: Backend>(
     let right_facts = matrix4_facts(right);
     if left_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "multiply4-owned-ref-identity-left"
         );
@@ -6632,7 +6818,7 @@ fn multiply_arrays4_rhs_ref<B: Backend>(
     }
     if right_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "multiply4-owned-ref-identity-right"
         );
@@ -6640,7 +6826,7 @@ fn multiply_arrays4_rhs_ref<B: Backend>(
     }
     if left_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "multiply4-owned-ref-diagonal-left"
         );
@@ -6648,7 +6834,7 @@ fn multiply_arrays4_rhs_ref<B: Backend>(
     }
     if right_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "multiply4-owned-ref-diagonal-right"
         );
@@ -6656,7 +6842,7 @@ fn multiply_arrays4_rhs_ref<B: Backend>(
     }
 
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "multiply4-owned-ref-specialized"
     );
@@ -6673,7 +6859,7 @@ fn multiply_arrays3_ref<B: Backend>(
     // was traced and rejected because it regressed exact-rational powi despite
     // fewer reduction events; keep the proven per-cell dot schedule here.
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "multiply3-ref-ref-specialized"
     );
@@ -6682,7 +6868,7 @@ fn multiply_arrays3_ref<B: Backend>(
     let right_facts = matrix3_facts(right);
     if left_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "multiply3-ref-ref-identity-left"
         );
@@ -6690,7 +6876,7 @@ fn multiply_arrays3_ref<B: Backend>(
     }
     if right_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "multiply3-ref-ref-identity-right"
         );
@@ -6698,7 +6884,7 @@ fn multiply_arrays3_ref<B: Backend>(
     }
     if left_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "multiply3-ref-ref-diagonal-left"
         );
@@ -6706,7 +6892,7 @@ fn multiply_arrays3_ref<B: Backend>(
     }
     if right_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "multiply3-ref-ref-diagonal-right"
         );
@@ -6726,7 +6912,7 @@ fn multiply_arrays4_ref<B: Backend>(
     // borrowed mat4 multiply benchmarks while keeping per-cell exact-rational
     // denominator schedules.
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "multiply4-ref-ref-specialized"
     );
@@ -6735,7 +6921,7 @@ fn multiply_arrays4_ref<B: Backend>(
     let right_facts = matrix4_facts(right);
     if left_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "multiply4-ref-ref-identity-left"
         );
@@ -6743,7 +6929,7 @@ fn multiply_arrays4_ref<B: Backend>(
     }
     if right_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "multiply4-ref-ref-identity-right"
         );
@@ -6751,7 +6937,7 @@ fn multiply_arrays4_ref<B: Backend>(
     }
     if left_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "multiply4-ref-ref-diagonal-left"
         );
@@ -6759,7 +6945,7 @@ fn multiply_arrays4_ref<B: Backend>(
     }
     if right_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "multiply4-ref-ref-diagonal-right"
         );
@@ -6782,7 +6968,7 @@ fn transform_vector_rhs_ref<B: Backend, const N: usize>(
         let left_facts = matrix4_facts_assuming_const4(left);
         if left_facts.is_identity {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "transform-vector4-identity"
             );
@@ -6791,7 +6977,7 @@ fn transform_vector_rhs_ref<B: Backend, const N: usize>(
 
         if left_facts.is_diagonal {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "transform-vector4-diagonal"
             );
@@ -6804,13 +6990,13 @@ fn transform_vector_rhs_ref<B: Backend, const N: usize>(
         match right[3].zero_or_one() {
             Some(false) => {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "helper",
                     "transform-vector-direction"
                 );
                 if left_facts.direction_linear_is_diagonal {
                     crate::trace_dispatch!(
-                        "realistic_blas_matrix",
+                        "hyperlattice_matrix",
                         "helper",
                         "transform-vector-direction-diagonal"
                     );
@@ -6829,10 +7015,10 @@ fn transform_vector_rhs_ref<B: Backend, const N: usize>(
                 });
             }
             Some(true) => {
-                crate::trace_dispatch!("realistic_blas_matrix", "helper", "transform-vector-point");
+                crate::trace_dispatch!("hyperlattice_matrix", "helper", "transform-vector-point");
                 if left_facts.is_affine && left_facts.linear_is_diagonal {
                     crate::trace_dispatch!(
-                        "realistic_blas_matrix",
+                        "hyperlattice_matrix",
                         "helper",
                         "transform-vector-point-affine-linear-diagonal"
                     );
@@ -6882,7 +7068,7 @@ fn transform_vector_rhs_ref<B: Backend, const N: usize>(
             }
         });
         let vector_terms = [&right[0], &right[1], &right[2]];
-        crate::trace_dispatch!("realistic_blas_matrix", "helper", "transform-vector-full");
+        crate::trace_dispatch!("hyperlattice_matrix", "helper", "transform-vector-full");
         from_fn(|row| {
             if translation_is_zero[row] {
                 let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
@@ -6906,7 +7092,7 @@ fn transform_vector_rhs_ref<B: Backend, const N: usize>(
         let left_facts = matrix3_facts_assuming_const3(left);
         if left_facts.is_identity {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "transform-vector3-identity"
             );
@@ -6915,7 +7101,7 @@ fn transform_vector_rhs_ref<B: Backend, const N: usize>(
 
         if left_facts.is_diagonal {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "transform-vector3-diagonal"
             );
@@ -6949,7 +7135,7 @@ fn transform_vector3_rhs_ref_cached<B: Backend>(
     let matrix_facts = matrix3_facts(left);
     if matrix_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "transform-vector3-identity"
         );
@@ -6958,14 +7144,14 @@ fn transform_vector3_rhs_ref_cached<B: Backend>(
 
     if matrix_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "transform-vector3-diagonal"
         );
         return from_fn(|row| right[row].clone().mul_cached(&left[row][row]));
     }
 
-    crate::trace_dispatch!("realistic_blas_matrix", "helper", "transform-vector3-dense");
+    crate::trace_dispatch!("hyperlattice_matrix", "helper", "transform-vector3-dense");
     transform_vector3_rhs_dense_ref(left, right)
 }
 
@@ -6990,7 +7176,7 @@ fn transform_vector4_rhs_ref_cached_with_matrix_facts<B: Backend>(
 ) -> [Scalar<B>; 4] {
     if matrix_facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "transform-vector4-identity"
         );
@@ -6999,7 +7185,7 @@ fn transform_vector4_rhs_ref_cached_with_matrix_facts<B: Backend>(
 
     if matrix_facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "transform-vector4-diagonal"
         );
@@ -7016,7 +7202,7 @@ fn transform_vector4_rhs_ref_cached_with_matrix_facts<B: Backend>(
         Some(false) => {
             // A direction vector keeps the row-local 3-term linear form.
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "transform-vector4-direction"
             );
@@ -7029,13 +7215,13 @@ fn transform_vector4_rhs_ref_cached_with_matrix_facts<B: Backend>(
         Some(true) => {
             // Point vectors can reuse exact translation offsets as an explicit
             // addition after the shared 3-term linear body.
-            crate::trace_dispatch!("realistic_blas_matrix", "helper", "transform-vector4-point");
+            crate::trace_dispatch!("hyperlattice_matrix", "helper", "transform-vector4-point");
             return transform_vector4_rhs_point_ref_cached(left, right, translation_is_zero);
         }
         None => {}
     }
 
-    crate::trace_dispatch!("realistic_blas_matrix", "helper", "transform-vector4-full");
+    crate::trace_dispatch!("hyperlattice_matrix", "helper", "transform-vector4-full");
     from_fn(|row| {
         if translation_is_zero[row] {
             let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
@@ -7101,7 +7287,7 @@ fn transform_vector4_rhs_direction_ref_cached<B: Backend>(
 ) -> [Scalar<B>; 4] {
     if direction_is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "transform-vector4-direction-diagonal-facts"
         );
@@ -7117,7 +7303,7 @@ fn transform_vector4_rhs_direction_ref_cached<B: Backend>(
     // If it is false, identity/diagonal direction cases are already ruled out,
     // so the remaining valid fast form is the three-term linear combination.
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "transform-vector4-batch-direction"
     );
@@ -7136,7 +7322,7 @@ fn transform_vector4_direction_batch_assumed_ref<B: Backend>(
     let mut transformed = Vec::with_capacity(rhs.len());
     if direction_is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "transform-vector4-direction-batch-diagonal-assumed"
         );
@@ -7152,7 +7338,7 @@ fn transform_vector4_direction_batch_assumed_ref<B: Backend>(
     }
 
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "transform-vector4-direction-batch-linear-assumed"
     );
@@ -7184,7 +7370,7 @@ fn transform_vector4_rhs_point_affine_linear_diagonal_ref_cached<B: Backend>(
     // split used in exact geometric computation; see Yap, "Towards Exact
     // Geometric Computation", 1997.
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "transform-vector4-point-affine-linear-diagonal"
     );
@@ -7225,7 +7411,7 @@ fn transform_vector4_rhs_point_with_scaled_w_ref_cached<B: Backend>(
     // short path branch-flat for known all-zero/all-nonzero affine offsets.
     if all_translation_zero {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "transform-vector4-point-scaled-w-full-no-translation"
         );
@@ -7240,7 +7426,7 @@ fn transform_vector4_rhs_point_with_scaled_w_ref_cached<B: Backend>(
         // per-row branches on homogeneous offset activity and apply one
         // multiplied offset term per lane.
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "transform-vector4-point-scaled-w-full-nonzero"
         );
@@ -7258,7 +7444,7 @@ fn transform_vector4_rhs_point_with_scaled_w_ref_cached<B: Backend>(
     // General projected-point fast path: use the 3-term spatial form and apply
     // `w'`-scaled affine offsets only where necessary.
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "transform-vector4-point-scaled-w-partial"
     );
@@ -7290,7 +7476,7 @@ fn transform_vector4_rhs_point_ref_cached<B: Backend>(
     // point and mixed-batch paths pay a second full matrix probe.
     // See Yap, "Towards Exact Geometric Computation", 1997.
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "transform-vector4-batch-point"
     );
@@ -7314,7 +7500,7 @@ fn transform_vector4_rhs_point_all_nonzero_ref_cached<B: Backend>(
     // Point transforms with guaranteed non-zero translation entries in every row
     // use a compact 3-term affine core and explicit offset for the same reason.
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "transform-vector4-point-all-nonzero"
     );
@@ -7331,7 +7517,7 @@ fn transform_vector4_rhs_full_no_translation_ref_cached<B: Backend>(
     right: &[Scalar<B>; 4],
 ) -> [Scalar<B>; 4] {
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "transform-vector4-batch-full-no-translation"
     );
@@ -7357,7 +7543,7 @@ impl<'a, B: Backend> TransformedMatrix3<'a, B> {
     pub fn transform_vector(&self, rhs: &Vector3<B>) -> Vector3<B> {
         if self.facts.is_identity {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "method",
                 "transform-vector3-identity"
             );
@@ -7365,7 +7551,7 @@ impl<'a, B: Backend> TransformedMatrix3<'a, B> {
         }
         if self.facts.is_diagonal {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "method",
                 "transform-vector3-diagonal"
             );
@@ -7373,7 +7559,7 @@ impl<'a, B: Backend> TransformedMatrix3<'a, B> {
                 rhs.0[row].clone().mul_cached(&self.matrix.0[row][row])
             }));
         }
-        crate::trace_dispatch!("realistic_blas_matrix", "helper", "transform-vector3-dense");
+        crate::trace_dispatch!("hyperlattice_matrix", "helper", "transform-vector3-dense");
         Vector3(transform_vector3_rhs_dense_ref(&self.matrix.0, &rhs.0))
     }
 
@@ -7388,7 +7574,7 @@ impl<'a, B: Backend> TransformedMatrix3<'a, B> {
     pub fn transform_vector_batch(&self, rhs: &[Vector3<B>]) -> Vec<Vector3<B>> {
         if self.facts.is_identity {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "method",
                 "transform-vector3-batch-identity"
             );
@@ -7396,7 +7582,7 @@ impl<'a, B: Backend> TransformedMatrix3<'a, B> {
         }
         if self.facts.is_diagonal {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "method",
                 "transform-vector3-batch-diagonal"
             );
@@ -7436,7 +7622,7 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
     ) -> Vector4<B> {
         if self.facts.is_identity {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "method",
                 "transform-vector4-identity"
             );
@@ -7444,7 +7630,7 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
         }
         if self.facts.is_diagonal {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "method",
                 "transform-vector4-diagonal"
             );
@@ -7556,7 +7742,7 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
     pub fn transform_point_vector(&self, rhs: &Vector4<B>) -> Vector4<B> {
         if self.facts.is_identity {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "method",
                 "transform-vector4-point-identity"
             );
@@ -7608,7 +7794,7 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
     pub fn transform_vector_batch(&self, rhs: &[Vector4<B>]) -> Vec<Vector4<B>> {
         if self.facts.is_identity {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "method",
                 "transform-vector4-batch-identity"
             );
@@ -7625,7 +7811,7 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
                             .all(|vector| vector.0[3].definitely_zero())
                         {
                             crate::trace_dispatch!(
-                                "realistic_blas_matrix",
+                                "hyperlattice_matrix",
                                 "helper",
                                 "transform-vector4-batch-diagonal-direction"
                             );
@@ -7654,7 +7840,7 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
                                 .all(|vector| vector.0[3].definitely_one()) =>
                     {
                         crate::trace_dispatch!(
-                            "realistic_blas_matrix",
+                            "hyperlattice_matrix",
                             "helper",
                             "transform-vector4-batch-diagonal-point"
                         );
@@ -7712,7 +7898,7 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
         // per-vector classification and fact-vector allocation.
         if has_direction && !has_point && !has_unknown {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "transform-vector4-batch-direction"
             );
@@ -7739,7 +7925,7 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
 
         if has_point && !has_direction && !has_unknown {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "transform-vector4-batch-point"
             );
@@ -7754,7 +7940,7 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
                 }
             } else if self.all_translation_nonzero {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "helper",
                     "transform-vector4-batch-point-all-nonzero"
                 );
@@ -7766,7 +7952,7 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
                 }
             } else if self.all_translation_zero {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "helper",
                     "transform-vector4-batch-full-no-translation"
                 );
@@ -7794,7 +7980,7 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
             // All unknown homogeneous vectors can use the generic point/pointish
             // kernel directly without materializing fact structs.
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "transform-vector4-batch-unknown"
             );
@@ -7818,7 +8004,7 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
 
         if has_direction && has_point && !has_unknown {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "method",
                 "transform-vector4-batch-mixed"
             );
@@ -7832,7 +8018,7 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
             // Fallback: per-vector facts handles direction/unknown or
             // point/unknown mixtures safely.
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "method",
                 "transform-vector4-batch-mixed"
             );
@@ -7861,13 +8047,13 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
     /// (Yap, "Towards Exact Geometric Computation", 1997).
     pub fn transform_direction_batch(&self, rhs: &[Vector4<B>]) -> Vec<Vector4<B>> {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "method",
             "transform-vector4-direction-batch-assumed"
         );
         if self.facts.is_identity {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "transform-vector4-direction-batch-identity-assumed"
             );
@@ -7896,13 +8082,13 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
     /// API surface.
     pub fn transform_point_batch(&self, rhs: &[Vector4<B>]) -> Vec<Vector4<B>> {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "method",
             "transform-vector4-point-batch-assumed"
         );
         if self.facts.is_identity {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "transform-vector4-point-batch-identity-assumed"
             );
@@ -7916,7 +8102,7 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
         let mut transformed = Vec::with_capacity(rhs.len());
         if self.facts.is_affine && self.facts.linear_is_diagonal {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "transform-vector4-point-batch-affine-linear-diagonal-assumed"
             );
@@ -7953,7 +8139,7 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
 
         if self.all_translation_nonzero {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "transform-vector4-point-batch-all-nonzero-assumed"
             );
@@ -7968,7 +8154,7 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
 
         if self.all_translation_zero {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "helper",
                 "transform-vector4-point-batch-no-translation-assumed"
             );
@@ -7981,7 +8167,7 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
         }
 
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "transform-vector4-point-batch-partial-translation-assumed"
         );
@@ -8008,7 +8194,7 @@ impl<'a, B: Backend> TransformedVector3<'a, B> {
     pub fn materialize(self) -> Vector3<B> {
         if self.facts.is_identity {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "method",
                 "materialize-vector3-identity"
             );
@@ -8016,7 +8202,7 @@ impl<'a, B: Backend> TransformedVector3<'a, B> {
         }
         if self.facts.is_diagonal {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "method",
                 "materialize-vector3-diagonal"
             );
@@ -8026,7 +8212,7 @@ impl<'a, B: Backend> TransformedVector3<'a, B> {
                     .mul_cached(&self.matrix.0[row][row])
             }));
         }
-        crate::trace_dispatch!("realistic_blas_matrix", "helper", "transform-vector3-dense");
+        crate::trace_dispatch!("hyperlattice_matrix", "helper", "transform-vector3-dense");
         Vector3(transform_vector3_rhs_dense_ref(
             &self.matrix.0,
             &self.vector.0,
@@ -8051,7 +8237,7 @@ impl<'a, B: Backend> TransformedVector4<'a, B> {
     pub fn materialize(self) -> Vector4<B> {
         if self.facts.is_identity {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "method",
                 "materialize-vector4-identity"
             );
@@ -8062,7 +8248,7 @@ impl<'a, B: Backend> TransformedVector4<'a, B> {
             .unwrap_or_else(|| self.vector.geometric_facts());
         if self.facts.is_diagonal {
             crate::trace_dispatch!(
-                "realistic_blas_matrix",
+                "hyperlattice_matrix",
                 "method",
                 "materialize-vector4-diagonal"
             );
@@ -8228,7 +8414,7 @@ fn mul_sub<B: Backend>(
         let second_zero = left_b.definitely_zero() || right_b.definitely_zero();
 
         if first_zero || second_zero {
-            crate::trace_dispatch!("realistic_blas_matrix", "helper", "mul-sub-pruned");
+            crate::trace_dispatch!("hyperlattice_matrix", "helper", "mul-sub-pruned");
             if first_zero && second_zero {
                 return Scalar::zero();
             }
@@ -8243,7 +8429,6 @@ fn mul_sub<B: Backend>(
     }
 }
 
-#[inline]
 fn mul_add<B: Backend>(
     left_a: &Scalar<B>,
     right_a: &Scalar<B>,
@@ -8261,7 +8446,7 @@ fn mul_add<B: Backend>(
         let second_zero = left_b.definitely_zero() || right_b.definitely_zero();
 
         if first_zero || second_zero {
-            crate::trace_dispatch!("realistic_blas_matrix", "helper", "mul-add-pruned");
+            crate::trace_dispatch!("hyperlattice_matrix", "helper", "mul-add-pruned");
             if first_zero && second_zero {
                 return Scalar::zero();
             }
@@ -8297,7 +8482,7 @@ fn mul_add_sub<B: Backend>(
         let nonzero_count = (!first_zero) as u8 + (!second_zero) as u8 + (!third_zero) as u8;
 
         if nonzero_count <= 2 {
-            crate::trace_dispatch!("realistic_blas_matrix", "helper", "mul-add-sub-pruned");
+            crate::trace_dispatch!("hyperlattice_matrix", "helper", "mul-add-sub-pruned");
             return match nonzero_count {
                 0 => Scalar::zero(),
                 1 => {
@@ -8339,7 +8524,6 @@ fn mul_add_sub<B: Backend>(
     }
 }
 
-#[inline]
 fn mul_sub_add<B: Backend>(
     left_a: &Scalar<B>,
     right_a: &Scalar<B>,
@@ -8359,7 +8543,7 @@ fn mul_sub_add<B: Backend>(
         let nonzero_count = (!first_zero) as u8 + (!second_zero) as u8 + (!third_zero) as u8;
 
         if nonzero_count <= 2 {
-            crate::trace_dispatch!("realistic_blas_matrix", "helper", "mul-sub-add-pruned");
+            crate::trace_dispatch!("hyperlattice_matrix", "helper", "mul-sub-add-pruned");
             return match nonzero_count {
                 0 => Scalar::zero(),
                 1 => {
@@ -8403,7 +8587,7 @@ fn mul_sub_add<B: Backend>(
 
 #[inline]
 fn determinant3<B: Backend>(m: &[[Scalar<B>; 3]; 3]) -> Scalar<B> {
-    crate::trace_dispatch!("realistic_blas_matrix", "helper", "determinant3");
+    crate::trace_dispatch!("hyperlattice_matrix", "helper", "determinant3");
     // Keep determinant infallible and division-free. A Bareiss prototype would
     // need pivot divisions and a fallback for singular or unknown-zero pivots,
     // which does not match the public determinant contract and adds exact
@@ -8424,7 +8608,7 @@ fn matrix3_adjugate_and_determinant<B: Backend>(
     matrix: &[[Scalar<B>; 3]; 3],
 ) -> ([[Scalar<B>; 3]; 3], Scalar<B>) {
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "matrix3-adjugate-and-determinant"
     );
@@ -8446,7 +8630,7 @@ fn matrix3_adjugate_and_determinant<B: Backend>(
 fn matrix3_scaled_adjugate<B: Backend>(
     matrix: &[[Scalar<B>; 3]; 3],
 ) -> BlasResult<[[Scalar<B>; 3]; 3]> {
-    crate::trace_dispatch!("realistic_blas_matrix", "helper", "matrix3-scaled-adjugate");
+    crate::trace_dispatch!("hyperlattice_matrix", "helper", "matrix3-scaled-adjugate");
     let m = &matrix;
     let c00 = mul_sub(&m[1][1], &m[2][2], &m[1][2], &m[2][1]);
     let c01 = mul_sub(&m[0][2], &m[2][1], &m[0][1], &m[2][2]);
@@ -8458,7 +8642,7 @@ fn matrix3_scaled_adjugate<B: Backend>(
     let c21 = mul_sub(&m[0][1], &m[2][0], &m[0][0], &m[2][1]);
     let c22 = mul_sub(&m[0][0], &m[1][1], &m[0][1], &m[1][0]);
     let det = Scalar::dot3([&m[0][0], &m[0][1], &m[0][2]], [&c00, &c10, &c20]);
-    let inv_det = det.clone().inverse()?;
+    let inv_det = det.inverse()?;
     // Mat3 reciprocal is hot enough to keep a scaled-cofactor schedule separate
     // from right-division's unscaled-adjugate path. This avoids constructing an
     // intermediate matrix only to immediately rescale it, while preserving one
@@ -8486,10 +8670,10 @@ fn matrix3_scaled_adjugate<B: Backend>(
 
 #[inline]
 fn invert_matrix3<B: Backend>(matrix: [[Scalar<B>; 3]; 3]) -> BlasResult<[[Scalar<B>; 3]; 3]> {
-    crate::trace_dispatch!("realistic_blas_matrix", "helper", "invert-matrix3");
+    crate::trace_dispatch!("hyperlattice_matrix", "helper", "invert-matrix3");
     if matrix3_is_definitely_dense_for_inverse(&matrix) {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix3-dense-cofactor"
         );
@@ -8497,11 +8681,11 @@ fn invert_matrix3<B: Backend>(matrix: [[Scalar<B>; 3]; 3]) -> BlasResult<[[Scala
     }
     let facts = matrix3_facts(&matrix);
     if facts.is_identity {
-        crate::trace_dispatch!("realistic_blas_matrix", "helper", "invert-matrix3-identity");
+        crate::trace_dispatch!("hyperlattice_matrix", "helper", "invert-matrix3-identity");
         return Ok(matrix);
     }
     if facts.is_diagonal {
-        crate::trace_dispatch!("realistic_blas_matrix", "helper", "invert-matrix3-diagonal");
+        crate::trace_dispatch!("hyperlattice_matrix", "helper", "invert-matrix3-diagonal");
         return invert_matrix3_by_diagonal(&matrix);
     }
     if facts.is_upper_triangular {
@@ -8509,7 +8693,7 @@ fn invert_matrix3<B: Backend>(matrix: [[Scalar<B>; 3]; 3]) -> BlasResult<[[Scala
         // holds, because each row/column has one structural dependency chain.
         // This is a small, explicit specialization for exact-geometric workloads.
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix3-upper-triangular"
         );
@@ -8517,14 +8701,14 @@ fn invert_matrix3<B: Backend>(matrix: [[Scalar<B>; 3]; 3]) -> BlasResult<[[Scala
     }
     if facts.is_lower_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix3-lower-triangular"
         );
         return invert_matrix3_lower_triangular(&matrix);
     }
     if facts.is_affine {
-        crate::trace_dispatch!("realistic_blas_matrix", "helper", "invert-matrix3-affine");
+        crate::trace_dispatch!("hyperlattice_matrix", "helper", "invert-matrix3-affine");
         return invert_matrix3_affine(&matrix, facts.linear_is_diagonal);
     }
     // Cofactor inversion is intentionally kept for 3x3 reciprocal/inverse.
@@ -8537,10 +8721,10 @@ fn invert_matrix3<B: Backend>(matrix: [[Scalar<B>; 3]; 3]) -> BlasResult<[[Scala
 fn invert_matrix3_checked<B: Backend>(
     matrix: [[Scalar<B>; 3]; 3],
 ) -> CheckedBlasResult<[[Scalar<B>; 3]; 3]> {
-    crate::trace_dispatch!("realistic_blas_matrix", "helper", "invert-matrix3-checked");
+    crate::trace_dispatch!("hyperlattice_matrix", "helper", "invert-matrix3-checked");
     if matrix3_is_definitely_dense_for_inverse(&matrix) {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix3-checked-dense-cofactor"
         );
@@ -8552,7 +8736,7 @@ fn invert_matrix3_checked<B: Backend>(
     let facts = matrix3_facts(&matrix);
     if facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix3-checked-identity"
         );
@@ -8560,7 +8744,7 @@ fn invert_matrix3_checked<B: Backend>(
     }
     if facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix3-checked-diagonal"
         );
@@ -8570,7 +8754,7 @@ fn invert_matrix3_checked<B: Backend>(
         // Checked fast path preserves the same dispatch preference as ordinary
         // inverse but with an explicit nonzero guarantee on diagonal pivots.
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix3-checked-upper-triangular"
         );
@@ -8578,7 +8762,7 @@ fn invert_matrix3_checked<B: Backend>(
     }
     if facts.is_lower_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix3-checked-lower-triangular"
         );
@@ -8586,7 +8770,7 @@ fn invert_matrix3_checked<B: Backend>(
     }
     if facts.is_affine {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix3-checked-affine"
         );
@@ -8604,13 +8788,13 @@ fn invert_matrix3_checked_with_abort<B: Backend>(
     signal: &AbortSignal,
 ) -> CheckedBlasResult<[[Scalar<B>; 3]; 3]> {
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "invert-matrix3-checked-with-abort"
     );
     if matrix3_is_definitely_dense_for_inverse(&matrix) {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix3-checked-with-abort-dense-cofactor"
         );
@@ -8623,7 +8807,7 @@ fn invert_matrix3_checked_with_abort<B: Backend>(
     let facts = matrix3_facts(&matrix);
     if facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix3-checked-with-abort-identity"
         );
@@ -8631,7 +8815,7 @@ fn invert_matrix3_checked_with_abort<B: Backend>(
     }
     if facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix3-checked-with-abort-diagonal"
         );
@@ -8639,7 +8823,7 @@ fn invert_matrix3_checked_with_abort<B: Backend>(
     }
     if facts.is_upper_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix3-checked-with-abort-upper-triangular"
         );
@@ -8647,7 +8831,7 @@ fn invert_matrix3_checked_with_abort<B: Backend>(
     }
     if facts.is_lower_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix3-checked-with-abort-lower-triangular"
         );
@@ -8655,7 +8839,7 @@ fn invert_matrix3_checked_with_abort<B: Backend>(
     }
     if facts.is_affine {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix3-checked-with-abort-affine"
         );
@@ -8670,7 +8854,7 @@ fn invert_matrix3_checked_with_abort<B: Backend>(
 
 #[inline]
 fn matrix4_factors<B: Backend>(m: &[[Scalar<B>; 4]; 4]) -> ([Scalar<B>; 6], [Scalar<B>; 6]) {
-    crate::trace_dispatch!("realistic_blas_matrix", "helper", "matrix4-factors");
+    crate::trace_dispatch!("hyperlattice_matrix", "helper", "matrix4-factors");
     // Keep the cofactor inverse helpers inline across crate boundaries. The
     // full suite exposed a mat4 reciprocal layout regression; after inlining
     // the fixed inverse/cofactor layers, 200-sample/8s targeted reruns improved
@@ -8695,13 +8879,8 @@ fn matrix4_factors<B: Backend>(m: &[[Scalar<B>; 4]; 4]) -> ([Scalar<B>; 6], [Sca
     (s, c)
 }
 
-#[inline]
 fn determinant4_from_factors<B: Backend>(s: &[Scalar<B>; 6], c: &[Scalar<B>; 6]) -> Scalar<B> {
-    crate::trace_dispatch!(
-        "realistic_blas_matrix",
-        "helper",
-        "determinant4-from-factors"
-    );
+    crate::trace_dispatch!("hyperlattice_matrix", "helper", "determinant4-from-factors");
     // This is the fixed six-minor determinant polynomial
     //   s0*c5 - s1*c4 + s2*c3 + s3*c2 - s4*c1 + s5*c0.
     // Route it as one signed product sum so hyperreal exact rationals can
@@ -8730,7 +8909,7 @@ fn determinant4_from_factors<B: Backend>(s: &[Scalar<B>; 6], c: &[Scalar<B>; 6])
 
 #[inline]
 fn determinant4<B: Backend>(m: &[[Scalar<B>; 4]; 4]) -> Scalar<B> {
-    crate::trace_dispatch!("realistic_blas_matrix", "helper", "determinant4");
+    crate::trace_dispatch!("hyperlattice_matrix", "helper", "determinant4");
     // The six-minor formula shares the same division-free rationale as 3x3.
     // It is also reused by the cofactor inverse path, so determinant and
     // inverse stay aligned with the trace counters used for regression checks.
@@ -8828,7 +9007,7 @@ fn matrix4_scaled_adjugate_from_factors<B: Backend>(
 fn invert_matrix4<B: Backend>(matrix: [[Scalar<B>; 4]; 4]) -> BlasResult<[[Scalar<B>; 4]; 4]> {
     if matrix4_is_definitely_dense_for_inverse(&matrix) {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix4-dense-cofactor"
         );
@@ -8841,16 +9020,16 @@ fn invert_matrix4<B: Backend>(matrix: [[Scalar<B>; 4]; 4]) -> BlasResult<[[Scala
     }
     let facts = matrix4_facts(&matrix);
     if facts.is_identity {
-        crate::trace_dispatch!("realistic_blas_matrix", "helper", "invert-matrix4-identity");
+        crate::trace_dispatch!("hyperlattice_matrix", "helper", "invert-matrix4-identity");
         return Ok(matrix);
     }
     if facts.is_diagonal {
-        crate::trace_dispatch!("realistic_blas_matrix", "helper", "invert-matrix4-diagonal");
+        crate::trace_dispatch!("hyperlattice_matrix", "helper", "invert-matrix4-diagonal");
         return invert_matrix4_by_diagonal(&matrix);
     }
     if facts.is_upper_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix4-upper-triangular"
         );
@@ -8858,14 +9037,14 @@ fn invert_matrix4<B: Backend>(matrix: [[Scalar<B>; 4]; 4]) -> BlasResult<[[Scala
     }
     if facts.is_lower_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix4-lower-triangular"
         );
         return invert_matrix4_by_lower_triangular(&matrix);
     }
     if facts.is_affine {
-        crate::trace_dispatch!("realistic_blas_matrix", "helper", "invert-matrix4-affine");
+        crate::trace_dispatch!("hyperlattice_matrix", "helper", "invert-matrix4-affine");
         return invert_matrix4_affine(
             &matrix,
             facts.linear_is_diagonal,
@@ -8890,7 +9069,7 @@ fn invert_matrix4_checked<B: Backend>(
 ) -> CheckedBlasResult<[[Scalar<B>; 4]; 4]> {
     if matrix4_is_definitely_dense_for_inverse(&matrix) {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix4-checked-dense-cofactor"
         );
@@ -8905,7 +9084,7 @@ fn invert_matrix4_checked<B: Backend>(
     let facts = matrix4_facts(&matrix);
     if facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix4-checked-identity"
         );
@@ -8913,7 +9092,7 @@ fn invert_matrix4_checked<B: Backend>(
     }
     if facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix4-checked-diagonal"
         );
@@ -8921,7 +9100,7 @@ fn invert_matrix4_checked<B: Backend>(
     }
     if facts.is_upper_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix4-checked-upper-triangular"
         );
@@ -8929,7 +9108,7 @@ fn invert_matrix4_checked<B: Backend>(
     }
     if facts.is_lower_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix4-checked-lower-triangular"
         );
@@ -8937,7 +9116,7 @@ fn invert_matrix4_checked<B: Backend>(
     }
     if facts.is_affine {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix4-checked-affine"
         );
@@ -8963,7 +9142,7 @@ fn invert_matrix4_checked_with_abort<B: Backend>(
 ) -> CheckedBlasResult<[[Scalar<B>; 4]; 4]> {
     if matrix4_is_definitely_dense_for_inverse(&matrix) {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix4-checked-with-abort-dense-cofactor"
         );
@@ -8979,7 +9158,7 @@ fn invert_matrix4_checked_with_abort<B: Backend>(
     let facts = matrix4_facts(&matrix);
     if facts.is_identity {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix4-checked-with-abort-identity"
         );
@@ -8987,7 +9166,7 @@ fn invert_matrix4_checked_with_abort<B: Backend>(
     }
     if facts.is_diagonal {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix4-checked-with-abort-diagonal"
         );
@@ -8995,7 +9174,7 @@ fn invert_matrix4_checked_with_abort<B: Backend>(
     }
     if facts.is_upper_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix4-checked-with-abort-upper-triangular"
         );
@@ -9003,7 +9182,7 @@ fn invert_matrix4_checked_with_abort<B: Backend>(
     }
     if facts.is_lower_triangular {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix4-checked-with-abort-lower-triangular"
         );
@@ -9011,7 +9190,7 @@ fn invert_matrix4_checked_with_abort<B: Backend>(
     }
     if facts.is_affine {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "helper",
             "invert-matrix4-checked-with-abort-affine"
         );
@@ -9039,7 +9218,7 @@ fn matrix4_adjugate_from_factors<B: Backend>(
     c: &[Scalar<B>; 6],
 ) -> [[Scalar<B>; 4]; 4] {
     crate::trace_dispatch!(
-        "realistic_blas_matrix",
+        "hyperlattice_matrix",
         "helper",
         "matrix4-unscaled-adjugate-from-factors"
     );
@@ -9094,19 +9273,19 @@ macro_rules! impl_matrix {
         impl<B: Backend> $name<B> {
             /// Constructs a matrix from row-major entries.
             pub fn new(values: [[Scalar<B>; $n]; $n]) -> Self {
-                crate::trace_dispatch!("realistic_blas_matrix", "constructor", "new");
+                crate::trace_dispatch!("hyperlattice_matrix", "constructor", "new");
                 Self(values)
             }
 
             /// Returns the zero matrix.
             pub fn zero() -> Self {
-                crate::trace_dispatch!("realistic_blas_matrix", "constructor", "zero");
+                crate::trace_dispatch!("hyperlattice_matrix", "constructor", "zero");
                 Self(from_fn(|_| from_fn(|_| Scalar::zero())))
             }
 
             /// Returns the identity matrix.
             pub fn identity() -> Self {
-                crate::trace_dispatch!("realistic_blas_matrix", "constructor", "identity");
+                crate::trace_dispatch!("hyperlattice_matrix", "constructor", "identity");
                 Self(from_fn(|row| {
                     from_fn(|col| {
                         if row == col {
@@ -9120,7 +9299,7 @@ macro_rules! impl_matrix {
 
             /// Returns the transpose.
             pub fn transpose(&self) -> Self {
-                crate::trace_dispatch!("realistic_blas_matrix", "method", "transpose");
+                crate::trace_dispatch!("hyperlattice_matrix", "method", "transpose");
                 Self(from_fn(|row| from_fn(|col| self.0[col][row].clone())))
             }
 
@@ -9128,7 +9307,7 @@ macro_rules! impl_matrix {
             ///
             /// This is equivalent to [`inverse`](Self::inverse).
             pub fn reciprocal(self) -> BlasResult<Self> {
-                crate::trace_dispatch!("realistic_blas_matrix", "method", "reciprocal");
+                crate::trace_dispatch!("hyperlattice_matrix", "method", "reciprocal");
                 self.inverse()
             }
 
@@ -9136,7 +9315,7 @@ macro_rules! impl_matrix {
             ///
             /// This is equivalent to [`inverse_checked`](Self::inverse_checked).
             pub fn reciprocal_checked(self) -> CheckedBlasResult<Self> {
-                crate::trace_dispatch!("realistic_blas_matrix", "method", "reciprocal-checked");
+                crate::trace_dispatch!("hyperlattice_matrix", "method", "reciprocal-checked");
                 self.inverse_checked()
             }
 
@@ -9144,7 +9323,7 @@ macro_rules! impl_matrix {
             ///
             /// Negative exponents invert the matrix first.
             pub fn powi(self, exponent: i32) -> BlasResult<Self> {
-                crate::trace_dispatch!("realistic_blas_matrix", "method", "powi");
+                crate::trace_dispatch!("hyperlattice_matrix", "method", "powi");
                 // Negative powers deliberately materialize A^-1 before
                 // repeated squaring. A delayed-scale prototype using
                 // A^-k = adj(A)^k * det(A)^-k looked structurally attractive,
@@ -9162,7 +9341,7 @@ macro_rules! impl_matrix {
 
             /// Raises the matrix to an integer power using checked inversion.
             pub fn powi_checked(self, exponent: i32) -> CheckedBlasResult<Self> {
-                crate::trace_dispatch!("realistic_blas_matrix", "method", "powi-checked");
+                crate::trace_dispatch!("hyperlattice_matrix", "method", "powi-checked");
                 let base = if exponent < 0 {
                     self.inverse_checked()?.0
                 } else {
@@ -9177,11 +9356,7 @@ macro_rules! impl_matrix {
                 exponent: i32,
                 signal: &AbortSignal,
             ) -> CheckedBlasResult<Self> {
-                crate::trace_dispatch!(
-                    "realistic_blas_matrix",
-                    "method",
-                    "powi-checked-with-abort"
-                );
+                crate::trace_dispatch!("hyperlattice_matrix", "method", "powi-checked-with-abort");
                 let base = if exponent < 0 {
                     self.inverse_checked_with_abort(signal)?.0
                 } else {
@@ -9192,7 +9367,7 @@ macro_rules! impl_matrix {
 
             /// Divides every entry by `rhs` after rejecting unknown-zero divisors.
             pub fn div_scalar_checked(self, rhs: Scalar<B>) -> CheckedBlasResult<Self> {
-                crate::trace_dispatch!("realistic_blas_matrix", "method", "div-scalar-checked");
+                crate::trace_dispatch!("hyperlattice_matrix", "method", "div-scalar-checked");
                 require_known_nonzero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
                 if B::MOVE_ELEMENTWISE {
@@ -9218,7 +9393,7 @@ macro_rules! impl_matrix {
                 signal: &AbortSignal,
             ) -> CheckedBlasResult<Self> {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "method",
                     "div-scalar-checked-with-abort"
                 );
@@ -9243,7 +9418,7 @@ macro_rules! impl_matrix {
 
             /// Divides by another matrix using checked inversion of the divisor.
             pub fn div_matrix_checked(self, rhs: Self) -> CheckedBlasResult<Self> {
-                crate::trace_dispatch!("realistic_blas_matrix", "method", "div-matrix-checked");
+                crate::trace_dispatch!("hyperlattice_matrix", "method", "div-matrix-checked");
                 Ok(Self($div_checked_fn(self.0, rhs.0)?))
             }
 
@@ -9254,7 +9429,7 @@ macro_rules! impl_matrix {
                 signal: &AbortSignal,
             ) -> CheckedBlasResult<Self> {
                 crate::trace_dispatch!(
-                    "realistic_blas_matrix",
+                    "hyperlattice_matrix",
                     "method",
                     "div-matrix-checked-with-abort"
                 );
@@ -9304,7 +9479,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn add(self, rhs: Self) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "add-owned-owned");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "add-owned-owned");
                 if B::MOVE_ELEMENTWISE {
                     Self(map_matrix2(self.0, rhs.0, |lhs, rhs| lhs + rhs))
                 } else {
@@ -9319,7 +9494,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn add(self, rhs: &$name<B>) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "add-owned-ref");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "add-owned-ref");
                 Self(map_matrix_ref(self.0, &rhs.0, Scalar::add_cached))
             }
         }
@@ -9328,7 +9503,7 @@ macro_rules! impl_matrix {
             type Output = $name<B>;
 
             fn add(self, rhs: $name<B>) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "add-ref-owned");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "add-ref-owned");
                 $name(map_matrix_left_ref(&self.0, rhs.0, |lhs, rhs| lhs + rhs))
             }
         }
@@ -9337,7 +9512,7 @@ macro_rules! impl_matrix {
             type Output = $name<B>;
 
             fn add(self, rhs: &$name<B>) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "add-ref-ref");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "add-ref-ref");
                 $name(from_fn(|row| {
                     from_fn(|col| &self.0[row][col] + &rhs.0[row][col])
                 }))
@@ -9348,7 +9523,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn add(self, rhs: Scalar<B>) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "add-scalar-owned");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "add-scalar-owned");
                 let rhs = &rhs;
                 if B::MOVE_ELEMENTWISE {
                     Self(self.0.map(|row| row.map(|value| value.add_cached(rhs))))
@@ -9368,7 +9543,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn add(self, rhs: &Scalar<B>) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "add-scalar-ref");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "add-scalar-ref");
                 Self(self.0.map(|row| row.map(|value| value.add_cached(rhs))))
             }
         }
@@ -9377,7 +9552,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn sub(self, rhs: Self) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "sub-owned-owned");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "sub-owned-owned");
                 if B::MOVE_ELEMENTWISE {
                     Self(map_matrix2(self.0, rhs.0, |lhs, rhs| lhs - rhs))
                 } else {
@@ -9392,7 +9567,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn sub(self, rhs: &$name<B>) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "sub-owned-ref");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "sub-owned-ref");
                 Self(map_matrix_ref(self.0, &rhs.0, Scalar::sub_cached))
             }
         }
@@ -9401,7 +9576,7 @@ macro_rules! impl_matrix {
             type Output = $name<B>;
 
             fn sub(self, rhs: $name<B>) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "sub-ref-owned");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "sub-ref-owned");
                 $name(map_matrix_left_ref(&self.0, rhs.0, |lhs, rhs| lhs - rhs))
             }
         }
@@ -9410,7 +9585,7 @@ macro_rules! impl_matrix {
             type Output = $name<B>;
 
             fn sub(self, rhs: &$name<B>) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "sub-ref-ref");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "sub-ref-ref");
                 $name(from_fn(|row| {
                     from_fn(|col| &self.0[row][col] - &rhs.0[row][col])
                 }))
@@ -9421,7 +9596,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn sub(self, rhs: Scalar<B>) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "sub-scalar-owned");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "sub-scalar-owned");
                 let rhs = &rhs;
                 if B::MOVE_ELEMENTWISE {
                     Self(self.0.map(|row| row.map(|value| value.sub_cached(rhs))))
@@ -9441,7 +9616,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn sub(self, rhs: &Scalar<B>) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "sub-scalar-ref");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "sub-scalar-ref");
                 Self(self.0.map(|row| row.map(|value| value.sub_cached(rhs))))
             }
         }
@@ -9450,7 +9625,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn neg(self) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "neg-owned");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "neg-owned");
                 if B::MOVE_ELEMENTWISE {
                     Self(self.0.map(|row| row.map(|value| -value)))
                 } else {
@@ -9463,7 +9638,7 @@ macro_rules! impl_matrix {
             type Output = $name<B>;
 
             fn neg(self) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "neg-ref");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "neg-ref");
                 $name(from_fn(|row| from_fn(|col| -self.0[row][col].clone())))
             }
         }
@@ -9472,7 +9647,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn mul(self, rhs: Scalar<B>) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "mul-scalar-owned");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "mul-scalar-owned");
                 let rhs = &rhs;
                 if B::MOVE_ELEMENTWISE {
                     Self(self.0.map(|row| row.map(|value| value.mul_cached(rhs))))
@@ -9492,7 +9667,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn mul(self, rhs: &Scalar<B>) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "mul-scalar-ref");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "mul-scalar-ref");
                 Self(self.0.map(|row| row.map(|value| value.mul_cached(rhs))))
             }
         }
@@ -9501,7 +9676,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<Self>;
 
             fn div(self, rhs: Scalar<B>) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "div-scalar-owned");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "div-scalar-owned");
                 reject_definite_zero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
                 if B::MOVE_ELEMENTWISE {
@@ -9525,7 +9700,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<Self>;
 
             fn div(self, rhs: &Scalar<B>) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "div-scalar-ref");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "div-scalar-ref");
                 reject_definite_zero(rhs)?;
                 let inv_rhs = rhs.inverse_ref()?;
                 if B::MOVE_ELEMENTWISE {
@@ -9549,7 +9724,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn mul(self, rhs: Self) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "mul-owned-owned");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "mul-owned-owned");
                 Self($mul_owned_fn(self.0, rhs.0))
             }
         }
@@ -9558,7 +9733,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn mul(self, rhs: &$name<B>) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "mul-owned-ref");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "mul-owned-ref");
                 Self($mul_rhs_ref_fn(self.0, &rhs.0))
             }
         }
@@ -9567,7 +9742,7 @@ macro_rules! impl_matrix {
             type Output = $name<B>;
 
             fn mul(self, rhs: $name<B>) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "mul-ref-owned");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "mul-ref-owned");
                 $name($mul_ref_fn(&self.0, &rhs.0))
             }
         }
@@ -9576,7 +9751,7 @@ macro_rules! impl_matrix {
             type Output = $name<B>;
 
             fn mul(self, rhs: &$name<B>) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "mul-ref-ref");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "mul-ref-ref");
                 $name($mul_ref_fn(&self.0, &rhs.0))
             }
         }
@@ -9585,7 +9760,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<Self>;
 
             fn div(self, rhs: Self) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "div-owned-owned");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "div-owned-owned");
                 Ok(Self($div_fn(self.0, rhs.0)?))
             }
         }
@@ -9594,7 +9769,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<Self>;
 
             fn div(self, rhs: &$name<B>) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "div-owned-ref");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "div-owned-ref");
                 self / rhs.clone()
             }
         }
@@ -9603,7 +9778,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<$name<B>>;
 
             fn div(self, rhs: $name<B>) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "div-ref-owned");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "div-ref-owned");
                 self.clone() / rhs
             }
         }
@@ -9612,7 +9787,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<$name<B>>;
 
             fn div(self, rhs: &$name<B>) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "div-ref-ref");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "div-ref-ref");
                 Ok($name($div_ref_fn(&self.0, &rhs.0)?))
             }
         }
@@ -9621,11 +9796,7 @@ macro_rules! impl_matrix {
             type Output = $vector<B>;
 
             fn mul(self, rhs: $vector<B>) -> Self::Output {
-                crate::trace_dispatch!(
-                    "realistic_blas_matrix",
-                    "op",
-                    "transform-vector-owned-owned"
-                );
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "transform-vector-owned-owned");
                 $vector(transform_vector_rhs_ref(&self.0, &rhs.0))
             }
         }
@@ -9634,7 +9805,7 @@ macro_rules! impl_matrix {
             type Output = $vector<B>;
 
             fn mul(self, rhs: &$vector<B>) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "transform-vector-owned-ref");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "transform-vector-owned-ref");
                 $vector(transform_vector_rhs_ref(&self.0, &rhs.0))
             }
         }
@@ -9643,7 +9814,7 @@ macro_rules! impl_matrix {
             type Output = $vector<B>;
 
             fn mul(self, rhs: $vector<B>) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "transform-vector-ref-owned");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "transform-vector-ref-owned");
                 $vector(transform_vector_rhs_ref(&self.0, &rhs.0))
             }
         }
@@ -9652,7 +9823,7 @@ macro_rules! impl_matrix {
             type Output = $vector<B>;
 
             fn mul(self, rhs: &$vector<B>) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "transform-vector-ref-ref");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "transform-vector-ref-ref");
                 $vector(transform_vector_rhs_ref(&self.0, &rhs.0))
             }
         }
@@ -9661,7 +9832,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<Self>;
 
             fn bitxor(self, rhs: i32) -> Self::Output {
-                crate::trace_dispatch!("realistic_blas_matrix", "op", "bitxor-powi");
+                crate::trace_dispatch!("hyperlattice_matrix", "op", "bitxor-powi");
                 self.powi(rhs)
             }
         }
@@ -9698,7 +9869,7 @@ impl_matrix!(
 impl<B: Backend> Matrix3<B> {
     /// Constructs a 3x3 diagonal matrix from known diagonal entries.
     pub fn diagonal(diagonal: [Scalar<B>; 3]) -> Self {
-        crate::trace_dispatch!("realistic_blas_matrix", "constructor", "diagonal3");
+        crate::trace_dispatch!("hyperlattice_matrix", "constructor", "diagonal3");
         let [d0, d1, d2] = diagonal;
         Self([
             [d0, Scalar::zero(), Scalar::zero()],
@@ -9718,7 +9889,7 @@ impl<B: Backend> Matrix3<B> {
     /// Geometric Computation", 1997) and the diagonal-system specialization in
     /// Golub and Van Loan, *Matrix Computations*.
     pub fn diagonal_inverse(diagonal: [Scalar<B>; 3]) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_matrix", "constructor", "diagonal3-inverse");
+        crate::trace_dispatch!("hyperlattice_matrix", "constructor", "diagonal3-inverse");
         let [d0, d1, d2] = diagonal;
         Ok(Self::diagonal([
             d0.inverse()?,
@@ -9739,7 +9910,7 @@ impl<B: Backend> Matrix3<B> {
     /// diagonal linear-system specialization described by Golub and Van Loan,
     /// *Matrix Computations*.
     pub fn div_diagonal(self, diagonal: [Scalar<B>; 3]) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_matrix", "method", "div-diagonal3");
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "div-diagonal3");
         let [[a00, a01, a02], [a10, a11, a12], [a20, a21, a22]] = self.0;
         let [d0, d1, d2] = diagonal;
         let inv0 = d0.inverse()?;
@@ -9780,7 +9951,7 @@ impl<B: Backend> Matrix3<B> {
         diagonal: [Scalar<B>; 3],
         rhs: &Vector3<B>,
     ) -> BlasResult<Vector3<B>> {
-        crate::trace_dispatch!("realistic_blas_matrix", "method", "div-diagonal3-vector");
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "div-diagonal3-vector");
         let [d0, d1, d2] = diagonal;
         let inv0 = d0.inverse()?;
         let inv1 = d1.inverse()?;
@@ -9814,11 +9985,7 @@ impl<B: Backend> Matrix3<B> {
         self,
         divisor: &mut PreparedRightDivisor3<'_, B>,
     ) -> BlasResult<Self> {
-        crate::trace_dispatch!(
-            "realistic_blas_matrix",
-            "method",
-            "div-matrix-with-prepared"
-        );
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "div-matrix-with-prepared");
         Ok(Self(divisor.divide(self.0)?))
     }
 
@@ -9831,7 +9998,7 @@ impl<B: Backend> Matrix3<B> {
         divisor: &mut PreparedRightDivisor3<'_, B>,
     ) -> CheckedBlasResult<Self> {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "method",
             "div-matrix-checked-with-prepared"
         );
@@ -9845,7 +10012,7 @@ impl<B: Backend> Matrix3<B> {
         signal: &AbortSignal,
     ) -> CheckedBlasResult<Self> {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "method",
             "div-matrix-checked-with-prepared-with-abort"
         );
@@ -9854,7 +10021,7 @@ impl<B: Backend> Matrix3<B> {
 
     /// Constructs a scalar multiple of the 3x3 identity matrix.
     pub fn uniform_scale(scale: Scalar<B>) -> Self {
-        crate::trace_dispatch!("realistic_blas_matrix", "constructor", "uniform-scale3");
+        crate::trace_dispatch!("hyperlattice_matrix", "constructor", "uniform-scale3");
         Self([
             [scale.clone(), Scalar::zero(), Scalar::zero()],
             [Scalar::zero(), scale.clone(), Scalar::zero()],
@@ -9874,7 +10041,7 @@ impl<B: Backend> Matrix3<B> {
     /// Van Loan, *Matrix Computations*.
     pub fn uniform_scale_inverse(scale: Scalar<B>) -> BlasResult<Self> {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "constructor",
             "uniform-scale3-inverse"
         );
@@ -9892,7 +10059,7 @@ impl<B: Backend> Matrix3<B> {
     /// same arithmetic path.
     pub fn transform_vec3_batch(&self, rhs: &[Vector3<B>]) -> Vec<Vector3<B>> {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "method",
             "transform-vector-vec3-batch"
         );
@@ -9922,20 +10089,20 @@ impl<B: Backend> Matrix3<B> {
     /// The ordinary path rejects a definite-zero determinant and otherwise
     /// propagates scalar arithmetic errors from the selected backend.
     pub fn inverse(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_matrix", "method", "matrix3-inverse");
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "matrix3-inverse");
         Ok(Self(invert_matrix3(self.0)?))
     }
 
     /// Returns the matrix inverse after rejecting unknown-zero determinants.
     pub fn inverse_checked(self) -> CheckedBlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_matrix", "method", "matrix3-inverse-checked");
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "matrix3-inverse-checked");
         Ok(Self(invert_matrix3_checked(self.0)?))
     }
 
     /// Returns the checked matrix inverse after attaching an abort signal.
     pub fn inverse_checked_with_abort(self, signal: &AbortSignal) -> CheckedBlasResult<Self> {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "method",
             "matrix3-inverse-checked-with-abort"
         );
@@ -9944,7 +10111,7 @@ impl<B: Backend> Matrix3<B> {
 
     /// Returns the determinant.
     pub fn determinant(&self) -> Scalar<B> {
-        crate::trace_dispatch!("realistic_blas_matrix", "method", "matrix3-determinant");
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "matrix3-determinant");
         determinant3(&self.0)
     }
 }
@@ -9952,7 +10119,7 @@ impl<B: Backend> Matrix3<B> {
 impl<B: Backend> Matrix4<B> {
     /// Constructs a 4x4 diagonal matrix from known diagonal entries.
     pub fn diagonal(diagonal: [Scalar<B>; 4]) -> Self {
-        crate::trace_dispatch!("realistic_blas_matrix", "constructor", "diagonal");
+        crate::trace_dispatch!("hyperlattice_matrix", "constructor", "diagonal");
         let [d0, d1, d2, d3] = diagonal;
         Self([
             [d0, Scalar::zero(), Scalar::zero(), Scalar::zero()],
@@ -9974,7 +10141,7 @@ impl<B: Backend> Matrix4<B> {
     /// ("Towards Exact Geometric Computation", 1997) and the diagonal solve
     /// treatment in Golub and Van Loan, *Matrix Computations*.
     pub fn diagonal_inverse(diagonal: [Scalar<B>; 4]) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_matrix", "constructor", "diagonal-inverse");
+        crate::trace_dispatch!("hyperlattice_matrix", "constructor", "diagonal-inverse");
         let [d0, d1, d2, d3] = diagonal;
         Ok(Self::diagonal([
             d0.inverse()?,
@@ -9997,7 +10164,7 @@ impl<B: Backend> Matrix4<B> {
     /// Geometric Computation", 1997) and the diagonal solve specialization in
     /// Golub and Van Loan, *Matrix Computations*.
     pub fn div_diagonal(self, diagonal: [Scalar<B>; 4]) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_matrix", "method", "div-diagonal");
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "div-diagonal");
         let [
             [a00, a01, a02, a03],
             [a10, a11, a12, a13],
@@ -10057,7 +10224,7 @@ impl<B: Backend> Matrix4<B> {
         diagonal: [Scalar<B>; 4],
         rhs: &Vector4<B>,
     ) -> BlasResult<Vector4<B>> {
-        crate::trace_dispatch!("realistic_blas_matrix", "method", "div-diagonal4-vector");
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "div-diagonal4-vector");
         let [d0, d1, d2, d3] = diagonal;
         let vector_facts = rhs.geometric_facts();
         if matches!(vector_facts.homogeneous, Vector4HomogeneousKind::Direction) {
@@ -10187,7 +10354,7 @@ impl<B: Backend> Matrix4<B> {
         rhs: &Vector4<B>,
     ) -> BlasResult<Vector4<B>> {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "method",
             "div-diagonal4-vector-direction-only"
         );
@@ -10228,11 +10395,7 @@ impl<B: Backend> Matrix4<B> {
         self,
         divisor: &mut PreparedRightDivisor4<'_, B>,
     ) -> BlasResult<Self> {
-        crate::trace_dispatch!(
-            "realistic_blas_matrix",
-            "method",
-            "div-matrix-with-prepared"
-        );
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "div-matrix-with-prepared");
         Ok(Self(divisor.divide(self.0)?))
     }
 
@@ -10245,7 +10408,7 @@ impl<B: Backend> Matrix4<B> {
         divisor: &mut PreparedRightDivisor4<'_, B>,
     ) -> CheckedBlasResult<Self> {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "method",
             "div-matrix-checked-with-prepared"
         );
@@ -10259,7 +10422,7 @@ impl<B: Backend> Matrix4<B> {
         signal: &AbortSignal,
     ) -> CheckedBlasResult<Self> {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "method",
             "div-matrix-checked-with-prepared-with-abort"
         );
@@ -10268,7 +10431,7 @@ impl<B: Backend> Matrix4<B> {
 
     /// Constructs a scalar multiple of the 4x4 identity matrix.
     pub fn uniform_scale(scale: Scalar<B>) -> Self {
-        crate::trace_dispatch!("realistic_blas_matrix", "constructor", "uniform-scale");
+        crate::trace_dispatch!("hyperlattice_matrix", "constructor", "uniform-scale");
         Self([
             [
                 scale.clone(),
@@ -10305,7 +10468,7 @@ impl<B: Backend> Matrix4<B> {
     /// Van Loan, *Matrix Computations*.
     pub fn uniform_scale_inverse(scale: Scalar<B>) -> BlasResult<Self> {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "constructor",
             "uniform-scale-inverse"
         );
@@ -10367,7 +10530,7 @@ impl<B: Backend> Matrix4<B> {
     /// the translation column out of the arithmetic schedule.
     pub fn transform_vec4_direction_batch(&self, rhs: &[Vector4<B>]) -> Vec<Vector4<B>> {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "method",
             "transform-vector-vec4-direction-batch"
         );
@@ -10393,7 +10556,7 @@ impl<B: Backend> Matrix4<B> {
     /// generic point/direction/unknown classification pass.
     pub fn transform_vec4_point_batch(&self, rhs: &[Vector4<B>]) -> Vec<Vector4<B>> {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "method",
             "transform-vector-vec4-point-batch"
         );
@@ -10415,7 +10578,7 @@ impl<B: Backend> Matrix4<B> {
     /// structural fact construction and keeps point/direction dispatch flat.
     pub fn transform_vec4_batch(&self, rhs: &[Vector4<B>]) -> Vec<Vector4<B>> {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "method",
             "transform-vector-vec4-batch"
         );
@@ -10427,20 +10590,20 @@ impl<B: Backend> Matrix4<B> {
     /// The ordinary path rejects a definite-zero determinant and propagates
     /// scalar arithmetic errors from the selected backend.
     pub fn inverse(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_matrix", "method", "matrix4-inverse");
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "matrix4-inverse");
         Ok(Self(invert_matrix4(self.0)?))
     }
 
     /// Returns the matrix inverse after rejecting unknown-zero determinants.
     pub fn inverse_checked(self) -> CheckedBlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_matrix", "method", "matrix4-inverse-checked");
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "matrix4-inverse-checked");
         Ok(Self(invert_matrix4_checked(self.0)?))
     }
 
     /// Returns the checked matrix inverse after attaching an abort signal.
     pub fn inverse_checked_with_abort(self, signal: &AbortSignal) -> CheckedBlasResult<Self> {
         crate::trace_dispatch!(
-            "realistic_blas_matrix",
+            "hyperlattice_matrix",
             "method",
             "matrix4-inverse-checked-with-abort"
         );
@@ -10449,7 +10612,7 @@ impl<B: Backend> Matrix4<B> {
 
     /// Returns the determinant.
     pub fn determinant(&self) -> Scalar<B> {
-        crate::trace_dispatch!("realistic_blas_matrix", "method", "matrix4-determinant");
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "matrix4-determinant");
         determinant4(&self.0)
     }
 }

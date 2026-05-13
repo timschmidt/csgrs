@@ -53,56 +53,52 @@ impl Backend for HyperrealBackend {
 
 impl BackendScalarTrait for BackendScalar {
     fn zero() -> Self {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "constructor", "zero");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "constructor", "zero");
         Self(hyperreal::Real::zero())
     }
 
     fn one() -> Self {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "constructor", "one");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "constructor", "one");
         Self(hyperreal::Real::one())
     }
 
     fn e() -> Self {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "constructor", "e");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "constructor", "e");
         Self(hyperreal::Real::e())
     }
 
     fn pi() -> Self {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "constructor", "pi");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "constructor", "pi");
         Self(hyperreal::Real::pi())
     }
 
     fn tau() -> Self {
         // Use hyperreal's cached internal `tau` representation instead of
         // rebuilding `2 * pi` through public scalar multiplication.
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "constructor", "tau");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "constructor", "tau");
         Self(hyperreal::Real::tau())
     }
 
     fn inverse(self) -> BlasResult<Self> {
-        crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
-            "method",
-            "inverse-owned"
-        );
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "method", "inverse-owned");
         self.0.inverse().map(Self).map_err(Problem::from)
     }
 
     #[inline]
     fn inverse_ref(&self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "method", "inverse-ref");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "method", "inverse-ref");
         self.0.inverse_ref().map(Self).map_err(Problem::from)
     }
 
     fn pow(self, exponent: Self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "method", "pow");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "method", "pow");
         self.0.pow(exponent.0).map(Self).map_err(Problem::from)
     }
 
     #[inline]
     fn add_ref(self, rhs: &Self) -> Self {
         crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
+            "hyperlattice_hyperreal_backend",
             "op",
             "add-owned-method-ref"
         );
@@ -111,26 +107,26 @@ impl BackendScalarTrait for BackendScalar {
 
     #[inline]
     fn add_owned_ref(left: Self, right: &Self) -> Self {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "op", "add-owned-ref");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "op", "add-owned-ref");
         Self(left.0 + &right.0)
     }
 
     #[inline]
     fn add_ref_owned(left: &Self, right: Self) -> Self {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "op", "add-ref-owned");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "op", "add-ref-owned");
         Self(&left.0 + right.0)
     }
 
     #[inline]
     fn add_refs(left: &Self, right: &Self) -> Self {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "op", "add-ref-ref");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "op", "add-ref-ref");
         Self(&left.0 + &right.0)
     }
 
     #[inline]
     fn sub_ref(self, rhs: &Self) -> Self {
         crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
+            "hyperlattice_hyperreal_backend",
             "op",
             "sub-owned-method-ref"
         );
@@ -139,26 +135,26 @@ impl BackendScalarTrait for BackendScalar {
 
     #[inline]
     fn sub_owned_ref(left: Self, right: &Self) -> Self {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "op", "sub-owned-ref");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "op", "sub-owned-ref");
         Self(left.0 - &right.0)
     }
 
     #[inline]
     fn sub_ref_owned(left: &Self, right: Self) -> Self {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "op", "sub-ref-owned");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "op", "sub-ref-owned");
         Self(&left.0 - right.0)
     }
 
     #[inline]
     fn sub_refs(left: &Self, right: &Self) -> Self {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "op", "sub-ref-ref");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "op", "sub-ref-ref");
         Self(&left.0 - &right.0)
     }
 
     #[inline]
     fn mul_ref(self, rhs: &Self) -> Self {
         crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
+            "hyperlattice_hyperreal_backend",
             "op",
             "mul-owned-method-ref"
         );
@@ -167,26 +163,26 @@ impl BackendScalarTrait for BackendScalar {
 
     #[inline]
     fn mul_owned_ref(left: Self, right: &Self) -> Self {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "op", "mul-owned-ref");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "op", "mul-owned-ref");
         Self(left.0 * &right.0)
     }
 
     #[inline]
     fn mul_ref_owned(left: &Self, right: Self) -> Self {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "op", "mul-ref-owned");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "op", "mul-ref-owned");
         Self(&left.0 * right.0)
     }
 
     #[inline]
     fn mul_refs(left: &Self, right: &Self) -> Self {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "op", "mul-ref-ref");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "op", "mul-ref-ref");
         Self(&left.0 * &right.0)
     }
 
     #[inline]
     fn div_ref(self, rhs: &Self) -> BlasResult<Self> {
         crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
+            "hyperlattice_hyperreal_backend",
             "op",
             "div-owned-method-ref"
         );
@@ -195,19 +191,19 @@ impl BackendScalarTrait for BackendScalar {
 
     #[inline]
     fn div_owned_ref(left: Self, right: &Self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "op", "div-owned-ref");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "op", "div-owned-ref");
         (left.0 / &right.0).map(Self).map_err(Problem::from)
     }
 
     #[inline]
     fn div_ref_owned(left: &Self, right: Self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "op", "div-ref-owned");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "op", "div-ref-owned");
         (&left.0 / right.0).map(Self).map_err(Problem::from)
     }
 
     #[inline]
     fn div_refs(left: &Self, right: &Self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "op", "div-ref-ref");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "op", "div-ref-ref");
         (&left.0 / &right.0).map(Self).map_err(Problem::from)
     }
 
@@ -218,7 +214,7 @@ impl BackendScalarTrait for BackendScalar {
         // lanes still use the previous product/tree shape inside hyperreal.
         // 2026-05 benches: borrowed mat3 mul refs moved from roughly 4.99 us
         // to 2.29 us and vec3 dot from roughly 695 ns to 253 ns.
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "op", "dot3-specialized");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "op", "dot3-specialized");
         Self(hyperreal::Real::dot3_refs(
             [&left[0].0, &left[1].0, &left[2].0],
             [&right[0].0, &right[1].0, &right[2].0],
@@ -227,7 +223,7 @@ impl BackendScalarTrait for BackendScalar {
 
     #[inline]
     fn active_dot3(left: [&Self; 3], right: [&Self; 3]) -> Self {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "op", "active-dot3");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "op", "active-dot3");
         Self(hyperreal::Real::active_dot3_refs(
             [&left[0].0, &left[1].0, &left[2].0],
             [&right[0].0, &right[1].0, &right[2].0],
@@ -240,7 +236,7 @@ impl BackendScalarTrait for BackendScalar {
         // most from hyperreal's shared-denominator exact-rational path. Keep
         // this specialization unless traces show the exact-rational constructor
         // count or benchmark time regressing beyond normal Criterion noise.
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "op", "dot4-specialized");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "op", "dot4-specialized");
         Self(hyperreal::Real::dot4_refs(
             [&left[0].0, &left[1].0, &left[2].0, &left[3].0],
             [&right[0].0, &right[1].0, &right[2].0, &right[3].0],
@@ -249,7 +245,7 @@ impl BackendScalarTrait for BackendScalar {
 
     #[inline]
     fn active_dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "op", "active-dot4");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "op", "active-dot4");
         Self(hyperreal::Real::active_dot4_refs(
             [&left[0].0, &left[1].0, &left[2].0, &left[3].0],
             [&right[0].0, &right[1].0, &right[2].0, &right[3].0],
@@ -261,7 +257,7 @@ impl BackendScalarTrait for BackendScalar {
         // Route through `Real`'s fixed-arity form to let affine-structure
         // opportunities in symbolic form live longer than immediate expansion.
         crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
+            "hyperlattice_hyperreal_backend",
             "op",
             "linear-combination3-specialized"
         );
@@ -274,7 +270,7 @@ impl BackendScalarTrait for BackendScalar {
     #[inline]
     fn active_linear_combination3(coeffs: [&Self; 3], values: [&Self; 3]) -> Self {
         crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
+            "hyperlattice_hyperreal_backend",
             "op",
             "active-linear-combination3"
         );
@@ -289,7 +285,7 @@ impl BackendScalarTrait for BackendScalar {
         // Same rationale as `dot4`; a dedicated 4-ary linear form can keep exact
         // rational denominator factorizations aligned with the matrix row.
         crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
+            "hyperlattice_hyperreal_backend",
             "op",
             "linear-combination4-specialized"
         );
@@ -302,7 +298,7 @@ impl BackendScalarTrait for BackendScalar {
     #[inline]
     fn active_linear_combination4(coeffs: [&Self; 4], values: [&Self; 4]) -> Self {
         crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
+            "hyperlattice_hyperreal_backend",
             "op",
             "active-linear-combination4"
         );
@@ -324,14 +320,14 @@ impl BackendScalarTrait for BackendScalar {
         if zero0 && zero1 && zero2 && zero3 {
             if offset.definitely_zero() {
                 crate::trace_dispatch!(
-                    "realistic_blas_hyperreal_backend",
+                    "hyperlattice_hyperreal_backend",
                     "op",
                     "affine-combination4-all-zero"
                 );
                 return Self::zero();
             }
             crate::trace_dispatch!(
-                "realistic_blas_hyperreal_backend",
+                "hyperlattice_hyperreal_backend",
                 "op",
                 "affine-combination4-all-zero-offset"
             );
@@ -341,7 +337,7 @@ impl BackendScalarTrait for BackendScalar {
         if offset.definitely_zero() {
             // Same zero-offset shortcut as the 3-ary helper.
             crate::trace_dispatch!(
-                "realistic_blas_hyperreal_backend",
+                "hyperlattice_hyperreal_backend",
                 "op",
                 "affine-combination4-offset-zero"
             );
@@ -351,7 +347,7 @@ impl BackendScalarTrait for BackendScalar {
         // Keep this as one linear stage plus one affine-offset addition to avoid
         // changing coefficient/value operation order.
         crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
+            "hyperlattice_hyperreal_backend",
             "op",
             "affine-combination4-specialized"
         );
@@ -372,7 +368,7 @@ impl BackendScalarTrait for BackendScalar {
             terms.map(|term| [&term[0].0, &term[1].0]),
         ) {
             crate::trace_dispatch!(
-                "realistic_blas_hyperreal_backend",
+                "hyperlattice_hyperreal_backend",
                 "op",
                 "active-signed-product-sum2-exact-rational"
             );
@@ -380,7 +376,7 @@ impl BackendScalarTrait for BackendScalar {
         }
 
         crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
+            "hyperlattice_hyperreal_backend",
             "op",
             "active-signed-product-sum2-generic"
         );
@@ -432,7 +428,7 @@ impl BackendScalarTrait for BackendScalar {
         match nonzero_count {
             0 => {
                 crate::trace_dispatch!(
-                    "realistic_blas_hyperreal_backend",
+                    "hyperlattice_hyperreal_backend",
                     "op",
                     "signed-product-sum2-all-zero"
                 );
@@ -442,7 +438,7 @@ impl BackendScalarTrait for BackendScalar {
                 let (term, positive) = first_term.expect("single non-zero term tracked");
                 let product = term[0].clone().mul_ref(term[1]);
                 crate::trace_dispatch!(
-                    "realistic_blas_hyperreal_backend",
+                    "hyperlattice_hyperreal_backend",
                     "op",
                     "signed-product-sum2-single-term"
                 );
@@ -467,7 +463,7 @@ impl BackendScalarTrait for BackendScalar {
                     // but bounded to the two surviving products already found
                     // by the structural zero scan.
                     crate::trace_dispatch!(
-                        "realistic_blas_hyperreal_backend",
+                        "hyperlattice_hyperreal_backend",
                         "op",
                         "signed-product-sum2-sparse-two-exact-rational"
                     );
@@ -476,7 +472,7 @@ impl BackendScalarTrait for BackendScalar {
                 let left_product = left_term[0].clone().mul_ref(left_term[1]);
                 let right_product = right_term[0].clone().mul_ref(right_term[1]);
                 crate::trace_dispatch!(
-                    "realistic_blas_hyperreal_backend",
+                    "hyperlattice_hyperreal_backend",
                     "op",
                     "signed-product-sum2-sparse-two"
                 );
@@ -495,7 +491,7 @@ impl BackendScalarTrait for BackendScalar {
             terms.map(|term| [&term[0].0, &term[1].0]),
         ) {
             crate::trace_dispatch!(
-                "realistic_blas_hyperreal_backend",
+                "hyperlattice_hyperreal_backend",
                 "op",
                 "signed-product-sum2-exact-rational"
             );
@@ -503,7 +499,7 @@ impl BackendScalarTrait for BackendScalar {
         }
 
         crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
+            "hyperlattice_hyperreal_backend",
             "op",
             "signed-product-sum2-generic"
         );
@@ -521,92 +517,84 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     fn exp(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "method", "exp");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "method", "exp");
         self.0.exp().map(Self).map_err(Problem::from)
     }
 
     fn ln(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "method", "ln");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "method", "ln");
         self.0.ln().map(Self).map_err(Problem::from)
     }
 
     fn log10(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "method", "log10");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "method", "log10");
         self.0.log10().map(Self).map_err(Problem::from)
     }
 
     fn sqrt(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "method", "sqrt");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "method", "sqrt");
         self.0.sqrt().map(Self).map_err(Problem::from)
     }
 
     fn sin(self) -> Self {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "method", "sin");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "method", "sin");
         Self(self.0.sin())
     }
 
     fn cos(self) -> Self {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "method", "cos");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "method", "cos");
         Self(self.0.cos())
     }
 
     fn tan(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "method", "tan");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "method", "tan");
         self.0.tan().map(Self).map_err(Problem::from)
     }
 
     fn asin(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "method", "asin");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "method", "asin");
         self.0.asin().map(Self).map_err(Problem::from)
     }
 
     fn acos(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "method", "acos");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "method", "acos");
         self.0.acos().map(Self).map_err(Problem::from)
     }
 
     fn atan(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "method", "atan");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "method", "atan");
         self.0.atan().map(Self).map_err(Problem::from)
     }
 
     fn asinh(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "method", "asinh");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "method", "asinh");
         self.0.asinh().map(Self).map_err(Problem::from)
     }
 
     fn acosh(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "method", "acosh");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "method", "acosh");
         self.0.acosh().map(Self).map_err(Problem::from)
     }
 
     fn atanh(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "method", "atanh");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "method", "atanh");
         self.0.atanh().map(Self).map_err(Problem::from)
     }
 
     fn div(self, rhs: Self) -> BlasResult<Self> {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "op", "div-owned-owned");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "op", "div-owned-owned");
         (self.0 / rhs.0).map(Self).map_err(Problem::from)
     }
 
     #[inline(always)]
     fn definitely_zero(&self) -> bool {
-        crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
-            "query",
-            "definitely-zero"
-        );
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "query", "definitely-zero");
         self.0.definitely_zero()
     }
 
     #[inline(always)]
     fn definitely_one(&self) -> bool {
-        crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
-            "query",
-            "definitely-one"
-        );
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "query", "definitely-one");
         self.0
             .exact_rational_ref()
             .is_some_and(|exact_rational| exact_rational == &hyperreal::Rational::from(1_i8))
@@ -614,7 +602,7 @@ impl BackendScalarTrait for BackendScalar {
 
     #[inline(always)]
     fn zero_or_one(&self) -> Option<bool> {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "query", "zero-or-one");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "query", "zero-or-one");
         // Transform kernels use this to distinguish direction vectors (`w=0`)
         // from points (`w=1`). Preserve the exact-rational fast path first:
         // moving a broader structural-zero probe ahead of it regressed symbolic
@@ -646,14 +634,14 @@ impl BackendScalarTrait for BackendScalar {
 
     #[inline(always)]
     fn zero_status(&self) -> ZeroStatus {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "query", "zero-status");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "query", "zero-status");
         map_zero(self.0.zero_status())
     }
 
     #[inline(always)]
     fn structural_facts(&self) -> ScalarFacts {
         crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
+            "hyperlattice_hyperreal_backend",
             "query",
             "structural-facts"
         );
@@ -670,9 +658,15 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     #[inline(always)]
+    fn is_exact_rational(&self) -> bool {
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "query", "exact-rational");
+        self.0.exact_rational_ref().is_some()
+    }
+
+    #[inline(always)]
     fn is_exact_dyadic_rational(&self) -> bool {
         crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
+            "hyperlattice_hyperreal_backend",
             "query",
             "exact-dyadic-rational"
         );
@@ -682,7 +676,7 @@ impl BackendScalarTrait for BackendScalar {
     #[inline(always)]
     fn refine_sign_until(&self, min_precision: i32) -> Option<ScalarSign> {
         crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
+            "hyperlattice_hyperreal_backend",
             "query",
             "refine-sign-until"
         );
@@ -690,20 +684,20 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     fn abort(&mut self, signal: AbortSignal) {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "query", "attach-abort");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "query", "attach-abort");
         self.0.abort(signal);
     }
 
     #[inline(always)]
     fn into_f64(self) -> f64 {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "conversion", "into-f64");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "conversion", "into-f64");
         f64::from(self.0)
     }
 
     #[inline(always)]
     fn to_f64_approx(&self) -> Option<f64> {
         crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
+            "hyperlattice_hyperreal_backend",
             "conversion",
             "to-f64-approx"
         );
@@ -758,7 +752,7 @@ impl TryFrom<f32> for BackendScalar {
 
     fn try_from(value: f32) -> Result<Self, Self::Error> {
         crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
+            "hyperlattice_hyperreal_backend",
             "constructor",
             "try-from-f32"
         );
@@ -773,7 +767,7 @@ impl TryFrom<f64> for BackendScalar {
 
     fn try_from(value: f64) -> Result<Self, Self::Error> {
         crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
+            "hyperlattice_hyperreal_backend",
             "constructor",
             "try-from-f64"
         );
@@ -789,7 +783,7 @@ impl Add for BackendScalar {
     #[inline]
     fn add(self, rhs: Self) -> Self::Output {
         crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
+            "hyperlattice_hyperreal_backend",
             "trait_op",
             "add-owned-owned"
         );
@@ -803,7 +797,7 @@ impl Sub for BackendScalar {
     #[inline]
     fn sub(self, rhs: Self) -> Self::Output {
         crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
+            "hyperlattice_hyperreal_backend",
             "trait_op",
             "sub-owned-owned"
         );
@@ -816,7 +810,7 @@ impl Neg for BackendScalar {
 
     #[inline]
     fn neg(self) -> Self::Output {
-        crate::trace_dispatch!("realistic_blas_hyperreal_backend", "trait_op", "neg-owned");
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "trait_op", "neg-owned");
         Self(-self.0)
     }
 }
@@ -827,7 +821,7 @@ impl Mul for BackendScalar {
     #[inline]
     fn mul(self, rhs: Self) -> Self::Output {
         crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
+            "hyperlattice_hyperreal_backend",
             "trait_op",
             "mul-owned-owned"
         );
@@ -841,7 +835,7 @@ impl Add<&BackendScalar> for BackendScalar {
     #[inline]
     fn add(self, rhs: &BackendScalar) -> Self::Output {
         crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
+            "hyperlattice_hyperreal_backend",
             "trait_op",
             "add-owned-ref"
         );
@@ -855,7 +849,7 @@ impl Sub<&BackendScalar> for BackendScalar {
     #[inline]
     fn sub(self, rhs: &BackendScalar) -> Self::Output {
         crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
+            "hyperlattice_hyperreal_backend",
             "trait_op",
             "sub-owned-ref"
         );
@@ -869,7 +863,7 @@ impl Mul<&BackendScalar> for BackendScalar {
     #[inline]
     fn mul(self, rhs: &BackendScalar) -> Self::Output {
         crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
+            "hyperlattice_hyperreal_backend",
             "trait_op",
             "mul-owned-ref"
         );
@@ -883,7 +877,7 @@ impl Div<&BackendScalar> for BackendScalar {
     #[inline]
     fn div(self, rhs: &BackendScalar) -> Self::Output {
         crate::trace_dispatch!(
-            "realistic_blas_hyperreal_backend",
+            "hyperlattice_hyperreal_backend",
             "trait_op",
             "div-owned-ref"
         );

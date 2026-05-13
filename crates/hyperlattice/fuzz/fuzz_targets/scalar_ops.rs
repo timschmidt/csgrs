@@ -10,21 +10,21 @@
 
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
-use realistic_blas::{
+use hyperlattice::{
     ApproxBackend, HyperrealBackend, Scalar, ZeroStatus,
     cosh, powi, reciprocal, reciprocal_checked, reciprocal_ref, reciprocal_ref_checked, sinh,
     tanh,
 };
 
 #[derive(Debug)]
-struct Input<Backend: realistic_blas::Backend> {
+struct Input<Backend: hyperlattice::Backend> {
     a: Scalar<Backend>,
     b: Scalar<Backend>,
     /// Bounded exponent so powi computation stays tractable.
     exp: i8,
 }
 
-impl<'a, Backend: realistic_blas::Backend> Arbitrary<'a> for Input<Backend> where Scalar<Backend>: Arbitrary<'a> {
+impl<'a, Backend: hyperlattice::Backend> Arbitrary<'a> for Input<Backend> where Scalar<Backend>: Arbitrary<'a> {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self {
             a: Arbitrary::arbitrary(u)?,
@@ -40,7 +40,7 @@ fuzz_target!(|input: (Input<ApproxBackend>, Input<HyperrealBackend>)| {
     scalar_fuzz(hyperreal_input);
 });
 
-fn scalar_fuzz<Backend: realistic_blas::Backend>(input: Input<Backend>) {
+fn scalar_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
     let Input { a, b, exp } = input;
 
     // ── No-panic: owned and borrowed arithmetic ──────────────────────────────

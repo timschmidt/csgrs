@@ -1,5 +1,5 @@
+use hyperlattice::{Scalar, Vector3, ZeroStatus};
 use proptest::prelude::*;
-use realistic_blas::{Scalar, Vector3, ZeroStatus};
 
 fn s(value: i32) -> Scalar {
     value.into()

@@ -1,5 +1,5 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use realistic_blas::{Matrix3, Matrix4, Scalar, Vector3, Vector4, sqrt};
+use hyperlattice::{Matrix3, Matrix4, Scalar, Vector3, Vector4, sqrt};
 
 fn r(value: i32) -> Scalar {
     value.into()
@@ -7,7 +7,7 @@ fn r(value: i32) -> Scalar {
 
 #[cfg(feature = "hyperreal-backend")]
 fn frac(numerator: i64, denominator: u64) -> Scalar {
-    realistic_blas::Rational::fraction(numerator, denominator)
+    hyperlattice::Rational::fraction(numerator, denominator)
         .unwrap()
         .into()
 }

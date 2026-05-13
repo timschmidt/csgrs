@@ -1,7 +1,7 @@
 mod common;
 
 use common::{abort_signal, frac, r, unknown_zero};
-use realistic_blas::{
+use hyperlattice::{
     Matrix3, Matrix4, Problem, Scalar, ScalarSign, Vector3, Vector4, ZeroStatus, zero,
 };
 
@@ -1099,7 +1099,7 @@ fn checked_matrix_scalar_division_accepts_abort_signal() {
 #[cfg(not(feature = "hyperreal-backend"))]
 #[test]
 fn ordinary_matrix_scalar_division_returns_unknown_zero() {
-    let divisor = realistic_blas::Scalar::approx(0.0, 0.25).unwrap();
+    let divisor = hyperlattice::Scalar::approx(0.0, 0.25).unwrap();
 
     assert_eq!(Matrix3::identity() / divisor, Err(Problem::UnknownZero));
 }

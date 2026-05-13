@@ -1,7 +1,7 @@
 mod common;
 
 use common::{frac, r, unknown_zero};
-use realistic_blas::{Matrix3, Matrix4, Problem, Scalar, Vector3, Vector4, ZeroStatus};
+use hyperlattice::{Matrix3, Matrix4, Problem, Scalar, Vector3, Vector4, ZeroStatus};
 
 fn assert_matrix3_inverse_invariants(matrix: Matrix3) {
     let inverse = matrix.clone().inverse().unwrap();

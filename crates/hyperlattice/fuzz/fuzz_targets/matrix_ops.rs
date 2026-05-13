@@ -13,10 +13,10 @@ use std::sync::{Arc, atomic::AtomicBool};
 
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
-use realistic_blas::{ApproxBackend, HyperrealBackend, Matrix3, Matrix4, Scalar, Vector3, Vector4, ZeroStatus};
+use hyperlattice::{ApproxBackend, HyperrealBackend, Matrix3, Matrix4, Scalar, Vector3, Vector4, ZeroStatus};
 
 #[derive(Debug)]
-struct Input<Backend: realistic_blas::Backend> {
+struct Input<Backend: hyperlattice::Backend> {
     m3a: Matrix3<Backend>,
     m3b: Matrix3<Backend>,
     m4a: Matrix4<Backend>,
@@ -25,7 +25,7 @@ struct Input<Backend: realistic_blas::Backend> {
     v4: Vector4<Backend>,
 }
 
-impl<'a, Backend: realistic_blas::Backend> Arbitrary<'a> for Input<Backend>
+impl<'a, Backend: hyperlattice::Backend> Arbitrary<'a> for Input<Backend>
 where Matrix3<Backend>: Arbitrary<'a>, Matrix4<Backend>: Arbitrary<'a>,
     Vector3<Backend>: Arbitrary<'a>, Vector4<Backend>: Arbitrary<'a>
 {
@@ -47,7 +47,7 @@ fuzz_target!(|input: (Input<ApproxBackend>, Input<HyperrealBackend>)| {
     matrix_fuzz(hyperreal_input);
 });
 
-fn matrix_fuzz<Backend: realistic_blas::Backend>(input: Input<Backend>) {
+fn matrix_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
     let Input { m3a, m3b, m4a, m4b, v3, v4 } = input;
 
     let signal = Arc::new(AtomicBool::new(false));

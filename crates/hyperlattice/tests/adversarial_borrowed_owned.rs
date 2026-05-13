@@ -1,7 +1,7 @@
 mod common;
 
 use common::{frac, r};
-use realistic_blas::{Complex, Matrix3, Matrix4, Scalar, Vector3, Vector4};
+use hyperlattice::{Complex, Matrix3, Matrix4, Scalar, Vector3, Vector4};
 
 #[test]
 fn scalar_owned_and_borrowed_paths_match_for_adversarial_values() {
@@ -20,7 +20,7 @@ fn scalar_owned_and_borrowed_paths_match_for_adversarial_values() {
         assert_eq!(&left + &right, left.clone() + right.clone());
         assert_eq!(&left - &right, left.clone() - right.clone());
         assert_eq!(&left * &right, left.clone() * right.clone());
-        if right.zero_status() == realistic_blas::ZeroStatus::NonZero {
+        if right.zero_status() == hyperlattice::ZeroStatus::NonZero {
             assert_eq!(
                 (&left / &right).unwrap(),
                 (left.clone() / right.clone()).unwrap()

@@ -1,7 +1,7 @@
 mod common;
 
 use common::{frac, r, unknown_zero};
-use realistic_blas::{
+use hyperlattice::{
     Problem, Scalar, ScalarFacts, ScalarSign, ZeroStatus, acos, acosh, asin, atanh, cos, e, ln,
     log10, one, pi, reciprocal_checked, reciprocal_ref_checked, sin, sqrt, tan, zero, zero_status,
 };
@@ -41,7 +41,7 @@ fn scalar_fact_queries_survive_repeated_cache_warming() {
         frac(1, 1 << 20),
         pi(),
         e(),
-        realistic_blas::tau(),
+        hyperlattice::tau(),
         sqrt(r(2)).unwrap(),
         pi() - r(3),
         ((pi() * e()) / e()).unwrap(),
@@ -74,14 +74,14 @@ fn structural_equivalents_built_by_different_histories_agree() {
 fn exact_special_forms_and_principal_branches_are_guarded() {
     assert_same_semantics(asin(frac(1, 2)).unwrap(), (pi() / r(6)).unwrap());
     assert_same_semantics(acos(frac(1, 2)).unwrap(), (pi() / r(3)).unwrap());
-    assert_same_semantics(realistic_blas::atan(one()).unwrap(), (pi() / r(4)).unwrap());
+    assert_same_semantics(hyperlattice::atan(one()).unwrap(), (pi() / r(4)).unwrap());
 
     let seven_pi_six = (r(7) * pi() / r(6)).unwrap();
     assert_same_semantics(sin(seven_pi_six), frac(-1, 2));
 
     let five_pi_four = (r(5) * pi() / r(4)).unwrap();
     assert_same_semantics(
-        realistic_blas::atan(tan(five_pi_four).unwrap()).unwrap(),
+        hyperlattice::atan(tan(five_pi_four).unwrap()).unwrap(),
         (pi() / r(4)).unwrap(),
     );
 }

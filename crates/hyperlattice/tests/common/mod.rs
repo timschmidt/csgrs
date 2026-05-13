@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 
-use realistic_blas::{Scalar, sin};
+use hyperlattice::{Scalar, sin};
 
 pub fn r(value: i32) -> Scalar {
     value.into()
@@ -10,7 +10,7 @@ pub fn r(value: i32) -> Scalar {
 #[allow(dead_code)]
 #[cfg(feature = "hyperreal-backend")]
 pub fn frac(numerator: i64, denominator: u64) -> Scalar {
-    realistic_blas::Rational::fraction(numerator, denominator)
+    hyperlattice::Rational::fraction(numerator, denominator)
         .unwrap()
         .into()
 }
@@ -22,7 +22,7 @@ pub fn frac(numerator: i64, denominator: u64) -> Scalar {
 }
 
 #[allow(dead_code)]
-pub fn abort_signal() -> realistic_blas::AbortSignal {
+pub fn abort_signal() -> hyperlattice::AbortSignal {
     Arc::new(AtomicBool::new(false))
 }
 

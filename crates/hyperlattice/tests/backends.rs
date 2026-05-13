@@ -1,7 +1,7 @@
 #[cfg(all(feature = "hyperreal-backend", feature = "approx-backend"))]
 #[test]
 fn explicit_backend_types_can_coexist() {
-    use realistic_blas::{ApproxBackend, HyperrealBackend, Scalar, Vector3, ZeroStatus};
+    use hyperlattice::{ApproxBackend, HyperrealBackend, Scalar, Vector3, ZeroStatus};
 
     let realistic: Scalar<HyperrealBackend> = Scalar::try_from(3.0).unwrap();
     let approx: Scalar<ApproxBackend> = Scalar::<ApproxBackend>::approx(4.0, 0.01).unwrap();

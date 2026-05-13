@@ -1,5 +1,5 @@
 [package]
-name = "realistic_blas-fuzz"
+name = "hyperlattice-fuzz"
 version = "0.0.0"
 edition = "2024"
 publish = false
@@ -14,7 +14,7 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 arbitrary = { version = "1", features = ["derive"] }
-realistic_blas = { path = "..", default-features = false, features = ["arbitrary", "approx-backend", "hyperreal-backend"] }
+hyperlattice = { path = "..", default-features = false, features = ["arbitrary", "approx-backend", "hyperreal-backend"] }
 
 [[bin]]
 name = "scalar_ops"

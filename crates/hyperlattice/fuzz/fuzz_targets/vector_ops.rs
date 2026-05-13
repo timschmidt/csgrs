@@ -12,17 +12,17 @@ use std::sync::{Arc, atomic::AtomicBool};
 
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
-use realistic_blas::{ApproxBackend, HyperrealBackend, Scalar, Vector3, Vector4, ZeroStatus};
+use hyperlattice::{ApproxBackend, HyperrealBackend, Scalar, Vector3, Vector4, ZeroStatus};
 
 #[derive(Debug)]
-struct Input<Backend: realistic_blas::Backend> {
+struct Input<Backend: hyperlattice::Backend> {
     v3a: Vector3<Backend>,
     v3b: Vector3<Backend>,
     v4a: Vector4<Backend>,
     v4b: Vector4<Backend>,
 }
 
-impl<'a, Backend: realistic_blas::Backend> Arbitrary<'a> for Input<Backend>
+impl<'a, Backend: hyperlattice::Backend> Arbitrary<'a> for Input<Backend>
 where Vector3<Backend>: Arbitrary<'a>, Vector4<Backend>: Arbitrary<'a> {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self {
@@ -40,7 +40,7 @@ fuzz_target!(|input: (Input<ApproxBackend>, Input<HyperrealBackend>)| {
     vector_fuzz(hyperreal_input);
 });
 
-fn vector_fuzz<Backend: realistic_blas::Backend>(input: Input<Backend>) {
+fn vector_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
     let Input { v3a, v3b, v4a, v4b } = input;
 
     let signal = Arc::new(AtomicBool::new(false));
@@ -186,7 +186,6 @@ fn vector_fuzz<Backend: realistic_blas::Backend>(input: Input<Backend>) {
             scaled_zero4[i].definitely_zero(),
             "Vector4 component {i} of v * 0 must be exactly zero"
         );
-    }
     }
 
     assert_eq!(

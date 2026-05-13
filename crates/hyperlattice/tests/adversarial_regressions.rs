@@ -1,7 +1,7 @@
 mod common;
 
 use common::{frac, r, unknown_zero};
-use realistic_blas::{Complex, Matrix3, Matrix4, Problem, Scalar, Vector3, Vector4, ZeroStatus};
+use hyperlattice::{Complex, Matrix3, Matrix4, Problem, Scalar, Vector3, Vector4, ZeroStatus};
 
 #[test]
 fn complex_zero_and_unknown_norms_are_rejected_by_checked_division() {

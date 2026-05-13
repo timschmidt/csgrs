@@ -1,7 +1,7 @@
 mod common;
 
 use common::{abort_signal, frac, r, unknown_zero};
-use realistic_blas::{Problem, Vector3, Vector4, one, zero};
+use hyperlattice::{Problem, Vector3, Vector4, one, zero};
 
 #[test]
 fn vector_dot_and_normalize() {
@@ -87,7 +87,7 @@ fn checked_vector_operations_reject_unknown_zero_divisors() {
 #[test]
 fn ordinary_vector_scalar_division_returns_unknown_zero() {
     let vector = Vector3::new([r(1), r(2), r(3)]);
-    let divisor = realistic_blas::Scalar::approx(0.0, 0.25).unwrap();
+    let divisor = hyperlattice::Scalar::approx(0.0, 0.25).unwrap();
 
     assert_eq!(vector / divisor, Err(Problem::UnknownZero));
 }

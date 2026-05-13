@@ -553,6 +553,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
+name = "hyperlattice"
+version = "0.3.3"
+dependencies = [
+ "arbitrary",
+ "astro-float",
+ "criterion",
+ "hyperreal",
+ "num",
+ "proptest",
+ "serde_json",
+ "symbolica",
+]
+
+[[package]]
 name = "hyperreal"
 version = "0.11.0"
 dependencies = [
@@ -1042,20 +1056,6 @@ checksum = "22e18b0f0062d30d4230b2e85ff77fdfe4326feb054b9783a3460d8435c8ab91"
 dependencies = [
  "crossbeam-deque",
  "crossbeam-utils",
-]
-
-[[package]]
-name = "realistic_blas"
-version = "0.3.3"
-dependencies = [
- "arbitrary",
- "astro-float",
- "criterion",
- "hyperreal",
- "num",
- "proptest",
- "serde_json",
- "symbolica",
 ]
 
 [[package]]

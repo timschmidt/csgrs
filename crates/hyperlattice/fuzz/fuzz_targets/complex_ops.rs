@@ -11,15 +11,15 @@
 
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
-use realistic_blas::{ApproxBackend, HyperrealBackend, Complex, ZeroStatus};
+use hyperlattice::{ApproxBackend, HyperrealBackend, Complex, ZeroStatus};
 
 #[derive(Debug)]
-struct Input<Backend: realistic_blas::Backend> {
+struct Input<Backend: hyperlattice::Backend> {
     z: Complex<Backend>,
     w: Complex<Backend>,
 }
 
-impl<'a, Backend: realistic_blas::Backend> Arbitrary<'a> for Input<Backend> where Complex<Backend>: Arbitrary<'a> {
+impl<'a, Backend: hyperlattice::Backend> Arbitrary<'a> for Input<Backend> where Complex<Backend>: Arbitrary<'a> {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self {
             z: Arbitrary::arbitrary(u)?,
@@ -34,7 +34,7 @@ fuzz_target!(|input: (Input<ApproxBackend>, Input<HyperrealBackend>)| {
     complex_fuzz(hyperreal_input);
 });
 
-fn complex_fuzz<Backend: realistic_blas::Backend>(input: Input<Backend>) {
+fn complex_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
     let Input { z, w } = input;
 
     // ── No-panic: owned and borrowed arithmetic ──────────────────────────────

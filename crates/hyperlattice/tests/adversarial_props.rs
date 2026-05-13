@@ -1,8 +1,8 @@
 mod common;
 
 use common::frac;
+use hyperlattice::{Complex, Matrix3, Matrix4, Problem, Scalar, ScalarSign, Vector3, ZeroStatus};
 use proptest::prelude::*;
-use realistic_blas::{Complex, Matrix3, Matrix4, Problem, Scalar, ScalarSign, Vector3, ZeroStatus};
 
 fn scalar_i(value: i32) -> Scalar {
     value.into()
@@ -18,7 +18,7 @@ fn small_scalar() -> impl Strategy<Value = Scalar> {
         (-64_i64..=64, 1_u64..=64).prop_map(|(n, d)| frac(n, d)),
         Just(Scalar::pi()),
         Just(Scalar::e()),
-        Just(realistic_blas::sqrt(scalar_i(2)).unwrap()),
+        Just(hyperlattice::sqrt(scalar_i(2)).unwrap()),
     ]
 }
 
