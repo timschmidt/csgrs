@@ -5,6 +5,7 @@ use csgrs::io::gerber::FromGerber;
 
 use crate::cli::{Check, Cli, DEFAULT_CHECKS, OutputFormat};
 use crate::config::{self, EffectiveRules};
+use crate::io::{self, SourceRecord};
 use crate::report::{Report, Violation, report_summary, report_to_geojson};
 use crate::{LayerMetadata, PcbSketch};
 use crate::{checks, conversion, excellon, ipc356, kicad, svg_overlay, waiver};
@@ -12,6 +13,7 @@ use crate::{checks, conversion, excellon, ipc356, kicad, svg_overlay, waiver};
 #[derive(Clone, Debug)]
 struct Layer {
     path: PathBuf,
+    source: SourceRecord,
     sketch: PcbSketch,
 }
 
@@ -29,8 +31,11 @@ pub fn run(cli: Cli) -> Result<()> {
             min_width: cli.min_width,
             min_mask_width: cli.min_mask_width,
             acid_trap_angle: cli.acid_trap_angle,
+            max_copper_imbalance_ratio: cli.max_copper_imbalance_ratio,
             annular_ring: cli.annular_ring,
             drill_clearance: cli.drill_clearance,
+            board_thickness: cli.board_thickness,
+            max_drill_aspect_ratio: cli.max_drill_aspect_ratio,
             net_clearance: cli.net_clearance,
             registration_tolerance: cli.registration_tolerance,
             panel_clearance: cli.panel_clearance,
@@ -122,6 +127,7 @@ pub fn run(cli: Cli) -> Result<()> {
             .chain(cli.waiver_files.iter())
             .map(|path| path.display().to_string())
             .collect(),
+        inputs: input_manifest(&cli, &layers),
         violation_count: violations.len(),
         waived_count: waived.len(),
         summary,
@@ -369,6 +375,37 @@ fn run_checks(
                     }
                 }
             }
+            Check::CopperBalance => {
+                if !cli.copper_layers.is_empty() {
+                    let gerber_copper = cli
+                        .copper_layers
+                        .iter()
+                        .map(|index| {
+                            let layer = &layers[*index];
+                            (layer_name(layer), layer.sketch.clone())
+                        })
+                        .collect::<Vec<_>>();
+                    violations.extend(checks::copper_balance(
+                        &gerber_copper,
+                        rules.max_copper_imbalance_ratio,
+                        rules.min_area,
+                    ));
+                }
+                for board in boards {
+                    let kicad_copper = board
+                        .copper_layers(kicad_copper_layers)
+                        .into_iter()
+                        .map(|(layer_name, copper)| {
+                            (format!("{}:{layer_name}", board.source), copper)
+                        })
+                        .collect::<Vec<_>>();
+                    violations.extend(checks::copper_balance(
+                        &kicad_copper,
+                        rules.max_copper_imbalance_ratio,
+                        rules.min_area,
+                    ));
+                }
+            }
             Check::MechanicalLayerGeometry => {
                 for layer in layers {
                     violations.extend(checks::mechanical_layer_geometry(
@@ -426,6 +463,48 @@ fn run_checks(
                     }
                 }
             }
+            Check::DrillAspectRatio => {
+                for board in boards {
+                    violations.extend(checks::drill_aspect_ratio(
+                        &format!("{} drills", board.source),
+                        &board.drills,
+                        rules.board_thickness,
+                        rules.max_drill_aspect_ratio,
+                    ));
+                }
+                if !excellon_drills.is_empty() {
+                    violations.extend(checks::drill_aspect_ratio(
+                        "Excellon drills",
+                        excellon_drills,
+                        rules.board_thickness,
+                        rules.max_drill_aspect_ratio,
+                    ));
+                }
+            }
+            Check::DrillTableConsistency => {
+                if boards.is_empty() {
+                    violations.extend(checks::drill_table_consistency(
+                        &[],
+                        excellon_drills,
+                        ipc356_points,
+                        rules.ipc356_tolerance,
+                    ));
+                } else {
+                    for board in boards {
+                        violations.extend(checks::drill_table_consistency(
+                            &board.drills,
+                            excellon_drills,
+                            ipc356_points,
+                            rules.ipc356_tolerance,
+                        ));
+                    }
+                }
+            }
+            Check::CopperNetIntent => {
+                for board in boards {
+                    violations.extend(checks::copper_net_intent(board, kicad_copper_layers));
+                }
+            }
             Check::NetSpacing => {
                 for board in boards {
                     violations.extend(checks::net_spacing(
@@ -472,6 +551,11 @@ fn run_checks(
                         rules.ipc356_tolerance,
                     ));
                 }
+            }
+            Check::FileManifestReadiness => {
+                violations.extend(checks::file_manifest_readiness(&manifest_input(
+                    cli, layers, boards,
+                )));
             }
         }
     }
@@ -529,21 +613,33 @@ fn selected_layers(layer_count: usize, explicit_layers: &[usize]) -> Vec<usize> 
     explicit_layers.to_vec()
 }
 
+#[cfg(test)]
 fn load_layers(files: &[PathBuf]) -> Result<Vec<Layer>> {
+    let discovered = files
+        .iter()
+        .cloned()
+        .map(io::direct_gerber_file)
+        .collect::<Vec<_>>();
+    load_discovered_layers(&discovered)
+}
+
+fn load_discovered_layers(files: &[io::DiscoveredFile]) -> Result<Vec<Layer>> {
     files
         .iter()
-        .map(|path| {
-            let bytes = std::fs::read(path)
-                .with_context(|| format!("failed to read {}", path.display()))?;
-            let name = path
+        .map(|file| {
+            let bytes = std::fs::read(&file.path)
+                .with_context(|| format!("failed to read {}", file.path.display()))?;
+            let name = file
+                .path
                 .file_name()
                 .and_then(|name| name.to_str())
                 .unwrap_or("layer")
                 .to_string();
             let sketch = PcbSketch::from_gerber(&bytes, Some(LayerMetadata { name }))
-                .with_context(|| format!("failed to parse Gerber {}", path.display()))?;
+                .with_context(|| format!("failed to parse Gerber {}", file.path.display()))?;
             Ok(Layer {
-                path: path.clone(),
+                path: file.path.clone(),
+                source: file.source.clone(),
                 sketch,
             })
         })
@@ -555,15 +651,22 @@ fn load_all_layers(
     gerber_dirs: &[PathBuf],
     conversion_outputs: &[conversion::ConversionOutput],
 ) -> Result<Vec<Layer>> {
-    let mut layer_paths = files.to_vec();
+    let mut layer_files = files
+        .iter()
+        .cloned()
+        .map(io::direct_gerber_file)
+        .collect::<Vec<_>>();
     for directory in gerber_dirs {
-        layer_paths.extend(gerber_files_in_dir(directory)?);
+        layer_files.extend(io::discover_gerber_dir(directory)?);
     }
     for output in conversion_outputs {
-        layer_paths.extend(gerber_files_in_dir(&output.gerber_dir)?);
+        for mut file in io::discover_gerber_dir(&output.gerber_dir)? {
+            file.source = io::converted_gerber_file(file.path.clone(), &output.source_dir).source;
+            layer_files.push(file);
+        }
     }
 
-    load_layers(&layer_paths)
+    load_discovered_layers(&layer_files)
 }
 
 fn run_conversions(cli: &Cli) -> Result<Vec<conversion::ConversionOutput>> {
@@ -590,61 +693,70 @@ fn run_conversions(cli: &Cli) -> Result<Vec<conversion::ConversionOutput>> {
         .collect()
 }
 
-fn gerber_files_in_dir(directory: &PathBuf) -> Result<Vec<PathBuf>> {
-    let mut files = Vec::new();
-    for entry in std::fs::read_dir(directory)
-        .with_context(|| format!("failed to read Gerber directory {}", directory.display()))?
-    {
-        let entry =
-            entry.with_context(|| format!("failed to read entry in {}", directory.display()))?;
-        let path = entry.path();
-        if path.is_file() && is_gerber_path(&path) {
-            files.push(path);
-        }
-    }
-    files.sort();
-    Ok(files)
-}
-
-fn is_gerber_path(path: &std::path::Path) -> bool {
-    let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
-        return false;
-    };
-    let lower = name.to_ascii_lowercase();
-    matches!(
-        path.extension()
-            .and_then(|extension| extension.to_str())
-            .map(str::to_ascii_lowercase)
-            .as_deref(),
-        Some(
-            "gbr"
-                | "ger"
-                | "gtl"
-                | "gbl"
-                | "gts"
-                | "gbs"
-                | "gto"
-                | "gbo"
-                | "gko"
-                | "gm1"
-                | "gm2"
-                | "gml"
-                | "gpb"
-                | "gpt"
-        )
-    ) || lower.starts_with("gerber_")
-        || lower.contains("copper")
-        || lower.contains("silkscreen")
-        || lower.contains("soldermask")
-        || lower.contains("solderpaste")
-        || lower.contains("outline")
-}
-
 fn load_boards(files: &[PathBuf]) -> Result<Vec<kicad::BoardModel>> {
     files
         .iter()
         .map(|path| kicad::load_kicad_pcb(path))
         .collect()
+}
+
+fn input_manifest(cli: &Cli, layers: &[Layer]) -> Vec<SourceRecord> {
+    let mut inputs = layers
+        .iter()
+        .map(|layer| layer.source.clone())
+        .collect::<Vec<_>>();
+    inputs.extend(cli.kicad_pcbs.iter().map(|path| {
+        SourceRecord::new(
+            io::IoAdapter::KiCad,
+            io::IoRole::KiCadBoard,
+            path,
+            Option::<&std::path::Path>::None,
+        )
+    }));
+    inputs.extend(cli.excellon_files.iter().map(|path| {
+        SourceRecord::new(
+            io::IoAdapter::Excellon,
+            io::IoRole::DrillSidecar,
+            path,
+            Option::<&std::path::Path>::None,
+        )
+    }));
+    inputs.extend(cli.ipc356_files.iter().map(|path| {
+        SourceRecord::new(
+            io::IoAdapter::Ipc356,
+            io::IoRole::NetlistSidecar,
+            path,
+            Option::<&std::path::Path>::None,
+        )
+    }));
+    inputs.extend(cli.waiver_files.iter().map(|path| {
+        SourceRecord::new(
+            io::IoAdapter::Waiver,
+            io::IoRole::Waiver,
+            path,
+            Option::<&std::path::Path>::None,
+        )
+    }));
+    inputs
+}
+
+fn manifest_input(
+    cli: &Cli,
+    layers: &[Layer],
+    boards: &[kicad::BoardModel],
+) -> checks::ManifestInput {
+    checks::ManifestInput {
+        gerber_layers: layers
+            .iter()
+            .map(|layer| checks::ManifestGerberLayer {
+                name: layer_name(layer),
+                source_path: layer.source.path.clone(),
+            })
+            .collect(),
+        has_board_outline: boards.iter().any(|board| board.board_outline.is_some()),
+        has_drill_data: !cli.excellon_files.is_empty()
+            || boards.iter().any(|board| !board.drills.is_empty()),
+    }
 }
 
 fn load_excellon_drills(files: &[PathBuf]) -> Result<Vec<kicad::DrillFeature>> {
@@ -852,11 +964,12 @@ mod tests {
     use clap::Parser;
 
     use crate::cli::Cli;
+    use crate::io::{discover_gerber_dir, is_gerber_path};
 
     use super::{
-        explicit_layer_pairs, gerber_files_in_dir, is_gerber_path, layer_pairs, load_boards,
-        load_excellon_drills, load_ipc356_points, load_layers, run, validate_board_outline_role,
-        validate_layer_index, validate_layer_indexes, validate_silk_layer_roles,
+        explicit_layer_pairs, layer_pairs, load_boards, load_excellon_drills, load_ipc356_points,
+        load_layers, run, validate_board_outline_role, validate_layer_index,
+        validate_layer_indexes, validate_silk_layer_roles,
     };
 
     #[test]
@@ -919,9 +1032,12 @@ mod tests {
         std::fs::write(dir.join("a-top.gtl"), "%").unwrap();
         std::fs::write(dir.join("notes.txt"), "not gerber").unwrap();
 
-        let files = gerber_files_in_dir(&dir).unwrap();
+        let files = discover_gerber_dir(&dir).unwrap();
 
-        assert_eq!(files, vec![dir.join("a-top.gtl"), dir.join("z-bottom.gbl")]);
+        assert_eq!(
+            files.into_iter().map(|file| file.path).collect::<Vec<_>>(),
+            vec![dir.join("a-top.gtl"), dir.join("z-bottom.gbl")]
+        );
         let _ = std::fs::remove_dir_all(dir);
     }
 

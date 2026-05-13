@@ -32,6 +32,7 @@ pub fn convert(request: &ConversionRequest) -> Result<ConversionOutput> {
 
 #[derive(Clone, Debug)]
 pub struct ConversionOutput {
+    pub source_dir: PathBuf,
     pub gerber_dir: PathBuf,
 }
 
@@ -62,6 +63,7 @@ impl Converter for TransjlcConverter {
         }
 
         Ok(ConversionOutput {
+            source_dir: request.input_dir.clone(),
             gerber_dir: request.output_dir.clone(),
         })
     }
@@ -113,9 +115,11 @@ mod tests {
     #[test]
     fn conversion_output_points_at_generated_gerber_directory() {
         let output = ConversionOutput {
+            source_dir: PathBuf::from("source"),
             gerber_dir: PathBuf::from("converted"),
         };
 
+        assert_eq!(output.source_dir, PathBuf::from("source"));
         assert_eq!(output.gerber_dir, PathBuf::from("converted"));
     }
 

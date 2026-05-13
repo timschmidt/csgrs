@@ -394,6 +394,49 @@ pub fn layer_sanity(
     violations
 }
 
+pub fn copper_balance(
+    copper_layers: &[(String, PcbSketch)],
+    max_imbalance_ratio: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    let mut measured = copper_layers
+        .iter()
+        .filter_map(|(name, sketch)| {
+            let area = sketch.to_multipolygon().unsigned_area();
+            (area > min_area).then_some((name.clone(), area))
+        })
+        .collect::<Vec<_>>();
+
+    if measured.len() < 2 {
+        return Vec::new();
+    }
+
+    measured.sort_by(|left, right| {
+        left.1
+            .partial_cmp(&right.1)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+    let (smallest_layer, smallest_area) = &measured[0];
+    let (largest_layer, largest_area) = &measured[measured.len() - 1];
+    let ratio = largest_area / smallest_area;
+
+    if ratio <= max_imbalance_ratio {
+        return Vec::new();
+    }
+
+    vec![Violation::new(
+        "copper-balance-readiness",
+        Severity::Warning,
+        vec![smallest_layer.clone(), largest_layer.clone()],
+        None,
+        Vec::new(),
+        Vec::new(),
+        Some(format!(
+            "copper area imbalance ratio {ratio:.3} exceeds maximum {max_imbalance_ratio:.3}; smallest layer {smallest_layer} area {smallest_area:.6}, largest layer {largest_layer} area {largest_area:.6}"
+        )),
+    )]
+}
+
 pub fn mechanical_layer_geometry(
     layer_name: &str,
     sketch: &PcbSketch,
@@ -564,10 +607,10 @@ mod tests {
     use geo::{Coord, LineString, Polygon};
 
     use super::{
-        acid_trap_candidates, board_edge_clearance, board_outline_sanity, copper_overlap,
-        exposed_copper, layer_sanity, mask_island_keepout, mechanical_layer_geometry,
-        min_copper_neck_width, paste_aperture_coverage, paste_overhang, silkscreen_min_width,
-        silkscreen_overlap, solder_mask_opening_coverage, solder_mask_sliver,
+        acid_trap_candidates, board_edge_clearance, board_outline_sanity, copper_balance,
+        copper_overlap, exposed_copper, layer_sanity, mask_island_keepout,
+        mechanical_layer_geometry, min_copper_neck_width, paste_aperture_coverage, paste_overhang,
+        silkscreen_min_width, silkscreen_overlap, solder_mask_opening_coverage, solder_mask_sliver,
     };
     use crate::LayerMetadata;
     use crate::geometry::{empty_sketch, line_polygon, polygons_to_sketch};
@@ -611,6 +654,46 @@ mod tests {
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].polygons.len(), 1);
         assert!((violations[0].polygons[0].area - 1.0).abs() < 1.0e-9);
+    }
+
+    #[test]
+    fn copper_balance_reports_large_area_imbalance() {
+        let layers = vec![
+            (
+                "F.Cu".to_string(),
+                sketch("F.Cu", vec![square(0.0, 0.0, 1.0, 1.0)]),
+            ),
+            (
+                "B.Cu".to_string(),
+                sketch("B.Cu", vec![square(0.0, 0.0, 4.0, 4.0)]),
+            ),
+        ];
+
+        let violations = copper_balance(&layers, 3.0, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "copper-balance-readiness");
+    }
+
+    #[test]
+    fn copper_balance_allows_similar_or_single_sided_inputs() {
+        let balanced = vec![
+            (
+                "F.Cu".to_string(),
+                sketch("F.Cu", vec![square(0.0, 0.0, 2.0, 2.0)]),
+            ),
+            (
+                "B.Cu".to_string(),
+                sketch("B.Cu", vec![square(0.0, 0.0, 2.5, 2.0)]),
+            ),
+        ];
+        let single = vec![(
+            "F.Cu".to_string(),
+            sketch("F.Cu", vec![square(0.0, 0.0, 2.0, 2.0)]),
+        )];
+
+        assert!(copper_balance(&balanced, 3.0, 1.0e-9).is_empty());
+        assert!(copper_balance(&single, 3.0, 1.0e-9).is_empty());
     }
 
     #[test]

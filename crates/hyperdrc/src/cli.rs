@@ -17,16 +17,21 @@ pub enum Check {
     MinCopperNeck,
     AcidTrap,
     LayerSanity,
+    CopperBalance,
     MechanicalLayerGeometry,
     SolderMaskSliver,
     AnnularRing,
     DrillCopperClearance,
     DrillSpacing,
+    DrillAspectRatio,
+    DrillTableConsistency,
+    CopperNetIntent,
     NetSpacing,
     RegistrationTolerance,
     PanelizationClearance,
     Ipc356Coverage,
     Ipc356DrillDiameter,
+    FileManifestReadiness,
 }
 
 pub const DEFAULT_CHECKS: &[Check] = &[
@@ -43,16 +48,21 @@ pub const DEFAULT_CHECKS: &[Check] = &[
     Check::MinCopperNeck,
     Check::AcidTrap,
     Check::LayerSanity,
+    Check::CopperBalance,
     Check::MechanicalLayerGeometry,
     Check::SolderMaskSliver,
     Check::AnnularRing,
     Check::DrillCopperClearance,
     Check::DrillSpacing,
+    Check::DrillAspectRatio,
+    Check::DrillTableConsistency,
+    Check::CopperNetIntent,
     Check::NetSpacing,
     Check::RegistrationTolerance,
     Check::PanelizationClearance,
     Check::Ipc356Coverage,
     Check::Ipc356DrillDiameter,
+    Check::FileManifestReadiness,
 ];
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, ValueEnum)]
@@ -217,6 +227,10 @@ pub struct Cli {
     #[arg(long)]
     pub acid_trap_angle: Option<f64>,
 
+    /// Warn when the largest selected copper layer area exceeds the smallest by this ratio.
+    #[arg(long)]
+    pub max_copper_imbalance_ratio: Option<f64>,
+
     /// Minimum acceptable annular ring around plated drills, in KiCad units.
     #[arg(long)]
     pub annular_ring: Option<f64>,
@@ -224,6 +238,14 @@ pub struct Cli {
     /// Drill-to-copper clearance, in KiCad or Excellon units.
     #[arg(long)]
     pub drill_clearance: Option<f64>,
+
+    /// Finished board thickness used by drill aspect-ratio readiness checks.
+    #[arg(long)]
+    pub board_thickness: Option<f64>,
+
+    /// Maximum allowed board-thickness-to-drill-diameter ratio.
+    #[arg(long)]
+    pub max_drill_aspect_ratio: Option<f64>,
 
     /// Different-net copper spacing for KiCad net-aware checks.
     #[arg(long)]
@@ -285,13 +307,23 @@ mod tests {
             "--check",
             "drill-spacing",
             "--check",
+            "drill-aspect-ratio",
+            "--check",
+            "drill-table-consistency",
+            "--check",
+            "copper-net-intent",
+            "--check",
             "solder-mask-opening-coverage",
+            "--check",
+            "copper-balance",
             "--check",
             "paste-aperture-coverage",
             "--check",
             "ipc356-drill-diameter",
             "--format",
             "json",
+            "--check",
+            "file-manifest-readiness",
             "--check",
             "mechanical-layer-geometry",
             "--check",
@@ -308,9 +340,14 @@ mod tests {
                 Check::CopperOverlap,
                 Check::AcidTrap,
                 Check::DrillSpacing,
+                Check::DrillAspectRatio,
+                Check::DrillTableConsistency,
+                Check::CopperNetIntent,
                 Check::SolderMaskOpeningCoverage,
+                Check::CopperBalance,
                 Check::PasteApertureCoverage,
                 Check::Ipc356DrillDiameter,
+                Check::FileManifestReadiness,
                 Check::MechanicalLayerGeometry,
                 Check::BoardOutlineSanity
             ]

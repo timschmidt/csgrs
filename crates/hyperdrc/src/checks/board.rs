@@ -140,6 +140,146 @@ pub fn drill_spacing(
     violations
 }
 
+pub fn drill_aspect_ratio(
+    source: &str,
+    drills: &[DrillFeature],
+    board_thickness: f64,
+    max_aspect_ratio: f64,
+) -> Vec<Violation> {
+    let mut violations = Vec::new();
+
+    for drill in drills {
+        if drill.diameter <= 0.0 {
+            violations.push(Violation::new(
+                "drill-aspect-ratio",
+                Severity::Warning,
+                vec![source.to_string()],
+                None,
+                Vec::new(),
+                vec![drill.location],
+                Some("drill diameter is not positive, so aspect ratio is undefined".to_string()),
+            ));
+            continue;
+        }
+
+        let aspect_ratio = board_thickness / drill.diameter;
+        if aspect_ratio <= max_aspect_ratio {
+            continue;
+        }
+
+        violations.push(Violation::new(
+            "drill-aspect-ratio",
+            Severity::Warning,
+            vec![source.to_string()],
+            None,
+            Vec::new(),
+            vec![drill.location],
+            Some(format!(
+                "drill aspect ratio {aspect_ratio:.3} exceeds maximum {max_aspect_ratio:.3} for board thickness {board_thickness:.3}"
+            )),
+        ));
+    }
+
+    violations
+}
+
+pub fn drill_table_consistency(
+    board_drills: &[DrillFeature],
+    extra_drills: &[DrillFeature],
+    ipc356_points: &[Ipc356Point],
+    tolerance: f64,
+) -> Vec<Violation> {
+    let mut violations = Vec::new();
+
+    for board_drill in board_drills {
+        for extra_drill in extra_drills {
+            if distance(board_drill.location, extra_drill.location) > tolerance {
+                continue;
+            }
+            if !diameters_conflict(board_drill.diameter, extra_drill.diameter, tolerance) {
+                continue;
+            }
+
+            violations.push(drill_table_violation(
+                "KiCad drills",
+                board_drill.diameter,
+                "Excellon drills",
+                extra_drill.diameter,
+                vec![board_drill.location, extra_drill.location],
+            ));
+        }
+    }
+
+    for extra_drill in extra_drills {
+        for point in ipc356_points {
+            if distance(extra_drill.location, point.location) > tolerance {
+                continue;
+            }
+            let Some(ipc_diameter) = point.diameter else {
+                continue;
+            };
+            if !diameters_conflict(extra_drill.diameter, ipc_diameter, tolerance) {
+                continue;
+            }
+
+            violations.push(drill_table_violation(
+                "Excellon drills",
+                extra_drill.diameter,
+                "IPC-D-356 drills",
+                ipc_diameter,
+                vec![extra_drill.location, point.location],
+            ));
+        }
+    }
+
+    violations
+}
+
+pub fn copper_net_intent(board: &BoardModel, selected_layers: &[String]) -> Vec<Violation> {
+    selected_copper_features(board, selected_layers)
+        .into_iter()
+        .filter(|feature| feature.net.is_none())
+        .map(|feature| {
+            Violation::new(
+                "copper-net-intent",
+                Severity::Warning,
+                vec![feature.layer.clone()],
+                None,
+                Vec::new(),
+                vec![feature.location],
+                Some(format!(
+                    "parsed {:?} copper has no net after KiCad parsing and IPC-D-356 annotation",
+                    feature.kind
+                )),
+            )
+        })
+        .collect()
+}
+
+fn diameters_conflict(left: f64, right: f64, tolerance: f64) -> bool {
+    left > 0.0 && right > 0.0 && (left - right).abs() > tolerance
+}
+
+fn drill_table_violation(
+    left_source: &str,
+    left_diameter: f64,
+    right_source: &str,
+    right_diameter: f64,
+    locations: Vec<[f64; 2]>,
+) -> Violation {
+    Violation::new(
+        "drill-table-consistency",
+        Severity::Warning,
+        vec![left_source.to_string(), right_source.to_string()],
+        None,
+        Vec::new(),
+        locations,
+        Some(format!(
+            "{left_source} diameter {left_diameter:.6} differs from {right_source} diameter {right_diameter:.6}"
+        )),
+    )
+}
+
 pub fn net_spacing(
     board: &BoardModel,
     clearance: f64,
@@ -468,8 +608,9 @@ mod tests {
     use crate::ipc356::Ipc356Point;
 
     use super::{
-        annular_ring, apply_ipc356_nets, drill_spacing, drill_to_copper_clearance, ipc356_coverage,
-        ipc356_drill_diameter, net_spacing, panelization_clearance, registration_tolerance,
+        annular_ring, apply_ipc356_nets, copper_net_intent, drill_aspect_ratio, drill_spacing,
+        drill_table_consistency, drill_to_copper_clearance, ipc356_coverage, ipc356_drill_diameter,
+        net_spacing, panelization_clearance, registration_tolerance,
     };
 
     #[test]
@@ -528,6 +669,157 @@ mod tests {
         };
 
         assert!(annular_ring(&board, 0.1, &[]).is_empty());
+    }
+
+    #[test]
+    fn drill_aspect_ratio_flags_small_holes_for_board_thickness() {
+        let drills = vec![
+            DrillFeature {
+                location: [0.0, 0.0],
+                diameter: 0.15,
+                net: None,
+                plated: true,
+            },
+            DrillFeature {
+                location: [1.0, 0.0],
+                diameter: 0.4,
+                net: None,
+                plated: true,
+            },
+        ];
+
+        let violations = drill_aspect_ratio("drills", &drills, 1.6, 10.0);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].locations, vec![[0.0, 0.0]]);
+    }
+
+    #[test]
+    fn drill_aspect_ratio_reports_zero_diameter_without_dividing() {
+        let drills = vec![DrillFeature {
+            location: [0.0, 0.0],
+            diameter: 0.0,
+            net: None,
+            plated: true,
+        }];
+
+        let violations = drill_aspect_ratio("drills", &drills, 1.6, 10.0);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .unwrap()
+                .contains("undefined")
+        );
+    }
+
+    #[test]
+    fn drill_table_consistency_reports_kicad_excellon_diameter_conflicts() {
+        let board_drills = vec![DrillFeature {
+            location: [0.0, 0.0],
+            diameter: 0.30,
+            net: Some("GND".to_string()),
+            plated: true,
+        }];
+        let excellon_drills = vec![DrillFeature {
+            location: [0.01, 0.0],
+            diameter: 0.45,
+            net: None,
+            plated: true,
+        }];
+
+        let violations = drill_table_consistency(&board_drills, &excellon_drills, &[], 0.05);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "drill-table-consistency");
+    }
+
+    #[test]
+    fn drill_table_consistency_reports_excellon_ipc356_diameter_conflicts() {
+        let excellon_drills = vec![DrillFeature {
+            location: [1.0, 0.0],
+            diameter: 0.30,
+            net: None,
+            plated: true,
+        }];
+        let points = vec![Ipc356Point {
+            net: "GND".to_string(),
+            reference: Some("V1".to_string()),
+            pin: None,
+            location: [1.01, 0.0],
+            diameter: Some(0.50),
+        }];
+
+        let violations = drill_table_consistency(&[], &excellon_drills, &points, 0.05);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(
+            violations[0].layers,
+            vec![
+                "Excellon drills".to_string(),
+                "IPC-D-356 drills".to_string()
+            ]
+        );
+    }
+
+    #[test]
+    fn drill_table_consistency_allows_matching_or_unmatched_records() {
+        let board_drills = vec![DrillFeature {
+            location: [0.0, 0.0],
+            diameter: 0.30,
+            net: Some("GND".to_string()),
+            plated: true,
+        }];
+        let excellon_drills = vec![
+            DrillFeature {
+                location: [0.01, 0.0],
+                diameter: 0.31,
+                net: None,
+                plated: true,
+            },
+            DrillFeature {
+                location: [10.0, 0.0],
+                diameter: 0.90,
+                net: None,
+                plated: true,
+            },
+        ];
+
+        assert!(drill_table_consistency(&board_drills, &excellon_drills, &[], 0.05).is_empty());
+    }
+
+    #[test]
+    fn copper_net_intent_reports_unnetted_kicad_copper() {
+        let mut unnetted = copper_disc("GND", CopperKind::Zone, [0.0, 0.0], 0.5);
+        unnetted.net = None;
+        let board = board_with_copper(vec![
+            copper_disc("GND", CopperKind::Pad, [1.0, 0.0], 0.5),
+            unnetted,
+        ]);
+
+        let violations = copper_net_intent(&board, &[]);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "copper-net-intent");
+        assert_eq!(violations[0].locations, vec![[0.0, 0.0]]);
+    }
+
+    #[test]
+    fn copper_net_intent_respects_selected_layers() {
+        let mut unnetted_front =
+            copper_disc_on_layer("GND", CopperKind::Zone, "F.Cu", [0.0, 0.0], 0.5);
+        unnetted_front.net = None;
+        let mut unnetted_back =
+            copper_disc_on_layer("GND", CopperKind::Zone, "B.Cu", [1.0, 0.0], 0.5);
+        unnetted_back.net = None;
+        let board = board_with_copper(vec![unnetted_front, unnetted_back]);
+
+        let violations = copper_net_intent(&board, &["B.Cu".to_string()]);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].layers, vec!["B.Cu".to_string()]);
     }
 
     #[test]

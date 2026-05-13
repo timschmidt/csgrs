@@ -7,6 +7,8 @@
 pub mod board;
 mod distance;
 pub mod layer;
+pub mod manifest;
 
 pub use board::*;
 pub use layer::*;
+pub use manifest::*;

@@ -213,6 +213,7 @@ mod tests {
         ];
         let report = Report {
             files: Vec::new(),
+            inputs: Vec::new(),
             violation_count: violations.len(),
             waived_count: 0,
             summary: report_summary(&violations, 0),
@@ -239,6 +240,7 @@ mod tests {
         )];
         let report = Report {
             files: Vec::new(),
+            inputs: Vec::new(),
             violation_count: violations.len(),
             waived_count: 0,
             summary: report_summary(&violations, 0),
@@ -258,6 +260,7 @@ mod tests {
     fn empty_report_still_renders_valid_svg_root() {
         let report = Report {
             files: Vec::new(),
+            inputs: Vec::new(),
             violation_count: 0,
             waived_count: 0,
             summary: report_summary(&[], 0),

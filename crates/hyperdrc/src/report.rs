@@ -4,9 +4,13 @@ use std::hash::{Hash, Hasher};
 use serde::Serialize;
 use serde_json::{Value, json};
 
+use crate::io::SourceRecord;
+
 #[derive(Debug, Serialize)]
 pub struct Report {
     pub files: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub inputs: Vec<SourceRecord>,
     pub violation_count: usize,
     pub waived_count: usize,
     pub summary: ReportSummary,
@@ -259,6 +263,7 @@ mod tests {
         ];
         let report = Report {
             files: Vec::new(),
+            inputs: Vec::new(),
             violation_count: violations.len(),
             waived_count: 0,
             summary: report_summary(&violations, 0),

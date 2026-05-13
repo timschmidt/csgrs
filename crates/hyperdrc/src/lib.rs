@@ -5,6 +5,7 @@ pub mod config;
 pub mod conversion;
 pub mod excellon;
 pub mod geometry;
+pub mod io;
 pub mod ipc356;
 pub mod kicad;
 pub mod report;
