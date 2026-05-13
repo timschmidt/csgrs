@@ -45,7 +45,7 @@ the needed facts:
 - product-sum signs are computed once and reused across reducer stages
 - all-zero and single-term sums exit before denominator construction
 
-These optimizations support the higher-level `Real` and `realistic_blas`
+These optimizations support the higher-level `Real` and `hyperlattice`
 matrix/vector kernels, where repeated rational reduction can dominate runtime.
 
 ## Error expectations

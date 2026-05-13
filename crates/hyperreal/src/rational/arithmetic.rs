@@ -588,7 +588,7 @@ impl Rational {
         // and common-factor exact matrix work
         // (https://link.springer.com/article/10.1007/s11786-020-00495-9),
         // but keeps the public fixed-size cofactor formulas division-free.
-        // 2026-05-09 targeted Criterion, 200 samples/8s: the realistic_blas
+        // 2026-05-09 targeted Criterion, 200 samples/8s: the hyperlattice
         // opt-in hook kept approximate matrix reciprocal/division rows at
         // 80-194 ns or better and kept borrowed approximate division unchanged,
         // while hyperreal-rational mat3/mat4 reciprocal held near 26.0/44.1 us
@@ -756,7 +756,7 @@ impl Rational {
             // there is no LCM to build and no per-term scale division. 2026-05
             // tracing target: lower non-dyadic rational dot-product gcd counts
             // without perturbing the dyadic fast path above. Targeted
-            // Criterion, 200 samples/8s: realistic_blas hyperreal-rational
+            // Criterion, 200 samples/8s: hyperlattice hyperreal-rational
             // mat3 powi improved 2.83%, mat4 div_matrix improved 3.88%,
             // mat3 inverse_checked and mat4 powi stayed within noise.
             crate::trace_dispatch!("rational", "dot_product", "equal-product-denominator");

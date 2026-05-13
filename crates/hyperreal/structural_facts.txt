@@ -270,7 +270,7 @@ Uses:
 
 - filters that need `f64`
 - solver numeric inner loops
-- `realistic_blas` approximate fallback decisions
+- `hyperlattice` approximate fallback decisions
 
 Cost:
 

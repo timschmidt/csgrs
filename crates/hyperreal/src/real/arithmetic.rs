@@ -912,7 +912,7 @@ pub struct Real {
 impl Clone for Real {
     fn clone(&self) -> Self {
         // `Computable` caches are accelerators, not semantic state. Most Real
-        // clones in realistic_blas matrix kernels are cold exact symbols, so
+        // clones in hyperlattice matrix kernels are cold exact symbols, so
         // cloning the full payload just to preserve an empty cache is wasted
         // work. Rebuild exact symbolic computables from the compact class
         // certificate; keep opaque irrational payloads and abort-attached values
@@ -1440,7 +1440,7 @@ impl Real {
         // Keep the symbolic fallback out of line so the matrix hot path that
         // exits through the exact-rational branch above remains small enough
         // for LLVM to inline consistently. An inline prototype improved mixed
-        // symbolic dots but regressed realistic_blas hyperreal mat4 borrowed
+        // symbolic dots but regressed hyperlattice hyperreal mat4 borrowed
         // multiply by ~2.6% through code layout alone.
         // Keep zero-sparse symbolic rows fast by skipping exact-zero lanes
         // before building intermediate symbolic terms.
@@ -1500,7 +1500,7 @@ impl Real {
     /// canonicalization because each output cell otherwise builds four product
     /// rationals plus three partial-sum rationals.
     ///
-    /// 2026-05 realistic_blas benchmarks: mat4 mul refs on hyperreal moved
+    /// 2026-05 hyperlattice benchmarks: mat4 mul refs on hyperreal moved
     /// from roughly 10.46 us to 4.33 us after this path, and trace constructors
     /// for one borrowed mat4 multiply dropped from 448 rational Reals to 64.
     pub fn dot4_refs(left: [&Real; 4], right: [&Real; 4]) -> Real {

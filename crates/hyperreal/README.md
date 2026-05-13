@@ -34,7 +34,7 @@ symbolic information available before approximation:
 
 ## Relationship to Other Crates
 
-- `realistic_blas` uses `hyperreal::Real` as its default exact/symbolic scalar
+- `hyperlattice` uses `hyperreal::Real` as its default exact/symbolic scalar
   backend. It forwards `hyperreal` structural facts through its `Scalar` type
   and adds vector, matrix, transform, and retained-geometry facts around them.
 - `liminal` can consume `hyperreal::Real` directly, using structural facts,
@@ -43,13 +43,13 @@ symbolic information available before approximation:
 - `hypersolve` is the experimental solver layer. Its current direction is to
   evaluate constraints through symbolic references to variables, reuse
   reductions across iterations, and route repeated residual and geometry
-  kernels through `hyperreal` and `realistic_blas` instead of rebuilding scalar
+  kernels through `hyperreal` and `hyperlattice` instead of rebuilding scalar
   expressions from scratch.
 
 `hyperreal` owns scalar representation and approximation. It does not own vector
 or matrix algebra, and it does not decide geometry topology. The stack is
 layered intentionally: scalar facts live here, object-level facts live in
-`realistic_blas`/geometry layers, and decision procedures live above them.
+`hyperlattice`/geometry layers, and decision procedures live above them.
 
 ## Why Exact Reals?
 
@@ -278,7 +278,7 @@ let offset = Real::pi() - Real::new(Rational::fraction(22, 7).unwrap());
 assert_eq!(classify_positive(&offset), Some(true));
 ```
 
-This pattern is the intended handoff to `realistic_blas` and `liminal`: cheap
+This pattern is the intended handoff to `hyperlattice` and `liminal`: cheap
 facts route the common case, approximation is delayed until useful, and bounded
 refinement remains available for hard predicate boundaries.
 
@@ -338,34 +338,34 @@ representation identity is the question.
 ## Performance Notes
 
 The implementation strategy is intentionally thin: preserve facts that are
-already known, reduce before approximating, and avoid hiding expensive scalar
-queries inside hot algebra loops. Performance shortcuts are documented next to
-the code that uses them, but the recurring rules are:
+already known, reduce before approximating, and keep expensive scalar queries
+out of hot algebra loops. Performance shortcuts are documented next to the code
+that uses them, but most of them follow the same themes:
 
-- keep exact rational and dyadic values outside generic computable graphs
-- preserve exact rational, dyadic, symbolic, sign, zero, magnitude, and
-  approximation-cache facts at the scalar layer
-- carry object-level facts in higher layers, such as known point/direction `w`,
-  affine form, diagonal or triangular matrix structure, retained transform
-  facts, shared determinant/cofactor work, and known coordinate zeros
-- reduce symbolically before approximating; exact rationals, `pi`, `e`, roots,
-  logarithms, and selected trig constants should simplify or classify without
-  entering generic approximation kernels
-- defer approximation until a decision or output precision requires it, then
-  cache the result and conservative sign or magnitude information
-- build identity values through dedicated constructors and clone cached named
-  constants instead of rebuilding them
-- preserve lightweight symbolic classes only where benchmarks show value
-- reduce trig and exponential arguments before entering series kernels
-- use endpoint and tiny-argument transforms for inverse trig and inverse
-  hyperbolic functions
-- answer structural queries from certificates before refining approximations
-- use borrowed arithmetic to reduce expression-graph cloning in callers such as
-  `realistic_blas` and `liminal`
-- prefer deterministic fast paths guarded by cheap facts over speculative
-  probing inside dense loops
-- keep similar functions flat: a fast path should improve the family it targets
-  without making neighboring functions erratic
+- Preserve facts at the layer that discovered them. `hyperreal` keeps exact
+  rational, dyadic, symbolic, sign, zero, magnitude, and approximation-cache
+  facts; `hyperlattice` and higher layers keep object facts such as affine,
+  diagonal, triangular, point/direction, retained transform, known coordinate
+  zero, and shared determinant/cofactor structure.
+- Use exact and symbolic reductions before generic approximation. Exact
+  rationals, dyadics, named constants, roots, logarithms, selected trig forms,
+  identity values, endpoint cases, tiny-argument transforms, and reduced
+  trig/exponential arguments should simplify or classify before entering
+  broader computable kernels.
+- Approximate only when a decision or output precision requires it. Cache the
+  resulting approximation plus conservative sign or magnitude facts, and answer
+  later structural queries from certificates before refining again.
+- Keep hot kernels predictable. Prefer deterministic fast paths guarded by
+  cheap retained facts, borrowed arithmetic, shared-denominator/product-sum
+  reducers, and cached constants over speculative scalar probing or expression
+  graph cloning inside dense loops.
+- Split backend-sensitive loop shapes narrowly. Compact approximate backends
+  should keep flat interval-friendly routes when possible, while exact
+  hyperreal/hyperreal-rational paths may use capability-gated reducers or
+  symbolic shortcuts when benchmarks show a real win.
+- Benchmark families, not isolated rows. A shortcut should improve the target
+  surface without making nearby functions or stack-facing `hyperlattice` and
+  `liminal` paths erratic.
 
 Benchmark suites:
 
@@ -402,7 +402,7 @@ cargo bench --bench numerical_micro
 
 When adding a shortcut, add a focused correctness test and a benchmark row for
 the smallest affected surface. Keep the shortcut only if it improves the target
-without regressing broader `realistic_blas` or `liminal` benchmarks.
+without regressing broader `hyperlattice` or `liminal` benchmarks.
 
 ## Provenance and Acknowledgements
 

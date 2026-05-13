@@ -7,7 +7,7 @@ macro_rules! impl_integer_conversion {
             #[inline]
             fn from(n: $T) -> Real {
                 // Integer identity conversion is a public hot path through
-                // realistic_blas and predicated. Keep 0 and 1 on dedicated
+                // hyperlattice and predicated. Keep 0 and 1 on dedicated
                 // Real constructors instead of paying BigInt rational import.
                 if n == 0 {
                     return Real::zero();

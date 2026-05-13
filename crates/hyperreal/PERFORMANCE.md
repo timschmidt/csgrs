@@ -29,8 +29,8 @@ Cross-crate regression checks:
 cargo bench --bench mathbench -- 'scalar_trig/hyperreal.*/(0.1|1.23456789|1e6|1e30|1000pi_eps)/(sin|cos)'
 cargo bench --bench mathbench -- 'matrix[34]/hyperreal'
 cargo bench --bench mathbench --features hyperreal-dispatch-trace -- --write-dispatch-trace-md
-cargo bench --bench predicates --features realistic-blas -- '(realistic_blas|hyperreal)'
-cargo bench --bench predicates --features dispatch-trace,realistic-blas -- --write-dispatch-trace-md
+cargo bench --bench predicates --features hyperlattice -- '(hyperlattice|hyperreal)'
+cargo bench --bench predicates --features dispatch-trace,hyperlattice -- --write-dispatch-trace-md
 ```
 
 ## Rational Path
@@ -59,7 +59,7 @@ Relevant path notes:
   sizes. Matrix regressions should be investigated with those counters before
   changing algebra code.
 - Exact f64 imports are intentionally kept rational/dyadic when possible so
-  `realistic_blas` and `liminal` can stay on structural paths.
+  `hyperlattice` and `liminal` can stay on structural paths.
 
 Goals:
 
@@ -86,7 +86,7 @@ Current timing anchors:
 | `dense_algebra/real_dot_36` | 28.3 us |
 | `dense_algebra/real_matmul_6` | 153.0 us |
 
-Scalar trig anchors from `realistic_blas`:
+Scalar trig anchors from `hyperlattice`:
 
 | Row | Median |
 | --- | ---: |
@@ -128,7 +128,7 @@ Goals:
 - Investigate remaining rational exact-special hot spots, especially
   `hyperreal-rational/pi_7_cos`, rational endpoint inverse trig, and
   `hyperreal-rational/e_acosh`.
-- Any new symbolic class must show wins in `scalar_micro`, `realistic_blas`, and
+- Any new symbolic class must show wins in `scalar_micro`, `hyperlattice`, and
   `liminal`; otherwise keep the representation simpler.
 
 ## Computable Path
@@ -191,7 +191,7 @@ When a scalar row regresses:
 3. If the trace path is unchanged, suspect code layout, extra clone/certificate
    rebuilds, or rational reduction counters before changing algorithms.
 4. Re-run the smallest affected Criterion filter, then one cross-crate guard
-   from `realistic_blas` and one from `liminal`.
+   from `hyperlattice` and one from `liminal`.
 
 For this snapshot, the most important regression sentinels are:
 
