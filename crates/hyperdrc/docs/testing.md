@@ -53,7 +53,9 @@ These tests exercise the runtime pipeline around the checks:
   drill availability are passed into `file-manifest-readiness`. Manifest unit
   tests also verify revision/date/project token consistency, invalid generated
   dates, stale generated dates, future generated dates, and backup/archive name
-  detection, including the configurable generated-date freshness window.
+  detection, including the configurable generated-date freshness window, named
+  package profiles, and field-level required-artifact and required-layer
+  policies.
 - Parser diagnostic tests feed malformed Excellon and IPC-D-356 sidecars and
   verify their parser issues are collected separately from active DRC
   violations.
@@ -154,8 +156,10 @@ Constraint tests use typed config structures and synthetic KiCad copper:
   dielectric/core/prepreg thickness entries when a finished thickness is
   declared.
 - Net-class tests match exact nets and simple `*` wildcard patterns, then verify
-  configured minimum trace width, different-net clearance, maximum layer count,
-  and minimum via count for layer-changing nets.
+  configured minimum trace width, current-carrying width, different-net
+  clearance, voltage-class clearance, maximum layer count, minimum via count for
+  layer-changing nets, maximum via count, explicit differential-pair side and
+  spacing rules, reference-plane intent, and impedance-control handoff metadata.
 - Passing tests build compliant or unmatched nets to ensure explicit config
   constraints do not affect unrelated copper.
 
@@ -175,6 +179,8 @@ Assembly tests focus on manufacturing intent that is not just copper clearance:
   report missing probe diameter/access metadata.
 - Tooling, mouse-bite, fiducial, local-fiducial, and dense-pad tests verify
   assembly fixture and panelization readiness.
+- Assembly policy tests verify profile defaults preserve existing production-SMT
+  thresholds and that field-level overrides replace individual resolved values.
 
 ### Stencil And Paste
 
@@ -312,7 +318,9 @@ These tests protect user-facing behavior around the check engine:
   are rejected, Gerber directories and conversion flags parse, manufacturing
   sidecar flags parse, and every report format enum variant is accepted.
 - Config tests verify malformed JSON is rejected, unknown config fields are
-  ignored, and CLI overrides take precedence over config values and defaults.
+  ignored, CLI overrides take precedence over config values and defaults, and
+  package-profile defaults can be overridden by individual manifest policy
+  fields. They also parse assembly profiles and assembly threshold overrides.
 - Conversion tests verify TransJLC command construction, pass-through arguments,
   color-image arguments, zip/output-directory options, missing converter errors,
   command failure context, and successful output directory handoff.

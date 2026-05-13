@@ -14,10 +14,42 @@
   "min_area": 1.0e-9,
   "max_layer_area": null,
   "generated_date_stale_days": 90,
+  "package_profile": "full-production",
+  "required_artifacts": {
+    "bom": true,
+    "centroid": true,
+    "netlist": true,
+    "fab_drawing": true,
+    "assembly_drawing": true,
+    "readme": true,
+    "rout_drawing": true
+  },
+  "required_layers": {
+    "board_outline": true,
+    "drill_data": true,
+    "top_mask": true,
+    "bottom_mask": true,
+    "top_paste": true,
+    "bottom_paste": true,
+    "top_silkscreen": true,
+    "bottom_silkscreen": true
+  },
+  "assembly_profile": "production-smt",
+  "assembly": {
+    "component_edge_clearance": 0.5,
+    "component_hole_clearance": 0.5,
+    "connector_rework_clearance": 0.5,
+    "testpoint_min_diameter": 0.15,
+    "testpoint_min_spacing": 0.6,
+    "testpoint_edge_clearance": 0.5,
+    "dense_pad_pitch": 0.8,
+    "dense_pad_via_search_radius": 1.5
+  },
   "kicad_copper_layers": ["F.Cu", "B.Cu"],
   "stackup": {
     "copper_layer_count": 2,
     "finished_thickness": 1.6,
+    "impedance_controlled": true,
     "layers": [
       {
         "name": "F.Cu",
@@ -44,7 +76,40 @@
       "min_width": 0.5,
       "min_clearance": 0.25,
       "max_layer_count": 2,
-      "min_via_count": 2
+      "min_via_count": 2,
+      "min_current_width": 0.75,
+      "min_voltage_clearance": 0.5,
+      "requires_reference_plane": true,
+      "requires_impedance_control": false,
+      "max_via_count": 4
+    },
+    {
+      "name": "usb positive",
+      "nets": ["USB_D+"],
+      "min_width": 0.12,
+      "min_clearance": 0.12,
+      "max_layer_count": 2,
+      "min_via_count": 1,
+      "requires_reference_plane": true,
+      "requires_impedance_control": true,
+      "differential_pair": "usb",
+      "differential_role": "positive",
+      "min_pair_spacing": 0.12,
+      "max_pair_spacing": 0.22
+    },
+    {
+      "name": "usb negative",
+      "nets": ["USB_D-"],
+      "min_width": 0.12,
+      "min_clearance": 0.12,
+      "max_layer_count": 2,
+      "min_via_count": 1,
+      "requires_reference_plane": true,
+      "requires_impedance_control": true,
+      "differential_pair": "usb",
+      "differential_role": "negative",
+      "min_pair_spacing": 0.12,
+      "max_pair_spacing": 0.22
     }
   ]
 }

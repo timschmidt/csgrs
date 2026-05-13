@@ -1,8 +1,10 @@
 pub mod app;
+pub mod assembly_policy;
 pub mod baseline;
 pub mod checks;
 pub mod cli;
 pub mod config;
+pub mod constraint_policy;
 pub mod conversion;
 pub mod date;
 pub mod excellon;
@@ -14,6 +16,7 @@ pub mod ipc356;
 pub mod jsonl;
 pub mod junit;
 pub mod kicad;
+pub mod package_policy;
 pub mod report;
 pub mod sarif;
 pub mod sexp;

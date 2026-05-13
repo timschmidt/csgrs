@@ -26,6 +26,18 @@ application orchestration, while subfolders hold the larger semantic areas.
   defines the optional stackup and net-class sections consumed by config-driven
   readiness checks, plus manifest freshness settings such as
   `generated_date_stale_days`.
+- [`assembly_policy.rs`](assembly_policy.rs) defines assembly profiles and
+  resolved thresholds for component clearance, connector rework, testpoint
+  access, tooling holes, mouse bites, fiducials, and dense-pad escape checks.
+- [`constraint_policy.rs`](constraint_policy.rs) defines the stackup and
+  net-class rule-deck structures consumed by config-driven checks. Net classes
+  can now carry width, clearance, current-width, voltage-clearance,
+  reference-plane, via-count, layer-count, differential-pair, and
+  impedance-control intent.
+- [`package_policy.rs`](package_policy.rs) defines named package profiles
+  (`full-production`, `fabrication-only`, `assembly-only`, and
+  `electrical-test`) and resolves those profiles with `required_artifacts` and
+  `required_layers` field overrides for manifest-readiness checks.
 - [`date.rs`](date.rs) contains day-level Gregorian parsing/comparison helpers
   shared by waiver governance and manifest freshness checks.
 - [`waiver.rs`](waiver.rs) defines JSON waiver parsing, matching by stable

@@ -28,11 +28,65 @@ pub struct ManifestInput {
     pub assembly_drawing_file_count: usize,
     pub readme_file_count: usize,
     pub rout_drawing_file_count: usize,
+    pub required_artifacts: ManifestRequirements,
+    pub required_layers: ManifestLayerRequirements,
     pub declared_copper_layer_count: Option<usize>,
     pub generated_date_stale_days: Option<usize>,
     pub kicad_copper_layer_count: Option<usize>,
     pub has_board_outline: bool,
     pub has_drill_data: bool,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ManifestRequirements {
+    pub bom: bool,
+    pub centroid: bool,
+    pub netlist: bool,
+    pub fab_drawing: bool,
+    pub assembly_drawing: bool,
+    pub readme: bool,
+    pub rout_drawing: bool,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ManifestLayerRequirements {
+    pub board_outline: bool,
+    pub drill_data: bool,
+    pub top_mask: bool,
+    pub bottom_mask: bool,
+    pub top_paste: bool,
+    pub bottom_paste: bool,
+    pub top_silkscreen: bool,
+    pub bottom_silkscreen: bool,
+}
+
+impl Default for ManifestLayerRequirements {
+    fn default() -> Self {
+        Self {
+            board_outline: true,
+            drill_data: true,
+            top_mask: true,
+            bottom_mask: true,
+            top_paste: true,
+            bottom_paste: true,
+            top_silkscreen: true,
+            bottom_silkscreen: true,
+        }
+    }
+}
+
+impl Default for ManifestRequirements {
+    fn default() -> Self {
+        Self {
+            bom: true,
+            centroid: true,
+            netlist: true,
+            fab_drawing: true,
+            assembly_drawing: true,
+            readme: true,
+            rout_drawing: true,
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -78,7 +132,7 @@ pub fn file_manifest_readiness(input: &ManifestInput) -> Vec<Violation> {
         ));
     }
 
-    if outline_count == 0 && !input.has_board_outline {
+    if input.required_layers.board_outline && outline_count == 0 && !input.has_board_outline {
         violations.push(package_violation(
             "missing-board-outline",
             Severity::Warning,
@@ -86,7 +140,7 @@ pub fn file_manifest_readiness(input: &ManifestInput) -> Vec<Violation> {
         ));
     }
 
-    if !input.has_drill_data {
+    if input.required_layers.drill_data && !input.has_drill_data {
         violations.push(package_violation(
             "missing-drill-data",
             Severity::Warning,
@@ -94,7 +148,7 @@ pub fn file_manifest_readiness(input: &ManifestInput) -> Vec<Violation> {
         ));
     }
 
-    if top_copper > 0 && top_mask_count == 0 {
+    if input.required_layers.top_mask && top_copper > 0 && top_mask_count == 0 {
         violations.push(package_violation(
             "missing-top-mask",
             Severity::Warning,
@@ -102,7 +156,7 @@ pub fn file_manifest_readiness(input: &ManifestInput) -> Vec<Violation> {
         ));
     }
 
-    if bottom_copper > 0 && bottom_mask_count == 0 {
+    if input.required_layers.bottom_mask && bottom_copper > 0 && bottom_mask_count == 0 {
         violations.push(package_violation(
             "missing-bottom-mask",
             Severity::Warning,
@@ -110,7 +164,7 @@ pub fn file_manifest_readiness(input: &ManifestInput) -> Vec<Violation> {
         ));
     }
 
-    if top_copper > 0 && top_silk_count == 0 {
+    if input.required_layers.top_silkscreen && top_copper > 0 && top_silk_count == 0 {
         violations.push(package_violation(
             "missing-top-silkscreen",
             Severity::Warning,
@@ -118,7 +172,7 @@ pub fn file_manifest_readiness(input: &ManifestInput) -> Vec<Violation> {
         ));
     }
 
-    if bottom_copper > 0 && bottom_silk_count == 0 {
+    if input.required_layers.bottom_silkscreen && bottom_copper > 0 && bottom_silk_count == 0 {
         violations.push(package_violation(
             "missing-bottom-silkscreen",
             Severity::Warning,
@@ -126,7 +180,7 @@ pub fn file_manifest_readiness(input: &ManifestInput) -> Vec<Violation> {
         ));
     }
 
-    if top_copper > 0 && top_paste_count == 0 {
+    if input.required_layers.top_paste && top_copper > 0 && top_paste_count == 0 {
         violations.push(package_violation(
             "missing-top-paste",
             Severity::Warning,
@@ -134,7 +188,7 @@ pub fn file_manifest_readiness(input: &ManifestInput) -> Vec<Violation> {
         ));
     }
 
-    if bottom_copper > 0 && bottom_paste_count == 0 {
+    if input.required_layers.bottom_paste && bottom_copper > 0 && bottom_paste_count == 0 {
         violations.push(package_violation(
             "missing-bottom-paste",
             Severity::Warning,
@@ -216,44 +270,56 @@ pub fn file_manifest_readiness(input: &ManifestInput) -> Vec<Violation> {
         &mut violations,
     );
 
-    check_single_file_required(
+    check_single_file(
         input.bom_file_count,
+        input.required_artifacts.bom,
         "bom",
         "bill of materials",
         &mut violations,
     );
 
-    check_single_file_required(
+    check_single_file(
         input.centroid_file_count,
+        input.required_artifacts.centroid,
         "centroid",
         "centroid",
         &mut violations,
     );
 
-    check_single_file_required(
+    check_single_file(
         input.netlist_file_count,
+        input.required_artifacts.netlist,
         "netlist",
         "netlist",
         &mut violations,
     );
 
-    check_single_file_required(
+    check_single_file(
         input.fab_drawing_file_count,
+        input.required_artifacts.fab_drawing,
         "fab-drawing",
         "fabrication drawing",
         &mut violations,
     );
 
-    check_single_file_required(
+    check_single_file(
         input.assembly_drawing_file_count,
+        input.required_artifacts.assembly_drawing,
         "assembly-drawing",
         "assembly drawing",
         &mut violations,
     );
 
-    check_single_file_required(input.readme_file_count, "readme", "readme", &mut violations);
-    check_single_file_required(
+    check_single_file(
+        input.readme_file_count,
+        input.required_artifacts.readme,
+        "readme",
+        "readme",
+        &mut violations,
+    );
+    check_single_file(
         input.rout_drawing_file_count,
+        input.required_artifacts.rout_drawing,
         "rout-drawing",
         "rout drawing",
         &mut violations,
@@ -389,13 +455,14 @@ fn verify_declared_copper_layer_count(
     }
 }
 
-fn check_single_file_required(
+fn check_single_file(
     count: usize,
+    required: bool,
     slug: &str,
     name: &str,
     violations: &mut Vec<Violation>,
 ) {
-    if count == 0 {
+    if count == 0 && required {
         violations.push(package_violation(
             &format!("missing-{slug}"),
             Severity::Warning,
@@ -981,8 +1048,9 @@ mod tests {
     use crate::date::parse_iso_day;
 
     use super::{
-        GerberRole, ManifestGerberLayer, ManifestInput, check_generated_date_age,
-        classify_gerber_role, file_manifest_readiness, normalize_date_token,
+        GerberRole, ManifestGerberLayer, ManifestInput, ManifestLayerRequirements,
+        ManifestRequirements, check_generated_date_age, classify_gerber_role,
+        file_manifest_readiness, normalize_date_token,
     };
 
     #[test]
@@ -1130,6 +1198,118 @@ mod tests {
         assert!(slugs.contains(&"package:missing-assembly-drawing".to_string()));
         assert!(slugs.contains(&"package:duplicate-netlist".to_string()));
         assert!(slugs.contains(&"package:duplicate-rout-drawing".to_string()));
+    }
+
+    #[test]
+    fn optional_production_artifacts_do_not_report_missing_inputs() {
+        let input = ManifestInput {
+            gerber_layers: vec![layer("TopCopper.GTL")],
+            has_board_outline: true,
+            has_drill_data: true,
+            required_artifacts: ManifestRequirements {
+                bom: true,
+                centroid: false,
+                netlist: false,
+                fab_drawing: true,
+                assembly_drawing: false,
+                readme: true,
+                rout_drawing: false,
+            },
+            bom_file_count: 1,
+            fab_drawing_file_count: 1,
+            readme_file_count: 1,
+            ..Default::default()
+        };
+        let slugs = violation_slugs(&file_manifest_readiness(&input));
+
+        assert!(!slugs.contains(&"package:missing-centroid".to_string()));
+        assert!(!slugs.contains(&"package:missing-netlist".to_string()));
+        assert!(!slugs.contains(&"package:missing-assembly-drawing".to_string()));
+        assert!(!slugs.contains(&"package:missing-rout-drawing".to_string()));
+    }
+
+    #[test]
+    fn optional_production_artifacts_still_report_duplicate_inputs() {
+        let input = ManifestInput {
+            gerber_layers: vec![layer("TopCopper.GTL")],
+            has_board_outline: true,
+            has_drill_data: true,
+            required_artifacts: ManifestRequirements {
+                centroid: false,
+                ..ManifestRequirements::default()
+            },
+            bom_file_count: 1,
+            centroid_file_count: 2,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            ..Default::default()
+        };
+        let slugs = violation_slugs(&file_manifest_readiness(&input));
+
+        assert!(slugs.contains(&"package:duplicate-centroid".to_string()));
+    }
+
+    #[test]
+    fn optional_layer_roles_do_not_report_missing_layers() {
+        let input = ManifestInput {
+            gerber_layers: vec![layer("TopCopper.GTL")],
+            required_layers: ManifestLayerRequirements {
+                board_outline: false,
+                drill_data: false,
+                top_mask: false,
+                bottom_mask: true,
+                top_paste: false,
+                bottom_paste: true,
+                top_silkscreen: false,
+                bottom_silkscreen: true,
+            },
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            ..Default::default()
+        };
+        let slugs = violation_slugs(&file_manifest_readiness(&input));
+
+        assert!(!slugs.contains(&"package:missing-board-outline".to_string()));
+        assert!(!slugs.contains(&"package:missing-drill-data".to_string()));
+        assert!(!slugs.contains(&"package:missing-top-mask".to_string()));
+        assert!(!slugs.contains(&"package:missing-top-paste".to_string()));
+        assert!(!slugs.contains(&"package:missing-top-silkscreen".to_string()));
+    }
+
+    #[test]
+    fn optional_layer_roles_still_report_duplicate_layers() {
+        let input = ManifestInput {
+            gerber_layers: vec![
+                layer("TopCopper.GTL"),
+                layer("TopPaste.GTP"),
+                layer("TopPaste-backup.GTP"),
+            ],
+            required_layers: ManifestLayerRequirements {
+                top_paste: false,
+                ..ManifestLayerRequirements::default()
+            },
+            has_board_outline: true,
+            has_drill_data: true,
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            ..Default::default()
+        };
+        let slugs = violation_slugs(&file_manifest_readiness(&input));
+
+        assert!(slugs.contains(&"package:duplicate-top-paste".to_string()));
     }
 
     #[test]

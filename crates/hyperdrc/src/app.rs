@@ -1343,7 +1343,7 @@ fn run_checks(
                     violations.extend(checks::component_edge_clearance_readiness(
                         board,
                         kicad_copper_layers,
-                        rules.clearance * 2.0,
+                        rules.assembly.component_edge_clearance,
                     ));
                 }
             }
@@ -1353,7 +1353,7 @@ fn run_checks(
                         board,
                         excellon_drills,
                         kicad_copper_layers,
-                        rules.clearance * 2.0,
+                        rules.assembly.component_hole_clearance,
                         rules.min_area,
                     ));
                 }
@@ -1363,8 +1363,8 @@ fn run_checks(
                     violations.extend(checks::connector_rework_clearance_readiness(
                         board,
                         kicad_copper_layers,
-                        rules.clearance * 2.0,
-                        rules.min_width * 3.0,
+                        rules.assembly.connector_rework_clearance,
+                        rules.assembly.connector_min_pad_dimension,
                     ));
                 }
             }
@@ -1373,9 +1373,9 @@ fn run_checks(
                     violations.extend(checks::pad_pair_asymmetry_readiness(
                         board,
                         kicad_copper_layers,
-                        rules.min_width * 8.0,
-                        1.5,
-                        rules.min_width * 10.0,
+                        rules.assembly.pad_pair_max_gap,
+                        rules.assembly.pad_pair_max_area_ratio,
+                        rules.assembly.pad_pair_max_pad_dimension,
                     ));
                 }
             }
@@ -1432,9 +1432,9 @@ fn run_checks(
                     violations.extend(checks::testpoint_accessibility_readiness(
                         board,
                         ipc356_points,
-                        rules.min_width,
-                        rules.net_clearance * 4.0,
-                        rules.clearance * 2.0,
+                        rules.assembly.testpoint_min_diameter,
+                        rules.assembly.testpoint_min_spacing,
+                        rules.assembly.testpoint_edge_clearance,
                     ));
                 }
             }
@@ -1443,9 +1443,9 @@ fn run_checks(
                     violations.extend(checks::tooling_hole_readiness(
                         board,
                         excellon_drills,
-                        rules.min_width * 4.0,
-                        rules.min_width * 20.0,
-                        rules.clearance * 2.0,
+                        rules.assembly.tooling_min_diameter,
+                        rules.assembly.tooling_max_diameter,
+                        rules.assembly.tooling_edge_clearance,
                     ));
                 }
             }
@@ -1454,10 +1454,10 @@ fn run_checks(
                     violations.extend(checks::mouse_bite_readiness(
                         board,
                         excellon_drills,
-                        rules.min_width,
-                        rules.min_width * 4.0,
-                        rules.min_width * 2.0,
-                        rules.min_width * 8.0,
+                        rules.assembly.mouse_bite_min_diameter,
+                        rules.assembly.mouse_bite_max_diameter,
+                        rules.assembly.mouse_bite_min_spacing,
+                        rules.assembly.mouse_bite_max_spacing,
                     ));
                 }
             }
@@ -1466,7 +1466,7 @@ fn run_checks(
                     violations.extend(checks::fiducial_readiness(
                         board,
                         kicad_copper_layers,
-                        rules.clearance * 2.0,
+                        rules.assembly.fiducial_edge_clearance,
                     ));
                 }
             }
@@ -1475,8 +1475,8 @@ fn run_checks(
                     violations.extend(checks::local_fiducial_readiness(
                         board,
                         kicad_copper_layers,
-                        0.8,
-                        rules.net_clearance * 25.0,
+                        rules.assembly.local_fiducial_pitch,
+                        rules.assembly.local_fiducial_search_radius,
                     ));
                 }
             }
@@ -1485,8 +1485,8 @@ fn run_checks(
                     violations.extend(checks::dense_pad_escape_readiness(
                         board,
                         kicad_copper_layers,
-                        0.8,
-                        rules.net_clearance * 10.0,
+                        rules.assembly.dense_pad_pitch,
+                        rules.assembly.dense_pad_via_search_radius,
                     ));
                 }
             }
@@ -1620,6 +1620,7 @@ fn run_checks(
             Check::NetConstraintReadiness => {
                 violations.extend(checks::net_constraint_readiness(
                     &config.net_classes,
+                    config.stackup.as_ref(),
                     boards,
                     kicad_copper_layers,
                 ));
@@ -2064,6 +2065,25 @@ fn manifest_input(
         assembly_drawing_file_count: package_inputs.assembly_drawing_files.len(),
         readme_file_count: package_inputs.readme_files.len(),
         rout_drawing_file_count: package_inputs.rout_drawing_files.len(),
+        required_artifacts: checks::ManifestRequirements {
+            bom: rules.required_artifacts.bom,
+            centroid: rules.required_artifacts.centroid,
+            netlist: rules.required_artifacts.netlist,
+            fab_drawing: rules.required_artifacts.fab_drawing,
+            assembly_drawing: rules.required_artifacts.assembly_drawing,
+            readme: rules.required_artifacts.readme,
+            rout_drawing: rules.required_artifacts.rout_drawing,
+        },
+        required_layers: checks::ManifestLayerRequirements {
+            board_outline: rules.required_layers.board_outline,
+            drill_data: rules.required_layers.drill_data,
+            top_mask: rules.required_layers.top_mask,
+            bottom_mask: rules.required_layers.bottom_mask,
+            top_paste: rules.required_layers.top_paste,
+            bottom_paste: rules.required_layers.bottom_paste,
+            top_silkscreen: rules.required_layers.top_silkscreen,
+            bottom_silkscreen: rules.required_layers.bottom_silkscreen,
+        },
         declared_copper_layer_count: cli.declared_copper_layer_count.filter(|count| *count > 0),
         generated_date_stale_days: Some(rules.generated_date_stale_days).filter(|days| *days > 0),
         kicad_copper_layer_count: Some(kicad_copper_layers.len()).filter(|count| *count > 0),
@@ -2697,6 +2717,12 @@ mod tests {
         assert_eq!(manifest.assembly_drawing_file_count, 1);
         assert_eq!(manifest.readme_file_count, 1);
         assert_eq!(manifest.rout_drawing_file_count, 1);
+        assert!(manifest.required_artifacts.bom);
+        assert!(manifest.required_artifacts.centroid);
+        assert!(manifest.required_artifacts.netlist);
+        assert!(manifest.required_layers.board_outline);
+        assert!(manifest.required_layers.drill_data);
+        assert!(manifest.required_layers.top_mask);
         assert_eq!(manifest.declared_copper_layer_count, Some(4));
         assert_eq!(manifest.generated_date_stale_days, Some(90));
         assert_eq!(manifest.kicad_copper_layer_count, Some(2));

@@ -196,8 +196,16 @@ dielectric/core/prepreg thickness entries.
 
 `net-constraint-readiness` applies optional JSON `net_classes` entries. It
 matches nets by exact name or simple `*` wildcard pattern, then checks configured
-minimum width, minimum clearance to different nets, maximum layer count, and
-minimum via count for layer-changing nets.
+minimum width, current-carrying minimum width, minimum clearance, voltage-class
+clearance, maximum layer count, minimum via count for layer-changing nets,
+maximum via count, explicit differential-pair positive/negative side presence,
+pair layer agreement, pair spacing bounds, reference-plane intent, and
+impedance-control handoff metadata. The impedance check is deliberately a
+readiness gate: it verifies stackup/reference metadata exists when a class asks
+for impedance control, not that the geometry solves to a target impedance.
+Differential-pair checks use nearest same-layer side-to-side copper spacing;
+true pair length/skew matching still needs routed path reconstruction from
+richer EDA data.
 
 ## Assembly Checks
 
@@ -218,7 +226,10 @@ minimum via count for layer-changing nets.
 These checks use KiCad pads, drills, board outlines, and IPC-D-356 points to
 review assembly edge clearance, mechanical keepouts, two-terminal land-pattern
 symmetry, fixture probe access, panel tooling, fiducials, and fine-pitch escape
-signals.
+signals. Their thresholds are resolved from `assembly_profile` and the
+field-level `assembly` rule-deck section so prototype, production SMT,
+double-sided SMT, and fixture-focused reviews can use different defaults without
+changing check code.
 
 ## Artifact Checks
 
@@ -272,23 +283,29 @@ placeholder-sized content, and role-specific filename tokens.
 [`manifest.rs`](manifest.rs) owns `file-manifest-readiness`. It classifies
 Gerber-like input names into core manufacturing roles and warns when a package
 is missing recognizable copper, outline/profile, drill data, or matching solder
-mask layers. It also warns on duplicated core roles such as multiple top copper
-files. In addition, `file-manifest-readiness` validates pre-production package
-artifacts from explicit sidecar flags and from `--gerber-dir` sidecar discovery.
-It expects one of each: BOM, centroid, netlist, fabrication drawing, assembly
-drawing, readme, and rout drawing. If KiCad input is provided the check also
-compares the count of KiCad copper layers and an optional declared manifest
-copper count against Gerber-recognized copper roles to catch probable
-layer-stack mismatches before downstream checks. It reports inner copper without
-both outer copper layers, odd recognized copper layer counts, side-specific
-mask/paste/silkscreen files without matching copper, and single-copper packages
-that also contain bottom-side outputs. It also compares recognizable revision
-and generated-date tokens across Gerber and package artifact filenames, warns
-when generated-date tags are older than the package freshness window or later
-than the current run date. The freshness window defaults to 90 days and can be
-set with `generated_date_stale_days` or `--generated-date-stale-days`. It also
-warns when files appear to mix project/job name prefixes, and warns on
-stale-looking backup/archive filename tokens.
+mask, paste, and silkscreen layers. `package_profile` sets the default
+deliverable set for `full-production`, `fabrication-only`, `assembly-only`, or
+`electrical-test` handoffs; `required_layers` can then override outline, drill,
+mask, paste, or silkscreen expectations field-by-field. Duplicated core roles
+are still reported because they make the upload ambiguous. In addition,
+`file-manifest-readiness` validates pre-production package artifacts from
+explicit sidecar flags and from `--gerber-dir` sidecar discovery. It expects one
+of each BOM, centroid, netlist, fabrication drawing, assembly drawing, readme,
+and rout drawing under the full-production profile. The rule deck can mark
+these artifacts optional or required through `required_artifacts`; duplicates
+are still reported because multiple copies usually mean an ambiguous upload
+package. If KiCad input is provided the check also compares the count of KiCad copper layers and an
+optional declared manifest copper count against Gerber-recognized copper roles
+to catch probable layer-stack mismatches before downstream checks. It reports
+inner copper without both outer copper layers, odd recognized copper layer
+counts, side-specific mask/paste/silkscreen files without matching copper, and
+single-copper packages that also contain bottom-side outputs. It also compares
+recognizable revision and generated-date tokens across Gerber and package
+artifact filenames, warns when generated-date tags are older than the package
+freshness window or later than the current run date. The freshness window
+defaults to 90 days and can be set with `generated_date_stale_days` or
+`--generated-date-stale-days`. It also warns when files appear to mix project/job
+name prefixes, and warns on stale-looking backup/archive filename tokens.
 
 ## Excellon Checks
 
