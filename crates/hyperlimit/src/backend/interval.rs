@@ -15,6 +15,7 @@ pub const CAPABILITIES: BackendCapabilities = BackendCapabilities {
 };
 
 impl StructuralScalar for inari::Interval {
+    #[inline(always)]
     fn scalar_facts(&self) -> ScalarFacts {
         let interval = *self;
         let sign = interval_sign(interval);
@@ -31,6 +32,7 @@ impl StructuralScalar for inari::Interval {
         }
     }
 
+    #[inline(always)]
     fn known_sign(&self) -> SignKnowledge {
         let interval = *self;
         if exact_zero(interval) == Some(true) {
@@ -46,11 +48,13 @@ impl StructuralScalar for inari::Interval {
 }
 
 impl PredicateScalar for inari::Interval {
+    #[inline(always)]
     fn to_f64(&self) -> Option<f64> {
         singleton_finite(*self)
     }
 }
 
+#[inline(always)]
 fn interval_sign(interval: inari::Interval) -> Option<Sign> {
     let inf = interval.inf();
     let sup = interval.sup();
@@ -68,6 +72,7 @@ fn interval_sign(interval: inari::Interval) -> Option<Sign> {
     }
 }
 
+#[inline(always)]
 fn exact_zero(interval: inari::Interval) -> Option<bool> {
     let inf = interval.inf();
     let sup = interval.sup();
@@ -83,6 +88,7 @@ fn exact_zero(interval: inari::Interval) -> Option<bool> {
     }
 }
 
+#[inline(always)]
 fn provably_nonzero(interval: inari::Interval) -> Option<bool> {
     let inf = interval.inf();
     let sup = interval.sup();
@@ -98,6 +104,7 @@ fn provably_nonzero(interval: inari::Interval) -> Option<bool> {
     }
 }
 
+#[inline(always)]
 fn magnitude_bounds(interval: inari::Interval) -> Option<MagnitudeBounds> {
     if !valid_bounds(interval.inf(), interval.sup()) {
         return None;
@@ -111,12 +118,14 @@ fn magnitude_bounds(interval: inari::Interval) -> Option<MagnitudeBounds> {
     })
 }
 
+#[inline(always)]
 fn singleton_finite(interval: inari::Interval) -> Option<f64> {
     let inf = interval.inf();
     let sup = interval.sup();
     (inf == sup && inf.is_finite()).then_some(inf)
 }
 
+#[inline(always)]
 fn valid_bounds(inf: f64, sup: f64) -> bool {
     inf <= sup && !inf.is_nan() && !sup.is_nan()
 }

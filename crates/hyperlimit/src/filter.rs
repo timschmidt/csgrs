@@ -11,25 +11,25 @@ pub fn det_sign_filter(det: f64, scale: f64, epsilon_multiplier: f64) -> SignKno
     // allocation-free and only certifies signs outside the error envelope; everything else
     // must continue to structural, exact, or robust fallback paths.
     if !det.is_finite() || !scale.is_finite() {
-        crate::trace_dispatch!("liminal", "det_sign_filter", "non-finite");
+        crate::trace_dispatch!("hyperlimit", "det_sign_filter", "non-finite");
         return SignKnowledge::Unknown;
     }
 
     if det == 0.0 {
-        crate::trace_dispatch!("liminal", "det_sign_filter", "exact-float-zero");
+        crate::trace_dispatch!("hyperlimit", "det_sign_filter", "exact-float-zero");
         return SignKnowledge::Unknown;
     }
 
     let threshold = f64::EPSILON * epsilon_multiplier * scale.max(1.0);
     if det.abs() > threshold {
-        crate::trace_dispatch!("liminal", "det_sign_filter", "outside-error-envelope");
+        crate::trace_dispatch!("hyperlimit", "det_sign_filter", "outside-error-envelope");
         SignKnowledge::filtered(if det > 0.0 {
             Sign::Positive
         } else {
             Sign::Negative
         })
     } else {
-        crate::trace_dispatch!("liminal", "det_sign_filter", "inside-error-envelope");
+        crate::trace_dispatch!("hyperlimit", "det_sign_filter", "inside-error-envelope");
         SignKnowledge::Unknown
     }
 }

@@ -1,4 +1,4 @@
-//! Adapter for `realistic_blas::Scalar` structural scalar facts.
+//! Adapter for `hyperlattice::Scalar` structural scalar facts.
 
 use crate::backend::BackendCapabilities;
 #[cfg(feature = "hyperreal")]
@@ -6,7 +6,7 @@ use crate::backend::hyperreal::magnitude_bits_to_bounds;
 use crate::predicate::{Sign, SignKnowledge};
 use crate::scalar::{MagnitudeBounds, PredicateScalar, ScalarFacts, StructuralScalar};
 
-/// Capabilities forwarded through `realistic_blas::Scalar`.
+/// Capabilities forwarded through `hyperlattice::Scalar`.
 pub const CAPABILITIES: BackendCapabilities = BackendCapabilities {
     structural_signs: true,
     exact_zero: true,
@@ -16,30 +16,33 @@ pub const CAPABILITIES: BackendCapabilities = BackendCapabilities {
     robust_fallback: false,
 };
 
-impl<B: realistic_blas::Backend> StructuralScalar for realistic_blas::Scalar<B> {
+impl<B: ::hyperlattice::Backend> StructuralScalar for ::hyperlattice::Scalar<B> {
+    #[inline(always)]
     fn scalar_facts(&self) -> ScalarFacts {
         crate::trace_dispatch!(
-            "liminal_realistic_blas_adapter",
+            "hyperlimit_hyperlattice_adapter",
             "structural",
             "scalar-facts"
         );
-        scalar_facts_from_realistic_blas(self.structural_facts())
+        scalar_facts_from_hyperlattice(self.structural_facts())
     }
 
+    #[inline(always)]
     fn known_sign(&self) -> SignKnowledge {
         crate::trace_dispatch!(
-            "liminal_realistic_blas_adapter",
+            "hyperlimit_hyperlattice_adapter",
             "structural",
             "known-sign"
         );
-        scalar_facts_from_realistic_blas(self.structural_facts()).sign_knowledge()
+        scalar_facts_from_hyperlattice(self.structural_facts()).sign_knowledge()
     }
 
+    #[inline(always)]
     fn refine_sign_until(&self, min_precision: i32) -> SignKnowledge {
         match self.refine_sign_until(min_precision) {
             Some(sign) => {
                 crate::trace_dispatch!(
-                    "liminal_realistic_blas_adapter",
+                    "hyperlimit_hyperlattice_adapter",
                     "structural",
                     "refine-hit"
                 );
@@ -47,7 +50,7 @@ impl<B: realistic_blas::Backend> StructuralScalar for realistic_blas::Scalar<B> 
             }
             None => {
                 crate::trace_dispatch!(
-                    "liminal_realistic_blas_adapter",
+                    "hyperlimit_hyperlattice_adapter",
                     "structural",
                     "refine-unknown"
                 );
@@ -57,11 +60,11 @@ impl<B: realistic_blas::Backend> StructuralScalar for realistic_blas::Scalar<B> 
     }
 }
 
-impl<B: realistic_blas::Backend> PredicateScalar for realistic_blas::Scalar<B> {
-    #[inline]
+impl<B: ::hyperlattice::Backend> PredicateScalar for ::hyperlattice::Scalar<B> {
+    #[inline(always)]
     fn to_f64(&self) -> Option<f64> {
         crate::trace_dispatch!(
-            "liminal_realistic_blas_adapter",
+            "hyperlimit_hyperlattice_adapter",
             "conversion",
             "to-f64-approx"
         );
@@ -70,10 +73,10 @@ impl<B: realistic_blas::Backend> PredicateScalar for realistic_blas::Scalar<B> {
 
     #[inline(always)]
     fn prefer_f64_filter_before_arithmetic() -> bool {
-        // Realistic BLAS scalars may wrap exact symbolic values; conservative f64 filtering
+        // Hyperlattice scalars may wrap exact symbolic values; conservative f64 filtering
         // avoids building those trees when the determinant sign is already certified.
         crate::trace_dispatch!(
-            "liminal_realistic_blas_adapter",
+            "hyperlimit_hyperlattice_adapter",
             "policy",
             "prefer-f64-prefilter"
         );
@@ -81,28 +84,30 @@ impl<B: realistic_blas::Backend> PredicateScalar for realistic_blas::Scalar<B> {
     }
 }
 
-fn map_sign(sign: realistic_blas::ScalarSign) -> Sign {
+#[inline]
+fn map_sign(sign: ::hyperlattice::ScalarSign) -> Sign {
     match sign {
-        realistic_blas::ScalarSign::Negative => Sign::Negative,
-        realistic_blas::ScalarSign::Zero => Sign::Zero,
-        realistic_blas::ScalarSign::Positive => Sign::Positive,
+        ::hyperlattice::ScalarSign::Negative => Sign::Negative,
+        ::hyperlattice::ScalarSign::Zero => Sign::Zero,
+        ::hyperlattice::ScalarSign::Positive => Sign::Positive,
     }
 }
 
-fn map_magnitude(magnitude: realistic_blas::ScalarMagnitudeBits) -> Option<MagnitudeBounds> {
+#[inline]
+fn map_magnitude(magnitude: ::hyperlattice::ScalarMagnitudeBits) -> Option<MagnitudeBounds> {
     magnitude_bits_to_bounds_local(magnitude.msd, magnitude.exact_msd)
 }
 
-fn scalar_facts_from_realistic_blas(facts: realistic_blas::ScalarFacts) -> ScalarFacts {
-    // Forward realistic_blas facts without asking the wrapped scalar for an
+fn scalar_facts_from_hyperlattice(facts: ::hyperlattice::ScalarFacts) -> ScalarFacts {
+    // Forward hyperlattice facts without asking the wrapped scalar for an
     // exact value. This keeps predicate filters on the borrowed structural path.
     ScalarFacts {
         sign: facts.sign.map(map_sign),
-        exact_zero: Some(matches!(facts.zero, realistic_blas::ZeroStatus::Zero)),
+        exact_zero: Some(matches!(facts.zero, ::hyperlattice::ZeroStatus::Zero)),
         provably_nonzero: match facts.zero {
-            realistic_blas::ZeroStatus::Zero => Some(false),
-            realistic_blas::ZeroStatus::NonZero => Some(true),
-            realistic_blas::ZeroStatus::Unknown => None,
+            ::hyperlattice::ZeroStatus::Zero => Some(false),
+            ::hyperlattice::ZeroStatus::NonZero => Some(true),
+            ::hyperlattice::ZeroStatus::Unknown => None,
         },
         exact: Some(facts.exact_rational),
         rational_only: Some(facts.exact_rational),

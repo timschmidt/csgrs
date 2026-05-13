@@ -1,6 +1,9 @@
-# liminal
+<h1>
+  hyperlimit
+  <img src="./doc/hyperlimit.png" alt="Hyper, a clever mathematician" width="144" align="right">
+</h1>
 
-`liminal` provides geometry predicates that report both the result and how
+`hyperlimit` provides geometry predicates that report both the result and how
 the result was decided.
 
 It implements 2D/3D orientation, in-circle, in-sphere, line classification, and
@@ -12,12 +15,12 @@ bounded refinement, or robust fallback.
 
 - `hyperreal` supplies exact/symbolic scalar facts and bounded sign refinement
   through `hyperreal::Real`.
-- `realistic_blas` supplies `Scalar<B>` values for vector and matrix code and
-  forwards backend-neutral scalar facts to `liminal`.
-- `liminal` owns predicate policy, escalation order, fallback selection, and
+- `hyperlattice` supplies `Scalar<B>` values for vector and matrix code and
+  forwards backend-neutral scalar facts to `hyperlimit`.
+- `hyperlimit` owns predicate policy, escalation order, fallback selection, and
   result provenance.
 
-`liminal` does not own scalar expression internals or linear algebra types.
+`hyperlimit` does not own scalar expression internals or linear algebra types.
 
 ## Current State
 
@@ -37,7 +40,7 @@ Implemented:
   behavior
 - scalar traits for structural facts, finite `f64` filters, borrowed arithmetic,
   and bounded sign refinement
-- optional adapters for `hyperreal`, `realistic_blas`, `inari`, `robust`, and
+- optional adapters for `hyperreal`, `hyperlattice`, `inari`, `robust`, and
   `geogram_predicates`
 
 Strict policies do not return approximate topology. Approximate signs are
@@ -47,21 +50,21 @@ available only when the policy explicitly allows them.
 
 ```toml
 [dependencies]
-liminal = "0.1.3"
+hyperlimit = "0.1.3"
 ```
 
 From sibling checkouts:
 
 ```toml
 [dependencies]
-liminal = { path = "../liminal" }
+hyperlimit = { path = "../hyperlimit" }
 ```
 
 Enable only the backends you need:
 
 ```toml
 [dependencies]
-liminal = {
+hyperlimit = {
     version = "0.1.3",
     features = ["hyperreal", "robust"]
 }
@@ -70,7 +73,7 @@ liminal = {
 ## Quick Start
 
 ```rust
-use liminal::{Point2, Sign, orient2d};
+use hyperlimit::{Point2, Sign, orient2d};
 
 let a = Point2::new(0.0_f64, 0.0);
 let b = Point2::new(1.0_f64, 0.0);
@@ -83,7 +86,7 @@ assert_eq!(outcome.value(), Some(Sign::Positive));
 Line-side classification maps orientation signs into geometry names:
 
 ```rust
-use liminal::{LineSide, Point2, classify_point_line};
+use hyperlimit::{LineSide, Point2, classify_point_line};
 
 let from = Point2::new(0.0_f64, 0.0);
 let to = Point2::new(1.0_f64, 0.0);
@@ -98,7 +101,7 @@ assert_eq!(
 Plane classification works with explicit plane equations:
 
 ```rust
-use liminal::{Plane3, PlaneSide, Point3, classify_point_plane};
+use hyperlimit::{Plane3, PlaneSide, Point3, classify_point_plane};
 
 let plane = Plane3::new(Point3::new(0.0_f64, 0.0, 1.0), -2.0);
 let point = Point3::new(0.0_f64, 0.0, 3.0);
@@ -114,7 +117,7 @@ assert_eq!(
 Predicates return `PredicateOutcome<T>`:
 
 ```rust
-use liminal::{Point2, PredicateOutcome, orient2d};
+use hyperlimit::{Point2, PredicateOutcome, orient2d};
 
 let a = Point2::new(0.0_f64, 0.0);
 let b = Point2::new(1.0_f64, 0.0);
@@ -159,7 +162,7 @@ The shared sign resolver attempts:
 Use policy-specific functions when the default strict behavior is not desired:
 
 ```rust
-use liminal::{Point2, PredicatePolicy, orient::orient2d_with_policy};
+use hyperlimit::{Point2, PredicatePolicy, orient::orient2d_with_policy};
 
 let a = Point2::new(0.0_f64, 0.0);
 let b = Point2::new(1.0_f64, 1.0);
@@ -194,7 +197,7 @@ Primitive `f32` and `f64` implement the scalar traits without optional features.
 | `std` | Default feature. No special public API is attached to it currently. |
 | `parallel` | Rayon-backed batch predicate variants. |
 | `hyperreal` | Implements predicate scalar traits for `hyperreal::Real`. |
-| `realistic-blas` | Implements predicate scalar traits for `realistic_blas::Scalar<B>`. |
+| `hyperlattice` | Implements predicate scalar traits for `hyperlattice::Scalar<B>`. |
 | `interval` | Implements predicate scalar traits for `inari::Interval`. |
 | `robust` | Robust fallback through the `robust` crate for finite `f64`-convertible inputs. |
 | `geogram` | Robust fallback through the Rust-port `geogram_predicates` branch. |
@@ -236,14 +239,14 @@ cargo test
 cargo test --no-default-features
 cargo test --features robust
 cargo test --features hyperreal
-cargo test --features realistic-blas
+cargo test --features hyperlattice
 ```
 
 Run the broad feature set:
 
 ```sh
-cargo test --features geogram,robust,hyperreal,realistic-blas,parallel
-RUSTFLAGS='-Ctarget-cpu=haswell' cargo test --features geogram,robust,hyperreal,realistic-blas,interval,parallel
+cargo test --features geogram,robust,hyperreal,hyperlattice,parallel
+RUSTFLAGS='-Ctarget-cpu=haswell' cargo test --features geogram,robust,hyperreal,hyperlattice,interval,parallel
 ```
 
 Run benchmarks:
@@ -257,7 +260,7 @@ The generated benchmark summary is in [`benchmarks.md`](benchmarks.md).
 Run dispatch tracing separately:
 
 ```sh
-cargo bench --bench predicates --features dispatch-trace,realistic-blas -- --write-dispatch-trace-md
+cargo bench --bench predicates --features dispatch-trace,hyperlattice -- --write-dispatch-trace-md
 ```
 
 The generated trace summary is in [`dispatch_trace.md`](dispatch_trace.md).

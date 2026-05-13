@@ -15,13 +15,13 @@ cargo run --example predicate_plots -- --out doc/predicate-plots --size 512
 Full backend plot set:
 
 ```sh
-RUSTFLAGS='-Ctarget-cpu=haswell' cargo run --example predicate_plots --features geogram,robust,hyperreal,realistic-blas,interval -- --backend all --out doc/predicate-plots --size 512
+RUSTFLAGS='-Ctarget-cpu=haswell' cargo run --example predicate_plots --features geogram,robust,hyperreal,hyperlattice,interval -- --backend all --out doc/predicate-plots --size 512
 ```
 
 Regenerate only the floating-point zoom companions:
 
 ```sh
-RUSTFLAGS='-Ctarget-cpu=haswell' cargo run --example predicate_plots --features geogram,robust,hyperreal,realistic-blas,interval -- --backend all --out doc/predicate-plots --size 512 --zoom-only
+RUSTFLAGS='-Ctarget-cpu=haswell' cargo run --example predicate_plots --features geogram,robust,hyperreal,hyperlattice,interval -- --backend all --out doc/predicate-plots --size 512 --zoom-only
 ```
 
 Validate that this gallery references every image from the latest manifest with
@@ -35,7 +35,7 @@ cargo run --example predicate_plots -- --out doc/predicate-plots --check-gallery
 `RUSTFLAGS='-Ctarget-cpu=haswell'`.
 
 Individual backend batches can be rendered with `--backend f64`,
-`--backend hyperreal`, `--backend realistic_blas`, or `--backend interval`.
+`--backend hyperreal`, `--backend hyperlattice`, or `--backend interval`.
 
 ## Legend
 
@@ -79,16 +79,16 @@ render because this section is specifically a floating-point precision probe.
 | oriented plane on `z=0` | ![hyperreal_oriented_plane_strict_fp_zoom.png](./doc/predicate-plots/hyperreal_oriented_plane_strict_fp_zoom.png) | ![hyperreal_oriented_plane_approximate_fp_zoom.png](./doc/predicate-plots/hyperreal_oriented_plane_approximate_fp_zoom.png) | ![hyperreal_oriented_plane_strict_no_fallback_fp_zoom.png](./doc/predicate-plots/hyperreal_oriented_plane_strict_no_fallback_fp_zoom.png) |
 | `insphere3d` cross-section | ![hyperreal_insphere3d_strict_fp_zoom.png](./doc/predicate-plots/hyperreal_insphere3d_strict_fp_zoom.png) | ![hyperreal_insphere3d_approximate_fp_zoom.png](./doc/predicate-plots/hyperreal_insphere3d_approximate_fp_zoom.png) | ![hyperreal_insphere3d_strict_no_fallback_fp_zoom.png](./doc/predicate-plots/hyperreal_insphere3d_strict_no_fallback_fp_zoom.png) |
 
-### realistic_blas Zooms
+### hyperlattice Zooms
 
 | Predicate | Strict Zoom | Approximate Zoom | Strict, No Fallback Zoom |
 | --- | --- | --- | --- |
-| `orient2d` | ![realistic_blas_orient2d_strict_fp_zoom.png](./doc/predicate-plots/realistic_blas_orient2d_strict_fp_zoom.png) | ![realistic_blas_orient2d_approximate_fp_zoom.png](./doc/predicate-plots/realistic_blas_orient2d_approximate_fp_zoom.png) | ![realistic_blas_orient2d_strict_no_fallback_fp_zoom.png](./doc/predicate-plots/realistic_blas_orient2d_strict_no_fallback_fp_zoom.png) |
-| line side | ![realistic_blas_line_side_strict_fp_zoom.png](./doc/predicate-plots/realistic_blas_line_side_strict_fp_zoom.png) | ![realistic_blas_line_side_approximate_fp_zoom.png](./doc/predicate-plots/realistic_blas_line_side_approximate_fp_zoom.png) | ![realistic_blas_line_side_strict_no_fallback_fp_zoom.png](./doc/predicate-plots/realistic_blas_line_side_strict_no_fallback_fp_zoom.png) |
-| `incircle2d` | ![realistic_blas_incircle2d_strict_fp_zoom.png](./doc/predicate-plots/realistic_blas_incircle2d_strict_fp_zoom.png) | ![realistic_blas_incircle2d_approximate_fp_zoom.png](./doc/predicate-plots/realistic_blas_incircle2d_approximate_fp_zoom.png) | ![realistic_blas_incircle2d_strict_no_fallback_fp_zoom.png](./doc/predicate-plots/realistic_blas_incircle2d_strict_no_fallback_fp_zoom.png) |
-| explicit plane on `z=0` | ![realistic_blas_explicit_plane_strict_fp_zoom.png](./doc/predicate-plots/realistic_blas_explicit_plane_strict_fp_zoom.png) | ![realistic_blas_explicit_plane_approximate_fp_zoom.png](./doc/predicate-plots/realistic_blas_explicit_plane_approximate_fp_zoom.png) | ![realistic_blas_explicit_plane_strict_no_fallback_fp_zoom.png](./doc/predicate-plots/realistic_blas_explicit_plane_strict_no_fallback_fp_zoom.png) |
-| oriented plane on `z=0` | ![realistic_blas_oriented_plane_strict_fp_zoom.png](./doc/predicate-plots/realistic_blas_oriented_plane_strict_fp_zoom.png) | ![realistic_blas_oriented_plane_approximate_fp_zoom.png](./doc/predicate-plots/realistic_blas_oriented_plane_approximate_fp_zoom.png) | ![realistic_blas_oriented_plane_strict_no_fallback_fp_zoom.png](./doc/predicate-plots/realistic_blas_oriented_plane_strict_no_fallback_fp_zoom.png) |
-| `insphere3d` cross-section | ![realistic_blas_insphere3d_strict_fp_zoom.png](./doc/predicate-plots/realistic_blas_insphere3d_strict_fp_zoom.png) | ![realistic_blas_insphere3d_approximate_fp_zoom.png](./doc/predicate-plots/realistic_blas_insphere3d_approximate_fp_zoom.png) | ![realistic_blas_insphere3d_strict_no_fallback_fp_zoom.png](./doc/predicate-plots/realistic_blas_insphere3d_strict_no_fallback_fp_zoom.png) |
+| `orient2d` | ![hyperlattice_orient2d_strict_fp_zoom.png](./doc/predicate-plots/hyperlattice_orient2d_strict_fp_zoom.png) | ![hyperlattice_orient2d_approximate_fp_zoom.png](./doc/predicate-plots/hyperlattice_orient2d_approximate_fp_zoom.png) | ![hyperlattice_orient2d_strict_no_fallback_fp_zoom.png](./doc/predicate-plots/hyperlattice_orient2d_strict_no_fallback_fp_zoom.png) |
+| line side | ![hyperlattice_line_side_strict_fp_zoom.png](./doc/predicate-plots/hyperlattice_line_side_strict_fp_zoom.png) | ![hyperlattice_line_side_approximate_fp_zoom.png](./doc/predicate-plots/hyperlattice_line_side_approximate_fp_zoom.png) | ![hyperlattice_line_side_strict_no_fallback_fp_zoom.png](./doc/predicate-plots/hyperlattice_line_side_strict_no_fallback_fp_zoom.png) |
+| `incircle2d` | ![hyperlattice_incircle2d_strict_fp_zoom.png](./doc/predicate-plots/hyperlattice_incircle2d_strict_fp_zoom.png) | ![hyperlattice_incircle2d_approximate_fp_zoom.png](./doc/predicate-plots/hyperlattice_incircle2d_approximate_fp_zoom.png) | ![hyperlattice_incircle2d_strict_no_fallback_fp_zoom.png](./doc/predicate-plots/hyperlattice_incircle2d_strict_no_fallback_fp_zoom.png) |
+| explicit plane on `z=0` | ![hyperlattice_explicit_plane_strict_fp_zoom.png](./doc/predicate-plots/hyperlattice_explicit_plane_strict_fp_zoom.png) | ![hyperlattice_explicit_plane_approximate_fp_zoom.png](./doc/predicate-plots/hyperlattice_explicit_plane_approximate_fp_zoom.png) | ![hyperlattice_explicit_plane_strict_no_fallback_fp_zoom.png](./doc/predicate-plots/hyperlattice_explicit_plane_strict_no_fallback_fp_zoom.png) |
+| oriented plane on `z=0` | ![hyperlattice_oriented_plane_strict_fp_zoom.png](./doc/predicate-plots/hyperlattice_oriented_plane_strict_fp_zoom.png) | ![hyperlattice_oriented_plane_approximate_fp_zoom.png](./doc/predicate-plots/hyperlattice_oriented_plane_approximate_fp_zoom.png) | ![hyperlattice_oriented_plane_strict_no_fallback_fp_zoom.png](./doc/predicate-plots/hyperlattice_oriented_plane_strict_no_fallback_fp_zoom.png) |
+| `insphere3d` cross-section | ![hyperlattice_insphere3d_strict_fp_zoom.png](./doc/predicate-plots/hyperlattice_insphere3d_strict_fp_zoom.png) | ![hyperlattice_insphere3d_approximate_fp_zoom.png](./doc/predicate-plots/hyperlattice_insphere3d_approximate_fp_zoom.png) | ![hyperlattice_insphere3d_strict_no_fallback_fp_zoom.png](./doc/predicate-plots/hyperlattice_insphere3d_strict_no_fallback_fp_zoom.png) |
 
 ### Interval Zooms
 
@@ -126,19 +126,19 @@ values. They exercise structural facts and bounded refinement before fallback.
 | oriented plane on `z=0` | ![hyperreal_oriented_plane_strict.png](./doc/predicate-plots/hyperreal_oriented_plane_strict.png) | ![hyperreal_oriented_plane_approximate.png](./doc/predicate-plots/hyperreal_oriented_plane_approximate.png) | ![hyperreal_oriented_plane_strict_no_fallback.png](./doc/predicate-plots/hyperreal_oriented_plane_strict_no_fallback.png) |
 | `insphere3d` cross-section | ![hyperreal_insphere3d_strict.png](./doc/predicate-plots/hyperreal_insphere3d_strict.png) | ![hyperreal_insphere3d_approximate.png](./doc/predicate-plots/hyperreal_insphere3d_approximate.png) | ![hyperreal_insphere3d_strict_no_fallback.png](./doc/predicate-plots/hyperreal_insphere3d_strict_no_fallback.png) |
 
-## realistic_blas Predicates
+## hyperlattice Predicates
 
-These plots use `realistic_blas::Scalar<DefaultBackend>`. They exercise the
-facts forwarded by `realistic_blas` through the same predicate pipeline.
+These plots use `hyperlattice::Scalar<DefaultBackend>`. They exercise the
+facts forwarded by `hyperlattice` through the same predicate pipeline.
 
 | Predicate | Strict | Approximate | Strict, No Fallback |
 | --- | --- | --- | --- |
-| `orient2d` | ![realistic_blas_orient2d_strict.png](./doc/predicate-plots/realistic_blas_orient2d_strict.png) | ![realistic_blas_orient2d_approximate.png](./doc/predicate-plots/realistic_blas_orient2d_approximate.png) | ![realistic_blas_orient2d_strict_no_fallback.png](./doc/predicate-plots/realistic_blas_orient2d_strict_no_fallback.png) |
-| line side | ![realistic_blas_line_side_strict.png](./doc/predicate-plots/realistic_blas_line_side_strict.png) | ![realistic_blas_line_side_approximate.png](./doc/predicate-plots/realistic_blas_line_side_approximate.png) | ![realistic_blas_line_side_strict_no_fallback.png](./doc/predicate-plots/realistic_blas_line_side_strict_no_fallback.png) |
-| `incircle2d` | ![realistic_blas_incircle2d_strict.png](./doc/predicate-plots/realistic_blas_incircle2d_strict.png) | ![realistic_blas_incircle2d_approximate.png](./doc/predicate-plots/realistic_blas_incircle2d_approximate.png) | ![realistic_blas_incircle2d_strict_no_fallback.png](./doc/predicate-plots/realistic_blas_incircle2d_strict_no_fallback.png) |
-| explicit plane on `z=0` | ![realistic_blas_explicit_plane_strict.png](./doc/predicate-plots/realistic_blas_explicit_plane_strict.png) | ![realistic_blas_explicit_plane_approximate.png](./doc/predicate-plots/realistic_blas_explicit_plane_approximate.png) | ![realistic_blas_explicit_plane_strict_no_fallback.png](./doc/predicate-plots/realistic_blas_explicit_plane_strict_no_fallback.png) |
-| oriented plane on `z=0` | ![realistic_blas_oriented_plane_strict.png](./doc/predicate-plots/realistic_blas_oriented_plane_strict.png) | ![realistic_blas_oriented_plane_approximate.png](./doc/predicate-plots/realistic_blas_oriented_plane_approximate.png) | ![realistic_blas_oriented_plane_strict_no_fallback.png](./doc/predicate-plots/realistic_blas_oriented_plane_strict_no_fallback.png) |
-| `insphere3d` cross-section | ![realistic_blas_insphere3d_strict.png](./doc/predicate-plots/realistic_blas_insphere3d_strict.png) | ![realistic_blas_insphere3d_approximate.png](./doc/predicate-plots/realistic_blas_insphere3d_approximate.png) | ![realistic_blas_insphere3d_strict_no_fallback.png](./doc/predicate-plots/realistic_blas_insphere3d_strict_no_fallback.png) |
+| `orient2d` | ![hyperlattice_orient2d_strict.png](./doc/predicate-plots/hyperlattice_orient2d_strict.png) | ![hyperlattice_orient2d_approximate.png](./doc/predicate-plots/hyperlattice_orient2d_approximate.png) | ![hyperlattice_orient2d_strict_no_fallback.png](./doc/predicate-plots/hyperlattice_orient2d_strict_no_fallback.png) |
+| line side | ![hyperlattice_line_side_strict.png](./doc/predicate-plots/hyperlattice_line_side_strict.png) | ![hyperlattice_line_side_approximate.png](./doc/predicate-plots/hyperlattice_line_side_approximate.png) | ![hyperlattice_line_side_strict_no_fallback.png](./doc/predicate-plots/hyperlattice_line_side_strict_no_fallback.png) |
+| `incircle2d` | ![hyperlattice_incircle2d_strict.png](./doc/predicate-plots/hyperlattice_incircle2d_strict.png) | ![hyperlattice_incircle2d_approximate.png](./doc/predicate-plots/hyperlattice_incircle2d_approximate.png) | ![hyperlattice_incircle2d_strict_no_fallback.png](./doc/predicate-plots/hyperlattice_incircle2d_strict_no_fallback.png) |
+| explicit plane on `z=0` | ![hyperlattice_explicit_plane_strict.png](./doc/predicate-plots/hyperlattice_explicit_plane_strict.png) | ![hyperlattice_explicit_plane_approximate.png](./doc/predicate-plots/hyperlattice_explicit_plane_approximate.png) | ![hyperlattice_explicit_plane_strict_no_fallback.png](./doc/predicate-plots/hyperlattice_explicit_plane_strict_no_fallback.png) |
+| oriented plane on `z=0` | ![hyperlattice_oriented_plane_strict.png](./doc/predicate-plots/hyperlattice_oriented_plane_strict.png) | ![hyperlattice_oriented_plane_approximate.png](./doc/predicate-plots/hyperlattice_oriented_plane_approximate.png) | ![hyperlattice_oriented_plane_strict_no_fallback.png](./doc/predicate-plots/hyperlattice_oriented_plane_strict_no_fallback.png) |
+| `insphere3d` cross-section | ![hyperlattice_insphere3d_strict.png](./doc/predicate-plots/hyperlattice_insphere3d_strict.png) | ![hyperlattice_insphere3d_approximate.png](./doc/predicate-plots/hyperlattice_insphere3d_approximate.png) | ![hyperlattice_insphere3d_strict_no_fallback.png](./doc/predicate-plots/hyperlattice_insphere3d_strict_no_fallback.png) |
 
 ## Interval Cell Predicates
 

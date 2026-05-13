@@ -4,7 +4,7 @@
 //!
 //! ```sh
 //! cargo run --example predicate_plots -- --out doc/predicate-plots --size 512
-//! RUSTFLAGS='-Ctarget-cpu=haswell' cargo run --example predicate_plots --features geogram,robust,hyperreal,realistic-blas,interval -- --backend all --out doc/predicate-plots --size 512
+//! RUSTFLAGS='-Ctarget-cpu=haswell' cargo run --example predicate_plots --features geogram,robust,hyperreal,hyperlattice,interval -- --backend all --out doc/predicate-plots --size 512
 //! ```
 //!
 //! Images are written as dependency-free PNG files.
@@ -15,16 +15,16 @@ use std::fs::{self, File};
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
-#[cfg(any(feature = "hyperreal", feature = "realistic-blas"))]
-use liminal::BorrowedPredicateScalar;
-use liminal::orient::{
+#[cfg(any(feature = "hyperreal", feature = "hyperlattice"))]
+use hyperlimit::BorrowedPredicateScalar;
+use hyperlimit::orient::{
     classify_point_line_with_policy, incircle2d_with_policy, insphere3d_with_policy,
     orient2d_with_policy,
 };
-use liminal::plane::{
+use hyperlimit::plane::{
     Plane3, classify_point_oriented_plane_with_policy, classify_point_plane_with_policy,
 };
-use liminal::{
+use hyperlimit::{
     Certainty, Escalation, LineSide, PlaneSide, Point2, Point3, PredicateOutcome, PredicatePolicy,
     Sign,
 };
@@ -78,7 +78,7 @@ fn main() -> io::Result<()> {
     fs::create_dir_all(&args.out_dir)?;
 
     let mut manifest = String::new();
-    manifest.push_str("liminal predicate plot demo\n");
+    manifest.push_str("hyperlimit predicate plot demo\n");
     manifest.push_str(&format!("size: {}x{}\n", args.size, args.size));
     manifest.push_str(&format!("backend selection: {}\n", args.backend));
     manifest.push_str("colors: blue=positive/left/above, orange=negative/right/below, white=zero/on, black=unknown\n\n");
@@ -147,14 +147,14 @@ fn main() -> io::Result<()> {
         ));
     }
 
-    #[cfg(feature = "realistic-blas")]
-    if args.wants("realistic_blas") {
+    #[cfg(feature = "hyperlattice")]
+    if args.wants("hyperlattice") {
         for config in configs {
             if args.zoom_only {
                 copy_f64_zoom_aliases(
                     &args.out_dir,
-                    "realistic_blas",
-                    "realistic_blas::Scalar<DefaultBackend>",
+                    "hyperlattice",
+                    "hyperlattice::Scalar<DefaultBackend>",
                     config,
                     &mut manifest,
                 )?;
@@ -162,8 +162,8 @@ fn main() -> io::Result<()> {
                 render_scalar_plots(
                     &args.out_dir,
                     args.size,
-                    "realistic_blas",
-                    "realistic_blas::Scalar<DefaultBackend>",
+                    "hyperlattice",
+                    "hyperlattice::Scalar<DefaultBackend>",
                     config,
                     true,
                     realistic_scalar,
@@ -173,11 +173,11 @@ fn main() -> io::Result<()> {
         }
     }
 
-    #[cfg(not(feature = "realistic-blas"))]
-    if args.backend == "realistic_blas" {
+    #[cfg(not(feature = "hyperlattice"))]
+    if args.backend == "hyperlattice" {
         return Err(io::Error::new(
             io::ErrorKind::InvalidInput,
-            "--backend realistic_blas requires the realistic-blas feature",
+            "--backend hyperlattice requires the hyperlattice feature",
         ));
     }
 
@@ -335,7 +335,7 @@ fn render_f64_plots(
     )
 }
 
-#[cfg(any(feature = "hyperreal", feature = "realistic-blas"))]
+#[cfg(any(feature = "hyperreal", feature = "hyperlattice"))]
 fn copy_f64_zoom_aliases(
     out_dir: &Path,
     prefix: &str,
@@ -371,7 +371,7 @@ fn copy_f64_zoom_aliases(
     Ok(())
 }
 
-#[cfg(any(feature = "hyperreal", feature = "realistic-blas"))]
+#[cfg(any(feature = "hyperreal", feature = "hyperlattice"))]
 #[allow(clippy::too_many_arguments)]
 fn render_scalar_plots<S>(
     out_dir: &Path,
@@ -801,9 +801,9 @@ fn real(value: f64) -> hyperreal::Real {
     hyperreal::Real::try_from(value).expect("valid demo real")
 }
 
-#[cfg(feature = "realistic-blas")]
-fn realistic_scalar(value: f64) -> realistic_blas::Scalar<realistic_blas::DefaultBackend> {
-    realistic_blas::Scalar::try_from(value).expect("valid demo scalar")
+#[cfg(feature = "hyperlattice")]
+fn realistic_scalar(value: f64) -> hyperlattice::Scalar<hyperlattice::DefaultBackend> {
+    hyperlattice::Scalar::try_from(value).expect("valid demo scalar")
 }
 
 fn write_png(path: &Path, width: usize, height: usize, rgb: &[u8]) -> io::Result<()> {
@@ -1038,11 +1038,11 @@ impl Args {
                     })?;
                     if !matches!(
                         backend.as_str(),
-                        "f64" | "hyperreal" | "realistic_blas" | "interval" | "all"
+                        "f64" | "hyperreal" | "hyperlattice" | "interval" | "all"
                     ) {
                         return Err(io::Error::new(
                             io::ErrorKind::InvalidInput,
-                            "--backend must be one of: f64, hyperreal, realistic_blas, interval, all",
+                            "--backend must be one of: f64, hyperreal, hyperlattice, interval, all",
                         ));
                     }
                 }
@@ -1054,7 +1054,7 @@ impl Args {
                 }
                 "--help" | "-h" => {
                     println!(
-                        "usage: cargo run --example predicate_plots -- [--backend NAME] [--out DIR] [--size N] [--zoom-only] [--check-gallery]\n\nNAME is one of: f64, hyperreal, realistic_blas, interval, all.\nN must be at least 512. Images are written as PNG files."
+                        "usage: cargo run --example predicate_plots -- [--backend NAME] [--out DIR] [--size N] [--zoom-only] [--check-gallery]\n\nNAME is one of: f64, hyperreal, hyperlattice, interval, all.\nN must be at least 512. Images are written as PNG files."
                     );
                     std::process::exit(0);
                 }

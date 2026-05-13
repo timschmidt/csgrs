@@ -15,25 +15,28 @@ pub const CAPABILITIES: BackendCapabilities = BackendCapabilities {
 };
 
 impl StructuralScalar for hyperreal::Real {
+    #[inline(always)]
     fn scalar_facts(&self) -> ScalarFacts {
-        crate::trace_dispatch!("liminal_hyperreal_adapter", "structural", "scalar-facts");
+        crate::trace_dispatch!("hyperlimit_hyperreal_adapter", "structural", "scalar-facts");
         scalar_facts_from_hyperreal(self.structural_facts())
     }
 
+    #[inline(always)]
     fn known_sign(&self) -> SignKnowledge {
-        crate::trace_dispatch!("liminal_hyperreal_adapter", "structural", "known-sign");
+        crate::trace_dispatch!("hyperlimit_hyperreal_adapter", "structural", "known-sign");
         scalar_facts_from_hyperreal(self.structural_facts()).sign_knowledge()
     }
 
+    #[inline(always)]
     fn refine_sign_until(&self, min_precision: i32) -> SignKnowledge {
         match self.refine_sign_until(min_precision) {
             Some(sign) => {
-                crate::trace_dispatch!("liminal_hyperreal_adapter", "structural", "refine-hit");
+                crate::trace_dispatch!("hyperlimit_hyperreal_adapter", "structural", "refine-hit");
                 SignKnowledge::exact(map_sign(sign))
             }
             None => {
                 crate::trace_dispatch!(
-                    "liminal_hyperreal_adapter",
+                    "hyperlimit_hyperreal_adapter",
                     "structural",
                     "refine-unknown"
                 );
@@ -44,10 +47,10 @@ impl StructuralScalar for hyperreal::Real {
 }
 
 impl PredicateScalar for hyperreal::Real {
-    #[inline]
+    #[inline(always)]
     fn to_f64(&self) -> Option<f64> {
         crate::trace_dispatch!(
-            "liminal_hyperreal_adapter",
+            "hyperlimit_hyperreal_adapter",
             "conversion",
             "to-f64-approx"
         );
@@ -59,7 +62,7 @@ impl PredicateScalar for hyperreal::Real {
         // Hyperreal expression construction is expensive enough that a proven f64 filter is
         // worth trying before exact predicate arithmetic.
         crate::trace_dispatch!(
-            "liminal_hyperreal_adapter",
+            "hyperlimit_hyperreal_adapter",
             "policy",
             "prefer-f64-prefilter"
         );
@@ -67,6 +70,7 @@ impl PredicateScalar for hyperreal::Real {
     }
 }
 
+#[inline]
 fn map_sign(sign: hyperreal::RealSign) -> Sign {
     match sign {
         hyperreal::RealSign::Negative => Sign::Negative,
@@ -75,6 +79,7 @@ fn map_sign(sign: hyperreal::RealSign) -> Sign {
     }
 }
 
+#[inline]
 fn map_magnitude(magnitude: hyperreal::MagnitudeBits) -> Option<MagnitudeBounds> {
     magnitude_bits_to_bounds(magnitude.msd, magnitude.exact_msd)
 }

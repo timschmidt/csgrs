@@ -1,32 +1,23 @@
 //! Geometry-oriented robust predicates with structural scalar awareness.
 //!
-//! `liminal` is intentionally positioned between scalar semantics and
+//! `hyperlimit` is intentionally positioned between scalar semantics and
 //! application geometry code. It asks backends for facts such as known sign,
 //! exact zero, magnitude bounds, and refinement capability before falling back
 //! to generic robust predicate machinery.
 
-#[cfg(feature = "dispatch-trace")]
-macro_rules! trace_dispatch {
-    ($layer:expr, $operation:expr, $path:expr) => {
-        ::hyperreal::dispatch_trace::record($layer, $operation, $path);
-    };
-}
-
-#[cfg(not(feature = "dispatch-trace"))]
-macro_rules! trace_dispatch {
-    ($layer:expr, $operation:expr, $path:expr) => {};
-}
-
-pub(crate) use trace_dispatch;
+mod trace;
+pub(crate) use trace::trace_dispatch;
 
 pub mod backend;
 pub mod batch;
 pub mod classify;
 pub mod error;
 pub mod filter;
+pub mod geometry;
 pub mod orient;
 pub mod plane;
 pub mod predicate;
+pub mod predicates;
 mod resolve;
 pub mod scalar;
 

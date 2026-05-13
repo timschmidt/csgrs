@@ -11,8 +11,8 @@ pub mod hyperreal;
 #[cfg(feature = "interval")]
 pub mod interval;
 
-#[cfg(feature = "realistic-blas")]
-pub mod realistic_blas;
+#[cfg(feature = "hyperlattice")]
+pub mod hyperlattice;
 
 #[cfg(feature = "robust")]
 pub mod robust;

@@ -2,7 +2,7 @@
 
 This file is generated from Criterion output under `target/criterion`.
 
-Generated at Unix timestamp `1778244273`.
+Generated at Unix timestamp `1778386676`.
 
 ## Commands
 
@@ -15,7 +15,7 @@ cargo bench --bench predicates
 Run dispatch tracing separately and update `dispatch_trace.md`:
 
 ```sh
-cargo bench --bench predicates --features dispatch-trace,realistic-blas -- --write-dispatch-trace-md
+cargo bench --bench predicates --features dispatch-trace,hyperlattice -- --write-dispatch-trace-md
 ```
 
 Regenerate this file from existing Criterion output:
@@ -27,7 +27,7 @@ cargo run --example write_benchmarks_md
 Run optional scalar representation benchmarks:
 
 ```sh
-RUSTFLAGS='-Ctarget-cpu=haswell' cargo bench --bench predicates --features hyperreal,realistic-blas,interval
+RUSTFLAGS='-Ctarget-cpu=haswell' cargo bench --bench predicates --features hyperreal,hyperlattice,interval
 ```
 
 Open Criterion's detailed HTML report at `target/criterion/report/index.html`.
@@ -36,59 +36,59 @@ Open Criterion's detailed HTML report at `target/criterion/report/index.html`.
 
 | Predicate | Representation | Workload | Mean | 95% CI | Median | Change vs Baseline |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `classify_point_line` | `f32` | `easy` | 25.12 us | 24.49 us - 25.98 us | 24.46 us | - |
-| `classify_point_line` | `f32` | `near_degenerate` | 52.15 us | 48.96 us - 54.08 us | 53.77 us | - |
-| `classify_point_line` | `f64` | `easy` | 23.88 us | 23.50 us - 24.28 us | 23.61 us | - |
-| `classify_point_line` | `f64` | `near_degenerate` | 26.01 us | 24.69 us - 27.43 us | 25.42 us | - |
-| `classify_point_line` | `hyperreal` | `easy` | 172.42 us | 161.33 us - 185.05 us | 171.00 us | -22.51% |
-| `classify_point_line` | `hyperreal` | `near_degenerate` | 145.45 us | 139.10 us - 153.74 us | 142.25 us | -35.37% |
-| `classify_point_line` | `realistic_blas` | `easy` | 117.15 us | 116.14 us - 118.21 us | 115.84 us | -5.60% |
-| `classify_point_line` | `realistic_blas` | `near_degenerate` | 119.91 us | 118.94 us - 121.04 us | 119.28 us | -6.78% |
-| `classify_point_oriented_plane` | `f32` | `easy` | 43.73 us | 42.73 us - 44.87 us | 42.90 us | - |
-| `classify_point_oriented_plane` | `f32` | `near_degenerate` | 55.81 us | 52.84 us - 58.64 us | 57.85 us | - |
-| `classify_point_oriented_plane` | `f64` | `easy` | 54.66 us | 47.53 us - 63.15 us | 50.54 us | - |
-| `classify_point_oriented_plane` | `f64` | `near_degenerate` | 43.66 us | 41.78 us - 46.44 us | 41.66 us | - |
-| `classify_point_oriented_plane` | `hyperreal` | `easy` | 290.32 us | 282.12 us - 298.32 us | 290.55 us | -26.38% |
-| `classify_point_oriented_plane` | `hyperreal` | `near_degenerate` | 288.97 us | 284.00 us - 295.46 us | 287.71 us | -42.55% |
-| `classify_point_oriented_plane` | `realistic_blas` | `easy` | 247.96 us | 244.43 us - 251.79 us | 241.56 us | -4.29% |
-| `classify_point_oriented_plane` | `realistic_blas` | `near_degenerate` | 238.29 us | 236.22 us - 240.55 us | 234.02 us | -8.46% |
-| `classify_point_plane` | `f32` | `easy` | 24.93 us | 23.30 us - 26.63 us | 23.22 us | +395.38% |
-| `classify_point_plane` | `f32` | `near_degenerate` | 25.60 us | 24.52 us - 26.75 us | 25.61 us | +436.20% |
-| `classify_point_plane` | `f64` | `easy` | 23.93 us | 23.29 us - 25.08 us | 23.36 us | +382.61% |
-| `classify_point_plane` | `f64` | `near_degenerate` | 23.17 us | 22.82 us - 23.66 us | 23.00 us | +395.59% |
-| `classify_point_plane` | `hyperreal` | `easy` | 209.15 us | 187.20 us - 232.13 us | 187.23 us | +24.14% |
-| `classify_point_plane` | `hyperreal` | `near_degenerate` | 171.69 us | 170.17 us - 173.52 us | 170.74 us | +7.16% |
-| `classify_point_plane` | `realistic_blas` | `easy` | 144.03 us | 143.52 us - 144.59 us | 143.66 us | -2.81% |
-| `classify_point_plane` | `realistic_blas` | `near_degenerate` | 144.03 us | 143.57 us - 144.51 us | 143.55 us | -1.45% |
-| `incircle2d` | `f32` | `easy` | 37.71 us | 36.44 us - 39.22 us | 36.51 us | +1213.80% |
-| `incircle2d` | `f32` | `near_degenerate` | 38.65 us | 37.71 us - 39.77 us | 38.71 us | +1291.37% |
-| `incircle2d` | `f64` | `easy` | 40.95 us | 40.74 us - 41.17 us | 40.87 us | +1415.16% |
-| `incircle2d` | `f64` | `near_degenerate` | 42.10 us | 41.46 us - 42.81 us | 42.31 us | +1452.88% |
-| `incircle2d` | `hyperreal` | `easy` | 136.07 us | 134.50 us - 138.34 us | 134.98 us | +5.70% |
-| `incircle2d` | `hyperreal` | `near_degenerate` | 138.65 us | 135.94 us - 141.70 us | 136.46 us | +7.92% |
-| `incircle2d` | `realistic_blas` | `easy` | 123.12 us | 121.75 us - 124.48 us | 123.94 us | -5.29% |
-| `incircle2d` | `realistic_blas` | `near_degenerate` | 122.70 us | 121.10 us - 124.28 us | 124.76 us | -7.38% |
-| `insphere3d` | `f32` | `easy` | 79.95 us | 78.74 us - 81.43 us | 79.40 us | +334.92% |
-| `insphere3d` | `f32` | `near_degenerate` | 80.36 us | 78.07 us - 83.29 us | 78.42 us | +295.07% |
-| `insphere3d` | `f64` | `easy` | 81.44 us | 79.71 us - 83.89 us | 79.99 us | +940.05% |
-| `insphere3d` | `f64` | `near_degenerate` | 81.03 us | 79.75 us - 82.69 us | 80.52 us | +923.57% |
-| `insphere3d` | `hyperreal` | `easy` | 232.22 us | 227.24 us - 236.79 us | 230.75 us | +13.76% |
-| `insphere3d` | `hyperreal` | `near_degenerate` | 309.62 us | 283.16 us - 334.02 us | 324.31 us | +44.08% |
-| `insphere3d` | `realistic_blas` | `easy` | 181.29 us | 178.70 us - 183.87 us | 181.44 us | -0.95% |
-| `insphere3d` | `realistic_blas` | `near_degenerate` | 192.33 us | 190.29 us - 194.26 us | 196.83 us | +2.22% |
-| `orient2d` | `f32` | `easy` | 25.23 us | 24.79 us - 25.70 us | 25.09 us | +203.53% |
-| `orient2d` | `f32` | `near_degenerate` | 32.72 us | 32.34 us - 33.12 us | 32.69 us | +99.57% |
-| `orient2d` | `f64` | `easy` | 26.77 us | 24.52 us - 29.25 us | 23.98 us | +729.79% |
-| `orient2d` | `f64` | `near_degenerate` | 25.07 us | 24.29 us - 25.88 us | 24.91 us | +537.98% |
-| `orient2d` | `hyperreal` | `easy` | 122.06 us | 120.90 us - 123.22 us | 122.03 us | -14.70% |
-| `orient2d` | `hyperreal` | `near_degenerate` | 123.28 us | 121.29 us - 125.31 us | 122.40 us | -8.57% |
-| `orient2d` | `realistic_blas` | `easy` | 124.81 us | 123.15 us - 126.76 us | 122.79 us | +5.78% |
-| `orient2d` | `realistic_blas` | `near_degenerate` | 132.23 us | 128.85 us - 135.94 us | 125.40 us | +2.35% |
-| `orient3d` | `f32` | `easy` | 73.94 us | 65.58 us - 83.81 us | 68.35 us | +722.77% |
-| `orient3d` | `f32` | `near_degenerate` | 43.82 us | 42.07 us - 46.53 us | 42.32 us | +392.46% |
-| `orient3d` | `f64` | `easy` | 59.16 us | 51.93 us - 66.35 us | 57.78 us | +581.24% |
-| `orient3d` | `f64` | `near_degenerate` | 41.62 us | 40.57 us - 43.11 us | 40.74 us | +376.17% |
-| `orient3d` | `hyperreal` | `easy` | 244.36 us | 237.07 us - 252.46 us | 243.26 us | -9.70% |
-| `orient3d` | `hyperreal` | `near_degenerate` | 143.09 us | 141.18 us - 145.12 us | 142.57 us | -20.34% |
-| `orient3d` | `realistic_blas` | `easy` | 247.13 us | 243.28 us - 251.69 us | 240.93 us | -0.86% |
-| `orient3d` | `realistic_blas` | `near_degenerate` | 143.64 us | 142.81 us - 144.50 us | 142.46 us | +1.75% |
+| `classify_point_line` | `f32` | `easy` | 4.39 us | 4.15 us - 4.64 us | 3.64 us | +22.94% |
+| `classify_point_line` | `f32` | `near_degenerate` | 4.12 us | 3.88 us - 4.40 us | 3.50 us | +25.63% |
+| `classify_point_line` | `f64` | `easy` | 4.59 us | 4.28 us - 4.93 us | 3.74 us | +20.72% |
+| `classify_point_line` | `f64` | `near_degenerate` | 4.89 us | 4.65 us - 5.12 us | 5.36 us | +23.85% |
+| `classify_point_line` | `hyperreal` | `easy` | 129.48 us | 128.71 us - 130.34 us | 128.48 us | +0.98% |
+| `classify_point_line` | `hyperreal` | `near_degenerate` | 214.61 us | 213.83 us - 215.40 us | 214.50 us | +68.11% |
+| `classify_point_line` | `hyperlattice` | `easy` | 161.10 us | 154.14 us - 168.56 us | 143.11 us | +14.64% |
+| `classify_point_line` | `hyperlattice` | `near_degenerate` | 140.25 us | 139.73 us - 140.81 us | 140.05 us | -2.04% |
+| `classify_point_oriented_plane` | `f32` | `easy` | 11.35 us | 10.68 us - 12.04 us | 9.40 us | +15.21% |
+| `classify_point_oriented_plane` | `f32` | `near_degenerate` | 11.88 us | 11.12 us - 12.69 us | 9.46 us | +36.59% |
+| `classify_point_oriented_plane` | `f64` | `easy` | 11.83 us | 11.04 us - 12.69 us | 9.33 us | +42.12% |
+| `classify_point_oriented_plane` | `f64` | `near_degenerate` | 10.61 us | 10.04 us - 11.24 us | 9.18 us | +28.32% |
+| `classify_point_oriented_plane` | `hyperreal` | `easy` | 245.44 us | 244.56 us - 246.40 us | 244.65 us | -15.46% |
+| `classify_point_oriented_plane` | `hyperreal` | `near_degenerate` | 249.11 us | 247.19 us - 251.30 us | 246.04 us | -13.79% |
+| `classify_point_oriented_plane` | `hyperlattice` | `easy` | 276.56 us | 274.85 us - 278.76 us | 274.83 us | +0.43% |
+| `classify_point_oriented_plane` | `hyperlattice` | `near_degenerate` | 275.64 us | 274.77 us - 276.56 us | 274.75 us | +15.67% |
+| `classify_point_plane` | `f32` | `easy` | 4.73 us | 4.52 us - 4.98 us | 4.35 us | +3.09% |
+| `classify_point_plane` | `f32` | `near_degenerate` | 5.82 us | 5.43 us - 6.23 us | 4.46 us | +18.58% |
+| `classify_point_plane` | `f64` | `easy` | 7.56 us | 7.02 us - 8.15 us | 7.69 us | +48.46% |
+| `classify_point_plane` | `f64` | `near_degenerate` | 6.84 us | 6.22 us - 7.51 us | 5.66 us | +68.11% |
+| `classify_point_plane` | `hyperreal` | `easy` | 155.45 us | 154.75 us - 156.17 us | 154.55 us | -25.68% |
+| `classify_point_plane` | `hyperreal` | `near_degenerate` | 156.56 us | 155.69 us - 157.52 us | 155.62 us | -8.81% |
+| `classify_point_plane` | `hyperlattice` | `easy` | 172.77 us | 172.03 us - 173.58 us | 172.11 us | +1.00% |
+| `classify_point_plane` | `hyperlattice` | `near_degenerate` | 169.44 us | 168.84 us - 170.06 us | 169.14 us | +17.64% |
+| `incircle2d` | `f32` | `easy` | 1.02 us | 969.03 ns - 1.08 us | 859.74 ns | +24.61% |
+| `incircle2d` | `f32` | `near_degenerate` | 1.01 us | 932.38 ns - 1.10 us | 810.70 ns | +21.50% |
+| `incircle2d` | `f64` | `easy` | 911.28 ns | 866.38 ns - 959.44 ns | 797.83 ns | +24.27% |
+| `incircle2d` | `f64` | `near_degenerate` | 982.73 ns | 926.07 ns - 1.04 us | 812.50 ns | +26.54% |
+| `incircle2d` | `hyperreal` | `easy` | 123.66 us | 122.99 us - 124.37 us | 122.95 us | -9.12% |
+| `incircle2d` | `hyperreal` | `near_degenerate` | 123.28 us | 122.51 us - 124.17 us | 122.43 us | -11.09% |
+| `incircle2d` | `hyperlattice` | `easy` | 139.36 us | 138.36 us - 140.71 us | 138.41 us | +0.47% |
+| `incircle2d` | `hyperlattice` | `near_degenerate` | 138.76 us | 138.02 us - 139.60 us | 137.84 us | +13.09% |
+| `insphere3d` | `f32` | `easy` | 7.32 us | 6.98 us - 7.68 us | 6.29 us | +16.76% |
+| `insphere3d` | `f32` | `near_degenerate` | 8.46 us | 7.99 us - 8.97 us | 8.73 us | +35.74% |
+| `insphere3d` | `f64` | `easy` | 5.73 us | 5.60 us - 5.90 us | 5.50 us | +6.11% |
+| `insphere3d` | `f64` | `near_degenerate` | 6.57 us | 6.23 us - 6.94 us | 5.61 us | +18.71% |
+| `insphere3d` | `hyperreal` | `easy` | 187.52 us | 186.39 us - 188.82 us | 185.75 us | -19.25% |
+| `insphere3d` | `hyperreal` | `near_degenerate` | 184.80 us | 184.33 us - 185.30 us | 184.25 us | -40.31% |
+| `insphere3d` | `hyperlattice` | `easy` | 246.36 us | 232.23 us - 261.91 us | 210.78 us | +16.33% |
+| `insphere3d` | `hyperlattice` | `near_degenerate` | 209.99 us | 208.99 us - 211.09 us | 209.29 us | +9.18% |
+| `orient2d` | `f32` | `easy` | 3.82 us | 3.68 us - 3.98 us | 3.52 us | +8.92% |
+| `orient2d` | `f32` | `near_degenerate` | 4.04 us | 3.84 us - 4.25 us | 3.49 us | +22.86% |
+| `orient2d` | `f64` | `easy` | 5.15 us | 4.92 us - 5.39 us | 5.34 us | +45.42% |
+| `orient2d` | `f64` | `near_degenerate` | 4.90 us | 4.64 us - 5.17 us | 5.28 us | +18.01% |
+| `orient2d` | `hyperreal` | `easy` | 217.34 us | 216.25 us - 218.74 us | 216.77 us | +67.18% |
+| `orient2d` | `hyperreal` | `near_degenerate` | 129.66 us | 128.54 us - 130.93 us | 127.49 us | +1.49% |
+| `orient2d` | `hyperlattice` | `easy` | 163.99 us | 154.80 us - 174.02 us | 139.28 us | +16.61% |
+| `orient2d` | `hyperlattice` | `near_degenerate` | 246.43 us | 243.33 us - 251.09 us | 243.08 us | +72.74% |
+| `orient3d` | `f32` | `easy` | 10.99 us | 10.37 us - 11.67 us | 9.31 us | +21.51% |
+| `orient3d` | `f32` | `near_degenerate` | 10.87 us | 10.33 us - 11.46 us | 9.42 us | +16.65% |
+| `orient3d` | `f64` | `easy` | 11.81 us | 11.08 us - 12.57 us | 9.49 us | +15.70% |
+| `orient3d` | `f64` | `near_degenerate` | 13.35 us | 12.60 us - 14.12 us | 14.50 us | +15.14% |
+| `orient3d` | `hyperreal` | `easy` | 245.95 us | 244.84 us - 247.15 us | 244.45 us | +0.65% |
+| `orient3d` | `hyperreal` | `near_degenerate` | 155.85 us | 154.74 us - 157.06 us | 154.11 us | +8.92% |
+| `orient3d` | `hyperlattice` | `easy` | 274.78 us | 272.60 us - 277.72 us | 271.80 us | +0.98% |
+| `orient3d` | `hyperlattice` | `near_degenerate` | 181.59 us | 180.60 us - 182.62 us | 181.14 us | +26.42% |
