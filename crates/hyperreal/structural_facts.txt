@@ -238,7 +238,7 @@ be easier for predicate APIs:
 
 Uses:
 
-- liminal predicate integration
+- hyperlimit predicate integration
 - active-set decisions
 
 Cost:
@@ -628,4 +628,3 @@ Recommended approach:
 4. Add trace counters for detailed-fact requests.
 5. Keep a fact only if targeted benches show it prevents more expensive work
    than it adds.
-

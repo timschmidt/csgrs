@@ -91,7 +91,7 @@ fn pow2_fraction_u64(numerator: u64, denominator_shift: u32, neg: bool) -> Ratio
         return Rational::zero();
     }
     // Same reduced-dyadic path as f32. This is the hot finite-f64 import path
-    // used by hyperlattice and predicated benchmark construction.
+    // used by hyperlattice and hyperlimit benchmark construction.
     let shift = numerator.trailing_zeros().min(denominator_shift);
     let numerator = numerator >> shift;
     let denominator_shift = denominator_shift - shift;

@@ -3,7 +3,7 @@ name = "hyperreal"
 description = "Exact rational and computable real arithmetic in Rust"
 license = "Apache-2.0"
 repository = "https://github.com/timschmidt/hyperreal/"
-version = "0.11.0"
+version = "0.11.1"
 edition = "2024"
 readme = "README.md"
 

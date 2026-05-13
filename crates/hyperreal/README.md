@@ -278,7 +278,7 @@ let offset = Real::pi() - Real::new(Rational::fraction(22, 7).unwrap());
 assert_eq!(classify_positive(&offset), Some(true));
 ```
 
-This pattern is the intended handoff to `hyperlattice` and `liminal`: cheap
+This pattern is the intended handoff to `hyperlattice` and `hyperlimit`: cheap
 facts route the common case, approximation is delayed until useful, and bounded
 refinement remains available for hard predicate boundaries.
 
@@ -402,7 +402,7 @@ cargo bench --bench numerical_micro
 
 When adding a shortcut, add a focused correctness test and a benchmark row for
 the smallest affected surface. Keep the shortcut only if it improves the target
-without regressing broader `hyperlattice` or `liminal` benchmarks.
+without regressing broader `hyperlattice` or `hyperlimit` benchmarks.
 
 ## Provenance and Acknowledgements
 
