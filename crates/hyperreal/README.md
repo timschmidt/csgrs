@@ -37,7 +37,7 @@ symbolic information available before approximation:
 - `hyperlattice` uses `hyperreal::Real` as its default exact/symbolic scalar
   backend. It forwards `hyperreal` structural facts through its `Scalar` type
   and adds vector, matrix, transform, and retained-geometry facts around them.
-- `liminal` can consume `hyperreal::Real` directly, using structural facts,
+- `hyperlimit` can consume `hyperreal::Real` directly, using structural facts,
   finite `f64` approximations, and bounded sign refinement before robust
   fallback.
 - `hypersolve` is the experimental solver layer. Its current direction is to
