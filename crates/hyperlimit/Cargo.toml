@@ -8,7 +8,7 @@ authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
 repository = "https://github.com/timschmidt/hyperlimit"
 readme = "README.md"
 keywords = ["robust", "geometric", "predicates", "boundary", "orientation"]
-categories = ["mathematics", "CAD", "games", "simulation", "geometry"]
+categories = ["mathematics", "games", "simulation"]
 
 [dependencies]
 geogram_predicates = { package = "exact_geo_predicates", version = "0.3.0", default-features = false, optional = true }
