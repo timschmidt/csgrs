@@ -264,6 +264,223 @@ precision planning to respect near-boundary and near-cancellation behavior. The
 final `sqrt` asks each child only for enough precision to produce the requested
 root approximation.
 
+### Refinement walk
+
+The generator in
+[`../../examples/computable_refinement_steps.rs`](../../examples/computable_refinement_steps.rs)
+walks the argument-reduction tower through the public inspection and evaluation
+steps:
+
+```sh
+cargo run --example computable_refinement_steps
+```
+
+It builds the same shape as the first graph:
+
+```text
+sqrt((tan(atan(7/10)) + sin(asin(3/5)))
+     / (sin(10^30*pi + 7/5 + 2^-40)^2 + cos(10^30*pi + 7/5)^2))
+```
+
+The example demonstrates most of the Computable lifecycle:
+
+- exact rational leaves report sign, zero status, exact-rational status, and
+  exact magnitude without approximation
+- the huge phase `10^30*pi + 7/5` is structurally nonzero and positive, with a
+  known high most-significant bit
+- trig evaluation reduces the huge `pi` multiple to the residual argument
+- inverse-function compositions refine back to their rational inputs
+- intermediate sums refine at progressively finer binary precisions
+- the final root is evaluated at the requested precision and a repeat request
+  reuses the cache
+
+The walkthrough prints staged graphs before the numeric output. Nodes in red are
+the expression shape being replaced or reduced; green nodes are the retained
+reduced form; blue nodes are refinement requests; purple is a repeated cached
+request.
+
+Symbolic stage 1 starts with the full expression graph:
+
+```mermaid
+flowchart TD
+    phase["10^30*pi + 7/5"]
+    tiny["2^-40"]
+    phaseTiny["add tiny"]
+    sinHuge["sin"]
+    phaseCos["10^30*pi + 7/5"]
+    cosHuge["cos"]
+    sinSq["square"]
+    cosSq["square"]
+    norm["add: trig_norm"]
+    sevenTenths["7/10"]
+    atan["atan"]
+    tan["tan"]
+    threeFifths["3/5"]
+    asin["asin"]
+    sinAsin["sin"]
+    numerator["add: numerator"]
+    invNorm["inverse"]
+    product["multiply"]
+    root["sqrt root"]
+    phase --> phaseTiny
+    tiny --> phaseTiny
+    phaseTiny --> sinHuge --> sinSq --> norm
+    phaseCos --> cosHuge --> cosSq --> norm
+    sevenTenths --> atan --> tan --> numerator
+    threeFifths --> asin --> sinAsin --> numerator
+    norm --> invNorm --> product
+    numerator --> product --> root
+    root:::root
+    classDef root fill:#f7f3c6,stroke:#8a6d00,stroke-width:2px
+```
+
+Symbolic stage 2 shows inverse-function reduction checks. These are not
+floating-point identities; `compare_absolute(..., -64)` asks the computable
+values to refine enough to prove equality at that tolerance:
+
+```mermaid
+flowchart TD
+    sevenTenths["7/10"]
+    atanTan["tan(atan(7/10))"]
+    sevenReduced["7/10 retained"]
+    threeFifths["3/5"]
+    asinSin["sin(asin(3/5))"]
+    threeReduced["3/5 retained"]
+    numerator["add: numerator"]
+    sevenTenths --> atanTan --> sevenReduced --> numerator
+    threeFifths --> asinSin --> threeReduced --> numerator
+    atanTan:::changed
+    asinSin:::changed
+    sevenReduced:::result
+    threeReduced:::result
+    classDef changed fill:#ffe3dc,stroke:#b5472f,stroke-width:2px
+    classDef result fill:#dcfce7,stroke:#15803d,stroke-width:2px
+```
+
+Numeric stage 3 shows argument reduction for the huge trigonometric inputs. The
+`10^30*pi` term is reduced away modulo the trig period before the approximation
+kernels spend precision on the residual:
+
+```mermaid
+flowchart TD
+    hugeSin["sin(10^30*pi + 7/5 + 2^-40)"]
+    reducedSin["sin(7/5 + 2^-40)"]
+    hugeCos["cos(10^30*pi + 7/5)"]
+    reducedCos["cos(7/5)"]
+    sinSq["square"]
+    cosSq["square"]
+    norm["add: trig_norm"]
+    hugeSin --> reducedSin --> sinSq --> norm
+    hugeCos --> reducedCos --> cosSq --> norm
+    hugeSin:::changed
+    hugeCos:::changed
+    reducedSin:::result
+    reducedCos:::result
+    classDef changed fill:#ffe3dc,stroke:#b5472f,stroke-width:2px
+    classDef result fill:#dcfce7,stroke:#15803d,stroke-width:2px
+```
+
+Numeric stage 4 shows precision refinement and cache reuse. `approx(p)` returns
+an integer scaled by `2^-p`, and each request may refine only as far as needed
+for that precision:
+
+```mermaid
+flowchart LR
+    root["sqrt root"]
+    p8["approx(-8)"]
+    p16["approx(-16)"]
+    p32["approx(-32)"]
+    p64["approx(-64)"]
+    p80["approx(-80)"]
+    cached["second approx(-80): cache hit"]
+    root --> p8 --> p16 --> p32 --> p64 --> p80 --> cached
+    p8:::changed
+    p16:::changed
+    p32:::changed
+    p64:::changed
+    p80:::result
+    cached:::cache
+    classDef changed fill:#e0f2fe,stroke:#0369a1,stroke-width:2px
+    classDef result fill:#dcfce7,stroke:#15803d,stroke-width:2px
+    classDef cache fill:#ede9fe,stroke:#6d28d9,stroke-width:2px
+```
+
+Representative output:
+
+```text
+residual 7/5:
+  facts: sign=positive, zero=nonzero, exact_rational=true, magnitude=msd 0 (exact=true)
+  sign_until(-24): Some(Positive)
+  approx(-12): 5734
+  approx(-24): 23488102
+
+tiny 2^-40:
+  facts: sign=positive, zero=nonzero, exact_rational=true, magnitude=msd -40 (exact=true)
+  sign_until(-24): Some(Positive)
+  approx(-12): 0
+  approx(-24): 0
+
+phase = 10^30*pi + 7/5:
+  facts: sign=positive, zero=nonzero, exact_rational=false, magnitude=msd 101 (exact=true)
+  zero_status: NonZero
+  sign_until(0): Some(Positive)
+
+trig_norm:
+  facts: sign=unknown, zero=unknown, exact_rational=false, magnitude=unknown
+  sign_until(-24): Some(Positive)
+  approx(-12): 3978
+  approx(-24): 16292542
+
+numerator:
+  facts: sign=unknown, zero=unknown, exact_rational=false, magnitude=unknown
+  sign_until(-24): Some(Positive)
+  approx(-12): 5325
+  approx(-24): 21810381
+
+trig_norm refinement:
+  approx( -8) = 249
+  approx(-16) = 63643
+  approx(-32) = 4170890717
+  approx(-64) = 17913839226283551985
+  decimal = 0.971111170334633746241117
+
+numerator refinement:
+  approx( -8) = 333
+  approx(-16) = 85197
+  approx(-32) = 5583457485
+  approx(-64) = 23980767295822417101
+  decimal = 1.300000000000000000000000
+
+product before sqrt:
+  facts: sign=unknown, zero=unknown, exact_rational=false, magnitude=unknown
+  sign_until(-24): None
+
+root:
+  facts: sign=unknown, zero=unknown, exact_rational=false, magnitude=unknown
+  sign_until(-24): None
+
+final root:
+  approx(-80) = 1398739548397216159170853
+  decimal = 1.157010236445354561840032
+
+large-argument reduction checks:
+  sin(10^30*pi + 7/5 + 2^-40) vs sin(7/5 + 2^-40): equal within tolerance
+  cos(10^30*pi + 7/5) vs cos(7/5): equal within tolerance
+
+inverse-function reduction checks:
+  tan(atan(7/10)) vs 7/10: equal within tolerance
+  sin(asin(3/5)) vs 3/5: equal within tolerance
+
+cache demonstration:
+  first approx(-80) = 1398739548397216159170853
+  second approx(-80) = 1398739548397216159170853
+```
+
+The coarse `tiny` approximations round to zero because `approx(p)` returns the
+integer scaled by `2^-p`; the exact structural facts still preserve its positive
+nonzero status. The later refinement rows show the same expression family
+requesting more binary digits only where the caller asks for them.
+
 ## Performance expectations
 
 The fastest `Computable` path is the one never entered because `Rational` or
