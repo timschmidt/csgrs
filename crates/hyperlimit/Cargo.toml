@@ -7,7 +7,7 @@ license = "MIT OR Apache-2.0"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
 repository = "https://github.com/timschmidt/hyperlimit"
 readme = "README.md"
-keywords = ["robust", "geometric", "predicates", "boundary", "limits", "orientation"]
+keywords = ["robust", "geometric", "predicates", "boundary", "orientation"]
 categories = ["mathematics", "CAD", "games", "simulation", "geometry"]
 
 [dependencies]
