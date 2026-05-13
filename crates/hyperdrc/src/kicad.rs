@@ -1,49 +1,26 @@
+//! KiCad PCB loader.
+//!
+//! This module keeps parser mechanics close to KiCad S-expression handling and
+//! re-exports the board model used by checks.
+
+mod graphics;
+mod model;
+
+use graphics::parse_graphics;
+pub use model::{BoardModel, CopperFeature, CopperKind, DrillFeature};
+
 use std::collections::HashMap;
 use std::path::Path;
 
 use anyhow::{Context, Result};
 use geo::{Area, Polygon};
 
+use crate::LayerMetadata;
 use crate::geometry::{
-    arc_line_polygons, circle_polygon, empty_sketch, line_polygon, polygon_from_points,
-    polygons_to_sketch, rect_polygon, transform_polygon,
+    circle_polygon, line_polygon, polygon_from_points, polygons_to_sketch, rect_polygon,
+    transform_polygon,
 };
 use crate::sexp::{self, Sexp};
-use crate::{LayerMetadata, PcbSketch};
-
-#[derive(Clone, Debug)]
-pub struct BoardModel {
-    pub source: String,
-    pub copper: Vec<CopperFeature>,
-    pub drills: Vec<DrillFeature>,
-    pub board_outline: Option<PcbSketch>,
-    pub panel_features: Option<PcbSketch>,
-}
-
-#[derive(Clone, Debug)]
-pub struct CopperFeature {
-    pub layer: String,
-    pub net: Option<String>,
-    pub kind: CopperKind,
-    pub sketch: PcbSketch,
-    pub location: [f64; 2],
-}
-
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
-pub enum CopperKind {
-    Pad,
-    Via,
-    Segment,
-    Zone,
-}
-
-#[derive(Clone, Debug)]
-pub struct DrillFeature {
-    pub location: [f64; 2],
-    pub diameter: f64,
-    pub net: Option<String>,
-    pub plated: bool,
-}
 
 pub fn load_kicad_pcb(path: &Path) -> Result<BoardModel> {
     let text = std::fs::read_to_string(path)
@@ -81,56 +58,6 @@ pub fn load_kicad_pcb(path: &Path) -> Result<BoardModel> {
             )
         }),
     })
-}
-
-impl BoardModel {
-    pub fn copper_layers(&self, selected_layers: &[String]) -> Vec<(String, PcbSketch)> {
-        let mut by_layer: HashMap<String, Vec<Polygon<f64>>> = HashMap::new();
-
-        for feature in &self.copper {
-            if !selected_layers.is_empty() && !selected_layers.contains(&feature.layer) {
-                continue;
-            }
-            by_layer
-                .entry(feature.layer.clone())
-                .or_default()
-                .extend(feature.sketch.to_multipolygon().0);
-        }
-
-        by_layer
-            .into_iter()
-            .map(|(layer, polygons)| {
-                let sketch = polygons_to_sketch(
-                    polygons,
-                    Some(LayerMetadata {
-                        name: format!("KiCad {layer}"),
-                    }),
-                );
-                (layer, sketch)
-            })
-            .collect()
-    }
-
-    pub fn all_copper(&self) -> PcbSketch {
-        let polygons = self
-            .copper
-            .iter()
-            .flat_map(|feature| feature.sketch.to_multipolygon().0)
-            .collect::<Vec<_>>();
-
-        if polygons.is_empty() {
-            return empty_sketch(Some(LayerMetadata {
-                name: "KiCad copper".to_string(),
-            }));
-        }
-
-        polygons_to_sketch(
-            polygons,
-            Some(LayerMetadata {
-                name: "KiCad copper".to_string(),
-            }),
-        )
-    }
 }
 
 fn parse_nets(root: &Sexp) -> HashMap<i32, String> {
@@ -434,195 +361,6 @@ fn parse_zones(root: &Sexp, nets: &HashMap<i32, String>, copper: &mut Vec<Copper
     }
 }
 
-fn parse_graphics(
-    root: &Sexp,
-    edge_polygons: &mut Vec<Polygon<f64>>,
-    panel_polygons: &mut Vec<Polygon<f64>>,
-) {
-    let mut edge_lines = Vec::new();
-
-    for line in root.named_children("gr_line") {
-        let Some(start) = xy_from_child(line, "start") else {
-            continue;
-        };
-        let Some(end) = xy_from_child(line, "end") else {
-            continue;
-        };
-        let width = line
-            .named_child("width")
-            .and_then(|width| width.f64_at(1))
-            .unwrap_or(0.05);
-        if is_edge_cuts(line) {
-            edge_lines.push((start, end));
-        } else if is_panel_layer(line)
-            && let Some(polygon) = line_polygon(start, end, width.max(0.01))
-        {
-            panel_polygons.push(polygon);
-        }
-    }
-
-    if let Some(outline) = closed_polygon_from_lines(&edge_lines) {
-        edge_polygons.push(outline);
-    } else {
-        for (start, end) in edge_lines {
-            if let Some(polygon) = line_polygon(start, end, 0.05) {
-                edge_polygons.push(polygon);
-            }
-        }
-    }
-
-    for rect in root.named_children("gr_rect") {
-        let Some(start) = xy_from_child(rect, "start") else {
-            continue;
-        };
-        let Some(end) = xy_from_child(rect, "end") else {
-            continue;
-        };
-        let polygon = polygon_from_points(vec![start, [end[0], start[1]], end, [start[0], end[1]]]);
-        if is_edge_cuts(rect) {
-            edge_polygons.push(polygon);
-        } else if is_panel_layer(rect) {
-            panel_polygons.push(polygon);
-        }
-    }
-
-    for circle in root.named_children("gr_circle") {
-        let Some(center) = xy_from_child(circle, "center") else {
-            continue;
-        };
-        let Some(end) = xy_from_child(circle, "end") else {
-            continue;
-        };
-        let radius = distance(center, end);
-        let polygon = circle_polygon(center, radius, 64);
-        if is_edge_cuts(circle) {
-            edge_polygons.push(polygon);
-        } else if is_panel_layer(circle) {
-            panel_polygons.push(polygon);
-        }
-    }
-
-    for arc in root.named_children("gr_arc") {
-        let Some(center) = xy_from_child(arc, "start").or_else(|| xy_from_child(arc, "center"))
-        else {
-            continue;
-        };
-        let Some(mid) = xy_from_child(arc, "mid") else {
-            continue;
-        };
-        let Some(end) = xy_from_child(arc, "end") else {
-            continue;
-        };
-        let width = arc
-            .named_child("width")
-            .and_then(|width| width.f64_at(1))
-            .unwrap_or(0.05)
-            .max(0.01);
-        let Some((arc_center, start, angle)) = arc_center_start_angle(center, mid, end) else {
-            continue;
-        };
-        let polygons = arc_line_polygons(arc_center, start, angle, width, 24);
-        if is_edge_cuts(arc) {
-            edge_polygons.extend(polygons);
-        } else if is_panel_layer(arc) {
-            panel_polygons.extend(polygons);
-        }
-    }
-}
-
-fn arc_center_start_angle(
-    start: [f64; 2],
-    mid: [f64; 2],
-    end: [f64; 2],
-) -> Option<([f64; 2], [f64; 2], f64)> {
-    // Circumcircle through start/mid/end. The midpoint determines whether the
-    // represented arc follows the counter-clockwise or clockwise sweep. This is
-    // the standard determinant form used for three-point circle reconstruction.
-    let d = 2.0
-        * (start[0] * (mid[1] - end[1])
-            + mid[0] * (end[1] - start[1])
-            + end[0] * (start[1] - mid[1]));
-    if d.abs() < 1.0e-9 {
-        return None;
-    }
-
-    let start_sq = start[0] * start[0] + start[1] * start[1];
-    let mid_sq = mid[0] * mid[0] + mid[1] * mid[1];
-    let end_sq = end[0] * end[0] + end[1] * end[1];
-    let center = [
-        (start_sq * (mid[1] - end[1])
-            + mid_sq * (end[1] - start[1])
-            + end_sq * (start[1] - mid[1]))
-            / d,
-        (start_sq * (end[0] - mid[0])
-            + mid_sq * (start[0] - end[0])
-            + end_sq * (mid[0] - start[0]))
-            / d,
-    ];
-    let start_angle = (start[1] - center[1]).atan2(start[0] - center[0]);
-    let mid_angle = (mid[1] - center[1]).atan2(mid[0] - center[0]);
-    let end_angle = (end[1] - center[1]).atan2(end[0] - center[0]);
-    let ccw_delta = positive_angle_delta(start_angle, end_angle);
-    let mid_delta = positive_angle_delta(start_angle, mid_angle);
-    let angle = if mid_delta <= ccw_delta {
-        ccw_delta.to_degrees()
-    } else {
-        -(std::f64::consts::TAU - ccw_delta).to_degrees()
-    };
-
-    Some((center, start, angle))
-}
-
-fn positive_angle_delta(start: f64, end: f64) -> f64 {
-    let mut delta = end - start;
-    while delta < 0.0 {
-        delta += std::f64::consts::TAU;
-    }
-    while delta >= std::f64::consts::TAU {
-        delta -= std::f64::consts::TAU;
-    }
-    delta
-}
-
-fn closed_polygon_from_lines(lines: &[([f64; 2], [f64; 2])]) -> Option<Polygon<f64>> {
-    let (first_start, first_end) = *lines.first()?;
-    let mut remaining = lines[1..].to_vec();
-    let mut points = vec![first_start, first_end];
-
-    while !remaining.is_empty() {
-        let current = *points.last()?;
-        // KiCad Edge.Cuts commonly arrives as unordered line segments. We stitch
-        // exact endpoint matches into a single outline before falling back to
-        // stroked line geometry. Tolerance is intentionally tiny because KiCad
-        // stores board coordinates in decimal millimeters.
-        let (index, next) = remaining
-            .iter()
-            .enumerate()
-            .find_map(|(index, (start, end))| {
-                if same_point(current, *start) {
-                    Some((index, *end))
-                } else if same_point(current, *end) {
-                    Some((index, *start))
-                } else {
-                    None
-                }
-            })?;
-
-        points.push(next);
-        remaining.remove(index);
-    }
-
-    if points.len() >= 4 && same_point(points[0], *points.last()?) {
-        Some(polygon_from_points(points))
-    } else {
-        None
-    }
-}
-
-fn same_point(left: [f64; 2], right: [f64; 2]) -> bool {
-    (left[0] - right[0]).abs() < 1.0e-6 && (left[1] - right[1]).abs() < 1.0e-6
-}
-
 fn polygons_from_pts(parent: &Sexp) -> Vec<Polygon<f64>> {
     let points = parent
         .named_children("pts")
@@ -679,28 +417,6 @@ fn expand_copper_layers(layers: &[String]) -> Vec<String> {
     out
 }
 
-fn is_edge_cuts(item: &Sexp) -> bool {
-    item.named_child("layer")
-        .and_then(|layer| layer.atom_at(1))
-        .is_some_and(|layer| layer == "Edge.Cuts")
-}
-
-fn is_panel_layer(item: &Sexp) -> bool {
-    item.named_child("layer")
-        .and_then(|layer| layer.atom_at(1))
-        .is_some_and(|layer| {
-            layer.contains("Panel")
-                || layer.contains("VScore")
-                || layer.contains("V-Score")
-                || layer.contains("TabRoute")
-                || layer.contains("Tab.Route")
-                || layer.contains("Castellated")
-                || layer.contains("Castellation")
-                || layer.contains("EdgePlating")
-                || layer.contains("Edge.Plating")
-        })
-}
-
 fn rotate_translate(point: [f64; 2], origin: [f64; 2], angle_degrees: f64) -> [f64; 2] {
     let theta = angle_degrees.to_radians();
     let cos = theta.cos();
@@ -725,7 +441,9 @@ fn distance(start: [f64; 2], end: [f64; 2]) -> f64 {
 mod tests {
     use std::fs;
 
-    use super::load_kicad_pcb;
+    use geo::Area;
+
+    use super::{CopperKind, load_kicad_pcb};
 
     #[test]
     fn parses_basic_kicad_board_features() {
@@ -783,6 +501,83 @@ mod tests {
         assert_eq!(board.copper.len(), 1);
         assert_eq!(board.copper[0].location, [1.0, 2.0]);
         assert!(!board.copper[0].sketch.to_multipolygon().0.is_empty());
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn parses_rotated_footprint_and_pad_geometry_on_expanded_copper_layers() {
+        let path = std::env::temp_dir().join("hyperdrc-rotated-pad.kicad_pcb");
+        fs::write(
+            &path,
+            r#"
+            (kicad_pcb
+              (net 1 "GND")
+              (footprint "ROT"
+                (at 10 20 90)
+                (pad "1" smd rect
+                  (at 2 0 45)
+                  (size 2 4)
+                  (layers "*.Cu" "F.Mask")
+                  (net 1 "GND"))))
+            "#,
+        )
+        .unwrap();
+
+        let board = load_kicad_pcb(&path).unwrap();
+
+        assert_eq!(board.copper.len(), 2);
+        assert!(board.copper.iter().any(|feature| feature.layer == "F.Cu"));
+        assert!(board.copper.iter().any(|feature| feature.layer == "B.Cu"));
+        assert!(
+            board
+                .copper
+                .iter()
+                .all(|feature| feature.kind == CopperKind::Pad
+                    && feature.net.as_deref() == Some("GND")
+                    && feature.location == [10.0, 22.0])
+        );
+        for feature in &board.copper {
+            assert!((feature.sketch.to_multipolygon().unsigned_area() - 8.0).abs() < 1.0e-9);
+        }
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn custom_pad_primitives_skip_degenerate_lines_and_rotate_shapes() {
+        let path = std::env::temp_dir().join("hyperdrc-custom-pad-antagonistic.kicad_pcb");
+        fs::write(
+            &path,
+            r#"
+            (kicad_pcb
+              (footprint "CUSTOM"
+                (at 5 5 90)
+                (pad "1" smd custom
+                  (at 1 0 90)
+                  (size 1 1)
+                  (layers "F.Cu")
+                  (primitives
+                    (gr_rect (start -1 -0.5) (end 1 0.5) (width 0))
+                    (gr_circle (center 2 0) (end 2.5 0) (width 0))
+                    (gr_line (start 0 0) (end 0 0) (width 0.2))))))
+            "#,
+        )
+        .unwrap();
+
+        let board = load_kicad_pcb(&path).unwrap();
+
+        assert_eq!(board.copper.len(), 2);
+        assert!(
+            board
+                .copper
+                .iter()
+                .all(|feature| feature.location == [5.0, 6.0])
+        );
+        assert!(
+            board
+                .copper
+                .iter()
+                .all(|feature| feature.sketch.to_multipolygon().unsigned_area() > 0.0)
+        );
         let _ = fs::remove_file(path);
     }
 
@@ -884,6 +679,89 @@ mod tests {
         let panel_features = board.panel_features.unwrap();
 
         assert!(panel_features.to_multipolygon().0.len() >= 4);
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn unordered_edge_lines_are_stitched_into_single_outline_polygon() {
+        let path = std::env::temp_dir().join("hyperdrc-unordered-edge-lines.kicad_pcb");
+        fs::write(
+            &path,
+            r#"
+            (kicad_pcb
+              (gr_line (start 10 0) (end 10 5) (layer "Edge.Cuts"))
+              (gr_line (start 0 0) (end 10 0) (layer "Edge.Cuts"))
+              (gr_line (start 0 5) (end 0 0) (layer "Edge.Cuts"))
+              (gr_line (start 10 5) (end 0 5) (layer "Edge.Cuts")))
+            "#,
+        )
+        .unwrap();
+
+        let board = load_kicad_pcb(&path).unwrap();
+        let outline = board.board_outline.unwrap().to_multipolygon();
+
+        assert_eq!(outline.0.len(), 1);
+        assert!((outline.unsigned_area() - 50.0).abs() < 1.0e-9);
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn degenerate_and_non_copper_geometry_is_ignored_without_fallback_shapes() {
+        let path = std::env::temp_dir().join("hyperdrc-degenerate-geometry.kicad_pcb");
+        fs::write(
+            &path,
+            r#"
+            (kicad_pcb
+              (footprint "NOCU"
+                (pad "1" smd rect
+                  (at 0 0)
+                  (size 1 1)
+                  (layers "F.Mask" "B.SilkS")))
+              (segment (start 0 0) (end 10 0) (width 0) (layer "F.Cu"))
+              (segment (start 1 1) (end 1 1) (width 0.2) (layer "F.Cu"))
+              (gr_arc
+                (start 0 0)
+                (mid 1 0)
+                (end 2 0)
+                (layer "User.Panel")
+                (width 0.1)))
+            "#,
+        )
+        .unwrap();
+
+        let board = load_kicad_pcb(&path).unwrap();
+
+        assert!(board.copper.is_empty());
+        assert!(board.panel_features.is_none());
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn zones_skip_underdefined_polygons_and_keep_valid_area() {
+        let path = std::env::temp_dir().join("hyperdrc-zone-antagonistic.kicad_pcb");
+        fs::write(
+            &path,
+            r#"
+            (kicad_pcb
+              (net 7 "PWR")
+              (zone
+                (net 7)
+                (layer "F.Cu")
+                (polygon (pts (xy 0 0) (xy 1 0))))
+              (zone
+                (net 7)
+                (layer "F.Cu")
+                (polygon (pts (xy 0 0) (xy 2 0) (xy 2 1) (xy 0 1)))))
+            "#,
+        )
+        .unwrap();
+
+        let board = load_kicad_pcb(&path).unwrap();
+
+        assert_eq!(board.copper.len(), 1);
+        assert_eq!(board.copper[0].kind, CopperKind::Zone);
+        assert_eq!(board.copper[0].net.as_deref(), Some("PWR"));
+        assert!((board.copper[0].sketch.to_multipolygon().unsigned_area() - 2.0).abs() < 1.0e-9);
         let _ = fs::remove_file(path);
     }
 

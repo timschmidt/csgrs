@@ -62,6 +62,30 @@ pub enum OutputFormat {
     Geojson,
 }
 
+#[derive(Copy, Clone, Debug, Eq, PartialEq, ValueEnum)]
+pub enum ConversionBackend {
+    Transjlc,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq, ValueEnum)]
+pub enum SourceEda {
+    Auto,
+    Kicad,
+    Jlc,
+    Protel,
+}
+
+impl SourceEda {
+    pub fn as_transjlc_arg(self) -> &'static str {
+        match self {
+            SourceEda::Auto => "auto",
+            SourceEda::Kicad => "kicad",
+            SourceEda::Jlc => "jlc",
+            SourceEda::Protel => "protel",
+        }
+    }
+}
+
 #[derive(Parser, Debug)]
 #[command(author, version, about)]
 pub struct Cli {
@@ -71,6 +95,46 @@ pub struct Cli {
 
     /// Gerber files to load as separate layers.
     pub files: Vec<PathBuf>,
+
+    /// Directory containing Gerber files to load as layers. Repeat to merge multiple packages.
+    #[arg(long = "gerber-dir")]
+    pub gerber_dirs: Vec<PathBuf>,
+
+    /// Gerber directory to convert before loading. Repeat for multiple input packages.
+    #[arg(long = "convert-input")]
+    pub conversion_inputs: Vec<PathBuf>,
+
+    /// Converter backend for --convert-input packages.
+    #[arg(long = "converter", value_enum, default_value_t = ConversionBackend::Transjlc)]
+    pub converter: ConversionBackend,
+
+    /// Base directory for converted Gerber output.
+    #[arg(long = "conversion-output-dir", default_value = "hyperdrc-converted")]
+    pub conversion_output_dir: PathBuf,
+
+    /// Source EDA passed to the converter.
+    #[arg(long = "source-eda", value_enum, default_value_t = SourceEda::Auto)]
+    pub source_eda: SourceEda,
+
+    /// Path to the TransJLC executable used by --converter transjlc.
+    #[arg(long = "transjlc-bin", default_value = "TransJLC")]
+    pub transjlc_bin: PathBuf,
+
+    /// Ask the converter to create a zip archive when supported.
+    #[arg(long = "conversion-zip")]
+    pub conversion_zip: bool,
+
+    /// Zip file base name passed to converters that support zipped output.
+    #[arg(long = "conversion-zip-name", default_value = "Gerber")]
+    pub conversion_zip_name: String,
+
+    /// Optional top colorful silkscreen image passed through to TransJLC.
+    #[arg(long = "top-color-image")]
+    pub top_color_image: Option<PathBuf>,
+
+    /// Optional bottom colorful silkscreen image passed through to TransJLC.
+    #[arg(long = "bottom-color-image")]
+    pub bottom_color_image: Option<PathBuf>,
 
     /// KiCad .kicad_pcb file. Repeat to check multiple boards.
     #[arg(long = "kicad-pcb")]
@@ -204,9 +268,11 @@ pub struct Cli {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use clap::Parser;
 
-    use super::{Check, Cli, OutputFormat};
+    use super::{Check, Cli, ConversionBackend, OutputFormat, SourceEda};
 
     #[test]
     fn parses_multiple_checks_and_inputs() {
@@ -252,6 +318,35 @@ mod tests {
         assert_eq!(cli.silk_layers, vec![1]);
         assert_eq!(cli.format, OutputFormat::Json);
         assert_eq!(cli.files.len(), 2);
+    }
+
+    #[test]
+    fn parses_gerber_directories_and_conversion_options() {
+        let cli = Cli::parse_from([
+            "hyperdrc",
+            "--gerber-dir",
+            "gerbers",
+            "--convert-input",
+            "incoming",
+            "--conversion-output-dir",
+            "converted",
+            "--source-eda",
+            "kicad",
+            "--transjlc-bin",
+            "transjlc",
+            "--conversion-zip",
+            "--conversion-zip-name",
+            "upload",
+        ]);
+
+        assert_eq!(cli.gerber_dirs, vec![PathBuf::from("gerbers")]);
+        assert_eq!(cli.conversion_inputs, vec![PathBuf::from("incoming")]);
+        assert_eq!(cli.conversion_output_dir, PathBuf::from("converted"));
+        assert_eq!(cli.converter, ConversionBackend::Transjlc);
+        assert_eq!(cli.source_eda, SourceEda::Kicad);
+        assert_eq!(cli.transjlc_bin, PathBuf::from("transjlc"));
+        assert!(cli.conversion_zip);
+        assert_eq!(cli.conversion_zip_name, "upload");
     }
 
     #[test]

@@ -1,3 +1,8 @@
+//! Layer-level geometry checks over already-flattened sketches.
+//!
+//! These checks are independent of KiCad concepts such as nets and drills, so
+//! Gerber-derived layers and KiCad-derived layers share the same behavior.
+
 use csgrs::csg::CSG;
 use geo::{Area, BoundingRect, Coord, LineString, MultiPolygon, Polygon};
 

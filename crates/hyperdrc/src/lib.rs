@@ -2,6 +2,7 @@ pub mod app;
 pub mod checks;
 pub mod cli;
 pub mod config;
+pub mod conversion;
 pub mod excellon;
 pub mod geometry;
 pub mod ipc356;

@@ -31,6 +31,30 @@ Run all checks against one or more Gerber layers:
 cargo run -- path/to/top.gbr path/to/bottom.gbr
 ```
 
+Load every Gerber-like file from a directory:
+
+```sh
+cargo run -- --gerber-dir path/to/gerber-package
+```
+
+Convert a Gerber package with
+[`TransJLC`](https://github.com/HalfSweet/TransJLC) before loading the converted
+outputs:
+
+```sh
+cargo run -- \
+  --convert-input path/to/source-gerbers \
+  --conversion-output-dir build/hyperdrc-converted \
+  --source-eda kicad \
+  --transjlc-bin TransJLC
+```
+
+The conversion path is backend-oriented. `transjlc` is currently the only
+backend, and `hyperdrc` invokes it as an external executable using TransJLC's
+directory-based `--path`, `--output_path`, `--eda`, `--zip`, and optional
+color-silkscreen arguments. Converted Gerber files are then loaded through the
+same layer pipeline as direct Gerber inputs.
+
 Run KiCad-aware checks against a `.kicad_pcb` file:
 
 ```sh
@@ -166,6 +190,11 @@ Excellon support reads common `METRIC`/`INCH` tool definitions and drill hits.
 IPC-D-356 support reads common test records and uses them to annotate nearby
 KiCad copper or drills with net names when source board objects are missing net
 data.
+
+Generic IO support includes direct Gerber files, Gerber directories, converted
+Gerber directories, KiCad boards, Excellon drills, IPC-D-356 netlists, JSON
+config, JSON waivers, text/JSON/GeoJSON reports, SVG overlays, and compact JSON
+summaries.
 
 Not yet modeled: exact routed slot shapes, plated-slot/edge-plating electrical
 semantics, KiCad silkscreen text side/mirroring, per-pad paste or mask

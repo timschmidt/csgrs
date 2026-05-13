@@ -7,7 +7,7 @@ use crate::cli::{Check, Cli, DEFAULT_CHECKS, OutputFormat};
 use crate::config::{self, EffectiveRules};
 use crate::report::{Report, Violation, report_summary, report_to_geojson};
 use crate::{LayerMetadata, PcbSketch};
-use crate::{checks, excellon, ipc356, kicad, svg_overlay, waiver};
+use crate::{checks, conversion, excellon, ipc356, kicad, svg_overlay, waiver};
 
 #[derive(Clone, Debug)]
 struct Layer {
@@ -46,16 +46,19 @@ pub fn run(cli: Cli) -> Result<()> {
     };
 
     if cli.files.is_empty()
+        && cli.gerber_dirs.is_empty()
+        && cli.conversion_inputs.is_empty()
         && cli.kicad_pcbs.is_empty()
         && cli.excellon_files.is_empty()
         && cli.ipc356_files.is_empty()
     {
         return Err(anyhow!(
-            "provide at least one Gerber file, --kicad-pcb, --excellon, or --ipc356 input"
+            "provide at least one Gerber file, --gerber-dir, --convert-input, --kicad-pcb, --excellon, or --ipc356 input"
         ));
     }
 
-    let layers = load_layers(&cli.files)?;
+    let conversion_outputs = run_conversions(&cli)?;
+    let layers = load_all_layers(&cli.files, &cli.gerber_dirs, &conversion_outputs)?;
     let mut boards = load_boards(&cli.kicad_pcbs)?;
     let excellon_drills = load_excellon_drills(&cli.excellon_files)?;
     let ipc356_points = load_ipc356_points(&cli.ipc356_files)?;
@@ -111,6 +114,8 @@ pub fn run(cli: Cli) -> Result<()> {
         files: cli
             .files
             .iter()
+            .chain(cli.gerber_dirs.iter())
+            .chain(cli.conversion_inputs.iter())
             .chain(cli.kicad_pcbs.iter())
             .chain(cli.excellon_files.iter())
             .chain(cli.ipc356_files.iter())
@@ -545,6 +550,96 @@ fn load_layers(files: &[PathBuf]) -> Result<Vec<Layer>> {
         .collect()
 }
 
+fn load_all_layers(
+    files: &[PathBuf],
+    gerber_dirs: &[PathBuf],
+    conversion_outputs: &[conversion::ConversionOutput],
+) -> Result<Vec<Layer>> {
+    let mut layer_paths = files.to_vec();
+    for directory in gerber_dirs {
+        layer_paths.extend(gerber_files_in_dir(directory)?);
+    }
+    for output in conversion_outputs {
+        layer_paths.extend(gerber_files_in_dir(&output.gerber_dir)?);
+    }
+
+    load_layers(&layer_paths)
+}
+
+fn run_conversions(cli: &Cli) -> Result<Vec<conversion::ConversionOutput>> {
+    cli.conversion_inputs
+        .iter()
+        .enumerate()
+        .map(|(index, input_dir)| {
+            let request = conversion::ConversionRequest {
+                backend: cli.converter,
+                input_dir: input_dir.clone(),
+                output_dir: conversion::default_conversion_output_dir(
+                    &cli.conversion_output_dir,
+                    index,
+                ),
+                source_eda: cli.source_eda,
+                zip: cli.conversion_zip,
+                zip_name: cli.conversion_zip_name.clone(),
+                top_color_image: cli.top_color_image.clone(),
+                bottom_color_image: cli.bottom_color_image.clone(),
+                transjlc_bin: cli.transjlc_bin.clone(),
+            };
+            conversion::convert(&request)
+        })
+        .collect()
+}
+
+fn gerber_files_in_dir(directory: &PathBuf) -> Result<Vec<PathBuf>> {
+    let mut files = Vec::new();
+    for entry in std::fs::read_dir(directory)
+        .with_context(|| format!("failed to read Gerber directory {}", directory.display()))?
+    {
+        let entry =
+            entry.with_context(|| format!("failed to read entry in {}", directory.display()))?;
+        let path = entry.path();
+        if path.is_file() && is_gerber_path(&path) {
+            files.push(path);
+        }
+    }
+    files.sort();
+    Ok(files)
+}
+
+fn is_gerber_path(path: &std::path::Path) -> bool {
+    let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
+        return false;
+    };
+    let lower = name.to_ascii_lowercase();
+    matches!(
+        path.extension()
+            .and_then(|extension| extension.to_str())
+            .map(str::to_ascii_lowercase)
+            .as_deref(),
+        Some(
+            "gbr"
+                | "ger"
+                | "gtl"
+                | "gbl"
+                | "gts"
+                | "gbs"
+                | "gto"
+                | "gbo"
+                | "gko"
+                | "gm1"
+                | "gm2"
+                | "gml"
+                | "gpb"
+                | "gpt"
+        )
+    ) || lower.starts_with("gerber_")
+        || lower.contains("copper")
+        || lower.contains("silkscreen")
+        || lower.contains("soldermask")
+        || lower.contains("solderpaste")
+        || lower.contains("outline")
+}
+
 fn load_boards(files: &[PathBuf]) -> Result<Vec<kicad::BoardModel>> {
     files
         .iter()
@@ -759,9 +854,9 @@ mod tests {
     use crate::cli::Cli;
 
     use super::{
-        explicit_layer_pairs, layer_pairs, load_boards, load_excellon_drills, load_ipc356_points,
-        load_layers, run, validate_board_outline_role, validate_layer_index,
-        validate_layer_indexes, validate_silk_layer_roles,
+        explicit_layer_pairs, gerber_files_in_dir, is_gerber_path, layer_pairs, load_boards,
+        load_excellon_drills, load_ipc356_points, load_layers, run, validate_board_outline_role,
+        validate_layer_index, validate_layer_indexes, validate_silk_layer_roles,
     };
 
     #[test]
@@ -813,6 +908,30 @@ mod tests {
         let error = run(cli).unwrap_err().to_string();
 
         assert!(error.contains("provide at least one"));
+    }
+
+    #[test]
+    fn gerber_directory_loader_discovers_supported_extensions_in_stable_order() {
+        let dir = std::env::temp_dir().join(format!("hyperdrc-gerber-dir-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("z-bottom.gbl"), "%").unwrap();
+        std::fs::write(dir.join("a-top.gtl"), "%").unwrap();
+        std::fs::write(dir.join("notes.txt"), "not gerber").unwrap();
+
+        let files = gerber_files_in_dir(&dir).unwrap();
+
+        assert_eq!(files, vec![dir.join("a-top.gtl"), dir.join("z-bottom.gbl")]);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn gerber_path_detection_covers_jlc_style_names() {
+        assert!(is_gerber_path(&PathBuf::from("board.gbr")));
+        assert!(is_gerber_path(&PathBuf::from("Gerber_TopCopperLayer.GTL")));
+        assert!(is_gerber_path(&PathBuf::from("Fabrication_Outline.GKO")));
+        assert!(!is_gerber_path(&PathBuf::from("board.drl")));
+        assert!(!is_gerber_path(&PathBuf::from("readme.txt")));
     }
 
     #[test]

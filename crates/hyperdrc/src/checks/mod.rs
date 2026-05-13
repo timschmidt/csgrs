@@ -5,6 +5,7 @@
 //! drills, vias, and panel features.
 
 pub mod board;
+mod distance;
 pub mod layer;
 
 pub use board::*;
