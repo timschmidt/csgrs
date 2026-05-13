@@ -24,7 +24,8 @@ electrical intent remains conservative: KiCad oval and rectangular drill declara
 circular keepouts using their larger dimension until exact routed-slot geometry
 is modeled, config-driven impedance checks verify declared stackup/reference
 intent rather than solving impedance, and IPC-D-356 parsing focuses on common
-test records rather than the full fixed-column dialect.
+test records and optional access-side/feature/soldermask hints rather than the
+full fixed-column dialect.
 
 ## Quick Start
 
@@ -141,7 +142,12 @@ that profile sets default manifest expectations, and `required_artifacts` plus
 `required_layers` can override individual deliverables. Generated-output
 freshness is controlled with `generated_date_stale_days`. Assembly thresholds
 can be selected with `assembly_profile` (`prototype`, `production-smt`,
-`double-sided-smt`, or `test-fixture`) and tuned field-by-field in `assembly`.
+`double-sided-smt`, `test-fixture`, `hand-assembly`, `selective-solder`,
+`wave-solder`, `press-fit`, or `conformal-coating`) and tuned field-by-field in
+`assembly`.
+Stackup readiness accepts process metadata plus built-in or custom
+`fabrication_capability` thresholds for finished thickness, copper layer count,
+copper weight, dielectric thickness, laminate Dk/Df, and Tg.
 
 ## Readiness Coverage
 
@@ -156,16 +162,21 @@ The default suite covers the main `hyperdrc` readiness surfaces:
 - KiCad board context: net intent, high-speed and high-current heuristics,
   reference-plane and return-path coverage, gold fingers, ESD proximity,
   panelization clearance, component edge/hole clearance, dense-pad escape, and
-  config-driven stackup/net-class constraints for width, clearance, current,
-  voltage, reference-plane, layer-count, via-count, differential-pair spacing,
-  and impedance-control intent.
+  config-driven stackup/net-class constraints for material, surface finish,
+  laminate Dk/Df/Tg, soldermask process/color, IPC/fabricator class,
+  fabrication capability thresholds, width, clearance, current, voltage,
+  reference-plane, layer-count, via-count, approximate length/skew,
+  differential-pair spacing, and impedance-control target/tolerance intent.
 - Assembly and test readiness: profile-driven component edge/hole clearance,
   connector rework spacing, fiducials, tooling holes, mouse bites, testpoint
-  coverage/accessibility, pad-pair asymmetry, dense-pad escape, and IPC-D-356
-  coverage.
+  coverage/accessibility including IPC-D-356 access-side, soldermask, and
+  KiCad pad-side parity hints, pad-pair asymmetry, dense-pad escape,
+  selective/wave solder keepouts, press-fit keepouts, conformal-coating
+  keepouts, and IPC-D-356 coverage.
 - Production package readiness: Gerber package completeness, sidecar discovery,
   BOM/centroid/netlist structure, README release notes, fabrication and assembly
   drawings, rout drawings, order-parameter consistency, generated-date freshness,
+  side-role filename conflict detection, paste/mask companion checks,
   configurable required artifacts/layers, and surface-finish handoff notes.
 
 The check implementations and exact ownership are documented in
@@ -249,8 +260,9 @@ details for that part of the tree:
 Not yet modeled: exact routed slot shapes, plated-slot/edge-plating electrical
 semantics, KiCad silkscreen text side/mirroring, per-pad paste or mask
 attributes, fabricator-specific rule-deck libraries, true impedance solving,
-differential-pair length/skew matching, semantic XLS/XLSX spreadsheet parsing, richer parser
-diagnostics for all input formats, and ODB++/IPC-2581 input.
+routed differential-pair length/skew matching, semantic XLS/XLSX spreadsheet
+parsing, richer parser diagnostics for all input formats, and ODB++/IPC-2581
+input.
 
 See [docs/design-readiness-plan.md](docs/design-readiness-plan.md) for the
 long-form design-readiness roadmap.
@@ -270,6 +282,7 @@ style so they can be copied into engineering review notes.
 - IPC. *Generic Standard on Printed Board Design: IPC-2221B*. IPC, https://www.ipc.org/TOC/IPC-2221B.pdf. Accessed 13 May 2026.
 - IPC. *Bare Substrate Electrical Test Data Format: IPC-D-356B*. IPC, 1 Oct. 2002, https://shop.electronics.org/ipc-d-356/ipc-d-356-standard-only.
 - IPC. *Generic Requirements for Surface Mount Design and Land Pattern Standard: IPC-7351B*. IPC, 2010, https://shop.ipc.org/ipc-7351/ipc-7351-standard-only.
+- IPC. *Requirements for Soldered Electrical and Electronic Assemblies: IPC J-STD-001H*. IPC, Sept. 2020, https://shop.ipc.org/ipc-j-std-001/ipc-j-std-001-standard-only.
 - IPC. *Requirements for Electrical Testing of Unpopulated Printed Boards: IPC-9252B*. IPC, 2016, https://shop.ipc.org/ipc-9252/ipc-9252-standard-only.
 - IPC. *Performance Specification for Electroless Nickel/Immersion Gold (ENIG) Plating for Printed Boards: IPC-4552B*. IPC, Apr. 2021, https://www.ipc.org/TOC/IPC-4552B-toc.pdf.
 - IPC. *Qualification and Performance Specification for Rigid Printed Boards: IPC-6012D*. IPC, https://www.ipc.org/TOC/IPC-6012D.pdf. Accessed 13 May 2026.

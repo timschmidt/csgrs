@@ -6,10 +6,12 @@ This folder contains small user-facing examples for configuring `hyperdrc`.
 
 - [`hyperdrc-config.json`](hyperdrc-config.json) demonstrates rule thresholds,
   KiCad copper-layer selection, generated-output freshness, package-profile
-  selection, assembly-profile thresholds, required production artifacts/layers,
-  stackup metadata, and net-class constraints for width, clearance, current,
-  voltage, reference-plane, differential-pair, and impedance-control intent that
-  can be loaded with `--config`.
+  selection, assembly-profile thresholds for SMT, fixture, hand, soldering,
+  press-fit, and coating processes, required production artifacts/layers,
+  stackup process/material metadata, fabrication capability thresholds, and
+  net-class constraints for width, clearance, current, voltage, reference-plane,
+  approximate length/skew, differential-pair, and impedance-control
+  target/tolerance intent that can be loaded with `--config`.
 
 ## Usage
 

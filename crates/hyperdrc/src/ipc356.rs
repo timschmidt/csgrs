@@ -17,6 +17,40 @@ pub struct Ipc356Point {
     pub pin: Option<String>,
     pub location: [f64; 2],
     pub diameter: Option<f64>,
+    pub access_side: Option<Ipc356AccessSide>,
+    pub feature_type: Option<Ipc356FeatureType>,
+    pub soldermask: Option<Ipc356Soldermask>,
+}
+
+/// Probe-side hints from common IPC-D-356 sidecar exports.
+///
+/// IPC-D-356B standardizes electrical-test records, but many EDA/export flows
+/// add pragmatic side tokens beside the record. hyperdrc keeps those tokens as
+/// readiness evidence instead of treating them as authoritative geometry.
+#[derive(Copy, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+pub enum Ipc356AccessSide {
+    Top,
+    Bottom,
+    Both,
+}
+
+/// Coarse test-feature class recovered from common sidecar annotations.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum Ipc356FeatureType {
+    ThroughHole,
+    Smd,
+    Via,
+    Tooling,
+    Connector,
+    Other,
+}
+
+/// Soldermask access state recovered from common testpoint annotations.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum Ipc356Soldermask {
+    Open,
+    Covered,
+    Unknown,
 }
 
 #[derive(Clone, Debug)]
@@ -123,6 +157,10 @@ fn parse_fixed_record(line: &str) -> Option<Ipc356Point> {
         .find("D")
         .and_then(|index| take_number(&line[index + 1..]))
         .and_then(parse_ipc_number);
+    let metadata = parse_metadata(
+        line.split(|ch: char| ch.is_whitespace())
+            .filter(|part| !part.is_empty()),
+    );
 
     Some(Ipc356Point {
         net,
@@ -130,6 +168,9 @@ fn parse_fixed_record(line: &str) -> Option<Ipc356Point> {
         pin,
         location: [x, y],
         diameter,
+        access_side: metadata.access_side,
+        feature_type: metadata.feature_type,
+        soldermask: metadata.soldermask,
     })
 }
 
@@ -150,6 +191,7 @@ fn parse_loose_record(line: &str) -> Option<Ipc356Point> {
                 .and_then(|index| take_number(&coordinate_text[index + 1..]))
                 .and_then(parse_ipc_number)
         });
+    let metadata = parse_metadata(parts.iter().copied());
 
     Some(Ipc356Point {
         net,
@@ -157,7 +199,89 @@ fn parse_loose_record(line: &str) -> Option<Ipc356Point> {
         pin: parts.get(3).map(|value| (*value).to_string()),
         location: [x, y],
         diameter,
+        access_side: metadata.access_side,
+        feature_type: metadata.feature_type,
+        soldermask: metadata.soldermask,
     })
+}
+
+#[derive(Copy, Clone, Debug, Default)]
+struct Ipc356Metadata {
+    access_side: Option<Ipc356AccessSide>,
+    feature_type: Option<Ipc356FeatureType>,
+    soldermask: Option<Ipc356Soldermask>,
+}
+
+fn parse_metadata<'a>(parts: impl IntoIterator<Item = &'a str>) -> Ipc356Metadata {
+    let mut metadata = Ipc356Metadata::default();
+    for part in parts {
+        let normalized = part
+            .trim_matches(|ch: char| ch == ',' || ch == ';')
+            .to_ascii_uppercase();
+        let value = normalized
+            .strip_prefix("ACCESS=")
+            .or_else(|| normalized.strip_prefix("SIDE="))
+            .or_else(|| normalized.strip_prefix("A="));
+        if let Some(value) = value {
+            metadata.access_side = parse_access_side(value).or(metadata.access_side);
+            continue;
+        }
+
+        let value = normalized
+            .strip_prefix("FEATURE=")
+            .or_else(|| normalized.strip_prefix("TYPE="))
+            .or_else(|| normalized.strip_prefix("F="));
+        if let Some(value) = value {
+            metadata.feature_type = parse_feature_type(value).or(metadata.feature_type);
+            continue;
+        }
+
+        let value = normalized
+            .strip_prefix("MASK=")
+            .or_else(|| normalized.strip_prefix("SOLDERMASK="))
+            .or_else(|| normalized.strip_prefix("SM="));
+        if let Some(value) = value {
+            metadata.soldermask = parse_soldermask(value).or(metadata.soldermask);
+            continue;
+        }
+
+        metadata.access_side = parse_access_side(&normalized).or(metadata.access_side);
+        metadata.feature_type = parse_feature_type(&normalized).or(metadata.feature_type);
+        metadata.soldermask = parse_soldermask(&normalized).or(metadata.soldermask);
+    }
+    metadata
+}
+
+fn parse_access_side(value: &str) -> Option<Ipc356AccessSide> {
+    match value {
+        "T" | "TOP" | "FRONT" | "COMPONENT" | "PRIMARY" => Some(Ipc356AccessSide::Top),
+        "B" | "BOT" | "BOTTOM" | "BACK" | "SOLDER" | "SECONDARY" => Some(Ipc356AccessSide::Bottom),
+        "BOTH" | "EITHER" | "ANY" => Some(Ipc356AccessSide::Both),
+        _ => None,
+    }
+}
+
+fn parse_feature_type(value: &str) -> Option<Ipc356FeatureType> {
+    match value {
+        "TH" | "THT" | "PTH" | "THROUGH" | "THROUGHHOLE" | "THROUGH-HOLE" => {
+            Some(Ipc356FeatureType::ThroughHole)
+        }
+        "SMD" | "SMT" | "PAD" | "SURFACE" => Some(Ipc356FeatureType::Smd),
+        "VIA" | "V" => Some(Ipc356FeatureType::Via),
+        "TOOL" | "TOOLING" | "FID" | "FIDUCIAL" => Some(Ipc356FeatureType::Tooling),
+        "CONN" | "CONNECTOR" | "EDGE" => Some(Ipc356FeatureType::Connector),
+        "OTHER" => Some(Ipc356FeatureType::Other),
+        _ => None,
+    }
+}
+
+fn parse_soldermask(value: &str) -> Option<Ipc356Soldermask> {
+    match value {
+        "OPEN" | "UNMASKED" | "EXPOSED" | "CLEAR" | "WINDOW" => Some(Ipc356Soldermask::Open),
+        "COVERED" | "MASKED" | "TENTED" | "CLOSED" => Some(Ipc356Soldermask::Covered),
+        "UNKNOWN" | "NA" | "N/A" => Some(Ipc356Soldermask::Unknown),
+        _ => None,
+    }
 }
 
 fn parse_xy_markers(value: &str) -> Option<(f64, f64)> {
@@ -226,7 +350,10 @@ fn parse_ipc_number(value: &str) -> Option<f64> {
 mod tests {
     use proptest::prelude::*;
 
-    use super::{Ipc356IssueKind, parse_ipc356, parse_ipc356_report};
+    use super::{
+        Ipc356AccessSide, Ipc356FeatureType, Ipc356IssueKind, Ipc356Soldermask, parse_ipc356,
+        parse_ipc356_report,
+    };
 
     #[test]
     fn parses_loose_ipc356_test_record() {
@@ -236,6 +363,18 @@ mod tests {
         assert_eq!(points[0].net, "GND");
         assert_eq!(points[0].location, [1.0, 2.0]);
         assert_eq!(points[0].diameter, Some(0.06));
+    }
+
+    #[test]
+    fn parses_optional_access_feature_and_soldermask_metadata() {
+        let points = parse_ipc356(
+            "327 /USB_D+ J1 2 X010000Y020000D000600 ACCESS=TOP FEATURE=SMD MASK=OPEN\n",
+        );
+
+        assert_eq!(points.len(), 1);
+        assert_eq!(points[0].access_side, Some(Ipc356AccessSide::Top));
+        assert_eq!(points[0].feature_type, Some(Ipc356FeatureType::Smd));
+        assert_eq!(points[0].soldermask, Some(Ipc356Soldermask::Open));
     }
 
     #[test]

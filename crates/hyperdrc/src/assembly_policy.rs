@@ -13,6 +13,11 @@ pub enum AssemblyProfile {
     ProductionSmt,
     DoubleSidedSmt,
     TestFixture,
+    HandAssembly,
+    SelectiveSolder,
+    WaveSolder,
+    PressFit,
+    ConformalCoating,
 }
 
 impl Default for AssemblyProfile {
@@ -46,6 +51,10 @@ pub struct AssemblyPolicyConfig {
     pub local_fiducial_search_radius: Option<f64>,
     pub dense_pad_pitch: Option<f64>,
     pub dense_pad_via_search_radius: Option<f64>,
+    pub selective_solder_keepout: Option<f64>,
+    pub wave_solder_keepout: Option<f64>,
+    pub press_fit_keepout: Option<f64>,
+    pub conformal_coating_keepout: Option<f64>,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -80,6 +89,10 @@ pub struct AssemblyRules {
     pub local_fiducial_search_radius: f64,
     pub dense_pad_pitch: f64,
     pub dense_pad_via_search_radius: f64,
+    pub selective_solder_keepout: f64,
+    pub wave_solder_keepout: f64,
+    pub press_fit_keepout: f64,
+    pub conformal_coating_keepout: f64,
 }
 
 impl AssemblyRules {
@@ -153,15 +166,29 @@ impl AssemblyRules {
             dense_pad_via_search_radius: config
                 .dense_pad_via_search_radius
                 .unwrap_or(defaults.dense_pad_via_search_radius),
+            selective_solder_keepout: config
+                .selective_solder_keepout
+                .unwrap_or(defaults.selective_solder_keepout),
+            wave_solder_keepout: config
+                .wave_solder_keepout
+                .unwrap_or(defaults.wave_solder_keepout),
+            press_fit_keepout: config
+                .press_fit_keepout
+                .unwrap_or(defaults.press_fit_keepout),
+            conformal_coating_keepout: config
+                .conformal_coating_keepout
+                .unwrap_or(defaults.conformal_coating_keepout),
         }
     }
 
     fn for_profile(profile: AssemblyProfile, base: AssemblyBaseRules) -> Self {
         // Defaults preserve the historical hyperdrc multipliers while grouping
         // them by assembly process. IPC-7351B frames land-pattern geometry as
-        // assembly-process dependent, and IPC-9252B/fixture practice similarly
-        // makes probe size and spacing process constraints rather than universal
-        // constants.
+        // assembly-process dependent, IPC-9252B/fixture practice makes probe
+        // size and spacing process constraints, and IPC J-STD-001H treats
+        // soldering, press-fit, coating, cleanliness, and assembly workmanship
+        // as process-controlled acceptance criteria rather than universal
+        // geometry constants.
         let production = Self {
             profile,
             component_edge_clearance: base.clearance * 2.0,
@@ -186,6 +213,10 @@ impl AssemblyRules {
             local_fiducial_search_radius: base.net_clearance * 25.0,
             dense_pad_pitch: 0.8,
             dense_pad_via_search_radius: base.net_clearance * 10.0,
+            selective_solder_keepout: base.clearance * 3.0,
+            wave_solder_keepout: base.clearance * 4.0,
+            press_fit_keepout: base.clearance * 5.0,
+            conformal_coating_keepout: base.clearance * 3.0,
         };
 
         match profile {
@@ -213,6 +244,60 @@ impl AssemblyRules {
                 testpoint_edge_clearance: base.clearance * 3.0,
                 tooling_min_diameter: base.min_width * 6.0,
                 tooling_edge_clearance: base.clearance * 3.0,
+                ..production
+            },
+            AssemblyProfile::HandAssembly => Self {
+                component_edge_clearance: base.clearance * 3.0,
+                component_hole_clearance: base.clearance * 3.0,
+                connector_rework_clearance: base.clearance * 4.0,
+                connector_min_pad_dimension: base.min_width * 4.0,
+                pad_pair_max_gap: base.min_width * 10.0,
+                pad_pair_max_area_ratio: 2.0,
+                dense_pad_pitch: 1.0,
+                local_fiducial_pitch: 1.0,
+                ..production
+            },
+            AssemblyProfile::SelectiveSolder => Self {
+                component_edge_clearance: base.clearance * 3.0,
+                component_hole_clearance: base.clearance * 4.0,
+                connector_rework_clearance: base.clearance * 3.0,
+                tooling_edge_clearance: base.clearance * 3.0,
+                mouse_bite_min_spacing: base.min_width * 3.0,
+                mouse_bite_max_spacing: base.min_width * 10.0,
+                selective_solder_keepout: base.clearance * 4.0,
+                ..production
+            },
+            AssemblyProfile::WaveSolder => Self {
+                component_edge_clearance: base.clearance * 4.0,
+                component_hole_clearance: base.clearance * 5.0,
+                connector_rework_clearance: base.clearance * 3.0,
+                pad_pair_max_gap: base.min_width * 10.0,
+                pad_pair_max_area_ratio: 1.25,
+                tooling_edge_clearance: base.clearance * 4.0,
+                mouse_bite_min_spacing: base.min_width * 4.0,
+                mouse_bite_max_spacing: base.min_width * 12.0,
+                wave_solder_keepout: base.clearance * 5.0,
+                ..production
+            },
+            AssemblyProfile::PressFit => Self {
+                component_edge_clearance: base.clearance * 3.0,
+                component_hole_clearance: base.clearance * 6.0,
+                connector_rework_clearance: base.clearance * 5.0,
+                connector_min_pad_dimension: base.min_width * 5.0,
+                tooling_min_diameter: base.min_width * 6.0,
+                tooling_edge_clearance: base.clearance * 4.0,
+                press_fit_keepout: base.clearance * 6.0,
+                ..production
+            },
+            AssemblyProfile::ConformalCoating => Self {
+                component_edge_clearance: base.clearance * 3.0,
+                component_hole_clearance: base.clearance * 3.0,
+                connector_rework_clearance: base.clearance * 4.0,
+                connector_min_pad_dimension: base.min_width * 4.0,
+                testpoint_edge_clearance: base.clearance * 4.0,
+                fiducial_edge_clearance: base.clearance * 3.0,
+                tooling_edge_clearance: base.clearance * 3.0,
+                conformal_coating_keepout: base.clearance * 5.0,
                 ..production
             },
         }
@@ -250,6 +335,51 @@ mod tests {
         assert_eq!(rules.testpoint_min_diameter, 0.42);
         assert_eq!(rules.dense_pad_pitch, 0.7);
         assert_eq!(rules.testpoint_edge_clearance, 0.75);
+    }
+
+    #[test]
+    fn hand_assembly_profile_expands_rework_access() {
+        let rules =
+            AssemblyRules::resolve(AssemblyProfile::HandAssembly, &Default::default(), base());
+
+        assert_eq!(rules.component_edge_clearance, 0.75);
+        assert_eq!(rules.connector_rework_clearance, 1.0);
+        assert_eq!(rules.dense_pad_pitch, 1.0);
+    }
+
+    #[test]
+    fn solder_and_press_fit_profiles_tighten_process_keepouts() {
+        let selective = AssemblyRules::resolve(
+            AssemblyProfile::SelectiveSolder,
+            &Default::default(),
+            base(),
+        );
+        let wave = AssemblyRules::resolve(AssemblyProfile::WaveSolder, &Default::default(), base());
+        let press_fit =
+            AssemblyRules::resolve(AssemblyProfile::PressFit, &Default::default(), base());
+
+        assert_eq!(selective.component_hole_clearance, 1.0);
+        assert_eq!(selective.selective_solder_keepout, 1.0);
+        assert_eq!(wave.component_edge_clearance, 1.0);
+        assert_eq!(wave.pad_pair_max_area_ratio, 1.25);
+        assert_eq!(wave.wave_solder_keepout, 1.25);
+        assert_eq!(press_fit.component_hole_clearance, 1.5);
+        assert_eq!(press_fit.connector_rework_clearance, 1.25);
+        assert_eq!(press_fit.press_fit_keepout, 1.5);
+    }
+
+    #[test]
+    fn conformal_coating_profile_expands_masking_and_probe_edges() {
+        let rules = AssemblyRules::resolve(
+            AssemblyProfile::ConformalCoating,
+            &Default::default(),
+            base(),
+        );
+
+        assert_eq!(rules.connector_rework_clearance, 1.0);
+        assert_eq!(rules.testpoint_edge_clearance, 1.0);
+        assert_eq!(rules.fiducial_edge_clearance, 0.75);
+        assert_eq!(rules.conformal_coating_keepout, 1.25);
     }
 
     fn base() -> AssemblyBaseRules {

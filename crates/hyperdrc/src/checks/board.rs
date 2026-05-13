@@ -2722,7 +2722,7 @@ mod tests {
         mouse_bite_readiness, plating_intent, routed_slot_readiness,
         testpoint_accessibility_readiness, testpoint_coverage_readiness, tooling_hole_readiness,
     };
-    use crate::ipc356::Ipc356Point;
+    use crate::ipc356::{Ipc356AccessSide, Ipc356FeatureType, Ipc356Point, Ipc356Soldermask};
 
     use super::{
         apply_ipc356_nets, board_edge_exposure, chassis_stitching_readiness,
@@ -3092,6 +3092,9 @@ mod tests {
             pin: None,
             location: [1.01, 0.0],
             diameter: Some(0.50),
+            access_side: None,
+            feature_type: None,
+            soldermask: None,
         }];
 
         let violations = drill_table_consistency(&[], &excellon_drills, &points, 0.05);
@@ -5259,6 +5262,9 @@ mod tests {
             pin: Some("1".to_string()),
             location: [10.0, 0.0],
             diameter: None,
+            access_side: None,
+            feature_type: None,
+            soldermask: None,
         }];
 
         let violations = testpoint_coverage_readiness(&board, &ipc_points, &[]);
@@ -5280,6 +5286,9 @@ mod tests {
             pin: Some("1".to_string()),
             location: [0.0, 0.0],
             diameter: None,
+            access_side: None,
+            feature_type: None,
+            soldermask: None,
         }];
 
         assert!(testpoint_coverage_readiness(&board, &ipc_points, &[]).is_empty());
@@ -5295,6 +5304,9 @@ mod tests {
                 pin: Some("1".to_string()),
                 location: [0.8, 10.0],
                 diameter: Some(0.20),
+                access_side: None,
+                feature_type: None,
+                soldermask: None,
             },
             Ipc356Point {
                 net: "VBUS".to_string(),
@@ -5302,6 +5314,9 @@ mod tests {
                 pin: Some("1".to_string()),
                 location: [1.1, 10.0],
                 diameter: Some(0.30),
+                access_side: None,
+                feature_type: None,
+                soldermask: None,
             },
             Ipc356Point {
                 net: "RESET".to_string(),
@@ -5309,6 +5324,9 @@ mod tests {
                 pin: Some("1".to_string()),
                 location: [10.0, 10.0],
                 diameter: None,
+                access_side: None,
+                feature_type: None,
+                soldermask: None,
             },
         ];
 
@@ -5338,6 +5356,16 @@ mod tests {
                 .iter()
                 .any(|message| message.contains("no parsed probe diameter"))
         );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("no soldermask access flag"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("no parsed access side"))
+        );
     }
 
     #[test]
@@ -5350,6 +5378,9 @@ mod tests {
                 pin: Some("1".to_string()),
                 location: [5.0, 5.0],
                 diameter: Some(0.35),
+                access_side: Some(Ipc356AccessSide::Top),
+                feature_type: Some(Ipc356FeatureType::Smd),
+                soldermask: Some(Ipc356Soldermask::Open),
             },
             Ipc356Point {
                 net: "VBUS".to_string(),
@@ -5357,10 +5388,145 @@ mod tests {
                 pin: Some("1".to_string()),
                 location: [8.0, 5.0],
                 diameter: Some(0.35),
+                access_side: Some(Ipc356AccessSide::Top),
+                feature_type: Some(Ipc356FeatureType::Smd),
+                soldermask: Some(Ipc356Soldermask::Open),
             },
         ];
 
         assert!(testpoint_accessibility_readiness(&board, &ipc_points, 0.25, 0.20, 1.0).is_empty());
+    }
+
+    #[test]
+    fn testpoint_accessibility_readiness_reports_mask_and_side_metadata_risks() {
+        let board = board_with_outline(square(0.0, 0.0, 20.0, 20.0));
+        let ipc_points = vec![
+            Ipc356Point {
+                net: "TP_COVERED".to_string(),
+                reference: Some("TP1".to_string()),
+                pin: Some("1".to_string()),
+                location: [5.0, 5.0],
+                diameter: Some(0.35),
+                access_side: Some(Ipc356AccessSide::Top),
+                feature_type: Some(Ipc356FeatureType::Smd),
+                soldermask: Some(Ipc356Soldermask::Covered),
+            },
+            Ipc356Point {
+                net: "TP_UNKNOWN".to_string(),
+                reference: Some("TP2".to_string()),
+                pin: Some("1".to_string()),
+                location: [8.0, 5.0],
+                diameter: Some(0.35),
+                access_side: Some(Ipc356AccessSide::Top),
+                feature_type: Some(Ipc356FeatureType::Smd),
+                soldermask: Some(Ipc356Soldermask::Unknown),
+            },
+            Ipc356Point {
+                net: "TP_BOTH".to_string(),
+                reference: Some("TP3".to_string()),
+                pin: Some("1".to_string()),
+                location: [11.0, 5.0],
+                diameter: Some(0.35),
+                access_side: Some(Ipc356AccessSide::Both),
+                feature_type: Some(Ipc356FeatureType::Smd),
+                soldermask: Some(Ipc356Soldermask::Open),
+            },
+        ];
+
+        let violations = testpoint_accessibility_readiness(&board, &ipc_points, 0.25, 0.20, 1.0);
+        let messages = violations
+            .iter()
+            .filter_map(|violation| violation.message.as_deref())
+            .collect::<Vec<_>>();
+
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("marked soldermask-covered"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("unknown soldermask access"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("accessible from both sides"))
+        );
+    }
+
+    #[test]
+    fn testpoint_accessibility_readiness_reports_ipc_side_disagreeing_with_kicad_pad_side() {
+        let board = BoardModel {
+            source: "test".to_string(),
+            copper: vec![copper_disc_on_layer(
+                "USB_D+",
+                CopperKind::Pad,
+                "B.Cu",
+                [5.0, 5.0],
+                0.20,
+            )],
+            drills: Vec::new(),
+            board_outline: Some(sketch(vec![square(0.0, 0.0, 20.0, 20.0)])),
+            panel_features: None,
+        };
+        let ipc_points = vec![Ipc356Point {
+            net: "USB_D+".to_string(),
+            reference: Some("TP1".to_string()),
+            pin: Some("1".to_string()),
+            location: [5.0, 5.0],
+            diameter: Some(0.35),
+            access_side: Some(Ipc356AccessSide::Top),
+            feature_type: Some(Ipc356FeatureType::Smd),
+            soldermask: Some(Ipc356Soldermask::Open),
+        }];
+
+        let violations = testpoint_accessibility_readiness(&board, &ipc_points, 0.25, 0.20, 1.0);
+
+        assert!(violations.iter().any(|violation| {
+            violation.message.as_deref().is_some_and(|message| {
+                message.contains("access side is top")
+                    && message.contains("KiCad pad/via copper is only on bottom")
+            })
+        }));
+    }
+
+    #[test]
+    fn testpoint_accessibility_readiness_allows_ipc_side_matching_kicad_pad_side() {
+        let board = BoardModel {
+            source: "test".to_string(),
+            copper: vec![copper_disc_on_layer(
+                "USB_D+",
+                CopperKind::Pad,
+                "B.Cu",
+                [5.0, 5.0],
+                0.20,
+            )],
+            drills: Vec::new(),
+            board_outline: Some(sketch(vec![square(0.0, 0.0, 20.0, 20.0)])),
+            panel_features: None,
+        };
+        let ipc_points = vec![Ipc356Point {
+            net: "USB_D+".to_string(),
+            reference: Some("TP1".to_string()),
+            pin: Some("1".to_string()),
+            location: [5.0, 5.0],
+            diameter: Some(0.35),
+            access_side: Some(Ipc356AccessSide::Bottom),
+            feature_type: Some(Ipc356FeatureType::Smd),
+            soldermask: Some(Ipc356Soldermask::Open),
+        }];
+        let messages = testpoint_accessibility_readiness(&board, &ipc_points, 0.25, 0.20, 1.0)
+            .into_iter()
+            .filter_map(|violation| violation.message)
+            .collect::<Vec<_>>();
+
+        assert!(
+            !messages
+                .iter()
+                .any(|message| message.contains("nearby same-net KiCad pad/via copper"))
+        );
     }
 
     #[test]
@@ -6081,6 +6247,9 @@ mod tests {
             pin: Some("1".to_string()),
             location: [0.001, 0.0],
             diameter: Some(0.50),
+            access_side: None,
+            feature_type: None,
+            soldermask: None,
         }];
 
         let violations = drill_table_consistency(&board_drills, &excellon_drills, &points, 0.04);
@@ -6691,6 +6860,9 @@ mod tests {
             pin: Some("1".to_string()),
             location: [1.02, 2.0],
             diameter: None,
+            access_side: None,
+            feature_type: None,
+            soldermask: None,
         }];
 
         apply_ipc356_nets(&mut board, &points, 0.1);
@@ -6719,6 +6891,9 @@ mod tests {
             pin: None,
             location: [1.01, 2.0],
             diameter: Some(0.45),
+            access_side: None,
+            feature_type: None,
+            soldermask: None,
         }];
 
         apply_ipc356_nets(&mut board, &points, 0.1);
@@ -6742,6 +6917,9 @@ mod tests {
             pin: Some("2".to_string()),
             location: [10.0, 20.0],
             diameter: None,
+            access_side: None,
+            feature_type: None,
+            soldermask: None,
         }];
 
         let violations = ipc356_coverage(&board, &points, 0.1);
@@ -6770,6 +6948,9 @@ mod tests {
             pin: None,
             location: [1.01, 2.0],
             diameter: Some(0.50),
+            access_side: None,
+            feature_type: None,
+            soldermask: None,
         }];
 
         let violations = ipc356_drill_diameter(&board, &points, 0.05);
@@ -6798,6 +6979,9 @@ mod tests {
             pin: None,
             location: [1.01, 2.0],
             diameter: Some(0.31),
+            access_side: None,
+            feature_type: None,
+            soldermask: None,
         }];
 
         assert!(ipc356_drill_diameter(&board, &points, 0.05).is_empty());

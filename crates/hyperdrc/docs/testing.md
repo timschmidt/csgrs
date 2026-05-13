@@ -154,12 +154,17 @@ Constraint tests use typed config structures and synthetic KiCad copper:
 - Stackup tests compare configured copper-layer counts and layer lists against
   parsed KiCad copper layers, then check missing copper weights and missing
   dielectric/core/prepreg thickness entries when a finished thickness is
-  declared.
+  declared. They also check material family, surface finish, soldermask
+  process/color, target IPC class, fabricator profile, built-in/custom
+  fabrication capability thresholds, laminate Dk/Df/Tg policy ranges, and
+  HASL-style controlled-impedance finish warnings.
 - Net-class tests match exact nets and simple `*` wildcard patterns, then verify
   configured minimum trace width, current-carrying width, different-net
   clearance, voltage-class clearance, maximum layer count, minimum via count for
   layer-changing nets, maximum via count, explicit differential-pair side and
-  spacing rules, reference-plane intent, and impedance-control handoff metadata.
+  spacing rules, approximate parsed copper length/skew limits,
+  reference-plane intent, and impedance-control target/tolerance handoff
+  metadata.
 - Passing tests build compliant or unmatched nets to ensure explicit config
   constraints do not affect unrelated copper.
 
@@ -176,11 +181,18 @@ Assembly tests focus on manufacturing intent that is not just copper clearance:
 - Connector rework and return-path tests check dense connector neighborhoods and
   edge-rate nets for nearby ground return.
 - Testpoint tests compare likely critical nets against IPC-D-356 records and
-  report missing probe diameter/access metadata.
+  report missing probe diameter, tight spacing, board-edge, missing access-side,
+  missing or covered soldermask-access metadata, and IPC-D-356 access-side hints
+  that disagree with nearby same-net KiCad pad/via side.
 - Tooling, mouse-bite, fiducial, local-fiducial, and dense-pad tests verify
   assembly fixture and panelization readiness.
+- Process keepout tests place likely through-hole solder, press-fit, and
+  no-coat contact/test features near neighboring pads to verify selective/wave,
+  insertion-tool, and coating-mask warnings.
 - Assembly policy tests verify profile defaults preserve existing production-SMT
-  thresholds and that field-level overrides replace individual resolved values.
+  thresholds, process-specific profiles resolve distinct hand/solder/press-fit/
+  coating defaults, and field-level overrides replace individual resolved
+  values.
 
 ### Stencil And Paste
 
@@ -211,8 +223,9 @@ Manifest and artifact tests use synthetic filenames and short text sidecars:
 - Manifest tests classify Gerber names into copper, mask, paste, silkscreen,
   outline, drill, and companion roles. They verify missing required roles,
   duplicate core roles, odd copper counts, inner layers without outers, orphan
-  side outputs, mixed project/revision/date tags, stale backup/archive names,
-  and complete packages.
+  side outputs, single-copper packages with opposite-side outputs, paste exports
+  without same-side mask companions, side-token filename conflicts, mixed
+  project/revision/date tags, stale backup/archive names, and complete packages.
 - BOM tests parse CSV/TSV/semicolon/whitespace tables and check required
   columns, blank parts, grouped reference expansion, quantity/refdes agreement,
   DNP/DNI handling, duplicate refs, lifecycle risk vocabulary, approved
@@ -298,8 +311,9 @@ Parser tests verify manufacturing sidecars:
 - Excellon property tests generate metric hits and arbitrary text to verify
   finite drill geometry and panic-free parsing.
 - IPC-D-356 tests parse loose and fixed test records, ignore comments and
-  unknown record types, report malformed recognized records, and preserve finite
-  coordinates from generated records.
+  unknown record types, report malformed recognized records, preserve optional
+  access-side/feature/soldermask metadata, and preserve finite coordinates from
+  generated records.
 - IPC-D-356 property tests feed arbitrary text to ensure malformed netlists do
   not panic the parser.
 
@@ -320,7 +334,8 @@ These tests protect user-facing behavior around the check engine:
 - Config tests verify malformed JSON is rejected, unknown config fields are
   ignored, CLI overrides take precedence over config values and defaults, and
   package-profile defaults can be overridden by individual manifest policy
-  fields. They also parse assembly profiles and assembly threshold overrides.
+  fields. They also parse assembly profiles, assembly threshold overrides, and
+  extended process-profile defaults.
 - Conversion tests verify TransJLC command construction, pass-through arguments,
   color-image arguments, zip/output-directory options, missing converter errors,
   command failure context, and successful output directory handoff.

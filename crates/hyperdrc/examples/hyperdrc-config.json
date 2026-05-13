@@ -43,13 +43,36 @@
     "testpoint_min_spacing": 0.6,
     "testpoint_edge_clearance": 0.5,
     "dense_pad_pitch": 0.8,
-    "dense_pad_via_search_radius": 1.5
+    "dense_pad_via_search_radius": 1.5,
+    "selective_solder_keepout": 0.75,
+    "wave_solder_keepout": 1.0,
+    "press_fit_keepout": 1.25,
+    "conformal_coating_keepout": 0.75
   },
   "kicad_copper_layers": ["F.Cu", "B.Cu"],
   "stackup": {
     "copper_layer_count": 2,
     "finished_thickness": 1.6,
     "impedance_controlled": true,
+    "material_family": "FR-4",
+    "material_dielectric_constant": 4.2,
+    "material_loss_tangent": 0.018,
+    "material_tg_c": 150.0,
+    "surface_finish": "enig",
+    "soldermask_process": "LPI",
+    "soldermask_color": "green",
+    "target_ipc_class": "IPC Class 2",
+    "fabricator_profile": "prototype-fab",
+    "fabrication_capability": {
+      "max_copper_layers": 4,
+      "min_finished_thickness": 0.6,
+      "max_finished_thickness": 2.4,
+      "min_copper_weight_oz": 0.5,
+      "max_copper_weight_oz": 2.0,
+      "min_dielectric_thickness": 0.05,
+      "max_loss_tangent": 0.025,
+      "min_tg_c": 130.0
+    },
     "layers": [
       {
         "name": "F.Cu",
@@ -81,7 +104,10 @@
       "min_voltage_clearance": 0.5,
       "requires_reference_plane": true,
       "requires_impedance_control": false,
-      "max_via_count": 4
+      "target_impedance_ohms": 50.0,
+      "impedance_tolerance_ohms": 5.0,
+      "max_via_count": 4,
+      "max_length": 75.0
     },
     {
       "name": "usb positive",
@@ -92,10 +118,13 @@
       "min_via_count": 1,
       "requires_reference_plane": true,
       "requires_impedance_control": true,
+      "target_impedance_ohms": 90.0,
+      "impedance_tolerance_ohms": 10.0,
       "differential_pair": "usb",
       "differential_role": "positive",
       "min_pair_spacing": 0.12,
-      "max_pair_spacing": 0.22
+      "max_pair_spacing": 0.22,
+      "max_pair_skew": 0.15
     },
     {
       "name": "usb negative",
@@ -106,10 +135,13 @@
       "min_via_count": 1,
       "requires_reference_plane": true,
       "requires_impedance_control": true,
+      "target_impedance_ohms": 90.0,
+      "impedance_tolerance_ohms": 10.0,
       "differential_pair": "usb",
       "differential_role": "negative",
       "min_pair_spacing": 0.12,
-      "max_pair_spacing": 0.22
+      "max_pair_spacing": 0.22,
+      "max_pair_skew": 0.15
     }
   ]
 }

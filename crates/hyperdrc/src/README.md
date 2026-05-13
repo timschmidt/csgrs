@@ -29,11 +29,16 @@ application orchestration, while subfolders hold the larger semantic areas.
 - [`assembly_policy.rs`](assembly_policy.rs) defines assembly profiles and
   resolved thresholds for component clearance, connector rework, testpoint
   access, tooling holes, mouse bites, fiducials, and dense-pad escape checks.
+  Profiles cover prototype, production SMT, double-sided SMT, fixture,
+  hand-assembly, selective/wave solder, press-fit, and conformal-coating review
+  assumptions, including process-specific keepout thresholds.
 - [`constraint_policy.rs`](constraint_policy.rs) defines the stackup and
-  net-class rule-deck structures consumed by config-driven checks. Net classes
-  can now carry width, clearance, current-width, voltage-clearance,
-  reference-plane, via-count, layer-count, differential-pair, and
-  impedance-control intent.
+  net-class rule-deck structures consumed by config-driven checks. Stackup
+  config carries process metadata such as material, finish, soldermask,
+  laminate Dk/Df/Tg, IPC/fabricator class, fabrication capability thresholds,
+  and impedance handoff. Net classes can carry width, clearance, current-width,
+  voltage-clearance, reference-plane, via-count, layer-count, differential-pair,
+  approximate length/skew, and impedance-control target/tolerance intent.
 - [`package_policy.rs`](package_policy.rs) defines named package profiles
   (`full-production`, `fabrication-only`, `assembly-only`, and
   `electrical-test`) and resolves those profiles with `required_artifacts` and
@@ -63,6 +68,9 @@ application orchestration, while subfolders hold the larger semantic areas.
   handling, drawing role, and release-note/order-preflight checks. Binary
   spreadsheet-like text sidecars are loaded lossily for now so the check can
   report missing structure instead of aborting the run.
+- Manifest checks also flag side-role filename conflicts, single-copper packages
+  with opposite-side outputs, and paste exports without a matching same-side
+  solder mask layer.
 - [`conversion.rs`](conversion.rs) owns external converter integration. The
   current backend shells out to TransJLC and then feeds the converted Gerber
   directory back through the normal Gerber loading path. `--conversion-arg`
@@ -73,9 +81,10 @@ application orchestration, while subfolders hold the larger semantic areas.
   panel, and table checks.
 - [`ipc356.rs`](ipc356.rs) parses common IPC-D-356 electrical-test records into
   point reports. Parsed points can annotate nearby KiCad copper and drills,
-  support coverage checks, and cross-check drill diameters; malformed recognized
-  test records are surfaced as parser diagnostics instead of being silently
-  dropped.
+  support coverage checks, cross-check drill diameters, and carry optional
+  access-side, feature-type, and soldermask hints for fixture-access readiness;
+  malformed recognized test records are surfaced as parser diagnostics instead
+  of being silently dropped.
 - [`sexp.rs`](sexp.rs) is a small S-expression parser used by the KiCad loader.
 
 ## Reports And Artifacts

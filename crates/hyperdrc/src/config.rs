@@ -86,6 +86,7 @@ impl RuleConfig {
     }
 }
 
+#[derive(Default)]
 pub struct RuleOverrides {
     pub keepout: Option<f64>,
     pub clearance: Option<f64>,
@@ -403,6 +404,29 @@ mod tests {
     }
 
     #[test]
+    fn extended_assembly_profiles_parse_and_resolve_defaults() {
+        for (profile, expected_connector_clearance) in [
+            (AssemblyProfile::HandAssembly, 1.0),
+            (AssemblyProfile::SelectiveSolder, 0.75),
+            (AssemblyProfile::WaveSolder, 0.75),
+            (AssemblyProfile::PressFit, 1.25),
+            (AssemblyProfile::ConformalCoating, 1.0),
+        ] {
+            let config = RuleConfig {
+                assembly_profile: Some(profile),
+                ..RuleConfig::default()
+            };
+            let rules = effective_rules(&config, RuleOverrides::default());
+
+            assert_eq!(rules.assembly.profile, profile);
+            assert_eq!(
+                rules.assembly.connector_rework_clearance,
+                expected_connector_clearance
+            );
+        }
+    }
+
+    #[test]
     fn loads_stackup_and_net_class_sections() {
         let path = std::env::temp_dir().join(format!(
             "hyperdrc-constraints-config-{}.json",
@@ -415,6 +439,22 @@ mod tests {
                 "copper_layer_count": 2,
                 "finished_thickness": 1.6,
                 "impedance_controlled": true,
+                "material_family": "FR-4",
+                "material_dielectric_constant": 4.2,
+                "material_loss_tangent": 0.018,
+                "material_tg_c": 150.0,
+                "surface_finish": "enig",
+                "soldermask_process": "LPI",
+                "soldermask_color": "green",
+                "target_ipc_class": "IPC Class 2",
+                "fabricator_profile": "prototype-fab",
+                "fabrication_capability": {
+                  "max_copper_layers": 4,
+                  "min_finished_thickness": 0.6,
+                  "max_finished_thickness": 2.4,
+                  "max_loss_tangent": 0.025,
+                  "min_tg_c": 130.0
+                },
                 "layers": [
                   {"name":"F.Cu","kind":"copper","copper_weight_oz":1.0},
                   {"name":"dielectric","kind":"dielectric","dielectric_thickness":1.5},
@@ -426,7 +466,10 @@ mod tests {
                 "component_edge_clearance": 0.6,
                 "testpoint_min_diameter": 0.45,
                 "tooling_min_diameter": 1.2,
-                "dense_pad_pitch": 0.65
+                "dense_pad_pitch": 0.65,
+                "selective_solder_keepout": 0.8,
+                "press_fit_keepout": 1.1,
+                "conformal_coating_keepout": 0.9
               },
               "net_classes": [
                 {
@@ -441,15 +484,21 @@ mod tests {
                   "min_voltage_clearance": 0.5,
                   "requires_reference_plane": true,
                   "requires_impedance_control": true,
-                  "max_via_count": 4
+                  "target_impedance_ohms": 50.0,
+                  "impedance_tolerance_ohms": 5.0,
+                  "max_via_count": 4,
+                  "max_length": 75.0
                 },
                 {
                   "name": "usb-p",
                   "nets": ["USB_D+"],
                   "differential_pair": "usb",
                   "differential_role": "positive",
+                  "target_impedance_ohms": 90.0,
+                  "impedance_tolerance_ohms": 10.0,
                   "min_pair_spacing": 0.12,
-                  "max_pair_spacing": 0.22
+                  "max_pair_spacing": 0.22,
+                  "max_pair_skew": 0.15
                 }
               ]
             }"#,
@@ -463,20 +512,43 @@ mod tests {
         assert_eq!(config.assembly.testpoint_min_diameter, Some(0.45));
         assert_eq!(config.assembly.tooling_min_diameter, Some(1.2));
         assert_eq!(config.assembly.dense_pad_pitch, Some(0.65));
-        assert_eq!(config.stackup.unwrap().copper_layer_count, Some(2));
+        assert_eq!(config.assembly.selective_solder_keepout, Some(0.8));
+        assert_eq!(config.assembly.press_fit_keepout, Some(1.1));
+        assert_eq!(config.assembly.conformal_coating_keepout, Some(0.9));
+        let stackup = config.stackup.unwrap();
+        assert_eq!(stackup.copper_layer_count, Some(2));
+        assert_eq!(stackup.material_family.as_deref(), Some("FR-4"));
+        assert_eq!(stackup.material_dielectric_constant, Some(4.2));
+        assert_eq!(stackup.material_loss_tangent, Some(0.018));
+        assert_eq!(stackup.material_tg_c, Some(150.0));
+        assert_eq!(stackup.soldermask_process.as_deref(), Some("LPI"));
+        assert_eq!(stackup.target_ipc_class.as_deref(), Some("IPC Class 2"));
+        assert_eq!(stackup.fabrication_capability.max_copper_layers, Some(4));
+        assert_eq!(
+            stackup.fabrication_capability.min_finished_thickness,
+            Some(0.6)
+        );
+        assert_eq!(stackup.fabrication_capability.max_loss_tangent, Some(0.025));
+        assert_eq!(stackup.fabrication_capability.min_tg_c, Some(130.0));
         assert_eq!(config.net_classes[0].name, "power");
         assert_eq!(config.net_classes[0].net_patterns, vec!["PWR_*"]);
         assert_eq!(config.net_classes[0].min_current_width, Some(0.75));
         assert_eq!(config.net_classes[0].min_voltage_clearance, Some(0.5));
         assert_eq!(config.net_classes[0].requires_reference_plane, Some(true));
         assert_eq!(config.net_classes[0].requires_impedance_control, Some(true));
+        assert_eq!(config.net_classes[0].target_impedance_ohms, Some(50.0));
+        assert_eq!(config.net_classes[0].impedance_tolerance_ohms, Some(5.0));
         assert_eq!(config.net_classes[0].max_via_count, Some(4));
+        assert_eq!(config.net_classes[0].max_length, Some(75.0));
         assert_eq!(
             config.net_classes[1].differential_pair.as_deref(),
             Some("usb")
         );
         assert_eq!(config.net_classes[1].min_pair_spacing, Some(0.12));
         assert_eq!(config.net_classes[1].max_pair_spacing, Some(0.22));
+        assert_eq!(config.net_classes[1].max_pair_skew, Some(0.15));
+        assert_eq!(config.net_classes[1].target_impedance_ohms, Some(90.0));
+        assert_eq!(config.net_classes[1].impedance_tolerance_ohms, Some(10.0));
         let _ = fs::remove_file(path);
     }
 }

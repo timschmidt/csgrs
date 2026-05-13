@@ -227,7 +227,10 @@ sidecar input where possible.
   sidecar-driven review signal.
 - `testpoint-accessibility-readiness`: warn when IPC-D-356 testpoints have no
   parsed probe diameter, undersized probe diameter, tight probe-to-probe
-  spacing, or insufficient board-edge fixture clearance.
+  spacing, insufficient board-edge fixture clearance, missing access-side
+  metadata, missing soldermask-access metadata, soldermask-covered access, or
+  contradictory SMD/both-side access hints, and when top/bottom IPC-D-356 access
+  conflicts with nearby same-net KiCad pad/via side.
 - `tooling-hole-readiness`: warn when parsed KiCad or Excellon drill data has
   fewer than two likely non-plated tooling holes, or when tooling candidates sit
   inside the fixture edge-clearance review band.
@@ -241,6 +244,14 @@ sidecar input where possible.
   have at least two likely local fiducials nearby on the same side.
 - `dense-pad-escape-readiness`: warn when dense fine-pitch pad clusters have no
   parsed nearby via escape, so BGA/QFN/fine-pitch breakout strategy is reviewed.
+- `selective-wave-solder-keepout-readiness`: warn when likely through-hole
+  solder process features sit too close to neighboring pads for wave/selective
+  solder pallet, solder-thief, or masking review.
+- `press-fit-keepout-readiness`: warn when likely press-fit connector holes sit
+  too close to neighboring pads for insertion-tool and deformation-clearance
+  review.
+- `conformal-coating-keepout-readiness`: warn when likely contacts,
+  testpoints, or fiducials have neighboring pads inside a no-coat keepout band.
 - `thermal-pad-via-readiness`: warn when large ground or power pads that look
   like exposed thermal pads have no parsed same-net via in pad.
 - `thermal-copper-area-readiness`: warn when likely heat or power pads, vias, or
@@ -282,8 +293,10 @@ sidecar input where possible.
     for partial handoffs;
   - validates duplicated companion roles;
   - flags orphaned side outputs, inner copper without both outer copper layers,
-    odd recognized copper layer counts, and one-copper packages that also
-    contain bottom-side outputs;
+    odd recognized copper layer counts, one-copper packages that also contain
+    opposite-side outputs, paste outputs without a same-side solder mask
+    companion, and Gerber filenames whose side tokens conflict with their
+    inferred role;
   - checks Gerber-recognized copper layer counts against KiCad-declared copper
     layer counts and optional order-declared layer-count metadata;
   - warns when filenames appear to mix project/job names, revision tags, or
@@ -316,14 +329,17 @@ sidecar input where possible.
 - Excellon drill files with common `METRIC`/`INCH` tool definitions and drill
   hit coordinates.
 - IPC-D-356 electrical test netlists with common test records. Parsed records can
-  annotate nearby KiCad copper and drills by net name.
+  annotate nearby KiCad copper and drills by net name, and common loose metadata
+  tokens can carry access-side, feature-type, and soldermask hints into
+  testpoint-accessibility checks.
 
 ## Remaining Checks Requiring Deeper Inputs
 
 - Full KiCad custom pad primitive semantics, including subtractive primitives,
   exact roundrect radii, text primitives, and all graphic variants.
-- Broader IPC-D-356 fixed-column dialect coverage and richer use of access-side,
-  feature type, and soldermask flags.
+- Broader IPC-D-356 fixed-column dialect coverage, plus deeper cross-checks that
+  combine parsed access-side, feature-type, and soldermask flags with explicit
+  fixture declarations and mask-opening geometry.
 - ODB++ or IPC-2581 ingestion for richer manufacturing stackup and fabrication
   rules.
 - Fabricator-specific rule decks, class-based constraints, and board stackup
@@ -341,26 +357,32 @@ example before it is considered production-ready.
 - Unit model: preserve source units, normalize internal distances, and report
   both source and normalized units. Avoid comparing mil/mm thresholds against
   untagged parser output.
-- Board stackup model: layer count, copper weight, and dielectric/core/prepreg
-  thickness config is implemented for readiness review. Remaining stackup work:
-  material family, finish, soldermask process, soldermask color, controlled-
-  impedance target solving, and target IPC/fabricator class.
+- Board stackup model: layer count, copper weight, dielectric/core/prepreg
+  thickness, material family, surface finish, soldermask process/color, target
+  IPC class, fabricator profile, and initial fabrication capability threshold
+  libraries are implemented for readiness review, including laminate dielectric
+  constant, loss tangent, and Tg metadata/range checks. Remaining stackup work:
+  actual impedance target solving and richer vendor-specific capability decks.
 - Net-class model: exact-name and simple wildcard net-class config is
   implemented for minimum width, current-carrying width, minimum clearance,
   voltage-class clearance, maximum layer count, minimum via-count,
   maximum via-count, explicit differential-pair side/spacing rules,
-  reference-plane intent, and impedance-control metadata review. Remaining
-  net-class work: pair length/skew, actual impedance targets, and richer class
-  inheritance constraints.
-- Manufacturing capability profiles: JLCPCB, PCBWay, Eurocircuits-style
-  service classes, and custom JSON decks. Profiles should separate hard minimum,
-  preferred minimum, and cost-escalation thresholds.
-- Assembly profile: prototype SMT, production SMT, double-sided SMT, and
-  fixture-focused threshold profiles are implemented for component clearance,
+  approximate parsed copper length/skew limits, reference-plane intent, and
+  impedance-control target/tolerance metadata review. Remaining net-class work:
+  true routed pair length/skew extraction, actual impedance solving, and richer
+  class inheritance constraints.
+- Manufacturing capability profiles: initial `prototype-fab`, `standard-fab`,
+  `advanced-fab`, and custom JSON threshold decks are implemented for stackup
+  review, including optional material-property windows. Remaining work:
+  vendor-specific JLCPCB, PCBWay, Eurocircuits-style service classes that
+  separate hard minimum, preferred minimum, and cost-escalation thresholds.
+- Assembly profile: prototype SMT, production SMT, double-sided SMT,
+  fixture-focused, hand-assembly, selective-solder, wave-solder, press-fit, and
+  conformal-coating threshold profiles are implemented for component clearance,
   connector rework, testpoint access, tooling, mouse-bite, fiducial, and
-  dense-pad escape checks. Remaining profile work: hand assembly, selective
-  solder, wave solder, press-fit, conformal coating, and package-class-specific
-  reflow assumptions.
+  dense-pad escape checks plus process-specific solder, press-fit, and coating
+  keepout checks. Remaining profile work: package-class-specific reflow
+  assumptions and richer process-specific keepout geometry.
 - Mechanical model: routed outline, V-score lines, mouse bites, tabs, slots,
   cutouts, countersinks, castellations, plated edges, bevels, tooling holes,
   fiducials, keepout zones, stiffeners, and enclosure constraints.
@@ -474,12 +496,15 @@ example before it is considered production-ready.
   present without a parsed ground zone on selected copper layers, and when
   likely high-speed copper does not overlap parsed ground-zone coverage.
   Config-driven net classes can require reference-plane and impedance-control
-  handoff metadata for exact nets or wildcard groups.
+  handoff metadata, including target impedance and tolerance values, for exact
+  nets or wildcard groups.
 - Differential pair constraints: exact configured net classes can declare
-  `differential_pair`, `differential_role`, and pair spacing bounds. Initial
+  `differential_pair`, `differential_role`, pair spacing bounds, and pair-skew
+  limits. Initial
   checks verify both sides are present, side layer sets agree, and same-layer
-  copper spacing is inside the configured range; true length/skew extraction is
-  still future work.
+  copper spacing is inside the configured range. Configured length/skew checks
+  use parsed segment bounding-box estimates; true routed length/skew extraction
+  is still future work.
 
 ### Solder Mask, Paste, and Finish Checks
 
@@ -587,8 +612,10 @@ example before it is considered production-ready.
   coverage, side accessibility, spacing, height clearance, and no soldermask or
   silkscreen obstruction. Initial KiCad/IPC-D-356 checks warn when likely
   critical nets have no matching IPC-D-356 test record, and warn on IPC-D-356
-  testpoint diameter, spacing, and edge-clearance fixture-access risks. Probe
-  diameter, spacing, and edge-clearance thresholds are assembly-profile driven.
+  testpoint diameter, spacing, edge-clearance, missing/covered soldermask access,
+  missing or contradictory access-side fixture-access risks, and access-side
+  hints that disagree with nearby same-net KiCad pad/via side. Probe diameter,
+  spacing, and edge-clearance thresholds are assembly-profile driven.
 - BOM, centroid, netlist, README, and drawing readiness: required columns,
   manufacturer/supplier metadata, lifecycle/status review, broader lifecycle-risk
   vocabulary, approved alternate coverage, same-as-primary alternate detection,
@@ -644,11 +671,15 @@ example before it is considered production-ready.
   orientation, shadowing, and thermal relief around through-hole pins. Initial
   README checks require selective/wave process notes when through-hole, wave, or
   selective assembly is mentioned, and BOM-driven checks require process handoff
-  when populated rows look through-hole or hand-soldered.
+  when populated rows look through-hole or hand-soldered. Initial KiCad geometry
+  checks now flag neighboring pads inside keepout bands around likely
+  through-hole solder features.
 - Moisture/cleanliness/coating: conformal coating keepouts, no-clean flux risk
   under low-standoff packages, and unmasked test pads in coated areas. Initial
   BOM/README checks require MSL metadata for likely moisture-sensitive packages
-  and coating keepout/cleanliness notes when conformal coating is mentioned.
+  and coating keepout/cleanliness notes when conformal coating is mentioned;
+  KiCad geometry checks now flag neighboring pads inside no-coat feature
+  keepout bands.
 
 ### Electrical and Functional Validation Checks
 
@@ -715,6 +746,8 @@ example before it is considered production-ready.
   stackup, and filename conventions agree.
 - Layer role inference: Gerber X2 attributes, file extensions, JLC-style names,
   KiCad names, and explicit CLI role overrides resolve to a coherent stack.
+  Initial filename side-token conflict checks are implemented in
+  `file-manifest-readiness`.
 - Polarity and mirroring: negative planes, bottom-layer mirroring, text
   orientation, drill origin, and coordinate origin consistency.
 - Drill file checks: plated/non-plated split, duplicate drill files, missing
@@ -751,8 +784,8 @@ example before it is considered production-ready.
 ### Data Sources to Consider Next
 
 - Gerber X2/X3 attributes for layer role, net, component, and aperture intent.
-- IPC-D-356 access-side, feature type, soldermask flags, net names, and drill
-  diameter records.
+- Additional IPC-D-356 dialect records and cross-source validation of parsed
+  access-side, feature-type, soldermask, net-name, and drill-diameter fields.
 - KiCad board setup: net classes, constraints, custom DRC rules, stackup,
   differential pair settings, pad properties, via properties, zones, component
   footprints, 3D/body boxes, and fabrication output settings.
@@ -808,8 +841,9 @@ Gerber/KiCad fixtures with one clear violation and one matching non-violation.
   generic panel graphics.
 - Remaining layer sanity and file completeness: add CLI/app-level fixtures for
   missing layer-order metadata and ambiguous one-layer versus two-layer inputs.
-- Remaining IPC-D-356 coverage: add access-side, feature-type, and soldermask
-  flag semantics as broader fixed-column dialect support improves.
+- Remaining IPC-D-356 coverage: add more fixed-column dialect variants and
+  cross-check parsed access-side, feature-type, and soldermask flags against
+  KiCad pad side, explicit soldermask openings, and fixture-side declarations.
 
 ### Future-rule fixture backlog
 
@@ -884,7 +918,8 @@ Gerber/KiCad fixtures with one clear violation and one matching non-violation.
   silkscreen/blocker pairs.
 - Expand the implemented assembly, stackup, and net-class project config
   sections with package-specific assembly classes, length, routed via-span,
-  impedance-target, material, and fabrication-class constraints.
+  impedance-target, material property ranges, and fabrication-class threshold
+  constraints.
 - Add IPC-356 netlist ingestion so copper overlap can distinguish intended from
   unintended coupling.
 - Add IPC-2581 and ODB++ importers if licensing and available crate support make

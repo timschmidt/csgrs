@@ -11,7 +11,7 @@ use geo::{Area, BoundingRect};
 
 use crate::checks::distance::polygon_boundary_distance;
 use crate::geometry::{circle_polygon, multipolygon_to_shapes, polygons_to_sketch};
-use crate::ipc356::Ipc356Point;
+use crate::ipc356::{Ipc356AccessSide, Ipc356FeatureType, Ipc356Point, Ipc356Soldermask};
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbSketch};
@@ -307,6 +307,81 @@ pub fn testpoint_accessibility_readiness(
     let mut violations = Vec::new();
 
     for point in points {
+        if matches!(
+            point.soldermask,
+            Some(Ipc356Soldermask::Covered | Ipc356Soldermask::Unknown)
+        ) {
+            violations.push(Violation::new(
+                "testpoint-accessibility-readiness",
+                Severity::Warning,
+                vec![format!("net:{}", point.net)],
+                None,
+                Vec::new(),
+                vec![point.location],
+                Some(if matches!(point.soldermask, Some(Ipc356Soldermask::Covered)) {
+                    "IPC-D-356 testpoint is marked soldermask-covered; review probe opening or test access"
+                        .to_string()
+                } else {
+                    "IPC-D-356 testpoint has unknown soldermask access; review exposed probe opening"
+                        .to_string()
+                }),
+            ));
+        }
+        if point.soldermask.is_none()
+            && matches!(
+                point.feature_type,
+                None | Some(Ipc356FeatureType::Smd | Ipc356FeatureType::ThroughHole)
+            )
+        {
+            violations.push(Violation::new(
+                "testpoint-accessibility-readiness",
+                Severity::Warning,
+                vec![format!("net:{}", point.net)],
+                None,
+                Vec::new(),
+                vec![point.location],
+                Some(
+                    "IPC-D-356 testpoint has no soldermask access flag; review exposed probe opening"
+                        .to_string(),
+                ),
+            ));
+        }
+        if point.access_side.is_none() {
+            violations.push(Violation::new(
+                "testpoint-accessibility-readiness",
+                Severity::Warning,
+                vec![format!("net:{}", point.net)],
+                None,
+                Vec::new(),
+                vec![point.location],
+                Some(
+                    "IPC-D-356 testpoint has no parsed access side; review top/bottom fixture access"
+                        .to_string(),
+                ),
+            ));
+        }
+        if matches!(point.access_side, Some(Ipc356AccessSide::Both))
+            && matches!(point.feature_type, Some(Ipc356FeatureType::Smd))
+        {
+            violations.push(Violation::new(
+                "testpoint-accessibility-readiness",
+                Severity::Warning,
+                vec![format!("net:{}", point.net)],
+                None,
+                Vec::new(),
+                vec![point.location],
+                Some(
+                    "IPC-D-356 SMD testpoint is marked accessible from both sides; review fixture side intent"
+                        .to_string(),
+                ),
+            ));
+        }
+        if let Some(side_violation) =
+            testpoint_side_parity_violation(board, point, minimum_diameter, minimum_spacing)
+        {
+            violations.push(side_violation);
+        }
+
         match point.diameter {
             Some(diameter) if diameter < minimum_diameter => {
                 violations.push(Violation::new(
@@ -398,6 +473,97 @@ pub fn testpoint_accessibility_readiness(
     }
 
     violations
+}
+
+fn testpoint_side_parity_violation(
+    board: &BoardModel,
+    point: &Ipc356Point,
+    minimum_diameter: f64,
+    minimum_spacing: f64,
+) -> Option<Violation> {
+    // IPC-D-356B carries electrical-test access evidence, while DFT fixture
+    // guidance treats probe side as a production constraint; cross-checking the
+    // sidecar against nearby KiCad copper catches common top/bottom export
+    // mistakes before fixture build. See IPC-D-356B (IPC, 2002) and FixturFab,
+    // "Design for Test: How to Design Test Points for PCB Testing."
+    let expected_side = match point.access_side? {
+        Ipc356AccessSide::Top => Ipc356AccessSide::Top,
+        Ipc356AccessSide::Bottom => Ipc356AccessSide::Bottom,
+        Ipc356AccessSide::Both => return None,
+    };
+    let search_radius =
+        point.diameter.unwrap_or(minimum_diameter) / 2.0 + minimum_spacing.max(0.25);
+    let point_net = normalize_net(&point.net);
+    let mut nearby_sides = BTreeSet::new();
+
+    for feature in &board.copper {
+        if !matches!(feature.kind, CopperKind::Pad | CopperKind::Via) {
+            continue;
+        }
+        if !feature
+            .net
+            .as_deref()
+            .is_some_and(|net| normalize_net(net) == point_net)
+        {
+            continue;
+        }
+        if distance(feature.location, point.location) > search_radius {
+            continue;
+        }
+        if let Some(side) = copper_layer_access_side(&feature.layer) {
+            nearby_sides.insert(side);
+        }
+    }
+
+    if nearby_sides.is_empty() || nearby_sides.contains(&expected_side) {
+        return None;
+    }
+
+    let observed = nearby_sides
+        .iter()
+        .map(|side| match side {
+            Ipc356AccessSide::Top => "top",
+            Ipc356AccessSide::Bottom => "bottom",
+            Ipc356AccessSide::Both => "both",
+        })
+        .collect::<Vec<_>>()
+        .join("/");
+    let expected = match expected_side {
+        Ipc356AccessSide::Top => "top",
+        Ipc356AccessSide::Bottom => "bottom",
+        Ipc356AccessSide::Both => "both",
+    };
+
+    Some(Violation::new(
+        "testpoint-accessibility-readiness",
+        Severity::Warning,
+        vec![format!("net:{}", point.net)],
+        None,
+        Vec::new(),
+        vec![point.location],
+        Some(format!(
+            "IPC-D-356 testpoint access side is {expected}, but nearby same-net KiCad pad/via copper is only on {observed}; review fixture side and exported testpoint side"
+        )),
+    ))
+}
+
+fn copper_layer_access_side(layer: &str) -> Option<Ipc356AccessSide> {
+    let normalized = layer.to_ascii_lowercase();
+    if normalized == "f.cu"
+        || normalized.contains("front")
+        || normalized.contains("top")
+        || normalized.contains("primary")
+    {
+        Some(Ipc356AccessSide::Top)
+    } else if normalized == "b.cu"
+        || normalized.contains("back")
+        || normalized.contains("bottom")
+        || normalized.contains("secondary")
+    {
+        Some(Ipc356AccessSide::Bottom)
+    } else {
+        None
+    }
 }
 
 pub fn tooling_hole_readiness(
@@ -715,6 +881,154 @@ pub fn dense_pad_escape_readiness(
     violations
 }
 
+/// Review solder-process clearance around likely through-hole solder features.
+///
+/// This is a process-readiness heuristic, not a solder-flow simulation. IPC
+/// J-STD-001H treats through-hole soldering workmanship as process controlled;
+/// hyperdrc therefore flags likely wave/selective solder features that are
+/// close to other pads so the engineer can confirm pallet, solder-thief, and
+/// masking intent before release.
+pub fn selective_wave_solder_keepout_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    keepout: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    let pads = selected_copper_features(board, selected_layers)
+        .into_iter()
+        .filter(|feature| feature.kind == CopperKind::Pad)
+        .filter(|feature| !likely_fiducial(feature))
+        .collect::<Vec<_>>();
+    let solder_drills = board
+        .drills
+        .iter()
+        .filter(|drill| drill.plated)
+        .filter(|drill| drill.net.as_deref().is_some_and(looks_solder_process_net))
+        .collect::<Vec<_>>();
+    let mut violations = Vec::new();
+
+    for drill in solder_drills {
+        let keepout_sketch = polygons_to_sketch(
+            vec![circle_polygon(
+                drill.location,
+                drill.diameter / 2.0 + keepout,
+                32,
+            )],
+            Some(LayerMetadata {
+                name: "selective/wave solder keepout".to_string(),
+            }),
+        );
+        for pad in &pads {
+            if drill.net.is_some() && drill.net == pad.net {
+                continue;
+            }
+            let overlap = keepout_sketch.intersection(&pad.sketch);
+            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            let touching = shapes.is_empty()
+                && polygon_boundary_distance(
+                    &keepout_sketch.to_multipolygon(),
+                    &pad.sketch.to_multipolygon(),
+                ) <= 1.0e-9;
+            if shapes.is_empty() && !touching {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "selective-wave-solder-keepout-readiness",
+                Severity::Warning,
+                vec![pad.layer.clone()],
+                None,
+                shapes,
+                vec![drill.location, pad.location],
+                Some(format!(
+                    "likely through-hole solder feature on net {:?} is within solder-process keepout {keepout:.6} of neighboring pad {:?}; review selective/wave solder pallet, solder thief, and masking clearance",
+                    drill.net, pad.net
+                )),
+            ));
+        }
+    }
+
+    violations
+}
+
+/// Review press-fit insertion clearance around likely connector holes.
+///
+/// Press-fit hardware needs insertion-tool and deformation clearance that is not
+/// represented by copper clearance alone. This check intentionally keys off
+/// connector-like net names and plated drill geometry so it stays conservative.
+pub fn press_fit_keepout_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    keepout: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    process_drill_keepout_readiness(
+        board,
+        selected_layers,
+        keepout,
+        min_area,
+        "press-fit-keepout-readiness",
+        "press-fit insertion",
+        looks_press_fit_net,
+    )
+}
+
+/// Review coating-mask clearance around likely contacts, fiducials, and probes.
+///
+/// IPC J-STD-001H treats conformal coating as a workmanship/process control
+/// item. Geometry cannot prove a coating mask exists, but nearby copper around
+/// likely no-coat features is a useful release-review prompt.
+pub fn conformal_coating_keepout_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    keepout: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    let features = selected_copper_features(board, selected_layers);
+    let no_coat_features = features
+        .iter()
+        .copied()
+        .filter(|feature| likely_no_coat_feature(feature))
+        .collect::<Vec<_>>();
+    let pads = features
+        .into_iter()
+        .filter(|feature| feature.kind == CopperKind::Pad)
+        .collect::<Vec<_>>();
+    let mut violations = Vec::new();
+
+    for no_coat in no_coat_features {
+        let keepout_sketch = no_coat.sketch.offset(keepout);
+        for neighbor in &pads {
+            if std::ptr::eq(no_coat, *neighbor) || no_coat.layer != neighbor.layer {
+                continue;
+            }
+            if no_coat.net.is_some() && no_coat.net == neighbor.net {
+                continue;
+            }
+            let overlap = keepout_sketch.intersection(&neighbor.sketch);
+            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            if shapes.is_empty() {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "conformal-coating-keepout-readiness",
+                Severity::Warning,
+                vec![no_coat.layer.clone()],
+                None,
+                shapes,
+                vec![no_coat.location, neighbor.location],
+                Some(format!(
+                    "likely no-coat feature {:?} has neighboring pad {:?} inside coating keepout {keepout:.6}; review conformal-coating mask, cleanliness, and contact/test access",
+                    no_coat.net, neighbor.net
+                )),
+            ));
+        }
+    }
+
+    violations
+}
+
 fn selected_copper_features<'a>(
     board: &'a BoardModel,
     selected_layers: &[String],
@@ -787,6 +1101,66 @@ fn distance(left: [f64; 2], right: [f64; 2]) -> f64 {
     (dx * dx + dy * dy).sqrt()
 }
 
+fn process_drill_keepout_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    keepout: f64,
+    min_area: f64,
+    check: &str,
+    process_label: &str,
+    net_predicate: fn(&str) -> bool,
+) -> Vec<Violation> {
+    let pads = selected_copper_features(board, selected_layers)
+        .into_iter()
+        .filter(|feature| feature.kind == CopperKind::Pad)
+        .filter(|feature| !likely_fiducial(feature))
+        .collect::<Vec<_>>();
+    let drills = board
+        .drills
+        .iter()
+        .filter(|drill| drill.plated)
+        .filter(|drill| drill.net.as_deref().is_some_and(net_predicate))
+        .collect::<Vec<_>>();
+    let mut violations = Vec::new();
+
+    for drill in drills {
+        let keepout_sketch = polygons_to_sketch(
+            vec![circle_polygon(
+                drill.location,
+                drill.diameter / 2.0 + keepout,
+                32,
+            )],
+            Some(LayerMetadata {
+                name: format!("{process_label} keepout"),
+            }),
+        );
+        for pad in &pads {
+            if drill.net.is_some() && drill.net == pad.net {
+                continue;
+            }
+            let overlap = keepout_sketch.intersection(&pad.sketch);
+            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            if shapes.is_empty() {
+                continue;
+            }
+            violations.push(Violation::new(
+                check,
+                Severity::Warning,
+                vec![pad.layer.clone()],
+                None,
+                shapes,
+                vec![drill.location, pad.location],
+                Some(format!(
+                    "likely {process_label} feature on net {:?} is within keepout {keepout:.6} of neighboring pad {:?}; review insertion tooling, component keepout, and assembly drawing notes",
+                    drill.net, pad.net
+                )),
+            ));
+        }
+    }
+
+    violations
+}
+
 fn looks_edge_intent_net(net: &str) -> bool {
     looks_gold_finger_net(net) || looks_chassis_net(net)
 }
@@ -826,6 +1200,38 @@ fn looks_connector_net(net: &str) -> bool {
     ]
     .iter()
     .any(|token| normalized.contains(token))
+}
+
+fn looks_solder_process_net(net: &str) -> bool {
+    let normalized = net.to_ascii_uppercase();
+    looks_connector_net(net)
+        || [
+            "THT",
+            "THROUGH",
+            "PTH",
+            "WAVE",
+            "SELECTIVE",
+            "HEADER",
+            "PIN",
+        ]
+        .iter()
+        .any(|token| normalized.contains(token))
+}
+
+fn looks_press_fit_net(net: &str) -> bool {
+    let normalized = net.to_ascii_uppercase();
+    looks_connector_net(net)
+        || ["PRESS", "PRESSFIT", "PRESS_FIT", "PIN", "BACKPLANE"]
+            .iter()
+            .any(|token| normalized.contains(token))
+}
+
+fn likely_no_coat_feature(feature: &CopperFeature) -> bool {
+    likely_fiducial(feature)
+        || feature
+            .net
+            .as_deref()
+            .is_some_and(|net| looks_connector_net(net) || looks_testpoint_required_net(net))
 }
 
 fn looks_testpoint_required_net(net: &str) -> bool {
@@ -899,10 +1305,13 @@ fn normalize_net(net: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::pad_pair_asymmetry_readiness;
+    use super::{
+        conformal_coating_keepout_readiness, pad_pair_asymmetry_readiness,
+        press_fit_keepout_readiness, selective_wave_solder_keepout_readiness,
+    };
     use crate::LayerMetadata;
     use crate::geometry::{polygons_to_sketch, rect_polygon};
-    use crate::kicad::{BoardModel, CopperFeature, CopperKind};
+    use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 
     #[test]
     fn pad_pair_asymmetry_readiness_reports_mismatched_neighbor_pads() {
@@ -943,11 +1352,75 @@ mod tests {
         assert!(pad_pair_asymmetry_readiness(&large_connector, &[], 0.3, 1.5, 2.0).is_empty());
     }
 
+    #[test]
+    fn selective_wave_solder_keepout_reports_neighboring_pad() {
+        let board = board_with_copper_and_drills(
+            vec![copper_pad("SIG", [0.35, 0.0], 0.25, 0.25)],
+            vec![plated_drill("J1_PIN1", [0.0, 0.0], 0.6)],
+        );
+
+        let violations = selective_wave_solder_keepout_readiness(&board, &[], 0.25, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(
+            violations[0].check,
+            "selective-wave-solder-keepout-readiness"
+        );
+    }
+
+    #[test]
+    fn press_fit_keepout_reports_neighboring_pad() {
+        let board = board_with_copper_and_drills(
+            vec![copper_pad("SIG", [0.45, 0.0], 0.25, 0.25)],
+            vec![plated_drill("PRESS_FIT_CONN", [0.0, 0.0], 0.6)],
+        );
+
+        let violations = press_fit_keepout_readiness(&board, &[], 0.35, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "press-fit-keepout-readiness");
+    }
+
+    #[test]
+    fn conformal_coating_keepout_reports_contact_neighbor() {
+        let board = board_with_copper(vec![
+            copper_pad("USB_DP", [0.0, 0.0], 0.4, 0.4),
+            copper_pad("SIG", [0.55, 0.0], 0.3, 0.3),
+        ]);
+
+        let violations = conformal_coating_keepout_readiness(&board, &[], 0.3, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "conformal-coating-keepout-readiness");
+    }
+
+    #[test]
+    fn process_keepouts_allow_distant_or_unmatched_features() {
+        let board = board_with_copper_and_drills(
+            vec![
+                copper_pad("SIG", [3.0, 0.0], 0.25, 0.25),
+                copper_pad("GND", [4.0, 0.0], 0.25, 0.25),
+            ],
+            vec![plated_drill("NET1", [0.0, 0.0], 0.6)],
+        );
+
+        assert!(selective_wave_solder_keepout_readiness(&board, &[], 0.25, 1.0e-9).is_empty());
+        assert!(press_fit_keepout_readiness(&board, &[], 0.35, 1.0e-9).is_empty());
+        assert!(conformal_coating_keepout_readiness(&board, &[], 0.3, 1.0e-9).is_empty());
+    }
+
     fn board_with_copper(copper: Vec<CopperFeature>) -> BoardModel {
+        board_with_copper_and_drills(copper, Vec::new())
+    }
+
+    fn board_with_copper_and_drills(
+        copper: Vec<CopperFeature>,
+        drills: Vec<DrillFeature>,
+    ) -> BoardModel {
         BoardModel {
             source: "test".to_string(),
             copper,
-            drills: Vec::new(),
+            drills,
             board_outline: None,
             panel_features: None,
         }
@@ -965,6 +1438,15 @@ mod tests {
                     name: "pad".to_string(),
                 }),
             ),
+        }
+    }
+
+    fn plated_drill(net: &str, location: [f64; 2], diameter: f64) -> DrillFeature {
+        DrillFeature {
+            location,
+            diameter,
+            net: Some(net.to_string()),
+            plated: true,
         }
     }
 }

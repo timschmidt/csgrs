@@ -11,7 +11,10 @@ use std::collections::{BTreeMap, BTreeSet};
 use geo::BoundingRect;
 
 use super::distance::polygon_boundary_distance;
-use crate::constraint_policy::{DifferentialRole, NetClassConfig, StackupConfig, StackupLayerKind};
+use crate::constraint_policy::{
+    DifferentialRole, FabricationCapabilityConfig, NetClassConfig, StackupConfig, StackupLayerKind,
+    SurfaceFinish,
+};
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
 
@@ -89,7 +92,7 @@ pub fn stackup_readiness(stackup: Option<&StackupConfig>, boards: &[BoardModel])
     }
 
     if !parsed_layers.is_empty() {
-        for layer in configured_copper_layers {
+        for layer in &configured_copper_layers {
             if !layer.name.trim().is_empty() && !parsed_layers.contains(&layer.name) {
                 violations.push(Violation::new(
                     "stackup-readiness",
@@ -135,7 +138,326 @@ pub fn stackup_readiness(stackup: Option<&StackupConfig>, boards: &[BoardModel])
         ));
     }
 
+    violations.extend(stackup_process_metadata_readiness(stackup));
+    violations.extend(stackup_fabrication_capability_readiness(
+        stackup,
+        &configured_copper_layers,
+    ));
+
     violations
+}
+
+fn stackup_process_metadata_readiness(stackup: &StackupConfig) -> Vec<Violation> {
+    let mut violations = Vec::new();
+    if is_blank(stackup.material_family.as_deref()) {
+        violations.push(stackup_metadata_violation(
+            "stackup material_family is missing; review laminate family before fabrication release",
+        ));
+    }
+    if stackup.surface_finish.is_none() {
+        violations.push(stackup_metadata_violation(
+            "stackup surface_finish is missing; review HASL/ENIG/ENEPIG/OSP/contact finish selection before fabrication release",
+        ));
+    }
+    if is_blank(stackup.soldermask_color.as_deref()) {
+        violations.push(stackup_metadata_violation(
+            "stackup soldermask_color is missing; review mask color and process assumptions before release",
+        ));
+    }
+    if is_blank(stackup.soldermask_process.as_deref()) {
+        violations.push(stackup_metadata_violation(
+            "stackup soldermask_process is missing; review LPI/dry-film/process assumptions before release",
+        ));
+    }
+    if is_blank(stackup.target_ipc_class.as_deref()) {
+        violations.push(stackup_metadata_violation(
+            "stackup target_ipc_class is missing; review IPC class or fabricator acceptance class before release",
+        ));
+    }
+    if is_blank(stackup.fabricator_profile.as_deref()) {
+        violations.push(stackup_metadata_violation(
+            "stackup fabricator_profile is missing; review selected fabricator capability profile before release",
+        ));
+    }
+
+    if matches!(
+        stackup.surface_finish,
+        Some(SurfaceFinish::Hasl | SurfaceFinish::LeadFreeHasl)
+    ) && stackup.impedance_controlled == Some(true)
+    {
+        violations.push(stackup_metadata_violation(
+            "stackup combines HASL-style finish with impedance_controlled=true; review finish planarity and controlled-impedance fabrication notes",
+        ));
+    }
+    if stackup.impedance_controlled == Some(true) {
+        if invalid_positive(stackup.material_dielectric_constant) {
+            violations.push(stackup_metadata_violation(
+                "stackup impedance_controlled=true but material_dielectric_constant is missing or invalid; review laminate Dk before impedance release",
+            ));
+        }
+        if invalid_non_negative(stackup.material_loss_tangent) {
+            violations.push(stackup_metadata_violation(
+                "stackup impedance_controlled=true but material_loss_tangent is missing or invalid; review laminate Df before impedance release",
+            ));
+        }
+    }
+
+    violations
+}
+
+fn stackup_metadata_violation(message: &str) -> Violation {
+    Violation::new(
+        "stackup-readiness",
+        Severity::Warning,
+        vec!["stackup:config".to_string()],
+        None,
+        Vec::new(),
+        Vec::new(),
+        Some(message.to_string()),
+    )
+}
+
+#[derive(Copy, Clone, Debug, Default)]
+struct FabricationCapability {
+    label: &'static str,
+    min_finished_thickness: Option<f64>,
+    max_finished_thickness: Option<f64>,
+    max_copper_layers: Option<usize>,
+    min_copper_weight_oz: Option<f64>,
+    max_copper_weight_oz: Option<f64>,
+    min_dielectric_thickness: Option<f64>,
+    min_dielectric_constant: Option<f64>,
+    max_dielectric_constant: Option<f64>,
+    max_loss_tangent: Option<f64>,
+    min_tg_c: Option<f64>,
+}
+
+fn stackup_fabrication_capability_readiness(
+    stackup: &StackupConfig,
+    configured_copper_layers: &[&crate::constraint_policy::StackupLayerConfig],
+) -> Vec<Violation> {
+    let Some(capability) = resolved_fabrication_capability(stackup) else {
+        return Vec::new();
+    };
+
+    let mut violations = Vec::new();
+    if let (Some(finished_thickness), Some(minimum)) = (
+        stackup.finished_thickness,
+        capability.min_finished_thickness,
+    ) {
+        if finished_thickness < minimum {
+            violations.push(stackup_metadata_violation(&format!(
+                "stackup finished_thickness {finished_thickness:.6} is below fabricator profile {} minimum {minimum:.6}",
+                capability.label
+            )));
+        }
+    }
+    if let (Some(finished_thickness), Some(maximum)) = (
+        stackup.finished_thickness,
+        capability.max_finished_thickness,
+    ) {
+        if finished_thickness > maximum {
+            violations.push(stackup_metadata_violation(&format!(
+                "stackup finished_thickness {finished_thickness:.6} is above fabricator profile {} maximum {maximum:.6}",
+                capability.label
+            )));
+        }
+    }
+    if let Some(max_copper_layers) = capability.max_copper_layers {
+        let configured_count = configured_copper_layers.len();
+        if configured_count > max_copper_layers {
+            violations.push(stackup_metadata_violation(&format!(
+                "fabricator profile {} supports up to {max_copper_layers} copper layer(s), but stackup lists {configured_count}",
+                capability.label
+            )));
+        }
+    }
+
+    for layer in configured_copper_layers {
+        if let (Some(weight), Some(minimum)) =
+            (layer.copper_weight_oz, capability.min_copper_weight_oz)
+        {
+            if weight < minimum {
+                violations.push(stackup_metadata_violation(&format!(
+                    "stackup copper layer {} has copper_weight_oz {weight:.6} below fabricator profile {} minimum {minimum:.6}",
+                    layer.name, capability.label
+                )));
+            }
+        }
+        if let (Some(weight), Some(maximum)) =
+            (layer.copper_weight_oz, capability.max_copper_weight_oz)
+        {
+            if weight > maximum {
+                violations.push(stackup_metadata_violation(&format!(
+                    "stackup copper layer {} has copper_weight_oz {weight:.6} above fabricator profile {} maximum {maximum:.6}",
+                    layer.name, capability.label
+                )));
+            }
+        }
+    }
+
+    if let Some(minimum) = capability.min_dielectric_thickness {
+        for layer in stackup.layers.iter().filter(|layer| {
+            matches!(
+                layer.kind,
+                StackupLayerKind::Dielectric | StackupLayerKind::Core | StackupLayerKind::Prepreg
+            )
+        }) {
+            if let Some(thickness) = layer.dielectric_thickness {
+                if thickness < minimum {
+                    violations.push(stackup_metadata_violation(&format!(
+                        "stackup dielectric layer {} has dielectric_thickness {thickness:.6} below fabricator profile {} minimum {minimum:.6}",
+                        layer.name, capability.label
+                    )));
+                }
+            }
+        }
+    }
+
+    // IPC-2221B treats dielectric constant and loss tangent as stackup inputs
+    // for electrical behavior; these checks only verify explicit policy ranges
+    // before handoff, leaving field solving to dedicated impedance tools.
+    if let (Some(value), Some(minimum)) = (
+        stackup.material_dielectric_constant,
+        capability.min_dielectric_constant,
+    ) {
+        if value < minimum {
+            violations.push(stackup_metadata_violation(&format!(
+                "stackup material_dielectric_constant {value:.6} is below fabricator profile {} minimum {minimum:.6}",
+                capability.label
+            )));
+        }
+    }
+    if let (Some(value), Some(maximum)) = (
+        stackup.material_dielectric_constant,
+        capability.max_dielectric_constant,
+    ) {
+        if value > maximum {
+            violations.push(stackup_metadata_violation(&format!(
+                "stackup material_dielectric_constant {value:.6} is above fabricator profile {} maximum {maximum:.6}",
+                capability.label
+            )));
+        }
+    }
+    if let (Some(value), Some(maximum)) =
+        (stackup.material_loss_tangent, capability.max_loss_tangent)
+    {
+        if value > maximum {
+            violations.push(stackup_metadata_violation(&format!(
+                "stackup material_loss_tangent {value:.6} is above fabricator profile {} maximum {maximum:.6}",
+                capability.label
+            )));
+        }
+    }
+    if let (Some(value), Some(minimum)) = (stackup.material_tg_c, capability.min_tg_c) {
+        if value < minimum {
+            violations.push(stackup_metadata_violation(&format!(
+                "stackup material_tg_c {value:.6} is below fabricator profile {} minimum {minimum:.6}",
+                capability.label
+            )));
+        }
+    }
+
+    violations
+}
+
+fn resolved_fabrication_capability(stackup: &StackupConfig) -> Option<FabricationCapability> {
+    // IPC-2221B and IPC-6012D frame thickness, conductor build-up, dielectric
+    // construction, and acceptance class as coupled design/fabrication
+    // constraints. These profiles are early review thresholds, not a substitute
+    // for the fabricator's current controlled-process limits.
+    let mut capability = stackup
+        .fabricator_profile
+        .as_deref()
+        .and_then(builtin_fabrication_capability);
+
+    if capability.is_none() && has_custom_capability(&stackup.fabrication_capability) {
+        capability = Some(FabricationCapability {
+            label: "custom",
+            ..FabricationCapability::default()
+        });
+    }
+
+    capability.map(|mut capability| {
+        let custom = &stackup.fabrication_capability;
+        capability.min_finished_thickness = custom
+            .min_finished_thickness
+            .or(capability.min_finished_thickness);
+        capability.max_finished_thickness = custom
+            .max_finished_thickness
+            .or(capability.max_finished_thickness);
+        capability.max_copper_layers = custom.max_copper_layers.or(capability.max_copper_layers);
+        capability.min_copper_weight_oz = custom
+            .min_copper_weight_oz
+            .or(capability.min_copper_weight_oz);
+        capability.max_copper_weight_oz = custom
+            .max_copper_weight_oz
+            .or(capability.max_copper_weight_oz);
+        capability.min_dielectric_thickness = custom
+            .min_dielectric_thickness
+            .or(capability.min_dielectric_thickness);
+        capability.min_dielectric_constant = custom
+            .min_dielectric_constant
+            .or(capability.min_dielectric_constant);
+        capability.max_dielectric_constant = custom
+            .max_dielectric_constant
+            .or(capability.max_dielectric_constant);
+        capability.max_loss_tangent = custom.max_loss_tangent.or(capability.max_loss_tangent);
+        capability.min_tg_c = custom.min_tg_c.or(capability.min_tg_c);
+        capability
+    })
+}
+
+fn builtin_fabrication_capability(profile: &str) -> Option<FabricationCapability> {
+    let normalized = profile.trim().to_ascii_lowercase();
+    match normalized.as_str() {
+        "prototype-fab" => Some(FabricationCapability {
+            label: "prototype-fab",
+            min_finished_thickness: Some(0.6),
+            max_finished_thickness: Some(2.4),
+            max_copper_layers: Some(4),
+            min_copper_weight_oz: Some(0.5),
+            max_copper_weight_oz: Some(2.0),
+            min_dielectric_thickness: Some(0.05),
+            ..FabricationCapability::default()
+        }),
+        "standard-fab" | "jlcpcb-standard" | "pcbway-standard" | "eurocircuits-standard" => {
+            Some(FabricationCapability {
+                label: "standard-fab",
+                min_finished_thickness: Some(0.4),
+                max_finished_thickness: Some(3.2),
+                max_copper_layers: Some(8),
+                min_copper_weight_oz: Some(0.33),
+                max_copper_weight_oz: Some(3.0),
+                min_dielectric_thickness: Some(0.04),
+                ..FabricationCapability::default()
+            })
+        }
+        "advanced-fab" => Some(FabricationCapability {
+            label: "advanced-fab",
+            min_finished_thickness: Some(0.2),
+            max_finished_thickness: Some(4.0),
+            max_copper_layers: Some(12),
+            min_copper_weight_oz: Some(0.25),
+            max_copper_weight_oz: Some(4.0),
+            min_dielectric_thickness: Some(0.025),
+            ..FabricationCapability::default()
+        }),
+        _ => None,
+    }
+}
+
+fn has_custom_capability(capability: &FabricationCapabilityConfig) -> bool {
+    capability.min_finished_thickness.is_some()
+        || capability.max_finished_thickness.is_some()
+        || capability.max_copper_layers.is_some()
+        || capability.min_copper_weight_oz.is_some()
+        || capability.max_copper_weight_oz.is_some()
+        || capability.min_dielectric_thickness.is_some()
+        || capability.min_dielectric_constant.is_some()
+        || capability.max_dielectric_constant.is_some()
+        || capability.max_loss_tangent.is_some()
+        || capability.min_tg_c.is_some()
 }
 
 pub fn net_constraint_readiness(
@@ -160,7 +482,9 @@ pub fn net_constraint_readiness(
         violations.extend(net_clearance_constraints(net_classes, &features));
         violations.extend(net_reference_plane_constraints(net_classes, &features));
         violations.extend(net_impedance_constraints(net_classes, stackup, &features));
+        violations.extend(net_impedance_target_constraints(net_classes, &features));
         violations.extend(net_differential_pair_constraints(net_classes, &features));
+        violations.extend(net_length_constraints(net_classes, &features));
     }
     violations
 }
@@ -535,6 +859,91 @@ fn impedance_intent_violations(
     violations
 }
 
+fn net_impedance_target_constraints(
+    net_classes: &[NetClassConfig],
+    features: &[&CopperFeature],
+) -> Vec<Violation> {
+    let mut by_net = BTreeMap::<String, NetUse>::new();
+    for feature in features {
+        let Some(net) = &feature.net else {
+            continue;
+        };
+        let entry = by_net.entry(net.clone()).or_default();
+        entry.layers.insert(feature.layer.clone());
+        entry.locations.push(feature.location);
+    }
+
+    let mut violations = Vec::new();
+    for (net, usage) in by_net {
+        for class in matching_classes(net_classes, &net) {
+            if class.requires_impedance_control != Some(true) {
+                continue;
+            }
+            // IPC-2221B treats characteristic impedance as a stackup and
+            // conductor-geometry design constraint. hyperdrc records target
+            // metadata here so fabrication handoff can be reviewed even though
+            // this check intentionally does not solve the field equations.
+            match class.target_impedance_ohms {
+                Some(target) if target.is_finite() && target > 0.0 => {}
+                Some(target) => violations.push(Violation::new(
+                    "net-constraint-readiness",
+                    Severity::Warning,
+                    usage.layers.iter().cloned().collect(),
+                    None,
+                    Vec::new(),
+                    usage.locations.clone(),
+                    Some(format!(
+                        "net {net} in class {} has invalid target_impedance_ohms {target:.6}",
+                        class_name(class)
+                    )),
+                )),
+                None => violations.push(Violation::new(
+                    "net-constraint-readiness",
+                    Severity::Warning,
+                    usage.layers.iter().cloned().collect(),
+                    None,
+                    Vec::new(),
+                    usage.locations.clone(),
+                    Some(format!(
+                        "net {net} in class {} requires impedance-control review, but target_impedance_ohms is missing",
+                        class_name(class)
+                    )),
+                )),
+            }
+
+            match class.impedance_tolerance_ohms {
+                Some(tolerance) if tolerance.is_finite() && tolerance > 0.0 => {}
+                Some(tolerance) => violations.push(Violation::new(
+                    "net-constraint-readiness",
+                    Severity::Warning,
+                    usage.layers.iter().cloned().collect(),
+                    None,
+                    Vec::new(),
+                    usage.locations.clone(),
+                    Some(format!(
+                        "net {net} in class {} has invalid impedance_tolerance_ohms {tolerance:.6}",
+                        class_name(class)
+                    )),
+                )),
+                None => violations.push(Violation::new(
+                    "net-constraint-readiness",
+                    Severity::Warning,
+                    usage.layers.iter().cloned().collect(),
+                    None,
+                    Vec::new(),
+                    usage.locations.clone(),
+                    Some(format!(
+                        "net {net} in class {} requires impedance-control review, but impedance_tolerance_ohms is missing",
+                        class_name(class)
+                    )),
+                )),
+            }
+        }
+    }
+
+    violations
+}
+
 fn net_differential_pair_constraints(
     net_classes: &[NetClassConfig],
     features: &[&CopperFeature],
@@ -556,6 +965,7 @@ fn net_differential_pair_constraints(
             side.features.push(*feature);
             side.min_pair_spacing = option_max(side.min_pair_spacing, class.min_pair_spacing);
             side.max_pair_spacing = option_min(side.max_pair_spacing, class.max_pair_spacing);
+            side.max_pair_skew = option_min(side.max_pair_skew, class.max_pair_skew);
         }
     }
 
@@ -658,6 +1068,93 @@ fn net_differential_pair_constraints(
     violations
 }
 
+fn net_length_constraints(
+    net_classes: &[NetClassConfig],
+    features: &[&CopperFeature],
+) -> Vec<Violation> {
+    let mut by_net = BTreeMap::<String, NetUse>::new();
+    let mut pairs = BTreeMap::<String, DifferentialPairUse>::new();
+
+    for feature in features {
+        let Some(net) = &feature.net else {
+            continue;
+        };
+        let estimated_length = estimated_feature_length(feature);
+        if estimated_length <= 0.0 {
+            continue;
+        }
+
+        for class in matching_classes(net_classes, net) {
+            let usage = by_net.entry(net.clone()).or_default();
+            usage.layers.insert(feature.layer.clone());
+            usage.locations.push(feature.location);
+            usage.estimated_length += estimated_length;
+            usage.max_length = option_min(usage.max_length, class.max_length);
+
+            let (Some(pair), Some(role)) = (&class.differential_pair, class.differential_role)
+            else {
+                continue;
+            };
+            let side = pairs.entry(pair.clone()).or_default().side_mut(role);
+            side.net_names.insert(net.clone());
+            side.layers.insert(feature.layer.clone());
+            side.locations.push(feature.location);
+            side.estimated_length += estimated_length;
+            side.max_pair_skew = option_min(side.max_pair_skew, class.max_pair_skew);
+        }
+    }
+
+    let mut violations = Vec::new();
+    for (net, usage) in by_net {
+        if let Some(max_length) = usage.max_length
+            && usage.estimated_length > max_length
+        {
+            violations.push(Violation::new(
+                "net-constraint-readiness",
+                Severity::Warning,
+                usage.layers.iter().cloned().collect(),
+                None,
+                Vec::new(),
+                usage.locations.clone(),
+                Some(format!(
+                    "net {net} has approximate parsed copper length {:.6}, above configured maximum {max_length:.6}",
+                    usage.estimated_length
+                )),
+            ));
+        }
+    }
+
+    for (pair, pair_use) in pairs {
+        let Some(max_pair_skew) = pair_use.max_pair_skew() else {
+            continue;
+        };
+        if pair_use.positive.estimated_length <= 0.0 || pair_use.negative.estimated_length <= 0.0 {
+            continue;
+        }
+        let skew = (pair_use.positive.estimated_length - pair_use.negative.estimated_length).abs();
+        if skew > max_pair_skew {
+            violations.push(Violation::new(
+                "net-constraint-readiness",
+                Severity::Warning,
+                pair_use
+                    .positive
+                    .layers
+                    .union(&pair_use.negative.layers)
+                    .cloned()
+                    .collect(),
+                None,
+                Vec::new(),
+                pair_use.locations(),
+                Some(format!(
+                    "differential pair {pair} has approximate parsed length skew {skew:.6}, above configured maximum {max_pair_skew:.6}"
+                )),
+            ));
+        }
+    }
+
+    violations
+}
+
 fn required_clearance<'a>(
     net_classes: &'a [NetClassConfig],
     left_net: &str,
@@ -690,6 +1187,18 @@ fn is_reference_net(net: &str) -> bool {
         || normalized.starts_with("gnd-")
         || normalized.contains("shield")
         || normalized.contains("chassis")
+}
+
+fn is_blank(value: Option<&str>) -> bool {
+    value.is_none_or(|value| value.trim().is_empty())
+}
+
+fn invalid_positive(value: Option<f64>) -> bool {
+    !value.is_some_and(|value| value.is_finite() && value > 0.0)
+}
+
+fn invalid_non_negative(value: Option<f64>) -> bool {
+    !value.is_some_and(|value| value.is_finite() && value >= 0.0)
 }
 
 fn matching_classes<'a>(net_classes: &'a [NetClassConfig], net: &str) -> Vec<&'a NetClassConfig> {
@@ -739,11 +1248,33 @@ fn minimum_bounding_dimension(sketch: &crate::PcbSketch) -> f64 {
         .unwrap_or(0.0)
 }
 
+fn maximum_bounding_dimension(sketch: &crate::PcbSketch) -> f64 {
+    sketch
+        .to_multipolygon()
+        .bounding_rect()
+        .map(|rect| rect.width().max(rect.height()))
+        .unwrap_or(0.0)
+}
+
+fn estimated_feature_length(feature: &CopperFeature) -> f64 {
+    match feature.kind {
+        // KiCad segment parsing currently emits rectangular copper envelopes.
+        // This max-bounding-dimension estimate is intentionally conservative
+        // readiness metadata, not routed-path reconstruction or a transmission
+        // line delay model.
+        CopperKind::Segment => maximum_bounding_dimension(&feature.sketch),
+        CopperKind::Via => 0.0,
+        CopperKind::Pad | CopperKind::Zone => 0.0,
+    }
+}
+
 #[derive(Clone, Debug, Default)]
 struct NetUse {
     layers: BTreeSet<String>,
     locations: Vec<[f64; 2]>,
     via_count: usize,
+    estimated_length: f64,
+    max_length: Option<f64>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -781,6 +1312,10 @@ impl<'a> DifferentialPairUse<'a> {
             self.positive.max_pair_spacing,
             self.negative.max_pair_spacing,
         )
+    }
+
+    fn max_pair_skew(&self) -> Option<f64> {
+        option_min(self.positive.max_pair_skew, self.negative.max_pair_skew)
     }
 
     fn same_layer_feature_pairs(&self) -> Vec<(&'a CopperFeature, &'a CopperFeature)> {
@@ -823,12 +1358,15 @@ struct DifferentialSideUse<'a> {
     features: Vec<&'a CopperFeature>,
     min_pair_spacing: Option<f64>,
     max_pair_spacing: Option<f64>,
+    estimated_length: f64,
+    max_pair_skew: Option<f64>,
 }
 
 #[cfg(test)]
 mod tests {
     use crate::constraint_policy::{
-        DifferentialRole, NetClassConfig, StackupConfig, StackupLayerConfig, StackupLayerKind,
+        DifferentialRole, FabricationCapabilityConfig, NetClassConfig, StackupConfig,
+        StackupLayerConfig, StackupLayerKind, SurfaceFinish,
     };
     use crate::geometry::{circle_polygon, polygons_to_sketch, rect_polygon};
     use crate::kicad::{BoardModel, CopperFeature, CopperKind};
@@ -885,6 +1423,184 @@ mod tests {
                 .iter()
                 .any(|message| message.contains("finished_thickness"))
         );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("material_family"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("surface_finish"))
+        );
+    }
+
+    #[test]
+    fn stackup_readiness_accepts_complete_process_metadata() {
+        let stackup = complete_stackup(Some(SurfaceFinish::Enig), Some(true));
+        let board = board_with_features(vec![
+            feature("F.Cu", "GND", CopperKind::Zone, [0.0, 0.0], 2.0, 2.0),
+            feature("B.Cu", "GND", CopperKind::Zone, [0.0, 0.0], 2.0, 2.0),
+        ]);
+
+        assert!(stackup_readiness(Some(&stackup), &[board]).is_empty());
+    }
+
+    #[test]
+    fn stackup_readiness_reports_hasl_controlled_impedance_finish_risk() {
+        let stackup = complete_stackup(Some(SurfaceFinish::LeadFreeHasl), Some(true));
+
+        let messages = stackup_readiness(Some(&stackup), &[])
+            .into_iter()
+            .filter_map(|violation| violation.message)
+            .collect::<Vec<_>>();
+
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("HASL-style finish"))
+        );
+    }
+
+    #[test]
+    fn stackup_readiness_reports_fabricator_capability_thresholds() {
+        let mut stackup = complete_stackup(Some(SurfaceFinish::Enig), Some(false));
+        stackup.copper_layer_count = Some(6);
+        stackup.finished_thickness = Some(0.3);
+        stackup.layers = vec![
+            StackupLayerConfig {
+                name: "F.Cu".to_string(),
+                kind: StackupLayerKind::Copper,
+                copper_weight_oz: Some(3.0),
+                dielectric_thickness: None,
+            },
+            StackupLayerConfig {
+                name: "In1.Cu".to_string(),
+                kind: StackupLayerKind::Copper,
+                copper_weight_oz: Some(1.0),
+                dielectric_thickness: None,
+            },
+            StackupLayerConfig {
+                name: "In2.Cu".to_string(),
+                kind: StackupLayerKind::Copper,
+                copper_weight_oz: Some(1.0),
+                dielectric_thickness: None,
+            },
+            StackupLayerConfig {
+                name: "In3.Cu".to_string(),
+                kind: StackupLayerKind::Copper,
+                copper_weight_oz: Some(1.0),
+                dielectric_thickness: None,
+            },
+            StackupLayerConfig {
+                name: "In4.Cu".to_string(),
+                kind: StackupLayerKind::Copper,
+                copper_weight_oz: Some(1.0),
+                dielectric_thickness: None,
+            },
+            StackupLayerConfig {
+                name: "B.Cu".to_string(),
+                kind: StackupLayerKind::Copper,
+                copper_weight_oz: Some(1.0),
+                dielectric_thickness: None,
+            },
+            StackupLayerConfig {
+                name: "Core".to_string(),
+                kind: StackupLayerKind::Core,
+                copper_weight_oz: None,
+                dielectric_thickness: Some(0.02),
+            },
+        ];
+
+        let messages = stackup_readiness(Some(&stackup), &[])
+            .into_iter()
+            .filter_map(|violation| violation.message)
+            .collect::<Vec<_>>();
+
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("supports up to 4"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("finished_thickness 0.300000 is below"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("copper_weight_oz 3.000000 above"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("dielectric_thickness 0.020000 below"))
+        );
+    }
+
+    #[test]
+    fn stackup_readiness_uses_custom_fabrication_capability_overrides() {
+        let mut stackup = complete_stackup(Some(SurfaceFinish::Enig), Some(false));
+        stackup.fabricator_profile = Some("custom-shop".to_string());
+        stackup.fabrication_capability = FabricationCapabilityConfig {
+            max_copper_layers: Some(1),
+            min_finished_thickness: Some(2.0),
+            ..FabricationCapabilityConfig::default()
+        };
+
+        let messages = stackup_readiness(Some(&stackup), &[])
+            .into_iter()
+            .filter_map(|violation| violation.message)
+            .collect::<Vec<_>>();
+
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("fabricator profile custom supports up to 1"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("finished_thickness 1.600000 is below"))
+        );
+    }
+
+    #[test]
+    fn stackup_readiness_reports_material_property_ranges() {
+        let mut stackup = complete_stackup(Some(SurfaceFinish::Enig), Some(true));
+        stackup.fabricator_profile = Some("custom-material-window".to_string());
+        stackup.material_dielectric_constant = Some(5.2);
+        stackup.material_loss_tangent = Some(0.035);
+        stackup.material_tg_c = Some(125.0);
+        stackup.fabrication_capability = FabricationCapabilityConfig {
+            min_dielectric_constant: Some(3.0),
+            max_dielectric_constant: Some(4.8),
+            max_loss_tangent: Some(0.02),
+            min_tg_c: Some(140.0),
+            ..FabricationCapabilityConfig::default()
+        };
+
+        let messages = stackup_readiness(Some(&stackup), &[])
+            .into_iter()
+            .filter_map(|violation| violation.message)
+            .collect::<Vec<_>>();
+
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("material_dielectric_constant 5.200000"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("material_loss_tangent 0.035000"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("material_tg_c 125.000000"))
+        );
     }
 
     #[test]
@@ -897,6 +1613,7 @@ mod tests {
             min_clearance: Some(0.4),
             max_layer_count: Some(1),
             min_via_count: Some(2),
+            max_length: Some(1.0),
             ..NetClassConfig::default()
         }];
         let board = board_with_features(vec![
@@ -929,6 +1646,11 @@ mod tests {
             messages
                 .iter()
                 .any(|message| message.contains("below configured minimum 2"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("approximate parsed copper length"))
         );
     }
 
@@ -972,6 +1694,12 @@ mod tests {
                 copper_weight_oz: None,
                 dielectric_thickness: None,
             }],
+            material_family: Some("FR-4".to_string()),
+            surface_finish: Some(SurfaceFinish::Enig),
+            soldermask_process: Some("LPI".to_string()),
+            soldermask_color: Some("green".to_string()),
+            target_ipc_class: Some("IPC Class 2".to_string()),
+            fabricator_profile: Some("prototype-fab".to_string()),
             ..StackupConfig::default()
         };
         let board = board_with_features(vec![
@@ -1004,6 +1732,16 @@ mod tests {
                 .iter()
                 .any(|message| message.contains("impedance-control review"))
         );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("target_impedance_ohms is missing"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("impedance_tolerance_ohms is missing"))
+        );
     }
 
     #[test]
@@ -1015,10 +1753,22 @@ mod tests {
             min_voltage_clearance: Some(0.2),
             requires_reference_plane: Some(true),
             requires_impedance_control: Some(true),
+            target_impedance_ohms: Some(90.0),
+            impedance_tolerance_ohms: Some(10.0),
             ..NetClassConfig::default()
         }];
         let stackup = StackupConfig {
             impedance_controlled: Some(true),
+            material_family: Some("FR-4".to_string()),
+            surface_finish: Some(SurfaceFinish::Enig),
+            soldermask_process: Some("LPI".to_string()),
+            soldermask_color: Some("green".to_string()),
+            target_ipc_class: Some("IPC Class 2".to_string()),
+            fabricator_profile: Some("prototype-fab".to_string()),
+            fabrication_capability: FabricationCapabilityConfig::default(),
+            material_dielectric_constant: Some(4.2),
+            material_loss_tangent: Some(0.018),
+            material_tg_c: Some(150.0),
             layers: vec![
                 StackupLayerConfig {
                     name: "F.Cu".to_string(),
@@ -1055,6 +1805,7 @@ mod tests {
                 min_pair_spacing: Some(0.2),
                 max_pair_spacing: Some(0.4),
                 max_via_count: Some(0),
+                max_pair_skew: Some(0.5),
                 ..NetClassConfig::default()
             },
             NetClassConfig {
@@ -1064,6 +1815,7 @@ mod tests {
                 differential_role: Some(DifferentialRole::Negative),
                 min_pair_spacing: Some(0.2),
                 max_pair_spacing: Some(0.4),
+                max_pair_skew: Some(0.5),
                 ..NetClassConfig::default()
             },
             NetClassConfig {
@@ -1077,6 +1829,7 @@ mod tests {
         let board = board_with_features(vec![
             feature("F.Cu", "USB_D+", CopperKind::Segment, [0.0, 0.0], 0.2, 0.2),
             feature("F.Cu", "USB_D-", CopperKind::Segment, [0.25, 0.0], 0.2, 0.2),
+            feature("F.Cu", "USB_D+", CopperKind::Segment, [2.0, 0.0], 2.0, 0.2),
             feature("B.Cu", "USB_D-", CopperKind::Segment, [0.0, 0.0], 0.2, 0.2),
             feature("F.Cu", "USB_D+", CopperKind::Via, [1.0, 0.0], 0.2, 0.2),
             feature(
@@ -1113,6 +1866,11 @@ mod tests {
             messages
                 .iter()
                 .any(|message| message.contains("missing configured negative side"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("approximate parsed length skew"))
         );
     }
 
@@ -1157,6 +1915,47 @@ mod tests {
             drills: Vec::new(),
             board_outline: None,
             panel_features: None,
+        }
+    }
+
+    fn complete_stackup(
+        surface_finish: Option<SurfaceFinish>,
+        impedance_controlled: Option<bool>,
+    ) -> StackupConfig {
+        StackupConfig {
+            copper_layer_count: Some(2),
+            finished_thickness: Some(1.6),
+            impedance_controlled,
+            material_family: Some("FR-4".to_string()),
+            material_dielectric_constant: Some(4.2),
+            material_loss_tangent: Some(0.018),
+            material_tg_c: Some(150.0),
+            surface_finish,
+            soldermask_process: Some("LPI".to_string()),
+            soldermask_color: Some("green".to_string()),
+            target_ipc_class: Some("IPC Class 2".to_string()),
+            fabricator_profile: Some("prototype-fab".to_string()),
+            fabrication_capability: FabricationCapabilityConfig::default(),
+            layers: vec![
+                StackupLayerConfig {
+                    name: "F.Cu".to_string(),
+                    kind: StackupLayerKind::Copper,
+                    copper_weight_oz: Some(1.0),
+                    dielectric_thickness: None,
+                },
+                StackupLayerConfig {
+                    name: "Core".to_string(),
+                    kind: StackupLayerKind::Core,
+                    copper_weight_oz: None,
+                    dielectric_thickness: Some(1.5),
+                },
+                StackupLayerConfig {
+                    name: "B.Cu".to_string(),
+                    kind: StackupLayerKind::Copper,
+                    copper_weight_oz: Some(1.0),
+                    dielectric_thickness: None,
+                },
+            ],
         }
     }
 

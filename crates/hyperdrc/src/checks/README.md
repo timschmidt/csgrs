@@ -192,20 +192,31 @@ geometry that is not visible from a single Gerber layer alone.
 KiCad copper layers. It reports declared layer-count mismatches, listed copper
 layers that are missing from parsed copper, copper layers with no
 `copper_weight_oz`, and finished-thickness declarations that have no
-dielectric/core/prepreg thickness entries.
+dielectric/core/prepreg thickness entries. It also checks process metadata for
+material family, surface finish, soldermask process/color, target IPC class, and
+fabricator profile, including a warning when HASL-style finish is paired with
+controlled-impedance handoff. Built-in `prototype-fab`, `standard-fab`, and
+`advanced-fab` capability thresholds, plus custom `fabrication_capability`
+overrides, check finished thickness, copper layer count, copper weight, and
+dielectric thickness against the declared stackup. Controlled-impedance stackups
+also require laminate dielectric constant and loss tangent metadata, and custom
+capability ranges can validate Dk, Df, and Tg.
 
 `net-constraint-readiness` applies optional JSON `net_classes` entries. It
 matches nets by exact name or simple `*` wildcard pattern, then checks configured
 minimum width, current-carrying minimum width, minimum clearance, voltage-class
 clearance, maximum layer count, minimum via count for layer-changing nets,
 maximum via count, explicit differential-pair positive/negative side presence,
-pair layer agreement, pair spacing bounds, reference-plane intent, and
-impedance-control handoff metadata. The impedance check is deliberately a
-readiness gate: it verifies stackup/reference metadata exists when a class asks
-for impedance control, not that the geometry solves to a target impedance.
-Differential-pair checks use nearest same-layer side-to-side copper spacing;
-true pair length/skew matching still needs routed path reconstruction from
-richer EDA data.
+pair layer agreement, pair spacing bounds, approximate parsed copper length,
+approximate pair skew, reference-plane intent, and impedance-control handoff
+metadata. The impedance check is deliberately a readiness gate: it verifies
+stackup/reference metadata exists when a class asks for impedance control, not
+that the geometry solves to a target impedance. Classes that require impedance
+control can also declare `target_impedance_ohms` and
+`impedance_tolerance_ohms`; missing or invalid values are reported as handoff
+risks. Differential-pair checks use nearest same-layer side-to-side copper
+spacing; length and skew checks use segment bounding-box estimates from parsed
+KiCad copper, so true routed path reconstruction remains a deeper future input.
 
 ## Assembly Checks
 
@@ -222,13 +233,21 @@ richer EDA data.
 - `fiducial-readiness`
 - `local-fiducial-readiness`
 - `dense-pad-escape-readiness`
+- `selective-wave-solder-keepout-readiness`
+- `press-fit-keepout-readiness`
+- `conformal-coating-keepout-readiness`
 
 These checks use KiCad pads, drills, board outlines, and IPC-D-356 points to
 review assembly edge clearance, mechanical keepouts, two-terminal land-pattern
 symmetry, fixture probe access, panel tooling, fiducials, and fine-pitch escape
-signals. Their thresholds are resolved from `assembly_profile` and the
-field-level `assembly` rule-deck section so prototype, production SMT,
-double-sided SMT, and fixture-focused reviews can use different defaults without
+signals. Testpoint accessibility combines probe diameter, spacing, board-edge,
+access-side, feature-type, and soldermask metadata when available. They also
+flag process-specific geometry around likely through-hole
+solder, press-fit, and no-coat contact/test features. Their thresholds are
+resolved from `assembly_profile` and the field-level `assembly` rule-deck
+section so prototype, production SMT,
+double-sided SMT, fixture-focused, hand-assembly, selective-solder, wave-solder,
+press-fit, and conformal-coating reviews can use different defaults without
 changing check code.
 
 ## Artifact Checks
@@ -298,8 +317,10 @@ package. If KiCad input is provided the check also compares the count of KiCad c
 optional declared manifest copper count against Gerber-recognized copper roles
 to catch probable layer-stack mismatches before downstream checks. It reports
 inner copper without both outer copper layers, odd recognized copper layer
-counts, side-specific mask/paste/silkscreen files without matching copper, and
-single-copper packages that also contain bottom-side outputs. It also compares
+counts, side-specific mask/paste/silkscreen files without matching copper,
+single-copper packages that also contain opposite-side outputs, paste files
+without matching same-side mask files, and filenames whose side tokens conflict
+with their inferred Gerber role. It also compares
 recognizable revision and generated-date tokens across Gerber and package
 artifact filenames, warns when generated-date tags are older than the package
 freshness window or later than the current run date. The freshness window

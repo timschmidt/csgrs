@@ -1490,6 +1490,39 @@ fn run_checks(
                     ));
                 }
             }
+            Check::SelectiveWaveSolderKeepoutReadiness => {
+                for board in boards {
+                    violations.extend(checks::selective_wave_solder_keepout_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules
+                            .assembly
+                            .selective_solder_keepout
+                            .max(rules.assembly.wave_solder_keepout),
+                        rules.min_area,
+                    ));
+                }
+            }
+            Check::PressFitKeepoutReadiness => {
+                for board in boards {
+                    violations.extend(checks::press_fit_keepout_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.assembly.press_fit_keepout,
+                        rules.min_area,
+                    ));
+                }
+            }
+            Check::ConformalCoatingKeepoutReadiness => {
+                for board in boards {
+                    violations.extend(checks::conformal_coating_keepout_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.assembly.conformal_coating_keepout,
+                        rules.min_area,
+                    ));
+                }
+            }
             Check::ThermalPadViaReadiness => {
                 for board in boards {
                     violations.extend(checks::thermal_pad_via_readiness(

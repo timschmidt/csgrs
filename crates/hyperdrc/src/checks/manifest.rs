@@ -250,6 +250,7 @@ pub fn file_manifest_readiness(input: &ManifestInput) -> Vec<Violation> {
         "duplicate-outline",
         &mut violations,
     );
+    check_layer_name_side_conflicts(&classified, &mut violations);
 
     check_layer_role_coherence(
         top_copper,
@@ -560,6 +561,28 @@ fn check_layer_role_coherence(
             "ambiguous-single-copper-with-bottom-outputs",
             Severity::Warning,
             "package has one recognized copper layer but also contains bottom-side manufacturing outputs",
+        ));
+    }
+    let top_outputs = top_mask + top_paste + top_silk;
+    if copper_count == 1 && bottom_copper > 0 && top_outputs > 0 {
+        violations.push(package_violation(
+            "ambiguous-single-copper-with-top-outputs",
+            Severity::Warning,
+            "package has one recognized copper layer but also contains top-side manufacturing outputs",
+        ));
+    }
+    if top_paste > 0 && top_mask == 0 {
+        violations.push(package_violation(
+            "top-paste-without-mask",
+            Severity::Warning,
+            "top paste was recognized without a top solder mask layer; review paste/mask export completeness",
+        ));
+    }
+    if bottom_paste > 0 && bottom_mask == 0 {
+        violations.push(package_violation(
+            "bottom-paste-without-mask",
+            Severity::Warning,
+            "bottom paste was recognized without a bottom solder mask layer; review paste/mask export completeness",
         ));
     }
 }
@@ -1031,6 +1054,76 @@ fn duplicate_role_warning(
     }
 }
 
+fn check_layer_name_side_conflicts(
+    classified: &[(&ManifestGerberLayer, GerberRole)],
+    violations: &mut Vec<Violation>,
+) {
+    for (layer, role) in classified {
+        let Some(expected_side) = gerber_role_side(*role) else {
+            continue;
+        };
+        let text = format!("{} {}", layer.source_path, layer.name).to_ascii_lowercase();
+        let has_wrong_side = match expected_side {
+            GerberSide::Top => has_bottom_side_marker(&text),
+            GerberSide::Bottom => has_top_side_marker(&text),
+        };
+        if !has_wrong_side {
+            continue;
+        }
+
+        let side = match expected_side {
+            GerberSide::Top => "top",
+            GerberSide::Bottom => "bottom",
+        };
+        violations.push(Violation::new(
+            "file-manifest-readiness",
+            Severity::Warning,
+            vec!["package:layer-side-name-conflict".to_string()],
+            None,
+            Vec::new(),
+            Vec::new(),
+            Some(format!(
+                "file {:?} was classified as a {side}-side manufacturing layer, but its name also contains opposite-side tokens",
+                layer.source_path
+            )),
+        ));
+    }
+}
+
+#[derive(Copy, Clone)]
+enum GerberSide {
+    Top,
+    Bottom,
+}
+
+fn gerber_role_side(role: GerberRole) -> Option<GerberSide> {
+    match role {
+        GerberRole::TopCopper
+        | GerberRole::TopMask
+        | GerberRole::TopPaste
+        | GerberRole::TopSilk => Some(GerberSide::Top),
+        GerberRole::BottomCopper
+        | GerberRole::BottomMask
+        | GerberRole::BottomPaste
+        | GerberRole::BottomSilk => Some(GerberSide::Bottom),
+        GerberRole::InnerCopper | GerberRole::Outline | GerberRole::Other => None,
+    }
+}
+
+fn has_top_side_marker(text: &str) -> bool {
+    has_side_token(text, &["top", "front", "f"]) || text.contains("f.cu")
+}
+
+fn has_bottom_side_marker(text: &str) -> bool {
+    has_side_token(text, &["bottom", "bot", "back", "b"]) || text.contains("b.cu")
+}
+
+fn has_side_token(text: &str, tokens: &[&str]) -> bool {
+    text.split(|ch: char| !ch.is_ascii_alphanumeric())
+        .filter(|token| !token.is_empty())
+        .any(|token| tokens.contains(&token))
+}
+
 fn package_violation(slug: &str, severity: Severity, message: &str) -> Violation {
     Violation::new(
         "file-manifest-readiness",
@@ -1389,6 +1482,90 @@ mod tests {
         assert!(slugs.contains(&"package:orphan-bottom-silkscreen".to_string()));
         assert!(slugs.contains(&"package:orphan-bottom-paste".to_string()));
         assert!(slugs.contains(&"package:ambiguous-single-copper-with-bottom-outputs".to_string()));
+    }
+
+    #[test]
+    fn bottom_single_copper_with_top_outputs_is_reported() {
+        let input = ManifestInput {
+            gerber_layers: vec![
+                layer("BottomCopper.GBL"),
+                layer("TopSolderMask.GTS"),
+                layer("TopSilkscreen.GTO"),
+                layer("TopPaste.GTP"),
+            ],
+            has_board_outline: true,
+            has_drill_data: true,
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            ..Default::default()
+        };
+        let slugs = violation_slugs(&file_manifest_readiness(&input));
+
+        assert!(slugs.contains(&"package:orphan-top-mask".to_string()));
+        assert!(slugs.contains(&"package:orphan-top-silkscreen".to_string()));
+        assert!(slugs.contains(&"package:orphan-top-paste".to_string()));
+        assert!(slugs.contains(&"package:ambiguous-single-copper-with-top-outputs".to_string()));
+    }
+
+    #[test]
+    fn paste_without_matching_mask_is_reported_even_when_mask_is_optional() {
+        let input = ManifestInput {
+            gerber_layers: vec![layer("TopCopper.GTL"), layer("TopPaste.GTP")],
+            required_layers: ManifestLayerRequirements {
+                top_mask: false,
+                top_silkscreen: false,
+                board_outline: false,
+                drill_data: false,
+                ..ManifestLayerRequirements::default()
+            },
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            ..Default::default()
+        };
+        let slugs = violation_slugs(&file_manifest_readiness(&input));
+
+        assert!(slugs.contains(&"package:top-paste-without-mask".to_string()));
+        assert!(!slugs.contains(&"package:missing-top-mask".to_string()));
+    }
+
+    #[test]
+    fn layer_name_side_conflicts_are_reported() {
+        let input = ManifestInput {
+            gerber_layers: vec![
+                layer("Widget_B_Cu.gtl"),
+                layer("Widget_top_layer.gbs"),
+                layer("Widget_EdgeCuts.gko"),
+            ],
+            has_board_outline: false,
+            has_drill_data: true,
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            ..Default::default()
+        };
+        let violations = file_manifest_readiness(&input);
+
+        assert!(
+            violation_slugs(&violations)
+                .iter()
+                .filter(|slug| *slug == "package:layer-side-name-conflict")
+                .count()
+                >= 2
+        );
     }
 
     #[test]
