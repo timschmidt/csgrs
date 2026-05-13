@@ -751,6 +751,90 @@ pub fn board_edge_exposure(
     violations
 }
 
+pub fn high_speed_edge_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    edge_clearance: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    let Some(outline) = &board.board_outline else {
+        return Vec::new();
+    };
+    let allowed = outline.offset(-edge_clearance);
+    let mut violations = Vec::new();
+
+    for feature in selected_copper_features(board, selected_layers) {
+        let Some(net) = &feature.net else {
+            continue;
+        };
+        if !looks_high_speed_net(net) {
+            continue;
+        }
+
+        let intrusion = feature.sketch.difference(&allowed);
+        let shapes = multipolygon_to_shapes(&intrusion.to_multipolygon(), min_area);
+        if shapes.is_empty() {
+            continue;
+        }
+
+        violations.push(Violation::new(
+            "high-speed-edge-readiness",
+            Severity::Warning,
+            vec![feature.layer.clone(), "KiCad Edge.Cuts".to_string()],
+            None,
+            shapes,
+            vec![feature.location],
+            Some(format!(
+                "likely high-speed net {net} is within {edge_clearance:.6} of the board edge; review EMC, return-current, and connector-edge intent"
+            )),
+        ));
+    }
+
+    violations
+}
+
+pub fn high_voltage_edge_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    edge_clearance: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    let Some(outline) = &board.board_outline else {
+        return Vec::new();
+    };
+    let allowed = outline.offset(-edge_clearance);
+    let mut violations = Vec::new();
+
+    for feature in selected_copper_features(board, selected_layers) {
+        let Some(net) = &feature.net else {
+            continue;
+        };
+        if !looks_high_voltage_net(net) {
+            continue;
+        }
+
+        let intrusion = feature.sketch.difference(&allowed);
+        let shapes = multipolygon_to_shapes(&intrusion.to_multipolygon(), min_area);
+        if shapes.is_empty() {
+            continue;
+        }
+
+        violations.push(Violation::new(
+            "high-voltage-edge-readiness",
+            Severity::Warning,
+            vec![feature.layer.clone(), "KiCad Edge.Cuts".to_string()],
+            None,
+            shapes,
+            vec![feature.location],
+            Some(format!(
+                "likely high-voltage net {net} is within {edge_clearance:.6} of the board edge; review edge creepage, clearance, and routed-slot barrier intent"
+            )),
+        ));
+    }
+
+    violations
+}
+
 pub fn controlled_impedance_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -793,6 +877,358 @@ pub fn controlled_impedance_readiness(
         .collect()
 }
 
+pub fn differential_pair_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+) -> Vec<Violation> {
+    let mut pairs: BTreeMap<String, DifferentialPairUse> = BTreeMap::new();
+
+    for feature in selected_copper_features(board, selected_layers) {
+        let Some(net) = &feature.net else {
+            continue;
+        };
+        let Some((pair, side)) = differential_pair_key(net) else {
+            continue;
+        };
+
+        let entry = pairs.entry(pair).or_default();
+        match side {
+            DifferentialSide::Positive => {
+                entry.positive_layers.insert(feature.layer.clone());
+                entry.positive_locations.push(feature.location);
+            }
+            DifferentialSide::Negative => {
+                entry.negative_layers.insert(feature.layer.clone());
+                entry.negative_locations.push(feature.location);
+            }
+        }
+    }
+
+    let mut violations = Vec::new();
+    for (pair, usage) in pairs {
+        let has_positive = !usage.positive_layers.is_empty();
+        let has_negative = !usage.negative_layers.is_empty();
+        if !has_positive || !has_negative {
+            let mut layers = usage.positive_layers.clone();
+            layers.extend(usage.negative_layers.clone());
+            let mut locations = usage.positive_locations.clone();
+            locations.extend(usage.negative_locations.clone());
+            let missing = if has_positive { "negative" } else { "positive" };
+            violations.push(Violation::new(
+                "differential-pair-readiness",
+                Severity::Warning,
+                layers.into_iter().collect(),
+                None,
+                Vec::new(),
+                locations,
+                Some(format!(
+                    "likely differential pair {pair} is missing its {missing} side on selected copper layers"
+                )),
+            ));
+            continue;
+        }
+
+        if usage.positive_layers != usage.negative_layers {
+            let mut layers = usage.positive_layers.clone();
+            layers.extend(usage.negative_layers.clone());
+            let mut locations = usage.positive_locations;
+            locations.extend(usage.negative_locations);
+            violations.push(Violation::new(
+                "differential-pair-readiness",
+                Severity::Warning,
+                layers.into_iter().collect(),
+                None,
+                Vec::new(),
+                locations,
+                Some(format!(
+                    "likely differential pair {pair} has positive and negative sides on different selected copper layers"
+                )),
+            ));
+        }
+    }
+
+    violations
+}
+
+pub fn differential_pair_spacing_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    maximum_pair_gap: f64,
+) -> Vec<Violation> {
+    let mut pairs: BTreeMap<String, DifferentialPairFeatureUse<'_>> = BTreeMap::new();
+
+    for feature in selected_copper_features(board, selected_layers) {
+        let Some(net) = &feature.net else {
+            continue;
+        };
+        let Some((pair, side)) = differential_pair_key(net) else {
+            continue;
+        };
+
+        let entry = pairs.entry(pair).or_default();
+        match side {
+            DifferentialSide::Positive => entry.positive.push(feature),
+            DifferentialSide::Negative => entry.negative.push(feature),
+        }
+    }
+
+    let mut violations = Vec::new();
+    for (pair, usage) in pairs {
+        let mut layers = BTreeSet::new();
+        layers.extend(usage.positive.iter().map(|feature| feature.layer.clone()));
+        layers.extend(usage.negative.iter().map(|feature| feature.layer.clone()));
+
+        for layer in layers {
+            let positives = usage
+                .positive
+                .iter()
+                .copied()
+                .filter(|feature| feature.layer == layer)
+                .collect::<Vec<_>>();
+            let negatives = usage
+                .negative
+                .iter()
+                .copied()
+                .filter(|feature| feature.layer == layer)
+                .collect::<Vec<_>>();
+            if positives.is_empty() || negatives.is_empty() {
+                continue;
+            }
+
+            let nearest = positives
+                .iter()
+                .flat_map(|positive| {
+                    negatives.iter().map(move |negative| {
+                        (
+                            polygon_boundary_distance(
+                                &positive.sketch.to_multipolygon(),
+                                &negative.sketch.to_multipolygon(),
+                            ),
+                            positive.location,
+                            negative.location,
+                        )
+                    })
+                })
+                .min_by(|left, right| {
+                    left.0
+                        .partial_cmp(&right.0)
+                        .unwrap_or(std::cmp::Ordering::Equal)
+                });
+            let Some((gap, positive_location, negative_location)) = nearest else {
+                continue;
+            };
+            if gap <= maximum_pair_gap {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "differential-pair-spacing-readiness",
+                Severity::Warning,
+                vec![layer],
+                None,
+                Vec::new(),
+                vec![positive_location, negative_location],
+                Some(format!(
+                    "likely differential pair {pair} has nearest parsed pair-side spacing {gap:.6} above review threshold {maximum_pair_gap:.6}"
+                )),
+            ));
+        }
+    }
+
+    violations
+}
+
+pub fn reference_plane_readiness(board: &BoardModel, selected_layers: &[String]) -> Vec<Violation> {
+    let features = selected_copper_features(board, selected_layers);
+    let has_ground_zone = features.iter().any(|feature| {
+        feature.kind == CopperKind::Zone && feature.net.as_deref().is_some_and(looks_ground_net)
+    });
+    if has_ground_zone {
+        return Vec::new();
+    }
+
+    let mut nets: BTreeMap<String, NetLayerUse> = BTreeMap::new();
+    for feature in features {
+        let Some(net) = &feature.net else {
+            continue;
+        };
+        if !looks_high_speed_net(net) {
+            continue;
+        }
+
+        let entry = nets.entry(net.clone()).or_default();
+        entry.layers.insert(feature.layer.clone());
+        entry.locations.push(feature.location);
+    }
+
+    nets.into_iter()
+        .map(|(net, usage)| {
+            Violation::new(
+                "reference-plane-readiness",
+                Severity::Warning,
+                usage.layers.into_iter().collect(),
+                None,
+                Vec::new(),
+                usage.locations,
+                Some(format!(
+                    "likely high-speed net {net} has no parsed ground zone on selected copper layers; review reference-plane and return-path continuity"
+                )),
+            )
+        })
+        .collect()
+}
+
+pub fn reference_plane_void_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    min_area: f64,
+) -> Vec<Violation> {
+    let features = selected_copper_features(board, selected_layers);
+    let ground_polygons = features
+        .iter()
+        .filter(|feature| {
+            feature.kind == CopperKind::Zone && feature.net.as_deref().is_some_and(looks_ground_net)
+        })
+        .flat_map(|feature| feature.sketch.to_multipolygon().0)
+        .collect::<Vec<_>>();
+    if ground_polygons.is_empty() {
+        return Vec::new();
+    }
+    let ground = polygons_to_sketch(
+        ground_polygons,
+        Some(LayerMetadata {
+            name: "KiCad ground zones".to_string(),
+        }),
+    );
+
+    let mut violations = Vec::new();
+    for feature in features {
+        let Some(net) = &feature.net else {
+            continue;
+        };
+        if !looks_high_speed_net(net) || feature.kind == CopperKind::Via {
+            continue;
+        }
+
+        let uncovered = feature.sketch.difference(&ground);
+        let shapes = multipolygon_to_shapes(&uncovered.to_multipolygon(), min_area);
+        if shapes.is_empty() {
+            continue;
+        }
+
+        violations.push(Violation::new(
+            "reference-plane-void-readiness",
+            Severity::Warning,
+            vec![feature.layer.clone(), "KiCad ground zones".to_string()],
+            None,
+            shapes,
+            vec![feature.location],
+            Some(format!(
+                "likely high-speed net {net} has copper without overlapping parsed ground-zone coverage; review split-plane and void-crossing return path"
+            )),
+        ));
+    }
+
+    violations
+}
+
+pub fn orphaned_zone_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    anchor_tolerance: f64,
+) -> Vec<Violation> {
+    let features = selected_copper_features(board, selected_layers);
+    let mut violations = Vec::new();
+
+    for zone in features
+        .iter()
+        .filter(|feature| feature.kind == CopperKind::Zone)
+    {
+        let Some(net) = &zone.net else {
+            continue;
+        };
+        let has_anchor = features.iter().any(|feature| {
+            feature.kind != CopperKind::Zone
+                && feature.net.as_deref() == Some(net.as_str())
+                && (feature
+                    .sketch
+                    .intersection(&zone.sketch)
+                    .to_multipolygon()
+                    .0
+                    .iter()
+                    .any(|polygon| polygon.unsigned_area() > 0.0)
+                    || polygon_boundary_distance(
+                        &feature.sketch.to_multipolygon(),
+                        &zone.sketch.to_multipolygon(),
+                    ) <= anchor_tolerance)
+        });
+        if has_anchor {
+            continue;
+        }
+
+        violations.push(Violation::new(
+            "orphaned-zone-readiness",
+            Severity::Warning,
+            vec![zone.layer.clone()],
+            None,
+            Vec::new(),
+            vec![zone.location],
+            Some(format!(
+                "copper zone on net {net} has no parsed same-net pad, via, or segment within {anchor_tolerance:.6}; review zone refill and connectivity"
+            )),
+        ));
+    }
+
+    violations
+}
+
+pub fn same_net_island_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    connection_tolerance: f64,
+) -> Vec<Violation> {
+    let mut by_net_layer: BTreeMap<(String, String), Vec<&CopperFeature>> = BTreeMap::new();
+    for feature in selected_copper_features(board, selected_layers) {
+        let Some(net) = &feature.net else {
+            continue;
+        };
+        by_net_layer
+            .entry((net.clone(), feature.layer.clone()))
+            .or_default()
+            .push(feature);
+    }
+
+    let mut violations = Vec::new();
+    for ((net, layer), features) in by_net_layer {
+        if features.len() < 2 {
+            continue;
+        }
+        let components = copper_components(&features, connection_tolerance);
+        if components.len() < 2 {
+            continue;
+        }
+
+        let locations = components
+            .iter()
+            .filter_map(|component| component.first().map(|index| features[*index].location))
+            .collect::<Vec<_>>();
+        violations.push(Violation::new(
+            "same-net-island-readiness",
+            Severity::Warning,
+            vec![layer],
+            None,
+            Vec::new(),
+            locations,
+            Some(format!(
+                "net {net} appears as {} disconnected copper islands on one selected layer; review routing, zone refill, or intentional no-connect handling",
+                components.len()
+            )),
+        ));
+    }
+
+    violations
+}
+
 pub fn high_current_readiness(board: &BoardModel, selected_layers: &[String]) -> Vec<Violation> {
     let mut nets: BTreeMap<String, NetLayerUse> = BTreeMap::new();
 
@@ -829,6 +1265,179 @@ pub fn high_current_readiness(board: &BoardModel, selected_layers: &[String]) ->
                     usage.via_count
                 )),
             )
+        })
+        .collect()
+}
+
+pub fn power_via_array_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    maximum_isolated_pitch: f64,
+) -> Vec<Violation> {
+    let mut nets: BTreeMap<String, ViaArrayUse> = BTreeMap::new();
+
+    for feature in selected_copper_features(board, selected_layers) {
+        let Some(net) = &feature.net else {
+            continue;
+        };
+        if feature.kind != CopperKind::Via || !looks_high_current_net(net) {
+            continue;
+        }
+
+        let entry = nets.entry(net.clone()).or_default();
+        entry.layers.insert(feature.layer.clone());
+        entry.locations.push(feature.location);
+    }
+
+    let mut violations = Vec::new();
+    for (net, usage) in nets {
+        if usage.locations.len() < 2 {
+            continue;
+        }
+
+        let isolated = usage
+            .locations
+            .iter()
+            .copied()
+            .filter(|location| {
+                !usage.locations.iter().any(|other| {
+                    *location != *other && distance(*location, *other) <= maximum_isolated_pitch
+                })
+            })
+            .collect::<Vec<_>>();
+        if isolated.is_empty() {
+            continue;
+        }
+
+        violations.push(Violation::new(
+            "power-via-array-readiness",
+            Severity::Warning,
+            usage.layers.into_iter().collect(),
+            None,
+            Vec::new(),
+            isolated,
+            Some(format!(
+                "likely high-current net {net} has isolated vias farther than {maximum_isolated_pitch:.6} from the rest of the same-net via array"
+            )),
+        ));
+    }
+
+    violations
+}
+
+pub fn thermal_via_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    minimum_vias: usize,
+    anchor_tolerance: f64,
+) -> Vec<Violation> {
+    let features = selected_copper_features(board, selected_layers);
+    let mut violations = Vec::new();
+
+    for zone in features
+        .iter()
+        .filter(|feature| feature.kind == CopperKind::Zone)
+    {
+        let Some(net) = &zone.net else {
+            continue;
+        };
+        if !looks_high_current_net(net) {
+            continue;
+        }
+
+        let via_count = features
+            .iter()
+            .filter(|feature| {
+                feature.kind == CopperKind::Via
+                    && feature.net.as_deref() == Some(net.as_str())
+                    && copper_features_touch(feature, zone, anchor_tolerance)
+            })
+            .count();
+        if via_count >= minimum_vias {
+            continue;
+        }
+
+        violations.push(Violation::new(
+            "thermal-via-readiness",
+            Severity::Warning,
+            vec![zone.layer.clone()],
+            None,
+            Vec::new(),
+            vec![zone.location],
+            Some(format!(
+                "likely power or thermal zone {net} has {via_count} parsed same-net via(s), below review threshold {minimum_vias}"
+            )),
+        ));
+    }
+
+    violations
+}
+
+pub fn power_plane_readiness(board: &BoardModel, selected_layers: &[String]) -> Vec<Violation> {
+    let mut nets: BTreeMap<String, NetLayerUse> = BTreeMap::new();
+
+    for feature in selected_copper_features(board, selected_layers) {
+        let Some(net) = &feature.net else {
+            continue;
+        };
+        if !looks_high_current_net(net) {
+            continue;
+        }
+
+        let entry = nets.entry(net.clone()).or_default();
+        entry.layers.insert(feature.layer.clone());
+        entry.locations.push(feature.location);
+        if feature.kind == CopperKind::Zone {
+            entry.has_zone = true;
+        }
+    }
+
+    nets.into_iter()
+        .filter(|(_, usage)| !usage.has_zone)
+        .map(|(net, usage)| {
+            Violation::new(
+                "power-plane-readiness",
+                Severity::Warning,
+                usage.layers.into_iter().collect(),
+                None,
+                Vec::new(),
+                usage.locations,
+                Some(format!(
+                    "likely high-current net {net} has no parsed same-net copper zone on selected layers; review pour, plane, and current-spreading intent"
+                )),
+            )
+        })
+        .collect()
+}
+
+pub fn high_current_neck_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    minimum_power_width: f64,
+) -> Vec<Violation> {
+    selected_copper_features(board, selected_layers)
+        .into_iter()
+        .filter_map(|feature| {
+            let net = feature.net.as_deref()?;
+            if !looks_high_current_net(net) {
+                return None;
+            }
+
+            let width = minimum_bounding_dimension(&feature.sketch);
+            (width > 0.0 && width < minimum_power_width).then(|| {
+                Violation::new(
+                    "high-current-neck-readiness",
+                    Severity::Warning,
+                    vec![feature.layer.clone()],
+                    None,
+                    Vec::new(),
+                    vec![feature.location],
+                    Some(format!(
+                        "likely high-current net {net} has {:?} copper neck width {width:.6} below preferred power width {minimum_power_width:.6}",
+                        feature.kind
+                    )),
+                )
+            })
         })
         .collect()
 }
@@ -889,12 +1498,201 @@ pub fn voltage_clearance_readiness(
     violations
 }
 
+pub fn sensitive_net_spacing_readiness(
+    board: &BoardModel,
+    clearance: f64,
+    selected_layers: &[String],
+    min_area: f64,
+) -> Vec<Violation> {
+    let features = selected_copper_features(board, selected_layers);
+    let mut violations = Vec::new();
+
+    for left_index in 0..features.len() {
+        for right in &features[(left_index + 1)..] {
+            let left = &features[left_index];
+            if left.layer != right.layer || left.net.is_none() || left.net == right.net {
+                continue;
+            }
+
+            let left_sensitive = left.net.as_deref().is_some_and(looks_sensitive_net);
+            let right_sensitive = right.net.as_deref().is_some_and(looks_sensitive_net);
+            let left_noisy = left.net.as_deref().is_some_and(looks_noisy_net);
+            let right_noisy = right.net.as_deref().is_some_and(looks_noisy_net);
+            if !(left_sensitive && right_noisy || right_sensitive && left_noisy) {
+                continue;
+            }
+
+            let overlap = left.sketch.offset(clearance).intersection(&right.sketch);
+            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            let locations = if shapes.is_empty()
+                && polygon_boundary_distance(
+                    &left.sketch.to_multipolygon(),
+                    &right.sketch.to_multipolygon(),
+                ) <= clearance
+            {
+                vec![left.location, right.location]
+            } else {
+                Vec::new()
+            };
+            if shapes.is_empty() && locations.is_empty() {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "sensitive-net-spacing-readiness",
+                Severity::Warning,
+                vec![left.layer.clone()],
+                None,
+                shapes,
+                locations,
+                Some(format!(
+                    "likely sensitive net {:?} is within {clearance:.6} of likely noisy net {:?}; review analog/RF segregation and guard intent",
+                    if left_sensitive { &left.net } else { &right.net },
+                    if left_sensitive { &right.net } else { &left.net }
+                )),
+            ));
+        }
+    }
+
+    violations
+}
+
+pub fn gold_finger_readiness(board: &BoardModel, selected_layers: &[String]) -> Vec<Violation> {
+    selected_copper_features(board, selected_layers)
+        .into_iter()
+        .filter(|feature| {
+            feature.kind == CopperKind::Via
+                && feature.net.as_deref().is_some_and(looks_gold_finger_net)
+        })
+        .map(|feature| {
+            Violation::new(
+                "gold-finger-readiness",
+                Severity::Warning,
+                vec![feature.layer.clone()],
+                None,
+                Vec::new(),
+                vec![feature.location],
+                Some(format!(
+                    "likely gold-finger net {:?} has via copper; review no-via finger plating and bevel keepout rules",
+                    feature.net
+                )),
+            )
+        })
+        .collect()
+}
+
+pub fn return_path_readiness(
+    board: &BoardModel,
+    stitching_distance: f64,
+    selected_layers: &[String],
+) -> Vec<Violation> {
+    let features = selected_copper_features(board, selected_layers);
+    let ground_vias = features
+        .iter()
+        .filter(|feature| feature.kind == CopperKind::Via)
+        .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
+        .copied()
+        .collect::<Vec<_>>();
+    let signal_vias = features
+        .iter()
+        .filter(|feature| feature.kind == CopperKind::Via)
+        .filter(|feature| feature.net.as_deref().is_some_and(looks_high_speed_net))
+        .copied()
+        .collect::<Vec<_>>();
+    let mut violations = Vec::new();
+
+    for via in signal_vias {
+        let has_nearby_ground = ground_vias
+            .iter()
+            .any(|ground| distance(via.location, ground.location) <= stitching_distance);
+        if has_nearby_ground {
+            continue;
+        }
+
+        violations.push(Violation::new(
+            "return-path-readiness",
+            Severity::Warning,
+            vec![via.layer.clone()],
+            None,
+            Vec::new(),
+            vec![via.location],
+            Some(format!(
+                "likely high-speed net {:?} changes layers without a parsed ground stitching via within {stitching_distance:.6}",
+                via.net
+            )),
+        ));
+    }
+
+    violations
+}
+
 #[derive(Default)]
 struct NetLayerUse {
     layers: BTreeSet<String>,
     locations: Vec<[f64; 2]>,
     has_via: bool,
     via_count: usize,
+    has_zone: bool,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+enum DifferentialSide {
+    Positive,
+    Negative,
+}
+
+#[derive(Default)]
+struct DifferentialPairUse {
+    positive_layers: BTreeSet<String>,
+    negative_layers: BTreeSet<String>,
+    positive_locations: Vec<[f64; 2]>,
+    negative_locations: Vec<[f64; 2]>,
+}
+
+#[derive(Default)]
+struct DifferentialPairFeatureUse<'a> {
+    positive: Vec<&'a CopperFeature>,
+    negative: Vec<&'a CopperFeature>,
+}
+
+#[derive(Default)]
+struct ViaArrayUse {
+    layers: BTreeSet<String>,
+    locations: Vec<[f64; 2]>,
+}
+
+fn differential_pair_key(net: &str) -> Option<(String, DifferentialSide)> {
+    let normalized = net.trim().to_ascii_uppercase();
+    let patterns = [
+        ("_DP", DifferentialSide::Positive),
+        ("-DP", DifferentialSide::Positive),
+        (".DP", DifferentialSide::Positive),
+        ("_DM", DifferentialSide::Negative),
+        ("-DM", DifferentialSide::Negative),
+        (".DM", DifferentialSide::Negative),
+        ("D+", DifferentialSide::Positive),
+        ("D-", DifferentialSide::Negative),
+        ("_P", DifferentialSide::Positive),
+        ("-P", DifferentialSide::Positive),
+        (".P", DifferentialSide::Positive),
+        ("_N", DifferentialSide::Negative),
+        ("-N", DifferentialSide::Negative),
+        (".N", DifferentialSide::Negative),
+    ];
+
+    for (suffix, side) in patterns {
+        let Some(base) = normalized.strip_suffix(suffix) else {
+            continue;
+        };
+        let base = base
+            .trim_end_matches(['_', '-', '.', '/', ' '])
+            .trim_start_matches(['_', '-', '.', '/', ' ']);
+        if !base.is_empty() {
+            return Some((base.to_string(), side));
+        }
+    }
+
+    None
 }
 
 fn looks_high_speed_net(net: &str) -> bool {
@@ -923,6 +1721,41 @@ fn looks_high_voltage_net(net: &str) -> bool {
         "HV", "HIGHV", "MAINS", "LINE", "NEUTRAL", "LIVE", "VAC", "AC_L", "AC_N", "RECT", "BULK",
         "400V", "240V", "230V", "120V", "48V",
     ];
+
+    tokens.iter().any(|token| normalized.contains(token))
+}
+
+fn looks_sensitive_net(net: &str) -> bool {
+    let normalized = net.to_ascii_uppercase();
+    let tokens = [
+        "RF", "ANT", "AUDIO", "MIC", "ADC", "DAC", "AIN", "AOUT", "ANALOG", "SENSE", "SNS", "XTAL",
+        "CRYSTAL", "OSC",
+    ];
+
+    tokens.iter().any(|token| normalized.contains(token))
+}
+
+fn looks_noisy_net(net: &str) -> bool {
+    let normalized = net.to_ascii_uppercase();
+    let tokens = ["SW", "PHASE", "MOTOR", "PWM", "GATE", "BOOT", "DRIVE"];
+
+    looks_high_current_net(net)
+        || looks_high_speed_net(net)
+        || tokens.iter().any(|token| normalized.contains(token))
+}
+
+fn looks_ground_net(net: &str) -> bool {
+    let normalized = net.to_ascii_uppercase();
+    matches!(
+        normalized.as_str(),
+        "GND" | "GROUND" | "PGND" | "AGND" | "DGND"
+    ) || normalized.ends_with("_GND")
+        || normalized.ends_with("-GND")
+}
+
+fn looks_gold_finger_net(net: &str) -> bool {
+    let normalized = net.to_ascii_uppercase();
+    let tokens = ["GOLD", "FINGER", "EDGE", "CARD_EDGE", "CONN_EDGE"];
 
     tokens.iter().any(|token| normalized.contains(token))
 }
@@ -1237,6 +2070,50 @@ fn has_nearby_copper(
         .any(|feature| distance(feature.location, location) <= tolerance)
 }
 
+fn copper_features_touch(left: &CopperFeature, right: &CopperFeature, tolerance: f64) -> bool {
+    left.sketch
+        .intersection(&right.sketch)
+        .to_multipolygon()
+        .0
+        .iter()
+        .any(|polygon| polygon.unsigned_area() > 0.0)
+        || polygon_boundary_distance(
+            &left.sketch.to_multipolygon(),
+            &right.sketch.to_multipolygon(),
+        ) <= tolerance
+}
+
+fn copper_components(features: &[&CopperFeature], tolerance: f64) -> Vec<Vec<usize>> {
+    let mut visited = vec![false; features.len()];
+    let mut components = Vec::new();
+
+    for start in 0..features.len() {
+        if visited[start] {
+            continue;
+        }
+
+        let mut stack = vec![start];
+        let mut component = Vec::new();
+        visited[start] = true;
+        while let Some(index) = stack.pop() {
+            component.push(index);
+            for candidate in 0..features.len() {
+                if visited[candidate] {
+                    continue;
+                }
+                if !copper_features_touch(features[index], features[candidate], tolerance) {
+                    continue;
+                }
+                visited[candidate] = true;
+                stack.push(candidate);
+            }
+        }
+        components.push(component);
+    }
+
+    components
+}
+
 fn selected_copper_features<'a>(
     board: &'a BoardModel,
     selected_layers: &[String],
@@ -1314,10 +2191,15 @@ mod tests {
         annular_ring, annular_ring_tolerance, apply_ipc356_nets, board_edge_exposure,
         board_outline_drill_clearance, castellation_hole_readiness, castellation_intent,
         controlled_impedance_readiness, copper_net_intent, copper_width_readiness,
-        drill_aspect_ratio, drill_spacing, drill_table_consistency, drill_to_copper_clearance,
-        high_current_readiness, ipc356_coverage, ipc356_drill_diameter, net_spacing,
-        panelization_clearance, plane_clearance_readiness, plating_intent, registration_tolerance,
-        routed_slot_readiness, teardrop_readiness, thermal_relief_readiness, via_in_pad_readiness,
+        differential_pair_readiness, differential_pair_spacing_readiness, drill_aspect_ratio,
+        drill_spacing, drill_table_consistency, drill_to_copper_clearance, gold_finger_readiness,
+        high_current_neck_readiness, high_current_readiness, high_speed_edge_readiness,
+        high_voltage_edge_readiness, ipc356_coverage, ipc356_drill_diameter, net_spacing,
+        orphaned_zone_readiness, panelization_clearance, plane_clearance_readiness, plating_intent,
+        power_plane_readiness, power_via_array_readiness, reference_plane_readiness,
+        reference_plane_void_readiness, registration_tolerance, return_path_readiness,
+        routed_slot_readiness, same_net_island_readiness, sensitive_net_spacing_readiness,
+        teardrop_readiness, thermal_relief_readiness, thermal_via_readiness, via_in_pad_readiness,
         voltage_clearance_readiness,
     };
 
@@ -2077,6 +2959,102 @@ mod tests {
     }
 
     #[test]
+    fn high_speed_edge_readiness_reports_edge_rate_copper_near_outline() {
+        let mut board = board_with_outline(square(0.0, 0.0, 10.0, 10.0));
+        board.copper = vec![copper_line(
+            "USB_D+",
+            CopperKind::Segment,
+            [0.10, 1.0],
+            [0.90, 1.0],
+            0.10,
+        )];
+
+        let violations = high_speed_edge_readiness(&board, &[], 0.50, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "high-speed-edge-readiness");
+    }
+
+    #[test]
+    fn high_speed_edge_readiness_allows_inset_or_low_speed_copper() {
+        let mut board = board_with_outline(square(0.0, 0.0, 10.0, 10.0));
+        board.copper = vec![
+            copper_line("USB_D+", CopperKind::Segment, [2.0, 2.0], [3.0, 2.0], 0.10),
+            copper_line("GPIO1", CopperKind::Segment, [0.10, 1.0], [0.90, 1.0], 0.10),
+        ];
+
+        assert!(high_speed_edge_readiness(&board, &[], 0.50, 1.0e-9).is_empty());
+    }
+
+    #[test]
+    fn high_speed_edge_readiness_respects_selected_layers() {
+        let mut board = board_with_outline(square(0.0, 0.0, 10.0, 10.0));
+        board.copper = vec![copper_line_on_layer(
+            "PCIE_RX0",
+            CopperKind::Segment,
+            "B.Cu",
+            [0.10, 1.0],
+            [0.90, 1.0],
+            0.10,
+        )];
+
+        assert!(high_speed_edge_readiness(&board, &["F.Cu".to_string()], 0.50, 1.0e-9).is_empty());
+        assert_eq!(
+            high_speed_edge_readiness(&board, &["B.Cu".to_string()], 0.50, 1.0e-9).len(),
+            1
+        );
+    }
+
+    #[test]
+    fn high_voltage_edge_readiness_reports_hv_copper_near_outline() {
+        let mut board = board_with_outline(square(0.0, 0.0, 10.0, 10.0));
+        board.copper = vec![copper_line(
+            "HV_400V",
+            CopperKind::Segment,
+            [0.20, 1.0],
+            [0.90, 1.0],
+            0.10,
+        )];
+
+        let violations = high_voltage_edge_readiness(&board, &[], 0.80, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "high-voltage-edge-readiness");
+    }
+
+    #[test]
+    fn high_voltage_edge_readiness_allows_inset_or_low_voltage_copper() {
+        let mut board = board_with_outline(square(0.0, 0.0, 10.0, 10.0));
+        board.copper = vec![
+            copper_line("HV_400V", CopperKind::Segment, [2.0, 2.0], [3.0, 2.0], 0.10),
+            copper_line("GPIO1", CopperKind::Segment, [0.2, 1.0], [0.9, 1.0], 0.10),
+        ];
+
+        assert!(high_voltage_edge_readiness(&board, &[], 0.80, 1.0e-9).is_empty());
+    }
+
+    #[test]
+    fn high_voltage_edge_readiness_respects_selected_layers() {
+        let mut board = board_with_outline(square(0.0, 0.0, 10.0, 10.0));
+        board.copper = vec![copper_line_on_layer(
+            "MAINS_L",
+            CopperKind::Segment,
+            "B.Cu",
+            [0.20, 1.0],
+            [0.90, 1.0],
+            0.10,
+        )];
+
+        assert!(
+            high_voltage_edge_readiness(&board, &["F.Cu".to_string()], 0.80, 1.0e-9).is_empty()
+        );
+        assert_eq!(
+            high_voltage_edge_readiness(&board, &["B.Cu".to_string()], 0.80, 1.0e-9).len(),
+            1
+        );
+    }
+
+    #[test]
     fn controlled_impedance_readiness_reports_high_speed_net_layer_change_without_via() {
         let board = board_with_copper(vec![
             copper_line_on_layer(
@@ -2169,6 +3147,347 @@ mod tests {
         assert!(controlled_impedance_readiness(&board, &["F.Cu".to_string()]).is_empty());
         assert_eq!(
             controlled_impedance_readiness(&board, &["F.Cu".to_string(), "B.Cu".to_string()]).len(),
+            1
+        );
+    }
+
+    #[test]
+    fn differential_pair_readiness_reports_missing_mate() {
+        let board = board_with_copper(vec![copper_line(
+            "USB_D+",
+            CopperKind::Segment,
+            [0.0, 0.0],
+            [1.0, 0.0],
+            0.12,
+        )]);
+
+        let violations = differential_pair_readiness(&board, &[]);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "differential-pair-readiness");
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("missing its negative side"))
+        );
+    }
+
+    #[test]
+    fn differential_pair_readiness_reports_layer_mismatch() {
+        let board = board_with_copper(vec![
+            copper_line_on_layer(
+                "PCIE_TX0_P",
+                CopperKind::Segment,
+                "F.Cu",
+                [0.0, 0.0],
+                [1.0, 0.0],
+                0.12,
+            ),
+            copper_line_on_layer(
+                "PCIE_TX0_N",
+                CopperKind::Segment,
+                "B.Cu",
+                [0.0, 0.2],
+                [1.0, 0.2],
+                0.12,
+            ),
+        ]);
+
+        let violations = differential_pair_readiness(&board, &[]);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "differential-pair-readiness");
+        assert_eq!(violations[0].layers, vec!["B.Cu", "F.Cu"]);
+    }
+
+    #[test]
+    fn differential_pair_readiness_allows_matched_pair_on_same_layer() {
+        let board = board_with_copper(vec![
+            copper_line("USB_D+", CopperKind::Segment, [0.0, 0.0], [1.0, 0.0], 0.12),
+            copper_line("USB_D-", CopperKind::Segment, [0.0, 0.2], [1.0, 0.2], 0.12),
+        ]);
+
+        assert!(differential_pair_readiness(&board, &[]).is_empty());
+    }
+
+    #[test]
+    fn differential_pair_readiness_respects_selected_layers() {
+        let board = board_with_copper(vec![copper_line_on_layer(
+            "LVDS_CLK_P",
+            CopperKind::Segment,
+            "B.Cu",
+            [0.0, 0.0],
+            [1.0, 0.0],
+            0.12,
+        )]);
+
+        assert!(differential_pair_readiness(&board, &["F.Cu".to_string()]).is_empty());
+        assert_eq!(
+            differential_pair_readiness(&board, &["B.Cu".to_string()]).len(),
+            1
+        );
+    }
+
+    #[test]
+    fn differential_pair_spacing_readiness_reports_loose_pair_gap() {
+        let board = board_with_copper(vec![
+            copper_line("USB_D+", CopperKind::Segment, [0.0, 0.0], [1.0, 0.0], 0.10),
+            copper_line("USB_D-", CopperKind::Segment, [0.0, 1.0], [1.0, 1.0], 0.10),
+        ]);
+
+        let violations = differential_pair_spacing_readiness(&board, &[], 0.30);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "differential-pair-spacing-readiness");
+    }
+
+    #[test]
+    fn differential_pair_spacing_readiness_allows_close_or_unpaired_features() {
+        let board = board_with_copper(vec![
+            copper_line("USB_D+", CopperKind::Segment, [0.0, 0.0], [1.0, 0.0], 0.10),
+            copper_line(
+                "USB_D-",
+                CopperKind::Segment,
+                [0.0, 0.20],
+                [1.0, 0.20],
+                0.10,
+            ),
+            copper_line("GPIO1", CopperKind::Segment, [0.0, 1.0], [1.0, 1.0], 0.10),
+        ]);
+
+        assert!(differential_pair_spacing_readiness(&board, &[], 0.30).is_empty());
+    }
+
+    #[test]
+    fn differential_pair_spacing_readiness_respects_selected_layers() {
+        let board = board_with_copper(vec![
+            copper_line_on_layer(
+                "LVDS_CLK_P",
+                CopperKind::Segment,
+                "B.Cu",
+                [0.0, 0.0],
+                [1.0, 0.0],
+                0.10,
+            ),
+            copper_line_on_layer(
+                "LVDS_CLK_N",
+                CopperKind::Segment,
+                "B.Cu",
+                [0.0, 1.0],
+                [1.0, 1.0],
+                0.10,
+            ),
+        ]);
+
+        assert!(
+            differential_pair_spacing_readiness(&board, &["F.Cu".to_string()], 0.30).is_empty()
+        );
+        assert_eq!(
+            differential_pair_spacing_readiness(&board, &["B.Cu".to_string()], 0.30).len(),
+            1
+        );
+    }
+
+    #[test]
+    fn reference_plane_readiness_reports_high_speed_without_ground_zone() {
+        let board = board_with_copper(vec![copper_line(
+            "USB_D+",
+            CopperKind::Segment,
+            [0.0, 0.0],
+            [1.0, 0.0],
+            0.12,
+        )]);
+
+        let violations = reference_plane_readiness(&board, &[]);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "reference-plane-readiness");
+    }
+
+    #[test]
+    fn reference_plane_readiness_allows_ground_zone() {
+        let board = board_with_copper(vec![
+            copper_line("CLK_OUT", CopperKind::Segment, [0.0, 0.0], [1.0, 0.0], 0.12),
+            copper_rect("GND", CopperKind::Zone, "F.Cu", -1.0, -1.0, 2.0, 1.0),
+        ]);
+
+        assert!(reference_plane_readiness(&board, &[]).is_empty());
+    }
+
+    #[test]
+    fn reference_plane_readiness_respects_selected_layers() {
+        let board = board_with_copper(vec![copper_line_on_layer(
+            "HDMI_CLK",
+            CopperKind::Segment,
+            "B.Cu",
+            [0.0, 0.0],
+            [1.0, 0.0],
+            0.12,
+        )]);
+
+        assert!(reference_plane_readiness(&board, &["F.Cu".to_string()]).is_empty());
+        assert_eq!(
+            reference_plane_readiness(&board, &["B.Cu".to_string()]).len(),
+            1
+        );
+    }
+
+    #[test]
+    fn reference_plane_void_readiness_reports_high_speed_copper_outside_ground_zone() {
+        let board = board_with_copper(vec![
+            copper_line("USB_D+", CopperKind::Segment, [0.0, 0.0], [2.0, 0.0], 0.12),
+            copper_rect("GND", CopperKind::Zone, "B.Cu", -0.5, -0.5, 0.5, 0.5),
+        ]);
+
+        let violations = reference_plane_void_readiness(&board, &[], 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "reference-plane-void-readiness");
+    }
+
+    #[test]
+    fn reference_plane_void_readiness_allows_covered_or_low_speed_copper() {
+        let board = board_with_copper(vec![
+            copper_line("USB_D+", CopperKind::Segment, [0.0, 0.0], [1.0, 0.0], 0.12),
+            copper_line("GPIO1", CopperKind::Segment, [2.0, 0.0], [3.0, 0.0], 0.12),
+            copper_rect("GND", CopperKind::Zone, "B.Cu", -1.0, -1.0, 4.0, 1.0),
+        ]);
+
+        assert!(reference_plane_void_readiness(&board, &[], 1.0e-9).is_empty());
+    }
+
+    #[test]
+    fn reference_plane_void_readiness_respects_selected_layers() {
+        let board = board_with_copper(vec![
+            copper_line_on_layer(
+                "HDMI_CLK",
+                CopperKind::Segment,
+                "B.Cu",
+                [0.0, 0.0],
+                [1.0, 0.0],
+                0.12,
+            ),
+            copper_rect("GND", CopperKind::Zone, "F.Cu", -1.0, -1.0, 2.0, 1.0),
+        ]);
+
+        assert!(reference_plane_void_readiness(&board, &["F.Cu".to_string()], 1.0e-9).is_empty());
+        assert_eq!(
+            reference_plane_void_readiness(
+                &board,
+                &["F.Cu".to_string(), "B.Cu".to_string()],
+                1.0e-9
+            )
+            .len(),
+            0
+        );
+    }
+
+    #[test]
+    fn orphaned_zone_readiness_reports_zone_without_same_net_anchor() {
+        let board = board_with_copper(vec![copper_rect(
+            "GND",
+            CopperKind::Zone,
+            "F.Cu",
+            -1.0,
+            -1.0,
+            1.0,
+            1.0,
+        )]);
+
+        let violations = orphaned_zone_readiness(&board, &[], 0.10);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "orphaned-zone-readiness");
+    }
+
+    #[test]
+    fn orphaned_zone_readiness_allows_intersecting_or_near_same_net_anchor() {
+        let board = board_with_copper(vec![
+            copper_rect("GND", CopperKind::Zone, "F.Cu", -1.0, -1.0, 1.0, 1.0),
+            copper_disc("GND", CopperKind::Via, [0.0, 0.0], 0.12),
+            copper_rect("VBUS", CopperKind::Zone, "F.Cu", 2.0, 2.0, 3.0, 3.0),
+            copper_line("VBUS", CopperKind::Segment, [3.05, 2.5], [3.5, 2.5], 0.10),
+        ]);
+
+        assert!(orphaned_zone_readiness(&board, &[], 0.10).is_empty());
+    }
+
+    #[test]
+    fn orphaned_zone_readiness_respects_selected_layers() {
+        let board = board_with_copper(vec![copper_rect(
+            "GND",
+            CopperKind::Zone,
+            "B.Cu",
+            -1.0,
+            -1.0,
+            1.0,
+            1.0,
+        )]);
+
+        assert!(orphaned_zone_readiness(&board, &["F.Cu".to_string()], 0.10).is_empty());
+        assert_eq!(
+            orphaned_zone_readiness(&board, &["B.Cu".to_string()], 0.10).len(),
+            1
+        );
+    }
+
+    #[test]
+    fn same_net_island_readiness_reports_disconnected_same_layer_copper() {
+        let board = board_with_copper(vec![
+            copper_line("GPIO1", CopperKind::Segment, [0.0, 0.0], [1.0, 0.0], 0.10),
+            copper_line("GPIO1", CopperKind::Segment, [3.0, 0.0], [4.0, 0.0], 0.10),
+        ]);
+
+        let violations = same_net_island_readiness(&board, &[], 0.10);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "same-net-island-readiness");
+        assert_eq!(violations[0].locations.len(), 2);
+    }
+
+    #[test]
+    fn same_net_island_readiness_allows_touching_or_different_layer_copper() {
+        let board = board_with_copper(vec![
+            copper_line("GPIO1", CopperKind::Segment, [0.0, 0.0], [1.0, 0.0], 0.10),
+            copper_line("GPIO1", CopperKind::Segment, [1.0, 0.0], [2.0, 0.0], 0.10),
+            copper_line_on_layer(
+                "GPIO1",
+                CopperKind::Segment,
+                "B.Cu",
+                [3.0, 0.0],
+                [4.0, 0.0],
+                0.10,
+            ),
+        ]);
+
+        assert!(same_net_island_readiness(&board, &[], 0.10).is_empty());
+    }
+
+    #[test]
+    fn same_net_island_readiness_respects_selected_layers() {
+        let board = board_with_copper(vec![
+            copper_line_on_layer(
+                "GPIO1",
+                CopperKind::Segment,
+                "B.Cu",
+                [0.0, 0.0],
+                [1.0, 0.0],
+                0.10,
+            ),
+            copper_line_on_layer(
+                "GPIO1",
+                CopperKind::Segment,
+                "B.Cu",
+                [3.0, 0.0],
+                [4.0, 0.0],
+                0.10,
+            ),
+        ]);
+
+        assert!(same_net_island_readiness(&board, &["F.Cu".to_string()], 0.10).is_empty());
+        assert_eq!(
+            same_net_island_readiness(&board, &["B.Cu".to_string()], 0.10).len(),
             1
         );
     }
@@ -2273,6 +3592,178 @@ mod tests {
     }
 
     #[test]
+    fn power_via_array_readiness_reports_isolated_power_vias() {
+        let board = board_with_copper(vec![
+            copper_disc("VBUS", CopperKind::Via, [0.0, 0.0], 0.12),
+            copper_disc("VBUS", CopperKind::Via, [2.0, 0.0], 0.12),
+        ]);
+
+        let violations = power_via_array_readiness(&board, &[], 0.50);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "power-via-array-readiness");
+        assert_eq!(violations[0].locations.len(), 2);
+    }
+
+    #[test]
+    fn power_via_array_readiness_allows_clustered_or_low_current_vias() {
+        let board = board_with_copper(vec![
+            copper_disc("VBUS", CopperKind::Via, [0.0, 0.0], 0.12),
+            copper_disc("VBUS", CopperKind::Via, [0.30, 0.0], 0.12),
+            copper_disc("GPIO1", CopperKind::Via, [2.0, 0.0], 0.12),
+            copper_disc("GPIO1", CopperKind::Via, [4.0, 0.0], 0.12),
+        ]);
+
+        assert!(power_via_array_readiness(&board, &[], 0.50).is_empty());
+    }
+
+    #[test]
+    fn power_via_array_readiness_respects_selected_layers() {
+        let board = board_with_copper(vec![
+            copper_disc_on_layer("12V", CopperKind::Via, "B.Cu", [0.0, 0.0], 0.12),
+            copper_disc_on_layer("12V", CopperKind::Via, "B.Cu", [2.0, 0.0], 0.12),
+        ]);
+
+        assert!(power_via_array_readiness(&board, &["F.Cu".to_string()], 0.50).is_empty());
+        assert_eq!(
+            power_via_array_readiness(&board, &["B.Cu".to_string()], 0.50).len(),
+            1
+        );
+    }
+
+    #[test]
+    fn thermal_via_readiness_reports_power_zone_with_too_few_vias() {
+        let board = board_with_copper(vec![
+            copper_rect("VBUS", CopperKind::Zone, "F.Cu", -1.0, -1.0, 1.0, 1.0),
+            copper_disc("VBUS", CopperKind::Via, [0.0, 0.0], 0.12),
+        ]);
+
+        let violations = thermal_via_readiness(&board, &[], 2, 0.10);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "thermal-via-readiness");
+    }
+
+    #[test]
+    fn thermal_via_readiness_allows_low_current_or_sufficient_vias() {
+        let board = board_with_copper(vec![
+            copper_rect("SIG", CopperKind::Zone, "F.Cu", -1.0, -1.0, 1.0, 1.0),
+            copper_rect("VBUS", CopperKind::Zone, "F.Cu", 2.0, 2.0, 4.0, 4.0),
+            copper_disc("VBUS", CopperKind::Via, [2.5, 2.5], 0.12),
+            copper_disc("VBUS", CopperKind::Via, [3.5, 3.5], 0.12),
+        ]);
+
+        assert!(thermal_via_readiness(&board, &[], 2, 0.10).is_empty());
+    }
+
+    #[test]
+    fn thermal_via_readiness_respects_selected_layers() {
+        let board = board_with_copper(vec![copper_rect(
+            "12V",
+            CopperKind::Zone,
+            "B.Cu",
+            -1.0,
+            -1.0,
+            1.0,
+            1.0,
+        )]);
+
+        assert!(thermal_via_readiness(&board, &["F.Cu".to_string()], 2, 0.10).is_empty());
+        assert_eq!(
+            thermal_via_readiness(&board, &["B.Cu".to_string()], 2, 0.10).len(),
+            1
+        );
+    }
+
+    #[test]
+    fn power_plane_readiness_reports_power_net_without_zone() {
+        let board = board_with_copper(vec![copper_line(
+            "VBUS",
+            CopperKind::Segment,
+            [0.0, 0.0],
+            [1.0, 0.0],
+            0.25,
+        )]);
+
+        let violations = power_plane_readiness(&board, &[]);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "power-plane-readiness");
+    }
+
+    #[test]
+    fn power_plane_readiness_allows_same_net_zone_or_low_current_net() {
+        let board = board_with_copper(vec![
+            copper_line("GPIO1", CopperKind::Segment, [0.0, 0.0], [1.0, 0.0], 0.12),
+            copper_rect("VDD_3V3", CopperKind::Zone, "F.Cu", -1.0, -1.0, 2.0, 1.0),
+        ]);
+
+        assert!(power_plane_readiness(&board, &[]).is_empty());
+    }
+
+    #[test]
+    fn power_plane_readiness_respects_selected_layers() {
+        let board = board_with_copper(vec![copper_line_on_layer(
+            "12V",
+            CopperKind::Segment,
+            "B.Cu",
+            [0.0, 0.0],
+            [1.0, 0.0],
+            0.25,
+        )]);
+
+        assert!(power_plane_readiness(&board, &["F.Cu".to_string()]).is_empty());
+        assert_eq!(
+            power_plane_readiness(&board, &["B.Cu".to_string()]).len(),
+            1
+        );
+    }
+
+    #[test]
+    fn high_current_neck_readiness_reports_narrow_power_copper() {
+        let board = board_with_copper(vec![copper_line(
+            "VBUS",
+            CopperKind::Segment,
+            [0.0, 0.0],
+            [1.0, 0.0],
+            0.18,
+        )]);
+
+        let violations = high_current_neck_readiness(&board, &[], 0.30);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "high-current-neck-readiness");
+    }
+
+    #[test]
+    fn high_current_neck_readiness_allows_low_current_or_wide_power_copper() {
+        let board = board_with_copper(vec![
+            copper_line("GPIO1", CopperKind::Segment, [0.0, 0.0], [1.0, 0.0], 0.12),
+            copper_line("VBUS", CopperKind::Segment, [0.0, 1.0], [1.0, 1.0], 0.35),
+        ]);
+
+        assert!(high_current_neck_readiness(&board, &[], 0.30).is_empty());
+    }
+
+    #[test]
+    fn high_current_neck_readiness_respects_selected_layers() {
+        let board = board_with_copper(vec![copper_line_on_layer(
+            "12V",
+            CopperKind::Segment,
+            "B.Cu",
+            [0.0, 0.0],
+            [1.0, 0.0],
+            0.18,
+        )]);
+
+        assert!(high_current_neck_readiness(&board, &["F.Cu".to_string()], 0.30).is_empty());
+        assert_eq!(
+            high_current_neck_readiness(&board, &["B.Cu".to_string()], 0.30).len(),
+            1
+        );
+    }
+
+    #[test]
     fn voltage_clearance_readiness_reports_likely_high_voltage_proximity() {
         let board = board_with_copper(vec![
             copper_line("HV_400V", CopperKind::Segment, [0.0, 0.0], [1.0, 0.0], 0.1),
@@ -2323,6 +3814,152 @@ mod tests {
         );
         assert_eq!(
             voltage_clearance_readiness(&board, 0.30, &["B.Cu".to_string()], 1.0e-9).len(),
+            1
+        );
+    }
+
+    #[test]
+    fn sensitive_net_spacing_readiness_reports_sensitive_near_noisy_net() {
+        let board = board_with_copper(vec![
+            copper_line("RF_ANT", CopperKind::Segment, [0.0, 0.0], [1.0, 0.0], 0.1),
+            copper_line(
+                "MOTOR_PWM",
+                CopperKind::Segment,
+                [0.0, 0.35],
+                [1.0, 0.35],
+                0.1,
+            ),
+        ]);
+
+        let violations = sensitive_net_spacing_readiness(&board, 0.30, &[], 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "sensitive-net-spacing-readiness");
+    }
+
+    #[test]
+    fn sensitive_net_spacing_readiness_allows_distant_or_non_noisy_neighbors() {
+        let board = board_with_copper(vec![
+            copper_line("RF_ANT", CopperKind::Segment, [0.0, 0.0], [1.0, 0.0], 0.1),
+            copper_line("GPIO1", CopperKind::Segment, [0.0, 0.12], [1.0, 0.12], 0.1),
+            copper_line("MIC_IN", CopperKind::Segment, [0.0, 2.0], [1.0, 2.0], 0.1),
+            copper_line("SW_NODE", CopperKind::Segment, [0.0, 2.6], [1.0, 2.6], 0.1),
+        ]);
+
+        assert!(sensitive_net_spacing_readiness(&board, 0.30, &[], 1.0e-9).is_empty());
+    }
+
+    #[test]
+    fn sensitive_net_spacing_readiness_respects_selected_layers() {
+        let board = board_with_copper(vec![
+            copper_line_on_layer(
+                "ADC_IN",
+                CopperKind::Segment,
+                "B.Cu",
+                [0.0, 0.0],
+                [1.0, 0.0],
+                0.1,
+            ),
+            copper_line_on_layer(
+                "CLK_OUT",
+                CopperKind::Segment,
+                "B.Cu",
+                [0.0, 0.35],
+                [1.0, 0.35],
+                0.1,
+            ),
+        ]);
+
+        assert!(
+            sensitive_net_spacing_readiness(&board, 0.30, &["F.Cu".to_string()], 1.0e-9).is_empty()
+        );
+        assert_eq!(
+            sensitive_net_spacing_readiness(&board, 0.30, &["B.Cu".to_string()], 1.0e-9).len(),
+            1
+        );
+    }
+
+    #[test]
+    fn gold_finger_readiness_reports_via_on_likely_finger_net() {
+        let board = board_with_copper(vec![copper_disc(
+            "GOLD_FINGER_1",
+            CopperKind::Via,
+            [0.0, 0.0],
+            0.12,
+        )]);
+
+        let violations = gold_finger_readiness(&board, &[]);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "gold-finger-readiness");
+    }
+
+    #[test]
+    fn gold_finger_readiness_allows_non_finger_vias_or_finger_pads() {
+        let board = board_with_copper(vec![
+            copper_disc("SIG", CopperKind::Via, [0.0, 0.0], 0.12),
+            copper_disc("GOLD_FINGER_1", CopperKind::Pad, [1.0, 0.0], 0.20),
+        ]);
+
+        assert!(gold_finger_readiness(&board, &[]).is_empty());
+    }
+
+    #[test]
+    fn gold_finger_readiness_respects_selected_layers() {
+        let board = board_with_copper(vec![copper_disc_on_layer(
+            "EDGE_CONN_1",
+            CopperKind::Via,
+            "B.Cu",
+            [0.0, 0.0],
+            0.12,
+        )]);
+
+        assert!(gold_finger_readiness(&board, &["F.Cu".to_string()]).is_empty());
+        assert_eq!(
+            gold_finger_readiness(&board, &["B.Cu".to_string()]).len(),
+            1
+        );
+    }
+
+    #[test]
+    fn return_path_readiness_reports_high_speed_via_without_ground_stitch() {
+        let board = board_with_copper(vec![copper_disc(
+            "USB_D+",
+            CopperKind::Via,
+            [0.0, 0.0],
+            0.12,
+        )]);
+
+        let violations = return_path_readiness(&board, 0.50, &[]);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "return-path-readiness");
+    }
+
+    #[test]
+    fn return_path_readiness_allows_nearby_ground_stitch_or_low_speed_vias() {
+        let board = board_with_copper(vec![
+            copper_disc("USB_D+", CopperKind::Via, [0.0, 0.0], 0.12),
+            copper_disc("GND", CopperKind::Via, [0.30, 0.0], 0.12),
+            copper_disc("GPIO1", CopperKind::Via, [2.0, 0.0], 0.12),
+        ]);
+
+        assert!(return_path_readiness(&board, 0.50, &[]).is_empty());
+    }
+
+    #[test]
+    fn return_path_readiness_respects_selected_layers() {
+        let board = board_with_copper(vec![copper_disc_on_layer(
+            "PCIE_RX0",
+            CopperKind::Via,
+            "B.Cu",
+            [0.0, 0.0],
+            0.12,
+        )]);
+
+        assert!(return_path_readiness(&board, 0.50, &["F.Cu".to_string()]).is_empty());
+        assert_eq!(
+            return_path_readiness(&board, 0.50, &["B.Cu".to_string()]).len(),
             1
         );
     }

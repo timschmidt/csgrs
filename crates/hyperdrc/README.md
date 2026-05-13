@@ -119,8 +119,17 @@ checks:
   `board-outline-drill-clearance`, `drill-spacing`, `drill-aspect-ratio`,
   `drill-table-consistency`, `copper-width-readiness`, `copper-net-intent`,
   `teardrop-readiness`, `thermal-relief-readiness`, `plane-clearance-readiness`,
-  `board-edge-exposure`, `controlled-impedance-readiness`, `high-current-readiness`,
-  `voltage-clearance-readiness`, `net-spacing`, `registration-tolerance`, and
+  `board-edge-exposure`, `high-speed-edge-readiness`,
+  `high-voltage-edge-readiness`,
+  `controlled-impedance-readiness`,
+  `differential-pair-readiness`, `differential-pair-spacing-readiness`,
+  `reference-plane-readiness`,
+  `reference-plane-void-readiness`, `orphaned-zone-readiness`,
+  `same-net-island-readiness`, `return-path-readiness`,
+  `high-current-readiness`, `power-via-array-readiness`, `thermal-via-readiness`,
+  `power-plane-readiness`, `high-current-neck-readiness`, `voltage-clearance-readiness`,
+  `sensitive-net-spacing-readiness`, `gold-finger-readiness`, `net-spacing`,
+  `registration-tolerance`, and
   `panelization-clearance`.
 - `ipc356-coverage`, `ipc356-drill-diameter`, and
   `file-manifest-readiness`.

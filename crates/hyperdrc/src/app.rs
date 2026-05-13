@@ -803,6 +803,26 @@ fn run_checks(
                     ));
                 }
             }
+            Check::HighSpeedEdgeReadiness => {
+                for board in boards {
+                    violations.extend(checks::high_speed_edge_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.net_clearance * 2.0,
+                        rules.min_area,
+                    ));
+                }
+            }
+            Check::HighVoltageEdgeReadiness => {
+                for board in boards {
+                    violations.extend(checks::high_voltage_edge_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.net_clearance * 4.0,
+                        rules.min_area,
+                    ));
+                }
+            }
             Check::ControlledImpedanceReadiness => {
                 for board in boards {
                     violations.extend(checks::controlled_impedance_readiness(
@@ -811,9 +831,103 @@ fn run_checks(
                     ));
                 }
             }
+            Check::DifferentialPairReadiness => {
+                for board in boards {
+                    violations.extend(checks::differential_pair_readiness(
+                        board,
+                        kicad_copper_layers,
+                    ));
+                }
+            }
+            Check::DifferentialPairSpacingReadiness => {
+                for board in boards {
+                    violations.extend(checks::differential_pair_spacing_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.net_clearance * 4.0,
+                    ));
+                }
+            }
+            Check::ReferencePlaneReadiness => {
+                for board in boards {
+                    violations.extend(checks::reference_plane_readiness(
+                        board,
+                        kicad_copper_layers,
+                    ));
+                }
+            }
+            Check::ReferencePlaneVoidReadiness => {
+                for board in boards {
+                    violations.extend(checks::reference_plane_void_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.min_area,
+                    ));
+                }
+            }
+            Check::OrphanedZoneReadiness => {
+                for board in boards {
+                    violations.extend(checks::orphaned_zone_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.net_clearance,
+                    ));
+                }
+            }
+            Check::SameNetIslandReadiness => {
+                for board in boards {
+                    violations.extend(checks::same_net_island_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.net_clearance,
+                    ));
+                }
+            }
+            Check::ReturnPathReadiness => {
+                for board in boards {
+                    violations.extend(checks::return_path_readiness(
+                        board,
+                        rules.net_clearance,
+                        kicad_copper_layers,
+                    ));
+                }
+            }
             Check::HighCurrentReadiness => {
                 for board in boards {
                     violations.extend(checks::high_current_readiness(board, kicad_copper_layers));
+                }
+            }
+            Check::PowerViaArrayReadiness => {
+                for board in boards {
+                    violations.extend(checks::power_via_array_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.net_clearance * 4.0,
+                    ));
+                }
+            }
+            Check::ThermalViaReadiness => {
+                for board in boards {
+                    violations.extend(checks::thermal_via_readiness(
+                        board,
+                        kicad_copper_layers,
+                        2,
+                        rules.net_clearance,
+                    ));
+                }
+            }
+            Check::PowerPlaneReadiness => {
+                for board in boards {
+                    violations.extend(checks::power_plane_readiness(board, kicad_copper_layers));
+                }
+            }
+            Check::HighCurrentNeckReadiness => {
+                for board in boards {
+                    violations.extend(checks::high_current_neck_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.min_width * 2.0,
+                    ));
                 }
             }
             Check::VoltageClearanceReadiness => {
@@ -824,6 +938,21 @@ fn run_checks(
                         kicad_copper_layers,
                         rules.min_area,
                     ));
+                }
+            }
+            Check::SensitiveNetSpacingReadiness => {
+                for board in boards {
+                    violations.extend(checks::sensitive_net_spacing_readiness(
+                        board,
+                        rules.net_clearance * 2.0,
+                        kicad_copper_layers,
+                        rules.min_area,
+                    ));
+                }
+            }
+            Check::GoldFingerReadiness => {
+                for board in boards {
+                    violations.extend(checks::gold_finger_readiness(board, kicad_copper_layers));
                 }
             }
             Check::NetSpacing => {

@@ -112,12 +112,43 @@ sidecar input where possible.
 - `board-edge-exposure`: warn when parsed KiCad copper extends outside the
   parsed board outline, so edge plating, castellations, and copper pullback can
   be reviewed.
+- `high-speed-edge-readiness`: warn when likely high-speed KiCad copper is
+  inside the configured board-edge clearance band.
+- `high-voltage-edge-readiness`: warn when likely high-voltage KiCad copper is
+  inside the configured board-edge clearance band.
 - `controlled-impedance-readiness`: warn when likely high-speed KiCad nets span
   multiple selected copper layers without a parsed same-net via transition.
+- `differential-pair-readiness`: warn when likely differential-pair KiCad nets
+  are missing their mate or put pair sides on different selected copper layers.
+- `differential-pair-spacing-readiness`: warn when likely differential-pair
+  KiCad copper sides are farther apart than the configured review threshold.
+- `reference-plane-readiness`: warn when likely high-speed KiCad nets are
+  present without a parsed ground zone on selected copper layers.
+- `reference-plane-void-readiness`: warn when likely high-speed KiCad copper
+  does not overlap parsed ground-zone coverage on selected copper layers.
+- `orphaned-zone-readiness`: warn when a KiCad copper zone has no parsed
+  same-net pad, via, or segment anchor within the configured net clearance.
+- `same-net-island-readiness`: warn when one net appears as disconnected
+  copper islands on the same selected layer.
+- `return-path-readiness`: warn when likely high-speed KiCad via transitions do
+  not have a parsed ground stitching via within the configured net clearance.
 - `high-current-readiness`: warn when likely power KiCad nets span multiple
   selected copper layers with fewer than two parsed same-net vias.
+- `power-via-array-readiness`: warn when likely power KiCad vias are isolated
+  from the rest of their same-net via array.
+- `thermal-via-readiness`: warn when likely power or thermal KiCad zones have
+  too few parsed same-net vias.
+- `power-plane-readiness`: warn when likely power KiCad nets have no parsed
+  same-net copper zone on selected layers.
+- `high-current-neck-readiness`: warn when likely power KiCad nets have copper
+  neck widths below the preferred power width.
 - `voltage-clearance-readiness`: warn when likely high-voltage KiCad nets are
   close to different-net copper using an expanded net-clearance threshold.
+- `sensitive-net-spacing-readiness`: warn when likely analog, RF, or sensor
+  KiCad nets are close to likely noisy power, switching, motor, or high-speed
+  nets.
+- `gold-finger-readiness`: warn when likely gold-finger or edge-connector KiCad
+  nets contain via copper on selected layers.
 - `different-net-spacing`: offset same-layer KiCad copper features by a
   configured clearance and report different-net proximity.
 - `layer-registration-tolerance`: compare KiCad copper layers with an offset
@@ -239,7 +270,9 @@ example before it is considered production-ready.
 - Isolated copper: floating copper islands, unconnected pours, orphaned zone
   remnants, and copper slivers below etchable area. Initial KiCad net-intent
   checks warn on parsed copper that remains unnetted after optional IPC-D-356
-  annotation.
+  annotation, and warn when a parsed zone has no same-net pad, via, or segment
+  anchor within the configured net clearance. They also warn when a single net
+  appears as disconnected copper islands on the same selected layer.
 - Acid traps: acute polygon vertices, acute trace junctions, narrow wedge voids,
   and trapped etchant pockets inside plane pours.
 - Teardrop recommendations: narrow trace-to-pad and trace-to-via junctions below
@@ -258,10 +291,12 @@ example before it is considered production-ready.
   plating, copper too close to V-score, copper too close to tab routes, and
   missing edge-plating declarations when copper intentionally reaches an edge.
   Initial KiCad checks warn when copper geometry extends outside the parsed
-  board outline.
+  board outline, and warn when likely high-speed or high-voltage copper enters
+  the configured board-edge clearance band.
 - Gold fingers: finger width/spacing, bevel keepout, mask opening, plating
   finish requirement, no vias/text/silk/paste on fingers, and consistent finger
-  length.
+  length. Initial KiCad checks warn when likely gold-finger or edge-connector
+  nets contain via copper.
 - Castellations and half holes: minimum hole diameter, annular ring, edge
   registration, plating intent, pad pitch, and copper pullback around routed
   board edge. Initial KiCad checks warn when plated drill holes cross the board
@@ -270,12 +305,19 @@ example before it is considered production-ready.
 - High-current copper: trace width, neck-down length, via array current sharing,
   copper pour bottlenecks, thermal vias, and connector/pad current-density
   warnings. Initial KiCad checks warn when likely power nets change layers with
-  fewer than two parsed same-net vias.
+  fewer than two parsed same-net vias, and warn when likely power-net copper
+  necks fall below the preferred power width, and warn when those likely power
+  nets have no parsed same-net copper zone on selected layers. They also warn
+  when likely power vias are isolated from the rest of their same-net via array,
+  and when likely power or thermal zones have too few same-net vias.
 - Controlled impedance readiness: impedance-rule presence, stackup completeness,
   reference-plane continuity, coplanar ground spacing, return-path voids, and
   layer-change via stitching. Initial KiCad checks warn when likely high-speed
   nets span multiple selected copper layers without a parsed same-net via
-  transition.
+  transition, and warn when likely high-speed via transitions lack a nearby
+  parsed ground stitching via. They also warn when likely high-speed nets are
+  present without a parsed ground zone on selected copper layers, and when
+  likely high-speed copper does not overlap parsed ground-zone coverage.
 
 ### Solder Mask, Paste, and Finish Checks
 
@@ -377,22 +419,33 @@ example before it is considered production-ready.
   islands, unconnected pads, and intentional no-connect handling.
 - Same-net continuity: broken traces, missing zone refill, unstitched plane
   islands, disconnected thermal spokes, and trace severed by holes or slots.
+  Initial KiCad checks warn when a net appears as disconnected copper islands
+  on the same selected layer.
 - Different-net shorts: copper overlap with net awareness, inner-layer antipad
   shorts, drill breakout shorts, and paste/mask-induced assembly short risk.
 - Differential pairs: pair membership, skew, intra-pair spacing, width,
   neck-downs, pair-to-pair spacing, layer-change symmetry, and reference plane
-  continuity.
+  continuity. Initial KiCad checks infer common pair suffixes and warn when one
+  side is missing, the pair sides occupy different selected copper layers, or
+  the nearest parsed pair-side spacing exceeds the configured review threshold.
 - High-speed return paths: reference-plane void crossings, split-plane
   crossings, missing stitching vias at layer changes, and loop-area excursions.
+  Initial KiCad checks warn on likely high-speed copper outside parsed
+  ground-zone coverage and likely high-speed vias without nearby ground
+  stitching.
 - Power integrity: decoupling capacitor proximity/orientation, plane neck-downs,
   via count per rail, high-current bottlenecks, and starved regulator thermal
-  pads.
+  pads. Initial KiCad checks warn on likely power nets without same-net copper
+  zones, narrow power copper, sparse layer-change vias, and isolated via-array
+  members.
 - Analog/digital/RF segregation: region keepouts, noisy-net proximity, guard
   traces, via fences, antenna keepouts, and copper-free regions under inductors
-  or antennas.
+  or antennas. Initial KiCad checks warn when likely analog, RF, or sensor nets
+  run close to likely noisy power, switching, motor, or high-speed nets.
 - ESD/safety: creepage and clearance by voltage class, slot barriers, spark-gap
   geometry, protective earth spacing, fuse/MOV keepouts, and high-voltage
-  silkscreen warnings.
+  silkscreen warnings. Initial KiCad checks warn when likely high-voltage nets
+  are close to other nets or enter the board-edge clearance band.
 - Thermal validation: thermal via arrays, copper area under heat-generating
   parts, thermal relief versus heat spreading, hot component spacing, and
   heatsink/mechanical keepouts.
