@@ -8,6 +8,10 @@ use geo::{Coord, LineString, Polygon};
 use std::f64::consts::PI;
 
 pub fn circle_polygon(center: [f64; 2], radius: f64, segments: usize) -> Polygon<Real> {
+    if !(center[0].is_finite() && center[1].is_finite() && radius.is_finite()) {
+        return Polygon::new(geo::LineString(vec![]), vec![]);
+    }
+
     let segments = segments.max(16);
     let mut coords = Vec::with_capacity(segments + 1);
     for index in 0..segments {
@@ -22,6 +26,15 @@ pub fn circle_polygon(center: [f64; 2], radius: f64, segments: usize) -> Polygon
 }
 
 pub fn rect_polygon(center: [f64; 2], size: [f64; 2], angle_degrees: f64) -> Polygon<Real> {
+    if !(center[0].is_finite()
+        && center[1].is_finite()
+        && size[0].is_finite()
+        && size[1].is_finite()
+        && angle_degrees.is_finite())
+    {
+        return polygon_from_points(Vec::new());
+    }
+
     let half_x = size[0] / 2.0;
     let half_y = size[1] / 2.0;
     let points = [
@@ -39,6 +52,10 @@ pub fn rect_polygon(center: [f64; 2], size: [f64; 2], angle_degrees: f64) -> Pol
 }
 
 pub fn line_polygon(start: [f64; 2], end: [f64; 2], width: f64) -> Option<Polygon<Real>> {
+    if !all_finite(start) || !all_finite(end) || !width.is_finite() {
+        return None;
+    }
+
     let dx = end[0] - start[0];
     let dy = end[1] - start[1];
     let length = (dx * dx + dy * dy).sqrt();
@@ -57,6 +74,13 @@ pub fn line_polygon(start: [f64; 2], end: [f64; 2], width: f64) -> Option<Polygo
 }
 
 pub fn polygon_from_points(points: Vec<[f64; 2]>) -> Polygon<Real> {
+    if points
+        .iter()
+        .any(|point| !point[0].is_finite() || !point[1].is_finite())
+    {
+        return Polygon::new(LineString(vec![]), vec![]);
+    }
+
     let mut coords = points
         .into_iter()
         .map(|point| Coord {
@@ -79,6 +103,10 @@ pub fn transform_polygon(
     origin: [f64; 2],
     angle_degrees: f64,
 ) -> Polygon<Real> {
+    if !origin[0].is_finite() || !origin[1].is_finite() || !angle_degrees.is_finite() {
+        return polygon.clone();
+    }
+
     let exterior = polygon
         .exterior()
         .0
@@ -125,6 +153,14 @@ pub fn arc_line_polygons(
     width: f64,
     segments: usize,
 ) -> Vec<Polygon<Real>> {
+    if !all_finite([center[0], center[1]])
+        || !all_finite([start[0], start[1]])
+        || !width.is_finite()
+        || !angle_degrees.is_finite()
+    {
+        return Vec::new();
+    }
+
     let segments = segments.max(4);
     let mut points = Vec::with_capacity(segments + 1);
     let start_vector = [start[0] - center[0], start[1] - center[1]];
@@ -143,6 +179,10 @@ pub fn arc_line_polygons(
         .windows(2)
         .filter_map(|window| line_polygon(window[0], window[1], width))
         .collect()
+}
+
+fn all_finite(point: [f64; 2]) -> bool {
+    point[0].is_finite() && point[1].is_finite()
 }
 
 fn rotate_translate(point: [f64; 2], center: [f64; 2], angle_degrees: f64) -> [f64; 2] {

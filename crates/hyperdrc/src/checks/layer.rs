@@ -4,8 +4,12 @@
 //! Gerber-derived layers and KiCad-derived layers share the same behavior.
 
 use csgrs::csg::CSG;
-use geo::{Area, BoundingRect, Coord, LineString, MultiPolygon, Polygon};
+use geo::{
+    Area, BoundingRect, Coord, Line, LineString, MultiPolygon, Polygon,
+    line_intersection::{LineIntersection, line_intersection},
+};
 
+use crate::checks::distance::polygon_boundary_distance;
 use crate::geometry::{multipolygon_to_shapes, polygon_to_sketch, polygons_to_sketch};
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbSketch};
@@ -103,6 +107,99 @@ pub fn board_edge_clearance(
             "copper falls outside the board outline eroded by clearance {clearance}"
         )),
     )]
+}
+
+/// Warn when geometry enters board-cutout regions created by nested outline
+/// contours. KiCad can emit outline contours for slots, windows, and other
+/// removed areas; this readiness check flags copper, masks, or other layers that
+/// enters a nested contour region. For each nested contour, any feature
+/// touching or intruding into the clearance band is reported.
+pub fn board_outline_cutout_clearance(
+    subject_name: &str,
+    subject: &PcbSketch,
+    outline_name: &str,
+    outline: &PcbSketch,
+    clearance: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    let mut violations = Vec::new();
+    let outline_polygons = outline.to_multipolygon();
+    for cutout in board_outline_cutouts(&outline_polygons) {
+        let cutout = polygon_to_sketch(cutout, Some(metadata("board cutout")));
+        let clearance_band = if clearance > 0.0 {
+            cutout.offset(clearance)
+        } else {
+            cutout.clone()
+        };
+
+        let intrusion = subject.intersection(&clearance_band);
+        let shapes = multipolygon_to_shapes(&intrusion.to_multipolygon(), min_area);
+        let touches_cutout = shapes.is_empty()
+            && polygon_boundary_distance(&subject.to_multipolygon(), &cutout.to_multipolygon())
+                <= clearance;
+        if shapes.is_empty() && !touches_cutout {
+            continue;
+        }
+
+        violations.push(Violation::new(
+            "board-outline-cutout-clearance",
+            Severity::Warning,
+            vec![subject_name.to_string(), outline_name.to_string()],
+            None,
+            shapes,
+            Vec::new(),
+            Some(format!(
+                "subject geometry touches or intrudes into a nested board contour (cutout) with clearance {clearance}"
+            )),
+        ));
+    }
+
+    violations
+}
+
+fn board_outline_cutouts(outline: &MultiPolygon<f64>) -> Vec<Polygon<f64>> {
+    let polygons = &outline.0;
+    if polygons.len() < 2 {
+        return Vec::new();
+    }
+
+    let mut cutouts = Vec::new();
+    for inner_index in 0..polygons.len() {
+        let inner = &polygons[inner_index];
+        if inner.unsigned_area() <= 0.0 {
+            continue;
+        }
+
+        let is_nested = (0..polygons.len())
+            .filter(|&outer_index| outer_index != inner_index)
+            .any(|outer_index| {
+                let outer = &polygons[outer_index];
+                polygon_contains_other_outer(
+                    outer,
+                    inner,
+                    BOARD_OUTLINE_NESTED_OVERLAP_RATIO,
+                    BOARD_OUTLINE_GEOMETRY_TOLERANCE,
+                )
+            });
+        if !is_nested {
+            continue;
+        }
+
+        let Some(point) = representative_point(inner) else {
+            continue;
+        };
+        if cutouts
+            .iter()
+            .filter_map(representative_point)
+            .any(|candidate| location_is_close(&candidate, &point))
+        {
+            continue;
+        }
+
+        cutouts.push(inner.clone());
+    }
+
+    cutouts
 }
 
 pub fn silkscreen_board_edge_clearance(
@@ -692,6 +789,34 @@ pub fn layer_sanity(
     let multipolygon = sketch.to_multipolygon();
     let area = multipolygon.unsigned_area();
 
+    if multipolygon_has_non_finite_coordinates(&multipolygon) {
+        violations.push(Violation::new(
+            "layer-sanity",
+            Severity::Error,
+            vec![layer_name.to_string()],
+            None,
+            Vec::new(),
+            Vec::new(),
+            Some(
+                "layer contains non-finite coordinates that cannot be validated geometrically"
+                    .to_string(),
+            ),
+        ));
+    }
+
+    let intersections = collect_ring_self_intersections(&multipolygon);
+    if !intersections.is_empty() {
+        violations.push(Violation::new(
+            "layer-sanity",
+            Severity::Error,
+            vec![layer_name.to_string()],
+            None,
+            Vec::new(),
+            intersections,
+            Some("layer contains self-intersecting contours".to_string()),
+        ));
+    }
+
     if area <= 0.0 {
         violations.push(Violation::new(
             "layer-sanity",
@@ -734,6 +859,28 @@ pub fn layer_sanity(
     }
 
     violations
+}
+
+fn multipolygon_has_non_finite_coordinates(multipolygon: &MultiPolygon<f64>) -> bool {
+    for polygon in &multipolygon.0 {
+        if !ring_has_finite_coordinates(polygon.exterior()) {
+            return true;
+        }
+
+        for hole in polygon.interiors() {
+            if !ring_has_finite_coordinates(hole) {
+                return true;
+            }
+        }
+    }
+
+    false
+}
+
+fn ring_has_finite_coordinates(ring: &LineString<f64>) -> bool {
+    ring.0
+        .iter()
+        .all(|coord| coord.x.is_finite() && coord.y.is_finite())
 }
 
 pub fn copper_balance(
@@ -846,6 +993,112 @@ pub fn board_outline_fragments(
     )]
 }
 
+/// Reject outline rings that self-intersect, which usually produces an invalid
+/// profile for profile-based CAM preparation.
+pub fn board_outline_self_intersection_readiness(
+    layer_name: &str,
+    outline: &PcbSketch,
+) -> Vec<Violation> {
+    let intersections = collect_ring_self_intersections(&outline.to_multipolygon());
+    if intersections.is_empty() {
+        return Vec::new();
+    }
+
+    vec![Violation::new(
+        "board-outline-self-intersection-readiness",
+        Severity::Error,
+        vec![layer_name.to_string()],
+        None,
+        Vec::new(),
+        intersections,
+        Some("board outline contains self-intersecting contour edges".to_string()),
+    )]
+}
+
+/// Flag strong inside-corners on board outlines where a narrow notch is likely to
+/// exceed router capability.
+pub fn board_outline_notch_readiness(layer_name: &str, outline: &PcbSketch) -> Vec<Violation> {
+    let mut locations = Vec::new();
+
+    let multipolygon = outline.to_multipolygon();
+    for polygon in &multipolygon.0 {
+        collect_board_outline_notches(polygon.exterior(), &mut locations);
+        for hole in polygon.interiors() {
+            collect_board_outline_notches(hole, &mut locations);
+        }
+    }
+
+    if locations.is_empty() {
+        return Vec::new();
+    }
+
+    vec![Violation::new(
+        "board-outline-notch-readiness",
+        Severity::Warning,
+        vec![layer_name.to_string()],
+        None,
+        Vec::new(),
+        locations,
+        Some("board outline contains sharp notch inside-corners".to_string()),
+    )]
+}
+
+/// Warn when the outline contains duplicated contour polygons that would indicate
+/// accidental repeated or merged contour definitions.
+pub fn board_outline_duplicate_readiness(layer_name: &str, outline: &PcbSketch) -> Vec<Violation> {
+    let mut locations = Vec::new();
+
+    collect_board_outline_overlapping_exteriors(
+        &outline.to_multipolygon(),
+        BOARD_OUTLINE_DUPLICATE_OVERLAP_RATIO,
+        BOARD_OUTLINE_GEOMETRY_TOLERANCE,
+        false,
+        &mut locations,
+    );
+
+    if locations.is_empty() {
+        return Vec::new();
+    }
+
+    vec![Violation::new(
+        "board-outline-duplicate-readiness",
+        Severity::Warning,
+        vec![layer_name.to_string()],
+        None,
+        Vec::new(),
+        locations,
+        Some("board outline contains duplicate contour geometry".to_string()),
+    )]
+}
+
+/// Warn when one contour is fully contained by another, which can indicate
+/// malformed nested board cutouts or accidental profile duplication.
+pub fn board_outline_nesting_readiness(layer_name: &str, outline: &PcbSketch) -> Vec<Violation> {
+    let mut locations = Vec::new();
+
+    collect_board_outline_overlapping_exteriors(
+        &outline.to_multipolygon(),
+        BOARD_OUTLINE_NESTED_OVERLAP_RATIO,
+        BOARD_OUTLINE_GEOMETRY_TOLERANCE,
+        true,
+        &mut locations,
+    );
+
+    if locations.is_empty() {
+        return Vec::new();
+    }
+
+    vec![Violation::new(
+        "board-outline-nesting-readiness",
+        Severity::Warning,
+        vec![layer_name.to_string()],
+        None,
+        Vec::new(),
+        locations,
+        Some("board outline contains nested contour geometry".to_string()),
+    )]
+}
+
 fn intersection_violation(
     spec: PairCheck<'_>,
     left_name: &str,
@@ -863,6 +1116,279 @@ fn intersection_violation(
         min_area,
         spec.message.to_string(),
     )
+}
+
+const BOARD_OUTLINE_NOTCH_ANGLE_DEGREES: f64 = 300.0;
+const BOARD_OUTLINE_GEOMETRY_TOLERANCE: f64 = 1.0e-6;
+const BOARD_OUTLINE_DUPLICATE_OVERLAP_RATIO: f64 = 0.999_999;
+const BOARD_OUTLINE_NESTED_OVERLAP_RATIO: f64 = 0.999_99;
+
+fn collect_ring_self_intersections(multipolygon: &MultiPolygon<f64>) -> Vec<[f64; 2]> {
+    let mut locations = Vec::new();
+
+    for polygon in &multipolygon.0 {
+        collect_segment_self_intersections(polygon.exterior(), &mut locations);
+        for hole in polygon.interiors() {
+            collect_segment_self_intersections(hole, &mut locations);
+        }
+    }
+
+    locations
+}
+
+fn collect_segment_self_intersections(ring: &LineString<f64>, locations: &mut Vec<[f64; 2]>) {
+    let coords = open_ring_coords(ring);
+    if coords.len() < 4 {
+        return;
+    }
+
+    let edge_count = coords.len();
+    for left in 0..edge_count {
+        for right in (left + 1)..edge_count {
+            if are_ring_edges_adjacent(left, right, edge_count) {
+                continue;
+            }
+
+            let intersection = ring_segment_intersection(
+                coords[left],
+                coords[(left + 1) % edge_count],
+                coords[right],
+                coords[(right + 1) % edge_count],
+            );
+
+            if let Some(location) = intersection {
+                push_unique_location(locations, location);
+            }
+        }
+    }
+}
+
+fn collect_board_outline_notches(ring: &LineString<f64>, locations: &mut Vec<[f64; 2]>) {
+    let coords = open_ring_coords(ring);
+    if coords.len() < 3 {
+        return;
+    }
+
+    let is_ccw = ring_is_ccw(ring);
+    for index in 0..coords.len() {
+        let previous = coords[(index + coords.len() - 1) % coords.len()];
+        let current = coords[index];
+        let next = coords[(index + 1) % coords.len()];
+
+        let Some(interior_angle) =
+            board_outline_notch_interior_angle(previous, current, next, is_ccw)
+        else {
+            continue;
+        };
+        if interior_angle < BOARD_OUTLINE_NOTCH_ANGLE_DEGREES {
+            continue;
+        }
+
+        push_unique_location(locations, [current.x, current.y]);
+    }
+}
+
+fn collect_board_outline_overlapping_exteriors(
+    multipolygon: &MultiPolygon<f64>,
+    containment_ratio: f64,
+    geometry_tolerance: f64,
+    detect_nesting: bool,
+    locations: &mut Vec<[f64; 2]>,
+) {
+    let polygons = &multipolygon.0;
+    if polygons.len() < 2 {
+        return;
+    }
+
+    for outer_index in 0..polygons.len() {
+        for inner_index in (outer_index + 1)..polygons.len() {
+            let outer = &polygons[outer_index];
+            let inner = &polygons[inner_index];
+
+            if detect_nesting {
+                if polygons_are_duplicate(outer, inner, geometry_tolerance) {
+                    continue;
+                }
+                if polygon_contains_other_outer(outer, inner, containment_ratio, geometry_tolerance)
+                {
+                    if let Some(point) = representative_point(inner) {
+                        push_unique_location(locations, point);
+                    }
+                }
+
+                if polygon_contains_other_outer(inner, outer, containment_ratio, geometry_tolerance)
+                {
+                    if let Some(point) = representative_point(outer) {
+                        push_unique_location(locations, point);
+                    }
+                }
+            } else if polygons_are_duplicate(outer, inner, geometry_tolerance) {
+                if let Some(point) = representative_point(outer) {
+                    push_unique_location(locations, point);
+                }
+            }
+        }
+    }
+}
+
+fn polygons_are_duplicate(left: &Polygon<f64>, right: &Polygon<f64>, tolerance: f64) -> bool {
+    let left_area = left.unsigned_area();
+    let right_area = right.unsigned_area();
+    if left_area <= 0.0 || right_area <= 0.0 {
+        return false;
+    }
+
+    if !areas_approximately_equal(left_area, right_area, tolerance) {
+        return false;
+    }
+
+    let overlap = polygon_intersection_area(left, right);
+    let left_delta = (left_area - overlap).abs();
+    let right_delta = (right_area - overlap).abs();
+    left_delta <= tolerance_area(left_area) && right_delta <= tolerance_area(right_area)
+}
+
+fn polygon_contains_other_outer(
+    outer: &Polygon<f64>,
+    inner: &Polygon<f64>,
+    ratio: f64,
+    tolerance: f64,
+) -> bool {
+    let outer_area = outer.unsigned_area();
+    let inner_area = inner.unsigned_area();
+    if outer_area <= 0.0 || inner_area <= 0.0 || outer_area <= inner_area {
+        return false;
+    }
+
+    let overlap = polygon_intersection_area(outer, inner);
+    if overlap <= inner_area * 0.25 {
+        return false;
+    }
+
+    let coverage = overlap / inner_area;
+    let area_gap = outer_area - inner_area;
+    coverage >= ratio
+        && area_gap > tolerance_area(outer_area)
+        && !areas_approximately_equal(outer_area, inner_area, tolerance)
+}
+
+fn polygon_intersection_area(left: &Polygon<f64>, right: &Polygon<f64>) -> f64 {
+    let left_sketch = polygon_to_sketch(left.clone(), None);
+    let right_sketch = polygon_to_sketch(right.clone(), None);
+    left_sketch
+        .intersection(&right_sketch)
+        .to_multipolygon()
+        .unsigned_area()
+}
+
+fn representative_point(polygon: &Polygon<f64>) -> Option<[f64; 2]> {
+    polygon.bounding_rect().map(|bounds| {
+        [
+            (bounds.min().x + bounds.max().x) / 2.0,
+            (bounds.min().y + bounds.max().y) / 2.0,
+        ]
+    })
+}
+
+fn tolerance_area(area: f64) -> f64 {
+    (area.abs() * 1.0e-9).max(1.0e-12)
+}
+
+fn areas_approximately_equal(left_area: f64, right_area: f64, tolerance: f64) -> bool {
+    let diff = (left_area - right_area).abs();
+    let scale = left_area.abs().max(right_area.abs()).max(1.0);
+    diff <= tolerance * scale
+}
+
+fn board_outline_notch_interior_angle(
+    previous: Coord<f64>,
+    current: Coord<f64>,
+    next: Coord<f64>,
+    is_ccw: bool,
+) -> Option<f64> {
+    let forward_one = vector(current, previous);
+    let forward_two = vector(next, current);
+    if vector_length(forward_one) == 0.0 || vector_length(forward_two) == 0.0 {
+        return None;
+    }
+
+    let cross = cross_product(forward_one, forward_two);
+    let dot = dot_product(forward_one, forward_two);
+    let raw_turn = cross.atan2(dot).to_degrees();
+    let is_reflex = if is_ccw {
+        raw_turn < 0.0
+    } else {
+        raw_turn > 0.0
+    };
+    if !is_reflex {
+        return None;
+    }
+
+    Some(360.0 - raw_turn.abs())
+}
+
+fn ring_is_ccw(ring: &LineString<f64>) -> bool {
+    Polygon::new(ring.clone(), vec![]).signed_area() >= 0.0
+}
+
+fn are_ring_edges_adjacent(left: usize, right: usize, edge_count: usize) -> bool {
+    right == left + 1 || right + 1 == left || (left == 0 && right == edge_count - 1)
+}
+
+fn ring_segment_intersection(
+    start_a: Coord<f64>,
+    end_a: Coord<f64>,
+    start_b: Coord<f64>,
+    end_b: Coord<f64>,
+) -> Option<[f64; 2]> {
+    let segment_a = Line::new(start_a, end_a);
+    let segment_b = Line::new(start_b, end_b);
+    let intersection = line_intersection(segment_a, segment_b)?;
+
+    match intersection {
+        LineIntersection::SinglePoint {
+            intersection: point,
+            is_proper: false,
+        } if point == start_a || point == end_a || point == start_b || point == end_b => None,
+        LineIntersection::SinglePoint {
+            intersection: point,
+            ..
+        } => Some([point.x, point.y]),
+        LineIntersection::Collinear { intersection } => Some([
+            (intersection.start.x + intersection.end.x) / 2.0,
+            (intersection.start.y + intersection.end.y) / 2.0,
+        ]),
+    }
+}
+
+fn push_unique_location(points: &mut Vec<[f64; 2]>, point: [f64; 2]) {
+    if !points
+        .iter()
+        .any(|current| location_is_close(current, &point))
+    {
+        points.push(point);
+    }
+}
+
+fn location_is_close(left: &[f64; 2], right: &[f64; 2]) -> bool {
+    const EPSILON: f64 = 1e-9;
+    (left[0] - right[0]).abs() < EPSILON && (left[1] - right[1]).abs() < EPSILON
+}
+
+fn vector(end: Coord<f64>, start: Coord<f64>) -> (f64, f64) {
+    (end.x - start.x, end.y - start.y)
+}
+
+fn cross_product(left: (f64, f64), right: (f64, f64)) -> f64 {
+    left.0 * right.1 - left.1 * right.0
+}
+
+fn dot_product(left: (f64, f64), right: (f64, f64)) -> f64 {
+    left.0 * right.0 + left.1 * right.1
+}
+
+fn vector_length(vector: (f64, f64)) -> f64 {
+    (vector.0 * vector.0 + vector.1 * vector.1).sqrt()
 }
 
 struct PairCheck<'a> {
@@ -970,11 +1496,13 @@ mod tests {
     use geo::{Coord, LineString, Polygon};
 
     use super::{
-        acid_trap_candidates, board_edge_clearance, board_outline_fragments, board_outline_sanity,
-        copper_balance, copper_overlap, exposed_copper, layer_sanity, mask_island_keepout,
-        mechanical_layer_geometry, min_copper_neck_width, minimum_mask_opening,
-        minimum_paste_aperture, paste_aperture_coverage, paste_aperture_ratio,
-        paste_aperture_spacing, paste_mask_alignment, paste_overhang,
+        acid_trap_candidates, board_edge_clearance, board_outline_cutout_clearance,
+        board_outline_duplicate_readiness, board_outline_fragments,
+        board_outline_nesting_readiness, board_outline_notch_readiness, board_outline_sanity,
+        board_outline_self_intersection_readiness, copper_balance, copper_overlap, exposed_copper,
+        layer_sanity, mask_island_keepout, mechanical_layer_geometry, min_copper_neck_width,
+        minimum_mask_opening, minimum_paste_aperture, paste_aperture_coverage,
+        paste_aperture_ratio, paste_aperture_spacing, paste_mask_alignment, paste_overhang,
         silkscreen_board_edge_clearance, silkscreen_clearance, silkscreen_min_width,
         silkscreen_overlap, solder_mask_board_edge_clearance, solder_mask_expansion,
         solder_mask_opening_coverage, solder_mask_opening_spacing, solder_mask_overlap_clearance,
@@ -1403,6 +1931,333 @@ mod tests {
     }
 
     #[test]
+    fn board_outline_self_intersection_readiness_reports_bow_tie() {
+        let outline = sketch(
+            "edge",
+            vec![Polygon::new(
+                LineString(vec![
+                    Coord { x: 0.0, y: 0.0 },
+                    Coord { x: 4.0, y: 4.0 },
+                    Coord { x: 0.0, y: 4.0 },
+                    Coord { x: 4.0, y: 0.0 },
+                    Coord { x: 0.0, y: 0.0 },
+                ]),
+                vec![],
+            )],
+        );
+
+        let violations = board_outline_self_intersection_readiness("edge", &outline);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(
+            violations[0].check,
+            "board-outline-self-intersection-readiness"
+        );
+    }
+
+    #[test]
+    fn board_outline_self_intersection_readiness_allows_rectangle() {
+        let outline = sketch("edge", vec![square(0.0, 0.0, 10.0, 10.0)]);
+
+        assert!(board_outline_self_intersection_readiness("edge", &outline).is_empty());
+    }
+
+    #[test]
+    fn board_outline_notch_readiness_reports_sharp_notch() {
+        let outline = sketch(
+            "edge",
+            vec![Polygon::new(
+                LineString(vec![
+                    Coord { x: 0.0, y: 0.0 },
+                    Coord { x: 10.0, y: 0.0 },
+                    Coord { x: 10.0, y: 10.0 },
+                    Coord { x: 6.0, y: 10.0 },
+                    Coord { x: 6.0, y: 9.9 },
+                    Coord { x: 5.0, y: 9.5 },
+                    Coord { x: 4.0, y: 9.9 },
+                    Coord { x: 4.0, y: 10.0 },
+                    Coord { x: 0.0, y: 10.0 },
+                    Coord { x: 0.0, y: 0.0 },
+                ]),
+                vec![],
+            )],
+        );
+
+        let violations = board_outline_notch_readiness("edge", &outline);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "board-outline-notch-readiness");
+        assert!(!violations[0].locations.is_empty());
+    }
+
+    #[test]
+    fn board_outline_notch_readiness_allows_convex_geometry() {
+        let outline = sketch("edge", vec![square(0.0, 0.0, 10.0, 10.0)]);
+
+        assert!(board_outline_notch_readiness("edge", &outline).is_empty());
+    }
+
+    #[test]
+    fn board_outline_notch_readiness_is_orientation_agnostic() {
+        let ccw = vec![
+            Coord { x: 0.0, y: 0.0 },
+            Coord { x: 10.0, y: 0.0 },
+            Coord { x: 10.0, y: 10.0 },
+            Coord { x: 6.0, y: 10.0 },
+            Coord { x: 6.0, y: 9.9 },
+            Coord { x: 5.0, y: 9.5 },
+            Coord { x: 4.0, y: 9.9 },
+            Coord { x: 4.0, y: 10.0 },
+            Coord { x: 0.0, y: 10.0 },
+            Coord { x: 0.0, y: 0.0 },
+        ];
+        let clockwise = {
+            let mut reversed = ccw.clone();
+            reversed.reverse();
+            Polygon::new(LineString(reversed), vec![])
+        };
+
+        let outline = sketch("edge", vec![clockwise]);
+
+        let violations = board_outline_notch_readiness("edge", &outline);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "board-outline-notch-readiness");
+    }
+
+    #[test]
+    fn board_outline_notch_readiness_detects_notch_in_hole() {
+        let mut outer = square(0.0, 0.0, 10.0, 10.0).exterior().0.clone();
+        outer.pop();
+        let outline = sketch(
+            "edge",
+            vec![Polygon::new(
+                LineString(outer),
+                vec![LineString(vec![
+                    Coord { x: 2.0, y: 2.0 },
+                    Coord { x: 8.0, y: 2.0 },
+                    Coord { x: 8.0, y: 8.0 },
+                    Coord { x: 6.0, y: 8.0 },
+                    Coord { x: 6.0, y: 7.9 },
+                    Coord { x: 5.0, y: 7.5 },
+                    Coord { x: 4.0, y: 7.9 },
+                    Coord { x: 4.0, y: 8.0 },
+                    Coord { x: 2.0, y: 8.0 },
+                    Coord { x: 2.0, y: 2.0 },
+                ])],
+            )],
+        );
+
+        let violations = board_outline_notch_readiness("edge", &outline);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "board-outline-notch-readiness");
+        assert!(!violations[0].locations.is_empty());
+    }
+
+    #[test]
+    fn board_outline_duplicate_readiness_reports_identical_contours() {
+        let outline = sketch(
+            "edge",
+            vec![square(0.0, 0.0, 10.0, 10.0), square(0.0, 0.0, 10.0, 10.0)],
+        );
+
+        let violations = board_outline_duplicate_readiness("edge", &outline);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "board-outline-duplicate-readiness");
+        assert!(!violations[0].locations.is_empty());
+    }
+
+    #[test]
+    fn board_outline_duplicate_readiness_allows_discrete_outer_regions() {
+        let outline = sketch(
+            "edge",
+            vec![square(0.0, 0.0, 10.0, 10.0), square(20.0, 0.0, 30.0, 10.0)],
+        );
+
+        assert!(board_outline_duplicate_readiness("edge", &outline).is_empty());
+    }
+
+    #[test]
+    fn board_outline_nesting_readiness_reports_nested_contour() {
+        let outline = sketch(
+            "edge",
+            vec![square(0.0, 0.0, 10.0, 10.0), square(2.0, 2.0, 4.0, 4.0)],
+        );
+
+        let violations = board_outline_nesting_readiness("edge", &outline);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "board-outline-nesting-readiness");
+        assert!(!violations[0].locations.is_empty());
+    }
+
+    #[test]
+    fn board_outline_nesting_readiness_allows_non_nested_discrete_regions() {
+        let outline = sketch(
+            "edge",
+            vec![square(0.0, 0.0, 10.0, 10.0), square(20.0, 0.0, 30.0, 10.0)],
+        );
+
+        assert!(board_outline_nesting_readiness("edge", &outline).is_empty());
+    }
+
+    #[test]
+    fn board_outline_nesting_readiness_allows_touching_contours() {
+        let outline = sketch(
+            "edge",
+            vec![square(0.0, 0.0, 10.0, 10.0), square(10.0, 4.0, 12.0, 6.0)],
+        );
+
+        assert!(board_outline_nesting_readiness("edge", &outline).is_empty());
+    }
+
+    #[test]
+    fn board_outline_duplicate_readiness_reports_reversed_duplicate_contour() {
+        let mut outer = square(0.0, 0.0, 10.0, 10.0).exterior().0.clone();
+        outer.pop();
+        outer.reverse();
+        outer.push(outer[0]);
+        let duplicate = Polygon::new(LineString(outer), vec![]);
+
+        let outline = sketch("edge", vec![square(0.0, 0.0, 10.0, 10.0), duplicate]);
+
+        let violations = board_outline_duplicate_readiness("edge", &outline);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "board-outline-duplicate-readiness");
+    }
+
+    #[test]
+    fn board_outline_cutout_clearance_reports_nested_inner_region_intrusion() {
+        let outline = sketch(
+            "edge",
+            vec![square(0.0, 0.0, 10.0, 10.0), square(3.0, 3.0, 7.0, 7.0)],
+        );
+        let subject = sketch("top", vec![square(4.0, 4.0, 6.0, 6.0)]);
+
+        let violations =
+            board_outline_cutout_clearance("top", &subject, "edge", &outline, 0.0, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "board-outline-cutout-clearance");
+    }
+
+    #[test]
+    fn board_outline_cutout_clearance_reports_nearby_geometry_with_clearance() {
+        let outline = sketch(
+            "edge",
+            vec![square(0.0, 0.0, 10.0, 10.0), square(3.0, 3.0, 7.0, 7.0)],
+        );
+        let near = sketch("top", vec![square(7.15, 4.0, 7.45, 6.0)]);
+
+        let violations =
+            board_outline_cutout_clearance("top", &near, "edge", &outline, 0.25, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "board-outline-cutout-clearance");
+    }
+
+    #[test]
+    fn board_outline_cutout_clearance_allows_geometry_outside_clearance_band() {
+        let outline = sketch(
+            "edge",
+            vec![square(0.0, 0.0, 10.0, 10.0), square(3.0, 3.0, 7.0, 7.0)],
+        );
+        let far = sketch("top", vec![square(7.8, 4.0, 8.2, 6.0)]);
+
+        let violations =
+            board_outline_cutout_clearance("top", &far, "edge", &outline, 0.25, 1.0e-9);
+
+        assert!(violations.is_empty());
+    }
+
+    #[test]
+    fn board_outline_cutout_clearance_allows_geometry_outside_cutout_region() {
+        let outline = sketch(
+            "edge",
+            vec![square(0.0, 0.0, 10.0, 10.0), square(3.0, 3.0, 7.0, 7.0)],
+        );
+        let subject = sketch("top", vec![square(1.0, 1.0, 2.0, 2.0)]);
+
+        let violations =
+            board_outline_cutout_clearance("top", &subject, "edge", &outline, 0.0, 1.0e-9);
+
+        assert!(violations.is_empty());
+    }
+
+    #[test]
+    fn board_outline_cutout_clearance_allows_non_nested_outline_regions() {
+        let outline = sketch(
+            "edge",
+            vec![square(0.0, 0.0, 10.0, 10.0), square(12.0, 0.0, 15.0, 2.0)],
+        );
+        let subject = sketch("top", vec![square(1.0, 1.0, 2.0, 2.0)]);
+
+        assert!(
+            board_outline_cutout_clearance("top", &subject, "edge", &outline, 0.0, 1.0e-9)
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn board_outline_cutout_clearance_reports_multiple_nested_regions() {
+        let outline = sketch(
+            "edge",
+            vec![
+                square(0.0, 0.0, 20.0, 20.0),
+                square(3.0, 3.0, 5.0, 5.0),
+                square(12.0, 12.0, 14.0, 14.0),
+            ],
+        );
+        let subject = sketch(
+            "top",
+            vec![square(4.0, 4.0, 4.5, 4.5), square(13.0, 13.0, 13.5, 13.5)],
+        );
+
+        let violations =
+            board_outline_cutout_clearance("top", &subject, "edge", &outline, 0.0, 1.0e-9);
+
+        assert_eq!(violations.len(), 2);
+    }
+
+    #[test]
+    fn board_outline_cutout_clearance_flags_zero_clearance_touching_geometry() {
+        let outline = sketch(
+            "edge",
+            vec![square(0.0, 0.0, 10.0, 10.0), square(3.0, 3.0, 7.0, 7.0)],
+        );
+        let touching = sketch("top", vec![square(2.0, 4.0, 3.0, 6.0)]);
+
+        let violations =
+            board_outline_cutout_clearance("top", &touching, "edge", &outline, 0.0, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+    }
+
+    #[test]
+    fn board_outline_cutout_clearance_is_orientation_tolerant_for_cutouts() {
+        let mut inner = square(3.0, 3.0, 7.0, 7.0).exterior().0.clone();
+        inner.pop();
+        inner.reverse();
+        inner.push(inner[0]);
+        let outline = sketch(
+            "edge",
+            vec![
+                square(0.0, 0.0, 10.0, 10.0),
+                Polygon::new(LineString(inner), vec![]),
+            ],
+        );
+        let near = sketch("top", vec![square(7.15, 4.0, 7.45, 6.0)]);
+
+        let violations =
+            board_outline_cutout_clearance("top", &near, "edge", &outline, 0.25, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+    }
+
+    #[test]
     fn exposed_copper_reports_oversized_mask_opening_touching_neighbor() {
         let copper = sketch(
             "top",
@@ -1609,6 +2464,132 @@ mod tests {
     }
 
     #[test]
+    fn layer_sanity_reports_malformed_contours() {
+        let bad_outline = sketch(
+            "bad layer",
+            vec![Polygon::new(
+                LineString(vec![
+                    Coord { x: 0.0, y: 0.0 },
+                    Coord { x: 4.0, y: 0.0 },
+                    Coord { x: 0.0, y: 4.0 },
+                    Coord { x: 4.0, y: 4.0 },
+                    Coord { x: 0.0, y: 0.0 },
+                ]),
+                vec![],
+            )],
+        );
+
+        let violations = layer_sanity("bad layer", &bad_outline, None);
+
+        assert!(violations.iter().any(|violation| {
+            violation
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("self-intersecting"))
+        }));
+    }
+
+    #[test]
+    fn layer_sanity_reports_self_intersection_inside_hole() {
+        let bad_outline = sketch(
+            "bad layer",
+            vec![Polygon::new(
+                LineString(vec![
+                    Coord { x: 0.0, y: 0.0 },
+                    Coord { x: 10.0, y: 0.0 },
+                    Coord { x: 10.0, y: 10.0 },
+                    Coord { x: 0.0, y: 10.0 },
+                    Coord { x: 0.0, y: 0.0 },
+                ]),
+                vec![LineString(vec![
+                    Coord { x: 2.0, y: 2.0 },
+                    Coord { x: 6.0, y: 6.0 },
+                    Coord { x: 2.0, y: 6.0 },
+                    Coord { x: 6.0, y: 2.0 },
+                    Coord { x: 2.0, y: 2.0 },
+                ])],
+            )],
+        );
+
+        let violations = layer_sanity("bad layer", &bad_outline, None);
+
+        assert!(violations.iter().any(|violation| {
+            violation
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("self-intersecting"))
+        }));
+        assert_eq!(violations.len(), 1);
+    }
+
+    #[test]
+    fn layer_sanity_reports_non_finite_coordinates_in_hole() {
+        let invalid = sketch(
+            "invalid layer",
+            vec![Polygon::new(
+                LineString(vec![
+                    Coord { x: 0.0, y: 0.0 },
+                    Coord { x: 10.0, y: 0.0 },
+                    Coord { x: 10.0, y: 10.0 },
+                    Coord { x: 0.0, y: 10.0 },
+                    Coord { x: 0.0, y: 0.0 },
+                ]),
+                vec![LineString(vec![
+                    Coord { x: 2.0, y: 2.0 },
+                    Coord {
+                        x: f64::NAN,
+                        y: 2.0,
+                    },
+                    Coord { x: 6.0, y: 2.0 },
+                    Coord { x: 6.0, y: 6.0 },
+                    Coord { x: 2.0, y: 2.0 },
+                ])],
+            )],
+        );
+
+        let violations = layer_sanity("invalid layer", &invalid, None);
+
+        assert!(violations.iter().any(|violation| {
+            violation
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("non-finite"))
+        }));
+    }
+
+    #[test]
+    fn layer_sanity_reports_non_finite_coordinates() {
+        let invalid = sketch(
+            "invalid layer",
+            vec![Polygon::new(
+                LineString(vec![
+                    Coord {
+                        x: f64::NAN,
+                        y: 0.0,
+                    },
+                    Coord { x: 1.0, y: 0.0 },
+                    Coord { x: 1.0, y: 1.0 },
+                    Coord { x: 0.0, y: 1.0 },
+                    Coord {
+                        x: f64::NAN,
+                        y: 0.0,
+                    },
+                ]),
+                vec![],
+            )],
+        );
+
+        let violations = layer_sanity("invalid layer", &invalid, None);
+
+        assert!(violations.iter().any(|violation| {
+            violation
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("non-finite"))
+        }));
+    }
+
+    #[test]
     fn layer_sanity_reports_area_excursions() {
         let flood = sketch("inner", vec![square(0.0, 0.0, 20.0, 20.0)]);
 
@@ -1622,6 +2603,78 @@ mod tests {
                 .unwrap()
                 .contains("exceeds maximum")
         );
+    }
+
+    #[test]
+    fn layer_sanity_allows_area_equal_to_limit() {
+        let flood = sketch("inner", vec![square(0.0, 0.0, 10.0, 10.0)]);
+
+        let violations = layer_sanity("inner", &flood, Some(100.0));
+
+        assert!(violations.iter().all(|violation| {
+            violation
+                .message
+                .as_deref()
+                .is_none_or(|message| !message.contains("exceeds maximum"))
+        }));
+    }
+
+    #[test]
+    fn board_outline_self_intersection_readiness_reports_hole_self_intersection() {
+        let outline = sketch(
+            "edge",
+            vec![Polygon::new(
+                LineString(vec![
+                    Coord { x: 0.0, y: 0.0 },
+                    Coord { x: 10.0, y: 0.0 },
+                    Coord { x: 10.0, y: 10.0 },
+                    Coord { x: 0.0, y: 10.0 },
+                    Coord { x: 0.0, y: 0.0 },
+                ]),
+                vec![LineString(vec![
+                    Coord { x: 2.0, y: 2.0 },
+                    Coord { x: 6.0, y: 6.0 },
+                    Coord { x: 2.0, y: 6.0 },
+                    Coord { x: 6.0, y: 2.0 },
+                    Coord { x: 2.0, y: 2.0 },
+                ])],
+            )],
+        );
+
+        let violations = board_outline_self_intersection_readiness("edge", &outline);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(
+            violations[0].check,
+            "board-outline-self-intersection-readiness"
+        );
+    }
+
+    #[test]
+    fn board_outline_duplicate_and_nesting_helpers_operate_on_shared_edge_case() {
+        let outer = square(0.0, 0.0, 10.0, 10.0);
+        let touching = Polygon::new(
+            LineString(vec![
+                Coord { x: 10.0, y: 4.0 },
+                Coord { x: 12.0, y: 4.0 },
+                Coord { x: 12.0, y: 6.0 },
+                Coord { x: 10.0, y: 6.0 },
+                Coord { x: 10.0, y: 4.0 },
+            ]),
+            vec![],
+        );
+
+        assert!(!super::polygon_contains_other_outer(
+            &outer,
+            &touching,
+            super::BOARD_OUTLINE_NESTED_OVERLAP_RATIO,
+            super::BOARD_OUTLINE_GEOMETRY_TOLERANCE,
+        ));
+        assert!(super::polygons_are_duplicate(
+            &outer,
+            &outer,
+            super::BOARD_OUTLINE_GEOMETRY_TOLERANCE,
+        ));
     }
 
     #[test]

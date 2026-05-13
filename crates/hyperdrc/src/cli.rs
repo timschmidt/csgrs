@@ -7,8 +7,13 @@ pub enum Check {
     MaskIslandKeepout,
     CopperOverlap,
     BoardEdgeClearance,
+    BoardOutlineCutoutClearance,
     BoardOutlineSanity,
     BoardOutlineFragments,
+    BoardOutlineSelfIntersectionReadiness,
+    BoardOutlineNotchReadiness,
+    BoardOutlineDuplicateReadiness,
+    BoardOutlineNestingReadiness,
     PasteOverhang,
     PasteApertureCoverage,
     PasteApertureRatio,
@@ -51,10 +56,12 @@ pub enum Check {
     PlaneClearanceReadiness,
     BoardEdgeExposure,
     HighSpeedEdgeReadiness,
+    EdgeCopperPullbackReadiness,
     HighVoltageEdgeReadiness,
     ControlledImpedanceReadiness,
     DifferentialPairReadiness,
     DifferentialPairSpacingReadiness,
+    DifferentialPairViaSymmetryReadiness,
     ReferencePlaneReadiness,
     ReferencePlaneVoidReadiness,
     OrphanedZoneReadiness,
@@ -67,21 +74,35 @@ pub enum Check {
     HighCurrentNeckReadiness,
     VoltageClearanceReadiness,
     SensitiveNetSpacingReadiness,
+    SensitiveReturnReadiness,
+    RfKeepoutReadiness,
+    ChassisStitchingReadiness,
+    EdgeStitchingReadiness,
     GoldFingerReadiness,
+    TestpointCoverageReadiness,
+    FiducialReadiness,
+    DensePadEscapeReadiness,
     NetSpacing,
     RegistrationTolerance,
     PanelizationClearance,
     Ipc356Coverage,
     Ipc356DrillDiameter,
+    ExcellonReadiness,
     FileManifestReadiness,
+    ProductionArtifactReadiness,
 }
 
 pub const DEFAULT_CHECKS: &[Check] = &[
     Check::MaskIslandKeepout,
     Check::CopperOverlap,
     Check::BoardEdgeClearance,
+    Check::BoardOutlineCutoutClearance,
     Check::BoardOutlineSanity,
     Check::BoardOutlineFragments,
+    Check::BoardOutlineSelfIntersectionReadiness,
+    Check::BoardOutlineNotchReadiness,
+    Check::BoardOutlineDuplicateReadiness,
+    Check::BoardOutlineNestingReadiness,
     Check::PasteOverhang,
     Check::PasteApertureCoverage,
     Check::PasteApertureRatio,
@@ -124,10 +145,12 @@ pub const DEFAULT_CHECKS: &[Check] = &[
     Check::PlaneClearanceReadiness,
     Check::BoardEdgeExposure,
     Check::HighSpeedEdgeReadiness,
+    Check::EdgeCopperPullbackReadiness,
     Check::HighVoltageEdgeReadiness,
     Check::ControlledImpedanceReadiness,
     Check::DifferentialPairReadiness,
     Check::DifferentialPairSpacingReadiness,
+    Check::DifferentialPairViaSymmetryReadiness,
     Check::ReferencePlaneReadiness,
     Check::ReferencePlaneVoidReadiness,
     Check::OrphanedZoneReadiness,
@@ -140,13 +163,22 @@ pub const DEFAULT_CHECKS: &[Check] = &[
     Check::HighCurrentNeckReadiness,
     Check::VoltageClearanceReadiness,
     Check::SensitiveNetSpacingReadiness,
+    Check::SensitiveReturnReadiness,
+    Check::RfKeepoutReadiness,
+    Check::ChassisStitchingReadiness,
+    Check::EdgeStitchingReadiness,
     Check::GoldFingerReadiness,
+    Check::TestpointCoverageReadiness,
+    Check::FiducialReadiness,
+    Check::DensePadEscapeReadiness,
     Check::NetSpacing,
     Check::RegistrationTolerance,
     Check::PanelizationClearance,
     Check::Ipc356Coverage,
     Check::Ipc356DrillDiameter,
+    Check::ExcellonReadiness,
     Check::FileManifestReadiness,
+    Check::ProductionArtifactReadiness,
 ];
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, ValueEnum)]
@@ -230,6 +262,10 @@ pub struct Cli {
     #[arg(long = "bottom-color-image")]
     pub bottom_color_image: Option<PathBuf>,
 
+    /// Extra command-line arguments passed to the selected converter backend.
+    #[arg(long = "conversion-arg", value_name = "ARG")]
+    pub conversion_args: Vec<String>,
+
     /// KiCad .kicad_pcb file. Repeat to check multiple boards.
     #[arg(long = "kicad-pcb")]
     pub kicad_pcbs: Vec<PathBuf>,
@@ -241,6 +277,34 @@ pub struct Cli {
     /// IPC-D-356 netlist file. Repeat to merge multiple electrical test netlists.
     #[arg(long = "ipc356")]
     pub ipc356_files: Vec<PathBuf>,
+
+    /// Bill of materials file.
+    #[arg(long = "bom")]
+    pub bom_files: Vec<PathBuf>,
+
+    /// Placement / centroid file.
+    #[arg(long = "centroid")]
+    pub centroid_files: Vec<PathBuf>,
+
+    /// Netlist source for pre-production validation and manifest completeness.
+    #[arg(long = "netlist")]
+    pub netlist_files: Vec<PathBuf>,
+
+    /// Mechanical fabricator drawing file.
+    #[arg(long = "fab-drawing")]
+    pub fab_drawing_files: Vec<PathBuf>,
+
+    /// Assembly drawing, instruction, or fixture file.
+    #[arg(long = "assembly-drawing")]
+    pub assembly_drawing_files: Vec<PathBuf>,
+
+    /// Readme or release-notes file describing the package.
+    #[arg(long = "readme")]
+    pub readme_files: Vec<PathBuf>,
+
+    /// Route, V-score, or tooling drawing for panelization review.
+    #[arg(long = "rout-drawing")]
+    pub rout_drawing_files: Vec<PathBuf>,
 
     /// JSON waiver file. Repeat to combine waiver sets.
     #[arg(long = "waiver")]
@@ -375,6 +439,10 @@ pub struct Cli {
     #[arg(long = "summary-file")]
     pub summary_file: Option<PathBuf>,
 
+    /// Declared total copper layer count from order metadata.
+    #[arg(long = "declared-copper-layer-count")]
+    pub declared_copper_layer_count: Option<usize>,
+
     /// Write an SVG overlay of active violations to this path.
     #[arg(long = "svg-overlay")]
     pub svg_overlay: Option<PathBuf>,
@@ -431,13 +499,19 @@ mod tests {
             "--check",
             "high-speed-edge-readiness",
             "--check",
+            "edge-copper-pullback-readiness",
+            "--check",
             "high-voltage-edge-readiness",
+            "--check",
+            "differential-pair-via-symmetry-readiness",
             "--check",
             "controlled-impedance-readiness",
             "--check",
             "differential-pair-readiness",
             "--check",
             "differential-pair-spacing-readiness",
+            "--check",
+            "edge-stitching-readiness",
             "--check",
             "reference-plane-readiness",
             "--check",
@@ -463,7 +537,19 @@ mod tests {
             "--check",
             "sensitive-net-spacing-readiness",
             "--check",
+            "sensitive-return-readiness",
+            "--check",
+            "rf-keepout-readiness",
+            "--check",
+            "chassis-stitching-readiness",
+            "--check",
             "gold-finger-readiness",
+            "--check",
+            "testpoint-coverage-readiness",
+            "--check",
+            "fiducial-readiness",
+            "--check",
+            "dense-pad-escape-readiness",
             "--check",
             "solder-mask-opening-coverage",
             "--check",
@@ -499,9 +585,21 @@ mod tests {
             "--check",
             "file-manifest-readiness",
             "--check",
+            "production-artifact-readiness",
+            "--check",
             "mechanical-layer-geometry",
             "--check",
             "board-outline-sanity",
+            "--check",
+            "board-outline-self-intersection-readiness",
+            "--check",
+            "board-outline-notch-readiness",
+            "--check",
+            "board-outline-duplicate-readiness",
+            "--check",
+            "board-outline-nesting-readiness",
+            "--check",
+            "board-outline-cutout-clearance",
             "--check",
             "board-outline-fragments",
             "--silk-layer",
@@ -532,10 +630,13 @@ mod tests {
                 Check::PlaneClearanceReadiness,
                 Check::BoardEdgeExposure,
                 Check::HighSpeedEdgeReadiness,
+                Check::EdgeCopperPullbackReadiness,
                 Check::HighVoltageEdgeReadiness,
+                Check::DifferentialPairViaSymmetryReadiness,
                 Check::ControlledImpedanceReadiness,
                 Check::DifferentialPairReadiness,
                 Check::DifferentialPairSpacingReadiness,
+                Check::EdgeStitchingReadiness,
                 Check::ReferencePlaneReadiness,
                 Check::ReferencePlaneVoidReadiness,
                 Check::OrphanedZoneReadiness,
@@ -548,7 +649,13 @@ mod tests {
                 Check::HighCurrentNeckReadiness,
                 Check::VoltageClearanceReadiness,
                 Check::SensitiveNetSpacingReadiness,
+                Check::SensitiveReturnReadiness,
+                Check::RfKeepoutReadiness,
+                Check::ChassisStitchingReadiness,
                 Check::GoldFingerReadiness,
+                Check::TestpointCoverageReadiness,
+                Check::FiducialReadiness,
+                Check::DensePadEscapeReadiness,
                 Check::SolderMaskOpeningCoverage,
                 Check::SolderMaskExpansion,
                 Check::SolderMaskOverlapClearance,
@@ -565,8 +672,14 @@ mod tests {
                 Check::SolderMaskOpeningSpacing,
                 Check::Ipc356DrillDiameter,
                 Check::FileManifestReadiness,
+                Check::ProductionArtifactReadiness,
                 Check::MechanicalLayerGeometry,
                 Check::BoardOutlineSanity,
+                Check::BoardOutlineSelfIntersectionReadiness,
+                Check::BoardOutlineNotchReadiness,
+                Check::BoardOutlineDuplicateReadiness,
+                Check::BoardOutlineNestingReadiness,
+                Check::BoardOutlineCutoutClearance,
                 Check::BoardOutlineFragments
             ]
         );
@@ -592,6 +705,8 @@ mod tests {
             "--conversion-zip",
             "--conversion-zip-name",
             "upload",
+            "--conversion-arg=--foo",
+            "--conversion-arg=--bar=baz",
         ]);
 
         assert_eq!(cli.gerber_dirs, vec![PathBuf::from("gerbers")]);
@@ -602,6 +717,43 @@ mod tests {
         assert_eq!(cli.transjlc_bin, PathBuf::from("transjlc"));
         assert!(cli.conversion_zip);
         assert_eq!(cli.conversion_zip_name, "upload");
+        assert_eq!(cli.conversion_args, vec!["--foo", "--bar=baz"]);
+    }
+
+    #[test]
+    fn parses_manufacturing_readiness_sources() {
+        let cli = Cli::parse_from([
+            "hyperdrc",
+            "--bom",
+            "parts.json",
+            "--centroid",
+            "centroid.txt",
+            "--netlist",
+            "netlist.csv",
+            "--fab-drawing",
+            "fab.pdf",
+            "--assembly-drawing",
+            "assembly.dxf",
+            "--readme",
+            "README.md",
+            "--rout-drawing",
+            "panel.dxf",
+            "--declared-copper-layer-count",
+            "4",
+            "top.gbr",
+        ]);
+
+        assert_eq!(cli.bom_files, vec![PathBuf::from("parts.json")]);
+        assert_eq!(cli.centroid_files, vec![PathBuf::from("centroid.txt")]);
+        assert_eq!(cli.netlist_files, vec![PathBuf::from("netlist.csv")]);
+        assert_eq!(cli.fab_drawing_files, vec![PathBuf::from("fab.pdf")]);
+        assert_eq!(
+            cli.assembly_drawing_files,
+            vec![PathBuf::from("assembly.dxf")]
+        );
+        assert_eq!(cli.readme_files, vec![PathBuf::from("README.md")]);
+        assert_eq!(cli.rout_drawing_files, vec![PathBuf::from("panel.dxf")]);
+        assert_eq!(cli.declared_copper_layer_count, Some(4));
     }
 
     #[test]

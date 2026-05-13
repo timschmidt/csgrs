@@ -29,6 +29,13 @@ pub enum IoRole {
     KiCadBoard,
     DrillSidecar,
     NetlistSidecar,
+    NetlistFile,
+    RoutDrawingFile,
+    BomFile,
+    CentroidFile,
+    FabDrawing,
+    AssemblyDrawing,
+    ReadmeFile,
     Waiver,
 }
 
@@ -147,7 +154,9 @@ pub fn is_gerber_path(path: &Path) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use std::fs::{create_dir_all, remove_dir_all, write};
     use std::path::PathBuf;
+    use std::process::id;
 
     use super::{IoAdapter, IoRole, SourceRecord, discover_gerber_dir, is_gerber_path};
 
@@ -162,12 +171,12 @@ mod tests {
 
     #[test]
     fn gerber_directory_discovery_is_sorted_and_records_origin() {
-        let dir = std::env::temp_dir().join(format!("hyperdrc-io-dir-{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
-        std::fs::write(dir.join("z-bottom.gbl"), "%").unwrap();
-        std::fs::write(dir.join("a-top.gtl"), "%").unwrap();
-        std::fs::write(dir.join("notes.txt"), "not gerber").unwrap();
+        let dir = std::env::temp_dir().join(format!("hyperdrc-io-dir-{}", id()));
+        let _ = remove_dir_all(&dir);
+        create_dir_all(&dir).unwrap();
+        write(dir.join("z-bottom.gbl"), "%").unwrap();
+        write(dir.join("a-top.gtl"), "%").unwrap();
+        write(dir.join("notes.txt"), "not gerber").unwrap();
 
         let files = discover_gerber_dir(&dir).unwrap();
 
@@ -179,7 +188,49 @@ mod tests {
             files[0].source.origin.as_deref(),
             Some(dir.to_str().unwrap())
         );
-        let _ = std::fs::remove_dir_all(dir);
+        let _ = remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn discover_gerber_dir_skips_directory_nodes_and_non_matching_files() {
+        let dir = std::env::temp_dir().join(format!("hyperdrc-io-dir-skip-{}", id()));
+        let _ = remove_dir_all(&dir);
+        create_dir_all(&dir).unwrap();
+        write(dir.join("top-layer.gtl"), "%").unwrap();
+        write(dir.join("README.md"), "notes").unwrap();
+        create_dir_all(dir.join("subdir")).unwrap();
+        write(dir.join("subdir").join("inner.gbr"), "nope").unwrap();
+
+        let files = discover_gerber_dir(&dir).unwrap();
+
+        assert_eq!(files.len(), 1);
+        assert_eq!(files[0].path, dir.join("top-layer.gtl"));
+        assert_eq!(files[0].source.role, IoRole::GerberLayer);
+        let _ = remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn discover_gerber_dir_reports_read_error_when_directory_is_missing() {
+        let dir = std::env::temp_dir().join(format!("hyperdrc-io-dir-missing-{}", id()));
+        let _ = remove_dir_all(&dir);
+
+        let err = discover_gerber_dir(&dir).unwrap_err().to_string();
+
+        assert!(err.contains("failed to read Gerber directory"));
+        assert!(err.contains(dir.to_string_lossy().as_ref()));
+    }
+
+    #[test]
+    fn gerber_path_detection_handles_keyword_only_matches_and_rejects_obvious_false_positives() {
+        assert!(is_gerber_path(&PathBuf::from("TopCopper_layer")));
+        assert!(is_gerber_path(&PathBuf::from("top-copper")));
+        assert!(is_gerber_path(&PathBuf::from("outline_bottom")));
+        assert!(is_gerber_path(&PathBuf::from("soldermask-top")));
+        assert!(is_gerber_path(&PathBuf::from("solderpaste-bottom")));
+        assert!(is_gerber_path(&PathBuf::from("silkscreen_top")));
+        assert!(!is_gerber_path(&PathBuf::from("readme.gbr.backup")));
+        assert!(!is_gerber_path(&PathBuf::from("readme.txt")));
+        assert!(!is_gerber_path(&PathBuf::from(".gbr")));
     }
 
     #[test]

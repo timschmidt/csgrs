@@ -16,10 +16,22 @@ sidecar input where possible.
   report overlapping geometry that may create unintended capacitance.
 - `board-edge-clearance`: erode the board outline by the requested clearance,
   subtract that allowed region from copper, and report any remaining copper.
+- `board-outline-cutout-clearance`: detect nested board outlines that represent
+  cutouts and report subject geometry that enters those regions within the
+  configured clearance.
 - `board-outline-sanity`: warn when an explicit board outline layer or KiCad
   `Edge.Cuts` data has no closed polygon area.
 - `board-outline-fragments`: warn when an explicit board outline layer or KiCad
   `Edge.Cuts` data parses to multiple disconnected outline regions.
+- `board-outline-self-intersection-readiness`: report explicit board-outline
+  and parsed KiCad `Edge.Cuts` contours that self-intersect.
+- `board-outline-notch-readiness`: report sharp inside-corners in outline
+  contours that are likely below router capability.
+- `board-outline-duplicate-readiness`: flag duplicate board-outline contours that
+  typically indicate accidental overlap or double-exported profile geometry.
+- `board-outline-nesting-readiness`: flag nested board-outline contours where
+  one contour is fully contained by another, which can indicate malformed profile
+  structure.
 - `paste-overhang`: subtract paired copper, optionally expanded by a tolerance,
   from paste apertures.
 - `paste-aperture-coverage`: subtract paste apertures from paired copper and
@@ -52,6 +64,10 @@ sidecar input where possible.
   region.
 - `silkscreen-board-edge-clearance`: warn when explicit silkscreen layers fall
   outside the board outline eroded by the configured clearance.
+- `waiver-governance`: warn when waiver entries are underspecified. Scope
+  checks require at least one of `id`, `check`, `layers`, or `message_contains`;
+  metadata checks require non-empty `reason`, `owner`, `review_date`, `source`,
+  and `geometry_hash`.
 - `silkscreen-min-width`: approximate thin silkscreen strokes and text geometry
   by eroding and re-growing silkscreen with half the requested minimum width.
 - `min-copper-neck`: approximate thin copper features by eroding and re-growing
@@ -97,6 +113,9 @@ sidecar input where possible.
   exceeded.
 - `drill-table-consistency`: compare nearby KiCad, Excellon, and IPC-D-356
   drill records and warn when sidecar drill diameters conflict.
+- `excellon-readiness`: validate Excellon sidecars for unit declarations, tool
+  table integrity, unknown-tool/undefined-tool drill hits, and malformed hit
+  lines before downstream drill spacing and consistency checks consume geometry.
 - `copper-width-readiness`: warn when parsed KiCad copper features on selected
   layers have a minimum bounding width below the configured threshold.
 - `copper-net-intent`: warn when parsed KiCad copper still has no net after
@@ -114,14 +133,20 @@ sidecar input where possible.
   be reviewed.
 - `high-speed-edge-readiness`: warn when likely high-speed KiCad copper is
   inside the configured board-edge clearance band.
+- `edge-copper-pullback-readiness`: warn when non-edge-intent copper intrudes into
+  the board-edge clearance band, catching accidental near-edge traces and planes.
 - `high-voltage-edge-readiness`: warn when likely high-voltage KiCad copper is
   inside the configured board-edge clearance band.
+- `edge-stitching-readiness`: warn when likely high-speed or RF/antenna copper is
+  near the board edge without nearby parsed ground stitch vias.
 - `controlled-impedance-readiness`: warn when likely high-speed KiCad nets span
   multiple selected copper layers without a parsed same-net via transition.
 - `differential-pair-readiness`: warn when likely differential-pair KiCad nets
   are missing their mate or put pair sides on different selected copper layers.
 - `differential-pair-spacing-readiness`: warn when likely differential-pair
   KiCad copper sides are farther apart than the configured review threshold.
+- `differential-pair-via-symmetry-readiness`: warn when one side of a likely
+  differential pair has an asymmetric via count or via layer set.
 - `reference-plane-readiness`: warn when likely high-speed KiCad nets are
   present without a parsed ground zone on selected copper layers.
 - `reference-plane-void-readiness`: warn when likely high-speed KiCad copper
@@ -147,8 +172,22 @@ sidecar input where possible.
 - `sensitive-net-spacing-readiness`: warn when likely analog, RF, or sensor
   KiCad nets are close to likely noisy power, switching, motor, or high-speed
   nets.
+- `sensitive-return-readiness`: warn when likely analog, RF, or sensor KiCad
+  nets have no parsed same-layer ground copper nearby.
+- `rf-keepout-readiness`: warn when likely RF or antenna KiCad nets are close
+  to non-ground copper on the same selected layer.
+- `chassis-stitching-readiness`: warn when likely chassis or shield KiCad nets
+  have no parsed ground stitching via nearby.
 - `gold-finger-readiness`: warn when likely gold-finger or edge-connector KiCad
   nets contain via copper on selected layers.
+- `testpoint-coverage-readiness`: warn when likely critical KiCad nets have no
+  matching IPC-D-356 test record, giving production test coverage an early
+  sidecar-driven review signal.
+- `fiducial-readiness`: infer likely unnetted circular fiducial pads and warn
+  when populated copper sides have fewer than two or when candidates sit inside
+  the configured edge-clearance review band.
+- `dense-pad-escape-readiness`: warn when dense fine-pitch pad clusters have no
+  parsed nearby via escape, so BGA/QFN/fine-pitch breakout strategy is reviewed.
 - `different-net-spacing`: offset same-layer KiCad copper features by a
   configured clearance and report different-net proximity.
 - `layer-registration-tolerance`: compare KiCad copper layers with an offset
@@ -161,7 +200,29 @@ sidecar input where possible.
   with nearby parsed KiCad drill diameters.
 - `file-manifest-readiness`: warn when a Gerber package is missing recognizable
   copper, board outline, drill data, or matching solder mask layers, and warn on
-  duplicate core manufacturing roles.
+  duplicate core manufacturing roles. It now also:
+  - flags missing or duplicate BOM, centroid, fab-drawing, assembly-drawing, and
+    readme artifacts, plus optional netlist and rout-drawing artifacts;
+  - flags missing same-side solder mask, solder paste, and silkscreen companion
+    layers whenever matching copper layers are detected;
+  - validates duplicated companion roles;
+  - flags orphaned side outputs, inner copper without both outer copper layers,
+    odd recognized copper layer counts, and one-copper packages that also
+    contain bottom-side outputs;
+  - checks Gerber-recognized copper layer counts against KiCad-declared copper
+    layer counts and optional order-declared layer-count metadata;
+  - warns when filenames appear to mix revision or generated-date tags across
+    Gerbers and package artifacts; and
+  - warns when package filenames include stale/archive tokens such as backup,
+    old, previous, or obsolete.
+- `production-artifact-readiness`: validate common BOM, centroid, netlist,
+  README, fabrication drawing, assembly drawing, and rout drawing sidecars for
+  required headers, BOM quantity/refdes agreement, duplicate reference
+  designators, malformed placement coordinates/rotations, invalid side values,
+  duplicate pin/net assignments, reference parity between
+  purchase/placement/netlist artifacts, missing README revision/manufacturing
+  notes, non-empty drawing files, common drawing extensions, and role-specific
+  drawing filename tokens.
 
 ## Supported Inputs
 
@@ -220,9 +281,11 @@ example before it is considered production-ready.
   polarity marks, fiducials, centroid files, assembly-side data, and alternate
   parts.
 - File manifest model: expected copper/mask/paste/silk/drill/fab/drawing files,
-  generated timestamp, source EDA, board revision, order parameters, and
-  declared layer count. Initial role inference and missing/duplicate core-file
-  checks are implemented by `file-manifest-readiness`.
+  BOM/centroid/netlist/readme/assembly/rout artifacts, generated timestamp, source
+  EDA, board revision, order parameters, and declared layer count. Initial role
+  inference
+  and missing/duplicate core-file checks are implemented by
+  `file-manifest-readiness`.
 
 ### Fabrication Geometry Checks
 
@@ -257,12 +320,12 @@ example before it is considered production-ready.
   slot end radius, slot-to-copper spacing, slot-to-slot spacing, and minimum
   routed cutter diameter. Initial KiCad checks warn when non-plated mechanical
   drill diameters are below the configured minimum width.
-- Board outline validity: closed contour, self-intersections, duplicate
-  outlines, nested cutouts, tiny outline fragments, notches below router
-  diameter, inside corners below router radius, and outline-to-hole tolerance.
+- Board outline validity: duplicate outlines, nested cutouts, outline-to-hole
+  tolerance, and router-access validation.
   Initial outline-fragment checks warn when the parsed outline has multiple
-  disconnected regions. Initial outline-to-hole checks report KiCad and
-  Excellon drill keepouts that are not contained by the parsed board outline.
+  disconnected regions. Initial outline self-intersection, duplicate, nesting,
+  and notch checks report self-crossing contours, duplicate/nested contours, and
+  sharp router-bottleneck corners.
 - Copper balance: layer copper area, local copper density, plane void islands,
   sparse inner layers, high copper imbalance across the stack, and bow/twist
   risk flags. Initial layer-area imbalance checks are implemented for KiCad
@@ -374,7 +437,9 @@ example before it is considered production-ready.
 - Polarity and pin-1 indicators present and visible for polarized parts,
   connectors, ICs, diodes, LEDs, electrolytics, and batteries.
 - Reference designator completeness, duplicate refdes detection, refdes outside
-  board outline, unreadable refdes, and assembly drawing consistency.
+  board outline, unreadable refdes, and assembly drawing consistency. Initial
+  production artifact checks flag duplicate BOM/centroid references and
+  BOM/centroid/netlist reference mismatches.
 - Fabrication marking checks: date code, UL mark, impedance coupon label,
   serialization, revision text, and customer-required markings in allowed zones.
 - Fiducial label and keepout clarity: global/local fiducials not covered by
@@ -396,14 +461,31 @@ example before it is considered production-ready.
   solder voiding risk, and exposed pad copper balance.
 - BGA assembly risk: pitch class, escape route feasibility, dogbone via size,
   microvia requirements, soldermask web, inspection accessibility, and X-ray
-  requirement flag.
+  requirement flag. Initial KiCad checks warn when dense fine-pitch pad clusters
+  have no parsed nearby escape via.
 - Connector/rework access: soldering iron access, cable insertion direction,
   latch clearance, mating height, and keepout zones.
 - Test point readiness: minimum probe diameter, soldermask opening, net
   coverage, side accessibility, spacing, height clearance, and no soldermask or
-  silkscreen obstruction.
+  silkscreen obstruction. Initial KiCad/IPC-D-356 checks warn when likely
+  critical nets have no matching IPC-D-356 test record.
+- BOM, centroid, netlist, README, and drawing readiness: required columns,
+  manufacturer/supplier metadata, value/footprint coverage, quantity/refdes
+  agreement, grouped reference expansion, DNP/DNI placement parity handling,
+  unusual reference designators, duplicate reference designators, conflicting
+  MPN value/footprint metadata, malformed placement coordinates,
+  out-of-range rotations, invalid side values, duplicate centroid coordinates,
+  duplicate pin-to-net assignments, repeated netlist rows, one-pin net review,
+  release revision notes, drawing role naming, text sidecar naming/extensions,
+  drawing file size, placeholder drawing detection, order-parameter intent,
+  contradictory order notes, assembly handoff evidence, release preflight
+  evidence, DNP/DNI placement conflicts, and package parity between purchase,
+  placement, and netlist files. Initial CSV/TSV, text, and
+  path/metadata checks are implemented by
+  `production-artifact-readiness`.
 - Fiducials: global/local count, symmetry, copper diameter, mask opening,
-  keepout, edge clearance, and side coverage.
+  keepout, edge clearance, and side coverage. Initial KiCad checks infer likely
+  unnetted circular fiducial pads and warn on low count or edge-clearance risk.
 - Panel fiducials/tooling: panel-level fiducials, tooling holes, rails, bad-board
   marks, breakaway tabs, mouse bite hole size/spacing, and V-score residual web.
 - Double-sided assembly: heavy parts on second side, reflow shadowing, adhesive
@@ -441,7 +523,9 @@ example before it is considered production-ready.
 - Analog/digital/RF segregation: region keepouts, noisy-net proximity, guard
   traces, via fences, antenna keepouts, and copper-free regions under inductors
   or antennas. Initial KiCad checks warn when likely analog, RF, or sensor nets
-  run close to likely noisy power, switching, motor, or high-speed nets.
+  run close to likely noisy power, switching, motor, or high-speed nets; when
+  those sensitive nets lack nearby same-layer ground copper; and when likely RF
+  or antenna nets are close to non-ground copper.
 - ESD/safety: creepage and clearance by voltage class, slot barriers, spark-gap
   geometry, protective earth spacing, fuse/MOV keepouts, and high-voltage
   silkscreen warnings. Initial KiCad checks warn when likely high-voltage nets
@@ -451,7 +535,8 @@ example before it is considered production-ready.
   heatsink/mechanical keepouts.
 - EMC readiness: edge-rate nets near board edge, connector return pins, chassis
   stitching, ground moat mistakes, cable shield connection intent, and loop
-  antenna risk.
+  antenna risk. Initial KiCad checks warn when likely chassis or shield nets
+  lack nearby parsed ground stitching vias.
 
 ### Manufacturing File and Pre-Production Workflow Checks
 
@@ -465,7 +550,9 @@ example before it is considered production-ready.
   orientation, drill origin, and coordinate origin consistency.
 - Drill file checks: plated/non-plated split, duplicate drill files, missing
   tools, unsupported units/zeros, route slots versus drill hits, and tool
-  diameter outliers.
+  diameter outliers. Initial implementation now covers missing/duplicate tools,
+  tool-unit sequencing, unresolved tool hits, and malformed coordinate records via
+  `excellon-readiness`.
 - Gerber sanity: empty layers, tiny aperture flashes, unbounded fills, huge
   areas, malformed regions, duplicate layers, stale plot files, and mixed
   revisions.
@@ -474,6 +561,8 @@ example before it is considered production-ready.
   depth, and panelization options match file content.
 - Revision consistency: board revision appears consistently in fab drawing,
   silkscreen, README, filename, BOM, placement file, and source metadata.
+  Initial manifest checks compare recognizable revision tags across Gerber and
+  sidecar filenames and warn on stale/archive filename tokens.
 - Preflight sequence: refill zones, run EDA DRC/ERC, generate fresh fabrication
   outputs, reload outputs into independent viewer/parser, run HyperDRC, generate
   overlay artifacts, review waiver diff, and archive exact submitted package.

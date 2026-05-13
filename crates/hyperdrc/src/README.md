@@ -23,17 +23,29 @@ application orchestration, while subfolders hold the larger semantic areas.
   they are intended to run by default.
 - [`config.rs`](config.rs) defines JSON rule-deck loading and merge behavior
   between config-file values, CLI overrides, and built-in defaults.
-- [`waiver.rs`](waiver.rs) defines JSON waiver parsing and matching by stable
-  violation ID, check name, layer list, and message text.
+- [`waiver.rs`](waiver.rs) defines JSON waiver parsing, matching by stable
+  violation ID, check name, layer list, and message text, plus governance
+  validation for waiver metadata completeness (reason, owner, review date, source,
+  and geometry hash).
 
 ## Input And Conversion
 
 - [`io.rs`](io.rs) centralizes input discovery and provenance. It records which
   adapter loaded each input, the input role, the path, and optional conversion
   origin. Report manifests use these records.
+- Production manifest-sidecar flags are now tracked through the same provenance model:
+  `--bom`, `--centroid`, `--netlist`, `--fab-drawing`, `--assembly-drawing`,
+  `--readme`, and `--rout-drawing` are surfaced in the report input list and
+  `file-manifest-readiness`. BOM, centroid, netlist, README, fabrication
+  drawing, assembly drawing, and rout drawing files are also consumed by
+  `production-artifact-readiness` for assembly-sidecar structure, reference
+  parity, grouped BOM references, DNP/DNI handling, drawing role, and
+  release-note/order-preflight checks.
 - [`conversion.rs`](conversion.rs) owns external converter integration. The
   current backend shells out to TransJLC and then feeds the converted Gerber
-  directory back through the normal Gerber loading path.
+  directory back through the normal Gerber loading path. `--conversion-arg`
+  provides backend-specific pass-through flags so additional converter options can
+  be surfaced without redesigning the adapter surface.
 - [`excellon.rs`](excellon.rs) parses common Excellon drill files into drill
   features used by spacing, clearance, aspect-ratio, panel, and table checks.
 - [`ipc356.rs`](ipc356.rs) parses common IPC-D-356 electrical-test records.

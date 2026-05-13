@@ -37,6 +37,25 @@ Load every Gerber-like file from a directory:
 cargo run -- --gerber-dir path/to/gerber-package
 ```
 
+Include pre-production sidecars for manifest-driven readiness checks:
+
+```sh
+cargo run -- \
+  --check file-manifest-readiness \
+  --bom parts.csv \
+  --centroid placement.txt \
+  --netlist netlist.csv \
+  --fab-drawing fab.dxf \
+  --assembly-drawing assembly.dxf \
+  --readme release-notes.md \
+  --rout-drawing panel.dxf \
+  --declared-copper-layer-count 4 \
+  --kicad-pcb board.kicad_pcb \
+  --excellon board.drl \
+  top.gbr \
+  bottom.gbr
+```
+
 Convert a Gerber package with
 [`TransJLC`](https://github.com/HalfSweet/TransJLC) before loading the converted
 outputs:
@@ -46,7 +65,9 @@ cargo run -- \
   --convert-input path/to/source-gerbers \
   --conversion-output-dir build/hyperdrc-converted \
   --source-eda kicad \
-  --transjlc-bin TransJLC
+  --transjlc-bin TransJLC \
+  --conversion-arg --colorize \
+  --conversion-arg --zip-name=upload
 ```
 
 Run KiCad-aware checks against a `.kicad_pcb` file:
@@ -103,7 +124,11 @@ The default suite includes geometry, drill, sidecar, package, and provenance
 checks:
 
 - `mask-island-keepout`, `copper-overlap`, `board-edge-clearance`,
-  `board-outline-sanity`, `board-outline-fragments`, `paste-overhang`,
+  `board-outline-sanity`, `board-outline-fragments`,
+  `board-outline-self-intersection-readiness`, `board-outline-notch-readiness`,
+  `board-outline-duplicate-readiness`, `board-outline-nesting-readiness`,
+  `board-outline-cutout-clearance`,
+  `paste-overhang`,
   `paste-aperture-coverage`, `paste-aperture-ratio`,
   `minimum-paste-aperture`, `paste-aperture-spacing`,
   `paste-mask-alignment`, `exposed-copper`, `solder-mask-opening-coverage`,
@@ -120,19 +145,39 @@ checks:
   `drill-table-consistency`, `copper-width-readiness`, `copper-net-intent`,
   `teardrop-readiness`, `thermal-relief-readiness`, `plane-clearance-readiness`,
   `board-edge-exposure`, `high-speed-edge-readiness`,
+  `edge-copper-pullback-readiness`,
   `high-voltage-edge-readiness`,
   `controlled-impedance-readiness`,
-  `differential-pair-readiness`, `differential-pair-spacing-readiness`,
+  `edge-stitching-readiness`, `differential-pair-readiness`,
+  `differential-pair-spacing-readiness`,
+  `differential-pair-via-symmetry-readiness`,
   `reference-plane-readiness`,
   `reference-plane-void-readiness`, `orphaned-zone-readiness`,
   `same-net-island-readiness`, `return-path-readiness`,
   `high-current-readiness`, `power-via-array-readiness`, `thermal-via-readiness`,
   `power-plane-readiness`, `high-current-neck-readiness`, `voltage-clearance-readiness`,
-  `sensitive-net-spacing-readiness`, `gold-finger-readiness`, `net-spacing`,
-  `registration-tolerance`, and
-  `panelization-clearance`.
-- `ipc356-coverage`, `ipc356-drill-diameter`, and
-  `file-manifest-readiness`.
+  `sensitive-net-spacing-readiness`, `sensitive-return-readiness`,
+  `rf-keepout-readiness`, `chassis-stitching-readiness`, `gold-finger-readiness`,
+  `testpoint-coverage-readiness`, `fiducial-readiness`,
+  `dense-pad-escape-readiness`, `net-spacing`, `registration-tolerance`,
+  and `panelization-clearance`.
+- `excellon-readiness`, `file-manifest-readiness`, `ipc356-coverage`,
+  `ipc356-drill-diameter`, `production-artifact-readiness`.
+  `file-manifest-readiness` (now validating BOM/centroid/netlist/fab drawing/
+  assembly/readme/rout-drawing availability, optional declared copper-layer count,
+  KiCad-to-Gerber copper stack parity, odd copper stack counts, orphaned
+  companion layers, mixed revision/date tags, and stale-looking package filenames).
+  `production-artifact-readiness` validates common BOM, centroid, netlist,
+  README, fabrication drawing, assembly drawing, and rout drawing sidecars for
+  required structure, BOM procurement metadata, BOM value/footprint coverage, BOM
+  quantity/refdes agreement, grouped reference expansion, DNP/DNI parity
+  handling, unusual reference designators, duplicate reference designators,
+  conflicting part metadata, malformed placement coordinates, out-of-range
+  rotations, side values, duplicate placement coordinates, pin/net conflicts,
+  repeated netlist rows, one-pin net review, reference parity, DNP/DNI placement
+  conflicts, release/manufacturing notes, order-parameter intent, contradictory
+  order notes, assembly handoff evidence, preflight evidence, text/drawing role
+  names, empty or placeholder-sized drawings, and common sidecar extensions.
 
 Important tunables include `--keepout`, `--clearance`, `--min-width`,
 `--min-mask-width`, `--acid-trap-angle`, `--annular-ring`,
@@ -145,7 +190,10 @@ Important tunables include `--keepout`, `--clearance`, `--min-width`,
 ## Waivers And CI
 
 Waiver files are JSON and can suppress findings by `id`, `check`, `layers`, and
-message text. A compact CI summary can be written with `--summary-file`:
+message text. The system also emits readiness warnings for incomplete waiver
+metadata so production waivers remain auditable: `reason`, `owner`,
+`review_date`, `source`, and `geometry_hash` are expected. A compact CI summary
+can be written with `--summary-file`:
 
 ```json
 {
@@ -154,7 +202,11 @@ message text. A compact CI summary can be written with `--summary-file`:
       "check": "acid-trap-candidate",
       "layers": ["F.Cu"],
       "message_contains": "below 30",
-      "reason": "accepted connector footprint geometry"
+      "reason": "accepted connector footprint geometry",
+      "owner": "DRC reviewer",
+      "review_date": "2026-05-01",
+      "source": "https://jira.example/issues/123",
+      "geometry_hash": "sha256:0000"
     }
   ]
 }

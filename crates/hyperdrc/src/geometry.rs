@@ -124,6 +124,14 @@ mod tests {
     }
 
     #[test]
+    fn line_polygon_rejects_non_finite_coordinates() {
+        assert!(line_polygon([f64::NAN, 0.0], [1.0, 0.0], 0.1).is_none());
+        assert!(line_polygon([0.0, f64::INFINITY], [1.0, 0.0], 0.1).is_none());
+        assert!(line_polygon([0.0, 0.0], [f64::NEG_INFINITY, 0.0], 0.1).is_none());
+        assert!(line_polygon([0.0, 0.0], [1.0, 0.0], f64::NAN).is_none());
+    }
+
+    #[test]
     fn line_polygon_builds_expected_horizontal_rectangle() {
         let polygon = line_polygon([0.0, 0.0], [2.0, 0.0], 0.5).unwrap();
 
@@ -204,6 +212,17 @@ mod tests {
     }
 
     #[test]
+    fn polygon_from_points_rejects_non_finite_coordinates() {
+        let nan = polygon_from_points(vec![[0.0, 0.0], [f64::NAN, 1.0], [1.0, 1.0]]);
+        let inf = polygon_from_points(vec![[0.0, 0.0], [1.0, f64::INFINITY], [2.0, 2.0]]);
+
+        assert!(nan.exterior().0.is_empty());
+        assert_eq!(nan.unsigned_area(), 0.0);
+        assert!(inf.exterior().0.is_empty());
+        assert_eq!(inf.unsigned_area(), 0.0);
+    }
+
+    #[test]
     fn circle_polygon_enforces_minimum_segment_count() {
         let polygon = circle_polygon([2.0, -3.0], 4.0, 3);
 
@@ -229,6 +248,15 @@ mod tests {
     }
 
     #[test]
+    fn circle_polygon_normalizes_invalid_segment_counts() {
+        let zero = circle_polygon([0.0, 0.0], 1.0, 0);
+        let huge = circle_polygon([1.0, 1.0], 1.0, 1_000_000);
+
+        assert_eq!(zero.exterior().0.len(), 17);
+        assert!(huge.exterior().0.len() > 1000);
+    }
+
+    #[test]
     fn circle_polygon_negative_radius_flips_winding_but_not_area() {
         let positive = circle_polygon([0.0, 0.0], 2.0, 32);
         let negative = circle_polygon([0.0, 0.0], -2.0, 32);
@@ -237,6 +265,17 @@ mod tests {
         assert_close(positive.unsigned_area(), negative.unsigned_area());
         assert_close(signed_area(&positive), signed_area(&negative));
         assert_point_close(negative.exterior().0[0], [-2.0, 0.0]);
+    }
+
+    #[test]
+    fn circle_polygon_rejects_non_finite_inputs() {
+        let non_finite_center = circle_polygon([f64::NAN, 0.0], 4.0, 16);
+        let non_finite_radius = circle_polygon([0.0, 0.0], f64::INFINITY, 16);
+
+        assert_eq!(non_finite_center.exterior().0.len(), 0);
+        assert_eq!(non_finite_radius.exterior().0.len(), 0);
+        assert_eq!(non_finite_center.unsigned_area(), 0.0);
+        assert_eq!(non_finite_radius.unsigned_area(), 0.0);
     }
 
     #[test]
@@ -260,6 +299,27 @@ mod tests {
         assert_point_close(polygon.exterior().0[1], [2.0, 4.0]);
         assert_point_close(polygon.exterior().0[2], [0.0, 4.0]);
         assert_point_close(polygon.exterior().0[3], [0.0, 0.0]);
+    }
+
+    #[test]
+    fn rect_polygon_rejects_non_finite_inputs() {
+        let bad_center = rect_polygon([f64::NAN, 0.0], [2.0, 2.0], 0.0);
+        let bad_size = rect_polygon([0.0, 0.0], [f64::INFINITY, 2.0], 0.0);
+        let bad_angle = rect_polygon([0.0, 0.0], [2.0, 2.0], f64::NAN);
+
+        assert_eq!(bad_center.unsigned_area(), 0.0);
+        assert!(bad_center.exterior().0.is_empty());
+        assert_eq!(bad_size.unsigned_area(), 0.0);
+        assert!(bad_size.exterior().0.is_empty());
+        assert!(bad_angle.exterior().0.is_empty());
+        assert_eq!(bad_angle.unsigned_area(), 0.0);
+    }
+
+    #[test]
+    fn rect_polygon_uses_absolute_size_without_clipping_sign() {
+        let reversed = rect_polygon([1.0, 1.0], [-3.0, -5.0], 15.0);
+
+        assert_close(reversed.unsigned_area(), 15.0);
     }
 
     #[test]
@@ -327,6 +387,28 @@ mod tests {
     }
 
     #[test]
+    fn transform_polygon_is_noop_for_invalid_angle() {
+        let polygon = rect_polygon([0.0, 0.0], [2.0, 3.0], 0.0);
+        let transformed = transform_polygon(&polygon, [1.0, 2.0], f64::NAN);
+
+        assert_eq!(polygon.exterior().0, transformed.exterior().0);
+    }
+
+    #[test]
+    fn transform_polygon_rejects_invalid_transform_inputs_without_panic() {
+        let polygon = rect_polygon([0.0, 0.0], [2.0, 2.0], 0.0);
+
+        assert_eq!(
+            transform_polygon(&polygon, [f64::INFINITY, 0.0], 30.0),
+            polygon
+        );
+        assert_eq!(
+            transform_polygon(&polygon, [0.0, 0.0], f64::INFINITY),
+            polygon
+        );
+    }
+
+    #[test]
     fn arc_with_zero_angle_produces_no_valid_segments() {
         let polygons = arc_line_polygons([0.0, 0.0], [1.0, 0.0], 0.0, 0.1, 8);
 
@@ -372,9 +454,27 @@ mod tests {
     }
 
     #[test]
+    fn arc_line_polygons_reject_invalid_inputs_without_geometry() {
+        let bad_center = arc_line_polygons([f64::NAN, 0.0], [1.0, 0.0], 90.0, 0.1, 12);
+        let bad_width = arc_line_polygons([0.0, 0.0], [1.0, 0.0], 90.0, f64::NAN, 12);
+        let bad_angle = arc_line_polygons([0.0, 0.0], [1.0, 0.0], f64::NAN, 0.1, 12);
+
+        assert!(bad_center.is_empty());
+        assert!(bad_width.is_empty());
+        assert!(bad_angle.is_empty());
+    }
+
+    #[test]
     fn arc_line_polygons_reject_invalid_width_or_zero_radius() {
         assert!(arc_line_polygons([0.0, 0.0], [1.0, 0.0], 90.0, 0.0, 8).is_empty());
         assert!(arc_line_polygons([0.0, 0.0], [0.0, 0.0], 90.0, 0.1, 8).is_empty());
+    }
+
+    #[test]
+    fn arc_line_polygons_rejects_zero_radius_centered_start() {
+        let polygons = arc_line_polygons([5.0, 5.0], [5.0, 5.0], 90.0, 0.1, 16);
+
+        assert!(polygons.is_empty());
     }
 
     #[test]

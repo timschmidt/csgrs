@@ -58,16 +58,28 @@ pub fn run(cli: Cli) -> Result<()> {
         && cli.kicad_pcbs.is_empty()
         && cli.excellon_files.is_empty()
         && cli.ipc356_files.is_empty()
+        && cli.bom_files.is_empty()
+        && cli.centroid_files.is_empty()
+        && cli.netlist_files.is_empty()
+        && cli.fab_drawing_files.is_empty()
+        && cli.assembly_drawing_files.is_empty()
+        && cli.readme_files.is_empty()
+        && cli.rout_drawing_files.is_empty()
     {
         return Err(anyhow!(
-            "provide at least one Gerber file, --gerber-dir, --convert-input, --kicad-pcb, --excellon, or --ipc356 input"
+            "provide at least one Gerber file, --gerber-dir, --convert-input, --kicad-pcb, --excellon, --ipc356, --bom, --centroid, --netlist, --fab-drawing, --assembly-drawing, --readme, or --rout-drawing input"
         ));
     }
 
     let conversion_outputs = run_conversions(&cli)?;
     let layers = load_all_layers(&cli.files, &cli.gerber_dirs, &conversion_outputs)?;
     let mut boards = load_boards(&cli.kicad_pcbs)?;
-    let excellon_drills = load_excellon_drills(&cli.excellon_files)?;
+    let excellon_reports = load_excellon_reports(&cli.excellon_files)?;
+    let excellon_drills = excellon_reports
+        .iter()
+        .flat_map(|report| report.drills.iter())
+        .cloned()
+        .collect::<Vec<_>>();
     let ipc356_points = load_ipc356_points(&cli.ipc356_files)?;
     let waivers = load_waivers(&cli.waiver_files)?;
 
@@ -105,11 +117,14 @@ pub fn run(cli: Cli) -> Result<()> {
         &cli,
         &layers,
         &boards,
+        &excellon_reports,
         &excellon_drills,
         &ipc356_points,
     )?;
 
-    let (violations, waived) = waiver::apply_waivers(violations, &waivers);
+    let (active_violations, waived) = waiver::apply_waivers(violations, &waivers);
+    let mut violations = active_violations;
+    violations.extend(waiver::governance_violations(&waivers));
     let summary = report_summary(&violations, waived.len());
 
     if let Some(summary_file) = &cli.summary_file {
@@ -126,6 +141,13 @@ pub fn run(cli: Cli) -> Result<()> {
             .chain(cli.kicad_pcbs.iter())
             .chain(cli.excellon_files.iter())
             .chain(cli.ipc356_files.iter())
+            .chain(cli.bom_files.iter())
+            .chain(cli.centroid_files.iter())
+            .chain(cli.netlist_files.iter())
+            .chain(cli.fab_drawing_files.iter())
+            .chain(cli.assembly_drawing_files.iter())
+            .chain(cli.readme_files.iter())
+            .chain(cli.rout_drawing_files.iter())
             .chain(cli.waiver_files.iter())
             .map(|path| path.display().to_string())
             .collect(),
@@ -165,6 +187,7 @@ fn run_checks(
     cli: &Cli,
     layers: &[Layer],
     boards: &[kicad::BoardModel],
+    excellon_reports: &[excellon::ExcellonReport],
     excellon_drills: &[kicad::DrillFeature],
     ipc356_points: &[ipc356::Ipc356Point],
 ) -> Result<Vec<Violation>> {
@@ -197,6 +220,14 @@ fn run_checks(
                 }
             }
             Check::BoardEdgeClearance => run_board_edge_clearance(
+                &mut violations,
+                rules,
+                kicad_copper_layers,
+                cli,
+                layers,
+                boards,
+            ),
+            Check::BoardOutlineCutoutClearance => run_board_outline_cutout_clearance(
                 &mut violations,
                 rules,
                 kicad_copper_layers,
@@ -247,6 +278,74 @@ fn run_checks(
                             "KiCad Edge.Cuts",
                             outline,
                             rules.min_area,
+                        ));
+                    }
+                }
+            }
+            Check::BoardOutlineSelfIntersectionReadiness => {
+                if let Some(board_index) = cli.board_outline {
+                    let board = &layers[board_index];
+                    violations.extend(checks::board_outline_self_intersection_readiness(
+                        &layer_name(board),
+                        &board.sketch,
+                    ));
+                }
+                for board in boards {
+                    if let Some(outline) = &board.board_outline {
+                        violations.extend(checks::board_outline_self_intersection_readiness(
+                            "KiCad Edge.Cuts",
+                            outline,
+                        ));
+                    }
+                }
+            }
+            Check::BoardOutlineNotchReadiness => {
+                if let Some(board_index) = cli.board_outline {
+                    let board = &layers[board_index];
+                    violations.extend(checks::board_outline_notch_readiness(
+                        &layer_name(board),
+                        &board.sketch,
+                    ));
+                }
+                for board in boards {
+                    if let Some(outline) = &board.board_outline {
+                        violations.extend(checks::board_outline_notch_readiness(
+                            "KiCad Edge.Cuts",
+                            outline,
+                        ));
+                    }
+                }
+            }
+            Check::BoardOutlineDuplicateReadiness => {
+                if let Some(board_index) = cli.board_outline {
+                    let board = &layers[board_index];
+                    violations.extend(checks::board_outline_duplicate_readiness(
+                        &layer_name(board),
+                        &board.sketch,
+                    ));
+                }
+                for board in boards {
+                    if let Some(outline) = &board.board_outline {
+                        violations.extend(checks::board_outline_duplicate_readiness(
+                            "KiCad Edge.Cuts",
+                            outline,
+                        ));
+                    }
+                }
+            }
+            Check::BoardOutlineNestingReadiness => {
+                if let Some(board_index) = cli.board_outline {
+                    let board = &layers[board_index];
+                    violations.extend(checks::board_outline_nesting_readiness(
+                        &layer_name(board),
+                        &board.sketch,
+                    ));
+                }
+                for board in boards {
+                    if let Some(outline) = &board.board_outline {
+                        violations.extend(checks::board_outline_nesting_readiness(
+                            "KiCad Edge.Cuts",
+                            outline,
                         ));
                     }
                 }
@@ -684,6 +783,38 @@ fn run_checks(
                 }
             }
             Check::BoardOutlineDrillClearance => {
+                let board_drills: Vec<_> = boards
+                    .iter()
+                    .flat_map(|board| board.drills.iter().cloned())
+                    .collect();
+                let has_board_drills = !board_drills.is_empty();
+                let has_excellon_drills = !excellon_drills.is_empty();
+
+                if let Some(board_index) = cli.board_outline {
+                    let outline = &layers[board_index];
+                    if has_board_drills || has_excellon_drills {
+                        let drill_source = if has_board_drills {
+                            if has_excellon_drills {
+                                "KiCad + Excellon drills"
+                            } else {
+                                "KiCad"
+                            }
+                        } else {
+                            "Excellon drills"
+                        };
+
+                        violations.extend(checks::board_outline_drill_clearance(
+                            drill_source,
+                            &layer_name(outline),
+                            &outline.sketch,
+                            &board_drills,
+                            excellon_drills,
+                            rules.drill_clearance,
+                            rules.min_area,
+                        ));
+                    }
+                }
+
                 for board in boards {
                     if let Some(outline) = &board.board_outline {
                         violations.extend(checks::board_outline_drill_clearance(
@@ -813,6 +944,16 @@ fn run_checks(
                     ));
                 }
             }
+            Check::EdgeCopperPullbackReadiness => {
+                for board in boards {
+                    violations.extend(checks::edge_copper_pullback_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.net_clearance,
+                        rules.min_area,
+                    ));
+                }
+            }
             Check::HighVoltageEdgeReadiness => {
                 for board in boards {
                     violations.extend(checks::high_voltage_edge_readiness(
@@ -845,6 +986,14 @@ fn run_checks(
                         board,
                         kicad_copper_layers,
                         rules.net_clearance * 4.0,
+                    ));
+                }
+            }
+            Check::DifferentialPairViaSymmetryReadiness => {
+                for board in boards {
+                    violations.extend(checks::differential_pair_via_symmetry_readiness(
+                        board,
+                        kicad_copper_layers,
                     ));
                 }
             }
@@ -950,9 +1099,76 @@ fn run_checks(
                     ));
                 }
             }
+            Check::SensitiveReturnReadiness => {
+                for board in boards {
+                    violations.extend(checks::sensitive_return_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.net_clearance * 2.0,
+                    ));
+                }
+            }
+            Check::RfKeepoutReadiness => {
+                for board in boards {
+                    violations.extend(checks::rf_keepout_readiness(
+                        board,
+                        rules.net_clearance * 4.0,
+                        kicad_copper_layers,
+                        rules.min_area,
+                    ));
+                }
+            }
+            Check::ChassisStitchingReadiness => {
+                for board in boards {
+                    violations.extend(checks::chassis_stitching_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.net_clearance * 4.0,
+                    ));
+                }
+            }
+            Check::EdgeStitchingReadiness => {
+                for board in boards {
+                    violations.extend(checks::edge_stitching_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.net_clearance,
+                        rules.net_clearance * 6.0,
+                        rules.min_area,
+                    ));
+                }
+            }
             Check::GoldFingerReadiness => {
                 for board in boards {
                     violations.extend(checks::gold_finger_readiness(board, kicad_copper_layers));
+                }
+            }
+            Check::TestpointCoverageReadiness => {
+                for board in boards {
+                    violations.extend(checks::testpoint_coverage_readiness(
+                        board,
+                        ipc356_points,
+                        kicad_copper_layers,
+                    ));
+                }
+            }
+            Check::FiducialReadiness => {
+                for board in boards {
+                    violations.extend(checks::fiducial_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.clearance * 2.0,
+                    ));
+                }
+            }
+            Check::DensePadEscapeReadiness => {
+                for board in boards {
+                    violations.extend(checks::dense_pad_escape_readiness(
+                        board,
+                        kicad_copper_layers,
+                        0.8,
+                        rules.net_clearance * 10.0,
+                    ));
                 }
             }
             Check::NetSpacing => {
@@ -1007,10 +1223,59 @@ fn run_checks(
                     cli, layers, boards,
                 )));
             }
+            Check::ExcellonReadiness => {
+                violations.extend(checks::excellon_batch_readiness(excellon_reports));
+            }
+            Check::ProductionArtifactReadiness => {
+                let bom_files = load_text_artifacts(&cli.bom_files)?;
+                let centroid_files = load_text_artifacts(&cli.centroid_files)?;
+                let netlist_files = load_text_artifacts(&cli.netlist_files)?;
+                let readme_files = load_text_artifacts(&cli.readme_files)?;
+                let fab_drawing_files = load_file_artifacts(&cli.fab_drawing_files)?;
+                let assembly_drawing_files = load_file_artifacts(&cli.assembly_drawing_files)?;
+                let rout_drawing_files = load_file_artifacts(&cli.rout_drawing_files)?;
+                violations.extend(checks::production_artifact_readiness(
+                    &bom_files,
+                    &centroid_files,
+                    &netlist_files,
+                    &readme_files,
+                    &fab_drawing_files,
+                    &assembly_drawing_files,
+                    &rout_drawing_files,
+                ));
+            }
         }
     }
 
     Ok(violations)
+}
+
+fn load_text_artifacts(files: &[PathBuf]) -> Result<Vec<checks::TextArtifact>> {
+    files
+        .iter()
+        .map(|path| {
+            let text = std::fs::read_to_string(path)
+                .with_context(|| format!("failed to read {}", path.display()))?;
+            Ok(checks::TextArtifact {
+                path: path.display().to_string(),
+                text,
+            })
+        })
+        .collect()
+}
+
+fn load_file_artifacts(files: &[PathBuf]) -> Result<Vec<checks::FileArtifact>> {
+    files
+        .iter()
+        .map(|path| {
+            let metadata = std::fs::metadata(path)
+                .with_context(|| format!("failed to stat {}", path.display()))?;
+            Ok(checks::FileArtifact {
+                path: path.display().to_string(),
+                byte_len: metadata.len(),
+            })
+        })
+        .collect()
 }
 
 fn run_board_edge_clearance(
@@ -1043,6 +1308,48 @@ fn run_board_edge_clearance(
         if let Some(outline) = &board.board_outline {
             for (layer_name, copper) in board.copper_layers(kicad_copper_layers) {
                 violations.extend(checks::board_edge_clearance(
+                    &format!("{}:{layer_name}", board.source),
+                    &copper,
+                    "KiCad Edge.Cuts",
+                    outline,
+                    rules.clearance,
+                    rules.min_area,
+                ));
+            }
+        }
+    }
+}
+
+fn run_board_outline_cutout_clearance(
+    violations: &mut Vec<Violation>,
+    rules: &EffectiveRules,
+    kicad_copper_layers: &[String],
+    cli: &Cli,
+    layers: &[Layer],
+    boards: &[kicad::BoardModel],
+) {
+    if let Some(board_index) = cli.board_outline {
+        let outline = &layers[board_index];
+        for copper_index in selected_layers(layers.len(), &cli.copper_layers) {
+            if copper_index == board_index {
+                continue;
+            }
+            let subject = &layers[copper_index];
+            violations.extend(checks::board_outline_cutout_clearance(
+                &layer_name(subject),
+                &subject.sketch,
+                &layer_name(outline),
+                &outline.sketch,
+                rules.clearance,
+                rules.min_area,
+            ));
+        }
+    }
+
+    for board in boards {
+        if let Some(outline) = &board.board_outline {
+            for (layer_name, copper) in board.copper_layers(kicad_copper_layers) {
+                violations.extend(checks::board_outline_cutout_clearance(
                     &format!("{}:{layer_name}", board.source),
                     &copper,
                     "KiCad Edge.Cuts",
@@ -1137,6 +1444,7 @@ fn run_conversions(cli: &Cli) -> Result<Vec<conversion::ConversionOutput>> {
                 top_color_image: cli.top_color_image.clone(),
                 bottom_color_image: cli.bottom_color_image.clone(),
                 transjlc_bin: cli.transjlc_bin.clone(),
+                extra_args: cli.conversion_args.clone(),
             };
             conversion::convert(&request)
         })
@@ -1187,6 +1495,62 @@ fn input_manifest(cli: &Cli, layers: &[Layer]) -> Vec<SourceRecord> {
             Option::<&std::path::Path>::None,
         )
     }));
+    inputs.extend(cli.bom_files.iter().map(|path| {
+        SourceRecord::new(
+            io::IoAdapter::DirectFile,
+            io::IoRole::BomFile,
+            path,
+            Option::<&std::path::Path>::None,
+        )
+    }));
+    inputs.extend(cli.centroid_files.iter().map(|path| {
+        SourceRecord::new(
+            io::IoAdapter::DirectFile,
+            io::IoRole::CentroidFile,
+            path,
+            Option::<&std::path::Path>::None,
+        )
+    }));
+    inputs.extend(cli.netlist_files.iter().map(|path| {
+        SourceRecord::new(
+            io::IoAdapter::DirectFile,
+            io::IoRole::NetlistFile,
+            path,
+            Option::<&std::path::Path>::None,
+        )
+    }));
+    inputs.extend(cli.fab_drawing_files.iter().map(|path| {
+        SourceRecord::new(
+            io::IoAdapter::DirectFile,
+            io::IoRole::FabDrawing,
+            path,
+            Option::<&std::path::Path>::None,
+        )
+    }));
+    inputs.extend(cli.assembly_drawing_files.iter().map(|path| {
+        SourceRecord::new(
+            io::IoAdapter::DirectFile,
+            io::IoRole::AssemblyDrawing,
+            path,
+            Option::<&std::path::Path>::None,
+        )
+    }));
+    inputs.extend(cli.readme_files.iter().map(|path| {
+        SourceRecord::new(
+            io::IoAdapter::DirectFile,
+            io::IoRole::ReadmeFile,
+            path,
+            Option::<&std::path::Path>::None,
+        )
+    }));
+    inputs.extend(cli.rout_drawing_files.iter().map(|path| {
+        SourceRecord::new(
+            io::IoAdapter::DirectFile,
+            io::IoRole::RoutDrawingFile,
+            path,
+            Option::<&std::path::Path>::None,
+        )
+    }));
     inputs
 }
 
@@ -1195,6 +1559,13 @@ fn manifest_input(
     layers: &[Layer],
     boards: &[kicad::BoardModel],
 ) -> checks::ManifestInput {
+    let mut kicad_copper_layers = std::collections::HashSet::new();
+    for board in boards {
+        for feature in &board.copper {
+            kicad_copper_layers.insert(feature.layer.clone());
+        }
+    }
+
     checks::ManifestInput {
         gerber_layers: layers
             .iter()
@@ -1203,18 +1574,49 @@ fn manifest_input(
                 source_path: layer.source.path.clone(),
             })
             .collect(),
+        artifact_paths: cli
+            .bom_files
+            .iter()
+            .chain(cli.centroid_files.iter())
+            .chain(cli.netlist_files.iter())
+            .chain(cli.fab_drawing_files.iter())
+            .chain(cli.assembly_drawing_files.iter())
+            .chain(cli.readme_files.iter())
+            .chain(cli.rout_drawing_files.iter())
+            .chain(cli.kicad_pcbs.iter())
+            .chain(cli.excellon_files.iter())
+            .chain(cli.ipc356_files.iter())
+            .map(|path| path.display().to_string())
+            .collect(),
+        bom_file_count: cli.bom_files.len(),
+        centroid_file_count: cli.centroid_files.len(),
+        netlist_file_count: cli.netlist_files.len(),
+        fab_drawing_file_count: cli.fab_drawing_files.len(),
+        assembly_drawing_file_count: cli.assembly_drawing_files.len(),
+        readme_file_count: cli.readme_files.len(),
+        rout_drawing_file_count: cli.rout_drawing_files.len(),
+        declared_copper_layer_count: cli.declared_copper_layer_count.filter(|count| *count > 0),
+        kicad_copper_layer_count: Some(kicad_copper_layers.len()).filter(|count| *count > 0),
         has_board_outline: boards.iter().any(|board| board.board_outline.is_some()),
         has_drill_data: !cli.excellon_files.is_empty()
             || boards.iter().any(|board| !board.drills.is_empty()),
     }
 }
 
+#[allow(dead_code)]
 fn load_excellon_drills(files: &[PathBuf]) -> Result<Vec<kicad::DrillFeature>> {
-    let mut drills = Vec::new();
+    Ok(load_excellon_reports(files)?
+        .into_iter()
+        .flat_map(|report| report.drills.into_iter())
+        .collect::<Vec<_>>())
+}
+
+fn load_excellon_reports(files: &[PathBuf]) -> Result<Vec<excellon::ExcellonReport>> {
+    let mut reports = Vec::new();
     for path in files {
-        drills.extend(excellon::load_excellon(path)?);
+        reports.push(excellon::load_excellon_report(path)?);
     }
-    Ok(drills)
+    Ok(reports)
 }
 
 fn load_ipc356_points(files: &[PathBuf]) -> Result<Vec<ipc356::Ipc356Point>> {
@@ -1409,18 +1811,80 @@ fn print_violation(index: usize, violation: &Violation) {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
+    use std::path::{Path, PathBuf};
+    use std::{fs, process};
 
     use clap::Parser;
 
     use crate::cli::Cli;
-    use crate::io::{discover_gerber_dir, is_gerber_path};
+    use crate::geometry::empty_sketch;
+    use crate::io::{IoAdapter, IoRole, SourceRecord, discover_gerber_dir, is_gerber_path};
+    use crate::kicad;
 
     use super::{
-        explicit_layer_pairs, layer_pairs, load_boards, load_excellon_drills, load_ipc356_points,
-        load_layers, run, validate_board_outline_role, validate_layer_index,
-        validate_layer_indexes, validate_silk_layer_roles,
+        Layer, explicit_layer_pairs, input_manifest, layer_pairs, load_all_layers, load_boards,
+        load_excellon_drills, load_ipc356_points, load_layers, manifest_input, run,
+        validate_board_outline_role, validate_layer_index, validate_layer_indexes,
+        validate_silk_layer_roles,
     };
+
+    const VALID_GERBER: &str =
+        "G04 trace*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,1*%\nD10*\nX0Y0D02*\nX4000000Y0D01*\nM02*\n";
+
+    fn make_layer(path: &str) -> Layer {
+        Layer {
+            path: PathBuf::from(path),
+            source: SourceRecord::new(
+                IoAdapter::DirectFile,
+                IoRole::GerberLayer,
+                path,
+                Option::<&Path>::None,
+            ),
+            sketch: empty_sketch(None),
+        }
+    }
+
+    fn make_board_model(
+        copper_layers: &[&str],
+        has_outline: bool,
+        has_drill: bool,
+    ) -> kicad::BoardModel {
+        let mut copper = Vec::new();
+        for layer in copper_layers {
+            copper.push(kicad::CopperFeature {
+                layer: (*layer).to_string(),
+                net: None,
+                kind: kicad::CopperKind::Pad,
+                sketch: empty_sketch(Some(crate::LayerMetadata {
+                    name: (*layer).to_string(),
+                })),
+                location: [0.0, 0.0],
+            });
+        }
+
+        kicad::BoardModel {
+            source: "board.kicad_pcb".to_string(),
+            copper,
+            drills: if has_drill {
+                vec![kicad::DrillFeature {
+                    location: [1.0, 1.0],
+                    diameter: 0.6,
+                    net: None,
+                    plated: true,
+                }]
+            } else {
+                Vec::new()
+            },
+            board_outline: if has_outline {
+                Some(empty_sketch(Some(crate::LayerMetadata {
+                    name: "Edge.Cuts".to_string(),
+                })))
+            } else {
+                None
+            },
+            panel_features: None,
+        }
+    }
 
     #[test]
     fn layer_pairs_defaults_to_unique_pairs() {
@@ -1528,5 +1992,167 @@ mod tests {
                 .to_string()
                 .contains("failed to read")
         );
+    }
+
+    #[test]
+    fn input_manifest_records_readiness_artifacts() {
+        let cli = Cli::parse_from([
+            "hyperdrc",
+            "--bom",
+            "bom.csv",
+            "--centroid",
+            "placement.txt",
+            "--netlist",
+            "netlist.csv",
+            "--fab-drawing",
+            "fab.pdf",
+            "--assembly-drawing",
+            "assembly.dxf",
+            "--readme",
+            "README.md",
+            "--rout-drawing",
+            "rout.dxf",
+            "top.gbr",
+        ]);
+        let manifest = input_manifest(&cli, &[]);
+        let roles = manifest
+            .iter()
+            .map(|source| source.role.clone())
+            .collect::<Vec<_>>();
+
+        assert!(roles.contains(&IoRole::BomFile));
+        assert!(roles.contains(&IoRole::CentroidFile));
+        assert!(roles.contains(&IoRole::NetlistFile));
+        assert!(roles.contains(&IoRole::FabDrawing));
+        assert!(roles.contains(&IoRole::AssemblyDrawing));
+        assert!(roles.contains(&IoRole::ReadmeFile));
+        assert!(roles.contains(&IoRole::RoutDrawingFile));
+        assert_eq!(manifest.len(), 7);
+    }
+
+    #[test]
+    fn manifest_input_collects_declared_counts_and_kicad_metadata() {
+        let cli = Cli::parse_from([
+            "hyperdrc",
+            "--declared-copper-layer-count",
+            "4",
+            "--bom",
+            "bom.csv",
+            "--centroid",
+            "centroid.csv",
+            "--netlist",
+            "netlist.csv",
+            "--fab-drawing",
+            "fab.dxf",
+            "--assembly-drawing",
+            "assembly.dxf",
+            "--readme",
+            "README.md",
+            "--rout-drawing",
+            "rout.dxf",
+            "top.gbr",
+            "bottom.gbr",
+        ]);
+
+        let layers = vec![make_layer("top.gbr"), make_layer("bottom.gbr")];
+        let boards = vec![make_board_model(&["F.Cu", "B.Cu", "F.Cu"], true, true)];
+        let manifest = manifest_input(&cli, &layers, &boards);
+
+        assert_eq!(manifest.gerber_layers.len(), 2);
+        assert!(manifest.artifact_paths.contains(&"bom.csv".to_string()));
+        assert!(manifest.artifact_paths.contains(&"rout.dxf".to_string()));
+        assert_eq!(manifest.bom_file_count, 1);
+        assert_eq!(manifest.centroid_file_count, 1);
+        assert_eq!(manifest.netlist_file_count, 1);
+        assert_eq!(manifest.fab_drawing_file_count, 1);
+        assert_eq!(manifest.assembly_drawing_file_count, 1);
+        assert_eq!(manifest.readme_file_count, 1);
+        assert_eq!(manifest.rout_drawing_file_count, 1);
+        assert_eq!(manifest.declared_copper_layer_count, Some(4));
+        assert_eq!(manifest.kicad_copper_layer_count, Some(2));
+        assert!(manifest.has_board_outline);
+        assert!(manifest.has_drill_data);
+    }
+
+    #[test]
+    fn manifest_input_discards_non_positive_optional_counts_when_no_readiness_context() {
+        let cli = Cli::parse_from(["hyperdrc", "--declared-copper-layer-count", "0", "top.gbr"]);
+        let layers = vec![make_layer("top.gbr")];
+        let boards = vec![make_board_model(&[], false, false)];
+        let manifest = manifest_input(&cli, &layers, &boards);
+
+        assert_eq!(manifest.gerber_layers.len(), 1);
+        assert_eq!(manifest.declared_copper_layer_count, None);
+        assert_eq!(manifest.kicad_copper_layer_count, None);
+        assert!(!manifest.has_board_outline);
+        assert!(!manifest.has_drill_data);
+    }
+
+    #[test]
+    fn load_all_layers_discovers_all_input_channels_and_marks_conversion_origin() {
+        let process_id = process::id();
+        let workspace = PathBuf::from(format!("/tmp/hyperdrc-load-all-layers-{process_id}"));
+        let direct_path = workspace.join("direct.gbr");
+        let gerber_dir = workspace.join("in");
+        let conversion_source_dir = workspace.join("conversion-source");
+        let conversion_gerber_dir = workspace.join("conversion-output");
+        let _ = fs::remove_dir_all(&workspace);
+        fs::create_dir_all(&workspace).unwrap();
+        fs::create_dir_all(&gerber_dir).unwrap();
+        fs::create_dir_all(&conversion_source_dir).unwrap();
+        fs::create_dir_all(&conversion_gerber_dir).unwrap();
+
+        fs::write(&direct_path, VALID_GERBER).unwrap();
+        fs::write(gerber_dir.join("dir-layer.gbr"), VALID_GERBER).unwrap();
+        fs::write(
+            conversion_source_dir.join("source.txt"),
+            "conversion input placeholder",
+        )
+        .unwrap();
+        fs::write(conversion_gerber_dir.join("conv.gbr"), VALID_GERBER).unwrap();
+
+        let conversion_output = crate::conversion::ConversionOutput {
+            source_dir: conversion_source_dir.clone(),
+            gerber_dir: conversion_gerber_dir.clone(),
+        };
+
+        let layers = load_all_layers(
+            std::slice::from_ref(&direct_path),
+            std::slice::from_ref(&gerber_dir),
+            &[conversion_output],
+        )
+        .unwrap();
+
+        assert_eq!(layers.len(), 3);
+        assert_eq!(layers[0].path, direct_path);
+        assert_eq!(layers[1].path, gerber_dir.join("dir-layer.gbr"));
+        assert_eq!(layers[2].path, conversion_gerber_dir.join("conv.gbr"));
+        assert_eq!(layers[0].source.adapter, IoAdapter::DirectFile);
+        assert_eq!(layers[1].source.adapter, IoAdapter::GerberDirectory);
+        assert_eq!(layers[2].source.adapter, IoAdapter::Conversion);
+        assert_eq!(
+            layers[2].source.origin.as_deref(),
+            Some(conversion_source_dir.to_str().unwrap())
+        );
+
+        let _ = fs::remove_dir_all(workspace);
+    }
+
+    #[test]
+    fn load_all_layers_wraps_parse_errors_with_file_path_context() {
+        let process_id = process::id();
+        let workspace = PathBuf::from(format!("/tmp/hyperdrc-load-all-layers-parse-{process_id}"));
+        let _ = fs::remove_dir_all(&workspace);
+        fs::create_dir_all(&workspace).unwrap();
+        let invalid_file = workspace.join("invalid.gbr");
+        fs::write(&invalid_file, "this is not a gerber file\n").unwrap();
+
+        let error = load_all_layers(std::slice::from_ref(&invalid_file), &[], &[]).unwrap_err();
+
+        let message = format!("{error}");
+        assert!(message.contains("failed to parse Gerber"));
+        assert!(message.contains("invalid.gbr"));
+
+        let _ = fs::remove_dir_all(workspace);
     }
 }
