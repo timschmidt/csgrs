@@ -44,12 +44,22 @@ pub fn production_artifact_readiness(
     let mut centroid_rotations = BTreeMap::<String, BTreeSet<String>>::new();
     let mut netlist_refs = BTreeSet::new();
     let mut release_notes = String::new();
+    let mut release_markers = Vec::<(String, String)>::new();
+    let mut through_hole_refs = BTreeSet::new();
+    let mut inspection_sensitive_refs = BTreeSet::new();
+    let mut programmable_refs = BTreeSet::new();
+    let mut assembly_variants = BTreeMap::<String, BTreeSet<String>>::new();
 
     for artifact in bom_files {
+        release_markers.push(("BOM".to_string(), artifact.path.clone()));
         violations.extend(analyze_text_artifact_path(artifact, TextArtifactKind::Bom));
         let report = analyze_bom(artifact);
         bom_refs.extend(report.refs);
         bom_not_populated_refs.extend(report.not_populated_refs);
+        through_hole_refs.extend(report.through_hole_refs);
+        inspection_sensitive_refs.extend(report.inspection_sensitive_refs);
+        programmable_refs.extend(report.programmable_refs);
+        merge_side_maps(&mut assembly_variants, report.assembly_variants);
         merge_side_maps(&mut bom_sides, report.sides);
         merge_side_maps(&mut bom_values, report.values);
         merge_side_maps(&mut bom_packages, report.packages);
@@ -58,6 +68,7 @@ pub fn production_artifact_readiness(
     }
 
     for artifact in centroid_files {
+        release_markers.push(("centroid".to_string(), artifact.path.clone()));
         violations.extend(analyze_text_artifact_path(
             artifact,
             TextArtifactKind::Centroid,
@@ -72,6 +83,7 @@ pub fn production_artifact_readiness(
     }
 
     for artifact in netlist_files {
+        release_markers.push(("netlist".to_string(), artifact.path.clone()));
         violations.extend(analyze_text_artifact_path(
             artifact,
             TextArtifactKind::Netlist,
@@ -82,6 +94,8 @@ pub fn production_artifact_readiness(
     }
 
     for artifact in readme_files {
+        release_markers.push(("README path".to_string(), artifact.path.clone()));
+        release_markers.push(("README content".to_string(), artifact.text.clone()));
         violations.extend(analyze_text_artifact_path(
             artifact,
             TextArtifactKind::Readme,
@@ -94,14 +108,24 @@ pub fn production_artifact_readiness(
         fab_drawing_files,
         DrawingKind::Fabrication,
     ));
+    for artifact in fab_drawing_files {
+        release_markers.push(("fabrication drawing".to_string(), artifact.path.clone()));
+    }
     violations.extend(analyze_file_artifacts(
         assembly_drawing_files,
         DrawingKind::Assembly,
     ));
+    for artifact in assembly_drawing_files {
+        release_markers.push(("assembly drawing".to_string(), artifact.path.clone()));
+    }
     violations.extend(analyze_file_artifacts(
         rout_drawing_files,
         DrawingKind::Rout,
     ));
+    for artifact in rout_drawing_files {
+        release_markers.push(("rout drawing".to_string(), artifact.path.clone()));
+    }
+    violations.extend(analyze_release_marker_consistency(&release_markers));
 
     if !bom_refs.is_empty() && !centroid_refs.is_empty() {
         for reference in bom_refs.difference(&centroid_refs) {
@@ -206,15 +230,86 @@ pub fn production_artifact_readiness(
         &mut violations,
     );
 
-    if centroid_has_bottom_placements(&centroid_sides)
+    if (centroid_has_bottom_placements(&centroid_sides)
+        || centroid_has_bottom_placements(&bom_sides))
         && !readme_mentions_double_sided_assembly(&release_notes)
     {
         violations.push(artifact_violation(
             "double-sided-assembly-handoff",
             Some(
-                "centroid includes bottom-side placements, but README does not mention double-sided or bottom-side assembly handoff"
+                "BOM or centroid data includes bottom-side placements, but README does not mention double-sided or bottom-side assembly handoff"
                     .to_string(),
             ),
+        ));
+    }
+
+    if !through_hole_refs.is_empty() && !readme_mentions_selective_or_wave_solder(&release_notes) {
+        violations.push(artifact_violation(
+            "bom-readme-assembly-process-parity",
+            Some(format!(
+                "BOM includes likely through-hole or hand-soldered references ({}) but README does not mention selective, wave, or hand-solder process notes",
+                join_limited_set(&through_hole_refs, 8)
+            )),
+        ));
+    }
+
+    if !inspection_sensitive_refs.is_empty() && !readme_mentions_inspection_process(&release_notes)
+    {
+        violations.push(artifact_violation(
+            "bom-readme-assembly-process-parity",
+            Some(format!(
+                "BOM includes likely BGA/CSP/LGA inspection-sensitive references ({}) but README does not mention X-ray, AOI, or inspection handoff",
+                join_limited_set(&inspection_sensitive_refs, 8)
+            )),
+        ));
+    }
+
+    if !programmable_refs.is_empty() && !readme_mentions_programming_handoff(&release_notes) {
+        violations.push(artifact_violation(
+            "bom-readme-assembly-process-parity",
+            Some(format!(
+                "BOM includes likely programmable references ({}) but README does not mention firmware, programming, or test handoff",
+                join_limited_set(&programmable_refs, 8)
+            )),
+        ));
+    }
+    if !programmable_refs.is_empty() && readme_mentions_programming_handoff(&release_notes) {
+        if !readme_mentions_firmware_revision(&release_notes) {
+            violations.push(artifact_violation(
+                "bom-readme-programming-traceability",
+                Some(format!(
+                    "BOM includes likely programmable references ({}) but README programming handoff does not mention firmware revision, image, or checksum traceability",
+                    join_limited_set(&programmable_refs, 8)
+                )),
+            ));
+        }
+        if !readme_mentions_programming_method(&release_notes) {
+            violations.push(artifact_violation(
+                "bom-readme-programming-method",
+                Some(format!(
+                    "BOM includes likely programmable references ({}) but README programming handoff does not mention SWD/JTAG/bootloader/fixture method",
+                    join_limited_set(&programmable_refs, 8)
+                )),
+            ));
+        }
+        if !readme_mentions_test_acceptance(&release_notes) {
+            violations.push(artifact_violation(
+                "bom-readme-test-acceptance",
+                Some(format!(
+                    "BOM includes likely programmable references ({}) but README does not mention functional-test acceptance, pass/fail, or test record criteria",
+                    join_limited_set(&programmable_refs, 8)
+                )),
+            ));
+        }
+    }
+
+    if assembly_variants.len() > 1 && !readme_mentions_assembly_variants(&release_notes) {
+        violations.push(artifact_violation(
+            "bom-readme-variant-parity",
+            Some(format!(
+                "BOM includes multiple assembly/build variants ({}) but README does not describe variant handling",
+                describe_marker_map(&assembly_variants)
+            )),
         ));
     }
 
@@ -257,8 +352,40 @@ pub fn production_artifact_readiness(
                 ),
             ));
         }
+        if readme_mentions_fabrication_marking(&release_notes) && fab_drawing_files.is_empty() {
+            violations.push(artifact_violation(
+                "readme-fab-drawing-parity",
+                Some(
+                    "README mentions fabrication markings, labels, date codes, UL marks, or serialization, but no fabrication drawing artifact was provided for allowed marking zones"
+                        .to_string(),
+                ),
+            ));
+        }
+        if readme_mentions_serialization(&release_notes)
+            && !readme_mentions_serialization_handoff(&release_notes)
+        {
+            violations.push(artifact_violation(
+                "readme-serialization-handoff",
+                Some(
+                    "README mentions serialization or barcodes but not serial format, label location, range, or traceability handoff"
+                        .to_string(),
+                ),
+            ));
+        }
+        if readme_mentions_packaging(&release_notes)
+            && !readme_mentions_packaging_handoff(&release_notes)
+        {
+            violations.push(artifact_violation(
+                "readme-packaging-handoff",
+                Some(
+                    "README mentions packaging or shipping but not ESD, moisture, labeling, lot, or tray/reel handling notes"
+                        .to_string(),
+                ),
+            ));
+        }
         if readme_mentions_double_sided_assembly(&release_notes)
             && !centroid_has_bottom_placements(&centroid_sides)
+            && !centroid_has_bottom_placements(&bom_sides)
         {
             violations.push(artifact_violation(
                 "double-sided-assembly-handoff",
@@ -319,6 +446,10 @@ struct ArtifactAnalysis {
     values: BTreeMap<String, BTreeSet<String>>,
     packages: BTreeMap<String, BTreeSet<String>>,
     rotations: BTreeMap<String, BTreeSet<String>>,
+    through_hole_refs: BTreeSet<String>,
+    inspection_sensitive_refs: BTreeSet<String>,
+    programmable_refs: BTreeSet<String>,
+    assembly_variants: BTreeMap<String, BTreeSet<String>>,
     violations: Vec<Violation>,
 }
 
@@ -497,6 +628,12 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
         ));
         return analysis;
     };
+    if table.rows.is_empty() {
+        analysis.violations.push(artifact_violation(
+            &artifact.path,
+            Some("BOM file has no component rows".to_string()),
+        ));
+    }
 
     let ref_col = find_column(&table.headers, &["ref", "reference", "designator"]);
     let part_col = find_column(
@@ -541,6 +678,42 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
     let value_col = find_column(&table.headers, &["value", "description"]);
     let package_col = find_column(&table.headers, &["package", "footprint", "case"]);
     let qty_col = find_column(&table.headers, &["qty", "quantity"]);
+    let unit_cost_col = find_column(
+        &table.headers,
+        &[
+            "unitcost",
+            "unit cost",
+            "price",
+            "cost",
+            "extendedcost",
+            "extended cost",
+        ],
+    );
+    let population_col = find_column(
+        &table.headers,
+        &[
+            "population",
+            "populate",
+            "fitted",
+            "fit",
+            "mount",
+            "mounted",
+        ],
+    );
+    let variant_col = find_column(
+        &table.headers,
+        &[
+            "assemblyoption",
+            "assembly option",
+            "buildvariant",
+            "build variant",
+            "variant",
+            "variantname",
+            "variant name",
+            "bomvariant",
+            "bom variant",
+        ],
+    );
     let rotation_col = find_column(&table.headers, &["rotation", "rot", "angle", "orientation"]);
     let polarity_col = find_column(
         &table.headers,
@@ -652,12 +825,27 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
     let mut occurrences = BTreeMap::<String, usize>::new();
     let mut mpn_values = BTreeMap::<String, BTreeSet<String>>::new();
     let mut mpn_packages = BTreeMap::<String, BTreeSet<String>>::new();
+    let mut mpn_manufacturers = BTreeMap::<String, BTreeSet<String>>::new();
+    let mut mpn_suppliers = BTreeMap::<String, BTreeSet<String>>::new();
+    let mut mpn_lifecycle = BTreeMap::<String, BTreeSet<String>>::new();
+    let mut supplier_parts = BTreeMap::<String, BTreeSet<String>>::new();
     let mut row_sides = BTreeMap::<String, BTreeSet<String>>::new();
     for (row_index, row) in table.rows.iter().enumerate() {
-        let not_populated = is_not_populated_row(row);
+        let not_populated = is_not_populated_row(row)
+            || population_col
+                .is_some_and(|column| is_not_populated_population_cell(cell(row, column)));
         let references = ref_col
             .map(|column| split_references(cell(row, column)))
             .unwrap_or_default();
+        if ref_col.is_some() && references.is_empty() && !not_populated {
+            analysis.violations.push(artifact_violation(
+                &artifact.path,
+                Some(format!(
+                    "BOM row {} has no reference designator",
+                    row_index + 2
+                )),
+            ));
+        }
         if ref_col.is_some() {
             for reference in &references {
                 *occurrences.entry(reference.clone()).or_default() += 1;
@@ -677,6 +865,16 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
                     ));
                 }
             }
+        }
+        if let Some(column) = variant_col
+            && !not_populated
+            && let Some(variant) = released_bom_key(cell(row, column))
+        {
+            analysis
+                .assembly_variants
+                .entry(variant)
+                .or_default()
+                .extend(references.iter().cloned());
         }
         if let Some(column) = side_col
             && !not_populated
@@ -712,7 +910,7 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
             }
         }
         if let Some(column) = part_col
-            && cell(row, column).trim().is_empty()
+            && is_unreleased_cell(cell(row, column))
             && !not_populated
         {
             analysis.violations.push(artifact_violation(
@@ -724,7 +922,7 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
             ));
         }
         if let Some(column) = manufacturer_col
-            && cell(row, column).trim().is_empty()
+            && is_unreleased_cell(cell(row, column))
             && !not_populated
         {
             analysis.violations.push(artifact_violation(
@@ -736,7 +934,7 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
             ));
         }
         if let Some(column) = supplier_col
-            && cell(row, column).trim().is_empty()
+            && is_unreleased_cell(cell(row, column))
             && !not_populated
         {
             analysis.violations.push(artifact_violation(
@@ -751,7 +949,7 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
             && !not_populated
         {
             let lifecycle = cell(row, column).trim();
-            if lifecycle.is_empty() {
+            if is_unreleased_cell(lifecycle) {
                 analysis.violations.push(artifact_violation(
                     &artifact.path,
                     Some(format!(
@@ -771,7 +969,7 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
             }
         }
         if let Some(column) = alternate_col
-            && cell(row, column).trim().is_empty()
+            && is_unreleased_cell(cell(row, column))
             && !not_populated
         {
             analysis.violations.push(artifact_violation(
@@ -782,8 +980,25 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
                 )),
             ));
         }
+        if !not_populated
+            && let (Some(part_column), Some(alternate_column)) = (part_col, alternate_col)
+        {
+            let part = released_bom_key(cell(row, part_column));
+            let alternate = released_bom_key(cell(row, alternate_column));
+            if let (Some(part), Some(alternate)) = (part, alternate)
+                && part == alternate
+            {
+                analysis.violations.push(artifact_violation(
+                    &artifact.path,
+                    Some(format!(
+                        "BOM row {} approved alternate/substitute is the same as the primary part",
+                        row_index + 2
+                    )),
+                ));
+            }
+        }
         if let Some(column) = value_col
-            && cell(row, column).trim().is_empty()
+            && is_unreleased_cell(cell(row, column))
             && !not_populated
         {
             analysis.violations.push(artifact_violation(
@@ -795,7 +1010,7 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
             ));
         }
         if let Some(column) = package_col
-            && cell(row, column).trim().is_empty()
+            && is_unreleased_cell(cell(row, column))
             && !not_populated
         {
             analysis.violations.push(artifact_violation(
@@ -810,20 +1025,67 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
             && let (Some(part_column), Some(value_column), Some(package_column)) =
                 (part_col, value_col, package_col)
         {
-            let part = normalize_bom_key(cell(row, part_column));
-            let value = normalize_bom_key(cell(row, value_column));
-            let package = normalize_bom_key(cell(row, package_column));
-            if !part.is_empty() && !value.is_empty() {
+            let part = released_bom_key(cell(row, part_column));
+            let value = released_bom_key(cell(row, value_column));
+            let package = released_bom_key(cell(row, package_column));
+            if let (Some(part), Some(value)) = (&part, value) {
                 mpn_values.entry(part.clone()).or_default().insert(value);
             }
-            if !part.is_empty() && !package.is_empty() {
+            if let (Some(part), Some(package)) = (part, package) {
                 mpn_packages.entry(part).or_default().insert(package);
             }
         }
+        if !not_populated && let Some(part_column) = part_col {
+            if let Some(part) = released_bom_key(cell(row, part_column)) {
+                if let Some(column) = manufacturer_col {
+                    if let Some(manufacturer) = released_bom_key(cell(row, column)) {
+                        mpn_manufacturers
+                            .entry(part.clone())
+                            .or_default()
+                            .insert(manufacturer);
+                    }
+                }
+                if let Some(column) = supplier_col {
+                    if let Some(supplier) = released_bom_key(cell(row, column)) {
+                        mpn_suppliers
+                            .entry(part.clone())
+                            .or_default()
+                            .insert(supplier.clone());
+                        supplier_parts
+                            .entry(supplier)
+                            .or_default()
+                            .insert(part.clone());
+                    }
+                }
+                if let Some(column) = lifecycle_col {
+                    if let Some(lifecycle) = released_bom_key(cell(row, column)) {
+                        mpn_lifecycle
+                            .entry(part.clone())
+                            .or_default()
+                            .insert(lifecycle);
+                    }
+                }
+            }
+        }
         if !not_populated {
+            if likely_through_hole_bom_row(&references, row, part_col, value_col, package_col) {
+                analysis
+                    .through_hole_refs
+                    .extend(references.iter().cloned());
+            }
+            if likely_inspection_sensitive_bom_row(row, part_col, value_col, package_col) {
+                analysis
+                    .inspection_sensitive_refs
+                    .extend(references.iter().cloned());
+            }
+            if likely_programmable_bom_row(row, part_col, value_col, package_col) {
+                analysis
+                    .programmable_refs
+                    .extend(references.iter().cloned());
+            }
             if likely_polarized_bom_row(&references, row, part_col, value_col, package_col) {
                 match polarity_col {
-                    Some(column) if !cell(row, column).trim().is_empty() => {}
+                    Some(column) if !is_unreleased_cell(cell(row, column)) => {}
                     Some(_) => analysis.violations.push(artifact_violation(
                         &artifact.path,
                         Some(format!(
@@ -842,7 +1104,7 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
             }
             if likely_moisture_sensitive_bom_row(row, part_col, value_col, package_col) {
                 match moisture_col {
-                    Some(column) if !cell(row, column).trim().is_empty() => {}
+                    Some(column) if !is_unreleased_cell(cell(row, column)) => {}
                     Some(_) => analysis.violations.push(artifact_violation(
                         &artifact.path,
                         Some(format!(
@@ -967,6 +1229,40 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
                     )),
                 ));
             }
+            if let Some(0) = quantity
+                && !not_populated
+            {
+                analysis.violations.push(artifact_violation(
+                    &artifact.path,
+                    Some(format!(
+                        "BOM row {} has zero quantity but is not marked DNP/DNI or not fitted",
+                        row_index + 2
+                    )),
+                ));
+            }
+        }
+        if let Some(column) = unit_cost_col
+            && !not_populated
+        {
+            let cost_text = cell(row, column).trim();
+            if is_unreleased_cell(cost_text) {
+                analysis.violations.push(artifact_violation(
+                    &artifact.path,
+                    Some(format!(
+                        "BOM row {} has no populated unit cost or price",
+                        row_index + 2
+                    )),
+                ));
+            } else if parse_non_negative_money(cost_text).is_none() {
+                analysis.violations.push(artifact_violation(
+                    &artifact.path,
+                    Some(format!(
+                        "BOM row {} has invalid unit cost/price {:?}",
+                        row_index + 2,
+                        cost_text
+                    )),
+                ));
+            }
         }
     }
 
@@ -1011,6 +1307,50 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
             ));
         }
     }
+    for (part, manufacturers) in mpn_manufacturers {
+        if manufacturers.len() > 1 {
+            analysis.violations.push(artifact_violation(
+                &artifact.path,
+                Some(format!(
+                    "BOM part {part} is used with multiple manufacturers: {}",
+                    manufacturers.into_iter().collect::<Vec<_>>().join(", ")
+                )),
+            ));
+        }
+    }
+    for (part, suppliers) in mpn_suppliers {
+        if suppliers.len() > 1 {
+            analysis.violations.push(artifact_violation(
+                &artifact.path,
+                Some(format!(
+                    "BOM part {part} is used with multiple supplier/distributor/SKU values: {}",
+                    suppliers.into_iter().collect::<Vec<_>>().join(", ")
+                )),
+            ));
+        }
+    }
+    for (part, lifecycle_values) in mpn_lifecycle {
+        if lifecycle_values.len() > 1 {
+            analysis.violations.push(artifact_violation(
+                &artifact.path,
+                Some(format!(
+                    "BOM part {part} is used with multiple lifecycle/status values: {}",
+                    lifecycle_values.into_iter().collect::<Vec<_>>().join(", ")
+                )),
+            ));
+        }
+    }
+    for (supplier, parts) in supplier_parts {
+        if parts.len() > 1 {
+            analysis.violations.push(artifact_violation(
+                &artifact.path,
+                Some(format!(
+                    "BOM supplier/distributor/SKU value {supplier} is assigned to multiple parts: {}",
+                    parts.into_iter().collect::<Vec<_>>().join(", ")
+                )),
+            ));
+        }
+    }
 
     analysis
 }
@@ -1024,6 +1364,12 @@ fn analyze_centroid(artifact: &TextArtifact) -> ArtifactAnalysis {
         ));
         return analysis;
     };
+    if table.rows.is_empty() {
+        analysis.violations.push(artifact_violation(
+            &artifact.path,
+            Some("centroid file has no placement rows".to_string()),
+        ));
+    }
 
     let ref_col = find_column(&table.headers, &["ref", "reference", "designator"]);
     let x_col = find_column(&table.headers, &["x", "posx", "mid x", "centerx"]);
@@ -1054,7 +1400,7 @@ fn analyze_centroid(artifact: &TextArtifact) -> ArtifactAnalysis {
         let mut row_reference = None;
         if let Some(column) = ref_col {
             let reference = cell(row, column).trim();
-            if reference.is_empty() {
+            if is_unreleased_cell(reference) {
                 analysis.violations.push(artifact_violation(
                     &artifact.path,
                     Some(format!("centroid row {} has no reference", row_index + 2)),
@@ -1093,6 +1439,16 @@ fn analyze_centroid(artifact: &TextArtifact) -> ArtifactAnalysis {
                     ));
                     continue;
                 };
+                if matches!(label, "x" | "y") && numeric.abs() > 5_000.0 {
+                    analysis.violations.push(artifact_violation(
+                        &artifact.path,
+                        Some(format!(
+                            "centroid row {} {label} coordinate {:?} is unusually large; review placement units and origin",
+                            row_index + 2,
+                            cell(row, column)
+                        )),
+                    ));
+                }
                 if label == "rotation" && !(-360.0..=360.0).contains(&numeric) {
                     analysis.violations.push(artifact_violation(
                         &artifact.path,
@@ -1156,8 +1512,7 @@ fn analyze_centroid(artifact: &TextArtifact) -> ArtifactAnalysis {
 
         if let Some(reference) = &row_reference {
             if let Some(column) = value_col {
-                let value = normalize_bom_key(cell(row, column));
-                if !value.is_empty() {
+                if let Some(value) = released_bom_key(cell(row, column)) {
                     analysis
                         .values
                         .entry(reference.clone())
@@ -1166,8 +1521,7 @@ fn analyze_centroid(artifact: &TextArtifact) -> ArtifactAnalysis {
                 }
             }
             if let Some(column) = package_col {
-                let package = normalize_bom_key(cell(row, column));
-                if !package.is_empty() {
+                if let Some(package) = released_bom_key(cell(row, column)) {
                     analysis
                         .packages
                         .entry(reference.clone())
@@ -1247,6 +1601,12 @@ fn analyze_netlist(artifact: &TextArtifact) -> ArtifactAnalysis {
         ));
         return analysis;
     };
+    if table.rows.is_empty() {
+        analysis.violations.push(artifact_violation(
+            &artifact.path,
+            Some("netlist file has no pin rows".to_string()),
+        ));
+    }
 
     let net_col = find_column(&table.headers, &["net", "netname", "signal"]);
     let ref_col = find_column(
@@ -1275,15 +1635,16 @@ fn analyze_netlist(artifact: &TextArtifact) -> ArtifactAnalysis {
         let net = net_col.map(|column| cell(row, column).trim()).unwrap_or("");
         let reference = ref_col.map(|column| cell(row, column).trim()).unwrap_or("");
         let pin = pin_col.map(|column| cell(row, column).trim()).unwrap_or("");
-        let normalized_reference = (!reference.is_empty()).then(|| normalize_reference(reference));
+        let normalized_reference =
+            (!is_unreleased_cell(reference)).then(|| normalize_reference(reference));
 
-        if net.is_empty() {
+        if is_unreleased_cell(net) {
             analysis.violations.push(artifact_violation(
                 &artifact.path,
                 Some(format!("netlist row {} has no net name", row_index + 2)),
             ));
         }
-        if reference.is_empty() {
+        if is_unreleased_cell(reference) {
             analysis.violations.push(artifact_violation(
                 &artifact.path,
                 Some(format!("netlist row {} has no reference", row_index + 2)),
@@ -1301,7 +1662,7 @@ fn analyze_netlist(artifact: &TextArtifact) -> ArtifactAnalysis {
                 ));
             }
         }
-        if pin.is_empty() {
+        if is_unreleased_cell(pin) {
             analysis.violations.push(artifact_violation(
                 &artifact.path,
                 Some(format!("netlist row {} has no pin/pad", row_index + 2)),
@@ -1309,8 +1670,8 @@ fn analyze_netlist(artifact: &TextArtifact) -> ArtifactAnalysis {
         }
 
         if let Some(reference) = normalized_reference
-            && !pin.is_empty()
-            && !net.is_empty()
+            && !is_unreleased_cell(pin)
+            && !is_unreleased_cell(net)
         {
             let net = net.to_string();
             let pin = pin.to_string();
@@ -1565,6 +1926,30 @@ fn readme_contradictions(path: &str, normalized: &str) -> Vec<Violation> {
             &["castellation required", "castellated"][..],
             "castellation",
         ),
+        (
+            &["no conformal coating", "coating not required"][..],
+            &["conformal coating required", "coating required"][..],
+            "conformal coating",
+        ),
+        (
+            &["no programming", "programming not required", "no firmware"][..],
+            &[
+                "programming required",
+                "firmware required",
+                "flash firmware",
+            ][..],
+            "programming",
+        ),
+        (
+            &[
+                "no test fixture",
+                "fixture not required",
+                "no ict",
+                "no fct",
+            ][..],
+            &["test fixture required", "ict required", "fct required"][..],
+            "test fixture",
+        ),
     ] {
         if has_any(normalized, negative) && has_any(normalized, positive) {
             violations.push(artifact_violation(
@@ -1609,6 +1994,13 @@ fn readme_contradictions(path: &str, normalized: &str) -> Vec<Violation> {
                 "0.6mm", "0.8mm", "1.0mm", "1.2mm", "1.6mm", "2.0mm", "2.4mm",
             ][..],
         ),
+        (
+            "layer count",
+            &[
+                "1 layer", "1-layer", "2 layer", "2-layer", "4 layer", "4-layer", "6 layer",
+                "6-layer", "8 layer", "8-layer", "10 layer", "10-layer", "12 layer", "12-layer",
+            ][..],
+        ),
         ("copper weight", &["0.5 oz", "1 oz", "2 oz", "3 oz"][..]),
     ] {
         let matches = distinct_present_tokens(normalized, tokens);
@@ -1623,6 +2015,127 @@ fn readme_contradictions(path: &str, normalized: &str) -> Vec<Violation> {
         }
     }
     violations
+}
+
+fn analyze_release_marker_consistency(markers: &[(String, String)]) -> Vec<Violation> {
+    let mut violations = Vec::new();
+    let mut revisions = BTreeMap::<String, BTreeSet<String>>::new();
+    let mut dates = BTreeMap::<String, BTreeSet<String>>::new();
+
+    for (label, text) in markers {
+        for revision in extract_revision_markers(text) {
+            revisions.entry(revision).or_default().insert(label.clone());
+        }
+        for date in extract_date_markers(text) {
+            dates.entry(date).or_default().insert(label.clone());
+        }
+    }
+
+    if revisions.len() > 1 {
+        violations.push(artifact_violation(
+            "release-marker-consistency",
+            Some(format!(
+                "release artifacts mention multiple revision markers: {}",
+                describe_marker_map(&revisions)
+            )),
+        ));
+    }
+    if dates.len() > 1 {
+        violations.push(artifact_violation(
+            "release-marker-consistency",
+            Some(format!(
+                "release artifacts mention multiple generated/release dates: {}",
+                describe_marker_map(&dates)
+            )),
+        ));
+    }
+
+    violations
+}
+
+fn describe_marker_map(markers: &BTreeMap<String, BTreeSet<String>>) -> String {
+    markers
+        .iter()
+        .map(|(marker, labels)| format!("{marker} in {}", join_set(labels)))
+        .collect::<Vec<_>>()
+        .join("; ")
+}
+
+fn extract_revision_markers(text: &str) -> BTreeSet<String> {
+    let tokens = release_tokens(text);
+    let mut revisions = BTreeSet::new();
+    for (index, token) in tokens.iter().enumerate() {
+        if matches!(token.as_str(), "rev" | "revision" | "version") {
+            if let Some(next) = tokens.get(index + 1)
+                && looks_like_revision_value(next)
+            {
+                revisions.insert(format!("rev{}", next.to_ascii_uppercase()));
+            }
+        } else if let Some(suffix) = token.strip_prefix("rev")
+            && looks_like_compact_revision_suffix(suffix)
+        {
+            revisions.insert(format!("rev{}", suffix.to_ascii_uppercase()));
+        } else if let Some(suffix) = token.strip_prefix('v')
+            && suffix.chars().next().is_some_and(|ch| ch.is_ascii_digit())
+            && looks_like_revision_value(suffix)
+        {
+            revisions.insert(format!("rev{}", suffix.to_ascii_uppercase()));
+        }
+    }
+    revisions
+}
+
+fn looks_like_revision_value(value: &str) -> bool {
+    let len = value.len();
+    (1..=8).contains(&len) && value.chars().all(|ch| ch.is_ascii_alphanumeric())
+}
+
+fn looks_like_compact_revision_suffix(value: &str) -> bool {
+    let len = value.len();
+    (1..=4).contains(&len) && value.chars().all(|ch| ch.is_ascii_alphanumeric())
+}
+
+fn extract_date_markers(text: &str) -> BTreeSet<String> {
+    let tokens = release_tokens(text);
+    let mut dates = BTreeSet::new();
+    for (index, token) in tokens.iter().enumerate() {
+        if token.len() == 8 && token.chars().all(|ch| ch.is_ascii_digit()) {
+            let year = &token[0..4];
+            let month = &token[4..6];
+            let day = &token[6..8];
+            if is_plausible_date_parts(year, month, day) {
+                dates.insert(format!("{year}-{month}-{day}"));
+            }
+        }
+        if token.len() == 4
+            && token.chars().all(|ch| ch.is_ascii_digit())
+            && let (Some(month), Some(day)) = (tokens.get(index + 1), tokens.get(index + 2))
+            && is_plausible_date_parts(token, month, day)
+        {
+            dates.insert(format!("{token}-{month:0>2}-{day:0>2}"));
+        }
+    }
+    dates
+}
+
+fn is_plausible_date_parts(year: &str, month: &str, day: &str) -> bool {
+    let Ok(year) = year.parse::<u16>() else {
+        return false;
+    };
+    let Ok(month) = month.parse::<u8>() else {
+        return false;
+    };
+    let Ok(day) = day.parse::<u8>() else {
+        return false;
+    };
+    (2000..=2099).contains(&year) && (1..=12).contains(&month) && (1..=31).contains(&day)
+}
+
+fn release_tokens(text: &str) -> Vec<String> {
+    text.split(|ch: char| !ch.is_ascii_alphanumeric())
+        .filter(|token| !token.is_empty())
+        .map(|token| token.to_ascii_lowercase())
+        .collect()
 }
 
 fn distinct_present_tokens(text: &str, tokens: &[&str]) -> Vec<String> {
@@ -1663,6 +2176,14 @@ fn analyze_text_artifact_path(artifact: &TextArtifact, kind: TextArtifactKind) -
     violations
 }
 
+#[derive(Copy, Clone)]
+enum TableDelimiter {
+    Comma,
+    Tab,
+    Semicolon,
+    Whitespace,
+}
+
 struct Table {
     headers: Vec<String>,
     rows: Vec<Vec<String>>,
@@ -1675,7 +2196,7 @@ fn parse_table(text: &str) -> Option<Table> {
         .filter(|line| !line.is_empty() && !line.starts_with('#'))
         .collect::<Vec<_>>();
     let header = lines.first()?;
-    let delimiter = if header.contains('\t') { '\t' } else { ',' };
+    let delimiter = detect_table_delimiter(header);
     let headers = split_row(header, delimiter)
         .into_iter()
         .map(|header| normalize_header(&header))
@@ -1690,7 +2211,19 @@ fn parse_table(text: &str) -> Option<Table> {
     Some(Table { headers, rows }).filter(|table| !table.headers.is_empty())
 }
 
-fn split_row(line: &str, delimiter: char) -> Vec<String> {
+fn detect_table_delimiter(header: &str) -> TableDelimiter {
+    if header.contains('\t') {
+        TableDelimiter::Tab
+    } else if header.contains(',') {
+        TableDelimiter::Comma
+    } else if header.contains(';') {
+        TableDelimiter::Semicolon
+    } else {
+        TableDelimiter::Whitespace
+    }
+}
+
+fn split_row(line: &str, delimiter: TableDelimiter) -> Vec<String> {
     let mut cells = Vec::new();
     let mut current = String::new();
     let mut in_quotes = false;
@@ -1704,9 +2237,14 @@ fn split_row(line: &str, delimiter: char) -> Vec<String> {
             } else {
                 in_quotes = !in_quotes;
             }
-        } else if ch == delimiter && !in_quotes {
+        } else if delimiter.matches(ch) && !in_quotes {
             cells.push(current.trim().to_string());
             current.clear();
+            if matches!(delimiter, TableDelimiter::Whitespace) {
+                while chars.peek().is_some_and(|next| next.is_ascii_whitespace()) {
+                    chars.next();
+                }
+            }
         } else {
             current.push(ch);
         }
@@ -1714,6 +2252,17 @@ fn split_row(line: &str, delimiter: char) -> Vec<String> {
     cells.push(current.trim().to_string());
 
     cells
+}
+
+impl TableDelimiter {
+    fn matches(self, ch: char) -> bool {
+        match self {
+            TableDelimiter::Comma => ch == ',',
+            TableDelimiter::Tab => ch == '\t',
+            TableDelimiter::Semicolon => ch == ';',
+            TableDelimiter::Whitespace => ch.is_ascii_whitespace(),
+        }
+    }
 }
 
 fn normalize_header(header: &str) -> String {
@@ -1786,6 +2335,36 @@ fn normalize_bom_key(value: &str) -> String {
         .to_ascii_uppercase()
 }
 
+fn released_bom_key(value: &str) -> Option<String> {
+    (!is_unreleased_cell(value)).then(|| normalize_bom_key(value))
+}
+
+fn is_unreleased_cell(value: &str) -> bool {
+    let normalized = value
+        .trim()
+        .trim_matches('"')
+        .trim_matches('\'')
+        .to_ascii_lowercase();
+    normalized.is_empty()
+        || matches!(
+            normalized.as_str(),
+            "tbd"
+                | "todo"
+                | "unknown"
+                | "unk"
+                | "n/a"
+                | "na"
+                | "none"
+                | "-"
+                | "--"
+                | "?"
+                | "pending"
+                | "placeholder"
+                | "select"
+                | "choose"
+        )
+}
+
 fn is_reference_designator(reference: &str) -> bool {
     split_reference_designator(reference).is_some()
 }
@@ -1837,6 +2416,15 @@ fn parse_positive_dimension(value: &str) -> Option<f64> {
     (numeric.is_finite() && numeric > 0.0).then_some(numeric)
 }
 
+fn parse_non_negative_money(value: &str) -> Option<f64> {
+    let compact = value
+        .trim()
+        .trim_start_matches('$')
+        .replace([',', '€', '£'], "");
+    let numeric = compact.parse::<f64>().ok()?;
+    (numeric.is_finite() && numeric >= 0.0).then_some(numeric)
+}
+
 fn normalize_side(side: &str) -> &'static str {
     match side {
         "top" | "front" | "f" | "f.cu" => "top",
@@ -1886,6 +2474,14 @@ fn join_set(values: &BTreeSet<String>) -> String {
     values.iter().cloned().collect::<Vec<_>>().join(", ")
 }
 
+fn join_limited_set(values: &BTreeSet<String>, limit: usize) -> String {
+    let mut joined = values.iter().take(limit).cloned().collect::<Vec<_>>();
+    if values.len() > limit {
+        joined.push(format!("and {} more", values.len() - limit));
+    }
+    joined.join(", ")
+}
+
 fn centroid_has_bottom_placements(sides: &BTreeMap<String, BTreeSet<String>>) -> bool {
     sides
         .values()
@@ -1933,6 +2529,206 @@ fn readme_mentions_conformal_coating(text: &str) -> bool {
             "coated assembly",
             "coat board",
             "coating required",
+        ],
+    )
+}
+
+fn readme_mentions_inspection_process(text: &str) -> bool {
+    has_any(
+        text,
+        &[
+            "x-ray",
+            "xray",
+            "x ray",
+            "aoi",
+            "automated optical inspection",
+            "inspection",
+            "inspect",
+            "bga review",
+            "voiding review",
+        ],
+    )
+}
+
+fn readme_mentions_programming_handoff(text: &str) -> bool {
+    has_any(
+        text,
+        &[
+            "programming",
+            "program",
+            "firmware",
+            "flashing",
+            "flash",
+            "bootloader",
+            "test fixture",
+            "ict",
+            "fct",
+            "functional test",
+        ],
+    )
+}
+
+fn readme_mentions_firmware_revision(text: &str) -> bool {
+    has_any(
+        text,
+        &[
+            "firmware revision",
+            "firmware version",
+            "fw revision",
+            "fw version",
+            "firmware image",
+            "image version",
+            "hex file",
+            "bin file",
+            "checksum",
+            "sha256",
+            "crc",
+        ],
+    )
+}
+
+fn readme_mentions_programming_method(text: &str) -> bool {
+    has_any(
+        text,
+        &[
+            "swd",
+            "jtag",
+            "bootloader",
+            "tag-connect",
+            "tag connect",
+            "pogo",
+            "programming fixture",
+            "test fixture",
+            "ict",
+            "uart boot",
+            "usb dfu",
+            "fixture method",
+        ],
+    )
+}
+
+fn readme_mentions_test_acceptance(text: &str) -> bool {
+    has_any(
+        text,
+        &[
+            "acceptance",
+            "pass/fail",
+            "pass fail",
+            "test record",
+            "test report",
+            "functional test",
+            "fct",
+            "ict",
+            "production test",
+            "calibration record",
+        ],
+    )
+}
+
+fn readme_mentions_assembly_variants(text: &str) -> bool {
+    has_any(
+        text,
+        &[
+            "assembly variant",
+            "build variant",
+            "bom variant",
+            "variant handling",
+            "variant:",
+            "variants:",
+            "prototype variant",
+            "production variant",
+            "do-not-populate variant",
+        ],
+    )
+}
+
+fn readme_mentions_fabrication_marking(text: &str) -> bool {
+    has_any(
+        text,
+        &[
+            "date code",
+            "ul mark",
+            "ul logo",
+            "fab mark",
+            "fabrication marking",
+            "board label",
+            "serial",
+            "serialization",
+            "barcode",
+            "qr code",
+            "revision text",
+        ],
+    )
+}
+
+fn readme_mentions_serialization(text: &str) -> bool {
+    has_any(
+        text,
+        &[
+            "serial",
+            "serialization",
+            "serialized",
+            "barcode",
+            "qr code",
+            "uid label",
+            "unit id",
+        ],
+    )
+}
+
+fn readme_mentions_serialization_handoff(text: &str) -> bool {
+    has_any(
+        text,
+        &[
+            "serial format",
+            "serial range",
+            "barcode format",
+            "label location",
+        ],
+    ) && has_any(
+        text,
+        &[
+            "traceability",
+            "traveler",
+            "lot record",
+            "unit record",
+            "label file",
+            "label drawing",
+        ],
+    )
+}
+
+fn readme_mentions_packaging(text: &str) -> bool {
+    has_any(
+        text,
+        &[
+            "packaging",
+            "shipping",
+            "ship in",
+            "esd bag",
+            "moisture barrier",
+            "tray",
+            "tape and reel",
+            "reel",
+            "vacuum pack",
+        ],
+    )
+}
+
+fn readme_mentions_packaging_handoff(text: &str) -> bool {
+    has_any(
+        text,
+        &[
+            "esd",
+            "moisture",
+            "msl",
+            "humidity card",
+            "desiccant",
+            "tray",
+            "tape and reel",
+            "lot label",
+            "box label",
+            "labeling",
         ],
     )
 }
@@ -2010,13 +2806,47 @@ fn parse_quantity(value: &str) -> Option<usize> {
 }
 
 fn is_not_populated_row(row: &[String]) -> bool {
-    row.iter().any(|cell| {
-        let normalized = cell.to_ascii_lowercase();
-        has_any(
-            &normalized,
-            &["dnp", "dni", "dnf", "do not populate", "not fitted"],
+    row.iter().any(|cell| is_not_populated_text(cell))
+}
+
+fn is_not_populated_text(value: &str) -> bool {
+    let normalized = value.trim().to_ascii_lowercase();
+    matches!(
+        normalized.as_str(),
+        "dnp"
+            | "dni"
+            | "dnf"
+            | "do not populate"
+            | "do not install"
+            | "do not fit"
+            | "not populated"
+            | "not fitted"
+            | "not installed"
+            | "no fit"
+            | "nofit"
+            | "unfitted"
+            | "unplaced"
+            | "exclude"
+            | "excluded"
+    ) || has_any(
+        &normalized,
+        &[
+            "do not populate",
+            "do not install",
+            "do not fit",
+            "not fitted",
+            "not populated",
+            "no stuff",
+        ],
+    )
+}
+
+fn is_not_populated_population_cell(value: &str) -> bool {
+    is_not_populated_text(value)
+        || matches!(
+            value.trim().to_ascii_lowercase().as_str(),
+            "false" | "no" | "n" | "0" | "off"
         )
-    })
 }
 
 fn likely_polarized_bom_row(
@@ -2073,6 +2903,93 @@ fn likely_moisture_sensitive_bom_row(
     )
 }
 
+fn likely_through_hole_bom_row(
+    references: &[String],
+    row: &[String],
+    part_col: Option<usize>,
+    value_col: Option<usize>,
+    package_col: Option<usize>,
+) -> bool {
+    references.iter().any(|reference| {
+        split_reference_designator(reference).is_some_and(|(prefix, _)| {
+            matches!(prefix, "J" | "P" | "CN" | "CON" | "K" | "SW" | "T")
+        })
+    }) || row_text_matches(
+        row,
+        &[part_col, value_col, package_col],
+        &[
+            "through-hole",
+            "through hole",
+            "tht",
+            "pht",
+            "pin header",
+            "header",
+            "terminal block",
+            "barrel jack",
+            "switch",
+            "relay",
+            "connector",
+            "press-fit",
+            "press fit",
+        ],
+    )
+}
+
+fn likely_inspection_sensitive_bom_row(
+    row: &[String],
+    part_col: Option<usize>,
+    value_col: Option<usize>,
+    package_col: Option<usize>,
+) -> bool {
+    row_text_matches(
+        row,
+        &[part_col, value_col, package_col],
+        &[
+            "bga",
+            "lga",
+            "wlcsp",
+            "csp",
+            "ucsp",
+            "fbga",
+            "ubga",
+            "flip chip",
+            "flip-chip",
+        ],
+    )
+}
+
+fn likely_programmable_bom_row(
+    row: &[String],
+    part_col: Option<usize>,
+    value_col: Option<usize>,
+    package_col: Option<usize>,
+) -> bool {
+    row_text_matches(
+        row,
+        &[part_col, value_col, package_col],
+        &[
+            "mcu",
+            "microcontroller",
+            "processor",
+            "fpga",
+            "cpld",
+            "soc",
+            "flash",
+            "eeprom",
+            "bootloader",
+            "firmware",
+            "esp32",
+            "stm32",
+            "nrf52",
+            "nrf53",
+            "module",
+            "wifi",
+            "bluetooth",
+            "radio module",
+        ],
+    )
+}
+
 fn likely_height_sensitive_bom_row(
     references: &[String],
     row: &[String],
@@ -2122,12 +3039,23 @@ fn is_risky_lifecycle(value: &str) -> bool {
         &normalized,
         &[
             "obsolete",
+            "discontinued",
+            "deprecated",
+            "inactive",
             "eol",
             "end of life",
             "not recommended",
+            "not for new design",
             "nrnd",
             "last time buy",
             "ltb",
+            "preliminary",
+            "preview",
+            "sample",
+            "engineering sample",
+            "prototype only",
+            "allocation",
+            "shortage",
         ],
     )
 }
@@ -2358,7 +3286,7 @@ mod tests {
     fn bom_readiness_reports_missing_procurement_cells_and_conflicting_part_metadata() {
         let bom = artifact(
             "bom.csv",
-            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier SKU,Lifecycle,Approved Alternate\nR1,1,RC0603,10k,0603,Yageo,SKU1,Active,ALT1\nR2,1,RC0603,1k,0402,,,NRND,\n",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier SKU,Lifecycle,Approved Alternate\nR1,1,RC0603,10k,0603,Yageo,SKU1,Active,ALT1\nR2,1,RC0603,1k,0402,,,NRND,\nR3,1,RC0603,10k,0603,Vishay,SKU2,Active,ALT2\nC1,1,CC0603,100nF,0603,Murata,SKU2,Active,ALT3\n",
         );
 
         let violations = production_artifact_readiness(&[bom], &[], &[], &[], &[], &[], &[]);
@@ -2393,6 +3321,74 @@ mod tests {
             messages.iter().any(
                 |message| message.contains("multiple footprints") && message.contains("RC0603")
             )
+        );
+        assert!(messages.iter().any(
+            |message| message.contains("multiple manufacturers") && message.contains("RC0603")
+        ));
+        assert!(messages.iter().any(
+            |message| message.contains("multiple supplier/distributor/SKU")
+                && message.contains("RC0603")
+        ));
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("multiple lifecycle/status")
+                    && message.contains("RC0603"))
+        );
+        assert!(messages.iter().any(|message| message.contains("SKU2")
+            && message.contains("multiple parts")
+            && message.contains("CC0603")
+            && message.contains("RC0603")));
+    }
+
+    #[test]
+    fn bom_readiness_reports_primary_part_reused_as_approved_alternate() {
+        let bom = artifact(
+            "bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate\nR1,1,RC0603,10k,0603,Yageo,SKU-R,Active,RC0603\nC1,1,CC0603,100nF,0603,Murata,SKU-C,Active,CC0603-ALT\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+        ));
+
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("approved alternate/substitute")
+                    && message.contains("same as the primary part"))
+        );
+    }
+
+    #[test]
+    fn bom_readiness_flags_broader_lifecycle_risks() {
+        let bom = artifact(
+            "bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate\nU1,1,MCU123,MCU,QFN32,Vendor,SKU-U,not for new design,ALT-U\nU2,1,ASIC123,ASIC,BGA100,Vendor,SKU-A,engineering sample,ALT-A\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+        ));
+
+        assert_eq!(
+            messages
+                .iter()
+                .filter(|message| message.contains("requires procurement review"))
+                .count(),
+            2
         );
     }
 
@@ -2455,6 +3451,144 @@ mod tests {
                 .iter()
                 .any(|message| message.contains("component-height"))
         );
+    }
+
+    #[test]
+    fn bom_readiness_treats_placeholder_cells_as_missing_release_metadata() {
+        let bom = artifact(
+            "bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Polarity,MSL,Height\nD1,1,TBD,N/A,?,unknown,pending,select,none,TBD,N/A,TBD\nU1,1,MCU123,MCU,QFN32,Vendor,SKU-U,Active,ALT-U,Pin 1 reviewed,N/A,0.9\nJ1,1,USB-C,USB connector,USB-C,Vendor,SKU-J,Active,ALT-J,Pin 1 reviewed,1,TBD\n",
+        );
+
+        let violations = production_artifact_readiness(&[bom], &[], &[], &[], &[], &[], &[]);
+        let messages = messages(&violations);
+
+        for expected in [
+            "no populated part identifier",
+            "no populated manufacturer",
+            "no populated supplier/distributor/SKU",
+            "no populated lifecycle/status",
+            "no approved alternate/substitute",
+            "no populated value/description",
+            "no populated footprint/package",
+            "no populated polarity/orientation note",
+            "no populated moisture/MSL handling note",
+            "no valid populated height",
+        ] {
+            assert!(
+                messages.iter().any(|message| message.contains(expected)),
+                "missing warning containing {expected:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn placeholder_procurement_cells_do_not_create_conflict_noise() {
+        let bom = artifact(
+            "bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate\nR1,1,RC0603,10k,0603,Yageo,SKU-R,Active,ALT-R\nR2,1,RC0603,TBD,unknown,unknown,pending,pending,TBD\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+        ));
+
+        assert!(
+            !messages
+                .iter()
+                .any(|message| message.contains("multiple values")
+                    || message.contains("multiple footprints")
+                    || message.contains("multiple manufacturers")
+                    || message.contains("multiple supplier/distributor/SKU")
+                    || message.contains("multiple lifecycle/status")),
+            "placeholder cells should only produce missing-field warnings, got {messages:?}"
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("no populated value/description"))
+        );
+    }
+
+    #[test]
+    fn artifact_tables_accept_semicolon_and_whitespace_delimited_sidecars() {
+        let bom = artifact(
+            "widget_bom.csv",
+            "Reference;Quantity;MPN;Value;Footprint;Manufacturer;Supplier;Lifecycle;Approved Alternate\nR1;1;RC0603;10k;0603;Yageo;SKU-R;Active;ALT-R\n",
+        );
+        let centroid = artifact(
+            "widget_pick_place.pos",
+            "Ref X Y Rotation Side Value Footprint\nR1 10.0 20.0 90 Top 10k 0603\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[centroid],
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+        ));
+
+        assert!(
+            !messages
+                .iter()
+                .any(|message| message.contains("header has no")),
+            "unexpected header parse warning: {messages:?}"
+        );
+        assert!(!messages.iter().any(|message| message.contains("invalid x")
+            || message.contains("invalid y")
+            || message.contains("invalid rotation")));
+        assert!(
+            !messages
+                .iter()
+                .any(|message| message.contains("artifact extension")
+                    || message.contains("artifact filename"))
+        );
+    }
+
+    #[test]
+    fn artifact_release_markers_report_revision_and_date_mismatches() {
+        let bom = artifact(
+            "widget_revA_20260501_bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate\nR1,1,RC0603,10k,0603,Yageo,SKU-R,Active,ALT-R\n",
+        );
+        let centroid = artifact(
+            "widget_revB_20260502_centroid.csv",
+            "Ref,X,Y,Rotation,Side\nR1,10.0,20.0,90,Top\n",
+        );
+        let readme = artifact(
+            "README.md",
+            "Revision A release package generated 2026-05-01. Fabrication stackup 2 layer, \
+             thickness 1.6mm, copper weight 1 oz, ENIG finish, soldermask green, no impedance, \
+             no panelization, tented vias, no edge plating, no castellation. DRC/ERC passed, \
+             zones refilled, outputs generated, Gerber viewer checked, HyperDRC reviewed, \
+             no waivers, archive created. Pin-1 and polarity reviewed. Test fixture handoff complete.\n",
+        );
+
+        let violations =
+            production_artifact_readiness(&[bom], &[centroid], &[], &[readme], &[], &[], &[]);
+        let messages = messages(&violations);
+
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("multiple revision markers")
+                    && message.contains("revA")
+                    && message.contains("revB"))
+        );
+        assert!(messages.iter().any(|message| {
+            message.contains("multiple generated/release dates")
+                && message.contains("2026-05-01")
+                && message.contains("2026-05-02")
+        }));
     }
 
     #[test]
@@ -2531,6 +3665,137 @@ mod tests {
     }
 
     #[test]
+    fn bom_population_columns_and_zero_quantity_rows_are_checked() {
+        let bom = artifact(
+            "widget_bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Fitted\nR1,1,RC0603,10k,0603,Yageo,SKU-R,Active,ALT-R,Yes\nC1,0,CC0603,100nF,0603,Murata,SKU-C,Active,ALT-C,Yes\nD1,2,LED0603,LED,0603 LED,LiteOn,SKU-D,Active,ALT-D,No\n,1,MCU,QFN,QFN32,Vendor,SKU-U,Active,ALT-U,Yes\n",
+        );
+
+        let violations = production_artifact_readiness(&[bom], &[], &[], &[], &[], &[], &[]);
+        let messages = messages(&violations);
+
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("zero quantity")
+                    && message.contains("not marked DNP/DNI"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("marked DNP/DNI")
+                    && message.contains("nonzero quantity 2"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("no reference designator"))
+        );
+    }
+
+    #[test]
+    fn bom_readiness_validates_optional_unit_cost_cells_when_present() {
+        let bom = artifact(
+            "widget_bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Unit Cost\nR1,1,RC0603,10k,0603,Yageo,SKU-R,Active,ALT-R,$0.01\nC1,1,CC0603,100nF,0603,Murata,SKU-C,Active,ALT-C,TBD\nU1,1,MCU,QFN,QFN32,Vendor,SKU-U,Active,ALT-U,not-a-price\nD1,0,DNP,,,,,,,\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+        ));
+
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("no populated unit cost"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("invalid unit cost/price"))
+        );
+        assert!(
+            !messages
+                .iter()
+                .any(|message| message.contains("BOM row 5") && message.contains("unit cost")),
+            "DNP rows should not require pricing: {messages:?}"
+        );
+    }
+
+    #[test]
+    fn bom_variant_columns_require_readme_variant_handoff_when_multiple_variants_exist() {
+        let bom = artifact(
+            "widget_bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Build Variant\nR1,1,RC0603,10k,0603,Yageo,SKU-R,Active,ALT-R,Prototype\nR2,1,RC0603,10k,0603,Yageo,SKU-R,Active,ALT-R,Production\n",
+        );
+        let readme = artifact(
+            "README.md",
+            "Revision R. Fabrication package. Stackup 2 layer, thickness 1.6mm, copper weight 1 oz, \
+             ENIG finish, soldermask green, no impedance, no panelization, tented vias, no edge plating, \
+             no castellation. DRC/ERC passed, zones refilled, outputs generated, Gerber viewer checked, \
+             HyperDRC reviewed, no waivers, archive created. Pin-1 and polarity reviewed. Test fixture handoff complete.\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[],
+            &[],
+        ));
+
+        assert!(
+            messages.iter().any(|message| {
+                message.contains("multiple assembly/build variants")
+                    && message.contains("PROTOTYPE")
+                    && message.contains("PRODUCTION")
+            }),
+            "missing variant warning in {messages:?}"
+        );
+    }
+
+    #[test]
+    fn bom_variant_columns_accept_explicit_readme_variant_handoff() {
+        let bom = artifact(
+            "widget_bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Build Variant\nR1,1,RC0603,10k,0603,Yageo,SKU-R,Active,ALT-R,Prototype\nR2,1,RC0603,10k,0603,Yageo,SKU-R,Active,ALT-R,Production\n",
+        );
+        let readme = artifact(
+            "README.md",
+            "Revision S. Fabrication package. Stackup 2 layer, thickness 1.6mm, copper weight 1 oz, \
+             ENIG finish, soldermask green, no impedance, no panelization, tented vias, no edge plating, \
+             no castellation. Assembly variant handling: build Prototype or Production as selected by PO. \
+             DRC/ERC passed, zones refilled, outputs generated, Gerber viewer checked, HyperDRC reviewed, \
+             no waivers, archive created. Pin-1 and polarity reviewed. Test fixture handoff complete.\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[],
+            &[],
+        ));
+
+        assert!(
+            !messages
+                .iter()
+                .any(|message| message.contains("multiple assembly/build variants")),
+            "explicit variant handoff should suppress warning: {messages:?}"
+        );
+    }
+
+    #[test]
     fn artifact_reference_designators_are_validated() {
         let bom = artifact("bom.csv", "Reference,Quantity,MPN\nMOUNT,1,hardware\n");
         let centroid = artifact("centroid.csv", "Ref,X,Y,Rotation,Side\nBAD,0,0,0,Top\n");
@@ -2584,6 +3849,66 @@ mod tests {
     }
 
     #[test]
+    fn centroid_readiness_reports_unusually_large_coordinates() {
+        let centroid = artifact(
+            "centroid.csv",
+            "Ref,X,Y,Rotation,Side\nU1,10000,25,0,Top\nU2,25,-6000,90,Bottom\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[],
+            &[centroid],
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+        ));
+
+        assert!(messages.iter().any(|message| {
+            message.contains("x coordinate")
+                && message.contains("unusually large")
+                && message.contains("units")
+        }));
+        assert!(messages.iter().any(|message| {
+            message.contains("y coordinate")
+                && message.contains("unusually large")
+                && message.contains("origin")
+        }));
+    }
+
+    #[test]
+    fn centroid_readiness_treats_placeholder_reference_and_metadata_as_missing() {
+        let centroid = artifact(
+            "centroid.csv",
+            "Ref,X,Y,Rotation,Side,Value,Footprint\nTBD,0,0,0,Top,TBD,unknown\nR1,1,1,0,Top,10k,0603\nR1,2,2,90,Top,N/A,?\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[],
+            &[centroid],
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+        ));
+
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("centroid row 2 has no reference"))
+        );
+        assert!(
+            !messages
+                .iter()
+                .any(|message| message.contains("multiple values")
+                    || message.contains("multiple footprints")),
+            "placeholder centroid metadata should not create conflict warnings: {messages:?}"
+        );
+    }
+
+    #[test]
     fn bom_centroid_side_parity_and_bottom_side_handoff_are_checked() {
         let bom = artifact(
             "bom.csv",
@@ -2620,6 +3945,37 @@ mod tests {
         assert!(messages.iter().any(
             |message| message.contains("bottom-side placements") && message.contains("README")
         ));
+    }
+
+    #[test]
+    fn bom_bottom_side_data_triggers_double_sided_handoff_review() {
+        let bom = artifact(
+            "bom.csv",
+            "Ref,Qty,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Side\nR1,1,RC0603,10k,0603,Yageo,SKU-R,Active,ALT-R,Bottom\n",
+        );
+        let readme = artifact(
+            "README.md",
+            "Revision N. Fabrication package. Stackup 2 layer, thickness 1.6mm, copper weight 1 oz, \
+             ENIG finish, soldermask green, no impedance, no panelization, tented vias, no edge plating, \
+             no castellation. DRC/ERC passed, zones refilled, outputs generated, Gerber viewer checked, \
+             HyperDRC reviewed, no waivers, archive created. Pin-1 and polarity reviewed. Test fixture handoff complete.\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[],
+            &[],
+        ));
+
+        assert!(messages.iter().any(|message| {
+            message.contains("bottom-side placements")
+                && message.contains("README")
+                && message.contains("double-sided")
+        }));
     }
 
     #[test]
@@ -2751,6 +4107,77 @@ mod tests {
                 .iter()
                 .any(|message| message.contains("no pin/pad"))
         );
+    }
+
+    #[test]
+    fn netlist_readiness_treats_placeholder_cells_as_missing() {
+        let netlist = artifact(
+            "netlist.csv",
+            "Net,Reference,Pin\nTBD,U1,1\nGND,?,2\n3V3,U2,N/A\nSIG,U3,1\nSIG,U4,1\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[],
+            &[],
+            &[netlist],
+            &[],
+            &[],
+            &[],
+            &[],
+        ));
+
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("row 2 has no net name"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("row 3 has no reference"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("row 4 has no pin/pad"))
+        );
+        assert!(
+            !messages
+                .iter()
+                .any(|message| message.contains("multiple nets")),
+            "placeholder netlist cells should not create pin conflict noise: {messages:?}"
+        );
+    }
+
+    #[test]
+    fn sidecar_tables_with_only_headers_are_reported_as_empty() {
+        let bom = artifact(
+            "bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate\n",
+        );
+        let centroid = artifact("centroid.csv", "Ref,X,Y,Rotation,Side\n");
+        let netlist = artifact("netlist.csv", "Net,Ref,Pin\n");
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[centroid],
+            &[netlist],
+            &[],
+            &[],
+            &[],
+            &[],
+        ));
+
+        for expected in [
+            "BOM file has no component rows",
+            "centroid file has no placement rows",
+            "netlist file has no pin rows",
+        ] {
+            assert!(
+                messages.iter().any(|message| message.contains(expected)),
+                "missing empty-sidecar warning containing {expected:?}"
+            );
+        }
     }
 
     #[test]
@@ -3025,10 +4452,42 @@ mod tests {
     }
 
     #[test]
+    fn readme_readiness_reports_contradictory_assembly_and_test_intent() {
+        let readme = artifact(
+            "README.md",
+            "Revision AA. Fabrication package. Stackup 2 layer, thickness 1.6mm, copper weight 1 oz, \
+             ENIG finish, soldermask green. No impedance. No panelization. Tented vias. No edge plating, \
+             no castellation. No conformal coating, but conformal coating required. No programming, but \
+             firmware required and flash firmware at test. No test fixture, but ICT required. DRC/ERC passed, \
+             zones refilled, outputs generated, Gerber viewer checked, HyperDRC reviewed, no waivers, archive \
+             created. Pin-1 and polarity reviewed. Test fixture handoff complete.\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[],
+            &[],
+        ));
+
+        for label in ["conformal coating", "programming", "test fixture"] {
+            assert!(
+                messages
+                    .iter()
+                    .any(|message| message.contains("contradictory") && message.contains(label)),
+                "missing contradiction for {label}: {messages:?}"
+            );
+        }
+    }
+
+    #[test]
     fn readme_readiness_reports_conflicting_order_parameters() {
         let readme = artifact(
             "README.md",
-            "Revision F. Fabrication package. Stackup 4 layer, 0.8mm and 1.6mm board thickness, \
+            "Revision F. Fabrication package. Stackup 2 layer and 4 layer, 0.8mm and 1.6mm board thickness, \
              1 oz and 2 oz copper weight. Finish: ENIG and HASL. Green mask and black mask. \
              No impedance. Panelization none. Tented vias and filled vias. No edge plating, \
              no castellation. DRC/ERC passed, zones refilled, outputs generated, Gerber viewer \
@@ -3044,6 +4503,7 @@ mod tests {
             "soldermask color",
             "via treatment",
             "board thickness",
+            "layer count",
             "copper weight",
         ] {
             assert!(
@@ -3168,6 +4628,200 @@ mod tests {
                 .iter()
                 .any(|message| message.contains("coating keepout")
                     && message.contains("cleanliness"))
+        );
+    }
+
+    #[test]
+    fn bom_driven_assembly_risks_require_readme_handoff_notes() {
+        let bom = artifact(
+            "bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate\nJ1,1,CONN-TH,Through-hole connector,Pin Header,Vendor,SKU-J,Active,ALT-J\nU1,1,MCU-BGA,MCU with firmware,BGA100,Vendor,SKU-U,Active,ALT-U\n",
+        );
+        let readme = artifact(
+            "README.md",
+            "Revision P. Fabrication package. Stackup 4 layer, thickness 1.6mm, copper weight 1 oz, \
+             ENIG finish, soldermask green, no impedance, no panelization, tented vias, no edge plating, \
+             no castellation. DRC/ERC passed, zones refilled, outputs generated, Gerber viewer checked, \
+             HyperDRC reviewed, no waivers, archive created. Pin-1 and polarity reviewed.\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[],
+            &[],
+        ));
+
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("through-hole")
+                    && message.contains("J1")
+                    && message.contains("README"))
+        );
+        assert!(messages.iter().any(|message| {
+            message.contains("inspection-sensitive")
+                && message.contains("U1")
+                && message.contains("X-ray")
+        }));
+        assert!(messages.iter().any(|message| {
+            message.contains("programmable")
+                && message.contains("U1")
+                && message.contains("firmware")
+        }));
+    }
+
+    #[test]
+    fn bom_driven_assembly_risks_accept_explicit_readme_handoff_notes() {
+        let bom = artifact(
+            "bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate\nJ1,1,CONN-TH,Through-hole connector,Pin Header,Vendor,SKU-J,Active,ALT-J\nU1,1,MCU-BGA,MCU with firmware,BGA100,Vendor,SKU-U,Active,ALT-U\n",
+        );
+        let readme = artifact(
+            "README.md",
+            "Revision Q. Fabrication package. Stackup 4 layer, thickness 1.6mm, copper weight 1 oz, \
+             ENIG finish, soldermask green, no impedance, no panelization, tented vias, no edge plating, \
+             no castellation. Assembly includes selective solder process notes for pin headers. \
+             BGA X-ray and AOI inspection handoff complete. Firmware programming via SWD test fixture uses \
+             firmware revision 1.2.3 with SHA256 checksum and functional test acceptance records. \
+             DRC/ERC passed, zones refilled, outputs generated, Gerber viewer checked, \
+             HyperDRC reviewed, no waivers, archive created. Pin-1 and polarity reviewed.\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[],
+            &[],
+        ));
+
+        assert!(
+            !messages.iter().any(
+                |message| message.contains("bom-readme-assembly-process-parity")
+                    || message.contains("BOM includes likely through-hole")
+                    || message.contains("inspection-sensitive")
+                    || message.contains("BOM includes likely programmable")
+            ),
+            "explicit process notes should suppress BOM-driven handoff warnings: {messages:?}"
+        );
+    }
+
+    #[test]
+    fn bom_driven_programming_requires_traceability_method_and_acceptance_notes() {
+        let bom = artifact(
+            "bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate\nU1,1,STM32F4,MCU firmware,QFP64,Vendor,SKU-U,Active,ALT-U\n",
+        );
+        let readme = artifact(
+            "README.md",
+            "Revision PRG. Fabrication package. Stackup 4 layer, thickness 1.6mm, copper weight 1 oz, \
+             ENIG finish, soldermask green, no impedance, no panelization, tented vias, no edge plating, \
+             no castellation. Firmware programming handoff complete. DRC/ERC passed, zones refilled, \
+             outputs generated, Gerber viewer checked, HyperDRC reviewed, no waivers, archive created. \
+             Pin-1 and polarity reviewed.\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[],
+            &[],
+        ));
+
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("firmware revision"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("SWD/JTAG/bootloader"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("functional-test acceptance"))
+        );
+    }
+
+    #[test]
+    fn readme_readiness_checks_marking_serialization_and_packaging_handoffs() {
+        let readme = artifact(
+            "README.md",
+            "Revision SER. Fabrication package. Stackup 4 layer, thickness 1.6mm, copper weight 1 oz, \
+             ENIG finish, soldermask green, no impedance, no panelization, tented vias, no edge plating, \
+             no castellation. Add date code, barcode serialization, and production packaging. DRC/ERC passed, \
+             zones refilled, outputs generated, Gerber viewer checked, HyperDRC reviewed, no waivers, \
+             archive created. Pin-1 and polarity reviewed. Test fixture handoff complete.\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[],
+            &[],
+        ));
+
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("allowed marking zones"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("serial format"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("ESD") && message.contains("packaging"))
+        );
+    }
+
+    #[test]
+    fn readme_readiness_accepts_marking_serialization_and_packaging_handoffs() {
+        let readme = artifact(
+            "README.md",
+            "Revision SER2. Fabrication package. Stackup 4 layer, thickness 1.6mm, copper weight 1 oz, \
+             ENIG finish, soldermask green, no impedance, no panelization, tented vias, no edge plating, \
+             no castellation. Date code and barcode serialization use serial format WID-####, serial range \
+             WID-0001..WID-0100, label location in fab drawing, and lot record traceability handoff. \
+             Packaging uses ESD bag, moisture barrier, desiccant, and lot label. DRC/ERC passed, zones refilled, \
+             outputs generated, Gerber viewer checked, HyperDRC reviewed, no waivers, archive created. \
+             Pin-1 and polarity reviewed. Test fixture handoff complete.\n",
+        );
+        let fab = file("widget_fab.pdf", 256);
+
+        let messages = messages(&production_artifact_readiness(
+            &[],
+            &[],
+            &[],
+            &[readme],
+            &[fab],
+            &[],
+            &[],
+        ));
+
+        assert!(
+            !messages
+                .iter()
+                .any(|message| message.contains("allowed marking zones")
+                    || message.contains("serial format")
+                    || message.contains("packaging or shipping"))
         );
     }
 

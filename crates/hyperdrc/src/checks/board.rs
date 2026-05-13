@@ -6,470 +6,12 @@ use csgrs::csg::CSG;
 use geo::{Area, BoundingRect};
 
 use super::distance::polygon_boundary_distance;
+use crate::checks::drill::drills_to_sketch;
 use crate::geometry::{circle_polygon, multipolygon_to_shapes, polygons_to_sketch};
 use crate::ipc356::Ipc356Point;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbSketch};
-
-pub fn annular_ring(
-    board: &BoardModel,
-    minimum_ring: f64,
-    selected_layers: &[String],
-) -> Vec<Violation> {
-    let mut violations = Vec::new();
-
-    for drill in &board.drills {
-        if !drill.plated {
-            continue;
-        }
-
-        let Some(nearest) = nearest_matching_copper(board, drill, selected_layers) else {
-            continue;
-        };
-
-        // KiCad pad geometry can be rectangular, oval, or custom. For the first
-        // pass we use an area-equivalent circular radius so annular-ring checks
-        // remain shape-agnostic. This is conservative enough to flag suspect
-        // cases, but exact pad-vs-drill containment can be added later.
-        let copper_radius = equivalent_radius(&nearest.sketch);
-        let ring = copper_radius - drill.diameter / 2.0;
-        if ring < minimum_ring {
-            violations.push(Violation::new(
-                "annular-ring-readiness",
-                Severity::Error,
-                vec![nearest.layer.clone()],
-                None,
-                Vec::new(),
-                vec![drill.location],
-                Some(format!(
-                    "annular ring {ring:.6} is below minimum {minimum_ring:.6}"
-                )),
-            ));
-        }
-    }
-
-    violations
-}
-
-pub fn annular_ring_tolerance(
-    board: &BoardModel,
-    minimum_ring: f64,
-    registration_tolerance: f64,
-    selected_layers: &[String],
-) -> Vec<Violation> {
-    let mut violations = Vec::new();
-
-    for drill in &board.drills {
-        if !drill.plated {
-            continue;
-        }
-
-        let Some(nearest) = nearest_matching_copper(board, drill, selected_layers) else {
-            continue;
-        };
-
-        let copper_radius = equivalent_radius(&nearest.sketch);
-        let nominal_ring = copper_radius - drill.diameter / 2.0;
-        let worst_case_ring = nominal_ring - registration_tolerance;
-        if nominal_ring >= minimum_ring && worst_case_ring < minimum_ring {
-            violations.push(Violation::new(
-                "annular-ring-tolerance",
-                Severity::Warning,
-                vec![nearest.layer.clone()],
-                None,
-                Vec::new(),
-                vec![drill.location],
-                Some(format!(
-                    "nominal annular ring {nominal_ring:.6} passes minimum {minimum_ring:.6}, but worst-case ring {worst_case_ring:.6} after tolerance {registration_tolerance:.6} does not"
-                )),
-            ));
-        }
-    }
-
-    violations
-}
-
-pub fn plating_intent(
-    board: &BoardModel,
-    selected_layers: &[String],
-    tolerance: f64,
-) -> Vec<Violation> {
-    let copper_features = selected_copper_features(board, selected_layers);
-    let mut violations = Vec::new();
-
-    for drill in &board.drills {
-        if drill.plated {
-            if has_plated_drill_copper(drill, &copper_features, tolerance) {
-                continue;
-            }
-
-            violations.push(Violation::new(
-                "plating-intent",
-                Severity::Warning,
-                vec!["KiCad drills".to_string()],
-                None,
-                Vec::new(),
-                vec![drill.location],
-                Some("plated drill has no nearby same-net pad or via copper".to_string()),
-            ));
-        } else if has_nearby_copper(
-            drill.location,
-            &copper_features,
-            drill.diameter / 2.0 + tolerance,
-        ) {
-            violations.push(Violation::new(
-                "plating-intent",
-                Severity::Warning,
-                vec!["KiCad NPTH drills".to_string()],
-                None,
-                Vec::new(),
-                vec![drill.location],
-                Some(
-                    "non-plated drill has nearby copper that may imply plated-hole intent"
-                        .to_string(),
-                ),
-            ));
-        }
-    }
-
-    violations
-}
-
-pub fn routed_slot_readiness(board: &BoardModel, minimum_route_width: f64) -> Vec<Violation> {
-    board
-        .drills
-        .iter()
-        .filter(|drill| !drill.plated && drill.diameter > 0.0 && drill.diameter < minimum_route_width)
-        .map(|drill| {
-            Violation::new(
-                "routed-slot-readiness",
-                Severity::Warning,
-                vec!["KiCad NPTH drills".to_string()],
-                None,
-                Vec::new(),
-                vec![drill.location],
-                Some(format!(
-                    "non-plated mechanical drill diameter {:.6} is below minimum route width {:.6}; review routed slot or cutter capability",
-                    drill.diameter, minimum_route_width
-                )),
-            )
-        })
-        .collect()
-}
-
-pub fn drill_to_copper_clearance(
-    board: &BoardModel,
-    extra_drills: &[DrillFeature],
-    clearance: f64,
-    selected_layers: &[String],
-    min_area: f64,
-) -> Vec<Violation> {
-    let mut drills = board.drills.clone();
-    drills.extend_from_slice(extra_drills);
-    let copper_features = selected_copper_features(board, selected_layers);
-    let mut violations = Vec::new();
-
-    for drill in drills {
-        let keepout = polygons_to_sketch(
-            vec![circle_polygon(
-                drill.location,
-                drill.diameter / 2.0 + clearance,
-                64,
-            )],
-            Some(LayerMetadata {
-                name: "drill keepout".to_string(),
-            }),
-        );
-
-        for copper in &copper_features {
-            if drill.plated && drill.net.is_some() && drill.net == copper.net {
-                continue;
-            }
-
-            let overlap = keepout.intersection(&copper.sketch);
-            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
-            if shapes.is_empty() {
-                continue;
-            }
-
-            violations.push(Violation::new(
-                "drill-to-copper-clearance",
-                Severity::Error,
-                vec![copper.layer.clone()],
-                None,
-                shapes,
-                vec![drill.location],
-                Some(format!(
-                    "drill keepout with clearance {clearance} intersects copper"
-                )),
-            ));
-        }
-    }
-
-    violations
-}
-
-pub fn drill_spacing(
-    board_drills: &[DrillFeature],
-    extra_drills: &[DrillFeature],
-    clearance: f64,
-) -> Vec<Violation> {
-    let mut drills = board_drills.to_vec();
-    drills.extend_from_slice(extra_drills);
-    let mut violations = Vec::new();
-
-    for left_index in 0..drills.len() {
-        let left = &drills[left_index];
-        for right in &drills[(left_index + 1)..] {
-            let edge_gap = distance(left.location, right.location)
-                - left.diameter / 2.0
-                - right.diameter / 2.0;
-            if edge_gap >= clearance {
-                continue;
-            }
-
-            violations.push(Violation::new(
-                "drill-spacing",
-                Severity::Error,
-                vec!["drills".to_string()],
-                None,
-                Vec::new(),
-                vec![left.location, right.location],
-                Some(format!(
-                    "drill edge spacing {edge_gap:.6} is below clearance {clearance:.6}"
-                )),
-            ));
-        }
-    }
-
-    violations
-}
-
-pub fn board_outline_drill_clearance(
-    drill_source: &str,
-    outline_name: &str,
-    outline: &PcbSketch,
-    board_drills: &[DrillFeature],
-    extra_drills: &[DrillFeature],
-    clearance: f64,
-    min_area: f64,
-) -> Vec<Violation> {
-    let mut drills = board_drills.to_vec();
-    drills.extend_from_slice(extra_drills);
-    let mut violations = Vec::new();
-
-    for drill in drills {
-        let keepout = polygons_to_sketch(
-            vec![circle_polygon(
-                drill.location,
-                drill.diameter / 2.0 + clearance,
-                64,
-            )],
-            Some(LayerMetadata {
-                name: "drill edge keepout".to_string(),
-            }),
-        );
-        let outside_outline = keepout.difference(outline);
-        let shapes = multipolygon_to_shapes(&outside_outline.to_multipolygon(), min_area);
-        if shapes.is_empty() {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "board-outline-drill-clearance",
-            Severity::Error,
-            vec![drill_source.to_string(), outline_name.to_string()],
-            None,
-            shapes,
-            vec![drill.location],
-            Some(format!(
-                "drill edge is within board outline clearance {clearance}"
-            )),
-        ));
-    }
-
-    violations
-}
-
-pub fn castellation_intent(board: &BoardModel, min_area: f64) -> Vec<Violation> {
-    let Some(outline) = &board.board_outline else {
-        return Vec::new();
-    };
-    let mut violations = Vec::new();
-
-    for drill in &board.drills {
-        if !drill.plated {
-            continue;
-        }
-
-        let hole = polygons_to_sketch(
-            vec![circle_polygon(drill.location, drill.diameter / 2.0, 64)],
-            Some(LayerMetadata {
-                name: "plated drill hole".to_string(),
-            }),
-        );
-        let outside_outline = hole.difference(outline);
-        let shapes = multipolygon_to_shapes(&outside_outline.to_multipolygon(), min_area);
-        if shapes.is_empty() {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "castellation-intent",
-            Severity::Warning,
-            vec![board.source.clone(), "KiCad Edge.Cuts".to_string()],
-            None,
-            shapes,
-            vec![drill.location],
-            Some(
-                "plated drill hole crosses the board outline; confirm castellation or plated-edge intent"
-                    .to_string(),
-            ),
-        ));
-    }
-
-    violations
-}
-
-pub fn castellation_hole_readiness(
-    board: &BoardModel,
-    minimum_diameter: f64,
-    min_area: f64,
-) -> Vec<Violation> {
-    let Some(outline) = &board.board_outline else {
-        return Vec::new();
-    };
-    let mut violations = Vec::new();
-
-    for drill in &board.drills {
-        if !drill.plated || drill.diameter >= minimum_diameter {
-            continue;
-        }
-
-        let hole = polygons_to_sketch(
-            vec![circle_polygon(drill.location, drill.diameter / 2.0, 64)],
-            Some(LayerMetadata {
-                name: "plated drill hole".to_string(),
-            }),
-        );
-        let outside_outline = hole.difference(outline);
-        let shapes = multipolygon_to_shapes(&outside_outline.to_multipolygon(), min_area);
-        if shapes.is_empty() {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "castellation-hole-readiness",
-            Severity::Warning,
-            vec![board.source.clone(), "KiCad Edge.Cuts".to_string()],
-            None,
-            shapes,
-            vec![drill.location],
-            Some(format!(
-                "plated drill crossing the board outline has diameter {:.6} below minimum castellation diameter {:.6}",
-                drill.diameter, minimum_diameter
-            )),
-        ));
-    }
-
-    violations
-}
-
-pub fn drill_aspect_ratio(
-    source: &str,
-    drills: &[DrillFeature],
-    board_thickness: f64,
-    max_aspect_ratio: f64,
-) -> Vec<Violation> {
-    let mut violations = Vec::new();
-
-    for drill in drills {
-        if drill.diameter <= 0.0 {
-            violations.push(Violation::new(
-                "drill-aspect-ratio",
-                Severity::Warning,
-                vec![source.to_string()],
-                None,
-                Vec::new(),
-                vec![drill.location],
-                Some("drill diameter is not positive, so aspect ratio is undefined".to_string()),
-            ));
-            continue;
-        }
-
-        let aspect_ratio = board_thickness / drill.diameter;
-        if aspect_ratio <= max_aspect_ratio {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "drill-aspect-ratio",
-            Severity::Warning,
-            vec![source.to_string()],
-            None,
-            Vec::new(),
-            vec![drill.location],
-            Some(format!(
-                "drill aspect ratio {aspect_ratio:.3} exceeds maximum {max_aspect_ratio:.3} for board thickness {board_thickness:.3}"
-            )),
-        ));
-    }
-
-    violations
-}
-
-pub fn drill_table_consistency(
-    board_drills: &[DrillFeature],
-    extra_drills: &[DrillFeature],
-    ipc356_points: &[Ipc356Point],
-    tolerance: f64,
-) -> Vec<Violation> {
-    let mut violations = Vec::new();
-
-    for board_drill in board_drills {
-        for extra_drill in extra_drills {
-            if distance(board_drill.location, extra_drill.location) > tolerance {
-                continue;
-            }
-            if !diameters_conflict(board_drill.diameter, extra_drill.diameter, tolerance) {
-                continue;
-            }
-
-            violations.push(drill_table_violation(
-                "KiCad drills",
-                board_drill.diameter,
-                "Excellon drills",
-                extra_drill.diameter,
-                vec![board_drill.location, extra_drill.location],
-            ));
-        }
-    }
-
-    for extra_drill in extra_drills {
-        for point in ipc356_points {
-            if distance(extra_drill.location, point.location) > tolerance {
-                continue;
-            }
-            let Some(ipc_diameter) = point.diameter else {
-                continue;
-            };
-            if !diameters_conflict(extra_drill.diameter, ipc_diameter, tolerance) {
-                continue;
-            }
-
-            violations.push(drill_table_violation(
-                "Excellon drills",
-                extra_drill.diameter,
-                "IPC-D-356 drills",
-                ipc_diameter,
-                vec![extra_drill.location, point.location],
-            ));
-        }
-    }
-
-    violations
-}
 
 pub fn copper_width_readiness(
     board: &BoardModel,
@@ -1927,171 +1469,615 @@ pub fn gold_finger_readiness(board: &BoardModel, selected_layers: &[String]) -> 
         .collect()
 }
 
-pub fn testpoint_coverage_readiness(
+pub fn gold_finger_edge_readiness(
     board: &BoardModel,
-    points: &[Ipc356Point],
     selected_layers: &[String],
+    edge_distance: f64,
 ) -> Vec<Violation> {
-    let covered_nets = points
-        .iter()
-        .map(|point| normalize_net(&point.net))
-        .collect::<BTreeSet<_>>();
-    let mut required_nets: BTreeMap<String, Vec<[f64; 2]>> = BTreeMap::new();
+    let Some(outline) = &board.board_outline else {
+        return Vec::new();
+    };
 
-    for feature in selected_copper_features(board, selected_layers) {
-        let Some(net) = feature.net.as_deref() else {
-            continue;
-        };
-        if !looks_testpoint_required_net(net) {
-            continue;
-        }
-        required_nets
-            .entry(net.to_string())
-            .or_default()
-            .push(feature.location);
-    }
-
-    required_nets
+    selected_copper_features(board, selected_layers)
         .into_iter()
-        .filter(|(net, _)| !covered_nets.contains(&normalize_net(net)))
-        .map(|(net, locations)| {
-            Violation::new(
-                "testpoint-coverage-readiness",
-                Severity::Warning,
-                vec![net.clone()],
-                None,
-                Vec::new(),
-                locations.into_iter().take(3).collect(),
-                Some(format!(
-                    "critical net {net:?} has parsed KiCad copper but no matching IPC-D-356 test record"
-                )),
-            )
+        .filter(|feature| feature.net.as_deref().is_some_and(looks_gold_finger_net))
+        .filter(|feature| matches!(feature.kind, CopperKind::Pad | CopperKind::Segment))
+        .filter_map(|feature| {
+            let gap = polygon_boundary_distance(
+                &feature.sketch.to_multipolygon(),
+                &outline.to_multipolygon(),
+            );
+            (gap > edge_distance).then(|| {
+                Violation::new(
+                    "gold-finger-edge-readiness",
+                    Severity::Warning,
+                    vec![feature.layer.clone()],
+                    None,
+                    Vec::new(),
+                    vec![feature.location],
+                    Some(format!(
+                        "likely gold-finger net {:?} is {gap:.6} from board edge, beyond expected edge-finger band {edge_distance:.6}; review card-edge placement and bevel intent",
+                        feature.net
+                    )),
+                )
+            })
         })
         .collect()
 }
 
-pub fn fiducial_readiness(
+pub fn gold_finger_spacing_readiness(
     board: &BoardModel,
     selected_layers: &[String],
-    edge_clearance: f64,
+    minimum_spacing: f64,
+    min_area: f64,
 ) -> Vec<Violation> {
-    let mut candidates_by_layer: BTreeMap<String, Vec<&CopperFeature>> = BTreeMap::new();
-    for feature in selected_copper_features(board, selected_layers) {
-        if likely_fiducial(feature) {
-            candidates_by_layer
-                .entry(feature.layer.clone())
-                .or_default()
-                .push(feature);
-        }
-    }
-
-    let mut expected_layers = board
-        .copper
-        .iter()
-        .filter(|feature| selected_layers.is_empty() || selected_layers.contains(&feature.layer))
-        .map(|feature| feature.layer.clone())
-        .collect::<BTreeSet<_>>();
-    expected_layers.retain(|layer| layer == "F.Cu" || layer == "B.Cu");
-    if expected_layers.is_empty() {
-        expected_layers.extend(candidates_by_layer.keys().cloned());
-    }
-
+    let fingers = selected_copper_features(board, selected_layers)
+        .into_iter()
+        .filter(|feature| feature.net.as_deref().is_some_and(looks_gold_finger_net))
+        .filter(|feature| matches!(feature.kind, CopperKind::Pad | CopperKind::Segment))
+        .collect::<Vec<_>>();
     let mut violations = Vec::new();
-    for layer in expected_layers {
-        let candidates = candidates_by_layer.get(&layer).cloned().unwrap_or_default();
-        if candidates.len() < 2 {
+
+    for left_index in 0..fingers.len() {
+        let left = fingers[left_index];
+        for right in &fingers[(left_index + 1)..] {
+            if left.layer != right.layer || left.net == right.net {
+                continue;
+            }
+
+            let overlap = left
+                .sketch
+                .offset(minimum_spacing)
+                .intersection(&right.sketch);
+            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            let fallback_hit = shapes.is_empty()
+                && polygon_boundary_distance(
+                    &left.sketch.to_multipolygon(),
+                    &right.sketch.to_multipolygon(),
+                ) <= minimum_spacing;
+            if shapes.is_empty() && !fallback_hit {
+                continue;
+            }
+
             violations.push(Violation::new(
-                "fiducial-readiness",
+                "gold-finger-spacing-readiness",
                 Severity::Warning,
-                vec![layer.clone()],
+                vec![left.layer.clone()],
                 None,
-                Vec::new(),
-                candidates.iter().map(|feature| feature.location).collect(),
+                shapes,
+                vec![left.location, right.location],
                 Some(format!(
-                    "layer {layer} has {} likely fiducial(s); assembly usually expects at least two per populated side",
-                    candidates.len()
+                    "likely gold-finger nets {:?} and {:?} are within finger spacing {minimum_spacing:.6}; review contact pitch, plating, mask opening, and bevel tolerances",
+                    left.net, right.net
                 )),
             ));
-        }
-
-        if let Some(outline) = &board.board_outline {
-            for candidate in candidates {
-                let distance_to_edge = polygon_boundary_distance(
-                    &candidate.sketch.to_multipolygon(),
-                    &outline.to_multipolygon(),
-                );
-                if distance_to_edge >= edge_clearance {
-                    continue;
-                }
-                violations.push(Violation::new(
-                    "fiducial-readiness",
-                    Severity::Warning,
-                    vec![layer.clone()],
-                    None,
-                    Vec::new(),
-                    vec![candidate.location],
-                    Some(format!(
-                        "likely fiducial is {:.6} from board edge, below clearance {:.6}",
-                        distance_to_edge, edge_clearance
-                    )),
-                ));
-            }
         }
     }
 
     violations
 }
 
-pub fn dense_pad_escape_readiness(
+pub fn gold_finger_drill_keepout_readiness(
     board: &BoardModel,
+    extra_drills: &[DrillFeature],
     selected_layers: &[String],
-    pitch_threshold: f64,
-    via_search_radius: f64,
+    keepout: f64,
+    min_area: f64,
 ) -> Vec<Violation> {
-    let mut pads_by_layer: BTreeMap<String, Vec<&CopperFeature>> = BTreeMap::new();
-    let mut vias = Vec::new();
-    for feature in selected_copper_features(board, selected_layers) {
-        match feature.kind {
-            CopperKind::Pad => pads_by_layer
-                .entry(feature.layer.clone())
-                .or_default()
-                .push(feature),
-            CopperKind::Via => vias.push(feature),
-            CopperKind::Segment | CopperKind::Zone => {}
+    let finger_features = selected_copper_features(board, selected_layers)
+        .into_iter()
+        .filter(|feature| feature.net.as_deref().is_some_and(looks_gold_finger_net))
+        .collect::<Vec<_>>();
+    let mut drills = board.drills.clone();
+    drills.extend_from_slice(extra_drills);
+    let mut violations = Vec::new();
+
+    for drill in &drills {
+        let keepout_sketch = polygons_to_sketch(
+            vec![circle_polygon(
+                drill.location,
+                drill.diameter / 2.0 + keepout,
+                32,
+            )],
+            Some(LayerMetadata {
+                name: "gold finger drill keepout".to_string(),
+            }),
+        );
+
+        for finger in &finger_features {
+            let overlap = keepout_sketch.intersection(&finger.sketch);
+            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            let fallback_hit = shapes.is_empty()
+                && polygon_boundary_distance(
+                    &keepout_sketch.to_multipolygon(),
+                    &finger.sketch.to_multipolygon(),
+                ) <= 1.0e-9;
+            if shapes.is_empty() && !fallback_hit {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "gold-finger-drill-keepout-readiness",
+                Severity::Warning,
+                vec![finger.layer.clone()],
+                None,
+                shapes,
+                vec![drill.location, finger.location],
+                Some(format!(
+                    "likely gold-finger copper {:?} intersects drill/mechanical keepout {keepout:.6}; review no-drill finger plating and bevel keepout",
+                    finger.net
+                )),
+            ));
         }
     }
 
+    violations
+}
+
+pub fn connector_return_path_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    edge_distance: f64,
+    ground_search_radius: f64,
+) -> Vec<Violation> {
+    let Some(outline) = &board.board_outline else {
+        return Vec::new();
+    };
+
+    let features = selected_copper_features(board, selected_layers);
+    let ground_features = features
+        .iter()
+        .copied()
+        .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
+        .collect::<Vec<_>>();
     let mut violations = Vec::new();
-    for (layer, pads) in pads_by_layer {
-        if pads.len() < 16 {
-            continue;
-        }
-        let Some(min_pitch) = minimum_feature_pitch(&pads) else {
+
+    for feature in features {
+        let Some(net) = feature.net.as_deref() else {
             continue;
         };
-        if min_pitch > pitch_threshold {
+        if !looks_connector_edge_rate_net(net) {
             continue;
         }
 
-        let cluster_center = average_location(&pads);
-        let has_escape_via = vias
+        let edge_gap = polygon_boundary_distance(
+            &feature.sketch.to_multipolygon(),
+            &outline.to_multipolygon(),
+        );
+        if edge_gap > edge_distance {
+            continue;
+        }
+        let has_ground_return = ground_features
             .iter()
-            .any(|via| distance(via.location, cluster_center) <= via_search_radius);
-        if has_escape_via {
+            .filter(|ground| ground.layer == feature.layer)
+            .any(|ground| distance(ground.location, feature.location) <= ground_search_radius);
+        if has_ground_return {
             continue;
         }
 
         violations.push(Violation::new(
-            "dense-pad-escape-readiness",
+            "connector-return-path-readiness",
             Severity::Warning,
-            vec![layer],
+            vec![feature.layer.clone()],
             None,
             Vec::new(),
-            vec![cluster_center],
+            vec![feature.location],
             Some(format!(
-                "dense pad cluster has minimum pitch {min_pitch:.6} with no parsed escape via within {via_search_radius:.6}; review BGA/fine-pitch escape strategy"
+                "likely connector edge-rate net {net:?} is {edge_gap:.6} from board edge without parsed same-layer ground return copper within {ground_search_radius:.6}"
             )),
         ));
+    }
+
+    violations
+}
+
+pub fn decoupling_proximity_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    ground_search_radius: f64,
+) -> Vec<Violation> {
+    let features = selected_copper_features(board, selected_layers);
+    let ground_features = features
+        .iter()
+        .copied()
+        .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
+        .collect::<Vec<_>>();
+    let mut violations = Vec::new();
+
+    for feature in features {
+        if !matches!(feature.kind, CopperKind::Pad | CopperKind::Via) {
+            continue;
+        }
+        let Some(net) = feature.net.as_deref() else {
+            continue;
+        };
+        if !looks_high_current_net(net) {
+            continue;
+        }
+
+        let has_nearby_ground = ground_features
+            .iter()
+            .filter(|ground| ground.layer == feature.layer)
+            .any(|ground| distance(ground.location, feature.location) <= ground_search_radius);
+        if has_nearby_ground {
+            continue;
+        }
+
+        violations.push(Violation::new(
+            "decoupling-proximity-readiness",
+            Severity::Warning,
+            vec![feature.layer.clone()],
+            None,
+            Vec::new(),
+            vec![feature.location],
+            Some(format!(
+                "likely power feature on net {net:?} has no parsed same-layer ground copper within {ground_search_radius:.6}; review decoupling capacitor loop area and return proximity"
+            )),
+        ));
+    }
+
+    violations
+}
+
+pub fn esd_protection_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    edge_distance: f64,
+    protection_search_radius: f64,
+) -> Vec<Violation> {
+    let Some(outline) = &board.board_outline else {
+        return Vec::new();
+    };
+
+    let features = selected_copper_features(board, selected_layers);
+    let protection_features = features
+        .iter()
+        .copied()
+        .filter(|feature| {
+            feature.net.as_deref().is_some_and(|net| {
+                looks_esd_protection_net(net) || looks_chassis_net(net) || looks_ground_net(net)
+            })
+        })
+        .collect::<Vec<_>>();
+    let mut violations = Vec::new();
+
+    for feature in features {
+        let Some(net) = feature.net.as_deref() else {
+            continue;
+        };
+        if !looks_connector_edge_rate_net(net) || looks_esd_protection_net(net) {
+            continue;
+        }
+
+        let edge_gap = polygon_boundary_distance(
+            &feature.sketch.to_multipolygon(),
+            &outline.to_multipolygon(),
+        );
+        if edge_gap > edge_distance {
+            continue;
+        }
+
+        let has_protection = protection_features
+            .iter()
+            .filter(|protection| protection.layer == feature.layer)
+            .any(|protection| {
+                !std::ptr::eq(*protection, feature)
+                    && distance(protection.location, feature.location) <= protection_search_radius
+            });
+        if has_protection {
+            continue;
+        }
+
+        violations.push(Violation::new(
+            "esd-protection-readiness",
+            Severity::Warning,
+            vec![feature.layer.clone()],
+            None,
+            Vec::new(),
+            vec![feature.location],
+            Some(format!(
+                "likely edge connector net {net:?} is {edge_gap:.6} from board edge without parsed ESD/chassis/ground protection copper within {protection_search_radius:.6}"
+            )),
+        ));
+    }
+
+    violations
+}
+
+pub fn switch_node_keepout_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    keepout: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    let features = selected_copper_features(board, selected_layers);
+    let switching = features
+        .iter()
+        .copied()
+        .filter(|feature| feature.net.as_deref().is_some_and(looks_switching_net))
+        .collect::<Vec<_>>();
+    let mut violations = Vec::new();
+
+    for switch_feature in switching {
+        for neighbor in &features {
+            if switch_feature.layer != neighbor.layer || std::ptr::eq(switch_feature, *neighbor) {
+                continue;
+            }
+            if switch_feature.net == neighbor.net {
+                continue;
+            }
+            if neighbor.net.as_deref().is_some_and(looks_ground_net) {
+                continue;
+            }
+
+            let overlap = switch_feature
+                .sketch
+                .offset(keepout)
+                .intersection(&neighbor.sketch);
+            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            let fallback_hit = shapes.is_empty()
+                && polygon_boundary_distance(
+                    &switch_feature.sketch.to_multipolygon(),
+                    &neighbor.sketch.to_multipolygon(),
+                ) <= keepout;
+            if shapes.is_empty() && !fallback_hit {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "switch-node-keepout-readiness",
+                Severity::Warning,
+                vec![switch_feature.layer.clone()],
+                None,
+                shapes,
+                vec![switch_feature.location, neighbor.location],
+                Some(format!(
+                    "likely switching node {:?} is within keepout {keepout:.6} of neighboring net {:?}; review regulator/motor loop area, EMI, and copper keepout",
+                    switch_feature.net, neighbor.net
+                )),
+            ));
+        }
+    }
+
+    violations
+}
+
+pub fn thermal_pad_via_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    minimum_pad_dimension: f64,
+) -> Vec<Violation> {
+    let features = selected_copper_features(board, selected_layers);
+    let vias = features
+        .iter()
+        .copied()
+        .filter(|feature| feature.kind == CopperKind::Via)
+        .collect::<Vec<_>>();
+    let mut violations = Vec::new();
+
+    for pad in features {
+        if pad.kind != CopperKind::Pad {
+            continue;
+        }
+        let Some(net) = pad.net.as_deref() else {
+            continue;
+        };
+        if !looks_ground_net(net) && !looks_high_current_net(net) {
+            continue;
+        }
+        let Some((min_dimension, max_dimension)) = bounding_dimensions(&pad.sketch) else {
+            continue;
+        };
+        if min_dimension < minimum_pad_dimension {
+            continue;
+        }
+        if max_dimension / min_dimension > 3.0 {
+            continue;
+        }
+
+        let has_same_net_via = vias
+            .iter()
+            .filter(|via| via.layer == pad.layer)
+            .filter(|via| via.net == pad.net)
+            .any(|via| {
+                !multipolygon_to_shapes(
+                    &via.sketch.intersection(&pad.sketch).to_multipolygon(),
+                    1.0e-9,
+                )
+                .is_empty()
+            });
+        if has_same_net_via {
+            continue;
+        }
+
+        violations.push(Violation::new(
+            "thermal-pad-via-readiness",
+            Severity::Warning,
+            vec![pad.layer.clone()],
+            None,
+            Vec::new(),
+            vec![pad.location],
+            Some(format!(
+                "large likely thermal pad on net {net:?} has no parsed same-net via in pad; review exposed-pad thermal via array, fill, tent, and solder-voiding intent"
+            )),
+        ));
+    }
+
+    violations
+}
+
+pub fn thermal_copper_area_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    search_radius: f64,
+) -> Vec<Violation> {
+    let features = selected_copper_features(board, selected_layers);
+    let same_net_zones = features
+        .iter()
+        .copied()
+        .filter(|feature| feature.kind == CopperKind::Zone)
+        .filter(|feature| {
+            feature
+                .net
+                .as_deref()
+                .is_some_and(looks_thermal_or_power_net)
+        })
+        .collect::<Vec<_>>();
+    let mut violations = Vec::new();
+
+    for feature in features {
+        if feature.kind == CopperKind::Zone {
+            continue;
+        }
+        let Some(net) = feature.net.as_deref() else {
+            continue;
+        };
+        if !looks_thermal_or_power_net(net) {
+            continue;
+        }
+
+        let has_nearby_same_net_zone = same_net_zones
+            .iter()
+            .filter(|zone| zone.layer == feature.layer && zone.net == feature.net)
+            .any(|zone| distance(zone.location, feature.location) <= search_radius);
+        if has_nearby_same_net_zone {
+            continue;
+        }
+
+        violations.push(Violation::new(
+            "thermal-copper-area-readiness",
+            Severity::Warning,
+            vec![feature.layer.clone()],
+            None,
+            Vec::new(),
+            vec![feature.location],
+            Some(format!(
+                "likely heat or power feature on net {net:?} has no parsed same-net copper zone within {search_radius:.6}; review copper area for heat spreading and current return"
+            )),
+        ));
+    }
+
+    violations
+}
+
+pub fn hot_component_spacing_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    spacing: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    let features = selected_copper_features(board, selected_layers);
+    let hot_features = features
+        .iter()
+        .copied()
+        .filter(|feature| {
+            feature.net.as_deref().is_some_and(looks_hot_component_net)
+                && matches!(feature.kind, CopperKind::Pad | CopperKind::Zone)
+        })
+        .collect::<Vec<_>>();
+    let mut violations = Vec::new();
+
+    for hot in hot_features {
+        for neighbor in &features {
+            if hot.layer != neighbor.layer || std::ptr::eq(hot, *neighbor) {
+                continue;
+            }
+            if hot.net == neighbor.net || neighbor.net.as_deref().is_some_and(looks_ground_net) {
+                continue;
+            }
+
+            let overlap = hot.sketch.offset(spacing).intersection(&neighbor.sketch);
+            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            let fallback_hit = shapes.is_empty()
+                && polygon_boundary_distance(
+                    &hot.sketch.to_multipolygon(),
+                    &neighbor.sketch.to_multipolygon(),
+                ) <= spacing;
+            if shapes.is_empty() && !fallback_hit {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "hot-component-spacing-readiness",
+                Severity::Warning,
+                vec![hot.layer.clone()],
+                None,
+                shapes,
+                vec![hot.location, neighbor.location],
+                Some(format!(
+                    "likely hot feature {:?} is within thermal spacing {spacing:.6} of neighboring net {:?}; review heat spreading, derating, and component placement",
+                    hot.net, neighbor.net
+                )),
+            ));
+        }
+    }
+
+    violations
+}
+
+pub fn thermal_mechanical_keepout_readiness(
+    board: &BoardModel,
+    extra_drills: &[DrillFeature],
+    selected_layers: &[String],
+    keepout: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    let mut mechanical_drills = board
+        .drills
+        .iter()
+        .chain(extra_drills.iter())
+        .filter(|drill| !drill.plated)
+        .collect::<Vec<_>>();
+    mechanical_drills.sort_by(|left, right| {
+        left.location[0]
+            .total_cmp(&right.location[0])
+            .then(left.location[1].total_cmp(&right.location[1]))
+            .then(left.diameter.total_cmp(&right.diameter))
+    });
+
+    let hot_features = selected_copper_features(board, selected_layers)
+        .into_iter()
+        .filter(|feature| feature.net.as_deref().is_some_and(looks_hot_component_net))
+        .collect::<Vec<_>>();
+    let mut violations = Vec::new();
+
+    for drill in mechanical_drills {
+        let keepout_sketch = polygons_to_sketch(
+            vec![circle_polygon(
+                drill.location,
+                drill.diameter / 2.0 + keepout,
+                32,
+            )],
+            Some(LayerMetadata {
+                name: "thermal mechanical keepout".to_string(),
+            }),
+        );
+
+        for hot in &hot_features {
+            let overlap = keepout_sketch.intersection(&hot.sketch);
+            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            let fallback_hit = shapes.is_empty()
+                && polygon_boundary_distance(
+                    &keepout_sketch.to_multipolygon(),
+                    &hot.sketch.to_multipolygon(),
+                ) <= 1.0e-9;
+            if shapes.is_empty() && !fallback_hit {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "thermal-mechanical-keepout-readiness",
+                Severity::Warning,
+                vec![hot.layer.clone()],
+                None,
+                shapes,
+                vec![drill.location, hot.location],
+                Some(format!(
+                    "likely hot feature {:?} is inside mechanical thermal keepout {keepout:.6}; review heatsink, standoff, screw, chassis, and airflow clearance",
+                    hot.net
+                )),
+            ));
+        }
     }
 
     violations
@@ -2241,6 +2227,26 @@ fn looks_high_current_net(net: &str) -> bool {
     tokens.iter().any(|token| normalized.contains(token))
 }
 
+fn looks_thermal_or_power_net(net: &str) -> bool {
+    let normalized = net.to_ascii_uppercase();
+    let tokens = [
+        "THERM", "THERMAL", "PAD", "EPAD", "HEAT", "HEATER", "LED", "REG", "FET", "MOSFET", "BUCK",
+        "LDO",
+    ];
+
+    looks_high_current_net(net) || tokens.iter().any(|token| normalized.contains(token))
+}
+
+fn looks_hot_component_net(net: &str) -> bool {
+    let normalized = net.to_ascii_uppercase();
+    let tokens = [
+        "THERM", "THERMAL", "HEAT", "HEATER", "LED", "REG", "FET", "MOSFET", "BUCK", "BOOST", "SW",
+        "PHASE", "MOTOR", "DRV", "DRIVE", "LDO",
+    ];
+
+    looks_high_current_net(net) || tokens.iter().any(|token| normalized.contains(token))
+}
+
 fn looks_high_voltage_net(net: &str) -> bool {
     let normalized = net.to_ascii_uppercase();
     let tokens = [
@@ -2279,6 +2285,16 @@ fn looks_noisy_net(net: &str) -> bool {
         || tokens.iter().any(|token| normalized.contains(token))
 }
 
+fn looks_switching_net(net: &str) -> bool {
+    let normalized = net.to_ascii_uppercase();
+    let tokens = [
+        "SW", "PHASE", "LX", "BOOT", "BST", "GATE", "HGATE", "LGATE", "DRV", "DRIVE", "MOTOR",
+        "PWM", "IND", "INDUCTOR",
+    ];
+
+    tokens.iter().any(|token| normalized.contains(token))
+}
+
 fn looks_chassis_net(net: &str) -> bool {
     let normalized = net.to_ascii_uppercase();
     matches!(
@@ -2305,52 +2321,48 @@ fn looks_gold_finger_net(net: &str) -> bool {
     tokens.iter().any(|token| normalized.contains(token))
 }
 
-fn looks_testpoint_required_net(net: &str) -> bool {
+fn looks_connector_net(net: &str) -> bool {
     let normalized = net.to_ascii_uppercase();
     let tokens = [
-        "RESET", "RST", "BOOT", "JTAG", "SWD", "SWCLK", "SWDIO", "TCK", "TMS", "TDI", "TDO",
-        "UART", "TXD", "RXD", "DEBUG", "PROG", "TEST",
+        "CONN",
+        "CONNECTOR",
+        "USB",
+        "JACK",
+        "SOCKET",
+        "PLUG",
+        "HEADER",
+        "VBUS",
+        "SHIELD",
+        "CHASSIS",
+        "CARD_EDGE",
+        "EDGE_CONN",
     ];
 
-    looks_ground_net(net)
-        || looks_high_current_net(net)
-        || looks_high_speed_net(net)
-        || looks_high_voltage_net(net)
-        || looks_sensitive_net(net)
-        || looks_chassis_net(net)
-        || tokens.iter().any(|token| normalized.contains(token))
+    tokens.iter().any(|token| normalized.contains(token))
+}
+
+fn looks_connector_edge_rate_net(net: &str) -> bool {
+    looks_connector_net(net) || looks_high_speed_net(net) || looks_rf_or_antenna_net(net)
+}
+
+fn looks_esd_protection_net(net: &str) -> bool {
+    let normalized = net.to_ascii_uppercase();
+    let tokens = [
+        "ESD",
+        "TVS",
+        "CLAMP",
+        "PROTECT",
+        "PROTECTION",
+        "SURGE",
+        "SPARK",
+        "TRANSIENT",
+    ];
+
+    tokens.iter().any(|token| normalized.contains(token))
 }
 
 fn looks_edge_intent_net(net: &str) -> bool {
     looks_gold_finger_net(net) || looks_chassis_net(net)
-}
-
-fn normalize_net(net: &str) -> String {
-    net.trim().to_ascii_uppercase()
-}
-
-fn diameters_conflict(left: f64, right: f64, tolerance: f64) -> bool {
-    left > 0.0 && right > 0.0 && (left - right).abs() > tolerance
-}
-
-fn drill_table_violation(
-    left_source: &str,
-    left_diameter: f64,
-    right_source: &str,
-    right_diameter: f64,
-    locations: Vec<[f64; 2]>,
-) -> Violation {
-    Violation::new(
-        "drill-table-consistency",
-        Severity::Warning,
-        vec![left_source.to_string(), right_source.to_string()],
-        None,
-        Vec::new(),
-        locations,
-        Some(format!(
-            "{left_source} diameter {left_diameter:.6} differs from {right_source} diameter {right_diameter:.6}"
-        )),
-    )
 }
 
 pub fn net_spacing(
@@ -2588,57 +2600,6 @@ pub fn ipc356_drill_diameter(
     violations
 }
 
-pub fn drills_to_sketch(drills: &[DrillFeature], name: &str) -> PcbSketch {
-    let polygons = drills
-        .iter()
-        .map(|drill| circle_polygon(drill.location, drill.diameter / 2.0, 48))
-        .collect::<Vec<_>>();
-
-    polygons_to_sketch(
-        polygons,
-        Some(LayerMetadata {
-            name: name.to_string(),
-        }),
-    )
-}
-
-fn nearest_matching_copper<'a>(
-    board: &'a BoardModel,
-    drill: &DrillFeature,
-    selected_layers: &[String],
-) -> Option<&'a CopperFeature> {
-    selected_copper_features(board, selected_layers)
-        .into_iter()
-        .filter(|feature| drill.net.is_none() || feature.net == drill.net)
-        .min_by(|left, right| {
-            distance(left.location, drill.location)
-                .partial_cmp(&distance(right.location, drill.location))
-                .unwrap_or(std::cmp::Ordering::Equal)
-        })
-}
-
-fn has_plated_drill_copper(
-    drill: &DrillFeature,
-    copper_features: &[&CopperFeature],
-    tolerance: f64,
-) -> bool {
-    copper_features.iter().any(|feature| {
-        matches!(feature.kind, CopperKind::Pad | CopperKind::Via)
-            && (drill.net.is_none() || feature.net == drill.net)
-            && distance(feature.location, drill.location) <= tolerance
-    })
-}
-
-fn has_nearby_copper(
-    location: [f64; 2],
-    copper_features: &[&CopperFeature],
-    tolerance: f64,
-) -> bool {
-    copper_features
-        .iter()
-        .any(|feature| distance(feature.location, location) <= tolerance)
-}
-
 fn copper_features_touch(left: &CopperFeature, right: &CopperFeature, tolerance: f64) -> bool {
     left.sketch
         .intersection(&right.sketch)
@@ -2702,53 +2663,12 @@ fn minimum_bounding_dimension(sketch: &PcbSketch) -> f64 {
         .unwrap_or(0.0)
 }
 
-fn equivalent_radius(sketch: &PcbSketch) -> f64 {
-    let area = sketch
-        .to_multipolygon()
-        .0
-        .iter()
-        .map(|polygon| polygon.unsigned_area())
-        .sum::<f64>();
-    (area / std::f64::consts::PI).sqrt()
-}
-
-fn likely_fiducial(feature: &CopperFeature) -> bool {
-    if feature.kind != CopperKind::Pad || feature.net.is_some() {
-        return false;
-    }
-
-    let Some(bounds) = feature.sketch.geometry.bounding_rect() else {
-        return false;
-    };
-    let width = bounds.max().x - bounds.min().x;
-    let height = bounds.max().y - bounds.min().y;
-    let min_dimension = width.min(height);
-    let max_dimension = width.max(height);
-
-    min_dimension >= 0.5 && max_dimension <= 2.5 && min_dimension / max_dimension >= 0.75
-}
-
-fn minimum_feature_pitch(features: &[&CopperFeature]) -> Option<f64> {
-    let mut min_pitch = f64::INFINITY;
-    for index in 0..features.len() {
-        for other in &features[(index + 1)..] {
-            min_pitch = min_pitch.min(distance(features[index].location, other.location));
-        }
-    }
-
-    min_pitch.is_finite().then_some(min_pitch)
-}
-
-fn average_location(features: &[&CopperFeature]) -> [f64; 2] {
-    let mut sum = [0.0, 0.0];
-    for feature in features {
-        sum[0] += feature.location[0];
-        sum[1] += feature.location[1];
-    }
-    [
-        sum[0] / features.len() as f64,
-        sum[1] / features.len() as f64,
-    ]
+fn bounding_dimensions(sketch: &PcbSketch) -> Option<(f64, f64)> {
+    sketch.geometry.bounding_rect().map(|bounds| {
+        let width = bounds.max().x - bounds.min().x;
+        let height = bounds.max().y - bounds.min().y;
+        (width.min(height), width.max(height))
+    })
 }
 
 fn distance(left: [f64; 2], right: [f64; 2]) -> f64 {
@@ -2793,24 +2713,33 @@ mod tests {
     use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
     use crate::{LayerMetadata, PcbSketch};
 
+    use crate::checks::{
+        annular_ring, annular_ring_tolerance, board_outline_drill_clearance,
+        castellation_hole_readiness, castellation_intent, component_edge_clearance_readiness,
+        component_hole_clearance_readiness, connector_rework_clearance_readiness,
+        dense_pad_escape_readiness, drill_aspect_ratio, drill_spacing, drill_table_consistency,
+        drill_to_copper_clearance, drills_to_sketch, fiducial_readiness, local_fiducial_readiness,
+        mouse_bite_readiness, plating_intent, routed_slot_readiness,
+        testpoint_accessibility_readiness, testpoint_coverage_readiness, tooling_hole_readiness,
+    };
     use crate::ipc356::Ipc356Point;
 
     use super::{
-        annular_ring, annular_ring_tolerance, apply_ipc356_nets, board_edge_exposure,
-        board_outline_drill_clearance, castellation_hole_readiness, castellation_intent,
-        chassis_stitching_readiness, controlled_impedance_readiness, copper_net_intent,
-        copper_width_readiness, dense_pad_escape_readiness, differential_pair_readiness,
+        apply_ipc356_nets, board_edge_exposure, chassis_stitching_readiness,
+        connector_return_path_readiness, controlled_impedance_readiness, copper_net_intent,
+        copper_width_readiness, decoupling_proximity_readiness, differential_pair_readiness,
         differential_pair_spacing_readiness, differential_pair_via_symmetry_readiness,
-        drill_aspect_ratio, drill_spacing, drill_table_consistency, drill_to_copper_clearance,
-        drills_to_sketch, edge_copper_pullback_readiness, edge_stitching_readiness,
-        fiducial_readiness, gold_finger_readiness, high_current_neck_readiness,
-        high_current_readiness, high_speed_edge_readiness, high_voltage_edge_readiness,
+        edge_copper_pullback_readiness, edge_stitching_readiness, esd_protection_readiness,
+        gold_finger_drill_keepout_readiness, gold_finger_edge_readiness, gold_finger_readiness,
+        gold_finger_spacing_readiness, high_current_neck_readiness, high_current_readiness,
+        high_speed_edge_readiness, high_voltage_edge_readiness, hot_component_spacing_readiness,
         ipc356_coverage, ipc356_drill_diameter, net_spacing, orphaned_zone_readiness,
-        panelization_clearance, plane_clearance_readiness, plating_intent, power_plane_readiness,
+        panelization_clearance, plane_clearance_readiness, power_plane_readiness,
         power_via_array_readiness, reference_plane_readiness, reference_plane_void_readiness,
-        registration_tolerance, return_path_readiness, rf_keepout_readiness, routed_slot_readiness,
+        registration_tolerance, return_path_readiness, rf_keepout_readiness,
         same_net_island_readiness, sensitive_net_spacing_readiness, sensitive_return_readiness,
-        teardrop_readiness, testpoint_coverage_readiness, thermal_relief_readiness,
+        switch_node_keepout_readiness, teardrop_readiness, thermal_copper_area_readiness,
+        thermal_mechanical_keepout_readiness, thermal_pad_via_readiness, thermal_relief_readiness,
         thermal_via_readiness, via_in_pad_readiness, voltage_clearance_readiness,
     };
 
@@ -4911,6 +4840,413 @@ mod tests {
     }
 
     #[test]
+    fn gold_finger_edge_readiness_reports_finger_copper_away_from_edge() {
+        let mut board = board_with_outline(square(0.0, 0.0, 20.0, 20.0));
+        board.copper = vec![copper_rect(
+            "GOLD_FINGER_1",
+            CopperKind::Pad,
+            "F.Cu",
+            5.0,
+            9.0,
+            6.0,
+            10.0,
+        )];
+
+        let violations = gold_finger_edge_readiness(&board, &[], 1.0);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "gold-finger-edge-readiness");
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("bevel intent"))
+        );
+    }
+
+    #[test]
+    fn gold_finger_edge_readiness_accepts_edge_fingers_or_missing_outline() {
+        let mut board = board_with_outline(square(0.0, 0.0, 20.0, 20.0));
+        board.copper = vec![copper_rect(
+            "GOLD_FINGER_1",
+            CopperKind::Pad,
+            "F.Cu",
+            0.2,
+            9.0,
+            0.8,
+            10.0,
+        )];
+        let no_outline = board_with_copper(vec![copper_rect(
+            "GOLD_FINGER_2",
+            CopperKind::Pad,
+            "F.Cu",
+            5.0,
+            9.0,
+            6.0,
+            10.0,
+        )]);
+
+        assert!(gold_finger_edge_readiness(&board, &[], 1.0).is_empty());
+        assert!(gold_finger_edge_readiness(&no_outline, &[], 1.0).is_empty());
+    }
+
+    #[test]
+    fn gold_finger_spacing_readiness_reports_tight_finger_pitch() {
+        let board = board_with_copper(vec![
+            copper_rect("GOLD_FINGER_1", CopperKind::Pad, "F.Cu", 0.0, 0.0, 0.5, 2.0),
+            copper_rect(
+                "GOLD_FINGER_2",
+                CopperKind::Pad,
+                "F.Cu",
+                0.55,
+                0.0,
+                1.0,
+                2.0,
+            ),
+        ]);
+
+        let violations = gold_finger_spacing_readiness(&board, &[], 0.10, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "gold-finger-spacing-readiness");
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("contact pitch"))
+        );
+    }
+
+    #[test]
+    fn gold_finger_spacing_readiness_allows_distant_or_same_net_fingers() {
+        let board = board_with_copper(vec![
+            copper_rect("GOLD_FINGER_1", CopperKind::Pad, "F.Cu", 0.0, 0.0, 0.5, 2.0),
+            copper_rect(
+                "GOLD_FINGER_1",
+                CopperKind::Pad,
+                "F.Cu",
+                0.55,
+                0.0,
+                1.0,
+                2.0,
+            ),
+            copper_rect("GOLD_FINGER_2", CopperKind::Pad, "F.Cu", 2.0, 0.0, 2.5, 2.0),
+        ]);
+
+        assert!(gold_finger_spacing_readiness(&board, &[], 0.10, 1.0e-9).is_empty());
+    }
+
+    #[test]
+    fn gold_finger_drill_keepout_readiness_reports_nearby_drills() {
+        let board = board_with_copper(vec![copper_rect(
+            "EDGE_CONN_1",
+            CopperKind::Pad,
+            "F.Cu",
+            0.0,
+            0.0,
+            1.0,
+            2.0,
+        )]);
+        let sidecar_drills = vec![DrillFeature {
+            location: [1.3, 1.0],
+            diameter: 0.6,
+            net: None,
+            plated: false,
+        }];
+
+        let violations =
+            gold_finger_drill_keepout_readiness(&board, &sidecar_drills, &[], 0.2, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "gold-finger-drill-keepout-readiness");
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("no-drill finger plating"))
+        );
+    }
+
+    #[test]
+    fn gold_finger_drill_keepout_readiness_accepts_distant_drills() {
+        let board = board_with_copper(vec![copper_rect(
+            "EDGE_CONN_1",
+            CopperKind::Pad,
+            "F.Cu",
+            0.0,
+            0.0,
+            1.0,
+            2.0,
+        )]);
+        let sidecar_drills = vec![DrillFeature {
+            location: [4.0, 1.0],
+            diameter: 0.6,
+            net: None,
+            plated: false,
+        }];
+
+        assert!(
+            gold_finger_drill_keepout_readiness(&board, &sidecar_drills, &[], 0.2, 1.0e-9)
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn component_edge_clearance_readiness_reports_close_component_pads() {
+        let mut board = board_with_outline(square(0.0, 0.0, 20.0, 20.0));
+        board.copper = vec![
+            copper_disc("U1_IO", CopperKind::Pad, [0.7, 10.0], 0.4),
+            copper_disc("CARD_EDGE_1", CopperKind::Pad, [0.2, 2.0], 0.4),
+            unnetted_copper_disc_on_layer("F.Cu", [0.8, 5.0], 0.4),
+        ];
+
+        let violations = component_edge_clearance_readiness(&board, &[], 0.5);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "component-edge-clearance-readiness");
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("depanelization"))
+        );
+    }
+
+    #[test]
+    fn component_edge_clearance_readiness_allows_inset_or_selected_out_pads() {
+        let mut board = board_with_outline(square(0.0, 0.0, 20.0, 20.0));
+        board.copper = vec![
+            copper_disc_on_layer("U1_IO", CopperKind::Pad, "B.Cu", [0.7, 10.0], 0.4),
+            copper_disc_on_layer("U2_IO", CopperKind::Pad, "F.Cu", [10.0, 10.0], 0.4),
+        ];
+
+        assert!(component_edge_clearance_readiness(&board, &["F.Cu".to_string()], 0.5).is_empty());
+    }
+
+    #[test]
+    fn component_hole_clearance_readiness_reports_pads_near_mechanical_holes() {
+        let board = board_with_copper(vec![copper_disc(
+            "U1_IO",
+            CopperKind::Pad,
+            [1.0, 0.0],
+            0.30,
+        )]);
+        let sidecar_drills = vec![DrillFeature {
+            location: [0.0, 0.0],
+            diameter: 1.0,
+            net: None,
+            plated: false,
+        }];
+
+        let violations =
+            component_hole_clearance_readiness(&board, &sidecar_drills, &[], 0.30, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "component-hole-clearance-readiness");
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("standoff"))
+        );
+    }
+
+    #[test]
+    fn component_hole_clearance_readiness_allows_distant_or_plated_holes() {
+        let mut board = board_with_copper(vec![copper_disc(
+            "U1_IO",
+            CopperKind::Pad,
+            [5.0, 0.0],
+            0.30,
+        )]);
+        board.drills = vec![
+            DrillFeature {
+                location: [0.0, 0.0],
+                diameter: 1.0,
+                net: None,
+                plated: false,
+            },
+            DrillFeature {
+                location: [5.0, 0.0],
+                diameter: 1.0,
+                net: Some("U1_IO".to_string()),
+                plated: true,
+            },
+        ];
+
+        assert!(component_hole_clearance_readiness(&board, &[], &[], 0.30, 1.0e-9).is_empty());
+    }
+
+    #[test]
+    fn connector_rework_clearance_readiness_reports_tight_neighboring_pads() {
+        let board = board_with_copper(vec![
+            copper_rect("USB_VBUS", CopperKind::Pad, "F.Cu", 0.0, 0.0, 1.0, 1.0),
+            copper_rect("GPIO1", CopperKind::Pad, "F.Cu", 1.10, 0.0, 1.60, 1.0),
+        ]);
+
+        let violations = connector_rework_clearance_readiness(&board, &[], 0.20, 0.40);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "connector-rework-clearance-readiness");
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("rework access"))
+        );
+    }
+
+    #[test]
+    fn connector_rework_clearance_readiness_allows_distant_or_small_pads() {
+        let board = board_with_copper(vec![
+            copper_rect("USB_VBUS", CopperKind::Pad, "F.Cu", 0.0, 0.0, 0.20, 0.20),
+            copper_rect("GPIO1", CopperKind::Pad, "F.Cu", 1.10, 0.0, 1.60, 1.0),
+            copper_rect("USB_D_P", CopperKind::Pad, "F.Cu", 5.0, 0.0, 6.0, 1.0),
+            copper_rect("GPIO2", CopperKind::Pad, "F.Cu", 7.0, 0.0, 8.0, 1.0),
+        ]);
+
+        assert!(connector_rework_clearance_readiness(&board, &[], 0.20, 0.40).is_empty());
+    }
+
+    #[test]
+    fn connector_return_path_readiness_reports_edge_rate_connector_without_ground_return() {
+        let mut board = board_with_outline(square(0.0, 0.0, 20.0, 20.0));
+        board.copper = vec![copper_rect(
+            "USB_D_P",
+            CopperKind::Pad,
+            "F.Cu",
+            0.4,
+            8.0,
+            1.0,
+            8.6,
+        )];
+
+        let violations = connector_return_path_readiness(&board, &[], 1.0, 2.0);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "connector-return-path-readiness");
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("ground return"))
+        );
+    }
+
+    #[test]
+    fn connector_return_path_readiness_accepts_nearby_ground_or_inset_connector() {
+        let mut board = board_with_outline(square(0.0, 0.0, 20.0, 20.0));
+        board.copper = vec![
+            copper_rect("USB_D_P", CopperKind::Pad, "F.Cu", 0.4, 8.0, 1.0, 8.6),
+            copper_disc("GND", CopperKind::Via, [1.5, 8.3], 0.12),
+            copper_rect("USB_D_N", CopperKind::Pad, "F.Cu", 5.0, 8.0, 5.6, 8.6),
+        ];
+
+        assert!(connector_return_path_readiness(&board, &[], 1.0, 2.0).is_empty());
+    }
+
+    #[test]
+    fn decoupling_proximity_readiness_reports_power_feature_without_ground_return() {
+        let board = board_with_copper(vec![
+            copper_disc("VDD_3V3", CopperKind::Pad, [0.0, 0.0], 0.3),
+            copper_disc("GND", CopperKind::Pad, [5.0, 0.0], 0.3),
+        ]);
+
+        let violations = decoupling_proximity_readiness(&board, &[], 1.0);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "decoupling-proximity-readiness");
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("decoupling capacitor loop"))
+        );
+    }
+
+    #[test]
+    fn decoupling_proximity_readiness_allows_nearby_ground_or_selected_out_layers() {
+        let board = board_with_copper(vec![
+            copper_disc("VDD_3V3", CopperKind::Pad, [0.0, 0.0], 0.3),
+            copper_disc("GND", CopperKind::Pad, [0.8, 0.0], 0.3),
+            copper_disc_on_layer("VBUS", CopperKind::Via, "B.Cu", [5.0, 0.0], 0.3),
+            copper_disc_on_layer("GND", CopperKind::Via, "B.Cu", [5.8, 0.0], 0.3),
+        ]);
+
+        assert!(decoupling_proximity_readiness(&board, &[], 1.0).is_empty());
+        assert!(decoupling_proximity_readiness(&board, &["F.Cu".to_string()], 1.0).is_empty());
+    }
+
+    #[test]
+    fn esd_protection_readiness_reports_unprotected_edge_connector_net() {
+        let mut board = board_with_outline(square(0.0, 0.0, 20.0, 20.0));
+        board.copper = vec![copper_rect(
+            "USB_D_P",
+            CopperKind::Pad,
+            "F.Cu",
+            0.4,
+            8.0,
+            1.0,
+            8.6,
+        )];
+
+        let violations = esd_protection_readiness(&board, &[], 1.0, 2.0);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "esd-protection-readiness");
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("ESD"))
+        );
+    }
+
+    #[test]
+    fn esd_protection_readiness_accepts_nearby_tvs_chassis_or_inset_net() {
+        let mut board = board_with_outline(square(0.0, 0.0, 20.0, 20.0));
+        board.copper = vec![
+            copper_rect("USB_D_P", CopperKind::Pad, "F.Cu", 0.4, 8.0, 1.0, 8.6),
+            copper_disc("USB_ESD_CLAMP", CopperKind::Pad, [1.5, 8.3], 0.12),
+            copper_rect("USB_D_N", CopperKind::Pad, "F.Cu", 5.0, 8.0, 5.6, 8.6),
+        ];
+
+        assert!(esd_protection_readiness(&board, &[], 1.0, 2.0).is_empty());
+    }
+
+    #[test]
+    fn switch_node_keepout_readiness_reports_nearby_non_ground_copper() {
+        let board = board_with_copper(vec![
+            copper_rect("BUCK_SW", CopperKind::Segment, "F.Cu", 0.0, 0.0, 1.0, 0.5),
+            copper_rect("ADC_IN", CopperKind::Segment, "F.Cu", 1.2, 0.0, 2.0, 0.5),
+            copper_rect("GND", CopperKind::Zone, "F.Cu", 0.0, 2.0, 2.0, 3.0),
+        ]);
+
+        let violations = switch_node_keepout_readiness(&board, &[], 0.3, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "switch-node-keepout-readiness");
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("EMI"))
+        );
+    }
+
+    #[test]
+    fn switch_node_keepout_readiness_allows_same_net_ground_and_distant_copper() {
+        let board = board_with_copper(vec![
+            copper_rect("BUCK_SW", CopperKind::Segment, "F.Cu", 0.0, 0.0, 1.0, 0.5),
+            copper_rect("BUCK_SW", CopperKind::Pad, "F.Cu", 1.1, 0.0, 1.5, 0.5),
+            copper_rect("GND", CopperKind::Zone, "F.Cu", 1.2, 0.0, 2.0, 0.5),
+            copper_rect("ADC_IN", CopperKind::Segment, "F.Cu", 4.0, 0.0, 5.0, 0.5),
+        ]);
+
+        assert!(switch_node_keepout_readiness(&board, &[], 0.3, 1.0e-9).is_empty());
+    }
+
+    #[test]
     fn testpoint_coverage_readiness_reports_critical_nets_missing_ipc_records() {
         let board = board_with_copper(vec![
             copper_disc("VBUS", CopperKind::Pad, [0.0, 0.0], 0.4),
@@ -4947,6 +5283,216 @@ mod tests {
         }];
 
         assert!(testpoint_coverage_readiness(&board, &ipc_points, &[]).is_empty());
+    }
+
+    #[test]
+    fn testpoint_accessibility_readiness_reports_probe_diameter_spacing_and_edge_risks() {
+        let board = board_with_outline(square(0.0, 0.0, 20.0, 20.0));
+        let ipc_points = vec![
+            Ipc356Point {
+                net: "GND".to_string(),
+                reference: Some("TP1".to_string()),
+                pin: Some("1".to_string()),
+                location: [0.8, 10.0],
+                diameter: Some(0.20),
+            },
+            Ipc356Point {
+                net: "VBUS".to_string(),
+                reference: Some("TP2".to_string()),
+                pin: Some("1".to_string()),
+                location: [1.1, 10.0],
+                diameter: Some(0.30),
+            },
+            Ipc356Point {
+                net: "RESET".to_string(),
+                reference: Some("TP3".to_string()),
+                pin: Some("1".to_string()),
+                location: [10.0, 10.0],
+                diameter: None,
+            },
+        ];
+
+        let violations = testpoint_accessibility_readiness(&board, &ipc_points, 0.25, 0.20, 1.0);
+        let messages = violations
+            .iter()
+            .filter_map(|violation| violation.message.as_deref())
+            .collect::<Vec<_>>();
+
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("below minimum probe diameter"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("below fixture edge clearance"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("below fixture probe spacing"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("no parsed probe diameter"))
+        );
+    }
+
+    #[test]
+    fn testpoint_accessibility_readiness_allows_complete_accessible_points() {
+        let board = board_with_outline(square(0.0, 0.0, 20.0, 20.0));
+        let ipc_points = vec![
+            Ipc356Point {
+                net: "GND".to_string(),
+                reference: Some("TP1".to_string()),
+                pin: Some("1".to_string()),
+                location: [5.0, 5.0],
+                diameter: Some(0.35),
+            },
+            Ipc356Point {
+                net: "VBUS".to_string(),
+                reference: Some("TP2".to_string()),
+                pin: Some("1".to_string()),
+                location: [8.0, 5.0],
+                diameter: Some(0.35),
+            },
+        ];
+
+        assert!(testpoint_accessibility_readiness(&board, &ipc_points, 0.25, 0.20, 1.0).is_empty());
+    }
+
+    #[test]
+    fn tooling_hole_readiness_reports_missing_or_edge_close_tooling_holes() {
+        let mut board = board_with_outline(square(0.0, 0.0, 20.0, 20.0));
+        board.drills = vec![DrillFeature {
+            location: [0.8, 10.0],
+            diameter: 1.0,
+            net: None,
+            plated: false,
+        }];
+
+        let violations = tooling_hole_readiness(&board, &[], 0.8, 4.0, 1.0);
+        let messages = violations
+            .iter()
+            .filter_map(|violation| violation.message.as_deref())
+            .collect::<Vec<_>>();
+
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("found 1 likely tooling hole"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("below fixture edge clearance"))
+        );
+    }
+
+    #[test]
+    fn tooling_hole_readiness_accepts_inset_board_and_sidecar_tooling_holes() {
+        let mut board = board_with_outline(square(0.0, 0.0, 20.0, 20.0));
+        board.drills = vec![DrillFeature {
+            location: [5.0, 5.0],
+            diameter: 1.5,
+            net: None,
+            plated: false,
+        }];
+        let sidecar_drills = vec![DrillFeature {
+            location: [15.0, 15.0],
+            diameter: 1.5,
+            net: None,
+            plated: false,
+        }];
+
+        assert!(tooling_hole_readiness(&board, &sidecar_drills, 0.8, 4.0, 1.0).is_empty());
+    }
+
+    #[test]
+    fn mouse_bite_readiness_reports_bad_diameter_and_spacing() {
+        let sidecar_drills = vec![
+            DrillFeature {
+                location: [0.0, 0.0],
+                diameter: 0.20,
+                net: None,
+                plated: false,
+            },
+            DrillFeature {
+                location: [0.30, 0.0],
+                diameter: 0.30,
+                net: None,
+                plated: false,
+            },
+            DrillFeature {
+                location: [2.00, 0.0],
+                diameter: 0.30,
+                net: None,
+                plated: false,
+            },
+        ];
+
+        let violations = mouse_bite_readiness(
+            &board_with_copper(Vec::new()),
+            &sidecar_drills,
+            0.25,
+            0.50,
+            0.40,
+            1.20,
+        );
+        let messages = violations
+            .iter()
+            .filter_map(|violation| violation.message.as_deref())
+            .collect::<Vec<_>>();
+
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("diameter") && message.contains("below minimum"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("center spacing")
+                    && message.contains("outside expected range"))
+        );
+    }
+
+    #[test]
+    fn mouse_bite_readiness_accepts_reasonable_small_npth_rows() {
+        let sidecar_drills = vec![
+            DrillFeature {
+                location: [0.0, 0.0],
+                diameter: 0.30,
+                net: None,
+                plated: false,
+            },
+            DrillFeature {
+                location: [0.70, 0.0],
+                diameter: 0.30,
+                net: None,
+                plated: false,
+            },
+            DrillFeature {
+                location: [1.40, 0.0],
+                diameter: 0.30,
+                net: None,
+                plated: false,
+            },
+        ];
+
+        assert!(
+            mouse_bite_readiness(
+                &board_with_copper(Vec::new()),
+                &sidecar_drills,
+                0.25,
+                0.50,
+                0.40,
+                1.20
+            )
+            .is_empty()
+        );
     }
 
     #[test]
@@ -4987,19 +5533,47 @@ mod tests {
     }
 
     #[test]
-    fn dense_pad_escape_readiness_reports_fine_pitch_cluster_without_escape_vias() {
-        let mut copper = Vec::new();
-        for x in 0..4 {
-            for y in 0..4 {
-                copper.push(copper_disc(
-                    &format!("BGA_{x}_{y}"),
+    fn local_fiducial_readiness_reports_dense_clusters_without_nearby_fiducials() {
+        let mut copper = dense_pad_cluster();
+        copper.push(unnetted_copper_disc_on_layer("F.Cu", [20.0, 20.0], 0.5));
+        copper.push(unnetted_copper_disc_on_layer("F.Cu", [22.0, 20.0], 0.5));
+
+        let violations = local_fiducial_readiness(&board_with_copper(copper), &[], 0.8, 5.0);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "local-fiducial-readiness");
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("only 0 likely local fiducial"))
+        );
+    }
+
+    #[test]
+    fn local_fiducial_readiness_accepts_nearby_local_fiducials_or_sparse_pads() {
+        let mut copper = dense_pad_cluster();
+        copper.push(unnetted_copper_disc_on_layer("F.Cu", [0.0, 3.0], 0.5));
+        copper.push(unnetted_copper_disc_on_layer("F.Cu", [3.0, 0.0], 0.5));
+
+        assert!(local_fiducial_readiness(&board_with_copper(copper), &[], 0.8, 5.0).is_empty());
+
+        let sparse = (0..8)
+            .map(|index| {
+                copper_disc(
+                    &format!("PAD_{index}"),
                     CopperKind::Pad,
-                    [x as f64 * 0.5, y as f64 * 0.5],
+                    [index as f64, 0.0],
                     0.12,
-                ));
-            }
-        }
-        let board = board_with_copper(copper);
+                )
+            })
+            .collect::<Vec<_>>();
+        assert!(local_fiducial_readiness(&board_with_copper(sparse), &[], 0.8, 5.0).is_empty());
+    }
+
+    #[test]
+    fn dense_pad_escape_readiness_reports_fine_pitch_cluster_without_escape_vias() {
+        let board = board_with_copper(dense_pad_cluster());
 
         let violations = dense_pad_escape_readiness(&board, &[], 0.8, 2.0);
 
@@ -5034,6 +5608,157 @@ mod tests {
         escaped.push(copper_disc("ESCAPE", CopperKind::Via, [0.75, 0.75], 0.15));
 
         assert!(dense_pad_escape_readiness(&board_with_copper(escaped), &[], 0.8, 2.0).is_empty());
+    }
+
+    #[test]
+    fn thermal_pad_via_readiness_reports_large_power_or_ground_pads_without_vias() {
+        let board = board_with_copper(vec![
+            copper_rect("GND", CopperKind::Pad, "F.Cu", 0.0, 0.0, 3.0, 3.0),
+            copper_rect("GPIO", CopperKind::Pad, "F.Cu", 5.0, 0.0, 8.0, 3.0),
+        ]);
+
+        let violations = thermal_pad_via_readiness(&board, &[], 2.0);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "thermal-pad-via-readiness");
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("thermal via array"))
+        );
+    }
+
+    #[test]
+    fn thermal_pad_via_readiness_accepts_same_net_via_in_large_pad() {
+        let board = board_with_copper(vec![
+            copper_rect("GND", CopperKind::Pad, "F.Cu", 0.0, 0.0, 3.0, 3.0),
+            copper_disc("GND", CopperKind::Via, [1.5, 1.5], 0.12),
+        ]);
+
+        assert!(thermal_pad_via_readiness(&board, &[], 2.0).is_empty());
+    }
+
+    #[test]
+    fn thermal_copper_area_readiness_reports_power_feature_without_nearby_zone() {
+        let board = board_with_copper(vec![
+            copper_disc("VREG_OUT", CopperKind::Pad, [0.0, 0.0], 0.30),
+            copper_rect("VREG_OUT", CopperKind::Zone, "F.Cu", 5.0, 0.0, 7.0, 2.0),
+        ]);
+
+        let violations = thermal_copper_area_readiness(&board, &[], 2.0);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "thermal-copper-area-readiness");
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("heat spreading"))
+        );
+    }
+
+    #[test]
+    fn thermal_copper_area_readiness_accepts_nearby_same_net_zone_or_low_power_net() {
+        let board = board_with_copper(vec![
+            copper_disc("VREG_OUT", CopperKind::Pad, [0.0, 0.0], 0.30),
+            copper_rect("VREG_OUT", CopperKind::Zone, "F.Cu", 0.8, 0.0, 2.0, 1.0),
+            copper_disc("GPIO1", CopperKind::Pad, [5.0, 0.0], 0.30),
+        ]);
+
+        assert!(thermal_copper_area_readiness(&board, &[], 2.0).is_empty());
+    }
+
+    #[test]
+    fn hot_component_spacing_readiness_reports_hot_feature_near_neighbor() {
+        let board = board_with_copper(vec![
+            copper_rect("LED_PWR", CopperKind::Pad, "F.Cu", 0.0, 0.0, 1.0, 1.0),
+            copper_rect("SENSOR_OUT", CopperKind::Pad, "F.Cu", 1.2, 0.0, 2.0, 1.0),
+            copper_rect("GND", CopperKind::Zone, "F.Cu", 0.0, 2.0, 2.0, 3.0),
+        ]);
+
+        let violations = hot_component_spacing_readiness(&board, &[], 0.3, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "hot-component-spacing-readiness");
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("derating"))
+        );
+    }
+
+    #[test]
+    fn hot_component_spacing_readiness_allows_ground_same_net_or_distant_neighbors() {
+        let board = board_with_copper(vec![
+            copper_rect("LED_PWR", CopperKind::Pad, "F.Cu", 0.0, 0.0, 1.0, 1.0),
+            copper_rect("LED_PWR", CopperKind::Zone, "F.Cu", 1.2, 0.0, 2.0, 1.0),
+            copper_rect("GND", CopperKind::Zone, "F.Cu", 1.2, 1.5, 2.0, 2.5),
+            copper_rect("SENSOR_OUT", CopperKind::Pad, "F.Cu", 5.0, 0.0, 6.0, 1.0),
+        ]);
+
+        assert!(hot_component_spacing_readiness(&board, &[], 0.3, 1.0e-9).is_empty());
+    }
+
+    #[test]
+    fn thermal_mechanical_keepout_readiness_reports_hot_feature_near_hole() {
+        let mut board = board_with_copper(vec![copper_rect(
+            "HEATER_OUT",
+            CopperKind::Pad,
+            "F.Cu",
+            0.0,
+            0.0,
+            1.0,
+            1.0,
+        )]);
+        board.drills = vec![DrillFeature {
+            location: [1.4, 0.5],
+            diameter: 0.8,
+            net: None,
+            plated: false,
+        }];
+
+        let violations = thermal_mechanical_keepout_readiness(&board, &[], &[], 0.2, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "thermal-mechanical-keepout-readiness");
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("heatsink"))
+        );
+    }
+
+    #[test]
+    fn thermal_mechanical_keepout_readiness_accepts_distant_or_plated_holes() {
+        let mut board = board_with_copper(vec![copper_rect(
+            "HEATER_OUT",
+            CopperKind::Pad,
+            "F.Cu",
+            0.0,
+            0.0,
+            1.0,
+            1.0,
+        )]);
+        board.drills = vec![DrillFeature {
+            location: [1.4, 0.5],
+            diameter: 0.8,
+            net: Some("HEATER_OUT".to_string()),
+            plated: true,
+        }];
+        let sidecar_drills = vec![DrillFeature {
+            location: [5.0, 0.0],
+            diameter: 0.8,
+            net: None,
+            plated: false,
+        }];
+
+        assert!(
+            thermal_mechanical_keepout_readiness(&board, &sidecar_drills, &[], 0.2, 1.0e-9)
+                .is_empty()
+        );
     }
 
     #[test]
@@ -6234,5 +6959,20 @@ mod tests {
                 }),
             ),
         }
+    }
+
+    fn dense_pad_cluster() -> Vec<CopperFeature> {
+        let mut copper = Vec::new();
+        for x in 0..4 {
+            for y in 0..4 {
+                copper.push(copper_disc(
+                    &format!("BGA_{x}_{y}"),
+                    CopperKind::Pad,
+                    [x as f64 * 0.5, y as f64 * 0.5],
+                    0.12,
+                ));
+            }
+        }
+        copper
     }
 }

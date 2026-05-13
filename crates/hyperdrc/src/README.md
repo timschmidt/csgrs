@@ -62,7 +62,9 @@ application orchestration, while subfolders hold the larger semantic areas.
 
 ## Subfolders
 
-- [checks](checks/README.md) contains the design-readiness checks.
+- [checks](checks/README.md) contains the design-readiness checks, now split
+  across generic layer, drill fabrication, board-context, stencil, assembly,
+  manifest, and artifact modules.
 - [geometry](geometry/README.md) contains geometry construction and conversion
   helpers around `csgrs` and `geo`.
 - [kicad](kicad/README.md) contains the KiCad board model and parser helpers.

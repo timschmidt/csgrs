@@ -130,6 +130,10 @@ checks:
   `board-outline-cutout-clearance`,
   `paste-overhang`,
   `paste-aperture-coverage`, `paste-aperture-ratio`,
+  `thermal-pad-paste-windowpane-readiness`,
+  `stencil-area-ratio-readiness`,
+  `paste-aperture-aspect-ratio-readiness`, `tombstone-paste-imbalance-readiness`,
+  `paste-via-exposure-readiness`,
   `minimum-paste-aperture`, `paste-aperture-spacing`,
   `paste-mask-alignment`, `exposed-copper`, `solder-mask-opening-coverage`,
   `solder-mask-expansion`, `solder-mask-overlap-clearance`,
@@ -158,9 +162,20 @@ checks:
   `power-plane-readiness`, `high-current-neck-readiness`, `voltage-clearance-readiness`,
   `sensitive-net-spacing-readiness`, `sensitive-return-readiness`,
   `rf-keepout-readiness`, `chassis-stitching-readiness`, `gold-finger-readiness`,
-  `testpoint-coverage-readiness`, `fiducial-readiness`,
-  `dense-pad-escape-readiness`, `net-spacing`, `registration-tolerance`,
-  and `panelization-clearance`.
+  `gold-finger-edge-readiness`, `gold-finger-spacing-readiness`,
+  `gold-finger-drill-keepout-readiness`,
+  `component-edge-clearance-readiness`, `component-hole-clearance-readiness`,
+  `connector-rework-clearance-readiness`, `pad-pair-asymmetry-readiness`,
+  `connector-return-path-readiness`,
+  `decoupling-proximity-readiness`, `esd-protection-readiness`,
+  `switch-node-keepout-readiness`,
+  `testpoint-coverage-readiness`, `testpoint-accessibility-readiness`,
+  `tooling-hole-readiness`, `mouse-bite-readiness`, `fiducial-readiness`,
+  `local-fiducial-readiness`, `dense-pad-escape-readiness`,
+  `thermal-pad-via-readiness`, `thermal-copper-area-readiness`,
+  `hot-component-spacing-readiness`, `thermal-mechanical-keepout-readiness`,
+  `net-spacing`, `registration-tolerance`, and
+  `panelization-clearance`.
 - `excellon-readiness`, `file-manifest-readiness`, `ipc356-coverage`,
   `ipc356-drill-diameter`, `production-artifact-readiness`.
   `file-manifest-readiness` (now validating BOM/centroid/netlist/fab drawing/
@@ -171,25 +186,38 @@ checks:
   `production-artifact-readiness` validates common BOM, centroid, netlist,
   README, fabrication drawing, assembly drawing, and rout drawing sidecars for
   required structure, BOM procurement metadata, BOM value/footprint coverage, BOM
-  lifecycle/status review, approved alternate coverage, quantity/refdes
-  agreement, grouped reference expansion, DNP/DNI parity handling, BOM/centroid
+  lifecycle/status review, broader lifecycle-risk vocabulary, distinct approved
+  alternate coverage, optional unit-cost/price sanity, procurement consistency
+  across manufacturer/supplier/lifecycle fields, placeholder release metadata,
+  semicolon- and whitespace-delimited BOM/placement tables, quantity/refdes
+  agreement, zero-quantity population intent, assembly/build variant handoff,
+  grouped reference expansion,
+  DNP/DNI parity handling, BOM/centroid
   assembly-side, value, footprint, and rotation parity, unusual reference
   designators, duplicate reference designators, conflicting part metadata,
   polarity/MSL/component-height handoff metadata, malformed placement
-  coordinates, out-of-range rotations, side values, duplicate placement
+  coordinates, unusually large placement coordinates, centroid/netlist
+  placeholder metadata, out-of-range rotations, side values, duplicate placement
   coordinates, conflicting centroid metadata, pin/net conflicts, repeated
   netlist rows, one-pin net review, reference parity, DNP/DNI placement
   conflicts, release/manufacturing notes, order-parameter intent, contradictory
-  order notes, panel/rout drawing parity, double-sided assembly handoff evidence,
-  selective/wave solder and conformal-coating process notes, fab/assembly
+  fabrication, layer-count, assembly, coating, programming, and test-fixture
+  notes, panel/rout drawing parity, BOM/centroid double-sided assembly
+  handoff evidence, BOM-driven through-hole solder, BGA/CSP/LGA inspection, and
+  programmable-device handoff evidence, firmware traceability, programming
+  method, functional-test acceptance criteria, serialization/barcode handoff,
+  fabrication marking zones, packaging/ESD/moisture notes, selective/wave solder
+  and conformal-coating process notes, fab/assembly
   drawing parity for special fabrication and assembly handoffs, preflight
-  evidence, text/drawing role names, empty or placeholder-sized drawings, and
-  common sidecar extensions.
+  evidence, release revision/date consistency, text/drawing role names, empty
+  sidecar tables, empty or
+  placeholder-sized drawings, and common sidecar extensions.
 
 Important tunables include `--keepout`, `--clearance`, `--min-width`,
 `--min-mask-width`, `--acid-trap-angle`, `--annular-ring`,
 `--drill-clearance`, `--board-thickness`, `--max-drill-aspect-ratio`,
 `--min-paste-area-ratio`, `--max-paste-area-ratio`,
+`--stencil-thickness`, `--min-stencil-area-ratio`,
 `--max-copper-imbalance-ratio`, `--net-clearance`,
 `--registration-tolerance`, `--panel-clearance`, `--ipc356-tolerance`,
 `--min-area`, and `--max-layer-area`.
@@ -235,7 +263,8 @@ details for that part of the tree:
 - [src](src/README.md): Rust crate structure, runtime pipeline, parsers,
   reports, configuration, and submodule map.
 - [src/checks](src/checks/README.md): all design-readiness checks grouped by
-  layer, board, manifest, and geometry-helper responsibilities.
+  layer, drill, board, stencil, assembly, manifest, artifact, and helper
+  responsibilities.
 - [src/geometry](src/geometry/README.md): polygon construction, sketch
   conversion, shape extraction, and geometry-test expectations.
 - [src/kicad](src/kicad/README.md): KiCad board model, S-expression parsing,
@@ -255,3 +284,17 @@ ODB++/IPC-2581 input.
 
 See [docs/design-readiness-plan.md](docs/design-readiness-plan.md) for the
 long-form design-readiness roadmap.
+
+## References
+
+hyperdrc comments and readiness heuristics cite these design and manufacturing
+references where the code implements related checks:
+
+- [IPC-7525B Stencil Design Guidelines table of contents](https://www.ipc.org/TOC/IPC-7525B.pdf).
+- [IPC-2221B Generic Standard on Printed Board Design table of contents](https://www.ipc.org/TOC/IPC-2221B.pdf).
+- [IPC-6012D Qualification and Performance Specification for Rigid Printed Boards table of contents](https://www.ipc.org/TOC/IPC-6012D.pdf).
+- Ross Wilcoxon, Tim Pearson, and David Hillman, "Modeling the Effects of Thermal Pad Voiding on Quad Flatpack No-lead (QFN) Components," *Journal of Surface Mount Technology*, 2023. https://doi.org/10.37665/smt.v36i2.37
+- Stefan Harter, Jens Niemann, Jorg Franke, Jeff Schake, and Mark Whitmore, "The Effect of Area Shape and Area Ratio on Solder Paste Printing Performance," SMTA International, 2016. https://www.circuitnet.com/programs/55115.html
+- F. A. Areny et al., "A study of SnAgCu solder paste transfer efficiency and effects of optimal reflow profile on solder deposits," *Microelectronic Engineering*, 2011. https://doi.org/10.1016/j.mee.2011.02.104
+- [Eurocircuits Tombstoning assembly guideline](https://www.eurocircuits.com/technical-guidelines/pcb-assembly-guidelines/tombstoning/).
+- [FixturFab design-for-test and SMD test point guidelines](https://fixturfab.com/resources/how-to-test/design-for-test).

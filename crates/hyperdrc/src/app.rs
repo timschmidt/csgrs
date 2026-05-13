@@ -30,6 +30,8 @@ pub fn run(cli: Cli) -> Result<()> {
             paste_tolerance: cli.paste_tolerance,
             min_paste_area_ratio: cli.min_paste_area_ratio,
             max_paste_area_ratio: cli.max_paste_area_ratio,
+            stencil_thickness: cli.stencil_thickness,
+            min_stencil_area_ratio: cli.min_stencil_area_ratio,
             min_width: cli.min_width,
             min_mask_width: cli.min_mask_width,
             acid_trap_angle: cli.acid_trap_angle,
@@ -396,6 +398,89 @@ fn run_checks(
                         rules.max_paste_area_ratio,
                         rules.min_area,
                     ));
+                }
+            }
+            Check::ThermalPadPasteWindowpaneReadiness => {
+                for (paste_index, copper_index) in
+                    explicit_layer_pairs(layers.len(), &cli.paste_pairs)?
+                {
+                    let paste = &layers[paste_index];
+                    let copper = &layers[copper_index];
+                    violations.extend(checks::thermal_pad_paste_windowpane_readiness(
+                        &layer_name(paste),
+                        &paste.sketch,
+                        &layer_name(copper),
+                        &copper.sketch,
+                        rules.min_area * 50.0,
+                        rules.max_paste_area_ratio,
+                        rules.min_area,
+                    ));
+                }
+            }
+            Check::StencilAreaRatioReadiness => {
+                let paste_layers = explicit_layer_pairs(layers.len(), &cli.paste_pairs)?
+                    .into_iter()
+                    .map(|(paste_index, _)| paste_index)
+                    .collect::<std::collections::BTreeSet<_>>();
+                for paste_index in paste_layers {
+                    let paste = &layers[paste_index];
+                    violations.extend(checks::stencil_area_ratio_readiness(
+                        &layer_name(paste),
+                        &paste.sketch,
+                        rules.stencil_thickness,
+                        rules.min_stencil_area_ratio,
+                        rules.min_area,
+                    ));
+                }
+            }
+            Check::PasteApertureAspectRatioReadiness => {
+                let paste_layers = explicit_layer_pairs(layers.len(), &cli.paste_pairs)?
+                    .into_iter()
+                    .map(|(paste_index, _)| paste_index)
+                    .collect::<std::collections::BTreeSet<_>>();
+                for paste_index in paste_layers {
+                    let paste = &layers[paste_index];
+                    violations.extend(checks::paste_aperture_aspect_ratio_readiness(
+                        &layer_name(paste),
+                        &paste.sketch,
+                        4.0,
+                        rules.min_area,
+                    ));
+                }
+            }
+            Check::TombstonePasteImbalanceReadiness => {
+                for (paste_index, copper_index) in
+                    explicit_layer_pairs(layers.len(), &cli.paste_pairs)?
+                {
+                    let paste = &layers[paste_index];
+                    let copper = &layers[copper_index];
+                    violations.extend(checks::tombstone_paste_imbalance_readiness(
+                        &layer_name(paste),
+                        &paste.sketch,
+                        &layer_name(copper),
+                        &copper.sketch,
+                        rules.min_width * 8.0,
+                        0.35,
+                        rules.min_area,
+                    ));
+                }
+            }
+            Check::PasteViaExposureReadiness => {
+                let paste_layers = explicit_layer_pairs(layers.len(), &cli.paste_pairs)?
+                    .into_iter()
+                    .map(|(paste_index, _)| paste_index)
+                    .collect::<std::collections::BTreeSet<_>>();
+                for paste_index in paste_layers {
+                    let paste = &layers[paste_index];
+                    for board in boards {
+                        violations.extend(checks::paste_via_exposure_readiness(
+                            &layer_name(paste),
+                            &paste.sketch,
+                            board,
+                            kicad_copper_layers,
+                            rules.min_area,
+                        ));
+                    }
                 }
             }
             Check::MinimumPasteAperture => {
@@ -1143,12 +1228,156 @@ fn run_checks(
                     violations.extend(checks::gold_finger_readiness(board, kicad_copper_layers));
                 }
             }
+            Check::GoldFingerEdgeReadiness => {
+                for board in boards {
+                    violations.extend(checks::gold_finger_edge_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.clearance * 2.0,
+                    ));
+                }
+            }
+            Check::GoldFingerSpacingReadiness => {
+                for board in boards {
+                    violations.extend(checks::gold_finger_spacing_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.net_clearance,
+                        rules.min_area,
+                    ));
+                }
+            }
+            Check::GoldFingerDrillKeepoutReadiness => {
+                for board in boards {
+                    violations.extend(checks::gold_finger_drill_keepout_readiness(
+                        board,
+                        excellon_drills,
+                        kicad_copper_layers,
+                        rules.clearance * 2.0,
+                        rules.min_area,
+                    ));
+                }
+            }
+            Check::ComponentEdgeClearanceReadiness => {
+                for board in boards {
+                    violations.extend(checks::component_edge_clearance_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.clearance * 2.0,
+                    ));
+                }
+            }
+            Check::ComponentHoleClearanceReadiness => {
+                for board in boards {
+                    violations.extend(checks::component_hole_clearance_readiness(
+                        board,
+                        excellon_drills,
+                        kicad_copper_layers,
+                        rules.clearance * 2.0,
+                        rules.min_area,
+                    ));
+                }
+            }
+            Check::ConnectorReworkClearanceReadiness => {
+                for board in boards {
+                    violations.extend(checks::connector_rework_clearance_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.clearance * 2.0,
+                        rules.min_width * 3.0,
+                    ));
+                }
+            }
+            Check::PadPairAsymmetryReadiness => {
+                for board in boards {
+                    violations.extend(checks::pad_pair_asymmetry_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.min_width * 8.0,
+                        1.5,
+                        rules.min_width * 10.0,
+                    ));
+                }
+            }
+            Check::ConnectorReturnPathReadiness => {
+                for board in boards {
+                    violations.extend(checks::connector_return_path_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.clearance * 2.0,
+                        rules.net_clearance * 6.0,
+                    ));
+                }
+            }
+            Check::DecouplingProximityReadiness => {
+                for board in boards {
+                    violations.extend(checks::decoupling_proximity_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.net_clearance * 6.0,
+                    ));
+                }
+            }
+            Check::EsdProtectionReadiness => {
+                for board in boards {
+                    violations.extend(checks::esd_protection_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.clearance * 2.0,
+                        rules.net_clearance * 8.0,
+                    ));
+                }
+            }
+            Check::SwitchNodeKeepoutReadiness => {
+                for board in boards {
+                    violations.extend(checks::switch_node_keepout_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.net_clearance * 4.0,
+                        rules.min_area,
+                    ));
+                }
+            }
             Check::TestpointCoverageReadiness => {
                 for board in boards {
                     violations.extend(checks::testpoint_coverage_readiness(
                         board,
                         ipc356_points,
                         kicad_copper_layers,
+                    ));
+                }
+            }
+            Check::TestpointAccessibilityReadiness => {
+                for board in boards {
+                    violations.extend(checks::testpoint_accessibility_readiness(
+                        board,
+                        ipc356_points,
+                        rules.min_width,
+                        rules.net_clearance * 4.0,
+                        rules.clearance * 2.0,
+                    ));
+                }
+            }
+            Check::ToolingHoleReadiness => {
+                for board in boards {
+                    violations.extend(checks::tooling_hole_readiness(
+                        board,
+                        excellon_drills,
+                        rules.min_width * 4.0,
+                        rules.min_width * 20.0,
+                        rules.clearance * 2.0,
+                    ));
+                }
+            }
+            Check::MouseBiteReadiness => {
+                for board in boards {
+                    violations.extend(checks::mouse_bite_readiness(
+                        board,
+                        excellon_drills,
+                        rules.min_width,
+                        rules.min_width * 4.0,
+                        rules.min_width * 2.0,
+                        rules.min_width * 8.0,
                     ));
                 }
             }
@@ -1161,6 +1390,16 @@ fn run_checks(
                     ));
                 }
             }
+            Check::LocalFiducialReadiness => {
+                for board in boards {
+                    violations.extend(checks::local_fiducial_readiness(
+                        board,
+                        kicad_copper_layers,
+                        0.8,
+                        rules.net_clearance * 25.0,
+                    ));
+                }
+            }
             Check::DensePadEscapeReadiness => {
                 for board in boards {
                     violations.extend(checks::dense_pad_escape_readiness(
@@ -1168,6 +1407,45 @@ fn run_checks(
                         kicad_copper_layers,
                         0.8,
                         rules.net_clearance * 10.0,
+                    ));
+                }
+            }
+            Check::ThermalPadViaReadiness => {
+                for board in boards {
+                    violations.extend(checks::thermal_pad_via_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.min_width * 12.0,
+                    ));
+                }
+            }
+            Check::ThermalCopperAreaReadiness => {
+                for board in boards {
+                    violations.extend(checks::thermal_copper_area_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.net_clearance * 8.0,
+                    ));
+                }
+            }
+            Check::HotComponentSpacingReadiness => {
+                for board in boards {
+                    violations.extend(checks::hot_component_spacing_readiness(
+                        board,
+                        kicad_copper_layers,
+                        rules.net_clearance * 6.0,
+                        rules.min_area,
+                    ));
+                }
+            }
+            Check::ThermalMechanicalKeepoutReadiness => {
+                for board in boards {
+                    violations.extend(checks::thermal_mechanical_keepout_readiness(
+                        board,
+                        excellon_drills,
+                        kicad_copper_layers,
+                        rules.clearance * 3.0,
+                        rules.min_area,
                     ));
                 }
             }
