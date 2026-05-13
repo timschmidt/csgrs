@@ -105,17 +105,23 @@ checks:
 - `mask-island-keepout`, `copper-overlap`, `board-edge-clearance`,
   `board-outline-sanity`, `board-outline-fragments`, `paste-overhang`,
   `paste-aperture-coverage`, `paste-aperture-ratio`,
-  `minimum-paste-aperture`, `paste-mask-alignment`, `exposed-copper`,
-  `solder-mask-opening-coverage`, `solder-mask-overlap-clearance`,
-  `solder-mask-board-edge-clearance`, `silkscreen-overlap`,
+  `minimum-paste-aperture`, `paste-aperture-spacing`,
+  `paste-mask-alignment`, `exposed-copper`, `solder-mask-opening-coverage`,
+  `solder-mask-expansion`, `solder-mask-overlap-clearance`,
+  `solder-mask-board-edge-clearance`, `silkscreen-overlap`, `silkscreen-clearance`,
   `silkscreen-board-edge-clearance`, `silkscreen-min-width`,
   `min-copper-neck`, `acid-trap`, `layer-sanity`, `copper-balance`,
   `mechanical-layer-geometry`, `solder-mask-sliver`, and
-  `minimum-mask-opening`.
-- `annular-ring`, `plating-intent`, `drill-copper-clearance`,
+  `minimum-mask-opening`, and `solder-mask-opening-spacing`.
+- `annular-ring`, `annular-ring-tolerance`, `plating-intent`, `routed-slot-readiness`,
+  `castellation-intent`, `castellation-hole-readiness`,
+  `drill-copper-clearance`, `via-in-pad-readiness`,
   `board-outline-drill-clearance`, `drill-spacing`, `drill-aspect-ratio`,
-  `drill-table-consistency`, `copper-net-intent`, `net-spacing`,
-  `registration-tolerance`, and `panelization-clearance`.
+  `drill-table-consistency`, `copper-width-readiness`, `copper-net-intent`,
+  `teardrop-readiness`, `thermal-relief-readiness`, `plane-clearance-readiness`,
+  `board-edge-exposure`, `controlled-impedance-readiness`, `high-current-readiness`,
+  `voltage-clearance-readiness`, `net-spacing`, `registration-tolerance`, and
+  `panelization-clearance`.
 - `ipc356-coverage`, `ipc356-drill-diameter`, and
   `file-manifest-readiness`.
 

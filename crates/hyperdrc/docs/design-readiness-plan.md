@@ -28,19 +28,28 @@ sidecar input where possible.
   against configured minimum and maximum paste-to-copper ratios.
 - `minimum-paste-aperture`: warn when explicit paste layers contain apertures
   whose minimum bounding dimension is below the configured minimum width.
+- `paste-aperture-spacing`: warn when apertures on an explicit paste layer are
+  closer than the configured minimum width, catching stencil bridge risk.
 - `paste-mask-alignment`: join explicit paste/copper and copper/mask pairs by
   their shared copper layer and warn when paste extends outside the matching
   solder mask opening.
 - `exposed-copper`: intersect paired copper and solder mask opening geometry.
 - `solder-mask-opening-coverage`: subtract solder mask openings from paired
   copper and report copper that would remain covered by mask.
+- `solder-mask-expansion`: subtract copper expanded by the configured clearance
+  from paired solder mask openings and warn on excessive opening growth.
 - `solder-mask-overlap-clearance`: expand paired solder mask openings by the
   configured clearance, subtract the intentional opening, and warn on covered
   copper in that vulnerable band.
 - `solder-mask-board-edge-clearance`: warn when explicit mask-opening layers
   fall outside the board outline eroded by the configured clearance.
+- `solder-mask-opening-spacing`: warn when openings on an explicit mask layer
+  are closer than the configured minimum mask bridge width.
 - `silkscreen-overlap`: intersect silkscreen with explicitly paired blocker
   geometry such as copper, paste, or mask openings.
+- `silkscreen-clearance`: expand explicitly paired blocker geometry by the
+  configured clearance and warn when silkscreen falls inside that clipping
+  region.
 - `silkscreen-board-edge-clearance`: warn when explicit silkscreen layers fall
   outside the board outline eroded by the configured clearance.
 - `silkscreen-min-width`: approximate thin silkscreen strokes and text geometry
@@ -62,8 +71,20 @@ sidecar input where possible.
   whose names look mechanical, fabrication, ECO, margin, or user-defined.
 - `annular-ring`: compare KiCad plated drill diameter against nearby same-net
   copper and report rings below the configured threshold.
+- `annular-ring-tolerance`: warn when a plated KiCad drill nominally passes the
+  configured annular ring but fails after subtracting the configured
+  registration tolerance.
 - `plating-intent`: warn when a KiCad NPTH drill has nearby copper or when a
   plated drill has no nearby same-net pad or via copper.
+- `routed-slot-readiness`: warn when KiCad non-plated mechanical drill
+  diameters are below the configured minimum width, as an initial routed cutter
+  manufacturability signal.
+- `castellation-intent`: warn when a plated KiCad drill hole crosses the board
+  outline, so castellated-hole or plated-edge intent can be reviewed.
+- `castellation-hole-readiness`: warn when a plated KiCad drill hole crossing
+  the board outline is below the configured minimum castellation diameter.
+- `via-in-pad-readiness`: warn when KiCad via copper overlaps a same-net pad on
+  the same layer, so fill, tenting, and paste treatment can be reviewed.
 - `drill-to-copper-clearance`: offset KiCad and Excellon drill holes by a
   configured clearance and intersect against other-net KiCad copper.
 - `board-outline-drill-clearance`: offset KiCad and Excellon drill holes by
@@ -76,8 +97,27 @@ sidecar input where possible.
   exceeded.
 - `drill-table-consistency`: compare nearby KiCad, Excellon, and IPC-D-356
   drill records and warn when sidecar drill diameters conflict.
+- `copper-width-readiness`: warn when parsed KiCad copper features on selected
+  layers have a minimum bounding width below the configured threshold.
 - `copper-net-intent`: warn when parsed KiCad copper still has no net after
   native board parsing and IPC-D-356 annotation.
+- `teardrop-readiness`: warn when a narrow KiCad same-net segment enters a pad
+  or via on the same layer below the configured minimum width.
+- `thermal-relief-readiness`: warn when KiCad same-net pad or via copper
+  intersects a copper zone on the same layer, so direct plane connections and
+  thermal-relief intent can be reviewed before fabrication.
+- `plane-clearance-readiness`: warn when KiCad non-plated mechanical holes
+  intersect copper zones on selected layers, so antipad and pour-clearance
+  intent can be reviewed.
+- `board-edge-exposure`: warn when parsed KiCad copper extends outside the
+  parsed board outline, so edge plating, castellations, and copper pullback can
+  be reviewed.
+- `controlled-impedance-readiness`: warn when likely high-speed KiCad nets span
+  multiple selected copper layers without a parsed same-net via transition.
+- `high-current-readiness`: warn when likely power KiCad nets span multiple
+  selected copper layers with fewer than two parsed same-net vias.
+- `voltage-clearance-readiness`: warn when likely high-voltage KiCad nets are
+  close to different-net copper using an expanded net-clearance threshold.
 - `different-net-spacing`: offset same-layer KiCad copper features by a
   configured clearance and report different-net proximity.
 - `layer-registration-tolerance`: compare KiCad copper layers with an offset
@@ -156,14 +196,19 @@ example before it is considered production-ready.
 ### Fabrication Geometry Checks
 
 - Minimum copper feature width by layer, copper weight, and service class.
+  Initial KiCad checks warn when selected copper features have a minimum
+  bounding width below the configured threshold.
 - Copper spacing matrix: trace-to-trace, trace-to-pad, trace-to-via,
   pad-to-pad, pad-to-via, via-to-via, copper-to-hole, copper-to-slot,
   copper-to-cutout, and copper-to-board-edge.
 - Voltage-aware clearance: compare net voltage classes against internal,
   external-coated, external-uncoated, slot, and creepage/clearance rules.
+  Initial KiCad checks warn when likely high-voltage nets are close to
+  different-net copper using an expanded net-clearance threshold.
 - Annular ring with tolerance: compute nominal, worst-case drill-wander, and
   registration-adjusted ring for vias, component holes, press-fit holes, and
-  plated slots.
+  plated slots. Initial KiCad checks warn when nominal annular ring passes but
+  the registration-adjusted ring fails the configured minimum.
 - Drill aspect ratio: board thickness divided by finished drill diameter, with
   separate thresholds for standard through holes, microvias, blind vias, buried
   vias, and backdrills. Initial through-hole style checks are implemented for
@@ -179,7 +224,8 @@ example before it is considered production-ready.
   copper and plated drills without nearby same-net pad or via copper.
 - Routed slot geometry: exact obround/rectangular slot outlines, slot width,
   slot end radius, slot-to-copper spacing, slot-to-slot spacing, and minimum
-  routed cutter diameter.
+  routed cutter diameter. Initial KiCad checks warn when non-plated mechanical
+  drill diameters are below the configured minimum width.
 - Board outline validity: closed contour, self-intersections, duplicate
   outlines, nested cutouts, tiny outline fragments, notches below router
   diameter, inside corners below router radius, and outline-to-hole tolerance.
@@ -197,35 +243,50 @@ example before it is considered production-ready.
 - Acid traps: acute polygon vertices, acute trace junctions, narrow wedge voids,
   and trapped etchant pockets inside plane pours.
 - Teardrop recommendations: narrow trace-to-pad and trace-to-via junctions below
-  a configured width or annular-ring margin.
+  a configured width or annular-ring margin. Initial KiCad checks warn when
+  narrow same-net segment geometry enters pads or vias.
 - Thermal relief: starved thermals, missing thermal spokes where required,
   excessive spoke width for solderability, asymmetric reliefs, and direct plane
-  connections on hand-soldered through-hole pads.
+  connections on hand-soldered through-hole pads. Initial KiCad checks warn
+  when same-net pads or vias intersect copper zones so the plane connection
+  style can be reviewed.
 - Plane clearances: antipad size on inner layers, missing clearance pads for
   through-hole pins, copper pour clearance around mechanical holes, and shorts
-  from insufficient antipads.
+  from insufficient antipads. Initial KiCad checks warn when non-plated
+  mechanical holes intersect copper zones on selected layers.
 - Board edge exposure: exposed copper at routed edges, unintentional edge
   plating, copper too close to V-score, copper too close to tab routes, and
   missing edge-plating declarations when copper intentionally reaches an edge.
+  Initial KiCad checks warn when copper geometry extends outside the parsed
+  board outline.
 - Gold fingers: finger width/spacing, bevel keepout, mask opening, plating
   finish requirement, no vias/text/silk/paste on fingers, and consistent finger
   length.
 - Castellations and half holes: minimum hole diameter, annular ring, edge
   registration, plating intent, pad pitch, and copper pullback around routed
-  board edge.
+  board edge. Initial KiCad checks warn when plated drill holes cross the board
+  outline, and warn when those crossing plated holes are below the configured
+  minimum diameter.
 - High-current copper: trace width, neck-down length, via array current sharing,
   copper pour bottlenecks, thermal vias, and connector/pad current-density
-  warnings.
+  warnings. Initial KiCad checks warn when likely power nets change layers with
+  fewer than two parsed same-net vias.
 - Controlled impedance readiness: impedance-rule presence, stackup completeness,
   reference-plane continuity, coplanar ground spacing, return-path voids, and
-  layer-change via stitching.
+  layer-change via stitching. Initial KiCad checks warn when likely high-speed
+  nets span multiple selected copper layers without a parsed same-net via
+  transition.
 
 ### Solder Mask, Paste, and Finish Checks
 
 - Solder mask expansion: mask opening larger than copper pad by the selected
-  process margin; flag mask-on-pad and excessive exposure.
+  process margin; flag mask-on-pad and excessive exposure. Initial paired
+  copper/mask checks warn when openings exceed the configured clearance around
+  copper.
 - Solder mask web/sliver: residual mask dam width between pads, vias, and
-  openings; classify by mask process and color where known.
+  openings; classify by mask process and color where known. Initial explicit
+  mask-layer checks warn when neighboring openings leave less than the
+  configured mask bridge width.
 - Mask overlap clearance: copper track or plane too close to mask opening to
   remain reliably covered. Initial paired copper/mask checks warn when covered
   copper falls within the configured mask-opening clearance band.
@@ -237,7 +298,8 @@ example before it is considered production-ready.
   checks warn when openings violate the configured board-edge clearance.
 - Via tenting/filling: vias under components, exposed vias in pads, tented-via
   intent versus mask openings, plugged/capped/fill requirements, and mismatch
-  between design and order notes.
+  between design and order notes. Initial KiCad checks warn when same-net via
+  copper overlaps pad copper on the same layer.
 - BGA mask rules: NSMD/SMD consistency, mask bridge width, opening ratio, escape
   via proximity, dogbone geometry, and via-in-pad treatment.
 - Paste reduction/expansion: paste aperture area ratio versus copper, per-pad
@@ -248,7 +310,7 @@ example before it is considered production-ready.
   aspect ratio, home-plate apertures, windowpane thermal pads, fine-pitch bridge
   risk, and tombstoning imbalance on two-terminal parts. Initial explicit paste
   layer checks flag apertures whose minimum bounding dimension is below the
-  configured minimum width.
+  configured minimum width and apertures whose spacing is below that width.
 - Paste-to-mask/copper alignment: paste outside mask opening, paste outside pad,
   paste over vias, paste bridging between adjacent pads, and paste aperture
   slivers below stencil process capability. Initial explicit triple checks warn
@@ -264,7 +326,8 @@ example before it is considered production-ready.
   slots, board edges, V-score, tab routes, and gold fingers. Initial explicit
   silkscreen plus board-outline clearance checks are implemented.
 - Silkscreen clipping risk: legend too close to mask cutbacks or pads where the
-  fabricator will clip text fragments.
+  fabricator will clip text fragments. Initial explicit silkscreen/blocker
+  pairs warn when legend geometry falls within the configured clearance.
 - Bottom-side mirroring and side intent for silkscreen text.
 - Polarity and pin-1 indicators present and visible for polarized parts,
   connectors, ICs, diodes, LEDs, electrolytics, and batteries.
