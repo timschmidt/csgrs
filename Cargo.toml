@@ -203,5 +203,18 @@ wasm = [
 ]
 spade = ["dep:spade"]
 
+[[example]]
+name = "readme_renders"
+required-features = [
+  "mesh",
+  "sketch",
+  "image-io",
+  "truetype-text",
+  "metaballs",
+  "sdf",
+  "offset",
+  "chull-io",
+]
+
 [dev-dependencies]
 proptest = "1.9"
