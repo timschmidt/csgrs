@@ -34,8 +34,8 @@ nalgebra = { version = "0.34.1", features = ["serde-serialize"] }
 #alum = "0.6.1"
 #curvo = "0.1.52"
 robust = { version = "1.1.0", default-features = false, features = ["no_std"] }
-geo = { version = "0.29.3", default-features = false, features = ["use-serde"] }
-geo-buf = { version = "0.1.0", optional = true } # straight-skeleton offsetting iOverlay can handle this in v2
+geo = { version = "0.31.0", default-features = false, features = ["use-serde"] }
+geo-buffer = { version = "0.2.0", optional = true }
 #geo-booleanop = "0.3.2" # alternative boolean implementation has fewer dependencies
 chull = { version = "0.2.4", optional = true }
 spade = { version = "2.15.0", optional = true }
@@ -171,7 +171,7 @@ sdf = [
   "fast-surface-nets",
 ]
 offset = [
-  "dep:geo-buf",
+  "dep:geo-buffer",
 ]
 delaunay = [
   "spade",

@@ -41,7 +41,6 @@ use crate::bmesh::BMesh;
 #[cfg(feature = "parallel")]
 use rayon::{iter::IntoParallelRefIterator, prelude::*};
 
-#[cfg(not(feature = "parallel"))]
 pub mod bsp;
 
 #[cfg(feature = "parallel")]
@@ -73,6 +72,9 @@ pub struct Mesh<S: Clone + Send + Sync + Debug> {
     /// Lazily calculated AABB that spans `polygons`.
     pub bounding_box: OnceLock<Aabb>,
 
+    /// Lazily built Parry TriMesh reused by query operations.
+    pub query_trimesh: OnceLock<Option<TriMesh>>,
+
     /// Metadata
     pub metadata: Option<S>,
 }
@@ -97,6 +99,7 @@ impl<S: Clone + Send + Sync + Debug + PartialEq> Mesh<S> {
         Mesh {
             polygons: polys,
             bounding_box: std::sync::OnceLock::new(),
+            query_trimesh: std::sync::OnceLock::new(),
             metadata: self.metadata.clone(),
         }
     }
@@ -341,6 +344,15 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         TriMesh::new(vertices, indices).ok()
     }
 
+    fn cached_trimesh(&self) -> Option<&TriMesh> {
+        self.query_trimesh
+            .get_or_init(|| {
+                let (vertices, indices) = self.get_vertices_and_indices();
+                TriMesh::new(vertices, indices).ok()
+            })
+            .as_ref()
+    }
+
     /// Uses Parry to check if a point is inside a `Mesh`'s as a `TriMesh`.\
     /// Note: this only use the 3d geometry of `CSG`
     ///
@@ -372,7 +384,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         &self,
         density: Real,
     ) -> (Real, Point3<Real>, Unit<Quaternion<Real>>) {
-        let trimesh = self.to_trimesh().unwrap();
+        let trimesh = self.cached_trimesh().unwrap();
         let mp = trimesh.mass_properties(density);
 
         (
@@ -467,6 +479,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
         Mesh {
             polygons: Vec::new(),
             bounding_box: OnceLock::new(),
+            query_trimesh: OnceLock::new(),
             metadata: None,
         }
     }
@@ -528,6 +541,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
         Mesh {
             polygons: final_polys,
             bounding_box: OnceLock::new(),
+            query_trimesh: OnceLock::new(),
             metadata: self.metadata.clone(),
         }
     }
@@ -603,6 +617,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
         Mesh {
             polygons: final_polys,
             bounding_box: OnceLock::new(),
+            query_trimesh: OnceLock::new(),
             metadata: self.metadata.clone(),
         }
     }
@@ -635,6 +650,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
         Mesh {
             polygons: a.all_polygons(),
             bounding_box: OnceLock::new(),
+            query_trimesh: OnceLock::new(),
             metadata: self.metadata.clone(),
         }
     }
@@ -739,6 +755,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
 
         // invalidate the old cached bounding box
         mesh.bounding_box = OnceLock::new();
+        mesh.query_trimesh = OnceLock::new();
 
         mesh
     }
@@ -782,6 +799,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
     /// Invalidates object's cached bounding box.
     fn invalidate_bounding_box(&mut self) {
         self.bounding_box = OnceLock::new();
+        self.query_trimesh = OnceLock::new();
     }
 
     /// Invert this Mesh (flip inside vs. outside)
@@ -857,6 +875,7 @@ impl<S: Clone + Send + Sync + Debug> From<Sketch<S>> for Mesh<S> {
         Mesh {
             polygons: final_polygons,
             bounding_box: OnceLock::new(),
+            query_trimesh: OnceLock::new(),
             metadata: None,
         }
     }

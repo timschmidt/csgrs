@@ -1339,6 +1339,18 @@ fn test_offset_2d_negative_distance_shrinks() {
 }
 
 #[test]
+#[cfg(feature = "offset")]
+fn test_straight_skeleton_2d_non_empty() {
+    let square = Sketch::<()>::square(2.0, None);
+    let skeleton = square.straight_skeleton(true);
+
+    assert!(
+        !skeleton.geometry.0.is_empty(),
+        "Straight skeleton should produce line geometry for a valid square"
+    );
+}
+
+#[test]
 fn test_polygon_2d_enforce_ccw_ordering() {
     // Define a triangle in CW order
     let points_cw = vec![[0.0, 0.0], [1.0, 0.0], [0.5, 1.0]];
