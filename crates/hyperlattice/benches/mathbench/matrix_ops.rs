@@ -1078,6 +1078,14 @@ fn bench_matrix_operations_for<B, F>(
             black_box(black_box(value.clone()).powi(-2).unwrap());
         }
     });
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat3 powi_negative_one"),
+        || {
+            for value in &lhs3_cases {
+                black_box(black_box(value.clone()).powi(-1).unwrap());
+            }
+        },
+    );
     trace_dispatch_row(format!("matrix_ops/{label}/mat3 powi_checked_negative"), || {
         for value in &lhs3_cases {
             black_box(black_box(value.clone()).powi_checked(-2).unwrap());
@@ -1349,6 +1357,14 @@ fn bench_matrix_operations_for<B, F>(
             black_box(black_box(value.clone()).powi(-2).unwrap());
         }
     });
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 powi_negative_one"),
+        || {
+            for value in &lhs4_cases {
+                black_box(black_box(value.clone()).powi(-1).unwrap());
+            }
+        },
+    );
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 powi_checked_negative"), || {
         for value in &lhs4_cases {
             black_box(black_box(value.clone()).powi_checked(-2).unwrap());
@@ -1867,6 +1883,16 @@ fn bench_matrix_operations_for<B, F>(
             )
         })
     });
+    group.bench_function(format!("{label}/mat3 powi_negative_one"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(
+                black_box(next_case(&lhs3_cases, &cursor).clone())
+                    .powi(-1)
+                    .unwrap(),
+            )
+        })
+    });
     group.bench_function(format!("{label}/mat3 powi_checked_negative"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
@@ -2314,6 +2340,16 @@ fn bench_matrix_operations_for<B, F>(
             black_box(
                 black_box(next_case(&lhs4_cases, &cursor).clone())
                     .powi(-2)
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat4 powi_negative_one"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(
+                black_box(next_case(&lhs4_cases, &cursor).clone())
+                    .powi(-1)
                     .unwrap(),
             )
         })

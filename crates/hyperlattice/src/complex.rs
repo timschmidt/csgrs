@@ -135,8 +135,7 @@ impl<B: Backend> Complex<B> {
         let denom = &rhs.re * &rhs.re + &rhs.im * &rhs.im;
         require_known_nonzero(&denom)?;
         let inv_denom = denom.inverse()?;
-        let re = &self.re * &rhs.re + &self.im * &rhs.im;
-        let im = &self.im * &rhs.re - &self.re * &rhs.im;
+        let (re, im) = complex_division_numerators(&self, &rhs);
         // The inverse norm is reused for both components, so keep it borrowed.
         Ok(Self::new(
             re.mul_cached(&inv_denom),
@@ -190,6 +189,32 @@ fn complex_powi_positive<B: Backend>(base: Complex<B>, exponent: u64) -> Complex
             complex_powi_by_squaring(base, exponent)
         }
     }
+}
+
+#[inline(always)]
+fn complex_division_numerators<B: Backend>(
+    lhs: &Complex<B>,
+    rhs: &Complex<B>,
+) -> (Scalar<B>, Scalar<B>) {
+    if B::FUSE_SIGNED_PRODUCT_SUM {
+        crate::trace_dispatch!("hyperlattice_complex", "op", "div-numerators-fused-exact");
+        return (
+            Scalar::active_signed_product_sum2(
+                [true, true],
+                [[&lhs.re, &rhs.re], [&lhs.im, &rhs.im]],
+            ),
+            Scalar::active_signed_product_sum2(
+                [true, false],
+                [[&lhs.im, &rhs.re], [&lhs.re, &rhs.im]],
+            ),
+        );
+    }
+
+    crate::trace_dispatch!("hyperlattice_complex", "op", "div-numerators-direct");
+    (
+        &lhs.re * &rhs.re + &lhs.im * &rhs.im,
+        &lhs.im * &rhs.re - &lhs.re * &rhs.im,
+    )
 }
 
 fn complex_powi_by_squaring<B: Backend>(base: Complex<B>, exponent: u64) -> Complex<B> {
@@ -369,8 +394,7 @@ impl<B: Backend> Div for Complex<B> {
     fn div(self, rhs: Self) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "div-owned-owned");
         let inv_denom = (&rhs.re * &rhs.re + &rhs.im * &rhs.im).inverse()?;
-        let re = &self.re * &rhs.re + &self.im * &rhs.im;
-        let im = &self.im * &rhs.re - &self.re * &rhs.im;
+        let (re, im) = complex_division_numerators(&self, &rhs);
         Ok(Self::new(
             re.mul_cached(&inv_denom),
             im.mul_cached(&inv_denom),
@@ -384,8 +408,7 @@ impl<B: Backend> Div<&Complex<B>> for Complex<B> {
     fn div(self, rhs: &Complex<B>) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "div-owned-ref");
         let inv_denom = (&rhs.re * &rhs.re + &rhs.im * &rhs.im).inverse()?;
-        let re = &self.re * &rhs.re + &self.im * &rhs.im;
-        let im = &self.im * &rhs.re - &self.re * &rhs.im;
+        let (re, im) = complex_division_numerators(&self, rhs);
         Ok(Self::new(
             re.mul_cached(&inv_denom),
             im.mul_cached(&inv_denom),
@@ -399,8 +422,7 @@ impl<B: Backend> Div<Complex<B>> for &Complex<B> {
     fn div(self, rhs: Complex<B>) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "div-ref-owned");
         let inv_denom = (&rhs.re * &rhs.re + &rhs.im * &rhs.im).inverse()?;
-        let re = &self.re * &rhs.re + &self.im * &rhs.im;
-        let im = &self.im * &rhs.re - &self.re * &rhs.im;
+        let (re, im) = complex_division_numerators(self, &rhs);
         Ok(Complex::new(
             re.mul_cached(&inv_denom),
             im.mul_cached(&inv_denom),
@@ -414,8 +436,7 @@ impl<B: Backend> Div<&Complex<B>> for &Complex<B> {
     fn div(self, rhs: &Complex<B>) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "div-ref-ref");
         let inv_denom = (&rhs.re * &rhs.re + &rhs.im * &rhs.im).inverse()?;
-        let re = &self.re * &rhs.re + &self.im * &rhs.im;
-        let im = &self.im * &rhs.re - &self.re * &rhs.im;
+        let (re, im) = complex_division_numerators(self, rhs);
         Ok(Complex::new(
             re.mul_cached(&inv_denom),
             im.mul_cached(&inv_denom),

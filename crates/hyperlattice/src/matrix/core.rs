@@ -12,7 +12,7 @@ use std::fmt;
 use std::mem;
 use std::ops::{Add, BitXor, Div, Index, IndexMut, Mul, Neg, Sub};
 
-use crate::backend::BackendScalar;
+use crate::backend::{BackendScalar, ExactRationalKind};
 use crate::require_known_nonzero_with_abort;
 use crate::scalar::{
     ZeroStatus, clone_with_abort, reject_definite_zero, require_known_nonzero, with_abort,
@@ -144,8 +144,8 @@ pub struct Matrix4<B: Backend = DefaultBackend>(
 pub struct PreparedRightDivisor3<'a, B: Backend = DefaultBackend> {
     divisor: &'a Matrix3<B>,
     facts: Matrix3Facts,
-    right_is_exact_dyadic: bool,
-    right_is_exact_rational: bool,
+    right_exact_rational_kind: ExactRationalKind,
+    is_definitely_dense_for_inverse: bool,
     adjugate: Option<[[Scalar<B>; 3]; 3]>,
     determinant: Option<Scalar<B>>,
     reciprocal_determinant: Option<Scalar<B>>,
@@ -162,8 +162,7 @@ pub struct PreparedRightDivisor3<'a, B: Backend = DefaultBackend> {
 pub struct PreparedRightDivisor4<'a, B: Backend = DefaultBackend> {
     divisor: &'a Matrix4<B>,
     facts: Matrix4Facts,
-    right_is_exact_dyadic: bool,
-    right_is_exact_rational: bool,
+    right_exact_rational_kind: ExactRationalKind,
     is_definitely_dense_for_inverse: bool,
     factors: Option<([Scalar<B>; 6], [Scalar<B>; 6])>,
     adjugate: Option<[[Scalar<B>; 4]; 4]>,
@@ -190,33 +189,61 @@ struct Matrix3Facts {
     is_affine_translation: bool,
 }
 
-fn matrix3_all_exact_dyadic_rational<B: Backend>(matrix: &[[Scalar<B>; 3]; 3]) -> bool {
-    matrix
-        .iter()
-        .all(|row| row.iter().all(|value| value.is_exact_dyadic_rational()))
+#[inline]
+fn combine_exact_rational_kind(
+    left: ExactRationalKind,
+    right: ExactRationalKind,
+) -> ExactRationalKind {
+    use ExactRationalKind::{ExactDyadicRational, ExactRational, NonRational};
+    match (left, right) {
+        (NonRational, _) | (_, NonRational) => NonRational,
+        (ExactRational, _) | (_, ExactRational) => ExactRational,
+        (ExactDyadicRational, ExactDyadicRational) => ExactDyadicRational,
+    }
 }
 
-fn matrix4_all_exact_dyadic_rational<B: Backend>(matrix: &[[Scalar<B>; 4]; 4]) -> bool {
-    matrix
-        .iter()
-        .all(|row| row.iter().all(|value| value.is_exact_dyadic_rational()))
+#[inline]
+fn matrix3_exact_rational_kind<B: Backend>(matrix: &[[Scalar<B>; 3]; 3]) -> ExactRationalKind {
+    let mut kind = ExactRationalKind::ExactDyadicRational;
+    for row in matrix {
+        for value in row {
+            kind = combine_exact_rational_kind(kind, value.exact_rational_kind());
+            if kind == ExactRationalKind::NonRational {
+                return kind;
+            }
+        }
+    }
+    kind
 }
 
-fn matrix3_all_exact_rational<B: Backend>(matrix: &[[Scalar<B>; 3]; 3]) -> bool {
-    matrix
-        .iter()
-        .all(|row| row.iter().all(|value| value.is_exact_rational()))
+#[inline]
+fn matrix4_exact_rational_kind<B: Backend>(matrix: &[[Scalar<B>; 4]; 4]) -> ExactRationalKind {
+    let mut kind = ExactRationalKind::ExactDyadicRational;
+    for row in matrix {
+        for value in row {
+            kind = combine_exact_rational_kind(kind, value.exact_rational_kind());
+            if kind == ExactRationalKind::NonRational {
+                return kind;
+            }
+        }
+    }
+    kind
 }
 
-fn matrix4_all_exact_rational<B: Backend>(matrix: &[[Scalar<B>; 4]; 4]) -> bool {
-    matrix
-        .iter()
-        .all(|row| row.iter().all(|value| value.is_exact_rational()))
-}
-
-#[inline(never)]
-fn matrix4_all_exact_rational_slow<B: Backend>(matrix: &[[Scalar<B>; 4]; 4]) -> bool {
-    matrix4_all_exact_rational(matrix)
+#[inline]
+fn matrix_exact_rational_kind<B: Backend, const N: usize>(
+    matrix: &[[Scalar<B>; N]; N],
+) -> ExactRationalKind {
+    let mut kind = ExactRationalKind::ExactDyadicRational;
+    for row in matrix {
+        for value in row {
+            kind = combine_exact_rational_kind(kind, value.exact_rational_kind());
+            if kind == ExactRationalKind::NonRational {
+                return kind;
+            }
+        }
+    }
+    kind
 }
 
 impl<'a, B: Backend> PreparedRightDivisor3<'a, B> {
@@ -228,14 +255,13 @@ impl<'a, B: Backend> PreparedRightDivisor3<'a, B> {
             "prepared-right-divisor3-new"
         );
         let facts = matrix3_facts(&divisor.0);
-        let right_is_exact_dyadic = matrix3_all_exact_dyadic_rational(&divisor.0);
-        let right_is_exact_rational =
-            right_is_exact_dyadic || matrix3_all_exact_rational(&divisor.0);
+        let right_exact_rational_kind = matrix3_exact_rational_kind(&divisor.0);
         Self {
             divisor,
             facts,
-            right_is_exact_dyadic,
-            right_is_exact_rational,
+            right_exact_rational_kind,
+            is_definitely_dense_for_inverse: B::FUSE_SIGNED_PRODUCT_SUM
+                && matrix3_is_definitely_dense_for_inverse(&divisor.0),
             adjugate: None,
             determinant: None,
             reciprocal_determinant: None,
@@ -252,13 +278,18 @@ impl<'a, B: Backend> PreparedRightDivisor3<'a, B> {
 
     #[inline]
     fn can_use_shared_adjugate(&self, left: &[[Scalar<B>; 3]; 3]) -> bool {
-        if self.right_is_exact_dyadic {
-            return matrix3_all_exact_dyadic_rational(left);
+        match self.right_exact_rational_kind {
+            ExactRationalKind::ExactDyadicRational => {
+                matrix3_exact_rational_kind(left) == ExactRationalKind::ExactDyadicRational
+            }
+            ExactRationalKind::ExactRational => {
+                matches!(
+                    matrix3_exact_rational_kind(left),
+                    ExactRationalKind::ExactDyadicRational | ExactRationalKind::ExactRational
+                )
+            }
+            ExactRationalKind::NonRational => false,
         }
-        if !self.right_is_exact_rational {
-            return false;
-        }
-        matrix3_all_exact_rational(left)
     }
 
     fn prepare_shared_adjugate(&mut self) -> BlasResult<&[[Scalar<B>; 3]; 3]> {
@@ -268,7 +299,11 @@ impl<'a, B: Backend> PreparedRightDivisor3<'a, B> {
                 "method",
                 "prepared-right-divisor3-cache-shared-adjugate"
             );
-            let (adjugate, determinant) = matrix3_adjugate_and_determinant(&self.divisor.0);
+            let (adjugate, determinant) = if self.is_definitely_dense_for_inverse {
+                matrix3_adjugate_and_determinant_dense_exact(&self.divisor.0)
+            } else {
+                matrix3_adjugate_and_determinant(&self.divisor.0)
+            };
             let reciprocal_determinant = determinant.inverse_ref()?;
             self.adjugate = Some(adjugate);
             self.determinant = Some(determinant);
@@ -287,7 +322,11 @@ impl<'a, B: Backend> PreparedRightDivisor3<'a, B> {
                 "method",
                 "prepared-right-divisor3-cache-shared-adjugate-checked"
             );
-            let (adjugate, determinant) = matrix3_adjugate_and_determinant(&self.divisor.0);
+            let (adjugate, determinant) = if self.is_definitely_dense_for_inverse {
+                matrix3_adjugate_and_determinant_dense_exact(&self.divisor.0)
+            } else {
+                matrix3_adjugate_and_determinant(&self.divisor.0)
+            };
             require_known_nonzero(&determinant)?;
             let reciprocal_determinant = determinant.inverse_ref()?;
             self.adjugate = Some(adjugate);
@@ -310,7 +349,11 @@ impl<'a, B: Backend> PreparedRightDivisor3<'a, B> {
                 "method",
                 "prepared-right-divisor3-cache-shared-adjugate-checked-abort"
             );
-            let (adjugate, determinant) = matrix3_adjugate_and_determinant(&self.divisor.0);
+            let (adjugate, determinant) = if self.is_definitely_dense_for_inverse {
+                matrix3_adjugate_and_determinant_dense_exact(&self.divisor.0)
+            } else {
+                matrix3_adjugate_and_determinant(&self.divisor.0)
+            };
             let determinant = with_abort(determinant, signal);
             require_known_nonzero(&determinant)?;
             let reciprocal_determinant = determinant.inverse_ref()?;
@@ -389,14 +432,11 @@ impl<'a, B: Backend> PreparedRightDivisor4<'a, B> {
             "prepared-right-divisor4-new"
         );
         let facts = matrix4_facts(&divisor.0);
-        let right_is_exact_dyadic = matrix4_all_exact_dyadic_rational(&divisor.0);
-        let right_is_exact_rational =
-            right_is_exact_dyadic || matrix4_all_exact_rational(&divisor.0);
+        let right_exact_rational_kind = matrix4_exact_rational_kind(&divisor.0);
         Self {
             divisor,
             facts,
-            right_is_exact_dyadic,
-            right_is_exact_rational,
+            right_exact_rational_kind,
             is_definitely_dense_for_inverse: B::FUSE_SIGNED_PRODUCT_SUM
                 && facts.is_definitely_dense_for_inverse,
             factors: None,
@@ -416,16 +456,20 @@ impl<'a, B: Backend> PreparedRightDivisor4<'a, B> {
 
     #[inline]
     fn can_use_shared_adjugate(&self, left: &[[Scalar<B>; 4]; 4]) -> bool {
-        if self.right_is_exact_dyadic {
-            if matrix4_all_exact_dyadic_rational(left) {
-                return true;
+        match self.right_exact_rational_kind {
+            ExactRationalKind::ExactDyadicRational => {
+                let left_kind = matrix4_exact_rational_kind(left);
+                left_kind == ExactRationalKind::ExactDyadicRational
+                    || (B::FUSE_SIGNED_PRODUCT_SUM && left_kind == ExactRationalKind::ExactRational)
             }
-            return B::FUSE_SIGNED_PRODUCT_SUM && matrix4_all_exact_rational_slow(left);
+            ExactRationalKind::ExactRational => {
+                matches!(
+                    matrix4_exact_rational_kind(left),
+                    ExactRationalKind::ExactDyadicRational | ExactRationalKind::ExactRational
+                )
+            }
+            ExactRationalKind::NonRational => false,
         }
-        if !self.right_is_exact_rational {
-            return false;
-        }
-        matrix4_all_exact_rational(left)
     }
 
     fn prepare_shared_adjugate(&mut self) -> BlasResult<&[[Scalar<B>; 4]; 4]> {
@@ -1349,33 +1393,15 @@ fn prefer_shared_adjugate_right_division<B: Backend, const N: usize>(
     // `det(right)` and all adjugate cofactors stay dyadic; decimal divisors can
     // reject the path before scanning the dividend. This preserves the exact
     // same predicate but moves the cheapest likely rejection earlier.
-    if right
-        .iter()
-        .flat_map(|row| row.iter())
-        .chain(left.iter().flat_map(|row| row.iter()))
-        .all(Scalar::is_exact_dyadic_rational)
-    {
-        return true;
+    let right_kind = matrix_exact_rational_kind(right);
+    if right_kind == ExactRationalKind::NonRational {
+        return false;
     }
-
-    prefer_shared_adjugate_exact_rational_right_division(left, right)
-}
-
-#[inline(never)]
-fn prefer_shared_adjugate_exact_rational_right_division<B: Backend, const N: usize>(
-    left: &[[Scalar<B>; N]; N],
-    right: &[[Scalar<B>; N]; N],
-) -> bool {
-    // This deliberately uses already-exposed structural facts rather than
-    // probing scalar values inside the matrix arithmetic lanes. Targeted
-    // Criterion after adding this fallback showed large wins for non-dyadic
-    // hyperreal-rational right-division, while the dyadic path above stayed on
-    // its small reduction-friendly primitive.
-    right
-        .iter()
-        .flat_map(|row| row.iter())
-        .chain(left.iter().flat_map(|row| row.iter()))
-        .all(Scalar::is_exact_rational)
+    let left_kind = matrix_exact_rational_kind(left);
+    matches!(
+        combine_exact_rational_kind(left_kind, right_kind),
+        ExactRationalKind::ExactDyadicRational | ExactRationalKind::ExactRational
+    )
 }
 
 #[inline]

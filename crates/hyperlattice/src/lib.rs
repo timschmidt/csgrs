@@ -165,23 +165,13 @@ impl<B: Backend> Scalar<B> {
     }
 
     #[inline]
-    pub(crate) fn is_exact_dyadic_rational(&self) -> bool {
-        // Matrix right-division uses this representation fact to choose between
-        // shared-adjugate scaling and Gauss-Jordan solving. Dyadic exact
-        // rationals reduce by shifts, so extra products can be cheaper than
-        // repeated pivot inverses; non-dyadic rationals usually need BigInt gcds.
-        crate::trace_dispatch!("hyperlattice", "scalar_query", "exact-dyadic-rational");
-        self.0.is_exact_dyadic_rational()
-    }
-
-    #[inline]
-    pub(crate) fn is_exact_rational(&self) -> bool {
-        // Reuse the backend's existing structural certificate. This is a
-        // representation fact, not an approximate scalar query, so matrix
-        // dispatch can decide between reduction schedules before entering dense
-        // arithmetic lanes.
-        crate::trace_dispatch!("hyperlattice", "scalar_query", "exact-rational");
-        self.0.is_exact_rational()
+    pub(crate) fn exact_rational_kind(&self) -> backend::ExactRationalKind {
+        // Matrix dispatch only needs the already-known representation class:
+        // non-rational, exact rational, or dyadic exact rational. Keeping that
+        // as one backend query avoids a dyadic scan followed by a rational scan
+        // before the hot right-division kernels.
+        crate::trace_dispatch!("hyperlattice", "scalar_query", "exact-rational-kind");
+        self.0.exact_rational_kind()
     }
 
     #[inline]
@@ -220,20 +210,11 @@ impl<B: Backend> Scalar<B> {
                 // two independent products. This mirrors the delayed
                 // normalization idea used in Bareiss fraction-free elimination
                 // (Math. Comp. 22(103), 1968, https://doi.org/10.2307/2004533).
-                Self::active_signed_product_sum2(
-                    [true, true],
-                    [[left[1], right[1]], [left[2], right[2]]],
-                )
+                Self::active_positive_product_sum2([[left[1], right[1]], [left[2], right[2]]])
             } else if left1_zero {
-                Self::active_signed_product_sum2(
-                    [true, true],
-                    [[left[0], right[0]], [left[2], right[2]]],
-                )
+                Self::active_positive_product_sum2([[left[0], right[0]], [left[2], right[2]]])
             } else if left2_zero {
-                Self::active_signed_product_sum2(
-                    [true, true],
-                    [[left[0], right[0]], [left[1], right[1]]],
-                )
+                Self::active_positive_product_sum2([[left[0], right[0]], [left[1], right[1]]])
             } else {
                 unreachable!("nonzero lane count checked")
             };
@@ -296,87 +277,66 @@ impl<B: Backend> Scalar<B> {
             crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot4-sparse-two");
             if left0_zero {
                 if left1_zero {
-                    return Self::active_signed_product_sum2(
-                        [true, true],
-                        [[left[2], right[2]], [left[3], right[3]]],
-                    );
+                    return Self::active_positive_product_sum2([
+                        [left[2], right[2]],
+                        [left[3], right[3]],
+                    ]);
                 }
                 if left2_zero {
-                    return Self::active_signed_product_sum2(
-                        [true, true],
-                        [[left[1], right[1]], [left[3], right[3]]],
-                    );
+                    return Self::active_positive_product_sum2([
+                        [left[1], right[1]],
+                        [left[3], right[3]],
+                    ]);
                 }
-                return Self::active_signed_product_sum2(
-                    [true, true],
-                    [[left[1], right[1]], [left[2], right[2]]],
-                );
+                return Self::active_positive_product_sum2([
+                    [left[1], right[1]],
+                    [left[2], right[2]],
+                ]);
             }
             if left1_zero {
                 return if left2_zero {
-                    Self::active_signed_product_sum2(
-                        [true, true],
-                        [[left[0], right[0]], [left[3], right[3]]],
-                    )
+                    Self::active_positive_product_sum2([[left[0], right[0]], [left[3], right[3]]])
                 } else {
-                    Self::active_signed_product_sum2(
-                        [true, true],
-                        [[left[0], right[0]], [left[2], right[2]]],
-                    )
+                    Self::active_positive_product_sum2([[left[0], right[0]], [left[2], right[2]]])
                 };
             }
             if left2_zero {
-                return Self::active_signed_product_sum2(
-                    [true, true],
-                    [[left[0], right[0]], [left[3], right[3]]],
-                );
+                return Self::active_positive_product_sum2([
+                    [left[0], right[0]],
+                    [left[3], right[3]],
+                ]);
             }
-            return Self::active_signed_product_sum2(
-                [true, true],
-                [[left[0], right[0]], [left[1], right[1]]],
-            );
+            return Self::active_positive_product_sum2([[left[0], right[0]], [left[1], right[1]]]);
         }
 
         if nonzero_lanes == 3 {
             crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot4-sparse-three");
             if left0_zero {
-                return Self::active_signed_product_sum2(
-                    [true, true, true],
-                    [
-                        [left[1], right[1]],
-                        [left[2], right[2]],
-                        [left[3], right[3]],
-                    ],
-                );
-            }
-            if left1_zero {
-                return Self::active_signed_product_sum2(
-                    [true, true, true],
-                    [
-                        [left[0], right[0]],
-                        [left[2], right[2]],
-                        [left[3], right[3]],
-                    ],
-                );
-            }
-            if left2_zero {
-                return Self::active_signed_product_sum2(
-                    [true, true, true],
-                    [
-                        [left[0], right[0]],
-                        [left[1], right[1]],
-                        [left[3], right[3]],
-                    ],
-                );
-            }
-            return Self::active_signed_product_sum2(
-                [true, true, true],
-                [
-                    [left[0], right[0]],
+                return Self::active_positive_product_sum3([
                     [left[1], right[1]],
                     [left[2], right[2]],
-                ],
-            );
+                    [left[3], right[3]],
+                ]);
+            }
+            if left1_zero {
+                return Self::active_positive_product_sum3([
+                    [left[0], right[0]],
+                    [left[2], right[2]],
+                    [left[3], right[3]],
+                ]);
+            }
+            if left2_zero {
+                return Self::active_positive_product_sum3([
+                    [left[0], right[0]],
+                    [left[1], right[1]],
+                    [left[3], right[3]],
+                ]);
+            }
+            return Self::active_positive_product_sum3([
+                [left[0], right[0]],
+                [left[1], right[1]],
+                [left[2], right[2]],
+            ]);
         }
 
         if B::FUSE_SIGNED_PRODUCT_SUM {
@@ -439,20 +399,11 @@ impl<B: Backend> Scalar<B> {
                 // of expanding two independent squares and an add. This follows
                 // Bareiss-style delayed normalization (Math. Comp. 22(103),
                 // 1968, <https://doi.org/10.2307/2004533>).
-                Self::active_signed_product_sum2(
-                    [true, true],
-                    [[values[1], values[1]], [values[2], values[2]]],
-                )
+                Self::active_positive_product_sum2([[values[1], values[1]], [values[2], values[2]]])
             } else if zero1 {
-                Self::active_signed_product_sum2(
-                    [true, true],
-                    [[values[0], values[0]], [values[2], values[2]]],
-                )
+                Self::active_positive_product_sum2([[values[0], values[0]], [values[2], values[2]]])
             } else {
-                Self::active_signed_product_sum2(
-                    [true, true],
-                    [[values[0], values[0]], [values[1], values[1]]],
-                )
+                Self::active_positive_product_sum2([[values[0], values[0]], [values[1], values[1]]])
             };
         }
 
@@ -505,76 +456,46 @@ impl<B: Backend> Scalar<B> {
         if nonzero_lanes == 2 {
             crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot4-same-sparse-two");
             return if zero0 && zero1 {
-                Self::active_signed_product_sum2(
-                    [true, true],
-                    [[values[2], values[2]], [values[3], values[3]]],
-                )
+                Self::active_positive_product_sum2([[values[2], values[2]], [values[3], values[3]]])
             } else if zero0 && zero2 {
-                Self::active_signed_product_sum2(
-                    [true, true],
-                    [[values[1], values[1]], [values[3], values[3]]],
-                )
+                Self::active_positive_product_sum2([[values[1], values[1]], [values[3], values[3]]])
             } else if zero0 && zero3 {
-                Self::active_signed_product_sum2(
-                    [true, true],
-                    [[values[1], values[1]], [values[2], values[2]]],
-                )
+                Self::active_positive_product_sum2([[values[1], values[1]], [values[2], values[2]]])
             } else if zero1 && zero2 {
-                Self::active_signed_product_sum2(
-                    [true, true],
-                    [[values[0], values[0]], [values[3], values[3]]],
-                )
+                Self::active_positive_product_sum2([[values[0], values[0]], [values[3], values[3]]])
             } else if zero1 && zero3 {
-                Self::active_signed_product_sum2(
-                    [true, true],
-                    [[values[0], values[0]], [values[2], values[2]]],
-                )
+                Self::active_positive_product_sum2([[values[0], values[0]], [values[2], values[2]]])
             } else {
-                Self::active_signed_product_sum2(
-                    [true, true],
-                    [[values[0], values[0]], [values[1], values[1]]],
-                )
+                Self::active_positive_product_sum2([[values[0], values[0]], [values[1], values[1]]])
             };
         }
 
         if nonzero_lanes == 3 {
             crate::trace_dispatch!("hyperlattice", "scalar_fast_path", "dot4-same-sparse-three");
             return if zero0 {
-                Self::active_signed_product_sum2(
-                    [true, true, true],
-                    [
-                        [values[1], values[1]],
-                        [values[2], values[2]],
-                        [values[3], values[3]],
-                    ],
-                )
+                Self::active_positive_product_sum3([
+                    [values[1], values[1]],
+                    [values[2], values[2]],
+                    [values[3], values[3]],
+                ])
             } else if zero1 {
-                Self::active_signed_product_sum2(
-                    [true, true, true],
-                    [
-                        [values[0], values[0]],
-                        [values[2], values[2]],
-                        [values[3], values[3]],
-                    ],
-                )
+                Self::active_positive_product_sum3([
+                    [values[0], values[0]],
+                    [values[2], values[2]],
+                    [values[3], values[3]],
+                ])
             } else if zero2 {
-                Self::active_signed_product_sum2(
-                    [true, true, true],
-                    [
-                        [values[0], values[0]],
-                        [values[1], values[1]],
-                        [values[3], values[3]],
-                    ],
-                )
+                Self::active_positive_product_sum3([
+                    [values[0], values[0]],
+                    [values[1], values[1]],
+                    [values[3], values[3]],
+                ])
             } else {
-                Self::active_signed_product_sum2(
-                    [true, true, true],
-                    [
-                        [values[0], values[0]],
-                        [values[1], values[1]],
-                        [values[2], values[2]],
-                    ],
-                )
+                Self::active_positive_product_sum3([
+                    [values[0], values[0]],
+                    [values[1], values[1]],
+                    [values[2], values[2]],
+                ])
             };
         }
 
@@ -974,6 +895,45 @@ impl<B: Backend> Scalar<B> {
         ))
     }
 
+    #[inline]
+    pub(crate) fn active_positive_product_sum2(terms: [[&Self; 2]; 2]) -> Self {
+        if B::FUSE_SIGNED_PRODUCT_SUM {
+            crate::trace_dispatch!(
+                "hyperlattice",
+                "scalar_fast_path",
+                "positive-product-sum2-active"
+            );
+            return Self::active_signed_product_sum2([true, true], terms);
+        }
+
+        crate::trace_dispatch!(
+            "hyperlattice",
+            "scalar_fast_path",
+            "positive-product-sum2-direct"
+        );
+        terms[0][0] * terms[0][1] + terms[1][0] * terms[1][1]
+    }
+
+    #[inline]
+    pub(crate) fn active_positive_product_sum3(terms: [[&Self; 2]; 3]) -> Self {
+        if B::FUSE_SIGNED_PRODUCT_SUM {
+            crate::trace_dispatch!(
+                "hyperlattice",
+                "scalar_fast_path",
+                "positive-product-sum3-active"
+            );
+            return Self::active_signed_product_sum2([true, true, true], terms);
+        }
+
+        crate::trace_dispatch!(
+            "hyperlattice",
+            "scalar_fast_path",
+            "positive-product-sum3-direct"
+        );
+        let first = terms[0][0] * terms[0][1] + terms[1][0] * terms[1][1];
+        first + terms[2][0] * terms[2][1]
+    }
+
     /// Raises this scalar to a scalar exponent.
     pub fn pow(self, exponent: Self) -> BlasResult<Self> {
         crate::trace_dispatch!("hyperlattice", "scalar_method", "pow");
@@ -1020,6 +980,39 @@ impl<B: Backend> Scalar<B> {
     pub fn tan(self) -> BlasResult<Self> {
         crate::trace_dispatch!("hyperlattice", "scalar_method", "tan");
         self.0.tan().map(Self)
+    }
+
+    /// Returns the hyperbolic sine.
+    pub fn sinh(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("hyperlattice", "scalar_method", "sinh");
+        if B::USE_BACKEND_HYPERBOLIC {
+            return self.0.sinh().map(Self);
+        }
+        let positive = self.clone().exp()?;
+        let negative = (-self).exp()?;
+        (positive - negative) / Scalar::<B>::from(2_i8)
+    }
+
+    /// Returns the hyperbolic cosine.
+    pub fn cosh(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("hyperlattice", "scalar_method", "cosh");
+        if B::USE_BACKEND_HYPERBOLIC {
+            return self.0.cosh().map(Self);
+        }
+        let positive = self.clone().exp()?;
+        let negative = (-self).exp()?;
+        (positive + negative) / Scalar::<B>::from(2_i8)
+    }
+
+    /// Returns the hyperbolic tangent.
+    pub fn tanh(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("hyperlattice", "scalar_method", "tanh");
+        if B::USE_BACKEND_HYPERBOLIC || B::USE_BACKEND_TANH {
+            return self.0.tanh().map(Self);
+        }
+        let positive = self.clone().exp()?;
+        let negative = (-self).exp()?;
+        (positive.clone() - negative.clone()) / (positive + negative)
     }
 
     /// Returns the inverse sine.

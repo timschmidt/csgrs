@@ -56,10 +56,6 @@ pub struct ScalarFacts {
     pub magnitude: Option<ScalarMagnitudeBits>,
 }
 
-pub(crate) fn two<B: Backend>() -> Scalar<B> {
-    2.into()
-}
-
 #[inline(always)]
 pub(crate) fn with_abort<B: Backend>(mut value: Scalar<B>, signal: &AbortSignal) -> Scalar<B> {
     crate::trace_dispatch!("hyperlattice", "abort", "attach-owned-scalar");
@@ -356,26 +352,41 @@ pub fn tan<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
 
 /// Returns the hyperbolic sine of `value`.
 pub fn sinh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "sinh-exp-formula");
-    let positive = value.clone().exp()?;
-    let negative = (-value).exp()?;
-    (positive - negative) / two()
+    if B::USE_BACKEND_HYPERBOLIC {
+        crate::trace_dispatch!("hyperlattice", "free_function", "sinh-backend");
+        value.sinh()
+    } else {
+        crate::trace_dispatch!("hyperlattice", "free_function", "sinh-exp-formula");
+        let positive = value.clone().exp()?;
+        let negative = (-value).exp()?;
+        (positive - negative) / Scalar::<B>::from(2_i8)
+    }
 }
 
 /// Returns the hyperbolic cosine of `value`.
 pub fn cosh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "cosh-exp-formula");
-    let positive = value.clone().exp()?;
-    let negative = (-value).exp()?;
-    (positive + negative) / two()
+    if B::USE_BACKEND_HYPERBOLIC {
+        crate::trace_dispatch!("hyperlattice", "free_function", "cosh-backend");
+        value.cosh()
+    } else {
+        crate::trace_dispatch!("hyperlattice", "free_function", "cosh-exp-formula");
+        let positive = value.clone().exp()?;
+        let negative = (-value).exp()?;
+        (positive + negative) / Scalar::<B>::from(2_i8)
+    }
 }
 
 /// Returns the hyperbolic tangent of `value`.
 pub fn tanh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
-    crate::trace_dispatch!("hyperlattice", "free_function", "tanh-exp-formula");
-    let positive = value.clone().exp()?;
-    let negative = (-value).exp()?;
-    (positive.clone() - negative.clone()) / (positive + negative)
+    if B::USE_BACKEND_HYPERBOLIC || B::USE_BACKEND_TANH {
+        crate::trace_dispatch!("hyperlattice", "free_function", "tanh-backend");
+        value.tanh()
+    } else {
+        crate::trace_dispatch!("hyperlattice", "free_function", "tanh-exp-formula");
+        let positive = value.clone().exp()?;
+        let negative = (-value).exp()?;
+        (positive.clone() - negative.clone()) / (positive + negative)
+    }
 }
 
 /// Returns the inverse sine of `value`.

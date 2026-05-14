@@ -1,7 +1,7 @@
 use std::fmt;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-use crate::backend::{Backend, BackendScalar as BackendScalarTrait};
+use crate::backend::{Backend, BackendScalar as BackendScalarTrait, ExactRationalKind};
 use crate::{
     AbortSignal, BlasResult, Problem, ScalarFacts, ScalarMagnitudeBits, ScalarSign, ZeroStatus,
 };
@@ -43,6 +43,11 @@ impl Backend for HyperrealBackend {
     // leave the default off because their direct owned multiply benchmarks
     // faster.
     const BORROW_SHARED_SCALE_FACTOR: bool = true;
+    // Hyperbolic scalar functions can reuse hyperreal's exact inverse/product
+    // structure. Approx stays on the public formula shape because its compact
+    // representation regresses through this extra backend layer.
+    const USE_BACKEND_HYPERBOLIC: bool = true;
+    const USE_BACKEND_TANH: bool = true;
     // Exact rational cofactors are short signed product sums. Fusing them in
     // hyperreal lets Rational share one denominator across the whole minor;
     // approximate backends keep the direct arithmetic expression instead.
@@ -551,6 +556,33 @@ impl BackendScalarTrait for BackendScalar {
         self.0.tan().map(Self).map_err(Problem::from)
     }
 
+    fn sinh(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "method", "sinh");
+        let positive = self.0.exp()?;
+        let negative = positive.inverse_ref()?;
+        ((positive - negative) / hyperreal::Real::from(2_i8))
+            .map(Self)
+            .map_err(Problem::from)
+    }
+
+    fn cosh(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "method", "cosh");
+        let positive = self.0.exp()?;
+        let negative = positive.inverse_ref()?;
+        ((positive + negative) / hyperreal::Real::from(2_i8))
+            .map(Self)
+            .map_err(Problem::from)
+    }
+
+    fn tanh(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("hyperlattice_hyperreal_backend", "method", "tanh");
+        let exp_double = (self.0 * hyperreal::Real::from(2_i8)).exp()?;
+        let one = hyperreal::Real::one();
+        ((exp_double.clone() - &one) / (exp_double + one))
+            .map(Self)
+            .map_err(Problem::from)
+    }
+
     fn asin(self) -> BlasResult<Self> {
         crate::trace_dispatch!("hyperlattice_hyperreal_backend", "method", "asin");
         self.0.asin().map(Self).map_err(Problem::from)
@@ -671,6 +703,20 @@ impl BackendScalarTrait for BackendScalar {
             "exact-dyadic-rational"
         );
         self.0.is_exact_dyadic_rational()
+    }
+
+    #[inline(always)]
+    fn exact_rational_kind(&self) -> ExactRationalKind {
+        crate::trace_dispatch!(
+            "hyperlattice_hyperreal_backend",
+            "query",
+            "exact-rational-kind"
+        );
+        match self.0.exact_rational_ref() {
+            Some(rational) if rational.is_dyadic() => ExactRationalKind::ExactDyadicRational,
+            Some(_) => ExactRationalKind::ExactRational,
+            None => ExactRationalKind::NonRational,
+        }
     }
 
     #[inline(always)]

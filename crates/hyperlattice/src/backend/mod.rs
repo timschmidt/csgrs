@@ -57,6 +57,20 @@ pub trait Backend: Clone + fmt::Debug + PartialEq + 'static {
     /// inline and scalarize aggressively.
     const BORROW_SHARED_SCALE_FACTOR: bool = false;
 
+    /// Whether scalar hyperbolic functions should route through backend
+    /// primitives instead of the public scalar formula.
+    ///
+    /// Hyperreal benefits from exact/symbolic formula selection inside the
+    /// backend. Compact approximate scalars benchmark faster with the original
+    /// public expression shape, where LLVM sees the whole formula.
+    const USE_BACKEND_HYPERBOLIC: bool = false;
+
+    /// Whether `tanh` alone should route through the backend primitive.
+    ///
+    /// Approx keeps `sinh`/`cosh` on the public formula, but its `tanh` row is
+    /// faster when the backend owns the whole ratio formula.
+    const USE_BACKEND_TANH: bool = false;
+
     /// Whether fixed determinant/cofactor helpers should route short signed
     /// product sums through the backend.
     ///
@@ -71,6 +85,17 @@ pub trait Backend: Clone + fmt::Debug + PartialEq + 'static {
 
     /// Opaque scalar representation owned by the backend.
     type Repr: BackendScalar;
+}
+
+/// Already-known exact-rational representation class for a scalar.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactRationalKind {
+    /// The scalar is not structurally known to be exact rational.
+    NonRational,
+    /// The scalar is exact rational, but not known to be dyadic.
+    ExactRational,
+    /// The scalar is exact rational with a power-of-two denominator.
+    ExactDyadicRational,
 }
 
 /// Shared scalar behavior required by crate-owned numeric backends.
@@ -477,6 +502,30 @@ pub trait BackendScalar:
     fn cos(self) -> Self;
     /// Returns the tangent.
     fn tan(self) -> BlasResult<Self>;
+    /// Returns the hyperbolic sine.
+    #[inline]
+    fn sinh(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("hyperlattice_backend_trait", "method", "sinh-default");
+        let positive = self.exp()?;
+        let negative = positive.clone().inverse()?;
+        (positive - negative).div(Self::from(2_i8))
+    }
+    /// Returns the hyperbolic cosine.
+    #[inline]
+    fn cosh(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("hyperlattice_backend_trait", "method", "cosh-default");
+        let positive = self.exp()?;
+        let negative = positive.clone().inverse()?;
+        (positive + negative).div(Self::from(2_i8))
+    }
+    /// Returns the hyperbolic tangent.
+    #[inline]
+    fn tanh(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("hyperlattice_backend_trait", "method", "tanh-default");
+        let exp_double = (self * Self::from(2_i8)).exp()?;
+        let one = Self::one();
+        (exp_double.clone() - one.clone()).div(exp_double + one)
+    }
     /// Returns the inverse sine.
     fn asin(self) -> BlasResult<Self>;
     /// Returns the inverse cosine.
@@ -549,6 +598,21 @@ pub trait BackendScalar:
     /// with fewer intermediate products.
     fn is_exact_dyadic_rational(&self) -> bool {
         false
+    }
+    /// Classifies exact-rational structure in one backend query.
+    ///
+    /// Right-division dispatch needs the distinction before entering dense
+    /// arithmetic lanes. The default keeps existing backend behavior; exact
+    /// backends can override this to avoid separate rational and dyadic probes.
+    #[inline]
+    fn exact_rational_kind(&self) -> ExactRationalKind {
+        if self.is_exact_dyadic_rational() {
+            ExactRationalKind::ExactDyadicRational
+        } else if self.is_exact_rational() {
+            ExactRationalKind::ExactRational
+        } else {
+            ExactRationalKind::NonRational
+        }
     }
     /// Tries to prove the sign without refining beyond the requested precision.
     #[inline]

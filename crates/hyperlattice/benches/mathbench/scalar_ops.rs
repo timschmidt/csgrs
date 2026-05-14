@@ -76,6 +76,13 @@ fn bench_scalar_operations_for<B, F>(
         },
     );
     trace_dispatch_cases(
+        format!("scalar_ops/{label}/powi_negative_one"),
+        &reciprocal_cases,
+        |value| {
+            let _ = black_box(hyperlattice::powi(value.clone(), -1).unwrap());
+        },
+    );
+    trace_dispatch_cases(
         format!("scalar_ops/{label}/exp"),
         &unit_interval_cases,
         |value| {
@@ -298,6 +305,15 @@ fn bench_scalar_operations_for<B, F>(
         b.iter(|| {
             black_box(
                 hyperlattice::powi(black_box(next_case(&reciprocal_cases, &cursor).clone()), 5)
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/powi_negative_one"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(
+                hyperlattice::powi(black_box(next_case(&reciprocal_cases, &cursor).clone()), -1)
                     .unwrap(),
             )
         })

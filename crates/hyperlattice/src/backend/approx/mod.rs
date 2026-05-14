@@ -19,6 +19,8 @@ pub struct BackendScalar {
 pub struct ApproxBackend;
 
 impl Backend for ApproxBackend {
+    const USE_BACKEND_TANH: bool = true;
+
     type Repr = BackendScalar;
 }
 
@@ -387,6 +389,27 @@ impl BackendScalarTrait for BackendScalar {
             return Err(Problem::NotANumber);
         }
         Self::from_unary(self.value.tan(), self.epsilon / (cos * cos).abs())
+    }
+
+    fn sinh(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("hyperlattice_approx_backend", "method", "sinh");
+        let positive = self.clone().exp()?;
+        let negative = (-self).exp()?;
+        (positive - negative).div(Self::from(2_i8))
+    }
+
+    fn cosh(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("hyperlattice_approx_backend", "method", "cosh");
+        let positive = self.clone().exp()?;
+        let negative = (-self).exp()?;
+        (positive + negative).div(Self::from(2_i8))
+    }
+
+    fn tanh(self) -> BlasResult<Self> {
+        crate::trace_dispatch!("hyperlattice_approx_backend", "method", "tanh");
+        let positive = self.clone().exp()?;
+        let negative = (-self).exp()?;
+        (positive.clone() - negative.clone()).div(positive + negative)
     }
 
     fn asin(self) -> BlasResult<Self> {
