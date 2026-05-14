@@ -14,6 +14,32 @@ approximate predicate behavior, porting the same predicate surface to
 `hyperreal` becomes a backend upgrade instead of a simultaneous semantic and API
 rewrite.
 
+## Branch and commit discipline during the port
+
+Porting work should happen on a branch named `hyperreal` in each repository
+touched by the migration. This applies especially to:
+
+- `csgrs`
+- `spade`
+- `boolmesh`
+- `curvo`
+- `voxelis`
+
+The default branches should be treated as integration targets, not active
+porting branches. Before changing a repository for the port, switch that
+repository to its `hyperreal` branch or create it from the appropriate upstream
+base if it does not exist yet.
+
+During the porting period, each successful change should be verified, committed,
+and pushed automatically to that repository's `hyperreal` branch before moving
+on to the next independent change. Cross-repo work should be split into
+repository-local commits so `csgrs`, `spade`, `boolmesh`, `curvo`, and `voxelis`
+each retain a reviewable history of the port.
+
+After every successful commit and push, take another implementation turn against
+the next incomplete item in this plan. Continue that cycle until the plan is
+finished, tests expose a blocker, or a design decision requires human review.
+
 ## Target ownership model
 
 The stack should have clear vertical responsibilities:
@@ -228,6 +254,12 @@ new stack:
 - `nalgebra::Matrix4<Real>` to the chosen `hyperlattice` transform type once
   that API is stable enough
 
+External geometry kernels should be handled on their own `hyperreal` branches.
+In particular, `spade`, `boolmesh`, `curvo`, and `voxelis` should not receive
+long-running uncommitted local patches during the `csgrs` migration. A verified
+change in one of those libraries should be committed and pushed to that
+library's `hyperreal` branch before `csgrs` is updated to depend on it.
+
 Keep these adapters private at first. The first milestone is internal
 correctness, not public API churn.
 
@@ -324,6 +356,13 @@ After internals are stable:
 
 ## Design rules during the port
 
+- Work on the `hyperreal` branch of each affected repository, especially
+  `csgrs`, `spade`, `boolmesh`, `curvo`, and `voxelis`.
+- Commit and push each verified successful change to that repository's
+  `hyperreal` branch before starting the next independent change.
+- After each successful commit and push, take another implementation turn on the
+  next unfinished porting-plan item, continuing until the plan is complete or a
+  blocker requires review.
 - Lower crates provide facts; `csgrs` makes modeling decisions.
 - Predicate uncertainty should be represented explicitly until `csgrs` decides
   how to handle it.
