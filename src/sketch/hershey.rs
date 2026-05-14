@@ -2,6 +2,7 @@
 
 use crate::float_types::Real;
 use crate::sketch::Sketch;
+use crate::vertex::Vertex;
 use geo::{Geometry, GeometryCollection, LineString, coord};
 use hershey::{Font, Glyph as HersheyGlyph, Vector as HersheyVector};
 use std::fmt::Debug;
@@ -67,6 +68,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             geometry: geo_coll,
             bounding_box: OnceLock::new(),
             metadata,
+            origin: Vertex::default(),
+            origin_transform: Sketch::<S>::prepare_origin_transform(Vertex::default()),
         }
     }
 }

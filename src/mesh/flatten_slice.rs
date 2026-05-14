@@ -69,6 +69,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             geometry: new_gc,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: Vertex::default(),
+            origin_transform: Sketch::<S>::prepare_origin_transform(Vertex::default()),
         }
     }
 
@@ -154,6 +156,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             geometry: new_gc,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: Vertex::default(),
+            origin_transform: Sketch::<S>::prepare_origin_transform(Vertex::default()),
         }
     }
 }

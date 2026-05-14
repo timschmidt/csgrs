@@ -5,7 +5,7 @@ use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
-use crate::sketch::Sketch;
+use crate::sketch::{OriginTransform, Sketch};
 use crate::csg::CSG;
 use geo::{Area, CoordsIter, LineString, Polygon as GeoPolygon};
 use nalgebra::{Point3, Vector3, Matrix4, Rotation3, Translation3};
@@ -85,7 +85,11 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// # Parameters
     /// - `direction`: 3D vector defining extrusion direction and magnitude
     pub fn extrude_vector(&self, direction: Vector3<Real>) -> Mesh<S> {
-        if direction.norm() < tolerance() {
+        if !direction.x.is_finite()
+            || !direction.y.is_finite()
+            || !direction.z.is_finite()
+            || direction.norm() < tolerance()
+        {
             return Mesh::new();
         }
 
@@ -93,7 +97,13 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let mut out: Vec<Polygon<S>> = Vec::new();
 
         for geom in &self.geometry {
-            Self::extrude_geometry(geom, direction, &self.metadata, &mut out);
+            Self::extrude_geometry(
+                geom,
+                direction,
+                self.origin_transform,
+                &self.metadata,
+                &mut out,
+            );
         }
 
         Mesh {
@@ -108,10 +118,15 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     fn extrude_geometry(
         geom: &geo::Geometry<Real>,
         direction: Vector3<Real>,
+        origin_transform: OriginTransform,
         metadata: &Option<S>,
         out_polygons: &mut Vec<Polygon<S>>,
     ) {
-        if direction.norm_squared() < tolerance() * tolerance() {
+        if !direction.x.is_finite()
+            || !direction.y.is_finite()
+            || !direction.z.is_finite()
+            || direction.norm_squared() < tolerance() * tolerance()
+        {
             return;
         }
 
@@ -146,9 +161,18 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     };
                     out_polygons.push(Polygon::new(
                         vec![
-                            Vertex::new(a, bottom_normal),
-                            Vertex::new(b, bottom_normal),
-                            Vertex::new(c, bottom_normal),
+                            Self::apply_origin_transform_vertex(
+                                Vertex::new(a, bottom_normal),
+                                origin_transform,
+                            ),
+                            Self::apply_origin_transform_vertex(
+                                Vertex::new(b, bottom_normal),
+                                origin_transform,
+                            ),
+                            Self::apply_origin_transform_vertex(
+                                Vertex::new(c, bottom_normal),
+                                origin_transform,
+                            ),
                         ],
                         metadata.clone(),
                     ));
@@ -165,9 +189,18 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     };
                     out_polygons.push(Polygon::new(
                         vec![
-                            Vertex::new(a, top_normal),
-                            Vertex::new(b, top_normal),
-                            Vertex::new(c, top_normal),
+                            Self::apply_origin_transform_vertex(
+                                Vertex::new(a, top_normal),
+                                origin_transform,
+                            ),
+                            Self::apply_origin_transform_vertex(
+                                Vertex::new(b, top_normal),
+                                origin_transform,
+                            ),
+                            Self::apply_origin_transform_vertex(
+                                Vertex::new(c, top_normal),
+                                origin_transform,
+                            ),
                         ],
                         metadata.clone(),
                     ));
@@ -184,9 +217,13 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                         let b_j = Point3::new(c_j.x, c_j.y, 0.0);
                         let t_i = b_i + direction;
                         let t_j = b_j + direction;
-                        let raw_normal = (b_j - b_i).cross(&direction).normalize();
+                        let Some(raw_normal) =
+                            (b_j - b_i).cross(&direction).try_normalize(tolerance())
+                        else {
+                            continue;
+                        };
                         let normal = if flip { -raw_normal } else { raw_normal };
-                        let verts = if flip {
+                        let verts: Vec<_> = if flip {
                             vec![
                                 Vertex::new(b_j, normal),
                                 Vertex::new(b_i, normal),
@@ -200,7 +237,12 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                                 Vertex::new(t_j, normal),
                                 Vertex::new(t_i, normal),
                             ]
-                        };
+                        }
+                        .into_iter()
+                        .map(|vertex| {
+                            Self::apply_origin_transform_vertex(vertex, origin_transform)
+                        })
+                        .collect();
                         out_polygons.push(Polygon::new(verts, metadata.clone()));
                     }
                 }
@@ -210,6 +252,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     Self::extrude_geometry(
                         &geo::Geometry::Polygon(poly.clone()),
                         direction,
+                        origin_transform,
                         metadata,
                         out_polygons,
                     );
@@ -217,7 +260,13 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             },
             geo::Geometry::GeometryCollection(gc) => {
                 for sub in &gc.0 {
-                    Self::extrude_geometry(sub, direction, metadata, out_polygons);
+                    Self::extrude_geometry(
+                        sub,
+                        direction,
+                        origin_transform,
+                        metadata,
+                        out_polygons,
+                    );
                 }
             },
             geo::Geometry::LineString(ls) => {
@@ -230,9 +279,13 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     let b_j = Point3::new(c_j.x, c_j.y, 0.0);
                     let t_i = b_i + direction;
                     let t_j = b_j + direction;
-                    let raw_normal = (b_j - b_i).cross(&direction).normalize();
+                    let Some(raw_normal) =
+                        (b_j - b_i).cross(&direction).try_normalize(tolerance())
+                    else {
+                        continue;
+                    };
                     let normal = if flip { -raw_normal } else { raw_normal };
-                    let verts = if flip {
+                    let verts: Vec<_> = if flip {
                         vec![
                             Vertex::new(b_j, normal),
                             Vertex::new(b_i, normal),
@@ -246,7 +299,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                             Vertex::new(t_j, normal),
                             Vertex::new(t_i, normal),
                         ]
-                    };
+                    }
+                    .into_iter()
+                    .map(|vertex| Self::apply_origin_transform_vertex(vertex, origin_transform))
+                    .collect();
                     out_polygons.push(Polygon::new(verts, metadata.clone()));
                 }
             },
@@ -258,9 +314,12 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                 let b1 = Point3::new(c1.x, c1.y, 0.0);
                 let t0 = b0 + direction;
                 let t1 = b1 + direction;
-                let raw_normal = (b1 - b0).cross(&direction).normalize();
+                let Some(raw_normal) = (b1 - b0).cross(&direction).try_normalize(tolerance())
+                else {
+                    return;
+                };
                 let normal = if flip { -raw_normal } else { raw_normal };
-                let verts = if flip {
+                let verts: Vec<_> = if flip {
                     vec![
                         Vertex::new(b1, normal),
                         Vertex::new(b0, normal),
@@ -274,7 +333,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                         Vertex::new(t1, normal),
                         Vertex::new(t0, normal),
                     ]
-                };
+                }
+                .into_iter()
+                .map(|vertex| Self::apply_origin_transform_vertex(vertex, origin_transform))
+                .collect();
                 out_polygons.push(Polygon::new(verts, metadata.clone()));
             },
 
@@ -284,6 +346,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                 Self::extrude_geometry(
                     &geo::Geometry::Polygon(poly2d),
                     direction,
+                    origin_transform,
                     metadata,
                     out_polygons,
                 );
@@ -295,6 +358,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                 Self::extrude_geometry(
                     &geo::Geometry::Polygon(poly2d),
                     direction,
+                    origin_transform,
                     metadata,
                     out_polygons,
                 );
@@ -608,7 +672,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         angle_degs: Real,
         segments: usize,
     ) -> Result<Mesh<S>, ValidationError> {
-        if segments < 2 {
+        if segments < 2 || !angle_degs.is_finite() {
             return Err(ValidationError::InvalidArguments);
         }
 
@@ -879,6 +943,12 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         if path.len() < 2 || self.geometry.0.is_empty() {
             return Mesh::new();
         }
+        if path
+            .iter()
+            .any(|p| !p.x.is_finite() || !p.y.is_finite() || !p.z.is_finite())
+        {
+            return Mesh::new();
+        }
         let n_path = path.len();
         let path_is_closed = (path[0] - path[n_path - 1]).norm() < tolerance();
 
@@ -886,10 +956,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         let mut slice_xforms: Vec<Matrix4<Real>> = Vec::with_capacity(n_path);
 
         // first slice
-        let mut dir_prev = (path[1] - path[0]).normalize();
-        if dir_prev.norm_squared() < tolerance() * tolerance() {
-            dir_prev = Vector3::z();
-        }
+        let mut dir_prev = (path[1] - path[0])
+            .try_normalize(tolerance())
+            .unwrap_or_else(Vector3::z);
         let mut orientation = Rotation3::rotation_between(&Vector3::z(), &dir_prev)
             .unwrap_or_else(Rotation3::identity)
             .to_homogeneous();
@@ -898,14 +967,15 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         // propagate frame with parallel transport
         for i in 1..n_path {
             // pick the outgoing tangent _now_
-            let mut dir_curr = if i == n_path - 1 && !path_is_closed {
-                (path[i] - path[i - 1]).normalize() // look back at the end
+            let dir_curr = if i == n_path - 1 && !path_is_closed {
+                (path[i] - path[i - 1])
+                    .try_normalize(tolerance())
+                    .unwrap_or(dir_prev) // look back at the end
             } else {
-                (path[(i + 1) % n_path] - path[i]).normalize()
+                (path[(i + 1) % n_path] - path[i])
+                    .try_normalize(tolerance())
+                    .unwrap_or(dir_prev)
             };
-            if dir_curr.norm_squared() < tolerance() * tolerance() {
-                dir_curr = dir_prev;
-            }
 
             // rotate the frame exactly **once**
             let rot_between = Rotation3::rotation_between(&dir_prev, &dir_curr)

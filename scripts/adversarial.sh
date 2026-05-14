@@ -19,6 +19,7 @@ expect_fail() {
 
 run cargo test --test adversarial
 run cargo test --test adversarial_deep
+run cargo test --test adversarial_extrusions
 run cargo test --test adversarial_stress
 run cargo test --test adversarial_fixtures
 
