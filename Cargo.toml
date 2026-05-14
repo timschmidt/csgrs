@@ -199,5 +199,6 @@ wasm = [
   "serde-wasm-bindgen",
   "serde_json",
   "serde",
+  "earcutr",
 ]
 spade = ["dep:spade"]

@@ -45,6 +45,19 @@ impl VertexJs {
         Vector3Js::from(self.inner.normal)
     }
 
+    #[wasm_bindgen(js_name = toString)]
+    pub fn to_string_js(&self) -> String {
+        format!(
+            "<Vertex position=({}, {}, {}) normal=({}, {}, {})>",
+            self.inner.position.x,
+            self.inner.position.y,
+            self.inner.position.z,
+            self.inner.normal.x,
+            self.inner.normal.y,
+            self.inner.normal.z
+        )
+    }
+
     #[wasm_bindgen(js_name = toArray)]
     pub fn to_array(&self) -> Vec<f64> {
         vec![

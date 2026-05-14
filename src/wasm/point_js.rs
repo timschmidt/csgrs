@@ -30,6 +30,14 @@ impl Point3Js {
     pub fn z(&self) -> f64 {
         self.inner.z as f64
     }
+
+    #[wasm_bindgen(js_name = toString)]
+    pub fn to_string_js(&self) -> String {
+        format!(
+            "<Point3({}, {}, {})>",
+            self.inner.x, self.inner.y, self.inner.z
+        )
+    }
 }
 
 // Rust-only conversions (not visible to JS)
