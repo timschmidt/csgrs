@@ -148,6 +148,44 @@ Long term, `csgrs` should not own independent definitions of fundamental:
 
 Those should come from `hyperreal`, `hyperlattice`, and `hyperlimit`.
 
+## Boolean, triangulation, contour, and kernel policy
+
+Mesh booleans should prefer `boolmesh` as the primary boolean layer. The current
+`BMesh`/boolmesh integration should be treated as the direction of travel, not
+as a side experiment:
+
+- use the existing BSP layer as the early porting and verification target before
+  completing the boolmesh port
+- port BSP predicates, splitting, and classification boundaries first so the
+  hyperlimit/hyperreal behavior can be verified against the current mesh boolean
+  semantics
+- keep BSP available as the differential test oracle while boolmesh-backed
+  booleans are being brought up
+- finish the experimental boolean feature so boolmesh-backed booleans are
+  usable as the robust mesh boolean path
+- port boolmesh-facing adapters and, where necessary, boolmesh-derived logic to
+  hyperreals instead of treating f64 conversion as the final numeric boundary
+- keep conversions between ordinary `Mesh`, `BMesh`, and boolmesh explicit,
+  tested, and easy to remove or simplify after the hyperreal backend is in place
+
+Triangulation and 2D contour dependencies should be brought under the same
+numeric plan:
+
+- port `spade` usage to hyperreals for Delaunay and constrained triangulation
+- port `earcut` / `earcutr` usage to hyperreals for earcut triangulation
+- port `cavalier_contours` usage to hyperreals for offsets, contour cleanup, and
+  any 2D boolean-style contour operations
+- keep f64 paths as transitional compatibility shims, not as the long-term
+  robustness model
+
+External geometry kernels should be handled in two stages. `curvo` and other
+useful kernels can be adapted to `csgrs` as f64 immediately when they provide
+practical functionality, but those adapters should not become permanent
+high-maintenance patches against moving upstream targets. The long-term plan is
+to harvest the useful algorithms, port them to hyperreals, and integrate them
+behind small internal traits or direct implementations so `csgrs` carries less
+patch burden over time.
+
 ## Migration phases
 
 ### Phase 1: Audit the existing f64/epsilon predicate surface
@@ -340,7 +378,10 @@ After internals are stable:
 Start with `mesh::plane`.
 
 It is the highest-leverage boundary because polygon splitting and BSP Booleans
-depend on point-plane classification. A focused first change would:
+depend on point-plane classification. BSP should be the first full boolean
+verification layer for the port; boolmesh remains the preferred end-state mesh
+boolean layer, but should be completed after the BSP predicate and splitting
+behavior is under test. A focused first change would:
 
 1. Audit the existing `mesh::plane` f64/epsilon behavior.
 2. Add `hyperlimit` parity and stress tests for that behavior.
