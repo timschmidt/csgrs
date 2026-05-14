@@ -17,6 +17,8 @@ without digging through a large demo binary.
 
 - `adjacency_demo.rs`: mesh connectivity, smoothing, and quality analysis.
 - `multi_format_export.rs`: OBJ, PLY, AMF, GLTF, and related export checks.
+- `readme_renders.rs`: pure-Rust software renderer for regenerating the PNG
+  assets referenced by the README.
 
 ## Running
 
@@ -24,10 +26,12 @@ without digging through a large demo binary.
 cargo run --example basic_shapes
 cargo run --example boolean_operations
 cargo run --example extrude
+cargo run --example readme_renders
 ```
 
-Most examples write output under `stl/examples/`. Check that every maintained
-example still compiles with:
+Most geometry examples write output under `stl/examples/`. The README render
+generator writes PNG files under `docs/`. Check that every maintained example
+still compiles with:
 
 ```bash
 cargo check --examples
