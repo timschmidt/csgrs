@@ -477,6 +477,7 @@ fn bench_real_powi(c: &mut Criterion) {
     let exact = Real::new(Rational::fraction(7, 5).unwrap());
     let irrational = Real::new(Rational::new(3)).sqrt().unwrap();
     let exp = BigInt::from(17_u8);
+    let negative_one = BigInt::from(-1_i8);
 
     group.bench_function("exact_17", |b| {
         b.iter_batched(
@@ -489,6 +490,13 @@ fn bench_real_powi(c: &mut Criterion) {
         b.iter_batched(
             || irrational.clone(),
             |value| black_box(value.powi(exp.clone()).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("pi_negative_one", |b| {
+        b.iter_batched(
+            Real::pi,
+            |value| black_box(value.powi(negative_one.clone()).unwrap()),
             BatchSize::SmallInput,
         )
     });

@@ -396,6 +396,10 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 name: "atanh_sqrt_half",
                 description: "Builds atanh(sqrt(2)/2) after exact structural domain checks.",
             },
+            BenchDoc {
+                name: "atanh_sqrt_two_error",
+                description: "Rejects atanh(sqrt(2)) through exact structural domain checks.",
+            },
         ],
     },
     BenchGroupDoc {
@@ -918,6 +922,7 @@ fn bench_exact_transcendental_special_forms(c: &mut Criterion) {
     let nine_pi_over_7 = Real::pi() * real(9, 7);
     let asinh_large = Real::new(Rational::new(1_000_000));
     let atanh_sqrt_half = Real::new(Rational::new(2)).sqrt().unwrap() * real(1, 2);
+    let atanh_sqrt_two_error = Real::new(Rational::new(2)).sqrt().unwrap();
 
     group.bench_function("sin_pi_7", |b| {
         b.iter_batched(
@@ -972,6 +977,13 @@ fn bench_exact_transcendental_special_forms(c: &mut Criterion) {
         b.iter_batched(
             || atanh_sqrt_half.clone(),
             |value| black_box(value.atanh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atanh_sqrt_two_error", |b| {
+        b.iter_batched(
+            || atanh_sqrt_two_error.clone(),
+            |value| black_box(value.atanh().unwrap_err()),
             BatchSize::SmallInput,
         )
     });

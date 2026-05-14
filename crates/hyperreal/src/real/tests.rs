@@ -525,6 +525,30 @@ mod tests {
     }
 
     #[test]
+    fn powi_negative_unknown_sign_matches_inverse() {
+        let near_pi = Real::pi() - Real::new(Rational::fraction(103_993, 33_102).unwrap());
+        assert_eq!(near_pi.structural_facts().sign, None);
+
+        let pow = near_pi.clone().powi(num::BigInt::from(-1)).unwrap();
+        let inverse = near_pi.inverse().unwrap();
+        let actual: f64 = pow.into();
+        let expected: f64 = inverse.into();
+        assert!(((actual - expected) / expected).abs() < 1e-8);
+
+        let zero = Real::pi() - Real::pi();
+        assert!(zero.powi(num::BigInt::from(-1)).is_err());
+    }
+
+    #[test]
+    fn powi_negative_one_reuses_symbolic_inverse() {
+        let pow = Real::pi().powi(num::BigInt::from(-1)).unwrap();
+        let inverse = Real::pi().inverse().unwrap();
+
+        assert_eq!(pow, inverse);
+        assert_eq!(pow * Real::pi(), Real::new(Rational::one()));
+    }
+
+    #[test]
     fn sqrt_3045512() {
         use crate::real::Class::Sqrt;
 
@@ -800,13 +824,14 @@ mod tests {
             assert_eq!(value.acosh(), Err(Problem::NotANumber));
         }
 
-        assert!(closest_f64(
-            (Real::new(Rational::fraction(1, 2).unwrap())
-                * Real::new(Rational::new(2)).sqrt().unwrap())
-            .atanh()
-            .unwrap(),
-            0.881373587019543
-        ));
+        let sqrt_half = Real::new(Rational::fraction(1, 2).unwrap())
+            * Real::new(Rational::new(2)).sqrt().unwrap();
+        let asinh_one = Real::one().asinh().unwrap();
+        let positive_diff: f64 = (sqrt_half.clone().atanh().unwrap() - asinh_one.clone()).into();
+        let negative_diff: f64 = ((-sqrt_half.clone()).atanh().unwrap() + asinh_one).into();
+        assert!(positive_diff.abs() < 1e-14);
+        assert!(negative_diff.abs() < 1e-14);
+        assert!(closest_f64(sqrt_half.atanh().unwrap(), 0.881373587019543));
         assert_eq!(
             Real::new(Rational::new(2)).sqrt().unwrap().atanh(),
             Err(Problem::NotANumber)

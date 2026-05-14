@@ -536,6 +536,9 @@ impl Computable {
                 (Approximation::PrescaledAsin(left), Approximation::PrescaledAsin(right)) => {
                     Computable::internal_structural_eq(left, right)
                 }
+                (Approximation::AsinDeferred(left), Approximation::AsinDeferred(right)) => {
+                    Computable::internal_structural_eq(left, right)
+                }
                 (Approximation::AcosPositive(left), Approximation::AcosPositive(right)) => {
                     Computable::internal_structural_eq(left, right)
                 }
@@ -980,6 +983,21 @@ impl Computable {
             cache: RefCell::new(Cache::Invalid),
             bound: RefCell::new(BoundCache::Invalid),
             exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            signal: None,
+        }
+    }
+
+    fn asin_deferred(value: Computable) -> Computable {
+        // Generic asin uses a stable atan/sqrt half-angle transform. Deferring
+        // that formula keeps symbolic-radical construction lightweight and
+        // leaves the exact input graph intact until approximation is requested.
+        crate::trace_dispatch!("computable", "constructor", "asin-deferred");
+        let sign = value.exact_sign();
+        Self {
+            internal: Box::new(Approximation::AsinDeferred(value)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(sign.map_or(ExactSignCache::Invalid, ExactSignCache::Valid)),
             signal: None,
         }
     }
@@ -1670,6 +1688,7 @@ impl Computable {
                 | Approximation::AcoshDirect(_) => Some(Some(Sign::Plus)),
                 Approximation::PrescaledAtan(child)
                 | Approximation::PrescaledAsin(child)
+                | Approximation::AsinDeferred(child)
                 | Approximation::AsinhNearZero(child)
                 | Approximation::AsinhDirect(child)
                 | Approximation::PrescaledAsinh(child)
@@ -3025,13 +3044,7 @@ impl Computable {
         }
 
         crate::trace_dispatch!("computable", "asin", "generic-atan-sqrt-transform");
-        let one = Self::one();
-        let denominator = one
-            .clone()
-            .add(self.clone().square().negate())
-            .sqrt()
-            .add(one);
-        self.multiply(denominator.inverse()).atan().shift_left(1)
+        Self::asin_deferred(self)
     }
 
     /// Inverse cosine of this number.
@@ -3151,12 +3164,32 @@ impl Computable {
                     crate::trace_dispatch!("computable", "acosh", "exact-one-zero");
                     return Self::zero();
                 }
+                if r >= &Rational::new(2) {
+                    let one = Self::one();
+                    let radicand = self.clone().square().add(one.negate());
+                    crate::trace_dispatch!(
+                        "computable",
+                        "acosh",
+                        "exact-rational-at-least-two-direct-ln-sqrt"
+                    );
+                    return self.add(radicand.sqrt()).ln();
+                }
                 r.msd_exact()
             }
             Approximation::Int(n) => {
                 if n == signed::ONE.deref() {
                     crate::trace_dispatch!("computable", "acosh", "exact-one-zero");
                     return Self::zero();
+                }
+                if n >= signed::TWO.deref() {
+                    let one = Self::one();
+                    let radicand = self.clone().square().add(one.negate());
+                    crate::trace_dispatch!(
+                        "computable",
+                        "acosh",
+                        "exact-integer-at-least-two-direct-ln-sqrt"
+                    );
+                    return self.add(radicand.sqrt()).ln();
                 }
                 if n.sign() == Sign::NoSign {
                     None
@@ -3334,6 +3367,12 @@ impl Computable {
             // Inverse of inverse collapses only when the inner value is
             // structurally nonzero.
             return child.clone();
+        }
+        if let Approximation::Square(child) = self.internal.as_ref()
+            && child.exact_sign().is_some_and(|sign| sign != Sign::NoSign)
+        {
+            crate::trace_dispatch!("computable", "inverse", "square-of-inverse");
+            return child.clone().inverse().square();
         }
         let exact_sign = match *self.exact_sign.borrow() {
             // Reciprocal preserves sign for structurally nonzero values and lets
@@ -5185,6 +5224,15 @@ mod tests {
         base.approx(-16);
         let value = base.clone().inverse().inverse();
         assert_close(value, base, -60, 2);
+    }
+
+    #[test]
+    fn inverse_of_square_of_nonzero_value_collapses_at_construction() {
+        let base =
+            Computable::pi().multiply(Computable::rational(Rational::fraction(7, 8).unwrap()));
+        let value = base.clone().square().inverse();
+        let expected = base.inverse().square();
+        assert_close(value, expected, -60, 2);
     }
 
     #[test]

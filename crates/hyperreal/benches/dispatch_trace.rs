@@ -152,6 +152,10 @@ fn collect_rows(
             black_box(base.pow(exponent).unwrap());
         },
     );
+    trace_row(&mut rows, filters, "real/pow/symbolic_negative_one", || {
+        black_box(Real::pi().powi(BigInt::from(-1_i8)).unwrap());
+        black_box(Real::e().powi(BigInt::from(-1_i8)).unwrap());
+    });
     trace_row(
         &mut rows,
         filters,
@@ -185,6 +189,15 @@ fn collect_rows(
         black_box((&Real::e() / &Real::pi()).unwrap());
         black_box((&Real::pi() / &Real::e()).unwrap());
     });
+    trace_row(
+        &mut rows,
+        filters,
+        "real/div/rational_over_symbolic",
+        || {
+            black_box((&Real::one() / &Real::pi()).unwrap());
+            black_box((&Real::new(Rational::new(2)) / &Real::e()).unwrap());
+        },
+    );
     trace_row(&mut rows, filters, "real/inverse/inverse_generic", || {
         let value = Real::new(Rational::fraction(7, 13).unwrap());
         black_box(value.inverse().unwrap());
@@ -221,6 +234,15 @@ fn collect_rows(
         black_box(near_one.clone().asin().unwrap());
         black_box(near_one.clone().acos().unwrap());
     });
+    trace_row(&mut rows, filters, "real/inverse_trig/exact", || {
+        let half = Real::new(Rational::fraction(1, 2).unwrap());
+        let sqrt_half = Real::new(Rational::new(2)).sqrt().unwrap()
+            * Real::new(Rational::fraction(1, 2).unwrap());
+        black_box(half.clone().asin().unwrap());
+        black_box(half.acos().unwrap());
+        black_box(sqrt_half.clone().asin().unwrap());
+        black_box(sqrt_half.acos().unwrap());
+    });
     trace_row(&mut rows, filters, "real/inverse_trig/mid-domain", || {
         let mid = real_from_f64(0.7);
         black_box(mid.clone().asin().unwrap());
@@ -251,6 +273,11 @@ fn collect_rows(
             black_box(near_one.atanh().unwrap());
         },
     );
+    trace_row(&mut rows, filters, "real/inverse_hyperbolic/sqrt", || {
+        let sqrt_half = Real::new(Rational::new(2)).sqrt().unwrap()
+            * Real::new(Rational::fraction(1, 2).unwrap());
+        black_box(sqrt_half.atanh().unwrap());
+    });
     trace_row(&mut rows, filters, "real/sqrt_scaled_rational", || {
         black_box(Real::new(Rational::new(18)).sqrt().unwrap());
     });

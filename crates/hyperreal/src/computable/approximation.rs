@@ -72,6 +72,10 @@ pub(super) enum Approximation {
     // entering that series.
     AsinRational(Rational),
     PrescaledAsin(Computable),
+    // Generic non-rational asin uses the stable half-angle atan transform. A
+    // deferred node keeps construction thin for symbolic radicals and endpoint
+    // inputs that may never be approximated.
+    AsinDeferred(Computable),
     AcosPositive(Computable),
     AcoshNearOne(Computable),
     AcoshDirect(Computable),
@@ -186,6 +190,7 @@ impl Approximation {
             AtanRational(r) => atan_rational(signal, r, p),
             AsinRational(r) => asin_rational(signal, r, p),
             PrescaledAsin(c) => asin_computable(signal, c, p),
+            AsinDeferred(c) => asin_deferred(signal, c, p),
             AcosPositive(c) => acos_positive(signal, c, p),
             AcoshNearOne(c) => acosh_near_one(signal, c, p),
             AcoshDirect(c) => acosh_direct(signal, c, p),
@@ -1595,6 +1600,20 @@ fn asin_computable(signal: &Option<Signal>, c: &Computable, p: Precision) -> Big
     }
 
     scale(sum, calc_precision - p)
+}
+
+fn asin_deferred(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
+    // Generic asin uses asin(x) = 2*atan(x / (sqrt(1-x^2)+1)).
+    // Keeping this as one approximation node mirrors the deferred acos and
+    // inverse-hyperbolic reductions: construction preserves the compact input
+    // graph, while approximation still enters the same stable transform.
+    let one = Computable::one();
+    let denominator = one.clone().add(c.clone().square().negate()).sqrt().add(one);
+    c.clone()
+        .multiply(denominator.inverse())
+        .atan()
+        .shift_left(1)
+        .approx_signal(signal, p)
 }
 
 fn acos_positive(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
