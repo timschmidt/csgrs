@@ -1,5 +1,8 @@
+//! SVG overlay rendering for report geometry.
+
 use crate::report::{Report, Severity, ViolationPolygon};
 
+/// Run the `report_to_svg` design-readiness check or report helper.
 pub fn report_to_svg(report: &Report) -> String {
     let bounds = report_bounds(report).unwrap_or(Bounds {
         min_x: 0.0,

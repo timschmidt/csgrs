@@ -12,51 +12,88 @@ use crate::report::{Severity, Violation};
 const DEFAULT_GENERATED_DATE_STALE_DAYS: i64 = 90;
 
 #[derive(Clone, Debug)]
+/// Public data model for `ManifestGerberLayer`.
 pub struct ManifestGerberLayer {
+    /// Field `name`.
     pub name: String,
+    /// Field `source_path`.
     pub source_path: String,
 }
 
 #[derive(Clone, Debug, Default)]
+/// Public data model for `ManifestInput`.
 pub struct ManifestInput {
+    /// Field `gerber_layers`.
     pub gerber_layers: Vec<ManifestGerberLayer>,
+    /// Field `artifact_paths`.
     pub artifact_paths: Vec<String>,
+    /// Field `bom_file_count`.
     pub bom_file_count: usize,
+    /// Field `centroid_file_count`.
     pub centroid_file_count: usize,
+    /// Field `netlist_file_count`.
     pub netlist_file_count: usize,
+    /// Field `fab_drawing_file_count`.
     pub fab_drawing_file_count: usize,
+    /// Field `assembly_drawing_file_count`.
     pub assembly_drawing_file_count: usize,
+    /// Field `readme_file_count`.
     pub readme_file_count: usize,
+    /// Field `rout_drawing_file_count`.
     pub rout_drawing_file_count: usize,
+    /// Field `required_artifacts`.
     pub required_artifacts: ManifestRequirements,
+    /// Field `required_layers`.
     pub required_layers: ManifestLayerRequirements,
+    /// Field `declared_copper_layer_count`.
     pub declared_copper_layer_count: Option<usize>,
+    /// Field `generated_date_stale_days`.
     pub generated_date_stale_days: Option<usize>,
+    /// Field `kicad_copper_layer_count`.
     pub kicad_copper_layer_count: Option<usize>,
+    /// Field `has_board_outline`.
     pub has_board_outline: bool,
+    /// Field `has_drill_data`.
     pub has_drill_data: bool,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+/// Public data model for `ManifestRequirements`.
 pub struct ManifestRequirements {
+    /// Field `bom`.
     pub bom: bool,
+    /// Field `centroid`.
     pub centroid: bool,
+    /// Field `netlist`.
     pub netlist: bool,
+    /// Field `fab_drawing`.
     pub fab_drawing: bool,
+    /// Field `assembly_drawing`.
     pub assembly_drawing: bool,
+    /// Field `readme`.
     pub readme: bool,
+    /// Field `rout_drawing`.
     pub rout_drawing: bool,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+/// Public data model for `ManifestLayerRequirements`.
 pub struct ManifestLayerRequirements {
+    /// Field `board_outline`.
     pub board_outline: bool,
+    /// Field `drill_data`.
     pub drill_data: bool,
+    /// Field `top_mask`.
     pub top_mask: bool,
+    /// Field `bottom_mask`.
     pub bottom_mask: bool,
+    /// Field `top_paste`.
     pub top_paste: bool,
+    /// Field `bottom_paste`.
     pub bottom_paste: bool,
+    /// Field `top_silkscreen`.
     pub top_silkscreen: bool,
+    /// Field `bottom_silkscreen`.
     pub bottom_silkscreen: bool,
 }
 
@@ -104,6 +141,7 @@ enum GerberRole {
     Other,
 }
 
+/// Run the `file_manifest_readiness` design-readiness check or report helper.
 pub fn file_manifest_readiness(input: &ManifestInput) -> Vec<Violation> {
     let classified = input
         .gerber_layers

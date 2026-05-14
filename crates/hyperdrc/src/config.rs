@@ -1,3 +1,9 @@
+//! Rule deck loading and effective threshold resolution.
+//!
+//! `RuleConfig` mirrors the optional JSON configuration file. `EffectiveRules`
+//! is the fully resolved rule set after applying built-in defaults, profile
+//! defaults, config values, and command-line overrides.
+
 use std::path::Path;
 
 use anyhow::{Context, Result};
@@ -14,70 +20,129 @@ use crate::package_policy::{
 
 #[derive(Clone, Debug, Deserialize, Default)]
 #[serde(default)]
+/// Public data model for `RuleConfig`.
 pub struct RuleConfig {
+    /// Field `keepout`.
     pub keepout: Option<f64>,
+    /// Field `clearance`.
     pub clearance: Option<f64>,
+    /// Field `paste_tolerance`.
     pub paste_tolerance: Option<f64>,
+    /// Field `min_paste_area_ratio`.
     pub min_paste_area_ratio: Option<f64>,
+    /// Field `max_paste_area_ratio`.
     pub max_paste_area_ratio: Option<f64>,
+    /// Field `stencil_thickness`.
     pub stencil_thickness: Option<f64>,
+    /// Field `min_stencil_area_ratio`.
     pub min_stencil_area_ratio: Option<f64>,
+    /// Field `min_width`.
     pub min_width: Option<f64>,
+    /// Field `min_mask_width`.
     pub min_mask_width: Option<f64>,
+    /// Field `acid_trap_angle`.
     pub acid_trap_angle: Option<f64>,
+    /// Field `max_copper_imbalance_ratio`.
     pub max_copper_imbalance_ratio: Option<f64>,
+    /// Field `annular_ring`.
     pub annular_ring: Option<f64>,
+    /// Field `drill_clearance`.
     pub drill_clearance: Option<f64>,
+    /// Field `board_thickness`.
     pub board_thickness: Option<f64>,
+    /// Field `max_drill_aspect_ratio`.
     pub max_drill_aspect_ratio: Option<f64>,
+    /// Field `net_clearance`.
     pub net_clearance: Option<f64>,
+    /// Field `registration_tolerance`.
     pub registration_tolerance: Option<f64>,
+    /// Field `panel_clearance`.
     pub panel_clearance: Option<f64>,
+    /// Field `ipc356_tolerance`.
     pub ipc356_tolerance: Option<f64>,
+    /// Field `min_area`.
     pub min_area: Option<f64>,
+    /// Field `max_layer_area`.
     pub max_layer_area: Option<f64>,
+    /// Field `generated_date_stale_days`.
     pub generated_date_stale_days: Option<usize>,
+    /// Field `assembly_profile`.
     pub assembly_profile: Option<AssemblyProfile>,
+    /// Field `assembly`.
     pub assembly: AssemblyPolicyConfig,
+    /// Field `package_profile`.
     pub package_profile: Option<PackageProfile>,
+    /// Field `required_artifacts`.
     pub required_artifacts: ArtifactRequirementsConfig,
+    /// Field `required_layers`.
     pub required_layers: LayerRequirementsConfig,
+    /// Field `kicad_copper_layers`.
     pub kicad_copper_layers: Vec<String>,
+    /// Field `stackup`.
     pub stackup: Option<StackupConfig>,
+    /// Field `net_classes`.
     pub net_classes: Vec<NetClassConfig>,
 }
 
 #[derive(Copy, Clone, Debug)]
+/// Public data model for `EffectiveRules`.
 pub struct EffectiveRules {
+    /// Field `keepout`.
     pub keepout: f64,
+    /// Field `clearance`.
     pub clearance: f64,
+    /// Field `paste_tolerance`.
     pub paste_tolerance: f64,
+    /// Field `min_paste_area_ratio`.
     pub min_paste_area_ratio: f64,
+    /// Field `max_paste_area_ratio`.
     pub max_paste_area_ratio: f64,
+    /// Field `stencil_thickness`.
     pub stencil_thickness: f64,
+    /// Field `min_stencil_area_ratio`.
     pub min_stencil_area_ratio: f64,
+    /// Field `min_width`.
     pub min_width: f64,
+    /// Field `min_mask_width`.
     pub min_mask_width: f64,
+    /// Field `acid_trap_angle`.
     pub acid_trap_angle: f64,
+    /// Field `max_copper_imbalance_ratio`.
     pub max_copper_imbalance_ratio: f64,
+    /// Field `annular_ring`.
     pub annular_ring: f64,
+    /// Field `drill_clearance`.
     pub drill_clearance: f64,
+    /// Field `board_thickness`.
     pub board_thickness: f64,
+    /// Field `max_drill_aspect_ratio`.
     pub max_drill_aspect_ratio: f64,
+    /// Field `net_clearance`.
     pub net_clearance: f64,
+    /// Field `registration_tolerance`.
     pub registration_tolerance: f64,
+    /// Field `panel_clearance`.
     pub panel_clearance: f64,
+    /// Field `ipc356_tolerance`.
     pub ipc356_tolerance: f64,
+    /// Field `min_area`.
     pub min_area: f64,
+    /// Field `max_layer_area`.
     pub max_layer_area: Option<f64>,
+    /// Field `generated_date_stale_days`.
     pub generated_date_stale_days: usize,
+    /// Field `assembly`.
     pub assembly: AssemblyRules,
+    /// Field `package_profile`.
     pub package_profile: PackageProfile,
+    /// Field `required_artifacts`.
     pub required_artifacts: ArtifactRequirements,
+    /// Field `required_layers`.
     pub required_layers: LayerRequirements,
 }
 
 impl RuleConfig {
+    /// Run or compute `load`.
     pub fn load(path: &Path) -> Result<Self> {
         let text = std::fs::read_to_string(path)
             .with_context(|| format!("failed to read {}", path.display()))?;
@@ -87,31 +152,55 @@ impl RuleConfig {
 }
 
 #[derive(Default)]
+/// Public data model for `RuleOverrides`.
 pub struct RuleOverrides {
+    /// Field `keepout`.
     pub keepout: Option<f64>,
+    /// Field `clearance`.
     pub clearance: Option<f64>,
+    /// Field `paste_tolerance`.
     pub paste_tolerance: Option<f64>,
+    /// Field `min_paste_area_ratio`.
     pub min_paste_area_ratio: Option<f64>,
+    /// Field `max_paste_area_ratio`.
     pub max_paste_area_ratio: Option<f64>,
+    /// Field `stencil_thickness`.
     pub stencil_thickness: Option<f64>,
+    /// Field `min_stencil_area_ratio`.
     pub min_stencil_area_ratio: Option<f64>,
+    /// Field `min_width`.
     pub min_width: Option<f64>,
+    /// Field `min_mask_width`.
     pub min_mask_width: Option<f64>,
+    /// Field `acid_trap_angle`.
     pub acid_trap_angle: Option<f64>,
+    /// Field `max_copper_imbalance_ratio`.
     pub max_copper_imbalance_ratio: Option<f64>,
+    /// Field `annular_ring`.
     pub annular_ring: Option<f64>,
+    /// Field `drill_clearance`.
     pub drill_clearance: Option<f64>,
+    /// Field `board_thickness`.
     pub board_thickness: Option<f64>,
+    /// Field `max_drill_aspect_ratio`.
     pub max_drill_aspect_ratio: Option<f64>,
+    /// Field `net_clearance`.
     pub net_clearance: Option<f64>,
+    /// Field `registration_tolerance`.
     pub registration_tolerance: Option<f64>,
+    /// Field `panel_clearance`.
     pub panel_clearance: Option<f64>,
+    /// Field `ipc356_tolerance`.
     pub ipc356_tolerance: Option<f64>,
+    /// Field `min_area`.
     pub min_area: Option<f64>,
+    /// Field `max_layer_area`.
     pub max_layer_area: Option<f64>,
+    /// Field `generated_date_stale_days`.
     pub generated_date_stale_days: Option<usize>,
 }
 
+/// Run or compute `effective_rules`.
 pub fn effective_rules(config: &RuleConfig, overrides: RuleOverrides) -> EffectiveRules {
     let package_profile = config.package_profile.unwrap_or_default();
     let clearance = pick(overrides.clearance, config.clearance, 0.25);

@@ -22,6 +22,7 @@ use crate::geometry::{
 };
 use crate::sexp::{self, Sexp};
 
+/// Run or compute `load_kicad_pcb`.
 pub fn load_kicad_pcb(path: &Path) -> Result<BoardModel> {
     let text = std::fs::read_to_string(path)
         .with_context(|| format!("failed to read {}", path.display()))?;

@@ -140,11 +140,43 @@ drills, outlines, zones, nets, and sidecars:
   tests verify proximity heuristics using board outlines, same-layer ground,
   ground vias, or protection copper.
 - Component, mechanical-hole, panelization, mouse-bite, tooling-hole, fiducial,
-  local-fiducial, and dense-pad tests verify DFA/manufacturing geometry around
+  fiducial-keepout, local-fiducial, and dense-pad tests verify
+  DFA/manufacturing geometry around
   pads, holes, panel graphics, and dense clusters.
 - IPC-D-356 tests verify test records annotate nearby copper, recover missing
   drill net/diameter metadata, report missing coverage, and detect drill
   diameter conflicts.
+
+### Mechanical Context
+
+Location: [`../src/checks/mechanical.rs`](../src/checks/mechanical.rs)
+
+Mechanical tests build synthetic KiCad-like boards with large non-plated holes
+and nearby copper:
+
+- Mounting-hole grounding tests verify large NPTH holes are reported when no
+  ground/chassis copper is nearby and accepted when chassis copper provides
+  bonding evidence.
+- Mounting-hole copper keepout tests place non-ground copper inside the
+  screw/standoff keepout, verify ground copper is ignored, and check selected
+  layer filtering.
+- Mounting-hole edge-clearance tests compare the screw/washer keepout against a
+  parsed board outline and verify missing outlines are non-fatal.
+- Mounting-hole plating-intent tests flag large plated mounting-style holes with
+  no ground/chassis evidence and accept explicit ground nets or nearby chassis
+  copper.
+- Mounting-hole distribution tests report single-hole and clustered hardware
+  patterns while accepting absent or well-spaced mounting hardware.
+- Mounting-hole spacing tests report tight edge-to-edge hardware-hole spacing
+  while ignoring tiny non-hardware drills and accepting compliant gaps.
+- Panel-feature outline tests report parsed panel graphics when no board
+  outline is available or when the graphic floats away from the outline, while
+  accepting absent panel features and edge-registered panel geometry.
+- Edge-plating intent tests report edge-named copper near the outline and
+  ordinary copper crossing outside the outline, while accepting interior copper
+  and selected-out layers.
+- Castellation pitch tests report tight plated edge-hole candidates and accept
+  distant or interior plated holes.
 
 ### Stackup And Net Constraints
 
@@ -177,16 +209,20 @@ Assembly tests focus on manufacturing intent that is not just copper clearance:
 
 - Pad-pair asymmetry tests compare nearby two-terminal pads and report likely
   tombstoning/reflow risk when neighbors are unbalanced.
-- Component edge and hole clearance tests verify component-like copper stays
-  away from board edges and mechanical holes.
+- Component edge, hole, and spacing clearance tests verify component-like copper
+  stays away from board edges, mechanical holes, and neighboring large pad
+  proxies on the same side.
 - Connector rework and return-path tests check dense connector neighborhoods and
   edge-rate nets for nearby ground return.
 - Testpoint tests compare likely critical nets against IPC-D-356 records and
   report missing probe diameter, tight spacing, board-edge, missing access-side,
   missing or covered soldermask-access metadata, and IPC-D-356 access-side hints
-  that disagree with nearby same-net KiCad pad/via side.
-- Tooling, mouse-bite, fiducial, local-fiducial, and dense-pad tests verify
-  assembly fixture and panelization readiness.
+  that disagree with nearby same-net KiCad pad/via side. Copper-clearance tests
+  place unrelated KiCad copper inside and outside the probe keepout and verify
+  same-net or selected-out copper is ignored.
+- Tooling, mouse-bite, fiducial, fiducial-keepout, local-fiducial, and
+  dense-pad tests verify assembly fixture and panelization readiness, including
+  same-layer copper intrusions into fiducial optical keepouts.
 - Process keepout tests place likely through-hole solder, press-fit, and
   no-coat contact/test features near neighboring pads to verify selective/wave,
   insertion-tool, and coating-mask warnings.

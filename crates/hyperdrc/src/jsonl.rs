@@ -10,6 +10,7 @@ use serde_json::{Value, json};
 
 use crate::report::{Report, Violation};
 
+/// Run the `report_to_jsonl` design-readiness check or report helper.
 pub fn report_to_jsonl(report: &Report) -> Result<String> {
     let mut lines = Vec::with_capacity(
         1 + report.inputs.len() + report.diagnostics.len() + report.violations.len(),

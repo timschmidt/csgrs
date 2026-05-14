@@ -6,11 +6,13 @@
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
+/// Run or compute `current_day_number`.
 pub fn current_day_number() -> Option<i64> {
     let seconds = SystemTime::now().duration_since(UNIX_EPOCH).ok()?.as_secs();
     Some((seconds / 86_400) as i64)
 }
 
+/// Run or compute `parse_iso_day`.
 pub fn parse_iso_day(value: &str) -> Option<i64> {
     if value.len() != 10 {
         return None;
@@ -26,6 +28,7 @@ pub fn parse_iso_day(value: &str) -> Option<i64> {
     calendar_day_number(year, month, day)
 }
 
+/// Run or compute `parse_compact_day`.
 pub fn parse_compact_day(value: &str) -> Option<i64> {
     if value.len() != 8 || !value.bytes().all(|byte| byte.is_ascii_digit()) {
         return None;

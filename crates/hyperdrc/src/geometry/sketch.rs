@@ -9,6 +9,7 @@ use geo::{Geometry, GeometryCollection, MultiPolygon, Polygon};
 
 use crate::LayerMetadata;
 
+/// Run the `polygon_to_sketch` design-readiness check or report helper.
 pub fn polygon_to_sketch(
     polygon: Polygon<Real>,
     metadata: Option<LayerMetadata>,
@@ -19,6 +20,7 @@ pub fn polygon_to_sketch(
     )
 }
 
+/// Run the `polygons_to_sketch` design-readiness check or report helper.
 pub fn polygons_to_sketch(
     polygons: Vec<Polygon<Real>>,
     metadata: Option<LayerMetadata>,
@@ -29,6 +31,7 @@ pub fn polygons_to_sketch(
     )
 }
 
+/// Run the `empty_sketch` design-readiness check or report helper.
 pub fn empty_sketch(metadata: Option<LayerMetadata>) -> Sketch<LayerMetadata> {
     Sketch::from_geo(GeometryCollection::default(), metadata)
 }

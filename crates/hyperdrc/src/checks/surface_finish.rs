@@ -6,6 +6,7 @@
 
 use crate::report::{Severity, Violation};
 
+/// Run the `readme_surface_finish_compatibility` design-readiness check or report helper.
 pub fn readme_surface_finish_compatibility(path: &str, normalized: &str) -> Vec<Violation> {
     let mut violations = Vec::new();
 

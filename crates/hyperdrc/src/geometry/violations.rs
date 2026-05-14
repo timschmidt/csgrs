@@ -5,6 +5,7 @@ use geo::{Area, Coord, LineString, MultiPolygon};
 
 use crate::report::ViolationPolygon;
 
+/// Run the `multipolygon_to_shapes` design-readiness check or report helper.
 pub fn multipolygon_to_shapes(
     multipolygon: &MultiPolygon<Real>,
     min_area: f64,

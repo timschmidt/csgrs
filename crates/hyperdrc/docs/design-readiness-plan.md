@@ -211,6 +211,9 @@ sidecar input where possible.
 - `component-hole-clearance-readiness`: warn when parsed KiCad component pads
   intersect a clearance band around non-plated KiCad or Excellon mechanical
   holes, slots, screw holes, standoffs, or chassis keepouts.
+- `component-spacing-readiness`: warn when large same-side KiCad pad proxies sit
+  closer than the configured assembly spacing, giving an initial component
+  courtyard/body clearance review signal before full courtyard parsing exists.
 - `connector-rework-clearance-readiness`: warn when likely connector pads have
   neighboring non-same-net pads inside the configured hand-solder/rework
   clearance band.
@@ -236,6 +239,9 @@ sidecar input where possible.
   metadata, missing soldermask-access metadata, soldermask-covered access, or
   contradictory SMD/both-side access hints, and when top/bottom IPC-D-356 access
   conflicts with nearby same-net KiCad pad/via side.
+- `testpoint-copper-clearance-readiness`: warn when an IPC-D-356 testpoint
+  probe keepout intersects unrelated selected KiCad copper, catching fixture
+  short and unreliable-contact review risks.
 - `tooling-hole-readiness`: warn when parsed KiCad or Excellon drill data has
   fewer than two likely non-plated tooling holes, or when tooling candidates sit
   inside the fixture edge-clearance review band.
@@ -247,6 +253,8 @@ sidecar input where possible.
   the configured edge-clearance review band.
 - `local-fiducial-readiness`: warn when dense fine-pitch pad clusters do not
   have at least two likely local fiducials nearby on the same side.
+- `fiducial-keepout-readiness`: warn when same-layer KiCad copper intrudes into
+  the configured optical keepout around likely fiducial targets.
 - `dense-pad-escape-readiness`: warn when dense fine-pitch pad clusters have no
   parsed nearby via escape, so BGA/QFN/fine-pitch breakout strategy is reviewed.
 - `selective-wave-solder-keepout-readiness`: warn when likely through-hole
@@ -267,6 +275,28 @@ sidecar input where possible.
 - `thermal-mechanical-keepout-readiness`: warn when likely hot copper sits inside
   the keepout around non-plated mechanical holes, standoffs, screws, chassis, or
   heatsink clearance features.
+- `mounting-hole-grounding-readiness`: warn when likely large non-plated
+  mounting holes have no parsed nearby ground or chassis copper, so chassis
+  bonding versus isolation intent is explicit before release.
+- `mounting-hole-copper-keepout-readiness`: warn when non-ground copper enters a
+  circular keepout around likely large non-plated mounting holes, catching screw,
+  washer, standoff, and chassis-clearance review gaps.
+- `mounting-hole-edge-clearance-readiness`: warn when a likely mounting-hole
+  screw/washer keepout extends beyond the parsed board outline.
+- `mounting-hole-plating-intent-readiness`: warn when a large plated
+  mounting-style hole lacks a parsed ground/chassis net or nearby bonding copper.
+- `mounting-hole-distribution-readiness`: warn when parsed hardware-style holes
+  are single-point or clustered below the mounting distribution review spacing.
+- `mounting-hole-spacing-readiness`: warn when likely hardware-hole edge-to-edge
+  spacing is below the configured mechanical review spacing.
+- `panel-feature-outline-readiness`: warn when parsed KiCad panel, route,
+  V-score, tab, or rail graphics have no board outline for registration or sit
+  farther from the outline than the panel-feature review distance.
+- `edge-plating-intent-readiness`: warn when selected KiCad copper reaches or
+  crosses the board outline in a way that should be paired with explicit
+  edge-plating, castellation, bevel, or copper-pullback fabrication intent.
+- `castellation-pitch-readiness`: warn when plated edge-hole candidates have
+  edge-to-edge spacing below the configured castellation pitch review distance.
 - `different-net-spacing`: offset same-layer KiCad copper features by a
   configured clearance and report different-net proximity.
 - `layer-registration-tolerance`: compare KiCad copper layers with an offset
@@ -317,8 +347,10 @@ sidecar input where possible.
   designators, malformed placement coordinates/rotations, invalid side values,
   duplicate pin/net assignments, reference parity between
   purchase/placement/netlist artifacts, missing README revision/manufacturing
-  notes, non-empty drawing files, common drawing extensions, and role-specific
-  drawing filename tokens.
+  notes, BOM compliance/traceability/source-control evidence for sensitive
+  rows, centroid placement unit/origin/rotation-convention handoff, non-empty
+  drawing files, common drawing extensions, and role-specific drawing filename
+  tokens.
 
 ## Supported Inputs
 
@@ -390,7 +422,9 @@ example before it is considered production-ready.
   assumptions and richer process-specific keepout geometry.
 - Mechanical model: routed outline, V-score lines, mouse bites, tabs, slots,
   cutouts, countersinks, castellations, plated edges, bevels, tooling holes,
-  fiducials, keepout zones, stiffeners, and enclosure constraints.
+  fiducials, keepout zones, stiffeners, and enclosure constraints. Initial KiCad
+  checks now review likely large NPTH mounting holes for nearby ground/chassis
+  bonding evidence and non-ground copper keepout intrusion.
 - BOM/position model: component outlines, package classes, rotations, heights,
   polarity marks, fiducials, centroid files, assembly-side data, and alternate
   parts.
@@ -467,12 +501,24 @@ example before it is considered production-ready.
   through-hole pins, copper pour clearance around mechanical holes, and shorts
   from insufficient antipads. Initial KiCad checks warn when non-plated
   mechanical holes intersect copper zones on selected layers.
+- Mounting-hole and chassis readiness: screw/washer/standoff copper keepouts,
+  explicit chassis bonding, intentional isolation, enclosure clearance, and
+  large NPTH classification. Initial KiCad checks infer likely large non-plated
+  mounting holes and warn when they lack nearby ground/chassis copper or when
+  non-ground copper enters the configured keepout region. They also warn when
+  mounting-hole keepouts breach the board outline, when large plated
+  mounting-style holes lack ground/chassis bonding evidence, and when parsed
+  hardware-style holes are single-point, clustered, or too tightly spaced
+  edge-to-edge.
 - Board edge exposure: exposed copper at routed edges, unintentional edge
   plating, copper too close to V-score, copper too close to tab routes, and
   missing edge-plating declarations when copper intentionally reaches an edge.
   Initial KiCad checks warn when copper geometry extends outside the parsed
   board outline, and warn when likely high-speed or high-voltage copper enters
-  the configured board-edge clearance band.
+  the configured board-edge clearance band. Initial mechanical checks also warn
+  when selected copper reaches or crosses the board outline in a way that should
+  be paired with edge-plating, castellation, bevel, or copper-pullback release
+  intent.
 - Gold fingers: finger width/spacing, bevel keepout, mask opening, plating
   finish requirement, no vias/text/silk/paste on fingers, and consistent finger
   length. Initial KiCad checks warn when likely gold-finger or edge-connector
@@ -482,8 +528,9 @@ example before it is considered production-ready.
 - Castellations and half holes: minimum hole diameter, annular ring, edge
   registration, plating intent, pad pitch, and copper pullback around routed
   board edge. Initial KiCad checks warn when plated drill holes cross the board
-  outline, and warn when those crossing plated holes are below the configured
-  minimum diameter.
+  outline, warn when those crossing plated holes are below the configured
+  minimum diameter, and now warn when neighboring plated edge-hole candidates
+  have tight edge-to-edge spacing below the castellation pitch review distance.
 - High-current copper: trace width, neck-down length, via array current sharing,
   copper pour bottlenecks, thermal vias, and connector/pad current-density
   warnings. Initial KiCad checks warn when likely power nets change layers with
@@ -586,6 +633,9 @@ example before it is considered production-ready.
 ### Assembly and DFA Checks
 
 - Component-to-component clearance using courtyard, body, and height data.
+  Initial KiCad checks now warn when large same-side pad proxies sit closer than
+  the configured assembly spacing, which is a conservative review signal until
+  true courtyard/body geometry is modeled.
 - Component-to-board-edge clearance for pick-and-place, depanelization, clamps,
   rework, and hand soldering. Initial KiCad checks warn when parsed component
   pads sit inside the board-edge assembly clearance band. The threshold is now
@@ -620,8 +670,10 @@ example before it is considered production-ready.
   critical nets have no matching IPC-D-356 test record, and warn on IPC-D-356
   testpoint diameter, spacing, edge-clearance, missing/covered soldermask access,
   missing or contradictory access-side fixture-access risks, and access-side
-  hints that disagree with nearby same-net KiCad pad/via side. Probe diameter,
-  spacing, and edge-clearance thresholds are assembly-profile driven.
+  hints that disagree with nearby same-net KiCad pad/via side. They now also
+  warn when an IPC-D-356 probe keepout intersects unrelated selected KiCad
+  copper. Probe diameter, spacing, copper-clearance, and edge-clearance
+  thresholds are assembly-profile driven.
 - BOM, centroid, netlist, README, and drawing readiness: required columns,
   manufacturer/supplier metadata, lifecycle/status review, broader lifecycle-risk
   vocabulary, approved alternate coverage, same-as-primary alternate detection,
@@ -662,8 +714,8 @@ example before it is considered production-ready.
 - Fiducials: global/local count, symmetry, copper diameter, mask opening,
   keepout, edge clearance, and side coverage. Initial KiCad checks infer likely
   unnetted circular fiducial pads and warn on low count or edge-clearance risk,
-  and warn when dense fine-pitch pad clusters have too few nearby local
-  fiducials.
+  warn when same-layer copper intrudes into the fiducial optical keepout, and
+  warn when dense fine-pitch pad clusters have too few nearby local fiducials.
 - Panel fiducials/tooling: panel-level fiducials, tooling holes, rails, bad-board
   marks, breakaway tabs, mouse bite hole size/spacing, and V-score residual web.
   Initial KiCad/Excellon checks warn when likely non-plated tooling holes are

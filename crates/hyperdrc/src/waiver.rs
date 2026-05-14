@@ -1,3 +1,9 @@
+//! Waiver loading, matching, and governance checks.
+//!
+//! Waivers suppress known findings only when their scope matches. Separate
+//! governance checks keep those suppressions reviewable by requiring ownership,
+//! reason, review date, source, and geometry hash metadata.
+
 use std::path::Path;
 
 use anyhow::{Context, Result};
@@ -6,31 +12,53 @@ use serde::Deserialize;
 use crate::date::{current_day_number, parse_iso_day};
 use crate::report::{Severity, Violation};
 
+/// Top-level JSON waiver file.
 #[derive(Debug, Deserialize)]
+/// Public data model for `WaiverFile`.
 pub struct WaiverFile {
+    /// Waiver entries loaded from JSON.
     #[serde(default)]
+    /// Field `waivers`.
     pub waivers: Vec<Waiver>,
 }
 
+/// One waiver entry from a waiver policy file.
 #[derive(Debug, Deserialize)]
+/// Public data model for `Waiver`.
 pub struct Waiver {
+    /// Optional exact violation id.
     pub id: Option<String>,
+    /// Optional check identifier.
     pub check: Option<String>,
+    /// Optional layer names that must all be present on the violation.
     #[serde(default)]
+    /// Field `layers`.
     pub layers: Vec<String>,
+    /// Optional substring that must appear in the violation message.
     pub message_contains: Option<String>,
+    /// Reviewable reason for accepting the finding.
     #[serde(default)]
+    /// Field `reason`.
     pub reason: Option<String>,
+    /// Person or team responsible for re-review.
     #[serde(default)]
+    /// Field `owner`.
     pub owner: Option<String>,
+    /// Review date in `YYYY-MM-DD` format.
     #[serde(default)]
+    /// Field `review_date`.
     pub review_date: Option<String>,
+    /// Ticket, ECO, drawing note, or other source reference.
     #[serde(default)]
+    /// Field `source`.
     pub source: Option<String>,
+    /// Stable geometry hash expected for the waived finding.
     #[serde(default)]
+    /// Field `geometry_hash`.
     pub geometry_hash: Option<String>,
 }
 
+/// Load waiver entries from a JSON file.
 pub fn load_waivers(path: &Path) -> Result<Vec<Waiver>> {
     let text = std::fs::read_to_string(path)
         .with_context(|| format!("failed to read {}", path.display()))?;
@@ -39,6 +67,7 @@ pub fn load_waivers(path: &Path) -> Result<Vec<Waiver>> {
     Ok(file.waivers)
 }
 
+/// Split violations into active and waived sets.
 pub fn apply_waivers(
     violations: Vec<Violation>,
     waivers: &[Waiver],

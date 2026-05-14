@@ -14,6 +14,7 @@ use crate::geometry::{multipolygon_to_shapes, polygon_to_sketch, polygons_to_ske
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbSketch};
 
+/// Run the `mask_island_keepout` design-readiness check or report helper.
 pub fn mask_island_keepout(
     layer_name: &str,
     sketch: &PcbSketch,
@@ -59,6 +60,7 @@ pub fn mask_island_keepout(
     violations
 }
 
+/// Run the `copper_overlap` design-readiness check or report helper.
 pub fn copper_overlap(
     left_name: &str,
     left: &PcbSketch,
@@ -80,6 +82,7 @@ pub fn copper_overlap(
     )
 }
 
+/// Run the `board_edge_clearance` design-readiness check or report helper.
 pub fn board_edge_clearance(
     copper_name: &str,
     copper: &PcbSketch,
@@ -202,6 +205,7 @@ fn board_outline_cutouts(outline: &MultiPolygon<f64>) -> Vec<Polygon<f64>> {
     cutouts
 }
 
+/// Run the `silkscreen_board_edge_clearance` design-readiness check or report helper.
 pub fn silkscreen_board_edge_clearance(
     silk_name: &str,
     silk: &PcbSketch,
@@ -222,6 +226,7 @@ pub fn silkscreen_board_edge_clearance(
     )
 }
 
+/// Run the `solder_mask_board_edge_clearance` design-readiness check or report helper.
 pub fn solder_mask_board_edge_clearance(
     mask_name: &str,
     mask: &PcbSketch,
@@ -244,6 +249,7 @@ pub fn solder_mask_board_edge_clearance(
     )
 }
 
+/// Run the `paste_overhang` design-readiness check or report helper.
 pub fn paste_overhang(
     paste_name: &str,
     paste: &PcbSketch,
@@ -264,6 +270,7 @@ pub fn paste_overhang(
     )
 }
 
+/// Run the `paste_aperture_coverage` design-readiness check or report helper.
 pub fn paste_aperture_coverage(
     paste_name: &str,
     paste: &PcbSketch,
@@ -282,6 +289,7 @@ pub fn paste_aperture_coverage(
     )
 }
 
+/// Run the `solder_mask_overlap_clearance` design-readiness check or report helper.
 pub fn solder_mask_overlap_clearance(
     copper_name: &str,
     copper: &PcbSketch,
@@ -302,6 +310,7 @@ pub fn solder_mask_overlap_clearance(
     )
 }
 
+/// Run the `paste_aperture_ratio` design-readiness check or report helper.
 pub fn paste_aperture_ratio(
     paste_name: &str,
     paste: &PcbSketch,
@@ -356,6 +365,7 @@ pub fn paste_aperture_ratio(
     violations
 }
 
+/// Run the `minimum_paste_aperture` design-readiness check or report helper.
 pub fn minimum_paste_aperture(
     paste_name: &str,
     paste: &PcbSketch,
@@ -393,6 +403,7 @@ pub fn minimum_paste_aperture(
     violations
 }
 
+/// Run the `paste_aperture_spacing` design-readiness check or report helper.
 pub fn paste_aperture_spacing(
     paste_name: &str,
     paste: &PcbSketch,
@@ -440,6 +451,7 @@ pub fn paste_aperture_spacing(
     violations
 }
 
+/// Run the `paste_mask_alignment` design-readiness check or report helper.
 pub fn paste_mask_alignment(
     paste_name: &str,
     paste: &PcbSketch,
@@ -458,6 +470,7 @@ pub fn paste_mask_alignment(
     )
 }
 
+/// Run the `exposed_copper` design-readiness check or report helper.
 pub fn exposed_copper(
     copper_name: &str,
     copper: &PcbSketch,
@@ -479,6 +492,7 @@ pub fn exposed_copper(
     )
 }
 
+/// Run the `solder_mask_opening_coverage` design-readiness check or report helper.
 pub fn solder_mask_opening_coverage(
     copper_name: &str,
     copper: &PcbSketch,
@@ -497,6 +511,7 @@ pub fn solder_mask_opening_coverage(
     )
 }
 
+/// Run the `solder_mask_expansion` design-readiness check or report helper.
 pub fn solder_mask_expansion(
     copper_name: &str,
     copper: &PcbSketch,
@@ -517,6 +532,7 @@ pub fn solder_mask_expansion(
     )
 }
 
+/// Run the `silkscreen_overlap` design-readiness check or report helper.
 pub fn silkscreen_overlap(
     silk_name: &str,
     silk: &PcbSketch,
@@ -538,6 +554,7 @@ pub fn silkscreen_overlap(
     )
 }
 
+/// Run the `silkscreen_clearance` design-readiness check or report helper.
 pub fn silkscreen_clearance(
     silk_name: &str,
     silk: &PcbSketch,
@@ -558,6 +575,7 @@ pub fn silkscreen_clearance(
     )
 }
 
+/// Run the `silkscreen_min_width` design-readiness check or report helper.
 pub fn silkscreen_min_width(
     silk_name: &str,
     silk: &PcbSketch,
@@ -577,6 +595,7 @@ pub fn silkscreen_min_width(
     )
 }
 
+/// Run the `min_copper_neck_width` design-readiness check or report helper.
 pub fn min_copper_neck_width(
     copper_name: &str,
     copper: &PcbSketch,
@@ -643,6 +662,7 @@ fn shortest_exterior_segment(polygon: &Polygon<f64>) -> f64 {
         .fold(f64::INFINITY, f64::min)
 }
 
+/// Run the `solder_mask_sliver` design-readiness check or report helper.
 pub fn solder_mask_sliver(
     mask_name: &str,
     mask: &PcbSketch,
@@ -665,6 +685,7 @@ pub fn solder_mask_sliver(
     )
 }
 
+/// Run the `minimum_mask_opening` design-readiness check or report helper.
 pub fn minimum_mask_opening(
     mask_name: &str,
     mask: &PcbSketch,
@@ -702,6 +723,7 @@ pub fn minimum_mask_opening(
     violations
 }
 
+/// Run the `solder_mask_opening_spacing` design-readiness check or report helper.
 pub fn solder_mask_opening_spacing(
     mask_name: &str,
     mask: &PcbSketch,
@@ -749,6 +771,7 @@ pub fn solder_mask_opening_spacing(
     violations
 }
 
+/// Run the `acid_trap_candidates` design-readiness check or report helper.
 pub fn acid_trap_candidates(
     copper_name: &str,
     copper: &PcbSketch,
@@ -780,6 +803,7 @@ pub fn acid_trap_candidates(
     )]
 }
 
+/// Run the `layer_sanity` design-readiness check or report helper.
 pub fn layer_sanity(
     layer_name: &str,
     sketch: &PcbSketch,
@@ -883,6 +907,7 @@ fn ring_has_finite_coordinates(ring: &LineString<f64>) -> bool {
         .all(|coord| coord.x.is_finite() && coord.y.is_finite())
 }
 
+/// Run the `copper_balance` design-readiness check or report helper.
 pub fn copper_balance(
     copper_layers: &[(String, PcbSketch)],
     max_imbalance_ratio: f64,
@@ -926,6 +951,7 @@ pub fn copper_balance(
     )]
 }
 
+/// Run the `mechanical_layer_geometry` design-readiness check or report helper.
 pub fn mechanical_layer_geometry(
     layer_name: &str,
     sketch: &PcbSketch,
@@ -951,6 +977,7 @@ pub fn mechanical_layer_geometry(
     )]
 }
 
+/// Run the `board_outline_sanity` design-readiness check or report helper.
 pub fn board_outline_sanity(
     layer_name: &str,
     outline: &PcbSketch,
@@ -972,6 +999,7 @@ pub fn board_outline_sanity(
     )]
 }
 
+/// Run the `board_outline_fragments` design-readiness check or report helper.
 pub fn board_outline_fragments(
     layer_name: &str,
     outline: &PcbSketch,

@@ -1,3 +1,9 @@
+//! Excellon drill parser with non-fatal parser diagnostics.
+//!
+//! The parser accepts common Excellon unit declarations, tool definitions, and
+//! hit records, returning drill geometry plus issues that can be surfaced as
+//! readiness findings without aborting the rest of a package run.
+
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
@@ -6,64 +12,105 @@ use anyhow::{Context, Result};
 use crate::kicad::DrillFeature;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+/// Public enumeration for `ExcellonUnits`.
 pub enum ExcellonUnits {
+    /// Variant `Metric`.
     Metric,
+    /// Variant `Inch`.
     Inch,
 }
 
 #[derive(Clone, Debug)]
+/// Public data model for `ExcellonIssue`.
 pub struct ExcellonIssue {
+    /// Field `line`.
     pub line: usize,
+    /// Field `kind`.
     pub kind: ExcellonIssueKind,
+    /// Field `detail`.
     pub detail: String,
 }
 
 #[derive(Clone, Debug)]
+/// Public enumeration for `ExcellonIssueKind`.
 pub enum ExcellonIssueKind {
+    /// Variant `MissingUnitDeclaration`.
     MissingUnitDeclaration,
+    /// Conflicting unit declarations appeared in one file.
     UnitConflict {
+        /// Previously declared units.
         existing: ExcellonUnits,
+        /// Later conflicting units.
         incoming: ExcellonUnits,
     },
+    /// A tool definition could not be parsed.
     InvalidToolDefinition {
+        /// Tool identifier.
         tool: String,
+        /// Raw diameter token that failed parsing.
         raw_diameter: String,
     },
+    /// A tool defined a zero or negative diameter.
     ToolDiameterNotPositive {
+        /// Tool identifier.
         tool: String,
+        /// Parsed diameter.
         diameter: f64,
     },
+    /// A tool was defined more than once with the same diameter.
     DuplicateToolDefinition {
+        /// Tool identifier.
         tool: String,
+        /// Repeated diameter.
         diameter: f64,
     },
+    /// A tool was redefined with a different diameter.
     ToolRedefinition {
+        /// Tool identifier.
         tool: String,
+        /// First diameter definition.
         previous: f64,
+        /// Later diameter definition.
         replacement: f64,
     },
+    /// A selected tool had no definition.
     UnknownToolSelection {
+        /// Tool identifier.
         tool: String,
     },
+    /// Variant `DrillHitWithoutActiveTool`.
     DrillHitWithoutActiveTool,
+    /// A coordinate hit referenced an undefined tool.
     DrillHitWithUnknownTool {
+        /// Tool identifier.
         tool: String,
     },
+    /// A coordinate hit used a tool whose diameter was invalid.
     DrillHitWithoutDiameter {
+        /// Tool identifier.
         tool: String,
     },
+    /// A coordinate record could not be parsed.
     InvalidCoordinate {
+        /// Raw line text.
         raw_line: String,
+        /// Parse failure reason.
         reason: String,
     },
 }
 
 #[derive(Clone, Debug)]
+/// Public data model for `ExcellonReport`.
 pub struct ExcellonReport {
+    /// Field `source`.
     pub source: String,
+    /// Field `drills`.
     pub drills: Vec<DrillFeature>,
+    /// Field `issues`.
     pub issues: Vec<ExcellonIssue>,
+    /// Field `has_units`.
     pub has_units: bool,
+    /// Field `declared_unit`.
     pub declared_unit: Option<ExcellonUnits>,
 }
 
@@ -114,25 +161,30 @@ impl ExcellonIssueKind {
 }
 
 impl ExcellonIssue {
+    /// Run or compute `message`.
     pub fn message(&self) -> String {
         self.kind.message(self.line)
     }
 }
 
+/// Run or compute `load_excellon_report`.
 pub fn load_excellon_report(path: &Path) -> Result<ExcellonReport> {
     let text = std::fs::read_to_string(path)
         .with_context(|| format!("failed to read {}", path.display()))?;
     Ok(parse_excellon_report(&text, path))
 }
 
+/// Run or compute `load_excellon`.
 pub fn load_excellon(path: &Path) -> Result<Vec<DrillFeature>> {
     Ok(load_excellon_report(path)?.drills)
 }
 
+/// Run or compute `parse_excellon`.
 pub fn parse_excellon(input: &str) -> Vec<DrillFeature> {
     parse_excellon_report(input, &PathBuf::from("<inline-excellon>")).drills
 }
 
+/// Run or compute `parse_excellon_report`.
 pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
     let mut tool_diameter = HashMap::<String, f64>::new();
     let mut current_tool: Option<String> = None;

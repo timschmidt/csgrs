@@ -12,19 +12,31 @@ use anyhow::{Context, Result, anyhow};
 use crate::cli::{ConversionBackend, SourceEda};
 
 #[derive(Clone, Debug)]
+/// Public data model for `ConversionRequest`.
 pub struct ConversionRequest {
+    /// Field `backend`.
     pub backend: ConversionBackend,
+    /// Field `input_dir`.
     pub input_dir: PathBuf,
+    /// Field `output_dir`.
     pub output_dir: PathBuf,
+    /// Field `source_eda`.
     pub source_eda: SourceEda,
+    /// Field `zip`.
     pub zip: bool,
+    /// Field `zip_name`.
     pub zip_name: String,
+    /// Field `top_color_image`.
     pub top_color_image: Option<PathBuf>,
+    /// Field `bottom_color_image`.
     pub bottom_color_image: Option<PathBuf>,
+    /// Field `transjlc_bin`.
     pub transjlc_bin: PathBuf,
+    /// Field `extra_args`.
     pub extra_args: Vec<String>,
 }
 
+/// Run or compute `convert`.
 pub fn convert(request: &ConversionRequest) -> Result<ConversionOutput> {
     match request.backend {
         ConversionBackend::Transjlc => TransjlcConverter.convert(request),
@@ -32,8 +44,11 @@ pub fn convert(request: &ConversionRequest) -> Result<ConversionOutput> {
 }
 
 #[derive(Clone, Debug)]
+/// Public data model for `ConversionOutput`.
 pub struct ConversionOutput {
+    /// Field `source_dir`.
     pub source_dir: PathBuf,
+    /// Field `gerber_dir`.
     pub gerber_dir: PathBuf,
 }
 
@@ -97,6 +112,7 @@ fn transjlc_command(request: &ConversionRequest) -> Command {
     command
 }
 
+/// Run or compute `default_conversion_output_dir`.
 pub fn default_conversion_output_dir(base: &Path, index: usize) -> PathBuf {
     base.join(format!("conversion-{index}"))
 }

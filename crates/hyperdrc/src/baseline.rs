@@ -13,73 +13,119 @@ use serde::{Deserialize, Serialize};
 
 use crate::report::{Report, Severity, Violation};
 
+/// File containing generated waiver templates.
 #[derive(Debug, Deserialize, Serialize)]
+/// Public data model for `WaiverStubFile`.
 pub struct WaiverStubFile {
+    /// Generated waiver templates.
     pub waivers: Vec<WaiverStub>,
 }
 
+/// Waiver template generated from an active finding.
 #[derive(Debug, Deserialize, Serialize)]
+/// Public data model for `WaiverStub`.
 pub struct WaiverStub {
+    /// Finding id to target.
     pub id: String,
+    /// Check identifier to target.
     pub check: String,
+    /// Layers involved in the finding.
     pub layers: Vec<String>,
+    /// Optional message excerpt for additional targeting.
     #[serde(skip_serializing_if = "Option::is_none")]
+    /// Field `message_contains`.
     pub message_contains: Option<String>,
+    /// Placeholder for the accepted-risk rationale.
     pub reason: String,
+    /// Placeholder for the responsible reviewer.
     pub owner: String,
+    /// Placeholder review date in `YYYY-MM-DD` format.
     pub review_date: String,
+    /// Placeholder review source such as an ECO, ticket, or note.
     pub source: String,
+    /// Stable geometry identity copied from the finding.
     pub geometry_hash: String,
 }
 
+/// Serialized baseline of active findings for release-to-release comparison.
 #[derive(Debug, Clone, Deserialize, Serialize)]
+/// Public data model for `BaselineFile`.
 pub struct BaselineFile {
+    /// Active findings captured in the baseline.
     pub findings: Vec<BaselineFinding>,
 }
 
+/// Stable baseline representation of one finding.
 #[derive(Debug, Clone, Deserialize, Serialize)]
+/// Public data model for `BaselineFinding`.
 pub struct BaselineFinding {
+    /// Finding id from the report.
     pub id: String,
+    /// Check identifier.
     pub check: String,
+    /// Finding severity.
     pub severity: Severity,
+    /// Layers involved in the finding.
     pub layers: Vec<String>,
+    /// Stable geometry identity for diffing.
     pub geometry_hash: String,
+    /// Optional finding detail text.
     #[serde(skip_serializing_if = "Option::is_none")]
+    /// Field `message`.
     pub message: Option<String>,
+    /// Number of polygon geometries associated with the finding.
     pub polygon_count: usize,
+    /// Number of point locations associated with the finding.
     pub point_count: usize,
+    /// Total polygon area in square millimeters.
     pub total_area: f64,
 }
 
+/// Baseline comparison result.
 #[derive(Debug, Serialize)]
+/// Public data model for `BaselineDiffFile`.
 pub struct BaselineDiffFile {
+    /// Aggregate diff counts.
     pub summary: BaselineDiffSummary,
+    /// Findings present in current but absent from reference.
     pub new_findings: Vec<BaselineFinding>,
+    /// Findings present in reference but absent from current.
     pub resolved_findings: Vec<BaselineFinding>,
+    /// Findings present in both baselines.
     pub unchanged_findings: Vec<BaselineFinding>,
 }
 
+/// Aggregate baseline diff counts.
 #[derive(Debug, Serialize)]
+/// Public data model for `BaselineDiffSummary`.
 pub struct BaselineDiffSummary {
+    /// Number of reference findings.
     pub reference_findings: usize,
+    /// Number of current findings.
     pub current_findings: usize,
+    /// Number of newly introduced findings.
     pub new_findings: usize,
+    /// Number of resolved findings.
     pub resolved_findings: usize,
+    /// Number of unchanged findings.
     pub unchanged_findings: usize,
 }
 
+/// Generate waiver templates for every active finding in a report.
 pub fn report_to_waiver_stubs(report: &Report) -> WaiverStubFile {
     WaiverStubFile {
         waivers: report.violations.iter().map(waiver_stub).collect(),
     }
 }
 
+/// Generate a baseline file from a report's active findings.
 pub fn report_to_baseline(report: &Report) -> BaselineFile {
     BaselineFile {
         findings: report.violations.iter().map(baseline_finding).collect(),
     }
 }
 
+/// Load a baseline file from JSON.
 pub fn load_baseline(path: &Path) -> Result<BaselineFile> {
     let text = std::fs::read_to_string(path)
         .with_context(|| format!("failed to read {}", path.display()))?;
@@ -87,6 +133,7 @@ pub fn load_baseline(path: &Path) -> Result<BaselineFile> {
         .with_context(|| format!("failed to parse baseline file {}", path.display()))
 }
 
+/// Compare reference and current baselines by check and geometry hash.
 pub fn compare_baselines(reference: &BaselineFile, current: &BaselineFile) -> BaselineDiffFile {
     let reference_by_key = keyed_findings(&reference.findings);
     let current_by_key = keyed_findings(&current.findings);

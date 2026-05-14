@@ -7,21 +7,29 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
+use super::artifact_table::{cell, find_column, parse_table};
 use super::surface_finish::readme_surface_finish_compatibility;
 use crate::report::{Severity, Violation};
 
 #[derive(Clone, Debug)]
+/// Public data model for `TextArtifact`.
 pub struct TextArtifact {
+    /// Field `path`.
     pub path: String,
+    /// Field `text`.
     pub text: String,
 }
 
 #[derive(Clone, Debug)]
+/// Public data model for `FileArtifact`.
 pub struct FileArtifact {
+    /// Field `path`.
     pub path: String,
+    /// Field `byte_len`.
     pub byte_len: u64,
 }
 
+/// Run the `production_artifact_readiness` design-readiness check or report helper.
 pub fn production_artifact_readiness(
     bom_files: &[TextArtifact],
     centroid_files: &[TextArtifact],
@@ -590,6 +598,38 @@ const README_ASSEMBLY_REQUIREMENTS: &[ReadmeRequirement] = &[
         label: "test or programming handoff",
         needles: &["test", "programming", "fixture", "ict", "fct"],
     },
+    ReadmeRequirement {
+        label: "first-article or sample approval",
+        needles: &[
+            "first article",
+            "fai",
+            "sample approval",
+            "golden sample",
+            "pilot build",
+        ],
+    },
+    ReadmeRequirement {
+        label: "production acceptance criteria",
+        needles: &[
+            "acceptance criteria",
+            "acceptance",
+            "pass/fail",
+            "pass fail",
+            "aql",
+            "inspection criteria",
+        ],
+    },
+    ReadmeRequirement {
+        label: "lot traceability",
+        needles: &[
+            "traceability",
+            "lot",
+            "date code",
+            "coc",
+            "certificate of conformance",
+            "traveler",
+        ],
+    },
 ];
 
 const README_CONDITIONAL_ASSEMBLY_REQUIREMENTS: &[ReadmeRequirement] = &[
@@ -764,6 +804,42 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
             "layer",
         ],
     );
+    let compliance_col = find_column(
+        &table.headers,
+        &[
+            "compliance",
+            "rohs",
+            "reach",
+            "leadfree",
+            "lead free",
+            "materialdeclaration",
+            "material declaration",
+        ],
+    );
+    let traceability_col = find_column(
+        &table.headers,
+        &[
+            "traceability",
+            "lot",
+            "lotcode",
+            "lot code",
+            "datecode",
+            "date code",
+            "coc",
+            "certificate",
+        ],
+    );
+    let source_control_col = find_column(
+        &table.headers,
+        &[
+            "sourcecontrol",
+            "source control",
+            "approvedvendor",
+            "approved vendor",
+            "AVL",
+            "authorized",
+        ],
+    );
 
     if ref_col.is_none() {
         analysis.violations.push(artifact_violation(
@@ -822,7 +898,6 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
             Some("BOM header has no footprint, package, or case column".to_string()),
         ));
     }
-
     let mut occurrences = BTreeMap::<String, usize>::new();
     let mut mpn_values = BTreeMap::<String, BTreeSet<String>>::new();
     let mut mpn_packages = BTreeMap::<String, BTreeSet<String>>::new();
@@ -1122,6 +1197,75 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
                     )),
                 }
             }
+            if likely_traceability_sensitive_bom_row(
+                row,
+                part_col,
+                value_col,
+                package_col,
+                lifecycle_col,
+            ) {
+                // IPC J-STD-001H frames assembly acceptance as process and
+                // material-control evidence, while IPC-7351B makes package
+                // class central to land-pattern/assembly interpretation. These
+                // BOM heuristics therefore ask for explicit lot/date-code or
+                // certificate traceability on packages and lifecycle states
+                // that often drive production risk.
+                match traceability_col {
+                    Some(column) if !is_unreleased_cell(cell(row, column)) => {}
+                    Some(_) => analysis.violations.push(artifact_violation(
+                        &artifact.path,
+                        Some(format!(
+                            "BOM row {} likely needs lot/date-code or certificate traceability but has no populated traceability note",
+                            row_index + 2
+                        )),
+                    )),
+                    None => analysis.violations.push(artifact_violation(
+                        &artifact.path,
+                        Some(format!(
+                            "BOM row {} likely needs lot/date-code or certificate traceability but BOM has no traceability column",
+                            row_index + 2
+                        )),
+                    )),
+                }
+            }
+            if likely_regulatory_sensitive_bom_row(row, part_col, value_col, package_col) {
+                match compliance_col {
+                    Some(column) if !is_unreleased_cell(cell(row, column)) => {}
+                    Some(_) => analysis.violations.push(artifact_violation(
+                        &artifact.path,
+                        Some(format!(
+                            "BOM row {} likely needs RoHS/REACH/lead-free compliance evidence but has no populated compliance note",
+                            row_index + 2
+                        )),
+                    )),
+                    None => analysis.violations.push(artifact_violation(
+                        &artifact.path,
+                        Some(format!(
+                            "BOM row {} likely needs RoHS/REACH/lead-free compliance evidence but BOM has no compliance column",
+                            row_index + 2
+                        )),
+                    )),
+                }
+            }
+            if likely_source_control_sensitive_bom_row(row, part_col, value_col, package_col) {
+                match source_control_col {
+                    Some(column) if !is_unreleased_cell(cell(row, column)) => {}
+                    Some(_) => analysis.violations.push(artifact_violation(
+                        &artifact.path,
+                        Some(format!(
+                            "BOM row {} likely needs approved-vendor/source-control evidence but has no populated source-control note",
+                            row_index + 2
+                        )),
+                    )),
+                    None => analysis.violations.push(artifact_violation(
+                        &artifact.path,
+                        Some(format!(
+                            "BOM row {} likely needs approved-vendor/source-control evidence but BOM has no source-control column",
+                            row_index + 2
+                        )),
+                    )),
+                }
+            }
             if likely_height_sensitive_bom_row(&references, row, part_col, value_col, package_col) {
                 match height_col {
                     Some(column) if parse_positive_dimension(cell(row, column)).is_some() => {}
@@ -1393,6 +1537,68 @@ fn analyze_centroid(artifact: &TextArtifact) -> ArtifactAnalysis {
                 Some(format!("centroid header has no {name} column")),
             ));
         }
+    }
+    // IPC-7351B land-pattern and assembly data is only meaningful when the
+    // placement origin, side, units, and rotation convention are unambiguous.
+    // Many EDA centroid exports omit that context, so hyperdrc treats missing
+    // package-level metadata as a production-handoff warning rather than trying
+    // to infer the assembly house convention.
+    let normalized_text = artifact.text.to_ascii_lowercase();
+    if !has_any(
+        &normalized_text,
+        &[
+            "unit",
+            "units",
+            "mm",
+            "millimeter",
+            "millimetre",
+            "inch",
+            "inches",
+        ],
+    ) {
+        analysis.violations.push(artifact_violation(
+            &artifact.path,
+            Some(
+                "centroid file does not state placement units; review mm/inch export settings"
+                    .to_string(),
+            ),
+        ));
+    }
+    if !has_any(
+        &normalized_text,
+        &[
+            "origin",
+            "aux origin",
+            "grid origin",
+            "board origin",
+            "absolute",
+            "relative",
+        ],
+    ) {
+        analysis.violations.push(artifact_violation(
+            &artifact.path,
+            Some(
+                "centroid file does not state placement origin; review board/aux-origin convention"
+                    .to_string(),
+            ),
+        ));
+    }
+    if rotation_col.is_some()
+        && !has_any(
+            &normalized_text,
+            &[
+                "rotation convention",
+                "degrees",
+                "clockwise",
+                "counterclockwise",
+                "ccw",
+            ],
+        )
+    {
+        analysis.violations.push(artifact_violation(
+            &artifact.path,
+            Some("centroid file has rotations but does not state rotation convention".to_string()),
+        ));
     }
 
     let mut occurrences = BTreeMap::<String, usize>::new();
@@ -2181,120 +2387,6 @@ fn analyze_text_artifact_path(artifact: &TextArtifact, kind: TextArtifactKind) -
     violations
 }
 
-#[derive(Copy, Clone)]
-enum TableDelimiter {
-    Comma,
-    Tab,
-    Semicolon,
-    Whitespace,
-}
-
-struct Table {
-    headers: Vec<String>,
-    rows: Vec<Vec<String>>,
-}
-
-fn parse_table(text: &str) -> Option<Table> {
-    let lines = text
-        .lines()
-        .map(str::trim)
-        .filter(|line| !line.is_empty() && !line.starts_with('#'))
-        .collect::<Vec<_>>();
-    let header = lines.first()?;
-    let delimiter = detect_table_delimiter(header);
-    let headers = split_row(header, delimiter)
-        .into_iter()
-        .map(|header| normalize_header(&header))
-        .collect::<Vec<_>>();
-    let rows = lines
-        .iter()
-        .skip(1)
-        .map(|line| split_row(line, delimiter))
-        .filter(|row| row.iter().any(|cell| !cell.trim().is_empty()))
-        .collect::<Vec<_>>();
-
-    Some(Table { headers, rows }).filter(|table| !table.headers.is_empty())
-}
-
-fn detect_table_delimiter(header: &str) -> TableDelimiter {
-    if header.contains('\t') {
-        TableDelimiter::Tab
-    } else if header.contains(',') {
-        TableDelimiter::Comma
-    } else if header.contains(';') {
-        TableDelimiter::Semicolon
-    } else {
-        TableDelimiter::Whitespace
-    }
-}
-
-fn split_row(line: &str, delimiter: TableDelimiter) -> Vec<String> {
-    let mut cells = Vec::new();
-    let mut current = String::new();
-    let mut in_quotes = false;
-    let mut chars = line.chars().peekable();
-
-    while let Some(ch) = chars.next() {
-        if ch == '"' {
-            if in_quotes && chars.peek() == Some(&'"') {
-                current.push('"');
-                chars.next();
-            } else {
-                in_quotes = !in_quotes;
-            }
-        } else if delimiter.matches(ch) && !in_quotes {
-            cells.push(current.trim().to_string());
-            current.clear();
-            if matches!(delimiter, TableDelimiter::Whitespace) {
-                while chars.peek().is_some_and(|next| next.is_ascii_whitespace()) {
-                    chars.next();
-                }
-            }
-        } else {
-            current.push(ch);
-        }
-    }
-    cells.push(current.trim().to_string());
-
-    cells
-}
-
-impl TableDelimiter {
-    fn matches(self, ch: char) -> bool {
-        match self {
-            TableDelimiter::Comma => ch == ',',
-            TableDelimiter::Tab => ch == '\t',
-            TableDelimiter::Semicolon => ch == ';',
-            TableDelimiter::Whitespace => ch.is_ascii_whitespace(),
-        }
-    }
-}
-
-fn normalize_header(header: &str) -> String {
-    header
-        .trim_matches('"')
-        .chars()
-        .filter(|ch| ch.is_ascii_alphanumeric())
-        .collect::<String>()
-        .to_ascii_lowercase()
-}
-
-fn find_column(headers: &[String], candidates: &[&str]) -> Option<usize> {
-    let candidates = candidates
-        .iter()
-        .map(|candidate| normalize_header(candidate))
-        .collect::<Vec<_>>();
-    headers.iter().position(|header| {
-        candidates
-            .iter()
-            .any(|candidate| header == candidate || header.contains(candidate))
-    })
-}
-
-fn cell(row: &[String], column: usize) -> &str {
-    row.get(column).map(String::as_str).unwrap_or("")
-}
-
 fn split_references(value: &str) -> Vec<String> {
     value
         .split(|ch: char| ch.is_whitespace() || matches!(ch, ',' | ';' | '|'))
@@ -2651,7 +2743,6 @@ fn readme_mentions_fabrication_marking(text: &str) -> bool {
     has_any(
         text,
         &[
-            "date code",
             "ul mark",
             "ul logo",
             "fab mark",
@@ -3031,6 +3122,98 @@ fn likely_height_sensitive_bom_row(
     )
 }
 
+fn likely_traceability_sensitive_bom_row(
+    row: &[String],
+    part_col: Option<usize>,
+    value_col: Option<usize>,
+    package_col: Option<usize>,
+    lifecycle_col: Option<usize>,
+) -> bool {
+    row_text_matches(
+        row,
+        &[part_col, value_col, package_col, lifecycle_col],
+        &[
+            "bga",
+            "csp",
+            "lga",
+            "qfn",
+            "dfn",
+            "mcu",
+            "processor",
+            "fpga",
+            "flash",
+            "memory",
+            "radio",
+            "wireless",
+            "crystal",
+            "oscillator",
+            "tvs",
+            "esd",
+            "connector",
+            "battery",
+            "engineering sample",
+            "sample",
+            "allocation",
+            "last time buy",
+            "ltb",
+        ],
+    )
+}
+
+fn likely_regulatory_sensitive_bom_row(
+    row: &[String],
+    part_col: Option<usize>,
+    value_col: Option<usize>,
+    package_col: Option<usize>,
+) -> bool {
+    row_text_matches(
+        row,
+        &[part_col, value_col, package_col],
+        &[
+            "connector",
+            "cable",
+            "battery",
+            "fuse",
+            "relay",
+            "display",
+            "led",
+            "module",
+            "wireless",
+            "radio",
+            "antenna",
+            "power supply",
+            "adapter",
+        ],
+    )
+}
+
+fn likely_source_control_sensitive_bom_row(
+    row: &[String],
+    part_col: Option<usize>,
+    value_col: Option<usize>,
+    package_col: Option<usize>,
+) -> bool {
+    row_text_matches(
+        row,
+        &[part_col, value_col, package_col],
+        &[
+            "mcu",
+            "processor",
+            "fpga",
+            "asic",
+            "module",
+            "wireless",
+            "radio",
+            "connector",
+            "battery",
+            "crystal",
+            "oscillator",
+            "regulator",
+            "pmic",
+        ],
+    )
+}
+
 fn row_text_matches(row: &[String], columns: &[Option<usize>], needles: &[&str]) -> bool {
     columns.iter().flatten().any(|column| {
         let text = cell(row, *column).to_ascii_lowercase();
@@ -3203,7 +3386,7 @@ mod tests {
         );
         let centroid = artifact(
             "centroid.csv",
-            "Designator,X,Y,Rotation,Side\nR1,1.0,2.0,90,Top\nC1,3.0,4.0,0,Bottom\n",
+            "# units mm; origin aux origin; rotation convention clockwise degrees\nDesignator,X,Y,Rotation,Side\nR1,1.0,2.0,90,Top\nC1,3.0,4.0,0,Bottom\n",
         );
         let readme = artifact(
             "README.md",
@@ -3215,21 +3398,25 @@ mod tests {
              Via treatment: tented vias. Edge plating: no edge plating. Castellations: no castellation.\n\
              Preflight: DRC/ERC passed, zones refilled, outputs generated and reloaded in Gerber viewer.\n\
              HyperDRC reviewed with no waivers. Submitted package archived.\n\
-             Assembly: double-sided assembly, pin-1 and polarity reviewed. Test fixture and programming handoff complete.\n",
+             Assembly: double-sided assembly, pin-1 and polarity reviewed. Test fixture and programming handoff complete.\n\
+             First article approval required before production. Acceptance criteria: pass/fail functional test and AQL inspection.\n\
+             Lot traceability: supplier lot, date code, COC, and traveler records retained.\n",
         );
         let assembly = file("widget_assembly.pdf", 256);
 
+        let violations = production_artifact_readiness(
+            &[bom],
+            &[centroid],
+            &[],
+            &[readme],
+            &[],
+            &[assembly],
+            &[],
+        );
         assert!(
-            production_artifact_readiness(
-                &[bom],
-                &[centroid],
-                &[],
-                &[readme],
-                &[],
-                &[assembly],
-                &[],
-            )
-            .is_empty()
+            violations.is_empty(),
+            "unexpected clean-package artifact warnings: {:?}",
+            messages(&violations)
         );
     }
 
@@ -3637,7 +3824,7 @@ mod tests {
         );
         let centroid = artifact(
             "centroid.csv",
-            "Ref,X,Y,Rotation,Side\nR1,0,0,0,Top\nR2,1,0,0,Top\nR3,2,0,0,Top\nR4,3,0,0,Top\nR5,4,0,0,Top\n",
+            "# units mm; origin aux origin; rotation convention clockwise degrees\nRef,X,Y,Rotation,Side\nR1,0,0,0,Top\nR2,1,0,0,Top\nR3,2,0,0,Top\nR4,3,0,0,Top\nR5,4,0,0,Top\n",
         );
 
         assert!(
@@ -3730,6 +3917,46 @@ mod tests {
                 .iter()
                 .any(|message| message.contains("BOM row 5") && message.contains("unit cost")),
             "DNP rows should not require pricing: {messages:?}"
+        );
+    }
+
+    #[test]
+    fn bom_readiness_reports_traceability_compliance_and_source_control_gaps() {
+        let bom = artifact(
+            "widget_bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Traceability,Compliance,Source Control\nU1,1,MCU123,MCU,QFN32,Vendor,SKU-U,Active,ALT-U,,,\nJ1,1,CONN123,USB connector,USB-C,Vendor,SKU-J,Active,ALT-J,,,\nR1,1,RC0603,10k,0603,Yageo,SKU-R,Active,ALT-R,,,\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+        ));
+
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("traceability note"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("compliance evidence"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("source-control evidence"))
+        );
+        assert!(
+            !messages
+                .iter()
+                .any(|message| message.contains("BOM row 4 likely needs")),
+            "passive row should not trigger advanced procurement handoff warnings: {messages:?}"
         );
     }
 
@@ -3880,6 +4107,37 @@ mod tests {
                 && message.contains("unusually large")
                 && message.contains("origin")
         }));
+    }
+
+    #[test]
+    fn centroid_readiness_requires_units_origin_and_rotation_convention() {
+        let centroid = artifact("centroid.csv", "Ref,X,Y,Rotation,Side\nU1,10,20,90,Top\n");
+
+        let messages = messages(&production_artifact_readiness(
+            &[],
+            &[centroid],
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+        ));
+
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("does not state placement units"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("does not state placement origin"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("does not state rotation convention"))
+        );
     }
 
     #[test]
@@ -4367,10 +4625,17 @@ mod tests {
              Via treatment: tented vias. Edge plating: no edge plating. Castellations: no castellation.\n\
              Preflight: DRC/ERC passed, zones refilled, outputs generated and reloaded in Gerber viewer.\n\
              HyperDRC reviewed with no waivers. Submitted package archived.\n\
-             Assembly: pin-1 and polarity reviewed. Test fixture and programming handoff complete.\n",
+             Assembly: pin-1 and polarity reviewed. Test fixture and programming handoff complete.\n\
+             First article approval required before production. Acceptance criteria: pass/fail functional test and AQL inspection.\n\
+             Lot traceability: supplier lot, date code, COC, and traveler records retained.\n",
         );
 
-        assert!(production_artifact_readiness(&[], &[], &[], &[readme], &[], &[], &[]).is_empty());
+        let violations = production_artifact_readiness(&[], &[], &[], &[readme], &[], &[], &[]);
+        assert!(
+            violations.is_empty(),
+            "unexpected README warnings: {:?}",
+            messages(&violations)
+        );
     }
 
     #[test]

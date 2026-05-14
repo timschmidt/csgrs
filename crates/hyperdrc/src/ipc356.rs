@@ -11,14 +11,23 @@ use std::path::Path;
 use anyhow::{Context, Result};
 
 #[derive(Clone, Debug)]
+/// Public data model for `Ipc356Point`.
 pub struct Ipc356Point {
+    /// Field `net`.
     pub net: String,
+    /// Field `reference`.
     pub reference: Option<String>,
+    /// Field `pin`.
     pub pin: Option<String>,
+    /// Field `location`.
     pub location: [f64; 2],
+    /// Field `diameter`.
     pub diameter: Option<f64>,
+    /// Field `access_side`.
     pub access_side: Option<Ipc356AccessSide>,
+    /// Field `feature_type`.
     pub feature_type: Option<Ipc356FeatureType>,
+    /// Field `soldermask`.
     pub soldermask: Option<Ipc356Soldermask>,
 }
 
@@ -28,51 +37,77 @@ pub struct Ipc356Point {
 /// add pragmatic side tokens beside the record. hyperdrc keeps those tokens as
 /// readiness evidence instead of treating them as authoritative geometry.
 #[derive(Copy, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+/// Public enumeration for `Ipc356AccessSide`.
 pub enum Ipc356AccessSide {
+    /// Variant `Top`.
     Top,
+    /// Variant `Bottom`.
     Bottom,
+    /// Variant `Both`.
     Both,
 }
 
 /// Coarse test-feature class recovered from common sidecar annotations.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
+/// Public enumeration for `Ipc356FeatureType`.
 pub enum Ipc356FeatureType {
+    /// Variant `ThroughHole`.
     ThroughHole,
+    /// Variant `Smd`.
     Smd,
+    /// Variant `Via`.
     Via,
+    /// Variant `Tooling`.
     Tooling,
+    /// Variant `Connector`.
     Connector,
+    /// Variant `Other`.
     Other,
 }
 
 /// Soldermask access state recovered from common testpoint annotations.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
+/// Public enumeration for `Ipc356Soldermask`.
 pub enum Ipc356Soldermask {
+    /// Variant `Open`.
     Open,
+    /// Variant `Covered`.
     Covered,
+    /// Variant `Unknown`.
     Unknown,
 }
 
 #[derive(Clone, Debug)]
+/// Public data model for `Ipc356Issue`.
 pub struct Ipc356Issue {
+    /// Field `line`.
     pub line: usize,
+    /// Field `kind`.
     pub kind: Ipc356IssueKind,
+    /// Field `detail`.
     pub detail: String,
 }
 
 #[derive(Clone, Debug)]
+/// Public enumeration for `Ipc356IssueKind`.
 pub enum Ipc356IssueKind {
+    /// Variant `MalformedTestRecord`.
     MalformedTestRecord,
 }
 
 #[derive(Clone, Debug)]
+/// Public data model for `Ipc356Report`.
 pub struct Ipc356Report {
+    /// Field `source`.
     pub source: String,
+    /// Field `points`.
     pub points: Vec<Ipc356Point>,
+    /// Field `issues`.
     pub issues: Vec<Ipc356Issue>,
 }
 
 impl Ipc356Issue {
+    /// Run or compute `message`.
     pub fn message(&self) -> String {
         match self.kind {
             Ipc356IssueKind::MalformedTestRecord => format!(
@@ -83,20 +118,24 @@ impl Ipc356Issue {
     }
 }
 
+/// Run or compute `load_ipc356_report`.
 pub fn load_ipc356_report(path: &Path) -> Result<Ipc356Report> {
     let text = std::fs::read_to_string(path)
         .with_context(|| format!("failed to read {}", path.display()))?;
     Ok(parse_ipc356_report(&text, path))
 }
 
+/// Run or compute `load_ipc356`.
 pub fn load_ipc356(path: &Path) -> Result<Vec<Ipc356Point>> {
     Ok(load_ipc356_report(path)?.points)
 }
 
+/// Run or compute `parse_ipc356`.
 pub fn parse_ipc356(input: &str) -> Vec<Ipc356Point> {
     parse_ipc356_report(input, Path::new("<inline-ipc356>")).points
 }
 
+/// Run or compute `parse_ipc356_report`.
 pub fn parse_ipc356_report(input: &str, source: &Path) -> Ipc356Report {
     let mut points = Vec::new();
     let mut issues = Vec::new();
@@ -161,7 +200,6 @@ fn parse_fixed_record(line: &str) -> Option<Ipc356Point> {
         line.split(|ch: char| ch.is_whitespace())
             .filter(|part| !part.is_empty()),
     );
-
     Some(Ipc356Point {
         net,
         reference,
@@ -192,7 +230,6 @@ fn parse_loose_record(line: &str) -> Option<Ipc356Point> {
                 .and_then(parse_ipc_number)
         });
     let metadata = parse_metadata(parts.iter().copied());
-
     Some(Ipc356Point {
         net,
         reference: parts.get(2).map(|value| (*value).to_string()),

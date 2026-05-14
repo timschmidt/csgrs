@@ -7,6 +7,7 @@
 use crate::report::{Report, Severity, Violation};
 use crate::svg_overlay;
 
+/// Run the `report_to_html` design-readiness check or report helper.
 pub fn report_to_html(report: &Report) -> String {
     let mut out = String::new();
     out.push_str("<!doctype html>\n<html lang=\"en\">\n<head>\n");

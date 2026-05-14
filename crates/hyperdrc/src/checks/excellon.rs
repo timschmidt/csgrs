@@ -1,6 +1,7 @@
 use crate::excellon::{ExcellonIssueKind, ExcellonReport};
 use crate::report::{Severity, Violation};
 
+/// Run the `excellon_readiness` design-readiness check or report helper.
 pub fn excellon_readiness(report: &ExcellonReport) -> Vec<Violation> {
     let mut violations = Vec::new();
     let layer = format!("excellon:{}", report.source);
@@ -32,6 +33,7 @@ pub fn excellon_readiness(report: &ExcellonReport) -> Vec<Violation> {
     violations
 }
 
+/// Run the `excellon_batch_readiness` design-readiness check or report helper.
 pub fn excellon_batch_readiness(reports: &[ExcellonReport]) -> Vec<Violation> {
     let mut violations = Vec::new();
     let mut expected_unit: Option<(String, crate::excellon::ExcellonUnits)> = None;
@@ -88,6 +90,7 @@ pub fn excellon_batch_readiness(reports: &[ExcellonReport]) -> Vec<Violation> {
     violations
 }
 
+/// Run the `excellon_issue_severity` design-readiness check or report helper.
 pub fn excellon_issue_severity(kind: &ExcellonIssueKind) -> Severity {
     match kind {
         ExcellonIssueKind::MissingUnitDeclaration

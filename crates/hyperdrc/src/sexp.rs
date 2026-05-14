@@ -1,12 +1,23 @@
+//! Minimal S-expression parser used by KiCad readers.
+//!
+//! KiCad board files are S-expression documents. This helper intentionally
+//! exposes a small immutable tree API tailored to navigation patterns used by
+//! the board parser rather than a complete general-purpose language runtime.
+
 use anyhow::{Result, anyhow};
 
+/// Parsed S-expression node.
 #[derive(Clone, Debug, PartialEq)]
+/// Public enumeration for `Sexp`.
 pub enum Sexp {
+    /// Atomic token or quoted string.
     Atom(String),
+    /// Parenthesized list of child expressions.
     List(Vec<Sexp>),
 }
 
 impl Sexp {
+    /// Return the first atom in a list, which KiCad uses as the list name.
     pub fn list_name(&self) -> Option<&str> {
         let Sexp::List(items) = self else {
             return None;
@@ -14,6 +25,7 @@ impl Sexp {
         items.first()?.as_atom()
     }
 
+    /// Return the atom text when this node is an atom.
     pub fn as_atom(&self) -> Option<&str> {
         match self {
             Sexp::Atom(value) => Some(value),
@@ -21,6 +33,7 @@ impl Sexp {
         }
     }
 
+    /// Return list children, or an empty slice for atoms.
     pub fn children(&self) -> &[Sexp] {
         match self {
             Sexp::Atom(_) => &[],
@@ -28,31 +41,37 @@ impl Sexp {
         }
     }
 
+    /// Find the first child list whose first atom matches `name`.
     pub fn named_child(&self, name: &str) -> Option<&Sexp> {
         self.children()
             .iter()
             .find(|child| child.list_name() == Some(name))
     }
 
+    /// Iterate child lists whose first atom matches `name`.
     pub fn named_children<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a Sexp> + 'a {
         self.children()
             .iter()
             .filter(move |child| child.list_name() == Some(name))
     }
 
+    /// Return the atom text for the child at `index`.
     pub fn atom_at(&self, index: usize) -> Option<&str> {
         self.children().get(index)?.as_atom()
     }
 
+    /// Parse the child atom at `index` as an `f64`.
     pub fn f64_at(&self, index: usize) -> Option<f64> {
         self.atom_at(index)?.parse().ok()
     }
 
+    /// Parse the child atom at `index` as an `i32`.
     pub fn i32_at(&self, index: usize) -> Option<i32> {
         self.atom_at(index)?.parse().ok()
     }
 }
 
+/// Parse one complete S-expression document.
 pub fn parse(input: &str) -> Result<Sexp> {
     let tokens = tokenize(input);
     let mut index = 0;
@@ -84,7 +103,6 @@ fn parse_one(tokens: &[String], index: &mut usize) -> Result<Sexp> {
     if token == ")" {
         return Err(anyhow!("unexpected ')' in S-expression"));
     }
-
     Ok(Sexp::Atom(token.clone()))
 }
 

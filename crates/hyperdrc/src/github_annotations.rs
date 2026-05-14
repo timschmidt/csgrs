@@ -7,6 +7,7 @@
 
 use crate::report::{Report, Severity, Violation};
 
+/// Run the `report_to_github_annotations` design-readiness check or report helper.
 pub fn report_to_github_annotations(report: &Report) -> String {
     let mut output = String::new();
     for violation in &report.violations {

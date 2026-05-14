@@ -3,10 +3,10 @@
   <img src="./docs/hyperdrc.png" alt="hyperdrc logo" width="144" align="right">
 </h1>
 
-`hyperdrc` is a Rust command line tool for PCB design-readiness checks over
-Gerber, KiCad, Excellon, and IPC-D-356 inputs. It uses the latest git version
-of [`csgrs`](https://github.com/timschmidt/csgrs) for Gerber parsing, polygon
-offsets, and boolean geometry.
+`hyperdrc` is a Rust library and thin command line tool for PCB
+design-readiness checks over Gerber, KiCad, Excellon, and IPC-D-356 inputs. It
+uses the latest git version of [`csgrs`](https://github.com/timschmidt/csgrs)
+for Gerber parsing, polygon offsets, and boolean geometry.
 
 ## Current Status
 
@@ -26,6 +26,18 @@ is modeled, config-driven impedance checks verify declared stackup/reference
 intent rather than solving impedance, and IPC-D-356 parsing focuses on common
 test records and optional access-side/feature/soldermask hints rather than the
 full fixed-column dialect.
+
+## Library And CLI Split
+
+The reusable API lives in `src/lib.rs`. It exposes parser modules, check
+modules, report types, rule policy modules, and the crate-root `run` entry
+point. `run` returns a `RunOutcome` containing the serializable `Report` instead
+of terminating the process, so Rust callers can embed `hyperdrc` in services,
+tests, or custom CI tooling.
+
+The binary in `src/main.rs` is intentionally thin: it parses `Cli` with `clap`
+and calls `hyperdrc::run_cli`, which delegates to the library and then maps
+active findings to the traditional non-zero process exit status.
 
 ## Quick Start
 
@@ -164,25 +176,31 @@ The default suite covers the main `hyperdrc` readiness surfaces:
   clearance, routed-slot readiness, castellation intent, aspect ratio, and
   cross-source drill-table consistency.
 - KiCad board context: net intent, high-speed and high-current heuristics,
-  reference-plane and return-path coverage, RF via-fence review, gold fingers, ESD proximity,
-  panelization clearance, component edge/hole clearance, dense-pad escape, and
+  reference-plane and return-path coverage, RF via-fence review, gold fingers,
+  ESD proximity, panelization clearance, mounting-hole grounding, plating,
+  edge-clearance, distribution, spacing, copper-keepout review, panel-feature
+  outline registration review, edge-plating intent, castellation pitch,
+  component edge/hole clearance, dense-pad escape, and
   config-driven stackup/net-class constraints for material, surface finish,
   laminate Dk/Df/Tg, soldermask process/color, IPC/fabricator class,
   fabrication capability thresholds, width, clearance, current, voltage,
   reference-plane, layer-count, via-count, approximate length/skew,
   differential-pair spacing, differential-pair return/guard proximity, and
   impedance-control target/tolerance intent.
-- Assembly and test readiness: profile-driven component edge/hole clearance,
-  connector rework spacing, fiducials, tooling holes, mouse bites, testpoint
-  coverage/accessibility including IPC-D-356 access-side, soldermask, and
-  KiCad pad-side parity hints, pad-pair asymmetry, dense-pad escape,
+- Assembly and test readiness: profile-driven component edge/hole/spacing
+  clearance, connector rework spacing, fiducials and fiducial copper keepouts,
+  tooling holes, mouse bites, testpoint coverage/accessibility including
+  IPC-D-356 access-side, soldermask, and KiCad pad-side parity hints,
+  testpoint copper clearance, pad-pair asymmetry, dense-pad escape,
   selective/wave solder keepouts, press-fit keepouts, conformal-coating
   keepouts, and IPC-D-356 coverage.
 - Production package readiness: Gerber package completeness, sidecar discovery,
   BOM/centroid/netlist structure, README release notes, fabrication and assembly
   drawings, rout drawings, order-parameter consistency, generated-date freshness,
   side-role filename conflict detection, paste/mask companion checks,
-  configurable required artifacts/layers, and surface-finish handoff notes.
+  configurable required artifacts/layers, centroid unit/origin/rotation
+  convention handoff, BOM compliance/traceability/source-control evidence for
+  sensitive rows, and surface-finish handoff notes.
 
 The check implementations and exact ownership are documented in
 [src/checks](src/checks/README.md). The roadmap and remaining gaps are tracked
@@ -246,8 +264,8 @@ details for that part of the tree:
 - [src](src/README.md): Rust crate structure, runtime pipeline, parsers,
   reports, configuration, and submodule map.
 - [src/checks](src/checks/README.md): all design-readiness checks grouped by
-  layer, drill, board, stencil, assembly, manifest, artifact, surface-finish,
-  and helper responsibilities.
+  layer, drill, board, mechanical, stencil, assembly, manifest, artifact,
+  surface-finish, and helper responsibilities.
 - [src/geometry](src/geometry/README.md): polygon construction, sketch
   conversion, shape extraction, and geometry-test expectations.
 - [src/kicad](src/kicad/README.md): KiCad board model, S-expression parsing,

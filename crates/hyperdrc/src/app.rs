@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use anyhow::{Context, Result, anyhow};
 use csgrs::io::gerber::FromGerber;
@@ -34,11 +34,31 @@ struct PackageInputs {
     rout_drawing_files: Vec<io::DiscoveredFile>,
 }
 
-pub fn run(cli: Cli) -> Result<()> {
+/// Result of a completed HyperDRC run.
+///
+/// The reusable library entry point returns this value instead of terminating
+/// the process. Command-line callers should use [`run_cli`], which preserves the
+/// traditional non-zero exit status when active findings remain.
+#[derive(Debug)]
+/// Public data model for `RunOutcome`.
+pub struct RunOutcome {
+    /// Fully rendered report model for downstream tooling.
+    pub report: Report,
+    /// Wall-clock duration of the run.
+    pub elapsed: Duration,
+}
+
+/// Run HyperDRC using parsed command-line options and return the report model.
+///
+/// This function may write requested side artifacts and emit the selected report
+/// format to standard output because those behaviors are part of [`Cli`]. It
+/// does not call `std::process::exit`, making it suitable for integration tests
+/// and embedding.
+pub fn run(cli: Cli) -> Result<RunOutcome> {
     let run_started = Instant::now();
     eprintln!("hyperdrc: starting run");
 
-    let run_result: Result<()> = (|| {
+    let run_result: Result<Report> = (|| {
         let config = status_activity("load configuration", || {
             Ok(match &cli.config {
                 Some(path) => config::RuleConfig::load(path)?,
@@ -316,26 +336,19 @@ pub fn run(cli: Cli) -> Result<()> {
             Ok(())
         })?;
 
-        if report.violation_count > 0 {
+        Ok(report)
+    })();
+
+    match run_result {
+        Ok(report) => {
+            let elapsed = run_started.elapsed();
             eprintln!(
                 "hyperdrc: finished run ({} active finding(s), {} waived, {:.3}s)",
                 report.violation_count,
                 report.waived_count,
-                run_started.elapsed().as_secs_f64()
+                elapsed.as_secs_f64()
             );
-            std::process::exit(1);
-        }
-
-        Ok(())
-    })();
-
-    match run_result {
-        Ok(()) => {
-            eprintln!(
-                "hyperdrc: finished run ({:.3}s)",
-                run_started.elapsed().as_secs_f64()
-            );
-            Ok(())
+            Ok(RunOutcome { report, elapsed })
         }
         Err(error) => {
             eprintln!(
@@ -345,6 +358,18 @@ pub fn run(cli: Cli) -> Result<()> {
             Err(error)
         }
     }
+}
+
+/// Run HyperDRC as a command-line program.
+///
+/// This wrapper is intentionally thin: it delegates all work to [`run`] and then
+/// converts active findings into the process exit status expected by CI.
+pub fn run_cli(cli: Cli) -> Result<()> {
+    let outcome = run(cli)?;
+    if outcome.report.violation_count > 0 {
+        std::process::exit(1);
+    }
+    Ok(())
 }
 
 fn status_activity<T>(activity: &str, work: impl FnOnce() -> Result<T>) -> Result<T> {
@@ -1494,6 +1519,16 @@ fn run_checks(
                         ));
                     }
                 }
+                Check::ComponentSpacingReadiness => {
+                    for board in boards {
+                        violations.extend(checks::component_spacing_readiness(
+                            board,
+                            kicad_copper_layers,
+                            rules.assembly.component_edge_clearance,
+                            rules.assembly.connector_min_pad_dimension,
+                        ));
+                    }
+                }
                 Check::ConnectorReworkClearanceReadiness => {
                     for board in boards {
                         violations.extend(checks::connector_rework_clearance_readiness(
@@ -1574,6 +1609,18 @@ fn run_checks(
                         ));
                     }
                 }
+                Check::TestpointCopperClearanceReadiness => {
+                    for board in boards {
+                        violations.extend(checks::testpoint_copper_clearance_readiness(
+                            board,
+                            ipc356_points,
+                            kicad_copper_layers,
+                            rules.assembly.testpoint_min_diameter,
+                            rules.assembly.testpoint_min_spacing,
+                            rules.min_area,
+                        ));
+                    }
+                }
                 Check::ToolingHoleReadiness => {
                     for board in boards {
                         violations.extend(checks::tooling_hole_readiness(
@@ -1613,6 +1660,16 @@ fn run_checks(
                             kicad_copper_layers,
                             rules.assembly.local_fiducial_pitch,
                             rules.assembly.local_fiducial_search_radius,
+                        ));
+                    }
+                }
+                Check::FiducialKeepoutReadiness => {
+                    for board in boards {
+                        violations.extend(checks::fiducial_keepout_readiness(
+                            board,
+                            kicad_copper_layers,
+                            rules.assembly.fiducial_edge_clearance,
+                            rules.min_area,
                         ));
                     }
                 }
@@ -1695,6 +1752,86 @@ fn run_checks(
                             kicad_copper_layers,
                             rules.clearance * 3.0,
                             rules.min_area,
+                        ));
+                    }
+                }
+                Check::MountingHoleGroundingReadiness => {
+                    for board in boards {
+                        violations.extend(checks::mounting_hole_grounding_readiness(
+                            board,
+                            kicad_copper_layers,
+                            rules.panel_clearance * 4.0,
+                        ));
+                    }
+                }
+                Check::MountingHoleCopperKeepoutReadiness => {
+                    for board in boards {
+                        violations.extend(checks::mounting_hole_copper_keepout_readiness(
+                            board,
+                            kicad_copper_layers,
+                            rules.panel_clearance,
+                            rules.min_area,
+                        ));
+                    }
+                }
+                Check::MountingHoleEdgeClearanceReadiness => {
+                    for board in boards {
+                        violations.extend(checks::mounting_hole_edge_clearance_readiness(
+                            board,
+                            rules.panel_clearance,
+                            rules.min_area,
+                        ));
+                    }
+                }
+                Check::MountingHolePlatingIntentReadiness => {
+                    for board in boards {
+                        violations.extend(checks::mounting_hole_plating_intent_readiness(
+                            board,
+                            kicad_copper_layers,
+                            rules.panel_clearance * 4.0,
+                        ));
+                    }
+                }
+                Check::MountingHoleDistributionReadiness => {
+                    for board in boards {
+                        violations.extend(checks::mounting_hole_distribution_readiness(
+                            board,
+                            rules.panel_clearance * 8.0,
+                        ));
+                    }
+                }
+                Check::MountingHoleSpacingReadiness => {
+                    for board in boards {
+                        violations.extend(checks::mounting_hole_spacing_readiness(
+                            board,
+                            rules.panel_clearance,
+                        ));
+                    }
+                }
+                Check::PanelFeatureOutlineReadiness => {
+                    for board in boards {
+                        violations.extend(checks::panel_feature_outline_readiness(
+                            board,
+                            rules.panel_clearance,
+                            rules.min_area,
+                        ));
+                    }
+                }
+                Check::EdgePlatingIntentReadiness => {
+                    for board in boards {
+                        violations.extend(checks::edge_plating_intent_readiness(
+                            board,
+                            kicad_copper_layers,
+                            rules.panel_clearance,
+                            rules.min_area,
+                        ));
+                    }
+                }
+                Check::CastellationPitchReadiness => {
+                    for board in boards {
+                        violations.extend(checks::castellation_pitch_readiness(
+                            board,
+                            rules.drill_clearance,
                         ));
                     }
                 }
@@ -1911,6 +2048,7 @@ fn check_slug(check: Check) -> &'static str {
         Check::GoldFingerDrillKeepoutReadiness => "gold-finger-drill-keepout-readiness",
         Check::ComponentEdgeClearanceReadiness => "component-edge-clearance-readiness",
         Check::ComponentHoleClearanceReadiness => "component-hole-clearance-readiness",
+        Check::ComponentSpacingReadiness => "component-spacing-readiness",
         Check::ConnectorReworkClearanceReadiness => "connector-rework-clearance-readiness",
         Check::PadPairAsymmetryReadiness => "pad-pair-asymmetry-readiness",
         Check::ConnectorReturnPathReadiness => "connector-return-path-readiness",
@@ -1919,10 +2057,12 @@ fn check_slug(check: Check) -> &'static str {
         Check::SwitchNodeKeepoutReadiness => "switch-node-keepout-readiness",
         Check::TestpointCoverageReadiness => "testpoint-coverage-readiness",
         Check::TestpointAccessibilityReadiness => "testpoint-accessibility-readiness",
+        Check::TestpointCopperClearanceReadiness => "testpoint-copper-clearance-readiness",
         Check::ToolingHoleReadiness => "tooling-hole-readiness",
         Check::MouseBiteReadiness => "mouse-bite-readiness",
         Check::FiducialReadiness => "fiducial-readiness",
         Check::LocalFiducialReadiness => "local-fiducial-readiness",
+        Check::FiducialKeepoutReadiness => "fiducial-keepout-readiness",
         Check::DensePadEscapeReadiness => "dense-pad-escape-readiness",
         Check::SelectiveWaveSolderKeepoutReadiness => "selective-wave-solder-keepout-readiness",
         Check::PressFitKeepoutReadiness => "press-fit-keepout-readiness",
@@ -1931,6 +2071,15 @@ fn check_slug(check: Check) -> &'static str {
         Check::ThermalCopperAreaReadiness => "thermal-copper-area-readiness",
         Check::HotComponentSpacingReadiness => "hot-component-spacing-readiness",
         Check::ThermalMechanicalKeepoutReadiness => "thermal-mechanical-keepout-readiness",
+        Check::MountingHoleGroundingReadiness => "mounting-hole-grounding-readiness",
+        Check::MountingHoleCopperKeepoutReadiness => "mounting-hole-copper-keepout-readiness",
+        Check::MountingHoleEdgeClearanceReadiness => "mounting-hole-edge-clearance-readiness",
+        Check::MountingHolePlatingIntentReadiness => "mounting-hole-plating-intent-readiness",
+        Check::MountingHoleDistributionReadiness => "mounting-hole-distribution-readiness",
+        Check::MountingHoleSpacingReadiness => "mounting-hole-spacing-readiness",
+        Check::PanelFeatureOutlineReadiness => "panel-feature-outline-readiness",
+        Check::EdgePlatingIntentReadiness => "edge-plating-intent-readiness",
+        Check::CastellationPitchReadiness => "castellation-pitch-readiness",
         Check::NetSpacing => "net-spacing",
         Check::RegistrationTolerance => "registration-tolerance",
         Check::PanelizationClearance => "panelization-clearance",

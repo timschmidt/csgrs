@@ -16,6 +16,7 @@ use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbSketch};
 
+/// Run the `component_edge_clearance_readiness` design-readiness check or report helper.
 pub fn component_edge_clearance_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -57,6 +58,7 @@ pub fn component_edge_clearance_readiness(
         .collect()
 }
 
+/// Run the `component_hole_clearance_readiness` design-readiness check or report helper.
 pub fn component_hole_clearance_readiness(
     board: &BoardModel,
     extra_drills: &[DrillFeature],
@@ -125,6 +127,60 @@ pub fn component_hole_clearance_readiness(
     violations
 }
 
+/// Run the `component_spacing_readiness` design-readiness check or report helper.
+pub fn component_spacing_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    clearance: f64,
+    minimum_pad_dimension: f64,
+) -> Vec<Violation> {
+    let pads = selected_copper_features(board, selected_layers)
+        .into_iter()
+        .filter(|feature| feature.kind == CopperKind::Pad)
+        .filter(|feature| !likely_fiducial(feature))
+        .filter(|feature| minimum_bounding_dimension(&feature.sketch) >= minimum_pad_dimension)
+        .collect::<Vec<_>>();
+    let mut violations = Vec::new();
+
+    for left_index in 0..pads.len() {
+        let left = pads[left_index];
+        for right in &pads[(left_index + 1)..] {
+            if left.layer != right.layer {
+                continue;
+            }
+
+            let gap = polygon_boundary_distance(
+                &left.sketch.to_multipolygon(),
+                &right.sketch.to_multipolygon(),
+            );
+            if gap >= clearance {
+                continue;
+            }
+
+            // Full component-to-component review needs courtyard/body data.
+            // Until the KiCad model carries that, use only large pad copper as
+            // a conservative proxy for connectors, modules, and bulky packages.
+            // IPC-7351B frames land patterns and courtyard spacing as assembly
+            // process constraints; this check is a review signal, not a final
+            // courtyard DRC.
+            violations.push(Violation::new(
+                "component-spacing-readiness",
+                Severity::Warning,
+                vec![left.layer.clone()],
+                None,
+                Vec::new(),
+                vec![left.location, right.location],
+                Some(format!(
+                    "large component pad proxies are {gap:.6} apart, below assembly component spacing {clearance:.6}; review courtyard/body clearance and rework access"
+                )),
+            ));
+        }
+    }
+
+    violations
+}
+
+/// Run the `connector_rework_clearance_readiness` design-readiness check or report helper.
 pub fn connector_rework_clearance_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -248,6 +304,7 @@ pub fn pad_pair_asymmetry_readiness(
     violations
 }
 
+/// Run the `testpoint_coverage_readiness` design-readiness check or report helper.
 pub fn testpoint_coverage_readiness(
     board: &BoardModel,
     points: &[Ipc356Point],
@@ -475,6 +532,77 @@ pub fn testpoint_accessibility_readiness(
     violations
 }
 
+/// Run the `testpoint_copper_clearance_readiness` design-readiness check or report helper.
+pub fn testpoint_copper_clearance_readiness(
+    board: &BoardModel,
+    points: &[Ipc356Point],
+    selected_layers: &[String],
+    minimum_diameter: f64,
+    clearance: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    let copper = selected_copper_features(board, selected_layers);
+    let mut violations = Vec::new();
+
+    for point in points {
+        let probe_diameter = point
+            .diameter
+            .unwrap_or(minimum_diameter)
+            .max(minimum_diameter);
+        let keepout = polygons_to_sketch(
+            vec![circle_polygon(
+                point.location,
+                probe_diameter / 2.0 + clearance,
+                32,
+            )],
+            Some(LayerMetadata {
+                name: "IPC-D-356 probe copper keepout".to_string(),
+            }),
+        );
+        let point_net = normalize_net(&point.net);
+
+        for feature in &copper {
+            if feature
+                .net
+                .as_deref()
+                .is_some_and(|net| normalize_net(net) == point_net)
+            {
+                continue;
+            }
+
+            // IPC-9252B and DFT fixture practice treat probe access as both an
+            // electrical and mechanical condition: nearby unrelated copper can
+            // create fixture shorts or unreliable contact even when the
+            // IPC-D-356 testpoint metadata itself is complete.
+            let overlap = keepout.intersection(&feature.sketch);
+            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            let fallback_hit = shapes.is_empty()
+                && polygon_boundary_distance(
+                    &keepout.to_multipolygon(),
+                    &feature.sketch.to_multipolygon(),
+                ) <= 1.0e-9;
+            if shapes.is_empty() && !fallback_hit {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "testpoint-copper-clearance-readiness",
+                Severity::Warning,
+                vec![feature.layer.clone(), format!("net:{}", point.net)],
+                None,
+                shapes,
+                vec![point.location, feature.location],
+                Some(format!(
+                    "IPC-D-356 testpoint probe keepout {clearance:.6} around net {:?} intersects unrelated KiCad copper {:?}; review fixture short risk and probe clearance",
+                    point.net, feature.net
+                )),
+            ));
+        }
+    }
+
+    violations
+}
+
 fn testpoint_side_parity_violation(
     board: &BoardModel,
     point: &Ipc356Point,
@@ -566,6 +694,7 @@ fn copper_layer_access_side(layer: &str) -> Option<Ipc356AccessSide> {
     }
 }
 
+/// Run the `tooling_hole_readiness` design-readiness check or report helper.
 pub fn tooling_hole_readiness(
     board: &BoardModel,
     extra_drills: &[DrillFeature],
@@ -629,6 +758,7 @@ pub fn tooling_hole_readiness(
     violations
 }
 
+/// Run the `mouse_bite_readiness` design-readiness check or report helper.
 pub fn mouse_bite_readiness(
     board: &BoardModel,
     extra_drills: &[DrillFeature],
@@ -694,6 +824,7 @@ pub fn mouse_bite_readiness(
     violations
 }
 
+/// Run the `fiducial_readiness` design-readiness check or report helper.
 pub fn fiducial_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -766,6 +897,7 @@ pub fn fiducial_readiness(
     violations
 }
 
+/// Run the `local_fiducial_readiness` design-readiness check or report helper.
 pub fn local_fiducial_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -826,6 +958,65 @@ pub fn local_fiducial_readiness(
     violations
 }
 
+/// Run the `fiducial_keepout_readiness` design-readiness check or report helper.
+pub fn fiducial_keepout_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    clearance: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    let features = selected_copper_features(board, selected_layers);
+    let fiducials = features
+        .iter()
+        .copied()
+        .filter(|feature| likely_fiducial(feature))
+        .collect::<Vec<_>>();
+    let blockers = features
+        .into_iter()
+        .filter(|feature| !likely_fiducial(feature))
+        .collect::<Vec<_>>();
+    let mut violations = Vec::new();
+
+    for fiducial in fiducials {
+        let keepout = fiducial.sketch.offset(clearance);
+        for blocker in &blockers {
+            if fiducial.layer != blocker.layer {
+                continue;
+            }
+
+            // IPC-7351B treats fiducials as assembly registration features. A
+            // clear copper-free annulus around the target improves optical
+            // contrast for placement cameras; this models that annulus as an
+            // offset target region and reports same-layer copper intrusions.
+            let overlap = keepout.intersection(&blocker.sketch);
+            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            let fallback_hit = shapes.is_empty()
+                && polygon_boundary_distance(
+                    &keepout.to_multipolygon(),
+                    &blocker.sketch.to_multipolygon(),
+                ) <= 1.0e-9;
+            if shapes.is_empty() && !fallback_hit {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "fiducial-keepout-readiness",
+                Severity::Warning,
+                vec![fiducial.layer.clone()],
+                None,
+                shapes,
+                vec![fiducial.location, blocker.location],
+                Some(format!(
+                    "likely fiducial has same-layer copper inside optical keepout {clearance:.6}; review placement-camera contrast, mask opening, and assembly fiducial keepout"
+                )),
+            ));
+        }
+    }
+
+    violations
+}
+
+/// Run the `dense_pad_escape_readiness` design-readiness check or report helper.
 pub fn dense_pad_escape_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -1306,11 +1497,13 @@ fn normalize_net(net: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        conformal_coating_keepout_readiness, pad_pair_asymmetry_readiness,
-        press_fit_keepout_readiness, selective_wave_solder_keepout_readiness,
+        component_spacing_readiness, conformal_coating_keepout_readiness,
+        fiducial_keepout_readiness, pad_pair_asymmetry_readiness, press_fit_keepout_readiness,
+        selective_wave_solder_keepout_readiness, testpoint_copper_clearance_readiness,
     };
     use crate::LayerMetadata;
     use crate::geometry::{polygons_to_sketch, rect_polygon};
+    use crate::ipc356::Ipc356Point;
     use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 
     #[test]
@@ -1409,6 +1602,142 @@ mod tests {
         assert!(conformal_coating_keepout_readiness(&board, &[], 0.3, 1.0e-9).is_empty());
     }
 
+    #[test]
+    fn component_spacing_readiness_reports_close_large_pad_proxies() {
+        let board = board_with_copper(vec![
+            copper_pad("J1", [0.0, 0.0], 1.0, 0.8),
+            copper_pad("J2", [1.15, 0.0], 1.0, 0.8),
+        ]);
+
+        let violations = component_spacing_readiness(&board, &[], 0.25, 0.5);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "component-spacing-readiness");
+        assert_eq!(violations[0].locations, vec![[0.0, 0.0], [1.15, 0.0]]);
+    }
+
+    #[test]
+    fn component_spacing_readiness_accepts_distant_small_other_layer_or_selected_out_pads() {
+        let distant = board_with_copper(vec![
+            copper_pad("J1", [0.0, 0.0], 1.0, 0.8),
+            copper_pad("J2", [2.0, 0.0], 1.0, 0.8),
+        ]);
+        assert!(component_spacing_readiness(&distant, &[], 0.25, 0.5).is_empty());
+
+        let small = board_with_copper(vec![
+            copper_pad("R1", [0.0, 0.0], 0.3, 0.3),
+            copper_pad("R2", [0.4, 0.0], 0.3, 0.3),
+        ]);
+        assert!(component_spacing_readiness(&small, &[], 0.25, 0.5).is_empty());
+
+        let other_layer = board_with_copper(vec![
+            copper_pad("J1", [0.0, 0.0], 1.0, 0.8),
+            copper_pad_on_layer("B.Cu", "J2", [1.15, 0.0], 1.0, 0.8),
+        ]);
+        assert!(component_spacing_readiness(&other_layer, &[], 0.25, 0.5).is_empty());
+
+        let selected_out = board_with_copper(vec![
+            copper_pad_on_layer("B.Cu", "J1", [0.0, 0.0], 1.0, 0.8),
+            copper_pad_on_layer("B.Cu", "J2", [1.15, 0.0], 1.0, 0.8),
+        ]);
+        assert!(
+            component_spacing_readiness(&selected_out, &["F.Cu".to_string()], 0.25, 0.5).is_empty()
+        );
+    }
+
+    #[test]
+    fn fiducial_keepout_readiness_reports_same_layer_copper_intrusion() {
+        let board = board_with_copper(vec![
+            fiducial("F.Cu", [0.0, 0.0], 0.8),
+            copper_pad("SIG", [0.75, 0.0], 0.25, 0.25),
+        ]);
+
+        let violations = fiducial_keepout_readiness(&board, &[], 0.25, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "fiducial-keepout-readiness");
+        assert_eq!(violations[0].locations, vec![[0.0, 0.0], [0.75, 0.0]]);
+    }
+
+    #[test]
+    fn fiducial_keepout_readiness_accepts_clear_other_layer_or_selected_out_copper() {
+        let clear = board_with_copper(vec![
+            fiducial("F.Cu", [0.0, 0.0], 0.8),
+            copper_pad("SIG", [2.0, 0.0], 0.25, 0.25),
+        ]);
+        assert!(fiducial_keepout_readiness(&clear, &[], 0.25, 1.0e-9).is_empty());
+
+        let other_layer = board_with_copper(vec![
+            fiducial("F.Cu", [0.0, 0.0], 0.8),
+            copper_pad_on_layer("B.Cu", "SIG", [0.75, 0.0], 0.25, 0.25),
+        ]);
+        assert!(fiducial_keepout_readiness(&other_layer, &[], 0.25, 1.0e-9).is_empty());
+
+        let selected_out = board_with_copper(vec![fiducial("B.Cu", [0.0, 0.0], 0.8)]);
+        assert!(
+            fiducial_keepout_readiness(&selected_out, &["F.Cu".to_string()], 0.25, 1.0e-9)
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn testpoint_copper_clearance_readiness_reports_unrelated_nearby_copper() {
+        let board = board_with_copper(vec![
+            copper_pad("TP_NET", [0.0, 0.0], 0.4, 0.4),
+            copper_pad("OTHER", [0.4, 0.0], 0.25, 0.25),
+        ]);
+        let point = ipc_point("TP_NET", [0.0, 0.0], Some(0.4));
+
+        let violations =
+            testpoint_copper_clearance_readiness(&board, &[point], &[], 0.4, 0.1, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "testpoint-copper-clearance-readiness");
+        assert_eq!(violations[0].locations, vec![[0.0, 0.0], [0.4, 0.0]]);
+    }
+
+    #[test]
+    fn testpoint_copper_clearance_readiness_accepts_same_net_far_or_selected_out_copper() {
+        let same_net = board_with_copper(vec![
+            copper_pad("TP_NET", [0.0, 0.0], 0.4, 0.4),
+            copper_pad("TP_NET", [0.55, 0.0], 0.25, 0.25),
+        ]);
+        let point = ipc_point("TP_NET", [0.0, 0.0], Some(0.4));
+        assert!(
+            testpoint_copper_clearance_readiness(&same_net, &[point], &[], 0.4, 0.1, 1.0e-9)
+                .is_empty()
+        );
+
+        let far = board_with_copper(vec![
+            copper_pad("TP_NET", [0.0, 0.0], 0.4, 0.4),
+            copper_pad("OTHER", [2.0, 0.0], 0.25, 0.25),
+        ]);
+        let point = ipc_point("TP_NET", [0.0, 0.0], Some(0.4));
+        assert!(
+            testpoint_copper_clearance_readiness(&far, &[point], &[], 0.4, 0.1, 1.0e-9).is_empty()
+        );
+
+        let selected_out = board_with_copper(vec![copper_pad_on_layer(
+            "B.Cu",
+            "OTHER",
+            [0.55, 0.0],
+            0.25,
+            0.25,
+        )]);
+        let point = ipc_point("TP_NET", [0.0, 0.0], Some(0.4));
+        assert!(
+            testpoint_copper_clearance_readiness(
+                &selected_out,
+                &[point],
+                &["F.Cu".to_string()],
+                0.4,
+                0.1,
+                1.0e-9
+            )
+            .is_empty()
+        );
+    }
+
     fn board_with_copper(copper: Vec<CopperFeature>) -> BoardModel {
         board_with_copper_and_drills(copper, Vec::new())
     }
@@ -1427,8 +1756,18 @@ mod tests {
     }
 
     fn copper_pad(net: &str, location: [f64; 2], width: f64, height: f64) -> CopperFeature {
+        copper_pad_on_layer("F.Cu", net, location, width, height)
+    }
+
+    fn copper_pad_on_layer(
+        layer: &str,
+        net: &str,
+        location: [f64; 2],
+        width: f64,
+        height: f64,
+    ) -> CopperFeature {
         CopperFeature {
-            layer: "F.Cu".to_string(),
+            layer: layer.to_string(),
             net: Some(net.to_string()),
             kind: CopperKind::Pad,
             location,
@@ -1441,12 +1780,40 @@ mod tests {
         }
     }
 
+    fn fiducial(layer: &str, location: [f64; 2], diameter: f64) -> CopperFeature {
+        CopperFeature {
+            layer: layer.to_string(),
+            net: None,
+            kind: CopperKind::Pad,
+            location,
+            sketch: polygons_to_sketch(
+                vec![rect_polygon(location, [diameter, diameter], 0.0)],
+                Some(LayerMetadata {
+                    name: "fiducial".to_string(),
+                }),
+            ),
+        }
+    }
+
     fn plated_drill(net: &str, location: [f64; 2], diameter: f64) -> DrillFeature {
         DrillFeature {
             location,
             diameter,
             net: Some(net.to_string()),
             plated: true,
+        }
+    }
+
+    fn ipc_point(net: &str, location: [f64; 2], diameter: Option<f64>) -> Ipc356Point {
+        Ipc356Point {
+            net: net.to_string(),
+            reference: Some("TP1".to_string()),
+            pin: Some("1".to_string()),
+            location,
+            diameter,
+            access_side: None,
+            feature_type: None,
+            soldermask: None,
         }
     }
 }

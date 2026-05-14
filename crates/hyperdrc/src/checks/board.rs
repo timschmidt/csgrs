@@ -13,6 +13,7 @@ use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbSketch};
 
+/// Run the `copper_width_readiness` design-readiness check or report helper.
 pub fn copper_width_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -40,6 +41,7 @@ pub fn copper_width_readiness(
         .collect()
 }
 
+/// Run the `copper_net_intent` design-readiness check or report helper.
 pub fn copper_net_intent(board: &BoardModel, selected_layers: &[String]) -> Vec<Violation> {
     selected_copper_features(board, selected_layers)
         .into_iter()
@@ -61,6 +63,7 @@ pub fn copper_net_intent(board: &BoardModel, selected_layers: &[String]) -> Vec<
         .collect()
 }
 
+/// Run the `via_in_pad_readiness` design-readiness check or report helper.
 pub fn via_in_pad_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -109,6 +112,7 @@ pub fn via_in_pad_readiness(
     violations
 }
 
+/// Run the `teardrop_readiness` design-readiness check or report helper.
 pub fn teardrop_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -163,6 +167,7 @@ pub fn teardrop_readiness(
     violations
 }
 
+/// Run the `thermal_relief_readiness` design-readiness check or report helper.
 pub fn thermal_relief_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -211,6 +216,7 @@ pub fn thermal_relief_readiness(
     violations
 }
 
+/// Run the `plane_clearance_readiness` design-readiness check or report helper.
 pub fn plane_clearance_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -259,6 +265,7 @@ pub fn plane_clearance_readiness(
     violations
 }
 
+/// Run the `board_edge_exposure` design-readiness check or report helper.
 pub fn board_edge_exposure(
     board: &BoardModel,
     selected_layers: &[String],
@@ -293,6 +300,7 @@ pub fn board_edge_exposure(
     violations
 }
 
+/// Run the `high_speed_edge_readiness` design-readiness check or report helper.
 pub fn high_speed_edge_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -335,6 +343,7 @@ pub fn high_speed_edge_readiness(
     violations
 }
 
+/// Run the `high_voltage_edge_readiness` design-readiness check or report helper.
 pub fn high_voltage_edge_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -491,6 +500,7 @@ pub fn edge_stitching_readiness(
     violations
 }
 
+/// Run the `controlled_impedance_readiness` design-readiness check or report helper.
 pub fn controlled_impedance_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -533,6 +543,7 @@ pub fn controlled_impedance_readiness(
         .collect()
 }
 
+/// Run the `differential_pair_readiness` design-readiness check or report helper.
 pub fn differential_pair_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -606,6 +617,7 @@ pub fn differential_pair_readiness(
     violations
 }
 
+/// Run the `differential_pair_spacing_readiness` design-readiness check or report helper.
 pub fn differential_pair_spacing_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -823,6 +835,7 @@ pub fn differential_pair_return_readiness(
     violations
 }
 
+/// Run the `reference_plane_readiness` design-readiness check or report helper.
 pub fn reference_plane_readiness(board: &BoardModel, selected_layers: &[String]) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
     let has_ground_zone = features.iter().any(|feature| {
@@ -863,6 +876,7 @@ pub fn reference_plane_readiness(board: &BoardModel, selected_layers: &[String])
         .collect()
 }
 
+/// Run the `reference_plane_void_readiness` design-readiness check or report helper.
 pub fn reference_plane_void_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -917,6 +931,7 @@ pub fn reference_plane_void_readiness(
     violations
 }
 
+/// Run the `orphaned_zone_readiness` design-readiness check or report helper.
 pub fn orphaned_zone_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -967,6 +982,7 @@ pub fn orphaned_zone_readiness(
     violations
 }
 
+/// Run the `same_net_island_readiness` design-readiness check or report helper.
 pub fn same_net_island_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -1014,6 +1030,7 @@ pub fn same_net_island_readiness(
     violations
 }
 
+/// Run the `high_current_readiness` design-readiness check or report helper.
 pub fn high_current_readiness(board: &BoardModel, selected_layers: &[String]) -> Vec<Violation> {
     let mut nets: BTreeMap<String, NetLayerUse> = BTreeMap::new();
 
@@ -1054,6 +1071,7 @@ pub fn high_current_readiness(board: &BoardModel, selected_layers: &[String]) ->
         .collect()
 }
 
+/// Run the `power_via_array_readiness` design-readiness check or report helper.
 pub fn power_via_array_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -1110,6 +1128,7 @@ pub fn power_via_array_readiness(
     violations
 }
 
+/// Run the `thermal_via_readiness` design-readiness check or report helper.
 pub fn thermal_via_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -1158,6 +1177,7 @@ pub fn thermal_via_readiness(
     violations
 }
 
+/// Run the `power_plane_readiness` design-readiness check or report helper.
 pub fn power_plane_readiness(board: &BoardModel, selected_layers: &[String]) -> Vec<Violation> {
     let mut nets: BTreeMap<String, NetLayerUse> = BTreeMap::new();
 
@@ -1195,6 +1215,7 @@ pub fn power_plane_readiness(board: &BoardModel, selected_layers: &[String]) -> 
         .collect()
 }
 
+/// Run the `high_current_neck_readiness` design-readiness check or report helper.
 pub fn high_current_neck_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -1227,6 +1248,7 @@ pub fn high_current_neck_readiness(
         .collect()
 }
 
+/// Run the `voltage_clearance_readiness` design-readiness check or report helper.
 pub fn voltage_clearance_readiness(
     board: &BoardModel,
     clearance: f64,
@@ -1283,6 +1305,7 @@ pub fn voltage_clearance_readiness(
     violations
 }
 
+/// Run the `sensitive_net_spacing_readiness` design-readiness check or report helper.
 pub fn sensitive_net_spacing_readiness(
     board: &BoardModel,
     clearance: f64,
@@ -1553,6 +1576,7 @@ pub fn chassis_stitching_readiness(
     violations
 }
 
+/// Run the `gold_finger_readiness` design-readiness check or report helper.
 pub fn gold_finger_readiness(board: &BoardModel, selected_layers: &[String]) -> Vec<Violation> {
     selected_copper_features(board, selected_layers)
         .into_iter()
@@ -1577,6 +1601,7 @@ pub fn gold_finger_readiness(board: &BoardModel, selected_layers: &[String]) -> 
         .collect()
 }
 
+/// Run the `gold_finger_edge_readiness` design-readiness check or report helper.
 pub fn gold_finger_edge_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -1613,6 +1638,7 @@ pub fn gold_finger_edge_readiness(
         .collect()
 }
 
+/// Run the `gold_finger_spacing_readiness` design-readiness check or report helper.
 pub fn gold_finger_spacing_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -1665,6 +1691,7 @@ pub fn gold_finger_spacing_readiness(
     violations
 }
 
+/// Run the `gold_finger_drill_keepout_readiness` design-readiness check or report helper.
 pub fn gold_finger_drill_keepout_readiness(
     board: &BoardModel,
     extra_drills: &[DrillFeature],
@@ -1722,6 +1749,7 @@ pub fn gold_finger_drill_keepout_readiness(
     violations
 }
 
+/// Run the `connector_return_path_readiness` design-readiness check or report helper.
 pub fn connector_return_path_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -1779,6 +1807,7 @@ pub fn connector_return_path_readiness(
     violations
 }
 
+/// Run the `decoupling_proximity_readiness` design-readiness check or report helper.
 pub fn decoupling_proximity_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -1827,6 +1856,7 @@ pub fn decoupling_proximity_readiness(
     violations
 }
 
+/// Run the `esd_protection_readiness` design-readiness check or report helper.
 pub fn esd_protection_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -1892,6 +1922,7 @@ pub fn esd_protection_readiness(
     violations
 }
 
+/// Run the `switch_node_keepout_readiness` design-readiness check or report helper.
 pub fn switch_node_keepout_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -1950,6 +1981,7 @@ pub fn switch_node_keepout_readiness(
     violations
 }
 
+/// Run the `thermal_pad_via_readiness` design-readiness check or report helper.
 pub fn thermal_pad_via_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -2014,6 +2046,7 @@ pub fn thermal_pad_via_readiness(
     violations
 }
 
+/// Run the `thermal_copper_area_readiness` design-readiness check or report helper.
 pub fn thermal_copper_area_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -2068,6 +2101,7 @@ pub fn thermal_copper_area_readiness(
     violations
 }
 
+/// Run the `hot_component_spacing_readiness` design-readiness check or report helper.
 pub fn hot_component_spacing_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -2123,6 +2157,7 @@ pub fn hot_component_spacing_readiness(
     violations
 }
 
+/// Run the `thermal_mechanical_keepout_readiness` design-readiness check or report helper.
 pub fn thermal_mechanical_keepout_readiness(
     board: &BoardModel,
     extra_drills: &[DrillFeature],
@@ -2191,6 +2226,7 @@ pub fn thermal_mechanical_keepout_readiness(
     violations
 }
 
+/// Run the `return_path_readiness` design-readiness check or report helper.
 pub fn return_path_readiness(
     board: &BoardModel,
     stitching_distance: f64,
@@ -2473,6 +2509,7 @@ fn looks_edge_intent_net(net: &str) -> bool {
     looks_gold_finger_net(net) || looks_chassis_net(net)
 }
 
+/// Run the `net_spacing` design-readiness check or report helper.
 pub fn net_spacing(
     board: &BoardModel,
     clearance: f64,
@@ -2528,6 +2565,7 @@ pub fn net_spacing(
     violations
 }
 
+/// Run the `registration_tolerance` design-readiness check or report helper.
 pub fn registration_tolerance(board: &BoardModel, tolerance: f64, min_area: f64) -> Vec<Violation> {
     let mut by_layer = board.copper_layers(&[]);
     by_layer.sort_by(|left, right| left.0.cmp(&right.0));
@@ -2559,6 +2597,7 @@ pub fn registration_tolerance(board: &BoardModel, tolerance: f64, min_area: f64)
     violations
 }
 
+/// Run the `panelization_clearance` design-readiness check or report helper.
 pub fn panelization_clearance(
     board: &BoardModel,
     extra_drills: &[DrillFeature],
@@ -2613,6 +2652,7 @@ pub fn panelization_clearance(
     violations
 }
 
+/// Run the `apply_ipc356_nets` design-readiness check or report helper.
 pub fn apply_ipc356_nets(board: &mut BoardModel, points: &[Ipc356Point], tolerance: f64) {
     for point in points {
         for copper in &mut board.copper {
@@ -2634,6 +2674,7 @@ pub fn apply_ipc356_nets(board: &mut BoardModel, points: &[Ipc356Point], toleran
     }
 }
 
+/// Run the `ipc356_coverage` design-readiness check or report helper.
 pub fn ipc356_coverage(
     board: &BoardModel,
     points: &[Ipc356Point],
@@ -2671,6 +2712,7 @@ pub fn ipc356_coverage(
     violations
 }
 
+/// Run the `ipc356_drill_diameter` design-readiness check or report helper.
 pub fn ipc356_drill_diameter(
     board: &BoardModel,
     points: &[Ipc356Point],
@@ -2785,6 +2827,7 @@ fn distance(left: [f64; 2], right: [f64; 2]) -> f64 {
     (dx * dx + dy * dy).sqrt()
 }
 
+/// Run the `layer_names_csv` design-readiness check or report helper.
 pub fn layer_names_csv(board: &BoardModel) -> String {
     let mut counts = HashMap::new();
     for feature in &board.copper {

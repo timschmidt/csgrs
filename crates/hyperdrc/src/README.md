@@ -6,15 +6,18 @@ application orchestration, while subfolders hold the larger semantic areas.
 
 ## Entry Points
 
-- [`main.rs`](main.rs) is the binary entry point. It parses the CLI and hands
-  control to the application layer.
-- [`lib.rs`](lib.rs) exposes the crate modules and defines shared PCB sketch
-  aliases used by parsers and checks.
+- [`main.rs`](main.rs) is the thin binary entry point. It parses the CLI and
+  calls `hyperdrc::run_cli`; all substantive loading, checking, reporting, and
+  exit-status decisions live in the library.
+- [`lib.rs`](lib.rs) exposes the docs.rs-facing library API, crate-level
+  documentation, shared PCB sketch aliases, parser/check/report modules, and
+  crate-root re-exports such as `run`, `run_cli`, `Cli`, and `Report`.
 - [`app.rs`](app.rs) is the runtime pipeline. It loads configuration, converts
   requested input packages, discovers and parses inputs, applies IPC-D-356 net
   annotations, validates explicit layer roles, runs selected checks, applies
   waivers, collects parser diagnostics, emits summaries, writes SVG overlays,
-  and exits nonzero when active violations remain.
+  and returns a `RunOutcome`. Its `run_cli` wrapper is the only layer that turns
+  active findings into a non-zero process exit.
 
 ## User-Facing Configuration
 
@@ -114,8 +117,9 @@ application orchestration, while subfolders hold the larger semantic areas.
 ## Subfolders
 
 - [checks](checks/README.md) contains the design-readiness checks, now split
-  across generic layer, drill fabrication, board-context, stencil, assembly,
-  manifest, artifact, stackup/net-constraint, and surface-finish helper modules.
+  across generic layer, drill fabrication, board-context, mechanical, stencil,
+  assembly, manifest, artifact, stackup/net-constraint, and surface-finish
+  helper modules.
 - [geometry](geometry/README.md) contains geometry construction and conversion
   helpers around `csgrs` and `geo`.
 - [kicad](kicad/README.md) contains the KiCad board model and parser helpers.

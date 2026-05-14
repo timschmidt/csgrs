@@ -10,45 +10,76 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use serde::Serialize;
 
+/// Input adapter that supplied a source file.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
+/// Public enumeration for `IoAdapter`.
 pub enum IoAdapter {
+    /// A file passed directly on the command line.
     DirectFile,
+    /// A file discovered inside a Gerber/package directory.
     GerberDirectory,
+    /// A file produced by a conversion backend.
     Conversion,
+    /// A KiCad board source file.
     KiCad,
+    /// An Excellon drill source file.
     Excellon,
+    /// An IPC-D-356 netlist source file.
     Ipc356,
+    /// A JSON waiver file.
     Waiver,
 }
 
+/// Functional role of a source file.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
+/// Public enumeration for `IoRole`.
 pub enum IoRole {
+    /// Gerber or Gerber-like layer geometry.
     GerberLayer,
+    /// Native KiCad board input.
     KiCadBoard,
+    /// Drill sidecar such as Excellon.
     DrillSidecar,
+    /// Electrical test netlist sidecar such as IPC-D-356.
     NetlistSidecar,
+    /// BOM-style netlist or connectivity export.
     NetlistFile,
+    /// Routing, tab, or mouse-bite drawing.
     RoutDrawingFile,
+    /// Bill of materials.
     BomFile,
+    /// Component placement or centroid file.
     CentroidFile,
+    /// Fabrication drawing.
     FabDrawing,
+    /// Assembly drawing.
     AssemblyDrawing,
+    /// Manufacturing package README or notes file.
     ReadmeFile,
+    /// Waiver policy input.
     Waiver,
 }
 
+/// Provenance record serialized into reports.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+/// Public data model for `SourceRecord`.
 pub struct SourceRecord {
+    /// Adapter that supplied the file.
     pub adapter: IoAdapter,
+    /// Role assigned to the source.
     pub role: IoRole,
+    /// Display path for the source.
     pub path: String,
+    /// Optional parent package, converter input, or discovery origin.
     #[serde(skip_serializing_if = "Option::is_none")]
+    /// Field `origin`.
     pub origin: Option<String>,
 }
 
 impl SourceRecord {
+    /// Build a source record from path-like values.
     pub fn new(
         adapter: IoAdapter,
         role: IoRole,
@@ -64,25 +95,41 @@ impl SourceRecord {
     }
 }
 
+/// File discovered with its source provenance.
 #[derive(Clone, Debug, Eq, PartialEq)]
+/// Public data model for `DiscoveredFile`.
 pub struct DiscoveredFile {
+    /// Filesystem path to the discovered source.
     pub path: PathBuf,
+    /// Provenance record for reports and manifests.
     pub source: SourceRecord,
 }
 
+/// Sidecar files discovered next to a Gerber package.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
+/// Public data model for `PackageSidecars`.
 pub struct PackageSidecars {
+    /// Excellon drill files.
     pub excellon_files: Vec<DiscoveredFile>,
+    /// IPC-D-356 netlist files.
     pub ipc356_files: Vec<DiscoveredFile>,
+    /// Bills of materials.
     pub bom_files: Vec<DiscoveredFile>,
+    /// Component placement files.
     pub centroid_files: Vec<DiscoveredFile>,
+    /// General netlist files.
     pub netlist_files: Vec<DiscoveredFile>,
+    /// Fabrication drawings.
     pub fab_drawing_files: Vec<DiscoveredFile>,
+    /// Assembly drawings.
     pub assembly_drawing_files: Vec<DiscoveredFile>,
+    /// Package README or manufacturing notes.
     pub readme_files: Vec<DiscoveredFile>,
+    /// Routing/tab drawings.
     pub rout_drawing_files: Vec<DiscoveredFile>,
 }
 
+/// Wrap a direct Gerber file path as a discovered input.
 pub fn direct_gerber_file(path: PathBuf) -> DiscoveredFile {
     DiscoveredFile {
         source: SourceRecord::new(
@@ -95,6 +142,7 @@ pub fn direct_gerber_file(path: PathBuf) -> DiscoveredFile {
     }
 }
 
+/// Wrap a converter-produced Gerber file with its original source.
 pub fn converted_gerber_file(path: PathBuf, origin: &Path) -> DiscoveredFile {
     DiscoveredFile {
         source: SourceRecord::new(
@@ -107,6 +155,7 @@ pub fn converted_gerber_file(path: PathBuf, origin: &Path) -> DiscoveredFile {
     }
 }
 
+/// Discover Gerber-like layer files in a directory.
 pub fn discover_gerber_dir(directory: &Path) -> Result<Vec<DiscoveredFile>> {
     let mut files = Vec::new();
     for entry in std::fs::read_dir(directory)
@@ -131,6 +180,7 @@ pub fn discover_gerber_dir(directory: &Path) -> Result<Vec<DiscoveredFile>> {
     Ok(files)
 }
 
+/// Discover manufacturing package sidecars in the provided directories.
 pub fn discover_package_sidecars(directories: &[PathBuf]) -> Result<PackageSidecars> {
     let mut sidecars = PackageSidecars::default();
     for directory in directories {
@@ -177,6 +227,7 @@ pub fn discover_package_sidecars(directories: &[PathBuf]) -> Result<PackageSidec
     Ok(sidecars)
 }
 
+/// Return true when a path looks like a Gerber layer export.
 pub fn is_gerber_path(path: &Path) -> bool {
     let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
         return false;
@@ -292,7 +343,6 @@ fn classify_package_sidecar(path: &Path) -> Option<IoRole> {
     {
         return Some(IoRole::AssemblyDrawing);
     }
-
     None
 }
 

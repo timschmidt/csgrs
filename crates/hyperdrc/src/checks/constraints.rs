@@ -18,6 +18,7 @@ use crate::constraint_policy::{
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
 
+/// Run the `stackup_readiness` design-readiness check or report helper.
 pub fn stackup_readiness(stackup: Option<&StackupConfig>, boards: &[BoardModel]) -> Vec<Violation> {
     let Some(stackup) = stackup else {
         return Vec::new();
@@ -460,6 +461,7 @@ fn has_custom_capability(capability: &FabricationCapabilityConfig) -> bool {
         || capability.min_tg_c.is_some()
 }
 
+/// Run the `net_constraint_readiness` design-readiness check or report helper.
 pub fn net_constraint_readiness(
     net_classes: &[NetClassConfig],
     stackup: Option<&StackupConfig>,

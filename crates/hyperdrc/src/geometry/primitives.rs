@@ -7,6 +7,7 @@ use csgrs::float_types::Real;
 use geo::{Coord, LineString, Polygon};
 use std::f64::consts::PI;
 
+/// Run the `circle_polygon` design-readiness check or report helper.
 pub fn circle_polygon(center: [f64; 2], radius: f64, segments: usize) -> Polygon<Real> {
     if !(center[0].is_finite() && center[1].is_finite() && radius.is_finite()) {
         return Polygon::new(geo::LineString(vec![]), vec![]);
@@ -25,6 +26,7 @@ pub fn circle_polygon(center: [f64; 2], radius: f64, segments: usize) -> Polygon
     Polygon::new(LineString(coords), vec![])
 }
 
+/// Run the `rect_polygon` design-readiness check or report helper.
 pub fn rect_polygon(center: [f64; 2], size: [f64; 2], angle_degrees: f64) -> Polygon<Real> {
     if !(center[0].is_finite()
         && center[1].is_finite()
@@ -51,6 +53,7 @@ pub fn rect_polygon(center: [f64; 2], size: [f64; 2], angle_degrees: f64) -> Pol
     )
 }
 
+/// Run the `line_polygon` design-readiness check or report helper.
 pub fn line_polygon(start: [f64; 2], end: [f64; 2], width: f64) -> Option<Polygon<Real>> {
     if !all_finite(start) || !all_finite(end) || !width.is_finite() {
         return None;
@@ -73,6 +76,7 @@ pub fn line_polygon(start: [f64; 2], end: [f64; 2], width: f64) -> Option<Polygo
     ]))
 }
 
+/// Run the `polygon_from_points` design-readiness check or report helper.
 pub fn polygon_from_points(points: Vec<[f64; 2]>) -> Polygon<Real> {
     if points
         .iter()
@@ -98,6 +102,7 @@ pub fn polygon_from_points(points: Vec<[f64; 2]>) -> Polygon<Real> {
     Polygon::new(LineString(coords), vec![])
 }
 
+/// Run the `transform_polygon` design-readiness check or report helper.
 pub fn transform_polygon(
     polygon: &Polygon<Real>,
     origin: [f64; 2],
@@ -146,6 +151,7 @@ pub fn transform_polygon(
     )
 }
 
+/// Run the `arc_line_polygons` design-readiness check or report helper.
 pub fn arc_line_polygons(
     center: [f64; 2],
     start: [f64; 2],

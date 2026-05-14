@@ -13,6 +13,7 @@ use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbSketch};
 
+/// Run the `annular_ring` design-readiness check or report helper.
 pub fn annular_ring(
     board: &BoardModel,
     minimum_ring: f64,
@@ -54,6 +55,7 @@ pub fn annular_ring(
     violations
 }
 
+/// Run the `annular_ring_tolerance` design-readiness check or report helper.
 pub fn annular_ring_tolerance(
     board: &BoardModel,
     minimum_ring: f64,
@@ -92,6 +94,7 @@ pub fn annular_ring_tolerance(
     violations
 }
 
+/// Run the `plating_intent` design-readiness check or report helper.
 pub fn plating_intent(
     board: &BoardModel,
     selected_layers: &[String],
@@ -138,6 +141,7 @@ pub fn plating_intent(
     violations
 }
 
+/// Run the `routed_slot_readiness` design-readiness check or report helper.
 pub fn routed_slot_readiness(board: &BoardModel, minimum_route_width: f64) -> Vec<Violation> {
     board
         .drills
@@ -160,6 +164,7 @@ pub fn routed_slot_readiness(board: &BoardModel, minimum_route_width: f64) -> Ve
         .collect()
 }
 
+/// Run the `drill_to_copper_clearance` design-readiness check or report helper.
 pub fn drill_to_copper_clearance(
     board: &BoardModel,
     extra_drills: &[DrillFeature],
@@ -212,6 +217,7 @@ pub fn drill_to_copper_clearance(
     violations
 }
 
+/// Run the `drill_spacing` design-readiness check or report helper.
 pub fn drill_spacing(
     board_drills: &[DrillFeature],
     extra_drills: &[DrillFeature],
@@ -248,6 +254,7 @@ pub fn drill_spacing(
     violations
 }
 
+/// Run the `board_outline_drill_clearance` design-readiness check or report helper.
 pub fn board_outline_drill_clearance(
     drill_source: &str,
     outline_name: &str,
@@ -294,6 +301,7 @@ pub fn board_outline_drill_clearance(
     violations
 }
 
+/// Run the `castellation_intent` design-readiness check or report helper.
 pub fn castellation_intent(board: &BoardModel, min_area: f64) -> Vec<Violation> {
     let Some(outline) = &board.board_outline else {
         return Vec::new();
@@ -334,6 +342,7 @@ pub fn castellation_intent(board: &BoardModel, min_area: f64) -> Vec<Violation> 
     violations
 }
 
+/// Run the `castellation_hole_readiness` design-readiness check or report helper.
 pub fn castellation_hole_readiness(
     board: &BoardModel,
     minimum_diameter: f64,
@@ -378,6 +387,7 @@ pub fn castellation_hole_readiness(
     violations
 }
 
+/// Run the `drill_aspect_ratio` design-readiness check or report helper.
 pub fn drill_aspect_ratio(
     source: &str,
     drills: &[DrillFeature],
@@ -421,6 +431,7 @@ pub fn drill_aspect_ratio(
     violations
 }
 
+/// Run the `drill_table_consistency` design-readiness check or report helper.
 pub fn drill_table_consistency(
     board_drills: &[DrillFeature],
     extra_drills: &[DrillFeature],
@@ -473,6 +484,7 @@ pub fn drill_table_consistency(
     violations
 }
 
+/// Run the `drills_to_sketch` design-readiness check or report helper.
 pub fn drills_to_sketch(drills: &[DrillFeature], name: &str) -> PcbSketch {
     let polygons = drills
         .iter()

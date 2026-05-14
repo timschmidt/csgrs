@@ -8,15 +8,25 @@ use serde::Deserialize;
 
 #[derive(Copy, Clone, Debug, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "kebab-case")]
+/// Assembly process profile used to select default readiness thresholds.
 pub enum AssemblyProfile {
+    /// Early prototype assembly with relaxed production assumptions.
     Prototype,
+    /// Standard production SMT assembly.
     ProductionSmt,
+    /// SMT assembly with populated top and bottom sides.
     DoubleSidedSmt,
+    /// Test fixture or bed-of-nails focused build.
     TestFixture,
+    /// Manual or low-volume hand assembly.
     HandAssembly,
+    /// Selective solder process.
     SelectiveSolder,
+    /// Wave solder process.
     WaveSolder,
+    /// Press-fit connector process.
     PressFit,
+    /// Assembly requiring conformal coating clearance.
     ConformalCoating,
 }
 
@@ -28,74 +38,134 @@ impl Default for AssemblyProfile {
 
 #[derive(Clone, Debug, Deserialize, Default)]
 #[serde(default)]
+/// Optional assembly threshold overrides from rule configuration.
 pub struct AssemblyPolicyConfig {
+    /// Override for component-to-board-edge clearance.
     pub component_edge_clearance: Option<f64>,
+    /// Override for component-to-hole clearance.
     pub component_hole_clearance: Option<f64>,
+    /// Override for connector rework access clearance.
     pub connector_rework_clearance: Option<f64>,
+    /// Override for minimum connector pad dimension used as a proxy.
     pub connector_min_pad_dimension: Option<f64>,
+    /// Override for neighboring pad-pair gap.
     pub pad_pair_max_gap: Option<f64>,
+    /// Override for neighboring pad-pair area ratio.
     pub pad_pair_max_area_ratio: Option<f64>,
+    /// Override for maximum pad dimension considered by pad-pair checks.
     pub pad_pair_max_pad_dimension: Option<f64>,
+    /// Override for minimum testpoint diameter.
     pub testpoint_min_diameter: Option<f64>,
+    /// Override for minimum testpoint spacing.
     pub testpoint_min_spacing: Option<f64>,
+    /// Override for testpoint-to-edge clearance.
     pub testpoint_edge_clearance: Option<f64>,
+    /// Override for minimum tooling-hole diameter.
     pub tooling_min_diameter: Option<f64>,
+    /// Override for maximum tooling-hole diameter.
     pub tooling_max_diameter: Option<f64>,
+    /// Override for tooling-hole edge clearance.
     pub tooling_edge_clearance: Option<f64>,
+    /// Override for minimum mouse-bite hole diameter.
     pub mouse_bite_min_diameter: Option<f64>,
+    /// Override for maximum mouse-bite hole diameter.
     pub mouse_bite_max_diameter: Option<f64>,
+    /// Override for minimum mouse-bite pitch.
     pub mouse_bite_min_spacing: Option<f64>,
+    /// Override for maximum mouse-bite pitch.
     pub mouse_bite_max_spacing: Option<f64>,
+    /// Override for fiducial-to-edge clearance.
     pub fiducial_edge_clearance: Option<f64>,
+    /// Override for expected local fiducial pitch.
     pub local_fiducial_pitch: Option<f64>,
+    /// Override for local fiducial search radius.
     pub local_fiducial_search_radius: Option<f64>,
+    /// Override for dense-pad pitch threshold.
     pub dense_pad_pitch: Option<f64>,
+    /// Override for via search radius around dense pads.
     pub dense_pad_via_search_radius: Option<f64>,
+    /// Override for selective-solder process keepout.
     pub selective_solder_keepout: Option<f64>,
+    /// Override for wave-solder process keepout.
     pub wave_solder_keepout: Option<f64>,
+    /// Override for press-fit process keepout.
     pub press_fit_keepout: Option<f64>,
+    /// Override for conformal-coating process keepout.
     pub conformal_coating_keepout: Option<f64>,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
+/// Base fabrication thresholds used to derive assembly defaults.
 pub struct AssemblyBaseRules {
+    /// General clearance in millimeters.
     pub clearance: f64,
+    /// Minimum feature width in millimeters.
     pub min_width: f64,
+    /// Electrical net clearance in millimeters.
     pub net_clearance: f64,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
+/// Fully resolved assembly readiness thresholds.
 pub struct AssemblyRules {
+    /// Profile that supplied the defaults.
     pub profile: AssemblyProfile,
+    /// Required component-to-board-edge clearance.
     pub component_edge_clearance: f64,
+    /// Required component-to-hole clearance.
     pub component_hole_clearance: f64,
+    /// Required connector rework access clearance.
     pub connector_rework_clearance: f64,
+    /// Minimum connector pad dimension used as a proxy.
     pub connector_min_pad_dimension: f64,
+    /// Maximum gap between pads considered a pair.
     pub pad_pair_max_gap: f64,
+    /// Maximum allowed neighboring pad area ratio.
     pub pad_pair_max_area_ratio: f64,
+    /// Maximum pad dimension considered by pad-pair checks.
     pub pad_pair_max_pad_dimension: f64,
+    /// Minimum testpoint diameter.
     pub testpoint_min_diameter: f64,
+    /// Minimum testpoint spacing.
     pub testpoint_min_spacing: f64,
+    /// Required testpoint-to-edge clearance.
     pub testpoint_edge_clearance: f64,
+    /// Minimum tooling-hole diameter.
     pub tooling_min_diameter: f64,
+    /// Maximum tooling-hole diameter.
     pub tooling_max_diameter: f64,
+    /// Required tooling-hole edge clearance.
     pub tooling_edge_clearance: f64,
+    /// Minimum mouse-bite hole diameter.
     pub mouse_bite_min_diameter: f64,
+    /// Maximum mouse-bite hole diameter.
     pub mouse_bite_max_diameter: f64,
+    /// Minimum mouse-bite pitch.
     pub mouse_bite_min_spacing: f64,
+    /// Maximum mouse-bite pitch.
     pub mouse_bite_max_spacing: f64,
+    /// Required fiducial-to-edge clearance.
     pub fiducial_edge_clearance: f64,
+    /// Expected pitch threshold for local fiducials.
     pub local_fiducial_pitch: f64,
+    /// Search radius for local fiducials.
     pub local_fiducial_search_radius: f64,
+    /// Dense-pad pitch threshold.
     pub dense_pad_pitch: f64,
+    /// Via search radius around dense pads.
     pub dense_pad_via_search_radius: f64,
+    /// Selective-solder process keepout.
     pub selective_solder_keepout: f64,
+    /// Wave-solder process keepout.
     pub wave_solder_keepout: f64,
+    /// Press-fit process keepout.
     pub press_fit_keepout: f64,
+    /// Conformal-coating process keepout.
     pub conformal_coating_keepout: f64,
 }
 
 impl AssemblyRules {
+    /// Resolve a profile plus optional overrides into concrete thresholds.
     pub fn resolve(
         profile: AssemblyProfile,
         config: &AssemblyPolicyConfig,

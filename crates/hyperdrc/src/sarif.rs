@@ -14,6 +14,7 @@ use crate::report::{Report, Severity, Violation};
 const SARIF_SCHEMA: &str = "https://json.schemastore.org/sarif-2.1.0.json";
 const SARIF_VERSION: &str = "2.1.0";
 
+/// Run the `report_to_sarif` design-readiness check or report helper.
 pub fn report_to_sarif(report: &Report) -> Value {
     json!({
         "$schema": SARIF_SCHEMA,

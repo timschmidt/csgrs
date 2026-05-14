@@ -11,40 +11,63 @@ use crate::geometry::{empty_sketch, polygons_to_sketch};
 use crate::{LayerMetadata, PcbSketch};
 
 #[derive(Clone, Debug)]
+/// Public data model for `BoardModel`.
 pub struct BoardModel {
+    /// Field `source`.
     pub source: String,
+    /// Field `copper`.
     pub copper: Vec<CopperFeature>,
+    /// Field `drills`.
     pub drills: Vec<DrillFeature>,
+    /// Field `board_outline`.
     pub board_outline: Option<PcbSketch>,
+    /// Field `panel_features`.
     pub panel_features: Option<PcbSketch>,
 }
 
 #[derive(Clone, Debug)]
+/// Public data model for `CopperFeature`.
 pub struct CopperFeature {
+    /// Field `layer`.
     pub layer: String,
+    /// Field `net`.
     pub net: Option<String>,
+    /// Field `kind`.
     pub kind: CopperKind,
+    /// Field `sketch`.
     pub sketch: PcbSketch,
+    /// Field `location`.
     pub location: [f64; 2],
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
+/// Public enumeration for `CopperKind`.
 pub enum CopperKind {
+    /// Variant `Pad`.
     Pad,
+    /// Variant `Via`.
     Via,
+    /// Variant `Segment`.
     Segment,
+    /// Variant `Zone`.
     Zone,
 }
 
 #[derive(Clone, Debug)]
+/// Public data model for `DrillFeature`.
 pub struct DrillFeature {
+    /// Field `location`.
     pub location: [f64; 2],
+    /// Field `diameter`.
     pub diameter: f64,
+    /// Field `net`.
     pub net: Option<String>,
+    /// Field `plated`.
     pub plated: bool,
 }
 
 impl BoardModel {
+    /// Run or compute `copper_layers`.
     pub fn copper_layers(&self, selected_layers: &[String]) -> Vec<(String, PcbSketch)> {
         let mut by_layer: HashMap<String, Vec<Polygon<f64>>> = HashMap::new();
 
@@ -72,6 +95,7 @@ impl BoardModel {
             .collect()
     }
 
+    /// Run or compute `all_copper`.
     pub fn all_copper(&self) -> PcbSketch {
         let polygons = self
             .copper

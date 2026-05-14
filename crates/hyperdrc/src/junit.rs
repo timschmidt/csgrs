@@ -7,6 +7,7 @@
 
 use crate::report::{Report, Severity, Violation};
 
+/// Run the `report_to_junit` design-readiness check or report helper.
 pub fn report_to_junit(report: &Report) -> String {
     let mut out = String::new();
     out.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
