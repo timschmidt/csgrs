@@ -133,8 +133,10 @@ IDs, severity, layers, polygon coordinates, point locations where applicable,
 short messages, structured parser diagnostics, and a structured input manifest.
 During a run, `hyperdrc` writes start/end status lines for runtime phases and
 per-check execution to stderr with elapsed time; each completed check also
-reports its new finding count. This leaves stdout safe for the selected report
-format.
+reports its new finding count. Expensive checks such as minimum copper neck,
+mask sliver, aperture/opening spacing, drill-to-copper clearance, and net
+spacing also emit intra-check progress lines so long-running layer or board
+work can be monitored. This leaves stdout safe for the selected report format.
 JSON Lines emits one run/input/diagnostic/violation object per line for
 streaming analytics. SARIF output preserves stable hyperdrc finding IDs and PCB
 geometry in result properties for CI/code-review systems. GitHub annotation

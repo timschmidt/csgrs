@@ -393,6 +393,21 @@ fn status_activity<T>(activity: &str, work: impl FnOnce() -> Result<T>) -> Resul
     }
 }
 
+fn progress_check_item(
+    check_name: &str,
+    item_index: usize,
+    item_count: usize,
+    item: &str,
+    check_started: Instant,
+) {
+    eprintln!(
+        "hyperdrc: check {check_name} progress {}/{} after {:.3}s: {item}",
+        item_index + 1,
+        item_count,
+        check_started.elapsed().as_secs_f64()
+    );
+}
+
 #[allow(clippy::too_many_arguments)]
 fn run_checks(
     selected_checks: &[Check],
@@ -723,10 +738,19 @@ fn run_checks(
                         .into_iter()
                         .map(|(paste_index, _)| paste_index)
                         .collect::<std::collections::BTreeSet<_>>();
-                    for paste_index in paste_layers {
+                    let item_count = paste_layers.len();
+                    for (item_index, paste_index) in paste_layers.into_iter().enumerate() {
                         let paste = &layers[paste_index];
+                        let name = layer_name(paste);
+                        progress_check_item(
+                            check_name,
+                            item_index,
+                            item_count,
+                            &format!("checking aperture spacing on {name}"),
+                            check_started,
+                        );
                         violations.extend(checks::paste_aperture_spacing(
-                            &layer_name(paste),
+                            &name,
                             &paste.sketch,
                             rules.min_width,
                             rules.min_area,
@@ -879,10 +903,20 @@ fn run_checks(
                     }
                 }
                 Check::SilkscreenMinWidth => {
-                    for silk_index in selected_layers(layers.len(), &cli.silk_layers) {
+                    let silk_layers = selected_layers(layers.len(), &cli.silk_layers);
+                    let item_count = silk_layers.len();
+                    for (item_index, silk_index) in silk_layers.into_iter().enumerate() {
                         let silk = &layers[silk_index];
+                        let name = layer_name(silk);
+                        progress_check_item(
+                            check_name,
+                            item_index,
+                            item_count,
+                            &format!("opening silk layer {name}"),
+                            check_started,
+                        );
                         violations.extend(checks::silkscreen_min_width(
-                            &layer_name(silk),
+                            &name,
                             &silk.sketch,
                             rules.min_width,
                             rules.min_area,
@@ -890,19 +924,42 @@ fn run_checks(
                     }
                 }
                 Check::MinCopperNeck => {
-                    for copper_index in selected_layers(layers.len(), &cli.copper_layers) {
+                    let gerber_copper_layers = selected_layers(layers.len(), &cli.copper_layers);
+                    let gerber_copper_layer_count = gerber_copper_layers.len();
+                    let item_count = gerber_copper_layer_count
+                        + selected_kicad_copper_layer_count(boards, kicad_copper_layers);
+
+                    for (item_index, copper_index) in gerber_copper_layers.into_iter().enumerate() {
                         let copper = &layers[copper_index];
+                        let name = layer_name(copper);
+                        progress_check_item(
+                            check_name,
+                            item_index,
+                            item_count,
+                            &format!("opening copper layer {name}"),
+                            check_started,
+                        );
                         violations.extend(checks::min_copper_neck_width(
-                            &layer_name(copper),
+                            &name,
                             &copper.sketch,
                             rules.min_width,
                             rules.min_area,
                         ));
                     }
+                    let mut item_index = gerber_copper_layer_count;
                     for board in boards {
                         for (layer_name, copper) in board.copper_layers(kicad_copper_layers) {
+                            let name = format!("{}:{layer_name}", board.source);
+                            progress_check_item(
+                                check_name,
+                                item_index,
+                                item_count,
+                                &format!("opening copper layer {name}"),
+                                check_started,
+                            );
+                            item_index += 1;
                             violations.extend(checks::min_copper_neck_width(
-                                &format!("{}:{layer_name}", board.source),
+                                &name,
                                 &copper,
                                 rules.min_width,
                                 rules.min_area,
@@ -988,10 +1045,20 @@ fn run_checks(
                     }
                 }
                 Check::SolderMaskSliver => {
-                    for mask_index in selected_layers(layers.len(), &cli.mask_layers) {
+                    let mask_layers = selected_layers(layers.len(), &cli.mask_layers);
+                    let item_count = mask_layers.len();
+                    for (item_index, mask_index) in mask_layers.into_iter().enumerate() {
                         let mask = &layers[mask_index];
+                        let name = layer_name(mask);
+                        progress_check_item(
+                            check_name,
+                            item_index,
+                            item_count,
+                            &format!("opening mask layer {name}"),
+                            check_started,
+                        );
                         violations.extend(checks::solder_mask_sliver(
-                            &layer_name(mask),
+                            &name,
                             &mask.sketch,
                             rules.min_mask_width,
                             rules.min_area,
@@ -1010,10 +1077,19 @@ fn run_checks(
                     }
                 }
                 Check::SolderMaskOpeningSpacing => {
-                    for mask_index in &cli.mask_layers {
+                    let item_count = cli.mask_layers.len();
+                    for (item_index, mask_index) in cli.mask_layers.iter().enumerate() {
                         let mask = &layers[*mask_index];
+                        let name = layer_name(mask);
+                        progress_check_item(
+                            check_name,
+                            item_index,
+                            item_count,
+                            &format!("checking opening spacing on {name}"),
+                            check_started,
+                        );
                         violations.extend(checks::solder_mask_opening_spacing(
-                            &layer_name(mask),
+                            &name,
                             &mask.sketch,
                             rules.min_mask_width,
                             rules.min_area,
@@ -1077,7 +1153,14 @@ fn run_checks(
                     }
                 }
                 Check::DrillCopperClearance => {
-                    for board in boards {
+                    for (item_index, board) in boards.iter().enumerate() {
+                        progress_check_item(
+                            check_name,
+                            item_index,
+                            boards.len(),
+                            &format!("checking {}", board.source),
+                            check_started,
+                        );
                         violations.extend(checks::drill_to_copper_clearance(
                             board,
                             excellon_drills,
@@ -1836,7 +1919,14 @@ fn run_checks(
                     }
                 }
                 Check::NetSpacing => {
-                    for board in boards {
+                    for (item_index, board) in boards.iter().enumerate() {
+                        progress_check_item(
+                            check_name,
+                            item_index,
+                            boards.len(),
+                            &format!("checking {}", board.source),
+                            check_started,
+                        );
                         violations.extend(checks::net_spacing(
                             board,
                             rules.net_clearance,
@@ -2373,6 +2463,26 @@ fn selected_layers(layer_count: usize, explicit_layers: &[usize]) -> Vec<usize> 
     }
 
     explicit_layers.to_vec()
+}
+
+fn selected_kicad_copper_layer_count(
+    boards: &[kicad::BoardModel],
+    selected_layers: &[String],
+) -> usize {
+    boards
+        .iter()
+        .map(|board| {
+            board
+                .copper
+                .iter()
+                .filter(|feature| {
+                    selected_layers.is_empty() || selected_layers.contains(&feature.layer)
+                })
+                .map(|feature| feature.layer.as_str())
+                .collect::<std::collections::BTreeSet<_>>()
+                .len()
+        })
+        .sum()
 }
 
 #[cfg(test)]
