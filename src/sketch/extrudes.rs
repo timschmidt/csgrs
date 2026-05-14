@@ -111,6 +111,17 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         metadata: &Option<S>,
         out_polygons: &mut Vec<Polygon<S>>,
     ) {
+        if direction.norm_squared() < tolerance() * tolerance() {
+            return;
+        }
+
+        let dir_unit = direction.normalize();
+        // When the extrusion opposes the sketch-plane normal (+Z), the solid is
+        // inverted and face orientations must flip.
+        let flip = direction.dot(&Vector3::z()) < 0.0;
+        let bottom_normal = -dir_unit;
+        let top_normal = dir_unit;
+
         match geom {
             geo::Geometry::Polygon(poly) => {
                 let exterior_coords: Vec<[Real; 2]> =
@@ -128,20 +139,38 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
                 // bottom
                 for tri in &tris {
-                    let v0 = Vertex::new(tri[2], -Vector3::z());
-                    let v1 = Vertex::new(tri[1], -Vector3::z());
-                    let v2 = Vertex::new(tri[0], -Vector3::z());
-                    out_polygons.push(Polygon::new(vec![v0, v1, v2], metadata.clone()));
+                    let (a, b, c) = if flip {
+                        (tri[0], tri[1], tri[2])
+                    } else {
+                        (tri[2], tri[1], tri[0])
+                    };
+                    out_polygons.push(Polygon::new(
+                        vec![
+                            Vertex::new(a, bottom_normal),
+                            Vertex::new(b, bottom_normal),
+                            Vertex::new(c, bottom_normal),
+                        ],
+                        metadata.clone(),
+                    ));
                 }
                 // top
                 for tri in &tris {
                     let p0 = tri[0] + direction;
                     let p1 = tri[1] + direction;
                     let p2 = tri[2] + direction;
-                    let v0 = Vertex::new(p0, Vector3::z());
-                    let v1 = Vertex::new(p1, Vector3::z());
-                    let v2 = Vertex::new(p2, Vector3::z());
-                    out_polygons.push(Polygon::new(vec![v0, v1, v2], metadata.clone()));
+                    let (a, b, c) = if flip {
+                        (p2, p1, p0)
+                    } else {
+                        (p0, p1, p2)
+                    };
+                    out_polygons.push(Polygon::new(
+                        vec![
+                            Vertex::new(a, top_normal),
+                            Vertex::new(b, top_normal),
+                            Vertex::new(c, top_normal),
+                        ],
+                        metadata.clone(),
+                    ));
                 }
 
                 // sides
@@ -155,15 +184,24 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                         let b_j = Point3::new(c_j.x, c_j.y, 0.0);
                         let t_i = b_i + direction;
                         let t_j = b_j + direction;
-                        out_polygons.push(Polygon::new(
+                        let raw_normal = (b_j - b_i).cross(&direction).normalize();
+                        let normal = if flip { -raw_normal } else { raw_normal };
+                        let verts = if flip {
                             vec![
-                                Vertex::new(b_i, Vector3::zeros()),
-                                Vertex::new(b_j, Vector3::zeros()),
-                                Vertex::new(t_j, Vector3::zeros()),
-                                Vertex::new(t_i, Vector3::zeros()),
-                            ],
-                            metadata.clone(),
-                        ));
+                                Vertex::new(b_j, normal),
+                                Vertex::new(b_i, normal),
+                                Vertex::new(t_i, normal),
+                                Vertex::new(t_j, normal),
+                            ]
+                        } else {
+                            vec![
+                                Vertex::new(b_i, normal),
+                                Vertex::new(b_j, normal),
+                                Vertex::new(t_j, normal),
+                                Vertex::new(t_i, normal),
+                            ]
+                        };
+                        out_polygons.push(Polygon::new(verts, metadata.clone()));
                     }
                 }
             },
@@ -192,17 +230,24 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     let b_j = Point3::new(c_j.x, c_j.y, 0.0);
                     let t_i = b_i + direction;
                     let t_j = b_j + direction;
-                    // compute face normal for lighting
-                    let normal = (b_j - b_i).cross(&(t_i - b_i)).normalize();
-                    out_polygons.push(Polygon::new(
+                    let raw_normal = (b_j - b_i).cross(&direction).normalize();
+                    let normal = if flip { -raw_normal } else { raw_normal };
+                    let verts = if flip {
+                        vec![
+                            Vertex::new(b_j, normal),
+                            Vertex::new(b_i, normal),
+                            Vertex::new(t_i, normal),
+                            Vertex::new(t_j, normal),
+                        ]
+                    } else {
                         vec![
                             Vertex::new(b_i, normal),
                             Vertex::new(b_j, normal),
                             Vertex::new(t_j, normal),
                             Vertex::new(t_i, normal),
-                        ],
-                        metadata.clone(),
-                    ));
+                        ]
+                    };
+                    out_polygons.push(Polygon::new(verts, metadata.clone()));
                 }
             },
             // Line: single segment ribbon
@@ -213,16 +258,24 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                 let b1 = Point3::new(c1.x, c1.y, 0.0);
                 let t0 = b0 + direction;
                 let t1 = b1 + direction;
-                let normal = (b1 - b0).cross(&(t0 - b0)).normalize();
-                out_polygons.push(Polygon::new(
+                let raw_normal = (b1 - b0).cross(&direction).normalize();
+                let normal = if flip { -raw_normal } else { raw_normal };
+                let verts = if flip {
+                    vec![
+                        Vertex::new(b1, normal),
+                        Vertex::new(b0, normal),
+                        Vertex::new(t0, normal),
+                        Vertex::new(t1, normal),
+                    ]
+                } else {
                     vec![
                         Vertex::new(b0, normal),
                         Vertex::new(b1, normal),
                         Vertex::new(t1, normal),
                         Vertex::new(t0, normal),
-                    ],
-                    metadata.clone(),
-                ));
+                    ]
+                };
+                out_polygons.push(Polygon::new(verts, metadata.clone()));
             },
 
             // Rect: convert to polygon and extrude

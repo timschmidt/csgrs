@@ -151,7 +151,17 @@ impl<S: Clone + Send + Sync> Polygon<S> {
             return vec![[a, b, c], [a, c, d]];
         }
 
-        let normal_3d = self.plane.normal().normalize();
+        let raw_normal = self.plane.normal();
+        let normal_len = raw_normal.norm();
+        if normal_len < tolerance() || !normal_len.is_finite() {
+            return Vec::new();
+        }
+
+        let normal_3d = raw_normal / normal_len;
+        if !normal_3d.x.is_finite() || !normal_3d.y.is_finite() || !normal_3d.z.is_finite() {
+            return Vec::new();
+        }
+
         let (u, v) = build_orthonormal_basis(normal_3d);
         let origin_3d = self.vertices[0].position;
 
@@ -159,19 +169,27 @@ impl<S: Clone + Send + Sync> Polygon<S> {
         {
             use earcutr::earcut;
 
+            let n_verts = self.vertices.len();
+
             // 1. Build flattened 2D coordinates, in the same order as `self.vertices`.
-            let mut flat_2d = Vec::with_capacity(self.vertices.len() * 2);
+            let mut flat_2d = Vec::with_capacity(n_verts * 2);
             for vert in &self.vertices {
                 let offset = vert.position.coords - origin_3d.coords;
                 let x = offset.dot(&u);
                 let y = offset.dot(&v);
+                if !x.is_finite() || !y.is_finite() {
+                    return Vec::new();
+                }
                 flat_2d.push(x);
                 flat_2d.push(y);
             }
 
             // 2. Run earcut: indices are into `flat_2d` as (x0, y0, x1, y1, …).
             let holes: Vec<usize> = Vec::new(); // you said: no holes
-            let indices = earcut(&flat_2d, &holes, 2).expect("no triangle indices returned");
+            let indices = match earcut(&flat_2d, &holes, 2) {
+                Ok(indices) => indices,
+                Err(_) => return Vec::new(),
+            };
 
             // 3. Build triangles using *original* vertices.
             let mut triangles = Vec::with_capacity(indices.len() / 3);
@@ -180,11 +198,21 @@ impl<S: Clone + Send + Sync> Polygon<S> {
                 let i1 = tri[1] as usize;
                 let i2 = tri[2] as usize;
 
+                if i0 >= n_verts || i1 >= n_verts || i2 >= n_verts {
+                    continue;
+                }
+
                 let a = self.vertices[i0];
                 let b = self.vertices[i1];
                 let c = self.vertices[i2];
 
-                triangles.push([a, b, c]); // reuse original triangle vertices without projection
+                let edge1 = b.position - a.position;
+                let edge2 = c.position - a.position;
+                if edge1.cross(&edge2).norm_squared() < tolerance() * tolerance() {
+                    continue;
+                }
+
+                triangles.push([a, b, c]);
             }
 
             triangles
@@ -228,6 +256,41 @@ impl<S: Clone + Send + Sync> Polygon<S> {
                 return Vec::new();
             }
 
+            {
+                let eps2 = tolerance() * tolerance();
+                let mut deduped = Vec::with_capacity(all_vertices_2d.len());
+                for c in &all_vertices_2d {
+                    if let Some(prev) = deduped.last() {
+                        let prev: &geo::Coord<Real> = prev;
+                        let dx = c.x - prev.x;
+                        let dy = c.y - prev.y;
+                        if dx * dx + dy * dy < eps2 {
+                            continue;
+                        }
+                    }
+                    deduped.push(*c);
+                }
+                if deduped.len() > 1 {
+                    let first = deduped[0];
+                    let last = *deduped.last().unwrap();
+                    let dx = first.x - last.x;
+                    let dy = first.y - last.y;
+                    if dx * dx + dy * dy < eps2 {
+                        deduped.pop();
+                    }
+                }
+                all_vertices_2d = deduped;
+            }
+
+            if all_vertices_2d.len() < 3 {
+                return Vec::new();
+            }
+
+            let signed_area_2x = polygon_signed_area_2x(&all_vertices_2d);
+            if signed_area_2x.abs() < tolerance() {
+                return Vec::new();
+            }
+
             // Build constrained Delaunay triangulation in Spade
 
             // Spade vertices
@@ -238,6 +301,30 @@ impl<S: Clone + Send + Sync> Polygon<S> {
 
             let n = vertices_spade.len();
             if n < 3 {
+                return Vec::new();
+            }
+
+            let has_self_intersection = {
+                let mut found = false;
+                'outer: for i in 0..n {
+                    let a1 = &all_vertices_2d[i];
+                    let b1 = &all_vertices_2d[(i + 1) % n];
+                    for j in (i + 2)..n {
+                        if i == 0 && j == n - 1 {
+                            continue;
+                        }
+                        let a2 = &all_vertices_2d[j];
+                        let b2 = &all_vertices_2d[(j + 1) % n];
+                        if segments_intersect_2d(a1.x, a1.y, b1.x, b1.y, a2.x, a2.y, b2.x, b2.y)
+                        {
+                            found = true;
+                            break 'outer;
+                        }
+                    }
+                }
+                found
+            };
+            if has_self_intersection {
                 return Vec::new();
             }
 
@@ -269,7 +356,6 @@ impl<S: Clone + Send + Sync> Polygon<S> {
                 }
                 p
             };
-            let signed_area_2x = polygon_signed_area_2x(&all_vertices_2d);
             let compactness = signed_area_2x.abs() / (perimeter * perimeter + tolerance());
             const REFINE_MIN_VERTS: usize = 64;
             if all_vertices_2d.len() >= REFINE_MIN_VERTS && compactness > 1e-6 {
@@ -307,6 +393,12 @@ impl<S: Clone + Send + Sync> Polygon<S> {
                     let p = v_handle.position(); // &Point2<Real>
                     let pos_3d = origin_3d.coords + p.x * u + p.y * v;
                     tri_vertices[k] = Vertex::new(Point3::from(pos_3d), normal_3d);
+                }
+
+                let edge1 = tri_vertices[1].position - tri_vertices[0].position;
+                let edge2 = tri_vertices[2].position - tri_vertices[0].position;
+                if edge1.cross(&edge2).norm_squared() < tolerance() * tolerance() {
+                    continue;
                 }
 
                 final_triangles.push(tri_vertices);
@@ -660,6 +752,36 @@ fn point_in_ring_2d(px: Real, py: Real, ring: &[geo::Coord<Real>]) -> bool {
     }
 
     inside
+}
+
+/// Test whether two 2D line segments properly intersect, ignoring shared endpoints.
+fn segments_intersect_2d(
+    ax1: Real,
+    ay1: Real,
+    bx1: Real,
+    by1: Real,
+    ax2: Real,
+    ay2: Real,
+    bx2: Real,
+    by2: Real,
+) -> bool {
+    let d1x = bx1 - ax1;
+    let d1y = by1 - ay1;
+    let d2x = bx2 - ax2;
+    let d2y = by2 - ay2;
+
+    let denom = d1x * d2y - d1y * d2x;
+    if denom.abs() < 1e-12 {
+        return false;
+    }
+
+    let dx = ax2 - ax1;
+    let dy = ay2 - ay1;
+    let t = (dx * d2y - dy * d2x) / denom;
+    let u = (dx * d1y - dy * d1x) / denom;
+
+    let eps = 1e-10;
+    t > eps && t < 1.0 - eps && u > eps && u < 1.0 - eps
 }
 
 // Helper function to subdivide a triangle

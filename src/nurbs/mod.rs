@@ -1,1 +1,3 @@
-// pub mod nurbs;
+mod nurbs;
+
+pub use self::nurbs::*;
