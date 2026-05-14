@@ -18,7 +18,7 @@ use crate::mesh::Vertex;
 #[cfg(feature = "parallel")]
 use crate::float_types::tolerance;
 
-impl<S: Clone + Send + Sync + Debug> Node<S> {
+impl<M: Clone + Send + Sync + Debug> Node<M> {
     /// Invert all polygons in the BSP tree using iterative approach to avoid stack overflow
     #[cfg(feature = "parallel")]
     pub fn invert(&mut self) {
@@ -47,7 +47,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
 
     /// Parallel version of clip Polygons
     #[cfg(feature = "parallel")]
-    pub fn clip_polygons(&self, polygons: &[Polygon<S>]) -> Vec<Polygon<S>> {
+    pub fn clip_polygons(&self, polygons: &[Polygon<M>]) -> Vec<Polygon<M>> {
         // If this node has no plane, just return the original set
         if self.plane.is_none() {
             return polygons.to_vec();
@@ -102,7 +102,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
 
     /// Parallel version of `clip_to` using iterative approach to avoid stack overflow
     #[cfg(feature = "parallel")]
-    pub fn clip_to(&mut self, bsp: &Node<S>) {
+    pub fn clip_to(&mut self, bsp: &Node<M>) {
         // Use iterative approach with a stack to avoid recursive stack overflow
         let mut stack = vec![self];
 
@@ -122,7 +122,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
 
     /// Parallel version of `build`.
     #[cfg(feature = "parallel")]
-    pub fn build(&mut self, polygons: &[Polygon<S>]) {
+    pub fn build(&mut self, polygons: &[Polygon<M>]) {
         if polygons.is_empty() {
             return;
         }
@@ -167,7 +167,7 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
 
     // Parallel slice
     #[cfg(feature = "parallel")]
-    pub fn slice(&self, slicing_plane: &Plane) -> (Vec<Polygon<S>>, Vec<[Vertex; 2]>) {
+    pub fn slice(&self, slicing_plane: &Plane) -> (Vec<Polygon<M>>, Vec<[Vertex; 2]>) {
         // Collect all polygons (this can be expensive, but let's do it).
         let all_polys = self.all_polygons();
 

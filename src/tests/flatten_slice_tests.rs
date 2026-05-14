@@ -7,7 +7,7 @@ fn test_flatten_and_union_single_polygon() {
     // Create a Mesh with one polygon (a unit square).
     let square_poly =
         polygon_from_xy_points(&[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]);
-    let csg = Mesh::from_polygons(&[square_poly], None);
+    let csg = Mesh::from_polygons(&[square_poly], ());
 
     // Flatten & union it
     let flat_csg = csg.flatten();
@@ -32,7 +32,7 @@ fn test_flatten_and_union_two_overlapping_squares() {
     let square1 = polygon_from_xy_points(&[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]);
     // Second square from (1,0) to (2,1)
     let square2 = polygon_from_xy_points(&[[1.0, 0.0], [2.0, 0.0], [2.0, 1.0], [1.0, 1.0]]);
-    let csg = Mesh::from_polygons(&[square1, square2], None);
+    let csg = Mesh::from_polygons(&[square1, square2], ());
 
     let flat_csg = csg.flatten();
     assert!(
@@ -56,7 +56,7 @@ fn test_flatten_and_union_two_disjoint_squares() {
     let square_a = polygon_from_xy_points(&[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]);
     // Square B at (2..3, 2..3)
     let square_b = polygon_from_xy_points(&[[2.0, 2.0], [3.0, 2.0], [3.0, 3.0], [2.0, 3.0]]);
-    let csg = Mesh::from_polygons(&[square_a, square_b], None);
+    let csg = Mesh::from_polygons(&[square_a, square_b], ());
 
     let flat_csg = csg.flatten();
     assert!(!flat_csg.geometry.0[0].is_empty());
@@ -75,10 +75,10 @@ fn test_flatten_and_union_near_xy_plane() {
             Vertex::new(Point3::new(1.0, 1.0, 1e-6), normal),
             Vertex::new(Point3::new(0.0, 1.0, 1e-6), normal),
         ],
-        None,
+        (),
     );
 
-    let csg = Mesh::from_polygons(&[poly1], None);
+    let csg = Mesh::from_polygons(&[poly1], ());
     let flat_csg = csg.flatten();
 
     assert!(
@@ -105,7 +105,7 @@ fn test_flatten_and_union_collinear_edges() {
         [2.0, 1.0],
     ]);
 
-    let csg = Mesh::<()>::from_polygons(&[rect1, rect2], None);
+    let csg = Mesh::<()>::from_polygons(&[rect1, rect2], ());
     let flat_csg = csg.flatten();
 
     // Expect 1 polygon from x=0..4, y=0..~1.0ish
@@ -121,7 +121,7 @@ fn test_flatten_and_union_collinear_edges() {
 /// you can println! debug info in `flatten_and_union`.
 #[test]
 fn test_flatten_and_union_debug() {
-    let cube = Mesh::<()>::cube(2.0, None);
+    let cube = Mesh::<()>::cube(2.0, ());
     let flattened = cube.flatten();
     assert!(
         !flattened.geometry.0[0].is_empty(),

@@ -10,7 +10,7 @@ use crate::vertex::Vertex;
 use nalgebra::{Matrix4, Point3, Rotation3, Translation3, Vector3};
 use std::fmt::Debug;
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// **Mathematical Foundations for 3D Box Geometry**
     ///
     /// This module implements mathematically rigorous algorithms for generating
@@ -50,7 +50,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// - **Surface Area**: A = 2(wl + wh + lh)
     /// - **Diagonal**: d = √(w² + l² + h²)
     /// - **Centroid**: (w/2, l/2, h/2)
-    pub fn cuboid(width: Real, length: Real, height: Real, metadata: Option<S>) -> Mesh<S> {
+    pub fn cuboid(width: Real, length: Real, height: Real, metadata: M) -> Mesh<M> {
         // Define the eight corner points of the prism.
         //    (x, y, z)
         let p000 = Point3::new(0.0, 0.0, 0.0);
@@ -148,7 +148,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         Mesh::from_polygons(&[bottom, top, front, back, left, right], metadata)
     }
 
-    pub fn cube(width: Real, metadata: Option<S>) -> Mesh<S> {
+    pub fn cube(width: Real, metadata: M) -> Mesh<M> {
         Self::cuboid(width, width, width, metadata)
     }
 
@@ -163,13 +163,13 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// ### **Parametric Surface Equations**
     /// The sphere surface is defined by:
     /// ```text
-    /// S(u,v) = r(sin(πv)cos(2πu), cos(πv), sin(πv)sin(2πu))
+    /// M(u,v) = r(sin(πv)cos(2πu), cos(πv), sin(πv)sin(2πu))
     /// where u ∈ [0,1], v ∈ [0,1]
     /// ```
     ///
     /// ### **Tessellation Algorithm**
     /// 1. **Parameter Grid**: Create (segments+1) × (stacks+1) parameter values
-    /// 2. **Vertex Generation**: Evaluate S(u,v) at grid points
+    /// 2. **Vertex Generation**: Evaluate M(u,v) at grid points
     /// 3. **Quadrilateral Formation**: Connect adjacent grid points
     /// 4. **Degeneracy Handling**: Poles require triangle adaptation
     ///
@@ -207,12 +207,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// - `segments`: Longitude divisions (≥ 3, recommend ≥ 8)
     /// - `stacks`: Latitude divisions (≥ 2, recommend ≥ 6)
     /// - `metadata`: Optional metadata for all faces
-    pub fn sphere(
-        radius: Real,
-        segments: usize,
-        stacks: usize,
-        metadata: Option<S>,
-    ) -> Mesh<S> {
+    pub fn sphere(radius: Real, segments: usize, stacks: usize, metadata: M) -> Mesh<M> {
         let segments = segments.max(3);
         let stacks = stacks.max(2);
         let mut polygons = Vec::new();
@@ -286,15 +281,15 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         radius1: Real,
         radius2: Real,
         segments: usize,
-        metadata: Option<S>,
-    ) -> Mesh<S> {
+        metadata: M,
+    ) -> Mesh<M> {
         let segments = segments.max(3);
         // Compute the axis and check that start and end do not coincide.
         let s = start.coords;
         let e = end.coords;
         let ray = e - s;
         if ray.norm_squared() < tolerance() {
-            return Mesh::new();
+            return Mesh::empty(metadata);
         }
         let axis_z = ray.normalize();
         // Pick an axis not parallel to axis_z.
@@ -332,7 +327,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
         // If both faces are degenerate, we cannot build a meaningful volume.
         if bottom_degenerate && top_degenerate {
-            return Mesh::new();
+            return Mesh::empty(metadata);
         }
 
         // For each slice of the circle (0..segments)
@@ -396,8 +391,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         radius2: Real,
         height: Real,
         segments: usize,
-        metadata: Option<S>,
-    ) -> Mesh<S> {
+        metadata: M,
+    ) -> Mesh<M> {
         Mesh::frustum_ptp(
             Point3::origin(),
             Point3::new(0.0, 0.0, height),
@@ -410,12 +405,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
     /// A helper to create a vertical cylinder along Z from z=0..z=height
     /// with the specified radius (NOT diameter).
-    pub fn cylinder(
-        radius: Real,
-        height: Real,
-        segments: usize,
-        metadata: Option<S>,
-    ) -> Mesh<S> {
+    pub fn cylinder(radius: Real, height: Real, segments: usize, metadata: M) -> Mesh<M> {
         Mesh::frustum_ptp(
             Point3::origin(),
             Point3::new(0.0, 0.0, height),
@@ -460,8 +450,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     pub fn polyhedron(
         points: &[[Real; 3]],
         faces: &[&[usize]],
-        metadata: Option<S>,
-    ) -> Result<Mesh<S>, ValidationError> {
+        metadata: M,
+    ) -> Result<Mesh<M>, ValidationError> {
         let mut polygons = Vec::new();
 
         for face in faces {
@@ -512,7 +502,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         length: Real,
         revolve_segments: usize,
         outline_segments: usize,
-        metadata: Option<S>,
+        metadata: M,
     ) -> Self {
         let egg_2d = Sketch::egg(width, length, outline_segments, metadata.clone());
 
@@ -546,7 +536,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         length: Real,
         revolve_segments: usize,
         shape_segments: usize,
-        metadata: Option<S>,
+        metadata: M,
     ) -> Self {
         // Make a 2D teardrop in the XY plane.
         let td_2d = Sketch::teardrop(width, length, shape_segments, metadata.clone());
@@ -581,7 +571,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         length: Real,
         height: Real,
         shape_segments: usize,
-        metadata: Option<S>,
+        metadata: M,
     ) -> Self {
         // Make a 2D teardrop in the XY plane.
         let td_2d = Sketch::teardrop(width, length, shape_segments, metadata.clone());
@@ -603,7 +593,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         rz: Real,
         segments: usize,
         stacks: usize,
-        metadata: Option<S>,
+        metadata: M,
     ) -> Self {
         let base_sphere = Self::sphere(1.0, segments, stacks, metadata.clone());
         base_sphere.scale(rx, ry, rz)
@@ -631,12 +621,12 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         direction: Vector3<Real>,
         segments: usize,
         orientation: bool,
-        metadata: Option<S>,
-    ) -> Mesh<S> {
+        metadata: M,
+    ) -> Mesh<M> {
         // Compute the arrow's total length.
         let arrow_length = direction.norm();
         if arrow_length < tolerance() {
-            return Mesh::new();
+            return Mesh::empty(metadata);
         }
         // Compute the unit direction.
         let unit_dir = direction / arrow_length;
@@ -698,7 +688,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     }
 
     /// Regular octahedron scaled by `radius`
-    pub fn octahedron(radius: Real, metadata: Option<S>) -> Self {
+    pub fn octahedron(radius: Real, metadata: M) -> Self {
         let pts = &[
             [1.0, 0.0, 0.0],
             [-1.0, 0.0, 0.0],
@@ -725,7 +715,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     }
 
     /// Regular icosahedron scaled by `radius`
-    pub fn icosahedron(radius: Real, metadata: Option<S>) -> Self {
+    pub fn icosahedron(radius: Real, metadata: M) -> Self {
         // radius scale factor
         let factor = radius * 0.5878; // empirically determined todo: eliminate this
         // golden ratio
@@ -791,7 +781,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         minor_r: Real,
         segments_major: usize,
         segments_minor: usize,
-        metadata: Option<S>,
+        metadata: M,
     ) -> Self {
         let circle = Sketch::circle(minor_r, segments_minor.max(3), metadata.clone())
             .translate(major_r, 0.0, 0.0);
@@ -809,8 +799,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         backlash: Real,
         segments_per_flank: usize,
         thickness: Real,
-        metadata: Option<S>,
-    ) -> Mesh<S> {
+        metadata: M,
+    ) -> Mesh<M> {
         Sketch::involute_gear(
             module,
             teeth,
@@ -830,8 +820,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         clearance: Real,
         segments_per_flank: usize,
         thickness: Real,
-        metadata: Option<S>,
-    ) -> Mesh<S> {
+        metadata: M,
+    ) -> Mesh<M> {
         Sketch::cycloidal_gear(
             module,
             teeth,
@@ -854,8 +844,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         thickness: Real,
         helix_angle_deg: Real, // β
         slices: usize,         // ≥ 2 – axial divisions
-        metadata: Option<S>,
-    ) -> Mesh<S> {
+        metadata: M,
+    ) -> Mesh<M> {
         assert!(slices >= 2);
         let base_slice = Sketch::involute_gear(
             module,
@@ -870,7 +860,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let dz = thickness / (slices as Real);
         let d_ψ = helix_angle_deg.to_radians() / (slices as Real);
 
-        let mut acc = Mesh::<S>::new();
+        let mut acc = Mesh::empty(metadata.clone());
         let mut z_curr = 0.0;
         for i in 0..slices {
             let slice = base_slice

@@ -14,14 +14,16 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub struct MeshJs {
-    pub(crate) inner: Mesh<String>,
+    pub(crate) inner: Mesh<Option<String>>,
 }
 
 #[wasm_bindgen]
 impl MeshJs {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
-        Self { inner: Mesh::new() }
+        Self {
+            inner: Mesh::empty(None),
+        }
     }
 
     #[wasm_bindgen(js_name=fromPolygons)]
@@ -692,13 +694,8 @@ impl MeshJs {
     #[wasm_bindgen(js_name=filterPolygonsByMetadata)]
     pub fn filter_polygons_by_metadata(&self, needle: JsValue) -> MeshJs {
         let meta = js_metadata_to_string(needle).unwrap_or(None);
-
-        if let Some(ref s) = meta {
-            let mesh = self.inner.filter_polygons_by_metadata(s);
-            MeshJs { inner: mesh }
-        } else {
-            MeshJs { inner: Mesh::new() }
-        }
+        let mesh = self.inner.filter_polygons_by_metadata(&meta);
+        MeshJs { inner: mesh }
     }
 
     // Mass Properties

@@ -22,7 +22,7 @@ fn test_polygon_construction() {
     let v2 = Vertex::new(Point3::new(1.0, 0.0, 1.0), Vector3::y());
     let v3 = Vertex::new(Point3::new(1.0, 0.0, -1.0), Vector3::y());
 
-    let poly: Polygon<()> = Polygon::new(vec![v1, v2, v3], None);
+    let poly: Polygon<()> = Polygon::new(vec![v1, v2, v3], ());
     assert_eq!(poly.vertices.len(), 3);
     // Plane should be defined by these three points. We expect a normal near ±Y.
     assert!(
@@ -38,7 +38,7 @@ fn test_polygon_construction() {
 #[test]
 #[cfg(feature = "stl-io")]
 fn test_to_stl_ascii() {
-    let cube: Mesh<()> = Mesh::cube(2.0, None);
+    let cube: Mesh<()> = Mesh::cube(2.0, ());
     let stl_str = cube.to_stl_ascii("test_cube");
     // Basic checks
     assert!(stl_str.contains("solid test_cube"));
@@ -63,7 +63,7 @@ fn test_degenerate_polygon_after_clipping() {
         Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::y()),
     ];
 
-    let polygon: Polygon<()> = Polygon::new(vertices.clone(), None);
+    let polygon: Polygon<()> = Polygon::new(vertices.clone(), ());
     let plane = Plane::from_normal(Vector3::new(0.0, 0.0, 1.0), 0.0);
 
     eprintln!("Original polygon: {:?}", polygon);
@@ -86,7 +86,7 @@ fn test_valid_polygon_clipping() {
         Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::y()),
     ];
 
-    let polygon: Polygon<()> = Polygon::new(vertices, None);
+    let polygon: Polygon<()> = Polygon::new(vertices, ());
 
     let plane = Plane::from_normal(-Vector3::y(), -0.5);
 

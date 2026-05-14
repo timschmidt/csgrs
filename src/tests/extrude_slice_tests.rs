@@ -139,7 +139,7 @@ fn test_union_of_extruded_shapes() {
 #[test]
 fn test_flatten_cube() {
     // 1) Create a cube from (-1,-1,-1) to (+1,+1,+1)
-    let cube = Mesh::<()>::cube(2.0, None);
+    let cube = Mesh::<()>::cube(2.0, ());
     // 2) Flatten into the XY plane
     let flattened = cube.flatten();
 
@@ -162,7 +162,7 @@ fn test_flatten_cube() {
 #[test]
 fn test_slice_cylinder() {
     // 1) Create a cylinder (start=-1, end=+1) with radius=1, 32 slices
-    let cyl = Mesh::<()>::cylinder(1.0, 2.0, 32, None).center();
+    let cyl = Mesh::<()>::cylinder(1.0, 2.0, 32, ()).center();
     // 2) Slice at z=0
     let cross_section = cyl.slice(Plane::from_normal(Vector3::z(), 0.0));
 

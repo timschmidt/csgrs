@@ -160,7 +160,7 @@ fn gltf_from_vertices(vertices: &[Vertex], indices: &[u32], object_name: &str) -
     json
 }
 
-impl<S: Clone + Debug + Send + Sync> crate::mesh::Mesh<S> {
+impl<M: Clone + Debug + Send + Sync> crate::mesh::Mesh<M> {
     pub fn to_gltf(&self, object_name: &str) -> String {
         let (vertices, indices) = build_gltf_buffers(self);
         gltf_from_vertices(&vertices, &indices, object_name)
@@ -176,7 +176,7 @@ impl<S: Clone + Debug + Send + Sync> crate::mesh::Mesh<S> {
     }
 }
 
-impl<S: Clone + Debug + Send + Sync> crate::sketch::Sketch<S> {
+impl<M: Clone + Debug + Send + Sync> crate::sketch::Sketch<M> {
     pub fn to_gltf(&self, object_name: &str) -> String {
         let (vertices, indices) = build_gltf_buffers(self);
         gltf_from_vertices(&vertices, &indices, object_name)
@@ -193,7 +193,7 @@ impl<S: Clone + Debug + Send + Sync> crate::sketch::Sketch<S> {
 }
 
 #[cfg(feature = "bmesh")]
-impl<S: Clone + Debug + Send + Sync> crate::bmesh::BMesh<S> {
+impl<M: Clone + Debug + Send + Sync> crate::bmesh::BMesh<M> {
     pub fn to_gltf(&self, object_name: &str) -> String {
         let (vertices, indices) = build_gltf_buffers(self);
         gltf_from_vertices(&vertices, &indices, object_name)

@@ -8,7 +8,6 @@ use nalgebra::{Matrix3, Matrix4, Rotation3, Translation3, Vector3};
 
 /// Boolean operations + transformations
 pub trait CSG: Sized + Clone {
-    fn new() -> Self;
     fn union(&self, other: &Self) -> Self;
     fn difference(&self, other: &Self) -> Self;
     fn intersection(&self, other: &Self) -> Self;

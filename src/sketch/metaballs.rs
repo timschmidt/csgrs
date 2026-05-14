@@ -1,6 +1,5 @@
 //! Provides a `MetaBall` struct and functions for creating a `Sketch` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
 
-use crate::csg::CSG;
 use crate::float_types::{Real, tolerance};
 use crate::sketch::Sketch;
 use geo::{
@@ -9,7 +8,7 @@ use geo::{
 use hashbrown::HashMap;
 use std::fmt::Debug;
 
-impl<S: Clone + Debug + Send + Sync> Sketch<S> {
+impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// Create a 2D metaball iso-contour in XY plane from a set of 2D metaballs.
     /// - `balls`: array of (center, radius).
     /// - `resolution`: (nx, ny) grid resolution for marching squares.
@@ -21,11 +20,11 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         resolution: (usize, usize),
         iso_value: Real,
         padding: Real,
-        metadata: Option<S>,
-    ) -> Sketch<S> {
+        metadata: M,
+    ) -> Sketch<M> {
         let (nx, ny) = resolution;
         if balls.is_empty() || nx < 2 || ny < 2 {
-            return Sketch::new();
+            return Sketch::empty(metadata);
         }
 
         // 1) Compute bounding box around all metaballs

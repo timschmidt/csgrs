@@ -9,7 +9,7 @@ const PATH: &str = "stl/examples/transformations";
 fn main() {
     fs::create_dir_all(PATH).unwrap();
 
-    let cube = Mesh::<()>::cube(1.5, None);
+    let cube = Mesh::<()>::cube(1.5, ());
     write_mesh(&cube.translate(2.0, 0.0, 0.0), "translated");
     write_mesh(&cube.rotate(30.0, 45.0, 10.0), "rotated");
     write_mesh(&cube.scale(1.0, 0.5, 2.0), "scaled");

@@ -11,7 +11,7 @@ use geo::{
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
-impl<S: Clone + Debug + Send + Sync> Sketch<S> {
+impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// Creates a 2D rectangle in the XY plane.
     ///
     /// # Parameters
@@ -25,7 +25,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// use csgrs::sketch::Sketch;
     /// let sq2 = Sketch::<()>::rectangle(2.0, 3.0, None);
     /// ```
-    pub fn rectangle(width: Real, length: Real, metadata: Option<S>) -> Self {
+    pub fn rectangle(width: Real, length: Real, metadata: M) -> Self {
         // In geo, a Polygon is basically (outer: LineString, Vec<LineString> for holes).
         let outer = line_string![
             (x: 0.0,     y: 0.0),
@@ -51,7 +51,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     ///
     /// # Example
     /// let sq2 = Sketch::square(2.0, None);
-    pub fn square(width: Real, metadata: Option<S>) -> Self {
+    pub fn square(width: Real, metadata: M) -> Self {
         Self::rectangle(width, width, metadata)
     }
 
@@ -97,9 +97,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// - `radius`: Circle radius (must be > 0)
     /// - `segments`: Number of polygon edges (minimum 3 for valid geometry)
     /// - `metadata`: Optional metadata attached to the shape
-    pub fn circle(radius: Real, segments: usize, metadata: Option<S>) -> Self {
+    pub fn circle(radius: Real, segments: usize, metadata: M) -> Self {
         if segments < 3 {
-            return Sketch::new();
+            return Sketch::empty(metadata);
         }
         let mut coords: Vec<(Real, Real)> = (0..segments)
             .map(|i| {
@@ -118,7 +118,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     }
 
     /// Right triangle from (0,0) to (width,0) to (0,height).
-    pub fn right_triangle(width: Real, height: Real, metadata: Option<S>) -> Self {
+    pub fn right_triangle(width: Real, height: Real, metadata: M) -> Self {
         let line_string = LineString::new(vec![
             coord! {x: 0.0, y: 0.0},
             coord! {x: width, y: 0.0},
@@ -138,9 +138,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// # Example
     /// let pts = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
     /// let poly2d = Sketch::polygon(&pts, metadata);
-    pub fn polygon(points: &[[Real; 2]], metadata: Option<S>) -> Self {
+    pub fn polygon(points: &[[Real; 2]], metadata: M) -> Self {
         if points.len() < 3 {
-            return Sketch::new();
+            return Sketch::empty(metadata);
         }
         let mut coords: Vec<(Real, Real)> = points.iter().map(|p| (p[0], p[1])).collect();
         // close
@@ -202,9 +202,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// - `height`: Full height (diameter) along y-axis  
     /// - `segments`: Number of polygon edges (minimum 3)
     /// - `metadata`: Optional metadata
-    pub fn ellipse(width: Real, height: Real, segments: usize, metadata: Option<S>) -> Self {
+    pub fn ellipse(width: Real, height: Real, segments: usize, metadata: M) -> Self {
         if segments < 3 {
-            return Sketch::new();
+            return Sketch::empty(metadata);
         }
         let rx = 0.5 * width;
         let ry = 0.5 * height;
@@ -274,9 +274,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// - `sides`: Number of polygon edges (≥ 3)
     /// - `radius`: Circumscribed circle radius
     /// - `metadata`: Optional metadata
-    pub fn regular_ngon(sides: usize, radius: Real, metadata: Option<S>) -> Self {
+    pub fn regular_ngon(sides: usize, radius: Real, metadata: M) -> Self {
         if sides < 3 {
-            return Sketch::new();
+            return Sketch::empty(metadata);
         }
         let mut coords: Vec<(Real, Real)> = (0..sides)
             .map(|i| {
@@ -315,11 +315,11 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         shaft_width: Real,
         head_length: Real,
         head_width: Real,
-        metadata: Option<S>,
+        metadata: M,
     ) -> Self {
         if shaft_length <= 0.0 || shaft_width <= 0.0 || head_length <= 0.0 || head_width <= 0.0
         {
-            return Sketch::new();
+            return Sketch::empty(metadata);
         }
 
         // Define the points for the arrow polygon
@@ -348,7 +348,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         bottom_width: Real,
         height: Real,
         top_offset: Real,
-        metadata: Option<S>,
+        metadata: M,
     ) -> Self {
         let coords = vec![
             (0.0, 0.0),
@@ -370,10 +370,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         num_points: usize,
         outer_radius: Real,
         inner_radius: Real,
-        metadata: Option<S>,
+        metadata: M,
     ) -> Self {
         if num_points < 2 {
-            return Sketch::new();
+            return Sketch::empty(metadata);
         }
         let step = TAU / (num_points as Real);
         let mut coords: Vec<(Real, Real)> = (0..num_points)
@@ -405,14 +405,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     ///
     /// This is just one of many possible "teardrop" definitions.
     // todo: center on focus of the arc
-    pub fn teardrop(
-        width: Real,
-        length: Real,
-        segments: usize,
-        metadata: Option<S>,
-    ) -> Sketch<S> {
+    pub fn teardrop(width: Real, length: Real, segments: usize, metadata: M) -> Sketch<M> {
         if segments < 2 || width < tolerance() || length < tolerance() {
-            return Sketch::new();
+            return Sketch::empty(metadata);
         }
         let r = 0.5 * width;
         let center_y = length - r;
@@ -436,9 +431,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
     /// Egg outline.  Approximate an egg shape using a parametric approach.
     /// This is only a toy approximation.  It creates a closed "egg-ish" outline around the origin.
-    pub fn egg(width: Real, length: Real, segments: usize, metadata: Option<S>) -> Sketch<S> {
+    pub fn egg(width: Real, length: Real, segments: usize, metadata: M) -> Sketch<M> {
         if segments < 3 {
-            return Sketch::new();
+            return Sketch::empty(metadata);
         }
         let rx = 0.5 * width;
         let ry = 0.5 * length;
@@ -468,7 +463,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         height: Real,
         corner_radius: Real,
         corner_segments: usize,
-        metadata: Option<S>,
+        metadata: M,
     ) -> Self {
         let r = corner_radius.min(width * 0.5).min(height * 0.5);
         if r <= tolerance() {
@@ -501,14 +496,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 
     /// Squircle (superellipse) centered at (0,0) with bounding box width×height.
     /// We use an exponent = 4.0 for "classic" squircle shape. `segments` controls the resolution.
-    pub fn squircle(
-        width: Real,
-        height: Real,
-        segments: usize,
-        metadata: Option<S>,
-    ) -> Sketch<S> {
+    pub fn squircle(width: Real, height: Real, segments: usize, metadata: M) -> Sketch<M> {
         if segments < 3 {
-            return Sketch::new();
+            return Sketch::empty(metadata);
         }
         let rx = 0.5 * width;
         let ry = 0.5 * height;
@@ -538,10 +528,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         handle_width: Real,
         handle_height: Real,
         segments: usize,
-        metadata: Option<S>,
-    ) -> Sketch<S> {
+        metadata: M,
+    ) -> Sketch<M> {
         if segments < 3 {
-            return Sketch::new();
+            return Sketch::empty(metadata);
         }
         // 1) Circle
         let circle = Sketch::circle(circle_radius, segments, metadata.clone());
@@ -572,10 +562,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         sides: usize,
         diameter: Real,
         circle_segments: usize,
-        metadata: Option<S>,
-    ) -> Sketch<S> {
+        metadata: M,
+    ) -> Sketch<M> {
         if sides < 3 || circle_segments < 6 || diameter <= tolerance() {
-            return Sketch::new();
+            return Sketch::empty(metadata);
         }
 
         // Circumradius that gives the requested *diameter* for the regular n-gon
@@ -607,15 +597,15 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             bounding_box: OnceLock::new(),
             metadata,
             origin: Vertex::default(),
-            origin_transform: Sketch::<S>::prepare_origin_transform(Vertex::default()),
+            origin_transform: Sketch::<M>::prepare_origin_transform(Vertex::default()),
         }
     }
 
     /// Outer diameter = `id + 2*thickness`. This yields an annulus in the XY plane.
     /// `segments` controls how smooth the outer/inner circles are.
-    pub fn ring(id: Real, thickness: Real, segments: usize, metadata: Option<S>) -> Sketch<S> {
+    pub fn ring(id: Real, thickness: Real, segments: usize, metadata: M) -> Sketch<M> {
         if id <= 0.0 || thickness <= 0.0 || segments < 3 {
-            return Sketch::new();
+            return Sketch::empty(metadata);
         }
         let inner_radius = 0.5 * id;
         let outer_radius = inner_radius + thickness;
@@ -637,10 +627,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         start_angle_deg: Real,
         end_angle_deg: Real,
         segments: usize,
-        metadata: Option<S>,
-    ) -> Sketch<S> {
+        metadata: M,
+    ) -> Sketch<M> {
         if segments < 1 {
-            return Sketch::new();
+            return Sketch::empty(metadata);
         }
 
         let start_rad = start_angle_deg.to_radians();
@@ -679,10 +669,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         n2: Real,
         n3: Real,
         segments: usize,
-        metadata: Option<S>,
-    ) -> Sketch<S> {
+        metadata: M,
+    ) -> Sketch<M> {
         if segments < 3 {
-            return Sketch::new();
+            return Sketch::empty(metadata);
         }
 
         // The typical superformula radius function
@@ -730,8 +720,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         segments: usize,
         key_width: Real,
         key_depth: Real,
-        metadata: Option<S>,
-    ) -> Sketch<S> {
+        metadata: M,
+    ) -> Sketch<M> {
         // 1. Full circle
         let circle = Sketch::circle(radius, segments, metadata.clone());
 
@@ -752,8 +742,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         radius: Real,
         segments: usize,
         flat_dist: Real,
-        metadata: Option<S>,
-    ) -> Sketch<S> {
+        metadata: M,
+    ) -> Sketch<M> {
         // 1. Full circle
         let circle = Sketch::circle(radius, segments, metadata.clone());
 
@@ -776,8 +766,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         radius: Real,
         segments: usize,
         flat_dist: Real,
-        metadata: Option<S>,
-    ) -> Sketch<S> {
+        metadata: M,
+    ) -> Sketch<M> {
         // 1. Full circle
         let circle = Sketch::circle(radius, segments, metadata.clone());
 
@@ -803,9 +793,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     ///
     /// * `control`: list of 2-D control points
     /// * `segments`: number of straight-line segments used for the tessellation
-    pub fn bezier(control: &[[Real; 2]], segments: usize, metadata: Option<S>) -> Self {
+    pub fn bezier(control: &[[Real; 2]], segments: usize, metadata: M) -> Self {
         if control.len() < 2 || segments < 1 {
-            return Sketch::new();
+            return Sketch::empty(metadata);
         }
 
         /// Evaluates a Bézier curve at a given parameter `t` using de Casteljau's algorithm.
@@ -855,10 +845,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         control: &[[Real; 2]],
         p: usize,
         segments_per_span: usize,
-        metadata: Option<S>,
+        metadata: M,
     ) -> Self {
         if control.len() < p + 1 || segments_per_span < 1 {
-            return Sketch::new();
+            return Sketch::empty(metadata);
         }
 
         let n = control.len() - 1;
@@ -938,9 +928,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// 2-D heart outline (closed polygon) sized to `width` × `height`.
     ///
     /// `segments` controls smoothness (≥ 8 recommended).
-    pub fn heart(width: Real, height: Real, segments: usize, metadata: Option<S>) -> Self {
+    pub fn heart(width: Real, height: Real, segments: usize, metadata: M) -> Self {
         if segments < 8 {
-            return Sketch::new();
+            return Sketch::empty(metadata);
         }
 
         let step = TAU / segments as Real;
@@ -994,10 +984,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         inner_r: Real,
         offset: Real,
         segments: usize,
-        metadata: Option<S>,
+        metadata: M,
     ) -> Self {
         if outer_r <= inner_r + tolerance() || segments < 6 {
-            return Sketch::new();
+            return Sketch::empty(metadata);
         }
 
         let big = Self::circle(outer_r, segments, metadata.clone());
@@ -1024,8 +1014,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         clearance: Real,
         backlash: Real,
         segments_per_flank: usize,
-        metadata: Option<S>,
-    ) -> Sketch<S> {
+        metadata: M,
+    ) -> Sketch<M> {
         assert!(teeth >= 4, "Need at least 4 teeth");
         assert!(segments_per_flank >= 2);
 
@@ -1138,8 +1128,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         _pin_teeth: usize, // kept for API symmetry, not used in this approx
         clearance: Real,
         segments_per_flank: usize,
-        metadata: Option<S>,
-    ) -> Sketch<S> {
+        metadata: M,
+    ) -> Sketch<M> {
         assert!(teeth >= 3);
         assert!(segments_per_flank >= 2);
 
@@ -1247,8 +1237,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         pressure_angle_deg: Real,
         clearance: Real,
         backlash: Real,
-        metadata: Option<S>,
-    ) -> Sketch<S> {
+        metadata: M,
+    ) -> Sketch<M> {
         assert!(num_teeth >= 1);
         let m = module_;
         let p = PI * m; // linear pitch
@@ -1327,8 +1317,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         generating_radius: Real, // usually = module_/2
         clearance: Real,
         segments_per_flank: usize,
-        metadata: Option<S>,
-    ) -> Sketch<S> {
+        metadata: M,
+    ) -> Sketch<M> {
         assert!(num_teeth >= 1 && segments_per_flank >= 4);
         let m = module_;
         let p = PI * m;
@@ -1397,8 +1387,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         thickness: Real,
         chord: Real,
         samples: usize,
-        metadata: Option<S>,
-    ) -> Sketch<S> {
+        metadata: M,
+    ) -> Sketch<M> {
         let max_camber_percentage = max_camber / 100.0;
         let camber_pos = camber_position / 10.0;
 
@@ -1470,12 +1460,12 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// - `order`: recursion order (number of points ≈ 4^order).
     /// - `padding`: optional inset from the bounding-box edges (same units as the sketch).
     ///   Returns a new `Sketch` containing only the inside segments as `LineString`s.
-    pub fn hilbert_curve(&self, order: usize, padding: Real) -> Sketch<S> {
+    pub fn hilbert_curve(&self, order: usize, padding: Real) -> Sketch<M> {
         if order == 0 {
-            return Sketch::new();
+            return Sketch::empty(self.metadata.clone());
         }
         let Some(rect) = self.geometry.bounding_rect() else {
-            return Sketch::new();
+            return Sketch::empty(self.metadata.clone());
         };
 
         // Bounding box and usable region (with padding).

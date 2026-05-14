@@ -23,7 +23,7 @@ fn test_plane_split_polygon() {
             Vertex::new(Point3::new(1.0, 1.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(-1.0, 1.0, 0.0), Vector3::z()),
         ],
-        None,
+        (),
     );
 
     let (cf, cb, f, b) = plane.split_polygon(&poly);

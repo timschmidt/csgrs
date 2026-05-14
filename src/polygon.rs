@@ -7,9 +7,10 @@ use nalgebra::{Point3, Vector3};
 use std::sync::OnceLock;
 
 /// A polygon, defined by a list of vertices.
-/// - `S` is the generic metadata type, stored as `Option<S>`.
+/// - `M` is the generic metadata type stored directly on the polygon. Use
+///   `M = ()` for no metadata, or `M = Option<T>` for optional metadata.
 #[derive(Debug, Clone)]
-pub struct Polygon<S: Clone> {
+pub struct Polygon<M: Clone> {
     /// Vertices defining the Polygon's shape
     pub vertices: Vec<Vertex>,
 
@@ -20,10 +21,10 @@ pub struct Polygon<S: Clone> {
     pub bounding_box: OnceLock<Aabb>,
 
     /// Generic metadata associated with the Polygon
-    pub metadata: Option<S>,
+    pub metadata: M,
 }
 
-impl<S: Clone + PartialEq> PartialEq for Polygon<S> {
+impl<M: Clone + PartialEq> PartialEq for Polygon<M> {
     fn eq(&self, other: &Self) -> bool {
         self.vertices == other.vertices
             && self.plane == other.plane
@@ -32,15 +33,15 @@ impl<S: Clone + PartialEq> PartialEq for Polygon<S> {
 }
 
 #[allow(unused)]
-impl<S: Clone + Send + Sync + PartialEq> Polygon<S> {
-    fn same_metadata(&self, metadata: Option<S>) -> bool {
-        self.metadata == metadata
+impl<M: Clone + Send + Sync + PartialEq> Polygon<M> {
+    fn same_metadata(&self, metadata: &M) -> bool {
+        &self.metadata == metadata
     }
 }
 
-impl<S: Clone + Send + Sync> Polygon<S> {
+impl<M: Clone + Send + Sync> Polygon<M> {
     /// Create a polygon from vertices
-    pub fn new(vertices: Vec<Vertex>, metadata: Option<S>) -> Self {
+    pub fn new(vertices: Vec<Vertex>, metadata: M) -> Self {
         assert!(vertices.len() >= 3, "degenerate polygon");
 
         let plane = Plane::from_vertices(vertices.clone());
@@ -50,6 +51,29 @@ impl<S: Clone + Send + Sync> Polygon<S> {
             plane,
             bounding_box: OnceLock::new(),
             metadata,
+        }
+    }
+
+    /// Return this polygon with replacement metadata.
+    pub fn with_metadata<T: Clone + Send + Sync>(self, metadata: T) -> Polygon<T> {
+        Polygon {
+            vertices: self.vertices,
+            plane: self.plane,
+            bounding_box: OnceLock::new(),
+            metadata,
+        }
+    }
+
+    /// Map this polygon's metadata while preserving its geometry.
+    pub fn map_metadata<T: Clone + Send + Sync, F>(self, f: F) -> Polygon<T>
+    where
+        F: FnOnce(M) -> T,
+    {
+        Polygon {
+            vertices: self.vertices,
+            plane: self.plane,
+            bounding_box: OnceLock::new(),
+            metadata: f(self.metadata),
         }
     }
 
@@ -594,7 +618,7 @@ impl<S: Clone + Send + Sync> Polygon<S> {
     pub fn subdivide_to_polygons(
         &self,
         subdivisions: core::num::NonZeroU32,
-    ) -> Vec<Polygon<S>> {
+    ) -> Vec<Polygon<M>> {
         self.subdivide_triangles(subdivisions)
             .into_iter()
             .map(|tri| {
@@ -646,19 +670,19 @@ impl<S: Clone + Send + Sync> Polygon<S> {
         }
     }
 
-    /// Returns a reference to the metadata, if any.
-    pub const fn metadata(&self) -> Option<&S> {
-        self.metadata.as_ref()
+    /// Returns a reference to the metadata.
+    pub const fn metadata(&self) -> &M {
+        &self.metadata
     }
 
-    /// Returns a mutable reference to the metadata, if any.
-    pub const fn metadata_mut(&mut self) -> Option<&mut S> {
-        self.metadata.as_mut()
+    /// Returns a mutable reference to the metadata.
+    pub const fn metadata_mut(&mut self) -> &mut M {
+        &mut self.metadata
     }
 
     /// Sets the metadata to the given value.
-    pub fn set_metadata(&mut self, data: S) {
-        self.metadata = Some(data);
+    pub fn set_metadata(&mut self, data: M) {
+        self.metadata = data;
     }
 }
 

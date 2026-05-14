@@ -8,10 +8,10 @@ const PATH: &str = "stl/examples/basic2d_shapes";
 fn main() {
     fs::create_dir_all(PATH).unwrap();
 
-    let square = Sketch::<()>::square(2.0, None);
-    let circle = Sketch::<()>::circle(1.0, 64, None);
-    let ring = Sketch::<()>::ring(2.0, 0.25, 64, None);
-    let keyhole = Sketch::<()>::keyhole(1.0, 0.4, 1.5, 32, None);
+    let square = Sketch::<()>::square(2.0, ());
+    let circle = Sketch::<()>::circle(1.0, 64, ());
+    let ring = Sketch::<()>::ring(2.0, 0.25, 64, ());
+    let keyhole = Sketch::<()>::keyhole(1.0, 0.4, 1.5, 32, ());
 
     write_sketch(&square, "square");
     write_sketch(&circle, "circle");

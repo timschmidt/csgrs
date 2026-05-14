@@ -1,6 +1,5 @@
 //! Create `Sketch`s using ttf fonts
 
-use crate::csg::CSG;
 use crate::float_types::{Real, tolerance};
 use crate::sketch::Sketch;
 use geo::{
@@ -14,7 +13,7 @@ use ttf_utils::Outline;
 // For flattening curves, how many segments per quad/cubic
 const CURVE_STEPS: usize = 8;
 
-impl<S: Clone + Debug + Send + Sync> Sketch<S> {
+impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// Create **2D text** (outlines only) in the XY plane using ttf-utils + ttf-parser.
     ///
     /// Each glyph’s closed contours become one or more `Polygon`s (with holes if needed),
@@ -32,20 +31,20 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// - A set of `LineString`s for any open contours (rare in standard fonts),
     ///
     /// all positioned in the XY plane at z=0.
-    pub fn text(text: &str, font_data: &[u8], scale: Real, metadata: Option<S>) -> Self {
+    pub fn text(text: &str, font_data: &[u8], scale: Real, metadata: M) -> Self {
         // 1) Parse the TTF font
         let face = match ttf_parser::Face::parse(font_data, 0) {
             Ok(f) => f,
             Err(_) => {
                 // If the font fails to parse, return an empty 2D Sketch
-                return Sketch::new();
+                return Sketch::empty(metadata);
             },
         };
 
         // Treat `scale` as points-per-em and convert points to millimeters.
         let units_per_em = face.units_per_em() as Real;
         if units_per_em <= 0.0 || !scale.is_finite() {
-            return Sketch::new();
+            return Sketch::empty(metadata);
         }
         let font_scale = scale * 0.3527777 / units_per_em;
         let default_advance = default_advance(&face, font_scale);

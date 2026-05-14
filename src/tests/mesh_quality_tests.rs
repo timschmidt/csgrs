@@ -4,7 +4,7 @@ use super::support::*;
 
 #[test]
 fn test_mesh_quality_analysis() {
-    let cube: Mesh<()> = Mesh::cube(2.0, None);
+    let cube: Mesh<()> = Mesh::cube(2.0, ());
 
     // Analyze triangle quality
     let qualities = cube.analyze_triangle_quality();
@@ -54,7 +54,7 @@ fn test_mesh_quality_analysis() {
 
 #[test]
 fn test_adaptive_mesh_refinement() {
-    let cube: Mesh<()> = Mesh::cube(2.0, None);
+    let cube: Mesh<()> = Mesh::cube(2.0, ());
     let original_polygon_count = cube.polygons.len();
 
     // Refine mesh adaptively based on quality and edge length
@@ -77,7 +77,7 @@ fn test_adaptive_mesh_refinement() {
 
 #[test]
 fn test_laplacian_mesh_smoothing() {
-    let sphere: Mesh<()> = Mesh::sphere(1.0, 16, 16, None);
+    let sphere: Mesh<()> = Mesh::sphere(1.0, 16, 16, ());
     let original_positions: Vec<_> = sphere
         .polygons
         .iter()
@@ -127,8 +127,8 @@ fn test_remove_poor_triangles() {
         Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(Point3::new(0.5, 1e-8, 0.0), Vector3::z()), // Very thin triangle
     ];
-    let bad_polygon: Polygon<()> = Polygon::new(vertices, None);
-    let csg_with_bad = Mesh::from_polygons(&[bad_polygon], None);
+    let bad_polygon: Polygon<()> = Polygon::new(vertices, ());
+    let csg_with_bad = Mesh::from_polygons(&[bad_polygon], ());
 
     // Remove poor quality triangles
     let filtered = csg_with_bad.remove_poor_triangles(0.1);
@@ -252,7 +252,7 @@ fn test_vertex_clustering() {
 #[test]
 fn test_mesh_connectivity_adjacency_usage() {
     // Create a simple cube to test mesh connectivity
-    let cube: Mesh<()> = Mesh::cube(2.0, None);
+    let cube: Mesh<()> = Mesh::cube(2.0, ());
 
     // Build the mesh connectivity graph
     let (vertex_map, adjacency_map) = cube.build_connectivity();
@@ -307,7 +307,7 @@ fn test_mesh_connectivity_adjacency_usage() {
 #[test]
 fn test_vertex_connectivity_analysis() {
     // Create a more complex mesh to test vertex connectivity
-    let sphere: Mesh<()> = Mesh::sphere(1.0, 16, 8, None);
+    let sphere: Mesh<()> = Mesh::sphere(1.0, 16, 8, ());
     let (vertex_map, adjacency_map) = sphere.build_connectivity();
 
     // Build vertex positions map for analysis
@@ -352,7 +352,7 @@ fn test_vertex_connectivity_analysis() {
 #[test]
 fn test_mesh_quality_with_adjacency() {
     // Create a triangulated cube
-    let cube: Mesh<()> = Mesh::cube(2.0, None).triangulate();
+    let cube: Mesh<()> = Mesh::cube(2.0, ()).triangulate();
 
     // Test triangle quality analysis
     let qualities = cube.analyze_triangle_quality();
@@ -404,7 +404,7 @@ fn test_adjacency_map_actually_used() {
     // This test specifically verifies that the adjacency map is actually used
     // by comparing results with and without proper connectivity
 
-    let cube: Mesh<()> = Mesh::cube(2.0, None);
+    let cube: Mesh<()> = Mesh::cube(2.0, ());
 
     // Build connectivity
     let (vertex_map, adjacency_map) = cube.build_connectivity();

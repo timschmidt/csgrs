@@ -10,39 +10,34 @@ use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 
 #[derive(Clone, Debug)]
-pub struct Shapes<S: Clone + Send + Sync + Debug> {
-    pub polygons: Vec<Polygon<S>>,
-    pub metadata: Option<S>,
+pub struct Shapes<M: Clone + Send + Sync + Debug> {
+    pub polygons: Vec<Polygon<M>>,
+    pub metadata: M,
 }
 
-impl<S: Clone + Send + Sync + Debug> Shapes<S> {
+impl<M: Clone + Send + Sync + Debug> Shapes<M> {
     #[inline]
-    pub fn new() -> Self {
-        Self { polygons: Vec::new(), metadata: None }
-    }
-
-    #[inline]
-    pub fn from_polygons(polygons: Vec<Polygon<S>>, metadata: Option<S>) -> Self {
+    pub fn from_polygons(polygons: Vec<Polygon<M>>, metadata: M) -> Self {
         Self { polygons, metadata }
     }
 
     /// Convenience when `mesh` is enabled.
     #[cfg(feature = "mesh")]
     #[inline]
-    pub fn into_mesh(self) -> crate::mesh::Mesh<S> {
+    pub fn into_mesh(self) -> crate::mesh::Mesh<M> {
         self.into()
     }
 
     /// Convenience when `bmesh` is enabled.
     #[cfg(feature = "bmesh")]
     #[inline]
-    pub fn into_bmesh(self) -> crate::bmesh::BMesh<S> {
+    pub fn into_bmesh(self) -> crate::bmesh::BMesh<M> {
         self.into()
     }
 }
 
 /// So all triangle-based IO backends work on Shapes too.
-impl<S: Clone + Send + Sync + Debug> Triangulated3D for Shapes<S> {
+impl<M: Clone + Send + Sync + Debug> Triangulated3D for Shapes<M> {
     fn visit_triangles<F>(&self, mut f: F)
     where
         F: FnMut([Vertex; 3]),
@@ -59,15 +54,15 @@ impl<S: Clone + Send + Sync + Debug> Triangulated3D for Shapes<S> {
 }
 
 #[cfg(feature = "mesh")]
-impl<S: Clone + Send + Sync + Debug> From<Shapes<S>> for crate::mesh::Mesh<S> {
-    fn from(shapes: Shapes<S>) -> Self {
+impl<M: Clone + Send + Sync + Debug> From<Shapes<M>> for crate::mesh::Mesh<M> {
+    fn from(shapes: Shapes<M>) -> Self {
         crate::mesh::Mesh::from_polygons(&shapes.polygons, shapes.metadata)
     }
 }
 
 #[cfg(feature = "bmesh")]
-impl<S: Clone + Send + Sync + Debug> From<Shapes<S>> for crate::bmesh::BMesh<S> {
-    fn from(shapes: Shapes<S>) -> Self {
+impl<M: Clone + Send + Sync + Debug> From<Shapes<M>> for crate::bmesh::BMesh<M> {
+    fn from(shapes: Shapes<M>) -> Self {
         // Build a triangle soup (duplicated vertices is OK; boolmesh will accept it).
         let mut points: Vec<Point3<Real>> = Vec::new();
         let mut indices: Vec<usize> = Vec::new();
@@ -85,7 +80,7 @@ impl<S: Clone + Send + Sync + Debug> From<Shapes<S>> for crate::bmesh::BMesh<S> 
         let metadata = shapes.metadata.clone();
 
         if indices.is_empty() {
-            return crate::bmesh::BMesh::new();
+            return crate::bmesh::BMesh::empty(metadata);
         }
 
         let mut pos_bool: Vec<boolmesh::Real> = Vec::with_capacity(points.len() * 3);

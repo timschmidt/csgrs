@@ -10,7 +10,7 @@ fn test_degenerate_polygon_after_clipping() {
         Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::y()),
     ];
 
-    let polygon: Polygon<()> = Polygon::new(vertices.clone(), None);
+    let polygon: Polygon<()> = Polygon::new(vertices.clone(), ());
     let plane = Plane::from_normal(Vector3::new(0.0, 0.0, 1.0), 0.0);
 
     eprintln!("Original polygon: {:?}", polygon);
@@ -33,7 +33,7 @@ fn test_valid_polygon_clipping() {
         Vertex::new(Point3::new(0.5, 1.0, 0.0), Vector3::y()),
     ];
 
-    let polygon: Polygon<()> = Polygon::new(vertices, None);
+    let polygon: Polygon<()> = Polygon::new(vertices, ());
 
     let plane = Plane::from_normal(-Vector3::y(), -0.5);
 
@@ -60,7 +60,7 @@ fn test_node_new_and_build() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
-        None,
+        (),
     );
     let node: Node<()> = Node::from_polygons(&[p.clone()]);
     // The node should have built a tree with plane = p.plane, polygons = [p], no front/back children
@@ -78,7 +78,7 @@ fn test_node_invert() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
-        None,
+        (),
     );
     let mut node: Node<()> = Node::from_polygons(&[p.clone()]);
     let original_count = node.polygons.len();
@@ -114,7 +114,7 @@ fn test_node_clip_polygons2() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
-        None,
+        (),
     );
     let poly_above: Polygon<()> = Polygon::new(
         vec![
@@ -122,7 +122,7 @@ fn test_node_clip_polygons2() {
             Vertex::new(Point3::new(1.0, 0.0, 1.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 1.0), Vector3::z()),
         ],
-        None,
+        (),
     );
     let poly_below: Polygon<()> = Polygon::new(
         vec![
@@ -130,7 +130,7 @@ fn test_node_clip_polygons2() {
             Vertex::new(Point3::new(1.0, 0.0, -1.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, -1.0), Vector3::z()),
         ],
-        None,
+        (),
     );
 
     node.build(&[
@@ -147,7 +147,7 @@ fn test_node_clip_polygons2() {
             Vertex::new(Point3::new(2.0, -1.0, 0.5), Vector3::z()),
             Vertex::new(Point3::new(-1.0, 2.0, 0.5), Vector3::z()),
         ],
-        None,
+        (),
     );
     let clipped = node.clip_polygons(&[crossing_poly.clone()]);
     // The crossing polygon should be clipped against z=0 plane and any sub-planes from front/back nodes
@@ -165,7 +165,7 @@ fn test_node_clip_to() {
             Vertex::new(Point3::new(0.5, -0.5, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 0.5, 0.0), Vector3::z()),
         ],
-        None,
+        (),
     );
     let mut node_a: Node<()> = Node::from_polygons(&[poly]);
     // Another polygon that fully encloses the above
@@ -176,7 +176,7 @@ fn test_node_clip_to() {
             Vertex::new(Point3::new(1.0, 1.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(-1.0, 1.0, 0.0), Vector3::z()),
         ],
-        None,
+        (),
     );
     let node_b: Node<()> = Node::from_polygons(&[big_poly]);
     node_a.clip_to(&node_b);
@@ -194,7 +194,7 @@ fn test_node_all_polygons() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
-        None,
+        (),
     );
     let poly2: Polygon<()> = Polygon::new(
         vec![
@@ -202,7 +202,7 @@ fn test_node_all_polygons() {
             Vertex::new(Point3::new(1.0, 0.0, 1.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 1.0), Vector3::z()),
         ],
-        None,
+        (),
     );
 
     let node: Node<()> = Node::from_polygons(&[poly1.clone(), poly2.clone()]);

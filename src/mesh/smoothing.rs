@@ -8,7 +8,7 @@ use nalgebra::Point3;
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// **Mathematical Foundation: True Laplacian Mesh Smoothing with Global Connectivity**
     ///
     /// Implements proper discrete Laplacian smoothing using global mesh connectivity:
@@ -34,7 +34,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         lambda: Real,
         iterations: usize,
         preserve_boundaries: bool,
-    ) -> Mesh<S> {
+    ) -> Mesh<M> {
         let (vertex_map, adjacency) = self.build_connectivity();
         let mut smoothed_polygons = self.polygons.clone();
 
@@ -139,7 +139,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         mu: Real,
         iterations: usize,
         preserve_boundaries: bool,
-    ) -> Mesh<S> {
+    ) -> Mesh<M> {
         let (vertex_map, adjacency) = self.build_connectivity();
         let mut smoothed_polygons = self.polygons.clone();
 
@@ -278,7 +278,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         quality_threshold: Real,
         max_edge_length: Real,
         curvature_threshold_deg: Real,
-    ) -> Mesh<S> {
+    ) -> Mesh<M> {
         let qualities = self.analyze_triangle_quality();
         let (mut vertex_map, _adjacency) = self.build_connectivity();
         let mut refined_polygons = Vec::new();
@@ -377,7 +377,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// - **Topology**: Ensure mesh remains manifold
     ///
     /// Returns cleaned mesh with improved triangle quality.
-    pub fn remove_poor_triangles(&self, min_quality: Real) -> Mesh<S> {
+    pub fn remove_poor_triangles(&self, min_quality: Real) -> Mesh<M> {
         let qualities = self.analyze_triangle_quality();
         let mut filtered_polygons = Vec::new();
 

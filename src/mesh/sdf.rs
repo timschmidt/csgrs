@@ -8,7 +8,7 @@ use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// Return a Mesh created by meshing a signed distance field within a bounding box
     ///
     /// ```
@@ -32,8 +32,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         min_pt: Point3<Real>,
         max_pt: Point3<Real>,
         iso_value: Real,
-        metadata: Option<S>,
-    ) -> Mesh<S>
+        metadata: M,
+    ) -> Mesh<M>
     where
         // F is a closure or function that takes a 3D point and returns the signed distance.
         // Must be `Sync`/`Send` if you want to parallelize the sampling.

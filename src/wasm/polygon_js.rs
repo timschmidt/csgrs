@@ -11,7 +11,7 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub struct PolygonJs {
-    pub(crate) inner: Polygon<String>,
+    pub(crate) inner: Polygon<Option<String>>,
 }
 
 #[wasm_bindgen]
@@ -19,7 +19,7 @@ impl PolygonJs {
     /// Construct a polygon from a list of vertices and optional metadata.
     ///
     /// Metadata may be any JSON-serializable value; it is stored as a JSON string
-    /// in the underlying Rust `Polygon<String>`.
+    /// in the underlying Rust `Polygon<Option<String>>`.
     #[wasm_bindgen(constructor)]
     pub fn new(vertices: Vec<VertexJs>, metadata: JsValue) -> PolygonJs {
         PolygonJs::from_vertices(vertices, metadata)
@@ -89,10 +89,7 @@ impl PolygonJs {
     #[wasm_bindgen(js_name = setMetadata)]
     pub fn set_metadata(&mut self, metadata: JsValue) {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
-        match meta {
-            Some(s) => self.inner.set_metadata(s),
-            None => self.inner.metadata = None,
-        }
+        self.inner.set_metadata(meta);
     }
 
     /// Recalculate a normal from all vertices and return it.
@@ -162,13 +159,13 @@ impl PolygonJs {
 }
 
 // Optional conversions for convenience
-impl From<Polygon<String>> for PolygonJs {
-    fn from(p: Polygon<String>) -> Self {
+impl From<Polygon<Option<String>>> for PolygonJs {
+    fn from(p: Polygon<Option<String>>) -> Self {
         PolygonJs { inner: p }
     }
 }
 
-impl From<&PolygonJs> for Polygon<String> {
+impl From<&PolygonJs> for Polygon<Option<String>> {
     fn from(p: &PolygonJs) -> Self {
         p.inner.clone()
     }

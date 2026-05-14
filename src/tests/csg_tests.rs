@@ -10,17 +10,17 @@ fn test_csg_from_polygons_and_to_polygons() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
-        None,
+        (),
     );
-    let csg: Mesh<()> = Mesh::from_polygons(&[poly.clone()], None);
+    let csg: Mesh<()> = Mesh::from_polygons(&[poly.clone()], ());
     assert_eq!(csg.polygons.len(), 1);
     assert_eq!(csg.polygons[0].vertices.len(), 3);
 }
 
 #[test]
 fn test_csg_union() {
-    let cube1: Mesh<()> = Mesh::cube(2.0, None).translate(-1.0, -1.0, -1.0); // from -1 to +1 in all coords
-    let cube2: Mesh<()> = Mesh::cube(1.0, None).translate(0.5, 0.5, 0.5);
+    let cube1: Mesh<()> = Mesh::cube(2.0, ()).translate(-1.0, -1.0, -1.0); // from -1 to +1 in all coords
+    let cube2: Mesh<()> = Mesh::cube(1.0, ()).translate(0.5, 0.5, 0.5);
 
     let union_csg = cube1.union(&cube2);
     assert!(
@@ -41,8 +41,8 @@ fn test_csg_union() {
 #[test]
 fn test_csg_difference() {
     // Subtract a smaller cube from a bigger one
-    let big_cube: Mesh<()> = Mesh::cube(4.0, None).translate(-2.0, -2.0, -2.0); // radius=2 => spans [-2,2]
-    let small_cube: Mesh<()> = Mesh::cube(2.0, None).translate(-1.0, -1.0, -1.0); // radius=1 => spans [-1,1]
+    let big_cube: Mesh<()> = Mesh::cube(4.0, ()).translate(-2.0, -2.0, -2.0); // radius=2 => spans [-2,2]
+    let small_cube: Mesh<()> = Mesh::cube(2.0, ()).translate(-1.0, -1.0, -1.0); // radius=1 => spans [-1,1]
 
     let result = big_cube.difference(&small_cube);
     assert!(
@@ -59,8 +59,8 @@ fn test_csg_difference() {
 
 #[test]
 fn test_csg_union2() {
-    let c1: Mesh<()> = Mesh::cube(2.0, None); // cube from (-1..+1) if that's how you set radius=1 by default
-    let c2: Mesh<()> = Mesh::sphere(1.0, 16, 8, None); // default sphere radius=1
+    let c1: Mesh<()> = Mesh::cube(2.0, ()); // cube from (-1..+1) if that's how you set radius=1 by default
+    let c2: Mesh<()> = Mesh::sphere(1.0, 16, 8, ()); // default sphere radius=1
     let unioned = c1.union(&c2);
     // We can check bounding box is bigger or at least not smaller than either shape's box
     let bb_union = unioned.bounding_box();
@@ -72,8 +72,8 @@ fn test_csg_union2() {
 
 #[test]
 fn test_csg_intersect() {
-    let c1: Mesh<()> = Mesh::cube(2.0, None);
-    let c2: Mesh<()> = Mesh::sphere(1.0, 16, 8, None);
+    let c1: Mesh<()> = Mesh::cube(2.0, ());
+    let c2: Mesh<()> = Mesh::sphere(1.0, 16, 8, ());
     let isect = c1.intersection(&c2);
     let bb_isect = isect.bounding_box();
     // The intersection bounding box should be smaller than or equal to each
@@ -87,8 +87,8 @@ fn test_csg_intersect() {
 
 #[test]
 fn test_csg_intersect2() {
-    let sphere: Mesh<()> = Mesh::sphere(1.0, 16, 8, None);
-    let cube: Mesh<()> = Mesh::cube(2.0, None);
+    let sphere: Mesh<()> = Mesh::sphere(1.0, 16, 8, ());
+    let cube: Mesh<()> = Mesh::cube(2.0, ());
 
     let intersection = sphere.intersection(&cube);
     assert!(
@@ -109,7 +109,7 @@ fn test_csg_intersect2() {
 
 #[test]
 fn test_csg_inverse() {
-    let c1: Mesh<()> = Mesh::cube(2.0, None);
+    let c1: Mesh<()> = Mesh::cube(2.0, ());
     let inv = c1.inverse();
     // The polygons are flipped
     // We can check just that the polygon planes are reversed, etc.
@@ -140,7 +140,7 @@ fn test_csg_inverse() {
 
 #[test]
 fn test_csg_cube() {
-    let c: Mesh<()> = Mesh::cube(2.0, None);
+    let c: Mesh<()> = Mesh::cube(2.0, ());
     // By default, corner at (0,0,0)
     // We expect 6 faces, each 4 vertices = 6 polygons
     assert_eq!(c.polygons.len(), 6);
@@ -157,7 +157,7 @@ fn test_csg_cube() {
 #[test]
 fn test_csg_sphere() {
     // Default sphere => radius=1, slices=16, stacks=8
-    let sphere: Mesh<()> = Mesh::sphere(1.0, 16, 8, None);
+    let sphere: Mesh<()> = Mesh::sphere(1.0, 16, 8, ());
     assert!(!sphere.polygons.is_empty(), "Sphere should generate polygons");
 
     let bb = bounding_box(&sphere.polygons);
@@ -177,7 +177,7 @@ fn test_csg_sphere() {
 #[test]
 fn test_csg_cylinder() {
     // Default cylinder => from (0,0,0) to (0,2,0) with radius=1
-    let cylinder: Mesh<()> = Mesh::cylinder(1.0, 2.0, 16, None);
+    let cylinder: Mesh<()> = Mesh::cylinder(1.0, 2.0, 16, ());
     assert!(
         !cylinder.polygons.is_empty(),
         "Cylinder should generate polygons"
@@ -206,14 +206,14 @@ fn test_csg_polyhedron() {
         [0.0, 0.0, 1.0], // 3
     ];
     let faces: [&[usize]; 4] = [&[0, 1, 2], &[0, 1, 3], &[1, 2, 3], &[2, 0, 3]];
-    let csg_tetra: Mesh<()> = Mesh::polyhedron(pts, &faces, None).unwrap();
+    let csg_tetra: Mesh<()> = Mesh::polyhedron(pts, &faces, ()).unwrap();
     // We should have exactly 4 triangular faces
     assert_eq!(csg_tetra.polygons.len(), 4);
 }
 
 #[test]
 fn test_csg_transform_translate_rotate_scale() {
-    let c: Mesh<()> = Mesh::cube(2.0, None).center();
+    let c: Mesh<()> = Mesh::cube(2.0, ()).center();
     let translated = c.translate(1.0, 2.0, 3.0);
     let rotated = c.rotate(90.0, 0.0, 0.0); // 90 deg about X
     let scaled = c.scale(2.0, 1.0, 1.0);
@@ -244,7 +244,7 @@ fn test_csg_transform_translate_rotate_scale() {
 
 #[test]
 fn test_csg_mirror() {
-    let c: Mesh<()> = Mesh::cube(2.0, None);
+    let c: Mesh<()> = Mesh::cube(2.0, ());
     let plane_x = Plane::from_normal(Vector3::x(), 0.0); // x=0 plane
     let mirror_x = c.mirror(plane_x);
     let bb_mx = mirror_x.bounding_box();
@@ -257,7 +257,7 @@ fn test_csg_mirror() {
 #[cfg(feature = "chull-io")]
 fn test_csg_convex_hull() {
     // If we take a shape with some random points, the hull should just enclose them
-    let c1: Mesh<()> = Mesh::sphere(1.0, 16, 8, None);
+    let c1: Mesh<()> = Mesh::sphere(1.0, 16, 8, ());
     // The convex_hull of a sphere's sampling is basically that same shape, but let's see if it runs.
     let hull = c1.convex_hull();
     // The hull should have some polygons
@@ -268,8 +268,8 @@ fn test_csg_convex_hull() {
 #[cfg(feature = "chull-io")]
 fn test_csg_minkowski_sum() {
     // Minkowski sum of two cubes => bigger cube offset by edges
-    let c1: Mesh<()> = Mesh::cube(2.0, None).center();
-    let c2: Mesh<()> = Mesh::cube(1.0, None).center();
+    let c1: Mesh<()> = Mesh::cube(2.0, ()).center();
+    let c2: Mesh<()> = Mesh::cube(1.0, ()).center();
     let sum = c1.minkowski_sum(&c2);
     let bb_sum = sum.bounding_box();
     // Expect bounding box from -1.5..+1.5 in each axis if both cubes were centered at (0,0,0).
@@ -279,7 +279,7 @@ fn test_csg_minkowski_sum() {
 
 #[test]
 fn test_csg_subdivide_triangles() {
-    let cube: Mesh<()> = Mesh::cube(2.0, None);
+    let cube: Mesh<()> = Mesh::cube(2.0, ());
     // subdivide_triangles(1) => each polygon (quad) is triangulated => 2 triangles => each tri subdivides => 4
     // So each face with 4 vertices => 2 triangles => each becomes 4 => total 8 per face => 6 faces => 48
     let subdiv = cube.subdivide_triangles(1.try_into().expect("not 0"));
@@ -288,7 +288,7 @@ fn test_csg_subdivide_triangles() {
 
 #[test]
 fn test_csg_renormalize() {
-    let mut cube: Mesh<()> = Mesh::cube(2.0, None);
+    let mut cube: Mesh<()> = Mesh::cube(2.0, ());
     // After we do some transforms, normals might be changed. We can artificially change them:
     for poly in &mut cube.polygons {
         for v in &mut poly.vertices {
@@ -308,7 +308,7 @@ fn test_csg_renormalize() {
 
 #[test]
 fn test_csg_ray_intersections() {
-    let cube: Mesh<()> = Mesh::cube(2.0, None).center();
+    let cube: Mesh<()> = Mesh::cube(2.0, ()).center();
     // Ray from (-2,0,0) toward +X
     let origin = Point3::new(-2.0, 0.0, 0.0);
     let direction = Vector3::new(1.0, 0.0, 0.0);
@@ -322,7 +322,7 @@ fn test_csg_ray_intersections() {
 
 #[test]
 fn test_csg_square() {
-    let sq: Sketch<()> = Sketch::square(2.0, None);
+    let sq: Sketch<()> = Sketch::square(2.0, ());
     let mesh_2d: Mesh<()> = sq.into();
     // Single polygon, 4 vertices
     assert_eq!(mesh_2d.polygons.len(), 1);
@@ -336,7 +336,7 @@ fn test_csg_square() {
 
 #[test]
 fn test_csg_circle() {
-    let circle: Sketch<()> = Sketch::circle(2.0, 32, None);
+    let circle: Sketch<()> = Sketch::circle(2.0, 32, ());
     let mesh_2d: Mesh<()> = circle.into();
     // Single polygon with 32 segments => 32 or 33 vertices if closed
     assert_eq!(mesh_2d.polygons.len(), 1);
@@ -350,7 +350,7 @@ fn test_csg_circle() {
 
 #[test]
 fn test_csg_extrude() {
-    let sq: Sketch<()> = Sketch::square(2.0, None);
+    let sq: Sketch<()> = Sketch::square(2.0, ());
     let extruded = sq.extrude(5.0);
     // We expect:
     //   bottom polygon: 2 (square triangulated)
@@ -369,7 +369,7 @@ fn test_csg_revolve() {
     // Default square is from (0,0) to (1,1) in XY.
     // Shift it so it's from (1,0) to (2,1) — i.e. at least 1.0 unit away from the Z-axis.
     // and rotate it 90 degrees so that it can be swept around Z
-    let square: Sketch<()> = Sketch::square(2.0, None)
+    let square: Sketch<()> = Sketch::square(2.0, ())
         .translate(1.0, 0.0, 0.0)
         .rotate(90.0, 0.0, 0.0);
 
@@ -382,7 +382,7 @@ fn test_csg_revolve() {
 
 #[test]
 fn test_csg_bounding_box() {
-    let sphere: Mesh<()> = Mesh::sphere(1.0, 16, 8, None);
+    let sphere: Mesh<()> = Mesh::sphere(1.0, 16, 8, ());
     let bb = sphere.bounding_box();
     // center=(2,-1,3), radius=2 => bounding box min=(0,-3,1), max=(4,1,5)
     assert!(approx_eq(bb.mins.x, -1.0, 0.1));
@@ -395,7 +395,7 @@ fn test_csg_bounding_box() {
 
 #[test]
 fn test_csg_vertices() {
-    let cube: Mesh<()> = Mesh::cube(2.0, None);
+    let cube: Mesh<()> = Mesh::cube(2.0, ());
     let verts = cube.vertices();
     // 6 faces x 4 vertices each = 24
     assert_eq!(verts.len(), 24);
@@ -404,7 +404,7 @@ fn test_csg_vertices() {
 #[test]
 #[cfg(feature = "offset")]
 fn test_csg_offset_2d() {
-    let square: Sketch<()> = Sketch::square(2.0, None);
+    let square: Sketch<()> = Sketch::square(2.0, ());
     let grown = square.offset(0.5);
     let shrunk = square.offset(-0.5);
     let bb_square = square.bounding_box();
@@ -428,7 +428,7 @@ fn test_csg_text() {
     // We can't easily test visually, but we can at least test that it doesn't panic
     // and returns some polygons for normal ASCII letters.
     let font_data = include_bytes!("../../asar.ttf");
-    let text_csg: Sketch<()> = Sketch::text("ABC", font_data, 10.0, None);
+    let text_csg: Sketch<()> = Sketch::text("ABC", font_data, 10.0, ());
     assert!(!text_csg.geometry.is_empty());
 }
 
@@ -437,9 +437,9 @@ fn test_csg_text() {
 fn test_truetype_text_spacing_and_line_breaks() {
     let font_data = include_bytes!("../../asar.ttf");
 
-    let compact: Sketch<()> = Sketch::text("AA", font_data, 20.0, None);
-    let spaced: Sketch<()> = Sketch::text("A A", font_data, 20.0, None);
-    let stacked: Sketch<()> = Sketch::text("A\nA", font_data, 20.0, None);
+    let compact: Sketch<()> = Sketch::text("AA", font_data, 20.0, ());
+    let spaced: Sketch<()> = Sketch::text("A A", font_data, 20.0, ());
+    let stacked: Sketch<()> = Sketch::text("A\nA", font_data, 20.0, ());
 
     let compact_bb = compact.bounding_box();
     let spaced_bb = spaced.bounding_box();
@@ -467,7 +467,7 @@ fn test_truetype_text_spacing_and_line_breaks() {
 
 #[test]
 fn test_csg_to_trimesh() {
-    let cube: Mesh<()> = Mesh::cube(2.0, None);
+    let cube: Mesh<()> = Mesh::cube(2.0, ());
     let shape = cube.to_trimesh();
     // Should be a TriMesh with 12 triangles
     if let Some(trimesh) = shape {
@@ -479,7 +479,7 @@ fn test_csg_to_trimesh() {
 
 #[test]
 fn test_csg_mass_properties() {
-    let cube: Mesh<()> = Mesh::cube(2.0, None).center(); // side=2 => volume=8. If density=1 => mass=8
+    let cube: Mesh<()> = Mesh::cube(2.0, ()).center(); // side=2 => volume=8. If density=1 => mass=8
     let (mass, com, _frame) = cube.mass_properties(1.0);
     println!("{:#?}", mass);
     // For a centered cube with side 2, volume=8 => mass=8 => COM=(0,0,0)
@@ -492,7 +492,7 @@ fn test_csg_mass_properties() {
 #[test]
 fn test_csg_to_rigid_body() {
     use crate::float_types::rapier3d::prelude::*;
-    let cube: Mesh<()> = Mesh::cube(2.0, None);
+    let cube: Mesh<()> = Mesh::cube(2.0, ());
     let mut rb_set = RigidBodySet::new();
     let mut co_set = ColliderSet::new();
     let handle = cube.to_rigid_body(
@@ -516,13 +516,13 @@ fn test_csg_to_stl_and_from_stl_file() -> Result<(), Box<dyn std::error::Error>>
     // You can redirect to a temp file or do an in-memory test.
     let tmp_path = "test_csg_output.stl";
 
-    let cube: Mesh<()> = Mesh::cube(2.0, None);
+    let cube: Mesh<()> = Mesh::cube(2.0, ());
     let res = cube.to_stl_binary("A cube");
     let _ = std::fs::write(tmp_path, res.as_ref().unwrap());
     assert!(res.is_ok());
 
     let stl_data: Vec<u8> = std::fs::read(tmp_path)?;
-    let csg_in: Mesh<()> = Mesh::from_stl(&stl_data, None)?;
+    let csg_in: Mesh<()> = Mesh::from_stl(&stl_data, ())?;
     // We expect to read the same number of triangular faces as the cube originally had
     // (though the orientation/normals might differ).
     // The default cube -> 6 polygons x 1 polygon each with 4 vertices => 12 triangles in STL.

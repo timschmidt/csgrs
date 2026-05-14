@@ -65,7 +65,7 @@ impl VertexIndexMap {
     }
 }
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// **Mathematical Foundation: Robust Mesh Connectivity Analysis**
     ///
     /// Build a proper vertex adjacency graph using epsilon-based vertex matching:

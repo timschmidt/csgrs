@@ -15,7 +15,7 @@ use dxf::Drawing;
 use dxf::entities::*;
 use std::io::Cursor;
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     #[doc = " Import a Mesh object from DXF data."]
     #[doc = ""]
     #[doc = " ## Parameters"]
@@ -24,7 +24,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     #[doc = ""]
     #[doc = " ## Returns"]
     #[doc = " A `Result` containing the Mesh object or an error if parsing fails."]
-    pub fn from_dxf(dxf_data: &[u8], metadata: Option<S>) -> Result<Mesh<S>, Box<dyn Error>> {
+    pub fn from_dxf(dxf_data: &[u8], metadata: M) -> Result<Mesh<M>, Box<dyn Error>> {
         let drawing = Drawing::load(&mut Cursor::new(dxf_data))?;
         let mut polygons = Vec::new();
 
@@ -45,7 +45,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                             ));
                         }
                         if verts.len() >= 3 {
-                            polygons.push(Polygon::new(verts, None));
+                            polygons.push(Polygon::new(verts, metadata.clone()));
                         }
                     }
                 },
@@ -93,7 +93,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                             Vec::new(),
                         )
                         .into(),
-                        None,
+                        metadata.clone(),
                     )
                     .extrude_vector(extrusion_direction * thickness)
                     .polygons;
@@ -148,20 +148,20 @@ pub fn to_dxf<T: Triangulated3D>(shape: &T) -> Result<Vec<u8>, Box<dyn Error>> {
     Ok(buffer)
 }
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     pub fn to_dxf(&self) -> Result<Vec<u8>, Box<dyn Error>> {
         self::to_dxf(self)
     }
 }
 
-impl<S: Clone + Debug + Send + Sync> Sketch<S> {
+impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     pub fn to_dxf(&self) -> Result<Vec<u8>, Box<dyn Error>> {
         self::to_dxf(self)
     }
 }
 
 #[cfg(feature = "bmesh")]
-impl<S: Clone + Debug + Send + Sync> crate::bmesh::BMesh<S> {
+impl<M: Clone + Debug + Send + Sync> crate::bmesh::BMesh<M> {
     pub fn to_dxf(&self) -> Result<Vec<u8>, Box<dyn Error>> {
         self::to_dxf(self)
     }

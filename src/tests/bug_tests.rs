@@ -4,7 +4,7 @@ use super::support::*;
 
 #[test]
 fn test_contains_vertex() {
-    let csg_cube = Mesh::<()>::cube(6.0, None);
+    let csg_cube = Mesh::<()>::cube(6.0, ());
 
     assert!(csg_cube.contains_vertex(&Point3::new(3.0, 3.0, 3.0)));
     assert!(csg_cube.contains_vertex(&Point3::new(1.0, 2.0, 5.9)));
@@ -33,7 +33,7 @@ fn test_contains_vertex() {
     assert!(csg_cube.contains_vertex(&Point3::new(0.01, 4.0, 3.0)));
     assert!(!csg_cube.contains_vertex(&Point3::new(-0.01, 4.0, 3.0)));
 
-    let csg_cube_hole = Mesh::<()>::cube(4.0, None);
+    let csg_cube_hole = Mesh::<()>::cube(4.0, ());
     let cube_with_hole = csg_cube.difference(&csg_cube_hole);
 
     assert!(!cube_with_hole.contains_vertex(&Point3::new(0.01, 4.0, 3.0)));
@@ -42,7 +42,7 @@ fn test_contains_vertex() {
     assert!(cube_with_hole.contains_vertex(&Point3::new(1.0, 2.0, 5.9)));
     assert!(!cube_with_hole.contains_vertex(&Point3::new(3.0, 3.0, 6.0)));
 
-    let csg_sphere = Mesh::<()>::sphere(6.0, 14, 14, None);
+    let csg_sphere = Mesh::<()>::sphere(6.0, 14, 14, ());
 
     assert!(csg_sphere.contains_vertex(&Point3::new(3.0, 3.0, 3.0)));
     assert!(csg_sphere.contains_vertex(&Point3::new(-3.0, -3.0, -3.0)));
@@ -86,7 +86,7 @@ fn test_union_crash() {
                             normal: Vector3::new(0.0, -1.0, 0.0),
                         },
                     ],
-                    None,
+                    (),
                 ),
                 Polygon::new(
                     vec![
@@ -107,7 +107,7 @@ fn test_union_crash() {
                             normal: Vector3::new(0.0, 1.0, 0.0),
                         },
                     ],
-                    None,
+                    (),
                 ),
                 Polygon::new(
                     vec![
@@ -144,7 +144,7 @@ fn test_union_crash() {
                             ),
                         },
                     ],
-                    None,
+                    (),
                 ),
                 Polygon::new(
                     vec![
@@ -181,7 +181,7 @@ fn test_union_crash() {
                             ),
                         },
                     ],
-                    None,
+                    (),
                 ),
                 Polygon::new(
                     vec![
@@ -218,7 +218,7 @@ fn test_union_crash() {
                             ),
                         },
                     ],
-                    None,
+                    (),
                 ),
                 Polygon::new(
                     vec![
@@ -239,10 +239,10 @@ fn test_union_crash() {
                             normal: Vector3::new(0.0, 0.0, -1.0),
                         },
                     ],
-                    None,
+                    (),
                 ),
             ],
-            None,
+            (),
         ),
         Mesh::from_polygons(
             &[
@@ -265,7 +265,7 @@ fn test_union_crash() {
                             normal: Vector3::new(0.0, -1.0, 0.0),
                         },
                     ],
-                    None,
+                    (),
                 ),
                 Polygon::new(
                     vec![
@@ -286,7 +286,7 @@ fn test_union_crash() {
                             normal: Vector3::new(0.0, 1.0, 0.0),
                         },
                     ],
-                    None,
+                    (),
                 ),
                 Polygon::new(
                     vec![
@@ -307,7 +307,7 @@ fn test_union_crash() {
                             normal: Vector3::new(0.8944271802902222, 0.0, -0.4472135901451111),
                         },
                     ],
-                    None,
+                    (),
                 ),
                 Polygon::new(
                     vec![
@@ -344,7 +344,7 @@ fn test_union_crash() {
                             ),
                         },
                     ],
-                    None,
+                    (),
                 ),
                 Polygon::new(
                     vec![
@@ -365,7 +365,7 @@ fn test_union_crash() {
                             normal: Vector3::new(-1.0, 0.0, 0.0),
                         },
                     ],
-                    None,
+                    (),
                 ),
                 Polygon::new(
                     vec![
@@ -402,10 +402,10 @@ fn test_union_crash() {
                             ),
                         },
                     ],
-                    None,
+                    (),
                 ),
             ],
-            None,
+            (),
         ),
     ];
 

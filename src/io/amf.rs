@@ -165,7 +165,7 @@ pub fn write_amf<T: Triangulated3D, W: Write>(
     writer.write_all(amf_content.as_bytes())
 }
 
-impl<S: Clone + Debug + Send + Sync> crate::mesh::Mesh<S> {
+impl<M: Clone + Debug + Send + Sync> crate::mesh::Mesh<M> {
     pub fn to_amf(&self, object_name: &str, units: &str) -> String {
         self::to_amf(self, object_name, units)
     }
@@ -189,7 +189,7 @@ impl<S: Clone + Debug + Send + Sync> crate::mesh::Mesh<S> {
     }
 }
 
-impl<S: Clone + Debug + Send + Sync> crate::sketch::Sketch<S> {
+impl<M: Clone + Debug + Send + Sync> crate::sketch::Sketch<M> {
     pub fn to_amf(&self, object_name: &str, units: &str) -> String {
         self::to_amf(self, object_name, units)
     }
@@ -214,7 +214,7 @@ impl<S: Clone + Debug + Send + Sync> crate::sketch::Sketch<S> {
 }
 
 #[cfg(feature = "bmesh")]
-impl<S: Clone + Debug + Send + Sync> crate::bmesh::BMesh<S> {
+impl<M: Clone + Debug + Send + Sync> crate::bmesh::BMesh<M> {
     pub fn to_amf(&self, object_name: &str, units: &str) -> String {
         self::to_amf(self, object_name, units)
     }

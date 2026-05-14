@@ -4,7 +4,7 @@ use super::support::*;
 
 #[test]
 fn test_square_ccw_ordering() {
-    let square = Sketch::<()>::square(2.0, None);
+    let square = Sketch::<()>::square(2.0, ());
     let mp = square.to_multipolygon();
     assert_eq!(mp.0.len(), 1);
     let poly = &mp.0[0];
@@ -15,7 +15,7 @@ fn test_square_ccw_ordering() {
 #[test]
 #[cfg(feature = "offset")]
 fn test_offset_2d_positive_distance_grows() {
-    let square = Sketch::<()>::square(2.0, None); // Centered square with size 2x2
+    let square = Sketch::<()>::square(2.0, ()); // Centered square with size 2x2
     let offset = square.offset(0.5); // Positive offset should grow the square
 
     // The original square has area 4.0
@@ -33,7 +33,7 @@ fn test_offset_2d_positive_distance_grows() {
 #[test]
 #[cfg(feature = "offset")]
 fn test_offset_2d_negative_distance_shrinks() {
-    let square = Sketch::<()>::square(2.0, None); // Centered square with size 2x2
+    let square = Sketch::<()>::square(2.0, ()); // Centered square with size 2x2
     let offset = square.offset(-0.5); // Negative offset should shrink the square
 
     // The original square has area 4.0
@@ -51,7 +51,7 @@ fn test_offset_2d_negative_distance_shrinks() {
 #[test]
 #[cfg(feature = "offset")]
 fn test_straight_skeleton_2d_non_empty() {
-    let square = Sketch::<()>::square(2.0, None);
+    let square = Sketch::<()>::square(2.0, ());
     let skeleton = square.straight_skeleton(true);
 
     assert!(
@@ -64,7 +64,7 @@ fn test_straight_skeleton_2d_non_empty() {
 fn test_polygon_2d_enforce_ccw_ordering() {
     // Define a triangle in CW order
     let points_cw = vec![[0.0, 0.0], [1.0, 0.0], [0.5, 1.0]];
-    let csg_cw = Sketch::<()>::polygon(&points_cw, None);
+    let csg_cw = Sketch::<()>::polygon(&points_cw, ());
     // Enforce CCW ordering
     csg_cw.renormalize();
     let poly = &csg_cw.geometry.0[0];
@@ -75,7 +75,7 @@ fn test_polygon_2d_enforce_ccw_ordering() {
 #[test]
 #[cfg(feature = "offset")]
 fn test_circle_offset_2d() {
-    let circle = Sketch::<()>::circle(1.0, 32, None);
+    let circle = Sketch::<()>::circle(1.0, 32, ());
     let offset_grow = circle.offset(0.2); // Should grow the circle
     let offset_shrink = circle.offset(-0.2); // Should shrink the circle
 

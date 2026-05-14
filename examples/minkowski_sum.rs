@@ -8,8 +8,8 @@ const PATH: &str = "stl/examples/minkowski_sum";
 fn main() {
     fs::create_dir_all(PATH).unwrap();
 
-    let cube = Mesh::<()>::cube(1.5, None);
-    let sphere = Mesh::<()>::sphere(0.4, 16, 8, None);
+    let cube = Mesh::<()>::cube(1.5, ());
+    let sphere = Mesh::<()>::sphere(0.4, 16, 8, ());
     write_mesh(&cube.minkowski_sum(&sphere), "rounded_cube");
 }
 
