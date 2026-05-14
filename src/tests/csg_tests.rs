@@ -430,6 +430,39 @@ fn test_csg_text() {
     assert!(!text_csg.geometry.is_empty());
 }
 
+#[cfg(feature = "truetype-text")]
+#[test]
+fn test_truetype_text_spacing_and_line_breaks() {
+    let font_data = include_bytes!("../../asar.ttf");
+
+    let compact: Sketch<()> = Sketch::text("AA", font_data, 20.0, None);
+    let spaced: Sketch<()> = Sketch::text("A A", font_data, 20.0, None);
+    let stacked: Sketch<()> = Sketch::text("A\nA", font_data, 20.0, None);
+
+    let compact_bb = compact.bounding_box();
+    let spaced_bb = spaced.bounding_box();
+    let stacked_bb = stacked.bounding_box();
+
+    let compact_width = compact_bb.maxs.x - compact_bb.mins.x;
+    let spaced_width = spaced_bb.maxs.x - spaced_bb.mins.x;
+    let stacked_width = stacked_bb.maxs.x - stacked_bb.mins.x;
+    let compact_height = compact_bb.maxs.y - compact_bb.mins.y;
+    let stacked_height = stacked_bb.maxs.y - stacked_bb.mins.y;
+
+    assert!(
+        spaced_width > compact_width,
+        "space glyph advance should widen text layout"
+    );
+    assert!(
+        stacked_width < compact_width,
+        "newline should reset the horizontal pen"
+    );
+    assert!(
+        stacked_height > compact_height,
+        "newline should advance to a new baseline"
+    );
+}
+
 #[test]
 fn test_csg_to_trimesh() {
     let cube: Mesh<()> = Mesh::cube(2.0, None);

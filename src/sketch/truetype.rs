@@ -8,7 +8,7 @@ use geo::{
     orient::Direction,
 };
 use std::fmt::Debug;
-use ttf_parser::OutlineBuilder;
+use ttf_parser::{Face, GlyphId, OutlineBuilder};
 use ttf_utils::Outline;
 
 // For flattening curves, how many segments per quad/cubic
@@ -21,7 +21,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// and any open contours become `LineString`s.
     ///
     /// # Arguments
-    /// - `text`: the text string (no multiline logic here)
+    /// - `text`: the text string
     /// - `font_data`: raw bytes of a TTF file
     /// - `scale`: a uniform scale factor for glyphs
     /// - `metadata`: optional metadata for the resulting `Sketch`
@@ -42,29 +42,62 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             },
         };
 
-        // 1 font unit, 2048 font units / em, scale points / em, 0.352777 points / mm
-        let font_scale = 1.0 / 2048.0 * scale * 0.3527777;
+        // Treat `scale` as points-per-em and convert points to millimeters.
+        let units_per_em = face.units_per_em() as Real;
+        if units_per_em <= 0.0 || !scale.is_finite() {
+            return Sketch::new();
+        }
+        let font_scale = scale * 0.3527777 / units_per_em;
+        let default_advance = default_advance(&face, font_scale);
+        let line_advance = line_advance(&face, font_scale);
+        let tab_advance = default_advance * 4.0;
 
         // 2) We'll collect all glyph geometry into one GeometryCollection
         let mut geo_coll = GeometryCollection::default();
 
         // 3) A simple "pen" cursor for horizontal text layout
         let mut cursor_x = 0.0 as Real;
+        let mut cursor_y = 0.0 as Real;
+        let mut previous_glyph = None;
 
         for ch in text.chars() {
-            // Skip control chars:
-            if ch.is_control() {
-                continue;
+            match ch {
+                '\n' => {
+                    cursor_x = 0.0;
+                    cursor_y -= line_advance;
+                    previous_glyph = None;
+                    continue;
+                },
+                '\r' => {
+                    cursor_x = 0.0;
+                    previous_glyph = None;
+                    continue;
+                },
+                '\t' => {
+                    cursor_x += tab_advance;
+                    previous_glyph = None;
+                    continue;
+                },
+                ch if ch.is_control() => {
+                    previous_glyph = None;
+                    continue;
+                },
+                _ => {},
             }
 
             // Find glyph index in the font
             if let Some(gid) = face.glyph_index(ch) {
+                if let Some(previous) = previous_glyph {
+                    cursor_x += glyph_pair_kerning(&face, previous, gid) * font_scale;
+                }
+
                 // Extract the glyph outline (if any)
                 if let Some(outline) = Outline::new(&face, gid) {
                     // Flatten the outline into line segments
                     let mut collector =
-                        OutlineFlattener::new(font_scale as Real, cursor_x as Real, 0.0);
+                        OutlineFlattener::new(font_scale as Real, cursor_x as Real, cursor_y);
                     outline.emit(&mut collector);
+                    collector.finish_open_subpath();
 
                     // Now `collector.contours` holds closed subpaths,
                     // and `collector.open_contours` holds open polylines.
@@ -132,23 +165,118 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                         }
                     }
 
-                    // Finally, advance our pen by the glyph's bounding-box width
-                    let bbox = outline.bbox();
-                    let glyph_width = bbox.width() as Real * font_scale;
-                    cursor_x += glyph_width;
-                } else {
-                    // If there's no outline (e.g., space), just move a bit
-                    cursor_x += font_scale as Real * 0.3;
                 }
+
+                cursor_x += glyph_advance(&face, gid, font_scale, default_advance);
+                previous_glyph = Some(gid);
             } else {
                 // Missing glyph => small blank advance
-                cursor_x += font_scale as Real * 0.3;
+                cursor_x += default_advance;
+                previous_glyph = None;
             }
         }
 
         // Build a 2D Sketch from the collected geometry
         Sketch::from_geo(geo_coll, metadata)
     }
+}
+
+fn glyph_advance(
+    face: &Face<'_>,
+    glyph_id: GlyphId,
+    font_scale: Real,
+    default_advance: Real,
+) -> Real {
+    face.glyph_hor_advance(glyph_id)
+        .map(|advance| advance as Real * font_scale)
+        .filter(|advance| advance.is_finite() && *advance >= 0.0)
+        .unwrap_or(default_advance)
+}
+
+fn default_advance(face: &Face<'_>, font_scale: Real) -> Real {
+    face.glyph_index(' ')
+        .and_then(|glyph_id| face.glyph_hor_advance(glyph_id))
+        .map(|advance| advance as Real * font_scale)
+        .filter(|advance| advance.is_finite() && *advance > 0.0)
+        .unwrap_or_else(|| face.units_per_em() as Real * font_scale * 0.5)
+}
+
+fn line_advance(face: &Face<'_>, font_scale: Real) -> Real {
+    let height = face.height() as Real;
+    let line_gap = face.line_gap() as Real;
+    let advance = (height + line_gap).max(face.units_per_em() as Real) * font_scale;
+    if advance.is_finite() && advance > 0.0 {
+        advance
+    } else {
+        face.units_per_em() as Real * font_scale
+    }
+}
+
+fn glyph_pair_kerning(face: &Face<'_>, left: GlyphId, right: GlyphId) -> Real {
+    let gpos_adjustment = gpos_pair_adjustment(face, left, right);
+    if gpos_adjustment != 0.0 {
+        return gpos_adjustment;
+    }
+
+    kern_pair_adjustment(face, left, right)
+}
+
+fn kern_pair_adjustment(face: &Face<'_>, left: GlyphId, right: GlyphId) -> Real {
+    let Some(kern) = face.tables().kern else {
+        return 0.0;
+    };
+
+    kern.subtables
+        .into_iter()
+        .filter(|subtable| {
+            subtable.horizontal && !subtable.has_cross_stream && !subtable.has_state_machine
+        })
+        .filter_map(|subtable| subtable.glyphs_kerning(left, right))
+        .map(|value| value as Real)
+        .sum()
+}
+
+fn gpos_pair_adjustment(face: &Face<'_>, left: GlyphId, right: GlyphId) -> Real {
+    let Some(gpos) = face.tables().gpos else {
+        return 0.0;
+    };
+
+    let mut adjustment = 0.0;
+
+    for lookup in gpos.lookups {
+        for subtable in lookup
+            .subtables
+            .into_iter::<ttf_parser::gpos::PositioningSubtable>()
+        {
+            let ttf_parser::gpos::PositioningSubtable::Pair(pair) = subtable else {
+                continue;
+            };
+
+            adjustment += match pair {
+                ttf_parser::gpos::PairAdjustment::Format1 { coverage, sets } => coverage
+                    .get(left)
+                    .and_then(|index| sets.get(index))
+                    .and_then(|set| set.get(right))
+                    .map(|(left_value, right_value)| {
+                        left_value.x_advance as Real + right_value.x_placement as Real
+                    })
+                    .unwrap_or(0.0),
+                ttf_parser::gpos::PairAdjustment::Format2 {
+                    classes, matrix, ..
+                } => {
+                    let class_pair = (classes.0.get(left), classes.1.get(right));
+                    matrix
+                        .get(class_pair)
+                        .map(|(left_value, right_value)| {
+                            left_value.x_advance as Real + right_value.x_placement as Real
+                        })
+                        .unwrap_or(0.0)
+                },
+            };
+        }
+    }
+
+    adjustment
 }
 
 /// A helper that implements `ttf_parser::OutlineBuilder`.
@@ -209,7 +337,7 @@ impl OutlineFlattener {
 
     /// Finish the current subpath as open (do not close).
     /// (We call this if a new `MoveTo` or the entire glyph ends.)
-    fn _finish_open_subpath(&mut self) {
+    fn finish_open_subpath(&mut self) {
         if self.subpath_open && !self.current.is_empty() {
             self.open_contours.push(self.current.clone());
         }
