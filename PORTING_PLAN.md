@@ -336,6 +336,130 @@ aliases for `decorum`-backed finite/ordered f64 wrappers where deterministic
 ordering or hashing is needed. These aliases should remain private or clearly
 experimental until the public scalar story is settled.
 
+### Phase 6b: Add coordinate input representations
+
+Issue #30's remaining API ergonomics request is implementable without waiting
+for the full `hyperlattice` port. The safe version is to add `csgrs`-owned
+conversion traits for user-facing coordinate inputs while keeping canonical
+storage as the current internal point/vector/matrix types.
+
+Do not try to implement blanket `Into<nalgebra::Vector3<Real>>` or
+`From<[Real; 3]> for nalgebra::Vector3<Real>` directly; Rust's orphan rules and
+downstream coherence would make that brittle. Instead, define local traits and
+small local newtypes where needed:
+
+- `IntoPoint2`
+- `IntoPoint3`
+- `IntoVector2`
+- `IntoVector3`
+- `IntoDirection3` for APIs that require non-zero normalized direction
+- `IntoTransform3` only after transform semantics are stable
+
+Supported initial representations:
+
+- `Point2<Real>`, `Point3<Real>`, `Vector2<Real>`, and `Vector3<Real>`
+- `[Real; 2]`, `[Real; 3]`, `(Real, Real)`, and `(Real, Real, Real)`
+- borrowed forms such as `&[Real; 2]`, `&[Real; 3]`, `&(Real, Real)`, and
+  `&(Real, Real, Real)` where they improve ergonomics without ambiguity
+- integer tuple/array inputs only if they convert through explicit checked or
+  lossless paths; otherwise keep examples numeric-literal friendly through
+  `Real` inference rather than broad integer blanket impls
+- future `hyperlattice` point/vector types behind the same local traits once
+  that crate becomes the internal linear algebra layer
+- future `hyperreal` scalar constructor forms, including exact integers,
+  rationals, decimal strings, symbolic constants, lazy computable values,
+  bounded intervals, and uncertainty-carrying approximations, routed through
+  explicit constructor helpers rather than accidental primitive casts
+
+Special `hyperreal` constructor considerations:
+
+- separate exact constructors from approximate constructors, for example
+  `point3_exact`, `point3_decimal`, `point3_approx`, and
+  `point3_uncertain`, or equivalent builder APIs
+- make rational and decimal construction lossless where the input representation
+  permits it; do not silently parse a decimal string through `f64`
+- let constructors preserve symbolic constants such as `pi`, `tau`, square
+  roots, algebraic values, or deferred expressions when `hyperreal` can carry
+  them
+- require explicit policy when an interval or uncertain scalar is used in a
+  topology-sensitive constructor: reject, defer classification, or produce an
+  uncertainty-bearing object
+- provide checked adapters from primitive `Real` to hyperreal approximate values
+  so old f64 APIs remain usable without pretending they are exact
+- avoid broad `From<f64>` or integer blanket impls that make exact and
+  approximate construction visually indistinguishable in public APIs
+- expose diagnostics that identify whether each coordinate was exact,
+  approximate, symbolic, interval-bounded, or rejected
+- keep mesh/sketch storage canonical for the active backend; mixed coordinate
+  representations should normalize at construction boundaries, not leak through
+  every operation
+
+Implementation plan:
+
+- add a `coords` or `geometry_input` module owned by `csgrs`
+- expose conversion traits publicly but keep concrete canonical types unchanged
+  at first
+- make every trait method return `Result<_, CoordinateError>` for fallible
+  forms, or provide paired `try_into_*` traits for APIs that must reject
+  non-finite, zero-length, or dimensionally invalid input
+- keep `translate(x, y, z)` and other legacy overload-style helpers as
+  compatibility shims during one release window
+- add new ergonomic methods where ambiguity is low, such as
+  `translate_by(v: impl IntoVector3)`, `scale_by(v: impl IntoVector3)`,
+  `rotate_around(axis: impl IntoDirection3, angle: Real)`, and constructors
+  accepting `impl IntoPoint2` / `impl IntoPoint3`
+- only rename the canonical method back to `translate(v: impl IntoVector3)`
+  once downstream breakage and method-resolution ambiguity have been evaluated
+- avoid accepting the same tuple shape for semantically different values in one
+  method call unless the parameter name and trait make the role obvious
+- add deprecation notes that point old `*_vector` and component methods toward
+  the new trait-based input forms
+- route all coordinate conversion through the same finite/non-finite policy used
+  by the approximate backend adapters
+- add examples that demonstrate tuple, array, nalgebra, and future
+  hyperlattice-compatible input forms side by side
+- add hyperreal constructor examples that demonstrate exact rational sketches,
+  decimal-string CAD dimensions, symbolic-angle rotations, and interval or
+  uncertainty rejection/reporting
+
+Tests:
+
+- compile tests for every accepted representation and for intentionally
+  rejected ambiguous representations
+- doc tests showing `mesh.translate_by([1.0, 2.0, 3.0])`,
+  `mesh.translate_by((1.0, 2.0, 3.0))`, and
+  `mesh.translate_by(Vector3::new(1.0, 2.0, 3.0))`
+- proptest over tuple, array, and nalgebra inputs to prove they produce
+  identical transformed geometry
+- fuzz raw coordinate arrays through fallible conversion paths, including NaN,
+  infinities, signed zero, subnormals, huge finite values, and wrong-length
+  slice adapters if slice support is added
+- coherence tests that downstream crates can implement the local traits for
+  their own coordinate wrappers without conflicting with `csgrs` impls
+- ambiguity tests for methods where point and vector inputs might both be valid
+- migration tests proving old `translate(x, y, z)` and `translate_vector(v)`
+  behavior remains equivalent while compatibility shims exist
+- exactness tests proving hyperreal rational and decimal-string constructors do
+  not round through f64
+- symbolic-construction tests for angles and constants used by rotate, revolve,
+  sweep frames, circles, and regular polygons
+- uncertainty tests proving interval or uncertain coordinates are rejected or
+  preserved according to the active backend policy before topology decisions
+
+Failure modes to avoid:
+
+- blanket impls that make method resolution surprising for tuples or arrays
+- silently accepting NaN/infinity in public coordinate input while internal
+  adapters reject it later
+- silently downgrading exact or symbolic hyperreal constructor inputs into
+  approximate f64 values
+- accepting interval coordinates in boolean-critical constructors without an
+  explicit uncertainty policy
+- treating points and vectors interchangeably in APIs where the distinction
+  matters
+- adding public backend generics before `hyperlattice` is ready
+- creating a second coordinate policy beside the adapter-boundary policy
+
 ### Phase 7: Port transforms and constructors
 
 Move transform-heavy APIs onto the chosen `hyperlattice` types:
@@ -654,6 +778,70 @@ When point/vector/matrix imports move behind aliases:
   output for representative geometry
 - proptest transform round trips through alias types
 - fuzz transform matrices through alias-backed transform APIs
+
+### Phase 6b coordinate input representation tests
+
+When issue #30-style coordinate conversions are added:
+
+- accepted 2D inputs:
+  - `Point2<Real>`
+  - `Vector2<Real>` where a vector is semantically valid
+  - `[Real; 2]`
+  - `(Real, Real)`
+  - borrowed array and tuple forms where supported
+- accepted 3D inputs:
+  - `Point3<Real>`
+  - `Vector3<Real>` where a vector is semantically valid
+  - `[Real; 3]`
+  - `(Real, Real, Real)`
+  - borrowed array and tuple forms where supported
+- future accepted backend inputs:
+  - `hyperlattice::Point2`
+  - `hyperlattice::Point3`
+  - `hyperlattice::Vector2`
+  - `hyperlattice::Vector3`
+- future hyperreal constructor inputs:
+  - exact integer-backed coordinates
+  - rational coordinates
+  - decimal-string coordinates
+  - symbolic constants and deferred expressions
+  - bounded intervals
+  - uncertainty-bearing approximate values
+- rejection tests:
+  - NaN
+  - positive and negative infinity
+  - zero-length direction vectors
+  - wrong dimensionality
+  - integer inputs if broad integer conversion is not adopted
+  - interval or uncertain coordinates in constructors whose policy is exact-only
+  - point inputs passed to vector-only APIs and vector inputs passed to
+    point-only APIs where the distinction is important
+- equivalence tests:
+  - tuple, array, nalgebra, and backend point forms produce identical
+    constructor outputs
+  - tuple, array, nalgebra, and backend vector forms produce identical
+    transform outputs
+  - old component methods and new trait-input methods remain equivalent during
+    compatibility windows
+  - exact rational and decimal-string hyperreal constructors preserve exact
+    geometry where approximate f64 constructors only preserve tolerance-bounded
+    geometry
+- property tests:
+  - proptest finite 2D and 3D arrays through every public coordinate trait
+  - proptest transform sequences using mixed coordinate representations
+  - proptest round trips from public inputs to canonical internal types and back
+    where back-conversion is exposed
+  - proptest small rational coordinate grids through exact constructors
+  - proptest decimal-string dimensions against exact decimal expectations
+- fuzz tests:
+  - fuzz raw coordinate arrays through fallible conversion APIs
+  - fuzz mixed operation sequences that choose coordinate representation per
+    operation
+  - fuzz decimal-string and rational-coordinate parsers
+  - fuzz interval endpoints and uncertainty widths through constructors that
+    accept or reject uncertainty
+  - fuzz external wrapper types in a downstream-style test crate to catch trait
+    coherence hazards
 
 ### Phase 7 transform and constructor tests
 
@@ -1630,6 +1818,9 @@ This gives an early robustness win without forcing a broad public API rewrite.
 
 > "Mesh Boolean." *libigl Documentation*, libigl,
 > https://libigl.github.io/dox/mesh__boolean_8h.html.
+
+> Schmidt, Tim. "Convert Some Methods to Trait Methods." *GitHub*, 17 Mar.
+> 2025, https://github.com/timschmidt/csgrs/issues/30.
 
 > Patrikalakis, Nicholas M., Takashi Maekawa, and Wen-Chyung Cho. *Shape
 > Interrogation for Computer Aided Design and Manufacturing*. MIT,
