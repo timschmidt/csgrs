@@ -4,7 +4,7 @@
 //! so you can use boolmesh’s robust boolean kernel inside csgrs.
 
 use crate::csg::CSG;
-use crate::float_types::{parry3d::bounding_volume::Aabb, Real};
+use crate::float_types::{Real, parry3d::bounding_volume::Aabb};
 
 use boolmesh::{
     compute_boolean,

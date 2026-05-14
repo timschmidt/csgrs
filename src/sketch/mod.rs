@@ -10,11 +10,11 @@ use crate::csg::CSG;
 use crate::vertex::Vertex;
 use geo::algorithm::winding_order::Winding;
 use geo::{
-    orient::Direction, AffineOps, AffineTransform, BooleanOps as GeoBooleanOps, BoundingRect, Coord,
-    CoordsIter, Geometry, GeometryCollection, Line, LineString, MultiPolygon, Orient,
-    Polygon as GeoPolygon, Rect,
+    AffineOps, AffineTransform, BooleanOps as GeoBooleanOps, BoundingRect, Coord, CoordsIter,
+    Geometry, GeometryCollection, Line, LineString, MultiPolygon, Orient,
+    Polygon as GeoPolygon, Rect, orient::Direction,
 };
-use nalgebra::{partial_max, partial_min, Matrix4, Point3, UnitQuaternion, Vector3};
+use nalgebra::{Matrix4, Point3, UnitQuaternion, Vector3, partial_max, partial_min};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
@@ -130,11 +130,8 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
             .normal
             .try_normalize(crate::float_types::tolerance())
             .unwrap_or(default_normal);
-        let rotation_quat = UnitQuaternion::rotation_between(
-            &default_normal,
-            &origin_normal,
-        )
-        .unwrap_or_else(|| UnitQuaternion::from_axis_angle(&Vector3::x_axis(), PI));
+        let rotation_quat = UnitQuaternion::rotation_between(&default_normal, &origin_normal)
+            .unwrap_or_else(|| UnitQuaternion::from_axis_angle(&Vector3::x_axis(), PI));
 
         (pos_transform, rotation_quat)
     }
@@ -180,9 +177,9 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
                     }
                 },
                 Geometry::Line(line) => {
-                    out.push(self.line_string_to_graphic_line_string(&LineString::from(vec![
-                        line.start, line.end,
-                    ])));
+                    out.push(self.line_string_to_graphic_line_string(&LineString::from(
+                        vec![line.start, line.end],
+                    )));
                 },
                 Geometry::LineString(line_string) => {
                     out.push(self.line_string_to_graphic_line_string(line_string));
@@ -316,9 +313,7 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
 
         #[cfg(feature = "delaunay-rs")]
         {
-            use delaunay_triangulator::core::{
-                vertex::Vertex as DelaunayVertex,
-            };
+            use delaunay_triangulator::core::vertex::Vertex as DelaunayVertex;
             use delaunay_triangulator::triangulation::delaunay::DelaunayTriangulation;
             use geo::{Intersects, Point as GeoPoint};
 
@@ -346,8 +341,7 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
                 .iter()
                 .map(|&[x, y]| delaunay_triangulator::vertex!([x as f64, y as f64]))
                 .collect();
-            let Ok(dt) = DelaunayTriangulation::<_, (), (), 2>::new(&delaunay_vertices)
-            else {
+            let Ok(dt) = DelaunayTriangulation::<_, (), (), 2>::new(&delaunay_vertices) else {
                 return Vec::new();
             };
 

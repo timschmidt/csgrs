@@ -1,14 +1,14 @@
 #![doc = " OBJ file format support"]
 #![doc = ""]
-#![doc = " This module provides import and export functionality for Wavefront OBJ files,"] 
+#![doc = " This module provides import and export functionality for Wavefront OBJ files,"]
 #![doc = " a widely-supported 3D file format used by many modeling and rendering applications."]
 
 use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
+use crate::sketch::Sketch;
 use crate::triangulated::Triangulated3D;
 use crate::vertex::Vertex;
-use crate::sketch::Sketch;
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 use std::io::{BufRead, Write};
@@ -35,7 +35,11 @@ fn add_unique_normal(normals: &mut Vec<Vector3<Real>>, normal: Vector3<Real>) ->
 
 fn build_obj_buffers<T: Triangulated3D>(
     shape: &T,
-) -> (Vec<Point3<Real>>, Vec<Vector3<Real>>, Vec<Vec<(usize, usize)>>) {
+) -> (
+    Vec<Point3<Real>>,
+    Vec<Vector3<Real>>,
+    Vec<Vec<(usize, usize)>>,
+) {
     let mut vertices = Vec::<Point3<Real>>::new();
     let mut normals = Vec::<Vector3<Real>>::new();
     let mut faces = Vec::<Vec<(usize, usize)>>::new();
@@ -170,7 +174,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                         })?;
                         vertices.push(Point3::new(x, y, z));
                     }
-                }
+                },
                 "vn" => {
                     if parts.len() >= 4 {
                         let x: Real = parts[1].parse().map_err(|e| {
@@ -193,7 +197,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                         })?;
                         normals.push(Vector3::new(x, y, z));
                     }
-                }
+                },
                 "f" => {
                     if parts.len() >= 4 {
                         let face_vertices =
@@ -209,8 +213,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                             }
                         }
                     }
-                }
-                _ => {}
+                },
+                _ => {},
             }
         }
 

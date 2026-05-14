@@ -204,7 +204,8 @@ impl Plane {
         let reference_normal = vertices.iter().zip(vertices.iter().cycle().skip(1)).fold(
             Vector3::zeros(),
             |acc, (curr, next)| {
-                acc + (curr.position - Point3::origin()).cross(&(next.position - Point3::origin()))
+                acc + (curr.position - Point3::origin())
+                    .cross(&(next.position - Point3::origin()))
             },
         );
 
@@ -396,8 +397,9 @@ impl Plane {
                         let denom = normal.dot(&(vertex_j.position - vertex_i.position));
                         // Avoid dividing by zero
                         if denom.abs() > tolerance() {
-                            let intersection =
-                                (self.offset() - normal.dot(&vertex_i.position.coords)) / denom;
+                            let intersection = (self.offset()
+                                - normal.dot(&vertex_i.position.coords))
+                                / denom;
                             let vertex_new = vertex_i.interpolate(vertex_j, intersection);
                             split_front.push(vertex_new);
                             split_back.push(vertex_new);

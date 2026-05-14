@@ -221,7 +221,10 @@ impl Vertex {
             Vector3::z() // Fallback normal
         };
 
-        Some(Vertex::new(Point3::from(weighted_position), normalized_normal))
+        Some(Vertex::new(
+            Point3::from(weighted_position),
+            normalized_normal,
+        ))
     }
 
     /// **Mathematical Foundation: Barycentric Coordinates Interpolation**
@@ -249,7 +252,9 @@ impl Vertex {
             (1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0) // Fallback to centroid
         };
 
-        let new_position = Point3::from(u * v1.position.coords + v * v2.position.coords + w * v3.position.coords);
+        let new_position = Point3::from(
+            u * v1.position.coords + v * v2.position.coords + w * v3.position.coords,
+        );
 
         let new_normal = (u * v1.normal + v * v2.normal + w * v3.normal).normalize();
 
@@ -285,7 +290,8 @@ impl Vertex {
             let v3 = triangle_vertices[(i + 2) % triangle_vertices.len()];
 
             // Check if this triangle contains our edge
-            let contains_edge = (v1.position == center.position && v2.position == neighbor.position)
+            let contains_edge = (v1.position == center.position
+                && v2.position == neighbor.position)
                 || (v2.position == center.position && v3.position == neighbor.position)
                 || (v3.position == center.position && v1.position == neighbor.position)
                 || (v1.position == neighbor.position && v2.position == center.position)
@@ -294,7 +300,9 @@ impl Vertex {
 
             if contains_edge {
                 // Find the vertex opposite to the edge
-                let opposite = if v1.position != center.position && v1.position != neighbor.position {
+                let opposite = if v1.position != center.position
+                    && v1.position != neighbor.position
+                {
                     v1
                 } else if v2.position != center.position && v2.position != neighbor.position {
                     v2

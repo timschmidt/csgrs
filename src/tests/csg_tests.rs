@@ -505,7 +505,8 @@ fn test_csg_to_rigid_body() {
     assert!(approx_eq(pos.x, 10.0, tolerance()));
 }
 
-#[ignore = "TODO: impl Mesh::from_stl"] #[cfg(any())]
+#[ignore = "TODO: impl Mesh::from_stl"]
+#[cfg(any())]
 #[test]
 #[cfg(feature = "stl-io")]
 fn test_csg_to_stl_and_from_stl_file() -> Result<(), Box<dyn std::error::Error>> {

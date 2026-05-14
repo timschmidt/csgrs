@@ -9,11 +9,11 @@
 #![cfg_attr(doc, doc = doc_image_embed::embed_image!("Pre-ConvexHull demo image", "docs/convex_hull_before_nobackground.png"))]
 #![cfg_attr(doc, doc = doc_image_embed::embed_image!("ConvexHull demo image", "docs/convex_hull_nobackground.png"))]
 
+use crate::csg::CSG;
 use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
-use crate::csg::CSG;
 use chull::ConvexHullWrapper;
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;

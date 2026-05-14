@@ -128,4 +128,3 @@ fn test_flatten_and_union_debug() {
     let area = flattened.geometry.0[0].signed_area();
     assert!(area > 3.9, "Flattened cube too small");
 }
-

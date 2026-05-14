@@ -7,7 +7,7 @@
 //! standard apertures by constructing the swept aperture area.
 
 use crate::csg::CSG;
-use crate::float_types::{tolerance, Real, PI, TAU};
+use crate::float_types::{PI, Real, TAU, tolerance};
 use crate::sketch::Sketch;
 use geo::{Coord, Geometry, GeometryCollection, LineString, Polygon as GeoPolygon};
 use gerber_types::{
@@ -21,7 +21,7 @@ use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::fmt::Debug;
 use std::io::{BufReader, Cursor};
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use super::IoError;
 
@@ -57,7 +57,7 @@ pub trait FromGerber<S>: Sized {
 pub trait ToGerber {
     fn to_gerber(&self) -> Result<Vec<u8>, IoError>;
     fn to_gerber_with_options(&self, options: GerberExportOptions)
-        -> Result<Vec<u8>, IoError>;
+    -> Result<Vec<u8>, IoError>;
 }
 
 impl<S> FromGerber<S> for Sketch<S>
@@ -70,8 +70,8 @@ where
         let reader = BufReader::new(Cursor::new(gerber_data));
         let parsed = catch_unwind(AssertUnwindSafe(|| gerber_parser::parse(reader)))
             .map_err(|_| IoError::GerberParsing("Gerber parser panicked".to_string()))?;
-        let doc = parsed
-            .map_err(|(_doc, error)| IoError::GerberParsing(format!("{error:?}")))?;
+        let doc =
+            parsed.map_err(|(_doc, error)| IoError::GerberParsing(format!("{error:?}")))?;
 
         let errors = doc.errors();
         if !errors.is_empty() {

@@ -1,7 +1,7 @@
 use crate::sketch::Sketch;
-use nalgebra::Vector3;
 use crate::triangulated::Triangulated3D;
 use crate::vertex::Vertex;
+use nalgebra::Vector3;
 
 impl<S: Clone + Send + Sync + std::fmt::Debug> Triangulated3D for Sketch<S> {
     fn visit_triangles<F>(&self, mut f: F)
@@ -13,9 +13,18 @@ impl<S: Clone + Send + Sync + std::fmt::Debug> Triangulated3D for Sketch<S> {
 
         for tri in triangles_2d {
             f([
-                Vertex { position: tri[0], normal },
-                Vertex { position: tri[1], normal },
-                Vertex { position: tri[2], normal },
+                Vertex {
+                    position: tri[0],
+                    normal,
+                },
+                Vertex {
+                    position: tri[1],
+                    normal,
+                },
+                Vertex {
+                    position: tri[2],
+                    normal,
+                },
             ]);
         }
     }

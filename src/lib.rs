@@ -34,12 +34,12 @@
 pub mod errors;
 pub mod float_types;
 pub mod io;
-pub mod vertex;
-pub mod polygon;
 pub mod mesh;
 #[cfg(feature = "nurbs")]
 pub mod nurbs;
+pub mod polygon;
 pub mod sketch;
+pub mod vertex;
 
 #[cfg(feature = "offset")]
 pub mod toolpath;

@@ -1,12 +1,12 @@
 //! 3D Shapes as `Mesh`s
 
+use crate::csg::CSG;
 use crate::errors::ValidationError;
 use crate::float_types::{PI, Real, TAU, tolerance};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
-use crate::vertex::Vertex;
 use crate::sketch::Sketch;
-use crate::csg::CSG;
+use crate::vertex::Vertex;
 use nalgebra::{Matrix4, Point3, Rotation3, Translation3, Vector3};
 use std::fmt::Debug;
 

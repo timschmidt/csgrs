@@ -1,6 +1,6 @@
 //! Struct and functions for working with planar `Polygon`s without holes
 
-use crate::float_types::{parry3d::bounding_volume::Aabb, tolerance, Real};
+use crate::float_types::{Real, parry3d::bounding_volume::Aabb, tolerance};
 use crate::mesh::plane::Plane;
 use crate::vertex::Vertex;
 use nalgebra::{Point3, Vector3};
@@ -736,11 +736,7 @@ fn point_in_ring_2d(px: Real, py: Real, ring: &[geo::Coord<Real>]) -> bool {
 
         let denom = yj - yi;
         let denom_safe = if denom.abs() < eps {
-            if denom >= 0.0 {
-                eps
-            } else {
-                -eps
-            }
+            if denom >= 0.0 { eps } else { -eps }
         } else {
             denom
         };

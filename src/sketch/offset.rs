@@ -43,11 +43,11 @@
 //! to the planar projections stored in the geometry collection.
 use crate::float_types::Real;
 use crate::sketch::Sketch;
-use geo::{
-    algorithm::buffer::{BufferStyle, LineJoin},
-    Buffer, Coord, Geometry, GeometryCollection, LineString, MultiPolygon, Polygon,
-};
 use geo::algorithm::map_coords::MapCoords;
+use geo::{
+    Buffer, Coord, Geometry, GeometryCollection, LineString, MultiPolygon, Polygon,
+    algorithm::buffer::{BufferStyle, LineJoin},
+};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 

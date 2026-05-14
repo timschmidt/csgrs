@@ -1,10 +1,10 @@
 //! Provides a `MetaBall` struct and functions for creating a `Mesh` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
 
+use crate::csg::CSG;
 use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
-use crate::csg::CSG;
 use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;

@@ -1,11 +1,11 @@
 use csgrs::csg::CSG;
 use csgrs::float_types::{Real, tolerance};
+use csgrs::mesh::Mesh;
 use csgrs::mesh::metaballs::MetaBall;
 use csgrs::mesh::plane::Plane;
-use csgrs::mesh::Mesh;
 use csgrs::sketch::Sketch;
 use nalgebra::{Point2, Point3, Vector3};
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 
 fn assert_mesh_finite<S: Clone + Send + Sync + std::fmt::Debug>(mesh: &Mesh<S>) {
     for vertex in mesh.vertices() {
@@ -143,14 +143,21 @@ fn adversarial_stress_sdf_tpms_and_metaball_resolution_ladder() {
         let balls = (0..resolution.min(10))
             .map(|i| MetaBall::new(Point3::new(i as Real * 0.25, 0.0, 0.0), 0.5))
             .collect::<Vec<_>>();
-        let mesh_balls = Mesh::<()>::metaballs(&balls, (resolution, resolution, resolution), 0.5, 0.1, None);
+        let mesh_balls = Mesh::<()>::metaballs(
+            &balls,
+            (resolution, resolution, resolution),
+            0.5,
+            0.1,
+            None,
+        );
         assert_mesh_finite(&mesh_balls);
 
         let sketch_balls = balls
             .iter()
             .map(|ball| (Point2::new(ball.center.x, ball.center.y), ball.radius))
             .collect::<Vec<_>>();
-        let sketch = Sketch::<()>::metaballs(&sketch_balls, (resolution, resolution), 0.5, 0.1, None);
+        let sketch =
+            Sketch::<()>::metaballs(&sketch_balls, (resolution, resolution), 0.5, 0.1, None);
         assert_sketch_finite(&sketch);
     }
 }

@@ -94,4 +94,3 @@ fn test_circle_offset_2d() {
         "Offset with negative distance did not shrink the circle"
     );
 }
-

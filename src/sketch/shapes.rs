@@ -1,8 +1,8 @@
 //! 2D Shapes as `Sketch`s
 
+use crate::csg::CSG;
 use crate::float_types::{FRAC_PI_2, PI, Real, TAU, tolerance};
 use crate::sketch::Sketch;
-use crate::csg::CSG;
 use crate::vertex::Vertex;
 use geo::{
     BoundingRect, Contains, Geometry, GeometryCollection, LineString, Orient, Point,

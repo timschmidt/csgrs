@@ -12,8 +12,8 @@
 
 use csgrs::csg::CSG;
 use csgrs::float_types::Real;
-use csgrs::mesh::metaballs::MetaBall;
 use csgrs::mesh::Mesh;
+use csgrs::mesh::metaballs::MetaBall;
 use csgrs::polygon::Polygon;
 use csgrs::sketch::Sketch;
 use csgrs::vertex::Vertex;
