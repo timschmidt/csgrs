@@ -103,7 +103,9 @@ rich polygon, mesh, sketch, vertex, toolpath, or CSG types.
 - triangulation orchestration
 - smoothing, quality, manifold, and connectivity utilities
 - CNC/toolpath-facing types
-- import/export glue for STL, OBJ, PLY, DXF, Gerber, SVG, glTF, AMF, and WASM
+- import/export glue for STL, OBJ, PLY, DXF, Gerber, SVG, glTF, and AMF
+- WASM bindings and platform support as a compilation target, not as an input
+  or output file format
 - metadata propagation rules
 
 `csgrs` may re-export or alias lower-level point/vector/matrix types for user
@@ -1161,7 +1163,12 @@ Toolpath code depends heavily on topology and offsets:
 
 ### WASM tests
 
-WASM bindings must preserve the Rust API contract:
+WASM is a supported compilation target and JS binding surface, not a geometry
+file format. `csgrs` should never treat `.wasm` as an import/export format for
+models; the only produced WASM artifact is the compiled library/bindings.
+
+WASM bindings must preserve the Rust API contract while respecting browser and
+wasm32 platform constraints:
 
 - constructor parity between Rust and JS-facing APIs
 - boolean parity for small fixtures
@@ -1173,6 +1180,34 @@ WASM bindings must preserve the Rust API contract:
 - feature-gated functions unavailable when their features are off
 - wasm-pack build smoke tests
 - browser-side snapshot tests for representative APIs where practical
+- limited stack depth:
+  - avoid recursive BSP, polygon splitting, contour traversal, and repair paths
+    that can overflow the smaller wasm stack on adversarial inputs
+  - add deep-tree and deeply nested geometry tests under wasm32
+  - prefer iterative work queues or explicit recursion limits at JS-callable
+    boundaries
+- bounded linear memory growth:
+  - reject or report oversized typed arrays before allocation where practical
+  - test large-but-valid meshes, sketches, and imports for predictable memory
+    behavior
+  - ensure caches, triangulation scratch buffers, and boolean temporaries are
+    dropped or reusable after JS-visible operations
+- panic and error behavior:
+  - no public WASM API should depend on unwinding across the JS boundary
+  - convert invalid inputs, unsupported features, and allocation-size guards into
+    stable JS errors
+  - fuzz JS-facing typed-array parsers for wrong lengths, NaN, infinities,
+    negative indices, huge indices, and detached/empty arrays
+- platform feature constraints:
+  - no filesystem assumptions in browser builds
+  - no thread/rayon assumptions unless wasm threads are explicitly enabled
+  - deterministic output despite platform differences in timers, JS number
+    conversion, and optional SIMD/thread support
+- file-format boundary:
+  - STL/OBJ/PLY/DXF/SVG/Gerber/glTF/AMF parsing and writing may be exposed to
+    JS as ordinary library functions where features permit
+  - compiled WASM itself is not a model interchange format and should not appear
+    in IO format lists, import/export matrices, or geometry fixture manifests
 
 ### Caches and acceleration structure tests
 
@@ -1702,6 +1737,8 @@ Show-off examples:
   how to handle it.
 - Metadata behavior remains entirely owned by `csgrs`.
 - IO formats should not leak lower-stack internals into public file APIs.
+- WASM is a supported platform target and binding layer, not a consumed or
+  produced geometry file format.
 - Avoid moving a type downward just because it contains coordinates.
 - Avoid making `hyperlimit` responsible for CSG concepts such as polygon
   splitting policy or manifold repair.
@@ -1737,6 +1774,8 @@ This gives an early robustness win without forcing a broad public API rewrite.
 - Do not move `Mesh<S>` or `Sketch<S>` into the lower stack.
 - Do not make `hyperlimit` a mesh-processing crate.
 - Do not make `hyperlattice` aware of file formats or CSG operations.
+- Do not list WASM as a geometry file format; it is only a compilation target
+  and binding artifact for the library.
 - Do not expose backend generics everywhere until the ergonomics are proven.
 - Do not remove `nalgebra` interop until replacement ergonomics are clearly
   better for existing users.
