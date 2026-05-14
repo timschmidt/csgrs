@@ -1,0 +1,8 @@
+feature_flags: default image-io
+real_type: f64
+operation_sequence: Sketch::from_image(GrayImage::new(0, 0), threshold=128, closepaths=true)
+input_coordinates: empty raster dimensions 0x0
+metadata: image
+expected_behavior: Empty sketch or contained panic; no later adversarial tests should be skipped.
+observed_behavior: contour_tracing can panic on an empty array, so tests wrap this constructor in catch_unwind.
+normalized_geometry_summary: empty or absent geometry, no finite-coordinate violations if construction succeeds.

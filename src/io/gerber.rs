@@ -21,6 +21,7 @@ use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::fmt::Debug;
 use std::io::{BufReader, Cursor};
+use std::panic::{catch_unwind, AssertUnwindSafe};
 
 use super::IoError;
 
@@ -64,8 +65,12 @@ where
     S: Clone + Debug + Send + Sync,
 {
     fn from_gerber(gerber_data: &[u8], metadata: Option<S>) -> Result<Self, IoError> {
+        preflight_gerber_input(gerber_data)?;
+
         let reader = BufReader::new(Cursor::new(gerber_data));
-        let doc = gerber_parser::parse(reader)
+        let parsed = catch_unwind(AssertUnwindSafe(|| gerber_parser::parse(reader)))
+            .map_err(|_| IoError::GerberParsing("Gerber parser panicked".to_string()))?;
+        let doc = parsed
             .map_err(|(_doc, error)| IoError::GerberParsing(format!("{error:?}")))?;
 
         let errors = doc.errors();
@@ -86,6 +91,26 @@ where
 
         Ok(state.sketch)
     }
+}
+
+fn preflight_gerber_input(gerber_data: &[u8]) -> Result<(), IoError> {
+    let text = std::str::from_utf8(gerber_data)
+        .map_err(|error| IoError::GerberParsing(format!("Invalid UTF-8: {error}")))?;
+
+    for line in text.lines() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+
+        if !line.contains('*') {
+            return Err(IoError::GerberParsing(format!(
+                "Gerber command is missing terminator: {line:?}"
+            )));
+        }
+    }
+
+    Ok(())
 }
 
 impl<S> ToGerber for Sketch<S>

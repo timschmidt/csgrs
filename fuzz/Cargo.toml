@@ -1,0 +1,147 @@
+[package]
+name = "csgrs-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+csgrs = { path = ".." }
+libfuzzer-sys = "0.4"
+nalgebra = "0.34.1"
+hashbrown = "0.15"
+
+[[bin]]
+name = "fuzz_mesh_bytecode"
+path = "fuzz_targets/fuzz_mesh_bytecode.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_sketch_polygon_triangulate"
+path = "fuzz_targets/fuzz_sketch_polygon_triangulate.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_obj_import"
+path = "fuzz_targets/fuzz_obj_import.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_svg_import"
+path = "fuzz_targets/fuzz_svg_import.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_gerber_import"
+path = "fuzz_targets/fuzz_gerber_import.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_transform_matrix"
+path = "fuzz_targets/fuzz_transform_matrix.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_export_names"
+path = "fuzz_targets/fuzz_export_names.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_dxf_import"
+path = "fuzz_targets/fuzz_dxf_import.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_plane_split_polygon"
+path = "fuzz_targets/fuzz_plane_split_polygon.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_toolpath_from_sketch"
+path = "fuzz_targets/fuzz_toolpath_from_sketch.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_mesh_primitive_catalog"
+path = "fuzz_targets/fuzz_mesh_primitive_catalog.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_sketch_shape_catalog"
+path = "fuzz_targets/fuzz_sketch_shape_catalog.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_sdf_tpms"
+path = "fuzz_targets/fuzz_sdf_tpms.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_vertex_arithmetic"
+path = "fuzz_targets/fuzz_vertex_arithmetic.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_sketch_extrude_revolve_sweep"
+path = "fuzz_targets/fuzz_sketch_extrude_revolve_sweep.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_mesh_polyhedron_constructor"
+path = "fuzz_targets/fuzz_mesh_polyhedron_constructor.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_mesh_boolean_pair"
+path = "fuzz_targets/fuzz_mesh_boolean_pair.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_sketch_boolean_pair"
+path = "fuzz_targets/fuzz_sketch_boolean_pair.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_vertex_quality"
+path = "fuzz_targets/fuzz_vertex_quality.rs"
+test = false
+doc = false
+bench = false

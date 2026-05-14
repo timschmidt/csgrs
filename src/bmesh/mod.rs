@@ -3,11 +3,8 @@
 //! This type wraps a `boolmesh::Manifold` and implements the `CSG` trait,
 //! so you can use boolmesh’s robust boolean kernel inside csgrs.
 
-use crate::float_types::{
-    parry3d::bounding_volume::Aabb,
-    Real,
-};
 use crate::csg::CSG;
+use crate::float_types::{parry3d::bounding_volume::Aabb, Real};
 
 use boolmesh::{
     compute_boolean,
@@ -74,18 +71,17 @@ impl<S: Clone + Send + Sync + Debug> BMesh<S> {
 
             // Ø op B
             (None, Some(_)) => match op {
-                Add => other.clone(),           // Ø ∪ B = B
-                Subtract => BMesh::new(),       // Ø − B = Ø
-                Intersect => BMesh::new(),      // Ø ∩ B = Ø
+                Add => other.clone(),      // Ø ∪ B = B
+                Subtract => BMesh::new(),  // Ø − B = Ø
+                Intersect => BMesh::new(), // Ø ∩ B = Ø
             },
 
             // A op B, both non-empty
             (Some(mp), Some(mq)) => {
-                let m = compute_boolean(mp, mq, op)
-                    .unwrap_or_else(|e| {
-                        // We may want to change this to a different error strategy.
-                        panic!("BMesh boolean operation failed: {e}");
-                    });
+                let m = compute_boolean(mp, mq, op).unwrap_or_else(|e| {
+                    // We may want to change this to a different error strategy.
+                    panic!("BMesh boolean operation failed: {e}");
+                });
 
                 // Follow `Mesh` semantics: keep left-hand side metadata.
                 BMesh {
@@ -93,7 +89,7 @@ impl<S: Clone + Send + Sync + Debug> BMesh<S> {
                     bounding_box: OnceLock::new(),
                     metadata: self.metadata.clone(),
                 }
-            }
+            },
         }
     }
 
@@ -104,15 +100,15 @@ impl<S: Clone + Send + Sync + Debug> BMesh<S> {
         let m = self.manifold.as_ref()?;
 
         // Flatten transformed positions
-        let mut pos: Vec<Real> = Vec::with_capacity(m.ps.len() * 3);
+        let mut pos: Vec<boolmesh::Real> = Vec::with_capacity(m.ps.len() * 3);
         for v in &m.ps {
-            let p = Point3::new(v.x, v.y, v.z);
+            let p = Point3::new(v.x as Real, v.y as Real, v.z as Real);
             let hp = mat * p.to_homogeneous();
             // If homogeneous w is invalid, fall back to original position.
             let p_t = Point3::from_homogeneous(hp).unwrap_or(p);
-            pos.push(p_t.x);
-            pos.push(p_t.y);
-            pos.push(p_t.z);
+            pos.push(p_t.x as boolmesh::Real);
+            pos.push(p_t.y as boolmesh::Real);
+            pos.push(p_t.z as boolmesh::Real);
         }
 
         // Reuse the current triangle connectivity.
@@ -124,22 +120,20 @@ impl<S: Clone + Send + Sync + Debug> BMesh<S> {
             idx.push(m.hs[base + 2].tail);
         }
 
-        Some(
-            Manifold::new(&pos, &idx).unwrap_or_else(|e| {
-                panic!("BMesh::transform – boolmesh::Manifold::new failed: {e}");
-            }),
-        )
+        Some(Manifold::new(&pos, &idx).unwrap_or_else(|e| {
+            panic!("BMesh::transform – boolmesh::Manifold::new failed: {e}");
+        }))
     }
 
     /// Rebuild a manifold with flipped triangle winding (geometric complement).
     fn inverted_manifold(&self) -> Option<Manifold> {
         let m = self.manifold.as_ref()?;
 
-        let mut pos: Vec<Real> = Vec::with_capacity(m.ps.len() * 3);
+        let mut pos: Vec<boolmesh::Real> = Vec::with_capacity(m.ps.len() * 3);
         for v in &m.ps {
-            pos.push(v.x);
-            pos.push(v.y);
-            pos.push(v.z);
+            pos.push(v.x as boolmesh::Real);
+            pos.push(v.y as boolmesh::Real);
+            pos.push(v.z as boolmesh::Real);
         }
 
         // Flip orientation: (v0, v1, v2) -> (v0, v2, v1)
@@ -154,11 +148,9 @@ impl<S: Clone + Send + Sync + Debug> BMesh<S> {
             idx.push(v1);
         }
 
-        Some(
-            Manifold::new(&pos, &idx).unwrap_or_else(|e| {
-                panic!("BMesh::inverse – boolmesh::Manifold::new failed: {e}");
-            }),
-        )
+        Some(Manifold::new(&pos, &idx).unwrap_or_else(|e| {
+            panic!("BMesh::inverse – boolmesh::Manifold::new failed: {e}");
+        }))
     }
 }
 
@@ -216,8 +208,8 @@ impl<S: Clone + Send + Sync + Debug> CSG for BMesh<S> {
         *self.bounding_box.get_or_init(|| {
             if let Some(m) = &self.manifold {
                 let bb = &m.bounding_box;
-                let mins = Point3::new(bb.min.x, bb.min.y, bb.min.z);
-                let maxs = Point3::new(bb.max.x, bb.max.y, bb.max.z);
+                let mins = Point3::new(bb.min.x as Real, bb.min.y as Real, bb.min.z as Real);
+                let maxs = Point3::new(bb.max.x as Real, bb.max.y as Real, bb.max.z as Real);
                 Aabb::new(mins, maxs)
             } else {
                 Aabb::new(Point3::origin(), Point3::origin())
@@ -251,6 +243,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for BMesh<S> {
     }
 }
 
+#[cfg(feature = "mesh")]
 impl<S: Clone + Send + Sync + Debug> From<Mesh<S>> for BMesh<S> {
     fn from(mesh: Mesh<S>) -> Self {
         // Keep the metadata from the original mesh

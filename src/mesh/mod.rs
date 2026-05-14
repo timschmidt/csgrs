@@ -802,7 +802,12 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
                 }
 
                 // Transform normal using inverse transpose rule
-                vert.normal = mat_inv_transpose.transform_vector(&vert.normal).normalize();
+                let transformed_normal = mat_inv_transpose.transform_vector(&vert.normal);
+                if transformed_normal.iter().all(|coord| coord.is_finite()) {
+                    if let Some(normal) = transformed_normal.try_normalize(tolerance()) {
+                        vert.normal = normal;
+                    }
+                }
             }
 
             // Reconstruct plane from transformed vertices for consistency

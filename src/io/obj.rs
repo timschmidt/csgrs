@@ -225,15 +225,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         let mut face_vertices = Vec::new();
         for part in face_parts {
             let indices: Vec<&str> = part.split('/').collect();
-            let vertex_idx: usize = indices[0]
-                .parse::<usize>()
-                .map_err(|e| {
-                    std::io::Error::new(
-                        std::io::ErrorKind::InvalidData,
-                        format!("Invalid vertex index: {e}"),
-                    )
-                })?
-                - 1;
+            let vertex_idx = parse_obj_positive_index(indices[0], "vertex")?;
             if vertex_idx >= vertices.len() {
                 return Err(std::io::Error::new(
                     std::io::ErrorKind::InvalidData,
@@ -242,15 +234,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             }
             let position = vertices[vertex_idx];
             let normal = if indices.len() >= 3 && !indices[2].is_empty() {
-                let normal_idx: usize = indices[2]
-                    .parse::<usize>()
-                    .map_err(|e| {
-                        std::io::Error::new(
-                            std::io::ErrorKind::InvalidData,
-                            format!("Invalid normal index: {e}"),
-                        )
-                    })?
-                    - 1;
+                let normal_idx = parse_obj_positive_index(indices[2], "normal")?;
                 if normal_idx >= normals.len() {
                     return Err(std::io::Error::new(
                         std::io::ErrorKind::InvalidData,
@@ -265,6 +249,22 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         }
         Ok(face_vertices)
     }
+}
+
+fn parse_obj_positive_index(raw: &str, label: &str) -> std::io::Result<usize> {
+    let index = raw.parse::<usize>().map_err(|e| {
+        std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!("Invalid {label} index: {e}"),
+        )
+    })?;
+
+    index.checked_sub(1).ok_or_else(|| {
+        std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!("Invalid {label} index: OBJ indices are 1-based"),
+        )
+    })
 }
 
 impl<S: Clone + Debug + Send + Sync> Sketch<S> {

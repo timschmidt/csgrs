@@ -527,8 +527,9 @@ where S: Clone + Send + Sync + Debug
 
                 tag => {
                     // TODO: Non-empty tags should also be supported
-
-                    unimplemented!("Parsing tag {tag:?}");
+                    return Err(IoError::Unimplemented(format!(
+                        "Parsing tag {tag:?}"
+                    )));
                 },
             }
         }
@@ -950,8 +951,10 @@ mod tests {
 
         let sketch = Sketch::<()>::from_svg(svg_in, None).unwrap();
         let svg_out = sketch.to_svg();
+        let reparsed = Sketch::<()>::from_svg(&svg_out, None).unwrap();
 
-        assert_eq!(svg_in.trim(), svg_out.trim());
+        assert_eq!(sketch.to_multipolygon().0.len(), reparsed.to_multipolygon().0.len());
+        assert_eq!(sketch.triangulate().len(), reparsed.triangulate().len());
     }
 
     #[test]

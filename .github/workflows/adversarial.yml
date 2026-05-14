@@ -1,0 +1,21 @@
+name: Adversarial
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  adversarial:
+    name: Adversarial suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rust/Cargo Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run adversarial checks
+        run: bash scripts/adversarial.sh
+
+      - name: Run medium adversarial checks
+        run: bash scripts/adversarial-medium.sh

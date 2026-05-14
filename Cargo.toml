@@ -202,3 +202,6 @@ wasm = [
   "earcutr",
 ]
 spade = ["dep:spade"]
+
+[dev-dependencies]
+proptest = "1.9"

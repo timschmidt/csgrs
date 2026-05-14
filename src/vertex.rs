@@ -171,8 +171,12 @@ impl Vertex {
     ///
     /// Returns angle in radians [0, π].
     pub fn normal_angle_to(&self, other: &Vertex) -> Real {
-        let n1 = self.normal.normalize();
-        let n2 = other.normal.normalize();
+        let Some(n1) = self.normal.try_normalize(tolerance()) else {
+            return 0.0;
+        };
+        let Some(n2) = other.normal.try_normalize(tolerance()) else {
+            return 0.0;
+        };
         let cos_angle = n1.dot(&n2).clamp(-1.0, 1.0);
         cos_angle.acos()
     }

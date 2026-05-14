@@ -26,10 +26,12 @@ Thumbs.db
 stl/
 outputs/
 target/
+fuzz/target/
+fuzz/artifacts/
+fuzz/corpus/
 xtask/target/
 pkg/
 *.stl
 *.obj
 *.amf
 *.ply
-
