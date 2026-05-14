@@ -14,6 +14,15 @@ approximate predicate behavior, porting the same predicate surface to
 `hyperreal` becomes a backend upgrade instead of a simultaneous semantic and API
 rewrite.
 
+The approximate f64 phase should evaluate
+[`decorum`](https://github.com/olson-sean-k/decorum) as a bridge for making
+floating-point behavior explicit before the full `hyperreal` port. `decorum`
+provides constrained IEEE-754 proxy types with total ordering, equivalence,
+hashing, configurable handling of non-real values, and `approx` integration.
+Those properties map directly to several current `csgrs` pain points: finite
+coordinate enforcement, deterministic map/set keys, explicit NaN/infinity
+policy, and centralized approximate comparisons.
+
 ## Target ownership model
 
 The stack should have clear vertical responsibilities:
@@ -244,6 +253,13 @@ for `csgrs`'s current f64 system.
 This backend should:
 
 - accept current `csgrs` f64-like coordinate data through adapters
+- evaluate `decorum` constrained f64 proxy types for the approximate backend's
+  scalar carrier, especially where finite-real invariants, total ordering,
+  equality, hashing, or `approx` traits are required
+- use `decorum` at adapter and predicate boundaries first, not as a broad public
+  API replacement for `Real`
+- make the NaN/infinity policy explicit: reject, sanitize, or propagate
+  uncertainty deliberately instead of relying on primitive f64 behavior
 - expose the predicate results `csgrs` needs without exposing CSG policy
 - represent uncertainty explicitly
 - support the current classification cases, including `COPLANAR`, `FRONT`,
@@ -255,6 +271,12 @@ After this phase, `hyperlimit` should be able to replace the f64/epsilon
 predicate machinery in `csgrs` without requiring a full scalar or public API
 port.
 
+`decorum` should remain a transition and evaluation tool unless it proves to be
+the right implementation detail for the approximate backend. The long-term
+numeric ownership model still routes scalar semantics through `hyperreal`; any
+`decorum` use should either disappear behind `hyperlimit`/`hyperlattice`
+backend traits or become an internal f64 compatibility backend.
+
 ### Phase 4: Introduce explicit adapter boundaries
 
 Add internal conversion helpers between current `csgrs` numeric types and the
@@ -262,6 +284,8 @@ new stack:
 
 - `nalgebra::Point2<Real>` to `hyperlimit::Point2<RealLike>`
 - `nalgebra::Point3<Real>` to `hyperlimit::Point3<RealLike>`
+- primitive `Real` values to finite, ordered approximate scalar wrappers
+  considered in Phase 3, including any `decorum`-backed candidate
 - `mesh::plane::Plane` to oriented point triples or `hyperlimit::Plane3`
 - `nalgebra::Matrix4<Real>` to the chosen `hyperlattice` transform type once
   that API is stable enough
@@ -306,6 +330,11 @@ throughout the codebase, route them through `float_types` or a successor module:
 
 This makes the eventual switch from `nalgebra`-centered internals to
 `hyperlattice` incremental instead of global.
+
+During the approximate f64 phase, the successor module may expose internal
+aliases for `decorum`-backed finite/ordered f64 wrappers where deterministic
+ordering or hashing is needed. These aliases should remain private or clearly
+experimental until the public scalar story is settled.
 
 ### Phase 7: Port transforms and constructors
 
