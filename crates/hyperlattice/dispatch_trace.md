@@ -201,9 +201,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/approx/complex div refs` | `hyperlattice` | `scalar_op` | `mul-ref-ref` | 24 |
 | `borrowed_ops/approx/complex div refs` | `hyperlattice` | `scalar_op` | `sub-owned-owned` | 4 |
 | `borrowed_ops/approx/complex div refs` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `borrowed_ops/approx/complex div refs` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `borrowed_ops/approx/complex div refs` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `borrowed_ops/approx/complex div refs` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `borrowed_ops/approx/complex div refs` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 24 |
 | `borrowed_ops/approx/complex div refs` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 4 |
 | `borrowed_ops/approx/complex div refs` | `hyperlattice_approx_backend` | `query` | `zero-status` | 4 |
@@ -241,10 +239,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/approx/mat3 div refs` | `hyperlattice` | `scalar_query` | `zero-status` | 12 |
 | `borrowed_ops/approx/mat3 div refs` | `hyperlattice` | `zero_status` | `scalar-query` | 12 |
 | `borrowed_ops/approx/mat3 div refs` | `hyperlattice_approx_backend` | `constructor` | `new` | 12 |
-| `borrowed_ops/approx/mat3 div refs` | `hyperlattice_approx_backend` | `constructor` | `one` | 24 |
+| `borrowed_ops/approx/mat3 div refs` | `hyperlattice_approx_backend` | `constructor` | `one` | 12 |
 | `borrowed_ops/approx/mat3 div refs` | `hyperlattice_approx_backend` | `constructor` | `zero` | 168 |
 | `borrowed_ops/approx/mat3 div refs` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 12 |
-| `borrowed_ops/approx/mat3 div refs` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 12 |
 | `borrowed_ops/approx/mat3 div refs` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 96 |
 | `borrowed_ops/approx/mat3 div refs` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 12 |
 | `borrowed_ops/approx/mat3 div refs` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 80 |
@@ -260,9 +257,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/approx/mat3 div_scalar_ref` | `hyperlattice` | `scalar_query` | `definitely-zero` | 4 |
 | `borrowed_ops/approx/mat3 div_scalar_ref` | `hyperlattice` | `zero_guard` | `not-definitely-zero` | 4 |
 | `borrowed_ops/approx/mat3 div_scalar_ref` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `borrowed_ops/approx/mat3 div_scalar_ref` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `borrowed_ops/approx/mat3 div_scalar_ref` | `hyperlattice_approx_backend` | `method` | `inverse-ref` | 4 |
-| `borrowed_ops/approx/mat3 div_scalar_ref` | `hyperlattice_approx_backend` | `op` | `div-ref-ref` | 4 |
 | `borrowed_ops/approx/mat3 div_scalar_ref` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 8 |
 | `borrowed_ops/approx/mat3 div_scalar_ref` | `hyperlattice_approx_backend` | `query` | `zero-status` | 4 |
 | `borrowed_ops/approx/mat3 div_scalar_ref` | `hyperlattice_approx_backend` | `trait_op` | `mul-owned-owned` | 36 |
@@ -306,10 +301,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/approx/mat4 div refs` | `hyperlattice` | `scalar_query` | `zero-status` | 27 |
 | `borrowed_ops/approx/mat4 div refs` | `hyperlattice` | `zero_status` | `scalar-query` | 16 |
 | `borrowed_ops/approx/mat4 div refs` | `hyperlattice_approx_backend` | `constructor` | `new` | 16 |
-| `borrowed_ops/approx/mat4 div refs` | `hyperlattice_approx_backend` | `constructor` | `one` | 32 |
+| `borrowed_ops/approx/mat4 div refs` | `hyperlattice_approx_backend` | `constructor` | `one` | 16 |
 | `borrowed_ops/approx/mat4 div refs` | `hyperlattice_approx_backend` | `constructor` | `zero` | 392 |
 | `borrowed_ops/approx/mat4 div refs` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 16 |
-| `borrowed_ops/approx/mat4 div refs` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 16 |
 | `borrowed_ops/approx/mat4 div refs` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 257 |
 | `borrowed_ops/approx/mat4 div refs` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 16 |
 | `borrowed_ops/approx/mat4 div refs` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 147 |
@@ -325,9 +319,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/approx/mat4 div_scalar_ref` | `hyperlattice` | `scalar_query` | `definitely-zero` | 4 |
 | `borrowed_ops/approx/mat4 div_scalar_ref` | `hyperlattice` | `zero_guard` | `not-definitely-zero` | 4 |
 | `borrowed_ops/approx/mat4 div_scalar_ref` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `borrowed_ops/approx/mat4 div_scalar_ref` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `borrowed_ops/approx/mat4 div_scalar_ref` | `hyperlattice_approx_backend` | `method` | `inverse-ref` | 4 |
-| `borrowed_ops/approx/mat4 div_scalar_ref` | `hyperlattice_approx_backend` | `op` | `div-ref-ref` | 4 |
 | `borrowed_ops/approx/mat4 div_scalar_ref` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 8 |
 | `borrowed_ops/approx/mat4 div_scalar_ref` | `hyperlattice_approx_backend` | `query` | `zero-status` | 4 |
 | `borrowed_ops/approx/mat4 div_scalar_ref` | `hyperlattice_approx_backend` | `trait_op` | `mul-owned-owned` | 64 |
@@ -402,9 +394,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/approx/vec3 div_scalar_ref` | `hyperlattice` | `scalar_query` | `definitely-zero` | 4 |
 | `borrowed_ops/approx/vec3 div_scalar_ref` | `hyperlattice` | `zero_guard` | `not-definitely-zero` | 4 |
 | `borrowed_ops/approx/vec3 div_scalar_ref` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `borrowed_ops/approx/vec3 div_scalar_ref` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `borrowed_ops/approx/vec3 div_scalar_ref` | `hyperlattice_approx_backend` | `method` | `inverse-ref` | 4 |
-| `borrowed_ops/approx/vec3 div_scalar_ref` | `hyperlattice_approx_backend` | `op` | `div-ref-ref` | 4 |
 | `borrowed_ops/approx/vec3 div_scalar_ref` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 8 |
 | `borrowed_ops/approx/vec3 div_scalar_ref` | `hyperlattice_approx_backend` | `query` | `zero-status` | 4 |
 | `borrowed_ops/approx/vec3 div_scalar_ref` | `hyperlattice_approx_backend` | `trait_op` | `mul-owned-owned` | 12 |
@@ -425,9 +415,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/approx/vec4 div_scalar_ref` | `hyperlattice` | `scalar_query` | `definitely-zero` | 4 |
 | `borrowed_ops/approx/vec4 div_scalar_ref` | `hyperlattice` | `zero_guard` | `not-definitely-zero` | 4 |
 | `borrowed_ops/approx/vec4 div_scalar_ref` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `borrowed_ops/approx/vec4 div_scalar_ref` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `borrowed_ops/approx/vec4 div_scalar_ref` | `hyperlattice_approx_backend` | `method` | `inverse-ref` | 4 |
-| `borrowed_ops/approx/vec4 div_scalar_ref` | `hyperlattice_approx_backend` | `op` | `div-ref-ref` | 4 |
 | `borrowed_ops/approx/vec4 div_scalar_ref` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 8 |
 | `borrowed_ops/approx/vec4 div_scalar_ref` | `hyperlattice_approx_backend` | `query` | `zero-status` | 4 |
 | `borrowed_ops/approx/vec4 div_scalar_ref` | `hyperlattice_approx_backend` | `trait_op` | `mul-owned-owned` | 16 |
@@ -1063,6 +1051,80 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/hyperreal/vec4 sub refs` | `hyperlattice_vector` | `op` | `sub-ref-ref` | 4 |
 | `borrowed_ops/hyperreal/vec4 sub refs` | `real` | `constructor` | `rational` | 15 |
 | `borrowed_ops/hyperreal/vec4 sub refs` | `real` | `constructor` | `zero` | 1 |
+| `complex_ops/approx/powi` | `hyperlattice` | `scalar_op` | `add-owned-owned` | 12 |
+| `complex_ops/approx/powi` | `hyperlattice` | `scalar_op` | `mul-ref-ref` | 48 |
+| `complex_ops/approx/powi` | `hyperlattice` | `scalar_op` | `sub-owned-owned` | 12 |
+| `complex_ops/approx/powi` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 48 |
+| `complex_ops/approx/powi` | `hyperlattice_approx_backend` | `trait_op` | `add-owned-owned` | 12 |
+| `complex_ops/approx/powi` | `hyperlattice_approx_backend` | `trait_op` | `sub-owned-owned` | 12 |
+| `complex_ops/approx/powi` | `hyperlattice_complex` | `constructor` | `new` | 12 |
+| `complex_ops/approx/powi` | `hyperlattice_complex` | `method` | `powi` | 4 |
+| `complex_ops/approx/powi` | `hyperlattice_complex` | `op` | `mul-owned-owned` | 12 |
+| `complex_ops/approx/powi` | `hyperlattice_complex` | `powi` | `mul-direct` | 12 |
+| `complex_ops/approx/powi` | `hyperlattice_complex` | `powi` | `specialized-fifth` | 4 |
+| `complex_ops/approx/powi_checked` | `hyperlattice` | `scalar_op` | `add-owned-owned` | 12 |
+| `complex_ops/approx/powi_checked` | `hyperlattice` | `scalar_op` | `mul-ref-ref` | 48 |
+| `complex_ops/approx/powi_checked` | `hyperlattice` | `scalar_op` | `sub-owned-owned` | 12 |
+| `complex_ops/approx/powi_checked` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 48 |
+| `complex_ops/approx/powi_checked` | `hyperlattice_approx_backend` | `trait_op` | `add-owned-owned` | 12 |
+| `complex_ops/approx/powi_checked` | `hyperlattice_approx_backend` | `trait_op` | `sub-owned-owned` | 12 |
+| `complex_ops/approx/powi_checked` | `hyperlattice_complex` | `constructor` | `new` | 12 |
+| `complex_ops/approx/powi_checked` | `hyperlattice_complex` | `method` | `powi-checked` | 4 |
+| `complex_ops/approx/powi_checked` | `hyperlattice_complex` | `op` | `mul-owned-owned` | 12 |
+| `complex_ops/approx/powi_checked` | `hyperlattice_complex` | `powi` | `mul-direct` | 12 |
+| `complex_ops/approx/powi_checked` | `hyperlattice_complex` | `powi` | `specialized-fifth` | 4 |
+| `complex_ops/hyperreal-rational/powi` | `hyperlattice` | `scalar_fast_path` | `active-signed-product-sum2` | 24 |
+| `complex_ops/hyperreal-rational/powi` | `hyperlattice_complex` | `constructor` | `new` | 12 |
+| `complex_ops/hyperreal-rational/powi` | `hyperlattice_complex` | `method` | `powi` | 4 |
+| `complex_ops/hyperreal-rational/powi` | `hyperlattice_complex` | `op` | `mul-components-fused-exact` | 12 |
+| `complex_ops/hyperreal-rational/powi` | `hyperlattice_complex` | `powi` | `mul-fused-exact` | 12 |
+| `complex_ops/hyperreal-rational/powi` | `hyperlattice_complex` | `powi` | `specialized-fifth` | 4 |
+| `complex_ops/hyperreal-rational/powi` | `hyperlattice_hyperreal_backend` | `op` | `active-signed-product-sum2-exact-rational` | 24 |
+| `complex_ops/hyperreal-rational/powi` | `rational` | `product_sum` | `all-zero` | 1 |
+| `complex_ops/hyperreal-rational/powi` | `rational` | `product_sum` | `dyadic-shared-denominator` | 12 |
+| `complex_ops/hyperreal-rational/powi` | `rational` | `product_sum` | `equal-product-denominator` | 5 |
+| `complex_ops/hyperreal-rational/powi` | `rational` | `product_sum` | `lcm-shared-denominator` | 3 |
+| `complex_ops/hyperreal-rational/powi` | `rational` | `product_sum` | `single-term-product` | 3 |
+| `complex_ops/hyperreal-rational/powi` | `real` | `constructor` | `rational` | 24 |
+| `complex_ops/hyperreal-rational/powi` | `real` | `product_sum` | `exact-rational-shared-denom` | 24 |
+| `complex_ops/hyperreal-rational/powi_checked` | `hyperlattice` | `scalar_fast_path` | `active-signed-product-sum2` | 24 |
+| `complex_ops/hyperreal-rational/powi_checked` | `hyperlattice_complex` | `constructor` | `new` | 12 |
+| `complex_ops/hyperreal-rational/powi_checked` | `hyperlattice_complex` | `method` | `powi-checked` | 4 |
+| `complex_ops/hyperreal-rational/powi_checked` | `hyperlattice_complex` | `op` | `mul-components-fused-exact` | 12 |
+| `complex_ops/hyperreal-rational/powi_checked` | `hyperlattice_complex` | `powi` | `mul-fused-exact` | 12 |
+| `complex_ops/hyperreal-rational/powi_checked` | `hyperlattice_complex` | `powi` | `specialized-fifth` | 4 |
+| `complex_ops/hyperreal-rational/powi_checked` | `hyperlattice_hyperreal_backend` | `op` | `active-signed-product-sum2-exact-rational` | 24 |
+| `complex_ops/hyperreal-rational/powi_checked` | `rational` | `product_sum` | `all-zero` | 1 |
+| `complex_ops/hyperreal-rational/powi_checked` | `rational` | `product_sum` | `dyadic-shared-denominator` | 12 |
+| `complex_ops/hyperreal-rational/powi_checked` | `rational` | `product_sum` | `equal-product-denominator` | 5 |
+| `complex_ops/hyperreal-rational/powi_checked` | `rational` | `product_sum` | `lcm-shared-denominator` | 3 |
+| `complex_ops/hyperreal-rational/powi_checked` | `rational` | `product_sum` | `single-term-product` | 3 |
+| `complex_ops/hyperreal-rational/powi_checked` | `real` | `constructor` | `rational` | 24 |
+| `complex_ops/hyperreal-rational/powi_checked` | `real` | `product_sum` | `exact-rational-shared-denom` | 24 |
+| `complex_ops/hyperreal/powi` | `hyperlattice` | `scalar_fast_path` | `active-signed-product-sum2` | 24 |
+| `complex_ops/hyperreal/powi` | `hyperlattice_complex` | `constructor` | `new` | 12 |
+| `complex_ops/hyperreal/powi` | `hyperlattice_complex` | `method` | `powi` | 4 |
+| `complex_ops/hyperreal/powi` | `hyperlattice_complex` | `op` | `mul-components-fused-exact` | 12 |
+| `complex_ops/hyperreal/powi` | `hyperlattice_complex` | `powi` | `mul-fused-exact` | 12 |
+| `complex_ops/hyperreal/powi` | `hyperlattice_complex` | `powi` | `specialized-fifth` | 4 |
+| `complex_ops/hyperreal/powi` | `hyperlattice_hyperreal_backend` | `op` | `active-signed-product-sum2-exact-rational` | 24 |
+| `complex_ops/hyperreal/powi` | `rational` | `product_sum` | `all-zero` | 1 |
+| `complex_ops/hyperreal/powi` | `rational` | `product_sum` | `dyadic-shared-denominator` | 20 |
+| `complex_ops/hyperreal/powi` | `rational` | `product_sum` | `single-term-product` | 3 |
+| `complex_ops/hyperreal/powi` | `real` | `constructor` | `rational` | 24 |
+| `complex_ops/hyperreal/powi` | `real` | `product_sum` | `exact-rational-shared-denom` | 24 |
+| `complex_ops/hyperreal/powi_checked` | `hyperlattice` | `scalar_fast_path` | `active-signed-product-sum2` | 24 |
+| `complex_ops/hyperreal/powi_checked` | `hyperlattice_complex` | `constructor` | `new` | 12 |
+| `complex_ops/hyperreal/powi_checked` | `hyperlattice_complex` | `method` | `powi-checked` | 4 |
+| `complex_ops/hyperreal/powi_checked` | `hyperlattice_complex` | `op` | `mul-components-fused-exact` | 12 |
+| `complex_ops/hyperreal/powi_checked` | `hyperlattice_complex` | `powi` | `mul-fused-exact` | 12 |
+| `complex_ops/hyperreal/powi_checked` | `hyperlattice_complex` | `powi` | `specialized-fifth` | 4 |
+| `complex_ops/hyperreal/powi_checked` | `hyperlattice_hyperreal_backend` | `op` | `active-signed-product-sum2-exact-rational` | 24 |
+| `complex_ops/hyperreal/powi_checked` | `rational` | `product_sum` | `all-zero` | 1 |
+| `complex_ops/hyperreal/powi_checked` | `rational` | `product_sum` | `dyadic-shared-denominator` | 20 |
+| `complex_ops/hyperreal/powi_checked` | `rational` | `product_sum` | `single-term-product` | 3 |
+| `complex_ops/hyperreal/powi_checked` | `real` | `constructor` | `rational` | 24 |
+| `complex_ops/hyperreal/powi_checked` | `real` | `product_sum` | `exact-rational-shared-denom` | 24 |
 | `matrix3/approx/mat3 determinant` | `hyperlattice` | `scalar_fast_path` | `dot3-backend` | 4 |
 | `matrix3/approx/mat3 determinant` | `hyperlattice` | `scalar_op` | `mul-ref-ref` | 24 |
 | `matrix3/approx/mat3 determinant` | `hyperlattice` | `scalar_op` | `sub-owned-owned` | 12 |
@@ -1081,9 +1143,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix3/approx/mat3 inverse` | `hyperlattice` | `scalar_query` | `definitely-zero` | 24 |
 | `matrix3/approx/mat3 inverse` | `hyperlattice` | `scalar_query` | `zero-status` | 12 |
 | `matrix3/approx/mat3 inverse` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix3/approx/mat3 inverse` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix3/approx/mat3 inverse` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix3/approx/mat3 inverse` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix3/approx/mat3 inverse` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix3/approx/mat3 inverse` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 72 |
 | `matrix3/approx/mat3 inverse` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 40 |
@@ -1522,9 +1582,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix4/approx/mat4 inverse` | `hyperlattice` | `scalar_query` | `definitely-zero` | 36 |
 | `matrix4/approx/mat4 inverse` | `hyperlattice` | `scalar_query` | `zero-status` | 11 |
 | `matrix4/approx/mat4 inverse` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix4/approx/mat4 inverse` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix4/approx/mat4 inverse` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix4/approx/mat4 inverse` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix4/approx/mat4 inverse` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix4/approx/mat4 inverse` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 300 |
 | `matrix4/approx/mat4 inverse` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 4 |
@@ -1547,10 +1605,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix4/approx/mat4 inverse sparse` | `hyperlattice` | `scalar_query` | `definitely-zero` | 48 |
 | `matrix4/approx/mat4 inverse sparse` | `hyperlattice` | `scalar_query` | `zero-status` | 10 |
 | `matrix4/approx/mat4 inverse sparse` | `hyperlattice_approx_backend` | `constructor` | `new` | 16 |
-| `matrix4/approx/mat4 inverse sparse` | `hyperlattice_approx_backend` | `constructor` | `one` | 28 |
+| `matrix4/approx/mat4 inverse sparse` | `hyperlattice_approx_backend` | `constructor` | `one` | 12 |
 | `matrix4/approx/mat4 inverse sparse` | `hyperlattice_approx_backend` | `constructor` | `zero` | 78 |
 | `matrix4/approx/mat4 inverse sparse` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 16 |
-| `matrix4/approx/mat4 inverse sparse` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 16 |
 | `matrix4/approx/mat4 inverse sparse` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 30 |
 | `matrix4/approx/mat4 inverse sparse` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 16 |
 | `matrix4/approx/mat4 inverse sparse` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 74 |
@@ -2885,10 +2942,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 3 |
 | `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `hyperlattice` | `zero_status` | `scalar-query` | 3 |
 | `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `new` | 3 |
-| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 6 |
+| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 3 |
 | `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `zero` | 42 |
 | `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 3 |
-| `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 3 |
 | `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 24 |
 | `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 3 |
 | `matrix_forms/approx/dyadic_dense/mat3 div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 20 |
@@ -2908,9 +2964,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `hyperlattice` | `scalar_query` | `definitely-zero` | 36 |
 | `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `hyperlattice` | `scalar_query` | `zero-status` | 3 |
 | `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `hyperlattice_approx_backend` | `constructor` | `new` | 1 |
-| `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `hyperlattice_approx_backend` | `constructor` | `one` | 1 |
 | `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 1 |
-| `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 1 |
 | `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 10 |
 | `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 18 |
 | `matrix_forms/approx/dyadic_dense/mat3 powi_negative` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 6 |
@@ -2935,9 +2989,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `hyperlattice` | `scalar_query` | `definitely-zero` | 6 |
 | `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `hyperlattice` | `scalar_query` | `zero-status` | 3 |
 | `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `hyperlattice_approx_backend` | `constructor` | `new` | 1 |
-| `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `hyperlattice_approx_backend` | `constructor` | `one` | 1 |
 | `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 1 |
-| `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 1 |
 | `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 1 |
 | `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 18 |
 | `matrix_forms/approx/dyadic_dense/mat3 reciprocal` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 10 |
@@ -2961,10 +3013,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 7 |
 | `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `hyperlattice` | `zero_status` | `scalar-query` | 4 |
 | `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 8 |
+| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `zero` | 100 |
 | `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 66 |
 | `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 4 |
 | `matrix_forms/approx/dyadic_dense/mat4 div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 37 |
@@ -2985,9 +3036,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `hyperlattice` | `scalar_query` | `definitely-zero` | 62 |
 | `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `hyperlattice` | `scalar_query` | `zero-status` | 9 |
 | `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `hyperlattice_approx_backend` | `constructor` | `new` | 1 |
-| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `hyperlattice_approx_backend` | `constructor` | `one` | 1 |
 | `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 1 |
-| `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 1 |
 | `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 1 |
 | `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `hyperlattice_approx_backend` | `op` | `dot4-specialized` | 16 |
 | `matrix_forms/approx/dyadic_dense/mat4 powi_negative` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 75 |
@@ -3015,9 +3064,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `hyperlattice` | `scalar_query` | `definitely-zero` | 6 |
 | `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `hyperlattice` | `scalar_query` | `zero-status` | 3 |
 | `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `hyperlattice_approx_backend` | `constructor` | `new` | 1 |
-| `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `hyperlattice_approx_backend` | `constructor` | `one` | 1 |
 | `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 1 |
-| `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 1 |
 | `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 1 |
 | `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 75 |
 | `matrix_forms/approx/dyadic_dense/mat4 reciprocal` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 10 |
@@ -3042,10 +3089,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 3 |
 | `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `hyperlattice` | `zero_status` | `scalar-query` | 3 |
 | `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `new` | 3 |
-| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 6 |
+| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 3 |
 | `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `zero` | 42 |
 | `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 3 |
-| `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 3 |
 | `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 24 |
 | `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 3 |
 | `matrix_forms/approx/equal_decimal_den/mat3 div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 20 |
@@ -3065,9 +3111,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `hyperlattice` | `scalar_query` | `definitely-zero` | 36 |
 | `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `hyperlattice` | `scalar_query` | `zero-status` | 3 |
 | `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `hyperlattice_approx_backend` | `constructor` | `new` | 1 |
-| `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `hyperlattice_approx_backend` | `constructor` | `one` | 1 |
 | `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 1 |
-| `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 1 |
 | `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 10 |
 | `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 18 |
 | `matrix_forms/approx/equal_decimal_den/mat3 powi_negative` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 6 |
@@ -3092,9 +3136,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `hyperlattice` | `scalar_query` | `definitely-zero` | 6 |
 | `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `hyperlattice` | `scalar_query` | `zero-status` | 3 |
 | `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `hyperlattice_approx_backend` | `constructor` | `new` | 1 |
-| `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `hyperlattice_approx_backend` | `constructor` | `one` | 1 |
 | `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 1 |
-| `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 1 |
 | `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 1 |
 | `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 18 |
 | `matrix_forms/approx/equal_decimal_den/mat3 reciprocal` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 10 |
@@ -3118,10 +3160,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 7 |
 | `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `hyperlattice` | `zero_status` | `scalar-query` | 4 |
 | `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 8 |
+| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `zero` | 100 |
 | `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 66 |
 | `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 4 |
 | `matrix_forms/approx/equal_decimal_den/mat4 div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 37 |
@@ -3142,9 +3183,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `hyperlattice` | `scalar_query` | `definitely-zero` | 62 |
 | `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `hyperlattice` | `scalar_query` | `zero-status` | 9 |
 | `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `hyperlattice_approx_backend` | `constructor` | `new` | 1 |
-| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `hyperlattice_approx_backend` | `constructor` | `one` | 1 |
 | `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 1 |
-| `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 1 |
 | `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 1 |
 | `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `hyperlattice_approx_backend` | `op` | `dot4-specialized` | 16 |
 | `matrix_forms/approx/equal_decimal_den/mat4 powi_negative` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 75 |
@@ -3172,9 +3211,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `hyperlattice` | `scalar_query` | `definitely-zero` | 6 |
 | `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `hyperlattice` | `scalar_query` | `zero-status` | 3 |
 | `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `hyperlattice_approx_backend` | `constructor` | `new` | 1 |
-| `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `hyperlattice_approx_backend` | `constructor` | `one` | 1 |
 | `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 1 |
-| `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 1 |
 | `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 1 |
 | `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 75 |
 | `matrix_forms/approx/equal_decimal_den/mat4 reciprocal` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 10 |
@@ -3199,10 +3236,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 3 |
 | `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `hyperlattice` | `zero_status` | `scalar-query` | 3 |
 | `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `new` | 3 |
-| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 6 |
+| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 3 |
 | `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `zero` | 42 |
 | `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 3 |
-| `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 3 |
 | `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 24 |
 | `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 3 |
 | `matrix_forms/approx/mixed_prime_den/mat3 div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 20 |
@@ -3222,9 +3258,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `hyperlattice` | `scalar_query` | `definitely-zero` | 36 |
 | `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `hyperlattice` | `scalar_query` | `zero-status` | 3 |
 | `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `hyperlattice_approx_backend` | `constructor` | `new` | 1 |
-| `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `hyperlattice_approx_backend` | `constructor` | `one` | 1 |
 | `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 1 |
-| `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 1 |
 | `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 10 |
 | `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 18 |
 | `matrix_forms/approx/mixed_prime_den/mat3 powi_negative` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 6 |
@@ -3249,9 +3283,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `hyperlattice` | `scalar_query` | `definitely-zero` | 6 |
 | `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `hyperlattice` | `scalar_query` | `zero-status` | 3 |
 | `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `hyperlattice_approx_backend` | `constructor` | `new` | 1 |
-| `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `hyperlattice_approx_backend` | `constructor` | `one` | 1 |
 | `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 1 |
-| `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 1 |
 | `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 1 |
 | `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 18 |
 | `matrix_forms/approx/mixed_prime_den/mat3 reciprocal` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 10 |
@@ -3275,10 +3307,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 7 |
 | `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `hyperlattice` | `zero_status` | `scalar-query` | 4 |
 | `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 8 |
+| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `zero` | 100 |
 | `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 66 |
 | `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 4 |
 | `matrix_forms/approx/mixed_prime_den/mat4 div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 37 |
@@ -3299,9 +3330,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `hyperlattice` | `scalar_query` | `definitely-zero` | 62 |
 | `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `hyperlattice` | `scalar_query` | `zero-status` | 9 |
 | `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `hyperlattice_approx_backend` | `constructor` | `new` | 1 |
-| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `hyperlattice_approx_backend` | `constructor` | `one` | 1 |
 | `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 1 |
-| `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 1 |
 | `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 1 |
 | `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `hyperlattice_approx_backend` | `op` | `dot4-specialized` | 16 |
 | `matrix_forms/approx/mixed_prime_den/mat4 powi_negative` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 75 |
@@ -3329,9 +3358,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `hyperlattice` | `scalar_query` | `definitely-zero` | 6 |
 | `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `hyperlattice` | `scalar_query` | `zero-status` | 3 |
 | `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `hyperlattice_approx_backend` | `constructor` | `new` | 1 |
-| `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `hyperlattice_approx_backend` | `constructor` | `one` | 1 |
 | `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 1 |
-| `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 1 |
 | `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 1 |
 | `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 75 |
 | `matrix_forms/approx/mixed_prime_den/mat4 reciprocal` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 10 |
@@ -3356,10 +3383,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 3 |
 | `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `hyperlattice` | `zero_status` | `scalar-query` | 3 |
 | `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `new` | 3 |
-| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 6 |
+| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 3 |
 | `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `zero` | 36 |
 | `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 3 |
-| `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 3 |
 | `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 19 |
 | `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 3 |
 | `matrix_forms/approx/sparse_integer/mat3 div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 20 |
@@ -3383,10 +3409,8 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `hyperlattice` | `scalar_query` | `definitely-zero` | 41 |
 | `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `hyperlattice` | `scalar_query` | `zero-status` | 1 |
 | `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `hyperlattice_approx_backend` | `constructor` | `new` | 1 |
-| `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `hyperlattice_approx_backend` | `constructor` | `one` | 1 |
 | `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `hyperlattice_approx_backend` | `constructor` | `zero` | 2 |
 | `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 1 |
-| `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 1 |
 | `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 2 |
 | `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 21 |
 | `matrix_forms/approx/sparse_integer/mat3 powi_negative` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 9 |
@@ -3417,9 +3441,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `hyperlattice` | `scalar_query` | `definitely-zero` | 11 |
 | `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `hyperlattice` | `scalar_query` | `zero-status` | 1 |
 | `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `hyperlattice_approx_backend` | `constructor` | `new` | 1 |
-| `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `hyperlattice_approx_backend` | `constructor` | `one` | 1 |
 | `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 1 |
-| `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 1 |
 | `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 20 |
 | `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 3 |
 | `matrix_forms/approx/sparse_integer/mat3 reciprocal` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 13 |
@@ -3443,10 +3465,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 5 |
 | `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `hyperlattice` | `zero_status` | `scalar-query` | 4 |
 | `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 8 |
+| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `zero` | 65 |
 | `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 36 |
 | `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 4 |
 | `matrix_forms/approx/sparse_integer/mat4 div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 35 |
@@ -3467,9 +3488,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `hyperlattice` | `scalar_query` | `definitely-zero` | 74 |
 | `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `hyperlattice` | `scalar_query` | `zero-status` | 10 |
 | `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `hyperlattice_approx_backend` | `constructor` | `new` | 1 |
-| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `hyperlattice_approx_backend` | `constructor` | `one` | 1 |
 | `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 1 |
-| `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 1 |
 | `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `hyperlattice_approx_backend` | `op` | `dot4-specialized` | 16 |
 | `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 76 |
 | `matrix_forms/approx/sparse_integer/mat4 powi_negative` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 12 |
@@ -3496,9 +3515,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `hyperlattice` | `scalar_query` | `definitely-zero` | 18 |
 | `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `hyperlattice` | `scalar_query` | `zero-status` | 4 |
 | `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `hyperlattice_approx_backend` | `constructor` | `new` | 1 |
-| `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `hyperlattice_approx_backend` | `constructor` | `one` | 1 |
 | `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 1 |
-| `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 1 |
 | `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 76 |
 | `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 4 |
 | `matrix_forms/approx/sparse_integer/mat4 reciprocal` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 23 |
@@ -5056,10 +5073,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 affine_div_matrix` | `hyperlattice` | `scalar_query` | `definitely-one` | 24 |
 | `matrix_ops/approx/mat3 affine_div_matrix` | `hyperlattice` | `scalar_query` | `definitely-zero` | 48 |
 | `matrix_ops/approx/mat3 affine_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `new` | 5 |
-| `matrix_ops/approx/mat3 affine_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 9 |
+| `matrix_ops/approx/mat3 affine_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat3 affine_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `zero` | 12 |
 | `matrix_ops/approx/mat3 affine_div_matrix` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 5 |
-| `matrix_ops/approx/mat3 affine_div_matrix` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 5 |
 | `matrix_ops/approx/mat3 affine_div_matrix` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 38 |
 | `matrix_ops/approx/mat3 affine_div_matrix` | `hyperlattice_approx_backend` | `op` | `sub-ref-ref` | 4 |
 | `matrix_ops/approx/mat3 affine_div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 24 |
@@ -5106,10 +5122,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 affine_inverse` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 8 |
 | `matrix_ops/approx/mat3 affine_inverse` | `hyperlattice` | `zero_status` | `scalar-query` | 8 |
 | `matrix_ops/approx/mat3 affine_inverse` | `hyperlattice_approx_backend` | `constructor` | `new` | 8 |
-| `matrix_ops/approx/mat3 affine_inverse` | `hyperlattice_approx_backend` | `constructor` | `one` | 10 |
+| `matrix_ops/approx/mat3 affine_inverse` | `hyperlattice_approx_backend` | `constructor` | `one` | 2 |
 | `matrix_ops/approx/mat3 affine_inverse` | `hyperlattice_approx_backend` | `constructor` | `zero` | 24 |
 | `matrix_ops/approx/mat3 affine_inverse` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 8 |
-| `matrix_ops/approx/mat3 affine_inverse` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 8 |
 | `matrix_ops/approx/mat3 affine_inverse` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 16 |
 | `matrix_ops/approx/mat3 affine_inverse` | `hyperlattice_approx_backend` | `op` | `sub-ref-ref` | 8 |
 | `matrix_ops/approx/mat3 affine_inverse` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 12 |
@@ -5146,10 +5161,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 12 |
 | `matrix_ops/approx/mat3 div_matrix` | `hyperlattice` | `zero_status` | `scalar-query` | 12 |
 | `matrix_ops/approx/mat3 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `new` | 12 |
-| `matrix_ops/approx/mat3 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 24 |
+| `matrix_ops/approx/mat3 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 12 |
 | `matrix_ops/approx/mat3 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `zero` | 168 |
 | `matrix_ops/approx/mat3 div_matrix` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 12 |
-| `matrix_ops/approx/mat3 div_matrix` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 12 |
 | `matrix_ops/approx/mat3 div_matrix` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 96 |
 | `matrix_ops/approx/mat3 div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 12 |
 | `matrix_ops/approx/mat3 div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 80 |
@@ -5172,10 +5186,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 div_matrix_checked` | `hyperlattice` | `scalar_query` | `zero-status` | 12 |
 | `matrix_ops/approx/mat3 div_matrix_checked` | `hyperlattice` | `zero_status` | `scalar-query` | 12 |
 | `matrix_ops/approx/mat3 div_matrix_checked` | `hyperlattice_approx_backend` | `constructor` | `new` | 12 |
-| `matrix_ops/approx/mat3 div_matrix_checked` | `hyperlattice_approx_backend` | `constructor` | `one` | 24 |
+| `matrix_ops/approx/mat3 div_matrix_checked` | `hyperlattice_approx_backend` | `constructor` | `one` | 12 |
 | `matrix_ops/approx/mat3 div_matrix_checked` | `hyperlattice_approx_backend` | `constructor` | `zero` | 168 |
 | `matrix_ops/approx/mat3 div_matrix_checked` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 12 |
-| `matrix_ops/approx/mat3 div_matrix_checked` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 12 |
 | `matrix_ops/approx/mat3 div_matrix_checked` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 96 |
 | `matrix_ops/approx/mat3 div_matrix_checked` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 12 |
 | `matrix_ops/approx/mat3 div_matrix_checked` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 80 |
@@ -5202,10 +5215,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 div_matrix_checked_abort` | `hyperlattice` | `zero_status` | `scalar-query` | 12 |
 | `matrix_ops/approx/mat3 div_matrix_checked_abort` | `hyperlattice` | `zero_status_abort` | `no-clone-fast-path` | 12 |
 | `matrix_ops/approx/mat3 div_matrix_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `new` | 12 |
-| `matrix_ops/approx/mat3 div_matrix_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `one` | 24 |
+| `matrix_ops/approx/mat3 div_matrix_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `one` | 12 |
 | `matrix_ops/approx/mat3 div_matrix_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `zero` | 168 |
 | `matrix_ops/approx/mat3 div_matrix_checked_abort` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 12 |
-| `matrix_ops/approx/mat3 div_matrix_checked_abort` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 12 |
 | `matrix_ops/approx/mat3 div_matrix_checked_abort` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 96 |
 | `matrix_ops/approx/mat3 div_matrix_checked_abort` | `hyperlattice_approx_backend` | `query` | `attach-abort-noop` | 12 |
 | `matrix_ops/approx/mat3 div_matrix_checked_abort` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 12 |
@@ -5227,9 +5239,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 inverse_checked` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/approx/mat3 inverse_checked` | `hyperlattice` | `zero_status` | `scalar-query` | 4 |
 | `matrix_ops/approx/mat3 inverse_checked` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat3 inverse_checked` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat3 inverse_checked` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat3 inverse_checked` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat3 inverse_checked` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/approx/mat3 inverse_checked` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 72 |
 | `matrix_ops/approx/mat3 inverse_checked` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 44 |
@@ -5252,9 +5262,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 inverse_checked_abort` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/approx/mat3 inverse_checked_abort` | `hyperlattice` | `zero_status` | `scalar-query` | 4 |
 | `matrix_ops/approx/mat3 inverse_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat3 inverse_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat3 inverse_checked_abort` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat3 inverse_checked_abort` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat3 inverse_checked_abort` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/approx/mat3 inverse_checked_abort` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 72 |
 | `matrix_ops/approx/mat3 inverse_checked_abort` | `hyperlattice_approx_backend` | `query` | `attach-abort-noop` | 4 |
@@ -5269,9 +5277,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 known_diagonal_div_matrix` | `hyperlattice` | `scalar_fast_path` | `mul-cached` | 9 |
 | `matrix_ops/approx/mat3 known_diagonal_div_matrix` | `hyperlattice` | `scalar_method` | `inverse-owned` | 3 |
 | `matrix_ops/approx/mat3 known_diagonal_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `new` | 3 |
-| `matrix_ops/approx/mat3 known_diagonal_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 3 |
 | `matrix_ops/approx/mat3 known_diagonal_div_matrix` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 3 |
-| `matrix_ops/approx/mat3 known_diagonal_div_matrix` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 3 |
 | `matrix_ops/approx/mat3 known_diagonal_div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 3 |
 | `matrix_ops/approx/mat3 known_diagonal_div_matrix` | `hyperlattice_approx_backend` | `query` | `zero-status` | 3 |
 | `matrix_ops/approx/mat3 known_diagonal_div_matrix` | `hyperlattice_approx_backend` | `trait_op` | `mul-owned-owned` | 9 |
@@ -5283,9 +5289,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 known_diagonal_div_vector` | `hyperlattice` | `scalar_query` | `definitely-one` | 3 |
 | `matrix_ops/approx/mat3 known_diagonal_div_vector` | `hyperlattice` | `scalar_query` | `definitely-zero` | 24 |
 | `matrix_ops/approx/mat3 known_diagonal_div_vector` | `hyperlattice_approx_backend` | `constructor` | `new` | 3 |
-| `matrix_ops/approx/mat3 known_diagonal_div_vector` | `hyperlattice_approx_backend` | `constructor` | `one` | 3 |
 | `matrix_ops/approx/mat3 known_diagonal_div_vector` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 3 |
-| `matrix_ops/approx/mat3 known_diagonal_div_vector` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 3 |
 | `matrix_ops/approx/mat3 known_diagonal_div_vector` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 3 |
 | `matrix_ops/approx/mat3 known_diagonal_div_vector` | `hyperlattice_approx_backend` | `op` | `linear-combination3-specialized` | 3 |
 | `matrix_ops/approx/mat3 known_diagonal_div_vector` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 3 |
@@ -5298,10 +5302,8 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 known_diagonal_inverse` | `hyperlattice` | `scalar_constructor` | `zero` | 6 |
 | `matrix_ops/approx/mat3 known_diagonal_inverse` | `hyperlattice` | `scalar_method` | `inverse-owned` | 3 |
 | `matrix_ops/approx/mat3 known_diagonal_inverse` | `hyperlattice_approx_backend` | `constructor` | `new` | 3 |
-| `matrix_ops/approx/mat3 known_diagonal_inverse` | `hyperlattice_approx_backend` | `constructor` | `one` | 3 |
 | `matrix_ops/approx/mat3 known_diagonal_inverse` | `hyperlattice_approx_backend` | `constructor` | `zero` | 6 |
 | `matrix_ops/approx/mat3 known_diagonal_inverse` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 3 |
-| `matrix_ops/approx/mat3 known_diagonal_inverse` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 3 |
 | `matrix_ops/approx/mat3 known_diagonal_inverse` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 3 |
 | `matrix_ops/approx/mat3 known_diagonal_inverse` | `hyperlattice_approx_backend` | `query` | `zero-status` | 3 |
 | `matrix_ops/approx/mat3 known_diagonal_inverse` | `hyperlattice_matrix` | `constructor` | `diagonal3` | 1 |
@@ -5311,9 +5313,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 known_lower_triangular_div_matrix` | `hyperlattice` | `scalar_op` | `mul-owned-ref` | 9 |
 | `matrix_ops/approx/mat3 known_lower_triangular_div_matrix` | `hyperlattice` | `scalar_op` | `sub-owned-owned` | 9 |
 | `matrix_ops/approx/mat3 known_lower_triangular_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `new` | 3 |
-| `matrix_ops/approx/mat3 known_lower_triangular_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 3 |
 | `matrix_ops/approx/mat3 known_lower_triangular_div_matrix` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 3 |
-| `matrix_ops/approx/mat3 known_lower_triangular_div_matrix` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 3 |
 | `matrix_ops/approx/mat3 known_lower_triangular_div_matrix` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 9 |
 | `matrix_ops/approx/mat3 known_lower_triangular_div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 3 |
 | `matrix_ops/approx/mat3 known_lower_triangular_div_matrix` | `hyperlattice_approx_backend` | `query` | `zero-status` | 3 |
@@ -5329,10 +5329,8 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 known_lower_triangular_inverse` | `hyperlattice` | `scalar_op` | `sub-owned-owned` | 1 |
 | `matrix_ops/approx/mat3 known_lower_triangular_inverse` | `hyperlattice` | `scalar_op` | `sub-owned-ref` | 2 |
 | `matrix_ops/approx/mat3 known_lower_triangular_inverse` | `hyperlattice_approx_backend` | `constructor` | `new` | 3 |
-| `matrix_ops/approx/mat3 known_lower_triangular_inverse` | `hyperlattice_approx_backend` | `constructor` | `one` | 3 |
 | `matrix_ops/approx/mat3 known_lower_triangular_inverse` | `hyperlattice_approx_backend` | `constructor` | `zero` | 6 |
 | `matrix_ops/approx/mat3 known_lower_triangular_inverse` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 3 |
-| `matrix_ops/approx/mat3 known_lower_triangular_inverse` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 3 |
 | `matrix_ops/approx/mat3 known_lower_triangular_inverse` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 2 |
 | `matrix_ops/approx/mat3 known_lower_triangular_inverse` | `hyperlattice_approx_backend` | `op` | `sub-ref-ref` | 2 |
 | `matrix_ops/approx/mat3 known_lower_triangular_inverse` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 3 |
@@ -5352,10 +5350,8 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 known_lower_triangular_inverse_checked` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 3 |
 | `matrix_ops/approx/mat3 known_lower_triangular_inverse_checked` | `hyperlattice` | `zero_status` | `scalar-query` | 3 |
 | `matrix_ops/approx/mat3 known_lower_triangular_inverse_checked` | `hyperlattice_approx_backend` | `constructor` | `new` | 3 |
-| `matrix_ops/approx/mat3 known_lower_triangular_inverse_checked` | `hyperlattice_approx_backend` | `constructor` | `one` | 3 |
 | `matrix_ops/approx/mat3 known_lower_triangular_inverse_checked` | `hyperlattice_approx_backend` | `constructor` | `zero` | 6 |
 | `matrix_ops/approx/mat3 known_lower_triangular_inverse_checked` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 3 |
-| `matrix_ops/approx/mat3 known_lower_triangular_inverse_checked` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 3 |
 | `matrix_ops/approx/mat3 known_lower_triangular_inverse_checked` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 2 |
 | `matrix_ops/approx/mat3 known_lower_triangular_inverse_checked` | `hyperlattice_approx_backend` | `op` | `sub-ref-ref` | 2 |
 | `matrix_ops/approx/mat3 known_lower_triangular_inverse_checked` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 6 |
@@ -5375,10 +5371,8 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 known_lower_triangular_inverse_checked_abort` | `hyperlattice` | `zero_status` | `scalar-query` | 3 |
 | `matrix_ops/approx/mat3 known_lower_triangular_inverse_checked_abort` | `hyperlattice` | `zero_status_abort` | `no-clone-fast-path` | 3 |
 | `matrix_ops/approx/mat3 known_lower_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `new` | 3 |
-| `matrix_ops/approx/mat3 known_lower_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `one` | 3 |
 | `matrix_ops/approx/mat3 known_lower_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `zero` | 6 |
 | `matrix_ops/approx/mat3 known_lower_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 3 |
-| `matrix_ops/approx/mat3 known_lower_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 3 |
 | `matrix_ops/approx/mat3 known_lower_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 2 |
 | `matrix_ops/approx/mat3 known_lower_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `op` | `sub-ref-ref` | 2 |
 | `matrix_ops/approx/mat3 known_lower_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 6 |
@@ -5390,10 +5384,8 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 known_uniform_scale_inverse` | `hyperlattice` | `scalar_constructor` | `zero` | 6 |
 | `matrix_ops/approx/mat3 known_uniform_scale_inverse` | `hyperlattice` | `scalar_method` | `inverse-owned` | 1 |
 | `matrix_ops/approx/mat3 known_uniform_scale_inverse` | `hyperlattice_approx_backend` | `constructor` | `new` | 1 |
-| `matrix_ops/approx/mat3 known_uniform_scale_inverse` | `hyperlattice_approx_backend` | `constructor` | `one` | 1 |
 | `matrix_ops/approx/mat3 known_uniform_scale_inverse` | `hyperlattice_approx_backend` | `constructor` | `zero` | 6 |
 | `matrix_ops/approx/mat3 known_uniform_scale_inverse` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 1 |
-| `matrix_ops/approx/mat3 known_uniform_scale_inverse` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 1 |
 | `matrix_ops/approx/mat3 known_uniform_scale_inverse` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 1 |
 | `matrix_ops/approx/mat3 known_uniform_scale_inverse` | `hyperlattice_approx_backend` | `query` | `zero-status` | 1 |
 | `matrix_ops/approx/mat3 known_uniform_scale_inverse` | `hyperlattice_matrix` | `constructor` | `uniform-scale3` | 1 |
@@ -5403,9 +5395,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 known_upper_triangular_div_matrix` | `hyperlattice` | `scalar_op` | `mul-owned-ref` | 9 |
 | `matrix_ops/approx/mat3 known_upper_triangular_div_matrix` | `hyperlattice` | `scalar_op` | `sub-owned-owned` | 9 |
 | `matrix_ops/approx/mat3 known_upper_triangular_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `new` | 3 |
-| `matrix_ops/approx/mat3 known_upper_triangular_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 3 |
 | `matrix_ops/approx/mat3 known_upper_triangular_div_matrix` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 3 |
-| `matrix_ops/approx/mat3 known_upper_triangular_div_matrix` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 3 |
 | `matrix_ops/approx/mat3 known_upper_triangular_div_matrix` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 9 |
 | `matrix_ops/approx/mat3 known_upper_triangular_div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 3 |
 | `matrix_ops/approx/mat3 known_upper_triangular_div_matrix` | `hyperlattice_approx_backend` | `query` | `zero-status` | 3 |
@@ -5421,10 +5411,8 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 known_upper_triangular_inverse` | `hyperlattice` | `scalar_op` | `sub-owned-owned` | 1 |
 | `matrix_ops/approx/mat3 known_upper_triangular_inverse` | `hyperlattice` | `scalar_op` | `sub-owned-ref` | 2 |
 | `matrix_ops/approx/mat3 known_upper_triangular_inverse` | `hyperlattice_approx_backend` | `constructor` | `new` | 3 |
-| `matrix_ops/approx/mat3 known_upper_triangular_inverse` | `hyperlattice_approx_backend` | `constructor` | `one` | 3 |
 | `matrix_ops/approx/mat3 known_upper_triangular_inverse` | `hyperlattice_approx_backend` | `constructor` | `zero` | 6 |
 | `matrix_ops/approx/mat3 known_upper_triangular_inverse` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 3 |
-| `matrix_ops/approx/mat3 known_upper_triangular_inverse` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 3 |
 | `matrix_ops/approx/mat3 known_upper_triangular_inverse` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 2 |
 | `matrix_ops/approx/mat3 known_upper_triangular_inverse` | `hyperlattice_approx_backend` | `op` | `sub-ref-ref` | 2 |
 | `matrix_ops/approx/mat3 known_upper_triangular_inverse` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 3 |
@@ -5444,10 +5432,8 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 known_upper_triangular_inverse_checked` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 3 |
 | `matrix_ops/approx/mat3 known_upper_triangular_inverse_checked` | `hyperlattice` | `zero_status` | `scalar-query` | 3 |
 | `matrix_ops/approx/mat3 known_upper_triangular_inverse_checked` | `hyperlattice_approx_backend` | `constructor` | `new` | 3 |
-| `matrix_ops/approx/mat3 known_upper_triangular_inverse_checked` | `hyperlattice_approx_backend` | `constructor` | `one` | 3 |
 | `matrix_ops/approx/mat3 known_upper_triangular_inverse_checked` | `hyperlattice_approx_backend` | `constructor` | `zero` | 6 |
 | `matrix_ops/approx/mat3 known_upper_triangular_inverse_checked` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 3 |
-| `matrix_ops/approx/mat3 known_upper_triangular_inverse_checked` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 3 |
 | `matrix_ops/approx/mat3 known_upper_triangular_inverse_checked` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 2 |
 | `matrix_ops/approx/mat3 known_upper_triangular_inverse_checked` | `hyperlattice_approx_backend` | `op` | `sub-ref-ref` | 2 |
 | `matrix_ops/approx/mat3 known_upper_triangular_inverse_checked` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 6 |
@@ -5467,10 +5453,8 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 known_upper_triangular_inverse_checked_abort` | `hyperlattice` | `zero_status` | `scalar-query` | 3 |
 | `matrix_ops/approx/mat3 known_upper_triangular_inverse_checked_abort` | `hyperlattice` | `zero_status_abort` | `no-clone-fast-path` | 3 |
 | `matrix_ops/approx/mat3 known_upper_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `new` | 3 |
-| `matrix_ops/approx/mat3 known_upper_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `one` | 3 |
 | `matrix_ops/approx/mat3 known_upper_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `zero` | 6 |
 | `matrix_ops/approx/mat3 known_upper_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 3 |
-| `matrix_ops/approx/mat3 known_upper_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 3 |
 | `matrix_ops/approx/mat3 known_upper_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 2 |
 | `matrix_ops/approx/mat3 known_upper_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `op` | `sub-ref-ref` | 2 |
 | `matrix_ops/approx/mat3 known_upper_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 6 |
@@ -5523,9 +5507,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 powi_checked_negative` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/approx/mat3 powi_checked_negative` | `hyperlattice` | `zero_status` | `scalar-query` | 4 |
 | `matrix_ops/approx/mat3 powi_checked_negative` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat3 powi_checked_negative` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat3 powi_checked_negative` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat3 powi_checked_negative` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat3 powi_checked_negative` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 40 |
 | `matrix_ops/approx/mat3 powi_checked_negative` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 72 |
 | `matrix_ops/approx/mat3 powi_checked_negative` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 24 |
@@ -5551,9 +5533,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 powi_negative` | `hyperlattice` | `scalar_query` | `definitely-zero` | 144 |
 | `matrix_ops/approx/mat3 powi_negative` | `hyperlattice` | `scalar_query` | `zero-status` | 12 |
 | `matrix_ops/approx/mat3 powi_negative` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat3 powi_negative` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat3 powi_negative` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat3 powi_negative` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat3 powi_negative` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 40 |
 | `matrix_ops/approx/mat3 powi_negative` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 72 |
 | `matrix_ops/approx/mat3 powi_negative` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 24 |
@@ -5578,9 +5558,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 powi_negative_one` | `hyperlattice` | `scalar_query` | `definitely-zero` | 24 |
 | `matrix_ops/approx/mat3 powi_negative_one` | `hyperlattice` | `scalar_query` | `zero-status` | 12 |
 | `matrix_ops/approx/mat3 powi_negative_one` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat3 powi_negative_one` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat3 powi_negative_one` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat3 powi_negative_one` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat3 powi_negative_one` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/approx/mat3 powi_negative_one` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 72 |
 | `matrix_ops/approx/mat3 powi_negative_one` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 40 |
@@ -5605,10 +5583,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 prepared_div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 12 |
 | `matrix_ops/approx/mat3 prepared_div_matrix` | `hyperlattice` | `zero_status` | `scalar-query` | 12 |
 | `matrix_ops/approx/mat3 prepared_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `new` | 12 |
-| `matrix_ops/approx/mat3 prepared_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 24 |
+| `matrix_ops/approx/mat3 prepared_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 12 |
 | `matrix_ops/approx/mat3 prepared_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `zero` | 168 |
 | `matrix_ops/approx/mat3 prepared_div_matrix` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 12 |
-| `matrix_ops/approx/mat3 prepared_div_matrix` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 12 |
 | `matrix_ops/approx/mat3 prepared_div_matrix` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 96 |
 | `matrix_ops/approx/mat3 prepared_div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 3 |
 | `matrix_ops/approx/mat3 prepared_div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 56 |
@@ -5633,10 +5610,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 prepared_div_matrix_checked` | `hyperlattice` | `scalar_query` | `zero-status` | 12 |
 | `matrix_ops/approx/mat3 prepared_div_matrix_checked` | `hyperlattice` | `zero_status` | `scalar-query` | 12 |
 | `matrix_ops/approx/mat3 prepared_div_matrix_checked` | `hyperlattice_approx_backend` | `constructor` | `new` | 12 |
-| `matrix_ops/approx/mat3 prepared_div_matrix_checked` | `hyperlattice_approx_backend` | `constructor` | `one` | 24 |
+| `matrix_ops/approx/mat3 prepared_div_matrix_checked` | `hyperlattice_approx_backend` | `constructor` | `one` | 12 |
 | `matrix_ops/approx/mat3 prepared_div_matrix_checked` | `hyperlattice_approx_backend` | `constructor` | `zero` | 168 |
 | `matrix_ops/approx/mat3 prepared_div_matrix_checked` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 12 |
-| `matrix_ops/approx/mat3 prepared_div_matrix_checked` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 12 |
 | `matrix_ops/approx/mat3 prepared_div_matrix_checked` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 96 |
 | `matrix_ops/approx/mat3 prepared_div_matrix_checked` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 3 |
 | `matrix_ops/approx/mat3 prepared_div_matrix_checked` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 56 |
@@ -5665,10 +5641,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 prepared_div_matrix_checked_abort` | `hyperlattice` | `zero_status` | `scalar-query` | 12 |
 | `matrix_ops/approx/mat3 prepared_div_matrix_checked_abort` | `hyperlattice` | `zero_status_abort` | `no-clone-fast-path` | 12 |
 | `matrix_ops/approx/mat3 prepared_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `new` | 12 |
-| `matrix_ops/approx/mat3 prepared_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `one` | 24 |
+| `matrix_ops/approx/mat3 prepared_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `one` | 12 |
 | `matrix_ops/approx/mat3 prepared_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `zero` | 168 |
 | `matrix_ops/approx/mat3 prepared_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 12 |
-| `matrix_ops/approx/mat3 prepared_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 12 |
 | `matrix_ops/approx/mat3 prepared_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 96 |
 | `matrix_ops/approx/mat3 prepared_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `query` | `attach-abort-noop` | 12 |
 | `matrix_ops/approx/mat3 prepared_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 3 |
@@ -5690,9 +5665,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 reciprocal` | `hyperlattice` | `scalar_query` | `definitely-zero` | 24 |
 | `matrix_ops/approx/mat3 reciprocal` | `hyperlattice` | `scalar_query` | `zero-status` | 12 |
 | `matrix_ops/approx/mat3 reciprocal` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat3 reciprocal` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat3 reciprocal` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat3 reciprocal` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat3 reciprocal` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/approx/mat3 reciprocal` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 72 |
 | `matrix_ops/approx/mat3 reciprocal` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 40 |
@@ -5714,9 +5687,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 reciprocal_checked` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/approx/mat3 reciprocal_checked` | `hyperlattice` | `zero_status` | `scalar-query` | 4 |
 | `matrix_ops/approx/mat3 reciprocal_checked` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat3 reciprocal_checked` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat3 reciprocal_checked` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat3 reciprocal_checked` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat3 reciprocal_checked` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/approx/mat3 reciprocal_checked` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 72 |
 | `matrix_ops/approx/mat3 reciprocal_checked` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 44 |
@@ -5750,10 +5721,8 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat3 uniform_scale_reciprocal` | `hyperlattice` | `scalar_query` | `definitely-zero` | 6 |
 | `matrix_ops/approx/mat3 uniform_scale_reciprocal` | `hyperlattice` | `scalar_query` | `zero-status` | 1 |
 | `matrix_ops/approx/mat3 uniform_scale_reciprocal` | `hyperlattice_approx_backend` | `constructor` | `new` | 3 |
-| `matrix_ops/approx/mat3 uniform_scale_reciprocal` | `hyperlattice_approx_backend` | `constructor` | `one` | 3 |
 | `matrix_ops/approx/mat3 uniform_scale_reciprocal` | `hyperlattice_approx_backend` | `constructor` | `zero` | 6 |
 | `matrix_ops/approx/mat3 uniform_scale_reciprocal` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 3 |
-| `matrix_ops/approx/mat3 uniform_scale_reciprocal` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 3 |
 | `matrix_ops/approx/mat3 uniform_scale_reciprocal` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 3 |
 | `matrix_ops/approx/mat3 uniform_scale_reciprocal` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 10 |
 | `matrix_ops/approx/mat3 uniform_scale_reciprocal` | `hyperlattice_approx_backend` | `query` | `zero-status` | 4 |
@@ -5778,11 +5747,10 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 affine_div_matrix` | `hyperlattice` | `scalar_query` | `definitely-zero` | 173 |
 | `matrix_ops/approx/mat4 affine_div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 17 |
 | `matrix_ops/approx/mat4 affine_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `new` | 6 |
-| `matrix_ops/approx/mat4 affine_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 9 |
+| `matrix_ops/approx/mat4 affine_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 3 |
 | `matrix_ops/approx/mat4 affine_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `zero` | 18 |
 | `matrix_ops/approx/mat4 affine_div_matrix` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 6 |
 | `matrix_ops/approx/mat4 affine_div_matrix` | `hyperlattice_approx_backend` | `op` | `add-ref-ref` | 12 |
-| `matrix_ops/approx/mat4 affine_div_matrix` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 6 |
 | `matrix_ops/approx/mat4 affine_div_matrix` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 16 |
 | `matrix_ops/approx/mat4 affine_div_matrix` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 103 |
 | `matrix_ops/approx/mat4 affine_div_matrix` | `hyperlattice_approx_backend` | `op` | `sub-ref-ref` | 3 |
@@ -5823,11 +5791,10 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 affine_div_matrix_checked` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 6 |
 | `matrix_ops/approx/mat4 affine_div_matrix_checked` | `hyperlattice` | `zero_status` | `scalar-query` | 6 |
 | `matrix_ops/approx/mat4 affine_div_matrix_checked` | `hyperlattice_approx_backend` | `constructor` | `new` | 6 |
-| `matrix_ops/approx/mat4 affine_div_matrix_checked` | `hyperlattice_approx_backend` | `constructor` | `one` | 9 |
+| `matrix_ops/approx/mat4 affine_div_matrix_checked` | `hyperlattice_approx_backend` | `constructor` | `one` | 3 |
 | `matrix_ops/approx/mat4 affine_div_matrix_checked` | `hyperlattice_approx_backend` | `constructor` | `zero` | 18 |
 | `matrix_ops/approx/mat4 affine_div_matrix_checked` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 6 |
 | `matrix_ops/approx/mat4 affine_div_matrix_checked` | `hyperlattice_approx_backend` | `op` | `add-ref-ref` | 12 |
-| `matrix_ops/approx/mat4 affine_div_matrix_checked` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 6 |
 | `matrix_ops/approx/mat4 affine_div_matrix_checked` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 16 |
 | `matrix_ops/approx/mat4 affine_div_matrix_checked` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 103 |
 | `matrix_ops/approx/mat4 affine_div_matrix_checked` | `hyperlattice_approx_backend` | `op` | `sub-ref-ref` | 3 |
@@ -5872,11 +5839,10 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 affine_div_matrix_checked_abort` | `hyperlattice` | `zero_status` | `scalar-query` | 6 |
 | `matrix_ops/approx/mat4 affine_div_matrix_checked_abort` | `hyperlattice` | `zero_status_abort` | `no-clone-fast-path` | 4 |
 | `matrix_ops/approx/mat4 affine_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `new` | 6 |
-| `matrix_ops/approx/mat4 affine_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `one` | 9 |
+| `matrix_ops/approx/mat4 affine_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `one` | 3 |
 | `matrix_ops/approx/mat4 affine_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `zero` | 18 |
 | `matrix_ops/approx/mat4 affine_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 6 |
 | `matrix_ops/approx/mat4 affine_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `op` | `add-ref-ref` | 12 |
-| `matrix_ops/approx/mat4 affine_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 6 |
 | `matrix_ops/approx/mat4 affine_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 16 |
 | `matrix_ops/approx/mat4 affine_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 103 |
 | `matrix_ops/approx/mat4 affine_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `op` | `sub-ref-ref` | 3 |
@@ -5975,11 +5941,10 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 affine_inverse` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 10 |
 | `matrix_ops/approx/mat4 affine_inverse` | `hyperlattice` | `zero_status` | `scalar-query` | 10 |
 | `matrix_ops/approx/mat4 affine_inverse` | `hyperlattice_approx_backend` | `constructor` | `new` | 10 |
-| `matrix_ops/approx/mat4 affine_inverse` | `hyperlattice_approx_backend` | `constructor` | `one` | 20 |
+| `matrix_ops/approx/mat4 affine_inverse` | `hyperlattice_approx_backend` | `constructor` | `one` | 10 |
 | `matrix_ops/approx/mat4 affine_inverse` | `hyperlattice_approx_backend` | `constructor` | `zero` | 56 |
 | `matrix_ops/approx/mat4 affine_inverse` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 10 |
 | `matrix_ops/approx/mat4 affine_inverse` | `hyperlattice_approx_backend` | `op` | `add-ref-ref` | 6 |
-| `matrix_ops/approx/mat4 affine_inverse` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 10 |
 | `matrix_ops/approx/mat4 affine_inverse` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 2 |
 | `matrix_ops/approx/mat4 affine_inverse` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 74 |
 | `matrix_ops/approx/mat4 affine_inverse` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 16 |
@@ -6050,10 +6015,8 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 diagonal_reciprocal` | `hyperlattice` | `scalar_query` | `definitely-zero` | 12 |
 | `matrix_ops/approx/mat4 diagonal_reciprocal` | `hyperlattice` | `scalar_query` | `zero-status` | 2 |
 | `matrix_ops/approx/mat4 diagonal_reciprocal` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat4 diagonal_reciprocal` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat4 diagonal_reciprocal` | `hyperlattice_approx_backend` | `constructor` | `zero` | 12 |
 | `matrix_ops/approx/mat4 diagonal_reciprocal` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat4 diagonal_reciprocal` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat4 diagonal_reciprocal` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 4 |
 | `matrix_ops/approx/mat4 diagonal_reciprocal` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 18 |
 | `matrix_ops/approx/mat4 diagonal_reciprocal` | `hyperlattice_approx_backend` | `query` | `zero-status` | 6 |
@@ -6072,10 +6035,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 27 |
 | `matrix_ops/approx/mat4 div_matrix` | `hyperlattice` | `zero_status` | `scalar-query` | 16 |
 | `matrix_ops/approx/mat4 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `new` | 16 |
-| `matrix_ops/approx/mat4 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 32 |
+| `matrix_ops/approx/mat4 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 16 |
 | `matrix_ops/approx/mat4 div_matrix` | `hyperlattice_approx_backend` | `constructor` | `zero` | 392 |
 | `matrix_ops/approx/mat4 div_matrix` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 16 |
-| `matrix_ops/approx/mat4 div_matrix` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 16 |
 | `matrix_ops/approx/mat4 div_matrix` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 257 |
 | `matrix_ops/approx/mat4 div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 16 |
 | `matrix_ops/approx/mat4 div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 147 |
@@ -6098,10 +6060,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 div_matrix_checked` | `hyperlattice` | `scalar_query` | `zero-status` | 27 |
 | `matrix_ops/approx/mat4 div_matrix_checked` | `hyperlattice` | `zero_status` | `scalar-query` | 16 |
 | `matrix_ops/approx/mat4 div_matrix_checked` | `hyperlattice_approx_backend` | `constructor` | `new` | 16 |
-| `matrix_ops/approx/mat4 div_matrix_checked` | `hyperlattice_approx_backend` | `constructor` | `one` | 32 |
+| `matrix_ops/approx/mat4 div_matrix_checked` | `hyperlattice_approx_backend` | `constructor` | `one` | 16 |
 | `matrix_ops/approx/mat4 div_matrix_checked` | `hyperlattice_approx_backend` | `constructor` | `zero` | 392 |
 | `matrix_ops/approx/mat4 div_matrix_checked` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 16 |
-| `matrix_ops/approx/mat4 div_matrix_checked` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 16 |
 | `matrix_ops/approx/mat4 div_matrix_checked` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 257 |
 | `matrix_ops/approx/mat4 div_matrix_checked` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 16 |
 | `matrix_ops/approx/mat4 div_matrix_checked` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 147 |
@@ -6128,10 +6089,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 div_matrix_checked_abort` | `hyperlattice` | `zero_status` | `scalar-query` | 16 |
 | `matrix_ops/approx/mat4 div_matrix_checked_abort` | `hyperlattice` | `zero_status_abort` | `no-clone-fast-path` | 16 |
 | `matrix_ops/approx/mat4 div_matrix_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `new` | 16 |
-| `matrix_ops/approx/mat4 div_matrix_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `one` | 32 |
+| `matrix_ops/approx/mat4 div_matrix_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `one` | 16 |
 | `matrix_ops/approx/mat4 div_matrix_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `zero` | 392 |
 | `matrix_ops/approx/mat4 div_matrix_checked_abort` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 16 |
-| `matrix_ops/approx/mat4 div_matrix_checked_abort` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 16 |
 | `matrix_ops/approx/mat4 div_matrix_checked_abort` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 257 |
 | `matrix_ops/approx/mat4 div_matrix_checked_abort` | `hyperlattice_approx_backend` | `query` | `attach-abort-noop` | 16 |
 | `matrix_ops/approx/mat4 div_matrix_checked_abort` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 16 |
@@ -6217,9 +6177,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 inverse_checked` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/approx/mat4 inverse_checked` | `hyperlattice` | `zero_status` | `scalar-query` | 4 |
 | `matrix_ops/approx/mat4 inverse_checked` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat4 inverse_checked` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat4 inverse_checked` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat4 inverse_checked` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat4 inverse_checked` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/approx/mat4 inverse_checked` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 300 |
 | `matrix_ops/approx/mat4 inverse_checked` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 4 |
@@ -6246,9 +6204,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 inverse_checked_abort` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/approx/mat4 inverse_checked_abort` | `hyperlattice` | `zero_status` | `scalar-query` | 4 |
 | `matrix_ops/approx/mat4 inverse_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat4 inverse_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat4 inverse_checked_abort` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat4 inverse_checked_abort` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat4 inverse_checked_abort` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/approx/mat4 inverse_checked_abort` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 300 |
 | `matrix_ops/approx/mat4 inverse_checked_abort` | `hyperlattice_approx_backend` | `query` | `attach-abort-noop` | 4 |
@@ -6265,9 +6221,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 known_diagonal_div_matrix` | `hyperlattice` | `scalar_fast_path` | `mul-cached` | 16 |
 | `matrix_ops/approx/mat4 known_diagonal_div_matrix` | `hyperlattice` | `scalar_method` | `inverse-owned` | 4 |
 | `matrix_ops/approx/mat4 known_diagonal_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat4 known_diagonal_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat4 known_diagonal_div_matrix` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat4 known_diagonal_div_matrix` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat4 known_diagonal_div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 4 |
 | `matrix_ops/approx/mat4 known_diagonal_div_matrix` | `hyperlattice_approx_backend` | `query` | `zero-status` | 4 |
 | `matrix_ops/approx/mat4 known_diagonal_div_matrix` | `hyperlattice_approx_backend` | `trait_op` | `mul-owned-owned` | 16 |
@@ -6283,10 +6237,8 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 known_diagonal_div_vector` | `hyperlattice` | `scalar_query` | `definitely-zero` | 26 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector` | `hyperlattice` | `scalar_query` | `zero-or-one` | 1 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat4 known_diagonal_div_vector` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector` | `hyperlattice_approx_backend` | `op` | `add-ref-ref` | 4 |
-| `matrix_ops/approx/mat4 known_diagonal_div_vector` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 2 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector` | `hyperlattice_approx_backend` | `op` | `linear-combination3-specialized` | 2 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 2 |
@@ -6309,10 +6261,8 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 known_diagonal_div_vector_direction` | `hyperlattice` | `scalar_query` | `definitely-zero` | 23 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector_direction` | `hyperlattice` | `scalar_query` | `zero-or-one` | 1 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector_direction` | `hyperlattice_approx_backend` | `constructor` | `new` | 3 |
-| `matrix_ops/approx/mat4 known_diagonal_div_vector_direction` | `hyperlattice_approx_backend` | `constructor` | `one` | 3 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector_direction` | `hyperlattice_approx_backend` | `constructor` | `zero` | 1 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector_direction` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 3 |
-| `matrix_ops/approx/mat4 known_diagonal_div_vector_direction` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 3 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector_direction` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 2 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector_direction` | `hyperlattice_approx_backend` | `op` | `linear-combination3-specialized` | 2 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector_direction` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 26 |
@@ -6333,10 +6283,8 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 known_diagonal_div_vector_direction_only` | `hyperlattice` | `scalar_method` | `inverse-owned` | 3 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector_direction_only` | `hyperlattice` | `scalar_query` | `definitely-zero` | 23 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector_direction_only` | `hyperlattice_approx_backend` | `constructor` | `new` | 3 |
-| `matrix_ops/approx/mat4 known_diagonal_div_vector_direction_only` | `hyperlattice_approx_backend` | `constructor` | `one` | 3 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector_direction_only` | `hyperlattice_approx_backend` | `constructor` | `zero` | 1 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector_direction_only` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 3 |
-| `matrix_ops/approx/mat4 known_diagonal_div_vector_direction_only` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 3 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector_direction_only` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 2 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector_direction_only` | `hyperlattice_approx_backend` | `op` | `linear-combination3-specialized` | 2 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector_direction_only` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 26 |
@@ -6358,10 +6306,8 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 known_diagonal_div_vector_point` | `hyperlattice` | `scalar_query` | `definitely-zero` | 26 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector_point` | `hyperlattice` | `scalar_query` | `zero-or-one` | 1 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector_point` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat4 known_diagonal_div_vector_point` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector_point` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector_point` | `hyperlattice_approx_backend` | `op` | `add-ref-ref` | 4 |
-| `matrix_ops/approx/mat4 known_diagonal_div_vector_point` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector_point` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 2 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector_point` | `hyperlattice_approx_backend` | `op` | `linear-combination3-specialized` | 2 |
 | `matrix_ops/approx/mat4 known_diagonal_div_vector_point` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 2 |
@@ -6378,10 +6324,8 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 known_diagonal_inverse` | `hyperlattice` | `scalar_constructor` | `zero` | 12 |
 | `matrix_ops/approx/mat4 known_diagonal_inverse` | `hyperlattice` | `scalar_method` | `inverse-owned` | 4 |
 | `matrix_ops/approx/mat4 known_diagonal_inverse` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat4 known_diagonal_inverse` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat4 known_diagonal_inverse` | `hyperlattice_approx_backend` | `constructor` | `zero` | 12 |
 | `matrix_ops/approx/mat4 known_diagonal_inverse` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat4 known_diagonal_inverse` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat4 known_diagonal_inverse` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 4 |
 | `matrix_ops/approx/mat4 known_diagonal_inverse` | `hyperlattice_approx_backend` | `query` | `zero-status` | 4 |
 | `matrix_ops/approx/mat4 known_diagonal_inverse` | `hyperlattice_matrix` | `constructor` | `diagonal` | 1 |
@@ -6391,9 +6335,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 known_lower_triangular_div_matrix` | `hyperlattice` | `scalar_op` | `mul-ref-ref` | 24 |
 | `matrix_ops/approx/mat4 known_lower_triangular_div_matrix` | `hyperlattice` | `scalar_op` | `sub-owned-owned` | 24 |
 | `matrix_ops/approx/mat4 known_lower_triangular_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat4 known_lower_triangular_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat4 known_lower_triangular_div_matrix` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat4 known_lower_triangular_div_matrix` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat4 known_lower_triangular_div_matrix` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 24 |
 | `matrix_ops/approx/mat4 known_lower_triangular_div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 4 |
 | `matrix_ops/approx/mat4 known_lower_triangular_div_matrix` | `hyperlattice_approx_backend` | `query` | `zero-status` | 4 |
@@ -6408,10 +6350,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 known_lower_triangular_inverse` | `hyperlattice` | `scalar_op` | `mul-ref-ref` | 10 |
 | `matrix_ops/approx/mat4 known_lower_triangular_inverse` | `hyperlattice` | `scalar_op` | `sub-owned-owned` | 10 |
 | `matrix_ops/approx/mat4 known_lower_triangular_inverse` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat4 known_lower_triangular_inverse` | `hyperlattice_approx_backend` | `constructor` | `one` | 8 |
+| `matrix_ops/approx/mat4 known_lower_triangular_inverse` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat4 known_lower_triangular_inverse` | `hyperlattice_approx_backend` | `constructor` | `zero` | 22 |
 | `matrix_ops/approx/mat4 known_lower_triangular_inverse` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat4 known_lower_triangular_inverse` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat4 known_lower_triangular_inverse` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 10 |
 | `matrix_ops/approx/mat4 known_lower_triangular_inverse` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 4 |
 | `matrix_ops/approx/mat4 known_lower_triangular_inverse` | `hyperlattice_approx_backend` | `query` | `zero-status` | 4 |
@@ -6429,10 +6370,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 known_lower_triangular_inverse_checked` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/approx/mat4 known_lower_triangular_inverse_checked` | `hyperlattice` | `zero_status` | `scalar-query` | 4 |
 | `matrix_ops/approx/mat4 known_lower_triangular_inverse_checked` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat4 known_lower_triangular_inverse_checked` | `hyperlattice_approx_backend` | `constructor` | `one` | 8 |
+| `matrix_ops/approx/mat4 known_lower_triangular_inverse_checked` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat4 known_lower_triangular_inverse_checked` | `hyperlattice_approx_backend` | `constructor` | `zero` | 22 |
 | `matrix_ops/approx/mat4 known_lower_triangular_inverse_checked` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat4 known_lower_triangular_inverse_checked` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat4 known_lower_triangular_inverse_checked` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 10 |
 | `matrix_ops/approx/mat4 known_lower_triangular_inverse_checked` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 8 |
 | `matrix_ops/approx/mat4 known_lower_triangular_inverse_checked` | `hyperlattice_approx_backend` | `query` | `zero-status` | 8 |
@@ -6450,10 +6390,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 known_lower_triangular_inverse_checked_abort` | `hyperlattice` | `zero_status` | `scalar-query` | 4 |
 | `matrix_ops/approx/mat4 known_lower_triangular_inverse_checked_abort` | `hyperlattice` | `zero_status_abort` | `no-clone-fast-path` | 4 |
 | `matrix_ops/approx/mat4 known_lower_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat4 known_lower_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `one` | 8 |
+| `matrix_ops/approx/mat4 known_lower_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat4 known_lower_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `zero` | 22 |
 | `matrix_ops/approx/mat4 known_lower_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat4 known_lower_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat4 known_lower_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 10 |
 | `matrix_ops/approx/mat4 known_lower_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 8 |
 | `matrix_ops/approx/mat4 known_lower_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `query` | `zero-status` | 8 |
@@ -6464,10 +6403,8 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 known_uniform_scale_inverse` | `hyperlattice` | `scalar_constructor` | `zero` | 12 |
 | `matrix_ops/approx/mat4 known_uniform_scale_inverse` | `hyperlattice` | `scalar_method` | `inverse-owned` | 1 |
 | `matrix_ops/approx/mat4 known_uniform_scale_inverse` | `hyperlattice_approx_backend` | `constructor` | `new` | 1 |
-| `matrix_ops/approx/mat4 known_uniform_scale_inverse` | `hyperlattice_approx_backend` | `constructor` | `one` | 1 |
 | `matrix_ops/approx/mat4 known_uniform_scale_inverse` | `hyperlattice_approx_backend` | `constructor` | `zero` | 12 |
 | `matrix_ops/approx/mat4 known_uniform_scale_inverse` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 1 |
-| `matrix_ops/approx/mat4 known_uniform_scale_inverse` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 1 |
 | `matrix_ops/approx/mat4 known_uniform_scale_inverse` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 1 |
 | `matrix_ops/approx/mat4 known_uniform_scale_inverse` | `hyperlattice_approx_backend` | `query` | `zero-status` | 1 |
 | `matrix_ops/approx/mat4 known_uniform_scale_inverse` | `hyperlattice_matrix` | `constructor` | `uniform-scale` | 1 |
@@ -6477,9 +6414,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 known_upper_triangular_div_matrix` | `hyperlattice` | `scalar_op` | `mul-ref-ref` | 24 |
 | `matrix_ops/approx/mat4 known_upper_triangular_div_matrix` | `hyperlattice` | `scalar_op` | `sub-owned-owned` | 24 |
 | `matrix_ops/approx/mat4 known_upper_triangular_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat4 known_upper_triangular_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat4 known_upper_triangular_div_matrix` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat4 known_upper_triangular_div_matrix` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat4 known_upper_triangular_div_matrix` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 24 |
 | `matrix_ops/approx/mat4 known_upper_triangular_div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 4 |
 | `matrix_ops/approx/mat4 known_upper_triangular_div_matrix` | `hyperlattice_approx_backend` | `query` | `zero-status` | 4 |
@@ -6494,10 +6429,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 known_upper_triangular_inverse` | `hyperlattice` | `scalar_op` | `mul-ref-ref` | 10 |
 | `matrix_ops/approx/mat4 known_upper_triangular_inverse` | `hyperlattice` | `scalar_op` | `sub-owned-owned` | 10 |
 | `matrix_ops/approx/mat4 known_upper_triangular_inverse` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat4 known_upper_triangular_inverse` | `hyperlattice_approx_backend` | `constructor` | `one` | 8 |
+| `matrix_ops/approx/mat4 known_upper_triangular_inverse` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat4 known_upper_triangular_inverse` | `hyperlattice_approx_backend` | `constructor` | `zero` | 22 |
 | `matrix_ops/approx/mat4 known_upper_triangular_inverse` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat4 known_upper_triangular_inverse` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat4 known_upper_triangular_inverse` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 10 |
 | `matrix_ops/approx/mat4 known_upper_triangular_inverse` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 4 |
 | `matrix_ops/approx/mat4 known_upper_triangular_inverse` | `hyperlattice_approx_backend` | `query` | `zero-status` | 4 |
@@ -6515,10 +6449,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 known_upper_triangular_inverse_checked` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/approx/mat4 known_upper_triangular_inverse_checked` | `hyperlattice` | `zero_status` | `scalar-query` | 4 |
 | `matrix_ops/approx/mat4 known_upper_triangular_inverse_checked` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat4 known_upper_triangular_inverse_checked` | `hyperlattice_approx_backend` | `constructor` | `one` | 8 |
+| `matrix_ops/approx/mat4 known_upper_triangular_inverse_checked` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat4 known_upper_triangular_inverse_checked` | `hyperlattice_approx_backend` | `constructor` | `zero` | 22 |
 | `matrix_ops/approx/mat4 known_upper_triangular_inverse_checked` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat4 known_upper_triangular_inverse_checked` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat4 known_upper_triangular_inverse_checked` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 10 |
 | `matrix_ops/approx/mat4 known_upper_triangular_inverse_checked` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 8 |
 | `matrix_ops/approx/mat4 known_upper_triangular_inverse_checked` | `hyperlattice_approx_backend` | `query` | `zero-status` | 8 |
@@ -6536,10 +6469,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 known_upper_triangular_inverse_checked_abort` | `hyperlattice` | `zero_status` | `scalar-query` | 4 |
 | `matrix_ops/approx/mat4 known_upper_triangular_inverse_checked_abort` | `hyperlattice` | `zero_status_abort` | `no-clone-fast-path` | 4 |
 | `matrix_ops/approx/mat4 known_upper_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat4 known_upper_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `one` | 8 |
+| `matrix_ops/approx/mat4 known_upper_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat4 known_upper_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `zero` | 22 |
 | `matrix_ops/approx/mat4 known_upper_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat4 known_upper_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat4 known_upper_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 10 |
 | `matrix_ops/approx/mat4 known_upper_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 8 |
 | `matrix_ops/approx/mat4 known_upper_triangular_inverse_checked_abort` | `hyperlattice_approx_backend` | `query` | `zero-status` | 8 |
@@ -6619,9 +6551,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 powi_checked_negative` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/approx/mat4 powi_checked_negative` | `hyperlattice` | `zero_status` | `scalar-query` | 4 |
 | `matrix_ops/approx/mat4 powi_checked_negative` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat4 powi_checked_negative` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat4 powi_checked_negative` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat4 powi_checked_negative` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat4 powi_checked_negative` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/approx/mat4 powi_checked_negative` | `hyperlattice_approx_backend` | `op` | `dot4-specialized` | 64 |
 | `matrix_ops/approx/mat4 powi_checked_negative` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 300 |
@@ -6650,9 +6580,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 powi_negative` | `hyperlattice` | `scalar_query` | `definitely-zero` | 260 |
 | `matrix_ops/approx/mat4 powi_negative` | `hyperlattice` | `scalar_query` | `zero-status` | 35 |
 | `matrix_ops/approx/mat4 powi_negative` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat4 powi_negative` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat4 powi_negative` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat4 powi_negative` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat4 powi_negative` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/approx/mat4 powi_negative` | `hyperlattice_approx_backend` | `op` | `dot4-specialized` | 64 |
 | `matrix_ops/approx/mat4 powi_negative` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 300 |
@@ -6681,9 +6609,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 powi_negative_one` | `hyperlattice` | `scalar_query` | `definitely-zero` | 36 |
 | `matrix_ops/approx/mat4 powi_negative_one` | `hyperlattice` | `scalar_query` | `zero-status` | 11 |
 | `matrix_ops/approx/mat4 powi_negative_one` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat4 powi_negative_one` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat4 powi_negative_one` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat4 powi_negative_one` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat4 powi_negative_one` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/approx/mat4 powi_negative_one` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 300 |
 | `matrix_ops/approx/mat4 powi_negative_one` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 4 |
@@ -6710,10 +6636,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 prepared_div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 18 |
 | `matrix_ops/approx/mat4 prepared_div_matrix` | `hyperlattice` | `zero_status` | `scalar-query` | 16 |
 | `matrix_ops/approx/mat4 prepared_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `new` | 16 |
-| `matrix_ops/approx/mat4 prepared_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 32 |
+| `matrix_ops/approx/mat4 prepared_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `one` | 16 |
 | `matrix_ops/approx/mat4 prepared_div_matrix` | `hyperlattice_approx_backend` | `constructor` | `zero` | 368 |
 | `matrix_ops/approx/mat4 prepared_div_matrix` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 16 |
-| `matrix_ops/approx/mat4 prepared_div_matrix` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 16 |
 | `matrix_ops/approx/mat4 prepared_div_matrix` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 236 |
 | `matrix_ops/approx/mat4 prepared_div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 4 |
 | `matrix_ops/approx/mat4 prepared_div_matrix` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 96 |
@@ -6738,10 +6663,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 prepared_div_matrix_checked` | `hyperlattice` | `scalar_query` | `zero-status` | 18 |
 | `matrix_ops/approx/mat4 prepared_div_matrix_checked` | `hyperlattice` | `zero_status` | `scalar-query` | 16 |
 | `matrix_ops/approx/mat4 prepared_div_matrix_checked` | `hyperlattice_approx_backend` | `constructor` | `new` | 16 |
-| `matrix_ops/approx/mat4 prepared_div_matrix_checked` | `hyperlattice_approx_backend` | `constructor` | `one` | 32 |
+| `matrix_ops/approx/mat4 prepared_div_matrix_checked` | `hyperlattice_approx_backend` | `constructor` | `one` | 16 |
 | `matrix_ops/approx/mat4 prepared_div_matrix_checked` | `hyperlattice_approx_backend` | `constructor` | `zero` | 368 |
 | `matrix_ops/approx/mat4 prepared_div_matrix_checked` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 16 |
-| `matrix_ops/approx/mat4 prepared_div_matrix_checked` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 16 |
 | `matrix_ops/approx/mat4 prepared_div_matrix_checked` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 236 |
 | `matrix_ops/approx/mat4 prepared_div_matrix_checked` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 4 |
 | `matrix_ops/approx/mat4 prepared_div_matrix_checked` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 96 |
@@ -6770,10 +6694,9 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 prepared_div_matrix_checked_abort` | `hyperlattice` | `zero_status` | `scalar-query` | 16 |
 | `matrix_ops/approx/mat4 prepared_div_matrix_checked_abort` | `hyperlattice` | `zero_status_abort` | `no-clone-fast-path` | 16 |
 | `matrix_ops/approx/mat4 prepared_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `new` | 16 |
-| `matrix_ops/approx/mat4 prepared_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `one` | 32 |
+| `matrix_ops/approx/mat4 prepared_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `one` | 16 |
 | `matrix_ops/approx/mat4 prepared_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `constructor` | `zero` | 368 |
 | `matrix_ops/approx/mat4 prepared_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 16 |
-| `matrix_ops/approx/mat4 prepared_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 16 |
 | `matrix_ops/approx/mat4 prepared_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 236 |
 | `matrix_ops/approx/mat4 prepared_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `query` | `attach-abort-noop` | 16 |
 | `matrix_ops/approx/mat4 prepared_div_matrix_checked_abort` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 4 |
@@ -6797,9 +6720,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 reciprocal` | `hyperlattice` | `scalar_query` | `definitely-zero` | 36 |
 | `matrix_ops/approx/mat4 reciprocal` | `hyperlattice` | `scalar_query` | `zero-status` | 11 |
 | `matrix_ops/approx/mat4 reciprocal` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat4 reciprocal` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat4 reciprocal` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat4 reciprocal` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat4 reciprocal` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/approx/mat4 reciprocal` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 300 |
 | `matrix_ops/approx/mat4 reciprocal` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 4 |
@@ -6825,9 +6746,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 reciprocal_checked` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/approx/mat4 reciprocal_checked` | `hyperlattice` | `zero_status` | `scalar-query` | 4 |
 | `matrix_ops/approx/mat4 reciprocal_checked` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat4 reciprocal_checked` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat4 reciprocal_checked` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat4 reciprocal_checked` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat4 reciprocal_checked` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 4 |
 | `matrix_ops/approx/mat4 reciprocal_checked` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 300 |
 | `matrix_ops/approx/mat4 reciprocal_checked` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 4 |
@@ -6975,10 +6894,8 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/approx/mat4 uniform_scale_reciprocal` | `hyperlattice` | `scalar_query` | `definitely-zero` | 12 |
 | `matrix_ops/approx/mat4 uniform_scale_reciprocal` | `hyperlattice` | `scalar_query` | `zero-status` | 2 |
 | `matrix_ops/approx/mat4 uniform_scale_reciprocal` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `matrix_ops/approx/mat4 uniform_scale_reciprocal` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/approx/mat4 uniform_scale_reciprocal` | `hyperlattice_approx_backend` | `constructor` | `zero` | 12 |
 | `matrix_ops/approx/mat4 uniform_scale_reciprocal` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `matrix_ops/approx/mat4 uniform_scale_reciprocal` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/approx/mat4 uniform_scale_reciprocal` | `hyperlattice_approx_backend` | `query` | `definitely-one` | 4 |
 | `matrix_ops/approx/mat4 uniform_scale_reciprocal` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 18 |
 | `matrix_ops/approx/mat4 uniform_scale_reciprocal` | `hyperlattice_approx_backend` | `query` | `zero-status` | 6 |
@@ -12025,9 +11942,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `scalar_ops/approx/powi_negative_one` | `hyperlattice` | `powi` | `negative-inverse` | 4 |
 | `scalar_ops/approx/powi_negative_one` | `hyperlattice` | `scalar_method` | `inverse-owned` | 4 |
 | `scalar_ops/approx/powi_negative_one` | `hyperlattice_approx_backend` | `constructor` | `new` | 4 |
-| `scalar_ops/approx/powi_negative_one` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `scalar_ops/approx/powi_negative_one` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
-| `scalar_ops/approx/powi_negative_one` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `scalar_ops/approx/powi_negative_one` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 4 |
 | `scalar_ops/approx/powi_negative_one` | `hyperlattice_approx_backend` | `query` | `zero-status` | 4 |
 | `scalar_ops/approx/sin` | `hyperlattice` | `free_function` | `sin` | 4 |
@@ -12378,22 +12293,18 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `scalar_ops/hyperreal-rational/tan` | `hyperlattice_hyperreal_backend` | `method` | `tan` | 4 |
 | `scalar_ops/hyperreal-rational/tan` | `real` | `definitely_zero` | `rational-sign` | 4 |
 | `scalar_ops/hyperreal-rational/tan` | `real` | `tan` | `rational-specialized-computable` | 4 |
-| `scalar_ops/hyperreal-rational/tanh` | `computable` | `constructor` | `cached-e-internal` | 4 |
-| `scalar_ops/hyperreal-rational/tanh` | `computable` | `constructor` | `one` | 7 |
-| `scalar_ops/hyperreal-rational/tanh` | `computable` | `constructor` | `rational-node` | 25 |
-| `scalar_ops/hyperreal-rational/tanh` | `computable` | `constructor` | `rational-one-canonicalized` | 4 |
-| `scalar_ops/hyperreal-rational/tanh` | `computable` | `constructor` | `shared-constant-wrapper` | 10 |
+| `scalar_ops/hyperreal-rational/tanh` | `computable` | `constructor` | `rational-node` | 24 |
+| `scalar_ops/hyperreal-rational/tanh` | `computable` | `constructor` | `shared-constant-wrapper` | 6 |
 | `scalar_ops/hyperreal-rational/tanh` | `computable` | `exp` | `ln2-range-reduction` | 6 |
 | `scalar_ops/hyperreal-rational/tanh` | `computable` | `exp` | `structural-large-range-reduction` | 6 |
-| `scalar_ops/hyperreal-rational/tanh` | `computable` | `exp` | `structural-small-prescaled` | 3 |
+| `scalar_ops/hyperreal-rational/tanh` | `computable` | `exp` | `structural-small-prescaled` | 6 |
 | `scalar_ops/hyperreal-rational/tanh` | `hyperlattice` | `free_function` | `tanh-backend` | 4 |
 | `scalar_ops/hyperreal-rational/tanh` | `hyperlattice` | `scalar_method` | `tanh` | 4 |
 | `scalar_ops/hyperreal-rational/tanh` | `hyperlattice_hyperreal_backend` | `method` | `tanh` | 4 |
-| `scalar_ops/hyperreal-rational/tanh` | `real` | `constructor` | `one` | 4 |
-| `scalar_ops/hyperreal-rational/tanh` | `real` | `constructor` | `rational` | 8 |
-| `scalar_ops/hyperreal-rational/tanh` | `real` | `definitely_zero` | `rational-sign` | 40 |
+| `scalar_ops/hyperreal-rational/tanh` | `real` | `definitely_zero` | `rational-sign` | 36 |
 | `scalar_ops/hyperreal-rational/tanh` | `real` | `exp` | `rational-exp-special-form` | 4 |
-| `scalar_ops/hyperreal-rational/tanh` | `real` | `inverse_ref` | `generic` | 4 |
+| `scalar_ops/hyperreal-rational/tanh` | `real` | `inverse` | `generic` | 4 |
+| `scalar_ops/hyperreal-rational/tanh` | `real` | `inverse_ref` | `exp` | 4 |
 | `scalar_ops/hyperreal/acos` | `computable` | `acos` | `negative-endpoint-rewrite` | 1 |
 | `scalar_ops/hyperreal/acos` | `computable` | `acos` | `positive-endpoint-deferred` | 2 |
 | `scalar_ops/hyperreal/acos` | `computable` | `acos` | `tiny-via-asin` | 1 |
@@ -12706,22 +12617,18 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `scalar_ops/hyperreal/tan` | `hyperlattice_hyperreal_backend` | `method` | `tan` | 4 |
 | `scalar_ops/hyperreal/tan` | `real` | `definitely_zero` | `rational-sign` | 4 |
 | `scalar_ops/hyperreal/tan` | `real` | `tan` | `rational-specialized-computable` | 4 |
-| `scalar_ops/hyperreal/tanh` | `computable` | `constructor` | `cached-e-internal` | 4 |
-| `scalar_ops/hyperreal/tanh` | `computable` | `constructor` | `one` | 7 |
-| `scalar_ops/hyperreal/tanh` | `computable` | `constructor` | `rational-node` | 25 |
-| `scalar_ops/hyperreal/tanh` | `computable` | `constructor` | `rational-one-canonicalized` | 4 |
-| `scalar_ops/hyperreal/tanh` | `computable` | `constructor` | `shared-constant-wrapper` | 10 |
+| `scalar_ops/hyperreal/tanh` | `computable` | `constructor` | `rational-node` | 24 |
+| `scalar_ops/hyperreal/tanh` | `computable` | `constructor` | `shared-constant-wrapper` | 6 |
 | `scalar_ops/hyperreal/tanh` | `computable` | `exp` | `ln2-range-reduction` | 6 |
 | `scalar_ops/hyperreal/tanh` | `computable` | `exp` | `structural-large-range-reduction` | 6 |
-| `scalar_ops/hyperreal/tanh` | `computable` | `exp` | `structural-small-prescaled` | 3 |
+| `scalar_ops/hyperreal/tanh` | `computable` | `exp` | `structural-small-prescaled` | 6 |
 | `scalar_ops/hyperreal/tanh` | `hyperlattice` | `free_function` | `tanh-backend` | 4 |
 | `scalar_ops/hyperreal/tanh` | `hyperlattice` | `scalar_method` | `tanh` | 4 |
 | `scalar_ops/hyperreal/tanh` | `hyperlattice_hyperreal_backend` | `method` | `tanh` | 4 |
-| `scalar_ops/hyperreal/tanh` | `real` | `constructor` | `one` | 4 |
-| `scalar_ops/hyperreal/tanh` | `real` | `constructor` | `rational` | 8 |
-| `scalar_ops/hyperreal/tanh` | `real` | `definitely_zero` | `rational-sign` | 40 |
+| `scalar_ops/hyperreal/tanh` | `real` | `definitely_zero` | `rational-sign` | 36 |
 | `scalar_ops/hyperreal/tanh` | `real` | `exp` | `rational-exp-special-form` | 4 |
-| `scalar_ops/hyperreal/tanh` | `real` | `inverse_ref` | `generic` | 4 |
+| `scalar_ops/hyperreal/tanh` | `real` | `inverse` | `generic` | 4 |
+| `scalar_ops/hyperreal/tanh` | `real` | `inverse_ref` | `exp` | 4 |
 | `scalar_trig/approx/0.1/cos` | `hyperlattice` | `free_function` | `cos` | 1 |
 | `scalar_trig/approx/0.1/cos` | `hyperlattice` | `scalar_method` | `cos` | 1 |
 | `scalar_trig/approx/0.1/cos` | `hyperlattice_approx_backend` | `constructor` | `rounded-with-input` | 1 |
@@ -13784,10 +13691,8 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `vectors/approx/vec3 normalize` | `hyperlattice` | `zero_guard` | `not-definitely-zero` | 4 |
 | `vectors/approx/vec3 normalize` | `hyperlattice_approx_backend` | `constructor` | `from-unary` | 4 |
 | `vectors/approx/vec3 normalize` | `hyperlattice_approx_backend` | `constructor` | `new` | 8 |
-| `vectors/approx/vec3 normalize` | `hyperlattice_approx_backend` | `constructor` | `one` | 4 |
 | `vectors/approx/vec3 normalize` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
 | `vectors/approx/vec3 normalize` | `hyperlattice_approx_backend` | `method` | `sqrt` | 4 |
-| `vectors/approx/vec3 normalize` | `hyperlattice_approx_backend` | `op` | `div-owned-owned` | 4 |
 | `vectors/approx/vec3 normalize` | `hyperlattice_approx_backend` | `op` | `dot3-specialized` | 4 |
 | `vectors/approx/vec3 normalize` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 12 |
 | `vectors/approx/vec3 normalize` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 20 |

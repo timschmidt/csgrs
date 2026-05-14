@@ -31,6 +31,17 @@ fn bench_complex_operations_for<B, F>(
         make_scalar(std::f64::consts::PI),
     ];
 
+    trace_dispatch_cases(format!("complex_ops/{label}/powi"), &lhs_cases, |value| {
+        let _ = black_box(value.clone().powi(5).unwrap());
+    });
+    trace_dispatch_cases(
+        format!("complex_ops/{label}/powi_checked"),
+        &lhs_cases,
+        |value| {
+            let _ = black_box(value.clone().powi_checked(5).unwrap());
+        },
+    );
+
     group.bench_function(format!("{label}/zero"), |b| {
         b.iter(|| black_box(Complex::<B>::zero()))
     });

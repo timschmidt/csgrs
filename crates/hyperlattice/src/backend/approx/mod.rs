@@ -72,6 +72,19 @@ fn product_epsilon(left: &BackendScalar, right: &BackendScalar, product: f64) ->
         + ROUNDING_EPSILON * product.abs()
 }
 
+fn inverse_impl(value: &BackendScalar) -> BlasResult<BackendScalar> {
+    match value.zero_status() {
+        ZeroStatus::Zero => return Err(Problem::DivideByZero),
+        ZeroStatus::Unknown => return Err(Problem::UnknownZero),
+        ZeroStatus::NonZero => {}
+    }
+
+    let center = value.value.recip();
+    let denom = value.value.abs() - value.epsilon;
+    let epsilon = value.epsilon / (denom * denom);
+    BackendScalar::new(center, epsilon + ROUNDING_EPSILON * center.abs())
+}
+
 impl BackendScalarTrait for BackendScalar {
     fn zero() -> Self {
         crate::trace_dispatch!("hyperlattice_approx_backend", "constructor", "zero");
@@ -101,13 +114,13 @@ impl BackendScalarTrait for BackendScalar {
 
     fn inverse(self) -> BlasResult<Self> {
         crate::trace_dispatch!("hyperlattice_approx_backend", "method", "inverse-owned");
-        Self::one().div(self)
+        inverse_impl(&self)
     }
 
     #[inline]
     fn inverse_ref(&self) -> BlasResult<Self> {
         crate::trace_dispatch!("hyperlattice_approx_backend", "method", "inverse-ref");
-        Self::div_refs(&Self::one(), self)
+        inverse_impl(self)
     }
 
     fn pow(self, exponent: Self) -> BlasResult<Self> {

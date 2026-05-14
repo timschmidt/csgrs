@@ -576,11 +576,11 @@ impl BackendScalarTrait for BackendScalar {
 
     fn tanh(self) -> BlasResult<Self> {
         crate::trace_dispatch!("hyperlattice_hyperreal_backend", "method", "tanh");
-        let exp_double = (self.0 * hyperreal::Real::from(2_i8)).exp()?;
-        let one = hyperreal::Real::one();
-        ((exp_double.clone() - &one) / (exp_double + one))
-            .map(Self)
-            .map_err(Problem::from)
+        let positive = self.0.exp()?;
+        let negative = positive.inverse_ref()?;
+        let numerator = positive.clone() - &negative;
+        let denominator_inv = (positive + negative).inverse()?;
+        Ok(Self(numerator * denominator_inv))
     }
 
     fn asin(self) -> BlasResult<Self> {

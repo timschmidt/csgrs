@@ -166,28 +166,40 @@ fn complex_powi_positive<B: Backend>(base: Complex<B>, exponent: u64) -> Complex
         }
         2 => {
             crate::trace_dispatch!("hyperlattice_complex", "powi", "specialized-square");
-            base.clone() * base
+            complex_multiply_for_powi(base.clone(), base)
         }
         3 => {
             crate::trace_dispatch!("hyperlattice_complex", "powi", "specialized-cube");
-            let square = base.clone() * base.clone();
-            square * base
+            let square = complex_multiply_for_powi(base.clone(), base.clone());
+            complex_multiply_for_powi(square, base)
         }
         4 => {
             crate::trace_dispatch!("hyperlattice_complex", "powi", "specialized-fourth");
-            let square = base.clone() * base;
-            square.clone() * square
+            let square = complex_multiply_for_powi(base.clone(), base);
+            complex_multiply_for_powi(square.clone(), square)
         }
         5 => {
             crate::trace_dispatch!("hyperlattice_complex", "powi", "specialized-fifth");
-            let square = base.clone() * base.clone();
-            let fourth = square.clone() * square;
-            fourth * base
+            let square = complex_multiply_for_powi(base.clone(), base.clone());
+            let fourth = complex_multiply_for_powi(square.clone(), square);
+            complex_multiply_for_powi(fourth, base)
         }
         _ => {
             crate::trace_dispatch!("hyperlattice_complex", "powi", "generic-squaring");
             complex_powi_by_squaring(base, exponent)
         }
+    }
+}
+
+#[inline(always)]
+fn complex_multiply_for_powi<B: Backend>(lhs: Complex<B>, rhs: Complex<B>) -> Complex<B> {
+    if B::FUSE_SIGNED_PRODUCT_SUM {
+        crate::trace_dispatch!("hyperlattice_complex", "powi", "mul-fused-exact");
+        let (re, im) = complex_multiply_components(&lhs, &rhs);
+        Complex::new(re, im)
+    } else {
+        crate::trace_dispatch!("hyperlattice_complex", "powi", "mul-direct");
+        lhs * rhs
     }
 }
 
@@ -214,6 +226,32 @@ fn complex_division_numerators<B: Backend>(
     (
         &lhs.re * &rhs.re + &lhs.im * &rhs.im,
         &lhs.im * &rhs.re - &lhs.re * &rhs.im,
+    )
+}
+
+#[inline]
+fn complex_multiply_components<B: Backend>(
+    lhs: &Complex<B>,
+    rhs: &Complex<B>,
+) -> (Scalar<B>, Scalar<B>) {
+    if B::FUSE_SIGNED_PRODUCT_SUM {
+        crate::trace_dispatch!("hyperlattice_complex", "op", "mul-components-fused-exact");
+        return (
+            Scalar::active_signed_product_sum2(
+                [true, false],
+                [[&lhs.re, &rhs.re], [&lhs.im, &rhs.im]],
+            ),
+            Scalar::active_signed_product_sum2(
+                [true, true],
+                [[&lhs.re, &rhs.im], [&lhs.im, &rhs.re]],
+            ),
+        );
+    }
+
+    crate::trace_dispatch!("hyperlattice_complex", "op", "mul-components-direct");
+    (
+        &lhs.re * &rhs.re - &lhs.im * &rhs.im,
+        &lhs.re * &rhs.im + &lhs.im * &rhs.re,
     )
 }
 
