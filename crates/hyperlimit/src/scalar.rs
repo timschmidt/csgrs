@@ -134,6 +134,42 @@ pub trait PredicateScalar:
         crate::trace_dispatch!("hyperlimit", "predicate_scalar", "default-no-prefilter");
         false
     }
+
+    /// Whether explicit point-plane classification should try its `f64`
+    /// filter before constructing scalar dot products.
+    #[inline]
+    fn prefer_plane_f64_filter_before_arithmetic() -> bool {
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "predicate_scalar",
+            "default-plane-prefilter-policy"
+        );
+        Self::prefer_f64_filter_before_arithmetic()
+    }
+
+    /// Whether 3D orientation predicates should try their `f64` filters
+    /// before constructing scalar determinant terms.
+    #[inline]
+    fn prefer_orientation_f64_filter_before_arithmetic() -> bool {
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "predicate_scalar",
+            "default-orientation-prefilter-policy"
+        );
+        Self::prefer_f64_filter_before_arithmetic()
+    }
+
+    /// Whether 3D in-sphere predicates should try their `f64` filters before
+    /// constructing scalar determinant terms.
+    #[inline]
+    fn prefer_insphere_f64_filter_before_arithmetic() -> bool {
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "predicate_scalar",
+            "default-insphere-prefilter-policy"
+        );
+        Self::prefer_f64_filter_before_arithmetic()
+    }
 }
 
 /// Predicate scalar with borrowed arithmetic.
@@ -213,11 +249,33 @@ macro_rules! impl_float_scalar {
             #[inline(always)]
             fn prefer_f64_filter_before_arithmetic() -> bool {
                 crate::trace_dispatch!("hyperlimit", "float_scalar", "prefilter-policy");
+                false
+            }
+
+            #[inline(always)]
+            fn prefer_plane_f64_filter_before_arithmetic() -> bool {
+                crate::trace_dispatch!("hyperlimit", "float_scalar", "plane-prefilter-policy");
                 $prefer_filter
+            }
+
+            #[inline(always)]
+            fn prefer_orientation_f64_filter_before_arithmetic() -> bool {
+                crate::trace_dispatch!(
+                    "hyperlimit",
+                    "float_scalar",
+                    "orientation-prefilter-policy"
+                );
+                true
+            }
+
+            #[inline(always)]
+            fn prefer_insphere_f64_filter_before_arithmetic() -> bool {
+                crate::trace_dispatch!("hyperlimit", "float_scalar", "insphere-prefilter-policy");
+                true
             }
         }
     };
 }
 
-impl_float_scalar!(f32, false);
-impl_float_scalar!(f64, false);
+impl_float_scalar!(f32, true);
+impl_float_scalar!(f64, true);

@@ -91,7 +91,7 @@ pub fn orient3d_with_policy<S: BorrowedPredicateScalar>(
     d: &Point3<S>,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Sign> {
-    if S::prefer_f64_filter_before_arithmetic() {
+    if S::prefer_orientation_f64_filter_before_arithmetic() {
         if let Some(outcome) = orient3d_point_filter(a, b, c, d) {
             crate::trace_dispatch!("hyperlimit", "orient3d", "f64-point-filter-hit");
             return outcome;
@@ -268,7 +268,7 @@ pub fn insphere3d_with_policy<S: BorrowedPredicateScalar>(
     e: &Point3<S>,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Sign> {
-    if S::prefer_f64_filter_before_arithmetic() {
+    if S::prefer_insphere_f64_filter_before_arithmetic() {
         if let Some(outcome) = insphere3d_point_filter(a, b, c, d, e) {
             crate::trace_dispatch!("hyperlimit", "insphere3d", "f64-point-filter-hit");
             return outcome;

@@ -68,6 +68,36 @@ impl PredicateScalar for hyperreal::Real {
         );
         true
     }
+
+    #[inline(always)]
+    fn prefer_plane_f64_filter_before_arithmetic() -> bool {
+        crate::trace_dispatch!(
+            "hyperlimit_hyperreal_adapter",
+            "policy",
+            "prefer-plane-f64-prefilter"
+        );
+        true
+    }
+
+    #[inline(always)]
+    fn prefer_orientation_f64_filter_before_arithmetic() -> bool {
+        crate::trace_dispatch!(
+            "hyperlimit_hyperreal_adapter",
+            "policy",
+            "prefer-orientation-f64-prefilter"
+        );
+        true
+    }
+
+    #[inline(always)]
+    fn prefer_insphere_f64_filter_before_arithmetic() -> bool {
+        crate::trace_dispatch!(
+            "hyperlimit_hyperreal_adapter",
+            "policy",
+            "prefer-insphere-f64-prefilter"
+        );
+        true
+    }
 }
 
 #[inline]

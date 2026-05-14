@@ -54,7 +54,8 @@ pub fn classify_point_plane_with_policy<S: BorrowedPredicateScalar>(
     // Exact symbolic backends can spend more constructing the plane-side scalar than the
     // conservative f64 filter costs, so try the filter before scalar arithmetic when the
     // backend opts in.
-    if S::prefer_f64_filter_before_arithmetic() {
+    let tried_prefilter = S::prefer_plane_f64_filter_before_arithmetic();
+    if tried_prefilter {
         if let Some(outcome) = classify_point_plane_filter(point, plane) {
             crate::trace_dispatch!("hyperlimit", "classify_point_plane", "f64-point-filter-hit");
             return outcome;
@@ -79,8 +80,17 @@ pub fn classify_point_plane_with_policy<S: BorrowedPredicateScalar>(
             &value,
             policy,
             || {
-                classify_point_plane_filter(point, plane)
-                    .map(|outcome| map_outcome(outcome, sign_from_plane_side))
+                if tried_prefilter {
+                    crate::trace_dispatch!(
+                        "hyperlimit",
+                        "classify_point_plane",
+                        "skip-duplicate-f64-point-filter"
+                    );
+                    None
+                } else {
+                    classify_point_plane_filter(point, plane)
+                        .map(|outcome| map_outcome(outcome, sign_from_plane_side))
+                }
             },
             || None,
             || None,

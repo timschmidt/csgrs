@@ -82,6 +82,36 @@ impl<B: ::hyperlattice::Backend> PredicateScalar for ::hyperlattice::Scalar<B> {
         );
         true
     }
+
+    #[inline(always)]
+    fn prefer_plane_f64_filter_before_arithmetic() -> bool {
+        crate::trace_dispatch!(
+            "hyperlimit_hyperlattice_adapter",
+            "policy",
+            "prefer-plane-f64-prefilter"
+        );
+        true
+    }
+
+    #[inline(always)]
+    fn prefer_orientation_f64_filter_before_arithmetic() -> bool {
+        crate::trace_dispatch!(
+            "hyperlimit_hyperlattice_adapter",
+            "policy",
+            "prefer-orientation-f64-prefilter"
+        );
+        true
+    }
+
+    #[inline(always)]
+    fn prefer_insphere_f64_filter_before_arithmetic() -> bool {
+        crate::trace_dispatch!(
+            "hyperlimit_hyperlattice_adapter",
+            "policy",
+            "prefer-insphere-f64-prefilter"
+        );
+        true
+    }
 }
 
 #[inline]

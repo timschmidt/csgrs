@@ -219,6 +219,7 @@ fn refine_scalar_sign_if_allowed<S: PredicateScalar>(
 
 /// Try to decide the sign of a sum of signed terms using structural signs and
 /// magnitude bounds. Each input term is `(term, sign_multiplier)`.
+#[inline(always)]
 pub(crate) fn signed_term_filter<S: PredicateScalar>(
     terms: &[(&S, Sign)],
 ) -> Option<PredicateOutcome<Sign>> {
@@ -226,31 +227,70 @@ pub(crate) fn signed_term_filter<S: PredicateScalar>(
     // It intentionally uses only cheap scalar facts: exact zero, structural
     // sign, and conservative magnitude. If any needed fact is missing, we stop
     // and let the normal predicate pipeline refine or fall back.
-    let mut nonzero = Vec::new();
+    if terms.len() > 4 {
+        return signed_term_filter_dynamic(terms);
+    }
+
+    let mut nonzero = [(Sign::Zero, MagnitudeBounds::exact(0.0)); 4];
+    let mut nonzero_len = 0usize;
+    for (term, multiplier) in terms {
+        let Some((sign, magnitude)) = signed_nonzero_term(*term, *multiplier)? else {
+            continue;
+        };
+        nonzero[nonzero_len] = (sign, magnitude);
+        nonzero_len += 1;
+    }
+
+    finish_signed_term_filter(&nonzero[..nonzero_len])
+}
+
+#[inline]
+fn signed_term_filter_dynamic<S: PredicateScalar>(
+    terms: &[(&S, Sign)],
+) -> Option<PredicateOutcome<Sign>> {
+    let mut nonzero = Vec::with_capacity(terms.len());
 
     for (term, multiplier) in terms {
-        let facts = term.scalar_facts();
-        if facts.exact_zero == Some(true) || facts.sign == Some(Sign::Zero) {
-            crate::trace_dispatch!("hyperlimit", "signed_term_filter", "zero-term");
+        let Some((sign, magnitude)) = signed_nonzero_term(*term, *multiplier)? else {
             continue;
-        }
-
-        let Some(sign) = facts.sign else {
-            crate::trace_dispatch!("hyperlimit", "signed_term_filter", "missing-sign");
-            return None;
-        };
-        let sign = multiply_sign(sign, *multiplier);
-        if sign == Sign::Zero {
-            crate::trace_dispatch!("hyperlimit", "signed_term_filter", "zero-after-multiplier");
-            continue;
-        }
-        let Some(magnitude) = facts.magnitude else {
-            crate::trace_dispatch!("hyperlimit", "signed_term_filter", "missing-magnitude");
-            return None;
         };
         nonzero.push((sign, magnitude));
     }
 
+    finish_signed_term_filter(&nonzero)
+}
+
+#[inline(always)]
+fn signed_nonzero_term<S: PredicateScalar>(
+    term: &S,
+    multiplier: Sign,
+) -> Option<Option<(Sign, MagnitudeBounds)>> {
+    let facts = term.scalar_facts();
+    if facts.exact_zero == Some(true) || facts.sign == Some(Sign::Zero) {
+        crate::trace_dispatch!("hyperlimit", "signed_term_filter", "zero-term");
+        return Some(None);
+    }
+
+    let Some(sign) = facts.sign else {
+        crate::trace_dispatch!("hyperlimit", "signed_term_filter", "missing-sign");
+        return None;
+    };
+    let sign = multiply_sign(sign, multiplier);
+    if sign == Sign::Zero {
+        crate::trace_dispatch!("hyperlimit", "signed_term_filter", "zero-after-multiplier");
+        return Some(None);
+    }
+    let Some(magnitude) = facts.magnitude else {
+        crate::trace_dispatch!("hyperlimit", "signed_term_filter", "missing-magnitude");
+        return None;
+    };
+    Some(Some((sign, magnitude)))
+}
+
+#[inline(always)]
+fn finish_signed_term_filter(
+    nonzero: &[(Sign, MagnitudeBounds)],
+) -> Option<PredicateOutcome<Sign>> {
     if nonzero.is_empty() {
         crate::trace_dispatch!("hyperlimit", "signed_term_filter", "all-zero");
         return Some(PredicateOutcome::decided(
@@ -259,7 +299,6 @@ pub(crate) fn signed_term_filter<S: PredicateScalar>(
             Escalation::Filter,
         ));
     }
-
     let first = nonzero[0].0;
     if nonzero.iter().all(|(sign, _)| *sign == first) {
         crate::trace_dispatch!("hyperlimit", "signed_term_filter", "same-sign");
@@ -270,7 +309,7 @@ pub(crate) fn signed_term_filter<S: PredicateScalar>(
         ));
     }
 
-    match dominance_sign(&nonzero) {
+    match dominance_sign(nonzero) {
         Some(sign) => {
             crate::trace_dispatch!("hyperlimit", "signed_term_filter", "dominant-term");
             Some(PredicateOutcome::decided(
@@ -286,6 +325,7 @@ pub(crate) fn signed_term_filter<S: PredicateScalar>(
     }
 }
 
+#[inline(always)]
 fn dominance_sign(terms: &[(Sign, MagnitudeBounds)]) -> Option<Sign> {
     // Dominant-term detection catches expressions like `pi - 3` without
     // constructing exact fallback objects. The two-bit gap is conservative:
@@ -314,6 +354,7 @@ fn dominance_sign(terms: &[(Sign, MagnitudeBounds)]) -> Option<Sign> {
     None
 }
 
+#[inline(always)]
 fn multiply_sign(left: Sign, right: Sign) -> Sign {
     match (left, right) {
         (Sign::Zero, _) | (_, Sign::Zero) => Sign::Zero,

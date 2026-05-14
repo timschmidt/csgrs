@@ -159,6 +159,26 @@ The shared sign resolver attempts:
 6. approximate sign, only when policy allows it
 7. `Unknown`
 
+The same escalation path as a flow:
+
+```mermaid
+flowchart TD
+    Predicate["Predicate call\norient, incircle, plane side"] --> Structural["Structural scalar facts\nsign, zero, nonzero, bounds"]
+    Structural -->|decided| ExactOutcome["PredicateOutcome\nExact"]
+    Structural -->|unknown| Filter["Determinant filters\nand conservative envelopes"]
+    Filter -->|decided| FilteredOutcome["PredicateOutcome\nFiltered"]
+    Filter -->|uncertain| ExactHook["Exact scalar or\nexact predicate hook"]
+    ExactHook -->|decided| ExactOutcome
+    ExactHook -->|unavailable or unknown| Refine["Bounded sign refinement"]
+    Refine -->|decided| RefinedOutcome["PredicateOutcome\nExact or Refined"]
+    Refine -->|still unknown| Robust["Robust backend fallback\nrobust or geogram"]
+    Robust -->|decided| RobustOutcome["PredicateOutcome\nRobustFloat"]
+    Robust -->|unavailable or disagrees| ApproxGate{"Policy allows\napproximate topology?"}
+    ApproxGate -->|yes| Approx["Approximate sign"]
+    Approx --> ApproxOutcome["PredicateOutcome\nApproximate"]
+    ApproxGate -->|no| Unknown["PredicateOutcome::Unknown"]
+```
+
 Use policy-specific functions when the default strict behavior is not desired:
 
 ```rust
