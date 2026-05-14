@@ -11,13 +11,7 @@
 //! ```
 
 use csgrs::csg::CSG;
-use csgrs::float_types::{
-    parry3d::{
-        query::{Ray, RayCast},
-        shape::TriMesh,
-    },
-    Real,
-};
+use csgrs::float_types::Real;
 use csgrs::mesh::metaballs::MetaBall;
 use csgrs::mesh::Mesh;
 use csgrs::polygon::Polygon;
@@ -27,13 +21,12 @@ use geo::{
     BoundingRect, Contains, CoordsIter, Geometry, GeometryCollection, Point as GeoPoint,
 };
 use image::{GrayImage, Luma, Rgba, RgbaImage};
-use nalgebra::{Isometry3, Point2, Point3, Vector3};
+use nalgebra::{Point2, Point3, Vector3};
 use std::fs;
 use std::path::Path;
 
-const SIZE: u32 = 512;
+const SIZE: u32 = 1024;
 const PADDING: Real = 0.12;
-const RAYCAST_TRIANGLE_THRESHOLD: usize = 220;
 
 const BG: Rgba<u8> = Rgba([0, 0, 0, 0]);
 const INK_2D: Rgba<u8> = Rgba([42, 95, 143, 255]);
@@ -460,14 +453,6 @@ fn render_mesh(name: &str, mesh: &Mesh<()>) {
     let bounds = projected_bounds_from_mesh(mesh);
     let map = Map2::new(bounds.0, bounds.1, bounds.2, bounds.3);
 
-    if triangles.len() >= RAYCAST_TRIANGLE_THRESHOLD {
-        if let Some(trimesh) = mesh.to_trimesh() {
-            render_mesh_raycast(&mut image, &map, mesh, &trimesh);
-            save_image(name, &image);
-            return;
-        }
-    }
-
     let mut ordered = projected;
     ordered.sort_by(|a, b| {
         a.depth
@@ -479,41 +464,6 @@ fn render_mesh(name: &str, mesh: &Mesh<()>) {
     }
 
     save_image(name, &image);
-}
-
-fn render_mesh_raycast(image: &mut RgbaImage, map: &Map2, mesh: &Mesh<()>, trimesh: &TriMesh) {
-    let (screen_x, screen_y, view_dir) = camera_axes();
-    let aabb = mesh.bounding_box();
-    let corners = aabb_corners(aabb.mins, aabb.maxs);
-    let (min_depth, max_depth) =
-        corners
-            .iter()
-            .fold((Real::MAX, -Real::MAX), |(min_depth, max_depth), point| {
-                let depth = point.coords.dot(&view_dir);
-                (min_depth.min(depth), max_depth.max(depth))
-            });
-    let depth_span = (max_depth - min_depth).max(1.0);
-    let camera_depth = max_depth + depth_span + 4.0;
-    let max_toi = depth_span * 3.0 + 8.0;
-    let iso = Isometry3::identity();
-    let light = Vector3::new(-0.35, -0.45, 0.82).normalize();
-
-    for y in 0..SIZE {
-        for x in 0..SIZE {
-            let (sx, sy) = map.world(x, y);
-            let origin = Point3::from(screen_x * sx + screen_y * sy + view_dir * camera_depth);
-            let ray = Ray::new(origin, -view_dir);
-            if let Some(hit) = trimesh.cast_ray_and_get_normal(&iso, &ray, max_toi, false) {
-                let shade = hit
-                    .normal
-                    .dot(&light)
-                    .abs()
-                    .mul_add(0.45, 0.35)
-                    .clamp(0.18, 1.0);
-                image.put_pixel(x, y, shade_color(shade));
-            }
-        }
-    }
 }
 
 fn projected_bounds_from_mesh(mesh: &Mesh<()>) -> (Real, Real, Real, Real) {
