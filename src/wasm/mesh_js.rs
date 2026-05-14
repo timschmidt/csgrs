@@ -1,12 +1,12 @@
+use crate::csg::CSG;
 use crate::float_types::Real;
 use crate::mesh::{Mesh, plane::Plane};
-use crate::csg::CSG;
 use crate::wasm::{
     js_metadata_to_string, matrix_js::Matrix4Js, plane_js::PlaneJs, point_js::Point3Js,
     polygon_js::PolygonJs, sketch_js::SketchJs, vector_js::Vector3Js,
 };
 use js_sys::{Float64Array, Object, Reflect, Uint32Array};
-use nalgebra::{Matrix4, Point3, Vector3};
+use nalgebra::{Matrix4, Point3, Quaternion, UnitQuaternion, Vector3};
 use serde_wasm_bindgen::from_value;
 use wasm_bindgen::prelude::*;
 
@@ -28,6 +28,129 @@ impl MeshJs {
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         let mesh = Mesh::from_polygons(&poly_vec, meta);
         MeshJs { inner: mesh }
+    }
+
+    #[wasm_bindgen(js_name=fromPointsWithHoles)]
+    pub fn from_points_with_holes(
+        outer_points: Vec<f64>,
+        hole_arrays: Vec<Float64Array>,
+        metadata: JsValue,
+    ) -> Result<MeshJs, JsValue> {
+        use crate::polygon::build_orthonormal_basis;
+        use crate::vertex::Vertex;
+
+        fn parse_points(data: &[f64], label: &str) -> Result<Vec<Point3<Real>>, JsValue> {
+            if data.len() % 3 != 0 {
+                return Err(JsValue::from_str(&format!(
+                    "{label} must contain x/y/z triples"
+                )));
+            }
+
+            let mut points = Vec::with_capacity(data.len() / 3);
+            for chunk in data.chunks_exact(3) {
+                if !chunk.iter().all(|value| value.is_finite()) {
+                    return Err(JsValue::from_str(&format!(
+                        "{label} contains a non-finite coordinate"
+                    )));
+                }
+                points.push(Point3::new(
+                    chunk[0] as Real,
+                    chunk[1] as Real,
+                    chunk[2] as Real,
+                ));
+            }
+            Ok(points)
+        }
+
+        fn push_ring(
+            ring: &[Point3<Real>],
+            origin: Point3<Real>,
+            u: Vector3<Real>,
+            v: Vector3<Real>,
+            vertices: &mut Vec<Vertex>,
+            flat_2d: &mut Vec<Real>,
+            normal: Vector3<Real>,
+        ) {
+            for point in ring {
+                let offset = point.coords - origin.coords;
+                flat_2d.push(offset.dot(&u));
+                flat_2d.push(offset.dot(&v));
+                vertices.push(Vertex::new(*point, normal));
+            }
+        }
+
+        let outer = parse_points(&outer_points, "outer_points")?;
+        if outer.len() < 3 {
+            return Err(JsValue::from_str(
+                "outer_points must contain at least three points",
+            ));
+        }
+
+        let normal = {
+            let mut normal = Vector3::zeros();
+            for i in 1..outer.len() - 1 {
+                normal = (outer[i] - outer[0]).cross(&(outer[i + 1] - outer[0]));
+                if normal.norm_squared() > Real::EPSILON {
+                    break;
+                }
+            }
+            let normal_len = normal.norm();
+            if normal_len <= Real::EPSILON || !normal_len.is_finite() {
+                return Err(JsValue::from_str("outer_points are degenerate"));
+            }
+            normal / normal_len
+        };
+
+        let origin = outer[0];
+        let (u, v) = build_orthonormal_basis(normal);
+        let mut vertices = Vec::new();
+        let mut flat_2d = Vec::new();
+        let mut holes = Vec::with_capacity(hole_arrays.len());
+
+        push_ring(&outer, origin, u, v, &mut vertices, &mut flat_2d, normal);
+
+        for (index, hole_array) in hole_arrays.into_iter().enumerate() {
+            let hole = parse_points(&hole_array.to_vec(), &format!("hole_arrays[{index}]"))?;
+            if hole.len() < 3 {
+                return Err(JsValue::from_str(&format!(
+                    "hole_arrays[{index}] must contain at least three points"
+                )));
+            }
+            holes.push(vertices.len());
+            push_ring(&hole, origin, u, v, &mut vertices, &mut flat_2d, normal);
+        }
+
+        use crate::polygon::Polygon;
+
+        let indices = earcutr::earcut(&flat_2d, &holes, 2)
+            .map_err(|err| JsValue::from_str(&format!("earcut failed: {err:?}")))?;
+        let meta = js_metadata_to_string(metadata).unwrap_or(None);
+        let mut polygons = Vec::with_capacity(indices.len() / 3);
+
+        for tri in indices.chunks_exact(3) {
+            let i0 = tri[0] as usize;
+            let i1 = tri[1] as usize;
+            let i2 = tri[2] as usize;
+            if i0 >= vertices.len() || i1 >= vertices.len() || i2 >= vertices.len() {
+                continue;
+            }
+
+            let a = vertices[i0];
+            let b = vertices[i1];
+            let c = vertices[i2];
+            if (b.position - a.position)
+                .cross(&(c.position - a.position))
+                .norm_squared()
+                <= Real::EPSILON
+            {
+                continue;
+            }
+            polygons.push(Polygon::new(vec![a, b, c], meta.clone()));
+        }
+
+        Ok(MeshJs {
+            inner: Mesh::from_polygons(&polygons, meta),
+        })
     }
 
     /// Return an interleaved array of vertex positions (x,y,z)*.
@@ -52,6 +175,15 @@ impl MeshJs {
         let obj = self.to_arrays();
         let idx = Reflect::get(&obj, &"indices".into()).unwrap();
         idx.dyn_into::<Uint32Array>().unwrap()
+    }
+
+    pub fn polygons(&self) -> Vec<PolygonJs> {
+        self.inner
+            .polygons
+            .iter()
+            .cloned()
+            .map(|inner| PolygonJs { inner })
+            .collect()
     }
 
     /// Number of triangles (handy to sanity-check).
@@ -90,7 +222,11 @@ impl MeshJs {
         let mut idx: u32 = 0;
         for p in &tri.polygons {
             for v in &p.vertices {
-                positions.extend_from_slice(&[v.position.x as f64, v.position.y as f64, v.position.z as f64]);
+                positions.extend_from_slice(&[
+                    v.position.x as f64,
+                    v.position.y as f64,
+                    v.position.z as f64,
+                ]);
                 normals.extend_from_slice(&[
                     v.normal.x as f64,
                     v.normal.y as f64,
@@ -244,6 +380,22 @@ impl MeshJs {
         }
     }
 
+    #[wasm_bindgen(js_name = rotateQuaternion)]
+    pub fn rotate_quaternion(&self, w: Real, x: Real, y: Real, z: Real) -> Self {
+        let q = Quaternion::new(w, x, y, z);
+        let norm = q.norm();
+        if norm <= Real::EPSILON || !norm.is_finite() {
+            return Self {
+                inner: self.inner.clone(),
+            };
+        }
+
+        let q = UnitQuaternion::new_unchecked(q / norm);
+        Self {
+            inner: self.inner.transform(&q.to_homogeneous()),
+        }
+    }
+
     #[wasm_bindgen(js_name = scale)]
     pub fn scale(&self, sx: Real, sy: Real, sz: Real) -> Self {
         Self {
@@ -258,6 +410,12 @@ impl MeshJs {
         }
     }
 
+    pub fn mirror(&self, plane: &PlaneJs) -> Self {
+        Self {
+            inner: self.inner.mirror(plane.inner.clone()),
+        }
+    }
+
     #[wasm_bindgen(js_name = float)]
     pub fn float(&self) -> Self {
         Self {
@@ -269,6 +427,12 @@ impl MeshJs {
     pub fn inverse(&self) -> Self {
         Self {
             inner: self.inner.inverse(),
+        }
+    }
+
+    pub fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
         }
     }
 
@@ -311,6 +475,42 @@ impl MeshJs {
         let plane = Plane::from_normal(Vector3::new(normal_x, normal_y, normal_z), offset);
         let sketch = self.inner.slice(plane);
         SketchJs { inner: sketch }
+    }
+
+    #[wasm_bindgen(js_name = splitByPlane)]
+    pub fn split_by_plane(&self, plane: &PlaneJs) -> Vec<MeshJs> {
+        let plane: Plane = plane.into();
+        let mut front_polys = Vec::new();
+        let mut back_polys = Vec::new();
+
+        for polygon in &self.inner.polygons {
+            let (coplanar_front, coplanar_back, mut front, mut back) =
+                plane.split_polygon(polygon);
+            front_polys.extend(coplanar_front);
+            back_polys.extend(coplanar_back);
+            front_polys.append(&mut front);
+            back_polys.append(&mut back);
+        }
+
+        vec![
+            MeshJs {
+                inner: Mesh::from_polygons(&front_polys, self.inner.metadata.clone()),
+            },
+            MeshJs {
+                inner: Mesh::from_polygons(&back_polys, self.inner.metadata.clone()),
+            },
+        ]
+    }
+
+    #[wasm_bindgen(js_name = intersectPolyline)]
+    pub fn intersect_polyline_js(&self, points: Vec<Point3Js>) -> Vec<Point3Js> {
+        let polyline: Vec<Point3<Real>> =
+            points.into_iter().map(|point| point.inner).collect();
+        self.inner
+            .intersect_polyline(&polyline)
+            .into_iter()
+            .map(Point3Js::from)
+            .collect()
     }
 
     #[wasm_bindgen(js_name=laplacianSmooth)]
@@ -469,8 +669,8 @@ impl MeshJs {
         self.inner
             .to_amf_with_color(object_name, units, (r as Real, g as Real, b as Real))
     }
-    
-	#[wasm_bindgen(js_name = toGLTF)]
+
+    #[wasm_bindgen(js_name = toGLTF)]
     pub fn to_gltf(&self, object_name: &str) -> String {
         self.inner.to_gltf(object_name)
     }

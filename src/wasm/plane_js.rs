@@ -34,6 +34,14 @@ impl PlaneJs {
         PlaneJs { inner: plane }
     }
 
+    pub fn points(&self) -> Vec<Point3Js> {
+        vec![
+            Point3Js::from(self.inner.point_a),
+            Point3Js::from(self.inner.point_b),
+            Point3Js::from(self.inner.point_c),
+        ]
+    }
+
     // Constructor: Create a plane from three vertices
     #[wasm_bindgen(js_name = FromComponents)]
     pub fn from_components(
