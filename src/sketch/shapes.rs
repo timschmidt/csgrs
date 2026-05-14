@@ -3,6 +3,7 @@
 use crate::float_types::{FRAC_PI_2, PI, Real, TAU, tolerance};
 use crate::sketch::Sketch;
 use crate::csg::CSG;
+use crate::vertex::Vertex;
 use geo::{
     BoundingRect, Contains, Geometry, GeometryCollection, LineString, Orient, Point,
     Polygon as GeoPolygon, coord, line_string, orient::Direction,
@@ -605,6 +606,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             geometry: shape.geometry,
             bounding_box: OnceLock::new(),
             metadata,
+            origin: Vertex::default(),
+            origin_transform: Sketch::<S>::prepare_origin_transform(Vertex::default()),
         }
     }
 

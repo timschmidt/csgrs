@@ -26,11 +26,12 @@ use crate::sketch::Sketch;
 use crate::csg::CSG;
 #[cfg(feature = "sketch")]
 use geo::{CoordsIter, Geometry, Polygon as GeoPolygon};
+use hashbrown::HashMap;
 use nalgebra::{
     Isometry3, Matrix4, Point3, Quaternion, Unit, Vector3, partial_max, partial_min,
 };
 use std::{
-    cmp::PartialEq,
+    cmp::{Ordering, PartialEq},
     fmt::Debug,
     num::NonZeroU32,
     sync::OnceLock,
@@ -63,6 +64,16 @@ pub mod smoothing;
 #[cfg(feature = "sdf")]
 pub mod tpms;
 pub mod triangulated;
+
+/// Stored as `(position: [f32; 3], normal: [f32; 3])`.
+pub type GraphicsMeshVertex = ([f32; 3], [f32; 3]);
+
+/// Mesh data laid out for renderers that want packed f32 vertices plus u32 indices.
+#[derive(Debug, Clone)]
+pub struct GraphicsMesh {
+    pub vertices: Vec<GraphicsMeshVertex>,
+    pub indices: Vec<u32>,
+}
 
 #[derive(Clone, Debug)]
 pub struct Mesh<S: Clone + Send + Sync + Debug> {
@@ -144,9 +155,114 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
             .collect()
     }
 
+    /// Pre-pass to remove T-junctions between polygons by inserting missing
+    /// vertices on shared or colinear overlapping edges before triangulation.
+    fn fix_t_junctions_on_shared_edges(polygons: &mut [Polygon<S>]) {
+        let eps = tolerance();
+        let eps2 = eps * eps;
+
+        if polygons.len() < 2 {
+            return;
+        }
+
+        let poly_count = polygons.len();
+        let mut edge_splits: Vec<HashMap<usize, Vec<(Real, Vertex)>>> =
+            vec![HashMap::new(); poly_count];
+
+        for (i, poly_i) in polygons.iter().enumerate() {
+            if poly_i.vertices.len() < 2 {
+                continue;
+            }
+
+            for vert in &poly_i.vertices {
+                for (j, poly_j) in polygons.iter().enumerate() {
+                    if i == j || poly_j.vertices.len() < 2 {
+                        continue;
+                    }
+
+                    let verts_j = &poly_j.vertices;
+                    let n_j = verts_j.len();
+                    for edge_start in 0..n_j {
+                        let a = &verts_j[edge_start];
+                        let b = &verts_j[(edge_start + 1) % n_j];
+                        let ab = b.position - a.position;
+                        let ab_len_sq = ab.norm_squared();
+                        if ab_len_sq < eps2 {
+                            continue;
+                        }
+
+                        let av = vert.position - a.position;
+                        let bv = vert.position - b.position;
+                        if av.norm_squared() < eps2 || bv.norm_squared() < eps2 {
+                            continue;
+                        }
+
+                        let t = ab.dot(&av) / ab_len_sq;
+                        if t <= eps || t >= 1.0 - eps {
+                            continue;
+                        }
+
+                        let projected = a.position + ab * t;
+                        if (vert.position - projected).norm_squared() > eps2 {
+                            continue;
+                        }
+
+                        let new_vertex = Vertex::new(vert.position, poly_j.plane.normal());
+                        let entry = edge_splits[j].entry(edge_start).or_default();
+                        let already_present = entry.iter().any(|(existing_t, existing_v)| {
+                            (existing_t - t).abs() < eps
+                                || (existing_v.position - new_vertex.position).norm_squared()
+                                    < eps2
+                        });
+
+                        if !already_present {
+                            entry.push((t, new_vertex));
+                        }
+                    }
+                }
+            }
+        }
+
+        for (poly_index, poly) in polygons.iter_mut().enumerate() {
+            let splits_map = &edge_splits[poly_index];
+            if splits_map.is_empty() {
+                continue;
+            }
+
+            let original = poly.vertices.clone();
+            let n = original.len();
+            if n < 2 {
+                continue;
+            }
+
+            let extra_vertices: usize = splits_map.values().map(Vec::len).sum();
+            let mut new_vertices = Vec::with_capacity(n + extra_vertices);
+
+            for edge_start in 0..n {
+                new_vertices.push(original[edge_start]);
+
+                if let Some(splits) = splits_map.get(&edge_start) {
+                    let mut splits_sorted = splits.clone();
+                    splits_sorted.sort_by(|(t_a, _), (t_b, _)| {
+                        t_a.partial_cmp(t_b).unwrap_or(Ordering::Equal)
+                    });
+
+                    for (_, vertex) in splits_sorted {
+                        new_vertices.push(vertex);
+                    }
+                }
+            }
+
+            poly.vertices = new_vertices;
+        }
+    }
+
     /// Triangulate each polygon in the Mesh returning a Mesh containing triangles
     pub fn triangulate(&self) -> Mesh<S> {
-        let triangles = self.polygons
+        let mut polygons = self.polygons.clone();
+        Self::fix_t_junctions_on_shared_edges(&mut polygons);
+
+        let triangles = polygons
             .iter()
             .flat_map(|poly| {
                 poly.triangulate().into_iter().map(move |triangle| {
@@ -258,7 +374,48 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         dot.acos()
     }
 
+    /// Converts this mesh into f32 vertex/index buffers suitable for rendering.
+    ///
+    /// Vertices are deduplicated by exact f32 position and normal bit pattern.
+    pub fn build_graphics_mesh(&self) -> GraphicsMesh {
+        let triangles = self.triangulate().polygons;
+        let triangle_count = triangles.len();
+
+        let mut indices = Vec::with_capacity(triangle_count * 3);
+        let mut vertices = Vec::with_capacity(triangle_count * 3);
+        let mut vertices_hash: HashMap<([u32; 3], [u32; 3]), u32> =
+            HashMap::with_capacity(triangle_count * 3);
+
+        for triangle in triangles {
+            for vertex in triangle.vertices {
+                let position = [
+                    vertex.position.x as f32,
+                    vertex.position.y as f32,
+                    vertex.position.z as f32,
+                ];
+                let normal = [
+                    vertex.normal.x as f32,
+                    vertex.normal.y as f32,
+                    vertex.normal.z as f32,
+                ];
+                let key = (position.map(f32::to_bits), normal.map(f32::to_bits));
+
+                let index = *vertices_hash.entry(key).or_insert_with(|| {
+                    let new_index = vertices.len() as u32;
+                    vertices.push((position, normal));
+                    new_index
+                });
+                indices.push(index);
+            }
+        }
+
+        vertices.shrink_to_fit();
+        GraphicsMesh { vertices, indices }
+    }
+
     /// Extracts vertices and indices from the Mesh's tessellated polygons.
+    ///
+    /// This intentionally does not remove duplicate vertices.
     pub fn get_vertices_and_indices(&self) -> (Vec<Point3<Real>>, Vec<[u32; 3]>) {
         let tri_csg = self.triangulate();
         let vertices = tri_csg

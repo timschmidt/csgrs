@@ -1,19 +1,20 @@
 //! `Sketch` struct and implementations of the `CSGOps` trait for `Sketch`
 
 use crate::float_types::parry3d::bounding_volume::Aabb;
-use crate::float_types::Real;
+use crate::float_types::{PI, Real};
 
 #[cfg(feature = "mesh")]
 use crate::mesh::Mesh;
 
 use crate::csg::CSG;
+use crate::vertex::Vertex;
 use geo::algorithm::winding_order::Winding;
 use geo::{
-    orient::Direction, AffineOps, AffineTransform, BooleanOps as GeoBooleanOps, BoundingRect,
-    Coord, CoordsIter, Geometry, GeometryCollection, LineString, MultiPolygon, Orient,
+    orient::Direction, AffineOps, AffineTransform, BooleanOps as GeoBooleanOps, BoundingRect, Coord,
+    CoordsIter, Geometry, GeometryCollection, Line, LineString, MultiPolygon, Orient,
     Polygon as GeoPolygon, Rect,
 };
-use nalgebra::{partial_max, partial_min, Matrix4, Point3};
+use nalgebra::{partial_max, partial_min, Matrix4, Point3, UnitQuaternion, Vector3};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
@@ -37,6 +38,34 @@ pub mod truetype;
 
 pub mod triangulated;
 
+/// Position transform plus rotation from the sketch's local XY plane into 3D.
+pub(crate) type OriginTransform = (Vector3<Real>, UnitQuaternion<Real>);
+
+#[derive(Debug, Clone)]
+pub struct GraphicLineString {
+    pub points: Vec<[f32; 3]>,
+}
+
+impl GraphicLineString {
+    pub fn line_count(&self) -> usize {
+        self.points.len().saturating_sub(1)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct GraphicLineStrings {
+    pub line_strings: Vec<GraphicLineString>,
+}
+
+impl GraphicLineStrings {
+    pub fn total_line_count(&self) -> usize {
+        self.line_strings
+            .iter()
+            .map(GraphicLineString::line_count)
+            .sum()
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Sketch<S> {
     /// 2D points, lines, polylines, polygons, and multipolygons
@@ -47,6 +76,11 @@ pub struct Sketch<S> {
 
     /// Metadata
     pub metadata: Option<S>,
+
+    /// Origin of the sketch in 3D space.
+    pub(crate) origin: Vertex,
+
+    pub(crate) origin_transform: OriginTransform,
 }
 
 impl<S: Clone + Send + Sync + Debug> Sketch<S> {
@@ -71,6 +105,147 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
         new_sketch.geometry = geometry;
         new_sketch.metadata = metadata;
         new_sketch
+    }
+
+    /// Set the origin used when rendering or lifting this sketch into 3D.
+    pub fn set_origin(&mut self, origin: Vertex) {
+        self.origin_transform = Self::prepare_origin_transform(origin);
+        self.origin = origin;
+    }
+
+    /// Return this sketch with a new 3D origin.
+    pub fn origin(mut self, origin: Vertex) -> Self {
+        self.set_origin(origin);
+        self
+    }
+
+    pub(crate) fn prepare_origin_transform(origin: Vertex) -> OriginTransform {
+        let default_origin = Vertex::default();
+        let pos_transform = origin.position - default_origin.position;
+        let default_normal = default_origin
+            .normal
+            .try_normalize(crate::float_types::tolerance())
+            .unwrap_or_else(Vector3::z);
+        let origin_normal = origin
+            .normal
+            .try_normalize(crate::float_types::tolerance())
+            .unwrap_or(default_normal);
+        let rotation_quat = UnitQuaternion::rotation_between(
+            &default_normal,
+            &origin_normal,
+        )
+        .unwrap_or_else(|| UnitQuaternion::from_axis_angle(&Vector3::x_axis(), PI));
+
+        (pos_transform, rotation_quat)
+    }
+
+    pub(crate) fn apply_origin_transform_vertex(
+        vertex: Vertex,
+        origin_transform: OriginTransform,
+    ) -> Vertex {
+        let (pos_transform, rotation_quat) = origin_transform;
+        let position = Point3::from(rotation_quat * vertex.position.coords + pos_transform);
+        let normal = rotation_quat * vertex.normal;
+        Vertex::new(position, normal)
+    }
+
+    fn apply_origin_transform_point(
+        point: Point3<Real>,
+        origin_transform: OriginTransform,
+    ) -> Point3<Real> {
+        let (pos_transform, rotation_quat) = origin_transform;
+        Point3::from(rotation_quat * point.coords + pos_transform)
+    }
+
+    /// Create render-ready line strings from this sketch's visible edges in 3D space.
+    pub fn build_graphic_line_strings(&self) -> GraphicLineStrings {
+        let mut graphic_line_strings = Vec::new();
+        self.collect_graphic_line_strings(&self.geometry, &mut graphic_line_strings);
+        GraphicLineStrings {
+            line_strings: graphic_line_strings,
+        }
+    }
+
+    fn collect_graphic_line_strings(
+        &self,
+        geometry: &GeometryCollection<Real>,
+        out: &mut Vec<GraphicLineString>,
+    ) {
+        for geom in geometry {
+            match geom {
+                Geometry::Polygon(polygon) => {
+                    out.push(self.line_string_to_graphic_line_string(polygon.exterior()));
+                    for interior in polygon.interiors() {
+                        out.push(self.line_string_to_graphic_line_string(interior));
+                    }
+                },
+                Geometry::Line(line) => {
+                    out.push(self.line_string_to_graphic_line_string(&LineString::from(vec![
+                        line.start, line.end,
+                    ])));
+                },
+                Geometry::LineString(line_string) => {
+                    out.push(self.line_string_to_graphic_line_string(line_string));
+                },
+                Geometry::MultiLineString(line_strings) => {
+                    for line_string in line_strings {
+                        out.push(self.line_string_to_graphic_line_string(line_string));
+                    }
+                },
+                Geometry::MultiPolygon(polygons) => {
+                    for polygon in polygons {
+                        out.push(self.line_string_to_graphic_line_string(polygon.exterior()));
+                        for interior in polygon.interiors() {
+                            out.push(self.line_string_to_graphic_line_string(interior));
+                        }
+                    }
+                },
+                Geometry::Rect(rect) => {
+                    let line_string = Self::lines_to_line_string(&rect.to_lines());
+                    out.push(self.line_string_to_graphic_line_string(&line_string));
+                },
+                Geometry::Triangle(triangle) => {
+                    let line_string = Self::lines_to_line_string(&triangle.to_lines());
+                    out.push(self.line_string_to_graphic_line_string(&line_string));
+                },
+                Geometry::GeometryCollection(collection) => {
+                    self.collect_graphic_line_strings(collection, out);
+                },
+                _ => {},
+            }
+        }
+    }
+
+    fn lines_to_line_string(lines: &[Line<Real>]) -> LineString<Real> {
+        let Some(first_line) = lines.first() else {
+            return LineString::empty();
+        };
+
+        let mut coord_vec = Vec::with_capacity(lines.len() + 1);
+        coord_vec.push(first_line.start);
+        coord_vec.extend(lines.iter().map(|line| line.end));
+        LineString::new(coord_vec)
+    }
+
+    fn line_string_to_graphic_line_string(
+        &self,
+        line_string: &LineString<Real>,
+    ) -> GraphicLineString {
+        let points = line_string
+            .coords()
+            .map(|coord| {
+                let point = Point3::new(coord.x, coord.y, 0.0);
+                let point_transformed =
+                    Self::apply_origin_transform_point(point, self.origin_transform);
+                [
+                    point_transformed.x as f32,
+                    point_transformed.y as f32,
+                    point_transformed.z as f32,
+                ]
+            })
+            .collect();
+
+        GraphicLineString { points }
     }
 
     /// Triangulate a polygon and holes into a list of triangles, each triangle is [v0, v1, v2].
@@ -300,6 +475,8 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
             geometry: GeometryCollection(oriented_geoms),
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: self.origin,
+            origin_transform: self.origin_transform,
         }
     }
 }
@@ -311,6 +488,8 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
             geometry: GeometryCollection::default(),
             bounding_box: OnceLock::new(),
             metadata: None,
+            origin: Vertex::default(),
+            origin_transform: Self::prepare_origin_transform(Vertex::default()),
         }
     }
 
@@ -362,6 +541,8 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
             geometry: final_gc,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: self.origin,
+            origin_transform: self.origin_transform,
         }
     }
 
@@ -403,6 +584,8 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
             geometry: final_gc,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: self.origin,
+            origin_transform: self.origin_transform,
         }
     }
 
@@ -450,6 +633,8 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
             geometry: final_gc,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: self.origin,
+            origin_transform: self.origin_transform,
         }
     }
 
@@ -497,6 +682,8 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
             geometry: final_gc,
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: self.origin,
+            origin_transform: self.origin_transform,
         }
     }
 
@@ -629,6 +816,8 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
             geometry: GeometryCollection(oriented_geoms),
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
+            origin: self.origin,
+            origin_transform: self.origin_transform,
         }
     }
 }
@@ -686,6 +875,8 @@ impl<S: Clone + Send + Sync + Debug> From<Mesh<S>> for Sketch<S> {
             geometry: new_gc,
             bounding_box: OnceLock::new(),
             metadata: None,
+            origin: Vertex::default(),
+            origin_transform: Self::prepare_origin_transform(Vertex::default()),
         }
     }
 }
