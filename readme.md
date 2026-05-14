@@ -587,8 +587,8 @@ cargo run --example readme_renders
 The generator writes every referenced PNG under `docs/` and intentionally covers
 each documented primitive or operation that has a visual representation. It uses
 the existing `image` dependency through the `image-io` feature, frames meshes
-with cached bounding boxes, and uses Parry `TriMesh` raycasting for heavier
-preview meshes.
+with cached bounding boxes, and deliberately uses a slower projected-triangle
+software path for consistent README previews.
 
 ## Roadmap
 
