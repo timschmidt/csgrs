@@ -48,6 +48,11 @@ pub mod csg;
 pub mod triangulated;
 pub mod voxels;
 
+/// Compatibility re-exports for trait imports used in examples.
+pub mod traits {
+    pub use crate::csg::CSG;
+}
+
 #[cfg(feature = "wasm")]
 pub mod wasm;
 
