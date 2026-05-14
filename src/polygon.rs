@@ -1,6 +1,6 @@
 //! Struct and functions for working with planar `Polygon`s without holes
 
-use crate::float_types::{parry3d::bounding_volume::Aabb, Real};
+use crate::float_types::{parry3d::bounding_volume::Aabb, tolerance, Real};
 use crate::mesh::plane::Plane;
 use crate::vertex::Vertex;
 use nalgebra::{Point3, Vector3};
@@ -257,18 +257,29 @@ impl<S: Clone + Send + Sync> Polygon<S> {
                     },
                 };
 
-            // Refine the CDT with a 20° angle limit
-            let refinement = RefinementParameters::<Real>::new()
-                .with_angle_limit(AngleLimit::from_deg(5.0))
-                // never insert steiner points on edges, so that we don't introduce new T junctions
-                .keep_constraint_edges()
-                // our polygon forms a closed shape; this makes refinement ignore
-                // faces outside the polygon when deciding where to insert Steiner points
-                .exclude_outer_faces(true);
+            // Refine only large, non-sliver polygons. For typical outlines,
+            // refinement can create excessive triangle counts and hurt exports.
+            let perimeter: Real = {
+                let mut p: Real = 0.0;
+                for i in 0..all_vertices_2d.len() {
+                    let j = (i + 1) % all_vertices_2d.len();
+                    let dx = all_vertices_2d[j].x - all_vertices_2d[i].x;
+                    let dy = all_vertices_2d[j].y - all_vertices_2d[i].y;
+                    p += (dx * dx + dy * dy).sqrt();
+                }
+                p
+            };
+            let signed_area_2x = polygon_signed_area_2x(&all_vertices_2d);
+            let compactness = signed_area_2x.abs() / (perimeter * perimeter + tolerance());
+            const REFINE_MIN_VERTS: usize = 64;
+            if all_vertices_2d.len() >= REFINE_MIN_VERTS && compactness > 1e-6 {
+                let refinement = RefinementParameters::<Real>::new()
+                    .with_angle_limit(AngleLimit::from_deg(5.0))
+                    .keep_constraint_edges()
+                    .exclude_outer_faces(true);
 
-            let _result = cdt.refine(refinement);
-            // We should inspect `_result.refinement_complete`
-            // and react if refinement ran out of additional vertices.
+                let _result = cdt.refine(refinement);
+            }
 
             // Extract triangles back out of Spade and lift to 3D
             let mut final_triangles = Vec::new();
@@ -276,6 +287,17 @@ impl<S: Clone + Send + Sync> Polygon<S> {
             for face in cdt.inner_faces() {
                 // Each face is a triangle; get its three vertices
                 let verts = face.vertices(); // [VertexHandle; 3]
+
+                // Keep only faces whose centroid lies inside the constrained
+                // ring; this avoids leaking triangles outside the polygon.
+                let p0 = verts[0].position();
+                let p1 = verts[1].position();
+                let p2 = verts[2].position();
+                let cx = (p0.x + p1.x + p2.x) / 3.0;
+                let cy = (p0.y + p1.y + p2.y) / 3.0;
+                if !point_in_ring_2d(cx, cy, &all_vertices_2d) {
+                    continue;
+                }
 
                 let mut tri_vertices =
                     [Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 0.0)); 3];
@@ -572,6 +594,72 @@ pub fn build_orthonormal_basis(n: Vector3<Real>) -> (Vector3<Real>, Vector3<Real
     let u = v.cross(&n).normalize();
 
     (u, v)
+}
+
+fn polygon_signed_area_2x(ring: &[geo::Coord<Real>]) -> Real {
+    let mut area = 0.0;
+    for i in 0..ring.len() {
+        let j = (i + 1) % ring.len();
+        area += ring[i].x * ring[j].y - ring[j].x * ring[i].y;
+    }
+    area
+}
+
+/// Point-in-polygon test for a simple 2D ring using ray casting.
+/// Returns true for inside points and points very close to the boundary.
+fn point_in_ring_2d(px: Real, py: Real, ring: &[geo::Coord<Real>]) -> bool {
+    if ring.len() < 3 {
+        return false;
+    }
+
+    let eps = tolerance();
+
+    for i in 0..ring.len() {
+        let j = (i + 1) % ring.len();
+        let x1 = ring[i].x;
+        let y1 = ring[i].y;
+        let x2 = ring[j].x;
+        let y2 = ring[j].y;
+
+        let cross = (px - x1) * (y2 - y1) - (py - y1) * (x2 - x1);
+        if cross.abs() <= eps {
+            let min_x = x1.min(x2) - eps;
+            let max_x = x1.max(x2) + eps;
+            let min_y = y1.min(y2) - eps;
+            let max_y = y1.max(y2) + eps;
+            if px >= min_x && px <= max_x && py >= min_y && py <= max_y {
+                return true;
+            }
+        }
+    }
+
+    let mut inside = false;
+    for i in 0..ring.len() {
+        let j = (i + 1) % ring.len();
+        let xi = ring[i].x;
+        let yi = ring[i].y;
+        let xj = ring[j].x;
+        let yj = ring[j].y;
+
+        let denom = yj - yi;
+        let denom_safe = if denom.abs() < eps {
+            if denom >= 0.0 {
+                eps
+            } else {
+                -eps
+            }
+        } else {
+            denom
+        };
+        let x_intersect = (xj - xi) * (py - yi) / denom_safe + xi;
+        let intersects = ((yi > py) != (yj > py)) && (px < x_intersect);
+
+        if intersects {
+            inside = !inside;
+        }
+    }
+
+    inside
 }
 
 // Helper function to subdivide a triangle

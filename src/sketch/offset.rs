@@ -27,7 +27,7 @@
 //!
 //! ## **Algorithm Implementation**
 //!
-//! This implementation uses the `geo-buf` crate which provides:
+//! This implementation uses `geo`'s buffer operations, which provide:
 //! - **Robust intersection handling**: Resolves self-intersections
 //! - **Topological correctness**: Maintains polygon validity
 //! - **Multi-polygon support**: Handles complex geometry with holes
@@ -43,72 +43,13 @@
 //! to the planar projections stored in the geometry collection.
 use crate::float_types::Real;
 use crate::sketch::Sketch;
-use geo::{Coord, Geometry, GeometryCollection, LineString, MultiPolygon, Point, Polygon};
-use geo_buf::{
-    buffer_multi_polygon, buffer_multi_polygon_rounded, buffer_point, buffer_polygon,
-    buffer_polygon_rounded, skeleton_of_multi_polygon_to_linestring,
-    skeleton_of_polygon_to_linestring,
+use geo::{
+    algorithm::buffer::{BufferStyle, LineJoin},
+    Buffer, Coord, Geometry, GeometryCollection, LineString, MultiPolygon, Polygon,
 };
+use geo::algorithm::map_coords::MapCoords;
 use std::fmt::Debug;
 use std::sync::OnceLock;
-
-use geo::algorithm::map_coords::MapCoords; // coordinate casting :contentReference[oaicite:0]{index=0}
-
-/// Cast a geometry to `f64`, call the supplied operation, then cast the result
-/// back to `Real`.  The closure is only ever executed on `f64` values so we
-/// don’t duplicate code for the two precisions.
-macro_rules! cast_through_f64 {
-    ($geom:expr, $op:expr) => {{
-        // promote to f64
-        let g_f64 = $geom.map_coords(|c| Coord {
-            x: c.x as f64,
-            y: c.y as f64,
-        });
-
-        // run the f64-only operation
-        let out_f64 = $op(&g_f64);
-
-        // demote back to Real
-        out_f64.map_coords(|c| Coord {
-            x: c.x as Real,
-            y: c.y as Real,
-        })
-    }};
-}
-
-#[allow(clippy::unnecessary_cast)]
-fn buf_poly(poly: &Polygon<Real>, d: Real) -> MultiPolygon<Real> {
-    cast_through_f64!(poly, |p: &Polygon<f64>| buffer_polygon(p, d as f64))
-}
-
-#[allow(clippy::unnecessary_cast)]
-fn buf_poly_round(poly: &Polygon<Real>, d: Real) -> MultiPolygon<Real> {
-    cast_through_f64!(poly, |p: &Polygon<f64>| buffer_polygon_rounded(p, d as f64))
-}
-
-#[allow(clippy::unnecessary_cast)]
-fn buf_multi_poly(mpoly: &MultiPolygon<Real>, d: Real) -> MultiPolygon<Real> {
-    cast_through_f64!(mpoly, |m: &MultiPolygon<f64>| buffer_multi_polygon(
-        m, d as f64
-    ))
-}
-
-#[allow(clippy::unnecessary_cast)]
-fn buf_multi_poly_round(mpoly: &MultiPolygon<Real>, d: Real) -> MultiPolygon<Real> {
-    cast_through_f64!(mpoly, |m: &MultiPolygon<f64>| buffer_multi_polygon_rounded(
-        m, d as f64
-    ))
-}
-
-#[allow(clippy::unnecessary_cast)]
-fn buf_point(pt: &Point<Real>, d: Real, res: usize) -> Polygon<Real> {
-    // buffer_point takes f64 Point, so just build one and cast result back
-    let pt_f64 = Point::new(pt.x() as f64, pt.y() as f64);
-    buffer_point(&pt_f64, d as f64, res).map_coords(|c| Coord {
-        x: c.x as Real,
-        y: c.y as Real,
-    })
-}
 
 #[allow(clippy::unnecessary_cast)]
 fn skel_poly(poly: &Polygon<Real>, inward: bool) -> Vec<LineString<Real>> {
@@ -116,7 +57,8 @@ fn skel_poly(poly: &Polygon<Real>, inward: bool) -> Vec<LineString<Real>> {
         x: c.x as f64,
         y: c.y as f64,
     });
-    skeleton_of_polygon_to_linestring(&poly_f64, inward)
+
+    geo_buffer::skeleton_of_polygon_to_linestring(&poly_f64, inward)
         .into_iter()
         .map(|ls| {
             ls.map_coords(|c| Coord {
@@ -133,7 +75,8 @@ fn skel_multi_poly(mpoly: &MultiPolygon<Real>, inward: bool) -> Vec<LineString<R
         x: c.x as f64,
         y: c.y as f64,
     });
-    skeleton_of_multi_polygon_to_linestring(&mpoly_f64, inward)
+
+    geo_buffer::skeleton_of_multi_polygon_to_linestring(&mpoly_f64, inward)
         .into_iter()
         .map(|ls| {
             ls.map_coords(|c| Coord {
@@ -191,19 +134,17 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             .iter()
             .filter_map(|geom| match geom {
                 Geometry::Polygon(poly) => {
-                    let new_mpoly = buf_poly(poly, distance);
+                    let style = BufferStyle::new(distance).line_join(LineJoin::Miter(1.0));
+                    let new_mpoly = poly.buffer_with_style(style);
                     Some(Geometry::MultiPolygon(new_mpoly))
                 },
                 Geometry::MultiPolygon(mpoly) => {
-                    let new_mpoly = buf_multi_poly(mpoly, distance);
+                    let style = BufferStyle::new(distance).line_join(LineJoin::Miter(1.0));
+                    let new_mpoly = mpoly.buffer_with_style(style);
                     Some(Geometry::MultiPolygon(new_mpoly))
                 },
-                Geometry::Point(point) => {
-                    let new_poly = buf_point(point, distance, 64); // todo: avoid hard coding resolution somehow
-                    let new_mpoly = MultiPolygon::new(vec![new_poly]);
-                    Some(Geometry::MultiPolygon(new_mpoly))
-                },
-                _ => None, // no support for offsetting Lines or LineStrings in geo-buf yet
+                Geometry::Point(point) => Some(Geometry::MultiPolygon(point.buffer(distance))),
+                _ => None,
             })
             .collect();
 
@@ -274,19 +215,15 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             .iter()
             .filter_map(|geom| match geom {
                 Geometry::Polygon(poly) => {
-                    let new_mpoly = buf_poly_round(poly, distance);
+                    let new_mpoly = poly.buffer(distance);
                     Some(Geometry::MultiPolygon(new_mpoly))
                 },
                 Geometry::MultiPolygon(mpoly) => {
-                    let new_mpoly = buf_multi_poly_round(mpoly, distance);
+                    let new_mpoly = mpoly.buffer(distance);
                     Some(Geometry::MultiPolygon(new_mpoly))
                 },
-                Geometry::Point(point) => {
-                    let new_poly = buf_point(point, distance, 64); // todo: avoid hard coding resolution somehow
-                    let new_mpoly = MultiPolygon::new(vec![new_poly]);
-                    Some(Geometry::MultiPolygon(new_mpoly))
-                },
-                _ => None, // no support for offsetting Lines or LineStrings in geo-buf yet
+                Geometry::Point(point) => Some(Geometry::MultiPolygon(point.buffer(distance))),
+                _ => None,
             })
             .collect();
 
@@ -324,7 +261,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     let mls = geo::MultiLineString(skel_multi_poly(mpoly, orientation));
                     Some(Geometry::MultiLineString(mls))
                 },
-                _ => None, // ignore other geometry types
+                _ => None,
             })
             .collect();
 
