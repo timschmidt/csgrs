@@ -250,16 +250,8 @@ fn render_readme_meshes() {
         ]),
     );
 
-    let cube = Mesh::<()>::cube(2.0, None);
     render_mesh("inverse", &Mesh::<()>::sphere(1.0, 32, 16, None).inverse());
-    render_mesh(
-        "cube_sphere_difference",
-        &cube.difference(&Mesh::<()>::sphere(1.25, 32, 16, None)),
-    );
-    render_mesh(
-        "csg",
-        &Mesh::<()>::cube(2.0, None).union(&Mesh::<()>::sphere(1.15, 32, 16, None)),
-    );
+    render_mesh("csg", &cube_minus_translated_sphere());
     render_mesh("convex_hull", &Mesh::<()>::cube(1.2, None).convex_hull());
     render_mesh(
         "minkowski_sum",
@@ -302,6 +294,12 @@ fn render_readme_meshes() {
     );
 
     render_distribution_examples();
+}
+
+fn cube_minus_translated_sphere() -> Mesh<()> {
+    let cube = Mesh::<()>::cube(2.0, None);
+    let sphere = Mesh::<()>::sphere(1.25, 16, 8, None).translate(1.0, 1.0, 1.0);
+    cube.difference(&sphere)
 }
 
 fn render_distribution_examples() {

@@ -77,8 +77,7 @@ cargo run
 
 This results in a file named `cube_sphere_difference.stl` in the current directory
 and it can be viewed in a STL viewer such as [f3d](https://github.com/f3d-app/f3d)
-with, `f3d cube_sphere_difference.stl`, and should look like this:
-![Cube minus sphere](docs/cube_sphere_difference.png)
+with, `f3d cube_sphere_difference.stl`.
 
 ### Building for WASM
 
