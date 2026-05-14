@@ -211,7 +211,8 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
                             if (ti | tj) == SPANNING {
                                 // The param intersection at which plane intersects the edge [vi -> vj].
                                 // Avoid dividing by zero:
-                                let denom = slicing_plane.normal().dot(&(vj.position - vi.position));
+                                let denom =
+                                    slicing_plane.normal().dot(&(vj.position - vi.position));
                                 if denom.abs() > tolerance() {
                                     let intersection = (slicing_plane.offset()
                                         - slicing_plane.normal().dot(&vi.position.coords))

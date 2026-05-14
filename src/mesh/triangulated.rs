@@ -12,9 +12,18 @@ impl<S: Clone + Send + Sync + std::fmt::Debug> Triangulated3D for Mesh<S> {
             let normal = poly.plane.normal().normalize();
             for tri in triangles {
                 f([
-                    Vertex { position: tri[0].position, normal },
-                    Vertex { position: tri[1].position, normal },
-                    Vertex { position: tri[2].position, normal },
+                    Vertex {
+                        position: tri[0].position,
+                        normal,
+                    },
+                    Vertex {
+                        position: tri[1].position,
+                        normal,
+                    },
+                    Vertex {
+                        position: tri[2].position,
+                        normal,
+                    },
                 ]);
             }
         }

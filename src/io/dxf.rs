@@ -1,17 +1,17 @@
 use crate::float_types::Real;
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
+use crate::sketch::Sketch;
 use crate::triangulated::Triangulated3D;
 use crate::vertex::Vertex;
-use crate::sketch::Sketch;
 use geo::{Polygon as GeoPolygon, line_string};
 use nalgebra::{Point3, Vector3};
 use std::error::Error;
 use std::fmt::Debug;
 
-use std::io::Cursor;
 use dxf::Drawing;
 use dxf::entities::*;
+use std::io::Cursor;
 
 impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     #[doc = " Import a Mesh object from DXF data."]
@@ -22,16 +22,13 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     #[doc = ""]
     #[doc = " ## Returns"]
     #[doc = " A `Result` containing the Mesh object or an error if parsing fails."]
-    pub fn from_dxf(
-        dxf_data: &[u8],
-        metadata: Option<S>,
-    ) -> Result<Mesh<S>, Box<dyn Error>> {
+    pub fn from_dxf(dxf_data: &[u8], metadata: Option<S>) -> Result<Mesh<S>, Box<dyn Error>> {
         let drawing = Drawing::load(&mut Cursor::new(dxf_data))?;
         let mut polygons = Vec::new();
 
         for entity in drawing.entities() {
             match &entity.specific {
-                EntityType::Line(_line) => {}
+                EntityType::Line(_line) => {},
                 EntityType::Polyline(polyline) => {
                     if polyline.is_closed() {
                         let mut verts = Vec::new();
@@ -49,7 +46,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                             polygons.push(Polygon::new(verts, None));
                         }
                     }
-                }
+                },
                 EntityType::Circle(circle) => {
                     let center = Point3::new(
                         circle.center.x as Real,
@@ -66,14 +63,15 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                     )
                     .normalize();
                     for i in 0..segments {
-                        let theta = 2.0 * crate::float_types::PI * (i as Real) / (segments as Real);
+                        let theta =
+                            2.0 * crate::float_types::PI * (i as Real) / (segments as Real);
                         let x = center.x as Real + radius * theta.cos();
                         let y = center.y as Real + radius * theta.sin();
                         let z = center.z as Real;
                         verts.push(Vertex::new(Point3::new(x, y, z), normal));
                     }
                     polygons.push(Polygon::new(verts, metadata.clone()));
-                }
+                },
                 EntityType::Solid(solid) => {
                     let thickness = solid.thickness as Real;
                     let extrusion_direction = Vector3::new(
@@ -98,8 +96,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                     .extrude_vector(extrusion_direction * thickness)
                     .polygons;
                     polygons.extend(extruded);
-                }
-                _ => {}
+                },
+                _ => {},
             }
         }
 

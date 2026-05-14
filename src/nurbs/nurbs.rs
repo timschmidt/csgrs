@@ -7,16 +7,16 @@
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
-use curvo::prelude::{
-    Boolean, CompoundCurve2D, CurveIntersectionSolverOptions, Invertible, NurbsCurve2D, Region,
-    Tessellation, Transformable,
-};
 use curvo::prelude::operation::BooleanOperation;
+use curvo::prelude::{
+    Boolean, CompoundCurve2D, CurveIntersectionSolverOptions, Invertible, NurbsCurve2D,
+    Region, Tessellation, Transformable,
+};
 use geo::{Geometry, GeometryCollection, LineString, MultiPolygon, Polygon as GeoPolygon};
 use nalgebra::{Matrix3, Matrix4, Point2, Point3, Vector2, Vector3};
 
 use crate::csg::CSG;
-use crate::float_types::{parry3d::bounding_volume::Aabb, Real};
+use crate::float_types::{Real, parry3d::bounding_volume::Aabb};
 #[cfg(feature = "mesh")]
 use crate::mesh::Mesh;
 #[cfg(feature = "sketch")]
@@ -115,13 +115,9 @@ impl<S: Clone + Send + Sync + Debug> Nurbs<S> {
 
     /// Exact NURBS circle centered at the origin.
     pub fn circle(radius: Real, metadata: Option<S>) -> NurbsResult<Self> {
-        let curve = NurbsCurve2D::try_circle(
-            &Point2::origin(),
-            &Vector2::x(),
-            &Vector2::y(),
-            radius,
-        )
-        .map_err(|e| format!("Failed to create NURBS circle: {e:?}"))?;
+        let curve =
+            NurbsCurve2D::try_circle(&Point2::origin(), &Vector2::x(), &Vector2::y(), radius)
+                .map_err(|e| format!("Failed to create NURBS circle: {e:?}"))?;
         Ok(Self::from_curve(curve, metadata))
     }
 
@@ -157,10 +153,7 @@ impl<S: Clone + Send + Sync + Debug> Nurbs<S> {
                         return None;
                     }
                     let exterior = LineString::from(
-                        exterior
-                            .into_iter()
-                            .map(|p| (p.x, p.y))
-                            .collect::<Vec<_>>(),
+                        exterior.into_iter().map(|p| (p.x, p.y)).collect::<Vec<_>>(),
                     );
                     let holes = holes
                         .into_iter()
@@ -191,7 +184,11 @@ impl<S: Clone + Send + Sync + Debug> Nurbs<S> {
 
     /// Convert into a `Mesh` by tessellating to a sketch and extruding.
     #[cfg(all(feature = "sketch", feature = "mesh"))]
-    pub fn extrude_vector(&self, direction: Vector3<Real>, tolerance: Option<Real>) -> Mesh<S> {
+    pub fn extrude_vector(
+        &self,
+        direction: Vector3<Real>,
+        tolerance: Option<Real>,
+    ) -> Mesh<S> {
         self.to_sketch(tolerance).extrude_vector(direction)
     }
 
@@ -223,7 +220,11 @@ impl<S: Clone + Send + Sync + Debug> Nurbs<S> {
                         let mut merged_any = false;
                         let mut remaining = Vec::new();
                         for candidate in pending {
-                            match lhs.boolean(BooleanOperation::Union, &candidate, Some(default_solver_options())) {
+                            match lhs.boolean(
+                                BooleanOperation::Union,
+                                &candidate,
+                                Some(default_solver_options()),
+                            ) {
                                 Ok(clip) => {
                                     let regions = clip.into_regions();
                                     if regions.len() == 1 {
@@ -255,7 +256,11 @@ impl<S: Clone + Send + Sync + Debug> Nurbs<S> {
                 for lhs in &self.regions {
                     for rhs in &other.regions {
                         let clip = lhs
-                            .boolean(BooleanOperation::Intersection, rhs, Some(default_solver_options()))
+                            .boolean(
+                                BooleanOperation::Intersection,
+                                rhs,
+                                Some(default_solver_options()),
+                            )
                             .map_err(|e| format!("NURBS intersection failed: {e:?}"))?;
                         out.extend(clip.into_regions());
                     }
@@ -268,7 +273,11 @@ impl<S: Clone + Send + Sync + Debug> Nurbs<S> {
                     let mut next = Vec::new();
                     for lhs in &current {
                         let clip = lhs
-                            .boolean(BooleanOperation::Difference, rhs, Some(default_solver_options()))
+                            .boolean(
+                                BooleanOperation::Difference,
+                                rhs,
+                                Some(default_solver_options()),
+                            )
                             .map_err(|e| format!("NURBS difference failed: {e:?}"))?;
                         next.extend(clip.into_regions());
                     }
@@ -363,7 +372,9 @@ impl<S: Clone + Send + Sync + Debug> CSG for Nurbs<S> {
             let mut max_x = -Real::MAX;
             let mut max_y = -Real::MAX;
 
-            for (exterior, holes) in self.tessellate_regions(Some(crate::float_types::tolerance())) {
+            for (exterior, holes) in
+                self.tessellate_regions(Some(crate::float_types::tolerance()))
+            {
                 for p in exterior.into_iter().chain(holes.into_iter().flatten()) {
                     min_x = min_x.min(p.x);
                     min_y = min_y.min(p.y);

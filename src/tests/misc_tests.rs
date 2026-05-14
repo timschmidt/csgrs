@@ -48,10 +48,8 @@ fn test_cube_intersection() {
 #[test]
 fn test_mesh_intersect_polyline_hits_cube() {
     let cube: Mesh<()> = Mesh::cube(2.0, None);
-    let hits = cube.intersect_polyline(&[
-        Point3::new(-2.0, 0.0, 0.0),
-        Point3::new(2.0, 0.0, 0.0),
-    ]);
+    let hits =
+        cube.intersect_polyline(&[Point3::new(-2.0, 0.0, 0.0), Point3::new(2.0, 0.0, 0.0)]);
 
     assert!(
         hits.len() >= 2,
@@ -65,9 +63,11 @@ fn test_negative_extrude_has_downward_top_normal() {
     let mesh = square.extrude_vector(Vector3::new(0.0, 0.0, -1.0));
 
     assert!(
-        mesh.polygons
-            .iter()
-            .any(|poly| poly.plane.normal().dot(&Vector3::new(0.0, 0.0, -1.0)) > 0.9),
+        mesh.polygons.iter().any(|poly| poly
+            .plane
+            .normal()
+            .dot(&Vector3::new(0.0, 0.0, -1.0))
+            > 0.9),
         "Negative extrusion should produce a downward-facing translated cap"
     );
 }

@@ -1,8 +1,8 @@
 //! Provides a `MetaBall` struct and functions for creating a `Sketch` from [MetaBalls](https://en.wikipedia.org/wiki/Metaballs)
 
+use crate::csg::CSG;
 use crate::float_types::{Real, tolerance};
 use crate::sketch::Sketch;
-use crate::csg::CSG;
 use geo::{
     CoordsIter, Geometry, GeometryCollection, LineString, Polygon as GeoPolygon, coord,
 };

@@ -265,7 +265,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                     .windows(2)
                     .map(|w| (w[1].position - w[0].position).norm())
                     .chain(std::iter::once(
-                        (poly.vertices[0].position - poly.vertices.last().unwrap().position).norm(),
+                        (poly.vertices[0].position - poly.vertices.last().unwrap().position)
+                            .norm(),
                     ))
             })
             .collect();

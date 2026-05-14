@@ -320,10 +320,7 @@ fn test_vertex_connectivity_analysis() {
 
     for &vertex_idx in adjacency_map.keys().take(5) {
         let (valence, regularity) =
-            crate::vertex::Vertex::analyze_connectivity_with_index(
-                vertex_idx,
-                &adjacency_map,
-            );
+            crate::vertex::Vertex::analyze_connectivity_with_index(vertex_idx, &adjacency_map);
 
         println!(
             "Vertex {}: valence={}, regularity={:.3}",
@@ -454,4 +451,3 @@ fn test_adjacency_map_actually_used() {
     println!("  Adjacency entries: {}", adjacency_map.len());
     println!("  Smoothing effect: {:.6}", smooth_diff);
 }
-

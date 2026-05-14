@@ -3,14 +3,14 @@
 #![doc = " This module provides export functionality for glTF 2.0 files,"]
 #![doc = " a modern, efficient, and widely supported 3D asset format."]
 
-use crate::float_types::{tolerance, Real};
+use crate::float_types::{Real, tolerance};
 use crate::triangulated::Triangulated3D;
 use crate::vertex::Vertex;
+use base64::Engine;
+use base64::engine::general_purpose::STANDARD as BASE64_ENGINE;
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 use std::io::Write;
-use base64::engine::general_purpose::STANDARD as BASE64_ENGINE;
-use base64::Engine;
 
 /// Add a vertex to the list, reusing an existing one if position and normal
 /// are within `tolerance()`.
@@ -30,19 +30,13 @@ fn add_unique_vertex_gltf(
     (vertices.len() - 1) as u32
 }
 
-fn build_gltf_buffers<T: Triangulated3D>(
-    shape: &T,
-) -> (Vec<Vertex>, Vec<u32>) {
+fn build_gltf_buffers<T: Triangulated3D>(shape: &T) -> (Vec<Vertex>, Vec<u32>) {
     let mut vertices = Vec::<Vertex>::new();
-    let mut indices  = Vec::<u32>::new();
+    let mut indices = Vec::<u32>::new();
 
     shape.visit_triangles(|tri| {
         for v in tri {
-            let idx = add_unique_vertex_gltf(
-                &mut vertices,
-                v.position,
-                v.normal,
-            );
+            let idx = add_unique_vertex_gltf(&mut vertices, v.position, v.normal);
             indices.push(idx);
         }
     });
@@ -54,11 +48,7 @@ fn build_gltf_buffers<T: Triangulated3D>(
 /// using POSITION and NORMAL attributes and UNSIGNED_INT indices.
 ///
 /// All binary data is stored in a single buffer as a base64-embedded data URI.
-fn gltf_from_vertices(
-    vertices: &[Vertex],
-    indices: &[u32],
-    object_name: &str,
-) -> String {
+fn gltf_from_vertices(vertices: &[Vertex], indices: &[u32], object_name: &str) -> String {
     // Pack positions, normals and indices into binary buffers
     let mut position_bytes = Vec::with_capacity(vertices.len() * 3 * 4);
     let mut normal_bytes = Vec::with_capacity(vertices.len() * 3 * 4);

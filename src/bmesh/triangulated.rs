@@ -1,24 +1,22 @@
 use crate::bmesh::BMesh;
 use crate::float_types::Real;
-use nalgebra::{Point3, Vector3};
 use crate::triangulated::Triangulated3D;
 use crate::vertex::Vertex;
+use nalgebra::{Point3, Vector3};
 
 impl<S: Clone + Send + Sync + std::fmt::Debug> Triangulated3D for BMesh<S> {
     fn visit_triangles<F>(&self, mut f: F)
     where
         F: FnMut([Vertex; 3]),
     {
-        let Some(m) = &self.manifold else { return; };
+        let Some(m) = &self.manifold else {
+            return;
+        };
 
         // Manifold has `ps` (points) and `hs` (half-edges). Triangles are 3 half-edges per face.
         for face_idx in 0..m.nf {
             let base = face_idx * 3;
-            let v_idx = [
-                m.hs[base].tail,
-                m.hs[base + 1].tail,
-                m.hs[base + 2].tail,
-            ];
+            let v_idx = [m.hs[base].tail, m.hs[base + 1].tail, m.hs[base + 2].tail];
 
             let p: [Point3<Real>; 3] = v_idx.map(|i| {
                 let v = &m.ps[i];
@@ -34,9 +32,18 @@ impl<S: Clone + Send + Sync + std::fmt::Debug> Triangulated3D for BMesh<S> {
             };
 
             f([
-                Vertex { position: p[0], normal: n },
-                Vertex { position: p[1], normal: n },
-                Vertex { position: p[2], normal: n },
+                Vertex {
+                    position: p[0],
+                    normal: n,
+                },
+                Vertex {
+                    position: p[1],
+                    normal: n,
+                },
+                Vertex {
+                    position: p[2],
+                    normal: n,
+                },
             ]);
         }
     }

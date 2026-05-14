@@ -1,11 +1,7 @@
 //! `Mesh` struct and implementations of the `CSGOps` trait for `Mesh`
 
 use crate::float_types::{
-    parry3d::{
-        bounding_volume::Aabb,
-        query::RayCast,
-        shape::Shape,
-    },
+    parry3d::{bounding_volume::Aabb, query::RayCast, shape::Shape},
     rapier3d::prelude::{
         ColliderBuilder, ColliderSet, Ray, RigidBodyBuilder, RigidBodyHandle, RigidBodySet,
         SharedShape, TriMesh, Triangle,
@@ -23,6 +19,8 @@ use crate::vertex::Vertex;
 #[cfg(feature = "sketch")]
 use crate::sketch::Sketch;
 
+#[cfg(feature = "bmesh")]
+use crate::bmesh::BMesh;
 use crate::csg::CSG;
 #[cfg(feature = "sketch")]
 use geo::{CoordsIter, Geometry, Polygon as GeoPolygon};
@@ -36,8 +34,6 @@ use std::{
     num::NonZeroU32,
     sync::OnceLock,
 };
-#[cfg(feature = "bmesh")]
-use crate::bmesh::BMesh;
 
 #[cfg(feature = "parallel")]
 use rayon::{iter::IntoParallelRefIterator, prelude::*};
@@ -51,11 +47,11 @@ pub mod bsp_parallel;
 pub mod convex_hull;
 pub mod flatten_slice;
 
+pub mod connectivity;
+pub mod manifold;
 #[cfg(feature = "metaballs")]
 pub mod metaballs;
 pub mod plane;
-pub mod connectivity;
-pub mod manifold;
 pub mod quality;
 #[cfg(feature = "sdf")]
 pub mod sdf;
@@ -421,7 +417,13 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         let vertices = tri_csg
             .polygons
             .iter()
-            .flat_map(|p| [p.vertices[0].position, p.vertices[1].position, p.vertices[2].position])
+            .flat_map(|p| {
+                [
+                    p.vertices[0].position,
+                    p.vertices[1].position,
+                    p.vertices[2].position,
+                ]
+            })
             .collect();
 
         let indices = (0..tri_csg.polygons.len())
@@ -513,7 +515,8 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
             let mut seg_hits: Vec<(Point3<Real>, Real)> = Vec::new();
 
             for tri in &triangles {
-                let triangle = Triangle::new(tri[0].position, tri[1].position, tri[2].position);
+                let triangle =
+                    Triangle::new(tri[0].position, tri[1].position, tri[2].position);
                 if let Some(hit) =
                     triangle.cast_ray_and_get_normal(&iso, &ray, seg_len + tol, true)
                 {
@@ -524,7 +527,8 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
                 }
             }
 
-            seg_hits.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+            seg_hits
+                .sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
 
             for (point, _) in seg_hits {
                 if let Some(last) = hits.last() {
@@ -663,7 +667,11 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
 
             // push 3 positions/normals
             for v in &poly.vertices {
-                positions_32.push([v.position.x as f32, v.position.y as f32, v.position.z as f32]);
+                positions_32.push([
+                    v.position.x as f32,
+                    v.position.y as f32,
+                    v.position.z as f32,
+                ]);
                 normals_32.push([v.normal.x as f32, v.normal.y as f32, v.normal.z as f32]);
             }
 
@@ -1038,9 +1046,7 @@ impl<S: Clone + Send + Sync + Debug> From<Sketch<S>> for Mesh<S> {
     /// Convert a Sketch into a Mesh.
     fn from(sketch: Sketch<S>) -> Self {
         /// Helper function to convert a geo::LineString to a Vec<crate::vertex::Vertex>
-        fn geo_line_string_to_vertices(
-            line_string: &geo::LineString<Real>,
-        ) -> Vec<Vertex> {
+        fn geo_line_string_to_vertices(line_string: &geo::LineString<Real>) -> Vec<Vertex> {
             let mut vertices: Vec<_> = line_string
                 .coords_iter()
                 .map(|c| Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z()))

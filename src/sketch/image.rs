@@ -1,8 +1,8 @@
 //! Create `Sketch`s from images
 
+use crate::csg::CSG;
 use crate::io::svg::FromSVG;
 use crate::sketch::Sketch;
-use crate::csg::CSG;
 use image::GrayImage;
 use std::fmt::Debug;
 

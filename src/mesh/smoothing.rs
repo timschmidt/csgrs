@@ -67,7 +67,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                     let mut valid_neighbors = 0;
 
                     for &neighbor_idx in neighbors {
-                        if let Some(&neighbor_position) = current_positions.get(&neighbor_idx) {
+                        if let Some(&neighbor_position) = current_positions.get(&neighbor_idx)
+                        {
                             neighbor_sum += neighbor_position.coords;
                             valid_neighbors += 1;
                         }
@@ -165,7 +166,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                     let mut neighbor_sum = Point3::origin();
                     let mut valid_neighbors = 0;
                     for &neighbor_idx in neighbors {
-                        if let Some(&neighbor_position) = current_positions.get(&neighbor_idx) {
+                        if let Some(&neighbor_position) = current_positions.get(&neighbor_idx)
+                        {
                             neighbor_sum += neighbor_position.coords;
                             valid_neighbors += 1;
                         }
@@ -216,7 +218,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                     let mut neighbor_sum = Point3::origin();
                     let mut valid_neighbors = 0;
                     for &neighbor_idx in neighbors {
-                        if let Some(&neighbor_position) = current_positions.get(&neighbor_idx) {
+                        if let Some(&neighbor_position) = current_positions.get(&neighbor_idx)
+                        {
                             neighbor_sum += neighbor_position.coords;
                             valid_neighbors += 1;
                         }

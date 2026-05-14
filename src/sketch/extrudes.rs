@@ -1,14 +1,14 @@
 //! Functions to extrude, revolve, loft, and otherwise transform 2D `Sketch`s into 3D `Mesh`s
 
+use crate::csg::CSG;
 use crate::errors::ValidationError;
 use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
-use crate::vertex::Vertex;
 use crate::sketch::{OriginTransform, Sketch};
-use crate::csg::CSG;
+use crate::vertex::Vertex;
 use geo::{Area, CoordsIter, LineString, Polygon as GeoPolygon};
-use nalgebra::{Point3, Vector3, Matrix4, Rotation3, Translation3};
+use nalgebra::{Matrix4, Point3, Rotation3, Translation3, Vector3};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
@@ -182,11 +182,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                     let p0 = tri[0] + direction;
                     let p1 = tri[1] + direction;
                     let p2 = tri[2] + direction;
-                    let (a, b, c) = if flip {
-                        (p2, p1, p0)
-                    } else {
-                        (p0, p1, p2)
-                    };
+                    let (a, b, c) = if flip { (p2, p1, p0) } else { (p0, p1, p2) };
                     out_polygons.push(Polygon::new(
                         vec![
                             Self::apply_origin_transform_vertex(
@@ -301,7 +297,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                         ]
                     }
                     .into_iter()
-                    .map(|vertex| Self::apply_origin_transform_vertex(vertex, origin_transform))
+                    .map(|vertex| {
+                        Self::apply_origin_transform_vertex(vertex, origin_transform)
+                    })
                     .collect();
                     out_polygons.push(Polygon::new(verts, metadata.clone()));
                 }

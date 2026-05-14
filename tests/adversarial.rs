@@ -1,16 +1,16 @@
 use csgrs::csg::CSG;
-use csgrs::float_types::{tolerance, Real};
+use csgrs::float_types::{Real, tolerance};
 #[cfg(feature = "svg-io")]
 use csgrs::io::svg::FromSVG;
-use csgrs::mesh::plane::Plane;
 use csgrs::mesh::Mesh;
+use csgrs::mesh::plane::Plane;
 use csgrs::polygon::Polygon;
 use csgrs::sketch::Sketch;
 use csgrs::vertex::Vertex;
 use nalgebra::{Matrix4, Point3, Vector3};
 use proptest::prelude::*;
 use std::io::Cursor;
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 
 fn finite_real() -> impl Strategy<Value = Real> {
     #[cfg(feature = "f32")]
@@ -405,17 +405,25 @@ fn adversarial_transform_matrix_fuzz_regression_preserves_finite_normals() {
             *slot = bytes[idx % bytes.len()];
             idx += 1;
         }
-        *value = ((i64::from_le_bytes(raw) as f64) / 1.0e12)
-            .clamp(-1.0e6, 1.0e6) as Real;
+        *value = ((i64::from_le_bytes(raw) as f64) / 1.0e12).clamp(-1.0e6, 1.0e6) as Real;
     }
 
     let matrix = Matrix4::from_row_slice(&values);
     let transformed = Mesh::<()>::cube(1.0, None).transform(&matrix);
 
     for vertex in transformed.vertices() {
-        assert!(vertex.normal.x.is_finite(), "normal x is not finite: {vertex:?}");
-        assert!(vertex.normal.y.is_finite(), "normal y is not finite: {vertex:?}");
-        assert!(vertex.normal.z.is_finite(), "normal z is not finite: {vertex:?}");
+        assert!(
+            vertex.normal.x.is_finite(),
+            "normal x is not finite: {vertex:?}"
+        );
+        assert!(
+            vertex.normal.y.is_finite(),
+            "normal y is not finite: {vertex:?}"
+        );
+        assert!(
+            vertex.normal.z.is_finite(),
+            "normal z is not finite: {vertex:?}"
+        );
     }
 }
 
@@ -428,7 +436,8 @@ fn adversarial_mesh_primitive_low_segments_regression_is_contained() {
         (sphere, ellipsoid, cylinder)
     }));
 
-    let (sphere, ellipsoid, cylinder) = result.expect("low tessellation counts should not panic");
+    let (sphere, ellipsoid, cylinder) =
+        result.expect("low tessellation counts should not panic");
     assert_mesh_sane(&sphere);
     for mesh in [&ellipsoid, &cylinder] {
         for vertex in mesh.vertices() {
@@ -449,7 +458,9 @@ fn adversarial_zero_normal_angle_regression_is_finite() {
 #[cfg(feature = "obj-io")]
 fn adversarial_obj_zero_face_index_regression_is_error_not_panic() {
     let obj = "v 0 0 0\nv 1 0 0\nv 0 1 0\nf 0 1 2\n";
-    let result = catch_unwind(AssertUnwindSafe(|| Mesh::<()>::from_obj(Cursor::new(obj), None)));
+    let result = catch_unwind(AssertUnwindSafe(|| {
+        Mesh::<()>::from_obj(Cursor::new(obj), None)
+    }));
     assert!(matches!(result, Ok(Err(_))));
 }
 

@@ -17,33 +17,24 @@ use stl_io;
 /// # Ok(())
 /// # }
 /// ```
-pub fn to_stl_ascii<T: Triangulated3D>(
-	shape: &T,
-	name: &str,
-) -> String {
-	let mut out = String::new();
-	out.push_str(&format!("solid {name}\n"));
+pub fn to_stl_ascii<T: Triangulated3D>(shape: &T, name: &str) -> String {
+    let mut out = String::new();
+    out.push_str(&format!("solid {name}\n"));
 
-	shape.visit_triangles(|tri| {
-		let n = tri[0].normal; // or recompute if you want per-facet normals
-		out.push_str(&format!(
-			"  facet normal {:.6} {:.6} {:.6}\n",
-			n.x, n.y, n.z
-		));
-		out.push_str("    outer loop\n");
-		for v in &tri {
-			let p = v.position;
-			out.push_str(&format!(
-				"      vertex {:.6} {:.6} {:.6}\n",
-				p.x, p.y, p.z
-			));
-		}
-		out.push_str("    endloop\n");
-		out.push_str("  endfacet\n");
-	});
+    shape.visit_triangles(|tri| {
+        let n = tri[0].normal; // or recompute if you want per-facet normals
+        out.push_str(&format!("  facet normal {:.6} {:.6} {:.6}\n", n.x, n.y, n.z));
+        out.push_str("    outer loop\n");
+        for v in &tri {
+            let p = v.position;
+            out.push_str(&format!("      vertex {:.6} {:.6} {:.6}\n", p.x, p.y, p.z));
+        }
+        out.push_str("    endloop\n");
+        out.push_str("  endfacet\n");
+    });
 
-	out.push_str(&format!("endsolid {name}\n"));
-	out
+    out.push_str(&format!("endsolid {name}\n"));
+    out
 }
 
 /// Export to BINARY STL (returns `Vec<u8>`)
@@ -63,31 +54,28 @@ pub fn to_stl_ascii<T: Triangulated3D>(
 /// # Ok(())
 /// # }
 /// ```
-pub fn to_stl_binary<T: Triangulated3D>(
-	shape: &T,
-	_name: &str,
-) -> std::io::Result<Vec<u8>> {
-	use stl_io::{Normal, Triangle, Vertex, write_stl};
+pub fn to_stl_binary<T: Triangulated3D>(shape: &T, _name: &str) -> std::io::Result<Vec<u8>> {
+    use stl_io::{Normal, Triangle, Vertex, write_stl};
 
-	let mut triangles = Vec::<Triangle>::new();
+    let mut triangles = Vec::<Triangle>::new();
 
-	shape.visit_triangles(|tri| {
-		let n = tri[0].normal;
-		#[allow(clippy::unnecessary_cast)]
-		{
-			triangles.push(Triangle {
-				normal: Normal::new([n.x as f32, n.y as f32, n.z as f32]),
-				vertices: tri.map(|v| {
-					let p = v.position;
-					Vertex::new([p.x as f32, p.y as f32, p.z as f32])
-				}),
-			});
-		}
-	});
+    shape.visit_triangles(|tri| {
+        let n = tri[0].normal;
+        #[allow(clippy::unnecessary_cast)]
+        {
+            triangles.push(Triangle {
+                normal: Normal::new([n.x as f32, n.y as f32, n.z as f32]),
+                vertices: tri.map(|v| {
+                    let p = v.position;
+                    Vertex::new([p.x as f32, p.y as f32, p.z as f32])
+                }),
+            });
+        }
+    });
 
-	let mut cursor = Cursor::new(Vec::new());
-	write_stl(&mut cursor, triangles.iter())?;
-	Ok(cursor.into_inner())
+    let mut cursor = Cursor::new(Vec::new());
+    write_stl(&mut cursor, triangles.iter())?;
+    Ok(cursor.into_inner())
 }
 
 impl<S: Clone + Debug + Send + Sync> crate::mesh::Mesh<S> {

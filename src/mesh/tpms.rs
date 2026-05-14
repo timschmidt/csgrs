@@ -1,9 +1,9 @@
 //! Triply‑Periodic Minimal Surfaces rewritten to leverage the generic
 //! signed‑distance mesher in `sdf.rs`.
 
+use crate::csg::CSG;
 use crate::float_types::Real;
 use crate::mesh::Mesh;
-use crate::csg::CSG;
 use nalgebra::Point3;
 use std::fmt::Debug;
 

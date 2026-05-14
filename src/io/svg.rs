@@ -1,8 +1,8 @@
 //! SVG input and output.
 
+use crate::csg::CSG;
 use crate::float_types::Real;
 use crate::sketch::Sketch;
-use crate::csg::CSG;
 use geo::{
     BoundingRect, Coord, CoordNum, CoordsIter, LineString, MapCoords, MultiLineString, Polygon,
 };
@@ -384,7 +384,8 @@ pub trait FromSVG<S>: Sized {
 }
 
 impl<S> FromSVG<S> for Sketch<S>
-where S: Clone + Send + Sync + Debug
+where
+    S: Clone + Send + Sync + Debug,
 {
     fn from_svg(doc: &str, metadata: Option<S>) -> Result<Self, IoError> {
         use svg::node::element::tag::{self, Type::*};
@@ -527,9 +528,7 @@ where S: Clone + Send + Sync + Debug
 
                 tag => {
                     // TODO: Non-empty tags should also be supported
-                    return Err(IoError::Unimplemented(format!(
-                        "Parsing tag {tag:?}"
-                    )));
+                    return Err(IoError::Unimplemented(format!("Parsing tag {tag:?}")));
                 },
             }
         }
@@ -953,7 +952,10 @@ mod tests {
         let svg_out = sketch.to_svg();
         let reparsed = Sketch::<()>::from_svg(&svg_out, None).unwrap();
 
-        assert_eq!(sketch.to_multipolygon().0.len(), reparsed.to_multipolygon().0.len());
+        assert_eq!(
+            sketch.to_multipolygon().0.len(),
+            reparsed.to_multipolygon().0.len()
+        );
         assert_eq!(sketch.triangulate().len(), reparsed.triangulate().len());
     }
 

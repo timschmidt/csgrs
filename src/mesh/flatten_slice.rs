@@ -5,8 +5,8 @@ use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
 use crate::mesh::bsp::Node;
 use crate::mesh::plane::Plane;
-use crate::vertex::Vertex;
 use crate::sketch::Sketch;
+use crate::vertex::Vertex;
 use geo::{
     BooleanOps, Geometry, GeometryCollection, LineString, MultiPolygon, Orient,
     Polygon as GeoPolygon, coord, orient::Direction,
@@ -174,7 +174,11 @@ fn quantize(x: Real) -> i64 {
 
 /// Convert a Vertex's position to an EndKey
 fn make_key(position: &Point3<Real>) -> EndKey {
-    EndKey(quantize(position.x), quantize(position.y), quantize(position.z))
+    EndKey(
+        quantize(position.x),
+        quantize(position.y),
+        quantize(position.z),
+    )
 }
 
 /// Take a list of intersection edges `[Vertex;2]` and merge them into polylines.

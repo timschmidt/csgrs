@@ -282,7 +282,8 @@ impl<S: Clone + Send + Sync + Debug> Node<S> {
                             let vj = &poly.vertices[j];
 
                             if (ti | tj) == SPANNING {
-                                let denom = slicing_plane.normal().dot(&(vj.position - vi.position));
+                                let denom =
+                                    slicing_plane.normal().dot(&(vj.position - vi.position));
                                 if denom.abs() > tolerance() {
                                     let intersection = (slicing_plane.offset()
                                         - slicing_plane.normal().dot(&vi.position.coords))

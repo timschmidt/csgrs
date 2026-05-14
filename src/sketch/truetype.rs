@@ -1,8 +1,8 @@
 //! Create `Sketch`s using ttf fonts
 
+use crate::csg::CSG;
 use crate::float_types::{Real, tolerance};
 use crate::sketch::Sketch;
-use crate::csg::CSG;
 use geo::{
     Area, Geometry, GeometryCollection, LineString, Orient, Polygon as GeoPolygon,
     orient::Direction,
@@ -164,7 +164,6 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
                                 .push(Geometry::LineString(LineString::from(open_pts)));
                         }
                     }
-
                 }
 
                 cursor_x += glyph_advance(&face, gid, font_scale, default_advance);

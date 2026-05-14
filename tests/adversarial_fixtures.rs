@@ -9,7 +9,10 @@ fn adversarial_regression_fixtures_are_recorded() {
         .collect::<Result<Vec<_>, _>>()
         .unwrap();
     entries.sort_by_key(|entry| entry.path());
-    assert!(!entries.is_empty(), "expected adversarial regression fixtures");
+    assert!(
+        !entries.is_empty(),
+        "expected adversarial regression fixtures"
+    );
 
     for entry in entries {
         let path = entry.path();
