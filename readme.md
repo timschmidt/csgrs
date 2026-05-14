@@ -30,6 +30,19 @@ triangulation feature: `delaunay` (spade), `earcut`, or `delaunay-rs`.
 ## Community
 [![](https://dcbadge.limes.pink/api/server/https://discord.gg/9WkD3WFxMC)](https://discord.gg/9WkD3WFxMC)
 
+## Acknowledgments
+
+Thanks to the project contributors whose code, documentation, examples, issue
+reports, review, and implementation guidance have helped shape **csgrs**:
+[Andrei Stepanenko](https://github.com/ftvkyo), Bruce Mitchener, Connor K,
+[Ed Swartz](https://github.com/eswartz), [Hattiffnat](https://github.com/Hattiffnat),
+[Mark van der Net](https://github.com/mvdnet), Markus Sprecher,
+[Naseschwarz](https://github.com/Naseschwarz), Nathan Fenner,
+[PJB3005](https://github.com/PJB3005), [qthree](https://github.com/qthree),
+[Ricardo C. Oliveira](https://github.com/Ricardo-C-Oliveira), Robin Miller, Ryan,
+[TimTheBig](https://github.com/TimTheBig),
+[uttarayan21](https://github.com/uttarayan21), and Wink Saville.
+
 ## Getting started
 
 ### A simple CSG example
