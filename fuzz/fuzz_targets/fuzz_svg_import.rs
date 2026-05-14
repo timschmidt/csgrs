@@ -1,3 +1,5 @@
+//! Fuzz target for SVG import parsing.
+
 #![no_main]
 
 use csgrs::io::svg::FromSVG;

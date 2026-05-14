@@ -1,3 +1,5 @@
+//! Fuzz target for bytecode-driven mesh operation sequences.
+
 #![no_main]
 
 use csgrs::csg::CSG;

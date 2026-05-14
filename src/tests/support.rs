@@ -1,3 +1,5 @@
+//! Shared imports and helpers for unit tests.
+
 pub use crate::csg::CSG;
 pub use crate::errors::ValidationError;
 pub use crate::float_types::{FRAC_PI_2, PI, Real, tolerance};

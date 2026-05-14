@@ -1,3 +1,5 @@
+//! STL import and export helpers for triangulated 3D geometry.
+
 use crate::triangulated::Triangulated3D;
 use std::fmt::Debug;
 use std::io::Cursor;

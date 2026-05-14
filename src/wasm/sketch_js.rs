@@ -1,3 +1,5 @@
+//! JavaScript wrapper for [`Sketch`].
+
 use crate::csg::CSG;
 use crate::float_types::Real;
 use crate::io::svg::{FromSVG, ToSVG};

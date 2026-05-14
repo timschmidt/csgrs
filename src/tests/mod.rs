@@ -1,3 +1,5 @@
+//! Internal test modules for the crate.
+
 mod support;
 
 mod bug_tests;

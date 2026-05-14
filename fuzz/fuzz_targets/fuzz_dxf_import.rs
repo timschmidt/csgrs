@@ -1,3 +1,5 @@
+//! Fuzz target for DXF import parsing.
+
 #![no_main]
 
 use csgrs::mesh::Mesh;

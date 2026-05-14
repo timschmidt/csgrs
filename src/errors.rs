@@ -1,3 +1,5 @@
+//! Shared error types used by geometry validation and file conversion APIs.
+
 use crate::float_types::Real;
 use nalgebra::Point3;
 

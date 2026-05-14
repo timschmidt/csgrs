@@ -1,3 +1,5 @@
+//! Manifoldness checks for triangle meshes.
+
 use crate::float_types::Real;
 use crate::mesh::Mesh;
 use nalgebra::Point3;

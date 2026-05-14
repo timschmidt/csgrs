@@ -1,3 +1,5 @@
+//! [`Triangulated3D`] implementation for [`Mesh`].
+
 use crate::mesh::Mesh;
 use crate::triangulated::Triangulated3D;
 use crate::vertex::Vertex;

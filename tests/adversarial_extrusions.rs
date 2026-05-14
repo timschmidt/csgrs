@@ -1,3 +1,5 @@
+//! Adversarial tests for extrusion, revolve, loft, and sweep operations.
+
 use csgrs::csg::CSG;
 use csgrs::errors::ValidationError;
 use csgrs::float_types::{Real, tolerance};

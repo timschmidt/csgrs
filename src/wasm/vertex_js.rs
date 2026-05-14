@@ -1,3 +1,5 @@
+//! JavaScript wrapper for mesh vertices.
+
 use crate::float_types::Real;
 use crate::vertex::Vertex;
 use crate::wasm::{point_js::Point3Js, vector_js::Vector3Js};

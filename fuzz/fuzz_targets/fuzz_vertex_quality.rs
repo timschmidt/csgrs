@@ -1,3 +1,5 @@
+//! Fuzz target for vertex quality calculations.
+
 #![no_main]
 
 use csgrs::float_types::Real;

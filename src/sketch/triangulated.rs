@@ -1,3 +1,5 @@
+//! Triangulation support for converting 2D sketches into 3D triangle streams.
+
 use crate::sketch::Sketch;
 use crate::triangulated::Triangulated3D;
 use crate::vertex::Vertex;

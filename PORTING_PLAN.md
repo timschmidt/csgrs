@@ -161,6 +161,28 @@ Those should come from `hyperreal`, `hyperlattice`, and `hyperlimit`.
 
 ## Boolean, triangulation, contour, and kernel policy
 
+All non-`csgrs` algorithms should enter through explicit conversion boundaries
+initially. If an upstream crate is f64-only or effectively f64-oriented, wrap it
+behind named adapters such as `from_f64`, `try_from_f64`, `to_f64`,
+`from_f64_points`, or `with_f64_kernel` rather than allowing ad hoc primitive
+casts to spread through modeling code. These adapters are compatibility and
+bootstrapping layers, not the final numeric architecture.
+
+Adapter rules:
+
+- every f64 boundary must be named, centralized, and covered by tests
+- conversion must record whether it is exact, approximate, lossy, clamped,
+  rejected, or uncertainty-producing
+- non-finite values must be rejected or explicitly represented before entering
+  third-party algorithms
+- topology decisions made by f64-only upstream crates must be treated as
+  approximate facts that require diagnostics or differential tests
+- once behavior is understood, the algorithm should be harvested, ported to
+  `hyperreal`/`hyperlattice`/`hyperlimit`, or replaced with a hyperreal-aware
+  implementation
+- no external f64 adapter should become a silent permanent dependency for core
+  boolean, predicate, triangulation, contour, offset, or construction decisions
+
 Mesh booleans should prefer `boolmesh` as the primary boolean layer. The current
 `BMesh`/boolmesh integration should be treated as the direction of travel, not
 as a side experiment:
@@ -182,6 +204,9 @@ as a side experiment:
 Triangulation and 2D contour dependencies should be brought under the same
 numeric plan:
 
+- interface with `spade`, `earcut` / `earcutr`, `delaunay`, `geo-buffer`,
+  `cavalier_contours`, and similar crates through explicit f64 conversion
+  adapters at first
 - port `spade` usage to hyperreals for Delaunay and constrained triangulation
 - port `earcut` / `earcutr` usage to hyperreals for earcut triangulation
 - port `cavalier_contours` usage to hyperreals for offsets, contour cleanup, and
@@ -192,10 +217,11 @@ numeric plan:
 External geometry kernels should be handled in two stages. `curvo` and other
 useful kernels can be adapted to `csgrs` as f64 immediately when they provide
 practical functionality, but those adapters should not become permanent
-high-maintenance patches against moving upstream targets. The long-term plan is
-to harvest the useful algorithms, port them to hyperreals, and integrate them
-behind small internal traits or direct implementations so `csgrs` carries less
-patch burden over time.
+high-maintenance patches against moving upstream targets. Their first adapters
+should use explicit `from_f64`/`to_f64`-style boundaries with documented
+precision loss. The long-term plan is to harvest the useful algorithms, port
+them to hyperreals, and integrate them behind small internal traits or direct
+implementations so `csgrs` carries less patch burden over time.
 
 ## Migration phases
 
@@ -291,6 +317,22 @@ new stack:
 - `mesh::plane::Plane` to oriented point triples or `hyperlimit::Plane3`
 - `nalgebra::Matrix4<Real>` to the chosen `hyperlattice` transform type once
   that API is stable enough
+
+Add the equivalent explicit f64 bridge for every external algorithm that cannot
+yet operate on the new numeric stack:
+
+- `from_f64` / `try_from_f64` adapters for values entering `csgrs` from f64-only
+  kernels
+- `to_f64` / `try_to_f64` adapters for values leaving `csgrs` for f64-only
+  kernels
+- collection adapters for f64 point clouds, rings, polylines, triangle soups,
+  transforms, NURBS control points, and per-face/per-vertex attributes
+- diagnostic records that identify lossy conversion, rejected non-finite input,
+  collapsed distinct coordinates, and scale-sensitive tolerance decisions
+- feature-local wrappers for `spade`, `earcut`/`earcutr`, `delaunay`,
+  `geo-buffer`, `cavalier_contours`, `curvo`, `boolmesh`, Manifold comparison
+  runners, and any other non-`csgrs` geometry implementation used during the
+  port
 
 Keep these adapters private at first. The first milestone is internal
 correctness, not public API churn.
@@ -736,6 +778,22 @@ Every adapter should have round-trip, invalid-input, and invariance tests:
   - duplicate items
   - large vectors
   - borrowed slice lifetime and allocation behavior
+- external f64 algorithm bridges
+  - every bridge is named `from_f64`, `try_from_f64`, `to_f64`,
+    `try_to_f64`, or similarly explicit
+  - non-finite values are rejected before entering third-party algorithms
+  - exact hyperreal values that cannot be represented exactly as f64 are marked
+    lossy or rejected according to policy
+  - nearby distinct hyperreal coordinates that collapse to one f64 value are
+    detected in topology-sensitive contexts
+  - conversion reports include scale, tolerance, and lossy/non-lossy status
+  - `spade`, `earcut`/`earcutr`, `delaunay`, `geo-buffer`,
+    `cavalier_contours`, `curvo`, `boolmesh`, and Manifold comparison runners
+    are covered by at least one adapter fixture each when enabled
+  - differential tests compare f64 adapter output with current `csgrs` output
+    and later hyperreal-native output
+  - static search tests reject ad hoc `as f64`, `as Real`, or primitive-cast
+    conversions in core geometry paths outside approved adapter modules
 
 ### Phase 5 predicate replacement tests in csgrs
 
@@ -1068,7 +1126,10 @@ When moving 2D contour logic toward a hyperreal-aware path:
 
 ### Curvo, NURBS, and harvested-kernel tests
 
-Curvo can remain useful as an f64 adapter while algorithms are harvested:
+Curvo can remain useful as an f64 adapter while algorithms are harvested. All
+Curvo calls should sit behind explicit `to_f64`/`from_f64` conversion helpers
+until the relevant curve, tessellation, and boolean algorithms are ported to
+`hyperreal`:
 
 - `Nurbs::empty`, `from_regions`, `from_compound`, `from_curve`, `polyline`,
   `rectangle`, `circle`, `tessellate_regions`, `to_multipolygon`,
@@ -1094,7 +1155,10 @@ Curvo can remain useful as an f64 adapter while algorithms are harvested:
   - finite output
   - no inverted rings after conversion
 - adapter tests:
-  - Curvo f64 input to `csgrs` `Real`
+  - Curvo f64 input to `csgrs` `Real` through named `from_f64` helpers
+  - `csgrs` exact or approximate input to Curvo through named `to_f64` helpers
+  - diagnostic reporting for precision loss, rejected non-finite values, and
+    collapsed coordinates at the Curvo boundary
   - later harvested algorithm to hyperreal backend
   - differential Curvo result vs harvested result on fixtures
 
@@ -1739,6 +1803,8 @@ Show-off examples:
 - IO formats should not leak lower-stack internals into public file APIs.
 - WASM is a supported platform target and binding layer, not a consumed or
   produced geometry file format.
+- Non-`csgrs` algorithms start behind explicit f64 conversion adapters, then
+  move toward harvested or native hyperreal implementations.
 - Avoid moving a type downward just because it contains coordinates.
 - Avoid making `hyperlimit` responsible for CSG concepts such as polygon
   splitting policy or manifold repair.
@@ -1776,6 +1842,9 @@ This gives an early robustness win without forcing a broad public API rewrite.
 - Do not make `hyperlattice` aware of file formats or CSG operations.
 - Do not list WASM as a geometry file format; it is only a compilation target
   and binding artifact for the library.
+- Do not allow third-party f64 algorithms to become invisible core numeric
+  policy; keep them behind named conversion adapters until they are ported or
+  replaced.
 - Do not expose backend generics everywhere until the ergonomics are proven.
 - Do not remove `nalgebra` interop until replacement ergonomics are clearly
   better for existing users.

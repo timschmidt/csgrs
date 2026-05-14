@@ -1,3 +1,5 @@
+//! Fuzz target for Gerber import parsing.
+
 #![no_main]
 
 use csgrs::io::gerber::FromGerber;

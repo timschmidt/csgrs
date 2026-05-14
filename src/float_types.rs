@@ -1,3 +1,6 @@
+//! Active scalar type, tolerance configuration, and precision-specific physics
+//! backend re-exports.
+
 // Re-export parry and rapier for the appropriate float size
 #[cfg(feature = "f64")]
 pub use parry3d_f64 as parry3d;

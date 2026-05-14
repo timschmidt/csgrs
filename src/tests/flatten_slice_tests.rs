@@ -1,3 +1,5 @@
+//! Tests for flattening and slice conversion helpers.
+
 use super::support::*;
 
 #[test]

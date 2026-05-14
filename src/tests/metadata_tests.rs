@@ -1,3 +1,5 @@
+//! Tests for metadata preservation and provenance.
+
 use super::support::*;
 
 #[test]

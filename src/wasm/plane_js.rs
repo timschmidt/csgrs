@@ -1,3 +1,5 @@
+//! JavaScript wrapper for mesh planes.
+
 use crate::float_types::Real;
 use crate::mesh::plane::Plane;
 use crate::vertex::Vertex;

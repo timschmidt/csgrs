@@ -1,3 +1,5 @@
+//! Fuzz target for plane and polygon splitting.
+
 #![no_main]
 
 use csgrs::float_types::{tolerance, Real};

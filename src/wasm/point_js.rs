@@ -1,3 +1,5 @@
+//! JavaScript wrapper for 3D points.
+
 use crate::float_types::Real;
 use nalgebra::Point3;
 use wasm_bindgen::prelude::*;

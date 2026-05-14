@@ -1,3 +1,5 @@
+//! Mesh smoothing and refinement operations.
+
 use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;

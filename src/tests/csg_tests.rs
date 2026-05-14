@@ -1,3 +1,5 @@
+//! Unit tests for core CSG operations.
+
 use super::support::*;
 
 #[test]

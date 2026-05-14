@@ -1,3 +1,5 @@
+//! Fuzz target for sketch extrusion, revolve, and sweep operations.
+
 #![no_main]
 
 use csgrs::csg::CSG;

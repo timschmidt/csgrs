@@ -1,3 +1,5 @@
+//! Tests for extrusion and slicing behavior.
+
 use super::support::*;
 
 #[test]

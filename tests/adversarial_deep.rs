@@ -1,3 +1,5 @@
+//! Deep adversarial tests for complex geometry and backend edge cases.
+
 use csgrs::csg::CSG;
 use csgrs::float_types::{Real, tolerance};
 use csgrs::mesh::Mesh;

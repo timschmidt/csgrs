@@ -1,3 +1,5 @@
+//! JavaScript wrapper for 3D vectors.
+
 use crate::float_types::Real;
 use nalgebra::{Quaternion, Rotation3, Unit, UnitQuaternion, Vector3};
 use wasm_bindgen::prelude::*;

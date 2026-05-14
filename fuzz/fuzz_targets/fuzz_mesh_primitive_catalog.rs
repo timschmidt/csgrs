@@ -1,3 +1,5 @@
+//! Fuzz target for mesh primitive constructors.
+
 #![no_main]
 
 use csgrs::float_types::{Real, tolerance};

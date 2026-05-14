@@ -1,3 +1,5 @@
+//! Fuzz target for toolpath generation from sketches.
+
 #![no_main]
 
 use csgrs::float_types::Real;

@@ -1,3 +1,5 @@
+//! JavaScript wrapper for 4x4 transform matrices.
+
 use crate::float_types::Real;
 use nalgebra::Matrix4;
 use wasm_bindgen::prelude::*;

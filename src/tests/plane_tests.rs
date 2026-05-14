@@ -1,3 +1,5 @@
+//! Tests for plane classification and splitting.
+
 use super::support::*;
 
 #[test]

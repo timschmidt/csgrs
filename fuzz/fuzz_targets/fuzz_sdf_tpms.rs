@@ -1,3 +1,5 @@
+//! Fuzz target for SDF and TPMS mesh generation.
+
 #![no_main]
 
 use csgrs::mesh::Mesh;

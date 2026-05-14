@@ -67,7 +67,7 @@ impl Vertex {
     /// This implements the fundamental linear interpolation formula:
     ///
     /// ## **Interpolation Formula**
-    /// For parameter t ∈ [0,1]:
+    /// For parameter `t` in the closed interval `[0, 1]`:
     /// - **Position**: p(t) = (1-t)·p₀ + t·p₁ = p₀ + t·(p₁ - p₀)
     /// - **Normal**: n(t) = (1-t)·n₀ + t·n₁ = n₀ + t·(n₁ - n₀)
     ///
@@ -100,7 +100,7 @@ impl Vertex {
     /// Compute spherical linear interpolation for normal vectors, preserving unit length:
     ///
     /// ## **SLERP Formula**
-    /// For unit vectors n₀, n₁ and parameter t ∈ [0,1]:
+    /// For unit vectors n₀, n₁ and parameter `t` in `[0, 1]`:
     /// ```text
     /// slerp(n₀, n₁, t) = (sin((1-t)·Ω) · n₀ + sin(t·Ω) · n₁) / sin(Ω)
     /// ```
@@ -346,7 +346,8 @@ impl Vertex {
     /// ```
     /// Where target = 6 for triangular meshes (optimal valence for interior vertices).
     ///
-    /// Returns (valence, regularity_score) where regularity ∈ [0,1], 1 = optimal.
+    /// Returns `(valence, regularity_score)` where regularity is in `[0, 1]`
+    /// and `1` is optimal.
     pub fn analyze_connectivity_with_index(
         vertex_index: usize,
         adjacency_map: &HashMap<usize, Vec<usize>>,

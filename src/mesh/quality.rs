@@ -1,3 +1,5 @@
+//! Mesh quality metrics for triangles, vertices, and aggregate mesh health.
+
 use crate::float_types::{PI, Real, tolerance};
 use crate::mesh::Mesh;
 use crate::vertex::Vertex;

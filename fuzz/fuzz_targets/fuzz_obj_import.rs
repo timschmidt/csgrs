@@ -1,3 +1,5 @@
+//! Fuzz target for OBJ import parsing.
+
 #![no_main]
 
 use csgrs::mesh::Mesh;

@@ -1,3 +1,6 @@
+//! Optional import and export modules for mesh, sketch, and toolpath-adjacent
+//! file formats.
+
 #[cfg(feature = "svg-io")]
 pub mod svg;
 

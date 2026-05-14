@@ -933,7 +933,9 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// aims the sketch’s +Z at the local path tangent,
     /// stitches side walls, and caps open ends.
     ///
-    /// * `path` - ordered list of 3-D points.  If the first and last points coincide (‖p[0] − p[n]‖ < tolerance()) the path is treated as **closed** and no caps are added.
+    /// * `path` - ordered list of 3-D points. If the first and last points
+    ///   coincide (`norm(p[0] - p[n]) < tolerance()`) the path is treated as
+    ///   **closed** and no caps are added.
     ///
     /// * returns - a `Mesh<S>` containing all side quads plus automatically triangulated caps (respecting any holes).
     pub fn sweep(&self, path: &[Point3<Real>]) -> Mesh<S> {

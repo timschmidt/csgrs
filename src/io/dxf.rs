@@ -1,3 +1,5 @@
+//! DXF import support for converting 2D CAD entities into `csgrs` geometry.
+
 use crate::float_types::Real;
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;

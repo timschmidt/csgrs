@@ -1,4 +1,4 @@
-//! Gerber (RS-274X) input and output for 2D [`Sketch`](crate::sketch::Sketch) geometry.
+//! Gerber (RS-274X) input and output for 2D [`Sketch`] geometry.
 //!
 //! The implementation uses `gerber-types` for code generation and `gerber_parser`
 //! for parsing. Gerber regions map directly to filled `Sketch` polygons. Simple

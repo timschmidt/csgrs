@@ -1,3 +1,5 @@
+//! Fuzz target for sketch shape constructors.
+
 #![no_main]
 
 use csgrs::float_types::{Real, tolerance};

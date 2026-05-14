@@ -1,3 +1,5 @@
+//! Fuzz target for vertex arithmetic operations.
+
 #![no_main]
 
 use csgrs::float_types::Real;
