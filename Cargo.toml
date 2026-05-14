@@ -32,7 +32,7 @@ opt-level = "z"
 # geometry
 nalgebra = { version = "0.34.1", features = ["serde-serialize"] }
 #alum = "0.6.1"
-#curvo = "0.1.52"
+curvo = { version = "0.1.88", optional = true }
 robust = { version = "1.1.0", default-features = false, features = ["no_std"] }
 geo = { version = "0.31.0", default-features = false, features = ["use-serde"] }
 geo-buffer = { version = "0.2.0", optional = true }
@@ -188,6 +188,9 @@ bevymesh = [
   "dep:bevy_mesh",
   "dep:bevy_asset",
   "dep:wgpu-types"
+]
+nurbs = [
+  "dep:curvo",
 ]
 wasm = [
   "uuid",

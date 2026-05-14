@@ -37,6 +37,7 @@ pub mod io;
 pub mod vertex;
 pub mod polygon;
 pub mod mesh;
+#[cfg(feature = "nurbs")]
 pub mod nurbs;
 pub mod sketch;
 

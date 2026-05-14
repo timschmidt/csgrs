@@ -323,6 +323,65 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         hits
     }
 
+    /// Find all intersection points between a polyline and this mesh's
+    /// triangulated surface.
+    ///
+    /// Each consecutive pair of points defines one segment. Hits are deduplicated
+    /// locally and returned in polyline order.
+    pub fn intersect_polyline(&self, polyline: &[Point3<Real>]) -> Vec<Point3<Real>> {
+        if polyline.len() < 2 {
+            return Vec::new();
+        }
+
+        let iso = Isometry3::identity();
+        let tol = tolerance();
+        let triangles: Vec<[Vertex; 3]> = self
+            .polygons
+            .iter()
+            .flat_map(|poly| poly.triangulate())
+            .collect();
+
+        let mut hits: Vec<Point3<Real>> = Vec::new();
+
+        for seg in polyline.windows(2) {
+            let seg_start = seg[0];
+            let seg_end = seg[1];
+            let seg_dir = seg_end - seg_start;
+            let seg_len = seg_dir.norm();
+            if seg_len < tol {
+                continue;
+            }
+
+            let ray = Ray::new(seg_start, seg_dir / seg_len);
+            let mut seg_hits: Vec<(Point3<Real>, Real)> = Vec::new();
+
+            for tri in &triangles {
+                let triangle = Triangle::new(tri[0].position, tri[1].position, tri[2].position);
+                if let Some(hit) =
+                    triangle.cast_ray_and_get_normal(&iso, &ray, seg_len + tol, true)
+                {
+                    let t = hit.time_of_impact;
+                    if t >= -tol && t <= seg_len + tol {
+                        seg_hits.push((Point3::from(ray.point_at(t).coords), t));
+                    }
+                }
+            }
+
+            seg_hits.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+
+            for (point, _) in seg_hits {
+                if let Some(last) = hits.last() {
+                    if (point - last).norm() < tol {
+                        continue;
+                    }
+                }
+                hits.push(point);
+            }
+        }
+
+        hits
+    }
+
     /// Convert the polygons in this Mesh to a Parry `TriMesh`, wrapped in a `SharedShape` to be used in Rapier.\
     /// Useful for collision detection or physics simulations.
     ///
