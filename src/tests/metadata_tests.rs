@@ -122,8 +122,8 @@ fn test_union_metadata() {
 #[test]
 fn test_difference_metadata() {
     // Difference two cubes, each with different shared data. The resulting polygons
-    // come from the *minuend* (the first shape) with *some* portion clipped out.
-    // So the differenced portion from the second shape won't appear in the final.
+    // keep source-face provenance. A difference result can contain surviving
+    // minuend faces and flipped boundary faces contributed by the subtrahend.
 
     let mut cube1 = Mesh::cube(2.0, Some("Cube1".to_string()));
     for p in &mut cube1.polygons {
@@ -137,21 +137,23 @@ fn test_difference_metadata() {
 
     let result = cube1.difference(&cube2);
 
-    println!("{:#?}", cube1);
-    println!("{:#?}", cube2);
-    println!("{:#?}", result);
-
-    // Difference may include clipped and inverted boundary polygons contributed by
-    // either input. Metadata should remain attached to known source geometry and
-    // should not be lost or replaced with unrelated values.
+    let mut saw_cube1 = false;
+    let mut saw_cube2 = false;
     for poly in &result.polygons {
         let metadata = poly.metadata().unwrap();
+        saw_cube1 |= metadata == "Cube1";
+        saw_cube2 |= metadata == "Cube2";
         assert!(
             metadata == "Cube1" || metadata == "Cube2",
             "Difference polygon has unexpected metadata = {:?}",
             metadata
         );
     }
+
+    assert!(
+        saw_cube1 && saw_cube2,
+        "Difference should retain source metadata from both operands for clipped boundary faces"
+    );
 }
 
 #[test]

@@ -10,7 +10,7 @@ use crate::float_types::{
 };
 
 #[cfg(feature = "mesh-bbopt")]
-use crate::float_types::bounding_volume::BoundingVolume;
+use crate::float_types::parry3d::bounding_volume::BoundingVolume;
 
 use crate::mesh::{bsp::Node, plane::Plane};
 use crate::polygon::Polygon;
@@ -792,19 +792,8 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
             let (b_clip, _b_passthru) =
                 Self::partition_polys(&other.polygons, &self.bounding_box());
 
-            // propagate self.metadata to new polygons by overwriting intersecting
-            // polygon.metadata in other.
-            let b_clip_retagged: Vec<Polygon<S>> = b_clip
-                .iter()
-                .map(|poly| {
-                    let mut p = poly.clone();
-                    p.metadata = self.metadata.clone();
-                    p
-                })
-                .collect();
-
             let mut a = Node::from_polygons(&a_clip);
-            let mut b = Node::from_polygons(&b_clip_retagged);
+            let mut b = Node::from_polygons(&b_clip);
 
             a.invert();
             a.clip_to(&b);
