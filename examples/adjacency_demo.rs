@@ -148,6 +148,8 @@ fn main() {
     let (refined_vertex_map, refined_adjacency_map) = refined.build_connectivity();
     println!("   Original triangles: {}", tessellated.polygons.len());
     println!("   After refinement: {}", refined.polygons.len());
+    println!("   Refined unique vertices: {}", refined_vertex_map.vertex_count());
+    println!("   Refined adjacency entries: {}", refined_adjacency_map.len());
 
     if refined.polygons.len() > tessellated.polygons.len() {
         println!("   ✓ Mesh was refined based on quality criteria");

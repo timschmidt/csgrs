@@ -1,0 +1,8 @@
+feature_flags: default
+real_type: f64
+operation_sequence: Sketch::from_svg -> Sketch::to_svg -> Sketch::from_svg -> triangulate
+input_coordinates: M0,0,100,0,100,100 z
+metadata: none
+expected_behavior: SVG roundtrip preserves semantic polygon/triangle content without requiring identical path point ordering.
+observed_behavior: Raw path strings may reorder equivalent ring coordinates.
+normalized_geometry_summary: one polygon, one triangle after triangulation, finite coordinates, no metadata.

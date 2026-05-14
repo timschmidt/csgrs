@@ -213,6 +213,8 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         stacks: usize,
         metadata: Option<S>,
     ) -> Mesh<S> {
+        let segments = segments.max(3);
+        let stacks = stacks.max(2);
         let mut polygons = Vec::new();
 
         for i in 0..segments {
@@ -286,6 +288,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         segments: usize,
         metadata: Option<S>,
     ) -> Mesh<S> {
+        let segments = segments.max(3);
         // Compute the axis and check that start and end do not coincide.
         let s = start.coords;
         let e = end.coords;

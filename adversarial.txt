@@ -1,0 +1,1303 @@
+Adversarial test plan for csgrs
+================================
+
+Purpose
+-------
+
+This file is a deliberately aggressive test inventory for the csgrs geometry
+suite. It is meant to guide unit tests, property tests, fuzz targets,
+metamorphic tests, snapshot tests, sanitizer runs, and long-running stress
+jobs. The goal is not only to verify expected examples, but to break every
+assumption about coordinates, topology, tolerances, feature flags, imports,
+exports, and algorithmic complexity.
+
+Core pass/fail rules
+--------------------
+
+Every test should declare which behavior is required:
+
+1. The operation returns a valid object and preserves the documented geometric
+   invariant.
+2. The operation returns an empty object when the input is invalid or
+   geometrically void.
+3. The operation returns a typed error where the API supports errors.
+4. The operation panics only if the API explicitly documents panic behavior.
+5. The operation must not hang, overflow, silently produce NaN from finite
+   input, corrupt metadata, create invalid indices, or allocate unbounded
+   memory.
+
+Global invariants to check everywhere
+-------------------------------------
+
+- All finite-input public APIs should produce only finite coordinates,
+  normals, areas, volumes, bounding boxes, indices, and quality metrics.
+- No triangle index should refer beyond the vertex array.
+- No exported face should have fewer than three distinct vertices unless the
+  format explicitly permits a degenerate placeholder.
+- Polygon normals should be finite, normalized where the API promises unit
+  normals, and consistently flipped by inverse/mirror operations.
+- `bounding_box()` should enclose every emitted vertex after transforms,
+  booleans, imports, triangulation, smoothing, refinement, subdivision, and
+  conversion.
+- `invalidate_bounding_box()` should force recomputation and not change
+  geometry.
+- `center()` should place the bounding-box center near the origin for non-empty
+  finite geometry.
+- `float()` should place minimum z near zero for non-empty finite geometry.
+- `inverse().inverse()` should be geometrically equivalent to the original.
+- Identity transform should be a no-op up to tolerance.
+- Transform composition should match sequential transforms up to tolerance.
+- Boolean identity laws should hold: A union empty = A, A difference empty = A,
+  A intersection empty = empty, A xor empty = A.
+- Boolean annihilator laws should hold: A difference A = empty, A intersection
+  A = A, A xor A = empty, A union A = A.
+- Boolean commutativity should hold for union, intersection, and xor, but not
+  difference.
+- Boolean associativity should be checked for union and intersection on clean
+  inputs, with tolerance-aware equivalence.
+- All repeated operations should be deterministic when run twice in the same
+  process with the same feature flags.
+- Parallel and non-parallel builds should produce equivalent geometry modulo
+  ordering.
+- f32 and f64 builds should both pass their own tolerance budgets.
+- Metadata should survive operations that document preservation, and should not
+  be spuriously copied where semantics require new or filtered metadata.
+- Empty meshes, empty sketches, empty NURBS, and empty BMesh values should not
+  crash downstream APIs.
+- Every invariant above should be encoded in reusable proptest assertion
+  helpers so generated Mesh, Sketch, Polygon, Plane, Transform, I/O, wasm, and
+  toolpath cases all check the same safety rules.
+- Every panic, hang, non-finite output, invalid index, and minimized proptest
+  failure should be promoted into the deterministic regression corpus and, if
+  byte-oriented, seeded into the fuzz corpus.
+
+Proptest and fuzzing strategy
+-----------------------------
+
+Use deterministic example tests for the hand-written edge cases in this file,
+proptest for structured and shrinking-aware geometry generation, and
+coverage-guided fuzzing for byte streams, API operation sequences, and invalid
+or semi-structured inputs.
+
+Proptest should be used throughout for:
+
+- scalar, vector, angle, and matrix generation with explicit finite and
+  non-finite strategies
+- valid convex polygons, concave simple polygons, invalid self-crossing
+  polygons, and polygons with holes
+- valid watertight meshes from primitives and intentionally invalid meshes
+  assembled from arbitrary polygons
+- boolean expression trees over Mesh, Sketch, and BMesh
+- transform sequences and inverse/round-trip checks
+- import/export round trips whose input model can be represented as structured
+  Rust values
+- metadata preservation and filtering checks
+- feature-flag differential checks, including f32 vs f64 and parallel vs
+  sequential output normalization
+- operation-chain generation, where a generated object is passed through
+  multiple public APIs before invariant checks
+
+Fuzzing should be used throughout for:
+
+- parsers and importers: OBJ, SVG, DXF, Gerber, images, font bytes, and any
+  future text/binary formats
+- exporters with hostile names, metadata, comments, units, and colors
+- wasm boundary inputs where JavaScript can supply malformed arrays and values
+- operation bytecode interpreters that turn bytes into constructor choices,
+  transforms, booleans, offsets, slicing planes, and export calls
+- polygon and polyhedron constructors fed by raw coordinate/index streams
+- matrix and plane splitting paths that have historically fragile tolerance
+  behavior
+- crash-only harnesses plus semantic harnesses that reject NaN output, invalid
+  indices, bad bounding boxes, and non-terminating reductions
+
+Required proptest/fuzz hygiene:
+
+- Store `ProptestConfig` seeds for every CI failure.
+- Use low case counts in fast CI, higher case counts in medium CI, and
+  long-running fuzz jobs outside the fast path.
+- Prefer small generated cases that shrink well, then add separate stress
+  strategies with explicit memory and time budgets.
+- Convert every minimized proptest case and every minimized fuzz artifact into
+  a named regression fixture.
+- Run fuzz targets with sanitizer builds where practical.
+- Keep native Rust, wasm, f32, f64, parallel, and alternate triangulation
+  backends fed from the same canonical corpora where possible.
+
+Global numeric sweeps
+---------------------
+
+Run every public constructor, boolean, transform, triangulation, slicing,
+flattening, offsetting, import/export, smoothing, and analysis path against
+these value sets wherever the parameter type allows it.
+
+Implementation guidance: encode the lists below as proptest weighted strategies
+that strongly bias toward exact boundary values while still generating random
+finite interiors. Add a fuzz operation-sequence harness that consumes raw bytes
+as scalars/counts/angles and routes them into selected APIs under timeout.
+
+Finite scalars:
+
+- 0
+- -0
+- 1
+- -1
+- 2
+- -2
+- 0.5
+- -0.5
+- Real::EPSILON
+- -Real::EPSILON
+- tolerance() / 1024
+- tolerance() / 16
+- tolerance() / 2
+- tolerance()
+- tolerance() * 2
+- tolerance() * 16
+- tolerance() * 1024
+- sqrt(tolerance())
+- 1 / sqrt(tolerance())
+- 1e-300, 1e-200, 1e-150, 1e-100, 1e-50, 1e-25, 1e-12, 1e-9, 1e-6, 1e-3
+- 1e3, 1e6, 1e9, 1e12, 1e25, 1e50, 1e100, 1e150, 1e200, 1e300
+- Real::MIN_POSITIVE
+- sqrt(Real::MIN_POSITIVE)
+- Real::MAX.sqrt()
+- Real::MAX / 4
+- Real::MAX / 2
+
+Non-finite scalars:
+
+- NaN
+- +infinity
+- -infinity
+- values created by 0 / 0, 1 / 0, -1 / 0
+- signaling NaN payloads where the platform exposes them
+
+Integer counts:
+
+- 0, 1, 2, 3, 4, 5, 6, 7, 8
+- 15, 16, 17, 31, 32, 33, 63, 64, 65
+- 127, 128, 129, 255, 256, 257
+- 511, 512, 513, 1023, 1024, 1025
+- 4095, 4096, 4097
+- very large values gated behind timeout and memory limits
+
+Angles in degrees:
+
+- 0, -0
+- 1e-12, -1e-12
+- tolerance(), -tolerance()
+- 1, -1
+- 30, -30
+- 45, -45
+- 60, -60
+- 89.999999999, -89.999999999
+- 90, -90
+- 90.000000001, -90.000000001
+- 120, -120
+- 179.999999999, -179.999999999
+- 180, -180
+- 180.000000001, -180.000000001
+- 270, -270
+- 359.999999999, -359.999999999
+- 360, -360
+- 360.000000001, -360.000000001
+- 720, -720
+- 1e6, -1e6
+- 1e12, -1e12
+
+Coordinate vectors:
+
+- all-zero vectors
+- unit axes and negative unit axes
+- duplicate components: (x, x, x)
+- mixed scale vectors: (1e-12, 1, 1e12)
+- nearly axis-aligned vectors: (1, tolerance(), 0)
+- nearly diagonal vectors: (1, 1 + tolerance(), 1 - tolerance())
+- vectors with one non-finite component
+- vectors whose norm overflows when squared
+- vectors whose norm underflows to zero
+
+Tolerance boundary cases
+------------------------
+
+- Points exactly equal.
+- Points separated by tolerance() / 1024, tolerance() / 16, tolerance() / 2,
+  tolerance(), tolerance() * 2, tolerance() * 16, tolerance() * 1024.
+- Planes with offsets differing by the same tolerance ladder.
+- Coplanar polygons whose normals differ by the same tolerance ladder.
+- Edges that almost touch but do not cross by tolerance() / 2.
+- Edges that should cross only after coordinate normalization.
+- Vertices that quantize into the same `VertexIndexMap` bucket.
+- Vertices just outside the same `VertexIndexMap` bucket.
+- Bounding boxes with min/max differences near zero.
+- Classification of points exactly on a plane, barely in front, barely behind,
+  and at enormous coordinates where tolerance is small relative to magnitude.
+
+Invalid coordinate catalogs
+---------------------------
+
+Implementation guidance: keep each catalog entry as a deterministic regression
+case, then build proptest strategies that randomly compose duplicate injection,
+spike insertion, winding reversal, coordinate corruption, closure mutation, and
+hole mutation. Add fuzz targets that decode arbitrary byte slices into 2D rings,
+3D vertices, face indices, and metadata, then run constructor plus invariant
+checks.
+
+2D point lists:
+
+- empty list
+- one point
+- two points
+- three identical points
+- three collinear points
+- repeated first point only
+- repeated last point only
+- ring with repeated first and last point
+- ring with repeated middle points
+- ring with duplicate adjacent edges
+- ring with backtracking edge A-B-A
+- ring with all x equal
+- ring with all y equal
+- ring with clockwise orientation
+- ring with counter-clockwise orientation
+- ring with alternating orientation due to repeated segments
+- bow-tie/self-crossing quadrilateral
+- figure-eight polygon
+- polygon with a spike
+- polygon with a zero-width notch
+- polygon with a hole touching the outer boundary
+- polygon with a hole outside the outer boundary
+- polygon with a hole equal to the outer boundary
+- polygon with two holes touching each other
+- polygon with nested holes
+- polygon with a hole that self-intersects
+- coordinates containing NaN or infinities
+- coordinates near Real::MAX that overflow when centered or transformed
+- coordinates near Real::MIN_POSITIVE that underflow when normalized
+
+3D vertex and polygon lists:
+
+- zero vertices
+- one vertex
+- two vertices
+- three identical vertices
+- three collinear vertices
+- three nearly collinear vertices
+- triangle with zero area
+- triangle with area below tolerance
+- triangle with normal opposite its winding
+- triangle with zero normal
+- triangle with NaN normal
+- triangle with non-unit normal
+- triangle with extremely long normal
+- quad with non-coplanar fourth vertex
+- polygon with all vertices coplanar but unsorted
+- polygon with self-crossing projection
+- polygon whose best projection axis is ambiguous
+- polygon with duplicate vertices separated by tiny epsilon
+- polygon with duplicate vertices separated by exactly tolerance
+- polygon with overlapping edges
+- polygon with holes represented as repeated winding if possible
+- polygon with more than u32::MAX vertices rejected or skipped by stress harness
+- mesh with isolated triangles
+- mesh with duplicated coincident polygons
+- mesh with coincident polygons of opposite winding
+- mesh with non-manifold edge shared by 3+ faces
+- mesh with vertex fan that has disconnected neighborhoods
+- mesh with open boundary
+- mesh with internal faces
+- mesh with zero-thickness walls
+- mesh with inverted shell
+- mesh with mixed inward and outward normals
+- mesh with disconnected islands
+- mesh with a tiny island far away from main shell
+- mesh with coordinates in vastly different scales inside one object
+
+Mesh primitive constructors
+---------------------------
+
+For `Mesh::cuboid`, `cube`, `sphere`, `frustum_ptp`, `frustum`, `cylinder`,
+`polyhedron`, `egg`, `teardrop`, `teardrop_cylinder`, `ellipsoid`, `arrow`,
+`octahedron`, `icosahedron`, `torus`, `spur_gear_involute`,
+`spur_gear_cycloid`, and `helical_involute_gear`:
+
+- Sweep every dimension through negative, zero, sub-tolerance, tolerance,
+  normal, huge, and non-finite values.
+- Sweep segment counts through 0, 1, 2, 3, 4, odd, even, prime, power of two,
+  and large values.
+- Verify triangle counts, face winding, finite normals, bounding boxes,
+  manifoldness where applicable, and no panics on documented invalid input.
+- Test metadata present, metadata absent, large metadata strings, unicode
+  metadata strings, and duplicate metadata.
+- Check constructors after immediate `triangulate`, `renormalize`,
+  `subdivide_triangles`, `to_trimesh`, `to_rapier_shape`, `mass_properties`,
+  and every export format.
+- Add proptest strategies for each primitive parameter set and assert shared
+  Mesh invariants after construction and after one randomly chosen follow-up
+  operation.
+- Add a fuzz operation harness that selects a primitive by byte tag, decodes
+  dimensions/counts/metadata from the remaining bytes, and runs construction
+  under `catch_unwind` plus invariant checks.
+
+Specific mesh primitive attacks:
+
+- `cuboid`: zero width, zero length, zero height, exactly one zero dimension,
+  two zero dimensions, negative dimensions, gigantic aspect ratios.
+- `cube`: width 0, width negative, width subnormal, width Real::MAX / 4.
+- `sphere`: radius 0, negative radius, segments 0..8, segments large enough to
+  stress allocations, polar triangles with duplicate vertices.
+- `cylinder`: radius 0, height 0, both zero, negative radius, negative height,
+  segments less than 3, caps that collapse to a line.
+- `frustum`: top radius 0, bottom radius 0, both radii 0, negative radii,
+  height 0, negative height, nearly equal radii, huge radius ratio.
+- `frustum_ptp`: endpoints equal, endpoints separated by sub-tolerance,
+  vertical, horizontal, diagonal, huge vector, zero direction, non-finite
+  endpoint component.
+- `polyhedron`: no points, no faces, face index out of range, duplicate index
+  in a face, negative-equivalent overflow impossible for usize but malformed
+  generated data, non-planar faces, reversed mixed faces.
+- `egg` and `teardrop`: zero width/length/height, negative dimensions,
+  segments 0..8, cusp degeneracies, very flat shapes.
+- `ellipsoid`: one axis zero, two axes zero, one negative axis, extreme aspect
+  ratios like 1e-12 by 1 by 1e12.
+- `arrow`: coincident start/end, zero shaft radius, zero head radius, head
+  shorter than shaft, head longer than total length, negative radii, almost
+  zero direction vector.
+- `octahedron` and `icosahedron`: radius 0, negative radius, huge radius,
+  subdivision or triangulation after creation.
+- `torus`: major radius 0, minor radius 0, major == minor, major < minor,
+  negative radii, radial/tube segment counts 0..8, self-intersecting torus.
+- gear constructors: teeth 0, 1, 2, 3, huge tooth counts, negative module,
+  zero pressure angle, 90 degree pressure angle, backlash negative, clearance
+  negative, helix angle near 90, invalid twist/height/segment combinations.
+
+Sketch primitive constructors
+-----------------------------
+
+For `Sketch::rectangle`, `square`, `circle`, `right_triangle`, `polygon`,
+`ellipse`, `regular_ngon`, `arrow`, `trapezoid`, `star`, `teardrop`, `egg`,
+`rounded_rectangle`, `squircle`, `keyhole`, `reuleaux`, `ring`, `pie_slice`,
+`supershape`, `circle_with_keyway`, `circle_with_flat`,
+`circle_with_two_flats`, `bezier`, `bspline`, `heart`, `crescent`,
+`involute_gear`, `cycloidal_gear`, `involute_rack`, `cycloidal_rack`,
+`airfoil_naca4`, and `hilbert_curve`:
+
+- Sweep dimensions through negative, zero, sub-tolerance, normal, huge, and
+  non-finite values.
+- Sweep segment and side counts through 0, 1, 2, 3, 4, 5, odd, even, prime,
+  powers of two, and large values.
+- Verify multipolygon validity, finite coordinates, ring closure, expected
+  orientation, triangulation behavior, bounding box, extrudability, offset
+  behavior, and import/export round trips.
+- Add proptest strategies for simple valid sketches, invalid sketches, and
+  parameterized primitive constructors. Reuse them in boolean, extrusion,
+  offset, toolpath, and I/O tests.
+- Add fuzz harnesses for `Sketch::polygon`, curve constructors, gear/rack
+  constructors, and operation chains that move from Sketch to Mesh and back.
+
+Specific sketch primitive attacks:
+
+- `polygon`: every invalid coordinate catalog listed above.
+- `circle`: radius <= 0, segments < 3, huge segment counts, tiny radius with
+  huge translation.
+- `ellipse`: width 0, height 0, one negative dimension, extreme aspect ratio.
+- `regular_ngon`: sides 0, 1, 2, 3, 4, huge, radius <= 0.
+- `arrow`: zero length, negative shaft/head sizes, head wider than length,
+  shaft width larger than head width.
+- `trapezoid`: top width 0, bottom width 0, both 0, height 0, crossed sides,
+  negative dimensions.
+- `star`: points 0, 1, 2, inner radius 0, outer radius 0, inner > outer,
+  negative radii, equal radii.
+- `rounded_rectangle`: corner radius 0, negative radius, radius larger than
+  half width/height, segments 0..4.
+- `squircle`: power/exponent edge values if exposed, width/height degeneracy.
+- `keyhole`: slot wider than circle, slot length 0, circle radius 0, negative
+  dimensions.
+- `reuleaux`: sides 0..5, even side counts, radius 0, negative radius.
+- `ring`: inner diameter 0, thickness 0, negative thickness, thickness larger
+  than diameter, segments < 3.
+- `pie_slice`: start == end, start > end, negative sweep, sweep > 360,
+  radius 0, inner radius greater than outer if available.
+- `supershape`: m 0, n values 0, negative n values, a/b 0, parameters causing
+  division by zero or pow of negative fractional bases.
+- `circle_with_keyway`: keyway width 0, keyway depth 0, keyway larger than
+  circle, negative keyway dimensions.
+- `circle_with_flat` and `circle_with_two_flats`: flat depth 0, flat deeper
+  than radius, two flats overlap, negative flat depth.
+- `bezier`: no controls, one control, two controls, duplicate controls,
+  all collinear controls, self-intersecting control polygon, segments 0..3.
+- `bspline`: degree 0, degree > control count, empty knot vector, unsorted
+  knots, repeated knots, all identical controls, segments 0..3.
+- `heart` and `crescent`: zero/negative dimensions, overlapping lobes,
+  segments 0..8.
+- gear/rack constructors: impossible tooth counts, impossible pressure angles,
+  negative pitch/module/addendum/dedendum/backlash.
+- `airfoil_naca4`: malformed codes, thickness 0, max camber > 9, camber
+  position 0 or 10, closed/open trailing edge degeneracy, segments 0..8.
+- `hilbert_curve`: order 0, 1, 2, high order with memory limit, negative
+  padding, padding greater than cell size.
+
+Boolean operation attacks
+-------------------------
+
+Run `union`, `difference`, `intersection`, and `xor` on Mesh, Sketch, and
+BMesh where available.
+
+Canonical pairs:
+
+- empty vs empty
+- empty vs non-empty
+- identical objects
+- identical objects with reversed winding
+- identical objects with different metadata
+- disjoint objects far apart
+- disjoint objects separated by tolerance() / 2
+- tangent objects touching at one point
+- tangent objects touching along one edge
+- tangent objects touching along one face
+- overlapping by tolerance() / 2
+- overlapping by exactly tolerance()
+- overlapping by tolerance() * 2
+- one object fully inside another
+- one object fully inside another but touching boundary
+- thin shell against solid
+- coplanar overlapping polygons
+- coplanar non-overlapping polygons
+- coplanar polygons with opposite normals
+- nearly coplanar polygons
+- rotated objects at irrational angles
+- scaled objects with negative determinant transform
+- transformed objects with extreme aspect ratios
+- many small objects unioned sequentially
+- many small objects unioned in balanced tree order
+- boolean result fed back into another boolean repeatedly
+
+Metamorphic boolean checks:
+
+- A union B equals B union A.
+- A intersection B equals B intersection A.
+- A xor B equals B xor A.
+- A difference B generally differs from B difference A.
+- A union (B union C) equals (A union B) union C for clean non-degenerate
+  solids.
+- A intersection (B intersection C) equals (A intersection B) intersection C.
+- A difference (B union C) equals (A difference B) difference C for clean
+  solids.
+- inverse(A union B) should align with inverse(A) intersection inverse(B) if
+  inverse is intended as complement over the same universe; document any
+  semantic limitations.
+- Boolean outputs should be stable after `triangulate` and `renormalize`.
+- Add proptest boolean expression trees with bounded depth, generated
+  primitive leaves, generated transforms between leaves, and normalized
+  equality checks for algebraic laws.
+- Add fuzz operation-sequence targets that decode a stack-machine language:
+  push primitive, transform, union, difference, intersection, xor, inverse,
+  triangulate, export, and invariant-check.
+
+BSP and plane attacks
+---------------------
+
+Target `Plane::from_vertices`, `Plane::from_normal`, `orient_point`,
+`orient_plane`, `classify_polygon`, `split_polygon`, `to_xy_transform`,
+`Node::from_polygons`, `pick_best_splitting_plane`, `clip_polygons`,
+`clip_to`, `all_polygons`, `build`, and `slice`.
+
+- Construct planes from 0, 1, 2, 3, and many vertices.
+- Construct planes from duplicate, collinear, nearly collinear, and
+  non-coplanar vertices.
+- Construct planes from zero normal, non-unit normal, enormous normal,
+  subnormal normal, and non-finite normal.
+- Classify points with finite and non-finite coordinates.
+- Split triangles crossing the plane at one vertex, one edge, two edges, and
+  all vertices on the plane.
+- Split polygons whose edges lie exactly on the plane.
+- Split polygons whose edges cross at tolerance boundaries.
+- Split non-convex polygons even if API assumes convex input; assert graceful
+  behavior.
+- Build BSP from empty polygon list.
+- Build BSP from identical planes repeated thousands of times.
+- Build BSP from alternating coplanar front/back polygons.
+- Build BSP from long thin sliver triangles.
+- Build BSP from sorted, reverse-sorted, and randomized polygon orders.
+- Compare sequential and parallel BSP outputs under the `parallel` feature.
+- Ensure `to_xy_transform` and its inverse round-trip points on the plane.
+- Ensure split results contain no invalid two-vertex polygons.
+- Add proptest strategies for planes, points near planes, convex polygons that
+  cross planes, coplanar polygons, and almost-coplanar polygons.
+- Add fuzz targets for `Plane::from_vertices`, `classify_polygon`,
+  `split_polygon`, and `Node::build` from arbitrary vertex streams.
+
+Transform attacks
+-----------------
+
+Target `transform`, `translate`, `translate_vector`, `rotate`, `scale`,
+`mirror`, `center`, `float`, `inverse`, and wasm component wrappers.
+
+- Identity matrix.
+- Translation by all scalar sweep values.
+- Rotation by all angle sweep values around x, y, z, and combinations.
+- Scale by 0, -0, 1, -1, non-uniform, one zero axis, two zero axes, all zero,
+  negative determinant, subnormal factors, huge factors.
+- Matrix with NaN, infinity, denormal, and huge entries.
+- Matrix with perspective/non-affine bottom row.
+- Singular matrix.
+- Nearly singular matrix.
+- Reflection across xy, yz, xz, diagonal, offset, zero-normal, and non-unit
+  planes.
+- Mirror twice across the same plane.
+- Apply transform then inverse transform.
+- Apply 10,000 tiny rotations and compare against one equivalent rotation.
+- Translate huge object by huge opposite vector and check cancellation error.
+- Center empty geometry.
+- Float empty geometry.
+- Center geometry with non-finite bounding box.
+- Add proptest transform sequence strategies that generate invertible,
+  singular, near-singular, affine, and corrupted matrices, with metamorphic
+  checks for identity, inverse, composition, and double mirror.
+- Add fuzz targets that decode 16 matrix entries plus a primitive selector and
+  apply the matrix to Mesh, Sketch, BMesh, and wasm wrappers where enabled.
+
+Triangulation attacks
+---------------------
+
+Target `Polygon::triangulate`, `Sketch::triangulate`,
+`Sketch::triangulate_with_holes`, `Mesh::triangulate`, `Triangulated3D`,
+and all triangulation feature choices: `delaunay`, `earcut`, and
+`delaunay-rs`.
+
+- Empty polygons.
+- Triangles already triangles.
+- Convex polygons with 4..1024 vertices.
+- Concave polygons with one notch, many notches, and alternating spikes.
+- Self-intersecting polygons.
+- Holes with valid orientation.
+- Holes with wrong orientation.
+- Holes touching outer ring.
+- Holes outside outer ring.
+- Nested holes.
+- Multiple holes sharing a vertex.
+- Rings with duplicate closure points.
+- Rings without explicit closure.
+- Extremely thin polygons.
+- Very large coordinates.
+- Very small coordinates.
+- Mixed-scale coordinates.
+- Random simple polygons generated from sorted radial points.
+- Random invalid polygons generated by shuffled radial points.
+- Compare total triangle area against polygon area for valid finite inputs.
+- Compare all triangulation backends on the same corpus where feature flags
+  allow separate builds.
+- Verify no triangle has NaN area, negative area where orientation is specified,
+  or vertices outside the original polygon beyond tolerance.
+- Add proptest strategies for valid polygons with holes and malformed rings,
+  checking area preservation and finite triangle output after shrinking.
+- Add fuzz targets that feed raw coordinate streams to polygon/sketch
+  triangulation across each triangulation backend.
+
+Subdivision, smoothing, and mesh quality attacks
+-----------------------------------------------
+
+Target `subdivide_triangle`, `Mesh::subdivide_triangles`,
+`subdivide_triangles_mut`, `Polygon::subdivide_triangles`,
+`Polygon::subdivide_to_polygons`, `laplacian_smooth`, `taubin_smooth`,
+`adaptive_refine`, `remove_poor_triangles`, `analyze_triangle_quality`,
+`compute_mesh_quality`, and vertex quality analysis helpers.
+
+- Subdivide zero-area triangles.
+- Subdivide sliver triangles.
+- Subdivide triangles with non-unit normals.
+- Subdivide meshes with mixed polygon sizes.
+- Subdivide levels 1, 2, 3, 4, 8, and stress levels behind memory limits.
+- Smooth empty mesh.
+- Smooth mesh with one triangle.
+- Smooth open boundary mesh.
+- Smooth non-manifold mesh.
+- Smooth with iterations 0, 1, many.
+- Smooth with lambda/mu 0, negative, > 1, NaN, infinity.
+- Adaptive refine with target edge length 0, negative, tiny, huge.
+- Remove poor triangles with quality threshold 0, negative, 1, > 1, NaN.
+- Verify smoothing does not create NaNs from finite inputs.
+- Verify quality metrics classify equilateral, right, obtuse, sliver,
+  degenerate, and huge-coordinate triangles.
+- Verify mass properties before/after smoothing remain finite and plausible.
+- Add proptest strategies for triangle quality classes and generated meshes
+  with controlled degeneracy ratios.
+- Add fuzz targets that decode triangle soups and smoothing/refinement
+  parameter bytes, then assert finite output and bounded growth.
+
+Vertex attacks
+--------------
+
+Target `Vertex::new`, `flip`, `interpolate`, `slerp_interpolate`,
+`distance_to`, `distance_squared_to`, `normal_angle_to`, `weighted_average`,
+`barycentric_interpolate`, `compute_cotangent_weight`,
+`analyze_connectivity_with_index`, `analyze_connectivity_by_position`,
+`estimate_mean_curvature`, `comprehensive_quality_analysis`, and
+`VertexCluster`.
+
+- Construct with finite position and zero normal.
+- Construct with NaN position or normal.
+- Construct with infinite position or normal.
+- Interpolate with t values -1, 0, tolerance, 0.5, 1, 2, NaN, infinity.
+- Slerp opposite normals, identical normals, zero normals, nearly opposite
+  normals.
+- Weighted average with empty list.
+- Weighted average with all zero weights.
+- Weighted average with negative weights.
+- Weighted average with weights summing to near zero.
+- Weighted average with NaN weights.
+- Barycentric interpolation with valid weights, negative weights, weights not
+  summing to one, and NaN weights.
+- Cotangent weight for right, acute, obtuse, collinear, and coincident points.
+- Connectivity with duplicate vertices under epsilon.
+- Curvature with no neighbors, duplicate neighbors, missing face areas,
+  negative face areas, and NaN areas.
+- VertexCluster from empty vertices, one vertex, duplicates, and mixed normals.
+- Add proptest strategies for vertices, neighbor sets, barycentric weights,
+  interpolation factors, and face area lists.
+- Add fuzz targets for vertex arithmetic that compare finite-input operations
+  against finite-output expectations and reject panics.
+
+Sketch boolean and geo conversion attacks
+-----------------------------------------
+
+Target `Sketch::from_geo`, `to_multipolygon`, `renormalize`, CSG operations,
+and conversion from `Mesh`.
+
+- GeometryCollection containing points only.
+- GeometryCollection containing lines only.
+- GeometryCollection containing empty polygons.
+- GeometryCollection with mixed polygon, line, and point geometry.
+- MultiPolygon with overlapping polygons.
+- MultiPolygon with adjacent polygons sharing an edge.
+- MultiPolygon with invalid holes.
+- Difference that deletes an entire polygon.
+- Difference that creates multiple islands.
+- Intersection that creates a line or point only.
+- Xor of touching polygons.
+- `renormalize` on invalid, empty, and nested geometries.
+- Mesh flattening followed by sketch boolean and re-extrusion.
+- Compare geo area before and after round trips where valid.
+- Add proptest strategies for `GeometryCollection` values containing mixed
+  points, lines, polygons, multipolygons, and empty geometry.
+- Add fuzz targets that decode geo-like ring collections and run
+  `from_geo -> to_multipolygon -> renormalize -> boolean`.
+
+Extrusion, loft, revolve, and sweep attacks
+-------------------------------------------
+
+Target `Sketch::extrude`, `extrude_vector`, `loft`, `revolve`, and `sweep`.
+
+- Extrude empty sketch.
+- Extrude zero height.
+- Extrude negative height.
+- Extrude sub-tolerance height.
+- Extrude huge height.
+- Extrude self-intersecting sketch.
+- Extrude sketch with holes.
+- Extrude vector zero, axis-aligned, diagonal, tiny, huge, NaN component.
+- Loft empty slice list.
+- Loft one slice.
+- Loft slices with mismatched vertex counts.
+- Loft slices with different hole counts.
+- Loft reversed winding between slices.
+- Loft crossing profiles.
+- Revolve angle 0, tiny, 90, 180, 360, > 360, negative.
+- Revolve segments 0, 1, 2, 3, large.
+- Revolve profile crossing the rotation axis.
+- Revolve profile lying exactly on the axis.
+- Revolve profile with negative x coordinates if x is radius.
+- Sweep empty path.
+- Sweep one-point path.
+- Sweep two identical path points.
+- Sweep path with backtracking.
+- Sweep path with sharp 180 degree turn.
+- Sweep path with near-zero segment length.
+- Sweep path with self-intersection.
+- Sweep path containing NaN or infinity.
+- Verify side faces, caps, normals, and manifoldness where applicable.
+- Add proptest strategies for profile sketches and path point sequences, with
+  shrinking that preserves the failing profile/path relationship.
+- Add fuzz targets that decode profile rings plus path/control bytes and run
+  extrude, revolve, loft, and sweep under invariant checks.
+
+Offset and straight skeleton attacks
+------------------------------------
+
+Target `Sketch::offset`, `offset_rounded`, and `straight_skeleton`.
+
+- Offset empty sketch.
+- Offset by 0.
+- Offset by positive/negative tolerance ladder.
+- Offset by distance larger than the smallest feature.
+- Offset inward until geometry disappears.
+- Offset outward huge distance.
+- Offset self-intersecting polygon.
+- Offset polygon with holes.
+- Offset hole until it collapses.
+- Offset shapes with spikes and zero-width notches.
+- Offset adjacent polygons.
+- Rounded offset with tiny radius-equivalent distances.
+- Skeleton for clockwise and counter-clockwise rings.
+- Skeleton with holes, touching holes, and invalid rings.
+- Verify output contains finite closed rings and no orphan linework unless
+  documented.
+- Add proptest offset cases from generated valid and invalid sketches, with
+  distances biased around collapse thresholds.
+- Add fuzz targets that decode rings and offset distances, then run both
+  sharp and rounded offset plus straight skeleton.
+
+Flattening, slicing, and intersections
+--------------------------------------
+
+Target `Mesh::flatten`, `Mesh::slice`, `Node::slice`, `split_by_plane` in wasm,
+`ray_intersections`, and `intersect_polyline`.
+
+- Flatten empty mesh.
+- Flatten mesh already in xy plane.
+- Flatten vertical polygons.
+- Flatten non-manifold mesh.
+- Slice empty mesh.
+- Slice with zero-normal plane.
+- Slice through no geometry.
+- Slice tangent to a vertex.
+- Slice tangent to an edge.
+- Slice exactly through a face.
+- Slice through many coplanar faces.
+- Slice near a face at tolerance distances.
+- Slice with huge plane offset.
+- Ray with zero direction.
+- Ray starting inside, outside, on surface, on edge, and on vertex.
+- Ray parallel to face.
+- Ray coplanar with face.
+- Ray through duplicate faces.
+- Polyline empty, one point, repeated points, self-intersecting, huge path.
+- Verify intersection ordering, duplicate suppression, and finite outputs.
+- Add proptest strategies for meshes, slicing planes, rays, and polylines,
+  especially near tangent and coplanar cases.
+- Add fuzz targets that decode a mesh triangle soup plus plane/ray/polyline
+  bytes and run slicing/intersection APIs.
+
+Convex hull and Minkowski attacks
+---------------------------------
+
+Target `convex_hull` and `minkowski_sum`.
+
+- Hull of empty mesh.
+- Hull of one point, two points, collinear points, coplanar points.
+- Hull of duplicate points.
+- Hull of cube, sphere, thin slab, and random point clouds.
+- Hull with NaN/infinite vertices.
+- Hull with extreme coordinate ranges.
+- Minkowski with empty mesh.
+- Minkowski with point-like degenerate mesh.
+- Minkowski cube + cube, cube + sphere, thin shape + thin shape.
+- Minkowski with one inverted mesh.
+- Minkowski with disjoint islands.
+- Verify hull contains original vertices and has finite outward normals.
+- Add proptest point-cloud and primitive-pair strategies for hull and
+  Minkowski invariants.
+- Add fuzz targets that feed arbitrary point clouds and triangle soups into
+  hull and Minkowski code paths under memory limits.
+
+SDF, TPMS, voxels, and metaballs attacks
+----------------------------------------
+
+Target `Mesh::sdf`, `Mesh::gyroid`, `schwarz_p`, `schwarz_d`,
+`Mesh::metaballs`, `Sketch::metaballs`, and voxel modules.
+
+- Grid resolution 0 in each axis.
+- Resolution 1, 2, 3, powers of two, odd sizes, and large stress sizes.
+- Bounding boxes with zero volume.
+- Bounding boxes with negative min/max order if constructible.
+- Iso value exactly 0, tiny, huge, NaN, infinity.
+- SDF closure returning NaN for some cells.
+- SDF closure returning infinity.
+- SDF closure discontinuous at cell boundaries.
+- SDF sphere at grid boundary, exactly tangent, fully outside, fully inside.
+- TPMS dimensions 0, negative, tiny, huge.
+- TPMS cell counts 0, 1, 2, large.
+- Metaballs empty list.
+- Metaball radius 0, negative, tiny, huge.
+- Coincident metaballs.
+- Metaballs far apart.
+- Iso threshold causing no surface.
+- Padding negative, 0, huge.
+- Verify output mesh finite, manifold where expected, and not pathologically
+  slow on empty/no-surface cases.
+- Add proptest strategies for bounded scalar fields, grid dimensions, iso
+  values, TPMS dimensions, and metaball sets.
+- Add fuzz targets where bytes select canned SDF closures, grid dimensions,
+  iso values, and metaball lists.
+
+NURBS attacks
+-------------
+
+When the `nurbs` feature is enabled, target `Nurbs::empty`, `from_regions`,
+`from_compound`, `from_curve`, `polyline`, `rectangle`, `circle`,
+`tessellate_regions`, `to_multipolygon`, `to_sketch`, `extrude_vector`,
+`try_union`, `try_difference`, and `try_intersection`.
+
+- Empty NURBS through every conversion.
+- Polyline with 0, 1, 2 points.
+- Polyline with duplicate points.
+- Polyline with self-intersections.
+- Rectangle with zero/negative dimensions.
+- Circle with zero/negative radius.
+- Tolerances None, 0, negative, tiny, huge, NaN.
+- Tessellation of curves with tiny tolerance and timeout limits.
+- Boolean operations on disjoint, touching, overlapping, nested, and invalid
+  NURBS regions.
+- Extrude vector zero, negative direction, huge direction, non-finite.
+- Round trip NURBS -> Sketch -> Mesh -> Sketch where applicable.
+- Add proptest strategies for NURBS polylines, rectangle/circle parameters,
+  tolerances, and boolean operation pairs.
+- Add fuzz targets for polyline/control-point byte streams and tolerance bytes.
+
+BMesh attacks
+-------------
+
+When the `bmesh` feature is enabled:
+
+- Convert empty Mesh to BMesh.
+- Convert invalid/non-manifold Mesh to BMesh.
+- Convert mesh with duplicate vertices.
+- Convert mesh with reversed winding.
+- Run all boolean identity and pair tests against BMesh.
+- Compare Mesh boolean result and BMesh boolean result on clean solids.
+- Transform BMesh with singular, negative, zero, and huge scales.
+- Invert BMesh twice.
+- Convert BMesh back through triangulation/export paths.
+- Verify invalid boolmesh conversions fail gracefully or produce empty BMesh
+  without corrupting later operations.
+- Add proptest differential tests that generate clean Mesh primitives,
+  transform them, then compare Mesh and BMesh boolean outputs after
+  normalization.
+- Add fuzz targets that decode triangle soups, attempt BMesh conversion, and
+  run a small operation sequence if conversion succeeds.
+
+I/O export attacks
+------------------
+
+Target STL ASCII/binary, OBJ, PLY, AMF, glTF, DXF, SVG, and Gerber exporters.
+
+Common export cases:
+
+- Empty geometry.
+- One triangle.
+- Degenerate triangles.
+- Non-manifold mesh.
+- Mesh with NaN coordinates.
+- Mesh with infinity coordinates.
+- Mesh with negative zero coordinates.
+- Huge coordinate values.
+- Very small coordinate values.
+- Object names empty, very long, whitespace only, unicode, XML/JSON/control
+  characters, path-looking strings, newline injection strings.
+- Comments empty, very long, unicode, control characters, newline injection.
+- Units empty, standard values, unknown values, XML injection strings.
+- Metadata with special characters.
+- Export then parse with a strict external parser where possible.
+- Export should not produce invalid UTF-8 for text formats.
+- Export should not write indices outside declared vertex counts.
+- Export should not silently truncate large finite values without documenting
+  precision loss.
+- Add proptest strategies for hostile but valid object names, metadata,
+  comments, units, colors, and small generated meshes.
+- Add fuzz targets that combine arbitrary text fields with generated or decoded
+  triangle soups, then validate text/binary exporters for crashes and basic
+  structural correctness.
+
+Format-specific export cases:
+
+- STL ASCII: names containing `solid`, `endsolid`, newlines, and binary-looking
+  bytes; normals for degenerate triangles.
+- STL binary: triangle count overflow guard; header length exactly 80 bytes;
+  no accidental ASCII-only assumptions.
+- OBJ: object names with spaces and slashes; negative zero formatting; repeated
+  vertices; face winding; no out-of-range face references.
+- PLY: header count matches body; comments with newlines sanitized; property
+  order stable.
+- AMF: XML escaping for object name, units, metadata, and color fields; invalid
+  color values negative, > 1, NaN.
+- glTF: valid JSON; base64 buffer length matches accessor counts; min/max
+  accessors finite; names escaped; empty geometry valid or rejected clearly.
+- DXF: empty layers; huge coordinates; arcs/lines/polylines if exported.
+- SVG: path data finite; viewBox around empty or huge geometry; transform
+  preservation if supported.
+- Gerber: units inch/mm; coordinate precision extremes; polarity transitions;
+  step-repeat; aperture holes; unsupported geometry ignored or errored
+  predictably.
+
+I/O import attacks
+------------------
+
+Target OBJ, DXF, SVG, Gerber, image import, TrueType text, and Hershey text.
+
+Implementation guidance: importers are primary fuzz targets. Pair raw
+coverage-guided fuzzing with proptest generators for syntactically valid but
+geometrically adversarial documents so the parser sees both garbage bytes and
+shrinking-aware structured inputs.
+
+OBJ:
+
+- Empty file.
+- File with comments only.
+- Vertices but no faces.
+- Faces before vertices.
+- Face index 0.
+- Negative indices.
+- Index out of range.
+- Mixed triangle/quad/ngon faces.
+- Duplicate vertices.
+- Degenerate faces.
+- Non-numeric tokens.
+- NaN/infinity tokens.
+- Scientific notation and enormous exponents.
+- CRLF, LF, mixed line endings.
+- Extremely long lines.
+- Multiple objects/groups/material statements.
+- Texture/normal indices missing or malformed.
+
+DXF:
+
+- Empty file.
+- Unsupported entities.
+- Malformed group codes.
+- Lines with missing coordinates.
+- Closed polylines with duplicate points.
+- Open polylines.
+- Arcs with zero radius.
+- Arcs with start=end.
+- Very large coordinate values.
+- Mixed units if represented.
+
+SVG:
+
+- Empty SVG.
+- No path elements.
+- Invalid XML.
+- Huge path string.
+- Path with every command: M, L, H, V, C, S, Q, T, A, Z, relative and absolute.
+- Smooth curves without previous control point.
+- Arc with zero radii.
+- Arc with impossible flags.
+- Arc with start=end.
+- Path containing NaN/infinity text.
+- Nested transforms, scale zero, negative scale, rotate huge angles.
+- Fill rules nonzero/evenodd.
+- Holes by winding and holes by evenodd fill.
+- Multiple subpaths, open subpaths, self-crossing paths.
+
+Gerber:
+
+- Empty file.
+- Missing units.
+- Missing format specification.
+- Unsupported aperture.
+- Aperture with zero or negative dimensions.
+- Region never closed.
+- Clear polarity before any dark geometry.
+- Step-repeat with zero repeat count.
+- Step-repeat with huge count.
+- Arc interpolation with missing center offsets.
+- Single-quadrant and multi-quadrant arcs.
+- Coordinate omissions under modal state.
+- Inch/mm round-trip precision.
+
+Image import:
+
+- 0x0 image if constructible.
+- 1x1 image black, white, transparent.
+- All transparent.
+- All opaque.
+- Checkerboard noise.
+- Single-pixel diagonal connections.
+- Thin one-pixel lines.
+- Huge image behind memory limits.
+- Images with invalid channels or unusual color types.
+- Threshold values 0, 1, mid, out of range if API allows.
+
+Text import:
+
+- Empty string.
+- Whitespace only.
+- Very long string.
+- Unicode text, combining marks, right-to-left text, emoji.
+- Missing glyphs.
+- Newlines and tabs.
+- Scale 0, negative, tiny, huge, NaN.
+- Corrupt TTF bytes.
+- Empty font bytes.
+- Hershey unknown font data, malformed glyph lines, huge coordinate glyphs.
+
+Wasm wrapper attacks
+--------------------
+
+When the `wasm` feature is enabled, test `Point3Js`, `Vector3Js`, `VertexJs`,
+`PlaneJs`, `PolygonJs`, `MeshJs`, `SketchJs`, and `Matrix4Js`.
+
+- Constructors with NaN, infinity, undefined/null from JS if possible.
+- Methods accepting arrays with wrong length.
+- Arrays containing holes, strings, objects, booleans, null, undefined.
+- Typed arrays with length not divisible by 2 or 3.
+- Metadata values null, undefined, string, number, boolean, array, object,
+  cyclic object if serializer sees it, huge object.
+- `from_points_with_holes` with malformed outer and hole arrays.
+- `transform_components` with every matrix scalar attack.
+- `to_arrays` object fields have expected typed array lengths and stable names.
+- `positions`, `normals`, and `indices` match `triangle_count` and
+  `vertex_count`.
+- JS exceptions are thrown as `JsValue` errors where expected.
+- wasm exports do not panic across the boundary for malformed data.
+- Round trip MeshJs -> arrays -> MeshJs if API supports reconstruction.
+- Compare wasm results against native Rust for a shared corpus.
+- Add proptest-generated JSON fixtures shared between native tests and
+  wasm-bindgen tests.
+- Add JS-side fuzzing for arrays, typed arrays, metadata `JsValue`s, wrong
+  arities, and operation sequences crossing the wasm boundary.
+
+Toolpath attacks
+----------------
+
+When `offset` enables the toolpath module, target `Toolpath`, `PathMove`,
+`fdm_layer_from_sketch`, `cut2d_contours`, `pocket2d`,
+`lathe_rough_from_profile`, `contour_only`, and G-code post output.
+
+- Empty sketch/profile.
+- Sketch with holes.
+- Self-intersecting sketch.
+- Open contours if constructible.
+- Nozzle diameter 0, negative, tiny, huge.
+- Tool diameter 0, negative, tiny, huge.
+- Layer height 0, negative, tiny, huge.
+- Feed rates 0, negative, huge.
+- Extrusion multiplier 0, negative, huge, NaN.
+- Kerf side left/right/on with zero kerf and huge kerf.
+- Lead-in/out longer than contour.
+- Pocket stepover 0, negative, larger than tool diameter.
+- Pocket depth 0, negative, huge.
+- Lathe profile crossing axis.
+- Lathe negative stock radius.
+- Travel/cut moves containing NaN or infinity.
+- G-code output with finite coordinates, stable line ordering, sanitized
+  comments, and no impossible feed/extrusion values.
+- Add proptest strategies for sketches, feeds, tool/nozzle dimensions,
+  lead-in/out settings, pocket settings, and lathe profiles.
+- Add fuzz targets that decode sketch rings and toolpath configuration bytes,
+  then postprocess to G-code and check for finite numeric output.
+
+Feature-flag matrix
+-------------------
+
+Build and test these combinations:
+
+- default features
+- `--no-default-features --features f64,delaunay`
+- `--no-default-features --features f64,earcut`
+- `--no-default-features --features f64,delaunay-rs`
+- `--no-default-features --features f32,delaunay`
+- `--no-default-features --features f32,earcut`
+- default plus `parallel`
+- default plus `wasm` for wasm32 where supported
+- default plus `nurbs`
+- default plus `bevymesh`
+- minimal mesh-only combinations where compile rules permit
+- minimal sketch-only combinations where compile rules permit
+- expected compile failures when both `f32` and `f64` are enabled
+- expected compile failures when no real type is enabled
+- expected compile failures when multiple triangulation backends are enabled
+- expected compile failures when no triangulation backend is enabled
+
+Performance and complexity attacks
+----------------------------------
+
+Every stress test must have wall-clock and memory limits.
+
+- Boolean chains of 10, 100, 1000 primitives.
+- Balanced-tree vs left-fold union of many objects.
+- BSP build from adversarial sorted coplanar polygons.
+- BSP build from random sliver triangles.
+- Triangulation of polygons with 100, 1000, 10000 vertices.
+- Offset of high-vertex-count noisy polygons.
+- Sweep along path with 100, 1000, 10000 points.
+- SDF grids increasing by powers of two.
+- Metaballs with 0, 1, 10, 100, 1000 balls.
+- Import files with very long lines and many tiny entities.
+- Export huge meshes and verify linear-ish time and no quadratic string
+  concatenation blowups.
+- Repeat bounding_box calls before and after invalidation to ensure caching
+  behavior is correct.
+- Run under release and debug modes to catch overflow-check differences.
+
+Property-based test generators
+------------------------------
+
+Use the `proptest` crate for this entire section. These generators should live
+in shared test support modules so unit tests, integration tests, differential
+tests, and regression-minimization workflows all use the same strategies.
+
+Generate structured valid data:
+
+- Convex polygons from sorted random angles.
+- Star-shaped simple polygons from radial functions.
+- Axis-aligned rectangles and boxes.
+- Random transforms with bounded finite scale.
+- Clean watertight triangle meshes from primitives.
+- Clean sketches with non-overlapping holes.
+- Random CSG expression trees over clean primitives.
+
+Generate malformed data:
+
+- Shuffled polygon vertices.
+- Random duplicate point injection.
+- Random spike insertion.
+- Random coordinate replacement with NaN/infinity.
+- Random edge collapse.
+- Random winding reversal.
+- Random face index corruption for import-like constructors.
+- Random transform matrix corruption.
+- Random metadata mutation.
+
+Metamorphic properties:
+
+- Transform identity is no-op.
+- Transform composition equals sequential application.
+- Translate by v then -v is no-op.
+- Rotate by a then -a is no-op within tolerance.
+- Scale by s then 1/s is no-op for nonzero finite s.
+- Mirror twice is no-op.
+- Triangulate area/volume equals source area/volume within tolerance for valid
+  inputs.
+- Export-import-export is stable after normalization for supported formats.
+- Parallel and sequential outputs have same normalized triangle set.
+- f32 outputs are within a looser envelope of f64 outputs on the same finite
+  corpus.
+
+Differential testing
+--------------------
+
+- Compare Mesh booleans against BMesh booleans on clean closed solids.
+- Compare Sketch booleans against geo expectations for simple rectangles and
+  circles.
+- Compare triangulation backends on identical valid polygons.
+- Compare STL/OBJ/PLY triangle counts from the same object.
+- Compare `to_trimesh` and exported indexed meshes for vertex/index validity.
+- Compare native Rust APIs and wasm APIs on shared JSON fixtures.
+- Compare mass properties of known shapes against analytic formulas for cube,
+  cuboid, sphere approximation, cylinder approximation, and torus
+  approximation.
+- Compare convex hull of primitive vertices against known bounding shapes.
+
+Regression fixtures to save
+---------------------------
+
+Save any failing input as a minimal fixture with:
+
+- feature flags
+- Real type
+- operation sequence
+- input coordinates
+- metadata
+- random seed if generated
+- expected behavior category
+- observed panic/error/wrong output
+- normalized geometry summary: vertex count, polygon count, triangle count,
+  bounding box, area, volume, manifoldness, finite-coordinate check
+
+Suggested fuzz targets
+----------------------
+
+Use cargo-fuzz/libFuzzer or an equivalent coverage-guided engine. Each target
+should have a crash-only mode and, where practical, a semantic mode that checks
+the global invariants after the decoded operation completes.
+
+- `fuzz_sketch_polygon_triangulate`
+- `fuzz_sketch_boolean_pair`
+- `fuzz_mesh_polyhedron_constructor`
+- `fuzz_mesh_boolean_pair`
+- `fuzz_plane_split_polygon`
+- `fuzz_transform_matrix`
+- `fuzz_obj_import`
+- `fuzz_svg_path_import`
+- `fuzz_gerber_import`
+- `fuzz_stl_obj_ply_amf_gltf_export_names`
+- `fuzz_wasm_array_inputs`
+- `fuzz_toolpath_from_sketch`
+- `fuzz_nurbs_polyline_to_sketch`
+
+Minimum adversarial CI tiers
+----------------------------
+
+Fast tier:
+
+- Deterministic unit tests for every invalid count and zero/negative dimension.
+- Boolean identity laws on cube, sphere, cylinder, rectangle, circle.
+- Triangulation invalid polygon catalog.
+- Transform matrix finite/non-finite smoke tests.
+- Export empty and one-triangle geometry for every enabled format.
+- Feature compile-fail checks for invalid real/triangulation combinations.
+
+Medium tier:
+
+- Property tests with 1000 generated cases per target.
+- Cross-feature triangulation backend comparison.
+- Parallel vs sequential deterministic corpus.
+- Import malformed fixture corpus.
+- Toolpath malformed geometry corpus.
+
+Long tier:
+
+- Coverage-guided fuzzing.
+- Large performance sweeps.
+- Sanitizer/miri runs where supported.
+- wasm browser or wasm-bindgen-test corpus.
+- f32 vs f64 differential runs.
+- External parser validation for exported formats.
+
+Concrete "try to break everything" operation chains
+---------------------------------------------------
+
+- Invalid polygon -> Sketch::polygon -> triangulate -> extrude -> boolean with
+  cube -> export all formats.
+- Self-crossing Sketch -> offset inward -> offset outward -> extrude -> slice
+  through every axis plane.
+- Cube -> scale(0, 1, 1) -> union sphere -> triangulate -> mass_properties.
+- Sphere segments 3 -> subdivide -> smooth -> remove poor triangles -> export.
+- Mesh with duplicate opposite polygons -> BSP build -> inverse -> union cube.
+- Huge cuboid -> center -> rotate tiny angle -> boolean with tiny sphere.
+- Tiny cuboid -> translate huge -> center -> float -> export.
+- Ring with touching hole -> triangulate -> extrude -> flatten -> to_svg.
+- OBJ malformed import -> to_obj -> from_obj again.
+- SVG arc-heavy path -> from_svg -> offset_rounded -> to_svg -> from_svg.
+- Gerber with step repeat -> from_gerber -> to_gerber -> from_gerber.
+- Text from corrupt font bytes -> extrude -> export if construction succeeds.
+- Metaballs no-surface -> boolean with cube -> slice -> export.
+- SDF closure returning NaN at one cell -> mesh quality -> export.
+- BMesh from invalid Mesh -> boolean -> transform -> back to Mesh if possible.
+- wasm MeshJs from wrong-length arrays -> every method should throw or return
+  documented empty output, never trap unexpectedly.
+
+Definition of a normalized geometry comparison
+----------------------------------------------
+
+For equality-like assertions, avoid relying on raw polygon order. Normalize by:
+
+- Rejecting non-finite coordinates first.
+- Triangulating polygons if necessary.
+- Sorting triangle vertices lexicographically after tolerance quantization.
+- Sorting triangles lexicographically.
+- Comparing quantized coordinates, normals where relevant, triangle count,
+  bounding box, surface area, volume, and manifoldness.
+- Allowing backend-specific tolerances for f32 vs f64 and triangulation
+  algorithm differences.
+
+Final reminder
+--------------
+
+Do not only test "nice CAD input." The suite should include hostile inputs:
+wrong counts, impossible parameters, self-intersections, non-manifold topology,
+NaNs, infinities, enormous and subnormal scales, malformed files, broken JS
+values, feature combinations, repeated operation chains, and cases constructed
+to sit exactly on tolerance boundaries.

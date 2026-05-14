@@ -315,8 +315,9 @@ impl<S: Clone + Send + Sync> Polygon<S> {
                         }
                         let a2 = &all_vertices_2d[j];
                         let b2 = &all_vertices_2d[(j + 1) % n];
-                        if segments_intersect_2d(a1.x, a1.y, b1.x, b1.y, a2.x, a2.y, b2.x, b2.y)
-                        {
+                        if segments_intersect_2d(
+                            a1.x, a1.y, b1.x, b1.y, a2.x, a2.y, b2.x, b2.y,
+                        ) {
                             found = true;
                             break 'outer;
                         }
@@ -409,9 +410,7 @@ impl<S: Clone + Send + Sync> Polygon<S> {
 
         #[cfg(feature = "delaunay-rs")]
         {
-            use delaunay_triangulator::core::{
-                vertex::Vertex as DelaunayVertex,
-            };
+            use delaunay_triangulator::core::vertex::Vertex as DelaunayVertex;
             use delaunay_triangulator::triangulation::delaunay::DelaunayTriangulation;
             use geo::{Intersects, LineString, Point as GeoPoint, Polygon as GeoPolygon};
 
@@ -448,8 +447,7 @@ impl<S: Clone + Send + Sync> Polygon<S> {
                 .iter()
                 .map(|&[x, y]| delaunay_triangulator::vertex!([x as f64, y as f64]))
                 .collect();
-            let Ok(dt) = DelaunayTriangulation::<_, (), (), 2>::new(&delaunay_vertices)
-            else {
+            let Ok(dt) = DelaunayTriangulation::<_, (), (), 2>::new(&delaunay_vertices) else {
                 return Vec::new();
             };
 
@@ -496,7 +494,8 @@ impl<S: Clone + Send + Sync> Polygon<S> {
                     [Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 0.0)); 3];
 
                 for (k, coord) in coords.iter().enumerate() {
-                    let pos_3d = origin_3d.coords + (coord[0] as Real) * u + (coord[1] as Real) * v;
+                    let pos_3d =
+                        origin_3d.coords + (coord[0] as Real) * u + (coord[1] as Real) * v;
                     tri_vertices[k] = Vertex::new(Point3::from(pos_3d), normal_3d);
                 }
 
@@ -688,6 +687,7 @@ pub fn build_orthonormal_basis(n: Vector3<Real>) -> (Vector3<Real>, Vector3<Real
     (u, v)
 }
 
+#[cfg(feature = "delaunay")]
 fn polygon_signed_area_2x(ring: &[geo::Coord<Real>]) -> Real {
     let mut area = 0.0;
     for i in 0..ring.len() {
@@ -699,6 +699,7 @@ fn polygon_signed_area_2x(ring: &[geo::Coord<Real>]) -> Real {
 
 /// Point-in-polygon test for a simple 2D ring using ray casting.
 /// Returns true for inside points and points very close to the boundary.
+#[cfg(feature = "delaunay")]
 fn point_in_ring_2d(px: Real, py: Real, ring: &[geo::Coord<Real>]) -> bool {
     if ring.len() < 3 {
         return false;
@@ -755,6 +756,7 @@ fn point_in_ring_2d(px: Real, py: Real, ring: &[geo::Coord<Real>]) -> bool {
 }
 
 /// Test whether two 2D line segments properly intersect, ignoring shared endpoints.
+#[cfg(feature = "delaunay")]
 fn segments_intersect_2d(
     ax1: Real,
     ay1: Real,

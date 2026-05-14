@@ -1,0 +1,8 @@
+feature_flags: default
+real_type: f64
+operation_sequence: Mesh::cube("Cube1").difference(Mesh::cube("Cube2").translate(0.5,0.5,0.5))
+input_coordinates: unit cube faces transformed by cube constructor and translation
+metadata: Cube1 on minuend polygons, Cube2 on subtrahend polygons
+expected_behavior: Difference output metadata is present and belongs to one of the source objects.
+observed_behavior: Difference may include clipped boundary polygons carrying either Cube1 or Cube2 metadata.
+normalized_geometry_summary: finite mesh, non-empty polygon list, metadata restricted to known source labels.
