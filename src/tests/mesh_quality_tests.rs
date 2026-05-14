@@ -1,3 +1,5 @@
+//! Tests for mesh quality metrics.
+
 use super::support::*;
 
 #[test]

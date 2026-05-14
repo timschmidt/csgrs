@@ -1,3 +1,5 @@
+//! Fuzz target for paired mesh boolean operations.
+
 #![no_main]
 
 use csgrs::csg::CSG;

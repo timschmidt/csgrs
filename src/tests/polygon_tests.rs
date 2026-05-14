@@ -1,3 +1,5 @@
+//! Tests for polygon construction and manipulation.
+
 use super::support::*;
 
 #[test]

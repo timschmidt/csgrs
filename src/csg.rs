@@ -1,3 +1,6 @@
+//! Core constructive solid geometry trait shared by mesh, sketch, and related
+//! representations.
+
 use crate::float_types::parry3d::bounding_volume::Aabb;
 use crate::float_types::{Real, tolerance};
 use crate::mesh::plane::Plane;

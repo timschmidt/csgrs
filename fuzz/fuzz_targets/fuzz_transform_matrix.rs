@@ -1,3 +1,5 @@
+//! Fuzz target for transform matrix inputs.
+
 #![no_main]
 
 use csgrs::csg::CSG;

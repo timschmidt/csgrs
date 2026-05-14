@@ -1,3 +1,5 @@
+//! Demonstrates mesh connectivity and adjacency helpers.
+
 use csgrs::float_types::Real;
 /// **Adjacency Map Usage Demonstration**
 ///

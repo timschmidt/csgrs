@@ -1,3 +1,5 @@
+//! Tests for vertex interpolation and export helpers.
+
 use super::support::*;
 
 #[test]

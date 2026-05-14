@@ -1,3 +1,5 @@
+//! JavaScript wrapper for polygons.
+
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
 use crate::wasm::{

@@ -1,3 +1,5 @@
+//! Regression tests for previously reported bugs.
+
 use super::support::*;
 
 #[test]

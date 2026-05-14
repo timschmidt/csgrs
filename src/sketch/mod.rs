@@ -722,7 +722,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
         sketch
     }
 
-    /// Returns a [`parry3d::bounding_volume::Aabb`] containing:
+    /// Returns an axis-aligned bounding box containing:
     /// The 2D bounding rectangle of `self.geometry`, interpreted at z=0.
     fn bounding_box(&self) -> Aabb {
         *self.bounding_box.get_or_init(|| {

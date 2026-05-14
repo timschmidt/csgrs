@@ -1,3 +1,5 @@
+//! Tests for offset and buffering behavior.
+
 use super::support::*;
 
 #[test]

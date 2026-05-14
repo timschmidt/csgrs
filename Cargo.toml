@@ -14,6 +14,33 @@ readme = "readme.md"
 keywords = ["geometry", "physics", "csg", "slicing", "offsetting"]
 categories = ["game-development", "graphics", "mathematics", "simulation", "wasm"]
 
+[package.metadata.docs.rs]
+no-default-features = true
+features = [
+  "f64",
+  "bmesh",
+  "mesh",
+  "sketch",
+  "stl-io",
+  "dxf-io",
+  "obj-io",
+  "ply-io",
+  "amf-io",
+  "gltf-io",
+  "gerber-io",
+  "svg-io",
+  "chull-io",
+  "image-io",
+  "metaballs",
+  "sdf",
+  "offset",
+  "delaunay",
+  "truetype-text",
+  "hershey-text",
+  "nurbs",
+  "wasm",
+]
+
 [lib]
 crate-type = ["cdylib", "rlib"]
 

@@ -1,3 +1,5 @@
+//! Fuzz target for export object and file names.
+
 #![no_main]
 
 use csgrs::mesh::Mesh;

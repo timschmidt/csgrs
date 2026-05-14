@@ -1,3 +1,5 @@
+//! Miscellaneous regression and integration tests.
+
 use super::support::*;
 
 #[test]

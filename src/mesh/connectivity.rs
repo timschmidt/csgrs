@@ -1,3 +1,6 @@
+//! Mesh connectivity helpers for tolerance-aware vertex indexing and topology
+//! analysis.
+
 use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
 use hashbrown::HashMap;

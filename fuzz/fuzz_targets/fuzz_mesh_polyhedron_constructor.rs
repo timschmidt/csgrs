@@ -1,3 +1,5 @@
+//! Fuzz target for mesh polyhedron construction.
+
 #![no_main]
 
 use csgrs::mesh::Mesh;

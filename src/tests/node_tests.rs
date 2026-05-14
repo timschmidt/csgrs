@@ -1,3 +1,5 @@
+//! Tests for BSP node behavior.
+
 use super::support::*;
 
 #[test]

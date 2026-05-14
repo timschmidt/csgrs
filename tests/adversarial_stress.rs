@@ -1,3 +1,5 @@
+//! Stress tests for adversarial geometry workloads.
+
 use csgrs::csg::CSG;
 use csgrs::float_types::{Real, tolerance};
 use csgrs::mesh::Mesh;

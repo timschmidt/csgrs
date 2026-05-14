@@ -1,3 +1,5 @@
+//! Legacy polygon collection wrapper for shape-like triangle sets.
+
 use crate::polygon::Polygon;
 use crate::triangulated::Triangulated3D;
 use crate::vertex::Vertex;

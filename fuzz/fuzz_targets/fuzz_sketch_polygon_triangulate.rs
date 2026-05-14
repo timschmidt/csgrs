@@ -1,3 +1,5 @@
+//! Fuzz target for sketch polygon triangulation.
+
 #![no_main]
 
 use csgrs::float_types::Real;

@@ -1,3 +1,5 @@
+//! Fuzz target for paired sketch boolean operations.
+
 #![no_main]
 
 use csgrs::csg::CSG;

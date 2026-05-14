@@ -1,3 +1,5 @@
+//! WebAssembly bindings and JavaScript-facing conversion helpers.
+
 use serde_json::Value as JsonValue;
 use serde_wasm_bindgen::from_value;
 use wasm_bindgen::prelude::*;
@@ -11,13 +13,6 @@ pub mod polygon_js;
 pub mod sketch_js;
 pub mod vector_js;
 pub mod vertex_js;
-
-// Optional: better panic messages in the browser console.
-#[cfg(feature = "console_error_panic_hook")]
-#[wasm_bindgen(start)]
-pub fn init_panic_hook() {
-    console_error_panic_hook::set_once();
-}
 
 fn js_metadata_to_string(metadata: JsValue) -> Result<Option<String>, JsValue> {
     if metadata.is_undefined() || metadata.is_null() {

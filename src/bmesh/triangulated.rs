@@ -1,3 +1,5 @@
+//! Triangulation adapter for boolmesh-backed [`BMesh`] solids.
+
 use crate::bmesh::BMesh;
 use crate::float_types::Real;
 use crate::triangulated::Triangulated3D;

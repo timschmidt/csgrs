@@ -1,3 +1,5 @@
+//! JavaScript wrapper for [`Mesh`].
+
 use crate::csg::CSG;
 use crate::float_types::Real;
 use crate::mesh::{Mesh, plane::Plane};

@@ -1,3 +1,5 @@
+//! Broad adversarial tests for geometry constructors, booleans, and invariants.
+
 use csgrs::csg::CSG;
 use csgrs::float_types::{Real, tolerance};
 #[cfg(feature = "svg-io")]
