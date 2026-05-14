@@ -6,7 +6,7 @@ use crate::triangulated::Triangulated3D;
 use crate::vertex::Vertex;
 use nalgebra::{Point3, Vector3};
 
-impl<S: Clone + Send + Sync + std::fmt::Debug> Triangulated3D for BMesh<S> {
+impl<M: Clone + Send + Sync + std::fmt::Debug> Triangulated3D for BMesh<M> {
     fn visit_triangles<F>(&self, mut f: F)
     where
         F: FnMut([Vertex; 3]),

@@ -21,31 +21,63 @@ pub mod triangulated;
 
 /// A solid represented by boolmesh’s `Manifold`, wired into csgrs’ `CSG` trait.
 ///
-/// `metadata` is whole-shape metadata, mirroring `Mesh<S>`.
+/// `metadata` is whole-shape metadata, mirroring `Mesh<M>`.
 #[derive(Clone)]
-pub struct BMesh<S: Clone + Send + Sync + Debug> {
+pub struct BMesh<M: Clone + Send + Sync + Debug> {
     /// Underlying robust manifold. `None` represents an empty solid.
     pub manifold: Option<Manifold>,
     /// Lazily computed Parry AABB for the solid.
     pub bounding_box: OnceLock<Aabb>,
-    /// Optional whole-shape metadata.
-    pub metadata: Option<S>,
+    /// Whole-shape metadata. Use `M = ()` for no metadata and `M = Option<T>`
+    /// for optional metadata.
+    pub metadata: M,
 }
 
-impl<S: Clone + Send + Sync + Debug> Default for BMesh<S> {
+impl<M: Clone + Default + Send + Sync + Debug> Default for BMesh<M> {
     fn default() -> Self {
-        Self::new()
+        Self::empty(M::default())
     }
 }
 
-impl<S: Clone + Send + Sync + Debug> BMesh<S> {
+impl<M: Clone + Send + Sync + Debug> BMesh<M> {
+    /// New empty BMesh with explicit metadata.
+    #[inline]
+    pub fn empty(metadata: M) -> Self {
+        BMesh {
+            manifold: None,
+            bounding_box: OnceLock::new(),
+            metadata,
+        }
+    }
+
     /// Construct from a boolmesh `Manifold`.
     #[inline]
-    pub fn from_manifold(manifold: Manifold, metadata: Option<S>) -> Self {
+    pub fn from_manifold(manifold: Manifold, metadata: M) -> Self {
         BMesh {
             manifold: Some(manifold),
             bounding_box: OnceLock::new(),
             metadata,
+        }
+    }
+
+    /// Return this boolmesh wrapper with replacement metadata.
+    pub fn with_metadata<T: Clone + Send + Sync + Debug>(self, metadata: T) -> BMesh<T> {
+        BMesh {
+            manifold: self.manifold,
+            bounding_box: OnceLock::new(),
+            metadata,
+        }
+    }
+
+    /// Map this boolmesh wrapper's metadata while preserving geometry.
+    pub fn map_metadata<T: Clone + Send + Sync + Debug, F>(self, f: F) -> BMesh<T>
+    where
+        F: FnOnce(M) -> T,
+    {
+        BMesh {
+            manifold: self.manifold,
+            bounding_box: OnceLock::new(),
+            metadata: f(self.metadata),
         }
     }
 
@@ -61,19 +93,19 @@ impl<S: Clone + Send + Sync + Debug> BMesh<S> {
 
         match (&self.manifold, &other.manifold) {
             // Ø op Ø  => Ø
-            (None, None) => BMesh::new(),
+            (None, None) => BMesh::empty(self.metadata.clone()),
 
             // A op Ø
             (Some(_), None) => match op {
                 Add | Subtract => self.clone(), // A ∪ Ø = A, A − Ø = A
-                Intersect => BMesh::new(),      // A ∩ Ø = Ø
+                Intersect => BMesh::empty(self.metadata.clone()), // A ∩ Ø = Ø
             },
 
             // Ø op B
             (None, Some(_)) => match op {
-                Add => other.clone(),      // Ø ∪ B = B
-                Subtract => BMesh::new(),  // Ø − B = Ø
-                Intersect => BMesh::new(), // Ø ∩ B = Ø
+                Add => other.clone(),                             // Ø ∪ B = B
+                Subtract => BMesh::empty(self.metadata.clone()),  // Ø − B = Ø
+                Intersect => BMesh::empty(self.metadata.clone()), // Ø ∩ B = Ø
             },
 
             // A op B, both non-empty
@@ -154,16 +186,14 @@ impl<S: Clone + Send + Sync + Debug> BMesh<S> {
     }
 }
 
-impl<S: Clone + Send + Sync + Debug> CSG for BMesh<S> {
-    /// New empty BMesh (no manifold).
-    fn new() -> Self {
-        BMesh {
-            manifold: None,
-            bounding_box: OnceLock::new(),
-            metadata: None,
-        }
+impl BMesh<()> {
+    /// New empty BMesh with unit metadata.
+    pub fn new() -> Self {
+        Self::empty(())
     }
+}
 
+impl<M: Clone + Send + Sync + Debug> CSG for BMesh<M> {
     /// Union via boolmesh.
     fn union(&self, other: &Self) -> Self {
         self.boolean(other, OpType::Add)
@@ -244,8 +274,8 @@ impl<S: Clone + Send + Sync + Debug> CSG for BMesh<S> {
 }
 
 #[cfg(feature = "mesh")]
-impl<S: Clone + Send + Sync + Debug> From<Mesh<S>> for BMesh<S> {
-    fn from(mesh: Mesh<S>) -> Self {
+impl<M: Clone + Send + Sync + Debug> From<Mesh<M>> for BMesh<M> {
+    fn from(mesh: Mesh<M>) -> Self {
         // Keep the metadata from the original mesh
         let metadata = mesh.metadata.clone();
 

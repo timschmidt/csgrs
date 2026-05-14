@@ -16,7 +16,7 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub struct SketchJs {
-    pub(crate) inner: Sketch<String>,
+    pub(crate) inner: Sketch<Option<String>>,
 }
 
 #[wasm_bindgen]
@@ -24,7 +24,7 @@ impl SketchJs {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
         Self {
-            inner: Sketch::new(),
+            inner: Sketch::empty(None),
         }
     }
 

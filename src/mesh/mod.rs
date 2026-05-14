@@ -72,9 +72,9 @@ pub struct GraphicsMesh {
 }
 
 #[derive(Clone, Debug)]
-pub struct Mesh<S: Clone + Send + Sync + Debug> {
+pub struct Mesh<M: Clone + Send + Sync + Debug> {
     /// 3D polygons for volumetric shapes
-    pub polygons: Vec<Polygon<S>>,
+    pub polygons: Vec<Polygon<M>>,
 
     /// Lazily calculated AABB that spans `polygons`.
     pub bounding_box: OnceLock<Aabb>,
@@ -82,11 +82,12 @@ pub struct Mesh<S: Clone + Send + Sync + Debug> {
     /// Lazily built Parry TriMesh reused by query operations.
     pub query_trimesh: OnceLock<Option<TriMesh>>,
 
-    /// Metadata
-    pub metadata: Option<S>,
+    /// Whole-mesh metadata. Use `M = ()` for no metadata and `M = Option<T>`
+    /// for optional metadata.
+    pub metadata: M,
 }
 
-impl<S: Clone + Send + Sync + Debug + PartialEq> Mesh<S> {
+impl<M: Clone + Send + Sync + Debug + PartialEq> Mesh<M> {
     /// Compare just the `metadata` fields of two meshes
     #[inline]
     pub fn same_metadata(&self, other: &Self) -> bool {
@@ -95,11 +96,11 @@ impl<S: Clone + Send + Sync + Debug + PartialEq> Mesh<S> {
 
     /// Example: retain only polygons whose metadata matches `needle`
     #[inline]
-    pub fn filter_polygons_by_metadata(&self, needle: &S) -> Mesh<S> {
+    pub fn filter_polygons_by_metadata(&self, needle: &M) -> Mesh<M> {
         let polys = self
             .polygons
             .iter()
-            .filter(|&p| p.metadata.as_ref() == Some(needle))
+            .filter(|&p| &p.metadata == needle)
             .cloned()
             .collect();
 
@@ -112,21 +113,69 @@ impl<S: Clone + Send + Sync + Debug + PartialEq> Mesh<S> {
     }
 }
 
-impl<S: Clone + Send + Sync + Debug> Mesh<S> {
+impl<M: Clone + Send + Sync + Debug> Mesh<M> {
+    /// Return a new empty mesh with explicit metadata.
+    pub fn empty(metadata: M) -> Self {
+        Mesh {
+            polygons: Vec::new(),
+            bounding_box: OnceLock::new(),
+            query_trimesh: OnceLock::new(),
+            metadata,
+        }
+    }
+
     /// Build a Mesh from an existing polygon list
-    pub fn from_polygons(polygons: &[Polygon<S>], metadata: Option<S>) -> Self {
-        let mut mesh = Mesh::new();
-        mesh.polygons = polygons.to_vec();
-        mesh.metadata = metadata;
-        mesh
+    pub fn from_polygons(polygons: &[Polygon<M>], metadata: M) -> Self {
+        Mesh {
+            polygons: polygons.to_vec(),
+            bounding_box: OnceLock::new(),
+            query_trimesh: OnceLock::new(),
+            metadata,
+        }
+    }
+
+    /// Return this mesh with replacement metadata on the mesh and every polygon.
+    pub fn with_metadata<T: Clone + Send + Sync + Debug>(self, metadata: T) -> Mesh<T> {
+        let polygons = self
+            .polygons
+            .into_iter()
+            .map(|polygon| polygon.with_metadata(metadata.clone()))
+            .collect();
+
+        Mesh {
+            polygons,
+            bounding_box: OnceLock::new(),
+            query_trimesh: OnceLock::new(),
+            metadata,
+        }
+    }
+
+    /// Map metadata on the mesh and every polygon while preserving geometry.
+    pub fn map_metadata<T: Clone + Send + Sync + Debug, F>(self, mut f: F) -> Mesh<T>
+    where
+        F: FnMut(M) -> T,
+    {
+        let polygons = self
+            .polygons
+            .into_iter()
+            .map(|polygon| polygon.map_metadata(&mut f))
+            .collect();
+        let metadata = f(self.metadata);
+
+        Mesh {
+            polygons,
+            bounding_box: OnceLock::new(),
+            query_trimesh: OnceLock::new(),
+            metadata,
+        }
     }
 
     /// Split polygons into (may_touch, cannot_touch) using bounding‑box tests
     #[cfg(feature = "mesh-bbopt")]
     fn partition_polys(
-        polys: &[Polygon<S>],
+        polys: &[Polygon<M>],
         other_bb: &Aabb,
-    ) -> (Vec<Polygon<S>>, Vec<Polygon<S>>) {
+    ) -> (Vec<Polygon<M>>, Vec<Polygon<M>>) {
         polys
             .iter()
             .cloned()
@@ -153,7 +202,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
 
     /// Pre-pass to remove T-junctions between polygons by inserting missing
     /// vertices on shared or colinear overlapping edges before triangulation.
-    fn fix_t_junctions_on_shared_edges(polygons: &mut [Polygon<S>]) {
+    fn fix_t_junctions_on_shared_edges(polygons: &mut [Polygon<M>]) {
         let eps = tolerance();
         let eps2 = eps * eps;
 
@@ -254,7 +303,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     }
 
     /// Triangulate each polygon in the Mesh returning a Mesh containing triangles
-    pub fn triangulate(&self) -> Mesh<S> {
+    pub fn triangulate(&self) -> Mesh<M> {
         let mut polygons = self.polygons.clone();
         Self::fix_t_junctions_on_shared_edges(&mut polygons);
 
@@ -272,9 +321,9 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
 
     /// Subdivide all polygons in this Mesh 'levels' times, returning a new Mesh.
     /// This results in a triangular mesh with more detail.
-    pub fn subdivide_triangles(&self, levels: NonZeroU32) -> Mesh<S> {
+    pub fn subdivide_triangles(&self, levels: NonZeroU32) -> Mesh<M> {
         #[cfg(feature = "parallel")]
-        let new_polygons: Vec<Polygon<S>> = self
+        let new_polygons: Vec<Polygon<M>> = self
             .polygons
             .par_iter()
             .flat_map(|poly| {
@@ -287,7 +336,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
             .collect();
 
         #[cfg(not(feature = "parallel"))]
-        let new_polygons: Vec<Polygon<S>> = self
+        let new_polygons: Vec<Polygon<M>> = self
             .polygons
             .iter()
             .flat_map(|poly| {
@@ -363,7 +412,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     /// The angle is computed as the angle between the normal vectors of the two polygons.
     ///
     /// Returns the angle in radians.
-    pub fn dihedral_angle(p1: &Polygon<S>, p2: &Polygon<S>) -> Real {
+    pub fn dihedral_angle(p1: &Polygon<M>, p2: &Polygon<M>) -> Real {
         let n1 = p1.plane.normal();
         let n2 = p2.plane.normal();
         let dot = n1.dot(&n2).clamp(-1.0, 1.0);
@@ -697,17 +746,14 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     }
 }
 
-impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
-    /// Returns a new empty Mesh
-    fn new() -> Self {
-        Mesh {
-            polygons: Vec::new(),
-            bounding_box: OnceLock::new(),
-            query_trimesh: OnceLock::new(),
-            metadata: None,
-        }
+impl Mesh<()> {
+    /// Return a new empty mesh with unit metadata.
+    pub fn new() -> Self {
+        Self::empty(())
     }
+}
 
+impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
     /// Return a new Mesh representing union of the two Meshes.
     ///
     /// ```text
@@ -721,7 +767,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
     ///          |       |            |       |
     ///          +-------+            +-------+
     /// ```
-    fn union(&self, other: &Mesh<S>) -> Mesh<S> {
+    fn union(&self, other: &Mesh<M>) -> Mesh<M> {
         // avoid splitting obvious non‑intersecting faces
         #[cfg(feature = "mesh-bbopt")]
         let final_polys = {
@@ -783,7 +829,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
     ///          |       |
     ///          +-------+
     /// ```
-    fn difference(&self, other: &Mesh<S>) -> Mesh<S> {
+    fn difference(&self, other: &Mesh<M>) -> Mesh<M> {
         // avoid splitting obvious non‑intersecting faces
         #[cfg(feature = "mesh-bbopt")]
         let final_polys = {
@@ -848,7 +894,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
     ///          |       |
     ///          +-------+
     /// ```
-    fn intersection(&self, other: &Mesh<S>) -> Mesh<S> {
+    fn intersection(&self, other: &Mesh<M>) -> Mesh<M> {
         let mut a = Node::from_polygons(&self.polygons);
         let mut b = Node::from_polygons(&other.polygons);
 
@@ -882,7 +928,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
     ///          |       |            |       |
     ///          +-------+            +-------+
     /// ```
-    fn xor(&self, other: &Mesh<S>) -> Mesh<S> {
+    fn xor(&self, other: &Mesh<M>) -> Mesh<M> {
         // 3D and 2D xor:
         // A \ B
         let a_sub_b = self.difference(other);
@@ -927,7 +973,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
     /// - **Plane Updates**: O(n) plane reconstructions from transformed vertices
     ///
     /// The polygon z-coordinates and normal vectors are fully transformed in 3D
-    fn transform(&self, mat: &Matrix4<Real>) -> Mesh<S> {
+    fn transform(&self, mat: &Matrix4<Real>) -> Mesh<M> {
         // Compute inverse transpose for normal transformation
         let mat_inv_transpose = match mat.try_inverse() {
             Some(inv) => inv.transpose(),
@@ -1022,7 +1068,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
     }
 
     /// Invert this Mesh (flip inside vs. outside)
-    fn inverse(&self) -> Mesh<S> {
+    fn inverse(&self) -> Mesh<M> {
         let mut mesh = self.clone();
         for p in &mut mesh.polygons {
             p.flip();
@@ -1032,9 +1078,9 @@ impl<S: Clone + Send + Sync + Debug> CSG for Mesh<S> {
 }
 
 #[cfg(feature = "sketch")]
-impl<S: Clone + Send + Sync + Debug> From<Sketch<S>> for Mesh<S> {
+impl<M: Clone + Send + Sync + Debug> From<Sketch<M>> for Mesh<M> {
     /// Convert a Sketch into a Mesh.
-    fn from(sketch: Sketch<S>) -> Self {
+    fn from(sketch: Sketch<M>) -> Self {
         /// Helper function to convert a geo::LineString to a Vec<crate::vertex::Vertex>
         fn geo_line_string_to_vertices(line_string: &geo::LineString<Real>) -> Vec<Vertex> {
             let mut vertices: Vec<_> = line_string
@@ -1049,10 +1095,10 @@ impl<S: Clone + Send + Sync + Debug> From<Sketch<S>> for Mesh<S> {
             vertices
         }
         /// Helper function to convert a geo::Polygon to a Vec<crate::mesh::polygon::Polygon>
-        fn geo_poly_to_csg_polys<S: Clone + Debug + Send + Sync>(
+        fn geo_poly_to_csg_polys<M: Clone + Debug + Send + Sync>(
             poly2d: &GeoPolygon<Real>,
-            metadata: &Option<S>,
-        ) -> Vec<Polygon<S>> {
+            metadata: &M,
+        ) -> Vec<Polygon<M>> {
             let mut all_polygons = Vec::new();
 
             // Handle the exterior ring
@@ -1075,7 +1121,7 @@ impl<S: Clone + Send + Sync + Debug> From<Sketch<S>> for Mesh<S> {
         let final_polygons = sketch
             .geometry
             .iter()
-            .flat_map(|geom| -> Vec<Polygon<S>> {
+            .flat_map(|geom| -> Vec<Polygon<M>> {
                 match geom {
                     Geometry::Polygon(poly2d) => {
                         geo_poly_to_csg_polys(poly2d, &sketch.metadata)
@@ -1093,17 +1139,17 @@ impl<S: Clone + Send + Sync + Debug> From<Sketch<S>> for Mesh<S> {
             polygons: final_polygons,
             bounding_box: OnceLock::new(),
             query_trimesh: OnceLock::new(),
-            metadata: None,
+            metadata: sketch.metadata.clone(),
         }
     }
 }
 
 #[cfg(feature = "bmesh")]
-impl<S: Clone + Send + Sync + Debug> From<BMesh<S>> for Mesh<S> {
-    fn from(bmesh: BMesh<S>) -> Self {
+impl<M: Clone + Send + Sync + Debug> From<BMesh<M>> for Mesh<M> {
+    fn from(bmesh: BMesh<M>) -> Self {
         // Empty BMesh -> empty Mesh
         let Some(manifold) = bmesh.manifold else {
-            return Mesh::<S>::new();
+            return Mesh::empty(bmesh.metadata);
         };
 
         // Convert boolmesh vertices (glam) into nalgebra points
@@ -1113,7 +1159,7 @@ impl<S: Clone + Send + Sync + Debug> From<BMesh<S>> for Mesh<S> {
         }
 
         // Each 3 half-edges in hs correspond to 1 triangle face
-        let mut polygons: Vec<Polygon<S>> = Vec::with_capacity(manifold.hs.len() / 3);
+        let mut polygons: Vec<Polygon<M>> = Vec::with_capacity(manifold.hs.len() / 3);
 
         for halfs in manifold.hs.chunks_exact(3) {
             let i0 = halfs[0].tail;

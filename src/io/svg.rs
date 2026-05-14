@@ -379,15 +379,15 @@ impl<F: CoordNum> PathBuilder<F> {
 }
 
 #[allow(unused)]
-pub trait FromSVG<S>: Sized {
-    fn from_svg(doc: &str, metadata: Option<S>) -> Result<Self, IoError>;
+pub trait FromSVG<M>: Sized {
+    fn from_svg(doc: &str, metadata: M) -> Result<Self, IoError>;
 }
 
-impl<S> FromSVG<S> for Sketch<S>
+impl<M> FromSVG<M> for Sketch<M>
 where
-    S: Clone + Send + Sync + Debug,
+    M: Clone + Send + Sync + Debug,
 {
-    fn from_svg(doc: &str, metadata: Option<S>) -> Result<Self, IoError> {
+    fn from_svg(doc: &str, metadata: M) -> Result<Self, IoError> {
         use svg::node::element::tag::{self, Type::*};
         use svg::parser::Event;
 
@@ -405,7 +405,7 @@ where
             };
         }
 
-        let mut sketch_union = Sketch::<S>::new();
+        let mut sketch_union = Sketch::empty(metadata.clone());
 
         for event in svg::read(doc)? {
             match event {
@@ -542,7 +542,7 @@ pub trait ToSVG {
     fn to_svg(&self) -> String;
 }
 
-impl<S: Clone> ToSVG for Sketch<S> {
+impl<M: Clone> ToSVG for Sketch<M> {
     fn to_svg(&self) -> String {
         use geo::Geometry::*;
         use svg::node::element;
@@ -948,9 +948,9 @@ mod tests {
 </svg>
         "#;
 
-        let sketch = Sketch::<()>::from_svg(svg_in, None).unwrap();
+        let sketch = Sketch::<()>::from_svg(svg_in, ()).unwrap();
         let svg_out = sketch.to_svg();
-        let reparsed = Sketch::<()>::from_svg(&svg_out, None).unwrap();
+        let reparsed = Sketch::<()>::from_svg(&svg_out, ()).unwrap();
 
         assert_eq!(
             sketch.to_multipolygon().0.len(),

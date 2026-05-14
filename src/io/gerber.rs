@@ -49,8 +49,8 @@ impl Default for GerberExportOptions {
 }
 
 /// Parse Gerber data into a `Sketch`.
-pub trait FromGerber<S>: Sized {
-    fn from_gerber(gerber_data: &[u8], metadata: Option<S>) -> Result<Self, IoError>;
+pub trait FromGerber<M>: Sized {
+    fn from_gerber(gerber_data: &[u8], metadata: M) -> Result<Self, IoError>;
 }
 
 /// Serialize geometry to Gerber.
@@ -60,11 +60,11 @@ pub trait ToGerber {
     -> Result<Vec<u8>, IoError>;
 }
 
-impl<S> FromGerber<S> for Sketch<S>
+impl<M> FromGerber<M> for Sketch<M>
 where
-    S: Clone + Debug + Send + Sync,
+    M: Clone + Debug + Send + Sync,
 {
-    fn from_gerber(gerber_data: &[u8], metadata: Option<S>) -> Result<Self, IoError> {
+    fn from_gerber(gerber_data: &[u8], metadata: M) -> Result<Self, IoError> {
         preflight_gerber_input(gerber_data)?;
 
         let reader = BufReader::new(Cursor::new(gerber_data));
@@ -84,7 +84,7 @@ where
         }
 
         let mut state =
-            ImportState::<S>::new(doc.units.unwrap_or(Unit::Millimeters), metadata);
+            ImportState::<M>::new(doc.units.unwrap_or(Unit::Millimeters), metadata);
         for command in doc.commands() {
             state.apply_command(command, &doc.apertures)?;
         }
@@ -113,9 +113,9 @@ fn preflight_gerber_input(gerber_data: &[u8]) -> Result<(), IoError> {
     Ok(())
 }
 
-impl<S> ToGerber for Sketch<S>
+impl<M> ToGerber for Sketch<M>
 where
-    S: Clone + Debug + Send + Sync,
+    M: Clone + Debug + Send + Sync,
 {
     fn to_gerber(&self) -> Result<Vec<u8>, IoError> {
         self.to_gerber_with_options(GerberExportOptions::default())
@@ -154,9 +154,9 @@ where
     }
 }
 
-struct ImportState<S> {
-    sketch: Sketch<S>,
-    metadata: Option<S>,
+struct ImportState<M> {
+    sketch: Sketch<M>,
+    metadata: M,
     unit_scale: Real,
     current: Coord<Real>,
     selected_aperture: Option<i32>,
@@ -168,13 +168,13 @@ struct ImportState<S> {
     region: Option<RegionBuilder>,
 }
 
-impl<S> ImportState<S>
+impl<M> ImportState<M>
 where
-    S: Clone + Debug + Send + Sync,
+    M: Clone + Debug + Send + Sync,
 {
-    fn new(unit: Unit, metadata: Option<S>) -> Self {
+    fn new(unit: Unit, metadata: M) -> Self {
         Self {
-            sketch: Sketch::new(),
+            sketch: Sketch::empty(metadata.clone()),
             metadata,
             unit_scale: unit_scale(unit),
             current: Coord { x: 0.0, y: 0.0 },
@@ -274,7 +274,7 @@ where
         };
     }
 
-    fn apply_polarity(&mut self, sketch: Sketch<S>) {
+    fn apply_polarity(&mut self, sketch: Sketch<M>) {
         let sketches = repeat_sketches(sketch, self.step_repeat);
         for sketch in sketches {
             self.sketch = match self.polarity {
@@ -481,9 +481,9 @@ impl RegionBuilder {
             .push(LineString::new(std::mem::take(&mut self.current_ring)));
     }
 
-    fn into_sketch<S>(mut self, metadata: Option<S>) -> Option<Sketch<S>>
+    fn into_sketch<M>(mut self, metadata: M) -> Option<Sketch<M>>
     where
-        S: Clone + Debug + Send + Sync,
+        M: Clone + Debug + Send + Sync,
     {
         self.finish_ring();
 
@@ -687,15 +687,15 @@ impl ImageTransform {
     }
 }
 
-fn flash_to_sketch<S>(
+fn flash_to_sketch<M>(
     aperture: &Aperture,
     center: Coord<Real>,
-    metadata: Option<S>,
+    metadata: M,
     unit_scale: Real,
     aperture_transform: ApertureTransform,
-) -> Option<Sketch<S>>
+) -> Option<Sketch<M>>
 where
-    S: Clone + Debug + Send + Sync,
+    M: Clone + Debug + Send + Sync,
 {
     let mut sketch = match aperture {
         Aperture::Circle(circle) => {
@@ -748,15 +748,15 @@ impl ApertureTransform {
     }
 }
 
-fn aperture_rect_sketch<S>(
+fn aperture_rect_sketch<M>(
     rect: &Rectangular,
-    metadata: Option<S>,
+    metadata: M,
     unit_scale: Real,
     aperture_transform: ApertureTransform,
     rounded: bool,
-) -> Sketch<S>
+) -> Sketch<M>
 where
-    S: Clone + Debug + Send + Sync,
+    M: Clone + Debug + Send + Sync,
 {
     let width = aperture_transform.scale_length((rect.x as Real) * unit_scale);
     let height = aperture_transform.scale_length((rect.y as Real) * unit_scale);
@@ -778,16 +778,16 @@ where
     sketch
 }
 
-fn trace_to_sketch<S>(
+fn trace_to_sketch<M>(
     aperture: &Aperture,
     start: Coord<Real>,
     end: Coord<Real>,
-    metadata: Option<S>,
+    metadata: M,
     unit_scale: Real,
     aperture_transform: ApertureTransform,
-) -> Option<Sketch<S>>
+) -> Option<Sketch<M>>
 where
-    S: Clone + Debug + Send + Sync,
+    M: Clone + Debug + Send + Sync,
 {
     if nearly_same(start, end) {
         return flash_to_sketch(aperture, start, metadata, unit_scale, aperture_transform);
@@ -874,14 +874,14 @@ fn aperture_outline_points(
     )
 }
 
-fn capsule_sketch<S>(
+fn capsule_sketch<M>(
     start: Coord<Real>,
     end: Coord<Real>,
     radius: Real,
-    metadata: Option<S>,
-) -> Sketch<S>
+    metadata: M,
+) -> Sketch<M>
 where
-    S: Clone + Debug + Send + Sync,
+    M: Clone + Debug + Send + Sync,
 {
     let dx = end.x - start.x;
     let dy = end.y - start.y;
@@ -918,7 +918,7 @@ where
             .into_iter()
             .skip(1),
     );
-    polygon_from_coords(points, metadata).unwrap_or_else(Sketch::new)
+    polygon_from_coords(points, metadata.clone()).unwrap_or_else(|| Sketch::empty(metadata))
 }
 
 fn approximate_arc(
@@ -1029,12 +1029,9 @@ fn rounded_rect_points(
         .collect()
 }
 
-fn polygon_from_coords<S>(
-    mut points: Vec<Coord<Real>>,
-    metadata: Option<S>,
-) -> Option<Sketch<S>>
+fn polygon_from_coords<M>(mut points: Vec<Coord<Real>>, metadata: M) -> Option<Sketch<M>>
 where
-    S: Clone + Debug + Send + Sync,
+    M: Clone + Debug + Send + Sync,
 {
     if points.len() < 3 {
         return None;
@@ -1051,12 +1048,12 @@ where
     ))
 }
 
-fn repeat_sketches<S>(
-    sketch: Sketch<S>,
+fn repeat_sketches<M>(
+    sketch: Sketch<M>,
     step_repeat: Option<StepRepeatState>,
-) -> Vec<Sketch<S>>
+) -> Vec<Sketch<M>>
 where
-    S: Clone + Debug + Send + Sync,
+    M: Clone + Debug + Send + Sync,
 {
     let Some(step_repeat) = step_repeat else {
         return vec![sketch];
@@ -1075,12 +1072,12 @@ where
     sketches
 }
 
-fn apply_aperture_transform<S>(
-    sketch: Sketch<S>,
+fn apply_aperture_transform<M>(
+    sketch: Sketch<M>,
     aperture_transform: ApertureTransform,
-) -> Sketch<S>
+) -> Sketch<M>
 where
-    S: Clone + Debug + Send + Sync,
+    M: Clone + Debug + Send + Sync,
 {
     let (sx, sy) = match aperture_transform.mirroring {
         Mirroring::None => (1.0, 1.0),
@@ -1186,7 +1183,7 @@ mod tests {
 
     #[test]
     fn exports_and_imports_square_region() {
-        let square = Sketch::<()>::square(5.0, None);
+        let square = Sketch::<()>::square(5.0, ());
 
         let gerber = square.to_gerber().unwrap();
         let gerber_text = String::from_utf8(gerber.clone()).unwrap();
@@ -1194,7 +1191,7 @@ mod tests {
         assert!(gerber_text.contains("G36*"));
         assert!(gerber_text.contains("G37*"));
 
-        let parsed = Sketch::<()>::from_gerber(&gerber, None).unwrap();
+        let parsed = Sketch::<()>::from_gerber(&gerber, ()).unwrap();
         let bounds = parsed.geometry.bounding_rect().unwrap();
         assert_eq!(bounds.min().x, 0.0);
         assert_eq!(bounds.min().y, 0.0);
@@ -1206,7 +1203,7 @@ mod tests {
     fn imports_circle_flash() {
         let gerber = b"G04 flash*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,2*%\nD10*\nX3000000Y4000000D03*\nM02*\n";
 
-        let parsed = Sketch::<()>::from_gerber(gerber, None).unwrap();
+        let parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
         let bounds = parsed.geometry.bounding_rect().unwrap();
         assert!((bounds.min().x - 2.0).abs() < 1.0e-6);
         assert!((bounds.max().x - 4.0).abs() < 1.0e-6);
@@ -1218,7 +1215,7 @@ mod tests {
     fn imports_circular_trace_as_capsule() {
         let gerber = b"G04 trace*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,1*%\nD10*\nX0Y0D02*\nX4000000Y0D01*\nM02*\n";
 
-        let parsed = Sketch::<()>::from_gerber(gerber, None).unwrap();
+        let parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
         let bounds = parsed.geometry.bounding_rect().unwrap();
         assert!((bounds.min().x + 0.5).abs() < 1.0e-6);
         assert!((bounds.max().x - 4.5).abs() < 1.0e-6);
@@ -1230,7 +1227,7 @@ mod tests {
     fn imports_rectangular_trace_as_sweep() {
         let gerber = b"G04 trace*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10R,1X2*%\nD10*\nX0Y0D02*\nX4000000Y0D01*\nM02*\n";
 
-        let parsed = Sketch::<()>::from_gerber(gerber, None).unwrap();
+        let parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
         let bounds = parsed.geometry.bounding_rect().unwrap();
         assert!((bounds.min().x + 0.5).abs() < 1.0e-6);
         assert!((bounds.max().x - 4.5).abs() < 1.0e-6);
@@ -1242,7 +1239,7 @@ mod tests {
     fn imports_arc_trace() {
         let gerber = b"G04 arc*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,0.2*%\nD10*\nX1000000Y0D02*\nG03X0Y1000000I-1000000J0D01*\nM02*\n";
 
-        let parsed = Sketch::<()>::from_gerber(gerber, None).unwrap();
+        let parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
         let bounds = parsed.geometry.bounding_rect().unwrap();
         assert!(bounds.min().x >= -0.11);
         assert!(bounds.min().y >= -0.11);
@@ -1254,7 +1251,7 @@ mod tests {
     fn imports_step_repeat() {
         let gerber = b"G04 step repeat*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,1*%\nD10*\n%SRX2Y2I2J3*%\nX0Y0D03*\n%SR*%\nM02*\n";
 
-        let parsed = Sketch::<()>::from_gerber(gerber, None).unwrap();
+        let parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
         let bounds = parsed.geometry.bounding_rect().unwrap();
         assert!((bounds.min().x + 0.5).abs() < 1.0e-6);
         assert!((bounds.max().x - 2.5).abs() < 1.0e-6);
@@ -1266,7 +1263,7 @@ mod tests {
     fn imports_load_rotation_for_flashes() {
         let gerber = b"G04 rotated flash*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10R,1X2*%\nD10*\n%LR90*%\nX0Y0D03*\nM02*\n";
 
-        let parsed = Sketch::<()>::from_gerber(gerber, None).unwrap();
+        let parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
         let bounds = parsed.geometry.bounding_rect().unwrap();
         assert!((bounds.min().x + 1.0).abs() < 1.0e-6);
         assert!((bounds.max().x - 1.0).abs() < 1.0e-6);
@@ -1278,7 +1275,7 @@ mod tests {
     fn imports_aperture_holes() {
         let gerber = b"G04 aperture hole*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,4X2*%\nD10*\nX0Y0D03*\nM02*\n";
 
-        let parsed = Sketch::<()>::from_gerber(gerber, None).unwrap();
+        let parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
         let area = parsed.to_multipolygon().unsigned_area();
         assert!((area - (PI * 3.0)).abs() < 0.05);
     }
@@ -1287,7 +1284,7 @@ mod tests {
     fn imports_clear_polarity_as_difference() {
         let gerber = b"G04 clear polarity*\n%MOMM*%\n%FSLAX46Y46*%\n%LPD*%\nG36*\nX0Y0D02*\nX4000000Y0D01*\nX4000000Y4000000D01*\nX0Y4000000D01*\nX0Y0D01*\nG37*\n%ADD10R,2X2*%\nD10*\n%LPC*%\nX2000000Y2000000D03*\nM02*\n";
 
-        let parsed = Sketch::<()>::from_gerber(gerber, None).unwrap();
+        let parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
         let area = parsed.to_multipolygon().unsigned_area();
         assert!((area - 12.0).abs() < 1.0e-6);
     }
@@ -1296,7 +1293,7 @@ mod tests {
     fn ignores_non_area_geometry_on_export() {
         let sketch = Sketch::<()>::from_geo(
             geo::GeometryCollection(vec![Geometry::Point(geo::Point::new(1.0, 2.0))]),
-            None,
+            (),
         );
 
         let gerber = String::from_utf8(sketch.to_gerber().unwrap()).unwrap();

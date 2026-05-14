@@ -4,7 +4,7 @@ use crate::mesh::Mesh;
 use crate::triangulated::Triangulated3D;
 use crate::vertex::Vertex;
 
-impl<S: Clone + Send + Sync + std::fmt::Debug> Triangulated3D for Mesh<S> {
+impl<M: Clone + Send + Sync + std::fmt::Debug> Triangulated3D for Mesh<M> {
     fn visit_triangles<F>(&self, mut f: F)
     where
         F: FnMut([Vertex; 3]),

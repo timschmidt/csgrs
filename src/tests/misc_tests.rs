@@ -4,7 +4,7 @@ use super::support::*;
 
 #[test]
 fn test_cube_basics() {
-    let cube: Mesh<()> = Mesh::cube(2.0, None);
+    let cube: Mesh<()> = Mesh::cube(2.0, ());
 
     // A cube should have 6 faces
     assert_eq!(cube.polygons.len(), 6);
@@ -27,8 +27,8 @@ fn test_cube_basics() {
 
 #[test]
 fn test_cube_intersection() {
-    let cube1: Mesh<()> = Mesh::cube(2.0, None);
-    let cube2: Mesh<()> = Mesh::cube(2.0, None).translate(1.0, 0.0, 0.0);
+    let cube1: Mesh<()> = Mesh::cube(2.0, ());
+    let cube2: Mesh<()> = Mesh::cube(2.0, ()).translate(1.0, 0.0, 0.0);
 
     let intersection = cube1.intersection(&cube2);
 
@@ -49,7 +49,7 @@ fn test_cube_intersection() {
 
 #[test]
 fn test_mesh_intersect_polyline_hits_cube() {
-    let cube: Mesh<()> = Mesh::cube(2.0, None);
+    let cube: Mesh<()> = Mesh::cube(2.0, ());
     let hits =
         cube.intersect_polyline(&[Point3::new(-2.0, 0.0, 0.0), Point3::new(2.0, 0.0, 0.0)]);
 
@@ -61,7 +61,7 @@ fn test_mesh_intersect_polyline_hits_cube() {
 
 #[test]
 fn test_negative_extrude_has_downward_top_normal() {
-    let square = Sketch::<()>::square(2.0, None);
+    let square = Sketch::<()>::square(2.0, ());
     let mesh = square.extrude_vector(Vector3::new(0.0, 0.0, -1.0));
 
     assert!(
@@ -77,7 +77,7 @@ fn test_negative_extrude_has_downward_top_normal() {
 #[test]
 #[cfg(feature = "nurbs")]
 fn test_nurbs_rectangle_bbox_and_transform() {
-    let rect = crate::nurbs::Nurbs::<()>::rectangle(2.0, 4.0, None);
+    let rect = crate::nurbs::Nurbs::<()>::rectangle(2.0, 4.0, ());
     let bbox = rect.bounding_box();
     assert!((bbox.mins.x + 1.0).abs() < tolerance());
     assert!((bbox.maxs.y - 2.0).abs() < tolerance());
@@ -91,7 +91,7 @@ fn test_nurbs_rectangle_bbox_and_transform() {
 #[test]
 #[cfg(all(feature = "nurbs", feature = "sketch"))]
 fn test_nurbs_to_sketch_tessellates_region() {
-    let circle = crate::nurbs::Nurbs::<()>::circle(1.0, None).unwrap();
+    let circle = crate::nurbs::Nurbs::<()>::circle(1.0, ()).unwrap();
     let sketch = circle.to_sketch(Some(1e-3));
     let mp = sketch.to_multipolygon();
 
@@ -102,8 +102,8 @@ fn test_nurbs_to_sketch_tessellates_region() {
 #[test]
 #[cfg(feature = "nurbs")]
 fn test_nurbs_boolean_intersection() {
-    let a = crate::nurbs::Nurbs::<()>::rectangle(2.0, 2.0, None);
-    let b = crate::nurbs::Nurbs::<()>::rectangle(2.0, 2.0, None).translate(1.0, 0.0, 0.0);
+    let a = crate::nurbs::Nurbs::<()>::rectangle(2.0, 2.0, ());
+    let b = crate::nurbs::Nurbs::<()>::rectangle(2.0, 2.0, ()).translate(1.0, 0.0, 0.0);
     let intersection = a.try_intersection(&b).unwrap();
     let bbox = intersection.bounding_box();
 
@@ -115,7 +115,7 @@ fn test_nurbs_boolean_intersection() {
 #[test]
 #[cfg(all(feature = "nurbs", feature = "sketch", feature = "mesh"))]
 fn test_nurbs_extrudes_to_mesh() {
-    let rect = crate::nurbs::Nurbs::<()>::rectangle(2.0, 2.0, None);
+    let rect = crate::nurbs::Nurbs::<()>::rectangle(2.0, 2.0, ());
     let mesh = rect.extrude_vector(Vector3::new(0.0, 0.0, 1.0), Some(1e-3));
 
     assert!(!mesh.polygons.is_empty());
@@ -124,7 +124,7 @@ fn test_nurbs_extrudes_to_mesh() {
 
 #[test]
 fn test_taubin_smoothing() {
-    let sphere: Mesh<()> = Mesh::sphere(1.0, 16, 16, None);
+    let sphere: Mesh<()> = Mesh::sphere(1.0, 16, 16, ());
     let original_positions: Vec<_> = sphere
         .polygons
         .iter()

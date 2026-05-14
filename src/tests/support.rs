@@ -70,7 +70,7 @@ pub fn make_polygon_3d(points: &[[Real; 3]]) -> Polygon<()> {
         let normal = Vector3::z();
         verts.push(Vertex::new(pos, normal));
     }
-    Polygon::new(verts, None)
+    Polygon::new(verts, ())
 }
 
 pub fn polygon_from_xy_points(xy_points: &[[Real; 2]]) -> Polygon<()> {
@@ -78,5 +78,5 @@ pub fn polygon_from_xy_points(xy_points: &[[Real; 2]]) -> Polygon<()> {
         .iter()
         .map(|p| Vertex::new(Point3::new(p[0], p[1], 0.0), Vector3::z()))
         .collect();
-    Polygon::new(vertices, None)
+    Polygon::new(vertices, ())
 }

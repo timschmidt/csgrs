@@ -9,7 +9,6 @@
 #![cfg_attr(doc, doc = doc_image_embed::embed_image!("Pre-ConvexHull demo image", "docs/convex_hull_before_nobackground.png"))]
 #![cfg_attr(doc, doc = doc_image_embed::embed_image!("ConvexHull demo image", "docs/convex_hull_nobackground.png"))]
 
-use crate::csg::CSG;
 use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
@@ -18,9 +17,9 @@ use chull::ConvexHullWrapper;
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// Compute the convex hull of all vertices in this Mesh.
-    pub fn convex_hull(&self) -> Mesh<S> {
+    pub fn convex_hull(&self) -> Mesh<M> {
         // Gather all (x, y, z) coordinates from the polygons
         let points: Vec<Point3<Real>> = self
             .polygons
@@ -36,7 +35,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             Ok(h) => h,
             Err(_) => {
                 // Fallback to an empty CSG if hull generation fails
-                return Mesh::new();
+                return Mesh::empty(self.metadata.clone());
             },
         };
 
@@ -51,7 +50,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             let vv0 = Vertex::new(Point3::new(v0[0], v0[1], v0[2]), Vector3::zeros());
             let vv1 = Vertex::new(Point3::new(v1[0], v1[1], v1[2]), Vector3::zeros());
             let vv2 = Vertex::new(Point3::new(v2[0], v2[1], v2[2]), Vector3::zeros());
-            polygons.push(Polygon::new(vec![vv0, vv1, vv2], None));
+            polygons.push(Polygon::new(vec![vv0, vv1, vv2], self.metadata.clone()));
         }
 
         Mesh::from_polygons(&polygons, self.metadata.clone())
@@ -64,7 +63,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// the Minkowski sum of the convex hulls of A and B.
     ///
     /// **Algorithm**: O(|A| × |B|) vertex combinations followed by O(n log n) convex hull computation.
-    pub fn minkowski_sum(&self, other: &Mesh<S>) -> Mesh<S> {
+    pub fn minkowski_sum(&self, other: &Mesh<M>) -> Mesh<M> {
         // Collect all vertices (x, y, z) from self
         let verts_a: Vec<Point3<Real>> = self
             .polygons
@@ -80,7 +79,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             .collect();
 
         if verts_a.is_empty() || verts_b.is_empty() {
-            return Mesh::new();
+            return Mesh::empty(self.metadata.clone());
         }
 
         // For Minkowski, add every point in A to every point in B
@@ -92,18 +91,18 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
 
         // Early return if no points generated
         if sum_points.is_empty() {
-            return Mesh::new();
+            return Mesh::empty(self.metadata.clone());
         }
 
         // Compute convex hull with proper error handling
         let hull = match ConvexHullWrapper::try_new(&sum_points, None) {
             Ok(h) => h,
-            Err(_) => return Mesh::new(), // Robust fallback for degenerate cases
+            Err(_) => return Mesh::empty(self.metadata.clone()), // Robust fallback for degenerate cases
         };
         let (verts, indices) = hull.vertices_indices();
 
         // Reconstruct polygons with proper normal vector calculation
-        let polygons: Vec<Polygon<S>> = indices
+        let polygons: Vec<Polygon<M>> = indices
             .chunks_exact(3)
             .filter_map(|tri| {
                 let v0 = &verts[tri[0]];
@@ -125,7 +124,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
                     let vv0 = Vertex::new(p0, normalized_normal);
                     let vv1 = Vertex::new(p1, normalized_normal);
                     let vv2 = Vertex::new(p2, normalized_normal);
-                    Some(Polygon::new(vec![vv0, vv1, vv2], None))
+                    Some(Polygon::new(vec![vv0, vv1, vv2], self.metadata.clone()))
                 } else {
                     None
                 }

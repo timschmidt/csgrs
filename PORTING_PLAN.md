@@ -70,8 +70,8 @@ It should not know about:
 
 `hyperlimit` should own robust predicate-facing geometry:
 
-- minimal `Point2<S>` and `Point3<S>` carrier types
-- `Plane3<S>` in implicit form
+- minimal `Point2<R>` and `Point3<R>` carrier types
+- `Plane3<R>` in implicit form
 - predicate case structs for batching, where useful
 - orientation and classification results
 
@@ -92,9 +92,9 @@ rich polygon, mesh, sketch, vertex, toolpath, or CSG types.
 
 `csgrs` should continue to own product-level geometry:
 
-- `Sketch<S>`
-- `Mesh<S>`
-- `Polygon<S>`
+- `Sketch<M>`
+- `Mesh<M>`
+- `Polygon<M>`
 - `Vertex`
 - BSP nodes and splitting logic
 - optional `BMesh` / manifold-backed representations
@@ -108,6 +108,28 @@ rich polygon, mesh, sketch, vertex, toolpath, or CSG types.
   or output file format
 - metadata propagation rules
 
+Metadata is moving immediately to a hard-break model: `Mesh<M>`, `Sketch<M>`,
+`Polygon<M>`, `BMesh<M>`, and `Nurbs<M>` store `metadata: M`, not
+`metadata: Option<M>`. Absence is represented by `M = ()`; optional user
+metadata is represented by `M = Option<T>`; required user metadata is represented
+by `M = T`. This avoids hidden double optionality, gives required metadata a
+compile-time guarantee, and makes boolean provenance rules explicit.
+
+Implementation decision:
+
+- primitive constructors for unannotated geometry should produce or accept
+  `M = ()` metadata, with `with_metadata` / `map_metadata` helpers used to move
+  into richer metadata types
+- APIs that import dynamic or optional metadata should choose
+  `M = Option<T>` explicitly
+- boolean operations preserve source-face metadata on polygons and use a
+  documented whole-object metadata policy for the returned shape
+- WASM bindings should not expose a generic metadata type; they should use
+  `Mesh<Option<String>>` / `Sketch<Option<String>>` or
+  `Mesh<serde_json::Value>` / `Sketch<serde_json::Value>` internally, with
+  null/undefined represented by `None` when using the `Option<String>` path
+- this is an immediate major-version break, not a compatibility shim target
+
 `csgrs` may re-export or alias lower-level point/vector/matrix types for user
 convenience, but it should avoid owning a new fundamental numeric geometry
 kernel once `hyperlattice` is available.
@@ -118,11 +140,11 @@ kernel once `hyperlattice` is available.
 
 Keep these as `csgrs` types because they encode CSG or product semantics:
 
-- `mesh::Mesh<S>`
-- `sketch::Sketch<S>`
-- `polygon::Polygon<S>`
+- `mesh::Mesh<M>`
+- `sketch::Sketch<M>`
+- `polygon::Polygon<M>`
 - `vertex::Vertex`
-- `bmesh::BMesh<S>`
+- `bmesh::BMesh<M>`
 - `voxels` module types
 - `toolpath` module types
 - IO module types
@@ -140,7 +162,7 @@ classification and splitting should delegate to `hyperlimit`.
 
 Recommended direction:
 
-- store face-plane data in whichever form is most useful for `Polygon<S>`
+- store face-plane data in whichever form is most useful for `Polygon<M>`
 - convert to `hyperlimit::Plane3` or oriented `hyperlimit::Point3` triples at
   predicate boundaries
 - use `hyperlimit` outcomes to classify vertices and polygons
@@ -1837,7 +1859,7 @@ This gives an early robustness win without forcing a broad public API rewrite.
 
 ## Non-goals
 
-- Do not move `Mesh<S>` or `Sketch<S>` into the lower stack.
+- Do not move `Mesh<M>` or `Sketch<M>` into the lower stack.
 - Do not make `hyperlimit` a mesh-processing crate.
 - Do not make `hyperlattice` aware of file formats or CSG operations.
 - Do not list WASM as a geometry file format; it is only a compilation target

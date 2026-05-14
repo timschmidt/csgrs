@@ -62,7 +62,7 @@ fn assert_vertex_finite(vertex: &Vertex) {
     assert!(vertex.normal.z.is_finite(), "non-finite normal z: {vertex:?}");
 }
 
-fn assert_polygon_sane<S: Clone + Send + Sync>(polygon: &Polygon<S>) {
+fn assert_polygon_sane<M: Clone + Send + Sync>(polygon: &Polygon<M>) {
     assert!(polygon.vertices.len() >= 3, "polygon has too few vertices");
     for vertex in &polygon.vertices {
         assert_vertex_finite(vertex);
@@ -90,7 +90,7 @@ fn assert_polygon_sane<S: Clone + Send + Sync>(polygon: &Polygon<S>) {
     }
 }
 
-fn assert_mesh_sane<S: Clone + Send + Sync + std::fmt::Debug>(mesh: &Mesh<S>) {
+fn assert_mesh_sane<M: Clone + Send + Sync + std::fmt::Debug>(mesh: &Mesh<M>) {
     for polygon in &mesh.polygons {
         assert_polygon_sane(polygon);
     }
@@ -142,7 +142,7 @@ fn simple_triangle(a: Point3<Real>, b: Point3<Real>, c: Point3<Real>) -> Option<
             Vertex::new(b, normal),
             Vertex::new(c, normal),
         ],
-        None,
+        (),
     ))
 }
 
@@ -172,7 +172,7 @@ fn run_mesh_bytecode(bytes: &[u8]) {
         match op {
             0 => {
                 let size = decode_real(bytes, &mut idx).abs().max(tolerance());
-                if let Ok(mesh) = catch_unwind(AssertUnwindSafe(|| Mesh::cube(size, None))) {
+                if let Ok(mesh) = catch_unwind(AssertUnwindSafe(|| Mesh::cube(size, ()))) {
                     stack.push(mesh);
                 }
             },
@@ -181,7 +181,7 @@ fn run_mesh_bytecode(bytes: &[u8]) {
                 let segments = (bytes[idx % bytes.len()] as usize % 16) + 3;
                 idx += 1;
                 if let Ok(mesh) = catch_unwind(AssertUnwindSafe(|| {
-                    Mesh::sphere(radius, segments, segments, None)
+                    Mesh::sphere(radius, segments, segments, ())
                 })) {
                     stack.push(mesh);
                 }
@@ -251,23 +251,22 @@ fn adversarial_mesh_constructor_sweep_does_not_corrupt_successes() {
     for &a in scalars {
         for &b in scalars {
             for &segments in &counts {
-                if let Ok(mesh) = catch_unwind(AssertUnwindSafe(|| Mesh::cube(a, None::<()>)))
+                if let Ok(mesh) = catch_unwind(AssertUnwindSafe(|| Mesh::cube(a, ()))) {
+                    assert_mesh_sane(&mesh);
+                }
+                if let Ok(mesh) =
+                    catch_unwind(AssertUnwindSafe(|| Mesh::cuboid(a, b, 1.0, ())))
                 {
                     assert_mesh_sane(&mesh);
                 }
                 if let Ok(mesh) =
-                    catch_unwind(AssertUnwindSafe(|| Mesh::cuboid(a, b, 1.0, None::<()>)))
+                    catch_unwind(AssertUnwindSafe(|| Mesh::cylinder(a, b, segments, ())))
                 {
                     assert_mesh_sane(&mesh);
                 }
-                if let Ok(mesh) = catch_unwind(AssertUnwindSafe(|| {
-                    Mesh::cylinder(a, b, segments, None::<()>)
-                })) {
-                    assert_mesh_sane(&mesh);
-                }
-                if let Ok(mesh) = catch_unwind(AssertUnwindSafe(|| {
-                    Mesh::sphere(a, segments, segments, None::<()>)
-                })) {
+                if let Ok(mesh) =
+                    catch_unwind(AssertUnwindSafe(|| Mesh::sphere(a, segments, segments, ())))
+                {
                     assert_mesh_sane(&mesh);
                 }
             }
@@ -296,27 +295,25 @@ fn adversarial_sketch_constructor_sweep_does_not_corrupt_successes() {
     for &a in scalars {
         for &b in scalars {
             for &segments in &counts {
+                if let Ok(sketch) = catch_unwind(AssertUnwindSafe(|| Sketch::square(a, ()))) {
+                    let _ = sketch.to_multipolygon();
+                    let _ = catch_unwind(AssertUnwindSafe(|| sketch.triangulate()));
+                }
                 if let Ok(sketch) =
-                    catch_unwind(AssertUnwindSafe(|| Sketch::square(a, None::<()>)))
+                    catch_unwind(AssertUnwindSafe(|| Sketch::rectangle(a, b, ())))
                 {
                     let _ = sketch.to_multipolygon();
                     let _ = catch_unwind(AssertUnwindSafe(|| sketch.triangulate()));
                 }
                 if let Ok(sketch) =
-                    catch_unwind(AssertUnwindSafe(|| Sketch::rectangle(a, b, None::<()>)))
+                    catch_unwind(AssertUnwindSafe(|| Sketch::circle(a, segments, ())))
                 {
                     let _ = sketch.to_multipolygon();
                     let _ = catch_unwind(AssertUnwindSafe(|| sketch.triangulate()));
                 }
                 if let Ok(sketch) =
-                    catch_unwind(AssertUnwindSafe(|| Sketch::circle(a, segments, None::<()>)))
+                    catch_unwind(AssertUnwindSafe(|| Sketch::ellipse(a, b, segments, ())))
                 {
-                    let _ = sketch.to_multipolygon();
-                    let _ = catch_unwind(AssertUnwindSafe(|| sketch.triangulate()));
-                }
-                if let Ok(sketch) = catch_unwind(AssertUnwindSafe(|| {
-                    Sketch::ellipse(a, b, segments, None::<()>)
-                })) {
                     let _ = sketch.to_multipolygon();
                     let _ = catch_unwind(AssertUnwindSafe(|| sketch.triangulate()));
                 }
@@ -341,7 +338,7 @@ fn adversarial_invalid_polygon_catalog_is_contained() {
 
     for points in catalogs {
         let result = catch_unwind(AssertUnwindSafe(|| {
-            let sketch: Sketch<()> = Sketch::polygon(points, None);
+            let sketch: Sketch<()> = Sketch::polygon(points, ());
             sketch.triangulate()
         }));
         if let Ok(triangles) = result {
@@ -352,7 +349,7 @@ fn adversarial_invalid_polygon_catalog_is_contained() {
 
 #[test]
 fn adversarial_transform_matrix_sweep_is_contained() {
-    let cube: Mesh<()> = Mesh::cube(1.0, None);
+    let cube: Mesh<()> = Mesh::cube(1.0, ());
     let matrices = [
         Matrix4::identity(),
         Matrix4::zeros(),
@@ -411,7 +408,7 @@ fn adversarial_transform_matrix_fuzz_regression_preserves_finite_normals() {
     }
 
     let matrix = Matrix4::from_row_slice(&values);
-    let transformed = Mesh::<()>::cube(1.0, None).transform(&matrix);
+    let transformed = Mesh::<()>::cube(1.0, ()).transform(&matrix);
 
     for vertex in transformed.vertices() {
         assert!(
@@ -432,9 +429,9 @@ fn adversarial_transform_matrix_fuzz_regression_preserves_finite_normals() {
 #[test]
 fn adversarial_mesh_primitive_low_segments_regression_is_contained() {
     let result = catch_unwind(AssertUnwindSafe(|| {
-        let sphere = Mesh::<()>::sphere(1.0, 1, 1, None);
-        let ellipsoid = Mesh::<()>::ellipsoid(1.0, 0.0, -1.0, 1, 1, None);
-        let cylinder = Mesh::<()>::cylinder(1.0, 1.0, 1, None);
+        let sphere = Mesh::<()>::sphere(1.0, 1, 1, ());
+        let ellipsoid = Mesh::<()>::ellipsoid(1.0, 0.0, -1.0, 1, 1, ());
+        let cylinder = Mesh::<()>::cylinder(1.0, 1.0, 1, ());
         (sphere, ellipsoid, cylinder)
     }));
 
@@ -461,7 +458,7 @@ fn adversarial_zero_normal_angle_regression_is_finite() {
 fn adversarial_obj_zero_face_index_regression_is_error_not_panic() {
     let obj = "v 0 0 0\nv 1 0 0\nv 0 1 0\nf 0 1 2\n";
     let result = catch_unwind(AssertUnwindSafe(|| {
-        Mesh::<()>::from_obj(Cursor::new(obj), None)
+        Mesh::<()>::from_obj(Cursor::new(obj), ())
     }));
     assert!(matches!(result, Ok(Err(_))));
 }
@@ -470,7 +467,7 @@ fn adversarial_obj_zero_face_index_regression_is_error_not_panic() {
 #[cfg(feature = "svg-io")]
 fn adversarial_svg_unknown_tag_regression_is_error_not_panic() {
     let svg = "<not-a-supported-shape />";
-    let result = catch_unwind(AssertUnwindSafe(|| Sketch::<()>::from_svg(svg, None)));
+    let result = catch_unwind(AssertUnwindSafe(|| Sketch::<()>::from_svg(svg, ())));
     assert!(matches!(result, Ok(Err(_))));
 }
 
@@ -479,7 +476,7 @@ fn adversarial_svg_unknown_tag_regression_is_error_not_panic() {
 fn adversarial_gerber_short_command_regression_is_error_not_panic() {
     use csgrs::io::gerber::FromGerber;
 
-    let result = catch_unwind(AssertUnwindSafe(|| Sketch::<()>::from_gerber(b"G0", None)));
+    let result = catch_unwind(AssertUnwindSafe(|| Sketch::<()>::from_gerber(b"G0", ())));
     assert!(matches!(result, Ok(Err(_))));
 }
 
@@ -492,7 +489,7 @@ proptest! {
 
     #[test]
     fn proptest_mesh_transform_roundtrip(size in positive_real(), dx in finite_real(), dy in finite_real(), dz in finite_real()) {
-        let cube: Mesh<()> = Mesh::cube(size, None);
+        let cube: Mesh<()> = Mesh::cube(size, ());
         let moved = cube.translate(dx, dy, dz).translate(-dx, -dy, -dz);
         assert_mesh_sane(&moved);
 
@@ -506,8 +503,8 @@ proptest! {
     #[test]
     fn proptest_boolean_identities_for_cubes(size in positive_real(), offset in -50.0f64..50.0f64) {
         let offset = offset as Real;
-        let a: Mesh<()> = Mesh::cube(size, None);
-        let b: Mesh<()> = Mesh::cube(size, None).translate(offset, 0.0, 0.0);
+        let a: Mesh<()> = Mesh::cube(size, ());
+        let b: Mesh<()> = Mesh::cube(size, ()).translate(offset, 0.0, 0.0);
         let empty = Mesh::<()>::new();
 
         let union_empty = a.union(&empty);
@@ -533,7 +530,7 @@ proptest! {
 
     #[test]
     fn proptest_sketch_rectangles_triangulate(width in positive_real(), height in positive_real()) {
-        let sketch: Sketch<()> = Sketch::rectangle(width, height, None);
+        let sketch: Sketch<()> = Sketch::rectangle(width, height, ());
         let triangles = sketch.triangulate();
         assert_triangles_finite(&triangles);
         prop_assert!(!triangles.is_empty());
@@ -542,7 +539,7 @@ proptest! {
     #[test]
     fn proptest_sketch_polygon_convex_quad_triangulates(x in positive_real(), y in positive_real()) {
         let points = [[0.0, 0.0], [x, 0.0], [x, y], [0.0, y]];
-        let sketch: Sketch<()> = Sketch::polygon(&points, None);
+        let sketch: Sketch<()> = Sketch::polygon(&points, ());
         let triangles = sketch.triangulate();
         assert_triangles_finite(&triangles);
         prop_assert!(!triangles.is_empty());
@@ -560,8 +557,7 @@ proptest! {
                 Vertex::new(Point3::new(x, y1, 0.0), Vector3::z()),
                 Vertex::new(Point3::new(-x, y1, 0.0), Vector3::z()),
             ],
-            None,
-        );
+            (),        );
         let plane = Plane::from_normal(Vector3::y(), 0.0);
         let (cf, cb, front, back) = plane.split_polygon(&poly);
         for p in cf.iter().chain(cb.iter()).chain(front.iter()).chain(back.iter()) {
@@ -580,7 +576,7 @@ proptest! {
             }
         }
 
-        let mesh = Mesh::from_polygons(&polygons, None);
+        let mesh = Mesh::from_polygons(&polygons, ());
         let triangulated = mesh.triangulate();
         assert_mesh_sane(&triangulated);
     }
@@ -608,7 +604,7 @@ proptest! {
     #[cfg(feature = "obj-io")]
     fn proptest_obj_import_malformed_text_does_not_panic(bytes in prop::collection::vec(any::<u8>(), 0..512)) {
         let text = String::from_utf8_lossy(&bytes).into_owned();
-        let result = catch_unwind(AssertUnwindSafe(|| Mesh::<()>::from_obj(Cursor::new(text), None)));
+        let result = catch_unwind(AssertUnwindSafe(|| Mesh::<()>::from_obj(Cursor::new(text), ())));
         if let Ok(Ok(mesh)) = result {
             assert_mesh_sane(&mesh);
         }
@@ -617,7 +613,7 @@ proptest! {
     #[test]
     #[cfg(feature = "obj-io")]
     fn proptest_obj_export_hostile_names(size in positive_real(), name in "\\PC{0,80}") {
-        let mesh: Mesh<()> = Mesh::cube(size, None);
+        let mesh: Mesh<()> = Mesh::cube(size, ());
         let obj = mesh.to_obj(&name);
         prop_assert!(obj.contains("# Generated by csgrs library"));
         prop_assert!(obj.contains("\nf "));
@@ -626,7 +622,7 @@ proptest! {
     #[test]
     #[cfg(feature = "stl-io")]
     fn proptest_stl_export_hostile_names(size in positive_real(), name in "\\PC{0,80}") {
-        let mesh: Mesh<()> = Mesh::cube(size, None);
+        let mesh: Mesh<()> = Mesh::cube(size, ());
         let ascii = mesh.to_stl_ascii(&name);
         let binary = mesh.to_stl_binary(&name).expect("binary STL export should succeed");
         prop_assert!(ascii.contains("facet normal"));
@@ -635,7 +631,7 @@ proptest! {
 
     #[test]
     fn proptest_ray_intersections_are_sorted(size in positive_real(), origin_x in -10.0f64..10.0f64, origin_y in -10.0f64..10.0f64) {
-        let mesh: Mesh<()> = Mesh::cube(size, None);
+        let mesh: Mesh<()> = Mesh::cube(size, ());
         let origin = Point3::new(origin_x as Real, origin_y as Real, -(size.abs() + 10.0));
         let direction = Vector3::z();
         let hits = mesh.ray_intersections(&origin, &direction);
@@ -651,7 +647,7 @@ proptest! {
     #[test]
     #[cfg(feature = "offset")]
     fn proptest_offset_extrude_slice_pipeline(width in positive_real(), height in positive_real(), depth in positive_real(), offset in -0.25f64..0.25f64) {
-        let sketch: Sketch<()> = Sketch::rectangle(width, height, None);
+        let sketch: Sketch<()> = Sketch::rectangle(width, height, ());
         let offset_sketch = sketch.offset(offset as Real);
         let mesh = offset_sketch.extrude(depth);
         assert_mesh_sane(&mesh);
@@ -663,7 +659,7 @@ proptest! {
 
     #[test]
     fn proptest_smoothing_and_quality_stay_finite(size in positive_real(), lambda in -0.5f64..0.5f64, iterations in 0usize..4) {
-        let mesh: Mesh<()> = Mesh::cube(size, None).triangulate();
+        let mesh: Mesh<()> = Mesh::cube(size, ()).triangulate();
         let smoothed = mesh.laplacian_smooth(lambda as Real, iterations, true);
         assert_mesh_sane(&smoothed);
 
@@ -678,7 +674,7 @@ proptest! {
     #[test]
     #[cfg(feature = "ply-io")]
     fn proptest_ply_export_hostile_comments(size in positive_real(), comment in "\\PC{0,80}") {
-        let mesh: Mesh<()> = Mesh::cube(size, None);
+        let mesh: Mesh<()> = Mesh::cube(size, ());
         let ply = mesh.to_ply(&comment);
         prop_assert!(ply.starts_with("ply\n"));
         prop_assert!(ply.contains("element vertex"));
@@ -688,7 +684,7 @@ proptest! {
     #[test]
     #[cfg(feature = "amf-io")]
     fn proptest_amf_export_hostile_names_and_units(size in positive_real(), name in "\\PC{0,80}", units in "\\PC{0,40}") {
-        let mesh: Mesh<()> = Mesh::cube(size, None);
+        let mesh: Mesh<()> = Mesh::cube(size, ());
         let amf = mesh.to_amf(&name, &units);
         prop_assert!(amf.contains("<amf"));
         prop_assert!(amf.contains("<object"));
@@ -698,7 +694,7 @@ proptest! {
     #[test]
     #[cfg(feature = "gltf-io")]
     fn proptest_gltf_export_hostile_names(size in positive_real(), name in "\\PC{0,80}") {
-        let mesh: Mesh<()> = Mesh::cube(size, None);
+        let mesh: Mesh<()> = Mesh::cube(size, ());
         let gltf = mesh.to_gltf(&name);
         prop_assert!(gltf.contains("\"asset\""));
         prop_assert!(gltf.contains("\"meshes\""));
@@ -712,18 +708,18 @@ proptest! {
             csgrs::mesh::metaballs::MetaBall::new(Point3::new(0.0, 0.0, 0.0), radius),
             csgrs::mesh::metaballs::MetaBall::new(Point3::new(radius * 0.5, 0.0, 0.0), radius),
         ];
-        let mesh: Mesh<()> = Mesh::metaballs(&balls, (4, 4, 4), iso as Real, padding as Real, None);
+        let mesh: Mesh<()> = Mesh::metaballs(&balls, (4, 4, 4), iso as Real, padding as Real, ());
         assert_mesh_sane(&mesh);
     }
 
     #[test]
     #[cfg(feature = "dxf-io")]
     fn proptest_dxf_export_and_malformed_import(size in positive_real(), bytes in prop::collection::vec(any::<u8>(), 0..256)) {
-        let mesh: Mesh<()> = Mesh::cube(size, None);
+        let mesh: Mesh<()> = Mesh::cube(size, ());
         let dxf = mesh.to_dxf().expect("DXF export should succeed for cube");
         prop_assert!(!dxf.is_empty());
 
-        let result = catch_unwind(AssertUnwindSafe(|| Mesh::<()>::from_dxf(&bytes, None)));
+        let result = catch_unwind(AssertUnwindSafe(|| Mesh::<()>::from_dxf(&bytes, ())));
         if let Ok(Ok(mesh)) = result {
             assert_mesh_sane(&mesh);
         }
@@ -734,15 +730,15 @@ proptest! {
     fn proptest_svg_roundtrip_and_malformed_import(width in positive_real(), height in positive_real(), bytes in prop::collection::vec(any::<u8>(), 0..512)) {
         use csgrs::io::svg::{FromSVG, ToSVG};
 
-        let sketch: Sketch<()> = Sketch::rectangle(width, height, None);
+        let sketch: Sketch<()> = Sketch::rectangle(width, height, ());
         let svg = sketch.to_svg();
-        let reparsed = Sketch::<()>::from_svg(&svg, None);
+        let reparsed = Sketch::<()>::from_svg(&svg, ());
         if let Ok(sketch) = reparsed {
             assert_triangles_finite(&sketch.triangulate());
         }
 
         let malformed = String::from_utf8_lossy(&bytes);
-        let result = catch_unwind(AssertUnwindSafe(|| Sketch::<()>::from_svg(&malformed, None)));
+        let result = catch_unwind(AssertUnwindSafe(|| Sketch::<()>::from_svg(&malformed, ())));
         if let Ok(Ok(sketch)) = result {
             assert_triangles_finite(&sketch.triangulate());
         }
@@ -753,14 +749,14 @@ proptest! {
     fn proptest_gerber_roundtrip_and_malformed_import(width in positive_real(), height in positive_real(), bytes in prop::collection::vec(any::<u8>(), 0..512)) {
         use csgrs::io::gerber::{FromGerber, ToGerber};
 
-        let sketch: Sketch<()> = Sketch::rectangle(width, height, None);
+        let sketch: Sketch<()> = Sketch::rectangle(width, height, ());
         let gerber = sketch.to_gerber().expect("Gerber export should succeed for rectangle");
-        let reparsed = Sketch::<()>::from_gerber(&gerber, None);
+        let reparsed = Sketch::<()>::from_gerber(&gerber, ());
         if let Ok(sketch) = reparsed {
             assert_triangles_finite(&sketch.triangulate());
         }
 
-        let result = catch_unwind(AssertUnwindSafe(|| Sketch::<()>::from_gerber(&bytes, None)));
+        let result = catch_unwind(AssertUnwindSafe(|| Sketch::<()>::from_gerber(&bytes, ())));
         if let Ok(Ok(sketch)) = result {
             assert_triangles_finite(&sketch.triangulate());
         }
@@ -775,7 +771,7 @@ proptest! {
         };
         use csgrs::toolpath::gcode::Post;
 
-        let sketch: Sketch<()> = Sketch::rectangle(width, height, None);
+        let sketch: Sketch<()> = Sketch::rectangle(width, height, ());
         let feeds = Feeds {
             travel: 3000.0,
             xy: 1200.0,
@@ -830,8 +826,8 @@ proptest! {
     fn proptest_bmesh_clean_cube_boolean_differential(size in positive_real(), offset in -20.0f64..20.0f64) {
         use csgrs::bmesh::BMesh;
 
-        let a: Mesh<()> = Mesh::cube(size, None);
-        let b: Mesh<()> = Mesh::cube(size, None).translate(offset as Real, 0.0, 0.0);
+        let a: Mesh<()> = Mesh::cube(size, ());
+        let b: Mesh<()> = Mesh::cube(size, ()).translate(offset as Real, 0.0, 0.0);
         let ma = BMesh::from(a.clone());
         let mb = BMesh::from(b.clone());
 
@@ -850,19 +846,19 @@ proptest! {
     fn proptest_nurbs_rectangle_to_sketch_and_mesh(width in positive_real(), height in positive_real(), depth in positive_real()) {
         use csgrs::nurbs::Nurbs;
 
-        let nurbs: Nurbs<()> = Nurbs::rectangle(width, height, None);
+        let nurbs: Nurbs<()> = Nurbs::rectangle(width, height, ());
         let sketch = nurbs.to_sketch(None);
         assert_triangles_finite(&sketch.triangulate());
 
-        let mesh = nurbs.extrude_vector(Vector3::new(0.0, 0.0, depth), None);
+        let mesh = nurbs.extrude_vector(Vector3::new(0.0, 0.0, depth), ());
         assert_mesh_sane(&mesh);
     }
 
     #[test]
     #[cfg(feature = "chull-io")]
     fn proptest_convex_hull_and_minkowski_are_finite(size_a in positive_real(), size_b in positive_real(), dx in -10.0f64..10.0f64) {
-        let a: Mesh<()> = Mesh::cube(size_a, None);
-        let b: Mesh<()> = Mesh::cube(size_b, None).translate(dx as Real, 0.0, 0.0);
+        let a: Mesh<()> = Mesh::cube(size_a, ());
+        let b: Mesh<()> = Mesh::cube(size_b, ()).translate(dx as Real, 0.0, 0.0);
 
         let hull = a.union(&b).convex_hull();
         let minkowski = a.minkowski_sum(&b);
@@ -872,7 +868,7 @@ proptest! {
 
     #[test]
     fn proptest_distribution_mirror_and_mass_properties_are_finite(size in positive_real(), count in 0usize..8, radius in 0.0f64..20.0f64, angle in -720.0f64..720.0f64) {
-        let mesh: Mesh<()> = Mesh::cube(size, None);
+        let mesh: Mesh<()> = Mesh::cube(size, ());
         let line = mesh.distribute_linear(count, Vector3::x(), size.max(tolerance()));
         let arc = mesh.distribute_arc(count, radius as Real, -angle as Real, angle as Real);
         let grid = mesh.distribute_grid(count, count, size.max(tolerance()), size.max(tolerance()));
@@ -892,7 +888,7 @@ proptest! {
 
     #[test]
     fn proptest_polyline_intersections_are_finite(size in positive_real(), z0 in -20.0f64..-0.1f64, z1 in 0.1f64..20.0f64, wiggle in -5.0f64..5.0f64) {
-        let mesh: Mesh<()> = Mesh::cube(size, None);
+        let mesh: Mesh<()> = Mesh::cube(size, ());
         let polyline = vec![
             Point3::new(wiggle as Real, 0.0, z0 as Real),
             Point3::new(wiggle as Real, 0.0, 0.0),

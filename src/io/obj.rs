@@ -116,7 +116,7 @@ pub fn write_obj<T: Triangulated3D, W: Write>(
     writer.write_all(obj_content.as_bytes())
 }
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     #[doc = " Export this Mesh to OBJ format as a string"]
     pub fn to_obj(&self, object_name: &str) -> String {
         self::to_obj(self, object_name)
@@ -136,7 +136,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     #[doc = " # Arguments"]
     #[doc = " * `reader` - Source of OBJ data"]
     #[doc = " * `metadata` - Optional metadata to attach to all polygons"]
-    pub fn from_obj<R: BufRead>(reader: R, metadata: Option<S>) -> std::io::Result<Mesh<S>> {
+    pub fn from_obj<R: BufRead>(reader: R, metadata: M) -> std::io::Result<Mesh<M>> {
         let mut vertices = Vec::new();
         let mut normals = Vec::new();
         let mut polygons = Vec::new();
@@ -271,7 +271,7 @@ fn parse_obj_positive_index(raw: &str, label: &str) -> std::io::Result<usize> {
     })
 }
 
-impl<S: Clone + Debug + Send + Sync> Sketch<S> {
+impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     #[doc = " Export this Sketch to OBJ format as a string"]
     pub fn to_obj(&self, object_name: &str) -> String {
         self::to_obj(self, object_name)
@@ -288,7 +288,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 }
 
 #[cfg(feature = "bmesh")]
-impl<S: Clone + Debug + Send + Sync> crate::bmesh::BMesh<S> {
+impl<M: Clone + Debug + Send + Sync> crate::bmesh::BMesh<M> {
     #[doc = " Export this BMesh to OBJ format as a string"]
     pub fn to_obj(&self, object_name: &str) -> String {
         self::to_obj(self, object_name)

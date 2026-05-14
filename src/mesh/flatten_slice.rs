@@ -16,13 +16,13 @@ use nalgebra::Point3;
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// Flattens any 3D polygons by projecting them onto the XY plane (z=0),
     /// unifies them into one or more 2D polygons, and returns a purely 2D Sketch.
     ///
     /// - All `polygons` in the Mesh are tessellated, projected into XY, and unioned.
     /// - The output is a Sketch containing the final 2D shape.
-    pub fn flatten(&self) -> Sketch<S> {
+    pub fn flatten(&self) -> Sketch<M> {
         // Convert all 3D polygons into a collection of 2D polygons
         let mut flattened_3d = Vec::new(); // will store geo::Polygon<Real>
 
@@ -70,7 +70,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
             origin: Vertex::default(),
-            origin_transform: Sketch::<S>::prepare_origin_transform(Vertex::default()),
+            origin_transform: Sketch::<M>::prepare_origin_transform(Vertex::default()),
         }
     }
 
@@ -97,7 +97,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
     /// //   - Possibly an open or closed polygon(s) at z=0
     /// //   - Or empty if no intersection
     /// ```
-    pub fn slice(&self, plane: Plane) -> Sketch<S> {
+    pub fn slice(&self, plane: Plane) -> Sketch<M> {
         // Build a BSP from all of our polygons:
         let node = Node::from_polygons(&self.polygons.clone());
 
@@ -107,7 +107,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
         // "Knit" those intersection edges into polylines. Each edge is [vA, vB].
         let polylines_3d = unify_intersection_edges(&intersection_edges);
 
-        // Convert each polyline of vertices into a Polygon<S>
+        // Convert each polyline of vertices into a Polygon<M>
         let mut result_polygons = Vec::new();
 
         // Add the coplanar polygons. We can re‐assign their plane to `plane` to ensure
@@ -157,7 +157,7 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             bounding_box: OnceLock::new(),
             metadata: self.metadata.clone(),
             origin: Vertex::default(),
-            origin_transform: Sketch::<S>::prepare_origin_transform(Vertex::default()),
+            origin_transform: Sketch::<M>::prepare_origin_transform(Vertex::default()),
         }
     }
 }

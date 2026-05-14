@@ -14,20 +14,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create various Mesh objects to demonstrate OBJ export
 
     // 1. Simple cube
-    let cube: Mesh<()> = Mesh::cube(20.0, None).center();
+    let cube: Mesh<()> = Mesh::cube(20.0, ()).center();
     export_to_obj(&cube, "cube", "Simple 20x20x20mm cube")?;
 
     // 2. Sphere
-    let sphere: Mesh<()> = Mesh::sphere(15.0, 32, 16, None);
+    let sphere: Mesh<()> = Mesh::sphere(15.0, 32, 16, ());
     export_to_obj(&sphere, "sphere", "Sphere with 15mm radius")?;
 
     // 3. Cylinder
-    let cylinder: Mesh<()> = Mesh::cylinder(8.0, 25.0, 24, None);
+    let cylinder: Mesh<()> = Mesh::cylinder(8.0, 25.0, 24, ());
     export_to_obj(&cylinder, "cylinder", "Cylinder: 8mm radius, 25mm height")?;
 
     // 4. Complex boolean operation: cube with spherical cavity
-    let cube_large: Mesh<()> = Mesh::cube(30.0, None).center();
-    let sphere_cavity: Mesh<()> = Mesh::sphere(12.0, 24, 12, None).translate(5.0, 5.0, 0.0);
+    let cube_large: Mesh<()> = Mesh::cube(30.0, ()).center();
+    let sphere_cavity: Mesh<()> = Mesh::sphere(12.0, 24, 12, ()).translate(5.0, 5.0, 0.0);
     let cube_with_cavity = cube_large.difference(&sphere_cavity);
     export_to_obj(
         &cube_with_cavity,
@@ -36,8 +36,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     // 5. Union operation: cube + sphere
-    let cube_small: Mesh<()> = Mesh::cube(16.0, None).center();
-    let sphere_union: Mesh<()> = Mesh::sphere(10.0, 20, 10, None).translate(8.0, 8.0, 8.0);
+    let cube_small: Mesh<()> = Mesh::cube(16.0, ()).center();
+    let sphere_union: Mesh<()> = Mesh::sphere(10.0, 20, 10, ()).translate(8.0, 8.0, 8.0);
     let union_object = cube_small.union(&sphere_union);
     export_to_obj(
         &union_object,
@@ -46,8 +46,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     // 6. Intersection operation
-    let cube_intersect: Mesh<()> = Mesh::cube(25.0, None).center();
-    let sphere_intersect: Mesh<()> = Mesh::sphere(15.0, 24, 12, None).translate(5.0, 5.0, 0.0);
+    let cube_intersect: Mesh<()> = Mesh::cube(25.0, ()).center();
+    let sphere_intersect: Mesh<()> = Mesh::sphere(15.0, 24, 12, ()).translate(5.0, 5.0, 0.0);
     let intersection_object = cube_intersect.intersection(&sphere_intersect);
     export_to_obj(
         &intersection_object,
@@ -56,8 +56,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     // 7. More complex shape: cube with cylindrical hole
-    let cube_base: Mesh<()> = Mesh::cube(40.0, None).center();
-    let hole_cylinder: Mesh<()> = Mesh::cylinder(6.0, 50.0, 16, None)
+    let cube_base: Mesh<()> = Mesh::cube(40.0, ()).center();
+    let hole_cylinder: Mesh<()> = Mesh::cylinder(6.0, 50.0, 16, ())
         .rotate(90.0, 0.0, 0.0) // Rotate to align with X-axis
         .translate(0.0, 0.0, 0.0);
     let cube_with_hole = cube_base.difference(&hole_cylinder);
@@ -238,7 +238,7 @@ mod tests {
     #[test]
     fn test_obj_export() {
         // Test basic OBJ export functionality
-        let cube: Mesh<()> = Mesh::cube(10.0, None);
+        let cube: Mesh<()> = Mesh::cube(10.0, ());
 
         #[cfg(feature = "obj-io")]
         {
@@ -258,7 +258,7 @@ mod tests {
 
     #[test]
     fn test_obj_content_format() {
-        let sphere: Mesh<()> = Mesh::sphere(5.0, 8, 4, None); // Low res for testing
+        let sphere: Mesh<()> = Mesh::sphere(5.0, 8, 4, ()); // Low res for testing
 
         #[cfg(feature = "obj-io")]
         {
@@ -314,8 +314,8 @@ mod tests {
     #[test]
     fn test_boolean_operations_obj_export() {
         // Test that boolean operations export correctly
-        let cube: Mesh<()> = Mesh::cube(10.0, None);
-        let sphere: Mesh<()> = Mesh::sphere(6.0, 8, 4, None);
+        let cube: Mesh<()> = Mesh::cube(10.0, ());
+        let sphere: Mesh<()> = Mesh::sphere(6.0, 8, 4, ());
 
         #[cfg(feature = "obj-io")]
         {
@@ -345,7 +345,7 @@ mod tests {
     #[test]
     fn test_ply_export() {
         // Test basic PLY export functionality
-        let cube: Mesh<()> = Mesh::cube(10.0, None);
+        let cube: Mesh<()> = Mesh::cube(10.0, ());
 
         #[cfg(feature = "ply-io")]
         {
@@ -388,7 +388,7 @@ mod tests {
 
     #[test]
     fn test_ply_format_structure() {
-        let sphere: Mesh<()> = Mesh::sphere(5.0, 8, 4, None); // Low res for testing
+        let sphere: Mesh<()> = Mesh::sphere(5.0, 8, 4, ()); // Low res for testing
 
         #[cfg(feature = "ply-io")]
         {
@@ -452,7 +452,7 @@ mod tests {
     #[test]
     fn test_amf_export() {
         // Test basic AMF export functionality
-        let cube: Mesh<()> = Mesh::cube(10.0, None);
+        let cube: Mesh<()> = Mesh::cube(10.0, ());
 
         #[cfg(feature = "amf-io")]
         {
@@ -488,7 +488,7 @@ mod tests {
 
     #[test]
     fn test_amf_with_color() {
-        let sphere: Mesh<()> = Mesh::sphere(5.0, 8, 4, None); // Low res for testing
+        let sphere: Mesh<()> = Mesh::sphere(5.0, 8, 4, ()); // Low res for testing
 
         #[cfg(feature = "amf-io")]
         {
@@ -516,7 +516,7 @@ mod tests {
 
     #[test]
     fn test_amf_xml_structure() {
-        let cube: Mesh<()> = Mesh::cube(8.0, None);
+        let cube: Mesh<()> = Mesh::cube(8.0, ());
 
         #[cfg(feature = "amf-io")]
         {

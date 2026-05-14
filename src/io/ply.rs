@@ -100,7 +100,7 @@ pub fn write_ply<T: Triangulated3D, W: Write>(
     writer.write_all(ply_content.as_bytes())
 }
 
-impl<S: Clone + Debug + Send + Sync> crate::mesh::Mesh<S> {
+impl<M: Clone + Debug + Send + Sync> crate::mesh::Mesh<M> {
     #[doc = " Export this Mesh to PLY format as a string"]
     pub fn to_ply(&self, comment: &str) -> String {
         self::to_ply(self, comment)
@@ -112,7 +112,7 @@ impl<S: Clone + Debug + Send + Sync> crate::mesh::Mesh<S> {
     }
 }
 
-impl<S: Clone + Debug + Send + Sync> crate::sketch::Sketch<S> {
+impl<M: Clone + Debug + Send + Sync> crate::sketch::Sketch<M> {
     #[doc = " Export this Sketch to PLY format as a string"]
     pub fn to_ply(&self, comment: &str) -> String {
         self::to_ply(self, comment)
@@ -125,7 +125,7 @@ impl<S: Clone + Debug + Send + Sync> crate::sketch::Sketch<S> {
 }
 
 #[cfg(feature = "bmesh")]
-impl<S: Clone + Debug + Send + Sync> crate::bmesh::BMesh<S> {
+impl<M: Clone + Debug + Send + Sync> crate::bmesh::BMesh<M> {
     #[doc = " Export this BMesh to PLY format as a string"]
     pub fn to_ply(&self, comment: &str) -> String {
         self::to_ply(self, comment)

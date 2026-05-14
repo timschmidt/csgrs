@@ -80,7 +80,7 @@ pub fn to_stl_binary<T: Triangulated3D>(shape: &T, _name: &str) -> std::io::Resu
     Ok(cursor.into_inner())
 }
 
-impl<S: Clone + Debug + Send + Sync> crate::mesh::Mesh<S> {
+impl<M: Clone + Debug + Send + Sync> crate::mesh::Mesh<M> {
     pub fn to_stl_ascii(&self, name: &str) -> String {
         self::to_stl_ascii(self, name)
     }
@@ -89,7 +89,7 @@ impl<S: Clone + Debug + Send + Sync> crate::mesh::Mesh<S> {
     }
 }
 
-impl<S: Clone + Debug + Send + Sync> crate::sketch::Sketch<S> {
+impl<M: Clone + Debug + Send + Sync> crate::sketch::Sketch<M> {
     pub fn to_stl_ascii(&self, name: &str) -> String {
         self::to_stl_ascii(self, name)
     }
@@ -99,7 +99,7 @@ impl<S: Clone + Debug + Send + Sync> crate::sketch::Sketch<S> {
 }
 
 #[cfg(feature = "bmesh")]
-impl<S: Clone + Debug + Send + Sync> crate::bmesh::BMesh<S> {
+impl<M: Clone + Debug + Send + Sync> crate::bmesh::BMesh<M> {
     pub fn to_stl_ascii(&self, name: &str) -> String {
         self::to_stl_ascii(self, name)
     }

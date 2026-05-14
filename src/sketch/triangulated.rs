@@ -5,7 +5,7 @@ use crate::triangulated::Triangulated3D;
 use crate::vertex::Vertex;
 use nalgebra::Vector3;
 
-impl<S: Clone + Send + Sync + std::fmt::Debug> Triangulated3D for Sketch<S> {
+impl<M: Clone + Send + Sync + std::fmt::Debug> Triangulated3D for Sketch<M> {
     fn visit_triangles<F>(&self, mut f: F)
     where
         F: FnMut([Vertex; 3]),

@@ -1,12 +1,11 @@
 //! Create `Sketch`s from images
 
-use crate::csg::CSG;
 use crate::io::svg::FromSVG;
 use crate::sketch::Sketch;
 use image::GrayImage;
 use std::fmt::Debug;
 
-impl<S: Clone + Debug + Send + Sync> Sketch<S> {
+impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// Builds a new Sketch from the "on" pixels of a grayscale image,
     /// tracing connected outlines (and holes) via the `contour_tracing` code.
     ///
@@ -31,12 +30,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// let my_mesh = my_sketch.extrude(5.0);
     /// # }
     /// ```
-    pub fn from_image(
-        img: &GrayImage,
-        threshold: u8,
-        closepaths: bool,
-        metadata: Option<S>,
-    ) -> Self {
+    pub fn from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: M) -> Self {
         let width = img.width() as usize;
         let height = img.height() as usize;
 
@@ -70,10 +64,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
             d = svg_path
         );
 
-        if let Ok(parsed) = <Sketch<S>>::from_svg(&svg_doc, metadata) {
+        if let Ok(parsed) = <Sketch<M>>::from_svg(&svg_doc, metadata.clone()) {
             parsed
         } else {
-            Sketch::new()
+            Sketch::empty(metadata.clone())
         }
     }
 }

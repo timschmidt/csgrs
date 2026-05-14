@@ -19,7 +19,7 @@ fn main() {
 
     // Create a test mesh - sphere for interesting connectivity
     println!("1. Creating test mesh (sphere with 16 segments, 8 rings)...");
-    let sphere: Mesh<()> = Mesh::sphere(1.0, 16, 8, None);
+    let sphere: Mesh<()> = Mesh::sphere(1.0, 16, 8, ());
     println!("   Original polygons: {}", sphere.polygons.len());
 
     // Build mesh connectivity - this is where adjacency map is created and used

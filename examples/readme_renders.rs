@@ -45,63 +45,54 @@ fn main() {
 fn render_readme_sketches() {
     let font_data = include_bytes!("../asar.ttf");
 
-    let square = Sketch::<()>::square(2.0, None);
+    let square = Sketch::<()>::square(2.0, ());
     render_sketch("square", &square);
-    render_sketch("rectangle", &Sketch::<()>::rectangle(2.4, 1.35, None));
-    render_sketch("circle", &Sketch::<()>::circle(1.0, 96, None));
+    render_sketch("rectangle", &Sketch::<()>::rectangle(2.4, 1.35, ()));
+    render_sketch("circle", &Sketch::<()>::circle(1.0, 96, ()));
     render_sketch(
         "polygon",
-        &Sketch::<()>::polygon(&[[0.0, 1.2], [-1.1, -0.8], [1.1, -0.8]], None),
+        &Sketch::<()>::polygon(&[[0.0, 1.2], [-1.1, -0.8], [1.1, -0.8]], ()),
     );
     render_sketch(
         "rounded_rectangle",
-        &Sketch::<()>::rounded_rectangle(2.4, 1.5, 0.28, 12, None),
+        &Sketch::<()>::rounded_rectangle(2.4, 1.5, 0.28, 12, ()),
     );
-    render_sketch("ellipse", &Sketch::<()>::ellipse(2.3, 1.3, 96, None));
-    render_sketch("regular_ngon", &Sketch::<()>::regular_ngon(6, 1.0, None));
-    render_sketch(
-        "sketch_arrow",
-        &Sketch::<()>::arrow(2.2, 0.35, 0.8, 1.0, None),
-    );
-    render_sketch(
-        "right_triangle",
-        &Sketch::<()>::right_triangle(2.0, 1.5, None),
-    );
-    render_sketch(
-        "trapezoid",
-        &Sketch::<()>::trapezoid(1.2, 2.2, 1.4, 0.45, None),
-    );
-    render_sketch("star", &Sketch::<()>::star(5, 1.1, 0.45, None));
-    render_sketch("teardrop", &Sketch::<()>::teardrop(1.5, 2.2, 80, None));
-    render_sketch("sketch_egg", &Sketch::<()>::egg(1.5, 2.2, 96, None));
-    render_sketch("squircle", &Sketch::<()>::squircle(2.0, 2.0, 96, None));
-    render_sketch("keyhole", &Sketch::<()>::keyhole(0.7, 0.55, 1.35, 64, None));
-    render_sketch("reuleaux", &Sketch::<()>::reuleaux(3, 1.0, 24, None));
-    render_sketch("ring", &Sketch::<()>::ring(1.4, 0.35, 96, None));
+    render_sketch("ellipse", &Sketch::<()>::ellipse(2.3, 1.3, 96, ()));
+    render_sketch("regular_ngon", &Sketch::<()>::regular_ngon(6, 1.0, ()));
+    render_sketch("sketch_arrow", &Sketch::<()>::arrow(2.2, 0.35, 0.8, 1.0, ()));
+    render_sketch("right_triangle", &Sketch::<()>::right_triangle(2.0, 1.5, ()));
+    render_sketch("trapezoid", &Sketch::<()>::trapezoid(1.2, 2.2, 1.4, 0.45, ()));
+    render_sketch("star", &Sketch::<()>::star(5, 1.1, 0.45, ()));
+    render_sketch("teardrop", &Sketch::<()>::teardrop(1.5, 2.2, 80, ()));
+    render_sketch("sketch_egg", &Sketch::<()>::egg(1.5, 2.2, 96, ()));
+    render_sketch("squircle", &Sketch::<()>::squircle(2.0, 2.0, 96, ()));
+    render_sketch("keyhole", &Sketch::<()>::keyhole(0.7, 0.55, 1.35, 64, ()));
+    render_sketch("reuleaux", &Sketch::<()>::reuleaux(3, 1.0, 24, ()));
+    render_sketch("ring", &Sketch::<()>::ring(1.4, 0.35, 96, ()));
     render_sketch(
         "pie_slice",
-        &Sketch::<()>::pie_slice(1.1, -35.0, 115.0, 64, None),
+        &Sketch::<()>::pie_slice(1.1, -35.0, 115.0, 64, ()),
     );
     render_sketch(
         "supershape",
-        &Sketch::<()>::supershape(1.0, 1.0, 6.0, 0.35, 0.8, 0.8, 240, None),
+        &Sketch::<()>::supershape(1.0, 1.0, 6.0, 0.35, 0.8, 0.8, 240, ()),
     );
     render_sketch(
         "circle_with_keyway",
-        &Sketch::<()>::circle_with_keyway(1.0, 96, 0.42, 0.35, None),
+        &Sketch::<()>::circle_with_keyway(1.0, 96, 0.42, 0.35, ()),
     );
     render_sketch(
         "circle_with_flat",
-        &Sketch::<()>::circle_with_flat(1.0, 96, 0.55, None),
+        &Sketch::<()>::circle_with_flat(1.0, 96, 0.55, ()),
     );
     render_sketch(
         "circle_with_two_flats",
-        &Sketch::<()>::circle_with_two_flats(1.0, 96, 0.55, None),
+        &Sketch::<()>::circle_with_two_flats(1.0, 96, 0.55, ()),
     );
-    render_sketch("text", &Sketch::<()>::text("HELLO", font_data, 28.0, None));
+    render_sketch("text", &Sketch::<()>::text("HELLO", font_data, 28.0, ()));
     render_sketch(
         "airfoil_naca4",
-        &Sketch::<()>::airfoil_naca4(2.0, 4.0, 12.0, 2.4, 80, None),
+        &Sketch::<()>::airfoil_naca4(2.0, 4.0, 12.0, 2.4, 80, ()),
     );
     render_sketch(
         "bspline",
@@ -109,18 +100,18 @@ fn render_readme_sketches() {
             &[[-1.3, -0.7], [-0.6, 1.0], [0.5, 1.1], [1.3, -0.6]],
             3,
             32,
-            None,
+            (),
         ),
     );
-    render_sketch("heart", &Sketch::<()>::heart(2.0, 1.8, 160, None));
-    render_sketch("crescent", &Sketch::<()>::crescent(1.1, 0.85, 0.45, 96, None));
+    render_sketch("heart", &Sketch::<()>::heart(2.0, 1.8, 160, ()));
+    render_sketch("crescent", &Sketch::<()>::crescent(1.1, 0.85, 0.45, 96, ()));
     render_sketch(
         "involute_gear",
-        &Sketch::<()>::involute_gear(0.2, 18, 20.0, 0.0, 0.0, 8, None),
+        &Sketch::<()>::involute_gear(0.2, 18, 20.0, 0.0, 0.0, 8, ()),
     );
     render_sketch(
         "hilbert_curve",
-        &Sketch::<()>::square(2.0, None).hilbert_curve(5, 0.08),
+        &Sketch::<()>::square(2.0, ()).hilbert_curve(5, 0.08),
     );
 
     let mut image = GrayImage::new(16, 16);
@@ -133,10 +124,7 @@ fn render_readme_sketches() {
             }
         }
     }
-    render_sketch(
-        "from_image",
-        &Sketch::<()>::from_image(&image, 128, true, None),
-    );
+    render_sketch("from_image", &Sketch::<()>::from_image(&image, 128, true, ()));
 
     let metaballs = [
         (Point2::new(-0.45, 0.0), 0.72),
@@ -145,23 +133,23 @@ fn render_readme_sketches() {
     ];
     render_sketch(
         "metaballs_2d",
-        &Sketch::<()>::metaballs(&metaballs, (48, 48), 0.7, 0.25, None),
+        &Sketch::<()>::metaballs(&metaballs, (48, 48), 0.7, 0.25, ()),
     );
 
     let bezier = Sketch::<()>::bezier(
         &[[-1.2, -0.75], [-0.55, 1.05], [0.55, -1.0], [1.2, 0.75]],
         96,
-        None,
+        (),
     );
     render_sketch("bezier", &bezier);
 }
 
 fn render_readme_meshes() {
-    render_mesh("cube", &Mesh::<()>::cube(2.0, None));
-    render_mesh("cuboid", &Mesh::<()>::cuboid(1.4, 2.3, 0.95, None));
-    render_mesh("sphere", &Mesh::<()>::sphere(1.0, 32, 16, None));
-    render_mesh("cylinder", &Mesh::<()>::cylinder(1.0, 2.0, 32, None));
-    render_mesh("frustum", &Mesh::<()>::frustum(0.65, 1.05, 2.0, 32, None));
+    render_mesh("cube", &Mesh::<()>::cube(2.0, ()));
+    render_mesh("cuboid", &Mesh::<()>::cuboid(1.4, 2.3, 0.95, ()));
+    render_mesh("sphere", &Mesh::<()>::sphere(1.0, 32, 16, ()));
+    render_mesh("cylinder", &Mesh::<()>::cylinder(1.0, 2.0, 32, ()));
+    render_mesh("frustum", &Mesh::<()>::frustum(0.65, 1.05, 2.0, 32, ()));
     render_mesh(
         "frustum_ptp",
         &Mesh::<()>::frustum_ptp(
@@ -170,25 +158,25 @@ fn render_readme_meshes() {
             0.35,
             0.75,
             32,
-            None,
+            (),
         ),
     );
-    render_mesh("octahedron", &Mesh::<()>::octahedron(1.2, None));
-    render_mesh("icosahedron", &Mesh::<()>::icosahedron(1.2, None));
-    render_mesh("torus", &Mesh::<()>::torus(1.25, 0.35, 36, 14, None));
-    render_mesh("mesh_egg", &Mesh::<()>::egg(1.3, 2.0, 32, 24, None));
-    render_mesh("mesh_teardrop", &Mesh::<()>::teardrop(1.4, 2.0, 32, 24, None));
+    render_mesh("octahedron", &Mesh::<()>::octahedron(1.2, ()));
+    render_mesh("icosahedron", &Mesh::<()>::icosahedron(1.2, ()));
+    render_mesh("torus", &Mesh::<()>::torus(1.25, 0.35, 36, 14, ()));
+    render_mesh("mesh_egg", &Mesh::<()>::egg(1.3, 2.0, 32, 24, ()));
+    render_mesh("mesh_teardrop", &Mesh::<()>::teardrop(1.4, 2.0, 32, 24, ()));
     render_mesh(
         "teardrop_cylinder",
-        &Mesh::<()>::teardrop_cylinder(1.2, 2.1, 1.4, 32, None),
+        &Mesh::<()>::teardrop_cylinder(1.2, 2.1, 1.4, 32, ()),
     );
     render_mesh(
         "ellipsoid",
-        &Mesh::<()>::ellipsoid(1.4, 0.85, 1.8, 32, 16, None),
+        &Mesh::<()>::ellipsoid(1.4, 0.85, 1.8, 32, 16, ()),
     );
     render_mesh(
         "mesh_arrow",
-        &Mesh::<()>::arrow(Point3::origin(), Vector3::new(0.8, 0.4, 2.0), 32, false, None),
+        &Mesh::<()>::arrow(Point3::origin(), Vector3::new(0.8, 0.4, 2.0), 32, false, ()),
     );
     render_mesh(
         "polyhedron",
@@ -200,12 +188,12 @@ fn render_readme_meshes() {
                 [1.0, -1.0, -1.0],
             ],
             &[&[0, 1, 2], &[0, 3, 1], &[0, 2, 3], &[1, 3, 2]],
-            None,
+            (),
         )
         .expect("polyhedron"),
     );
 
-    let star = Sketch::<()>::star(5, 1.0, 0.45, None);
+    let star = Sketch::<()>::star(5, 1.0, 0.45, ());
     render_mesh("extrude", &star.extrude(0.65));
     render_mesh(
         "extrude_vector",
@@ -213,7 +201,7 @@ fn render_readme_meshes() {
     );
     render_mesh(
         "revolve",
-        &Sketch::<()>::circle(0.18, 32, None)
+        &Sketch::<()>::circle(0.18, 32, ())
             .translate(1.0, 0.0, 0.0)
             .revolve(265.0, 32)
             .expect("revolve"),
@@ -225,7 +213,7 @@ fn render_readme_meshes() {
             Vertex::new(Point3::new(0.8, 0.8, 0.0), Vector3::z()),
             Vertex::new(Point3::new(-0.8, 0.8, 0.0), Vector3::z()),
         ],
-        None,
+        (),
     );
     let top = Polygon::new(
         vec![
@@ -234,7 +222,7 @@ fn render_readme_meshes() {
             Vertex::new(Point3::new(0.45, 0.45, 1.2), Vector3::z()),
             Vertex::new(Point3::new(-0.45, 0.45, 1.2), Vector3::z()),
         ],
-        None,
+        (),
     );
     render_mesh(
         "loft",
@@ -242,7 +230,7 @@ fn render_readme_meshes() {
     );
     render_mesh(
         "sweep",
-        &Sketch::<()>::circle(0.18, 24, None).sweep(&[
+        &Sketch::<()>::circle(0.18, 24, ()).sweep(&[
             Point3::new(-1.2, -0.6, 0.0),
             Point3::new(-0.45, 0.4, 0.55),
             Point3::new(0.4, -0.25, 1.0),
@@ -250,16 +238,16 @@ fn render_readme_meshes() {
         ]),
     );
 
-    render_mesh("inverse", &Mesh::<()>::sphere(1.0, 32, 16, None).inverse());
+    render_mesh("inverse", &Mesh::<()>::sphere(1.0, 32, 16, ()).inverse());
     render_mesh("csg", &cube_minus_translated_sphere());
-    render_mesh("convex_hull", &Mesh::<()>::cube(1.2, None).convex_hull());
+    render_mesh("convex_hull", &Mesh::<()>::cube(1.2, ()).convex_hull());
     render_mesh(
         "minkowski_sum",
-        &Mesh::<()>::cube(1.1, None).minkowski_sum(&Mesh::<()>::sphere(0.45, 16, 8, None)),
+        &Mesh::<()>::cube(1.1, ()).minkowski_sum(&Mesh::<()>::sphere(0.45, 16, 8, ())),
     );
     render_mesh(
         "subdivide_triangles",
-        &Mesh::<()>::cube(2.0, None).subdivide_triangles(1.try_into().unwrap()),
+        &Mesh::<()>::cube(2.0, ()).subdivide_triangles(1.try_into().unwrap()),
     );
 
     let balls = [
@@ -269,7 +257,7 @@ fn render_readme_meshes() {
     ];
     render_mesh(
         "metaballs_3d",
-        &Mesh::<()>::metaballs(&balls, (16, 16, 16), 0.7, 0.25, None),
+        &Mesh::<()>::metaballs(&balls, (16, 16, 16), 0.7, 0.25, ()),
     );
 
     render_mesh(
@@ -280,30 +268,30 @@ fn render_readme_meshes() {
             Point3::new(-1.2, -1.2, -1.2),
             Point3::new(1.2, 1.2, 1.2),
             0.0,
-            None,
+            (),
         ),
     );
 
-    let tpms_box = Mesh::<()>::cube(2.0, None);
-    render_mesh("gyroid", &tpms_box.gyroid(14, 0.75, 0.0, None));
-    render_mesh("schwarz_p", &tpms_box.schwarz_p(14, 0.75, 0.0, None));
-    render_mesh("schwarz_d", &tpms_box.schwarz_d(14, 0.75, 0.0, None));
+    let tpms_box = Mesh::<()>::cube(2.0, ());
+    render_mesh("gyroid", &tpms_box.gyroid(14, 0.75, 0.0, ()));
+    render_mesh("schwarz_p", &tpms_box.schwarz_p(14, 0.75, 0.0, ()));
+    render_mesh("schwarz_d", &tpms_box.schwarz_d(14, 0.75, 0.0, ()));
     render_mesh(
         "spur_gear_involute",
-        &Mesh::<()>::spur_gear_involute(0.18, 22, 20.0, 0.0, 0.0, 8, 0.35, None),
+        &Mesh::<()>::spur_gear_involute(0.18, 22, 20.0, 0.0, 0.0, 8, 0.35, ()),
     );
 
     render_distribution_examples();
 }
 
 fn cube_minus_translated_sphere() -> Mesh<()> {
-    let cube = Mesh::<()>::cube(2.0, None);
-    let sphere = Mesh::<()>::sphere(1.25, 16, 8, None).translate(1.0, 1.0, 1.0);
+    let cube = Mesh::<()>::cube(2.0, ());
+    let sphere = Mesh::<()>::sphere(1.25, 16, 8, ()).translate(1.0, 1.0, 1.0);
     cube.difference(&sphere)
 }
 
 fn render_distribution_examples() {
-    let base = Mesh::<()>::sphere(0.13, 16, 8, None);
+    let base = Mesh::<()>::sphere(0.13, 16, 8, ());
     let line = (0..7)
         .map(|i| base.translate(i as Real * 0.38 - 1.14, 0.0, 0.0))
         .reduce(|a, b| a.union(&b))

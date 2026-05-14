@@ -9,7 +9,7 @@ use csgrs::sketch::Sketch;
 use nalgebra::{Point2, Point3, Vector3};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
-fn assert_mesh_finite<S: Clone + Send + Sync + std::fmt::Debug>(mesh: &Mesh<S>) {
+fn assert_mesh_finite<M: Clone + Send + Sync + std::fmt::Debug>(mesh: &Mesh<M>) {
     for vertex in mesh.vertices() {
         assert!(vertex.position.x.is_finite());
         assert!(vertex.position.y.is_finite());
@@ -20,7 +20,7 @@ fn assert_mesh_finite<S: Clone + Send + Sync + std::fmt::Debug>(mesh: &Mesh<S>) 
     }
 }
 
-fn assert_sketch_finite<S: Clone + Send + Sync + std::fmt::Debug>(sketch: &Sketch<S>) {
+fn assert_sketch_finite<M: Clone + Send + Sync + std::fmt::Debug>(sketch: &Sketch<M>) {
     for polygon in sketch.to_multipolygon().0 {
         for coord in &polygon.exterior().0 {
             assert!(coord.x.is_finite());
@@ -51,7 +51,7 @@ fn adversarial_stress_bounded_boolean_chains_and_cache_reuse() {
     let mut left_fold = Mesh::<()>::new();
     let mut parts = Vec::new();
     for i in 0..16 {
-        let cube = Mesh::cube(0.5, None).translate(i as Real * 0.45, 0.0, 0.0);
+        let cube = Mesh::cube(0.5, ()).translate(i as Real * 0.45, 0.0, 0.0);
         left_fold = if i == 0 {
             cube.clone()
         } else {
@@ -91,7 +91,7 @@ fn adversarial_stress_bounded_boolean_chains_and_cache_reuse() {
 fn adversarial_stress_high_vertex_triangulate_offset_sweep_and_slice() {
     for count in [100usize, 256, 512] {
         let points = regular_ring(count, 10.0, 0.01);
-        let sketch = Sketch::<()>::polygon(&points, None);
+        let sketch = Sketch::<()>::polygon(&points, ());
         assert_sketch_finite(&sketch);
         let triangles = sketch.triangulate();
         for tri in triangles {
@@ -113,7 +113,7 @@ fn adversarial_stress_high_vertex_triangulate_offset_sweep_and_slice() {
                 )
             })
             .collect::<Vec<_>>();
-        let swept = Sketch::<()>::circle(0.1, 12, None).sweep(&path);
+        let swept = Sketch::<()>::circle(0.1, 12, ()).sweep(&path);
         assert_mesh_finite(&swept);
         let slice = swept.slice(Plane::from_normal(Vector3::z(), 0.5));
         assert_sketch_finite(&slice);
@@ -129,15 +129,15 @@ fn adversarial_stress_sdf_tpms_and_metaball_resolution_ladder() {
             Point3::new(-1.0, -1.0, -1.0),
             Point3::new(1.0, 1.0, 1.0),
             0.0,
-            None,
+            (),
         );
         assert_mesh_finite(&sdf);
 
-        let cube = Mesh::<()>::cube(2.0, None);
+        let cube = Mesh::<()>::cube(2.0, ());
         for mesh in [
-            cube.gyroid(resolution, 1.0, 0.0, None),
-            cube.schwarz_p(resolution, 1.0, 0.0, None),
-            cube.schwarz_d(resolution, 1.0, 0.0, None),
+            cube.gyroid(resolution, 1.0, 0.0, ()),
+            cube.schwarz_p(resolution, 1.0, 0.0, ()),
+            cube.schwarz_d(resolution, 1.0, 0.0, ()),
         ] {
             assert_mesh_finite(&mesh);
         }
@@ -145,13 +145,8 @@ fn adversarial_stress_sdf_tpms_and_metaball_resolution_ladder() {
         let balls = (0..resolution.min(10))
             .map(|i| MetaBall::new(Point3::new(i as Real * 0.25, 0.0, 0.0), 0.5))
             .collect::<Vec<_>>();
-        let mesh_balls = Mesh::<()>::metaballs(
-            &balls,
-            (resolution, resolution, resolution),
-            0.5,
-            0.1,
-            None,
-        );
+        let mesh_balls =
+            Mesh::<()>::metaballs(&balls, (resolution, resolution, resolution), 0.5, 0.1, ());
         assert_mesh_finite(&mesh_balls);
 
         let sketch_balls = balls
@@ -159,7 +154,7 @@ fn adversarial_stress_sdf_tpms_and_metaball_resolution_ladder() {
             .map(|ball| (Point2::new(ball.center.x, ball.center.y), ball.radius))
             .collect::<Vec<_>>();
         let sketch =
-            Sketch::<()>::metaballs(&sketch_balls, (resolution, resolution), 0.5, 0.1, None);
+            Sketch::<()>::metaballs(&sketch_balls, (resolution, resolution), 0.5, 0.1, ());
         assert_sketch_finite(&sketch);
     }
 }
@@ -168,14 +163,14 @@ fn adversarial_stress_sdf_tpms_and_metaball_resolution_ladder() {
 fn adversarial_stress_concrete_operation_chains_are_contained() {
     let invalid = Sketch::<()>::polygon(
         &[[0.0, 0.0], [1.0, 1.0], [0.0, 1.0], [1.0, 0.0], [0.0, 0.0]],
-        None,
+        (),
     );
     let invalid_chain = catch_unwind(AssertUnwindSafe(|| {
         invalid
             .offset(0.05)
             .offset(-0.05)
             .extrude(0.5)
-            .union(&Mesh::cube(0.5, None))
+            .union(&Mesh::cube(0.5, ()))
             .triangulate()
     }));
     if let Ok(mesh) = invalid_chain {
@@ -184,14 +179,14 @@ fn adversarial_stress_concrete_operation_chains_are_contained() {
         let _ = mesh.to_obj("invalid_chain");
     }
 
-    let scaled = Mesh::<()>::cube(1.0, None)
+    let scaled = Mesh::<()>::cube(1.0, ())
         .scale(0.0, 1.0, 1.0)
-        .union(&Mesh::sphere(0.5, 8, 8, None))
+        .union(&Mesh::sphere(0.5, 8, 8, ()))
         .triangulate();
     assert_mesh_finite(&scaled);
     let _ = catch_unwind(AssertUnwindSafe(|| scaled.mass_properties(1.0)));
 
-    let tiny_huge = Mesh::<()>::cuboid(tolerance(), tolerance(), tolerance(), None)
+    let tiny_huge = Mesh::<()>::cuboid(tolerance(), tolerance(), tolerance(), ())
         .translate(1.0e6, -1.0e6, 1.0e6)
         .center()
         .float();

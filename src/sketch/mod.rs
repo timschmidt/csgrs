@@ -67,15 +67,16 @@ impl GraphicLineStrings {
 }
 
 #[derive(Clone, Debug)]
-pub struct Sketch<S> {
+pub struct Sketch<M> {
     /// 2D points, lines, polylines, polygons, and multipolygons
     pub geometry: GeometryCollection<Real>,
 
     /// Lazily calculated AABB that spans `geometry`.
     pub bounding_box: OnceLock<Aabb>,
 
-    /// Metadata
-    pub metadata: Option<S>,
+    /// Whole-sketch metadata. Use `M = ()` for no metadata and `M = Option<T>`
+    /// for optional metadata.
+    pub metadata: M,
 
     /// Origin of the sketch in 3D space.
     pub(crate) origin: Vertex,
@@ -83,7 +84,18 @@ pub struct Sketch<S> {
     pub(crate) origin_transform: OriginTransform,
 }
 
-impl<S: Clone + Send + Sync + Debug> Sketch<S> {
+impl<M: Clone + Send + Sync + Debug> Sketch<M> {
+    /// Return a new empty sketch with explicit metadata.
+    pub fn empty(metadata: M) -> Self {
+        Sketch {
+            geometry: GeometryCollection::default(),
+            bounding_box: OnceLock::new(),
+            metadata,
+            origin: Vertex::default(),
+            origin_transform: Self::prepare_origin_transform(Vertex::default()),
+        }
+    }
+
     /// Take the [`geo::Polygon`]'s from the `CSG`'s geometry collection
     pub fn to_multipolygon(&self) -> MultiPolygon<Real> {
         let polygons = self
@@ -100,11 +112,39 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
     }
 
     /// Create a Sketch from a `geo::GeometryCollection`.
-    pub fn from_geo(geometry: GeometryCollection<Real>, metadata: Option<S>) -> Sketch<S> {
-        let mut new_sketch = Sketch::new();
-        new_sketch.geometry = geometry;
-        new_sketch.metadata = metadata;
-        new_sketch
+    pub fn from_geo(geometry: GeometryCollection<Real>, metadata: M) -> Sketch<M> {
+        Sketch {
+            geometry,
+            bounding_box: OnceLock::new(),
+            metadata,
+            origin: Vertex::default(),
+            origin_transform: Self::prepare_origin_transform(Vertex::default()),
+        }
+    }
+
+    /// Return this sketch with replacement metadata.
+    pub fn with_metadata<T: Clone + Send + Sync + Debug>(self, metadata: T) -> Sketch<T> {
+        Sketch {
+            geometry: self.geometry,
+            bounding_box: OnceLock::new(),
+            metadata,
+            origin: self.origin,
+            origin_transform: self.origin_transform,
+        }
+    }
+
+    /// Map this sketch's metadata while preserving its geometry and origin.
+    pub fn map_metadata<T: Clone + Send + Sync + Debug, F>(self, f: F) -> Sketch<T>
+    where
+        F: FnOnce(M) -> T,
+    {
+        Sketch {
+            geometry: self.geometry,
+            bounding_box: OnceLock::new(),
+            metadata: f(self.metadata),
+            origin: self.origin,
+            origin_transform: self.origin_transform,
+        }
     }
 
     /// Set the origin used when rendering or lifting this sketch into 3D.
@@ -447,7 +487,7 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
 
     /// Return a copy of this `Sketch` whose polygons are normalised so that
     /// exterior rings wind counter-clockwise and interior rings clockwise.
-    pub fn renormalize(&self) -> Sketch<S> {
+    pub fn renormalize(&self) -> Sketch<M> {
         // Re-build the collection, orienting only what’s supported.
         let oriented_geoms: Vec<Geometry<Real>> = self
             .geometry
@@ -474,18 +514,14 @@ impl<S: Clone + Send + Sync + Debug> Sketch<S> {
     }
 }
 
-impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
-    /// Returns a new empty Sketch
-    fn new() -> Self {
-        Sketch {
-            geometry: GeometryCollection::default(),
-            bounding_box: OnceLock::new(),
-            metadata: None,
-            origin: Vertex::default(),
-            origin_transform: Self::prepare_origin_transform(Vertex::default()),
-        }
+impl Sketch<()> {
+    /// Return a new empty sketch with unit metadata.
+    pub fn new() -> Self {
+        Self::empty(())
     }
+}
 
+impl<M: Clone + Send + Sync + Debug> CSG for Sketch<M> {
     /// Return a new Sketch representing union of the two Sketches.
     ///
     /// ```text
@@ -499,7 +535,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
     ///          |       |            |       |
     ///          +-------+            +-------+
     /// ```
-    fn union(&self, other: &Sketch<S>) -> Sketch<S> {
+    fn union(&self, other: &Sketch<M>) -> Sketch<M> {
         // Extract multipolygon from geometry
         let polys1 = self.to_multipolygon();
         let polys2 = &other.to_multipolygon();
@@ -552,7 +588,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
     ///          |       |
     ///          +-------+
     /// ```
-    fn difference(&self, other: &Sketch<S>) -> Sketch<S> {
+    fn difference(&self, other: &Sketch<M>) -> Sketch<M> {
         let polys1 = &self.to_multipolygon();
         let polys2 = &other.to_multipolygon();
 
@@ -595,7 +631,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
     ///          |       |
     ///          +-------+
     /// ```
-    fn intersection(&self, other: &Sketch<S>) -> Sketch<S> {
+    fn intersection(&self, other: &Sketch<M>) -> Sketch<M> {
         let polys1 = &self.to_multipolygon();
         let polys2 = &other.to_multipolygon();
 
@@ -645,7 +681,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
     ///          |       |            |       |
     ///          +-------+            +-------+
     /// ```
-    fn xor(&self, other: &Sketch<S>) -> Sketch<S> {
+    fn xor(&self, other: &Sketch<M>) -> Sketch<M> {
         let polys1 = &self.to_multipolygon();
         let polys2 = &other.to_multipolygon();
 
@@ -683,7 +719,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
     /// Apply an arbitrary 3D transform (as a 4x4 matrix) to both polygons and polylines.
     /// The polygon z-coordinates and normal vectors are fully transformed in 3D,
     /// and the 2D polylines are updated by ignoring the resulting z after transform.
-    fn transform(&self, mat: &Matrix4<Real>) -> Sketch<S> {
+    fn transform(&self, mat: &Matrix4<Real>) -> Sketch<M> {
         let mut sketch = self.clone();
 
         // Convert the top-left 2×2 submatrix + translation of a 4×4 into a geo::AffineTransform
@@ -771,7 +807,7 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
     }
 
     /// Invert this Sketch (flip inside vs. outside)
-    fn inverse(&self) -> Sketch<S> {
+    fn inverse(&self) -> Sketch<M> {
         // Re-build the collection, orienting only what’s supported.
         let oriented_geoms: Vec<Geometry<Real>> = self
             .geometry
@@ -816,11 +852,11 @@ impl<S: Clone + Send + Sync + Debug> CSG for Sketch<S> {
 }
 
 #[cfg(feature = "mesh")]
-impl<S: Clone + Send + Sync + Debug> From<Mesh<S>> for Sketch<S> {
-    fn from(mesh: Mesh<S>) -> Self {
+impl<M: Clone + Send + Sync + Debug> From<Mesh<M>> for Sketch<M> {
+    fn from(mesh: Mesh<M>) -> Self {
         // If mesh is empty, return empty Sketch
         if mesh.polygons.is_empty() {
-            return Sketch::new();
+            return Sketch::empty(mesh.metadata);
         }
 
         // Convert mesh into a collection of 2D polygons
@@ -867,7 +903,7 @@ impl<S: Clone + Send + Sync + Debug> From<Mesh<S>> for Sketch<S> {
         Sketch {
             geometry: new_gc,
             bounding_box: OnceLock::new(),
-            metadata: None,
+            metadata: mesh.metadata,
             origin: Vertex::default(),
             origin_transform: Self::prepare_origin_transform(Vertex::default()),
         }

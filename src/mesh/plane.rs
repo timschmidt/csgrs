@@ -318,7 +318,7 @@ impl Plane {
 
     /// Classify a polygon with respect to the plane.
     /// Returns a bitmask of `COPLANAR`, `FRONT`, and `BACK`.
-    pub fn classify_polygon<S: Clone>(&self, polygon: &Polygon<S>) -> i8 {
+    pub fn classify_polygon<M: Clone>(&self, polygon: &Polygon<M>) -> i8 {
         let mut polygon_type: i8 = 0;
         for vertex in &polygon.vertices {
             polygon_type |= self.orient_point(&vertex.position);
@@ -329,14 +329,14 @@ impl Plane {
     /// Splits a polygon by this plane, returning four buckets:
     /// `(coplanar_front, coplanar_back, front, back)`.
     #[allow(clippy::type_complexity)]
-    pub fn split_polygon<S: Clone + Send + Sync>(
+    pub fn split_polygon<M: Clone + Send + Sync>(
         &self,
-        polygon: &Polygon<S>,
+        polygon: &Polygon<M>,
     ) -> (
-        Vec<Polygon<S>>,
-        Vec<Polygon<S>>,
-        Vec<Polygon<S>>,
-        Vec<Polygon<S>>,
+        Vec<Polygon<M>>,
+        Vec<Polygon<M>>,
+        Vec<Polygon<M>>,
+        Vec<Polygon<M>>,
     ) {
         let mut coplanar_front = Vec::new();
         let mut coplanar_back = Vec::new();

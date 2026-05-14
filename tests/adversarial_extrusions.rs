@@ -37,7 +37,7 @@ fn positive_real() -> impl Strategy<Value = Real> {
     }
 }
 
-fn assert_mesh_finite<S: Clone + Send + Sync + std::fmt::Debug>(mesh: &Mesh<S>) {
+fn assert_mesh_finite<M: Clone + Send + Sync + std::fmt::Debug>(mesh: &Mesh<M>) {
     for polygon in &mesh.polygons {
         assert!(polygon.vertices.len() >= 3, "degenerate polygon: {polygon:?}");
         let poly_box = polygon.bounding_box();
@@ -86,7 +86,7 @@ fn polygon_at_z(
             .iter()
             .map(|&(x, y)| Vertex::new(Point3::new(x, y, z), Vector3::z()))
             .collect(),
-        Some(metadata),
+        metadata,
     )
 }
 
@@ -142,12 +142,12 @@ fn sketch_catalog() -> Vec<Sketch<&'static str>> {
     );
 
     vec![
-        Sketch::rectangle(1.0, 0.5, Some("rect")),
-        Sketch::rectangle(1.0, 0.5, Some("offset_profile")).translate(1.5, 0.0, 0.0),
-        Sketch::circle(1.0, 16, Some("circle")),
-        Sketch::star(5, 1.0, 0.25, Some("star")),
-        Sketch::ring(2.0, 0.25, 24, Some("ring")),
-        Sketch::from_geo(Geometry::Polygon(holed).into(), Some("holed")),
+        Sketch::rectangle(1.0, 0.5, "rect"),
+        Sketch::rectangle(1.0, 0.5, "offset_profile").translate(1.5, 0.0, 0.0),
+        Sketch::circle(1.0, 16, "circle"),
+        Sketch::star(5, 1.0, 0.25, "star"),
+        Sketch::ring(2.0, 0.25, 24, "ring"),
+        Sketch::from_geo(Geometry::Polygon(holed).into(), "holed"),
         Sketch::from_geo(
             GeometryCollection(vec![
                 Geometry::Line(Line::new(Coord { x: 0.0, y: 0.0 }, Coord { x: 1.0, y: 0.0 })),
@@ -166,7 +166,7 @@ fn sketch_catalog() -> Vec<Sketch<&'static str>> {
                     Coord { x: 0.0, y: 1.0 },
                 )),
             ]),
-            Some("mixed_geo"),
+            "mixed_geo",
         ),
         Sketch::from_geo(
             Geometry::MultiPolygon(MultiPolygon(vec![
@@ -192,7 +192,7 @@ fn sketch_catalog() -> Vec<Sketch<&'static str>> {
                 ),
             ]))
             .into(),
-            Some("multipolygon"),
+            "multipolygon",
         ),
     ]
 }
@@ -357,22 +357,16 @@ fn adversarial_mesh_shape_helpers_that_delegate_to_extrusion_are_finite() {
             for &count in &counts {
                 let attempts = [
                     catch_unwind(AssertUnwindSafe(|| {
-                        Mesh::<&str>::egg(a, b, count, count, Some("egg"))
+                        Mesh::<&str>::egg(a, b, count, count, "egg")
                     })),
                     catch_unwind(AssertUnwindSafe(|| {
-                        Mesh::<&str>::teardrop(a, b, count, count, Some("teardrop"))
+                        Mesh::<&str>::teardrop(a, b, count, count, "teardrop")
                     })),
                     catch_unwind(AssertUnwindSafe(|| {
-                        Mesh::<&str>::teardrop_cylinder(
-                            a,
-                            b,
-                            1.0,
-                            count,
-                            Some("teardrop_cylinder"),
-                        )
+                        Mesh::<&str>::teardrop_cylinder(a, b, 1.0, count, "teardrop_cylinder")
                     })),
                     catch_unwind(AssertUnwindSafe(|| {
-                        Mesh::<&str>::torus(a, b, count, count, Some("torus"))
+                        Mesh::<&str>::torus(a, b, count, count, "torus")
                     })),
                 ];
                 for attempt in attempts {
@@ -400,7 +394,7 @@ proptest! {
         dy in finite_real(),
         dz in finite_real(),
     ) {
-        let sketch = Sketch::<&str>::rectangle(width, height, Some("rect"));
+        let sketch = Sketch::<&str>::rectangle(width, height, "rect");
         let mesh = sketch.extrude_vector(Vector3::new(dx, dy, dz));
         assert_mesh_finite(&mesh);
     }
@@ -413,7 +407,7 @@ proptest! {
         angle in -1080.0f64..1080.0f64,
         segments in 2usize..96,
     ) {
-        let sketch = Sketch::<&str>::rectangle(radius, height, Some("revolve"))
+        let sketch = Sketch::<&str>::rectangle(radius, height, "revolve")
             .translate(x_offset as Real, 0.0, 0.0);
         let mesh = sketch.revolve(angle as Real, segments).unwrap();
         assert_mesh_finite(&mesh);
@@ -428,7 +422,7 @@ proptest! {
         duplicate_first in any::<bool>(),
         close_path in any::<bool>(),
     ) {
-        let sketch = Sketch::<&str>::circle(profile_radius as Real, 12, Some("sweep"));
+        let sketch = Sketch::<&str>::circle(profile_radius as Real, 12, "sweep");
         let start = Point3::new(p0.0, p0.1, p0.2);
         let mut path = vec![
             start,
@@ -456,7 +450,7 @@ proptest! {
                 Vertex::new(Point3::new(skew as Real + scale as Real, 0.0, z as Real), Vector3::z()),
                 Vertex::new(Point3::new(skew as Real + scale as Real * 0.5, scale as Real, z as Real), Vector3::z()),
             ],
-            Some("top"),
+            "top",
         );
         let mesh = Sketch::loft(&bottom, &top, flip).unwrap();
         assert_mesh_finite(&mesh);

@@ -1,6 +1,5 @@
 //! Functions to extrude, revolve, loft, and otherwise transform 2D `Sketch`s into 3D `Mesh`s
 
-use crate::csg::CSG;
 use crate::errors::ValidationError;
 use crate::float_types::{Real, tolerance};
 use crate::mesh::Mesh;
@@ -12,11 +11,11 @@ use nalgebra::{Matrix4, Point3, Rotation3, Translation3, Vector3};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
-impl<S: Clone + Debug + Send + Sync> Sketch<S> {
+impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// Linearly extrude this (2D) shape in the +Z direction by `height`.
     ///
     /// This is just a convenience wrapper around extrude_vector using Vector3::new(0.0, 0.0, height)
-    pub fn extrude(&self, height: Real) -> Mesh<S> {
+    pub fn extrude(&self, height: Real) -> Mesh<M> {
         self.extrude_vector(Vector3::new(0.0, 0.0, height))
     }
 
@@ -31,7 +30,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// ### **Parametric Surface Definition**
     /// For a 2D boundary curve C(u) and direction vector d⃗:
     /// ```text
-    /// S(u,v) = C(u) + v·d⃗
+    /// M(u,v) = C(u) + v·d⃗
     /// where u ∈ [0,1] parameterizes the boundary
     ///       v ∈ [0,1] parameterizes the extrusion
     /// ```
@@ -39,7 +38,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// ### **Surface Normal Computation**
     /// For side surfaces, the normal is computed as:
     /// ```text
-    /// n⃗ = (∂S/∂u × ∂S/∂v).normalize()
+    /// n⃗ = (∂M/∂u × ∂M/∂v).normalize()
     ///   = (C'(u) × d⃗).normalize()
     /// ```
     /// where C'(u) is the tangent to the boundary curve.
@@ -84,17 +83,17 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     ///
     /// # Parameters
     /// - `direction`: 3D vector defining extrusion direction and magnitude
-    pub fn extrude_vector(&self, direction: Vector3<Real>) -> Mesh<S> {
+    pub fn extrude_vector(&self, direction: Vector3<Real>) -> Mesh<M> {
         if !direction.x.is_finite()
             || !direction.y.is_finite()
             || !direction.z.is_finite()
             || direction.norm() < tolerance()
         {
-            return Mesh::new();
+            return Mesh::empty(self.metadata.clone());
         }
 
         // Collect 3-D polygons generated from every `geo` geometry in the sketch
-        let mut out: Vec<Polygon<S>> = Vec::new();
+        let mut out: Vec<Polygon<M>> = Vec::new();
 
         for geom in &self.geometry {
             Self::extrude_geometry(
@@ -119,8 +118,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         geom: &geo::Geometry<Real>,
         direction: Vector3<Real>,
         origin_transform: OriginTransform,
-        metadata: &Option<S>,
-        out_polygons: &mut Vec<Polygon<S>>,
+        metadata: &M,
+        out_polygons: &mut Vec<Polygon<M>>,
     ) {
         if !direction.x.is_finite()
             || !direction.y.is_finite()
@@ -373,10 +372,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     ///   - The `top` polygon,
     ///   - `n` rectangular side polygons bridging each edge of `bottom` to the corresponding edge of `top`.
     pub fn loft(
-        bottom: &Polygon<S>,
-        top: &Polygon<S>,
+        bottom: &Polygon<M>,
+        top: &Polygon<M>,
         flip_bottom_polygon: bool,
-    ) -> Result<Mesh<S>, ValidationError> {
+    ) -> Result<Mesh<M>, ValidationError> {
         let n = bottom.vertices.len();
         if n != top.vertices.len() {
             return Err(ValidationError::MismatchedVertices);
@@ -453,8 +452,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     // twist_degs: Real,
     // segments: usize,
     // scale_top: Real,
-    // metadata: Option<S>,
-    // ) -> CSG<S> {
+    // metadata: M,
+    // ) -> CSG<M> {
     // let mut polygons_3d = Vec::new();
     // if segments < 1 {
     // return CSG::new();
@@ -605,7 +604,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// ### **Parametric Surface Generation**
     /// For each 2D boundary point (x,y), generate revolution surface:
     /// ```text
-    /// S(θ) = (x·cos(θ), y, x·sin(θ))
+    /// M(θ) = (x·cos(θ), y, x·sin(θ))
     /// where θ ∈ [0, angle_radians]
     /// ```
     ///
@@ -669,7 +668,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         &self,
         angle_degs: Real,
         segments: usize,
-    ) -> Result<Mesh<S>, ValidationError> {
+    ) -> Result<Mesh<M>, ValidationError> {
         if segments < 2 || !angle_degs.is_finite() {
             return Err(ValidationError::InvalidArguments);
         }
@@ -701,13 +700,13 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         // - `angle_radians`: total revolve sweep in radians.
         // - `segments`: how many discrete slices around the revolve.
         // - `metadata`: user metadata to attach to side polygons.
-        fn revolve_ring<S: Clone + Send + Sync>(
+        fn revolve_ring<M: Clone + Send + Sync>(
             ring_coords: &[geo::Coord<Real>],
             ring_is_ccw: bool,
             angle_radians: Real,
             segments: usize,
-            metadata: &Option<S>,
-        ) -> Vec<Polygon<S>> {
+            metadata: &M,
+        ) -> Vec<Polygon<M>> {
             if ring_coords.len() < 2 {
                 return vec![];
             }
@@ -763,12 +762,12 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         // Build a single “cap” polygon from ring_coords at a given angle (0 or angle_radians).
         //  - revolve each 2D point by `angle`, produce a 3D ring
         //  - if `flip` is true, reverse the ring so the normal is inverted
-        fn build_cap_polygon<S: Clone + Send + Sync>(
+        fn build_cap_polygon<M: Clone + Send + Sync>(
             ring_coords: &[geo::Coord<Real>],
             angle: Real,
             flip: bool,
-            metadata: &Option<S>,
-        ) -> Option<Polygon<S>> {
+            metadata: &M,
+        ) -> Option<Polygon<M>> {
             if ring_coords.len() < 3 {
                 return None;
             }
@@ -937,17 +936,17 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     ///   coincide (`norm(p[0] - p[n]) < tolerance()`) the path is treated as
     ///   **closed** and no caps are added.
     ///
-    /// * returns - a `Mesh<S>` containing all side quads plus automatically triangulated caps (respecting any holes).
-    pub fn sweep(&self, path: &[Point3<Real>]) -> Mesh<S> {
+    /// * returns - a `Mesh<M>` containing all side quads plus automatically triangulated caps (respecting any holes).
+    pub fn sweep(&self, path: &[Point3<Real>]) -> Mesh<M> {
         // sanity checks
         if path.len() < 2 || self.geometry.0.is_empty() {
-            return Mesh::new();
+            return Mesh::empty(self.metadata.clone());
         }
         if path
             .iter()
             .any(|p| !p.x.is_finite() || !p.y.is_finite() || !p.z.is_finite())
         {
-            return Mesh::new();
+            return Mesh::empty(self.metadata.clone());
         }
         let n_path = path.len();
         let path_is_closed = (path[0] - path[n_path - 1]).norm() < tolerance();
@@ -1043,7 +1042,7 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         }
 
         // build polygons
-        let mut out_polys: Vec<Polygon<S>> = Vec::new();
+        let mut out_polys: Vec<Polygon<M>> = Vec::new();
 
         // side walls, ring-by-ring
         let end_idx = if path_is_closed { n_path } else { n_path - 1 };
@@ -1152,11 +1151,11 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
 /// Helper to build a single Polygon from a “slice” of 3D points.
 ///
 /// If `flip_winding` is true, we reverse the vertex order (so the polygon’s normal flips).
-fn _polygon_from_slice<S: Clone + Send + Sync>(
+fn _polygon_from_slice<M: Clone + Send + Sync>(
     slice_pts: &[Point3<Real>],
     flip_winding: bool,
-    metadata: Option<S>,
-) -> Polygon<S> {
+    metadata: M,
+) -> Polygon<M> {
     if slice_pts.len() < 3 {
         // degenerate polygon
         return Polygon::new(vec![], metadata);

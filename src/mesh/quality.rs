@@ -83,7 +83,7 @@ pub struct MeshQualityMetrics {
     pub edge_length_std: Real,
 }
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// **Mathematical Foundation: Comprehensive Triangle Quality Analysis**
     ///
     /// Analyze triangle quality using multiple geometric metrics:

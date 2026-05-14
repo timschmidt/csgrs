@@ -9,9 +9,9 @@ fn test_polygon_new() {
         Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
         Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
     ];
-    let poly: Polygon<()> = Polygon::new(vertices.clone(), None);
+    let poly: Polygon<()> = Polygon::new(vertices.clone(), ());
     assert_eq!(poly.vertices.len(), 3);
-    assert_eq!(poly.metadata, None);
+    assert_eq!(poly.metadata, ());
     // Plane normal should be +Z for the above points
     assert!(approx_eq(poly.plane.normal().x, 0.0, tolerance()));
     assert!(approx_eq(poly.plane.normal().y, 0.0, tolerance()));
@@ -26,7 +26,7 @@ fn test_polygon_flip() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
-        None,
+        (),
     );
     let plane_normal_before = poly.plane.normal();
     poly.flip();
@@ -59,7 +59,7 @@ fn test_polygon_triangulate() {
             Vertex::new(Point3::new(1.0, 1.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
-        None,
+        (),
     );
     let triangles = poly.triangulate();
     // We expect 2 triangles from a quad
@@ -79,7 +79,7 @@ fn test_polygon_subdivide_triangles() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::z()),
         ],
-        None,
+        (),
     );
     let subs = poly.subdivide_triangles(1.try_into().expect("not 0"));
     // One triangle subdivided once => 4 smaller triangles
@@ -98,7 +98,7 @@ fn test_polygon_recalc_plane_and_normals() {
             Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::zeros()),
             Vertex::new(Point3::new(0.0, 1.0, 0.0), Vector3::zeros()),
         ],
-        None,
+        (),
     );
     poly.set_new_normal();
     assert!(approx_eq(poly.plane.normal().z, 1.0, tolerance()));

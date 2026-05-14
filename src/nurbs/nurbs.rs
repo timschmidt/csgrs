@@ -30,15 +30,15 @@ pub type NurbsResult<T> = Result<T, String>;
 /// Each value can contain multiple disjoint planar regions. Each region has one
 /// exterior compound curve and zero or more interior compound-curve holes.
 #[derive(Clone, Debug)]
-pub struct Nurbs<S: Clone + Send + Sync + Debug = ()> {
+pub struct Nurbs<M: Clone + Send + Sync + Debug = ()> {
     regions: Vec<Region<Real>>,
     bounding_box: OnceLock<Aabb>,
-    pub metadata: Option<S>,
+    pub metadata: M,
 }
 
-impl<S: Clone + Send + Sync + Debug> Nurbs<S> {
+impl<M: Clone + Send + Sync + Debug> Nurbs<M> {
     /// Create an empty NURBS geometry.
-    pub fn empty(metadata: Option<S>) -> Self {
+    pub fn empty(metadata: M) -> Self {
         Self {
             regions: Vec::new(),
             bounding_box: OnceLock::new(),
@@ -47,11 +47,32 @@ impl<S: Clone + Send + Sync + Debug> Nurbs<S> {
     }
 
     /// Create from Curvo regions.
-    pub fn from_regions(regions: Vec<Region<Real>>, metadata: Option<S>) -> Self {
+    pub fn from_regions(regions: Vec<Region<Real>>, metadata: M) -> Self {
         Self {
             regions,
             bounding_box: OnceLock::new(),
             metadata,
+        }
+    }
+
+    /// Return this NURBS geometry with replacement metadata.
+    pub fn with_metadata<T: Clone + Send + Sync + Debug>(self, metadata: T) -> Nurbs<T> {
+        Nurbs {
+            regions: self.regions,
+            bounding_box: OnceLock::new(),
+            metadata,
+        }
+    }
+
+    /// Map this NURBS geometry's metadata while preserving its regions.
+    pub fn map_metadata<T: Clone + Send + Sync + Debug, F>(self, f: F) -> Nurbs<T>
+    where
+        F: FnOnce(M) -> T,
+    {
+        Nurbs {
+            regions: self.regions,
+            bounding_box: OnceLock::new(),
+            metadata: f(self.metadata),
         }
     }
 
@@ -69,19 +90,19 @@ impl<S: Clone + Send + Sync + Debug> Nurbs<S> {
     pub fn from_compound(
         exterior: CompoundCurve2D<Real>,
         holes: Vec<CompoundCurve2D<Real>>,
-        metadata: Option<S>,
+        metadata: M,
     ) -> Self {
         Self::from_regions(vec![Region::new(exterior, holes)], metadata)
     }
 
     /// Create from a single closed curve.
-    pub fn from_curve(curve: NurbsCurve2D<Real>, metadata: Option<S>) -> Self {
+    pub fn from_curve(curve: NurbsCurve2D<Real>, metadata: M) -> Self {
         Self::from_compound(curve.into(), Vec::new(), metadata)
     }
 
     /// Create from a polyline. The point list should be closed for region
     /// booleans; this method closes it if needed.
-    pub fn polyline(points: &[Point2<Real>], metadata: Option<S>) -> NurbsResult<Self> {
+    pub fn polyline(points: &[Point2<Real>], metadata: M) -> NurbsResult<Self> {
         if points.len() < 3 {
             return Err("NURBS polyline needs at least three points".to_string());
         }
@@ -100,7 +121,7 @@ impl<S: Clone + Send + Sync + Debug> Nurbs<S> {
     }
 
     /// Axis-aligned rectangle centered at the origin.
-    pub fn rectangle(width: Real, height: Real, metadata: Option<S>) -> Self {
+    pub fn rectangle(width: Real, height: Real, metadata: M) -> Self {
         let hw = width * 0.5;
         let hh = height * 0.5;
         let points = [
@@ -114,7 +135,7 @@ impl<S: Clone + Send + Sync + Debug> Nurbs<S> {
     }
 
     /// Exact NURBS circle centered at the origin.
-    pub fn circle(radius: Real, metadata: Option<S>) -> NurbsResult<Self> {
+    pub fn circle(radius: Real, metadata: M) -> NurbsResult<Self> {
         let curve =
             NurbsCurve2D::try_circle(&Point2::origin(), &Vector2::x(), &Vector2::y(), radius)
                 .map_err(|e| format!("Failed to create NURBS circle: {e:?}"))?;
@@ -172,7 +193,7 @@ impl<S: Clone + Send + Sync + Debug> Nurbs<S> {
 
     /// Convert into a `Sketch` by tessellating the NURBS boundaries.
     #[cfg(feature = "sketch")]
-    pub fn to_sketch(&self, tolerance: Option<Real>) -> Sketch<S> {
+    pub fn to_sketch(&self, tolerance: Option<Real>) -> Sketch<M> {
         let geometry = self
             .to_multipolygon(tolerance)
             .0
@@ -188,7 +209,7 @@ impl<S: Clone + Send + Sync + Debug> Nurbs<S> {
         &self,
         direction: Vector3<Real>,
         tolerance: Option<Real>,
-    ) -> Mesh<S> {
+    ) -> Mesh<M> {
         self.to_sketch(tolerance).extrude_vector(direction)
     }
 
@@ -313,11 +334,14 @@ impl<S: Clone + Send + Sync + Debug> Nurbs<S> {
     }
 }
 
-impl<S: Clone + Send + Sync + Debug> CSG for Nurbs<S> {
-    fn new() -> Self {
-        Self::empty(None)
+impl Nurbs<()> {
+    /// Create an empty NURBS geometry with unit metadata.
+    pub fn new() -> Self {
+        Self::empty(())
     }
+}
 
+impl<M: Clone + Send + Sync + Debug> CSG for Nurbs<M> {
     fn union(&self, other: &Self) -> Self {
         self.try_union(other)
             .unwrap_or_else(|e| panic!("NURBS union failed: {e}"))

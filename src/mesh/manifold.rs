@@ -6,7 +6,7 @@ use nalgebra::Point3;
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-impl<S: Clone + Debug + Send + Sync> Mesh<S> {
+impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// Checks if the Mesh object is manifold.
     ///
     /// This function defines a comparison function which takes tolerance into account
