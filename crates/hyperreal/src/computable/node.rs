@@ -3105,6 +3105,8 @@ impl Computable {
                         crate::trace_dispatch!("computable", "asin", "endpoint-via-acos");
                         return Self::pi().shift_right(1).add(self.acos().negate());
                     }
+                    crate::trace_dispatch!("computable", "asin", "positive-rational-via-acos");
+                    return Self::pi().shift_right(1).add(self.acos().negate());
                 }
             }
         }

@@ -155,6 +155,36 @@ const ADVERSARIAL_TRANSCENDENTAL_GROUPS: &[BenchGroupDoc] = &[
         ],
     },
     BenchGroupDoc {
+        name: "trig_fuzz_adversarial_approx",
+        description: "Deterministic broad sweeps of sine, cosine, and tangent over tiny, ordinary, huge, pi-offset, and near-pole exact inputs.",
+        benches: &[
+            BenchDoc {
+                name: "sin_sweep_768_p96",
+                description: "Approximates sin over 768 deterministic exact inputs spanning tiny, ordinary, huge, dyadic, rational, and pi-offset cases.",
+            },
+            BenchDoc {
+                name: "cos_sweep_768_p96",
+                description: "Approximates cos over the same 768-input deterministic fuzz sweep.",
+            },
+            BenchDoc {
+                name: "tan_sweep_768_p96",
+                description: "Approximates tan over the same deterministic sweep, including near-half-pi stress cases.",
+            },
+            BenchDoc {
+                name: "sin_promoted_slow_candidates_p96",
+                description: "Approximates sin over promoted slow candidates found by prior sweep-style runs.",
+            },
+            BenchDoc {
+                name: "cos_promoted_slow_candidates_p96",
+                description: "Approximates cos over promoted slow candidates found by prior sweep-style runs.",
+            },
+            BenchDoc {
+                name: "tan_promoted_slow_candidates_p96",
+                description: "Approximates tan over promoted near-pole and large-reduction slow candidates.",
+            },
+        ],
+    },
+    BenchGroupDoc {
         name: "inverse_hyperbolic_adversarial_approx",
         description: "Cold approximation of inverse hyperbolic functions at tiny, moderate, large, and endpoint-adjacent arguments.",
         benches: &[
@@ -309,6 +339,94 @@ fn near_half_pi() -> Computable {
         .add(computable(offset).negate())
 }
 
+fn scaled_rational(seed: u64, exponent: i32) -> Rational {
+    let numerator_seed = i64::try_from((seed % 997) + 1).expect("small numerator fits i64");
+    let denominator_seed = (seed % 251) + 1;
+    let sign = if seed & 1 == 0 { 1 } else { -1 };
+    if exponent >= 0 {
+        let numerator = BigInt::from(sign * numerator_seed) << exponent;
+        rational_big(numerator, BigUint::from(denominator_seed))
+    } else {
+        let shift = usize::try_from(-exponent).expect("negative exponent magnitude fits usize");
+        let denominator = BigUint::from(denominator_seed) << shift;
+        rational_big(BigInt::from(sign * numerator_seed), denominator)
+    }
+}
+
+fn trig_sweep_inputs() -> Vec<Computable> {
+    let mut inputs = Vec::with_capacity(768);
+    let exponents = [
+        -32, -24, -16, -12, -8, -4, -2, -1, 0, 1, 2, 3, 4, 8, 12, 16, 24, 32,
+    ];
+    let mut state = 0x9e37_79b9_7f4a_7c15_u64;
+    while inputs.len() < 520 {
+        state = state
+            .wrapping_mul(6_364_136_223_846_793_005)
+            .wrapping_add(1_442_695_040_888_963_407);
+        let exponent = exponents[(state as usize) % exponents.len()];
+        inputs.push(computable(scaled_rational(state.rotate_left(17), exponent)));
+    }
+
+    let pi = Computable::pi();
+    for exponent in [-32, -24, -16, -8, -4, 0, 4, 8, 16, 24, 32] {
+        for numerator in [-7, -3, -1, 1, 3, 7] {
+            inputs.push(computable(scaled_rational(numerator as u64, exponent)));
+        }
+    }
+    for shift in [8_usize, 16, 24, 32] {
+        let offset = computable(rational_big(
+            BigInt::from(1_u8),
+            BigUint::from(1_u8) << shift,
+        ));
+        inputs.push(
+            pi.clone()
+                .multiply(computable(rational(1, 2)))
+                .add(offset.clone()),
+        );
+        inputs.push(
+            pi.clone()
+                .multiply(computable(rational(1, 2)))
+                .add(offset.clone().negate()),
+        );
+        let huge_pi = pi.clone().multiply(computable(Rational::from_bigint(
+            BigInt::from(1_u8) << shift,
+        )));
+        inputs.push(huge_pi.clone().add(offset.clone()));
+        inputs.push(huge_pi.add(offset.negate()));
+    }
+    while inputs.len() < 768 {
+        state = state
+            .wrapping_mul(6_364_136_223_846_793_005)
+            .wrapping_add(1_442_695_040_888_963_407);
+        let exponent = exponents[(state.rotate_right(11) as usize) % exponents.len()];
+        inputs.push(computable(scaled_rational(
+            state ^ 0xa5a5_a5a5_a5a5_a5a5,
+            exponent,
+        )));
+    }
+    inputs
+}
+
+fn promoted_trig_slow_candidates() -> Vec<Computable> {
+    vec![
+        computable(Rational::from_bigint(BigInt::from(10_u8).pow(30))),
+        computable(Rational::from_bigint(BigInt::from(10_u8).pow(80))),
+        computable(scaled_rational(47, 512)),
+        computable(scaled_rational(191, -512)),
+        huge_pi_plus_offset(),
+        near_half_pi(),
+        Computable::pi()
+            .multiply(computable(Rational::from_bigint(BigInt::from(1_u8) << 768)))
+            .add(computable(rational(1, 1_000_003))),
+        Computable::pi()
+            .multiply(computable(rational(1, 2)))
+            .add(computable(rational_big(
+                BigInt::from(-1_i8),
+                BigUint::from(1_u8) << 96,
+            ))),
+    ]
+}
+
 fn bench_approx<F>(
     group: &mut criterion::BenchmarkGroup<'_, criterion::measurement::WallTime>,
     name: &'static str,
@@ -324,6 +442,24 @@ fn bench_approx<F>(
             |value| black_box(op(value).approx(precision)),
             BatchSize::SmallInput,
         )
+    });
+}
+
+fn bench_approx_sweep<F>(
+    group: &mut criterion::BenchmarkGroup<'_, criterion::measurement::WallTime>,
+    name: &'static str,
+    inputs: &[Computable],
+    precision: i32,
+    op: F,
+) where
+    F: Fn(Computable) -> Computable + Copy,
+{
+    group.bench_function(name, |b| {
+        b.iter(|| {
+            for input in inputs {
+                black_box(op(input.clone()).approx(precision));
+            }
+        })
     });
 }
 
@@ -610,6 +746,40 @@ fn bench_inverse_trig_adversarial(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_trig_fuzz_adversarial(c: &mut Criterion) {
+    let mut group = c.benchmark_group("trig_fuzz_adversarial_approx");
+    configure_group(&mut group);
+    let p = -96;
+    let sweep = trig_sweep_inputs();
+    let promoted = promoted_trig_slow_candidates();
+
+    bench_approx_sweep(&mut group, "sin_sweep_768_p96", &sweep, p, Computable::sin);
+    bench_approx_sweep(&mut group, "cos_sweep_768_p96", &sweep, p, Computable::cos);
+    bench_approx_sweep(&mut group, "tan_sweep_768_p96", &sweep, p, Computable::tan);
+    bench_approx_sweep(
+        &mut group,
+        "sin_promoted_slow_candidates_p96",
+        &promoted,
+        p,
+        Computable::sin,
+    );
+    bench_approx_sweep(
+        &mut group,
+        "cos_promoted_slow_candidates_p96",
+        &promoted,
+        p,
+        Computable::cos,
+    );
+    bench_approx_sweep(
+        &mut group,
+        "tan_promoted_slow_candidates_p96",
+        &promoted,
+        p,
+        Computable::tan,
+    );
+    group.finish();
+}
+
 fn bench_inverse_hyperbolic_adversarial(c: &mut Criterion) {
     let mut group = c.benchmark_group("inverse_hyperbolic_adversarial_approx");
     configure_group(&mut group);
@@ -777,6 +947,7 @@ criterion_group!(
     benches,
     bench_trig_adversarial,
     bench_inverse_trig_adversarial,
+    bench_trig_fuzz_adversarial,
     bench_inverse_hyperbolic_adversarial,
     bench_real_shortcut_adversarial
 );

@@ -58,3 +58,7 @@ harness = false
 [[bench]]
 name = "adversarial_transcendentals"
 harness = false
+
+[[bench]]
+name = "adversarial_library"
+harness = false

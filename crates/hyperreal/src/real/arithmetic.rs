@@ -1066,11 +1066,16 @@ fn sin_pi_neg(r: Rational) -> bool {
 }
 
 impl Real {
+    #[inline]
+    fn has_zero_scale(&self) -> bool {
+        self.rational.sign() == Sign::NoSign
+    }
+
     /// Is this Real exactly zero?
     #[inline]
     pub fn definitely_zero(&self) -> bool {
         crate::trace_dispatch!("real", "definitely_zero", "rational-sign");
-        self.rational.sign() == Sign::NoSign
+        self.has_zero_scale()
     }
 
     /// Return this value as an owned exact rational when that is structurally known.
@@ -4033,10 +4038,10 @@ impl<T: AsRef<Real>> Add<T> for &Real {
                 signal: self.signal.clone(),
             };
         }
-        if self.definitely_zero() {
+        if self.has_zero_scale() {
             return other.clone();
         }
-        if other.definitely_zero() {
+        if other.has_zero_scale() {
             return self.clone();
         }
         if self.class.is_ln() && other.class.is_ln() {
@@ -4146,10 +4151,10 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
                 signal: self.signal.clone(),
             };
         }
-        if other.definitely_zero() {
+        if other.has_zero_scale() {
             return self.clone();
         }
-        if self.definitely_zero() {
+        if self.has_zero_scale() {
             return -other;
         }
         if self.class.is_ln() && other.class.is_ln() {
@@ -4269,7 +4274,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
         if self.class == One && other.class == One {
             return Self::Output::new(&self.rational * &other.rational);
         }
-        if self.definitely_zero() || other.definitely_zero() {
+        if self.has_zero_scale() || other.has_zero_scale() {
             return Self::Output::zero();
         }
         if self.class == One {
@@ -4704,11 +4709,11 @@ impl<T: AsRef<Real>> Div<T> for &Real {
             crate::trace_dispatch!("real", "div", "cached-sqrt-six-over-three-prechecked");
             return Ok(constants::sqrt_six_over_three());
         }
-        if other.definitely_zero() {
+        if other.has_zero_scale() {
             crate::trace_dispatch!("real", "div", "div-by-zero");
             return Err(Problem::DivideByZero);
         }
-        if self.definitely_zero() {
+        if self.has_zero_scale() {
             crate::trace_dispatch!("real", "div", "zero");
             return Ok(Real::zero());
         }

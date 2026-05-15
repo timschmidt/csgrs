@@ -231,9 +231,9 @@ Core scalar algorithms that do not require high-precision transcendental approxi
 | `pure_scalar_algorithm_speed/rational_add` | not run | not run | Adds two nontrivial rational values. |
 | `pure_scalar_algorithm_speed/rational_mul` | 155.42 ns | 146.03 ns - 165.44 ns | Multiplies two nontrivial rational values. |
 | `pure_scalar_algorithm_speed/rational_div` | 33.98 ns | 33.84 ns - 34.18 ns | Divides two nontrivial rational values. |
-| `pure_scalar_algorithm_speed/real_exact_add` | 436.78 ns | 435.25 ns - 438.60 ns | Adds exact rational-backed `Real` values. |
-| `pure_scalar_algorithm_speed/real_exact_mul` | 191.41 ns | 191.17 ns - 191.68 ns | Multiplies exact rational-backed `Real` values. |
-| `pure_scalar_algorithm_speed/real_exact_div` | 107.90 ns | 107.33 ns - 108.75 ns | Divides exact rational-backed `Real` values. |
+| `pure_scalar_algorithm_speed/real_exact_add` | 444.53 ns | 441.90 ns - 447.46 ns | Adds exact rational-backed `Real` values. |
+| `pure_scalar_algorithm_speed/real_exact_mul` | 185.83 ns | 184.71 ns - 187.12 ns | Multiplies exact rational-backed `Real` values. |
+| `pure_scalar_algorithm_speed/real_exact_div` | 106.72 ns | 106.55 ns - 106.90 ns | Divides exact rational-backed `Real` values. |
 | `pure_scalar_algorithm_speed/real_exact_sqrt_reduce` | not run | not run | Reduces an exact square-root expression. |
 | `pure_scalar_algorithm_speed/real_exact_ln_reduce` | not run | not run | Reduces an exact logarithm of a power of two. |
 | `pure_scalar_algorithm_speed/real_pow_small_integer_exponent` | 308.44 ns | 307.37 ns - 309.61 ns | Dispatches `Real::pow` with an exact small-integer exponent. |
@@ -252,12 +252,12 @@ Borrowed versus owned operation overhead for rational and real operands.
 | `borrowed_op_overhead/real_unscaled_add_owned` | not run | not run | Adds owned unscaled transcendental `Real` values. |
 | `borrowed_op_overhead/real_add_refs` | 584.69 ns | 561.82 ns - 606.92 ns | Adds borrowed scaled transcendental `Real` values. |
 | `borrowed_op_overhead/real_add_owned` | not run | not run | Adds owned scaled transcendental `Real` values. |
-| `borrowed_op_overhead/real_dot3_refs_dense_symbolic` | not run | not run | Computes a borrowed three-lane symbolic dot product with no rational shortcut terms. |
-| `borrowed_op_overhead/real_active_dot3_refs_dense_symbolic` | not run | not run | Computes a borrowed three-lane symbolic dot product after the caller has already classified every lane active. |
-| `borrowed_op_overhead/real_dot3_refs_mixed_structural` | not run | not run | Computes a borrowed three-lane symbolic dot product with exact zero and rational scale terms. |
-| `borrowed_op_overhead/real_dot4_refs_dense_symbolic` | not run | not run | Computes a borrowed four-lane symbolic dot product with no rational shortcut terms. |
-| `borrowed_op_overhead/real_active_dot4_refs_dense_symbolic` | not run | not run | Computes a borrowed four-lane symbolic dot product after the caller has already classified every lane active. |
-| `borrowed_op_overhead/real_dot4_refs_mixed_structural` | not run | not run | Computes a borrowed four-lane symbolic dot product with exact zero and rational scale terms. |
+| `borrowed_op_overhead/real_dot3_refs_dense_symbolic` | 3.069 us | 3.060 us - 3.079 us | Computes a borrowed three-lane symbolic dot product with no rational shortcut terms. |
+| `borrowed_op_overhead/real_active_dot3_refs_dense_symbolic` | 3.284 us | 3.278 us - 3.291 us | Computes a borrowed three-lane symbolic dot product after the caller has already classified every lane active. |
+| `borrowed_op_overhead/real_dot3_refs_mixed_structural` | 610.23 ns | 609.34 ns - 611.21 ns | Computes a borrowed three-lane symbolic dot product with exact zero and rational scale terms. |
+| `borrowed_op_overhead/real_dot4_refs_dense_symbolic` | 5.636 us | 5.625 us - 5.653 us | Computes a borrowed four-lane symbolic dot product with no rational shortcut terms. |
+| `borrowed_op_overhead/real_active_dot4_refs_dense_symbolic` | 5.677 us | 5.670 us - 5.688 us | Computes a borrowed four-lane symbolic dot product after the caller has already classified every lane active. |
+| `borrowed_op_overhead/real_dot4_refs_mixed_structural` | 653.48 ns | 651.96 ns - 655.30 ns | Computes a borrowed four-lane symbolic dot product with exact zero and rational scale terms. |
 
 ### `dense_algebra`
 
@@ -297,20 +297,20 @@ Existing symbolic constant algebra cases considered for additional reductions.
 | `symbolic_reductions/ln_scaled_e` | 1.394 us | 1.382 us - 1.408 us | Reduces ln(2 * e). |
 | `symbolic_reductions/sub_pi_three` | 248.16 ns | 244.62 ns - 252.32 ns | Builds the certified pi - 3 constant-offset form. |
 | `symbolic_reductions/pi_minus_three_facts` | 36.67 ns | 36.34 ns - 37.03 ns | Reads structural facts for the cached pi - 3 offset form. |
-| `symbolic_reductions/div_exp_exp` | 572.26 ns | 570.97 ns - 573.54 ns | Reduces e^3 / e. |
-| `symbolic_reductions/div_pi_square_e` | 457.63 ns | 455.88 ns - 459.64 ns | Reduces pi^2 / e. |
-| `symbolic_reductions/div_const_products` | 856.68 ns | 852.25 ns - 861.13 ns | Reduces (pi^3 * e^5) / (pi * e^2). |
-| `symbolic_reductions/inverse_pi` | 88.52 ns | 88.21 ns - 88.89 ns | Builds the reciprocal of pi. |
-| `symbolic_reductions/div_one_pi` | 143.02 ns | 142.27 ns - 144.25 ns | Reduces 1 / pi. |
-| `symbolic_reductions/div_rational_exp` | 280.35 ns | 279.67 ns - 281.08 ns | Reduces 2 / e. |
-| `symbolic_reductions/div_e_pi` | 335.26 ns | 319.47 ns - 351.19 ns | Reduces e / pi. |
-| `symbolic_reductions/mul_pi_inverse_pi` | 277.26 ns | 264.65 ns - 290.87 ns | Multiplies pi by its reciprocal. |
+| `symbolic_reductions/div_exp_exp` | 566.66 ns | 562.95 ns - 570.95 ns | Reduces e^3 / e. |
+| `symbolic_reductions/div_pi_square_e` | 464.50 ns | 463.12 ns - 465.90 ns | Reduces pi^2 / e. |
+| `symbolic_reductions/div_const_products` | 855.78 ns | 852.01 ns - 860.32 ns | Reduces (pi^3 * e^5) / (pi * e^2). |
+| `symbolic_reductions/inverse_pi` | 89.50 ns | 89.20 ns - 89.85 ns | Builds the reciprocal of pi. |
+| `symbolic_reductions/div_one_pi` | 141.50 ns | 140.79 ns - 142.37 ns | Reduces 1 / pi. |
+| `symbolic_reductions/div_rational_exp` | 292.12 ns | 289.84 ns - 294.69 ns | Reduces 2 / e. |
+| `symbolic_reductions/div_e_pi` | 269.92 ns | 261.15 ns - 279.59 ns | Reduces e / pi. |
+| `symbolic_reductions/mul_pi_inverse_pi` | 247.62 ns | 246.97 ns - 248.30 ns | Multiplies pi by its reciprocal. |
 | `symbolic_reductions/mul_pi_e_sqrt_two` | 438.83 ns | 437.88 ns - 439.69 ns | Builds the factored pi * e * sqrt(2) form. |
 | `symbolic_reductions/mul_const_product_sqrt_sqrt` | 685.04 ns | 676.75 ns - 693.88 ns | Cancels sqrt(2) from (pi * e * sqrt(2)) * sqrt(2). |
-| `symbolic_reductions/div_const_product_sqrt_e` | 926.77 ns | 876.56 ns - 979.25 ns | Reduces (pi * e * sqrt(2)) / e. |
-| `symbolic_reductions/inverse_const_product_sqrt` | 591.70 ns | 562.33 ns - 623.32 ns | Builds a rationalized reciprocal of pi * e * sqrt(2). |
-| `symbolic_reductions/inverse_sqrt_two` | 100.33 ns | 99.81 ns - 100.89 ns | Builds the rationalized reciprocal of unit-scaled sqrt(2). |
-| `symbolic_reductions/div_sqrt_two_sqrt_three` | 925.57 ns | 889.53 ns - 964.57 ns | Rationalizes a quotient of two unit-scaled square roots. |
+| `symbolic_reductions/div_const_product_sqrt_e` | 728.58 ns | 725.63 ns - 731.29 ns | Reduces (pi * e * sqrt(2)) / e. |
+| `symbolic_reductions/inverse_const_product_sqrt` | 478.56 ns | 475.73 ns - 482.08 ns | Builds a rationalized reciprocal of pi * e * sqrt(2). |
+| `symbolic_reductions/inverse_sqrt_two` | 101.33 ns | 100.92 ns - 101.81 ns | Builds the rationalized reciprocal of unit-scaled sqrt(2). |
+| `symbolic_reductions/div_sqrt_two_sqrt_three` | 842.52 ns | 838.35 ns - 847.63 ns | Rationalizes a quotient of two unit-scaled square roots. |
 
 <!-- END scalar_micro -->
 
@@ -534,18 +534,31 @@ Cold approximation of asin, acos, and atan near exact values, zero, endpoints, a
 | `inverse_trig_adversarial_approx/asin_zero_p96` | not run | not run | Approximates asin(0), which should collapse before the generic inverse-trig path. |
 | `inverse_trig_adversarial_approx/acos_zero_p96` | not run | not run | Approximates acos(0), which should reduce to pi/2. |
 | `inverse_trig_adversarial_approx/atan_zero_p96` | not run | not run | Approximates atan(0), which should collapse to zero. |
-| `inverse_trig_adversarial_approx/asin_tiny_positive_p96` | 466.54 ns | 442.42 ns - 496.20 ns | Approximates asin(1e-12), stressing the tiny odd series. |
-| `inverse_trig_adversarial_approx/acos_tiny_positive_p96` | 768.11 ns | 763.35 ns - 774.27 ns | Approximates acos(1e-12), stressing pi/2 minus the tiny asin path. |
+| `inverse_trig_adversarial_approx/asin_tiny_positive_p96` | 430.37 ns | 424.97 ns - 436.45 ns | Approximates asin(1e-12), stressing the tiny odd series. |
+| `inverse_trig_adversarial_approx/acos_tiny_positive_p96` | 768.82 ns | 767.20 ns - 770.25 ns | Approximates acos(1e-12), stressing pi/2 minus the tiny asin path. |
 | `inverse_trig_adversarial_approx/atan_tiny_positive_p96` | not run | not run | Approximates atan(1e-12), stressing direct tiny atan setup. |
-| `inverse_trig_adversarial_approx/asin_mid_positive_p96` | 10.058 us | 10.001 us - 10.124 us | Approximates asin(7/10), a generic in-domain value. |
-| `inverse_trig_adversarial_approx/acos_mid_positive_p96` | 8.325 us | 8.148 us - 8.509 us | Approximates acos(7/10), a generic in-domain value. |
-| `inverse_trig_adversarial_approx/atan_mid_positive_p96` | 3.798 us | 3.753 us - 3.856 us | Approximates atan(7/10), a generic in-domain value. |
-| `inverse_trig_adversarial_approx/asin_near_one_p96` | 4.156 us | 4.048 us - 4.298 us | Approximates asin(0.999999), stressing endpoint transforms. |
-| `inverse_trig_adversarial_approx/acos_near_one_p96` | 3.388 us | 3.377 us - 3.400 us | Approximates acos(0.999999), stressing endpoint transforms. |
-| `inverse_trig_adversarial_approx/asin_near_minus_one_p96` | 4.225 us | 4.206 us - 4.245 us | Approximates asin(-0.999999), stressing odd symmetry near the endpoint. |
-| `inverse_trig_adversarial_approx/acos_near_minus_one_p96` | 3.990 us | 3.742 us - 4.344 us | Approximates acos(-0.999999), stressing negative endpoint transforms. |
-| `inverse_trig_adversarial_approx/atan_large_p96` | 1.715 us | 1.674 us - 1.756 us | Approximates atan(8), stressing reciprocal reduction. |
+| `inverse_trig_adversarial_approx/asin_mid_positive_p96` | 8.365 us | 8.333 us - 8.404 us | Approximates asin(7/10), a generic in-domain value. |
+| `inverse_trig_adversarial_approx/acos_mid_positive_p96` | 8.102 us | 8.061 us - 8.159 us | Approximates acos(7/10), a generic in-domain value. |
+| `inverse_trig_adversarial_approx/atan_mid_positive_p96` | 3.712 us | 3.691 us - 3.739 us | Approximates atan(7/10), a generic in-domain value. |
+| `inverse_trig_adversarial_approx/asin_near_one_p96` | 4.076 us | 4.067 us - 4.084 us | Approximates asin(0.999999), stressing endpoint transforms. |
+| `inverse_trig_adversarial_approx/acos_near_one_p96` | 3.636 us | 3.525 us - 3.753 us | Approximates acos(0.999999), stressing endpoint transforms. |
+| `inverse_trig_adversarial_approx/asin_near_minus_one_p96` | 4.212 us | 4.198 us - 4.235 us | Approximates asin(-0.999999), stressing odd symmetry near the endpoint. |
+| `inverse_trig_adversarial_approx/acos_near_minus_one_p96` | 3.637 us | 3.626 us - 3.649 us | Approximates acos(-0.999999), stressing negative endpoint transforms. |
+| `inverse_trig_adversarial_approx/atan_large_p96` | 1.620 us | 1.598 us - 1.644 us | Approximates atan(8), stressing reciprocal reduction. |
 | `inverse_trig_adversarial_approx/atan_huge_p96` | 637.59 ns | 630.68 ns - 647.40 ns | Approximates atan(10^30), stressing very large reciprocal reduction. |
+
+### `trig_fuzz_adversarial_approx`
+
+Deterministic broad sweeps of sine, cosine, and tangent over tiny, ordinary, huge, pi-offset, and near-pole exact inputs.
+
+| Benchmark output | Mean | 95% CI | What it measures |
+| --- | ---: | ---: | --- |
+| `trig_fuzz_adversarial_approx/sin_sweep_768_p96` | 1.763 ms | 1.740 ms - 1.801 ms | Approximates sin over 768 deterministic exact inputs spanning tiny, ordinary, huge, dyadic, rational, and pi-offset cases. |
+| `trig_fuzz_adversarial_approx/cos_sweep_768_p96` | not run | not run | Approximates cos over the same 768-input deterministic fuzz sweep. |
+| `trig_fuzz_adversarial_approx/tan_sweep_768_p96` | not run | not run | Approximates tan over the same deterministic sweep, including near-half-pi stress cases. |
+| `trig_fuzz_adversarial_approx/sin_promoted_slow_candidates_p96` | 17.250 us | 16.904 us - 17.771 us | Approximates sin over promoted slow candidates found by prior sweep-style runs. |
+| `trig_fuzz_adversarial_approx/cos_promoted_slow_candidates_p96` | 18.142 us | 17.793 us - 18.549 us | Approximates cos over promoted slow candidates found by prior sweep-style runs. |
+| `trig_fuzz_adversarial_approx/tan_promoted_slow_candidates_p96` | 32.258 us | 31.911 us - 32.732 us | Approximates tan over promoted near-pole and large-reduction slow candidates. |
 
 ### `inverse_hyperbolic_adversarial_approx`
 
@@ -554,17 +567,17 @@ Cold approximation of inverse hyperbolic functions at tiny, moderate, large, and
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
 | `inverse_hyperbolic_adversarial_approx/asinh_tiny_positive_p128` | 592.23 ns | 579.06 ns - 610.33 ns | Approximates asinh(1e-12), stressing cancellation avoidance near zero. |
-| `inverse_hyperbolic_adversarial_approx/asinh_mid_positive_p128` | 7.571 us | 7.563 us - 7.579 us | Approximates asinh(1/2), a moderate positive value. |
-| `inverse_hyperbolic_adversarial_approx/asinh_large_positive_p128` | 7.137 us | 7.104 us - 7.180 us | Approximates asinh(10^6), stressing large-input logarithmic behavior. |
-| `inverse_hyperbolic_adversarial_approx/asinh_large_negative_p128` | 7.648 us | 7.408 us - 7.965 us | Approximates asinh(-10^6), stressing odd symmetry for large inputs. |
-| `inverse_hyperbolic_adversarial_approx/acosh_one_plus_tiny_p128` | 6.811 us | 6.724 us - 6.932 us | Approximates acosh(1 + 1e-12), stressing the near-one endpoint. |
+| `inverse_hyperbolic_adversarial_approx/asinh_mid_positive_p128` | 7.602 us | 7.565 us - 7.642 us | Approximates asinh(1/2), a moderate positive value. |
+| `inverse_hyperbolic_adversarial_approx/asinh_large_positive_p128` | 7.147 us | 7.075 us - 7.236 us | Approximates asinh(10^6), stressing large-input logarithmic behavior. |
+| `inverse_hyperbolic_adversarial_approx/asinh_large_negative_p128` | 7.233 us | 7.207 us - 7.259 us | Approximates asinh(-10^6), stressing odd symmetry for large inputs. |
+| `inverse_hyperbolic_adversarial_approx/acosh_one_plus_tiny_p128` | 6.765 us | 6.625 us - 6.932 us | Approximates acosh(1 + 1e-12), stressing the near-one endpoint. |
 | `inverse_hyperbolic_adversarial_approx/acosh_sqrt_two_p128` | 128.95 ns | 126.43 ns - 131.96 ns | Approximates acosh(sqrt(2)), a symbolic square-root input. |
 | `inverse_hyperbolic_adversarial_approx/acosh_two_p128` | 94.91 ns | 93.64 ns - 96.06 ns | Approximates acosh(2), a moderate exact rational. |
-| `inverse_hyperbolic_adversarial_approx/acosh_large_positive_p128` | 7.178 us | 7.094 us - 7.287 us | Approximates acosh(10^6), stressing large-input logarithmic behavior. |
+| `inverse_hyperbolic_adversarial_approx/acosh_large_positive_p128` | 7.277 us | 7.185 us - 7.398 us | Approximates acosh(10^6), stressing large-input logarithmic behavior. |
 | `inverse_hyperbolic_adversarial_approx/atanh_tiny_positive_p128` | 540.27 ns | 535.23 ns - 546.50 ns | Approximates atanh(1e-12), stressing the tiny odd series. |
 | `inverse_hyperbolic_adversarial_approx/atanh_mid_positive_p128` | 268.55 ns | 263.71 ns - 274.73 ns | Approximates atanh(1/2), a moderate exact rational. |
-| `inverse_hyperbolic_adversarial_approx/atanh_near_one_p128` | 6.226 us | 6.210 us - 6.241 us | Approximates atanh(0.999999), stressing endpoint logarithmic behavior. |
-| `inverse_hyperbolic_adversarial_approx/atanh_near_minus_one_p128` | 6.525 us | 6.432 us - 6.637 us | Approximates atanh(-0.999999), stressing odd symmetry near the endpoint. |
+| `inverse_hyperbolic_adversarial_approx/atanh_near_one_p128` | 6.224 us | 6.155 us - 6.317 us | Approximates atanh(0.999999), stressing endpoint logarithmic behavior. |
+| `inverse_hyperbolic_adversarial_approx/atanh_near_minus_one_p128` | 6.667 us | 6.508 us - 6.843 us | Approximates atanh(-0.999999), stressing odd symmetry near the endpoint. |
 
 ### `real_shortcut_adversarial`
 
