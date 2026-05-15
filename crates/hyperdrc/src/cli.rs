@@ -129,6 +129,18 @@ pub enum Check {
     DifferentialPairReadiness,
     /// Variant `DifferentialPairSpacingReadiness`.
     DifferentialPairSpacingReadiness,
+    /// Variant `DifferentialPairWidthReadiness`.
+    DifferentialPairWidthReadiness,
+    /// Variant `DifferentialPairNeckdownReadiness`.
+    DifferentialPairNeckdownReadiness,
+    /// Variant `DifferentialPairSkewReadiness`.
+    DifferentialPairSkewReadiness,
+    /// Variant `DifferentialPairToPairSpacingReadiness`.
+    DifferentialPairToPairSpacingReadiness,
+    /// Variant `DifferentialPairViaProximityReadiness`.
+    DifferentialPairViaProximityReadiness,
+    /// Variant `DifferentialPairViaReturnReadiness`.
+    DifferentialPairViaReturnReadiness,
     /// Variant `DifferentialPairViaSymmetryReadiness`.
     DifferentialPairViaSymmetryReadiness,
     /// Variant `DifferentialPairReturnReadiness`.
@@ -137,30 +149,52 @@ pub enum Check {
     ReferencePlaneReadiness,
     /// Variant `ReferencePlaneVoidReadiness`.
     ReferencePlaneVoidReadiness,
+    /// Variant `SplitPlaneCrossingReadiness`.
+    SplitPlaneCrossingReadiness,
+    /// Variant `ReturnPathProximityReadiness`.
+    ReturnPathProximityReadiness,
     /// Variant `OrphanedZoneReadiness`.
     OrphanedZoneReadiness,
     /// Variant `SameNetIslandReadiness`.
     SameNetIslandReadiness,
+    /// Variant `SameNetDrillBreakReadiness`.
+    SameNetDrillBreakReadiness,
+    /// Variant `DifferentNetShortReadiness`.
+    DifferentNetShortReadiness,
     /// Variant `ReturnPathReadiness`.
     ReturnPathReadiness,
     /// Variant `HighCurrentReadiness`.
     HighCurrentReadiness,
     /// Variant `PowerViaArrayReadiness`.
     PowerViaArrayReadiness,
+    /// Variant `PowerViaReturnReadiness`.
+    PowerViaReturnReadiness,
     /// Variant `ThermalViaReadiness`.
     ThermalViaReadiness,
+    /// Variant `ThermalViaDistributionReadiness`.
+    ThermalViaDistributionReadiness,
     /// Variant `PowerPlaneReadiness`.
     PowerPlaneReadiness,
     /// Variant `HighCurrentNeckReadiness`.
     HighCurrentNeckReadiness,
+    /// Variant `PowerPadEntryReadiness`.
+    PowerPadEntryReadiness,
     /// Variant `VoltageClearanceReadiness`.
     VoltageClearanceReadiness,
+    /// Variant `ProtectiveEarthSpacingReadiness`.
+    ProtectiveEarthSpacingReadiness,
+    /// Variant `SurgeProtectionKeepoutReadiness`.
+    SurgeProtectionKeepoutReadiness,
     /// Variant `SensitiveNetSpacingReadiness`.
     SensitiveNetSpacingReadiness,
     /// Variant `SensitiveReturnReadiness`.
     SensitiveReturnReadiness,
+    /// Variant `MixedSignalPartitionReadiness`.
+    MixedSignalPartitionReadiness,
     /// Variant `RfKeepoutReadiness`.
     RfKeepoutReadiness,
+    /// Variant `AntennaCopperKeepoutReadiness`.
+    AntennaCopperKeepoutReadiness,
     /// Variant `RfViaFenceReadiness`.
     RfViaFenceReadiness,
     /// Variant `ChassisStitchingReadiness`.
@@ -191,8 +225,12 @@ pub enum Check {
     DecouplingProximityReadiness,
     /// Variant `EsdProtectionReadiness`.
     EsdProtectionReadiness,
+    /// Variant `EsdReturnPathReadiness`.
+    EsdReturnPathReadiness,
     /// Variant `SwitchNodeKeepoutReadiness`.
     SwitchNodeKeepoutReadiness,
+    /// Variant `InductorCopperKeepoutReadiness`.
+    InductorCopperKeepoutReadiness,
     /// Variant `TestpointCoverageReadiness`.
     TestpointCoverageReadiness,
     /// Variant `TestpointAccessibilityReadiness`.
@@ -211,6 +249,10 @@ pub enum Check {
     FiducialKeepoutReadiness,
     /// Variant `DensePadEscapeReadiness`.
     DensePadEscapeReadiness,
+    /// Variant `DensePadViaSpacingReadiness`.
+    DensePadViaSpacingReadiness,
+    /// Variant `DensePadMaskBridgeReadiness`.
+    DensePadMaskBridgeReadiness,
     /// Variant `SelectiveWaveSolderKeepoutReadiness`.
     SelectiveWaveSolderKeepoutReadiness,
     /// Variant `PressFitKeepoutReadiness`.
@@ -328,22 +370,39 @@ pub const DEFAULT_CHECKS: &[Check] = &[
     Check::ControlledImpedanceReadiness,
     Check::DifferentialPairReadiness,
     Check::DifferentialPairSpacingReadiness,
+    Check::DifferentialPairWidthReadiness,
+    Check::DifferentialPairNeckdownReadiness,
+    Check::DifferentialPairSkewReadiness,
+    Check::DifferentialPairToPairSpacingReadiness,
+    Check::DifferentialPairViaProximityReadiness,
+    Check::DifferentialPairViaReturnReadiness,
     Check::DifferentialPairViaSymmetryReadiness,
     Check::DifferentialPairReturnReadiness,
     Check::ReferencePlaneReadiness,
     Check::ReferencePlaneVoidReadiness,
+    Check::SplitPlaneCrossingReadiness,
+    Check::ReturnPathProximityReadiness,
     Check::OrphanedZoneReadiness,
     Check::SameNetIslandReadiness,
+    Check::SameNetDrillBreakReadiness,
+    Check::DifferentNetShortReadiness,
     Check::ReturnPathReadiness,
     Check::HighCurrentReadiness,
     Check::PowerViaArrayReadiness,
+    Check::PowerViaReturnReadiness,
     Check::ThermalViaReadiness,
+    Check::ThermalViaDistributionReadiness,
     Check::PowerPlaneReadiness,
     Check::HighCurrentNeckReadiness,
+    Check::PowerPadEntryReadiness,
     Check::VoltageClearanceReadiness,
+    Check::ProtectiveEarthSpacingReadiness,
+    Check::SurgeProtectionKeepoutReadiness,
     Check::SensitiveNetSpacingReadiness,
     Check::SensitiveReturnReadiness,
+    Check::MixedSignalPartitionReadiness,
     Check::RfKeepoutReadiness,
+    Check::AntennaCopperKeepoutReadiness,
     Check::RfViaFenceReadiness,
     Check::ChassisStitchingReadiness,
     Check::EdgeStitchingReadiness,
@@ -359,7 +418,9 @@ pub const DEFAULT_CHECKS: &[Check] = &[
     Check::ConnectorReturnPathReadiness,
     Check::DecouplingProximityReadiness,
     Check::EsdProtectionReadiness,
+    Check::EsdReturnPathReadiness,
     Check::SwitchNodeKeepoutReadiness,
+    Check::InductorCopperKeepoutReadiness,
     Check::TestpointCoverageReadiness,
     Check::TestpointAccessibilityReadiness,
     Check::TestpointCopperClearanceReadiness,
@@ -369,6 +430,8 @@ pub const DEFAULT_CHECKS: &[Check] = &[
     Check::LocalFiducialReadiness,
     Check::FiducialKeepoutReadiness,
     Check::DensePadEscapeReadiness,
+    Check::DensePadViaSpacingReadiness,
+    Check::DensePadMaskBridgeReadiness,
     Check::SelectiveWaveSolderKeepoutReadiness,
     Check::PressFitKeepoutReadiness,
     Check::ConformalCoatingKeepoutReadiness,
@@ -842,6 +905,18 @@ mod tests {
             "--check",
             "differential-pair-spacing-readiness",
             "--check",
+            "differential-pair-width-readiness",
+            "--check",
+            "differential-pair-neckdown-readiness",
+            "--check",
+            "differential-pair-skew-readiness",
+            "--check",
+            "differential-pair-to-pair-spacing-readiness",
+            "--check",
+            "differential-pair-via-proximity-readiness",
+            "--check",
+            "differential-pair-via-return-readiness",
+            "--check",
             "differential-pair-return-readiness",
             "--check",
             "edge-stitching-readiness",
@@ -850,9 +925,17 @@ mod tests {
             "--check",
             "reference-plane-void-readiness",
             "--check",
+            "split-plane-crossing-readiness",
+            "--check",
+            "return-path-proximity-readiness",
+            "--check",
             "orphaned-zone-readiness",
             "--check",
             "same-net-island-readiness",
+            "--check",
+            "same-net-drill-break-readiness",
+            "--check",
+            "different-net-short-readiness",
             "--check",
             "return-path-readiness",
             "--check",
@@ -860,19 +943,33 @@ mod tests {
             "--check",
             "power-via-array-readiness",
             "--check",
+            "power-via-return-readiness",
+            "--check",
             "thermal-via-readiness",
+            "--check",
+            "thermal-via-distribution-readiness",
             "--check",
             "power-plane-readiness",
             "--check",
             "high-current-neck-readiness",
             "--check",
+            "power-pad-entry-readiness",
+            "--check",
             "voltage-clearance-readiness",
+            "--check",
+            "protective-earth-spacing-readiness",
+            "--check",
+            "surge-protection-keepout-readiness",
             "--check",
             "sensitive-net-spacing-readiness",
             "--check",
             "sensitive-return-readiness",
             "--check",
+            "mixed-signal-partition-readiness",
+            "--check",
             "rf-keepout-readiness",
+            "--check",
+            "antenna-copper-keepout-readiness",
             "--check",
             "rf-via-fence-readiness",
             "--check",
@@ -902,7 +999,11 @@ mod tests {
             "--check",
             "esd-protection-readiness",
             "--check",
+            "esd-return-path-readiness",
+            "--check",
             "switch-node-keepout-readiness",
+            "--check",
+            "inductor-copper-keepout-readiness",
             "--check",
             "testpoint-coverage-readiness",
             "--check",
@@ -921,6 +1022,10 @@ mod tests {
             "fiducial-keepout-readiness",
             "--check",
             "dense-pad-escape-readiness",
+            "--check",
+            "dense-pad-via-spacing-readiness",
+            "--check",
+            "dense-pad-mask-bridge-readiness",
             "--check",
             "selective-wave-solder-keepout-readiness",
             "--check",
@@ -1053,22 +1158,39 @@ mod tests {
                 Check::ControlledImpedanceReadiness,
                 Check::DifferentialPairReadiness,
                 Check::DifferentialPairSpacingReadiness,
+                Check::DifferentialPairWidthReadiness,
+                Check::DifferentialPairNeckdownReadiness,
+                Check::DifferentialPairSkewReadiness,
+                Check::DifferentialPairToPairSpacingReadiness,
+                Check::DifferentialPairViaProximityReadiness,
+                Check::DifferentialPairViaReturnReadiness,
                 Check::DifferentialPairReturnReadiness,
                 Check::EdgeStitchingReadiness,
                 Check::ReferencePlaneReadiness,
                 Check::ReferencePlaneVoidReadiness,
+                Check::SplitPlaneCrossingReadiness,
+                Check::ReturnPathProximityReadiness,
                 Check::OrphanedZoneReadiness,
                 Check::SameNetIslandReadiness,
+                Check::SameNetDrillBreakReadiness,
+                Check::DifferentNetShortReadiness,
                 Check::ReturnPathReadiness,
                 Check::HighCurrentReadiness,
                 Check::PowerViaArrayReadiness,
+                Check::PowerViaReturnReadiness,
                 Check::ThermalViaReadiness,
+                Check::ThermalViaDistributionReadiness,
                 Check::PowerPlaneReadiness,
                 Check::HighCurrentNeckReadiness,
+                Check::PowerPadEntryReadiness,
                 Check::VoltageClearanceReadiness,
+                Check::ProtectiveEarthSpacingReadiness,
+                Check::SurgeProtectionKeepoutReadiness,
                 Check::SensitiveNetSpacingReadiness,
                 Check::SensitiveReturnReadiness,
+                Check::MixedSignalPartitionReadiness,
                 Check::RfKeepoutReadiness,
+                Check::AntennaCopperKeepoutReadiness,
                 Check::RfViaFenceReadiness,
                 Check::ChassisStitchingReadiness,
                 Check::GoldFingerReadiness,
@@ -1083,7 +1205,9 @@ mod tests {
                 Check::ConnectorReturnPathReadiness,
                 Check::DecouplingProximityReadiness,
                 Check::EsdProtectionReadiness,
+                Check::EsdReturnPathReadiness,
                 Check::SwitchNodeKeepoutReadiness,
+                Check::InductorCopperKeepoutReadiness,
                 Check::TestpointCoverageReadiness,
                 Check::TestpointAccessibilityReadiness,
                 Check::TestpointCopperClearanceReadiness,
@@ -1093,6 +1217,8 @@ mod tests {
                 Check::LocalFiducialReadiness,
                 Check::FiducialKeepoutReadiness,
                 Check::DensePadEscapeReadiness,
+                Check::DensePadViaSpacingReadiness,
+                Check::DensePadMaskBridgeReadiness,
                 Check::SelectiveWaveSolderKeepoutReadiness,
                 Check::PressFitKeepoutReadiness,
                 Check::ConformalCoatingKeepoutReadiness,

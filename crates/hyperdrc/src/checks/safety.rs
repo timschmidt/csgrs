@@ -151,6 +151,171 @@ pub fn voltage_clearance_readiness(
     violations
 }
 
+/// Warn when likely high-voltage copper is close to protective earth/chassis.
+///
+/// General voltage spacing already reports high-voltage proximity to unrelated
+/// copper. This companion gives PE/chassis boundaries their own review item so
+/// safety intent does not get lost among ordinary spacing findings. IPC-2221B
+/// frames electrical clearance as a board-design constraint, and Lin and Canny,
+/// "A Fast Algorithm for Incremental Distance Calculation", IEEE ICRA, 1991,
+/// motivates the broad/narrow geometry pattern used here: cheap bounding-box
+/// rejection first, exact offset/intersection or boundary distance second.
+pub fn protective_earth_spacing_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    clearance: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    let features = selected_copper_features(board, selected_layers);
+    let high_voltage = features
+        .iter()
+        .copied()
+        .filter(|feature| feature.net.as_deref().is_some_and(looks_high_voltage_net))
+        .collect::<Vec<_>>();
+    let protective = features
+        .iter()
+        .copied()
+        .filter(|feature| {
+            feature
+                .net
+                .as_deref()
+                .is_some_and(looks_protective_earth_net)
+        })
+        .collect::<Vec<_>>();
+    log::trace!(
+        "protective-earth spacing readiness: source={} high_voltage={} protective={} clearance={clearance:.6}",
+        board.source,
+        high_voltage.len(),
+        protective.len()
+    );
+
+    let mut violations = Vec::new();
+    for hv in high_voltage {
+        for pe in &protective {
+            if hv.layer != pe.layer || hv.net == pe.net {
+                continue;
+            }
+            if !sketches_within_clearance(&hv.sketch, &pe.sketch, clearance) {
+                continue;
+            }
+
+            let overlap = hv.sketch.offset(clearance).intersection(&pe.sketch);
+            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            let fallback_hit = shapes.is_empty()
+                && polygon_boundary_distance(
+                    &hv.sketch.to_multipolygon(),
+                    &pe.sketch.to_multipolygon(),
+                ) <= clearance;
+            if shapes.is_empty() && !fallback_hit {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "protective-earth-spacing-readiness",
+                Severity::Warning,
+                vec![hv.layer.clone()],
+                None,
+                shapes,
+                if fallback_hit {
+                    vec![hv.location, pe.location]
+                } else {
+                    Vec::new()
+                },
+                Some(format!(
+                    "likely high-voltage net {:?} is within {clearance:.6} of protective/chassis net {:?}; review protective-earth clearance, creepage, slots, coating, and safety documentation",
+                    hv.net, pe.net
+                )),
+            ));
+        }
+    }
+
+    violations
+}
+
+/// Warn when ordinary copper crowds likely surge/fuse/MOV protection copper.
+///
+/// Surge protection devices deliberately connect to hazardous or chassis domains,
+/// so this check does not flag high-voltage, ground, PE/chassis, same-net, or
+/// other surge-protection copper. It reports unrelated ordinary copper inside
+/// the local keepout band around likely MOV, GDT, spark-gap, TVS, or fuse nets.
+/// IEC 61000-4-5 defines the surge-immunity context behind this review, while
+/// Lin and Canny, "A Fast Algorithm for Incremental Distance Calculation", IEEE
+/// ICRA, 1991, motivates the broad/narrow geometry pattern used below.
+pub fn surge_protection_keepout_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    keepout: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    let features = selected_copper_features(board, selected_layers);
+    let surge = features
+        .iter()
+        .copied()
+        .filter(|feature| {
+            feature
+                .net
+                .as_deref()
+                .is_some_and(looks_surge_protection_net)
+        })
+        .collect::<Vec<_>>();
+    log::trace!(
+        "surge protection keepout readiness: source={} features={} surge_features={} keepout={keepout:.6}",
+        board.source,
+        features.len(),
+        surge.len()
+    );
+
+    let mut violations = Vec::new();
+    for source in surge {
+        for neighbor in &features {
+            if source.layer != neighbor.layer || std::ptr::eq(source, *neighbor) {
+                continue;
+            }
+            if source.net == neighbor.net
+                || neighbor
+                    .net
+                    .as_deref()
+                    .is_some_and(allowed_surge_neighbor_net)
+            {
+                continue;
+            }
+            if !sketches_within_clearance(&source.sketch, &neighbor.sketch, keepout) {
+                continue;
+            }
+
+            let overlap = source.sketch.offset(keepout).intersection(&neighbor.sketch);
+            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            let fallback_hit = shapes.is_empty()
+                && polygon_boundary_distance(
+                    &source.sketch.to_multipolygon(),
+                    &neighbor.sketch.to_multipolygon(),
+                ) <= keepout;
+            if shapes.is_empty() && !fallback_hit {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "surge-protection-keepout-readiness",
+                Severity::Warning,
+                vec![source.layer.clone()],
+                None,
+                shapes,
+                if fallback_hit {
+                    vec![source.location, neighbor.location]
+                } else {
+                    Vec::new()
+                },
+                Some(format!(
+                    "likely surge/fuse protection net {:?} has unrelated copper from net {:?} inside keepout {keepout:.6}; review MOV, GDT, spark-gap, fuse, and surge-current isolation geometry",
+                    source.net, neighbor.net
+                )),
+            ));
+        }
+    }
+
+    violations
+}
+
 fn sketches_within_clearance(
     left: &crate::PcbSketch,
     right: &crate::PcbSketch,
@@ -367,6 +532,18 @@ fn looks_chassis_net(net: &str) -> bool {
         || normalized.contains("CHASSIS")
 }
 
+fn looks_protective_earth_net(net: &str) -> bool {
+    let normalized = net.to_ascii_uppercase();
+    matches!(
+        normalized.as_str(),
+        "PE" | "EARTH" | "PROTECTIVE_EARTH" | "PROTECTIVE-EARTH" | "SAFETY_GND"
+    ) || normalized.contains("CHASSIS")
+        || normalized.contains("SHIELD")
+        || normalized.ends_with("_PE")
+        || normalized.ends_with("-PE")
+        || normalized.contains("EARTH")
+}
+
 fn looks_ground_net(net: &str) -> bool {
     let normalized = net.to_ascii_uppercase();
     matches!(
@@ -416,6 +593,22 @@ fn looks_esd_protection_net(net: &str) -> bool {
     tokens.iter().any(|token| normalized.contains(token))
 }
 
+fn looks_surge_protection_net(net: &str) -> bool {
+    let normalized = net.to_ascii_uppercase();
+    let tokens = [
+        "MOV", "VARISTOR", "GDT", "SPARK", "SPARKGAP", "SURGE", "FUSE", "FUSED", "TVS", "PTC",
+    ];
+
+    tokens.iter().any(|token| normalized.contains(token))
+}
+
+fn allowed_surge_neighbor_net(net: &str) -> bool {
+    looks_high_voltage_net(net)
+        || looks_ground_net(net)
+        || looks_protective_earth_net(net)
+        || looks_surge_protection_net(net)
+}
+
 fn distance(left: [f64; 2], right: [f64; 2]) -> f64 {
     let dx = left[0] - right[0];
     let dy = left[1] - right[1];
@@ -430,6 +623,7 @@ mod tests {
 
     use super::{
         esd_protection_readiness, esd_return_path_readiness, high_voltage_edge_readiness,
+        protective_earth_spacing_readiness, surge_protection_keepout_readiness,
         voltage_clearance_readiness,
     };
 
@@ -470,6 +664,155 @@ mod tests {
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "voltage-clearance-readiness");
+    }
+
+    #[test]
+    fn protective_earth_spacing_readiness_reports_hv_near_chassis() {
+        let board = board_with_copper(vec![
+            copper_rect("HV_BUS", CopperKind::Segment, "F.Cu", 0.0, 0.0, 1.0, 0.2),
+            copper_rect("PE", CopperKind::Segment, "F.Cu", 1.2, 0.0, 2.0, 0.2),
+        ]);
+
+        let violations = protective_earth_spacing_readiness(&board, &[], 0.30, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "protective-earth-spacing-readiness");
+    }
+
+    #[test]
+    fn protective_earth_spacing_readiness_allows_distant_or_non_protective_copper() {
+        let distant = board_with_copper(vec![
+            copper_rect("HV_BUS", CopperKind::Segment, "F.Cu", 0.0, 0.0, 1.0, 0.2),
+            copper_rect("PE", CopperKind::Segment, "F.Cu", 2.0, 0.0, 3.0, 0.2),
+        ]);
+        let ordinary = board_with_copper(vec![
+            copper_rect("HV_BUS", CopperKind::Segment, "F.Cu", 0.0, 0.0, 1.0, 0.2),
+            copper_rect("GPIO", CopperKind::Segment, "F.Cu", 1.2, 0.0, 2.0, 0.2),
+        ]);
+
+        assert!(protective_earth_spacing_readiness(&distant, &[], 0.30, 1.0e-9).is_empty());
+        assert!(protective_earth_spacing_readiness(&ordinary, &[], 0.30, 1.0e-9).is_empty());
+    }
+
+    #[test]
+    fn protective_earth_spacing_readiness_respects_selected_layers() {
+        let board = board_with_copper(vec![
+            copper_rect("HV_BUS", CopperKind::Segment, "B.Cu", 0.0, 0.0, 1.0, 0.2),
+            copper_rect("CHASSIS", CopperKind::Segment, "B.Cu", 1.2, 0.0, 2.0, 0.2),
+        ]);
+
+        assert!(
+            protective_earth_spacing_readiness(&board, &["F.Cu".to_string()], 0.30, 1.0e-9)
+                .is_empty()
+        );
+        assert_eq!(
+            protective_earth_spacing_readiness(&board, &["B.Cu".to_string()], 0.30, 1.0e-9).len(),
+            1
+        );
+    }
+
+    #[test]
+    fn protective_earth_spacing_readiness_culls_sparse_large_cases() {
+        let mut copper = vec![copper_rect(
+            "HV_BUS",
+            CopperKind::Segment,
+            "F.Cu",
+            0.0,
+            0.0,
+            1.0,
+            0.2,
+        )];
+        for index in 0..500 {
+            let x = 100.0 + index as f64 * 2.0;
+            copper.push(copper_rect(
+                "CHASSIS",
+                CopperKind::Segment,
+                "F.Cu",
+                x,
+                0.0,
+                x + 1.0,
+                0.2,
+            ));
+        }
+        let board = board_with_copper(copper);
+
+        let violations = protective_earth_spacing_readiness(&board, &[], 0.30, 1.0e-9);
+
+        assert!(violations.is_empty());
+    }
+
+    #[test]
+    fn surge_protection_keepout_readiness_reports_unrelated_copper() {
+        let board = board_with_copper(vec![
+            copper_rect("MOV_LINE", CopperKind::Pad, "F.Cu", 0.0, 0.0, 0.5, 0.5),
+            copper_rect("GPIO", CopperKind::Segment, "F.Cu", 0.7, 0.0, 1.2, 0.5),
+        ]);
+
+        let violations = surge_protection_keepout_readiness(&board, &[], 0.30, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "surge-protection-keepout-readiness");
+    }
+
+    #[test]
+    fn surge_protection_keepout_readiness_allows_expected_surge_neighbors() {
+        let board = board_with_copper(vec![
+            copper_rect("MOV_LINE", CopperKind::Pad, "F.Cu", 0.0, 0.0, 0.5, 0.5),
+            copper_rect("HV_BUS", CopperKind::Segment, "F.Cu", 0.7, 0.0, 1.2, 0.5),
+            copper_rect("PE", CopperKind::Segment, "F.Cu", -0.7, 0.0, -0.2, 0.5),
+            copper_rect("GND", CopperKind::Segment, "F.Cu", 0.0, 0.7, 0.5, 1.2),
+        ]);
+
+        let violations = surge_protection_keepout_readiness(&board, &[], 0.30, 1.0e-9);
+
+        assert!(violations.is_empty());
+    }
+
+    #[test]
+    fn surge_protection_keepout_readiness_respects_selected_layers() {
+        let board = board_with_copper(vec![
+            copper_rect("FUSE_IN", CopperKind::Pad, "B.Cu", 0.0, 0.0, 0.5, 0.5),
+            copper_rect("GPIO", CopperKind::Segment, "B.Cu", 0.7, 0.0, 1.2, 0.5),
+        ]);
+
+        assert!(
+            surge_protection_keepout_readiness(&board, &["F.Cu".to_string()], 0.30, 1.0e-9)
+                .is_empty()
+        );
+        assert_eq!(
+            surge_protection_keepout_readiness(&board, &["B.Cu".to_string()], 0.30, 1.0e-9).len(),
+            1
+        );
+    }
+
+    #[test]
+    fn surge_protection_keepout_readiness_culls_sparse_large_cases() {
+        let mut copper = vec![copper_rect(
+            "MOV_LINE",
+            CopperKind::Pad,
+            "F.Cu",
+            0.0,
+            0.0,
+            0.5,
+            0.5,
+        )];
+        for index in 0..500 {
+            let x = 100.0 + index as f64 * 2.0;
+            copper.push(copper_rect(
+                "GPIO",
+                CopperKind::Segment,
+                "F.Cu",
+                x,
+                0.0,
+                x + 0.5,
+                0.5,
+            ));
+        }
+        let board = board_with_copper(copper);
+
+        let violations = surge_protection_keepout_readiness(&board, &[], 0.30, 1.0e-9);
+
+        assert!(violations.is_empty());
     }
 
     #[test]

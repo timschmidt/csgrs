@@ -10,11 +10,14 @@ This folder contains benchmark and smoke-performance entry points for
   readiness paths plus dense-pad via-spacing and mask-bridge review in a
   benchmark-style harness. It also times the antenna and inductor copper
   keepout heuristics used by RF and power-converter readiness, plus clustered
-  thermal-via distribution review, ESD clamp return-path proximity, and
-  mixed-signal partition review. The harness also includes a many-island
+  thermal-via distribution review, ESD clamp return-path proximity,
+  protective-earth spacing, surge-protection keepout review, and mixed-signal partition review. The harness also includes same-net drill-break,
+  different-net short, differential pair width/neck-down/skew/via-proximity/return,
+  differential pair-to-pair spacing, split-plane crossing, and return-path
+  proximity probes, high-current pad-entry/via-return review, and a many-island
   minimum-copper-neck case so morphology changes do not regress on split copper
-  pours, plus a small production-artifact package covering BOM/centroid/README
-  parity and package-level handoff checks. It is intended to catch broad
+  pours, plus a small production-artifact package covering BOM/centroid/README parity and
+  package-level handoff checks. It is intended to catch broad
   regressions in the hot paths rather than to prove detailed rule behavior.
 
 ## Usage

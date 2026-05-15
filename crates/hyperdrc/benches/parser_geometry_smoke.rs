@@ -3,13 +3,19 @@ use std::time::Instant;
 use hyperdrc::LayerMetadata;
 use hyperdrc::checks::{
     FileArtifact, TextArtifact, antenna_copper_keepout_readiness, dense_pad_mask_bridge_readiness,
-    dense_pad_via_spacing_readiness, esd_return_path_readiness, inductor_copper_keepout_readiness,
-    local_copper_density_readiness, min_copper_neck_width, mixed_signal_partition_readiness,
-    production_artifact_readiness, thermal_via_distribution_readiness,
-    trace_junction_acid_trap_readiness,
+    dense_pad_via_spacing_readiness, different_net_short_readiness,
+    differential_pair_neckdown_readiness, differential_pair_skew_readiness,
+    differential_pair_to_pair_spacing_readiness, differential_pair_via_proximity_readiness,
+    differential_pair_via_return_readiness, differential_pair_width_readiness,
+    esd_return_path_readiness, inductor_copper_keepout_readiness, local_copper_density_readiness,
+    min_copper_neck_width, mixed_signal_partition_readiness, power_pad_entry_readiness,
+    power_via_return_readiness, production_artifact_readiness, protective_earth_spacing_readiness,
+    return_path_proximity_readiness, same_net_drill_break_readiness,
+    split_plane_crossing_readiness, surge_protection_keepout_readiness,
+    thermal_via_distribution_readiness, trace_junction_acid_trap_readiness,
 };
 use hyperdrc::geometry::{circle_polygon, line_polygon, polygons_to_sketch, rect_polygon};
-use hyperdrc::kicad::{BoardModel, CopperFeature, CopperKind};
+use hyperdrc::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use hyperdrc::sexp;
 
 fn main() {
@@ -136,6 +142,36 @@ fn main() {
             let _ = inductor_copper_keepout_readiness(&power_board, &[], 0.70, 1.0e-9);
         }
     });
+    let pad_entry_board = BoardModel {
+        source: "bench".to_string(),
+        copper: vec![
+            bench_pad("VIN", [0.0, 0.0], [1.0, 1.0]),
+            bench_segment("VIN", [0.5, 0.0], [2.0, 0.0], 0.12),
+        ],
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let power_pad_entry_elapsed = time("power_pad_entry_10k", || {
+        for _ in 0..10_000 {
+            let _ = power_pad_entry_readiness(&pad_entry_board, &[], 0.20, 0.30, 2);
+        }
+    });
+    let power_via_return_board = BoardModel {
+        source: "bench".to_string(),
+        copper: vec![
+            bench_via("VIN", [0.0, 0.0], 0.20),
+            bench_segment("GND", [2.0, 0.0], [3.0, 0.0], 0.20),
+        ],
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let power_via_return_elapsed = time("power_via_return_10k", || {
+        for _ in 0..10_000 {
+            let _ = power_via_return_readiness(&power_via_return_board, &[], 0.50);
+        }
+    });
 
     let thermal_board = BoardModel {
         source: "bench".to_string(),
@@ -168,6 +204,37 @@ fn main() {
     let esd_return_path_elapsed = time("esd_return_path_10k", || {
         for _ in 0..10_000 {
             let _ = esd_return_path_readiness(&safety_board, &[], 0.50);
+        }
+    });
+    let protective_spacing_board = BoardModel {
+        source: "bench".to_string(),
+        copper: vec![
+            bench_segment("HV_BUS", [0.0, 0.0], [1.0, 0.0], 0.20),
+            bench_segment("PE", [1.3, 0.0], [2.3, 0.0], 0.20),
+        ],
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let protective_earth_spacing_elapsed = time("protective_earth_spacing_10k", || {
+        for _ in 0..10_000 {
+            let _ =
+                protective_earth_spacing_readiness(&protective_spacing_board, &[], 0.30, 1.0e-9);
+        }
+    });
+    let surge_keepout_board = BoardModel {
+        source: "bench".to_string(),
+        copper: vec![
+            bench_pad("MOV_LINE", [0.0, 0.0], [0.5, 0.5]),
+            bench_segment("GPIO", [0.8, 0.0], [1.6, 0.0], 0.20),
+        ],
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let surge_keepout_elapsed = time("surge_protection_keepout_10k", || {
+        for _ in 0..10_000 {
+            let _ = surge_protection_keepout_readiness(&surge_keepout_board, &[], 0.30, 1.0e-9);
         }
     });
 
@@ -203,6 +270,109 @@ fn main() {
     let min_copper_neck_elapsed = time("min_copper_neck_1k", || {
         for _ in 0..1_000 {
             let _ = min_copper_neck_width("bench neck islands", &neck_layer, 0.0762, 1.0e-9);
+        }
+    });
+
+    let continuity_board = BoardModel {
+        source: "bench".to_string(),
+        copper: vec![bench_segment("SIG", [-1.0, 0.0], [1.0, 0.0], 0.30)],
+        drills: vec![DrillFeature {
+            location: [0.0, 0.0],
+            diameter: 0.60,
+            net: None,
+            plated: false,
+        }],
+        board_outline: None,
+        panel_features: None,
+    };
+    let continuity_elapsed = time("same_net_drill_break_10k", || {
+        for _ in 0..10_000 {
+            let _ = same_net_drill_break_readiness(&continuity_board, &[], &[], 1.0e-9);
+        }
+    });
+
+    let short_board = BoardModel {
+        source: "bench".to_string(),
+        copper: vec![
+            bench_pad("A", [0.0, 0.0], [0.8, 0.8]),
+            bench_pad("B", [0.3, 0.0], [0.8, 0.8]),
+        ],
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let short_elapsed = time("different_net_short_10k", || {
+        for _ in 0..10_000 {
+            let _ = different_net_short_readiness(&short_board, &[], 1.0e-9);
+        }
+    });
+
+    let differential_pair_board = BoardModel {
+        source: "bench".to_string(),
+        copper: vec![
+            bench_segment("USB1_DP", [0.0, 0.00], [2.0, 0.00], 0.10),
+            bench_segment("USB1_DM", [0.0, 0.20], [2.0, 0.20], 0.10),
+            bench_segment("USB2_DP", [0.0, 0.50], [2.0, 0.50], 0.10),
+            bench_segment("USB2_DM", [0.0, 0.70], [2.0, 0.70], 0.10),
+            bench_via("USB1_DP", [1.0, 0.00], 0.20),
+            bench_via("USB1_DM", [1.1, 0.00], 0.20),
+            bench_via("GND", [1.05, 0.00], 0.20),
+        ],
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let pair_to_pair_elapsed = time("differential_pair_to_pair_spacing_10k", || {
+        for _ in 0..10_000 {
+            let _ =
+                differential_pair_to_pair_spacing_readiness(&differential_pair_board, &[], 0.40);
+        }
+    });
+    let pair_skew_elapsed = time("differential_pair_skew_10k", || {
+        for _ in 0..10_000 {
+            let _ = differential_pair_skew_readiness(&differential_pair_board, &[], 0.20);
+        }
+    });
+    let pair_width_elapsed = time("differential_pair_width_10k", || {
+        for _ in 0..10_000 {
+            let _ = differential_pair_width_readiness(&differential_pair_board, &[], 0.08, 0.04);
+        }
+    });
+    let pair_neckdown_elapsed = time("differential_pair_neckdown_10k", || {
+        for _ in 0..10_000 {
+            let _ = differential_pair_neckdown_readiness(&differential_pair_board, &[], 0.08, 0.50);
+        }
+    });
+    let pair_via_proximity_elapsed = time("differential_pair_via_proximity_10k", || {
+        for _ in 0..10_000 {
+            let _ = differential_pair_via_proximity_readiness(&differential_pair_board, &[], 0.20);
+        }
+    });
+    let pair_via_return_elapsed = time("differential_pair_via_return_10k", || {
+        for _ in 0..10_000 {
+            let _ = differential_pair_via_return_readiness(&differential_pair_board, &[], 0.20);
+        }
+    });
+
+    let split_plane_board = BoardModel {
+        source: "bench".to_string(),
+        copper: vec![
+            bench_zone("GND", [-1.25, 0.0], [1.5, 1.0]),
+            bench_zone("GND", [1.25, 0.0], [1.5, 1.0]),
+            bench_segment("USB_DP", [-2.0, 0.0], [2.0, 0.0], 0.10),
+        ],
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let split_plane_elapsed = time("split_plane_crossing_10k", || {
+        for _ in 0..10_000 {
+            let _ = split_plane_crossing_readiness(&split_plane_board, &[], 0.05, 1.0e-9);
+        }
+    });
+    let return_path_proximity_elapsed = time("return_path_proximity_10k", || {
+        for _ in 0..10_000 {
+            let _ = return_path_proximity_readiness(&split_plane_board, &[], 0.50);
         }
     });
 
@@ -250,10 +420,24 @@ fn main() {
             + dense_pad_mask_elapsed
             + antenna_keepout_elapsed
             + inductor_keepout_elapsed
+            + power_pad_entry_elapsed
+            + power_via_return_elapsed
             + thermal_via_distribution_elapsed
             + esd_return_path_elapsed
+            + protective_earth_spacing_elapsed
+            + surge_keepout_elapsed
             + mixed_signal_partition_elapsed
             + min_copper_neck_elapsed
+            + continuity_elapsed
+            + short_elapsed
+            + pair_to_pair_elapsed
+            + pair_skew_elapsed
+            + pair_width_elapsed
+            + pair_neckdown_elapsed
+            + pair_via_proximity_elapsed
+            + pair_via_return_elapsed
+            + split_plane_elapsed
+            + return_path_proximity_elapsed
             + artifact_elapsed)
             .as_secs_f64()
             * 1000.0

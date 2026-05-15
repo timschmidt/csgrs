@@ -27,6 +27,11 @@ by the data model they need.
 - [`constraints.rs`](constraints.rs) contains config-driven stackup and
   net-class checks that compare parsed KiCad copper against explicit project
   constraints.
+- [`continuity.rs`](continuity.rs) contains same-net continuity checks for
+  geometry that can sever routed copper before bare-board electrical test.
+- [`differential.rs`](differential.rs) contains inferred differential width,
+  neck-down, skew, via-proximity/return, pair-to-pair coupling, and spacing
+  checks using common net suffixes.
 - [`assembly.rs`](assembly.rs) contains component, fiducial keepout,
   testpoint, tooling, mouse-bite, and process-specific assembly-readiness
   checks.
@@ -51,6 +56,47 @@ by the data model they need.
 - [`distance.rs`](distance.rs) contains geometric distance helpers shared by
   checks that need boundary-distance fallbacks in addition to polygon boolean
   operations.
+
+```mermaid
+flowchart TB
+    gerber["Gerber / flattened layer geometry"]
+    board["KiCad board model"]
+    drills["KiCad, Excellon, IPC-D-356 drills"]
+    sidecars["BOM, centroid, netlist, drawings, README"]
+    config["Config: stackup, net classes, policies"]
+
+    gerber --> layer["layer.rs"]
+    gerber --> manifest["manifest.rs"]
+    board --> board_checks["board.rs"]
+    board --> safety["safety.rs"]
+    board --> signal["signal.rs"]
+    board --> rf["rf.rs"]
+    board --> power["power.rs / power_integrity.rs"]
+    board --> continuity["continuity.rs"]
+    board --> differential["differential.rs"]
+    board --> thermal["thermal.rs"]
+    board --> mechanical["mechanical.rs"]
+    board --> assembly["assembly.rs / dense_pad.rs"]
+    drills --> drill["drill.rs / excellon.rs"]
+    sidecars --> artifacts["artifacts.rs and helpers"]
+    config --> constraints["constraints.rs"]
+
+    layer --> violations["Violation records"]
+    manifest --> violations
+    board_checks --> violations
+    safety --> violations
+    signal --> violations
+    rf --> violations
+    power --> violations
+    continuity --> violations
+    differential --> violations
+    thermal --> violations
+    mechanical --> violations
+    assembly --> violations
+    drill --> violations
+    artifacts --> violations
+    constraints --> violations
+```
 
 ## Layer Checks
 
@@ -153,19 +199,33 @@ panel features:
 - `controlled-impedance-readiness`
 - `differential-pair-readiness`
 - `differential-pair-spacing-readiness`
+- `differential-pair-width-readiness`
+- `differential-pair-neckdown-readiness`
+- `differential-pair-skew-readiness`
+- `differential-pair-to-pair-spacing-readiness`
+- `differential-pair-via-proximity-readiness`
+- `differential-pair-via-return-readiness`
 - `differential-pair-via-symmetry-readiness`
 - `differential-pair-return-readiness`
 - `reference-plane-readiness`
 - `reference-plane-void-readiness`
+- `split-plane-crossing-readiness`
+- `return-path-proximity-readiness`
 - `orphaned-zone-readiness`
 - `same-net-island-readiness`
+- `same-net-drill-break-readiness`
+- `different-net-short-readiness`
 - `return-path-readiness`
 - `high-current-readiness`
 - `power-via-array-readiness`
+- `power-via-return-readiness`
 - `thermal-via-readiness`
 - `thermal-via-distribution-readiness`
 - `power-plane-readiness`
 - `high-current-neck-readiness`
+- `power-pad-entry-readiness`
+- `protective-earth-spacing-readiness`
+- `surge-protection-keepout-readiness`
 - `rf-keepout-readiness`
 - `antenna-copper-keepout-readiness`
 - `rf-via-fence-readiness`
@@ -203,7 +263,11 @@ risk, differential-pair return/guard proximity, RF keepout,
 antenna copper-free-region, and via-fence proximity, thermal via count and
 distribution, thermal copper-area support, hot-component spacing,
 thermal/mechanical hole keepouts, likely thermal-pad via coverage, and panel
-geometry that is not visible from a single Gerber layer alone.
+geometry that is not visible from a single Gerber layer alone. Companion checks
+such as antenna keepout, inductor keepout, thermal-via distribution, ESD return
+path, mixed-signal partitioning, and dense-pad via/mask review are independently
+selectable from the CLI even when they belong to the same module and design
+review family.
 
 ## Signal Checks
 
@@ -225,6 +289,8 @@ ground guard.
 
 - `high-voltage-edge-readiness`
 - `voltage-clearance-readiness`
+- `protective-earth-spacing-readiness`
+- `surge-protection-keepout-readiness`
 - `esd-protection-readiness`
 - `esd-return-path-readiness`
 
@@ -232,7 +298,10 @@ These checks keep high-voltage and protective-interface heuristics separate
 from the broader board-context module. They use net-name intent, board outline
 geometry, same-layer copper proximity, and protection/return net hints to flag
 edge creepage, high-voltage spacing, missing edge-interface ESD protection, and
-TVS clamp return-path inductance review items.
+protective-earth/chassis spacing, and TVS clamp return-path inductance review
+items. Surge keepout checks report ordinary copper crowding likely MOV, GDT,
+spark-gap, TVS, or fuse copper while allowing intended high-voltage,
+protective-earth, ground, and same-net adjacency.
 
 ## Mechanical Checks
 
@@ -287,7 +356,33 @@ dielectric thickness against the declared stackup. Controlled-impedance stackups
 also require laminate dielectric constant and loss tangent metadata, and custom
 capability ranges can validate Dk, Df, and Tg.
 
-`net-constraint-readiness` applies optional JSON `net_classes` entries. It
+`differential-pair-width-readiness` reports inferred differential segments below
+the width review threshold and pairs whose positive/negative side widths are
+imbalanced. `differential-pair-neckdown-readiness` reports inferred differential
+segments that are both narrower than the width review threshold and longer than
+the neck-down length limit. `differential-pair-skew-readiness` reports inferred
+differential pairs whose positive and negative sides have approximate parsed
+segment-length skew above the review threshold. `differential-pair-to-pair-spacing-readiness`
+reports separate inferred differential pairs whose same-layer copper is closer
+than the review threshold, making possible pair-to-pair crosstalk visible even
+without explicit net-class pair groups.
+`differential-pair-via-proximity-readiness` reports inferred differential
+layer-change vias without a nearby opposite-side via.
+`differential-pair-via-return-readiness` reports inferred differential
+layer-change vias without nearby parsed ground stitching vias.
+`power-via-return-readiness` reports likely high-current vias whose same-layer
+parsed copper lacks a nearby ground return feature, making large loop-area
+review visible alongside the via-array capacity check.
+`split-plane-crossing-readiness` reports likely high-speed segments that cross
+between separated same-layer ground-zone islands, returning the uncovered trace
+region as the review shape. `return-path-proximity-readiness` reports likely
+high-speed segment or pad copper whose nearest same-layer ground copper exceeds
+the return-distance review threshold. `same-net-drill-break-readiness` reports non-plated drill or slot keepouts that
+intersect netted segment/zone copper, a conservative pre-test continuity signal
+for traces cut by mechanical holes. `different-net-short-readiness` reports
+same-layer copper overlaps between different named nets as a conservative
+bare-board isolation signal. `net-constraint-readiness` applies optional JSON
+`net_classes` entries. It
 matches nets by exact name or simple `*` wildcard pattern, then checks configured
 minimum width, current-carrying minimum width, minimum clearance, voltage-class
 clearance, maximum layer count, minimum via count for layer-changing nets,

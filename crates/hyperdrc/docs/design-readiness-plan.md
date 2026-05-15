@@ -6,6 +6,19 @@ adds net, drill, pad, via, track, zone, and board-outline context for richer
 readiness checks. Excellon drill files are supported as an industry-standard
 sidecar input where possible.
 
+## Numerical Backbone Policy
+
+HyperDRC should inherit the workspace numerical policy: hyperreal-backed
+geometry through `csgrs`, `hyperlattice`, and `hyperlimit` is the primary
+computational backbone for checks that affect geometry, clearance, topology, or
+readiness decisions.
+
+f64 support is allowed only at explicit edges for Gerber/KiCad/Excellon parser
+interop, external CLI/library calls, reports, serialization, and language
+bindings. Those boundaries must be named and documented as exact lifting, lossy
+approximation, rejected input, or lossy export. f64 parser values may be used as
+input records, but they should be lifted before core geometry decisions.
+
 ## Implemented Checks
 
 - `mask-island-keepout`: treat each closed polygon or multipolygon island in a
@@ -159,6 +172,16 @@ sidecar input where possible.
   are missing their mate or put pair sides on different selected copper layers.
 - `differential-pair-spacing-readiness`: warn when likely differential-pair
   KiCad copper sides are farther apart than the configured review threshold.
+- `differential-pair-width-readiness`: warn when inferred differential-pair
+  segments are below the width review threshold or have side-width imbalance.
+- `differential-pair-neckdown-readiness`: warn when inferred differential-pair
+  segments stay below the width threshold longer than the neck-down limit.
+- `differential-pair-skew-readiness`: warn when inferred differential-pair sides
+  have approximate parsed segment-length skew above the review threshold.
+- `differential-pair-via-proximity-readiness`: warn when an inferred
+  differential-pair layer-change via lacks a nearby opposite-side via.
+- `differential-pair-via-return-readiness`: warn when inferred differential-pair
+  layer-change vias lack nearby parsed ground stitching vias.
 - `differential-pair-via-symmetry-readiness`: warn when one side of a likely
   differential pair has an asymmetric via count or via layer set.
 - `differential-pair-return-readiness`: warn when likely differential-pair
@@ -168,6 +191,10 @@ sidecar input where possible.
   present without a parsed ground zone on selected copper layers.
 - `reference-plane-void-readiness`: warn when likely high-speed KiCad copper
   does not overlap parsed ground-zone coverage on selected copper layers.
+- `split-plane-crossing-readiness`: warn when likely high-speed KiCad segments
+  cross between separated same-layer ground-zone islands.
+- `return-path-proximity-readiness`: warn when likely high-speed KiCad segment
+  or pad copper is too far from parsed same-layer ground copper.
 - `orphaned-zone-readiness`: warn when a KiCad copper zone has no parsed
   same-net pad, via, or segment anchor within the configured net clearance.
 - `same-net-island-readiness`: warn when one net appears as disconnected
@@ -178,6 +205,8 @@ sidecar input where possible.
   selected copper layers with fewer than two parsed same-net vias.
 - `power-via-array-readiness`: warn when likely power KiCad vias are isolated
   from the rest of their same-net via array.
+- `power-via-return-readiness`: warn when likely high-current KiCad vias have
+  no nearby parsed same-layer ground return copper.
 - `thermal-via-readiness`: warn when likely power or thermal KiCad zones have
   too few parsed same-net vias.
 - `thermal-via-distribution-readiness`: warn when a likely thermal/power zone
@@ -187,8 +216,14 @@ sidecar input where possible.
   same-net copper zone on selected layers.
 - `high-current-neck-readiness`: warn when likely power KiCad nets have copper
   neck widths below the preferred power width.
+- `power-pad-entry-readiness`: warn when likely high-current pads lack local
+  same-net pour support, parallel vias, or a sufficiently wide entry segment.
 - `voltage-clearance-readiness`: warn when likely high-voltage KiCad nets are
   close to different-net copper using an expanded net-clearance threshold.
+- `protective-earth-spacing-readiness`: warn when likely high-voltage KiCad
+  copper is close to protective earth, chassis, or shield copper.
+- `surge-protection-keepout-readiness`: warn when ordinary unrelated copper
+  crowds likely MOV, GDT, spark-gap, TVS, or fuse copper.
 - `sensitive-net-spacing-readiness`: warn when likely analog, RF, or sensor
   KiCad nets are close to likely noisy power, switching, motor, or high-speed
   nets.
@@ -565,7 +600,9 @@ example before it is considered production-ready.
   necks fall below the preferred power width, and warn when those likely power
   nets have no parsed same-net copper zone on selected layers. They also warn
   when likely power vias are isolated from the rest of their same-net via array,
-  and when likely power or thermal zones have too few same-net vias.
+  when likely high-current vias lack nearby same-layer ground return copper,
+  when likely high-current pads have weak local entry copper, and when likely
+  power or thermal zones have too few same-net vias.
 - Controlled impedance readiness: impedance-rule presence, stackup completeness,
   reference-plane continuity, coplanar ground spacing, return-path voids, and
   layer-change via stitching. Initial KiCad checks warn when likely high-speed
@@ -801,25 +838,38 @@ example before it is considered production-ready.
 - Same-net continuity: broken traces, missing zone refill, unstitched plane
   islands, disconnected thermal spokes, and trace severed by holes or slots.
   Initial KiCad checks warn when a net appears as disconnected copper islands
-  on the same selected layer.
+  on the same selected layer and when non-plated drill/slot keepouts intersect
+  netted routed copper as a pre-test continuity risk.
 - Different-net shorts: copper overlap with net awareness, inner-layer antipad
   shorts, drill breakout shorts, and paste/mask-induced assembly short risk.
+  Initial KiCad checks now flag same-layer copper overlap between different
+  named nets as a pre-test isolation risk.
 - Differential pairs: pair membership, skew, intra-pair spacing, width,
   neck-downs, pair-to-pair spacing, layer-change symmetry, and reference plane
   continuity. Initial KiCad checks infer common pair suffixes and warn when one
   side is missing, the pair sides occupy different selected copper layers, or
   the nearest parsed pair-side spacing exceeds the configured review threshold,
-  and when pair-side copper lacks nearby same-layer ground guard/return copper.
+  when approximate parsed segment widths fall below the review threshold or pair
+  sides are width-imbalanced, when a narrow parsed segment exceeds the neck-down
+  length limit, when approximate parsed segment-length skew exceeds the review
+  threshold, when layer-change vias are not physically paired or lack nearby
+  ground stitching vias, when separate inferred pairs run inside the pair-to-pair
+  spacing review threshold, and when pair-side copper lacks nearby same-layer
+  ground guard/return copper.
 - High-speed return paths: reference-plane void crossings, split-plane
   crossings, missing stitching vias at layer changes, and loop-area excursions.
   Initial KiCad checks warn on likely high-speed copper outside parsed
-  ground-zone coverage and likely high-speed vias without nearby ground
-  stitching.
+  ground-zone coverage, likely high-speed segments crossing separated ground
+  islands, likely high-speed copper too far from same-layer ground return, and
+  likely high-speed vias without nearby ground stitching.
 - Power integrity: decoupling capacitor proximity/orientation, plane neck-downs,
   via count per rail, high-current bottlenecks, and starved regulator thermal
   pads. Initial KiCad checks warn on likely power nets without same-net copper
   zones, narrow power copper, sparse layer-change vias, isolated via-array
   members, and power pads or vias without nearby same-layer ground return copper.
+  Thermal via count and thermal-via distribution are independently selectable
+  readiness gates so release profiles can distinguish absolute via starvation
+  from uneven heat-spreading coverage.
 - Analog/digital/RF segregation: region keepouts, noisy-net proximity, guard
   traces, via fences, antenna keepouts, and copper-free regions under inductors
   or antennas. Initial KiCad checks warn when likely analog, RF, or sensor nets
@@ -830,15 +880,19 @@ example before it is considered production-ready.
   likely antenna nets have same-layer copper inside a stricter copper-free-region
   review distance; and when likely RF or antenna copper lacks a nearby same-layer
   ground via fence.
-  Initial power-converter checks also warn when likely inductor or switch-node
-  copper has same-layer copper inside the stricter inductor copper-free-region
-  review distance.
+  Initial power-converter checks also expose switch-node keepout and inductor
+  copper-free-region review as separate gates, so noisy-node clearance and
+  inductor body copper policy can be tuned independently.
 - ESD/safety: creepage and clearance by voltage class, slot barriers, spark-gap
   geometry, protective earth spacing, fuse/MOV keepouts, and high-voltage
   silkscreen warnings. Initial KiCad checks warn when likely high-voltage nets
-  are close to other nets or enter the board-edge clearance band, and when
-  likely edge connector nets lack nearby ESD/chassis/ground protection copper
-  or likely TVS/ESD clamp copper lacks nearby same-layer ground/chassis return.
+  are close to other nets, close to protective earth/chassis copper, or enter
+  the board-edge clearance band, and when likely edge connector nets lack
+  nearby ESD/chassis/ground protection copper or likely TVS/ESD clamp copper
+  lacks nearby same-layer ground/chassis return. ESD protection proximity and
+  ESD return-path loop review are independently selectable checks. They also
+  warn when ordinary unrelated copper crowds likely MOV, GDT, spark-gap, TVS,
+  or fuse copper.
   Configured net classes can now carry explicit voltage-clearance requirements.
 - Thermal validation: thermal via arrays, copper area under heat-generating
   parts, thermal relief versus heat spreading, hot component spacing, and

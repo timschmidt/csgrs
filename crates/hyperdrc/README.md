@@ -27,6 +27,39 @@ intent rather than solving impedance, and IPC-D-356 parsing focuses on common
 test records and optional access-side/feature/soldermask hints rather than the
 full fixed-column dialect.
 
+## Workflow Overview
+
+```mermaid
+flowchart LR
+    package["Release package"]
+    gerber["Gerber layers"]
+    kicad["KiCad board"]
+    drill["Excellon drills"]
+    ipc["IPC-D-356 net/test data"]
+    sidecars["BOM, centroid, netlist, drawings, README"]
+    config["JSON config and CLI overrides"]
+
+    package --> gerber
+    package --> kicad
+    package --> drill
+    package --> ipc
+    package --> sidecars
+
+    gerber --> load["Load and normalize inputs"]
+    kicad --> load
+    drill --> load
+    ipc --> load
+    sidecars --> load
+    config --> rules["Resolve rule and package policies"]
+
+    load --> checks["Run readiness checks"]
+    rules --> checks
+    checks --> report["Report model with stable finding IDs"]
+    report --> outputs["Text, JSON, JSONL, GeoJSON, SARIF, HTML, JUnit"]
+    report --> overlays["SVG review overlays"]
+    report --> governance["Waivers, baselines, CI summaries"]
+```
+
 ## Library And CLI Split
 
 The reusable API lives in `src/lib.rs`. It exposes parser modules, check
@@ -179,12 +212,14 @@ The default suite covers the main `hyperdrc` readiness surfaces:
   clearance, routed-slot readiness, castellation intent, aspect ratio, and
   cross-source drill-table consistency.
 - KiCad board context: net intent, high-speed and high-current heuristics,
-  reference-plane and return-path coverage, RF keepout, antenna copper-free
+  reference-plane, split-plane, and return-proximity coverage, RF keepout, antenna copper-free
   region, and via-fence review, gold fingers, ESD proximity and TVS clamp
-  return-path proximity, panelization clearance, mounting-hole grounding,
+  return-path proximity, protective-earth spacing, surge-protection keepouts, panelization clearance, mounting-hole grounding,
   plating, edge-clearance, distribution, spacing, copper-keepout review,
-  switch-node and inductor copper keepouts,
-  panel-feature
+  same-net drill-break continuity review, different-net short isolation review,
+  differential pair width, neck-down, skew, via proximity/return, and pair-to-pair spacing review,
+  high-current pad-entry and via-return support review,
+  switch-node and inductor copper keepouts, panel-feature
   outline registration review, edge-plating intent, castellation pitch,
   component edge/hole clearance, dense-pad escape, pad/via spacing,
   mask-bridge review, thermal-via count/distribution, and config-driven
@@ -194,6 +229,10 @@ The default suite covers the main `hyperdrc` readiness surfaces:
   reference-plane, layer-count, via-count, approximate length/skew,
   differential-pair spacing, differential-pair return/guard proximity,
   mixed-signal partitioning, and impedance-control target/tolerance intent.
+  Companion checks for thermal-via distribution, antenna copper keepout,
+  TVS/ESD return path, inductor copper keepout, mixed-signal partitioning, and
+  dense-pad via/mask review are also first-class CLI checks rather than only
+  hidden side effects of broader review groups.
 - Assembly and test readiness: profile-driven component edge/hole/spacing
   clearance, connector rework spacing, fiducials and fiducial copper keepouts,
   tooling holes, mouse bites, testpoint coverage/accessibility including
@@ -311,6 +350,7 @@ style so they can be copied into engineering review notes.
 - Areny, F. A., et al. "A Study of SnAgCu Solder Paste Transfer Efficiency and Effects of Optimal Reflow Profile on Solder Deposits." *Microelectronic Engineering*, 2011, https://doi.org/10.1016/j.mee.2011.02.104.
 - Becerra, Jose, Dennis Willie, and Murad Kurwa. "Press Fit Technology Roadmap and Control Parameters for a High Performance Process." *IPC APEX EXPO Conference Proceedings*, Flextronics, https://www.circuitinsight.com/pdf/press_fit_technology_roadmap_control_parameters_ipc.pdf. Accessed 14 May 2026.
 - Bhargava, Ankit, et al. "DC-DC Buck Converter EMI Reduction Using PCB Layout Modification." *IEEE Transactions on Electromagnetic Compatibility*, vol. 53, no. 3, 2011, pp. 806-813, https://doi.org/10.1109/TEMC.2011.2145421.
+- Black, J. R. "Electromigration--A Brief Survey and Some Recent Results." *IEEE Transactions on Electron Devices*, vol. 16, no. 4, 1969, pp. 338-347, https://doi.org/10.1109/T-ED.1969.16754.
 - Chen, Fen, and Ning-Cheng Lee. "A Novel Solution for No-Clean Flux Not Fully Dried Under Component Terminations." *Indium Corporation Technical Paper*, 2015, https://www.electronics.org/system/files/technical_resource/E39%26S13_03%20-%20Ning%20C.%20Lee.pdf. Accessed 14 May 2026.
 - Chesser, Kevin, and May Porley. "What Are the Basic Guidelines for Layout Design of Mixed-Signal PCBs?" *Analog Dialogue*, vol. 56, no. 3, 2022, https://www.analog.com/en/resources/analog-dialogue/articles/what-are-the-basic-guidelines-for-layout-design-of-mixed-signal-pcbs.html. Accessed 14 May 2026.
 - Eurocircuits. "Tombstoning." *Eurocircuits Technical Guidelines*, https://www.eurocircuits.com/technical-guidelines/pcb-assembly-guidelines/tombstoning/. Accessed 13 May 2026.
@@ -320,8 +360,10 @@ style so they can be copied into engineering review notes.
 - Hinnant, Howard. "chrono-Compatible Low-Level Date Algorithms." *Howard Hinnant's Date Algorithms*, https://howardhinnant.github.io/date_algorithms.html. Accessed 13 May 2026.
 - Hollstein, K., X. Yang, and K. Weide-Zaage. "Thermal Analysis of the Design Parameters of a QFN Package Soldered on a PCB Using a Simulation Approach." *Microelectronics Reliability*, vol. 120, 2021, article 114118, https://doi.org/10.1016/j.microrel.2021.114118.
 - IPC. *Generic Standard on Printed Board Design: IPC-2221B*. IPC, https://www.ipc.org/TOC/IPC-2221B.pdf. Accessed 13 May 2026.
+- IPC. *Standard for Determining Current Carrying Capacity in Printed Board Design: IPC-2152*. IPC, 2009, https://shop.ipc.org/ipc-2152/ipc-2152-standard-only.
 - IPC. *Bare Substrate Electrical Test Data Format: IPC-D-356B*. IPC, 1 Oct. 2002, https://shop.electronics.org/ipc-d-356/ipc-d-356-standard-only.
 - IPC. *Generic Requirements for Surface Mount Design and Land Pattern Standard: IPC-7351B*. IPC, 2010, https://shop.ipc.org/ipc-7351/ipc-7351-standard-only.
+- IEC. *IEC 61000-4-5: Electromagnetic Compatibility (EMC), Part 4-5: Testing and Measurement Techniques, Surge Immunity Test*. International Electrotechnical Commission, https://webstore.iec.ch/publication/4184.
 - IPC. *Press-Fit Standard for Automotive Requirements and Other High-Reliability Applications: IPC-9797*. IPC, May 2020, https://www.ipc.org/TOC/IPC-9797-toc.pdf.
 - IPC. *Requirements for Soldered Electrical and Electronic Assemblies: IPC J-STD-001H*. IPC, Sept. 2020, https://shop.ipc.org/ipc-j-std-001/ipc-j-std-001-standard-only.
 - IPC. *Requirements for Electrical Testing of Unpopulated Printed Boards: IPC-9252B*. IPC, 2016, https://shop.ipc.org/ipc-9252/ipc-9252-standard-only.
@@ -330,6 +372,7 @@ style so they can be copied into engineering review notes.
 - IPC. *Specification for Electroless Nickel/Electroless Palladium/Immersion Gold (ENEPIG) Plating for Printed Circuit Boards: IPC-4556*. IPC, 5 Feb. 2013, https://shop.electronics.org/ipc-4556/ipc-4556-standard-only/Revision-0/english.
 - IPC. *Specification for Immersion Silver Plating for Printed Boards: IPC-4553A*. IPC, 16 June 2009, https://webstore.ansi.org/standards/ipc/ipc4553a2009.
 - IPC. *Stencil Design Guidelines: IPC-7525B*. IPC, https://www.ipc.org/TOC/IPC-7525B.pdf. Accessed 13 May 2026.
+- Kirschning, M., and R. H. Jansen. "Accurate Wide-Range Design Equations for the Frequency-Dependent Characteristic of Parallel Coupled Microstrip Lines." *IEEE Transactions on Microwave Theory and Techniques*, vol. 32, no. 1, 1984, pp. 83-90, https://doi.org/10.1109/TMTT.1984.1132616.
 - Oezkoek, Mustafa, Joe McGurran, Dieter Metzger, and Hugh Roberts. "Wire Bonding and Soldering on ENEPIG and ENEP Surface Finishes with Pure Pd-Layers." *IPC Technical Resource*, Atotech, https://www.ipc.org/system/files/technical_resource/E5%26S34_01.pdf. Accessed 15 May 2026.
 - Chin, Cheng-Hao, and Gnyaneshwar Ramakrishna. "Impact of BGA Escape Trace Design on Performance of Solder Joint." *SMTA International*, Cisco Systems, https://www.circuitnet.com/programs/56311.html. Accessed 14 May 2026.
 - Jonnalagadda, K. "Reliability of Via-in-Pad Structures in Mechanical Cycling Fatigue." *Microelectronics Reliability*, vol. 42, no. 2, 2002, pp. 253-258, https://doi.org/10.1016/S0026-2714(01)00136-6.
