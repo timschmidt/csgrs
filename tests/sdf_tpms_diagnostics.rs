@@ -374,9 +374,15 @@ fn readme_sdf_examples_mesh_non_empty_surfaces() {
 
     let box_mesh = Mesh::<&'static str>::cube(2.0, "tpms");
     for (name, mesh) in [
-        ("gyroid", box_mesh.gyroid(20, 2.0, 0.0, "gyroid")),
-        ("schwarz_p", box_mesh.schwarz_p(20, 2.0, 0.0, "schwarz_p")),
-        ("schwarz_d", box_mesh.schwarz_d(20, 2.0, 0.0, "schwarz_d")),
+        ("gyroid", box_mesh.gyroid_solid(24, 2.0, 0.0, 0.18, "gyroid")),
+        (
+            "schwarz_p",
+            box_mesh.schwarz_p_solid(24, 2.0, 0.0, 0.18, "schwarz_p"),
+        ),
+        (
+            "schwarz_d",
+            box_mesh.schwarz_d_solid(24, 2.0, 0.0, 0.18, "schwarz_d"),
+        ),
     ] {
         assert_mesh_vertices_finite(&mesh);
         assert_sdf_mesh_is_triangular(&mesh);
@@ -384,6 +390,59 @@ fn readme_sdf_examples_mesh_non_empty_surfaces() {
             mesh.polygons.len() > 100,
             "{name} README TPMS example emitted too few triangles: {}",
             mesh.polygons.len()
+        );
+        assert_eq!(
+            boundary_edge_count(&mesh),
+            0,
+            "{name} README TPMS solid should be capped and closed"
+        );
+    }
+}
+
+#[test]
+fn tpms_solid_helpers_emit_closed_capped_meshes() {
+    let cube = Mesh::<&'static str>::cube(2.0, "solid");
+    for (name, mesh) in [
+        ("gyroid", cube.gyroid_solid(22, 2.0, 0.0, 0.2, "gyroid")),
+        (
+            "schwarz_p",
+            cube.schwarz_p_solid(22, 2.0, 0.0, 0.2, "schwarz_p"),
+        ),
+        (
+            "schwarz_d",
+            cube.schwarz_d_solid(22, 2.0, 0.0, 0.2, "schwarz_d"),
+        ),
+    ] {
+        assert_mesh_vertices_finite(&mesh);
+        assert_sdf_mesh_is_triangular(&mesh);
+        assert!(
+            mesh.polygons.len() > 100,
+            "{name} solid emitted too few triangles: {}",
+            mesh.polygons.len()
+        );
+        assert_eq!(
+            boundary_edge_count(&mesh),
+            0,
+            "{name} solid should not have open boundary edges"
+        );
+        assert!(
+            mesh.polygons
+                .iter()
+                .all(|poly| triangle_area2(poly) > Real::EPSILON),
+            "{name} solid emitted degenerate triangles"
+        );
+    }
+}
+
+#[test]
+fn tpms_solid_helpers_reject_non_positive_thickness() {
+    let cube = Mesh::<&'static str>::cube(2.0, "solid");
+    for thickness in [0.0, -0.1, Real::NAN, Real::INFINITY] {
+        assert!(
+            cube.gyroid_solid(12, 2.0, 0.0, thickness, "gyroid")
+                .polygons
+                .is_empty(),
+            "invalid thickness {thickness:?} should return an empty gyroid solid"
         );
     }
 }
