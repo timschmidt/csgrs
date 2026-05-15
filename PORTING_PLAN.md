@@ -57,11 +57,23 @@ csgrs         = CSG objects, modeling operations, topology, metadata, IO, and us
 
 - exact rationals
 - symbolic and computable reals
+- shared reduced expression machinery with symbolic leaves
+- standard-real solver variables and formal infinitesimal perturbation leaves
 - lazy approximation
 - sign, zero, magnitude, and structural facts
 - refinement and conservative comparison support
 
 It should not own CSG, polygon, mesh, or CAD-specific geometry types.
+
+The machinery needed for the feature that gives `hyperreal` its name should be
+developed together with the machinery needed to map a SolveSpace-style solver
+onto `hyperreal`, but the semantics should remain distinct. Both need reduced
+expression graphs, symbolic leaves, dependency sets, structural facts,
+derivative hooks, and cached evaluation. Solver variables are unknown standard
+reals that are bound by an evaluation context during iterative solving.
+Infinitesimal perturbations are ordered formal terms used for exact
+lexicographic signs, tie-breaking, degeneracy handling, and simulation of
+simplicity; they are not ordinary variables to solve for numerically.
 
 ### `hyperlattice`
 
@@ -343,6 +355,41 @@ At this point, the semantic boundary should already be correct:
 
 The hyperreal port should therefore focus on backend behavior, performance, and
 additional certificates rather than rewriting `csgrs` modeling logic again.
+
+This phase should align with the `hypersolve` / SolveSpace-style symbolic
+variable work in `hyperreal`. The shared substrate should support:
+
+- expression nodes with symbolic leaves
+- dependency and independence facts
+- structural sign, zero, magnitude, and domain facts before full evaluation
+- reduced-expression caching across repeated queries
+- derivative hooks for solver residuals and, where useful, perturbation
+  propagation
+- bounded simplification so solver equations and infinitesimal series do not
+  grow without control
+
+The first infinitesimal target should be CAD-useful ordered perturbations, not a
+general nonstandard-analysis universe. A practical model is a finite
+lexicographic perturbation tower:
+
+```text
+standard Real + a1*eps + a2*eps^2 + ...
+```
+
+or an equivalent ordered perturbation-term representation. `hyperlimit` should
+be able to use these terms to decide predicate signs in degenerate cases without
+inventing ad hoc epsilon constants. `hypersolve` should use the same expression
+and fact infrastructure for standard-real variables, residuals, Jacobians, and
+rank diagnostics. The two paths should share representation, reduction,
+caching, and derivative infrastructure while keeping their policy layers
+separate:
+
+- solver symbols are bound by an evaluation context and participate in numeric
+  iteration
+- infinitesimal symbols are ordered formal perturbations and participate in
+  lexicographic comparison
+- `csgrs` consumes the resulting classifications and certificates, but still
+  owns CSG topology, metadata, and modeling policy
 
 ### Phase 10: Public API cleanup
 
