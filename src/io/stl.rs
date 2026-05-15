@@ -12,7 +12,7 @@ use stl_io;
 /// # fn main() -> Result<(), Box<dyn Error>> {
 /// let mesh  = Mesh::<()>::cube(1.0, None);
 /// let bytes = mesh.to_stl_ascii("my_solid");
-/// std::fs::write("stl/my_solid.stl", bytes)?;
+/// assert!(bytes.starts_with("solid my_solid"));
 /// # Ok(())
 /// # }
 /// ```
@@ -57,7 +57,7 @@ pub fn to_stl_ascii<T: Triangulated3D>(
 /// # fn main() -> Result<(), Box<dyn Error>> {
 /// let object = Mesh::<()>::cube(1.0, None);
 /// let bytes  = object.to_stl_binary("my_solid")?;
-/// std::fs::write("stl/my_solid.stl", bytes)?;
+/// assert!(!bytes.is_empty());
 /// # Ok(())
 /// # }
 /// ```

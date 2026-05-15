@@ -1,5 +1,6 @@
 //! `Mesh` struct and implementations of the `CSGOps` trait for `Mesh`
 
+use crate::errors::ValidationError;
 use crate::float_types::{
     parry3d::{
         bounding_volume::Aabb,
@@ -325,10 +326,11 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     ///
     /// ## Errors
     /// If any 3d polygon has fewer than 3 vertices, or Parry returns a `TriMeshBuilderError`
-    pub fn to_rapier_shape(&self) -> SharedShape {
+    pub fn to_rapier_shape(&self) -> Result<SharedShape, ValidationError> {
         let (vertices, indices) = self.get_vertices_and_indices();
-        let trimesh = TriMesh::new(vertices, indices).unwrap();
-        SharedShape::new(trimesh)
+        let trimesh = TriMesh::new(vertices, indices)
+            .map_err(|err| ValidationError::TriMeshError(format!("{err:?}")))?;
+        Ok(SharedShape::new(trimesh))
     }
 
     /// Convert the polygons in this Mesh to a Parry `TriMesh`.\
@@ -336,9 +338,10 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     ///
     /// ## Errors
     /// If any 3d polygon has fewer than 3 vertices, or Parry returns a `TriMeshBuilderError`
-    pub fn to_trimesh(&self) -> Option<TriMesh> {
+    pub fn to_trimesh(&self) -> Result<TriMesh, ValidationError> {
         let (vertices, indices) = self.get_vertices_and_indices();
-        TriMesh::new(vertices, indices).ok()
+        TriMesh::new(vertices, indices)
+            .map_err(|err| ValidationError::TriMeshError(format!("{err:?}")))
     }
 
     /// Uses Parry to check if a point is inside a `Mesh`'s as a `TriMesh`.\
@@ -371,15 +374,15 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
     pub fn mass_properties(
         &self,
         density: Real,
-    ) -> (Real, Point3<Real>, Unit<Quaternion<Real>>) {
-        let trimesh = self.to_trimesh().unwrap();
+    ) -> Result<(Real, Point3<Real>, Unit<Quaternion<Real>>), ValidationError> {
+        let trimesh = self.to_trimesh()?;
         let mp = trimesh.mass_properties(density);
 
-        (
+        Ok((
             mp.mass(),
             mp.local_com,                     // a Point3<Real>
             mp.principal_inertia_local_frame, // a Unit<Quaternion<Real>>
-        )
+        ))
     }
 
     /// Create a Rapier rigid body + collider from this Mesh, using
@@ -392,8 +395,8 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         translation: Vector3<Real>,
         rotation: Vector3<Real>, // rotation axis scaled by angle (radians)
         density: Real,
-    ) -> RigidBodyHandle {
-        let shape = self.to_rapier_shape();
+    ) -> Result<RigidBodyHandle, ValidationError> {
+        let shape = self.to_rapier_shape()?;
 
         // Build a Rapier RigidBody
         let rb = RigidBodyBuilder::dynamic()
@@ -407,7 +410,7 @@ impl<S: Clone + Send + Sync + Debug> Mesh<S> {
         let coll = ColliderBuilder::new(shape).density(density).build();
         co_set.insert_with_parent(coll, rb_handle, rb_set);
 
-        rb_handle
+        Ok(rb_handle)
     }
 
     /// Convert a Mesh into a Bevy `Mesh`.

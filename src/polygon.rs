@@ -463,7 +463,7 @@ impl<S: Clone + Send + Sync> Polygon<S> {
             // We'll keep a queue of triangles to process
             let mut queue = vec![tri];
             for _ in 0..subdivisions.get() {
-                let mut next_level = Vec::new();
+                let mut next_level = Vec::with_capacity(queue.len() * 4);
                 for t in queue {
                     let subs = subdivide_triangle(t);
                     next_level.extend(subs);
@@ -574,13 +574,13 @@ pub fn build_orthonormal_basis(n: Vector3<Real>) -> (Vector3<Real>, Vector3<Real
     (u, v)
 }
 
-// Helper function to subdivide a triangle
-pub fn subdivide_triangle(tri: [Vertex; 3]) -> Vec<[Vertex; 3]> {
+/// Helper function to subdivide a triangle into four smaller triangles.
+pub fn subdivide_triangle(tri: [Vertex; 3]) -> [[Vertex; 3]; 4] {
     let v01 = tri[0].interpolate(&tri[1], 0.5);
     let v12 = tri[1].interpolate(&tri[2], 0.5);
     let v20 = tri[2].interpolate(&tri[0], 0.5);
 
-    vec![
+    [
         [tri[0], v01, v20],
         [v01, tri[1], v12],
         [v20, v12, tri[2]],
