@@ -56,7 +56,10 @@ impl<M: Clone + Send + Sync + Debug> Nurbs<M> {
     }
 
     /// Return this NURBS geometry with replacement metadata.
-    pub fn with_metadata<T: Clone + Send + Sync + Debug>(self, metadata: T) -> Nurbs<T> {
+    pub fn with_metadata<NewM: Clone + Send + Sync + Debug>(
+        self,
+        metadata: NewM,
+    ) -> Nurbs<NewM> {
         Nurbs {
             regions: self.regions,
             bounding_box: OnceLock::new(),
@@ -65,9 +68,9 @@ impl<M: Clone + Send + Sync + Debug> Nurbs<M> {
     }
 
     /// Map this NURBS geometry's metadata while preserving its regions.
-    pub fn map_metadata<T: Clone + Send + Sync + Debug, F>(self, f: F) -> Nurbs<T>
+    pub fn map_metadata<NewM: Clone + Send + Sync + Debug, F>(self, f: F) -> Nurbs<NewM>
     where
-        F: FnOnce(M) -> T,
+        F: FnOnce(M) -> NewM,
     {
         Nurbs {
             regions: self.regions,
