@@ -91,20 +91,23 @@ fn assert_sdf_diagnostics_consistent(mesh: &Mesh<&'static str>, diagnostics: &Sd
 }
 
 fn gyroid_value(point: &Point3<Real>, period: Real) -> Real {
-    let x = point.x / period;
-    let y = point.y / period;
-    let z = point.z / period;
+    let scale = std::f64::consts::TAU as Real / period;
+    let x = point.x * scale;
+    let y = point.y * scale;
+    let z = point.z * scale;
     x.sin() * y.cos() + y.sin() * z.cos() + z.sin() * x.cos()
 }
 
 fn schwarz_p_value(point: &Point3<Real>, period: Real) -> Real {
-    (point.x / period).cos() + (point.y / period).cos() + (point.z / period).cos()
+    let scale = std::f64::consts::TAU as Real / period;
+    (point.x * scale).cos() + (point.y * scale).cos() + (point.z * scale).cos()
 }
 
 fn schwarz_d_value(point: &Point3<Real>, period: Real) -> Real {
-    let (sx, cx) = (point.x / period).sin_cos();
-    let (sy, cy) = (point.y / period).sin_cos();
-    let (sz, cz) = (point.z / period).sin_cos();
+    let scale = std::f64::consts::TAU as Real / period;
+    let (sx, cx) = (point.x * scale).sin_cos();
+    let (sy, cy) = (point.y * scale).sin_cos();
+    let (sz, cz) = (point.z * scale).sin_cos();
     sx * sy * sz + sx * cy * cz + cx * sy * cz + cx * cy * sz
 }
 
@@ -344,4 +347,43 @@ fn closed_sdf_sphere_has_no_boundary_edges_or_degenerate_triangles() {
             .all(|poly| triangle_area2(poly) > Real::EPSILON),
         "sphere SDF emitted degenerate triangles: {diagnostics:#?}"
     );
+}
+
+#[test]
+fn readme_sdf_examples_mesh_non_empty_surfaces() {
+    let (sphere, sphere_diagnostics) = Mesh::<&'static str>::sdf_with_diagnostics(
+        |p| p.coords.norm() - 0.75,
+        (20, 20, 20),
+        Point3::new(-1.1, -1.1, -1.1),
+        Point3::new(1.1, 1.1, 1.1),
+        0.0,
+        "readme_sdf",
+    );
+    assert_sdf_diagnostics_consistent(&sphere, &sphere_diagnostics);
+    assert_mesh_vertices_finite(&sphere);
+    assert_sdf_mesh_is_triangular(&sphere);
+    assert!(
+        sphere_diagnostics.emitted_triangle_count > 0,
+        "README SDF sphere emitted no triangles: {sphere_diagnostics:#?}"
+    );
+    assert_eq!(
+        boundary_edge_count(&sphere),
+        0,
+        "README SDF sphere should be closed: {sphere_diagnostics:#?}"
+    );
+
+    let box_mesh = Mesh::<&'static str>::cube(2.0, "tpms");
+    for (name, mesh) in [
+        ("gyroid", box_mesh.gyroid(20, 2.0, 0.0, "gyroid")),
+        ("schwarz_p", box_mesh.schwarz_p(20, 2.0, 0.0, "schwarz_p")),
+        ("schwarz_d", box_mesh.schwarz_d(20, 2.0, 0.0, "schwarz_d")),
+    ] {
+        assert_mesh_vertices_finite(&mesh);
+        assert_sdf_mesh_is_triangular(&mesh);
+        assert!(
+            mesh.polygons.len() > 100,
+            "{name} README TPMS example emitted too few triangles: {}",
+            mesh.polygons.len()
+        );
+    }
 }

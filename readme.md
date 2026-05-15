@@ -270,7 +270,7 @@ let faces = vec![
     vec![2, 3, 4],
     vec![3, 0, 4],
 ];
-let pyramid = Mesh::polyhedron(points, &faces, None);
+let pyramid = Mesh::<()>::polyhedron(points, &faces, ());
 
 // Metaballs https://en.wikipedia.org/wiki/Metaballs
 use csgrs::mesh::metaballs::MetaBall;
@@ -283,12 +283,12 @@ let resolution = (60, 60, 60);
 let iso_value = 1.0;
 let padding = 1.0;
 
-let metaball_csg = CSG::from_metaballs(
+let metaball_csg = Mesh::<()>::metaballs(
     &balls,
     resolution,
     iso_value,
     padding,
-    None,
+    (),
 );
 
 // Example Signed Distance Field for a sphere of radius 1.5 centered at (0,0,0)
@@ -299,7 +299,7 @@ let min_pt = Point3::new(-2.0, -2.0, -2.0);
 let max_pt = Point3::new( 2.0,  2.0,  2.0);
 let iso_value = 0.0; // Typically zero for SDF-based surfaces
 
-let csg_shape = Mesh::from_sdf(my_sdf, resolution, min_pt, max_pt, iso_value, None);
+let csg_shape = Mesh::<()>::sdf(my_sdf, resolution, min_pt, max_pt, iso_value, ());
 ```
 
 ### CSG Boolean Operations
