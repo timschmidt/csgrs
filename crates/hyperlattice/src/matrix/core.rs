@@ -6811,6 +6811,14 @@ fn right_divide_matrix4<B: Backend>(
     left: [[Scalar<B>; 4]; 4],
     right: [[Scalar<B>; 4]; 4],
 ) -> BlasResult<[[Scalar<B>; 4]; 4]> {
+    if can_use_dense_exact_shared_adjugate4(&right) {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "helper",
+            "right-divide4-dense-exact-shared-adjugate"
+        );
+        return right_divide_matrix4_dense_exact_shared(&left, &right);
+    }
     let right_facts = matrix4_facts(&right);
     if right_facts.is_identity {
         crate::trace_dispatch!("hyperlattice_matrix", "helper", "right-divide4-identity");
@@ -6973,6 +6981,61 @@ fn right_divide_matrix4<B: Backend>(
     };
     Ok(scale_matrix4(
         multiply_arrays4_ref_with_dense_certificate(&left, &adjugate),
+        &inv_det,
+    ))
+}
+
+#[inline]
+fn can_use_dense_exact_shared_adjugate4<B: Backend>(right: &[[Scalar<B>; 4]; 4]) -> bool {
+    B::FUSE_SIGNED_PRODUCT_SUM
+        && matrix4_is_definitely_dense_for_inverse(right)
+        && matrix4_exact_rational_kind(right) != ExactRationalKind::NonRational
+}
+
+#[inline]
+fn right_divide_matrix4_dense_exact_shared<B: Backend>(
+    left: &[[Scalar<B>; 4]; 4],
+    right: &[[Scalar<B>; 4]; 4],
+) -> BlasResult<[[Scalar<B>; 4]; 4]> {
+    let (s, c) = matrix4_factors_dense_exact(right);
+    let det = determinant4_from_factors(&s, &c);
+    let inv_det = det.inverse()?;
+    let adjugate = matrix4_adjugate_from_factors_dense_exact(right, &s, &c);
+    Ok(scale_matrix4(
+        multiply_arrays4_ref_with_dense_certificate(left, &adjugate),
+        &inv_det,
+    ))
+}
+
+#[inline]
+fn right_divide_matrix4_dense_exact_shared_checked<B: Backend>(
+    left: &[[Scalar<B>; 4]; 4],
+    right: &[[Scalar<B>; 4]; 4],
+) -> CheckedBlasResult<[[Scalar<B>; 4]; 4]> {
+    let (s, c) = matrix4_factors_dense_exact(right);
+    let det = determinant4_from_factors(&s, &c);
+    require_known_nonzero(&det)?;
+    let inv_det = det.inverse()?;
+    let adjugate = matrix4_adjugate_from_factors_dense_exact(right, &s, &c);
+    Ok(scale_matrix4(
+        multiply_arrays4_ref_with_dense_certificate(left, &adjugate),
+        &inv_det,
+    ))
+}
+
+#[inline]
+fn right_divide_matrix4_dense_exact_shared_checked_with_abort<B: Backend>(
+    left: &[[Scalar<B>; 4]; 4],
+    right: &[[Scalar<B>; 4]; 4],
+    signal: &AbortSignal,
+) -> CheckedBlasResult<[[Scalar<B>; 4]; 4]> {
+    let (s, c) = matrix4_factors_dense_exact(right);
+    let det = with_abort(determinant4_from_factors(&s, &c), signal);
+    require_known_nonzero(&det)?;
+    let inv_det = det.inverse()?;
+    let adjugate = matrix4_adjugate_from_factors_dense_exact(right, &s, &c);
+    Ok(scale_matrix4(
+        multiply_arrays4_ref_with_dense_certificate(left, &adjugate),
         &inv_det,
     ))
 }
@@ -7514,6 +7577,14 @@ fn right_divide_matrix4_ref<B: Backend>(
     left: &[[Scalar<B>; 4]; 4],
     right: &[[Scalar<B>; 4]; 4],
 ) -> BlasResult<[[Scalar<B>; 4]; 4]> {
+    if can_use_dense_exact_shared_adjugate4(right) {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "helper",
+            "right-divide4-ref-dense-exact-shared-adjugate"
+        );
+        return right_divide_matrix4_dense_exact_shared(left, right);
+    }
     let right_facts = matrix4_facts(right);
     if right_facts.is_identity {
         crate::trace_dispatch!(
@@ -7662,6 +7733,14 @@ fn right_divide_matrix4_checked<B: Backend>(
     left: [[Scalar<B>; 4]; 4],
     right: [[Scalar<B>; 4]; 4],
 ) -> CheckedBlasResult<[[Scalar<B>; 4]; 4]> {
+    if can_use_dense_exact_shared_adjugate4(&right) {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "helper",
+            "right-divide4-checked-dense-exact-shared-adjugate"
+        );
+        return right_divide_matrix4_dense_exact_shared_checked(&left, &right);
+    }
     let right_facts = matrix4_facts(&right);
     if right_facts.is_identity {
         crate::trace_dispatch!(
@@ -7847,6 +7926,14 @@ fn right_divide_matrix4_checked_with_abort<B: Backend>(
     right: [[Scalar<B>; 4]; 4],
     signal: &AbortSignal,
 ) -> CheckedBlasResult<[[Scalar<B>; 4]; 4]> {
+    if can_use_dense_exact_shared_adjugate4(&right) {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "helper",
+            "right-divide4-checked-abort-dense-exact-shared-adjugate"
+        );
+        return right_divide_matrix4_dense_exact_shared_checked_with_abort(&left, &right, signal);
+    }
     let right_facts = matrix4_facts(&right);
     if right_facts.is_identity {
         crate::trace_dispatch!(
@@ -10612,9 +10699,36 @@ fn matrix3_scaled_adjugate_dense_exact<B: Backend>(
         "helper",
         "matrix3-scaled-adjugate-dense-exact"
     );
-    let (adjugate, det) = matrix3_adjugate_and_determinant_dense_exact(matrix);
+    let m = &matrix;
+    let c00 = mul_sub_dense_exact(&m[1][1], &m[2][2], &m[1][2], &m[2][1]);
+    let c01 = mul_sub_dense_exact(&m[0][2], &m[2][1], &m[0][1], &m[2][2]);
+    let c02 = mul_sub_dense_exact(&m[0][1], &m[1][2], &m[0][2], &m[1][1]);
+    let c10 = mul_sub_dense_exact(&m[1][2], &m[2][0], &m[1][0], &m[2][2]);
+    let c11 = mul_sub_dense_exact(&m[0][0], &m[2][2], &m[0][2], &m[2][0]);
+    let c12 = mul_sub_dense_exact(&m[0][2], &m[1][0], &m[0][0], &m[1][2]);
+    let c20 = mul_sub_dense_exact(&m[1][0], &m[2][1], &m[1][1], &m[2][0]);
+    let c21 = mul_sub_dense_exact(&m[0][1], &m[2][0], &m[0][0], &m[2][1]);
+    let c22 = mul_sub_dense_exact(&m[0][0], &m[1][1], &m[0][1], &m[1][0]);
+    let det =
+        Scalar::active_linear_combination3([&m[0][0], &m[0][1], &m[0][2]], [&c00, &c10, &c20]);
     let inv_det = det.inverse()?;
-    Ok(scale_matrix3(adjugate, &inv_det))
+    Ok([
+        [
+            scale_by_shared_factor(c00, &inv_det),
+            scale_by_shared_factor(c01, &inv_det),
+            scale_by_shared_factor(c02, &inv_det),
+        ],
+        [
+            scale_by_shared_factor(c10, &inv_det),
+            scale_by_shared_factor(c11, &inv_det),
+            scale_by_shared_factor(c12, &inv_det),
+        ],
+        [
+            scale_by_shared_factor(c20, &inv_det),
+            scale_by_shared_factor(c21, &inv_det),
+            scale_by_shared_factor(c22, &inv_det),
+        ],
+    ])
 }
 
 #[inline]

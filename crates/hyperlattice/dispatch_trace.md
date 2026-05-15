@@ -100,14 +100,14 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `mat4` | `diagonal_point_batch` | `rational` | 4 | 0 | 0 | 3 | 0 | 0 | 0 | 3 | 0 | 11.75 | 8 | none=3, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `diagonal_reciprocal` | `from-f64` | 1 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 52 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `diagonal_reciprocal` | `rational` | 1 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 52 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
-| `mat4` | `div_matrix` | `from-f64` | 4 | 0 | 0 | 16.75 | 0 | 1 | 1 | 52 | 12.25 | 146.50 | 332 | none=33.50, pow2=9.750, <=8b=2.500, <=64b=0.500, >64b=5.750 |
-| `mat4` | `div_matrix` | `rational` | 4 | 0 | 0 | 16.75 | 0 | 1 | 1 | 52 | 100.75 | 155.25 | 288 | none=49.25, pow2=7.250, <=8b=8.750, <=64b=35.75, >64b=14.75 |
+| `mat4` | `div_matrix` | `from-f64` | 4 | 0 | 0 | 16.75 | 0 | 1 | 1 | 51 | 12.25 | 143.50 | 332 | none=32.50, pow2=9.750, <=8b=2.500, <=64b=0.500, >64b=5.750 |
+| `mat4` | `div_matrix` | `rational` | 4 | 0 | 0 | 16.75 | 0 | 1 | 1 | 51 | 99.75 | 152 | 288 | none=48.50, pow2=7.250, <=8b=8.750, <=64b=35.50, >64b=14.75 |
 | `mat4` | `div_matrix_affine` | `from-f64` | 4 | 1.500 | 3 | 10 | 0 | 1.250 | 0 | 26.75 | 35.25 | 98.50 | 277 | none=23.25, pow2=9.250, <=8b=1, <=64b=1, >64b=14.75 |
 | `mat4` | `div_matrix_affine` | `rational` | 4 | 1.500 | 3 | 10 | 0 | 1.250 | 0 | 26.75 | 41 | 107 | 283 | none=12.25, pow2=7.250, <=8b=0, <=64b=11.25, >64b=11 |
-| `mat4` | `div_matrix_checked` | `from-f64` | 4 | 0 | 0 | 16.75 | 0 | 1 | 1 | 52 | 12.25 | 146.50 | 332 | none=33.50, pow2=9.750, <=8b=2.500, <=64b=0.500, >64b=5.750 |
-| `mat4` | `div_matrix_checked` | `rational` | 4 | 0 | 0 | 16.75 | 0 | 1 | 1 | 52 | 100.75 | 155.25 | 288 | none=49.25, pow2=7.250, <=8b=8.750, <=64b=35.75, >64b=14.75 |
-| `mat4` | `div_matrix_checked_abort` | `from-f64` | 4 | 0 | 0 | 16.75 | 0 | 1 | 1 | 52 | 12.25 | 146.50 | 332 | none=33.50, pow2=9.750, <=8b=2.500, <=64b=0.500, >64b=5.750 |
-| `mat4` | `div_matrix_checked_abort` | `rational` | 4 | 0 | 0 | 16.75 | 0 | 1 | 1 | 52 | 100.75 | 155.25 | 288 | none=49.25, pow2=7.250, <=8b=8.750, <=64b=35.75, >64b=14.75 |
+| `mat4` | `div_matrix_checked` | `from-f64` | 4 | 0 | 0 | 16.75 | 0 | 1 | 1 | 51 | 12.25 | 143.50 | 332 | none=32.50, pow2=9.750, <=8b=2.500, <=64b=0.500, >64b=5.750 |
+| `mat4` | `div_matrix_checked` | `rational` | 4 | 0 | 0 | 16.75 | 0 | 1 | 1 | 51 | 99.75 | 152 | 288 | none=48.50, pow2=7.250, <=8b=8.750, <=64b=35.50, >64b=14.75 |
+| `mat4` | `div_matrix_checked_abort` | `from-f64` | 4 | 0 | 0 | 16.75 | 0 | 1 | 1 | 51 | 12.25 | 143.50 | 332 | none=32.50, pow2=9.750, <=8b=2.500, <=64b=0.500, >64b=5.750 |
+| `mat4` | `div_matrix_checked_abort` | `rational` | 4 | 0 | 0 | 16.75 | 0 | 1 | 1 | 51 | 99.75 | 152 | 288 | none=48.50, pow2=7.250, <=8b=8.750, <=64b=35.50, >64b=14.75 |
 | `mat4` | `identity_direction_batch_assumed` | `from-f64` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `identity_direction_batch_assumed` | `rational` | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
 | `mat4` | `identity_direction_materialize` | `from-f64` | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | none=0, pow2=0, <=8b=0, <=64b=0, >64b=0 |
@@ -616,20 +616,20 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice` | `scalar_method` | `inverse-owned` | 4 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice` | `scalar_op` | `mul-ref-ref` | 3 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice` | `scalar_op` | `neg-owned` | 2 |
-| `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice` | `scalar_query` | `definitely-one` | 24 |
-| `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice` | `scalar_query` | `definitely-zero` | 288 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice` | `scalar_query` | `definitely-one` | 12 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice` | `scalar_query` | `definitely-zero` | 252 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice` | `scalar_query` | `exact-rational-kind` | 64 |
-| `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice` | `scalar_query` | `zero-status` | 52 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice` | `scalar_query` | `zero-status` | 27 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_hyperreal_backend` | `method` | `inverse-owned` | 4 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_hyperreal_backend` | `op` | `active-dot4` | 56 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_hyperreal_backend` | `op` | `active-signed-product-sum2-exact-rational` | 117 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_hyperreal_backend` | `op` | `mul-owned-method-ref` | 64 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_hyperreal_backend` | `op` | `mul-ref-ref` | 3 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 4 |
-| `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 24 |
-| `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 314 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 12 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 278 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_hyperreal_backend` | `query` | `exact-rational-kind` | 64 |
-| `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 52 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 27 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_hyperreal_backend` | `trait_op` | `neg-owned` | 2 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_matrix` | `helper` | `determinant4-from-factors` | 4 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_matrix` | `helper` | `matrix4-factors` | 1 |
@@ -643,11 +643,11 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 36 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_matrix` | `helper` | `mul-sub-pruned` | 3 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_matrix` | `helper` | `multiply4-borrowed-sparse` | 1 |
-| `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_matrix` | `helper` | `multiply4-dense-certified-ref` | 3 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_matrix` | `helper` | `multiply4-dense-ref` | 3 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_matrix` | `helper` | `multiply4-ref-ref-specialized` | 1 |
-| `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_matrix` | `helper` | `right-divide4-exact-right-skip-left-kind` | 4 |
-| `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_matrix` | `helper` | `right-divide4-ref-shared-adjugate` | 4 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_matrix` | `helper` | `right-divide4-exact-right-skip-left-kind` | 1 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_matrix` | `helper` | `right-divide4-ref-dense-exact-shared-adjugate` | 3 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_matrix` | `helper` | `right-divide4-ref-shared-adjugate` | 1 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `hyperlattice_matrix` | `op` | `div-ref-ref` | 4 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `rational` | `dot_product` | `dyadic-shared-denominator` | 8 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `rational` | `dot_product` | `equal-product-denominator` | 9 |
@@ -657,12 +657,12 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `rational` | `product_sum` | `equal-product-denominator` | 7 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `rational` | `product_sum` | `lcm-shared-denominator` | 59 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `real` | `constructor` | `rational` | 244 |
-| `borrowed_ops/hyperreal-rational/mat4 div refs` | `real` | `definitely_zero` | `rational-sign` | 314 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `real` | `definitely_zero` | `rational-sign` | 278 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `real` | `dot_product` | `active-dot4-exact-rational` | 56 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `real` | `inverse` | `prechecked-one` | 4 |
 | `borrowed_ops/hyperreal-rational/mat4 div refs` | `real` | `product_sum` | `exact-rational-shared-denom` | 121 |
-| `borrowed_ops/hyperreal-rational/mat4 div refs` | `real` | `zero_status` | `symbolic-nonzero-scale` | 48 |
-| `borrowed_ops/hyperreal-rational/mat4 div refs` | `real` | `zero_status` | `zero-scale` | 4 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `real` | `zero_status` | `symbolic-nonzero-scale` | 22 |
+| `borrowed_ops/hyperreal-rational/mat4 div refs` | `real` | `zero_status` | `zero-scale` | 5 |
 | `borrowed_ops/hyperreal-rational/mat4 div_scalar_ref` | `hyperlattice` | `scalar_fast_path` | `mul-cached` | 64 |
 | `borrowed_ops/hyperreal-rational/mat4 div_scalar_ref` | `hyperlattice` | `scalar_method` | `inverse-ref` | 4 |
 | `borrowed_ops/hyperreal-rational/mat4 div_scalar_ref` | `hyperlattice` | `scalar_query` | `definitely-zero` | 4 |
@@ -743,7 +743,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/hyperreal-rational/scalar div refs` | `hyperlattice` | `scalar_op` | `div-ref-ref` | 4 |
 | `borrowed_ops/hyperreal-rational/scalar div refs` | `hyperlattice_hyperreal_backend` | `op` | `div-ref-ref` | 4 |
 | `borrowed_ops/hyperreal-rational/scalar div refs` | `real` | `constructor` | `rational` | 4 |
-| `borrowed_ops/hyperreal-rational/scalar div refs` | `real` | `definitely_zero` | `rational-sign` | 8 |
 | `borrowed_ops/hyperreal-rational/scalar div refs` | `real` | `div` | `same-class` | 4 |
 | `borrowed_ops/hyperreal-rational/scalar mul refs` | `hyperlattice` | `scalar_op` | `mul-ref-ref` | 4 |
 | `borrowed_ops/hyperreal-rational/scalar mul refs` | `hyperlattice_hyperreal_backend` | `op` | `mul-ref-ref` | 4 |
@@ -926,20 +925,20 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice` | `scalar_method` | `inverse-owned` | 4 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice` | `scalar_op` | `mul-ref-ref` | 3 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice` | `scalar_op` | `neg-owned` | 2 |
-| `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice` | `scalar_query` | `definitely-one` | 24 |
-| `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice` | `scalar_query` | `definitely-zero` | 288 |
+| `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice` | `scalar_query` | `definitely-one` | 12 |
+| `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice` | `scalar_query` | `definitely-zero` | 252 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice` | `scalar_query` | `exact-rational-kind` | 64 |
-| `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice` | `scalar_query` | `zero-status` | 52 |
+| `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice` | `scalar_query` | `zero-status` | 27 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_hyperreal_backend` | `method` | `inverse-owned` | 4 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_hyperreal_backend` | `op` | `active-dot4` | 56 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_hyperreal_backend` | `op` | `active-signed-product-sum2-exact-rational` | 117 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_hyperreal_backend` | `op` | `mul-owned-method-ref` | 64 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_hyperreal_backend` | `op` | `mul-ref-ref` | 3 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 4 |
-| `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 24 |
-| `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 314 |
+| `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 12 |
+| `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 278 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_hyperreal_backend` | `query` | `exact-rational-kind` | 64 |
-| `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 52 |
+| `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 27 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_hyperreal_backend` | `trait_op` | `neg-owned` | 2 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_matrix` | `helper` | `determinant4-from-factors` | 4 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_matrix` | `helper` | `matrix4-factors` | 1 |
@@ -953,22 +952,22 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 36 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_matrix` | `helper` | `mul-sub-pruned` | 3 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_matrix` | `helper` | `multiply4-borrowed-sparse` | 1 |
-| `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_matrix` | `helper` | `multiply4-dense-certified-ref` | 3 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_matrix` | `helper` | `multiply4-dense-ref` | 3 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_matrix` | `helper` | `multiply4-ref-ref-specialized` | 1 |
-| `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_matrix` | `helper` | `right-divide4-exact-right-skip-left-kind` | 4 |
-| `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_matrix` | `helper` | `right-divide4-ref-shared-adjugate` | 4 |
+| `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_matrix` | `helper` | `right-divide4-exact-right-skip-left-kind` | 1 |
+| `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_matrix` | `helper` | `right-divide4-ref-dense-exact-shared-adjugate` | 3 |
+| `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_matrix` | `helper` | `right-divide4-ref-shared-adjugate` | 1 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `hyperlattice_matrix` | `op` | `div-ref-ref` | 4 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `rational` | `dot_product` | `dyadic-shared-denominator` | 56 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `rational` | `product_sum` | `all-zero` | 2 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `rational` | `product_sum` | `dyadic-shared-denominator` | 119 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `real` | `constructor` | `rational` | 244 |
-| `borrowed_ops/hyperreal/mat4 div refs` | `real` | `definitely_zero` | `rational-sign` | 314 |
+| `borrowed_ops/hyperreal/mat4 div refs` | `real` | `definitely_zero` | `rational-sign` | 278 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `real` | `dot_product` | `active-dot4-exact-rational` | 56 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `real` | `inverse` | `prechecked-one` | 4 |
 | `borrowed_ops/hyperreal/mat4 div refs` | `real` | `product_sum` | `exact-rational-shared-denom` | 121 |
-| `borrowed_ops/hyperreal/mat4 div refs` | `real` | `zero_status` | `symbolic-nonzero-scale` | 48 |
-| `borrowed_ops/hyperreal/mat4 div refs` | `real` | `zero_status` | `zero-scale` | 4 |
+| `borrowed_ops/hyperreal/mat4 div refs` | `real` | `zero_status` | `symbolic-nonzero-scale` | 22 |
+| `borrowed_ops/hyperreal/mat4 div refs` | `real` | `zero_status` | `zero-scale` | 5 |
 | `borrowed_ops/hyperreal/mat4 div_scalar_ref` | `hyperlattice` | `scalar_fast_path` | `mul-cached` | 64 |
 | `borrowed_ops/hyperreal/mat4 div_scalar_ref` | `hyperlattice` | `scalar_method` | `inverse-ref` | 4 |
 | `borrowed_ops/hyperreal/mat4 div_scalar_ref` | `hyperlattice` | `scalar_query` | `definitely-zero` | 4 |
@@ -1046,7 +1045,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/hyperreal/scalar div refs` | `hyperlattice` | `scalar_op` | `div-ref-ref` | 4 |
 | `borrowed_ops/hyperreal/scalar div refs` | `hyperlattice_hyperreal_backend` | `op` | `div-ref-ref` | 4 |
 | `borrowed_ops/hyperreal/scalar div refs` | `real` | `constructor` | `rational` | 4 |
-| `borrowed_ops/hyperreal/scalar div refs` | `real` | `definitely_zero` | `rational-sign` | 8 |
 | `borrowed_ops/hyperreal/scalar div refs` | `real` | `div` | `same-class` | 4 |
 | `borrowed_ops/hyperreal/scalar mul refs` | `hyperlattice` | `scalar_op` | `mul-ref-ref` | 4 |
 | `borrowed_ops/hyperreal/scalar mul refs` | `hyperlattice_hyperreal_backend` | `op` | `mul-ref-ref` | 4 |
@@ -1362,7 +1360,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix3/hyperreal-rational/mat3 inverse` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 3 |
 | `matrix3/hyperreal-rational/mat3 inverse` | `hyperlattice_matrix` | `helper` | `invert-matrix3` | 1 |
 | `matrix3/hyperreal-rational/mat3 inverse` | `hyperlattice_matrix` | `helper` | `invert-matrix3-dense-cofactor` | 1 |
-| `matrix3/hyperreal-rational/mat3 inverse` | `hyperlattice_matrix` | `helper` | `matrix3-adjugate-and-determinant-dense-exact` | 1 |
 | `matrix3/hyperreal-rational/mat3 inverse` | `hyperlattice_matrix` | `helper` | `matrix3-scaled-adjugate-dense-exact` | 1 |
 | `matrix3/hyperreal-rational/mat3 inverse` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 9 |
 | `matrix3/hyperreal-rational/mat3 inverse` | `hyperlattice_matrix` | `method` | `matrix3-inverse` | 1 |
@@ -1511,7 +1508,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix3/hyperreal-symbolic/mat3 transform vec3` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 24 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3` | `hyperlattice_matrix` | `op` | `transform-vector-owned-owned` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3` | `real` | `constructor` | `rational` | 1 |
-| `matrix3/hyperreal-symbolic/mat3 transform vec3` | `real` | `definitely_zero` | `rational-sign` | 40 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3` | `real` | `definitely_zero` | `rational-sign` | 24 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3` | `real` | `dot_product` | `active-dot3-real-tree` | 3 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 all-coord approx` | `computable` | `constructor` | `cached-e-internal` | 4 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 all-coord approx` | `computable` | `constructor` | `cached-pi` | 7 |
@@ -1528,7 +1525,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 all-coord approx` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 24 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 all-coord approx` | `hyperlattice_matrix` | `op` | `transform-vector-owned-owned` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 all-coord approx` | `real` | `constructor` | `rational` | 1 |
-| `matrix3/hyperreal-symbolic/mat3 transform vec3 all-coord approx` | `real` | `definitely_zero` | `rational-sign` | 40 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 all-coord approx` | `real` | `definitely_zero` | `rational-sign` | 24 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 all-coord approx` | `real` | `dot_product` | `active-dot3-real-tree` | 3 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 all-coord approx` | `real` | `refine_sign_until` | `structural-facts` | 3 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 all-coord approx` | `real` | `structural_facts` | `scaled-computable` | 3 |
@@ -1545,7 +1542,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch` | `hyperlattice_matrix` | `helper` | `transform-vector3-dense` | 4 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch` | `hyperlattice_matrix` | `method` | `transform-vector-vec3-batch` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch` | `real` | `constructor` | `rational` | 4 |
-| `matrix3/hyperreal-symbolic/mat3 transform vec3 batch` | `real` | `definitely_zero` | `rational-sign` | 142 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 batch` | `real` | `definitely_zero` | `rational-sign` | 78 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch` | `real` | `dot_product` | `active-dot3-real-tree` | 12 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch all-coord approx` | `computable` | `constructor` | `cached-e-internal` | 6 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch all-coord approx` | `computable` | `constructor` | `cached-pi` | 18 |
@@ -1563,7 +1560,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch all-coord approx` | `hyperlattice_matrix` | `helper` | `transform-vector3-dense` | 4 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch all-coord approx` | `hyperlattice_matrix` | `method` | `transform-vector-vec3-batch` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch all-coord approx` | `real` | `constructor` | `rational` | 4 |
-| `matrix3/hyperreal-symbolic/mat3 transform vec3 batch all-coord approx` | `real` | `definitely_zero` | `rational-sign` | 142 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 batch all-coord approx` | `real` | `definitely_zero` | `rational-sign` | 78 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch all-coord approx` | `real` | `dot_product` | `active-dot3-real-tree` | 12 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch all-coord approx` | `real` | `refine_sign_until` | `structural-facts` | 9 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch all-coord approx` | `real` | `structural_facts` | `scaled-computable` | 9 |
@@ -1583,7 +1580,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch one-coord approx` | `hyperlattice_matrix` | `helper` | `transform-vector3-dense` | 4 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch one-coord approx` | `hyperlattice_matrix` | `method` | `transform-vector-vec3-batch` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch one-coord approx` | `real` | `constructor` | `rational` | 4 |
-| `matrix3/hyperreal-symbolic/mat3 transform vec3 batch one-coord approx` | `real` | `definitely_zero` | `rational-sign` | 142 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 batch one-coord approx` | `real` | `definitely_zero` | `rational-sign` | 78 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch one-coord approx` | `real` | `dot_product` | `active-dot3-real-tree` | 12 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch one-coord approx` | `real` | `refine_sign_until` | `structural-facts` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch one-coord approx` | `real` | `structural_facts` | `scaled-computable` | 1 |
@@ -1606,7 +1603,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch structural facts` | `hyperlattice_matrix` | `helper` | `transform-vector3-dense` | 4 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch structural facts` | `hyperlattice_matrix` | `method` | `transform-vector-vec3-batch` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch structural facts` | `real` | `constructor` | `rational` | 4 |
-| `matrix3/hyperreal-symbolic/mat3 transform vec3 batch structural facts` | `real` | `definitely_zero` | `rational-sign` | 142 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 batch structural facts` | `real` | `definitely_zero` | `rational-sign` | 78 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch structural facts` | `real` | `dot_product` | `active-dot3-real-tree` | 12 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch structural facts` | `real` | `structural_facts` | `scaled-computable` | 9 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 batch structural facts` | `real` | `zero_status` | `scaled-computable` | 9 |
@@ -1625,7 +1622,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 one-coord approx` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 24 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 one-coord approx` | `hyperlattice_matrix` | `op` | `transform-vector-owned-owned` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 one-coord approx` | `real` | `constructor` | `rational` | 1 |
-| `matrix3/hyperreal-symbolic/mat3 transform vec3 one-coord approx` | `real` | `definitely_zero` | `rational-sign` | 40 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 one-coord approx` | `real` | `definitely_zero` | `rational-sign` | 24 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 one-coord approx` | `real` | `dot_product` | `active-dot3-real-tree` | 3 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 one-coord approx` | `real` | `refine_sign_until` | `structural-facts` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 one-coord approx` | `real` | `structural_facts` | `scaled-computable` | 1 |
@@ -1644,7 +1641,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 sign refinement` | `hyperlattice_hyperreal_backend` | `query` | `refine-sign-until` | 3 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 sign refinement` | `hyperlattice_matrix` | `op` | `transform-vector-owned-owned` | 1 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 sign refinement` | `real` | `constructor` | `rational` | 1 |
-| `matrix3/hyperreal-symbolic/mat3 transform vec3 sign refinement` | `real` | `definitely_zero` | `rational-sign` | 40 |
+| `matrix3/hyperreal-symbolic/mat3 transform vec3 sign refinement` | `real` | `definitely_zero` | `rational-sign` | 24 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 sign refinement` | `real` | `dot_product` | `active-dot3-real-tree` | 3 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 sign refinement` | `real` | `refine_sign_until` | `structural-facts` | 3 |
 | `matrix3/hyperreal-symbolic/mat3 transform vec3 sign refinement` | `real` | `structural_facts` | `scaled-computable` | 3 |
@@ -1674,7 +1671,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix3/hyperreal/mat3 inverse` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 12 |
 | `matrix3/hyperreal/mat3 inverse` | `hyperlattice_matrix` | `helper` | `invert-matrix3` | 4 |
 | `matrix3/hyperreal/mat3 inverse` | `hyperlattice_matrix` | `helper` | `invert-matrix3-dense-cofactor` | 4 |
-| `matrix3/hyperreal/mat3 inverse` | `hyperlattice_matrix` | `helper` | `matrix3-adjugate-and-determinant-dense-exact` | 4 |
 | `matrix3/hyperreal/mat3 inverse` | `hyperlattice_matrix` | `helper` | `matrix3-scaled-adjugate-dense-exact` | 4 |
 | `matrix3/hyperreal/mat3 inverse` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 36 |
 | `matrix3/hyperreal/mat3 inverse` | `hyperlattice_matrix` | `method` | `matrix3-inverse` | 4 |
@@ -1985,7 +1981,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix4/hyperreal-rational/mat4 transform point vec4` | `hyperlattice_matrix` | `helper` | `transform-vector4-point-all-nonzero` | 1 |
 | `matrix4/hyperreal-rational/mat4 transform point vec4` | `rational` | `product_sum` | `lcm-shared-denominator` | 1 |
 | `matrix4/hyperreal-rational/mat4 transform point vec4` | `real` | `constructor` | `rational` | 6 |
-| `matrix4/hyperreal-rational/mat4 transform point vec4` | `real` | `definitely_zero` | `rational-sign` | 54 |
+| `matrix4/hyperreal-rational/mat4 transform point vec4` | `real` | `definitely_zero` | `rational-sign` | 36 |
 | `matrix4/hyperreal-rational/mat4 transform point vec4` | `real` | `dot_product` | `active-dot3-real-tree` | 2 |
 | `matrix4/hyperreal-rational/mat4 transform point vec4` | `real` | `product_sum` | `exact-rational-shared-denom` | 1 |
 | `matrix4/hyperreal-rational/mat4 transform point vec4` | `real` | `zero_status` | `symbolic-nonzero-scale` | 2 |
@@ -2424,7 +2420,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4` | `hyperlattice_matrix` | `op` | `transform-vector-owned-owned` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4` | `rational` | `dot_product` | `lcm-shared-denominator` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4` | `real` | `constructor` | `rational` | 7 |
-| `matrix4/hyperreal-symbolic/mat4 transform direction vec4` | `real` | `definitely_zero` | `rational-sign` | 46 |
+| `matrix4/hyperreal-symbolic/mat4 transform direction vec4` | `real` | `definitely_zero` | `rational-sign` | 36 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4` | `real` | `dot_product` | `active-dot3-exact-rational` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4` | `real` | `dot_product` | `active-dot3-real-tree` | 3 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4` | `real` | `zero_status` | `symbolic-nonzero-scale` | 6 |
@@ -2450,7 +2446,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 all-coord approx` | `hyperlattice_matrix` | `op` | `transform-vector-owned-owned` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 all-coord approx` | `rational` | `dot_product` | `lcm-shared-denominator` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 all-coord approx` | `real` | `constructor` | `rational` | 7 |
-| `matrix4/hyperreal-symbolic/mat4 transform direction vec4 all-coord approx` | `real` | `definitely_zero` | `rational-sign` | 46 |
+| `matrix4/hyperreal-symbolic/mat4 transform direction vec4 all-coord approx` | `real` | `definitely_zero` | `rational-sign` | 36 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 all-coord approx` | `real` | `dot_product` | `active-dot3-exact-rational` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 all-coord approx` | `real` | `dot_product` | `active-dot3-real-tree` | 3 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 all-coord approx` | `real` | `refine_sign_until` | `computable-refine` | 1 |
@@ -2479,7 +2475,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 one-coord approx` | `hyperlattice_matrix` | `op` | `transform-vector-owned-owned` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 one-coord approx` | `rational` | `dot_product` | `lcm-shared-denominator` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 one-coord approx` | `real` | `constructor` | `rational` | 7 |
-| `matrix4/hyperreal-symbolic/mat4 transform direction vec4 one-coord approx` | `real` | `definitely_zero` | `rational-sign` | 46 |
+| `matrix4/hyperreal-symbolic/mat4 transform direction vec4 one-coord approx` | `real` | `definitely_zero` | `rational-sign` | 36 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 one-coord approx` | `real` | `dot_product` | `active-dot3-exact-rational` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 one-coord approx` | `real` | `dot_product` | `active-dot3-real-tree` | 3 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 one-coord approx` | `real` | `refine_sign_until` | `computable-refine` | 1 |
@@ -2508,7 +2504,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts` | `hyperlattice_matrix` | `op` | `transform-vector-owned-owned` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts` | `rational` | `dot_product` | `lcm-shared-denominator` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts` | `real` | `constructor` | `rational` | 7 |
-| `matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts` | `real` | `definitely_zero` | `rational-sign` | 46 |
+| `matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts` | `real` | `definitely_zero` | `rational-sign` | 36 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts` | `real` | `dot_product` | `active-dot3-exact-rational` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts` | `real` | `dot_product` | `active-dot3-real-tree` | 3 |
 | `matrix4/hyperreal-symbolic/mat4 transform direction vec4 structural facts` | `real` | `structural_facts` | `exact-rational` | 1 |
@@ -2533,7 +2529,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix4/hyperreal-symbolic/mat4 transform vec4` | `hyperlattice_matrix` | `helper` | `transform-vector-full` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4` | `hyperlattice_matrix` | `op` | `transform-vector-owned-owned` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4` | `real` | `constructor` | `rational` | 5 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4` | `real` | `definitely_zero` | `rational-sign` | 74 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4` | `real` | `definitely_zero` | `rational-sign` | 46 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4` | `real` | `dot_product` | `active-dot4-real-tree` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4` | `real` | `zero_status` | `symbolic-nonzero-scale` | 6 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 all-coord approx` | `computable` | `constructor` | `cached-e-internal` | 7 |
@@ -2556,7 +2552,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 all-coord approx` | `hyperlattice_matrix` | `helper` | `transform-vector-full` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 all-coord approx` | `hyperlattice_matrix` | `op` | `transform-vector-owned-owned` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 all-coord approx` | `real` | `constructor` | `rational` | 5 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 all-coord approx` | `real` | `definitely_zero` | `rational-sign` | 74 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 all-coord approx` | `real` | `definitely_zero` | `rational-sign` | 46 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 all-coord approx` | `real` | `dot_product` | `active-dot4-real-tree` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 all-coord approx` | `real` | `refine_sign_until` | `structural-facts` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 all-coord approx` | `real` | `structural_facts` | `scaled-computable` | 4 |
@@ -2579,7 +2575,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch` | `hyperlattice_matrix` | `helper` | `transform-vector4-full` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch` | `hyperlattice_matrix` | `method` | `transform-vector-vec4-batch` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch` | `real` | `constructor` | `rational` | 20 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch` | `real` | `definitely_zero` | `rational-sign` | 261 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch` | `real` | `definitely_zero` | `rational-sign` | 149 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch` | `real` | `dot_product` | `active-dot4-real-tree` | 16 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch` | `real` | `zero_status` | `symbolic-nonzero-scale` | 6 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch all-coord approx` | `computable` | `constructor` | `cached-e-internal` | 18 |
@@ -2603,7 +2599,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch all-coord approx` | `hyperlattice_matrix` | `helper` | `transform-vector4-full` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch all-coord approx` | `hyperlattice_matrix` | `method` | `transform-vector-vec4-batch` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch all-coord approx` | `real` | `constructor` | `rational` | 20 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch all-coord approx` | `real` | `definitely_zero` | `rational-sign` | 261 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch all-coord approx` | `real` | `definitely_zero` | `rational-sign` | 149 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch all-coord approx` | `real` | `dot_product` | `active-dot4-real-tree` | 16 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch all-coord approx` | `real` | `refine_sign_until` | `structural-facts` | 16 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch all-coord approx` | `real` | `structural_facts` | `scaled-computable` | 16 |
@@ -2626,7 +2622,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction` | `hyperlattice_matrix` | `method` | `transform-vector-vec4-batch` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction` | `rational` | `dot_product` | `lcm-shared-denominator` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction` | `real` | `constructor` | `rational` | 28 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction` | `real` | `definitely_zero` | `rational-sign` | 149 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction` | `real` | `definitely_zero` | `rational-sign` | 109 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction` | `real` | `dot_product` | `active-dot3-exact-rational` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction` | `real` | `dot_product` | `active-dot3-real-tree` | 12 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction` | `real` | `zero_status` | `symbolic-nonzero-scale` | 6 |
@@ -2652,7 +2648,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction all-coord approx` | `hyperlattice_matrix` | `method` | `transform-vector-vec4-batch` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction all-coord approx` | `rational` | `dot_product` | `lcm-shared-denominator` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction all-coord approx` | `real` | `constructor` | `rational` | 28 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction all-coord approx` | `real` | `definitely_zero` | `rational-sign` | 149 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction all-coord approx` | `real` | `definitely_zero` | `rational-sign` | 109 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction all-coord approx` | `real` | `dot_product` | `active-dot3-exact-rational` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction all-coord approx` | `real` | `dot_product` | `active-dot3-real-tree` | 12 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction all-coord approx` | `real` | `refine_sign_until` | `computable-refine` | 4 |
@@ -2681,7 +2677,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx` | `hyperlattice_matrix` | `method` | `transform-vector-vec4-batch` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx` | `rational` | `dot_product` | `lcm-shared-denominator` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx` | `real` | `constructor` | `rational` | 28 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx` | `real` | `definitely_zero` | `rational-sign` | 149 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx` | `real` | `definitely_zero` | `rational-sign` | 109 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx` | `real` | `dot_product` | `active-dot3-exact-rational` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx` | `real` | `dot_product` | `active-dot3-real-tree` | 12 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction one-coord approx` | `real` | `refine_sign_until` | `computable-refine` | 1 |
@@ -2710,7 +2706,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction structural facts` | `hyperlattice_matrix` | `method` | `transform-vector-vec4-batch` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction structural facts` | `rational` | `dot_product` | `lcm-shared-denominator` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction structural facts` | `real` | `constructor` | `rational` | 28 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction structural facts` | `real` | `definitely_zero` | `rational-sign` | 149 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction structural facts` | `real` | `definitely_zero` | `rational-sign` | 109 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction structural facts` | `real` | `dot_product` | `active-dot3-exact-rational` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction structural facts` | `real` | `dot_product` | `active-dot3-real-tree` | 12 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch direction structural facts` | `real` | `structural_facts` | `exact-rational` | 4 |
@@ -2739,7 +2735,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch one-coord approx` | `hyperlattice_matrix` | `helper` | `transform-vector4-full` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch one-coord approx` | `hyperlattice_matrix` | `method` | `transform-vector-vec4-batch` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch one-coord approx` | `real` | `constructor` | `rational` | 20 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch one-coord approx` | `real` | `definitely_zero` | `rational-sign` | 261 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch one-coord approx` | `real` | `definitely_zero` | `rational-sign` | 149 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch one-coord approx` | `real` | `dot_product` | `active-dot4-real-tree` | 16 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch one-coord approx` | `real` | `refine_sign_until` | `structural-facts` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch one-coord approx` | `real` | `structural_facts` | `scaled-computable` | 1 |
@@ -2766,7 +2762,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch structural facts` | `hyperlattice_matrix` | `helper` | `transform-vector4-full` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch structural facts` | `hyperlattice_matrix` | `method` | `transform-vector-vec4-batch` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch structural facts` | `real` | `constructor` | `rational` | 20 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch structural facts` | `real` | `definitely_zero` | `rational-sign` | 261 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 batch structural facts` | `real` | `definitely_zero` | `rational-sign` | 149 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch structural facts` | `real` | `dot_product` | `active-dot4-real-tree` | 16 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch structural facts` | `real` | `structural_facts` | `scaled-computable` | 16 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 batch structural facts` | `real` | `zero_status` | `scaled-computable` | 16 |
@@ -2788,7 +2784,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation` | `hyperlattice_matrix` | `helper` | `transform-vector-full` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation` | `hyperlattice_matrix` | `op` | `transform-vector-owned-owned` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation` | `real` | `constructor` | `rational` | 2 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation` | `real` | `definitely_zero` | `rational-sign` | 58 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation` | `real` | `definitely_zero` | `rational-sign` | 38 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation` | `real` | `dot_product` | `active-dot3-real-tree` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation` | `real` | `zero_status` | `symbolic-nonzero-scale` | 6 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation all-coord approx` | `computable` | `constructor` | `cached-e-internal` | 4 |
@@ -2811,7 +2807,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation all-coord approx` | `hyperlattice_matrix` | `helper` | `transform-vector-full` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation all-coord approx` | `hyperlattice_matrix` | `op` | `transform-vector-owned-owned` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation all-coord approx` | `real` | `constructor` | `rational` | 2 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation all-coord approx` | `real` | `definitely_zero` | `rational-sign` | 58 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation all-coord approx` | `real` | `definitely_zero` | `rational-sign` | 38 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation all-coord approx` | `real` | `dot_product` | `active-dot3-real-tree` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation all-coord approx` | `real` | `refine_sign_until` | `structural-facts` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation all-coord approx` | `real` | `structural_facts` | `scaled-computable` | 4 |
@@ -2836,7 +2832,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation one-coord approx` | `hyperlattice_matrix` | `helper` | `transform-vector-full` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation one-coord approx` | `hyperlattice_matrix` | `op` | `transform-vector-owned-owned` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation one-coord approx` | `real` | `constructor` | `rational` | 2 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation one-coord approx` | `real` | `definitely_zero` | `rational-sign` | 58 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation one-coord approx` | `real` | `definitely_zero` | `rational-sign` | 38 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation one-coord approx` | `real` | `dot_product` | `active-dot3-real-tree` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation one-coord approx` | `real` | `refine_sign_until` | `structural-facts` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation one-coord approx` | `real` | `structural_facts` | `scaled-computable` | 1 |
@@ -2862,7 +2858,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation structural facts` | `hyperlattice_matrix` | `helper` | `transform-vector-full` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation structural facts` | `hyperlattice_matrix` | `op` | `transform-vector-owned-owned` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation structural facts` | `real` | `constructor` | `rational` | 2 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation structural facts` | `real` | `definitely_zero` | `rational-sign` | 58 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation structural facts` | `real` | `definitely_zero` | `rational-sign` | 38 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation structural facts` | `real` | `dot_product` | `active-dot3-real-tree` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation structural facts` | `real` | `structural_facts` | `scaled-computable` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 no-translation structural facts` | `real` | `zero_status` | `scaled-computable` | 4 |
@@ -2887,7 +2883,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 one-coord approx` | `hyperlattice_matrix` | `helper` | `transform-vector-full` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 one-coord approx` | `hyperlattice_matrix` | `op` | `transform-vector-owned-owned` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 one-coord approx` | `real` | `constructor` | `rational` | 5 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 one-coord approx` | `real` | `definitely_zero` | `rational-sign` | 74 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 one-coord approx` | `real` | `definitely_zero` | `rational-sign` | 46 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 one-coord approx` | `real` | `dot_product` | `active-dot4-real-tree` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 one-coord approx` | `real` | `refine_sign_until` | `structural-facts` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 one-coord approx` | `real` | `structural_facts` | `scaled-computable` | 1 |
@@ -2912,7 +2908,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 sign refinement` | `hyperlattice_matrix` | `helper` | `transform-vector-full` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 sign refinement` | `hyperlattice_matrix` | `op` | `transform-vector-owned-owned` | 1 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 sign refinement` | `real` | `constructor` | `rational` | 5 |
-| `matrix4/hyperreal-symbolic/mat4 transform vec4 sign refinement` | `real` | `definitely_zero` | `rational-sign` | 74 |
+| `matrix4/hyperreal-symbolic/mat4 transform vec4 sign refinement` | `real` | `definitely_zero` | `rational-sign` | 46 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 sign refinement` | `real` | `dot_product` | `active-dot4-real-tree` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 sign refinement` | `real` | `refine_sign_until` | `structural-facts` | 4 |
 | `matrix4/hyperreal-symbolic/mat4 transform vec4 sign refinement` | `real` | `structural_facts` | `scaled-computable` | 4 |
@@ -3737,7 +3733,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix-power3-borrowed-square` | 1 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix-power3-dense-certified-square` | 1 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix-power3-fixed-mul` | 1 |
-| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix3-adjugate-and-determinant-dense-exact` | 1 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix3-scaled-adjugate-dense-exact` | 1 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 9 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `multiply3-dense-ref` | 1 |
@@ -3764,7 +3759,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 3 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `invert-matrix3` | 1 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `invert-matrix3-dense-cofactor` | 1 |
-| `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `matrix3-adjugate-and-determinant-dense-exact` | 1 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `matrix3-scaled-adjugate-dense-exact` | 1 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 9 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat3 reciprocal` | `hyperlattice_matrix` | `method` | `matrix3-inverse` | 1 |
@@ -3779,38 +3773,34 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice` | `scalar_fast_path` | `active-signed-product-sum2` | 28 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice` | `scalar_fast_path` | `mul-cached` | 16 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice` | `scalar_method` | `inverse-owned` | 1 |
-| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-one` | 4 |
-| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-zero` | 24 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-zero` | 12 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `exact-rational-kind` | 16 |
-| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 12 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 3 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `method` | `inverse-owned` | 1 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `active-dot4` | 16 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `active-signed-product-sum2-exact-rational` | 28 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 1 |
-| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 4 |
-| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 30 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 18 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `exact-rational-kind` | 16 |
-| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 12 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 3 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `determinant4-from-factors` | 1 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `matrix4-factors-dense-exact` | 1 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `matrix4-unscaled-adjugate-dense-exact` | 1 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `mul-add-sub-dense-exact` | 8 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `mul-sub-add-dense-exact` | 8 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 12 |
-| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `multiply4-dense-certified-ref` | 1 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `multiply4-dense-ref` | 1 |
-| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-exact-right-skip-left-kind` | 1 |
-| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-shared-adjugate` | 1 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-dense-exact-shared-adjugate` | 1 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `hyperlattice_matrix` | `op` | `div-owned-owned` | 1 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `rational` | `dot_product` | `dyadic-shared-denominator` | 16 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `real` | `constructor` | `rational` | 61 |
-| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 30 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 18 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `real` | `dot_product` | `active-dot4-exact-rational` | 16 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `real` | `inverse` | `prechecked-one` | 1 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
-| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 12 |
+| `matrix_forms/hyperreal-rational/dyadic_dense/mat4 div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 3 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 powi_negative` | `hyperlattice` | `scalar_fast_path` | `active-signed-product-sum2` | 28 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 powi_negative` | `hyperlattice` | `scalar_fast_path` | `mul-cached` | 16 |
 | `matrix_forms/hyperreal-rational/dyadic_dense/mat4 powi_negative` | `hyperlattice` | `scalar_method` | `inverse-owned` | 1 |
@@ -3918,7 +3908,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix-power3-borrowed-square` | 1 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix-power3-dense-certified-square` | 1 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix-power3-fixed-mul` | 1 |
-| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix3-adjugate-and-determinant-dense-exact` | 1 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix3-scaled-adjugate-dense-exact` | 1 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 9 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `multiply3-dense-ref` | 1 |
@@ -3946,7 +3935,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 3 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `invert-matrix3` | 1 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `invert-matrix3-dense-cofactor` | 1 |
-| `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `matrix3-adjugate-and-determinant-dense-exact` | 1 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `matrix3-scaled-adjugate-dense-exact` | 1 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 9 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat3 reciprocal` | `hyperlattice_matrix` | `method` | `matrix3-inverse` | 1 |
@@ -3962,40 +3950,36 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice` | `scalar_fast_path` | `active-signed-product-sum2` | 28 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice` | `scalar_fast_path` | `mul-cached` | 16 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice` | `scalar_method` | `inverse-owned` | 1 |
-| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-one` | 4 |
-| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-zero` | 24 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-zero` | 12 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `exact-rational-kind` | 16 |
-| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 12 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 3 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `method` | `inverse-owned` | 1 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `active-dot4` | 16 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `active-signed-product-sum2-exact-rational` | 28 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 1 |
-| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 4 |
-| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 30 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 18 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `exact-rational-kind` | 16 |
-| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 12 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 3 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `determinant4-from-factors` | 1 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `matrix4-factors-dense-exact` | 1 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `matrix4-unscaled-adjugate-dense-exact` | 1 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `mul-add-sub-dense-exact` | 8 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `mul-sub-add-dense-exact` | 8 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 12 |
-| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `multiply4-dense-certified-ref` | 1 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `multiply4-dense-ref` | 1 |
-| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-exact-right-skip-left-kind` | 1 |
-| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-shared-adjugate` | 1 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-dense-exact-shared-adjugate` | 1 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `hyperlattice_matrix` | `op` | `div-owned-owned` | 1 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `rational` | `dot_product` | `equal-product-denominator` | 1 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `rational` | `dot_product` | `lcm-shared-denominator` | 15 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `rational` | `product_sum` | `equal-product-denominator` | 6 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `rational` | `product_sum` | `lcm-shared-denominator` | 23 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `real` | `constructor` | `rational` | 61 |
-| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 30 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 18 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `real` | `dot_product` | `active-dot4-exact-rational` | 16 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `real` | `inverse` | `prechecked-one` | 1 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
-| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 12 |
+| `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 3 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 powi_negative` | `hyperlattice` | `scalar_fast_path` | `active-signed-product-sum2` | 28 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 powi_negative` | `hyperlattice` | `scalar_fast_path` | `mul-cached` | 16 |
 | `matrix_forms/hyperreal-rational/equal_decimal_den/mat4 powi_negative` | `hyperlattice` | `scalar_method` | `inverse-owned` | 1 |
@@ -4104,7 +4088,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix-power3-borrowed-square` | 1 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix-power3-dense-certified-square` | 1 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix-power3-fixed-mul` | 1 |
-| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix3-adjugate-and-determinant-dense-exact` | 1 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix3-scaled-adjugate-dense-exact` | 1 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 9 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `multiply3-dense-ref` | 1 |
@@ -4130,7 +4113,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 3 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `invert-matrix3` | 1 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `invert-matrix3-dense-cofactor` | 1 |
-| `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `matrix3-adjugate-and-determinant-dense-exact` | 1 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `matrix3-scaled-adjugate-dense-exact` | 1 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 9 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat3 reciprocal` | `hyperlattice_matrix` | `method` | `matrix3-inverse` | 1 |
@@ -4145,38 +4127,34 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice` | `scalar_fast_path` | `active-signed-product-sum2` | 28 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice` | `scalar_fast_path` | `mul-cached` | 16 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice` | `scalar_method` | `inverse-owned` | 1 |
-| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-one` | 4 |
-| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-zero` | 24 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-zero` | 12 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `exact-rational-kind` | 16 |
-| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 12 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 3 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `method` | `inverse-owned` | 1 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `active-dot4` | 16 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `active-signed-product-sum2-exact-rational` | 28 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 1 |
-| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 4 |
-| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 30 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 18 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `exact-rational-kind` | 16 |
-| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 12 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 3 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `determinant4-from-factors` | 1 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `matrix4-factors-dense-exact` | 1 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `matrix4-unscaled-adjugate-dense-exact` | 1 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `mul-add-sub-dense-exact` | 8 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `mul-sub-add-dense-exact` | 8 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 12 |
-| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `multiply4-dense-certified-ref` | 1 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `multiply4-dense-ref` | 1 |
-| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-exact-right-skip-left-kind` | 1 |
-| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-shared-adjugate` | 1 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-dense-exact-shared-adjugate` | 1 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `hyperlattice_matrix` | `op` | `div-owned-owned` | 1 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `rational` | `dot_product` | `lcm-shared-denominator` | 16 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `rational` | `product_sum` | `lcm-shared-denominator` | 29 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `real` | `constructor` | `rational` | 61 |
-| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 30 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 18 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `real` | `dot_product` | `active-dot4-exact-rational` | 16 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `real` | `inverse` | `prechecked-one` | 1 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
-| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 12 |
+| `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 3 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 powi_negative` | `hyperlattice` | `scalar_fast_path` | `active-signed-product-sum2` | 28 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 powi_negative` | `hyperlattice` | `scalar_fast_path` | `mul-cached` | 16 |
 | `matrix_forms/hyperreal-rational/mixed_prime_den/mat4 powi_negative` | `hyperlattice` | `scalar_method` | `inverse-owned` | 1 |
@@ -4350,7 +4328,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-one` | 12 |
 | `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-zero` | 191 |
 | `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `exact-rational-kind` | 16 |
-| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 16 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 17 |
 | `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `constructor` | `zero` | 9 |
 | `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `method` | `inverse-owned` | 1 |
 | `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `active-signed-product-sum2-exact-rational` | 18 |
@@ -4360,7 +4338,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 12 |
 | `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 199 |
 | `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `exact-rational-kind` | 16 |
-| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 16 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 17 |
 | `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `trait_op` | `neg-owned` | 4 |
 | `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `determinant4-from-factors` | 1 |
 | `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `matrix4-factors` | 1 |
@@ -4380,7 +4358,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `real` | `inverse` | `prechecked-one` | 1 |
 | `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 19 |
 | `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 12 |
-| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `real` | `zero_status` | `zero-scale` | 4 |
+| `matrix_forms/hyperreal-rational/sparse_integer/mat4 div_matrix` | `real` | `zero_status` | `zero-scale` | 5 |
 | `matrix_forms/hyperreal-rational/sparse_integer/mat4 powi_negative` | `hyperlattice` | `scalar_constructor` | `zero` | 3 |
 | `matrix_forms/hyperreal-rational/sparse_integer/mat4 powi_negative` | `hyperlattice` | `scalar_fast_path` | `active-signed-product-sum2` | 4 |
 | `matrix_forms/hyperreal-rational/sparse_integer/mat4 powi_negative` | `hyperlattice` | `scalar_fast_path` | `mul-cached` | 16 |
@@ -4504,7 +4482,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix-power3-borrowed-square` | 1 |
 | `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix-power3-dense-certified-square` | 1 |
 | `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix-power3-fixed-mul` | 1 |
-| `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix3-adjugate-and-determinant-dense-exact` | 1 |
 | `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix3-scaled-adjugate-dense-exact` | 1 |
 | `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 9 |
 | `matrix_forms/hyperreal/dyadic_dense/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `multiply3-dense-ref` | 1 |
@@ -4531,7 +4508,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 3 |
 | `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `invert-matrix3` | 1 |
 | `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `invert-matrix3-dense-cofactor` | 1 |
-| `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `matrix3-adjugate-and-determinant-dense-exact` | 1 |
 | `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `matrix3-scaled-adjugate-dense-exact` | 1 |
 | `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 9 |
 | `matrix_forms/hyperreal/dyadic_dense/mat3 reciprocal` | `hyperlattice_matrix` | `method` | `matrix3-inverse` | 1 |
@@ -4546,38 +4522,34 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice` | `scalar_fast_path` | `active-signed-product-sum2` | 28 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice` | `scalar_fast_path` | `mul-cached` | 16 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice` | `scalar_method` | `inverse-owned` | 1 |
-| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-one` | 4 |
-| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-zero` | 24 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-zero` | 12 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `exact-rational-kind` | 16 |
-| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 12 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 3 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `method` | `inverse-owned` | 1 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `active-dot4` | 16 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `active-signed-product-sum2-exact-rational` | 28 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 1 |
-| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 4 |
-| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 30 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 18 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `exact-rational-kind` | 16 |
-| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 12 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 3 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `determinant4-from-factors` | 1 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `matrix4-factors-dense-exact` | 1 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `matrix4-unscaled-adjugate-dense-exact` | 1 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `mul-add-sub-dense-exact` | 8 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `mul-sub-add-dense-exact` | 8 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 12 |
-| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `multiply4-dense-certified-ref` | 1 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `multiply4-dense-ref` | 1 |
-| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-exact-right-skip-left-kind` | 1 |
-| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-shared-adjugate` | 1 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-dense-exact-shared-adjugate` | 1 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `hyperlattice_matrix` | `op` | `div-owned-owned` | 1 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `rational` | `dot_product` | `dyadic-shared-denominator` | 16 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `real` | `constructor` | `rational` | 61 |
-| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 30 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 18 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `real` | `dot_product` | `active-dot4-exact-rational` | 16 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `real` | `inverse` | `prechecked-one` | 1 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
-| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 12 |
+| `matrix_forms/hyperreal/dyadic_dense/mat4 div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 3 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 powi_negative` | `hyperlattice` | `scalar_fast_path` | `active-signed-product-sum2` | 28 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 powi_negative` | `hyperlattice` | `scalar_fast_path` | `mul-cached` | 16 |
 | `matrix_forms/hyperreal/dyadic_dense/mat4 powi_negative` | `hyperlattice` | `scalar_method` | `inverse-owned` | 1 |
@@ -4684,7 +4656,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix-power3-borrowed-square` | 1 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix-power3-dense-certified-square` | 1 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix-power3-fixed-mul` | 1 |
-| `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix3-adjugate-and-determinant-dense-exact` | 1 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix3-scaled-adjugate-dense-exact` | 1 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 9 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `multiply3-dense-ref` | 1 |
@@ -4711,7 +4682,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 3 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `invert-matrix3` | 1 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `invert-matrix3-dense-cofactor` | 1 |
-| `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `matrix3-adjugate-and-determinant-dense-exact` | 1 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `matrix3-scaled-adjugate-dense-exact` | 1 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 9 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat3 reciprocal` | `hyperlattice_matrix` | `method` | `matrix3-inverse` | 1 |
@@ -4726,38 +4696,34 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice` | `scalar_fast_path` | `active-signed-product-sum2` | 28 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice` | `scalar_fast_path` | `mul-cached` | 16 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice` | `scalar_method` | `inverse-owned` | 1 |
-| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-one` | 4 |
-| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-zero` | 24 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-zero` | 12 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `exact-rational-kind` | 16 |
-| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 12 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 3 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `method` | `inverse-owned` | 1 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `active-dot4` | 16 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `active-signed-product-sum2-exact-rational` | 28 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 1 |
-| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 4 |
-| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 30 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 18 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `exact-rational-kind` | 16 |
-| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 12 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 3 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `determinant4-from-factors` | 1 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `matrix4-factors-dense-exact` | 1 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `matrix4-unscaled-adjugate-dense-exact` | 1 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `mul-add-sub-dense-exact` | 8 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `mul-sub-add-dense-exact` | 8 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 12 |
-| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `multiply4-dense-certified-ref` | 1 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `multiply4-dense-ref` | 1 |
-| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-exact-right-skip-left-kind` | 1 |
-| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-shared-adjugate` | 1 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-dense-exact-shared-adjugate` | 1 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `hyperlattice_matrix` | `op` | `div-owned-owned` | 1 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `rational` | `dot_product` | `dyadic-shared-denominator` | 16 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `real` | `constructor` | `rational` | 61 |
-| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 30 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 18 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `real` | `dot_product` | `active-dot4-exact-rational` | 16 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `real` | `inverse` | `prechecked-one` | 1 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
-| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 12 |
+| `matrix_forms/hyperreal/equal_decimal_den/mat4 div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 3 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | `hyperlattice` | `scalar_fast_path` | `active-signed-product-sum2` | 28 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | `hyperlattice` | `scalar_fast_path` | `mul-cached` | 16 |
 | `matrix_forms/hyperreal/equal_decimal_den/mat4 powi_negative` | `hyperlattice` | `scalar_method` | `inverse-owned` | 1 |
@@ -4865,7 +4831,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix-power3-borrowed-square` | 1 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix-power3-dense-certified-square` | 1 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix-power3-fixed-mul` | 1 |
-| `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix3-adjugate-and-determinant-dense-exact` | 1 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix3-scaled-adjugate-dense-exact` | 1 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 9 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `multiply3-dense-ref` | 1 |
@@ -4893,7 +4858,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 3 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `invert-matrix3` | 1 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `invert-matrix3-dense-cofactor` | 1 |
-| `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `matrix3-adjugate-and-determinant-dense-exact` | 1 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `matrix3-scaled-adjugate-dense-exact` | 1 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 9 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat3 reciprocal` | `hyperlattice_matrix` | `method` | `matrix3-inverse` | 1 |
@@ -4908,38 +4872,34 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice` | `scalar_fast_path` | `active-signed-product-sum2` | 28 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice` | `scalar_fast_path` | `mul-cached` | 16 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice` | `scalar_method` | `inverse-owned` | 1 |
-| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-one` | 4 |
-| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-zero` | 24 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-zero` | 12 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `exact-rational-kind` | 16 |
-| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 12 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 3 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `method` | `inverse-owned` | 1 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `active-dot4` | 16 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `active-signed-product-sum2-exact-rational` | 28 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `mul-owned-method-ref` | 16 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 1 |
-| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 4 |
-| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 30 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 18 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `exact-rational-kind` | 16 |
-| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 12 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 3 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `determinant4-from-factors` | 1 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `matrix4-factors-dense-exact` | 1 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `matrix4-unscaled-adjugate-dense-exact` | 1 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `mul-add-sub-dense-exact` | 8 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `mul-sub-add-dense-exact` | 8 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 12 |
-| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `multiply4-dense-certified-ref` | 1 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `multiply4-dense-ref` | 1 |
-| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-exact-right-skip-left-kind` | 1 |
-| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-shared-adjugate` | 1 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-dense-exact-shared-adjugate` | 1 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `hyperlattice_matrix` | `op` | `div-owned-owned` | 1 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `rational` | `dot_product` | `dyadic-shared-denominator` | 16 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `rational` | `product_sum` | `dyadic-shared-denominator` | 29 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `real` | `constructor` | `rational` | 61 |
-| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 30 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 18 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `real` | `dot_product` | `active-dot4-exact-rational` | 16 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `real` | `inverse` | `prechecked-one` | 1 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 29 |
-| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 12 |
+| `matrix_forms/hyperreal/mixed_prime_den/mat4 div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 3 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | `hyperlattice` | `scalar_fast_path` | `active-signed-product-sum2` | 28 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | `hyperlattice` | `scalar_fast_path` | `mul-cached` | 16 |
 | `matrix_forms/hyperreal/mixed_prime_den/mat4 powi_negative` | `hyperlattice` | `scalar_method` | `inverse-owned` | 1 |
@@ -5113,7 +5073,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-one` | 12 |
 | `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-zero` | 191 |
 | `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `exact-rational-kind` | 16 |
-| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 16 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 17 |
 | `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `constructor` | `zero` | 9 |
 | `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `method` | `inverse-owned` | 1 |
 | `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `active-signed-product-sum2-exact-rational` | 18 |
@@ -5123,7 +5083,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 12 |
 | `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 199 |
 | `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `exact-rational-kind` | 16 |
-| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 16 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 17 |
 | `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `trait_op` | `neg-owned` | 4 |
 | `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `determinant4-from-factors` | 1 |
 | `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `matrix4-factors` | 1 |
@@ -5143,7 +5103,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `real` | `inverse` | `prechecked-one` | 1 |
 | `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 19 |
 | `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 12 |
-| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `real` | `zero_status` | `zero-scale` | 4 |
+| `matrix_forms/hyperreal/sparse_integer/mat4 div_matrix` | `real` | `zero_status` | `zero-scale` | 5 |
 | `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | `hyperlattice` | `scalar_constructor` | `zero` | 3 |
 | `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | `hyperlattice` | `scalar_fast_path` | `active-signed-product-sum2` | 4 |
 | `matrix_forms/hyperreal/sparse_integer/mat4 powi_negative` | `hyperlattice` | `scalar_fast_path` | `mul-cached` | 16 |
@@ -8213,7 +8173,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix-power3-borrowed-square` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix-power3-dense-certified-square` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix-power3-fixed-mul` | 4 |
-| `matrix_ops/hyperreal-rational/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix3-adjugate-and-determinant-dense-exact` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix3-scaled-adjugate-dense-exact` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 36 |
 | `matrix_ops/hyperreal-rational/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `multiply3-dense-ref` | 4 |
@@ -8243,7 +8202,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat3 powi_negative_one` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 12 |
 | `matrix_ops/hyperreal-rational/mat3 powi_negative_one` | `hyperlattice_matrix` | `helper` | `invert-matrix3` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 powi_negative_one` | `hyperlattice_matrix` | `helper` | `invert-matrix3-dense-cofactor` | 4 |
-| `matrix_ops/hyperreal-rational/mat3 powi_negative_one` | `hyperlattice_matrix` | `helper` | `matrix3-adjugate-and-determinant-dense-exact` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 powi_negative_one` | `hyperlattice_matrix` | `helper` | `matrix3-scaled-adjugate-dense-exact` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 powi_negative_one` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 36 |
 | `matrix_ops/hyperreal-rational/mat3 powi_negative_one` | `hyperlattice_matrix` | `method` | `matrix3-inverse` | 4 |
@@ -8579,7 +8537,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat3 reciprocal` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 12 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `invert-matrix3` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `invert-matrix3-dense-cofactor` | 4 |
-| `matrix_ops/hyperreal-rational/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `matrix3-adjugate-and-determinant-dense-exact` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `matrix3-scaled-adjugate-dense-exact` | 4 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 36 |
 | `matrix_ops/hyperreal-rational/mat3 reciprocal` | `hyperlattice_matrix` | `method` | `matrix3-inverse` | 4 |
@@ -8676,7 +8633,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `hyperlattice` | `scalar_op` | `sub-owned-owned` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `hyperlattice` | `scalar_query` | `definitely-one` | 41 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `hyperlattice` | `scalar_query` | `definitely-zero` | 167 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 52 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 58 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `hyperlattice_hyperreal_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `hyperlattice_hyperreal_backend` | `constructor` | `zero` | 20 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `hyperlattice_hyperreal_backend` | `method` | `inverse-owned` | 5 |
@@ -8687,7 +8644,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `mul-ref-ref` | 13 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 41 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 167 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 52 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 58 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `hyperlattice_hyperreal_backend` | `trait_op` | `add-owned-owned` | 6 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `hyperlattice_hyperreal_backend` | `trait_op` | `neg-owned` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `hyperlattice_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 12 |
@@ -8696,7 +8653,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `hyperlattice_matrix` | `helper` | `divide4-affine-left-affine-upper-triangular-fused-exact` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `hyperlattice_matrix` | `helper` | `invert-matrix3` | 2 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `hyperlattice_matrix` | `helper` | `invert-matrix3-dense-cofactor` | 1 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `hyperlattice_matrix` | `helper` | `matrix3-adjugate-and-determinant-dense-exact` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `hyperlattice_matrix` | `helper` | `matrix3-scaled-adjugate` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `hyperlattice_matrix` | `helper` | `matrix3-scaled-adjugate-dense-exact` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 9 |
@@ -8725,8 +8681,8 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 15 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `real` | `inverse` | `prechecked-one` | 5 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 16 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 42 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `real` | `zero_status` | `zero-scale` | 10 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 44 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix` | `real` | `zero_status` | `zero-scale` | 14 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `hyperlattice` | `scalar_constructor` | `one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `hyperlattice` | `scalar_constructor` | `zero` | 20 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `hyperlattice` | `scalar_fast_path` | `active-linear-combination3` | 16 |
@@ -8740,7 +8696,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `hyperlattice` | `scalar_op` | `sub-owned-owned` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `hyperlattice` | `scalar_query` | `definitely-one` | 41 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `hyperlattice` | `scalar_query` | `definitely-zero` | 167 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `hyperlattice` | `scalar_query` | `zero-status` | 57 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `hyperlattice` | `scalar_query` | `zero-status` | 63 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 5 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `hyperlattice` | `zero_status` | `scalar-query` | 5 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `hyperlattice_hyperreal_backend` | `constructor` | `one` | 4 |
@@ -8753,7 +8709,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `hyperlattice_hyperreal_backend` | `op` | `mul-ref-ref` | 13 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 41 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 167 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 57 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 63 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `hyperlattice_hyperreal_backend` | `trait_op` | `add-owned-owned` | 6 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `hyperlattice_hyperreal_backend` | `trait_op` | `neg-owned` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `hyperlattice_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 12 |
@@ -8791,8 +8747,8 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 15 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `real` | `inverse` | `prechecked-one` | 5 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `real` | `product_sum` | `exact-rational-shared-denom` | 16 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 47 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `real` | `zero_status` | `zero-scale` | 10 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 49 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked` | `real` | `zero_status` | `zero-scale` | 14 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `hyperlattice` | `abort` | `attach-owned-scalar` | 2 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `hyperlattice` | `scalar_constructor` | `one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `hyperlattice` | `scalar_constructor` | `zero` | 20 |
@@ -8808,7 +8764,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `attach-abort` | 2 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `definitely-one` | 41 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `definitely-zero` | 167 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `zero-status` | 57 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `zero-status` | 63 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 2 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `hyperlattice` | `zero_status` | `scalar-query` | 5 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `hyperlattice` | `zero_status_abort` | `no-clone-fast-path` | 3 |
@@ -8823,7 +8779,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `attach-abort` | 2 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 41 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 167 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 57 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 63 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `trait_op` | `add-owned-owned` | 6 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `trait_op` | `neg-owned` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 12 |
@@ -8861,21 +8817,21 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 15 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `real` | `inverse` | `prechecked-one` | 5 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `real` | `product_sum` | `exact-rational-shared-denom` | 16 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 47 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `real` | `zero_status` | `zero-scale` | 10 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 49 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_checked_abort` | `real` | `zero_status` | `zero-scale` | 14 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `hyperlattice` | `scalar_constructor` | `one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `hyperlattice` | `scalar_constructor` | `zero` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `hyperlattice` | `scalar_fast_path` | `active-linear-combination3` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `hyperlattice` | `scalar_op` | `sub-owned-owned` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `hyperlattice` | `scalar_query` | `definitely-one` | 32 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `hyperlattice` | `scalar_query` | `definitely-zero` | 96 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `hyperlattice` | `scalar_query` | `zero-status` | 32 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `hyperlattice` | `scalar_query` | `zero-status` | 36 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `hyperlattice_hyperreal_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `hyperlattice_hyperreal_backend` | `constructor` | `zero` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `hyperlattice_hyperreal_backend` | `op` | `active-linear-combination3` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 32 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 96 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 32 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 36 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `hyperlattice_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `hyperlattice_matrix` | `helper` | `affine-translation-column-subtract` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `hyperlattice_matrix` | `helper` | `affine-translation-dot3-active-exact` | 12 |
@@ -8888,20 +8844,20 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `real` | `definitely_zero` | `rational-sign` | 96 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `real` | `dot_product` | `active-dot3-exact-rational` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `real` | `zero_status` | `symbolic-nonzero-scale` | 24 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `real` | `zero_status` | `zero-scale` | 8 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation` | `real` | `zero_status` | `zero-scale` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `hyperlattice` | `scalar_constructor` | `one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `hyperlattice` | `scalar_constructor` | `zero` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `hyperlattice` | `scalar_fast_path` | `active-linear-combination3` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `hyperlattice` | `scalar_op` | `sub-owned-owned` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `hyperlattice` | `scalar_query` | `definitely-one` | 32 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `hyperlattice` | `scalar_query` | `definitely-zero` | 96 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `hyperlattice` | `scalar_query` | `zero-status` | 32 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `hyperlattice` | `scalar_query` | `zero-status` | 36 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `hyperlattice_hyperreal_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `hyperlattice_hyperreal_backend` | `constructor` | `zero` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `hyperlattice_hyperreal_backend` | `op` | `active-linear-combination3` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 32 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 96 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 32 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 36 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `hyperlattice_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `hyperlattice_matrix` | `helper` | `affine-translation-column-subtract` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `hyperlattice_matrix` | `helper` | `affine-translation-dot3-active-exact` | 12 |
@@ -8915,20 +8871,20 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `real` | `definitely_zero` | `rational-sign` | 96 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `real` | `dot_product` | `active-dot3-exact-rational` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 24 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `real` | `zero_status` | `zero-scale` | 8 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked` | `real` | `zero_status` | `zero-scale` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice` | `scalar_constructor` | `one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice` | `scalar_constructor` | `zero` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice` | `scalar_fast_path` | `active-linear-combination3` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice` | `scalar_op` | `sub-owned-owned` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice` | `scalar_query` | `definitely-one` | 32 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice` | `scalar_query` | `definitely-zero` | 96 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice` | `scalar_query` | `zero-status` | 32 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice` | `scalar_query` | `zero-status` | 36 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice_hyperreal_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice_hyperreal_backend` | `constructor` | `zero` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice_hyperreal_backend` | `op` | `active-linear-combination3` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 32 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 96 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 32 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 36 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice_matrix` | `helper` | `affine-translation-column-subtract` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice_matrix` | `helper` | `affine-translation-dot3-active-exact` | 12 |
@@ -8942,7 +8898,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `real` | `definitely_zero` | `rational-sign` | 96 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `real` | `dot_product` | `active-dot3-exact-rational` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 24 |
-| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `real` | `zero_status` | `zero-scale` | 8 |
+| `matrix_ops/hyperreal-rational/mat4 affine_div_matrix_translation_checked_abort` | `real` | `zero_status` | `zero-scale` | 12 |
 | `matrix_ops/hyperreal-rational/mat4 affine_inverse` | `hyperlattice` | `scalar_constructor` | `one` | 10 |
 | `matrix_ops/hyperreal-rational/mat4 affine_inverse` | `hyperlattice` | `scalar_constructor` | `zero` | 56 |
 | `matrix_ops/hyperreal-rational/mat4 affine_inverse` | `hyperlattice` | `scalar_fast_path` | `active-linear-combination3` | 8 |
@@ -9074,20 +9030,20 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice` | `scalar_method` | `inverse-owned` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice` | `scalar_op` | `mul-ref-ref` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice` | `scalar_op` | `neg-owned` | 2 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-one` | 24 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-zero` | 288 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-one` | 12 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-zero` | 252 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `exact-rational-kind` | 64 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 52 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 27 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `method` | `inverse-owned` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `active-dot4` | 56 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `active-signed-product-sum2-exact-rational` | 117 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `mul-owned-method-ref` | 64 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `mul-ref-ref` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 24 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 314 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 12 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 278 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `exact-rational-kind` | 64 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 52 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 27 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `trait_op` | `neg-owned` | 2 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `determinant4-from-factors` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `matrix4-factors` | 1 |
@@ -9101,11 +9057,11 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 36 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `mul-sub-pruned` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `multiply4-borrowed-sparse` | 1 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `multiply4-dense-certified-ref` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `multiply4-dense-ref` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `multiply4-ref-ref-specialized` | 1 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-exact-right-skip-left-kind` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-shared-adjugate` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-dense-exact-shared-adjugate` | 3 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-exact-right-skip-left-kind` | 1 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-shared-adjugate` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `hyperlattice_matrix` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `rational` | `dot_product` | `dyadic-shared-denominator` | 8 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `rational` | `dot_product` | `equal-product-denominator` | 9 |
@@ -9115,21 +9071,21 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `rational` | `product_sum` | `equal-product-denominator` | 7 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `rational` | `product_sum` | `lcm-shared-denominator` | 59 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `real` | `constructor` | `rational` | 244 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 314 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 278 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `real` | `dot_product` | `active-dot4-exact-rational` | 56 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `real` | `inverse` | `prechecked-one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 121 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 48 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `real` | `zero_status` | `zero-scale` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 22 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix` | `real` | `zero_status` | `zero-scale` | 5 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice` | `scalar_fast_path` | `active-signed-product-sum2` | 117 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice` | `scalar_fast_path` | `mul-cached` | 64 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice` | `scalar_method` | `inverse-owned` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice` | `scalar_op` | `mul-ref-ref` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice` | `scalar_op` | `neg-owned` | 2 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice` | `scalar_query` | `definitely-one` | 24 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice` | `scalar_query` | `definitely-zero` | 288 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice` | `scalar_query` | `definitely-one` | 12 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice` | `scalar_query` | `definitely-zero` | 252 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice` | `scalar_query` | `exact-rational-kind` | 64 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice` | `scalar_query` | `zero-status` | 56 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice` | `scalar_query` | `zero-status` | 31 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice` | `zero_status` | `scalar-query` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_hyperreal_backend` | `method` | `inverse-owned` | 4 |
@@ -9138,10 +9094,10 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_hyperreal_backend` | `op` | `mul-owned-method-ref` | 64 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_hyperreal_backend` | `op` | `mul-ref-ref` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 24 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 314 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 12 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 278 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_hyperreal_backend` | `query` | `exact-rational-kind` | 64 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 56 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 31 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_hyperreal_backend` | `trait_op` | `neg-owned` | 2 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `determinant4-from-factors` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `matrix4-factors` | 1 |
@@ -9155,11 +9111,11 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 36 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `mul-sub-pruned` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `multiply4-borrowed-sparse` | 1 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `multiply4-dense-certified-ref` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `multiply4-dense-ref` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `multiply4-ref-ref-specialized` | 1 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `right-divide4-checked-shared-adjugate` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `right-divide4-exact-right-skip-left-kind` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `right-divide4-checked-dense-exact-shared-adjugate` | 3 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `right-divide4-checked-shared-adjugate` | 1 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `right-divide4-exact-right-skip-left-kind` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `hyperlattice_matrix` | `method` | `div-matrix-checked` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `rational` | `dot_product` | `dyadic-shared-denominator` | 8 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `rational` | `dot_product` | `equal-product-denominator` | 9 |
@@ -9169,12 +9125,12 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `rational` | `product_sum` | `equal-product-denominator` | 7 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `rational` | `product_sum` | `lcm-shared-denominator` | 59 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `real` | `constructor` | `rational` | 244 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `real` | `definitely_zero` | `rational-sign` | 314 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `real` | `definitely_zero` | `rational-sign` | 278 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `real` | `dot_product` | `active-dot4-exact-rational` | 56 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `real` | `inverse` | `prechecked-one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `real` | `product_sum` | `exact-rational-shared-denom` | 121 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 52 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `real` | `zero_status` | `zero-scale` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 26 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked` | `real` | `zero_status` | `zero-scale` | 5 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice` | `abort` | `attach-owned-scalar` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice` | `scalar_fast_path` | `active-signed-product-sum2` | 117 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice` | `scalar_fast_path` | `mul-cached` | 64 |
@@ -9182,10 +9138,10 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice` | `scalar_op` | `mul-ref-ref` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice` | `scalar_op` | `neg-owned` | 2 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `attach-abort` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `definitely-one` | 24 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `definitely-zero` | 288 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `definitely-one` | 12 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `definitely-zero` | 252 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `exact-rational-kind` | 64 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `zero-status` | 56 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `zero-status` | 31 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice` | `zero_status` | `scalar-query` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `method` | `inverse-owned` | 4 |
@@ -9195,10 +9151,10 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `op` | `mul-ref-ref` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `attach-abort` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 24 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 314 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 12 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 278 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `exact-rational-kind` | 64 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 56 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 31 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `trait_op` | `neg-owned` | 2 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `determinant4-from-factors` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `matrix4-factors` | 1 |
@@ -9212,11 +9168,11 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 36 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `mul-sub-pruned` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `multiply4-borrowed-sparse` | 1 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `multiply4-dense-certified-ref` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `multiply4-dense-ref` | 3 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `multiply4-ref-ref-specialized` | 1 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `right-divide4-checked-abort-shared-adjugate` | 4 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `right-divide4-exact-right-skip-left-kind` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `right-divide4-checked-abort-dense-exact-shared-adjugate` | 3 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `right-divide4-checked-abort-shared-adjugate` | 1 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `right-divide4-exact-right-skip-left-kind` | 1 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `method` | `div-matrix-checked-with-abort` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `rational` | `dot_product` | `dyadic-shared-denominator` | 8 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `rational` | `dot_product` | `equal-product-denominator` | 9 |
@@ -9226,12 +9182,12 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `rational` | `product_sum` | `equal-product-denominator` | 7 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `rational` | `product_sum` | `lcm-shared-denominator` | 59 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `real` | `constructor` | `rational` | 244 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `real` | `definitely_zero` | `rational-sign` | 314 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `real` | `definitely_zero` | `rational-sign` | 278 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `real` | `dot_product` | `active-dot4-exact-rational` | 56 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `real` | `inverse` | `prechecked-one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `real` | `product_sum` | `exact-rational-shared-denom` | 121 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 52 |
-| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `real` | `zero_status` | `zero-scale` | 4 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 26 |
+| `matrix_ops/hyperreal-rational/mat4 div_matrix_checked_abort` | `real` | `zero_status` | `zero-scale` | 5 |
 | `matrix_ops/hyperreal-rational/mat4 identity_direction_batch_assumed` | `hyperlattice` | `scalar_query` | `definitely-one` | 4 |
 | `matrix_ops/hyperreal-rational/mat4 identity_direction_batch_assumed` | `hyperlattice` | `scalar_query` | `definitely-zero` | 13 |
 | `matrix_ops/hyperreal-rational/mat4 identity_direction_batch_assumed` | `hyperlattice` | `scalar_query` | `zero-status` | 4 |
@@ -11320,7 +11276,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix-power3-borrowed-square` | 4 |
 | `matrix_ops/hyperreal/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix-power3-dense-certified-square` | 4 |
 | `matrix_ops/hyperreal/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix-power3-fixed-mul` | 4 |
-| `matrix_ops/hyperreal/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix3-adjugate-and-determinant-dense-exact` | 4 |
 | `matrix_ops/hyperreal/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `matrix3-scaled-adjugate-dense-exact` | 4 |
 | `matrix_ops/hyperreal/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 36 |
 | `matrix_ops/hyperreal/mat3 powi_negative` | `hyperlattice_matrix` | `helper` | `multiply3-dense-ref` | 4 |
@@ -11349,7 +11304,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat3 powi_negative_one` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 12 |
 | `matrix_ops/hyperreal/mat3 powi_negative_one` | `hyperlattice_matrix` | `helper` | `invert-matrix3` | 4 |
 | `matrix_ops/hyperreal/mat3 powi_negative_one` | `hyperlattice_matrix` | `helper` | `invert-matrix3-dense-cofactor` | 4 |
-| `matrix_ops/hyperreal/mat3 powi_negative_one` | `hyperlattice_matrix` | `helper` | `matrix3-adjugate-and-determinant-dense-exact` | 4 |
 | `matrix_ops/hyperreal/mat3 powi_negative_one` | `hyperlattice_matrix` | `helper` | `matrix3-scaled-adjugate-dense-exact` | 4 |
 | `matrix_ops/hyperreal/mat3 powi_negative_one` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 36 |
 | `matrix_ops/hyperreal/mat3 powi_negative_one` | `hyperlattice_matrix` | `method` | `matrix3-inverse` | 4 |
@@ -11683,7 +11637,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat3 reciprocal` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 12 |
 | `matrix_ops/hyperreal/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `invert-matrix3` | 4 |
 | `matrix_ops/hyperreal/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `invert-matrix3-dense-cofactor` | 4 |
-| `matrix_ops/hyperreal/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `matrix3-adjugate-and-determinant-dense-exact` | 4 |
 | `matrix_ops/hyperreal/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `matrix3-scaled-adjugate-dense-exact` | 4 |
 | `matrix_ops/hyperreal/mat3 reciprocal` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 36 |
 | `matrix_ops/hyperreal/mat3 reciprocal` | `hyperlattice_matrix` | `method` | `matrix3-inverse` | 4 |
@@ -11774,7 +11727,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `hyperlattice` | `scalar_op` | `sub-owned-owned` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `hyperlattice` | `scalar_query` | `definitely-one` | 41 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `hyperlattice` | `scalar_query` | `definitely-zero` | 167 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 52 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 58 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `hyperlattice_hyperreal_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `hyperlattice_hyperreal_backend` | `constructor` | `zero` | 20 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `hyperlattice_hyperreal_backend` | `method` | `inverse-owned` | 5 |
@@ -11785,7 +11738,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `mul-ref-ref` | 13 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 41 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 167 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 52 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 58 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `hyperlattice_hyperreal_backend` | `trait_op` | `add-owned-owned` | 6 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `hyperlattice_hyperreal_backend` | `trait_op` | `neg-owned` | 3 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `hyperlattice_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 12 |
@@ -11794,7 +11747,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `hyperlattice_matrix` | `helper` | `divide4-affine-left-affine-upper-triangular-fused-exact` | 1 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `hyperlattice_matrix` | `helper` | `invert-matrix3` | 2 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `hyperlattice_matrix` | `helper` | `invert-matrix3-dense-cofactor` | 1 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix` | `hyperlattice_matrix` | `helper` | `matrix3-adjugate-and-determinant-dense-exact` | 1 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `hyperlattice_matrix` | `helper` | `matrix3-scaled-adjugate` | 1 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `hyperlattice_matrix` | `helper` | `matrix3-scaled-adjugate-dense-exact` | 1 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 9 |
@@ -11823,8 +11775,8 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 15 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `real` | `inverse` | `prechecked-one` | 5 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 16 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 42 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix` | `real` | `zero_status` | `zero-scale` | 10 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 44 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix` | `real` | `zero_status` | `zero-scale` | 14 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `hyperlattice` | `scalar_constructor` | `one` | 4 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `hyperlattice` | `scalar_constructor` | `zero` | 20 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `hyperlattice` | `scalar_fast_path` | `active-linear-combination3` | 16 |
@@ -11838,7 +11790,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `hyperlattice` | `scalar_op` | `sub-owned-owned` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `hyperlattice` | `scalar_query` | `definitely-one` | 41 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `hyperlattice` | `scalar_query` | `definitely-zero` | 167 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `hyperlattice` | `scalar_query` | `zero-status` | 57 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `hyperlattice` | `scalar_query` | `zero-status` | 63 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 5 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `hyperlattice` | `zero_status` | `scalar-query` | 5 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `hyperlattice_hyperreal_backend` | `constructor` | `one` | 4 |
@@ -11851,7 +11803,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `hyperlattice_hyperreal_backend` | `op` | `mul-ref-ref` | 13 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 41 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 167 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 57 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 63 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `hyperlattice_hyperreal_backend` | `trait_op` | `add-owned-owned` | 6 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `hyperlattice_hyperreal_backend` | `trait_op` | `neg-owned` | 3 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `hyperlattice_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 12 |
@@ -11889,8 +11841,8 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 15 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `real` | `inverse` | `prechecked-one` | 5 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `real` | `product_sum` | `exact-rational-shared-denom` | 16 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 47 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `real` | `zero_status` | `zero-scale` | 10 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 49 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked` | `real` | `zero_status` | `zero-scale` | 14 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `hyperlattice` | `abort` | `attach-owned-scalar` | 2 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `hyperlattice` | `scalar_constructor` | `one` | 4 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `hyperlattice` | `scalar_constructor` | `zero` | 20 |
@@ -11906,7 +11858,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `attach-abort` | 2 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `definitely-one` | 41 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `definitely-zero` | 167 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `zero-status` | 57 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `zero-status` | 63 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 2 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `hyperlattice` | `zero_status` | `scalar-query` | 5 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `hyperlattice` | `zero_status_abort` | `no-clone-fast-path` | 3 |
@@ -11921,7 +11873,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `attach-abort` | 2 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 41 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 167 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 57 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 63 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `trait_op` | `add-owned-owned` | 6 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `trait_op` | `neg-owned` | 3 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 12 |
@@ -11959,21 +11911,21 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `real` | `dot_product` | `dot3-exact-rational-shared-denom` | 15 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `real` | `inverse` | `prechecked-one` | 5 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `real` | `product_sum` | `exact-rational-shared-denom` | 16 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 47 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `real` | `zero_status` | `zero-scale` | 10 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 49 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_checked_abort` | `real` | `zero_status` | `zero-scale` | 14 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `hyperlattice` | `scalar_constructor` | `one` | 4 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `hyperlattice` | `scalar_constructor` | `zero` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `hyperlattice` | `scalar_fast_path` | `active-linear-combination3` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `hyperlattice` | `scalar_op` | `sub-owned-owned` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `hyperlattice` | `scalar_query` | `definitely-one` | 32 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `hyperlattice` | `scalar_query` | `definitely-zero` | 96 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `hyperlattice` | `scalar_query` | `zero-status` | 32 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `hyperlattice` | `scalar_query` | `zero-status` | 36 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `hyperlattice_hyperreal_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `hyperlattice_hyperreal_backend` | `constructor` | `zero` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `hyperlattice_hyperreal_backend` | `op` | `active-linear-combination3` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 32 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 96 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 32 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 36 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `hyperlattice_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `hyperlattice_matrix` | `helper` | `affine-translation-column-subtract` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `hyperlattice_matrix` | `helper` | `affine-translation-dot3-active-exact` | 12 |
@@ -11986,20 +11938,20 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `real` | `definitely_zero` | `rational-sign` | 96 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `real` | `dot_product` | `active-dot3-exact-rational` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `real` | `zero_status` | `symbolic-nonzero-scale` | 24 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `real` | `zero_status` | `zero-scale` | 8 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation` | `real` | `zero_status` | `zero-scale` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `hyperlattice` | `scalar_constructor` | `one` | 4 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `hyperlattice` | `scalar_constructor` | `zero` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `hyperlattice` | `scalar_fast_path` | `active-linear-combination3` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `hyperlattice` | `scalar_op` | `sub-owned-owned` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `hyperlattice` | `scalar_query` | `definitely-one` | 32 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `hyperlattice` | `scalar_query` | `definitely-zero` | 96 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `hyperlattice` | `scalar_query` | `zero-status` | 32 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `hyperlattice` | `scalar_query` | `zero-status` | 36 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `hyperlattice_hyperreal_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `hyperlattice_hyperreal_backend` | `constructor` | `zero` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `hyperlattice_hyperreal_backend` | `op` | `active-linear-combination3` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 32 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 96 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 32 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 36 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `hyperlattice_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `hyperlattice_matrix` | `helper` | `affine-translation-column-subtract` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `hyperlattice_matrix` | `helper` | `affine-translation-dot3-active-exact` | 12 |
@@ -12013,20 +11965,20 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `real` | `definitely_zero` | `rational-sign` | 96 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `real` | `dot_product` | `active-dot3-exact-rational` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 24 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `real` | `zero_status` | `zero-scale` | 8 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked` | `real` | `zero_status` | `zero-scale` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice` | `scalar_constructor` | `one` | 4 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice` | `scalar_constructor` | `zero` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice` | `scalar_fast_path` | `active-linear-combination3` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice` | `scalar_op` | `sub-owned-owned` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice` | `scalar_query` | `definitely-one` | 32 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice` | `scalar_query` | `definitely-zero` | 96 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice` | `scalar_query` | `zero-status` | 32 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice` | `scalar_query` | `zero-status` | 36 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice_hyperreal_backend` | `constructor` | `one` | 4 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice_hyperreal_backend` | `constructor` | `zero` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice_hyperreal_backend` | `op` | `active-linear-combination3` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 32 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 96 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 32 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 36 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice_hyperreal_backend` | `trait_op` | `sub-owned-owned` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice_matrix` | `helper` | `affine-translation-column-subtract` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `hyperlattice_matrix` | `helper` | `affine-translation-dot3-active-exact` | 12 |
@@ -12040,7 +11992,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `real` | `definitely_zero` | `rational-sign` | 96 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `real` | `dot_product` | `active-dot3-exact-rational` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 24 |
-| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `real` | `zero_status` | `zero-scale` | 8 |
+| `matrix_ops/hyperreal/mat4 affine_div_matrix_translation_checked_abort` | `real` | `zero_status` | `zero-scale` | 12 |
 | `matrix_ops/hyperreal/mat4 affine_inverse` | `hyperlattice` | `scalar_constructor` | `one` | 10 |
 | `matrix_ops/hyperreal/mat4 affine_inverse` | `hyperlattice` | `scalar_constructor` | `zero` | 56 |
 | `matrix_ops/hyperreal/mat4 affine_inverse` | `hyperlattice` | `scalar_fast_path` | `active-linear-combination3` | 8 |
@@ -12172,20 +12124,20 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice` | `scalar_method` | `inverse-owned` | 4 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice` | `scalar_op` | `mul-ref-ref` | 3 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice` | `scalar_op` | `neg-owned` | 2 |
-| `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-one` | 24 |
-| `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-zero` | 288 |
+| `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-one` | 12 |
+| `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `definitely-zero` | 252 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `exact-rational-kind` | 64 |
-| `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 52 |
+| `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice` | `scalar_query` | `zero-status` | 27 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `method` | `inverse-owned` | 4 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `active-dot4` | 56 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `active-signed-product-sum2-exact-rational` | 117 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `mul-owned-method-ref` | 64 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `mul-ref-ref` | 3 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 4 |
-| `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 24 |
-| `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 314 |
+| `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 12 |
+| `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 278 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `exact-rational-kind` | 64 |
-| `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 52 |
+| `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 27 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_hyperreal_backend` | `trait_op` | `neg-owned` | 2 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `determinant4-from-factors` | 4 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `matrix4-factors` | 1 |
@@ -12199,31 +12151,31 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 36 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `mul-sub-pruned` | 3 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `multiply4-borrowed-sparse` | 1 |
-| `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `multiply4-dense-certified-ref` | 3 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `multiply4-dense-ref` | 3 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `multiply4-ref-ref-specialized` | 1 |
-| `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-exact-right-skip-left-kind` | 4 |
-| `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-shared-adjugate` | 4 |
+| `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-dense-exact-shared-adjugate` | 3 |
+| `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-exact-right-skip-left-kind` | 1 |
+| `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_matrix` | `helper` | `right-divide4-shared-adjugate` | 1 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `hyperlattice_matrix` | `op` | `div-owned-owned` | 4 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `rational` | `dot_product` | `dyadic-shared-denominator` | 56 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `rational` | `product_sum` | `all-zero` | 2 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `rational` | `product_sum` | `dyadic-shared-denominator` | 119 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `real` | `constructor` | `rational` | 244 |
-| `matrix_ops/hyperreal/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 314 |
+| `matrix_ops/hyperreal/mat4 div_matrix` | `real` | `definitely_zero` | `rational-sign` | 278 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `real` | `dot_product` | `active-dot4-exact-rational` | 56 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `real` | `inverse` | `prechecked-one` | 4 |
 | `matrix_ops/hyperreal/mat4 div_matrix` | `real` | `product_sum` | `exact-rational-shared-denom` | 121 |
-| `matrix_ops/hyperreal/mat4 div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 48 |
-| `matrix_ops/hyperreal/mat4 div_matrix` | `real` | `zero_status` | `zero-scale` | 4 |
+| `matrix_ops/hyperreal/mat4 div_matrix` | `real` | `zero_status` | `symbolic-nonzero-scale` | 22 |
+| `matrix_ops/hyperreal/mat4 div_matrix` | `real` | `zero_status` | `zero-scale` | 5 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice` | `scalar_fast_path` | `active-signed-product-sum2` | 117 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice` | `scalar_fast_path` | `mul-cached` | 64 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice` | `scalar_method` | `inverse-owned` | 4 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice` | `scalar_op` | `mul-ref-ref` | 3 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice` | `scalar_op` | `neg-owned` | 2 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice` | `scalar_query` | `definitely-one` | 24 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice` | `scalar_query` | `definitely-zero` | 288 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice` | `scalar_query` | `definitely-one` | 12 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice` | `scalar_query` | `definitely-zero` | 252 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice` | `scalar_query` | `exact-rational-kind` | 64 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice` | `scalar_query` | `zero-status` | 56 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice` | `scalar_query` | `zero-status` | 31 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice` | `zero_status` | `scalar-query` | 4 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_hyperreal_backend` | `method` | `inverse-owned` | 4 |
@@ -12232,10 +12184,10 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_hyperreal_backend` | `op` | `mul-owned-method-ref` | 64 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_hyperreal_backend` | `op` | `mul-ref-ref` | 3 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 4 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 24 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 314 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 12 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 278 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_hyperreal_backend` | `query` | `exact-rational-kind` | 64 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 56 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 31 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_hyperreal_backend` | `trait_op` | `neg-owned` | 2 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `determinant4-from-factors` | 4 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `matrix4-factors` | 1 |
@@ -12249,22 +12201,22 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 36 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `mul-sub-pruned` | 3 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `multiply4-borrowed-sparse` | 1 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `multiply4-dense-certified-ref` | 3 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `multiply4-dense-ref` | 3 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `multiply4-ref-ref-specialized` | 1 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `right-divide4-checked-shared-adjugate` | 4 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `right-divide4-exact-right-skip-left-kind` | 4 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `right-divide4-checked-dense-exact-shared-adjugate` | 3 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `right-divide4-checked-shared-adjugate` | 1 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_matrix` | `helper` | `right-divide4-exact-right-skip-left-kind` | 1 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `hyperlattice_matrix` | `method` | `div-matrix-checked` | 4 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `rational` | `dot_product` | `dyadic-shared-denominator` | 56 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `rational` | `product_sum` | `all-zero` | 2 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `rational` | `product_sum` | `dyadic-shared-denominator` | 119 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `real` | `constructor` | `rational` | 244 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked` | `real` | `definitely_zero` | `rational-sign` | 314 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked` | `real` | `definitely_zero` | `rational-sign` | 278 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `real` | `dot_product` | `active-dot4-exact-rational` | 56 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `real` | `inverse` | `prechecked-one` | 4 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked` | `real` | `product_sum` | `exact-rational-shared-denom` | 121 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 52 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked` | `real` | `zero_status` | `zero-scale` | 4 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked` | `real` | `zero_status` | `symbolic-nonzero-scale` | 26 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked` | `real` | `zero_status` | `zero-scale` | 5 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice` | `abort` | `attach-owned-scalar` | 4 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice` | `scalar_fast_path` | `active-signed-product-sum2` | 117 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice` | `scalar_fast_path` | `mul-cached` | 64 |
@@ -12272,10 +12224,10 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice` | `scalar_op` | `mul-ref-ref` | 3 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice` | `scalar_op` | `neg-owned` | 2 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `attach-abort` | 4 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `definitely-one` | 24 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `definitely-zero` | 288 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `definitely-one` | 12 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `definitely-zero` | 252 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `exact-rational-kind` | 64 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `zero-status` | 56 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice` | `scalar_query` | `zero-status` | 31 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice` | `zero_guard` | `checked-nonzero` | 4 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice` | `zero_status` | `scalar-query` | 4 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `method` | `inverse-owned` | 4 |
@@ -12285,10 +12237,10 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `op` | `mul-ref-ref` | 3 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `op` | `signed-product-sum2-exact-rational` | 4 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `attach-abort` | 4 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 24 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 314 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `definitely-one` | 12 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 278 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `exact-rational-kind` | 64 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 56 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `query` | `zero-status` | 31 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_hyperreal_backend` | `trait_op` | `neg-owned` | 2 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `determinant4-from-factors` | 4 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `matrix4-factors` | 1 |
@@ -12302,22 +12254,22 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `mul-sub-dense-exact` | 36 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `mul-sub-pruned` | 3 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `multiply4-borrowed-sparse` | 1 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `multiply4-dense-certified-ref` | 3 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `multiply4-dense-ref` | 3 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `multiply4-ref-ref-specialized` | 1 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `right-divide4-checked-abort-shared-adjugate` | 4 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `right-divide4-exact-right-skip-left-kind` | 4 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `right-divide4-checked-abort-dense-exact-shared-adjugate` | 3 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `right-divide4-checked-abort-shared-adjugate` | 1 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `helper` | `right-divide4-exact-right-skip-left-kind` | 1 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `hyperlattice_matrix` | `method` | `div-matrix-checked-with-abort` | 4 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `rational` | `dot_product` | `dyadic-shared-denominator` | 56 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `rational` | `product_sum` | `all-zero` | 2 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `rational` | `product_sum` | `dyadic-shared-denominator` | 119 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `real` | `constructor` | `rational` | 244 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `real` | `definitely_zero` | `rational-sign` | 314 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `real` | `definitely_zero` | `rational-sign` | 278 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `real` | `dot_product` | `active-dot4-exact-rational` | 56 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `real` | `inverse` | `prechecked-one` | 4 |
 | `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `real` | `product_sum` | `exact-rational-shared-denom` | 121 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 52 |
-| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `real` | `zero_status` | `zero-scale` | 4 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `real` | `zero_status` | `symbolic-nonzero-scale` | 26 |
+| `matrix_ops/hyperreal/mat4 div_matrix_checked_abort` | `real` | `zero_status` | `zero-scale` | 5 |
 | `matrix_ops/hyperreal/mat4 identity_direction_batch_assumed` | `hyperlattice` | `scalar_query` | `definitely-one` | 4 |
 | `matrix_ops/hyperreal/mat4 identity_direction_batch_assumed` | `hyperlattice` | `scalar_query` | `definitely-zero` | 13 |
 | `matrix_ops/hyperreal/mat4 identity_direction_batch_assumed` | `hyperlattice` | `scalar_query` | `zero-status` | 4 |
@@ -14174,7 +14126,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `scalar_ops/hyperreal-rational/cosh` | `hyperlattice` | `scalar_method` | `cosh` | 4 |
 | `scalar_ops/hyperreal-rational/cosh` | `hyperlattice_hyperreal_backend` | `method` | `cosh` | 4 |
 | `scalar_ops/hyperreal-rational/cosh` | `real` | `constructor` | `rational` | 4 |
-| `scalar_ops/hyperreal-rational/cosh` | `real` | `definitely_zero` | `rational-sign` | 24 |
+| `scalar_ops/hyperreal-rational/cosh` | `real` | `definitely_zero` | `rational-sign` | 8 |
 | `scalar_ops/hyperreal-rational/cosh` | `real` | `div` | `rhs-one` | 4 |
 | `scalar_ops/hyperreal-rational/cosh` | `real` | `exp` | `rational-exp-special-form` | 4 |
 | `scalar_ops/hyperreal-rational/cosh` | `real` | `inverse_ref` | `exp` | 4 |
@@ -14285,7 +14237,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `scalar_ops/hyperreal-rational/sinh` | `hyperlattice` | `scalar_method` | `sinh` | 4 |
 | `scalar_ops/hyperreal-rational/sinh` | `hyperlattice_hyperreal_backend` | `method` | `sinh` | 4 |
 | `scalar_ops/hyperreal-rational/sinh` | `real` | `constructor` | `rational` | 4 |
-| `scalar_ops/hyperreal-rational/sinh` | `real` | `definitely_zero` | `rational-sign` | 24 |
+| `scalar_ops/hyperreal-rational/sinh` | `real` | `definitely_zero` | `rational-sign` | 8 |
 | `scalar_ops/hyperreal-rational/sinh` | `real` | `div` | `rhs-one` | 4 |
 | `scalar_ops/hyperreal-rational/sinh` | `real` | `exp` | `rational-exp-special-form` | 4 |
 | `scalar_ops/hyperreal-rational/sinh` | `real` | `inverse_ref` | `exp` | 4 |
@@ -14314,7 +14266,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `scalar_ops/hyperreal-rational/tanh` | `hyperlattice` | `free_function` | `tanh-backend` | 4 |
 | `scalar_ops/hyperreal-rational/tanh` | `hyperlattice` | `scalar_method` | `tanh` | 4 |
 | `scalar_ops/hyperreal-rational/tanh` | `hyperlattice_hyperreal_backend` | `method` | `tanh` | 4 |
-| `scalar_ops/hyperreal-rational/tanh` | `real` | `definitely_zero` | `rational-sign` | 36 |
+| `scalar_ops/hyperreal-rational/tanh` | `real` | `definitely_zero` | `rational-sign` | 12 |
 | `scalar_ops/hyperreal-rational/tanh` | `real` | `exp` | `rational-exp-special-form` | 4 |
 | `scalar_ops/hyperreal-rational/tanh` | `real` | `inverse` | `generic` | 4 |
 | `scalar_ops/hyperreal-rational/tanh` | `real` | `inverse_ref` | `exp` | 4 |
@@ -14496,7 +14448,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `scalar_ops/hyperreal/cosh` | `hyperlattice` | `scalar_method` | `cosh` | 4 |
 | `scalar_ops/hyperreal/cosh` | `hyperlattice_hyperreal_backend` | `method` | `cosh` | 4 |
 | `scalar_ops/hyperreal/cosh` | `real` | `constructor` | `rational` | 4 |
-| `scalar_ops/hyperreal/cosh` | `real` | `definitely_zero` | `rational-sign` | 24 |
+| `scalar_ops/hyperreal/cosh` | `real` | `definitely_zero` | `rational-sign` | 8 |
 | `scalar_ops/hyperreal/cosh` | `real` | `div` | `rhs-one` | 4 |
 | `scalar_ops/hyperreal/cosh` | `real` | `exp` | `rational-exp-special-form` | 4 |
 | `scalar_ops/hyperreal/cosh` | `real` | `inverse_ref` | `exp` | 4 |
@@ -14610,7 +14562,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `scalar_ops/hyperreal/sinh` | `hyperlattice` | `scalar_method` | `sinh` | 4 |
 | `scalar_ops/hyperreal/sinh` | `hyperlattice_hyperreal_backend` | `method` | `sinh` | 4 |
 | `scalar_ops/hyperreal/sinh` | `real` | `constructor` | `rational` | 4 |
-| `scalar_ops/hyperreal/sinh` | `real` | `definitely_zero` | `rational-sign` | 24 |
+| `scalar_ops/hyperreal/sinh` | `real` | `definitely_zero` | `rational-sign` | 8 |
 | `scalar_ops/hyperreal/sinh` | `real` | `div` | `rhs-one` | 4 |
 | `scalar_ops/hyperreal/sinh` | `real` | `exp` | `rational-exp-special-form` | 4 |
 | `scalar_ops/hyperreal/sinh` | `real` | `inverse_ref` | `exp` | 4 |
@@ -14639,7 +14591,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `scalar_ops/hyperreal/tanh` | `hyperlattice` | `free_function` | `tanh-backend` | 4 |
 | `scalar_ops/hyperreal/tanh` | `hyperlattice` | `scalar_method` | `tanh` | 4 |
 | `scalar_ops/hyperreal/tanh` | `hyperlattice_hyperreal_backend` | `method` | `tanh` | 4 |
-| `scalar_ops/hyperreal/tanh` | `real` | `definitely_zero` | `rational-sign` | 36 |
+| `scalar_ops/hyperreal/tanh` | `real` | `definitely_zero` | `rational-sign` | 12 |
 | `scalar_ops/hyperreal/tanh` | `real` | `exp` | `rational-exp-special-form` | 4 |
 | `scalar_ops/hyperreal/tanh` | `real` | `inverse` | `generic` | 4 |
 | `scalar_ops/hyperreal/tanh` | `real` | `inverse_ref` | `exp` | 4 |
@@ -15011,7 +14963,6 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `scalar_trig/hyperreal-rational/e/acosh` | `real` | `acosh` | `near-one-deferred-node` | 1 |
 | `scalar_trig/hyperreal-rational/e/acosh` | `real` | `best_sign` | `symbolic-or-rational` | 1 |
 | `scalar_trig/hyperreal-rational/e/acosh` | `real` | `constructor` | `one` | 1 |
-| `scalar_trig/hyperreal-rational/e/acosh` | `real` | `definitely_zero` | `rational-sign` | 2 |
 | `scalar_trig/hyperreal-rational/neg_0.999999/acos` | `computable` | `acos` | `negative-rational-deferred` | 1 |
 | `scalar_trig/hyperreal-rational/neg_0.999999/acos` | `computable` | `constructor` | `acos-negative-rational-deferred` | 1 |
 | `scalar_trig/hyperreal-rational/neg_0.999999/acos` | `computable` | `constructor` | `rational-node` | 1 |
@@ -15747,7 +15698,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `vectors/hyperreal-rational/vec3 normalize` | `rational` | `dot_product` | `lcm-shared-denominator` | 1 |
 | `vectors/hyperreal-rational/vec3 normalize` | `real` | `best_sign` | `symbolic-or-rational` | 1 |
 | `vectors/hyperreal-rational/vec3 normalize` | `real` | `constructor` | `rational` | 1 |
-| `vectors/hyperreal-rational/vec3 normalize` | `real` | `definitely_zero` | `rational-sign` | 10 |
+| `vectors/hyperreal-rational/vec3 normalize` | `real` | `definitely_zero` | `rational-sign` | 4 |
 | `vectors/hyperreal-rational/vec3 normalize` | `real` | `dot_product` | `active-dot3-exact-rational` | 1 |
 | `vectors/hyperreal-rational/vec3 normalize` | `real` | `inverse` | `const-product-sqrt` | 1 |
 | `vectors/hyperreal-rational/vec3 normalize` | `real` | `sqrt` | `rational-sqrt-special-form` | 1 |
@@ -15792,7 +15743,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `vectors/hyperreal/vec3 normalize` | `rational` | `dot_product` | `dyadic-shared-denominator` | 4 |
 | `vectors/hyperreal/vec3 normalize` | `real` | `best_sign` | `symbolic-or-rational` | 4 |
 | `vectors/hyperreal/vec3 normalize` | `real` | `constructor` | `rational` | 4 |
-| `vectors/hyperreal/vec3 normalize` | `real` | `definitely_zero` | `rational-sign` | 36 |
+| `vectors/hyperreal/vec3 normalize` | `real` | `definitely_zero` | `rational-sign` | 12 |
 | `vectors/hyperreal/vec3 normalize` | `real` | `dot_product` | `active-dot3-exact-rational` | 4 |
 | `vectors/hyperreal/vec3 normalize` | `real` | `inverse` | `prechecked-sqrt-rational-radical` | 4 |
 | `vectors/hyperreal/vec3 normalize` | `real` | `sqrt` | `rational-sqrt-special-form` | 4 |

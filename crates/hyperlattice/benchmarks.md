@@ -209,9 +209,9 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `mat3 zero` | 16.28 ns | 538.16 ns | 520.61 ns | 273.72 ns | 207.38 ns | 11.44 ns | 33.06x | 1.97x | 2.60x | 47.04x |
 | `mat3 identity` | 9.74 ns | 641.93 ns | 612.99 ns | 332.80 ns | 240.60 ns | 153.43 ns | 65.94x | 1.93x | 2.67x | 4.18x |
 | `mat3 transpose` | 9.04 ns | 687.31 ns | 668.68 ns | 233.72 ns | 206.71 ns | 108.65 ns | 76.01x | 2.94x | 3.32x | 6.33x |
-| `mat3 reciprocal` | 87.15 ns | 15.29 us | 24.42 us | 2.93 us | 2.26 us | 81.55 us | 175.47x | 5.23x | 6.78x | 0.19x |
-| `mat3 reciprocal checked` | 88.17 ns | 14.44 us | 24.21 us | 2.90 us | 2.26 us | 81.62 us | 163.80x | 4.98x | 6.40x | 0.18x |
-| `mat3 inverse checked` | 88.31 ns | 14.54 us | 24.23 us | 2.95 us | 2.26 us | 81.46 us | 164.63x | 4.93x | 6.43x | 0.18x |
+| `mat3 reciprocal` | 87.15 ns | 14.71 us | 24.50 us | 2.93 us | 2.26 us | 81.55 us | 168.74x | 5.02x | 6.52x | 0.18x |
+| `mat3 reciprocal checked` | 88.17 ns | 14.52 us | 24.26 us | 2.90 us | 2.26 us | 81.62 us | 164.65x | 5.00x | 6.43x | 0.18x |
+| `mat3 inverse checked` | 88.31 ns | 14.61 us | 24.30 us | 2.95 us | 2.26 us | 81.46 us | 165.39x | 4.95x | 6.46x | 0.18x |
 | `mat3 inverse checked abort` | 93.91 ns | 14.53 us | 24.33 us | 2.91 us | 2.25 us | 81.41 us | 154.73x | 5.00x | 6.46x | 0.18x |
 | `mat3 powi` | 108.62 ns | 4.41 us | 37.93 us | 6.77 us | 6.21 us | 152.91 us | 40.57x | 0.65x | 0.71x | 0.03x |
 | `mat3 powi checked` | 108.52 ns | 4.38 us | 38.10 us | 6.78 us | 6.23 us | 150.33 us | 40.32x | 0.65x | 0.70x | 0.03x |
@@ -227,13 +227,13 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `mat3 neg` | 10.21 ns | 619.16 ns | 621.05 ns | 475.92 ns | 463.19 ns | 8.47 us | 60.63x | 1.30x | 1.34x | 0.07x |
 | `mat3 mul scalar` | 13.56 ns | 1.76 us | 6.01 us | 788.07 ns | 676.13 ns | 12.42 us | 129.58x | 2.23x | 2.60x | 0.14x |
 | `mat3 div scalar` | 23.22 ns | 4.37 us | 5.67 us | 1.51 us | 803.51 ns | 21.74 us | 188.26x | 2.89x | 5.44x | 0.20x |
-| `mat3 div matrix` | 133.96 ns | 17.89 us | 43.22 us | 5.55 us | 4.36 us | 158.09 us | 133.57x | 3.22x | 4.10x | 0.11x |
+| `mat3 div matrix` | 133.96 ns | 18.33 us | 43.31 us | 5.55 us | 4.36 us | 158.09 us | 136.85x | 3.30x | 4.20x | 0.12x |
 | `mat3 bitxor` | 108.21 ns | 4.39 us | 38.44 us | 6.72 us | 6.26 us | 148.76 us | 40.57x | 0.65x | 0.70x | 0.03x |
 | `mat4 zero` | 11.53 ns | 792.36 ns | 913.79 ns | 554.12 ns | 348.35 ns | 14.12 ns | 68.73x | 1.43x | 2.27x | 56.13x |
 | `mat4 identity` | 11.04 ns | 982.48 ns | 1.11 us | 611.36 ns | 413.96 ns | 232.41 ns | 89.01x | 1.61x | 2.37x | 4.23x |
 | `mat4 transpose` | 9.34 ns | 1.18 us | 1.10 us | 481.70 ns | 366.45 ns | 178.36 ns | 126.07x | 2.44x | 3.21x | 6.60x |
-| `mat4 reciprocal` | 176.44 ns | 24.47 us | 40.34 us | 10.60 us | 8.73 us | 337.88 us | 138.70x | 2.31x | 2.80x | 0.07x |
-| `mat4 reciprocal checked` | 172.36 ns | 24.33 us | 40.58 us | 10.63 us | 8.70 us | 341.64 us | 141.15x | 2.29x | 2.80x | 0.07x |
+| `mat4 reciprocal` | 176.44 ns | 24.51 us | 40.98 us | 10.60 us | 8.73 us | 337.88 us | 138.89x | 2.31x | 2.81x | 0.07x |
+| `mat4 reciprocal checked` | 172.36 ns | 24.62 us | 41.63 us | 10.63 us | 8.70 us | 341.64 us | 142.82x | 2.32x | 2.83x | 0.07x |
 | `mat4 powi` | 239.07 ns | 9.32 us | 52.11 us | 15.72 us | 13.84 us | 343.78 us | 39.01x | 0.59x | 0.67x | 0.03x |
 | `mat4 powi checked` | 239.95 ns | 9.33 us | 52.30 us | 15.83 us | 13.74 us | 347.09 us | 38.89x | 0.59x | 0.68x | 0.03x |
 | `mat4 add` | 52.34 ns | 5.72 us | 6.18 us | 909.87 ns | 847.73 ns | 19.82 us | 109.21x | 6.28x | 6.74x | 0.29x |
@@ -243,7 +243,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `mat4 neg` | 14.49 ns | 1.11 us | 1.01 us | 929.45 ns | 761.99 ns | 14.11 us | 76.89x | 1.20x | 1.46x | 0.08x |
 | `mat4 mul scalar` | 24.62 ns | 3.05 us | 7.31 us | 1.45 us | 1.14 us | 20.62 us | 123.89x | 2.10x | 2.68x | 0.15x |
 | `mat4 div scalar` | 31.56 ns | 7.48 us | 7.50 us | 2.66 us | 1.38 us | 37.36 us | 236.96x | 2.81x | 5.43x | 0.20x |
-| `mat4 div matrix` | 191.48 ns | 28.95 us | 63.87 us | 16.62 us | 14.11 us | 526.74 us | 151.20x | 1.74x | 2.05x | 0.05x |
+| `mat4 div matrix` | 191.48 ns | 28.04 us | 63.15 us | 16.62 us | 14.11 us | 526.74 us | 146.42x | 1.69x | 1.99x | 0.05x |
 | `mat4 bitxor` | 239.84 ns | 9.35 us | 52.27 us | 15.91 us | 13.71 us | 350.53 us | 38.98x | 0.59x | 0.68x | 0.03x |
 
 ### Borrowed API Operations
@@ -296,7 +296,7 @@ The following Criterion median estimates were collected on an AMD Ryzen 7 5800X3
 | `mat4 add refs` | 18.51 ns | 2.74 us | 3.58 us | - | - | 19.13 us | 148.08x | - | - | 0.14x |
 | `mat4 sub refs` | 16.83 ns | 3.00 us | 4.76 us | - | - | 35.07 us | 178.40x | - | - | 0.09x |
 | `mat4 mul refs` | 131.43 ns | 4.42 us | 19.31 us | - | - | 139.08 us | 33.63x | - | - | 0.03x |
-| `mat4 div refs` | 186.35 ns | 26.52 us | 60.65 us | - | - | 521.93 us | 142.30x | - | - | 0.05x |
+| `mat4 div refs` | 186.35 ns | 26.20 us | 60.52 us | - | - | 521.93 us | 140.59x | - | - | 0.05x |
 | `mat4 neg ref` | 12.47 ns | 874.96 ns | 846.74 ns | - | - | 13.98 us | 70.14x | - | - | 0.06x |
 | `mat4 add_scalar_ref` | 52.51 ns | 4.22 us | 6.70 us | - | - | 20.15 us | 80.34x | - | - | 0.21x |
 | `mat4 sub_scalar_ref` | 39.12 ns | 4.52 us | 7.62 us | - | - | 36.63 us | 115.65x | - | - | 0.12x |
