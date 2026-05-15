@@ -530,49 +530,6 @@ impl Rational {
         ))
     }
 
-    fn signed_product_sum_equal_denominator<const TERMS: usize, const FACTORS: usize>(
-        terms: [[&Self; FACTORS]; TERMS],
-        signs: [Sign; TERMS],
-    ) -> Option<Self> {
-        let mut shared_denominator = None::<BigUint>;
-        for i in 0..TERMS {
-            if signs[i] == NoSign {
-                continue;
-            }
-            let denominator = Self::product_term_denominator(terms[i]);
-            match &shared_denominator {
-                None => shared_denominator = Some(denominator),
-                Some(shared) if *shared == denominator => {}
-                Some(_) => return None,
-            }
-        }
-
-        let Some(denominator) = shared_denominator else {
-            return Some(Self::zero());
-        };
-
-        let mut positive = BigUint::ZERO;
-        let mut negative = BigUint::ZERO;
-        for i in 0..TERMS {
-            let sign = signs[i];
-            if sign == NoSign {
-                continue;
-            }
-            let magnitude = Self::product_term_magnitude(terms[i]);
-            match sign {
-                Plus => positive += magnitude,
-                Minus => negative += magnitude,
-                NoSign => {}
-            }
-        }
-
-        Some(Self::from_signed_magnitude_difference(
-            positive,
-            negative,
-            denominator,
-        ))
-    }
-
     pub(crate) fn signed_product_sum<const TERMS: usize, const FACTORS: usize>(
         positive_terms: [bool; TERMS],
         terms: [[&Self; FACTORS]; TERMS],
@@ -643,25 +600,56 @@ impl Rational {
             crate::trace_dispatch!("rational", "product_sum", "dyadic-shared-denominator");
             return dyadic;
         }
-        if let Some(equal_denominator) = Self::signed_product_sum_equal_denominator(terms, signs) {
-            crate::trace_dispatch!("rational", "product_sum", "equal-product-denominator");
-            return equal_denominator;
-        }
 
-        crate::trace_dispatch!("rational", "product_sum", "lcm-shared-denominator");
-        let mut common_denominator = BigUint::one();
         let mut denominators: [BigUint; TERMS] = std::array::from_fn(|_| BigUint::ZERO);
+        let mut shared_denominator = None::<BigUint>;
+        let mut equal_denominator = true;
         for i in 0..TERMS {
             if signs[i] == NoSign {
                 continue;
             }
             let denominator = Self::product_term_denominator(terms[i]);
-            if denominator != *ONE.deref() {
-                let divisor = num::Integer::gcd(&common_denominator, &denominator);
-                trace_rational_gcd!(&common_denominator, &denominator, &divisor);
-                common_denominator *= &denominator / &divisor;
+            match &shared_denominator {
+                None => shared_denominator = Some(denominator.clone()),
+                Some(shared) if *shared == denominator => {}
+                Some(_) => equal_denominator = false,
             }
             denominators[i] = denominator;
+        }
+
+        if equal_denominator {
+            let denominator = shared_denominator.expect("nonzero product sum has denominator");
+            let mut positive = BigUint::ZERO;
+            let mut negative = BigUint::ZERO;
+            for i in 0..TERMS {
+                let sign = signs[i];
+                if sign == NoSign {
+                    continue;
+                }
+                let magnitude = Self::product_term_magnitude(terms[i]);
+                match sign {
+                    Plus => positive += magnitude,
+                    Minus => negative += magnitude,
+                    NoSign => {}
+                }
+            }
+
+            crate::trace_dispatch!("rational", "product_sum", "equal-product-denominator");
+            return Self::from_signed_magnitude_difference(positive, negative, denominator);
+        }
+
+        crate::trace_dispatch!("rational", "product_sum", "lcm-shared-denominator");
+        let mut common_denominator = BigUint::one();
+        for i in 0..TERMS {
+            if signs[i] == NoSign {
+                continue;
+            }
+            let denominator = &denominators[i];
+            if denominator != ONE.deref() {
+                let divisor = num::Integer::gcd(&common_denominator, denominator);
+                trace_rational_gcd!(&common_denominator, denominator, &divisor);
+                common_denominator *= denominator / &divisor;
+            }
         }
 
         let mut positive = BigUint::ZERO;
