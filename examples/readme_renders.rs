@@ -274,9 +274,9 @@ fn render_readme_meshes() {
     );
 
     let tpms_box = Mesh::<()>::cube(2.0, ());
-    render_mesh("gyroid", &tpms_box.gyroid(20, 2.0, 0.0, ()));
-    render_mesh("schwarz_p", &tpms_box.schwarz_p(20, 2.0, 0.0, ()));
-    render_mesh("schwarz_d", &tpms_box.schwarz_d(20, 2.0, 0.0, ()));
+    render_mesh("gyroid", &tpms_box.gyroid_solid(24, 2.0, 0.0, 0.18, ()));
+    render_mesh("schwarz_p", &tpms_box.schwarz_p_solid(24, 2.0, 0.0, 0.18, ()));
+    render_mesh("schwarz_d", &tpms_box.schwarz_d_solid(24, 2.0, 0.0, 0.18, ()));
     render_mesh(
         "spur_gear_involute",
         &Mesh::<()>::spur_gear_involute(0.18, 22, 20.0, 0.0, 0.0, 8, 0.35, ()),
