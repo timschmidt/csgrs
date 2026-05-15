@@ -8,7 +8,7 @@ use std::sync::OnceLock;
 
 /// A polygon, defined by a list of vertices.
 /// - `M` is the generic metadata type stored directly on the polygon. Use
-///   `M = ()` for no metadata, or `M = Option<T>` for optional metadata.
+///   `M = ()` for no metadata, or `M = Option<YourMetadata>` for optional metadata.
 #[derive(Debug, Clone)]
 pub struct Polygon<M: Clone> {
     /// Vertices defining the Polygon's shape
@@ -55,7 +55,7 @@ impl<M: Clone + Send + Sync> Polygon<M> {
     }
 
     /// Return this polygon with replacement metadata.
-    pub fn with_metadata<T: Clone + Send + Sync>(self, metadata: T) -> Polygon<T> {
+    pub fn with_metadata<NewM: Clone + Send + Sync>(self, metadata: NewM) -> Polygon<NewM> {
         Polygon {
             vertices: self.vertices,
             plane: self.plane,
@@ -65,9 +65,9 @@ impl<M: Clone + Send + Sync> Polygon<M> {
     }
 
     /// Map this polygon's metadata while preserving its geometry.
-    pub fn map_metadata<T: Clone + Send + Sync, F>(self, f: F) -> Polygon<T>
+    pub fn map_metadata<NewM: Clone + Send + Sync, F>(self, f: F) -> Polygon<NewM>
     where
-        F: FnOnce(M) -> T,
+        F: FnOnce(M) -> NewM,
     {
         Polygon {
             vertices: self.vertices,

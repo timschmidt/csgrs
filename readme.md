@@ -67,10 +67,10 @@ type Mesh = csgrs::mesh::Mesh<()>;
 
 fn main() {
     // Create a cube
-    let cube: Mesh = Mesh::cube(2.0, None); // 2×2×2 cube at origin, no metadata
+    let cube: Mesh = Mesh::cube(2.0, ()); // 2×2×2 cube at origin, no metadata
 
     // Create sphere at (1, 1, 1) with radius 1.25:
-    let sphere: Mesh = Mesh::sphere(1.25, 16, 8, None).translate(1.0, 1.0, 1.0);
+    let sphere: Mesh = Mesh::sphere(1.25, 16, 8, ()).translate(1.0, 1.0, 1.0);
 
     // Perform a difference operation:
     let result = cube.difference(&sphere);
@@ -103,66 +103,66 @@ wasm-pack build --release --target bundler --out-dir pkg -- --features wasm
 
 ### Sketch Structure
 
-- **`Sketch<S>`** is the type which stores and manipulates 2D polygonal geometry.  It contains:
+- **`Sketch<M>`** is the type which stores and manipulates 2D polygonal geometry.  It contains:
   - a [`geo`](https://crates.io/crates/geo) [`GeometryCollection<Real>`](https://docs.rs/geo/latest/geo/geometry/struct.GeometryCollection.html)
   - a bounding box wrapped in a OnceLock (bounding_box: OnceLock<Aabb>)
-  - an optional metadata field (`Option<S>`) also defined by you
+  - a metadata field of type `M` also defined by you
 
-`Sketch<S>` provides methods for working with 2D shapes made of points and lines.
-You can build a `Sketch<S>` from geo Geometries with `Sketch::from_geo(...)`.
+`Sketch<M>` provides methods for working with 2D shapes made of points and lines.
+You can build a `Sketch<M>` from geo Geometries with `Sketch::from_geo(...)`.
 Geometries can be open or closed, and can have holes, but must be planar in the XY.
 `Sketch`'s are triangulated when exported as an STL, or when a Geometry is
-converted into a `Mesh<S>`.
+converted into a `Mesh<M>`.
 
 ### 2D Shapes in Sketch
 
-- <img src="docs/square.png" width="128" alt="top down view of a square"/> **`Sketch::square(width: Real, metadata: Option<S>)`**
-- <img src="docs/rectangle.png" width="128" alt="top down view of a rectangle"/> **`Sketch::rectangle(width: Real, length: Real, metadata: Option<S>)`**
-- <img src="docs/circle.png" width="128" alt="top down view of a circle"/> **`Sketch::circle(radius: Real, segments: usize, metadata: Option<S>)`**
-- <img src="docs/polygon.png" width="128" alt="top down view of a triangle"/> **`Sketch::polygon(&[[x1,y1],[x2,y2],...], metadata: Option<S>)`**
-- <img src="docs/rounded_rectangle.png" width="128" alt="top down view of a rectangle with rounded corners"/> **`Sketch::rounded_rectangle(width: Real, height: Real, corner_radius: Real, corner_segments: usize, metadata: Option<S>)`**
-- <img src="docs/ellipse.png" width="128" alt="top down view of an ellipse"/> **`Sketch::ellipse(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
-- <img src="docs/regular_ngon.png" width="128" alt="top down view of a 6 sided n-gon"/> **`Sketch::regular_ngon(sides: usize, radius: Real, metadata: Option<S>)`**
-- <img src="docs/sketch_arrow.png" width="128" alt="top down view of a 2D arrow"/> **`Sketch::arrow(shaft_length: Real, shaft_width: Real, head_length: Real, head_width: Real, metadata: Option<S>)`**
-- <img src="docs/right_triangle.png" width="128" alt="top down view of a right triangle"/> **`Sketch::right_triangle(width: Real, height: Real, metadata: Option<S>)`**
-- <img src="docs/trapezoid.png" width="128" alt="top down view of trapezoid"/> **`Sketch::trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real, metadata: Option<S>)`**
-- <img src="docs/star.png" width="128" alt="top down view of star"/> **`Sketch::star(num_points: usize, outer_radius: Real, inner_radius: Real, metadata: Option<S>)`**
-- <img src="docs/teardrop.png" width="128" alt="top down view of a teardrop"/> **`Sketch::teardrop(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
-- <img src="docs/sketch_egg.png" width="128" alt="top down view of an egg shape"/> **`Sketch::egg(width: Real, length: Real, segments: usize, metadata: Option<S>)`**
-- <img src="docs/squircle.png" width="128" alt="top down view of a squircle"/> **`Sketch::squircle(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
-- <img src="docs/keyhole.png" width="128" alt="top down view of a keyhole"/> **`Sketch::keyhole(circle_radius: Real, handle_width: Real, handle_height: Real, segments: usize, metadata: Option<S>)`**
-- <img src="docs/reuleaux.png" width="128"/> **`Sketch::reuleaux(sides: usize, radius: Real, arc_segments_per_side: usize, metadata: Option<S>)`**
-- <img src="docs/ring.png" width="128" alt="top down view of a ring"/> **`Sketch::ring(id: Real, thickness: Real, segments: usize, metadata: Option<S>)`**
-- <img src="docs/pie_slice.png" width="128" alt="top down view of a slice of a circle"/> **`Sketch::pie_slice(radius: Real, start_angle_deg: Real, end_angle_deg: Real, segments: usize, metadata: Option<S>)`**
-- <img src="docs/supershape.png" width="128"/> **`Sketch::supershape(a: Real, b: Real, m: Real, n1: Real, n2: Real, n3: Real, segments: usize, metadata: Option<S>)`**
-- <img src="docs/circle_with_keyway.png" width="128" alt="top down view of a circle with a notch taken out of it"/> **`Sketch::circle_with_keyway(radius: Real, segments: usize, key_width: Real, key_depth: Real, metadata: Option<S>)`**
-- <img src="docs/circle_with_flat.png" width="128" alt="top down view of a circle with a flat edge"/> **`Sketch::circle_with_flat(radius: Real, segments: usize, flat_dist: Real, metadata: Option<S>)`**
-- <img src="docs/circle_with_two_flats.png" width="128" alt="top down view of a circle with two flat edges"/> **`Sketch::circle_with_two_flats(radius: Real, segments: usize, flat_dist: Real, metadata: Option<S>)`**
-- <img src="docs/from_image.png" width="128" alt="top down view of a pixleated circle"/> **`Sketch::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: Option<S>)`** - Builds a new CSG from the “on” pixels of a grayscale image
-- <img src="docs/text.png" width="128" alt="top down view of the text 'HELLO'"/> **`Sketch::text(text: &str, font_data: &[u8], size: Real, metadata: Option<S>)`** - generate 2D text geometry in the XY plane from TTF fonts
-- <img src="docs/metaballs_2d.png" width="128" alt="top down view of three metaballs merged"/> **`Sketch::metaballs(balls: &[(nalgebra::Point2<Real>, Real)], resolution: (usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`**
-- <img src="docs/airfoil_naca4.png" width="128" alt="a side view of an airfoil"/> **`Sketch::airfoil_naca4(max_camber: Real, camber_position: Real, thickness: Real, chord: Real, samples: usize, metadata: Option<S>)`** - [NACA 4 digit](https://en.wikipedia.org/wiki/NACA_airfoil#Four-digit_series) airfoil
-- <img src="docs/bezier.png" width="128" alt="top down view of a bezier curve"/> **`Sketch::bezier(control: &[[Real; 2]], segments: usize, metadata: Option<S>)`**
-- <img src="docs/bspline.png" width="128" alt="top down view of a neer semi-circle shape"/> **`Sketch::bspline(control: &[[Real; 2]], p: usize, segments_per_span: usize, metadata: Option<S>)`**
-- <img src="docs/heart.png" width="128" alt="top down view of a cartune heart"/> **`Sketch::heart(width: Real, height: Real, segments: usize, metadata: Option<S>)`**
-- <img src="docs/crescent.png" width="128" alt="top down view of a crescent"/> **`Sketch::crescent(outer_r: Real, inner_r: Real, offset: Real, segments: usize, metadata: Option<S>)`** - 
+- <img src="docs/square.png" width="128" alt="top down view of a square"/> **`Sketch::square(width: Real, metadata: M)`**
+- <img src="docs/rectangle.png" width="128" alt="top down view of a rectangle"/> **`Sketch::rectangle(width: Real, length: Real, metadata: M)`**
+- <img src="docs/circle.png" width="128" alt="top down view of a circle"/> **`Sketch::circle(radius: Real, segments: usize, metadata: M)`**
+- <img src="docs/polygon.png" width="128" alt="top down view of a triangle"/> **`Sketch::polygon(&[[x1,y1],[x2,y2],...], metadata: M)`**
+- <img src="docs/rounded_rectangle.png" width="128" alt="top down view of a rectangle with rounded corners"/> **`Sketch::rounded_rectangle(width: Real, height: Real, corner_radius: Real, corner_segments: usize, metadata: M)`**
+- <img src="docs/ellipse.png" width="128" alt="top down view of an ellipse"/> **`Sketch::ellipse(width: Real, height: Real, segments: usize, metadata: M)`**
+- <img src="docs/regular_ngon.png" width="128" alt="top down view of a 6 sided n-gon"/> **`Sketch::regular_ngon(sides: usize, radius: Real, metadata: M)`**
+- <img src="docs/sketch_arrow.png" width="128" alt="top down view of a 2D arrow"/> **`Sketch::arrow(shaft_length: Real, shaft_width: Real, head_length: Real, head_width: Real, metadata: M)`**
+- <img src="docs/right_triangle.png" width="128" alt="top down view of a right triangle"/> **`Sketch::right_triangle(width: Real, height: Real, metadata: M)`**
+- <img src="docs/trapezoid.png" width="128" alt="top down view of trapezoid"/> **`Sketch::trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real, metadata: M)`**
+- <img src="docs/star.png" width="128" alt="top down view of star"/> **`Sketch::star(num_points: usize, outer_radius: Real, inner_radius: Real, metadata: M)`**
+- <img src="docs/teardrop.png" width="128" alt="top down view of a teardrop"/> **`Sketch::teardrop(width: Real, height: Real, segments: usize, metadata: M)`**
+- <img src="docs/sketch_egg.png" width="128" alt="top down view of an egg shape"/> **`Sketch::egg(width: Real, length: Real, segments: usize, metadata: M)`**
+- <img src="docs/squircle.png" width="128" alt="top down view of a squircle"/> **`Sketch::squircle(width: Real, height: Real, segments: usize, metadata: M)`**
+- <img src="docs/keyhole.png" width="128" alt="top down view of a keyhole"/> **`Sketch::keyhole(circle_radius: Real, handle_width: Real, handle_height: Real, segments: usize, metadata: M)`**
+- <img src="docs/reuleaux.png" width="128"/> **`Sketch::reuleaux(sides: usize, radius: Real, arc_segments_per_side: usize, metadata: M)`**
+- <img src="docs/ring.png" width="128" alt="top down view of a ring"/> **`Sketch::ring(id: Real, thickness: Real, segments: usize, metadata: M)`**
+- <img src="docs/pie_slice.png" width="128" alt="top down view of a slice of a circle"/> **`Sketch::pie_slice(radius: Real, start_angle_deg: Real, end_angle_deg: Real, segments: usize, metadata: M)`**
+- <img src="docs/supershape.png" width="128"/> **`Sketch::supershape(a: Real, b: Real, m: Real, n1: Real, n2: Real, n3: Real, segments: usize, metadata: M)`**
+- <img src="docs/circle_with_keyway.png" width="128" alt="top down view of a circle with a notch taken out of it"/> **`Sketch::circle_with_keyway(radius: Real, segments: usize, key_width: Real, key_depth: Real, metadata: M)`**
+- <img src="docs/circle_with_flat.png" width="128" alt="top down view of a circle with a flat edge"/> **`Sketch::circle_with_flat(radius: Real, segments: usize, flat_dist: Real, metadata: M)`**
+- <img src="docs/circle_with_two_flats.png" width="128" alt="top down view of a circle with two flat edges"/> **`Sketch::circle_with_two_flats(radius: Real, segments: usize, flat_dist: Real, metadata: M)`**
+- <img src="docs/from_image.png" width="128" alt="top down view of a pixleated circle"/> **`Sketch::from_image(img: &GrayImage, threshold: u8, closepaths: bool, metadata: M)`** - Builds a new CSG from the “on” pixels of a grayscale image
+- <img src="docs/text.png" width="128" alt="top down view of the text 'HELLO'"/> **`Sketch::text(text: &str, font_data: &[u8], size: Real, metadata: M)`** - generate 2D text geometry in the XY plane from TTF fonts
+- <img src="docs/metaballs_2d.png" width="128" alt="top down view of three metaballs merged"/> **`Sketch::metaballs(balls: &[(nalgebra::Point2<Real>, Real)], resolution: (usize, usize), iso_value: Real, padding: Real, metadata: M)`**
+- <img src="docs/airfoil_naca4.png" width="128" alt="a side view of an airfoil"/> **`Sketch::airfoil_naca4(max_camber: Real, camber_position: Real, thickness: Real, chord: Real, samples: usize, metadata: M)`** - [NACA 4 digit](https://en.wikipedia.org/wiki/NACA_airfoil#Four-digit_series) airfoil
+- <img src="docs/bezier.png" width="128" alt="top down view of a bezier curve"/> **`Sketch::bezier(control: &[[Real; 2]], segments: usize, metadata: M)`**
+- <img src="docs/bspline.png" width="128" alt="top down view of a neer semi-circle shape"/> **`Sketch::bspline(control: &[[Real; 2]], p: usize, segments_per_span: usize, metadata: M)`**
+- <img src="docs/heart.png" width="128" alt="top down view of a cartune heart"/> **`Sketch::heart(width: Real, height: Real, segments: usize, metadata: M)`**
+- <img src="docs/crescent.png" width="128" alt="top down view of a crescent"/> **`Sketch::crescent(outer_r: Real, inner_r: Real, offset: Real, segments: usize, metadata: M)`** -
 - <img src="docs/hilbert_curve.png" width="128" alt="top down view of a hilbert curve"/> **`Sketch::hilbert(order: usize, padding: Real)`** - fill an existing Sketch with a hilbert curve
-- <img src="docs/involute_gear.png" width="128" alt="top down view of a involute gear profile"/> **`Sketch::involute_gear(module: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, metadata: Option<S>)`**
-- **`Sketch::cycloidal_gear(module_: Real, teeth: usize, pin_teeth: usize, clearance: Real, segments_per_flank: usize, metadata: Option<S>)`** - under construction
-- **`Sketch::involute_rack(module_: Real, num_teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, metadata: Option<S>)`** - under construction
-- **`Sketch::cycloidal_rack(module_: Real, num_teeth: usize, generating_radius: Real, clearance: Real, segments_per_flank: usize, metadata: Option<S>)`** - under construction
+- <img src="docs/involute_gear.png" width="128" alt="top down view of a involute gear profile"/> **`Sketch::involute_gear(module: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, metadata: M)`**
+- **`Sketch::cycloidal_gear(module_: Real, teeth: usize, pin_teeth: usize, clearance: Real, segments_per_flank: usize, metadata: M)`** - under construction
+- **`Sketch::involute_rack(module_: Real, num_teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, metadata: M)`** - under construction
+- **`Sketch::cycloidal_rack(module_: Real, num_teeth: usize, generating_radius: Real, clearance: Real, segments_per_flank: usize, metadata: M)`** - under construction
 
 ```rust
-// Alias the library’s generic Sketch type with empty metadata:
+// Alias the library’s generic Sketch type with unit metadata:
 type Sketch = csgrs::sketch::Sketch<()>;
 
-let square = Sketch::square(1.0, None); // 1×1 at origin
-let rect = Sketch::rectangle(2.0, 4.0, None);
-let circle = Sketch::circle(1.0, 32, None); // radius=1, 32 segments
-let circle2 = Sketch::circle(2.0, 64, None);
+let square = Sketch::square(1.0, ()); // 1×1 at origin
+let rect = Sketch::rectangle(2.0, 4.0, ());
+let circle = Sketch::circle(1.0, 32, ()); // radius=1, 32 segments
+let circle2 = Sketch::circle(2.0, 64, ());
 
 let font_data = include_bytes!("../fonts/MyFont.ttf");
-let sketch_text = Sketch::text("Hello!", font_data, 20.0, None);
+let sketch_text = Sketch::text("Hello!", font_data, 20.0, ());
 
 // Then extrude the text to make it 3D:
 let text_3d = sketch_text.extrude(1.0);
@@ -179,12 +179,12 @@ Extrusions build 3D polygons from 2D Geometries.
 - <img src="docs/sweep.png" width="128" alt="a Sketch swept along a 3D path"/> **`Sketch::sweep(path: &[Point3<Real>])`** - Sweep a Sketch along a path defined by a series of Points
 
 ```rust
-let square = Sketch::square(2.0, None);
+let square = Sketch::square(2.0, ());
 let prism = square.extrude(5.0);
 
 let revolve_shape = square.revolve(360.0, 16);
 
-let bottom = Sketch::circle(2.0, 64, None);
+let bottom = Sketch::circle(2.0, 64, ());
 let top = bottom.translate(0.0, 0.0, 5.0);
 let lofted = Sketch::loft(&bottom.polygons[0], &top.polygons[0], false);
 ```
@@ -200,60 +200,60 @@ let lofted = Sketch::loft(&bottom.polygons[0], &top.polygons[0], false);
 
 ### Mesh Structure
 
-- **`Mesh<S>`** is the type which stores and manipulates 3D polygonal geometry.  It contains:
-  - a `Vec<Polygon<S>>` polygons, describing 3D shapes, each `Polygon<S>` holds:
+- **`Mesh<M>`** is the type which stores and manipulates 3D polygonal geometry.  It contains:
+  - a `Vec<Polygon<M>>` polygons, describing 3D shapes, each `Polygon<M>` holds:
     - a `Vec<Vertex>` (positions + normals),
     - a `Plane` describing the polygon’s orientation in 3D.
     - a lazily cached polygon bounding box (`OnceLock<Aabb>`) used by boolean and query code.
-    - an optional metadata field (`Option<S>`) defined by you
+    - a metadata field of type `M` defined by you
   - a bounding box wrapped in a OnceLock (bounding_box: OnceLock<Aabb>)
   - a lazily built Parry `TriMesh` cache for repeated point/ray query operations
-  - another optional metadata field (`Option<S>`) also defined by you
+  - another metadata field of type `M` also defined by you
 
-`Mesh<S>` provides methods for working with 3D shapes. You can build a
-`Mesh<S>` from polygons with `Mesh::from_polygons(...)`.
+`Mesh<M>` provides methods for working with 3D shapes. You can build a
+`Mesh<M>` from polygons with `Mesh::from_polygons(...)`.
 Polygons must be closed, planar, and have 3 or more vertices.
 Polygons are triangulated when being exported or converted to query meshes.
 
 ### 3D Shapes in Mesh
 
-- <img src="docs/cube.png" width="128" alt="an angled view of a cube"/> **`Mesh::cube(width: Real, metadata: Option<S>)`**
-- <img src="docs/cuboid.png" width="128" alt="an angled view of a cuboid"/> **`Mesh::cuboid(width: Real, length: Real, height: Real, metadata: Option<S>)`**
-- <img src="docs/sphere.png" width="128" alt="an angled view of a sphere"/> **`Mesh::sphere(radius: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
-- <img src="docs/cylinder.png" width="128" alt="an angled view of a cylinder"/> **`Mesh::cylinder(radius: Real, height: Real, segments: usize, metadata: Option<S>)`**
-- <img src="docs/frustum.png" width="128"/> **`Mesh::frustum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: Option<S>)`** -
+- <img src="docs/cube.png" width="128" alt="an angled view of a cube"/> **`Mesh::cube(width: Real, metadata: M)`**
+- <img src="docs/cuboid.png" width="128" alt="an angled view of a cuboid"/> **`Mesh::cuboid(width: Real, length: Real, height: Real, metadata: M)`**
+- <img src="docs/sphere.png" width="128" alt="an angled view of a sphere"/> **`Mesh::sphere(radius: Real, segments: usize, stacks: usize, metadata: M)`**
+- <img src="docs/cylinder.png" width="128" alt="an angled view of a cylinder"/> **`Mesh::cylinder(radius: Real, height: Real, segments: usize, metadata: M)`**
+- <img src="docs/frustum.png" width="128"/> **`Mesh::frustum(radius1: Real, radius2: Real, height: Real, segments: usize, metadata: M)`** -
 Construct a frustum at origin with height and `radius1` and `radius2`.
 If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
 - <img src="docs/frustum_ptp.png" width="128"/> **`Mesh::frustum_ptp(start: Point3, end: Point3, radius1: Real, radius2: Real, segments:
-usize, metadata: Option<S>)`** -
+usize, metadata: M)`** -
 Construct a frustum from `start` to `end` with `radius1` and `radius2`.
 If either radius is within EPSILON of 0.0, a cone terminating at a point is constructed.
-- <img src="docs/polyhedron.png" width="128"/> **`Mesh::polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: Option<S>)`**
-- <img src="docs/octahedron.png" width="128"/> **`Mesh::octahedron(radius: Real, metadata: Option<S>)`** -
-- <img src="docs/icosahedron.png" width="128"/> **`Mesh::icosahedron(radius: Real, metadata: Option<S>)`** -
-- <img src="docs/torus.png" width="128"/> **`Mesh::torus(major_r: Real, minor_r: Real, segments_major: usize, segments_minor: usize, metadata: Option<S>)`** -
-- <img src="docs/mesh_egg.png" width="128"/> **`Mesh::egg(width: Real, length: Real, revolve_segments: usize, outline_segments: usize, metadata: Option<S>)`**
-- <img src="docs/mesh_teardrop.png" width="128"/> **`Mesh::teardrop(width: Real, height: Real, revolve_segments: usize, shape_segments: usize, metadata: Option<S>)`**
-- <img src="docs/teardrop_cylinder.png" width="128"/> **`Mesh::teardrop_cylinder(width: Real, length: Real, height: Real, shape_segments: usize, metadata: Option<S>)`**
-- <img src="docs/ellipsoid.png" width="128"/> **`Mesh::ellipsoid(rx: Real, ry: Real, rz: Real, segments: usize, stacks: usize, metadata: Option<S>)`**
-- <img src="docs/metaballs_3d.png" width="128"/> **`Mesh::metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real, metadata: Option<S>)`**
-- <img src="docs/sdf.png" width="128"/> **`Mesh::sdf<F>(sdf: F, resolution: (usize, usize, usize), min_pt: Point3, max_pt: Point3, iso_value: Real, metadata: Option<S>)`** - Return a CSG created by meshing a signed distance field within a bounding box
-- <img src="docs/mesh_arrow.png" width="128"/> **`Mesh::arrow(start: Point3, direction: Vector3, segments: usize, orientation: bool, metadata: Option<S>)`** - Create an arrow at start, pointing along direction
-- <img src="docs/gyroid.png" width="128"/> **`Mesh::gyroid(resolution: usize, period: Real, iso_value: Real, metadata: Option<S>)`** - Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self`
-- <img src="docs/schwarz_p.png" width="128"/> **`Mesh::schwarz_p(resolution: usize, period: Real, iso_value: Real, metadata: Option<S>)`** - Generate a Triply Periodic Minimal Surface (Schwarz P) inside the volume of `self`
-- <img src="docs/schwarz_d.png" width="128"/> **`Mesh::schwarz_d(resolution: usize, period: Real, iso_value: Real, metadata: Option<S>)`** - Generate a Triply Periodic Minimal Surface (Schwarz D) inside the volume of `self`
-- <img src="docs/spur_gear_involute.png" width="128"/> **`Mesh::spur_gear_involute(module: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, helix_angle_deg: Real, slices: usize, metadata: Option<S>,)`** - Generate an involute spur gear
-- **`Mesh::helical_involute_gear(module_: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, helix_angle_deg: Real, slices: usize, metadata: Option<S>)`** - under construction
+- <img src="docs/polyhedron.png" width="128"/> **`Mesh::polyhedron(points: &[[Real; 3]], faces: &[Vec<usize>], metadata: M)`**
+- <img src="docs/octahedron.png" width="128"/> **`Mesh::octahedron(radius: Real, metadata: M)`** -
+- <img src="docs/icosahedron.png" width="128"/> **`Mesh::icosahedron(radius: Real, metadata: M)`** -
+- <img src="docs/torus.png" width="128"/> **`Mesh::torus(major_r: Real, minor_r: Real, segments_major: usize, segments_minor: usize, metadata: M)`** -
+- <img src="docs/mesh_egg.png" width="128"/> **`Mesh::egg(width: Real, length: Real, revolve_segments: usize, outline_segments: usize, metadata: M)`**
+- <img src="docs/mesh_teardrop.png" width="128"/> **`Mesh::teardrop(width: Real, height: Real, revolve_segments: usize, shape_segments: usize, metadata: M)`**
+- <img src="docs/teardrop_cylinder.png" width="128"/> **`Mesh::teardrop_cylinder(width: Real, length: Real, height: Real, shape_segments: usize, metadata: M)`**
+- <img src="docs/ellipsoid.png" width="128"/> **`Mesh::ellipsoid(rx: Real, ry: Real, rz: Real, segments: usize, stacks: usize, metadata: M)`**
+- <img src="docs/metaballs_3d.png" width="128"/> **`Mesh::metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real, metadata: M)`**
+- <img src="docs/sdf.png" width="128"/> **`Mesh::sdf<F>(sdf: F, resolution: (usize, usize, usize), min_pt: Point3, max_pt: Point3, iso_value: Real, metadata: M)`** - Return a CSG created by meshing a signed distance field within a bounding box
+- <img src="docs/mesh_arrow.png" width="128"/> **`Mesh::arrow(start: Point3, direction: Vector3, segments: usize, orientation: bool, metadata: M)`** - Create an arrow at start, pointing along direction
+- <img src="docs/gyroid.png" width="128"/> **`Mesh::gyroid(resolution: usize, period: Real, iso_value: Real, metadata: M)`** - Generate a Triply Periodic Minimal Surface (Gyroid) inside the volume of `self`
+- <img src="docs/schwarz_p.png" width="128"/> **`Mesh::schwarz_p(resolution: usize, period: Real, iso_value: Real, metadata: M)`** - Generate a Triply Periodic Minimal Surface (Schwarz P) inside the volume of `self`
+- <img src="docs/schwarz_d.png" width="128"/> **`Mesh::schwarz_d(resolution: usize, period: Real, iso_value: Real, metadata: M)`** - Generate a Triply Periodic Minimal Surface (Schwarz D) inside the volume of `self`
+- <img src="docs/spur_gear_involute.png" width="128"/> **`Mesh::spur_gear_involute(module: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, helix_angle_deg: Real, slices: usize, metadata: M,)`** - Generate an involute spur gear
+- **`Mesh::helical_involute_gear(module_: Real, teeth: usize, pressure_angle_deg: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, helix_angle_deg: Real, slices: usize, metadata: M)`** - under construction
 
 ```rust
 // Unit cube at origin, no metadata
-let cube = Mesh::cube(1.0, None);
+let cube = Mesh::cube(1.0, ());
 
 // Sphere of radius=2 at origin with 32 segments and 16 stacks
-let sphere = Mesh::sphere(2.0, 32, 16, None);
+let sphere = Mesh::sphere(2.0, 32, 16, ());
 
 // Cylinder from radius=1, height=2, 16 segments, and no metadata
-let cyl = Mesh::cylinder(1.0, 2.0, 16, None);
+let cyl = Mesh::cylinder(1.0, 2.0, 16, ());
 
 // Create a custom polyhedron from points and face indices:
 let points = &[
@@ -270,7 +270,7 @@ let faces = vec![
     vec![2, 3, 4],
     vec![3, 0, 4],
 ];
-let pyramid = Mesh::polyhedron(points, &faces, None);
+let pyramid = Mesh::polyhedron(points, &faces, ());
 
 // Metaballs https://en.wikipedia.org/wiki/Metaballs
 use csgrs::mesh::metaballs::MetaBall;
@@ -288,7 +288,7 @@ let metaball_csg = CSG::from_metaballs(
     resolution,
     iso_value,
     padding,
-    None,
+    (),
 );
 
 // Example Signed Distance Field for a sphere of radius 1.5 centered at (0,0,0)
@@ -299,7 +299,7 @@ let min_pt = Point3::new(-2.0, -2.0, -2.0);
 let max_pt = Point3::new( 2.0,  2.0,  2.0);
 let iso_value = 0.0; // Typically zero for SDF-based surfaces
 
-let csg_shape = Mesh::from_sdf(my_sdf, resolution, min_pt, max_pt, iso_value, None);
+let csg_shape = Mesh::from_sdf(my_sdf, resolution, min_pt, max_pt, iso_value, ());
 ```
 
 ### CSG Boolean Operations
@@ -312,7 +312,7 @@ let difference_result = cube.difference(&sphere);
 let intersection_result = cylinder.intersection(&sphere);
 ```
 
-Booleans on any type implementing the CSG trait such as `Mesh<S>` or `Sketch<S>` return their own type.
+Booleans on any type implementing the CSG trait such as `Mesh<M>` or `Sketch<M>` return their own type.
 Types implementing the CSG trait also provide the following transformation functions:
 
 ### Transformations
@@ -358,13 +358,13 @@ let mirrored = cube.mirror(plane_x);
 - **`Mesh::bounding_box()`** - computes the bounding box of the shape.
 - **`Mesh::invalidate_bounding_box()`** - invalidates the bounding box of the shape, causing it to be recomputed on next access
 - **`Mesh::triangulate()`** - triangulates all polygons returning a CSG containing triangles.
-- **`Mesh::from_polygons(polygons: &[Polygon<S>])`** - create a new CSG from Polygons.
+- **`Mesh::from_polygons(polygons: &[Polygon<M>])`** - create a new CSG from Polygons.
 
 ### STL
 
 - **Export ASCII STL**: `csg.to_stl_ascii("solid_name") -> String`
 - **Export Binary STL**: `csg.to_stl_binary("solid_name") -> io::Result<Vec<u8>>`
-- **Import STL**: `Mesh::from_stl(&stl_data) -> io::Result<CSG<S>>`
+- **Import STL**: `Mesh::from_stl(&stl_data) -> io::Result<CSG<M>>`
 
 ```rust
 // Save to ASCII STL
@@ -383,7 +383,7 @@ let imported_mesh = Mesh::from_stl(&file_data)?;
 ### DXF
 
 - **Export**: `csg.to_dxf() -> Result<Vec<u8>, Box<dyn Error>>`
-- **Import**: `Mesh::from_dxf(&dxf_data) -> Result<CSG<S>, Box<dyn Error>>`
+- **Import**: `Mesh::from_dxf(&dxf_data) -> Result<CSG<M>, Box<dyn Error>>`
 
 ```rust
 // Export DXF
@@ -401,7 +401,7 @@ Hershey fonts are single stroke fonts which produce open ended polylines in the 
 
 ```rust
 let font_data = include_bytes("../fonts/myfont.jhf");
-let csg_text = Sketch::from_hershey("Hello!", font_data, 20.0, None);
+let csg_text = Sketch::from_hershey("Hello!", font_data, 20.0, ());
 ```
 
 ### Create a Bevy `Mesh`
@@ -515,7 +515,7 @@ To account for error inherent in the storage of IEEE754 floating point numbers, 
 
 ## Working with Metadata
 
-`Mesh<S>` and `Sketch<S>` are generic over `S: Clone`. Each polygon in a `Mesh<S>` and each `Mesh<S>` and `Sketch<S>` have an optional `metadata: Option<S>`.  
+`Mesh<M>` and `Sketch<M>` are generic over `M: Clone`. Each polygon in a `Mesh<M>` and each `Mesh<M>` and `Sketch<M>` store `metadata: M`. Use `M = ()` for no metadata or `M = Option<YourMetadata>` for optional metadata.
 Use cases include storing color, ID, or layer info.
 
 ```rust
@@ -529,7 +529,7 @@ struct MyMetadata {
     label: String,
 }
 
-type Mesh = csgrs::mesh::Mesh<MyMetadata>;
+type Mesh = csgrs::mesh::Mesh<Option<MyMetadata>>;
 
 // For a single polygon:
 let mut poly = Polygon::new(
