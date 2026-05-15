@@ -8,6 +8,26 @@ use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
 use nalgebra::{Point3, Vector3};
 use std::fmt::Debug;
 
+/// Diagnostics captured while sampling and meshing an SDF.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct SdfDiagnostics {
+    pub resolution: (u32, u32, u32),
+    pub sample_count: usize,
+    pub finite_sample_count: usize,
+    pub non_finite_sample_count: usize,
+    pub negative_sample_count: usize,
+    pub zero_sample_count: usize,
+    pub positive_sample_count: usize,
+    pub min_finite_value: Option<Real>,
+    pub max_finite_value: Option<Real>,
+    pub crossing_cell_count: usize,
+    pub surface_nets_vertex_count: usize,
+    pub surface_nets_index_count: usize,
+    pub emitted_triangle_count: usize,
+    pub skipped_non_finite_triangle_count: usize,
+    pub degenerate_triangle_count: usize,
+}
+
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// Return a Mesh created by meshing a signed distance field within a bounding box
     ///
@@ -39,10 +59,31 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         // Must be `Sync`/`Send` if you want to parallelize the sampling.
         F: Fn(&Point3<Real>) -> Real + Sync + Send,
     {
+        Self::sdf_with_diagnostics(sdf, resolution, min_pt, max_pt, iso_value, metadata).0
+    }
+
+    /// Return a Mesh created by meshing a signed distance field and diagnostics
+    /// describing the sampled field and generated triangle stream.
+    pub fn sdf_with_diagnostics<F>(
+        sdf: F,
+        resolution: (usize, usize, usize),
+        min_pt: Point3<Real>,
+        max_pt: Point3<Real>,
+        iso_value: Real,
+        metadata: M,
+    ) -> (Mesh<M>, SdfDiagnostics)
+    where
+        F: Fn(&Point3<Real>) -> Real + Sync + Send,
+    {
         // Early return if resolution is degenerate
         let nx = resolution.0.max(2) as u32;
         let ny = resolution.1.max(2) as u32;
         let nz = resolution.2.max(2) as u32;
+        let mut diagnostics = SdfDiagnostics {
+            resolution: (nx, ny, nz),
+            sample_count: (nx * ny * nz) as usize,
+            ..SdfDiagnostics::default()
+        };
 
         // Determine grid spacing based on bounding box and resolution
         let dx = (max_pt.x - min_pt.x) / (nx as Real - 1.0);
@@ -85,8 +126,29 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
             // Robust finite value handling with mathematical correctness
             field_values[i as usize] = if sdf_val.is_finite() {
-                (sdf_val - iso_value) as f32
+                diagnostics.finite_sample_count += 1;
+                diagnostics.min_finite_value = Some(
+                    diagnostics
+                        .min_finite_value
+                        .map_or(sdf_val, |current| current.min(sdf_val)),
+                );
+                diagnostics.max_finite_value = Some(
+                    diagnostics
+                        .max_finite_value
+                        .map_or(sdf_val, |current| current.max(sdf_val)),
+                );
+                let shifted = sdf_val - iso_value;
+                if shifted < 0.0 {
+                    diagnostics.negative_sample_count += 1;
+                } else if shifted > 0.0 {
+                    diagnostics.positive_sample_count += 1;
+                } else {
+                    diagnostics.zero_sample_count += 1;
+                }
+                shifted as f32
             } else {
+                diagnostics.non_finite_sample_count += 1;
+                diagnostics.positive_sample_count += 1;
                 // For infinite/NaN values, use large positive value to indicate "far outside"
                 // This preserves the mathematical properties of the distance field
                 1e10_f32
@@ -132,6 +194,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         }
 
         let shape = GridShape { nx, ny, nz };
+        diagnostics.crossing_cell_count = count_crossing_cells(&field_values, nx, ny, nz);
 
         // `SurfaceNetsBuffer` collects the positions, normals, and triangle indices
         let mut sn_buffer = SurfaceNetsBuffer::default();
@@ -149,6 +212,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             [max_x, max_y, max_z],
             &mut sn_buffer,
         );
+        diagnostics.surface_nets_vertex_count = sn_buffer.positions.len();
+        diagnostics.surface_nets_index_count = sn_buffer.indices.len();
 
         // Convert the resulting triangles into Mesh polygons
         let mut triangles = Vec::with_capacity(sn_buffer.indices.len() / 3);
@@ -198,7 +263,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 && vec_finite(&n2v))
             {
                 // at least one coordinate was NaN/±∞ – ignore this triangle
+                diagnostics.skipped_non_finite_triangle_count += 1;
                 continue;
+            }
+
+            if triangle_area2(p0, p1, p2) <= Real::EPSILON {
+                diagnostics.degenerate_triangle_count += 1;
             }
 
             let v0 =
@@ -211,9 +281,48 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             // Note: reverse v1, v2 if you need to fix winding
             let poly = Polygon::new(vec![v0, v1, v2], metadata.clone());
             triangles.push(poly);
+            diagnostics.emitted_triangle_count += 1;
         }
 
         // Return as a Mesh
-        Mesh::from_polygons(&triangles, metadata)
+        (Mesh::from_polygons(&triangles, metadata), diagnostics)
     }
+}
+
+fn count_crossing_cells(field_values: &[f32], nx: u32, ny: u32, nz: u32) -> usize {
+    if nx < 2 || ny < 2 || nz < 2 {
+        return 0;
+    }
+
+    let index = |x: u32, y: u32, z: u32| -> usize { ((z * ny + y) * nx + x) as usize };
+    let mut count = 0;
+
+    for z in 0..(nz - 1) {
+        for y in 0..(ny - 1) {
+            for x in 0..(nx - 1) {
+                let corners = [
+                    field_values[index(x, y, z)],
+                    field_values[index(x + 1, y, z)],
+                    field_values[index(x, y + 1, z)],
+                    field_values[index(x + 1, y + 1, z)],
+                    field_values[index(x, y, z + 1)],
+                    field_values[index(x + 1, y, z + 1)],
+                    field_values[index(x, y + 1, z + 1)],
+                    field_values[index(x + 1, y + 1, z + 1)],
+                ];
+                let has_negative = corners.iter().any(|value| *value < 0.0);
+                let has_positive = corners.iter().any(|value| *value > 0.0);
+                let has_zero = corners.contains(&0.0);
+                if (has_negative && has_positive) || has_zero {
+                    count += 1;
+                }
+            }
+        }
+    }
+
+    count
+}
+
+fn triangle_area2(a: Point3<Real>, b: Point3<Real>, c: Point3<Real>) -> Real {
+    (b - a).cross(&(c - a)).norm()
 }

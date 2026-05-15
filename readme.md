@@ -602,6 +602,13 @@ the existing `image` dependency through the `image-io` feature, frames meshes
 with cached bounding boxes, and deliberately uses a slower projected-triangle
 software path for consistent README previews.
 
+To render into a scratch directory without touching the checked-in baselines,
+set `README_RENDER_OUTPUT_DIR`:
+
+```shell
+README_RENDER_OUTPUT_DIR=/tmp/csgrs-readme-renders cargo run --example readme_renders
+```
+
 ## Roadmap
 
 - **Boolean robustness**: keep BSP as the early verification layer, complete the
