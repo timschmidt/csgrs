@@ -5,6 +5,11 @@
 //! voltage, current, environment, and fabrication capability; hyperdrc only
 //! enforces the explicit project constraints supplied in `hyperdrc` config
 //! rather than trying to infer a universal rule deck.
+//!
+//! Reliability note: parsed trace length, pair skew, and clearance estimates in
+//! this module are suspect for meanders, arcs, zones, and vendor-specific
+//! stackups. Verify any release-blocking result against the layout tool's
+//! constraint engine or a fabricator rule deck.
 
 use std::collections::{BTreeMap, BTreeSet};
 

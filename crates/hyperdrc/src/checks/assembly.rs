@@ -3,6 +3,10 @@
 //! These checks operate on parsed KiCad pads/drills plus optional sidecars and
 //! focus on whether a board package is ready for placement, probing, tooling,
 //! and fine-pitch assembly review.
+//!
+//! Reliability note: assembly checks use copper footprints as proxies for real
+//! bodies, tooling envelopes, and process keepouts. Suspect results need review
+//! against the assembly drawing, package data, and fixture/process constraints.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -87,18 +91,18 @@ pub fn component_hole_clearance_readiness(
     let mut violations = Vec::new();
 
     for drill in mechanical_drills {
+        let keepout_radius = drill.diameter / 2.0 + clearance;
         let keepout = polygons_to_sketch(
-            vec![circle_polygon(
-                drill.location,
-                drill.diameter / 2.0 + clearance,
-                32,
-            )],
+            vec![circle_polygon(drill.location, keepout_radius, 32)],
             Some(LayerMetadata {
                 name: "mechanical hole keepout".to_string(),
             }),
         );
 
         for pad in &pads {
+            if !feature_may_touch_circle(pad, drill.location, keepout_radius) {
+                continue;
+            }
             let overlap = keepout.intersection(&pad.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
@@ -146,6 +150,9 @@ pub fn component_spacing_readiness(
         let left = pads[left_index];
         for right in &pads[(left_index + 1)..] {
             if left.layer != right.layer {
+                continue;
+            }
+            if !sketches_within_clearance(&left.sketch, &right.sketch, clearance) {
                 continue;
             }
 
@@ -271,6 +278,9 @@ pub fn pad_pair_asymmetry_readiness(
                 continue;
             }
             if left.net.is_some() && left.net == right.net {
+                continue;
+            }
+            if !sketches_within_clearance(&left.sketch, &right.sketch, max_pair_gap) {
                 continue;
             }
 
@@ -897,67 +907,6 @@ pub fn fiducial_readiness(
     violations
 }
 
-/// Run the `local_fiducial_readiness` design-readiness check or report helper.
-pub fn local_fiducial_readiness(
-    board: &BoardModel,
-    selected_layers: &[String],
-    pitch_threshold: f64,
-    search_radius: f64,
-) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let fiducials = features
-        .iter()
-        .copied()
-        .filter(|feature| likely_fiducial(feature))
-        .collect::<Vec<_>>();
-    let mut pads_by_layer: BTreeMap<String, Vec<&CopperFeature>> = BTreeMap::new();
-    for feature in features {
-        if feature.kind == CopperKind::Pad && !likely_fiducial(feature) {
-            pads_by_layer
-                .entry(feature.layer.clone())
-                .or_default()
-                .push(feature);
-        }
-    }
-
-    let mut violations = Vec::new();
-    for (layer, pads) in pads_by_layer {
-        if pads.len() < 16 {
-            continue;
-        }
-        let Some(min_pitch) = minimum_feature_pitch(&pads) else {
-            continue;
-        };
-        if min_pitch > pitch_threshold {
-            continue;
-        }
-
-        let cluster_center = average_location(&pads);
-        let nearby_fiducials = fiducials
-            .iter()
-            .filter(|fiducial| fiducial.layer == layer)
-            .filter(|fiducial| distance(fiducial.location, cluster_center) <= search_radius)
-            .count();
-        if nearby_fiducials >= 2 {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "local-fiducial-readiness",
-            Severity::Warning,
-            vec![layer],
-            None,
-            Vec::new(),
-            vec![cluster_center],
-            Some(format!(
-                "dense pad cluster has minimum pitch {min_pitch:.6} but only {nearby_fiducials} likely local fiducial(s) within {search_radius:.6}; review local fiducials for fine-pitch assembly"
-            )),
-        ));
-    }
-
-    violations
-}
-
 /// Run the `fiducial_keepout_readiness` design-readiness check or report helper.
 pub fn fiducial_keepout_readiness(
     board: &BoardModel,
@@ -981,6 +930,9 @@ pub fn fiducial_keepout_readiness(
         let keepout = fiducial.sketch.offset(clearance);
         for blocker in &blockers {
             if fiducial.layer != blocker.layer {
+                continue;
+            }
+            if !sketches_within_clearance(&fiducial.sketch, &blocker.sketch, clearance) {
                 continue;
             }
 
@@ -1011,62 +963,6 @@ pub fn fiducial_keepout_readiness(
                 )),
             ));
         }
-    }
-
-    violations
-}
-
-/// Run the `dense_pad_escape_readiness` design-readiness check or report helper.
-pub fn dense_pad_escape_readiness(
-    board: &BoardModel,
-    selected_layers: &[String],
-    pitch_threshold: f64,
-    via_search_radius: f64,
-) -> Vec<Violation> {
-    let mut pads_by_layer: BTreeMap<String, Vec<&CopperFeature>> = BTreeMap::new();
-    let mut vias = Vec::new();
-    for feature in selected_copper_features(board, selected_layers) {
-        match feature.kind {
-            CopperKind::Pad => pads_by_layer
-                .entry(feature.layer.clone())
-                .or_default()
-                .push(feature),
-            CopperKind::Via => vias.push(feature),
-            CopperKind::Segment | CopperKind::Zone => {}
-        }
-    }
-
-    let mut violations = Vec::new();
-    for (layer, pads) in pads_by_layer {
-        if pads.len() < 16 {
-            continue;
-        }
-        let Some(min_pitch) = minimum_feature_pitch(&pads) else {
-            continue;
-        };
-        if min_pitch > pitch_threshold {
-            continue;
-        }
-
-        let cluster_center = average_location(&pads);
-        let has_escape_via = vias
-            .iter()
-            .any(|via| distance(via.location, cluster_center) <= via_search_radius);
-        if has_escape_via {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "dense-pad-escape-readiness",
-            Severity::Warning,
-            vec![layer],
-            None,
-            Vec::new(),
-            vec![cluster_center],
-            Some(format!(
-                "dense pad cluster has minimum pitch {min_pitch:.6} with no parsed escape via within {via_search_radius:.6}; review BGA/fine-pitch escape strategy"
-            )),
-        ));
     }
 
     violations
@@ -1180,17 +1076,59 @@ pub fn conformal_coating_keepout_readiness(
         .iter()
         .copied()
         .filter(|feature| likely_no_coat_feature(feature))
+        .filter_map(|feature| {
+            feature
+                .sketch
+                .geometry
+                .bounding_rect()
+                .map(|bounds| (feature, bounds))
+        })
         .collect::<Vec<_>>();
-    let pads = features
+    let mut pads_by_layer: BTreeMap<String, Vec<(&CopperFeature, geo::Rect<f64>)>> =
+        BTreeMap::new();
+    for pad in features
         .into_iter()
         .filter(|feature| feature.kind == CopperKind::Pad)
-        .collect::<Vec<_>>();
+        .filter_map(|feature| {
+            feature
+                .sketch
+                .geometry
+                .bounding_rect()
+                .map(|bounds| (feature, bounds))
+        })
+    {
+        pads_by_layer
+            .entry(pad.0.layer.clone())
+            .or_default()
+            .push(pad);
+    }
+    for pads in pads_by_layer.values_mut() {
+        pads.sort_by(|left, right| {
+            left.1
+                .min()
+                .x
+                .total_cmp(&right.1.min().x)
+                .then(left.1.min().y.total_cmp(&right.1.min().y))
+        });
+    }
     let mut violations = Vec::new();
 
-    for no_coat in no_coat_features {
+    for (no_coat, no_coat_bounds) in no_coat_features {
         let keepout_sketch = no_coat.sketch.offset(keepout);
-        for neighbor in &pads {
-            if std::ptr::eq(no_coat, *neighbor) || no_coat.layer != neighbor.layer {
+        let Some(pads) = pads_by_layer.get(&no_coat.layer) else {
+            continue;
+        };
+        for (neighbor, neighbor_bounds) in pads {
+            if neighbor_bounds.min().x - no_coat_bounds.max().x > keepout {
+                break;
+            }
+            if no_coat_bounds.min().x - neighbor_bounds.max().x > keepout {
+                continue;
+            }
+            if std::ptr::eq(no_coat, *neighbor) {
+                continue;
+            }
+            if !rects_within_clearance(&no_coat_bounds, neighbor_bounds, keepout) {
                 continue;
             }
             if no_coat.net.is_some() && no_coat.net == neighbor.net {
@@ -1247,6 +1185,41 @@ fn bounding_dimensions(sketch: &PcbSketch) -> Option<(f64, f64)> {
     })
 }
 
+fn sketches_within_clearance(left: &PcbSketch, right: &PcbSketch, clearance: f64) -> bool {
+    let Some(left_bounds) = left.geometry.bounding_rect() else {
+        return true;
+    };
+    let Some(right_bounds) = right.geometry.bounding_rect() else {
+        return true;
+    };
+
+    // AABB broad-phase before exact segment/polygon distance. This follows the
+    // broad/narrow phase collision structure from Lin and Canny, "A Fast
+    // Algorithm for Incremental Distance Calculation", IEEE ICRA, 1991.
+    left_bounds.min().x - clearance <= right_bounds.max().x
+        && left_bounds.max().x + clearance >= right_bounds.min().x
+        && left_bounds.min().y - clearance <= right_bounds.max().y
+        && left_bounds.max().y + clearance >= right_bounds.min().y
+}
+
+fn rects_within_clearance(left: &geo::Rect<f64>, right: &geo::Rect<f64>, clearance: f64) -> bool {
+    left.min().x - clearance <= right.max().x
+        && left.max().x + clearance >= right.min().x
+        && left.min().y - clearance <= right.max().y
+        && left.max().y + clearance >= right.min().y
+}
+
+fn feature_may_touch_circle(feature: &CopperFeature, center: [f64; 2], radius: f64) -> bool {
+    let Some(bounds) = feature.sketch.geometry.bounding_rect() else {
+        return true;
+    };
+
+    center[0] - radius <= bounds.max().x
+        && center[0] + radius >= bounds.min().x
+        && center[1] - radius <= bounds.max().y
+        && center[1] + radius >= bounds.min().y
+}
+
 fn likely_fiducial(feature: &CopperFeature) -> bool {
     if feature.kind != CopperKind::Pad || feature.net.is_some() {
         return false;
@@ -1261,29 +1234,6 @@ fn likely_fiducial(feature: &CopperFeature) -> bool {
     let max_dimension = width.max(height);
 
     min_dimension >= 0.5 && max_dimension <= 2.5 && min_dimension / max_dimension >= 0.75
-}
-
-fn minimum_feature_pitch(features: &[&CopperFeature]) -> Option<f64> {
-    let mut min_pitch = f64::INFINITY;
-    for index in 0..features.len() {
-        for other in &features[(index + 1)..] {
-            min_pitch = min_pitch.min(distance(features[index].location, other.location));
-        }
-    }
-
-    min_pitch.is_finite().then_some(min_pitch)
-}
-
-fn average_location(features: &[&CopperFeature]) -> [f64; 2] {
-    let mut sum = [0.0, 0.0];
-    for feature in features {
-        sum[0] += feature.location[0];
-        sum[1] += feature.location[1];
-    }
-    [
-        sum[0] / features.len() as f64,
-        sum[1] / features.len() as f64,
-    ]
 }
 
 fn distance(left: [f64; 2], right: [f64; 2]) -> f64 {
@@ -1315,18 +1265,18 @@ fn process_drill_keepout_readiness(
     let mut violations = Vec::new();
 
     for drill in drills {
+        let keepout_radius = drill.diameter / 2.0 + keepout;
         let keepout_sketch = polygons_to_sketch(
-            vec![circle_polygon(
-                drill.location,
-                drill.diameter / 2.0 + keepout,
-                32,
-            )],
+            vec![circle_polygon(drill.location, keepout_radius, 32)],
             Some(LayerMetadata {
                 name: format!("{process_label} keepout"),
             }),
         );
         for pad in &pads {
             if drill.net.is_some() && drill.net == pad.net {
+                continue;
+            }
+            if !feature_may_touch_circle(pad, drill.location, keepout_radius) {
                 continue;
             }
             let overlap = keepout_sketch.intersection(&pad.sketch);
@@ -1585,6 +1535,30 @@ mod tests {
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "conformal-coating-keepout-readiness");
+    }
+
+    #[test]
+    fn conformal_coating_keepout_culls_large_sparse_pad_fields() {
+        let mut copper = vec![copper_pad("USB_DP", [0.0, 0.0], 0.4, 0.4)];
+        for index in 0..900 {
+            copper.push(copper_pad(
+                &format!("SIG{index}"),
+                [10.0 + (index % 45) as f64 * 3.0, (index / 45) as f64 * 3.0],
+                0.3,
+                0.3,
+            ));
+        }
+        copper.push(copper_pad("SIG_NEAR", [0.55, 0.0], 0.3, 0.3));
+        let board = board_with_copper(copper);
+
+        let start = std::time::Instant::now();
+        let violations = conformal_coating_keepout_readiness(&board, &[], 0.3, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed() < std::time::Duration::from_secs(2),
+            "conformal-coating keepout should cull distant pads by layer and bounds"
+        );
     }
 
     #[test]

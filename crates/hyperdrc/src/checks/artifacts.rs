@@ -4,9 +4,20 @@
 //! reaches assembly quoting or programming/test fixture review. The parser is
 //! intentionally conservative: it understands common CSV/TSV headers and emits
 //! review warnings rather than trying to become a full spreadsheet engine.
+//!
+//! Reliability note: package findings are suspect when projects use custom
+//! column names, vendor shorthand, or free-form README language. Treat them as
+//! prompts for release-package verification, not as authoritative ERP or MES
+//! validation.
 
 use std::collections::{BTreeMap, BTreeSet};
 
+use super::artifact_handoff::{
+    TALL_COMPONENT_HEIGHT_MM, mentions_fabrication_marking_zone_handoff, mentions_height_handoff,
+    mentions_low_standoff_cleanliness_handoff, mentions_press_fit_handoff,
+    mentions_reflow_profile_handoff, mentions_thermal_validation_handoff,
+    mentions_wire_bond_handoff,
+};
 use super::artifact_table::{cell, find_column, parse_table};
 use super::surface_finish::readme_surface_finish_compatibility;
 use crate::report::{Severity, Violation};
@@ -57,6 +68,14 @@ pub fn production_artifact_readiness(
     let mut through_hole_refs = BTreeSet::new();
     let mut inspection_sensitive_refs = BTreeSet::new();
     let mut programmable_refs = BTreeSet::new();
+    let mut polarized_refs = BTreeSet::new();
+    let mut moisture_sensitive_refs = BTreeSet::new();
+    let mut reflow_sensitive_refs = BTreeSet::new();
+    let mut tall_component_refs = BTreeSet::new();
+    let mut thermal_validation_refs = BTreeSet::new();
+    let mut low_standoff_refs = BTreeSet::new();
+    let mut press_fit_refs = BTreeSet::new();
+    let mut wire_bond_refs = BTreeSet::new();
     let mut assembly_variants = BTreeMap::<String, BTreeSet<String>>::new();
 
     for artifact in bom_files {
@@ -68,6 +87,14 @@ pub fn production_artifact_readiness(
         through_hole_refs.extend(report.through_hole_refs);
         inspection_sensitive_refs.extend(report.inspection_sensitive_refs);
         programmable_refs.extend(report.programmable_refs);
+        polarized_refs.extend(report.polarized_refs);
+        moisture_sensitive_refs.extend(report.moisture_sensitive_refs);
+        reflow_sensitive_refs.extend(report.reflow_sensitive_refs);
+        tall_component_refs.extend(report.tall_component_refs);
+        thermal_validation_refs.extend(report.thermal_validation_refs);
+        low_standoff_refs.extend(report.low_standoff_refs);
+        press_fit_refs.extend(report.press_fit_refs);
+        wire_bond_refs.extend(report.wire_bond_refs);
         merge_side_maps(&mut assembly_variants, report.assembly_variants);
         merge_side_maps(&mut bom_sides, report.sides);
         merge_side_maps(&mut bom_values, report.values);
@@ -135,6 +162,40 @@ pub fn production_artifact_readiness(
         release_markers.push(("rout drawing".to_string(), artifact.path.clone()));
     }
     violations.extend(analyze_release_marker_consistency(&release_markers));
+    let polarized_orientation_groups = polarized_orientation_mismatch_groups(
+        &polarized_refs,
+        &bom_values,
+        &bom_packages,
+        &centroid_rotations,
+    );
+    let release_mentions_fabrication_marking = readme_mentions_fabrication_marking(&release_notes);
+    let release_mentions_marking_zone_handoff =
+        mentions_fabrication_marking_zone_handoff(&release_notes);
+
+    log::trace!(
+        "production artifact readiness: bom_refs={} centroid_refs={} netlist_refs={} polarized_refs={} polarized_orientation_mismatch_groups={} msl_sensitive_refs={} reflow_sensitive_refs={} tall_component_refs={} thermal_validation_refs={} low_standoff_refs={} press_fit_refs={} wire_bond_refs={} through_hole_refs={} inspection_sensitive_refs={} programmable_refs={} marking_request={} marking_zone_handoff={} readme_files={} fab_drawings={} assembly_drawings={} rout_drawings={}",
+        bom_refs.len(),
+        centroid_refs.len(),
+        netlist_refs.len(),
+        polarized_refs.len(),
+        polarized_orientation_groups.len(),
+        moisture_sensitive_refs.len(),
+        reflow_sensitive_refs.len(),
+        tall_component_refs.len(),
+        thermal_validation_refs.len(),
+        low_standoff_refs.len(),
+        press_fit_refs.len(),
+        wire_bond_refs.len(),
+        through_hole_refs.len(),
+        inspection_sensitive_refs.len(),
+        programmable_refs.len(),
+        release_mentions_fabrication_marking,
+        release_mentions_marking_zone_handoff,
+        readme_files.len(),
+        fab_drawing_files.len(),
+        assembly_drawing_files.len(),
+        rout_drawing_files.len()
+    );
 
     if !bom_refs.is_empty() && !centroid_refs.is_empty() {
         for reference in bom_refs.difference(&centroid_refs) {
@@ -312,6 +373,196 @@ pub fn production_artifact_readiness(
         }
     }
 
+    // IPC-7351B makes package orientation conventions part of the assembly
+    // land-pattern handoff, while IPC J-STD-001H ties soldering acceptance to
+    // documented production controls. These package-class warnings therefore
+    // bridge row-level BOM metadata into the README/drawing release package.
+    if !polarized_refs.is_empty() && !readme_mentions_pin1_or_polarity_handoff(&release_notes) {
+        violations.push(artifact_violation(
+            "bom-readme-polarity-handoff",
+            Some(format!(
+                "BOM includes likely polarized or pin-1-sensitive references ({}) but README does not mention polarity, pin-1, cathode/anode, or orientation-mark review",
+                join_limited_set(&polarized_refs, 8)
+            )),
+        ));
+    }
+    if !polarized_refs.is_empty() && assembly_drawing_files.is_empty() {
+        violations.push(artifact_violation(
+            "bom-assembly-drawing-polarity-parity",
+            Some(format!(
+                "BOM includes likely polarized or pin-1-sensitive references ({}) but no assembly drawing artifact was provided for visible polarity/pin-1 marks",
+                join_limited_set(&polarized_refs, 8)
+            )),
+        ));
+    }
+    if !moisture_sensitive_refs.is_empty() && !readme_mentions_moisture_handoff(&release_notes) {
+        violations.push(artifact_violation(
+            "bom-readme-moisture-handoff",
+            Some(format!(
+                "BOM includes likely MSL-sensitive package references ({}) but README does not mention MSL, bake, dry-pack, desiccant, humidity-card, or moisture-barrier handling",
+                join_limited_set(&moisture_sensitive_refs, 8)
+            )),
+        ));
+    }
+    if !reflow_sensitive_refs.is_empty() && !mentions_reflow_profile_handoff(&release_notes) {
+        // IPC J-STD-001H treats soldering as a controlled production process.
+        // Areny et al. (2011) show that the selected reflow profile affects
+        // SnAgCu paste transfer and solder-deposit outcomes, so dense
+        // array/fine-pitch rows get a release-package handoff warning when no
+        // profile or thermal-recipe language is present.
+        violations.push(artifact_violation(
+            "bom-readme-reflow-profile-handoff",
+            Some(format!(
+                "BOM includes likely reflow-profile-sensitive package references ({}) but README does not mention reflow profile, oven recipe, soak/peak/ramp settings, or thermal profiling handoff",
+                join_limited_set(&reflow_sensitive_refs, 8)
+            )),
+        ));
+    }
+    if !tall_component_refs.is_empty() && !mentions_height_handoff(&release_notes) {
+        violations.push(artifact_violation(
+            "bom-readme-component-height-handoff",
+            Some(format!(
+                "BOM includes component heights above {TALL_COMPONENT_HEIGHT_MM:.1} mm for references ({}) but README does not mention component height, enclosure clearance, mechanical keepout, or mating-height review",
+                join_limited_set(&tall_component_refs, 8)
+            )),
+        ));
+    }
+    if !tall_component_refs.is_empty() && assembly_drawing_files.is_empty() {
+        // IPC-7351B treats package height and courtyard information as part of
+        // the assembly land-pattern handoff. A BOM height value catches the
+        // procurement fact, but tall connectors, modules, inductors, and
+        // batteries still need drawing/review context for keepout and enclosure
+        // clearance before release.
+        violations.push(artifact_violation(
+            "bom-assembly-drawing-height-parity",
+            Some(format!(
+                "BOM includes component heights above {TALL_COMPONENT_HEIGHT_MM:.1} mm for references ({}) but no assembly drawing artifact was provided for height/keepout review",
+                join_limited_set(&tall_component_refs, 8)
+            )),
+        ));
+    }
+    if !thermal_validation_refs.is_empty() && !mentions_thermal_validation_handoff(&release_notes) {
+        // Hollstein, Yang, and Weide-Zaage (2021) show that QFN thermal
+        // behavior depends on board-level design parameters such as thermal
+        // pad, via, and heat-spreading choices. BOM rows that explicitly name
+        // heat sinks, high-power parts, or power modules are therefore promoted
+        // into a release-package warning when no thermal validation, derating,
+        // temperature-rise, airflow, or thermal-interface handoff is present.
+        violations.push(artifact_violation(
+            "bom-readme-thermal-validation-handoff",
+            Some(format!(
+                "BOM includes likely heat-dissipating references ({}) but README does not mention thermal validation, temperature rise, derating, heatsink/TIM, airflow, thermal vias, or heat-spreader review",
+                join_limited_set(&thermal_validation_refs, 8)
+            )),
+        ));
+    }
+    if !thermal_validation_refs.is_empty() && assembly_drawing_files.is_empty() {
+        violations.push(artifact_violation(
+            "bom-assembly-drawing-thermal-parity",
+            Some(format!(
+                "BOM includes likely heat-dissipating references ({}) but no assembly drawing artifact was provided for heatsink, airflow, keepout, or thermal-interface review",
+                join_limited_set(&thermal_validation_refs, 8)
+            )),
+        ));
+    }
+    if !low_standoff_refs.is_empty() && !mentions_low_standoff_cleanliness_handoff(&release_notes) {
+        // IPC J-STD-001H treats cleanliness and residue control as production
+        // process evidence, and IPC-7351B makes low-standoff package geometry a
+        // package/land-pattern assembly concern. Chen and Lee (2015) show why
+        // no-clean flux that is not fully dried under low-standoff component
+        // terminations can become a corrosion/reliability risk, so dense
+        // no-lead and array packages are promoted into an explicit cleanliness
+        // handoff warning.
+        violations.push(artifact_violation(
+            "bom-readme-low-standoff-cleanliness-handoff",
+            Some(format!(
+                "BOM includes likely low-standoff package references ({}) but README does not mention no-clean flux, cleanliness, wash process, flux residue, or ionic-contamination controls",
+                join_limited_set(&low_standoff_refs, 8)
+            )),
+        ));
+    }
+    if !press_fit_refs.is_empty() && !mentions_press_fit_handoff(&release_notes) {
+        // IPC-9797 frames compliant press-fit pins around qualification,
+        // process control, finished-hole dimensions, insertion/push-out force,
+        // and acceptance evidence. Becerra, Willie, and Kurwa's IPC APEX EXPO
+        // process paper likewise calls out placement, insertion, inspection,
+        // repair, and critical process-control parameters. That makes a plain
+        // BOM row too weak for release: the sidecar package should carry the
+        // press-fit process handoff explicitly.
+        violations.push(artifact_violation(
+            "bom-readme-press-fit-handoff",
+            Some(format!(
+                "BOM includes likely press-fit/compliant-pin references ({}) but README does not mention press-fit process, compliant-pin handling, insertion force, finished-hole tolerance, or press tooling",
+                join_limited_set(&press_fit_refs, 8)
+            )),
+        ));
+    }
+    if !press_fit_refs.is_empty() && fab_drawing_files.is_empty() {
+        violations.push(artifact_violation(
+            "bom-fab-drawing-press-fit-parity",
+            Some(format!(
+                "BOM includes likely press-fit/compliant-pin references ({}) but no fabrication drawing artifact was provided for finished-hole and plating tolerance review",
+                join_limited_set(&press_fit_refs, 8)
+            )),
+        ));
+    }
+    if !press_fit_refs.is_empty() && assembly_drawing_files.is_empty() {
+        violations.push(artifact_violation(
+            "bom-assembly-drawing-press-fit-parity",
+            Some(format!(
+                "BOM includes likely press-fit/compliant-pin references ({}) but no assembly drawing artifact was provided for insertion tooling and support-fixture review",
+                join_limited_set(&press_fit_refs, 8)
+            )),
+        ));
+    }
+    if !wire_bond_refs.is_empty() && !mentions_wire_bond_handoff(&release_notes) {
+        // IPC-4556 treats ENEPIG as a surface finish for solderability and
+        // wire-bonding use cases. Oezkoek, McGurran, Metzger, and Roberts show
+        // that ENEPIG/ENEP layer choices, gold thickness, and palladium
+        // properties materially affect gold and copper wire-bond process
+        // windows. A BOM row that implies bare-die or chip-on-board assembly
+        // therefore needs release-package language for finish, bond map, loop,
+        // and pull-test handoff rather than relying on part metadata alone.
+        violations.push(artifact_violation(
+            "bom-readme-wire-bond-handoff",
+            Some(format!(
+                "BOM includes likely wire-bond or chip-on-board references ({}) but README does not mention wire bonding, bond pads, die attach, ENEPIG/soft-gold finish, bond map, loop height, or pull-test handoff",
+                join_limited_set(&wire_bond_refs, 8)
+            )),
+        ));
+    }
+    if !wire_bond_refs.is_empty() && fab_drawing_files.is_empty() {
+        violations.push(artifact_violation(
+            "bom-fab-drawing-wire-bond-parity",
+            Some(format!(
+                "BOM includes likely wire-bond or chip-on-board references ({}) but no fabrication drawing artifact was provided for bondable finish and pad-plating review",
+                join_limited_set(&wire_bond_refs, 8)
+            )),
+        ));
+    }
+    if !wire_bond_refs.is_empty() && assembly_drawing_files.is_empty() {
+        violations.push(artifact_violation(
+            "bom-assembly-drawing-wire-bond-parity",
+            Some(format!(
+                "BOM includes likely wire-bond or chip-on-board references ({}) but no assembly drawing artifact was provided for die attach, bond map, loop-height, and pull-test review",
+                join_limited_set(&wire_bond_refs, 8)
+            )),
+        ));
+    }
+    for (signature, rotations) in polarized_orientation_groups {
+        // IPC-7351B's orientation conventions are especially important for
+        // polarized same-package arrays: a 180-degree centroid mismatch may be
+        // intentional, but it is usually a pin-1/cathode/anode review item
+        // before the assembly package is released.
+        violations.push(artifact_violation(
+            "bom-centroid-polarized-orientation-parity",
+            Some(format!(
+                "BOM/centroid data places likely polarized same-package group {signature} at multiple centroid rotations ({}); review pin-1/polarity orientation consistency",
+                describe_rotation_groups(&rotations)
+            )),
+        ));
+    }
+
     if assembly_variants.len() > 1 && !readme_mentions_assembly_variants(&release_notes) {
         violations.push(artifact_violation(
             "bom-readme-variant-parity",
@@ -361,11 +612,26 @@ pub fn production_artifact_readiness(
                 ),
             ));
         }
-        if readme_mentions_fabrication_marking(&release_notes) && fab_drawing_files.is_empty() {
+        if release_mentions_fabrication_marking && fab_drawing_files.is_empty() {
             violations.push(artifact_violation(
                 "readme-fab-drawing-parity",
                 Some(
                     "README mentions fabrication markings, labels, date codes, UL marks, or serialization, but no fabrication drawing artifact was provided for allowed marking zones"
+                        .to_string(),
+                ),
+            ));
+        }
+        if release_mentions_fabrication_marking && !release_mentions_marking_zone_handoff {
+            // IPC-2221B and IPC-6012D treat board markings as fabrication
+            // information that must remain legible and compatible with board
+            // material, solder mask, copper, and customer traceability needs.
+            // Date codes, UL marks, revision labels, and serialized barcodes
+            // therefore need explicit location/allowed-zone handoff instead of
+            // free text that merely asks the fabricator to add a mark.
+            violations.push(artifact_violation(
+                "readme-fabrication-marking-zone-handoff",
+                Some(
+                    "README mentions fabrication markings, labels, date codes, UL marks, or serialization but does not identify an allowed marking zone, label location, silkscreen/legend location, or fab drawing marking callout"
                         .to_string(),
                 ),
             ));
@@ -458,6 +724,14 @@ struct ArtifactAnalysis {
     through_hole_refs: BTreeSet<String>,
     inspection_sensitive_refs: BTreeSet<String>,
     programmable_refs: BTreeSet<String>,
+    polarized_refs: BTreeSet<String>,
+    moisture_sensitive_refs: BTreeSet<String>,
+    reflow_sensitive_refs: BTreeSet<String>,
+    tall_component_refs: BTreeSet<String>,
+    thermal_validation_refs: BTreeSet<String>,
+    low_standoff_refs: BTreeSet<String>,
+    press_fit_refs: BTreeSet<String>,
+    wire_bond_refs: BTreeSet<String>,
     assembly_variants: BTreeMap<String, BTreeSet<String>>,
     violations: Vec<Violation>,
 }
@@ -1160,6 +1434,7 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
                     .extend(references.iter().cloned());
             }
             if likely_polarized_bom_row(&references, row, part_col, value_col, package_col) {
+                analysis.polarized_refs.extend(references.iter().cloned());
                 match polarity_col {
                     Some(column) if !is_unreleased_cell(cell(row, column)) => {}
                     Some(_) => analysis.violations.push(artifact_violation(
@@ -1179,6 +1454,9 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
                 }
             }
             if likely_moisture_sensitive_bom_row(row, part_col, value_col, package_col) {
+                analysis
+                    .moisture_sensitive_refs
+                    .extend(references.iter().cloned());
                 match moisture_col {
                     Some(column) if !is_unreleased_cell(cell(row, column)) => {}
                     Some(_) => analysis.violations.push(artifact_violation(
@@ -1196,6 +1474,27 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
                         )),
                     )),
                 }
+            }
+            if likely_reflow_sensitive_bom_row(row, part_col, value_col, package_col) {
+                analysis
+                    .reflow_sensitive_refs
+                    .extend(references.iter().cloned());
+            }
+            if likely_thermal_validation_bom_row(row, part_col, value_col, package_col) {
+                analysis
+                    .thermal_validation_refs
+                    .extend(references.iter().cloned());
+            }
+            if likely_low_standoff_bom_row(row, part_col, value_col, package_col) {
+                analysis
+                    .low_standoff_refs
+                    .extend(references.iter().cloned());
+            }
+            if likely_press_fit_bom_row(row, part_col, value_col, package_col) {
+                analysis.press_fit_refs.extend(references.iter().cloned());
+            }
+            if likely_wire_bond_bom_row(row, part_col, value_col, package_col) {
+                analysis.wire_bond_refs.extend(references.iter().cloned());
             }
             if likely_traceability_sensitive_bom_row(
                 row,
@@ -1268,7 +1567,15 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
             }
             if likely_height_sensitive_bom_row(&references, row, part_col, value_col, package_col) {
                 match height_col {
-                    Some(column) if parse_positive_dimension(cell(row, column)).is_some() => {}
+                    Some(column) if parse_positive_dimension(cell(row, column)).is_some() => {
+                        if parse_positive_dimension(cell(row, column))
+                            .is_some_and(|height| height > TALL_COMPONENT_HEIGHT_MM)
+                        {
+                            analysis
+                                .tall_component_refs
+                                .extend(references.iter().cloned());
+                        }
+                    }
                     Some(_) => analysis.violations.push(artifact_violation(
                         &artifact.path,
                         Some(format!(
@@ -2567,6 +2874,63 @@ fn compare_reference_metadata(
     }
 }
 
+fn polarized_orientation_mismatch_groups(
+    polarized_refs: &BTreeSet<String>,
+    bom_values: &BTreeMap<String, BTreeSet<String>>,
+    bom_packages: &BTreeMap<String, BTreeSet<String>>,
+    centroid_rotations: &BTreeMap<String, BTreeSet<String>>,
+) -> BTreeMap<String, BTreeMap<String, BTreeSet<String>>> {
+    let mut groups = BTreeMap::<String, BTreeMap<String, BTreeSet<String>>>::new();
+
+    for reference in polarized_refs {
+        let Some(signature) = reference_package_signature(reference, bom_values, bom_packages)
+        else {
+            continue;
+        };
+        let Some(rotation) = single_metadata_value(centroid_rotations.get(reference)) else {
+            continue;
+        };
+        groups
+            .entry(signature)
+            .or_default()
+            .entry(rotation)
+            .or_default()
+            .insert(reference.clone());
+    }
+
+    groups.retain(|_, rotations| rotations.len() > 1);
+    groups
+}
+
+fn reference_package_signature(
+    reference: &str,
+    bom_values: &BTreeMap<String, BTreeSet<String>>,
+    bom_packages: &BTreeMap<String, BTreeSet<String>>,
+) -> Option<String> {
+    let value = single_metadata_value(bom_values.get(reference));
+    let package = single_metadata_value(bom_packages.get(reference));
+    match (value, package) {
+        (Some(value), Some(package)) => Some(format!("value={value} package={package}")),
+        (Some(value), None) => Some(format!("value={value}")),
+        (None, Some(package)) => Some(format!("package={package}")),
+        (None, None) => None,
+    }
+}
+
+fn single_metadata_value(values: Option<&BTreeSet<String>>) -> Option<String> {
+    let mut iter = values?.iter();
+    let first = iter.next()?;
+    iter.next().is_none().then(|| first.clone())
+}
+
+fn describe_rotation_groups(rotations: &BTreeMap<String, BTreeSet<String>>) -> String {
+    rotations
+        .iter()
+        .map(|(rotation, references)| format!("{rotation}: {}", join_limited_set(references, 6)))
+        .collect::<Vec<_>>()
+        .join("; ")
+}
+
 fn join_set(values: &BTreeSet<String>) -> String {
     values.iter().cloned().collect::<Vec<_>>().join(", ")
 }
@@ -2661,6 +3025,44 @@ fn readme_mentions_programming_handoff(text: &str) -> bool {
             "ict",
             "fct",
             "functional test",
+        ],
+    )
+}
+
+fn readme_mentions_pin1_or_polarity_handoff(text: &str) -> bool {
+    has_any(
+        text,
+        &[
+            "pin-1",
+            "pin 1",
+            "pin one",
+            "polarity",
+            "polarized",
+            "orientation mark",
+            "orientation dot",
+            "cathode",
+            "anode",
+            "positive terminal",
+            "negative terminal",
+        ],
+    )
+}
+
+fn readme_mentions_moisture_handoff(text: &str) -> bool {
+    has_any(
+        text,
+        &[
+            "msl",
+            "moisture",
+            "dry pack",
+            "dry-pack",
+            "drypack",
+            "bake",
+            "humidity card",
+            "desiccant",
+            "moisture barrier",
+            "vacuum pack",
+            "floor life",
         ],
     )
 }
@@ -2995,6 +3397,155 @@ fn likely_moisture_sensitive_bom_row(
         &[part_col, value_col, package_col],
         &[
             "bga", "lga", "qfn", "dfn", "wlcsp", "csp", "qfp", "tqfp", "module",
+        ],
+    )
+}
+
+fn likely_reflow_sensitive_bom_row(
+    row: &[String],
+    part_col: Option<usize>,
+    value_col: Option<usize>,
+    package_col: Option<usize>,
+) -> bool {
+    row_text_matches(
+        row,
+        &[part_col, value_col, package_col],
+        &[
+            "bga",
+            "lga",
+            "qfn",
+            "dfn",
+            "wlcsp",
+            "csp",
+            "ucsp",
+            "fbga",
+            "ubga",
+            "flip chip",
+            "flip-chip",
+            "qfp",
+            "tqfp",
+            "lqfp",
+            "fine pitch",
+            "fine-pitch",
+            "module",
+        ],
+    )
+}
+
+fn likely_low_standoff_bom_row(
+    row: &[String],
+    part_col: Option<usize>,
+    value_col: Option<usize>,
+    package_col: Option<usize>,
+) -> bool {
+    row_text_matches(
+        row,
+        &[part_col, value_col, package_col],
+        &[
+            "bga",
+            "lga",
+            "qfn",
+            "dfn",
+            "wlcsp",
+            "csp",
+            "ucsp",
+            "flip chip",
+            "flip-chip",
+            "land grid",
+            "no-lead",
+            "no lead",
+            "leadless",
+        ],
+    )
+}
+
+fn likely_thermal_validation_bom_row(
+    row: &[String],
+    part_col: Option<usize>,
+    value_col: Option<usize>,
+    package_col: Option<usize>,
+) -> bool {
+    row_text_matches(
+        row,
+        &[part_col, value_col, package_col],
+        &[
+            "heatsink",
+            "heat sink",
+            "heat spreader",
+            "thermal pad",
+            "thermal slug",
+            "exposed pad",
+            "power module",
+            "powerstage",
+            "power stage",
+            "buck regulator",
+            "boost regulator",
+            "dc-dc",
+            "dcdc",
+            "ldo",
+            "linear regulator",
+            "mosfet",
+            "gan fet",
+            "sic fet",
+            "high power led",
+            "high-power led",
+            "power led",
+            "hot swap",
+            "load switch",
+            "motor driver",
+            "h-bridge",
+        ],
+    )
+}
+
+fn likely_press_fit_bom_row(
+    row: &[String],
+    part_col: Option<usize>,
+    value_col: Option<usize>,
+    package_col: Option<usize>,
+) -> bool {
+    row_text_matches(
+        row,
+        &[part_col, value_col, package_col],
+        &[
+            "press-fit",
+            "press fit",
+            "pressfit",
+            "compliant pin",
+            "compliant-pin",
+            "eye of needle",
+            "eye-of-needle",
+            "solderless connector",
+            "press-in",
+            "press in",
+        ],
+    )
+}
+
+fn likely_wire_bond_bom_row(
+    row: &[String],
+    part_col: Option<usize>,
+    value_col: Option<usize>,
+    package_col: Option<usize>,
+) -> bool {
+    row_text_matches(
+        row,
+        &[part_col, value_col, package_col],
+        &[
+            "wire bond",
+            "wire-bond",
+            "wirebond",
+            "bond pad",
+            "bondable",
+            "chip on board",
+            "chip-on-board",
+            "bare die",
+            "known good die",
+            "kgt die",
+            "die attach",
+            "glob top",
+            "dam and fill",
+            "cob",
         ],
     )
 }
@@ -3646,6 +4197,645 @@ mod tests {
     }
 
     #[test]
+    fn bom_readiness_requires_package_level_polarity_handoffs() {
+        let bom = artifact(
+            "bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Polarity,MSL,Height\nD1,1,LED0603,LED,0603 LED,LiteOn,DistA,Active,ALT1,Cathode mark reviewed,1,0.8mm\nU1,1,MCU123,MCU,QFN32,Vendor,DistB,Active,ALT2,Pin 1 dot,3,0.9mm\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+        ));
+
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("README does not mention polarity"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("no assembly drawing artifact")
+                    && message.contains("visible polarity/pin-1 marks"))
+        );
+    }
+
+    #[test]
+    fn bom_readiness_accepts_package_level_polarity_handoffs() {
+        let bom = artifact(
+            "bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Polarity,MSL,Height\nD1,1,LED0603,LED,0603 LED,LiteOn,DistA,Active,ALT1,Cathode mark reviewed,1,0.8mm\nU1,1,MCU123,MCU,QFN32,Vendor,DistB,Active,ALT2,Pin 1 dot,3,0.9mm\n",
+        );
+        let readme = artifact(
+            "README.md",
+            "Revision C package.\n\
+             Stackup: 4 layer, 1.6mm board thickness, 1 oz copper weight.\n\
+             Finish: ENIG. Soldermask: green.\n\
+             Controlled impedance: no impedance.\n\
+             Panelization: no panel, single board only.\n\
+             Via treatment: tented vias. Edge plating: no edge plating. Castellations: no castellation.\n\
+             Preflight: DRC/ERC passed, zones refilled, outputs generated and reloaded in Gerber viewer.\n\
+             HyperDRC reviewed with no waivers. Submitted package archived.\n\
+             Assembly: pin-1 and polarity reviewed against assembly drawing. X-ray inspection for QFN voiding.\n\
+             Packaging: MSL dry pack with desiccant and humidity card. ESD bag and lot label required.\n",
+        );
+        let assembly = file("widget_assembly.pdf", 256);
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[assembly],
+            &[],
+        ));
+
+        assert!(
+            !messages.iter().any(
+                |message| message.contains("README does not mention polarity")
+                    || message.contains("visible polarity/pin-1 marks")
+            ),
+            "package-level polarity handoffs should be satisfied, got {messages:?}"
+        );
+    }
+
+    #[test]
+    fn bom_readiness_requires_package_level_moisture_handoff() {
+        let bom = artifact(
+            "bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Polarity,MSL,Height\nU1,1,MCU123,MCU,QFN32,Vendor,DistB,Active,ALT2,Pin 1 dot,3,0.9mm\n",
+        );
+        let readme = artifact(
+            "README.md",
+            "Revision C package.\n\
+             Stackup: 4 layer, 1.6mm board thickness, 1 oz copper weight.\n\
+             Finish: ENIG. Soldermask: green.\n\
+             Controlled impedance: no impedance.\n\
+             Panelization: no panel, single board only.\n\
+             Via treatment: tented vias. Edge plating: no edge plating. Castellations: no castellation.\n\
+             Preflight: DRC/ERC passed, zones refilled, outputs generated and reloaded in Gerber viewer.\n\
+             HyperDRC reviewed with no waivers. Submitted package archived.\n\
+             Assembly: pin-1 and polarity reviewed against assembly drawing.\n",
+        );
+        let assembly = file("widget_assembly.pdf", 256);
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[assembly],
+            &[],
+        ));
+
+        assert!(messages.iter().any(
+            |message| message.contains("README does not mention MSL") && message.contains("U1")
+        ));
+    }
+
+    #[test]
+    fn bom_readiness_accepts_package_level_moisture_handoff() {
+        let bom = artifact(
+            "bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Polarity,MSL,Height\nU1,1,MCU123,MCU,QFN32,Vendor,DistB,Active,ALT2,Pin 1 dot,3,0.9mm\n",
+        );
+        let readme = artifact(
+            "README.md",
+            "Revision C package.\n\
+             Stackup: 4 layer, 1.6mm board thickness, 1 oz copper weight.\n\
+             Finish: ENIG. Soldermask: green.\n\
+             Controlled impedance: no impedance.\n\
+             Panelization: no panel, single board only.\n\
+             Via treatment: tented vias. Edge plating: no edge plating. Castellations: no castellation.\n\
+             Preflight: DRC/ERC passed, zones refilled, outputs generated and reloaded in Gerber viewer.\n\
+             HyperDRC reviewed with no waivers. Submitted package archived.\n\
+             Assembly: pin-1 and polarity reviewed against assembly drawing.\n\
+             Packaging: MSL dry pack with desiccant, humidity card, and moisture barrier bag.\n\
+             Reflow profile: SAC305 oven recipe with soak, peak temperature, and ramp-rate limits.\n",
+        );
+        let assembly = file("widget_assembly.pdf", 256);
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[assembly],
+            &[],
+        ));
+
+        assert!(
+            !messages
+                .iter()
+                .any(|message| message.contains("README does not mention MSL")),
+            "MSL handoff should be satisfied, got {messages:?}"
+        );
+    }
+
+    #[test]
+    fn bom_readiness_requires_reflow_profile_handoff_for_dense_packages() {
+        let bom = artifact(
+            "bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Polarity,MSL,Height\nU1,1,MCU123,MCU,QFN32,Vendor,DistB,Active,ALT2,Pin 1 dot,3,0.9mm\nU2,1,RF123,RF module,LGA module,Vendor,DistC,Active,ALT3,Pin 1 dot,3,1.2mm\n",
+        );
+        let readme = artifact(
+            "README.md",
+            "Revision E package.\n\
+             Stackup: 4 layer, 1.6mm board thickness, 1 oz copper weight.\n\
+             Finish: ENIG. Soldermask: green.\n\
+             Controlled impedance: no impedance.\n\
+             Panelization: no panel, single board only.\n\
+             Via treatment: tented vias. Edge plating: no edge plating. Castellations: no castellation.\n\
+             Preflight: DRC/ERC passed, zones refilled, outputs generated and reloaded in Gerber viewer.\n\
+             HyperDRC reviewed with no waivers. Submitted package archived.\n\
+             Assembly: pin-1 and polarity reviewed against assembly drawing. X-ray inspection for LGA module.\n\
+             Packaging: MSL dry pack with desiccant, humidity card, and moisture barrier bag.\n",
+        );
+        let assembly = file("widget_assembly.pdf", 256);
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[assembly],
+            &[],
+        ));
+
+        assert!(messages.iter().any(|message| {
+            message.contains("README does not mention reflow profile")
+                && message.contains("U1")
+                && message.contains("U2")
+        }));
+    }
+
+    #[test]
+    fn bom_readiness_accepts_reflow_profile_handoff_for_dense_packages() {
+        let bom = artifact(
+            "bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Polarity,MSL,Height\nU1,1,MCU123,MCU,QFN32,Vendor,DistB,Active,ALT2,Pin 1 dot,3,0.9mm\n",
+        );
+        let readme = artifact(
+            "README.md",
+            "Revision E package.\n\
+             Stackup: 4 layer, 1.6mm board thickness, 1 oz copper weight.\n\
+             Finish: ENIG. Soldermask: green.\n\
+             Controlled impedance: no impedance.\n\
+             Panelization: no panel, single board only.\n\
+             Via treatment: tented vias. Edge plating: no edge plating. Castellations: no castellation.\n\
+             Preflight: DRC/ERC passed, zones refilled, outputs generated and reloaded in Gerber viewer.\n\
+             HyperDRC reviewed with no waivers. Submitted package archived.\n\
+             Assembly: pin-1 and polarity reviewed against assembly drawing. X-ray inspection for QFN.\n\
+             Packaging: MSL dry pack with desiccant, humidity card, and moisture barrier bag.\n\
+             Reflow profile: validated oven recipe with soak, peak temperature, ramp rate, and time above liquidus.\n",
+        );
+        let assembly = file("widget_assembly.pdf", 256);
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[assembly],
+            &[],
+        ));
+
+        assert!(
+            !messages
+                .iter()
+                .any(|message| message.contains("README does not mention reflow profile")),
+            "reflow handoff should be satisfied, got {messages:?}"
+        );
+    }
+
+    #[test]
+    fn bom_readiness_requires_low_standoff_cleanliness_handoff() {
+        let bom = artifact(
+            "bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Polarity,MSL,Height\nU1,1,MCU123,MCU,QFN32,Vendor,DistB,Active,ALT2,Pin 1 dot,3,0.9mm\nU2,1,SENSOR123,Sensor,WLCSP,Vendor,DistC,Active,ALT3,Pin 1 dot,3,0.6mm\n",
+        );
+        let readme = artifact(
+            "README.md",
+            "Revision L package.\n\
+             Stackup: 4 layer, 1.6mm board thickness, 1 oz copper weight.\n\
+             Finish: ENIG. Soldermask: green.\n\
+             Controlled impedance: no impedance.\n\
+             Panelization: no panel, single board only.\n\
+             Via treatment: tented vias. Edge plating: no edge plating. Castellations: no castellation.\n\
+             Preflight: DRC/ERC passed, zones refilled, outputs generated and reloaded in Gerber viewer.\n\
+             HyperDRC reviewed with no waivers. Submitted package archived.\n\
+             Assembly: pin-1 and polarity reviewed against assembly drawing. X-ray inspection for WLCSP.\n\
+             Packaging: MSL dry pack with desiccant, humidity card, and moisture barrier bag.\n\
+             Reflow profile: validated oven recipe with soak, peak temperature, ramp rate, and time above liquidus.\n",
+        );
+        let assembly = file("widget_assembly.pdf", 256);
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[assembly],
+            &[],
+        ));
+
+        assert!(messages.iter().any(
+            |message| message.contains("low-standoff package references")
+                && message.contains("U1")
+                && message.contains("U2")
+                && message.contains("cleanliness")
+        ));
+    }
+
+    #[test]
+    fn bom_readiness_accepts_low_standoff_cleanliness_handoff() {
+        let bom = artifact(
+            "bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Polarity,MSL,Height\nU1,1,MCU123,MCU,QFN32,Vendor,DistB,Active,ALT2,Pin 1 dot,3,0.9mm\n",
+        );
+        let readme = artifact(
+            "README.md",
+            "Revision L package.\n\
+             Stackup: 4 layer, 1.6mm board thickness, 1 oz copper weight.\n\
+             Finish: ENIG. Soldermask: green.\n\
+             Controlled impedance: no impedance.\n\
+             Panelization: no panel, single board only.\n\
+             Via treatment: tented vias. Edge plating: no edge plating. Castellations: no castellation.\n\
+             Preflight: DRC/ERC passed, zones refilled, outputs generated and reloaded in Gerber viewer.\n\
+             HyperDRC reviewed with no waivers. Submitted package archived.\n\
+             Assembly: pin-1 and polarity reviewed against assembly drawing. X-ray inspection for QFN.\n\
+             Packaging: MSL dry pack with desiccant, humidity card, and moisture barrier bag.\n\
+             Reflow profile: validated oven recipe with soak, peak temperature, ramp rate, and time above liquidus.\n\
+             Cleanliness: no-clean flux residue and ionic contamination controls reviewed for low-standoff packages.\n",
+        );
+        let assembly = file("widget_assembly.pdf", 256);
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[assembly],
+            &[],
+        ));
+
+        assert!(
+            !messages
+                .iter()
+                .any(|message| message.contains("low-standoff package references")),
+            "cleanliness handoff should be satisfied, got {messages:?}"
+        );
+    }
+
+    #[test]
+    fn bom_readiness_requires_press_fit_process_and_drawing_handoffs() {
+        let bom = artifact(
+            "bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Polarity,MSL,Height\nJ1,1,PF-100,Press-fit compliant pin connector,2x20 press-fit,Vendor,DistA,Active,ALT1,Pin 1 mark,1,12mm\n",
+        );
+        let readme = artifact(
+            "README.md",
+            "Revision PF package.\n\
+             Stackup: 4 layer, 1.6mm board thickness, 1 oz copper weight.\n\
+             Finish: ENIG. Soldermask: green.\n\
+             Controlled impedance: no impedance.\n\
+             Panelization: no panel, single board only.\n\
+             Via treatment: tented vias. Edge plating: no edge plating. Castellations: no castellation.\n\
+             Preflight: DRC/ERC passed, zones refilled, outputs generated and reloaded in Gerber viewer.\n\
+             HyperDRC reviewed with no waivers. Submitted package archived.\n\
+             Assembly: pin-1 and polarity reviewed. Component height and enclosure clearance reviewed.\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[],
+            &[],
+        ));
+
+        assert!(messages.iter().any(
+            |message| message.contains("press-fit/compliant-pin references")
+                && message.contains("README does not mention press-fit process")
+        ));
+        assert!(messages.iter().any(|message| {
+            message.contains("press-fit/compliant-pin references")
+                && message.contains("no fabrication drawing artifact")
+        }));
+        assert!(messages.iter().any(|message| {
+            message.contains("press-fit/compliant-pin references")
+                && message.contains("no assembly drawing artifact")
+        }));
+    }
+
+    #[test]
+    fn bom_readiness_accepts_press_fit_process_and_drawing_handoffs() {
+        let bom = artifact(
+            "bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Polarity,MSL,Height\nJ1,1,PF-100,Press-fit compliant pin connector,2x20 press-fit,Vendor,DistA,Active,ALT1,Pin 1 mark,1,12mm\n",
+        );
+        let readme = artifact(
+            "README.md",
+            "Revision PF package.\n\
+             Stackup: 4 layer, 1.6mm board thickness, 1 oz copper weight.\n\
+             Finish: ENIG. Soldermask: green.\n\
+             Controlled impedance: no impedance.\n\
+             Panelization: no panel, single board only.\n\
+             Via treatment: tented vias. Edge plating: no edge plating. Castellations: no castellation.\n\
+             Preflight: DRC/ERC passed, zones refilled, outputs generated and reloaded in Gerber viewer.\n\
+             HyperDRC reviewed with no waivers. Submitted package archived.\n\
+             Assembly: pin-1 and polarity reviewed. Component height and enclosure clearance reviewed.\n\
+             Press-fit process: compliant-pin insertion force, finished-hole tolerance, press tooling, and support fixture reviewed.\n",
+        );
+        let fab = file("widget_fab.pdf", 256);
+        let assembly = file("widget_assembly.pdf", 256);
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[readme],
+            &[fab],
+            &[assembly],
+            &[],
+        ));
+
+        assert!(
+            !messages
+                .iter()
+                .any(|message| message.contains("press-fit/compliant-pin references")),
+            "press-fit handoff should be satisfied, got {messages:?}"
+        );
+    }
+
+    #[test]
+    fn bom_readiness_requires_wire_bond_process_and_drawing_handoffs() {
+        let bom = artifact(
+            "bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Polarity,MSL,Height\nU1,1,COB-DIE-1,Bare die wire bond sensor,chip-on-board bond pad array,Vendor,DistA,Active,ALT1,Die corner 1,3,0.4mm\n",
+        );
+        let readme = artifact(
+            "README.md",
+            "Revision WB package.\n\
+             Stackup: 4 layer, 1.0mm board thickness, 1 oz copper weight.\n\
+             Finish: ENIG. Soldermask: green.\n\
+             Controlled impedance: no impedance.\n\
+             Panelization: no panel, single board only.\n\
+             Via treatment: tented vias. Edge plating: no edge plating. Castellations: no castellation.\n\
+             Preflight: DRC/ERC passed, zones refilled, outputs generated and reloaded in Gerber viewer.\n\
+             HyperDRC reviewed with no waivers. Submitted package archived.\n\
+             Packaging: MSL dry pack with desiccant, humidity card, and moisture barrier bag.\n\
+             Cleanliness: no-clean flux residue and ionic contamination controls reviewed for low-standoff packages.\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[],
+            &[],
+        ));
+
+        assert!(messages.iter().any(|message| {
+            message.contains("wire-bond or chip-on-board references")
+                && message.contains("README does not mention wire bonding")
+        }));
+        assert!(messages.iter().any(|message| {
+            message.contains("wire-bond or chip-on-board references")
+                && message.contains("no fabrication drawing artifact")
+        }));
+        assert!(messages.iter().any(|message| {
+            message.contains("wire-bond or chip-on-board references")
+                && message.contains("no assembly drawing artifact")
+        }));
+    }
+
+    #[test]
+    fn bom_readiness_accepts_wire_bond_process_and_drawing_handoffs() {
+        let bom = artifact(
+            "bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Polarity,MSL,Height\nU1,1,COB-DIE-1,Bare die wire bond sensor,chip-on-board bond pad array,Vendor,DistA,Active,ALT1,Die corner 1,3,0.4mm\n",
+        );
+        let readme = artifact(
+            "README.md",
+            "Revision WB package.\n\
+             Stackup: 4 layer, 1.0mm board thickness, 1 oz copper weight.\n\
+             Finish: ENEPIG soft gold for wire bond pads. Soldermask: green.\n\
+             Controlled impedance: no impedance.\n\
+             Panelization: no panel, single board only.\n\
+             Via treatment: tented vias. Edge plating: no edge plating. Castellations: no castellation.\n\
+             Preflight: DRC/ERC passed, zones refilled, outputs generated and reloaded in Gerber viewer.\n\
+             HyperDRC reviewed with no waivers. Submitted package archived.\n\
+             Wire bonding: die attach, bond map, loop height, and bond pull test handoff reviewed.\n\
+             Packaging: MSL dry pack with desiccant, humidity card, and moisture barrier bag.\n\
+             Cleanliness: no-clean flux residue and ionic contamination controls reviewed for low-standoff packages.\n",
+        );
+        let fab = file("widget_fab.pdf", 256);
+        let assembly = file("widget_assembly.pdf", 256);
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[readme],
+            &[fab],
+            &[assembly],
+            &[],
+        ));
+
+        assert!(
+            !messages
+                .iter()
+                .any(|message| message.contains("wire-bond or chip-on-board references")),
+            "wire-bond handoff should be satisfied, got {messages:?}"
+        );
+    }
+
+    #[test]
+    fn bom_readiness_requires_package_level_height_handoff_for_tall_parts() {
+        let bom = artifact(
+            "bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Polarity,MSL,Height\nJ1,1,USB-C,USB connector,USB-C,Vendor,DistC,Active,ALT3,Pin 1 on shell,1,8.5mm\nBT1,1,BAT123,Battery holder,Keystone,Vendor,DistB,Active,ALT2,Polarity mark,1,12.0mm\n",
+        );
+        let readme = artifact(
+            "README.md",
+            "Revision H package.\n\
+             Stackup: 2 layer, 1.6mm board thickness, 1 oz copper weight.\n\
+             Finish: ENIG. Soldermask: green.\n\
+             Controlled impedance: no impedance.\n\
+             Panelization: no panel, single board only.\n\
+             Via treatment: tented vias. Edge plating: no edge plating. Castellations: no castellation.\n\
+             Preflight: DRC/ERC passed, zones refilled, outputs generated and reloaded in Gerber viewer.\n\
+             HyperDRC reviewed with no waivers. Submitted package archived.\n\
+             Assembly: pin-1 and polarity reviewed. Test fixture handoff complete.\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[],
+            &[],
+        ));
+
+        assert!(messages.iter().any(|message| {
+            message.contains("component heights above")
+                && message.contains("README does not mention component height")
+                && message.contains("J1")
+                && message.contains("BT1")
+        }));
+        assert!(messages.iter().any(|message| {
+            message.contains("component heights above")
+                && message.contains("no assembly drawing artifact")
+                && message.contains("height/keepout review")
+        }));
+    }
+
+    #[test]
+    fn bom_readiness_accepts_package_level_height_handoff_for_tall_parts() {
+        let bom = artifact(
+            "bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Polarity,MSL,Height\nJ1,1,USB-C,USB connector,USB-C,Vendor,DistC,Active,ALT3,Pin 1 on shell,1,8.5mm\n",
+        );
+        let readme = artifact(
+            "README.md",
+            "Revision H package.\n\
+             Stackup: 2 layer, 1.6mm board thickness, 1 oz copper weight.\n\
+             Finish: ENIG. Soldermask: green.\n\
+             Controlled impedance: no impedance.\n\
+             Panelization: no panel, single board only.\n\
+             Via treatment: tented vias. Edge plating: no edge plating. Castellations: no castellation.\n\
+             Preflight: DRC/ERC passed, zones refilled, outputs generated and reloaded in Gerber viewer.\n\
+             HyperDRC reviewed with no waivers. Submitted package archived.\n\
+             Assembly: pin-1 and polarity reviewed. Component height and enclosure clearance reviewed against mechanical keepout.\n\
+             Test fixture handoff complete.\n",
+        );
+        let assembly = file("widget_assembly.pdf", 256);
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[assembly],
+            &[],
+        ));
+
+        assert!(
+            !messages
+                .iter()
+                .any(|message| message.contains("component heights above")),
+            "height handoff should be satisfied, got {messages:?}"
+        );
+    }
+
+    #[test]
+    fn bom_readiness_requires_thermal_validation_handoff_for_hot_parts() {
+        let bom = artifact(
+            "bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Polarity,MSL,Height\nU1,1,BUCK-10A,10A buck regulator with exposed pad,QFN32 thermal pad,Vendor,DistA,Active,ALT1,Pin 1 dot,3,0.9mm\nLED1,1,LED-3W,High power LED,3535 high-power LED,Vendor,DistL,Active,ALT2,Anode mark,2,1.8mm\n",
+        );
+        let readme = artifact(
+            "README.md",
+            "Revision TH package.\n\
+             Stackup: 4 layer, 1.6mm board thickness, 2 oz copper weight.\n\
+             Finish: ENIG. Soldermask: green.\n\
+             Controlled impedance: no impedance.\n\
+             Panelization: no panel, single board only.\n\
+             Via treatment: tented vias. Edge plating: no edge plating. Castellations: no castellation.\n\
+             Preflight: DRC/ERC passed, zones refilled, outputs generated and reloaded in Gerber viewer.\n\
+             HyperDRC reviewed with no waivers. Submitted package archived.\n\
+             Assembly: pin-1 and polarity reviewed. X-ray inspection for QFN.\n\
+             Packaging: MSL dry pack with desiccant, humidity card, and moisture barrier bag.\n\
+             Reflow profile: validated oven recipe with soak, peak temperature, ramp rate, and time above liquidus.\n\
+             Cleanliness: no-clean flux residue and ionic contamination controls reviewed for low-standoff packages.\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[],
+            &[],
+        ));
+
+        assert!(messages.iter().any(|message| {
+            message.contains("heat-dissipating references")
+                && message.contains("README does not mention thermal validation")
+                && message.contains("U1")
+                && message.contains("LED1")
+        }));
+        assert!(messages.iter().any(|message| {
+            message.contains("heat-dissipating references")
+                && message.contains("no assembly drawing artifact")
+        }));
+    }
+
+    #[test]
+    fn bom_readiness_accepts_thermal_validation_handoff_for_hot_parts() {
+        let bom = artifact(
+            "bom.csv",
+            "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Polarity,MSL,Height\nU1,1,BUCK-10A,10A buck regulator with exposed pad,QFN32 thermal pad,Vendor,DistA,Active,ALT1,Pin 1 dot,3,0.9mm\nLED1,1,LED-3W,High power LED,3535 high-power LED,Vendor,DistL,Active,ALT2,Anode mark,2,1.8mm\n",
+        );
+        let readme = artifact(
+            "README.md",
+            "Revision TH package.\n\
+             Stackup: 4 layer, 1.6mm board thickness, 2 oz copper weight.\n\
+             Finish: ENIG. Soldermask: green.\n\
+             Controlled impedance: no impedance.\n\
+             Panelization: no panel, single board only.\n\
+             Via treatment: tented vias. Edge plating: no edge plating. Castellations: no castellation.\n\
+             Preflight: DRC/ERC passed, zones refilled, outputs generated and reloaded in Gerber viewer.\n\
+             HyperDRC reviewed with no waivers. Submitted package archived.\n\
+             Assembly: pin-1 and polarity reviewed. X-ray inspection for QFN.\n\
+             Thermal validation: temperature rise, derating, airflow, thermal vias, and heat spreader reviewed.\n\
+             Packaging: MSL dry pack with desiccant, humidity card, and moisture barrier bag.\n\
+             Reflow profile: validated oven recipe with soak, peak temperature, ramp rate, and time above liquidus.\n\
+             Cleanliness: no-clean flux residue and ionic contamination controls reviewed for low-standoff packages.\n",
+        );
+        let assembly = file("widget_assembly.pdf", 256);
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[assembly],
+            &[],
+        ));
+
+        assert!(
+            !messages
+                .iter()
+                .any(|message| message.contains("heat-dissipating references")),
+            "thermal validation handoff should be satisfied, got {messages:?}"
+        );
+    }
+
+    #[test]
     fn bom_readiness_treats_placeholder_cells_as_missing_release_metadata() {
         let bom = artifact(
             "bom.csv",
@@ -4279,6 +5469,86 @@ mod tests {
             !messages
                 .iter()
                 .any(|message| message.contains("BOM rotation for C1"))
+        );
+    }
+
+    #[test]
+    fn bom_centroid_polarized_orientation_consistency_is_checked() {
+        let bom = artifact(
+            "bom.csv",
+            "Ref,Qty,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Polarity,MSL,Height\nD1,1,LED0603,LED,0603 LED,LiteOn,DistA,Active,ALT1,Cathode mark,1,0.8mm\nD2,1,LED0603,LED,0603 LED,LiteOn,DistA,Active,ALT1,Cathode mark,1,0.8mm\n",
+        );
+        let centroid = artifact(
+            "centroid.csv",
+            "# units mm; origin aux origin; rotation convention clockwise degrees\nRef,X,Y,Rotation,Side,Value,Footprint\nD1,0,0,0,Top,LED,0603 LED\nD2,3,0,180,Top,LED,0603 LED\n",
+        );
+        let readme = artifact(
+            "README.md",
+            "Revision D package. Stackup: 2 layer, 1.6mm board thickness, 1 oz copper weight. \
+             Finish: ENIG. Soldermask: green. Controlled impedance: no impedance. Panelization: no panel. \
+             Via treatment: tented vias. Edge plating: no edge plating. Castellations: no castellation. \
+             Preflight: DRC/ERC passed, zones refilled, outputs generated and reloaded in Gerber viewer. \
+             HyperDRC reviewed with no waivers. Submitted package archived. Assembly: pin-1 and polarity reviewed. \
+             Test fixture handoff complete. First article approval required. Acceptance criteria: pass/fail inspection. \
+             Lot traceability retained.\n",
+        );
+        let assembly = file("widget_assembly.pdf", 256);
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[centroid],
+            &[],
+            &[readme],
+            &[],
+            &[assembly],
+            &[],
+        ));
+
+        assert!(messages.iter().any(|message| {
+            message.contains("same-package group value=LED package=0603 LED")
+                && message.contains("multiple centroid rotations")
+                && message.contains("D1")
+                && message.contains("D2")
+        }));
+    }
+
+    #[test]
+    fn bom_centroid_polarized_orientation_consistency_accepts_matching_rotations() {
+        let bom = artifact(
+            "bom.csv",
+            "Ref,Qty,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Polarity,MSL,Height\nD1,1,LED0603,LED,0603 LED,LiteOn,DistA,Active,ALT1,Cathode mark,1,0.8mm\nD2,1,LED0603,LED,0603 LED,LiteOn,DistA,Active,ALT1,Cathode mark,1,0.8mm\n",
+        );
+        let centroid = artifact(
+            "centroid.csv",
+            "# units mm; origin aux origin; rotation convention clockwise degrees\nRef,X,Y,Rotation,Side,Value,Footprint\nD1,0,0,90,Top,LED,0603 LED\nD2,3,0,90,Top,LED,0603 LED\n",
+        );
+        let readme = artifact(
+            "README.md",
+            "Revision D package. Stackup: 2 layer, 1.6mm board thickness, 1 oz copper weight. \
+             Finish: ENIG. Soldermask: green. Controlled impedance: no impedance. Panelization: no panel. \
+             Via treatment: tented vias. Edge plating: no edge plating. Castellations: no castellation. \
+             Preflight: DRC/ERC passed, zones refilled, outputs generated and reloaded in Gerber viewer. \
+             HyperDRC reviewed with no waivers. Submitted package archived. Assembly: pin-1 and polarity reviewed. \
+             Test fixture handoff complete. First article approval required. Acceptance criteria: pass/fail inspection. \
+             Lot traceability retained.\n",
+        );
+        let assembly = file("widget_assembly.pdf", 256);
+
+        let messages = messages(&production_artifact_readiness(
+            &[bom],
+            &[centroid],
+            &[],
+            &[readme],
+            &[],
+            &[assembly],
+            &[],
+        ));
+
+        assert!(
+            !messages
+                .iter()
+                .any(|message| message.contains("same-package group value=LED package=0603 LED")),
+            "matching polarized rotations should not create orientation parity warnings: {messages:?}"
         );
     }
 
@@ -5126,12 +6396,51 @@ mod tests {
         assert!(
             messages
                 .iter()
+                .any(|message| message.contains("allowed marking zone"))
+        );
+        assert!(
+            messages
+                .iter()
                 .any(|message| message.contains("serial format"))
         );
         assert!(
             messages
                 .iter()
                 .any(|message| message.contains("ESD") && message.contains("packaging"))
+        );
+    }
+
+    #[test]
+    fn readme_readiness_requires_marking_zone_handoff_even_with_fab_drawing() {
+        let readme = artifact(
+            "README.md",
+            "Revision SERZ. Fabrication package. Stackup 4 layer, thickness 1.6mm, copper weight 1 oz, \
+             ENIG finish, soldermask green, no impedance, no panelization, tented vias, no edge plating, \
+             no castellation. Add UL mark, date code, and revision text. DRC/ERC passed, zones refilled, \
+             outputs generated, Gerber viewer checked, HyperDRC reviewed, no waivers, archive created. \
+             Pin-1 and polarity reviewed. Test fixture handoff complete.\n",
+        );
+        let fab = file("widget_fab.pdf", 256);
+
+        let messages = messages(&production_artifact_readiness(
+            &[],
+            &[],
+            &[],
+            &[readme],
+            &[fab],
+            &[],
+            &[],
+        ));
+
+        assert!(messages.iter().any(|message| {
+            message.contains("fabrication markings") && message.contains("allowed marking zone")
+        }));
+        assert!(
+            !messages.iter().any(|message| {
+                message.contains("no fabrication drawing artifact")
+                    && message.contains("allowed marking zones")
+            }),
+            "fab drawing should satisfy drawing parity, got {messages:?}"
         );
     }
 

@@ -1,4 +1,10 @@
 //! Board-level checks that need nets, drills, vias, or panel features.
+//!
+//! Reliability note: many board-level checks infer intent from net names,
+//! component-like copper geometry, or parsed KiCad features. These areas are
+//! suspect for false positives and false negatives on unusual naming schemes,
+//! custom footprints, filled zones, and panel drawings; release decisions should
+//! double-check the source board and fabrication notes.
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
@@ -87,6 +93,9 @@ pub fn via_in_pad_readiness(
             if via.layer != pad.layer || via.net.is_none() || via.net != pad.net {
                 continue;
             }
+            if !sketches_within_clearance(&via.sketch, &pad.sketch, 0.0) {
+                continue;
+            }
 
             let overlap = via.sketch.intersection(&pad.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
@@ -158,55 +167,6 @@ pub fn teardrop_readiness(
                 vec![segment.location, anchor.location],
                 Some(format!(
                     "same-net segment neck width {segment_width:.6} into {:?} is below {min_neck_width:.6}; consider teardrops or wider entry geometry",
-                    anchor.kind
-                )),
-            ));
-        }
-    }
-
-    violations
-}
-
-/// Run the `thermal_relief_readiness` design-readiness check or report helper.
-pub fn thermal_relief_readiness(
-    board: &BoardModel,
-    selected_layers: &[String],
-    min_area: f64,
-) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let anchors = features
-        .iter()
-        .filter(|feature| matches!(feature.kind, CopperKind::Pad | CopperKind::Via))
-        .copied()
-        .collect::<Vec<_>>();
-    let zones = features
-        .iter()
-        .filter(|feature| feature.kind == CopperKind::Zone)
-        .copied()
-        .collect::<Vec<_>>();
-    let mut violations = Vec::new();
-
-    for anchor in anchors {
-        for zone in &zones {
-            if anchor.layer != zone.layer || anchor.net.is_none() || anchor.net != zone.net {
-                continue;
-            }
-
-            let overlap = anchor.sketch.intersection(&zone.sketch);
-            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
-            if shapes.is_empty() {
-                continue;
-            }
-
-            violations.push(Violation::new(
-                "thermal-relief-readiness",
-                Severity::Warning,
-                vec![anchor.layer.clone()],
-                None,
-                shapes,
-                vec![anchor.location, zone.location],
-                Some(format!(
-                    "same-net {:?} copper intersects a copper zone; confirm thermal relief or intentional direct plane connection",
                     anchor.kind
                 )),
             ));
@@ -343,49 +303,6 @@ pub fn high_speed_edge_readiness(
     violations
 }
 
-/// Run the `high_voltage_edge_readiness` design-readiness check or report helper.
-pub fn high_voltage_edge_readiness(
-    board: &BoardModel,
-    selected_layers: &[String],
-    edge_clearance: f64,
-    min_area: f64,
-) -> Vec<Violation> {
-    let Some(outline) = &board.board_outline else {
-        return Vec::new();
-    };
-    let allowed = outline.offset(-edge_clearance);
-    let mut violations = Vec::new();
-
-    for feature in selected_copper_features(board, selected_layers) {
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        if !looks_high_voltage_net(net) {
-            continue;
-        }
-
-        let intrusion = feature.sketch.difference(&allowed);
-        let shapes = multipolygon_to_shapes(&intrusion.to_multipolygon(), min_area);
-        if shapes.is_empty() {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "high-voltage-edge-readiness",
-            Severity::Warning,
-            vec![feature.layer.clone(), "KiCad Edge.Cuts".to_string()],
-            None,
-            shapes,
-            vec![feature.location],
-            Some(format!(
-                "likely high-voltage net {net} is within {edge_clearance:.6} of the board edge; review edge creepage, clearance, and routed-slot barrier intent"
-            )),
-        ));
-    }
-
-    violations
-}
-
 /// Warn when non-edge intent copper appears inside the board-edge pullback band.
 pub fn edge_copper_pullback_readiness(
     board: &BoardModel,
@@ -495,6 +412,76 @@ pub fn edge_stitching_readiness(
                 "likely high-speed or RF net {net} is near board edge without nearby ground stitch vias within {stitching_distance:.6}"
             )),
         ));
+    }
+
+    violations
+}
+
+/// Run the `acid-trap` KiCad trace-junction readiness helper.
+///
+/// Layer-level acid-trap checks find acute polygon vertices after all copper is
+/// flattened. This board-level helper keeps KiCad segment identity long enough
+/// to identify same-net traces that join at an acute angle. The check is a DFM
+/// review heuristic, not a wet-etch process simulator: Tang et al., "Study on
+/// Wet Chemical Etching of Flexible Printed Circuit Board with 16-um Line
+/// Pitch," *Journal of Electronic Materials* 52 (2023), pp. 4030-4036,
+/// <https://doi.org/10.1007/s11664-023-10368-z>, shows that copper wet etch
+/// profiles depend on process transport conditions. HyperDRC therefore reports
+/// suspect junction geometry for review instead of claiming a specific
+/// corrosion or over-etch failure.
+pub fn trace_junction_acid_trap_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    max_angle_degrees: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    let segments = selected_copper_features(board, selected_layers)
+        .into_iter()
+        .filter(|feature| feature.kind == CopperKind::Segment)
+        .filter(|feature| feature.net.is_some())
+        .collect::<Vec<_>>();
+    log::trace!(
+        "trace-junction acid-trap readiness: source={} segments={} selected_layers={}",
+        board.source,
+        segments.len(),
+        selected_layers.len()
+    );
+    let mut violations = Vec::new();
+
+    for left_index in 0..segments.len() {
+        for right in segments.iter().skip(left_index + 1) {
+            let left = segments[left_index];
+            if left.layer != right.layer || left.net != right.net {
+                continue;
+            }
+
+            let overlap = left.sketch.intersection(&right.sketch);
+            let overlap_polygons = overlap.to_multipolygon();
+            let shapes = multipolygon_to_shapes(&overlap_polygons, min_area);
+            if shapes.is_empty() {
+                continue;
+            }
+            let Some(junction) = multipolygon_center(&overlap_polygons) else {
+                continue;
+            };
+            let angle = point_angle_degrees(left.location, junction, right.location);
+            if angle <= 0.0 || angle >= max_angle_degrees {
+                continue;
+            }
+
+            let net = left.net.as_deref().unwrap_or("unknown");
+            violations.push(Violation::new(
+                "acid-trap-trace-junction",
+                Severity::Warning,
+                vec![left.layer.clone()],
+                None,
+                shapes,
+                vec![junction, left.location, right.location],
+                Some(format!(
+                    "same-net trace junction on {net} forms an acute {angle:.3} degree angle below {max_angle_degrees:.3}; review acid-trap and etch-cleanout risk"
+                )),
+            ));
+        }
     }
 
     violations
@@ -1128,55 +1115,6 @@ pub fn power_via_array_readiness(
     violations
 }
 
-/// Run the `thermal_via_readiness` design-readiness check or report helper.
-pub fn thermal_via_readiness(
-    board: &BoardModel,
-    selected_layers: &[String],
-    minimum_vias: usize,
-    anchor_tolerance: f64,
-) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let mut violations = Vec::new();
-
-    for zone in features
-        .iter()
-        .filter(|feature| feature.kind == CopperKind::Zone)
-    {
-        let Some(net) = &zone.net else {
-            continue;
-        };
-        if !looks_high_current_net(net) {
-            continue;
-        }
-
-        let via_count = features
-            .iter()
-            .filter(|feature| {
-                feature.kind == CopperKind::Via
-                    && feature.net.as_deref() == Some(net.as_str())
-                    && copper_features_touch(feature, zone, anchor_tolerance)
-            })
-            .count();
-        if via_count >= minimum_vias {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "thermal-via-readiness",
-            Severity::Warning,
-            vec![zone.layer.clone()],
-            None,
-            Vec::new(),
-            vec![zone.location],
-            Some(format!(
-                "likely power or thermal zone {net} has {via_count} parsed same-net via(s), below review threshold {minimum_vias}"
-            )),
-        ));
-    }
-
-    violations
-}
-
 /// Run the `power_plane_readiness` design-readiness check or report helper.
 pub fn power_plane_readiness(board: &BoardModel, selected_layers: &[String]) -> Vec<Violation> {
     let mut nets: BTreeMap<String, NetLayerUse> = BTreeMap::new();
@@ -1246,287 +1184,6 @@ pub fn high_current_neck_readiness(
             })
         })
         .collect()
-}
-
-/// Run the `voltage_clearance_readiness` design-readiness check or report helper.
-pub fn voltage_clearance_readiness(
-    board: &BoardModel,
-    clearance: f64,
-    selected_layers: &[String],
-    min_area: f64,
-) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let mut violations = Vec::new();
-
-    for left_index in 0..features.len() {
-        for right in &features[(left_index + 1)..] {
-            let left = &features[left_index];
-            if left.layer != right.layer || left.net.is_none() || left.net == right.net {
-                continue;
-            }
-            let left_high_voltage = left.net.as_deref().is_some_and(looks_high_voltage_net);
-            let right_high_voltage = right.net.as_deref().is_some_and(looks_high_voltage_net);
-            if !left_high_voltage && !right_high_voltage {
-                continue;
-            }
-
-            let overlap = left.sketch.offset(clearance).intersection(&right.sketch);
-            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
-            let locations = if shapes.is_empty()
-                && polygon_boundary_distance(
-                    &left.sketch.to_multipolygon(),
-                    &right.sketch.to_multipolygon(),
-                ) <= clearance
-            {
-                vec![left.location, right.location]
-            } else {
-                Vec::new()
-            };
-            if shapes.is_empty() && locations.is_empty() {
-                continue;
-            }
-
-            violations.push(Violation::new(
-                "voltage-clearance-readiness",
-                Severity::Warning,
-                vec![left.layer.clone()],
-                None,
-                shapes,
-                locations,
-                Some(format!(
-                    "likely high-voltage net {:?} is within {clearance:.6} of net {:?}; review voltage-class creepage and clearance",
-                    if left_high_voltage { &left.net } else { &right.net },
-                    if left_high_voltage { &right.net } else { &left.net }
-                )),
-            ));
-        }
-    }
-
-    violations
-}
-
-/// Run the `sensitive_net_spacing_readiness` design-readiness check or report helper.
-pub fn sensitive_net_spacing_readiness(
-    board: &BoardModel,
-    clearance: f64,
-    selected_layers: &[String],
-    min_area: f64,
-) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let mut violations = Vec::new();
-
-    for left_index in 0..features.len() {
-        for right in &features[(left_index + 1)..] {
-            let left = &features[left_index];
-            if left.layer != right.layer || left.net.is_none() || left.net == right.net {
-                continue;
-            }
-
-            let left_sensitive = left.net.as_deref().is_some_and(looks_sensitive_net);
-            let right_sensitive = right.net.as_deref().is_some_and(looks_sensitive_net);
-            let left_noisy = left.net.as_deref().is_some_and(looks_noisy_net);
-            let right_noisy = right.net.as_deref().is_some_and(looks_noisy_net);
-            if !(left_sensitive && right_noisy || right_sensitive && left_noisy) {
-                continue;
-            }
-
-            let overlap = left.sketch.offset(clearance).intersection(&right.sketch);
-            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
-            let locations = if shapes.is_empty()
-                && polygon_boundary_distance(
-                    &left.sketch.to_multipolygon(),
-                    &right.sketch.to_multipolygon(),
-                ) <= clearance
-            {
-                vec![left.location, right.location]
-            } else {
-                Vec::new()
-            };
-            if shapes.is_empty() && locations.is_empty() {
-                continue;
-            }
-
-            violations.push(Violation::new(
-                "sensitive-net-spacing-readiness",
-                Severity::Warning,
-                vec![left.layer.clone()],
-                None,
-                shapes,
-                locations,
-                Some(format!(
-                    "likely sensitive net {:?} is within {clearance:.6} of likely noisy net {:?}; review analog/RF segregation and guard intent",
-                    if left_sensitive { &left.net } else { &right.net },
-                    if left_sensitive { &right.net } else { &left.net }
-                )),
-            ));
-        }
-    }
-
-    violations
-}
-
-/// Warn when likely RF/antenna copper is too near non-ground copper on the same
-/// selected layer.
-pub fn rf_keepout_readiness(
-    board: &BoardModel,
-    clearance: f64,
-    selected_layers: &[String],
-    min_area: f64,
-) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let mut violations = Vec::new();
-
-    for left_index in 0..features.len() {
-        for right in &features[(left_index + 1)..] {
-            let left = &features[left_index];
-            if left.layer != right.layer || left.net.is_none() || left.net == right.net {
-                continue;
-            }
-
-            let left_rf = left.net.as_deref().is_some_and(looks_rf_or_antenna_net);
-            let right_rf = right.net.as_deref().is_some_and(looks_rf_or_antenna_net);
-            if !(left_rf || right_rf) {
-                continue;
-            }
-            if left_rf && right.net.as_deref().is_some_and(looks_ground_net)
-                || right_rf && left.net.as_deref().is_some_and(looks_ground_net)
-            {
-                continue;
-            }
-
-            let overlap = left.sketch.offset(clearance).intersection(&right.sketch);
-            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
-            let locations = if shapes.is_empty()
-                && polygon_boundary_distance(
-                    &left.sketch.to_multipolygon(),
-                    &right.sketch.to_multipolygon(),
-                ) <= clearance
-            {
-                vec![left.location, right.location]
-            } else {
-                Vec::new()
-            };
-            if shapes.is_empty() && locations.is_empty() {
-                continue;
-            }
-
-            violations.push(Violation::new(
-                "rf-keepout-readiness",
-                Severity::Warning,
-                vec![left.layer.clone()],
-                None,
-                shapes,
-                locations,
-                Some(format!(
-                    "likely RF or antenna net {:?} is within {clearance:.6} of non-ground net {:?}; review antenna keepout, guard, and coupling intent",
-                    if left_rf { &left.net } else { &right.net },
-                    if left_rf { &right.net } else { &left.net }
-                )),
-            ));
-        }
-    }
-
-    violations
-}
-
-/// Warn when likely RF/antenna copper has no nearby ground via fence.
-///
-/// This is a deliberately conservative readiness heuristic: it does not try to
-/// solve an RF launch or antenna structure, but it does catch the common handoff
-/// gap where an RF trace/connector is present and there is no parsed ground-via
-/// stitching nearby for shielding or return-current review. This follows the
-/// same practical DFM/EMC framing as IPC-2221B board-design guidance: geometry
-/// gets reviewed as evidence of intent before production release.
-pub fn rf_via_fence_readiness(
-    board: &BoardModel,
-    selected_layers: &[String],
-    fence_distance: f64,
-) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let ground_vias = features
-        .iter()
-        .copied()
-        .filter(|feature| feature.kind == CopperKind::Via)
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
-        .collect::<Vec<_>>();
-    let mut violations = Vec::new();
-
-    for feature in features {
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        if !looks_rf_or_antenna_net(net) || feature.kind == CopperKind::Via {
-            continue;
-        }
-
-        let has_fence = ground_vias.iter().any(|ground| {
-            ground.layer == feature.layer
-                && distance(feature.location, ground.location) <= fence_distance
-        });
-        if has_fence {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "rf-via-fence-readiness",
-            Severity::Warning,
-            vec![feature.layer.clone()],
-            None,
-            Vec::new(),
-            vec![feature.location],
-            Some(format!(
-                "likely RF or antenna net {net} has no parsed same-layer ground via within {fence_distance:.6}; review via fence, coplanar ground, and launch shielding intent"
-            )),
-        ));
-    }
-
-    violations
-}
-
-/// Warn when likely sensitive analog/RF/sensor nets do not have nearby
-/// same-layer parsed ground for return-path intent.
-pub fn sensitive_return_readiness(
-    board: &BoardModel,
-    selected_layers: &[String],
-    guard_distance: f64,
-) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let ground_features = features
-        .iter()
-        .copied()
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
-        .collect::<Vec<_>>();
-    let mut violations = Vec::new();
-
-    for feature in features {
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        if !looks_sensitive_net(net) {
-            continue;
-        }
-
-        let has_guard = ground_features.iter().any(|ground| {
-            ground.layer == feature.layer && copper_features_touch(feature, ground, guard_distance)
-        });
-        if has_guard {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "sensitive-return-readiness",
-            Severity::Warning,
-            vec![feature.layer.clone()],
-            None,
-            Vec::new(),
-            vec![feature.location],
-            Some(format!(
-                "likely sensitive net {net} has no parsed same-layer ground copper within {guard_distance:.6}; review guard, return, and shielding intent"
-            )),
-        ));
-    }
-
-    violations
 }
 
 /// Warn when chassis/shield nets appear without a nearby parsed ground via for
@@ -1856,376 +1513,6 @@ pub fn decoupling_proximity_readiness(
     violations
 }
 
-/// Run the `esd_protection_readiness` design-readiness check or report helper.
-pub fn esd_protection_readiness(
-    board: &BoardModel,
-    selected_layers: &[String],
-    edge_distance: f64,
-    protection_search_radius: f64,
-) -> Vec<Violation> {
-    let Some(outline) = &board.board_outline else {
-        return Vec::new();
-    };
-
-    let features = selected_copper_features(board, selected_layers);
-    let protection_features = features
-        .iter()
-        .copied()
-        .filter(|feature| {
-            feature.net.as_deref().is_some_and(|net| {
-                looks_esd_protection_net(net) || looks_chassis_net(net) || looks_ground_net(net)
-            })
-        })
-        .collect::<Vec<_>>();
-    let mut violations = Vec::new();
-
-    for feature in features {
-        let Some(net) = feature.net.as_deref() else {
-            continue;
-        };
-        if !looks_connector_edge_rate_net(net) || looks_esd_protection_net(net) {
-            continue;
-        }
-
-        let edge_gap = polygon_boundary_distance(
-            &feature.sketch.to_multipolygon(),
-            &outline.to_multipolygon(),
-        );
-        if edge_gap > edge_distance {
-            continue;
-        }
-
-        let has_protection = protection_features
-            .iter()
-            .filter(|protection| protection.layer == feature.layer)
-            .any(|protection| {
-                !std::ptr::eq(*protection, feature)
-                    && distance(protection.location, feature.location) <= protection_search_radius
-            });
-        if has_protection {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "esd-protection-readiness",
-            Severity::Warning,
-            vec![feature.layer.clone()],
-            None,
-            Vec::new(),
-            vec![feature.location],
-            Some(format!(
-                "likely edge connector net {net:?} is {edge_gap:.6} from board edge without parsed ESD/chassis/ground protection copper within {protection_search_radius:.6}"
-            )),
-        ));
-    }
-
-    violations
-}
-
-/// Run the `switch_node_keepout_readiness` design-readiness check or report helper.
-pub fn switch_node_keepout_readiness(
-    board: &BoardModel,
-    selected_layers: &[String],
-    keepout: f64,
-    min_area: f64,
-) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let switching = features
-        .iter()
-        .copied()
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_switching_net))
-        .collect::<Vec<_>>();
-    let mut violations = Vec::new();
-
-    for switch_feature in switching {
-        for neighbor in &features {
-            if switch_feature.layer != neighbor.layer || std::ptr::eq(switch_feature, *neighbor) {
-                continue;
-            }
-            if switch_feature.net == neighbor.net {
-                continue;
-            }
-            if neighbor.net.as_deref().is_some_and(looks_ground_net) {
-                continue;
-            }
-
-            let overlap = switch_feature
-                .sketch
-                .offset(keepout)
-                .intersection(&neighbor.sketch);
-            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
-            let fallback_hit = shapes.is_empty()
-                && polygon_boundary_distance(
-                    &switch_feature.sketch.to_multipolygon(),
-                    &neighbor.sketch.to_multipolygon(),
-                ) <= keepout;
-            if shapes.is_empty() && !fallback_hit {
-                continue;
-            }
-
-            violations.push(Violation::new(
-                "switch-node-keepout-readiness",
-                Severity::Warning,
-                vec![switch_feature.layer.clone()],
-                None,
-                shapes,
-                vec![switch_feature.location, neighbor.location],
-                Some(format!(
-                    "likely switching node {:?} is within keepout {keepout:.6} of neighboring net {:?}; review regulator/motor loop area, EMI, and copper keepout",
-                    switch_feature.net, neighbor.net
-                )),
-            ));
-        }
-    }
-
-    violations
-}
-
-/// Run the `thermal_pad_via_readiness` design-readiness check or report helper.
-pub fn thermal_pad_via_readiness(
-    board: &BoardModel,
-    selected_layers: &[String],
-    minimum_pad_dimension: f64,
-) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let vias = features
-        .iter()
-        .copied()
-        .filter(|feature| feature.kind == CopperKind::Via)
-        .collect::<Vec<_>>();
-    let mut violations = Vec::new();
-
-    for pad in features {
-        if pad.kind != CopperKind::Pad {
-            continue;
-        }
-        let Some(net) = pad.net.as_deref() else {
-            continue;
-        };
-        if !looks_ground_net(net) && !looks_high_current_net(net) {
-            continue;
-        }
-        let Some((min_dimension, max_dimension)) = bounding_dimensions(&pad.sketch) else {
-            continue;
-        };
-        if min_dimension < minimum_pad_dimension {
-            continue;
-        }
-        if max_dimension / min_dimension > 3.0 {
-            continue;
-        }
-
-        let has_same_net_via = vias
-            .iter()
-            .filter(|via| via.layer == pad.layer)
-            .filter(|via| via.net == pad.net)
-            .any(|via| {
-                !multipolygon_to_shapes(
-                    &via.sketch.intersection(&pad.sketch).to_multipolygon(),
-                    1.0e-9,
-                )
-                .is_empty()
-            });
-        if has_same_net_via {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "thermal-pad-via-readiness",
-            Severity::Warning,
-            vec![pad.layer.clone()],
-            None,
-            Vec::new(),
-            vec![pad.location],
-            Some(format!(
-                "large likely thermal pad on net {net:?} has no parsed same-net via in pad; review exposed-pad thermal via array, fill, tent, and solder-voiding intent"
-            )),
-        ));
-    }
-
-    violations
-}
-
-/// Run the `thermal_copper_area_readiness` design-readiness check or report helper.
-pub fn thermal_copper_area_readiness(
-    board: &BoardModel,
-    selected_layers: &[String],
-    search_radius: f64,
-) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let same_net_zones = features
-        .iter()
-        .copied()
-        .filter(|feature| feature.kind == CopperKind::Zone)
-        .filter(|feature| {
-            feature
-                .net
-                .as_deref()
-                .is_some_and(looks_thermal_or_power_net)
-        })
-        .collect::<Vec<_>>();
-    let mut violations = Vec::new();
-
-    for feature in features {
-        if feature.kind == CopperKind::Zone {
-            continue;
-        }
-        let Some(net) = feature.net.as_deref() else {
-            continue;
-        };
-        if !looks_thermal_or_power_net(net) {
-            continue;
-        }
-
-        let has_nearby_same_net_zone = same_net_zones
-            .iter()
-            .filter(|zone| zone.layer == feature.layer && zone.net == feature.net)
-            .any(|zone| distance(zone.location, feature.location) <= search_radius);
-        if has_nearby_same_net_zone {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "thermal-copper-area-readiness",
-            Severity::Warning,
-            vec![feature.layer.clone()],
-            None,
-            Vec::new(),
-            vec![feature.location],
-            Some(format!(
-                "likely heat or power feature on net {net:?} has no parsed same-net copper zone within {search_radius:.6}; review copper area for heat spreading and current return"
-            )),
-        ));
-    }
-
-    violations
-}
-
-/// Run the `hot_component_spacing_readiness` design-readiness check or report helper.
-pub fn hot_component_spacing_readiness(
-    board: &BoardModel,
-    selected_layers: &[String],
-    spacing: f64,
-    min_area: f64,
-) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let hot_features = features
-        .iter()
-        .copied()
-        .filter(|feature| {
-            feature.net.as_deref().is_some_and(looks_hot_component_net)
-                && matches!(feature.kind, CopperKind::Pad | CopperKind::Zone)
-        })
-        .collect::<Vec<_>>();
-    let mut violations = Vec::new();
-
-    for hot in hot_features {
-        for neighbor in &features {
-            if hot.layer != neighbor.layer || std::ptr::eq(hot, *neighbor) {
-                continue;
-            }
-            if hot.net == neighbor.net || neighbor.net.as_deref().is_some_and(looks_ground_net) {
-                continue;
-            }
-
-            let overlap = hot.sketch.offset(spacing).intersection(&neighbor.sketch);
-            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
-            let fallback_hit = shapes.is_empty()
-                && polygon_boundary_distance(
-                    &hot.sketch.to_multipolygon(),
-                    &neighbor.sketch.to_multipolygon(),
-                ) <= spacing;
-            if shapes.is_empty() && !fallback_hit {
-                continue;
-            }
-
-            violations.push(Violation::new(
-                "hot-component-spacing-readiness",
-                Severity::Warning,
-                vec![hot.layer.clone()],
-                None,
-                shapes,
-                vec![hot.location, neighbor.location],
-                Some(format!(
-                    "likely hot feature {:?} is within thermal spacing {spacing:.6} of neighboring net {:?}; review heat spreading, derating, and component placement",
-                    hot.net, neighbor.net
-                )),
-            ));
-        }
-    }
-
-    violations
-}
-
-/// Run the `thermal_mechanical_keepout_readiness` design-readiness check or report helper.
-pub fn thermal_mechanical_keepout_readiness(
-    board: &BoardModel,
-    extra_drills: &[DrillFeature],
-    selected_layers: &[String],
-    keepout: f64,
-    min_area: f64,
-) -> Vec<Violation> {
-    let mut mechanical_drills = board
-        .drills
-        .iter()
-        .chain(extra_drills.iter())
-        .filter(|drill| !drill.plated)
-        .collect::<Vec<_>>();
-    mechanical_drills.sort_by(|left, right| {
-        left.location[0]
-            .total_cmp(&right.location[0])
-            .then(left.location[1].total_cmp(&right.location[1]))
-            .then(left.diameter.total_cmp(&right.diameter))
-    });
-
-    let hot_features = selected_copper_features(board, selected_layers)
-        .into_iter()
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_hot_component_net))
-        .collect::<Vec<_>>();
-    let mut violations = Vec::new();
-
-    for drill in mechanical_drills {
-        let keepout_sketch = polygons_to_sketch(
-            vec![circle_polygon(
-                drill.location,
-                drill.diameter / 2.0 + keepout,
-                32,
-            )],
-            Some(LayerMetadata {
-                name: "thermal mechanical keepout".to_string(),
-            }),
-        );
-
-        for hot in &hot_features {
-            let overlap = keepout_sketch.intersection(&hot.sketch);
-            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
-            let fallback_hit = shapes.is_empty()
-                && polygon_boundary_distance(
-                    &keepout_sketch.to_multipolygon(),
-                    &hot.sketch.to_multipolygon(),
-                ) <= 1.0e-9;
-            if shapes.is_empty() && !fallback_hit {
-                continue;
-            }
-
-            violations.push(Violation::new(
-                "thermal-mechanical-keepout-readiness",
-                Severity::Warning,
-                vec![hot.layer.clone()],
-                None,
-                shapes,
-                vec![drill.location, hot.location],
-                Some(format!(
-                    "likely hot feature {:?} is inside mechanical thermal keepout {keepout:.6}; review heatsink, standoff, screw, chassis, and airflow clearance",
-                    hot.net
-                )),
-            ));
-        }
-    }
-
-    violations
-}
-
 /// Run the `return_path_readiness` design-readiness check or report helper.
 pub fn return_path_readiness(
     board: &BoardModel,
@@ -2371,26 +1658,6 @@ fn looks_high_current_net(net: &str) -> bool {
     tokens.iter().any(|token| normalized.contains(token))
 }
 
-fn looks_thermal_or_power_net(net: &str) -> bool {
-    let normalized = net.to_ascii_uppercase();
-    let tokens = [
-        "THERM", "THERMAL", "PAD", "EPAD", "HEAT", "HEATER", "LED", "REG", "FET", "MOSFET", "BUCK",
-        "LDO",
-    ];
-
-    looks_high_current_net(net) || tokens.iter().any(|token| normalized.contains(token))
-}
-
-fn looks_hot_component_net(net: &str) -> bool {
-    let normalized = net.to_ascii_uppercase();
-    let tokens = [
-        "THERM", "THERMAL", "HEAT", "HEATER", "LED", "REG", "FET", "MOSFET", "BUCK", "BOOST", "SW",
-        "PHASE", "MOTOR", "DRV", "DRIVE", "LDO",
-    ];
-
-    looks_high_current_net(net) || tokens.iter().any(|token| normalized.contains(token))
-}
-
 fn looks_high_voltage_net(net: &str) -> bool {
     let normalized = net.to_ascii_uppercase();
     let tokens = [
@@ -2401,39 +1668,10 @@ fn looks_high_voltage_net(net: &str) -> bool {
     tokens.iter().any(|token| normalized.contains(token))
 }
 
-fn looks_sensitive_net(net: &str) -> bool {
-    let normalized = net.to_ascii_uppercase();
-    let tokens = [
-        "RF", "ANT", "AUDIO", "MIC", "ADC", "DAC", "AIN", "AOUT", "ANALOG", "SENSE", "SNS", "XTAL",
-        "CRYSTAL", "OSC",
-    ];
-
-    tokens.iter().any(|token| normalized.contains(token))
-}
-
 fn looks_rf_or_antenna_net(net: &str) -> bool {
     let normalized = net.to_ascii_uppercase();
     let tokens = [
         "RF", "ANT", "ANTENNA", "GNSS", "GPS", "WIFI", "BT_", "BLE", "LTE",
-    ];
-
-    tokens.iter().any(|token| normalized.contains(token))
-}
-
-fn looks_noisy_net(net: &str) -> bool {
-    let normalized = net.to_ascii_uppercase();
-    let tokens = ["SW", "PHASE", "MOTOR", "PWM", "GATE", "BOOT", "DRIVE"];
-
-    looks_high_current_net(net)
-        || looks_high_speed_net(net)
-        || tokens.iter().any(|token| normalized.contains(token))
-}
-
-fn looks_switching_net(net: &str) -> bool {
-    let normalized = net.to_ascii_uppercase();
-    let tokens = [
-        "SW", "PHASE", "LX", "BOOT", "BST", "GATE", "HGATE", "LGATE", "DRV", "DRIVE", "MOTOR",
-        "PWM", "IND", "INDUCTOR",
     ];
 
     tokens.iter().any(|token| normalized.contains(token))
@@ -2489,22 +1727,6 @@ fn looks_connector_edge_rate_net(net: &str) -> bool {
     looks_connector_net(net) || looks_high_speed_net(net) || looks_rf_or_antenna_net(net)
 }
 
-fn looks_esd_protection_net(net: &str) -> bool {
-    let normalized = net.to_ascii_uppercase();
-    let tokens = [
-        "ESD",
-        "TVS",
-        "CLAMP",
-        "PROTECT",
-        "PROTECTION",
-        "SURGE",
-        "SPARK",
-        "TRANSIENT",
-    ];
-
-    tokens.iter().any(|token| normalized.contains(token))
-}
-
 fn looks_edge_intent_net(net: &str) -> bool {
     looks_gold_finger_net(net) || looks_chassis_net(net)
 }
@@ -2517,84 +1739,210 @@ pub fn net_spacing(
     min_area: f64,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
+    let mut by_layer: BTreeMap<String, Vec<(&CopperFeature, geo::Rect<f64>)>> = BTreeMap::new();
+    for feature in features {
+        let Some(bounds) = feature.sketch.geometry.bounding_rect() else {
+            continue;
+        };
+        by_layer
+            .entry(feature.layer.clone())
+            .or_default()
+            .push((feature, bounds));
+    }
+    for candidates in by_layer.values_mut() {
+        candidates.sort_by(|left, right| {
+            left.1
+                .min()
+                .x
+                .total_cmp(&right.1.min().x)
+                .then(left.1.min().y.total_cmp(&right.1.min().y))
+        });
+    }
+
     let mut violations = Vec::new();
 
-    for left_index in 0..features.len() {
-        for right in &features[(left_index + 1)..] {
-            let left = &features[left_index];
-            if left.layer != right.layer || left.net.is_none() || left.net == right.net {
-                continue;
+    for candidates in by_layer.values() {
+        for left_index in 0..candidates.len() {
+            let (left, left_bounds) = candidates[left_index];
+            for (right, right_bounds) in &candidates[(left_index + 1)..] {
+                if right_bounds.min().x - left_bounds.max().x > clearance {
+                    break;
+                }
+                if left.net.is_none() || left.net == right.net {
+                    continue;
+                }
+                if !rects_within_clearance(&left_bounds, right_bounds, clearance) {
+                    continue;
+                }
+                collect_net_spacing_violation(left, right, clearance, min_area, &mut violations);
             }
-
-            // Clearance is modeled by a Minkowski sum of the left copper feature
-            // with a disk of radius `clearance`, followed by an intersection
-            // with the right feature. In computational geometry terms this is a
-            // set-membership test against an offset region; see Lee and
-            // Preparata, "Computational Geometry - A Survey", IEEE TC, 1984.
-            let overlap = left.sketch.offset(clearance).intersection(&right.sketch);
-            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
-            let locations = if shapes.is_empty()
-                && polygon_boundary_distance(
-                    &left.sketch.to_multipolygon(),
-                    &right.sketch.to_multipolygon(),
-                ) <= clearance
-            {
-                vec![left.location, right.location]
-            } else {
-                Vec::new()
-            };
-            if shapes.is_empty() && locations.is_empty() {
-                continue;
-            }
-
-            violations.push(Violation::new(
-                "different-net-spacing",
-                Severity::Error,
-                vec![left.layer.clone()],
-                None,
-                shapes,
-                locations,
-                Some(format!(
-                    "net {:?} is within {clearance} of net {:?}",
-                    left.net, right.net
-                )),
-            ));
         }
     }
 
     violations
 }
 
+fn collect_net_spacing_violation(
+    left: &CopperFeature,
+    right: &CopperFeature,
+    clearance: f64,
+    min_area: f64,
+    violations: &mut Vec<Violation>,
+) {
+    if !sketches_within_clearance(&left.sketch, &right.sketch, clearance) {
+        return;
+    }
+
+    // Clearance is modeled by a Minkowski sum of the left copper feature with a
+    // disk of radius `clearance`, followed by an intersection with the right
+    // feature. In computational geometry terms this is a set-membership test
+    // against an offset region; see Lee and Preparata, "Computational Geometry -
+    // A Survey", IEEE TC, 1984.
+    let overlap = left.sketch.offset(clearance).intersection(&right.sketch);
+    let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+    let locations = if shapes.is_empty()
+        && polygon_boundary_distance(
+            &left.sketch.to_multipolygon(),
+            &right.sketch.to_multipolygon(),
+        ) <= clearance
+    {
+        vec![left.location, right.location]
+    } else {
+        Vec::new()
+    };
+    if shapes.is_empty() && locations.is_empty() {
+        return;
+    }
+
+    violations.push(Violation::new(
+        "different-net-spacing",
+        Severity::Error,
+        vec![left.layer.clone()],
+        None,
+        shapes,
+        locations,
+        Some(format!(
+            "net {:?} is within {clearance} of net {:?}",
+            left.net, right.net
+        )),
+    ));
+}
+
+fn rects_within_clearance(left: &geo::Rect<f64>, right: &geo::Rect<f64>, clearance: f64) -> bool {
+    left.min().x - clearance <= right.max().x
+        && left.max().x + clearance >= right.min().x
+        && left.min().y - clearance <= right.max().y
+        && left.max().y + clearance >= right.min().y
+}
+
 /// Run the `registration_tolerance` design-readiness check or report helper.
 pub fn registration_tolerance(board: &BoardModel, tolerance: f64, min_area: f64) -> Vec<Violation> {
-    let mut by_layer = board.copper_layers(&[]);
-    by_layer.sort_by(|left, right| left.0.cmp(&right.0));
+    let mut by_layer: BTreeMap<String, Vec<(&CopperFeature, geo::Rect<f64>)>> = BTreeMap::new();
+    for feature in selected_copper_features(board, &[]) {
+        let Some(bounds) = feature.sketch.geometry.bounding_rect() else {
+            continue;
+        };
+        by_layer
+            .entry(feature.layer.clone())
+            .or_default()
+            .push((feature, bounds));
+    }
+    for features in by_layer.values_mut() {
+        features.sort_by(|left, right| {
+            left.1
+                .min()
+                .x
+                .total_cmp(&right.1.min().x)
+                .then(left.1.min().y.total_cmp(&right.1.min().y))
+        });
+    }
+    let layer_names = by_layer.keys().cloned().collect::<Vec<_>>();
+    log::trace!(
+        "registration tolerance: source={} layers={} tolerance={tolerance:.6}",
+        board.source,
+        layer_names.len()
+    );
+
     let mut violations = Vec::new();
 
-    for index in 0..by_layer.len() {
-        for other in &by_layer[(index + 1)..] {
-            let left = &by_layer[index];
-            let overlap = left.1.offset(tolerance).intersection(&other.1);
-            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
-            if shapes.is_empty() {
-                continue;
+    for layer_index in 0..layer_names.len() {
+        for other_layer in &layer_names[(layer_index + 1)..] {
+            let left_layer = &layer_names[layer_index];
+            let left_features = &by_layer[left_layer];
+            let right_features = &by_layer[other_layer];
+            for (left, left_bounds) in left_features {
+                for (right, right_bounds) in right_features {
+                    if right_bounds.max().x < left_bounds.min().x - tolerance {
+                        continue;
+                    }
+                    if right_bounds.min().x - left_bounds.max().x > tolerance {
+                        break;
+                    }
+                    if !rects_within_clearance(left_bounds, right_bounds, tolerance) {
+                        continue;
+                    }
+                    collect_registration_tolerance_violation(
+                        left,
+                        right,
+                        left_layer,
+                        other_layer,
+                        tolerance,
+                        min_area,
+                        &mut violations,
+                    );
+                }
             }
-
-            violations.push(Violation::new(
-                "layer-registration-tolerance",
-                Severity::Warning,
-                vec![left.0.clone(), other.0.clone()],
-                None,
-                shapes,
-                Vec::new(),
-                Some(format!(
-                    "features on paired layers are within registration tolerance {tolerance}"
-                )),
-            ));
         }
     }
 
     violations
+}
+
+fn collect_registration_tolerance_violation(
+    left: &CopperFeature,
+    right: &CopperFeature,
+    left_layer: &str,
+    right_layer: &str,
+    tolerance: f64,
+    min_area: f64,
+    violations: &mut Vec<Violation>,
+) {
+    if !sketches_within_clearance(&left.sketch, &right.sketch, tolerance) {
+        return;
+    }
+
+    // Treat registration tolerance as a feature-level proximity query rather
+    // than a whole-layer boolean operation. Whole copper layers can contain
+    // thousands of disconnected islands; broad-phase feature culling keeps the
+    // exact Minkowski offset bounded while preserving the same conservative
+    // geometric predicate.
+    let overlap = left.sketch.offset(tolerance).intersection(&right.sketch);
+    let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+    let locations = if shapes.is_empty()
+        && polygon_boundary_distance(
+            &left.sketch.to_multipolygon(),
+            &right.sketch.to_multipolygon(),
+        ) <= tolerance
+    {
+        vec![left.location, right.location]
+    } else {
+        Vec::new()
+    };
+    if shapes.is_empty() && locations.is_empty() {
+        return;
+    }
+
+    violations.push(Violation::new(
+        "layer-registration-tolerance",
+        Severity::Warning,
+        vec![left_layer.to_string(), right_layer.to_string()],
+        None,
+        shapes,
+        locations,
+        Some(format!(
+            "features on paired layers are within registration tolerance {tolerance}"
+        )),
+    ));
 }
 
 /// Run the `panelization_clearance` design-readiness check or report helper.
@@ -2604,7 +1952,6 @@ pub fn panelization_clearance(
     clearance: f64,
     min_area: f64,
 ) -> Vec<Violation> {
-    let copper = board.all_copper();
     let mut blockers = Vec::new();
 
     if let Some(panel_features) = &board.panel_features {
@@ -2625,13 +1972,57 @@ pub fn panelization_clearance(
         blockers.push(drills_to_sketch(&npth, "KiCad NPTH panel drills"));
     }
 
+    let bounded_copper = board
+        .copper
+        .iter()
+        .filter_map(|copper| {
+            copper
+                .sketch
+                .geometry
+                .bounding_rect()
+                .map(|bounds| (copper, bounds))
+        })
+        .collect::<Vec<_>>();
     let mut violations = Vec::new();
     for blocker in blockers {
-        let overlap = blocker.offset(clearance).intersection(&copper);
-        let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
-        let fallback_hit = shapes.is_empty()
-            && polygon_boundary_distance(&blocker.to_multipolygon(), &copper.to_multipolygon())
-                <= clearance;
+        let mut shapes = Vec::new();
+        let mut fallback_hit = false;
+        let mut locations = Vec::new();
+        let mut layers = BTreeSet::new();
+
+        for blocker_polygon in blocker.to_multipolygon().0 {
+            let blocker_piece = polygons_to_sketch(vec![blocker_polygon], None);
+            let blocker_geometry = blocker_piece.to_multipolygon();
+            let Some(blocker_bounds) = blocker_piece.geometry.bounding_rect() else {
+                continue;
+            };
+
+            for (copper, copper_bounds) in &bounded_copper {
+                if !rects_within_clearance(&blocker_bounds, copper_bounds, clearance) {
+                    continue;
+                }
+
+                // Panel features can be long routed tabs or score lines.
+                // Offsetting the entire panel sketch is unnecessarily expensive
+                // on dense boards, so use exact feature intersections plus the
+                // same boundary distance predicate the offset fallback used to
+                // represent copper inside the requested keepout band.
+                let overlap = blocker_piece.intersection(&copper.sketch);
+                let feature_shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+                if feature_shapes.is_empty()
+                    && polygon_boundary_distance(
+                        &blocker_geometry,
+                        &copper.sketch.to_multipolygon(),
+                    ) <= clearance
+                {
+                    fallback_hit = true;
+                    locations.push(copper.location);
+                }
+                shapes.extend(feature_shapes);
+                layers.insert(copper.layer.clone());
+            }
+        }
+
         if shapes.is_empty() && !fallback_hit {
             continue;
         }
@@ -2639,10 +2030,14 @@ pub fn panelization_clearance(
         violations.push(Violation::new(
             "panelization-clearance",
             Severity::Warning,
-            vec!["KiCad copper".to_string()],
+            if layers.is_empty() {
+                vec!["KiCad copper".to_string()]
+            } else {
+                layers.into_iter().collect()
+            },
             None,
             shapes,
-            Vec::new(),
+            locations,
             Some(format!(
                 "copper is within panel feature clearance {clearance}"
             )),
@@ -2751,6 +2146,10 @@ pub fn ipc356_drill_diameter(
 }
 
 fn copper_features_touch(left: &CopperFeature, right: &CopperFeature, tolerance: f64) -> bool {
+    if !sketches_within_clearance(&left.sketch, &right.sketch, tolerance) {
+        return false;
+    }
+
     left.sketch
         .intersection(&right.sketch)
         .to_multipolygon()
@@ -2813,18 +2212,52 @@ fn minimum_bounding_dimension(sketch: &PcbSketch) -> f64 {
         .unwrap_or(0.0)
 }
 
-fn bounding_dimensions(sketch: &PcbSketch) -> Option<(f64, f64)> {
-    sketch.geometry.bounding_rect().map(|bounds| {
-        let width = bounds.max().x - bounds.min().x;
-        let height = bounds.max().y - bounds.min().y;
-        (width.min(height), width.max(height))
-    })
+fn sketches_within_clearance(left: &PcbSketch, right: &PcbSketch, clearance: f64) -> bool {
+    let Some(left_bounds) = left.geometry.bounding_rect() else {
+        return true;
+    };
+    let Some(right_bounds) = right.geometry.bounding_rect() else {
+        return true;
+    };
+
+    // Axis-aligned bounding boxes are used only as a broad-phase rejection
+    // before exact polygon predicates. This is the standard two-phase collision
+    // pattern described by Lin and Canny, "A Fast Algorithm for Incremental
+    // Distance Calculation", IEEE ICRA, 1991: cheap conservative culling first,
+    // exact distance/intersection only for surviving candidates.
+    left_bounds.min().x - clearance <= right_bounds.max().x
+        && left_bounds.max().x + clearance >= right_bounds.min().x
+        && left_bounds.min().y - clearance <= right_bounds.max().y
+        && left_bounds.max().y + clearance >= right_bounds.min().y
 }
 
 fn distance(left: [f64; 2], right: [f64; 2]) -> f64 {
     let dx = left[0] - right[0];
     let dy = left[1] - right[1];
     (dx * dx + dy * dy).sqrt()
+}
+
+fn multipolygon_center(multipolygon: &geo::MultiPolygon<f64>) -> Option<[f64; 2]> {
+    let bounds = multipolygon.bounding_rect()?;
+    Some([
+        (bounds.min().x + bounds.max().x) / 2.0,
+        (bounds.min().y + bounds.max().y) / 2.0,
+    ])
+}
+
+fn point_angle_degrees(previous: [f64; 2], current: [f64; 2], next: [f64; 2]) -> f64 {
+    let ax = previous[0] - current[0];
+    let ay = previous[1] - current[1];
+    let bx = next[0] - current[0];
+    let by = next[1] - current[1];
+    let a_len = (ax * ax + ay * ay).sqrt();
+    let b_len = (bx * bx + by * by).sqrt();
+    if a_len == 0.0 || b_len == 0.0 {
+        return 0.0;
+    }
+
+    let cos = ((ax * bx + ay * by) / (a_len * b_len)).clamp(-1.0, 1.0);
+    cos.acos().to_degrees()
 }
 
 /// Run the `layer_names_csv` design-readiness check or report helper.
@@ -2869,9 +2302,14 @@ mod tests {
         castellation_hole_readiness, castellation_intent, component_edge_clearance_readiness,
         component_hole_clearance_readiness, connector_rework_clearance_readiness,
         dense_pad_escape_readiness, drill_aspect_ratio, drill_spacing, drill_table_consistency,
-        drill_to_copper_clearance, drills_to_sketch, fiducial_readiness, local_fiducial_readiness,
-        mouse_bite_readiness, plating_intent, routed_slot_readiness,
-        testpoint_accessibility_readiness, testpoint_coverage_readiness, tooling_hole_readiness,
+        drill_to_copper_clearance, drills_to_sketch, esd_protection_readiness, fiducial_readiness,
+        high_voltage_edge_readiness, hot_component_spacing_readiness, local_fiducial_readiness,
+        mouse_bite_readiness, plating_intent, rf_keepout_readiness, rf_via_fence_readiness,
+        routed_slot_readiness, sensitive_net_spacing_readiness, sensitive_return_readiness,
+        switch_node_keepout_readiness, testpoint_accessibility_readiness,
+        testpoint_coverage_readiness, thermal_copper_area_readiness,
+        thermal_mechanical_keepout_readiness, thermal_pad_via_readiness, thermal_relief_readiness,
+        thermal_via_readiness, tooling_hole_readiness, voltage_clearance_readiness,
     };
     use crate::ipc356::{Ipc356AccessSide, Ipc356FeatureType, Ipc356Point, Ipc356Soldermask};
 
@@ -2881,18 +2319,14 @@ mod tests {
         copper_width_readiness, decoupling_proximity_readiness, differential_pair_readiness,
         differential_pair_return_readiness, differential_pair_spacing_readiness,
         differential_pair_via_symmetry_readiness, edge_copper_pullback_readiness,
-        edge_stitching_readiness, esd_protection_readiness, gold_finger_drill_keepout_readiness,
-        gold_finger_edge_readiness, gold_finger_readiness, gold_finger_spacing_readiness,
-        high_current_neck_readiness, high_current_readiness, high_speed_edge_readiness,
-        high_voltage_edge_readiness, hot_component_spacing_readiness, ipc356_coverage,
-        ipc356_drill_diameter, net_spacing, orphaned_zone_readiness, panelization_clearance,
-        plane_clearance_readiness, power_plane_readiness, power_via_array_readiness,
-        reference_plane_readiness, reference_plane_void_readiness, registration_tolerance,
-        return_path_readiness, rf_keepout_readiness, rf_via_fence_readiness,
-        same_net_island_readiness, sensitive_net_spacing_readiness, sensitive_return_readiness,
-        switch_node_keepout_readiness, teardrop_readiness, thermal_copper_area_readiness,
-        thermal_mechanical_keepout_readiness, thermal_pad_via_readiness, thermal_relief_readiness,
-        thermal_via_readiness, via_in_pad_readiness, voltage_clearance_readiness,
+        edge_stitching_readiness, gold_finger_drill_keepout_readiness, gold_finger_edge_readiness,
+        gold_finger_readiness, gold_finger_spacing_readiness, high_current_neck_readiness,
+        high_current_readiness, high_speed_edge_readiness, ipc356_coverage, ipc356_drill_diameter,
+        net_spacing, orphaned_zone_readiness, panelization_clearance, plane_clearance_readiness,
+        power_plane_readiness, power_via_array_readiness, reference_plane_readiness,
+        reference_plane_void_readiness, registration_tolerance, return_path_readiness,
+        same_net_island_readiness, teardrop_readiness, trace_junction_acid_trap_readiness,
+        via_in_pad_readiness,
     };
 
     #[test]
@@ -3395,6 +2829,28 @@ mod tests {
         let violations = net_spacing(&board, 0.20, &selected_layers, 1.0e-9);
 
         assert_eq!(violations.len(), 2);
+    }
+
+    #[test]
+    fn net_spacing_culls_large_sparse_feature_sets() {
+        let mut copper = Vec::new();
+        for index in 0..600 {
+            copper.push(feature(
+                &format!("N{index}"),
+                [(index % 30) as f64 * 5.0, (index / 30) as f64 * 5.0],
+            ));
+        }
+        copper.push(feature("NEAR", [0.6, 0.0]));
+        let board = board_with_copper(copper);
+
+        let start = std::time::Instant::now();
+        let violations = net_spacing(&board, 0.2, &[], 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed() < std::time::Duration::from_secs(2),
+            "large sparse net-spacing check should stay in the broad phase"
+        );
     }
 
     #[test]
@@ -4272,6 +3728,50 @@ mod tests {
             differential_pair_return_readiness(&board, &["B.Cu".to_string()], 0.30).len(),
             1
         );
+    }
+
+    #[test]
+    fn trace_junction_acid_trap_reports_acute_same_net_segments() {
+        let shallow_angle_degrees = 20.0_f64;
+        let board = board_with_copper(vec![
+            copper_line("SIG", CopperKind::Segment, [0.0, 0.0], [2.0, 0.0], 0.12),
+            copper_line(
+                "SIG",
+                CopperKind::Segment,
+                [0.0, 0.0],
+                [
+                    2.0 * shallow_angle_degrees.to_radians().cos(),
+                    2.0 * shallow_angle_degrees.to_radians().sin(),
+                ],
+                0.12,
+            ),
+        ]);
+
+        let violations = trace_junction_acid_trap_readiness(&board, &[], 30.0, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "acid-trap-trace-junction");
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("acute"))
+        );
+    }
+
+    #[test]
+    fn trace_junction_acid_trap_allows_obtuse_or_different_net_segments() {
+        let obtuse = board_with_copper(vec![
+            copper_line("SIG", CopperKind::Segment, [0.0, 0.0], [2.0, 0.0], 0.12),
+            copper_line("SIG", CopperKind::Segment, [0.0, 0.0], [-1.0, 1.0], 0.12),
+        ]);
+        let different_net = board_with_copper(vec![
+            copper_line("A", CopperKind::Segment, [0.0, 0.0], [2.0, 0.0], 0.12),
+            copper_line("B", CopperKind::Segment, [0.0, 0.0], [2.0, 0.2], 0.12),
+        ]);
+
+        assert!(trace_junction_acid_trap_readiness(&obtuse, &[], 30.0, 1.0e-9).is_empty());
+        assert!(trace_junction_acid_trap_readiness(&different_net, &[], 30.0, 1.0e-9).is_empty());
     }
 
     #[test]
@@ -7035,6 +6535,41 @@ mod tests {
     }
 
     #[test]
+    fn panelization_clearance_culls_large_sparse_copper_fields() {
+        let mut copper = Vec::new();
+        for index in 0..800 {
+            copper.push(copper_disc(
+                &format!("N{index}"),
+                CopperKind::Pad,
+                [10.0 + (index % 40) as f64 * 5.0, (index / 40) as f64 * 5.0],
+                0.08,
+            ));
+        }
+        copper.push(copper_disc("NEAR", CopperKind::Pad, [0.12, 0.0], 0.08));
+        let board = BoardModel {
+            source: "test".to_string(),
+            copper,
+            drills: Vec::new(),
+            board_outline: None,
+            panel_features: Some(polygons_to_sketch(
+                vec![line_polygon([0.0, -1.0], [0.0, 1.0], 0.05).unwrap()],
+                Some(LayerMetadata {
+                    name: "KiCad panel features".to_string(),
+                }),
+            )),
+        };
+
+        let start = std::time::Instant::now();
+        let violations = panelization_clearance(&board, &[], 0.25, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed() < std::time::Duration::from_secs(2),
+            "panelization clearance should avoid whole-board copper intersections"
+        );
+    }
+
+    #[test]
     fn panelization_clearance_with_no_panel_blockers_is_noop() {
         let board = BoardModel {
             source: "test".to_string(),
@@ -7089,6 +6624,46 @@ mod tests {
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].layers, vec!["B.Cu", "F.Cu"]);
+    }
+
+    #[test]
+    fn registration_tolerance_culls_large_sparse_layer_sets() {
+        let mut copper = Vec::new();
+        for index in 0..400 {
+            let x = (index % 20) as f64 * 5.0;
+            let y = (index / 20) as f64 * 5.0;
+            copper.push(copper_disc_on_layer(
+                &format!("F{index}"),
+                CopperKind::Pad,
+                "F.Cu",
+                [x, y],
+                0.2,
+            ));
+            copper.push(copper_disc_on_layer(
+                &format!("B{index}"),
+                CopperKind::Pad,
+                "B.Cu",
+                [x + 2.0, y + 2.0],
+                0.2,
+            ));
+        }
+        copper.push(copper_disc_on_layer(
+            "B_NEAR",
+            CopperKind::Pad,
+            "B.Cu",
+            [0.3, 0.0],
+            0.2,
+        ));
+        let board = board_with_copper(copper);
+
+        let start = std::time::Instant::now();
+        let violations = registration_tolerance(&board, 0.15, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed() < std::time::Duration::from_secs(2),
+            "large sparse registration check should stay in the broad phase"
+        );
     }
 
     #[test]

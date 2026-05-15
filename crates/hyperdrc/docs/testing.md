@@ -85,6 +85,12 @@ Layer tests verify flattened 2D geometry checks:
   duplicate detection, nesting detection, and cutout clearance.
 - Minimum-width tests use erode/grow morphology to confirm thin traces or mask
   webs are reported and compliant features pass.
+- Minimum copper-neck regression tests extract the complex project fixture zips
+  in `docs/` and verify representative KiCad copper layers complete without the
+  whole-layer morphology stall seen on complex pours. App-level smoke tests also
+  extract a small Gerber outline subset when present so package
+  extraction and Gerber loading stay covered without turning the fixture into a
+  long-running full-board DRC job.
 - Copper-overlap and exposed-copper tests assert violation coordinates are
   preserved so reports can point to the actual intersection.
 - Layer-sanity tests inject empty geometry, huge area, malformed contours, holes,
@@ -130,15 +136,18 @@ drills, outlines, zones, nets, and sidecars:
 - High-speed, differential-pair, reference-plane, return-path, and stitching
   tests use net-name heuristics plus nearby ground copper/vias to check signal
   integrity readiness, including pair-side return/guard proximity.
+- Mixed-signal tests verify sensitive analog/RF/sensor spacing, local
+  ground-return proximity, and digital/control partition heuristics.
 - High-current, power-plane, power-via-array, thermal-via, thermal-pad, and
   thermal-copper tests verify power and heat-spreading heuristics around zones,
-  vias, and large pads.
+  via count/distribution, and large pads.
 - Gold-finger tests verify finger identification, edge proximity, spacing,
   via-on-finger risk, and drill keepout.
-- Edge, high-voltage, edge-copper pullback, chassis, RF, RF via-fence,
-  sensitive-net, ESD, switch-node, connector, decoupling, and hot-component
-  tests verify proximity heuristics using board outlines, same-layer ground,
-  ground vias, or protection copper.
+- Edge, high-voltage, edge-copper pullback, chassis, RF keepout, antenna
+  copper keepout, RF via-fence, sensitive-net, ESD protection and return-path,
+  switch-node, connector, inductor copper keepout, decoupling, and
+  hot-component tests verify proximity heuristics using board outlines,
+  same-layer ground, ground vias, chassis, or protection copper.
 - Component, mechanical-hole, panelization, mouse-bite, tooling-hole, fiducial,
   fiducial-keepout, local-fiducial, and dense-pad tests verify
   DFA/manufacturing geometry around
@@ -395,7 +404,9 @@ These tests protect user-facing behavior around the check engine:
 Location: [`../benches`](../benches/README.md)
 
 The benchmark target is not a correctness suite. It is a smoke-performance
-entry point for parser and geometry hot paths. Behavioral expectations belong
-in the module-level unit and property tests above.
+entry point for parser, geometry, local copper-density, and trace-junction
+acid-trap hot paths, plus dense-pad via-spacing and mask-bridge review.
+Behavioral expectations belong in the module-level unit and property tests
+above.
 
 Return to the [docs README](README.md).

@@ -180,6 +180,9 @@ sidecar input where possible.
   from the rest of their same-net via array.
 - `thermal-via-readiness`: warn when likely power or thermal KiCad zones have
   too few parsed same-net vias.
+- `thermal-via-distribution-readiness`: warn when a likely thermal/power zone
+  has enough same-net vias by count, but their maximum spread is below the
+  configured heat-spreading review distance.
 - `power-plane-readiness`: warn when likely power KiCad nets have no parsed
   same-net copper zone on selected layers.
 - `high-current-neck-readiness`: warn when likely power KiCad nets have copper
@@ -191,8 +194,14 @@ sidecar input where possible.
   nets.
 - `sensitive-return-readiness`: warn when likely analog, RF, or sensor KiCad
   nets have no parsed same-layer ground copper nearby.
+- `mixed-signal-partition-readiness`: warn when likely analog, RF, or sensor
+  copper is near likely digital/control copper without a nearby same-layer
+  ground guard.
 - `rf-keepout-readiness`: warn when likely RF or antenna KiCad nets are close
   to non-ground copper on the same selected layer.
+- `antenna-copper-keepout-readiness`: warn when likely antenna KiCad nets have
+  any other same-layer copper, including ground copper, inside a stricter
+  copper-free-region review distance.
 - `rf-via-fence-readiness`: warn when likely RF or antenna KiCad copper has no
   parsed same-layer ground via inside the configured via-fence review distance.
 - `chassis-stitching-readiness`: warn when likely chassis or shield KiCad nets
@@ -227,9 +236,14 @@ sidecar input where possible.
   proximity an early review signal.
 - `esd-protection-readiness`: warn when likely edge connector nets sit near the
   board edge without parsed ESD, chassis, or ground protection copper nearby.
+- `esd-return-path-readiness`: warn when likely ESD, TVS, or transient clamp
+  copper has no nearby same-layer ground or chassis return copper.
 - `switch-node-keepout-readiness`: warn when likely switching, boot, gate,
   motor, or PWM nodes are close to non-ground neighboring copper on the same
   selected layer.
+- `inductor-copper-keepout-readiness`: warn when likely inductor or switching
+  power nets have any other same-layer copper, including ground copper, inside a
+  stricter copper-free-region review distance.
 - `testpoint-coverage-readiness`: warn when likely critical KiCad nets have no
   matching IPC-D-356 test record, giving production test coverage an early
   sidecar-driven review signal.
@@ -257,6 +271,10 @@ sidecar input where possible.
   the configured optical keepout around likely fiducial targets.
 - `dense-pad-escape-readiness`: warn when dense fine-pitch pad clusters have no
   parsed nearby via escape, so BGA/QFN/fine-pitch breakout strategy is reviewed.
+  The same check path also reports `dense-pad-via-spacing-readiness` when
+  nearby vias are inside the configured pad/via spacing review threshold.
+  `dense-pad-mask-bridge-readiness` now also reports dense pad clusters whose
+  nearest copper spacing is below the configured mask-web review threshold.
 - `selective-wave-solder-keepout-readiness`: warn when likely through-hole
   solder process features sit too close to neighboring pads for wave/selective
   solder pallet, solder-thief, or masking review.
@@ -348,9 +366,10 @@ sidecar input where possible.
   duplicate pin/net assignments, reference parity between
   purchase/placement/netlist artifacts, missing README revision/manufacturing
   notes, BOM compliance/traceability/source-control evidence for sensitive
-  rows, centroid placement unit/origin/rotation-convention handoff, non-empty
-  drawing files, common drawing extensions, and role-specific drawing filename
-  tokens.
+  rows, package-level polarity/pin-1 and MSL handling handoffs, polarized
+  same-package orientation consistency, centroid placement
+  unit/origin/rotation-convention handoff, non-empty drawing files, common
+  drawing extensions, and role-specific drawing filename tokens.
 
 ## Supported Inputs
 
@@ -418,8 +437,10 @@ example before it is considered production-ready.
   conformal-coating threshold profiles are implemented for component clearance,
   connector rework, testpoint access, tooling, mouse-bite, fiducial, and
   dense-pad escape checks plus process-specific solder, press-fit, and coating
-  keepout checks. Remaining profile work: package-class-specific reflow
-  assumptions and richer process-specific keepout geometry.
+  keepout checks. Initial artifact checks also infer dense, array, and
+  fine-pitch BOM rows and require release notes to carry reflow-profile or
+  oven-recipe handoff language. Remaining profile work: richer
+  process-specific keepout geometry.
 - Mechanical model: routed outline, V-score lines, mouse bites, tabs, slots,
   cutouts, countersinks, castellations, plated edges, bevels, tooling holes,
   fiducials, keepout zones, stiffeners, and enclosure constraints. Initial KiCad
@@ -480,7 +501,10 @@ example before it is considered production-ready.
 - Copper balance: layer copper area, local copper density, plane void islands,
   sparse inner layers, high copper imbalance across the stack, and bow/twist
   risk flags. Initial layer-area imbalance checks are implemented for KiCad
-  copper layers and explicitly selected Gerber copper layers.
+  copper layers and explicitly selected Gerber copper layers. Initial
+  `local-copper-density-readiness` windows now warn when one copper layer is
+  locally dense while another selected copper layer is sparse in the same
+  region.
 - Isolated copper: floating copper islands, unconnected pours, orphaned zone
   remnants, and copper slivers below etchable area. Initial KiCad net-intent
   checks warn on parsed copper that remains unnetted after optional IPC-D-356
@@ -488,7 +512,10 @@ example before it is considered production-ready.
   anchor within the configured net clearance. They also warn when a single net
   appears as disconnected copper islands on the same selected layer.
 - Acid traps: acute polygon vertices, acute trace junctions, narrow wedge voids,
-  and trapped etchant pockets inside plane pours.
+  and trapped etchant pockets inside plane pours. Initial polygon-vertex checks
+  are implemented for flattened copper, and `acid-trap-trace-junction` now
+  warns on acute same-net KiCad segment junctions before segment identity is
+  lost in layer flattening.
 - Teardrop recommendations: narrow trace-to-pad and trace-to-via junctions below
   a configured width or annular-ring margin. Initial KiCad checks warn when
   narrow same-net segment geometry enters pads or vias.
@@ -620,13 +647,19 @@ example before it is considered production-ready.
   pairs warn when legend geometry falls within the configured clearance.
 - Bottom-side mirroring and side intent for silkscreen text.
 - Polarity and pin-1 indicators present and visible for polarized parts,
-  connectors, ICs, diodes, LEDs, electrolytics, and batteries.
+  connectors, ICs, diodes, LEDs, electrolytics, and batteries. Initial
+  production artifact checks infer likely polarized rows from refdes/package
+  text and require README orientation-review language plus an assembly drawing
+  artifact for visible pin-1/polarity marks.
 - Reference designator completeness, duplicate refdes detection, refdes outside
   board outline, unreadable refdes, and assembly drawing consistency. Initial
   production artifact checks flag duplicate BOM/centroid references and
   BOM/centroid/netlist reference mismatches.
 - Fabrication marking checks: date code, UL mark, impedance coupon label,
   serialization, revision text, and customer-required markings in allowed zones.
+  Initial README checks require a fabrication drawing artifact and explicit
+  allowed-zone, label-location, silkscreen/legend-location, or fab-drawing
+  marking callout language when release notes request those markings.
 - Fiducial label and keepout clarity: global/local fiducials not covered by
   silk, mask, copper clutter, or components.
 
@@ -635,7 +668,9 @@ example before it is considered production-ready.
 - Component-to-component clearance using courtyard, body, and height data.
   Initial KiCad checks now warn when large same-side pad proxies sit closer than
   the configured assembly spacing, which is a conservative review signal until
-  true courtyard/body geometry is modeled.
+  true courtyard/body geometry is modeled. Initial BOM/README checks also
+  require tall populated components to have mechanical-height/keepout handoff
+  language and an assembly drawing artifact.
 - Component-to-board-edge clearance for pick-and-place, depanelization, clamps,
   rework, and hand soldering. Initial KiCad checks warn when parsed component
   pads sit inside the board-edge assembly clearance band. The threshold is now
@@ -646,6 +681,9 @@ example before it is considered production-ready.
   clearance band. The threshold is now resolved through `assembly_profile` and
   `assembly` rule-deck overrides.
 - Orientation consistency for polarized packages and same-package arrays.
+  Initial production artifact checks group likely polarized references by BOM
+  value/footprint and warn when the centroid places the group at multiple
+  rotations.
 - Tombstoning risk: asymmetric pad sizes, thermal imbalance, paste imbalance,
   copper imbalance, and unequal trace connections on small passives. Initial
   KiCad checks warn when neighboring small pads have asymmetric copper area, and
@@ -654,7 +692,8 @@ example before it is considered production-ready.
   and soldermask-defined/NSMD mismatch.
 - QFN/DFN thermal pad rules: paste windowpane, via-in-pad fill/tent intent,
   solder voiding risk, and exposed pad copper balance. Initial KiCad checks warn
-  when large likely thermal pads have no parsed same-net via in pad.
+  when large likely thermal pads have no parsed same-net via in pad, and initial
+  BOM/README checks require reflow-profile handoff language for dense packages.
 - BGA assembly risk: pitch class, escape route feasibility, dogbone via size,
   microvia requirements, soldermask web, inspection accessibility, and X-ray
   requirement flag. Initial KiCad checks warn when dense fine-pitch pad clusters
@@ -686,8 +725,9 @@ example before it is considered production-ready.
   placement parity handling, empty component/placement/netlist sidecars, unusual
   reference designators, duplicate reference designators, conflicting MPN
   value/footprint and procurement metadata,
-  polarity/MSL/component-height handoff metadata, malformed placement
-  coordinates, unusually large placement coordinates, centroid/netlist
+  polarity/MSL/component-height handoff metadata, tall-component height/keepout
+  README and assembly-drawing handoff, malformed placement coordinates,
+  unusually large placement coordinates, centroid/netlist
   placeholder metadata, out-of-range rotations, invalid side values, duplicate
   centroid coordinates,
   duplicate pin-to-net assignments, repeated netlist rows, one-pin net review,
@@ -698,8 +738,12 @@ example before it is considered production-ready.
   conflicting finish, mask, thickness, copper-weight, and via-treatment values,
   conflicting layer-count, coating, programming, and test-fixture values,
   panel/rout drawing parity, BOM/centroid double-sided assembly handoff evidence,
-  BOM-driven through-hole solder, BGA/CSP/LGA inspection, and programmable-device
-  handoff evidence, firmware traceability, programming method, functional-test
+  BOM-driven through-hole solder, BGA/CSP/LGA inspection, polarized pin-1/
+  polarity drawing and README handoff, polarized same-package centroid rotation
+  consistency, dense-package reflow-profile handoff, tall-component
+  height/keepout handoff, low-standoff flux-cleanliness handoff,
+  press-fit process/fab/assembly drawing handoff, programmable-device handoff
+  evidence, firmware traceability, programming method, functional-test
   acceptance criteria, serialization/barcode handoff, fabrication marking-zone
   drawing parity, packaging/ESD/moisture notes, release preflight evidence,
   surface-finish compatibility notes for edge contacts, fine-pitch packages,
@@ -732,12 +776,23 @@ example before it is considered production-ready.
   when populated rows look through-hole or hand-soldered. Initial KiCad geometry
   checks now flag neighboring pads inside keepout bands around likely
   through-hole solder features.
+- Press-fit readiness: compliant-pin finished-hole tolerance, insertion force,
+  push-out force, insertion tooling, support fixtures, and drawing handoff.
+  Initial BOM/README checks infer press-fit/compliant-pin rows and require
+  process-control language plus fabrication and assembly drawing artifacts.
+- Wire-bond and chip-on-board readiness: bondable surface finish, pad plating,
+  die attach, bond map, loop height, pull-test criteria, and drawing handoff.
+  Initial BOM/README checks infer likely wire-bond, bare-die, and
+  chip-on-board rows and require process-control language plus fabrication and
+  assembly drawing artifacts.
 - Moisture/cleanliness/coating: conformal coating keepouts, no-clean flux risk
   under low-standoff packages, and unmasked test pads in coated areas. Initial
   BOM/README checks require MSL metadata for likely moisture-sensitive packages
-  and coating keepout/cleanliness notes when conformal coating is mentioned;
-  KiCad geometry checks now flag neighboring pads inside no-coat feature
-  keepout bands.
+  and package-level README dry-pack/bake/desiccant/humidity-card handling notes,
+  low-standoff no-clean flux/cleanliness/residue/ionic-contamination handoff
+  notes, plus coating keepout/cleanliness notes when conformal coating is
+  mentioned; KiCad geometry checks now flag neighboring pads inside no-coat
+  feature keepout bands.
 
 ### Electrical and Functional Validation Checks
 
@@ -769,29 +824,41 @@ example before it is considered production-ready.
   traces, via fences, antenna keepouts, and copper-free regions under inductors
   or antennas. Initial KiCad checks warn when likely analog, RF, or sensor nets
   run close to likely noisy power, switching, motor, or high-speed nets; when
-  those sensitive nets lack nearby same-layer ground copper; when likely RF or
-  antenna nets are close to non-ground copper; and when likely RF or antenna
-  copper lacks a nearby same-layer ground via fence.
+  those sensitive nets lack nearby same-layer ground copper; when likely analog,
+  RF, or sensor copper runs near digital/control copper without a nearby ground
+  guard; when likely RF or antenna nets are close to non-ground copper; when
+  likely antenna nets have same-layer copper inside a stricter copper-free-region
+  review distance; and when likely RF or antenna copper lacks a nearby same-layer
+  ground via fence.
+  Initial power-converter checks also warn when likely inductor or switch-node
+  copper has same-layer copper inside the stricter inductor copper-free-region
+  review distance.
 - ESD/safety: creepage and clearance by voltage class, slot barriers, spark-gap
   geometry, protective earth spacing, fuse/MOV keepouts, and high-voltage
   silkscreen warnings. Initial KiCad checks warn when likely high-voltage nets
   are close to other nets or enter the board-edge clearance band, and when
-  likely edge connector nets lack nearby ESD/chassis/ground protection copper.
+  likely edge connector nets lack nearby ESD/chassis/ground protection copper
+  or likely TVS/ESD clamp copper lacks nearby same-layer ground/chassis return.
   Configured net classes can now carry explicit voltage-clearance requirements.
 - Thermal validation: thermal via arrays, copper area under heat-generating
   parts, thermal relief versus heat spreading, hot component spacing, and
   heatsink/mechanical keepouts. Initial KiCad checks warn when likely thermal
-  pads lack via-in-pad support, when likely heat or power features lack nearby
+  pads lack via-in-pad support, when likely power or thermal zones have too few
+  vias or a clustered via field, when likely heat or power features lack nearby
   same-net copper zone area, when likely hot features crowd neighboring
   non-ground copper, and when hot copper enters non-plated mechanical-hole
-  keepouts.
+  keepouts. Initial BOM/README checks infer likely heat-dissipating rows such
+  as exposed-pad regulators, power modules, high-power LEDs, MOSFETs, and
+  heatsinked assemblies and require thermal validation language plus an assembly
+  drawing artifact for heatsink, airflow, keepout, or thermal-interface review.
 - EMC readiness: edge-rate nets near board edge, connector return pins, chassis
   stitching, ground moat mistakes, cable shield connection intent, switching-node
   copper keepouts, and loop antenna risk. Initial KiCad checks warn when likely
   chassis or shield nets lack nearby parsed ground stitching vias, when likely
   connector edge-rate nets sit near the board edge without nearby same-layer
-  ground return copper, and when likely switching nodes are close to non-ground
-  neighboring copper.
+  ground return copper, when likely switching nodes are close to non-ground
+  neighboring copper, and when likely inductor or switch-node copper has any
+  same-layer copper inside a stricter copper-free-region review distance.
 
 ### Manufacturing File and Pre-Production Workflow Checks
 
@@ -869,6 +936,7 @@ Gerber/KiCad fixtures with one clear violation and one matching non-violation.
   KiCad via annular-ring fail/pass coverage, pad-to-via, via-to-via,
   trace-to-trace, trace-to-pad, trace-to-via, hole-to-trace, hole-to-hole,
   conservative slot-to-slot, and slot-like drill-to-trace spacing coverage,
+  acute same-net KiCad trace-junction acid-trap coverage,
   0.20 mm board-edge trace
   clearance, pad-crossing-outline coverage, oversized solder-mask opening
   coverage, undersized/missing paste and solder-mask opening coverage,
@@ -919,8 +987,9 @@ Gerber/KiCad fixtures with one clear violation and one matching non-violation.
 - Gold fingers and beveling: fixtures for no gold-finger design despite order
   metadata, missing mask opening on fingers, copper/text on fingers, and bevel
   keepout violations.
-- BGA-specific checks: fixtures for BGA pad opening, solder-mask bridge, via
-  escape, and pad/via spacing at dense pitch.
+- BGA-specific checks: initial fixtures cover via escape, pad/via spacing at
+  dense pitch, and copper-derived solder-mask bridge risk. Remaining fixtures
+  should add BGA pad opening examples once explicit mask openings are available.
 - NPTH and slot semantics: fixtures that distinguish cutouts, round holes,
   oval slots, rectangle slots, NPTH holes, plated slots, and route slots drawn on
   the wrong layer.
@@ -930,8 +999,10 @@ Gerber/KiCad fixtures with one clear violation and one matching non-violation.
   at high voltage, with internal/external layer variants and optional coating.
 - Aspect-ratio fixtures: board thickness and drill diameter combinations that
   pass/fail standard via, microvia, blind via, and through-hole limits.
-- Copper-balance fixtures: large pour imbalance, isolated local copper density
-  islands, and dense copper regions near sparse opposite-side geometry.
+- Copper-balance fixtures: large pour imbalance is covered, and initial local
+  density fixtures cover dense copper regions near sparse opposite-side
+  geometry. Remaining fixtures should add isolated local density islands on
+  larger multi-window boards.
 - Board-outline fixtures: unordered outlines, self-crossing outlines, duplicate
   outlines, tiny route notches, nested cutouts, and route slots touching copper.
 - File-package fixtures: stale generated Gerber files, missing paste/mask/drill

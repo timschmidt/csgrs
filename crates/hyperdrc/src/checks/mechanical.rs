@@ -4,6 +4,10 @@
 //! they need KiCad drill/copper context, but the primary design question is
 //! mechanical production intent around mounting holes, panel fixtures, and
 //! chassis attachment features.
+//!
+//! Reliability note: parsed mounting-hole and panel geometry may omit hardware
+//! stackups, fixtures, plating notes, and chassis bonds. Treat suspect findings
+//! as prompts for mechanical drawing and fabrication-note verification.
 
 use csgrs::csg::CSG;
 

@@ -4,6 +4,10 @@
 //! Gerber file, a Gerber package directory, or a converter. This module keeps
 //! that discovery logic and source metadata in one place so future adapters can
 //! implement the same shape.
+//!
+//! Reliability note: file-role discovery is filename heuristic driven. Suspect
+//! package manifests, duplicate roles, or missing layers should be verified
+//! against the supplier's naming convention and fabrication README.
 
 use std::path::{Path, PathBuf};
 

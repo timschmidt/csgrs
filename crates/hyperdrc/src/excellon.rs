@@ -3,6 +3,10 @@
 //! The parser accepts common Excellon unit declarations, tool definitions, and
 //! hit records, returning drill geometry plus issues that can be surfaced as
 //! readiness findings without aborting the rest of a package run.
+//!
+//! Reliability note: Excellon coordinate formats and headers vary by CAM
+//! exporter. Unit inference or malformed-tool recovery is suspect and should be
+//! checked against the fabrication drill report before release.
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};

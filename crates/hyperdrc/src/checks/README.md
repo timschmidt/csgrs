@@ -16,17 +16,32 @@ by the data model they need.
 - [`board.rs`](board.rs) contains checks that need richer board context:
   KiCad nets, pads, vias, panel graphics, Excellon drills, and
   IPC-D-356 points.
+- [`safety.rs`](safety.rs) contains high-voltage edge, voltage-clearance, ESD
+  protection, and TVS/ESD return-path checks.
 - [`mechanical.rs`](mechanical.rs) contains chassis and mounting-hole checks
   that use KiCad drill/copper context but answer mechanical release questions.
+- [`power.rs`](power.rs) contains switch-node, inductor keepout, and
+  power-converter EMC geometry checks.
+- [`thermal.rs`](thermal.rs) contains thermal relief, thermal via, thermal pad,
+  hot copper spacing, and mechanical thermal keepout checks.
 - [`constraints.rs`](constraints.rs) contains config-driven stackup and
   net-class checks that compare parsed KiCad copper against explicit project
   constraints.
-- [`assembly.rs`](assembly.rs) contains component, fiducial, testpoint, tooling,
-  mouse-bite, and fine-pitch assembly-readiness checks.
+- [`assembly.rs`](assembly.rs) contains component, fiducial keepout,
+  testpoint, tooling, mouse-bite, and process-specific assembly-readiness
+  checks.
+- [`dense_pad.rs`](dense_pad.rs) contains dense fine-pitch/BGA cluster checks
+  for local fiducials, escape vias, pad/via spacing, and mask-web review.
+- [`rf.rs`](rf.rs) contains RF launch, via-fence, and antenna copper keepout
+  checks.
+- [`signal.rs`](signal.rs) contains sensitive-net, mixed-signal partition, and
+  quiet-return/guard proximity checks.
 - [`artifacts.rs`](artifacts.rs) contains BOM, centroid, netlist, README, and
   drawing sidecar checks for assembly/pre-production package readiness.
 - [`artifact_table.rs`](artifact_table.rs) contains the small delimited-table
   parser shared by BOM, centroid, and netlist sidecar checks.
+- [`artifact_handoff.rs`](artifact_handoff.rs) contains package-level README
+  handoff vocabulary used by `production-artifact-readiness`.
 - [`surface_finish.rs`](surface_finish.rs) contains README/order-note surface
   finish compatibility heuristics used by `production-artifact-readiness`.
 - [`excellon.rs`](excellon.rs) contains Excellon-sidecar readiness checks that
@@ -65,8 +80,10 @@ by the data model they need.
 - `minimum-mask-opening`
 - `solder-mask-opening-spacing`
 - `acid-trap-candidate`
+- `acid-trap-trace-junction`
 - `layer-sanity`
 - `copper-balance-readiness`
+- `local-copper-density-readiness`
 - `mechanical-layer-geometry`
 - `board-outline-sanity`
 - `board-outline-fragments`
@@ -132,7 +149,6 @@ panel features:
 - `board-edge-exposure`
 - `high-speed-edge-readiness`
 - `edge-copper-pullback-readiness`
-- `high-voltage-edge-readiness`
 - `edge-stitching-readiness`
 - `controlled-impedance-readiness`
 - `differential-pair-readiness`
@@ -147,12 +163,11 @@ panel features:
 - `high-current-readiness`
 - `power-via-array-readiness`
 - `thermal-via-readiness`
+- `thermal-via-distribution-readiness`
 - `power-plane-readiness`
 - `high-current-neck-readiness`
-- `voltage-clearance-readiness`
-- `sensitive-net-spacing-readiness`
-- `sensitive-return-readiness`
 - `rf-keepout-readiness`
+- `antenna-copper-keepout-readiness`
 - `rf-via-fence-readiness`
 - `chassis-stitching-readiness`
 - `gold-finger-readiness`
@@ -166,8 +181,8 @@ panel features:
 - `pad-pair-asymmetry-readiness`
 - `connector-return-path-readiness`
 - `decoupling-proximity-readiness`
-- `esd-protection-readiness`
 - `switch-node-keepout-readiness`
+- `inductor-copper-keepout-readiness`
 - `thermal-pad-via-readiness`
 - `thermal-copper-area-readiness`
 - `hot-component-spacing-readiness`
@@ -183,11 +198,41 @@ panel features:
 Board checks use the parsed KiCad model and sidecars. They can reason about
 same-net versus different-net copper, nearby IPC-D-356 test records,
 gold-finger edge, spacing, and drill keepout risk, connector return-path
-signals, power decoupling proximity, ESD protection proximity, switching-node
-keepout risk, differential-pair return/guard proximity, RF via-fence proximity,
-thermal copper-area support, hot-component spacing,
+signals, power decoupling proximity, switching-node and inductor copper keepout
+risk, differential-pair return/guard proximity, RF keepout,
+antenna copper-free-region, and via-fence proximity, thermal via count and
+distribution, thermal copper-area support, hot-component spacing,
 thermal/mechanical hole keepouts, likely thermal-pad via coverage, and panel
 geometry that is not visible from a single Gerber layer alone.
+
+## Signal Checks
+
+[`signal.rs`](signal.rs) owns mixed-signal and sensitive-net checks:
+
+- `sensitive-net-spacing-readiness`
+- `sensitive-return-readiness`
+- `mixed-signal-partition-readiness`
+
+These checks use net-name intent plus same-layer copper proximity to make
+analog/RF/sensor segregation visible before release. They report sensitive nets
+near noisy nets, sensitive nets missing nearby ground guard/return copper, and
+quiet analog/RF/sensor copper near digital/control copper without a local
+ground guard.
+
+## Safety Checks
+
+[`safety.rs`](safety.rs) owns voltage and system-ESD readiness checks:
+
+- `high-voltage-edge-readiness`
+- `voltage-clearance-readiness`
+- `esd-protection-readiness`
+- `esd-return-path-readiness`
+
+These checks keep high-voltage and protective-interface heuristics separate
+from the broader board-context module. They use net-name intent, board outline
+geometry, same-layer copper proximity, and protection/return net hints to flag
+edge creepage, high-voltage spacing, missing edge-interface ESD protection, and
+TVS clamp return-path inductance review items.
 
 ## Mechanical Checks
 
@@ -275,6 +320,8 @@ KiCad copper, so true routed path reconstruction remains a deeper future input.
 - `local-fiducial-readiness`
 - `fiducial-keepout-readiness`
 - `dense-pad-escape-readiness`
+- `dense-pad-via-spacing-readiness`
+- `dense-pad-mask-bridge-readiness`
 - `selective-wave-solder-keepout-readiness`
 - `press-fit-keepout-readiness`
 - `conformal-coating-keepout-readiness`
@@ -282,8 +329,10 @@ KiCad copper, so true routed path reconstruction remains a deeper future input.
 These checks use KiCad pads, drills, board outlines, and IPC-D-356 points to
 review assembly edge clearance, mechanical keepouts, large-pad component spacing
 proxies, two-terminal land-pattern symmetry, fixture probe access, panel
-tooling, fiducials, and fine-pitch escape signals. Fiducial keepout readiness
-reports same-layer copper that crowds the optical target keepout. Testpoint
+tooling, fiducials, and dense fine-pitch escape signals. Dense-pad checks live
+in [`dense_pad.rs`](dense_pad.rs) so BGA cluster geometry stays separate from
+general DFA checks. Fiducial keepout readiness reports same-layer copper that
+crowds the optical target keepout. Testpoint
 accessibility combines probe diameter, spacing, board-edge, access-side,
 feature-type, and soldermask metadata when available; testpoint copper clearance
 checks for unrelated selected copper inside the probe keepout. They also
@@ -317,9 +366,11 @@ invalid side values, duplicate centroid coordinates,
 duplicate pin/net assignments, repeated netlist pin rows, one-pin net review,
 reference parity between purchase, placement, and netlist artifacts, BOM versus
 centroid assembly-side, value, footprint, and rotation parity, conflicting
-centroid value/footprint/rotation metadata, polarity/MSL/component-height handoff
-metadata for likely sensitive BOM rows, and DNP/DNI references that still appear
-in placement data. Sensitive BOM rows such as programmable devices, connectors,
+centroid value/footprint/rotation metadata, polarized same-package centroid
+orientation consistency, polarity/MSL/component-height handoff metadata for
+likely sensitive BOM rows, tall-component height/keepout handoff parity, and
+DNP/DNI references that still appear in placement data. Sensitive BOM rows such
+as programmable devices, connectors,
 modules, batteries, crystals, wireless parts, BGA/QFN/LGA packages, and risky
 lifecycle statuses are also checked for lot/date-code or certificate
 traceability, RoHS/REACH/lead-free compliance evidence, and approved-vendor or
@@ -334,13 +385,35 @@ selective/wave solder or conformal coating. It also infers likely through-hole,
 BGA/CSP/LGA, and programmable BOM rows and expects README handoff notes for
 solder process, X-ray/AOI/inspection, firmware/programming/test coverage,
 firmware revision traceability, programming method, and test-acceptance
-criteria, plus first-article/sample approval, production acceptance criteria,
-and lot traceability. It cross-checks README requests for controlled impedance, edge
+criteria. Likely polarized or pin-1-sensitive rows must also be represented in
+README orientation-review language and an assembly drawing, and likely
+MSL-sensitive packages require package-level moisture handling language in the
+README. Likely polarized references that share the same BOM value/footprint are
+also grouped by centroid rotation so same-package orientation mismatches are
+visible before assembly release. Dense, array, and fine-pitch packages are also
+checked for README reflow-profile, oven-recipe, soak/peak/ramp, or thermal
+profiling handoff language. Populated height values above the internal tall-part
+threshold require README mechanical-height/keepout language and an assembly
+drawing. Rows that look like high-power regulators, LEDs, exposed-pad thermal
+packages, power modules, or heatsinked assemblies require README thermal
+validation language plus an assembly drawing for heatsink, airflow, keepout, or
+thermal-interface review. Low-standoff no-lead and array packages require
+no-clean flux, cleanliness, wash, residue, or ionic-contamination handoff
+language. Likely press-fit/compliant-pin rows require README process-control
+language plus fab and assembly drawings for finished-hole tolerance, insertion
+force, and tooling review. Likely wire-bond, bare-die, and chip-on-board rows
+require README finish/bond-process language plus fab and assembly drawings for
+bondable finish, pad plating, die attach, bond map, loop-height, and pull-test
+review. The same
+path checks first-article/sample approval, production
+acceptance criteria, and lot traceability. It cross-checks README requests for controlled impedance, edge
 plating, castellations, fabrication markings, double-sided assembly, and special
 assembly processes against the presence of fabrication or assembly drawing
-sidecars. It also checks serialization/barcode handoff and packaging/ESD/
-moisture notes when README release notes mention those workflows. It checks
-surface-finish compatibility notes for edge contacts, fine-pitch packages,
+sidecars. Fabrication markings also require explicit allowed-zone, label
+location, silkscreen/legend location, or fab-drawing marking callout language.
+It also checks serialization/barcode handoff and packaging/ESD/moisture notes
+when README release notes mention those workflows. It checks surface-finish
+compatibility notes for edge contacts, fine-pitch packages,
 press-fit hardware, and wire bonding. It checks
 revision and generated/release date markers across sidecar filenames and README
 content so mixed release packages are caught before handoff. It validates text

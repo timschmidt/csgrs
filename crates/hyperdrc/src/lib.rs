@@ -66,6 +66,8 @@ pub mod jsonl;
 pub mod junit;
 pub mod kicad;
 pub mod package_policy;
+#[doc(hidden)]
+pub mod process_lifecycle;
 pub mod report;
 pub mod sarif;
 pub mod sexp;

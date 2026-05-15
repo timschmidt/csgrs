@@ -3,9 +3,13 @@
 //! This module owns checks where the primary object is a KiCad, Excellon, or
 //! IPC-D-356 drill record. Keeping them separate from board-wide electrical
 //! checks makes mechanical fabrication rules easier to find and extend.
+//!
+//! Reliability note: slot handling and drill keepouts use conservative circular
+//! or rectangular proxies when source data is incomplete. Verify suspect annular
+//! ring, slot, and clearance findings against the drill drawing and CAM import.
 
 use csgrs::csg::CSG;
-use geo::Area;
+use geo::{Area, BoundingRect};
 
 use crate::geometry::{circle_polygon, multipolygon_to_shapes, polygons_to_sketch};
 use crate::ipc356::Ipc356Point;
@@ -175,25 +179,34 @@ pub fn drill_to_copper_clearance(
     let mut drills = board.drills.clone();
     drills.extend_from_slice(extra_drills);
     let copper_features = selected_copper_features(board, selected_layers);
+    log::trace!(
+        "drill-to-copper clearance: source={} drills={} copper_features={} clearance={clearance:.6}",
+        board.source,
+        drills.len(),
+        copper_features.len()
+    );
     let mut violations = Vec::new();
 
     for drill in drills {
-        let keepout = polygons_to_sketch(
-            vec![circle_polygon(
-                drill.location,
-                drill.diameter / 2.0 + clearance,
-                64,
-            )],
-            Some(LayerMetadata {
-                name: "drill keepout".to_string(),
-            }),
-        );
+        let keepout_radius = drill.diameter / 2.0 + clearance;
+        let mut keepout = None;
 
         for copper in &copper_features {
             if drill.plated && drill.net.is_some() && drill.net == copper.net {
                 continue;
             }
+            if !copper_may_touch_drill_keepout(copper, drill.location, keepout_radius) {
+                continue;
+            }
 
+            let keepout = keepout.get_or_insert_with(|| {
+                polygons_to_sketch(
+                    vec![circle_polygon(drill.location, keepout_radius, 64)],
+                    Some(LayerMetadata {
+                        name: "drill keepout".to_string(),
+                    }),
+                )
+            });
             let overlap = keepout.intersection(&copper.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
             if shapes.is_empty() {
@@ -215,6 +228,24 @@ pub fn drill_to_copper_clearance(
     }
 
     violations
+}
+
+fn copper_may_touch_drill_keepout(
+    copper: &CopperFeature,
+    drill_location: [f64; 2],
+    keepout_radius: f64,
+) -> bool {
+    let Some(bounds) = copper.sketch.geometry.bounding_rect() else {
+        return true;
+    };
+
+    // The drill keepout is circular, so its broad-phase box is just the drill
+    // center expanded by radius. Exact polygon intersection still decides
+    // surviving candidates; the box test only rejects impossible contacts.
+    drill_location[0] - keepout_radius <= bounds.max().x
+        && drill_location[0] + keepout_radius >= bounds.min().x
+        && drill_location[1] - keepout_radius <= bounds.max().y
+        && drill_location[1] + keepout_radius >= bounds.min().y
 }
 
 /// Run the `drill_spacing` design-readiness check or report helper.

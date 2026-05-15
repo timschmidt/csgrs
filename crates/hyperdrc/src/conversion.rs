@@ -10,6 +10,7 @@ use std::process::Command;
 use anyhow::{Context, Result, anyhow};
 
 use crate::cli::{ConversionBackend, SourceEda};
+use crate::process_lifecycle::{ChildProcessGuard, configure_child_command};
 
 #[derive(Clone, Debug)]
 /// Public data model for `ConversionRequest`.
@@ -64,12 +65,16 @@ impl Converter for TransjlcConverter {
             .with_context(|| format!("failed to create {}", request.output_dir.display()))?;
 
         let mut command = transjlc_command(request);
-        let status = command.status().with_context(|| {
+        configure_child_command(&mut command);
+        let child = command.spawn().with_context(|| {
             format!(
                 "failed to run TransJLC executable {}",
                 request.transjlc_bin.display()
             )
         })?;
+        let status = ChildProcessGuard::new(child)
+            .wait()
+            .with_context(|| "failed while waiting for TransJLC conversion to finish")?;
 
         if !status.success() {
             return Err(anyhow!(

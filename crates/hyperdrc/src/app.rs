@@ -14,6 +14,8 @@ use crate::{
     kicad, sarif, svg_overlay, waiver,
 };
 
+const LOCAL_COPPER_DENSITY_WINDOW_MULTIPLIER: f64 = 100.0;
+
 #[derive(Clone, Debug)]
 struct Layer {
     path: PathBuf,
@@ -365,6 +367,8 @@ pub fn run(cli: Cli) -> Result<RunOutcome> {
 /// This wrapper is intentionally thin: it delegates all work to [`run`] and then
 /// converts active findings into the process exit status expected by CI.
 pub fn run_cli(cli: Cli) -> Result<()> {
+    crate::process_lifecycle::install_cli_termination_handler()
+        .context("failed to install CLI termination handler")?;
     let outcome = run(cli)?;
     if outcome.report.violation_count > 0 {
         std::process::exit(1);
@@ -433,7 +437,8 @@ fn run_checks(
         let check_result: Result<()> = (|| {
             match check {
                 Check::MaskIslandKeepout => {
-                    for layer in layers {
+                    for layer_index in selected_layers(layers.len(), &cli.mask_layers) {
+                        let layer = &layers[layer_index];
                         violations.extend(checks::mask_island_keepout(
                             &layer_name(layer),
                             &layer.sketch,
@@ -984,6 +989,12 @@ fn run_checks(
                                 rules.acid_trap_angle,
                             ));
                         }
+                        violations.extend(checks::trace_junction_acid_trap_readiness(
+                            board,
+                            kicad_copper_layers,
+                            rules.acid_trap_angle,
+                            rules.min_area,
+                        ));
                     }
                 }
                 Check::LayerSanity => {
@@ -1019,6 +1030,12 @@ fn run_checks(
                             rules.max_copper_imbalance_ratio,
                             rules.min_area,
                         ));
+                        violations.extend(checks::local_copper_density_readiness(
+                            &gerber_copper,
+                            local_copper_density_window(rules.min_width),
+                            rules.max_copper_imbalance_ratio,
+                            rules.min_area,
+                        ));
                     }
                     for board in boards {
                         let kicad_copper = board
@@ -1030,6 +1047,12 @@ fn run_checks(
                             .collect::<Vec<_>>();
                         violations.extend(checks::copper_balance(
                             &kicad_copper,
+                            rules.max_copper_imbalance_ratio,
+                            rules.min_area,
+                        ));
+                        violations.extend(checks::local_copper_density_readiness(
+                            &kicad_copper,
+                            local_copper_density_window(rules.min_width),
                             rules.max_copper_imbalance_ratio,
                             rules.min_area,
                         ));
@@ -1461,6 +1484,13 @@ fn run_checks(
                             2,
                             rules.net_clearance,
                         ));
+                        violations.extend(checks::thermal_via_distribution_readiness(
+                            board,
+                            kicad_copper_layers,
+                            2,
+                            rules.net_clearance * 4.0,
+                            rules.net_clearance,
+                        ));
                     }
                 }
                 Check::PowerPlaneReadiness => {
@@ -1496,6 +1526,13 @@ fn run_checks(
                             kicad_copper_layers,
                             rules.min_area,
                         ));
+                        violations.extend(checks::mixed_signal_partition_readiness(
+                            board,
+                            kicad_copper_layers,
+                            rules.net_clearance * 3.0,
+                            rules.net_clearance * 2.0,
+                            rules.min_area,
+                        ));
                     }
                 }
                 Check::SensitiveReturnReadiness => {
@@ -1513,6 +1550,12 @@ fn run_checks(
                             board,
                             rules.net_clearance * 4.0,
                             kicad_copper_layers,
+                            rules.min_area,
+                        ));
+                        violations.extend(checks::antenna_copper_keepout_readiness(
+                            board,
+                            kicad_copper_layers,
+                            rules.net_clearance * 6.0,
                             rules.min_area,
                         ));
                     }
@@ -1660,6 +1703,11 @@ fn run_checks(
                             rules.clearance * 2.0,
                             rules.net_clearance * 8.0,
                         ));
+                        violations.extend(checks::esd_return_path_readiness(
+                            board,
+                            kicad_copper_layers,
+                            rules.net_clearance * 4.0,
+                        ));
                     }
                 }
                 Check::SwitchNodeKeepoutReadiness => {
@@ -1668,6 +1716,12 @@ fn run_checks(
                             board,
                             kicad_copper_layers,
                             rules.net_clearance * 4.0,
+                            rules.min_area,
+                        ));
+                        violations.extend(checks::inductor_copper_keepout_readiness(
+                            board,
+                            kicad_copper_layers,
+                            rules.net_clearance * 6.0,
                             rules.min_area,
                         ));
                     }
@@ -1763,6 +1817,20 @@ fn run_checks(
                             kicad_copper_layers,
                             rules.assembly.dense_pad_pitch,
                             rules.assembly.dense_pad_via_search_radius,
+                        ));
+                        violations.extend(checks::dense_pad_via_spacing_readiness(
+                            board,
+                            kicad_copper_layers,
+                            rules.assembly.dense_pad_pitch,
+                            rules.assembly.dense_pad_via_search_radius,
+                            rules.net_clearance,
+                            rules.min_area,
+                        ));
+                        violations.extend(checks::dense_pad_mask_bridge_readiness(
+                            board,
+                            kicad_copper_layers,
+                            rules.assembly.dense_pad_pitch,
+                            rules.min_mask_width,
                         ));
                     }
                 }
@@ -2881,6 +2949,10 @@ fn layer_name(layer: &Layer) -> String {
     layer.path.display().to_string()
 }
 
+fn local_copper_density_window(min_width: f64) -> f64 {
+    (min_width * LOCAL_COPPER_DENSITY_WINDOW_MULTIPLIER).max(1.0)
+}
+
 fn print_text_report(report: &Report) {
     if report.violations.is_empty() {
         if report.waived_count == 0 {
@@ -2963,6 +3035,7 @@ fn print_violation(index: usize, violation: &Violation) {
 #[cfg(test)]
 mod tests {
     use std::path::{Path, PathBuf};
+    use std::time::{Duration, Instant};
     use std::{fs, process};
 
     use clap::Parser;
@@ -3071,6 +3144,77 @@ mod tests {
         )
     }
 
+    struct ComplexProjectFixture {
+        label: &'static str,
+        zip_path: &'static str,
+        board_path: &'static str,
+        gerber_dir: Option<&'static str>,
+        edge_cuts: Option<&'static str>,
+    }
+
+    const COMPLEX_PROJECT_FIXTURES: &[ComplexProjectFixture] = &[
+        ComplexProjectFixture {
+            label: "cparti-fpga",
+            zip_path: "docs/CPArti FPGA dev board.zip",
+            board_path: "CPArti FPGA dev board.kicad_pcb",
+            gerber_dir: Some("gerbers"),
+            edge_cuts: Some("CPArti FPGA dev board-Edge_Cuts.gbr"),
+        },
+        ComplexProjectFixture {
+            label: "hvp109a",
+            zip_path: "docs/HVP109A.zip",
+            board_path: "HVP109A.kicad_pcb",
+            gerber_dir: None,
+            edge_cuts: None,
+        },
+    ];
+
+    fn complex_zip_temp_root(label: &str) -> PathBuf {
+        std::env::temp_dir().join(format!(
+            "hyperdrc-complex-project-{label}-{}",
+            std::process::id()
+        ))
+    }
+
+    fn extract_complex_project_zip(root: &Path, label: &str, zip_path: &str) -> Option<PathBuf> {
+        let zip_path = Path::new(env!("CARGO_MANIFEST_DIR")).join(zip_path);
+        if !zip_path.exists() {
+            eprintln!(
+                "skipping complex project fixture test: missing {}",
+                zip_path.display()
+            );
+            return None;
+        }
+
+        let package_dir = root.join(label);
+        fs::create_dir_all(&package_dir).unwrap();
+        let output = process::Command::new("unzip")
+            .arg("-q")
+            .arg("-o")
+            .arg(&zip_path)
+            .arg("-d")
+            .arg(&package_dir)
+            .output();
+        match output {
+            Ok(output) if output.status.success() => Some(package_dir),
+            Ok(output) => {
+                eprintln!(
+                    "skipping complex project fixture test: unzip failed for {}: {}",
+                    zip_path.display(),
+                    String::from_utf8_lossy(&output.stderr)
+                );
+                None
+            }
+            Err(error) => {
+                eprintln!(
+                    "skipping complex project fixture test: cannot run unzip for {}: {error}",
+                    zip_path.display()
+                );
+                None
+            }
+        }
+    }
+
     #[test]
     fn layer_pairs_defaults_to_unique_pairs() {
         assert_eq!(layer_pairs(3, &[]).unwrap(), vec![(0, 1), (0, 2), (1, 2)]);
@@ -3120,6 +3264,124 @@ mod tests {
         let error = run(cli).unwrap_err().to_string();
 
         assert!(error.contains("provide at least one"));
+    }
+
+    #[test]
+    fn complex_project_zip_kicad_board_completes_smoke_check_suite() {
+        let root = complex_zip_temp_root("kicad-smoke-suite");
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir_all(&root).unwrap();
+
+        let started = Instant::now();
+        for fixture in COMPLEX_PROJECT_FIXTURES {
+            let Some(package_dir) =
+                extract_complex_project_zip(&root, fixture.label, fixture.zip_path)
+            else {
+                continue;
+            };
+            let pcb_path = package_dir.join(fixture.board_path);
+            assert!(
+                pcb_path.exists(),
+                "missing extracted board {}",
+                pcb_path.display()
+            );
+
+            let cli = Cli::parse_from([
+                "hyperdrc",
+                "--kicad-pcb",
+                pcb_path.to_str().unwrap(),
+                "--check",
+                "layer-sanity",
+                "--check",
+                "board-outline-sanity",
+                "--check",
+                "min-copper-neck",
+                "--check",
+                "drill-spacing",
+                "--min-width",
+                "0.0762",
+                "--format",
+                "text",
+            ]);
+            let outcome = run(cli).unwrap_or_else(|error| {
+                panic!(
+                    "smoke check suite failed for complex project board {}: {error}",
+                    pcb_path.display()
+                );
+            });
+            assert!(!outcome.report.inputs.is_empty());
+        }
+
+        let _ = fs::remove_dir_all(&root);
+        assert!(
+            started.elapsed() < Duration::from_secs(120),
+            "complex project KiCad smoke suite took {:?}",
+            started.elapsed()
+        );
+    }
+
+    #[test]
+    fn complex_project_gerber_package_completes_smoke_check_suite() {
+        let root = complex_zip_temp_root("gerber-smoke-suite");
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir_all(&root).unwrap();
+
+        let started = Instant::now();
+        let mut covered_gerber_fixture = false;
+        for fixture in COMPLEX_PROJECT_FIXTURES {
+            let Some(gerber_dir_name) = fixture.gerber_dir else {
+                continue;
+            };
+            let Some(edge_cuts_name) = fixture.edge_cuts else {
+                continue;
+            };
+            let Some(package_dir) =
+                extract_complex_project_zip(&root, fixture.label, fixture.zip_path)
+            else {
+                continue;
+            };
+            let gerber_dir = package_dir.join(gerber_dir_name);
+            assert!(
+                gerber_dir.exists(),
+                "missing extracted Gerber directory {}",
+                gerber_dir.display()
+            );
+            let smoke_dir = package_dir.join("gerber-smoke-subset");
+            fs::create_dir_all(&smoke_dir).unwrap();
+            fs::copy(
+                gerber_dir.join(edge_cuts_name),
+                smoke_dir.join(edge_cuts_name),
+            )
+            .unwrap();
+
+            let cli = Cli::parse_from([
+                "hyperdrc",
+                "--gerber-dir",
+                smoke_dir.to_str().unwrap(),
+                "--check",
+                "layer-sanity",
+                "--min-width",
+                "0.0762",
+                "--format",
+                "text",
+            ]);
+            let outcome = run(cli).unwrap_or_else(|error| {
+                panic!(
+                    "smoke check suite failed for complex project Gerbers in {}: {error}",
+                    smoke_dir.display()
+                );
+            });
+            assert!(!outcome.report.inputs.is_empty());
+            covered_gerber_fixture = true;
+        }
+        let _ = fs::remove_dir_all(&root);
+
+        assert!(covered_gerber_fixture);
+        assert!(
+            started.elapsed() < Duration::from_secs(120),
+            "complex project Gerber smoke suite took {:?}",
+            started.elapsed()
+        );
     }
 
     #[test]

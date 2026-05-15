@@ -19,6 +19,8 @@ anyhow = "1.0"
 clap = { version = "4.5", features = ["derive"] }
 csgrs = { git = "https://github.com/timschmidt/csgrs", default-features = false, features = ["f64", "sketch", "gerber-io", "offset", "delaunay"] }
 geo = { version = "0.29.3", default-features = false }
+log = "0.4"
+libc = "0.2"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 

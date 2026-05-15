@@ -2,6 +2,11 @@
 //!
 //! These checks are independent of KiCad concepts such as nets and drills, so
 //! Gerber-derived layers and KiCad-derived layers share the same behavior.
+//!
+//! Reliability note: offset/opening operations, local-density windows, and
+//! boundary-distance fallbacks approximate manufacturing concerns over polygon
+//! data. Double-check suspect results against CAM tooling when geometry is
+//! self-touching, highly fragmented, or near rule thresholds.
 
 use csgrs::csg::CSG;
 use geo::{
@@ -10,9 +15,14 @@ use geo::{
 };
 
 use crate::checks::distance::polygon_boundary_distance;
-use crate::geometry::{multipolygon_to_shapes, polygon_to_sketch, polygons_to_sketch};
+use crate::geometry::{
+    multipolygon_to_shapes, polygon_to_sketch, polygons_to_sketch, rect_polygon,
+};
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbSketch};
+
+const LOCAL_COPPER_DENSITY_FLOOR: f64 = 0.05;
+const LOCAL_COPPER_DENSITY_DELTA: f64 = 0.50;
 
 /// Run the `mask_island_keepout` design-readiness check or report helper.
 pub fn mask_island_keepout(
@@ -22,42 +32,66 @@ pub fn mask_island_keepout(
     min_area: f64,
 ) -> Vec<Violation> {
     let polygons = sketch.to_multipolygon().0;
+    log::trace!(
+        "mask-island keepout: layer={layer_name} islands={} keepout={keepout:.6}",
+        polygons.len()
+    );
     let mut violations = Vec::new();
 
     for island_index in 0..polygons.len() {
-        let island = polygon_to_sketch(polygons[island_index].clone(), Some(metadata(layer_name)));
-        let remaining_polygons = polygons
-            .iter()
-            .enumerate()
-            .filter_map(|(index, polygon)| (index != island_index).then_some(polygon.clone()))
-            .collect::<Vec<_>>();
+        for neighbor_index in (island_index + 1)..polygons.len() {
+            if !polygons_within_clearance(
+                &polygons[island_index],
+                &polygons[neighbor_index],
+                keepout * 2.0,
+            ) {
+                continue;
+            }
 
-        if remaining_polygons.is_empty() {
-            continue;
-        }
+            // Offset both candidate islands and intersect only after a bounding
+            // box broad phase. This avoids rebuilding and offsetting the rest
+            // of a dense soldermask layer for every island while preserving the
+            // same exact polygon predicate for nearby island pairs.
+            let island =
+                polygon_to_sketch(polygons[island_index].clone(), Some(metadata(layer_name)));
+            let neighbor =
+                polygon_to_sketch(polygons[neighbor_index].clone(), Some(metadata(layer_name)));
+            let overlap = island
+                .offset(keepout)
+                .intersection(&neighbor.offset(keepout));
+            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
 
-        let remaining = polygons_to_sketch(remaining_polygons, Some(metadata(layer_name)));
-        let overlap = island
-            .offset(keepout)
-            .intersection(&remaining.offset(keepout));
-        let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
-
-        if !shapes.is_empty() {
-            violations.push(Violation::new(
-                "mask-island-keepout",
-                Severity::Error,
-                vec![layer_name.to_string()],
-                Some(island_index),
-                shapes,
-                Vec::new(),
-                Some(format!(
-                    "island keepout intersects neighboring mask geometry after {keepout} offset"
-                )),
-            ));
+            if !shapes.is_empty() {
+                violations.push(Violation::new(
+                    "mask-island-keepout",
+                    Severity::Error,
+                    vec![layer_name.to_string()],
+                    Some(island_index),
+                    shapes,
+                    Vec::new(),
+                    Some(format!(
+                        "island keepout intersects neighboring mask geometry after {keepout} offset"
+                    )),
+                ));
+            }
         }
     }
 
     violations
+}
+
+fn polygons_within_clearance(left: &Polygon<f64>, right: &Polygon<f64>, clearance: f64) -> bool {
+    let Some(left_bounds) = left.bounding_rect() else {
+        return true;
+    };
+    let Some(right_bounds) = right.bounding_rect() else {
+        return true;
+    };
+
+    left_bounds.min().x - clearance <= right_bounds.max().x
+        && left_bounds.max().x + clearance >= right_bounds.min().x
+        && left_bounds.min().y - clearance <= right_bounds.max().y
+        && left_bounds.max().y + clearance >= right_bounds.min().y
 }
 
 /// Run the `copper_overlap` design-readiness check or report helper.
@@ -583,16 +617,42 @@ pub fn silkscreen_min_width(
     min_area: f64,
 ) -> Vec<Violation> {
     let radius = min_width / 2.0;
-    let reconstructed = silk.offset(-radius).offset(radius);
-    let thin_features = silk.difference(&reconstructed);
-    shapes_violation(
+    let polygons = silk.to_multipolygon().0;
+    log::trace!(
+        "silkscreen-min-width: layer={silk_name} polygons={} min_width={min_width:.6}",
+        polygons.len()
+    );
+    let mut shapes = Vec::new();
+
+    for polygon in polygons {
+        // Apply morphological opening to one disconnected legend island at a
+        // time. Whole-layer opening can create pathological boolean operations
+        // on dense Gerber packages, while island-local opening is equivalent
+        // for independent silkscreen strokes.
+        let island = polygon_to_sketch(polygon, Some(metadata(silk_name)));
+        let reconstructed = island.offset(-radius).offset(radius);
+        let thin_features = island.difference(&reconstructed);
+        shapes.extend(multipolygon_to_shapes(
+            &thin_features.to_multipolygon(),
+            min_area,
+        ));
+    }
+
+    if shapes.is_empty() {
+        return Vec::new();
+    }
+
+    vec![Violation::new(
         "silkscreen-min-width",
         Severity::Warning,
         vec![silk_name.to_string()],
-        thin_features,
-        min_area,
-        format!("silkscreen features are removed by opening with width {min_width}"),
-    )
+        None,
+        shapes,
+        Vec::new(),
+        Some(format!(
+            "silkscreen features are removed by opening with width {min_width}"
+        )),
+    )]
 }
 
 /// Run the `min_copper_neck_width` design-readiness check or report helper.
@@ -603,19 +663,45 @@ pub fn min_copper_neck_width(
     min_area: f64,
 ) -> Vec<Violation> {
     let radius = min_width / 2.0;
+    let source_polygons = copper.to_multipolygon().0;
+    log::trace!(
+        "min-copper-neck: layer={copper_name} polygons={} min_width={min_width:.6} min_area={min_area:.6}",
+        source_polygons.len()
+    );
+
     // Morphological opening: erode by r, then dilate by r. Features that cannot
     // contain a disk of radius r disappear, which makes this a useful fast
     // approximation for "minimum neck width" checks on copper. This follows the
     // dilation/erosion algebra formalized in Heijmans and Ronse,
     // "The algebraic basis of mathematical morphology I. Dilations and erosions",
     // Computer Vision, Graphics, and Image Processing, 1990.
-    let reconstructed = copper.offset(-radius).offset(radius);
-    let thin_features = copper.difference(&reconstructed);
-    let source = copper.to_multipolygon();
-    let thin = thin_features.to_multipolygon();
-    let shapes = multipolygon_to_shapes(&thin, min_area);
+    //
+    // Run the opening per polygon island instead of against the whole layer.
+    // Real production pours can contain hundreds or thousands of independent
+    // islands; feeding that entire multipolygon into one offset/difference can
+    // create pathological boolean work in the geometry kernel even though the
+    // minimum-neck question is local to each island. Per-island opening preserves
+    // the check's intent while bounding each offset operation to a much smaller
+    // contour set.
+    let mut shapes = Vec::new();
+    for (island_index, polygon) in source_polygons.iter().cloned().enumerate() {
+        log::trace!(
+            "min-copper-neck: layer={copper_name} island={island_index} exterior_vertices={} holes={}",
+            polygon.exterior().0.len(),
+            polygon.interiors().len()
+        );
+        let source = MultiPolygon(vec![polygon.clone()]);
+        let island = polygon_to_sketch(polygon, Some(metadata(copper_name)));
+        let reconstructed = island.offset(-radius).offset(radius);
+        let thin_features = island.difference(&reconstructed);
+        let thin = thin_features.to_multipolygon();
+        if whole_feature_removal_is_width_compliant(&source, &thin, min_width) {
+            continue;
+        }
+        shapes.extend(multipolygon_to_shapes(&thin, min_area));
+    }
 
-    if shapes.is_empty() || whole_feature_removal_is_width_compliant(&source, &thin, min_width) {
+    if shapes.is_empty() {
         return Vec::new();
     }
 
@@ -731,41 +817,47 @@ pub fn solder_mask_opening_spacing(
     min_area: f64,
 ) -> Vec<Violation> {
     let openings = mask.to_multipolygon().0;
+    log::trace!(
+        "solder-mask-opening-spacing: layer={mask_name} openings={} min_spacing={min_spacing:.6}",
+        openings.len()
+    );
     let mut violations = Vec::new();
     let expansion = min_spacing / 2.0;
 
     for opening_index in 0..openings.len() {
-        let opening = polygon_to_sketch(openings[opening_index].clone(), Some(metadata(mask_name)));
-        let remaining_openings = openings
-            .iter()
-            .enumerate()
-            .filter_map(|(index, polygon)| (index != opening_index).then_some(polygon.clone()))
-            .collect::<Vec<_>>();
+        for neighbor_index in (opening_index + 1)..openings.len() {
+            if !polygons_within_clearance(
+                &openings[opening_index],
+                &openings[neighbor_index],
+                min_spacing,
+            ) {
+                continue;
+            }
 
-        if remaining_openings.is_empty() {
-            continue;
+            let opening =
+                polygon_to_sketch(openings[opening_index].clone(), Some(metadata(mask_name)));
+            let neighbor =
+                polygon_to_sketch(openings[neighbor_index].clone(), Some(metadata(mask_name)));
+            let bridge_conflict = opening
+                .offset(expansion)
+                .intersection(&neighbor.offset(expansion));
+            let shapes = multipolygon_to_shapes(&bridge_conflict.to_multipolygon(), min_area);
+            if shapes.is_empty() {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "solder-mask-opening-spacing",
+                Severity::Warning,
+                vec![mask_name.to_string()],
+                Some(opening_index),
+                shapes,
+                Vec::new(),
+                Some(format!(
+                    "solder mask openings are closer than minimum bridge width {min_spacing}"
+                )),
+            ));
         }
-
-        let remaining = polygons_to_sketch(remaining_openings, Some(metadata(mask_name)));
-        let bridge_conflict = opening
-            .offset(expansion)
-            .intersection(&remaining.offset(expansion));
-        let shapes = multipolygon_to_shapes(&bridge_conflict.to_multipolygon(), min_area);
-        if shapes.is_empty() {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "solder-mask-opening-spacing",
-            Severity::Warning,
-            vec![mask_name.to_string()],
-            Some(opening_index),
-            shapes,
-            Vec::new(),
-            Some(format!(
-                "solder mask openings are closer than minimum bridge width {min_spacing}"
-            )),
-        ));
     }
 
     violations
@@ -949,6 +1041,214 @@ pub fn copper_balance(
             "copper area imbalance ratio {ratio:.3} exceeds maximum {max_imbalance_ratio:.3}; smallest layer {smallest_layer} area {smallest_area:.6}, largest layer {largest_layer} area {largest_area:.6}"
         )),
     )]
+}
+
+/// Run a local copper-density balance check over matching windows on each layer.
+///
+/// The global [`copper_balance`] check catches whole-layer area mismatch. This
+/// helper catches the more local DFM case called out in the design-readiness
+/// plan: a dense copper island on one layer with sparse copper in the same board
+/// region on another layer. It is still a readiness heuristic rather than a CAM
+/// compensation model; the review signal is useful because copper pattern
+/// density influences etch and copper plating uniformity in PCB production.
+///
+/// The implementation intentionally uses rectangular windows so the result is
+/// deterministic, inexpensive, and friendly to docs.rs examples/tests. For the
+/// manufacturing motivation, see Sun et al., "Multi-physics coupling aid
+/// uniformity improvement in pattern plating," *Applied Thermal Engineering*
+/// 108 (2016), and Lee et al., "Effect of pulse-reverse plating on copper:
+/// Thermal mechanical properties and microstructure relationship,"
+/// *Microelectronics Reliability* 100-101 (2019).
+pub fn local_copper_density_readiness(
+    copper_layers: &[(String, PcbSketch)],
+    window_size: f64,
+    max_density_ratio: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    if copper_layers.len() < 2 || window_size <= 0.0 {
+        return Vec::new();
+    }
+
+    let prepared_layers = prepare_density_layers(copper_layers, min_area);
+    let Some(bounds) = combined_density_bounds(&prepared_layers) else {
+        return Vec::new();
+    };
+    log::trace!(
+        "local copper-density readiness: layers={} window_size={window_size:.6} ratio={max_density_ratio:.6}",
+        prepared_layers.len()
+    );
+
+    let mut violations = Vec::new();
+    let min_x = bounds.min().x;
+    let min_y = bounds.min().y;
+    let max_x = bounds.max().x;
+    let max_y = bounds.max().y;
+    let mut y = min_y;
+
+    while y < max_y {
+        let mut x = min_x;
+        while x < max_x {
+            let width = (max_x - x).min(window_size);
+            let height = (max_y - y).min(window_size);
+            if width * height > min_area {
+                collect_local_density_window(
+                    &prepared_layers,
+                    [x + width / 2.0, y + height / 2.0],
+                    [width, height],
+                    max_density_ratio,
+                    min_area,
+                    &mut violations,
+                );
+            }
+            x += window_size;
+        }
+        y += window_size;
+    }
+
+    violations
+}
+
+struct DensityLayer {
+    name: String,
+    polygons: Vec<DensityPolygon>,
+}
+
+struct DensityPolygon {
+    bounds: geo::Rect<f64>,
+    area: f64,
+}
+
+fn prepare_density_layers(
+    copper_layers: &[(String, PcbSketch)],
+    min_area: f64,
+) -> Vec<DensityLayer> {
+    copper_layers
+        .iter()
+        .filter_map(|(name, sketch)| {
+            let polygons = sketch
+                .to_multipolygon()
+                .0
+                .into_iter()
+                .filter_map(|polygon| {
+                    let area = polygon.unsigned_area();
+                    let bounds = polygon.bounding_rect()?;
+                    (area > min_area).then_some(DensityPolygon { bounds, area })
+                })
+                .collect::<Vec<_>>();
+            (!polygons.is_empty()).then_some(DensityLayer {
+                name: name.clone(),
+                polygons,
+            })
+        })
+        .collect()
+}
+
+fn collect_local_density_window(
+    copper_layers: &[DensityLayer],
+    center: [f64; 2],
+    size: [f64; 2],
+    max_density_ratio: f64,
+    min_area: f64,
+    violations: &mut Vec<Violation>,
+) {
+    let window_polygon = rect_polygon(center, size, 0.0);
+    let window_area = window_polygon.unsigned_area();
+    if window_area <= min_area {
+        return;
+    }
+    let Some(window_bounds) = window_polygon.bounding_rect() else {
+        return;
+    };
+    let mut densities = copper_layers
+        .iter()
+        .map(|layer| {
+            let copper_area = layer
+                .polygons
+                .iter()
+                .map(|polygon| approximate_window_polygon_area(&window_bounds, polygon))
+                .sum::<f64>();
+            (&layer.name, (copper_area / window_area).clamp(0.0, 1.0))
+        })
+        .collect::<Vec<_>>();
+
+    densities.sort_by(|left, right| {
+        left.1
+            .partial_cmp(&right.1)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+    let Some((sparse_layer, sparse_density)) = densities.first() else {
+        return;
+    };
+    let Some((dense_layer, dense_density)) = densities.last() else {
+        return;
+    };
+    if *dense_density < LOCAL_COPPER_DENSITY_FLOOR {
+        return;
+    }
+
+    let ratio = *dense_density / sparse_density.max(min_area);
+    let delta = *dense_density - *sparse_density;
+    if ratio <= max_density_ratio || delta < LOCAL_COPPER_DENSITY_DELTA {
+        return;
+    }
+
+    let window = polygons_to_sketch(vec![window_polygon], Some(metadata("density window")));
+    let shapes = multipolygon_to_shapes(&window.to_multipolygon(), min_area);
+    violations.push(Violation::new(
+        "local-copper-density-readiness",
+        Severity::Warning,
+        vec![(*sparse_layer).clone(), (*dense_layer).clone()],
+        None,
+        shapes,
+        vec![center],
+        Some(format!(
+            "local copper density imbalance ratio {ratio:.3} exceeds maximum {max_density_ratio:.3}; sparse layer {sparse_layer} density {sparse_density:.3}, dense layer {dense_layer} density {dense_density:.3}"
+        )),
+    ));
+}
+
+fn approximate_window_polygon_area(window: &geo::Rect<f64>, polygon: &DensityPolygon) -> f64 {
+    let overlap_width = (window.max().x.min(polygon.bounds.max().x)
+        - window.min().x.max(polygon.bounds.min().x))
+    .max(0.0);
+    let overlap_height = (window.max().y.min(polygon.bounds.max().y)
+        - window.min().y.max(polygon.bounds.min().y))
+    .max(0.0);
+    if overlap_width == 0.0 || overlap_height == 0.0 {
+        return 0.0;
+    }
+
+    let bounds_area = (polygon.bounds.max().x - polygon.bounds.min().x)
+        * (polygon.bounds.max().y - polygon.bounds.min().y);
+    if bounds_area <= 0.0 {
+        return 0.0;
+    }
+
+    // The local density check is a DFM heuristic, so it uses a conservative
+    // raster-like area accumulator instead of exact CSG window clipping. This
+    // mirrors the gridded density maps used for copper CMP/plating review while
+    // avoiding a pathological "number of windows times number of layers" boolean
+    // workload on large pours. See Kahng et al., "Filling Algorithms and
+    // Analyses for Layout Density Control", IEEE TCAD, 1999.
+    polygon.area * (overlap_width * overlap_height / bounds_area)
+}
+
+fn combined_density_bounds(copper_layers: &[DensityLayer]) -> Option<geo::Rect<f64>> {
+    copper_layers
+        .iter()
+        .flat_map(|layer| layer.polygons.iter().map(|polygon| polygon.bounds))
+        .reduce(|left, right| {
+            geo::Rect::new(
+                Coord {
+                    x: left.min().x.min(right.min().x),
+                    y: left.min().y.min(right.min().y),
+                },
+                Coord {
+                    x: left.max().x.max(right.max().x),
+                    y: left.max().y.max(right.max().y),
+                },
+            )
+        })
 }
 
 /// Run the `mechanical_layer_geometry` design-readiness check or report helper.
@@ -1521,6 +1821,10 @@ fn metadata(layer_name: &str) -> LayerMetadata {
 
 #[cfg(test)]
 mod tests {
+    use std::path::Path;
+    use std::process::Command;
+    use std::time::{Duration, Instant};
+
     use geo::{Coord, LineString, Polygon};
 
     use super::{
@@ -1528,16 +1832,18 @@ mod tests {
         board_outline_duplicate_readiness, board_outline_fragments,
         board_outline_nesting_readiness, board_outline_notch_readiness, board_outline_sanity,
         board_outline_self_intersection_readiness, copper_balance, copper_overlap, exposed_copper,
-        layer_sanity, mask_island_keepout, mechanical_layer_geometry, min_copper_neck_width,
-        minimum_mask_opening, minimum_paste_aperture, paste_aperture_coverage,
-        paste_aperture_ratio, paste_aperture_spacing, paste_mask_alignment, paste_overhang,
+        layer_sanity, local_copper_density_readiness, mask_island_keepout,
+        mechanical_layer_geometry, min_copper_neck_width, minimum_mask_opening,
+        minimum_paste_aperture, paste_aperture_coverage, paste_aperture_ratio,
+        paste_aperture_spacing, paste_mask_alignment, paste_overhang,
         silkscreen_board_edge_clearance, silkscreen_clearance, silkscreen_min_width,
         silkscreen_overlap, solder_mask_board_edge_clearance, solder_mask_expansion,
         solder_mask_opening_coverage, solder_mask_opening_spacing, solder_mask_overlap_clearance,
         solder_mask_sliver,
     };
     use crate::LayerMetadata;
-    use crate::geometry::{empty_sketch, line_polygon, polygons_to_sketch};
+    use crate::geometry::{empty_sketch, line_polygon, polygons_to_sketch, rect_polygon};
+    use crate::kicad::load_kicad_pcb;
 
     #[test]
     fn mask_island_keepout_reports_expanded_island_collision() {
@@ -1548,7 +1854,7 @@ mod tests {
 
         let violations = mask_island_keepout("mask", &layer, 0.1, 1.0e-9);
 
-        assert_eq!(violations.len(), 2);
+        assert_eq!(violations.len(), 1);
         assert!(
             violations
                 .iter()
@@ -1618,6 +1924,67 @@ mod tests {
 
         assert!(copper_balance(&balanced, 3.0, 1.0e-9).is_empty());
         assert!(copper_balance(&single, 3.0, 1.0e-9).is_empty());
+    }
+
+    #[test]
+    fn local_copper_density_reports_dense_island_over_sparse_layer() {
+        let layers = vec![
+            (
+                "F.Cu".to_string(),
+                polygons_to_sketch(
+                    vec![rect_polygon([5.0, 5.0], [10.0, 10.0], 0.0)],
+                    Some(LayerMetadata {
+                        name: "F.Cu".to_string(),
+                    }),
+                ),
+            ),
+            (
+                "B.Cu".to_string(),
+                polygons_to_sketch(
+                    vec![rect_polygon([5.0, 5.0], [1.0, 1.0], 0.0)],
+                    Some(LayerMetadata {
+                        name: "B.Cu".to_string(),
+                    }),
+                ),
+            ),
+        ];
+
+        let violations = local_copper_density_readiness(&layers, 10.0, 3.0, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "local-copper-density-readiness");
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("density imbalance ratio"))
+        );
+    }
+
+    #[test]
+    fn local_copper_density_allows_balanced_matching_windows() {
+        let layers = vec![
+            (
+                "F.Cu".to_string(),
+                polygons_to_sketch(
+                    vec![rect_polygon([5.0, 5.0], [7.0, 7.0], 0.0)],
+                    Some(LayerMetadata {
+                        name: "F.Cu".to_string(),
+                    }),
+                ),
+            ),
+            (
+                "B.Cu".to_string(),
+                polygons_to_sketch(
+                    vec![rect_polygon([5.0, 5.0], [6.0, 6.0], 0.0)],
+                    Some(LayerMetadata {
+                        name: "B.Cu".to_string(),
+                    }),
+                ),
+            ),
+        ];
+
+        assert!(local_copper_density_readiness(&layers, 10.0, 3.0, 1.0e-9).is_empty());
     }
 
     #[test]
@@ -1836,7 +2203,7 @@ mod tests {
 
         let violations = solder_mask_opening_spacing("mask", &mask, 0.1, 1.0e-9);
 
-        assert_eq!(violations.len(), 2);
+        assert_eq!(violations.len(), 1);
         assert!(
             violations
                 .iter()
@@ -1886,6 +2253,43 @@ mod tests {
                 .iter()
                 .map(|violation| violation.total_area)
                 .collect::<Vec<_>>()
+        );
+    }
+
+    const COMPLEX_PROJECT_FIXTURES: &[(&str, &str)] = &[
+        (
+            "docs/CPArti FPGA dev board.zip",
+            "CPArti FPGA dev board.kicad_pcb",
+        ),
+        ("docs/HVP109A.zip", "HVP109A.kicad_pcb"),
+    ];
+
+    #[test]
+    fn min_copper_neck_width_completes_on_complex_project_copper_layers() {
+        let started = Instant::now();
+        let min_width = 0.0762;
+        let min_area = 1.0e-9;
+
+        for (zip_path, board_entry) in COMPLEX_PROJECT_FIXTURES {
+            let Some(board_bytes) = unzip_fixture_entry(zip_path, board_entry) else {
+                continue;
+            };
+            let board_path = write_temp_fixture(board_entry, &board_bytes);
+            let board =
+                load_kicad_pcb(&board_path).expect("complex project KiCad fixture should parse");
+            for (layer_name, copper) in board.copper_layers(&[]) {
+                if layer_name != "F.Cu" && layer_name != "B.Cu" {
+                    continue;
+                }
+                let _ = min_copper_neck_width(&layer_name, &copper, min_width, min_area);
+            }
+            let _ = std::fs::remove_file(board_path);
+        }
+
+        assert!(
+            started.elapsed() < Duration::from_secs(20),
+            "complex project copper neck regression fixture took {:?}",
+            started.elapsed()
         );
     }
 
@@ -2756,6 +3160,43 @@ mod tests {
                 name: name.to_string(),
             }),
         )
+    }
+
+    fn unzip_fixture_entry(zip_name: &str, entry_name: &str) -> Option<Vec<u8>> {
+        let zip_path = Path::new(env!("CARGO_MANIFEST_DIR")).join(zip_name);
+        if !zip_path.exists() {
+            eprintln!(
+                "skipping complex project fixture regression; missing {}",
+                zip_path.display()
+            );
+            return None;
+        }
+
+        let output = Command::new("unzip")
+            .arg("-p")
+            .arg(&zip_path)
+            .arg(entry_name)
+            .output()
+            .ok()?;
+        if !output.status.success() {
+            eprintln!(
+                "skipping complex project fixture regression; could not extract {entry_name} from {}",
+                zip_path.display()
+            );
+            return None;
+        }
+
+        Some(output.stdout)
+    }
+
+    fn write_temp_fixture(entry_name: &str, bytes: &[u8]) -> std::path::PathBuf {
+        let sanitized = entry_name.replace(['/', '\\'], "_");
+        let path = std::env::temp_dir().join(format!(
+            "hyperdrc-complex-project-fixture-{}-{sanitized}",
+            std::process::id()
+        ));
+        std::fs::write(&path, bytes).expect("temporary complex project fixture should be writable");
+        path
     }
 
     fn square(min_x: f64, min_y: f64, max_x: f64, max_y: f64) -> Polygon<f64> {

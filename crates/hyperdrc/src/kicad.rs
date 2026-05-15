@@ -2,6 +2,11 @@
 //!
 //! This module keeps parser mechanics close to KiCad S-expression handling and
 //! re-exports the board model used by checks.
+//!
+//! Reliability note: KiCad syntax evolves and custom footprint primitives can
+//! encode geometry in ways this parser does not fully model. Suspect parsed
+//! copper, drill, or panel results should be verified against KiCad's own DRC
+//! and plotted manufacturing outputs.
 
 mod graphics;
 mod model;
