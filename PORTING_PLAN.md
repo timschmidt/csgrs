@@ -23,6 +23,32 @@ Those properties map directly to several current `csgrs` pain points: finite
 coordinate enforcement, deterministic map/set keys, explicit NaN/infinity
 policy, and centralized approximate comparisons.
 
+## Branch and commit discipline during the port
+
+Porting work should happen on a branch named `hyperreal` in each repository
+touched by the migration. This applies especially to:
+
+- `csgrs`
+- `spade`
+- `boolmesh`
+- `curvo`
+- `voxelis`
+
+The default branches should be treated as integration targets, not active
+porting branches. Before changing a repository for the port, switch that
+repository to its `hyperreal` branch or create it from the appropriate upstream
+base if it does not exist yet.
+
+During the porting period, each successful change should be verified, committed,
+and pushed automatically to that repository's `hyperreal` branch before moving
+on to the next independent change. Cross-repo work should be split into
+repository-local commits so `csgrs`, `spade`, `boolmesh`, `curvo`, and `voxelis`
+each retain a reviewable history of the port.
+
+After every successful commit and push, take another implementation turn against
+the next incomplete item in this plan. Continue that cycle until the plan is
+finished, tests expose a blocker, or a design decision requires human review.
+
 ## Target ownership model
 
 The stack should have clear vertical responsibilities:
@@ -40,11 +66,23 @@ csgrs         = CSG objects, modeling operations, topology, metadata, IO, and us
 
 - exact rationals
 - symbolic and computable reals
+- shared reduced expression machinery with symbolic leaves
+- standard-real solver variables and formal infinitesimal perturbation leaves
 - lazy approximation
 - sign, zero, magnitude, and structural facts
 - refinement and conservative comparison support
 
 It should not own CSG, polygon, mesh, or CAD-specific geometry types.
+
+The machinery needed for the feature that gives `hyperreal` its name should be
+developed together with the machinery needed to map a SolveSpace-style solver
+onto `hyperreal`, but the semantics should remain distinct. Both need reduced
+expression graphs, symbolic leaves, dependency sets, structural facts,
+derivative hooks, and cached evaluation. Solver variables are unknown standard
+reals that are bound by an evaluation context during iterative solving.
+Infinitesimal perturbations are ordered formal terms used for exact
+lexicographic signs, tie-breaking, degeneracy handling, and simulation of
+simplicity; they are not ordinary variables to solve for numerically.
 
 ### `hyperlattice`
 
@@ -356,6 +394,36 @@ yet operate on the new numeric stack:
   runners, and any other non-`csgrs` geometry implementation used during the
   port
 
+External geometry kernels should be handled on their own `hyperreal` branches.
+In particular, `spade`, `boolmesh`, `curvo`, and `voxelis` should not receive
+long-running uncommitted local patches during the `csgrs` migration. A verified
+change in one of those libraries should be committed and pushed to that
+library's `hyperreal` branch before `csgrs` is updated to depend on it.
+
+When a needed function is missing from `hyperlattice`, `hyperlimit`,
+`hypersolve`, or a future `hyperphysics` crate, the normal path should be to
+borrow the algorithm from an appropriately licensed crate, port it to
+`hyperreal`-compatible scalar and fact machinery, and extend the correct stack
+crate here. Crates such as `nalgebra` are valid sources when their licenses,
+attribution requirements, and implementation boundaries are compatible with the
+target crate. The goal is not to keep permanent f64-only adapter islands; it is
+to move useful, well-understood algorithms into the `hyperreal` stack so they
+share consistency, structural facts, exact/perturbed predicate behavior, and
+performance work with the rest of the system.
+
+Use this path for crates that should ultimately be ported to `hyperreal` for
+consistency and performance:
+
+- linear algebra, transforms, decomposition, and dense/sparse numeric kernels
+  belong in `hyperlattice`
+- robust geometric predicates, carriers, classification helpers, and
+  degeneracy policies belong in `hyperlimit`
+- solver residual, Jacobian, rank, projection, and constraint scheduling
+  helpers belong in `hypersolve`
+- physical simulation, dynamics, collision-response policy, material behavior,
+  or other non-geometric physics primitives should live in a separate
+  `hyperphysics` crate if they do not fit the existing ownership boundaries
+
 Keep these adapters private at first. The first milestone is internal
 correctness, not public API churn.
 
@@ -568,6 +636,41 @@ At this point, the semantic boundary should already be correct:
 
 The hyperreal port should therefore focus on backend behavior, performance, and
 additional certificates rather than rewriting `csgrs` modeling logic again.
+
+This phase should align with the `hypersolve` / SolveSpace-style symbolic
+variable work in `hyperreal`. The shared substrate should support:
+
+- expression nodes with symbolic leaves
+- dependency and independence facts
+- structural sign, zero, magnitude, and domain facts before full evaluation
+- reduced-expression caching across repeated queries
+- derivative hooks for solver residuals and, where useful, perturbation
+  propagation
+- bounded simplification so solver equations and infinitesimal series do not
+  grow without control
+
+The first infinitesimal target should be CAD-useful ordered perturbations, not a
+general nonstandard-analysis universe. A practical model is a finite
+lexicographic perturbation tower:
+
+```text
+standard Real + a1*eps + a2*eps^2 + ...
+```
+
+or an equivalent ordered perturbation-term representation. `hyperlimit` should
+be able to use these terms to decide predicate signs in degenerate cases without
+inventing ad hoc epsilon constants. `hypersolve` should use the same expression
+and fact infrastructure for standard-real variables, residuals, Jacobians, and
+rank diagnostics. The two paths should share representation, reduction,
+caching, and derivative infrastructure while keeping their policy layers
+separate:
+
+- solver symbols are bound by an evaluation context and participate in numeric
+  iteration
+- infinitesimal symbols are ordered formal perturbations and participate in
+  lexicographic comparison
+- `csgrs` consumes the resulting classifications and certificates, but still
+  owns CSG topology, metadata, and modeling policy
 
 ### Phase 10: Public API cleanup
 
@@ -1818,6 +1921,13 @@ Show-off examples:
 
 ## Design rules during the port
 
+- Work on the `hyperreal` branch of each affected repository, especially
+  `csgrs`, `spade`, `boolmesh`, `curvo`, and `voxelis`.
+- Commit and push each verified successful change to that repository's
+  `hyperreal` branch before starting the next independent change.
+- After each successful commit and push, take another implementation turn on the
+  next unfinished porting-plan item, continuing until the plan is complete or a
+  blocker requires review.
 - Lower crates provide facts; `csgrs` makes modeling decisions.
 - Predicate uncertainty should be represented explicitly until `csgrs` decides
   how to handle it.

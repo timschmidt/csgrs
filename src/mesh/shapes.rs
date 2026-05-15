@@ -273,7 +273,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// let bottom = Point3::new(0.0, 0.0, 0.0);
     /// let top = Point3::new(0.0, 0.0, 5.0);
     /// // This will create a cone (bottom degenerate) because radius1 is 0:
-    /// let cone = Mesh::<()>::frustum_ptp(bottom, top, 0.0, 2.0, 32, None);
+    /// let cone = Mesh::<()>::frustum_ptp(bottom, top, 0.0, 2.0, 32, ());
     /// ```
     pub fn frustum_ptp(
         start: Point3<Real>,
@@ -445,7 +445,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     ///     &[3, 0, 4],
     /// ];
     ///
-    /// let mesh_poly = Mesh::<()>::polyhedron(pts, fcs, None);
+    /// let mesh_poly = Mesh::<()>::polyhedron(pts, fcs, ());
     /// ```
     pub fn polyhedron(
         points: &[[Real; 3]],
@@ -465,7 +465,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             for &idx in face.iter() {
                 // Ensure the index is valid
                 if idx >= points.len() {
-                    return Err(ValidationError::IndexOutOfRange);
+                    return Err(ValidationError::IndexOutOfRangeWithLen {
+                        index: idx,
+                        len: points.len(),
+                    });
                 }
                 let [x, y, z] = points[idx];
                 face_vertices.push(Vertex::new(

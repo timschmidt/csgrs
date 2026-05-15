@@ -701,7 +701,9 @@ impl MeshJs {
     // Mass Properties
     #[wasm_bindgen(js_name = massProperties)]
     pub fn mass_properties(&self, density: Real) -> JsValue {
-        let (mass, com, _frame) = self.inner.mass_properties(density);
+        let Ok((mass, com, _frame)) = self.inner.mass_properties(density) else {
+            return JsValue::NULL;
+        };
         let obj = Object::new();
 
         let com_js = Point3Js::from(com);

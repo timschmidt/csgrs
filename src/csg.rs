@@ -48,7 +48,7 @@ pub trait CSG: Sized + Clone {
     /// ```
     /// use csgrs::mesh::Mesh;
     /// use csgrs::csg::CSG;
-    /// let mesh = Mesh::<()>::cube(1.0, None).translate(2.0, 1.0, -2.0);
+    /// let mesh = Mesh::<()>::cube(1.0, ()).translate(2.0, 1.0, -2.0);
     /// let floated = mesh.float();
     /// assert_eq!(floated.bounding_box().mins.z, 0.0);
     /// ```

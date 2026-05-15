@@ -84,10 +84,11 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// # Parameters
     /// - `direction`: 3D vector defining extrusion direction and magnitude
     pub fn extrude_vector(&self, direction: Vector3<Real>) -> Mesh<M> {
+        let tol = tolerance();
         if !direction.x.is_finite()
             || !direction.y.is_finite()
             || !direction.z.is_finite()
-            || direction.norm() < tolerance()
+            || direction.norm_squared() < tol * tol
         {
             return Mesh::empty(self.metadata.clone());
         }
@@ -378,7 +379,10 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     ) -> Result<Mesh<M>, ValidationError> {
         let n = bottom.vertices.len();
         if n != top.vertices.len() {
-            return Err(ValidationError::MismatchedVertices);
+            return Err(ValidationError::MismatchedVertexCount {
+                left: n,
+                right: top.vertices.len(),
+            });
         }
 
         // Conditionally flip the bottom polygon if requested.
@@ -669,7 +673,13 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         angle_degs: Real,
         segments: usize,
     ) -> Result<Mesh<M>, ValidationError> {
-        if segments < 2 || !angle_degs.is_finite() {
+        if segments < 2 {
+            return Err(ValidationError::FieldLessThan {
+                name: "segments",
+                min: 2,
+            });
+        }
+        if !angle_degs.is_finite() {
             return Err(ValidationError::InvalidArguments);
         }
 
