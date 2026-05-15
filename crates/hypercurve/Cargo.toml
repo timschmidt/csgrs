@@ -4,3 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+hyperlattice = { path = "../hyperlattice", version = "0.4.0", default-features = false }
+hyperlimit = { path = "../hyperlimit", version = "0.2.0", default-features = false, features = ["std", "hyperlattice"], optional = true }
+hyperreal = { path = "../hyperreal", version = "0.11.1", optional = true }
+
+[features]
+default = ["approx", "hyperreal", "predicates"]
+approx = ["hyperlattice/approx-backend"]
+hyperreal = ["dep:hyperreal", "hyperlattice/hyperreal-backend"]
+predicates = ["dep:hyperlimit"]
+serde = []
