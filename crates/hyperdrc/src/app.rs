@@ -215,7 +215,9 @@ pub fn run(cli: Cli) -> Result<RunOutcome> {
         let (violations, waived) = status_activity("apply waivers", || {
             let (active_violations, waived) = waiver::apply_waivers(violations, &waivers);
             let mut violations = active_violations;
-            violations.extend(waiver::governance_violations(&waivers));
+            if waiver_governance_selected(&checks) {
+                violations.extend(waiver::governance_violations(&waivers));
+            }
             Ok((violations, waived))
         })?;
         let summary = status_activity("summarize findings", || {
@@ -989,6 +991,10 @@ fn run_checks(
                                 rules.acid_trap_angle,
                             ));
                         }
+                    }
+                }
+                Check::AcidTrapTraceJunction => {
+                    for board in boards {
                         violations.extend(checks::trace_junction_acid_trap_readiness(
                             board,
                             kicad_copper_layers,
@@ -1004,15 +1010,67 @@ fn run_checks(
                             &layer.sketch,
                             rules.max_layer_area,
                         ));
+                        violations.extend(checks::tiny_layer_feature_readiness(
+                            &layer_name(layer),
+                            &layer.sketch,
+                            rules.min_area,
+                        ));
+                        violations.extend(checks::skinny_layer_feature_readiness(
+                            &layer_name(layer),
+                            &layer.sketch,
+                            rules.min_width,
+                            rules.min_area,
+                        ));
+                        violations.extend(checks::duplicate_layer_island_readiness(
+                            &layer_name(layer),
+                            &layer.sketch,
+                            rules.min_area,
+                        ));
                     }
+                    let explicit_layers = layers
+                        .iter()
+                        .map(|layer| (layer_name(layer), layer.sketch.clone()))
+                        .collect::<Vec<_>>();
+                    violations.extend(checks::duplicate_layer_geometry_readiness(
+                        &explicit_layers,
+                        rules.min_area,
+                    ));
                     for board in boards {
                         for (layer_name, copper) in board.copper_layers(kicad_copper_layers) {
+                            let name = format!("{}:{layer_name}", board.source);
                             violations.extend(checks::layer_sanity(
-                                &format!("{}:{layer_name}", board.source),
+                                &name,
                                 &copper,
                                 rules.max_layer_area,
                             ));
+                            violations.extend(checks::tiny_layer_feature_readiness(
+                                &name,
+                                &copper,
+                                rules.min_area,
+                            ));
+                            violations.extend(checks::skinny_layer_feature_readiness(
+                                &name,
+                                &copper,
+                                rules.min_width,
+                                rules.min_area,
+                            ));
+                            violations.extend(checks::duplicate_layer_island_readiness(
+                                &name,
+                                &copper,
+                                rules.min_area,
+                            ));
                         }
+                        let kicad_layers = board
+                            .copper_layers(kicad_copper_layers)
+                            .into_iter()
+                            .map(|(layer_name, copper)| {
+                                (format!("{}:{layer_name}", board.source), copper)
+                            })
+                            .collect::<Vec<_>>();
+                        violations.extend(checks::duplicate_layer_geometry_readiness(
+                            &kicad_layers,
+                            rules.min_area,
+                        ));
                     }
                 }
                 Check::CopperBalance => {
@@ -1030,6 +1088,32 @@ fn run_checks(
                             rules.max_copper_imbalance_ratio,
                             rules.min_area,
                         ));
+                    }
+                    for board in boards {
+                        let kicad_copper = board
+                            .copper_layers(kicad_copper_layers)
+                            .into_iter()
+                            .map(|(layer_name, copper)| {
+                                (format!("{}:{layer_name}", board.source), copper)
+                            })
+                            .collect::<Vec<_>>();
+                        violations.extend(checks::copper_balance(
+                            &kicad_copper,
+                            rules.max_copper_imbalance_ratio,
+                            rules.min_area,
+                        ));
+                    }
+                }
+                Check::LocalCopperDensityReadiness => {
+                    if !cli.copper_layers.is_empty() {
+                        let gerber_copper = cli
+                            .copper_layers
+                            .iter()
+                            .map(|index| {
+                                let layer = &layers[*index];
+                                (layer_name(layer), layer.sketch.clone())
+                            })
+                            .collect::<Vec<_>>();
                         violations.extend(checks::local_copper_density_readiness(
                             &gerber_copper,
                             local_copper_density_window(rules.min_width),
@@ -1045,11 +1129,6 @@ fn run_checks(
                                 (format!("{}:{layer_name}", board.source), copper)
                             })
                             .collect::<Vec<_>>();
-                        violations.extend(checks::copper_balance(
-                            &kicad_copper,
-                            rules.max_copper_imbalance_ratio,
-                            rules.min_area,
-                        ));
                         violations.extend(checks::local_copper_density_readiness(
                             &kicad_copper,
                             local_copper_density_window(rules.min_width),
@@ -1175,7 +1254,7 @@ fn run_checks(
                         ));
                     }
                 }
-                Check::DrillCopperClearance => {
+                Check::DrillCopperClearance | Check::DrillToCopperClearance => {
                     for (item_index, board) in boards.iter().enumerate() {
                         progress_check_item(
                             check_name,
@@ -2148,7 +2227,7 @@ fn run_checks(
                         ));
                     }
                 }
-                Check::NetSpacing => {
+                Check::NetSpacing | Check::DifferentNetSpacing => {
                     for (item_index, board) in boards.iter().enumerate() {
                         progress_check_item(
                             check_name,
@@ -2165,7 +2244,7 @@ fn run_checks(
                         ));
                     }
                 }
-                Check::RegistrationTolerance => {
+                Check::RegistrationTolerance | Check::LayerRegistrationTolerance => {
                     for board in boards {
                         violations.extend(checks::registration_tolerance(
                             board,
@@ -2253,6 +2332,13 @@ fn run_checks(
                         kicad_copper_layers,
                     ));
                 }
+                Check::WaiverGovernance => {
+                    // Waiver metadata must be audited after normal findings are
+                    // waived, otherwise a waiver file could suppress warnings
+                    // about itself. The selectable check is recorded here for
+                    // progress output; findings are appended in `run`.
+                    log::trace!("waiver-governance readiness deferred until after waiver matching");
+                }
             }
             Ok(())
         })();
@@ -2313,8 +2399,10 @@ fn check_slug(check: Check) -> &'static str {
         Check::SilkscreenMinWidth => "silkscreen-min-width",
         Check::MinCopperNeck => "min-copper-neck",
         Check::AcidTrap => "acid-trap",
+        Check::AcidTrapTraceJunction => "acid-trap-trace-junction",
         Check::LayerSanity => "layer-sanity",
         Check::CopperBalance => "copper-balance",
+        Check::LocalCopperDensityReadiness => "local-copper-density-readiness",
         Check::MechanicalLayerGeometry => "mechanical-layer-geometry",
         Check::SolderMaskSliver => "solder-mask-sliver",
         Check::MinimumMaskOpening => "minimum-mask-opening",
@@ -2327,6 +2415,7 @@ fn check_slug(check: Check) -> &'static str {
         Check::CastellationHoleReadiness => "castellation-hole-readiness",
         Check::ViaInPadReadiness => "via-in-pad-readiness",
         Check::DrillCopperClearance => "drill-copper-clearance",
+        Check::DrillToCopperClearance => "drill-to-copper-clearance",
         Check::BoardOutlineDrillClearance => "board-outline-drill-clearance",
         Check::DrillSpacing => "drill-spacing",
         Check::DrillAspectRatio => "drill-aspect-ratio",
@@ -2424,7 +2513,9 @@ fn check_slug(check: Check) -> &'static str {
         Check::EdgePlatingIntentReadiness => "edge-plating-intent-readiness",
         Check::CastellationPitchReadiness => "castellation-pitch-readiness",
         Check::NetSpacing => "net-spacing",
+        Check::DifferentNetSpacing => "different-net-spacing",
         Check::RegistrationTolerance => "registration-tolerance",
+        Check::LayerRegistrationTolerance => "layer-registration-tolerance",
         Check::PanelizationClearance => "panelization-clearance",
         Check::Ipc356Coverage => "ipc356-coverage",
         Check::Ipc356DrillDiameter => "ipc356-drill-diameter",
@@ -2433,7 +2524,12 @@ fn check_slug(check: Check) -> &'static str {
         Check::ProductionArtifactReadiness => "production-artifact-readiness",
         Check::StackupReadiness => "stackup-readiness",
         Check::NetConstraintReadiness => "net-constraint-readiness",
+        Check::WaiverGovernance => "waiver-governance",
     }
+}
+
+fn waiver_governance_selected(checks: &[Check]) -> bool {
+    checks.contains(&Check::WaiverGovernance)
 }
 
 fn package_inputs(cli: &Cli, discovered: io::PackageSidecars) -> PackageInputs {
@@ -3225,7 +3321,7 @@ mod tests {
 
     use clap::Parser;
 
-    use crate::cli::Cli;
+    use crate::cli::{Check, Cli};
     use crate::config::{self, RuleOverrides};
     use crate::geometry::empty_sketch;
     use crate::io::{
@@ -3238,7 +3334,7 @@ mod tests {
         Layer, explicit_layer_pairs, input_manifest, layer_pairs, load_all_layers, load_boards,
         load_excellon_drills, load_ipc356_points, load_layers, load_text_artifacts, manifest_input,
         package_inputs, parser_diagnostics, run, validate_board_outline_role, validate_layer_index,
-        validate_layer_indexes, validate_silk_layer_roles,
+        validate_layer_indexes, validate_silk_layer_roles, waiver_governance_selected,
     };
 
     const VALID_GERBER: &str =
@@ -3255,6 +3351,16 @@ mod tests {
             ),
             sketch: empty_sketch(None),
         }
+    }
+
+    #[test]
+    fn waiver_governance_selection_tracks_explicit_check() {
+        assert!(waiver_governance_selected(&[Check::WaiverGovernance]));
+        assert!(waiver_governance_selected(&[
+            Check::CopperBalance,
+            Check::WaiverGovernance
+        ]));
+        assert!(!waiver_governance_selected(&[Check::CopperBalance]));
     }
 
     fn make_board_model(

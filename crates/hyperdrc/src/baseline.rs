@@ -13,6 +13,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::report::{Report, Severity, Violation};
 
+const GEOMETRY_HASH_OFFSET: u64 = 0xcbf29ce484222325;
+const GEOMETRY_HASH_PRIME: u64 = 0x00000100000001b3;
+const GEOMETRY_HASH_SCALE: f64 = 1_000_000.0;
+
 /// File containing generated waiver templates.
 #[derive(Debug, Deserialize, Serialize)]
 /// Public data model for `WaiverStubFile`.
@@ -220,14 +224,103 @@ fn finding_key(finding: &BaselineFinding) -> String {
 }
 
 fn geometry_hash(violation: &Violation) -> String {
-    format!("hyperdrc-stable-id:{}", violation.id)
+    let mut hash = GeometryHasher::new();
+    hash.write_str(&violation.check);
+    hash.write_usize(violation.layers.len());
+    for layer in &violation.layers {
+        hash.write_str(layer);
+    }
+    match violation.island_index {
+        Some(island_index) => {
+            hash.write_u8(1);
+            hash.write_usize(island_index);
+        }
+        None => hash.write_u8(0),
+    }
+    hash.write_usize(violation.polygons.len());
+    for polygon in &violation.polygons {
+        hash.write_i64(quantize_geometry_value(polygon.area));
+        hash.write_usize(polygon.exterior.len());
+        for point in &polygon.exterior {
+            hash.write_point(*point);
+        }
+        hash.write_usize(polygon.holes.len());
+        for hole in &polygon.holes {
+            hash.write_usize(hole.len());
+            for point in hole {
+                hash.write_point(*point);
+            }
+        }
+    }
+    hash.write_usize(violation.locations.len());
+    for location in &violation.locations {
+        hash.write_point(*location);
+    }
+
+    // IEEE 828-2012 treats baseline identity and status accounting as part of
+    // configuration management. Use an explicit FNV-1a byte stream rather than
+    // Rust's DefaultHasher so generated waiver fingerprints remain stable
+    // across toolchain releases and can be reviewed as production artifacts.
+    format!("hyperdrc-geometry-v1:{:016x}", hash.finish())
+}
+
+struct GeometryHasher {
+    state: u64,
+}
+
+impl GeometryHasher {
+    fn new() -> Self {
+        Self {
+            state: GEOMETRY_HASH_OFFSET,
+        }
+    }
+
+    fn finish(self) -> u64 {
+        self.state
+    }
+
+    fn write_u8(&mut self, value: u8) {
+        self.write_bytes(&[value]);
+    }
+
+    fn write_usize(&mut self, value: usize) {
+        self.write_bytes(&(value as u64).to_le_bytes());
+    }
+
+    fn write_i64(&mut self, value: i64) {
+        self.write_bytes(&value.to_le_bytes());
+    }
+
+    fn write_point(&mut self, point: [f64; 2]) {
+        self.write_i64(quantize_geometry_value(point[0]));
+        self.write_i64(quantize_geometry_value(point[1]));
+    }
+
+    fn write_str(&mut self, value: &str) {
+        self.write_usize(value.len());
+        self.write_bytes(value.as_bytes());
+    }
+
+    fn write_bytes(&mut self, bytes: &[u8]) {
+        for byte in bytes {
+            self.state ^= u64::from(*byte);
+            self.state = self.state.wrapping_mul(GEOMETRY_HASH_PRIME);
+        }
+    }
+}
+
+fn quantize_geometry_value(value: f64) -> i64 {
+    if !value.is_finite() {
+        return 0;
+    }
+    (value * GEOMETRY_HASH_SCALE).round() as i64
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::report::{Report, Severity, Violation, report_summary};
+    use crate::report::{Report, Severity, Violation, ViolationPolygon, report_summary};
 
-    use super::{compare_baselines, report_to_baseline, report_to_waiver_stubs};
+    use super::{compare_baselines, geometry_hash, report_to_baseline, report_to_waiver_stubs};
 
     #[test]
     fn waiver_stubs_preserve_scope_and_governance_placeholders() {
@@ -241,9 +334,19 @@ mod tests {
         assert!(
             stubs.waivers[0]
                 .geometry_hash
-                .starts_with("hyperdrc-stable-id:")
+                .starts_with("hyperdrc-geometry-v1:")
         );
         assert!(stubs.waivers[0].reason.contains("TODO"));
+    }
+
+    #[test]
+    fn geometry_hash_ignores_message_but_tracks_geometry() {
+        let base = polygon_violation("first diagnostic", [[0.0, 0.0], [1.0, 0.0]]);
+        let same_geometry = polygon_violation("reworded diagnostic", [[0.0, 0.0], [1.0, 0.0]]);
+        let moved_geometry = polygon_violation("first diagnostic", [[0.0, 0.0], [2.0, 0.0]]);
+
+        assert_eq!(geometry_hash(&base), geometry_hash(&same_geometry));
+        assert_ne!(geometry_hash(&base), geometry_hash(&moved_geometry));
     }
 
     #[test]
@@ -310,11 +413,33 @@ mod tests {
             check: check.to_string(),
             severity: Severity::Warning,
             layers: vec!["F.Cu".to_string()],
-            geometry_hash: format!("hyperdrc-stable-id:{id}"),
+            geometry_hash: format!("hyperdrc-geometry-v1:{id}"),
             message: Some("sample".to_string()),
             polygon_count: 0,
             point_count: 1,
             total_area: 0.0,
         }
+    }
+
+    fn polygon_violation(message: &str, exterior_prefix: [[f64; 2]; 2]) -> Violation {
+        Violation::new(
+            "copper-overlap",
+            Severity::Warning,
+            vec!["F.Cu".to_string()],
+            Some(0),
+            vec![ViolationPolygon {
+                area: 1.0,
+                exterior: vec![
+                    exterior_prefix[0],
+                    exterior_prefix[1],
+                    [1.0, 1.0],
+                    [0.0, 1.0],
+                    exterior_prefix[0],
+                ],
+                holes: Vec::new(),
+            }],
+            vec![[0.5, 0.5]],
+            Some(message.to_string()),
+        )
     }
 }

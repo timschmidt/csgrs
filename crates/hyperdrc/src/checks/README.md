@@ -138,6 +138,21 @@ flowchart TB
 - `board-outline-duplicate-readiness`
 - `board-outline-nesting-readiness`
 
+`copper-balance` and `local-copper-density-readiness` are separate CLI checks:
+the former compares whole-layer copper area, while the latter scans matching
+windows for local plating/etch-density imbalance.
+`acid-trap` and `acid-trap-trace-junction` are also separate CLI checks:
+polygon-vertex traps operate on flattened copper, while trace-junction traps use
+KiCad segment identity before the board copper is flattened into layer shapes.
+`layer-sanity` includes both per-layer validation and set-level sanity passes:
+tiny polygon islands at or below the configured reportable-area threshold are
+reported as aperture-flash or fractured-sliver review items, long skinny
+islands below the feature-width threshold are reported as hairline-fragment
+review items, duplicate islands within one layer are reported as repeated-flash
+or repeated-contour review items, and duplicate geometry across layers is
+reported so stale or double-exported fabrication layers appear during the same
+package sanity sweep.
+
 These checks mostly work by combining `csgrs` boolean operations with small
 role-specific heuristics. Morphological checks use an erode-and-grow pattern to
 detect thin copper, mask, and silkscreen features. Paste checks also compare
@@ -229,6 +244,11 @@ panel features:
 - `rf-keepout-readiness`
 - `antenna-copper-keepout-readiness`
 - `rf-via-fence-readiness`
+
+RF keepout, antenna copper-free-region, and via-fence checks use the shared
+layer-aware copper spatial index as a broad phase before exact geometry or
+center-distance review, keeping sparse RF layouts bounded during full suite
+runs.
 - `chassis-stitching-readiness`
 - `gold-finger-readiness`
 - `gold-finger-edge-readiness`
@@ -243,10 +263,18 @@ panel features:
 - `decoupling-proximity-readiness`
 - `switch-node-keepout-readiness`
 - `inductor-copper-keepout-readiness`
+
+Switch-node and inductor keepout checks use the shared layer-aware copper
+spatial index before exact CSG intersection, avoiding all-copper scans on sparse
+power-converter layouts.
 - `thermal-pad-via-readiness`
 - `thermal-copper-area-readiness`
 - `hot-component-spacing-readiness`
 - `thermal-mechanical-keepout-readiness`
+
+Thermal copper-area support, hot-component spacing, and mechanical thermal
+keepout checks use the shared copper spatial index before exact center-distance
+or CSG intersection review, keeping sparse heat-spreading layouts bounded.
 - `different-net-spacing`
 - `layer-registration-tolerance`
 - `panelization-clearance`
@@ -258,8 +286,8 @@ panel features:
 Board checks use the parsed KiCad model and sidecars. They can reason about
 same-net versus different-net copper, nearby IPC-D-356 test records,
 gold-finger edge, spacing, and drill keepout risk, connector return-path
-signals, power decoupling proximity, switching-node and inductor copper keepout
-risk, differential-pair return/guard proximity, RF keepout,
+signals, bucketed component-hole/component/connector/fiducial/process/probe/pad-pair spacing review, power
+decoupling proximity, switching-node and inductor copper keepout risk, differential-pair return/guard proximity, RF keepout,
 antenna copper-free-region, and via-fence proximity, thermal via count and
 distribution, thermal copper-area support, hot-component spacing,
 thermal/mechanical hole keepouts, likely thermal-pad via coverage, and panel
@@ -281,7 +309,9 @@ These checks use net-name intent plus same-layer copper proximity to make
 analog/RF/sensor segregation visible before release. They report sensitive nets
 near noisy nets, sensitive nets missing nearby ground guard/return copper, and
 quiet analog/RF/sensor copper near digital/control copper without a local
-ground guard.
+ground guard. Noisy, digital, and ground candidates use the shared layer-aware
+copper spatial index before exact geometry or guard-distance review, keeping
+sparse mixed-signal layouts bounded in full check runs.
 
 ## Safety Checks
 
@@ -301,7 +331,10 @@ edge creepage, high-voltage spacing, missing edge-interface ESD protection, and
 protective-earth/chassis spacing, and TVS clamp return-path inductance review
 items. Surge keepout checks report ordinary copper crowding likely MOV, GDT,
 spark-gap, TVS, or fuse copper while allowing intended high-voltage,
-protective-earth, ground, and same-net adjacency.
+protective-earth, ground, and same-net adjacency. Voltage, protective-earth,
+surge, ESD-protection, and ESD-return proximity checks use the shared
+layer-aware copper spatial index before exact geometry or center-distance
+review so sparse safety layouts remain bounded.
 
 ## Mechanical Checks
 
@@ -555,6 +588,15 @@ reports and reports parser-level and data-integrity issues before geometry check
 consume drill hits.
 
 - `excellon-readiness`
+
+## Waiver Governance
+
+[`../waiver.rs`](../waiver.rs) owns `waiver-governance`. It is selected by
+default and can be requested explicitly from the CLI. Governance findings are
+created after normal findings are matched against waiver files, so waiver
+metadata warnings cannot be suppressed by the same waiver policy under review.
+The check requires every durable production waiver to carry a scope plus
+`reason`, `owner`, `review_date`, `source`, and `geometry_hash` metadata.
 
 ## Adding A Check
 

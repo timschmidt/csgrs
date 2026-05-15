@@ -69,10 +69,14 @@ pub enum Check {
     MinCopperNeck,
     /// Variant `AcidTrap`.
     AcidTrap,
+    /// Variant `AcidTrapTraceJunction`.
+    AcidTrapTraceJunction,
     /// Variant `LayerSanity`.
     LayerSanity,
     /// Variant `CopperBalance`.
     CopperBalance,
+    /// Variant `LocalCopperDensityReadiness`.
+    LocalCopperDensityReadiness,
     /// Variant `MechanicalLayerGeometry`.
     MechanicalLayerGeometry,
     /// Variant `SolderMaskSliver`.
@@ -97,6 +101,8 @@ pub enum Check {
     ViaInPadReadiness,
     /// Variant `DrillCopperClearance`.
     DrillCopperClearance,
+    /// Variant `DrillToCopperClearance`.
+    DrillToCopperClearance,
     /// Variant `BoardOutlineDrillClearance`.
     BoardOutlineDrillClearance,
     /// Variant `DrillSpacing`.
@@ -287,8 +293,12 @@ pub enum Check {
     CastellationPitchReadiness,
     /// Variant `NetSpacing`.
     NetSpacing,
+    /// Variant `DifferentNetSpacing`.
+    DifferentNetSpacing,
     /// Variant `RegistrationTolerance`.
     RegistrationTolerance,
+    /// Variant `LayerRegistrationTolerance`.
+    LayerRegistrationTolerance,
     /// Variant `PanelizationClearance`.
     PanelizationClearance,
     /// Variant `Ipc356Coverage`.
@@ -305,6 +315,8 @@ pub enum Check {
     StackupReadiness,
     /// Variant `NetConstraintReadiness`.
     NetConstraintReadiness,
+    /// Variant `WaiverGovernance`.
+    WaiverGovernance,
 }
 
 pub const DEFAULT_CHECKS: &[Check] = &[
@@ -340,8 +352,10 @@ pub const DEFAULT_CHECKS: &[Check] = &[
     Check::SilkscreenMinWidth,
     Check::MinCopperNeck,
     Check::AcidTrap,
+    Check::AcidTrapTraceJunction,
     Check::LayerSanity,
     Check::CopperBalance,
+    Check::LocalCopperDensityReadiness,
     Check::MechanicalLayerGeometry,
     Check::SolderMaskSliver,
     Check::MinimumMaskOpening,
@@ -353,7 +367,7 @@ pub const DEFAULT_CHECKS: &[Check] = &[
     Check::CastellationIntent,
     Check::CastellationHoleReadiness,
     Check::ViaInPadReadiness,
-    Check::DrillCopperClearance,
+    Check::DrillToCopperClearance,
     Check::BoardOutlineDrillClearance,
     Check::DrillSpacing,
     Check::DrillAspectRatio,
@@ -448,8 +462,8 @@ pub const DEFAULT_CHECKS: &[Check] = &[
     Check::PanelFeatureOutlineReadiness,
     Check::EdgePlatingIntentReadiness,
     Check::CastellationPitchReadiness,
-    Check::NetSpacing,
-    Check::RegistrationTolerance,
+    Check::DifferentNetSpacing,
+    Check::LayerRegistrationTolerance,
     Check::PanelizationClearance,
     Check::Ipc356Coverage,
     Check::Ipc356DrillDiameter,
@@ -458,6 +472,7 @@ pub const DEFAULT_CHECKS: &[Check] = &[
     Check::ProductionArtifactReadiness,
     Check::StackupReadiness,
     Check::NetConstraintReadiness,
+    Check::WaiverGovernance,
 ];
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, ValueEnum)]
@@ -859,6 +874,8 @@ mod tests {
             "--check",
             "acid-trap",
             "--check",
+            "acid-trap-trace-junction",
+            "--check",
             "drill-spacing",
             "--check",
             "board-outline-drill-clearance",
@@ -876,6 +893,8 @@ mod tests {
             "castellation-hole-readiness",
             "--check",
             "via-in-pad-readiness",
+            "--check",
+            "drill-to-copper-clearance",
             "--check",
             "drill-table-consistency",
             "--check",
@@ -1059,6 +1078,10 @@ mod tests {
             "--check",
             "castellation-pitch-readiness",
             "--check",
+            "different-net-spacing",
+            "--check",
+            "layer-registration-tolerance",
+            "--check",
             "solder-mask-opening-coverage",
             "--check",
             "solder-mask-expansion",
@@ -1072,6 +1095,8 @@ mod tests {
             "solder-mask-board-edge-clearance",
             "--check",
             "copper-balance",
+            "--check",
+            "local-copper-density-readiness",
             "--check",
             "paste-aperture-coverage",
             "--check",
@@ -1124,6 +1149,8 @@ mod tests {
             "board-outline-cutout-clearance",
             "--check",
             "board-outline-fragments",
+            "--check",
+            "waiver-governance",
             "--silk-layer",
             "1",
             "top.gbr",
@@ -1135,6 +1162,7 @@ mod tests {
             vec![
                 Check::CopperOverlap,
                 Check::AcidTrap,
+                Check::AcidTrapTraceJunction,
                 Check::DrillSpacing,
                 Check::BoardOutlineDrillClearance,
                 Check::DrillAspectRatio,
@@ -1144,6 +1172,7 @@ mod tests {
                 Check::CastellationIntent,
                 Check::CastellationHoleReadiness,
                 Check::ViaInPadReadiness,
+                Check::DrillToCopperClearance,
                 Check::DrillTableConsistency,
                 Check::CopperWidthReadiness,
                 Check::CopperNetIntent,
@@ -1235,6 +1264,8 @@ mod tests {
                 Check::PanelFeatureOutlineReadiness,
                 Check::EdgePlatingIntentReadiness,
                 Check::CastellationPitchReadiness,
+                Check::DifferentNetSpacing,
+                Check::LayerRegistrationTolerance,
                 Check::SolderMaskOpeningCoverage,
                 Check::SolderMaskExpansion,
                 Check::SolderMaskOverlapClearance,
@@ -1242,6 +1273,7 @@ mod tests {
                 Check::SilkscreenBoardEdgeClearance,
                 Check::SolderMaskBoardEdgeClearance,
                 Check::CopperBalance,
+                Check::LocalCopperDensityReadiness,
                 Check::PasteApertureCoverage,
                 Check::PasteApertureRatio,
                 Check::ThermalPadPasteWindowpaneReadiness,
@@ -1266,7 +1298,8 @@ mod tests {
                 Check::BoardOutlineDuplicateReadiness,
                 Check::BoardOutlineNestingReadiness,
                 Check::BoardOutlineCutoutClearance,
-                Check::BoardOutlineFragments
+                Check::BoardOutlineFragments,
+                Check::WaiverGovernance
             ]
         );
         assert_eq!(cli.silk_layers, vec![1]);
@@ -1388,5 +1421,28 @@ mod tests {
         let result = Cli::try_parse_from(["hyperdrc", "--check", "not-a-check", "top.gbr"]);
 
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn parses_legacy_check_names_for_plan_named_checks() {
+        let cli = Cli::parse_from([
+            "hyperdrc",
+            "--check",
+            "drill-copper-clearance",
+            "--check",
+            "net-spacing",
+            "--check",
+            "registration-tolerance",
+            "top.gbr",
+        ]);
+
+        assert_eq!(
+            cli.checks,
+            vec![
+                Check::DrillCopperClearance,
+                Check::NetSpacing,
+                Check::RegistrationTolerance
+            ]
+        );
     }
 }

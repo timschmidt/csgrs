@@ -12,6 +12,7 @@ use csgrs::csg::CSG;
 use geo::BoundingRect;
 
 use crate::checks::distance::polygon_boundary_distance;
+use crate::checks::spatial::CopperSpatialIndex;
 use crate::geometry::multipolygon_to_shapes;
 use crate::kicad::{BoardModel, CopperFeature};
 use crate::report::{Severity, Violation};
@@ -24,22 +25,27 @@ pub fn switch_node_keepout_readiness(
     min_area: f64,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
+    let feature_index = CopperSpatialIndex::new(&features, keepout);
     let switching = features
         .iter()
         .copied()
         .filter(|feature| feature.net.as_deref().is_some_and(looks_switching_net))
         .collect::<Vec<_>>();
     log::trace!(
-        "switch-node keepout readiness: source={} switching={} features={} keepout={keepout:.6}",
+        "switch-node keepout readiness: source={} switching={} features={} buckets={} keepout={keepout:.6}",
         board.source,
         switching.len(),
-        features.len()
+        features.len(),
+        feature_index.bucket_count()
     );
     let mut violations = Vec::new();
+    let mut candidate_count = 0_usize;
 
     for switch_feature in switching {
-        for neighbor in &features {
-            if switch_feature.layer != neighbor.layer || std::ptr::eq(switch_feature, *neighbor) {
+        for neighbor_index in feature_index.same_layer_near_feature(switch_feature, keepout) {
+            candidate_count += 1;
+            let neighbor = features[neighbor_index];
+            if std::ptr::eq(switch_feature, neighbor) {
                 continue;
             }
             if switch_feature.net == neighbor.net {
@@ -81,6 +87,13 @@ pub fn switch_node_keepout_readiness(
         }
     }
 
+    log::trace!(
+        "switch-node keepout readiness: source={} candidate_pairs={} violations={}",
+        board.source,
+        candidate_count,
+        violations.len()
+    );
+
     violations
 }
 
@@ -108,6 +121,7 @@ pub fn inductor_copper_keepout_readiness(
     }
 
     let features = selected_copper_features(board, selected_layers);
+    let feature_index = CopperSpatialIndex::new(&features, keepout);
     let inductors = features
         .iter()
         .copied()
@@ -119,16 +133,20 @@ pub fn inductor_copper_keepout_readiness(
         })
         .collect::<Vec<_>>();
     log::trace!(
-        "inductor copper keepout readiness: source={} inductors={} features={} keepout={keepout:.6}",
+        "inductor copper keepout readiness: source={} inductors={} features={} buckets={} keepout={keepout:.6}",
         board.source,
         inductors.len(),
-        features.len()
+        features.len(),
+        feature_index.bucket_count()
     );
     let mut violations = Vec::new();
+    let mut candidate_count = 0_usize;
 
     for inductor in inductors {
-        for neighbor in &features {
-            if inductor.layer != neighbor.layer || std::ptr::eq(inductor, *neighbor) {
+        for neighbor_index in feature_index.same_layer_near_feature(inductor, keepout) {
+            candidate_count += 1;
+            let neighbor = features[neighbor_index];
+            if std::ptr::eq(inductor, neighbor) {
                 continue;
             }
             if inductor.net == neighbor.net {
@@ -166,6 +184,13 @@ pub fn inductor_copper_keepout_readiness(
             ));
         }
     }
+
+    log::trace!(
+        "inductor copper keepout readiness: source={} candidate_pairs={} violations={}",
+        board.source,
+        candidate_count,
+        violations.len()
+    );
 
     violations
 }
@@ -269,6 +294,46 @@ mod tests {
     }
 
     #[test]
+    fn switch_node_keepout_readiness_culls_sparse_neighbor_fields() {
+        let mut copper = sparse_signal_rects("GPIO", 2_000, 100.0);
+        copper.push(copper_rect(
+            "BUCK_SW",
+            CopperKind::Segment,
+            "F.Cu",
+            0.0,
+            0.0,
+            1.0,
+            0.5,
+        ));
+        copper.push(copper_rect(
+            "ADC_NEAR",
+            CopperKind::Segment,
+            "F.Cu",
+            1.2,
+            0.0,
+            2.0,
+            0.5,
+        ));
+        copper.push(copper_rect(
+            "ADC_OTHER_LAYER",
+            CopperKind::Segment,
+            "B.Cu",
+            1.2,
+            0.0,
+            2.0,
+            0.5,
+        ));
+        let board = board_with_copper(copper);
+
+        let violations = switch_node_keepout_readiness(&board, &[], 0.3, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(violations[0].message.as_ref().is_some_and(|message| {
+            message.contains("ADC_NEAR") && !message.contains("ADC_OTHER_LAYER")
+        }));
+    }
+
+    #[test]
     fn inductor_copper_keepout_readiness_reports_ground_under_inductor_region() {
         let board = board_with_copper(vec![
             copper_rect("BUCK_LX", CopperKind::Pad, "F.Cu", 0.0, 0.0, 1.0, 0.8),
@@ -300,6 +365,35 @@ mod tests {
             inductor_copper_keepout_readiness(&board, &["F.Cu".to_string()], 0.30, 1.0e-9)
                 .is_empty()
         );
+    }
+
+    #[test]
+    fn inductor_copper_keepout_readiness_culls_sparse_copper_fields() {
+        let mut copper = sparse_signal_rects("SIG", 2_000, 100.0);
+        copper.push(copper_rect(
+            "COIL_SW",
+            CopperKind::Pad,
+            "F.Cu",
+            0.0,
+            0.0,
+            1.0,
+            0.8,
+        ));
+        copper.push(copper_rect(
+            "PGND",
+            CopperKind::Zone,
+            "F.Cu",
+            1.2,
+            0.0,
+            2.0,
+            0.8,
+        ));
+        let board = board_with_copper(copper);
+
+        let violations = inductor_copper_keepout_readiness(&board, &[], 0.30, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "inductor-copper-keepout-readiness");
     }
 
     fn board_with_copper(copper: Vec<CopperFeature>) -> BoardModel {
@@ -337,5 +431,23 @@ mod tests {
                 }),
             ),
         }
+    }
+
+    fn sparse_signal_rects(prefix: &str, count: usize, offset_x: f64) -> Vec<CopperFeature> {
+        (0..count)
+            .map(|index| {
+                let x = offset_x + (index % 100) as f64 * 3.0;
+                let y = (index / 100) as f64 * 3.0;
+                copper_rect(
+                    &format!("{prefix}{index}"),
+                    CopperKind::Segment,
+                    "F.Cu",
+                    x,
+                    y,
+                    x + 0.8,
+                    y + 0.4,
+                )
+            })
+            .collect()
     }
 }

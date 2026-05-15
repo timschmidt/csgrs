@@ -14,6 +14,7 @@ use csgrs::csg::CSG;
 use geo::BoundingRect;
 
 use crate::checks::distance::polygon_boundary_distance;
+use crate::checks::spatial::CopperSpatialIndex;
 use crate::geometry::multipolygon_to_shapes;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
@@ -27,10 +28,12 @@ pub fn rf_keepout_readiness(
     min_area: f64,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
+    let feature_index = CopperSpatialIndex::new(&features, clearance);
     log::trace!(
-        "RF keepout readiness: source={} features={} clearance={clearance:.6}",
+        "RF keepout readiness: source={} features={} rf_buckets={} clearance={clearance:.6}",
         board.source,
-        features.len()
+        features.len(),
+        feature_index.bucket_count()
     );
     let rf_indices = features
         .iter()
@@ -44,14 +47,17 @@ pub fn rf_keepout_readiness(
         })
         .collect::<Vec<_>>();
     let mut violations = Vec::new();
+    let mut candidate_count = 0_usize;
 
     for &rf_index in &rf_indices {
         let rf = features[rf_index];
-        for (neighbor_index, neighbor) in features.iter().enumerate() {
+        for neighbor_index in feature_index.same_layer_near_feature(rf, clearance) {
+            candidate_count += 1;
+            let neighbor = features[neighbor_index];
             if rf_index == neighbor_index {
                 continue;
             }
-            if rf.layer != neighbor.layer || rf.net.is_none() || rf.net == neighbor.net {
+            if rf.net.is_none() || rf.net == neighbor.net {
                 continue;
             }
             if neighbor.net.as_deref().is_some_and(looks_ground_net) {
@@ -97,6 +103,14 @@ pub fn rf_keepout_readiness(
         }
     }
 
+    log::trace!(
+        "RF keepout readiness: source={} rf_features={} candidate_pairs={} violations={}",
+        board.source,
+        rf_indices.len(),
+        candidate_count,
+        violations.len()
+    );
+
     violations
 }
 
@@ -123,23 +137,30 @@ pub fn antenna_copper_keepout_readiness(
     }
 
     let features = selected_copper_features(board, selected_layers);
+    let feature_index = CopperSpatialIndex::new(&features, keepout);
     log::trace!(
-        "antenna copper keepout readiness: source={} features={} keepout={keepout:.6}",
+        "antenna copper keepout readiness: source={} features={} buckets={} keepout={keepout:.6}",
         board.source,
-        features.len()
+        features.len(),
+        feature_index.bucket_count()
     );
     let mut violations = Vec::new();
+    let mut antenna_count = 0_usize;
+    let mut candidate_count = 0_usize;
 
-    for antenna in features
-        .iter()
-        .copied()
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_antenna_net))
-    {
-        for neighbor in features.iter().copied() {
-            if std::ptr::eq(antenna, neighbor)
-                || antenna.layer != neighbor.layer
-                || antenna.net == neighbor.net
-            {
+    for antenna_index in features.iter().enumerate().filter_map(|(index, feature)| {
+        feature
+            .net
+            .as_deref()
+            .is_some_and(looks_antenna_net)
+            .then_some(index)
+    }) {
+        antenna_count += 1;
+        let antenna = features[antenna_index];
+        for neighbor_index in feature_index.same_layer_near_feature(antenna, keepout) {
+            candidate_count += 1;
+            let neighbor = features[neighbor_index];
+            if antenna_index == neighbor_index || antenna.net == neighbor.net {
                 continue;
             }
             if !sketches_within_clearance(&antenna.sketch, &neighbor.sketch, keepout) {
@@ -180,6 +201,14 @@ pub fn antenna_copper_keepout_readiness(
         }
     }
 
+    log::trace!(
+        "antenna copper keepout readiness: source={} antenna_features={} candidate_pairs={} violations={}",
+        board.source,
+        antenna_count,
+        candidate_count,
+        violations.len()
+    );
+
     violations
 }
 
@@ -197,18 +226,23 @@ pub fn rf_via_fence_readiness(
     fence_distance: f64,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
-    log::trace!(
-        "RF via-fence readiness: source={} features={} fence_distance={fence_distance:.6}",
-        board.source,
-        features.len()
-    );
     let ground_vias = features
         .iter()
         .copied()
         .filter(|feature| feature.kind == CopperKind::Via)
         .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
         .collect::<Vec<_>>();
+    let ground_index = CopperSpatialIndex::new(&ground_vias, fence_distance);
+    log::trace!(
+        "RF via-fence readiness: source={} features={} ground_vias={} buckets={} fence_distance={fence_distance:.6}",
+        board.source,
+        features.len(),
+        ground_vias.len(),
+        ground_index.bucket_count()
+    );
     let mut violations = Vec::new();
+    let mut rf_feature_count = 0_usize;
+    let mut candidate_count = 0_usize;
 
     for feature in features {
         let Some(net) = &feature.net else {
@@ -217,11 +251,15 @@ pub fn rf_via_fence_readiness(
         if !looks_rf_or_antenna_net(net) || feature.kind == CopperKind::Via {
             continue;
         }
+        rf_feature_count += 1;
 
-        let has_fence = ground_vias.iter().any(|ground| {
-            ground.layer == feature.layer
-                && distance(feature.location, ground.location) <= fence_distance
-        });
+        let candidates = ground_index.same_layer_centers_within(
+            feature.location,
+            &feature.layer,
+            fence_distance,
+        );
+        candidate_count += candidates.len();
+        let has_fence = !candidates.is_empty();
         if has_fence {
             continue;
         }
@@ -238,6 +276,14 @@ pub fn rf_via_fence_readiness(
             )),
         ));
     }
+
+    log::trace!(
+        "RF via-fence readiness: source={} rf_features={} candidate_ground_vias={} violations={}",
+        board.source,
+        rf_feature_count,
+        candidate_count,
+        violations.len()
+    );
 
     violations
 }
@@ -296,12 +342,6 @@ fn looks_ground_net(net: &str) -> bool {
         || normalized.ends_with("-GND")
 }
 
-fn distance(left: [f64; 2], right: [f64; 2]) -> f64 {
-    let dx = left[0] - right[0];
-    let dy = left[1] - right[1];
-    (dx * dx + dy * dy).sqrt()
-}
-
 #[cfg(test)]
 mod tests {
     use crate::LayerMetadata;
@@ -335,6 +375,57 @@ mod tests {
     }
 
     #[test]
+    fn rf_keepout_readiness_culls_sparse_neighbor_fields() {
+        let mut copper = (0..2_000)
+            .map(|index| {
+                copper_line(
+                    &format!("GPIO{index}"),
+                    CopperKind::Segment,
+                    [
+                        100.0 + (index % 100) as f64 * 3.0,
+                        (index / 100) as f64 * 3.0,
+                    ],
+                    [
+                        101.0 + (index % 100) as f64 * 3.0,
+                        (index / 100) as f64 * 3.0,
+                    ],
+                    0.10,
+                )
+            })
+            .collect::<Vec<_>>();
+        copper.push(copper_line(
+            "RF_ANT",
+            CopperKind::Segment,
+            [0.0, 0.0],
+            [1.0, 0.0],
+            0.10,
+        ));
+        copper.push(copper_line(
+            "GPIO_NEAR",
+            CopperKind::Segment,
+            [0.0, 0.45],
+            [1.0, 0.45],
+            0.10,
+        ));
+        copper.push(copper_line_on_layer(
+            "GPIO_OTHER_LAYER",
+            CopperKind::Segment,
+            "B.Cu",
+            [0.0, 0.45],
+            [1.0, 0.45],
+            0.10,
+        ));
+        let board = board_with_copper(copper);
+
+        let violations = rf_keepout_readiness(&board, 0.60, &[], 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(violations[0].message.as_ref().is_some_and(|message| {
+            message.contains("GPIO_NEAR") && !message.contains("GPIO_OTHER_LAYER")
+        }));
+    }
+
+    #[test]
     fn antenna_copper_keepout_readiness_reports_ground_copper() {
         let board = board_with_copper(vec![
             copper_line(
@@ -346,6 +437,47 @@ mod tests {
             ),
             copper_line("GND", CopperKind::Segment, [0.0, 0.35], [1.0, 0.35], 0.10),
         ]);
+
+        let violations = antenna_copper_keepout_readiness(&board, &[], 0.50, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "antenna-copper-keepout-readiness");
+    }
+
+    #[test]
+    fn antenna_copper_keepout_readiness_culls_sparse_ground_fields() {
+        let mut copper = (0..2_000)
+            .map(|index| {
+                copper_line(
+                    &format!("SIG{index}"),
+                    CopperKind::Segment,
+                    [
+                        100.0 + (index % 100) as f64 * 3.0,
+                        (index / 100) as f64 * 3.0,
+                    ],
+                    [
+                        101.0 + (index % 100) as f64 * 3.0,
+                        (index / 100) as f64 * 3.0,
+                    ],
+                    0.10,
+                )
+            })
+            .collect::<Vec<_>>();
+        copper.push(copper_line(
+            "WIFI_ANT",
+            CopperKind::Segment,
+            [0.0, 0.0],
+            [1.0, 0.0],
+            0.10,
+        ));
+        copper.push(copper_line(
+            "GND",
+            CopperKind::Segment,
+            [0.0, 0.35],
+            [1.0, 0.35],
+            0.10,
+        ));
+        let board = board_with_copper(copper);
 
         let violations = antenna_copper_keepout_readiness(&board, &[], 0.50, 1.0e-9);
 
@@ -417,6 +549,34 @@ mod tests {
             copper_disc("GND", CopperKind::Via, [0.2, 0.2], 0.12),
             copper_line("GPIO1", CopperKind::Segment, [3.0, 0.0], [4.0, 0.0], 0.10),
         ]);
+
+        assert!(rf_via_fence_readiness(&board, &[], 0.60).is_empty());
+    }
+
+    #[test]
+    fn rf_via_fence_readiness_culls_sparse_ground_vias() {
+        let mut copper = (0..2_000)
+            .map(|index| {
+                copper_disc(
+                    "GND",
+                    CopperKind::Via,
+                    [
+                        100.0 + (index % 100) as f64 * 3.0,
+                        (index / 100) as f64 * 3.0,
+                    ],
+                    0.12,
+                )
+            })
+            .collect::<Vec<_>>();
+        copper.push(copper_line(
+            "RF_ANT",
+            CopperKind::Segment,
+            [0.0, 0.0],
+            [1.0, 0.0],
+            0.10,
+        ));
+        copper.push(copper_disc("GND", CopperKind::Via, [0.2, 0.2], 0.12));
+        let board = board_with_copper(copper);
 
         assert!(rf_via_fence_readiness(&board, &[], 0.60).is_empty());
     }

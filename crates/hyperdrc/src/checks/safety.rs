@@ -12,6 +12,7 @@ use csgrs::csg::CSG;
 use geo::BoundingRect;
 
 use crate::checks::distance::polygon_boundary_distance;
+use crate::checks::spatial::CopperSpatialIndex;
 use crate::geometry::multipolygon_to_shapes;
 use crate::kicad::{BoardModel, CopperFeature};
 use crate::report::{Severity, Violation};
@@ -76,6 +77,7 @@ pub fn voltage_clearance_readiness(
     min_area: f64,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
+    let feature_index = CopperSpatialIndex::new(&features, clearance);
     let high_voltage_indices = features
         .iter()
         .enumerate()
@@ -88,20 +90,24 @@ pub fn voltage_clearance_readiness(
         })
         .collect::<Vec<_>>();
     log::trace!(
-        "voltage-clearance readiness: source={} features={} high_voltage_features={} clearance={clearance:.6}",
+        "voltage-clearance readiness: source={} features={} high_voltage_features={} buckets={} clearance={clearance:.6}",
         board.source,
         features.len(),
-        high_voltage_indices.len()
+        high_voltage_indices.len(),
+        feature_index.bucket_count()
     );
     let mut violations = Vec::new();
+    let mut candidate_count = 0_usize;
 
     for &left_index in &high_voltage_indices {
         let left = features[left_index];
-        for (right_index, right) in features.iter().enumerate() {
+        for right_index in feature_index.same_layer_near_feature(left, clearance) {
+            candidate_count += 1;
+            let right = features[right_index];
             if left_index == right_index {
                 continue;
             }
-            if left.layer != right.layer || left.net.is_none() || left.net == right.net {
+            if left.net.is_none() || left.net == right.net {
                 continue;
             }
             let left_high_voltage = left.net.as_deref().is_some_and(looks_high_voltage_net);
@@ -148,6 +154,13 @@ pub fn voltage_clearance_readiness(
         }
     }
 
+    log::trace!(
+        "voltage-clearance readiness: source={} candidate_pairs={} violations={}",
+        board.source,
+        candidate_count,
+        violations.len()
+    );
+
     violations
 }
 
@@ -182,17 +195,22 @@ pub fn protective_earth_spacing_readiness(
                 .is_some_and(looks_protective_earth_net)
         })
         .collect::<Vec<_>>();
+    let protective_index = CopperSpatialIndex::new(&protective, clearance);
     log::trace!(
-        "protective-earth spacing readiness: source={} high_voltage={} protective={} clearance={clearance:.6}",
+        "protective-earth spacing readiness: source={} high_voltage={} protective={} buckets={} clearance={clearance:.6}",
         board.source,
         high_voltage.len(),
-        protective.len()
+        protective.len(),
+        protective_index.bucket_count()
     );
 
     let mut violations = Vec::new();
+    let mut candidate_count = 0_usize;
     for hv in high_voltage {
-        for pe in &protective {
-            if hv.layer != pe.layer || hv.net == pe.net {
+        for pe_index in protective_index.same_layer_near_feature(hv, clearance) {
+            candidate_count += 1;
+            let pe = protective[pe_index];
+            if hv.net == pe.net {
                 continue;
             }
             if !sketches_within_clearance(&hv.sketch, &pe.sketch, clearance) {
@@ -229,6 +247,13 @@ pub fn protective_earth_spacing_readiness(
         }
     }
 
+    log::trace!(
+        "protective-earth spacing readiness: source={} candidate_pairs={} violations={}",
+        board.source,
+        candidate_count,
+        violations.len()
+    );
+
     violations
 }
 
@@ -258,17 +283,22 @@ pub fn surge_protection_keepout_readiness(
                 .is_some_and(looks_surge_protection_net)
         })
         .collect::<Vec<_>>();
+    let feature_index = CopperSpatialIndex::new(&features, keepout);
     log::trace!(
-        "surge protection keepout readiness: source={} features={} surge_features={} keepout={keepout:.6}",
+        "surge protection keepout readiness: source={} features={} surge_features={} buckets={} keepout={keepout:.6}",
         board.source,
         features.len(),
-        surge.len()
+        surge.len(),
+        feature_index.bucket_count()
     );
 
     let mut violations = Vec::new();
+    let mut candidate_count = 0_usize;
     for source in surge {
-        for neighbor in &features {
-            if source.layer != neighbor.layer || std::ptr::eq(source, *neighbor) {
+        for neighbor_index in feature_index.same_layer_near_feature(source, keepout) {
+            candidate_count += 1;
+            let neighbor = features[neighbor_index];
+            if std::ptr::eq(source, neighbor) {
                 continue;
             }
             if source.net == neighbor.net
@@ -312,6 +342,13 @@ pub fn surge_protection_keepout_readiness(
             ));
         }
     }
+
+    log::trace!(
+        "surge protection keepout readiness: source={} candidate_pairs={} violations={}",
+        board.source,
+        candidate_count,
+        violations.len()
+    );
 
     violations
 }
@@ -362,13 +399,17 @@ pub fn esd_protection_readiness(
             })
         })
         .collect::<Vec<_>>();
+    let protection_index = CopperSpatialIndex::new(&protection_features, protection_search_radius);
     log::trace!(
-        "ESD protection readiness: source={} features={} protection_features={}",
+        "ESD protection readiness: source={} features={} protection_features={} buckets={} edge_distance={edge_distance:.6} protection_radius={protection_search_radius:.6}",
         board.source,
         features.len(),
-        protection_features.len()
+        protection_features.len(),
+        protection_index.bucket_count()
     );
     let mut violations = Vec::new();
+    let mut edge_candidate_count = 0_usize;
+    let mut protection_candidate_count = 0_usize;
 
     for feature in features {
         let Some(net) = feature.net.as_deref() else {
@@ -385,14 +426,17 @@ pub fn esd_protection_readiness(
         if edge_gap > edge_distance {
             continue;
         }
+        edge_candidate_count += 1;
 
-        let has_protection = protection_features
-            .iter()
-            .filter(|protection| protection.layer == feature.layer)
-            .any(|protection| {
-                !std::ptr::eq(*protection, feature)
-                    && distance(protection.location, feature.location) <= protection_search_radius
-            });
+        let protection_candidates = protection_index.same_layer_centers_within(
+            feature.location,
+            &feature.layer,
+            protection_search_radius,
+        );
+        protection_candidate_count += protection_candidates.len();
+        let has_protection = protection_candidates
+            .into_iter()
+            .any(|protection_index| !std::ptr::eq(protection_features[protection_index], feature));
         if has_protection {
             continue;
         }
@@ -409,6 +453,14 @@ pub fn esd_protection_readiness(
             )),
         ));
     }
+
+    log::trace!(
+        "ESD protection readiness: source={} edge_candidates={} protection_candidates={} violations={}",
+        board.source,
+        edge_candidate_count,
+        protection_candidate_count,
+        violations.len()
+    );
 
     violations
 }
@@ -439,13 +491,17 @@ pub fn esd_return_path_readiness(
                 .is_some_and(|net| looks_ground_net(net) || looks_chassis_net(net))
         })
         .collect::<Vec<_>>();
+    let return_index = CopperSpatialIndex::new(&return_features, return_search_radius);
     log::trace!(
-        "ESD return-path readiness: source={} features={} return_features={} radius={return_search_radius:.6}",
+        "ESD return-path readiness: source={} features={} return_features={} buckets={} radius={return_search_radius:.6}",
         board.source,
         features.len(),
-        return_features.len()
+        return_features.len(),
+        return_index.bucket_count()
     );
     let mut violations = Vec::new();
+    let mut esd_count = 0_usize;
+    let mut return_candidate_count = 0_usize;
 
     for feature in features {
         let Some(net) = feature.net.as_deref() else {
@@ -454,14 +510,17 @@ pub fn esd_return_path_readiness(
         if !looks_esd_protection_net(net) {
             continue;
         }
+        esd_count += 1;
 
-        let has_return = return_features
-            .iter()
-            .filter(|return_feature| return_feature.layer == feature.layer)
-            .any(|return_feature| {
-                !std::ptr::eq(*return_feature, feature)
-                    && distance(return_feature.location, feature.location) <= return_search_radius
-            });
+        let return_candidates = return_index.same_layer_centers_within(
+            feature.location,
+            &feature.layer,
+            return_search_radius,
+        );
+        return_candidate_count += return_candidates.len();
+        let has_return = return_candidates
+            .into_iter()
+            .any(|return_index| !std::ptr::eq(return_features[return_index], feature));
         if has_return {
             continue;
         }
@@ -478,6 +537,14 @@ pub fn esd_return_path_readiness(
             )),
         ));
     }
+
+    log::trace!(
+        "ESD return-path readiness: source={} esd_features={} return_candidates={} violations={}",
+        board.source,
+        esd_count,
+        return_candidate_count,
+        violations.len()
+    );
 
     violations
 }
@@ -609,12 +676,6 @@ fn allowed_surge_neighbor_net(net: &str) -> bool {
         || looks_surge_protection_net(net)
 }
 
-fn distance(left: [f64; 2], right: [f64; 2]) -> f64 {
-    let dx = left[0] - right[0];
-    let dy = left[1] - right[1];
-    (dx * dx + dy * dy).sqrt()
-}
-
 #[cfg(test)]
 mod tests {
     use crate::LayerMetadata;
@@ -664,6 +725,46 @@ mod tests {
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "voltage-clearance-readiness");
+    }
+
+    #[test]
+    fn voltage_clearance_readiness_culls_sparse_copper_fields() {
+        let mut copper = sparse_rects("GPIO", 2_000, 100.0);
+        copper.push(copper_rect(
+            "HV_BUS",
+            CopperKind::Segment,
+            "F.Cu",
+            0.0,
+            0.0,
+            1.0,
+            0.2,
+        ));
+        copper.push(copper_rect(
+            "GND_NEAR",
+            CopperKind::Segment,
+            "F.Cu",
+            1.1,
+            0.0,
+            2.0,
+            0.2,
+        ));
+        copper.push(copper_rect(
+            "GND_OTHER_LAYER",
+            CopperKind::Segment,
+            "B.Cu",
+            1.1,
+            0.0,
+            2.0,
+            0.2,
+        ));
+        let board = board_with_copper(copper);
+
+        let violations = voltage_clearance_readiness(&board, 0.30, &[], 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(violations[0].message.as_ref().is_some_and(|message| {
+            message.contains("GND_NEAR") && !message.contains("GND_OTHER_LAYER")
+        }));
     }
 
     #[test]
@@ -853,6 +954,47 @@ mod tests {
         assert_eq!(violations[0].check, "esd-protection-readiness");
     }
 
+    #[test]
+    fn esd_protection_readiness_culls_sparse_protection_fields() {
+        let mut board = board_with_outline(square(0.0, 0.0, 20.0, 20.0));
+        board.copper = sparse_rects("USB_TVS", 2_000, 100.0);
+        board.copper.push(copper_rect(
+            "USB_D_P",
+            CopperKind::Pad,
+            "F.Cu",
+            0.4,
+            8.0,
+            1.0,
+            8.6,
+        ));
+        board.copper.push(copper_rect(
+            "USB_TVS_NEAR",
+            CopperKind::Pad,
+            "F.Cu",
+            1.4,
+            8.0,
+            2.0,
+            8.6,
+        ));
+
+        assert!(esd_protection_readiness(&board, &[], 1.0, 2.0).is_empty());
+    }
+
+    #[test]
+    fn esd_return_path_readiness_culls_sparse_return_fields() {
+        let mut copper = sparse_rects("GND", 2_000, 100.0);
+        copper.push(copper_disc(
+            "USB_ESD_CLAMP",
+            CopperKind::Pad,
+            [0.0, 0.0],
+            0.20,
+        ));
+        copper.push(copper_disc("CHASSIS", CopperKind::Pad, [0.25, 0.0], 0.20));
+        let board = board_with_copper(copper);
+
+        assert!(esd_return_path_readiness(&board, &[], 0.50).is_empty());
+    }
+
     fn board_with_copper(copper: Vec<CopperFeature>) -> BoardModel {
         BoardModel {
             source: "test".to_string(),
@@ -941,5 +1083,23 @@ mod tests {
                 }),
             ),
         }
+    }
+
+    fn sparse_rects(prefix: &str, count: usize, offset_x: f64) -> Vec<CopperFeature> {
+        (0..count)
+            .map(|index| {
+                let x = offset_x + (index % 100) as f64 * 3.0;
+                let y = (index / 100) as f64 * 3.0;
+                copper_rect(
+                    &format!("{prefix}{index}"),
+                    CopperKind::Segment,
+                    "F.Cu",
+                    x,
+                    y,
+                    x + 1.0,
+                    y + 0.2,
+                )
+            })
+            .collect()
     }
 }

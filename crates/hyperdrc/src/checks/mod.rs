@@ -40,6 +40,7 @@ pub mod return_path;
 pub mod rf;
 pub mod safety;
 pub mod signal;
+mod spatial;
 pub mod stencil;
 mod surface_finish;
 pub mod thermal;

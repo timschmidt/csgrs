@@ -8,6 +8,8 @@
 //! data. Double-check suspect results against CAM tooling when geometry is
 //! self-touching, highly fragmented, or near rule thresholds.
 
+use std::collections::BTreeMap;
+
 use csgrs::csg::CSG;
 use geo::{
     Area, BoundingRect, Coord, Line, LineString, MultiPolygon, Polygon,
@@ -23,6 +25,8 @@ use crate::{LayerMetadata, PcbSketch};
 
 const LOCAL_COPPER_DENSITY_FLOOR: f64 = 0.05;
 const LOCAL_COPPER_DENSITY_DELTA: f64 = 0.50;
+const DUPLICATE_LAYER_OVERLAP_RATIO: f64 = 0.999_999;
+const DUPLICATE_LAYER_SIGNATURE_SCALE: f64 = 1_000_000.0;
 
 /// Run the `mask_island_keepout` design-readiness check or report helper.
 pub fn mask_island_keepout(
@@ -977,6 +981,341 @@ pub fn layer_sanity(
     violations
 }
 
+/// Warn when a parsed layer contains polygon islands at or below the configured
+/// reportable feature area.
+///
+/// This is a lightweight Gerber-sanity check for tiny aperture flashes,
+/// fractured slivers, and parser artifacts. It intentionally uses the existing
+/// `min_area` threshold so projects can decide when a small object is relevant
+/// to the process. Tang et al. (2023) discuss wet-etch limits for very fine
+/// flexible PCB features; HyperDRC uses this as a review trigger rather than a
+/// claim that the specific island cannot be fabricated.
+pub fn tiny_layer_feature_readiness(
+    layer_name: &str,
+    sketch: &PcbSketch,
+    min_area: f64,
+) -> Vec<Violation> {
+    if min_area <= 0.0 || !min_area.is_finite() {
+        return Vec::new();
+    }
+
+    let multipolygon = sketch.to_multipolygon();
+    let tiny_polygons = multipolygon
+        .0
+        .iter()
+        .filter(|polygon| {
+            let area = polygon.unsigned_area();
+            area > 0.0 && area <= min_area
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+    log::trace!(
+        "tiny-layer feature readiness: layer={layer_name} polygons={} tiny_polygons={} min_area={min_area:.9}",
+        multipolygon.0.len(),
+        tiny_polygons.len()
+    );
+
+    if tiny_polygons.is_empty() {
+        return Vec::new();
+    }
+
+    let tiny = MultiPolygon(tiny_polygons);
+    let locations = duplicate_layer_locations(&tiny);
+    let shapes = multipolygon_to_shapes(&tiny, 0.0);
+    vec![Violation::new(
+        "layer-sanity",
+        Severity::Warning,
+        vec![layer_name.to_string()],
+        None,
+        shapes,
+        locations,
+        Some(format!(
+            "layer contains polygon islands at or below reportable feature area {min_area:.9}; review for tiny aperture flashes, fractured slivers, or stale artifacts"
+        )),
+    )]
+}
+
+/// Warn when a parsed layer contains long, skinny polygon islands.
+///
+/// This complements [`tiny_layer_feature_readiness`]: a route shard, overdrawn
+/// line, or fragmented CAM export can have enough area to pass an area filter
+/// while still being narrower than the process feature-width threshold. Tang et
+/// al. (2023) describe fine-line etch sensitivity in flexible PCB processing;
+/// HyperDRC uses a bounding-box width proxy here so the check remains cheap and
+/// docs.rs-friendly rather than pretending to be a fabricator-specific etch
+/// simulation.
+pub fn skinny_layer_feature_readiness(
+    layer_name: &str,
+    sketch: &PcbSketch,
+    min_width: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    if min_width <= 0.0 || !min_width.is_finite() {
+        return Vec::new();
+    }
+
+    let multipolygon = sketch.to_multipolygon();
+    let skinny_polygons = multipolygon
+        .0
+        .iter()
+        .filter(|polygon| {
+            let area = polygon.unsigned_area();
+            area > min_area
+                && polygon_minimum_bounding_dimension(polygon)
+                    .is_some_and(|dimension| dimension > 0.0 && dimension < min_width)
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+    log::trace!(
+        "skinny-layer feature readiness: layer={layer_name} polygons={} skinny_polygons={} min_width={min_width:.6} min_area={min_area:.9}",
+        multipolygon.0.len(),
+        skinny_polygons.len()
+    );
+
+    if skinny_polygons.is_empty() {
+        return Vec::new();
+    }
+
+    let skinny = MultiPolygon(skinny_polygons);
+    let locations = duplicate_layer_locations(&skinny);
+    let shapes = multipolygon_to_shapes(&skinny, min_area);
+    vec![Violation::new(
+        "layer-sanity",
+        Severity::Warning,
+        vec![layer_name.to_string()],
+        None,
+        shapes,
+        locations,
+        Some(format!(
+            "layer contains polygon islands whose minimum bounding dimension is below feature width {min_width:.6}; review for hairline fragments, slivers, or overdrawn route artifacts"
+        )),
+    )]
+}
+
+fn polygon_minimum_bounding_dimension(polygon: &Polygon<f64>) -> Option<f64> {
+    let bounds = polygon.bounding_rect()?;
+    let width = bounds.max().x - bounds.min().x;
+    let height = bounds.max().y - bounds.min().y;
+    Some(width.min(height))
+}
+
+/// Warn when one parsed layer contains duplicate polygon islands.
+///
+/// Intra-layer duplicates can come from repeated Gerber flashes, stale aperture
+/// macro expansion, or CAM exports that wrote the same contour twice. The
+/// geometry is usually harmless after boolean union, but it is still a release
+/// readiness signal because duplicate primitives can confuse downstream CAM,
+/// quoting, or review tools. The pairwise filter uses the same conservative
+/// set-overlap idea as [`duplicate_layer_geometry_readiness`], following the
+/// computational-geometry set-intersection framing surveyed by Lee and
+/// Preparata (1984).
+pub fn duplicate_layer_island_readiness(
+    layer_name: &str,
+    sketch: &PcbSketch,
+    min_area: f64,
+) -> Vec<Violation> {
+    let multipolygon = sketch.to_multipolygon();
+    let mut buckets = BTreeMap::<DuplicateIslandSignature, Vec<&Polygon<f64>>>::new();
+    for polygon in &multipolygon.0 {
+        if polygon.unsigned_area() <= min_area {
+            continue;
+        }
+        let Some(signature) = duplicate_island_signature(polygon) else {
+            continue;
+        };
+        buckets.entry(signature).or_default().push(polygon);
+    }
+    let comparable_polygons = buckets.values().map(Vec::len).sum::<usize>();
+    log::trace!(
+        "duplicate-layer island readiness: layer={layer_name} polygons={} comparable_polygons={} candidate_buckets={} min_area={min_area:.9}",
+        multipolygon.0.len(),
+        comparable_polygons,
+        buckets.values().filter(|bucket| bucket.len() > 1).count()
+    );
+
+    let mut locations = Vec::new();
+    for bucket in buckets.values().filter(|bucket| bucket.len() > 1) {
+        for left_index in 0..bucket.len() {
+            let mut matched_left = false;
+            for right_index in (left_index + 1)..bucket.len() {
+                if polygons_are_duplicate(
+                    bucket[left_index],
+                    bucket[right_index],
+                    BOARD_OUTLINE_GEOMETRY_TOLERANCE,
+                ) {
+                    if let Some(location) = polygon_bounds_center(bucket[left_index]) {
+                        push_unique_location(&mut locations, location);
+                    }
+                    matched_left = true;
+                    break;
+                }
+            }
+            if matched_left {
+                continue;
+            }
+        }
+    }
+
+    if locations.is_empty() {
+        return Vec::new();
+    }
+
+    vec![Violation::new(
+        "layer-sanity",
+        Severity::Warning,
+        vec![layer_name.to_string()],
+        None,
+        Vec::new(),
+        locations,
+        Some(
+            "layer contains duplicate polygon island geometry; review for repeated flashes, duplicated contours, or stale CAM artifacts"
+                .to_string(),
+        ),
+    )]
+}
+
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+struct DuplicateIslandSignature {
+    area: i64,
+    min_x: i64,
+    min_y: i64,
+    max_x: i64,
+    max_y: i64,
+}
+
+fn duplicate_island_signature(polygon: &Polygon<f64>) -> Option<DuplicateIslandSignature> {
+    let bounds = polygon.bounding_rect()?;
+    Some(DuplicateIslandSignature {
+        area: quantize_layer_signature_value(polygon.unsigned_area()),
+        min_x: quantize_layer_signature_value(bounds.min().x),
+        min_y: quantize_layer_signature_value(bounds.min().y),
+        max_x: quantize_layer_signature_value(bounds.max().x),
+        max_y: quantize_layer_signature_value(bounds.max().y),
+    })
+}
+
+fn quantize_layer_signature_value(value: f64) -> i64 {
+    if !value.is_finite() {
+        return 0;
+    }
+    (value * DUPLICATE_LAYER_SIGNATURE_SCALE).round() as i64
+}
+
+/// Warn when two parsed layers carry effectively identical polygon geometry.
+///
+/// Duplicate manufacturing layers are a package-readiness signal rather than a
+/// proof of electrical failure: panel rails, mirrored sides, or intentional
+/// copper symmetry can look similar. The check therefore lives under
+/// `layer-sanity` as a warning and should be reviewed against the fabrication
+/// file manifest. The overlap test follows the broad computational-geometry
+/// set-intersection framing surveyed by Lee and Preparata (1984) while keeping
+/// the final predicate intentionally conservative for CAM handoff use.
+pub fn duplicate_layer_geometry_readiness(
+    layers: &[(String, PcbSketch)],
+    min_area: f64,
+) -> Vec<Violation> {
+    let prepared = layers
+        .iter()
+        .filter_map(|(name, sketch)| {
+            let multipolygon = sketch.to_multipolygon();
+            let area = multipolygon.unsigned_area();
+            let bounds = multipolygon.bounding_rect()?;
+            (area > min_area).then_some(DuplicateLayer {
+                name,
+                sketch,
+                multipolygon,
+                area,
+                bounds,
+            })
+        })
+        .collect::<Vec<_>>();
+    log::trace!(
+        "duplicate-layer geometry readiness: input_layers={} comparable_layers={} min_area={min_area:.9}",
+        layers.len(),
+        prepared.len()
+    );
+
+    let mut violations = Vec::new();
+    for left_index in 0..prepared.len() {
+        for right_index in (left_index + 1)..prepared.len() {
+            let left = &prepared[left_index];
+            let right = &prepared[right_index];
+            if !areas_approximately_equal(left.area, right.area, BOARD_OUTLINE_GEOMETRY_TOLERANCE)
+                || !rects_approximately_equal(
+                    &left.bounds,
+                    &right.bounds,
+                    BOARD_OUTLINE_GEOMETRY_TOLERANCE,
+                )
+            {
+                continue;
+            }
+
+            let overlap = left.sketch.intersection(right.sketch);
+            let overlap_area = overlap.to_multipolygon().unsigned_area();
+            let left_coverage = overlap_area / left.area;
+            let right_coverage = overlap_area / right.area;
+            if left_coverage < DUPLICATE_LAYER_OVERLAP_RATIO
+                || right_coverage < DUPLICATE_LAYER_OVERLAP_RATIO
+            {
+                continue;
+            }
+
+            let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
+            let locations = duplicate_layer_locations(&left.multipolygon);
+            violations.push(Violation::new(
+                "layer-sanity",
+                Severity::Warning,
+                vec![left.name.to_string(), right.name.to_string()],
+                None,
+                shapes,
+                locations,
+                Some(format!(
+                    "layers appear to contain duplicate geometry ({:.6}% overlap by area); review for duplicate or stale fabrication outputs",
+                    left_coverage.min(right_coverage) * 100.0
+                )),
+            ));
+        }
+    }
+
+    violations
+}
+
+struct DuplicateLayer<'a> {
+    name: &'a str,
+    sketch: &'a PcbSketch,
+    multipolygon: MultiPolygon<f64>,
+    area: f64,
+    bounds: geo::Rect<f64>,
+}
+
+fn duplicate_layer_locations(multipolygon: &MultiPolygon<f64>) -> Vec<[f64; 2]> {
+    multipolygon
+        .0
+        .iter()
+        .filter_map(polygon_bounds_center)
+        .take(8)
+        .collect()
+}
+
+fn polygon_bounds_center(polygon: &Polygon<f64>) -> Option<[f64; 2]> {
+    let bounds = polygon.bounding_rect()?;
+    Some([
+        (bounds.min().x + bounds.max().x) / 2.0,
+        (bounds.min().y + bounds.max().y) / 2.0,
+    ])
+}
+
+fn rects_approximately_equal(
+    left: &geo::Rect<f64>,
+    right: &geo::Rect<f64>,
+    tolerance: f64,
+) -> bool {
+    (left.min().x - right.min().x).abs() <= tolerance
+        && (left.min().y - right.min().y).abs() <= tolerance
+        && (left.max().x - right.max().x).abs() <= tolerance
+        && (left.max().y - right.max().y).abs() <= tolerance
+}
+
 fn multipolygon_has_non_finite_coordinates(multipolygon: &MultiPolygon<f64>) -> bool {
     for polygon in &multipolygon.0 {
         if !ring_has_finite_coordinates(polygon.exterior()) {
@@ -1831,15 +2170,16 @@ mod tests {
         acid_trap_candidates, board_edge_clearance, board_outline_cutout_clearance,
         board_outline_duplicate_readiness, board_outline_fragments,
         board_outline_nesting_readiness, board_outline_notch_readiness, board_outline_sanity,
-        board_outline_self_intersection_readiness, copper_balance, copper_overlap, exposed_copper,
+        board_outline_self_intersection_readiness, copper_balance, copper_overlap,
+        duplicate_layer_geometry_readiness, duplicate_layer_island_readiness, exposed_copper,
         layer_sanity, local_copper_density_readiness, mask_island_keepout,
         mechanical_layer_geometry, min_copper_neck_width, minimum_mask_opening,
         minimum_paste_aperture, paste_aperture_coverage, paste_aperture_ratio,
         paste_aperture_spacing, paste_mask_alignment, paste_overhang,
         silkscreen_board_edge_clearance, silkscreen_clearance, silkscreen_min_width,
-        silkscreen_overlap, solder_mask_board_edge_clearance, solder_mask_expansion,
-        solder_mask_opening_coverage, solder_mask_opening_spacing, solder_mask_overlap_clearance,
-        solder_mask_sliver,
+        silkscreen_overlap, skinny_layer_feature_readiness, solder_mask_board_edge_clearance,
+        solder_mask_expansion, solder_mask_opening_coverage, solder_mask_opening_spacing,
+        solder_mask_overlap_clearance, solder_mask_sliver, tiny_layer_feature_readiness,
     };
     use crate::LayerMetadata;
     use crate::geometry::{empty_sketch, line_polygon, polygons_to_sketch, rect_polygon};
@@ -3049,6 +3389,143 @@ mod tests {
                 .as_deref()
                 .is_none_or(|message| !message.contains("exceeds maximum"))
         }));
+    }
+
+    #[test]
+    fn duplicate_layer_geometry_readiness_reports_identical_layers() {
+        let top = sketch("F.Cu", vec![square(0.0, 0.0, 10.0, 10.0)]);
+        let duplicate = sketch("B.Cu", vec![square(0.0, 0.0, 10.0, 10.0)]);
+        let layers = vec![("F.Cu".to_string(), top), ("B.Cu".to_string(), duplicate)];
+
+        let violations = duplicate_layer_geometry_readiness(&layers, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "layer-sanity");
+        assert_eq!(violations[0].layers, vec!["F.Cu", "B.Cu"]);
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .unwrap_or_default()
+                .contains("duplicate geometry")
+        );
+        assert!(!violations[0].locations.is_empty());
+    }
+
+    #[test]
+    fn duplicate_layer_geometry_readiness_allows_different_or_empty_layers() {
+        let top = sketch("F.Cu", vec![square(0.0, 0.0, 10.0, 10.0)]);
+        let shifted = sketch("B.Cu", vec![square(12.0, 0.0, 22.0, 10.0)]);
+        let empty = empty_sketch(Some(LayerMetadata {
+            name: "empty".to_string(),
+        }));
+        let layers = vec![
+            ("F.Cu".to_string(), top),
+            ("B.Cu".to_string(), shifted),
+            ("empty".to_string(), empty),
+        ];
+
+        assert!(duplicate_layer_geometry_readiness(&layers, 1.0e-9).is_empty());
+    }
+
+    #[test]
+    fn tiny_layer_feature_readiness_reports_islands_below_area_gate() {
+        let layer = sketch(
+            "F.Cu",
+            vec![
+                square(0.0, 0.0, 10.0, 10.0),
+                square(20.0, 20.0, 20.05, 20.05),
+            ],
+        );
+
+        let violations = tiny_layer_feature_readiness("F.Cu", &layer, 0.01);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "layer-sanity");
+        assert!(!violations[0].locations.is_empty());
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .unwrap_or_default()
+                .contains("tiny aperture flashes")
+        );
+    }
+
+    #[test]
+    fn tiny_layer_feature_readiness_allows_larger_or_unconfigured_features() {
+        let layer = sketch("F.Cu", vec![square(0.0, 0.0, 10.0, 10.0)]);
+
+        assert!(tiny_layer_feature_readiness("F.Cu", &layer, 0.01).is_empty());
+        assert!(tiny_layer_feature_readiness("F.Cu", &layer, 0.0).is_empty());
+        assert!(tiny_layer_feature_readiness("F.Cu", &layer, f64::NAN).is_empty());
+    }
+
+    #[test]
+    fn skinny_layer_feature_readiness_reports_long_slivers_above_area_gate() {
+        let layer = sketch(
+            "F.Cu",
+            vec![
+                square(0.0, 0.0, 10.0, 10.0),
+                rect_polygon([20.0, 20.0], [4.0, 0.05], 0.0),
+            ],
+        );
+
+        let violations = skinny_layer_feature_readiness("F.Cu", &layer, 0.10, 0.01);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "layer-sanity");
+        assert!(!violations[0].locations.is_empty());
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .unwrap_or_default()
+                .contains("hairline fragments")
+        );
+    }
+
+    #[test]
+    fn skinny_layer_feature_readiness_allows_wide_tiny_or_unconfigured_features() {
+        let wide = sketch("F.Cu", vec![square(0.0, 0.0, 10.0, 10.0)]);
+        let tiny = sketch("F.Cu", vec![rect_polygon([0.0, 0.0], [0.09, 0.09], 0.0)]);
+
+        assert!(skinny_layer_feature_readiness("F.Cu", &wide, 0.10, 0.01).is_empty());
+        assert!(skinny_layer_feature_readiness("F.Cu", &tiny, 0.10, 0.01).is_empty());
+        assert!(skinny_layer_feature_readiness("F.Cu", &wide, 0.0, 0.01).is_empty());
+        assert!(skinny_layer_feature_readiness("F.Cu", &wide, f64::NAN, 0.01).is_empty());
+    }
+
+    #[test]
+    fn duplicate_layer_island_readiness_reports_repeated_polygon_geometry() {
+        let duplicate = square(0.0, 0.0, 10.0, 10.0);
+        let layer = sketch("F.Cu", vec![duplicate.clone(), duplicate]);
+
+        let violations = duplicate_layer_island_readiness("F.Cu", &layer, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "layer-sanity");
+        assert!(!violations[0].locations.is_empty());
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .unwrap_or_default()
+                .contains("duplicate polygon island")
+        );
+    }
+
+    #[test]
+    fn duplicate_layer_island_readiness_allows_discrete_or_tiny_polygons() {
+        let discrete = sketch(
+            "F.Cu",
+            vec![square(0.0, 0.0, 10.0, 10.0), square(12.0, 0.0, 22.0, 10.0)],
+        );
+        let tiny_duplicate = rect_polygon([0.0, 0.0], [0.03, 0.03], 0.0);
+        let tiny = sketch("F.Cu", vec![tiny_duplicate.clone(), tiny_duplicate]);
+
+        assert!(duplicate_layer_island_readiness("F.Cu", &discrete, 1.0e-9).is_empty());
+        assert!(duplicate_layer_island_readiness("F.Cu", &tiny, 0.01).is_empty());
     }
 
     #[test]

@@ -105,8 +105,12 @@ input records, but they should be lifted before core geometry decisions.
   openings whose minimum bounding dimension is below the configured mask width.
 - `acid-trap`: report copper polygon vertices whose angle is below a configured
   threshold.
-- `layer-sanity`: report empty polygon geometry, missing bounds, and optional
-  maximum-area excursions that can indicate polarity or layer-role problems.
+- `layer-sanity`: report empty polygon geometry, missing bounds, malformed
+  contours, optional maximum-area excursions, tiny polygon islands at or below
+  the configured reportable-area threshold, skinny polygon islands below the
+  configured feature-width threshold, duplicate polygon islands within one
+  layer, and duplicate layer geometry that can indicate polarity, layer-role,
+  stale-output, or double-export problems.
 - `copper-balance`: compare selected Gerber copper layers or parsed KiCad
   copper layers and warn when largest-to-smallest copper area exceeds a
   configured ratio.
@@ -220,25 +224,35 @@ input records, but they should be lifted before core geometry decisions.
   same-net pour support, parallel vias, or a sufficiently wide entry segment.
 - `voltage-clearance-readiness`: warn when likely high-voltage KiCad nets are
   close to different-net copper using an expanded net-clearance threshold.
+  Different-net candidates use the shared layer-aware grid before exact
+  clearance geometry review.
 - `protective-earth-spacing-readiness`: warn when likely high-voltage KiCad
-  copper is close to protective earth, chassis, or shield copper.
+  copper is close to protective earth, chassis, or shield copper. Protective
+  candidates are indexed by layer before exact PE/chassis clearance review.
 - `surge-protection-keepout-readiness`: warn when ordinary unrelated copper
-  crowds likely MOV, GDT, spark-gap, TVS, or fuse copper.
+  crowds likely MOV, GDT, spark-gap, TVS, or fuse copper. Neighbor copper uses
+  the same grid broad phase before exact keepout review.
 - `sensitive-net-spacing-readiness`: warn when likely analog, RF, or sensor
   KiCad nets are close to likely noisy power, switching, motor, or high-speed
-  nets.
+  nets. Noisy-net candidates use the shared layer-aware grid before exact
+  offset/intersection review.
 - `sensitive-return-readiness`: warn when likely analog, RF, or sensor KiCad
-  nets have no parsed same-layer ground copper nearby.
+  nets have no parsed same-layer ground copper nearby. Ground candidates use an
+  indexed same-layer lookup before exact ground-touch review.
 - `mixed-signal-partition-readiness`: warn when likely analog, RF, or sensor
   copper is near likely digital/control copper without a nearby same-layer
-  ground guard.
+  ground guard. Digital and ground candidates are both grid-indexed before the
+  exact proximity and guard predicates run.
 - `rf-keepout-readiness`: warn when likely RF or antenna KiCad nets are close
-  to non-ground copper on the same selected layer.
+  to non-ground copper on the same selected layer. Same-layer copper candidates
+  use the shared grid broad phase before exact offset/intersection review.
 - `antenna-copper-keepout-readiness`: warn when likely antenna KiCad nets have
   any other same-layer copper, including ground copper, inside a stricter
-  copper-free-region review distance.
+  copper-free-region review distance. It uses the same broad-phase grid to keep
+  sparse antenna/copper fields bounded.
 - `rf-via-fence-readiness`: warn when likely RF or antenna KiCad copper has no
   parsed same-layer ground via inside the configured via-fence review distance.
+  Ground-via lookup is indexed by layer before the center-distance check.
 - `chassis-stitching-readiness`: warn when likely chassis or shield KiCad nets
   have no parsed ground stitching via nearby.
 - `gold-finger-readiness`: warn when likely gold-finger or edge-connector KiCad
@@ -254,16 +268,23 @@ input records, but they should be lifted before core geometry decisions.
   edge connectors and fiducials.
 - `component-hole-clearance-readiness`: warn when parsed KiCad component pads
   intersect a clearance band around non-plated KiCad or Excellon mechanical
-  holes, slots, screw holes, standoffs, or chassis keepouts.
+  holes, slots, screw holes, standoffs, or chassis keepouts. Pad candidates use
+  a grid lookup around each circular drill keepout before exact intersection
+  review, keeping large sparse mechanical/pad fields bounded.
 - `component-spacing-readiness`: warn when large same-side KiCad pad proxies sit
   closer than the configured assembly spacing, giving an initial component
   courtyard/body clearance review signal before full courtyard parsing exists.
+  Dense pad fields use same-layer grid candidate generation before exact
+  polygon-distance review so large assemblies remain bounded.
 - `connector-rework-clearance-readiness`: warn when likely connector pads have
   neighboring non-same-net pads inside the configured hand-solder/rework
-  clearance band.
+  clearance band. Connector-neighbor selection uses same-layer grid candidate
+  generation before exact polygon-gap review so sparse connector-heavy boards do
+  not require every connector pad to compare against every other pad.
 - `pad-pair-asymmetry-readiness`: warn when neighboring small pads on the same
   layer have a large copper-area mismatch that can increase tombstoning or
-  passive placement risk.
+  passive placement risk. Candidate pad pairs use the same grid broad phase as
+  component spacing before area-ratio and exact gap checks.
 - `connector-return-path-readiness`: warn when likely connector edge-rate nets
   sit near the board edge without nearby same-layer ground return copper.
 - `decoupling-proximity-readiness`: warn when likely power pads or vias have no
@@ -271,14 +292,18 @@ input records, but they should be lifted before core geometry decisions.
   proximity an early review signal.
 - `esd-protection-readiness`: warn when likely edge connector nets sit near the
   board edge without parsed ESD, chassis, or ground protection copper nearby.
+  Protection candidates use an indexed same-layer center-radius lookup.
 - `esd-return-path-readiness`: warn when likely ESD, TVS, or transient clamp
-  copper has no nearby same-layer ground or chassis return copper.
+  copper has no nearby same-layer ground or chassis return copper. Ground and
+  chassis return candidates are indexed by layer before distance review.
 - `switch-node-keepout-readiness`: warn when likely switching, boot, gate,
   motor, or PWM nodes are close to non-ground neighboring copper on the same
-  selected layer.
+  selected layer. Same-layer neighbors use the shared copper spatial index
+  before exact offset/intersection review.
 - `inductor-copper-keepout-readiness`: warn when likely inductor or switching
   power nets have any other same-layer copper, including ground copper, inside a
-  stricter copper-free-region review distance.
+  stricter copper-free-region review distance. Sparse power-stage fields use the
+  same grid broad phase before exact copper-free-region review.
 - `testpoint-coverage-readiness`: warn when likely critical KiCad nets have no
   matching IPC-D-356 test record, giving production test coverage an early
   sidecar-driven review signal.
@@ -287,7 +312,9 @@ input records, but they should be lifted before core geometry decisions.
   spacing, insufficient board-edge fixture clearance, missing access-side
   metadata, missing soldermask-access metadata, soldermask-covered access, or
   contradictory SMD/both-side access hints, and when top/bottom IPC-D-356 access
-  conflicts with nearby same-net KiCad pad/via side.
+  conflicts with nearby same-net KiCad pad/via side. Dense probe spacing uses a
+  grid broad phase before exact edge-spacing review so large fixture sidecars
+  stay bounded during full check runs.
 - `testpoint-copper-clearance-readiness`: warn when an IPC-D-356 testpoint
   probe keepout intersects unrelated selected KiCad copper, catching fixture
   short and unreliable-contact review risks.
@@ -303,7 +330,9 @@ input records, but they should be lifted before core geometry decisions.
 - `local-fiducial-readiness`: warn when dense fine-pitch pad clusters do not
   have at least two likely local fiducials nearby on the same side.
 - `fiducial-keepout-readiness`: warn when same-layer KiCad copper intrudes into
-  the configured optical keepout around likely fiducial targets.
+  the configured optical keepout around likely fiducial targets. Blocker
+  selection uses a bounding-circle grid query before exact offset/intersection
+  review, keeping fiducial checks bounded on sparse assembly fields.
 - `dense-pad-escape-readiness`: warn when dense fine-pitch pad clusters have no
   parsed nearby via escape, so BGA/QFN/fine-pitch breakout strategy is reviewed.
   The same check path also reports `dense-pad-via-spacing-readiness` when
@@ -312,22 +341,28 @@ input records, but they should be lifted before core geometry decisions.
   nearest copper spacing is below the configured mask-web review threshold.
 - `selective-wave-solder-keepout-readiness`: warn when likely through-hole
   solder process features sit too close to neighboring pads for wave/selective
-  solder pallet, solder-thief, or masking review.
+  solder pallet, solder-thief, or masking review. Neighbor pads are selected
+  through the same circular grid query used by mechanical-hole keepout review
+  before exact keepout intersection.
 - `press-fit-keepout-readiness`: warn when likely press-fit connector holes sit
   too close to neighboring pads for insertion-tool and deformation-clearance
-  review.
+  review. Press-fit drill candidates use the same grid broad phase so sparse
+  connector fields avoid all-pad scans.
 - `conformal-coating-keepout-readiness`: warn when likely contacts,
   testpoints, or fiducials have neighboring pads inside a no-coat keepout band.
 - `thermal-pad-via-readiness`: warn when large ground or power pads that look
   like exposed thermal pads have no parsed same-net via in pad.
 - `thermal-copper-area-readiness`: warn when likely heat or power pads, vias, or
   traces have no parsed same-net copper zone nearby for heat spreading and
-  current return.
+  current return. Same-net zones use the shared layer-aware center-radius index
+  before the heat-spreading support decision.
 - `hot-component-spacing-readiness`: warn when likely hot pads or zones sit close
   to neighboring non-ground copper, calling out derating and placement review.
+  Neighbor candidates are grid-indexed before exact spacing geometry review.
 - `thermal-mechanical-keepout-readiness`: warn when likely hot copper sits inside
   the keepout around non-plated mechanical holes, standoffs, screws, chassis, or
-  heatsink clearance features.
+  heatsink clearance features. Hot-feature candidates use the shared broad phase
+  before exact circular keepout intersection.
 - `mounting-hole-grounding-readiness`: warn when likely large non-plated
   mounting holes have no parsed nearby ground or chassis copper, so chassis
   bonding versus isolation intent is explicit before release.
@@ -539,7 +574,9 @@ example before it is considered production-ready.
   copper layers and explicitly selected Gerber copper layers. Initial
   `local-copper-density-readiness` windows now warn when one copper layer is
   locally dense while another selected copper layer is sparse in the same
-  region.
+  region, and the local window check is independently selectable from
+  `copper-balance` for release profiles that want separate global and local
+  copper-density gates.
 - Isolated copper: floating copper islands, unconnected pours, orphaned zone
   remnants, and copper slivers below etchable area. Initial KiCad net-intent
   checks warn on parsed copper that remains unnetted after optional IPC-D-356
@@ -550,7 +587,9 @@ example before it is considered production-ready.
   and trapped etchant pockets inside plane pours. Initial polygon-vertex checks
   are implemented for flattened copper, and `acid-trap-trace-junction` now
   warns on acute same-net KiCad segment junctions before segment identity is
-  lost in layer flattening.
+  lost in layer flattening. Polygon-level and trace-junction acid-trap checks
+  are independently selectable so board-context junction review can be enabled
+  without changing flattened Gerber checks.
 - Teardrop recommendations: narrow trace-to-pad and trace-to-via junctions below
   a configured width or annular-ring margin. Initial KiCad checks warn when
   narrow same-net segment geometry enters pads or vias.
@@ -938,7 +977,10 @@ example before it is considered production-ready.
   `excellon-readiness`.
 - Gerber sanity: empty layers, tiny aperture flashes, unbounded fills, huge
   areas, malformed regions, duplicate layers, stale plot files, and mixed
-  revisions.
+  revisions. Initial layer sanity now reports empty/unbounded/malformed layers,
+  area excursions, tiny aperture-flash candidates, hairline/sliver islands, and
+  duplicate islands within one layer as well as effectively duplicate geometry
+  across the checked layer set.
 - Order-parameter parity: board thickness, copper weight, soldermask color,
   surface finish, impedance, castellations, edge plating, via fill, controlled
   depth, and panelization options match file content.
@@ -1084,7 +1126,9 @@ Gerber/KiCad fixtures with one clear violation and one matching non-violation.
   conversion-origin provenance.
 - JSON waiver files that suppress findings by ID, check name, layers, or message
   text, with governance warnings for incomplete, malformed, or expired
-  production-review metadata.
+  production-review metadata. `waiver-governance` is a default and explicitly
+  selectable readiness check; governance findings are appended after waiver
+  matching so a waiver file cannot suppress warnings about itself.
 - Compact JSON CI summaries with error, warning, waiver, and per-check counts.
 - JSON rule configuration with CLI overrides for clearance thresholds, area
   thresholds, and KiCad copper layer selection.
@@ -1232,7 +1276,9 @@ well-maintained exporter.
 - Waiver and baseline update sinks: proposed waiver stubs, active-finding
   baselines, and baseline diff JSON are implemented for controlled production
   exceptions and release drift review. Waiver governance reports expired review
-  dates. Richer geometry fingerprints remain future work.
+  dates as a first-class default check. Waiver stubs and baselines now carry a
+  deterministic `hyperdrc-geometry-v1` fingerprint derived from check, layers,
+  island, polygons, and point locations rather than diagnostic wording.
 
 ### Adapter Architecture Notes
 

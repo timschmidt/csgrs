@@ -30,3 +30,7 @@ proptest = "1.6"
 [[bench]]
 name = "parser_geometry_smoke"
 harness = false
+
+[[bench]]
+name = "fixture_smoke"
+harness = false

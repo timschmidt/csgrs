@@ -12,6 +12,7 @@ use csgrs::csg::CSG;
 use geo::BoundingRect;
 
 use crate::checks::distance::polygon_boundary_distance;
+use crate::checks::spatial::CopperSpatialIndex;
 use crate::geometry::multipolygon_to_shapes;
 use crate::kicad::{BoardModel, CopperFeature};
 use crate::report::{Severity, Violation};
@@ -30,11 +31,6 @@ pub fn sensitive_net_spacing_readiness(
     min_area: f64,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
-    log::trace!(
-        "sensitive-net spacing readiness: source={} features={} clearance={clearance:.6}",
-        board.source,
-        features.len()
-    );
     let sensitive_indices = features
         .iter()
         .enumerate()
@@ -46,27 +42,29 @@ pub fn sensitive_net_spacing_readiness(
                 .then_some(index)
         })
         .collect::<Vec<_>>();
-    let noisy_indices = features
+    let noisy_features = features
         .iter()
-        .enumerate()
-        .filter_map(|(index, feature)| {
-            feature
-                .net
-                .as_deref()
-                .is_some_and(looks_noisy_net)
-                .then_some(index)
-        })
+        .copied()
+        .filter(|feature| feature.net.as_deref().is_some_and(looks_noisy_net))
         .collect::<Vec<_>>();
+    let noisy_index = CopperSpatialIndex::new(&noisy_features, clearance);
+    log::trace!(
+        "sensitive-net spacing readiness: source={} features={} sensitive={} noisy={} buckets={} clearance={clearance:.6}",
+        board.source,
+        features.len(),
+        sensitive_indices.len(),
+        noisy_features.len(),
+        noisy_index.bucket_count()
+    );
     let mut violations = Vec::new();
+    let mut candidate_count = 0_usize;
 
     for &sensitive_index in &sensitive_indices {
         let sensitive = features[sensitive_index];
-        for &noisy_index in &noisy_indices {
-            if sensitive_index == noisy_index {
-                continue;
-            }
-            let noisy = features[noisy_index];
-            if sensitive.layer != noisy.layer
+        for noisy_candidate_index in noisy_index.same_layer_near_feature(sensitive, clearance) {
+            candidate_count += 1;
+            let noisy = noisy_features[noisy_candidate_index];
+            if std::ptr::eq(sensitive, noisy)
                 || sensitive.net.is_none()
                 || sensitive.net == noisy.net
             {
@@ -110,6 +108,13 @@ pub fn sensitive_net_spacing_readiness(
         }
     }
 
+    log::trace!(
+        "sensitive-net spacing readiness: source={} candidate_pairs={} violations={}",
+        board.source,
+        candidate_count,
+        violations.len()
+    );
+
     violations
 }
 
@@ -129,13 +134,17 @@ pub fn sensitive_return_readiness(
         .copied()
         .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
         .collect::<Vec<_>>();
+    let ground_index = CopperSpatialIndex::new(&ground_features, guard_distance);
     log::trace!(
-        "sensitive-return readiness: source={} features={} ground_features={} guard_distance={guard_distance:.6}",
+        "sensitive-return readiness: source={} features={} ground_features={} buckets={} guard_distance={guard_distance:.6}",
         board.source,
         features.len(),
-        ground_features.len()
+        ground_features.len(),
+        ground_index.bucket_count()
     );
     let mut violations = Vec::new();
+    let mut sensitive_count = 0_usize;
+    let mut candidate_count = 0_usize;
 
     for feature in features {
         let Some(net) = &feature.net else {
@@ -144,9 +153,12 @@ pub fn sensitive_return_readiness(
         if !looks_sensitive_net(net) {
             continue;
         }
+        sensitive_count += 1;
 
-        let has_guard = ground_features.iter().any(|ground| {
-            ground.layer == feature.layer && copper_features_touch(feature, ground, guard_distance)
+        let guard_candidates = ground_index.same_layer_near_feature(feature, guard_distance);
+        candidate_count += guard_candidates.len();
+        let has_guard = guard_candidates.into_iter().any(|ground_index| {
+            copper_features_touch(feature, ground_features[ground_index], guard_distance)
         });
         if has_guard {
             continue;
@@ -164,6 +176,14 @@ pub fn sensitive_return_readiness(
             )),
         ));
     }
+
+    log::trace!(
+        "sensitive-return readiness: source={} sensitive={} candidate_ground={} violations={}",
+        board.source,
+        sensitive_count,
+        candidate_count,
+        violations.len()
+    );
 
     violations
 }
@@ -194,12 +214,7 @@ pub fn mixed_signal_partition_readiness(
         .copied()
         .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
         .collect::<Vec<_>>();
-    log::trace!(
-        "mixed-signal partition readiness: source={} features={} ground_features={} separation={separation:.6} guard_distance={guard_distance:.6}",
-        board.source,
-        features.len(),
-        ground_features.len()
-    );
+    let ground_index = CopperSpatialIndex::new(&ground_features, guard_distance);
     let sensitive_indices = features
         .iter()
         .enumerate()
@@ -211,27 +226,38 @@ pub fn mixed_signal_partition_readiness(
                 .then_some(index)
         })
         .collect::<Vec<_>>();
-    let digital_indices = features
+    let digital_features = features
         .iter()
-        .enumerate()
-        .filter_map(|(index, feature)| {
+        .copied()
+        .filter(|feature| {
             feature
                 .net
                 .as_deref()
                 .is_some_and(looks_digital_control_net)
-                .then_some(index)
         })
         .collect::<Vec<_>>();
+    let digital_index = CopperSpatialIndex::new(&digital_features, separation);
+    log::trace!(
+        "mixed-signal partition readiness: source={} features={} sensitive={} digital={} digital_buckets={} ground_features={} ground_buckets={} separation={separation:.6} guard_distance={guard_distance:.6}",
+        board.source,
+        features.len(),
+        sensitive_indices.len(),
+        digital_features.len(),
+        digital_index.bucket_count(),
+        ground_features.len(),
+        ground_index.bucket_count()
+    );
     let mut violations = Vec::new();
+    let mut digital_candidate_count = 0_usize;
+    let mut guard_candidate_count = 0_usize;
 
     for &sensitive_index in &sensitive_indices {
         let sensitive = features[sensitive_index];
-        for &digital_index in &digital_indices {
-            if sensitive_index == digital_index {
-                continue;
-            }
-            let digital = features[digital_index];
-            if sensitive.layer != digital.layer
+        for digital_candidate_index in digital_index.same_layer_near_feature(sensitive, separation)
+        {
+            digital_candidate_count += 1;
+            let digital = digital_features[digital_candidate_index];
+            if std::ptr::eq(sensitive, digital)
                 || sensitive.net.is_none()
                 || sensitive.net == digital.net
             {
@@ -241,9 +267,10 @@ pub fn mixed_signal_partition_readiness(
                 continue;
             }
 
-            let has_guard = ground_features.iter().any(|ground| {
-                ground.layer == sensitive.layer
-                    && copper_features_touch(sensitive, ground, guard_distance)
+            let guard_candidates = ground_index.same_layer_near_feature(sensitive, guard_distance);
+            guard_candidate_count += guard_candidates.len();
+            let has_guard = guard_candidates.into_iter().any(|ground_index| {
+                copper_features_touch(sensitive, ground_features[ground_index], guard_distance)
             });
             if has_guard {
                 continue;
@@ -282,6 +309,14 @@ pub fn mixed_signal_partition_readiness(
             ));
         }
     }
+
+    log::trace!(
+        "mixed-signal partition readiness: source={} digital_candidates={} guard_candidates={} violations={}",
+        board.source,
+        digital_candidate_count,
+        guard_candidate_count,
+        violations.len()
+    );
 
     violations
 }
@@ -477,6 +512,41 @@ mod tests {
     }
 
     #[test]
+    fn mixed_signal_partition_readiness_culls_sparse_digital_fields() {
+        let mut copper = sparse_lines("MCU_GPIO", 2_000, 100.0);
+        copper.push(copper_line(
+            "ADC_IN",
+            CopperKind::Segment,
+            [0.0, 0.0],
+            [1.0, 0.0],
+            0.10,
+        ));
+        copper.push(copper_line(
+            "MCU_GPIO_NEAR",
+            CopperKind::Segment,
+            [0.0, 0.25],
+            [1.0, 0.25],
+            0.10,
+        ));
+        copper.push(copper_line_on_layer(
+            "MCU_GPIO_OTHER_LAYER",
+            CopperKind::Segment,
+            "B.Cu",
+            [0.0, 0.25],
+            [1.0, 0.25],
+            0.10,
+        ));
+        let board = board_with_copper(copper);
+
+        let violations = mixed_signal_partition_readiness(&board, &[], 0.30, 0.20, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(violations[0].message.as_ref().is_some_and(|message| {
+            message.contains("MCU_GPIO_NEAR") && !message.contains("MCU_GPIO_OTHER_LAYER")
+        }));
+    }
+
+    #[test]
     fn sensitive_net_spacing_readiness_reports_sensitive_near_noisy_net() {
         let board = board_with_copper(vec![
             copper_line("RF_ANT", CopperKind::Segment, [0.0, 0.0], [1.0, 0.0], 0.1),
@@ -488,6 +558,31 @@ mod tests {
                 0.1,
             ),
         ]);
+
+        let violations = sensitive_net_spacing_readiness(&board, 0.30, &[], 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "sensitive-net-spacing-readiness");
+    }
+
+    #[test]
+    fn sensitive_net_spacing_readiness_culls_sparse_noisy_fields() {
+        let mut copper = sparse_lines("MOTOR_PWM", 2_000, 100.0);
+        copper.push(copper_line(
+            "RF_ANT",
+            CopperKind::Segment,
+            [0.0, 0.0],
+            [1.0, 0.0],
+            0.10,
+        ));
+        copper.push(copper_line(
+            "MOTOR_PWM_NEAR",
+            CopperKind::Segment,
+            [0.0, 0.35],
+            [1.0, 0.35],
+            0.10,
+        ));
+        let board = board_with_copper(copper);
 
         let violations = sensitive_net_spacing_readiness(&board, 0.30, &[], 1.0e-9);
 
@@ -509,6 +604,28 @@ mod tests {
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "sensitive-return-readiness");
+    }
+
+    #[test]
+    fn sensitive_return_readiness_culls_sparse_ground_fields() {
+        let mut copper = sparse_lines("GND", 2_000, 100.0);
+        copper.push(copper_line(
+            "ADC_IN",
+            CopperKind::Segment,
+            [0.0, 0.0],
+            [1.0, 0.0],
+            0.10,
+        ));
+        copper.push(copper_line(
+            "AGND",
+            CopperKind::Segment,
+            [0.0, 0.18],
+            [1.0, 0.18],
+            0.10,
+        ));
+        let board = board_with_copper(copper);
+
+        assert!(sensitive_return_readiness(&board, &[], 0.30).is_empty());
     }
 
     fn board_with_copper(copper: Vec<CopperFeature>) -> BoardModel {
@@ -551,5 +668,21 @@ mod tests {
                 }),
             ),
         }
+    }
+
+    fn sparse_lines(prefix: &str, count: usize, offset_x: f64) -> Vec<CopperFeature> {
+        (0..count)
+            .map(|index| {
+                let x = offset_x + (index % 100) as f64 * 3.0;
+                let y = (index / 100) as f64 * 3.0;
+                copper_line(
+                    &format!("{prefix}{index}"),
+                    CopperKind::Segment,
+                    [x, y],
+                    [x + 1.0, y],
+                    0.10,
+                )
+            })
+            .collect()
     }
 }

@@ -12,6 +12,7 @@ use csgrs::csg::CSG;
 use geo::{Area, BoundingRect};
 
 use crate::checks::distance::polygon_boundary_distance;
+use crate::checks::spatial::CopperSpatialIndex;
 use crate::geometry::{circle_polygon, multipolygon_to_shapes, polygons_to_sketch};
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
@@ -276,13 +277,17 @@ pub fn thermal_copper_area_readiness(
                 .is_some_and(looks_thermal_or_power_net)
         })
         .collect::<Vec<_>>();
+    let zone_index = CopperSpatialIndex::new(&same_net_zones, search_radius);
     log::trace!(
-        "thermal copper-area readiness: source={} features={} zones={}",
+        "thermal copper-area readiness: source={} features={} zones={} buckets={} search_radius={search_radius:.6}",
         board.source,
         features.len(),
-        same_net_zones.len()
+        same_net_zones.len(),
+        zone_index.bucket_count()
     );
     let mut violations = Vec::new();
+    let mut thermal_feature_count = 0_usize;
+    let mut candidate_count = 0_usize;
 
     for feature in features {
         if feature.kind == CopperKind::Zone {
@@ -294,11 +299,14 @@ pub fn thermal_copper_area_readiness(
         if !looks_thermal_or_power_net(net) {
             continue;
         }
+        thermal_feature_count += 1;
 
-        let has_nearby_same_net_zone = same_net_zones
-            .iter()
-            .filter(|zone| zone.layer == feature.layer && zone.net == feature.net)
-            .any(|zone| distance(zone.location, feature.location) <= search_radius);
+        let zone_candidates =
+            zone_index.same_layer_centers_within(feature.location, &feature.layer, search_radius);
+        candidate_count += zone_candidates.len();
+        let has_nearby_same_net_zone = zone_candidates
+            .into_iter()
+            .any(|zone_index| same_net_zones[zone_index].net == feature.net);
         if has_nearby_same_net_zone {
             continue;
         }
@@ -316,6 +324,14 @@ pub fn thermal_copper_area_readiness(
         ));
     }
 
+    log::trace!(
+        "thermal copper-area readiness: source={} thermal_features={} zone_candidates={} violations={}",
+        board.source,
+        thermal_feature_count,
+        candidate_count,
+        violations.len()
+    );
+
     violations
 }
 
@@ -327,6 +343,7 @@ pub fn hot_component_spacing_readiness(
     min_area: f64,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
+    let feature_index = CopperSpatialIndex::new(&features, spacing);
     let hot_features = features
         .iter()
         .copied()
@@ -336,15 +353,20 @@ pub fn hot_component_spacing_readiness(
         })
         .collect::<Vec<_>>();
     log::trace!(
-        "hot-component spacing readiness: source={} hot_features={} spacing={spacing:.6}",
+        "hot-component spacing readiness: source={} hot_features={} features={} buckets={} spacing={spacing:.6}",
         board.source,
-        hot_features.len()
+        hot_features.len(),
+        features.len(),
+        feature_index.bucket_count()
     );
     let mut violations = Vec::new();
+    let mut candidate_count = 0_usize;
 
     for hot in hot_features {
-        for neighbor in &features {
-            if hot.layer != neighbor.layer || std::ptr::eq(hot, *neighbor) {
+        for neighbor_index in feature_index.same_layer_near_feature(hot, spacing) {
+            candidate_count += 1;
+            let neighbor = features[neighbor_index];
+            if std::ptr::eq(hot, neighbor) {
                 continue;
             }
             if hot.net == neighbor.net || neighbor.net.as_deref().is_some_and(looks_ground_net) {
@@ -380,6 +402,13 @@ pub fn hot_component_spacing_readiness(
         }
     }
 
+    log::trace!(
+        "hot-component spacing readiness: source={} candidate_pairs={} violations={}",
+        board.source,
+        candidate_count,
+        violations.len()
+    );
+
     violations
 }
 
@@ -408,13 +437,16 @@ pub fn thermal_mechanical_keepout_readiness(
         .into_iter()
         .filter(|feature| feature.net.as_deref().is_some_and(looks_hot_component_net))
         .collect::<Vec<_>>();
+    let hot_index = CopperSpatialIndex::new(&hot_features, keepout);
     log::trace!(
-        "thermal mechanical-keepout readiness: source={} hot_features={} mechanical_drills={} keepout={keepout:.6}",
+        "thermal mechanical-keepout readiness: source={} hot_features={} buckets={} mechanical_drills={} keepout={keepout:.6}",
         board.source,
         hot_features.len(),
+        hot_index.bucket_count(),
         mechanical_drills.len()
     );
     let mut violations = Vec::new();
+    let mut candidate_count = 0_usize;
 
     for drill in mechanical_drills {
         let keepout_radius = drill.diameter / 2.0 + keepout;
@@ -425,7 +457,9 @@ pub fn thermal_mechanical_keepout_readiness(
             }),
         );
 
-        for hot in &hot_features {
+        for hot_index in hot_index.all_layers_near_circle(drill.location, keepout_radius) {
+            candidate_count += 1;
+            let hot = hot_features[hot_index];
             if !feature_may_touch_circle(hot, drill.location, keepout_radius) {
                 continue;
             }
@@ -454,6 +488,13 @@ pub fn thermal_mechanical_keepout_readiness(
             ));
         }
     }
+
+    log::trace!(
+        "thermal mechanical-keepout readiness: source={} candidate_pairs={} violations={}",
+        board.source,
+        candidate_count,
+        violations.len()
+    );
 
     violations
 }
@@ -715,6 +756,33 @@ mod tests {
     }
 
     #[test]
+    fn thermal_copper_area_readiness_culls_sparse_zone_fields() {
+        let mut copper = sparse_rects("VOUT", CopperKind::Zone, 2_000, 100.0);
+        copper.push(copper_disc("VOUT", CopperKind::Pad, [0.0, 0.0], 0.30));
+        copper.push(copper_rect(
+            "VOUT",
+            CopperKind::Zone,
+            "F.Cu",
+            0.8,
+            -0.5,
+            1.8,
+            0.5,
+        ));
+        copper.push(copper_rect(
+            "VOUT",
+            CopperKind::Zone,
+            "B.Cu",
+            0.8,
+            -0.5,
+            1.8,
+            0.5,
+        ));
+        let board = board_with_copper(copper);
+
+        assert!(thermal_copper_area_readiness(&board, &[], 2.0).is_empty());
+    }
+
+    #[test]
     fn hot_component_spacing_readiness_reports_hot_feature_near_neighbor() {
         let board = board_with_copper(vec![
             copper_rect("LED_PWR", CopperKind::Pad, "F.Cu", 0.0, 0.0, 1.0, 1.0),
@@ -726,6 +794,46 @@ mod tests {
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "hot-component-spacing-readiness");
+    }
+
+    #[test]
+    fn hot_component_spacing_readiness_culls_sparse_neighbors() {
+        let mut copper = sparse_rects("SENSOR", CopperKind::Pad, 2_000, 100.0);
+        copper.push(copper_rect(
+            "LED_PWR",
+            CopperKind::Pad,
+            "F.Cu",
+            0.0,
+            0.0,
+            1.0,
+            1.0,
+        ));
+        copper.push(copper_rect(
+            "SENSOR_NEAR",
+            CopperKind::Pad,
+            "F.Cu",
+            1.2,
+            0.0,
+            2.0,
+            1.0,
+        ));
+        copper.push(copper_rect(
+            "SENSOR_OTHER_LAYER",
+            CopperKind::Pad,
+            "B.Cu",
+            1.2,
+            0.0,
+            2.0,
+            1.0,
+        ));
+        let board = board_with_copper(copper);
+
+        let violations = hot_component_spacing_readiness(&board, &[], 0.3, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(violations[0].message.as_ref().is_some_and(|message| {
+            message.contains("SENSOR_NEAR") && !message.contains("SENSOR_OTHER_LAYER")
+        }));
     }
 
     #[test]
@@ -860,5 +968,28 @@ mod tests {
                 }),
             ),
         }
+    }
+
+    fn sparse_rects(
+        prefix: &str,
+        kind: CopperKind,
+        count: usize,
+        offset_x: f64,
+    ) -> Vec<CopperFeature> {
+        (0..count)
+            .map(|index| {
+                let x = offset_x + (index % 100) as f64 * 3.0;
+                let y = (index / 100) as f64 * 3.0;
+                copper_rect(
+                    &format!("{prefix}_{index}"),
+                    kind,
+                    "F.Cu",
+                    x,
+                    y,
+                    x + 0.5,
+                    y + 0.5,
+                )
+            })
+            .collect()
     }
 }

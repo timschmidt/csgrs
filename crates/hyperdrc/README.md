@@ -205,16 +205,16 @@ copper weight, dielectric thickness, laminate Dk/Df, and Tg.
 The default suite covers the main `hyperdrc` readiness surfaces:
 
 - Layer geometry: copper overlap, edge clearance, mask and paste alignment,
-  silkscreen clearance, minimum feature width, polygon and trace-junction acid
-  traps, whole-layer and local copper-density balance, and board-outline
-  sanity.
+  silkscreen clearance, minimum feature width, independently selectable polygon
+  and trace-junction acid traps, whole-layer copper balance, first-class local
+  copper-density balance, and board-outline sanity.
 - Drill and fabrication context: annular ring, drill spacing, drill-to-copper
   clearance, routed-slot readiness, castellation intent, aspect ratio, and
   cross-source drill-table consistency.
 - KiCad board context: net intent, high-speed and high-current heuristics,
   reference-plane, split-plane, and return-proximity coverage, RF keepout, antenna copper-free
   region, and via-fence review, gold fingers, ESD proximity and TVS clamp
-  return-path proximity, protective-earth spacing, surge-protection keepouts, panelization clearance, mounting-hole grounding,
+  return-path proximity, bucketed voltage/protective-earth spacing, bucketed ESD protection/return, surge-protection keepouts, panelization clearance, mounting-hole grounding,
   plating, edge-clearance, distribution, spacing, copper-keepout review,
   same-net drill-break continuity review, different-net short isolation review,
   differential pair width, neck-down, skew, via proximity/return, and pair-to-pair spacing review,
@@ -222,28 +222,29 @@ The default suite covers the main `hyperdrc` readiness surfaces:
   switch-node and inductor copper keepouts, panel-feature
   outline registration review, edge-plating intent, castellation pitch,
   component edge/hole clearance, dense-pad escape, pad/via spacing,
-  mask-bridge review, thermal-via count/distribution, and config-driven
+  mask-bridge review, bucketed thermal copper-area/spacing/keepout review, thermal-via count/distribution, and config-driven
   stackup/net-class constraints for material, surface finish,
   laminate Dk/Df/Tg, soldermask process/color, IPC/fabricator class,
   fabrication capability thresholds, width, clearance, current, voltage,
   reference-plane, layer-count, via-count, approximate length/skew,
   differential-pair spacing, differential-pair return/guard proximity,
   mixed-signal partitioning, and impedance-control target/tolerance intent.
-  Companion checks for thermal-via distribution, antenna copper keepout,
-  TVS/ESD return path, inductor copper keepout, mixed-signal partitioning, and
+  Companion checks for thermal-via distribution, bucketed thermal copper-area/spacing/keepout review, bucketed RF/antenna keepout,
+  RF via-fence, TVS/ESD return path, bucketed switch-node and inductor copper keepout, bucketed sensitive-net/mixed-signal partitioning, and
   dense-pad via/mask review are also first-class CLI checks rather than only
   hidden side effects of broader review groups.
-- Assembly and test readiness: profile-driven component edge/hole/spacing
-  clearance, connector rework spacing, fiducials and fiducial copper keepouts,
-  tooling holes, mouse bites, testpoint coverage/accessibility including
-  IPC-D-356 access-side, soldermask, and KiCad pad-side parity hints,
-  testpoint copper clearance, pad-pair asymmetry, dense-pad escape,
-  selective/wave solder keepouts, press-fit keepouts, conformal-coating
-  keepouts, and IPC-D-356 coverage.
+- Assembly and test readiness: profile-driven component edge and bucketed hole/spacing
+  clearance, bucketed connector rework spacing, fiducials and fiducial copper
+  keepouts with nearby-blocker bucketing, tooling holes, mouse bites, testpoint coverage/accessibility
+  including IPC-D-356 access-side, soldermask, KiCad pad-side parity hints,
+  bucketed component/probe spacing review, testpoint copper clearance, bucketed
+  pad-pair asymmetry, dense-pad escape, bucketed selective/wave solder and
+  press-fit keepouts, conformal-coating keepouts, and IPC-D-356 coverage.
 - Production package readiness: Gerber package completeness, sidecar discovery,
   BOM/centroid/netlist structure, README release notes, fabrication and assembly
   drawings, rout drawings, order-parameter consistency, generated-date freshness,
-  side-role filename conflict detection, paste/mask companion checks,
+  duplicate layer/island-geometry detection, tiny and skinny layer-fragment
+  detection, side-role filename conflict detection, paste/mask companion checks,
   configurable required artifacts/layers, centroid unit/origin/rotation
   convention handoff, BOM compliance/traceability/source-control evidence for
   sensitive rows, package-level polarity/MSL handoffs, polarized same-package
@@ -268,12 +269,13 @@ Important tunables include `--keepout`, `--clearance`, `--min-width`,
 ## Waivers And CI
 
 Waiver files are JSON and can suppress findings by `id`, `check`, `layers`, and
-message text. The system also emits readiness warnings for incomplete waiver
-metadata so production waivers remain auditable: `reason`, `owner`,
-`review_date`, `source`, and `geometry_hash` are expected. `review_date` must be
-an ISO `YYYY-MM-DD` date and is warned when it has expired, so standing
-exceptions stay visible in pre-production review. A compact CI summary can be
-written with `--summary-file`. Proposed waiver stubs and active-finding
+message text. The default suite includes `waiver-governance`, and it can also be
+selected explicitly; it emits readiness warnings for incomplete waiver metadata
+so production waivers remain auditable: `reason`, `owner`, `review_date`,
+`source`, and `geometry_hash` are expected. `review_date` must be an ISO
+`YYYY-MM-DD` date and is warned when it has expired, so standing exceptions stay
+visible in pre-production review. A compact CI summary can be written with
+`--summary-file`. Proposed waiver stubs and active-finding
 baselines can be generated without suppressing anything. Baseline comparison is
 an audit artifact: it classifies drift in the active finding set, but waivers
 remain the mechanism for intentionally suppressing accepted findings.
@@ -289,7 +291,7 @@ remain the mechanism for intentionally suppressing accepted findings.
       "owner": "DRC reviewer",
       "review_date": "2027-05-01",
       "source": "https://jira.example/issues/123",
-      "geometry_hash": "sha256:0000"
+      "geometry_hash": "hyperdrc-geometry-v1:0123456789abcdef"
     }
   ]
 }
@@ -354,6 +356,7 @@ style so they can be copied into engineering review notes.
 - Chen, Fen, and Ning-Cheng Lee. "A Novel Solution for No-Clean Flux Not Fully Dried Under Component Terminations." *Indium Corporation Technical Paper*, 2015, https://www.electronics.org/system/files/technical_resource/E39%26S13_03%20-%20Ning%20C.%20Lee.pdf. Accessed 14 May 2026.
 - Chesser, Kevin, and May Porley. "What Are the Basic Guidelines for Layout Design of Mixed-Signal PCBs?" *Analog Dialogue*, vol. 56, no. 3, 2022, https://www.analog.com/en/resources/analog-dialogue/articles/what-are-the-basic-guidelines-for-layout-design-of-mixed-signal-pcbs.html. Accessed 14 May 2026.
 - Eurocircuits. "Tombstoning." *Eurocircuits Technical Guidelines*, https://www.eurocircuits.com/technical-guidelines/pcb-assembly-guidelines/tombstoning/. Accessed 13 May 2026.
+- Ericson, Christer. *Real-Time Collision Detection*. CRC Press, 2005.
 - FixturFab. "Design for Test: How to Design Test Points for PCB Testing." *FixturFab Resources*, https://fixturfab.com/resources/how-to-test/design-for-test. Accessed 13 May 2026.
 - GitHub. "Workflow Commands for GitHub Actions." *GitHub Docs*, https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands. Accessed 13 May 2026.
 - Harter, Stefan, et al. "The Effect of Area Shape and Area Ratio on Solder Paste Printing Performance." *SMTA International*, 2016, https://www.circuitnet.com/programs/55115.html.
@@ -364,6 +367,7 @@ style so they can be copied into engineering review notes.
 - IPC. *Bare Substrate Electrical Test Data Format: IPC-D-356B*. IPC, 1 Oct. 2002, https://shop.electronics.org/ipc-d-356/ipc-d-356-standard-only.
 - IPC. *Generic Requirements for Surface Mount Design and Land Pattern Standard: IPC-7351B*. IPC, 2010, https://shop.ipc.org/ipc-7351/ipc-7351-standard-only.
 - IEC. *IEC 61000-4-5: Electromagnetic Compatibility (EMC), Part 4-5: Testing and Measurement Techniques, Surge Immunity Test*. International Electrotechnical Commission, https://webstore.iec.ch/publication/4184.
+- IEEE. *IEEE Standard for Configuration Management in Systems and Software Engineering: IEEE Std 828-2012*. IEEE, 2012, https://doi.org/10.1109/IEEESTD.2012.6170935.
 - IPC. *Press-Fit Standard for Automotive Requirements and Other High-Reliability Applications: IPC-9797*. IPC, May 2020, https://www.ipc.org/TOC/IPC-9797-toc.pdf.
 - IPC. *Requirements for Soldered Electrical and Electronic Assemblies: IPC J-STD-001H*. IPC, Sept. 2020, https://shop.ipc.org/ipc-j-std-001/ipc-j-std-001-standard-only.
 - IPC. *Requirements for Electrical Testing of Unpopulated Printed Boards: IPC-9252B*. IPC, 2016, https://shop.ipc.org/ipc-9252/ipc-9252-standard-only.
