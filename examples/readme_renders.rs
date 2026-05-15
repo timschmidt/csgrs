@@ -264,19 +264,19 @@ fn render_readme_meshes() {
     render_mesh(
         "sdf",
         &Mesh::<()>::sdf(
-            |p| p.coords.norm() - 1.0,
-            (16, 16, 16),
-            Point3::new(-1.2, -1.2, -1.2),
-            Point3::new(1.2, 1.2, 1.2),
+            |p| p.coords.norm() - 0.75,
+            (20, 20, 20),
+            Point3::new(-1.1, -1.1, -1.1),
+            Point3::new(1.1, 1.1, 1.1),
             0.0,
             (),
         ),
     );
 
     let tpms_box = Mesh::<()>::cube(2.0, ());
-    render_mesh("gyroid", &tpms_box.gyroid(14, 0.75, 0.0, ()));
-    render_mesh("schwarz_p", &tpms_box.schwarz_p(14, 0.75, 0.0, ()));
-    render_mesh("schwarz_d", &tpms_box.schwarz_d(14, 0.75, 0.0, ()));
+    render_mesh("gyroid", &tpms_box.gyroid(20, 2.0, 0.0, ()));
+    render_mesh("schwarz_p", &tpms_box.schwarz_p(20, 2.0, 0.0, ()));
+    render_mesh("schwarz_d", &tpms_box.schwarz_d(20, 2.0, 0.0, ()));
     render_mesh(
         "spur_gear_involute",
         &Mesh::<()>::spur_gear_involute(0.18, 22, 20.0, 0.0, 0.0, 8, 0.35, ()),

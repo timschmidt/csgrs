@@ -37,8 +37,11 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
     // ------------  Specific minimal‑surface flavours  --------------------
 
-    /// Gyroid surface:  `sin x cos y + sin y cos z + sin z cos x = iso`  
-    /// (`period` rescales the spatial frequency; larger => slower repeat)
+    /// Gyroid surface:  `sin x cos y + sin y cos z + sin z cos x = iso`
+    /// after scaling coordinates by `2π / period`.
+    ///
+    /// `period` is a spatial wavelength in model units; larger values repeat
+    /// more slowly.
     /// **Mathematical Foundation**: Gyroid is a triply periodic minimal surface with zero mean curvature.
     /// **Optimization**: Pre-compute trigonometric values for better performance.
     pub fn gyroid(
@@ -49,13 +52,13 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         metadata: M,
     ) -> Mesh<M> {
         let res = (resolution.max(2), resolution.max(2), resolution.max(2));
-        let period_inv = 1.0 / period;
+        let scale = std::f64::consts::TAU as Real / period;
         self.tpms_from_sdf(
             move |p: &Point3<Real>| {
                 // Pre-compute scaled coordinates for efficiency
-                let x_scaled = p.x * period_inv;
-                let y_scaled = p.y * period_inv;
-                let z_scaled = p.z * period_inv;
+                let x_scaled = p.x * scale;
+                let y_scaled = p.y * scale;
+                let z_scaled = p.z * scale;
 
                 // Pre-compute trigonometric values to avoid redundant calculations
                 let (sin_x, cos_x) = x_scaled.sin_cos();
@@ -73,6 +76,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     }
 
     /// Schwarz‑P surface:  `cos x + cos y + cos z = iso`  (default iso = 0)
+    /// after scaling coordinates by `2π / period`.
     /// **Mathematical Foundation**: Schwarz P-surface has constant mean curvature and cubic symmetry.
     /// **Optimization**: Use direct cosine computation for this simpler surface equation.
     pub fn schwarz_p(
@@ -83,13 +87,13 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         metadata: M,
     ) -> Mesh<M> {
         let res = (resolution.max(2), resolution.max(2), resolution.max(2));
-        let period_inv = 1.0 / period;
+        let scale = std::f64::consts::TAU as Real / period;
         self.tpms_from_sdf(
             move |p: &Point3<Real>| {
                 // Pre-compute scaled coordinates
-                let x_scaled = p.x * period_inv;
-                let y_scaled = p.y * period_inv;
-                let z_scaled = p.z * period_inv;
+                let x_scaled = p.x * scale;
+                let y_scaled = p.y * scale;
+                let z_scaled = p.z * scale;
 
                 // **Mathematical Formula**: Schwarz P-surface equation
                 // P(x,y,z) = cos(x) + cos(y) + cos(z)
@@ -102,6 +106,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     }
 
     /// Schwarz‑D (Diamond) surface:  `sin x sin y sin z + sin x cos y cos z + ... = iso`
+    /// after scaling coordinates by `2π / period`.
     /// **Mathematical Foundation**: Diamond surface exhibits tetrahedral symmetry and is self-intersecting.
     /// **Optimization**: Pre-compute all trigonometric values for maximum efficiency.
     pub fn schwarz_d(
@@ -112,13 +117,13 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         metadata: M,
     ) -> Mesh<M> {
         let res = (resolution.max(2), resolution.max(2), resolution.max(2));
-        let period_inv = 1.0 / period;
+        let scale = std::f64::consts::TAU as Real / period;
         self.tpms_from_sdf(
             move |p: &Point3<Real>| {
                 // Pre-compute scaled coordinates
-                let x_scaled = p.x * period_inv;
-                let y_scaled = p.y * period_inv;
-                let z_scaled = p.z * period_inv;
+                let x_scaled = p.x * scale;
+                let y_scaled = p.y * scale;
+                let z_scaled = p.z * scale;
 
                 // Pre-compute all trigonometric values once
                 let (sin_x, cos_x) = x_scaled.sin_cos();
