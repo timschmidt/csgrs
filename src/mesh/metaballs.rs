@@ -14,6 +14,27 @@ pub struct MetaBall {
     pub radius: Real,
 }
 
+/// Diagnostics captured while sampling and meshing 3D metaballs.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct MetaballDiagnostics {
+    pub resolution: (u32, u32, u32),
+    pub ball_count: usize,
+    pub sample_count: usize,
+    pub finite_sample_count: usize,
+    pub non_finite_sample_count: usize,
+    pub negative_sample_count: usize,
+    pub zero_sample_count: usize,
+    pub positive_sample_count: usize,
+    pub min_finite_value: Option<Real>,
+    pub max_finite_value: Option<Real>,
+    pub crossing_cell_count: usize,
+    pub surface_nets_vertex_count: usize,
+    pub surface_nets_index_count: usize,
+    pub emitted_triangle_count: usize,
+    pub skipped_non_finite_triangle_count: usize,
+    pub degenerate_triangle_count: usize,
+}
+
 impl MetaBall {
     pub const fn new(center: Point3<Real>, radius: Real) -> Self {
         Self { center, radius }
@@ -59,8 +80,30 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         padding: Real,
         metadata: M,
     ) -> Mesh<M> {
+        Self::metaballs_with_diagnostics(balls, resolution, iso_value, padding, metadata).0
+    }
+
+    /// Creates a Mesh from metaballs and returns diagnostics for sampling and
+    /// surface-net triangle conversion.
+    pub fn metaballs_with_diagnostics(
+        balls: &[MetaBall],
+        resolution: (usize, usize, usize),
+        iso_value: Real,
+        padding: Real,
+        metadata: M,
+    ) -> (Mesh<M>, MetaballDiagnostics) {
         if balls.is_empty() {
-            return Mesh::empty(metadata);
+            return (
+                Mesh::empty(metadata),
+                MetaballDiagnostics {
+                    resolution: (
+                        resolution.0.max(2) as u32,
+                        resolution.1.max(2) as u32,
+                        resolution.2.max(2) as u32,
+                    ),
+                    ..MetaballDiagnostics::default()
+                },
+            );
         }
 
         // Determine bounding box of all metaballs (plus padding).
@@ -85,6 +128,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let nx = resolution.0.max(2) as u32;
         let ny = resolution.1.max(2) as u32;
         let nz = resolution.2.max(2) as u32;
+        let mut diagnostics = MetaballDiagnostics {
+            resolution: (nx, ny, nz),
+            ball_count: balls.len(),
+            sample_count: (nx * ny * nz) as usize,
+            ..MetaballDiagnostics::default()
+        };
 
         // Spacing in each axis
         let dx = (max_pt.x - min_pt.x) / (nx as Real - 1.0);
@@ -108,8 +157,33 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                     let xf = min_pt.x + (ix as Real) * dx;
                     let p = Point3::new(xf, yf, zf);
 
-                    let val = scalar_field_metaballs(balls, &p) - iso_value;
-                    field_values[index_3d(ix, iy, iz)] = val as f32;
+                    let field_value = scalar_field_metaballs(balls, &p);
+                    field_values[index_3d(ix, iy, iz)] = if field_value.is_finite() {
+                        diagnostics.finite_sample_count += 1;
+                        diagnostics.min_finite_value = Some(
+                            diagnostics
+                                .min_finite_value
+                                .map_or(field_value, |current| current.min(field_value)),
+                        );
+                        diagnostics.max_finite_value = Some(
+                            diagnostics
+                                .max_finite_value
+                                .map_or(field_value, |current| current.max(field_value)),
+                        );
+                        let shifted = field_value - iso_value;
+                        if shifted < 0.0 {
+                            diagnostics.negative_sample_count += 1;
+                        } else if shifted > 0.0 {
+                            diagnostics.positive_sample_count += 1;
+                        } else {
+                            diagnostics.zero_sample_count += 1;
+                        }
+                        shifted as f32
+                    } else {
+                        diagnostics.non_finite_sample_count += 1;
+                        diagnostics.positive_sample_count += 1;
+                        1e10_f32
+                    };
                 }
             }
         }
@@ -154,6 +228,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         }
 
         let shape = GridShape { nx, ny, nz };
+        diagnostics.crossing_cell_count = count_crossing_cells(&field_values, nx, ny, nz);
 
         // We'll collect the output into a SurfaceNetsBuffer
         let mut sn_buffer = SurfaceNetsBuffer::default();
@@ -169,6 +244,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             [max_x, max_y, max_z],
             &mut sn_buffer,
         );
+        diagnostics.surface_nets_vertex_count = sn_buffer.positions.len();
+        diagnostics.surface_nets_index_count = sn_buffer.indices.len();
 
         // Convert the resulting surface net indices/positions into Polygons
         // for the csgrs data structures.
@@ -210,26 +287,85 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             let n1 = sn_buffer.normals[i1];
             let n2 = sn_buffer.normals[i2];
 
+            let n0v = Vector3::new(n0[0] as Real, n0[1] as Real, n0[2] as Real);
+            let n1v = Vector3::new(n1[0] as Real, n1[1] as Real, n1[2] as Real);
+            let n2v = Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real);
+
+            if !(point_finite(&p0_real)
+                && point_finite(&p1_real)
+                && point_finite(&p2_real)
+                && vec_finite(&n0v)
+                && vec_finite(&n1v)
+                && vec_finite(&n2v))
+            {
+                diagnostics.skipped_non_finite_triangle_count += 1;
+                continue;
+            }
+
+            if triangle_area2(p0_real, p1_real, p2_real) <= Real::EPSILON {
+                diagnostics.degenerate_triangle_count += 1;
+            }
+
             // Construct your vertices:
-            let v0 = Vertex::new(
-                p0_real,
-                Vector3::new(n0[0] as Real, n0[1] as Real, n0[2] as Real),
-            );
-            let v1 = Vertex::new(
-                p1_real,
-                Vector3::new(n1[0] as Real, n1[1] as Real, n1[2] as Real),
-            );
-            let v2 = Vertex::new(
-                p2_real,
-                Vector3::new(n2[0] as Real, n2[1] as Real, n2[2] as Real),
-            );
+            let v0 = Vertex::new(p0_real, n0v);
+            let v1 = Vertex::new(p1_real, n1v);
+            let v2 = Vertex::new(p2_real, n2v);
 
             // Each tri is turned into a Polygon with 3 vertices
             let poly = Polygon::new(vec![v0, v2, v1], metadata.clone());
             triangles.push(poly);
+            diagnostics.emitted_triangle_count += 1;
         }
 
         // Build and return a Mesh from these polygons
-        Mesh::from_polygons(&triangles, metadata)
+        (Mesh::from_polygons(&triangles, metadata), diagnostics)
     }
+}
+
+#[inline]
+fn point_finite(p: &Point3<Real>) -> bool {
+    p.coords.iter().all(|&c| c.is_finite())
+}
+
+#[inline]
+fn vec_finite(v: &Vector3<Real>) -> bool {
+    v.iter().all(|&c| c.is_finite())
+}
+
+fn count_crossing_cells(field_values: &[f32], nx: u32, ny: u32, nz: u32) -> usize {
+    if nx < 2 || ny < 2 || nz < 2 {
+        return 0;
+    }
+
+    let index = |x: u32, y: u32, z: u32| -> usize { ((z * ny + y) * nx + x) as usize };
+    let mut count = 0;
+
+    for z in 0..(nz - 1) {
+        for y in 0..(ny - 1) {
+            for x in 0..(nx - 1) {
+                let corners = [
+                    field_values[index(x, y, z)],
+                    field_values[index(x + 1, y, z)],
+                    field_values[index(x, y + 1, z)],
+                    field_values[index(x + 1, y + 1, z)],
+                    field_values[index(x, y, z + 1)],
+                    field_values[index(x + 1, y, z + 1)],
+                    field_values[index(x, y + 1, z + 1)],
+                    field_values[index(x + 1, y + 1, z + 1)],
+                ];
+                let has_negative = corners.iter().any(|value| *value < 0.0);
+                let has_positive = corners.iter().any(|value| *value > 0.0);
+                let has_zero = corners.contains(&0.0);
+                if (has_negative && has_positive) || has_zero {
+                    count += 1;
+                }
+            }
+        }
+    }
+
+    count
+}
+
+fn triangle_area2(a: Point3<Real>, b: Point3<Real>, c: Point3<Real>) -> Real {
+    (b - a).cross(&(c - a)).norm()
 }

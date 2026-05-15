@@ -14,8 +14,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// * `resolution` – voxel grid sampling resolution `(nx, ny, nz)`
     /// * `iso_value`  – iso‑contour value (normally 0.0)
     ///
-    /// The result is intersected against `self`, so the surface only appears inside
-    /// the original solid's bounding box / volume.
+    /// The result is sampled inside `self`'s bounding box. The TPMS output is an
+    /// open implicit surface, so it is not boolean-intersected with `self`; BSP
+    /// solid booleans assume closed volumes and can delete valid sheet triangles.
     #[inline]
     fn tpms_from_sdf<F>(
         &self,
@@ -31,9 +32,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let min_pt = aabb.mins;
         let max_pt = aabb.maxs;
         // Mesh the implicit surface with the generic surface‑nets backend
-        let surf = Mesh::sdf(sdf_fn, resolution, min_pt, max_pt, iso_value, metadata);
-        // Clip the infinite TPMS down to the original shape's volume
-        surf.intersection(self)
+        Mesh::sdf(sdf_fn, resolution, min_pt, max_pt, iso_value, metadata)
     }
 
     // ------------  Specific minimal‑surface flavours  --------------------

@@ -23,7 +23,7 @@ use geo::{
 use image::{GrayImage, Luma, Rgba, RgbaImage};
 use nalgebra::{Point2, Point3, Vector3};
 use std::fs;
-use std::path::Path;
+use std::path::PathBuf;
 
 const SIZE: u32 = 1024;
 const PADDING: Real = 0.12;
@@ -34,12 +34,13 @@ const EDGE_2D: Rgba<u8> = Rgba([15, 41, 70, 255]);
 const LINE_2D: Rgba<u8> = Rgba([31, 80, 126, 255]);
 
 fn main() {
-    fs::create_dir_all("docs").expect("create docs directory");
+    let output_dir = output_dir();
+    fs::create_dir_all(&output_dir).expect("create README render output directory");
 
     render_readme_sketches();
     render_readme_meshes();
 
-    println!("README renders written to docs/*.png");
+    println!("README renders written to {}/*.png", output_dir.display());
 }
 
 fn render_readme_sketches() {
@@ -610,9 +611,15 @@ fn draw_line(image: &mut RgbaImage, a: (u32, u32), b: (u32, u32), color: Rgba<u8
 }
 
 fn save_image(name: &str, image: &RgbaImage) {
-    let path = Path::new("docs").join(name).with_extension("png");
+    let path = output_dir().join(name).with_extension("png");
     image.save(&path).expect("save README render");
     println!("wrote {}", path.display());
+}
+
+fn output_dir() -> PathBuf {
+    std::env::var_os("README_RENDER_OUTPUT_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("docs"))
 }
 
 #[derive(Clone, Copy)]
