@@ -5,13 +5,17 @@
 //! `hyperlimit` predicate policy model.
 
 mod bulge;
+mod classify;
 mod error;
+mod intersect;
 mod point;
 mod policy;
 mod segment;
 
 pub use bulge::BulgeVertex2;
+pub use classify::{Classification, LineSide, UncertaintyReason};
 pub use error::{CurveError, CurveResult};
+pub use intersect::{IntersectionKind, LineLineIntersection, ParamRange};
 pub use point::Point2;
 pub use policy::{CurvePolicy, NumericMode, Tolerance};
 pub use segment::{CircularArc2, LineSeg2, Segment2};
@@ -36,6 +40,17 @@ mod tests {
 
     fn p<B: Backend>(x: i32, y: i32) -> Point2<B> {
         Point2::new(s(x), s(y))
+    }
+
+    fn topology_policy() -> CurvePolicy {
+        #[cfg(feature = "hyperreal")]
+        {
+            CurvePolicy::certified()
+        }
+        #[cfg(not(feature = "hyperreal"))]
+        {
+            CurvePolicy::approximate(Tolerance::new(1e-9, 1e-9))
+        }
     }
 
     #[test]
@@ -126,5 +141,101 @@ mod tests {
             panic!("semicircle bulge should construct an arc");
         };
         assert_eq!(arc.radius_squared().to_f64_approx(), Some(1.0));
+    }
+
+    #[test]
+    fn line_side_classifies_left_right_and_on() {
+        let line = LineSeg2::try_new(p::<DefaultBackend>(0, 0), p::<DefaultBackend>(2, 0)).unwrap();
+        assert_eq!(
+            line.classify_point(&p::<DefaultBackend>(1, 1), &topology_policy()),
+            Classification::Decided(LineSide::Left)
+        );
+        assert_eq!(
+            line.classify_point(&p::<DefaultBackend>(1, -1), &topology_policy()),
+            Classification::Decided(LineSide::Right)
+        );
+        assert_eq!(
+            line.classify_point(&p::<DefaultBackend>(1, 0), &topology_policy()),
+            Classification::Decided(LineSide::On)
+        );
+    }
+
+    #[test]
+    fn line_line_intersection_crosses_at_point() {
+        let a = LineSeg2::try_new(p::<DefaultBackend>(0, 0), p::<DefaultBackend>(2, 2)).unwrap();
+        let b = LineSeg2::try_new(p::<DefaultBackend>(0, 2), p::<DefaultBackend>(2, 0)).unwrap();
+        let intersection = a.intersect_line(&b, &topology_policy()).unwrap();
+
+        let LineLineIntersection::Point {
+            point,
+            a_param,
+            b_param,
+            kind,
+        } = intersection
+        else {
+            panic!("expected one point intersection");
+        };
+
+        let half = Scalar::<DefaultBackend>::try_from(0.5_f64).unwrap();
+        assert_eq!(point, p::<DefaultBackend>(1, 1));
+        assert_eq!(a_param, half);
+        assert_eq!(
+            b_param,
+            Scalar::<DefaultBackend>::try_from(0.5_f64).unwrap()
+        );
+        assert_eq!(kind, IntersectionKind::Crossing);
+    }
+
+    #[test]
+    fn line_line_intersection_detects_endpoint_touch() {
+        let a = LineSeg2::try_new(p::<DefaultBackend>(0, 0), p::<DefaultBackend>(1, 0)).unwrap();
+        let b = LineSeg2::try_new(p::<DefaultBackend>(1, 0), p::<DefaultBackend>(1, 1)).unwrap();
+        let intersection = a.intersect_line(&b, &topology_policy()).unwrap();
+
+        let LineLineIntersection::Point { point, kind, .. } = intersection else {
+            panic!("expected endpoint point intersection");
+        };
+
+        assert_eq!(point, p::<DefaultBackend>(1, 0));
+        assert_eq!(kind, IntersectionKind::Endpoint);
+    }
+
+    #[test]
+    fn line_line_intersection_detects_collinear_overlap() {
+        let a = LineSeg2::try_new(p::<DefaultBackend>(0, 0), p::<DefaultBackend>(4, 0)).unwrap();
+        let b = LineSeg2::try_new(p::<DefaultBackend>(2, 0), p::<DefaultBackend>(6, 0)).unwrap();
+        let intersection = a.intersect_line(&b, &topology_policy()).unwrap();
+
+        let LineLineIntersection::Overlap {
+            segment,
+            a_range,
+            b_range,
+        } = intersection
+        else {
+            panic!("expected overlap");
+        };
+
+        assert_eq!(segment.start(), &p::<DefaultBackend>(2, 0));
+        assert_eq!(segment.end(), &p::<DefaultBackend>(4, 0));
+        assert_eq!(
+            a_range.start(),
+            &Scalar::<DefaultBackend>::try_from(0.5_f64).unwrap()
+        );
+        assert_eq!(a_range.end(), &s::<DefaultBackend>(1));
+        assert_eq!(b_range.start(), &s::<DefaultBackend>(0));
+        assert_eq!(
+            b_range.end(),
+            &Scalar::<DefaultBackend>::try_from(0.5_f64).unwrap()
+        );
+    }
+
+    #[test]
+    fn line_line_intersection_detects_parallel_disjoint() {
+        let a = LineSeg2::try_new(p::<DefaultBackend>(0, 0), p::<DefaultBackend>(1, 0)).unwrap();
+        let b = LineSeg2::try_new(p::<DefaultBackend>(0, 1), p::<DefaultBackend>(1, 1)).unwrap();
+        assert_eq!(
+            a.intersect_line(&b, &topology_policy()).unwrap(),
+            LineLineIntersection::None
+        );
     }
 }

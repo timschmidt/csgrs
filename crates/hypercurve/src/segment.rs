@@ -2,7 +2,8 @@
 
 use hyperlattice::{Backend, DefaultBackend, Scalar, ScalarSign, ZeroStatus};
 
-use crate::{CurveError, CurveResult, Point2};
+use crate::classify::classify_oriented_line;
+use crate::{Classification, CurveError, CurvePolicy, CurveResult, LineSide, Point2};
 
 /// A finite line segment.
 #[derive(Clone, Debug, PartialEq)]
@@ -48,6 +49,15 @@ impl<B: Backend> LineSeg2<B> {
     /// Returns the point at affine parameter `t`, where `0` is start and `1` is end.
     pub fn point_at(&self, t: Scalar<B>) -> Point2<B> {
         self.start.lerp(&self.end, t)
+    }
+
+    /// Classifies a point relative to this oriented line segment's supporting line.
+    pub fn classify_point(
+        &self,
+        point: &Point2<B>,
+        policy: &CurvePolicy,
+    ) -> Classification<LineSide> {
+        classify_oriented_line(&self.start, &self.end, point, policy)
     }
 }
 
