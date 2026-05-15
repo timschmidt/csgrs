@@ -70,7 +70,9 @@ tests, or custom CI tooling.
 
 The binary in `src/main.rs` is intentionally thin: it parses `Cli` with `clap`
 and calls `hyperdrc::run_cli`, which delegates to the library and then maps
-active findings to the traditional non-zero process exit status.
+active findings to the traditional non-zero process exit status. Use
+`--allow-findings` for exploratory or report-only automation that should emit
+the full report and still return exit code 0 when findings remain.
 
 ## Quick Start
 
@@ -131,6 +133,16 @@ cargo run -- \
   --kicad-copper-layer B.Cu \
   --excellon panel-holes.drl \
   --ipc356 board.ipc \
+  --format geojson
+```
+
+Generate a release report without failing the surrounding shell recipe on
+findings:
+
+```sh
+cargo run -- \
+  --allow-findings \
+  --kicad-pcb board.kicad_pcb \
   --format geojson
 ```
 

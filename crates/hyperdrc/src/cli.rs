@@ -826,6 +826,11 @@ pub struct Cli {
     /// Field `summary_file`.
     pub summary_file: Option<PathBuf>,
 
+    /// Return exit code 0 even when active findings remain.
+    #[arg(long = "allow-findings")]
+    /// Field `allow_findings`.
+    pub allow_findings: bool,
+
     /// Declared total copper layer count from order metadata.
     #[arg(long = "declared-copper-layer-count")]
     /// Field `declared_copper_layer_count`.
@@ -869,6 +874,7 @@ mod tests {
     fn parses_multiple_checks_and_inputs() {
         let cli = Cli::parse_from([
             "hyperdrc",
+            "--allow-findings",
             "--check",
             "copper-overlap",
             "--check",
@@ -1304,6 +1310,7 @@ mod tests {
         );
         assert_eq!(cli.silk_layers, vec![1]);
         assert_eq!(cli.format, OutputFormat::Json);
+        assert!(cli.allow_findings);
         assert_eq!(cli.files.len(), 2);
     }
 

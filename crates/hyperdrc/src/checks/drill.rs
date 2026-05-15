@@ -17,6 +17,8 @@ use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbSketch};
 
+use super::spatial::CopperSpatialIndex;
+
 /// Run the `annular_ring` design-readiness check or report helper.
 pub fn annular_ring(
     board: &BoardModel,
@@ -179,11 +181,20 @@ pub fn drill_to_copper_clearance(
     let mut drills = board.drills.clone();
     drills.extend_from_slice(extra_drills);
     let copper_features = selected_copper_features(board, selected_layers);
+    let maximum_keepout_radius = drills
+        .iter()
+        .map(|drill| drill.diameter / 2.0 + clearance)
+        .fold(0.0_f64, f64::max);
+    // Clearance is still decided by exact geometry below. This grid is only the
+    // broad phase described by Ericson, Real-Time Collision Detection, 2005,
+    // reducing sparse drill/copper fields before CSG intersection.
+    let copper_index = CopperSpatialIndex::new(&copper_features, maximum_keepout_radius);
     log::trace!(
-        "drill-to-copper clearance: source={} drills={} copper_features={} clearance={clearance:.6}",
+        "drill-to-copper clearance: source={} drills={} copper_features={} spatial_buckets={} clearance={clearance:.6}",
         board.source,
         drills.len(),
-        copper_features.len()
+        copper_features.len(),
+        copper_index.bucket_count()
     );
     let mut violations = Vec::new();
 
@@ -191,7 +202,8 @@ pub fn drill_to_copper_clearance(
         let keepout_radius = drill.diameter / 2.0 + clearance;
         let mut keepout = None;
 
-        for copper in &copper_features {
+        for candidate_index in copper_index.all_layers_near_circle(drill.location, keepout_radius) {
+            let copper = copper_features[candidate_index];
             if drill.plated && drill.net.is_some() && drill.net == copper.net {
                 continue;
             }
@@ -616,4 +628,126 @@ fn distance(left: [f64; 2], right: [f64; 2]) -> f64 {
     let dx = left[0] - right[0];
     let dy = left[1] - right[1];
     (dx * dx + dy * dy).sqrt()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::drill_to_copper_clearance;
+    use crate::LayerMetadata;
+    use crate::geometry::{line_polygon, polygons_to_sketch, rect_polygon};
+    use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
+
+    #[test]
+    fn drill_to_copper_clearance_reports_other_net_copper() {
+        let mut board = board_with_copper(vec![segment("SIG", [-1.0, 0.0], [1.0, 0.0], 0.20)]);
+        board.drills = vec![drill(Some("GND"), [0.0, 0.0], 0.40, true)];
+
+        let violations = drill_to_copper_clearance(&board, &[], 0.20, &[], 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "drill-to-copper-clearance");
+    }
+
+    #[test]
+    fn drill_to_copper_clearance_allows_same_net_plated_and_selected_out_copper() {
+        let mut same_net = board_with_copper(vec![segment("SIG", [-1.0, 0.0], [1.0, 0.0], 0.20)]);
+        same_net.drills = vec![drill(Some("SIG"), [0.0, 0.0], 0.40, true)];
+        assert!(drill_to_copper_clearance(&same_net, &[], 0.20, &[], 1.0e-9).is_empty());
+
+        let mut selected_out = board_with_copper(vec![segment_on_layer(
+            "B.Cu",
+            "SIG",
+            [-1.0, 0.0],
+            [1.0, 0.0],
+            0.20,
+        )]);
+        selected_out.drills = vec![drill(None, [0.0, 0.0], 0.40, false)];
+        assert!(
+            drill_to_copper_clearance(&selected_out, &[], 0.20, &["F.Cu".to_string()], 1.0e-9)
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn drill_to_copper_clearance_culls_large_sparse_feature_sets() {
+        let mut copper = Vec::new();
+        for index in 0..900 {
+            copper.push(pad(
+                &format!("N{index}"),
+                [20.0 + index as f64 * 2.0, 20.0],
+                [0.4, 0.4],
+            ));
+        }
+        copper.push(segment("SIG", [-1.0, 0.0], [1.0, 0.0], 0.20));
+        let mut board = board_with_copper(copper);
+        board.drills = vec![drill(None, [0.0, 0.0], 0.40, false)];
+
+        let started = std::time::Instant::now();
+        let violations = drill_to_copper_clearance(&board, &[], 0.20, &[], 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "drill-to-copper clearance should cull sparse copper before exact CSG"
+        );
+    }
+
+    fn board_with_copper(copper: Vec<CopperFeature>) -> BoardModel {
+        BoardModel {
+            source: "test".to_string(),
+            copper,
+            drills: Vec::new(),
+            board_outline: None,
+            panel_features: None,
+        }
+    }
+
+    fn segment(net: &str, start: [f64; 2], end: [f64; 2], width: f64) -> CopperFeature {
+        segment_on_layer("F.Cu", net, start, end, width)
+    }
+
+    fn segment_on_layer(
+        layer: &str,
+        net: &str,
+        start: [f64; 2],
+        end: [f64; 2],
+        width: f64,
+    ) -> CopperFeature {
+        CopperFeature {
+            layer: layer.to_string(),
+            net: Some(net.to_string()),
+            kind: CopperKind::Segment,
+            location: [(start[0] + end[0]) / 2.0, (start[1] + end[1]) / 2.0],
+            sketch: polygons_to_sketch(
+                vec![line_polygon(start, end, width).expect("test segment should be valid")],
+                Some(LayerMetadata {
+                    name: "segment".to_string(),
+                }),
+            ),
+        }
+    }
+
+    fn pad(net: &str, location: [f64; 2], size: [f64; 2]) -> CopperFeature {
+        CopperFeature {
+            layer: "F.Cu".to_string(),
+            net: Some(net.to_string()),
+            kind: CopperKind::Pad,
+            location,
+            sketch: polygons_to_sketch(
+                vec![rect_polygon(location, size, 0.0)],
+                Some(LayerMetadata {
+                    name: "pad".to_string(),
+                }),
+            ),
+        }
+    }
+
+    fn drill(net: Option<&str>, location: [f64; 2], diameter: f64, plated: bool) -> DrillFeature {
+        DrillFeature {
+            location,
+            diameter,
+            net: net.map(str::to_string),
+            plated,
+        }
+    }
 }

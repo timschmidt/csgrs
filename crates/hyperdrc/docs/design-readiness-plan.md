@@ -133,7 +133,9 @@ input records, but they should be lifted before core geometry decisions.
 - `via-in-pad-readiness`: warn when KiCad via copper overlaps a same-net pad on
   the same layer, so fill, tenting, and paste treatment can be reviewed.
 - `drill-to-copper-clearance`: offset KiCad and Excellon drill holes by a
-  configured clearance and intersect against other-net KiCad copper.
+  configured clearance and intersect against other-net KiCad copper. Selected
+  copper now uses the shared spatial broad phase before exact keepout/copper CSG
+  intersection so sparse drill fields stay bounded.
 - `board-outline-drill-clearance`: offset KiCad and Excellon drill holes by
   their radius plus the configured drill clearance and report keepout area that
   is not contained by the KiCad board outline.
@@ -203,6 +205,9 @@ input records, but they should be lifted before core geometry decisions.
   same-net pad, via, or segment anchor within the configured net clearance.
 - `same-net-island-readiness`: warn when one net appears as disconnected
   copper islands on the same selected layer.
+- `same-net-drill-break-readiness`: warn when non-plated KiCad or Excellon drill
+  keepouts cut through netted trace or zone copper. Routed copper candidates use
+  the shared spatial broad phase before exact CSG intersection.
 - `return-path-readiness`: warn when likely high-speed KiCad via transitions do
   not have a parsed ground stitching via within the configured net clearance.
 - `high-current-readiness`: warn when likely power KiCad nets span multiple

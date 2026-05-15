@@ -193,7 +193,9 @@ hole, slot, castellation, or drill-table record:
 These checks compare KiCad holes with sidecar Excellon and IPC-D-356 records,
 review plated versus non-plated intent, catch edge/castellation ambiguity,
 estimate annular-ring margin, and build conservative circular keepouts for slots
-until exact routed-slot geometry is modeled.
+until exact routed-slot geometry is modeled. `drill-to-copper-clearance` uses
+the shared spatial broad phase before exact keepout/copper CSG intersection so
+sparse drill fields do not devolve into all-copper scans.
 
 ## Board Checks
 
@@ -410,9 +412,11 @@ review visible alongside the via-array capacity check.
 between separated same-layer ground-zone islands, returning the uncovered trace
 region as the review shape. `return-path-proximity-readiness` reports likely
 high-speed segment or pad copper whose nearest same-layer ground copper exceeds
-the return-distance review threshold. `same-net-drill-break-readiness` reports non-plated drill or slot keepouts that
-intersect netted segment/zone copper, a conservative pre-test continuity signal
-for traces cut by mechanical holes. `different-net-short-readiness` reports
+the return-distance review threshold. `same-net-drill-break-readiness` reports
+non-plated drill or slot keepouts that intersect netted segment/zone copper, a
+conservative pre-test continuity signal for traces cut by mechanical holes; it
+uses the shared spatial broad phase before exact CSG intersection.
+`different-net-short-readiness` reports
 same-layer copper overlaps between different named nets as a conservative
 bare-board isolation signal. `net-constraint-readiness` applies optional JSON
 `net_classes` entries. It

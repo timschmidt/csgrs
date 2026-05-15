@@ -367,15 +367,22 @@ pub fn run(cli: Cli) -> Result<RunOutcome> {
 /// Run HyperDRC as a command-line program.
 ///
 /// This wrapper is intentionally thin: it delegates all work to [`run`] and then
-/// converts active findings into the process exit status expected by CI.
+/// converts active findings into the process exit status expected by CI unless
+/// the caller explicitly requested report-only behavior with
+/// [`Cli::allow_findings`].
 pub fn run_cli(cli: Cli) -> Result<()> {
     crate::process_lifecycle::install_cli_termination_handler()
         .context("failed to install CLI termination handler")?;
+    let allow_findings = cli.allow_findings;
     let outcome = run(cli)?;
-    if outcome.report.violation_count > 0 {
+    if should_fail_on_findings(allow_findings, outcome.report.violation_count) {
         std::process::exit(1);
     }
     Ok(())
+}
+
+fn should_fail_on_findings(allow_findings: bool, violation_count: usize) -> bool {
+    !allow_findings && violation_count > 0
 }
 
 fn status_activity<T>(activity: &str, work: impl FnOnce() -> Result<T>) -> Result<T> {
@@ -3333,8 +3340,9 @@ mod tests {
     use super::{
         Layer, explicit_layer_pairs, input_manifest, layer_pairs, load_all_layers, load_boards,
         load_excellon_drills, load_ipc356_points, load_layers, load_text_artifacts, manifest_input,
-        package_inputs, parser_diagnostics, run, validate_board_outline_role, validate_layer_index,
-        validate_layer_indexes, validate_silk_layer_roles, waiver_governance_selected,
+        package_inputs, parser_diagnostics, run, should_fail_on_findings,
+        validate_board_outline_role, validate_layer_index, validate_layer_indexes,
+        validate_silk_layer_roles, waiver_governance_selected,
     };
 
     const VALID_GERBER: &str =
@@ -3361,6 +3369,13 @@ mod tests {
             Check::WaiverGovernance
         ]));
         assert!(!waiver_governance_selected(&[Check::CopperBalance]));
+    }
+
+    #[test]
+    fn cli_exit_status_policy_allows_report_only_runs() {
+        assert!(!should_fail_on_findings(false, 0));
+        assert!(should_fail_on_findings(false, 1));
+        assert!(!should_fail_on_findings(true, 1));
     }
 
     fn make_board_model(

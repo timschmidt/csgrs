@@ -10,19 +10,20 @@ use hyperdrc::checks::{
     differential_pair_neckdown_readiness, differential_pair_skew_readiness,
     differential_pair_to_pair_spacing_readiness, differential_pair_via_proximity_readiness,
     differential_pair_via_return_readiness, differential_pair_width_readiness,
-    duplicate_layer_geometry_readiness, duplicate_layer_island_readiness, esd_protection_readiness,
-    esd_return_path_readiness, fiducial_keepout_readiness, hot_component_spacing_readiness,
-    inductor_copper_keepout_readiness, local_copper_density_readiness, min_copper_neck_width,
-    mixed_signal_partition_readiness, pad_pair_asymmetry_readiness, power_pad_entry_readiness,
-    power_via_return_readiness, press_fit_keepout_readiness, production_artifact_readiness,
-    protective_earth_spacing_readiness, return_path_proximity_readiness, rf_keepout_readiness,
-    rf_via_fence_readiness, same_net_drill_break_readiness,
-    selective_wave_solder_keepout_readiness, sensitive_net_spacing_readiness,
-    sensitive_return_readiness, skinny_layer_feature_readiness, split_plane_crossing_readiness,
-    surge_protection_keepout_readiness, switch_node_keepout_readiness,
-    testpoint_accessibility_readiness, thermal_copper_area_readiness,
-    thermal_mechanical_keepout_readiness, thermal_via_distribution_readiness,
-    tiny_layer_feature_readiness, trace_junction_acid_trap_readiness, voltage_clearance_readiness,
+    drill_to_copper_clearance, duplicate_layer_geometry_readiness,
+    duplicate_layer_island_readiness, esd_protection_readiness, esd_return_path_readiness,
+    fiducial_keepout_readiness, hot_component_spacing_readiness, inductor_copper_keepout_readiness,
+    local_copper_density_readiness, min_copper_neck_width, mixed_signal_partition_readiness,
+    pad_pair_asymmetry_readiness, power_pad_entry_readiness, power_via_return_readiness,
+    press_fit_keepout_readiness, production_artifact_readiness, protective_earth_spacing_readiness,
+    return_path_proximity_readiness, rf_keepout_readiness, rf_via_fence_readiness,
+    same_net_drill_break_readiness, selective_wave_solder_keepout_readiness,
+    sensitive_net_spacing_readiness, sensitive_return_readiness, skinny_layer_feature_readiness,
+    split_plane_crossing_readiness, surge_protection_keepout_readiness,
+    switch_node_keepout_readiness, testpoint_accessibility_readiness,
+    thermal_copper_area_readiness, thermal_mechanical_keepout_readiness,
+    thermal_via_distribution_readiness, tiny_layer_feature_readiness,
+    trace_junction_acid_trap_readiness, voltage_clearance_readiness,
 };
 use hyperdrc::geometry::{circle_polygon, line_polygon, polygons_to_sketch, rect_polygon};
 use hyperdrc::ipc356::{Ipc356AccessSide, Ipc356FeatureType, Ipc356Point, Ipc356Soldermask};
@@ -736,6 +737,39 @@ fn main() {
         }
     });
 
+    let drill_clearance_sparse_board = BoardModel {
+        source: "bench".to_string(),
+        copper: (0..400)
+            .map(|index| {
+                bench_pad(
+                    &format!("N{index}"),
+                    [20.0 + index as f64 * 2.0, 20.0],
+                    [0.4, 0.4],
+                )
+            })
+            .chain(std::iter::once(bench_segment(
+                "SIG",
+                [-1.0, 0.0],
+                [1.0, 0.0],
+                0.20,
+            )))
+            .collect(),
+        drills: vec![DrillFeature {
+            location: [0.0, 0.0],
+            diameter: 0.40,
+            net: None,
+            plated: false,
+        }],
+        board_outline: None,
+        panel_features: None,
+    };
+    let drill_clearance_elapsed = time("drill_to_copper_clearance_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ =
+                drill_to_copper_clearance(&drill_clearance_sparse_board, &[], 0.20, &[], 1.0e-9);
+        }
+    });
+
     let short_board = BoardModel {
         source: "bench".to_string(),
         copper: vec![
@@ -941,6 +975,7 @@ fn main() {
             + sensitive_return_elapsed
             + min_copper_neck_elapsed
             + continuity_elapsed
+            + drill_clearance_elapsed
             + short_elapsed
             + pair_to_pair_elapsed
             + pair_skew_elapsed

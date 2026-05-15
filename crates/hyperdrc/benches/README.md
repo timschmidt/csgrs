@@ -14,8 +14,8 @@ This folder contains benchmark and smoke-performance entry points for
   thermal-via distribution and bucketed thermal copper-area/spacing/keepout review, ESD clamp return-path proximity,
   voltage/protective-earth spacing, ESD protection/return, surge-protection keepout review, mixed-signal partition and sensitive-net review, bucketed component-hole/component/connector/fiducial/process/pad-pair spacing, and bucketed testpoint accessibility spacing. The harness also includes same-net drill-break,
   different-net short, differential pair width/neck-down/skew/via-proximity/return,
-  differential pair-to-pair spacing, split-plane crossing, and return-path
-  proximity probes, high-current pad-entry/via-return review, and a many-island
+  differential pair-to-pair spacing, split-plane crossing, return-path
+  proximity, and drill-to-copper clearance probes, high-current pad-entry/via-return review, and a many-island
   minimum-copper-neck case so morphology changes do not regress on split copper
   pours, plus a small production-artifact package covering BOM/centroid/README parity,
   package-level handoff checks, waiver-governance metadata review, and waiver

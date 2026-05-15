@@ -19,6 +19,8 @@ use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbSketch};
 
+use super::spatial::CopperSpatialIndex;
+
 /// Warn when different named nets have overlapping copper on the same layer.
 ///
 /// IPC-9252B treats bare-board electrical test as both a continuity and
@@ -132,32 +134,31 @@ pub fn same_net_drill_break_readiness(
         .into_iter()
         .filter(|feature| feature.net.is_some())
         .filter(|feature| matches!(feature.kind, CopperKind::Segment | CopperKind::Zone))
-        .filter_map(|feature| {
-            feature
-                .sketch
-                .geometry
-                .bounding_rect()
-                .map(|bounds| (feature, bounds))
-        })
         .collect::<Vec<_>>();
+    let maximum_drill_radius = drills
+        .iter()
+        .map(|drill| drill.diameter / 2.0)
+        .fold(0.0_f64, f64::max);
+    // Drill-break review is a conservative continuity proxy for IPC-9252B
+    // electrical-test risk. The grid broad phase follows Ericson, Real-Time
+    // Collision Detection, 2005: it only proposes possible drill/copper
+    // contacts, while exact CSG intersection below remains authoritative.
+    let copper_index = CopperSpatialIndex::new(&copper, maximum_drill_radius);
     log::trace!(
-        "same-net drill break readiness: source={} netted_routing_features={} non_plated_drills={}",
+        "same-net drill break readiness: source={} netted_routing_features={} non_plated_drills={} spatial_buckets={}",
         board.source,
         copper.len(),
-        drills.len()
+        drills.len(),
+        copper_index.bucket_count()
     );
 
     let mut violations = Vec::new();
     for drill in drills {
         let drill_sketch = drill_keepout_sketch(drill);
-        let Some(drill_bounds) = drill_sketch.geometry.bounding_rect() else {
-            continue;
-        };
+        let drill_radius = drill.diameter / 2.0;
 
-        for (feature, feature_bounds) in &copper {
-            if !rects_overlap(&drill_bounds, feature_bounds) {
-                continue;
-            }
+        for candidate_index in copper_index.all_layers_near_circle(drill.location, drill_radius) {
+            let feature = copper[candidate_index];
 
             let overlap = drill_sketch.intersection(&feature.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
