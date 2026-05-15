@@ -472,7 +472,10 @@ impl<S: Clone + Debug + Send + Sync> Mesh<S> {
             for &idx in face.iter() {
                 // Ensure the index is valid
                 if idx >= points.len() {
-                    return Err(ValidationError::IndexOutOfRange);
+                    return Err(ValidationError::IndexOutOfRangeWithLen {
+                        index: idx,
+                        len: points.len(),
+                    });
                 }
                 let [x, y, z] = points[idx];
                 face_vertices.push(Vertex::new(

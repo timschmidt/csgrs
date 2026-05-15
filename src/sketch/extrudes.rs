@@ -85,7 +85,8 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     /// # Parameters
     /// - `direction`: 3D vector defining extrusion direction and magnitude
     pub fn extrude_vector(&self, direction: Vector3<Real>) -> Mesh<S> {
-        if direction.norm() < tolerance() {
+        let tol = tolerance();
+        if direction.norm_squared() < tol * tol {
             return Mesh::new();
         }
 
@@ -263,7 +264,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
     ) -> Result<Mesh<S>, ValidationError> {
         let n = bottom.vertices.len();
         if n != top.vertices.len() {
-            return Err(ValidationError::MismatchedVertices);
+            return Err(ValidationError::MismatchedVertexCount {
+                left: n,
+                right: top.vertices.len(),
+            });
         }
 
         // Conditionally flip the bottom polygon if requested.
@@ -555,7 +559,10 @@ impl<S: Clone + Debug + Send + Sync> Sketch<S> {
         segments: usize,
     ) -> Result<Mesh<S>, ValidationError> {
         if segments < 2 {
-            return Err(ValidationError::InvalidArguments);
+            return Err(ValidationError::FieldLessThan {
+                name: "segments",
+                min: 2,
+            });
         }
 
         let angle_radians = angle_degs.to_radians();
