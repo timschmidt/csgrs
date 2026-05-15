@@ -13,6 +13,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use geo::BoundingRect;
 
 use super::distance::polygon_boundary_distance;
+use super::spatial::PointSpatialIndex;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
 
@@ -253,7 +254,11 @@ pub fn differential_pair_skew_readiness(
 /// Characteristic of Parallel Coupled Microstrip Lines", IEEE Transactions on
 /// Microwave Theory and Techniques, 1984, gives the coupled-line context for
 /// keeping pair-side transitions physically symmetric. This check uses parsed
-/// via centers only; it is a readiness proxy, not delay extraction.
+/// via centers only; it is a readiness proxy, not delay extraction. Opposite
+/// side via centers are queried through the shared point-grid broad phase
+/// described by Ericson, *Real-Time Collision Detection* (2005), so dense
+/// package escape fields do not require every positive-side via to scan every
+/// negative-side via.
 pub fn differential_pair_via_proximity_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -275,28 +280,25 @@ pub fn differential_pair_via_proximity_readiness(
         side_use.layers.insert(feature.layer.clone());
         side_use.locations.push(feature.location);
     }
-    log::trace!(
-        "differential pair via proximity readiness: source={} inferred_pairs={} selected_layers={} threshold={:.6}",
-        board.source,
-        pairs.len(),
-        selected_layers.len(),
-        maximum_via_pair_gap
-    );
-
     let mut violations = Vec::new();
+    let mut indexed_pair_sides = 0usize;
+    let mut spatial_buckets = 0usize;
+    let mut candidate_hits = 0usize;
     for (pair, usage) in pairs {
         if usage.positive.locations.is_empty() || usage.negative.locations.is_empty() {
             continue;
         }
 
+        let negative_index = PointSpatialIndex::new(
+            usage.negative.locations.iter().copied(),
+            maximum_via_pair_gap,
+        );
+        indexed_pair_sides += 1;
+        spatial_buckets += negative_index.bucket_count();
         for positive in &usage.positive.locations {
-            let nearest = usage
-                .negative
-                .locations
-                .iter()
-                .map(|negative| point_distance(*positive, *negative))
-                .min_by(|left, right| left.total_cmp(right));
-            if nearest.is_some_and(|gap| gap <= maximum_via_pair_gap) {
+            let nearby = negative_index.centers_within(*positive, maximum_via_pair_gap);
+            candidate_hits += nearby.len();
+            if !nearby.is_empty() {
                 continue;
             }
 
@@ -313,14 +315,16 @@ pub fn differential_pair_via_proximity_readiness(
             ));
         }
 
+        let positive_index = PointSpatialIndex::new(
+            usage.positive.locations.iter().copied(),
+            maximum_via_pair_gap,
+        );
+        indexed_pair_sides += 1;
+        spatial_buckets += positive_index.bucket_count();
         for negative in &usage.negative.locations {
-            let nearest = usage
-                .positive
-                .locations
-                .iter()
-                .map(|positive| point_distance(*negative, *positive))
-                .min_by(|left, right| left.total_cmp(right));
-            if nearest.is_some_and(|gap| gap <= maximum_via_pair_gap) {
+            let nearby = positive_index.centers_within(*negative, maximum_via_pair_gap);
+            candidate_hits += nearby.len();
+            if !nearby.is_empty() {
                 continue;
             }
 
@@ -337,6 +341,17 @@ pub fn differential_pair_via_proximity_readiness(
             ));
         }
     }
+    log::trace!(
+        "differential pair via proximity readiness: source={} inferred_pairs={} selected_layers={} indexed_pair_sides={} spatial_buckets={} candidate_hits={} threshold={:.6} violations={}",
+        board.source,
+        indexed_pair_sides / 2,
+        selected_layers.len(),
+        indexed_pair_sides,
+        spatial_buckets,
+        candidate_hits,
+        maximum_via_pair_gap,
+        violations.len()
+    );
 
     violations
 }
@@ -351,6 +366,9 @@ pub fn differential_pair_via_proximity_readiness(
 /// 1984, motivates preserving coupled-line geometry through transitions. This
 /// check uses parsed via centers and inferred ground-net names; verify
 /// release-blocking findings against stackup, plane, and field-solver data.
+/// Ground-stitching lookup uses the Ericson-style point-grid broad phase from
+/// *Real-Time Collision Detection* (2005) before the exact center-distance
+/// predicate.
 pub fn differential_pair_via_return_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -379,26 +397,23 @@ pub fn differential_pair_via_return_readiness(
         side_use.layers.insert(feature.layer.clone());
         side_use.locations.push(feature.location);
     }
-    log::trace!(
-        "differential pair via return readiness: source={} inferred_pairs={} ground_vias={} selected_layers={} threshold={:.6}",
-        board.source,
-        pair_vias.len(),
-        ground_vias.len(),
-        selected_layers.len(),
-        stitching_distance
+    let ground_index = PointSpatialIndex::new(
+        ground_vias.iter().map(|ground| ground.location),
+        stitching_distance,
     );
 
+    let inferred_pair_count = pair_vias.len();
     let mut violations = Vec::new();
+    let mut candidate_hits = 0usize;
     for (pair, usage) in pair_vias {
         if usage.positive.locations.is_empty() || usage.negative.locations.is_empty() {
             continue;
         }
 
         for location in usage.locations() {
-            let has_nearby_ground = ground_vias
-                .iter()
-                .any(|ground| point_distance(location, ground.location) <= stitching_distance);
-            if has_nearby_ground {
+            let nearby_ground = ground_index.centers_within(location, stitching_distance);
+            candidate_hits += nearby_ground.len();
+            if !nearby_ground.is_empty() {
                 continue;
             }
 
@@ -415,6 +430,17 @@ pub fn differential_pair_via_return_readiness(
             ));
         }
     }
+    log::trace!(
+        "differential pair via return readiness: source={} inferred_pairs={} ground_vias={} ground_buckets={} candidate_hits={} selected_layers={} threshold={:.6} violations={}",
+        board.source,
+        inferred_pair_count,
+        ground_vias.len(),
+        ground_index.bucket_count(),
+        candidate_hits,
+        selected_layers.len(),
+        stitching_distance,
+        violations.len()
+    );
 
     violations
 }
@@ -747,14 +773,10 @@ fn estimated_segment_width(feature: &CopperFeature) -> f64 {
         .unwrap_or(0.0)
 }
 
-fn point_distance(left: [f64; 2], right: [f64; 2]) -> f64 {
-    let dx = left[0] - right[0];
-    let dy = left[1] - right[1];
-    (dx * dx + dy * dy).sqrt()
-}
-
 #[cfg(test)]
 mod tests {
+    use std::time::Instant;
+
     use super::{
         differential_pair_neckdown_readiness, differential_pair_skew_readiness,
         differential_pair_to_pair_spacing_readiness, differential_pair_via_proximity_readiness,
@@ -899,6 +921,26 @@ mod tests {
     }
 
     #[test]
+    fn differential_pair_via_proximity_culls_many_vias_within_one_pair() {
+        let mut copper = Vec::new();
+        for index in 0..1_000 {
+            let x = index as f64 * 0.25;
+            copper.push(via("DDR_DQS_DP", [x, 0.0], 0.20, "F.Cu"));
+            copper.push(via("DDR_DQS_DM", [x + 0.05, 0.0], 0.20, "F.Cu"));
+        }
+        let board = board_with_copper(copper);
+        let start = Instant::now();
+
+        let violations = differential_pair_via_proximity_readiness(&board, &[], 0.10);
+
+        assert!(violations.is_empty());
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "opposite-side via lookup should be indexed for dense pair escape fields"
+        );
+    }
+
+    #[test]
     fn differential_pair_via_return_reports_missing_ground_stitching() {
         let board = board_with_copper(vec![
             via("USB_DP", [0.0, 0.0], 0.30, "F.Cu"),
@@ -956,6 +998,32 @@ mod tests {
         assert!(
             violations.is_empty(),
             "stitched inferred pair via return checks should stay linear in pair count"
+        );
+    }
+
+    #[test]
+    fn differential_pair_via_return_culls_remote_ground_via_fields() {
+        let mut copper = vec![
+            via("USB_DP", [0.0, 0.0], 0.20, "F.Cu"),
+            via("USB_DM", [0.05, 0.0], 0.20, "F.Cu"),
+        ];
+        for index in 0..2_000 {
+            copper.push(via(
+                "GND",
+                [100.0 + index as f64 * 0.25, 10.0],
+                0.20,
+                "F.Cu",
+            ));
+        }
+        let board = board_with_copper(copper);
+        let start = Instant::now();
+
+        let violations = differential_pair_via_return_readiness(&board, &[], 0.20);
+
+        assert_eq!(violations.len(), 2);
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "ground-stitch lookup should be indexed for sparse ground via fields"
         );
     }
 

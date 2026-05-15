@@ -12,6 +12,7 @@ use geo::BoundingRect;
 
 use crate::PcbSketch;
 use crate::checks::distance::polygon_boundary_distance;
+use crate::checks::spatial::CopperSpatialIndex;
 use crate::geometry::multipolygon_to_shapes;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
@@ -31,6 +32,7 @@ pub fn local_fiducial_readiness(
         .copied()
         .filter(|feature| likely_fiducial(feature))
         .collect::<Vec<_>>();
+    let fiducial_index = CopperSpatialIndex::new(&fiducials, search_radius);
     let mut pads_by_layer: BTreeMap<String, Vec<&CopperFeature>> = BTreeMap::new();
     for feature in features {
         if feature.kind == CopperKind::Pad && !likely_fiducial(feature) {
@@ -40,8 +42,16 @@ pub fn local_fiducial_readiness(
                 .push(feature);
         }
     }
+    log::trace!(
+        "local fiducial readiness: source={} layers={} fiducials={} buckets={} pitch_threshold={pitch_threshold:.6} search_radius={search_radius:.6}",
+        board.source,
+        pads_by_layer.len(),
+        fiducials.len(),
+        fiducial_index.bucket_count()
+    );
 
     let mut violations = Vec::new();
+    let mut candidate_count = 0_usize;
     for (layer, pads) in pads_by_layer {
         if pads.len() < DENSE_PAD_CLUSTER_MIN_PADS {
             continue;
@@ -51,10 +61,12 @@ pub fn local_fiducial_readiness(
         };
 
         let cluster_center = average_location(&pads);
-        let nearby_fiducials = fiducials
-            .iter()
-            .filter(|fiducial| fiducial.layer == layer)
-            .filter(|fiducial| distance(fiducial.location, cluster_center) <= search_radius)
+        let fiducial_candidates =
+            fiducial_index.same_layer_centers_within(cluster_center, &layer, search_radius);
+        candidate_count += fiducial_candidates.len();
+        let nearby_fiducials = fiducial_candidates
+            .into_iter()
+            .filter(|&index| distance(fiducials[index].location, cluster_center) <= search_radius)
             .count();
         if nearby_fiducials >= 2 {
             continue;
@@ -73,6 +85,13 @@ pub fn local_fiducial_readiness(
         ));
     }
 
+    log::trace!(
+        "local fiducial readiness: source={} fiducial_candidates={} violations={}",
+        board.source,
+        candidate_count,
+        violations.len()
+    );
+
     violations
 }
 
@@ -84,16 +103,27 @@ pub fn dense_pad_escape_readiness(
     via_search_radius: f64,
 ) -> Vec<Violation> {
     let (pads_by_layer, vias) = dense_pad_inputs(board, selected_layers);
+    let via_index = CopperSpatialIndex::new(&vias, via_search_radius);
+    log::trace!(
+        "dense-pad escape readiness: source={} layers={} vias={} buckets={} pitch_threshold={pitch_threshold:.6} via_search_radius={via_search_radius:.6}",
+        board.source,
+        pads_by_layer.len(),
+        vias.len(),
+        via_index.bucket_count()
+    );
     let mut violations = Vec::new();
+    let mut candidate_count = 0_usize;
 
     for (layer, pads) in pads_by_layer {
         let Some((min_pitch, cluster_center)) = dense_cluster_context(&pads, pitch_threshold)
         else {
             continue;
         };
-        let has_escape_via = vias
-            .iter()
-            .any(|via| distance(via.location, cluster_center) <= via_search_radius);
+        let via_candidates = via_index.all_layers_near_circle(cluster_center, via_search_radius);
+        candidate_count += via_candidates.len();
+        let has_escape_via = via_candidates
+            .into_iter()
+            .any(|index| distance(vias[index].location, cluster_center) <= via_search_radius);
         if has_escape_via {
             continue;
         }
@@ -110,6 +140,13 @@ pub fn dense_pad_escape_readiness(
             )),
         ));
     }
+
+    log::trace!(
+        "dense-pad escape readiness: source={} via_candidates={} violations={}",
+        board.source,
+        candidate_count,
+        violations.len()
+    );
 
     violations
 }
@@ -140,13 +177,16 @@ pub fn dense_pad_via_spacing_readiness(
     }
 
     let (pads_by_layer, vias) = dense_pad_inputs(board, selected_layers);
+    let via_index = CopperSpatialIndex::new(&vias, via_search_radius);
     log::trace!(
-        "dense pad/via spacing readiness: source={} layers={} vias={} pitch_threshold={pitch_threshold:.6}",
+        "dense pad/via spacing readiness: source={} layers={} vias={} buckets={} pitch_threshold={pitch_threshold:.6} via_search_radius={via_search_radius:.6}",
         board.source,
         pads_by_layer.len(),
-        vias.len()
+        vias.len(),
+        via_index.bucket_count()
     );
     let mut violations = Vec::new();
+    let mut candidate_count = 0_usize;
 
     for (layer, pads) in pads_by_layer {
         let Some((min_pitch, cluster_center)) = dense_cluster_context(&pads, pitch_threshold)
@@ -154,9 +194,11 @@ pub fn dense_pad_via_spacing_readiness(
             continue;
         };
 
-        for via in vias
-            .iter()
-            .copied()
+        let via_candidates = via_index.all_layers_near_circle(cluster_center, via_search_radius);
+        candidate_count += via_candidates.len();
+        for via in via_candidates
+            .into_iter()
+            .map(|index| vias[index])
             .filter(|via| distance(via.location, cluster_center) <= via_search_radius)
         {
             let Some((pad, clearance)) = nearest_pad_to_via(&pads, via) else {
@@ -184,6 +226,13 @@ pub fn dense_pad_via_spacing_readiness(
             ));
         }
     }
+
+    log::trace!(
+        "dense pad/via spacing readiness: source={} via_candidates={} violations={}",
+        board.source,
+        candidate_count,
+        violations.len()
+    );
 
     violations
 }
@@ -480,6 +529,57 @@ mod tests {
     }
 
     #[test]
+    fn local_fiducial_readiness_culls_sparse_fiducial_fields() {
+        let mut copper = dense_pad_cluster();
+        copper.extend((0..2_000).map(|index| {
+            fiducial(
+                "F.Cu",
+                [100.0 + index as f64 * 4.0, 100.0 + index as f64 * 0.01],
+                0.8,
+            )
+        }));
+        copper.push(fiducial("F.Cu", [-1.0, -1.0], 0.8));
+        copper.push(fiducial("F.Cu", [2.5, -1.0], 0.8));
+
+        let started = std::time::Instant::now();
+        let violations = local_fiducial_readiness(&board_with_copper(copper), &[], 0.8, 5.0);
+
+        assert!(violations.is_empty());
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "local fiducial review should spatially cull distant fiducials"
+        );
+    }
+
+    #[test]
+    fn dense_pad_escape_readiness_reports_missing_escape_via() {
+        let board = board_with_copper(dense_pad_cluster());
+
+        let violations = dense_pad_escape_readiness(&board, &[], 0.8, 2.0);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "dense-pad-escape-readiness");
+    }
+
+    #[test]
+    fn dense_pad_escape_readiness_culls_sparse_via_fields() {
+        let mut copper = dense_pad_cluster();
+        copper.extend(
+            (0..2_000).map(|index| copper_via("ESC", [100.0 + index as f64 * 4.0, 100.0], 0.20)),
+        );
+        copper.push(copper_via("ESC", [0.75, 0.75], 0.20));
+
+        let started = std::time::Instant::now();
+        let violations = dense_pad_escape_readiness(&board_with_copper(copper), &[], 0.8, 2.0);
+
+        assert!(violations.is_empty());
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "dense-pad escape review should spatially cull distant vias"
+        );
+    }
+
+    #[test]
     fn dense_pad_via_spacing_readiness_reports_close_escape_via() {
         let mut copper = dense_pad_cluster();
         copper.push(copper_via("ESC", [0.32, 0.0], 0.20));
@@ -540,6 +640,31 @@ mod tests {
                 1.0e-9
             )
             .is_empty()
+        );
+    }
+
+    #[test]
+    fn dense_pad_via_spacing_readiness_culls_sparse_via_fields() {
+        let mut copper = dense_pad_cluster();
+        copper.extend(
+            (0..2_000).map(|index| copper_via("ESC", [100.0 + index as f64 * 4.0, 100.0], 0.20)),
+        );
+        copper.push(copper_via("ESC_NEAR", [0.32, 0.0], 0.20));
+
+        let started = std::time::Instant::now();
+        let violations = dense_pad_via_spacing_readiness(
+            &board_with_copper(copper),
+            &[],
+            0.8,
+            2.0,
+            0.15,
+            1.0e-9,
+        );
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "dense-pad via spacing should spatially cull distant vias"
         );
     }
 

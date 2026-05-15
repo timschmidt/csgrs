@@ -12,6 +12,7 @@ use csgrs::csg::CSG;
 use geo::{Area, BoundingRect};
 
 use super::distance::polygon_boundary_distance;
+use super::spatial::{CopperSpatialIndex, DrillSpatialIndex, PointSpatialIndex};
 use crate::checks::drill::drills_to_sketch;
 use crate::geometry::{circle_polygon, multipolygon_to_shapes, polygons_to_sketch};
 use crate::ipc356::Ipc356Point;
@@ -70,6 +71,13 @@ pub fn copper_net_intent(board: &BoardModel, selected_layers: &[String]) -> Vec<
 }
 
 /// Run the `via_in_pad_readiness` design-readiness check or report helper.
+///
+/// This is a broad/narrow-phase geometry review in the sense of Ericson,
+/// *Real-Time Collision Detection* (2005): the spatial index only proposes
+/// nearby same-layer pads, then exact CSG overlap decides the finding. The
+/// manufacturing risk being made visible here is the via-in-pad fill/tent/paste
+/// handoff discussed by Jonnalagadda, "Reliability of Via-in-Pad Structures in
+/// Mechanical Cycling Fatigue" (2002).
 pub fn via_in_pad_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -86,10 +94,21 @@ pub fn via_in_pad_readiness(
         .filter(|feature| feature.kind == CopperKind::Pad)
         .copied()
         .collect::<Vec<_>>();
+    let pad_spatial_index = CopperSpatialIndex::new(&pads, 1.0);
+    log::trace!(
+        "via-in-pad readiness: source={} vias={} pads={} buckets={} min_area={min_area:.9}",
+        board.source,
+        vias.len(),
+        pads.len(),
+        pad_spatial_index.bucket_count()
+    );
     let mut violations = Vec::new();
+    let mut candidate_count = 0_usize;
 
     for via in vias {
-        for pad in &pads {
+        for pad_index in pad_spatial_index.same_layer_near_feature(via, 0.0) {
+            candidate_count += 1;
+            let pad = pads[pad_index];
             if via.layer != pad.layer || via.net.is_none() || via.net != pad.net {
                 continue;
             }
@@ -118,10 +137,23 @@ pub fn via_in_pad_readiness(
         }
     }
 
+    log::trace!(
+        "via-in-pad readiness: source={} candidate_pairs={} violations={}",
+        board.source,
+        candidate_count,
+        violations.len()
+    );
+
     violations
 }
 
 /// Run the `teardrop_readiness` design-readiness check or report helper.
+///
+/// The rule is a release-readiness proxy for pad/via entry robustness rather
+/// than a true teardrop synthesizer. IPC-2221B treats conductor-to-land joins as
+/// a design reliability concern; HyperDRC keeps that review visible by finding
+/// narrow same-net segment entries after a spatial broad phase filters the
+/// candidate anchors.
 pub fn teardrop_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -139,7 +171,16 @@ pub fn teardrop_readiness(
         .filter(|feature| matches!(feature.kind, CopperKind::Pad | CopperKind::Via))
         .copied()
         .collect::<Vec<_>>();
+    let anchor_index = CopperSpatialIndex::new(&anchors, 1.0);
+    log::trace!(
+        "teardrop readiness: source={} segments={} anchors={} buckets={} min_neck_width={min_neck_width:.6} min_area={min_area:.9}",
+        board.source,
+        segments.len(),
+        anchors.len(),
+        anchor_index.bucket_count()
+    );
     let mut violations = Vec::new();
+    let mut candidate_count = 0_usize;
 
     for segment in segments {
         let segment_width = minimum_bounding_dimension(&segment.sketch);
@@ -147,7 +188,9 @@ pub fn teardrop_readiness(
             continue;
         }
 
-        for anchor in &anchors {
+        for anchor_index in anchor_index.same_layer_near_feature(segment, 0.0) {
+            candidate_count += 1;
+            let anchor = anchors[anchor_index];
             if segment.layer != anchor.layer || segment.net.is_none() || segment.net != anchor.net {
                 continue;
             }
@@ -173,10 +216,23 @@ pub fn teardrop_readiness(
         }
     }
 
+    log::trace!(
+        "teardrop readiness: source={} candidate_pairs={} violations={}",
+        board.source,
+        candidate_count,
+        violations.len()
+    );
+
     violations
 }
 
 /// Run the `plane_clearance_readiness` design-readiness check or report helper.
+///
+/// Non-plated drill keepouts are matched to candidate copper zones with the
+/// deterministic grid broad phase described by Ericson, *Real-Time Collision
+/// Detection* (2005), before exact CSG overlap review. This preserves the
+/// conservative antipad-readiness predicate while avoiding every drill scanning
+/// every zone on sparse mechanical-heavy boards.
 pub fn plane_clearance_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -186,12 +242,22 @@ pub fn plane_clearance_readiness(
         .into_iter()
         .filter(|feature| feature.kind == CopperKind::Zone)
         .collect::<Vec<_>>();
+    let maximum_drill_radius = board
+        .drills
+        .iter()
+        .filter(|drill| !drill.plated)
+        .map(|drill| drill.diameter / 2.0)
+        .fold(0.0_f64, f64::max);
+    let zone_index = CopperSpatialIndex::new(&zones, maximum_drill_radius);
     let mut violations = Vec::new();
+    let mut drill_count = 0usize;
+    let mut candidate_pairs = 0usize;
 
     for drill in &board.drills {
         if drill.plated {
             continue;
         }
+        drill_count += 1;
 
         let hole = polygons_to_sketch(
             vec![circle_polygon(drill.location, drill.diameter / 2.0, 64)],
@@ -200,7 +266,11 @@ pub fn plane_clearance_readiness(
             }),
         );
 
-        for zone in &zones {
+        for candidate_index in
+            zone_index.all_layers_near_circle(drill.location, drill.diameter / 2.0)
+        {
+            candidate_pairs += 1;
+            let zone = zones[candidate_index];
             let overlap = hole.intersection(&zone.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
             if shapes.is_empty() {
@@ -221,6 +291,15 @@ pub fn plane_clearance_readiness(
             ));
         }
     }
+    log::trace!(
+        "plane clearance readiness: source={} zones={} non_plated_drills={} spatial_buckets={} candidate_pairs={} violations={}",
+        board.source,
+        zones.len(),
+        drill_count,
+        zone_index.bucket_count(),
+        candidate_pairs,
+        violations.len()
+    );
 
     violations
 }
@@ -355,6 +434,11 @@ pub fn edge_copper_pullback_readiness(
 
 /// Warn when high-speed or RF/antenna nets near the edge have no nearby ground
 /// stitching via for intended return-path reinforcement.
+///
+/// Ground-stitch centers use the point-grid broad phase from Ericson,
+/// *Real-Time Collision Detection* (2005), before the exact center-radius
+/// predicate. The result remains a readiness proxy: board-edge return-current
+/// quality still needs stackup, chassis, and enclosure review.
 pub fn edge_stitching_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -373,15 +457,24 @@ pub fn edge_stitching_readiness(
         .filter(|feature| feature.kind == CopperKind::Via)
         .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
         .collect::<Vec<_>>();
+    let ground_points = ground_vias
+        .iter()
+        .map(|feature| feature.location)
+        .collect::<Vec<_>>();
+    let ground_index = PointSpatialIndex::new(ground_points, stitching_distance);
 
     let mut violations = Vec::new();
-    for feature in features {
+    let mut candidate_features = 0usize;
+    let mut stitch_hits = 0usize;
+    for feature in &features {
+        let feature = *feature;
         let Some(net) = &feature.net else {
             continue;
         };
         if !looks_high_speed_net(net) && !looks_rf_or_antenna_net(net) {
             continue;
         }
+        candidate_features += 1;
 
         let intrusion = feature.sketch.difference(&allowed);
         let shapes = multipolygon_to_shapes(&intrusion.to_multipolygon(), min_area);
@@ -394,9 +487,9 @@ pub fn edge_stitching_readiness(
             continue;
         }
 
-        let has_stitch = ground_vias
-            .iter()
-            .any(|ground| distance(feature.location, ground.location) <= stitching_distance);
+        let nearby_stitches = ground_index.centers_within(feature.location, stitching_distance);
+        stitch_hits += nearby_stitches.len();
+        let has_stitch = !nearby_stitches.is_empty();
         if has_stitch {
             continue;
         }
@@ -414,6 +507,16 @@ pub fn edge_stitching_readiness(
         ));
     }
 
+    log::trace!(
+        "edge stitching readiness: source={} candidate_features={} ground_vias={} ground_buckets={} stitch_hits={} edge_clearance={edge_clearance:.6} stitching_distance={stitching_distance:.6} violations={}",
+        board.source,
+        candidate_features,
+        ground_vias.len(),
+        ground_index.bucket_count(),
+        stitch_hits,
+        violations.len()
+    );
+
     violations
 }
 
@@ -428,7 +531,9 @@ pub fn edge_stitching_readiness(
 /// <https://doi.org/10.1007/s11664-023-10368-z>, shows that copper wet etch
 /// profiles depend on process transport conditions. HyperDRC therefore reports
 /// suspect junction geometry for review instead of claiming a specific
-/// corrosion or over-etch failure.
+/// corrosion or over-etch failure. Segment-pair candidate generation uses the
+/// deterministic grid broad phase described by Ericson, *Real-Time Collision
+/// Detection* (2005), before exact CSG overlap and junction-angle review.
 pub fn trace_junction_acid_trap_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -440,21 +545,37 @@ pub fn trace_junction_acid_trap_readiness(
         .filter(|feature| feature.kind == CopperKind::Segment)
         .filter(|feature| feature.net.is_some())
         .collect::<Vec<_>>();
-    log::trace!(
-        "trace-junction acid-trap readiness: source={} segments={} selected_layers={}",
-        board.source,
-        segments.len(),
-        selected_layers.len()
-    );
+    let segment_bounds = segments
+        .iter()
+        .map(|segment| segment.sketch.geometry.bounding_rect())
+        .collect::<Vec<_>>();
+    let segment_index = CopperSpatialIndex::new(&segments, 0.0);
     let mut violations = Vec::new();
+    let mut candidate_pairs = 0usize;
+    let mut exact_pairs = 0usize;
 
     for left_index in 0..segments.len() {
-        for right in segments.iter().skip(left_index + 1) {
-            let left = segments[left_index];
+        let left = segments[left_index];
+        let Some(left_bounds) = &segment_bounds[left_index] else {
+            continue;
+        };
+        for right_index in segment_index.same_layer_near_feature(left, 0.0) {
+            if right_index <= left_index {
+                continue;
+            }
+            let right = segments[right_index];
             if left.layer != right.layer || left.net != right.net {
                 continue;
             }
+            candidate_pairs += 1;
+            let Some(right_bounds) = &segment_bounds[right_index] else {
+                continue;
+            };
+            if !rects_overlap(left_bounds, right_bounds) {
+                continue;
+            }
 
+            exact_pairs += 1;
             let overlap = left.sketch.intersection(&right.sketch);
             let overlap_polygons = overlap.to_multipolygon();
             let shapes = multipolygon_to_shapes(&overlap_polygons, min_area);
@@ -483,6 +604,16 @@ pub fn trace_junction_acid_trap_readiness(
             ));
         }
     }
+    log::trace!(
+        "trace-junction acid-trap readiness: source={} segments={} spatial_buckets={} candidate_pairs={} exact_pairs={} selected_layers={} violations={}",
+        board.source,
+        segments.len(),
+        segment_index.bucket_count(),
+        candidate_pairs,
+        exact_pairs,
+        selected_layers.len(),
+        violations.len()
+    );
 
     violations
 }
@@ -774,6 +905,9 @@ pub fn differential_pair_via_symmetry_readiness(
 /// treats conductor spacing and return-path planning as board-design concerns;
 /// here we simply require some parsed ground copper near each differential side
 /// so missing guard/coplanar/reference intent is visible before release.
+/// Ground candidates use the deterministic grid broad phase described by
+/// Ericson, *Real-Time Collision Detection* (2005), before exact geometry
+/// distance/overlap review.
 pub fn differential_pair_return_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -785,9 +919,12 @@ pub fn differential_pair_return_readiness(
         .copied()
         .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
         .collect::<Vec<_>>();
+    let ground_index = CopperSpatialIndex::new(&ground_features, guard_distance);
     let mut violations = Vec::new();
+    let mut candidate_pairs = 0usize;
 
-    for feature in features {
+    for feature in &features {
+        let feature = *feature;
         let Some(net) = &feature.net else {
             continue;
         };
@@ -795,9 +932,13 @@ pub fn differential_pair_return_readiness(
             continue;
         };
 
-        let has_guard = ground_features.iter().any(|ground| {
-            ground.layer == feature.layer && copper_features_touch(feature, ground, guard_distance)
-        });
+        let has_guard = ground_index
+            .same_layer_near_feature(feature, guard_distance)
+            .into_iter()
+            .any(|ground_index| {
+                candidate_pairs += 1;
+                copper_features_touch(feature, ground_features[ground_index], guard_distance)
+            });
         if has_guard {
             continue;
         }
@@ -818,6 +959,15 @@ pub fn differential_pair_return_readiness(
             )),
         ));
     }
+    log::trace!(
+        "differential-pair return readiness: source={} features={} ground_features={} ground_buckets={} candidate_pairs={} guard_distance={guard_distance:.6} violations={}",
+        board.source,
+        features.len(),
+        ground_features.len(),
+        ground_index.bucket_count(),
+        candidate_pairs,
+        violations.len()
+    );
 
     violations
 }
@@ -970,6 +1120,11 @@ pub fn orphaned_zone_readiness(
 }
 
 /// Run the `same_net_island_readiness` design-readiness check or report helper.
+///
+/// Same-net connectivity is still decided by exact overlap/distance predicates,
+/// but candidate edges are selected with the deterministic grid broad phase from
+/// Ericson, *Real-Time Collision Detection* (2005). That keeps sparse same-net
+/// copper fields from requiring an all-pairs connectivity walk.
 pub fn same_net_island_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -991,7 +1146,17 @@ pub fn same_net_island_readiness(
         if features.len() < 2 {
             continue;
         }
-        let components = copper_components(&features, connection_tolerance);
+        let component_result = copper_components(&features, connection_tolerance);
+        let components = component_result.components;
+        log::trace!(
+            "same-net island readiness: net={} layer={} features={} spatial_buckets={} exact_pairs={} components={}",
+            net,
+            layer,
+            features.len(),
+            component_result.spatial_buckets,
+            component_result.exact_pairs,
+            components.len()
+        );
         if components.len() < 2 {
             continue;
         }
@@ -1059,6 +1224,11 @@ pub fn high_current_readiness(board: &BoardModel, selected_layers: &[String]) ->
 }
 
 /// Run the `power_via_array_readiness` design-readiness check or report helper.
+///
+/// Same-net via neighbors are queried with a point-grid broad phase before the
+/// exact pitch predicate, following Ericson, *Real-Time Collision Detection*
+/// (2005). This keeps sparse high-current via fields from degenerating into
+/// all-pairs center-distance scans.
 pub fn power_via_array_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -1080,20 +1250,30 @@ pub fn power_via_array_readiness(
     }
 
     let mut violations = Vec::new();
+    let mut indexed_nets = 0usize;
+    let mut spatial_buckets = 0usize;
+    let mut candidate_hits = 0usize;
     for (net, usage) in nets {
         if usage.locations.len() < 2 {
             continue;
         }
 
+        let via_index =
+            PointSpatialIndex::new(usage.locations.iter().copied(), maximum_isolated_pitch);
+        indexed_nets += 1;
+        spatial_buckets += via_index.bucket_count();
         let isolated = usage
             .locations
             .iter()
-            .copied()
-            .filter(|location| {
-                !usage.locations.iter().any(|other| {
-                    *location != *other && distance(*location, *other) <= maximum_isolated_pitch
+            .enumerate()
+            .filter(|(location_index, location)| {
+                let nearby = via_index.centers_within(**location, maximum_isolated_pitch);
+                candidate_hits += nearby.len();
+                !nearby.into_iter().any(|other_index| {
+                    other_index != *location_index && usage.locations[other_index] != **location
                 })
             })
+            .map(|(_, location)| *location)
             .collect::<Vec<_>>();
         if isolated.is_empty() {
             continue;
@@ -1111,6 +1291,14 @@ pub fn power_via_array_readiness(
             )),
         ));
     }
+    log::trace!(
+        "power-via array readiness: source={} indexed_nets={} spatial_buckets={} candidate_hits={} maximum_isolated_pitch={maximum_isolated_pitch:.6} violations={}",
+        board.source,
+        indexed_nets,
+        spatial_buckets,
+        candidate_hits,
+        violations.len()
+    );
 
     violations
 }
@@ -1188,6 +1376,12 @@ pub fn high_current_neck_readiness(
 
 /// Warn when chassis/shield nets appear without a nearby parsed ground via for
 /// stitching or bonding intent.
+///
+/// The parsed ground via centers are indexed with the same deterministic point
+/// grid used by drill-table matching. Following Ericson, *Real-Time Collision
+/// Detection* (2005), the grid is only a broad phase; the readiness rule remains
+/// a center-distance bonding proxy that should be verified against the chassis
+/// and enclosure design.
 pub fn chassis_stitching_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -1200,7 +1394,14 @@ pub fn chassis_stitching_readiness(
         .filter(|feature| feature.kind == CopperKind::Via)
         .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
         .collect::<Vec<_>>();
+    let ground_points = ground_vias
+        .iter()
+        .map(|feature| feature.location)
+        .collect::<Vec<_>>();
+    let ground_index = PointSpatialIndex::new(ground_points, stitching_distance);
     let mut violations = Vec::new();
+    let mut candidate_features = 0usize;
+    let mut stitch_hits = 0usize;
 
     for feature in features {
         let Some(net) = &feature.net else {
@@ -1209,10 +1410,11 @@ pub fn chassis_stitching_readiness(
         if !looks_chassis_net(net) {
             continue;
         }
+        candidate_features += 1;
 
-        let has_stitch = ground_vias
-            .iter()
-            .any(|ground| distance(feature.location, ground.location) <= stitching_distance);
+        let nearby_stitches = ground_index.centers_within(feature.location, stitching_distance);
+        stitch_hits += nearby_stitches.len();
+        let has_stitch = !nearby_stitches.is_empty();
         if has_stitch {
             continue;
         }
@@ -1229,6 +1431,16 @@ pub fn chassis_stitching_readiness(
             )),
         ));
     }
+
+    log::trace!(
+        "chassis stitching readiness: source={} candidate_features={} ground_vias={} ground_buckets={} stitch_hits={} stitching_distance={stitching_distance:.6} violations={}",
+        board.source,
+        candidate_features,
+        ground_vias.len(),
+        ground_index.bucket_count(),
+        stitch_hits,
+        violations.len()
+    );
 
     violations
 }
@@ -1296,6 +1508,12 @@ pub fn gold_finger_edge_readiness(
 }
 
 /// Run the `gold_finger_spacing_readiness` design-readiness check or report helper.
+///
+/// Candidate contact pairs are selected with the shared spatial broad phase and
+/// then checked with the exact offset/intersection predicate. This follows the
+/// broad/narrow collision-query pattern described by Ericson, *Real-Time
+/// Collision Detection* (2005), and keeps sparse card-edge connector fields from
+/// degrading into all-pairs CSG work.
 pub fn gold_finger_spacing_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -1307,15 +1525,22 @@ pub fn gold_finger_spacing_readiness(
         .filter(|feature| feature.net.as_deref().is_some_and(looks_gold_finger_net))
         .filter(|feature| matches!(feature.kind, CopperKind::Pad | CopperKind::Segment))
         .collect::<Vec<_>>();
+    let finger_index = CopperSpatialIndex::new(&fingers, minimum_spacing);
+    let mut exact_pair_count = 0_usize;
     let mut violations = Vec::new();
 
     for left_index in 0..fingers.len() {
         let left = fingers[left_index];
-        for right in &fingers[(left_index + 1)..] {
-            if left.layer != right.layer || left.net == right.net {
+        for right_index in finger_index.same_layer_near_feature(left, minimum_spacing) {
+            if right_index <= left_index {
+                continue;
+            }
+            let right = fingers[right_index];
+            if left.net == right.net {
                 continue;
             }
 
+            exact_pair_count += 1;
             let overlap = left
                 .sketch
                 .offset(minimum_spacing)
@@ -1344,11 +1569,25 @@ pub fn gold_finger_spacing_readiness(
             ));
         }
     }
+    log::trace!(
+        "gold-finger spacing readiness: source={} fingers={} spatial_buckets={} exact_pairs={} minimum_spacing={minimum_spacing:.6} violations={}",
+        board.source,
+        fingers.len(),
+        finger_index.bucket_count(),
+        exact_pair_count,
+        violations.len()
+    );
 
     violations
 }
 
 /// Run the `gold_finger_drill_keepout_readiness` design-readiness check or report helper.
+///
+/// Drill keepouts are circular mechanical blockers and gold-finger copper can
+/// be sparse on large panels, so the check uses the shared spatial broad phase
+/// before exact keepout/copper CSG intersection. This follows the
+/// broad/narrow-phase collision pattern in Ericson, *Real-Time Collision
+/// Detection* (2005).
 pub fn gold_finger_drill_keepout_readiness(
     board: &BoardModel,
     extra_drills: &[DrillFeature],
@@ -1360,23 +1599,24 @@ pub fn gold_finger_drill_keepout_readiness(
         .into_iter()
         .filter(|feature| feature.net.as_deref().is_some_and(looks_gold_finger_net))
         .collect::<Vec<_>>();
+    let finger_index = CopperSpatialIndex::new(&finger_features, keepout);
     let mut drills = board.drills.clone();
     drills.extend_from_slice(extra_drills);
+    let mut exact_pair_count = 0_usize;
     let mut violations = Vec::new();
 
     for drill in &drills {
+        let keepout_radius = drill.diameter / 2.0 + keepout;
         let keepout_sketch = polygons_to_sketch(
-            vec![circle_polygon(
-                drill.location,
-                drill.diameter / 2.0 + keepout,
-                32,
-            )],
+            vec![circle_polygon(drill.location, keepout_radius, 32)],
             Some(LayerMetadata {
                 name: "gold finger drill keepout".to_string(),
             }),
         );
 
-        for finger in &finger_features {
+        for finger_index in finger_index.all_layers_near_circle(drill.location, keepout_radius) {
+            let finger = finger_features[finger_index];
+            exact_pair_count += 1;
             let overlap = keepout_sketch.intersection(&finger.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
@@ -1402,11 +1642,26 @@ pub fn gold_finger_drill_keepout_readiness(
             ));
         }
     }
+    log::trace!(
+        "gold-finger drill keepout readiness: source={} fingers={} drills={} spatial_buckets={} exact_pairs={} keepout={keepout:.6} violations={}",
+        board.source,
+        finger_features.len(),
+        drills.len(),
+        finger_index.bucket_count(),
+        exact_pair_count,
+        violations.len()
+    );
 
     violations
 }
 
 /// Run the `connector_return_path_readiness` design-readiness check or report helper.
+///
+/// This is a center-proximity readiness proxy for edge connector return intent.
+/// Same-layer ground candidates use the shared copper spatial index before the
+/// exact center-distance predicate, following Ericson, *Real-Time Collision
+/// Detection* (2005). The finding still needs schematic, stackup, and field
+/// review before it becomes release-blocking.
 pub fn connector_return_path_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -1423,7 +1678,10 @@ pub fn connector_return_path_readiness(
         .copied()
         .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
         .collect::<Vec<_>>();
+    let ground_index = CopperSpatialIndex::new(&ground_features, ground_search_radius);
     let mut violations = Vec::new();
+    let mut candidate_features = 0usize;
+    let mut ground_hits = 0usize;
 
     for feature in features {
         let Some(net) = feature.net.as_deref() else {
@@ -1432,6 +1690,7 @@ pub fn connector_return_path_readiness(
         if !looks_connector_edge_rate_net(net) {
             continue;
         }
+        candidate_features += 1;
 
         let edge_gap = polygon_boundary_distance(
             &feature.sketch.to_multipolygon(),
@@ -1440,10 +1699,13 @@ pub fn connector_return_path_readiness(
         if edge_gap > edge_distance {
             continue;
         }
-        let has_ground_return = ground_features
-            .iter()
-            .filter(|ground| ground.layer == feature.layer)
-            .any(|ground| distance(ground.location, feature.location) <= ground_search_radius);
+        let nearby_ground = ground_index.same_layer_centers_within(
+            feature.location,
+            &feature.layer,
+            ground_search_radius,
+        );
+        ground_hits += nearby_ground.len();
+        let has_ground_return = !nearby_ground.is_empty();
         if has_ground_return {
             continue;
         }
@@ -1460,11 +1722,24 @@ pub fn connector_return_path_readiness(
             )),
         ));
     }
+    log::trace!(
+        "connector return-path readiness: source={} candidate_features={} ground_features={} ground_buckets={} ground_hits={} edge_distance={edge_distance:.6} ground_search_radius={ground_search_radius:.6} violations={}",
+        board.source,
+        candidate_features,
+        ground_features.len(),
+        ground_index.bucket_count(),
+        ground_hits,
+        violations.len()
+    );
 
     violations
 }
 
 /// Run the `decoupling_proximity_readiness` design-readiness check or report helper.
+///
+/// This is a loop-area readiness proxy, not a placement optimizer. Same-layer
+/// ground candidates are selected through the Ericson-style grid broad phase in
+/// `CopperSpatialIndex` before exact center-distance review.
 pub fn decoupling_proximity_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -1476,7 +1751,10 @@ pub fn decoupling_proximity_readiness(
         .copied()
         .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
         .collect::<Vec<_>>();
+    let ground_index = CopperSpatialIndex::new(&ground_features, ground_search_radius);
     let mut violations = Vec::new();
+    let mut candidate_features = 0usize;
+    let mut ground_hits = 0usize;
 
     for feature in features {
         if !matches!(feature.kind, CopperKind::Pad | CopperKind::Via) {
@@ -1488,11 +1766,15 @@ pub fn decoupling_proximity_readiness(
         if !looks_high_current_net(net) {
             continue;
         }
+        candidate_features += 1;
 
-        let has_nearby_ground = ground_features
-            .iter()
-            .filter(|ground| ground.layer == feature.layer)
-            .any(|ground| distance(ground.location, feature.location) <= ground_search_radius);
+        let nearby_ground = ground_index.same_layer_centers_within(
+            feature.location,
+            &feature.layer,
+            ground_search_radius,
+        );
+        ground_hits += nearby_ground.len();
+        let has_nearby_ground = !nearby_ground.is_empty();
         if has_nearby_ground {
             continue;
         }
@@ -1509,11 +1791,26 @@ pub fn decoupling_proximity_readiness(
             )),
         ));
     }
+    log::trace!(
+        "decoupling proximity readiness: source={} candidate_features={} ground_features={} ground_buckets={} ground_hits={} ground_search_radius={ground_search_radius:.6} violations={}",
+        board.source,
+        candidate_features,
+        ground_features.len(),
+        ground_index.bucket_count(),
+        ground_hits,
+        violations.len()
+    );
 
     violations
 }
 
 /// Run the `return_path_readiness` design-readiness check or report helper.
+///
+/// High-speed via transitions are matched to nearby ground stitching via centers
+/// with a point-grid broad phase before exact center-radius review. This follows
+/// the broad/narrow phase pattern from Ericson, *Real-Time Collision Detection*
+/// (2005), and keeps sparse ground-stitch fields bounded while retaining the
+/// documented return-path heuristic.
 pub fn return_path_readiness(
     board: &BoardModel,
     stitching_distance: f64,
@@ -1526,6 +1823,11 @@ pub fn return_path_readiness(
         .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
         .copied()
         .collect::<Vec<_>>();
+    let ground_points = ground_vias
+        .iter()
+        .map(|feature| feature.location)
+        .collect::<Vec<_>>();
+    let ground_index = PointSpatialIndex::new(ground_points, stitching_distance);
     let signal_vias = features
         .iter()
         .filter(|feature| feature.kind == CopperKind::Via)
@@ -1533,11 +1835,12 @@ pub fn return_path_readiness(
         .copied()
         .collect::<Vec<_>>();
     let mut violations = Vec::new();
+    let mut stitch_hits = 0usize;
 
     for via in signal_vias {
-        let has_nearby_ground = ground_vias
-            .iter()
-            .any(|ground| distance(via.location, ground.location) <= stitching_distance);
+        let nearby_ground = ground_index.centers_within(via.location, stitching_distance);
+        stitch_hits += nearby_ground.len();
+        let has_nearby_ground = !nearby_ground.is_empty();
         if has_nearby_ground {
             continue;
         }
@@ -1555,6 +1858,20 @@ pub fn return_path_readiness(
             )),
         ));
     }
+
+    log::trace!(
+        "return-path readiness: source={} signal_vias={} ground_vias={} ground_buckets={} stitch_hits={} stitching_distance={stitching_distance:.6} violations={}",
+        board.source,
+        features
+            .iter()
+            .filter(|feature| feature.kind == CopperKind::Via)
+            .filter(|feature| feature.net.as_deref().is_some_and(looks_high_speed_net))
+            .count(),
+        ground_vias.len(),
+        ground_index.bucket_count(),
+        stitch_hits,
+        violations.len()
+    );
 
     violations
 }
@@ -2048,17 +2365,44 @@ pub fn panelization_clearance(
 }
 
 /// Run the `apply_ipc356_nets` design-readiness check or report helper.
+///
+/// IPC-D-356 records are point-like electrical-test observations. Matching them
+/// against parsed KiCad feature centers uses the same grid broad phase described
+/// by Ericson, *Real-Time Collision Detection* (2005), before the exact
+/// center-distance predicate. This keeps sidecar annotation linear-ish on large
+/// fixture files and avoids assigning drill diameter metadata from unrelated
+/// distant records.
 pub fn apply_ipc356_nets(board: &mut BoardModel, points: &[Ipc356Point], tolerance: f64) {
+    let point_index = PointSpatialIndex::new(points.iter().map(|point| point.location), tolerance);
+    let copper_locations = board
+        .copper
+        .iter()
+        .map(|copper| copper.location)
+        .collect::<Vec<_>>();
+    let copper_index = PointSpatialIndex::new(copper_locations, tolerance);
+    let drill_locations = board
+        .drills
+        .iter()
+        .map(|drill| drill.location)
+        .collect::<Vec<_>>();
+    let drill_index = PointSpatialIndex::new(drill_locations, tolerance);
+    let mut copper_matches = 0_usize;
+    let mut drill_matches = 0_usize;
+
     for point in points {
-        for copper in &mut board.copper {
-            if copper.net.is_none() && distance(copper.location, point.location) <= tolerance {
+        for copper_index in copper_index.centers_within(point.location, tolerance) {
+            let copper = &mut board.copper[copper_index];
+            if copper.net.is_none() {
                 copper.net = Some(point.net.clone());
+                copper_matches += 1;
             }
         }
 
-        for drill in &mut board.drills {
-            if drill.net.is_none() && distance(drill.location, point.location) <= tolerance {
+        for drill_index in drill_index.centers_within(point.location, tolerance) {
+            let drill = &mut board.drills[drill_index];
+            if drill.net.is_none() {
                 drill.net = Some(point.net.clone());
+                drill_matches += 1;
             }
             if drill.diameter == 0.0
                 && let Some(diameter) = point.diameter
@@ -2067,21 +2411,39 @@ pub fn apply_ipc356_nets(board: &mut BoardModel, points: &[Ipc356Point], toleran
             }
         }
     }
+
+    log::trace!(
+        "apply IPC-D-356 nets: points={} point_buckets={} copper_buckets={} drill_buckets={} copper_matches={} drill_matches={} tolerance={tolerance:.6}",
+        points.len(),
+        point_index.bucket_count(),
+        copper_index.bucket_count(),
+        drill_index.bucket_count(),
+        copper_matches,
+        drill_matches
+    );
 }
 
 /// Run the `ipc356_coverage` design-readiness check or report helper.
+///
+/// Coverage is a point-to-center proximity query, so the check uses a
+/// deterministic point spatial index as a broad phase before exact distance.
+/// This follows Ericson's broad/narrow collision-detection pattern and keeps
+/// large ICT/netlist sidecars bounded.
 pub fn ipc356_coverage(
     board: &BoardModel,
     points: &[Ipc356Point],
     tolerance: f64,
 ) -> Vec<Violation> {
+    let copper_index = PointSpatialIndex::new(
+        board.copper.iter().map(|feature| feature.location),
+        tolerance,
+    );
     let mut violations = Vec::new();
 
     for point in points {
-        let has_copper = board
-            .copper
-            .iter()
-            .any(|feature| distance(feature.location, point.location) <= tolerance);
+        let has_copper = !copper_index
+            .centers_within(point.location, tolerance)
+            .is_empty();
         if has_copper {
             continue;
         }
@@ -2103,26 +2465,38 @@ pub fn ipc356_coverage(
             )),
         ));
     }
+    log::trace!(
+        "IPC-D-356 coverage readiness: points={} copper={} spatial_buckets={} tolerance={tolerance:.6} violations={}",
+        points.len(),
+        board.copper.len(),
+        copper_index.bucket_count(),
+        violations.len()
+    );
 
     violations
 }
 
 /// Run the `ipc356_drill_diameter` design-readiness check or report helper.
+///
+/// Diameter comparison uses a drill-center grid as a broad phase before exact
+/// tolerance comparison. This keeps cross-source drill-table checks bounded on
+/// dense IPC-D-356 fixtures while preserving the caller-visible diagnostic.
 pub fn ipc356_drill_diameter(
     board: &BoardModel,
     points: &[Ipc356Point],
     tolerance: f64,
 ) -> Vec<Violation> {
+    let drill_index = DrillSpatialIndex::new(&board.drills, tolerance);
+    let mut candidate_count = 0_usize;
     let mut violations = Vec::new();
 
     for point in points {
         let Some(ipc_diameter) = point.diameter else {
             continue;
         };
-        for drill in &board.drills {
-            if distance(drill.location, point.location) > tolerance {
-                continue;
-            }
+        for drill_index in drill_index.centers_within(point.location, tolerance) {
+            candidate_count += 1;
+            let drill = &board.drills[drill_index];
             if drill.diameter == 0.0 || (drill.diameter - ipc_diameter).abs() <= tolerance {
                 continue;
             }
@@ -2141,6 +2515,14 @@ pub fn ipc356_drill_diameter(
             ));
         }
     }
+    log::trace!(
+        "IPC-D-356 drill diameter readiness: points={} drills={} spatial_buckets={} candidate_pairs={} tolerance={tolerance:.6} violations={}",
+        points.len(),
+        board.drills.len(),
+        drill_index.bucket_count(),
+        candidate_count,
+        violations.len()
+    );
 
     violations
 }
@@ -2162,9 +2544,24 @@ fn copper_features_touch(left: &CopperFeature, right: &CopperFeature, tolerance:
         ) <= tolerance
 }
 
-fn copper_components(features: &[&CopperFeature], tolerance: f64) -> Vec<Vec<usize>> {
+fn rects_overlap(left: &geo::Rect<f64>, right: &geo::Rect<f64>) -> bool {
+    left.min().x <= right.max().x
+        && left.max().x >= right.min().x
+        && left.min().y <= right.max().y
+        && left.max().y >= right.min().y
+}
+
+struct CopperComponentResult {
+    components: Vec<Vec<usize>>,
+    spatial_buckets: usize,
+    exact_pairs: usize,
+}
+
+fn copper_components(features: &[&CopperFeature], tolerance: f64) -> CopperComponentResult {
+    let feature_index = CopperSpatialIndex::new(features, tolerance);
     let mut visited = vec![false; features.len()];
     let mut components = Vec::new();
+    let mut exact_pairs = 0usize;
 
     for start in 0..features.len() {
         if visited[start] {
@@ -2176,10 +2573,11 @@ fn copper_components(features: &[&CopperFeature], tolerance: f64) -> Vec<Vec<usi
         visited[start] = true;
         while let Some(index) = stack.pop() {
             component.push(index);
-            for candidate in 0..features.len() {
+            for candidate in feature_index.same_layer_near_feature(features[index], tolerance) {
                 if visited[candidate] {
                     continue;
                 }
+                exact_pairs += 1;
                 if !copper_features_touch(features[index], features[candidate], tolerance) {
                     continue;
                 }
@@ -2190,7 +2588,11 @@ fn copper_components(features: &[&CopperFeature], tolerance: f64) -> Vec<Vec<usi
         components.push(component);
     }
 
-    components
+    CopperComponentResult {
+        components,
+        spatial_buckets: feature_index.bucket_count(),
+        exact_pairs,
+    }
 }
 
 fn selected_copper_features<'a>(
@@ -2229,12 +2631,6 @@ fn sketches_within_clearance(left: &PcbSketch, right: &PcbSketch, clearance: f64
         && left_bounds.max().x + clearance >= right_bounds.min().x
         && left_bounds.min().y - clearance <= right_bounds.max().y
         && left_bounds.max().y + clearance >= right_bounds.min().y
-}
-
-fn distance(left: [f64; 2], right: [f64; 2]) -> f64 {
-    let dx = left[0] - right[0];
-    let dy = left[1] - right[1];
-    (dx * dx + dy * dy).sqrt()
 }
 
 fn multipolygon_center(multipolygon: &geo::MultiPolygon<f64>) -> Option<[f64; 2]> {
@@ -2291,6 +2687,8 @@ impl CopperKind {
 
 #[cfg(test)]
 mod tests {
+    use std::time::Instant;
+
     use geo::{Coord, LineString, Polygon};
 
     use crate::geometry::{circle_polygon, line_polygon, polygons_to_sketch};
@@ -2910,6 +3308,32 @@ mod tests {
     }
 
     #[test]
+    fn via_in_pad_readiness_culls_sparse_pad_fields() {
+        let mut copper = (0..2_000)
+            .map(|index| {
+                copper_disc(
+                    &format!("GND_{index}"),
+                    CopperKind::Pad,
+                    [100.0 + index as f64 * 4.0, 100.0],
+                    0.30,
+                )
+            })
+            .collect::<Vec<_>>();
+        copper.push(copper_disc("GND", CopperKind::Pad, [0.0, 0.0], 0.30));
+        copper.push(copper_disc("GND", CopperKind::Via, [0.05, 0.0], 0.12));
+        let board = board_with_copper(copper);
+
+        let started = std::time::Instant::now();
+        let violations = via_in_pad_readiness(&board, &[], 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "via-in-pad should spatially cull distant pads before exact overlap review"
+        );
+    }
+
+    #[test]
     fn teardrop_readiness_reports_narrow_segment_into_pad() {
         let board = board_with_copper(vec![
             copper_disc("SIG", CopperKind::Pad, [0.0, 0.0], 0.25),
@@ -2951,6 +3375,38 @@ mod tests {
         assert_eq!(
             teardrop_readiness(&board, &["B.Cu".to_string()], 0.12, 1.0e-9).len(),
             1
+        );
+    }
+
+    #[test]
+    fn teardrop_readiness_culls_sparse_anchor_fields() {
+        let mut copper = (0..2_000)
+            .map(|index| {
+                copper_disc(
+                    &format!("SIG_{index}"),
+                    CopperKind::Pad,
+                    [100.0 + index as f64 * 4.0, 100.0],
+                    0.25,
+                )
+            })
+            .collect::<Vec<_>>();
+        copper.push(copper_disc("SIG", CopperKind::Pad, [0.0, 0.0], 0.25));
+        copper.push(copper_line(
+            "SIG",
+            CopperKind::Segment,
+            [0.0, 0.0],
+            [1.0, 0.0],
+            0.08,
+        ));
+        let board = board_with_copper(copper);
+
+        let started = std::time::Instant::now();
+        let violations = teardrop_readiness(&board, &[], 0.12, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "teardrop review should spatially cull distant anchors before exact overlap review"
         );
     }
 
@@ -3067,6 +3523,35 @@ mod tests {
         assert_eq!(
             plane_clearance_readiness(&board, &["B.Cu".to_string()], 1.0e-9).len(),
             1
+        );
+    }
+
+    #[test]
+    fn plane_clearance_readiness_culls_sparse_zone_and_drill_fields() {
+        let mut board = board_with_copper(
+            (0..2_000)
+                .map(|index| {
+                    let x = 100.0 + index as f64 * 3.0;
+                    copper_rect("GND", CopperKind::Zone, "F.Cu", x, 100.0, x + 1.0, 101.0)
+                })
+                .collect(),
+        );
+        board.drills = (0..400)
+            .map(|index| DrillFeature {
+                location: [index as f64 * 3.0, 0.0],
+                diameter: 0.5,
+                net: None,
+                plated: false,
+            })
+            .collect();
+        let start = Instant::now();
+
+        let violations = plane_clearance_readiness(&board, &[], 1.0e-9);
+
+        assert!(violations.is_empty());
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "plane clearance should index sparse zone/drill fields"
         );
     }
 
@@ -3354,6 +3839,37 @@ mod tests {
         ];
 
         assert!(edge_stitching_readiness(&board, &[], 0.50, 0.30, 1.0e-9).is_empty());
+    }
+
+    #[test]
+    fn edge_stitching_readiness_culls_sparse_ground_vias() {
+        let mut board = board_with_outline(square(0.0, 0.0, 10.0, 10.0));
+        board.copper = (0..2_000)
+            .map(|index| {
+                copper_disc(
+                    "GND",
+                    CopperKind::Via,
+                    [100.0 + index as f64 * 2.0, 50.0],
+                    0.10,
+                )
+            })
+            .chain([copper_line(
+                "USB_D+",
+                CopperKind::Segment,
+                [0.10, 1.0],
+                [0.90, 1.0],
+                0.10,
+            )])
+            .collect();
+
+        let start = Instant::now();
+        let violations = edge_stitching_readiness(&board, &[], 0.50, 0.30, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "edge stitching should index sparse ground-via fields"
+        );
     }
 
     #[test]
@@ -3731,6 +4247,34 @@ mod tests {
     }
 
     #[test]
+    fn differential_pair_return_readiness_culls_sparse_ground_fields() {
+        let mut copper = vec![
+            copper_line("USB_D+", CopperKind::Segment, [0.0, 0.0], [1.0, 0.0], 0.10),
+            copper_line(
+                "USB_D-",
+                CopperKind::Segment,
+                [0.0, 0.20],
+                [1.0, 0.20],
+                0.10,
+            ),
+        ];
+        for index in 0..2_000 {
+            let x = 100.0 + index as f64 * 0.50;
+            copper.push(copper_disc("GND", CopperKind::Via, [x, 10.0], 0.12));
+        }
+        let board = board_with_copper(copper);
+        let start = Instant::now();
+
+        let violations = differential_pair_return_readiness(&board, &[], 0.30);
+
+        assert_eq!(violations.len(), 2);
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "differential return lookup should index sparse same-layer ground fields"
+        );
+    }
+
+    #[test]
     fn trace_junction_acid_trap_reports_acute_same_net_segments() {
         let shallow_angle_degrees = 20.0_f64;
         let board = board_with_copper(vec![
@@ -3772,6 +4316,31 @@ mod tests {
 
         assert!(trace_junction_acid_trap_readiness(&obtuse, &[], 30.0, 1.0e-9).is_empty());
         assert!(trace_junction_acid_trap_readiness(&different_net, &[], 30.0, 1.0e-9).is_empty());
+    }
+
+    #[test]
+    fn trace_junction_acid_trap_culls_sparse_segment_fields() {
+        let mut copper = Vec::new();
+        for index in 0..2_000 {
+            let y = index as f64 * 0.50;
+            copper.push(copper_line(
+                "SIG",
+                CopperKind::Segment,
+                [100.0, y],
+                [101.0, y],
+                0.10,
+            ));
+        }
+        let board = board_with_copper(copper);
+        let start = Instant::now();
+
+        let violations = trace_junction_acid_trap_readiness(&board, &[], 30.0, 1.0e-9);
+
+        assert!(violations.is_empty());
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "trace-junction acid-trap review should index sparse same-net segment fields"
+        );
     }
 
     #[test]
@@ -3978,6 +4547,32 @@ mod tests {
     }
 
     #[test]
+    fn same_net_island_readiness_culls_sparse_same_net_fields() {
+        let mut copper = Vec::new();
+        for index in 0..2_000 {
+            let x = index as f64 * 2.0;
+            copper.push(copper_line(
+                "GPIO1",
+                CopperKind::Segment,
+                [x, 0.0],
+                [x + 0.5, 0.0],
+                0.10,
+            ));
+        }
+        let board = board_with_copper(copper);
+        let start = Instant::now();
+
+        let violations = same_net_island_readiness(&board, &[], 0.10);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].locations.len(), 2_000);
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "same-net island connectivity should index sparse copper fields"
+        );
+    }
+
+    #[test]
     fn high_current_readiness_reports_power_net_layer_change_with_single_via() {
         let board = board_with_copper(vec![
             copper_line_on_layer(
@@ -4113,6 +4708,30 @@ mod tests {
         assert_eq!(
             power_via_array_readiness(&board, &["B.Cu".to_string()], 0.50).len(),
             1
+        );
+    }
+
+    #[test]
+    fn power_via_array_readiness_culls_sparse_via_fields() {
+        let mut copper = Vec::new();
+        for index in 0..2_000 {
+            copper.push(copper_disc(
+                "VBUS",
+                CopperKind::Via,
+                [index as f64 * 2.0, 0.0],
+                0.12,
+            ));
+        }
+        let board = board_with_copper(copper);
+        let start = Instant::now();
+
+        let violations = power_via_array_readiness(&board, &[], 0.50);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].locations.len(), 2_000);
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "power via isolation should use indexed nearest-neighbor lookup"
         );
     }
 
@@ -4558,6 +5177,38 @@ mod tests {
     }
 
     #[test]
+    fn chassis_stitching_readiness_culls_sparse_ground_vias() {
+        let board = board_with_copper(
+            (0..2_000)
+                .map(|index| {
+                    copper_disc(
+                        "GND",
+                        CopperKind::Via,
+                        [100.0 + index as f64 * 2.0, 50.0],
+                        0.10,
+                    )
+                })
+                .chain([copper_line(
+                    "USB_SHIELD",
+                    CopperKind::Segment,
+                    [0.0, 0.0],
+                    [1.0, 0.0],
+                    0.20,
+                )])
+                .collect(),
+        );
+
+        let start = Instant::now();
+        let violations = chassis_stitching_readiness(&board, &[], 0.50);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "chassis stitching should index sparse ground-via fields"
+        );
+    }
+
+    #[test]
     fn gold_finger_readiness_reports_via_on_likely_finger_net() {
         let board = board_with_copper(vec![copper_disc(
             "GOLD_FINGER_1",
@@ -4697,6 +5348,51 @@ mod tests {
     }
 
     #[test]
+    fn gold_finger_spacing_readiness_culls_sparse_finger_fields() {
+        let mut copper = (0..2_000)
+            .map(|index| {
+                copper_rect(
+                    &format!("GOLD_FINGER_{index}"),
+                    CopperKind::Pad,
+                    "F.Cu",
+                    100.0 + index as f64 * 5.0,
+                    0.0,
+                    100.5 + index as f64 * 5.0,
+                    2.0,
+                )
+            })
+            .collect::<Vec<_>>();
+        copper.push(copper_rect(
+            "GOLD_FINGER_A",
+            CopperKind::Pad,
+            "F.Cu",
+            0.0,
+            0.0,
+            0.5,
+            2.0,
+        ));
+        copper.push(copper_rect(
+            "GOLD_FINGER_B",
+            CopperKind::Pad,
+            "F.Cu",
+            0.55,
+            0.0,
+            1.0,
+            2.0,
+        ));
+        let board = board_with_copper(copper);
+
+        let started = std::time::Instant::now();
+        let violations = gold_finger_spacing_readiness(&board, &[], 0.10, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "gold-finger spacing should cull sparse card-edge contacts before exact CSG"
+        );
+    }
+
+    #[test]
     fn gold_finger_drill_keepout_readiness_reports_nearby_drills() {
         let board = board_with_copper(vec![copper_rect(
             "EDGE_CONN_1",
@@ -4748,6 +5444,49 @@ mod tests {
         assert!(
             gold_finger_drill_keepout_readiness(&board, &sidecar_drills, &[], 0.2, 1.0e-9)
                 .is_empty()
+        );
+    }
+
+    #[test]
+    fn gold_finger_drill_keepout_readiness_culls_sparse_finger_fields() {
+        let copper = (0..2_000)
+            .map(|index| {
+                copper_rect(
+                    &format!("GOLD_FINGER_{index}"),
+                    CopperKind::Pad,
+                    "F.Cu",
+                    100.0 + index as f64 * 5.0,
+                    0.0,
+                    100.5 + index as f64 * 5.0,
+                    2.0,
+                )
+            })
+            .chain([copper_rect(
+                "GOLD_FINGER_NEAR",
+                CopperKind::Pad,
+                "F.Cu",
+                0.0,
+                0.0,
+                1.0,
+                2.0,
+            )])
+            .collect::<Vec<_>>();
+        let board = board_with_copper(copper);
+        let sidecar_drills = vec![DrillFeature {
+            location: [1.25, 1.0],
+            diameter: 0.6,
+            net: None,
+            plated: false,
+        }];
+
+        let started = std::time::Instant::now();
+        let violations =
+            gold_finger_drill_keepout_readiness(&board, &sidecar_drills, &[], 0.4, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "gold-finger drill keepout should cull sparse finger fields before exact CSG"
         );
     }
 
@@ -4906,6 +5645,37 @@ mod tests {
     }
 
     #[test]
+    fn connector_return_path_readiness_culls_sparse_ground_fields() {
+        let mut board = board_with_outline(square(0.0, 0.0, 20.0, 20.0));
+        board.copper = vec![copper_rect(
+            "USB_D_P",
+            CopperKind::Pad,
+            "F.Cu",
+            0.4,
+            8.0,
+            1.0,
+            8.6,
+        )];
+        for index in 0..2_000 {
+            board.copper.push(copper_disc(
+                "GND",
+                CopperKind::Via,
+                [100.0 + index as f64 * 2.0, 50.0],
+                0.12,
+            ));
+        }
+        let start = Instant::now();
+
+        let violations = connector_return_path_readiness(&board, &[], 1.0, 2.0);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "connector return-path lookup should index sparse ground fields"
+        );
+    }
+
+    #[test]
     fn decoupling_proximity_readiness_reports_power_feature_without_ground_return() {
         let board = board_with_copper(vec![
             copper_disc("VDD_3V3", CopperKind::Pad, [0.0, 0.0], 0.3),
@@ -4935,6 +5705,29 @@ mod tests {
 
         assert!(decoupling_proximity_readiness(&board, &[], 1.0).is_empty());
         assert!(decoupling_proximity_readiness(&board, &["F.Cu".to_string()], 1.0).is_empty());
+    }
+
+    #[test]
+    fn decoupling_proximity_readiness_culls_sparse_ground_fields() {
+        let mut copper = vec![copper_disc("VDD_3V3", CopperKind::Pad, [0.0, 0.0], 0.3)];
+        for index in 0..2_000 {
+            copper.push(copper_disc(
+                "GND",
+                CopperKind::Pad,
+                [100.0 + index as f64 * 2.0, 20.0],
+                0.3,
+            ));
+        }
+        let board = board_with_copper(copper);
+        let start = Instant::now();
+
+        let violations = decoupling_proximity_readiness(&board, &[], 1.0);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "decoupling proximity lookup should index sparse ground fields"
+        );
     }
 
     #[test]
@@ -5724,6 +6517,32 @@ mod tests {
         assert_eq!(
             return_path_readiness(&board, 0.50, &["B.Cu".to_string()]).len(),
             1
+        );
+    }
+
+    #[test]
+    fn return_path_readiness_culls_sparse_ground_vias() {
+        let board = board_with_copper(
+            (0..2_000)
+                .map(|index| {
+                    copper_disc(
+                        "GND",
+                        CopperKind::Via,
+                        [100.0 + index as f64 * 2.0, 50.0],
+                        0.10,
+                    )
+                })
+                .chain([copper_disc("USB_D+", CopperKind::Via, [0.0, 0.0], 0.12)])
+                .collect(),
+        );
+
+        let start = Instant::now();
+        let violations = return_path_readiness(&board, 0.50, &[]);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "return-path via stitching should index sparse ground-via fields"
         );
     }
 
@@ -6735,6 +7554,121 @@ mod tests {
     }
 
     #[test]
+    fn ipc356_points_do_not_copy_far_drill_diameter() {
+        let mut board = BoardModel {
+            source: "test".to_string(),
+            copper: Vec::new(),
+            drills: vec![DrillFeature {
+                location: [1.0, 2.0],
+                diameter: 0.0,
+                net: None,
+                plated: true,
+            }],
+            board_outline: None,
+            panel_features: None,
+        };
+        let points = vec![Ipc356Point {
+            net: "PWR".to_string(),
+            reference: Some("TP1".to_string()),
+            pin: None,
+            location: [10.0, 20.0],
+            diameter: Some(0.45),
+            access_side: None,
+            feature_type: None,
+            soldermask: None,
+        }];
+
+        apply_ipc356_nets(&mut board, &points, 0.1);
+
+        assert!(board.drills[0].net.is_none());
+        assert_eq!(board.drills[0].diameter, 0.0);
+    }
+
+    #[test]
+    fn ipc356_annotation_culls_sparse_copper_and_drill_fields() {
+        let mut board = BoardModel {
+            source: "test".to_string(),
+            copper: (0..2_000)
+                .map(|index| {
+                    copper_disc(
+                        "NO_NET",
+                        CopperKind::Pad,
+                        [100.0 + index as f64 * 5.0, 0.0],
+                        0.2,
+                    )
+                })
+                .chain([CopperFeature {
+                    layer: "F.Cu".to_string(),
+                    net: None,
+                    kind: CopperKind::Pad,
+                    location: [1.0, 2.0],
+                    sketch: polygons_to_sketch(
+                        vec![circle_polygon([1.0, 2.0], 0.5, 32)],
+                        Some(LayerMetadata {
+                            name: "feature".to_string(),
+                        }),
+                    ),
+                }])
+                .collect(),
+            drills: (0..2_000)
+                .map(|index| DrillFeature {
+                    location: [100.0 + index as f64 * 5.0, 10.0],
+                    diameter: 0.2,
+                    net: None,
+                    plated: true,
+                })
+                .chain([DrillFeature {
+                    location: [1.0, 3.0],
+                    diameter: 0.0,
+                    net: None,
+                    plated: true,
+                }])
+                .collect(),
+            board_outline: None,
+            panel_features: None,
+        };
+        let points = vec![
+            Ipc356Point {
+                net: "GND".to_string(),
+                reference: Some("U1".to_string()),
+                pin: Some("1".to_string()),
+                location: [1.02, 2.0],
+                diameter: None,
+                access_side: None,
+                feature_type: None,
+                soldermask: None,
+            },
+            Ipc356Point {
+                net: "PWR".to_string(),
+                reference: Some("TP1".to_string()),
+                pin: None,
+                location: [1.01, 3.0],
+                diameter: Some(0.45),
+                access_side: None,
+                feature_type: None,
+                soldermask: None,
+            },
+        ];
+
+        let started = std::time::Instant::now();
+        apply_ipc356_nets(&mut board, &points, 0.1);
+
+        assert_eq!(
+            board.copper.last().and_then(|copper| copper.net.as_deref()),
+            Some("GND")
+        );
+        assert_eq!(
+            board.drills.last().and_then(|drill| drill.net.as_deref()),
+            Some("PWR")
+        );
+        assert_eq!(board.drills.last().map(|drill| drill.diameter), Some(0.45));
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "IPC-D-356 annotation should index sparse copper and drill fields"
+        );
+    }
+
+    #[test]
     fn ipc356_coverage_reports_missing_test_record_copper() {
         let board = BoardModel {
             source: "test".to_string(),
@@ -6758,6 +7692,46 @@ mod tests {
 
         assert_eq!(violations.len(), 1);
         assert!(violations[0].message.as_deref().unwrap().contains("J1.2"));
+    }
+
+    #[test]
+    fn ipc356_coverage_culls_sparse_copper_fields() {
+        let board = BoardModel {
+            source: "test".to_string(),
+            copper: (0..2_000)
+                .map(|index| {
+                    copper_disc(
+                        "SIG",
+                        CopperKind::Pad,
+                        [100.0 + index as f64 * 5.0, 0.0],
+                        0.2,
+                    )
+                })
+                .chain([copper_disc("GND", CopperKind::Pad, [1.0, 2.0], 0.2)])
+                .collect(),
+            drills: Vec::new(),
+            board_outline: None,
+            panel_features: None,
+        };
+        let points = vec![Ipc356Point {
+            net: "GND".to_string(),
+            reference: Some("U1".to_string()),
+            pin: Some("1".to_string()),
+            location: [1.02, 2.0],
+            diameter: None,
+            access_side: None,
+            feature_type: None,
+            soldermask: None,
+        }];
+
+        let started = std::time::Instant::now();
+        let violations = ipc356_coverage(&board, &points, 0.1);
+
+        assert!(violations.is_empty());
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "IPC-D-356 coverage should cull sparse copper fields by point index"
+        );
     }
 
     #[test]
@@ -6817,6 +7791,49 @@ mod tests {
         }];
 
         assert!(ipc356_drill_diameter(&board, &points, 0.05).is_empty());
+    }
+
+    #[test]
+    fn ipc356_drill_diameter_culls_sparse_drill_fields() {
+        let board = BoardModel {
+            source: "test".to_string(),
+            copper: Vec::new(),
+            drills: (0..2_000)
+                .map(|index| DrillFeature {
+                    location: [100.0 + index as f64 * 5.0, 0.0],
+                    diameter: 0.30,
+                    net: Some("GND".to_string()),
+                    plated: true,
+                })
+                .chain([DrillFeature {
+                    location: [1.0, 2.0],
+                    diameter: 0.30,
+                    net: Some("GND".to_string()),
+                    plated: true,
+                }])
+                .collect(),
+            board_outline: None,
+            panel_features: None,
+        };
+        let points = vec![Ipc356Point {
+            net: "GND".to_string(),
+            reference: Some("V1".to_string()),
+            pin: None,
+            location: [1.01, 2.0],
+            diameter: Some(0.50),
+            access_side: None,
+            feature_type: None,
+            soldermask: None,
+        }];
+
+        let started = std::time::Instant::now();
+        let violations = ipc356_drill_diameter(&board, &points, 0.05);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "IPC-D-356 drill diameter comparison should index sparse drill fields"
+        );
     }
 
     fn feature(net: &str, location: [f64; 2]) -> CopperFeature {

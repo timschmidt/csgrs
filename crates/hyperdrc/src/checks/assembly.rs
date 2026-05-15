@@ -14,6 +14,7 @@ use csgrs::csg::CSG;
 use geo::{Area, BoundingRect};
 
 use crate::checks::distance::polygon_boundary_distance;
+use crate::checks::spatial::CopperSpatialIndex;
 use crate::geometry::{circle_polygon, multipolygon_to_shapes, polygons_to_sketch};
 use crate::ipc356::{Ipc356AccessSide, Ipc356FeatureType, Ipc356Point, Ipc356Soldermask};
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
@@ -425,10 +426,22 @@ pub fn testpoint_accessibility_readiness(
     edge_clearance: f64,
 ) -> Vec<Violation> {
     let mut violations = Vec::new();
+    let side_parity_features = board
+        .copper
+        .iter()
+        .filter(|feature| matches!(feature.kind, CopperKind::Pad | CopperKind::Via))
+        .filter(|feature| copper_layer_access_side(&feature.layer).is_some())
+        .collect::<Vec<_>>();
+    let side_parity_index = CopperSpatialIndex::new(
+        &side_parity_features,
+        minimum_diameter / 2.0 + minimum_spacing,
+    );
     log::trace!(
-        "testpoint accessibility readiness: source={} points={} minimum_diameter={minimum_diameter:.6} minimum_spacing={minimum_spacing:.6} edge_clearance={edge_clearance:.6}",
+        "testpoint accessibility readiness: source={} points={} side_parity_features={} side_parity_buckets={} minimum_diameter={minimum_diameter:.6} minimum_spacing={minimum_spacing:.6} edge_clearance={edge_clearance:.6}",
         board.source,
-        points.len()
+        points.len(),
+        side_parity_features.len(),
+        side_parity_index.bucket_count()
     );
 
     for point in points {
@@ -501,9 +514,13 @@ pub fn testpoint_accessibility_readiness(
                 ),
             ));
         }
-        if let Some(side_violation) =
-            testpoint_side_parity_violation(board, point, minimum_diameter, minimum_spacing)
-        {
+        if let Some(side_violation) = testpoint_side_parity_violation(
+            point,
+            minimum_diameter,
+            minimum_spacing,
+            &side_parity_features,
+            &side_parity_index,
+        ) {
             violations.push(side_violation);
         }
 
@@ -658,6 +675,14 @@ fn testpoint_bucket(location: [f64; 2], cell_size: f64) -> (i64, i64) {
 }
 
 /// Run the `testpoint_copper_clearance_readiness` design-readiness check or report helper.
+///
+/// The probe keepout is a circular fixture envelope around each IPC-D-356 test
+/// access point. Candidate copper is found with the shared broad-phase grid
+/// described by Ericson, *Real-Time Collision Detection* (2005), then exact CSG
+/// intersection remains the narrow-phase decision. IPC-9252B-style DFT practice
+/// treats probe access as both electrical and mechanical evidence; unrelated
+/// nearby copper can create fixture shorts even when the IPC-D-356 record is
+/// otherwise complete.
 pub fn testpoint_copper_clearance_readiness(
     board: &BoardModel,
     points: &[Ipc356Point],
@@ -667,31 +692,42 @@ pub fn testpoint_copper_clearance_readiness(
     min_area: f64,
 ) -> Vec<Violation> {
     let copper = selected_copper_features(board, selected_layers);
+    let copper_index = CopperSpatialIndex::new(&copper, minimum_diameter / 2.0 + clearance);
     let mut violations = Vec::new();
+    let mut candidate_count = 0_usize;
+    log::trace!(
+        "testpoint copper clearance readiness: source={} points={} copper={} buckets={} minimum_diameter={minimum_diameter:.6} clearance={clearance:.6} min_area={min_area:.9}",
+        board.source,
+        points.len(),
+        copper.len(),
+        copper_index.bucket_count()
+    );
 
     for point in points {
         let probe_diameter = point
             .diameter
             .unwrap_or(minimum_diameter)
             .max(minimum_diameter);
+        let keepout_radius = probe_diameter / 2.0 + clearance;
         let keepout = polygons_to_sketch(
-            vec![circle_polygon(
-                point.location,
-                probe_diameter / 2.0 + clearance,
-                32,
-            )],
+            vec![circle_polygon(point.location, keepout_radius, 32)],
             Some(LayerMetadata {
                 name: "IPC-D-356 probe copper keepout".to_string(),
             }),
         );
         let point_net = normalize_net(&point.net);
 
-        for feature in &copper {
+        for feature_index in copper_index.all_layers_near_circle(point.location, keepout_radius) {
+            candidate_count += 1;
+            let feature = copper[feature_index];
             if feature
                 .net
                 .as_deref()
                 .is_some_and(|net| normalize_net(net) == point_net)
             {
+                continue;
+            }
+            if !feature_may_touch_circle(feature, point.location, keepout_radius) {
                 continue;
             }
 
@@ -725,14 +761,22 @@ pub fn testpoint_copper_clearance_readiness(
         }
     }
 
+    log::trace!(
+        "testpoint copper clearance readiness: source={} candidate_pairs={} violations={}",
+        board.source,
+        candidate_count,
+        violations.len()
+    );
+
     violations
 }
 
 fn testpoint_side_parity_violation(
-    board: &BoardModel,
     point: &Ipc356Point,
     minimum_diameter: f64,
     minimum_spacing: f64,
+    features: &[&CopperFeature],
+    spatial_index: &CopperSpatialIndex<'_>,
 ) -> Option<Violation> {
     // IPC-D-356B carries electrical-test access evidence, while DFT fixture
     // guidance treats probe side as a production constraint; cross-checking the
@@ -748,11 +792,11 @@ fn testpoint_side_parity_violation(
         point.diameter.unwrap_or(minimum_diameter) / 2.0 + minimum_spacing.max(0.25);
     let point_net = normalize_net(&point.net);
     let mut nearby_sides = BTreeSet::new();
+    let mut candidate_count = 0_usize;
 
-    for feature in &board.copper {
-        if !matches!(feature.kind, CopperKind::Pad | CopperKind::Via) {
-            continue;
-        }
+    for feature_index in spatial_index.all_layers_near_circle(point.location, search_radius) {
+        candidate_count += 1;
+        let feature = features[feature_index];
         if !feature
             .net
             .as_deref()
@@ -767,6 +811,12 @@ fn testpoint_side_parity_violation(
             nearby_sides.insert(side);
         }
     }
+    log::trace!(
+        "testpoint side parity: net={} candidates={} nearby_sides={} search_radius={search_radius:.6}",
+        point.net,
+        candidate_count,
+        nearby_sides.len()
+    );
 
     if nearby_sides.is_empty() || nearby_sides.contains(&expected_side) {
         return None;
@@ -2242,6 +2292,34 @@ mod tests {
     }
 
     #[test]
+    fn testpoint_copper_clearance_readiness_culls_sparse_copper_fields() {
+        let mut copper = (0..2_000)
+            .map(|index| {
+                copper_pad(
+                    &format!("SIG{index}"),
+                    [100.0 + (index % 50) as f64 * 5.0, (index / 50) as f64 * 5.0],
+                    0.25,
+                    0.25,
+                )
+            })
+            .collect::<Vec<_>>();
+        copper.push(copper_pad("TP_NET", [-10.0, -10.0], 0.4, 0.4));
+        copper.push(copper_pad("OTHER_NEAR", [-9.62, -10.0], 0.25, 0.25));
+        let board = board_with_copper(copper);
+        let point = ipc_point("TP_NET", [-10.0, -10.0], Some(0.4));
+
+        let start = std::time::Instant::now();
+        let violations =
+            testpoint_copper_clearance_readiness(&board, &[point], &[], 0.4, 0.1, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed() < std::time::Duration::from_secs(2),
+            "testpoint copper clearance should cull distant copper by grid bucket"
+        );
+    }
+
+    #[test]
     fn testpoint_accessibility_readiness_reports_close_probe_spacing() {
         let board = board_with_copper(Vec::new());
         let points = vec![
@@ -2279,6 +2357,42 @@ mod tests {
         assert!(
             start.elapsed() < std::time::Duration::from_secs(2),
             "testpoint accessibility should cull distant probe pairs by grid bucket"
+        );
+    }
+
+    #[test]
+    fn testpoint_accessibility_readiness_culls_sparse_side_parity_copper() {
+        let mut copper = (0..2_000)
+            .map(|index| {
+                copper_pad_on_layer(
+                    "F.Cu",
+                    "TP_NET",
+                    [100.0 + (index % 50) as f64 * 5.0, (index / 50) as f64 * 5.0],
+                    0.25,
+                    0.25,
+                )
+            })
+            .collect::<Vec<_>>();
+        copper.push(copper_pad_on_layer(
+            "B.Cu",
+            "TP_NET",
+            [-10.0, -10.0],
+            0.35,
+            0.35,
+        ));
+        let board = board_with_copper(copper);
+        let point = accessible_ipc_point("TP_NET", [-10.0, -10.0], 0.4);
+
+        let start = std::time::Instant::now();
+        let violations = testpoint_accessibility_readiness(&board, &[point], 0.4, 0.35, 0.5);
+
+        assert_eq!(violations.len(), 1);
+        assert!(violations[0].message.as_deref().is_some_and(|message| {
+            message.contains("access side is top") && message.contains("only on bottom")
+        }));
+        assert!(
+            start.elapsed() < std::time::Duration::from_secs(2),
+            "testpoint side parity should cull distant KiCad pads by grid bucket"
         );
     }
 

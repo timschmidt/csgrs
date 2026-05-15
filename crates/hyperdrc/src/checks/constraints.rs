@@ -16,6 +16,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use geo::BoundingRect;
 
 use super::distance::polygon_boundary_distance;
+use super::spatial::CopperSpatialIndex;
 use crate::constraint_policy::{
     DifferentialRole, FabricationCapabilityConfig, NetClassConfig, StackupConfig, StackupLayerKind,
     SurfaceFinish,
@@ -649,16 +650,28 @@ fn net_clearance_constraints(
     net_classes: &[NetClassConfig],
     features: &[&CopperFeature],
 ) -> Vec<Violation> {
+    let Some(maximum_clearance) = maximum_configured_clearance(net_classes) else {
+        return Vec::new();
+    };
+    // Broad-phase candidate generation follows Ericson, Real-Time Collision
+    // Detection (2005): use a deterministic grid to bound same-layer candidates,
+    // then keep the exact polygon-boundary distance as the release predicate.
+    let feature_index = CopperSpatialIndex::new(features, maximum_clearance);
+    let mut exact_pair_count = 0_usize;
     let mut violations = Vec::new();
     for (left_index, left) in features.iter().enumerate() {
         let Some(left_net) = &left.net else {
             continue;
         };
-        for right in features.iter().skip(left_index + 1) {
+        for right_index in feature_index.same_layer_near_feature(left, maximum_clearance) {
+            if right_index <= left_index {
+                continue;
+            }
+            let right = features[right_index];
             let Some(right_net) = &right.net else {
                 continue;
             };
-            if left.layer != right.layer || left_net == right_net {
+            if left_net == right_net {
                 continue;
             }
 
@@ -667,6 +680,7 @@ fn net_clearance_constraints(
             else {
                 continue;
             };
+            exact_pair_count += 1;
             let gap = polygon_boundary_distance(
                 &left.sketch.to_multipolygon(),
                 &right.sketch.to_multipolygon(),
@@ -686,6 +700,13 @@ fn net_clearance_constraints(
             }
         }
     }
+    log::trace!(
+        "net-constraint clearance readiness: features={} spatial_buckets={} maximum_clearance={maximum_clearance:.6} exact_pairs={} violations={}",
+        features.len(),
+        feature_index.bucket_count(),
+        exact_pair_count,
+        violations.len()
+    );
     violations
 }
 
@@ -1028,11 +1049,61 @@ fn net_differential_pair_constraints(
             continue;
         }
 
-        // This is a geometry readiness check, not length/skew extraction. It
-        // measures nearest same-layer side-to-side copper distance using the
-        // same boundary-distance fallback as other net-spacing checks; explicit
-        // length matching needs routed path reconstruction from richer EDA data.
-        for (positive, negative) in pair_use.same_layer_feature_pairs() {
+        violations.extend(differential_pair_spacing_violations(
+            &pair,
+            &pair_use,
+            min_spacing,
+            max_spacing,
+        ));
+    }
+    violations
+}
+
+fn differential_pair_spacing_violations(
+    pair: &str,
+    pair_use: &DifferentialPairUse<'_>,
+    min_spacing: Option<f64>,
+    max_spacing: Option<f64>,
+) -> Vec<Violation> {
+    let query_spacing = [min_spacing, max_spacing]
+        .into_iter()
+        .flatten()
+        .filter(|spacing| spacing.is_finite() && *spacing >= 0.0)
+        .fold(0.0_f64, f64::max);
+    let negative_features = pair_use
+        .negative
+        .features
+        .iter()
+        .copied()
+        .filter(|feature| feature.kind != CopperKind::Via)
+        .collect::<Vec<_>>();
+    let positive_features = pair_use
+        .positive
+        .features
+        .iter()
+        .copied()
+        .filter(|feature| feature.kind != CopperKind::Via)
+        .collect::<Vec<_>>();
+    if positive_features.is_empty() || negative_features.is_empty() {
+        return Vec::new();
+    }
+
+    // Broad-phase candidate generation follows Ericson, Real-Time Collision
+    // Detection (2005). Configured pair-spacing checks still use exact polygon
+    // boundary distance for every candidate, but sparse repeated pair segments
+    // no longer need a full positive-by-negative scan.
+    let negative_index = CopperSpatialIndex::new(&negative_features, query_spacing);
+    let mut exact_pair_count = 0_usize;
+    let mut closest_pair: Option<DifferentialGap<'_>> = None;
+    let mut has_pair_within_max = max_spacing.is_none();
+    let mut violations = Vec::new();
+
+    for positive in &positive_features {
+        for negative_index in negative_index.same_layer_near_feature(positive, query_spacing) {
+            let negative = negative_features[negative_index];
+            if positive.layer != negative.layer {
+                continue;
+            }
             let gap = polygon_boundary_distance(
                 &positive.sketch.to_multipolygon(),
                 &negative.sketch.to_multipolygon(),
@@ -1040,6 +1111,19 @@ fn net_differential_pair_constraints(
             if !gap.is_finite() {
                 continue;
             }
+            exact_pair_count += 1;
+            let observed = DifferentialGap {
+                positive,
+                negative,
+                gap,
+            };
+            if closest_pair
+                .as_ref()
+                .is_none_or(|closest| gap < closest.gap)
+            {
+                closest_pair = Some(observed);
+            }
+
             if let Some(min_spacing) = min_spacing
                 && gap < min_spacing
             {
@@ -1056,23 +1140,77 @@ fn net_differential_pair_constraints(
                 ));
             }
             if let Some(max_spacing) = max_spacing
-                && gap > max_spacing
+                && gap <= max_spacing
             {
-                violations.push(Violation::new(
-                    "net-constraint-readiness",
-                    Severity::Warning,
-                    vec![positive.layer.clone()],
-                    None,
-                    Vec::new(),
-                    vec![positive.location, negative.location],
-                    Some(format!(
-                        "differential pair {pair} side spacing {gap:.6} is above configured maximum {max_spacing:.6}"
-                    )),
-                ));
+                has_pair_within_max = true;
             }
         }
     }
+
+    if !has_pair_within_max {
+        if closest_pair.is_none() {
+            closest_pair = first_same_layer_pair_gap(&positive_features, &negative_features);
+        }
+        if let (Some(max_spacing), Some(closest)) = (max_spacing, closest_pair)
+            && closest.gap > max_spacing
+        {
+            violations.push(Violation::new(
+                "net-constraint-readiness",
+                Severity::Warning,
+                vec![closest.positive.layer.clone()],
+                None,
+                Vec::new(),
+                vec![closest.positive.location, closest.negative.location],
+                Some(format!(
+                    "differential pair {pair} nearest side spacing {:.6} is above configured maximum {max_spacing:.6}",
+                    closest.gap
+                )),
+            ));
+        }
+    }
+
+    log::trace!(
+        "net-constraint differential-pair spacing readiness: pair={} positives={} negatives={} spatial_buckets={} exact_pairs={} violations={}",
+        pair,
+        positive_features.len(),
+        negative_features.len(),
+        negative_index.bucket_count(),
+        exact_pair_count,
+        violations.len()
+    );
     violations
+}
+
+#[derive(Clone, Copy, Debug)]
+struct DifferentialGap<'a> {
+    positive: &'a CopperFeature,
+    negative: &'a CopperFeature,
+    gap: f64,
+}
+
+fn first_same_layer_pair_gap<'a>(
+    positive_features: &[&'a CopperFeature],
+    negative_features: &[&'a CopperFeature],
+) -> Option<DifferentialGap<'a>> {
+    for positive in positive_features {
+        for negative in negative_features {
+            if positive.layer != negative.layer {
+                continue;
+            }
+            let gap = polygon_boundary_distance(
+                &positive.sketch.to_multipolygon(),
+                &negative.sketch.to_multipolygon(),
+            );
+            if gap.is_finite() {
+                return Some(DifferentialGap {
+                    positive,
+                    negative,
+                    gap,
+                });
+            }
+        }
+    }
+    None
 }
 
 fn net_length_constraints(
@@ -1184,6 +1322,15 @@ fn required_clearance<'a>(
                 .partial_cmp(&right.1)
                 .unwrap_or(std::cmp::Ordering::Equal)
         })
+}
+
+fn maximum_configured_clearance(net_classes: &[NetClassConfig]) -> Option<f64> {
+    net_classes
+        .iter()
+        .flat_map(|class| [class.min_clearance, class.min_voltage_clearance])
+        .flatten()
+        .filter(|clearance| clearance.is_finite() && *clearance >= 0.0)
+        .max_by(|left, right| left.partial_cmp(right).unwrap_or(std::cmp::Ordering::Equal))
 }
 
 fn is_reference_net(net: &str) -> bool {
@@ -1323,21 +1470,6 @@ impl<'a> DifferentialPairUse<'a> {
 
     fn max_pair_skew(&self) -> Option<f64> {
         option_min(self.positive.max_pair_skew, self.negative.max_pair_skew)
-    }
-
-    fn same_layer_feature_pairs(&self) -> Vec<(&'a CopperFeature, &'a CopperFeature)> {
-        let mut pairs = Vec::new();
-        for positive in &self.positive.features {
-            for negative in &self.negative.features {
-                if positive.layer == negative.layer
-                    && positive.kind != CopperKind::Via
-                    && negative.kind != CopperKind::Via
-                {
-                    pairs.push((*positive, *negative));
-                }
-            }
-        }
-        pairs
     }
 }
 
@@ -1682,6 +1814,63 @@ mod tests {
     }
 
     #[test]
+    fn net_constraint_clearance_culls_sparse_same_layer_fields() {
+        let classes = vec![NetClassConfig {
+            name: "power".to_string(),
+            nets: vec!["VBUS".to_string()],
+            min_clearance: Some(0.4),
+            ..NetClassConfig::default()
+        }];
+        let mut copper = (0..2_000)
+            .map(|index| {
+                feature(
+                    "F.Cu",
+                    &format!("SIG{index}"),
+                    CopperKind::Segment,
+                    [100.0 + (index % 50) as f64 * 5.0, (index / 50) as f64 * 5.0],
+                    0.2,
+                    0.2,
+                )
+            })
+            .collect::<Vec<_>>();
+        copper.push(feature(
+            "F.Cu",
+            "VBUS",
+            CopperKind::Segment,
+            [0.0, 0.0],
+            0.2,
+            0.2,
+        ));
+        copper.push(feature(
+            "F.Cu",
+            "SIG_NEAR",
+            CopperKind::Segment,
+            [0.3, 0.0],
+            0.2,
+            0.2,
+        ));
+        let board = board_with_features(copper);
+
+        let started = std::time::Instant::now();
+        let violations = net_constraint_readiness(&classes, None, &[board], &[]);
+
+        assert_eq!(
+            violations
+                .iter()
+                .filter(|violation| violation
+                    .message
+                    .as_deref()
+                    .is_some_and(|message| message.contains("below configured clearance")))
+                .count(),
+            1
+        );
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "net clearance constraints should cull sparse same-layer copper before exact CSG"
+        );
+    }
+
+    #[test]
     fn net_constraint_readiness_reports_current_voltage_plane_and_impedance_rules() {
         let classes = vec![NetClassConfig {
             name: "critical".to_string(),
@@ -1878,6 +2067,124 @@ mod tests {
             messages
                 .iter()
                 .any(|message| message.contains("approximate parsed length skew"))
+        );
+    }
+
+    #[test]
+    fn net_constraint_differential_pair_spacing_culls_sparse_side_fields() {
+        let classes = vec![
+            NetClassConfig {
+                name: "usb-p".to_string(),
+                nets: vec!["USB_D+".to_string()],
+                differential_pair: Some("usb".to_string()),
+                differential_role: Some(DifferentialRole::Positive),
+                min_pair_spacing: Some(0.2),
+                max_pair_spacing: Some(0.5),
+                ..NetClassConfig::default()
+            },
+            NetClassConfig {
+                name: "usb-n".to_string(),
+                nets: vec!["USB_D-".to_string()],
+                differential_pair: Some("usb".to_string()),
+                differential_role: Some(DifferentialRole::Negative),
+                min_pair_spacing: Some(0.2),
+                max_pair_spacing: Some(0.5),
+                ..NetClassConfig::default()
+            },
+        ];
+        let mut copper = (0..1_000)
+            .flat_map(|index| {
+                [
+                    feature(
+                        "F.Cu",
+                        "USB_D+",
+                        CopperKind::Segment,
+                        [100.0 + index as f64 * 4.0, 0.0],
+                        0.10,
+                        0.10,
+                    ),
+                    feature(
+                        "F.Cu",
+                        "USB_D-",
+                        CopperKind::Segment,
+                        [100.0 + index as f64 * 4.0, 2.0],
+                        0.10,
+                        0.10,
+                    ),
+                ]
+            })
+            .collect::<Vec<_>>();
+        copper.push(feature(
+            "F.Cu",
+            "USB_D+",
+            CopperKind::Segment,
+            [0.0, 0.0],
+            0.10,
+            0.10,
+        ));
+        copper.push(feature(
+            "F.Cu",
+            "USB_D-",
+            CopperKind::Segment,
+            [0.18, 0.0],
+            0.10,
+            0.10,
+        ));
+        let board = board_with_features(copper);
+
+        let started = std::time::Instant::now();
+        let messages = net_constraint_readiness(&classes, None, &[board], &[])
+            .into_iter()
+            .filter_map(|violation| violation.message)
+            .collect::<Vec<_>>();
+
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("below configured minimum 0.200000"))
+        );
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "differential-pair spacing should cull sparse repeated side fields before exact CSG"
+        );
+    }
+
+    #[test]
+    fn net_constraint_differential_pair_max_spacing_reports_nearest_side_gap() {
+        let classes = vec![
+            NetClassConfig {
+                name: "usb-p".to_string(),
+                nets: vec!["USB_D+".to_string()],
+                differential_pair: Some("usb".to_string()),
+                differential_role: Some(DifferentialRole::Positive),
+                max_pair_spacing: Some(0.5),
+                ..NetClassConfig::default()
+            },
+            NetClassConfig {
+                name: "usb-n".to_string(),
+                nets: vec!["USB_D-".to_string()],
+                differential_pair: Some("usb".to_string()),
+                differential_role: Some(DifferentialRole::Negative),
+                max_pair_spacing: Some(0.5),
+                ..NetClassConfig::default()
+            },
+        ];
+        let board = board_with_features(vec![
+            feature("F.Cu", "USB_D+", CopperKind::Segment, [0.0, 0.0], 0.1, 0.1),
+            feature("F.Cu", "USB_D-", CopperKind::Segment, [2.0, 0.0], 0.1, 0.1),
+        ]);
+
+        let messages = net_constraint_readiness(&classes, None, &[board], &[])
+            .into_iter()
+            .filter_map(|violation| violation.message)
+            .collect::<Vec<_>>();
+
+        assert_eq!(
+            messages
+                .iter()
+                .filter(|message| message.contains("nearest side spacing"))
+                .count(),
+            1
         );
     }
 

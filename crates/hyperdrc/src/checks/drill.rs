@@ -17,7 +17,7 @@ use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbSketch};
 
-use super::spatial::CopperSpatialIndex;
+use super::spatial::{CopperSpatialIndex, DrillSpatialIndex, PointSpatialIndex};
 
 /// Run the `annular_ring` design-readiness check or report helper.
 pub fn annular_ring(
@@ -268,11 +268,18 @@ pub fn drill_spacing(
 ) -> Vec<Violation> {
     let mut drills = board_drills.to_vec();
     drills.extend_from_slice(extra_drills);
+    let drill_index = DrillSpatialIndex::new(&drills, clearance);
+    log::trace!(
+        "drill spacing: drills={} spatial_buckets={} clearance={clearance:.6}",
+        drills.len(),
+        drill_index.bucket_count()
+    );
     let mut violations = Vec::new();
 
     for left_index in 0..drills.len() {
         let left = &drills[left_index];
-        for right in &drills[(left_index + 1)..] {
+        for right_index in drill_index.later_candidates_within_spacing(left_index, clearance) {
+            let right = &drills[right_index];
             let edge_gap = distance(left.location, right.location)
                 - left.diameter / 2.0
                 - right.diameter / 2.0;
@@ -482,12 +489,21 @@ pub fn drill_table_consistency(
     tolerance: f64,
 ) -> Vec<Violation> {
     let mut violations = Vec::new();
+    let extra_drill_index = DrillSpatialIndex::new(extra_drills, tolerance);
+    let ipc_point_index =
+        PointSpatialIndex::new(ipc356_points.iter().map(|point| point.location), tolerance);
+    log::trace!(
+        "drill table consistency: board_drills={} extra_drills={} ipc356_points={} extra_drill_buckets={} ipc356_buckets={} tolerance={tolerance:.6}",
+        board_drills.len(),
+        extra_drills.len(),
+        ipc356_points.len(),
+        extra_drill_index.bucket_count(),
+        ipc_point_index.bucket_count()
+    );
 
     for board_drill in board_drills {
-        for extra_drill in extra_drills {
-            if distance(board_drill.location, extra_drill.location) > tolerance {
-                continue;
-            }
+        for extra_index in extra_drill_index.centers_within(board_drill.location, tolerance) {
+            let extra_drill = &extra_drills[extra_index];
             if !diameters_conflict(board_drill.diameter, extra_drill.diameter, tolerance) {
                 continue;
             }
@@ -503,10 +519,8 @@ pub fn drill_table_consistency(
     }
 
     for extra_drill in extra_drills {
-        for point in ipc356_points {
-            if distance(extra_drill.location, point.location) > tolerance {
-                continue;
-            }
+        for point_index in ipc_point_index.centers_within(extra_drill.location, tolerance) {
+            let point = &ipc356_points[point_index];
             let Some(ipc_diameter) = point.diameter else {
                 continue;
             };
@@ -632,9 +646,10 @@ fn distance(left: [f64; 2], right: [f64; 2]) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use super::drill_to_copper_clearance;
+    use super::{drill_table_consistency, drill_to_copper_clearance};
     use crate::LayerMetadata;
     use crate::geometry::{line_polygon, polygons_to_sketch, rect_polygon};
+    use crate::ipc356::Ipc356Point;
     use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 
     #[test]
@@ -689,6 +704,76 @@ mod tests {
         assert!(
             started.elapsed() < std::time::Duration::from_secs(2),
             "drill-to-copper clearance should cull sparse copper before exact CSG"
+        );
+    }
+
+    #[test]
+    fn drill_spacing_reports_close_holes_and_allows_distant_holes() {
+        let drills = vec![
+            drill(None, [0.0, 0.0], 0.40, true),
+            drill(None, [0.55, 0.0], 0.40, true),
+            drill(None, [3.0, 0.0], 0.40, true),
+        ];
+
+        let violations = super::drill_spacing(&drills, &[], 0.20);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "drill-spacing");
+    }
+
+    #[test]
+    fn drill_spacing_culls_large_sparse_drill_fields() {
+        let mut drills = (0..2_000)
+            .map(|index| drill(None, [10.0 + index as f64 * 2.0, 10.0], 0.30, true))
+            .collect::<Vec<_>>();
+        drills.push(drill(None, [0.0, 0.0], 0.40, true));
+        drills.push(drill(None, [0.55, 0.0], 0.40, true));
+
+        let started = std::time::Instant::now();
+        let violations = super::drill_spacing(&drills, &[], 0.20);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "drill spacing should cull sparse drill fields before exact edge-gap review"
+        );
+    }
+
+    #[test]
+    fn drill_table_consistency_reports_nearby_cross_source_conflicts() {
+        let board_drills = vec![drill(None, [0.0, 0.0], 0.40, true)];
+        let extra_drills = vec![drill(None, [0.05, 0.0], 0.60, true)];
+        let ipc_points = vec![ipc_point([0.06, 0.0], Some(0.80))];
+
+        let violations = drill_table_consistency(&board_drills, &extra_drills, &ipc_points, 0.10);
+
+        assert_eq!(violations.len(), 2);
+        assert!(
+            violations
+                .iter()
+                .all(|violation| violation.check == "drill-table-consistency")
+        );
+    }
+
+    #[test]
+    fn drill_table_consistency_culls_large_sparse_sidecars() {
+        let board_drills = vec![drill(None, [0.0, 0.0], 0.40, true)];
+        let mut extra_drills = (0..2_000)
+            .map(|index| drill(None, [20.0 + index as f64 * 2.0, 20.0], 0.60, true))
+            .collect::<Vec<_>>();
+        extra_drills.push(drill(None, [0.05, 0.0], 0.60, true));
+        let mut ipc_points = (0..2_000)
+            .map(|index| ipc_point([40.0 + index as f64 * 2.0, 40.0], Some(0.80)))
+            .collect::<Vec<_>>();
+        ipc_points.push(ipc_point([0.06, 0.0], Some(0.80)));
+
+        let started = std::time::Instant::now();
+        let violations = drill_table_consistency(&board_drills, &extra_drills, &ipc_points, 0.10);
+
+        assert_eq!(violations.len(), 2);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "drill-table consistency should index sparse sidecar records before exact diameter review"
         );
     }
 
@@ -748,6 +833,19 @@ mod tests {
             diameter,
             net: net.map(str::to_string),
             plated,
+        }
+    }
+
+    fn ipc_point(location: [f64; 2], diameter: Option<f64>) -> Ipc356Point {
+        Ipc356Point {
+            net: "SIG".to_string(),
+            reference: None,
+            pin: None,
+            location,
+            diameter,
+            access_side: None,
+            feature_type: None,
+            soldermask: None,
         }
     }
 }

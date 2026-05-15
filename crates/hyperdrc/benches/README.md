@@ -7,15 +7,20 @@ This folder contains benchmark and smoke-performance entry points for
 
 - [`parser_geometry_smoke.rs`](parser_geometry_smoke.rs) exercises parser,
   geometry construction, duplicate layer/island-geometry sanity, tiny and skinny
-  layer-fragment review, local copper-density, and trace-junction acid-trap readiness paths plus dense-pad via-spacing and mask-bridge review in a
+  layer-fragment review, local copper-density, tombstone paste-imbalance, trace-junction acid-trap including sparse segment culling, via-in-pad, and teardrop readiness paths plus dense-pad local-fiducial, escape, via-spacing, and mask-bridge review in a
   benchmark-style harness. It also times RF keepout, antenna copper keepout,
   RF via-fence, switch-node, and inductor copper keepout heuristics used by RF
   and power-converter readiness, plus clustered
-  thermal-via distribution and bucketed thermal copper-area/spacing/keepout review, ESD clamp return-path proximity,
-  voltage/protective-earth spacing, ESD protection/return, surge-protection keepout review, mixed-signal partition and sensitive-net review, bucketed component-hole/component/connector/fiducial/process/pad-pair spacing, and bucketed testpoint accessibility spacing. The harness also includes same-net drill-break,
-  different-net short, differential pair width/neck-down/skew/via-proximity/return,
-  differential pair-to-pair spacing, split-plane crossing, return-path
-  proximity, and drill-to-copper clearance probes, high-current pad-entry/via-return review, and a many-island
+  thermal-via distribution, clustered thermal-via spread, bucketed thermal copper-area/spacing/keepout review, and sparse net-class clearance/differential-pair spacing review, ESD clamp return-path proximity,
+  voltage/protective-earth spacing, ESD protection/return, surge-protection keepout review, mixed-signal partition and sensitive-net review, bucketed component-hole/component/connector/fiducial/process/pad-pair spacing, bucketed testpoint accessibility spacing, testpoint side-parity culling, and testpoint copper-clearance culling. The harness also includes same-net drill-break,
+  different-net short, differential pair width/neck-down/skew/via-proximity/return
+  including dense pair-side via and sparse ground-stitch lookup cases,
+  differential pair return, differential pair-to-pair spacing, split-plane crossing, return-path
+  proximity including sparse same-layer ground lookup, connector return-path,
+  edge/chassis stitching, high-speed via return-path stitching, and decoupling
+  proximity sparse ground-field lookups,
+  proximity, same-net island connectivity, plane-clearance, drill-to-copper clearance, drill-spacing, drill-table consistency, IPC-D-356 annotation/coverage/drill-diameter matching,
+  mounting-hole spacing/distribution/grounding/keepout/edge/plating, gold-finger spacing/drill-keepout, rectangular edge-plating intent, and castellation pitch probes, high-current pad-entry/via-array/via-return review, and a many-island
   minimum-copper-neck case so morphology changes do not regress on split copper
   pours, plus a small production-artifact package covering BOM/centroid/README parity,
   package-level handoff checks, waiver-governance metadata review, and waiver

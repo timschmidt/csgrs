@@ -41,6 +41,7 @@ pub mod rf;
 pub mod safety;
 pub mod signal;
 mod spatial;
+mod spread;
 pub mod stencil;
 mod surface_finish;
 pub mod thermal;

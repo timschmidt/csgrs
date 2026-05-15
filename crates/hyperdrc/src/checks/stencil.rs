@@ -14,6 +14,8 @@ use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbSketch};
 
+use super::spatial::PointSpatialIndex;
+
 /// Warn when a large copper island is pasted as one broad aperture.
 ///
 /// IPC-7525B frames stencil aperture design around paste release and volume
@@ -191,7 +193,10 @@ pub fn paste_aperture_aspect_ratio_readiness(
 /// as likely two-terminal pad pairs and compares their paste-to-copper ratios.
 /// The heuristic follows the manufacturing idea, documented in IPC-7525B and
 /// chip-component tombstoning literature, that unbalanced wetting and thermal
-/// conditions across the two terminations increase tombstoning risk.
+/// conditions across the two terminations increase tombstoning risk. Candidate
+/// pad pairs are selected with a deterministic point-grid broad phase before
+/// area-ratio and paste-ratio checks, following Ericson, *Real-Time Collision
+/// Detection* (2005).
 pub fn tombstone_paste_imbalance_readiness(
     paste_name: &str,
     paste: &PcbSketch,
@@ -227,19 +232,24 @@ pub fn tombstone_paste_imbalance_readiness(
         islands.push((index, island, center, area, paste_area / area));
     }
 
+    let center_index = PointSpatialIndex::new(
+        islands.iter().map(|(_, _, center, _, _)| *center),
+        max_pair_gap,
+    );
+    let mut candidate_pairs = 0_usize;
     let mut violations = Vec::new();
     for left_index in 0..islands.len() {
         let (left_original_index, left_island, left_center, left_area, left_ratio) =
             &islands[left_index];
-        for (right_original_index, right_island, right_center, right_area, right_ratio) in
-            &islands[(left_index + 1)..]
-        {
-            let area_ratio = left_area.max(*right_area) / left_area.min(*right_area);
-            if area_ratio > 1.5 {
+        for right_index in center_index.centers_within(*left_center, max_pair_gap) {
+            if right_index <= left_index {
                 continue;
             }
-            let center_gap = point_distance(*left_center, *right_center);
-            if center_gap > max_pair_gap {
+            candidate_pairs += 1;
+            let (right_original_index, right_island, _right_center, right_area, right_ratio) =
+                &islands[right_index];
+            let area_ratio = left_area.max(*right_area) / left_area.min(*right_area);
+            if area_ratio > 1.5 {
                 continue;
             }
             let delta = (left_ratio - right_ratio).abs();
@@ -261,6 +271,15 @@ pub fn tombstone_paste_imbalance_readiness(
             ));
         }
     }
+    log::trace!(
+        "tombstone paste imbalance readiness: paste={} copper={} islands={} spatial_buckets={} candidate_pairs={} max_pair_gap={max_pair_gap:.6} violations={}",
+        paste_name,
+        copper_name,
+        islands.len(),
+        center_index.bucket_count(),
+        candidate_pairs,
+        violations.len()
+    );
 
     violations
 }
@@ -551,6 +570,33 @@ mod tests {
                 1.0e-9
             )
             .is_empty()
+        );
+    }
+
+    #[test]
+    fn tombstone_paste_imbalance_readiness_culls_sparse_pad_fields() {
+        let mut copper_polygons = (0..2_000)
+            .map(|index| {
+                let x = 100.0 + index as f64 * 5.0;
+                square(x, 0.0, x + 1.0, 1.0)
+            })
+            .collect::<Vec<_>>();
+        copper_polygons.push(square(0.0, 0.0, 1.0, 1.0));
+        copper_polygons.push(square(1.4, 0.0, 2.4, 1.0));
+        let copper = sketch("top", copper_polygons);
+        let paste = sketch(
+            "paste",
+            vec![square(0.0, 0.0, 1.0, 1.0), square(1.4, 0.0, 1.9, 1.0)],
+        );
+
+        let started = std::time::Instant::now();
+        let violations =
+            tombstone_paste_imbalance_readiness("paste", &paste, "top", &copper, 2.0, 0.30, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "tombstone paste imbalance should index sparse pad fields before pair review"
         );
     }
 

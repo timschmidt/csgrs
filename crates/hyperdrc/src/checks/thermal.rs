@@ -13,6 +13,7 @@ use geo::{Area, BoundingRect};
 
 use crate::checks::distance::polygon_boundary_distance;
 use crate::checks::spatial::CopperSpatialIndex;
+use crate::checks::spread::maximum_point_spread;
 use crate::geometry::{circle_polygon, multipolygon_to_shapes, polygons_to_sketch};
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
@@ -166,8 +167,16 @@ pub fn thermal_via_distribution_readiness(
         if vias.len() < minimum_vias {
             continue;
         }
-        let spread = maximum_location_spread(&vias);
-        if spread >= minimum_spread {
+        let spread = maximum_point_spread(vias.iter().map(|via| via.location));
+        log::trace!(
+            "thermal-via distribution readiness: source={} zone_net={net} vias={} hull_points={} caliper_steps={} spread={:.6}",
+            board.source,
+            vias.len(),
+            spread.hull_points,
+            spread.caliper_steps,
+            spread.distance
+        );
+        if spread.distance >= minimum_spread {
             continue;
         }
 
@@ -179,8 +188,9 @@ pub fn thermal_via_distribution_readiness(
             Vec::new(),
             vias.iter().map(|via| via.location).collect(),
             Some(format!(
-                "likely power or thermal zone {net} has {} parsed same-net vias but via-field spread {spread:.6} is below {minimum_spread:.6}; review thermal via distribution and heat spreading",
-                vias.len()
+                "likely power or thermal zone {net} has {} parsed same-net vias but via-field spread {:.6} is below {minimum_spread:.6}; review thermal via distribution and heat spreading",
+                vias.len(),
+                spread.distance
             )),
         ));
     }
@@ -515,16 +525,6 @@ fn thermal_zone_vias<'a>(
         .collect()
 }
 
-fn maximum_location_spread(features: &[&CopperFeature]) -> f64 {
-    let mut spread: f64 = 0.0;
-    for left_index in 0..features.len() {
-        for right in features.iter().skip(left_index + 1) {
-            spread = spread.max(distance(features[left_index].location, right.location));
-        }
-    }
-    spread
-}
-
 fn copper_features_touch(left: &CopperFeature, right: &CopperFeature, tolerance: f64) -> bool {
     left.sketch
         .intersection(&right.sketch)
@@ -580,12 +580,6 @@ fn feature_may_touch_circle(feature: &CopperFeature, center: [f64; 2], radius: f
         && center[0] + radius >= bounds.min().x
         && center[1] - radius <= bounds.max().y
         && center[1] + radius >= bounds.min().y
-}
-
-fn distance(left: [f64; 2], right: [f64; 2]) -> f64 {
-    let dx = left[0] - right[0];
-    let dy = left[1] - right[1];
-    (dx * dx + dy * dy).sqrt()
 }
 
 fn looks_high_current_net(net: &str) -> bool {
@@ -690,6 +684,37 @@ mod tests {
         assert_eq!(
             thermal_via_distribution_readiness(&board, &["B.Cu".to_string()], 2, 1.0, 0.10).len(),
             1
+        );
+    }
+
+    #[test]
+    fn thermal_via_distribution_handles_large_clustered_via_fields() {
+        let mut copper = vec![copper_rect(
+            "VOUT",
+            CopperKind::Zone,
+            "F.Cu",
+            -2.0,
+            -2.0,
+            2.0,
+            2.0,
+        )];
+        copper.extend((0..2_000).map(|index| {
+            copper_disc(
+                "VOUT",
+                CopperKind::Via,
+                [(index % 50) as f64 * 0.02, (index / 50) as f64 * 0.02],
+                0.01,
+            )
+        }));
+        let board = board_with_copper(copper);
+
+        let started = std::time::Instant::now();
+        let violations = thermal_via_distribution_readiness(&board, &[], 2, 5.0, 0.0);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "thermal-via distribution should use hull diameter instead of all-pairs spread"
         );
     }
 

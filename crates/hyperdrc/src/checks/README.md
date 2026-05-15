@@ -144,6 +144,8 @@ windows for local plating/etch-density imbalance.
 `acid-trap` and `acid-trap-trace-junction` are also separate CLI checks:
 polygon-vertex traps operate on flattened copper, while trace-junction traps use
 KiCad segment identity before the board copper is flattened into layer shapes.
+Trace-junction candidates use the shared copper spatial index before exact
+same-net overlap and angle review.
 `layer-sanity` includes both per-layer validation and set-level sanity passes:
 tiny polygon islands at or below the configured reportable-area threshold are
 reported as aperture-flash or fractured-sliver review items, long skinny
@@ -170,7 +172,9 @@ heuristics or KiCad via context:
 - `paste-via-exposure-readiness`
 
 The module keeps IPC-7525-style paste printing heuristics out of generic layer
-checks while still accepting flattened paste/copper geometry.
+checks while still accepting flattened paste/copper geometry. Tombstone paste
+imbalance uses a point spatial index for likely neighboring pad centers before
+paste-ratio review so sparse paste/copper layers avoid all-pairs pad scans.
 
 ## Drill Checks
 
@@ -195,7 +199,10 @@ review plated versus non-plated intent, catch edge/castellation ambiguity,
 estimate annular-ring margin, and build conservative circular keepouts for slots
 until exact routed-slot geometry is modeled. `drill-to-copper-clearance` uses
 the shared spatial broad phase before exact keepout/copper CSG intersection so
-sparse drill fields do not devolve into all-copper scans.
+sparse drill fields do not devolve into all-copper scans. `drill-spacing` uses
+a drill-center grid before exact edge-gap review so large sparse drill tables do
+not require an all-pairs distance pass. `drill-table-consistency` also indexes
+cross-source drill and IPC-D-356 centers before exact diameter-conflict review.
 
 ## Board Checks
 
@@ -251,6 +258,9 @@ RF keepout, antenna copper-free-region, and via-fence checks use the shared
 layer-aware copper spatial index as a broad phase before exact geometry or
 center-distance review, keeping sparse RF layouts bounded during full suite
 runs.
+Board-edge and chassis stitching checks use a point spatial index for parsed
+ground-stitch via centers before exact center-distance review, avoiding sparse
+ground-via scans during EMC readiness sweeps.
 - `chassis-stitching-readiness`
 - `gold-finger-readiness`
 - `gold-finger-edge-readiness`
@@ -269,6 +279,9 @@ runs.
 Switch-node and inductor keepout checks use the shared layer-aware copper
 spatial index before exact CSG intersection, avoiding all-copper scans on sparse
 power-converter layouts.
+Connector return-path and decoupling proximity checks use the same copper index
+before exact same-layer center-distance review, keeping sparse ground fields
+bounded while preserving the documented loop-area and return-path heuristics.
 - `thermal-pad-via-readiness`
 - `thermal-copper-area-readiness`
 - `hot-component-spacing-readiness`
@@ -297,7 +310,19 @@ geometry that is not visible from a single Gerber layer alone. Companion checks
 such as antenna keepout, inductor keepout, thermal-via distribution, ESD return
 path, mixed-signal partitioning, and dense-pad via/mask review are independently
 selectable from the CLI even when they belong to the same module and design
-review family.
+review family. Thermal-via distribution uses the shared point-spread helper's
+convex-hull diameter pass for exact via-field spread without all-pairs distance
+scans. Gold-finger spacing and drill-keepout checks use the shared copper
+spatial index before exact contact-pitch or keepout CSG checks, keeping sparse
+edge-connector fields bounded.
+IPC-D-356 annotation, coverage, and drill-diameter checks use point/drill
+spatial indexes before exact tolerance matching so large electrical-test
+sidecars do not scan every parsed KiCad feature.
+Plane-clearance readiness indexes copper zones before exact non-plated
+drill-keepout overlap review, keeping sparse mechanical/plane fields bounded.
+Via-in-pad and teardrop readiness use the shared copper spatial index
+before exact same-net CSG overlap checks, keeping sparse pad and anchor fields
+bounded.
 
 ## Signal Checks
 
@@ -356,19 +381,30 @@ release intent:
 These checks classify likely large non-plated mounting holes from parsed KiCad
 drill data. Grounding readiness looks for nearby ground/chassis copper as
 evidence of bonding intent; copper keepout readiness builds a circular
-screw/standoff keepout and reports intruding non-ground copper. Edge-clearance
-readiness compares that same keepout against the parsed board outline.
+screw/standoff keepout and reports intruding non-ground copper. Both mounting
+hole grounding and copper keepout use the shared copper spatial index before
+exact center-distance or keepout-overlap review. Edge-clearance readiness
+compares that same keepout against the parsed board outline and skips exact CSG
+difference for rectangular outlines when the circular keepout is fully inside
+the board rectangle.
 Panel-feature outline readiness checks that parsed route, tab, V-score, or rail
 graphics can be registered against the board outline instead of floating as
 unverifiable mechanical notes. Plating-intent readiness reports large plated
-mounting-style holes without ground/chassis bonding evidence. Distribution
+mounting-style holes without ground/chassis bonding evidence, also using the
+shared copper spatial index before exact center-distance review. Distribution
 readiness catches single-point or clustered hardware holes that may not provide
-useful enclosure or retention support. Spacing readiness reports hardware holes
-whose edge-to-edge gap is below the mechanical review clearance. Edge-plating
-intent readiness flags selected copper that reaches or crosses the outline and
-should have explicit edge plating, castellation, bevel, or copper-pullback
-handoff notes. Castellation pitch readiness checks neighboring plated edge-hole
-candidates for tight edge-to-edge spacing.
+useful enclosure or retention support, using the shared
+convex-hull/rotating-calipers point-spread helper instead of checking every hole
+pair. Spacing readiness reports hardware holes whose edge-to-edge gap is below
+the mechanical review clearance, using the shared drill spatial index before
+exact pair review. Edge-plating intent readiness flags selected copper that
+reaches or crosses the outline and should have explicit edge plating,
+castellation, bevel, or copper-pullback handoff; for rectangular outlines it
+uses an AABB edge-proximity classifier before falling back to exact boundary
+distance for general outlines. Castellation pitch readiness checks neighboring
+plated edge-hole
+candidates for tight edge-to-edge spacing after a rectangular-outline fast path
+or general exact outline-distance classifier and the same drill broad phase.
 
 ## Constraint Checks
 
@@ -402,9 +438,17 @@ reports separate inferred differential pairs whose same-layer copper is closer
 than the review threshold, making possible pair-to-pair crosstalk visible even
 without explicit net-class pair groups.
 `differential-pair-via-proximity-readiness` reports inferred differential
-layer-change vias without a nearby opposite-side via.
+layer-change vias without a nearby opposite-side via. Opposite-side via centers
+use a point spatial index before exact center-distance review so dense escape
+fields avoid pair-side all-pairs scans.
 `differential-pair-via-return-readiness` reports inferred differential
-layer-change vias without nearby parsed ground stitching vias.
+layer-change vias without nearby parsed ground stitching vias. Ground-stitching
+via centers use the same point-index broad phase before exact distance review.
+`differential-pair-return-readiness` reports likely differential-pair copper
+without nearby same-layer ground copper. Ground candidates use the shared copper
+spatial index before exact guard-distance review.
+`power-via-array-readiness` reports isolated likely high-current vias; same-net
+via centers use a point spatial index before exact pitch review.
 `power-via-return-readiness` reports likely high-current vias whose same-layer
 parsed copper lacks a nearby ground return feature, making large loop-area
 review visible alongside the via-array capacity check.
@@ -412,7 +456,15 @@ review visible alongside the via-array capacity check.
 between separated same-layer ground-zone islands, returning the uncovered trace
 region as the review shape. `return-path-proximity-readiness` reports likely
 high-speed segment or pad copper whose nearest same-layer ground copper exceeds
-the return-distance review threshold. `same-net-drill-break-readiness` reports
+the return-distance review threshold, using the shared copper spatial index to
+select same-layer ground candidates before exact distance review.
+`return-path-readiness` uses a point spatial index for parsed ground stitching
+via centers before exact center-distance review, keeping sparse via fields
+bounded.
+`same-net-island-readiness` reports disconnected same-net copper components on
+one selected layer. Connectivity candidate edges use the shared copper spatial
+index before exact overlap/distance review.
+`same-net-drill-break-readiness` reports
 non-plated drill or slot keepouts that intersect netted segment/zone copper, a
 conservative pre-test continuity signal for traces cut by mechanical holes; it
 uses the shared spatial broad phase before exact CSG intersection.
@@ -426,10 +478,14 @@ clearance, maximum layer count, minimum via count for layer-changing nets,
 maximum via count, explicit differential-pair positive/negative side presence,
 pair layer agreement, pair spacing bounds, approximate parsed copper length,
 approximate pair skew, reference-plane intent, and impedance-control handoff
-metadata. The impedance check is deliberately a readiness gate: it verifies
-stackup/reference metadata exists when a class asks for impedance control, not
-that the geometry solves to a target impedance. Classes that require impedance
-control can also declare `target_impedance_ohms` and
+metadata. Configured clearance and voltage-clearance rules use the shared copper
+spatial broad phase before exact polygon-boundary distance, keeping sparse
+same-layer net-class sweeps bounded. Configured differential-pair spacing uses
+the same broad phase over the opposite pair side before exact side-to-side
+polygon distance and reports max-spacing as the nearest side gap. The impedance
+check is deliberately a readiness gate: it verifies stackup/reference metadata
+exists when a class asks for impedance control, not that the geometry solves to a
+target impedance. Classes that require impedance control can also declare `target_impedance_ohms` and
 `impedance_tolerance_ohms`; missing or invalid values are reported as handoff
 risks. Differential-pair checks use nearest same-layer side-to-side copper
 spacing; length and skew checks use segment bounding-box estimates from parsed
@@ -463,12 +519,18 @@ review assembly edge clearance, mechanical keepouts, large-pad component spacing
 proxies, two-terminal land-pattern symmetry, fixture probe access, panel
 tooling, fiducials, and dense fine-pitch escape signals. Dense-pad checks live
 in [`dense_pad.rs`](dense_pad.rs) so BGA cluster geometry stays separate from
-general DFA checks. Fiducial keepout readiness reports same-layer copper that
-crowds the optical target keepout. Testpoint
-accessibility combines probe diameter, spacing, board-edge, access-side,
-feature-type, and soldermask metadata when available; testpoint copper clearance
-checks for unrelated selected copper inside the probe keepout. They also
-flag process-specific geometry around likely through-hole
+general DFA checks. Dense-pad local-fiducial and escape-via searches use the
+shared copper spatial index before exact center-distance review, and dense
+pad/via spacing uses the same index before exact pad-clearance review. Fiducial
+keepout readiness reports same-layer copper that crowds the optical target
+keepout. Testpoint accessibility combines probe diameter, spacing, board-edge,
+access-side, feature-type, and soldermask metadata when available; probe
+spacing and IPC-D-356/KiCad side-parity searches are bucketed before exact
+edge-gap, net, side, and distance review. Testpoint
+copper clearance checks for unrelated selected copper inside the probe keepout,
+using the shared copper spatial index before exact keepout intersection so
+large sparse fixture sidecars avoid all-copper scans. They also flag
+process-specific geometry around likely through-hole
 solder, press-fit, and no-coat contact/test features. Their thresholds are
 resolved from `assembly_profile` and the field-level `assembly` rule-deck
 section so prototype, production SMT,

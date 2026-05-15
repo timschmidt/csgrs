@@ -14,6 +14,7 @@ use csgrs::csg::CSG;
 use geo::BoundingRect;
 
 use super::distance::polygon_boundary_distance;
+use super::spatial::CopperSpatialIndex;
 use crate::LayerMetadata;
 use crate::geometry::{multipolygon_to_shapes, polygons_to_sketch};
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
@@ -139,29 +140,24 @@ pub fn split_plane_crossing_readiness(
 /// changes can materially change emissions. As with split-plane detection, the
 /// check uses AABB rejection before exact polygon distance; Lin and Canny,
 /// "A Fast Algorithm for Incremental Distance Calculation", IEEE ICRA, 1991,
-/// is the distance-processing context for that staged approach.
+/// is the distance-processing context for that staged approach. Sparse ground
+/// lookup uses the deterministic grid broad phase described by Ericson,
+/// *Real-Time Collision Detection* (2005), before exact distance review.
 pub fn return_path_proximity_readiness(
     board: &BoardModel,
     selected_layers: &[String],
     maximum_return_distance: f64,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
-    let mut ground_by_layer: BTreeMap<String, Vec<GroundZone<'_>>> = BTreeMap::new();
-
-    for feature in &features {
-        if !feature.net.as_deref().is_some_and(looks_ground_net) {
-            continue;
-        }
-        let Some(bounds) = feature.sketch.to_multipolygon().bounding_rect() else {
-            continue;
-        };
-        ground_by_layer
-            .entry(feature.layer.clone())
-            .or_default()
-            .push(GroundZone { feature, bounds });
-    }
+    let ground_features = features
+        .iter()
+        .copied()
+        .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
+        .collect::<Vec<_>>();
+    let ground_index = CopperSpatialIndex::new(&ground_features, maximum_return_distance);
 
     let mut candidate_features = 0usize;
+    let mut exact_pairs = 0usize;
     let mut violations = Vec::new();
     for feature in &features {
         if feature.kind == CopperKind::Via {
@@ -174,10 +170,9 @@ pub fn return_path_proximity_readiness(
             continue;
         }
         candidate_features += 1;
-        let Some(feature_bounds) = feature.sketch.to_multipolygon().bounding_rect() else {
-            continue;
-        };
-        let Some(grounds) = ground_by_layer.get(&feature.layer) else {
+        let candidate_ground_indexes =
+            ground_index.same_layer_near_feature(feature, maximum_return_distance);
+        if candidate_ground_indexes.is_empty() {
             violations.push(return_path_proximity_violation(
                 feature,
                 net,
@@ -188,15 +183,13 @@ pub fn return_path_proximity_readiness(
         };
 
         let feature_geometry = feature.sketch.to_multipolygon();
-        let nearest_distance = grounds
-            .iter()
-            .filter(|ground| {
-                expanded_rects_overlap(&feature_bounds, &ground.bounds, maximum_return_distance)
-            })
-            .map(|ground| {
+        let nearest_distance = candidate_ground_indexes
+            .into_iter()
+            .map(|ground_index| {
+                exact_pairs += 1;
                 polygon_boundary_distance(
                     &feature_geometry,
-                    &ground.feature.sketch.to_multipolygon(),
+                    &ground_features[ground_index].sketch.to_multipolygon(),
                 )
             })
             .fold(f64::INFINITY, f64::min);
@@ -213,12 +206,15 @@ pub fn return_path_proximity_readiness(
     }
 
     log::trace!(
-        "return path proximity readiness: source={} candidate_features={} ground_layers={} selected_layers={} max_distance={:.6}",
+        "return path proximity readiness: source={} candidate_features={} ground_features={} ground_buckets={} exact_pairs={} selected_layers={} max_distance={:.6} violations={}",
         board.source,
         candidate_features,
-        ground_by_layer.len(),
+        ground_features.len(),
+        ground_index.bucket_count(),
+        exact_pairs,
         selected_layers.len(),
-        maximum_return_distance
+        maximum_return_distance,
+        violations.len()
     );
 
     violations
@@ -315,6 +311,8 @@ fn expanded_rects_overlap(left: &geo::Rect<f64>, right: &geo::Rect<f64>, expansi
 
 #[cfg(test)]
 mod tests {
+    use std::time::Instant;
+
     use super::*;
     use crate::geometry::{line_polygon, rect_polygon};
 
@@ -486,7 +484,7 @@ mod tests {
     #[test]
     fn return_path_proximity_culls_sparse_large_cases() {
         let mut copper = vec![segment("USB_DP", [0.0, 0.0], [1.0, 0.0], 0.10)];
-        for index in 0..500 {
+        for index in 0..2_000 {
             copper.push(segment(
                 "GND",
                 [100.0 + index as f64 * 3.0, 100.0],
@@ -495,9 +493,14 @@ mod tests {
             ));
         }
         let board = board(copper);
+        let start = Instant::now();
 
         let violations = return_path_proximity_readiness(&board, &[], 0.50);
 
         assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "return-path proximity should index sparse same-layer ground fields"
+        );
     }
 }
