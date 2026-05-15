@@ -2,7 +2,7 @@ mod common;
 
 use common::{abort_signal, frac, r, unknown_zero};
 use hyperlattice::{
-    Matrix3, Matrix4, Problem, Scalar, ScalarSign, Vector3, Vector4, ZeroStatus, zero,
+    Matrix3, Matrix4, Problem, Scalar, ScalarSign, SignedAxis4, Vector3, Vector4, ZeroStatus, zero,
 };
 
 fn assert_singular_error<T: std::fmt::Debug>(result: Result<T, Problem>) {
@@ -202,6 +202,28 @@ fn matrix4_negative_power_matches_repeated_inverse_product() {
     assert_eq!(matrix.powi(-2).unwrap(), inverse.clone() * inverse);
 }
 
+#[test]
+fn matrix4_prepared_negative_power_matches_ordinary_power() {
+    let matrix = Matrix4::new([
+        [r(2), r(0), r(1), r(0)],
+        [r(1), r(3), r(0), r(1)],
+        [r(0), r(2), r(1), r(0)],
+        [r(1), r(0), r(0), r(2)],
+    ]);
+    let signal = abort_signal();
+    let mut prepared = matrix.prepare_right_divisor();
+
+    assert_eq!(prepared.powi(-2).unwrap(), matrix.clone().powi(-2).unwrap());
+    assert_eq!(
+        prepared.powi_checked(-2).unwrap(),
+        matrix.clone().powi_checked(-2).unwrap()
+    );
+    assert_eq!(
+        prepared.powi_checked_with_abort(-2, &signal).unwrap(),
+        matrix.powi_checked_with_abort(-2, &signal).unwrap()
+    );
+}
+
 #[cfg(feature = "hyperreal-backend")]
 #[test]
 fn targeted_fractional_matrix_forms_round_trip_exactly() {
@@ -373,6 +395,112 @@ fn matrix4_known_uniform_scale_inverse_matches_matrix_inverse() {
 
     assert_eq!(matrix.clone().reciprocal().unwrap(), expected);
     assert_eq!(Matrix4::uniform_scale_inverse(r(6)).unwrap(), expected);
+}
+
+#[test]
+fn matrix4_known_affine_translation_matches_generic_paths() {
+    let translation = [r(3), r(-5), r(7)];
+    let matrix = Matrix4::affine_translation(translation.clone());
+    let expected_inverse = Matrix4::affine_translation([r(-3), r(5), r(-7)]);
+
+    assert_eq!(matrix.clone().reciprocal().unwrap(), expected_inverse);
+    assert_eq!(
+        Matrix4::affine_translation_inverse(translation.clone()),
+        expected_inverse
+    );
+
+    let numerator = Matrix4::new([
+        [r(2), r(6), r(15), r(28)],
+        [r(10), r(12), r(25), r(42)],
+        [r(14), r(18), r(35), r(56)],
+        [r(22), r(24), r(45), r(70)],
+    ]);
+
+    assert_eq!(
+        numerator.clone().div_affine_translation(translation),
+        (numerator / matrix).unwrap()
+    );
+}
+
+#[test]
+fn matrix4_known_affine_orthonormal_matches_generic_paths() {
+    let linear = [[r(0), r(-1), r(0)], [r(1), r(0), r(0)], [r(0), r(0), r(1)]];
+    let translation = [r(3), r(-5), r(7)];
+    let matrix = Matrix4::affine_orthonormal(linear.clone(), translation.clone());
+    let expected_inverse = Matrix4::new([
+        [r(0), r(1), r(0), r(5)],
+        [r(-1), r(0), r(0), r(3)],
+        [r(0), r(0), r(1), r(-7)],
+        [r(0), r(0), r(0), r(1)],
+    ]);
+
+    assert_eq!(matrix.clone().reciprocal().unwrap(), expected_inverse);
+    assert_eq!(
+        Matrix4::affine_orthonormal_inverse(linear.clone(), translation.clone()),
+        expected_inverse
+    );
+
+    let numerator = Matrix4::new([
+        [r(2), r(6), r(15), r(28)],
+        [r(10), r(12), r(25), r(42)],
+        [r(14), r(18), r(35), r(56)],
+        [r(22), r(24), r(45), r(70)],
+    ]);
+
+    assert_eq!(
+        numerator
+            .clone()
+            .div_affine_orthonormal(linear, translation),
+        (numerator / matrix).unwrap()
+    );
+}
+
+#[test]
+fn matrix4_known_signed_permutation_matches_generic_paths() {
+    let rows = [
+        SignedAxis4::PosY,
+        SignedAxis4::NegX,
+        SignedAxis4::PosW,
+        SignedAxis4::NegZ,
+    ];
+    let matrix = Matrix4::signed_permutation(rows);
+    let expected_inverse = Matrix4::new([
+        [r(0), r(-1), r(0), r(0)],
+        [r(1), r(0), r(0), r(0)],
+        [r(0), r(0), r(0), r(-1)],
+        [r(0), r(0), r(1), r(0)],
+    ]);
+
+    assert_eq!(matrix.clone().reciprocal().unwrap(), expected_inverse);
+    assert_eq!(Matrix4::signed_permutation_inverse(rows), expected_inverse);
+
+    let numerator = Matrix4::new([
+        [r(2), r(6), r(15), r(28)],
+        [r(10), r(12), r(25), r(42)],
+        [r(14), r(18), r(35), r(56)],
+        [r(22), r(24), r(45), r(70)],
+    ]);
+
+    assert_eq!(
+        numerator.clone().div_signed_permutation(rows),
+        (numerator / matrix.clone()).unwrap()
+    );
+
+    let vector = Vector4::new([r(2), r(3), r(5), r(7)]);
+    let batch = [vector.clone(), Vector4::new([r(11), r(13), r(17), r(19)])];
+
+    assert_eq!(
+        Matrix4::transform_signed_permutation_vector(rows, &vector),
+        matrix.clone() * vector
+    );
+    assert_eq!(
+        Matrix4::transform_signed_permutation_batch(rows, &batch),
+        batch
+            .iter()
+            .cloned()
+            .map(|item| matrix.clone() * item)
+            .collect::<Vec<_>>()
+    );
 }
 
 #[test]
@@ -1073,6 +1201,32 @@ fn matrix3_division_checked_and_checked_abort_with_prepared_divisor_match_ordina
             .unwrap(),
         expected_checked
     );
+    assert_eq!(
+        prepared.inverse().unwrap(),
+        divisor.clone().inverse().unwrap()
+    );
+    assert_eq!(
+        prepared.inverse_checked().unwrap(),
+        divisor.clone().inverse_checked().unwrap()
+    );
+    assert_eq!(
+        prepared.inverse_checked_with_abort(&signal).unwrap(),
+        divisor.clone().inverse_checked_with_abort(&signal).unwrap()
+    );
+
+    let mut prepared = divisor.prepare_right_divisor();
+    assert_eq!(
+        prepared.reciprocal().unwrap(),
+        divisor.clone().reciprocal().unwrap()
+    );
+    assert_eq!(
+        prepared.reciprocal_checked().unwrap(),
+        divisor.clone().reciprocal_checked().unwrap()
+    );
+    assert_eq!(
+        prepared.reciprocal_checked_with_abort(&signal).unwrap(),
+        divisor.clone().reciprocal_checked().unwrap()
+    );
 }
 
 #[test]
@@ -1165,6 +1319,33 @@ fn matrix4_division_checked_and_checked_abort_with_prepared_divisor_match_ordina
             .div_matrix_checked_with_prepared_with_abort(&mut prepared, &signal)
             .unwrap(),
         expected_checked
+    );
+
+    assert_eq!(
+        prepared.inverse().unwrap(),
+        divisor.clone().inverse().unwrap()
+    );
+    assert_eq!(
+        prepared.inverse_checked().unwrap(),
+        divisor.clone().inverse_checked().unwrap()
+    );
+    assert_eq!(
+        prepared.inverse_checked_with_abort(&signal).unwrap(),
+        divisor.clone().inverse_checked_with_abort(&signal).unwrap()
+    );
+
+    let mut prepared = divisor.prepare_right_divisor();
+    assert_eq!(
+        prepared.reciprocal().unwrap(),
+        divisor.clone().reciprocal().unwrap()
+    );
+    assert_eq!(
+        prepared.reciprocal_checked().unwrap(),
+        divisor.clone().reciprocal_checked().unwrap()
+    );
+    assert_eq!(
+        prepared.reciprocal_checked_with_abort(&signal).unwrap(),
+        divisor.inverse_checked_with_abort(&signal).unwrap()
     );
 }
 

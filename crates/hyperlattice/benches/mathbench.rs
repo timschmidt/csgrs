@@ -3,7 +3,8 @@ use std::{cell::Cell, collections::BTreeMap, env, fs, hint::black_box, path::Pat
 use criterion::{BatchSize, BenchmarkGroup, BenchmarkId, Criterion};
 use hyperlattice::Rational;
 use hyperlattice::{
-    ApproxBackend, Backend, Complex, HyperrealBackend, Matrix3, Matrix4, Scalar, Vector3, Vector4,
+    ApproxBackend, Backend, Complex, HyperrealBackend, Matrix3, Matrix4, Scalar, SignedAxis4,
+    Vector3, Vector4,
 };
 
 type HyperrealScalar = Scalar<HyperrealBackend>;

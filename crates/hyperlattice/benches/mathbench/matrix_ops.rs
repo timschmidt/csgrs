@@ -71,6 +71,18 @@ fn bench_matrix_operations_for<B, F>(
         [make_scalar(0.0), make_scalar(0.0), make_scalar(0.0), make_scalar(2.0)],
     ]);
     let uniform_scale_value = make_scalar(2.0);
+    let translation_values4 = [make_scalar(3.0), make_scalar(-5.0), make_scalar(7.0)];
+    let orthonormal_linear4 = [
+        [make_scalar(0.0), make_scalar(-1.0), make_scalar(0.0)],
+        [make_scalar(1.0), make_scalar(0.0), make_scalar(0.0)],
+        [make_scalar(0.0), make_scalar(0.0), make_scalar(1.0)],
+    ];
+    let signed_permutation_rows4 = [
+        SignedAxis4::PosY,
+        SignedAxis4::NegX,
+        SignedAxis4::PosW,
+        SignedAxis4::NegZ,
+    ];
     let diagonal_values4 = [
         make_scalar(2.0),
         make_scalar(3.0),
@@ -200,6 +212,20 @@ fn bench_matrix_operations_for<B, F>(
                     .unwrap(),
             );
         });
+        trace_matrix_profile_row("mat3", "known_uniform_diagonal_div_vector", input, 1, || {
+            black_box(
+                black_box(&lhs3_cases[0])
+                    .div_diagonal_vector(
+                        black_box([
+                            uniform_scale_value.clone(),
+                            uniform_scale_value.clone(),
+                            uniform_scale_value.clone(),
+                        ]),
+                        black_box(&vector3_cases[0]),
+                    )
+                    .unwrap(),
+            );
+        });
         trace_matrix_profile_row("mat3", "reciprocal_checked", input, lhs3_cases.len(), || {
             for value in &lhs3_cases {
                 black_box(black_box(value.clone()).reciprocal_checked().unwrap());
@@ -305,6 +331,66 @@ fn bench_matrix_operations_for<B, F>(
                 }
             },
         );
+        trace_matrix_profile_row("mat3", "prepared_inverse", input, lhs3_cases.len(), || {
+            let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+            for _ in 0..lhs3_cases.len() {
+                black_box(prepared.inverse().unwrap());
+            }
+        });
+        trace_matrix_profile_row("mat3", "prepared_reciprocal", input, lhs3_cases.len(), || {
+            let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+            for _ in 0..lhs3_cases.len() {
+                black_box(prepared.reciprocal().unwrap());
+            }
+        });
+        trace_matrix_profile_row(
+            "mat3",
+            "prepared_inverse_checked",
+            input,
+            lhs3_cases.len(),
+            || {
+                let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+                for _ in 0..lhs3_cases.len() {
+                    black_box(prepared.inverse_checked().unwrap());
+                }
+            },
+        );
+        trace_matrix_profile_row(
+            "mat3",
+            "prepared_reciprocal_checked",
+            input,
+            lhs3_cases.len(),
+            || {
+                let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+                for _ in 0..lhs3_cases.len() {
+                    black_box(prepared.reciprocal_checked().unwrap());
+                }
+            },
+        );
+        trace_matrix_profile_row(
+            "mat3",
+            "prepared_inverse_checked_abort",
+            input,
+            lhs3_cases.len(),
+            || {
+                let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+                for _ in 0..lhs3_cases.len() {
+                    black_box(prepared.inverse_checked_with_abort(&signal).unwrap());
+                }
+            },
+        );
+        trace_matrix_profile_row(
+            "mat3",
+            "prepared_reciprocal_checked_abort",
+            input,
+            lhs3_cases.len(),
+            || {
+                let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+                for _ in 0..lhs3_cases.len() {
+                    black_box(prepared.reciprocal_checked_with_abort(&signal).unwrap());
+                }
+            },
+        );
         trace_matrix_profile_row(
             "mat3",
             "inverse_checked_affine",
@@ -397,6 +483,52 @@ fn bench_matrix_operations_for<B, F>(
         });
         trace_matrix_profile_row("mat4", "diagonal_reciprocal", input, 1, || {
             black_box(black_box(diagonal_affine_matrix.clone()).reciprocal().unwrap());
+        });
+        trace_matrix_profile_row("mat4", "known_translation_inverse", input, 1, || {
+            black_box(Matrix4::<B>::affine_translation_inverse(black_box(
+                translation_values4.clone(),
+            )));
+        });
+        trace_matrix_profile_row("mat4", "known_translation_div_matrix", input, 1, || {
+            black_box(
+                black_box(lhs4_cases[0].clone())
+                    .div_affine_translation(black_box(translation_values4.clone())),
+            );
+        });
+        trace_matrix_profile_row("mat4", "known_orthonormal_inverse", input, 1, || {
+            black_box(Matrix4::<B>::affine_orthonormal_inverse(
+                black_box(orthonormal_linear4.clone()),
+                black_box(translation_values4.clone()),
+            ));
+        });
+        trace_matrix_profile_row("mat4", "known_orthonormal_div_matrix", input, 1, || {
+            black_box(black_box(lhs4_cases[0].clone()).div_affine_orthonormal(
+                black_box(orthonormal_linear4.clone()),
+                black_box(translation_values4.clone()),
+            ));
+        });
+        trace_matrix_profile_row("mat4", "known_signed_permutation_inverse", input, 1, || {
+            black_box(Matrix4::<B>::signed_permutation_inverse(black_box(
+                signed_permutation_rows4,
+            )));
+        });
+        trace_matrix_profile_row("mat4", "known_signed_permutation_div_matrix", input, 1, || {
+            black_box(
+                black_box(lhs4_cases[0].clone())
+                    .div_signed_permutation(black_box(signed_permutation_rows4)),
+            );
+        });
+        trace_matrix_profile_row("mat4", "known_signed_permutation_transform", input, 1, || {
+            black_box(Matrix4::<B>::transform_signed_permutation_vector(
+                black_box(signed_permutation_rows4),
+                black_box(&vector4_cases[0]),
+            ));
+        });
+        trace_matrix_profile_row("mat4", "known_signed_permutation_batch", input, 1, || {
+            black_box(Matrix4::<B>::transform_signed_permutation_batch(
+                black_box(signed_permutation_rows4),
+                black_box(&translated_diagonal_point_batch),
+            ));
         });
         trace_matrix_profile_row("mat4", "uniform_scale_reciprocal", input, 1, || {
             black_box(black_box(uniform_scale_matrix4.clone()).reciprocal().unwrap());
@@ -491,6 +623,21 @@ fn bench_matrix_operations_for<B, F>(
                     .unwrap(),
             );
         });
+        trace_matrix_profile_row("mat4", "known_uniform_diagonal_div_vector", input, 1, || {
+            black_box(
+                black_box(&lhs4_cases[0])
+                    .div_diagonal_vector(
+                        black_box([
+                            uniform_scale_value.clone(),
+                            uniform_scale_value.clone(),
+                            uniform_scale_value.clone(),
+                            uniform_scale_value.clone(),
+                        ]),
+                        black_box(&vector4_cases[0]),
+                    )
+                    .unwrap(),
+            );
+        });
         trace_matrix_profile_row(
             "mat4",
             "known_diagonal_div_vector_direction",
@@ -507,11 +654,47 @@ fn bench_matrix_operations_for<B, F>(
                 );
             },
         );
+        trace_matrix_profile_row(
+            "mat4",
+            "known_uniform_diagonal_div_vector_direction",
+            input,
+            1,
+            || {
+                black_box(
+                    black_box(&lhs4_cases[0])
+                        .div_diagonal_vector(
+                            black_box([
+                                uniform_scale_value.clone(),
+                                uniform_scale_value.clone(),
+                                uniform_scale_value.clone(),
+                                uniform_scale_value.clone(),
+                            ]),
+                            black_box(&translated_diagonal_direction),
+                        )
+                        .unwrap(),
+                );
+            },
+        );
         trace_matrix_profile_row("mat4", "known_diagonal_div_vector_point", input, 1, || {
             black_box(
                 black_box(&lhs4_cases[0])
                     .div_diagonal_vector(
                         black_box(diagonal_values4.clone()),
+                        black_box(&translated_diagonal_point),
+                    )
+                    .unwrap(),
+            );
+        });
+        trace_matrix_profile_row("mat4", "known_uniform_diagonal_div_vector_point", input, 1, || {
+            black_box(
+                black_box(&lhs4_cases[0])
+                    .div_diagonal_vector(
+                        black_box([
+                            uniform_scale_value.clone(),
+                            uniform_scale_value.clone(),
+                            uniform_scale_value.clone(),
+                            uniform_scale_value.clone(),
+                        ]),
                         black_box(&translated_diagonal_point),
                     )
                     .unwrap(),
@@ -619,6 +802,84 @@ fn bench_matrix_operations_for<B, F>(
                             )
                             .unwrap(),
                     );
+                }
+            },
+        );
+        trace_matrix_profile_row("mat4", "prepared_inverse", input, lhs4_cases.len(), || {
+            let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+            for _ in 0..lhs4_cases.len() {
+                black_box(prepared.inverse().unwrap());
+            }
+        });
+        trace_matrix_profile_row("mat4", "prepared_reciprocal", input, lhs4_cases.len(), || {
+            let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+            for _ in 0..lhs4_cases.len() {
+                black_box(prepared.reciprocal().unwrap());
+            }
+        });
+        trace_matrix_profile_row(
+            "mat4",
+            "prepared_inverse_checked",
+            input,
+            lhs4_cases.len(),
+            || {
+                let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+                for _ in 0..lhs4_cases.len() {
+                    black_box(prepared.inverse_checked().unwrap());
+                }
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "prepared_reciprocal_checked",
+            input,
+            lhs4_cases.len(),
+            || {
+                let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+                for _ in 0..lhs4_cases.len() {
+                    black_box(prepared.reciprocal_checked().unwrap());
+                }
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "prepared_inverse_checked_abort",
+            input,
+            lhs4_cases.len(),
+            || {
+                let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+                for _ in 0..lhs4_cases.len() {
+                    black_box(prepared.inverse_checked_with_abort(&signal).unwrap());
+                }
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "prepared_reciprocal_checked_abort",
+            input,
+            lhs4_cases.len(),
+            || {
+                let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+                for _ in 0..lhs4_cases.len() {
+                    black_box(prepared.reciprocal_checked_with_abort(&signal).unwrap());
+                }
+            },
+        );
+        trace_matrix_profile_row("mat4", "prepared_powi_negative", input, lhs4_cases.len(), || {
+            let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+            for _ in 0..lhs4_cases.len() {
+                black_box(prepared.powi(-2).unwrap());
+            }
+        });
+        trace_matrix_profile_row(
+            "mat4",
+            "prepared_powi_negative_one",
+            input,
+            lhs4_cases.len(),
+            || {
+                let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+                for _ in 0..lhs4_cases.len() {
+                    black_box(prepared.powi(-1).unwrap());
                 }
             },
         );
@@ -1035,6 +1296,23 @@ fn bench_matrix_operations_for<B, F>(
                 .unwrap(),
         );
     });
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat3 known_uniform_diagonal_div_vector"),
+        || {
+            black_box(
+                black_box(&lhs3_cases[0])
+                    .div_diagonal_vector(
+                        black_box([
+                            uniform_scale_value.clone(),
+                            uniform_scale_value.clone(),
+                            uniform_scale_value.clone(),
+                        ]),
+                        black_box(&vector3_cases[0]),
+                    )
+                    .unwrap(),
+            );
+        },
+    );
     trace_dispatch_row(format!("matrix_ops/{label}/mat3 reciprocal_checked"), || {
         for value in &lhs3_cases {
             black_box(black_box(value.clone()).reciprocal_checked().unwrap());
@@ -1132,6 +1410,51 @@ fn bench_matrix_operations_for<B, F>(
             );
         }
     });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 prepared_inverse"), || {
+        let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+        for _ in 0..lhs3_cases.len() {
+            black_box(prepared.inverse().unwrap());
+        }
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 prepared_reciprocal"), || {
+        let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+        for _ in 0..lhs3_cases.len() {
+            black_box(prepared.reciprocal().unwrap());
+        }
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 prepared_inverse_checked"), || {
+        let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+        for _ in 0..lhs3_cases.len() {
+            black_box(prepared.inverse_checked().unwrap());
+        }
+    });
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat3 prepared_reciprocal_checked"),
+        || {
+            let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+            for _ in 0..lhs3_cases.len() {
+                black_box(prepared.reciprocal_checked().unwrap());
+            }
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat3 prepared_inverse_checked_abort"),
+        || {
+            let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+            for _ in 0..lhs3_cases.len() {
+                black_box(prepared.inverse_checked_with_abort(&signal).unwrap());
+            }
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat3 prepared_reciprocal_checked_abort"),
+        || {
+            let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+            for _ in 0..lhs3_cases.len() {
+                black_box(prepared.reciprocal_checked_with_abort(&signal).unwrap());
+            }
+        },
+    );
     trace_dispatch_row(format!("matrix_ops/{label}/mat3 prepared_div_matrix_checked"), || {
         let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
         for index in 0..lhs3_cases.len() {
@@ -1202,6 +1525,64 @@ fn bench_matrix_operations_for<B, F>(
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 diagonal_reciprocal"), || {
         black_box(black_box(diagonal_affine_matrix.clone()).reciprocal().unwrap());
     });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_translation_inverse"), || {
+        black_box(Matrix4::<B>::affine_translation_inverse(black_box(
+            translation_values4.clone(),
+        )));
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_translation_div_matrix"), || {
+        black_box(
+            black_box(lhs4_cases[0].clone())
+                .div_affine_translation(black_box(translation_values4.clone())),
+        );
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_orthonormal_inverse"), || {
+        black_box(Matrix4::<B>::affine_orthonormal_inverse(
+            black_box(orthonormal_linear4.clone()),
+            black_box(translation_values4.clone()),
+        ));
+    });
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_orthonormal_div_matrix"), || {
+        black_box(black_box(lhs4_cases[0].clone()).div_affine_orthonormal(
+            black_box(orthonormal_linear4.clone()),
+            black_box(translation_values4.clone()),
+        ));
+    });
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 known_signed_permutation_inverse"),
+        || {
+            black_box(Matrix4::<B>::signed_permutation_inverse(black_box(
+                signed_permutation_rows4,
+            )));
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 known_signed_permutation_div_matrix"),
+        || {
+            black_box(
+                black_box(lhs4_cases[0].clone())
+                    .div_signed_permutation(black_box(signed_permutation_rows4)),
+            );
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 known_signed_permutation_transform"),
+        || {
+            black_box(Matrix4::<B>::transform_signed_permutation_vector(
+                black_box(signed_permutation_rows4),
+                black_box(&vector4_cases[0]),
+            ));
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 known_signed_permutation_batch"),
+        || {
+            black_box(Matrix4::<B>::transform_signed_permutation_batch(
+                black_box(signed_permutation_rows4),
+                black_box(&translated_diagonal_point_batch),
+            ));
+        },
+    );
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 uniform_scale_reciprocal"), || {
         black_box(black_box(uniform_scale_matrix4.clone()).reciprocal().unwrap());
     });
@@ -1278,6 +1659,24 @@ fn bench_matrix_operations_for<B, F>(
                 .unwrap(),
         );
     });
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 known_uniform_diagonal_div_vector"),
+        || {
+            black_box(
+                black_box(&lhs4_cases[0])
+                    .div_diagonal_vector(
+                        black_box([
+                            uniform_scale_value.clone(),
+                            uniform_scale_value.clone(),
+                            uniform_scale_value.clone(),
+                            uniform_scale_value.clone(),
+                        ]),
+                        black_box(&vector4_cases[0]),
+                    )
+                    .unwrap(),
+            );
+        },
+    );
     trace_dispatch_row(format!(
         "matrix_ops/{label}/mat4 known_diagonal_div_vector_direction",
     ), || {
@@ -1285,6 +1684,23 @@ fn bench_matrix_operations_for<B, F>(
             black_box(&lhs4_cases[0])
                 .div_diagonal_vector(
                     black_box(diagonal_values4.clone()),
+                    black_box(&translated_diagonal_direction),
+                )
+                .unwrap(),
+        );
+    });
+    trace_dispatch_row(format!(
+        "matrix_ops/{label}/mat4 known_uniform_diagonal_div_vector_direction",
+    ), || {
+        black_box(
+            black_box(&lhs4_cases[0])
+                .div_diagonal_vector(
+                    black_box([
+                        uniform_scale_value.clone(),
+                        uniform_scale_value.clone(),
+                        uniform_scale_value.clone(),
+                        uniform_scale_value.clone(),
+                    ]),
                     black_box(&translated_diagonal_direction),
                 )
                 .unwrap(),
@@ -1309,6 +1725,23 @@ fn bench_matrix_operations_for<B, F>(
             black_box(&lhs4_cases[0])
                 .div_diagonal_vector(
                     black_box(diagonal_values4.clone()),
+                    black_box(&translated_diagonal_point),
+                )
+                .unwrap(),
+        );
+    });
+    trace_dispatch_row(format!(
+        "matrix_ops/{label}/mat4 known_uniform_diagonal_div_vector_point",
+    ), || {
+        black_box(
+            black_box(&lhs4_cases[0])
+                .div_diagonal_vector(
+                    black_box([
+                        uniform_scale_value.clone(),
+                        uniform_scale_value.clone(),
+                        uniform_scale_value.clone(),
+                        uniform_scale_value.clone(),
+                    ]),
                     black_box(&translated_diagonal_point),
                 )
                 .unwrap(),
@@ -1427,6 +1860,69 @@ fn bench_matrix_operations_for<B, F>(
                         )
                         .unwrap(),
                 );
+            }
+        },
+    );
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 prepared_inverse"), || {
+        let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+        for _ in 0..lhs4_cases.len() {
+            black_box(prepared.inverse().unwrap());
+        }
+    });
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 prepared_reciprocal"),
+        || {
+            let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+            for _ in 0..lhs4_cases.len() {
+                black_box(prepared.reciprocal().unwrap());
+            }
+        },
+    );
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 prepared_inverse_checked"), || {
+        let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+        for _ in 0..lhs4_cases.len() {
+            black_box(prepared.inverse_checked().unwrap());
+        }
+    });
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 prepared_reciprocal_checked"),
+        || {
+            let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+            for _ in 0..lhs4_cases.len() {
+                black_box(prepared.reciprocal_checked().unwrap());
+            }
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 prepared_inverse_checked_abort"),
+        || {
+            let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+            for _ in 0..lhs4_cases.len() {
+                black_box(prepared.inverse_checked_with_abort(&signal).unwrap());
+            }
+        },
+    );
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 prepared_reciprocal_checked_abort"),
+        || {
+            let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+            for _ in 0..lhs4_cases.len() {
+                black_box(prepared.reciprocal_checked_with_abort(&signal).unwrap());
+            }
+        },
+    );
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 prepared_powi_negative"), || {
+        let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+        for _ in 0..lhs4_cases.len() {
+            black_box(prepared.powi(-2).unwrap());
+        }
+    });
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 prepared_powi_negative_one"),
+        || {
+            let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+            for _ in 0..lhs4_cases.len() {
+                black_box(prepared.powi(-1).unwrap());
             }
         },
     );
@@ -1813,6 +2309,22 @@ fn bench_matrix_operations_for<B, F>(
             )
         })
     });
+    group.bench_function(format!("{label}/mat3 known_uniform_diagonal_div_vector"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(&lhs3_cases[0])
+                    .div_diagonal_vector(
+                        black_box([
+                            uniform_scale_value.clone(),
+                            uniform_scale_value.clone(),
+                            uniform_scale_value.clone(),
+                        ]),
+                        black_box(&vector3_cases[0]),
+                    )
+                    .unwrap(),
+            )
+        })
+    });
     group.bench_function(format!("{label}/mat3 reciprocal_checked"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
@@ -2120,6 +2632,68 @@ fn bench_matrix_operations_for<B, F>(
     group.bench_function(format!("{label}/mat4 diagonal_reciprocal"), |b| {
         b.iter(|| black_box(black_box(diagonal_affine_matrix.clone()).reciprocal().unwrap()))
     });
+    group.bench_function(format!("{label}/mat4 known_translation_inverse"), |b| {
+        b.iter(|| {
+            black_box(Matrix4::<B>::affine_translation_inverse(black_box(
+                translation_values4.clone(),
+            )))
+        })
+    });
+    group.bench_function(format!("{label}/mat4 known_translation_div_matrix"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(lhs4_cases[0].clone())
+                    .div_affine_translation(black_box(translation_values4.clone())),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat4 known_orthonormal_inverse"), |b| {
+        b.iter(|| {
+            black_box(Matrix4::<B>::affine_orthonormal_inverse(
+                black_box(orthonormal_linear4.clone()),
+                black_box(translation_values4.clone()),
+            ))
+        })
+    });
+    group.bench_function(format!("{label}/mat4 known_orthonormal_div_matrix"), |b| {
+        b.iter(|| {
+            black_box(black_box(lhs4_cases[0].clone()).div_affine_orthonormal(
+                black_box(orthonormal_linear4.clone()),
+                black_box(translation_values4.clone()),
+            ))
+        })
+    });
+    group.bench_function(format!("{label}/mat4 known_signed_permutation_inverse"), |b| {
+        b.iter(|| {
+            black_box(Matrix4::<B>::signed_permutation_inverse(black_box(
+                signed_permutation_rows4,
+            )))
+        })
+    });
+    group.bench_function(format!("{label}/mat4 known_signed_permutation_div_matrix"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(lhs4_cases[0].clone())
+                    .div_signed_permutation(black_box(signed_permutation_rows4)),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat4 known_signed_permutation_transform"), |b| {
+        b.iter(|| {
+            black_box(Matrix4::<B>::transform_signed_permutation_vector(
+                black_box(signed_permutation_rows4),
+                black_box(&vector4_cases[0]),
+            ))
+        })
+    });
+    group.bench_function(format!("{label}/mat4 known_signed_permutation_batch"), |b| {
+        b.iter(|| {
+            black_box(Matrix4::<B>::transform_signed_permutation_batch(
+                black_box(signed_permutation_rows4),
+                black_box(&translated_diagonal_point_batch),
+            ))
+        })
+    });
     group.bench_function(format!("{label}/mat4 uniform_scale_reciprocal"), |b| {
         b.iter(|| black_box(black_box(uniform_scale_matrix4.clone()).reciprocal().unwrap()))
     });
@@ -2238,6 +2812,23 @@ fn bench_matrix_operations_for<B, F>(
             )
         })
     });
+    group.bench_function(format!("{label}/mat4 known_uniform_diagonal_div_vector"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(&lhs4_cases[0])
+                    .div_diagonal_vector(
+                        black_box([
+                            uniform_scale_value.clone(),
+                            uniform_scale_value.clone(),
+                            uniform_scale_value.clone(),
+                            uniform_scale_value.clone(),
+                        ]),
+                        black_box(&vector4_cases[0]),
+                    )
+                    .unwrap(),
+            )
+        })
+    });
     group.bench_function(format!("{label}/mat4 known_diagonal_div_vector_direction"), |b| {
         b.iter(|| {
             black_box(
@@ -2250,6 +2841,26 @@ fn bench_matrix_operations_for<B, F>(
             )
         })
     });
+    group.bench_function(
+        format!("{label}/mat4 known_uniform_diagonal_div_vector_direction"),
+        |b| {
+            b.iter(|| {
+                black_box(
+                    black_box(&lhs4_cases[0])
+                        .div_diagonal_vector(
+                            black_box([
+                                uniform_scale_value.clone(),
+                                uniform_scale_value.clone(),
+                                uniform_scale_value.clone(),
+                                uniform_scale_value.clone(),
+                            ]),
+                            black_box(&translated_diagonal_direction),
+                        )
+                        .unwrap(),
+                )
+            })
+        },
+    );
     group.bench_function(format!("{label}/mat4 known_diagonal_div_vector_direction_only"), |b| {
         b.iter(|| {
             black_box(
@@ -2268,6 +2879,23 @@ fn bench_matrix_operations_for<B, F>(
                 black_box(&lhs4_cases[0])
                     .div_diagonal_vector(
                         black_box(diagonal_values4.clone()),
+                        black_box(&translated_diagonal_point),
+                    )
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/mat4 known_uniform_diagonal_div_vector_point"), |b| {
+        b.iter(|| {
+            black_box(
+                black_box(&lhs4_cases[0])
+                    .div_diagonal_vector(
+                        black_box([
+                            uniform_scale_value.clone(),
+                            uniform_scale_value.clone(),
+                            uniform_scale_value.clone(),
+                            uniform_scale_value.clone(),
+                        ]),
                         black_box(&translated_diagonal_point),
                     )
                     .unwrap(),
@@ -2588,6 +3216,41 @@ fn bench_matrix_operations_for<B, F>(
                     .unwrap(),
             )
         })
+    });
+    group.bench_function(format!("{label}/mat4 prepared_inverse"), |b| {
+        let mut prepared = rhs4_cases[0].prepare_right_divisor();
+        b.iter(|| black_box(prepared.inverse().unwrap()))
+    });
+    group.bench_function(format!("{label}/mat4 prepared_reciprocal"), |b| {
+        let mut prepared = rhs4_cases[0].prepare_right_divisor();
+        b.iter(|| black_box(prepared.reciprocal().unwrap()))
+    });
+    group.bench_function(format!("{label}/mat4 prepared_inverse_checked"), |b| {
+        let mut prepared = rhs4_cases[0].prepare_right_divisor();
+        b.iter(|| black_box(prepared.inverse_checked().unwrap()))
+    });
+    group.bench_function(format!("{label}/mat4 prepared_reciprocal_checked"), |b| {
+        let mut prepared = rhs4_cases[0].prepare_right_divisor();
+        b.iter(|| black_box(prepared.reciprocal_checked().unwrap()))
+    });
+    group.bench_function(format!("{label}/mat4 prepared_inverse_checked_abort"), |b| {
+        let mut prepared = rhs4_cases[0].prepare_right_divisor();
+        b.iter(|| black_box(prepared.inverse_checked_with_abort(&signal).unwrap()))
+    });
+    group.bench_function(
+        format!("{label}/mat4 prepared_reciprocal_checked_abort"),
+        |b| {
+            let mut prepared = rhs4_cases[0].prepare_right_divisor();
+            b.iter(|| black_box(prepared.reciprocal_checked_with_abort(&signal).unwrap()))
+        },
+    );
+    group.bench_function(format!("{label}/mat4 prepared_powi_negative"), |b| {
+        let mut prepared = rhs4_cases[0].prepare_right_divisor();
+        b.iter(|| black_box(prepared.powi(-2).unwrap()))
+    });
+    group.bench_function(format!("{label}/mat4 prepared_powi_negative_one"), |b| {
+        let mut prepared = rhs4_cases[0].prepare_right_divisor();
+        b.iter(|| black_box(prepared.powi(-1).unwrap()))
     });
     group.bench_function(format!("{label}/mat4 translated_diagonal_direction_batch"), |b| {
         let handle = translated_diagonal_direction_matrix.transform_vec4_handle();

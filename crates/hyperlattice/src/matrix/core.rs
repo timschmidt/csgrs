@@ -149,6 +149,7 @@ pub struct PreparedRightDivisor3<'a, B: Backend = DefaultBackend> {
     adjugate: Option<[[Scalar<B>; 3]; 3]>,
     determinant: Option<Scalar<B>>,
     reciprocal_determinant: Option<Scalar<B>>,
+    inverse: Option<Matrix3<B>>,
 }
 
 /// Cached structural and exact-structure metadata for repeated right-division
@@ -168,6 +169,7 @@ pub struct PreparedRightDivisor4<'a, B: Backend = DefaultBackend> {
     adjugate: Option<[[Scalar<B>; 4]; 4]>,
     determinant: Option<Scalar<B>>,
     reciprocal_determinant: Option<Scalar<B>>,
+    inverse: Option<Matrix4<B>>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -265,6 +267,7 @@ impl<'a, B: Backend> PreparedRightDivisor3<'a, B> {
             adjugate: None,
             determinant: None,
             reciprocal_determinant: None,
+            inverse: None,
         }
     }
 
@@ -421,6 +424,133 @@ impl<'a, B: Backend> PreparedRightDivisor3<'a, B> {
         );
         right_divide_matrix3_prepared_checked_with_abort(left, self, signal)
     }
+
+    /// Returns the inverse of the prepared divisor using its cached adjugate
+    /// and reciprocal determinant.
+    pub fn inverse(&mut self) -> BlasResult<Matrix3<B>> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-right-divisor3-inverse"
+        );
+        if let Some(inverse) = &self.inverse {
+            crate::trace_dispatch!(
+                "hyperlattice_matrix",
+                "method",
+                "prepared-right-divisor3-inverse-cache-hit"
+            );
+            return Ok(inverse.clone());
+        }
+        let _ = self.prepare_shared_adjugate()?;
+        let inv_det = self
+            .reciprocal_determinant
+            .as_ref()
+            .expect("reciprocal determinant cache should be present");
+        let adjugate = self
+            .adjugate
+            .as_ref()
+            .expect("adjugate cache should be present")
+            .clone();
+        let inverse = Matrix3(scale_matrix3(adjugate, inv_det));
+        self.inverse = Some(inverse.clone());
+        Ok(inverse)
+    }
+
+    /// Checked inverse of the prepared divisor using cached factors.
+    pub fn inverse_checked(&mut self) -> CheckedBlasResult<Matrix3<B>> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-right-divisor3-inverse-checked"
+        );
+        let _ = self.prepare_shared_adjugate_checked()?;
+        if let Some(inverse) = &self.inverse {
+            crate::trace_dispatch!(
+                "hyperlattice_matrix",
+                "method",
+                "prepared-right-divisor3-inverse-checked-cache-hit"
+            );
+            return Ok(inverse.clone());
+        }
+        let inv_det = self
+            .reciprocal_determinant
+            .as_ref()
+            .expect("reciprocal determinant cache should be present");
+        let adjugate = self
+            .adjugate
+            .as_ref()
+            .expect("adjugate cache should be present")
+            .clone();
+        let inverse = Matrix3(scale_matrix3(adjugate, inv_det));
+        self.inverse = Some(inverse.clone());
+        Ok(inverse)
+    }
+
+    /// Abort-aware checked inverse of the prepared divisor using cached factors.
+    pub fn inverse_checked_with_abort(
+        &mut self,
+        signal: &AbortSignal,
+    ) -> CheckedBlasResult<Matrix3<B>> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-right-divisor3-inverse-checked-abort"
+        );
+        let _ = self.prepare_shared_adjugate_checked_with_abort(signal)?;
+        if let Some(inverse) = &self.inverse {
+            crate::trace_dispatch!(
+                "hyperlattice_matrix",
+                "method",
+                "prepared-right-divisor3-inverse-checked-abort-cache-hit"
+            );
+            return Ok(inverse.clone());
+        }
+        let inv_det = self
+            .reciprocal_determinant
+            .as_ref()
+            .expect("reciprocal determinant cache should be present");
+        let adjugate = self
+            .adjugate
+            .as_ref()
+            .expect("adjugate cache should be present")
+            .clone();
+        let inverse = Matrix3(scale_matrix3(adjugate, inv_det));
+        self.inverse = Some(inverse.clone());
+        Ok(inverse)
+    }
+
+    /// Returns the reciprocal matrix of the prepared divisor.
+    pub fn reciprocal(&mut self) -> BlasResult<Matrix3<B>> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-right-divisor3-reciprocal"
+        );
+        self.inverse()
+    }
+
+    /// Checked reciprocal matrix of the prepared divisor.
+    pub fn reciprocal_checked(&mut self) -> CheckedBlasResult<Matrix3<B>> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-right-divisor3-reciprocal-checked"
+        );
+        self.inverse_checked()
+    }
+
+    /// Abort-aware checked reciprocal matrix of the prepared divisor.
+    pub fn reciprocal_checked_with_abort(
+        &mut self,
+        signal: &AbortSignal,
+    ) -> CheckedBlasResult<Matrix3<B>> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-right-divisor3-reciprocal-checked-abort"
+        );
+        self.inverse_checked_with_abort(signal)
+    }
 }
 
 impl<'a, B: Backend> PreparedRightDivisor4<'a, B> {
@@ -443,6 +573,7 @@ impl<'a, B: Backend> PreparedRightDivisor4<'a, B> {
             adjugate: None,
             determinant: None,
             reciprocal_determinant: None,
+            inverse: None,
         }
     }
 
@@ -456,6 +587,16 @@ impl<'a, B: Backend> PreparedRightDivisor4<'a, B> {
 
     #[inline]
     fn can_use_shared_adjugate(&self, left: &[[Scalar<B>; 4]; 4]) -> bool {
+        if B::FUSE_SIGNED_PRODUCT_SUM
+            && self.right_exact_rational_kind != ExactRationalKind::NonRational
+        {
+            crate::trace_dispatch!(
+                "hyperlattice_matrix",
+                "helper",
+                "prepared-right-divisor4-exact-right-skip-left-kind"
+            );
+            return true;
+        }
         match self.right_exact_rational_kind {
             ExactRationalKind::ExactDyadicRational => {
                 let left_kind = matrix4_exact_rational_kind(left);
@@ -635,6 +776,218 @@ impl<'a, B: Backend> PreparedRightDivisor4<'a, B> {
             "prepared-right-divisor4-divide-checked-abort"
         );
         right_divide_matrix4_prepared_checked_with_abort(left, self, signal)
+    }
+
+    /// Returns the inverse of the prepared divisor using its cached adjugate
+    /// and reciprocal determinant.
+    ///
+    /// This exposes the same object-level cache used by prepared right-division
+    /// to callers that repeatedly need the inverse matrix itself.
+    pub fn inverse(&mut self) -> BlasResult<Matrix4<B>> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-right-divisor4-inverse"
+        );
+        if let Some(inverse) = &self.inverse {
+            crate::trace_dispatch!(
+                "hyperlattice_matrix",
+                "method",
+                "prepared-right-divisor4-inverse-cache-hit"
+            );
+            return Ok(inverse.clone());
+        }
+        let _ = self.prepare_shared_adjugate()?;
+        let inv_det = self
+            .reciprocal_determinant
+            .as_ref()
+            .expect("reciprocal determinant cache should be present");
+        let adjugate = self
+            .adjugate
+            .as_ref()
+            .expect("adjugate cache should be present")
+            .clone();
+        let inverse = Matrix4(scale_matrix4(adjugate, inv_det));
+        self.inverse = Some(inverse.clone());
+        Ok(inverse)
+    }
+
+    /// Checked inverse of the prepared divisor using cached factors.
+    pub fn inverse_checked(&mut self) -> CheckedBlasResult<Matrix4<B>> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-right-divisor4-inverse-checked"
+        );
+        let _ = self.prepare_shared_adjugate_checked()?;
+        if let Some(inverse) = &self.inverse {
+            crate::trace_dispatch!(
+                "hyperlattice_matrix",
+                "method",
+                "prepared-right-divisor4-inverse-checked-cache-hit"
+            );
+            return Ok(inverse.clone());
+        }
+        let inv_det = self
+            .reciprocal_determinant
+            .as_ref()
+            .expect("reciprocal determinant cache should be present");
+        let adjugate = self
+            .adjugate
+            .as_ref()
+            .expect("adjugate cache should be present")
+            .clone();
+        let inverse = Matrix4(scale_matrix4(adjugate, inv_det));
+        self.inverse = Some(inverse.clone());
+        Ok(inverse)
+    }
+
+    /// Abort-aware checked inverse of the prepared divisor using cached factors.
+    pub fn inverse_checked_with_abort(
+        &mut self,
+        signal: &AbortSignal,
+    ) -> CheckedBlasResult<Matrix4<B>> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-right-divisor4-inverse-checked-abort"
+        );
+        let _ = self.prepare_shared_adjugate_checked_with_abort(signal)?;
+        if let Some(inverse) = &self.inverse {
+            crate::trace_dispatch!(
+                "hyperlattice_matrix",
+                "method",
+                "prepared-right-divisor4-inverse-checked-abort-cache-hit"
+            );
+            return Ok(inverse.clone());
+        }
+        let inv_det = self
+            .reciprocal_determinant
+            .as_ref()
+            .expect("reciprocal determinant cache should be present");
+        let adjugate = self
+            .adjugate
+            .as_ref()
+            .expect("adjugate cache should be present")
+            .clone();
+        let inverse = Matrix4(scale_matrix4(adjugate, inv_det));
+        self.inverse = Some(inverse.clone());
+        Ok(inverse)
+    }
+
+    /// Returns the reciprocal matrix of the prepared divisor.
+    ///
+    /// This is an explicit reciprocal-family spelling for callers that have
+    /// prepared the divisor object. It reuses the same cached scaled inverse as
+    /// [`PreparedRightDivisor4::inverse`] instead of falling back to generic
+    /// `Matrix4::reciprocal`.
+    pub fn reciprocal(&mut self) -> BlasResult<Matrix4<B>> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-right-divisor4-reciprocal"
+        );
+        self.inverse()
+    }
+
+    /// Checked reciprocal matrix of the prepared divisor.
+    pub fn reciprocal_checked(&mut self) -> CheckedBlasResult<Matrix4<B>> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-right-divisor4-reciprocal-checked"
+        );
+        self.inverse_checked()
+    }
+
+    /// Abort-aware checked reciprocal matrix of the prepared divisor.
+    pub fn reciprocal_checked_with_abort(
+        &mut self,
+        signal: &AbortSignal,
+    ) -> CheckedBlasResult<Matrix4<B>> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-right-divisor4-reciprocal-checked-abort"
+        );
+        self.inverse_checked_with_abort(signal)
+    }
+
+    /// Raises the prepared divisor to an integer power.
+    ///
+    /// Negative powers reuse the cached prepared inverse, so repeated
+    /// `A^-k` workloads pay determinant/cofactor setup once at this object
+    /// boundary instead of once per power call.
+    pub fn powi(&mut self, exponent: i32) -> BlasResult<Matrix4<B>> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-right-divisor4-powi"
+        );
+        if exponent == -1 {
+            crate::trace_dispatch!(
+                "hyperlattice_matrix",
+                "powi",
+                "prepared-negative-one-inverse"
+            );
+            return self.inverse();
+        }
+        let base = if exponent < 0 {
+            self.inverse()?.0
+        } else {
+            self.divisor.0.clone()
+        };
+        Ok(Matrix4(matrix_power4(base, exponent.unsigned_abs())))
+    }
+
+    /// Checked integer power of the prepared divisor.
+    pub fn powi_checked(&mut self, exponent: i32) -> CheckedBlasResult<Matrix4<B>> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-right-divisor4-powi-checked"
+        );
+        if exponent == -1 {
+            crate::trace_dispatch!(
+                "hyperlattice_matrix",
+                "powi",
+                "prepared-negative-one-inverse-checked"
+            );
+            return self.inverse_checked();
+        }
+        let base = if exponent < 0 {
+            self.inverse_checked()?.0
+        } else {
+            self.divisor.0.clone()
+        };
+        Ok(Matrix4(matrix_power4(base, exponent.unsigned_abs())))
+    }
+
+    /// Abort-aware checked integer power of the prepared divisor.
+    pub fn powi_checked_with_abort(
+        &mut self,
+        exponent: i32,
+        signal: &AbortSignal,
+    ) -> CheckedBlasResult<Matrix4<B>> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-right-divisor4-powi-checked-abort"
+        );
+        if exponent == -1 {
+            crate::trace_dispatch!(
+                "hyperlattice_matrix",
+                "powi",
+                "prepared-negative-one-inverse-checked-abort"
+            );
+            return self.inverse_checked_with_abort(signal);
+        }
+        let base = if exponent < 0 {
+            self.inverse_checked_with_abort(signal)?.0
+        } else {
+            self.divisor.0.clone()
+        };
+        Ok(Matrix4(matrix_power4(base, exponent.unsigned_abs())))
     }
 }
 
@@ -1396,6 +1749,14 @@ fn prefer_shared_adjugate_right_division<B: Backend, const N: usize>(
     let right_kind = matrix_exact_rational_kind(right);
     if right_kind == ExactRationalKind::NonRational {
         return false;
+    }
+    if B::FUSE_SIGNED_PRODUCT_SUM && N == 4 {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "helper",
+            "right-divide4-exact-right-skip-left-kind"
+        );
+        return true;
     }
     let left_kind = matrix_exact_rational_kind(left);
     matches!(
@@ -3094,6 +3455,19 @@ fn invert_matrix3_by_diagonal<B: Backend>(
     // For true diagonal matrices, inversion is n scalar inverses with no extra
     // multiply-add schedule; this avoids the division-heavy elimination and
     // cofactor work while preserving exact division semantics.
+    if matrix[0][0] == matrix[1][1] && matrix[0][0] == matrix[2][2] {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "helper",
+            "invert-matrix3-diagonal-uniform-scale"
+        );
+        let inv = matrix[0][0].clone().inverse()?;
+        return Ok([
+            [inv.clone(), Scalar::zero(), Scalar::zero()],
+            [Scalar::zero(), inv.clone(), Scalar::zero()],
+            [Scalar::zero(), Scalar::zero(), inv],
+        ]);
+    }
     let inv00 = matrix[0][0].clone().inverse()?;
     let inv11 = matrix[1][1].clone().inverse()?;
     let inv22 = matrix[2][2].clone().inverse()?;
@@ -3622,6 +3996,21 @@ fn invert_matrix4_by_diagonal<B: Backend>(
 ) -> BlasResult<[[Scalar<B>; 4]; 4]> {
     // The same diagonal path is the exact analog in 4x4: invert only diagonal
     // entries when structural zeros certify no couplings.
+    if matrix[0][0] == matrix[1][1] && matrix[0][0] == matrix[2][2] && matrix[0][0] == matrix[3][3]
+    {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "helper",
+            "invert-matrix4-diagonal-uniform-scale"
+        );
+        let inv = matrix[0][0].clone().inverse()?;
+        return Ok([
+            [inv.clone(), Scalar::zero(), Scalar::zero(), Scalar::zero()],
+            [Scalar::zero(), inv.clone(), Scalar::zero(), Scalar::zero()],
+            [Scalar::zero(), Scalar::zero(), inv.clone(), Scalar::zero()],
+            [Scalar::zero(), Scalar::zero(), Scalar::zero(), inv],
+        ]);
+    }
     let inv00 = matrix[0][0].clone().inverse()?;
     let inv11 = matrix[1][1].clone().inverse()?;
     let inv22 = matrix[2][2].clone().inverse()?;
@@ -9609,19 +9998,7 @@ impl<'a, B: Backend> TransformedMatrix4<'a, B> {
                     // Keep the canonical point lane as a freshly constructed
                     // `1` in this batch kernel. Cloning the input `w` lane was
                     // tested because the API assumes a point, but it regressed
-                    // the approx backend by ~13% in this nanosecond-scale loop.
-                    // The scalar constructor is cheaper for compact backends
-                    // after LLVM scalarization, while symbolic backends can use
-                    // the single-vector retained-lane helper when preserving an
-                    // existing exact `w` node matters more. If batch hyperreal
-                    // workloads later benefit from retaining `w`, split the
-                    // route by backend capability rather than reintroducing the
-                    // approx regression. This follows the
-                    // fixed-kernel specialization discipline suggested by Yap:
-                    // exploit geometric facts only when the chosen
-                    // representation actually reduces work for the object
-                    // package in question (Yap, "Towards Exact Geometric
-                    // Computation", 1997).
+                    // both approx and hyperreal-family rows in this hot loop.
                     Scalar::one(),
                 ]));
             }
@@ -11089,6 +11466,10 @@ macro_rules! impl_matrix {
             /// Negative exponents invert the matrix first.
             pub fn powi(self, exponent: i32) -> BlasResult<Self> {
                 crate::trace_dispatch!("hyperlattice_matrix", "method", "powi");
+                if exponent == -1 {
+                    crate::trace_dispatch!("hyperlattice_matrix", "powi", "negative-one-inverse");
+                    return self.inverse();
+                }
                 // Negative powers deliberately materialize A^-1 before
                 // repeated squaring. A delayed-scale prototype using
                 // A^-k = adj(A)^k * det(A)^-k looked structurally attractive,
@@ -11107,6 +11488,14 @@ macro_rules! impl_matrix {
             /// Raises the matrix to an integer power using checked inversion.
             pub fn powi_checked(self, exponent: i32) -> CheckedBlasResult<Self> {
                 crate::trace_dispatch!("hyperlattice_matrix", "method", "powi-checked");
+                if exponent == -1 {
+                    crate::trace_dispatch!(
+                        "hyperlattice_matrix",
+                        "powi",
+                        "negative-one-inverse-checked"
+                    );
+                    return self.inverse_checked();
+                }
                 let base = if exponent < 0 {
                     self.inverse_checked()?.0
                 } else {
@@ -11122,6 +11511,14 @@ macro_rules! impl_matrix {
                 signal: &AbortSignal,
             ) -> CheckedBlasResult<Self> {
                 crate::trace_dispatch!("hyperlattice_matrix", "method", "powi-checked-with-abort");
+                if exponent == -1 {
+                    crate::trace_dispatch!(
+                        "hyperlattice_matrix",
+                        "powi",
+                        "negative-one-inverse-checked-with-abort"
+                    );
+                    return self.inverse_checked_with_abort(signal);
+                }
                 let base = if exponent < 0 {
                     self.inverse_checked_with_abort(signal)?.0
                 } else {
@@ -11444,7 +11841,9 @@ macro_rules! impl_matrix {
                 crate::trace_dispatch!("hyperlattice_matrix", "op", "div-scalar-owned");
                 reject_definite_zero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
-                if B::MOVE_ELEMENTWISE {
+                if B::MOVE_ELEMENTWISE && $n == 3 {
+                    Ok(Self(self.0.map(|row| row.map(|value| &value * &inv_rhs))))
+                } else if B::MOVE_ELEMENTWISE {
                     Ok(Self(
                         self.0
                             .map(|row| row.map(|value| value.mul_cached(&inv_rhs))),
@@ -11468,7 +11867,9 @@ macro_rules! impl_matrix {
                 crate::trace_dispatch!("hyperlattice_matrix", "op", "div-scalar-ref");
                 reject_definite_zero(rhs)?;
                 let inv_rhs = rhs.inverse_ref()?;
-                if B::MOVE_ELEMENTWISE {
+                if B::MOVE_ELEMENTWISE && $n == 3 {
+                    Ok(Self(self.0.map(|row| row.map(|value| &value * &inv_rhs))))
+                } else if B::MOVE_ELEMENTWISE {
                     Ok(Self(
                         self.0
                             .map(|row| row.map(|value| value.mul_cached(&inv_rhs))),
@@ -11856,9 +12257,17 @@ impl<B: Backend> Matrix3<B> {
     ) -> BlasResult<Vector3<B>> {
         crate::trace_dispatch!("hyperlattice_matrix", "method", "div-diagonal3-vector");
         let [d0, d1, d2] = diagonal;
-        let inv0 = d0.inverse()?;
-        let inv1 = d1.inverse()?;
-        let inv2 = d2.inverse()?;
+        let (inv0, inv1, inv2) = if d0 == d1 && d0 == d2 {
+            crate::trace_dispatch!(
+                "hyperlattice_matrix",
+                "helper",
+                "div-diagonal3-vector-uniform-scale"
+            );
+            let inv = d0.inverse()?;
+            (inv.clone(), inv.clone(), inv)
+        } else {
+            (d0.inverse()?, d1.inverse()?, d2.inverse()?)
+        };
 
         let rhs_div = [
             rhs.0[0].clone().mul_cached(&inv0),
@@ -12024,7 +12433,334 @@ impl<B: Backend> Matrix3<B> {
     }
 }
 
+/// A signed 4D basis axis used by caller-certified signed-permutation matrices.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SignedAxis4 {
+    /// Positive X axis.
+    PosX,
+    /// Negative X axis.
+    NegX,
+    /// Positive Y axis.
+    PosY,
+    /// Negative Y axis.
+    NegY,
+    /// Positive Z axis.
+    PosZ,
+    /// Negative Z axis.
+    NegZ,
+    /// Positive W axis.
+    PosW,
+    /// Negative W axis.
+    NegW,
+}
+
+impl SignedAxis4 {
+    #[inline]
+    fn index(self) -> usize {
+        match self {
+            Self::PosX | Self::NegX => 0,
+            Self::PosY | Self::NegY => 1,
+            Self::PosZ | Self::NegZ => 2,
+            Self::PosW | Self::NegW => 3,
+        }
+    }
+
+    #[inline]
+    fn is_negative(self) -> bool {
+        matches!(self, Self::NegX | Self::NegY | Self::NegZ | Self::NegW)
+    }
+}
+
+#[inline]
+fn signed_axis4_scalar<B: Backend>(axis: SignedAxis4) -> Scalar<B> {
+    if axis.is_negative() {
+        -Scalar::one()
+    } else {
+        Scalar::one()
+    }
+}
+
+#[inline]
+fn signed_axis4_apply<B: Backend>(value: Scalar<B>, axis: SignedAxis4) -> Scalar<B> {
+    if axis.is_negative() { -value } else { value }
+}
+
 impl<B: Backend> Matrix4<B> {
+    /// Constructs a 4x4 affine translation matrix from known x/y/z offsets.
+    pub fn affine_translation(translation: [Scalar<B>; 3]) -> Self {
+        crate::trace_dispatch!("hyperlattice_matrix", "constructor", "affine-translation");
+        let [tx, ty, tz] = translation;
+        Self([
+            [Scalar::one(), Scalar::zero(), Scalar::zero(), tx],
+            [Scalar::zero(), Scalar::one(), Scalar::zero(), ty],
+            [Scalar::zero(), Scalar::zero(), Scalar::one(), tz],
+            [
+                Scalar::zero(),
+                Scalar::zero(),
+                Scalar::zero(),
+                Scalar::one(),
+            ],
+        ])
+    }
+
+    /// Constructs the inverse of a caller-certified affine translation.
+    ///
+    /// Translation inverse is exact negation of the offset vector. Keeping this
+    /// as a known-object API avoids the generic affine fact scan and does not
+    /// enter determinant/cofactor arithmetic.
+    pub fn affine_translation_inverse(translation: [Scalar<B>; 3]) -> Self {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "constructor",
+            "affine-translation-inverse"
+        );
+        let [tx, ty, tz] = translation;
+        Self::affine_translation([-tx, -ty, -tz])
+    }
+
+    /// Right-divides this matrix by a caller-certified affine translation.
+    ///
+    /// For a translation `T(t)`, `A / T(t) = A * T(-t)`, so only the
+    /// homogeneous translation column changes. This exposes the same
+    /// object-level fast path used by generic affine dispatch without making
+    /// callers rediscover translation structure numerically.
+    pub fn div_affine_translation(self, translation: [Scalar<B>; 3]) -> Self {
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "div-affine-translation4");
+        let [row0, row1, row2, row3] = self.0;
+        let [tx, ty, tz] = translation;
+        let terms = [&tx, &ty, &tz];
+        let t0 = affine_translation_column_subtract_update(&row0, terms);
+        let t1 = affine_translation_column_subtract_update(&row1, terms);
+        let t2 = affine_translation_column_subtract_update(&row2, terms);
+        let t3 = affine_translation_column_subtract_update(&row3, terms);
+        let [a00, a01, a02, _] = row0;
+        let [a10, a11, a12, _] = row1;
+        let [a20, a21, a22, _] = row2;
+        let [a30, a31, a32, _] = row3;
+        Self([
+            [a00, a01, a02, t0],
+            [a10, a11, a12, t1],
+            [a20, a21, a22, t2],
+            [a30, a31, a32, t3],
+        ])
+    }
+
+    /// Constructs a caller-certified affine orthonormal transform.
+    ///
+    /// The caller supplies the object fact that the 3x3 linear block is
+    /// orthonormal. This constructor does not validate that fact; it preserves
+    /// it for known-object inverse and right-division paths.
+    pub fn affine_orthonormal(linear: [[Scalar<B>; 3]; 3], translation: [Scalar<B>; 3]) -> Self {
+        crate::trace_dispatch!("hyperlattice_matrix", "constructor", "affine-orthonormal");
+        let [[r00, r01, r02], [r10, r11, r12], [r20, r21, r22]] = linear;
+        let [tx, ty, tz] = translation;
+        Self([
+            [r00, r01, r02, tx],
+            [r10, r11, r12, ty],
+            [r20, r21, r22, tz],
+            [
+                Scalar::zero(),
+                Scalar::zero(),
+                Scalar::zero(),
+                Scalar::one(),
+            ],
+        ])
+    }
+
+    /// Constructs the inverse of a caller-certified affine orthonormal transform.
+    ///
+    /// For `M = [R t; 0 1]` with orthonormal `R`, `M^-1 = [R^T -R^T t; 0 1]`.
+    /// This bypasses generic affine inversion and avoids determinant/cofactor
+    /// arithmetic for rigid transform stacks.
+    pub fn affine_orthonormal_inverse(
+        linear: [[Scalar<B>; 3]; 3],
+        translation: [Scalar<B>; 3],
+    ) -> Self {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "constructor",
+            "affine-orthonormal-inverse"
+        );
+        let [[r00, r01, r02], [r10, r11, r12], [r20, r21, r22]] = linear;
+        let [tx, ty, tz] = translation;
+        let it0 = Scalar::zero() - affine_translation_dot3([&r00, &r10, &r20], [&tx, &ty, &tz]);
+        let it1 = Scalar::zero() - affine_translation_dot3([&r01, &r11, &r21], [&tx, &ty, &tz]);
+        let it2 = Scalar::zero() - affine_translation_dot3([&r02, &r12, &r22], [&tx, &ty, &tz]);
+        Self([
+            [r00, r10, r20, it0],
+            [r01, r11, r21, it1],
+            [r02, r12, r22, it2],
+            [
+                Scalar::zero(),
+                Scalar::zero(),
+                Scalar::zero(),
+                Scalar::one(),
+            ],
+        ])
+    }
+
+    /// Right-divides this matrix by a caller-certified affine orthonormal transform.
+    pub fn div_affine_orthonormal(
+        self,
+        linear: [[Scalar<B>; 3]; 3],
+        translation: [Scalar<B>; 3],
+    ) -> Self {
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "div-affine-orthonormal4");
+        let [[r00, r01, r02], [r10, r11, r12], [r20, r21, r22]] = linear;
+        let [tx, ty, tz] = translation;
+        let it0 = Scalar::zero() - affine_translation_dot3([&r00, &r10, &r20], [&tx, &ty, &tz]);
+        let it1 = Scalar::zero() - affine_translation_dot3([&r01, &r11, &r21], [&tx, &ty, &tz]);
+        let it2 = Scalar::zero() - affine_translation_dot3([&r02, &r12, &r22], [&tx, &ty, &tz]);
+        let inv_translation = [&it0, &it1, &it2];
+        let result = self.0.map(|row| {
+            let [a0, a1, a2, a3] = row;
+            let c0 = Scalar::active_linear_combination3([&a0, &a1, &a2], [&r00, &r01, &r02]);
+            let c1 = Scalar::active_linear_combination3([&a0, &a1, &a2], [&r10, &r11, &r12]);
+            let c2 = Scalar::active_linear_combination3([&a0, &a1, &a2], [&r20, &r21, &r22]);
+            let c3 = affine_translation_dot3([&a0, &a1, &a2], inv_translation) + a3;
+            [c0, c1, c2, c3]
+        });
+        Self(result)
+    }
+
+    /// Constructs a caller-certified signed-permutation matrix.
+    ///
+    /// Each row names the signed input axis selected by that output row. This
+    /// does not validate uniqueness; callers use it when the construction
+    /// provenance already proves signed-permutation structure.
+    pub fn signed_permutation(rows: [SignedAxis4; 4]) -> Self {
+        crate::trace_dispatch!("hyperlattice_matrix", "constructor", "signed-permutation4");
+        let [r0, r1, r2, r3] = rows;
+        let mut matrix = [
+            [
+                Scalar::zero(),
+                Scalar::zero(),
+                Scalar::zero(),
+                Scalar::zero(),
+            ],
+            [
+                Scalar::zero(),
+                Scalar::zero(),
+                Scalar::zero(),
+                Scalar::zero(),
+            ],
+            [
+                Scalar::zero(),
+                Scalar::zero(),
+                Scalar::zero(),
+                Scalar::zero(),
+            ],
+            [
+                Scalar::zero(),
+                Scalar::zero(),
+                Scalar::zero(),
+                Scalar::zero(),
+            ],
+        ];
+        matrix[0][r0.index()] = signed_axis4_scalar(r0);
+        matrix[1][r1.index()] = signed_axis4_scalar(r1);
+        matrix[2][r2.index()] = signed_axis4_scalar(r2);
+        matrix[3][r3.index()] = signed_axis4_scalar(r3);
+        Self(matrix)
+    }
+
+    /// Constructs the inverse of a caller-certified signed-permutation matrix.
+    pub fn signed_permutation_inverse(rows: [SignedAxis4; 4]) -> Self {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "constructor",
+            "signed-permutation4-inverse"
+        );
+        let [r0, r1, r2, r3] = rows;
+        let mut matrix = [
+            [
+                Scalar::zero(),
+                Scalar::zero(),
+                Scalar::zero(),
+                Scalar::zero(),
+            ],
+            [
+                Scalar::zero(),
+                Scalar::zero(),
+                Scalar::zero(),
+                Scalar::zero(),
+            ],
+            [
+                Scalar::zero(),
+                Scalar::zero(),
+                Scalar::zero(),
+                Scalar::zero(),
+            ],
+            [
+                Scalar::zero(),
+                Scalar::zero(),
+                Scalar::zero(),
+                Scalar::zero(),
+            ],
+        ];
+        matrix[r0.index()][0] = signed_axis4_scalar(r0);
+        matrix[r1.index()][1] = signed_axis4_scalar(r1);
+        matrix[r2.index()][2] = signed_axis4_scalar(r2);
+        matrix[r3.index()][3] = signed_axis4_scalar(r3);
+        Self(matrix)
+    }
+
+    /// Right-divides this matrix by a caller-certified signed-permutation matrix.
+    pub fn div_signed_permutation(self, rows: [SignedAxis4; 4]) -> Self {
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "div-signed-permutation4");
+        let [r0, r1, r2, r3] = rows;
+        Self(self.0.map(|row| {
+            [
+                signed_axis4_apply(row[r0.index()].clone(), r0),
+                signed_axis4_apply(row[r1.index()].clone(), r1),
+                signed_axis4_apply(row[r2.index()].clone(), r2),
+                signed_axis4_apply(row[r3.index()].clone(), r3),
+            ]
+        }))
+    }
+
+    /// Applies a caller-certified signed-permutation transform to a vector.
+    pub fn transform_signed_permutation_vector(
+        rows: [SignedAxis4; 4],
+        rhs: &Vector4<B>,
+    ) -> Vector4<B> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "transform-signed-permutation4-vector"
+        );
+        let [r0, r1, r2, r3] = rows;
+        Vector4([
+            signed_axis4_apply(rhs.0[r0.index()].clone(), r0),
+            signed_axis4_apply(rhs.0[r1.index()].clone(), r1),
+            signed_axis4_apply(rhs.0[r2.index()].clone(), r2),
+            signed_axis4_apply(rhs.0[r3.index()].clone(), r3),
+        ])
+    }
+
+    /// Applies a caller-certified signed-permutation transform to a vector batch.
+    pub fn transform_signed_permutation_batch(
+        rows: [SignedAxis4; 4],
+        rhs: &[Vector4<B>],
+    ) -> Vec<Vector4<B>> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "transform-signed-permutation4-batch"
+        );
+        let [r0, r1, r2, r3] = rows;
+        rhs.iter()
+            .map(|vector| {
+                Vector4([
+                    signed_axis4_apply(vector.0[r0.index()].clone(), r0),
+                    signed_axis4_apply(vector.0[r1.index()].clone(), r1),
+                    signed_axis4_apply(vector.0[r2.index()].clone(), r2),
+                    signed_axis4_apply(vector.0[r3.index()].clone(), r3),
+                ])
+            })
+            .collect()
+    }
+
     /// Constructs a 4x4 diagonal matrix from known diagonal entries.
     pub fn diagonal(diagonal: [Scalar<B>; 4]) -> Self {
         crate::trace_dispatch!("hyperlattice_matrix", "constructor", "diagonal");
@@ -12275,9 +13011,17 @@ impl<B: Backend> Matrix4<B> {
             // unnecessary reciprocal work when only three linear scales are ever used.
             // This follows Yap's geometric-object split between points and
             // directions in "Towards Exact Geometric Computation", 1997.
-            let inv0 = d0.inverse()?;
-            let inv1 = d1.inverse()?;
-            let inv2 = d2.inverse()?;
+            let (inv0, inv1, inv2) = if d0 == d1 && d0 == d2 {
+                crate::trace_dispatch!(
+                    "hyperlattice_matrix",
+                    "helper",
+                    "div-diagonal4-vector-direction-uniform-scale"
+                );
+                let inv = d0.inverse()?;
+                (inv.clone(), inv.clone(), inv)
+            } else {
+                (d0.inverse()?, d1.inverse()?, d2.inverse()?)
+            };
             let rhs_div = [
                 rhs.0[0].clone().mul_cached(&inv0),
                 rhs.0[1].clone().mul_cached(&inv1),
@@ -12291,9 +13035,18 @@ impl<B: Backend> Matrix4<B> {
             )));
         }
 
-        let inv0 = d0.inverse()?;
-        let inv1 = d1.inverse()?;
-        let inv2 = d2.inverse()?;
+        let linear_uniform_scale = d0 == d1 && d0 == d2;
+        let (inv0, inv1, inv2) = if linear_uniform_scale {
+            crate::trace_dispatch!(
+                "hyperlattice_matrix",
+                "helper",
+                "div-diagonal4-vector-linear-uniform-scale"
+            );
+            let inv = d0.inverse()?;
+            (inv.clone(), inv.clone(), inv)
+        } else {
+            (d0.inverse()?, d1.inverse()?, d2.inverse()?)
+        };
         // Keep the common affine case `d3 == 1` from paying a needless
         // reciprocal and downstream one-multiplies. Structural affine factors
         // are exact where supplied, so this branch is safe and preserves

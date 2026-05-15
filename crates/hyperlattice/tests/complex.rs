@@ -9,6 +9,13 @@ fn complex_i_squared() {
 }
 
 #[test]
+fn complex_negative_one_power_uses_reciprocal_semantics() {
+    let value = Complex::new(r(3), r(4));
+
+    assert_eq!(value.clone().powi(-1).unwrap(), value.reciprocal().unwrap());
+}
+
+#[test]
 fn complex_display_forwards_real_formatting() {
     let value = Complex::new(frac(1, 2), r(2));
 

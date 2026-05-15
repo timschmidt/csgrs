@@ -102,6 +102,10 @@ impl<B: Backend> Complex<B> {
             }
             return Ok(Self::one());
         }
+        if exponent == -1 {
+            crate::trace_dispatch!("hyperlattice_complex", "powi", "negative-one-reciprocal");
+            return self.reciprocal();
+        }
 
         let result = complex_powi_positive(self, exponent.unsigned_abs());
         if exponent < 0 {
@@ -119,6 +123,14 @@ impl<B: Backend> Complex<B> {
                 return Err(Problem::NotANumber);
             }
             return Ok(Self::one());
+        }
+        if exponent == -1 {
+            crate::trace_dispatch!(
+                "hyperlattice_complex",
+                "powi",
+                "negative-one-reciprocal-checked"
+            );
+            return self.reciprocal_checked();
         }
 
         let result = complex_powi_positive(self, exponent.unsigned_abs());

@@ -1388,6 +1388,6 @@ mod vector;
 mod arbitrary_impls;
 
 pub use complex::Complex;
-pub use matrix::{Matrix3, Matrix4, PreparedRightDivisor3, PreparedRightDivisor4};
+pub use matrix::{Matrix3, Matrix4, PreparedRightDivisor3, PreparedRightDivisor4, SignedAxis4};
 pub use scalar::*;
 pub use vector::{Vector3, Vector4};

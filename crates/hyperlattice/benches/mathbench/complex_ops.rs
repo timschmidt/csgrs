@@ -35,10 +35,24 @@ fn bench_complex_operations_for<B, F>(
         let _ = black_box(value.clone().powi(5).unwrap());
     });
     trace_dispatch_cases(
+        format!("complex_ops/{label}/powi_negative_one"),
+        &lhs_cases,
+        |value| {
+            let _ = black_box(value.clone().powi(-1).unwrap());
+        },
+    );
+    trace_dispatch_cases(
         format!("complex_ops/{label}/powi_checked"),
         &lhs_cases,
         |value| {
             let _ = black_box(value.clone().powi_checked(5).unwrap());
+        },
+    );
+    trace_dispatch_cases(
+        format!("complex_ops/{label}/powi_checked_negative_one"),
+        &lhs_cases,
+        |value| {
+            let _ = black_box(value.clone().powi_checked(-1).unwrap());
         },
     );
 
@@ -92,12 +106,32 @@ fn bench_complex_operations_for<B, F>(
             )
         })
     });
+    group.bench_function(format!("{label}/powi_negative_one"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(
+                black_box(next_case(&lhs_cases, &cursor).clone())
+                    .powi(-1)
+                    .unwrap(),
+            )
+        })
+    });
     group.bench_function(format!("{label}/powi_checked"), |b| {
         let cursor = Cell::new(0);
         b.iter(|| {
             black_box(
                 black_box(next_case(&lhs_cases, &cursor).clone())
                     .powi_checked(5)
+                    .unwrap(),
+            )
+        })
+    });
+    group.bench_function(format!("{label}/powi_checked_negative_one"), |b| {
+        let cursor = Cell::new(0);
+        b.iter(|| {
+            black_box(
+                black_box(next_case(&lhs_cases, &cursor).clone())
+                    .powi_checked(-1)
                     .unwrap(),
             )
         })

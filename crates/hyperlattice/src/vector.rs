@@ -126,7 +126,6 @@ macro_rules! impl_vector {
             pub fn normalize(&self) -> BlasResult<Self> {
                 crate::trace_dispatch!("hyperlattice_vector", "method", "normalize");
                 let mag = self.magnitude()?;
-                reject_definite_zero(&mag)?;
                 let inv_mag = mag.inverse()?;
                 // Keep the borrowed `Mul` form here. A `mul_cached` prototype
                 // reused the reciprocal magnitude like matrix inverse scaling,
@@ -143,7 +142,6 @@ macro_rules! impl_vector {
                 let mag_squared = self.magnitude_squared_fast();
                 require_known_nonzero(&mag_squared)?;
                 let mag = mag_squared.sqrt()?;
-                require_known_nonzero(&mag)?;
                 let inv_mag = mag.inverse()?;
                 // See `normalize`: direct borrowed multiply benchmarks faster
                 // than forcing the matrix shared-scale helper for vectors.
@@ -163,7 +161,6 @@ macro_rules! impl_vector {
                 let mag_squared = with_abort(self.dot_with_abort(self, signal), signal);
                 require_known_nonzero(&mag_squared)?;
                 let mag = mag_squared.sqrt()?;
-                require_known_nonzero(&mag)?;
                 let inv_mag = mag.inverse()?;
                 // See `normalize`: direct borrowed multiply keeps this vector
                 // path faster after abort-aware magnitude construction.
@@ -175,9 +172,15 @@ macro_rules! impl_vector {
                 crate::trace_dispatch!("hyperlattice_vector", "method", "div-scalar-checked");
                 require_known_nonzero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
-                if B::MOVE_ELEMENTWISE {
-                    // Some backends, notably hyperreal, are cheaper when owned vector slots
-                    // are consumed element-by-element instead of cloned and overwritten.
+                if B::MOVE_ELEMENTWISE && $n == 3 {
+                    // Keep this vec3 path aligned with normalize: for three
+                    // lanes, borrowed multiply can be cheaper than
+                    // forcing the shared-scale helper used by matrices.
+                    Ok(Self(self.0.map(|value| &value * &inv_rhs)))
+                } else if B::MOVE_ELEMENTWISE {
+                    // Vec4 still benchmarks faster through the cached scalar
+                    // multiply path because it amortizes the shared scale over
+                    // one extra lane.
                     Ok(Self(self.0.map(|value| value.mul_cached(&inv_rhs))))
                 } else {
                     let mut values = self.0;
@@ -202,7 +205,9 @@ macro_rules! impl_vector {
                 let rhs = with_abort(rhs, signal);
                 require_known_nonzero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
-                if B::MOVE_ELEMENTWISE {
+                if B::MOVE_ELEMENTWISE && $n == 3 {
+                    Ok(Self(self.0.map(|value| &value * &inv_rhs)))
+                } else if B::MOVE_ELEMENTWISE {
                     Ok(Self(self.0.map(|value| value.mul_cached(&inv_rhs))))
                 } else {
                     let mut values = self.0;
@@ -443,7 +448,9 @@ macro_rules! impl_vector {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "div-scalar-owned");
                 reject_definite_zero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
-                if B::MOVE_ELEMENTWISE {
+                if B::MOVE_ELEMENTWISE && $n == 3 {
+                    Ok(Self(self.0.map(|value| &value * &inv_rhs)))
+                } else if B::MOVE_ELEMENTWISE {
                     Ok(Self(self.0.map(|value| value.mul_cached(&inv_rhs))))
                 } else {
                     let mut values = self.0;
@@ -462,7 +469,9 @@ macro_rules! impl_vector {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "div-scalar-ref");
                 reject_definite_zero(rhs)?;
                 let inv_rhs = rhs.inverse_ref()?;
-                if B::MOVE_ELEMENTWISE {
+                if B::MOVE_ELEMENTWISE && $n == 3 {
+                    Ok(Self(self.0.map(|value| &value * &inv_rhs)))
+                } else if B::MOVE_ELEMENTWISE {
                     Ok(Self(self.0.map(|value| value.mul_cached(&inv_rhs))))
                 } else {
                     let mut values = self.0;
