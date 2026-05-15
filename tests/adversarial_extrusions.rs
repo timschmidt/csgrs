@@ -335,7 +335,10 @@ fn adversarial_loft_polygon_pair_catalog_is_finite_or_errors() {
         Sketch::loft(&bottoms[0], &mismatched_top, true)
     }))
     .expect("loft should report mismatched vertices without panicking");
-    assert!(matches!(result, Err(ValidationError::MismatchedVertices)));
+    assert!(matches!(
+        result,
+        Err(ValidationError::MismatchedVertexCount { left: 3, right: 2 })
+    ));
 }
 
 #[test]

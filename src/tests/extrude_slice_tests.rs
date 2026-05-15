@@ -36,7 +36,10 @@ fn test_different_number_of_vertices_panics() {
 
     // Call the API and assert the specific error variant is returned
     let result = Sketch::loft(&bottom, &top, true);
-    assert!(matches!(result, Err(ValidationError::MismatchedVertices)));
+    assert!(matches!(
+        result,
+        Err(ValidationError::MismatchedVertexCount { left: 3, right: 4 })
+    ));
 }
 
 #[test]

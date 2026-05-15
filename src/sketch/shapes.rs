@@ -23,7 +23,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// # Example
     /// ```
     /// use csgrs::sketch::Sketch;
-    /// let sq2 = Sketch::<()>::rectangle(2.0, 3.0, None);
+    /// let sq2 = Sketch::<()>::rectangle(2.0, 3.0, ());
     /// ```
     pub fn rectangle(width: Real, length: Real, metadata: M) -> Self {
         // In geo, a Polygon is basically (outer: LineString, Vec<LineString> for holes).
@@ -308,7 +308,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// # Example
     /// ```
     /// use csgrs::sketch::Sketch;
-    /// let arrow = Sketch::<()>::arrow(5.0, 0.5, 2.0, 1.5, None);
+    /// let arrow = Sketch::<()>::arrow(5.0, 0.5, 2.0, 1.5, ());
     /// ```
     pub fn arrow(
         shaft_length: Real,
@@ -977,7 +977,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     ///
     /// ```
     /// use csgrs::sketch::Sketch;
-    /// let cres = Sketch::<()>::crescent(2.0, 1.4, 0.8, 64, None);
+    /// let cres = Sketch::<()>::crescent(2.0, 1.4, 0.8, 64, ());
     /// ```
     pub fn crescent(
         outer_r: Real,

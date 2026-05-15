@@ -877,7 +877,7 @@ proptest! {
         for candidate in [&line, &arc, &grid, &mirrored] {
             assert_mesh_sane(candidate);
             let props = catch_unwind(AssertUnwindSafe(|| candidate.mass_properties(1.0)));
-            if let Ok((mass, local_com, _frame)) = props {
+            if let Ok(Ok((mass, local_com, _frame))) = props {
                 prop_assert!(mass.is_finite());
                 prop_assert!(local_com.x.is_finite());
                 prop_assert!(local_com.y.is_finite());
