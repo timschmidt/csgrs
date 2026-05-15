@@ -650,6 +650,7 @@ impl Rational {
 
         crate::trace_dispatch!("rational", "product_sum", "lcm-shared-denominator");
         let mut common_denominator = BigUint::one();
+        let mut denominators: [BigUint; TERMS] = std::array::from_fn(|_| BigUint::ZERO);
         for i in 0..TERMS {
             if signs[i] == NoSign {
                 continue;
@@ -658,8 +659,9 @@ impl Rational {
             if denominator != *ONE.deref() {
                 let divisor = num::Integer::gcd(&common_denominator, &denominator);
                 trace_rational_gcd!(&common_denominator, &denominator, &divisor);
-                common_denominator *= denominator / &divisor;
+                common_denominator *= &denominator / &divisor;
             }
+            denominators[i] = denominator;
         }
 
         let mut positive = BigUint::ZERO;
@@ -669,9 +671,9 @@ impl Rational {
             if sign == NoSign {
                 continue;
             }
-            let denominator = Self::product_term_denominator(terms[i]);
             let mut magnitude = Self::product_term_magnitude(terms[i]);
-            if denominator != common_denominator {
+            let denominator = &denominators[i];
+            if denominator != &common_denominator {
                 magnitude *= &common_denominator / denominator;
             }
             match sign {
@@ -826,6 +828,23 @@ impl Rational {
     #[inline(always)]
     pub fn is_one(&self) -> bool {
         self.sign == Plus && self.numerator == *ONE.deref() && self.denominator == *ONE.deref()
+    }
+
+    #[inline]
+    pub(crate) fn is_two(&self) -> bool {
+        self.sign == Plus
+            && self.numerator.bits() == 2
+            && self.numerator == *TWO.deref()
+            && self.denominator == *ONE.deref()
+    }
+
+    #[inline]
+    pub(crate) fn is_one_half(&self) -> bool {
+        self.sign == Plus
+            && self.numerator.bits() == 1
+            && self.denominator.bits() == 2
+            && self.numerator == *ONE.deref()
+            && self.denominator == *TWO.deref()
     }
 
     #[inline]
@@ -1294,6 +1313,17 @@ impl Rational {
         if exp == &BigUint::ZERO {
             return Self::one();
         }
+        if let Some(exp) = exp.to_u32().filter(|exp| *exp <= 64) {
+            return Self {
+                numerator: self.numerator.pow(exp),
+                denominator: self.denominator.pow(exp),
+                sign: if self.sign == Minus && exp % 2 == 1 {
+                    Minus
+                } else {
+                    Plus
+                },
+            };
+        }
         let mut result = Self::one();
         let mut factor = self.clone();
         let bits = exp.bits();
@@ -1617,6 +1647,14 @@ impl<T: AsRef<Rational>> Div<T> for &Rational {
         let sign = self.sign * other.sign;
         if sign == NoSign {
             return Self::Output::zero();
+        }
+        if self.numerator == other.denominator && self.denominator == other.numerator {
+            trace_rational_temporary!();
+            return Self::Output {
+                sign,
+                numerator: &self.numerator * &self.numerator,
+                denominator: &self.denominator * &self.denominator,
+            };
         }
         let numerator = &self.numerator * &other.denominator;
         let denominator = &self.denominator * &other.numerator;

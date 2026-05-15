@@ -77,6 +77,13 @@ pub(super) enum Approximation {
     // inputs that may never be approximated.
     AsinDeferred(Computable),
     AcosPositive(Computable),
+    // Exact-rational positive endpoint acos uses the same half-angle atan
+    // transform, but computes the residual rational directly instead of
+    // rebuilding a subtraction/division graph for every cold approximation.
+    AcosPositiveRational(Rational),
+    // Negative endpoint rational acos is pi - acos(|x|). Store |x| directly
+    // so construction does not allocate a pi/subtraction graph.
+    AcosNegativeRational(Rational),
     AcoshNearOne(Computable),
     AcoshDirect(Computable),
     AsinhNearZero(Computable),
@@ -133,6 +140,7 @@ pub(super) enum Approximation {
 pub(super) enum SharedConstant {
     E,
     Pi,
+    InvPi,
     Tau,
     Ln2,
     Ln3,
@@ -142,24 +150,29 @@ pub(super) enum SharedConstant {
     Ln10,
     Sqrt2,
     Sqrt3,
+    Acosh2,
+    Asinh1,
 }
 
 impl SharedConstant {
-    pub(super) const COUNT: usize = 11;
+    pub(super) const COUNT: usize = 14;
 
     pub(super) fn cache_index(self) -> usize {
         match self {
             Self::E => 0,
             Self::Pi => 1,
-            Self::Tau => 2,
-            Self::Ln2 => 3,
-            Self::Ln3 => 4,
-            Self::Ln5 => 5,
-            Self::Ln6 => 6,
-            Self::Ln7 => 7,
-            Self::Ln10 => 8,
-            Self::Sqrt2 => 9,
-            Self::Sqrt3 => 10,
+            Self::InvPi => 2,
+            Self::Tau => 3,
+            Self::Ln2 => 4,
+            Self::Ln3 => 5,
+            Self::Ln5 => 6,
+            Self::Ln6 => 7,
+            Self::Ln7 => 8,
+            Self::Ln10 => 9,
+            Self::Sqrt2 => 10,
+            Self::Sqrt3 => 11,
+            Self::Acosh2 => 12,
+            Self::Asinh1 => 13,
         }
     }
 }
@@ -192,6 +205,8 @@ impl Approximation {
             PrescaledAsin(c) => asin_computable(signal, c, p),
             AsinDeferred(c) => asin_deferred(signal, c, p),
             AcosPositive(c) => acos_positive(signal, c, p),
+            AcosPositiveRational(r) => acos_positive_rational(signal, r, p),
+            AcosNegativeRational(r) => acos_negative_rational(signal, r, p),
             AcoshNearOne(c) => acosh_near_one(signal, c, p),
             AcoshDirect(c) => acosh_direct(signal, c, p),
             AsinhNearZero(c) => asinh_near_zero(signal, c, p),
@@ -227,6 +242,7 @@ impl SharedConstant {
         match self {
             Self::E => e(p),
             Self::Pi => pi(signal, p),
+            Self::InvPi => inverse(signal, &Computable::pi(), p),
             Self::Tau => pi(signal, p - 1),
             Self::Ln2 => ln2(signal, p),
             Self::Ln3 => ln_constant(signal, Rational::new(3), p),
@@ -236,6 +252,8 @@ impl SharedConstant {
             Self::Ln10 => ln_constant(signal, Rational::new(10), p),
             Self::Sqrt2 => sqrt_constant(signal, Rational::new(2), p),
             Self::Sqrt3 => sqrt_constant(signal, Rational::new(3), p),
+            Self::Acosh2 => acosh2_constant(signal, p),
+            Self::Asinh1 => asinh1_constant(signal, p),
         }
     }
 }
@@ -304,6 +322,23 @@ fn sqrt_constant(signal: &Option<Signal>, n: Rational, p: Precision) -> BigInt {
     // sqrt(2) and sqrt(3) are common exact trig results; they share caches even
     // though the approximation kernel is the generic sqrt.
     raw(Approximation::Sqrt(Computable::rational(n))).approx_signal(signal, p)
+}
+
+fn acosh2_constant(signal: &Option<Signal>, p: Precision) -> BigInt {
+    // acosh(2) = ln(2 + sqrt(3)). This exact value is common enough in
+    // inverse-hyperbolic tests to benefit from the shared-constant cache.
+    Computable::rational(Rational::new(2))
+        .add(Computable::sqrt_constant(3).unwrap())
+        .ln()
+        .approx_signal(signal, p)
+}
+
+fn asinh1_constant(signal: &Option<Signal>, p: Precision) -> BigInt {
+    // asinh(1) = ln(1 + sqrt(2)), also equal to atanh(sqrt(2)/2).
+    Computable::one()
+        .add(Computable::sqrt_constant(2).unwrap())
+        .ln()
+        .approx_signal(signal, p)
 }
 
 fn e_terms_for_precision(p: Precision) -> u32 {
@@ -1508,6 +1543,16 @@ fn atan_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt 
         return atan_rational_small(signal, r, p);
     }
 
+    if r.denominator() == &BigUint::one() && r.numerator() > &BigUint::one() {
+        crate::trace_dispatch!("computable_approx", "atan", "large-integer-reciprocal");
+        let extra = 3;
+        let work_precision = p - extra;
+        let half_pi = Computable::pi().approx_signal(signal, work_precision + 1);
+        let denominator = BigInt::from_biguint(Sign::Plus, r.numerator().clone());
+        let reduced = atan(signal, &denominator, work_precision);
+        return scale(half_pi - reduced, -extra);
+    }
+
     if r.msd_exact().is_some_and(|msd| msd >= 1) {
         let extra = 3;
         let work_precision = p - extra;
@@ -1519,6 +1564,16 @@ fn atan_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt 
 
     let extra = 3;
     let work_precision = p - extra;
+    if r <= &Rational::one() {
+        crate::trace_dispatch!("computable_approx", "atan", "unit-anchor-pi-quarter");
+        let quarter_pi = Computable::pi().approx_signal(signal, work_precision + 2);
+        let numerator = r.clone() - Rational::one();
+        let denominator = Rational::one() + r.clone();
+        let residual = numerator / denominator;
+        let reduced = atan_rational_small(signal, &residual, work_precision);
+        return scale(quarter_pi + scale(reduced, 2), -(extra + 2));
+    }
+
     let anchor = atan(signal, signed::TWO.deref(), work_precision);
     let numerator = r.clone() - half;
     let denominator = Rational::one() + r.clone() * half;
@@ -1629,6 +1684,21 @@ fn acos_positive(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigIn
         .atan()
         .shift_left(1)
         .approx_signal(signal, p)
+}
+
+fn acos_positive_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
+    // Exact-rational endpoint inputs benefit from forming the half-angle
+    // residual directly. This follows the same cancellation-avoiding reduction
+    // as `acos_positive` while avoiding a temporary Computable division tree.
+    let residual = (Rational::one() - r.clone()) / (Rational::one() + r.clone());
+    Computable::sqrt_rational(residual)
+        .atan()
+        .shift_left(1)
+        .approx_signal(signal, p)
+}
+
+fn acos_negative_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
+    Computable::pi().approx_signal(signal, p) - acos_positive_rational(signal, r, p)
 }
 
 fn acosh_near_one(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {

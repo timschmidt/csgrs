@@ -1953,6 +1953,79 @@ impl Real {
     /// assert_eq!(five.inverse(), Ok(a_fifth));
     /// ```
     pub fn inverse(self) -> Result<Self, Problem> {
+        if self.rational.sign() != Sign::NoSign {
+            match &self.class {
+                One => {
+                    crate::trace_dispatch!("real", "inverse", "prechecked-one");
+                    return Ok(Self {
+                        rational: self.rational.inverse()?,
+                        class: One,
+                        computable: None,
+                        signal: None,
+                    });
+                }
+                Pi => {
+                    crate::trace_dispatch!("real", "inverse", "prechecked-pi");
+                    return Ok(Self {
+                        rational: self.rational.clone().inverse()?,
+                        class: PiInv,
+                        computable: Some(Computable::pi_inverse_constant()),
+                        signal: None,
+                    });
+                }
+                PiInv => {
+                    crate::trace_dispatch!("real", "inverse", "prechecked-pi-inverse");
+                    return Ok(Self {
+                        rational: self.rational.clone().inverse()?,
+                        class: Pi,
+                        computable: Some(Computable::pi()),
+                        signal: None,
+                    });
+                }
+                Sqrt(sqrt) => {
+                    if let Some(sqrt) = sqrt.integer_magnitude() {
+                        crate::trace_dispatch!(
+                            "real",
+                            "inverse",
+                            "prechecked-sqrt-rational-radical"
+                        );
+                        let rational = if self.rational.is_one() {
+                            Rational::from_unsigned_integer(sqrt.clone()).inverse()?
+                        } else {
+                            (self.rational * Rational::from_unsigned_integer(sqrt.clone()))
+                                .inverse()?
+                        };
+                        return Ok(Self {
+                            rational,
+                            class: self.class,
+                            computable: self.computable,
+                            signal: None,
+                        });
+                    }
+                }
+                ConstProductSqrt(product) => {
+                    crate::trace_dispatch!("real", "inverse", "prechecked-const-product-sqrt");
+                    let radicand = product.radicand.clone();
+                    let rational = if self.rational.is_one() {
+                        radicand.clone().inverse()?
+                    } else {
+                        (self.rational * radicand.clone()).inverse()?
+                    };
+                    let (class, computable) = Class::make_const_product_sqrt(
+                        -product.pi_power,
+                        product.exp_power.clone().neg(),
+                        radicand,
+                    );
+                    return Ok(Self {
+                        rational,
+                        class,
+                        computable: Some(computable),
+                        signal: None,
+                    });
+                }
+                _ => {}
+            }
+        }
         if self.definitely_zero() {
             crate::trace_dispatch!("real", "inverse", "div-by-zero");
             return Err(Problem::DivideByZero);
@@ -2001,7 +2074,7 @@ impl Real {
                 return Ok(Self {
                     rational: self.rational.clone().inverse()?,
                     class: PiInv,
-                    computable: Some(self.computable_clone().inverse()),
+                    computable: Some(Computable::pi_inverse_constant()),
                     signal: None,
                 });
             }
@@ -2012,7 +2085,7 @@ impl Real {
                 return Ok(Self {
                     rational: self.rational.clone().inverse()?,
                     class: Pi,
-                    computable: Some(self.computable_clone().inverse()),
+                    computable: Some(Computable::pi()),
                     signal: None,
                 });
             }
@@ -2099,6 +2172,79 @@ impl Real {
 
     /// The multiplicative inverse of this Real without consuming it.
     pub fn inverse_ref(&self) -> Result<Self, Problem> {
+        if self.rational.sign() != Sign::NoSign {
+            match &self.class {
+                One => {
+                    crate::trace_dispatch!("real", "inverse_ref", "prechecked-one");
+                    return Ok(Self {
+                        rational: self.rational.clone().inverse()?,
+                        class: One,
+                        computable: None,
+                        signal: None,
+                    });
+                }
+                Pi => {
+                    crate::trace_dispatch!("real", "inverse_ref", "prechecked-pi");
+                    return Ok(Self {
+                        rational: self.rational.clone().inverse()?,
+                        class: PiInv,
+                        computable: Some(Computable::pi_inverse_constant()),
+                        signal: None,
+                    });
+                }
+                PiInv => {
+                    crate::trace_dispatch!("real", "inverse_ref", "prechecked-pi-inverse");
+                    return Ok(Self {
+                        rational: self.rational.clone().inverse()?,
+                        class: Pi,
+                        computable: Some(Computable::pi()),
+                        signal: None,
+                    });
+                }
+                Sqrt(sqrt) => {
+                    if let Some(sqrt) = sqrt.integer_magnitude() {
+                        crate::trace_dispatch!(
+                            "real",
+                            "inverse_ref",
+                            "prechecked-sqrt-rational-radical"
+                        );
+                        let rational = if self.rational.is_one() {
+                            Rational::from_unsigned_integer(sqrt.clone()).inverse()?
+                        } else {
+                            (&self.rational * Rational::from_unsigned_integer(sqrt.clone()))
+                                .inverse()?
+                        };
+                        return Ok(Self {
+                            rational,
+                            class: self.class.clone(),
+                            computable: self.computable.clone(),
+                            signal: None,
+                        });
+                    }
+                }
+                ConstProductSqrt(product) => {
+                    crate::trace_dispatch!("real", "inverse_ref", "prechecked-const-product-sqrt");
+                    let radicand = product.radicand.clone();
+                    let rational = if self.rational.is_one() {
+                        radicand.clone().inverse()?
+                    } else {
+                        (&self.rational * radicand.clone()).inverse()?
+                    };
+                    let (class, computable) = Class::make_const_product_sqrt(
+                        -product.pi_power,
+                        product.exp_power.clone().neg(),
+                        radicand,
+                    );
+                    return Ok(Self {
+                        rational,
+                        class,
+                        computable: Some(computable),
+                        signal: None,
+                    });
+                }
+                _ => {}
+            }
+        }
         if self.definitely_zero() {
             crate::trace_dispatch!("real", "inverse_ref", "div-by-zero");
             return Err(Problem::DivideByZero);
@@ -2146,7 +2292,7 @@ impl Real {
                 Ok(Self {
                     rational: self.rational.clone().inverse()?,
                     class: PiInv,
-                    computable: Some(self.computable_clone().inverse()),
+                    computable: Some(Computable::pi_inverse_constant()),
                     signal: None,
                 })
             }
@@ -2155,7 +2301,7 @@ impl Real {
                 Ok(Self {
                     rational: self.rational.clone().inverse()?,
                     class: Pi,
-                    computable: Some(self.computable_clone().inverse()),
+                    computable: Some(Computable::pi()),
                     signal: None,
                 })
             }
@@ -3008,7 +3154,9 @@ impl Real {
                 return Err(Problem::NotANumber);
             }
         }
-        if let Some(asin) = self.asin_exact() {
+        if !matches!(&self.class, Sqrt(_))
+            && let Some(asin) = self.asin_exact()
+        {
             // acos(x) shares the exact asin table through pi/2 - asin(x).
             crate::trace_dispatch!("real", "acos", "asin-table-special-form");
             return Ok(Self::pi_fraction(1, 2) - asin);
@@ -3051,6 +3199,18 @@ impl Real {
             crate::trace_dispatch!("real", "asinh", "tiny-rational-computable");
             return Ok(self.make_computable(Computable::asinh));
         }
+        if self.class == One {
+            if self.rational.sign() == Sign::Minus {
+                crate::trace_dispatch!("real", "asinh", "rational-negative-symmetry");
+                return Ok(self.neg().asinh()?.neg());
+            }
+            if self.rational.msd_exact().is_some_and(|msd| msd < 3) {
+                crate::trace_dispatch!("real", "asinh", "rational-near-zero-deferred-node");
+                return Ok(self.make_computable(Computable::asinh_near_zero_deferred));
+            }
+            crate::trace_dispatch!("real", "asinh", "rational-direct-deferred-node");
+            return Ok(self.make_computable(Computable::asinh_direct_deferred));
+        }
         let folded = self.fold_ref();
         let (known_sign, planning_msd) = folded.planning_sign_and_msd();
         if known_sign == Some(Sign::Minus) {
@@ -3091,6 +3251,12 @@ impl Real {
                 }
                 std::cmp::Ordering::Greater => {}
             }
+            if self.rational.is_two() {
+                crate::trace_dispatch!("real", "acosh", "exact-two-shared-constant");
+                return Ok(Self::irrational_from_computable(
+                    Computable::acosh2_constant(),
+                ));
+            }
             if self.rational >= *rationals::TWO {
                 // Exact rationals at two or above are outside the
                 // cancellation-prone acosh neighborhood. Use the direct
@@ -3122,6 +3288,22 @@ impl Real {
                 crate::trace_dispatch!("real", "acosh", "sqrt-domain-error");
                 return Err(Problem::NotANumber);
             }
+            if self.rational.is_one() && r == &*rationals::TWO {
+                crate::trace_dispatch!("real", "acosh", "sqrt-two-asinh-one");
+                return Ok(Self::irrational_from_computable(
+                    Computable::asinh1_constant(),
+                ));
+            }
+            if self
+                .rational
+                .compare_magnitude_squared_times(r, &Rational::new(64))
+                == std::cmp::Ordering::Less
+            {
+                crate::trace_dispatch!("real", "acosh", "sqrt-near-one-deferred-node");
+                return Ok(self.make_computable(Computable::acosh_near_one_deferred));
+            }
+            crate::trace_dispatch!("real", "acosh", "sqrt-direct-deferred-node");
+            return Ok(self.make_computable(Computable::acosh_direct_deferred));
         } else {
             let one = Self::one();
             if (self.clone() - one).best_sign() == Sign::Minus {
@@ -3164,6 +3346,16 @@ impl Real {
                 crate::trace_dispatch!("real", "atanh", "rational-domain-error");
                 return Err(Problem::NotANumber);
             }
+            if self.rational == *rationals::HALF {
+                crate::trace_dispatch!("real", "atanh", "rational-half-ln3-special-form");
+                return Ok(constants::half_ln3());
+            }
+            if self.rational.sign() == Sign::Minus
+                && self.rational.compare_magnitude(&*rationals::HALF) == std::cmp::Ordering::Equal
+            {
+                crate::trace_dispatch!("real", "atanh", "rational-minus-half-ln3-special-form");
+                return Ok(-constants::half_ln3());
+            }
             if self.rational.msd_exact().is_some_and(|msd| msd <= -4) {
                 // Tiny rational atanh is faster in the dedicated computable kernel than
                 // building ln((1+x)/(1-x))/2.
@@ -3187,14 +3379,6 @@ impl Real {
             // additions. This follows Boehm et al., "Exact Real Arithmetic: A
             // Case Study in Higher Order Programming" (1986), where symbolic
             // construction is kept separate from later numerical refinement.
-            if self.rational == *rationals::HALF {
-                crate::trace_dispatch!("real", "atanh", "rational-half-ln3-special-form");
-                return Ok(constants::half_ln3());
-            }
-            if -&self.rational == *rationals::HALF {
-                crate::trace_dispatch!("real", "atanh", "rational-minus-half-ln3-special-form");
-                return Ok(-constants::half_ln3());
-            }
             let one = rationals::ONE.clone();
             let ratio = (one.clone() + self.rational.clone()) / (one - self.rational);
             if ratio == *rationals::THREE {
@@ -3209,42 +3393,57 @@ impl Real {
             crate::trace_dispatch!("real", "atanh", "rational-log-ratio-special-form");
             return Ok(Self::ln_rational(ratio)? * constants::half());
         }
-        if let Sqrt(r) = &self.class
-            && self
+        if let Sqrt(r) = &self.class {
+            if r == &*rationals::TWO {
+                if self.rational.compare_magnitude(&*rationals::ONE) == std::cmp::Ordering::Equal {
+                    crate::trace_dispatch!("real", "atanh", "sqrt-two-domain-error");
+                    return Err(Problem::NotANumber);
+                }
+                if self.rational.compare_magnitude(&*rationals::HALF) == std::cmp::Ordering::Equal {
+                    // atanh(1/sqrt(2)) = ln(1 + sqrt(2)) = asinh(1). This
+                    // exact structural identity is common enough to test
+                    // before the generic squared-magnitude domain machinery.
+                    crate::trace_dispatch!("real", "atanh", "sqrt-half-asinh-one");
+                    let value = Self::irrational_from_computable(Computable::asinh1_constant());
+                    return if self.rational.sign() == Sign::Minus {
+                        Ok(-value)
+                    } else {
+                        Ok(value)
+                    };
+                }
+            }
+            match self
                 .rational
                 .compare_magnitude_squared_times(r, &*rationals::ONE)
-                == std::cmp::Ordering::Equal
-        {
-            // Exact sqrt endpoint, e.g. sqrt(2)/2 scaled to magnitude one.
-            crate::trace_dispatch!("real", "atanh", "sqrt-endpoint-infinity");
-            return Err(Problem::Infinity);
-        }
-        if let Sqrt(r) = &self.class
-            && self
-                .rational
-                .compare_magnitude_squared_times(r, &*rationals::ONE)
-                == std::cmp::Ordering::Greater
-        {
-            // Exact sqrt domain failure avoids an approximation sign query.
-            crate::trace_dispatch!("real", "atanh", "sqrt-domain-error");
-            return Err(Problem::NotANumber);
-        }
-        if let Sqrt(r) = &self.class
-            && self
+            {
+                std::cmp::Ordering::Greater => {
+                    // Exact sqrt domain failure avoids an approximation sign query.
+                    crate::trace_dispatch!("real", "atanh", "sqrt-domain-error");
+                    return Err(Problem::NotANumber);
+                }
+                std::cmp::Ordering::Equal => {
+                    // Exact sqrt endpoint, e.g. sqrt(2)/2 scaled to magnitude one.
+                    crate::trace_dispatch!("real", "atanh", "sqrt-endpoint-infinity");
+                    return Err(Problem::Infinity);
+                }
+                std::cmp::Ordering::Less => {}
+            }
+            if self
                 .rational
                 .compare_magnitude_squared_times(r, &*rationals::HALF)
                 == std::cmp::Ordering::Equal
-        {
-            // atanh(1/sqrt(2)) = ln(1 + sqrt(2)) = asinh(1). This exact
-            // structural identity avoids constructing a fresh sqrt log-ratio
-            // graph for the common half-angle boundary.
-            crate::trace_dispatch!("real", "atanh", "sqrt-half-asinh-one");
-            let value = Self::one().asinh()?;
-            return if self.rational.sign() == Sign::Minus {
-                Ok(-value)
-            } else {
-                Ok(value)
-            };
+            {
+                // atanh(1/sqrt(2)) = ln(1 + sqrt(2)) = asinh(1). This exact
+                // structural identity is only possible after the broader
+                // endpoint/domain check has proven the value is inside (-1, 1).
+                crate::trace_dispatch!("real", "atanh", "sqrt-half-asinh-one");
+                let value = Self::irrational_from_computable(Computable::asinh1_constant());
+                return if self.rational.sign() == Sign::Minus {
+                    Ok(-value)
+                } else {
+                    Ok(value)
+                };
+            }
         }
         if matches!(&self.class, Sqrt(_)) {
             // The exact sqrt-domain checks above already proved this input is
@@ -4496,6 +4695,15 @@ impl<T: AsRef<Real>> Div<T> for &Real {
 
     fn div(self, other: T) -> Self::Output {
         let other = other.as_ref();
+        if self.rational.is_one()
+            && other.rational.is_one()
+            && let (Sqrt(left), Sqrt(right)) = (&self.class, &other.class)
+            && left == &*rationals::TWO
+            && right == &*rationals::THREE
+        {
+            crate::trace_dispatch!("real", "div", "cached-sqrt-six-over-three-prechecked");
+            return Ok(constants::sqrt_six_over_three());
+        }
         if other.definitely_zero() {
             crate::trace_dispatch!("real", "div", "div-by-zero");
             return Err(Problem::DivideByZero);
@@ -4524,6 +4732,16 @@ impl<T: AsRef<Real>> Div<T> for &Real {
             });
         }
         if self.class == One {
+            if let Exp(exp) = &other.class {
+                crate::trace_dispatch!("real", "div", "rational-over-exp");
+                let exp = exp.clone().neg();
+                return Ok(Real {
+                    rational: &self.rational / &other.rational,
+                    class: Exp(exp.clone()),
+                    computable: Some(Computable::exp_rational(exp)),
+                    signal: None,
+                });
+            }
             crate::trace_dispatch!("real", "div", "lhs-rational-symbolic-inverse");
             let inverted = other.inverse_ref()?;
             if self.rational.is_one() {
@@ -4588,19 +4806,56 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     signal: None,
                 });
             }
+            (Exp(exp), Pi) => {
+                crate::trace_dispatch!("real", "div", "exp-over-pi");
+                let computable = Computable::pi_inverse_constant()
+                    .multiply(Computable::exp_rational(exp.clone()));
+                return Ok(Real {
+                    rational: &self.rational / &other.rational,
+                    class: PiInvExp(exp.clone()),
+                    computable: Some(computable),
+                    signal: None,
+                });
+            }
+            (Pi, Exp(exp)) => {
+                crate::trace_dispatch!("real", "div", "pi-over-exp");
+                let (class, computable) = Class::make_pi_exp(exp.clone().neg());
+                return Ok(Real {
+                    rational: &self.rational / &other.rational,
+                    class,
+                    computable: Some(computable),
+                    signal: None,
+                });
+            }
+            (ConstProductSqrt(product), Exp(exp)) => {
+                if self.rational.is_one()
+                    && other.rational.is_one()
+                    && product.pi_power == 1
+                    && product.exp_power == *rationals::ONE
+                    && exp == &*rationals::ONE
+                    && product.radicand == *rationals::TWO
+                {
+                    crate::trace_dispatch!("real", "div", "cached-pi-sqrt-two-over-exp");
+                    return Ok(constants::pi_sqrt_two());
+                }
+                crate::trace_dispatch!("real", "div", "const-product-sqrt-over-exp");
+                let (class, computable) = Class::make_const_product_sqrt(
+                    product.pi_power,
+                    &product.exp_power - exp,
+                    product.radicand.clone(),
+                );
+                return Ok(Real {
+                    rational: &self.rational / &other.rational,
+                    class,
+                    computable: Some(computable),
+                    signal: None,
+                });
+            }
             _ => {}
         }
         if let (Sqrt(left), Sqrt(right)) = (&self.class, &other.class)
             && let Some(right_integer) = right.integer_magnitude()
         {
-            if self.rational.is_one()
-                && other.rational.is_one()
-                && left == &*rationals::TWO
-                && right == &*rationals::THREE
-            {
-                crate::trace_dispatch!("real", "div", "cached-sqrt-six-over-three");
-                return Ok(constants::sqrt_six_over_three());
-            }
             // Rationalize sqrt(a)/sqrt(b) as sqrt(a*b)/b when b is an integer.
             // This keeps simple radical quotients exact instead of using
             // `other.inverse()` and losing the radicand certificate.
@@ -4615,7 +4870,11 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                 &other.rational * Rational::from_unsigned_integer(right_integer.clone())
             };
             return Ok(Real {
-                rational: &square.rational * &self.rational / denominator,
+                rational: if square.rational.is_one() && self.rational.is_one() {
+                    denominator.inverse()?
+                } else {
+                    &square.rational * &self.rational / denominator
+                },
                 ..square
             });
         }
@@ -4640,7 +4899,11 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     } else {
                         &other.rational * right_rad
                     };
-                    let rational = &square.rational * &self.rational / denominator;
+                    let rational = if square.rational.is_one() && self.rational.is_one() {
+                        denominator.inverse()?
+                    } else {
+                        &square.rational * &self.rational / denominator
+                    };
                     let exp_power = left_exp - right_exp;
                     return Ok(match square.class {
                         One => {

@@ -313,14 +313,17 @@ impl SharedConstant {
         // cached approximation.
         let msd = match self {
             SharedConstant::E | SharedConstant::Pi | SharedConstant::Ln10 => Some(1),
+            SharedConstant::InvPi => Some(-2),
             SharedConstant::Tau => Some(2),
             SharedConstant::Ln2 => Some(-1),
+            SharedConstant::Asinh1 => Some(-1),
             SharedConstant::Ln3
             | SharedConstant::Ln5
             | SharedConstant::Ln6
             | SharedConstant::Ln7
             | SharedConstant::Sqrt2
-            | SharedConstant::Sqrt3 => Some(0),
+            | SharedConstant::Sqrt3
+            | SharedConstant::Acosh2 => Some(0),
         };
         BoundInfo::with_sign(Sign::Plus, msd)
     }
@@ -337,6 +340,10 @@ impl SharedConstant {
             Self::Pi => (
                 Rational::fraction(333, 106).unwrap(),
                 Rational::fraction(355, 113).unwrap(),
+            ),
+            Self::InvPi => (
+                Rational::fraction(113, 355).unwrap(),
+                Rational::fraction(106, 333).unwrap(),
             ),
             Self::Tau => (
                 Rational::fraction(333, 53).unwrap(),
@@ -373,6 +380,14 @@ impl SharedConstant {
             Self::Sqrt3 => (
                 Rational::fraction(173, 100).unwrap(),
                 Rational::fraction(174, 100).unwrap(),
+            ),
+            Self::Acosh2 => (
+                Rational::fraction(131, 100).unwrap(),
+                Rational::fraction(132, 100).unwrap(),
+            ),
+            Self::Asinh1 => (
+                Rational::fraction(88, 100).unwrap(),
+                Rational::fraction(89, 100).unwrap(),
             ),
         }
     }
@@ -542,6 +557,14 @@ impl Computable {
                 (Approximation::AcosPositive(left), Approximation::AcosPositive(right)) => {
                     Computable::internal_structural_eq(left, right)
                 }
+                (
+                    Approximation::AcosPositiveRational(left),
+                    Approximation::AcosPositiveRational(right),
+                )
+                | (
+                    Approximation::AcosNegativeRational(left),
+                    Approximation::AcosNegativeRational(right),
+                ) => left == right,
                 (Approximation::AcoshNearOne(left), Approximation::AcoshNearOne(right)) => {
                     Computable::internal_structural_eq(left, right)
                 }
@@ -701,6 +724,11 @@ impl Computable {
         Self::shared_constant(SharedConstant::Pi)
     }
 
+    pub(crate) fn pi_inverse_constant() -> Computable {
+        crate::trace_dispatch!("computable", "constructor", "cached-inv-pi");
+        Self::shared_constant(SharedConstant::InvPi)
+    }
+
     /// Approximate τ, the ratio of a circle's circumference to its radius.
     pub fn tau() -> Computable {
         crate::trace_dispatch!("computable", "constructor", "cached-tau");
@@ -744,6 +772,16 @@ impl Computable {
             _ => return None,
         };
         Some(Self::shared_constant(constant))
+    }
+
+    pub(crate) fn acosh2_constant() -> Computable {
+        crate::trace_dispatch!("computable", "constructor", "cached-acosh2");
+        Self::shared_constant(SharedConstant::Acosh2)
+    }
+
+    pub(crate) fn asinh1_constant() -> Computable {
+        crate::trace_dispatch!("computable", "constructor", "cached-asinh1");
+        Self::shared_constant(SharedConstant::Asinh1)
     }
 
     pub(crate) fn prescaled_sin(value: Computable) -> Computable {
@@ -980,6 +1018,36 @@ impl Computable {
         crate::trace_dispatch!("computable", "constructor", "acos-positive-deferred");
         Self {
             internal: Box::new(Approximation::AcosPositive(value)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            signal: None,
+        }
+    }
+
+    fn acos_positive_rational_deferred(rational: Rational) -> Computable {
+        crate::trace_dispatch!(
+            "computable",
+            "constructor",
+            "acos-positive-rational-deferred"
+        );
+        Self {
+            internal: Box::new(Approximation::AcosPositiveRational(rational)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
+            signal: None,
+        }
+    }
+
+    fn acos_negative_rational_deferred(magnitude: Rational) -> Computable {
+        crate::trace_dispatch!(
+            "computable",
+            "constructor",
+            "acos-negative-rational-deferred"
+        );
+        Self {
+            internal: Box::new(Approximation::AcosNegativeRational(magnitude)),
             cache: RefCell::new(Cache::Invalid),
             bound: RefCell::new(BoundCache::Invalid),
             exact_sign: RefCell::new(ExactSignCache::Valid(Sign::Plus)),
@@ -1684,6 +1752,8 @@ impl Computable {
                 | Approximation::PrescaledSinHalfPiMinusRational(_)
                 | Approximation::PrescaledCotHalfPiMinusRational(_) => Some(Some(Sign::Plus)),
                 Approximation::AcosPositive(_)
+                | Approximation::AcosPositiveRational(_)
+                | Approximation::AcosNegativeRational(_)
                 | Approximation::AcoshNearOne(_)
                 | Approximation::AcoshDirect(_) => Some(Some(Sign::Plus)),
                 Approximation::PrescaledAtan(child)
@@ -3074,9 +3144,14 @@ impl Computable {
             }
             if rational_sign == Sign::Minus && magnitude >= *INVERSE_ENDPOINT_RATIONAL_THRESHOLD {
                 // Negative endpoint values mirror the positive endpoint transform.
-                // Building pi - acos(|x|) avoids the longer pi/2 - asin(-x) chain.
-                crate::trace_dispatch!("computable", "acos", "negative-endpoint-rewrite");
-                return Self::pi().add(self.negate().acos().negate());
+                // Store the magnitude directly so construction stays as a single
+                // deferred fact instead of rebuilding pi - acos(|x|).
+                crate::trace_dispatch!("computable", "acos", "negative-rational-deferred");
+                return Self::acos_negative_rational_deferred(magnitude);
+            }
+            if rational_sign == Sign::Plus {
+                crate::trace_dispatch!("computable", "acos", "positive-rational-deferred");
+                return Self::acos_positive_rational_deferred(magnitude);
             }
         }
 
@@ -3164,15 +3239,18 @@ impl Computable {
                     crate::trace_dispatch!("computable", "acosh", "exact-one-zero");
                     return Self::zero();
                 }
+                if r == &Rational::new(2) {
+                    crate::trace_dispatch!("computable", "acosh", "exact-two-constant");
+                    return Self::acosh2_constant();
+                }
                 if r >= &Rational::new(2) {
-                    let one = Self::one();
-                    let radicand = self.clone().square().add(one.negate());
+                    let radicand = r.clone() * r.clone() - Rational::one();
                     crate::trace_dispatch!(
                         "computable",
                         "acosh",
-                        "exact-rational-at-least-two-direct-ln-sqrt"
+                        "exact-rational-at-least-two-direct-radicand"
                     );
-                    return self.add(radicand.sqrt()).ln();
+                    return self.add(Self::sqrt_rational(radicand)).ln();
                 }
                 r.msd_exact()
             }
@@ -3181,15 +3259,19 @@ impl Computable {
                     crate::trace_dispatch!("computable", "acosh", "exact-one-zero");
                     return Self::zero();
                 }
+                if n == signed::TWO.deref() {
+                    crate::trace_dispatch!("computable", "acosh", "exact-two-constant");
+                    return Self::acosh2_constant();
+                }
                 if n >= signed::TWO.deref() {
-                    let one = Self::one();
-                    let radicand = self.clone().square().add(one.negate());
+                    let r = Rational::from_bigint(n.clone());
+                    let radicand = r.clone() * r - Rational::one();
                     crate::trace_dispatch!(
                         "computable",
                         "acosh",
-                        "exact-integer-at-least-two-direct-ln-sqrt"
+                        "exact-integer-at-least-two-direct-radicand"
                     );
-                    return self.add(radicand.sqrt()).ln();
+                    return self.add(Self::sqrt_rational(radicand)).ln();
                 }
                 if n.sign() == Sign::NoSign {
                     None
@@ -3199,6 +3281,14 @@ impl Computable {
             }
             _ => None,
         };
+        if let Approximation::Sqrt(child) = self.internal.as_ref()
+            && child
+                .exact_rational()
+                .is_some_and(|r| r == Rational::new(2))
+        {
+            crate::trace_dispatch!("computable", "acosh", "sqrt-two-asinh-one");
+            return Self::asinh1_constant();
+        }
         if exact_rational_msd.is_some_and(|msd| msd >= 3) {
             // Large exact rationals skip the low-precision near-one probe and
             // use the direct acosh identity.
@@ -3248,6 +3338,12 @@ impl Computable {
                         // Tiny atanh(x) is best served by the direct odd series.
                         crate::trace_dispatch!("computable", "atanh", "exact-tiny-prescaled");
                         return Self::atanh_rational_deferred(rational);
+                    }
+                    if rational.is_one_half() {
+                        crate::trace_dispatch!("computable", "atanh", "exact-half-ln3");
+                        return Self::ln_constant(3)
+                            .expect("ln3 is a shared log constant")
+                            .multiply(Self::half());
                     }
                     if !rational.is_one() {
                         // For exact rationals, atanh(x) is one exact ln ratio.
@@ -3324,6 +3420,14 @@ impl Computable {
 
     /// Multiplicative inverse of this number.
     pub fn inverse(self) -> Computable {
+        if self.shared_constant_kind() == Some(SharedConstant::Pi) {
+            crate::trace_dispatch!("computable", "inverse", "shared-pi");
+            return Self::pi_inverse_constant();
+        }
+        if self.shared_constant_kind() == Some(SharedConstant::InvPi) {
+            crate::trace_dispatch!("computable", "inverse", "shared-inv-pi");
+            return Self::pi();
+        }
         if let Some(rational) = self.exact_rational()
             && let Ok(inverse) = rational.inverse()
         {

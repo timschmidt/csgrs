@@ -447,6 +447,10 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Reduces 1 / pi.",
             },
             BenchDoc {
+                name: "div_rational_exp",
+                description: "Reduces 2 / e.",
+            },
+            BenchDoc {
                 name: "div_e_pi",
                 description: "Reduces e / pi.",
             },
@@ -1011,6 +1015,7 @@ fn bench_symbolic_reductions(c: &mut Criterion) {
         (&(&pi_square * &pi) * &Real::new(Rational::new(5)).exp().unwrap()).clone();
     let pi_e_two = &pi * &Real::new(Rational::new(2)).exp().unwrap();
     let one = Real::new(Rational::one());
+    let two = Real::new(Rational::new(2));
     let inverse_pi = pi.clone().inverse().unwrap();
 
     group.bench_function("sqrt_pi_square", |b| {
@@ -1082,6 +1087,13 @@ fn bench_symbolic_reductions(c: &mut Criterion) {
     group.bench_function("div_one_pi", |b| {
         b.iter_batched(
             || (one.clone(), pi.clone()),
+            |(left, right)| black_box((left / right).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("div_rational_exp", |b| {
+        b.iter_batched(
+            || (two.clone(), e.clone()),
             |(left, right)| black_box((left / right).unwrap()),
             BatchSize::SmallInput,
         )

@@ -469,6 +469,11 @@ They are listed here in MLA style for easy citation.
   "[Common Factors in Fraction-Free Matrix
   Decompositions](https://doi.org/10.1007/s11786-020-00495-9)."
   *Mathematics in Computer Science*, vol. 15, 2021, pp. 589-608.
+- Odrzywołek, Andrzej. "[All Elementary Functions from a Single Binary
+  Operator](https://arxiv.org/abs/2603.21852)." *arXiv*, 2026,
+  arXiv:2603.21852. Related implementation: Schmidt, Tim.
+  "[emlmath](https://github.com/timschmidt/emlmath)." GitHub, 2026. Relevant
+  to `Computable` graph evaluation and expression-tree lowering.
 - Payne, Mary H., and Robert N. Hanek.
   "[Radian Reduction for Trigonometric
   Functions](https://doi.org/10.1145/1057600.1057602)." *ACM SIGNUM

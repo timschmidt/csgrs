@@ -202,6 +202,7 @@ fn collect_rows(
         let value = Real::new(Rational::fraction(7, 13).unwrap());
         black_box(value.inverse().unwrap());
         let irrational = Real::new(Rational::fraction(2, 1).unwrap()).sqrt().unwrap();
+        black_box(irrational.clone().inverse().unwrap());
         black_box(irrational.inverse_ref().unwrap());
     });
     trace_row(&mut rows, filters, "real/trig/general", || {
@@ -268,6 +269,9 @@ fn collect_rows(
         || {
             let half = Real::new(Rational::fraction(1, 2).unwrap());
             let near_one = Real::new(Rational::fraction(9, 10).unwrap());
+            black_box(half.clone().asinh().unwrap());
+            black_box((-half.clone()).asinh().unwrap());
+            black_box(Real::new(Rational::new(1_000_000)).asinh().unwrap());
             black_box(half.clone().atanh().unwrap());
             black_box((-half).atanh().unwrap());
             black_box(near_one.atanh().unwrap());
@@ -276,6 +280,8 @@ fn collect_rows(
     trace_row(&mut rows, filters, "real/inverse_hyperbolic/sqrt", || {
         let sqrt_half = Real::new(Rational::new(2)).sqrt().unwrap()
             * Real::new(Rational::fraction(1, 2).unwrap());
+        let sqrt_two = Real::new(Rational::new(2)).sqrt().unwrap();
+        black_box(sqrt_two.acosh().unwrap());
         black_box(sqrt_half.atanh().unwrap());
     });
     trace_row(&mut rows, filters, "real/sqrt_scaled_rational", || {

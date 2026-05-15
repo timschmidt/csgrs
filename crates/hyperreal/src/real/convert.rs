@@ -279,13 +279,59 @@ impl Real {
         const NEG_BITS: u64 = 0x8000_0000_0000_0000;
         const EXP_BITS: u64 = 0x7ff0_0000_0000_0000;
 
-        if matches!(self.class, crate::real::Class::One)
+        use crate::real::Class;
+
+        if matches!(self.class, Class::One)
             && let fast @ Some(_) = self.rational.to_f64_approx()
         {
             // Exact rationals can often be rounded to f64 without touching the
             // lazy computable tree. This matters for matrix/predicate code that
             // asks for approximate centers of plain scalar data.
             return fast;
+        }
+
+        if self.rational.is_one() {
+            let value = match &self.class {
+                Class::Pi => Some(std::f64::consts::PI),
+                Class::PiInv => Some(1.0 / std::f64::consts::PI),
+                Class::PiPow(power) => Some(std::f64::consts::PI.powi(i32::from(*power))),
+                Class::Sqrt(radicand) => radicand.to_f64_approx().map(f64::sqrt),
+                _ => None,
+            };
+            if let Some(value) = value
+                && value.is_finite()
+            {
+                return Some(value);
+            }
+        } else if self.rational.is_two() && matches!(self.class, Class::Pi) {
+            return Some(std::f64::consts::TAU);
+        }
+
+        if let Some(scale) = self.rational.to_f64_approx() {
+            let value = match &self.class {
+                Class::Pi => Some(scale * std::f64::consts::PI),
+                Class::PiInv => Some(scale / std::f64::consts::PI),
+                Class::PiPow(power) => Some(scale * std::f64::consts::PI.powi(i32::from(*power))),
+                Class::Exp(exp) => exp.to_f64_approx().map(|exp| scale * exp.exp()),
+                Class::PiExp(exp) => exp
+                    .to_f64_approx()
+                    .map(|exp| scale * std::f64::consts::PI * exp.exp()),
+                Class::PiInvExp(exp) => exp
+                    .to_f64_approx()
+                    .map(|exp| scale / std::f64::consts::PI * exp.exp()),
+                Class::Sqrt(radicand) => radicand
+                    .to_f64_approx()
+                    .map(|radicand| scale * radicand.sqrt()),
+                Class::PiSqrt(radicand) => radicand
+                    .to_f64_approx()
+                    .map(|radicand| scale * std::f64::consts::PI * radicand.sqrt()),
+                _ => None,
+            };
+            if let Some(value) = value
+                && value.is_finite()
+            {
+                return Some(value);
+            }
         }
 
         let c = self.fold_ref();

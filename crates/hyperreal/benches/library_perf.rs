@@ -257,6 +257,10 @@ const LIBRARY_PERF_GROUPS: &[BenchGroupDoc] = &[
                 description: "Builds exact-rational atanh(-1/2).",
             },
             BenchDoc {
+                name: "atanh_sqrt_half",
+                description: "Recognizes atanh(sqrt(2)/2) as asinh(1).",
+            },
+            BenchDoc {
                 name: "atanh_9_10",
                 description: "Builds exact-rational atanh near the upper domain boundary.",
             },
@@ -744,6 +748,7 @@ fn bench_real_inverse_hyperbolic(c: &mut Criterion) {
     let two = Real::new(Rational::new(2));
     let million = Real::new(Rational::new(1_000_000));
     let sqrt_two = Real::new(Rational::new(2)).sqrt().unwrap();
+    let sqrt_half = sqrt_two.clone() * Real::new(Rational::fraction(1, 2).unwrap());
 
     group.bench_function("asinh_0", |b| {
         b.iter_batched(
@@ -825,6 +830,13 @@ fn bench_real_inverse_hyperbolic(c: &mut Criterion) {
     group.bench_function("atanh_minus_1_2", |b| {
         b.iter_batched(
             || minus_half.clone(),
+            |value| black_box(value.atanh().unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("atanh_sqrt_half", |b| {
+        b.iter_batched(
+            || sqrt_half.clone(),
             |value| black_box(value.atanh().unwrap()),
             BatchSize::SmallInput,
         )
