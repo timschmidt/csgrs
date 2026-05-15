@@ -272,6 +272,30 @@ long-running uncommitted local patches during the `csgrs` migration. A verified
 change in one of those libraries should be committed and pushed to that
 library's `hyperreal` branch before `csgrs` is updated to depend on it.
 
+When a needed function is missing from `hyperlattice`, `hyperlimit`,
+`hypersolve`, or a future `hyperphysics` crate, the normal path should be to
+borrow the algorithm from an appropriately licensed crate, port it to
+`hyperreal`-compatible scalar and fact machinery, and extend the correct stack
+crate here. Crates such as `nalgebra` are valid sources when their licenses,
+attribution requirements, and implementation boundaries are compatible with the
+target crate. The goal is not to keep permanent f64-only adapter islands; it is
+to move useful, well-understood algorithms into the `hyperreal` stack so they
+share consistency, structural facts, exact/perturbed predicate behavior, and
+performance work with the rest of the system.
+
+Use this path for crates that should ultimately be ported to `hyperreal` for
+consistency and performance:
+
+- linear algebra, transforms, decomposition, and dense/sparse numeric kernels
+  belong in `hyperlattice`
+- robust geometric predicates, carriers, classification helpers, and
+  degeneracy policies belong in `hyperlimit`
+- solver residual, Jacobian, rank, projection, and constraint scheduling
+  helpers belong in `hypersolve`
+- physical simulation, dynamics, collision-response policy, material behavior,
+  or other non-geometric physics primitives should live in a separate
+  `hyperphysics` crate if they do not fit the existing ownership boundaries
+
 Keep these adapters private at first. The first milestone is internal
 correctness, not public API churn.
 
