@@ -3,11 +3,11 @@
   <img src="./doc/hypercurve.png" alt="Hyper, a clever mathematician" width="144" align="right">
 </h1>
 
-`hypercurve` is an early-stage planar curve kernel for line and circular-arc
-geometry. The current implementation focuses on exactness-aware topology:
-segment intersections, closed-contour containment, signed region views,
-region-pair event extraction, fragment splitting, and the first boolean
-selection/traversal scaffolding.
+`hypercurve` is a planar curve kernel for line and circular-arc geometry in the
+hyperreal geometry stack. The current implementation focuses on
+exactness-aware topology: segment intersections, closed-contour containment,
+signed region views, region-pair event extraction, fragment splitting, prepared
+query views, and the first region boolean / offset pipeline.
 
 The crate keeps Cavalier-compatible bulge semantics where they are useful, but
 the native APIs expose explicit uncertainty for tangent, overlap, boundary, and
@@ -18,6 +18,10 @@ rules.
 
 The deployed WASM app is available at
 <https://timschmidt.github.io/hypercurve/>.
+
+The app links back to the project repository and recreates the Cavalier-style
+polyline test article around `hypercurve` booleans, intersections, slices, and
+offsets.
 
 ## Numeric Model
 
@@ -50,12 +54,24 @@ policies.
 
 ## Current Status
 
+Core geometry:
+
 - Line and circular-arc segments with explicit intersection result types,
   including finite same-circle arc overlap intervals.
+- Cavalier-compatible bulge vertex helpers and bulge import/export for
+  supported line and circular-arc sweeps.
 - Axis-aligned bounding boxes for points, segments, curve strings, contours, and
   regions, used as conservative broad-phase filters before exact curve
   intersections, contour/region event collection, point classification, and
   self-contact checks.
+- Closed contours with winding and boundary classification.
+- Owned and borrowed regions with explicit material and hole contour bins.
+- Polyline reconstruction can collapse sampled point runs into native line and
+  circular-arc curve strings or closed contours, using finite-difference
+  curvature witnesses and conservative tolerances at the IO boundary.
+
+Offsets:
+
 - Primitive left offsets for line and circular-arc segments, with explicit
   uncertainty when an arc offset would collapse or reverse radius.
 - Raw open curve-string and closed-contour left offsets with line joins:
@@ -65,9 +81,9 @@ policies.
   that reject raw joined offsets requiring self-intersection trimming.
 - Checked closed outlines for open curve strings using left/right offsets and a
   selectable `OffsetCap` style: circular, straight butt, or square end caps.
-- Closed contours with winding/boundary classification.
-- Region point classification skips contours whose bounding boxes are decidably
-  missed before exact boundary and winding tests.
+
+Prepared and repeated-query paths:
+
 - Prepared borrowed curve-string, contour, and region views cache segment,
   contour, and whole-region boxes for repeated self-contact, curve-string
   intersection, contour/region point classification, and contour/region event
@@ -81,7 +97,11 @@ policies.
   finite-segment containment semantics on the native segment type.
 - Prepared circular-arc views cache radial sweep predicates and structural arc
   facts for repeated sweep and point-on-arc classification.
-- Owned and borrowed regions with material and hole contour bins.
+- Region point classification skips contours whose bounding boxes are decidably
+  missed before exact boundary and winding tests.
+
+Boolean and region pipeline:
+
 - Region-pair event collection and point-bearing fragment splitting.
 - Boolean fragment classification for union, intersection, difference, and xor.
 - Directed boundary-fragment emission, endpoint-connected chain assembly, and
@@ -104,9 +124,6 @@ policies.
   their explicit signed bins, preserving boundary-touching components.
 - Checked boundary-contour xor uses the same symmetric-difference region path
   before exposing unassigned boundary loops.
-- Polyline reconstruction can collapse sampled point runs into native line and
-  circular-arc curve strings or closed contours, using finite-difference
-  curvature witnesses and conservative tolerances at the IO boundary.
 - Boundary-only contacts are certified before traversal: point contacts use
   regularized set identities, and external shared-edge contacts drop coincident
   zero-area edges for union/xor output.
@@ -118,11 +135,45 @@ policies.
 - Imported Cavalier deterministic and fuzz suites are present as compatibility
   references.
 
-This crate is not yet a complete boolean or offset engine. Shared-boundary
-fragments with positive-area overlap beyond the certified containment/contact
-fast paths, point-touching containment branches, or otherwise ambiguous topology
-are still reported as unresolved until the general overlap resolver is
-implemented; joined offsets are not yet self-intersection trimmed.
+Known limits:
+
+- This crate is not yet a complete boolean or offset engine.
+- Shared-boundary fragments with positive-area overlap beyond the certified
+  containment/contact fast paths still report unresolved topology.
+- Some point-touching containment branches and otherwise ambiguous topology are
+  intentionally unresolved until the general overlap resolver is implemented.
+- Joined offsets are not yet self-intersection trimmed; checked offset entry
+  points reject cases that need that trimming.
+- Circular arcs are first-class, but general conics, Beziers, and NURBS are not
+  part of the current implementation.
+- Primitive-float reconstruction and tessellation are IO/display helpers, not
+  the internal topology model.
+
+## API Shape
+
+The native API uses `hyperreal::Real` coordinates:
+
+```rust
+use hypercurve::{CurvePolicy, LineSeg2, Point2, Real};
+
+fn main() -> hypercurve::CurveResult<()> {
+    let a = Point2::new(Real::from(0), Real::from(0));
+    let b = Point2::new(Real::from(1), Real::from(0));
+    let segment = LineSeg2::try_new(a, b)?;
+
+    let policy = CurvePolicy::certified();
+    let query = Point2::new(Real::from(0), Real::from(1));
+    let side = segment.classify_point(&query, &policy);
+
+    assert!(matches!(side, hypercurve::Classification::Decided(_)));
+    Ok(())
+}
+```
+
+For Cavalier-style polyline data, `BulgeVertex2` and reconstruction helpers sit
+at the adapter boundary. They are useful for compatibility and UI workflows,
+but topology decisions should still flow through native `Segment2`, `Contour2`,
+`Region2`, and prepared query views.
 
 ## Documentation
 
@@ -174,6 +225,12 @@ cargo bench --bench reconstruction
 Bentley, Jon Louis, and Thomas A. Ottmann. "Algorithms for Reporting and
 Counting Geometric Intersections." *IEEE Transactions on Computers*, vol. C-28,
 no. 9, 1979, pp. 643-647.
+
+cavalier_contours. "2D Polyline/Shape Library for Offsetting, Combining, etc."
+Rust crate and repository. https://github.com/jbuckmccready/cavalier_contours.
+
+CavalierContours. C++ polyline offsetting and combining library.
+https://github.com/jbuckmccready/CavalierContours.
 
 de Berg, Mark, et al. *Computational Geometry: Algorithms and Applications*. 3rd
 ed., Springer, 2008. https://doi.org/10.1007/978-3-540-77974-2.
