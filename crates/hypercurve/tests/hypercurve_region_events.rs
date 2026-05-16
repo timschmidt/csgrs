@@ -152,9 +152,14 @@ fn prepared_region_events_match_owned_region_events() {
     let mixed_events = prepared_region
         .intersect_region(&cutter.as_view(), &policy)
         .unwrap();
+    let right_prepared_events = region
+        .as_view()
+        .intersect_prepared_region(&prepared_cutter, &policy)
+        .unwrap();
 
     assert_eq!(prepared_events, owned_events);
     assert_eq!(mixed_events, owned_events);
+    assert_eq!(right_prepared_events, owned_events);
     assert_eq!(prepared_events.len(), 2);
 }
 

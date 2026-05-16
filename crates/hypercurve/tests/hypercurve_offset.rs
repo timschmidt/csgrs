@@ -1,6 +1,6 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurvePolicy, CurveString2,
-    DefaultBackend, LineSeg2, Point2, Scalar, Segment2, UncertaintyReason,
+    DefaultBackend, LineSeg2, OffsetCap, Point2, Scalar, Segment2, UncertaintyReason,
 };
 
 fn s(value: i32) -> Scalar<DefaultBackend> {
@@ -270,6 +270,31 @@ fn curve_string_checked_offset_rejects_self_contacting_result() {
 }
 
 #[test]
+fn curve_string_offset_outline_dispatches_cap_styles() {
+    let curve =
+        CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 3)]).unwrap();
+
+    assert_eq!(
+        curve
+            .offset_outline(s(1), OffsetCap::Round, &policy())
+            .unwrap(),
+        curve.offset_outline_round_caps(s(1), &policy()).unwrap()
+    );
+    assert_eq!(
+        curve
+            .offset_outline(s(1), OffsetCap::Butt, &policy())
+            .unwrap(),
+        curve.offset_outline_butt_caps(s(1), &policy()).unwrap()
+    );
+    assert_eq!(
+        curve
+            .offset_outline(s(1), OffsetCap::Square, &policy())
+            .unwrap(),
+        curve.offset_outline_square_caps(s(1), &policy()).unwrap()
+    );
+}
+
+#[test]
 fn curve_string_round_cap_outline_wraps_single_line() {
     let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
     let Classification::Decided(outline) =
@@ -347,6 +372,225 @@ fn curve_string_round_cap_outline_rejects_self_contacting_input() {
 
     assert_eq!(
         curve.offset_outline_round_caps(s(1), &policy()).unwrap(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+}
+
+#[test]
+fn curve_string_butt_cap_outline_wraps_single_line() {
+    let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
+    let Classification::Decided(outline) = curve.offset_outline_butt_caps(s(1), &policy()).unwrap()
+    else {
+        panic!("simple butt-cap line outline should be decided");
+    };
+
+    assert_eq!(outline.len(), 4);
+    assert_line(&outline.segments()[0], p(0, 1), p(4, 1));
+    assert_line(&outline.segments()[1], p(4, 1), p(4, -1));
+    assert_line(&outline.segments()[2], p(4, -1), p(0, -1));
+    assert_line(&outline.segments()[3], p(0, -1), p(0, 1));
+}
+
+#[test]
+fn curve_string_butt_cap_outline_connects_arc_endpoint_offsets() {
+    let curve = CurveString2::try_new(vec![Segment2::Arc(
+        CircularArc2::from_bulge(p(0, 0), p(2, 0), s(-1)).unwrap(),
+    )])
+    .unwrap();
+    let Classification::Decided(outline) =
+        curve.offset_outline_butt_caps(q(1, 2), &policy()).unwrap()
+    else {
+        panic!("arc butt-cap outline should be decided");
+    };
+
+    assert_eq!(outline.len(), 4);
+    let Segment2::Arc(left) = &outline.segments()[0] else {
+        panic!("left offset should remain an arc");
+    };
+    assert_eq!(left.start(), &Point2::new(q(-1, 2), s(0)));
+    assert_eq!(left.end(), &Point2::new(q(5, 2), s(0)));
+    assert_eq!(left.center(), &p(1, 0));
+    assert_line(
+        &outline.segments()[1],
+        Point2::new(q(5, 2), s(0)),
+        Point2::new(q(3, 2), s(0)),
+    );
+    let Segment2::Arc(right) = &outline.segments()[2] else {
+        panic!("right offset should remain an arc");
+    };
+    assert_eq!(right.start(), &Point2::new(q(3, 2), s(0)));
+    assert_eq!(right.end(), &Point2::new(q(1, 2), s(0)));
+    assert_eq!(right.center(), &p(1, 0));
+    assert_line(
+        &outline.segments()[3],
+        Point2::new(q(1, 2), s(0)),
+        Point2::new(q(-1, 2), s(0)),
+    );
+}
+
+#[test]
+fn curve_string_butt_cap_outline_keeps_mitered_corners() {
+    let curve =
+        CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 3)]).unwrap();
+    let Classification::Decided(outline) = curve.offset_outline_butt_caps(s(1), &policy()).unwrap()
+    else {
+        panic!("mitered butt-cap outline should be decided");
+    };
+
+    assert_eq!(outline.len(), 6);
+    assert_line(&outline.segments()[0], p(0, 1), p(3, 1));
+    assert_line(&outline.segments()[1], p(3, 1), p(3, 3));
+    assert_line(&outline.segments()[2], p(3, 3), p(5, 3));
+    assert_line(&outline.segments()[3], p(5, 3), p(5, -1));
+    assert_line(&outline.segments()[4], p(5, -1), p(0, -1));
+    assert_line(&outline.segments()[5], p(0, -1), p(0, 1));
+}
+
+#[test]
+fn curve_string_butt_cap_outline_rejects_nonpositive_distance() {
+    let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
+
+    assert_eq!(
+        curve.offset_outline_butt_caps(s(0), &policy()).unwrap(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+    assert_eq!(
+        curve.offset_outline_butt_caps(s(-1), &policy()).unwrap(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+}
+
+#[test]
+fn curve_string_butt_cap_outline_rejects_self_contacting_input() {
+    let curve = CurveString2::try_new(vec![
+        line_segment(0, 0, 4, 4),
+        line_segment(4, 4, 0, 4),
+        line_segment(0, 4, 4, 0),
+    ])
+    .unwrap();
+
+    assert_eq!(
+        curve.offset_outline_butt_caps(s(1), &policy()).unwrap(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+}
+
+#[test]
+fn curve_string_square_cap_outline_extends_single_line() {
+    let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
+    let Classification::Decided(outline) =
+        curve.offset_outline_square_caps(s(1), &policy()).unwrap()
+    else {
+        panic!("simple square-cap line outline should be decided");
+    };
+
+    assert_eq!(outline.len(), 4);
+    assert_line(&outline.segments()[0], p(-1, 1), p(5, 1));
+    assert_line(&outline.segments()[1], p(5, 1), p(5, -1));
+    assert_line(&outline.segments()[2], p(5, -1), p(-1, -1));
+    assert_line(&outline.segments()[3], p(-1, -1), p(-1, 1));
+}
+
+#[test]
+fn curve_string_square_cap_outline_extends_mitered_path_end_tangents() {
+    let curve =
+        CurveString2::try_new(vec![line_segment(0, 0, 4, 0), line_segment(4, 0, 4, 3)]).unwrap();
+    let Classification::Decided(outline) =
+        curve.offset_outline_square_caps(s(1), &policy()).unwrap()
+    else {
+        panic!("mitered square-cap outline should be decided");
+    };
+
+    assert_eq!(outline.len(), 6);
+    assert_line(&outline.segments()[0], p(-1, 1), p(3, 1));
+    assert_line(&outline.segments()[1], p(3, 1), p(3, 4));
+    assert_line(&outline.segments()[2], p(3, 4), p(5, 4));
+    assert_line(&outline.segments()[3], p(5, 4), p(5, -1));
+    assert_line(&outline.segments()[4], p(5, -1), p(-1, -1));
+    assert_line(&outline.segments()[5], p(-1, -1), p(-1, 1));
+}
+
+#[test]
+fn curve_string_square_cap_outline_extends_arc_endpoint_tangents() {
+    let curve = CurveString2::try_new(vec![Segment2::Arc(
+        CircularArc2::from_bulge(p(0, 0), p(2, 0), s(-1)).unwrap(),
+    )])
+    .unwrap();
+    let Classification::Decided(outline) = curve
+        .offset_outline_square_caps(q(1, 2), &policy())
+        .unwrap()
+    else {
+        panic!("arc square-cap outline should be decided");
+    };
+
+    assert_eq!(outline.len(), 8);
+    assert_line(
+        &outline.segments()[0],
+        Point2::new(q(-1, 2), q(-1, 2)),
+        Point2::new(q(-1, 2), s(0)),
+    );
+    let Segment2::Arc(left) = &outline.segments()[1] else {
+        panic!("left offset should remain an arc");
+    };
+    assert_eq!(left.start(), &Point2::new(q(-1, 2), s(0)));
+    assert_eq!(left.end(), &Point2::new(q(5, 2), s(0)));
+    assert_line(
+        &outline.segments()[2],
+        Point2::new(q(5, 2), s(0)),
+        Point2::new(q(5, 2), q(-1, 2)),
+    );
+    assert_line(
+        &outline.segments()[3],
+        Point2::new(q(5, 2), q(-1, 2)),
+        Point2::new(q(3, 2), q(-1, 2)),
+    );
+    assert_line(
+        &outline.segments()[4],
+        Point2::new(q(3, 2), q(-1, 2)),
+        Point2::new(q(3, 2), s(0)),
+    );
+    let Segment2::Arc(right) = &outline.segments()[5] else {
+        panic!("right offset should remain an arc");
+    };
+    assert_eq!(right.start(), &Point2::new(q(3, 2), s(0)));
+    assert_eq!(right.end(), &Point2::new(q(1, 2), s(0)));
+    assert_line(
+        &outline.segments()[6],
+        Point2::new(q(1, 2), s(0)),
+        Point2::new(q(1, 2), q(-1, 2)),
+    );
+    assert_line(
+        &outline.segments()[7],
+        Point2::new(q(1, 2), q(-1, 2)),
+        Point2::new(q(-1, 2), q(-1, 2)),
+    );
+}
+
+#[test]
+fn curve_string_square_cap_outline_rejects_nonpositive_distance() {
+    let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
+
+    assert_eq!(
+        curve.offset_outline_square_caps(s(0), &policy()).unwrap(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+    assert_eq!(
+        curve.offset_outline_square_caps(s(-1), &policy()).unwrap(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+}
+
+#[test]
+fn curve_string_square_cap_outline_rejects_self_contacting_input() {
+    let curve = CurveString2::try_new(vec![
+        line_segment(0, 0, 4, 4),
+        line_segment(4, 4, 0, 4),
+        line_segment(0, 4, 4, 0),
+    ])
+    .unwrap();
+
+    assert_eq!(
+        curve.offset_outline_square_caps(s(1), &policy()).unwrap(),
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
 }

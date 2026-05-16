@@ -26,15 +26,18 @@ rules.
   circular join arcs until the full offset trim/rebuild pipeline is implemented.
 - Curve-string/contour self-contact detection and checked offset entry points
   that reject raw joined offsets requiring self-intersection trimming.
-- Checked closed outlines for open curve strings using left/right offsets and
-  circular end caps.
+- Checked closed outlines for open curve strings using left/right offsets and a
+  selectable `OffsetCap` style: circular, straight butt, or square end caps.
 - Closed contours with winding/boundary classification.
 - Region point classification skips contours whose bounding boxes are decidably
   missed before exact boundary and winding tests.
 - Prepared borrowed curve-string, contour, and region views cache segment,
   contour, and whole-region boxes for repeated self-contact, curve-string
   intersection, contour/region point classification, and contour/region event
-  queries without changing exact boundary semantics.
+  queries, plus prepared region boolean-boundary loop, checked-contour, and
+  region-result traversal. Mixed prepared-vs-region event and boolean wrappers
+  reuse either prepared operand while transiently preparing the ordinary side,
+  without changing exact boundary semantics.
 - Owned and borrowed regions with material and hole contour bins.
 - Region-pair event collection and point-bearing fragment splitting.
 - Boolean fragment classification for union, intersection, difference, and xor.
@@ -61,6 +64,10 @@ rules.
 - Boundary-only contacts are certified before traversal: point contacts use
   regularized set identities, and external shared-edge contacts drop coincident
   zero-area edges for union/xor output.
+- Boundary-touching containment identities are handled before traversal for
+  union, intersection, and contained-minus-container difference, while
+  container-minus-touching-subset still defers to the future overlap rebuild
+  path.
 - Imported Cavalier deterministic and fuzz suites are present as compatibility
   references.
 
@@ -79,11 +86,12 @@ RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps
 
 ## Benchmarks
 
-Small no-dependency benchmark targets exercise the current boolean boundary
-pipeline, containment hot paths including prepared contour and region
-repeated-query classifiers, segment-intersection hot paths, ordinary and prepared curve-string
-intersections, ordinary and prepared bounding-box filtered self-contact scans,
-ordinary and prepared region-event scans, and primitive offsets:
+Small no-dependency benchmark targets exercise the current ordinary, prepared,
+and mixed-prepared boolean boundary pipeline, containment hot paths including
+prepared contour and region repeated-query classifiers, segment-intersection
+hot paths, ordinary and prepared curve-string intersections, ordinary and
+prepared bounding-box filtered self-contact scans, ordinary and prepared
+region-event scans, and primitive plus open-outline offsets:
 
 ```text
 cargo bench --bench boolean_pipeline

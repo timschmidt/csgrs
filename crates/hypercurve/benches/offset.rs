@@ -3,7 +3,7 @@ use std::time::Instant;
 
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurvePolicy, CurveResult, CurveString2,
-    DefaultBackend, LineSeg2, Point2, Scalar, Segment2,
+    DefaultBackend, LineSeg2, OffsetCap, Point2, Scalar, Segment2,
 };
 
 fn s(value: i32) -> Scalar<DefaultBackend> {
@@ -167,6 +167,59 @@ fn bench_curve_string_round_cap_outline(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
+fn bench_curve_string_butt_cap_outline(iterations: u32) -> CurveResult<()> {
+    let curve = CurveString2::try_new(vec![
+        line_segment(0, 0, 4, 0),
+        line_segment(4, 0, 4, 3),
+        line_segment(4, 3, 7, 3),
+    ])?;
+    let policy = CurvePolicy::certified();
+    let started = Instant::now();
+    let mut total_segments = 0_usize;
+
+    for _ in 0..iterations {
+        let Classification::Decided(outline) = curve.offset_outline_butt_caps(s(1), &policy)?
+        else {
+            panic!("curve_string_butt_cap_outline became uncertain during benchmark");
+        };
+        total_segments += black_box(outline.len());
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "curve_string_butt_cap_outline: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
+fn bench_curve_string_square_cap_outline(iterations: u32) -> CurveResult<()> {
+    let curve = CurveString2::try_new(vec![
+        line_segment(0, 0, 4, 0),
+        line_segment(4, 0, 4, 3),
+        line_segment(4, 3, 7, 3),
+    ])?;
+    let policy = CurvePolicy::certified();
+    let started = Instant::now();
+    let mut total_segments = 0_usize;
+
+    for _ in 0..iterations {
+        let Classification::Decided(outline) =
+            curve.offset_outline(s(1), OffsetCap::Square, &policy)?
+        else {
+            panic!("curve_string_square_cap_outline became uncertain during benchmark");
+        };
+        total_segments += black_box(outline.len());
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "curve_string_square_cap_outline: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
 fn bench_contour_joined_offset(iterations: u32) -> CurveResult<()> {
     let contour = Contour2::from_bulge_vertices(&[
         vertex(0, 0, 0),
@@ -250,6 +303,8 @@ fn main() -> CurveResult<()> {
     bench_curve_string_round_join_offset(100_000)?;
     bench_curve_string_checked_offset(100_000)?;
     bench_curve_string_round_cap_outline(100_000)?;
+    bench_curve_string_butt_cap_outline(100_000)?;
+    bench_curve_string_square_cap_outline(100_000)?;
     bench_contour_joined_offset(100_000)?;
     bench_contour_checked_offset(100_000)?;
 

@@ -9,10 +9,10 @@ use hyperlattice::{Backend, DefaultBackend};
 
 use crate::bbox::{Aabb2, aabb_decided_misses_point, decided_segment_aabb};
 use crate::{
-    Classification, Contour2, ContourIntersectionSet, ContourPointLocation, CurvePolicy,
-    CurveResult, CurveString2, CurveStringIntersection, Point2, Region2, RegionContourIntersection,
-    RegionContourKey, RegionContourRole, RegionIntersectionSet, RegionPointLocation, RegionSide,
-    RegionView2, UncertaintyReason,
+    BooleanBoundaryLoopSet, BooleanOp, Classification, Contour2, ContourIntersectionSet,
+    ContourPointLocation, CurvePolicy, CurveResult, CurveString2, CurveStringIntersection,
+    FillRule, Point2, Region2, RegionContourIntersection, RegionContourKey, RegionContourRole,
+    RegionIntersectionSet, RegionPointLocation, RegionSide, RegionView2, UncertaintyReason,
 };
 
 /// A borrowed curve string with cached segment and whole-string bounding boxes.
@@ -280,6 +280,19 @@ impl<'a, B: Backend> PreparedRegionView2<'a, B> {
         &self.hole_contours
     }
 
+    /// Reconstructs a borrowed ordinary region view over the same contours.
+    ///
+    /// The returned view is cheap and keeps the same contour lifetimes. It is
+    /// useful when an algorithm still needs the canonical `RegionView2` shape
+    /// for splitting or cloning, while prepared classifiers supply repeated
+    /// point and event queries.
+    pub fn as_region_view(&self) -> RegionView2<'a, B> {
+        RegionView2::from_contours(
+            self.material_contours.iter().copied(),
+            self.hole_contours.iter().copied(),
+        )
+    }
+
     /// Returns prepared material contours in region-bin order.
     pub fn prepared_material_contours(&self) -> &[PreparedContourView2<'a, B>] {
         &self.material_prepared_contours
@@ -402,6 +415,121 @@ impl<'a, B: Backend> PreparedRegionView2<'a, B> {
         let other = PreparedRegionView2::from_region_view(other, policy);
         self.intersect_prepared_region(&other, policy)
     }
+
+    /// Computes closed boolean boundary loops against another prepared region.
+    ///
+    /// This prepared path runs the same split, classify, and boundary-chain
+    /// traversal as [`RegionView2::boolean_boundary_loops`], but reuses cached
+    /// region/contour boxes during event collection and fragment midpoint
+    /// classification. Greiner and Hormann describe closed boundary traversal
+    /// after intersection insertion and entry/exit classification (G. Greiner
+    /// and K. Hormann, "Efficient clipping of arbitrary polygons," 1998);
+    /// Martinez, Rueda, and Feito describe boolean selection from classified
+    /// segments (F. Martinez, A. J. Rueda, and F. R. Feito, "A new algorithm
+    /// for computing Boolean operations on polygons," 2009). Cached boxes only
+    /// prune decided misses, so boundary and overlap uncertainty is preserved.
+    pub fn boolean_boundary_loops(
+        &self,
+        other: &PreparedRegionView2<'_, B>,
+        op: BooleanOp,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<BooleanBoundaryLoopSet<B>>> {
+        crate::prepared_boolean::boolean_boundary_loops_between_prepared(self, other, op, policy)
+    }
+
+    /// Computes closed boolean boundary loops against an ordinary region view.
+    ///
+    /// This is a mixed prepared/unprepared convenience path: the left operand's
+    /// cache is reused, the right operand is prepared for this call, and the
+    /// prepared-prepared traversal described in
+    /// [`PreparedRegionView2::boolean_boundary_loops`] remains authoritative.
+    /// The transient right-side cache follows the same candidate-pruning role
+    /// as Bentley and Ottmann's broad-phase intersection reporting setup, while
+    /// the final boundary traversal still follows the Greiner-Hormann and
+    /// Martinez-Rueda-Feito split/classify/assemble model cited above.
+    pub fn boolean_boundary_loops_against_region(
+        &self,
+        other: &RegionView2<'_, B>,
+        op: BooleanOp,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<BooleanBoundaryLoopSet<B>>> {
+        let other = PreparedRegionView2::from_region_view(other, policy);
+        self.boolean_boundary_loops(&other, op, policy)
+    }
+
+    /// Computes checked boolean boundary contours against another prepared
+    /// region.
+    ///
+    /// This extends [`PreparedRegionView2::boolean_boundary_loops`] through the
+    /// same checked-contour conversion and regularized contact fast paths used
+    /// by [`RegionView2::boolean_boundary_contours`]. The prepared parts remain
+    /// candidate filters only: Foster, Hormann, and Popa's degenerate
+    /// clipping cases still surface as explicit boundary handling rather than
+    /// as tolerance-based inside/outside choices.
+    pub fn boolean_boundary_contours(
+        &self,
+        other: &PreparedRegionView2<'_, B>,
+        op: BooleanOp,
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Vec<Contour2<B>>>> {
+        crate::prepared_boolean::boolean_boundary_contours_between_prepared(
+            self, other, op, fill_rule, policy,
+        )
+    }
+
+    /// Computes checked boolean boundary contours against an ordinary region
+    /// view.
+    ///
+    /// This prepares the right operand only for the duration of the call and
+    /// then uses [`PreparedRegionView2::boolean_boundary_contours`]. Keeping the
+    /// wrapper explicit makes one-prepared/many-unprepared workloads ergonomic
+    /// without weakening the degenerate clipping behavior described by Foster,
+    /// Hormann, and Popa for boundary contacts.
+    pub fn boolean_boundary_contours_against_region(
+        &self,
+        other: &RegionView2<'_, B>,
+        op: BooleanOp,
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Vec<Contour2<B>>>> {
+        let other = PreparedRegionView2::from_region_view(other, policy);
+        self.boolean_boundary_contours(&other, op, fill_rule, policy)
+    }
+
+    /// Computes a role-assigned boolean region against another prepared region.
+    ///
+    /// This is the prepared analogue of [`RegionView2::boolean_region`]. It
+    /// reuses cached event and point-classification broad phases before
+    /// returning to the ordinary contour-nesting pass for final material/hole
+    /// assignment, preserving the Vatti-style fill-state semantics already used
+    /// by the non-prepared region pipeline.
+    pub fn boolean_region(
+        &self,
+        other: &PreparedRegionView2<'_, B>,
+        op: BooleanOp,
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Region2<B>>> {
+        crate::prepared_boolean::boolean_region_between_prepared(self, other, op, fill_rule, policy)
+    }
+
+    /// Computes a role-assigned boolean region against an ordinary region view.
+    ///
+    /// The right operand is prepared transiently, after which the same prepared
+    /// boolean-region path assigns resolved contours to material and hole bins.
+    /// The nesting step remains the Hormann-Agathos boundary-first point
+    /// classification used by [`RegionView2::boolean_region`].
+    pub fn boolean_region_against_region(
+        &self,
+        other: &RegionView2<'_, B>,
+        op: BooleanOp,
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Region2<B>>> {
+        let other = PreparedRegionView2::from_region_view(other, policy);
+        self.boolean_region(&other, op, fill_rule, policy)
+    }
 }
 
 impl<B: Backend> CurveString2<B> {
@@ -442,6 +570,73 @@ impl<'a, B: Backend> RegionView2<'a, B> {
     /// Builds a prepared borrowed view for repeated point and event queries.
     pub fn prepare_topology_queries(&self, policy: &CurvePolicy) -> PreparedRegionView2<'a, B> {
         PreparedRegionView2::from_region_view(self, policy)
+    }
+
+    /// Collects normalized topology events against a prepared right operand.
+    ///
+    /// This preserves operand order for callers that have already prepared the
+    /// second region. The left view is prepared transiently, then the prepared
+    /// event collector uses cached broad-phase boxes before exact intersection
+    /// normalization.
+    pub fn intersect_prepared_region(
+        &self,
+        other: &PreparedRegionView2<'_, B>,
+        policy: &CurvePolicy,
+    ) -> CurveResult<RegionIntersectionSet<B>> {
+        let this = PreparedRegionView2::from_region_view(self, policy);
+        this.intersect_prepared_region(other, policy)
+    }
+
+    /// Computes closed boolean boundary loops against a prepared right operand.
+    ///
+    /// Use this when the right operand is reused across many ordinary region
+    /// views, especially for non-commutative operations such as difference. The
+    /// transient left cache only prunes decided misses; Greiner-Hormann style
+    /// boundary traversal and Martinez-Rueda-Feito fragment selection remain
+    /// unchanged from [`RegionView2::boolean_boundary_loops`].
+    pub fn boolean_boundary_loops_against_prepared_region(
+        &self,
+        other: &PreparedRegionView2<'_, B>,
+        op: BooleanOp,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<BooleanBoundaryLoopSet<B>>> {
+        let this = PreparedRegionView2::from_region_view(self, policy);
+        this.boolean_boundary_loops(other, op, policy)
+    }
+
+    /// Computes checked boolean boundary contours against a prepared right
+    /// operand.
+    ///
+    /// The operation order is `self op other`; the prepared right operand is not
+    /// swapped to the left. Degenerate shared-boundary cases keep the same
+    /// explicit Foster-Hormann-Popa style uncertainty/regularization behavior
+    /// as the ordinary checked-contour API.
+    pub fn boolean_boundary_contours_against_prepared_region(
+        &self,
+        other: &PreparedRegionView2<'_, B>,
+        op: BooleanOp,
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Vec<Contour2<B>>>> {
+        let this = PreparedRegionView2::from_region_view(self, policy);
+        this.boolean_boundary_contours(other, op, fill_rule, policy)
+    }
+
+    /// Computes a role-assigned boolean region against a prepared right
+    /// operand.
+    ///
+    /// The prepared path still returns to the ordinary nesting classifier for
+    /// material/hole assignment, so Hormann-Agathos boundary-first point
+    /// classification remains the final arbiter for resolved output contours.
+    pub fn boolean_region_against_prepared_region(
+        &self,
+        other: &PreparedRegionView2<'_, B>,
+        op: BooleanOp,
+        fill_rule: FillRule,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Region2<B>>> {
+        let this = PreparedRegionView2::from_region_view(self, policy);
+        this.boolean_region(other, op, fill_rule, policy)
     }
 }
 

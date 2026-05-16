@@ -9,14 +9,27 @@ use hyperlattice::Backend;
 
 use crate::{
     BooleanBoundaryFragmentSet, BooleanBoundaryLoopSet, BooleanOp, Classification, Contour2,
-    ContourIntersection, CurvePolicy, CurveResult, FillRule, IntersectionKind, Region2,
-    RegionPointLocation, RegionSide, RegionView2,
+    ContourIntersection, CurvePolicy, CurveResult, FillRule, IntersectionKind, Point2, Region2,
+    RegionIntersectionSet, RegionPointLocation, RegionSide, RegionView2,
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum BoundaryContactKind {
     PointOnly,
     Overlap,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum BoundaryContainmentRelation {
+    FirstContainsSecond,
+    SecondContainsFirst,
+    Equivalent,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum BoundaryContactResolution {
+    BoundaryOnly(BoundaryContactKind),
+    Containment(BoundaryContainmentRelation),
 }
 
 impl<B: Backend> Region2<B> {
@@ -171,9 +184,14 @@ pub(crate) fn boolean_boundary_contours_between<B: Backend>(
             first, second, op,
         )));
     }
-    match boundary_only_contact(first, second, policy)? {
-        Classification::Decided(Some(kind)) => {
+    match boundary_contact_resolution(first, second, policy)? {
+        Classification::Decided(Some(BoundaryContactResolution::BoundaryOnly(kind))) => {
             return boundary_contact_boundary_contours(first, second, op, fill_rule, policy, kind);
+        }
+        Classification::Decided(Some(BoundaryContactResolution::Containment(relation))) => {
+            if let Some(contours) = containment_boundary_contours(first, second, op, relation) {
+                return Ok(Classification::Decided(contours));
+            }
         }
         Classification::Decided(None) => {}
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -231,9 +249,14 @@ pub(crate) fn boolean_region_between<B: Backend>(
             first, second, op,
         )));
     }
-    match boundary_only_contact(first, second, policy)? {
-        Classification::Decided(Some(kind)) => {
+    match boundary_contact_resolution(first, second, policy)? {
+        Classification::Decided(Some(BoundaryContactResolution::BoundaryOnly(kind))) => {
             return boundary_contact_region(first, second, op, fill_rule, policy, kind);
+        }
+        Classification::Decided(Some(BoundaryContactResolution::Containment(relation))) => {
+            if let Some(region) = containment_region(first, second, op, relation) {
+                return Ok(Classification::Decided(region));
+            }
         }
         Classification::Decided(None) => {}
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -248,16 +271,53 @@ pub(crate) fn boolean_region_between<B: Backend>(
     }
 }
 
-fn boundary_only_contact<B: Backend>(
+fn boundary_contact_resolution<B: Backend>(
     first: &RegionView2<'_, B>,
     second: &RegionView2<'_, B>,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Option<BoundaryContactKind>>> {
+) -> CurveResult<Classification<Option<BoundaryContactResolution>>> {
     let intersections = first.intersect_region(second, policy)?;
     if intersections.is_empty() {
         return Ok(Classification::Decided(None));
     }
 
+    let saw_overlap = match boundary_contact_overlap_flag(&intersections) {
+        Classification::Decided(Some(saw_overlap)) => saw_overlap,
+        Classification::Decided(None) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+
+    let disjoint_interiors = if saw_overlap {
+        split_contact_interiors_are_disjoint(first, second, &intersections, policy)?
+    } else {
+        unsplit_contact_interiors_are_disjoint(first, second, policy)?
+    };
+    match disjoint_interiors {
+        Classification::Decided(true) => {}
+        Classification::Decided(false) => {
+            return match boundary_contact_containment_relation(first, second, policy)? {
+                Classification::Decided(Some(relation)) => Ok(Classification::Decided(Some(
+                    BoundaryContactResolution::Containment(relation),
+                ))),
+                Classification::Decided(None) => Ok(Classification::Decided(None)),
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            };
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+
+    Ok(Classification::Decided(Some(
+        BoundaryContactResolution::BoundaryOnly(if saw_overlap {
+            BoundaryContactKind::Overlap
+        } else {
+            BoundaryContactKind::PointOnly
+        }),
+    )))
+}
+
+pub(crate) fn boundary_contact_overlap_flag<B: Backend>(
+    intersections: &RegionIntersectionSet<B>,
+) -> Classification<Option<bool>> {
     let mut saw_contact = false;
     let mut saw_overlap = false;
     for pair in intersections.pairs() {
@@ -268,7 +328,7 @@ fn boundary_only_contact<B: Backend>(
                         saw_contact = true;
                     }
                     IntersectionKind::Crossing | IntersectionKind::Overlap => {
-                        return Ok(Classification::Decided(None));
+                        return Classification::Decided(None);
                     }
                 },
                 ContourIntersection::Overlap(_) => {
@@ -276,32 +336,13 @@ fn boundary_only_contact<B: Backend>(
                     saw_overlap = true;
                 }
                 ContourIntersection::Uncertain(uncertain) => {
-                    return Ok(Classification::Uncertain(uncertain.reason));
+                    return Classification::Uncertain(uncertain.reason);
                 }
             }
         }
     }
 
-    if !saw_contact {
-        return Ok(Classification::Decided(None));
-    }
-
-    let disjoint_interiors = if saw_overlap {
-        split_contact_interiors_are_disjoint(first, second, &intersections, policy)?
-    } else {
-        unsplit_contact_interiors_are_disjoint(first, second, policy)?
-    };
-    match disjoint_interiors {
-        Classification::Decided(true) => {}
-        Classification::Decided(false) => return Ok(Classification::Decided(None)),
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    }
-
-    Ok(Classification::Decided(Some(if saw_overlap {
-        BoundaryContactKind::Overlap
-    } else {
-        BoundaryContactKind::PointOnly
-    })))
+    Classification::Decided(saw_contact.then_some(saw_overlap))
 }
 
 fn split_contact_interiors_are_disjoint<B: Backend>(
@@ -435,6 +476,186 @@ fn scan_unsplit_contact_samples<B: Backend>(
     Ok(Classification::Decided(true))
 }
 
+fn boundary_contact_containment_relation<B: Backend>(
+    first: &RegionView2<'_, B>,
+    second: &RegionView2<'_, B>,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Option<BoundaryContainmentRelation>>> {
+    let first_contains_second =
+        match region_contains_region_boundary_samples(first, second, policy)? {
+            Classification::Decided(contains) => contains,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+    let second_contains_first =
+        match region_contains_region_boundary_samples(second, first, policy)? {
+            Classification::Decided(contains) => contains,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+
+    Ok(Classification::Decided(
+        match (first_contains_second, second_contains_first) {
+            (true, true) => Some(BoundaryContainmentRelation::Equivalent),
+            (true, false) => Some(BoundaryContainmentRelation::FirstContainsSecond),
+            (false, true) => Some(BoundaryContainmentRelation::SecondContainsFirst),
+            (false, false) => None,
+        },
+    ))
+}
+
+fn region_contains_region_boundary_samples<B: Backend>(
+    container: &RegionView2<'_, B>,
+    candidate: &RegionView2<'_, B>,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<bool>> {
+    boundary_contours_inside_or_on_region(
+        candidate
+            .material_contours()
+            .iter()
+            .copied()
+            .chain(candidate.hole_contours().iter().copied()),
+        |point| container.classify_point(point, policy),
+        policy,
+    )
+}
+
+pub(crate) fn boundary_contours_inside_or_on_region<'a, B, I, F>(
+    contours: I,
+    mut classify_point: F,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<bool>>
+where
+    B: Backend + 'a,
+    I: IntoIterator<Item = &'a Contour2<B>>,
+    F: FnMut(&Point2<B>) -> Classification<RegionPointLocation>,
+{
+    for contour in contours {
+        for segment in contour.segments() {
+            // Boundary-contact containment is a conservative fast path for
+            // cases with no crossing events. Sampling vertices plus each
+            // fragment representative keeps the decision tied to the
+            // boundary-first point-in-region classification described by
+            // Hormann and Agathos, "The Point in Polygon Problem for Arbitrary
+            // Polygons" (2001), rather than an epsilon-based bounding rule.
+            match point_is_inside_or_boundary(segment.start(), &mut classify_point) {
+                Classification::Decided(true) => {}
+                Classification::Decided(false) => return Ok(Classification::Decided(false)),
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+            match point_is_inside_or_boundary(segment.end(), &mut classify_point) {
+                Classification::Decided(true) => {}
+                Classification::Decided(false) => return Ok(Classification::Decided(false)),
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+
+            let sample = match segment.representative_point(policy)? {
+                Classification::Decided(sample) => sample,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            match point_is_inside_or_boundary(&sample, &mut classify_point) {
+                Classification::Decided(true) => {}
+                Classification::Decided(false) => return Ok(Classification::Decided(false)),
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+        }
+    }
+
+    Ok(Classification::Decided(true))
+}
+
+fn point_is_inside_or_boundary<B: Backend, F>(
+    point: &Point2<B>,
+    classify_point: &mut F,
+) -> Classification<bool>
+where
+    F: FnMut(&Point2<B>) -> Classification<RegionPointLocation>,
+{
+    match classify_point(point) {
+        Classification::Decided(RegionPointLocation::Inside | RegionPointLocation::Boundary) => {
+            Classification::Decided(true)
+        }
+        Classification::Decided(RegionPointLocation::Outside) => Classification::Decided(false),
+        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+    }
+}
+
+fn containment_boundary_contours<B: Backend>(
+    first: &RegionView2<'_, B>,
+    second: &RegionView2<'_, B>,
+    op: BooleanOp,
+    relation: BoundaryContainmentRelation,
+) -> Option<Vec<Contour2<B>>> {
+    // These containment identities are regularized set identities, not graph
+    // traversal guesses. They cover the subset cases Foster, Hormann, and Popa
+    // separate from ordinary entry/exit traversal for degenerate polygon
+    // clipping (2019). Difference is decided only when the left operand is
+    // contained by the right; subtracting a boundary-touching subset from its
+    // container still needs the future overlap-aware rebuild path.
+    match (relation, op) {
+        (
+            BoundaryContainmentRelation::FirstContainsSecond,
+            BooleanOp::Union | BooleanOp::Intersection,
+        ) => Some(match op {
+            BooleanOp::Union => clone_boundary_contours(first),
+            BooleanOp::Intersection => clone_boundary_contours(second),
+            _ => unreachable!(),
+        }),
+        (
+            BoundaryContainmentRelation::SecondContainsFirst,
+            BooleanOp::Union | BooleanOp::Intersection,
+        ) => Some(match op {
+            BooleanOp::Union => clone_boundary_contours(second),
+            BooleanOp::Intersection => clone_boundary_contours(first),
+            _ => unreachable!(),
+        }),
+        (BoundaryContainmentRelation::SecondContainsFirst, BooleanOp::Difference) => {
+            Some(Vec::new())
+        }
+        (BoundaryContainmentRelation::Equivalent, BooleanOp::Union | BooleanOp::Intersection) => {
+            Some(clone_boundary_contours(first))
+        }
+        (BoundaryContainmentRelation::Equivalent, BooleanOp::Difference | BooleanOp::Xor) => {
+            Some(Vec::new())
+        }
+        _ => None,
+    }
+}
+
+fn containment_region<B: Backend>(
+    first: &RegionView2<'_, B>,
+    second: &RegionView2<'_, B>,
+    op: BooleanOp,
+    relation: BoundaryContainmentRelation,
+) -> Option<Region2<B>> {
+    match (relation, op) {
+        (
+            BoundaryContainmentRelation::FirstContainsSecond,
+            BooleanOp::Union | BooleanOp::Intersection,
+        ) => Some(match op {
+            BooleanOp::Union => clone_region(first),
+            BooleanOp::Intersection => clone_region(second),
+            _ => unreachable!(),
+        }),
+        (
+            BoundaryContainmentRelation::SecondContainsFirst,
+            BooleanOp::Union | BooleanOp::Intersection,
+        ) => Some(match op {
+            BooleanOp::Union => clone_region(second),
+            BooleanOp::Intersection => clone_region(first),
+            _ => unreachable!(),
+        }),
+        (BoundaryContainmentRelation::SecondContainsFirst, BooleanOp::Difference) => {
+            Some(Region2::empty())
+        }
+        (BoundaryContainmentRelation::Equivalent, BooleanOp::Union | BooleanOp::Intersection) => {
+            Some(clone_region(first))
+        }
+        (BoundaryContainmentRelation::Equivalent, BooleanOp::Difference | BooleanOp::Xor) => {
+            Some(Region2::empty())
+        }
+        _ => None,
+    }
+}
+
 fn boundary_contact_boundary_contours<B: Backend>(
     first: &RegionView2<'_, B>,
     second: &RegionView2<'_, B>,
@@ -565,7 +786,10 @@ fn xor_region_by_difference_union<B: Backend>(
     )))
 }
 
-fn merge_disjoint_region_bins<B: Backend>(first: Region2<B>, second: Region2<B>) -> Region2<B> {
+pub(crate) fn merge_disjoint_region_bins<B: Backend>(
+    first: Region2<B>,
+    second: Region2<B>,
+) -> Region2<B> {
     // The two symmetric-difference halves are interior-disjoint by set
     // definition. Directly merging their signed contour bins preserves
     // boundary-only contacts that a contour-only nesting pass would reject as
@@ -581,7 +805,10 @@ fn merge_disjoint_region_bins<B: Backend>(first: Region2<B>, second: Region2<B>)
     Region2::new(material_contours, hole_contours)
 }
 
-fn same_region_view<B: Backend>(first: &RegionView2<'_, B>, second: &RegionView2<'_, B>) -> bool {
+pub(crate) fn same_region_view<B: Backend>(
+    first: &RegionView2<'_, B>,
+    second: &RegionView2<'_, B>,
+) -> bool {
     same_contour_multiset(first.material_contours(), second.material_contours())
         && same_contour_multiset(first.hole_contours(), second.hole_contours())
 }
@@ -609,7 +836,7 @@ fn same_contour_multiset<B: Backend>(first: &[&Contour2<B>], second: &[&Contour2
     true
 }
 
-fn clone_boundary_contours<B: Backend>(region: &RegionView2<'_, B>) -> Vec<Contour2<B>> {
+pub(crate) fn clone_boundary_contours<B: Backend>(region: &RegionView2<'_, B>) -> Vec<Contour2<B>> {
     // Exact contour-bin identity fast paths keep coincident boundaries out of
     // the general traversal graph. Foster, Hormann, and Popa show that
     // degenerate polygon clipping benefits from separating coincident-boundary
@@ -627,7 +854,7 @@ fn clone_boundary_contours<B: Backend>(region: &RegionView2<'_, B>) -> Vec<Conto
         .collect()
 }
 
-fn clone_region<B: Backend>(region: &RegionView2<'_, B>) -> Region2<B> {
+pub(crate) fn clone_region<B: Backend>(region: &RegionView2<'_, B>) -> Region2<B> {
     // Region-level identity fast paths preserve explicit contour roles without
     // re-entering the nesting pass. Vatti describes boolean output in terms of
     // fill-state transitions (B. R. Vatti, "A generic solution to polygon
@@ -650,7 +877,7 @@ fn clone_region<B: Backend>(region: &RegionView2<'_, B>) -> Region2<B> {
     )
 }
 
-fn empty_operand_boundary_contours<B: Backend>(
+pub(crate) fn empty_operand_boundary_contours<B: Backend>(
     first: &RegionView2<'_, B>,
     second: &RegionView2<'_, B>,
     op: BooleanOp,
@@ -670,7 +897,7 @@ fn empty_operand_boundary_contours<B: Backend>(
     }
 }
 
-fn empty_operand_region<B: Backend>(
+pub(crate) fn empty_operand_region<B: Backend>(
     first: &RegionView2<'_, B>,
     second: &RegionView2<'_, B>,
     op: BooleanOp,

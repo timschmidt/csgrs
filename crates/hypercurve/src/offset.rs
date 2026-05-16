@@ -8,6 +8,23 @@ use crate::curve_string::CurveString2;
 use crate::segment::{CircularArc2, LineSeg2, Segment2};
 use crate::{Classification, CurveError, CurvePolicy, CurveResult, Point2, UncertaintyReason};
 
+/// Endpoint cap style for checked open curve-string outlines.
+///
+/// The cap is applied after the source curve string has been offset on both
+/// sides. This enum describes only the endpoint construction; joins along the
+/// left and right traces still use the primitive offset and line/round-join
+/// machinery documented on [`CurveString2::offset_left_with_line_joins`].
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum OffsetCap {
+    /// Connect left and right traces with circular arcs centered on endpoints.
+    Round,
+    /// Connect left and right traces directly at each endpoint.
+    Butt,
+    /// Extend each trace by one half-width along endpoint tangents before
+    /// adding straight endpoint connectors.
+    Square,
+}
+
 impl<B: Backend> LineSeg2<B> {
     /// Returns the constant-distance segment on this segment's left side.
     ///
@@ -159,6 +176,30 @@ impl<B: Backend> CurveString2<B> {
 
     /// Builds a checked closed outline around this open curve string.
     ///
+    /// The outline follows the left joined offset, applies the selected
+    /// [`OffsetCap`] at the end point, returns along the reversed right joined
+    /// offset, and applies the matching cap at the start point. The `distance`
+    /// is the half-width of the outline and must be strictly positive under
+    /// the active policy. As with [`CurveString2::offset_left_checked`], this
+    /// is still the raw offset-construction stage described by Tiller and
+    /// Hanson, "Offsets of Two-Dimensional Profiles" (1984): self-contacting
+    /// input or output is rejected as explicit uncertainty until the
+    /// trim/rebuild stage exists.
+    pub fn offset_outline(
+        &self,
+        distance: Scalar<B>,
+        cap: OffsetCap,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Contour2<B>>> {
+        match cap {
+            OffsetCap::Round => self.offset_outline_round_caps(distance, policy),
+            OffsetCap::Butt => self.offset_outline_butt_caps(distance, policy),
+            OffsetCap::Square => self.offset_outline_square_caps(distance, policy),
+        }
+    }
+
+    /// Builds a checked closed outline around this open curve string.
+    ///
     /// The outline follows the left joined offset, adds a round cap at the end
     /// point, returns along the reversed right joined offset, and adds a round
     /// cap at the start point. The `distance` is the half-width of the outline
@@ -173,37 +214,20 @@ impl<B: Backend> CurveString2<B> {
         distance: Scalar<B>,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Contour2<B>>> {
-        match scalar_sign(&distance, policy) {
-            Some(ScalarSign::Positive) => {}
-            Some(ScalarSign::Zero | ScalarSign::Negative) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-            None => return Ok(Classification::Uncertain(UncertaintyReason::ScalarSign)),
-        }
-
-        match self.has_self_contacts(policy)? {
-            Classification::Decided(false) => {}
-            Classification::Decided(true) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        }
-
-        let left = match self.offset_left_with_line_joins(distance.clone(), policy)? {
-            Classification::Decided(left) => left,
+        let offsets = match checked_outline_offsets(self, distance, policy)? {
+            Classification::Decided(offsets) => offsets,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let right = match self.offset_left_with_line_joins(-distance, policy)? {
-            Classification::Decided(right) => right,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-
-        let start_center = self.start().ok_or(CurveError::EmptyCurveString)?.clone();
-        let end_center = self.end().ok_or(CurveError::EmptyCurveString)?.clone();
-        let left_start = left.start().ok_or(CurveError::EmptyCurveString)?.clone();
-        let left_end = left.end().ok_or(CurveError::EmptyCurveString)?.clone();
-        let right_start = right.start().ok_or(CurveError::EmptyCurveString)?.clone();
-        let right_end = right.end().ok_or(CurveError::EmptyCurveString)?.clone();
+        let OutlineOffsets {
+            left,
+            right,
+            start_center,
+            end_center,
+            left_start,
+            left_end,
+            right_start,
+            right_end,
+        } = offsets;
 
         let mut segments = Vec::with_capacity(left.len() + right.len() + 2);
         segments.extend(left.into_segments());
@@ -217,23 +241,129 @@ impl<B: Backend> CurveString2<B> {
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
 
-        let outline = match Contour2::try_new(segments) {
-            Ok(outline) => outline,
-            Err(CurveError::DisconnectedCurveString) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-            Err(CurveError::AmbiguousCurveStringConnection) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::ScalarSign));
-            }
-            Err(error) => return Err(error),
+        checked_outline_contour(segments, policy)
+    }
+
+    /// Builds a checked closed outline around this open curve string.
+    ///
+    /// This variant connects the left and right offset traces with straight
+    /// endpoint caps. Those cap lines are the radial/perpendicular endpoint
+    /// connectors in the same primitive-offset, cap, and trim decomposition
+    /// used for open profiles by Tiller and Hanson, "Offsets of
+    /// Two-Dimensional Profiles" (1984). The distance is the half-width and
+    /// must be strictly positive. As with round caps, this constructor rejects
+    /// self-contacting input or output instead of trimming the raw outline.
+    pub fn offset_outline_butt_caps(
+        &self,
+        distance: Scalar<B>,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Contour2<B>>> {
+        let offsets = match checked_outline_offsets(self, distance, policy)? {
+            Classification::Decided(offsets) => offsets,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        match outline.has_self_contacts(policy)? {
-            Classification::Decided(false) => Ok(Classification::Decided(outline)),
-            Classification::Decided(true) => {
-                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-            }
-            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        let OutlineOffsets {
+            left,
+            right,
+            left_start,
+            left_end,
+            right_start,
+            right_end,
+            ..
+        } = offsets;
+
+        let mut segments = Vec::with_capacity(left.len() + right.len() + 2);
+        segments.extend(left.into_segments());
+        match cap_line(&left_end, &right_end)? {
+            Classification::Decided(cap) => segments.push(Segment2::Line(cap)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
+        segments.extend(reversed_segments(right.into_segments()));
+        match cap_line(&right_start, &left_start)? {
+            Classification::Decided(cap) => segments.push(Segment2::Line(cap)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+
+        checked_outline_contour(segments, policy)
+    }
+
+    /// Builds a checked closed outline with square endpoint caps.
+    ///
+    /// Square caps extend both offset traces by one half-width along the source
+    /// endpoint tangent before connecting them with a straight cap line. For
+    /// line endpoints this can be folded into the endpoint offset segment; for
+    /// arc endpoints it becomes an explicit tangent extension line so the
+    /// circular offset arc remains exact. This is still the primitive
+    /// offset/cap construction stage described by Tiller and Hanson, "Offsets
+    /// of Two-Dimensional Profiles" (1984): self-contacting input or output is
+    /// rejected as uncertainty until the trim/rebuild stage exists.
+    pub fn offset_outline_square_caps(
+        &self,
+        distance: Scalar<B>,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Contour2<B>>> {
+        let offsets = match checked_outline_offsets(self, distance.clone(), policy)? {
+            Classification::Decided(offsets) => offsets,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let OutlineOffsets {
+            left,
+            right,
+            left_start,
+            left_end,
+            right_start,
+            right_end,
+            ..
+        } = offsets;
+
+        let start_tangent = unit_tangent_at_segment_start(
+            self.segments()
+                .first()
+                .ok_or(CurveError::EmptyCurveString)?,
+        )?;
+        let end_tangent = unit_tangent_at_segment_end(
+            self.segments().last().ok_or(CurveError::EmptyCurveString)?,
+        )?;
+        let start_dx = &start_tangent.0 * &distance;
+        let start_dy = &start_tangent.1 * &distance;
+        let end_dx = &end_tangent.0 * &distance;
+        let end_dy = &end_tangent.1 * &distance;
+
+        let left_start_square = left_start.translated(-start_dx.clone(), -start_dy.clone());
+        let right_start_square = right_start.translated(-start_dx, -start_dy);
+        let left_end_square = left_end.translated(end_dx.clone(), end_dy.clone());
+        let right_end_square = right_end.translated(end_dx, end_dy);
+
+        let left = match extend_square_cap_trace(
+            left.into_segments(),
+            left_start_square.clone(),
+            left_end_square.clone(),
+        )? {
+            Classification::Decided(left) => left,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let right = match extend_square_cap_trace(
+            right.into_segments(),
+            right_start_square.clone(),
+            right_end_square.clone(),
+        )? {
+            Classification::Decided(right) => right,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+
+        let mut segments = Vec::with_capacity(left.len() + right.len() + 2);
+        segments.extend(left);
+        match cap_line(&left_end_square, &right_end_square)? {
+            Classification::Decided(cap) => segments.push(Segment2::Line(cap)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+        segments.extend(reversed_segments(right));
+        match cap_line(&right_start_square, &left_start_square)? {
+            Classification::Decided(cap) => segments.push(Segment2::Line(cap)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+
+        checked_outline_contour(segments, policy)
     }
 }
 
@@ -304,6 +434,167 @@ fn scale_from_center<B: Backend>(
         center.x() + (&radius.0 * scale),
         center.y() + (&radius.1 * scale),
     )
+}
+
+struct OutlineOffsets<B: Backend> {
+    left: CurveString2<B>,
+    right: CurveString2<B>,
+    start_center: Point2<B>,
+    end_center: Point2<B>,
+    left_start: Point2<B>,
+    left_end: Point2<B>,
+    right_start: Point2<B>,
+    right_end: Point2<B>,
+}
+
+// Shared setup for open-profile outlines. The public cap variants differ only
+// in how they connect the two offset traces; both must enforce the same
+// positive-distance and no-self-contact preconditions before exposing a closed
+// contour to callers.
+fn checked_outline_offsets<B: Backend>(
+    source: &CurveString2<B>,
+    distance: Scalar<B>,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<OutlineOffsets<B>>> {
+    match scalar_sign(&distance, policy) {
+        Some(ScalarSign::Positive) => {}
+        Some(ScalarSign::Zero | ScalarSign::Negative) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        None => return Ok(Classification::Uncertain(UncertaintyReason::ScalarSign)),
+    }
+
+    match source.has_self_contacts(policy)? {
+        Classification::Decided(false) => {}
+        Classification::Decided(true) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+
+    let left = match source.offset_left_with_line_joins(distance.clone(), policy)? {
+        Classification::Decided(left) => left,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let right = match source.offset_left_with_line_joins(-distance, policy)? {
+        Classification::Decided(right) => right,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+
+    Ok(Classification::Decided(OutlineOffsets {
+        start_center: source.start().ok_or(CurveError::EmptyCurveString)?.clone(),
+        end_center: source.end().ok_or(CurveError::EmptyCurveString)?.clone(),
+        left_start: left.start().ok_or(CurveError::EmptyCurveString)?.clone(),
+        left_end: left.end().ok_or(CurveError::EmptyCurveString)?.clone(),
+        right_start: right.start().ok_or(CurveError::EmptyCurveString)?.clone(),
+        right_end: right.end().ok_or(CurveError::EmptyCurveString)?.clone(),
+        left,
+        right,
+    }))
+}
+
+// Contour closure and self-contact checks are deliberately centralized so every
+// open-outline cap style preserves the same "raw construction, no trimming"
+// contract described by Tiller and Hanson (1984).
+fn checked_outline_contour<B: Backend>(
+    segments: Vec<Segment2<B>>,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Contour2<B>>> {
+    let outline = match Contour2::try_new(segments) {
+        Ok(outline) => outline,
+        Err(CurveError::DisconnectedCurveString) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        Err(CurveError::AmbiguousCurveStringConnection) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::ScalarSign));
+        }
+        Err(error) => return Err(error),
+    };
+    match outline.has_self_contacts(policy)? {
+        Classification::Decided(false) => Ok(Classification::Decided(outline)),
+        Classification::Decided(true) => {
+            Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+        }
+        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+    }
+}
+
+fn extend_square_cap_trace<B: Backend>(
+    mut segments: Vec<Segment2<B>>,
+    extended_start: Point2<B>,
+    extended_end: Point2<B>,
+) -> CurveResult<Classification<Vec<Segment2<B>>>> {
+    if segments.is_empty() {
+        return Err(CurveError::EmptyCurveString);
+    }
+
+    let original_start = segments[0].start().clone();
+    match &segments[0] {
+        Segment2::Line(line) => {
+            segments[0] = match cap_line(&extended_start, line.end())? {
+                Classification::Decided(line) => Segment2::Line(line),
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+        }
+        Segment2::Arc(_) => match cap_line(&extended_start, &original_start)? {
+            Classification::Decided(line) => segments.insert(0, Segment2::Line(line)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        },
+    }
+
+    let last_index = segments.len() - 1;
+    let original_end = segments[last_index].end().clone();
+    match &segments[last_index] {
+        Segment2::Line(line) => {
+            segments[last_index] = match cap_line(line.start(), &extended_end)? {
+                Classification::Decided(line) => Segment2::Line(line),
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+        }
+        Segment2::Arc(_) => match cap_line(&original_end, &extended_end)? {
+            Classification::Decided(line) => segments.push(Segment2::Line(line)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        },
+    }
+
+    Ok(Classification::Decided(segments))
+}
+
+fn unit_tangent_at_segment_start<B: Backend>(
+    segment: &Segment2<B>,
+) -> CurveResult<(Scalar<B>, Scalar<B>)> {
+    match segment {
+        Segment2::Line(line) => unit_tangent_for_line(line),
+        Segment2::Arc(arc) => unit_tangent_for_arc_at_point(arc, arc.start()),
+    }
+}
+
+fn unit_tangent_at_segment_end<B: Backend>(
+    segment: &Segment2<B>,
+) -> CurveResult<(Scalar<B>, Scalar<B>)> {
+    match segment {
+        Segment2::Line(line) => unit_tangent_for_line(line),
+        Segment2::Arc(arc) => unit_tangent_for_arc_at_point(arc, arc.end()),
+    }
+}
+
+fn unit_tangent_for_line<B: Backend>(line: &LineSeg2<B>) -> CurveResult<(Scalar<B>, Scalar<B>)> {
+    let length = line.length_squared().sqrt()?;
+    let (dx, dy) = line.delta();
+    Ok(((dx / &length)?, (dy / &length)?))
+}
+
+fn unit_tangent_for_arc_at_point<B: Backend>(
+    arc: &CircularArc2<B>,
+    point: &Point2<B>,
+) -> CurveResult<(Scalar<B>, Scalar<B>)> {
+    let radius = arc.radius_squared().sqrt()?;
+    let (rx, ry) = point.delta_from(arc.center());
+    if arc.is_clockwise() {
+        Ok(((ry / &radius)?, ((-rx) / &radius)?))
+    } else {
+        Ok(((-ry / &radius)?, (rx / &radius)?))
+    }
 }
 
 fn offset_segments_left<B: Backend>(
@@ -545,6 +836,19 @@ fn round_cap_arc<B: Backend>(
                 .map(Classification::Decided)
         }
         None => Ok(Classification::Uncertain(UncertaintyReason::ScalarSign)),
+    }
+}
+
+fn cap_line<B: Backend>(
+    from: &Point2<B>,
+    to: &Point2<B>,
+) -> CurveResult<Classification<LineSeg2<B>>> {
+    match LineSeg2::try_new(from.clone(), to.clone()) {
+        Ok(line) => Ok(Classification::Decided(line)),
+        Err(CurveError::ZeroLengthLine) => {
+            Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+        }
+        Err(error) => Err(error),
     }
 }
 

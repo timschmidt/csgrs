@@ -114,6 +114,102 @@ fn bench_case(
     );
 }
 
+fn bench_prepared_case(
+    name: &str,
+    first: &Region2<DefaultBackend>,
+    second: &Region2<DefaultBackend>,
+    op: BooleanOp,
+    iterations: u32,
+) {
+    let policy = CurvePolicy::certified();
+    let first = first.prepare_topology_queries(&policy);
+    let second = second.prepare_topology_queries(&policy);
+    let started = Instant::now();
+    let mut total_loops = 0_usize;
+
+    for _ in 0..iterations {
+        let loops = match first.boolean_boundary_loops(&second, op, &policy).unwrap() {
+            Classification::Decided(loops) => loops,
+            Classification::Uncertain(reason) => {
+                panic!("{name} became uncertain during benchmark: {reason:?}");
+            }
+        };
+        total_loops += black_box(loops.len());
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "{name}: {iterations} iterations in {elapsed:?} ({:?}/iter), total loops={total_loops}",
+        elapsed / iterations
+    );
+}
+
+fn bench_left_prepared_case(
+    name: &str,
+    first: &Region2<DefaultBackend>,
+    second: &Region2<DefaultBackend>,
+    op: BooleanOp,
+    iterations: u32,
+) {
+    let policy = CurvePolicy::certified();
+    let first = first.prepare_topology_queries(&policy);
+    let second = second.as_view();
+    let started = Instant::now();
+    let mut total_loops = 0_usize;
+
+    for _ in 0..iterations {
+        let loops = match first
+            .boolean_boundary_loops_against_region(&second, op, &policy)
+            .unwrap()
+        {
+            Classification::Decided(loops) => loops,
+            Classification::Uncertain(reason) => {
+                panic!("{name} became uncertain during benchmark: {reason:?}");
+            }
+        };
+        total_loops += black_box(loops.len());
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "{name}: {iterations} iterations in {elapsed:?} ({:?}/iter), total loops={total_loops}",
+        elapsed / iterations
+    );
+}
+
+fn bench_right_prepared_case(
+    name: &str,
+    first: &Region2<DefaultBackend>,
+    second: &Region2<DefaultBackend>,
+    op: BooleanOp,
+    iterations: u32,
+) {
+    let policy = CurvePolicy::certified();
+    let first = first.as_view();
+    let second = second.prepare_topology_queries(&policy);
+    let started = Instant::now();
+    let mut total_loops = 0_usize;
+
+    for _ in 0..iterations {
+        let loops = match first
+            .boolean_boundary_loops_against_prepared_region(&second, op, &policy)
+            .unwrap()
+        {
+            Classification::Decided(loops) => loops,
+            Classification::Uncertain(reason) => {
+                panic!("{name} became uncertain during benchmark: {reason:?}");
+            }
+        };
+        total_loops += black_box(loops.len());
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "{name}: {iterations} iterations in {elapsed:?} ({:?}/iter), total loops={total_loops}",
+        elapsed / iterations
+    );
+}
+
 fn bench_region_case(
     name: &str,
     first: &Region2<DefaultBackend>,
@@ -128,6 +224,40 @@ fn bench_region_case(
     for _ in 0..iterations {
         let region = match first
             .boolean_region(second, op, FillRule::NonZero, &policy)
+            .unwrap()
+        {
+            Classification::Decided(region) => region,
+            Classification::Uncertain(reason) => {
+                panic!("{name} became uncertain during benchmark: {reason:?}");
+            }
+        };
+        total_contours +=
+            black_box(region.material_contours().len() + region.hole_contours().len());
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "{name}: {iterations} iterations in {elapsed:?} ({:?}/iter), total contours={total_contours}",
+        elapsed / iterations
+    );
+}
+
+fn bench_prepared_region_case(
+    name: &str,
+    first: &Region2<DefaultBackend>,
+    second: &Region2<DefaultBackend>,
+    op: BooleanOp,
+    iterations: u32,
+) {
+    let policy = CurvePolicy::certified();
+    let first = first.prepare_topology_queries(&policy);
+    let second = second.prepare_topology_queries(&policy);
+    let started = Instant::now();
+    let mut total_contours = 0_usize;
+
+    for _ in 0..iterations {
+        let region = match first
+            .boolean_region(&second, op, FillRule::NonZero, &policy)
             .unwrap()
         {
             Classification::Decided(region) => region,
@@ -210,8 +340,36 @@ fn main() {
         BooleanOp::Union,
         100,
     );
+    bench_prepared_case(
+        "prepared_staggered_grid_5x5_union",
+        &grid_a,
+        &grid_b,
+        BooleanOp::Union,
+        100,
+    );
+    bench_left_prepared_case(
+        "left_prepared_staggered_grid_5x5_union",
+        &grid_a,
+        &grid_b,
+        BooleanOp::Union,
+        100,
+    );
+    bench_right_prepared_case(
+        "right_prepared_staggered_grid_5x5_union",
+        &grid_a,
+        &grid_b,
+        BooleanOp::Union,
+        100,
+    );
     bench_region_case(
         "staggered_grid_5x5_union_region",
+        &grid_a,
+        &grid_b,
+        BooleanOp::Union,
+        100,
+    );
+    bench_prepared_region_case(
+        "prepared_staggered_grid_5x5_union_region",
         &grid_a,
         &grid_b,
         BooleanOp::Union,
@@ -226,6 +384,36 @@ fn main() {
         &inner,
         BooleanOp::Difference,
         1_000,
+    );
+
+    let edge_touching_inner = region(vec![rectangle(3, 0, 7, 3)]);
+    bench_region_case(
+        "boundary_touching_containment_union_region",
+        &outer,
+        &edge_touching_inner,
+        BooleanOp::Union,
+        10_000,
+    );
+    bench_region_case(
+        "boundary_touching_containment_intersection_region",
+        &outer,
+        &edge_touching_inner,
+        BooleanOp::Intersection,
+        10_000,
+    );
+    bench_region_case(
+        "boundary_touching_subset_minus_container_region",
+        &edge_touching_inner,
+        &outer,
+        BooleanOp::Difference,
+        10_000,
+    );
+    bench_boundary_contour_case(
+        "boundary_touching_containment_union_boundary_contours",
+        &outer,
+        &edge_touching_inner,
+        BooleanOp::Union,
+        10_000,
     );
 
     let donut = Region2::new(vec![rectangle(0, 0, 10, 10)], vec![rectangle(3, 3, 7, 7)]);

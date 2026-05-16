@@ -19,6 +19,7 @@ mod offset;
 mod point;
 mod policy;
 mod prepared;
+mod prepared_boolean;
 mod region;
 mod region_boolean;
 mod region_events;
@@ -50,6 +51,7 @@ pub use intersect::{
     ArcArcIntersection, ArcArcIntersectionPoint, IntersectionKind, LineArcIntersection,
     LineArcIntersectionPoint, LineArcOrder, LineLineIntersection, ParamRange, SegmentIntersection,
 };
+pub use offset::OffsetCap;
 pub use point::Point2;
 pub use policy::{CurvePolicy, NumericMode, Tolerance};
 pub use prepared::{PreparedContourView2, PreparedCurveStringView2, PreparedRegionView2};

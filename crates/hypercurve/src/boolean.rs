@@ -261,14 +261,32 @@ impl<B: Backend> RegionFragmentSet<B> {
         op: BooleanOp,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<BooleanFragmentSelection>> {
-        let mut classifications = Vec::new();
-
-        for contour_fragments in self.contours() {
-            let opposite = match contour_fragments.key.side {
+        self.classify_for_boolean_with_point_classifier(op, policy, |source_side, sample| {
+            let opposite = match source_side {
                 RegionSide::First => second,
                 RegionSide::Second => first,
             };
+            opposite.classify_point(sample, policy)
+        })
+    }
 
+    /// Classifies fragments using a caller-supplied opposite-region point
+    /// classifier.
+    ///
+    /// Prepared boolean paths use this hook to keep the exact same fragment
+    /// selection rules while reusing cached region classifiers.
+    pub(crate) fn classify_for_boolean_with_point_classifier<F>(
+        &self,
+        op: BooleanOp,
+        policy: &CurvePolicy,
+        mut classify_opposite: F,
+    ) -> CurveResult<Classification<BooleanFragmentSelection>>
+    where
+        F: FnMut(RegionSide, &crate::Point2<B>) -> Classification<RegionPointLocation>,
+    {
+        let mut classifications = Vec::new();
+
+        for contour_fragments in self.contours() {
             for (fragment_index, fragment) in
                 contour_fragments.fragments.fragments().iter().enumerate()
             {
@@ -278,17 +296,15 @@ impl<B: Backend> RegionFragmentSet<B> {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let opposite_location = match opposite.classify_point(&sample, policy) {
+                let source_side = contour_fragments.key.side;
+                let opposite_location = match classify_opposite(source_side, &sample) {
                     Classification::Decided(location) => location,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let action = op.action_for(
-                    contour_fragments.key.side,
-                    contour_fragments.key.role,
-                    opposite_location,
-                );
+                let action =
+                    op.action_for(source_side, contour_fragments.key.role, opposite_location);
 
                 classifications.push(BooleanFragmentClassification {
                     key: contour_fragments.key,

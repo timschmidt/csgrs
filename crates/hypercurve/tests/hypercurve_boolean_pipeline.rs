@@ -117,6 +117,337 @@ fn region_boolean_boundary_contours_union_overlapping_rectangles() {
 }
 
 #[test]
+fn prepared_region_boolean_boundary_loops_match_plain_overlapping_rectangles() {
+    let first = region(vec![rectangle(0, 0, 4, 4)]);
+    let second = region(vec![rectangle(2, -1, 6, 3)]);
+    let policy = policy();
+    let first_prepared = first.prepare_topology_queries(&policy);
+    let second_prepared = second.prepare_topology_queries(&policy);
+
+    for op in [
+        BooleanOp::Union,
+        BooleanOp::Intersection,
+        BooleanOp::Difference,
+    ] {
+        assert_eq!(
+            first_prepared
+                .boolean_boundary_loops(&second_prepared, op, &policy)
+                .unwrap(),
+            first.boolean_boundary_loops(&second, op, &policy).unwrap()
+        );
+    }
+}
+
+#[test]
+fn prepared_region_boolean_boundary_loops_preserve_contact_uncertainty() {
+    let shared_edge_first = region(vec![rectangle(0, 0, 4, 4)]);
+    let shared_edge_second = region(vec![rectangle(2, -2, 6, 0)]);
+    let point_touch_first = region(vec![rectangle(0, 0, 2, 2)]);
+    let point_touch_second = region(vec![rectangle(2, 2, 4, 4)]);
+    let policy = policy();
+
+    assert_eq!(
+        shared_edge_first
+            .prepare_topology_queries(&policy)
+            .boolean_boundary_loops(
+                &shared_edge_second.prepare_topology_queries(&policy),
+                BooleanOp::Union,
+                &policy,
+            )
+            .unwrap(),
+        Classification::Uncertain(UncertaintyReason::Boundary)
+    );
+    assert_eq!(
+        point_touch_first
+            .prepare_topology_queries(&policy)
+            .boolean_boundary_loops(
+                &point_touch_second.prepare_topology_queries(&policy),
+                BooleanOp::Union,
+                &policy,
+            )
+            .unwrap(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+}
+
+#[test]
+fn prepared_region_boolean_boundary_contours_match_plain_results() {
+    let first = region(vec![rectangle(0, 0, 4, 4)]);
+    let second = region(vec![rectangle(2, -1, 6, 3)]);
+    let policy = policy();
+    let first_prepared = first.prepare_topology_queries(&policy);
+    let second_prepared = second.prepare_topology_queries(&policy);
+
+    for op in [
+        BooleanOp::Union,
+        BooleanOp::Intersection,
+        BooleanOp::Difference,
+        BooleanOp::Xor,
+    ] {
+        assert_eq!(
+            first_prepared
+                .boolean_boundary_contours(&second_prepared, op, FillRule::NonZero, &policy)
+                .unwrap(),
+            first
+                .boolean_boundary_contours(&second, op, FillRule::NonZero, &policy)
+                .unwrap()
+        );
+    }
+}
+
+#[test]
+fn prepared_region_boolean_region_matches_plain_regularized_cases() {
+    let cases = [
+        (
+            region(vec![rectangle(0, 0, 4, 4)]),
+            region(vec![rectangle(2, -1, 6, 3)]),
+        ),
+        (
+            region(vec![rectangle(0, 0, 2, 2)]),
+            region(vec![rectangle(2, 2, 4, 4)]),
+        ),
+        (
+            region(vec![rectangle(0, 0, 4, 4)]),
+            region(vec![rectangle(2, -2, 6, 0)]),
+        ),
+        (
+            donut(rectangle(0, 0, 12, 12), rectangle(4, 4, 8, 8)),
+            region(vec![rectangle(6, 2, 10, 10)]),
+        ),
+    ];
+    let policy = policy();
+
+    for (first, second) in cases {
+        let first_prepared = first.prepare_topology_queries(&policy);
+        let second_prepared = second.prepare_topology_queries(&policy);
+        for op in [
+            BooleanOp::Union,
+            BooleanOp::Intersection,
+            BooleanOp::Difference,
+            BooleanOp::Xor,
+        ] {
+            assert_eq!(
+                first_prepared
+                    .boolean_region(&second_prepared, op, FillRule::NonZero, &policy)
+                    .unwrap(),
+                first
+                    .boolean_region(&second, op, FillRule::NonZero, &policy)
+                    .unwrap()
+            );
+        }
+    }
+}
+
+#[test]
+fn prepared_region_boolean_region_decides_boundary_touching_containment_identities() {
+    let outer = region(vec![rectangle(0, 0, 6, 6)]);
+    let inner_touching_edge = region(vec![rectangle(2, 0, 4, 2)]);
+    let policy = policy();
+    let outer_prepared = outer.prepare_topology_queries(&policy);
+    let inner_prepared = inner_touching_edge.prepare_topology_queries(&policy);
+
+    assert_eq!(
+        outer_prepared
+            .boolean_region(
+                &inner_prepared,
+                BooleanOp::Union,
+                FillRule::NonZero,
+                &policy
+            )
+            .unwrap(),
+        outer
+            .boolean_region(
+                &inner_touching_edge,
+                BooleanOp::Union,
+                FillRule::NonZero,
+                &policy,
+            )
+            .unwrap()
+    );
+    assert_eq!(
+        outer_prepared
+            .boolean_region(
+                &inner_prepared,
+                BooleanOp::Intersection,
+                FillRule::NonZero,
+                &policy,
+            )
+            .unwrap(),
+        outer
+            .boolean_region(
+                &inner_touching_edge,
+                BooleanOp::Intersection,
+                FillRule::NonZero,
+                &policy,
+            )
+            .unwrap()
+    );
+    assert_eq!(
+        inner_prepared
+            .boolean_region(
+                &outer_prepared,
+                BooleanOp::Difference,
+                FillRule::NonZero,
+                &policy,
+            )
+            .unwrap(),
+        inner_touching_edge
+            .boolean_region(&outer, BooleanOp::Difference, FillRule::NonZero, &policy)
+            .unwrap()
+    );
+}
+
+#[test]
+fn prepared_region_boolean_against_region_view_matches_prepared_and_plain() {
+    let cases = [
+        (
+            region(vec![rectangle(0, 0, 4, 4)]),
+            region(vec![rectangle(2, -1, 6, 3)]),
+        ),
+        (
+            region(vec![rectangle(0, 0, 2, 2)]),
+            region(vec![rectangle(2, 2, 4, 4)]),
+        ),
+        (
+            region(vec![rectangle(0, 0, 4, 4)]),
+            region(vec![rectangle(2, -2, 6, 0)]),
+        ),
+        (
+            donut(rectangle(0, 0, 12, 12), rectangle(4, 4, 8, 8)),
+            region(vec![rectangle(6, 2, 10, 10)]),
+        ),
+    ];
+    let policy = policy();
+
+    for (first, second) in cases {
+        let first_prepared = first.prepare_topology_queries(&policy);
+        let second_prepared = second.prepare_topology_queries(&policy);
+        let first_view = first.as_view();
+        let second_view = second.as_view();
+
+        for op in [
+            BooleanOp::Union,
+            BooleanOp::Intersection,
+            BooleanOp::Difference,
+        ] {
+            assert_eq!(
+                first_prepared
+                    .boolean_boundary_loops_against_region(&second_view, op, &policy)
+                    .unwrap(),
+                first_prepared
+                    .boolean_boundary_loops(&second_prepared, op, &policy)
+                    .unwrap()
+            );
+            assert_eq!(
+                first_view
+                    .boolean_boundary_loops_against_prepared_region(&second_prepared, op, &policy)
+                    .unwrap(),
+                first.boolean_boundary_loops(&second, op, &policy).unwrap()
+            );
+        }
+
+        for op in [
+            BooleanOp::Union,
+            BooleanOp::Intersection,
+            BooleanOp::Difference,
+            BooleanOp::Xor,
+        ] {
+            assert_eq!(
+                first_prepared
+                    .boolean_boundary_contours_against_region(
+                        &second_view,
+                        op,
+                        FillRule::NonZero,
+                        &policy,
+                    )
+                    .unwrap(),
+                first
+                    .boolean_boundary_contours(&second, op, FillRule::NonZero, &policy)
+                    .unwrap()
+            );
+            assert_eq!(
+                first_view
+                    .boolean_boundary_contours_against_prepared_region(
+                        &second_prepared,
+                        op,
+                        FillRule::NonZero,
+                        &policy,
+                    )
+                    .unwrap(),
+                first
+                    .boolean_boundary_contours(&second, op, FillRule::NonZero, &policy)
+                    .unwrap()
+            );
+            assert_eq!(
+                first_prepared
+                    .boolean_region_against_region(&second_view, op, FillRule::NonZero, &policy)
+                    .unwrap(),
+                first
+                    .boolean_region(&second, op, FillRule::NonZero, &policy)
+                    .unwrap()
+            );
+            assert_eq!(
+                first_view
+                    .boolean_region_against_prepared_region(
+                        &second_prepared,
+                        op,
+                        FillRule::NonZero,
+                        &policy,
+                    )
+                    .unwrap(),
+                first
+                    .boolean_region(&second, op, FillRule::NonZero, &policy)
+                    .unwrap()
+            );
+        }
+    }
+}
+
+#[test]
+fn prepared_region_boolean_identity_fast_paths_match_plain() {
+    let cases = [
+        (touching_material_bins(), touching_material_bins()),
+        (touching_material_bins(), touching_material_bins_reordered()),
+        (
+            touching_material_bins(),
+            touching_material_bins_rotated_and_reversed(),
+        ),
+        (Region2::<DefaultBackend>::empty(), touching_material_bins()),
+        (touching_material_bins(), Region2::<DefaultBackend>::empty()),
+    ];
+    let policy = policy();
+
+    for (first, second) in cases {
+        let first_prepared = first.prepare_topology_queries(&policy);
+        let second_prepared = second.prepare_topology_queries(&policy);
+
+        for op in [
+            BooleanOp::Union,
+            BooleanOp::Intersection,
+            BooleanOp::Difference,
+            BooleanOp::Xor,
+        ] {
+            assert_eq!(
+                first_prepared
+                    .boolean_boundary_contours(&second_prepared, op, FillRule::NonZero, &policy)
+                    .unwrap(),
+                first
+                    .boolean_boundary_contours(&second, op, FillRule::NonZero, &policy)
+                    .unwrap()
+            );
+            assert_eq!(
+                first_prepared
+                    .boolean_region(&second_prepared, op, FillRule::NonZero, &policy)
+                    .unwrap(),
+                first
+                    .boolean_region(&second, op, FillRule::NonZero, &policy)
+                    .unwrap()
+            );
+        }
+    }
+}
+
+#[test]
 fn region_boolean_region_union_overlapping_rectangles() {
     let first = region(vec![rectangle(0, 0, 4, 4)]);
     let second = region(vec![rectangle(2, -1, 6, 3)]);
@@ -1001,21 +1332,95 @@ fn region_boolean_boundary_contours_shared_edge_rectangles_are_regularized() {
 }
 
 #[test]
-fn region_boolean_region_boundary_overlap_with_interior_containment_still_defers() {
+fn region_boolean_region_boundary_overlap_with_interior_containment_identities() {
     let outer = region(vec![rectangle(0, 0, 6, 6)]);
     let inner_touching_edge = region(vec![rectangle(2, 0, 4, 2)]);
+
+    let Classification::Decided(union) = outer
+        .boolean_region(
+            &inner_touching_edge,
+            BooleanOp::Union,
+            FillRule::NonZero,
+            &policy(),
+        )
+        .unwrap()
+    else {
+        panic!("boundary-touching subset union should clone the container");
+    };
+    assert_eq!(union, outer);
+
+    let Classification::Decided(intersection) = outer
+        .boolean_region(
+            &inner_touching_edge,
+            BooleanOp::Intersection,
+            FillRule::NonZero,
+            &policy(),
+        )
+        .unwrap()
+    else {
+        panic!("boundary-touching subset intersection should clone the subset");
+    };
+    assert_eq!(intersection, inner_touching_edge);
+
+    let Classification::Decided(reverse_difference) = inner_touching_edge
+        .boolean_region(&outer, BooleanOp::Difference, FillRule::NonZero, &policy())
+        .unwrap()
+    else {
+        panic!("subset minus container should be empty");
+    };
+    assert!(reverse_difference.is_empty());
 
     assert_eq!(
         outer
             .boolean_region(
                 &inner_touching_edge,
-                BooleanOp::Union,
+                BooleanOp::Difference,
                 FillRule::NonZero,
                 &policy(),
             )
             .unwrap(),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
+}
+
+#[test]
+fn region_boolean_boundary_contours_boundary_touching_containment_identities() {
+    let outer = region(vec![rectangle(0, 0, 6, 6)]);
+    let inner_touching_edge = region(vec![rectangle(2, 0, 4, 2)]);
+
+    let Classification::Decided(union) = outer
+        .boolean_boundary_contours(
+            &inner_touching_edge,
+            BooleanOp::Union,
+            FillRule::NonZero,
+            &policy(),
+        )
+        .unwrap()
+    else {
+        panic!("boundary-touching subset union contours should be decided");
+    };
+    assert_eq!(union, outer.material_contours());
+
+    let Classification::Decided(intersection) = outer
+        .boolean_boundary_contours(
+            &inner_touching_edge,
+            BooleanOp::Intersection,
+            FillRule::NonZero,
+            &policy(),
+        )
+        .unwrap()
+    else {
+        panic!("boundary-touching subset intersection contours should be decided");
+    };
+    assert_eq!(intersection, inner_touching_edge.material_contours());
+
+    let Classification::Decided(reverse_difference) = inner_touching_edge
+        .boolean_boundary_contours(&outer, BooleanOp::Difference, FillRule::NonZero, &policy())
+        .unwrap()
+    else {
+        panic!("subset minus container contours should be empty");
+    };
+    assert!(reverse_difference.is_empty());
 }
 
 #[test]
