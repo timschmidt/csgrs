@@ -295,6 +295,24 @@ fn prepared_region_boolean_region_decides_boundary_touching_containment_identiti
             .boolean_region(&outer, BooleanOp::Difference, FillRule::NonZero, &policy)
             .unwrap()
     );
+    assert_eq!(
+        outer_prepared
+            .boolean_region(
+                &inner_prepared,
+                BooleanOp::Difference,
+                FillRule::NonZero,
+                &policy,
+            )
+            .unwrap(),
+        outer
+            .boolean_region(
+                &inner_touching_edge,
+                BooleanOp::Difference,
+                FillRule::NonZero,
+                &policy,
+            )
+            .unwrap()
+    );
 }
 
 #[test]
@@ -1370,17 +1388,24 @@ fn region_boolean_region_boundary_overlap_with_interior_containment_identities()
     };
     assert!(reverse_difference.is_empty());
 
-    assert_eq!(
-        outer
-            .boolean_region(
-                &inner_touching_edge,
-                BooleanOp::Difference,
-                FillRule::NonZero,
-                &policy(),
-            )
-            .unwrap(),
-        Classification::Uncertain(UncertaintyReason::Boundary)
-    );
+    let Classification::Decided(difference) = outer
+        .boolean_region(
+            &inner_touching_edge,
+            BooleanOp::Difference,
+            FillRule::NonZero,
+            &policy(),
+        )
+        .unwrap()
+    else {
+        panic!("container minus boundary-touching subset should rebuild a notched region");
+    };
+    assert_eq!(difference.material_contours().len(), 1);
+    assert!(difference.hole_contours().is_empty());
+    assert_region_location(&difference, p(1, 1), RegionPointLocation::Inside);
+    assert_region_location(&difference, p(3, 1), RegionPointLocation::Outside);
+    assert_region_location(&difference, p(3, 3), RegionPointLocation::Inside);
+    assert_region_location(&difference, p(3, 0), RegionPointLocation::Outside);
+    assert_region_location(&difference, p(3, 2), RegionPointLocation::Boundary);
 }
 
 #[test]
@@ -1421,6 +1446,70 @@ fn region_boolean_boundary_contours_boundary_touching_containment_identities() {
         panic!("subset minus container contours should be empty");
     };
     assert!(reverse_difference.is_empty());
+
+    let Classification::Decided(difference) = outer
+        .boolean_boundary_contours(
+            &inner_touching_edge,
+            BooleanOp::Difference,
+            FillRule::NonZero,
+            &policy(),
+        )
+        .unwrap()
+    else {
+        panic!("container minus boundary-touching subset contours should be decided");
+    };
+    assert_eq!(difference.len(), 1);
+    assert_contour_location(&difference[0], p(1, 1), ContourPointLocation::Inside);
+    assert_contour_location(&difference[0], p(3, 1), ContourPointLocation::Outside);
+    assert_contour_location(&difference[0], p(3, 3), ContourPointLocation::Inside);
+    assert_contour_location(&difference[0], p(3, 0), ContourPointLocation::Outside);
+    assert_contour_location(&difference[0], p(3, 2), ContourPointLocation::Boundary);
+}
+
+#[test]
+fn region_boolean_difference_rebuilds_full_width_boundary_touching_strip() {
+    let outer = region(vec![rectangle(0, 0, 6, 6)]);
+    let bottom_strip = region(vec![rectangle(0, 0, 6, 2)]);
+
+    let Classification::Decided(difference) = outer
+        .boolean_region(
+            &bottom_strip,
+            BooleanOp::Difference,
+            FillRule::NonZero,
+            &policy(),
+        )
+        .unwrap()
+    else {
+        panic!("full-width strip subtraction should produce the remaining rectangle");
+    };
+
+    assert_eq!(difference.material_contours().len(), 1);
+    assert!(difference.hole_contours().is_empty());
+    assert_region_location(&difference, p(3, 1), RegionPointLocation::Outside);
+    assert_region_location(&difference, p(3, 3), RegionPointLocation::Inside);
+    assert_region_location(&difference, p(3, 2), RegionPointLocation::Boundary);
+}
+
+#[test]
+fn region_boolean_difference_rebuilds_boundary_touching_donut_subset() {
+    let outer = region(vec![rectangle(0, 0, 10, 10)]);
+    let cutter = donut(rectangle(2, 0, 8, 6), rectangle(4, 2, 6, 4));
+
+    let Classification::Decided(difference) = outer
+        .boolean_region(&cutter, BooleanOp::Difference, FillRule::NonZero, &policy())
+        .unwrap()
+    else {
+        panic!("boundary-touching donut subtraction should preserve the cutter hole as material");
+    };
+
+    assert_eq!(difference.material_contours().len(), 2);
+    assert!(difference.hole_contours().is_empty());
+    assert_region_location(&difference, p(1, 1), RegionPointLocation::Inside);
+    assert_region_location(&difference, p(3, 1), RegionPointLocation::Outside);
+    assert_region_location(&difference, p(5, 3), RegionPointLocation::Inside);
+    assert_region_location(&difference, p(5, 5), RegionPointLocation::Outside);
+    assert_region_location(&difference, p(9, 9), RegionPointLocation::Inside);
+    assert_region_location(&difference, p(4, 3), RegionPointLocation::Boundary);
 }
 
 #[test]

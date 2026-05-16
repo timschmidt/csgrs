@@ -408,11 +408,25 @@ fn main() {
         BooleanOp::Difference,
         10_000,
     );
+    bench_region_case(
+        "boundary_touching_container_minus_subset_region",
+        &outer,
+        &edge_touching_inner,
+        BooleanOp::Difference,
+        10_000,
+    );
     bench_boundary_contour_case(
         "boundary_touching_containment_union_boundary_contours",
         &outer,
         &edge_touching_inner,
         BooleanOp::Union,
+        10_000,
+    );
+    bench_boundary_contour_case(
+        "boundary_touching_container_minus_subset_boundary_contours",
+        &outer,
+        &edge_touching_inner,
+        BooleanOp::Difference,
         10_000,
     );
 

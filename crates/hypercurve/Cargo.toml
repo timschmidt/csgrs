@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2024"
 readme = "README.md"
 
+[package.metadata.docs.rs]
+all-features = true
+
 [dependencies]
 hyperlattice = { path = "../hyperlattice", version = "0.4.0", default-features = false }
 hyperlimit = { path = "../hyperlimit", version = "0.2.0", default-features = false, features = ["std", "hyperlattice"], optional = true }

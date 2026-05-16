@@ -8,9 +8,10 @@
 use hyperlattice::Backend;
 
 use crate::{
-    BooleanBoundaryFragmentSet, BooleanBoundaryLoopSet, BooleanOp, Classification, Contour2,
-    ContourIntersection, CurvePolicy, CurveResult, FillRule, IntersectionKind, Point2, Region2,
-    RegionIntersectionSet, RegionPointLocation, RegionSide, RegionView2,
+    BooleanBoundaryFragmentSet, BooleanBoundaryLoopSet, BooleanFragmentSelection, BooleanOp,
+    Classification, Contour2, ContourIntersection, CurvePolicy, CurveResult, FillRule,
+    IntersectionKind, Point2, Region2, RegionFragmentSet, RegionIntersectionSet,
+    RegionPointLocation, RegionSide, RegionView2,
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -29,7 +30,10 @@ pub(crate) enum BoundaryContainmentRelation {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum BoundaryContactResolution {
     BoundaryOnly(BoundaryContactKind),
-    Containment(BoundaryContainmentRelation),
+    Containment {
+        relation: BoundaryContainmentRelation,
+        contact: BoundaryContactKind,
+    },
 }
 
 impl<B: Backend> Region2<B> {
@@ -188,9 +192,18 @@ pub(crate) fn boolean_boundary_contours_between<B: Backend>(
         Classification::Decided(Some(BoundaryContactResolution::BoundaryOnly(kind))) => {
             return boundary_contact_boundary_contours(first, second, op, fill_rule, policy, kind);
         }
-        Classification::Decided(Some(BoundaryContactResolution::Containment(relation))) => {
+        Classification::Decided(Some(BoundaryContactResolution::Containment {
+            relation,
+            contact,
+        })) => {
             if let Some(contours) = containment_boundary_contours(first, second, op, relation) {
                 return Ok(Classification::Decided(contours));
+            }
+            if relation == BoundaryContainmentRelation::FirstContainsSecond
+                && contact == BoundaryContactKind::Overlap
+                && op == BooleanOp::Difference
+            {
+                return containment_difference_boundary_contours(first, second, fill_rule, policy);
             }
         }
         Classification::Decided(None) => {}
@@ -253,9 +266,25 @@ pub(crate) fn boolean_region_between<B: Backend>(
         Classification::Decided(Some(BoundaryContactResolution::BoundaryOnly(kind))) => {
             return boundary_contact_region(first, second, op, fill_rule, policy, kind);
         }
-        Classification::Decided(Some(BoundaryContactResolution::Containment(relation))) => {
+        Classification::Decided(Some(BoundaryContactResolution::Containment {
+            relation,
+            contact,
+        })) => {
             if let Some(region) = containment_region(first, second, op, relation) {
                 return Ok(Classification::Decided(region));
+            }
+            if relation == BoundaryContainmentRelation::FirstContainsSecond
+                && contact == BoundaryContactKind::Overlap
+                && op == BooleanOp::Difference
+            {
+                return match containment_difference_boundary_contours(
+                    first, second, fill_rule, policy,
+                )? {
+                    Classification::Decided(contours) => {
+                        Region2::from_boundary_contours(contours, policy)
+                    }
+                    Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+                };
             }
         }
         Classification::Decided(None) => {}
@@ -297,7 +326,14 @@ fn boundary_contact_resolution<B: Backend>(
         Classification::Decided(false) => {
             return match boundary_contact_containment_relation(first, second, policy)? {
                 Classification::Decided(Some(relation)) => Ok(Classification::Decided(Some(
-                    BoundaryContactResolution::Containment(relation),
+                    BoundaryContactResolution::Containment {
+                        relation,
+                        contact: if saw_overlap {
+                            BoundaryContactKind::Overlap
+                        } else {
+                            BoundaryContactKind::PointOnly
+                        },
+                    },
                 ))),
                 Classification::Decided(None) => Ok(Classification::Decided(None)),
                 Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
@@ -587,9 +623,10 @@ fn containment_boundary_contours<B: Backend>(
     // These containment identities are regularized set identities, not graph
     // traversal guesses. They cover the subset cases Foster, Hormann, and Popa
     // separate from ordinary entry/exit traversal for degenerate polygon
-    // clipping (2019). Difference is decided only when the left operand is
-    // contained by the right; subtracting a boundary-touching subset from its
-    // container still needs the future overlap-aware rebuild path.
+    // clipping (2019). Difference is decided immediately when the left operand
+    // is contained by the right. The opposite `container - touching subset`
+    // case is handled by the certified overlap rebuild below, where coincident
+    // zero-area edges are dropped before the remaining boundary is assembled.
     match (relation, op) {
         (
             BoundaryContainmentRelation::FirstContainsSecond,
@@ -656,6 +693,26 @@ fn containment_region<B: Backend>(
     }
 }
 
+fn containment_difference_boundary_contours<B: Backend>(
+    first: &RegionView2<'_, B>,
+    second: &RegionView2<'_, B>,
+    fill_rule: FillRule,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Vec<Contour2<B>>>> {
+    let intersections = first.intersect_region(second, policy)?;
+    let fragments = match intersections.split_regions(first, second, policy)? {
+        Classification::Decided(fragments) => fragments,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let selection =
+        match fragments.classify_for_boolean(first, second, BooleanOp::Difference, policy)? {
+            Classification::Decided(selection) => selection,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+
+    boundary_contours_dropping_unresolved(&fragments, &selection, fill_rule, policy)
+}
+
 fn boundary_contact_boundary_contours<B: Backend>(
     first: &RegionView2<'_, B>,
     second: &RegionView2<'_, B>,
@@ -703,15 +760,26 @@ fn boundary_overlap_union_contours<B: Backend>(
         Classification::Decided(selection) => selection,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let emitted = selection.emit_boundary_fragments(&fragments)?;
 
-    // For a certified boundary-only overlap, the unresolved fragments are
-    // exactly the coincident zero-area edges. Dropping them and assembling the
-    // remaining directed boundary implements the regularized shared-edge union
-    // described by fill-state clipping algorithms such as Vatti's scanline
+    boundary_contours_dropping_unresolved(&fragments, &selection, fill_rule, policy)
+}
+
+pub(crate) fn boundary_contours_dropping_unresolved<B: Backend>(
+    fragments: &RegionFragmentSet<B>,
+    selection: &BooleanFragmentSelection,
+    fill_rule: FillRule,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Vec<Contour2<B>>>> {
+    let emitted = selection.emit_boundary_fragments(fragments)?;
+
+    // Certified contact handlers call this only after proving that every
+    // unresolved classification represents a zero-area coincident boundary
+    // edge. Dropping those edges and assembling the remaining directed graph is
+    // the regularized fill-state treatment described by Vatti's scanline
     // formulation (B. R. Vatti, "A generic solution to polygon clipping,"
-    // Communications of the ACM 35(7), 56-63, 1992). The certification above
-    // rejects containment and positive-area overlap before this path runs.
+    // Communications of the ACM 35(7), 56-63, 1992). The containment-difference
+    // caller additionally uses Foster, Hormann, and Popa's degeneracy split to
+    // keep positive-area overlap and branch cases out of this helper.
     let emitted =
         BooleanBoundaryFragmentSet::new(emitted.directed_fragments().to_vec(), Vec::new());
     let chains = match emitted.assemble_chains(policy) {

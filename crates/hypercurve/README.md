@@ -65,16 +65,18 @@ rules.
   regularized set identities, and external shared-edge contacts drop coincident
   zero-area edges for union/xor output.
 - Boundary-touching containment identities are handled before traversal for
-  union, intersection, and contained-minus-container difference, while
-  container-minus-touching-subset still defers to the future overlap rebuild
-  path.
+  union, intersection, and contained-minus-container difference.
+- Container-minus-boundary-touching-subset difference is rebuilt for certified
+  shared-edge containment by dropping the coincident zero-area boundary and
+  assembling the remaining directed fragments into the notched result.
 - Imported Cavalier deterministic and fuzz suites are present as compatibility
   references.
 
 This crate is not yet a complete boolean or offset engine. Shared-boundary
-fragments with positive-area containment or otherwise ambiguous topology are
-still reported as unresolved until the general overlap resolver is implemented;
-joined offsets are not yet self-intersection trimmed.
+fragments with positive-area overlap beyond the certified containment/contact
+fast paths, point-touching containment branches, or otherwise ambiguous topology
+are still reported as unresolved until the general overlap resolver is
+implemented; joined offsets are not yet self-intersection trimmed.
 
 ## Documentation
 
@@ -83,6 +85,22 @@ Public APIs are written to build cleanly on docs.rs. Local verification uses:
 ```text
 RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps
 ```
+
+## UI Test Article
+
+The `examples/hypercurve_ui` package recreates the Cavalier UI test article
+around `hypercurve` operations. It keeps a bulge-vertex editor for convenient
+interactive testing, then converts that data into `hypercurve` contours and
+regions for booleans, intersections, slices, and offsets.
+
+```text
+cargo run --manifest-path examples/hypercurve_ui/Cargo.toml
+cargo check --manifest-path examples/hypercurve_ui/Cargo.toml --target wasm32-unknown-unknown
+trunk serve examples/hypercurve_ui/index.html
+```
+
+If Trunk 0.21 rejects `NO_COLOR=1` in the local environment, run the Trunk
+command as `env -u NO_COLOR trunk serve examples/hypercurve_ui/index.html`.
 
 ## Benchmarks
 

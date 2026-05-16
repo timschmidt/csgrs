@@ -10,9 +10,9 @@ use hyperlattice::Backend;
 
 use crate::prepared::{PreparedContourView2, PreparedRegionView2};
 use crate::{
-    BooleanBoundaryFragmentSet, BooleanBoundaryLoopSet, BooleanFragmentSelection, BooleanOp,
-    Classification, Contour2, CurvePolicy, CurveResult, FillRule, Region2, RegionFragmentSet,
-    RegionIntersectionSet, RegionPointLocation, RegionSide,
+    BooleanBoundaryLoopSet, BooleanFragmentSelection, BooleanOp, Classification, Contour2,
+    CurvePolicy, CurveResult, FillRule, Region2, RegionFragmentSet, RegionIntersectionSet,
+    RegionPointLocation, RegionSide,
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -24,7 +24,10 @@ enum PreparedBoundaryContactKind {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum PreparedBoundaryContactResolution {
     BoundaryOnly(PreparedBoundaryContactKind),
-    Containment(crate::region_boolean::BoundaryContainmentRelation),
+    Containment {
+        relation: crate::region_boolean::BoundaryContainmentRelation,
+        contact: PreparedBoundaryContactKind,
+    },
 }
 
 pub(crate) fn boolean_boundary_loops_between_prepared<B: Backend>(
@@ -89,11 +92,22 @@ pub(crate) fn boolean_boundary_contours_between_prepared<B: Backend>(
                 first, second, op, fill_rule, policy, kind,
             );
         }
-        Classification::Decided(Some(PreparedBoundaryContactResolution::Containment(relation))) => {
+        Classification::Decided(Some(PreparedBoundaryContactResolution::Containment {
+            relation,
+            contact,
+        })) => {
             if let Some(contours) =
                 containment_boundary_contours_prepared(first, second, op, relation)
             {
                 return Ok(Classification::Decided(contours));
+            }
+            if relation == crate::region_boolean::BoundaryContainmentRelation::FirstContainsSecond
+                && contact == PreparedBoundaryContactKind::Overlap
+                && op == BooleanOp::Difference
+            {
+                return containment_difference_boundary_contours_prepared(
+                    first, second, fill_rule, policy,
+                );
             }
         }
         Classification::Decided(None) => {}
@@ -137,9 +151,25 @@ pub(crate) fn boolean_region_between_prepared<B: Backend>(
         Classification::Decided(Some(PreparedBoundaryContactResolution::BoundaryOnly(kind))) => {
             return boundary_contact_region_prepared(first, second, op, fill_rule, policy, kind);
         }
-        Classification::Decided(Some(PreparedBoundaryContactResolution::Containment(relation))) => {
+        Classification::Decided(Some(PreparedBoundaryContactResolution::Containment {
+            relation,
+            contact,
+        })) => {
             if let Some(region) = containment_region_prepared(first, second, op, relation) {
                 return Ok(Classification::Decided(region));
+            }
+            if relation == crate::region_boolean::BoundaryContainmentRelation::FirstContainsSecond
+                && contact == PreparedBoundaryContactKind::Overlap
+                && op == BooleanOp::Difference
+            {
+                return match containment_difference_boundary_contours_prepared(
+                    first, second, fill_rule, policy,
+                )? {
+                    Classification::Decided(contours) => {
+                        Region2::from_boundary_contours(contours, policy)
+                    }
+                    Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+                };
             }
         }
         Classification::Decided(None) => {}
@@ -199,7 +229,14 @@ fn boundary_contact_resolution_prepared<B: Backend>(
         Classification::Decided(false) => {
             return match boundary_contact_containment_relation_prepared(first, second, policy)? {
                 Classification::Decided(Some(relation)) => Ok(Classification::Decided(Some(
-                    PreparedBoundaryContactResolution::Containment(relation),
+                    PreparedBoundaryContactResolution::Containment {
+                        relation,
+                        contact: if saw_overlap {
+                            PreparedBoundaryContactKind::Overlap
+                        } else {
+                            PreparedBoundaryContactKind::PointOnly
+                        },
+                    },
                 ))),
                 Classification::Decided(None) => Ok(Classification::Decided(None)),
                 Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
@@ -482,6 +519,35 @@ fn containment_region_prepared<B: Backend>(
     }
 }
 
+fn containment_difference_boundary_contours_prepared<B: Backend>(
+    first: &PreparedRegionView2<'_, B>,
+    second: &PreparedRegionView2<'_, B>,
+    fill_rule: FillRule,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Vec<Contour2<B>>>> {
+    let first_view = first.as_region_view();
+    let second_view = second.as_region_view();
+    let intersections = first.intersect_prepared_region(second, policy)?;
+    let fragments = match intersections.split_regions(&first_view, &second_view, policy)? {
+        Classification::Decided(fragments) => fragments,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let selection = match classify_fragments_with_prepared_regions(
+        &fragments,
+        first,
+        second,
+        BooleanOp::Difference,
+        policy,
+    )? {
+        Classification::Decided(selection) => selection,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+
+    crate::region_boolean::boundary_contours_dropping_unresolved(
+        &fragments, &selection, fill_rule, policy,
+    )
+}
+
 fn boundary_contact_boundary_contours_prepared<B: Backend>(
     first: &PreparedRegionView2<'_, B>,
     second: &PreparedRegionView2<'_, B>,
@@ -529,25 +595,10 @@ fn boundary_overlap_union_contours_prepared<B: Backend>(
             Classification::Decided(selection) => selection,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-    let emitted = selection.emit_boundary_fragments(&fragments)?;
 
-    // The prepared shared-edge path keeps Vatti's regularized fill-state
-    // interpretation from the ordinary resolver, while reusing cached
-    // broad-phase and midpoint classifiers before dropping certified
-    // zero-area coincident edges.
-    let emitted =
-        BooleanBoundaryFragmentSet::new(emitted.directed_fragments().to_vec(), Vec::new());
-    let chains = match emitted.assemble_chains(policy) {
-        Classification::Decided(chains) => chains,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-
-    match chains.into_closed_loops() {
-        Classification::Decided(loops) => {
-            loops.into_contours(fill_rule).map(Classification::Decided)
-        }
-        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-    }
+    crate::region_boolean::boundary_contours_dropping_unresolved(
+        &fragments, &selection, fill_rule, policy,
+    )
 }
 
 fn boundary_contact_region_prepared<B: Backend>(
