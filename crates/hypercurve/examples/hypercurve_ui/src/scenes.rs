@@ -44,6 +44,8 @@ impl DemoScenes {
                 {
                     ui.selectable_value(&mut self.active, index, label);
                 }
+                ui.separator();
+                ui.hyperlink_to("GitHub", "https://github.com/timschmidt/hypercurve");
             });
         });
 
