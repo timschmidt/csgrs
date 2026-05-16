@@ -5,19 +5,35 @@ use hyperlimit::{
     orient2d, orient2d_batch, orient3d, orient3d_batch,
 };
 
+type Real = hyperreal::Real;
+
+fn real(value: f64) -> Real {
+    Real::try_from(value).expect("finite test scalar")
+}
+
+fn p2(x: f64, y: f64) -> Point2 {
+    Point2::new(real(x), real(y))
+}
+
+fn p3(x: f64, y: f64, z: f64) -> Point3 {
+    Point3::new(real(x), real(y), real(z))
+}
+
+#[cfg(feature = "parallel")]
+fn sp2(x: i128, y: i128) -> Point2 {
+    Point2::new(Real::from(x), Real::from(y))
+}
+
+#[cfg(feature = "parallel")]
+fn sp3(x: i128, y: i128, z: i128) -> Point3 {
+    Point3::new(Real::from(x), Real::from(y), Real::from(z))
+}
+
 #[test]
 fn sequential_batches_match_scalar_predicates() {
     let orient2_cases = vec![
-        (
-            Point2::new(0.0, 0.0),
-            Point2::new(1.0, 0.0),
-            Point2::new(0.0, 1.0),
-        ),
-        (
-            Point2::new(0.0, 0.0),
-            Point2::new(0.0, 1.0),
-            Point2::new(1.0, 0.0),
-        ),
+        (p2(0.0, 0.0), p2(1.0, 0.0), p2(0.0, 1.0)),
+        (p2(0.0, 0.0), p2(0.0, 1.0), p2(1.0, 0.0)),
     ];
     assert_eq!(
         orient2d_batch(&orient2_cases),
@@ -36,16 +52,16 @@ fn sequential_batches_match_scalar_predicates() {
 
     let orient3_cases = vec![
         (
-            Point3::new(0.0, 0.0, 0.0),
-            Point3::new(1.0, 0.0, 0.0),
-            Point3::new(0.0, 1.0, 0.0),
-            Point3::new(0.0, 0.0, 1.0),
+            p3(0.0, 0.0, 0.0),
+            p3(1.0, 0.0, 0.0),
+            p3(0.0, 1.0, 0.0),
+            p3(0.0, 0.0, 1.0),
         ),
         (
-            Point3::new(0.0, 0.0, 0.0),
-            Point3::new(0.0, 1.0, 0.0),
-            Point3::new(1.0, 0.0, 0.0),
-            Point3::new(0.0, 0.0, 1.0),
+            p3(0.0, 0.0, 0.0),
+            p3(0.0, 1.0, 0.0),
+            p3(1.0, 0.0, 0.0),
+            p3(0.0, 0.0, 1.0),
         ),
     ];
     assert_eq!(
@@ -65,12 +81,12 @@ fn sequential_batches_match_scalar_predicates() {
 
     let plane_cases = vec![
         (
-            Point3::new(0.0, 0.0, 3.0),
-            Plane3::new(Point3::new(0.0, 0.0, 1.0), -2.0),
+            p3(0.0, 0.0, 3.0),
+            Plane3::new(p3(0.0, 0.0, 1.0), real(-2.0)),
         ),
         (
-            Point3::new(0.0, 0.0, 1.0),
-            Plane3::new(Point3::new(0.0, 0.0, 1.0), -2.0),
+            p3(0.0, 0.0, 1.0),
+            Plane3::new(p3(0.0, 0.0, 1.0), real(-2.0)),
         ),
     ];
     assert_eq!(
@@ -81,12 +97,7 @@ fn sequential_batches_match_scalar_predicates() {
             .collect::<Vec<_>>()
     );
 
-    let incircle_cases = vec![(
-        Point2::new(1.0, 0.0),
-        Point2::new(0.0, 1.0),
-        Point2::new(-1.0, 0.0),
-        Point2::new(0.0, 0.0),
-    )];
+    let incircle_cases = vec![(p2(1.0, 0.0), p2(0.0, 1.0), p2(-1.0, 0.0), p2(0.0, 0.0))];
     assert_eq!(
         incircle2d_batch(&incircle_cases),
         incircle_cases
@@ -96,11 +107,11 @@ fn sequential_batches_match_scalar_predicates() {
     );
 
     let insphere_cases = vec![(
-        Point3::new(1.0, 0.0, 0.0),
-        Point3::new(-1.0, 0.0, 0.0),
-        Point3::new(0.0, 1.0, 0.0),
-        Point3::new(0.0, 0.0, 1.0),
-        Point3::new(0.0, 0.0, 0.0),
+        p3(1.0, 0.0, 0.0),
+        p3(-1.0, 0.0, 0.0),
+        p3(0.0, 1.0, 0.0),
+        p3(0.0, 0.0, 1.0),
+        p3(0.0, 0.0, 0.0),
     )];
     assert_eq!(
         insphere3d_batch(&insphere_cases),
@@ -113,19 +124,15 @@ fn sequential_batches_match_scalar_predicates() {
 
 #[test]
 fn batch_policy_is_applied_to_each_case() {
-    let cases = vec![(
-        Point2::new(0.0, 0.0),
-        Point2::new(1.0, 0.0),
-        Point2::new(0.0, 1.0),
-    )];
+    let cases = vec![(p2(0.0, 0.0), p2(1.0, 0.0), p2(0.0, 1.0))];
 
     assert_eq!(
-        hyperlimit::orient2d_batch_with_policy(&cases, PredicatePolicy::APPROXIMATE),
+        hyperlimit::orient2d_batch_with_policy(&cases, PredicatePolicy::STRICT),
         vec![hyperlimit::orient::orient2d_with_policy(
             &cases[0].0,
             &cases[0].1,
             &cases[0].2,
-            PredicatePolicy::APPROXIMATE,
+            PredicatePolicy::STRICT,
         )]
     );
 }
@@ -135,12 +142,9 @@ fn batch_policy_is_applied_to_each_case() {
 fn parallel_batches_match_sequential_batches() {
     let orient2_cases = (0..2048)
         .map(|i| {
-            let x = -0.5 + i as f64 / 2048.0;
-            (
-                Point2::new(0.0, 0.0),
-                Point2::new(1.0, 1.0),
-                Point2::new(x, x + if i % 2 == 0 { 1.0e-12 } else { -1.0e-12 }),
-            )
+            let x = i as i128 - 1024;
+            let eps = if i % 2 == 0 { 1 } else { -1 };
+            (sp2(0, 0), sp2(2048, 2048), sp2(x, x + eps))
         })
         .collect::<Vec<_>>();
     assert_eq!(
@@ -150,13 +154,9 @@ fn parallel_batches_match_sequential_batches() {
 
     let orient3_cases = (0..2048)
         .map(|i| {
-            let x = -0.5 + i as f64 / 2048.0;
-            (
-                Point3::new(0.0, 0.0, 0.0),
-                Point3::new(1.0, 0.0, 0.0),
-                Point3::new(0.0, 1.0, 0.0),
-                Point3::new(x, -x, if i % 2 == 0 { 1.0e-12 } else { -1.0e-12 }),
-            )
+            let x = i as i128 - 1024;
+            let z = if i % 2 == 0 { 1 } else { -1 };
+            (sp3(0, 0, 0), sp3(1, 0, 0), sp3(0, 1, 0), sp3(x, -x, z))
         })
         .collect::<Vec<_>>();
     assert_eq!(

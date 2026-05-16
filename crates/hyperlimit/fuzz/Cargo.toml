@@ -1,0 +1,23 @@
+[package]
+name = "hyperlimit-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+# Keep fuzz dependencies out of the parent workspace graph during normal builds.
+[workspace]
+
+[dependencies]
+libfuzzer-sys = "0.4"
+arbitrary = { version = "1", features = ["derive"] }
+hyperlimit = { path = "..", default-features = false, features = ["std", "parallel"] }
+hyperreal = { path = "../../hyperreal" }
+
+[[bin]]
+name = "predicate_invariants"
+path = "fuzz_targets/predicate_invariants.rs"
+test = false
+doc = false

@@ -8,10 +8,10 @@ pub type Result<T> = core::result::Result<T, PredicateError>;
 /// Errors that can occur while evaluating a predicate.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum PredicateError {
-    /// The selected policy requires a backend capability that is unavailable.
+    /// The selected policy requires a Real predicate capability that is unavailable.
     CapabilityUnavailable(&'static str),
-    /// The backend rejected refinement or exact evaluation.
-    Backend(&'static str),
+    /// Real refinement or exact evaluation failed.
+    Real(&'static str),
 }
 
 impl fmt::Display for PredicateError {
@@ -20,7 +20,7 @@ impl fmt::Display for PredicateError {
             Self::CapabilityUnavailable(capability) => {
                 write!(f, "predicate capability unavailable: {capability}")
             }
-            Self::Backend(message) => write!(f, "predicate backend error: {message}"),
+            Self::Real(message) => write!(f, "predicate Real error: {message}"),
         }
     }
 }

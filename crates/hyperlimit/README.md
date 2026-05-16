@@ -3,54 +3,84 @@
   <img src="./doc/hyperlimit.png" alt="Hyper, a clever mathematician" width="144" align="right">
 </h1>
 
-`hyperlimit` provides geometry predicates that report both the result and how
-the result was decided.
+`hyperlimit` provides hyperreal-first exact geometry predicates that report both
+the classified result and how the result was decided.
 
 It implements 2D/3D orientation, in-circle, in-sphere, line classification, and
-plane classification over scalar types that can expose structural facts. The
-resolver tries cheap scalar and determinant facts before exact arithmetic,
-bounded refinement, or robust fallback.
+plane classification over `hyperreal::Real`. The resolver uses Real structural
+facts, exact structural term-sign filters, exact arithmetic, and bounded
+hyperreal sign refinement. Primitive `f32` and `f64` are not predicate Real
+values; they should only appear at rendering, IO, and interop boundaries.
 
 ## Relationship to Other Crates
 
-- `hyperreal` supplies exact/symbolic scalar facts and bounded sign refinement
+- `hyperreal` supplies exact/symbolic Real facts and bounded sign refinement
   through `hyperreal::Real`.
-- `hyperlattice` supplies `Scalar<B>` values for vector and matrix code and
-  forwards backend-neutral scalar facts to `hyperlimit`.
-- `hyperlimit` owns predicate policy, escalation order, fallback selection, and
-  result provenance.
+- `hyperlattice` uses the same `hyperreal::Real` type for vector and matrix
+  code and shares Real structural facts with `hyperlimit`.
+- `hyperlimit` owns predicate policy, escalation order, and result provenance.
 
-`hyperlimit` does not own scalar expression internals or linear algebra types.
+`hyperlimit` does not own Real expression internals or linear algebra types.
+
+## Semantic Boundary and Structural Dispatch
+
+`hyperlimit` is the exact decision layer. It owns reusable geometric predicate
+traits, outcomes, policies, escalation stages, and small classifiers whose
+semantics are shared by higher crates. It does not own Real representation,
+vector/matrix storage, curve booleans, triangulation topology, solver models, or
+domain-specific geometry.
+
+Predicate dispatch may use facts carried by lower layers, but decisions must
+remain exact. Current shortcuts use exact structural zero/sign facts, exact
+arithmetic, and bounded hyperreal refinement. Future fast paths should accept
+metadata such as integer-grid scale, dyadic denominator class, symbolic Real
+class, sparse-zero masks, affine-transform kind, coordinate bounds expressed as
+exact structural certificates, and source normalization facts. Those facts
+should select faster determinant expansions or skip known-zero terms before
+generic expression construction; they must not reintroduce primitive-float
+predicate filters.
+
+`hyperlimit` should keep reusable predicates here and leave object ownership
+above it: segment/ring storage in `hypercurve` or `hypertri`, DCEL state in
+`hypertri`, and active-set policy in `hypersolve`.
 
 ## Current State
 
-Version `0.1.3` is an early, documented predicate crate with a small public API.
+Version `0.2.0` is an early, documented predicate crate with a small public API.
 It is not a mesh, polygon, BSP, CSG, or intersection library.
 
 Implemented:
 
-- `Point2<S>` and `Point3<S>`
+- `Point2` and `Point3` with `Real` coordinates
+- `RealZeroKnowledge`, `Point2DisplacementFacts`, `Segment2Facts`,
+  `Triangle2Facts`, `TriangleEdge2`, and `Aabb2Facts` for predicate-facing
+  structural dispatch metadata
+- `compare_reals`, `compare_point2_lexicographic`
+- `point2_equal`, `compare_point2_distance_squared`
+- `classify_real_closed_interval`, `real_in_closed_interval`,
+  `classify_closed_interval_intersection`, `closed_intervals_intersect`
+- `classify_point_aabb2`, `point_in_aabb2`,
+  `classify_aabb2_intersection`, `aabb2s_intersect`
 - `orient2d`, `orient3d`
 - `incircle2d`, `insphere3d`
 - `classify_point_line`
+- `classify_point_segment`, `point_on_segment`,
+  `classify_segment_intersection`, `PreparedSegment2`, and
+  cached-`Segment2Facts` variants
+- `classify_point_triangle`, `PreparedTriangle2`, and cached-`Triangle2Facts`
+  variants
+- `ring_area_sign`, `classify_point_ring_even_odd`, `point_in_ring_even_odd`
 - `Plane3`, `classify_point_plane`, `classify_point_oriented_plane`
 - batch APIs, with optional Rayon parallel variants
 - `PredicateOutcome<T>` with certainty and deciding stage
-- `PredicatePolicy` for strict, filtered, refined, robust, and approximate
-  behavior
-- scalar traits for structural facts, finite `f64` filters, borrowed arithmetic,
-  and bounded sign refinement
-- optional adapters for `hyperreal`, `hyperlattice`, `inari`, `robust`, and
-  `geogram_predicates`
-
-Strict policies do not return approximate topology. Approximate signs are
-available only when the policy explicitly allows them.
+- `PredicatePolicy` for exact/refined predicate behavior
+- Real structural-fact helpers and bounded sign refinement
 
 ## Installation
 
 ```toml
 [dependencies]
-hyperlimit = "0.1.3"
+hyperlimit = "0.2.0"
 ```
 
 From sibling checkouts:
@@ -60,24 +90,15 @@ From sibling checkouts:
 hyperlimit = { path = "../hyperlimit" }
 ```
 
-Enable only the backends you need:
-
-```toml
-[dependencies]
-hyperlimit = {
-    version = "0.1.3",
-    features = ["hyperreal", "robust"]
-}
-```
-
 ## Quick Start
 
 ```rust
 use hyperlimit::{Point2, Sign, orient2d};
+use hyperreal::Real;
 
-let a = Point2::new(0.0_f64, 0.0);
-let b = Point2::new(1.0_f64, 0.0);
-let c = Point2::new(0.0_f64, 1.0);
+let a = Point2::new(Real::from(0), Real::from(0));
+let b = Point2::new(Real::from(1), Real::from(0));
+let c = Point2::new(Real::from(0), Real::from(1));
 
 let outcome = orient2d(&a, &b, &c);
 assert_eq!(outcome.value(), Some(Sign::Positive));
@@ -87,10 +108,11 @@ Line-side classification maps orientation signs into geometry names:
 
 ```rust
 use hyperlimit::{LineSide, Point2, classify_point_line};
+use hyperreal::Real;
 
-let from = Point2::new(0.0_f64, 0.0);
-let to = Point2::new(1.0_f64, 0.0);
-let point = Point2::new(0.0_f64, 1.0);
+let from = Point2::new(Real::from(0), Real::from(0));
+let to = Point2::new(Real::from(1), Real::from(0));
+let point = Point2::new(Real::from(0), Real::from(1));
 
 assert_eq!(
     classify_point_line(&from, &to, &point).value(),
@@ -102,9 +124,13 @@ Plane classification works with explicit plane equations:
 
 ```rust
 use hyperlimit::{Plane3, PlaneSide, Point3, classify_point_plane};
+use hyperreal::Real;
 
-let plane = Plane3::new(Point3::new(0.0_f64, 0.0, 1.0), -2.0);
-let point = Point3::new(0.0_f64, 0.0, 3.0);
+let plane = Plane3::new(
+    Point3::new(Real::from(0), Real::from(0), Real::from(1)),
+    Real::from(-2),
+);
+let point = Point3::new(Real::from(0), Real::from(0), Real::from(3));
 
 assert_eq!(
     classify_point_plane(&point, &plane).value(),
@@ -118,10 +144,11 @@ Predicates return `PredicateOutcome<T>`:
 
 ```rust
 use hyperlimit::{Point2, PredicateOutcome, orient2d};
+use hyperreal::Real;
 
-let a = Point2::new(0.0_f64, 0.0);
-let b = Point2::new(1.0_f64, 0.0);
-let c = Point2::new(0.0_f64, 1.0);
+let a = Point2::new(Real::from(0), Real::from(0));
+let b = Point2::new(Real::from(1), Real::from(0));
+let c = Point2::new(Real::from(0), Real::from(1));
 
 match orient2d(&a, &b, &c) {
     PredicateOutcome::Decided { value, certainty, stage } => {
@@ -137,8 +164,6 @@ Certainty values:
 
 - `Exact`
 - `Filtered`
-- `RobustFloat`
-- `Approximate`
 
 Stages:
 
@@ -146,109 +171,97 @@ Stages:
 - `Filter`
 - `Exact`
 - `Refined`
-- `RobustFallback`
 - `Undecided`
 
 The shared sign resolver attempts:
 
-1. scalar structural sign
-2. determinant term filters and conservative numeric filters
-3. exact scalar or exact predicate hooks
-4. bounded scalar sign refinement
-5. robust backend fallback
-6. approximate sign, only when policy allows it
-7. `Unknown`
-
-The same escalation path as a flow:
-
-```mermaid
-flowchart TD
-    Predicate["Predicate call\norient, incircle, plane side"] --> Structural["Structural scalar facts\nsign, zero, nonzero, bounds"]
-    Structural -->|decided| ExactOutcome["PredicateOutcome\nExact"]
-    Structural -->|unknown| Filter["Determinant filters\nand conservative envelopes"]
-    Filter -->|decided| FilteredOutcome["PredicateOutcome\nFiltered"]
-    Filter -->|uncertain| ExactHook["Exact scalar or\nexact predicate hook"]
-    ExactHook -->|decided| ExactOutcome
-    ExactHook -->|unavailable or unknown| Refine["Bounded sign refinement"]
-    Refine -->|decided| RefinedOutcome["PredicateOutcome\nExact or Refined"]
-    Refine -->|still unknown| Robust["Robust backend fallback\nrobust or geogram"]
-    Robust -->|decided| RobustOutcome["PredicateOutcome\nRobustFloat"]
-    Robust -->|unavailable or disagrees| ApproxGate{"Policy allows\napproximate topology?"}
-    ApproxGate -->|yes| Approx["Approximate sign"]
-    Approx --> ApproxOutcome["PredicateOutcome\nApproximate"]
-    ApproxGate -->|no| Unknown["PredicateOutcome::Unknown"]
-```
+1. Real structural sign
+2. determinant term filters from exact structural zero/sign facts
+3. exact Real or exact predicate hooks
+4. bounded Real sign refinement
+5. `Unknown`
 
 Use policy-specific functions when the default strict behavior is not desired:
 
 ```rust
 use hyperlimit::{Point2, PredicatePolicy, orient::orient2d_with_policy};
+use hyperreal::Real;
 
-let a = Point2::new(0.0_f64, 0.0);
-let b = Point2::new(1.0_f64, 1.0);
-let c = Point2::new(2.0_f64, 2.0);
+let a = Point2::new(Real::from(0), Real::from(0));
+let b = Point2::new(Real::from(1), Real::from(1));
+let c = Point2::new(Real::from(2), Real::from(2));
 
-let outcome = orient2d_with_policy(&a, &b, &c, PredicatePolicy::APPROXIMATE);
+let policy = PredicatePolicy {
+    allow_refinement: false,
+    ..PredicatePolicy::STRICT
+};
+let outcome = orient2d_with_policy(&a, &b, &c, policy);
 println!("{outcome:?}");
 ```
 
-## Scalar Model
+## Real Model
 
-`StructuralScalar` can expose:
+Predicate coordinates are `hyperreal::Real`. The predicate layer reads:
 
 - known sign
-- exact zero status
-- provable nonzero status
-- exact/rational state
-- magnitude bounds
+- exact zero/nonzero status
+- exact rational state
 - bounded sign refinement
 
-`PredicateScalar` adds arithmetic and finite `f64` conversion for filters and
-fallbacks. `BorrowedPredicateScalar` adds borrowed `add_ref`, `sub_ref`, and
-`mul_ref` operations so richer scalar backends avoid cloning every determinant
-term.
-
-Primitive `f32` and `f64` implement the scalar traits without optional features.
+Higher crates should preserve these facts alongside geometric objects when they
+can reuse them across many predicates.
 
 ## Optional Features
 
 | Feature | Purpose |
 | --- | --- |
 | `std` | Default feature. No special public API is attached to it currently. |
-| `parallel` | Rayon-backed batch predicate variants. |
-| `hyperreal` | Implements predicate scalar traits for `hyperreal::Real`. |
-| `hyperlattice` | Implements predicate scalar traits for `hyperlattice::Scalar<B>`. |
-| `interval` | Implements predicate scalar traits for `inari::Interval`. |
-| `robust` | Robust fallback through the `robust` crate for finite `f64`-convertible inputs. |
-| `geogram` | Robust fallback through the Rust-port `geogram_predicates` branch. |
-
-Interval values expose finite `f64` fallback only for singleton finite
-intervals. This avoids treating interval midpoints as exact geometry.
-
-`inari` 2 requires Haswell-class SIMD on x86-64:
-
-```sh
-RUSTFLAGS='-Ctarget-cpu=haswell' cargo test --features interval
-```
-
-When both `geogram` and `robust` are enabled, fallback dispatch prefers Geogram.
-For Geogram in-circle and in-sphere fallback, both symbolic-perturbation
-polarities are checked and disagreement is reported as zero.
+| `parallel` | Enables batch predicate variants under the same Real API. |
+| `dispatch-trace` | Records predicate dispatch provenance during benchmarks. |
 
 ## Module Map
 
-- `scalar`: scalar traits and fact types
+- `real`: Real fact mapping and borrowed Real arithmetic helpers
+- `geometry::facts`: point-displacement, segment, and AABB extent structural
+  facts for exact fast-path selection
 - `predicate`: outcome, certainty, policy, and sign types
-- `filter`: conservative determinant filters
 - `resolve`: shared internal sign-resolution pipeline
+- `predicates::aabb`: exact stateless 2D axis-aligned box classifiers
+- `predicates::distance`: exact squared-distance comparison predicates
+- `predicates::interval`: exact Real interval containment and intersection
+  classifiers
+- `predicates::order`: exact Real and point ordering predicates
 - `orient`: points and orientation/circle/sphere predicates
+- `predicates::segment`: exact point-on-segment and segment-intersection
+  classifiers
+- `predicates::ring`: exact signed-area/winding sign and even-odd point-ring
+  helpers
 - `plane`: explicit and oriented plane classification
 - `classify`: line and plane side enums
 - `batch`: sequential and optional parallel batch APIs
-- `backend`: optional backend adapters
 - `error`: crate-local error/result types
 
 Common public types and functions are re-exported from the crate root.
+
+## References
+
+Bentley, Jon Louis, and Thomas A. Ottmann. "Algorithms for Reporting and
+Counting Geometric Intersections." *IEEE Transactions on Computers*, vol. C-28,
+no. 9, 1979, pp. 643-647.
+
+de Berg, Mark, Otfried Cheong, Marc van Kreveld, and Mark Overmars.
+*Computational Geometry: Algorithms and Applications*. 3rd ed., Springer, 2008.
+
+Hormann, Kai, and Alexander Agathos. "The Point in Polygon Problem for
+Arbitrary Polygons." *Computational Geometry*, vol. 20, no. 3, 2001, pp.
+131-144.
+
+Shewchuk, Jonathan Richard. "Adaptive Precision Floating-Point Arithmetic and
+Fast Robust Geometric Predicates." *Discrete & Computational Geometry*, vol.
+18, no. 3, 1997, pp. 305-363.
+
+Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry*,
+vol. 7, nos. 1-2, 1997, pp. 3-23.
 
 ## Benchmarks and Development
 
@@ -257,16 +270,13 @@ Run checks:
 ```sh
 cargo test
 cargo test --no-default-features
-cargo test --features robust
-cargo test --features hyperreal
-cargo test --features hyperlattice
+cargo test --all-features
 ```
 
 Run the broad feature set:
 
 ```sh
-cargo test --features geogram,robust,hyperreal,hyperlattice,parallel
-RUSTFLAGS='-Ctarget-cpu=haswell' cargo test --features geogram,robust,hyperreal,hyperlattice,interval,parallel
+cargo test --features parallel
 ```
 
 Run benchmarks:
@@ -280,18 +290,10 @@ The generated benchmark summary is in [`benchmarks.md`](benchmarks.md).
 Run dispatch tracing separately:
 
 ```sh
-cargo bench --bench predicates --features dispatch-trace,hyperlattice -- --write-dispatch-trace-md
+cargo bench --bench predicates --features dispatch-trace -- --write-dispatch-trace-md
 ```
 
 The generated trace summary is in [`dispatch_trace.md`](dispatch_trace.md).
-
-Render predicate demo plots:
-
-```sh
-cargo run --example predicate_plots -- --out doc/predicate-plots --size 512
-```
-
-See [`plots.md`](plots.md) for the plot gallery.
 
 ## License
 

@@ -1,7 +1,24 @@
+pub mod aabb;
+pub mod distance;
+mod exact;
+pub mod filters;
 pub mod incircle;
 pub mod insphere;
+pub mod interval;
+pub mod order;
 pub mod orient;
 pub mod point_line;
 pub mod point_plane;
+pub mod ring;
+pub mod segment;
+pub mod triangle;
 
+pub use self::aabb::*;
+pub use self::distance::*;
+pub use self::filters::*;
+pub use self::interval::*;
+pub use self::order::*;
 pub use self::orient::*;
+pub use self::ring::*;
+pub use self::segment::*;
+pub use self::triangle::*;

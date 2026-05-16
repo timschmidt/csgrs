@@ -3,111 +3,75 @@
 use crate::predicate::{
     Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign, SignKnowledge,
 };
-use crate::scalar::{MagnitudeBounds, PredicateScalar};
+use crate::real::{RealPredicateExt, sign_knowledge_from_real_facts};
+use hyperreal::{Real, ZeroKnowledge};
 
-/// Resolve a scalar sign through the common predicate pipeline.
+/// Resolve a Real sign through the common predicate pipeline.
 ///
 /// `exact` is the predicate-level exact evaluation hook. It should do actual
-/// exact determinant/sign work for the whole predicate, while scalar facts only
-/// certify signs that are already exposed by the computed scalar value.
-pub(crate) fn resolve_scalar_sign<S: PredicateScalar>(
-    value: &S,
+/// exact determinant/sign work for the whole predicate, while Real facts only
+/// certify signs that are already exposed by the computed Real value.
+pub(crate) fn resolve_real_sign(
+    value: &Real,
     policy: PredicatePolicy,
     filter: impl FnOnce() -> Option<PredicateOutcome<Sign>>,
     exact: impl FnOnce() -> Option<Sign>,
-    fallback: impl FnOnce() -> Option<PredicateOutcome<Sign>>,
     unknown_need: RefinementNeed,
 ) -> PredicateOutcome<Sign> {
     // The ordering is the performance policy for every predicate: use facts
-    // already attached to the scalar, then determinant-specific cheap filters,
-    // then exact/refinement/fallback stages. Reordering this can easily move
-    // exact symbolic backends from nanosecond fact checks to expression builds.
-    if let Some(outcome) = decide_scalar_sign(value, Escalation::Structural) {
-        crate::trace_dispatch!(
-            "hyperlimit",
-            "resolve_scalar_sign",
-            "structural-scalar-facts"
-        );
+    // already attached to the Real, then determinant-specific cheap filters,
+    // then exact/refinement stages. Reordering this can easily move
+    // exact symbolic Real values from nanosecond fact checks to expression builds.
+    if let Some(outcome) = decide_real_sign(value, Escalation::Structural) {
+        crate::trace_dispatch!("hyperlimit", "resolve_real_sign", "structural-real-facts");
         return outcome;
     }
 
+    // Structural-dispatch note: richer Real metadata should be preserved up
+    // to this boundary. Exact-rational kind, dyadic denominator class, sparse
+    // zero masks, symbolic-class tags, and coordinate-grid facts can select
+    // faster exact determinant expansions before the predicate allocates a full
+    // symbolic expression. Those future dispatches must remain exact; do not
+    // reintroduce primitive-float dominance predicates here.
     if let Some(outcome) = filter() {
-        crate::trace_dispatch!("hyperlimit", "resolve_scalar_sign", "predicate-filter");
+        crate::trace_dispatch!("hyperlimit", "resolve_real_sign", "predicate-filter");
         return outcome;
     }
 
-    if let Some(outcome) = exact_scalar_sign_if_allowed(value, policy) {
-        crate::trace_dispatch!("hyperlimit", "resolve_scalar_sign", "exact-scalar-facts");
+    if let Some(outcome) = exact_real_sign_if_allowed(value, policy) {
+        crate::trace_dispatch!("hyperlimit", "resolve_real_sign", "exact-real-facts");
         return outcome;
     }
 
     if let Some(outcome) = exact_evaluation_if_allowed(policy, exact) {
-        crate::trace_dispatch!("hyperlimit", "resolve_scalar_sign", "exact-predicate");
+        crate::trace_dispatch!("hyperlimit", "resolve_real_sign", "exact-predicate");
         return outcome;
     }
 
-    if let Some(outcome) = refine_scalar_sign_if_allowed(value, policy) {
-        crate::trace_dispatch!("hyperlimit", "resolve_scalar_sign", "scalar-refinement");
+    if let Some(outcome) = refine_real_sign_if_allowed(value, policy) {
+        crate::trace_dispatch!("hyperlimit", "resolve_real_sign", "real-refinement");
         return outcome;
     }
 
-    if let Some(outcome) = fallback() {
-        crate::trace_dispatch!("hyperlimit", "resolve_scalar_sign", "robust-fallback");
-        return outcome;
-    }
-
-    if let Some(outcome) = approximate_if_allowed(value, policy) {
-        crate::trace_dispatch!("hyperlimit", "resolve_scalar_sign", "approximate");
-        return outcome;
-    }
-
-    crate::trace_dispatch!("hyperlimit", "resolve_scalar_sign", "unknown");
+    crate::trace_dispatch!("hyperlimit", "resolve_real_sign", "unknown");
     PredicateOutcome::unknown(unknown_need, Escalation::Undecided)
 }
 
-pub(crate) fn decide_scalar_sign<S: PredicateScalar>(
-    value: &S,
-    stage: Escalation,
-) -> Option<PredicateOutcome<Sign>> {
+pub(crate) fn decide_real_sign(value: &Real, stage: Escalation) -> Option<PredicateOutcome<Sign>> {
     match value.known_sign() {
         SignKnowledge::Known { sign, certainty } => {
-            crate::trace_dispatch!("hyperlimit", "decide_scalar_sign", "known-sign");
+            crate::trace_dispatch!("hyperlimit", "decide_real_sign", "known-sign");
             Some(PredicateOutcome::decided(sign, certainty, stage))
         }
         SignKnowledge::NonZero => {
-            crate::trace_dispatch!("hyperlimit", "decide_scalar_sign", "nonzero-no-sign");
+            crate::trace_dispatch!("hyperlimit", "decide_real_sign", "nonzero-no-sign");
             None
         }
         SignKnowledge::Unknown => {
-            crate::trace_dispatch!("hyperlimit", "decide_scalar_sign", "unknown");
+            crate::trace_dispatch!("hyperlimit", "decide_real_sign", "unknown");
             None
         }
     }
-}
-
-pub(crate) fn approximate_if_allowed<S: PredicateScalar>(
-    value: &S,
-    policy: PredicatePolicy,
-) -> Option<PredicateOutcome<Sign>> {
-    if !policy.allow_approximate {
-        crate::trace_dispatch!("hyperlimit", "approximate_if_allowed", "disabled");
-        return None;
-    }
-
-    let Some(value) = value.to_f64() else {
-        crate::trace_dispatch!("hyperlimit", "approximate_if_allowed", "no-f64");
-        return None;
-    };
-    let Some(sign) = Sign::from_f64(value) else {
-        crate::trace_dispatch!("hyperlimit", "approximate_if_allowed", "zero-or-nan");
-        return None;
-    };
-    crate::trace_dispatch!("hyperlimit", "approximate_if_allowed", "decided");
-    Some(PredicateOutcome::decided(
-        sign,
-        Certainty::Approximate,
-        Escalation::Undecided,
-    ))
 }
 
 pub(crate) fn map_outcome<T, U>(
@@ -124,24 +88,24 @@ pub(crate) fn map_outcome<T, U>(
     }
 }
 
-fn exact_scalar_sign_if_allowed<S: PredicateScalar>(
-    value: &S,
+fn exact_real_sign_if_allowed(
+    value: &Real,
     policy: PredicatePolicy,
 ) -> Option<PredicateOutcome<Sign>> {
     if !policy.allow_exact {
-        crate::trace_dispatch!("hyperlimit", "exact_scalar_sign", "disabled");
+        crate::trace_dispatch!("hyperlimit", "exact_real_sign", "disabled");
         return None;
     }
 
-    let facts = value.scalar_facts();
-    if facts.exact != Some(true) && facts.rational_only != Some(true) {
-        crate::trace_dispatch!("hyperlimit", "exact_scalar_sign", "not-exact-scalar");
+    let facts = value.real_facts();
+    if !facts.exact_rational {
+        crate::trace_dispatch!("hyperlimit", "exact_real_sign", "not-exact-real");
         return None;
     }
 
-    match facts.sign_knowledge() {
+    match sign_knowledge_from_real_facts(facts) {
         SignKnowledge::Known { sign, .. } => {
-            crate::trace_dispatch!("hyperlimit", "exact_scalar_sign", "decided");
+            crate::trace_dispatch!("hyperlimit", "exact_real_sign", "decided");
             Some(PredicateOutcome::decided(
                 sign,
                 Certainty::Exact,
@@ -149,11 +113,11 @@ fn exact_scalar_sign_if_allowed<S: PredicateScalar>(
             ))
         }
         SignKnowledge::NonZero => {
-            crate::trace_dispatch!("hyperlimit", "exact_scalar_sign", "nonzero-no-sign");
+            crate::trace_dispatch!("hyperlimit", "exact_real_sign", "nonzero-no-sign");
             None
         }
         SignKnowledge::Unknown => {
-            crate::trace_dispatch!("hyperlimit", "exact_scalar_sign", "unknown");
+            crate::trace_dispatch!("hyperlimit", "exact_real_sign", "unknown");
             None
         }
     }
@@ -184,22 +148,22 @@ fn exact_evaluation_if_allowed(
     }
 }
 
-fn refine_scalar_sign_if_allowed<S: PredicateScalar>(
-    value: &S,
+fn refine_real_sign_if_allowed(
+    value: &Real,
     policy: PredicatePolicy,
 ) -> Option<PredicateOutcome<Sign>> {
     if !policy.allow_refinement {
-        crate::trace_dispatch!("hyperlimit", "refine_scalar_sign", "disabled");
+        crate::trace_dispatch!("hyperlimit", "refine_real_sign", "disabled");
         return None;
     }
 
     let Some(precision) = policy.max_refinement_precision else {
-        crate::trace_dispatch!("hyperlimit", "refine_scalar_sign", "no-precision-budget");
+        crate::trace_dispatch!("hyperlimit", "refine_real_sign", "no-precision-budget");
         return None;
     };
-    match value.refine_sign_until(precision) {
+    match value.refine_sign_knowledge_until(precision) {
         SignKnowledge::Known { sign, certainty } => {
-            crate::trace_dispatch!("hyperlimit", "refine_scalar_sign", "decided");
+            crate::trace_dispatch!("hyperlimit", "refine_real_sign", "decided");
             Some(PredicateOutcome::decided(
                 sign,
                 certainty,
@@ -207,37 +171,36 @@ fn refine_scalar_sign_if_allowed<S: PredicateScalar>(
             ))
         }
         SignKnowledge::NonZero => {
-            crate::trace_dispatch!("hyperlimit", "refine_scalar_sign", "nonzero-no-sign");
+            crate::trace_dispatch!("hyperlimit", "refine_real_sign", "nonzero-no-sign");
             None
         }
         SignKnowledge::Unknown => {
-            crate::trace_dispatch!("hyperlimit", "refine_scalar_sign", "unknown");
+            crate::trace_dispatch!("hyperlimit", "refine_real_sign", "unknown");
             None
         }
     }
 }
 
-/// Try to decide the sign of a sum of signed terms using structural signs and
-/// magnitude bounds. Each input term is `(term, sign_multiplier)`.
+/// Try to decide the sign of a sum of signed terms using structural zero/sign
+/// facts only. Each input term is `(term, sign_multiplier)`.
 #[inline(always)]
-pub(crate) fn signed_term_filter<S: PredicateScalar>(
-    terms: &[(&S, Sign)],
-) -> Option<PredicateOutcome<Sign>> {
+pub(crate) fn signed_term_filter(terms: &[(&Real, Sign)]) -> Option<PredicateOutcome<Sign>> {
     // This filter is a performance shortcut ahead of exact predicate fallback.
-    // It intentionally uses only cheap scalar facts: exact zero, structural
-    // sign, and conservative magnitude. If any needed fact is missing, we stop
-    // and let the normal predicate pipeline refine or fall back.
+    // It intentionally uses only exact structural zero/sign facts. Primitive
+    // float magnitude dominance used to live here; it was removed so
+    // `hyperlimit` predicates operate entirely through hyperreal-backed exact
+    // signs, exact arithmetic, and bounded refinement.
     if terms.len() > 4 {
         return signed_term_filter_dynamic(terms);
     }
 
-    let mut nonzero = [(Sign::Zero, MagnitudeBounds::exact(0.0)); 4];
+    let mut nonzero = [Sign::Zero; 4];
     let mut nonzero_len = 0usize;
     for (term, multiplier) in terms {
-        let Some((sign, magnitude)) = signed_nonzero_term(*term, *multiplier)? else {
+        let Some(sign) = signed_nonzero_term(*term, *multiplier)? else {
             continue;
         };
-        nonzero[nonzero_len] = (sign, magnitude);
+        nonzero[nonzero_len] = sign;
         nonzero_len += 1;
     }
 
@@ -245,33 +208,28 @@ pub(crate) fn signed_term_filter<S: PredicateScalar>(
 }
 
 #[inline]
-fn signed_term_filter_dynamic<S: PredicateScalar>(
-    terms: &[(&S, Sign)],
-) -> Option<PredicateOutcome<Sign>> {
+fn signed_term_filter_dynamic(terms: &[(&Real, Sign)]) -> Option<PredicateOutcome<Sign>> {
     let mut nonzero = Vec::with_capacity(terms.len());
 
     for (term, multiplier) in terms {
-        let Some((sign, magnitude)) = signed_nonzero_term(*term, *multiplier)? else {
+        let Some(sign) = signed_nonzero_term(*term, *multiplier)? else {
             continue;
         };
-        nonzero.push((sign, magnitude));
+        nonzero.push(sign);
     }
 
     finish_signed_term_filter(&nonzero)
 }
 
 #[inline(always)]
-fn signed_nonzero_term<S: PredicateScalar>(
-    term: &S,
-    multiplier: Sign,
-) -> Option<Option<(Sign, MagnitudeBounds)>> {
-    let facts = term.scalar_facts();
-    if facts.exact_zero == Some(true) || facts.sign == Some(Sign::Zero) {
+fn signed_nonzero_term(term: &Real, multiplier: Sign) -> Option<Option<Sign>> {
+    let facts = term.real_facts();
+    if matches!(facts.zero, ZeroKnowledge::Zero) {
         crate::trace_dispatch!("hyperlimit", "signed_term_filter", "zero-term");
         return Some(None);
     }
 
-    let Some(sign) = facts.sign else {
+    let Some(sign) = facts.sign.map(crate::real::map_real_sign) else {
         crate::trace_dispatch!("hyperlimit", "signed_term_filter", "missing-sign");
         return None;
     };
@@ -280,17 +238,11 @@ fn signed_nonzero_term<S: PredicateScalar>(
         crate::trace_dispatch!("hyperlimit", "signed_term_filter", "zero-after-multiplier");
         return Some(None);
     }
-    let Some(magnitude) = facts.magnitude else {
-        crate::trace_dispatch!("hyperlimit", "signed_term_filter", "missing-magnitude");
-        return None;
-    };
-    Some(Some((sign, magnitude)))
+    Some(Some(sign))
 }
 
 #[inline(always)]
-fn finish_signed_term_filter(
-    nonzero: &[(Sign, MagnitudeBounds)],
-) -> Option<PredicateOutcome<Sign>> {
+fn finish_signed_term_filter(nonzero: &[Sign]) -> Option<PredicateOutcome<Sign>> {
     if nonzero.is_empty() {
         crate::trace_dispatch!("hyperlimit", "signed_term_filter", "all-zero");
         return Some(PredicateOutcome::decided(
@@ -299,8 +251,8 @@ fn finish_signed_term_filter(
             Escalation::Filter,
         ));
     }
-    let first = nonzero[0].0;
-    if nonzero.iter().all(|(sign, _)| *sign == first) {
+    let first = nonzero[0];
+    if nonzero.iter().all(|sign| *sign == first) {
         crate::trace_dispatch!("hyperlimit", "signed_term_filter", "same-sign");
         return Some(PredicateOutcome::decided(
             first,
@@ -309,48 +261,7 @@ fn finish_signed_term_filter(
         ));
     }
 
-    match dominance_sign(nonzero) {
-        Some(sign) => {
-            crate::trace_dispatch!("hyperlimit", "signed_term_filter", "dominant-term");
-            Some(PredicateOutcome::decided(
-                sign,
-                Certainty::Filtered,
-                Escalation::Filter,
-            ))
-        }
-        None => {
-            crate::trace_dispatch!("hyperlimit", "signed_term_filter", "mixed-no-dominance");
-            None
-        }
-    }
-}
-
-#[inline(always)]
-fn dominance_sign(terms: &[(Sign, MagnitudeBounds)]) -> Option<Sign> {
-    // Dominant-term detection catches expressions like `pi - 3` without
-    // constructing exact fallback objects. The two-bit gap is conservative:
-    // it leaves ambiguous near-cancellation to the slower but safer path.
-    for (index, (sign, magnitude)) in terms.iter().enumerate() {
-        if magnitude.abs_lower <= 0.0 {
-            crate::trace_dispatch!("hyperlimit", "dominance_sign", "nonpositive-lower-bound");
-            continue;
-        }
-
-        let mut others_upper = 0.0;
-        for (other_index, (_, other_magnitude)) in terms.iter().enumerate() {
-            if other_index == index {
-                continue;
-            }
-            others_upper += other_magnitude.abs_upper;
-        }
-
-        if magnitude.abs_lower > others_upper {
-            crate::trace_dispatch!("hyperlimit", "dominance_sign", "decided");
-            return Some(*sign);
-        }
-    }
-
-    crate::trace_dispatch!("hyperlimit", "dominance_sign", "none");
+    crate::trace_dispatch!("hyperlimit", "signed_term_filter", "mixed-signs");
     None
 }
 
@@ -366,106 +277,17 @@ fn multiply_sign(left: Sign, right: Sign) -> Sign {
 #[cfg(test)]
 mod tests {
     use core::cell::Cell;
-    use core::ops::{Add, Mul, Sub};
 
     use super::*;
-    use crate::scalar::{ScalarFacts, StructuralScalar};
-
-    #[derive(Clone, Debug, PartialEq)]
-    struct FactScalar {
-        facts: ScalarFacts,
-        value: f64,
-    }
-
-    impl FactScalar {
-        fn new(sign: Sign, abs_lower: f64, abs_upper: f64) -> Self {
-            Self {
-                facts: ScalarFacts {
-                    sign: Some(sign),
-                    exact_zero: Some(sign == Sign::Zero),
-                    provably_nonzero: Some(sign != Sign::Zero),
-                    exact: Some(false),
-                    rational_only: Some(false),
-                    magnitude: Some(MagnitudeBounds {
-                        abs_lower,
-                        abs_upper,
-                    }),
-                },
-                value: match sign {
-                    Sign::Negative => -abs_lower,
-                    Sign::Zero => 0.0,
-                    Sign::Positive => abs_lower,
-                },
-            }
-        }
-
-        fn exact_without_known_sign(value: f64) -> Self {
-            Self {
-                facts: ScalarFacts {
-                    sign: None,
-                    exact_zero: Some(false),
-                    provably_nonzero: None,
-                    exact: Some(true),
-                    rational_only: Some(true),
-                    magnitude: Some(MagnitudeBounds::exact(value.abs())),
-                },
-                value,
-            }
-        }
-    }
-
-    impl StructuralScalar for FactScalar {
-        fn scalar_facts(&self) -> ScalarFacts {
-            self.facts
-        }
-    }
-
-    impl crate::scalar::PredicateScalar for FactScalar {
-        fn to_f64(&self) -> Option<f64> {
-            Some(self.value)
-        }
-    }
-
-    impl Add for FactScalar {
-        type Output = Self;
-
-        fn add(self, rhs: Self) -> Self::Output {
-            Self {
-                facts: ScalarFacts::default(),
-                value: self.value + rhs.value,
-            }
-        }
-    }
-
-    impl Sub for FactScalar {
-        type Output = Self;
-
-        fn sub(self, rhs: Self) -> Self::Output {
-            Self {
-                facts: ScalarFacts::default(),
-                value: self.value - rhs.value,
-            }
-        }
-    }
-
-    impl Mul for FactScalar {
-        type Output = Self;
-
-        fn mul(self, rhs: Self) -> Self::Output {
-            Self {
-                facts: ScalarFacts::default(),
-                value: self.value * rhs.value,
-            }
-        }
-    }
+    use hyperreal::Rational;
 
     #[test]
-    fn signed_term_filter_uses_magnitude_dominance() {
-        let large = FactScalar::new(Sign::Positive, 10.0, 12.0);
-        let small = FactScalar::new(Sign::Positive, 1.0, 2.0);
+    fn signed_term_filter_decides_same_sign_terms_without_magnitude() {
+        let large = Real::from(10);
+        let small = Real::from(1);
 
         assert_eq!(
-            signed_term_filter(&[(&large, Sign::Positive), (&small, Sign::Negative)]),
+            signed_term_filter(&[(&large, Sign::Positive), (&small, Sign::Positive)]),
             Some(PredicateOutcome::decided(
                 Sign::Positive,
                 Certainty::Filtered,
@@ -475,16 +297,29 @@ mod tests {
     }
 
     #[test]
-    fn resolve_scalar_sign_uses_exact_evaluation_callback() {
-        let value = FactScalar::exact_without_known_sign(3.0);
+    fn signed_term_filter_leaves_mixed_signs_to_exact_pipeline() {
+        let large = Real::from(10);
+        let small = Real::from(1);
 
         assert_eq!(
-            resolve_scalar_sign(
+            signed_term_filter(&[(&large, Sign::Positive), (&small, Sign::Negative)]),
+            None
+        );
+    }
+
+    #[test]
+    fn resolve_real_sign_uses_exact_evaluation_callback() {
+        // Use a deliberately tight rational approximation to pi so cheap
+        // structural Real facts cannot decide the sign before the predicate-level
+        // exact callback is reached.
+        let value = Real::pi() - Real::new(Rational::fraction(103_993, 33_102).unwrap());
+
+        assert_eq!(
+            resolve_real_sign(
                 &value,
                 PredicatePolicy::STRICT,
                 || None,
                 || Some(Sign::Positive),
-                || None,
                 RefinementNeed::ExactArithmetic,
             ),
             PredicateOutcome::decided(Sign::Positive, Certainty::Exact, Escalation::Exact)
@@ -492,19 +327,20 @@ mod tests {
     }
 
     #[test]
-    fn resolve_scalar_sign_does_not_call_exact_evaluation_when_policy_disallows_exact() {
-        let value = FactScalar::exact_without_known_sign(3.0);
+    fn resolve_real_sign_does_not_call_exact_evaluation_when_policy_disallows_exact() {
+        // The value is not structurally sign-known, which keeps this test
+        // focused on the exact-callback policy gate instead of the earlier
+        // structural short-circuit.
+        let value = Real::pi() - Real::new(Rational::fraction(103_993, 33_102).unwrap());
         let called = Cell::new(false);
         let policy = PredicatePolicy {
             allow_exact: false,
             allow_refinement: false,
-            allow_robust_fallback: false,
-            allow_approximate: false,
             ..PredicatePolicy::STRICT
         };
 
         assert_eq!(
-            resolve_scalar_sign(
+            resolve_real_sign(
                 &value,
                 policy,
                 || None,
@@ -512,7 +348,6 @@ mod tests {
                     called.set(true);
                     Some(Sign::Positive)
                 },
-                || None,
                 RefinementNeed::ExactArithmetic,
             ),
             PredicateOutcome::unknown(RefinementNeed::ExactArithmetic, Escalation::Undecided)

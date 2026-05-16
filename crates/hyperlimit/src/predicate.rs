@@ -12,19 +12,6 @@ pub enum Sign {
 }
 
 impl Sign {
-    /// Returns the sign of a primitive floating value.
-    pub fn from_f64(value: f64) -> Option<Self> {
-        if value.is_nan() {
-            None
-        } else if value > 0.0 {
-            Some(Self::Positive)
-        } else if value < 0.0 {
-            Some(Self::Negative)
-        } else {
-            Some(Self::Zero)
-        }
-    }
-
     /// Returns the opposite sign.
     pub const fn reversed(self) -> Self {
         match self {
@@ -40,16 +27,11 @@ impl Sign {
 pub enum Certainty {
     /// The result follows from exact or structural information.
     Exact,
-    /// The result follows from a conservative numeric filter.
+    /// The result follows from conservative structural Real facts.
     Filtered,
-    /// The result follows from adaptive robust arithmetic on projected finite
-    /// floating-point coordinates.
-    RobustFloat,
-    /// The result is approximate and should not be used for irreversible topology.
-    Approximate,
 }
 
-/// What a scalar or predicate currently knows about a sign.
+/// What a Real value or predicate currently knows about a sign.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SignKnowledge {
     /// The sign is known with the given certainty.
@@ -94,18 +76,139 @@ impl SignKnowledge {
 /// Which stage decided, or failed to decide, a predicate.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Escalation {
-    /// Decided using structural scalar facts.
+    /// Decided using structural Real facts.
     Structural,
-    /// Decided using a conservative numeric filter.
+    /// Decided using exact structural term facts.
     Filter,
-    /// Decided using exact scalar arithmetic.
+    /// Decided using exact Real arithmetic.
     Exact,
-    /// Decided using a robust backend fallback.
-    RobustFallback,
-    /// Decided after adaptive scalar refinement.
+    /// Decided after adaptive Real refinement.
     Refined,
     /// Not decided by the enabled stages.
     Undecided,
+}
+
+/// Exact determinant kernel selected for a predicate.
+///
+/// This is intentionally a predicate-layer description, not a scalar or matrix
+/// implementation type. The exact-geometric-computation separation follows
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997): higher layers can observe which certified geometric schedule
+/// decided the topology without depending on the internal `Real` expression
+/// tree or on a particular determinant storage representation.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactPredicateKernel {
+    /// Rational 2x2 determinant for 2D orientation.
+    Orient2dRationalDet2,
+    /// Rational translated 3x3 determinant for 3D orientation.
+    Orient3dRationalDet3,
+    /// Rational lifted 3x3 determinant for the 2D in-circle predicate.
+    Incircle2dRationalLiftedDet3,
+    /// Rational lifted 4x4 determinant for the 3D in-sphere predicate.
+    Insphere3dRationalLiftedDet4,
+}
+
+/// Advisory determinant schedule selected from prepared geometric facts.
+///
+/// This is a schedule hint, not a correctness certificate. It lets prepared
+/// predicates and higher crates reuse object-level facts such as sparse support,
+/// dyadic coordinates, or shared denominators before constructing generic
+/// `Real` expressions. The exact predicate report remains the certificate for
+/// any topology decision. This directly follows Yap's exact-geometric-
+/// computation boundary between geometric object structure and arithmetic
+/// packages; see Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DeterminantScheduleHint {
+    /// Some fixed points have certified sparse support and no fixed point has
+    /// unknown zero status, so a sparse determinant schedule is a candidate.
+    ///
+    /// Sparse exact determinant formulas are classical arithmetic-package
+    /// choices. They should still be paired with exact reduction schedules such
+    /// as fraction-free elimination when appropriate; see Bareiss,
+    /// "Sylvester's Identity and Multistep Integer-Preserving Gaussian
+    /// Elimination," *Mathematics of Computation* 22.103 (1968).
+    SparseSupportCandidate {
+        /// Exact predicate kernel shape that would consume the schedule.
+        kernel: ExactPredicateKernel,
+        /// Number of fixed points with origin or one-hot support.
+        fixed_sparse_points: u32,
+    },
+    /// Every fixed coordinate has one shared reduced denominator.
+    ///
+    /// This is the borrowed common-scale case highlighted by Yap: keep the
+    /// geometric object scale available instead of immediately expanding every
+    /// coordinate as an independent scalar rational.
+    SharedDenominatorCandidate {
+        /// Exact predicate kernel shape that would consume the schedule.
+        kernel: ExactPredicateKernel,
+    },
+    /// Every fixed coordinate is dyadic, allowing shift-oriented exact rational
+    /// schedules when the query coordinates are compatible.
+    DyadicCandidate {
+        /// Exact predicate kernel shape that would consume the schedule.
+        kernel: ExactPredicateKernel,
+    },
+    /// Fixed coordinates are exact rational, but no more specific retained
+    /// structure has been exposed.
+    ExactRationalKernel {
+        /// Exact predicate kernel shape that would consume the schedule.
+        kernel: ExactPredicateKernel,
+    },
+    /// The prepared facts do not certify a fixed exact-rational determinant
+    /// schedule; the generic `Real` predicate path is the honest fallback.
+    GenericRealFallback,
+}
+
+/// Provenance certificate for a predicate decision or explicit non-decision.
+///
+/// Certificates are deliberately compact and copyable. They identify the
+/// semantic route used by the predicate pipeline so applications can audit
+/// topology decisions, benchmark dispatch choices, and keep approximate edge
+/// policies visibly separate from exact computation.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PredicateCertificate {
+    /// Cheap facts attached to a `Real` or geometric object decided the result.
+    StructuralFact,
+    /// A conservative exact filter over structurally signed terms decided it.
+    DeterminantFilter,
+    /// A conservative exact interval enclosure decided the sign.
+    CertifiedIntervalFilter,
+    /// A fixed exact rational determinant kernel decided it.
+    ExactRationalKernel {
+        /// The selected exact determinant schedule.
+        kernel: ExactPredicateKernel,
+    },
+    /// Exact scalar facts on the constructed `Real` expression decided it.
+    ExactRealFact,
+    /// Bounded Real refinement decided it.
+    BoundedRefinement,
+    /// Exact symbolic predicate support would be needed here.
+    ExactSymbolicKernel,
+    /// An explicitly requested approximate policy decided it.
+    ApproximatePolicyFallback,
+    /// No enabled certified route decided the predicate.
+    Unknown,
+}
+
+impl PredicateCertificate {
+    /// Return a coarse certificate for an already computed outcome.
+    ///
+    /// This is useful for older code paths that still return only
+    /// [`PredicateOutcome`]. New exact-kernel code should prefer constructing a
+    /// more specific certificate such as [`PredicateCertificate::ExactRationalKernel`].
+    pub const fn from_outcome<T>(outcome: &PredicateOutcome<T>) -> Self {
+        match outcome {
+            PredicateOutcome::Decided { stage, .. } => match stage {
+                Escalation::Structural => Self::StructuralFact,
+                Escalation::Filter => Self::DeterminantFilter,
+                Escalation::Exact => Self::ExactRealFact,
+                Escalation::Refined => Self::BoundedRefinement,
+                Escalation::Undecided => Self::Unknown,
+            },
+            PredicateOutcome::Unknown { .. } => Self::Unknown,
+        }
+    }
 }
 
 /// A predicate result with provenance.
@@ -153,51 +256,67 @@ impl<T> PredicateOutcome<T> {
     }
 }
 
+/// A predicate outcome paired with a provenance certificate.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct PredicateReport<T> {
+    /// The value or explicit uncertainty returned by the predicate.
+    pub outcome: PredicateOutcome<T>,
+    /// The semantic route that produced `outcome`.
+    pub certificate: PredicateCertificate,
+}
+
+impl<T> PredicateReport<T> {
+    /// Construct a predicate report.
+    pub const fn new(outcome: PredicateOutcome<T>, certificate: PredicateCertificate) -> Self {
+        Self {
+            outcome,
+            certificate,
+        }
+    }
+
+    /// Construct a report by deriving a coarse certificate from the outcome.
+    pub const fn from_outcome(outcome: PredicateOutcome<T>) -> Self {
+        let certificate = PredicateCertificate::from_outcome(&outcome);
+        Self {
+            outcome,
+            certificate,
+        }
+    }
+
+    /// Return the decided value, or `None` when the outcome is unknown.
+    pub fn value(self) -> Option<T> {
+        self.outcome.value()
+    }
+}
+
 /// What additional work would be required.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum RefinementNeed {
     /// Exact arithmetic is needed.
     ExactArithmetic,
-    /// A robust fallback backend is needed.
-    RobustFallback,
-    /// More scalar precision or refinement is needed.
-    ScalarRefinement,
-    /// The enabled backends cannot decide this case.
+    /// More Real refinement is needed.
+    RealRefinement,
+    /// The Real-backed predicate pipeline cannot decide this case.
     Unsupported,
 }
 
 /// Runtime policy for predicate escalation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct PredicatePolicy {
-    /// Permit approximate signs when no proof is available.
-    pub allow_approximate: bool,
-    /// Permit robust backend fallback when available.
-    pub allow_robust_fallback: bool,
-    /// Permit exact backend paths when available.
+    /// Permit exact Real predicate paths when available.
     pub allow_exact: bool,
-    /// Permit scalar refinement when available.
+    /// Permit Real refinement when available.
     pub allow_refinement: bool,
-    /// Lowest binary precision scalar refinement may request.
+    /// Lowest binary precision Real refinement may request.
     pub max_refinement_precision: Option<i32>,
 }
 
 impl PredicatePolicy {
-    /// Conservative default: do not return approximate topology.
+    /// Conservative default: topology is decided by exact/refined paths.
     pub const STRICT: Self = Self {
-        allow_approximate: false,
-        allow_robust_fallback: true,
         allow_exact: true,
         allow_refinement: true,
         max_refinement_precision: Some(-512),
-    };
-
-    /// Useful for prototyping, debugging, and visual previews.
-    pub const APPROXIMATE: Self = Self {
-        allow_approximate: true,
-        allow_robust_fallback: false,
-        allow_exact: false,
-        allow_refinement: false,
-        max_refinement_precision: None,
     };
 }
 

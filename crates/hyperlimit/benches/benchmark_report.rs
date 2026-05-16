@@ -33,6 +33,7 @@ pub fn write_benchmarks_md() -> io::Result<ReportSummary> {
     if criterion_dir.exists() {
         collect_rows(&criterion_dir, &mut rows)?;
     }
+    rows.retain(row_is_current_real_benchmark);
     rows.sort_by(compare_rows);
 
     let path = root.join("benchmarks.md");
@@ -149,6 +150,10 @@ fn compare_rows(left: &Row, right: &Row) -> Ordering {
         .then_with(|| left.full_id.cmp(&right.full_id))
 }
 
+fn row_is_current_real_benchmark(row: &Row) -> bool {
+    matches!(row.value_str.as_str(), "hyperreal" | "hyperreal_prepared")
+}
+
 fn render_markdown(rows: &[Row]) -> String {
     let mut md = String::new();
     md.push_str("# Benchmarks\n\n");
@@ -162,12 +167,10 @@ fn render_markdown(rows: &[Row]) -> String {
     md.push_str("```sh\ncargo bench --bench predicates\n```\n\n");
     md.push_str("Run dispatch tracing separately and update `dispatch_trace.md`:\n\n");
     md.push_str(
-        "```sh\ncargo bench --bench predicates --features dispatch-trace,hyperlattice -- --write-dispatch-trace-md\n```\n\n",
+        "```sh\ncargo bench --bench predicates --features dispatch-trace -- --write-dispatch-trace-md\n```\n\n",
     );
     md.push_str("Regenerate this file from existing Criterion output:\n\n");
     md.push_str("```sh\ncargo run --example write_benchmarks_md\n```\n\n");
-    md.push_str("Run optional scalar representation benchmarks:\n\n");
-    md.push_str("```sh\nRUSTFLAGS='-Ctarget-cpu=haswell' cargo bench --bench predicates --features hyperreal,hyperlattice,interval\n```\n\n");
     md.push_str(
         "Open Criterion's detailed HTML report at `target/criterion/report/index.html`.\n\n",
     );
