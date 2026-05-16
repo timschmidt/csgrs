@@ -84,7 +84,7 @@ pub fn configure_child_command(_command: &mut std::process::Command) {}
 
 /// RAII guard for a CLI-owned child process.
 pub struct ChildProcessGuard {
-    child: Child,
+    child: Option<Child>,
     active_group: i32,
     disarmed: bool,
 }
@@ -95,7 +95,7 @@ impl ChildProcessGuard {
         let active_group = child.id() as i32;
         ACTIVE_CHILD_GROUP.store(active_group, Ordering::SeqCst);
         Self {
-            child,
+            child: Some(child),
             active_group,
             disarmed: false,
         }
@@ -103,9 +103,25 @@ impl ChildProcessGuard {
 
     /// Wait for the child to exit and unregister it from signal cleanup.
     pub fn wait(mut self) -> std::io::Result<std::process::ExitStatus> {
-        let status = self.child.wait();
+        let status = self
+            .child
+            .as_mut()
+            .expect("child process guard should own a child")
+            .wait();
         self.disarm();
         status
+    }
+
+    /// Wait for the child to exit, capture its output, and unregister it from
+    /// signal cleanup.
+    pub fn wait_with_output(mut self) -> std::io::Result<std::process::Output> {
+        let child = self
+            .child
+            .take()
+            .expect("child process guard should own a child");
+        let output = child.wait_with_output();
+        self.disarm();
+        output
     }
 
     fn disarm(&mut self) {
@@ -120,8 +136,10 @@ impl Drop for ChildProcessGuard {
     fn drop(&mut self) {
         if !self.disarmed {
             terminate_active_child_group(self.active_group);
-            let _ = self.child.kill();
-            let _ = self.child.wait();
+            if let Some(child) = self.child.as_mut() {
+                let _ = child.kill();
+                let _ = child.wait();
+            }
             self.disarm();
         }
     }

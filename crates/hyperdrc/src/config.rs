@@ -599,8 +599,17 @@ mod tests {
                 "fabricator_profile": "prototype-fab",
                 "fabrication_capability": {
                   "max_copper_layers": 4,
+                  "preferred_max_copper_layers": 2,
+                  "cost_escalation_copper_layers": 3,
                   "min_finished_thickness": 0.6,
+                  "preferred_min_finished_thickness": 0.8,
+                  "preferred_max_finished_thickness": 1.6,
                   "max_finished_thickness": 2.4,
+                  "preferred_min_copper_weight_oz": 0.5,
+                  "preferred_max_copper_weight_oz": 2.0,
+                  "cost_escalation_copper_weight_oz": 3.0,
+                  "preferred_min_dielectric_thickness": 0.075,
+                  "cost_escalation_min_dielectric_thickness": 0.05,
                   "max_loss_tangent": 0.025,
                   "min_tg_c": 130.0
                 },
@@ -685,8 +694,58 @@ mod tests {
         assert_eq!(stackup.target_ipc_class.as_deref(), Some("IPC Class 2"));
         assert_eq!(stackup.fabrication_capability.max_copper_layers, Some(4));
         assert_eq!(
+            stackup.fabrication_capability.preferred_max_copper_layers,
+            Some(2)
+        );
+        assert_eq!(
+            stackup.fabrication_capability.cost_escalation_copper_layers,
+            Some(3)
+        );
+        assert_eq!(
             stackup.fabrication_capability.min_finished_thickness,
             Some(0.6)
+        );
+        assert_eq!(
+            stackup
+                .fabrication_capability
+                .preferred_min_finished_thickness,
+            Some(0.8)
+        );
+        assert_eq!(
+            stackup
+                .fabrication_capability
+                .preferred_max_finished_thickness,
+            Some(1.6)
+        );
+        assert_eq!(
+            stackup
+                .fabrication_capability
+                .preferred_min_copper_weight_oz,
+            Some(0.5)
+        );
+        assert_eq!(
+            stackup
+                .fabrication_capability
+                .preferred_max_copper_weight_oz,
+            Some(2.0)
+        );
+        assert_eq!(
+            stackup
+                .fabrication_capability
+                .cost_escalation_copper_weight_oz,
+            Some(3.0)
+        );
+        assert_eq!(
+            stackup
+                .fabrication_capability
+                .preferred_min_dielectric_thickness,
+            Some(0.075)
+        );
+        assert_eq!(
+            stackup
+                .fabrication_capability
+                .cost_escalation_min_dielectric_thickness,
+            Some(0.05)
         );
         assert_eq!(stackup.fabrication_capability.max_loss_tangent, Some(0.025));
         assert_eq!(stackup.fabrication_capability.min_tg_c, Some(130.0));

@@ -49,7 +49,10 @@ should not become primitive-float geometry decisions.
   Island-neighbor selection uses a layer polygon spatial index before exact
   expanded-island intersection review.
 - `copper-overlap`: intersect one copper layer with another copper layer and
-  report overlapping geometry that may create unintended capacitance.
+  report overlapping geometry that may create unintended capacitance. When
+  IPC-D-356 net points are loaded, overlap regions with one net are downgraded
+  to review warnings with same-net evidence, while missing or mixed net evidence
+  remains an error.
 - `board-edge-clearance`: erode the board outline by the requested clearance,
   subtract that allowed region from copper, and report any remaining copper.
 - `board-outline-cutout-clearance`: detect nested board outlines that represent
@@ -652,10 +655,15 @@ should not become primitive-float geometry decisions.
 ## Supported Inputs
 
 - Gerber RS-274X through `csgrs` `gerber-io`.
-- Gerber directories and converter-produced Gerber directories. The first
-  converter backend shells out to TransJLC to normalize common EDA Gerber
-  packages into JLCEDA/JLCPCB-style Gerber names before loading them through the
-  same layer pipeline.
+- Gerber directories, converter-produced Gerber directories, and ZIP/TAR/TGZ
+  package archives. Archive inputs are extracted into a temporary workspace and
+  recursively discovered before flowing through the same layer and sidecar
+  pipeline. Converter backends shell out to TransJLC to normalize common EDA
+  Gerber packages into JLCEDA/JLCPCB-style Gerber names, or to KiCad CLI to
+  export Gerber, Excellon drill, IPC-D-356, DRC JSON, position/centroid, and
+  optional DXF/SVG/PDF review drawing plus IPC-2581, ODB++, STEP, GLB, PLY, and
+  statistics handoff files from `.kicad_pcb` sources, before loading generated
+  files through the same layer and sidecar pipelines.
 - KiCad `.kicad_pcb` S-expression files for common board objects: nets, pads,
   oval, trapezoid, rounded-rectangle, and chamfered roundrect pads, oval/rectangular drill
   declarations with offset drill centers, common custom pad primitives
@@ -735,10 +743,10 @@ example before it is considered production-ready.
   asymmetric-stripline/coupled/coplanar impedance solving, polygonal/named board
   region models beyond rectangular class scopes.
 - Manufacturing capability profiles: initial `prototype-fab`, `standard-fab`,
-  `advanced-fab`, and custom JSON threshold decks are implemented for stackup
-  review, including optional material-property windows. Remaining work:
-  vendor-specific JLCPCB, PCBWay, Eurocircuits-style service classes that
-  separate hard minimum, preferred minimum, and cost-escalation thresholds.
+  `advanced-fab`, vendor-style JLCPCB, PCBWay, and Eurocircuits service classes,
+  and custom JSON threshold decks are implemented for stackup review, including
+  optional material-property windows. Profiles can separate hard minimum/maximum
+  bounds, preferred service bounds, and cost-escalation review thresholds.
 - Assembly profile: prototype SMT, production SMT, double-sided SMT,
   fixture-focused, hand-assembly, selective-solder, wave-solder, press-fit, and
   conformal-coating threshold profiles are implemented for component clearance,
@@ -1079,7 +1087,8 @@ example before it is considered production-ready.
   fab/assembly drawing parity for special fabrication and assembly handoffs,
   release revision/date consistency, DNP/DNI placement conflicts, and package
   parity between purchase, placement, and netlist files. Initial CSV/TSV,
-  semicolon/whitespace table, text, and
+  semicolon/whitespace table, common JSON array/object table extraction,
+  XLS/XLSX/XLSM/XLSB/ODS first-populated-sheet extraction, text, and
   path/metadata checks are implemented by
   `production-artifact-readiness`.
 - Fiducials: global/local count, symmetry, copper diameter, mask opening,
@@ -1282,7 +1291,9 @@ example before it is considered production-ready.
   provenance. Aperture macro definitions from `%AM...*%` are preserved with
   malformed, duplicate, and conflicting-definition diagnostics so custom
   aperture templates remain visible before `%ADD` expansion and geometry
-  flattening.
+  flattening. Manifest readiness now warns when Gerber image unit or
+  coordinate-format declarations are mixed across layers, or when only part of a
+  package declares them.
 - Order-parameter parity: board thickness, copper weight, soldermask color,
   surface finish, impedance, castellations, edge plating, via fill, controlled
   depth, and panelization options match file content.
@@ -1448,27 +1459,58 @@ Gerber/KiCad fixtures with one clear violation and one matching non-violation.
   step-and-repeat, `%AM...*%` aperture macros, `%ADD...*%` aperture definitions, undefined `Dnn` aperture selections, X2/X3
   `.AperFunction`, net-name `.N`, component-refdes `.C`, and component-pin `.P`
   intent forms.
-- Structured JSON input manifest entries with adapter, role, path, and
-  conversion-origin provenance.
+- Structured JSON input manifest entries with adapter, role, path,
+  conversion-origin provenance, and Gerber source/normalized unit context when
+  declared.
 - JSON waiver files that suppress findings by ID, check name, layers, or message
   text, with governance warnings for incomplete, malformed, or expired
   production-review metadata. `waiver-governance` is a default and explicitly
   selectable readiness check; governance findings are appended after waiver
-  matching so a waiver file cannot suppress warnings about itself.
+  matching so a waiver file cannot suppress warnings about itself. Waived
+  finding details are retained in the report model for review sinks while active
+  finding counts and CI gates continue to use non-waived findings.
 - Compact JSON CI summaries with error, warning, waiver, and per-check counts.
+- Gerber violation overlays for direct review in board or CAM viewers. The
+  initial `--gerber-overlay` sink emits active finding polygons as RS-274X
+  regions and point-only findings as circular flashes in millimeter units.
+  The `--gerber-keepout-overlay` sink emits a separate generated Gerber keepout
+  review layer with larger point markers.
+- Excellon-style marker overlays for drill-map review. The `--excellon-overlay`
+  sink emits active finding locations as review drill hits and polygon-only
+  findings as approximate center markers.
+- DXF violation overlays for CAD and mechanical review. The `--dxf-overlay`
+  sink emits active finding polygon rings as closed lightweight polylines and
+  point-only findings as circles.
+- PDF violation overlays for document-centric review packets. The
+  `--pdf-overlay` sink emits a single-page PDF with active finding polygons and
+  circular point markers.
 - JSON rule configuration with CLI overrides for clearance thresholds, area
   thresholds, and KiCad copper layer selection.
 
 ## Reporting Roadmap
 
-- Export violation overlays as Gerber for direct review in board viewers.
-- Expand parser diagnostics beyond Excellon, IPC-D-356, and initial Gerber
-  image setup/X2 metadata to full Gerber image syntax, KiCad,
-  BOM/centroid/netlist table parsing, and converter adapters.
+- Parser diagnostics have expanded beyond Excellon, IPC-D-356, and initial
+  Gerber image setup/X2 metadata into broader Gerber image syntax, KiCad CLI DRC
+  JSON, BOM/centroid/netlist table parsing, and converter adapter output
+  manifests. Spreadsheet diagnostics now flag formula cells, defined names,
+  VBA/macro projects, hidden sheets, non-worksheet sheets, multiple populated
+  sheets, empty sheets, explicit BOM/centroid/netlist sheet selection,
+  same-header multi-sheet row merging, merged regions, native Excel tables, custom number
+  formats, cell styles, conditional formatting, data validations, autofilters,
+  cell error values, hyperlinks, comments, drawing objects, embedded media, and
+  charts, pivot tables, and date/time conversion caveats.
+  Remaining work: diagnostics from a future typed/lossless native KiCad parser
+  and deeper workbook extraction beyond sidecar-readiness diagnostics. Nested
+  JSON sidecar dialects are now searched recursively for common table arrays and
+  nested object cells are flattened into dotted column names.
 
 ## Input Roadmap
 
-- Infer layer roles from file extensions and X2 attributes.
+- Infer layer roles from file extensions and X2 attributes. The app now fills
+  missing board-outline, copper, mask, silkscreen, paste-pair, mask-pair, and
+  silkscreen/blocker selections from standard Gerber extensions, KiCad-style
+  layer names, common package names, and X2 `.FileFunction` values. Explicit CLI
+  layer-role flags remain authoritative for ambiguous packages.
 - Accept explicit layer-role flags for ambiguous files. Initial flags are present
   for board outline, copper, paste/copper pairs, copper/mask pairs, and
   silkscreen/blocker pairs.
@@ -1477,13 +1519,15 @@ Gerber/KiCad fixtures with one clear violation and one matching non-violation.
   impedance-target, material property ranges, and fabrication-class threshold
   constraints.
 - Add IPC-356 netlist ingestion so copper overlap can distinguish intended from
-  unintended coupling.
+  unintended coupling. IPC-D-356 point nets now classify Gerber copper-overlap
+  findings as same-net review warnings versus missing/mixed-net overlap errors.
 - Add IPC-2581 and ODB++ importers if licensing and available crate support make
   that practical.
 - Preserve Gerber units and report normalized units explicitly. Initial parser
   evidence now preserves `%MO...*%` units and `%FS...*%` coordinate format for
-  loaded Gerber layers and reports malformed or repeated setup commands as
-  structured parser diagnostics.
+  loaded Gerber layers, reports malformed or repeated setup commands as
+  structured parser diagnostics, and feeds package-level mixed/partial
+  unit-format warnings through `file-manifest-readiness`.
 
 ## IO Sources and Sinks Roadmap
 
@@ -1500,10 +1544,27 @@ well-maintained exporter.
   symbol/footprint library tables, and worksheet/title-block files. This would
   unlock native net classes, custom DRC rules, stackup, title/revision data,
   footprint metadata, pad properties, and schematic/PCB parity checks.
-- KiCad CLI as a conversion/check backend: shell out to `kicad-cli` for DRC,
-  Gerber, drill, DXF, SVG, PDF, IPC-D-356, IPC-2581, ODB++, STEP, GLB, PLY,
-  position-file, and statistics exports. This is the fastest path to high
-  fidelity for formats that KiCad already owns.
+- KiCad CLI as a conversion/check backend: initial `--converter kicad-cli`
+  support shells out to `kicad-cli pcb export gerbers` and
+  `kicad-cli pcb export drill --format excellon` for `.kicad_pcb` inputs, and
+  also writes a CSV `positions.pos` file with `kicad-cli pcb export pos` and an
+  IPC-D-356 sidecar with `kicad-cli pcb export ipcd356`. KiCad CLI DRC is
+  captured with `kicad-cli pcb drc --format json`, and report entries are
+  surfaced as HyperDRC diagnostics. It tracks the generated Gerber directory as
+  converted provenance and recursively discovers converted drill, IPC-D-356, and
+  centroid sidecars so Excellon, drill-readiness, electrical-test, placement,
+  and artifact checks can consume them. Optional `--kicad-cli-review-exports`
+  support writes DXF, SVG, and PDF drawing sidecars through KiCad CLI for
+  fabrication/assembly review checks. Optional `--kicad-cli-handoff-exports`
+  support writes IPC-2581, ODB++, STEP, GLB, PLY, and JSON statistics handoff
+  files. IPC-2581 XML, GenCAD text, boundary-scan, flying-probe, AOI/ICT,
+  ODB++ package outputs, KiCad JSON statistics, STEP/STEPZ files, and mesh
+  handoff outputs are discovered as manufacturing handoff sidecars. IPC-2581,
+  GenCAD, KiCad statistics JSON, STEP text, mechanical mesh files, and
+  test/inspection reports get lightweight parser-evidence diagnostics, including
+  common KiCad statistics layer, track, via, zone, and filled-zone key evidence,
+  while ODB++ is preserved as provenance until a full importer is practical.
+  This is the fastest path to high fidelity for formats that KiCad already owns.
 - Gerber X2/X3 and Gerber job files through `gerber_parser` / `gerber-types`:
   mine attributes for layer role, net/component metadata, file function,
   polarity, aperture intent, board profile, drill map, and job-level manifest
@@ -1514,25 +1575,61 @@ well-maintained exporter.
   packages from KiCad, Altium, Eagle, Allegro, gEDA, Fritzing, PADS, and
   Target3001. Rust can drive this through a command-line or Python subprocess
   bridge if direct Rust coverage is insufficient.
-- GenCAD via the `gencad` crate: import a richer manufacturing/test model with
-  components, nets, routes, and part data. This is attractive for DFT/testpoint
-  readiness and assembly checks because GenCAD was designed around PCB
-  fabrication and testing interchange.
-- DXF/DWG mechanical data via `dxf` or `acadrust`: import enclosures,
+- GenCAD sidecars: obvious GenCAD filenames/extensions are discovered as
+  manufacturing handoff sidecars, and lightweight section diagnostics summarize
+  board, component, part, signal, route, and test/fixture sections plus basic
+  component, part, signal, route, and testpoint record counts, unique
+  component/part/signal/testpoint IDs, and coordinate-bearing records. Remaining
+  work: replace this evidence pass with a full `gencad`-crate-backed importer
+  for geometry, package, net, route, and fixture semantics.
+- DXF/DWG mechanical data via `dxf` or `acadrust`: DXF/DXB/DWG/ACIS/SAT
+  fabrication, assembly, and rout/panel sidecars are discovered by filename role.
+  DXF text drawings get lightweight section/entity parser-evidence diagnostics
+  for common outline, note, dimension, insert, arc, circle, line, polyline, and
+  LWPOLYLINE content, plus layer, color, coordinate-pair, and rough XY bounds
+  evidence. Binary DWG/ACIS/SAT drawings are retained in the input manifest with
+  an explicit not-yet-imported diagnostic. Remaining work: import enclosures,
   panel drawings, mechanical keepouts, board outlines, slots, fab notes, and
-  assembly fixture constraints. `dxf` is a mature read/write path; `acadrust`
-  broadens scope to DWG and ACIS/SAT but should be evaluated for stability and
-  license fit.
-- SVG drawings via `usvg`: import laser/mechanical outlines, vendor templates,
-  board-edge graphics, and review annotations. `usvg` resolves CSS, inherited
-  attributes, basic shapes, and path commands into simpler absolute paths.
-- BOM and placement files via `csv`, `serde`, and `calamine`: parse CSV/TSV,
-  JSON, XLS/XLSX/XLSM/XLSB/ODS BOMs, centroid files, AVL/AML sheets, and
-  assembly notes. This supports refdes completeness, DNP variants, centroid
-  sanity, side/rotation checks, and manufacturer order-parameter parity.
-- ZIP/TGZ/package ingestion via Rust archive crates: accept manufacturer upload
-  packages directly, unpack to a temp workspace, detect Gerber/drill/BOM/PNP
-  roles, and preserve a manifest of exactly what was checked.
+  assembly fixture constraints through `dxf`/`acadrust` geometry models after
+  license and stability review.
+- SVG drawings via `usvg`: SVG fabrication, assembly, and rout/panel sidecars
+  are discovered by filename role and parsed for lightweight XML element
+  evidence, including paths, basic shapes, text, images, uses, groups, root
+  width/height/viewBox declarations, IDs, classes, inline styles, transforms,
+  and external/reference links. Remaining work: replace the evidence pass with
+  `usvg` import of
+  laser/mechanical outlines, vendor templates, board-edge graphics, and review
+  annotations so CSS, inherited attributes, basic shapes, and path commands are
+  normalized into check geometry.
+- BOM and placement files via `csv`, `serde`, and `calamine`: CSV/TSV/text
+  sidecars, common JSON array/object tables, and first-populated-sheet
+  XLS/XLSX/XLSM/XLSB/ODS workbooks are converted into the common artifact-table
+  pipeline for BOMs, centroid files, AVL/AML sheets, and assembly notes;
+  additional populated workbook sheets with matching normalized headers are
+  merged into the extracted table rows, and `--bom-sheet`, `--centroid-sheet`,
+  and `--netlist-sheet` select named workbook tabs before merging selected
+  sheets by normalized header union, preserving dissimilar auxiliary columns.
+  Nested
+  JSON objects are searched recursively for common table arrays, and nested
+  object cells are flattened into dotted column names. Workbook diagnostics flag
+  formula cells, defined names, VBA/macro projects, hidden sheets,
+  non-worksheet sheets, multiple populated sheets, empty sheets, merged regions,
+  native Excel tables, custom number formats, cell styles, conditional
+  formatting, data validations, autofilters, cell error values, hyperlinks,
+  comments, drawing objects, embedded media, charts, pivot tables, and date/time
+  conversion caveats. Centroid parsing recognizes generic, KiCad `.pos`,
+  Altium placement CSV, and JLCPCB CPL header/side-value schemas. Remaining
+  work: preserving native table objects, styles, and workbook layout semantics
+  beyond extracted cell values; formula cells are retained as ignored
+  `# hyperdrc-workbook-formula` metadata comments in extracted text.
+  This supports refdes
+  completeness, DNP variants, centroid sanity, side/rotation checks, and
+  manufacturer order-parameter parity.
+- ZIP/TAR/TGZ package ingestion via Rust archive crates: `--package-archive`
+  accepts manufacturer upload packages directly, unpacks them to a run-scoped
+  temporary workspace, recursively detects Gerber/drill/BOM/PNP/drawing roles,
+  rejects path-traversal entries, and preserves archive provenance in the
+  structured input manifest.
 
 ### Medium-Value or Specialized Sources
 
@@ -1540,36 +1637,68 @@ well-maintained exporter.
   PCB design/manufacturing exchange format and includes fabrication and assembly
   information. There does not appear to be a mature Rust-native parser today,
   but it is XML, so an incremental parser using `quick-xml`, `roxmltree`, or
-  `xml-rs` is realistic. Existing web tooling such as BoardUI can serve as a
-  reference for object modeling.
+  `xml-rs` is realistic. Initial `quick-xml` evidence diagnostics summarize
+  root/section presence plus common named layer, net, refdes, package, drill,
+  coordinate, unit, material, and thickness attributes, including unique
+  material names and thickness values where present. Existing web tooling such
+  as BoardUI can serve as a reference for object modeling.
 - ODB++ through external services or adapters: ODB++ is data-rich and widely
   used for CAM/assembly, but the format is proprietary. Options include parsing
   a practical subset, driving KiCad's ODB++ exporter, using an external
-  extractor, or integrating a service such as OdbDesign. Note licensing risk:
-  OdbDesign is AGPL for the open-source edition, so use it as a subprocess or
-  optional service only if license constraints are acceptable.
-- STEP/STEPZ for enclosure and mechanical validation: use KiCad CLI export,
+  extractor, or integrating a service such as OdbDesign. Initial package-tree
+  evidence inspects ODB++ ZIP/TAR/TGZ/directory handoffs for matrix, step,
+  layer, features, profile, netlist, component/EDA, and drill/tool path
+  families without importing proprietary semantics, and bounded text-payload
+  evidence summarizes matrix, feature, profile, netlist, component, and
+  drill-tool record counts when readable. Note licensing risk: OdbDesign is AGPL
+  for the open-source edition, so use it as a subprocess or optional service
+  only if license constraints are acceptable.
+- STEP/STEPZ for enclosure and mechanical validation: KiCad CLI exports and
+  package STEP/STP/STEPZ files are discovered as manufacturing handoff
+  sidecars. Plain STEP files get lightweight product, assembly, solid, face,
+  shell, curve, placement, unit, shape-representation, dimension, and tolerance
+  evidence diagnostics. Remaining work: replace the evidence pass with
   OCCT-based tooling, `ruststep`, or `vcad` depending on whether the goal is
   metadata, B-rep geometry, or simple collision envelopes. Rust-native STEP
   support exists but may be limited for full AP242 assembly/GD&T workflows; OCCT
   remains the mature path through C++ or external tools.
-- 3D mesh formats: STL, OBJ, PLY, GLB/glTF, and U3D can be useful sinks for
-  review artifacts and collision envelopes. Rust has `stl_io`, glTF ecosystem
-  crates, and `vcad` export paths; these are best treated as visualization or
-  approximate mechanical-clearance sinks rather than authoritative CAD inputs.
+- 3D mesh formats: STL, OBJ, PLY, GLB/glTF, and U3D package files are discovered
+  as manufacturing handoff sidecars and reported as mechanical handoff evidence
+  with file-size provenance. STL, OBJ, PLY, GLB, and glTF files get lightweight
+  header/entity summaries for triangles, vertices, faces, materials, mesh
+  counts, glTF buffer-view/accessor/primitive counts, declared GLB length where
+  applicable, and rough vertex bounds for readable ASCII STL, OBJ, and ASCII PLY
+  payloads. Rust has `stl_io`, glTF ecosystem crates, and `vcad` export paths;
+  these are best treated as visualization or approximate mechanical-clearance
+  sinks rather than authoritative CAD inputs until geometry import is added.
 - PDF/PostScript/HPGL: useful mostly as human review sinks or fab-drawing
-  sources. Direct semantic extraction is weak; prefer producing PDFs from
-  structured report/overlay data and using PDF parsing only for rough metadata
-  or text-note extraction.
+  sources. PDF, PS/EPS, PLT, and HPGL/HPG drawing files with fabrication,
+  assembly, or rout/panel filenames are discovered and checked as drawing
+  artifacts. Initial parser-evidence diagnostics summarize PDF headers/object
+  markers, stream/font/XObject/text/media-box markers, PostScript/EPS bounding
+  boxes and drawing commands, and HPGL/plotter command usage. Direct semantic
+  extraction is weak; prefer producing PDFs from structured report/overlay data
+  and using PDF parsing only for rough metadata or text-note extraction.
 - Image inputs: PNG/TIFF renderings from Gerber, KiCad, or vendor viewers can be
   used for visual regression tests, ML-assisted review, or review overlays.
+  Package images with render, preview, screenshot, viewer, visual, raster, or
+  image filenames are discovered as manufacturing handoff sidecars. PNG, JPEG,
+  TIFF, BMP, and WebP files get header-only width, height, pixel-count, and
+  aspect-ratio diagnostics both as visual handoff files and as drawing sidecars.
   They should not be the source of truth for dimensional checks.
 - Pick-and-place variants and assembly drawings: many CMs require only refdes,
-  X, Y, rotation, and side for centroid data. Add explicit parsers for common
-  KiCad `.pos`, Altium CSV, JLCPCB CPL, and generic centroid schemas.
-- Test and inspection formats: IPC-D-356, GenCAD, boundary-scan netlists,
-  flying-probe reports, AOI placement exports, and bed-of-nails fixture formats
-  can improve DFT coverage and production feedback loops.
+  X, Y, rotation, and side for centroid data. Generic centroid tables plus
+  common KiCad `.pos`, Altium CSV, and JLCPCB CPL header/side-value schemas are
+  recognized in the artifact-table pipeline.
+- Test and inspection formats: IPC-D-356 is parsed directly, and IPC-2581 XML,
+  GenCAD text, boundary-scan netlists, flying-probe reports, AOI/ICT placement
+  exports, bed-of-nails fixture formats, plus ODB++ packages are discovered as
+  manufacturing handoff sidecars with readiness diagnostics. SVF/JTAG-style
+  boundary-scan files get command summaries, and delimited tester/inspection
+  reports get table, column, coordinate, result, probe, net, and refdes evidence
+  diagnostics, including pass/fail/open/short result counts where a result
+  column is available. Remaining work: replace these evidence passes with
+  vendor-specific DFT/test importers.
 - Vendor/order APIs: JLCPCB, PCBWay, Eurocircuits, DigiKey, Mouser, Octopart,
   Nexar, and internal PLM/ERP APIs could provide capabilities, stackup options,
   BOM availability, lifecycle status, pricing, and order-parameter parity. Keep
@@ -1577,32 +1706,73 @@ well-maintained exporter.
 
 ### Highest-Value Sinks
 
-- Gerber/Excellon output: export violation overlays or generated keepout layers
-  as Gerber so designers can load findings in existing PCB viewers.
-- KiCad markers or rule areas: write warnings back into `.kicad_pcb` as markers,
-  graphics, zones, or generated user layers once lossless KiCad writing is
-  available.
-- KiCad `.kicad_dru`: generate or update custom rule files from HyperDRC rule
-  decks so designers can catch issues earlier in KiCad.
-- IPC-D-356 output: emit an annotated electrical-test netlist or diff showing
-  expected test access, uncovered nets, and drill/net mismatches.
-- IPC-2581 or ODB++ export: longer-term single-package manufacturing handoff
-  with embedded DRC/DFM annotations, if library/tool support matures.
-- GenCAD output: useful for DFT/test fixture workflows and integration with
-  test engineering tooling.
-- DXF/SVG/PDF overlays: produce human-review artifacts for mechanical, fab, and
-  assembly teams. SVG already exists; DXF/PDF would make review easier in CAD
-  and document workflows.
+- Gerber/Excellon output: initial Gerber violation overlays are implemented for
+  active finding polygons and point flashes, and initial Excellon-style marker
+  overlays are implemented for drill-map review. Generated Gerber keepout-layer
+  export is also implemented for active finding regions and larger point
+  markers.
+- KiCad markers or rule areas: `--kicad-marker-output` writes a standalone
+  KiCad `.kicad_pcb` review-marker companion with active error and warning
+  polygons, point circles, and labels on generated user layers.
+  `--kicad-marker-merge-output` writes a separate copy of the first input KiCad
+  board with HyperDRC user layers and marker graphics inserted, so the original
+  project is not mutated. Remaining work: richer typed/lossless KiCad editing
+  for zones, rule areas, and project-level generated artifacts.
+- KiCad `.kicad_dru`: `--kicad-dru-output` generates an initial custom-rule
+  file from resolved HyperDRC thresholds for copper clearance, track width,
+  annular ring, silkscreen clearance, board-edge clearance, and hole clearance
+  so designers can catch simple issues earlier in KiCad.
+  `--kicad-dru-merge-input` plus `--kicad-dru-merge-output` writes a copy of an
+  existing project rule file with stale HyperDRC rules replaced and custom rules
+  preserved. Remaining work: translate richer readiness checks that have no
+  direct KiCad custom-rule equivalent.
+- IPC-D-356 output: `--ipc356-review-output` emits an annotated electrical-test
+  review companion with IPC-D-356 source summaries, per-net test-access counts,
+  soldermask/access-side evidence, and active drill/net/test-related HyperDRC
+  findings. It also emits a stable key-value `DIFF_*` comment block with source
+  counts plus active and waived drill/net/test-related findings for downstream
+  scripts; both human and machine finding records include explicit
+  `GEOMETRY_HASH` fields for waiver and baseline joins. Remaining work: emit a
+  full replacement IPC-D-356 netlist once expected test access can be generated
+  from native board semantics.
+- IPC-2581 or ODB++ export: `--ipc2581-review-output` emits an IPC-2581-style
+  XML manufacturing review companion with embedded HyperDRC DRC/DFM annotations,
+  locations, region summaries with area, vertex, hole, and bounding-box
+  attributes, explicit geometry-hash attributes, and waived-review context.
+  Remaining work: generate a full IPC-2581 replacement package or ODB++ package
+  with embedded fabrication objects once library/tool support matures.
+- GenCAD output: `--gencad-review-output` emits a GenCAD-style review companion
+  with sectioned HyperDRC summary data, IPC-D-356-derived net names, component
+  references, testpoint/testpin records, and active/waived
+  DFT/fixture/manufacturing findings for test engineering tooling, including
+  explicit geometry-hash fields, finding point coordinates plus polygon and area
+  counts. Remaining work: emit a full GenCAD replacement/export once route,
+  package, and fixture semantics are available from a richer importer.
+- DXF/SVG/PDF overlays: SVG, initial DXF, and initial single-page PDF overlays
+  are implemented for human-review artifacts across mechanical, fab, assembly,
+  and document-review workflows.
 - HTML report bundle: initial self-contained HTML output is implemented with an
-  embedded SVG overlay, source manifest, summary table, and finding cards. Layer
-  toggles and waiver-state interaction remain future enhancements.
+  embedded SVG overlay, source manifest, summary table, finding cards, and
+  layer toggles that filter both finding cards and overlay geometry. Active and
+  waived finding cards can also be filtered independently. Finding cards expose
+  the stable geometry hash as visible text and a `data-geometry-hash` attribute
+  for review and waiver workflows.
 - SARIF/JUnit/GitHub annotations: SARIF output is implemented with stable
-  finding IDs and PCB geometry properties; GitHub Actions annotation output is
-  implemented for CI log annotations; JUnit XML output is implemented for CI
-  systems with test-report publishers.
-- JSON Lines / SQLite / Parquet: JSON Lines output is implemented for streaming
-  analysis across many boards, vendors, revisions, and rule decks. SQLite and
-  Parquet remain future structured stores.
+  finding IDs, a `geometryHash` property/fingerprint alias, and PCB geometry
+  properties; GitHub Actions annotation output is implemented for CI log
+  annotations; JUnit XML output is implemented for CI systems with test-report
+  publishers. GitHub and JUnit messages also include explicit geometry-hash
+  labels so CI logs line up with waiver and structured report terminology.
+- JSON Lines / SQLite / Arrow / Parquet: JSON Lines output is implemented for
+  streaming analytics, `--sqlite-report` writes a queryable SQLite database,
+  `--arrow-report` writes an Arrow IPC file, and `--parquet-report` writes a
+  Parquet file with summary, input, diagnostic, active finding, waived finding,
+  and geometry JSON columns. JSON Lines emits active and waived finding records
+  with explicit `geometry_hash` fields, and SQLite stores `geometry_hash` as a
+  first-class indexed finding column. Arrow and Parquet expose the same
+  `geometry_hash` column in their shared finding schema.
+  These structured sinks support analysis across many boards, vendors,
+  revisions, and rule decks.
 - Waiver and baseline update sinks: proposed waiver stubs, active-finding
   baselines, and baseline diff JSON are implemented for controlled production
   exceptions and release drift review. Waiver governance reports expired review
@@ -1622,8 +1792,15 @@ well-maintained exporter.
   provenance is implemented for direct Gerbers, Gerber directories, converted
   Gerbers, KiCad boards, Excellon drills, IPC-D-356 netlists, explicit
   pre-production sidecars, Gerber-directory-discovered sidecars, and waivers.
+  Converted Gerber source records also carry the converter input hash and
+  command/version transformation history into JSON and structured report inputs.
 - Treat external tools as hermetic conversion steps with captured command line,
-  version output, stdout/stderr, input hash, and output manifest.
+  version output, stdout/stderr, input hash, and output manifest. Initial
+  converter outputs now retain command lines, exit status, bounded
+  stdout/stderr, an explicit converter `--version` probe, a deterministic
+  input-tree hash, and a sorted generated-file manifest; adapter diagnostics
+  also report missing, unreadable, or empty generated Gerber directories, while
+  KiCad CLI DRC JSON entries are surfaced as report diagnostics.
 - Prefer optional Cargo features for heavy or license-sensitive integrations:
   `io-kicad-typed`, `io-dxf`, `io-svg`, `io-xlsx`, `io-gencad`,
   `io-ipc2581`, `io-step`, and `io-archives`.

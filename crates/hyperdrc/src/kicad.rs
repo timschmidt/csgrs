@@ -1480,6 +1480,31 @@ mod tests {
     }
 
     #[test]
+    fn near_endpoint_edge_lines_are_not_stitched_by_float_tolerance() {
+        let path = std::env::temp_dir().join("hyperdrc-near-edge-lines.kicad_pcb");
+        fs::write(
+            &path,
+            r#"
+            (kicad_pcb
+              (gr_line (start 10.0000005 0) (end 10 5) (layer "Edge.Cuts"))
+              (gr_line (start 0 0) (end 10 0) (layer "Edge.Cuts"))
+              (gr_line (start 0 5) (end 0 0) (layer "Edge.Cuts"))
+              (gr_line (start 10 5) (end 0 5) (layer "Edge.Cuts")))
+            "#,
+        )
+        .unwrap();
+
+        let board = load_kicad_pcb(&path).unwrap();
+        let outline = board.board_outline.unwrap().to_multipolygon();
+
+        assert!(
+            outline.0.len() > 1,
+            "near but unequal outline endpoints must remain unstiched fallback geometry"
+        );
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
     fn degenerate_and_non_copper_geometry_is_ignored_without_fallback_shapes() {
         let path = std::env::temp_dir().join("hyperdrc-degenerate-geometry.kicad_pcb");
         fs::write(

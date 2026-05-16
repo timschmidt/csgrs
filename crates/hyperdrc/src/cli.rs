@@ -510,6 +510,8 @@ pub enum OutputFormat {
 pub enum ConversionBackend {
     /// Variant `Transjlc`.
     Transjlc,
+    /// Variant `KicadCli`.
+    KicadCli,
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, ValueEnum)]
@@ -537,7 +539,7 @@ impl SourceEda {
     }
 }
 
-#[derive(Parser, Debug)]
+#[derive(Clone, Parser, Debug)]
 #[command(author, version, about)]
 /// Public data model for `Cli`.
 pub struct Cli {
@@ -553,6 +555,11 @@ pub struct Cli {
     #[arg(long = "gerber-dir")]
     /// Field `gerber_dirs`.
     pub gerber_dirs: Vec<PathBuf>,
+
+    /// ZIP, TAR, TAR.GZ, or TGZ manufacturing package archive to extract and check.
+    #[arg(long = "package-archive")]
+    /// Field `package_archives`.
+    pub package_archives: Vec<PathBuf>,
 
     /// Gerber directory to convert before loading. Repeat for multiple input packages.
     #[arg(long = "convert-input")]
@@ -579,6 +586,11 @@ pub struct Cli {
     /// Field `transjlc_bin`.
     pub transjlc_bin: PathBuf,
 
+    /// Path to the KiCad CLI executable used by --converter kicad-cli.
+    #[arg(long = "kicad-cli-bin", default_value = "kicad-cli")]
+    /// Field `kicad_cli_bin`.
+    pub kicad_cli_bin: PathBuf,
+
     /// Ask the converter to create a zip archive when supported.
     #[arg(long = "conversion-zip")]
     /// Field `conversion_zip`.
@@ -600,9 +612,86 @@ pub struct Cli {
     pub bottom_color_image: Option<PathBuf>,
 
     /// Extra command-line arguments passed to the selected converter backend.
-    #[arg(long = "conversion-arg", value_name = "ARG")]
+    #[arg(
+        long = "conversion-arg",
+        value_name = "ARG",
+        allow_hyphen_values = true
+    )]
     /// Field `conversion_args`.
     pub conversion_args: Vec<String>,
+
+    /// Extra command-line arguments passed to KiCad CLI drill export.
+    #[arg(
+        long = "kicad-cli-drill-arg",
+        value_name = "ARG",
+        allow_hyphen_values = true
+    )]
+    /// Field `kicad_cli_drill_args`.
+    pub kicad_cli_drill_args: Vec<String>,
+
+    /// Extra command-line arguments passed to KiCad CLI position export.
+    #[arg(
+        long = "kicad-cli-pos-arg",
+        value_name = "ARG",
+        allow_hyphen_values = true
+    )]
+    /// Field `kicad_cli_pos_args`.
+    pub kicad_cli_pos_args: Vec<String>,
+
+    /// Extra command-line arguments passed to KiCad CLI IPC-D-356 export.
+    #[arg(
+        long = "kicad-cli-ipcd356-arg",
+        value_name = "ARG",
+        allow_hyphen_values = true
+    )]
+    /// Field `kicad_cli_ipcd356_args`.
+    pub kicad_cli_ipcd356_args: Vec<String>,
+
+    /// Extra command-line arguments passed to KiCad CLI DRC report generation.
+    #[arg(
+        long = "kicad-cli-drc-arg",
+        value_name = "ARG",
+        allow_hyphen_values = true
+    )]
+    /// Field `kicad_cli_drc_args`.
+    pub kicad_cli_drc_args: Vec<String>,
+
+    /// Also export KiCad CLI manufacturing handoff files into the conversion directory.
+    #[arg(long = "kicad-cli-handoff-exports")]
+    /// Field `kicad_cli_handoff_exports`.
+    pub kicad_cli_handoff_exports: bool,
+
+    /// Also export KiCad CLI DXF/SVG/PDF review drawings into the conversion directory.
+    #[arg(long = "kicad-cli-review-exports")]
+    /// Field `kicad_cli_review_exports`.
+    pub kicad_cli_review_exports: bool,
+
+    /// Extra command-line arguments passed to KiCad CLI DXF export.
+    #[arg(
+        long = "kicad-cli-dxf-arg",
+        value_name = "ARG",
+        allow_hyphen_values = true
+    )]
+    /// Field `kicad_cli_dxf_args`.
+    pub kicad_cli_dxf_args: Vec<String>,
+
+    /// Extra command-line arguments passed to KiCad CLI SVG export.
+    #[arg(
+        long = "kicad-cli-svg-arg",
+        value_name = "ARG",
+        allow_hyphen_values = true
+    )]
+    /// Field `kicad_cli_svg_args`.
+    pub kicad_cli_svg_args: Vec<String>,
+
+    /// Extra command-line arguments passed to KiCad CLI PDF export.
+    #[arg(
+        long = "kicad-cli-pdf-arg",
+        value_name = "ARG",
+        allow_hyphen_values = true
+    )]
+    /// Field `kicad_cli_pdf_args`.
+    pub kicad_cli_pdf_args: Vec<String>,
 
     /// KiCad .kicad_pcb file. Repeat to check multiple boards.
     #[arg(long = "kicad-pcb")]
@@ -624,15 +713,30 @@ pub struct Cli {
     /// Field `bom_files`.
     pub bom_files: Vec<PathBuf>,
 
+    /// Workbook sheet name to extract from BOM spreadsheets. Repeat to merge same-header sheets.
+    #[arg(long = "bom-sheet")]
+    /// Field `bom_sheet_names`.
+    pub bom_sheet_names: Vec<String>,
+
     /// Placement / centroid file.
     #[arg(long = "centroid")]
     /// Field `centroid_files`.
     pub centroid_files: Vec<PathBuf>,
 
+    /// Workbook sheet name to extract from centroid spreadsheets. Repeat to merge same-header sheets.
+    #[arg(long = "centroid-sheet")]
+    /// Field `centroid_sheet_names`.
+    pub centroid_sheet_names: Vec<String>,
+
     /// Netlist source for pre-production validation and manifest completeness.
     #[arg(long = "netlist")]
     /// Field `netlist_files`.
     pub netlist_files: Vec<PathBuf>,
+
+    /// Workbook sheet name to extract from netlist spreadsheets. Repeat to merge same-header sheets.
+    #[arg(long = "netlist-sheet")]
+    /// Field `netlist_sheet_names`.
+    pub netlist_sheet_names: Vec<String>,
 
     /// Mechanical fabricator drawing file.
     #[arg(long = "fab-drawing")]
@@ -855,6 +959,21 @@ pub struct Cli {
     /// Field `summary_file`.
     pub summary_file: Option<PathBuf>,
 
+    /// Write a SQLite report database to this path.
+    #[arg(long = "sqlite-report")]
+    /// Field `sqlite_report`.
+    pub sqlite_report: Option<PathBuf>,
+
+    /// Write an Arrow IPC report file to this path.
+    #[arg(long = "arrow-report")]
+    /// Field `arrow_report`.
+    pub arrow_report: Option<PathBuf>,
+
+    /// Write a Parquet report file to this path.
+    #[arg(long = "parquet-report")]
+    /// Field `parquet_report`.
+    pub parquet_report: Option<PathBuf>,
+
     /// Return exit code 0 even when active findings remain.
     #[arg(long = "allow-findings")]
     /// Field `allow_findings`.
@@ -869,6 +988,71 @@ pub struct Cli {
     #[arg(long = "svg-overlay")]
     /// Field `svg_overlay`.
     pub svg_overlay: Option<PathBuf>,
+
+    /// Write a Gerber review overlay of active violations to this path.
+    #[arg(long = "gerber-overlay")]
+    /// Field `gerber_overlay`.
+    pub gerber_overlay: Option<PathBuf>,
+
+    /// Write a Gerber keepout review layer for active violations to this path.
+    #[arg(long = "gerber-keepout-overlay")]
+    /// Field `gerber_keepout_overlay`.
+    pub gerber_keepout_overlay: Option<PathBuf>,
+
+    /// Write an Excellon-style drill marker overlay of active violations to this path.
+    #[arg(long = "excellon-overlay")]
+    /// Field `excellon_overlay`.
+    pub excellon_overlay: Option<PathBuf>,
+
+    /// Write a DXF review overlay of active violations to this path.
+    #[arg(long = "dxf-overlay")]
+    /// Field `dxf_overlay`.
+    pub dxf_overlay: Option<PathBuf>,
+
+    /// Write a PDF review overlay of active violations to this path.
+    #[arg(long = "pdf-overlay")]
+    /// Field `pdf_overlay`.
+    pub pdf_overlay: Option<PathBuf>,
+
+    /// Write a generated KiCad custom-rule deck to this path.
+    #[arg(long = "kicad-dru-output")]
+    /// Field `kicad_dru_output`.
+    pub kicad_dru_output: Option<PathBuf>,
+
+    /// Existing KiCad custom-rule deck to merge with --kicad-dru-merge-output.
+    #[arg(long = "kicad-dru-merge-input")]
+    /// Field `kicad_dru_merge_input`.
+    pub kicad_dru_merge_input: Option<PathBuf>,
+
+    /// Write a copy of a KiCad custom-rule deck with HyperDRC rules merged.
+    #[arg(long = "kicad-dru-merge-output")]
+    /// Field `kicad_dru_merge_output`.
+    pub kicad_dru_merge_output: Option<PathBuf>,
+
+    /// Write a standalone KiCad review-marker board to this path.
+    #[arg(long = "kicad-marker-output")]
+    /// Field `kicad_marker_output`.
+    pub kicad_marker_output: Option<PathBuf>,
+
+    /// Write a copy of the first input KiCad board with review markers inserted.
+    #[arg(long = "kicad-marker-merge-output")]
+    /// Field `kicad_marker_merge_output`.
+    pub kicad_marker_merge_output: Option<PathBuf>,
+
+    /// Write an annotated IPC-D-356 electrical-test review companion to this path.
+    #[arg(long = "ipc356-review-output")]
+    /// Field `ipc356_review_output`.
+    pub ipc356_review_output: Option<PathBuf>,
+
+    /// Write a GenCAD-style DFT/test-fixture review companion to this path.
+    #[arg(long = "gencad-review-output")]
+    /// Field `gencad_review_output`.
+    pub gencad_review_output: Option<PathBuf>,
+
+    /// Write an IPC-2581-style XML manufacturing review companion to this path.
+    #[arg(long = "ipc2581-review-output")]
+    /// Field `ipc2581_review_output`.
+    pub ipc2581_review_output: Option<PathBuf>,
 
     /// Write proposed waiver stubs for active findings to this JSON path.
     #[arg(long = "waiver-stubs")]
@@ -1352,6 +1536,34 @@ mod tests {
             "hyperdrc",
             "--gerber-dir",
             "gerbers",
+            "--sqlite-report",
+            "report.sqlite",
+            "--arrow-report",
+            "report.arrow",
+            "--parquet-report",
+            "report.parquet",
+            "--kicad-dru-output",
+            "hyperdrc.kicad_dru",
+            "--kicad-dru-merge-input",
+            "project.kicad_dru",
+            "--kicad-dru-merge-output",
+            "project-with-hyperdrc.kicad_dru",
+            "--kicad-marker-output",
+            "hyperdrc-markers.kicad_pcb",
+            "--kicad-marker-merge-output",
+            "board-with-markers.kicad_pcb",
+            "--ipc356-review-output",
+            "review.ipc",
+            "--gencad-review-output",
+            "review.gencad",
+            "--ipc2581-review-output",
+            "review.ipc2581.xml",
+            "--package-archive",
+            "release.zip",
+            "--gerber-keepout-overlay",
+            "keepout.gbr",
+            "--excellon-overlay",
+            "markers.drl",
             "--convert-input",
             "incoming",
             "--conversion-output-dir",
@@ -1360,22 +1572,131 @@ mod tests {
             "kicad",
             "--transjlc-bin",
             "transjlc",
+            "--kicad-cli-bin",
+            "kicad-cli",
             "--conversion-zip",
             "--conversion-zip-name",
             "upload",
             "--conversion-arg=--foo",
             "--conversion-arg=--bar=baz",
+            "--kicad-cli-drill-arg=--generate-map",
+            "--kicad-cli-pos-arg=--side",
+            "--kicad-cli-pos-arg=front",
+            "--kicad-cli-ipcd356-arg=--custom-ipc",
+            "--kicad-cli-drc-arg=--schematic-parity",
+            "--kicad-cli-handoff-exports",
+            "--kicad-cli-review-exports",
+            "--kicad-cli-dxf-arg=--layers",
+            "--kicad-cli-dxf-arg=Edge.Cuts",
+            "--kicad-cli-svg-arg=--black-and-white",
+            "--kicad-cli-pdf-arg=--include-border-title",
         ]);
 
         assert_eq!(cli.gerber_dirs, vec![PathBuf::from("gerbers")]);
+        assert_eq!(cli.sqlite_report, Some(PathBuf::from("report.sqlite")));
+        assert_eq!(cli.arrow_report, Some(PathBuf::from("report.arrow")));
+        assert_eq!(cli.parquet_report, Some(PathBuf::from("report.parquet")));
+        assert_eq!(
+            cli.kicad_dru_output,
+            Some(PathBuf::from("hyperdrc.kicad_dru"))
+        );
+        assert_eq!(
+            cli.kicad_dru_merge_input,
+            Some(PathBuf::from("project.kicad_dru"))
+        );
+        assert_eq!(
+            cli.kicad_dru_merge_output,
+            Some(PathBuf::from("project-with-hyperdrc.kicad_dru"))
+        );
+        assert_eq!(
+            cli.kicad_marker_output,
+            Some(PathBuf::from("hyperdrc-markers.kicad_pcb"))
+        );
+        assert_eq!(
+            cli.kicad_marker_merge_output,
+            Some(PathBuf::from("board-with-markers.kicad_pcb"))
+        );
+        assert_eq!(cli.ipc356_review_output, Some(PathBuf::from("review.ipc")));
+        assert_eq!(
+            cli.gencad_review_output,
+            Some(PathBuf::from("review.gencad"))
+        );
+        assert_eq!(
+            cli.ipc2581_review_output,
+            Some(PathBuf::from("review.ipc2581.xml"))
+        );
+        assert_eq!(cli.package_archives, vec![PathBuf::from("release.zip")]);
+        assert_eq!(
+            cli.gerber_keepout_overlay,
+            Some(PathBuf::from("keepout.gbr"))
+        );
+        assert_eq!(cli.excellon_overlay, Some(PathBuf::from("markers.drl")));
         assert_eq!(cli.conversion_inputs, vec![PathBuf::from("incoming")]);
         assert_eq!(cli.conversion_output_dir, PathBuf::from("converted"));
         assert_eq!(cli.converter, ConversionBackend::Transjlc);
         assert_eq!(cli.source_eda, SourceEda::Kicad);
         assert_eq!(cli.transjlc_bin, PathBuf::from("transjlc"));
+        assert_eq!(cli.kicad_cli_bin, PathBuf::from("kicad-cli"));
         assert!(cli.conversion_zip);
         assert_eq!(cli.conversion_zip_name, "upload");
         assert_eq!(cli.conversion_args, vec!["--foo", "--bar=baz"]);
+        assert_eq!(cli.kicad_cli_drill_args, vec!["--generate-map"]);
+        assert_eq!(cli.kicad_cli_pos_args, vec!["--side", "front"]);
+        assert_eq!(cli.kicad_cli_ipcd356_args, vec!["--custom-ipc"]);
+        assert_eq!(cli.kicad_cli_drc_args, vec!["--schematic-parity"]);
+        assert!(cli.kicad_cli_handoff_exports);
+        assert!(cli.kicad_cli_review_exports);
+        assert_eq!(cli.kicad_cli_dxf_args, vec!["--layers", "Edge.Cuts"]);
+        assert_eq!(cli.kicad_cli_svg_args, vec!["--black-and-white"]);
+        assert_eq!(cli.kicad_cli_pdf_args, vec!["--include-border-title"]);
+    }
+
+    #[test]
+    fn parses_kicad_cli_conversion_backend() {
+        let cli = Cli::parse_from([
+            "hyperdrc",
+            "--convert-input",
+            "board.kicad_pcb",
+            "--converter",
+            "kicad-cli",
+            "--kicad-cli-bin",
+            "/opt/kicad/bin/kicad-cli",
+            "--kicad-cli-drill-arg",
+            "--excellon-oval-format",
+            "--kicad-cli-drill-arg=alternate",
+            "--kicad-cli-pos-arg",
+            "--smd-only",
+            "--kicad-cli-pos-arg=--exclude-dnp",
+            "--kicad-cli-ipcd356-arg",
+            "--custom-ipc",
+            "--kicad-cli-drc-arg",
+            "--all-track-errors",
+            "--kicad-cli-handoff-exports",
+            "--kicad-cli-review-exports",
+            "--kicad-cli-dxf-arg",
+            "--mode-single",
+            "--kicad-cli-svg-arg=--exclude-drawing-sheet",
+            "--kicad-cli-pdf-arg=--black-and-white",
+        ]);
+
+        assert_eq!(
+            cli.conversion_inputs,
+            vec![PathBuf::from("board.kicad_pcb")]
+        );
+        assert_eq!(cli.converter, ConversionBackend::KicadCli);
+        assert_eq!(cli.kicad_cli_bin, PathBuf::from("/opt/kicad/bin/kicad-cli"));
+        assert_eq!(
+            cli.kicad_cli_drill_args,
+            vec!["--excellon-oval-format", "alternate"]
+        );
+        assert_eq!(cli.kicad_cli_pos_args, vec!["--smd-only", "--exclude-dnp"]);
+        assert_eq!(cli.kicad_cli_ipcd356_args, vec!["--custom-ipc"]);
+        assert_eq!(cli.kicad_cli_drc_args, vec!["--all-track-errors"]);
+        assert!(cli.kicad_cli_handoff_exports);
+        assert!(cli.kicad_cli_review_exports);
+        assert_eq!(cli.kicad_cli_dxf_args, vec!["--mode-single"]);
+        assert_eq!(cli.kicad_cli_svg_args, vec!["--exclude-drawing-sheet"]);
+        assert_eq!(cli.kicad_cli_pdf_args, vec!["--black-and-white"]);
     }
 
     #[test]
@@ -1384,10 +1705,16 @@ mod tests {
             "hyperdrc",
             "--bom",
             "parts.json",
+            "--bom-sheet",
+            "ReleaseBOM",
             "--centroid",
             "centroid.txt",
+            "--centroid-sheet",
+            "Top",
             "--netlist",
             "netlist.csv",
+            "--netlist-sheet",
+            "Electrical",
             "--fab-drawing",
             "fab.pdf",
             "--assembly-drawing",
@@ -1412,8 +1739,11 @@ mod tests {
         ]);
 
         assert_eq!(cli.bom_files, vec![PathBuf::from("parts.json")]);
+        assert_eq!(cli.bom_sheet_names, vec!["ReleaseBOM"]);
         assert_eq!(cli.centroid_files, vec![PathBuf::from("centroid.txt")]);
+        assert_eq!(cli.centroid_sheet_names, vec!["Top"]);
         assert_eq!(cli.netlist_files, vec![PathBuf::from("netlist.csv")]);
+        assert_eq!(cli.netlist_sheet_names, vec!["Electrical"]);
         assert_eq!(cli.fab_drawing_files, vec![PathBuf::from("fab.pdf")]);
         assert_eq!(
             cli.assembly_drawing_files,

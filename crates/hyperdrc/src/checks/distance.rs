@@ -4,6 +4,9 @@
 //! fallbacks where two shapes are close but do not intersect.
 
 use geo::{Coord, LineString, MultiPolygon, Polygon};
+use hyperlimit::{Point2, PredicatePolicy, SegmentIntersection};
+
+use crate::geometry::{RuleGeometryProvenance, SourceGridFacts};
 
 pub(super) fn polygon_boundary_distance(
     left: &MultiPolygon<f64>,
@@ -81,8 +84,17 @@ fn point_segment_distance(point: Coord<f64>, start: Coord<f64>, end: Coord<f64>)
     let dx = end.x - start.x;
     let dy = end.y - start.y;
     let length_squared = dx * dx + dy * dy;
-    if length_squared == 0.0 {
+    if exact_coords_equal(start, end) {
         return distance([point.x, point.y], [start.x, start.y]);
+    }
+    if length_squared == 0.0 {
+        // Metric-edge underflow: exact equality above proved this is not a
+        // point segment, but f64 projection cannot represent the squared
+        // length. Fall back to endpoint distance for a finite conservative
+        // report magnitude; topology has already been handled by exact
+        // predicates before this projection path.
+        return distance([point.x, point.y], [start.x, start.y])
+            .min(distance([point.x, point.y], [end.x, end.y]));
     }
 
     let t =
@@ -100,45 +112,88 @@ fn segments_intersect(
         return false;
     }
 
-    let d1 = orientation(a_start, a_end, b_start);
-    let d2 = orientation(a_start, a_end, b_end);
-    let d3 = orientation(b_start, b_end, a_start);
-    let d4 = orientation(b_start, b_end, a_end);
-
-    if d1 == 0.0 && point_on_segment(b_start, a_start, a_end) {
-        return true;
-    }
-    if d2 == 0.0 && point_on_segment(b_end, a_start, a_end) {
-        return true;
-    }
-    if d3 == 0.0 && point_on_segment(a_start, b_start, b_end) {
-        return true;
-    }
-    if d4 == 0.0 && point_on_segment(a_end, b_start, b_end) {
-        return true;
-    }
-
-    (d1 > 0.0) != (d2 > 0.0) && (d3 > 0.0) != (d4 > 0.0)
-}
-
-fn orientation(a: Coord<f64>, b: Coord<f64>, c: Coord<f64>) -> f64 {
-    if !coords_are_finite_3(a, b, c) {
-        return 0.0;
-    }
-
-    let cross = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
-    if cross.abs() < 1.0e-12 { 0.0 } else { cross }
-}
-
-fn point_on_segment(point: Coord<f64>, start: Coord<f64>, end: Coord<f64>) -> bool {
-    if !coords_are_finite_3(point, start, end) {
+    let Some((a, b, c, d)) = lift_segment_points(a_start, a_end, b_start, b_end) else {
         return false;
-    }
+    };
 
-    point.x >= start.x.min(end.x) - 1.0e-12
-        && point.x <= start.x.max(end.x) + 1.0e-12
-        && point.y >= start.y.min(end.y) - 1.0e-12
-        && point.y <= start.y.max(end.y) + 1.0e-12
+    // Clearance geometry still arrives from `geo`/`csgrs` as finite f64 edge
+    // coordinates, but f64 must remain an I/O compatibility boundary rather
+    // than a topology kernel. IEEE-754 coordinates are lifted to exact dyadic
+    // `Real`s, then the closed-segment classifier routes orientation and
+    // interval tests through `hyperlimit`. This follows Yap's exact geometric
+    // computation boundary: combinatorial decisions are made by exact
+    // predicates, while approximate coordinates may be used only to describe
+    // inputs or report metric magnitudes. See Yap, "Towards Exact Geometric
+    // Computation," Computational Geometry 7.1-2 (1997), and Shewchuk,
+    // "Adaptive Precision Floating-Point Arithmetic and Fast Robust Geometric
+    // Predicates," Discrete & Computational Geometry 18.3 (1997).
+    match hyperlimit::classify_segment_intersection_with_policy(
+        &a,
+        &b,
+        &c,
+        &d,
+        PredicatePolicy::STRICT,
+    )
+    .value()
+    {
+        Some(SegmentIntersection::Disjoint) => false,
+        Some(_) => true,
+        // A strict predicate over lifted finite dyadics should decide. If a
+        // future symbolic source reaches this path undecided, report contact
+        // conservatively so a clearance check does not silently miss a
+        // violation.
+        None => true,
+    }
+}
+
+fn lift_segment_points(
+    a_start: Coord<f64>,
+    a_end: Coord<f64>,
+    b_start: Coord<f64>,
+    b_end: Coord<f64>,
+) -> Option<(Point2, Point2, Point2, Point2)> {
+    let provenance = RuleGeometryProvenance::new(
+        "clearance-segment-topology",
+        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+    );
+    Some((
+        lift_coord(a_start, provenance)?,
+        lift_coord(a_end, provenance)?,
+        lift_coord(b_start, provenance)?,
+        lift_coord(b_end, provenance)?,
+    ))
+}
+
+fn lift_coord(coord: Coord<f64>, provenance: RuleGeometryProvenance) -> Option<Point2> {
+    Some(Point2::new(
+        provenance.lift_f64(coord.x)?,
+        provenance.lift_f64(coord.y)?,
+    ))
+}
+
+fn exact_coords_equal(left: Coord<f64>, right: Coord<f64>) -> bool {
+    // Degenerate segment classification is a topology decision even when the
+    // resulting distance magnitude is reported as f64. Lift finite coordinates
+    // and ask `hyperlimit` for exact point equality instead of using
+    // `length_squared == 0.0`, which can conflate a very small nonzero segment
+    // with a point after primitive-float underflow. This keeps the clearance
+    // fallback aligned with Yap's exact-geometric-computation boundary; see
+    // Yap, "Towards Exact Geometric Computation," Computational Geometry 7.1-2
+    // (1997).
+    //
+    let provenance = RuleGeometryProvenance::new(
+        "clearance-degenerate-segment",
+        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+    );
+    let Some(left) = lift_coord(left, provenance) else {
+        return false;
+    };
+    let Some(right) = lift_coord(right, provenance) else {
+        return false;
+    };
+    hyperlimit::point2_equal_with_policy(&left, &right, PredicatePolicy::STRICT)
+        .value()
+        .unwrap_or(false)
 }
 
 fn distance(left: [f64; 2], right: [f64; 2]) -> f64 {
@@ -185,8 +240,7 @@ mod tests {
     use geo::{Coord, LineString, MultiPolygon, Polygon};
 
     use super::{
-        orientation, point_on_segment, point_segment_distance, polygon_boundary_distance,
-        segment_distance, segments_intersect,
+        point_segment_distance, polygon_boundary_distance, segment_distance, segments_intersect,
     };
 
     fn square(x: f64, y: f64, size: f64) -> Polygon<f64> {
@@ -242,46 +296,35 @@ mod tests {
     }
 
     #[test]
-    fn orientation_classifies_collinear_segments_as_zero() {
-        assert_eq!(
-            orientation(
-                Coord { x: 0.0, y: 0.0 },
-                Coord { x: 1.0, y: 1.0 },
-                Coord { x: 2.0, y: 2.0 }
-            ),
-            0.0
-        );
-        assert_eq!(
-            orientation(
-                Coord { x: 0.0, y: 0.0 },
-                Coord { x: 1.0, y: 0.0 },
-                Coord { x: 2.0, y: 1.0e-13 },
-            ),
-            0.0
-        );
+    fn point_segment_distance_keeps_tiny_nonzero_segment_distinct_from_point() {
+        let point = Coord {
+            x: 1.0e-200,
+            y: 0.0,
+        };
+        let start = Coord { x: 0.0, y: 0.0 };
+        let end = Coord {
+            x: 1.0e-200,
+            y: 0.0,
+        };
+
+        assert!(super::exact_coords_equal(start, start));
+        assert!(!super::exact_coords_equal(start, end));
+        assert_eq!(point_segment_distance(point, start, end), 0.0);
     }
 
     #[test]
-    fn point_on_segment_is_tolerant_of_closed_bounds() {
-        assert!(point_on_segment(
+    fn segments_intersect_uses_exact_closed_segment_topology() {
+        assert!(segments_intersect(
             Coord { x: 0.0, y: 0.0 },
-            Coord { x: 0.0, y: 0.0 },
-            Coord { x: 2.0, y: 0.0 }
-        ));
-        assert!(point_on_segment(
-            Coord { x: 1.0, y: 0.0 },
-            Coord { x: 0.0, y: 0.0 },
-            Coord { x: 2.0, y: 0.0 }
-        ));
-        assert!(point_on_segment(
             Coord { x: 2.0, y: 0.0 },
-            Coord { x: 0.0, y: 0.0 },
-            Coord { x: 2.0, y: 0.0 }
+            Coord { x: 1.0, y: 0.0 },
+            Coord { x: 3.0, y: 0.0 }
         ));
-        assert!(!point_on_segment(
-            Coord { x: 3.0, y: 0.0 },
+        assert!(!segments_intersect(
             Coord { x: 0.0, y: 0.0 },
-            Coord { x: 2.0, y: 0.0 }
+            Coord { x: 2.0, y: 0.0 },
+            Coord { x: 3.0, y: 0.0 },
+            Coord { x: 4.0, y: 0.0 }
         ));
     }
 
@@ -404,18 +447,34 @@ mod tests {
     }
 
     #[test]
-    fn orientation_with_non_finite_inputs_returns_zero() {
-        assert_eq!(
-            orientation(
-                Coord {
-                    x: f64::NAN,
-                    y: 0.0
-                },
-                Coord { x: 1.0, y: 1.0 },
-                Coord { x: 2.0, y: 2.0 }
-            ),
-            0.0
-        );
+    fn segments_intersect_with_non_finite_inputs_returns_false() {
+        assert!(!segments_intersect(
+            Coord {
+                x: f64::NAN,
+                y: 0.0
+            },
+            Coord { x: 1.0, y: 1.0 },
+            Coord { x: 0.0, y: 1.0 },
+            Coord { x: 1.0, y: 0.0 }
+        ));
+    }
+
+    #[test]
+    fn segment_distance_does_not_zero_parallel_traces_inside_old_epsilon() {
+        let left = [Coord { x: 0.0, y: 0.0 }, Coord { x: 1.0, y: 0.0 }];
+        let right = [Coord { x: 0.0, y: 5.0e-13 }, Coord { x: 1.0, y: 5.0e-13 }];
+
+        let measured = segment_distance(left[0], left[1], right[0], right[1]);
+        assert!(measured > 0.0);
+        assert!((measured - 5.0e-13).abs() <= f64::EPSILON);
+    }
+
+    #[test]
+    fn segment_distance_still_zeroes_tiny_exact_crossing() {
+        let left = [Coord { x: 0.0, y: 0.0 }, Coord { x: 1.0, y: 1.0e-13 }];
+        let right = [Coord { x: 0.0, y: 1.0e-13 }, Coord { x: 1.0, y: 0.0 }];
+
+        assert_eq!(segment_distance(left[0], left[1], right[0], right[1]), 0.0);
     }
 
     #[test]

@@ -12,7 +12,7 @@ use std::collections::BTreeMap;
 
 use csgrs::csg::CSG;
 use geo::{
-    Area, BoundingRect, Coord, Line, LineString, MultiPolygon, Polygon,
+    Area, BoundingRect, Contains, Coord, Line, LineString, MultiPolygon, Point, Polygon,
     line_intersection::{LineIntersection, line_intersection},
 };
 
@@ -21,6 +21,7 @@ use crate::checks::spatial::LayerPolygonSpatialIndex;
 use crate::geometry::{
     multipolygon_to_shapes, polygon_to_sketch, polygons_to_sketch, rect_polygon,
 };
+use crate::ipc356::Ipc356Point;
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbSketch};
 
@@ -135,6 +136,71 @@ pub fn copper_overlap(
         right,
         min_area,
     )
+}
+
+/// Run a copper-overlap check that uses IPC-D-356 net evidence when available.
+pub fn copper_overlap_with_ipc356(
+    left_name: &str,
+    left: &PcbSketch,
+    right_name: &str,
+    right: &PcbSketch,
+    ipc356_points: &[Ipc356Point],
+    min_area: f64,
+) -> Vec<Violation> {
+    let overlap = left.intersection(right).to_multipolygon();
+    let shapes = multipolygon_to_shapes(&overlap, min_area);
+    if shapes.is_empty() {
+        return Vec::new();
+    }
+
+    let nets = ipc356_nets_in_multipolygon(&overlap, ipc356_points);
+    let (severity, message) = match nets.as_slice() {
+        [net] => (
+            Severity::Warning,
+            format!(
+                "copper regions overlap across layers with IPC-D-356 same-net evidence for {net}; review whether the overlap is intentional"
+            ),
+        ),
+        [] => (
+            Severity::Error,
+            "copper regions overlap across layers without IPC-D-356 same-net evidence".to_string(),
+        ),
+        _ => (
+            Severity::Error,
+            format!(
+                "copper regions overlap across layers with mixed IPC-D-356 net evidence: {}",
+                nets.join(", ")
+            ),
+        ),
+    };
+
+    vec![Violation::new(
+        "copper-overlap",
+        severity,
+        vec![left_name.to_string(), right_name.to_string()],
+        None,
+        shapes,
+        Vec::new(),
+        Some(message),
+    )]
+}
+
+fn ipc356_nets_in_multipolygon(
+    overlap: &MultiPolygon<f64>,
+    ipc356_points: &[Ipc356Point],
+) -> Vec<String> {
+    let mut nets = std::collections::BTreeSet::new();
+    for point in ipc356_points {
+        let net = point.net.trim();
+        if net.is_empty() {
+            continue;
+        }
+        let location = Point::new(point.location[0], point.location[1]);
+        if overlap.contains(&location) {
+            nets.insert(net.to_string());
+        }
+    }
+    nets.into_iter().collect()
 }
 
 /// Run the `board_edge_clearance` design-readiness check or report helper.
@@ -2716,13 +2782,14 @@ mod tests {
         board_outline_duplicate_readiness, board_outline_fragments,
         board_outline_nesting_readiness, board_outline_notch_readiness, board_outline_sanity,
         board_outline_self_intersection_readiness, copper_balance, copper_overlap,
-        duplicate_layer_geometry_readiness, duplicate_layer_island_readiness, exposed_copper,
-        layer_sanity, local_copper_density_readiness, mask_island_keepout,
-        mechanical_layer_geometry, min_copper_neck_width, minimum_mask_opening,
-        minimum_paste_aperture, paste_aperture_coverage, paste_aperture_ratio,
-        paste_aperture_spacing, paste_mask_alignment, paste_overhang,
-        silkscreen_board_edge_clearance, silkscreen_clearance, silkscreen_min_width,
-        silkscreen_overlap, silkscreen_text_height_readiness, skinny_layer_feature_readiness,
+        copper_overlap_with_ipc356, duplicate_layer_geometry_readiness,
+        duplicate_layer_island_readiness, exposed_copper, layer_sanity,
+        local_copper_density_readiness, mask_island_keepout, mechanical_layer_geometry,
+        min_copper_neck_width, minimum_mask_opening, minimum_paste_aperture,
+        paste_aperture_coverage, paste_aperture_ratio, paste_aperture_spacing,
+        paste_mask_alignment, paste_overhang, silkscreen_board_edge_clearance,
+        silkscreen_clearance, silkscreen_min_width, silkscreen_overlap,
+        silkscreen_text_height_readiness, skinny_layer_feature_readiness,
         solder_mask_annular_ring_readiness, solder_mask_board_edge_clearance,
         solder_mask_expansion, solder_mask_opening_coverage, solder_mask_opening_ratio_readiness,
         solder_mask_opening_spacing, solder_mask_overlap_clearance, solder_mask_sliver,
@@ -2730,6 +2797,7 @@ mod tests {
     };
     use crate::LayerMetadata;
     use crate::geometry::{empty_sketch, line_polygon, polygons_to_sketch, rect_polygon};
+    use crate::ipc356::Ipc356Point;
     use crate::kicad::load_kicad_pcb;
 
     #[test]
@@ -2793,6 +2861,44 @@ mod tests {
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].polygons.len(), 1);
         assert!((violations[0].polygons[0].area - 1.0).abs() < 1.0e-9);
+    }
+
+    #[test]
+    fn copper_overlap_with_ipc356_marks_same_net_evidence_as_review_warning() {
+        let top = sketch("top", vec![square(0.0, 0.0, 2.0, 2.0)]);
+        let bottom = sketch("bottom", vec![square(1.0, 1.0, 3.0, 3.0)]);
+        let points = vec![ipc_point("GND", [1.5, 1.5])];
+
+        let violations =
+            copper_overlap_with_ipc356("top", &top, "bottom", &bottom, &points, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].severity, crate::report::Severity::Warning);
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("same-net evidence for GND"))
+        );
+    }
+
+    #[test]
+    fn copper_overlap_with_ipc356_reports_mixed_net_evidence_as_error() {
+        let top = sketch("top", vec![square(0.0, 0.0, 2.0, 2.0)]);
+        let bottom = sketch("bottom", vec![square(1.0, 1.0, 3.0, 3.0)]);
+        let points = vec![ipc_point("GND", [1.5, 1.5]), ipc_point("VBUS", [1.6, 1.6])];
+
+        let violations =
+            copper_overlap_with_ipc356("top", &top, "bottom", &bottom, &points, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].severity, crate::report::Severity::Error);
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("mixed IPC-D-356 net evidence"))
+        );
     }
 
     #[test]
@@ -4667,6 +4773,19 @@ mod tests {
                 name: name.to_string(),
             }),
         )
+    }
+
+    fn ipc_point(net: &str, location: [f64; 2]) -> Ipc356Point {
+        Ipc356Point {
+            net: net.to_string(),
+            reference: None,
+            pin: None,
+            location,
+            diameter: None,
+            access_side: None,
+            feature_type: None,
+            soldermask: None,
+        }
     }
 
     fn unzip_fixture_entry(zip_name: &str, entry_name: &str) -> Option<Vec<u8>> {

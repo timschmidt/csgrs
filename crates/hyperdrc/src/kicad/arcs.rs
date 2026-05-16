@@ -4,6 +4,10 @@
 //! circumcircle math here lets board graphics and custom-pad primitives share
 //! the same sweep convention.
 
+use hyperlimit::{Point2, PredicatePolicy, Sign, orient2d_with_policy};
+
+use crate::geometry::{RuleGeometryProvenance, SourceGridFacts, SourceUnit};
+
 /// Recover a circle center, start point, and signed sweep angle from three arc points.
 ///
 /// The midpoint decides whether the shorter counter-clockwise sweep or the
@@ -24,12 +28,15 @@ pub(super) fn arc_center_start_angle(
     if !all_finite(start) || !all_finite(mid) || !all_finite(end) {
         return None;
     }
+    if exact_arc_orientation(start, mid, end)? == Sign::Zero {
+        return None;
+    }
 
     let d = 2.0
         * (start[0] * (mid[1] - end[1])
             + mid[0] * (end[1] - start[1])
             + end[0] * (start[1] - mid[1]));
-    if !d.is_finite() || d.abs() < 1.0e-9 {
+    if !d.is_finite() {
         return None;
     }
 
@@ -77,4 +84,57 @@ fn positive_angle_delta(start: f64, end: f64) -> f64 {
 
 fn all_finite(point: [f64; 2]) -> bool {
     point[0].is_finite() && point[1].is_finite()
+}
+
+fn exact_arc_orientation(start: [f64; 2], mid: [f64; 2], end: [f64; 2]) -> Option<Sign> {
+    // The circumcircle denominator is twice the orientation determinant of the
+    // three arc points. Its zero/nonzero status controls whether a KiCad arc is
+    // geometrically well-defined, so the degeneracy decision belongs to the
+    // exact predicate layer rather than an f64 epsilon. This follows Yap's
+    // exact geometric computation boundary; the subsequent center and angle are
+    // still parser/rendering-edge approximations. See Yap, "Towards Exact
+    // Geometric Computation," Computational Geometry 7.1-2 (1997), and Lee and
+    // Preparata, "Computational Geometry - A Survey," IEEE Transactions on
+    // Computers 33.12 (1984).
+    //
+    let provenance = RuleGeometryProvenance::new(
+        "kicad-arc-orientation",
+        SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter),
+    );
+    let start = lift_point(start, provenance)?;
+    let mid = lift_point(mid, provenance)?;
+    let end = lift_point(end, provenance)?;
+    orient2d_with_policy(&start, &mid, &end, PredicatePolicy::STRICT).value()
+}
+
+fn lift_point(point: [f64; 2], provenance: RuleGeometryProvenance) -> Option<Point2> {
+    Some(Point2::new(
+        provenance.lift_f64(point[0])?,
+        provenance.lift_f64(point[1])?,
+    ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::arc_center_start_angle;
+
+    #[test]
+    fn arc_center_start_angle_rejects_exactly_collinear_points() {
+        assert!(arc_center_start_angle([0.0, 0.0], [1.0, 0.0], [2.0, 0.0]).is_none());
+    }
+
+    #[test]
+    fn arc_center_start_angle_accepts_tiny_nonzero_orientation() {
+        let arc = arc_center_start_angle([0.0, 0.0], [1.0, 1.0e-12], [2.0, 0.0])
+            .expect("exact non-collinear arcs must not be rejected by an epsilon");
+
+        assert!(arc.0[0].is_finite());
+        assert!(arc.0[1].is_finite());
+        assert!(arc.2.is_finite());
+    }
+
+    #[test]
+    fn arc_center_start_angle_rejects_non_finite_inputs() {
+        assert!(arc_center_start_angle([f64::NAN, 0.0], [1.0, 1.0], [2.0, 0.0]).is_none());
+    }
 }

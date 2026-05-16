@@ -402,6 +402,7 @@ mod tests {
             diagnostics: Vec::new(),
             violation_count: violations.len(),
             waived_count: 0,
+            waived_violations: Vec::new(),
             summary: report_summary(&violations, 0),
             violations,
         }

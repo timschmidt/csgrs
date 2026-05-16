@@ -46,16 +46,34 @@ pub struct StackupConfig {
 pub struct FabricationCapabilityConfig {
     /// Field `min_finished_thickness`.
     pub min_finished_thickness: Option<f64>,
+    /// Field `preferred_min_finished_thickness`.
+    pub preferred_min_finished_thickness: Option<f64>,
+    /// Field `preferred_max_finished_thickness`.
+    pub preferred_max_finished_thickness: Option<f64>,
     /// Field `max_finished_thickness`.
     pub max_finished_thickness: Option<f64>,
     /// Field `max_copper_layers`.
     pub max_copper_layers: Option<usize>,
+    /// Field `preferred_max_copper_layers`.
+    pub preferred_max_copper_layers: Option<usize>,
+    /// Field `cost_escalation_copper_layers`.
+    pub cost_escalation_copper_layers: Option<usize>,
     /// Field `min_copper_weight_oz`.
     pub min_copper_weight_oz: Option<f64>,
+    /// Field `preferred_min_copper_weight_oz`.
+    pub preferred_min_copper_weight_oz: Option<f64>,
+    /// Field `preferred_max_copper_weight_oz`.
+    pub preferred_max_copper_weight_oz: Option<f64>,
+    /// Field `cost_escalation_copper_weight_oz`.
+    pub cost_escalation_copper_weight_oz: Option<f64>,
     /// Field `max_copper_weight_oz`.
     pub max_copper_weight_oz: Option<f64>,
     /// Field `min_dielectric_thickness`.
     pub min_dielectric_thickness: Option<f64>,
+    /// Field `preferred_min_dielectric_thickness`.
+    pub preferred_min_dielectric_thickness: Option<f64>,
+    /// Field `cost_escalation_min_dielectric_thickness`.
+    pub cost_escalation_min_dielectric_thickness: Option<f64>,
     /// Field `min_dielectric_constant`.
     pub min_dielectric_constant: Option<f64>,
     /// Field `max_dielectric_constant`.

@@ -52,6 +52,7 @@
 
 #[doc(hidden)]
 pub mod app;
+pub mod arrow_report;
 pub mod assembly_policy;
 pub mod baseline;
 pub mod checks;
@@ -61,22 +62,34 @@ pub mod config;
 pub mod constraint_policy;
 pub mod conversion;
 pub mod date;
+pub mod dxf_overlay;
 pub mod excellon;
+pub mod excellon_overlay;
+pub mod gencad_review;
 pub mod geometry;
 pub mod gerber_metadata;
+pub mod gerber_overlay;
 pub mod github_annotations;
 pub mod html_report;
 pub mod io;
+pub mod ipc2581_review;
 pub mod ipc356;
+pub mod ipc356_review;
 pub mod jsonl;
 pub mod junit;
 pub mod kicad;
+pub mod kicad_dru;
+pub mod kicad_markers;
+pub mod package_archive;
 pub mod package_policy;
+pub mod parquet_report;
+pub mod pdf_overlay;
 #[doc(hidden)]
 pub mod process_lifecycle;
 pub mod report;
 pub mod sarif;
 pub mod sexp;
+pub mod sqlite_report;
 pub mod svg_overlay;
 pub mod waiver;
 

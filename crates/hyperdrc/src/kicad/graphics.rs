@@ -5,9 +5,11 @@
 //! scan and keeps arc/outline reconstruction in one place.
 
 use geo::Polygon;
+use hyperlimit::{Point2, PredicatePolicy, point2_equal_with_policy};
 
 use crate::geometry::{
-    arc_line_polygons, bezier_line_polygons, circle_polygon, line_polygon, polygon_from_points,
+    RuleGeometryProvenance, SourceGridFacts, SourceUnit, arc_line_polygons, bezier_line_polygons,
+    circle_polygon, line_polygon, polygon_from_points,
 };
 use crate::sexp::Sexp;
 
@@ -184,7 +186,34 @@ fn closed_polygon_from_lines(lines: &[([f64; 2], [f64; 2])]) -> Option<Polygon<f
 }
 
 fn same_point(left: [f64; 2], right: [f64; 2]) -> bool {
-    (left[0] - right[0]).abs() < 1.0e-6 && (left[1] - right[1]).abs() < 1.0e-6
+    // Outline stitching changes imported topology before board-level checks
+    // run, so endpoint equality must be exact after lifting finite parser
+    // coordinates. KiCad coordinates arrive through an f64 parser boundary, but
+    // every finite IEEE-754 value has an exact dyadic `Real` representation.
+    // Route equality through `hyperlimit` rather than a local tolerance, in the
+    // exact-geometric-computation style of Yap, "Towards Exact Geometric
+    // Computation," Computational Geometry 7.1-2 (1997).
+    //
+    let provenance = RuleGeometryProvenance::new(
+        "kicad-edge-stitching",
+        SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter),
+    );
+    let Some(left) = lift_point(left, provenance) else {
+        return false;
+    };
+    let Some(right) = lift_point(right, provenance) else {
+        return false;
+    };
+    point2_equal_with_policy(&left, &right, PredicatePolicy::STRICT)
+        .value()
+        .unwrap_or(false)
+}
+
+fn lift_point(point: [f64; 2], provenance: RuleGeometryProvenance) -> Option<Point2> {
+    Some(Point2::new(
+        provenance.lift_f64(point[0])?,
+        provenance.lift_f64(point[1])?,
+    ))
 }
 
 fn is_edge_cuts(item: &Sexp) -> bool {

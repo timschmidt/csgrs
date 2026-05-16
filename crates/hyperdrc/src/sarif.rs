@@ -118,9 +118,11 @@ fn result(violation: &Violation) -> Value {
         }],
         "partialFingerprints": {
             "hyperdrcStableId": violation.id,
+            "hyperdrcGeometryHash": violation.id,
         },
         "properties": {
             "hyperdrcId": violation.id,
+            "geometryHash": violation.id,
             "layers": violation.layers,
             "islandIndex": violation.island_index,
             "totalArea": violation.total_area,
@@ -192,6 +194,7 @@ mod tests {
             diagnostics: Vec::new(),
             violation_count: violations.len(),
             waived_count: 1,
+            waived_violations: Vec::new(),
             summary: report_summary(&violations, 1),
             violations,
         };
@@ -203,6 +206,14 @@ mod tests {
         assert_eq!(sarif["runs"][0]["results"][0]["level"], "error");
         assert_eq!(
             sarif["runs"][0]["results"][0]["partialFingerprints"]["hyperdrcStableId"],
+            report.violations[0].id
+        );
+        assert_eq!(
+            sarif["runs"][0]["results"][0]["partialFingerprints"]["hyperdrcGeometryHash"],
+            report.violations[0].id
+        );
+        assert_eq!(
+            sarif["runs"][0]["results"][0]["properties"]["geometryHash"],
             report.violations[0].id
         );
         assert_eq!(

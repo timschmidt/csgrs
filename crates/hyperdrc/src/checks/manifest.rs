@@ -38,6 +38,10 @@ pub struct ManifestGerberLayer {
     pub project_id: Option<String>,
     /// Optional Gerber X2 `.MD5` file signature/checksum value.
     pub md5: Option<String>,
+    /// Optional Gerber `%MO...*%` image units, normalized for report output.
+    pub units: Option<String>,
+    /// Optional Gerber `%FS...*%` coordinate format, normalized for report output.
+    pub coordinate_format: Option<String>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -386,6 +390,7 @@ pub fn file_manifest_readiness(input: &ManifestInput) -> Vec<Violation> {
     check_generation_software_evidence(input, &mut violations);
     check_project_id_evidence(input, &mut violations);
     check_md5_evidence(input, &mut violations);
+    check_image_setup_consistency(input, &mut violations);
 
     check_layer_role_coherence(
         top_copper,
@@ -1731,6 +1736,98 @@ fn check_file_function_evidence(input: &ManifestInput, violations: &mut Vec<Viol
             missing.join(", ")
         )),
     ));
+}
+
+fn check_image_setup_consistency(input: &ManifestInput, violations: &mut Vec<Violation>) {
+    let mut units = std::collections::BTreeMap::<String, Vec<String>>::new();
+    let mut formats = std::collections::BTreeMap::<String, Vec<String>>::new();
+    let mut missing_units = Vec::new();
+    let mut missing_formats = Vec::new();
+
+    for layer in &input.gerber_layers {
+        match layer.units.as_deref() {
+            Some(value) => units
+                .entry(value.to_string())
+                .or_default()
+                .push(layer.source_path.clone()),
+            None => missing_units.push(layer.source_path.clone()),
+        }
+        match layer.coordinate_format.as_deref() {
+            Some(value) => formats
+                .entry(value.to_string())
+                .or_default()
+                .push(layer.source_path.clone()),
+            None => missing_formats.push(layer.source_path.clone()),
+        }
+    }
+
+    if units.len() > 1 {
+        violations.push(Violation::new(
+            "file-manifest-readiness",
+            Severity::Warning,
+            vec!["package:mixed-gerber-units".to_string()],
+            None,
+            Vec::new(),
+            Vec::new(),
+            Some(format!(
+                "Gerber package mixes image units across layers; review parser normalization: {}",
+                format_evidence_groups(&units)
+            )),
+        ));
+    }
+
+    if !units.is_empty() && !missing_units.is_empty() {
+        violations.push(Violation::new(
+            "file-manifest-readiness",
+            Severity::Warning,
+            vec!["package:partial-gerber-unit-evidence".to_string()],
+            None,
+            Vec::new(),
+            Vec::new(),
+            Some(format!(
+                "some Gerber layers declare image units while others do not; review source-unit provenance: {}",
+                missing_units.join(", ")
+            )),
+        ));
+    }
+
+    if formats.len() > 1 {
+        violations.push(Violation::new(
+            "file-manifest-readiness",
+            Severity::Warning,
+            vec!["package:mixed-gerber-coordinate-format".to_string()],
+            None,
+            Vec::new(),
+            Vec::new(),
+            Some(format!(
+                "Gerber package mixes coordinate formats across layers; review fixed-coordinate interpretation: {}",
+                format_evidence_groups(&formats)
+            )),
+        ));
+    }
+
+    if !formats.is_empty() && !missing_formats.is_empty() {
+        violations.push(Violation::new(
+            "file-manifest-readiness",
+            Severity::Warning,
+            vec!["package:partial-gerber-coordinate-format-evidence".to_string()],
+            None,
+            Vec::new(),
+            Vec::new(),
+            Some(format!(
+                "some Gerber layers declare coordinate format while others do not; review fixed-coordinate provenance: {}",
+                missing_formats.join(", ")
+            )),
+        ));
+    }
+}
+
+fn format_evidence_groups(groups: &std::collections::BTreeMap<String, Vec<String>>) -> String {
+    groups
+        .iter()
+        .map(|(value, paths)| format!("{value} in {}", paths.join(", ")))
+        .collect::<Vec<_>>()
+        .join("; ")
 }
 
 fn check_part_evidence(input: &ManifestInput, violations: &mut Vec<Violation>) {
@@ -3473,6 +3570,57 @@ mod tests {
         }));
     }
 
+    #[test]
+    fn mixed_gerber_image_setup_is_reported() {
+        let mut top = layer("Widget_F_Cu.gtl");
+        top.units = Some("millimeters".to_string());
+        top.coordinate_format = Some("4:6".to_string());
+        let mut bottom = layer("Widget_B_Cu.gbl");
+        bottom.units = Some("inches".to_string());
+        bottom.coordinate_format = Some("2:6".to_string());
+        let input = ManifestInput {
+            gerber_layers: vec![top, bottom],
+            has_board_outline: true,
+            has_drill_data: true,
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            ..Default::default()
+        };
+        let slugs = violation_slugs(&file_manifest_readiness(&input));
+
+        assert!(slugs.contains(&"package:mixed-gerber-units".to_string()));
+        assert!(slugs.contains(&"package:mixed-gerber-coordinate-format".to_string()));
+    }
+
+    #[test]
+    fn partial_gerber_image_setup_evidence_is_reported() {
+        let mut top = layer("Widget_F_Cu.gtl");
+        top.units = Some("millimeters".to_string());
+        top.coordinate_format = Some("4:6".to_string());
+        let input = ManifestInput {
+            gerber_layers: vec![top, layer("Widget_B_Cu.gbl")],
+            has_board_outline: true,
+            has_drill_data: true,
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            ..Default::default()
+        };
+        let slugs = violation_slugs(&file_manifest_readiness(&input));
+
+        assert!(slugs.contains(&"package:partial-gerber-unit-evidence".to_string()));
+        assert!(slugs.contains(&"package:partial-gerber-coordinate-format-evidence".to_string()));
+    }
+
     fn layer(path: &str) -> ManifestGerberLayer {
         ManifestGerberLayer {
             name: path.to_string(),
@@ -3485,6 +3633,8 @@ mod tests {
             generation_software: None,
             project_id: None,
             md5: None,
+            units: None,
+            coordinate_format: None,
         }
     }
 
@@ -3500,6 +3650,8 @@ mod tests {
             generation_software: None,
             project_id: None,
             md5: None,
+            units: None,
+            coordinate_format: None,
         }
     }
 

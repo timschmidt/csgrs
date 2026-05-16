@@ -231,11 +231,20 @@ fn stackup_metadata_violation(message: &str) -> Violation {
 struct FabricationCapability {
     label: &'static str,
     min_finished_thickness: Option<f64>,
+    preferred_min_finished_thickness: Option<f64>,
+    preferred_max_finished_thickness: Option<f64>,
     max_finished_thickness: Option<f64>,
     max_copper_layers: Option<usize>,
+    preferred_max_copper_layers: Option<usize>,
+    cost_escalation_copper_layers: Option<usize>,
     min_copper_weight_oz: Option<f64>,
+    preferred_min_copper_weight_oz: Option<f64>,
+    preferred_max_copper_weight_oz: Option<f64>,
+    cost_escalation_copper_weight_oz: Option<f64>,
     max_copper_weight_oz: Option<f64>,
     min_dielectric_thickness: Option<f64>,
+    preferred_min_dielectric_thickness: Option<f64>,
+    cost_escalation_min_dielectric_thickness: Option<f64>,
     min_dielectric_constant: Option<f64>,
     max_dielectric_constant: Option<f64>,
     max_loss_tangent: Option<f64>,
@@ -273,11 +282,66 @@ fn stackup_fabrication_capability_readiness(
             )));
         }
     }
+    if let (Some(finished_thickness), Some(preferred_minimum)) = (
+        stackup.finished_thickness,
+        capability.preferred_min_finished_thickness,
+    ) {
+        if finished_thickness < preferred_minimum
+            && capability
+                .min_finished_thickness
+                .is_none_or(|minimum| finished_thickness >= minimum)
+        {
+            violations.push(stackup_metadata_violation(&format!(
+                "stackup finished_thickness {finished_thickness:.6} is below fabricator profile {} preferred minimum {preferred_minimum:.6}; review cost-escalation or special-process requirements",
+                capability.label
+            )));
+        }
+    }
+    if let (Some(finished_thickness), Some(preferred_maximum)) = (
+        stackup.finished_thickness,
+        capability.preferred_max_finished_thickness,
+    ) {
+        if finished_thickness > preferred_maximum
+            && capability
+                .max_finished_thickness
+                .is_none_or(|maximum| finished_thickness <= maximum)
+        {
+            violations.push(stackup_metadata_violation(&format!(
+                "stackup finished_thickness {finished_thickness:.6} is above fabricator profile {} preferred maximum {preferred_maximum:.6}; review cost-escalation or special-process requirements",
+                capability.label
+            )));
+        }
+    }
     if let Some(max_copper_layers) = capability.max_copper_layers {
         let configured_count = configured_copper_layers.len();
         if configured_count > max_copper_layers {
             violations.push(stackup_metadata_violation(&format!(
                 "fabricator profile {} supports up to {max_copper_layers} copper layer(s), but stackup lists {configured_count}",
+                capability.label
+            )));
+        }
+    }
+    let configured_count = configured_copper_layers.len();
+    if let Some(preferred_max_copper_layers) = capability.preferred_max_copper_layers {
+        if configured_count > preferred_max_copper_layers
+            && capability
+                .max_copper_layers
+                .is_none_or(|maximum| configured_count <= maximum)
+        {
+            violations.push(stackup_metadata_violation(&format!(
+                "fabricator profile {} preferred service supports up to {preferred_max_copper_layers} copper layer(s), but stackup lists {configured_count}; review cost-escalation or advanced-service selection",
+                capability.label
+            )));
+        }
+    }
+    if let Some(cost_escalation_copper_layers) = capability.cost_escalation_copper_layers {
+        if configured_count > cost_escalation_copper_layers
+            && capability
+                .max_copper_layers
+                .is_none_or(|maximum| configured_count <= maximum)
+        {
+            violations.push(stackup_metadata_violation(&format!(
+                "fabricator profile {} cost-escalation threshold is {cost_escalation_copper_layers} copper layer(s), but stackup lists {configured_count}; review quote class and fabrication lead time",
                 capability.label
             )));
         }
@@ -304,6 +368,51 @@ fn stackup_fabrication_capability_readiness(
                 )));
             }
         }
+        if let (Some(weight), Some(preferred_minimum)) = (
+            layer.copper_weight_oz,
+            capability.preferred_min_copper_weight_oz,
+        ) {
+            if weight < preferred_minimum
+                && capability
+                    .min_copper_weight_oz
+                    .is_none_or(|minimum| weight >= minimum)
+            {
+                violations.push(stackup_metadata_violation(&format!(
+                    "stackup copper layer {} has copper_weight_oz {weight:.6} below fabricator profile {} preferred minimum {preferred_minimum:.6}; review cost-escalation or special-process requirements",
+                    layer.name, capability.label
+                )));
+            }
+        }
+        if let (Some(weight), Some(preferred_maximum)) = (
+            layer.copper_weight_oz,
+            capability.preferred_max_copper_weight_oz,
+        ) {
+            if weight > preferred_maximum
+                && capability
+                    .max_copper_weight_oz
+                    .is_none_or(|maximum| weight <= maximum)
+            {
+                violations.push(stackup_metadata_violation(&format!(
+                    "stackup copper layer {} has copper_weight_oz {weight:.6} above fabricator profile {} preferred maximum {preferred_maximum:.6}; review cost-escalation or special-process requirements",
+                    layer.name, capability.label
+                )));
+            }
+        }
+        if let (Some(weight), Some(cost_threshold)) = (
+            layer.copper_weight_oz,
+            capability.cost_escalation_copper_weight_oz,
+        ) {
+            if weight > cost_threshold
+                && capability
+                    .max_copper_weight_oz
+                    .is_none_or(|maximum| weight <= maximum)
+            {
+                violations.push(stackup_metadata_violation(&format!(
+                    "stackup copper layer {} has copper_weight_oz {weight:.6} above fabricator profile {} cost-escalation threshold {cost_threshold:.6}; review quote class and fabrication lead time",
+                    layer.name, capability.label
+                )));
+            }
+        }
     }
 
     if let Some(minimum) = capability.min_dielectric_thickness {
@@ -317,6 +426,48 @@ fn stackup_fabrication_capability_readiness(
                 if thickness < minimum {
                     violations.push(stackup_metadata_violation(&format!(
                         "stackup dielectric layer {} has dielectric_thickness {thickness:.6} below fabricator profile {} minimum {minimum:.6}",
+                        layer.name, capability.label
+                    )));
+                }
+            }
+        }
+    }
+    if let Some(preferred_minimum) = capability.preferred_min_dielectric_thickness {
+        for layer in stackup.layers.iter().filter(|layer| {
+            matches!(
+                layer.kind,
+                StackupLayerKind::Dielectric | StackupLayerKind::Core | StackupLayerKind::Prepreg
+            )
+        }) {
+            if let Some(thickness) = layer.dielectric_thickness {
+                if thickness < preferred_minimum
+                    && capability
+                        .min_dielectric_thickness
+                        .is_none_or(|minimum| thickness >= minimum)
+                {
+                    violations.push(stackup_metadata_violation(&format!(
+                        "stackup dielectric layer {} has dielectric_thickness {thickness:.6} below fabricator profile {} preferred minimum {preferred_minimum:.6}; review cost-escalation or special-process requirements",
+                        layer.name, capability.label
+                    )));
+                }
+            }
+        }
+    }
+    if let Some(cost_threshold) = capability.cost_escalation_min_dielectric_thickness {
+        for layer in stackup.layers.iter().filter(|layer| {
+            matches!(
+                layer.kind,
+                StackupLayerKind::Dielectric | StackupLayerKind::Core | StackupLayerKind::Prepreg
+            )
+        }) {
+            if let Some(thickness) = layer.dielectric_thickness {
+                if thickness < cost_threshold
+                    && capability
+                        .min_dielectric_thickness
+                        .is_none_or(|minimum| thickness >= minimum)
+                {
+                    violations.push(stackup_metadata_violation(&format!(
+                        "stackup dielectric layer {} has dielectric_thickness {thickness:.6} below fabricator profile {} cost-escalation threshold {cost_threshold:.6}; review quote class and fabrication lead time",
                         layer.name, capability.label
                     )));
                 }
@@ -393,19 +544,46 @@ fn resolved_fabrication_capability(stackup: &StackupConfig) -> Option<Fabricatio
         capability.min_finished_thickness = custom
             .min_finished_thickness
             .or(capability.min_finished_thickness);
+        capability.preferred_min_finished_thickness = custom
+            .preferred_min_finished_thickness
+            .or(capability.preferred_min_finished_thickness);
+        capability.preferred_max_finished_thickness = custom
+            .preferred_max_finished_thickness
+            .or(capability.preferred_max_finished_thickness);
         capability.max_finished_thickness = custom
             .max_finished_thickness
             .or(capability.max_finished_thickness);
         capability.max_copper_layers = custom.max_copper_layers.or(capability.max_copper_layers);
+        capability.preferred_max_copper_layers = custom
+            .preferred_max_copper_layers
+            .or(capability.preferred_max_copper_layers);
+        capability.cost_escalation_copper_layers = custom
+            .cost_escalation_copper_layers
+            .or(capability.cost_escalation_copper_layers);
         capability.min_copper_weight_oz = custom
             .min_copper_weight_oz
             .or(capability.min_copper_weight_oz);
+        capability.preferred_min_copper_weight_oz = custom
+            .preferred_min_copper_weight_oz
+            .or(capability.preferred_min_copper_weight_oz);
+        capability.preferred_max_copper_weight_oz = custom
+            .preferred_max_copper_weight_oz
+            .or(capability.preferred_max_copper_weight_oz);
+        capability.cost_escalation_copper_weight_oz = custom
+            .cost_escalation_copper_weight_oz
+            .or(capability.cost_escalation_copper_weight_oz);
         capability.max_copper_weight_oz = custom
             .max_copper_weight_oz
             .or(capability.max_copper_weight_oz);
         capability.min_dielectric_thickness = custom
             .min_dielectric_thickness
             .or(capability.min_dielectric_thickness);
+        capability.preferred_min_dielectric_thickness = custom
+            .preferred_min_dielectric_thickness
+            .or(capability.preferred_min_dielectric_thickness);
+        capability.cost_escalation_min_dielectric_thickness = custom
+            .cost_escalation_min_dielectric_thickness
+            .or(capability.cost_escalation_min_dielectric_thickness);
         capability.min_dielectric_constant = custom
             .min_dielectric_constant
             .or(capability.min_dielectric_constant);
@@ -424,33 +602,214 @@ fn builtin_fabrication_capability(profile: &str) -> Option<FabricationCapability
         "prototype-fab" => Some(FabricationCapability {
             label: "prototype-fab",
             min_finished_thickness: Some(0.6),
+            preferred_min_finished_thickness: Some(0.8),
+            preferred_max_finished_thickness: Some(1.6),
             max_finished_thickness: Some(2.4),
             max_copper_layers: Some(4),
+            preferred_max_copper_layers: Some(2),
+            cost_escalation_copper_layers: Some(4),
             min_copper_weight_oz: Some(0.5),
+            preferred_min_copper_weight_oz: Some(1.0),
+            preferred_max_copper_weight_oz: Some(1.0),
+            cost_escalation_copper_weight_oz: Some(2.0),
             max_copper_weight_oz: Some(2.0),
             min_dielectric_thickness: Some(0.05),
+            preferred_min_dielectric_thickness: Some(0.10),
+            cost_escalation_min_dielectric_thickness: Some(0.075),
             ..FabricationCapability::default()
         }),
-        "standard-fab" | "jlcpcb-standard" | "pcbway-standard" | "eurocircuits-standard" => {
-            Some(FabricationCapability {
-                label: "standard-fab",
-                min_finished_thickness: Some(0.4),
-                max_finished_thickness: Some(3.2),
-                max_copper_layers: Some(8),
-                min_copper_weight_oz: Some(0.33),
-                max_copper_weight_oz: Some(3.0),
-                min_dielectric_thickness: Some(0.04),
-                ..FabricationCapability::default()
-            })
-        }
+        "standard-fab" => Some(FabricationCapability {
+            label: "standard-fab",
+            min_finished_thickness: Some(0.4),
+            preferred_min_finished_thickness: Some(0.8),
+            preferred_max_finished_thickness: Some(2.0),
+            max_finished_thickness: Some(3.2),
+            max_copper_layers: Some(8),
+            preferred_max_copper_layers: Some(4),
+            cost_escalation_copper_layers: Some(6),
+            min_copper_weight_oz: Some(0.33),
+            preferred_min_copper_weight_oz: Some(0.5),
+            preferred_max_copper_weight_oz: Some(2.0),
+            cost_escalation_copper_weight_oz: Some(2.0),
+            max_copper_weight_oz: Some(3.0),
+            min_dielectric_thickness: Some(0.04),
+            preferred_min_dielectric_thickness: Some(0.075),
+            cost_escalation_min_dielectric_thickness: Some(0.05),
+            ..FabricationCapability::default()
+        }),
+        "jlcpcb-economy" | "jlcpcb-basic" => Some(FabricationCapability {
+            label: "jlcpcb-economy",
+            min_finished_thickness: Some(0.6),
+            preferred_min_finished_thickness: Some(0.8),
+            preferred_max_finished_thickness: Some(1.6),
+            max_finished_thickness: Some(2.0),
+            max_copper_layers: Some(4),
+            preferred_max_copper_layers: Some(2),
+            cost_escalation_copper_layers: Some(4),
+            min_copper_weight_oz: Some(1.0),
+            preferred_min_copper_weight_oz: Some(1.0),
+            preferred_max_copper_weight_oz: Some(1.0),
+            cost_escalation_copper_weight_oz: Some(1.0),
+            max_copper_weight_oz: Some(2.0),
+            min_dielectric_thickness: Some(0.075),
+            preferred_min_dielectric_thickness: Some(0.10),
+            cost_escalation_min_dielectric_thickness: Some(0.075),
+            ..FabricationCapability::default()
+        }),
+        "jlcpcb-standard" => Some(FabricationCapability {
+            label: "jlcpcb-standard",
+            min_finished_thickness: Some(0.4),
+            preferred_min_finished_thickness: Some(0.8),
+            preferred_max_finished_thickness: Some(2.0),
+            max_finished_thickness: Some(3.2),
+            max_copper_layers: Some(6),
+            preferred_max_copper_layers: Some(4),
+            cost_escalation_copper_layers: Some(6),
+            min_copper_weight_oz: Some(0.5),
+            preferred_min_copper_weight_oz: Some(1.0),
+            preferred_max_copper_weight_oz: Some(2.0),
+            cost_escalation_copper_weight_oz: Some(2.0),
+            max_copper_weight_oz: Some(3.0),
+            min_dielectric_thickness: Some(0.04),
+            preferred_min_dielectric_thickness: Some(0.075),
+            cost_escalation_min_dielectric_thickness: Some(0.05),
+            ..FabricationCapability::default()
+        }),
+        "jlcpcb-advanced" => Some(FabricationCapability {
+            label: "jlcpcb-advanced",
+            min_finished_thickness: Some(0.2),
+            preferred_min_finished_thickness: Some(0.6),
+            preferred_max_finished_thickness: Some(2.4),
+            max_finished_thickness: Some(4.0),
+            max_copper_layers: Some(12),
+            preferred_max_copper_layers: Some(8),
+            cost_escalation_copper_layers: Some(10),
+            min_copper_weight_oz: Some(0.25),
+            preferred_min_copper_weight_oz: Some(0.5),
+            preferred_max_copper_weight_oz: Some(3.0),
+            cost_escalation_copper_weight_oz: Some(3.0),
+            max_copper_weight_oz: Some(4.0),
+            min_dielectric_thickness: Some(0.025),
+            preferred_min_dielectric_thickness: Some(0.05),
+            cost_escalation_min_dielectric_thickness: Some(0.035),
+            ..FabricationCapability::default()
+        }),
+        "pcbway-standard" => Some(FabricationCapability {
+            label: "pcbway-standard",
+            min_finished_thickness: Some(0.4),
+            preferred_min_finished_thickness: Some(0.8),
+            preferred_max_finished_thickness: Some(2.4),
+            max_finished_thickness: Some(3.2),
+            max_copper_layers: Some(14),
+            preferred_max_copper_layers: Some(6),
+            cost_escalation_copper_layers: Some(10),
+            min_copper_weight_oz: Some(0.5),
+            preferred_min_copper_weight_oz: Some(1.0),
+            preferred_max_copper_weight_oz: Some(2.0),
+            cost_escalation_copper_weight_oz: Some(3.0),
+            max_copper_weight_oz: Some(8.0),
+            min_dielectric_thickness: Some(0.04),
+            preferred_min_dielectric_thickness: Some(0.075),
+            cost_escalation_min_dielectric_thickness: Some(0.05),
+            ..FabricationCapability::default()
+        }),
+        "pcbway-advanced" => Some(FabricationCapability {
+            label: "pcbway-advanced",
+            min_finished_thickness: Some(0.2),
+            preferred_min_finished_thickness: Some(0.6),
+            preferred_max_finished_thickness: Some(3.2),
+            max_finished_thickness: Some(4.5),
+            max_copper_layers: Some(30),
+            preferred_max_copper_layers: Some(16),
+            cost_escalation_copper_layers: Some(20),
+            min_copper_weight_oz: Some(0.25),
+            preferred_min_copper_weight_oz: Some(0.5),
+            preferred_max_copper_weight_oz: Some(3.0),
+            cost_escalation_copper_weight_oz: Some(4.0),
+            max_copper_weight_oz: Some(8.0),
+            min_dielectric_thickness: Some(0.025),
+            preferred_min_dielectric_thickness: Some(0.05),
+            cost_escalation_min_dielectric_thickness: Some(0.035),
+            ..FabricationCapability::default()
+        }),
+        "eurocircuits-pcb-proto" | "eurocircuits-standard" => Some(FabricationCapability {
+            label: "eurocircuits-pcb-proto",
+            min_finished_thickness: Some(0.8),
+            preferred_min_finished_thickness: Some(1.0),
+            preferred_max_finished_thickness: Some(1.6),
+            max_finished_thickness: Some(2.4),
+            max_copper_layers: Some(4),
+            preferred_max_copper_layers: Some(2),
+            cost_escalation_copper_layers: Some(4),
+            min_copper_weight_oz: Some(0.5),
+            preferred_min_copper_weight_oz: Some(1.0),
+            preferred_max_copper_weight_oz: Some(1.0),
+            cost_escalation_copper_weight_oz: Some(2.0),
+            max_copper_weight_oz: Some(2.0),
+            min_dielectric_thickness: Some(0.075),
+            preferred_min_dielectric_thickness: Some(0.10),
+            cost_escalation_min_dielectric_thickness: Some(0.075),
+            ..FabricationCapability::default()
+        }),
+        "eurocircuits-standard-pool" => Some(FabricationCapability {
+            label: "eurocircuits-standard-pool",
+            min_finished_thickness: Some(0.5),
+            preferred_min_finished_thickness: Some(0.8),
+            preferred_max_finished_thickness: Some(2.0),
+            max_finished_thickness: Some(3.2),
+            max_copper_layers: Some(8),
+            preferred_max_copper_layers: Some(4),
+            cost_escalation_copper_layers: Some(6),
+            min_copper_weight_oz: Some(0.5),
+            preferred_min_copper_weight_oz: Some(1.0),
+            preferred_max_copper_weight_oz: Some(1.0),
+            cost_escalation_copper_weight_oz: Some(2.0),
+            max_copper_weight_oz: Some(2.0),
+            min_dielectric_thickness: Some(0.05),
+            preferred_min_dielectric_thickness: Some(0.075),
+            cost_escalation_min_dielectric_thickness: Some(0.05),
+            ..FabricationCapability::default()
+        }),
+        "eurocircuits-defined-impedance" => Some(FabricationCapability {
+            label: "eurocircuits-defined-impedance",
+            min_finished_thickness: Some(0.5),
+            preferred_min_finished_thickness: Some(0.8),
+            preferred_max_finished_thickness: Some(2.4),
+            max_finished_thickness: Some(3.2),
+            max_copper_layers: Some(12),
+            preferred_max_copper_layers: Some(6),
+            cost_escalation_copper_layers: Some(8),
+            min_copper_weight_oz: Some(0.5),
+            preferred_min_copper_weight_oz: Some(1.0),
+            preferred_max_copper_weight_oz: Some(2.0),
+            cost_escalation_copper_weight_oz: Some(2.0),
+            max_copper_weight_oz: Some(3.0),
+            min_dielectric_thickness: Some(0.04),
+            preferred_min_dielectric_thickness: Some(0.075),
+            cost_escalation_min_dielectric_thickness: Some(0.05),
+            min_dielectric_constant: Some(3.0),
+            max_dielectric_constant: Some(4.8),
+            max_loss_tangent: Some(0.025),
+            min_tg_c: Some(130.0),
+            ..FabricationCapability::default()
+        }),
         "advanced-fab" => Some(FabricationCapability {
             label: "advanced-fab",
             min_finished_thickness: Some(0.2),
+            preferred_min_finished_thickness: Some(0.6),
+            preferred_max_finished_thickness: Some(3.2),
             max_finished_thickness: Some(4.0),
             max_copper_layers: Some(12),
+            preferred_max_copper_layers: Some(8),
+            cost_escalation_copper_layers: Some(10),
             min_copper_weight_oz: Some(0.25),
+            preferred_min_copper_weight_oz: Some(0.5),
+            preferred_max_copper_weight_oz: Some(3.0),
+            cost_escalation_copper_weight_oz: Some(3.0),
             max_copper_weight_oz: Some(4.0),
             min_dielectric_thickness: Some(0.025),
+            preferred_min_dielectric_thickness: Some(0.05),
+            cost_escalation_min_dielectric_thickness: Some(0.035),
             ..FabricationCapability::default()
         }),
         _ => None,
@@ -459,11 +818,22 @@ fn builtin_fabrication_capability(profile: &str) -> Option<FabricationCapability
 
 fn has_custom_capability(capability: &FabricationCapabilityConfig) -> bool {
     capability.min_finished_thickness.is_some()
+        || capability.preferred_min_finished_thickness.is_some()
+        || capability.preferred_max_finished_thickness.is_some()
         || capability.max_finished_thickness.is_some()
         || capability.max_copper_layers.is_some()
+        || capability.preferred_max_copper_layers.is_some()
+        || capability.cost_escalation_copper_layers.is_some()
         || capability.min_copper_weight_oz.is_some()
+        || capability.preferred_min_copper_weight_oz.is_some()
+        || capability.preferred_max_copper_weight_oz.is_some()
+        || capability.cost_escalation_copper_weight_oz.is_some()
         || capability.max_copper_weight_oz.is_some()
         || capability.min_dielectric_thickness.is_some()
+        || capability.preferred_min_dielectric_thickness.is_some()
+        || capability
+            .cost_escalation_min_dielectric_thickness
+            .is_some()
         || capability.min_dielectric_constant.is_some()
         || capability.max_dielectric_constant.is_some()
         || capability.max_loss_tangent.is_some()
@@ -1828,6 +2198,86 @@ mod tests {
             messages
                 .iter()
                 .any(|message| message.contains("finished_thickness 1.600000 is below"))
+        );
+    }
+
+    #[test]
+    fn stackup_readiness_reports_vendor_service_class_thresholds() {
+        let mut stackup = complete_stackup(Some(SurfaceFinish::Enig), Some(false));
+        stackup.fabricator_profile = Some("pcbway-standard".to_string());
+        stackup.finished_thickness = Some(2.8);
+        stackup.layers = (0..12)
+            .map(|index| StackupLayerConfig {
+                name: format!("L{}.Cu", index + 1),
+                kind: StackupLayerKind::Copper,
+                copper_weight_oz: Some(if index == 0 { 3.5 } else { 1.0 }),
+                dielectric_thickness: None,
+            })
+            .chain(std::iter::once(StackupLayerConfig {
+                name: "Core".to_string(),
+                kind: StackupLayerKind::Core,
+                copper_weight_oz: None,
+                dielectric_thickness: Some(0.045),
+            }))
+            .collect();
+
+        let messages = stackup_readiness(Some(&stackup), &[])
+            .into_iter()
+            .filter_map(|violation| violation.message)
+            .collect::<Vec<_>>();
+
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("pcbway-standard preferred service"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("pcbway-standard cost-escalation threshold"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("finished_thickness 2.800000 is above"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("copper_weight_oz 3.500000 above"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("dielectric_thickness 0.045000 below"))
+        );
+    }
+
+    #[test]
+    fn stackup_readiness_uses_custom_preferred_and_cost_thresholds() {
+        let mut stackup = complete_stackup(Some(SurfaceFinish::Enig), Some(false));
+        stackup.fabricator_profile = Some("custom-shop".to_string());
+        stackup.layers[0].copper_weight_oz = Some(2.5);
+        stackup.fabrication_capability = FabricationCapabilityConfig {
+            preferred_max_copper_weight_oz: Some(1.0),
+            cost_escalation_copper_weight_oz: Some(2.0),
+            ..FabricationCapabilityConfig::default()
+        };
+
+        let messages = stackup_readiness(Some(&stackup), &[])
+            .into_iter()
+            .filter_map(|violation| violation.message)
+            .collect::<Vec<_>>();
+
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("fabricator profile custom preferred maximum"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("fabricator profile custom cost-escalation"))
         );
     }
 

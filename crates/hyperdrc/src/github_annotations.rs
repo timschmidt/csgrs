@@ -40,6 +40,7 @@ fn annotation(violation: &Violation) -> String {
 fn message(violation: &Violation) -> String {
     let mut parts = vec![
         format!("id {}", violation.id),
+        format!("geometry_hash {}", violation.id),
         violation
             .message
             .clone()
@@ -108,6 +109,7 @@ mod tests {
             diagnostics: Vec::new(),
             violation_count: violations.len(),
             waived_count: 0,
+            waived_violations: Vec::new(),
             summary: report_summary(&violations, 0),
             violations,
         };
@@ -116,6 +118,7 @@ mod tests {
 
         assert!(annotations.starts_with("::warning file=top%2Csilk.gbr"));
         assert!(annotations.contains("legend crosses pad: U1%0Areview"));
+        assert!(annotations.contains("geometry_hash"));
         assert!(annotations.contains("locations (1.250000, 2.500000)"));
     }
 }

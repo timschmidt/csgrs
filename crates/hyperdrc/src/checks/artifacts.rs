@@ -20,7 +20,7 @@ use super::artifact_handoff::{
 };
 use super::artifact_table::{cell, find_column, parse_table};
 use super::surface_finish::readme_surface_finish_compatibility;
-use crate::report::{Severity, Violation};
+use crate::report::{Diagnostic, Severity, Violation};
 
 #[derive(Clone, Debug)]
 /// Public data model for `TextArtifact`.
@@ -38,6 +38,100 @@ pub struct FileArtifact {
     pub path: String,
     /// Field `byte_len`.
     pub byte_len: u64,
+}
+
+#[derive(Copy, Clone, Debug)]
+/// Public enumeration for `TextArtifactParserKind`.
+pub enum TextArtifactParserKind {
+    /// BOM or component list sidecar.
+    Bom,
+    /// Pick-and-place or centroid sidecar.
+    Centroid,
+    /// Netlist table sidecar.
+    Netlist,
+}
+
+/// Return non-fatal parser diagnostics for structured text sidecars.
+pub fn text_artifact_parser_diagnostics(
+    artifact: &TextArtifact,
+    kind: TextArtifactParserKind,
+) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+    let Some(table) = parse_table(&artifact.text) else {
+        diagnostics.push(text_artifact_diagnostic(
+            artifact,
+            None,
+            kind,
+            "unparseable",
+            format!("{} sidecar has no parseable table rows", kind.label()),
+        ));
+        return diagnostics;
+    };
+
+    if table.rows.is_empty() {
+        diagnostics.push(text_artifact_diagnostic(
+            artifact,
+            None,
+            kind,
+            "empty",
+            format!("{} sidecar has headers but no data rows", kind.label()),
+        ));
+    }
+
+    let mut seen_headers = BTreeSet::new();
+    for header in &table.headers {
+        if !header.is_empty() && !seen_headers.insert(header) {
+            diagnostics.push(text_artifact_diagnostic(
+                artifact,
+                None,
+                kind,
+                "duplicate-header",
+                format!(
+                    "{} sidecar has duplicate normalized header {header}",
+                    kind.label()
+                ),
+            ));
+        }
+    }
+
+    for required in kind.required_columns() {
+        if find_column(&table.headers, required.candidates).is_none() {
+            diagnostics.push(text_artifact_diagnostic(
+                artifact,
+                None,
+                kind,
+                "missing-column",
+                format!(
+                    "{} sidecar header has no {} column",
+                    kind.label(),
+                    required.label
+                ),
+            ));
+        }
+    }
+
+    for (row_index, row) in table.rows.iter().enumerate() {
+        if row.len() != table.headers.len() {
+            diagnostics.push(text_artifact_diagnostic(
+                artifact,
+                Some(row_index + 2),
+                kind,
+                "ragged-row",
+                format!(
+                    "{} sidecar row has {} cell(s), expected {} from the header",
+                    kind.label(),
+                    row.len(),
+                    table.headers.len()
+                ),
+            ));
+        }
+    }
+
+    if let TextArtifactParserKind::Centroid = kind {
+        diagnostics.extend(centroid_numeric_diagnostics(artifact, &table, kind));
+    }
+
+    diagnostics
 }
 
 /// Run the `production_artifact_readiness` design-readiness check or report helper.
@@ -713,6 +807,198 @@ enum TextArtifactKind {
     Centroid,
     Netlist,
     Readme,
+}
+
+struct RequiredTextColumn {
+    label: &'static str,
+    candidates: &'static [&'static str],
+}
+
+const CENTROID_REFERENCE_COLUMNS: &[&str] = &[
+    "ref",
+    "reference",
+    "designator",
+    "refdes",
+    "component",
+    "component designator",
+];
+const CENTROID_X_COLUMNS: &[&str] = &[
+    "x",
+    "posx",
+    "pos x",
+    "mid x",
+    "midx",
+    "centerx",
+    "center x",
+    "center-x",
+    "x position",
+    "xposition",
+    "xpos",
+    "locationx",
+    "location x",
+];
+const CENTROID_Y_COLUMNS: &[&str] = &[
+    "y",
+    "posy",
+    "pos y",
+    "mid y",
+    "midy",
+    "centery",
+    "center y",
+    "center-y",
+    "y position",
+    "yposition",
+    "ypos",
+    "locationy",
+    "location y",
+];
+const CENTROID_ROTATION_COLUMNS: &[&str] = &[
+    "rotation",
+    "rot",
+    "angle",
+    "orientation",
+    "rotation degrees",
+    "rotationdeg",
+];
+const CENTROID_SIDE_COLUMNS: &[&str] = &[
+    "side",
+    "layer",
+    "mountside",
+    "mount side",
+    "board side",
+    "tb",
+    "topbottom",
+    "top bottom",
+];
+
+impl TextArtifactParserKind {
+    fn label(self) -> &'static str {
+        match self {
+            TextArtifactParserKind::Bom => "BOM",
+            TextArtifactParserKind::Centroid => "centroid",
+            TextArtifactParserKind::Netlist => "netlist",
+        }
+    }
+
+    fn code_prefix(self) -> &'static str {
+        match self {
+            TextArtifactParserKind::Bom => "artifact-table::bom",
+            TextArtifactParserKind::Centroid => "artifact-table::centroid",
+            TextArtifactParserKind::Netlist => "artifact-table::netlist",
+        }
+    }
+
+    fn required_columns(self) -> &'static [RequiredTextColumn] {
+        match self {
+            TextArtifactParserKind::Bom => &[
+                RequiredTextColumn {
+                    label: "reference/designator",
+                    candidates: &["ref", "reference", "designator"],
+                },
+                RequiredTextColumn {
+                    label: "part/value",
+                    candidates: &["mpn", "manufacturer", "part", "partnumber", "value"],
+                },
+            ],
+            TextArtifactParserKind::Centroid => &[
+                RequiredTextColumn {
+                    label: "reference/designator",
+                    candidates: CENTROID_REFERENCE_COLUMNS,
+                },
+                RequiredTextColumn {
+                    label: "x coordinate",
+                    candidates: CENTROID_X_COLUMNS,
+                },
+                RequiredTextColumn {
+                    label: "y coordinate",
+                    candidates: CENTROID_Y_COLUMNS,
+                },
+                RequiredTextColumn {
+                    label: "rotation",
+                    candidates: CENTROID_ROTATION_COLUMNS,
+                },
+                RequiredTextColumn {
+                    label: "side/layer",
+                    candidates: CENTROID_SIDE_COLUMNS,
+                },
+            ],
+            TextArtifactParserKind::Netlist => &[
+                RequiredTextColumn {
+                    label: "net",
+                    candidates: &["net", "netname", "signal"],
+                },
+                RequiredTextColumn {
+                    label: "reference/designator",
+                    candidates: &["ref", "reference", "designator", "component"],
+                },
+                RequiredTextColumn {
+                    label: "pin/pad",
+                    candidates: &["pin", "pad", "terminal"],
+                },
+            ],
+        }
+    }
+}
+
+fn text_artifact_diagnostic(
+    artifact: &TextArtifact,
+    line: Option<usize>,
+    kind: TextArtifactParserKind,
+    suffix: &str,
+    message: String,
+) -> Diagnostic {
+    Diagnostic {
+        source: artifact.path.clone(),
+        line,
+        severity: Severity::Warning,
+        code: format!("{}::{suffix}", kind.code_prefix()),
+        message,
+    }
+}
+
+fn centroid_numeric_diagnostics(
+    artifact: &TextArtifact,
+    table: &super::artifact_table::Table,
+    kind: TextArtifactParserKind,
+) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+    for (label, column) in [
+        (
+            "x coordinate",
+            find_column(&table.headers, CENTROID_X_COLUMNS),
+        ),
+        (
+            "y coordinate",
+            find_column(&table.headers, CENTROID_Y_COLUMNS),
+        ),
+        (
+            "rotation",
+            find_column(&table.headers, CENTROID_ROTATION_COLUMNS),
+        ),
+    ] {
+        let Some(column) = column else {
+            continue;
+        };
+        for (row_index, row) in table.rows.iter().enumerate() {
+            let value = cell(row, column).trim();
+            if value.is_empty() {
+                continue;
+            }
+            if value.parse::<f64>().is_err() {
+                diagnostics.push(text_artifact_diagnostic(
+                    artifact,
+                    Some(row_index + 2),
+                    kind,
+                    "invalid-number",
+                    format!(
+                        "{} sidecar row has non-numeric {label} value {value:?}",
+                        kind.label()
+                    ),
+                ));
+            }
+        }
+    }
+    diagnostics
 }
 
 #[derive(Default)]
@@ -1940,13 +2226,13 @@ fn analyze_centroid(artifact: &TextArtifact) -> ArtifactAnalysis {
         ));
     }
 
-    let ref_col = find_column(&table.headers, &["ref", "reference", "designator"]);
-    let x_col = find_column(&table.headers, &["x", "posx", "mid x", "centerx"]);
-    let y_col = find_column(&table.headers, &["y", "posy", "mid y", "centery"]);
-    let rotation_col = find_column(&table.headers, &["rotation", "rot", "angle"]);
-    let side_col = find_column(&table.headers, &["side", "layer", "mountside"]);
-    let value_col = find_column(&table.headers, &["value", "description", "comment"]);
-    let package_col = find_column(&table.headers, &["package", "footprint", "case"]);
+    let ref_col = find_column(&table.headers, CENTROID_REFERENCE_COLUMNS);
+    let x_col = find_column(&table.headers, CENTROID_X_COLUMNS);
+    let y_col = find_column(&table.headers, CENTROID_Y_COLUMNS);
+    let rotation_col = find_column(&table.headers, CENTROID_ROTATION_COLUMNS);
+    let side_col = find_column(&table.headers, CENTROID_SIDE_COLUMNS);
+    let value_col = find_column(&table.headers, &["value", "val", "description", "comment"]);
+    let package_col = find_column(&table.headers, &["package", "pkg", "footprint", "case"]);
 
     for (name, column) in [
         ("reference/designator", ref_col),
@@ -2012,6 +2298,9 @@ fn analyze_centroid(artifact: &TextArtifact) -> ArtifactAnalysis {
             &normalized_text,
             &[
                 "rotation convention",
+                "angle",
+                "deg",
+                "degree",
                 "degrees",
                 "clockwise",
                 "counterclockwise",
@@ -2110,20 +2399,8 @@ fn analyze_centroid(artifact: &TextArtifact) -> ArtifactAnalysis {
         let mut row_side = None;
         if let Some(column) = side_col {
             let side = cell(row, column).trim().to_ascii_lowercase();
-            if !matches!(
-                side.as_str(),
-                "top" | "bottom" | "front" | "back" | "f" | "b" | "f.cu" | "b.cu"
-            ) {
-                analysis.violations.push(artifact_violation(
-                    &artifact.path,
-                    Some(format!(
-                        "centroid row {} has invalid side value {:?}",
-                        row_index + 2,
-                        cell(row, column)
-                    )),
-                ));
-            } else {
-                let side = normalize_side(&side).to_string();
+            if let Some(side) = normalize_centroid_side(&side) {
+                let side = side.to_string();
                 row_side = Some(side.clone());
                 if let Some(reference) = &row_reference {
                     analysis
@@ -2132,6 +2409,15 @@ fn analyze_centroid(artifact: &TextArtifact) -> ArtifactAnalysis {
                         .or_default()
                         .insert(side);
                 }
+            } else {
+                analysis.violations.push(artifact_violation(
+                    &artifact.path,
+                    Some(format!(
+                        "centroid row {} has invalid side value {:?}",
+                        row_index + 2,
+                        cell(row, column)
+                    )),
+                ));
             }
         }
 
@@ -2978,6 +3264,21 @@ fn normalize_side(side: &str) -> &'static str {
         "top" | "front" | "f" | "f.cu" => "top",
         "bottom" | "back" | "b" | "b.cu" => "bottom",
         _ => "unknown",
+    }
+}
+
+fn normalize_centroid_side(side: &str) -> Option<&'static str> {
+    let normalized = side
+        .chars()
+        .filter(|ch| ch.is_ascii_alphanumeric())
+        .collect::<String>()
+        .to_ascii_lowercase();
+    match normalized.as_str() {
+        "top" | "front" | "f" | "t" | "fcu" | "toplayer" | "topsidelayer" | "topside"
+        | "component" | "componentside" | "primary" => Some("top"),
+        "bottom" | "back" | "b" | "bot" | "bcu" | "bottomlayer" | "bottomsidelayer"
+        | "bottomside" | "solder" | "solderside" | "secondary" => Some("bottom"),
+        _ => None,
     }
 }
 
@@ -4022,9 +4323,18 @@ impl DrawingKind {
 
     fn allowed_extensions(self) -> &'static [&'static str] {
         match self {
-            DrawingKind::Fabrication => &["pdf", "dxf", "svg", "dwg"],
-            DrawingKind::Assembly => &["pdf", "dxf", "svg", "png", "jpg", "jpeg"],
-            DrawingKind::Rout => &["pdf", "dxf", "svg", "dwg", "gko", "gm1", "gm2", "gml"],
+            DrawingKind::Fabrication => &[
+                "pdf", "dxf", "dxb", "svg", "dwg", "sat", "sab", "acis", "ps", "eps", "plt",
+                "hpgl", "hpg",
+            ],
+            DrawingKind::Assembly => &[
+                "pdf", "dxf", "dxb", "svg", "dwg", "sat", "sab", "acis", "png", "jpg", "jpeg",
+                "ps", "eps", "plt", "hpgl", "hpg",
+            ],
+            DrawingKind::Rout => &[
+                "pdf", "dxf", "dxb", "svg", "dwg", "sat", "sab", "acis", "gko", "gm1", "gm2",
+                "gml", "ps", "eps", "plt", "hpgl", "hpg",
+            ],
         }
     }
 
@@ -4051,9 +4361,16 @@ impl TextArtifactKind {
 
     fn allowed_extensions(self) -> &'static [&'static str] {
         match self {
-            TextArtifactKind::Bom => &["csv", "tsv", "txt", "xlsx", "xls"],
-            TextArtifactKind::Centroid => &["csv", "tsv", "txt", "pos"],
-            TextArtifactKind::Netlist => &["csv", "tsv", "txt", "net", "ipc", "356"],
+            TextArtifactKind::Bom => &[
+                "csv", "tsv", "txt", "xlsx", "xls", "xlsm", "xlsb", "ods", "json",
+            ],
+            TextArtifactKind::Centroid => &[
+                "csv", "tsv", "txt", "pos", "xlsx", "xls", "xlsm", "xlsb", "ods", "json",
+            ],
+            TextArtifactKind::Netlist => &[
+                "csv", "tsv", "txt", "net", "ipc", "356", "xlsx", "xls", "xlsm", "xlsb", "ods",
+                "json",
+            ],
             TextArtifactKind::Readme => &["md", "markdown", "txt"],
         }
     }
@@ -5430,6 +5747,55 @@ mod tests {
                 .iter()
                 .any(|message| message.contains("multiple references") && message.contains("R1"))
         );
+    }
+
+    #[test]
+    fn centroid_readiness_accepts_common_eda_placement_schemas() {
+        let cases = [
+            artifact(
+                "board_kicad.pos",
+                "## Unit = mm, Angle = deg, Origin = drill/place-file origin\nRef Val Package PosX PosY Rot Side\nR1 10k R_0603 10.0 20.0 90 top\nC1 100n C_0603 12.5 22.0 0 bottom\n",
+            ),
+            artifact(
+                "board_altium_centroid.csv",
+                "# units mm; origin board origin; rotation convention clockwise degrees\nDesignator,Center-X(mm),Center-Y(mm),Rotation,Layer,Comment,Footprint\nR1,10.0,20.0,90,TopLayer,10k,R_0603\nC1,12.5,22.0,0,BottomLayer,100n,C_0603\n",
+            ),
+            artifact(
+                "board_jlcpcb_cpl.csv",
+                "# units mm; origin auxiliary origin; rotation convention clockwise degrees\nDesignator,Mid X,Mid Y,Layer,Rotation\nR1,10.0,20.0,Top,90\nC1,12.5,22.0,Bottom,0\n",
+            ),
+        ];
+
+        for centroid in cases {
+            let messages = messages(&production_artifact_readiness(
+                &[],
+                &[centroid],
+                &[],
+                &[],
+                &[],
+                &[],
+                &[],
+            ));
+
+            assert!(
+                !messages
+                    .iter()
+                    .any(|message| message.contains("centroid header has no")),
+                "unexpected missing-column warning: {messages:?}"
+            );
+            assert!(
+                !messages
+                    .iter()
+                    .any(|message| message.contains("invalid side")),
+                "unexpected side warning: {messages:?}"
+            );
+            assert!(
+                !messages
+                    .iter()
+                    .any(|message| message.contains("invalid rotation")),
+                "unexpected rotation warning: {messages:?}"
+            );
+        }
     }
 
     #[test]
@@ -6873,9 +7239,18 @@ mod tests {
                 &[],
                 &[],
                 &[],
-                &[file("widget_fab.pdf", 128)],
-                &[file("widget_assembly.svg", 128)],
-                &[file("widget_vscore.dxf", 128)],
+                &[
+                    file("widget_fab.pdf", 128),
+                    file("widget_fabrication_plot.ps", 128),
+                ],
+                &[
+                    file("widget_assembly.svg", 128),
+                    file("widget_assembly_plot.eps", 128),
+                ],
+                &[
+                    file("widget_vscore.dxf", 128),
+                    file("widget_panel_route.hpgl", 128),
+                ],
             )
             .is_empty()
         );

@@ -107,7 +107,20 @@ The source tree follows a few explicit boundaries:
   assembly-sidecar structure, reference parity, grouped BOM references, DNP/DNI
   handling, drawing role, and release-note/order-preflight checks. Binary
   spreadsheet-like text sidecars are loaded lossily for now so the check can
-  report missing structure instead of aborting the run.
+  report missing structure instead of aborting the run. XLS/XLSX/XLSM/XLSB/ODS
+  sidecars merge matching-header sheets, and `--bom-sheet`, `--centroid-sheet`,
+  and `--netlist-sheet` select named workbook tabs when needed; selected tabs
+  with different headers are merged by normalized header union.
+- Drawing sidecars also feed parser diagnostics: SVG files are summarized by
+  element type, DXF files are summarized by section/entity content, and binary
+  DWG/ACIS/SAT files are retained with an explicit not-yet-imported diagnostic.
+  PDF, PostScript/EPS, HPGL/plot, and raster drawings get lightweight header or
+  command evidence for review-package provenance.
+- Test and inspection handoff diagnostics include SVF/JTAG boundary-scan command
+  summaries plus delimited tester-report table evidence for probe, net, refdes,
+  coordinate, and result columns.
+- Mechanical handoff diagnostics include STEP text evidence plus STL, OBJ, PLY,
+  GLB, and glTF mesh header/entity summaries for visual/mechanical provenance.
 - Manifest checks also flag side-role filename conflicts, single-copper packages
   with opposite-side outputs, and paste exports without a matching same-side
   solder mask layer.
@@ -153,6 +166,11 @@ The source tree follows a few explicit boundaries:
   trend stores.
 - [`junit.rs`](junit.rs) renders a conservative JUnit XML subset for CI systems
   that expose test report publishers but not SARIF ingestion.
+- [`kicad_dru.rs`](kicad_dru.rs) renders generated KiCad custom-rule decks and
+  merged project-rule copies with stale HyperDRC rules replaced.
+- [`kicad_markers.rs`](kicad_markers.rs) renders standalone KiCad review boards
+  and marked-up board copies with active finding polygons, point markers, and
+  labels on user layers.
 - [`report.rs`](report.rs) defines violation data, parser diagnostics, stable
   violation IDs, summaries, and GeoJSON conversion.
 - [`sarif.rs`](sarif.rs) renders SARIF 2.1.0 output for CI and code review

@@ -16,7 +16,9 @@ pub fn report_to_html(report: &Report) -> String {
     out.push_str("<title>hyperdrc report</title>\n");
     out.push_str("<style>\n");
     out.push_str(STYLE);
-    out.push_str("</style>\n</head>\n<body>\n");
+    out.push_str("</style>\n<script>\n");
+    out.push_str(SCRIPT);
+    out.push_str("</script>\n</head>\n<body>\n");
     out.push_str("<main>\n");
     out.push_str("<header>\n<h1>hyperdrc report</h1>\n");
     out.push_str(&format!(
@@ -65,6 +67,32 @@ pub fn report_to_html(report: &Report) -> String {
     out.push_str(&svg_overlay::report_to_svg(report));
     out.push_str("</div>\n</section>\n");
 
+    let states = finding_states(report);
+    if !states.is_empty() {
+        out.push_str("<section>\n<h2>Finding State</h2>\n<div class=\"filter-controls\">\n");
+        for state in &states {
+            out.push_str(&format!(
+                "<label><input type=\"checkbox\" data-state-toggle=\"{}\" checked> {}</label>\n",
+                escape_html_attr(state),
+                escape_html(state)
+            ));
+        }
+        out.push_str("</div>\n</section>\n");
+    }
+
+    let layers = finding_layers(report);
+    if !layers.is_empty() {
+        out.push_str("<section>\n<h2>Layers</h2>\n<div class=\"filter-controls\">\n");
+        for layer in &layers {
+            out.push_str(&format!(
+                "<label><input type=\"checkbox\" data-layer-toggle=\"{}\" checked> {}</label>\n",
+                escape_html_attr(layer),
+                escape_html(layer)
+            ));
+        }
+        out.push_str("</div>\n</section>\n");
+    }
+
     out.push_str("<section>\n<h2>Inputs</h2>\n");
     if report.inputs.is_empty() {
         out.push_str("<p>No structured input manifest was recorded.</p>\n");
@@ -84,12 +112,15 @@ pub fn report_to_html(report: &Report) -> String {
     out.push_str("</section>\n");
 
     out.push_str("<section>\n<h2>Findings</h2>\n");
-    if report.violations.is_empty() {
+    if report.violations.is_empty() && report.waived_violations.is_empty() {
         out.push_str("<p>No active findings.</p>\n");
     } else {
         out.push_str("<div class=\"findings\">\n");
         for violation in &report.violations {
-            out.push_str(&finding_card(violation));
+            out.push_str(&finding_card(violation, "active"));
+        }
+        for violation in &report.waived_violations {
+            out.push_str(&finding_card(violation, "waived"));
         }
         out.push_str("</div>\n");
     }
@@ -98,18 +129,28 @@ pub fn report_to_html(report: &Report) -> String {
     out
 }
 
-fn finding_card(violation: &Violation) -> String {
+fn finding_card(violation: &Violation, state: &str) -> String {
     let severity = match violation.severity {
         Severity::Error => "error",
         Severity::Warning => "warning",
     };
     let mut out = String::new();
-    out.push_str(&format!("<article class=\"finding {severity}\">\n"));
     out.push_str(&format!(
-        "<h3>{}</h3>\n<p class=\"meta\">{} · {}</p>\n",
+        "<article class=\"finding {severity} {state}\" data-state=\"{}\" data-layers=\"{}\" data-geometry-hash=\"{}\">\n",
+        escape_html_attr(state),
+        escape_html_attr(&violation.layers.join("|")),
+        escape_html_attr(&violation.id)
+    ));
+    out.push_str(&format!(
+        "<h3>{}</h3>\n<p class=\"meta\">{} · {} · {}</p>\n",
         escape_html(&violation.check),
+        escape_html(state),
         escape_html(&violation.id),
         escape_html(&violation.layers.join(", "))
+    ));
+    out.push_str(&format!(
+        "<p class=\"meta\">Geometry hash: <code>{}</code></p>\n",
+        escape_html(&violation.id)
     ));
     if let Some(message) = &violation.message {
         out.push_str(&format!("<p>{}</p>\n", escape_html(message)));
@@ -131,6 +172,33 @@ fn finding_card(violation: &Violation) -> String {
     out
 }
 
+fn finding_states(report: &Report) -> Vec<String> {
+    let mut states = Vec::new();
+    if !report.violations.is_empty() {
+        states.push("active".to_string());
+    }
+    if !report.waived_violations.is_empty() {
+        states.push("waived".to_string());
+    }
+    states
+}
+
+fn finding_layers(report: &Report) -> Vec<String> {
+    let mut layers = std::collections::BTreeSet::new();
+    for violation in report
+        .violations
+        .iter()
+        .chain(report.waived_violations.iter())
+    {
+        for layer in &violation.layers {
+            if !layer.is_empty() {
+                layers.insert(layer.clone());
+            }
+        }
+    }
+    layers.into_iter().collect()
+}
+
 fn coordinates(locations: &[[f64; 2]]) -> String {
     locations
         .iter()
@@ -147,6 +215,10 @@ fn escape_html(value: &str) -> String {
         .replace('>', "&gt;")
         .replace('"', "&quot;")
         .replace('\'', "&#39;")
+}
+
+fn escape_html_attr(value: &str) -> String {
+    escape_html(value)
 }
 
 const STYLE: &str = r#"
@@ -195,6 +267,19 @@ th {
   width: 100%;
   min-height: 280px;
 }
+.filter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.filter-controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid #d8dee4;
+  padding: 6px 10px;
+}
 .findings {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -212,10 +297,50 @@ th {
 .finding.warning {
   border-left-color: #9a6700;
 }
+.finding.waived {
+  opacity: 0.72;
+  border-left-style: dashed;
+}
 .meta {
   color: #57606a;
   font-size: 0.92rem;
 }
+"#;
+
+const SCRIPT: &str = r#"
+document.addEventListener("DOMContentLoaded", () => {
+  const toggles = Array.from(document.querySelectorAll("[data-layer-toggle]"));
+  const stateToggles = Array.from(document.querySelectorAll("[data-state-toggle]"));
+  const layerSeparator = "|";
+  const activeLayers = () => new Set(
+    toggles
+      .filter((toggle) => toggle.checked)
+      .map((toggle) => toggle.getAttribute("data-layer-toggle"))
+  );
+  const activeStates = () => new Set(
+    stateToggles
+      .filter((toggle) => toggle.checked)
+      .map((toggle) => toggle.getAttribute("data-state-toggle"))
+  );
+  const itemLayers = (item) => (item.getAttribute("data-layers") || "")
+    .split(layerSeparator)
+    .filter(Boolean);
+  const refresh = () => {
+    const active = activeLayers();
+    const states = activeStates();
+    document.querySelectorAll("[data-layers]").forEach((item) => {
+      const layers = itemLayers(item);
+      const state = item.getAttribute("data-state");
+      const layerVisible = layers.length === 0 || layers.some((layer) => active.has(layer));
+      const stateVisible = !state || states.size === 0 || states.has(state);
+      const visible = layerVisible && stateVisible;
+      item.style.display = visible ? "" : "none";
+    });
+  };
+  toggles.forEach((toggle) => toggle.addEventListener("change", refresh));
+  stateToggles.forEach((toggle) => toggle.addEventListener("change", refresh));
+  refresh();
+});
 "#;
 
 #[cfg(test)]
@@ -235,12 +360,22 @@ mod tests {
             vec![[1.0, 2.0]],
             Some("opening crosses R1 & C1".to_string()),
         )];
+        let waived = vec![Violation::new(
+            "waived-check",
+            Severity::Warning,
+            vec!["B.Mask".to_string()],
+            None,
+            Vec::new(),
+            vec![[3.0, 4.0]],
+            Some("accepted finding".to_string()),
+        )];
         let report = Report {
             files: vec!["board.gbr".to_string()],
             inputs: Vec::new(),
             diagnostics: Vec::new(),
             violation_count: violations.len(),
-            waived_count: 2,
+            waived_count: waived.len(),
+            waived_violations: waived,
             summary: report_summary(&violations, 2),
             violations,
         };
@@ -249,8 +384,16 @@ mod tests {
 
         assert!(html.contains("<!doctype html>"));
         assert!(html.contains("<svg"));
+        assert!(html.contains("data-layer-toggle=\"F.Mask\""));
+        assert!(html.contains("data-layer-toggle=\"B.Mask\""));
+        assert!(html.contains("data-state-toggle=\"active\""));
+        assert!(html.contains("data-state-toggle=\"waived\""));
+        assert!(html.contains("data-layers=\"F.Mask\""));
+        assert!(html.contains("data-state=\"waived\""));
+        assert!(html.contains("data-geometry-hash=\""));
+        assert!(html.contains("Geometry hash: <code>"));
         assert!(html.contains("mask&lt;sliver&gt;"));
         assert!(html.contains("opening crosses R1 &amp; C1"));
-        assert!(html.contains("2 waived"));
+        assert!(html.contains("1 waived"));
     }
 }

@@ -13,7 +13,10 @@ use crate::report::{Report, Violation};
 /// Run the `report_to_jsonl` design-readiness check or report helper.
 pub fn report_to_jsonl(report: &Report) -> Result<String> {
     let mut lines = Vec::with_capacity(
-        1 + report.inputs.len() + report.diagnostics.len() + report.violations.len(),
+        1 + report.inputs.len()
+            + report.diagnostics.len()
+            + report.violations.len()
+            + report.waived_violations.len(),
     );
     lines.push(serde_json::to_string(&run_record(report))?);
     for input in &report.inputs {
@@ -29,7 +32,10 @@ pub fn report_to_jsonl(report: &Report) -> Result<String> {
         }))?);
     }
     for violation in &report.violations {
-        lines.push(serde_json::to_string(&violation_record(violation))?);
+        lines.push(serde_json::to_string(&violation_record(violation, false))?);
+    }
+    for violation in &report.waived_violations {
+        lines.push(serde_json::to_string(&violation_record(violation, true))?);
     }
 
     Ok(format!("{}\n", lines.join("\n")))
@@ -45,9 +51,11 @@ fn run_record(report: &Report) -> Value {
     })
 }
 
-fn violation_record(violation: &Violation) -> Value {
+fn violation_record(violation: &Violation, waived: bool) -> Value {
     json!({
         "kind": "violation",
+        "waived": waived,
+        "geometry_hash": violation.id,
         "violation": violation,
     })
 }
@@ -72,6 +80,15 @@ mod tests {
             vec![[4.0, 5.0]],
             Some("copper is too close to outline".to_string()),
         )];
+        let waived = vec![Violation::new(
+            "silkscreen-clearance",
+            Severity::Warning,
+            vec!["top.gbr".to_string()],
+            None,
+            Vec::new(),
+            vec![[1.0, 2.0]],
+            Some("accepted".to_string()),
+        )];
         let report = Report {
             files: vec!["top.gbr".to_string()],
             inputs: vec![SourceRecord::new(
@@ -88,8 +105,9 @@ mod tests {
                 message: "sample parser warning".to_string(),
             }],
             violation_count: violations.len(),
-            waived_count: 0,
-            summary: report_summary(&violations, 0),
+            waived_count: waived.len(),
+            waived_violations: waived,
+            summary: report_summary(&violations, 1),
             violations,
         };
 
@@ -99,12 +117,17 @@ mod tests {
             .map(|line| serde_json::from_str::<Value>(line).unwrap())
             .collect::<Vec<_>>();
 
-        assert_eq!(records.len(), 4);
+        assert_eq!(records.len(), 5);
         assert_eq!(records[0]["kind"], "run");
         assert_eq!(records[1]["kind"], "input");
         assert_eq!(records[2]["kind"], "diagnostic");
         assert_eq!(records[2]["diagnostic"]["line"], 7);
         assert_eq!(records[3]["kind"], "violation");
+        assert_eq!(records[3]["waived"], false);
+        assert_eq!(records[3]["geometry_hash"], records[3]["violation"]["id"]);
         assert_eq!(records[3]["violation"]["locations"][0][0], 4.0);
+        assert_eq!(records[4]["kind"], "violation");
+        assert_eq!(records[4]["waived"], true);
+        assert_eq!(records[4]["geometry_hash"], records[4]["violation"]["id"]);
     }
 }

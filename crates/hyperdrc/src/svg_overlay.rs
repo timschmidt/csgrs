@@ -36,9 +36,11 @@ pub fn report_to_svg(report: &Report) -> String {
 
     for violation in &report.violations {
         let style = style_for(violation.severity);
+        let data_layers = escape_xml(&violation.layers.join("|"));
         for polygon in &violation.polygons {
             out.push_str(&format!(
-                r#"<path d="{}" fill="{}" fill-opacity="0.35" stroke="{}" stroke-width="{}">"#,
+                r#"<path data-layers="{}" d="{}" fill="{}" fill-opacity="0.35" stroke="{}" stroke-width="{}">"#,
+                data_layers,
                 polygon_path(polygon),
                 style.fill,
                 style.stroke,
@@ -55,7 +57,8 @@ pub fn report_to_svg(report: &Report) -> String {
 
         for location in &violation.locations {
             out.push_str(&format!(
-                r#"<circle cx="{:.6}" cy="{:.6}" r="{:.6}" fill="{}" stroke="{}" stroke-width="{:.6}">"#,
+                r#"<circle data-layers="{}" cx="{:.6}" cy="{:.6}" r="{:.6}" fill="{}" stroke="{}" stroke-width="{:.6}">"#,
+                data_layers,
                 location[0],
                 location[1],
                 marker_radius.max(0.05),
@@ -220,6 +223,7 @@ mod tests {
             diagnostics: Vec::new(),
             violation_count: violations.len(),
             waived_count: 0,
+            waived_violations: Vec::new(),
             summary: report_summary(&violations, 0),
             violations,
         };
@@ -229,6 +233,7 @@ mod tests {
         assert!(svg.contains("<svg"));
         assert!(svg.contains("<path"));
         assert!(svg.contains("<circle"));
+        assert!(svg.contains("data-layers=\"F.Cu\""));
     }
 
     #[test]
@@ -248,6 +253,7 @@ mod tests {
             diagnostics: Vec::new(),
             violation_count: violations.len(),
             waived_count: 0,
+            waived_violations: Vec::new(),
             summary: report_summary(&violations, 0),
             violations,
         };
@@ -269,6 +275,7 @@ mod tests {
             diagnostics: Vec::new(),
             violation_count: 0,
             waived_count: 0,
+            waived_violations: Vec::new(),
             summary: report_summary(&[], 0),
             violations: Vec::new(),
         };

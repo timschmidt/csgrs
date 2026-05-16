@@ -152,6 +152,7 @@ Include pre-production sidecars for manifest-driven readiness checks:
 ```sh
 cargo run -- \
   --check file-manifest-readiness \
+  --package-archive release-package.zip \
   --bom parts.csv \
   --centroid placement.txt \
   --netlist netlist.csv \
@@ -168,7 +169,7 @@ cargo run -- \
 
 Convert a Gerber package with
 [`TransJLC`](https://github.com/HalfSweet/TransJLC) before loading the converted
-outputs:
+outputs, or export Gerbers directly from a KiCad board with `kicad-cli`:
 
 ```sh
 cargo run -- \
@@ -179,6 +180,54 @@ cargo run -- \
   --conversion-arg --colorize \
   --conversion-arg --zip-name=upload
 ```
+
+```sh
+cargo run -- \
+  --convert-input board.kicad_pcb \
+  --converter kicad-cli \
+  --kicad-cli-bin kicad-cli \
+  --conversion-output-dir build/hyperdrc-kicad-gerbers \
+  --conversion-arg --layers \
+  --conversion-arg F.Cu,B.Cu \
+  --kicad-cli-drill-arg --generate-map \
+  --kicad-cli-pos-arg --smd-only \
+  --kicad-cli-handoff-exports \
+  --kicad-cli-review-exports
+```
+
+The KiCad CLI backend exports Gerbers, Excellon drill files, and a CSV
+`positions.pos` placement file into the conversion output directory, plus an
+IPC-D-356 test netlist at `ipc356.d356` and a JSON DRC report at
+`kicad_drc.json`. With `--kicad-cli-review-exports`, it also writes DXF, SVG,
+and PDF review drawings with sidecar-friendly filenames.
+With `--kicad-cli-handoff-exports`, it also writes IPC-2581, ODB++, STEP, GLB,
+PLY, and JSON statistics handoff outputs into the conversion directory.
+Converted drill, IPC-D-356, placement, and drawing files are discovered as
+sidecars and feed the same Excellon, drill-readiness, IPC-D-356, centroid,
+drawing, and artifact checks as explicit `--excellon`, `--ipc356`,
+`--centroid`, `--fab-drawing`, and `--assembly-drawing` inputs. Converted KiCad
+DRC JSON entries are surfaced as report diagnostics. Converted IPC-2581,
+GenCAD, boundary-scan, flying-probe, AOI/ICT, ODB++, STEP/STEPZ, mesh outputs,
+and visual review images are preserved as manufacturing handoff sidecars;
+IPC-2581 XML, GenCAD text, KiCad statistics JSON, STEP text, mechanical mesh
+files, PNG/JPEG/TIFF/BMP/WebP image headers, and test/inspection reports get
+lightweight parser-evidence diagnostics, including STL/OBJ/PLY/GLB/glTF mesh
+summaries, SVF/JTAG boundary-scan command summaries, and tester-report
+table/column evidence, while ODB++ is recorded as present pending a full
+importer.
+IPC-2581 diagnostics include XML section evidence plus common layer, net,
+refdes, package, drill, coordinate, and unit attributes when present.
+ODB++ diagnostics inspect ZIP/TAR/TGZ or directory package trees for matrix,
+step, layer, feature, profile, netlist, component/EDA, and drill/tool evidence
+without importing proprietary geometry.
+
+Drawing sidecar discovery accepts common CAD/review outputs for fabrication,
+assembly, and rout/panel review, including PDF, DXF/DXB, SVG, DWG, ACIS/SAT,
+PS/EPS, PLT, and HPGL/HPG where the filename declares the drawing role.
+SVG drawings get XML element summaries, DXF drawings get section/entity
+summaries, PDF/PostScript/HPGL and raster drawings get lightweight header or
+command evidence, and binary CAD drawings are retained in the manifest with an
+explicit parser diagnostic.
 
 Run KiCad-aware checks against a `.kicad_pcb` file:
 
@@ -215,7 +264,9 @@ cargo run -- \
   path/to/mask.gbr path/to/copper.gbr
 ```
 
-Layer roles are explicit zero-based indexes into the Gerber input list:
+Layer roles can be inferred from standard Gerber extensions, common KiCad-style
+layer names, and X2 `.FileFunction` attributes. Explicit zero-based indexes are
+still available and override inferred roles for ambiguous packages:
 
 ```sh
 cargo run -- \
@@ -233,6 +284,22 @@ Output formats are `text`, `json`, `jsonl`, `geojson`, `sarif`,
 `github-annotations`, `html`, and `junit`. JSON reports include stable violation
 IDs, severity, layers, polygon coordinates, point locations where applicable,
 short messages, structured parser diagnostics, and a structured input manifest.
+Parser diagnostics cover Gerber metadata/image-syntax evidence, Excellon,
+IPC-D-356, KiCad CLI DRC JSON, IPC-2581/GenCAD/test-inspection/ODB++/KiCad-statistics/STEP/mesh/image handoff evidence,
+BOM/centroid/netlist table parser issues, and converter output manifest issues.
+JSON sidecars can be direct tables or nested
+objects containing common table arrays; nested JSON cells are flattened into
+dotted column names. Spreadsheet sidecars extract matching-header rows across
+multiple populated workbook sheets; `--bom-sheet`, `--centroid-sheet`, and
+`--netlist-sheet` can select named workbook tabs when the release table is not
+the first populated sheet, merging selected tabs by normalized header union when
+they describe related auxiliary data with different columns. Spreadsheet sidecars also emit diagnostics for
+formula cells, defined names, VBA/macro projects, hidden sheets, multiple populated
+sheets, merged regions, native Excel tables, custom number formats, cell
+styles, conditional formatting, data validations, autofilters, cell error
+values, hyperlinks, comments, drawing objects, embedded media, charts, pivot
+tables, and date/time conversion caveats. Formula cells are also preserved in
+the extracted text as ignored `# hyperdrc-workbook-formula` metadata comments.
 During a run, `hyperdrc` writes start/end status lines for runtime phases and
 per-check execution to stderr with elapsed time; each completed check also
 reports its new finding count. Expensive checks such as minimum copper neck,
@@ -240,9 +307,14 @@ mask sliver, aperture/opening spacing, drill-to-copper clearance, and net
 spacing also emit intra-check progress lines so long-running layer or board
 work can be monitored. This leaves stdout safe for the selected report format.
 JSON Lines emits one run/input/diagnostic/violation object per line for
-streaming analytics. SARIF output preserves stable hyperdrc finding IDs and PCB
-geometry in result properties for CI/code-review systems. GitHub annotation
-output emits workflow commands that surface findings in Actions logs. HTML
+streaming analytics. `--sqlite-report report.sqlite` writes a queryable SQLite
+database with summary, input, diagnostic, active finding, and waived finding
+tables, and `--arrow-report report.arrow` writes the same report model as an
+Arrow IPC file for columnar analytics. `--parquet-report report.parquet` writes
+the same schema as a Parquet file for warehouse ingestion. SARIF output
+preserves stable hyperdrc finding IDs and PCB geometry in result properties for
+CI/code-review systems. GitHub annotation output emits workflow commands that
+surface findings in Actions logs. HTML
 output embeds the SVG overlay with summary, parser diagnostic, input, and
 finding tables for review packets. JUnit XML output maps active findings into
 testcase failures for CI systems with JUnit publishers. SVG review overlays can
@@ -267,13 +339,20 @@ can be selected with `assembly_profile` (`prototype`, `production-smt`,
 `assembly`.
 Stackup readiness accepts process metadata plus built-in or custom
 `fabrication_capability` thresholds for finished thickness, copper layer count,
-copper weight, dielectric thickness, laminate Dk/Df, and Tg.
+copper weight, dielectric thickness, laminate Dk/Df, and Tg. Built-in
+fabricator profiles include generic `prototype-fab`, `standard-fab`, and
+`advanced-fab` decks plus vendor-style `jlcpcb-economy`, `jlcpcb-standard`,
+`jlcpcb-advanced`, `pcbway-standard`, `pcbway-advanced`,
+`eurocircuits-pcb-proto`, `eurocircuits-standard-pool`, and
+`eurocircuits-defined-impedance` service classes. Profiles can distinguish hard
+limits, preferred service limits, and cost-escalation review thresholds.
 
 ## Readiness Coverage
 
 The default suite covers the main `hyperdrc` readiness surfaces:
 
-- Layer geometry: copper overlap, edge clearance, mask and paste alignment,
+- Layer geometry: copper overlap with optional IPC-D-356 same-net/mixed-net
+  evidence classification, edge clearance, mask and paste alignment,
   silkscreen clearance, minimum feature width, independently selectable polygon
   and trace-junction acid traps, whole-layer copper balance, first-class local
   copper-density balance, and board-outline sanity.
@@ -324,13 +403,15 @@ The default suite covers the main `hyperdrc` readiness surfaces:
   including structural FileFunction role-field validation and partial/mixed
   FilePolarity evidence review,
   SameCoordinates alignment-evidence consistency, CreationDate freshness and
-  FileFunction/GenerationSoftware/ProjectId provenance checks, MD5 checksum-evidence
-  coverage, negative-copper-polarity review,
+  FileFunction/GenerationSoftware/ProjectId provenance checks, Gerber source
+  unit reporting and image unit/coordinate-format consistency,
+  MD5 checksum-evidence coverage, negative-copper-polarity review,
   side-role filename conflict detection, paste/mask companion checks
   including solder-mask opening-ratio, annular-ring relief, and silkscreen
   text-height review,
   filename layer-count convention parity, configurable required artifacts/layers, centroid unit/origin/rotation
-  convention handoff, BOM compliance/traceability/source-control evidence for
+  convention handoff with KiCad `.pos`, Altium placement CSV, JLCPCB CPL, and
+  generic centroid schema aliases, BOM compliance/traceability/source-control evidence for
   sensitive rows, package-level polarity/MSL handoffs, polarized same-package
   centroid orientation review, dense-package reflow-profile handoff,
   tall-component height/keepout handoff, thermal-validation handoff for
@@ -363,10 +444,35 @@ so production waivers remain auditable: `reason`, `owner`, `review_date`,
 `source`, and `geometry_hash` are expected. `review_date` must be an ISO
 `YYYY-MM-DD` date and is warned when it has expired, so standing exceptions stay
 visible in pre-production review. A compact CI summary can be written with
-`--summary-file`. Proposed waiver stubs and active-finding
-baselines can be generated without suppressing anything. Baseline comparison is
-an audit artifact: it classifies drift in the active finding set, but waivers
-remain the mechanism for intentionally suppressing accepted findings.
+`--summary-file`. SVG overlays can be written with `--svg-overlay`, and Gerber
+review overlays can be written with `--gerber-overlay` for loading active
+finding geometry in board or CAM viewers, `--gerber-keepout-overlay` can emit a
+Gerber keepout review layer, Excellon-style marker overlays can be written with
+`--excellon-overlay` for drill-map review, and DXF overlays can be written with
+`--dxf-overlay` for CAD/mechanical review. PDF overlays can be written with
+`--pdf-overlay` for document-centric review packets. KiCad custom-rule decks can
+be generated with `--kicad-dru-output` for early editor feedback on core
+clearance, width, annular-ring, board-edge, silkscreen, and hole-clearance
+thresholds; `--kicad-dru-merge-input` and `--kicad-dru-merge-output` write a
+copy of an existing project rule file with HyperDRC rules inserted between
+generated markers. Standalone KiCad review-marker boards can be generated with
+`--kicad-marker-output`; `--kicad-marker-merge-output` writes a marked-up copy
+of the first input `.kicad_pcb` with HyperDRC user layers and active finding
+geometry inserted, without modifying the source board. IPC-D-356 electrical-test
+review companions can be written with
+`--ipc356-review-output`; they summarize parsed test access by source and net
+and annotate active drill/net/test-related findings, including a stable
+key-value `DIFF_*` comment block for scripts that need machine-readable review
+context. GenCAD-style DFT review
+companions can be written with `--gencad-review-output`; they include sectioned
+summary data, IPC-D-356-derived net names, component references, testpin records,
+and active/waived fixture/manufacturing findings for test engineering review. IPC-2581-style XML manufacturing review
+companions can be written with `--ipc2581-review-output`; they embed HyperDRC
+DRC/DFM annotations, locations, and region summaries for CAM handoff review.
+HTML reports retain waived finding details and provide active/waived filters for review. Proposed waiver stubs and active-finding baselines can be generated without suppressing
+anything. Baseline comparison is an audit artifact: it classifies drift in the
+active finding set, but waivers remain the mechanism for intentionally
+suppressing accepted findings.
 
 ```json
 {
@@ -426,8 +532,9 @@ semantics, subtractive KiCad custom pad primitive booleans, glyph-accurate
 KiCad silkscreen text rendering and side/mirroring, per-pad paste or mask
 attributes, fabricator-specific rule-deck libraries,
 asymmetric-stripline/coupled/coplanar/vendor-tuned impedance solving, routed
-differential-pair length/skew matching, semantic XLS/XLSX spreadsheet parsing,
-richer parser diagnostics for all input formats, and ODB++/IPC-2581 input.
+differential-pair length/skew matching, schema-specific nested JSON sidecar
+dialects, workbook-aware formulas/styles/macros for spreadsheets, richer parser
+diagnostics for all input formats, and ODB++/IPC-2581 input.
 
 See [docs/design-readiness-plan.md](docs/design-readiness-plan.md) for the
 long-form design-readiness roadmap.

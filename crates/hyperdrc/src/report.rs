@@ -31,6 +31,9 @@ pub struct Report {
     pub violation_count: usize,
     /// Number of violations suppressed by waiver policy.
     pub waived_count: usize,
+    /// Findings suppressed by waiver policy, retained for review sinks.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub waived_violations: Vec<Violation>,
     /// Aggregated counts by severity and check.
     pub summary: ReportSummary,
     /// Active findings emitted by checks after waiver filtering.
@@ -341,6 +344,7 @@ mod tests {
             diagnostics: Vec::new(),
             violation_count: violations.len(),
             waived_count: 0,
+            waived_violations: Vec::new(),
             summary: report_summary(&violations, 0),
             violations,
         };

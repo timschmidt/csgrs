@@ -78,6 +78,7 @@ fn failure_message(violation: &Violation) -> String {
 fn failure_body(violation: &Violation) -> String {
     let mut body = vec![
         format!("id: {}", violation.id),
+        format!("geometry hash: {}", violation.id),
         format!("check: {}", violation.check),
         format!("severity: {}", severity_name(violation.severity)),
         format!("layers: {}", violation.layers.join(", ")),
@@ -140,6 +141,7 @@ mod tests {
             diagnostics: Vec::new(),
             violation_count: violations.len(),
             waived_count: 1,
+            waived_violations: Vec::new(),
             summary: report_summary(&violations, 1),
             violations,
         };
@@ -149,6 +151,7 @@ mod tests {
         assert!(junit.contains("<testsuite name=\"hyperdrc\" tests=\"1\" failures=\"1\""));
         assert!(junit.contains("hyperdrc.copper&lt;overlap&gt;"));
         assert!(junit.contains("overlap at U1 &amp; U2"));
+        assert!(junit.contains("geometry hash:"));
         assert!(junit.contains("locations: (3.000000, 4.000000)"));
     }
 }

@@ -506,12 +506,13 @@ layers that are missing from parsed copper, copper layers with no
 dielectric/core/prepreg thickness entries. It also checks process metadata for
 material family, surface finish, soldermask process/color, target IPC class, and
 fabricator profile, including a warning when HASL-style finish is paired with
-controlled-impedance handoff. Built-in `prototype-fab`, `standard-fab`, and
-`advanced-fab` capability thresholds, plus custom `fabrication_capability`
-overrides, check finished thickness, copper layer count, copper weight, and
-dielectric thickness against the declared stackup. Controlled-impedance stackups
-also require laminate dielectric constant and loss tangent metadata, and custom
-capability ranges can validate Dk, Df, and Tg.
+controlled-impedance handoff. Built-in `prototype-fab`, `standard-fab`,
+`advanced-fab`, `jlcpcb-*`, `pcbway-*`, and `eurocircuits-*` capability
+thresholds, plus custom `fabrication_capability` overrides, check finished
+thickness, copper layer count, copper weight, and dielectric thickness against
+hard limits, preferred service limits, and cost-escalation review thresholds.
+Controlled-impedance stackups also require laminate dielectric constant and loss
+tangent metadata, and custom capability ranges can validate Dk, Df, and Tg.
 
 `differential-pair-width-readiness` reports inferred differential segments below
 the width review threshold and pairs whose positive/negative side widths are
@@ -764,7 +765,9 @@ content so mixed release packages are caught before handoff. It validates text
 sidecar filenames/extensions for
 recognizable BOM, centroid, netlist, and README roles, and checks
 fabrication/assembly/rout drawing files for common extensions, empty or
-placeholder-sized content, and role-specific filename tokens.
+placeholder-sized content, and role-specific filename tokens. Centroid parsing
+accepts generic `Ref/X/Y/Rotation/Side` tables plus common KiCad `.pos`, Altium
+placement CSV, and JLCPCB CPL header/side-value aliases.
 
 ## Manifest Checks
 

@@ -5,11 +5,11 @@
 //! to CSG for non-rectangular outlines, cutouts, or boundary candidates.
 
 use geo::BoundingRect;
+use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 
 use crate::PcbSketch;
+use crate::geometry::{RuleGeometryProvenance, SourceGridFacts};
 use crate::kicad::{CopperFeature, DrillFeature};
-
-const OUTLINE_EPSILON: f64 = 1.0e-9;
 
 /// Return the board rectangle when the outline is one simple axis-aligned box.
 pub(super) fn axis_aligned_outline_rect(outline: &PcbSketch) -> Option<geo::Rect<f64>> {
@@ -30,10 +30,10 @@ pub(super) fn axis_aligned_outline_rect(outline: &PcbSketch) -> Option<geo::Rect
     let min = bounds.min();
     let max = bounds.max();
     let on_rect_edges = exterior.iter().take(exterior.len() - 1).all(|coord| {
-        approx_eq(coord.x, min.x)
-            || approx_eq(coord.x, max.x)
-            || approx_eq(coord.y, min.y)
-            || approx_eq(coord.y, max.y)
+        exact_eq(coord.x, min.x)
+            || exact_eq(coord.x, max.x)
+            || exact_eq(coord.y, min.y)
+            || exact_eq(coord.y, max.y)
     });
     on_rect_edges.then_some(bounds)
 }
@@ -58,10 +58,10 @@ pub(super) fn feature_bounds_inside_rect(feature: &CopperFeature, rect: &geo::Re
     let feature_min = bounds.min();
     let feature_max = bounds.max();
 
-    feature_min.x >= min.x
-        && feature_max.x <= max.x
-        && feature_min.y >= min.y
-        && feature_max.y <= max.y
+    exact_ge(feature_min.x, min.x)
+        && exact_le(feature_max.x, max.x)
+        && exact_ge(feature_min.y, min.y)
+        && exact_le(feature_max.y, max.y)
 }
 
 /// Return whether feature bounds are strictly outside an edge-clearance band.
@@ -83,23 +83,60 @@ pub(super) fn feature_bounds_inside_rect_margin(
     // the broad/narrow-phase structure in Ericson, *Real-Time Collision
     // Detection* (2005): rectangle predicates reject safe interior candidates,
     // and exact CSG/boundary-distance logic remains authoritative near edges.
-    feature_min.x > min.x + margin
-        && feature_max.x < max.x - margin
-        && feature_min.y > min.y + margin
-        && feature_max.y < max.y - margin
+    exact_gt(feature_min.x, min.x + margin)
+        && exact_lt(feature_max.x, max.x - margin)
+        && exact_gt(feature_min.y, min.y + margin)
+        && exact_lt(feature_max.y, max.y - margin)
 }
 
 fn circle_inside_rect(center: [f64; 2], radius: f64, rect: &geo::Rect<f64>) -> bool {
     let min = rect.min();
     let max = rect.max();
-    center[0] - radius >= min.x
-        && center[0] + radius <= max.x
-        && center[1] - radius >= min.y
-        && center[1] + radius <= max.y
+    exact_ge(center[0] - radius, min.x)
+        && exact_le(center[0] + radius, max.x)
+        && exact_ge(center[1] - radius, min.y)
+        && exact_le(center[1] + radius, max.y)
 }
 
-fn approx_eq(left: f64, right: f64) -> bool {
-    (left - right).abs() <= OUTLINE_EPSILON
+fn exact_eq(left: f64, right: f64) -> bool {
+    exact_cmp(left, right).is_some_and(|ordering| ordering == std::cmp::Ordering::Equal)
+}
+
+fn exact_ge(left: f64, right: f64) -> bool {
+    exact_cmp(left, right).is_some_and(|ordering| ordering != std::cmp::Ordering::Less)
+}
+
+fn exact_gt(left: f64, right: f64) -> bool {
+    exact_cmp(left, right).is_some_and(|ordering| ordering == std::cmp::Ordering::Greater)
+}
+
+fn exact_le(left: f64, right: f64) -> bool {
+    exact_cmp(left, right).is_some_and(|ordering| ordering != std::cmp::Ordering::Greater)
+}
+
+fn exact_lt(left: f64, right: f64) -> bool {
+    exact_cmp(left, right).is_some_and(|ordering| ordering == std::cmp::Ordering::Less)
+}
+
+fn exact_cmp(left: f64, right: f64) -> Option<std::cmp::Ordering> {
+    // These outline helpers are broad/narrow phase gates: accepting a rectangle
+    // or an interior feature may bypass a slower CSG check, so the comparison
+    // itself must be a certified predicate. Finite parser coordinates are
+    // lifted to exact dyadic `Real`s and ordered through `hyperlimit`, following
+    // Yap's exact geometric computation boundary. See Yap, "Towards Exact
+    // Geometric Computation," Computational Geometry 7.1-2 (1997).
+    //
+    // Future KiCad/Gerber parser paths should replace this primitive-float
+    // provenance with token-level [`SourceGridFacts`] so repeated rectangle
+    // checks can choose a cheap shared-scale integer comparison without
+    // re-lifting every f64 edge.
+    let provenance = RuleGeometryProvenance::new(
+        "axis-aligned-outline-rect",
+        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+    );
+    let left = provenance.lift_f64(left)?;
+    let right = provenance.lift_f64(right)?;
+    compare_reals_with_policy(&left, &right, PredicatePolicy::STRICT).value()
 }
 
 #[cfg(test)]
@@ -140,6 +177,27 @@ mod tests {
         assert_eq!(rect.min().y, 0.0);
         assert_eq!(rect.max().x, 100.0);
         assert_eq!(rect.max().y, 100.0);
+    }
+
+    #[test]
+    fn axis_aligned_outline_rect_rejects_near_edge_epsilon_drift() {
+        let polygon = crate::geometry::polygon_from_points(vec![
+            [0.0, 0.0],
+            [100.0, 0.0],
+            [100.0, 100.0],
+            [5.0e-10, 50.0],
+        ]);
+        let outline = crate::geometry::polygon_to_sketch(
+            polygon,
+            Some(LayerMetadata {
+                name: "near rectangle".to_string(),
+            }),
+        );
+
+        assert!(
+            axis_aligned_outline_rect(&outline).is_none(),
+            "near-rectangular outlines must stay on the exact geometry path"
+        );
     }
 
     #[test]
