@@ -95,3 +95,45 @@ path = "fuzz_targets/pline_inversion_view_boolean.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "hypercurve_segment_intersections"
+path = "fuzz_targets/hypercurve_segment_intersections.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "hypercurve_contour_region"
+path = "fuzz_targets/hypercurve_contour_region.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "hypercurve_region_boolean"
+path = "fuzz_targets/hypercurve_region_boolean.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "hypercurve_events_fragments"
+path = "fuzz_targets/hypercurve_events_fragments.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "hypercurve_bboxes_curve_strings_splits"
+path = "fuzz_targets/hypercurve_bboxes_curve_strings_splits.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "hypercurve_offsets"
+path = "fuzz_targets/hypercurve_offsets.rs"
+test = false
+doc = false
+bench = false
