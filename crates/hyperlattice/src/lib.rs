@@ -4,7 +4,7 @@
 //! matrices whose coordinate and scalar type is [`Real`]. Primitive
 //! floating-point values are supported only at API edges: finite `f32`/`f64`
 //! inputs are lifted through checked [`Real`] constructors, and
-//! [`Real::to_f64_approx`] provides a named lossy export for rendering, IO, and
+//! [`Real::to_f64_lossy`] provides a named lossy export for rendering, IO, and
 //! other external libraries.
 //!
 //! Most arithmetic that can fail returns [`BlasResult`]. Checked APIs use
@@ -72,14 +72,14 @@ pub use complex::Complex;
 mod vector;
 pub use vector::{
     Axis2, SharedScaleVec, SignedAxis2, Vector2, Vector2Facts, Vector3, Vector3Facts, Vector4,
-    Vector4Facts, Vector4HomogeneousKind, VectorSharedScaleView,
+    Vector4Facts, Vector4HomogeneousKind, VectorSharedScaleFacts, VectorSharedScaleView,
 };
 
 mod matrix;
 pub use matrix::{
-    Matrix3, Matrix3StructuralFacts, Matrix4, Matrix4StructuralFacts,
-    MatrixDeterminantScheduleHint, PreparedMatrix3, PreparedMatrix4, PreparedRightDivisor3,
-    PreparedRightDivisor4, SignedAxis4,
+    Matrix3, Matrix3StructuralFacts, Matrix3TransformKind, Matrix4, Matrix4StructuralFacts,
+    Matrix4TransformKind, MatrixDeterminantScheduleHint, MatrixPreparedCacheState, PreparedMatrix3,
+    PreparedMatrix4, PreparedRightDivisor3, PreparedRightDivisor4, SignedAxis4,
 };
 
 #[cfg(feature = "arbitrary")]

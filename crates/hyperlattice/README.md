@@ -9,7 +9,7 @@ numbers, 2D/3D/4D vectors, and 3x3/4x4 matrices.
 
 Primitive `f32` and `f64` are accepted only at named boundaries for checked
 input lifting, rendering, IO, diagnostics, or third-party interop. Lossy output
-is explicit through `Real::to_f64_approx`.
+is explicit through `Real::to_f64_lossy`.
 
 ## Relationship to Other Crates
 
@@ -140,7 +140,7 @@ assert_eq!(facts.sign, Some(RealSign::Positive));
 assert_eq!(facts.zero, ZeroStatus::NonZero);
 assert!(!facts.exact_rational);
 
-let approx = pi().to_f64_approx().unwrap();
+let approx = pi().to_f64_lossy().unwrap();
 assert!(approx > 3.0 && approx < 4.0);
 ```
 
@@ -154,6 +154,16 @@ The crate is optimized for small fixed-size algebra over rich exact values:
 - small powers are specialized before exponentiation by squaring
 - 3x3 and 4x4 matrix multiplication is unrolled
 - checked inverses use exact zero-status paths
+- matrix structural facts expose semantic row/column zero certificates and
+  determinant schedule categories, so consumers can pick exact kernels without
+  depending on mask layouts
+- prepared matrix and right-divisor handles expose `MatrixPreparedCacheState`,
+  a docs.rs-visible cache availability summary for determinant, reciprocal,
+  minor-factor, adjugate, and inverse reuse without exposing cached scalar
+  storage
+- homogeneous matrix facts carry conservative transform-kind provenance for
+  affine, translation, diagonal-linear, signed-permutation, and projective
+  dispatch
 - structural facts are forwarded by borrow so `hyperlimit` can query them cheaply
 
 Run the benchmark suite:
@@ -167,6 +177,15 @@ Run dispatch tracing separately:
 ```sh
 cargo bench --bench mathbench --features hyperreal-dispatch-trace -- --write-dispatch-trace-md
 ```
+
+## References
+
+Bareiss, Erwin H. "Sylvester's Identity and Multistep Integer-Preserving
+Gaussian Elimination." *Mathematics of Computation*, vol. 22, no. 103, 1968,
+pp. 565-578.
+
+Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry*,
+vol. 7, nos. 1-2, 1997, pp. 3-23.
 
 ## Source Layout
 

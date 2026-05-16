@@ -2,8 +2,9 @@ mod common;
 
 use common::{abort_signal, frac, r, unknown_zero};
 use hyperlattice::{
-    Matrix3, Matrix4, MatrixDeterminantScheduleHint, Problem, Real, RealSign,
-    RealSymbolicDependencyMask, SignedAxis4, Vector3, Vector4, ZeroStatus, zero,
+    Matrix3, Matrix3TransformKind, Matrix4, Matrix4TransformKind, MatrixDeterminantScheduleHint,
+    MatrixPreparedCacheState, Problem, Real, RealSign, RealSymbolicDependencyMask, SignedAxis4,
+    Vector3, Vector4, ZeroStatus, zero,
 };
 
 fn assert_singular_error<T: std::fmt::Debug>(result: Result<T, Problem>) {
@@ -54,6 +55,10 @@ fn matrix_structural_facts_expose_sparse_masks_and_shape_flags() {
     assert!(identity3_facts.is_exact_rational_uniform_scale);
     assert!(identity3_facts.is_upper_triangular);
     assert!(identity3_facts.is_lower_triangular);
+    assert_eq!(
+        identity3_facts.transform_kind,
+        Matrix3TransformKind::Identity
+    );
     assert!(!identity3_facts.is_zero());
     assert_eq!(identity3_facts.zero_mask, 238);
     assert_eq!(identity3_facts.one_mask, 273);
@@ -66,6 +71,11 @@ fn matrix_structural_facts_expose_sparse_masks_and_shape_flags() {
     assert_eq!(identity3_facts.row_zero_mask(1), Some(0b101));
     assert_eq!(identity3_facts.row_known_zero_count(1), Some(2));
     assert_eq!(identity3_facts.column_known_zero_count(0), Some(2));
+    assert_eq!(identity3_facts.row_is_known_zero(1), Some(false));
+    assert_eq!(identity3_facts.column_is_known_zero(0), Some(false));
+    assert!(!identity3_facts.has_known_zero_row());
+    assert!(!identity3_facts.has_known_zero_column());
+    assert!(!identity3_facts.has_known_zero_lane());
     assert_eq!(identity3_facts.row_has_sparse_support(1), Some(true));
     assert_eq!(identity3_facts.column_has_sparse_support(0), Some(true));
     assert!(identity3_facts.all_rows_have_sparse_support());
@@ -83,6 +93,10 @@ fn matrix_structural_facts_expose_sparse_masks_and_shape_flags() {
     assert!(identity4_facts.is_affine_translation);
     assert!(identity4_facts.linear_is_diagonal);
     assert!(identity4_facts.direction_linear_is_diagonal);
+    assert_eq!(
+        identity4_facts.transform_kind,
+        Matrix4TransformKind::Identity
+    );
     assert_eq!(identity4_facts.zero_mask, 31_710);
     assert_eq!(identity4_facts.one_mask, 33_825);
     assert_eq!(
@@ -98,6 +112,11 @@ fn matrix_structural_facts_expose_sparse_masks_and_shape_flags() {
     assert_eq!(identity4_facts.entry_known_one(3, 3), Some(true));
     assert_eq!(identity4_facts.row_known_zero_count(3), Some(3));
     assert_eq!(identity4_facts.column_known_zero_count(3), Some(3));
+    assert_eq!(identity4_facts.row_is_known_zero(3), Some(false));
+    assert_eq!(identity4_facts.column_is_known_zero(3), Some(false));
+    assert!(!identity4_facts.has_known_zero_row());
+    assert!(!identity4_facts.has_known_zero_column());
+    assert!(!identity4_facts.has_known_zero_lane());
     assert_eq!(identity4_facts.row_has_sparse_support(3), Some(true));
     assert_eq!(identity4_facts.column_has_sparse_support(3), Some(true));
     assert!(identity4_facts.all_rows_have_sparse_support());
@@ -118,6 +137,10 @@ fn matrix_structural_facts_expose_sparse_masks_and_shape_flags() {
     let translation_facts = translation.structural_facts();
     assert!(translation_facts.is_affine);
     assert!(translation_facts.is_affine_translation);
+    assert_eq!(
+        translation_facts.transform_kind,
+        Matrix4TransformKind::AffineTranslation
+    );
     assert_eq!(translation_facts.translation_xyz_zero, [false, true, false]);
     assert_eq!(translation_facts.row_zero_mask(0), Some(0b0110));
     assert_eq!(translation_facts.row_known_zero_count(0), Some(2));
@@ -128,6 +151,91 @@ fn matrix_structural_facts_expose_sparse_masks_and_shape_flags() {
     assert!(!translation_facts.all_columns_have_sparse_support());
     assert_eq!(translation_facts.signed_permutation_rows, None);
     assert!(!translation_facts.is_signed_permutation());
+}
+
+#[test]
+fn matrix_structural_facts_expose_transform_kind_provenance() {
+    let projective3 = Matrix3::new([[r(1), r(0), r(0)], [r(0), r(1), r(0)], [r(1), r(0), r(1)]]);
+    assert_eq!(
+        projective3.structural_facts().transform_kind,
+        Matrix3TransformKind::Projective
+    );
+
+    let affine3 = Matrix3::new([
+        [r(2), r(1), r(3)],
+        [r(4), r(5), r(6)],
+        [zero(), zero(), r(1)],
+    ]);
+    assert_eq!(
+        affine3.structural_facts().transform_kind,
+        Matrix3TransformKind::Affine
+    );
+
+    let diagonal_affine4 = Matrix4::diagonal([r(2), r(3), r(5), r(1)]);
+    assert_eq!(
+        diagonal_affine4.structural_facts().transform_kind,
+        Matrix4TransformKind::AffineDiagonalLinear
+    );
+
+    let signed = Matrix4::signed_permutation([
+        SignedAxis4::PosY,
+        SignedAxis4::NegX,
+        SignedAxis4::PosW,
+        SignedAxis4::NegZ,
+    ]);
+    assert_eq!(
+        signed.structural_facts().transform_kind,
+        Matrix4TransformKind::SignedPermutation
+    );
+
+    let projective4 = Matrix4::new([
+        [r(1), zero(), zero(), zero()],
+        [zero(), r(1), zero(), zero()],
+        [zero(), zero(), r(1), zero()],
+        [r(1), zero(), zero(), r(1)],
+    ]);
+    assert_eq!(
+        projective4.structural_facts().transform_kind,
+        Matrix4TransformKind::Projective
+    );
+}
+
+#[test]
+fn matrix_structural_facts_expose_zero_lane_certificates() {
+    let zero_row = Matrix3::new([
+        [r(1), r(2), r(3)],
+        [zero(), zero(), zero()],
+        [r(4), r(5), r(6)],
+    ]);
+    let row_facts = zero_row.structural_facts();
+    assert_eq!(row_facts.row_is_known_zero(1), Some(true));
+    assert_eq!(row_facts.row_is_known_zero(3), None);
+    assert_eq!(row_facts.column_is_known_zero(1), Some(false));
+    assert!(row_facts.has_known_zero_row());
+    assert!(!row_facts.has_known_zero_column());
+    assert!(row_facts.has_known_zero_lane());
+    assert_eq!(
+        row_facts.determinant_schedule_hint(),
+        MatrixDeterminantScheduleHint::StructurallyZero
+    );
+
+    let zero_column = Matrix4::new([
+        [r(1), zero(), r(2), r(3)],
+        [r(4), zero(), r(5), r(6)],
+        [r(7), zero(), r(8), r(9)],
+        [r(10), zero(), r(11), r(12)],
+    ]);
+    let column_facts = zero_column.structural_facts();
+    assert_eq!(column_facts.column_is_known_zero(1), Some(true));
+    assert_eq!(column_facts.column_is_known_zero(4), None);
+    assert_eq!(column_facts.row_is_known_zero(0), Some(false));
+    assert!(!column_facts.has_known_zero_row());
+    assert!(column_facts.has_known_zero_column());
+    assert!(column_facts.has_known_zero_lane());
+    assert_eq!(
+        column_facts.determinant_schedule_hint(),
+        MatrixDeterminantScheduleHint::StructurallyZero
+    );
 }
 
 #[test]
@@ -250,6 +358,12 @@ fn matrix_structural_facts_select_advisory_determinant_schedules() {
         zero_row.structural_facts().determinant_schedule_hint(),
         MatrixDeterminantScheduleHint::StructurallyZero
     );
+    assert!(
+        zero_row
+            .structural_facts()
+            .determinant_schedule_hint()
+            .is_shape_driven()
+    );
 
     let diagonal = Matrix3::diagonal([r(2), r(3), r(5)]);
     assert_eq!(
@@ -289,6 +403,12 @@ fn matrix_structural_facts_select_advisory_determinant_schedules() {
         shared.structural_facts().determinant_schedule_hint(),
         MatrixDeterminantScheduleHint::SharedDenominator
     );
+    assert!(
+        shared
+            .structural_facts()
+            .determinant_schedule_hint()
+            .is_exact_rational_driven()
+    );
 
     let dyadic = Matrix3::new([
         [frac(1, 2), frac(1, 4), frac(3, 8)],
@@ -319,6 +439,12 @@ fn matrix_structural_facts_select_advisory_determinant_schedules() {
         symbolic.structural_facts().determinant_schedule_hint(),
         MatrixDeterminantScheduleHint::GenericRealFallback
     );
+    assert!(
+        symbolic
+            .structural_facts()
+            .determinant_schedule_hint()
+            .requires_generic_real_fallback()
+    );
 }
 
 #[test]
@@ -334,6 +460,8 @@ fn prepared_matrix_handles_reuse_facts_inverse_and_division_semantics() {
     assert_eq!(prepared3.matrix(), &divisor3);
     assert_eq!(prepared3.structural_facts(), divisor3.structural_facts());
     assert_eq!(prepared3.exact_facts(), divisor3.exact_facts());
+    assert_eq!(prepared3.cache_state(), MatrixPreparedCacheState::default());
+    assert!(prepared3.cache_state().is_cold());
     assert_eq!(
         prepared3.determinant_schedule_hint(),
         MatrixDeterminantScheduleHint::Triangular
@@ -347,11 +475,32 @@ fn prepared_matrix_handles_reuse_facts_inverse_and_division_semantics() {
         MatrixDeterminantScheduleHint::Triangular
     );
     assert_eq!(prepared3.determinant(), divisor3.determinant());
+    assert_eq!(
+        prepared3.cache_state(),
+        MatrixPreparedCacheState {
+            determinant: true,
+            ..MatrixPreparedCacheState::default()
+        }
+    );
+    assert!(prepared3.cache_state().is_warm());
+    assert!(!prepared3.cache_state().has_determinant_scale());
     assert_eq!(prepared3.determinant(), divisor3.determinant());
     assert_eq!(
         prepared3.inverse().unwrap(),
         divisor3.clone().inverse().unwrap()
     );
+    assert_eq!(
+        prepared3.cache_state(),
+        MatrixPreparedCacheState {
+            determinant: true,
+            reciprocal_determinant: true,
+            adjugate: true,
+            inverse: true,
+            ..MatrixPreparedCacheState::default()
+        }
+    );
+    assert!(prepared3.cache_state().has_determinant_scale());
+    assert!(prepared3.cache_state().has_shared_adjugate_path());
     assert_eq!(prepared3.determinant(), divisor3.determinant());
     assert_eq!(
         prepared3.reciprocal_checked().unwrap(),
@@ -389,6 +538,7 @@ fn prepared_matrix_handles_reuse_facts_inverse_and_division_semantics() {
     assert_eq!(prepared4.matrix(), &divisor4);
     assert_eq!(prepared4.structural_facts(), divisor4.structural_facts());
     assert_eq!(prepared4.exact_facts(), divisor4.exact_facts());
+    assert!(prepared4.cache_state().is_cold());
     assert_eq!(
         prepared4.determinant_schedule_hint(),
         MatrixDeterminantScheduleHint::Triangular
@@ -402,11 +552,31 @@ fn prepared_matrix_handles_reuse_facts_inverse_and_division_semantics() {
         MatrixDeterminantScheduleHint::Triangular
     );
     assert_eq!(prepared4.determinant(), divisor4.determinant());
+    assert_eq!(
+        prepared4.cache_state(),
+        MatrixPreparedCacheState {
+            determinant: true,
+            minor_factors: true,
+            ..MatrixPreparedCacheState::default()
+        }
+    );
     assert_eq!(prepared4.determinant(), divisor4.determinant());
     assert_eq!(
         prepared4.inverse_checked().unwrap(),
         divisor4.clone().inverse_checked().unwrap()
     );
+    assert_eq!(
+        prepared4.cache_state(),
+        MatrixPreparedCacheState {
+            determinant: true,
+            reciprocal_determinant: true,
+            minor_factors: true,
+            adjugate: true,
+            inverse: true,
+        }
+    );
+    assert!(prepared4.cache_state().has_determinant_scale());
+    assert!(prepared4.cache_state().has_shared_adjugate_path());
     assert_eq!(prepared4.determinant(), divisor4.determinant());
     assert_eq!(
         prepared4.divide_left(left4.clone()).unwrap(),
@@ -424,6 +594,46 @@ fn prepared_matrix_handles_reuse_facts_inverse_and_division_semantics() {
             .div_matrix_checked_with_abort(divisor4.clone(), &signal)
             .unwrap()
     );
+}
+
+#[test]
+fn prepared_right_divisor_cache_state_tracks_shared_adjugate_warmup() {
+    let divisor3 = Matrix3::new([[r(2), r(1), r(0)], [r(0), r(3), r(1)], [r(0), r(0), r(5)]]);
+    let mut prepared3 = divisor3.prepare_right_divisor();
+    assert!(prepared3.cache_state().is_cold());
+    assert_eq!(prepared3.determinant(), divisor3.determinant());
+    assert_eq!(
+        prepared3.cache_state(),
+        MatrixPreparedCacheState {
+            determinant: true,
+            ..MatrixPreparedCacheState::default()
+        }
+    );
+    assert_eq!(
+        prepared3.inverse().unwrap(),
+        divisor3.clone().inverse().unwrap()
+    );
+    let warmed3 = prepared3.cache_state();
+    assert!(warmed3.has_shared_adjugate_path());
+    assert!(warmed3.adjugate);
+    assert!(!warmed3.minor_factors);
+
+    let divisor4 = Matrix4::new([
+        [r(2), r(1), r(0), r(0)],
+        [r(0), r(3), r(1), r(0)],
+        [r(0), r(0), r(5), r(1)],
+        [r(0), r(0), r(0), r(7)],
+    ]);
+    let mut prepared4 = divisor4.prepare_right_divisor();
+    assert!(prepared4.cache_state().is_cold());
+    assert_eq!(
+        prepared4.inverse().unwrap(),
+        divisor4.clone().inverse().unwrap()
+    );
+    let warmed4 = prepared4.cache_state();
+    assert!(warmed4.has_shared_adjugate_path());
+    assert!(warmed4.minor_factors);
+    assert!(warmed4.inverse);
 }
 
 #[test]
@@ -606,6 +816,69 @@ fn matrix4_assumed_homogeneous_batches_match_single_lane_transforms() {
     assert_eq!(
         identity_handle.transform_point_batch(&points),
         points.to_vec()
+    );
+}
+
+#[test]
+fn prepared_matrix_transform_methods_reuse_matrix_handle_semantics() {
+    let matrix3 = Matrix3::new([[r(2), r(0), r(5)], [r(0), r(3), r(7)], [r(0), r(0), r(1)]]);
+    let vectors3 = [
+        Vector3::new([r(11), r(13), r(1)]),
+        Vector3::new([r(17), r(19), r(1)]),
+    ];
+    let prepared3 = matrix3.prepare();
+    let handle3 = matrix3.transform_vec3_handle();
+
+    assert_eq!(
+        prepared3.transform_vector(&vectors3[0]),
+        handle3.transform_vector(&vectors3[0])
+    );
+    assert_eq!(
+        prepared3.transform_vector_batch(&vectors3),
+        handle3.transform_vector_batch(&vectors3)
+    );
+
+    let matrix4 = Matrix4::new([
+        [r(2), r(0), r(0), r(100)],
+        [r(0), r(3), r(0), r(200)],
+        [r(0), r(0), r(4), r(300)],
+        [r(0), r(0), r(0), r(1)],
+    ]);
+    let directions = [
+        Vector4::new([r(5), r(7), r(11), r(0)]),
+        Vector4::new([r(13), r(17), r(19), r(0)]),
+    ];
+    let points = [
+        Vector4::new([r(5), r(7), r(11), r(1)]),
+        Vector4::new([r(13), r(17), r(19), r(1)]),
+    ];
+    let mixed = [
+        directions[0].clone(),
+        points[0].clone(),
+        directions[1].clone(),
+    ];
+    let prepared4 = matrix4.prepare();
+    let handle4 = matrix4.transform_vec4_handle();
+
+    assert_eq!(
+        prepared4.transform_direction_vector(&directions[0]),
+        handle4.transform_direction_vector(&directions[0])
+    );
+    assert_eq!(
+        prepared4.transform_point_vector(&points[0]),
+        handle4.transform_point_vector(&points[0])
+    );
+    assert_eq!(
+        prepared4.transform_direction_batch(&directions),
+        handle4.transform_direction_batch(&directions)
+    );
+    assert_eq!(
+        prepared4.transform_point_batch(&points),
+        handle4.transform_point_batch(&points)
+    );
+    assert_eq!(
+        prepared4.transform_vector_batch(&mixed),
+        handle4.transform_vector_batch(&mixed)
     );
 }
 

@@ -103,6 +103,76 @@ pub struct VectorSharedScaleView<'a, const N: usize> {
     pub unknown_zero_mask: u128,
 }
 
+/// Conservative fact packet for a shared-scale vector object.
+///
+/// This is the stable scheduling surface for common-scale vector storage and
+/// borrowed common-scale views. It groups exact-set facts, sparse masks, and
+/// count helpers without exposing rational numerators or denominators. Keeping
+/// this object-level packet separate from scalar storage follows Yap's
+/// exact-geometric-computation layering: geometric objects retain enough
+/// structure to choose arithmetic packages before expanding into BigNumber
+/// operations. See Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct VectorSharedScaleFacts<const N: usize> {
+    /// Exact-rational representation facts for all coordinates.
+    pub exact: ExactRealSetFacts,
+    /// Bit mask of coordinates known to be exactly zero.
+    pub known_zero_mask: u128,
+    /// Bit mask of coordinates known to be nonzero.
+    pub known_nonzero_mask: u128,
+    /// Bit mask of coordinates whose zero status is unknown.
+    pub unknown_zero_mask: u128,
+}
+
+impl<const N: usize> VectorSharedScaleFacts<N> {
+    /// Returns true when every coordinate is known to be exactly zero.
+    pub fn is_known_zero(self) -> bool {
+        self.known_zero_mask == vector_mask::<N>()
+    }
+
+    /// Returns true when every coordinate is known to be nonzero.
+    pub fn is_known_dense(self) -> bool {
+        self.known_nonzero_mask == vector_mask::<N>()
+    }
+
+    /// Counts coordinates known to be exactly zero.
+    pub fn known_zero_count(self) -> u32 {
+        self.known_zero_mask.count_ones()
+    }
+
+    /// Counts coordinates known to be nonzero.
+    pub fn known_nonzero_count(self) -> u32 {
+        self.known_nonzero_mask.count_ones()
+    }
+
+    /// Counts coordinates whose zero status is not structurally certified.
+    pub fn unknown_zero_count(self) -> u32 {
+        self.unknown_zero_mask.count_ones()
+    }
+
+    /// Returns true when the retained facts select a dyadic exact schedule.
+    pub fn has_dyadic_schedule(self) -> bool {
+        self.exact.has_dyadic_schedule()
+    }
+
+    /// Returns true when the retained facts select a non-dyadic shared
+    /// denominator exact schedule.
+    pub fn has_shared_denominator_schedule(self) -> bool {
+        self.exact.has_shared_denominator_schedule()
+    }
+
+    /// Returns true when every coordinate is an exact integer.
+    pub fn has_integer_grid_schedule(self) -> bool {
+        self.exact.has_integer_grid_schedule()
+    }
+
+    /// Returns true when every coordinate is a known signed unit or zero.
+    pub fn has_signed_unit_schedule(self) -> bool {
+        self.exact.has_signed_unit_schedule()
+    }
+}
+
 impl<'a, const N: usize> VectorSharedScaleView<'a, N> {
     /// Attempts to build a borrowed shared-scale view from coordinate refs.
     ///
@@ -119,14 +189,13 @@ impl<'a, const N: usize> VectorSharedScaleView<'a, N> {
         if !exact.has_shared_denominator_schedule() {
             return None;
         }
-        let (known_zero_mask, known_nonzero_mask, unknown_zero_mask) =
-            vector_zero_status_masks(components);
+        let facts = vector_shared_scale_facts(exact, components);
         Some(Self {
             components,
             exact,
-            known_zero_mask,
-            known_nonzero_mask,
-            unknown_zero_mask,
+            known_zero_mask: facts.known_zero_mask,
+            known_nonzero_mask: facts.known_nonzero_mask,
+            unknown_zero_mask: facts.unknown_zero_mask,
         })
     }
 
@@ -145,14 +214,24 @@ impl<'a, const N: usize> VectorSharedScaleView<'a, N> {
         N == 0
     }
 
+    /// Returns the retained common-scale fact packet for this view.
+    pub fn facts(self) -> VectorSharedScaleFacts<N> {
+        VectorSharedScaleFacts {
+            exact: self.exact,
+            known_zero_mask: self.known_zero_mask,
+            known_nonzero_mask: self.known_nonzero_mask,
+            unknown_zero_mask: self.unknown_zero_mask,
+        }
+    }
+
     /// Returns true when every coordinate is known to be exactly zero.
     pub fn is_known_zero(self) -> bool {
-        self.known_zero_mask == vector_mask::<N>()
+        self.facts().is_known_zero()
     }
 
     /// Returns true when every coordinate is known to be nonzero.
     pub fn is_known_dense(self) -> bool {
-        self.known_nonzero_mask == vector_mask::<N>()
+        self.facts().is_known_dense()
     }
 
     /// Counts coordinates known to be exactly zero.
@@ -164,17 +243,17 @@ impl<'a, const N: usize> VectorSharedScaleView<'a, N> {
     /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
     /// (1997).
     pub fn known_zero_count(self) -> u32 {
-        self.known_zero_mask.count_ones()
+        self.facts().known_zero_count()
     }
 
     /// Counts coordinates known to be nonzero.
     pub fn known_nonzero_count(self) -> u32 {
-        self.known_nonzero_mask.count_ones()
+        self.facts().known_nonzero_count()
     }
 
     /// Counts coordinates whose zero status is not structurally certified.
     pub fn unknown_zero_count(self) -> u32 {
-        self.unknown_zero_mask.count_ones()
+        self.facts().unknown_zero_count()
     }
 
     /// Returns the dot product with another shared-scale view.
@@ -298,6 +377,8 @@ pub struct SharedScaleVec<const N: usize> {
     components: [Real; N],
     /// Exact-rational representation facts for all owned coordinates.
     pub exact: ExactRealSetFacts,
+    /// Cached common-scale and sparse-support fact packet.
+    pub facts: VectorSharedScaleFacts<N>,
 }
 
 impl<const N: usize> SharedScaleVec<N> {
@@ -317,7 +398,13 @@ impl<const N: usize> SharedScaleVec<N> {
         if !exact.has_shared_denominator_schedule() {
             return None;
         }
-        Some(Self { components, exact })
+        let refs = from_fn(|index| &components[index]);
+        let facts = vector_shared_scale_facts(exact, refs);
+        Some(Self {
+            components,
+            exact,
+            facts,
+        })
     }
 
     /// Returns the owned coordinates by reference.
@@ -335,8 +422,13 @@ impl<const N: usize> SharedScaleVec<N> {
     /// The view recomputes conservative masks from the retained coordinates but
     /// preserves the same scalar abstraction boundary as direct vector views.
     pub fn as_view(&self) -> VectorSharedScaleView<'_, N> {
-        VectorSharedScaleView::from_components(from_fn(|index| &self.components[index]))
-            .expect("SharedScaleVec invariant guarantees shared denominator")
+        VectorSharedScaleView {
+            components: from_fn(|index| &self.components[index]),
+            exact: self.facts.exact,
+            known_zero_mask: self.facts.known_zero_mask,
+            known_nonzero_mask: self.facts.known_nonzero_mask,
+            unknown_zero_mask: self.facts.unknown_zero_mask,
+        }
     }
 
     /// Returns the number of coordinates.
@@ -349,6 +441,16 @@ impl<const N: usize> SharedScaleVec<N> {
         N == 0
     }
 
+    /// Returns the cached common-scale fact packet for this owned vector.
+    ///
+    /// The packet is collected once at construction and then reused by borrowed
+    /// views, sparse dispatch, and exact algebra helpers. Missing facts remain
+    /// only missed optimizations; topological predicates must still be decided
+    /// in `hyperlimit`.
+    pub fn facts(&self) -> VectorSharedScaleFacts<N> {
+        self.facts
+    }
+
     /// Count coordinates known to be exactly zero.
     ///
     /// This forwards the borrowed view's mask-derived count without exposing
@@ -357,17 +459,17 @@ impl<const N: usize> SharedScaleVec<N> {
     /// boundary described by Yap, "Towards Exact Geometric Computation,"
     /// *Computational Geometry* 7.1-2 (1997).
     pub fn known_zero_count(&self) -> u32 {
-        self.as_view().known_zero_count()
+        self.facts.known_zero_count()
     }
 
     /// Count coordinates known to be nonzero.
     pub fn known_nonzero_count(&self) -> u32 {
-        self.as_view().known_nonzero_count()
+        self.facts.known_nonzero_count()
     }
 
     /// Count coordinates whose zero status is unknown.
     pub fn unknown_zero_count(&self) -> u32 {
-        self.as_view().unknown_zero_count()
+        self.facts.unknown_zero_count()
     }
 
     /// Returns the dot product with another owned shared-scale vector.
@@ -432,6 +534,21 @@ fn vector_zero_status_masks<const N: usize>(components: [&Real; N]) -> (u128, u1
         }
     }
     (known_zero_mask, known_nonzero_mask, unknown_zero_mask)
+}
+
+#[inline]
+fn vector_shared_scale_facts<const N: usize>(
+    exact: ExactRealSetFacts,
+    components: [&Real; N],
+) -> VectorSharedScaleFacts<N> {
+    let (known_zero_mask, known_nonzero_mask, unknown_zero_mask) =
+        vector_zero_status_masks(components);
+    VectorSharedScaleFacts {
+        exact,
+        known_zero_mask,
+        known_nonzero_mask,
+        unknown_zero_mask,
+    }
 }
 
 #[inline]

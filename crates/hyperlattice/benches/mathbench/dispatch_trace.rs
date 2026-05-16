@@ -6,7 +6,7 @@ mod enabled {
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::sync::{Mutex, OnceLock};
 
-    static ROWS: OnceLock<Mutex<BTreeMap<String, Vec<hyperreal::dispatch_trace::DispatchCount>>>> =
+    static ROWS: OnceLock<Mutex<BTreeMap<String, hyperreal::dispatch_trace::TraceSnapshot>>> =
         OnceLock::new();
     static MATRIX_PROFILE_ROWS: OnceLock<Mutex<Vec<MatrixProfileRow>>> = OnceLock::new();
     static TRACE_RUN: AtomicBool = AtomicBool::new(false);
@@ -33,7 +33,7 @@ mod enabled {
         constructor_events: u64,
     }
 
-    fn rows() -> &'static Mutex<BTreeMap<String, Vec<hyperreal::dispatch_trace::DispatchCount>>> {
+    fn rows() -> &'static Mutex<BTreeMap<String, hyperreal::dispatch_trace::TraceSnapshot>> {
         ROWS.get_or_init(|| Mutex::new(BTreeMap::new()))
     }
 
@@ -87,15 +87,15 @@ mod enabled {
         hyperreal::dispatch_trace::with_recording(|| {
             sample();
         });
-        let counts = hyperreal::dispatch_trace::take();
-        if counts.is_empty() {
+        let trace = hyperreal::dispatch_trace::take_trace();
+        if trace.dispatch.is_empty() {
             return;
         }
 
         rows()
             .lock()
             .expect("dispatch trace rows lock poisoned")
-            .insert(name.into(), counts);
+            .insert(name.into(), trace);
     }
 
     pub fn trace_cases<T>(name: impl Into<String>, cases: &[T], mut sample: impl FnMut(&T)) {
@@ -319,11 +319,44 @@ mod enabled {
         }
 
         if !rows.is_empty() {
+            out.push_str("## Correlation Summary\n\n");
+            out.push_str("This table groups raw cross-stack labels into Yap-aligned diagnostic buckets. It is a report aid, not a correctness certificate; raw paths below remain the detailed source.\n\n");
+            out.push_str("| Benchmark Row | Dispatch | Predicate | Linear Algebra | Object Facts | Scalar Facts | Detailed Facts | Unknown Facts | Rational Kinds | Sign/Zero Queries | Exact Reducers | Approximation | Approx Starts | Approx Cache | Refinement | Predicate Stages | Cache | Fallback/Abort | Rational Temps | Rational Reductions | Rational GCDs |\n");
+            out.push_str("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |\n");
+            for (row, trace) in rows.iter() {
+                let summary = trace.correlation_summary();
+                out.push_str(&format!(
+                    "| `{}` | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |\n",
+                    row,
+                    summary.dispatch_events,
+                    summary.predicate_events,
+                    summary.linear_algebra_events,
+                    summary.object_fact_events,
+                    summary.scalar_fact_events,
+                    summary.detailed_fact_events,
+                    summary.unknown_fact_events,
+                    summary.exact_rational_kind_events,
+                    summary.sign_or_zero_query_events,
+                    summary.exact_reducer_events,
+                    summary.approximation_events,
+                    summary.approximation_start_events,
+                    summary.approximation_cache_events,
+                    summary.refinement_events,
+                    summary.predicate_decision_stage_events,
+                    summary.cache_events,
+                    summary.fallback_or_abort_events,
+                    summary.rational_temporaries,
+                    summary.rational_reductions,
+                    summary.rational_gcds
+                ));
+            }
+            out.push('\n');
+
             out.push_str("## Dispatch Counts\n\n");
             out.push_str("| Benchmark Row | Layer | Operation | Path | Count |\n");
             out.push_str("| --- | --- | --- | --- | ---: |\n");
-            for (row, counts) in rows.iter() {
-                for count in counts {
+            for (row, trace) in rows.iter() {
+                for count in &trace.dispatch {
                     out.push_str(&format!(
                         "| `{}` | `{}` | `{}` | `{}` | {} |\n",
                         row, count.layer, count.operation, count.path, count.count

@@ -151,10 +151,13 @@ fn matrix_lane_has_sparse_support<const N: usize>(mask: u8) -> bool {
 }
 
 #[inline]
+fn matrix_lane_is_known_zero<const N: usize>(mask: u8) -> bool {
+    matrix_lane_known_zero_count::<N>(mask) == N as u32
+}
+
+#[inline]
 fn matrix_has_zero_lane<const N: usize>(masks: [u8; N]) -> bool {
-    masks
-        .into_iter()
-        .any(|mask| matrix_lane_known_zero_count::<N>(mask) == N as u32)
+    masks.into_iter().any(matrix_lane_is_known_zero::<N>)
 }
 
 #[inline]
@@ -493,6 +496,86 @@ pub enum MatrixDeterminantScheduleHint {
     GenericRealFallback,
 }
 
+impl MatrixDeterminantScheduleHint {
+    /// Returns whether this hint is selected entirely by retained matrix shape.
+    ///
+    /// Shape-driven hints can be chosen without inspecting scalar denominator
+    /// schedules. This keeps matrix structure in `hyperlattice` and arithmetic
+    /// representation in `hyperreal`, matching Yap's object/arithmetic package
+    /// separation for exact geometric computation; see Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    pub fn is_shape_driven(self) -> bool {
+        matches!(
+            self,
+            Self::StructurallyZero | Self::Diagonal | Self::Triangular | Self::SparseSupport
+        )
+    }
+
+    /// Returns whether this hint is selected by exact-rational scalar facts.
+    ///
+    /// These routes are still exact, but they depend on `hyperreal`'s retained
+    /// arithmetic facts rather than solely on matrix shape. Downstream kernels
+    /// can use this to try Bareiss-style or common-denominator schedules before
+    /// generic `Real` expansion; see Bareiss, "Sylvester's Identity and
+    /// Multistep Integer-Preserving Gaussian Elimination," *Mathematics of
+    /// Computation* 22.103 (1968).
+    pub fn is_exact_rational_driven(self) -> bool {
+        matches!(
+            self,
+            Self::SharedDenominator | Self::Dyadic | Self::ExactRational
+        )
+    }
+
+    /// Returns whether no retained exact matrix schedule was certified.
+    pub fn requires_generic_real_fallback(self) -> bool {
+        matches!(self, Self::GenericRealFallback)
+    }
+}
+
+/// Conservative homogeneous 2D transform kind for a [`Matrix3`].
+///
+/// The kind is a scheduling fact, not a proof of geometric intent. It is
+/// derived from exact structural facts already collected during matrix
+/// classification, preserving Yap's exact-geometric-computation boundary:
+/// object packages expose cheap structure, while topology and scalar algebra
+/// remain separate decisions. See Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Matrix3TransformKind {
+    /// Structurally the identity transform.
+    Identity,
+    /// Homogeneous affine translation with unit diagonal linear block.
+    AffineTranslation,
+    /// Affine transform whose 2x2 linear block is structurally diagonal.
+    AffineDiagonalLinear,
+    /// Affine transform with bottom row `[0, 0, 1]`.
+    Affine,
+    /// No affine transform structure was certified.
+    Projective,
+}
+
+/// Conservative homogeneous 3D transform kind for a [`Matrix4`].
+///
+/// This groups the public affine, diagonal-linear, translation, and
+/// signed-permutation facts into one stable dispatch key. It intentionally
+/// remains advisory: exact determinant signs, incidence predicates, and
+/// topology decisions still belong to exact scalar/predicate kernels.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Matrix4TransformKind {
+    /// Structurally the identity transform.
+    Identity,
+    /// Structurally a signed permutation of homogeneous coordinates.
+    SignedPermutation,
+    /// Homogeneous affine translation with unit diagonal linear block.
+    AffineTranslation,
+    /// Affine transform whose 3x3 linear block is structurally diagonal.
+    AffineDiagonalLinear,
+    /// Affine transform with bottom row `[0, 0, 0, 1]`.
+    Affine,
+    /// No affine or signed-permutation transform structure was certified.
+    Projective,
+}
+
 /// Public structural facts for a [`Matrix3`].
 ///
 /// These are conservative object-level facts gathered in one matrix scan. They
@@ -543,6 +626,8 @@ pub struct Matrix3StructuralFacts {
     pub is_affine: bool,
     /// Whether the affine linear block is structurally diagonal and unit-scaled.
     pub is_affine_translation: bool,
+    /// Conservative transform kind derived from retained homogeneous facts.
+    pub transform_kind: Matrix3TransformKind,
 }
 
 impl Matrix3StructuralFacts {
@@ -587,6 +672,41 @@ impl Matrix3StructuralFacts {
     pub fn column_known_zero_count(self, column: usize) -> Option<u32> {
         self.column_zero_mask(column)
             .map(matrix_lane_known_zero_count::<3>)
+    }
+
+    /// Returns whether one row is structurally known to be entirely zero.
+    ///
+    /// This is the determinant-relevant version of [`Self::row_zero_mask`]:
+    /// callers get a semantic certificate instead of depending on the mask
+    /// layout. The fact is conservative and may return `Some(false)` for a row
+    /// that is mathematically zero but not cheaply certified by scalar facts.
+    pub fn row_is_known_zero(self, row: usize) -> Option<bool> {
+        self.row_zero_mask(row).map(matrix_lane_is_known_zero::<3>)
+    }
+
+    /// Returns whether one column is structurally known to be entirely zero.
+    pub fn column_is_known_zero(self, column: usize) -> Option<bool> {
+        self.column_zero_mask(column)
+            .map(matrix_lane_is_known_zero::<3>)
+    }
+
+    /// Returns whether any row has a retained all-zero certificate.
+    pub fn has_known_zero_row(self) -> bool {
+        self.row_zero_masks
+            .into_iter()
+            .any(matrix_lane_is_known_zero::<3>)
+    }
+
+    /// Returns whether any column has a retained all-zero certificate.
+    pub fn has_known_zero_column(self) -> bool {
+        self.column_zero_masks
+            .into_iter()
+            .any(matrix_lane_is_known_zero::<3>)
+    }
+
+    /// Returns whether any row or column is certified entirely zero.
+    pub fn has_known_zero_lane(self) -> bool {
+        self.has_known_zero_row() || self.has_known_zero_column()
     }
 
     /// Returns whether one row has certified sparse support.
@@ -692,6 +812,8 @@ pub struct Matrix4StructuralFacts {
     pub signed_permutation_rows: Option<[SignedAxis4; 4]>,
     /// Whether the translation column's xyz entries are structurally zero.
     pub translation_xyz_zero: [bool; 3],
+    /// Conservative transform kind derived from retained homogeneous facts.
+    pub transform_kind: Matrix4TransformKind,
 }
 
 impl Matrix4StructuralFacts {
@@ -739,6 +861,40 @@ impl Matrix4StructuralFacts {
     pub fn column_known_zero_count(self, column: usize) -> Option<u32> {
         self.column_zero_mask(column)
             .map(matrix_lane_known_zero_count::<4>)
+    }
+
+    /// Returns whether one row is structurally known to be entirely zero.
+    ///
+    /// This exposes the structural-zero determinant certificate as a semantic
+    /// query. Matrix users should prefer this helper over decoding raw masks,
+    /// keeping the mask representation local to `hyperlattice`.
+    pub fn row_is_known_zero(self, row: usize) -> Option<bool> {
+        self.row_zero_mask(row).map(matrix_lane_is_known_zero::<4>)
+    }
+
+    /// Returns whether one column is structurally known to be entirely zero.
+    pub fn column_is_known_zero(self, column: usize) -> Option<bool> {
+        self.column_zero_mask(column)
+            .map(matrix_lane_is_known_zero::<4>)
+    }
+
+    /// Returns whether any row has a retained all-zero certificate.
+    pub fn has_known_zero_row(self) -> bool {
+        self.row_zero_masks
+            .into_iter()
+            .any(matrix_lane_is_known_zero::<4>)
+    }
+
+    /// Returns whether any column has a retained all-zero certificate.
+    pub fn has_known_zero_column(self) -> bool {
+        self.column_zero_masks
+            .into_iter()
+            .any(matrix_lane_is_known_zero::<4>)
+    }
+
+    /// Returns whether any row or column is certified entirely zero.
+    pub fn has_known_zero_lane(self) -> bool {
+        self.has_known_zero_row() || self.has_known_zero_column()
     }
 
     /// Returns whether one row has certified sparse support.
@@ -855,6 +1011,59 @@ pub struct PreparedRightDivisor4<'a> {
     determinant: Option<Real>,
     reciprocal_determinant: Option<Real>,
     inverse: Option<Matrix4>,
+}
+
+/// Public cache-state summary for prepared matrix handles.
+///
+/// This type exposes cache availability without exposing cached determinant,
+/// reciprocal, factor, adjugate, or inverse storage. That keeps the
+/// `hyperlattice` abstraction boundary intact: higher-level crates can decide
+/// whether a reusable matrix handle is cold or warm, while exact algebra still
+/// owns the cached arithmetic values. The design follows Yap's object-level
+/// exact-computation advice to carry structural work at stable geometric
+/// objects without leaking scalar representation details; see Yap, "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct MatrixPreparedCacheState {
+    /// Whether a determinant has been computed and retained.
+    pub determinant: bool,
+    /// Whether the reciprocal determinant has been computed and retained.
+    pub reciprocal_determinant: bool,
+    /// Whether 4x4 minor factors have been computed and retained.
+    ///
+    /// This is always `false` for 3x3 prepared handles because their adjugate
+    /// path does not use a separate factor cache.
+    pub minor_factors: bool,
+    /// Whether an unscaled adjugate has been computed and retained.
+    pub adjugate: bool,
+    /// Whether a scaled inverse matrix has been computed and retained.
+    pub inverse: bool,
+}
+
+impl MatrixPreparedCacheState {
+    /// Return whether no expensive derived matrix cache is currently warm.
+    pub const fn is_cold(self) -> bool {
+        !self.determinant
+            && !self.reciprocal_determinant
+            && !self.minor_factors
+            && !self.adjugate
+            && !self.inverse
+    }
+
+    /// Return whether any expensive derived matrix cache is currently warm.
+    pub const fn is_warm(self) -> bool {
+        !self.is_cold()
+    }
+
+    /// Return whether the handle can reuse determinant-derived scale data.
+    pub const fn has_determinant_scale(self) -> bool {
+        self.determinant && self.reciprocal_determinant
+    }
+
+    /// Return whether the handle can reuse the shared-adjugate inverse path.
+    pub const fn has_shared_adjugate_path(self) -> bool {
+        self.adjugate && self.has_determinant_scale()
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -981,6 +1190,17 @@ impl<'a> PreparedMatrix3<'a> {
         self.right_divisor.determinant_schedule_hint()
     }
 
+    /// Return which determinant/adjugate caches are warm on this prepared
+    /// matrix.
+    pub fn cache_state(&self) -> MatrixPreparedCacheState {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "query",
+            "prepared-matrix3-cache-state"
+        );
+        self.right_divisor.cache_state()
+    }
+
     /// Returns the determinant using the prepared determinant cache.
     ///
     /// This keeps determinant reuse on the prepared matrix object instead of
@@ -1005,6 +1225,46 @@ impl<'a> PreparedMatrix3<'a> {
     /// determinant, reciprocal, and adjugate data.
     pub fn right_divisor(&mut self) -> &mut PreparedRightDivisor3<'a> {
         &mut self.right_divisor
+    }
+
+    /// Returns a retained transform handle using this prepared matrix's cached
+    /// structural facts.
+    ///
+    /// This is the transform-side counterpart to [`PreparedMatrix3::inverse`]
+    /// and [`PreparedMatrix3::divide_left`]: geometry code that already keeps a
+    /// prepared matrix can reuse the same object-fact scan for repeated vector
+    /// transforms instead of constructing a separate transform handle. The
+    /// boundary follows Yap's object-layer rule in "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7.1-2 (1997): carry facts on the
+    /// reusable geometric object and select arithmetic kernels from those
+    /// facts.
+    pub fn transform_vec3_handle(&self) -> TransformedMatrix3<'a> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-matrix3-transform-handle"
+        );
+        TransformedMatrix3::new_with_facts(self.right_divisor.divisor, self.right_divisor.facts)
+    }
+
+    /// Transforms one 3D vector using cached prepared-matrix facts.
+    pub fn transform_vector(&self, rhs: &Vector3) -> Vector3 {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-matrix3-transform-vector"
+        );
+        self.transform_vec3_handle().transform_vector(rhs)
+    }
+
+    /// Transforms a batch of 3D vectors using cached prepared-matrix facts.
+    pub fn transform_vector_batch(&self, rhs: &[Vector3]) -> Vec<Vector3> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-matrix3-transform-vector-batch"
+        );
+        self.transform_vec3_handle().transform_vector_batch(rhs)
     }
 
     /// Returns the inverse using the prepared determinant/adjugate cache.
@@ -1156,6 +1416,17 @@ impl<'a> PreparedMatrix4<'a> {
         self.right_divisor.determinant_schedule_hint()
     }
 
+    /// Return which determinant/factor/adjugate caches are warm on this
+    /// prepared matrix.
+    pub fn cache_state(&self) -> MatrixPreparedCacheState {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "query",
+            "prepared-matrix4-cache-state"
+        );
+        self.right_divisor.cache_state()
+    }
+
     /// Returns the determinant using the prepared determinant/factor cache.
     ///
     /// For 4x4 matrices this may reuse the same fixed minor factors used by the
@@ -1174,6 +1445,90 @@ impl<'a> PreparedMatrix4<'a> {
     /// Returns a mutable prepared right-divisor view of the same matrix.
     pub fn right_divisor(&mut self) -> &mut PreparedRightDivisor4<'a> {
         &mut self.right_divisor
+    }
+
+    /// Returns a retained transform handle using this prepared matrix's cached
+    /// structural facts.
+    ///
+    /// Reusing the same prepared object for matrix-vector transforms,
+    /// determinant queries, inverse construction, and right division keeps
+    /// affine/homogeneous facts in one semantic cache. The arithmetic kernels
+    /// remain owned by the retained transform handle; this method only prevents
+    /// repeated structural rediscovery, following Yap's object-package model in
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+    /// (1997).
+    pub fn transform_vec4_handle(&self) -> TransformedMatrix4<'a> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-matrix4-transform-handle"
+        );
+        TransformedMatrix4::new_with_facts(self.right_divisor.divisor, self.right_divisor.facts)
+    }
+
+    /// Transforms one 4D homogeneous vector using cached prepared-matrix facts.
+    pub fn transform_vector(&self, rhs: &Vector4) -> Vector4 {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-matrix4-transform-vector"
+        );
+        self.transform_vec4_handle().transform_vector(rhs)
+    }
+
+    /// Transforms a batch of 4D homogeneous vectors using cached prepared-matrix
+    /// facts.
+    pub fn transform_vector_batch(&self, rhs: &[Vector4]) -> Vec<Vector4> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-matrix4-transform-vector-batch"
+        );
+        self.transform_vec4_handle().transform_vector_batch(rhs)
+    }
+
+    /// Transforms one caller-certified homogeneous direction (`w = 0`) using
+    /// cached prepared-matrix facts.
+    pub fn transform_direction_vector(&self, rhs: &Vector4) -> Vector4 {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-matrix4-transform-direction-vector"
+        );
+        self.transform_vec4_handle().transform_direction_vector(rhs)
+    }
+
+    /// Transforms a batch of caller-certified homogeneous directions (`w = 0`)
+    /// using cached prepared-matrix facts.
+    pub fn transform_direction_batch(&self, rhs: &[Vector4]) -> Vec<Vector4> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-matrix4-transform-direction-batch"
+        );
+        self.transform_vec4_handle().transform_direction_batch(rhs)
+    }
+
+    /// Transforms one caller-certified homogeneous point (`w = 1`) using cached
+    /// prepared-matrix facts.
+    pub fn transform_point_vector(&self, rhs: &Vector4) -> Vector4 {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-matrix4-transform-point-vector"
+        );
+        self.transform_vec4_handle().transform_point_vector(rhs)
+    }
+
+    /// Transforms a batch of caller-certified homogeneous points (`w = 1`) using
+    /// cached prepared-matrix facts.
+    pub fn transform_point_batch(&self, rhs: &[Vector4]) -> Vec<Vector4> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-matrix4-transform-point-batch"
+        );
+        self.transform_vec4_handle().transform_point_batch(rhs)
     }
 
     /// Returns the inverse using the prepared determinant/adjugate cache.
@@ -1336,6 +1691,21 @@ impl<'a> PreparedRightDivisor3<'a> {
     /// evaluation and checked inverse paths still decide singularity.
     pub fn determinant_schedule_hint(&self) -> MatrixDeterminantScheduleHint {
         self.facts.public.determinant_schedule_hint()
+    }
+
+    /// Return which determinant/adjugate caches are warm on this prepared
+    /// divisor.
+    ///
+    /// The returned summary is diagnostic scheduling metadata only. Missing
+    /// cache entries must affect performance, not exact algebra semantics.
+    pub fn cache_state(&self) -> MatrixPreparedCacheState {
+        MatrixPreparedCacheState {
+            determinant: self.determinant.is_some(),
+            reciprocal_determinant: self.reciprocal_determinant.is_some(),
+            minor_factors: false,
+            adjugate: self.adjugate.is_some(),
+            inverse: self.inverse.is_some(),
+        }
     }
 
     /// Returns the determinant of the prepared divisor.
@@ -1689,6 +2059,22 @@ impl<'a> PreparedRightDivisor4<'a> {
     /// transform-heavy 4x4 workloads.
     pub fn determinant_schedule_hint(&self) -> MatrixDeterminantScheduleHint {
         self.facts.public.determinant_schedule_hint()
+    }
+
+    /// Return which determinant/factor/adjugate caches are warm on this
+    /// prepared divisor.
+    ///
+    /// The factor flag exposes only availability of the retained fixed-minor
+    /// package, not the factors themselves. This keeps exact scalar storage and
+    /// cofactor layouts private to the matrix kernel.
+    pub fn cache_state(&self) -> MatrixPreparedCacheState {
+        MatrixPreparedCacheState {
+            determinant: self.determinant.is_some(),
+            reciprocal_determinant: self.reciprocal_determinant.is_some(),
+            minor_factors: self.factors.is_some(),
+            adjugate: self.adjugate.is_some(),
+            inverse: self.inverse.is_some(),
+        }
     }
 
     /// Returns the determinant of the prepared divisor.
@@ -2247,6 +2633,49 @@ struct Matrix4Facts {
 }
 
 #[inline]
+fn matrix3_transform_kind(
+    is_identity: bool,
+    is_affine: bool,
+    is_affine_translation: bool,
+    linear_is_diagonal: bool,
+) -> Matrix3TransformKind {
+    if is_identity {
+        Matrix3TransformKind::Identity
+    } else if is_affine_translation {
+        Matrix3TransformKind::AffineTranslation
+    } else if is_affine && linear_is_diagonal {
+        Matrix3TransformKind::AffineDiagonalLinear
+    } else if is_affine {
+        Matrix3TransformKind::Affine
+    } else {
+        Matrix3TransformKind::Projective
+    }
+}
+
+#[inline]
+fn matrix4_transform_kind(
+    is_identity: bool,
+    is_affine: bool,
+    is_affine_translation: bool,
+    linear_is_diagonal: bool,
+    signed_permutation_rows: Option<[SignedAxis4; 4]>,
+) -> Matrix4TransformKind {
+    if is_identity {
+        Matrix4TransformKind::Identity
+    } else if signed_permutation_rows.is_some() {
+        Matrix4TransformKind::SignedPermutation
+    } else if is_affine_translation {
+        Matrix4TransformKind::AffineTranslation
+    } else if is_affine && linear_is_diagonal {
+        Matrix4TransformKind::AffineDiagonalLinear
+    } else if is_affine {
+        Matrix4TransformKind::Affine
+    } else {
+        Matrix4TransformKind::Projective
+    }
+}
+
+#[inline]
 fn matrix3_facts(matrix: &[[Real; 3]; 3]) -> Matrix3Facts {
     // Collapse 3×3 structural predicates into one cheap scan so downstream
     // dispatch can avoid repeated definite checks in inverse/division hot loops.
@@ -2282,6 +2711,12 @@ fn matrix3_facts(matrix: &[[Real; 3]; 3]) -> Matrix3Facts {
     let exact = crate::kernels::exact_real_set_facts(matrix.iter().flat_map(|row| row.iter()));
     let (zero_mask, row_zero_masks, column_zero_masks) = matrix_zero_masks(matrix);
     let one_mask = matrix_one_mask(matrix);
+    let transform_kind = matrix3_transform_kind(
+        is_identity,
+        is_affine,
+        is_affine_translation,
+        linear_is_diagonal,
+    );
     let public = Matrix3StructuralFacts {
         exact,
         symbolic_dependencies: matrix_symbolic_dependency_mask(matrix),
@@ -2296,6 +2731,7 @@ fn matrix3_facts(matrix: &[[Real; 3]; 3]) -> Matrix3Facts {
         is_lower_triangular,
         is_affine,
         is_affine_translation,
+        transform_kind,
     };
 
     Matrix3Facts {
@@ -2378,6 +2814,14 @@ fn matrix4_facts(matrix: &[[Real; 4]; 4]) -> Matrix4Facts {
     let (zero_mask, row_zero_masks, column_zero_masks) = matrix_zero_masks(matrix);
     let one_mask = matrix_one_mask(matrix);
     let translation_xyz_zero = [m03_zero, m13_zero, m23_zero];
+    let signed_permutation_rows = matrix4_signed_permutation_rows(matrix);
+    let transform_kind = matrix4_transform_kind(
+        is_identity,
+        is_affine,
+        is_affine_translation,
+        linear_is_diagonal,
+        signed_permutation_rows,
+    );
     let public = Matrix4StructuralFacts {
         exact,
         symbolic_dependencies: matrix_symbolic_dependency_mask(matrix),
@@ -2394,8 +2838,9 @@ fn matrix4_facts(matrix: &[[Real; 4]; 4]) -> Matrix4Facts {
         is_affine_translation,
         linear_is_diagonal,
         direction_linear_is_diagonal,
-        signed_permutation_rows: matrix4_signed_permutation_rows(matrix),
+        signed_permutation_rows,
         translation_xyz_zero,
+        transform_kind,
     };
 
     Matrix4Facts {
@@ -2448,6 +2893,12 @@ fn matrix3_facts_assuming_const3<const N: usize>(matrix: &[[Real; N]; N]) -> Mat
     let (zero_mask, row_zero_masks, column_zero_masks) =
         matrix_zero_masks_assuming_size::<N, 3>(matrix);
     let one_mask = matrix_one_mask_assuming_size::<N, 3>(matrix);
+    let transform_kind = matrix3_transform_kind(
+        is_identity,
+        is_affine,
+        is_affine_translation,
+        linear_is_diagonal,
+    );
     let public = Matrix3StructuralFacts {
         exact,
         symbolic_dependencies: matrix_symbolic_dependency_mask_assuming_size::<N, 3>(matrix),
@@ -2465,6 +2916,7 @@ fn matrix3_facts_assuming_const3<const N: usize>(matrix: &[[Real; N]; N]) -> Mat
         is_lower_triangular,
         is_affine,
         is_affine_translation,
+        transform_kind,
     };
 
     Matrix3Facts {
@@ -2539,6 +2991,14 @@ fn matrix4_facts_assuming_const4<const N: usize>(matrix: &[[Real; N]; N]) -> Mat
         matrix_zero_masks_assuming_size::<N, 4>(matrix);
     let one_mask = matrix_one_mask_assuming_size::<N, 4>(matrix);
     let translation_xyz_zero = [m03_zero, m13_zero, m23_zero];
+    let signed_permutation_rows = matrix4_signed_permutation_rows_assuming_size(matrix);
+    let transform_kind = matrix4_transform_kind(
+        is_identity,
+        is_affine,
+        is_affine_translation,
+        linear_is_diagonal,
+        signed_permutation_rows,
+    );
     let public = Matrix4StructuralFacts {
         exact,
         symbolic_dependencies: matrix_symbolic_dependency_mask_assuming_size::<N, 4>(matrix),
@@ -2558,8 +3018,9 @@ fn matrix4_facts_assuming_const4<const N: usize>(matrix: &[[Real; N]; N]) -> Mat
         is_affine_translation,
         linear_is_diagonal,
         direction_linear_is_diagonal,
-        signed_permutation_rows: matrix4_signed_permutation_rows_assuming_size(matrix),
+        signed_permutation_rows,
         translation_xyz_zero,
+        transform_kind,
     };
 
     Matrix4Facts {
@@ -10767,6 +11228,10 @@ pub struct TransformedMatrix3<'a> {
 impl<'a> TransformedMatrix3<'a> {
     fn new(matrix: &'a Matrix3) -> Self {
         let facts = matrix3_facts(&matrix.0);
+        Self::new_with_facts(matrix, facts)
+    }
+
+    fn new_with_facts(matrix: &'a Matrix3, facts: Matrix3Facts) -> Self {
         Self { matrix, facts }
     }
 

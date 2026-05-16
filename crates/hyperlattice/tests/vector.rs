@@ -283,6 +283,12 @@ fn vector_shared_scale_views_preserve_borrowed_common_scale_facts() {
     assert_eq!(view2.known_zero_count(), 0);
     assert_eq!(view2.known_nonzero_count(), 2);
     assert_eq!(view2.unknown_zero_count(), 0);
+    let view2_facts = view2.facts();
+    assert_eq!(view2_facts.exact, view2.exact);
+    assert!(view2_facts.has_shared_denominator_schedule());
+    assert!(!view2_facts.has_dyadic_schedule());
+    assert!(view2_facts.is_known_dense());
+    assert_eq!(view2_facts.known_nonzero_count(), 2);
     assert_eq!(view2.components()[0], &frac(1, 3));
 
     let zero_vector = Vector2::zero();
@@ -341,7 +347,12 @@ fn owned_shared_scale_vectors_preserve_common_scale_across_lifetimes() {
     assert_eq!(owned.known_zero_count(), 0);
     assert_eq!(owned.known_nonzero_count(), 3);
     assert_eq!(owned.unknown_zero_count(), 0);
+    let owned_facts = owned.facts();
+    assert_eq!(owned_facts, owned.as_view().facts());
+    assert!(owned_facts.is_known_dense());
+    assert_eq!(owned_facts.known_nonzero_count(), 3);
     assert!(owned.exact.has_shared_denominator_schedule());
+    assert_eq!(owned.facts.exact, owned.exact);
     assert!(!owned.exact.has_integer_grid_schedule());
     assert_eq!(
         owned.exact.shared_denominator_kind(),
@@ -376,6 +387,9 @@ fn owned_shared_scale_vectors_preserve_common_scale_across_lifetimes() {
         .expect("signed unit coordinates are integer-grid shared scale");
     assert!(zero_units.exact.has_integer_grid_schedule());
     assert!(zero_units.exact.has_signed_unit_schedule());
+    assert!(zero_units.facts().has_integer_grid_schedule());
+    assert!(zero_units.facts().has_signed_unit_schedule());
+    assert_eq!(zero_units.facts().known_zero_count(), 2);
 
     assert!(SharedScaleVec::from_components([frac(1, 2), frac(1, 3)]).is_none());
     assert!(
