@@ -19,10 +19,6 @@ rules.
 The deployed WASM app is available at
 <https://timschmidt.github.io/hypercurve/>.
 
-The app links back to the project repository and recreates the Cavalier-style
-polyline test article around `hypercurve` booleans, intersections, slices, and
-offsets.
-
 ## Numeric Model
 
 `hypercurve` stores and decides core geometry with `hyperreal::Real`
