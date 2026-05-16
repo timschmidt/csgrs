@@ -1,6 +1,38 @@
 [package]
-name = "hypertriangulate"
+name = "hypertri"
 version = "0.1.0"
 edition = "2024"
+description = "Hyperreal-backed triangulation algorithms with exact geometric predicates"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+
+[features]
+default = ["earcut", "cdt", "runtime-select"]
+earcut = []
+cdt = []
+runtime-select = []
+f64-interop = []
+serde = []
 
 [dependencies]
+hyperreal = { path = "../hyperreal", version = "0.11.1" }
+hyperlimit = { path = "../hyperlimit", version = "0.2.0", default-features = false, features = ["std"] }
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+proptest = "1.7.0"
+
+[[bench]]
+name = "earcut"
+harness = false
+required-features = ["earcut", "f64-interop"]
+
+[[bench]]
+name = "delaunay"
+harness = false
+required-features = ["cdt", "f64-interop"]
+
+[[bench]]
+name = "exact"
+harness = false
+required-features = ["earcut", "cdt"]
