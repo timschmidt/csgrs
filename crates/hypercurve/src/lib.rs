@@ -4,21 +4,63 @@
 //! Cavalier-style polyline semantics while using `hyperlattice` scalars and the
 //! `hyperlimit` predicate policy model.
 
+mod bbox;
+mod boolean;
+mod boolean_boundary;
 mod bulge;
 mod classify;
+mod contour;
+mod curve_string;
 mod error;
+mod events;
+mod fragment;
 mod intersect;
+mod offset;
 mod point;
 mod policy;
+mod prepared;
+mod region;
+mod region_boolean;
+mod region_events;
+mod region_fragments;
+mod region_nesting;
 mod segment;
+mod self_intersect;
+mod split;
 
+pub use bbox::Aabb2;
+pub use boolean::{
+    BooleanFragmentAction, BooleanFragmentClassification, BooleanFragmentSelection, BooleanOp,
+};
+pub use boolean_boundary::{
+    BooleanBoundaryChain, BooleanBoundaryChainSet, BooleanBoundaryFragmentSet, BooleanBoundaryLoop,
+    BooleanBoundaryLoopSet, DirectedBooleanFragment,
+};
 pub use bulge::BulgeVertex2;
 pub use classify::{Classification, LineSide, UncertaintyReason};
+pub use contour::{Contour2, ContourPointLocation, FillRule};
+pub use curve_string::{CurveString2, CurveStringIntersection};
 pub use error::{CurveError, CurveResult};
-pub use intersect::{IntersectionKind, LineLineIntersection, ParamRange};
+pub use events::{
+    ContourIntersection, ContourIntersectionSet, ContourOperand, ContourOverlapIntersection,
+    ContourPointIntersection, ContourUncertainIntersection,
+};
+pub use fragment::{ContourFragment, ContourFragmentSet};
+pub use intersect::{
+    ArcArcIntersection, ArcArcIntersectionPoint, IntersectionKind, LineArcIntersection,
+    LineArcIntersectionPoint, LineArcOrder, LineLineIntersection, ParamRange, SegmentIntersection,
+};
 pub use point::Point2;
 pub use policy::{CurvePolicy, NumericMode, Tolerance};
+pub use prepared::{PreparedContourView2, PreparedCurveStringView2, PreparedRegionView2};
+pub use region::{Region2, RegionPointLocation, RegionView2};
+pub use region_events::{
+    RegionContourIntersection, RegionContourKey, RegionContourRole, RegionIntersectionSet,
+    RegionSide,
+};
+pub use region_fragments::{RegionContourFragments, RegionFragmentSet};
 pub use segment::{CircularArc2, LineSeg2, Segment2};
+pub use split::{ContourSplitMap, ContourSplitMarkers, SegmentSplitMarker, SegmentSplitPoint};
 
 pub use hyperlattice::{Backend, DefaultBackend, Scalar, ScalarSign, ZeroStatus};
 
@@ -121,6 +163,118 @@ mod tests {
         let b = BulgeVertex2::new(p::<DefaultBackend>(2, 0), s(0));
         let segment = a.segment_to(&b).unwrap();
         assert!(matches!(segment, Segment2::Arc(_)));
+    }
+
+    #[test]
+    fn curve_string_rejects_empty_segment_list() {
+        let err = CurveString2::<DefaultBackend>::try_new(Vec::new())
+            .expect_err("empty checked curve string should be rejected");
+        assert_eq!(err, CurveError::EmptyCurveString);
+    }
+
+    #[test]
+    fn curve_string_rejects_disconnected_segments() {
+        let first = Segment2::Line(
+            LineSeg2::try_new(p::<DefaultBackend>(0, 0), p::<DefaultBackend>(1, 0)).unwrap(),
+        );
+        let second = Segment2::Line(
+            LineSeg2::try_new(p::<DefaultBackend>(2, 0), p::<DefaultBackend>(3, 0)).unwrap(),
+        );
+        let err = CurveString2::try_new(vec![first, second])
+            .expect_err("disconnected segments should be rejected");
+        assert_eq!(err, CurveError::DisconnectedCurveString);
+    }
+
+    #[test]
+    fn curve_string_builds_from_bulge_vertices() {
+        let vertices = [
+            BulgeVertex2::new(p::<DefaultBackend>(0, 0), s(0)),
+            BulgeVertex2::new(p::<DefaultBackend>(1, 0), s(1)),
+            BulgeVertex2::new(p::<DefaultBackend>(3, 0), s(0)),
+        ];
+        let curve = CurveString2::from_bulge_vertices(&vertices).unwrap();
+
+        assert_eq!(curve.len(), 2);
+        assert_eq!(curve.start(), Some(&p::<DefaultBackend>(0, 0)));
+        assert_eq!(curve.end(), Some(&p::<DefaultBackend>(3, 0)));
+        assert!(matches!(curve.segments()[0], Segment2::Line(_)));
+        assert!(matches!(curve.segments()[1], Segment2::Arc(_)));
+    }
+
+    #[test]
+    fn curve_string_rejects_too_few_bulge_vertices() {
+        let vertices = [BulgeVertex2::new(p::<DefaultBackend>(0, 0), s(0))];
+        let err = CurveString2::from_bulge_vertices(&vertices)
+            .expect_err("open curve string needs at least two vertices");
+        assert_eq!(err, CurveError::InsufficientVertices);
+    }
+
+    #[test]
+    fn curve_string_intersections_collect_line_line_event() {
+        let a = CurveString2::try_new(vec![Segment2::Line(
+            LineSeg2::try_new(p::<DefaultBackend>(0, 0), p::<DefaultBackend>(2, 0)).unwrap(),
+        )])
+        .unwrap();
+        let b = CurveString2::try_new(vec![Segment2::Line(
+            LineSeg2::try_new(p::<DefaultBackend>(1, -1), p::<DefaultBackend>(1, 1)).unwrap(),
+        )])
+        .unwrap();
+
+        let intersections = a.intersect_curve_string(&b, &topology_policy()).unwrap();
+        assert_eq!(intersections.len(), 1);
+        assert_eq!(intersections[0].a_segment_index, 0);
+        assert_eq!(intersections[0].b_segment_index, 0);
+
+        let SegmentIntersection::LineLine(LineLineIntersection::Point { point, kind, .. }) =
+            &intersections[0].relation
+        else {
+            panic!("expected line-line curve-string event");
+        };
+        assert_eq!(point, &p::<DefaultBackend>(1, 0));
+        assert_eq!(*kind, IntersectionKind::Crossing);
+    }
+
+    #[test]
+    fn curve_string_intersections_collect_line_arc_event() {
+        let line_curve = CurveString2::try_new(vec![Segment2::Line(
+            LineSeg2::try_new(p::<DefaultBackend>(1, -2), p::<DefaultBackend>(1, 2)).unwrap(),
+        )])
+        .unwrap();
+        let arc_curve = CurveString2::try_new(vec![Segment2::Arc(
+            CircularArc2::from_bulge(p::<DefaultBackend>(0, 0), p::<DefaultBackend>(2, 0), s(1))
+                .unwrap(),
+        )])
+        .unwrap();
+
+        let intersections = line_curve
+            .intersect_curve_string(&arc_curve, &topology_policy())
+            .unwrap();
+        assert_eq!(intersections.len(), 1);
+
+        let SegmentIntersection::LineArc {
+            order,
+            result: LineArcIntersection::Point(hit),
+        } = &intersections[0].relation
+        else {
+            panic!("expected line-arc curve-string event");
+        };
+        assert_eq!(*order, LineArcOrder::LineThenArc);
+        assert_eq!(hit.point, p::<DefaultBackend>(1, -1));
+    }
+
+    #[test]
+    fn curve_string_intersections_drop_empty_segment_pairs() {
+        let a = CurveString2::try_new(vec![Segment2::Line(
+            LineSeg2::try_new(p::<DefaultBackend>(0, 0), p::<DefaultBackend>(1, 0)).unwrap(),
+        )])
+        .unwrap();
+        let b = CurveString2::try_new(vec![Segment2::Line(
+            LineSeg2::try_new(p::<DefaultBackend>(0, 1), p::<DefaultBackend>(1, 1)).unwrap(),
+        )])
+        .unwrap();
+
+        let intersections = a.intersect_curve_string(&b, &topology_policy()).unwrap();
+        assert!(intersections.is_empty());
     }
 
     #[cfg(feature = "approx")]
@@ -237,5 +391,430 @@ mod tests {
             a.intersect_line(&b, &topology_policy()).unwrap(),
             LineLineIntersection::None
         );
+    }
+
+    #[test]
+    fn arc_sweep_classifies_positive_bulge_semicircle() {
+        let arc =
+            CircularArc2::from_bulge(p::<DefaultBackend>(0, 0), p::<DefaultBackend>(2, 0), s(1))
+                .unwrap();
+        assert_eq!(
+            arc.contains_sweep_point(&p::<DefaultBackend>(1, -1), &topology_policy()),
+            Classification::Decided(true)
+        );
+        assert_eq!(
+            arc.contains_sweep_point(&p::<DefaultBackend>(1, 1), &topology_policy()),
+            Classification::Decided(false)
+        );
+        assert_eq!(
+            arc.contains_sweep_point(&p::<DefaultBackend>(0, 0), &topology_policy()),
+            Classification::Decided(true)
+        );
+    }
+
+    #[test]
+    fn arc_sweep_classifies_negative_bulge_semicircle() {
+        let arc =
+            CircularArc2::from_bulge(p::<DefaultBackend>(0, 0), p::<DefaultBackend>(2, 0), s(-1))
+                .unwrap();
+        assert_eq!(
+            arc.contains_sweep_point(&p::<DefaultBackend>(1, 1), &topology_policy()),
+            Classification::Decided(true)
+        );
+        assert_eq!(
+            arc.contains_sweep_point(&p::<DefaultBackend>(1, -1), &topology_policy()),
+            Classification::Decided(false)
+        );
+        assert_eq!(
+            arc.contains_sweep_point(&p::<DefaultBackend>(2, 0), &topology_policy()),
+            Classification::Decided(true)
+        );
+    }
+
+    #[test]
+    fn line_arc_intersection_keeps_only_points_inside_sweep() {
+        let arc =
+            CircularArc2::from_bulge(p::<DefaultBackend>(0, 0), p::<DefaultBackend>(2, 0), s(1))
+                .unwrap();
+        let line =
+            LineSeg2::try_new(p::<DefaultBackend>(1, -2), p::<DefaultBackend>(1, 2)).unwrap();
+        let intersection = line.intersect_arc(&arc, &topology_policy()).unwrap();
+
+        let LineArcIntersection::Point(hit) = intersection else {
+            panic!("expected one line-arc hit");
+        };
+
+        assert_eq!(hit.point, p::<DefaultBackend>(1, -1));
+        assert_eq!(
+            hit.line_param,
+            Scalar::<DefaultBackend>::try_from(0.25_f64).unwrap()
+        );
+        assert_eq!(hit.kind, IntersectionKind::Crossing);
+    }
+
+    #[test]
+    fn line_arc_intersection_keeps_clockwise_sweep() {
+        let arc =
+            CircularArc2::from_bulge(p::<DefaultBackend>(0, 0), p::<DefaultBackend>(2, 0), s(-1))
+                .unwrap();
+        let line =
+            LineSeg2::try_new(p::<DefaultBackend>(1, -2), p::<DefaultBackend>(1, 2)).unwrap();
+        let intersection = line.intersect_arc(&arc, &topology_policy()).unwrap();
+
+        let LineArcIntersection::Point(hit) = intersection else {
+            panic!("expected one line-arc hit");
+        };
+
+        assert_eq!(hit.point, p::<DefaultBackend>(1, 1));
+        assert_eq!(
+            hit.line_param,
+            Scalar::<DefaultBackend>::try_from(0.75_f64).unwrap()
+        );
+        assert_eq!(hit.kind, IntersectionKind::Crossing);
+    }
+
+    #[test]
+    fn line_arc_intersection_detects_tangent() {
+        let arc =
+            CircularArc2::from_bulge(p::<DefaultBackend>(0, 0), p::<DefaultBackend>(2, 0), s(1))
+                .unwrap();
+        let line =
+            LineSeg2::try_new(p::<DefaultBackend>(0, -1), p::<DefaultBackend>(2, -1)).unwrap();
+        let intersection = line.intersect_arc(&arc, &topology_policy()).unwrap();
+
+        let LineArcIntersection::Point(hit) = intersection else {
+            panic!("expected tangent hit");
+        };
+
+        assert_eq!(hit.point, p::<DefaultBackend>(1, -1));
+        assert_eq!(hit.kind, IntersectionKind::Tangent);
+    }
+
+    #[test]
+    fn line_arc_intersection_rejects_circle_hit_outside_sweep() {
+        let arc =
+            CircularArc2::from_bulge(p::<DefaultBackend>(0, 0), p::<DefaultBackend>(2, 0), s(1))
+                .unwrap();
+        let line = LineSeg2::try_new(p::<DefaultBackend>(0, 1), p::<DefaultBackend>(2, 1)).unwrap();
+        assert_eq!(
+            line.intersect_arc(&arc, &topology_policy()).unwrap(),
+            LineArcIntersection::None
+        );
+    }
+
+    #[test]
+    fn line_arc_intersection_detects_two_endpoint_hits() {
+        let arc =
+            CircularArc2::from_bulge(p::<DefaultBackend>(0, 0), p::<DefaultBackend>(2, 0), s(1))
+                .unwrap();
+        let line =
+            LineSeg2::try_new(p::<DefaultBackend>(-1, 0), p::<DefaultBackend>(3, 0)).unwrap();
+        let intersection = line.intersect_arc(&arc, &topology_policy()).unwrap();
+
+        let LineArcIntersection::TwoPoints { first, second } = intersection else {
+            panic!("expected two endpoint hits");
+        };
+
+        assert_eq!(first.point, p::<DefaultBackend>(0, 0));
+        assert_eq!(first.kind, IntersectionKind::Endpoint);
+        assert_eq!(second.point, p::<DefaultBackend>(2, 0));
+        assert_eq!(second.kind, IntersectionKind::Endpoint);
+    }
+
+    #[test]
+    fn arc_arc_intersection_detects_one_filtered_crossing() {
+        let a = CircularArc2::try_from_center(
+            p::<DefaultBackend>(5, 0),
+            p::<DefaultBackend>(-5, 0),
+            p::<DefaultBackend>(0, 0),
+            false,
+        )
+        .unwrap();
+        let b = CircularArc2::try_from_center(
+            p::<DefaultBackend>(3, 0),
+            p::<DefaultBackend>(13, 0),
+            p::<DefaultBackend>(8, 0),
+            true,
+        )
+        .unwrap();
+
+        let intersection = a.intersect_arc(&b, &topology_policy()).unwrap();
+        let ArcArcIntersection::Point(hit) = intersection else {
+            panic!("expected one filtered arc-arc hit");
+        };
+
+        assert_eq!(hit.point, p::<DefaultBackend>(4, 3));
+        assert_eq!(hit.kind, IntersectionKind::Crossing);
+    }
+
+    #[test]
+    fn arc_arc_intersection_detects_tangent() {
+        let a = CircularArc2::try_from_center(
+            p::<DefaultBackend>(0, -5),
+            p::<DefaultBackend>(0, 5),
+            p::<DefaultBackend>(0, 0),
+            false,
+        )
+        .unwrap();
+        let b = CircularArc2::try_from_center(
+            p::<DefaultBackend>(10, 5),
+            p::<DefaultBackend>(10, -5),
+            p::<DefaultBackend>(10, 0),
+            false,
+        )
+        .unwrap();
+
+        let intersection = a.intersect_arc(&b, &topology_policy()).unwrap();
+        let ArcArcIntersection::Point(hit) = intersection else {
+            panic!("expected tangent arc-arc hit");
+        };
+
+        assert_eq!(hit.point, p::<DefaultBackend>(5, 0));
+        assert_eq!(hit.kind, IntersectionKind::Tangent);
+    }
+
+    #[test]
+    fn arc_arc_intersection_detects_two_endpoint_hits() {
+        let a = CircularArc2::try_from_center(
+            p::<DefaultBackend>(4, 3),
+            p::<DefaultBackend>(4, -3),
+            p::<DefaultBackend>(0, 0),
+            true,
+        )
+        .unwrap();
+        let b = CircularArc2::try_from_center(
+            p::<DefaultBackend>(4, -3),
+            p::<DefaultBackend>(4, 3),
+            p::<DefaultBackend>(8, 0),
+            true,
+        )
+        .unwrap();
+
+        let intersection = a.intersect_arc(&b, &topology_policy()).unwrap();
+        let ArcArcIntersection::TwoPoints { first, second } = intersection else {
+            panic!("expected two endpoint arc-arc hits");
+        };
+
+        assert_eq!(first.point, p::<DefaultBackend>(4, 3));
+        assert_eq!(first.kind, IntersectionKind::Endpoint);
+        assert_eq!(second.point, p::<DefaultBackend>(4, -3));
+        assert_eq!(second.kind, IntersectionKind::Endpoint);
+    }
+
+    #[test]
+    fn arc_arc_intersection_detects_disjoint_circles() {
+        let a = CircularArc2::try_from_center(
+            p::<DefaultBackend>(5, 0),
+            p::<DefaultBackend>(-5, 0),
+            p::<DefaultBackend>(0, 0),
+            false,
+        )
+        .unwrap();
+        let b = CircularArc2::try_from_center(
+            p::<DefaultBackend>(17, 0),
+            p::<DefaultBackend>(7, 0),
+            p::<DefaultBackend>(12, 0),
+            false,
+        )
+        .unwrap();
+
+        assert_eq!(
+            a.intersect_arc(&b, &topology_policy()).unwrap(),
+            ArcArcIntersection::None
+        );
+    }
+
+    #[test]
+    fn arc_arc_intersection_reports_same_circle_overlap() {
+        let a = CircularArc2::try_from_center(
+            p::<DefaultBackend>(5, 0),
+            p::<DefaultBackend>(-5, 0),
+            p::<DefaultBackend>(0, 0),
+            false,
+        )
+        .unwrap();
+        let b = CircularArc2::try_from_center(
+            p::<DefaultBackend>(0, 5),
+            p::<DefaultBackend>(0, -5),
+            p::<DefaultBackend>(0, 0),
+            false,
+        )
+        .unwrap();
+
+        let intersection = a.intersect_arc(&b, &topology_policy()).unwrap();
+        let ArcArcIntersection::Overlap {
+            segment,
+            a_range,
+            b_range,
+        } = intersection
+        else {
+            panic!("expected same-circle arc overlap");
+        };
+
+        assert_eq!(segment.start(), &p::<DefaultBackend>(0, 5));
+        assert_eq!(segment.end(), &p::<DefaultBackend>(-5, 0));
+        assert_eq!(a_range.start(), &Scalar::try_from(0.5_f64).unwrap());
+        assert_eq!(a_range.end(), &s(1));
+        assert_eq!(b_range.start(), &s(0));
+        assert_eq!(b_range.end(), &Scalar::try_from(0.5_f64).unwrap());
+    }
+
+    #[test]
+    fn arc_arc_intersection_reports_reversed_same_circle_overlap() {
+        let a = CircularArc2::try_from_center(
+            p::<DefaultBackend>(0, 0),
+            p::<DefaultBackend>(2, 0),
+            p::<DefaultBackend>(1, 0),
+            false,
+        )
+        .unwrap();
+        let b = CircularArc2::try_from_center(
+            p::<DefaultBackend>(2, 0),
+            p::<DefaultBackend>(0, 0),
+            p::<DefaultBackend>(1, 0),
+            true,
+        )
+        .unwrap();
+
+        let intersection = a.intersect_arc(&b, &topology_policy()).unwrap();
+        let ArcArcIntersection::Overlap {
+            segment,
+            a_range,
+            b_range,
+        } = intersection
+        else {
+            panic!("expected reversed same-circle arc overlap");
+        };
+
+        assert_eq!(segment.start(), &p::<DefaultBackend>(0, 0));
+        assert_eq!(segment.end(), &p::<DefaultBackend>(2, 0));
+        assert_eq!(a_range.start(), &s(0));
+        assert_eq!(a_range.end(), &s(1));
+        assert_eq!(b_range.start(), &s(1));
+        assert_eq!(b_range.end(), &s(0));
+    }
+
+    #[test]
+    fn arc_arc_intersection_reports_same_circle_endpoint_only_pair() {
+        let a = CircularArc2::try_from_center(
+            p::<DefaultBackend>(5, 0),
+            p::<DefaultBackend>(-5, 0),
+            p::<DefaultBackend>(0, 0),
+            false,
+        )
+        .unwrap();
+        let b = CircularArc2::try_from_center(
+            p::<DefaultBackend>(5, 0),
+            p::<DefaultBackend>(-5, 0),
+            p::<DefaultBackend>(0, 0),
+            true,
+        )
+        .unwrap();
+
+        let intersection = a.intersect_arc(&b, &topology_policy()).unwrap();
+        let ArcArcIntersection::TwoPoints { first, second } = intersection else {
+            panic!("expected same-circle endpoint-only pair");
+        };
+
+        assert_eq!(first.point, p::<DefaultBackend>(5, 0));
+        assert_eq!(first.kind, IntersectionKind::Endpoint);
+        assert_eq!(second.point, p::<DefaultBackend>(-5, 0));
+        assert_eq!(second.kind, IntersectionKind::Endpoint);
+    }
+
+    #[test]
+    fn segment_intersection_dispatches_line_line() {
+        let a = Segment2::Line(
+            LineSeg2::try_new(p::<DefaultBackend>(0, 0), p::<DefaultBackend>(2, 2)).unwrap(),
+        );
+        let b = Segment2::Line(
+            LineSeg2::try_new(p::<DefaultBackend>(0, 2), p::<DefaultBackend>(2, 0)).unwrap(),
+        );
+        let intersection = a.intersect_segment(&b, &topology_policy()).unwrap();
+
+        let SegmentIntersection::LineLine(LineLineIntersection::Point { point, kind, .. }) =
+            intersection
+        else {
+            panic!("expected dispatched line-line point");
+        };
+
+        assert_eq!(point, p::<DefaultBackend>(1, 1));
+        assert_eq!(kind, IntersectionKind::Crossing);
+    }
+
+    #[test]
+    fn segment_intersection_dispatches_line_arc_with_order() {
+        let line = Segment2::Line(
+            LineSeg2::try_new(p::<DefaultBackend>(1, -2), p::<DefaultBackend>(1, 2)).unwrap(),
+        );
+        let arc = Segment2::Arc(
+            CircularArc2::from_bulge(p::<DefaultBackend>(0, 0), p::<DefaultBackend>(2, 0), s(1))
+                .unwrap(),
+        );
+        let intersection = line.intersect_segment(&arc, &topology_policy()).unwrap();
+
+        let SegmentIntersection::LineArc {
+            order,
+            result: LineArcIntersection::Point(hit),
+        } = intersection
+        else {
+            panic!("expected dispatched line-arc point");
+        };
+
+        assert_eq!(order, LineArcOrder::LineThenArc);
+        assert_eq!(hit.point, p::<DefaultBackend>(1, -1));
+    }
+
+    #[test]
+    fn segment_intersection_dispatches_arc_line_with_order() {
+        let arc = Segment2::Arc(
+            CircularArc2::from_bulge(p::<DefaultBackend>(0, 0), p::<DefaultBackend>(2, 0), s(1))
+                .unwrap(),
+        );
+        let line = Segment2::Line(
+            LineSeg2::try_new(p::<DefaultBackend>(1, -2), p::<DefaultBackend>(1, 2)).unwrap(),
+        );
+        let intersection = arc.intersect_segment(&line, &topology_policy()).unwrap();
+
+        let SegmentIntersection::LineArc {
+            order,
+            result: LineArcIntersection::Point(hit),
+        } = intersection
+        else {
+            panic!("expected dispatched arc-line point");
+        };
+
+        assert_eq!(order, LineArcOrder::ArcThenLine);
+        assert_eq!(hit.point, p::<DefaultBackend>(1, -1));
+    }
+
+    #[test]
+    fn segment_intersection_dispatches_arc_arc() {
+        let a = Segment2::Arc(
+            CircularArc2::try_from_center(
+                p::<DefaultBackend>(5, 0),
+                p::<DefaultBackend>(-5, 0),
+                p::<DefaultBackend>(0, 0),
+                false,
+            )
+            .unwrap(),
+        );
+        let b = Segment2::Arc(
+            CircularArc2::try_from_center(
+                p::<DefaultBackend>(3, 0),
+                p::<DefaultBackend>(13, 0),
+                p::<DefaultBackend>(8, 0),
+                true,
+            )
+            .unwrap(),
+        );
+        let intersection = a.intersect_segment(&b, &topology_policy()).unwrap();
+
+        let SegmentIntersection::ArcArc(ArcArcIntersection::Point(hit)) = intersection else {
+            panic!("expected dispatched arc-arc point");
+        };
+
+        assert_eq!(hit.point, p::<DefaultBackend>(4, 3));
+        assert_eq!(hit.kind, IntersectionKind::Crossing);
     }
 }

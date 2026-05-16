@@ -1,0 +1,97 @@
+[package]
+name = "hypercurve-cavalier-compat-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+cavalier_contours = { path = "../../cavalier_contours/cavalier_contours" }
+hypercurve = { path = ".." }
+libfuzzer-sys = "0.4"
+
+[[bin]]
+name = "shape_boolean_rects"
+path = "fuzz_targets/shape_boolean_rects.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "shape_boolean_polygons"
+path = "fuzz_targets/shape_boolean_polygons.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "shape_boolean_donuts"
+path = "fuzz_targets/shape_boolean_donuts.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "shape_boolean_arcs"
+path = "fuzz_targets/shape_boolean_arcs.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "shape_boolean_deep_nesting"
+path = "fuzz_targets/shape_boolean_deep_nesting.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "shape_boolean_adversarial_corpus"
+path = "fuzz_targets/shape_boolean_adversarial_corpus.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "shape_boolean_singularity_corpus"
+path = "fuzz_targets/shape_boolean_singularity_corpus.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "shape_transform_then_boolean"
+path = "fuzz_targets/shape_transform_then_boolean.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "shape_boolean_vertex_drag_ui"
+path = "fuzz_targets/shape_boolean_vertex_drag_ui.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "shape_boolean_vertex_drag_ui_xor"
+path = "fuzz_targets/shape_boolean_vertex_drag_ui_xor.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "shape_boolean_vertex_drag_rebuilt"
+path = "fuzz_targets/shape_boolean_vertex_drag_rebuilt.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "pline_inversion_view_boolean"
+path = "fuzz_targets/pline_inversion_view_boolean.rs"
+test = false
+doc = false
+bench = false

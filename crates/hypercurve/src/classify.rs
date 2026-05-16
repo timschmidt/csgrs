@@ -15,6 +15,19 @@ pub enum Classification<T> {
     Uncertain(UncertaintyReason),
 }
 
+impl<T> Classification<T> {
+    /// Maps a decided value while preserving uncertainty unchanged.
+    pub fn map<U, F>(self, f: F) -> Classification<U>
+    where
+        F: FnOnce(T) -> U,
+    {
+        match self {
+            Self::Decided(value) => Classification::Decided(f(value)),
+            Self::Uncertain(reason) => Classification::Uncertain(reason),
+        }
+    }
+}
+
 /// Reason an operation could not decide a topology branch.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum UncertaintyReason {
@@ -24,6 +37,8 @@ pub enum UncertaintyReason {
     Predicate,
     /// Parameter ordering could not be decided.
     Ordering,
+    /// The query lies on a boundary where the requested scalar result is undefined.
+    Boundary,
     /// The requested operation is not supported by this slice.
     Unsupported,
 }

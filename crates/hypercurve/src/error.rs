@@ -18,6 +18,16 @@ pub enum CurveError {
     AmbiguousBulge,
     /// Cavalier-compatible bulge import only accepts arcs up to a half circle.
     UnsupportedBulge,
+    /// A curve string needs at least two vertices or one segment.
+    InsufficientVertices,
+    /// A curve string cannot be empty when built through checked constructors.
+    EmptyCurveString,
+    /// Adjacent curve-string segments are not connected.
+    DisconnectedCurveString,
+    /// Adjacent curve-string segment connectivity could not be classified.
+    AmbiguousCurveStringConnection,
+    /// A topology pipeline referenced inconsistent internal state.
+    Topology(String),
     /// A scalar division or elementary scalar operation failed.
     Scalar(String),
 }
@@ -32,6 +42,13 @@ impl fmt::Display for CurveError {
             Self::UnsupportedBulge => {
                 write!(f, "Cavalier-compatible bulge exceeds half-circle support")
             }
+            Self::InsufficientVertices => write!(f, "curve string has insufficient vertices"),
+            Self::EmptyCurveString => write!(f, "curve string has no segments"),
+            Self::DisconnectedCurveString => write!(f, "curve string segments are disconnected"),
+            Self::AmbiguousCurveStringConnection => {
+                write!(f, "curve string segment connectivity is ambiguous")
+            }
+            Self::Topology(message) => write!(f, "topology operation failed: {message}"),
             Self::Scalar(message) => write!(f, "scalar operation failed: {message}"),
         }
     }

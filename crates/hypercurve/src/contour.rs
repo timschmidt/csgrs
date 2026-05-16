@@ -1,0 +1,563 @@
+//! Closed contour topology.
+
+use std::cmp::Ordering;
+
+use hyperlattice::{Backend, DefaultBackend, Scalar, ZeroStatus};
+
+use crate::bbox::{Aabb2, aabb_decided_misses_point, decided_contour_aabb, decided_segment_aabb};
+use crate::classify::{classify_oriented_line, compare_scalars};
+use crate::{
+    BulgeVertex2, Classification, CurveError, CurvePolicy, CurveResult, CurveString2, LineSide,
+    Point2, Segment2, UncertaintyReason,
+};
+
+/// Fill rule used when classifying contour interiors.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum FillRule {
+    /// Non-zero winding rule.
+    NonZero,
+    /// Even-odd winding rule.
+    EvenOdd,
+}
+
+/// Point location relative to a closed contour.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ContourPointLocation {
+    /// The point is outside the filled contour.
+    Outside,
+    /// The point lies on the contour boundary.
+    Boundary,
+    /// The point is inside the filled contour.
+    Inside,
+}
+
+/// A closed sequence of connected native segments.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Contour2<B: Backend = DefaultBackend> {
+    curve: CurveString2<B>,
+    fill_rule: FillRule,
+}
+
+impl<B: Backend> Contour2<B> {
+    /// Constructs a closed contour with the non-zero winding fill rule.
+    pub fn try_new(segments: Vec<Segment2<B>>) -> CurveResult<Self> {
+        Self::try_new_with_fill_rule(segments, FillRule::NonZero)
+    }
+
+    /// Constructs a closed contour with an explicit fill rule.
+    pub fn try_new_with_fill_rule(
+        segments: Vec<Segment2<B>>,
+        fill_rule: FillRule,
+    ) -> CurveResult<Self> {
+        let curve = CurveString2::try_new(segments)?;
+        validate_closed_curve_string(&curve)?;
+        Ok(Self { curve, fill_rule })
+    }
+
+    /// Constructs a closed contour without checking connectivity or closure.
+    pub const fn new_unchecked(curve: CurveString2<B>, fill_rule: FillRule) -> Self {
+        Self { curve, fill_rule }
+    }
+
+    /// Constructs a closed contour from Cavalier-style bulge vertices.
+    ///
+    /// The final vertex's bulge defines the segment back to the first vertex.
+    pub fn from_bulge_vertices(vertices: &[BulgeVertex2<B>]) -> CurveResult<Self> {
+        Self::from_bulge_vertices_with_fill_rule(vertices, FillRule::NonZero)
+    }
+
+    /// Constructs a closed contour from Cavalier-style bulge vertices and a fill rule.
+    pub fn from_bulge_vertices_with_fill_rule(
+        vertices: &[BulgeVertex2<B>],
+        fill_rule: FillRule,
+    ) -> CurveResult<Self> {
+        if vertices.len() < 2 {
+            return Err(CurveError::InsufficientVertices);
+        }
+
+        let mut segments = Vec::with_capacity(vertices.len());
+        for adjacent in vertices.windows(2) {
+            segments.push(adjacent[0].segment_to(&adjacent[1])?);
+        }
+        segments.push(vertices[vertices.len() - 1].segment_to(&vertices[0])?);
+        Self::try_new_with_fill_rule(segments, fill_rule)
+    }
+
+    /// Returns the underlying closed curve string.
+    pub const fn curve_string(&self) -> &CurveString2<B> {
+        &self.curve
+    }
+
+    /// Returns the segments in contour order.
+    pub fn segments(&self) -> &[Segment2<B>] {
+        self.curve.segments()
+    }
+
+    /// Returns true when two closed contours have the same exact boundary.
+    ///
+    /// This is an exact structural comparison, not a geometric overlap test. It
+    /// accepts cyclic start-index changes and reversed traversal direction, but
+    /// it still requires the same fill rule and the same unsplit segment
+    /// sequence up to those two closed-contour symmetries.
+    pub fn has_same_exact_boundary(&self, other: &Self) -> bool {
+        self.fill_rule == other.fill_rule
+            && same_exact_segment_cycle(self.segments(), other.segments())
+    }
+
+    /// Returns the fill rule.
+    pub const fn fill_rule(&self) -> FillRule {
+        self.fill_rule
+    }
+
+    /// Returns the segment count.
+    pub fn len(&self) -> usize {
+        self.curve.len()
+    }
+
+    /// Returns true when there are no segments.
+    pub fn is_empty(&self) -> bool {
+        self.curve.is_empty()
+    }
+
+    /// Computes the winding number for a point not on the boundary.
+    ///
+    /// Boundary points return `Uncertain(Boundary)` because a scalar winding
+    /// number is not well-defined there. A decided bounding-box miss returns
+    /// zero before boundary and winding scans; otherwise this follows the
+    /// boundary-first point-in-contour structure discussed by Hormann and
+    /// Agathos, "The Point in Polygon Problem for Arbitrary Polygons" (2001),
+    /// extended here to native circular-arc segments.
+    pub fn winding_number(&self, point: &Point2<B>, policy: &CurvePolicy) -> Classification<i32> {
+        let contour_box = decided_contour_aabb(self, policy);
+        let segment_boxes = decided_segment_boxes(self.segments(), policy);
+        contour_winding_number_with_cached_aabbs(
+            self,
+            point,
+            contour_box.as_ref(),
+            &segment_boxes,
+            policy,
+        )
+    }
+
+    /// Classifies a point against this contour.
+    ///
+    /// The query first uses the contour bounding box as a conservative rejection
+    /// test, then checks the boundary explicitly before applying the fill rule
+    /// to the winding number. Hormann and Agathos, "The Point in Polygon
+    /// Problem for Arbitrary Polygons" (2001), survey the boundary and winding
+    /// issues that motivate keeping those stages separate.
+    pub fn classify_point(
+        &self,
+        point: &Point2<B>,
+        policy: &CurvePolicy,
+    ) -> Classification<ContourPointLocation> {
+        let contour_box = decided_contour_aabb(self, policy);
+        let segment_boxes = decided_segment_boxes(self.segments(), policy);
+        classify_contour_point_with_cached_aabbs(
+            self,
+            point,
+            contour_box.as_ref(),
+            &segment_boxes,
+            policy,
+        )
+    }
+
+    /// Returns true when the point lies on any segment of the contour.
+    ///
+    /// Segment boxes are used only to skip decided misses. A box hit or
+    /// uncertain ordering still falls back to exact segment containment so edge
+    /// and vertex boundary cases remain explicit.
+    pub fn point_on_boundary(
+        &self,
+        point: &Point2<B>,
+        policy: &CurvePolicy,
+    ) -> Classification<bool> {
+        let contour_box = decided_contour_aabb(self, policy);
+        let segment_boxes = decided_segment_boxes(self.segments(), policy);
+        point_on_contour_boundary_with_cached_aabbs(
+            self,
+            point,
+            contour_box.as_ref(),
+            &segment_boxes,
+            policy,
+        )
+    }
+
+    /// Collects normalized topology events against another contour.
+    pub fn intersect_contour(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<crate::ContourIntersectionSet<B>> {
+        crate::events::intersect_contours(self, other, policy)
+    }
+
+    /// Splits this contour into traversal-order fragments at events from one
+    /// contour-pair intersection set.
+    pub fn split_at_intersections(
+        &self,
+        intersections: &crate::ContourIntersectionSet<B>,
+        operand: crate::ContourOperand,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<crate::ContourFragmentSet<B>>> {
+        crate::fragment::split_contour_at_intersections(self, intersections, operand, policy)
+    }
+}
+
+pub(crate) fn classify_contour_point_with_cached_aabbs<B: Backend>(
+    contour: &Contour2<B>,
+    point: &Point2<B>,
+    contour_box: Option<&Aabb2<B>>,
+    segment_boxes: &[Option<Aabb2<B>>],
+    policy: &CurvePolicy,
+) -> Classification<ContourPointLocation> {
+    // Keep the boundary-first structure from Hormann and Agathos, "The Point
+    // in Polygon Problem for Arbitrary Polygons" (2001). Cached boxes only
+    // reject decided misses; they never replace exact segment-boundary checks
+    // or the winding pass.
+    if contour_box_misses_point(contour_box, point, policy) {
+        return Classification::Decided(ContourPointLocation::Outside);
+    }
+
+    match point_on_contour_boundary_with_cached_aabbs(
+        contour,
+        point,
+        contour_box,
+        segment_boxes,
+        policy,
+    ) {
+        Classification::Decided(true) => {
+            return Classification::Decided(ContourPointLocation::Boundary);
+        }
+        Classification::Decided(false) => {}
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    }
+
+    let winding = match contour_winding_number_unchecked_with_cached_aabb(
+        contour,
+        point,
+        contour_box,
+        policy,
+    ) {
+        Classification::Decided(winding) => winding,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+
+    let inside = match contour.fill_rule {
+        FillRule::NonZero => winding != 0,
+        FillRule::EvenOdd => winding.rem_euclid(2) != 0,
+    };
+
+    Classification::Decided(if inside {
+        ContourPointLocation::Inside
+    } else {
+        ContourPointLocation::Outside
+    })
+}
+
+pub(crate) fn contour_winding_number_with_cached_aabbs<B: Backend>(
+    contour: &Contour2<B>,
+    point: &Point2<B>,
+    contour_box: Option<&Aabb2<B>>,
+    segment_boxes: &[Option<Aabb2<B>>],
+    policy: &CurvePolicy,
+) -> Classification<i32> {
+    if contour_box_misses_point(contour_box, point, policy) {
+        return Classification::Decided(0);
+    }
+
+    match point_on_contour_boundary_with_cached_aabbs(
+        contour,
+        point,
+        contour_box,
+        segment_boxes,
+        policy,
+    ) {
+        Classification::Decided(true) => {
+            return Classification::Uncertain(UncertaintyReason::Boundary);
+        }
+        Classification::Decided(false) => {}
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    }
+
+    contour_winding_number_unchecked_with_cached_aabb(contour, point, contour_box, policy)
+}
+
+pub(crate) fn point_on_contour_boundary_with_cached_aabbs<B: Backend>(
+    contour: &Contour2<B>,
+    point: &Point2<B>,
+    contour_box: Option<&Aabb2<B>>,
+    segment_boxes: &[Option<Aabb2<B>>],
+    policy: &CurvePolicy,
+) -> Classification<bool> {
+    if contour_box_misses_point(contour_box, point, policy) {
+        return Classification::Decided(false);
+    }
+
+    for (index, segment) in contour.segments().iter().enumerate() {
+        if segment_boxes
+            .get(index)
+            .and_then(Option::as_ref)
+            .is_some_and(|bbox| aabb_decided_misses_point(bbox, point, policy))
+        {
+            continue;
+        }
+
+        match segment.contains_point(point, policy) {
+            Classification::Decided(true) => return Classification::Decided(true),
+            Classification::Decided(false) => {}
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        }
+    }
+
+    Classification::Decided(false)
+}
+
+fn contour_winding_number_unchecked_with_cached_aabb<B: Backend>(
+    contour: &Contour2<B>,
+    point: &Point2<B>,
+    contour_box: Option<&Aabb2<B>>,
+    policy: &CurvePolicy,
+) -> Classification<i32> {
+    if contour_box_misses_point(contour_box, point, policy) {
+        return Classification::Decided(0);
+    }
+
+    let mut winding = 0;
+    for segment in contour.segments() {
+        let delta = match segment {
+            Segment2::Line(line) => process_line_winding(line.start(), line.end(), point, policy),
+            Segment2::Arc(arc) => process_arc_winding(arc, point, policy),
+        };
+        let Some(delta) = delta else {
+            return Classification::Uncertain(UncertaintyReason::Ordering);
+        };
+        winding += delta;
+    }
+
+    Classification::Decided(winding)
+}
+
+fn contour_box_misses_point<B: Backend>(
+    contour_box: Option<&Aabb2<B>>,
+    point: &Point2<B>,
+    policy: &CurvePolicy,
+) -> bool {
+    contour_box.is_some_and(|bbox| aabb_decided_misses_point(bbox, point, policy))
+}
+
+fn decided_segment_boxes<B: Backend>(
+    segments: &[Segment2<B>],
+    policy: &CurvePolicy,
+) -> Vec<Option<Aabb2<B>>> {
+    segments
+        .iter()
+        .map(|segment| decided_segment_aabb(segment, policy))
+        .collect()
+}
+
+fn validate_closed_curve_string<B: Backend>(curve: &CurveString2<B>) -> CurveResult<()> {
+    let start = curve.start().ok_or(CurveError::EmptyCurveString)?;
+    let end = curve.end().ok_or(CurveError::EmptyCurveString)?;
+    match start.distance_squared(end).zero_status() {
+        ZeroStatus::Zero => Ok(()),
+        ZeroStatus::NonZero => Err(CurveError::DisconnectedCurveString),
+        ZeroStatus::Unknown => Err(CurveError::AmbiguousCurveStringConnection),
+    }
+}
+
+fn same_exact_segment_cycle<B: Backend>(first: &[Segment2<B>], second: &[Segment2<B>]) -> bool {
+    if first.len() != second.len() {
+        return false;
+    }
+    if first.is_empty() {
+        return true;
+    }
+
+    same_directed_segment_cycle(first, second) || same_reversed_segment_cycle(first, second)
+}
+
+fn same_directed_segment_cycle<B: Backend>(first: &[Segment2<B>], second: &[Segment2<B>]) -> bool {
+    let len = first.len();
+    (0..len).any(|offset| {
+        first
+            .iter()
+            .enumerate()
+            .all(|(index, segment)| segment == &second[(index + offset) % len])
+    })
+}
+
+fn same_reversed_segment_cycle<B: Backend>(first: &[Segment2<B>], second: &[Segment2<B>]) -> bool {
+    let len = first.len();
+    (0..len).any(|offset| {
+        first.iter().enumerate().all(|(index, segment)| {
+            let reversed_index = (offset + len - 1 - index) % len;
+            segment == &second[reversed_index].reversed()
+        })
+    })
+}
+
+fn process_line_winding<B: Backend>(
+    start: &Point2<B>,
+    end: &Point2<B>,
+    point: &Point2<B>,
+    policy: &CurvePolicy,
+) -> Option<i32> {
+    if le_scalar(start.y(), point.y(), policy)? {
+        if gt_scalar(end.y(), point.y(), policy)? && is_left(start, end, point, policy)? {
+            Some(1)
+        } else {
+            Some(0)
+        }
+    } else if le_scalar(end.y(), point.y(), policy)? && !is_left(start, end, point, policy)? {
+        Some(-1)
+    } else {
+        Some(0)
+    }
+}
+
+fn process_arc_winding<B: Backend>(
+    arc: &crate::CircularArc2<B>,
+    point: &Point2<B>,
+    policy: &CurvePolicy,
+) -> Option<i32> {
+    let start = arc.start();
+    let end = arc.end();
+    let is_ccw = !arc.is_clockwise();
+    let point_is_left = if is_ccw {
+        is_left(start, end, point, policy)?
+    } else {
+        is_left_or_equal(start, end, point, policy)?
+    };
+
+    let inside_circle = point_inside_circle(arc, point, policy)?;
+
+    if le_scalar(start.y(), point.y(), policy)? {
+        if gt_scalar(end.y(), point.y(), policy)? {
+            if is_ccw {
+                if point_is_left || inside_circle {
+                    Some(1)
+                } else {
+                    Some(0)
+                }
+            } else if point_is_left && !inside_circle {
+                Some(1)
+            } else {
+                Some(0)
+            }
+        } else if is_ccw
+            && !point_is_left
+            && lt_scalar(end.x(), point.x(), policy)?
+            && lt_scalar(point.x(), start.x(), policy)?
+            && inside_circle
+        {
+            Some(1)
+        } else if !is_ccw
+            && point_is_left
+            && lt_scalar(start.x(), point.x(), policy)?
+            && lt_scalar(point.x(), end.x(), policy)?
+            && inside_circle
+        {
+            Some(-1)
+        } else {
+            Some(0)
+        }
+    } else if le_scalar(end.y(), point.y(), policy)? {
+        if is_ccw {
+            if !point_is_left && !inside_circle {
+                Some(-1)
+            } else {
+                Some(0)
+            }
+        } else if point_is_left {
+            if inside_circle { Some(-1) } else { Some(0) }
+        } else {
+            Some(-1)
+        }
+    } else if is_ccw
+        && !point_is_left
+        && lt_scalar(start.x(), point.x(), policy)?
+        && lt_scalar(point.x(), end.x(), policy)?
+        && inside_circle
+    {
+        Some(1)
+    } else if !is_ccw
+        && point_is_left
+        && lt_scalar(end.x(), point.x(), policy)?
+        && lt_scalar(point.x(), start.x(), policy)?
+        && inside_circle
+    {
+        Some(-1)
+    } else {
+        Some(0)
+    }
+}
+
+fn point_inside_circle<B: Backend>(
+    arc: &crate::CircularArc2<B>,
+    point: &Point2<B>,
+    policy: &CurvePolicy,
+) -> Option<bool> {
+    let distance_squared = point.distance_squared(arc.center());
+    Some(matches!(
+        compare_scalars(&distance_squared, &arc.radius_squared(), policy)?,
+        Ordering::Less
+    ))
+}
+
+fn is_left<B: Backend>(
+    start: &Point2<B>,
+    end: &Point2<B>,
+    point: &Point2<B>,
+    policy: &CurvePolicy,
+) -> Option<bool> {
+    match classify_oriented_line(start, end, point, policy) {
+        Classification::Decided(side) => Some(side == LineSide::Left),
+        Classification::Uncertain(_) => None,
+    }
+}
+
+fn is_left_or_equal<B: Backend>(
+    start: &Point2<B>,
+    end: &Point2<B>,
+    point: &Point2<B>,
+    policy: &CurvePolicy,
+) -> Option<bool> {
+    match classify_oriented_line(start, end, point, policy) {
+        Classification::Decided(side) => Some(matches!(side, LineSide::Left | LineSide::On)),
+        Classification::Uncertain(_) => None,
+    }
+}
+
+fn le_scalar<B: Backend>(
+    left: &Scalar<B>,
+    right: &Scalar<B>,
+    policy: &CurvePolicy,
+) -> Option<bool> {
+    Some(!matches!(
+        compare_scalars(left, right, policy)?,
+        Ordering::Greater
+    ))
+}
+
+fn lt_scalar<B: Backend>(
+    left: &Scalar<B>,
+    right: &Scalar<B>,
+    policy: &CurvePolicy,
+) -> Option<bool> {
+    Some(matches!(
+        compare_scalars(left, right, policy)?,
+        Ordering::Less
+    ))
+}
+
+fn gt_scalar<B: Backend>(
+    left: &Scalar<B>,
+    right: &Scalar<B>,
+    policy: &CurvePolicy,
+) -> Option<bool> {
+    Some(matches!(
+        compare_scalars(left, right, policy)?,
+        Ordering::Greater
+    ))
+}
