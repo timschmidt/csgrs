@@ -199,8 +199,18 @@ impl From<Real> for f32 {
 }
 
 impl Real {
+    /// Return a finite borrowed lossy `f32` approximation, or `None` on overflow.
+    ///
+    /// This is an explicit primitive-float edge for rendering, IO, display,
+    /// statistics, and external-library adapters. It is not a certified sign,
+    /// ordering, equality, or topology predicate. Call
+    /// [`Real::certified_sign_until`] or the higher-level predicate crates when
+    /// a decision needs proof. This naming follows Yap's exact-geometric-
+    /// computation separation between certified decisions and approximate
+    /// numerical views; see Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997).
     #[inline]
-    pub fn to_f32_approx(&self) -> Option<f32> {
+    pub fn to_f32_lossy(&self) -> Option<f32> {
         #[cfg(feature = "cached-f32-approx")]
         if let PrimitiveApproxCache::F32(value) = self.primitive_approx_cache.get() {
             return value;
@@ -216,6 +226,16 @@ impl Real {
                 .set(PrimitiveApproxCache::F32(value));
         }
         value
+    }
+
+    /// Return a finite borrowed `f32` approximation, or `None` on overflow.
+    ///
+    /// This compatibility name is intentionally documented as lossy. Prefer
+    /// [`Real::to_f32_lossy`] at new API boundaries so primitive-float export is
+    /// visibly separated from certified predicate/sign APIs.
+    #[inline]
+    pub fn to_f32_approx(&self) -> Option<f32> {
+        self.to_f32_lossy()
     }
 
     fn to_f32_approx_uncached(&self) -> Option<f32> {
@@ -330,9 +350,22 @@ impl From<Real> for f64 {
 }
 
 impl Real {
-    /// Return a finite borrowed `f64` approximation, or `None` on overflow.
+    /// Return a finite borrowed lossy `f64` approximation, or `None` on overflow.
+    ///
+    /// This is an explicit primitive-float edge for rendering, IO, display,
+    /// statistics, and external-library adapters. It may round, underflow to
+    /// signed zero, or fail on overflow. It must not be used as a certified
+    /// predicate or topology decision. For proof-producing sign information use
+    /// [`Real::certified_sign_until`]; for geometric predicates use
+    /// `hyperlimit`.
+    ///
+    /// The API name makes the approximation boundary visible, matching Yap's
+    /// exact-geometric-computation rule that approximate values are views with
+    /// proof obligations, not replacements for exact decisions. See Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+    /// (1997).
     #[inline]
-    pub fn to_f64_approx(&self) -> Option<f64> {
+    pub fn to_f64_lossy(&self) -> Option<f64> {
         #[cfg(feature = "cached-f64-approx")]
         if let PrimitiveApproxCache::F64(value) = self.primitive_approx_cache.get() {
             return value;
@@ -343,6 +376,16 @@ impl Real {
         self.primitive_approx_cache
             .set(PrimitiveApproxCache::F64(value));
         value
+    }
+
+    /// Return a finite borrowed `f64` approximation, or `None` on overflow.
+    ///
+    /// This compatibility name is intentionally documented as lossy. Prefer
+    /// [`Real::to_f64_lossy`] at new API boundaries so primitive-float export is
+    /// visibly separated from certified predicate/sign APIs.
+    #[inline]
+    pub fn to_f64_approx(&self) -> Option<f64> {
+        self.to_f64_lossy()
     }
 
     fn to_f64_approx_uncached(&self) -> Option<f64> {
@@ -684,12 +727,37 @@ mod tests {
     fn borrowed_f64_approx_finite_values() {
         let half = Real::new(Rational::fraction(1, 2).unwrap());
         assert_eq!(half.to_f64_approx(), Some(0.5));
+        assert_eq!(half.to_f64_lossy(), Some(0.5));
 
         let one_third = Real::new(Rational::fraction(1, 3).unwrap());
         assert_eq!(one_third.to_f64_approx(), Some(1.0 / 3.0));
+        assert_eq!(one_third.to_f64_lossy(), Some(1.0 / 3.0));
 
         let pi = Real::pi().to_f64_approx().unwrap();
+        let pi_lossy = Real::pi().to_f64_lossy().unwrap();
         assert!(std::f64::consts::PI.to_bits().abs_diff(pi.to_bits()) < 2);
+        assert!(std::f64::consts::PI.to_bits().abs_diff(pi_lossy.to_bits()) < 2);
+    }
+
+    #[test]
+    fn borrowed_lossy_float_exports_match_compatibility_approx_names() {
+        let values = [
+            Real::from(0),
+            Real::new(Rational::fraction(1, 7).unwrap()),
+            -Real::pi(),
+            Real::from(2).sqrt().unwrap(),
+        ];
+
+        for value in values {
+            assert_eq!(
+                value.to_f32_lossy().map(f32::to_bits),
+                value.to_f32_approx().map(f32::to_bits)
+            );
+            assert_eq!(
+                value.to_f64_lossy().map(f64::to_bits),
+                value.to_f64_approx().map(f64::to_bits)
+            );
+        }
     }
 
     #[test]

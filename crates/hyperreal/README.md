@@ -357,11 +357,14 @@ Supported conversions include:
 - integer types to `Rational` and `Real`
 - finite `f32`/`f64` to `Rational` and `Real` by exact IEEE-754 decoding
 - `Real` to `f32`/`f64` by approximation
-- `Real::to_f64_approx()` for borrowed finite approximation used by rendering,
-  IO, diagnostics, and third-party-library interop
+- `Real::to_f32_lossy()` and `Real::to_f64_lossy()` for borrowed primitive
+  exports used by rendering, IO, diagnostics, and third-party-library interop
+- `Real::to_f64_approx()` remains as a compatibility spelling, but new edge
+  APIs should prefer the `*_lossy` names
 
-Float import rejects `NaN` and infinities. `to_f64_approx()` returns `None`
-when no finite `f64` approximation can be produced.
+Float import rejects `NaN` and infinities. Borrowed lossy export returns `None`
+when no finite primitive-float approximation can be produced. These exports are
+not certified sign, ordering, equality, or topology predicates.
 
 Finite decimal and fraction strings parse losslessly through `Rational`; the
 parser also accepts leading `+` signs and digit separators where the rational
@@ -432,6 +435,12 @@ cargo bench --bench dispatch_trace --features dispatch-trace
 ```
 
 The generated trace summary is in [`dispatch_trace.md`](./dispatch_trace.md).
+The public `dispatch_trace::TraceSnapshot` also exposes
+`correlation_summary()`, a coarse Yap-aligned report that groups raw trace
+labels into predicate, linear-algebra, object-fact, scalar-fact,
+exact-reducer, approximation, refinement, cache, and fallback pressure. Use it
+for cross-crate benchmark summaries; keep raw path labels for local hot-path
+diagnosis.
 
 ## Development
 

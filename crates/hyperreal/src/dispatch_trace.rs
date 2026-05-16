@@ -43,6 +43,68 @@ pub struct LayerSummary {
     pub count: u64,
 }
 
+/// Coarse semantic correlation of one trace snapshot.
+///
+/// This summary is deliberately conservative: it classifies existing
+/// cross-stack trace labels into broad buckets that match Yap's exact
+/// geometric computation stack: object facts, scalar facts, exact reducers,
+/// certified or lossy approximation boundaries, refinement, caches, and
+/// fallbacks. The raw labels remain available for detailed profiling; this
+/// type gives benchmark reports one stable, crate-independent view for asking
+/// whether a run spent time preserving structure or rediscovering scalar
+/// facts. See Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997).
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct TraceCorrelationSummary {
+    /// Total recorded dispatch events.
+    pub dispatch_events: u64,
+    /// Events recorded by predicate layers such as `hyperlimit`.
+    pub predicate_events: u64,
+    /// Events recorded by vector, matrix, or algebra object layers.
+    pub linear_algebra_events: u64,
+    /// Events that appear to use object-level facts, schedules, or prepared
+    /// handles.
+    pub object_fact_events: u64,
+    /// Events that appear to query scalar-owned facts.
+    pub scalar_fact_events: u64,
+    /// Events that appear to ask for nontrivial/detailed fact packages instead
+    /// of only cheap structural tags.
+    pub detailed_fact_events: u64,
+    /// Events that report an unknown, uncertain, or sign-missing fact.
+    pub unknown_fact_events: u64,
+    /// Events that appear to classify exact-rational representation kind, such
+    /// as dyadic, shared-denominator, or exact-set eligibility.
+    pub exact_rational_kind_events: u64,
+    /// Events that appear to query sign, zero, or ordering facts.
+    pub sign_or_zero_query_events: u64,
+    /// Events that appear to select exact rational, determinant, or
+    /// product-sum reducers.
+    pub exact_reducer_events: u64,
+    /// Events that appear to enter approximate, lossy, or primitive-float
+    /// adapter paths.
+    pub approximation_events: u64,
+    /// Events that appear to start approximation or export an approximate view.
+    pub approximation_start_events: u64,
+    /// Events that appear to hit or consume an approximation cache.
+    pub approximation_cache_events: u64,
+    /// Events that appear to refine a `Real` or certified sign.
+    pub refinement_events: u64,
+    /// Events that appear to be predicate decision stages such as filters,
+    /// exact predicate resolution, refinement, or explicit uncertainty.
+    pub predicate_decision_stage_events: u64,
+    /// Events that appear to hit, create, or consume prepared/cached state.
+    pub cache_events: u64,
+    /// Events that appear to abort, reject, report domain errors, or fall back
+    /// to generic/unknown paths.
+    pub fallback_or_abort_events: u64,
+    /// Rational temporary counter from the same recording window.
+    pub rational_temporaries: u64,
+    /// Rational reduction counter from the same recording window.
+    pub rational_reductions: u64,
+    /// Rational GCD counter from the same recording window.
+    pub rational_gcds: u64,
+}
+
 /// Unified snapshot of dispatch labels plus rational reducer statistics.
 ///
 /// The snapshot is intentionally a read-only report value. It does not own
@@ -115,6 +177,222 @@ impl TraceSnapshot {
             })
             .collect()
     }
+
+    /// Return a coarse semantic correlation summary for this snapshot.
+    ///
+    /// The classifier is a reporting aid, not a correctness certificate. It
+    /// intentionally derives from public trace labels plus rational reducer
+    /// counters so benchmark harnesses can correlate predicate stages, matrix
+    /// fact use, reducer pressure, approximation requests, cache hits, and
+    /// fallback paths without depending on each crate's private data
+    /// structures.
+    pub fn correlation_summary(&self) -> TraceCorrelationSummary {
+        let mut summary = TraceCorrelationSummary {
+            rational_temporaries: self.rational.temporary_rationals,
+            rational_reductions: self.rational.reductions,
+            rational_gcds: self.rational.gcds,
+            ..TraceCorrelationSummary::default()
+        };
+
+        for entry in &self.dispatch {
+            summary.dispatch_events += entry.count;
+            if is_predicate_layer(entry.layer) {
+                summary.predicate_events += entry.count;
+            }
+            if is_linear_algebra_layer(entry.layer) {
+                summary.linear_algebra_events += entry.count;
+            }
+            if is_object_fact_event(entry) {
+                summary.object_fact_events += entry.count;
+            }
+            if is_scalar_fact_event(entry) {
+                summary.scalar_fact_events += entry.count;
+            }
+            if is_detailed_fact_event(entry) {
+                summary.detailed_fact_events += entry.count;
+            }
+            if is_unknown_fact_event(entry) {
+                summary.unknown_fact_events += entry.count;
+            }
+            if is_exact_rational_kind_event(entry) {
+                summary.exact_rational_kind_events += entry.count;
+            }
+            if is_sign_or_zero_query_event(entry) {
+                summary.sign_or_zero_query_events += entry.count;
+            }
+            if is_exact_reducer_event(entry) {
+                summary.exact_reducer_events += entry.count;
+            }
+            if is_approximation_event(entry) {
+                summary.approximation_events += entry.count;
+            }
+            if is_approximation_start_event(entry) {
+                summary.approximation_start_events += entry.count;
+            }
+            if is_approximation_cache_event(entry) {
+                summary.approximation_cache_events += entry.count;
+            }
+            if is_refinement_event(entry) {
+                summary.refinement_events += entry.count;
+            }
+            if is_predicate_decision_stage_event(entry) {
+                summary.predicate_decision_stage_events += entry.count;
+            }
+            if is_cache_event(entry) {
+                summary.cache_events += entry.count;
+            }
+            if is_fallback_or_abort_event(entry) {
+                summary.fallback_or_abort_events += entry.count;
+            }
+        }
+
+        summary
+    }
+}
+
+fn contains_label_part(value: &str, needle: &str) -> bool {
+    value.contains(needle)
+}
+
+fn entry_contains(entry: &DispatchCount, needle: &str) -> bool {
+    contains_label_part(entry.layer, needle)
+        || contains_label_part(entry.operation, needle)
+        || contains_label_part(entry.path, needle)
+}
+
+fn is_predicate_layer(layer: &str) -> bool {
+    layer == "hyperlimit" || layer.contains("predicate")
+}
+
+fn is_linear_algebra_layer(layer: &str) -> bool {
+    layer.starts_with("hyperlattice")
+}
+
+fn is_object_fact_event(entry: &DispatchCount) -> bool {
+    entry.layer != "real"
+        && (entry_contains(entry, "facts")
+            || entry_contains(entry, "structural")
+            || entry_contains(entry, "shared-scale")
+            || entry_contains(entry, "schedule")
+            || entry_contains(entry, "prepared"))
+}
+
+fn is_scalar_fact_event(entry: &DispatchCount) -> bool {
+    entry.layer == "real"
+        && (entry_contains(entry, "facts")
+            || entry_contains(entry, "exact-set")
+            || entry_contains(entry, "zero")
+            || entry_contains(entry, "domain")
+            || entry_contains(entry, "sign"))
+}
+
+fn is_detailed_fact_event(entry: &DispatchCount) -> bool {
+    entry_contains(entry, "detailed")
+        || entry_contains(entry, "exact_set_facts")
+        || entry_contains(entry, "exact-set")
+        || entry_contains(entry, "structural-facts")
+        || entry_contains(entry, "geometry_facts")
+}
+
+fn is_unknown_fact_event(entry: &DispatchCount) -> bool {
+    entry_contains(entry, "unknown")
+        || entry_contains(entry, "uncertain")
+        || entry_contains(entry, "missing-sign")
+        || entry_contains(entry, "nonzero-no-sign")
+        || entry_contains(entry, "unavailable")
+}
+
+fn is_exact_rational_kind_event(entry: &DispatchCount) -> bool {
+    entry_contains(entry, "exact-rational")
+        || entry_contains(entry, "rational-det")
+        || entry_contains(entry, "rational-kind")
+        || entry_contains(entry, "exact-set")
+        || entry_contains(entry, "exact_set")
+        || entry_contains(entry, "dyadic")
+        || entry_contains(entry, "shared-denominator")
+        || entry_contains(entry, "common-denominator")
+}
+
+fn is_sign_or_zero_query_event(entry: &DispatchCount) -> bool {
+    entry_contains(entry, "sign")
+        || entry_contains(entry, "zero")
+        || entry_contains(entry, "compare")
+        || entry_contains(entry, "ordering")
+        || entry_contains(entry, "domain")
+}
+
+fn is_exact_reducer_event(entry: &DispatchCount) -> bool {
+    entry_contains(entry, "exact")
+        || entry_contains(entry, "rational")
+        || entry_contains(entry, "determinant")
+        || entry_contains(entry, "product-sum")
+        || entry_contains(entry, "signed-product-sum")
+        || entry_contains(entry, "kernel")
+        || entry_contains(entry, "dyadic")
+        || entry_contains(entry, "shared-denominator")
+}
+
+fn is_approximation_event(entry: &DispatchCount) -> bool {
+    entry_contains(entry, "approx")
+        || entry_contains(entry, "lossy")
+        || entry_contains(entry, "f64")
+        || entry_contains(entry, "float")
+}
+
+fn is_approximation_start_event(entry: &DispatchCount) -> bool {
+    is_approximation_event(entry)
+        && !is_approximation_cache_event(entry)
+        && (entry_contains(entry, "start")
+            || entry_contains(entry, "export")
+            || entry_contains(entry, "lossy")
+            || entry_contains(entry, "generic")
+            || entry_contains(entry, "approx"))
+}
+
+fn is_approximation_cache_event(entry: &DispatchCount) -> bool {
+    is_approximation_event(entry)
+        && (entry_contains(entry, "cache")
+            || entry_contains(entry, "cached")
+            || entry_contains(entry, "hit"))
+}
+
+fn is_refinement_event(entry: &DispatchCount) -> bool {
+    entry_contains(entry, "refine")
+        || entry_contains(entry, "refinement")
+        || entry_contains(entry, "certified-sign")
+}
+
+fn is_predicate_decision_stage_event(entry: &DispatchCount) -> bool {
+    is_predicate_layer(entry.layer)
+        && (entry_contains(entry, "resolve")
+            || entry_contains(entry, "decide")
+            || entry_contains(entry, "filter")
+            || entry_contains(entry, "exact")
+            || entry_contains(entry, "refine")
+            || entry_contains(entry, "real-determinant")
+            || entry_contains(entry, "det")
+            || entry_contains(entry, "decided")
+            || entry_contains(entry, "positive")
+            || entry_contains(entry, "negative")
+            || entry_contains(entry, "zero")
+            || entry_contains(entry, "unknown")
+            || entry_contains(entry, "uncertain"))
+}
+
+fn is_cache_event(entry: &DispatchCount) -> bool {
+    entry_contains(entry, "cache")
+        || entry_contains(entry, "cached")
+        || entry_contains(entry, "prepared")
+}
+
+fn is_fallback_or_abort_event(entry: &DispatchCount) -> bool {
+    entry_contains(entry, "abort")
+        || entry_contains(entry, "fallback")
+        || entry_contains(entry, "generic")
+        || entry_contains(entry, "unknown")
+        || entry_contains(entry, "rejected")
+        || entry_contains(entry, "domain-error")
+        || entry_contains(entry, "div-by-zero")
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -346,9 +624,13 @@ pub fn take_trace() -> TraceSnapshot {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Mutex;
+
+    static TEST_LOCK: Mutex<()> = Mutex::new(());
 
     #[test]
     fn dispatch_trace_records_only_inside_scope() {
+        let _lock = TEST_LOCK.lock().expect("dispatch trace test lock poisoned");
         reset();
         record("real", "sin", "ignored");
         assert!(snapshot().is_empty());
@@ -374,6 +656,7 @@ mod tests {
     fn rational_trace_records_reductions_and_gcds() {
         use crate::Rational;
 
+        let _lock = TEST_LOCK.lock().expect("dispatch trace test lock poisoned");
         reset();
         with_recording(|| {
             let left = Rational::fraction(6, 8).unwrap();
@@ -390,6 +673,7 @@ mod tests {
 
     #[test]
     fn unified_trace_snapshot_groups_cross_stack_counts() {
+        let _lock = TEST_LOCK.lock().expect("dispatch trace test lock poisoned");
         reset();
         with_recording(|| {
             record("hyperlimit", "resolve_real_sign", "structural-real-facts");
@@ -430,5 +714,44 @@ mod tests {
         assert_eq!(taken.layer_count("hyperlimit"), 2);
         assert!(snapshot_trace().dispatch.is_empty());
         assert_eq!(snapshot_trace().rational, RationalTraceStats::default());
+    }
+
+    #[test]
+    fn correlation_summary_groups_exact_geometry_ladder_events() {
+        let _lock = TEST_LOCK.lock().expect("dispatch trace test lock poisoned");
+        reset();
+        with_recording(|| {
+            record("hyperlimit", "orient2d", "exact-rational-kernel");
+            record("hyperlattice_matrix", "query", "matrix4-structural-facts");
+            record("real", "exact_set_facts", "scan");
+            record("real", "approximation", "cached-f64-hit");
+            record("real", "domain_facts", "sqrt-domain-positive");
+            record("real", "to_f64_lossy", "lossy-export");
+            record("real", "certified_sign", "bounded-refinement");
+            record("hyperlimit", "resolve_real_sign", "unknown-fallback");
+            record_rational_temporary();
+            record_rational_power_of_two_common_factor(3);
+        });
+
+        let summary = snapshot_trace().correlation_summary();
+        assert_eq!(summary.dispatch_events, 8);
+        assert_eq!(summary.predicate_events, 2);
+        assert_eq!(summary.linear_algebra_events, 1);
+        assert_eq!(summary.object_fact_events, 1);
+        assert_eq!(summary.scalar_fact_events, 3);
+        assert_eq!(summary.detailed_fact_events, 2);
+        assert_eq!(summary.unknown_fact_events, 1);
+        assert_eq!(summary.exact_rational_kind_events, 2);
+        assert_eq!(summary.sign_or_zero_query_events, 3);
+        assert_eq!(summary.exact_reducer_events, 2);
+        assert_eq!(summary.approximation_events, 2);
+        assert_eq!(summary.approximation_start_events, 1);
+        assert_eq!(summary.approximation_cache_events, 1);
+        assert_eq!(summary.refinement_events, 1);
+        assert_eq!(summary.predicate_decision_stage_events, 2);
+        assert_eq!(summary.fallback_or_abort_events, 1);
+        assert_eq!(summary.rational_temporaries, 1);
+        assert_eq!(summary.rational_reductions, 0);
+        assert_eq!(summary.rational_gcds, 0);
     }
 }
