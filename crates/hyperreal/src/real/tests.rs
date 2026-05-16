@@ -2,11 +2,12 @@
 mod tests {
     use crate::real::arithmetic::curve;
     use crate::{
-        CertifiedRealSign, DomainStatus, ExpressionDegree, MagnitudeBits, PrimitiveFloatStatus,
-        Problem, Rational, RationalStorageClass, Real, RealExactSetDenominatorKind,
-        RealExactSetDyadicExponentClass, RealExactSetFacts, RealExactSetSignPattern, RealSign,
-        RealSignCertificate, RealStructuralFacts, StructuralComparison, StructuralKind,
-        SymbolicDependencyMask, ZeroKnowledge, ZeroOneMinusOneStatus,
+        CertifiedRealEquality, CertifiedRealSign, DomainStatus, ExpressionDegree, MagnitudeBits,
+        PrimitiveFloatStatus, Problem, Rational, RationalStorageClass, Real,
+        RealEqualityCertificate, RealExactSetDenominatorKind, RealExactSetDyadicExponentClass,
+        RealExactSetFacts, RealExactSetSignPattern, RealSign, RealSignCertificate,
+        RealStructuralFacts, StructuralComparison, StructuralKind, SymbolicDependencyMask,
+        ZeroKnowledge, ZeroOneMinusOneStatus,
     };
 
     #[test]
@@ -674,6 +675,56 @@ mod tests {
             CertifiedRealSign::Unknown { min_precision: 0 }
         );
         assert_eq!(unresolved.refine_sign_until(0), None);
+    }
+
+    #[test]
+    fn certified_eq_until_reports_structural_and_exact_rational_results() {
+        let two = Real::from(2);
+        assert_eq!(
+            two.certified_eq_until(&Real::from(2), -16),
+            CertifiedRealEquality::Equal {
+                certificate: RealEqualityCertificate::StructuralEquality,
+            }
+        );
+        assert_eq!(
+            two.certified_eq_until(&Real::from(2), -16).as_bool(),
+            Some(true)
+        );
+
+        assert_eq!(
+            two.certified_eq_until(&Real::from(3), -16),
+            CertifiedRealEquality::NotEqual {
+                certificate: RealEqualityCertificate::ExactRationalComparison,
+            }
+        );
+        assert_eq!(
+            two.certified_eq_until(&Real::from(3), -16).as_bool(),
+            Some(false)
+        );
+    }
+
+    #[test]
+    fn certified_eq_until_proves_semantic_equality_through_difference() {
+        let left = Real::new(Rational::new(1024)).ln().unwrap();
+        let right = Real::new(Rational::new(10)) * Real::new(Rational::new(2)).ln().unwrap();
+
+        assert_eq!(left.certified_eq_until(&right, -64).as_bool(), Some(true));
+    }
+
+    #[test]
+    fn certified_eq_until_refines_nearby_values_or_reports_unknown() {
+        let near_pi = Real::new(Rational::fraction(103_993, 33_102).unwrap());
+
+        assert_eq!(
+            Real::pi().certified_eq_until(&near_pi, 0),
+            CertifiedRealEquality::Unknown { min_precision: 0 }
+        );
+        assert_eq!(
+            Real::pi().certified_eq_until(&near_pi, -64),
+            CertifiedRealEquality::NotEqual {
+                certificate: RealEqualityCertificate::BoundedRefinement { min_precision: -64 },
+            }
+        );
     }
 
     #[test]

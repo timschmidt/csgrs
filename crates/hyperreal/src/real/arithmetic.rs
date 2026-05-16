@@ -1,9 +1,10 @@
 use crate::{
-    CertifiedRealSign, Computable, DomainFacts, DomainStatus, ExpressionDegree, IdentityFacts,
-    MagnitudeBits, OrderingFacts, PrimitiveFacts, PrimitiveFloatStatus, Problem, Rational,
-    RationalFacts, RationalStorageClass, RealDetailedFacts, RealSign, RealSignCertificate,
-    RealStructuralFacts, StructuralComparison, StructuralKind, SymbolicDependencyMask,
-    SymbolicFacts, ZeroKnowledge, ZeroOneMinusOneStatus, ZeroOneStatus,
+    CertifiedRealEquality, CertifiedRealSign, Computable, DomainFacts, DomainStatus,
+    ExpressionDegree, IdentityFacts, MagnitudeBits, OrderingFacts, PrimitiveFacts,
+    PrimitiveFloatStatus, Problem, Rational, RationalFacts, RationalStorageClass,
+    RealDetailedFacts, RealEqualityCertificate, RealSign, RealSignCertificate, RealStructuralFacts,
+    StructuralComparison, StructuralKind, SymbolicDependencyMask, SymbolicFacts, ZeroKnowledge,
+    ZeroOneMinusOneStatus, ZeroOneStatus,
 };
 use num::ToPrimitive;
 use num::bigint::{BigInt, BigUint, Sign};
@@ -1636,6 +1637,116 @@ impl Real {
         CertifiedRealSign::Known {
             sign,
             certificate: RealSignCertificate::BoundedRefinement { min_precision },
+        }
+    }
+
+    /// Try to prove whether two values are equal without refining past
+    /// `min_precision`.
+    ///
+    /// This is intentionally separate from [`PartialEq`]. `PartialEq` remains a
+    /// fast structural relation, while this method can prove additional semantic
+    /// equalities and inequalities by comparing exact rationals, checking cheap
+    /// structural facts, and finally proving the sign of `self - other` through
+    /// bounded exact-real refinement. `Unknown` means the requested refinement
+    /// budget did not decide the result.
+    #[inline]
+    pub fn certified_eq_until(&self, other: &Self, min_precision: i32) -> CertifiedRealEquality {
+        if self == other {
+            crate::trace_dispatch!("real", "certified_eq_until", "structural-equality");
+            return CertifiedRealEquality::Equal {
+                certificate: RealEqualityCertificate::StructuralEquality,
+            };
+        }
+
+        if let (Some(left), Some(right)) = (self.exact_rational_ref(), other.exact_rational_ref()) {
+            crate::trace_dispatch!("real", "certified_eq_until", "exact-rational-comparison");
+            return if left == right {
+                CertifiedRealEquality::Equal {
+                    certificate: RealEqualityCertificate::ExactRationalComparison,
+                }
+            } else {
+                CertifiedRealEquality::NotEqual {
+                    certificate: RealEqualityCertificate::ExactRationalComparison,
+                }
+            };
+        }
+
+        if self.class == other.class && !matches!(self.class, Irrational) {
+            crate::trace_dispatch!(
+                "real",
+                "certified_eq_until",
+                "same-exact-class-different-scale"
+            );
+            return CertifiedRealEquality::NotEqual {
+                certificate: RealEqualityCertificate::StructuralFacts,
+            };
+        }
+
+        let left_facts = self.structural_facts();
+        let right_facts = other.structural_facts();
+
+        match (left_facts.zero, right_facts.zero) {
+            (ZeroKnowledge::Zero, ZeroKnowledge::Zero) => {
+                crate::trace_dispatch!("real", "certified_eq_until", "structural-zero-equality");
+                return CertifiedRealEquality::Equal {
+                    certificate: RealEqualityCertificate::StructuralFacts,
+                };
+            }
+            (ZeroKnowledge::Zero, ZeroKnowledge::NonZero)
+            | (ZeroKnowledge::NonZero, ZeroKnowledge::Zero) => {
+                crate::trace_dispatch!("real", "certified_eq_until", "structural-zero-inequality");
+                return CertifiedRealEquality::NotEqual {
+                    certificate: RealEqualityCertificate::StructuralFacts,
+                };
+            }
+            _ => {}
+        }
+
+        if let (Some(left), Some(right)) = (left_facts.sign, right_facts.sign)
+            && left != right
+        {
+            crate::trace_dispatch!("real", "certified_eq_until", "structural-sign-inequality");
+            return CertifiedRealEquality::NotEqual {
+                certificate: RealEqualityCertificate::StructuralFacts,
+            };
+        }
+
+        if let (Some(left), Some(right)) = (left_facts.magnitude, right_facts.magnitude)
+            && left.exact_msd
+            && right.exact_msd
+            && left.msd != right.msd
+        {
+            crate::trace_dispatch!(
+                "real",
+                "certified_eq_until",
+                "structural-magnitude-inequality"
+            );
+            return CertifiedRealEquality::NotEqual {
+                certificate: RealEqualityCertificate::StructuralFacts,
+            };
+        }
+
+        let difference = self - other;
+        match difference.certified_sign_until(min_precision) {
+            CertifiedRealSign::Known {
+                sign: RealSign::Zero,
+                certificate,
+            } => {
+                crate::trace_dispatch!("real", "certified_eq_until", "difference-zero");
+                CertifiedRealEquality::Equal {
+                    certificate: equality_certificate_from_sign_certificate(certificate),
+                }
+            }
+            CertifiedRealSign::Known { certificate, .. } => {
+                crate::trace_dispatch!("real", "certified_eq_until", "difference-nonzero");
+                CertifiedRealEquality::NotEqual {
+                    certificate: equality_certificate_from_sign_certificate(certificate),
+                }
+            }
+            CertifiedRealSign::Unknown { .. } => {
+                crate::trace_dispatch!("real", "certified_eq_until", "unknown");
+                CertifiedRealEquality::Unknown { min_precision }
+            }
         }
     }
 
@@ -4095,6 +4206,19 @@ fn multiply_public_sign(left: Option<RealSign>, right: Option<RealSign>) -> Opti
         }
         (RealSign::Positive, RealSign::Negative) | (RealSign::Negative, RealSign::Positive) => {
             Some(RealSign::Negative)
+        }
+    }
+}
+
+fn equality_certificate_from_sign_certificate(
+    certificate: RealSignCertificate,
+) -> RealEqualityCertificate {
+    match certificate {
+        RealSignCertificate::StructuralFacts | RealSignCertificate::ExactZeroScale => {
+            RealEqualityCertificate::DifferenceStructuralFacts
+        }
+        RealSignCertificate::BoundedRefinement { min_precision } => {
+            RealEqualityCertificate::BoundedRefinement { min_precision }
         }
     }
 }

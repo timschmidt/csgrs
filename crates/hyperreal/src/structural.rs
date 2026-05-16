@@ -84,6 +84,71 @@ impl CertifiedRealSign {
     }
 }
 
+/// Source of a certified equality or inequality decision between two `Real`
+/// values.
+///
+/// The variants describe proof routes, not tolerance policies. Equality is
+/// certified either by representation identity, exact rational comparison, or
+/// by proving that the difference is exactly zero. Inequality is certified by
+/// exact structural facts or by proving a nonzero sign for the difference.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RealEqualityCertificate {
+    /// The existing structural `PartialEq` relation proved equality.
+    StructuralEquality,
+    /// Both values were exactly rational and compared as rationals.
+    ExactRationalComparison,
+    /// Cheap structural facts about the operands proved the result.
+    StructuralFacts,
+    /// Cheap structural facts about `left - right` proved the result.
+    DifferenceStructuralFacts,
+    /// Bounded exact-real refinement of `left - right` proved the result.
+    BoundedRefinement {
+        /// Lowest binary precision the proof was allowed to request.
+        min_precision: i32,
+    },
+}
+
+/// Result of asking whether two `Real` values are mathematically equal under a
+/// bounded exact-real policy.
+///
+/// `Equal` and `NotEqual` are certified decisions. `Unknown` means the requested
+/// precision budget did not prove the equality status; it must not be treated
+/// as approximate inequality.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CertifiedRealEquality {
+    /// Equality was proved.
+    Equal {
+        /// Proof route used to establish equality.
+        certificate: RealEqualityCertificate,
+    },
+    /// Inequality was proved.
+    NotEqual {
+        /// Proof route used to establish inequality.
+        certificate: RealEqualityCertificate,
+    },
+    /// The requested bounded exact-real proof did not decide equality.
+    Unknown {
+        /// Lowest binary precision the proof was allowed to request.
+        min_precision: i32,
+    },
+}
+
+impl CertifiedRealEquality {
+    /// Return the certified equality result, if known.
+    pub const fn as_bool(self) -> Option<bool> {
+        match self {
+            Self::Equal { .. } => Some(true),
+            Self::NotEqual { .. } => Some(false),
+            Self::Unknown { .. } => None,
+        }
+    }
+
+    /// Return whether equality status was proved.
+    pub const fn is_known(self) -> bool {
+        !matches!(self, Self::Unknown { .. })
+    }
+}
+
 /// A known most-significant binary digit for a nonzero value.
 ///
 /// `exact_msd` is true when `msd` is known exactly. When it is false, `msd`

@@ -158,6 +158,7 @@ computable real ideas. Current implementation work includes:
 - argument reduction and prescaled kernels for transcendental approximation
 - structural sign, zero, nonzero, magnitude, and exact-rational queries
 - bounded sign refinement through `sign_until` and `refine_sign_until`
+- certified equality/inequality through `certified_eq_until`
 - cached approximation and structural-fact propagation through computable nodes
 - borrowed arithmetic paths for `Rational` and `Real`
 - shared-denominator and signed-product-sum hooks used by matrix/vector callers
