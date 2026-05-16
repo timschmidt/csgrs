@@ -145,7 +145,7 @@ impl<B: Backend> CurveString2<B> {
             Classification::Decided(joined) => joined,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        CurveString2::try_new(joined).map(Classification::Decided)
+        Ok(Classification::Decided(CurveString2::new_unchecked(joined)))
     }
 
     /// Returns a raw joined left offset, rejecting self-contacting output.
@@ -394,7 +394,10 @@ impl<B: Backend> Contour2<B> {
             Classification::Decided(joined) => joined,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        Contour2::try_new_with_fill_rule(joined, self.fill_rule()).map(Classification::Decided)
+        Ok(Classification::Decided(Contour2::new_unchecked(
+            CurveString2::new_unchecked(joined),
+            self.fill_rule(),
+        )))
     }
 
     /// Returns a raw joined left offset, rejecting self-contacting output.

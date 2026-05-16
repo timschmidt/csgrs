@@ -210,6 +210,18 @@ pub(crate) fn in_closed_unit_interval<B: Backend>(
     value: &Scalar<B>,
     policy: &CurvePolicy,
 ) -> Option<bool> {
+    // Decisively out-of-range approximate parameters cannot represent finite
+    // segment hits; near-boundary values still fall through to exact comparison.
+    if let Some(approx) = value.to_f64_approx() {
+        let tolerance = policy
+            .tolerance
+            .map(|tolerance| tolerance.absolute.max(tolerance.relative))
+            .unwrap_or(1e-12);
+        if approx.is_finite() && (approx < -tolerance || approx > 1.0 + tolerance) {
+            return Some(false);
+        }
+    }
+
     let zero = Scalar::<B>::zero();
     let one = Scalar::<B>::one();
     let lower = compare_scalars(value, &zero, policy)?;

@@ -168,25 +168,30 @@ impl PlineBooleanScene {
                 .data_aspect(1.0)
                 .allow_drag(false)
                 .show(ui, |plot_ui| {
-                    handle_polyline_drag(plot_ui, &mut self.polylines, &mut self.drag);
+                    let show_sources = self.mode.boolean_mode().is_none();
+                    if show_sources {
+                        handle_polyline_drag(plot_ui, &mut self.polylines, &mut self.drag);
+                    }
                     self.last_error = None;
                     let vertex = self.show_vertices.then_some(theme.vertex);
-                    draw_polyline(
-                        plot_ui,
-                        "polyline 1",
-                        &self.polylines[0],
-                        theme.primary,
-                        self.fill.then_some(theme.primary.gamma_multiply(0.18)),
-                        vertex,
-                    );
-                    draw_polyline(
-                        plot_ui,
-                        "polyline 2",
-                        &self.polylines[1],
-                        theme.secondary,
-                        self.fill.then_some(theme.secondary.gamma_multiply(0.18)),
-                        vertex,
-                    );
+                    if show_sources {
+                        draw_polyline(
+                            plot_ui,
+                            "polyline 1",
+                            &self.polylines[0],
+                            theme.primary,
+                            self.fill.then_some(theme.primary.gamma_multiply(0.18)),
+                            vertex,
+                        );
+                        draw_polyline(
+                            plot_ui,
+                            "polyline 2",
+                            &self.polylines[1],
+                            theme.secondary,
+                            self.fill.then_some(theme.secondary.gamma_multiply(0.18)),
+                            vertex,
+                        );
+                    }
 
                     match self.mode {
                         BooleanSceneMode::None => {}
@@ -399,7 +404,7 @@ impl PlineOffsetScene {
                 for _ in 0..self.max_offset_count {
                     let mut next = Vec::new();
                     for polyline in current {
-                        if let Some(offset) = polyline.offset_checked(self.offset)? {
+                        for offset in polyline.offsets_for_display(self.offset)? {
                             next.push(offset.clone());
                             result.push(offset);
                         }
@@ -425,10 +430,10 @@ pub struct MultiPlineBooleanScene {
 
 impl Default for MultiPlineBooleanScene {
     fn default() -> Self {
-        let plines = default_multi_plines();
+        let plines = default_multi_boolean_plines();
         Self {
-            first: Shape::from_materials(plines.clone()).translated(-20.0, -20.0),
-            second: Shape::from_materials(plines).translated(20.0, 20.0),
+            first: Shape::from_polylines(plines.clone()).translated(-20.0, -20.0),
+            second: Shape::from_polylines(plines).translated(20.0, 20.0),
             op: None,
             drag: ShapeDragState::default(),
             last_error: None,
@@ -520,7 +525,7 @@ pub struct MultiPlineOffsetScene {
 
 impl Default for MultiPlineOffsetScene {
     fn default() -> Self {
-        let polylines = default_multi_plines();
+        let polylines = default_multi_offset_plines();
         let mut editor = PolylineEditor::multi("Multi-Polyline Editor");
         editor.initialize_with_polylines(polylines.clone());
         Self {
@@ -586,7 +591,7 @@ impl MultiPlineOffsetScene {
                 .allow_drag(false)
                 .show(ui, |plot_ui| {
                     handle_polyline_drag(plot_ui, &mut self.polylines, &mut self.drag);
-                    let source = Shape::from_materials(self.polylines.clone());
+                    let source = Shape::from_polylines(self.polylines.clone());
                     draw_shape(
                         plot_ui,
                         "multi source",
@@ -768,7 +773,7 @@ fn mode_combo(ui: &mut egui::Ui, id: &str, mode: &mut BooleanSceneMode) {
         });
 }
 
-fn default_multi_plines() -> Vec<Polyline> {
+fn default_multi_boolean_plines() -> Vec<Polyline> {
     vec![
         Polyline::closed(&[
             (100.0, 100.0, -0.5),
@@ -791,8 +796,8 @@ fn default_multi_plines() -> Vec<Polyline> {
             (250.0, 100.0, -1.0),
         ]),
         Polyline::closed(&[
-            (320.5065990423979, 76.14222955572362, -1.0),
             (320.2986109239592, 103.52378781211337, 0.0),
+            (320.5065990423979, 76.14222955572362, -1.0),
         ]),
         Polyline::closed(&[
             (273.6131273938006, -13.968608715397636, -0.3),
@@ -800,6 +805,15 @@ fn default_multi_plines() -> Vec<Polyline> {
             (249.69820124026208, 27.234215862385582, 0.0),
         ]),
     ]
+}
+
+fn default_multi_offset_plines() -> Vec<Polyline> {
+    let mut plines = default_multi_boolean_plines();
+    plines[3] = Polyline::closed(&[
+        (320.5065990423979, 76.14222955572362, -1.0),
+        (320.2986109239592, 103.52378781211337, 0.0),
+    ]);
+    plines
 }
 
 fn multi_color(index: usize) -> egui::Color32 {
@@ -814,4 +828,77 @@ fn multi_color(index: usize) -> egui::Color32 {
         egui::Color32::from_rgb(170, 190, 90),
     ];
     COLORS[index % COLORS.len()]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn multi_defaults_are_sorted_into_material_and_hole_bins() {
+        let shape = Shape::from_polylines(default_multi_boolean_plines());
+
+        assert!(!shape.materials.is_empty());
+        assert!(!shape.holes.is_empty());
+    }
+
+    #[test]
+    fn multi_boolean_defaults_resolve_all_boolean_modes() {
+        let plines = default_multi_boolean_plines();
+        let first = Shape::from_polylines(plines.clone()).translated(-20.0, -20.0);
+        let second = Shape::from_polylines(plines).translated(20.0, 20.0);
+
+        for op in [
+            BooleanMode::Union,
+            BooleanMode::Intersection,
+            BooleanMode::Difference,
+            BooleanMode::Xor,
+        ] {
+            let result = first.boolean(&second, op).unwrap();
+            assert!(
+                result.is_some(),
+                "default multi-polyline boolean returned unresolved topology for {op:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn polyline_boolean_defaults_resolve_all_boolean_modes() {
+        let scene = PlineBooleanScene::default();
+
+        for op in [
+            BooleanMode::Union,
+            BooleanMode::Intersection,
+            BooleanMode::Difference,
+            BooleanMode::Xor,
+        ] {
+            assert!(
+                boolean_polylines(&scene.polylines[0], &scene.polylines[1], op)
+                    .unwrap()
+                    .is_some(),
+                "default polyline boolean returned unresolved topology for {op:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn polyline_offset_default_scene_produces_visible_offsets() {
+        let scene = PlineOffsetScene::default();
+
+        assert!(
+            !scene.build_offset_state().unwrap().is_empty(),
+            "default polyline offset scene should produce at least one visible offset"
+        );
+    }
+
+    #[test]
+    fn multi_offset_default_scene_produces_first_visible_offset() {
+        let source = Shape::from_polylines(default_multi_offset_plines());
+
+        assert!(
+            !source.offset_once(2.0).materials.is_empty()
+                || !source.offset_once(2.0).holes.is_empty(),
+            "default multi-polyline offset scene should produce at least one visible offset"
+        );
+    }
 }

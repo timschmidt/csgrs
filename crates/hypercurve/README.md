@@ -1,4 +1,7 @@
-# hypercurve
+<h1>
+  hypercurve
+  <img src="./doc/hypercurve.png" alt="Hyper, a clever mathematician" width="144" align="right">
+</h1>
 
 `hypercurve` is an early-stage planar curve kernel for line and circular-arc
 geometry. The current implementation focuses on exactness-aware topology:
