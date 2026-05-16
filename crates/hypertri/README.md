@@ -25,6 +25,8 @@ Implemented and tested:
   axis-aligned edges, exact-rational coordinate summaries, symbolic dependency
   summaries, signed ring area, and local turn consistency.
 - Earcut-style triangulation for simple and holed polygons.
+- Earcut hot-loop diagnostics for candidate ear tests and containment checks,
+  exposed as non-certifying measurement metadata before optional pruning work.
 - Local-intersection curing and split fallback for difficult earcut inputs.
 - Exact incremental Delaunay triangulation for point sets.
 - Closed-ring constrained triangulation for one exterior ring plus holes.
@@ -120,6 +122,11 @@ provenance, protected-edge flags, and cavity boundary facts. These facts select
 faster exact algorithms and reduce candidate sets; they do not permit lossy
 topology decisions.
 
+`earcut_report` returns the same triangle indices as `earcut` plus hot-loop
+diagnostics such as ear-candidate tests and triangle-containment checks. These
+counters are for benchmarking and algorithm selection work only; exact
+predicates remain the source of topology decisions.
+
 ## Testing
 
 The test suite combines fixed adversarial cases with `proptest` fuzz-style
@@ -127,6 +134,9 @@ generators over exact integer and rational inputs. The fuzz properties check
 topology invariants such as valid triangle indices, non-degenerate triangle
 index triples, constrained edges preserved by the accepted CDT subset, and
 exact local Delaunay legality on unconstrained interior edges.
+Dev-only differential tests compare ordinary polygon cases against `earcutr`
+by triangle-count topology and area preservation; exact hyperreal predicates
+remain the correctness oracle for degeneracies and near-degeneracies.
 
 Useful local checks:
 

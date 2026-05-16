@@ -42,3 +42,12 @@ pub use types::{
 pub fn earcut(vertices: &[ExactPoint], hole_indices: &[usize]) -> Result<TriangleIndices> {
     earcut::triangulate(vertices, hole_indices)
 }
+
+/// Triangulate an exact polygon with earcut-style diagnostics.
+#[cfg(feature = "earcut")]
+pub fn earcut_report(
+    vertices: &[ExactPoint],
+    hole_indices: &[usize],
+) -> Result<earcut::EarcutReport> {
+    earcut::triangulate_report(vertices, hole_indices)
+}

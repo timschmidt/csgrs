@@ -20,6 +20,7 @@ hyperlimit = { path = "../hyperlimit", version = "0.2.0", default-features = fal
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
+earcutr = { path = "../earcutr" }
 proptest = "1.7.0"
 
 [[bench]]

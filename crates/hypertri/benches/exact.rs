@@ -26,6 +26,44 @@ fn bench_exact_triangulation(c: &mut Criterion) {
         b.iter(|| hypertri::earcut(&rational_spike, &[]).unwrap())
     });
 
+    c.bench_function("exact_rational_spike_earcut_diagnostics", |b| {
+        b.iter(|| {
+            let report = hypertri::earcut_report(&rational_spike, &[]).unwrap();
+            (
+                report.triangles.len(),
+                report.diagnostics.ear_tests,
+                report.diagnostics.containment_tests,
+                report.diagnostics.emitted_triangles,
+            )
+        })
+    });
+
+    let mut sawtooth = Vec::new();
+    for i in 0..32_i64 {
+        sawtooth.push(p(r(i), if i % 2 == 0 { r(0) } else { q(1, 3) }));
+    }
+    sawtooth.push(p(r(31), r(4)));
+    sawtooth.push(p(r(0), r(4)));
+
+    c.bench_function("exact_sawtooth_earcut_candidate_pressure", |b| {
+        b.iter(|| {
+            // This row intentionally measures the exact ear loop before adding
+            // z-order candidate pruning or unsafe indexing. The report counts
+            // predicate-stage pressure while topology still routes through
+            // exact `hyperlimit` predicates, following Yap's advice to retain
+            // and measure object-level structure first; see Yap, "Towards
+            // Exact Geometric Computation," Computational Geometry 7.1-2
+            // (1997).
+            let report = hypertri::earcut_report(&sawtooth, &[]).unwrap();
+            (
+                report.triangles.len(),
+                report.diagnostics.ear_tests,
+                report.diagnostics.containment_tests,
+                report.diagnostics.split_fallbacks,
+            )
+        })
+    });
+
     let crossing_points = vec![p(r(0), r(0)), p(r(4), r(3)), p(r(0), r(3)), p(r(4), r(0))];
     let crossing_constraints = vec![Constraint::new(0, 1), Constraint::new(2, 3)];
 

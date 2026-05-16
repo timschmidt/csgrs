@@ -60,7 +60,7 @@ impl eframe::App for MainApp {
         CentralPanel::default().show(ctx, |ui| {
             Plot::new("hypertri_plot")
                 .data_aspect(1.0)
-                .allow_drag(true)
+                .allow_drag(false)
                 .allow_zoom(true)
                 .show(ui, |plot_ui| match self.active {
                     Scene::Polygon => self.polygon.draw(plot_ui, &self.view),
@@ -113,12 +113,17 @@ impl ViewOptions {
 
 struct PolygonScene {
     case: PolygonCase,
+    input: PolygonInput,
+    drag: Option<usize>,
 }
 
 impl Default for PolygonScene {
     fn default() -> Self {
+        let case = PolygonCase::Holed;
         Self {
-            case: PolygonCase::Holed,
+            case,
+            input: case.input(),
+            drag: None,
         }
     }
 }
@@ -126,22 +131,35 @@ impl Default for PolygonScene {
 impl PolygonScene {
     fn controls(&mut self, ui: &mut egui::Ui) {
         ui.heading("Earcut Polygon");
-        case_radio(ui, &mut self.case, PolygonCase::Concave, "Concave");
-        case_radio(ui, &mut self.case, PolygonCase::Holed, "Holed");
-        case_radio(
+        let mut changed = false;
+        changed |= case_radio(ui, &mut self.case, PolygonCase::Concave, "Concave");
+        changed |= case_radio(ui, &mut self.case, PolygonCase::Holed, "Holed");
+        changed |= case_radio(
             ui,
             &mut self.case,
             PolygonCase::Adversarial,
             "Near collinear",
         );
-        let input = self.case.input();
-        let facts = polygon_facts(input.vertices.len(), input.holes.len());
+        if changed {
+            self.input = self.case.input();
+            self.drag = None;
+        }
+        if ui.button("Reset").clicked() {
+            self.input = self.case.input();
+            self.drag = None;
+        }
+        let facts = polygon_facts(self.input.vertices.len(), self.input.holes.len());
         ui.separator();
         ui.label(facts);
     }
 
-    fn draw(&self, plot_ui: &mut PlotUi<'_>, view: &ViewOptions) {
-        let input = self.case.input();
+    fn draw(&mut self, plot_ui: &mut PlotUi<'_>, view: &ViewOptions) {
+        if let Some(point) =
+            handle_vertex_interaction(plot_ui, &mut self.input.vertices, &mut self.drag)
+        {
+            self.insert_vertex(point);
+        }
+        let input = &self.input;
         if view.show_input {
             draw_rings(plot_ui, &input.vertices, &input.holes);
         }
@@ -166,16 +184,32 @@ impl PolygonScene {
             Err(error) => draw_error(plot_ui, &format!("{error}")),
         }
     }
+
+    fn insert_vertex(&mut self, point: [f64; 2]) {
+        if let Some(first_hole) = self.input.holes.first().copied() {
+            self.input.vertices.insert(first_hole, point);
+            for hole in &mut self.input.holes {
+                *hole += 1;
+            }
+        } else {
+            self.input.vertices.push(point);
+        }
+    }
 }
 
 struct PointScene {
     case: PointCase,
+    points: Vec<[f64; 2]>,
+    drag: Option<usize>,
 }
 
 impl Default for PointScene {
     fn default() -> Self {
+        let case = PointCase::Cloud;
         Self {
-            case: PointCase::Cloud,
+            case,
+            points: case.points(),
+            drag: None,
         }
     }
 }
@@ -183,40 +217,51 @@ impl Default for PointScene {
 impl PointScene {
     fn controls(&mut self, ui: &mut egui::Ui) {
         ui.heading("Delaunay Points");
-        case_radio(ui, &mut self.case, PointCase::Cloud, "Point cloud");
-        case_radio(ui, &mut self.case, PointCase::Grid, "Perturbed grid");
-        case_radio(
+        let mut changed = false;
+        changed |= case_radio(ui, &mut self.case, PointCase::Cloud, "Point cloud");
+        changed |= case_radio(ui, &mut self.case, PointCase::Grid, "Perturbed grid");
+        changed |= case_radio(
             ui,
             &mut self.case,
             PointCase::Degenerate,
             "Cospherical stress",
         );
+        if changed {
+            self.points = self.case.points();
+            self.drag = None;
+        }
+        if ui.button("Reset").clicked() {
+            self.points = self.case.points();
+            self.drag = None;
+        }
     }
 
-    fn draw(&self, plot_ui: &mut PlotUi<'_>, view: &ViewOptions) {
-        let points = self.case.points();
-        match hypertri::f64::delaunay(&points) {
+    fn draw(&mut self, plot_ui: &mut PlotUi<'_>, view: &ViewOptions) {
+        if let Some(point) = handle_vertex_interaction(plot_ui, &mut self.points, &mut self.drag) {
+            self.points.push(point);
+        }
+        match hypertri::f64::delaunay(&self.points) {
             Ok(triangulation) => {
                 if view.show_triangles {
                     draw_triangles(
                         plot_ui,
                         "delaunay",
-                        &points,
+                        &self.points,
                         triangulation.triangles(),
                         RESULT,
                     );
                 }
                 if view.show_vertices {
-                    draw_points(plot_ui, "points", &points, VERTEX);
+                    draw_points(plot_ui, "points", &self.points, VERTEX);
                 }
                 if view.show_indices {
-                    draw_labels(plot_ui, &points);
+                    draw_labels(plot_ui, &self.points);
                 }
                 draw_status(
                     plot_ui,
                     "delaunay ok",
                     triangulation.triangles().len(),
-                    points.len(),
+                    self.points.len(),
                 );
             }
             Err(error) => draw_error(plot_ui, &format!("{error}")),
@@ -226,12 +271,17 @@ impl PointScene {
 
 struct ConstraintScene {
     case: ConstraintCase,
+    input: ConstraintInput,
+    drag: Option<usize>,
 }
 
 impl Default for ConstraintScene {
     fn default() -> Self {
+        let case = ConstraintCase::BoxWithHole;
         Self {
-            case: ConstraintCase::BoxWithHole,
+            case,
+            input: case.input(),
+            drag: None,
         }
     }
 }
@@ -239,23 +289,37 @@ impl Default for ConstraintScene {
 impl ConstraintScene {
     fn controls(&mut self, ui: &mut egui::Ui) {
         ui.heading("Constrained CDT");
-        case_radio(
+        let mut changed = false;
+        changed |= case_radio(
             ui,
             &mut self.case,
             ConstraintCase::BoxWithHole,
             "Box with hole",
         );
-        case_radio(
+        changed |= case_radio(
             ui,
             &mut self.case,
             ConstraintCase::Crossing,
             "Crossing constraints",
         );
-        case_radio(ui, &mut self.case, ConstraintCase::OpenPslg, "Open PSLG");
+        changed |= case_radio(ui, &mut self.case, ConstraintCase::OpenPslg, "Open PSLG");
+        if changed {
+            self.input = self.case.input();
+            self.drag = None;
+        }
+        if ui.button("Reset").clicked() {
+            self.input = self.case.input();
+            self.drag = None;
+        }
     }
 
-    fn draw(&self, plot_ui: &mut PlotUi<'_>, view: &ViewOptions) {
-        let input = self.case.input();
+    fn draw(&mut self, plot_ui: &mut PlotUi<'_>, view: &ViewOptions) {
+        if let Some(point) =
+            handle_vertex_interaction(plot_ui, &mut self.input.points, &mut self.drag)
+        {
+            self.input.points.push(point);
+        }
+        let input = &self.input;
         match hypertri::f64::constrained_delaunay(&input.points, &input.constraints) {
             Ok(triangulation) => {
                 let points = approx_points(triangulation.points());
@@ -538,8 +602,8 @@ fn ring_constraints(start: usize, len: usize) -> Vec<Constraint> {
         .collect()
 }
 
-fn case_radio<T: Copy + PartialEq>(ui: &mut egui::Ui, value: &mut T, case: T, label: &str) {
-    ui.radio_value(value, case, label);
+fn case_radio<T: Copy + PartialEq>(ui: &mut egui::Ui, value: &mut T, case: T, label: &str) -> bool {
+    ui.radio_value(value, case, label).changed()
 }
 
 fn lift_points(points: &[[f64; 2]]) -> Vec<hypertri::ExactPoint> {
@@ -559,8 +623,8 @@ fn approx_points(points: &[hypertri::ExactPoint]) -> Vec<[f64; 2]> {
         .iter()
         .map(|point| {
             [
-                point.x.to_f64_approx().unwrap_or(0.0),
-                point.y.to_f64_approx().unwrap_or(0.0),
+                point.x.to_f64_lossy().unwrap_or(0.0),
+                point.y.to_f64_lossy().unwrap_or(0.0),
             ]
         })
         .collect()
@@ -679,6 +743,60 @@ fn draw_status(plot_ui: &mut PlotUi<'_>, label: &str, triangles: usize, vertices
         ))
         .color(LABEL),
     ));
+}
+
+fn handle_vertex_interaction(
+    plot_ui: &mut PlotUi<'_>,
+    points: &mut [[f64; 2]],
+    drag: &mut Option<usize>,
+) -> Option<[f64; 2]> {
+    let response = plot_ui.response();
+    let pointer_plot = plot_ui.pointer_coordinate()?;
+    let pointer = [pointer_plot.x, pointer_plot.y];
+    let pointer_screen = response.hover_pos()?;
+    let primary_pressed = plot_ui.ctx().input(|input| input.pointer.primary_pressed());
+    let primary_down = plot_ui.ctx().input(|input| input.pointer.primary_down());
+    let primary_released = plot_ui
+        .ctx()
+        .input(|input| input.pointer.primary_released());
+
+    if primary_released {
+        *drag = None;
+    }
+
+    if primary_pressed && response.hovered() {
+        *drag = nearest_vertex(plot_ui, points, pointer_screen, 12.0);
+        if drag.is_none() {
+            return Some(pointer);
+        }
+    }
+
+    if primary_down
+        && let Some(index) = *drag
+        && let Some(point) = points.get_mut(index)
+    {
+        *point = pointer;
+    }
+
+    None
+}
+
+fn nearest_vertex(
+    plot_ui: &PlotUi<'_>,
+    points: &[[f64; 2]],
+    pointer_screen: egui::Pos2,
+    max_distance: f32,
+) -> Option<usize> {
+    points
+        .iter()
+        .enumerate()
+        .filter_map(|(index, point)| {
+            let screen = plot_ui.screen_from_plot(PlotPoint::new(point[0], point[1]));
+            let distance = screen.distance(pointer_screen);
+            (distance <= max_distance).then_some((index, distance))
+        })
+        .min_by(|(_, left), (_, right)| left.total_cmp(right))
+        .map(|(index, _)| index)
 }
 
 fn draw_error(plot_ui: &mut PlotUi<'_>, error: &str) {

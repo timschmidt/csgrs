@@ -14,9 +14,48 @@ use crate::predicates::{self, SegmentIntersection};
 use crate::types::Sign;
 use crate::types::{ExactPoint, Point2, Real, TriangleIndices};
 
+/// Non-certifying diagnostics for the exact earcut hot loop.
+///
+/// These counters make candidate pressure visible before introducing optional
+/// z-order pruning, unsafe indexing, or additional 2D-specialized kernels.
+/// They are scheduling metadata only: exact predicates still certify topology.
+/// This mirrors Yap's object-layer discipline of measuring and carrying
+/// geometric structure before changing the arithmetic package; see Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997). The ear candidate loop itself follows the two-ears theorem; see
+/// Meisters, "Polygons Have Ears," *The American Mathematical Monthly* 82.6
+/// (1975).
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct EarcutDiagnostics {
+    /// Number of vertices tested as ear candidates.
+    pub ear_tests: usize,
+    /// Number of non-triangle vertices tested for containment in candidate ears.
+    pub containment_tests: usize,
+    /// Number of triangles emitted by clipping, curing, or split fallback.
+    pub emitted_triangles: usize,
+    /// Number of accepted local-intersection cures.
+    pub local_intersection_cures: usize,
+    /// Number of split fallback attempts entered.
+    pub split_fallbacks: usize,
+}
+
+/// Triangle indices paired with hot-loop diagnostics.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct EarcutReport {
+    /// Flat earcut-compatible triangle index buffer.
+    pub triangles: TriangleIndices,
+    /// Non-certifying hot-loop counters.
+    pub diagnostics: EarcutDiagnostics,
+}
+
 /// Triangulate an exact polygon.
 pub fn triangulate(vertices: &[ExactPoint], hole_indices: &[usize]) -> Result<TriangleIndices> {
     triangulate_with_kernel::<ExactKernel>(vertices, hole_indices)
+}
+
+/// Triangulate an exact polygon and return hot-loop diagnostics.
+pub fn triangulate_report(vertices: &[ExactPoint], hole_indices: &[usize]) -> Result<EarcutReport> {
+    triangulate_report_with_kernel::<ExactKernel>(vertices, hole_indices)
 }
 
 /// Triangulate a polygon with the provided numeric kernel.
@@ -27,7 +66,20 @@ pub fn triangulate_with_kernel<K>(
 where
     K: Kernel,
 {
+    Ok(triangulate_report_with_kernel::<K>(vertices, hole_indices)?.triangles)
+}
+
+/// Triangulate a polygon with the provided numeric kernel and return hot-loop
+/// diagnostics.
+pub fn triangulate_report_with_kernel<K>(
+    vertices: &[Point2],
+    hole_indices: &[usize],
+) -> Result<EarcutReport>
+where
+    K: Kernel,
+{
     let rings = rings_from_hole_indices(vertices, hole_indices)?;
+    let mut diagnostics = EarcutDiagnostics::default();
     // Structural-dispatch note: normalization discovers several facts that are
     // currently consumed locally and then discarded. Preserving "simple",
     // "convex", "monotone", exact-rational coordinate kind, and the count of
@@ -35,12 +87,18 @@ where
     // fan, monotone partition, earcut, or CDT without re-scanning coordinates.
     let mut ring = normalized_ring::<K>(vertices, rings.exterior())?;
     if ring.len() < 3 {
-        return Ok(Vec::new());
+        return Ok(EarcutReport {
+            triangles: Vec::new(),
+            diagnostics,
+        });
     }
 
     let winding = ring_area_sign::<K>(vertices, &ring)?;
     if winding == Sign::Zero {
-        return Ok(Vec::new());
+        return Ok(EarcutReport {
+            triangles: Vec::new(),
+            diagnostics,
+        });
     }
 
     let holes = normalized_holes::<K>(vertices, rings.holes(), winding)?;
@@ -48,11 +106,18 @@ where
         ring = bridge_holes::<K>(vertices, ring, &holes)?;
         ring = filter_ring::<K>(vertices, ring)?;
         if ring.len() < 3 {
-            return Ok(Vec::new());
+            return Ok(EarcutReport {
+                triangles: Vec::new(),
+                diagnostics,
+            });
         }
     }
 
-    clip_ring::<K>(vertices, ring, winding)
+    let triangles = clip_ring::<K>(vertices, ring, winding, &mut diagnostics)?;
+    Ok(EarcutReport {
+        triangles,
+        diagnostics,
+    })
 }
 
 fn normalized_ring<K>(vertices: &[Point2], range: RingRange) -> Result<Vec<usize>>
@@ -395,11 +460,16 @@ where
     Ok(ring)
 }
 
-fn clip_ring<K>(vertices: &[Point2], ring: Vec<usize>, winding: Sign) -> Result<TriangleIndices>
+fn clip_ring<K>(
+    vertices: &[Point2],
+    ring: Vec<usize>,
+    winding: Sign,
+    diagnostics: &mut EarcutDiagnostics,
+) -> Result<TriangleIndices>
 where
     K: Kernel,
 {
-    clip_ring_with_splits::<K>(vertices, ring, winding, 0)
+    clip_ring_with_splits::<K>(vertices, ring, winding, 0, diagnostics)
 }
 
 fn clip_ring_with_splits<K>(
@@ -407,6 +477,7 @@ fn clip_ring_with_splits<K>(
     mut ring: Vec<usize>,
     winding: Sign,
     split_depth: usize,
+    diagnostics: &mut EarcutDiagnostics,
 ) -> Result<TriangleIndices>
 where
     K: Kernel,
@@ -427,19 +498,21 @@ where
                     cured_ring,
                     winding,
                     split_depth,
+                    diagnostics,
                 )?);
                 return Ok(triangles);
             }
-            return split_or_fail::<K>(vertices, cured_ring, winding, split_depth);
+            return split_or_fail::<K>(vertices, cured_ring, winding, split_depth, diagnostics);
         }
         guard -= 1;
 
-        if is_ear::<K>(vertices, &ring, cursor, winding)? {
+        if is_ear::<K>(vertices, &ring, cursor, winding, diagnostics)? {
             let len = ring.len();
             let prev = ring[(cursor + len - 1) % len];
             let curr = ring[cursor];
             let next = ring[(cursor + 1) % len];
             push_triangle(&mut triangles, prev, curr, next, winding);
+            diagnostics.emitted_triangles += 1;
             ring.remove(cursor);
             if cursor == ring.len() {
                 cursor = 0;
@@ -462,6 +535,8 @@ where
                     cure_local_intersections::<K>(vertices, ring, winding)?;
                 triangles.append(&mut cured_triangles);
                 if cured {
+                    diagnostics.local_intersection_cures += 1;
+                    diagnostics.emitted_triangles += cured_triangles.len() / 3;
                     ring = cured_ring;
                     cursor = 0;
                     misses = 0;
@@ -470,7 +545,7 @@ where
                 }
 
                 let mut split_triangles =
-                    split_or_fail::<K>(vertices, cured_ring, winding, split_depth)?;
+                    split_or_fail::<K>(vertices, cured_ring, winding, split_depth, diagnostics)?;
                 triangles.append(&mut split_triangles);
                 return Ok(triangles);
             }
@@ -482,6 +557,7 @@ where
     let sign = K::orient2d(&vertices[ring[0]], &vertices[ring[1]], &vertices[ring[2]])?;
     if sign != Sign::Zero {
         push_triangle(&mut triangles, ring[0], ring[1], ring[2], sign);
+        diagnostics.emitted_triangles += 1;
     }
 
     Ok(triangles)
@@ -628,6 +704,7 @@ fn split_or_fail<K>(
     ring: Vec<usize>,
     winding: Sign,
     split_depth: usize,
+    diagnostics: &mut EarcutDiagnostics,
 ) -> Result<TriangleIndices>
 where
     K: Kernel,
@@ -635,6 +712,7 @@ where
     if split_depth > ring.len() {
         return Err(Error::NoEarFound);
     }
+    diagnostics.split_fallbacks += 1;
 
     let Some((first, second)) = find_split_diagonal::<K>(vertices, &ring)? else {
         return Err(Error::NoEarFound);
@@ -657,6 +735,7 @@ where
             left,
             winding,
             split_depth + 1,
+            diagnostics,
         )?);
     }
     if right.len() >= 3 {
@@ -665,6 +744,7 @@ where
             right,
             winding,
             split_depth + 1,
+            diagnostics,
         )?);
     }
 
@@ -737,10 +817,17 @@ fn ordered_positions(first: usize, second: usize) -> (usize, usize) {
     }
 }
 
-fn is_ear<K>(vertices: &[Point2], ring: &[usize], cursor: usize, winding: Sign) -> Result<bool>
+fn is_ear<K>(
+    vertices: &[Point2],
+    ring: &[usize],
+    cursor: usize,
+    winding: Sign,
+    diagnostics: &mut EarcutDiagnostics,
+) -> Result<bool>
 where
     K: Kernel,
 {
+    diagnostics.ear_tests += 1;
     let len = ring.len();
     let prev = ring[(cursor + len - 1) % len];
     let curr = ring[cursor];
@@ -765,6 +852,7 @@ where
             continue;
         }
 
+        diagnostics.containment_tests += 1;
         if predicates::point_in_or_on_triangle::<K>(
             &vertices[prev],
             &vertices[curr],
@@ -921,6 +1009,25 @@ mod tests {
     }
 
     #[test]
+    fn earcut_report_matches_plain_triangulation_and_counts_hot_loop() {
+        let vertices = vec![
+            exact_point(0, 0),
+            exact_point(4, 0),
+            exact_point(4, 3),
+            exact_point(2, 1),
+            exact_point(0, 3),
+        ];
+
+        let plain = triangulate(&vertices, &[]).unwrap();
+        let report = triangulate_report(&vertices, &[]).unwrap();
+
+        assert_eq!(report.triangles, plain);
+        assert_eq!(report.diagnostics.emitted_triangles * 3, plain.len());
+        assert!(report.diagnostics.ear_tests > 0);
+        assert!(report.diagnostics.containment_tests > 0);
+    }
+
+    #[test]
     fn split_fallback_triangulates_forced_valid_diagonal() {
         let vertices = vec![
             exact_point(0, 0),
@@ -932,9 +1039,13 @@ mod tests {
         ];
         let ring = vec![0, 1, 2, 3, 4, 5];
 
-        let triangles = split_or_fail::<ExactKernel>(&vertices, ring, Sign::Positive, 0).unwrap();
+        let mut diagnostics = EarcutDiagnostics::default();
+        let triangles =
+            split_or_fail::<ExactKernel>(&vertices, ring, Sign::Positive, 0, &mut diagnostics)
+                .unwrap();
 
         assert_eq!(triangles.len(), 12);
+        assert_eq!(diagnostics.split_fallbacks, 1);
         assert!(triangles.iter().all(|&index| index < vertices.len()));
     }
 
