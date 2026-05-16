@@ -280,9 +280,9 @@ impl PredicateCertificate {
     pub const fn precision_stage(self) -> PredicatePrecisionStage {
         match self {
             Self::StructuralFact => PredicatePrecisionStage::StructuralFact,
-            Self::DeterminantFilter
-            | Self::CertifiedIntervalFilter
-            | Self::CertifiedBallFilter => PredicatePrecisionStage::CertifiedFilter,
+            Self::DeterminantFilter | Self::CertifiedIntervalFilter | Self::CertifiedBallFilter => {
+                PredicatePrecisionStage::CertifiedFilter
+            }
             Self::ExactRationalKernel { .. } | Self::ExactRealFact => {
                 PredicatePrecisionStage::ExactReducer
             }

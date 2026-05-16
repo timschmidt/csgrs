@@ -18,6 +18,25 @@ fn p3(x: f64, y: f64, z: f64) -> Point3 {
     Point3::new(real(x), real(y), real(z))
 }
 
+fn p2i(x: i32, y: i32) -> Point2 {
+    Point2::new(Real::from(x), Real::from(y))
+}
+
+fn translate2i(point: &Point2, dx: i32, dy: i32) -> Point2 {
+    let dx = Real::from(dx);
+    let dy = Real::from(dy);
+    Point2::new(&point.x + &dx, &point.y + &dy)
+}
+
+fn scale2i(point: &Point2, scale: i32) -> Point2 {
+    let scale = Real::from(scale);
+    Point2::new(&point.x * &scale, &point.y * &scale)
+}
+
+fn reflect_x(point: &Point2) -> Point2 {
+    Point2::new(-&point.x, point.y.clone())
+}
+
 fn small_coord() -> impl Strategy<Value = f64> {
     (-10_000_i32..=10_000).prop_map(|value| value as f64)
 }
@@ -136,5 +155,73 @@ proptest! {
         if let Some(sign) = value(incircle2d(&a, &b, &c, &d)) {
             prop_assert_eq!(sign, expected);
         }
+    }
+
+    #[test]
+    fn orient2d_scaling_and_reflection_follow_determinant_sign(
+        ax in -32_i32..32, ay in -32_i32..32,
+        bx in -32_i32..32, by in -32_i32..32,
+        cx in -32_i32..32, cy in -32_i32..32,
+        scale in 1_i32..16,
+    ) {
+        // Metamorphic predicate tests are a direct fit for Yap's exact
+        // computation model: the determinant identity is the oracle, not a
+        // sampled approximate coordinate. See Yap, "Towards Exact Geometric
+        // Computation," Computational Geometry 7.1-2 (1997). The sign change
+        // under reflection is the standard orientation determinant law used by
+        // robust predicates; see Shewchuk, "Adaptive Precision Floating-Point
+        // Arithmetic and Fast Robust Geometric Predicates," DCG 18.3 (1997).
+        let a = p2i(ax, ay);
+        let b = p2i(bx, by);
+        let c = p2i(cx, cy);
+
+        let scaled = (
+            scale2i(&a, scale),
+            scale2i(&b, scale),
+            scale2i(&c, scale),
+        );
+        prop_assert_eq!(
+            value(orient2d(&a, &b, &c)),
+            value(orient2d(&scaled.0, &scaled.1, &scaled.2))
+        );
+
+        let reflected = (reflect_x(&a), reflect_x(&b), reflect_x(&c));
+        if let (Some(sign), Some(reflected_sign)) = (
+            value(orient2d(&a, &b, &c)),
+            value(orient2d(&reflected.0, &reflected.1, &reflected.2)),
+        ) {
+            prop_assert_eq!(sign.reversed(), reflected_sign);
+        }
+    }
+
+    #[test]
+    fn incircle2d_translation_and_positive_scaling_preserve_sign(
+        ax in -8_i32..8, ay in -8_i32..8,
+        bx in -8_i32..8, by in -8_i32..8,
+        cx in -8_i32..8, cy in -8_i32..8,
+        dx in -8_i32..8, dy in -8_i32..8,
+        tx in -16_i32..16, ty in -16_i32..16,
+        scale in 1_i32..8,
+    ) {
+        let a = p2i(ax, ay);
+        let b = p2i(bx, by);
+        let c = p2i(cx, cy);
+        let d = p2i(dx, dy);
+        let moved_scaled = (
+            scale2i(&translate2i(&a, tx, ty), scale),
+            scale2i(&translate2i(&b, tx, ty), scale),
+            scale2i(&translate2i(&c, tx, ty), scale),
+            scale2i(&translate2i(&d, tx, ty), scale),
+        );
+
+        prop_assert_eq!(
+            value(incircle2d(&a, &b, &c, &d)),
+            value(incircle2d(
+                &moved_scaled.0,
+                &moved_scaled.1,
+                &moved_scaled.2,
+                &moved_scaled.3,
+            ))
+        );
     }
 }

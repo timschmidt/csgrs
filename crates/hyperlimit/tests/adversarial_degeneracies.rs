@@ -60,6 +60,26 @@ fn orient2d_translation_and_scaling_invariance_on_near_collinear_rows() {
 }
 
 #[test]
+fn finite_f64_subnormal_import_remains_exact_dyadic_predicate_input() {
+    let tiny = f64::from_bits(1);
+    let a = p2(0.0, 0.0);
+    let b = p2(tiny, 0.0);
+    let c = p2(0.0, tiny);
+
+    // This is an explicit f64-edge regression, not a primitive-float predicate.
+    // The raw f64 determinant underflows to zero, but the finite inputs are
+    // lifted as exact dyadic `Real` values before orientation is decided. That
+    // is the exact-geometric-computation boundary described by Yap, "Towards
+    // Exact Geometric Computation," Computational Geometry 7.1-2 (1997).
+    let primitive_det = (tiny - 0.0) * (tiny - 0.0);
+    assert_eq!(primitive_det, 0.0);
+    assert_eq!(decided(orient2d(&a, &b, &c)), Sign::Positive);
+    assert!(a.x.exact_rational().is_some());
+    assert!(b.x.exact_rational().is_some());
+    assert!(c.y.exact_rational().is_some());
+}
+
+#[test]
 fn classify_point_line_is_consistent_for_reversed_line_orientation() {
     let a = p2(-3.0, 2.0);
     let b = p2(5.0, -7.0);

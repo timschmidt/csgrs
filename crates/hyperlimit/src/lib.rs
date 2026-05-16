@@ -122,5 +122,5 @@ pub use real::{RealFacts, RealPredicateExt, RealZeroKnowledge};
 pub use session::{
     CachePayoff, CachedApproximateView, ConstructionCertificate, ConstructionDependencies,
     ConstructionFreshness, ConstructionVersion, ExactGeometrySession, VersionedFacts,
-    VersionedPredicateReport,
+    VersionedPredicateReport, VersionedPrepared,
 };

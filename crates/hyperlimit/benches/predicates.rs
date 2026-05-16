@@ -6,10 +6,10 @@ mod dispatch_trace;
 use criterion::{BenchmarkId, Criterion, black_box};
 use dispatch_trace::{begin_dispatch_trace_run, trace_dispatch_cases, write_dispatch_trace_report};
 use hyperlimit::{
-    LineSide, Plane3, PlaneSide, Point2, Point3, PredicateOutcome, PreparedIncircle2,
-    PreparedInsphere3, PreparedLine2, PreparedOrientedPlane3, Sign, certified_ball_sign,
-    classify_point_line, classify_point_oriented_plane, classify_point_plane, incircle2d,
-    insphere3d, orient2d, orient3d,
+    ExactGeometrySession, LineSide, Plane3, PlaneSide, Point2, Point3, PredicateOutcome,
+    PreparedIncircle2, PreparedInsphere3, PreparedLine2, PreparedOrientedPlane3, Sign,
+    certified_ball_sign, classify_point_line, classify_point_oriented_plane, classify_point_plane,
+    incircle2d, insphere3d, orient2d, orient3d,
 };
 
 const BATCH: usize = 512;
@@ -41,6 +41,8 @@ fn bench_predicates(c: &mut Criterion) {
     bench_certified_filters(c);
     bench_exact_rational_kernels(c);
     bench_shared_scale_views(c);
+    bench_transformed_predicates(c);
+    bench_versioned_prepared(c);
 
     // Parallel batch APIs require `Sync` real storage. `hyperreal::Real`
     // currently keeps local refinement caches behind `RefCell`, so exact
@@ -62,6 +64,30 @@ fn bench_certified_filters(c: &mut Criterion) {
             }
             black_box(score)
         });
+    });
+    group.finish();
+}
+
+fn bench_versioned_prepared(c: &mut Criterion) {
+    let mut group = c.benchmark_group("versioned_prepared");
+    let session = ExactGeometrySession::default();
+    let a = rational_point2(0, 1, 0, 1);
+    let b = rational_point2(4, 1, 0, 1);
+    let line = session.versioned_prepared(session.prepare_line2(&a, &b));
+
+    // This row keeps construction-version cache diagnostics visible beside
+    // predicate rows. It measures metadata checks only; stale prepared facts are
+    // scheduling data, not topology certificates, following Yap's object-cache
+    // boundary in "Towards Exact Geometric Computation," Computational
+    // Geometry 7.1-2 (1997).
+    group.bench_function("line2/freshness_current", |bench| {
+        bench.iter(|| black_box(line.freshness_for(black_box(session)).is_current()))
+    });
+
+    let mut stale_session = session;
+    stale_session.advance_version();
+    group.bench_function("line2/freshness_stale", |bench| {
+        bench.iter(|| black_box(line.freshness_for(black_box(stale_session)).is_current()))
     });
     group.finish();
 }
@@ -95,6 +121,26 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
         });
     });
 
+    // Larger near-degenerate exact rationals keep the benchmark surface aligned
+    // with Yap's warning that exact geometric computation must preserve the
+    // algebraic decision, not a nearby primitive-float surrogate; see Yap,
+    // "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+    // (1997).
+    let orient2_large = large_rational_near_degenerate_orient2d_cases();
+    group.bench_function("orient2d/larger_rational_near_degenerate", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c) in &orient2_large {
+                score += sign_score(black_box(orient2d(
+                    black_box(a),
+                    black_box(b),
+                    black_box(c),
+                )));
+            }
+            black_box(score)
+        });
+    });
+
     let orient3 = exact_rational_orient3d_cases();
     group.bench_function("orient3d/common_denominator", |b| {
         b.iter(|| {
@@ -116,6 +162,22 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
         b.iter(|| {
             let mut score = 0_i64;
             for (a, b, c, d) in &incircle {
+                score += sign_score(black_box(incircle2d(
+                    black_box(a),
+                    black_box(b),
+                    black_box(c),
+                    black_box(d),
+                )));
+            }
+            black_box(score)
+        });
+    });
+
+    let incircle_large = large_rational_near_degenerate_incircle2d_cases();
+    group.bench_function("incircle2d/larger_rational_near_degenerate", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c, d) in &incircle_large {
                 score += sign_score(black_box(incircle2d(
                     black_box(a),
                     black_box(b),
@@ -220,6 +282,112 @@ fn bench_shared_scale_views(c: &mut Criterion) {
             });
         });
     }
+    group.finish();
+}
+
+fn bench_transformed_predicates(c: &mut Criterion) {
+    let mut group = c.benchmark_group("transformed_predicates");
+
+    // Yap treats exact geometric computation as an object-level discipline, not
+    // only a scalar one. These rows keep transformed exact-rational workloads
+    // visible as first-class benchmark cases so future affine/common-scale
+    // carriers can be measured before scalar expansion; see Yap, "Towards
+    // Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    let orient_cases = transformed_orient2d_cases();
+    trace_dispatch_cases(
+        "transformed_predicates/orient2d/exact_rational_affine",
+        &orient_cases,
+        |(a, b, c)| {
+            black_box(sign_score(orient2d(a, b, c)));
+        },
+    );
+    group.bench_function("orient2d/exact_rational_affine", |bench| {
+        bench.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c) in &orient_cases {
+                score += sign_score(black_box(orient2d(
+                    black_box(a),
+                    black_box(b),
+                    black_box(c),
+                )));
+            }
+            black_box(score)
+        });
+    });
+
+    let line_cases = transformed_line_cases();
+    if let Some((a, b, _)) = line_cases.first() {
+        let prepared = PreparedLine2::new(a, b);
+        trace_dispatch_cases(
+            "transformed_predicates/classify_point_line/prepared_exact_rational_affine",
+            &line_cases,
+            |(_, _, point)| {
+                black_box(line_score(prepared.classify_point(point)));
+            },
+        );
+        group.bench_function(
+            "classify_point_line/prepared_exact_rational_affine",
+            |bench| {
+                bench.iter(|| {
+                    let mut score = 0_i64;
+                    for (_, _, point) in &line_cases {
+                        score += line_score(black_box(prepared.classify_point(black_box(point))));
+                    }
+                    black_box(score)
+                });
+            },
+        );
+    }
+
+    // The in-circle determinant is especially sensitive to expansion strategy.
+    // Keeping both cold and prepared transformed rows beside the shared-scale
+    // rows lets us check whether future lifted-circle coefficient reuse follows
+    // Shewchuk's determinant orientation of the predicate while preserving
+    // exact signs; see Shewchuk, "Adaptive Precision Floating-Point Arithmetic
+    // and Fast Robust Geometric Predicates," *Discrete & Computational
+    // Geometry* 18.3 (1997).
+    let incircle_cases = transformed_incircle2d_cases();
+    trace_dispatch_cases(
+        "transformed_predicates/incircle2d/exact_rational_affine",
+        &incircle_cases,
+        |(a, b, c, d)| {
+            black_box(sign_score(incircle2d(a, b, c, d)));
+        },
+    );
+    group.bench_function("incircle2d/exact_rational_affine", |bench| {
+        bench.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c, d) in &incircle_cases {
+                score += sign_score(black_box(incircle2d(
+                    black_box(a),
+                    black_box(b),
+                    black_box(c),
+                    black_box(d),
+                )));
+            }
+            black_box(score)
+        });
+    });
+    if let Some((a, b, c, _)) = incircle_cases.first() {
+        let prepared = PreparedIncircle2::new(a, b, c);
+        trace_dispatch_cases(
+            "transformed_predicates/incircle2d/prepared_exact_rational_affine",
+            &incircle_cases,
+            |(_, _, _, d)| {
+                black_box(sign_score(prepared.test_point(d)));
+            },
+        );
+        group.bench_function("incircle2d/prepared_exact_rational_affine", |bench| {
+            bench.iter(|| {
+                let mut score = 0_i64;
+                for (_, _, _, d) in &incircle_cases {
+                    score += sign_score(black_box(prepared.test_point(black_box(d))));
+                }
+                black_box(score)
+            });
+        });
+    }
+
     group.finish();
 }
 
@@ -830,6 +998,53 @@ fn exact_rational_insphere3d_cases() -> Vec<Insphere3Case> {
     cases
 }
 
+fn large_rational_near_degenerate_orient2d_cases() -> Vec<Orient2Case> {
+    let den = 1_000_003_u64;
+    let den_sq = den * den;
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let x_num = i as i64 % 1_003 - 501;
+        let y_num = x_num * den as i64 + signed_jitter(i as i64);
+        cases.push((
+            rational_point2(-1, 1, -1, 1),
+            rational_point2(1, 1, 1, 1),
+            rational_point2(x_num, den, y_num, den_sq),
+        ));
+    }
+    cases
+}
+
+fn large_rational_near_degenerate_incircle2d_cases() -> Vec<Incircle2Case> {
+    let den = 1_000_003_u64;
+    let a = rational_point2(1, 1, 0, 1);
+    let b = rational_point2(0, 1, 1, 1);
+    let c = rational_point2(-1, 1, 0, 1);
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let t_num = i as i64 % 1_003 - 501;
+        let circle_den = den * den + (t_num * t_num) as u64;
+        let x_num = 2 * t_num * den as i64;
+        let y_num = den as i128 * den as i128 - t_num as i128 * t_num as i128;
+        let y_den = circle_den * den;
+        let y_final_num = y_num * den as i128 + signed_jitter(i as i64) as i128;
+        cases.push((
+            a.clone(),
+            b.clone(),
+            c.clone(),
+            Point2::new(
+                rational_real(x_num, den),
+                rational_real(
+                    y_final_num
+                        .try_into()
+                        .expect("benchmark numerator fits in i64"),
+                    y_den,
+                ),
+            ),
+        ));
+    }
+    cases
+}
+
 fn shared_scale_incircle2d_cases() -> Vec<Incircle2Case> {
     let a = rational_point2(1, 7, 1, 7);
     let b = rational_point2(4, 7, 1, 7);
@@ -864,6 +1079,73 @@ fn shared_scale_insphere3d_cases() -> Vec<Insphere3Case> {
         ));
     }
     cases
+}
+
+fn transformed_orient2d_cases() -> Vec<Orient2Case> {
+    let mut cases = Vec::with_capacity(BATCH);
+    let scale = rational_real(5, 3);
+    let tx = rational_real(-17, 11);
+    let ty = rational_real(23, 13);
+    for (a, b, c) in exact_rational_orient2d_cases() {
+        cases.push((
+            transform_point2(&a, &scale, &tx, &ty),
+            transform_point2(&b, &scale, &tx, &ty),
+            transform_point2(&c, &scale, &tx, &ty),
+        ));
+    }
+    cases
+}
+
+fn transformed_line_cases() -> Vec<Orient2Case> {
+    let base_a = rational_point2(-1, 5, -1, 5);
+    let base_b = rational_point2(7, 5, 7, 5);
+    let scale = rational_real(7, 4);
+    let tx = rational_real(31, 17);
+    let ty = rational_real(-29, 19);
+    let a = transform_point2(&base_a, &scale, &tx, &ty);
+    let b = transform_point2(&base_b, &scale, &tx, &ty);
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        let point = rational_point2(j % 23 - 11, 23, j % 23 - 11 + signed_jitter(j), 23);
+        cases.push((
+            a.clone(),
+            b.clone(),
+            transform_point2(&point, &scale, &tx, &ty),
+        ));
+    }
+    cases
+}
+
+fn transformed_incircle2d_cases() -> Vec<Incircle2Case> {
+    let scale = rational_real(9, 5);
+    let tx = rational_real(-41, 29);
+    let ty = rational_real(37, 31);
+    let mut cases = Vec::with_capacity(BATCH);
+    for (a, b, c, d) in exact_rational_incircle2d_cases() {
+        cases.push((
+            transform_point2(&a, &scale, &tx, &ty),
+            transform_point2(&b, &scale, &tx, &ty),
+            transform_point2(&c, &scale, &tx, &ty),
+            transform_point2(&d, &scale, &tx, &ty),
+        ));
+    }
+    cases
+}
+
+fn transform_point2(
+    point: &Point2,
+    scale: &hyperreal::Real,
+    tx: &hyperreal::Real,
+    ty: &hyperreal::Real,
+) -> Point2 {
+    let scaled_x = &point.x * scale;
+    let scaled_y = &point.y * scale;
+    Point2::new(&scaled_x + tx, &scaled_y + ty)
+}
+
+fn signed_jitter(index: i64) -> i64 {
+    if index % 2 == 0 { 1 } else { -1 }
 }
 
 fn point2(x: f64, y: f64, real: fn(f64) -> hyperreal::Real) -> Point2 {

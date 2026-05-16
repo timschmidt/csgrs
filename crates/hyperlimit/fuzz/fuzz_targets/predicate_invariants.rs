@@ -3,8 +3,8 @@
 //! The generated inputs stay in `hyperreal::Real` and never use primitive-float
 //! topology. The checks focus on metamorphic laws that should survive every
 //! exact kernel and fallback route: orientation reversal/cyclicity, batch/scalar
-//! agreement, prepared-line/prepared-incircle/prepared-insphere agreement, and
-//! circle/sphere boundary behavior.
+//! agreement, prepared-line/prepared-incircle/prepared-insphere agreement,
+//! versioned prepared-cache freshness, and circle/sphere boundary behavior.
 //!
 //! Run with: `cargo fuzz run predicate_invariants` from `hyperlimit/fuzz/`.
 
@@ -12,7 +12,8 @@
 
 use arbitrary::Arbitrary;
 use hyperlimit::{
-    LineSide, Point2, Point3, PredicateOutcome, PredicatePolicy, Sign, certified_ball_sign,
+    CachePayoff, ConstructionFreshness, ConstructionVersion, LineSide, Point2, Point3,
+    PredicateApiSemantics, PredicateOutcome, PredicatePolicy, Sign, certified_ball_sign,
     certified_interval_sign, classify_point_line, classify_point_line_batch,
     compare_point2_lexicographic, compare_point2_lexicographic_report, compare_reals,
     compare_reals_report, incircle2d, insphere3d, orient2d, orient2d_batch, point2_equal,
@@ -119,9 +120,24 @@ fn predicate_invariants(input: Input) {
     }
 
     let session = hyperlimit::ExactGeometrySession::default();
-    let prepared = session.prepare_line2(&a, &b);
+    let payoff = CachePayoff::new(3, 2, 2).expect("generated prepared line should repay");
+    let prepared =
+        session.versioned_prepared_with_payoff(session.prepare_line2(&a, &b), payoff);
+    assert_eq!(prepared.source_version(), ConstructionVersion::ZERO);
+    assert_eq!(prepared.payoff(), Some(payoff));
     assert_eq!(
-        session.classify_prepared_line2(&prepared, &c).value(),
+        prepared.api_semantics(),
+        PredicateApiSemantics::CachePopulating
+    );
+    assert!(prepared.is_current_for(session));
+    assert_eq!(
+        prepared.freshness_for(session),
+        ConstructionFreshness::Current
+    );
+    assert_eq!(
+        session
+            .classify_prepared_line2(prepared.prepared(), &c)
+            .value(),
         line_side
     );
 
@@ -166,16 +182,18 @@ fn predicate_invariants(input: Input) {
     assert_decided_zero(insphere3d(&p, &q, &r, &s, &r));
     assert_decided_zero(insphere3d(&p, &q, &r, &s, &s));
 
-    let prepared_incircle = session.prepare_incircle2(&a, &b, &c);
+    let prepared_incircle = session.versioned_prepared(session.prepare_incircle2(&a, &b, &c));
+    assert!(prepared_incircle.is_current_for(session));
     assert_eq!(
         session
-            .test_prepared_incircle2(&prepared_incircle, &d)
+            .test_prepared_incircle2(prepared_incircle.prepared(), &d)
             .value(),
         incircle2d(&a, &b, &c, &d).value(),
         "prepared in-circle path must agree with scalar predicate"
     );
     assert!(
         prepared_incircle
+            .prepared()
             .coefficient_facts()
             .coefficient_exact
             .all_exact_rational,
@@ -183,22 +201,25 @@ fn predicate_invariants(input: Input) {
     );
     assert_eq!(
         prepared_incircle
+            .prepared()
             .coefficient_facts()
             .coefficient_unknown_zero_count(),
         0,
         "rational lifted-circle coefficients should have decidable zero status"
     );
 
-    let prepared_insphere = session.prepare_insphere3(&p, &q, &r, &s);
+    let prepared_insphere = session.versioned_prepared(session.prepare_insphere3(&p, &q, &r, &s));
+    assert!(prepared_insphere.is_current_for(session));
     assert_eq!(
         session
-            .test_prepared_insphere3(&prepared_insphere, &t)
+            .test_prepared_insphere3(prepared_insphere.prepared(), &t)
             .value(),
         insphere3d(&p, &q, &r, &s, &t).value(),
         "prepared in-sphere path must agree with scalar predicate"
     );
     assert!(
         prepared_insphere
+            .prepared()
             .coefficient_facts()
             .coefficient_exact
             .all_exact_rational,
@@ -206,11 +227,35 @@ fn predicate_invariants(input: Input) {
     );
     assert_eq!(
         prepared_insphere
+            .prepared()
             .coefficient_facts()
             .coefficient_unknown_zero_count(),
         0,
         "rational lifted-sphere coefficients should have decidable zero status"
     );
+
+    // Fuzz the versioned prepared-cache invalidation boundary. Stale prepared
+    // objects are legal Rust borrows, but their retained facts must be treated
+    // as scheduling metadata to recompute or bypass, never as topology
+    // certificates. This is Yap's construction-object separation in executable
+    // form: cached object facts have version provenance, while exact predicates
+    // still certify signs. See Yap, "Towards Exact Geometric Computation,"
+    // *Computational Geometry* 7.1-2 (1997).
+    let mut stale_session = session;
+    stale_session.advance_version();
+    for freshness in [
+        prepared.freshness_for(stale_session),
+        prepared_incircle.freshness_for(stale_session),
+        prepared_insphere.freshness_for(stale_session),
+    ] {
+        assert_eq!(
+            freshness,
+            ConstructionFreshness::StaleSource {
+                cached: ConstructionVersion::ZERO,
+                current: stale_session.version()
+            }
+        );
+    }
 
     let interval = certified_interval_sign(&a.x, &b.x);
     let ax_sign = sign_of_rational(&a.x);

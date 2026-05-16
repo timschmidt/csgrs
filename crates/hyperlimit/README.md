@@ -234,8 +234,11 @@ Reports expose this with `PredicateReport::api_semantics()`, certificates with
 `PredicateCertificate::api_semantics()`, and policies with
 `PredicatePolicy::api_semantics()`. Session-level carriers mirror the same
 labels: `CachedApproximateView` is `ApproximationForcing`, `VersionedFacts` is
-`CachePopulating`, `ConstructionCertificate` follows its predicate route, and
-`ExactGeometrySession` is `PolicyDependent`.
+`CachePopulating`, `VersionedPrepared` binds borrowed prepared predicates to a
+construction version as `CachePopulating`, `ConstructionCertificate` follows
+its predicate route, and `ExactGeometrySession` is `PolicyDependent`. Stale
+versioned prepared objects are diagnostics for recomputation or slower
+scheduling; they are not topology certificates.
 
 ## Real Model
 
@@ -279,6 +282,9 @@ can reuse them across many predicates.
 - `plane`: explicit and oriented plane classification
 - `classify`: line and plane side enums
 - `batch`: sequential and optional parallel batch APIs
+- `session`: predicate policy, versioned reports, versioned facts, versioned
+  prepared predicates, approximate-view metadata, and construction
+  certificates
 - `error`: crate-local error/result types
 
 Common public types and functions are re-exported from the crate root.

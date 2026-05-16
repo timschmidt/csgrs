@@ -13,8 +13,7 @@ use crate::classify::{
 };
 use crate::geometry::Point2;
 use crate::predicate::{
-    PredicateApiSemantics, PredicateCertificate, PredicateOutcome, PredicatePolicy,
-    PredicateReport,
+    PredicateApiSemantics, PredicateCertificate, PredicateOutcome, PredicatePolicy, PredicateReport,
 };
 use crate::predicates::aabb::PreparedAabb2;
 use crate::predicates::segment::PreparedSegment2;
@@ -387,6 +386,24 @@ pub struct VersionedFacts<F> {
     payoff: Option<CachePayoff>,
 }
 
+/// Prepared predicate object bound to a construction version.
+///
+/// This wrapper is intentionally generic: `hyperlimit` owns exact predicate
+/// preparation, while higher crates own curve fragments, triangulation nodes,
+/// mesh faces, and invalidation policy. A [`VersionedPrepared`] value lets
+/// callers attach session freshness diagnostics to borrowed prepared
+/// predicates without making stale prepared facts authoritative. Following
+/// Yap's exact-geometric-computation boundary, stale cached object facts must
+/// only trigger recomputation or slower scheduling; exact predicates still
+/// certify topology. See Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997).
+#[derive(Clone, Debug)]
+pub struct VersionedPrepared<P> {
+    prepared: P,
+    source_version: ConstructionVersion,
+    payoff: Option<CachePayoff>,
+}
+
 /// A predicate report bound to a construction certificate.
 ///
 /// This type is the session-level carrier for exact sign decisions and their
@@ -549,6 +566,69 @@ impl<F> VersionedFacts<F> {
         self.certificate
             .map(|certificate| certificate.freshness_for(session))
             .unwrap_or(ConstructionFreshness::Current)
+    }
+}
+
+impl<P> VersionedPrepared<P> {
+    /// Build a versioned prepared predicate object.
+    pub const fn new(prepared: P, source_version: ConstructionVersion) -> Self {
+        Self {
+            prepared,
+            source_version,
+            payoff: None,
+        }
+    }
+
+    /// Build a versioned prepared predicate object with payoff metadata.
+    pub const fn with_payoff(
+        prepared: P,
+        source_version: ConstructionVersion,
+        payoff: CachePayoff,
+    ) -> Self {
+        Self {
+            prepared,
+            source_version,
+            payoff: Some(payoff),
+        }
+    }
+
+    /// Return the wrapped prepared predicate object.
+    pub const fn prepared(&self) -> &P {
+        &self.prepared
+    }
+
+    /// Consume the wrapper and return the prepared predicate object.
+    pub fn into_prepared(self) -> P {
+        self.prepared
+    }
+
+    /// Return the construction version used when this object was prepared.
+    pub const fn source_version(&self) -> ConstructionVersion {
+        self.source_version
+    }
+
+    /// Return cache payoff metadata, if supplied by the producer.
+    pub const fn payoff(&self) -> Option<CachePayoff> {
+        self.payoff
+    }
+
+    /// Return the API semantic class for prepared predicate caches.
+    ///
+    /// Prepared predicate objects cache reusable structural metadata and
+    /// coefficients. They are cache-populating, not proof-producing, until a
+    /// query produces a predicate report.
+    pub const fn api_semantics(&self) -> PredicateApiSemantics {
+        PredicateApiSemantics::CachePopulating
+    }
+
+    /// Return whether this prepared object matches the session's current version.
+    pub fn is_current_for(&self, session: ExactGeometrySession) -> bool {
+        self.freshness_for(session).is_current()
+    }
+
+    /// Return freshness diagnostics for this prepared object.
+    pub fn freshness_for(&self, session: ExactGeometrySession) -> ConstructionFreshness {
+        freshness_from_source(self.source_version, session.version())
     }
 }
 
@@ -758,6 +838,28 @@ impl ExactGeometrySession {
             certificate,
             Some(payoff),
         )
+    }
+
+    /// Bind an already prepared predicate object to this session's version.
+    ///
+    /// This is the neutral cache carrier for prepared predicates returned by
+    /// [`Self::prepare_line2`], [`Self::prepare_segment2`],
+    /// [`Self::prepare_triangle2`], [`Self::prepare_aabb2`],
+    /// [`Self::prepare_incircle2`], [`Self::prepare_insphere3`],
+    /// [`Self::prepare_plane3`], and [`Self::prepare_oriented_plane3`]. It keeps
+    /// invalidation metadata in the session layer without moving application
+    /// topology ownership into `hyperlimit`.
+    pub fn versioned_prepared<P>(&self, prepared: P) -> VersionedPrepared<P> {
+        VersionedPrepared::new(prepared, self.version)
+    }
+
+    /// Bind a prepared predicate object to this session's version with payoff metadata.
+    pub fn versioned_prepared_with_payoff<P>(
+        &self,
+        prepared: P,
+        payoff: CachePayoff,
+    ) -> VersionedPrepared<P> {
+        VersionedPrepared::with_payoff(prepared, self.version, payoff)
     }
 
     /// Prepare a borrowed oriented line predicate.
@@ -1148,6 +1250,96 @@ mod tests {
     }
 
     #[test]
+    fn versioned_prepared_predicates_report_stale_source_without_certifying_topology() {
+        let mut session = ExactGeometrySession::default();
+        let origin = p2(0, 0);
+        let x_axis = p2(4, 0);
+        let y_axis = p2(0, 3);
+        let query = p2(1, 1);
+        let box_max = p2(4, 4);
+        let p = p3(0, 0, 0);
+        let q = p3(1, 0, 0);
+        let r = p3(0, 1, 0);
+        let s = p3(0, 0, 1);
+        let plane = Plane3::new(p3(0, 0, 1), hyperreal::Real::from(0));
+        let payoff = CachePayoff::new(4, 2, 3).expect("prepared line should repay");
+
+        let line =
+            session.versioned_prepared_with_payoff(session.prepare_line2(&origin, &x_axis), payoff);
+        let segment = session.versioned_prepared(session.prepare_segment2(&origin, &x_axis));
+        let triangle =
+            session.versioned_prepared(session.prepare_triangle2(&origin, &x_axis, &y_axis));
+        let aabb = session.versioned_prepared(session.prepare_aabb2(&origin, &box_max));
+        let incircle =
+            session.versioned_prepared(session.prepare_incircle2(&x_axis, &y_axis, &origin));
+        let insphere = session.versioned_prepared(session.prepare_insphere3(&p, &q, &r, &s));
+        let explicit_plane = session.versioned_prepared(session.prepare_plane3(&plane));
+        let oriented_plane =
+            session.versioned_prepared(session.prepare_oriented_plane3(&p, &q, &r));
+
+        assert_eq!(line.source_version(), ConstructionVersion::ZERO);
+        assert_eq!(line.payoff(), Some(payoff));
+        assert_eq!(line.api_semantics(), PredicateApiSemantics::CachePopulating);
+        for current in [
+            line.is_current_for(session),
+            segment.is_current_for(session),
+            triangle.is_current_for(session),
+            aabb.is_current_for(session),
+            incircle.is_current_for(session),
+            insphere.is_current_for(session),
+            explicit_plane.is_current_for(session),
+            oriented_plane.is_current_for(session),
+        ] {
+            assert!(current);
+        }
+
+        assert_eq!(
+            session
+                .classify_prepared_line2(line.prepared(), &y_axis)
+                .value(),
+            Some(LineSide::Left)
+        );
+        assert_eq!(
+            session
+                .classify_prepared_segment2_point(segment.prepared(), &p2(2, 0))
+                .value(),
+            Some(PointSegmentLocation::OnSegment)
+        );
+        assert_eq!(
+            session
+                .classify_prepared_triangle2_point(triangle.prepared(), &query)
+                .value(),
+            Some(TriangleLocation::Inside)
+        );
+        assert_eq!(
+            session
+                .classify_prepared_aabb2_point(aabb.prepared(), &query)
+                .value(),
+            Some(Aabb2PointLocation::Inside)
+        );
+
+        session.advance_version();
+        for freshness in [
+            line.freshness_for(session),
+            segment.freshness_for(session),
+            triangle.freshness_for(session),
+            aabb.freshness_for(session),
+            incircle.freshness_for(session),
+            insphere.freshness_for(session),
+            explicit_plane.freshness_for(session),
+            oriented_plane.freshness_for(session),
+        ] {
+            assert_eq!(
+                freshness,
+                ConstructionFreshness::StaleSource {
+                    cached: ConstructionVersion::ZERO,
+                    current: session.version()
+                }
+            );
+        }
+    }
+
+    #[test]
     fn session_versioned_approximate_views_are_edge_metadata_only() {
         let mut session = ExactGeometrySession::default();
         let view = session
@@ -1195,7 +1387,10 @@ mod tests {
 
         assert_eq!(certificate.version(), ConstructionVersion::ZERO);
         assert_eq!(certificate.predicate(), report.certificate);
-        assert_eq!(certificate.api_semantics(), report.certificate.api_semantics());
+        assert_eq!(
+            certificate.api_semantics(),
+            report.certificate.api_semantics()
+        );
         assert!(certificate.is_current_for(session));
         assert_eq!(
             certificate.freshness_for(session),
