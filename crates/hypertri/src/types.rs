@@ -148,6 +148,33 @@ impl PolygonInputFacts {
     pub const fn all_coordinates_dyadic(&self) -> bool {
         self.coordinate_exact.all_dyadic
     }
+
+    /// Return the total number of edges structurally known to collapse.
+    ///
+    /// This is an algorithm-selection hint, not a validity proof. Runtime
+    /// planners can use it to prefer boundary-preserving normalization before
+    /// constructing constrained edges, while final topology still belongs to
+    /// exact predicates inside the selected algorithm. This follows Yap's
+    /// object-structure-first rule for exact geometric computation; see Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+    /// (1997).
+    pub fn known_degenerate_edge_count(&self) -> usize {
+        self.rings
+            .iter()
+            .map(|ring| ring.known_degenerate_edges)
+            .sum()
+    }
+
+    /// Return the total number of edges whose zero status is not structurally known.
+    ///
+    /// Missing facts only block optional fast paths. They must not be treated
+    /// as nonzero edge certificates.
+    pub fn unknown_edge_zero_status_count(&self) -> usize {
+        self.rings
+            .iter()
+            .map(|ring| ring.unknown_edge_zero_status)
+            .sum()
+    }
 }
 
 /// Polygon input using one flat vertex buffer and earcut-compatible hole starts.

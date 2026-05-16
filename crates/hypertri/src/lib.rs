@@ -2,7 +2,7 @@
 //!
 //! This crate owns source ports of earcut-style polygon triangulation and
 //! spade-style Delaunay/CDT topology. The exact API uses [`Real`]
-//! directly, while [`mod@f64`] exposes boundary entry points that lift finite
+//! directly, while the optional `f64` module exposes boundary entry points that lift finite
 //! `f64` coordinates into exact hyperreal-backed values before topology is
 //! decided.
 
@@ -29,7 +29,8 @@ pub mod types;
 pub use error::{Error, Result};
 #[cfg(feature = "runtime-select")]
 pub use runtime::{
-    PolygonTriangulationAlgorithm, QualityPolicy, TriangulationOptions, triangulate_polygon,
+    PolygonTriangulationAlgorithm, PolygonTriangulationPlan, QualityPolicy, TriangulationOptions,
+    plan_polygon_triangulation, triangulate_polygon,
 };
 pub use types::{
     Constraint, ExactPoint, Point2, PolygonInput, PolygonInputFacts, Rational, Real,

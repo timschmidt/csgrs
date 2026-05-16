@@ -3,7 +3,7 @@
 use crate::error::Result;
 #[cfg(feature = "cdt")]
 use crate::polygon::{open_ring_indices, rings_from_hole_indices};
-use crate::types::{Point2, PolygonInput, TriangleIndices};
+use crate::types::{Point2, PolygonInput, PolygonInputFacts, TriangleIndices};
 
 /// Polygon triangulation algorithm requested at runtime.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -45,12 +45,70 @@ impl Default for TriangulationOptions {
     }
 }
 
+/// Resolved runtime plan for one polygon triangulation request.
+///
+/// The plan is intentionally a lightweight value rather than a prepared
+/// triangulation cache. It records the selected algorithm together with the
+/// structural polygon facts that justified selection, giving callers and future
+/// dispatch code a stable place to retain cheap exact information. Following
+/// Yap's exact-geometric-computation model, these facts are advisory scheduling
+/// metadata only; exact predicates inside the selected algorithm remain the
+/// topology certificates. See Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997).
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PolygonTriangulationPlan {
+    algorithm: PolygonTriangulationAlgorithm,
+    quality: QualityPolicy,
+    facts: PolygonInputFacts,
+}
+
+impl PolygonTriangulationPlan {
+    /// Return the algorithm selected for this input.
+    pub const fn algorithm(&self) -> PolygonTriangulationAlgorithm {
+        self.algorithm
+    }
+
+    /// Return the quality preference that participated in selection.
+    pub const fn quality(&self) -> QualityPolicy {
+        self.quality
+    }
+
+    /// Return the retained structural facts for the planned input.
+    pub const fn facts(&self) -> &PolygonInputFacts {
+        &self.facts
+    }
+}
+
+/// Resolve the runtime plan for a polygon input without executing it.
+///
+/// This is the semantic handoff point for future inexpensive structure such as
+/// convexity, monotone-ring status, duplicate/collinear cleanup counts, source
+/// grid denominator, and constraint density. Those facts belong with
+/// [`PolygonInputFacts`] or a later prepared polygon type, not inside earcut or
+/// CDT internals.
+pub fn plan_polygon_triangulation(
+    input: &PolygonInput,
+    options: TriangulationOptions,
+) -> Result<PolygonTriangulationPlan> {
+    let algorithm = resolve_algorithm_for_facts(options, input.facts())?;
+    Ok(PolygonTriangulationPlan {
+        algorithm,
+        quality: options.quality,
+        facts: input.facts().clone(),
+    })
+}
+
 /// Triangulate a polygon using runtime algorithm selection.
 pub fn triangulate_polygon(
     input: &PolygonInput,
     options: TriangulationOptions,
 ) -> Result<TriangleIndices> {
-    triangulate_polygon_points(input.vertices(), input.hole_indices(), options)
+    let plan = plan_polygon_triangulation(input, options)?;
+    triangulate_polygon_points_with_algorithm(
+        input.vertices(),
+        input.hole_indices(),
+        plan.algorithm,
+    )
 }
 
 /// Triangulate borrowed polygon buffers using runtime algorithm selection.
@@ -62,7 +120,19 @@ pub fn triangulate_polygon_points(
     #[cfg(not(any(feature = "earcut", feature = "cdt")))]
     let _ = (vertices, hole_indices);
 
-    match resolve_algorithm(options) {
+    let algorithm = resolve_algorithm(options)?;
+    triangulate_polygon_points_with_algorithm(vertices, hole_indices, algorithm)
+}
+
+fn triangulate_polygon_points_with_algorithm(
+    vertices: &[Point2],
+    hole_indices: &[usize],
+    algorithm: PolygonTriangulationAlgorithm,
+) -> Result<TriangleIndices> {
+    #[cfg(not(any(feature = "earcut", feature = "cdt")))]
+    let _ = (vertices, hole_indices);
+
+    match algorithm {
         #[cfg(feature = "earcut")]
         PolygonTriangulationAlgorithm::Earcut => crate::earcut::triangulate(vertices, hole_indices),
         #[cfg(feature = "cdt")]
@@ -119,23 +189,46 @@ fn append_ring_constraints(
     Ok(())
 }
 
-fn resolve_algorithm(options: TriangulationOptions) -> PolygonTriangulationAlgorithm {
+fn resolve_algorithm(options: TriangulationOptions) -> Result<PolygonTriangulationAlgorithm> {
     match options.algorithm {
-        PolygonTriangulationAlgorithm::Auto => auto_algorithm(options.quality),
+        PolygonTriangulationAlgorithm::Auto => resolve_auto_algorithm(options.quality, None),
         #[cfg(any(feature = "earcut", feature = "cdt"))]
-        algorithm => algorithm,
+        algorithm => Ok(algorithm),
     }
 }
 
-fn auto_algorithm(quality: QualityPolicy) -> PolygonTriangulationAlgorithm {
-    // Structural-dispatch note: `Auto` currently respects only the caller's
-    // quality preference and compile-time feature set. Once polygon
-    // normalization carries cheap facts such as hole count, convexity,
-    // duplicate/collinear removals, coordinate exact-rational kind, and
-    // constraint density, this should select the lower-cost exact algorithm:
-    // fan/earcut for convex or nearly convex simple rings, CDT for constraint
-    // heavy inputs or when triangle quality is requested.
-    match quality {
+fn resolve_algorithm_for_facts(
+    options: TriangulationOptions,
+    facts: &PolygonInputFacts,
+) -> Result<PolygonTriangulationAlgorithm> {
+    match options.algorithm {
+        PolygonTriangulationAlgorithm::Auto => resolve_auto_algorithm(options.quality, Some(facts)),
+        #[cfg(any(feature = "earcut", feature = "cdt"))]
+        algorithm => Ok(algorithm),
+    }
+}
+
+fn resolve_auto_algorithm(
+    quality: QualityPolicy,
+    facts: Option<&PolygonInputFacts>,
+) -> Result<PolygonTriangulationAlgorithm> {
+    // Structural-dispatch note: `Auto` consumes only facts already retained on
+    // `PolygonInput`; it does not probe primitive coordinates or run topology
+    // predicates early. Degenerate or unknown-zero ring edges are a conservative
+    // reason to keep the boundary-preserving earcut path when it is available,
+    // because the CDT route has to materialize every ring edge as a constraint
+    // before legalization. This is advisory scheduling in Yap's sense, not a
+    // correctness certificate; the selected algorithm still owns exact
+    // orientation and containment predicates. See Yap, "Towards Exact Geometric
+    // Computation," *Computational Geometry* 7.1-2 (1997).
+    let boundary_cleanup_preferred = facts.is_some_and(|facts| {
+        facts.known_degenerate_edge_count() > 0 || facts.unknown_edge_zero_status_count() > 0
+    });
+    let algorithm = match quality {
+        #[cfg(all(feature = "cdt", feature = "earcut"))]
+        QualityPolicy::PreferDelaunay if boundary_cleanup_preferred => {
+            PolygonTriangulationAlgorithm::Earcut
+        }
         #[cfg(feature = "cdt")]
         QualityPolicy::PreferDelaunay => PolygonTriangulationAlgorithm::ConstrainedDelaunay,
         #[cfg(feature = "earcut")]
@@ -146,5 +239,12 @@ fn auto_algorithm(quality: QualityPolicy) -> PolygonTriangulationAlgorithm {
         QualityPolicy::PreserveBoundary => PolygonTriangulationAlgorithm::ConstrainedDelaunay,
         #[allow(unreachable_patterns)]
         _ => PolygonTriangulationAlgorithm::Auto,
+    };
+    if algorithm == PolygonTriangulationAlgorithm::Auto {
+        Err(crate::Error::UnsupportedFeature {
+            feature: "compiled polygon triangulation algorithm",
+        })
+    } else {
+        Ok(algorithm)
     }
 }
