@@ -181,6 +181,19 @@ pub(crate) fn is_zero(value: &Real, policy: &CurvePolicy) -> Option<bool> {
 }
 
 pub(crate) fn compare_reals(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<Ordering> {
+    #[cfg(feature = "predicates")]
+    if !matches!(policy.numeric_mode, NumericMode::EdgePreview) {
+        // Curve parameter ordering is a topology predicate: it decides whether
+        // an intersection root lies on a segment, whether two split markers
+        // coincide, and how degenerate overlaps are classified. Route the sign
+        // of `left - right` through hyperlimit's predicate pipeline so scalar
+        // ordering has the same certified/unknown boundary as orientation.
+        // This follows Yap's exact geometric computation split between exact
+        // predicate decisions and approximate edge views; see Yap, "Towards
+        // Exact Geometric Computation," Computational Geometry 7.1-2 (1997).
+        return hyperlimit::compare_reals_with_policy(left, right, policy.predicate_policy).value();
+    }
+
     let delta = left - right;
     real_sign(&delta, policy).map(|sign| match sign {
         RealSign::Negative => Ordering::Less,

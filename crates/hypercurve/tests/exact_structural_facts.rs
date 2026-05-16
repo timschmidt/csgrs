@@ -1,6 +1,6 @@
 use hypercurve::{
-    BulgeVertex2, Classification, Contour2, CurvePolicy, CurveString2, FillRule, LineSeg2, Point2,
-    Real, Segment2, SegmentKind, SymbolicDependencyMask,
+    BulgeVertex2, Classification, Contour2, CurvePolicy, CurveString2, FillRule,
+    LineLineIntersection, LineSeg2, Point2, Real, Segment2, SegmentKind, SymbolicDependencyMask,
 };
 
 fn r(value: i32) -> Real {
@@ -154,4 +154,45 @@ fn symbolic_bulge_sign_selects_arc_orientation_exactly() {
         panic!("nonzero symbolic bulge should produce an arc");
     };
     assert!(negative.is_clockwise());
+}
+
+#[test]
+fn certified_line_parameters_keep_tiny_exact_endpoint_gap() {
+    let tiny = (Real::one() / Real::from(1_000_000_000_000_i64)).unwrap();
+    let left = LineSeg2::try_new(
+        Point2::new(Real::zero(), Real::zero()),
+        Point2::new(Real::one(), Real::zero()),
+    )
+    .unwrap();
+    let right = LineSeg2::try_new(
+        Point2::new(Real::one() + tiny.clone(), Real::zero()),
+        Point2::new(Real::from(2_i8), Real::zero()),
+    )
+    .unwrap();
+
+    assert_eq!(
+        left.intersect_line(&right, &policy()).unwrap(),
+        LineLineIntersection::None,
+        "certified parameter ordering must not collapse a tiny exact gap"
+    );
+}
+
+#[test]
+fn certified_line_parameters_retain_exact_endpoint_touch() {
+    let left = LineSeg2::try_new(
+        Point2::new(Real::zero(), Real::zero()),
+        Point2::new(Real::one(), Real::zero()),
+    )
+    .unwrap();
+    let right = LineSeg2::try_new(
+        Point2::new(Real::one(), Real::zero()),
+        Point2::new(Real::from(2_i8), Real::zero()),
+    )
+    .unwrap();
+
+    let intersection = left.intersect_line(&right, &policy()).unwrap();
+    let LineLineIntersection::Point { kind, .. } = intersection else {
+        panic!("expected a certified endpoint touch");
+    };
+    assert_eq!(kind, hypercurve::IntersectionKind::Endpoint);
 }

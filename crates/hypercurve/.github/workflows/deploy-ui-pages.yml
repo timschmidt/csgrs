@@ -22,6 +22,20 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          path: hypercurve
+
+      - name: Check out hyperreal sibling
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/hyperreal
+          path: hyperreal
+
+      - name: Check out hyperlimit sibling
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/hyperlimit
+          path: hyperlimit
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -32,8 +46,8 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: |
-            . -> target
-            examples/hypercurve_ui -> examples/hypercurve_ui/target
+            hypercurve -> hypercurve/target
+            hypercurve/examples/hypercurve_ui -> hypercurve/examples/hypercurve_ui/target
 
       - name: Install Trunk
         run: cargo install --locked trunk --version 0.21.14
@@ -50,7 +64,7 @@ jobs:
             public_url="/${{ github.event.repository.name }}/"
           fi
 
-          trunk build examples/hypercurve_ui/index.html \
+          trunk build hypercurve/examples/hypercurve_ui/index.html \
             --release \
             --dist dist \
             --public-url "${public_url}"
