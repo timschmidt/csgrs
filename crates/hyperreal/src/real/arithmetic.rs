@@ -1,8 +1,9 @@
 use crate::{
-    Computable, DomainFacts, DomainStatus, IdentityFacts, MagnitudeBits, OrderingFacts,
-    PrimitiveFacts, PrimitiveFloatStatus, Problem, Rational, RationalFacts, RationalStorageClass,
-    RealDetailedFacts, RealSign, RealStructuralFacts, StructuralComparison, StructuralKind,
-    SymbolicFacts, ZeroKnowledge, ZeroOneStatus,
+    CertifiedRealSign, Computable, DomainFacts, DomainStatus, ExpressionDegree, IdentityFacts,
+    MagnitudeBits, OrderingFacts, PrimitiveFacts, PrimitiveFloatStatus, Problem, Rational,
+    RationalFacts, RationalStorageClass, RealDetailedFacts, RealSign, RealSignCertificate,
+    RealStructuralFacts, StructuralComparison, StructuralKind, SymbolicDependencyMask,
+    SymbolicFacts, ZeroKnowledge, ZeroOneMinusOneStatus, ZeroOneStatus,
 };
 use num::ToPrimitive;
 use num::bigint::{BigInt, BigUint, Sign};
@@ -86,6 +87,17 @@ pub(crate) enum Class {
 use Class::*;
 use serde::Deserialize;
 use serde::Serialize;
+use std::cell::Cell;
+
+#[derive(Clone, Copy, Debug, Default)]
+pub(super) enum PrimitiveApproxCache {
+    #[default]
+    Empty,
+    #[cfg(feature = "cached-f32-approx")]
+    F32(Option<f32>),
+    #[cfg(feature = "cached-f64-approx")]
+    F64(Option<f64>),
+}
 
 // We can't tell whether an Irrational value is ever equal to anything
 impl PartialEq for Class {
@@ -571,8 +583,9 @@ pub(crate) mod rationals {
 }
 
 mod constants {
-    use super::{Class, ConstOffsetClass, LnAffineClass};
+    use super::{Class, ConstOffsetClass, LnAffineClass, PrimitiveApproxCache};
     use crate::{Computable, Rational, Real};
+    use std::cell::Cell;
     thread_local! {
         // These are the canonical internal constants. Public constructors clone
         // these symbolic/computable forms instead of rebuilding exact classes and
@@ -585,36 +598,42 @@ mod constants {
             class: Class::Pi,
             computable: Some(Computable::pi()),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         };
         static TAU: Real = Real {
             rational: Rational::new(2),
             class: Class::Pi,
             computable: Some(Computable::pi()),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         };
         static PI_OVER_TWO: Real = Real {
             rational: Rational::fraction(1, 2).unwrap(),
             class: Class::Pi,
             computable: Some(Computable::pi()),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         };
         static PI_OVER_THREE: Real = Real {
             rational: Rational::fraction(1, 3).unwrap(),
             class: Class::Pi,
             computable: Some(Computable::pi()),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         };
         static PI_OVER_FOUR: Real = Real {
             rational: Rational::fraction(1, 4).unwrap(),
             class: Class::Pi,
             computable: Some(Computable::pi()),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         };
         static PI_OVER_SIX: Real = Real {
             rational: Rational::fraction(1, 6).unwrap(),
             class: Class::Pi,
             computable: Some(Computable::pi()),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         };
         static HALF: Real = Real::new(Rational::fraction(1, 2).unwrap());
         static SQRT_TWO_OVER_TWO: Real = Real {
@@ -622,30 +641,35 @@ mod constants {
             class: Class::Sqrt(Rational::new(2)),
             computable: Some(Computable::sqrt_constant(2).unwrap()),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         };
         static SQRT_THREE_OVER_TWO: Real = Real {
             rational: Rational::fraction(1, 2).unwrap(),
             class: Class::Sqrt(Rational::new(3)),
             computable: Some(Computable::sqrt_constant(3).unwrap()),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         };
         static SQRT_THREE: Real = Real {
             rational: Rational::one(),
             class: Class::Sqrt(Rational::new(3)),
             computable: Some(Computable::sqrt_constant(3).unwrap()),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         };
         static SQRT_THREE_OVER_THREE: Real = Real {
             rational: Rational::fraction(1, 3).unwrap(),
             class: Class::Sqrt(Rational::new(3)),
             computable: Some(Computable::sqrt_constant(3).unwrap()),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         };
         static SQRT_SIX_OVER_THREE: Real = Real {
             rational: Rational::fraction(1, 3).unwrap(),
             class: Class::Sqrt(Rational::new(6)),
             computable: Some(Computable::sqrt_rational(Rational::new(6))),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         };
         static PI_SQRT_TWO: Real = Real {
             rational: Rational::one(),
@@ -655,48 +679,56 @@ mod constants {
                 Computable::sqrt_constant(2).unwrap(),
             )),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         };
         static LN2: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(2)),
             computable: Some(Computable::ln_constant(2).unwrap()),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         };
         static LN3: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(3)),
             computable: Some(Computable::ln_constant(3).unwrap()),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         };
         static HALF_LN3: Real = Real {
             rational: Rational::fraction(1, 2).unwrap(),
             class: Class::Ln(Rational::new(3)),
             computable: Some(Computable::ln_constant(3).unwrap()),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         };
         static LN5: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(5)),
             computable: Some(Computable::ln_constant(5).unwrap()),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         };
         static LN6: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(6)),
             computable: Some(Computable::ln_constant(6).unwrap()),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         };
         static LN7: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(7)),
             computable: Some(Computable::ln_constant(7).unwrap()),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         };
         static LN10: Real = Real {
             rational: Rational::one(),
             class: Class::Ln(Rational::new(10)),
             computable: Some(Computable::ln_constant(10).unwrap()),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         };
         static PI_MINUS_THREE: Real = Real {
             rational: Rational::one(),
@@ -710,6 +742,7 @@ mod constants {
                 Computable::rational(Rational::new(-3)),
             )),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         };
         static ONE_PLUS_LN2: Real = Real {
             rational: Rational::one(),
@@ -722,12 +755,14 @@ mod constants {
                 Computable::ln_constant(2).unwrap(),
             )),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         };
         static E: Real = Real {
             rational: Rational::one(),
             class: Class::Exp(Rational::one()),
             computable: Some(Computable::e_constant()),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         };
     }
 
@@ -795,6 +830,7 @@ mod constants {
                 class: Class::Sqrt(Rational::new(2)),
                 computable: Some(Computable::sqrt_constant(2).unwrap()),
                 signal: None,
+                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
             }),
             3 => Some(sqrt_three()),
             _ => None,
@@ -864,7 +900,7 @@ pub type Signal = Arc<AtomicBool>;
 /// and a [`Rational`].
 ///
 /// Internally the rational scale is kept beside a lightweight symbolic
-/// [`Class`] certificate. Many hot operations inspect that certificate before
+/// class certificate. Many hot operations inspect that certificate before
 /// folding into the generic computable graph; do not eagerly combine the fields
 /// unless a generic kernel really needs it.
 ///
@@ -907,6 +943,8 @@ pub struct Real {
     pub(super) computable: Option<Computable>,
     #[serde(skip)]
     pub(super) signal: Option<Signal>,
+    #[serde(skip, default)]
+    pub(super) primitive_approx_cache: Cell<PrimitiveApproxCache>,
 }
 
 impl Clone for Real {
@@ -934,6 +972,7 @@ impl Clone for Real {
             class: self.class.clone(),
             computable,
             signal: self.signal.clone(),
+            primitive_approx_cache: Cell::new(self.primitive_approx_cache.get()),
         }
     }
 }
@@ -945,6 +984,7 @@ impl Real {
             class: One,
             computable: None,
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         }
     }
 
@@ -970,6 +1010,7 @@ impl Real {
     /// Aborted calculations may have incorrect results.
     pub fn abort(&mut self, s: Signal) {
         self.signal = Some(s.clone());
+        self.primitive_approx_cache.set(PrimitiveApproxCache::Empty);
         if let Some(computable) = &mut self.computable {
             computable.abort(s);
         }
@@ -1078,6 +1119,44 @@ impl Real {
         self.has_zero_scale()
     }
 
+    /// Returns whether this value is structurally known to be exactly one.
+    #[inline]
+    pub fn definitely_one(&self) -> bool {
+        crate::trace_dispatch!("real", "definitely_one", "identity-facts");
+        matches!(
+            self.detailed_facts().identity.zero_or_one,
+            ZeroOneStatus::One
+        )
+    }
+
+    /// Classifies the value as exact zero or exact one when structural facts prove it.
+    ///
+    /// Returns `Some(false)` for zero, `Some(true)` for one, and `None` for
+    /// every other value or values whose identity status cannot be decided
+    /// without refinement.
+    #[inline]
+    pub fn zero_or_one(&self) -> Option<bool> {
+        crate::trace_dispatch!("real", "zero_or_one", "identity-facts");
+        match self.detailed_facts().identity.zero_or_one {
+            ZeroOneStatus::Zero => Some(false),
+            ZeroOneStatus::One => Some(true),
+            ZeroOneStatus::NeitherOrUnknown => None,
+        }
+    }
+
+    /// Classifies this value as exact zero, one, or minus one when structural
+    /// facts prove it.
+    ///
+    /// This combined query serves hot dispatch paths that need all three
+    /// identity cases, such as sparse vectors, homogeneous transforms, and
+    /// signed-permutation matrices. It performs no approximation or refinement;
+    /// callers get only stored exact scalar structure.
+    #[inline]
+    pub fn zero_one_or_minus_one(&self) -> ZeroOneMinusOneStatus {
+        crate::trace_dispatch!("real", "zero_one_or_minus_one", "identity-facts");
+        self.detailed_facts().identity.zero_one_or_minus_one
+    }
+
     /// Return this value as an owned exact rational when that is structurally known.
     #[inline]
     pub fn exact_rational(&self) -> Option<Rational> {
@@ -1126,6 +1205,7 @@ impl Real {
             class: self.class.clone(),
             computable: self.computable.clone(),
             signal: self.signal.clone(),
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         }
     }
 
@@ -1139,6 +1219,20 @@ impl Real {
     #[inline]
     pub fn is_exact_dyadic_rational(&self) -> bool {
         matches!(self.class, One) && self.rational.is_dyadic()
+    }
+
+    /// Return exact-rational facts for a borrowed set of values.
+    ///
+    /// This is the scalar-layer entry point for object crates that want to
+    /// carry common-scale eligibility without inspecting rational internals.
+    /// The split follows Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997): scalar representation facts are
+    /// produced here, while geometry crates decide how long to retain them.
+    pub fn exact_set_facts<'a, I>(values: I) -> crate::real::RealExactSetFacts
+    where
+        I: IntoIterator<Item = &'a Real>,
+    {
+        crate::real::RealExactSetFacts::from_reals(values)
     }
 
     /// Return a fused sum of signed exact-rational products.
@@ -1182,6 +1276,65 @@ impl Real {
         let rational_terms = terms.map(|term| term.map(|factor| &factor.rational));
         crate::trace_dispatch!("real", "product_sum", "exact-rational-known-shared-denom");
         Real::new(Rational::signed_product_sum(positive_terms, rational_terms))
+    }
+
+    /// Return a fixed-size signed sum of products while preserving its shape.
+    ///
+    /// This is the general expression-layer counterpart to the matrix dot
+    /// helpers. It first attempts the exact rational reducer, which keeps one
+    /// shared denominator and performs one final canonicalization for the whole
+    /// determinant/cofactor polynomial. If any factor is symbolic or computable,
+    /// it falls back to a bounded expression tree that still prunes exact-zero
+    /// factors and applies exact-rational scales directly.
+    ///
+    /// The API is intentionally fixed-arity and caller-directed rather than a
+    /// general symbolic optimizer. Predicate, matrix, and solver crates should
+    /// pass known geometric polynomials here before expanding them. This is the
+    /// representation separation recommended by Yap, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7.1-2 (1997). The exact-rational
+    /// route uses the same delayed-normalization strategy as Bareiss,
+    /// "Sylvester's Identity and Multistep Integer-Preserving Gaussian
+    /// Elimination," *Mathematics of Computation* 22.103 (1968).
+    pub fn signed_product_sum<const TERMS: usize, const FACTORS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Real; FACTORS]; TERMS],
+    ) -> Real {
+        if let Some(sum) = Self::exact_rational_signed_product_sum(positive_terms, terms) {
+            crate::trace_dispatch!("real", "product_sum", "fixed-exact-rational");
+            return sum;
+        }
+
+        crate::trace_dispatch!("real", "product_sum", "fixed-real-tree");
+        Self::active_signed_product_sum(positive_terms, terms)
+    }
+
+    /// Return a fixed-size signed sum of products whose terms are already active.
+    ///
+    /// Callers use this after object-level facts have already removed
+    /// structurally zero terms. Exact-rational inputs still go through the
+    /// whole-polynomial reducer; mixed symbolic inputs keep rational factors as
+    /// scales and avoid introducing unrelated optimization passes.
+    pub fn active_signed_product_sum<const TERMS: usize, const FACTORS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Real; FACTORS]; TERMS],
+    ) -> Real {
+        if let Some(sum) = Self::exact_rational_signed_product_sum(positive_terms, terms) {
+            crate::trace_dispatch!("real", "product_sum", "active-fixed-exact-rational");
+            return sum;
+        }
+
+        let mut total = None;
+        for i in 0..TERMS {
+            let Some(product) = Self::product_term(terms[i]) else {
+                continue;
+            };
+            let signed = if positive_terms[i] { product } else { -product };
+            total = Some(match total.take() {
+                Some(total) => &total + &signed,
+                None => signed,
+            });
+        }
+        total.unwrap_or_else(Real::zero)
     }
 
     /// Conservatively inspect public structural facts about this value.
@@ -1257,6 +1410,11 @@ impl Real {
     /// `structural_facts`, plus bit-length and denominator-shape checks. Keep
     /// expensive decomposition out of this query so solvers and matrix kernels
     /// can call it speculatively.
+    ///
+    /// Structural-dispatch note: this fact set is the right boundary for future
+    /// algorithm selection. Keep additions descriptive, such as integer grid,
+    /// dyadic scale, algebraic class, or magnitude envelope, so higher crates
+    /// can choose faster exact kernels without learning `Real` internals.
     #[inline]
     pub fn detailed_facts(&self) -> RealDetailedFacts {
         let base = self.structural_facts();
@@ -1281,6 +1439,15 @@ impl Real {
             } else {
                 ZeroOneStatus::NeitherOrUnknown
             },
+            zero_one_or_minus_one: if self.rational.sign() == Sign::NoSign {
+                ZeroOneMinusOneStatus::Zero
+            } else if exact_rational && self.rational.is_one() {
+                ZeroOneMinusOneStatus::One
+            } else if exact_rational && self.rational.is_minus_one() {
+                ZeroOneMinusOneStatus::MinusOne
+            } else {
+                ZeroOneMinusOneStatus::NeitherOrUnknown
+            },
         };
         let rational = if exact_rational {
             self.rational.detailed_rational_facts()
@@ -1299,35 +1466,25 @@ impl Real {
         };
         let primitive = primitive_facts_from_base(&base);
         let domains = DomainFacts {
+            reciprocal: domain_from_zero_nonzero(base.zero),
             sqrt: domain_from_sign_nonnegative(base.sign),
             log: domain_from_sign_positive(base.sign),
+            asin_acos: domain_abs_cmp_one(abs_cmp_one, true),
             unit_interval_closed: domain_abs_cmp_one(abs_cmp_one, true),
             unit_interval_open: domain_abs_cmp_one(abs_cmp_one, false),
             acosh: domain_cmp_one_ge(cmp_one),
+            atanh: domain_abs_cmp_one(abs_cmp_one, false),
         };
+        let dependencies = symbolic_dependencies_for_class(&self.class);
         let symbolic = SymbolicFacts {
             kind: structural_kind_for_class(&self.class),
+            degree: symbolic_degree_for_class(&self.class),
+            dependencies,
             has_sqrt_factor: matches!(self.class, Sqrt(_) | PiSqrt(_) | ConstProductSqrt(_)),
-            has_pi_factor: matches!(
-                self.class,
-                Pi | PiPow(_)
-                    | PiInv
-                    | PiExp(_)
-                    | PiInvExp(_)
-                    | PiSqrt(_)
-                    | ConstProduct(_)
-                    | ConstOffset(_)
-                    | ConstProductSqrt(_)
-            ),
-            has_exp_factor: matches!(
-                self.class,
-                Exp(_)
-                    | PiExp(_)
-                    | PiInvExp(_)
-                    | ConstProduct(_)
-                    | ConstOffset(_)
-                    | ConstProductSqrt(_)
-            ),
+            has_pi_factor: dependencies.contains(SymbolicDependencyMask::PI),
+            has_exp_factor: dependencies.contains(SymbolicDependencyMask::EXP),
+            has_log_factor: dependencies.contains(SymbolicDependencyMask::LOG),
+            has_trig_factor: dependencies.contains(SymbolicDependencyMask::TRIG),
             computable_required: self.computable.is_some() || matches!(self.class, Irrational),
         };
 
@@ -1357,6 +1514,55 @@ impl Real {
         }
     }
 
+    /// Return structural domain certificates for common unary operations.
+    ///
+    /// This is a convenience accessor around [`Real::detailed_facts`]. It does
+    /// not approximate or refine the value. Domain facts are conservative:
+    /// `Valid` and `Invalid` are certificates, while `Unknown` means callers
+    /// need an exact predicate, a symbolic rewrite, or an explicit refinement
+    /// policy. Keeping these decisions visible follows Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    #[inline]
+    pub fn domain_facts(&self) -> DomainFacts {
+        self.detailed_facts().domains
+    }
+
+    /// Return whether reciprocal/inverse is structurally in-domain.
+    #[inline]
+    pub fn reciprocal_domain(&self) -> DomainStatus {
+        self.domain_facts().reciprocal
+    }
+
+    /// Return whether square root is structurally in-domain.
+    #[inline]
+    pub fn sqrt_domain(&self) -> DomainStatus {
+        self.domain_facts().sqrt
+    }
+
+    /// Return whether natural logarithm is structurally in-domain.
+    #[inline]
+    pub fn log_domain(&self) -> DomainStatus {
+        self.domain_facts().log
+    }
+
+    /// Return whether asin/acos are structurally in-domain.
+    #[inline]
+    pub fn asin_acos_domain(&self) -> DomainStatus {
+        self.domain_facts().asin_acos
+    }
+
+    /// Return whether acosh is structurally in-domain.
+    #[inline]
+    pub fn acosh_domain(&self) -> DomainStatus {
+        self.domain_facts().acosh
+    }
+
+    /// Return whether atanh is structurally in-domain.
+    #[inline]
+    pub fn atanh_domain(&self) -> DomainStatus {
+        self.domain_facts().atanh
+    }
+
     /// Conservatively report whether structural inspection proves this value is zero.
     #[inline]
     pub fn zero_status(&self) -> ZeroKnowledge {
@@ -1383,21 +1589,54 @@ impl Real {
     /// Try to prove the sign without refining past `min_precision`.
     #[inline]
     pub fn refine_sign_until(&self, min_precision: i32) -> Option<RealSign> {
+        self.certified_sign_until(min_precision).sign()
+    }
+
+    /// Try to prove the sign and report the proof route used.
+    ///
+    /// This method is the certificate-bearing counterpart to
+    /// [`Real::refine_sign_until`]. It never returns a primitive-float
+    /// approximation and must not be interpreted as a tolerance policy. A known
+    /// result is an exact sign proof from structural facts, exact zero scale, or
+    /// bounded exact-real refinement. This matches Yap's EGC requirement that
+    /// combinatorial predicates consume certified facts or explicit
+    /// uncertainty, and follows the exact-real refinement model of Boehm et al.,
+    /// "Exact Real Arithmetic: A Case Study in Higher Order Programming,"
+    /// *Proceedings of the 1998 ACM SIGPLAN International Conference on
+    /// Functional Programming*.
+    #[inline]
+    pub fn certified_sign_until(&self, min_precision: i32) -> CertifiedRealSign {
         let facts = self.structural_facts();
         if let Some(sign) = facts.sign {
-            crate::trace_dispatch!("real", "refine_sign_until", "structural-facts");
-            return Some(sign);
+            crate::trace_dispatch!("real", "certified_sign_until", "structural-facts");
+            return CertifiedRealSign::Known {
+                sign,
+                certificate: RealSignCertificate::StructuralFacts,
+            };
         }
         if self.rational.sign() == Sign::NoSign {
-            crate::trace_dispatch!("real", "refine_sign_until", "zero-scale");
-            return Some(RealSign::Zero);
+            crate::trace_dispatch!("real", "certified_sign_until", "zero-scale");
+            return CertifiedRealSign::Known {
+                sign: RealSign::Zero,
+                certificate: RealSignCertificate::ExactZeroScale,
+            };
         }
-        crate::trace_dispatch!("real", "refine_sign_until", "computable-refine");
-        let computable_sign = self.computable_ref().sign_until(min_precision)?;
-        multiply_public_sign(
+        crate::trace_dispatch!("real", "certified_sign_until", "computable-refine");
+        let Some(computable_sign) = self.computable_ref().sign_until(min_precision) else {
+            crate::trace_dispatch!("real", "certified_sign_until", "unknown");
+            return CertifiedRealSign::Unknown { min_precision };
+        };
+        let Some(sign) = multiply_public_sign(
             Some(real_sign_from_num(self.rational.sign())),
             Some(computable_sign),
-        )
+        ) else {
+            crate::trace_dispatch!("real", "certified_sign_until", "scale-unknown");
+            return CertifiedRealSign::Unknown { min_precision };
+        };
+        CertifiedRealSign::Known {
+            sign,
+            certificate: RealSignCertificate::BoundedRefinement { min_precision },
+        }
     }
 
     /// Return the three-lane dot product of borrowed reals.
@@ -1406,7 +1645,7 @@ impl Real {
     /// single final canonicalization. This is the vector/matrix analogue of the
     /// fraction-delaying exact linear-algebra algorithms discussed around
     /// Bareiss elimination and common factors in
-    /// https://link.springer.com/article/10.1007/s11786-020-00495-9. The
+    /// <https://link.springer.com/article/10.1007/s11786-020-00495-9>. The
     /// fallback intentionally preserves the previous product-then-pairwise-add
     /// tree for non-rational symbolic values; sharing that path with the
     /// rational fast path regressed expression-heavy scalar rows. Mixed
@@ -1787,6 +2026,29 @@ impl Real {
     }
 
     #[inline]
+    fn product_term<const FACTORS: usize>(factors: [&Real; FACTORS]) -> Option<Real> {
+        let mut product = None::<Real>;
+        for factor in factors {
+            if factor.rational.sign() == Sign::NoSign {
+                return None;
+            }
+
+            product = Some(match product.take() {
+                None => factor.clone(),
+                Some(product) if matches!(factor.class, One) => {
+                    product.scaled_by_rational(&factor.rational)
+                }
+                Some(product) if matches!(product.class, One) => {
+                    factor.scaled_by_rational(&product.rational)
+                }
+                Some(product) => &product * factor,
+            });
+        }
+
+        product
+    }
+
+    #[inline]
     fn sum_dot3_terms(p0: Option<Real>, p1: Option<Real>, p2: Option<Real>) -> Real {
         match (p0, p1, p2) {
             (None, None, None) => Real::zero(),
@@ -1881,6 +2143,7 @@ impl Real {
             class: Irrational,
             computable: Some(computable),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         }
     }
 
@@ -1890,6 +2153,7 @@ impl Real {
             class: Irrational,
             computable: Some(computable),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         }
     }
 
@@ -1954,6 +2218,7 @@ impl Real {
                 class: SinPi(reduced),
                 computable: Some(computable),
                 signal: None,
+                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
             }
         } else {
             Self {
@@ -1961,6 +2226,7 @@ impl Real {
                 class: SinPi(reduced),
                 computable: Some(computable),
                 signal: None,
+                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
             }
         }
     }
@@ -1985,6 +2251,7 @@ impl Real {
                         class: One,
                         computable: None,
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     });
                 }
                 Pi => {
@@ -1994,6 +2261,7 @@ impl Real {
                         class: PiInv,
                         computable: Some(Computable::pi_inverse_constant()),
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     });
                 }
                 PiInv => {
@@ -2003,6 +2271,7 @@ impl Real {
                         class: Pi,
                         computable: Some(Computable::pi()),
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     });
                 }
                 Sqrt(sqrt) => {
@@ -2023,6 +2292,7 @@ impl Real {
                             class: self.class,
                             computable: self.computable,
                             signal: None,
+                            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                         });
                     }
                 }
@@ -2044,6 +2314,7 @@ impl Real {
                         class,
                         computable: Some(computable),
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     });
                 }
                 _ => {}
@@ -2062,6 +2333,7 @@ impl Real {
                     class: One,
                     computable: None,
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 });
             }
             Sqrt(sqrt) => {
@@ -2087,6 +2359,7 @@ impl Real {
                         class: self.class,
                         computable: self.computable,
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     });
                 }
             }
@@ -2099,6 +2372,7 @@ impl Real {
                     class: PiInv,
                     computable: Some(Computable::pi_inverse_constant()),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 });
             }
             PiInv => {
@@ -2110,6 +2384,7 @@ impl Real {
                     class: Pi,
                     computable: Some(Computable::pi()),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 });
             }
             Exp(exp) => {
@@ -2121,6 +2396,7 @@ impl Real {
                     class: Exp(exp.clone()),
                     computable: Some(Computable::exp_rational(exp)),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 });
             }
             PiExp(exp) => {
@@ -2132,6 +2408,7 @@ impl Real {
                     class: PiInvExp(exp.clone().neg()),
                     computable: Some(self.computable_clone().inverse()),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 });
             }
             PiInvExp(exp) => {
@@ -2142,6 +2419,7 @@ impl Real {
                     class: PiExp(exp.clone().neg()),
                     computable: Some(self.computable_clone().inverse()),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 });
             }
             _ => (),
@@ -2169,6 +2447,7 @@ impl Real {
                 class,
                 computable: Some(computable),
                 signal: None,
+                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
             });
         }
         if let Some((pi_power, exp_power)) = self.class.const_product_parts() {
@@ -2182,6 +2461,7 @@ impl Real {
                 class,
                 computable: Some(computable),
                 signal: None,
+                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
             });
         }
         crate::trace_dispatch!("real", "inverse", "generic");
@@ -2190,6 +2470,7 @@ impl Real {
             class: Irrational,
             computable: Some(Computable::inverse(self.computable_clone())),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         })
     }
 
@@ -2204,6 +2485,7 @@ impl Real {
                         class: One,
                         computable: None,
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     });
                 }
                 Pi => {
@@ -2213,6 +2495,7 @@ impl Real {
                         class: PiInv,
                         computable: Some(Computable::pi_inverse_constant()),
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     });
                 }
                 PiInv => {
@@ -2222,6 +2505,7 @@ impl Real {
                         class: Pi,
                         computable: Some(Computable::pi()),
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     });
                 }
                 Sqrt(sqrt) => {
@@ -2242,6 +2526,7 @@ impl Real {
                             class: self.class.clone(),
                             computable: self.computable.clone(),
                             signal: None,
+                            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                         });
                     }
                 }
@@ -2263,6 +2548,7 @@ impl Real {
                         class,
                         computable: Some(computable),
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     });
                 }
                 _ => {}
@@ -2298,6 +2584,7 @@ impl Real {
                         class: self.class.clone(),
                         computable: self.computable.clone(),
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     });
                 }
                 crate::trace_dispatch!("real", "inverse_ref", "sqrt-generic");
@@ -2306,6 +2593,7 @@ impl Real {
                     class: Irrational,
                     computable: Some(Computable::inverse(self.computable_clone())),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 })
             }
             Pi => {
@@ -2317,6 +2605,7 @@ impl Real {
                     class: PiInv,
                     computable: Some(Computable::pi_inverse_constant()),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 })
             }
             PiInv => {
@@ -2326,6 +2615,7 @@ impl Real {
                     class: Pi,
                     computable: Some(Computable::pi()),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 })
             }
             Exp(exp) => {
@@ -2338,6 +2628,7 @@ impl Real {
                     class: Exp(exp.clone()),
                     computable: Some(Computable::exp_rational(exp)),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 })
             }
             PiExp(exp) => {
@@ -2347,6 +2638,7 @@ impl Real {
                     class: PiInvExp(exp.clone().neg()),
                     computable: Some(self.computable_clone().inverse()),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 })
             }
             PiInvExp(exp) => {
@@ -2356,6 +2648,7 @@ impl Real {
                     class: PiExp(exp.clone().neg()),
                     computable: Some(self.computable_clone().inverse()),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 })
             }
             _ => {
@@ -2380,6 +2673,7 @@ impl Real {
                         class,
                         computable: Some(computable),
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     });
                 }
                 if let Some((pi_power, exp_power)) = self.class.const_product_parts() {
@@ -2392,6 +2686,7 @@ impl Real {
                         class,
                         computable: Some(computable),
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     });
                 }
                 crate::trace_dispatch!("real", "inverse_ref", "generic");
@@ -2400,6 +2695,7 @@ impl Real {
                     class: Irrational,
                     computable: Some(Computable::inverse(self.computable_clone())),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 })
             }
         }
@@ -2430,6 +2726,7 @@ impl Real {
                         class: One,
                         computable: None,
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     });
                 } else if !square.is_one()
                     && let Some(shared) = rest.to_integer_i64().and_then(constants::sqrt_constant)
@@ -2445,6 +2742,7 @@ impl Real {
                         class: shared.class,
                         computable: shared.computable,
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     });
                 } else {
                     crate::trace_dispatch!("real", "sqrt", "rational-sqrt-special-form");
@@ -2453,6 +2751,7 @@ impl Real {
                         class: Sqrt(rest.clone()),
                         computable: Some(Computable::sqrt_rational(rest)),
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     });
                 }
             }
@@ -2468,6 +2767,7 @@ impl Real {
                         class: Irrational,
                         computable: Some(Computable::sqrt(self.into_computable())),
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     });
                 }
             }
@@ -2484,6 +2784,7 @@ impl Real {
                         class: Exp(exp.clone()),
                         computable: Some(Computable::exp_rational(exp)),
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     });
                 }
             }
@@ -2509,6 +2810,7 @@ impl Real {
                     class: Exp(self.rational.clone()),
                     computable: Some(Computable::exp_rational(self.rational)),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 });
             }
             Ln(ln) => {
@@ -2520,6 +2822,7 @@ impl Real {
                         class: One,
                         computable: None,
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     });
                 }
             }
@@ -2572,6 +2875,7 @@ impl Real {
             class: Log10(r),
             computable: Some(computable),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         })
     }
 
@@ -2691,6 +2995,7 @@ impl Real {
                     class: Ln(inv),
                     computable: Some(Computable::ln(new)),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 })
             }
             std::cmp::Ordering::Equal => {
@@ -2710,6 +3015,7 @@ impl Real {
                     class: Ln(r),
                     computable: Some(Computable::ln(new)),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 })
             }
         }
@@ -2738,6 +3044,7 @@ impl Real {
             class,
             computable: Some(computable),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         })
     }
 
@@ -2758,6 +3065,7 @@ impl Real {
                         class: One,
                         computable: None,
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     });
                 }
                 if exp == &*rationals::ONE && self.rational == *rationals::TWO {
@@ -2918,6 +3226,7 @@ impl Real {
                             class: TanPi(n),
                             computable: Some(computable),
                             signal: None,
+                            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                         });
                     } else {
                         return Ok(Self {
@@ -2925,6 +3234,7 @@ impl Real {
                             class: TanPi(n),
                             computable: Some(computable),
                             signal: None,
+                            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                         });
                     }
                 }
@@ -3545,6 +3855,7 @@ impl Real {
                     class: Irrational,
                     computable: Some(value.ln().multiply(exp).exp()),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 })
             }
             Sign::Minus => {
@@ -3557,6 +3868,7 @@ impl Real {
                         class: Irrational,
                         computable: Some(value.ln().multiply(exp).exp().negate()),
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     })
                 } else {
                     Ok(Self {
@@ -3564,6 +3876,7 @@ impl Real {
                         class: Irrational,
                         computable: Some(value.ln().multiply(exp).exp()),
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     })
                 }
             }
@@ -3607,6 +3920,7 @@ impl Real {
                         class: One,
                         computable: None,
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     });
                 }
                 Sqrt(sqrt) => 'quick: {
@@ -3623,6 +3937,7 @@ impl Real {
                             class: Sqrt(sqrt.clone()),
                             computable: self.computable,
                             signal: None,
+                            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                         };
                         crate::trace_dispatch!("real", "powi", "sqrt-odd-special-form");
                         return Ok(n);
@@ -3643,6 +3958,7 @@ impl Real {
                             class: Irrational,
                             computable: Some(computable),
                             signal: None,
+                            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                         });
                     }
                 }
@@ -3693,6 +4009,7 @@ impl Real {
                     class: Irrational,
                     computable: Some(value.ln().multiply(exp).exp()),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 })
             }
         }
@@ -3806,6 +4123,14 @@ fn domain_from_sign_positive(sign: Option<RealSign>) -> DomainStatus {
     }
 }
 
+fn domain_from_zero_nonzero(zero: ZeroKnowledge) -> DomainStatus {
+    match zero {
+        ZeroKnowledge::NonZero => DomainStatus::Valid,
+        ZeroKnowledge::Zero => DomainStatus::Invalid,
+        ZeroKnowledge::Unknown => DomainStatus::Unknown,
+    }
+}
+
 fn domain_abs_cmp_one(comparison: StructuralComparison, closed: bool) -> DomainStatus {
     match (comparison, closed) {
         (StructuralComparison::Less, _) => DomainStatus::Valid,
@@ -3881,6 +4206,44 @@ fn structural_kind_for_class(class: &Class) -> StructuralKind {
         ConstProduct(_) | ConstOffset(_) | ConstProductSqrt(_) => StructuralKind::ProductConstant,
         Irrational => StructuralKind::ComputableOpaque,
     }
+}
+
+fn symbolic_degree_for_class(class: &Class) -> ExpressionDegree {
+    match class {
+        Irrational => ExpressionDegree::Unknown,
+        One | Pi | PiPow(_) | PiInv | PiExp(_) | PiInvExp(_) | PiSqrt(_) | ConstProduct(_)
+        | ConstOffset(_) | ConstProductSqrt(_) | Sqrt(_) | Exp(_) | Ln(_) | LnAffine(_)
+        | LnProduct(_) | Log10(_) | SinPi(_) | TanPi(_) => ExpressionDegree::Constant,
+    }
+}
+
+fn symbolic_dependencies_for_class(class: &Class) -> SymbolicDependencyMask {
+    match class {
+        One => SymbolicDependencyMask::NONE,
+        Pi | PiPow(_) | PiInv => SymbolicDependencyMask::PI,
+        Exp(_) => SymbolicDependencyMask::EXP,
+        PiExp(_) | PiInvExp(_) => SymbolicDependencyMask::PI.union(SymbolicDependencyMask::EXP),
+        PiSqrt(_) => SymbolicDependencyMask::PI.union(SymbolicDependencyMask::SQRT),
+        ConstProduct(product) => pi_exp_dependency_mask(product.pi_power, &product.exp_power),
+        ConstOffset(offset) => pi_exp_dependency_mask(offset.pi_power, &offset.exp_power),
+        ConstProductSqrt(product) => pi_exp_dependency_mask(product.pi_power, &product.exp_power)
+            .union(SymbolicDependencyMask::SQRT),
+        Sqrt(_) => SymbolicDependencyMask::SQRT,
+        Ln(_) | LnAffine(_) | LnProduct(_) | Log10(_) => SymbolicDependencyMask::LOG,
+        SinPi(_) | TanPi(_) => SymbolicDependencyMask::TRIG.union(SymbolicDependencyMask::PI),
+        Irrational => SymbolicDependencyMask::OPAQUE,
+    }
+}
+
+fn pi_exp_dependency_mask(pi_power: i16, exp_power: &Rational) -> SymbolicDependencyMask {
+    let mut mask = SymbolicDependencyMask::NONE;
+    if pi_power != 0 {
+        mask = mask.union(SymbolicDependencyMask::PI);
+    }
+    if exp_power.sign() != Sign::NoSign {
+        mask = mask.union(SymbolicDependencyMask::EXP);
+    }
+    mask
 }
 
 fn facts_from_rational(rational: &Rational, exact_rational: bool) -> RealStructuralFacts {
@@ -3985,6 +4348,7 @@ impl std::str::FromStr for Real {
             class: One,
             computable: None,
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         })
     }
 }
@@ -4030,6 +4394,7 @@ impl Real {
             class,
             computable: Some(computable),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         })
     }
 }
@@ -4054,6 +4419,7 @@ impl<T: AsRef<Real>> Add<T> for &Real {
                 class: self.class.clone(),
                 computable: self.computable.clone(),
                 signal: self.signal.clone(),
+                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
             };
         }
         if self.has_zero_scale() {
@@ -4103,6 +4469,7 @@ impl<T: AsRef<Real>> Add<T> for &Real {
             class: Irrational,
             computable: Some(computable),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         }
     }
 }
@@ -4121,6 +4488,7 @@ impl Neg for Real {
     fn neg(self) -> Self {
         Self {
             rational: -self.rational,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
             ..self
         }
     }
@@ -4132,6 +4500,7 @@ impl Neg for &Real {
     fn neg(self) -> Self::Output {
         let mut ret = self.clone();
         ret.rational = -ret.rational;
+        ret.primitive_approx_cache.set(PrimitiveApproxCache::Empty);
         ret
     }
 }
@@ -4167,6 +4536,7 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
                 class: self.class.clone(),
                 computable: self.computable.clone(),
                 signal: self.signal.clone(),
+                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
             };
         }
         if other.has_zero_scale() {
@@ -4213,6 +4583,7 @@ impl<T: AsRef<Real>> Sub<T> for &Real {
             class: Irrational,
             computable: Some(computable),
             signal: None,
+            primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
         }
     }
 }
@@ -4237,6 +4608,7 @@ impl Real {
                 class: One,
                 computable: None,
                 signal: None,
+                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
             }
         } else if matches!(
             (x.to_integer_i64(), y.to_integer_i64()),
@@ -4252,6 +4624,7 @@ impl Real {
                 class: Sqrt(rationals::SIX.clone()),
                 computable: Some(Computable::sqrt_rational(rationals::SIX.clone())),
                 signal: None,
+                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
             }
         } else {
             let product = x * y;
@@ -4261,6 +4634,7 @@ impl Real {
                     class: One,
                     computable: None,
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 };
             }
             let (a, b) = product.extract_square_reduced();
@@ -4272,6 +4646,7 @@ impl Real {
                     class: One,
                     computable: None,
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 };
             }
             Self {
@@ -4279,6 +4654,7 @@ impl Real {
                 class: Sqrt(b.clone()),
                 computable: Some(Computable::sqrt_rational(b)),
                 signal: None,
+                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
             }
         }
     }
@@ -4321,6 +4697,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     class,
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 }
             }
             (Pi, Pi) => {
@@ -4333,6 +4710,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     class,
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 }
             }
             (PiPow(power), Pi) | (Pi, PiPow(power)) => {
@@ -4348,6 +4726,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                             other.computable_clone(),
                         )),
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     };
                 };
                 let (class, computable) = Class::make_pi_power(power);
@@ -4357,6 +4736,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     class,
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 }
             }
             (PiPow(left), PiPow(right)) => {
@@ -4372,6 +4752,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                             other.computable_clone(),
                         )),
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     };
                 };
                 let (class, computable) = Class::make_pi_power(power);
@@ -4381,6 +4762,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     class,
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 }
             }
             (Pi, Exp(r)) | (Exp(r), Pi) => {
@@ -4393,6 +4775,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     class,
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 }
             }
             (PiPow(power), Exp(exp)) | (Exp(exp), PiPow(power)) => {
@@ -4405,6 +4788,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     class,
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 }
             }
             (PiExp(r), Exp(s)) | (Exp(s), PiExp(r)) => {
@@ -4417,6 +4801,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     class,
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 }
             }
             (ConstProduct(product), Exp(exp)) | (Exp(exp), ConstProduct(product)) => {
@@ -4429,6 +4814,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     class,
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 }
             }
             (ConstProduct(product), Pi) | (Pi, ConstProduct(product)) => {
@@ -4444,6 +4830,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                             other.computable_clone(),
                         )),
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     };
                 };
                 let (class, computable) =
@@ -4454,6 +4841,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     class,
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 }
             }
             (ConstProduct(product), PiPow(power)) | (PiPow(power), ConstProduct(product)) => {
@@ -4469,6 +4857,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                             other.computable_clone(),
                         )),
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     };
                 };
                 let (class, computable) =
@@ -4479,6 +4868,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     class,
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 }
             }
             (ConstProduct(left), ConstProduct(right)) => {
@@ -4494,6 +4884,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                             other.computable_clone(),
                         )),
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     };
                 };
                 let (class, computable) =
@@ -4504,6 +4895,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     class,
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 }
             }
             (Pi, Sqrt(r)) | (Sqrt(r), Pi) => {
@@ -4516,6 +4908,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     class,
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 }
             }
             (Exp(exp), Sqrt(r)) | (Sqrt(r), Exp(exp)) => {
@@ -4528,6 +4921,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     class,
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 }
             }
             (PiExp(exp), Sqrt(r)) | (Sqrt(r), PiExp(exp)) => {
@@ -4541,6 +4935,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     class,
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 }
             }
             (PiInvExp(exp), Sqrt(r)) | (Sqrt(r), PiInvExp(exp)) => {
@@ -4554,6 +4949,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     class,
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 }
             }
             (ConstProduct(product), Sqrt(r)) | (Sqrt(r), ConstProduct(product)) => {
@@ -4570,6 +4966,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     class,
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 }
             }
             (PiSqrt(r), Sqrt(s)) | (Sqrt(s), PiSqrt(r)) if r == s => {
@@ -4581,6 +4978,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     class: Pi,
                     computable: Some(Computable::pi()),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 }
             }
             (Ln(r), Ln(s)) => {
@@ -4593,6 +4991,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                     class,
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 }
             }
             _ => {
@@ -4619,6 +5018,9 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                                         class,
                                         computable: Some(computable),
                                         signal: None,
+                                        primitive_approx_cache: Cell::new(
+                                            PrimitiveApproxCache::Empty,
+                                        ),
                                     };
                                 }
                                 Sqrt(radicand) => {
@@ -4630,6 +5032,9 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                                         class,
                                         computable: Some(computable),
                                         signal: None,
+                                        primitive_approx_cache: Cell::new(
+                                            PrimitiveApproxCache::Empty,
+                                        ),
                                     };
                                 }
                                 _ => unreachable!(),
@@ -4654,6 +5059,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                                 class,
                                 computable: Some(computable),
                                 signal: None,
+                                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                             };
                         }
                     }
@@ -4673,6 +5079,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                                 class,
                                 computable: Some(computable),
                                 signal: None,
+                                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                             };
                         }
                     }
@@ -4688,6 +5095,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                         class,
                         computable: Some(computable),
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     };
                 }
                 let rational = &self.rational * &other.rational;
@@ -4699,6 +5107,7 @@ impl<T: AsRef<Real>> Mul<T> for &Real {
                         other.computable_clone(),
                     )),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 }
             }
         }
@@ -4752,6 +5161,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                 class: self.class.clone(),
                 computable: self.computable.clone(),
                 signal: self.signal.clone(),
+                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
             });
         }
         if self.class == One {
@@ -4763,6 +5173,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     class: Exp(exp.clone()),
                     computable: Some(Computable::exp_rational(exp)),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 });
             }
             crate::trace_dispatch!("real", "div", "lhs-rational-symbolic-inverse");
@@ -4785,6 +5196,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     class,
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 });
             }
             (ConstProduct(product), Exp(exp)) => {
@@ -4796,6 +5208,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     class,
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 });
             }
             (ConstProduct(product), Pi) if product.pi_power > 0 => {
@@ -4807,6 +5220,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     class,
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 });
             }
             (PiExp(exp), Exp(divisor_exp)) => {
@@ -4817,6 +5231,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     class,
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 });
             }
             (PiExp(exp), Pi) => {
@@ -4827,6 +5242,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     class,
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 });
             }
             (Exp(exp), Pi) => {
@@ -4838,6 +5254,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     class: PiInvExp(exp.clone()),
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 });
             }
             (Pi, Exp(exp)) => {
@@ -4848,6 +5265,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     class,
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 });
             }
             (ConstProductSqrt(product), Exp(exp)) => {
@@ -4872,6 +5290,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                     class,
                     computable: Some(computable),
                     signal: None,
+                    primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                 });
             }
             _ => {}
@@ -4937,6 +5356,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                                 class,
                                 computable: Some(computable),
                                 signal: None,
+                                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                             }
                         }
                         Sqrt(radicand) => {
@@ -4947,6 +5367,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                                 class,
                                 computable: Some(computable),
                                 signal: None,
+                                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                             }
                         }
                         _ => unreachable!(),
@@ -4978,6 +5399,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                         class,
                         computable: Some(computable),
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     });
                 }
             }
@@ -5005,6 +5427,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                         class,
                         computable: Some(computable),
                         signal: None,
+                        primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
                     });
                 }
             }
@@ -5019,6 +5442,7 @@ impl<T: AsRef<Real>> Div<T> for &Real {
                 class,
                 computable: Some(computable),
                 signal: None,
+                primitive_approx_cache: Cell::new(PrimitiveApproxCache::Empty),
             });
         }
         // Simplify ln(x) / ln(10) to just log10(x)

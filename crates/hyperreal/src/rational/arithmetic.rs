@@ -172,6 +172,62 @@ impl Rational {
         }
     }
 
+    pub(crate) fn add_one(&self) -> Self {
+        if self.sign == NoSign {
+            return Self::one();
+        }
+
+        match self.sign {
+            Plus => Self::from_fraction_parts(
+                Plus,
+                &self.numerator + &self.denominator,
+                self.denominator.clone(),
+            ),
+            Minus => match self.numerator.cmp(&self.denominator) {
+                Ordering::Greater => Self::from_fraction_parts(
+                    Minus,
+                    &self.numerator - &self.denominator,
+                    self.denominator.clone(),
+                ),
+                Ordering::Equal => Self::zero(),
+                Ordering::Less => Self::from_fraction_parts(
+                    Plus,
+                    &self.denominator - &self.numerator,
+                    self.denominator.clone(),
+                ),
+            },
+            NoSign => unreachable!(),
+        }
+    }
+
+    pub(crate) fn subtract_one(&self) -> Self {
+        if self.sign == NoSign {
+            return Self::from_integer_magnitude(Minus, ONE.deref().clone());
+        }
+
+        match self.sign {
+            Plus => match self.numerator.cmp(&self.denominator) {
+                Ordering::Greater => Self::from_fraction_parts(
+                    Plus,
+                    &self.numerator - &self.denominator,
+                    self.denominator.clone(),
+                ),
+                Ordering::Equal => Self::zero(),
+                Ordering::Less => Self::from_fraction_parts(
+                    Minus,
+                    &self.denominator - &self.numerator,
+                    self.denominator.clone(),
+                ),
+            },
+            Minus => Self::from_fraction_parts(
+                Minus,
+                &self.numerator + &self.denominator,
+                self.denominator.clone(),
+            ),
+            NoSign => unreachable!(),
+        }
+    }
+
     fn maybe_reduce(self) -> Self {
         if Self::is_power_of_two(&self.denominator) {
             let denominator = self.denominator.clone();
@@ -336,7 +392,22 @@ impl Rational {
         Self::is_power_of_two(&self.denominator)
     }
 
-    fn dyadic_denominator_shift(&self) -> Option<u64> {
+    /// Return whether two rationals share the same reduced denominator.
+    ///
+    /// This is a structural query for higher-level exact kernels that carry
+    /// common-scale facts opportunistically. It exposes only denominator
+    /// equality, not the denominator itself, so geometry crates can select
+    /// faster shared-scale schedules while `Rational` keeps ownership of its
+    /// storage and reduction strategy. This follows Yap's recommendation to
+    /// preserve object-level rational structure before scalar expansion; see
+    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7.1-2 (1997).
+    #[inline]
+    pub fn same_denominator(&self, other: &Self) -> bool {
+        self.denominator == other.denominator
+    }
+
+    pub(crate) fn dyadic_denominator_shift(&self) -> Option<u64> {
         Self::biguint_power_of_two_shift(&self.denominator)
     }
 
@@ -530,7 +601,23 @@ impl Rational {
         ))
     }
 
-    pub(crate) fn signed_product_sum<const TERMS: usize, const FACTORS: usize>(
+    /// Evaluate a fixed-size signed sum of products exactly.
+    ///
+    /// Each row in `terms` is multiplied, then added or subtracted according to
+    /// the matching entry in `positive_terms`. The implementation delays
+    /// rational reduction until the final sum and has structural fast paths for
+    /// dyadic and equal-denominator products. This is the scalar reducer that
+    /// geometry crates use for small determinant schedules while preserving
+    /// their abstraction boundary: they pass a known polynomial shape, but do
+    /// not inspect `Rational` storage internals.
+    ///
+    /// The fraction-delay strategy follows Bareiss, "Sylvester's Identity and
+    /// Multistep Integer-Preserving Gaussian Elimination," *Mathematics of
+    /// Computation* 22.103 (1968), and matches Yap's exact-geometric-
+    /// computation guidance to keep algebraic object shape visible before
+    /// scalar expansion; see Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997).
+    pub fn signed_product_sum<const TERMS: usize, const FACTORS: usize>(
         positive_terms: [bool; TERMS],
         terms: [[&Self; FACTORS]; TERMS],
     ) -> Self {
@@ -545,12 +632,10 @@ impl Rational {
         // and common-factor exact matrix work
         // (https://link.springer.com/article/10.1007/s11786-020-00495-9),
         // but keeps the public fixed-size cofactor formulas division-free.
-        // 2026-05-09 targeted Criterion, 200 samples/8s: the hyperlattice
-        // opt-in hook kept approximate matrix reciprocal/division rows at
-        // 80-194 ns or better and kept borrowed approximate division unchanged,
-        // while hyperreal-rational mat3/mat4 reciprocal held near 26.0/44.1 us
-        // after the first fused run reported roughly 20-27% faster reciprocal
-        // rows against the pre-hook baseline. Treat those as regression guards.
+        // Structural note: keep this hook scalar-local. Hyperlattice can use it
+        // for exact cofactor and determinant kernels, while predicate and
+        // triangulation crates should consume only the resulting exact signs or
+        // values through their own abstraction boundaries.
         debug_assert!(FACTORS > 0);
         let mut signs = [NoSign; TERMS];
         let mut nonzero_count = 0_usize;
@@ -597,6 +682,10 @@ impl Rational {
         }
 
         if let Some(dyadic) = Self::signed_product_sum_dyadic(terms, signs) {
+            // Structural-dispatch note: callers that know coordinates are
+            // lifted from a common binary grid could pass that grid exponent
+            // with the terms and jump directly to this reducer, avoiding the
+            // exploratory denominator scans used by generic exact rationals.
             crate::trace_dispatch!("rational", "product_sum", "dyadic-shared-denominator");
             return dyadic;
         }
@@ -736,6 +825,9 @@ impl Rational {
             // Dyadic f64 imports are the hottest exact-rational matrix path.
             // A common power-of-two denominator lets us scale numerators with
             // shifts and lets `maybe_reduce` avoid a BigInt gcd.
+            // Structural-dispatch note: matrix/vector callers with retained
+            // grid-scale metadata can route straight here and reserve the LCM
+            // path for genuinely mixed rational inputs.
             crate::trace_dispatch!("rational", "dot_product", "dyadic-shared-denominator");
             return dyadic;
         }
@@ -802,7 +894,7 @@ impl Rational {
     /// algebraic simplification ahead of approximation, matching the exact-real
     /// arithmetic strategy described by Boehm, Cartwright, Riggle, and
     /// O'Donnell, "Exact Real Arithmetic: A Case Study in Higher Order
-    /// Programming", LFP 1986, https://doi.org/10.1145/319838.319860.
+    /// Programming", LFP 1986, <https://doi.org/10.1145/319838.319860>.
     #[inline(always)]
     pub fn is_zero(&self) -> bool {
         self.sign == NoSign
@@ -1507,6 +1599,12 @@ impl<T: AsRef<Rational>> Add<T> for &Rational {
         if other.sign == NoSign {
             return self.clone();
         }
+        if self.is_one() {
+            return other.add_one();
+        }
+        if other.is_one() {
+            return self.add_one();
+        }
 
         let common_denominator = num::Integer::gcd(&self.denominator, &other.denominator);
         trace_rational_gcd!(&self.denominator, &other.denominator, &common_denominator);
@@ -1576,6 +1674,12 @@ impl<T: AsRef<Rational>> Sub<T> for &Rational {
         }
         if self.sign == NoSign {
             return -other;
+        }
+        if other.is_one() {
+            return self.subtract_one();
+        }
+        if self.is_one() {
+            return -other.subtract_one();
         }
 
         let common_denominator = num::Integer::gcd(&self.denominator, &other.denominator);
@@ -1939,6 +2043,22 @@ mod tests {
     }
 
     #[test]
+    fn add_and_subtract_one_helpers_match_generic_arithmetic() {
+        for value in [
+            Rational::zero(),
+            Rational::one(),
+            Rational::new(-1),
+            Rational::fraction(7, 4).unwrap(),
+            Rational::fraction(3, 5).unwrap(),
+            Rational::fraction(-7, 4).unwrap(),
+            Rational::fraction(-3, 5).unwrap(),
+        ] {
+            assert_eq!(value.add_one(), value.clone() + Rational::one());
+            assert_eq!(value.subtract_one(), value.clone() - Rational::one());
+        }
+    }
+
+    #[test]
     fn magnitude_at_least_power_of_two_handles_threshold_boundaries() {
         assert!(
             !Rational::fraction(7, 1)
@@ -1986,6 +2106,18 @@ mod tests {
             Rational::fraction(-1, 16).unwrap()
         );
         assert_eq!(&three_eighths - &three_eighths, Rational::zero());
+    }
+
+    #[test]
+    fn same_denominator_reports_reduced_common_scale() {
+        let a = Rational::fraction(3, 10).unwrap();
+        let b = Rational::fraction(-7, 10).unwrap();
+        let reduced = Rational::fraction(6, 20).unwrap();
+        let c = Rational::fraction(1, 3).unwrap();
+
+        assert!(a.same_denominator(&b));
+        assert!(a.same_denominator(&reduced));
+        assert!(!a.same_denominator(&c));
     }
 
     #[test]

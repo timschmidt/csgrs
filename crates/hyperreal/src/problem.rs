@@ -37,6 +37,12 @@ pub enum Problem {
     NotAnInteger,
     /// Operation was rejected because it was likely to consume all available resources
     Exhausted,
+    /// A checked operation could not prove that a value was non-zero.
+    ///
+    /// This is distinct from [`Problem::DivideByZero`]: exact-real algorithms
+    /// sometimes have enough structural information to reject definite zero,
+    /// but not enough to certify non-zero without unbounded refinement.
+    UnknownZero,
 }
 
 use std::fmt;

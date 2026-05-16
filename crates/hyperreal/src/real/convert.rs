@@ -1,4 +1,6 @@
 use crate::RealSign;
+#[cfg(any(feature = "cached-f32-approx", feature = "cached-f64-approx"))]
+use crate::real::PrimitiveApproxCache;
 use crate::{Computable, Problem, Rational, Real};
 
 macro_rules! impl_integer_conversion {
@@ -94,6 +96,7 @@ impl Real {
             class,
             computable,
             signal,
+            primitive_approx_cache: _,
         } = self;
         if rational.is_one() {
             let mut c = computable.unwrap_or_else(Computable::one);
@@ -195,6 +198,60 @@ impl From<Real> for f32 {
     }
 }
 
+impl Real {
+    #[inline]
+    pub fn to_f32_approx(&self) -> Option<f32> {
+        #[cfg(feature = "cached-f32-approx")]
+        if let PrimitiveApproxCache::F32(value) = self.primitive_approx_cache.get() {
+            return value;
+        }
+
+        let value = self.to_f32_approx_uncached();
+        #[cfg(feature = "cached-f32-approx")]
+        if matches!(
+            self.primitive_approx_cache.get(),
+            PrimitiveApproxCache::Empty
+        ) {
+            self.primitive_approx_cache
+                .set(PrimitiveApproxCache::F32(value));
+        }
+        value
+    }
+
+    fn to_f32_approx_uncached(&self) -> Option<f32> {
+        const NEG_BITS: u32 = 0x8000_0000;
+        const EXP_BITS: u32 = 0x7f80_0000;
+
+        let c = self.fold_ref();
+        let sign = match self.refine_sign_until(-150) {
+            Some(sign) => sign,
+            None => return Some(0.0),
+        };
+        let neg = match sign {
+            RealSign::Zero => return Some(0.0),
+            RealSign::Positive => 0,
+            RealSign::Negative => 1,
+        };
+
+        let Some(msd) = c.iter_msd_stop(-150) else {
+            return Some(match neg {
+                0 => 0.0,
+                1 => -0.0,
+                _ => unreachable!(),
+            });
+        };
+        if msd > 127 {
+            return None;
+        }
+        let (sig_bits, exp) = sig_exp_32(c, msd);
+        let neg_bits: u32 = neg << NEG_BITS.trailing_zeros();
+        let exp_bits: u32 = exp << EXP_BITS.trailing_zeros();
+        let bits = neg_bits | exp_bits | sig_bits;
+        let value = f32::from_bits(bits);
+        value.is_finite().then_some(value)
+    }
+}
+
 // (Significand, Exponent)
 fn sig_exp_64(c: Computable, mut msd: Precision) -> (u64, u64) {
     const SIG_BITS: u64 = 0x000f_ffff_ffff_ffff;
@@ -276,6 +333,19 @@ impl Real {
     /// Return a finite borrowed `f64` approximation, or `None` on overflow.
     #[inline]
     pub fn to_f64_approx(&self) -> Option<f64> {
+        #[cfg(feature = "cached-f64-approx")]
+        if let PrimitiveApproxCache::F64(value) = self.primitive_approx_cache.get() {
+            return value;
+        }
+
+        let value = self.to_f64_approx_uncached();
+        #[cfg(feature = "cached-f64-approx")]
+        self.primitive_approx_cache
+            .set(PrimitiveApproxCache::F64(value));
+        value
+    }
+
+    fn to_f64_approx_uncached(&self) -> Option<f64> {
         const NEG_BITS: u64 = 0x8000_0000_0000_0000;
         const EXP_BITS: u64 = 0x7ff0_0000_0000_0000;
 
@@ -370,8 +440,22 @@ impl Real {
 mod tests {
     use num::bigint::ToBigInt;
     use num::{BigInt, One};
+    #[cfg(any(feature = "cached-f32-approx", feature = "cached-f64-approx"))]
+    use proptest::prelude::*;
 
     use super::*;
+
+    #[cfg(any(feature = "cached-f32-approx", feature = "cached-f64-approx"))]
+    fn finite_rational_strategy() -> impl Strategy<Value = Rational> {
+        (-1_000_000_i64..=1_000_000, 1_u64..=1_000_000).prop_map(|(numerator, denominator)| {
+            Rational::fraction(numerator, denominator).unwrap()
+        })
+    }
+
+    #[cfg(feature = "cached-f64-approx")]
+    fn nonzero_finite_rational_strategy() -> impl Strategy<Value = Rational> {
+        finite_rational_strategy().prop_filter("nonzero rational", |r| !r.is_zero())
+    }
 
     #[test]
     fn zero() {
@@ -632,5 +716,147 @@ mod tests {
         let approx = value.to_f64_approx().unwrap();
         assert!(approx.is_sign_negative());
         assert!((approx + std::f64::consts::SQRT_2).abs() < 1e-15);
+    }
+
+    #[test]
+    #[cfg(all(feature = "cached-f32-approx", feature = "cached-f64-approx"))]
+    fn primitive_approx_cache_fills_and_upgrades() {
+        let value = Real::pi();
+
+        let f32_value = value.to_f32_approx().unwrap();
+        assert!(std::f32::consts::PI.to_bits().abs_diff(f32_value.to_bits()) < 2);
+        assert!(matches!(
+            value.primitive_approx_cache.get(),
+            PrimitiveApproxCache::F32(Some(_))
+        ));
+
+        let f64_value = value.to_f64_approx().unwrap();
+        assert!(std::f64::consts::PI.to_bits().abs_diff(f64_value.to_bits()) < 2);
+        assert!(matches!(
+            value.primitive_approx_cache.get(),
+            PrimitiveApproxCache::F64(Some(_))
+        ));
+    }
+
+    #[test]
+    #[cfg(feature = "cached-f64-approx")]
+    fn primitive_approx_cache_keeps_overflow_state() {
+        let huge = Real::new(Rational::from_bigint(BigInt::from(1_u8) << 1200));
+
+        assert_eq!(huge.to_f64_approx(), None);
+        assert!(matches!(
+            huge.primitive_approx_cache.get(),
+            PrimitiveApproxCache::F64(None)
+        ));
+    }
+
+    #[test]
+    #[cfg(feature = "cached-f32-approx")]
+    fn primitive_approx_cache_keeps_f32_overflow_state() {
+        let huge = Real::new(Rational::from_bigint(BigInt::from(1_u8) << 200));
+
+        assert_eq!(huge.to_f32_approx(), None);
+        assert!(matches!(
+            huge.primitive_approx_cache.get(),
+            PrimitiveApproxCache::F32(None)
+        ));
+    }
+
+    #[test]
+    #[cfg(feature = "cached-f64-approx")]
+    fn abort_invalidates_primitive_approx_cache() {
+        use std::sync::Arc;
+        use std::sync::atomic::AtomicBool;
+
+        let mut value = Real::pi();
+        assert!(value.to_f64_approx().is_some());
+        assert!(matches!(
+            value.primitive_approx_cache.get(),
+            PrimitiveApproxCache::F64(Some(_))
+        ));
+
+        value.abort(Arc::new(AtomicBool::new(false)));
+        assert!(matches!(
+            value.primitive_approx_cache.get(),
+            PrimitiveApproxCache::Empty
+        ));
+    }
+
+    #[cfg(any(feature = "cached-f32-approx", feature = "cached-f64-approx"))]
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(512))]
+
+        #[test]
+        #[cfg(feature = "cached-f64-approx")]
+        fn cached_f64_matches_uncached_for_rationals(rational in finite_rational_strategy()) {
+            let value = Real::new(rational.clone());
+            let expected = Real::new(rational).to_f64_approx_uncached();
+
+            prop_assert_eq!(value.to_f64_approx().map(f64::to_bits), expected.map(f64::to_bits));
+            prop_assert_eq!(value.to_f64_approx().map(f64::to_bits), expected.map(f64::to_bits));
+            prop_assert!(matches!(
+                value.primitive_approx_cache.get(),
+                PrimitiveApproxCache::F64(_)
+            ));
+        }
+
+        #[test]
+        #[cfg(feature = "cached-f32-approx")]
+        fn cached_f32_matches_uncached_for_rationals(rational in finite_rational_strategy()) {
+            let value = Real::new(rational.clone());
+            let expected = Real::new(rational).to_f32_approx_uncached();
+
+            prop_assert_eq!(value.to_f32_approx().map(f32::to_bits), expected.map(f32::to_bits));
+            prop_assert_eq!(value.to_f32_approx().map(f32::to_bits), expected.map(f32::to_bits));
+            prop_assert!(matches!(
+                value.primitive_approx_cache.get(),
+                PrimitiveApproxCache::F32(_)
+            ));
+        }
+
+        #[test]
+        #[cfg(all(feature = "cached-f32-approx", feature = "cached-f64-approx"))]
+        fn f32_then_f64_cache_upgrade_matches_uncached(rational in finite_rational_strategy()) {
+            let value = Real::new(rational.clone());
+            let expected_f32 = Real::new(rational.clone()).to_f32_approx_uncached();
+            let expected_f64 = Real::new(rational).to_f64_approx_uncached();
+
+            prop_assert_eq!(value.to_f32_approx().map(f32::to_bits), expected_f32.map(f32::to_bits));
+            prop_assert!(matches!(
+                value.primitive_approx_cache.get(),
+                PrimitiveApproxCache::F32(_)
+            ));
+            prop_assert_eq!(value.to_f64_approx().map(f64::to_bits), expected_f64.map(f64::to_bits));
+            prop_assert!(matches!(
+                value.primitive_approx_cache.get(),
+                PrimitiveApproxCache::F64(_)
+            ));
+        }
+
+        #[test]
+        #[cfg(feature = "cached-f64-approx")]
+        fn cached_f64_is_not_reused_after_negation(rational in nonzero_finite_rational_strategy()) {
+            let value = Real::new(rational.clone());
+            let cached_positive = value.to_f64_approx();
+            let negated_ref = -&value;
+            let expected_ref = Real::new(-rational.clone()).to_f64_approx_uncached();
+
+            prop_assume!(cached_positive.map(f64::to_bits) != expected_ref.map(f64::to_bits));
+            prop_assert!(matches!(
+                negated_ref.primitive_approx_cache.get(),
+                PrimitiveApproxCache::Empty
+            ));
+            prop_assert_eq!(negated_ref.to_f64_approx().map(f64::to_bits), expected_ref.map(f64::to_bits));
+
+            let owned = Real::new(rational.clone());
+            let _ = owned.to_f64_approx();
+            let negated_owned = -owned;
+            let expected_owned = Real::new(-rational).to_f64_approx_uncached();
+            prop_assert!(matches!(
+                negated_owned.primitive_approx_cache.get(),
+                PrimitiveApproxCache::Empty
+            ));
+            prop_assert_eq!(negated_owned.to_f64_approx().map(f64::to_bits), expected_owned.map(f64::to_bits));
+        }
     }
 }

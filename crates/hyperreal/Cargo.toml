@@ -10,6 +10,8 @@ readme = "README.md"
 [features]
 default = []
 simple = []
+cached-f32-approx = []
+cached-f64-approx = []
 # Compile-time opt-in diagnostic hooks for benchmark path tracing. The
 # instrumentation macro compiles away unless this feature is enabled.
 dispatch-trace = []

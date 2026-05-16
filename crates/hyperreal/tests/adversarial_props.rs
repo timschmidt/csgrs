@@ -96,6 +96,37 @@ proptest! {
     }
 
     #[test]
+    fn signed_product_sum_matches_expanded_3x3_determinant(
+        a0 in rational_strategy(), a1 in rational_strategy(), a2 in rational_strategy(),
+        b0 in rational_strategy(), b1 in rational_strategy(), b2 in rational_strategy(),
+        c0 in rational_strategy(), c1 in rational_strategy(), c2 in rational_strategy(),
+    ) {
+        let a = [Real::new(a0), Real::new(a1), Real::new(a2)];
+        let b = [Real::new(b0), Real::new(b1), Real::new(b2)];
+        let c = [Real::new(c0), Real::new(c1), Real::new(c2)];
+
+        let fused = Real::signed_product_sum(
+            [true, false, false, true, true, false],
+            [
+                [&a[0], &b[1], &c[2]],
+                [&a[0], &b[2], &c[1]],
+                [&a[1], &b[0], &c[2]],
+                [&a[1], &b[2], &c[0]],
+                [&a[2], &b[0], &c[1]],
+                [&a[2], &b[1], &c[0]],
+            ],
+        );
+        let expanded = &(&a[0] * &b[1] * &c[2])
+            - &(&a[0] * &b[2] * &c[1])
+            - &(&a[1] * &b[0] * &c[2])
+            + &(&a[1] * &b[2] * &c[0])
+            + &(&a[2] * &b[0] * &c[1])
+            - &(&a[2] * &b[1] * &c[0]);
+
+        prop_assert_eq!(fused, expanded);
+    }
+
+    #[test]
     fn cache_warming_does_not_change_refinement_answers(a in real_strategy(), b in real_strategy()) {
         let value = (a.clone() * Real::pi()) - (b.clone() * Real::pi());
         let facts = value.structural_facts();

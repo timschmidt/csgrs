@@ -3,41 +3,31 @@
 
 Deterministic lexicase score for the current 100 promoted slow offenders. The score is the average current best-of-five wall-clock probe across the promoted set; lower is better. Delta compares with the previous score recorded in this file, and derivative is the change in delta.
 
-<!-- promoted_slow_score_nanos: 4173 -->
-<!-- promoted_slow_previous_score_nanos: 4173 -->
+<!-- promoted_slow_score_nanos: 2928 -->
+<!-- promoted_slow_previous_score_nanos: 2928 -->
 <!-- promoted_slow_score_delta_nanos: 0 -->
 
 | Metric | Value |
 | --- | ---: |
 | Cases scored | 100 |
-| Average score | 4.173 us |
+| Average score | 2.928 us |
 | Delta | 0 ns |
 | Delta derivative | 0 ns |
 
 | Rank | Current Time | Operation | Input |
 | ---: | ---: | --- | --- |
-| 1 | 5.909 us | `generated_ln_abs_plus_one_p96` | `generated[9457] -3 23/90` |
-| 2 | 5.839 us | `generated_ln_abs_plus_one_p96` | `generated[15472] -3 13/50` |
-| 3 | 5.750 us | `generated_ln_abs_plus_one_p96` | `generated[9862] -1 221/492` |
-| 4 | 5.719 us | `generated_ln_abs_plus_one_p96` | `generated[18352] -1 133/500` |
-| 5 | 5.690 us | `generated_ln_abs_plus_one_p96` | `generated[14947] 3 11/222` |
-| 6 | 5.669 us | `generated_ln_abs_plus_one_p96` | `generated[8152] 3 11/62` |
-| 7 | 5.650 us | `generated_ln_abs_plus_one_p96` | `generated[6592] 1 109/348` |
-| 8 | 5.630 us | `generated_ln_abs_plus_one_p96` | `generated[6877] -9 34/77` |
-| 9 | 5.629 us | `generated_ln_abs_plus_one_p96` | `generated[1297] -1 83/188` |
-| 10 | 5.609 us | `generated_ln_abs_plus_one_p96` | `generated[15082] 1 181/356` |
+| 1 | 4.060 us | `generated_ln_abs_plus_one_p96` | `generated[9457] -3 23/90` |
+| 2 | 4.029 us | `generated_tan_p96` | `generated[11841] -5 2/17` |
+| 3 | 4.020 us | `generated_tan_p96` | `generated[16806] 5 3/22` |
+| 4 | 4.010 us | `generated_tan_p96` | `generated[13446] -5 15/187` |
+| 5 | 3.980 us | `generated_tan_p96` | `generated[18666] 5 15/17` |
+| 6 | 3.920 us | `generated_ln_abs_plus_one_p96` | `generated[15472] -3 13/50` |
+| 7 | 3.860 us | `generated_tan_p96` | `generated[15891] -5 23/33` |
+| 8 | 3.770 us | `generated_tan_p96` | `generated[11421] -4 55/57` |
+| 9 | 3.759 us | `generated_tan_p96` | `generated[3321] -4 17/107` |
+| 10 | 3.730 us | `generated_ln_abs_plus_one_p96` | `generated[18352] -1 133/500` |
 
 <!-- END promoted_slow_offender_score -->
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -138,14 +128,14 @@ Low-level approximation kernels and deep expression-tree stress cases.
 | `computable_transcendentals/exp_near_limit_cold_p128` | 2.797 us | 2.792 us - 2.802 us | Approximates exp near a prescaling threshold. |
 | `computable_transcendentals/exp_near_limit_cached_p128` | 21.81 ns | 21.73 ns - 21.91 ns | Repeats a cached near-threshold exp approximation. |
 | `computable_transcendentals/exp_zero_cold_p128` | 72.59 ns | 72.29 ns - 72.94 ns | Approximates exp(0). |
-| `computable_transcendentals/ln_cold_p128` | 4.198 us | 4.192 us - 4.205 us | Approximates ln(11/7). |
-| `computable_transcendentals/ln_cached_p128` | 21.81 ns | 21.75 ns - 21.88 ns | Repeats a cached ln(11/7) approximation. |
-| `computable_transcendentals/ln_smooth_rational_cold_p128` | 732.27 ns | 725.52 ns - 738.51 ns | Approximates ln(45/14), which can decompose into shared prime-log constants. |
-| `computable_transcendentals/ln_nonsmooth_rational_cold_p128` | 2.540 us | 2.467 us - 2.632 us | Approximates ln(11/13), guarding the generic exact-rational log fallback. |
-| `computable_transcendentals/ln_large_cold_p128` | 245.62 ns | 241.02 ns - 252.07 ns | Approximates ln(1024), exercising large-input reduction. |
+| `computable_transcendentals/ln_cold_p128` | 5.095 us | 4.862 us - 5.335 us | Approximates ln(11/7). |
+| `computable_transcendentals/ln_cached_p128` | 25.75 ns | 24.88 ns - 26.68 ns | Repeats a cached ln(11/7) approximation. |
+| `computable_transcendentals/ln_smooth_rational_cold_p128` | 729.65 ns | 674.39 ns - 836.94 ns | Approximates ln(45/14), which can decompose into shared prime-log constants. |
+| `computable_transcendentals/ln_nonsmooth_rational_cold_p128` | 2.523 us | 2.511 us - 2.536 us | Approximates ln(11/13), guarding the generic exact-rational log fallback. |
+| `computable_transcendentals/ln_large_cold_p128` | 306.17 ns | 303.44 ns - 309.27 ns | Approximates ln(1024), exercising large-input reduction. |
 | `computable_transcendentals/ln_large_cached_p128` | 21.80 ns | 21.76 ns - 21.83 ns | Repeats a cached ln(1024) approximation. |
 | `computable_transcendentals/ln_tiny_cold_p128` | 190.35 ns | 189.59 ns - 191.17 ns | Approximates ln(2^-1024), exercising tiny-input reduction. |
-| `computable_transcendentals/ln_near_limit_cold_p128` | 3.420 us | 3.334 us - 3.520 us | Approximates ln near the prescaled-ln limit. |
+| `computable_transcendentals/ln_near_limit_cold_p128` | 3.114 us | 3.103 us - 3.127 us | Approximates ln near the prescaled-ln limit. |
 | `computable_transcendentals/ln_near_limit_cached_p128` | 21.84 ns | 21.79 ns - 21.89 ns | Repeats a cached near-limit ln approximation. |
 | `computable_transcendentals/ln_one_cold_p128` | 35.07 ns | 34.88 ns - 35.27 ns | Approximates ln(1). |
 | `computable_transcendentals/sqrt_cold_p128` | 746.58 ns | 731.98 ns - 772.57 ns | Approximates sqrt(2). |
@@ -648,18 +638,18 @@ Cold approximation of inverse hyperbolic functions at tiny, moderate, large, and
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `inverse_hyperbolic_adversarial_approx/asinh_tiny_positive_p128` | 592.97 ns | 591.06 ns - 595.48 ns | Approximates asinh(1e-12), stressing cancellation avoidance near zero. |
-| `inverse_hyperbolic_adversarial_approx/asinh_mid_positive_p128` | 7.112 us | 6.969 us - 7.278 us | Approximates asinh(1/2), a moderate positive value. |
-| `inverse_hyperbolic_adversarial_approx/asinh_large_positive_p128` | 8.537 us | 8.355 us - 8.734 us | Approximates asinh(10^6), stressing large-input logarithmic behavior. |
-| `inverse_hyperbolic_adversarial_approx/asinh_large_negative_p128` | 8.536 us | 8.471 us - 8.611 us | Approximates asinh(-10^6), stressing odd symmetry for large inputs. |
+| `inverse_hyperbolic_adversarial_approx/asinh_tiny_positive_p128` | 588.39 ns | 580.84 ns - 599.59 ns | Approximates asinh(1e-12), stressing cancellation avoidance near zero. |
+| `inverse_hyperbolic_adversarial_approx/asinh_mid_positive_p128` | 7.082 us | 7.074 us - 7.092 us | Approximates asinh(1/2), a moderate positive value. |
+| `inverse_hyperbolic_adversarial_approx/asinh_large_positive_p128` | 6.911 us | 6.893 us - 6.932 us | Approximates asinh(10^6), stressing large-input logarithmic behavior. |
+| `inverse_hyperbolic_adversarial_approx/asinh_large_negative_p128` | 7.140 us | 7.048 us - 7.246 us | Approximates asinh(-10^6), stressing odd symmetry for large inputs. |
 | `inverse_hyperbolic_adversarial_approx/acosh_one_plus_tiny_p128` | 6.701 us | 6.630 us - 6.790 us | Approximates acosh(1 + 1e-12), stressing the near-one endpoint. |
 | `inverse_hyperbolic_adversarial_approx/acosh_sqrt_two_p128` | 128.95 ns | 126.43 ns - 131.96 ns | Approximates acosh(sqrt(2)), a symbolic square-root input. |
 | `inverse_hyperbolic_adversarial_approx/acosh_two_p128` | 100.74 ns | 93.07 ns - 114.21 ns | Approximates acosh(2), a moderate exact rational. |
 | `inverse_hyperbolic_adversarial_approx/acosh_large_positive_p128` | 8.797 us | 8.692 us - 8.924 us | Approximates acosh(10^6), stressing large-input logarithmic behavior. |
-| `inverse_hyperbolic_adversarial_approx/atanh_tiny_positive_p128` | 540.27 ns | 535.23 ns - 546.50 ns | Approximates atanh(1e-12), stressing the tiny odd series. |
-| `inverse_hyperbolic_adversarial_approx/atanh_mid_positive_p128` | 268.55 ns | 263.71 ns - 274.73 ns | Approximates atanh(1/2), a moderate exact rational. |
-| `inverse_hyperbolic_adversarial_approx/atanh_near_one_p128` | 5.350 us | 5.254 us - 5.482 us | Approximates atanh(0.999999), stressing endpoint logarithmic behavior. |
-| `inverse_hyperbolic_adversarial_approx/atanh_near_minus_one_p128` | 5.449 us | 5.422 us - 5.478 us | Approximates atanh(-0.999999), stressing odd symmetry near the endpoint. |
+| `inverse_hyperbolic_adversarial_approx/atanh_tiny_positive_p128` | 558.41 ns | 527.88 ns - 603.56 ns | Approximates atanh(1e-12), stressing the tiny odd series. |
+| `inverse_hyperbolic_adversarial_approx/atanh_mid_positive_p128` | 271.37 ns | 262.93 ns - 283.43 ns | Approximates atanh(1/2), a moderate exact rational. |
+| `inverse_hyperbolic_adversarial_approx/atanh_near_one_p128` | 3.819 us | 3.704 us - 3.956 us | Approximates atanh(0.999999), stressing endpoint logarithmic behavior. |
+| `inverse_hyperbolic_adversarial_approx/atanh_near_minus_one_p128` | 4.923 us | 4.898 us - 4.945 us | Approximates atanh(-0.999999), stressing odd symmetry near the endpoint. |
 
 ### `real_shortcut_adversarial`
 
@@ -681,3 +671,54 @@ Public `Real` construction shortcuts and domain checks for the same transcendent
 
 <!-- END adversarial_transcendentals -->
 
+<!-- BEGIN borrowed_ops -->
+## `borrowed_ops`
+
+Compares owned arithmetic with borrowed arithmetic for exact and irrational values.
+
+### `rational_ops`
+
+Owned versus borrowed arithmetic for exact `Rational` values.
+
+| Benchmark output | Mean | 95% CI | What it measures |
+| --- | ---: | ---: | --- |
+| `rational_ops/add_owned` | not run | not run | Adds cloned owned operands. |
+| `rational_ops/add_refs` | not run | not run | Adds borrowed operands without cloning both inputs. |
+| `rational_ops/sub_owned` | not run | not run | Subtracts cloned owned operands. |
+| `rational_ops/sub_refs` | not run | not run | Subtracts borrowed operands. |
+| `rational_ops/mul_owned` | not run | not run | Multiplies cloned owned operands. |
+| `rational_ops/mul_refs` | not run | not run | Multiplies borrowed operands. |
+| `rational_ops/div_owned` | not run | not run | Divides cloned owned operands. |
+| `rational_ops/div_refs` | not run | not run | Divides borrowed operands. |
+
+### `real_ops`
+
+Owned versus borrowed arithmetic for exact rational-backed `Real` values.
+
+| Benchmark output | Mean | 95% CI | What it measures |
+| --- | ---: | ---: | --- |
+| `real_ops/add_owned` | not run | not run | Adds cloned owned operands. |
+| `real_ops/add_refs` | not run | not run | Adds borrowed operands without cloning both inputs. |
+| `real_ops/sub_owned` | not run | not run | Subtracts cloned owned operands. |
+| `real_ops/sub_refs` | not run | not run | Subtracts borrowed operands. |
+| `real_ops/mul_owned` | not run | not run | Multiplies cloned owned operands. |
+| `real_ops/mul_refs` | not run | not run | Multiplies borrowed operands. |
+| `real_ops/div_owned` | not run | not run | Divides cloned owned operands. |
+| `real_ops/div_refs` | not run | not run | Divides borrowed operands. |
+
+### `real_irrational_ops`
+
+Owned versus borrowed arithmetic for symbolic irrational `Real` values.
+
+| Benchmark output | Mean | 95% CI | What it measures |
+| --- | ---: | ---: | --- |
+| `real_irrational_ops/add_owned` | not run | not run | Adds cloned owned operands. |
+| `real_irrational_ops/add_refs` | not run | not run | Adds borrowed operands without cloning both inputs. |
+| `real_irrational_ops/sub_owned` | not run | not run | Subtracts cloned owned operands. |
+| `real_irrational_ops/sub_refs` | not run | not run | Subtracts borrowed operands. |
+| `real_irrational_ops/mul_owned` | not run | not run | Multiplies cloned owned operands. |
+| `real_irrational_ops/mul_refs` | not run | not run | Multiplies borrowed operands. |
+| `real_irrational_ops/div_owned` | not run | not run | Divides cloned owned operands. |
+| `real_irrational_ops/div_refs` | not run | not run | Divides borrowed operands. |
+
+<!-- END borrowed_ops -->

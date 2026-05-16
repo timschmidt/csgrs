@@ -484,6 +484,28 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
             },
         ],
     },
+    BenchGroupDoc {
+        name: "exact_product_sums",
+        description: "Fixed product-sum reducers used by determinant and cofactor kernels.",
+        benches: &[
+            BenchDoc {
+                name: "signed_product_sum_lcm_6x2",
+                description: "Computes an exact rational six-term signed product sum with mixed denominators.",
+            },
+            BenchDoc {
+                name: "signed_product_sum_sparse_single_6x2",
+                description: "Computes a sparse exact rational six-term signed product sum with one active product.",
+            },
+            BenchDoc {
+                name: "real_signed_product_sum_rational_det3",
+                description: "Computes a 3x3 determinant-shaped signed product sum through the public `Real` builder.",
+            },
+            BenchDoc {
+                name: "real_signed_product_sum_mixed_symbolic_det3",
+                description: "Computes the same determinant-shaped builder with symbolic factors and rational scales.",
+            },
+        ],
+    },
 ];
 
 fn rational(n: i64, d: u64) -> Rational {
@@ -1214,6 +1236,56 @@ fn bench_exact_product_sums(c: &mut Criterion) {
                     [&zero, &terms[3][1]],
                     [&terms[4][0], &zero],
                     [&zero, &terms[5][1]],
+                ],
+            ))
+        })
+    });
+
+    let det3 = [
+        [real(3, 7), real(5, 11), real(13, 17)],
+        [real(19, 23), real(29, 31), real(37, 41)],
+        [real(43, 47), real(53, 59), real(61, 67)],
+    ];
+    group.bench_function("real_signed_product_sum_rational_det3", |b| {
+        b.iter(|| {
+            black_box(Real::signed_product_sum(
+                [true, false, false, true, true, false],
+                [
+                    [&det3[0][0], &det3[1][1], &det3[2][2]],
+                    [&det3[0][0], &det3[1][2], &det3[2][1]],
+                    [&det3[0][1], &det3[1][0], &det3[2][2]],
+                    [&det3[0][1], &det3[1][2], &det3[2][0]],
+                    [&det3[0][2], &det3[1][0], &det3[2][1]],
+                    [&det3[0][2], &det3[1][1], &det3[2][0]],
+                ],
+            ))
+        })
+    });
+
+    let symbolic = [
+        [Real::pi(), Real::e(), Real::tau()],
+        [
+            Real::pi() * real(2, 5),
+            Real::e() * real(3, 7),
+            Real::tau() * real(5, 11),
+        ],
+        [
+            Real::from(2_i32).sqrt().unwrap(),
+            Real::from(3_i32),
+            Real::zero(),
+        ],
+    ];
+    group.bench_function("real_signed_product_sum_mixed_symbolic_det3", |b| {
+        b.iter(|| {
+            black_box(Real::signed_product_sum(
+                [true, false, false, true, true, false],
+                [
+                    [&symbolic[0][0], &symbolic[1][1], &symbolic[2][2]],
+                    [&symbolic[0][0], &symbolic[1][2], &symbolic[2][1]],
+                    [&symbolic[0][1], &symbolic[1][0], &symbolic[2][2]],
+                    [&symbolic[0][1], &symbolic[1][2], &symbolic[2][0]],
+                    [&symbolic[0][2], &symbolic[1][0], &symbolic[2][1]],
+                    [&symbolic[0][2], &symbolic[1][1], &symbolic[2][0]],
                 ],
             ))
         })

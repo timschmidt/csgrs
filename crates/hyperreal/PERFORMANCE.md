@@ -29,8 +29,8 @@ Cross-crate regression checks:
 cargo bench --bench mathbench -- 'scalar_trig/hyperreal.*/(0.1|1.23456789|1e6|1e30|1000pi_eps)/(sin|cos)'
 cargo bench --bench mathbench -- 'matrix[34]/hyperreal'
 cargo bench --bench mathbench --features hyperreal-dispatch-trace -- --write-dispatch-trace-md
-cargo bench --bench predicates --features hyperlattice -- '(hyperlattice|hyperreal)'
-cargo bench --bench predicates --features dispatch-trace,hyperlattice -- --write-dispatch-trace-md
+cargo bench --manifest-path ../hyperlimit/Cargo.toml --bench predicates
+cargo bench --manifest-path ../hyperlimit/Cargo.toml --bench predicates --features dispatch-trace -- --write-dispatch-trace-md
 ```
 
 ## Rational Path

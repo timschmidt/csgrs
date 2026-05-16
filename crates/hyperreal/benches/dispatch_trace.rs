@@ -737,6 +737,15 @@ fn collect_rows(
     trace_row(
         &mut rows,
         filters,
+        "computable/promoted_library_slow/ln_generated_10732_pos_6_6_137",
+        || {
+            let value = computable(mixed_rational(6, 6, 137));
+            black_box(value.square().add(Computable::one()).ln().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
         "computable/promoted_library_slow/ln_generated_14947_pos_3_11_222",
         || {
             let value = computable(mixed_rational(3, 11, 222));
@@ -848,6 +857,14 @@ fn collect_rows(
         "computable/promoted_library_slow/atan_generated_10704_pos_1_371_412",
         || {
             black_box(computable(mixed_rational(1, 371, 412)).atan().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/atan_generated_11034_pos_1_367_518",
+        || {
+            black_box(computable(mixed_rational(1, 367, 518)).atan().approx(-96));
         },
     );
     trace_row(

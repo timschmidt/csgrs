@@ -12,6 +12,111 @@ pub struct DispatchCount {
     pub count: u64,
 }
 
+/// Aggregated trace count for one `(layer, operation)` pair.
+///
+/// This is the smallest stable reporting unit for cross-stack exact geometry
+/// traces. `hyperlattice` and `hyperlimit` both record into this module when
+/// their trace features are enabled, so operation summaries let benchmark
+/// harnesses correlate matrix/vector fact use, predicate stages, scalar
+/// reducers, approximation requests, and cache hits without depending on the
+/// private dispatch labels of any one crate. The design follows Yap's
+/// exact-geometric-computation model: observe which arithmetic package and
+/// object-fact boundary was selected before judging performance. See Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997).
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct OperationSummary {
+    /// Trace layer, such as `real`, `hyperlimit`, or `hyperlattice_matrix`.
+    pub layer: &'static str,
+    /// Operation name recorded by the caller.
+    pub operation: &'static str,
+    /// Total count for all paths under this operation.
+    pub count: u64,
+}
+
+/// Aggregated trace count for one layer.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct LayerSummary {
+    /// Trace layer, such as `real`, `hyperlimit`, or `hyperlattice_vector`.
+    pub layer: &'static str,
+    /// Total count for every operation and path under this layer.
+    pub count: u64,
+}
+
+/// Unified snapshot of dispatch labels plus rational reducer statistics.
+///
+/// The snapshot is intentionally a read-only report value. It does not own
+/// caches and it does not certify geometry; it only records which exact
+/// arithmetic and object-fact paths were exercised during a recording scope.
+/// This gives Criterion benches and regression tests one cross-crate view of
+/// the computation ladder described by Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997).
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TraceSnapshot {
+    /// Raw `(layer, operation, path)` counts.
+    pub dispatch: Vec<DispatchCount>,
+    /// Rational reducer counters collected during the same recording window.
+    pub rational: RationalTraceStats,
+}
+
+impl TraceSnapshot {
+    /// Return the count for one exact dispatch path.
+    pub fn path_count(&self, layer: &str, operation: &str, path: &str) -> u64 {
+        self.dispatch
+            .iter()
+            .find(|entry| {
+                entry.layer == layer && entry.operation == operation && entry.path == path
+            })
+            .map_or(0, |entry| entry.count)
+    }
+
+    /// Return the total count for one layer.
+    pub fn layer_count(&self, layer: &str) -> u64 {
+        self.dispatch
+            .iter()
+            .filter(|entry| entry.layer == layer)
+            .map(|entry| entry.count)
+            .sum()
+    }
+
+    /// Return the total count for one `(layer, operation)` pair.
+    pub fn operation_count(&self, layer: &str, operation: &str) -> u64 {
+        self.dispatch
+            .iter()
+            .filter(|entry| entry.layer == layer && entry.operation == operation)
+            .map(|entry| entry.count)
+            .sum()
+    }
+
+    /// Return counts grouped by layer.
+    pub fn layer_summaries(&self) -> Vec<LayerSummary> {
+        let mut grouped = BTreeMap::<&'static str, u64>::new();
+        for entry in &self.dispatch {
+            *grouped.entry(entry.layer).or_insert(0) += entry.count;
+        }
+        grouped
+            .into_iter()
+            .map(|(layer, count)| LayerSummary { layer, count })
+            .collect()
+    }
+
+    /// Return counts grouped by `(layer, operation)`.
+    pub fn operation_summaries(&self) -> Vec<OperationSummary> {
+        let mut grouped = BTreeMap::<(&'static str, &'static str), u64>::new();
+        for entry in &self.dispatch {
+            *grouped.entry((entry.layer, entry.operation)).or_insert(0) += entry.count;
+        }
+        grouped
+            .into_iter()
+            .map(|((layer, operation), count)| OperationSummary {
+                layer,
+                operation,
+                count,
+            })
+            .collect()
+    }
+}
+
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct CommonFactorBuckets {
     pub none: u64,
@@ -222,6 +327,22 @@ pub fn take() -> Vec<DispatchCount> {
     snapshot
 }
 
+/// Return a unified snapshot without clearing counters.
+pub fn snapshot_trace() -> TraceSnapshot {
+    TraceSnapshot {
+        dispatch: snapshot(),
+        rational: snapshot_rational_stats(),
+    }
+}
+
+/// Return a unified snapshot and clear all trace counters.
+pub fn take_trace() -> TraceSnapshot {
+    TraceSnapshot {
+        dispatch: take(),
+        rational: take_rational_stats(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -265,5 +386,49 @@ mod tests {
         assert!(stats.reductions > 0);
         assert!(stats.gcds > 0);
         assert!(stats.peak_operand_bits > 0);
+    }
+
+    #[test]
+    fn unified_trace_snapshot_groups_cross_stack_counts() {
+        reset();
+        with_recording(|| {
+            record("hyperlimit", "resolve_real_sign", "structural-real-facts");
+            record("hyperlimit", "resolve_real_sign", "exact-predicate");
+            record("hyperlattice_matrix", "query", "matrix4-structural-facts");
+            record("hyperlattice_matrix", "query", "matrix4-structural-facts");
+            record("real", "detailed_facts", "pi-like");
+            record_rational_temporary();
+        });
+
+        let snapshot = snapshot_trace();
+        assert_eq!(
+            snapshot.path_count("hyperlattice_matrix", "query", "matrix4-structural-facts"),
+            2
+        );
+        assert_eq!(
+            snapshot.operation_count("hyperlimit", "resolve_real_sign"),
+            2
+        );
+        assert_eq!(snapshot.layer_count("hyperlattice_matrix"), 2);
+        assert_eq!(snapshot.rational.temporary_rationals, 1);
+
+        let operations = snapshot.operation_summaries();
+        assert!(operations.iter().any(|entry| {
+            entry.layer == "hyperlimit"
+                && entry.operation == "resolve_real_sign"
+                && entry.count == 2
+        }));
+
+        let layers = snapshot.layer_summaries();
+        assert!(
+            layers
+                .iter()
+                .any(|entry| { entry.layer == "real" && entry.count == 1 })
+        );
+
+        let taken = take_trace();
+        assert_eq!(taken.layer_count("hyperlimit"), 2);
+        assert!(snapshot_trace().dispatch.is_empty());
+        assert_eq!(snapshot_trace().rational, RationalTraceStats::default());
     }
 }

@@ -10,8 +10,13 @@ mod approximation;
 mod arithmetic;
 mod constructors;
 mod convert;
+mod exact_set;
 mod facts;
 mod linear_combination;
 mod tests;
 
 pub use arithmetic::*;
+pub use exact_set::{
+    RealExactSetDenominatorKind, RealExactSetDyadicExponentClass, RealExactSetFacts,
+    RealExactSetSignPattern,
+};

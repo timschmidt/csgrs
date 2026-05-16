@@ -6,16 +6,17 @@
 //! query APIs expose cheap conservative facts for callers that need to avoid
 //! forcing high-precision evaluation. The lazy approximation layer follows the
 //! exact-real arithmetic model described by Boehm et al.,
-//! https://doi.org/10.1145/319838.319860.
+//! <https://doi.org/10.1145/319838.319860>.
 
 mod rational;
 pub use crate::rational::Rational;
 
 mod structural;
 pub use crate::structural::{
-    DomainFacts, DomainStatus, IdentityFacts, MagnitudeBits, OrderingFacts, PrimitiveFacts,
-    PrimitiveFloatStatus, RationalFacts, RationalStorageClass, RealDetailedFacts, RealSign,
-    RealStructuralFacts, StructuralComparison, StructuralKind, SymbolicFacts, ZeroKnowledge,
+    CertifiedRealSign, DomainFacts, DomainStatus, ExpressionDegree, IdentityFacts, MagnitudeBits,
+    OrderingFacts, PrimitiveFacts, PrimitiveFloatStatus, RationalFacts, RationalStorageClass,
+    RealDetailedFacts, RealSign, RealSignCertificate, RealStructuralFacts, StructuralComparison,
+    StructuralKind, SymbolicDependencyMask, SymbolicFacts, ZeroKnowledge, ZeroOneMinusOneStatus,
     ZeroOneStatus,
 };
 
@@ -29,7 +30,10 @@ mod computable;
 pub use crate::computable::Computable;
 
 mod real;
-pub use crate::real::Real;
+pub use crate::real::{
+    Real, RealExactSetDenominatorKind, RealExactSetDyadicExponentClass, RealExactSetFacts,
+    RealExactSetSignPattern,
+};
 
 #[cfg(feature = "simple")]
 mod simple;

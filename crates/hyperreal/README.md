@@ -38,8 +38,8 @@ symbolic information available before approximation:
   backend. It forwards `hyperreal` structural facts through its `Scalar` type
   and adds vector, matrix, transform, and retained-geometry facts around them.
 - `hyperlimit` can consume `hyperreal::Real` directly, using structural facts,
-  finite `f64` approximations, and bounded sign refinement before robust
-  fallback.
+  exact scalar arithmetic, and bounded sign refinement. It must not ask
+  `hyperreal` for primitive-float predicate decisions.
 - `hypersolve` is the experimental solver layer. Its current direction is to
   evaluate constraints through symbolic references to variables, reuse
   reductions across iterations, and route repeated residual and geometry
@@ -50,6 +50,25 @@ symbolic information available before approximation:
 or matrix algebra, and it does not decide geometry topology. The stack is
 layered intentionally: scalar facts live here, object-level facts live in
 `hyperlattice`/geometry layers, and decision procedures live above them.
+
+## Semantic Boundary and Structural Facts
+
+`hyperreal` is the scalar-fact owner for the stack. It should continue to expose
+only conservative facts about one value: sign, zero/nonzero status, exact
+rational availability, dyadic denominator class, symbolic class, magnitude bits,
+domain facts, and bounded-refinement capability.
+
+Future optimization metadata belongs here only when it is scalar-local and cheap
+to preserve opportunistically. Examples include denominator scale, square-factor
+state, known algebraic/transcendental class, cancellation hints attached to a
+single expression node, and cache provenance for a requested precision.
+
+Geometry facts do not belong here. Vector sparsity, affine-transform kind,
+predicate policy, ring topology, triangulation constraints, solver active sets,
+and manufacturing-domain metadata belong in `hyperlattice`, `hyperlimit`,
+`hypercurve`, `hypertri`, `hypersolve`, or the domain crate that discovered
+them. Those crates may use scalar facts to select faster exact algorithms, but
+topology-changing decisions must not be made from `f64` approximations.
 
 ## Why Exact Reals?
 
@@ -274,11 +293,12 @@ assert!(exact_facts.exact_rational);
 Facts are conservative. Missing sign or magnitude information means the fact
 was not proven cheaply.
 
-### Stack-Facing Filters
+### Stack-Facing Exact Decisions
 
 The surrounding geometry stack uses `hyperreal` values as scalar certificates:
-try cheap structural facts first, use finite approximation when that is enough,
-and only then request bounded refinement.
+try cheap structural facts first, then request bounded refinement when a decision
+needs a sign. Primitive-float approximation is reserved for named rendering, IO,
+and interop exports, not for core predicate branches.
 
 ```rust
 use hyperreal::{Rational, Real, RealSign};
@@ -286,15 +306,6 @@ use hyperreal::{Rational, Real, RealSign};
 fn classify_positive(value: &Real) -> Option<bool> {
     if let Some(sign) = value.structural_facts().sign {
         return Some(sign == RealSign::Positive);
-    }
-
-    if let Some(approx) = value.to_f64_approx() {
-        if approx > 1e-12 {
-            return Some(true);
-        }
-        if approx < -1e-12 {
-            return Some(false);
-        }
     }
 
     value
@@ -307,8 +318,8 @@ assert_eq!(classify_positive(&offset), Some(true));
 ```
 
 This pattern is the intended handoff to `hyperlattice` and `hyperlimit`: cheap
-facts route the common case, approximation is delayed until useful, and bounded
-refinement remains available for hard predicate boundaries.
+facts route the common case, exact refinement remains available for hard
+predicate boundaries, and lossy approximation stays outside topology decisions.
 
 ### Simple Expressions
 
@@ -345,7 +356,8 @@ Supported conversions include:
 - integer types to `Rational` and `Real`
 - finite `f32`/`f64` to `Rational` and `Real` by exact IEEE-754 decoding
 - `Real` to `f32`/`f64` by approximation
-- `Real::to_f64_approx()` for borrowed finite approximation used by filters
+- `Real::to_f64_approx()` for borrowed finite approximation used by rendering,
+  IO, diagnostics, and third-party-library interop
 
 Float import rejects `NaN` and infinities. `to_f64_approx()` returns `None`
 when no finite `f64` approximation can be produced.
@@ -380,17 +392,19 @@ that uses them, but most of them follow the same themes:
   identity values, endpoint cases, tiny-argument transforms, and reduced
   trig/exponential arguments should simplify or classify before entering
   broader computable kernels.
-- Approximate only when a decision or output precision requires it. Cache the
-  resulting approximation plus conservative sign or magnitude facts, and answer
-  later structural queries from certificates before refining again.
+- Approximate only when an explicit scalar-refinement request or output
+  precision requires it. Cache the resulting approximation plus conservative
+  sign or magnitude facts, and answer later structural queries from
+  certificates before refining again. Higher-level topology decisions still
+  route through exact predicate layers.
 - Keep hot kernels predictable. Prefer deterministic fast paths guarded by
   cheap retained facts, borrowed arithmetic, shared-denominator/product-sum
   reducers, and cached constants over speculative scalar probing or expression
   graph cloning inside dense loops.
-- Split backend-sensitive loop shapes narrowly. Compact approximate backends
-  should keep flat interval-friendly routes when possible, while exact
-  hyperreal/hyperreal-rational paths may use capability-gated reducers or
-  symbolic shortcuts when benchmarks show a real win.
+- Split backend-sensitive loop shapes narrowly. Exact hyperreal and
+  hyperreal-rational paths may use capability-gated reducers or symbolic
+  shortcuts when benchmarks show a real win, while lossy primitive exports stay
+  outside the core scalar model.
 - Benchmark families, not isolated rows. A shortcut should improve the target
   surface without making nearby functions or stack-facing `hyperlattice` and
   `hyperlimit` paths erratic.

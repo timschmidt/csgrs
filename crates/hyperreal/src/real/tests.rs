@@ -2,8 +2,11 @@
 mod tests {
     use crate::real::arithmetic::curve;
     use crate::{
-        DomainStatus, MagnitudeBits, PrimitiveFloatStatus, Problem, Rational, RationalStorageClass,
-        Real, RealSign, RealStructuralFacts, StructuralComparison, StructuralKind, ZeroKnowledge,
+        CertifiedRealSign, DomainStatus, ExpressionDegree, MagnitudeBits, PrimitiveFloatStatus,
+        Problem, Rational, RationalStorageClass, Real, RealExactSetDenominatorKind,
+        RealExactSetDyadicExponentClass, RealExactSetFacts, RealExactSetSignPattern, RealSign,
+        RealSignCertificate, RealStructuralFacts, StructuralComparison, StructuralKind,
+        SymbolicDependencyMask, ZeroKnowledge, ZeroOneMinusOneStatus,
     };
 
     #[test]
@@ -384,30 +387,150 @@ mod tests {
     fn real_detailed_facts_report_cheap_rational_and_symbolic_structure() {
         let half = Real::new(Rational::fraction(1, 2).unwrap()).detailed_facts();
         assert!(half.base.exact_rational);
+        assert_eq!(
+            half.identity.zero_one_or_minus_one,
+            ZeroOneMinusOneStatus::NeitherOrUnknown
+        );
         assert!(half.rational.exact_dyadic);
         assert!(!half.rational.exact_integer);
         assert_eq!(half.ordering.abs_cmp_one, StructuralComparison::Less);
+        assert_eq!(half.domains.reciprocal, DomainStatus::Valid);
+        assert_eq!(half.domains.asin_acos, DomainStatus::Valid);
         assert_eq!(half.domains.unit_interval_closed, DomainStatus::Valid);
         assert_eq!(half.domains.unit_interval_open, DomainStatus::Valid);
+        assert_eq!(half.domains.atanh, DomainStatus::Valid);
         assert_eq!(half.primitive.f64, PrimitiveFloatStatus::NormalFinite);
         assert_eq!(half.symbolic.kind, StructuralKind::ExactRational);
+        assert_eq!(half.symbolic.degree, ExpressionDegree::Constant);
+        assert!(half.symbolic.dependencies.is_empty());
 
         let two = Real::new(Rational::new(2)).detailed_facts();
+        assert_eq!(
+            two.identity.zero_one_or_minus_one,
+            ZeroOneMinusOneStatus::NeitherOrUnknown
+        );
         assert!(two.rational.exact_integer);
         assert!(two.rational.exact_small_integer_i64);
         assert!(two.rational.power_of_two);
         assert_eq!(two.rational.storage, RationalStorageClass::WordSized);
         assert_eq!(two.primitive.f32, PrimitiveFloatStatus::NormalFinite);
         assert_eq!(two.ordering.cmp_one, StructuralComparison::Greater);
+        assert_eq!(two.domains.asin_acos, DomainStatus::Invalid);
         assert_eq!(two.domains.unit_interval_closed, DomainStatus::Invalid);
         assert_eq!(two.domains.acosh, DomainStatus::Valid);
+        assert_eq!(two.domains.atanh, DomainStatus::Invalid);
 
         let pi_sqrt_two = Real::pi() * Real::from(2_i32).sqrt().unwrap();
         let symbolic = pi_sqrt_two.detailed_facts();
+        assert_eq!(
+            symbolic.identity.zero_one_or_minus_one,
+            ZeroOneMinusOneStatus::NeitherOrUnknown
+        );
         assert_eq!(symbolic.symbolic.kind, StructuralKind::SqrtLike);
+        assert_eq!(symbolic.symbolic.degree, ExpressionDegree::Constant);
         assert!(symbolic.symbolic.has_pi_factor);
         assert!(symbolic.symbolic.has_sqrt_factor);
+        assert!(
+            symbolic
+                .symbolic
+                .dependencies
+                .contains(SymbolicDependencyMask::PI)
+        );
+        assert!(
+            symbolic
+                .symbolic
+                .dependencies
+                .contains(SymbolicDependencyMask::SQRT)
+        );
+        assert!(
+            !symbolic
+                .symbolic
+                .dependencies
+                .contains(SymbolicDependencyMask::LOG)
+        );
         assert_eq!(symbolic.base.sign, Some(RealSign::Positive));
+    }
+
+    #[test]
+    fn symbolic_facts_report_dependency_families_and_degree() {
+        let pi_exp = Real::pi() * Real::e();
+        let facts = pi_exp.detailed_facts().symbolic;
+        assert_eq!(facts.degree, ExpressionDegree::Constant);
+        assert!(facts.dependencies.contains(SymbolicDependencyMask::PI));
+        assert!(facts.dependencies.contains(SymbolicDependencyMask::EXP));
+        assert!(facts.has_pi_factor);
+        assert!(facts.has_exp_factor);
+        assert!(!facts.has_log_factor);
+        assert!(!facts.has_trig_factor);
+
+        let log_facts = Real::from(2_i32).ln().unwrap().detailed_facts().symbolic;
+        assert_eq!(log_facts.degree, ExpressionDegree::Constant);
+        assert!(log_facts.dependencies.contains(SymbolicDependencyMask::LOG));
+        assert!(log_facts.has_log_factor);
+
+        let trig_facts = pi_fraction(1, 5).sin().detailed_facts().symbolic;
+        assert_eq!(trig_facts.degree, ExpressionDegree::Constant);
+        assert!(
+            trig_facts
+                .dependencies
+                .contains(SymbolicDependencyMask::TRIG)
+        );
+        assert!(trig_facts.dependencies.contains(SymbolicDependencyMask::PI));
+        assert!(trig_facts.has_trig_factor);
+    }
+
+    #[test]
+    fn real_domain_accessors_expose_structural_certificates_without_refinement() {
+        let zero = Real::zero();
+        let half = Real::new(Rational::fraction(1, 2).unwrap());
+        let minus_two = Real::from(-2_i32);
+        let pi = Real::pi();
+
+        assert_eq!(zero.reciprocal_domain(), DomainStatus::Invalid);
+        assert_eq!(zero.sqrt_domain(), DomainStatus::Valid);
+        assert_eq!(zero.log_domain(), DomainStatus::Invalid);
+        assert_eq!(zero.asin_acos_domain(), DomainStatus::Valid);
+        assert_eq!(zero.atanh_domain(), DomainStatus::Valid);
+
+        assert_eq!(half.reciprocal_domain(), DomainStatus::Valid);
+        assert_eq!(half.sqrt_domain(), DomainStatus::Valid);
+        assert_eq!(half.log_domain(), DomainStatus::Valid);
+        assert_eq!(half.asin_acos_domain(), DomainStatus::Valid);
+        assert_eq!(half.atanh_domain(), DomainStatus::Valid);
+
+        assert_eq!(minus_two.sqrt_domain(), DomainStatus::Invalid);
+        assert_eq!(minus_two.log_domain(), DomainStatus::Invalid);
+        assert_eq!(minus_two.asin_acos_domain(), DomainStatus::Invalid);
+        assert_eq!(minus_two.acosh_domain(), DomainStatus::Invalid);
+        assert_eq!(minus_two.atanh_domain(), DomainStatus::Invalid);
+
+        assert_eq!(pi.domain_facts().sqrt, DomainStatus::Valid);
+        assert_eq!(pi.domain_facts().reciprocal, DomainStatus::Valid);
+        assert_eq!(pi.asin_acos_domain(), DomainStatus::Unknown);
+    }
+
+    #[test]
+    fn zero_one_or_minus_one_reports_signed_unit_identity() {
+        assert_eq!(
+            Real::zero().zero_one_or_minus_one(),
+            ZeroOneMinusOneStatus::Zero
+        );
+        assert_eq!(
+            Real::one().zero_one_or_minus_one(),
+            ZeroOneMinusOneStatus::One
+        );
+        assert_eq!(
+            (-Real::one()).zero_one_or_minus_one(),
+            ZeroOneMinusOneStatus::MinusOne
+        );
+        assert_eq!(
+            Real::new(Rational::fraction(1, 2).unwrap()).zero_one_or_minus_one(),
+            ZeroOneMinusOneStatus::NeitherOrUnknown
+        );
+        assert_eq!(
+            Real::pi().zero_one_or_minus_one(),
+            ZeroOneMinusOneStatus::NeitherOrUnknown
+        );
     }
 
     #[test]
@@ -513,6 +636,44 @@ mod tests {
 
         let certified = Real::pi() - Real::new(Rational::new(3));
         assert_eq!(certified.refine_sign_until(0), Some(RealSign::Positive));
+    }
+
+    #[test]
+    fn certified_sign_until_reports_proof_source_without_lossy_approximation() {
+        let exact = Real::from(-7);
+        assert_eq!(
+            exact.certified_sign_until(-16),
+            CertifiedRealSign::Known {
+                sign: RealSign::Negative,
+                certificate: RealSignCertificate::StructuralFacts,
+            }
+        );
+
+        let zero_scale = Real::zero() * Real::pi();
+        assert_eq!(
+            zero_scale.certified_sign_until(-16),
+            CertifiedRealSign::Known {
+                sign: RealSign::Zero,
+                certificate: RealSignCertificate::StructuralFacts,
+            }
+        );
+
+        let bounded = Real::pi() - Real::new(Rational::fraction(103_993, 33_102).unwrap());
+        assert_eq!(bounded.structural_facts().sign, None);
+        assert_eq!(
+            bounded.certified_sign_until(-64),
+            CertifiedRealSign::Known {
+                sign: RealSign::Positive,
+                certificate: RealSignCertificate::BoundedRefinement { min_precision: -64 },
+            }
+        );
+
+        let unresolved = Real::pi() - Real::new(Rational::fraction(103_993, 33_102).unwrap());
+        assert_eq!(
+            unresolved.certified_sign_until(0),
+            CertifiedRealSign::Unknown { min_precision: 0 }
+        );
+        assert_eq!(unresolved.refine_sign_until(0), None);
     }
 
     #[test]
@@ -1060,6 +1221,159 @@ mod tests {
         assert_eq!(
             Real::exact_rational_signed_product_sum([true, false], [[&one, &two], [&pi, &three]]),
             None
+        );
+    }
+
+    #[test]
+    fn exact_set_facts_report_dyadic_and_shared_denominator_routes() {
+        let dyadic = [
+            Real::new(Rational::fraction(1, 4).unwrap()),
+            Real::new(Rational::fraction(-3, 4).unwrap()),
+            Real::zero(),
+        ];
+        let dyadic_facts = Real::exact_set_facts(dyadic.iter());
+        assert_eq!(dyadic_facts.len, 3);
+        assert!(dyadic_facts.is_nonempty_exact_rational());
+        assert!(dyadic_facts.has_dyadic_schedule());
+        assert!(!dyadic_facts.has_shared_denominator_schedule());
+        assert_eq!(dyadic_facts.known_zero_count, 1);
+        assert_eq!(dyadic_facts.known_nonzero_count, 2);
+        assert_eq!(dyadic_facts.unknown_zero_count, 0);
+        assert_eq!(dyadic_facts.known_positive_count, 1);
+        assert_eq!(dyadic_facts.known_negative_count, 1);
+        assert_eq!(dyadic_facts.exact_integer_count, 1);
+        assert_eq!(dyadic_facts.exact_power_of_two_count, 1);
+        assert_eq!(dyadic_facts.known_one_count, 0);
+        assert_eq!(dyadic_facts.known_minus_one_count, 0);
+        assert!(!dyadic_facts.has_integer_grid_schedule());
+        assert!(!dyadic_facts.has_signed_unit_schedule());
+        assert_eq!(
+            dyadic_facts.sign_pattern(),
+            RealExactSetSignPattern::MixedKnown
+        );
+        assert_eq!(
+            dyadic_facts.max_dyadic_exponent_class,
+            Some(RealExactSetDyadicExponentClass::Small)
+        );
+
+        let quarters = [
+            Real::new(Rational::fraction(1, 4).unwrap()),
+            Real::new(Rational::fraction(-3, 4).unwrap()),
+        ];
+        let quarter_facts = Real::exact_set_facts(quarters.iter());
+        assert!(quarter_facts.has_shared_denominator_schedule());
+        assert_eq!(
+            quarter_facts.shared_denominator_kind(),
+            Some(RealExactSetDenominatorKind::Dyadic)
+        );
+        assert_eq!(
+            quarter_facts.max_rational_storage,
+            Some(RationalStorageClass::WordSized)
+        );
+        assert_eq!(
+            quarter_facts.max_dyadic_exponent_class,
+            Some(RealExactSetDyadicExponentClass::Small)
+        );
+
+        let integers = [Real::from(7_i32), Real::from(-11_i32), Real::zero()];
+        let integer_facts = Real::exact_set_facts(integers.iter());
+        assert_eq!(integer_facts.exact_integer_count, 3);
+        assert!(integer_facts.has_integer_grid_schedule());
+        assert_eq!(
+            integer_facts.sign_pattern(),
+            RealExactSetSignPattern::MixedKnown
+        );
+        assert_eq!(
+            integer_facts.max_dyadic_exponent_class,
+            Some(RealExactSetDyadicExponentClass::Integer)
+        );
+
+        let positives = [Real::from(7_i32), Real::from(11_i32)];
+        assert_eq!(
+            Real::exact_set_facts(positives.iter()).sign_pattern(),
+            RealExactSetSignPattern::AllPositive
+        );
+
+        let negatives = [Real::from(-7_i32), Real::from(-11_i32)];
+        assert_eq!(
+            Real::exact_set_facts(negatives.iter()).sign_pattern(),
+            RealExactSetSignPattern::AllNegative
+        );
+
+        let zeros = [Real::zero(), Real::zero()];
+        let zero_facts = Real::exact_set_facts(zeros.iter());
+        assert_eq!(zero_facts.sign_pattern(), RealExactSetSignPattern::AllZero);
+        assert!(zero_facts.has_signed_unit_schedule());
+
+        let signed_units = [Real::one(), -Real::one(), Real::zero()];
+        let signed_unit_facts = Real::exact_set_facts(signed_units.iter());
+        assert_eq!(signed_unit_facts.known_one_count, 1);
+        assert_eq!(signed_unit_facts.known_minus_one_count, 1);
+        assert_eq!(signed_unit_facts.exact_power_of_two_count, 2);
+        assert!(signed_unit_facts.has_integer_grid_schedule());
+        assert!(signed_unit_facts.has_signed_unit_schedule());
+
+        let thirds = [
+            Real::new(Rational::fraction(1, 3).unwrap()),
+            Real::new(Rational::fraction(2, 3).unwrap()),
+        ];
+        let third_facts = Real::exact_set_facts(thirds.iter());
+        assert!(third_facts.all_exact_rational);
+        assert_eq!(third_facts.exact_integer_count, 0);
+        assert!(!third_facts.has_integer_grid_schedule());
+        assert!(!third_facts.all_dyadic);
+        assert!(third_facts.shared_denominator);
+        assert_eq!(
+            third_facts.shared_denominator_kind(),
+            Some(RealExactSetDenominatorKind::SharedNonDyadic)
+        );
+        assert_eq!(third_facts.max_dyadic_exponent_class, None);
+
+        let mixed = [Real::pi(), Real::one()];
+        let mixed_facts = Real::exact_set_facts(mixed.iter());
+        assert_eq!(mixed_facts.exact_rational_count, 1);
+        assert_eq!(mixed_facts.known_positive_count, 2);
+        assert_eq!(
+            mixed_facts.sign_pattern(),
+            RealExactSetSignPattern::AllPositive
+        );
+        assert!(!mixed_facts.all_exact_rational);
+        assert!(!mixed_facts.shared_denominator);
+        assert_eq!(mixed_facts.shared_denominator_kind(), None);
+        assert_eq!(mixed_facts.max_dyadic_exponent_class, None);
+
+        let unknown_sign = Real::pi() - Real::new(Rational::fraction(103_993, 33_102).unwrap());
+        let exact_one = Real::one();
+        let uncertain = [&unknown_sign, &exact_one];
+        assert_eq!(
+            RealExactSetFacts::from_reals(uncertain).sign_pattern(),
+            RealExactSetSignPattern::Unknown
+        );
+
+        let empty: [&Real; 0] = [];
+        assert_eq!(
+            RealExactSetFacts::from_reals(empty).sign_pattern(),
+            RealExactSetSignPattern::Empty
+        );
+    }
+
+    #[test]
+    fn signed_product_sum_preserves_mixed_symbolic_products() {
+        let pi = Real::pi();
+        let e = Real::e();
+        let half = Real::new(Rational::fraction(1, 2).unwrap());
+        let third = Real::new(Rational::fraction(1, 3).unwrap());
+        let neg_five = Real::from(-5_i32);
+        let zero = Real::zero();
+
+        let actual = Real::signed_product_sum(
+            [true, false, true],
+            [[&pi, &half, &e], [&e, &third, &pi], [&zero, &neg_five, &pi]],
+        );
+        let expected = &(&pi * &half * &e) - &(&e * &third * &pi) + &(&zero * &neg_five * &pi);
+
+        assert!(
+            (actual.to_f64_approx().unwrap() - expected.to_f64_approx().unwrap()).abs() < 1e-12
         );
     }
 

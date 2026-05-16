@@ -147,7 +147,7 @@ Uses:
 - shift-only rational reduction
 - exact imported float handling
 - matrix/vector kernels that want to avoid general denominator work
-- geometry filters with exact binary inputs
+- exact geometry kernels with lifted binary-rational inputs
 
 Cost:
 
@@ -193,7 +193,7 @@ Small enum for approximate storage cost, for example:
 
 Uses:
 
-- choose exact versus approximate path in solvers
+- choose exact reduction strategy or explicit external-solver adapter path
 - avoid unexpectedly expensive rational arithmetic in inner loops
 - benchmark diagnostics
 
@@ -261,16 +261,16 @@ Cost:
 - exact rational comparison
 - known positive symbolic classes when simple
 
-### known finite primitive range
+### known finite primitive export range
 
 Whether a finite `f64` approximation is structurally guaranteed to exist
 without overflow or underflow surprises.
 
 Uses:
 
-- filters that need `f64`
-- solver numeric inner loops
-- `hyperlattice` approximate fallback decisions
+- rendering, IO, diagnostics, and external-solver export adapters
+- cost prediction before a named lossy boundary conversion
+- rejecting unsupported primitive export before spending refinement work
 
 Cost:
 
@@ -287,8 +287,8 @@ Coarse magnitude buckets such as:
 
 Uses:
 
-- decide when primitive filters are unsafe
-- select scaled formulas for kernels
+- decide when primitive export needs scaling, rejection, or a wider adapter
+- select scaled exact formulas for kernels
 
 Cost:
 
@@ -479,7 +479,7 @@ Uses:
 
 - solver evaluation planning
 - trace/debug reports
-- decide when exact filters are enough
+- decide when exact structural facts are enough
 
 Cost:
 
@@ -524,7 +524,7 @@ Whether magnitude/most-significant-digit information is already cached.
 Uses:
 
 - precision planning
-- primitive conversion filters
+- primitive conversion/export planning
 
 Cost:
 

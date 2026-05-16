@@ -8,7 +8,7 @@
 //!
 //! The exact-real model follows Boehm, Cartwright, Riggle, and O'Donnell,
 //! "Exact real arithmetic: a case study in higher order programming",
-//! LFP 1986, https://doi.org/10.1145/319838.319860.
+//! LFP 1986, <https://doi.org/10.1145/319838.319860>.
 
 use crate::computable::approximation::{Approximation, SharedConstant};
 use crate::{MagnitudeBits, Rational, RealSign, RealStructuralFacts, ZeroKnowledge};
@@ -444,7 +444,7 @@ thread_local! {
 /// integer approximation at a requested binary precision, and caches store only
 /// approximations proven for that node. The model follows the constructive/exact
 /// real arithmetic approach in Boehm et al., "Exact real arithmetic: a case
-/// study in higher order programming", https://doi.org/10.1145/319838.319860.
+/// study in higher order programming", <https://doi.org/10.1145/319838.319860>.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Computable {
     pub(super) internal: Box<Approximation>,
@@ -490,8 +490,12 @@ pub(crate) mod unsigned {
 
 static HALF_PI_SHORTCUT_RATIONAL_LIMIT: LazyLock<Rational> =
     LazyLock::new(|| Rational::fraction(3, 2).unwrap());
+static NEAR_LARGE_RATIONAL_TRIG_THRESHOLD: LazyLock<Rational> =
+    LazyLock::new(|| Rational::fraction(79, 20).unwrap());
 static INVERSE_ENDPOINT_RATIONAL_THRESHOLD: LazyLock<Rational> =
     LazyLock::new(|| Rational::fraction(7, 8).unwrap());
+static THREE_HALVES_RATIONAL: LazyLock<Rational> =
+    LazyLock::new(|| Rational::fraction(3, 2).unwrap());
 static HALF_RATIONAL: LazyLock<Rational> = LazyLock::new(|| Rational::fraction(1, 2).unwrap());
 
 impl Computable {
@@ -546,6 +550,20 @@ impl Computable {
                 (Approximation::PrescaledLn(left), Approximation::PrescaledLn(right)) => {
                     Computable::internal_structural_eq(left, right)
                 }
+                (
+                    Approximation::PrescaledLnRational(left),
+                    Approximation::PrescaledLnRational(right),
+                ) => left == right,
+                (
+                    Approximation::BinaryScaledLnRational {
+                        residual: left_residual,
+                        shift: left_shift,
+                    },
+                    Approximation::BinaryScaledLnRational {
+                        residual: right_residual,
+                        shift: right_shift,
+                    },
+                ) => left_residual == right_residual && left_shift == right_shift,
                 (Approximation::IntegralAtan(left), Approximation::IntegralAtan(right)) => {
                     left == right
                 }
@@ -2443,13 +2461,7 @@ impl Computable {
                     result
                 };
             }
-            let near_large_threshold = Rational::fraction(79, 20).expect("nonzero denominator");
-            let magnitude = if rational.sign() == Sign::Minus {
-                -rational.clone()
-            } else {
-                rational.clone()
-            };
-            if magnitude >= near_large_threshold {
+            if rational.compare_magnitude(&NEAR_LARGE_RATIONAL_TRIG_THRESHOLD) != Ordering::Less {
                 crate::trace_dispatch!("computable", "tan", "near-large-rational-deferred");
                 return Self::tan_large_rational_deferred(rational);
             }
@@ -2610,7 +2622,7 @@ impl Computable {
         Self::rational(rational).tan()
     }
 
-    fn ln2() -> Self {
+    pub(crate) fn ln2() -> Self {
         Self::shared_constant(SharedConstant::Ln2)
     }
 
@@ -2718,10 +2730,10 @@ impl Computable {
         // recursion. That avoids re-discovering the same dyadic scale and
         // constructing a short-lived Offset tree for adversarial ln(1+x^2)
         // cases while preserving the existing smooth-log fast paths above.
-        let three_halves = Rational::fraction(3, 2).expect("nonzero denominator");
-        if rational < &three_halves {
-            let fraction = rational.clone() - Rational::one();
-            return Some(Self::prescaled_ln(Self::rational(fraction)));
+        let three_halves = THREE_HALVES_RATIONAL.deref();
+        if rational < three_halves {
+            let fraction = rational.subtract_one();
+            return Some(Self::prescaled_ln_rational(fraction));
         }
 
         let mut shift = rational.msd_exact()?;
@@ -2731,20 +2743,17 @@ impl Computable {
 
         let mut scaled = rational.divide_by_power_of_two(shift)?;
 
-        if scaled >= three_halves {
+        if &scaled >= three_halves {
             shift = shift.checked_add(1)?;
             scaled = rational.divide_by_power_of_two(shift)?;
         }
 
-        let half = Rational::fraction(1, 2).expect("nonzero denominator");
-        if scaled <= half || scaled >= three_halves {
+        if &scaled <= HALF_RATIONAL.deref() || &scaled >= three_halves {
             return None;
         }
 
-        let fraction = scaled - Rational::one();
-        let reduced = Self::prescaled_ln(Self::rational(fraction));
-        let shift: BigInt = shift.into();
-        Some(reduced.add(Self::integer(shift).multiply(Self::ln2())))
+        let fraction = scaled.subtract_one();
+        Some(Self::binary_scaled_ln_rational(fraction, shift))
     }
 
     fn ln_exact_rational(rational: Rational) -> Self {
@@ -2783,11 +2792,20 @@ impl Computable {
         if let Approximation::Ratio(r) = &*self.internal
             && r.sign() == Sign::Plus
         {
-            let three_halves = Rational::fraction(3, 2).expect("nonzero denominator");
-            if r >= &Rational::one() && r < &three_halves {
-                let fraction = r.clone() - Rational::one();
+            if r.numerator() >= r.denominator() && r < THREE_HALVES_RATIONAL.deref() {
+                let fraction = r.subtract_one();
                 crate::trace_dispatch!("computable", "ln", "exact-rational-direct-ln1p");
-                return Self::prescaled_ln(Self::rational(fraction));
+                return Self::prescaled_ln_rational(fraction);
+            }
+            if r.numerator() >= r.denominator() {
+                if let Some(reduced) = Self::ln_smooth_rational(r) {
+                    crate::trace_dispatch!("computable", "ln", "smooth-rational-shared-log-sum");
+                    return reduced;
+                }
+                if let Some(reduced) = Self::ln_binary_scaled_exact_rational(r) {
+                    crate::trace_dispatch!("computable", "ln", "exact-rational-binary-scaled-ln1p");
+                    return reduced;
+                }
             }
             let (shift, reduced) = r.factor_two_powers();
             if shift != 0 {
@@ -2923,6 +2941,34 @@ impl Computable {
         // first so this node never sees an arbitrary positive value.
         Self {
             internal: Box::new(Approximation::PrescaledLn(self)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Invalid),
+            signal: None,
+        }
+    }
+
+    fn prescaled_ln_rational(rational: Rational) -> Self {
+        // Exact-rational ln1p reductions can skip a Ratio child and feed the
+        // residual directly to the approximation kernel. For |x| < 1, ln(1+x)
+        // has the same sign as x, so store that cheap certificate too.
+        let sign = rational.sign();
+        Self {
+            internal: Box::new(Approximation::PrescaledLnRational(rational)),
+            cache: RefCell::new(Cache::Invalid),
+            bound: RefCell::new(BoundCache::Invalid),
+            exact_sign: RefCell::new(ExactSignCache::Valid(sign)),
+            signal: None,
+        }
+    }
+
+    fn binary_scaled_ln_rational(residual: Rational, shift: i32) -> Self {
+        // Private constructor for ln(2^shift * (1+residual)) after exact
+        // rational range reduction. This keeps the exact shift/residual facts
+        // together for hot ln(1+x^2) offenders and lets the approximation
+        // kernel combine the two terms without allocating a short-lived graph.
+        Self {
+            internal: Box::new(Approximation::BinaryScaledLnRational { residual, shift }),
             cache: RefCell::new(Cache::Invalid),
             bound: RefCell::new(BoundCache::Invalid),
             exact_sign: RefCell::new(ExactSignCache::Invalid),
@@ -3837,6 +3883,16 @@ impl Computable {
         if matches!(right_exact.as_ref(), Some(r) if r.sign() == Sign::NoSign) {
             // Symmetric exact-zero fast path for borrowed and owned additions.
             return self;
+        }
+        if matches!(right_exact.as_ref(), Some(r) if r.is_one())
+            && let Some(left) = left_exact.as_ref()
+        {
+            return Self::rational(left.add_one());
+        }
+        if matches!(left_exact.as_ref(), Some(r) if r.is_one())
+            && let Some(right) = right_exact.as_ref()
+        {
+            return Self::rational(right.add_one());
         }
         if let (Some(left), Some(right)) = (left_exact.as_ref(), right_exact.as_ref()) {
             // Fold exact leaf sums immediately so rational imports and parsed
