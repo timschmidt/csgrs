@@ -51,13 +51,25 @@ fn bench_blas_vectors<B: Backend>(
     });
 }
 
+fn trace_blas_vec4_normalize<B: Backend>(label: &str, lhs_cases: [SampleVec4; 4]) {
+    let blas_lhs_cases = lhs_cases.map(blas_vec4::<B>);
+    trace_dispatch_row(format!("vectors/{label}/vec4 normalize"), || {
+        for value in &blas_lhs_cases {
+            black_box(black_box(value).normalize().unwrap());
+        }
+    });
+}
+
 fn bench_vectors(c: &mut Criterion) {
     let mut group = c.benchmark_group("vectors");
     let lhs_cases = sample_vec3_cases();
     let rhs_cases = sample_vec3_b_cases();
+    let lhs4_cases = sample_vec4_cases();
 
     bench_blas_vectors::<ApproxBackend>(&mut group, "approx", lhs_cases, rhs_cases);
     bench_blas_vectors::<HyperrealBackend>(&mut group, "hyperreal", lhs_cases, rhs_cases);
+    trace_blas_vec4_normalize::<ApproxBackend>("approx", lhs4_cases);
+    trace_blas_vec4_normalize::<HyperrealBackend>("hyperreal", lhs4_cases);
 
     {
         let rational_lhs = blas_vec3_rational();
@@ -70,6 +82,10 @@ fn bench_vectors(c: &mut Criterion) {
         });
         trace_dispatch_row("vectors/hyperreal-rational/vec3 normalize", || {
             black_box(black_box(&rational_lhs).normalize().unwrap());
+        });
+        let rational_lhs4 = blas_vec4_rational();
+        trace_dispatch_row("vectors/hyperreal-rational/vec4 normalize", || {
+            black_box(black_box(&rational_lhs4).normalize().unwrap());
         });
         group.bench_function("hyperreal-rational/vec3 dot", |b| {
             b.iter(|| black_box(black_box(&rational_lhs).dot(black_box(&rational_rhs))))

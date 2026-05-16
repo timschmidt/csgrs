@@ -547,7 +547,7 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `borrowed_ops/hyperreal-rational/mat3 div refs` | `hyperlattice_matrix` | `helper` | `matrix3-adjugate-and-determinant` | 4 |
 | `borrowed_ops/hyperreal-rational/mat3 div refs` | `hyperlattice_matrix` | `helper` | `multiply3-dense-ref` | 4 |
 | `borrowed_ops/hyperreal-rational/mat3 div refs` | `hyperlattice_matrix` | `helper` | `multiply3-ref-ref-dense-certified-exact` | 4 |
-| `borrowed_ops/hyperreal-rational/mat3 div refs` | `hyperlattice_matrix` | `helper` | `right-divide3-exact-right-skip-left-kind` | 4 |
+| `borrowed_ops/hyperreal-rational/mat3 div refs` | `hyperlattice_matrix` | `helper` | `right-divide3-ref-exact-right-skip-left-kind` | 4 |
 | `borrowed_ops/hyperreal-rational/mat3 div refs` | `hyperlattice_matrix` | `helper` | `right-divide3-ref-shared-adjugate` | 4 |
 | `borrowed_ops/hyperreal-rational/mat3 div refs` | `hyperlattice_matrix` | `op` | `div-ref-ref` | 4 |
 | `borrowed_ops/hyperreal-rational/mat3 div refs` | `rational` | `dot_product` | `dyadic-shared-denominator` | 2 |
@@ -15702,6 +15702,21 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `vectors/approx/vec3 normalize` | `hyperlattice_approx_backend` | `query` | `zero-status` | 4 |
 | `vectors/approx/vec3 normalize` | `hyperlattice_vector` | `method` | `magnitude` | 4 |
 | `vectors/approx/vec3 normalize` | `hyperlattice_vector` | `method` | `normalize` | 4 |
+| `vectors/approx/vec4 normalize` | `hyperlattice` | `scalar_fast_path` | `dot4-same-backend` | 4 |
+| `vectors/approx/vec4 normalize` | `hyperlattice` | `scalar_method` | `inverse-owned` | 4 |
+| `vectors/approx/vec4 normalize` | `hyperlattice` | `scalar_method` | `sqrt` | 4 |
+| `vectors/approx/vec4 normalize` | `hyperlattice` | `scalar_op` | `mul-ref-ref` | 16 |
+| `vectors/approx/vec4 normalize` | `hyperlattice` | `scalar_query` | `definitely-zero` | 16 |
+| `vectors/approx/vec4 normalize` | `hyperlattice_approx_backend` | `constructor` | `from-unary` | 4 |
+| `vectors/approx/vec4 normalize` | `hyperlattice_approx_backend` | `constructor` | `new` | 8 |
+| `vectors/approx/vec4 normalize` | `hyperlattice_approx_backend` | `method` | `inverse-owned` | 4 |
+| `vectors/approx/vec4 normalize` | `hyperlattice_approx_backend` | `method` | `sqrt` | 4 |
+| `vectors/approx/vec4 normalize` | `hyperlattice_approx_backend` | `op` | `dot4-specialized` | 4 |
+| `vectors/approx/vec4 normalize` | `hyperlattice_approx_backend` | `op` | `mul-ref-ref` | 16 |
+| `vectors/approx/vec4 normalize` | `hyperlattice_approx_backend` | `query` | `definitely-zero` | 20 |
+| `vectors/approx/vec4 normalize` | `hyperlattice_approx_backend` | `query` | `zero-status` | 4 |
+| `vectors/approx/vec4 normalize` | `hyperlattice_vector` | `method` | `magnitude` | 4 |
+| `vectors/approx/vec4 normalize` | `hyperlattice_vector` | `method` | `normalize` | 4 |
 | `vectors/hyperreal-rational/vec3 dot` | `hyperlattice` | `scalar_fast_path` | `dot3-active` | 1 |
 | `vectors/hyperreal-rational/vec3 dot` | `hyperlattice` | `scalar_query` | `definitely-zero` | 6 |
 | `vectors/hyperreal-rational/vec3 dot` | `hyperlattice_hyperreal_backend` | `op` | `active-dot3` | 1 |
@@ -15747,6 +15762,27 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `vectors/hyperreal-rational/vec3 normalize` | `real` | `dot_product` | `active-dot3-exact-rational` | 1 |
 | `vectors/hyperreal-rational/vec3 normalize` | `real` | `inverse` | `const-product-sqrt` | 1 |
 | `vectors/hyperreal-rational/vec3 normalize` | `real` | `sqrt` | `rational-sqrt-special-form` | 1 |
+| `vectors/hyperreal-rational/vec4 normalize` | `computable` | `constructor` | `rational-node` | 2 |
+| `vectors/hyperreal-rational/vec4 normalize` | `computable` | `sqrt` | `generic-sqrt-node` | 2 |
+| `vectors/hyperreal-rational/vec4 normalize` | `hyperlattice` | `scalar_fast_path` | `dot4-same-active` | 1 |
+| `vectors/hyperreal-rational/vec4 normalize` | `hyperlattice` | `scalar_method` | `inverse-owned` | 1 |
+| `vectors/hyperreal-rational/vec4 normalize` | `hyperlattice` | `scalar_method` | `sqrt` | 1 |
+| `vectors/hyperreal-rational/vec4 normalize` | `hyperlattice` | `scalar_op` | `mul-ref-ref` | 4 |
+| `vectors/hyperreal-rational/vec4 normalize` | `hyperlattice` | `scalar_query` | `definitely-zero` | 4 |
+| `vectors/hyperreal-rational/vec4 normalize` | `hyperlattice_hyperreal_backend` | `method` | `inverse-owned` | 1 |
+| `vectors/hyperreal-rational/vec4 normalize` | `hyperlattice_hyperreal_backend` | `method` | `sqrt` | 1 |
+| `vectors/hyperreal-rational/vec4 normalize` | `hyperlattice_hyperreal_backend` | `op` | `active-dot4` | 1 |
+| `vectors/hyperreal-rational/vec4 normalize` | `hyperlattice_hyperreal_backend` | `op` | `mul-ref-ref` | 4 |
+| `vectors/hyperreal-rational/vec4 normalize` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 4 |
+| `vectors/hyperreal-rational/vec4 normalize` | `hyperlattice_vector` | `method` | `magnitude` | 1 |
+| `vectors/hyperreal-rational/vec4 normalize` | `hyperlattice_vector` | `method` | `normalize` | 1 |
+| `vectors/hyperreal-rational/vec4 normalize` | `rational` | `dot_product` | `dyadic-shared-denominator` | 1 |
+| `vectors/hyperreal-rational/vec4 normalize` | `real` | `best_sign` | `symbolic-or-rational` | 1 |
+| `vectors/hyperreal-rational/vec4 normalize` | `real` | `constructor` | `rational` | 1 |
+| `vectors/hyperreal-rational/vec4 normalize` | `real` | `definitely_zero` | `rational-sign` | 4 |
+| `vectors/hyperreal-rational/vec4 normalize` | `real` | `dot_product` | `active-dot4-exact-rational` | 1 |
+| `vectors/hyperreal-rational/vec4 normalize` | `real` | `inverse` | `prechecked-sqrt-rational-radical` | 1 |
+| `vectors/hyperreal-rational/vec4 normalize` | `real` | `sqrt` | `rational-sqrt-special-form` | 1 |
 | `vectors/hyperreal/vec3 dot` | `hyperlattice` | `scalar_fast_path` | `dot3-active` | 4 |
 | `vectors/hyperreal/vec3 dot` | `hyperlattice` | `scalar_query` | `definitely-zero` | 24 |
 | `vectors/hyperreal/vec3 dot` | `hyperlattice_hyperreal_backend` | `op` | `active-dot3` | 4 |
@@ -15792,3 +15828,24 @@ Per-call values are one unmeasured sample pass divided by the sampled calls. `do
 | `vectors/hyperreal/vec3 normalize` | `real` | `dot_product` | `active-dot3-exact-rational` | 4 |
 | `vectors/hyperreal/vec3 normalize` | `real` | `inverse` | `prechecked-sqrt-rational-radical` | 4 |
 | `vectors/hyperreal/vec3 normalize` | `real` | `sqrt` | `rational-sqrt-special-form` | 4 |
+| `vectors/hyperreal/vec4 normalize` | `computable` | `constructor` | `rational-node` | 7 |
+| `vectors/hyperreal/vec4 normalize` | `computable` | `sqrt` | `generic-sqrt-node` | 7 |
+| `vectors/hyperreal/vec4 normalize` | `hyperlattice` | `scalar_fast_path` | `dot4-same-active` | 4 |
+| `vectors/hyperreal/vec4 normalize` | `hyperlattice` | `scalar_method` | `inverse-owned` | 4 |
+| `vectors/hyperreal/vec4 normalize` | `hyperlattice` | `scalar_method` | `sqrt` | 4 |
+| `vectors/hyperreal/vec4 normalize` | `hyperlattice` | `scalar_op` | `mul-ref-ref` | 16 |
+| `vectors/hyperreal/vec4 normalize` | `hyperlattice` | `scalar_query` | `definitely-zero` | 16 |
+| `vectors/hyperreal/vec4 normalize` | `hyperlattice_hyperreal_backend` | `method` | `inverse-owned` | 4 |
+| `vectors/hyperreal/vec4 normalize` | `hyperlattice_hyperreal_backend` | `method` | `sqrt` | 4 |
+| `vectors/hyperreal/vec4 normalize` | `hyperlattice_hyperreal_backend` | `op` | `active-dot4` | 4 |
+| `vectors/hyperreal/vec4 normalize` | `hyperlattice_hyperreal_backend` | `op` | `mul-ref-ref` | 16 |
+| `vectors/hyperreal/vec4 normalize` | `hyperlattice_hyperreal_backend` | `query` | `definitely-zero` | 16 |
+| `vectors/hyperreal/vec4 normalize` | `hyperlattice_vector` | `method` | `magnitude` | 4 |
+| `vectors/hyperreal/vec4 normalize` | `hyperlattice_vector` | `method` | `normalize` | 4 |
+| `vectors/hyperreal/vec4 normalize` | `rational` | `dot_product` | `dyadic-shared-denominator` | 4 |
+| `vectors/hyperreal/vec4 normalize` | `real` | `best_sign` | `symbolic-or-rational` | 4 |
+| `vectors/hyperreal/vec4 normalize` | `real` | `constructor` | `rational` | 4 |
+| `vectors/hyperreal/vec4 normalize` | `real` | `definitely_zero` | `rational-sign` | 16 |
+| `vectors/hyperreal/vec4 normalize` | `real` | `dot_product` | `active-dot4-exact-rational` | 4 |
+| `vectors/hyperreal/vec4 normalize` | `real` | `inverse` | `prechecked-sqrt-rational-radical` | 4 |
+| `vectors/hyperreal/vec4 normalize` | `real` | `sqrt` | `rational-sqrt-special-form` | 4 |
