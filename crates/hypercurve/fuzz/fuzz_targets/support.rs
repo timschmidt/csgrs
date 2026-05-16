@@ -971,7 +971,7 @@ fn h_policy() -> HCurvePolicy {
 }
 
 fn h_offset_policy() -> HCurvePolicy {
-    HCurvePolicy::approximate(HTolerance::new(1e-8, 1e-8))
+    HCurvePolicy::edge_preview(HTolerance::new(1e-8, 1e-8))
 }
 
 fn h_boolean_op(reader: &mut ByteReader<'_>) -> HBooleanOp {

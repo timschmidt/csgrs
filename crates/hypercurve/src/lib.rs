@@ -65,10 +65,6 @@ pub use segment::{CircularArc2, LineSeg2, Segment2};
 pub use split::{ContourSplitMap, ContourSplitMarkers, SegmentSplitMarker, SegmentSplitPoint};
 
 pub use hyperlattice::{Backend, DefaultBackend, Scalar, ScalarSign, ZeroStatus};
-
-#[cfg(feature = "approx")]
-pub use hyperlattice::ApproxBackend;
-#[cfg(feature = "hyperreal")]
 pub use hyperlattice::{HyperrealBackend, Rational, Real};
 
 #[cfg(feature = "predicates")]
@@ -87,14 +83,7 @@ mod tests {
     }
 
     fn topology_policy() -> CurvePolicy {
-        #[cfg(feature = "hyperreal")]
-        {
-            CurvePolicy::certified()
-        }
-        #[cfg(not(feature = "hyperreal"))]
-        {
-            CurvePolicy::approximate(Tolerance::new(1e-9, 1e-9))
-        }
+        CurvePolicy::certified()
     }
 
     #[test]
@@ -277,26 +266,6 @@ mod tests {
 
         let intersections = a.intersect_curve_string(&b, &topology_policy()).unwrap();
         assert!(intersections.is_empty());
-    }
-
-    #[cfg(feature = "approx")]
-    #[test]
-    fn approx_backend_constructs_same_basic_arc() {
-        let start = Point2::<ApproxBackend>::new(
-            Scalar::<ApproxBackend>::try_from(0.0).unwrap(),
-            Scalar::<ApproxBackend>::try_from(0.0).unwrap(),
-        );
-        let end = Point2::<ApproxBackend>::new(
-            Scalar::<ApproxBackend>::try_from(2.0).unwrap(),
-            Scalar::<ApproxBackend>::try_from(0.0).unwrap(),
-        );
-        let segment =
-            Segment2::from_bulge(start, end, Scalar::<ApproxBackend>::try_from(1.0).unwrap())
-                .unwrap();
-        let Segment2::Arc(arc) = segment else {
-            panic!("semicircle bulge should construct an arc");
-        };
-        assert_eq!(arc.radius_squared().to_f64_approx(), Some(1.0));
     }
 
     #[test]

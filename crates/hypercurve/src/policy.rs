@@ -3,15 +3,19 @@
 /// Runtime numeric mode for whole curve operations.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum NumericMode {
-    /// Fast preview mode. Results may be approximate and must say so.
-    Approximate,
-    /// Hybrid mode. Approximate witnesses are allowed only when certified.
+    /// Explicit preview or compatibility boundary mode.
+    ///
+    /// This mode may use named lossy estimates for diagnostics and rendering
+    /// preview, but core hyper topology should use [`NumericMode::Certified`]
+    /// or [`NumericMode::ExactSymbolic`].
+    EdgePreview,
+    /// Hybrid mode. Filtered or structural witnesses are accepted only when certified.
     Certified,
     /// Exact/symbolic mode. Tolerance collapse is not allowed.
     ExactSymbolic,
 }
 
-/// Optional absolute/relative tolerance metadata for approximate operations.
+/// Optional absolute/relative tolerance metadata for edge-preview operations.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Tolerance {
     /// Absolute tolerance.
@@ -35,7 +39,7 @@ pub struct CurvePolicy {
     /// Predicate escalation policy used by topology decisions.
     #[cfg(feature = "predicates")]
     pub predicate_policy: hyperlimit::PredicatePolicy,
-    /// Optional tolerance carried by approximate operations.
+    /// Optional tolerance carried by edge-preview operations.
     pub tolerance: Option<Tolerance>,
 }
 
@@ -50,12 +54,17 @@ impl CurvePolicy {
         }
     }
 
-    /// Fast approximate policy for previews and exploratory work.
-    pub const fn approximate(tolerance: Tolerance) -> Self {
+    /// Edge-preview policy for diagnostics and exploratory rendering.
+    ///
+    /// This policy is intentionally not the default. It exists for code that is
+    /// already at an IO, rendering, or compatibility boundary. Hyperlimit
+    /// predicates still run under the strict exact policy; the tolerance is
+    /// available only to curve-local preview operations.
+    pub const fn edge_preview(tolerance: Tolerance) -> Self {
         Self {
-            numeric_mode: NumericMode::Approximate,
+            numeric_mode: NumericMode::EdgePreview,
             #[cfg(feature = "predicates")]
-            predicate_policy: hyperlimit::PredicatePolicy::APPROXIMATE,
+            predicate_policy: hyperlimit::PredicatePolicy::STRICT,
             tolerance: Some(tolerance),
         }
     }

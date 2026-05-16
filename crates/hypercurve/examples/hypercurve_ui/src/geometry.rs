@@ -3,13 +3,13 @@ use std::ops::{Index, IndexMut};
 
 use geo::{BooleanOps, Buffer, Coord, LineString, MultiPolygon, Polygon};
 use hypercurve::{
-    ApproxBackend, BooleanOp as HBooleanOp, BulgeVertex2, Classification, Contour2,
+    BooleanOp as HBooleanOp, BulgeVertex2, Classification, Contour2,
     ContourIntersection, CurvePolicy, CurveString2, FillRule, OffsetCap, Point2, Region2, Scalar,
-    Segment2, Tolerance,
+    Segment2, Tolerance, HyperrealBackend,
 };
 use serde::{Deserialize, Serialize};
 
-type Backend = ApproxBackend;
+type Backend = HyperrealBackend;
 type HPoint = Point2<Backend>;
 type HScalar = Scalar<Backend>;
 type HSegment = Segment2<Backend>;
@@ -400,7 +400,7 @@ pub enum BooleanMode {
 }
 
 pub fn policy() -> CurvePolicy {
-    CurvePolicy::approximate(Tolerance::new(1e-7, 1e-7))
+    CurvePolicy::edge_preview(Tolerance::new(1e-7, 1e-7))
 }
 
 pub fn boolean_polylines(

@@ -31,7 +31,7 @@ impl<T> Classification<T> {
 /// Reason an operation could not decide a topology branch.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum UncertaintyReason {
-    /// A scalar sign could not be proven or approximated under the active policy.
+    /// A scalar sign could not be proven under the active policy.
     ScalarSign,
     /// Predicate policy could not decide the branch.
     Predicate,
@@ -129,13 +129,17 @@ pub(crate) fn scalar_sign<B: Backend>(
         return Some(sign);
     }
 
-    if !matches!(policy.numeric_mode, NumericMode::Approximate)
-        && let Some(sign) = value.refine_sign_until(-512)
+    if !matches!(policy.numeric_mode, NumericMode::EdgePreview)
+        && let Some(sign) = value.refine_sign_until(-4096)
     {
         return Some(sign);
     }
 
-    if matches!(policy.numeric_mode, NumericMode::Approximate) {
+    if matches!(policy.numeric_mode, NumericMode::EdgePreview) {
+        // Edge-preview mode is the only curve policy allowed to collapse a
+        // hyperreal scalar to `f64` for a sign. Certified topology must carry
+        // structural sign/refinement information instead of committing a lossy
+        // branch.
         return value.to_f64_approx().and_then(|value| {
             if value > 0.0 {
                 Some(ScalarSign::Positive)
@@ -210,9 +214,12 @@ pub(crate) fn in_closed_unit_interval<B: Backend>(
     value: &Scalar<B>,
     policy: &CurvePolicy,
 ) -> Option<bool> {
-    // Decisively out-of-range approximate parameters cannot represent finite
-    // segment hits; near-boundary values still fall through to exact comparison.
-    if let Some(approx) = value.to_f64_approx() {
+    // Edge-preview f64 parameters are candidate filters only: decisively
+    // out-of-range values cannot represent finite segment hits, while
+    // near-boundary values still fall through to exact comparison.
+    if matches!(policy.numeric_mode, NumericMode::EdgePreview)
+        && let Some(approx) = value.to_f64_approx()
+    {
         let tolerance = policy
             .tolerance
             .map(|tolerance| tolerance.absolute.max(tolerance.relative))

@@ -338,7 +338,6 @@ dependencies = [
  "geo",
  "hyperlattice",
  "hyperlimit",
- "hyperreal",
  "proptest",
  "static_aabb2d_index",
 ]
@@ -356,6 +355,7 @@ name = "hyperlimit"
 version = "0.2.0"
 dependencies = [
  "hyperlattice",
+ "hyperreal",
 ]
 
 [[package]]

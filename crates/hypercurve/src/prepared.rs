@@ -33,6 +33,11 @@ pub struct PreparedCurveStringView2<'a, B: Backend = DefaultBackend> {
 impl<'a, B: Backend> PreparedCurveStringView2<'a, B> {
     /// Builds a prepared borrowed curve string.
     pub fn from_curve_string(curve: &'a CurveString2<B>, policy: &CurvePolicy) -> Self {
+        // Structural-dispatch note: this preparation pass already visits every
+        // segment. It is the natural place to retain facts such as all-line,
+        // all-axis-aligned, monotone parameter ranges, or certified disjoint
+        // interval buckets so later intersection queries can choose sweep-line
+        // or grid-index paths instead of the current flat candidate scan.
         let segment_boxes = decided_segment_boxes(curve.segments(), policy);
         let curve_box = union_all_decided_boxes(segment_boxes.iter().map(Option::as_ref), policy);
 
@@ -115,6 +120,10 @@ pub struct PreparedContourView2<'a, B: Backend = DefaultBackend> {
 impl<'a, B: Backend> PreparedContourView2<'a, B> {
     /// Builds a prepared borrowed contour.
     pub fn from_contour(contour: &'a Contour2<B>, policy: &CurvePolicy) -> Self {
+        // Structural-dispatch note: contour preparation can preserve ring-level
+        // facts such as convexity, orientation certainty, y-monotonicity, and
+        // hole/material provenance for future triangulation and Boolean-region
+        // dispatch without weakening the exact boundary classifiers.
         let segment_boxes = decided_segment_boxes(contour.segments(), policy);
         let contour_box = union_all_decided_boxes(segment_boxes.iter().map(Option::as_ref), policy);
 

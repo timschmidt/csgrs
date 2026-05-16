@@ -14,6 +14,13 @@ the native APIs expose explicit uncertainty for tangent, overlap, boundary, and
 unsupported cases instead of silently resolving them through global epsilon
 rules.
 
+## Numeric Model
+
+`hypercurve` stores and decides core geometry with hyperreal-backed
+`hyperlattice::Scalar` values. Primitive `f64` appears only in named edge
+conversions, tests, benchmarks, rendering/IO helpers, and compatibility
+harnesses. There is no approximate scalar backend feature.
+
 ## Current Status
 
 - Line and circular-arc segments with explicit intersection result types,

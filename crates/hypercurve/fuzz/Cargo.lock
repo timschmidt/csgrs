@@ -108,7 +108,6 @@ version = "0.1.0"
 dependencies = [
  "hyperlattice",
  "hyperlimit",
- "hyperreal",
 ]
 
 [[package]]
@@ -133,6 +132,7 @@ name = "hyperlimit"
 version = "0.2.0"
 dependencies = [
  "hyperlattice",
+ "hyperreal",
 ]
 
 [[package]]

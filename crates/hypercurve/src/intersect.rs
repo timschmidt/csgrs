@@ -2,7 +2,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlattice::{Backend, DefaultBackend, Scalar};
+use hyperlattice::{Backend, DefaultBackend, Scalar, ScalarSign};
 
 use crate::classify::{
     at_unit_interval_endpoint, compare_scalars, in_closed_unit_interval, is_zero, max_scalar,
@@ -289,11 +289,22 @@ impl<B: Backend> LineSeg2<B> {
                 }
             }
             Some(hyperlattice::ScalarSign::Positive) => {
-                let sqrt_discriminant = discriminant.sqrt()?;
+                let sqrt_discriminant = discriminant.clone().sqrt()?;
                 let negative_half_b = -half_b;
                 let t0 = ((&negative_half_b - &sqrt_discriminant) / &a)?;
-                let t1 = ((negative_half_b + sqrt_discriminant) / &a)?;
-                line_arc_two_candidates(self, arc, t0, t1, policy)
+                let t1 = ((negative_half_b.clone() + sqrt_discriminant) / &a)?;
+                line_arc_two_candidates(
+                    self,
+                    arc,
+                    t0,
+                    t1,
+                    QuadraticRootContext {
+                        numerator: &negative_half_b,
+                        discriminant: &discriminant,
+                        denominator: &a,
+                    },
+                    policy,
+                )
             }
             None => Ok(LineArcIntersection::Uncertain {
                 reason: UncertaintyReason::ScalarSign,
@@ -493,6 +504,7 @@ fn line_arc_two_candidates<B: Backend>(
     arc: &CircularArc2<B>,
     t0: Scalar<B>,
     t1: Scalar<B>,
+    root_context: QuadraticRootContext<'_, B>,
     policy: &CurvePolicy,
 ) -> CurveResult<LineArcIntersection<B>> {
     let ordered = match compare_scalars(&t0, &t1, policy) {
@@ -505,8 +517,22 @@ fn line_arc_two_candidates<B: Backend>(
         }
     };
 
-    let first = line_arc_hit_candidate(line, arc, ordered.0, IntersectionKind::Crossing, policy)?;
-    let second = line_arc_hit_candidate(line, arc, ordered.1, IntersectionKind::Crossing, policy)?;
+    let first =
+        if quadratic_root_in_closed_unit_interval(&root_context, QuadraticRoot::Lower, policy)
+            == Some(false)
+        {
+            LineArcCandidate::Miss
+        } else {
+            line_arc_hit_candidate(line, arc, ordered.0, IntersectionKind::Crossing, policy)?
+        };
+    let second =
+        if quadratic_root_in_closed_unit_interval(&root_context, QuadraticRoot::Upper, policy)
+            == Some(false)
+        {
+            LineArcCandidate::Miss
+        } else {
+            line_arc_hit_candidate(line, arc, ordered.1, IntersectionKind::Crossing, policy)?
+        };
 
     match (first, second) {
         (LineArcCandidate::Hit(first), LineArcCandidate::Hit(second)) => {
@@ -520,6 +546,87 @@ fn line_arc_two_candidates<B: Backend>(
         (LineArcCandidate::Uncertain(reason), _) | (_, LineArcCandidate::Uncertain(reason)) => {
             Ok(LineArcIntersection::Uncertain { reason })
         }
+    }
+}
+
+struct QuadraticRootContext<'a, B: Backend> {
+    numerator: &'a Scalar<B>,
+    discriminant: &'a Scalar<B>,
+    denominator: &'a Scalar<B>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum QuadraticRoot {
+    Lower,
+    Upper,
+}
+
+fn quadratic_root_in_closed_unit_interval<B: Backend>(
+    context: &QuadraticRootContext<'_, B>,
+    root: QuadraticRoot,
+    policy: &CurvePolicy,
+) -> Option<bool> {
+    // Structural-dispatch note: line/arc intersections already know the root
+    // shape `(n +/- sqrt(D)) / a`. Carrying that shape lets us compare the root
+    // against interval endpoints by squaring exact terms, avoiding a lossy
+    // `f64` parameter rejection and avoiding a harder sign query on an
+    // expression containing `sqrt(D)`.
+    let zero = Scalar::<B>::zero();
+    let lower = quadratic_root_numerator_sign(
+        context.numerator,
+        context.discriminant,
+        &zero,
+        root,
+        policy,
+    )?;
+    if lower == ScalarSign::Negative {
+        return Some(false);
+    }
+
+    let upper = quadratic_root_numerator_sign(
+        context.numerator,
+        context.discriminant,
+        context.denominator,
+        root,
+        policy,
+    )?;
+    Some(upper != ScalarSign::Positive)
+}
+
+fn quadratic_root_numerator_sign<B: Backend>(
+    numerator: &Scalar<B>,
+    discriminant: &Scalar<B>,
+    shift: &Scalar<B>,
+    root: QuadraticRoot,
+    policy: &CurvePolicy,
+) -> Option<ScalarSign> {
+    let offset = numerator - shift;
+    let offset_sign = crate::classify::scalar_sign(&offset, policy)?;
+    match root {
+        QuadraticRoot::Lower => match offset_sign {
+            ScalarSign::Negative => Some(ScalarSign::Negative),
+            ScalarSign::Zero => match crate::classify::scalar_sign(discriminant, policy)? {
+                ScalarSign::Zero => Some(ScalarSign::Zero),
+                ScalarSign::Positive => Some(ScalarSign::Negative),
+                ScalarSign::Negative => None,
+            },
+            ScalarSign::Positive => {
+                let squared_gap = (&offset * &offset) - discriminant;
+                crate::classify::scalar_sign(&squared_gap, policy)
+            }
+        },
+        QuadraticRoot::Upper => match offset_sign {
+            ScalarSign::Positive => Some(ScalarSign::Positive),
+            ScalarSign::Zero => match crate::classify::scalar_sign(discriminant, policy)? {
+                ScalarSign::Zero => Some(ScalarSign::Zero),
+                ScalarSign::Positive => Some(ScalarSign::Positive),
+                ScalarSign::Negative => None,
+            },
+            ScalarSign::Negative => {
+                let squared_gap = discriminant - (&offset * &offset);
+                crate::classify::scalar_sign(&squared_gap, policy)
+            }
+        },
     }
 }
 

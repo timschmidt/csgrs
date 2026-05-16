@@ -256,7 +256,7 @@ fn geo_jts_line_intersection_regressions_are_classified() {
         (588748.2060416829, 4518933.945284994),
         1e-6,
     );
-    // Geo asserts a normalized robust surrogate coordinate for this
+    // Geo asserts a normalized surrogate coordinate for this
     // ill-conditioned case. `hypercurve` only needs the topological fact here:
     // the certified line relation is a single crossing, not none or overlap.
     assert_single_line_hit_exists(
@@ -338,7 +338,7 @@ fn geo_contains_boundary_and_hole_point_cases_match_region_classification() {
 }
 
 #[test]
-fn geo_boolean_issue_867_shared_vertex_triangles_are_explicitly_deferred() {
+fn geo_boolean_issue_867_shared_vertex_triangles_match_geo_samples() {
     let first = &[
         (17.724912058920285, -16.37118892052372),
         (18.06452454246989, -17.693907532504),
@@ -349,8 +349,13 @@ fn geo_boolean_issue_867_shared_vertex_triangles_are_explicitly_deferred() {
         (17.19432983818328, -17.499393422066746),
         (18.06452454246989, -17.693907532504),
     ];
-    let first_region = region_from_rings(&[first], &[]);
-    let second_region = region_from_rings(&[second], &[]);
+    let samples = &[
+        (17.72, -16.8),
+        (17.55, -16.5),
+        (18.4, -17.75),
+        (17.8, -17.45),
+        (19.0, -17.8),
+    ];
 
     for op in [
         BooleanOp::Union,
@@ -358,13 +363,7 @@ fn geo_boolean_issue_867_shared_vertex_triangles_are_explicitly_deferred() {
         BooleanOp::Difference,
         BooleanOp::Xor,
     ] {
-        assert_eq!(
-            first_region
-                .boolean_region(&second_region, op, FillRule::NonZero, &policy())
-                .unwrap(),
-            Classification::Uncertain(UncertaintyReason::Unsupported),
-            "Geo issue 867 should be an explicit branch-vertex deferral for {op:?}"
-        );
+        assert_boolean_samples_match_geo(first, second, op, samples);
     }
 }
 
@@ -452,7 +451,7 @@ fn geo_unary_union_third_triangle_branch_case_is_explicitly_deferred() {
 }
 
 #[test]
-fn geo_issue_913_polygon_union_pair_is_explicitly_deferred() {
+fn geo_issue_913_polygon_union_pair_matches_geo_samples() {
     let first = &[
         (204.0, 287.0),
         (206.69670020700084, 288.2213844497616),
@@ -463,17 +462,13 @@ fn geo_issue_913_polygon_union_pair_is_explicitly_deferred() {
         (204.07584923592933, 288.2701221108328),
         (212.24082541367974, 285.47846008552216),
     ];
+    let samples = &[
+        (203.8, 288.1),
+        (204.2, 288.25),
+        (206.0, 288.0),
+        (210.0, 289.0),
+        (211.0, 286.5),
+    ];
 
-    let result = region_from_rings(&[first], &[])
-        .boolean_region(
-            &region_from_rings(&[second], &[]),
-            BooleanOp::Union,
-            FillRule::NonZero,
-            &policy(),
-        )
-        .unwrap();
-    assert_eq!(
-        result,
-        Classification::Uncertain(UncertaintyReason::Unsupported)
-    );
+    assert_boolean_samples_match_geo(first, second, BooleanOp::Union, samples);
 }
