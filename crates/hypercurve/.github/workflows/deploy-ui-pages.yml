@@ -54,6 +54,7 @@ jobs:
 
       - name: Build UI
         shell: bash
+        working-directory: hypercurve/examples/hypercurve_ui
         run: |
           set -euo pipefail
           unset NO_COLOR
@@ -64,7 +65,7 @@ jobs:
             public_url="/${{ github.event.repository.name }}/"
           fi
 
-          trunk build hypercurve/examples/hypercurve_ui/index.html \
+          trunk build index.html \
             --release \
             --dist dist \
             --public-url "${public_url}"
@@ -77,7 +78,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: hypercurve/examples/hypercurve_ui/dist
 
   deploy:
     name: Deploy
