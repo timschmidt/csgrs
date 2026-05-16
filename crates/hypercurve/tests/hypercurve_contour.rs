@@ -1,17 +1,17 @@
 use hypercurve::{
     BulgeVertex2, Classification, Contour2, ContourPointLocation, CurveError, CurvePolicy,
-    DefaultBackend, FillRule, Scalar, Segment2, UncertaintyReason,
+    FillRule, Real, Segment2, UncertaintyReason,
 };
 
-fn s(value: i32) -> Scalar<DefaultBackend> {
+fn s(value: i32) -> Real {
     value.into()
 }
 
-fn p(x: i32, y: i32) -> hypercurve::Point2<DefaultBackend> {
+fn p(x: i32, y: i32) -> hypercurve::Point2 {
     hypercurve::Point2::new(s(x), s(y))
 }
 
-fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2<DefaultBackend> {
+fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2 {
     BulgeVertex2::new(p(x, y), s(bulge))
 }
 
@@ -19,7 +19,7 @@ fn policy() -> CurvePolicy {
     CurvePolicy::certified()
 }
 
-fn rectangle() -> Contour2<DefaultBackend> {
+fn rectangle() -> Contour2 {
     Contour2::from_bulge_vertices(&[
         vertex(0, 0, 0),
         vertex(4, 0, 0),
@@ -29,7 +29,7 @@ fn rectangle() -> Contour2<DefaultBackend> {
     .unwrap()
 }
 
-fn rotated_rectangle() -> Contour2<DefaultBackend> {
+fn rotated_rectangle() -> Contour2 {
     Contour2::from_bulge_vertices(&[
         vertex(4, 4, 0),
         vertex(0, 4, 0),
@@ -39,7 +39,7 @@ fn rotated_rectangle() -> Contour2<DefaultBackend> {
     .unwrap()
 }
 
-fn reversed_rectangle() -> Contour2<DefaultBackend> {
+fn reversed_rectangle() -> Contour2 {
     Contour2::from_bulge_vertices(&[
         vertex(0, 0, 0),
         vertex(0, 4, 0),

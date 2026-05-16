@@ -2,23 +2,22 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy, DefaultBackend, FillRule,
-    Region2, Scalar,
+    BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, Real, Region2,
 };
 
-fn s(value: i32) -> Scalar<DefaultBackend> {
+fn s(value: i32) -> Real {
     value.into()
 }
 
-fn p(x: i32, y: i32) -> hypercurve::Point2<DefaultBackend> {
+fn p(x: i32, y: i32) -> hypercurve::Point2 {
     hypercurve::Point2::new(s(x), s(y))
 }
 
-fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2<DefaultBackend> {
+fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2 {
     BulgeVertex2::new(p(x, y), s(bulge))
 }
 
-fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2<DefaultBackend> {
+fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
     Contour2::from_bulge_vertices(&[
         vertex(xmin, ymin, 0),
         vertex(xmax, ymin, 0),
@@ -28,7 +27,7 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2<DefaultBack
     .unwrap()
 }
 
-fn rectangle_rotated_start(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2<DefaultBackend> {
+fn rectangle_rotated_start(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
     Contour2::from_bulge_vertices(&[
         vertex(xmax, ymax, 0),
         vertex(xmin, ymax, 0),
@@ -38,7 +37,7 @@ fn rectangle_rotated_start(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contou
     .unwrap()
 }
 
-fn rectangle_reversed(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2<DefaultBackend> {
+fn rectangle_reversed(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
     Contour2::from_bulge_vertices(&[
         vertex(xmin, ymin, 0),
         vertex(xmin, ymax, 0),
@@ -48,33 +47,33 @@ fn rectangle_reversed(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2<De
     .unwrap()
 }
 
-fn region(contours: Vec<Contour2<DefaultBackend>>) -> Region2<DefaultBackend> {
+fn region(contours: Vec<Contour2>) -> Region2 {
     Region2::from_material_contours(contours)
 }
 
-fn overlapping_rectangles() -> (Region2<DefaultBackend>, Region2<DefaultBackend>) {
+fn overlapping_rectangles() -> (Region2, Region2) {
     (
         region(vec![rectangle(0, 0, 4, 4)]),
         region(vec![rectangle(2, -1, 6, 3)]),
     )
 }
 
-fn touching_material_bins() -> Region2<DefaultBackend> {
+fn touching_material_bins() -> Region2 {
     Region2::from_material_contours(vec![rectangle(0, 0, 2, 2), rectangle(2, 0, 4, 2)])
 }
 
-fn touching_material_bins_reordered() -> Region2<DefaultBackend> {
+fn touching_material_bins_reordered() -> Region2 {
     Region2::from_material_contours(vec![rectangle(2, 0, 4, 2), rectangle(0, 0, 2, 2)])
 }
 
-fn touching_material_bins_rotated_and_reversed() -> Region2<DefaultBackend> {
+fn touching_material_bins_rotated_and_reversed() -> Region2 {
     Region2::from_material_contours(vec![
         rectangle_reversed(2, 0, 4, 2),
         rectangle_rotated_start(0, 0, 2, 2),
     ])
 }
 
-fn staggered_grid(side: i32, offset: i32) -> Region2<DefaultBackend> {
+fn staggered_grid(side: i32, offset: i32) -> Region2 {
     let mut contours = Vec::new();
     for row in 0..side {
         for col in 0..side {
@@ -86,13 +85,7 @@ fn staggered_grid(side: i32, offset: i32) -> Region2<DefaultBackend> {
     region(contours)
 }
 
-fn bench_case(
-    name: &str,
-    first: &Region2<DefaultBackend>,
-    second: &Region2<DefaultBackend>,
-    op: BooleanOp,
-    iterations: u32,
-) {
+fn bench_case(name: &str, first: &Region2, second: &Region2, op: BooleanOp, iterations: u32) {
     let policy = CurvePolicy::certified();
     let started = Instant::now();
     let mut total_loops = 0_usize;
@@ -116,8 +109,8 @@ fn bench_case(
 
 fn bench_prepared_case(
     name: &str,
-    first: &Region2<DefaultBackend>,
-    second: &Region2<DefaultBackend>,
+    first: &Region2,
+    second: &Region2,
     op: BooleanOp,
     iterations: u32,
 ) {
@@ -146,8 +139,8 @@ fn bench_prepared_case(
 
 fn bench_left_prepared_case(
     name: &str,
-    first: &Region2<DefaultBackend>,
-    second: &Region2<DefaultBackend>,
+    first: &Region2,
+    second: &Region2,
     op: BooleanOp,
     iterations: u32,
 ) {
@@ -179,8 +172,8 @@ fn bench_left_prepared_case(
 
 fn bench_right_prepared_case(
     name: &str,
-    first: &Region2<DefaultBackend>,
-    second: &Region2<DefaultBackend>,
+    first: &Region2,
+    second: &Region2,
     op: BooleanOp,
     iterations: u32,
 ) {
@@ -212,8 +205,8 @@ fn bench_right_prepared_case(
 
 fn bench_region_case(
     name: &str,
-    first: &Region2<DefaultBackend>,
-    second: &Region2<DefaultBackend>,
+    first: &Region2,
+    second: &Region2,
     op: BooleanOp,
     iterations: u32,
 ) {
@@ -244,8 +237,8 @@ fn bench_region_case(
 
 fn bench_prepared_region_case(
     name: &str,
-    first: &Region2<DefaultBackend>,
-    second: &Region2<DefaultBackend>,
+    first: &Region2,
+    second: &Region2,
     op: BooleanOp,
     iterations: u32,
 ) {
@@ -278,8 +271,8 @@ fn bench_prepared_region_case(
 
 fn bench_boundary_contour_case(
     name: &str,
-    first: &Region2<DefaultBackend>,
-    second: &Region2<DefaultBackend>,
+    first: &Region2,
+    second: &Region2,
     op: BooleanOp,
     iterations: u32,
 ) {
@@ -439,7 +432,7 @@ fn main() {
         10_000,
     );
 
-    let empty = Region2::<DefaultBackend>::empty();
+    let empty = Region2::empty();
     bench_region_case(
         "empty_donut_union_region",
         &empty,

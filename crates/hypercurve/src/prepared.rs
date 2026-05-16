@@ -3,11 +3,12 @@
 //! Prepared views cache conservative broad-phase data but do not replace exact
 //! topology. They skip only decided bounding-box misses and then delegate to the
 //! same segment-intersection and boundary-first contour classification used by
-//! ordinary contours and regions.
-
-use hyperlattice::{Backend, DefaultBackend};
+//! ordinary contours and regions. This keeps preparation in the candidate
+//! generation role of Bentley and Ottmann's intersection-reporting framework,
+//! while preserving Shewchuk-style certified predicates for topology branches.
 
 use crate::bbox::{Aabb2, aabb_decided_misses_point, decided_segment_aabb};
+use crate::facts::{CurveStringFacts, RegionFacts};
 use crate::{
     BooleanBoundaryLoopSet, BooleanOp, Classification, Contour2, ContourIntersectionSet,
     ContourPointLocation, CurvePolicy, CurveResult, CurveString2, CurveStringIntersection,
@@ -24,15 +25,16 @@ use crate::{
 /// "Algorithms for Reporting and Counting Geometric Intersections" (1979),
 /// while retaining the current flat pair enumeration.
 #[derive(Clone, Debug, PartialEq)]
-pub struct PreparedCurveStringView2<'a, B: Backend = DefaultBackend> {
-    curve: &'a CurveString2<B>,
-    segment_boxes: Vec<Option<Aabb2<B>>>,
-    curve_box: Option<Aabb2<B>>,
+pub struct PreparedCurveStringView2<'a> {
+    curve: &'a CurveString2,
+    segment_boxes: Vec<Option<Aabb2>>,
+    curve_box: Option<Aabb2>,
+    facts: CurveStringFacts,
 }
 
-impl<'a, B: Backend> PreparedCurveStringView2<'a, B> {
+impl<'a> PreparedCurveStringView2<'a> {
     /// Builds a prepared borrowed curve string.
-    pub fn from_curve_string(curve: &'a CurveString2<B>, policy: &CurvePolicy) -> Self {
+    pub fn from_curve_string(curve: &'a CurveString2, policy: &CurvePolicy) -> Self {
         // Structural-dispatch note: this preparation pass already visits every
         // segment. It is the natural place to retain facts such as all-line,
         // all-axis-aligned, monotone parameter ranges, or certified disjoint
@@ -40,36 +42,52 @@ impl<'a, B: Backend> PreparedCurveStringView2<'a, B> {
         // or grid-index paths instead of the current flat candidate scan.
         let segment_boxes = decided_segment_boxes(curve.segments(), policy);
         let curve_box = union_all_decided_boxes(segment_boxes.iter().map(Option::as_ref), policy);
+        let facts = crate::facts::curve_string_facts(
+            curve,
+            segment_boxes.iter().filter(|bbox| bbox.is_some()).count(),
+            curve_box.is_some(),
+        );
 
         Self {
             curve,
             segment_boxes,
             curve_box,
+            facts,
         }
     }
 
     /// Returns the borrowed source curve string.
-    pub const fn curve_string(&self) -> &'a CurveString2<B> {
+    pub const fn curve_string(&self) -> &'a CurveString2 {
         self.curve
     }
 
     /// Returns the cached whole-curve box when every segment box was decided.
-    pub const fn curve_box(&self) -> Option<&Aabb2<B>> {
+    pub const fn curve_box(&self) -> Option<&Aabb2> {
         self.curve_box.as_ref()
     }
 
     /// Returns cached segment boxes in source segment order.
-    pub fn segment_boxes(&self) -> &[Option<Aabb2<B>>] {
+    pub fn segment_boxes(&self) -> &[Option<Aabb2>] {
         &self.segment_boxes
+    }
+
+    /// Returns conservative structural facts collected while preparing.
+    ///
+    /// Structural-dispatch note: these facts are the intended home for future
+    /// all-line, axis-aligned, common-scale, and symbolic-family routing of
+    /// repeated curve-string intersection workloads. They do not certify
+    /// topology; exact predicates and explicit uncertainty still do that.
+    pub const fn facts(&self) -> &CurveStringFacts {
+        &self.facts
     }
 
     /// Collects all nonempty segment-pair intersections against another
     /// prepared curve string.
     pub fn intersect_prepared_curve_string(
         &self,
-        other: &PreparedCurveStringView2<'_, B>,
+        other: &PreparedCurveStringView2<'_>,
         policy: &CurvePolicy,
-    ) -> CurveResult<Vec<CurveStringIntersection<B>>> {
+    ) -> CurveResult<Vec<CurveStringIntersection>> {
         crate::curve_string::intersect_curve_strings_with_cached_aabbs(
             self.curve,
             other.curve,
@@ -83,9 +101,9 @@ impl<'a, B: Backend> PreparedCurveStringView2<'a, B> {
     /// borrowed curve string.
     pub fn intersect_curve_string(
         &self,
-        other: &CurveString2<B>,
+        other: &CurveString2,
         policy: &CurvePolicy,
-    ) -> CurveResult<Vec<CurveStringIntersection<B>>> {
+    ) -> CurveResult<Vec<CurveStringIntersection>> {
         let other = PreparedCurveStringView2::from_curve_string(other, policy);
         self.intersect_prepared_curve_string(&other, policy)
     }
@@ -111,50 +129,66 @@ impl<'a, B: Backend> PreparedCurveStringView2<'a, B> {
 /// Reporting and Counting Geometric Intersections" (1979), kept here as a flat
 /// pair scan until the crate grows a sweep-line index.
 #[derive(Clone, Debug, PartialEq)]
-pub struct PreparedContourView2<'a, B: Backend = DefaultBackend> {
-    contour: &'a Contour2<B>,
-    segment_boxes: Vec<Option<Aabb2<B>>>,
-    contour_box: Option<Aabb2<B>>,
+pub struct PreparedContourView2<'a> {
+    contour: &'a Contour2,
+    segment_boxes: Vec<Option<Aabb2>>,
+    contour_box: Option<Aabb2>,
+    facts: CurveStringFacts,
 }
 
-impl<'a, B: Backend> PreparedContourView2<'a, B> {
+impl<'a> PreparedContourView2<'a> {
     /// Builds a prepared borrowed contour.
-    pub fn from_contour(contour: &'a Contour2<B>, policy: &CurvePolicy) -> Self {
+    pub fn from_contour(contour: &'a Contour2, policy: &CurvePolicy) -> Self {
         // Structural-dispatch note: contour preparation can preserve ring-level
         // facts such as convexity, orientation certainty, y-monotonicity, and
         // hole/material provenance for future triangulation and Boolean-region
         // dispatch without weakening the exact boundary classifiers.
         let segment_boxes = decided_segment_boxes(contour.segments(), policy);
         let contour_box = union_all_decided_boxes(segment_boxes.iter().map(Option::as_ref), policy);
+        let facts = crate::facts::contour_facts(
+            contour,
+            segment_boxes.iter().filter(|bbox| bbox.is_some()).count(),
+            contour_box.is_some(),
+        );
 
         Self {
             contour,
             segment_boxes,
             contour_box,
+            facts,
         }
     }
 
     /// Returns the borrowed source contour.
-    pub const fn contour(&self) -> &'a Contour2<B> {
+    pub const fn contour(&self) -> &'a Contour2 {
         self.contour
     }
 
     /// Returns the cached whole-contour box when every segment box was decided.
-    pub const fn contour_box(&self) -> Option<&Aabb2<B>> {
+    pub const fn contour_box(&self) -> Option<&Aabb2> {
         self.contour_box.as_ref()
     }
 
     /// Returns cached segment boxes in source segment order.
-    pub fn segment_boxes(&self) -> &[Option<Aabb2<B>>] {
+    pub fn segment_boxes(&self) -> &[Option<Aabb2>] {
         &self.segment_boxes
+    }
+
+    /// Returns conservative structural facts collected while preparing.
+    ///
+    /// These facts are advisory scheduling metadata in Yap's object layer:
+    /// Boolean and containment code can select specialized exact paths from
+    /// them, but they are not a geometric decision by themselves.
+    pub const fn facts(&self) -> &CurveStringFacts {
+        &self.facts
     }
 
     /// Intersects two prepared contours using their cached broad-phase boxes.
     pub fn intersect_prepared_contour(
         &self,
-        other: &PreparedContourView2<'_, B>,
+        other: &PreparedContourView2<'_>,
         policy: &CurvePolicy,
-    ) -> CurveResult<ContourIntersectionSet<B>> {
+    ) -> CurveResult<ContourIntersectionSet> {
         crate::events::intersect_contours_with_cached_aabbs(
             self.contour,
             other.contour,
@@ -169,17 +203,26 @@ impl<'a, B: Backend> PreparedContourView2<'a, B> {
     /// Intersects this prepared contour against an ordinary borrowed contour.
     pub fn intersect_contour(
         &self,
-        other: &Contour2<B>,
+        other: &Contour2,
         policy: &CurvePolicy,
-    ) -> CurveResult<ContourIntersectionSet<B>> {
+    ) -> CurveResult<ContourIntersectionSet> {
         let other = PreparedContourView2::from_contour(other, policy);
         self.intersect_prepared_contour(&other, policy)
+    }
+
+    /// Collects self-intersection events using this contour's cached boxes.
+    pub fn intersect_self(&self, policy: &CurvePolicy) -> CurveResult<ContourIntersectionSet> {
+        crate::events::intersect_contour_self_with_cached_aabbs(
+            self.contour,
+            &self.segment_boxes,
+            policy,
+        )
     }
 
     /// Classifies a point against this prepared contour.
     pub fn classify_point(
         &self,
-        point: &Point2<B>,
+        point: &Point2,
         policy: &CurvePolicy,
     ) -> Classification<ContourPointLocation> {
         crate::contour::classify_contour_point_with_cached_aabbs(
@@ -192,11 +235,7 @@ impl<'a, B: Backend> PreparedContourView2<'a, B> {
     }
 
     /// Returns true when the point lies on this prepared contour boundary.
-    pub fn point_on_boundary(
-        &self,
-        point: &Point2<B>,
-        policy: &CurvePolicy,
-    ) -> Classification<bool> {
+    pub fn point_on_boundary(&self, point: &Point2, policy: &CurvePolicy) -> Classification<bool> {
         crate::contour::point_on_contour_boundary_with_cached_aabbs(
             self.contour,
             point,
@@ -207,7 +246,7 @@ impl<'a, B: Backend> PreparedContourView2<'a, B> {
     }
 
     /// Computes the winding number for a point not on this prepared boundary.
-    pub fn winding_number(&self, point: &Point2<B>, policy: &CurvePolicy) -> Classification<i32> {
+    pub fn winding_number(&self, point: &Point2, policy: &CurvePolicy) -> Classification<i32> {
         crate::contour::contour_winding_number_with_cached_aabbs(
             self.contour,
             point,
@@ -237,22 +276,23 @@ impl<'a, B: Backend> PreparedContourView2<'a, B> {
 /// prepared view with the same policy family used for later queries so arc
 /// extrema and coordinate ordering are interpreted consistently.
 #[derive(Clone, Debug, PartialEq)]
-pub struct PreparedRegionView2<'a, B: Backend = DefaultBackend> {
-    material_contours: Vec<&'a Contour2<B>>,
-    hole_contours: Vec<&'a Contour2<B>>,
-    material_prepared_contours: Vec<PreparedContourView2<'a, B>>,
-    hole_prepared_contours: Vec<PreparedContourView2<'a, B>>,
-    region_box: Option<Aabb2<B>>,
+pub struct PreparedRegionView2<'a> {
+    material_contours: Vec<&'a Contour2>,
+    hole_contours: Vec<&'a Contour2>,
+    material_prepared_contours: Vec<PreparedContourView2<'a>>,
+    hole_prepared_contours: Vec<PreparedContourView2<'a>>,
+    region_box: Option<Aabb2>,
+    facts: RegionFacts,
 }
 
-impl<'a, B: Backend> PreparedRegionView2<'a, B> {
+impl<'a> PreparedRegionView2<'a> {
     /// Builds a prepared view from an owned region.
-    pub fn from_region(region: &'a Region2<B>, policy: &CurvePolicy) -> Self {
+    pub fn from_region(region: &'a Region2, policy: &CurvePolicy) -> Self {
         Self::from_region_view(&region.as_view(), policy)
     }
 
     /// Builds a prepared view from a borrowed region view.
-    pub fn from_region_view(region: &RegionView2<'a, B>, policy: &CurvePolicy) -> Self {
+    pub fn from_region_view(region: &RegionView2<'a>, policy: &CurvePolicy) -> Self {
         let material_contours = region.material_contours().to_vec();
         let hole_contours = region.hole_contours().to_vec();
         let material_prepared_contours = prepared_contours(&material_contours, policy);
@@ -264,6 +304,7 @@ impl<'a, B: Backend> PreparedRegionView2<'a, B> {
                 .map(PreparedContourView2::contour_box),
             policy,
         );
+        let facts = crate::facts::region_view_facts(region, region_box.is_some());
 
         Self {
             material_contours,
@@ -271,21 +312,22 @@ impl<'a, B: Backend> PreparedRegionView2<'a, B> {
             material_prepared_contours,
             hole_prepared_contours,
             region_box,
+            facts,
         }
     }
 
     /// Returns the cached whole-region box when every contour box was decided.
-    pub const fn region_box(&self) -> Option<&Aabb2<B>> {
+    pub const fn region_box(&self) -> Option<&Aabb2> {
         self.region_box.as_ref()
     }
 
     /// Returns material contours in the prepared view.
-    pub fn material_contours(&self) -> &[&'a Contour2<B>] {
+    pub fn material_contours(&self) -> &[&'a Contour2] {
         &self.material_contours
     }
 
     /// Returns hole contours in the prepared view.
-    pub fn hole_contours(&self) -> &[&'a Contour2<B>] {
+    pub fn hole_contours(&self) -> &[&'a Contour2] {
         &self.hole_contours
     }
 
@@ -295,7 +337,7 @@ impl<'a, B: Backend> PreparedRegionView2<'a, B> {
     /// useful when an algorithm still needs the canonical `RegionView2` shape
     /// for splitting or cloning, while prepared classifiers supply repeated
     /// point and event queries.
-    pub fn as_region_view(&self) -> RegionView2<'a, B> {
+    pub fn as_region_view(&self) -> RegionView2<'a> {
         RegionView2::from_contours(
             self.material_contours.iter().copied(),
             self.hole_contours.iter().copied(),
@@ -303,19 +345,29 @@ impl<'a, B: Backend> PreparedRegionView2<'a, B> {
     }
 
     /// Returns prepared material contours in region-bin order.
-    pub fn prepared_material_contours(&self) -> &[PreparedContourView2<'a, B>] {
+    pub fn prepared_material_contours(&self) -> &[PreparedContourView2<'a>] {
         &self.material_prepared_contours
     }
 
     /// Returns prepared hole contours in region-bin order.
-    pub fn prepared_hole_contours(&self) -> &[PreparedContourView2<'a, B>] {
+    pub fn prepared_hole_contours(&self) -> &[PreparedContourView2<'a>] {
         &self.hole_prepared_contours
+    }
+
+    /// Returns conservative structural facts collected while preparing.
+    ///
+    /// Structural-dispatch note: this is where future region-level convexity,
+    /// contour orientation certainty, all-line/all-arc partitioning, common
+    /// scales, and symbolic dependencies should be shared with Boolean and
+    /// containment algorithms without leaking scalar representation details.
+    pub const fn facts(&self) -> &RegionFacts {
+        &self.facts
     }
 
     /// Classifies a point against this prepared region view.
     pub fn classify_point(
         &self,
-        point: &Point2<B>,
+        point: &Point2,
         policy: &CurvePolicy,
     ) -> Classification<RegionPointLocation> {
         let depth = match self.signed_depth(point, policy) {
@@ -340,7 +392,7 @@ impl<'a, B: Backend> PreparedRegionView2<'a, B> {
     /// candidate contours are classified with the boundary-first winding
     /// structure described by Hormann and Agathos, "The Point in Polygon Problem
     /// for Arbitrary Polygons" (2001), with this crate's circular-arc extension.
-    pub fn signed_depth(&self, point: &Point2<B>, policy: &CurvePolicy) -> Classification<i32> {
+    pub fn signed_depth(&self, point: &Point2, policy: &CurvePolicy) -> Classification<i32> {
         if self
             .region_box
             .as_ref()
@@ -374,9 +426,9 @@ impl<'a, B: Backend> PreparedRegionView2<'a, B> {
     /// amount of repeated broad-phase work, not the topology contract.
     pub fn intersect_prepared_region(
         &self,
-        other: &PreparedRegionView2<'_, B>,
+        other: &PreparedRegionView2<'_>,
         policy: &CurvePolicy,
-    ) -> CurveResult<RegionIntersectionSet<B>> {
+    ) -> CurveResult<RegionIntersectionSet> {
         let mut pairs = Vec::new();
 
         collect_prepared_role_pairs(
@@ -418,9 +470,9 @@ impl<'a, B: Backend> PreparedRegionView2<'a, B> {
     /// Collects normalized topology events against an ordinary region view.
     pub fn intersect_region(
         &self,
-        other: &RegionView2<'_, B>,
+        other: &RegionView2<'_>,
         policy: &CurvePolicy,
-    ) -> CurveResult<RegionIntersectionSet<B>> {
+    ) -> CurveResult<RegionIntersectionSet> {
         let other = PreparedRegionView2::from_region_view(other, policy);
         self.intersect_prepared_region(&other, policy)
     }
@@ -439,10 +491,10 @@ impl<'a, B: Backend> PreparedRegionView2<'a, B> {
     /// prune decided misses, so boundary and overlap uncertainty is preserved.
     pub fn boolean_boundary_loops(
         &self,
-        other: &PreparedRegionView2<'_, B>,
+        other: &PreparedRegionView2<'_>,
         op: BooleanOp,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<BooleanBoundaryLoopSet<B>>> {
+    ) -> CurveResult<Classification<BooleanBoundaryLoopSet>> {
         crate::prepared_boolean::boolean_boundary_loops_between_prepared(self, other, op, policy)
     }
 
@@ -458,10 +510,10 @@ impl<'a, B: Backend> PreparedRegionView2<'a, B> {
     /// Martinez-Rueda-Feito split/classify/assemble model cited above.
     pub fn boolean_boundary_loops_against_region(
         &self,
-        other: &RegionView2<'_, B>,
+        other: &RegionView2<'_>,
         op: BooleanOp,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<BooleanBoundaryLoopSet<B>>> {
+    ) -> CurveResult<Classification<BooleanBoundaryLoopSet>> {
         let other = PreparedRegionView2::from_region_view(other, policy);
         self.boolean_boundary_loops(&other, op, policy)
     }
@@ -477,11 +529,11 @@ impl<'a, B: Backend> PreparedRegionView2<'a, B> {
     /// as tolerance-based inside/outside choices.
     pub fn boolean_boundary_contours(
         &self,
-        other: &PreparedRegionView2<'_, B>,
+        other: &PreparedRegionView2<'_>,
         op: BooleanOp,
         fill_rule: FillRule,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Vec<Contour2<B>>>> {
+    ) -> CurveResult<Classification<Vec<Contour2>>> {
         crate::prepared_boolean::boolean_boundary_contours_between_prepared(
             self, other, op, fill_rule, policy,
         )
@@ -497,11 +549,11 @@ impl<'a, B: Backend> PreparedRegionView2<'a, B> {
     /// Hormann, and Popa for boundary contacts.
     pub fn boolean_boundary_contours_against_region(
         &self,
-        other: &RegionView2<'_, B>,
+        other: &RegionView2<'_>,
         op: BooleanOp,
         fill_rule: FillRule,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Vec<Contour2<B>>>> {
+    ) -> CurveResult<Classification<Vec<Contour2>>> {
         let other = PreparedRegionView2::from_region_view(other, policy);
         self.boolean_boundary_contours(&other, op, fill_rule, policy)
     }
@@ -515,11 +567,11 @@ impl<'a, B: Backend> PreparedRegionView2<'a, B> {
     /// by the non-prepared region pipeline.
     pub fn boolean_region(
         &self,
-        other: &PreparedRegionView2<'_, B>,
+        other: &PreparedRegionView2<'_>,
         op: BooleanOp,
         fill_rule: FillRule,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Region2<B>>> {
+    ) -> CurveResult<Classification<Region2>> {
         crate::prepared_boolean::boolean_region_between_prepared(self, other, op, fill_rule, policy)
     }
 
@@ -531,53 +583,50 @@ impl<'a, B: Backend> PreparedRegionView2<'a, B> {
     /// classification used by [`RegionView2::boolean_region`].
     pub fn boolean_region_against_region(
         &self,
-        other: &RegionView2<'_, B>,
+        other: &RegionView2<'_>,
         op: BooleanOp,
         fill_rule: FillRule,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Region2<B>>> {
+    ) -> CurveResult<Classification<Region2>> {
         let other = PreparedRegionView2::from_region_view(other, policy);
         self.boolean_region(&other, op, fill_rule, policy)
     }
 }
 
-impl<B: Backend> CurveString2<B> {
+impl CurveString2 {
     /// Builds a prepared borrowed curve string for repeated topology queries.
-    pub fn prepare_topology_queries(
-        &self,
-        policy: &CurvePolicy,
-    ) -> PreparedCurveStringView2<'_, B> {
+    pub fn prepare_topology_queries(&self, policy: &CurvePolicy) -> PreparedCurveStringView2<'_> {
         PreparedCurveStringView2::from_curve_string(self, policy)
     }
 }
 
-impl<B: Backend> Contour2<B> {
+impl Contour2 {
     /// Builds a prepared borrowed contour for repeated topology queries.
-    pub fn prepare_topology_queries(&self, policy: &CurvePolicy) -> PreparedContourView2<'_, B> {
+    pub fn prepare_topology_queries(&self, policy: &CurvePolicy) -> PreparedContourView2<'_> {
         PreparedContourView2::from_contour(self, policy)
     }
 }
 
-impl<B: Backend> Region2<B> {
+impl Region2 {
     /// Builds a prepared borrowed view for repeated point classification.
-    pub fn prepare_point_classifier(&self, policy: &CurvePolicy) -> PreparedRegionView2<'_, B> {
+    pub fn prepare_point_classifier(&self, policy: &CurvePolicy) -> PreparedRegionView2<'_> {
         PreparedRegionView2::from_region(self, policy)
     }
 
     /// Builds a prepared borrowed view for repeated point and event queries.
-    pub fn prepare_topology_queries(&self, policy: &CurvePolicy) -> PreparedRegionView2<'_, B> {
+    pub fn prepare_topology_queries(&self, policy: &CurvePolicy) -> PreparedRegionView2<'_> {
         PreparedRegionView2::from_region(self, policy)
     }
 }
 
-impl<'a, B: Backend> RegionView2<'a, B> {
+impl<'a> RegionView2<'a> {
     /// Builds a prepared borrowed view for repeated point classification.
-    pub fn prepare_point_classifier(&self, policy: &CurvePolicy) -> PreparedRegionView2<'a, B> {
+    pub fn prepare_point_classifier(&self, policy: &CurvePolicy) -> PreparedRegionView2<'a> {
         PreparedRegionView2::from_region_view(self, policy)
     }
 
     /// Builds a prepared borrowed view for repeated point and event queries.
-    pub fn prepare_topology_queries(&self, policy: &CurvePolicy) -> PreparedRegionView2<'a, B> {
+    pub fn prepare_topology_queries(&self, policy: &CurvePolicy) -> PreparedRegionView2<'a> {
         PreparedRegionView2::from_region_view(self, policy)
     }
 
@@ -589,9 +638,9 @@ impl<'a, B: Backend> RegionView2<'a, B> {
     /// normalization.
     pub fn intersect_prepared_region(
         &self,
-        other: &PreparedRegionView2<'_, B>,
+        other: &PreparedRegionView2<'_>,
         policy: &CurvePolicy,
-    ) -> CurveResult<RegionIntersectionSet<B>> {
+    ) -> CurveResult<RegionIntersectionSet> {
         let this = PreparedRegionView2::from_region_view(self, policy);
         this.intersect_prepared_region(other, policy)
     }
@@ -605,10 +654,10 @@ impl<'a, B: Backend> RegionView2<'a, B> {
     /// unchanged from [`RegionView2::boolean_boundary_loops`].
     pub fn boolean_boundary_loops_against_prepared_region(
         &self,
-        other: &PreparedRegionView2<'_, B>,
+        other: &PreparedRegionView2<'_>,
         op: BooleanOp,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<BooleanBoundaryLoopSet<B>>> {
+    ) -> CurveResult<Classification<BooleanBoundaryLoopSet>> {
         let this = PreparedRegionView2::from_region_view(self, policy);
         this.boolean_boundary_loops(other, op, policy)
     }
@@ -622,11 +671,11 @@ impl<'a, B: Backend> RegionView2<'a, B> {
     /// as the ordinary checked-contour API.
     pub fn boolean_boundary_contours_against_prepared_region(
         &self,
-        other: &PreparedRegionView2<'_, B>,
+        other: &PreparedRegionView2<'_>,
         op: BooleanOp,
         fill_rule: FillRule,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Vec<Contour2<B>>>> {
+    ) -> CurveResult<Classification<Vec<Contour2>>> {
         let this = PreparedRegionView2::from_region_view(self, policy);
         this.boolean_boundary_contours(other, op, fill_rule, policy)
     }
@@ -639,22 +688,21 @@ impl<'a, B: Backend> RegionView2<'a, B> {
     /// classification remains the final arbiter for resolved output contours.
     pub fn boolean_region_against_prepared_region(
         &self,
-        other: &PreparedRegionView2<'_, B>,
+        other: &PreparedRegionView2<'_>,
         op: BooleanOp,
         fill_rule: FillRule,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Region2<B>>> {
+    ) -> CurveResult<Classification<Region2>> {
         let this = PreparedRegionView2::from_region_view(self, policy);
         this.boolean_region(other, op, fill_rule, policy)
     }
 }
 
-fn prepared_contours<'a, B: Backend>(
-    contours: &[&'a Contour2<B>],
+fn prepared_contours<'a>(
+    contours: &[&'a Contour2],
     policy: &CurvePolicy,
-) -> Vec<PreparedContourView2<'a, B>>
+) -> Vec<PreparedContourView2<'a>>
 where
-    B: 'a,
 {
     contours
         .iter()
@@ -662,20 +710,16 @@ where
         .collect()
 }
 
-fn decided_segment_boxes<B: Backend>(
-    segments: &[crate::Segment2<B>],
-    policy: &CurvePolicy,
-) -> Vec<Option<Aabb2<B>>> {
+fn decided_segment_boxes(segments: &[crate::Segment2], policy: &CurvePolicy) -> Vec<Option<Aabb2>> {
     segments
         .iter()
         .map(|segment| decided_segment_aabb(segment, policy))
         .collect()
 }
 
-fn union_all_decided_boxes<'a, B: Backend, I>(boxes: I, policy: &CurvePolicy) -> Option<Aabb2<B>>
+fn union_all_decided_boxes<'a, I>(boxes: I, policy: &CurvePolicy) -> Option<Aabb2>
 where
-    I: IntoIterator<Item = Option<&'a Aabb2<B>>>,
-    B: 'a,
+    I: IntoIterator<Item = Option<&'a Aabb2>>,
 {
     let mut boxes = boxes.into_iter();
     let first = boxes.next()??.clone();
@@ -692,10 +736,10 @@ where
     Some(merged)
 }
 
-fn accumulate_depth<B: Backend>(
+fn accumulate_depth(
     depth: &mut i32,
-    contours: &[PreparedContourView2<'_, B>],
-    point: &Point2<B>,
+    contours: &[PreparedContourView2<'_>],
+    point: &Point2,
     sign: i32,
     policy: &CurvePolicy,
 ) -> Classification<()> {
@@ -720,11 +764,11 @@ fn accumulate_depth<B: Backend>(
     Classification::Decided(())
 }
 
-fn collect_prepared_role_pairs<B: Backend>(
-    pairs: &mut Vec<RegionContourIntersection<B>>,
-    first_contours: &[PreparedContourView2<'_, B>],
+fn collect_prepared_role_pairs(
+    pairs: &mut Vec<RegionContourIntersection>,
+    first_contours: &[PreparedContourView2<'_>],
     first_role: RegionContourRole,
-    second_contours: &[PreparedContourView2<'_, B>],
+    second_contours: &[PreparedContourView2<'_>],
     second_role: RegionContourRole,
     policy: &CurvePolicy,
 ) -> CurveResult<()> {

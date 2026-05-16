@@ -1,25 +1,25 @@
 use hypercurve::{
-    BulgeVertex2, Classification, Contour2, CurvePolicy, DefaultBackend, Region2, RegionContourKey,
-    RegionContourRole, RegionSide, Scalar,
+    BulgeVertex2, Classification, Contour2, CurvePolicy, Real, Region2, RegionContourKey,
+    RegionContourRole, RegionSide,
 };
 
-fn s(value: i32) -> Scalar<DefaultBackend> {
+fn s(value: i32) -> Real {
     value.into()
 }
 
-fn p(x: i32, y: i32) -> hypercurve::Point2<DefaultBackend> {
+fn p(x: i32, y: i32) -> hypercurve::Point2 {
     hypercurve::Point2::new(s(x), s(y))
 }
 
-fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2<DefaultBackend> {
+fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2 {
     BulgeVertex2::new(p(x, y), s(bulge))
 }
 
-fn contour(vertices: &[BulgeVertex2<DefaultBackend>]) -> Contour2<DefaultBackend> {
+fn contour(vertices: &[BulgeVertex2]) -> Contour2 {
     Contour2::from_bulge_vertices(vertices).unwrap()
 }
 
-fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2<DefaultBackend> {
+fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
     contour(&[
         vertex(xmin, ymin, 0),
         vertex(xmax, ymin, 0),

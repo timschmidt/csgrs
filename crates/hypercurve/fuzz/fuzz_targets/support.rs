@@ -15,18 +15,23 @@ use cavalier_contours::shape_algorithms::Shape;
 use cavalier_contours::static_aabb2d_index::AABB;
 use hypercurve::{
     Aabb2 as HAabb2, ArcArcIntersection as HArcArcIntersection, BooleanOp as HBooleanOp,
-    BulgeVertex2 as HBulgeVertex2, Classification as HClassification, Contour2 as HContour2,
+    ArcArcIntersectionPoint as HArcArcIntersectionPoint, BulgeVertex2 as HBulgeVertex2,
+    CircularArc2 as HCircularArc2, Classification as HClassification, Contour2 as HContour2,
     ContourOperand as HContourOperand, ContourPointLocation as HContourPointLocation,
-    ContourSplitMap as HContourSplitMap, CurvePolicy as HCurvePolicy,
-    CurveString2 as HCurveString2, DefaultBackend as HBackend, FillRule as HFillRule,
-    LineArcIntersection as HLineArcIntersection, LineLineIntersection as HLineLineIntersection,
-    LineSeg2 as HLineSeg2, OffsetCap as HOffsetCap, Point2 as HPoint2, Region2 as HRegion2,
-    RegionPointLocation as HRegionPointLocation, Scalar as HScalar, Segment2 as HSegment2,
+    ContourSplitMap as HContourSplitMap, CurvePolicy as HCurvePolicy, FillRule as HFillRule,
+    CurveString2 as HCurveString2, CurveStringIntersection as HCurveStringIntersection,
+    LineArcIntersection as HLineArcIntersection,
+    LineArcIntersectionPoint as HLineArcIntersectionPoint,
+    LineLineIntersection as HLineLineIntersection, LineSeg2 as HLineSeg2, OffsetCap as HOffsetCap,
+    ParamRange as HParamRange, Point2 as HPoint2,
+    PolylineReconstructionOptions as HPolylineReconstructionOptions, Region2 as HRegion2,
+    RegionPointLocation as HRegionPointLocation, Real as HReal, Segment2 as HSegment2,
     SegmentIntersection as HSegmentIntersection, Tolerance as HTolerance,
 };
 use std::f64::consts::PI;
 
 const EPS: f64 = 1e-7;
+const H_GEOMETRY_EQ_EPS: f64 = 1e-6;
 
 /// Deterministic byte reader for lightweight, shrinkable fuzz input decoding.
 pub struct ByteReader<'a> {
@@ -909,11 +914,11 @@ pub fn assert_inversion_boolean(reader: &mut ByteReader<'_>) {
     }
 }
 
-type HPoint = HPoint2<HBackend>;
-type HScalarValue = HScalar<HBackend>;
-type HContour = HContour2<HBackend>;
-type HRegion = HRegion2<HBackend>;
-type HSegment = HSegment2<HBackend>;
+type HPoint = HPoint2;
+type HRealValue = HReal;
+type HContour = HContour2;
+type HRegion = HRegion2;
+type HSegment = HSegment2;
 
 #[derive(Clone, Copy, Debug)]
 struct HRect {
@@ -942,11 +947,11 @@ impl HRect {
     }
 }
 
-fn h_scalar(value: f64) -> HScalarValue {
-    HScalar::<HBackend>::try_from(value).unwrap()
+fn h_scalar(value: f64) -> HRealValue {
+    HReal::try_from(value).unwrap()
 }
 
-fn h_scalar_i32(value: i32) -> HScalarValue {
+fn h_scalar_i32(value: i32) -> HRealValue {
     value.into()
 }
 
@@ -958,11 +963,11 @@ fn h_point_i32(x: i32, y: i32) -> HPoint {
     HPoint2::new(h_scalar_i32(x), h_scalar_i32(y))
 }
 
-fn h_vertex(x: f64, y: f64, bulge: f64) -> HBulgeVertex2<HBackend> {
+fn h_vertex(x: f64, y: f64, bulge: f64) -> HBulgeVertex2 {
     HBulgeVertex2::new(h_point(x, y), h_scalar(bulge))
 }
 
-fn h_vertex_i32(x: i32, y: i32, bulge: i32) -> HBulgeVertex2<HBackend> {
+fn h_vertex_i32(x: i32, y: i32, bulge: i32) -> HBulgeVertex2 {
     HBulgeVertex2::new(h_point_i32(x, y), h_scalar_i32(bulge))
 }
 
@@ -1089,7 +1094,7 @@ fn h_assert_point_finite(point: &HPoint) {
     assert!(point.y().to_f64_approx().is_some_and(f64::is_finite));
 }
 
-fn h_assert_scalar_unit_interval(value: &HScalarValue) {
+fn h_assert_scalar_unit_interval(value: &HRealValue) {
     let value = value
         .to_f64_approx()
         .expect("fuzz scalar should be approximable");
@@ -1097,6 +1102,71 @@ fn h_assert_scalar_unit_interval(value: &HScalarValue) {
         (-1e-8..=1.0 + 1e-8).contains(&value),
         "segment parameter out of range: {value}"
     );
+}
+
+fn h_scalar_f64(value: &HRealValue, context: &str) -> f64 {
+    let value = value
+        .to_f64_approx()
+        .unwrap_or_else(|| panic!("{context}: scalar should be approximable"));
+    assert!(value.is_finite(), "{context}: scalar should be finite");
+    value
+}
+
+fn h_assert_scalar_approx_eq(left: &HRealValue, right: &HRealValue, context: &str) {
+    let left = h_scalar_f64(left, context);
+    let right = h_scalar_f64(right, context);
+    let tolerance = H_GEOMETRY_EQ_EPS.max(H_GEOMETRY_EQ_EPS * left.abs().max(right.abs()));
+    assert!(
+        (left - right).abs() <= tolerance,
+        "{context}: expected approximately equal scalars, left={left}, right={right}, tolerance={tolerance}"
+    );
+}
+
+fn h_assert_point_approx_eq(left: &HPoint, right: &HPoint, context: &str) {
+    h_assert_scalar_approx_eq(left.x(), right.x(), context);
+    h_assert_scalar_approx_eq(left.y(), right.y(), context);
+}
+
+fn h_assert_param_range_approx_eq(
+    left: &HParamRange,
+    right: &HParamRange,
+    context: &str,
+) {
+    h_assert_scalar_approx_eq(left.start(), right.start(), context);
+    h_assert_scalar_approx_eq(left.end(), right.end(), context);
+}
+
+fn h_assert_line_segment_approx_eq(
+    left: &HLineSeg2,
+    right: &HLineSeg2,
+    context: &str,
+) {
+    h_assert_point_approx_eq(left.start(), right.start(), context);
+    h_assert_point_approx_eq(left.end(), right.end(), context);
+}
+
+fn h_assert_arc_segment_approx_eq(
+    left: &HCircularArc2,
+    right: &HCircularArc2,
+    context: &str,
+) {
+    h_assert_point_approx_eq(left.start(), right.start(), context);
+    h_assert_point_approx_eq(left.end(), right.end(), context);
+    h_assert_point_approx_eq(left.center(), right.center(), context);
+    h_assert_scalar_approx_eq(&left.radius_squared(), &right.radius_squared(), context);
+    assert_eq!(left.is_clockwise(), right.is_clockwise(), "{context}");
+}
+
+fn h_assert_segment_approx_eq(left: &HSegment, right: &HSegment, context: &str) {
+    match (left, right) {
+        (HSegment2::Line(left), HSegment2::Line(right)) => {
+            h_assert_line_segment_approx_eq(left, right, context);
+        }
+        (HSegment2::Arc(left), HSegment2::Arc(right)) => {
+            h_assert_arc_segment_approx_eq(left, right, context);
+        }
+        _ => panic!("{context}: expected matching segment variants, left={left:?}, right={right:?}"),
+    }
 }
 
 fn h_assert_segment_finite(segment: &HSegment) {
@@ -1118,7 +1188,7 @@ fn h_assert_segment_finite(segment: &HSegment) {
     }
 }
 
-fn h_assert_curve_string_finite(curve: &HCurveString2<HBackend>) {
+fn h_assert_curve_string_finite(curve: &HCurveString2) {
     for segment in curve.segments() {
         h_assert_segment_finite(segment);
     }
@@ -1126,6 +1196,27 @@ fn h_assert_curve_string_finite(curve: &HCurveString2<HBackend>) {
 
 fn h_assert_contour_finite(contour: &HContour) {
     h_assert_curve_string_finite(contour.curve_string());
+}
+
+fn h_assert_contour_boundary_sets_match(left: &[HContour], right: &[HContour]) {
+    assert_eq!(
+        left.len(),
+        right.len(),
+        "boundary contour sets should have equal cardinality"
+    );
+    let mut matched = vec![false; right.len()];
+    for contour in left {
+        let Some((index, _)) = right
+            .iter()
+            .enumerate()
+            .find(|(index, candidate)| {
+                !matched[*index] && contour.has_same_exact_boundary(candidate)
+            })
+        else {
+            panic!("boundary contour set is missing {contour:?}");
+        };
+        matched[index] = true;
+    }
 }
 
 fn h_assert_region_semantics(a: &HRegion, b: &HRegion, result: &HRegion, op: HBooleanOp) {
@@ -1156,7 +1247,7 @@ fn h_assert_region_semantics(a: &HRegion, b: &HRegion, result: &HRegion, op: HBo
     }
 }
 
-fn h_line_from_i32(start: (i32, i32), end: (i32, i32)) -> HLineSeg2<HBackend> {
+fn h_line_from_i32(start: (i32, i32), end: (i32, i32)) -> HLineSeg2 {
     HLineSeg2::try_new(h_point_i32(start.0, start.1), h_point_i32(end.0, end.1)).unwrap()
 }
 
@@ -1192,7 +1283,7 @@ fn h_segment_from_bytes(reader: &mut ByteReader<'_>) -> HSegment {
     }
 }
 
-fn h_validate_line_line(result: &HLineLineIntersection<HBackend>) {
+fn h_validate_line_line(result: &HLineLineIntersection) {
     match result {
         HLineLineIntersection::None | HLineLineIntersection::Uncertain { .. } => {}
         HLineLineIntersection::Point {
@@ -1220,8 +1311,8 @@ fn h_validate_line_line(result: &HLineLineIntersection<HBackend>) {
     }
 }
 
-fn h_validate_line_arc(result: &HLineArcIntersection<HBackend>) {
-    let validate_point = |point: &hypercurve::LineArcIntersectionPoint<HBackend>| {
+fn h_validate_line_arc(result: &HLineArcIntersection) {
+    let validate_point = |point: &hypercurve::LineArcIntersectionPoint| {
         h_assert_point_finite(&point.point);
         h_assert_scalar_unit_interval(&point.line_param);
     };
@@ -1236,8 +1327,8 @@ fn h_validate_line_arc(result: &HLineArcIntersection<HBackend>) {
     }
 }
 
-fn h_validate_arc_arc(result: &HArcArcIntersection<HBackend>) {
-    let validate_point = |point: &hypercurve::ArcArcIntersectionPoint<HBackend>| {
+fn h_validate_arc_arc(result: &HArcArcIntersection) {
+    let validate_point = |point: &hypercurve::ArcArcIntersectionPoint| {
         h_assert_point_finite(&point.point);
     };
 
@@ -1264,11 +1355,233 @@ fn h_validate_arc_arc(result: &HArcArcIntersection<HBackend>) {
     }
 }
 
-fn h_validate_segment_intersection(result: &HSegmentIntersection<HBackend>) {
+fn h_validate_segment_intersection(result: &HSegmentIntersection) {
     match result {
         HSegmentIntersection::LineLine(result) => h_validate_line_line(result),
         HSegmentIntersection::LineArc { result, .. } => h_validate_line_arc(result),
         HSegmentIntersection::ArcArc(result) => h_validate_arc_arc(result),
+    }
+}
+
+fn h_assert_line_arc_point_equivalent(
+    left: &HLineArcIntersectionPoint,
+    right: &HLineArcIntersectionPoint,
+    context: &str,
+) {
+    h_assert_point_approx_eq(&left.point, &right.point, context);
+    h_assert_scalar_approx_eq(&left.line_param, &right.line_param, context);
+    assert_eq!(left.kind, right.kind, "{context}");
+}
+
+fn h_assert_arc_arc_point_equivalent(
+    left: &HArcArcIntersectionPoint,
+    right: &HArcArcIntersectionPoint,
+    context: &str,
+) {
+    h_assert_point_approx_eq(&left.point, &right.point, context);
+    assert_eq!(left.kind, right.kind, "{context}");
+}
+
+fn h_assert_line_line_intersection_equivalent(
+    left: &HLineLineIntersection,
+    right: &HLineLineIntersection,
+    context: &str,
+) {
+    match (left, right) {
+        (HLineLineIntersection::None, HLineLineIntersection::None) => {}
+        (
+            HLineLineIntersection::Point {
+                point: left_point,
+                a_param: left_a,
+                b_param: left_b,
+                kind: left_kind,
+            },
+            HLineLineIntersection::Point {
+                point: right_point,
+                a_param: right_a,
+                b_param: right_b,
+                kind: right_kind,
+            },
+        ) => {
+            h_assert_point_approx_eq(left_point, right_point, context);
+            h_assert_scalar_approx_eq(left_a, right_a, context);
+            h_assert_scalar_approx_eq(left_b, right_b, context);
+            assert_eq!(left_kind, right_kind, "{context}");
+        }
+        (
+            HLineLineIntersection::Overlap {
+                segment: left_segment,
+                a_range: left_a,
+                b_range: left_b,
+            },
+            HLineLineIntersection::Overlap {
+                segment: right_segment,
+                a_range: right_a,
+                b_range: right_b,
+            },
+        ) => {
+            h_assert_line_segment_approx_eq(left_segment, right_segment, context);
+            h_assert_param_range_approx_eq(left_a, right_a, context);
+            h_assert_param_range_approx_eq(left_b, right_b, context);
+        }
+        (
+            HLineLineIntersection::Uncertain {
+                reason: left_reason,
+            },
+            HLineLineIntersection::Uncertain {
+                reason: right_reason,
+            },
+        ) => assert_eq!(left_reason, right_reason, "{context}"),
+        _ => panic!(
+            "{context}: expected equivalent line-line intersections, left={left:?}, right={right:?}"
+        ),
+    }
+}
+
+fn h_assert_line_arc_intersection_equivalent(
+    left: &HLineArcIntersection,
+    right: &HLineArcIntersection,
+    context: &str,
+) {
+    match (left, right) {
+        (HLineArcIntersection::None, HLineArcIntersection::None) => {}
+        (HLineArcIntersection::Point(left), HLineArcIntersection::Point(right)) => {
+            h_assert_line_arc_point_equivalent(left, right, context);
+        }
+        (
+            HLineArcIntersection::TwoPoints {
+                first: left_first,
+                second: left_second,
+            },
+            HLineArcIntersection::TwoPoints {
+                first: right_first,
+                second: right_second,
+            },
+        ) => {
+            h_assert_line_arc_point_equivalent(left_first, right_first, context);
+            h_assert_line_arc_point_equivalent(left_second, right_second, context);
+        }
+        (
+            HLineArcIntersection::Uncertain {
+                reason: left_reason,
+            },
+            HLineArcIntersection::Uncertain {
+                reason: right_reason,
+            },
+        ) => assert_eq!(left_reason, right_reason, "{context}"),
+        _ => panic!(
+            "{context}: expected equivalent line-arc intersections, left={left:?}, right={right:?}"
+        ),
+    }
+}
+
+fn h_assert_arc_arc_intersection_equivalent(
+    left: &HArcArcIntersection,
+    right: &HArcArcIntersection,
+    context: &str,
+) {
+    match (left, right) {
+        (HArcArcIntersection::None, HArcArcIntersection::None) => {}
+        (HArcArcIntersection::Point(left), HArcArcIntersection::Point(right)) => {
+            h_assert_arc_arc_point_equivalent(left, right, context);
+        }
+        (
+            HArcArcIntersection::TwoPoints {
+                first: left_first,
+                second: left_second,
+            },
+            HArcArcIntersection::TwoPoints {
+                first: right_first,
+                second: right_second,
+            },
+        ) => {
+            h_assert_arc_arc_point_equivalent(left_first, right_first, context);
+            h_assert_arc_arc_point_equivalent(left_second, right_second, context);
+        }
+        (
+            HArcArcIntersection::Overlap {
+                segment: left_segment,
+                a_range: left_a,
+                b_range: left_b,
+            },
+            HArcArcIntersection::Overlap {
+                segment: right_segment,
+                a_range: right_a,
+                b_range: right_b,
+            },
+        ) => {
+            h_assert_arc_segment_approx_eq(left_segment, right_segment, context);
+            h_assert_param_range_approx_eq(left_a, right_a, context);
+            h_assert_param_range_approx_eq(left_b, right_b, context);
+        }
+        (
+            HArcArcIntersection::Uncertain {
+                reason: left_reason,
+            },
+            HArcArcIntersection::Uncertain {
+                reason: right_reason,
+            },
+        ) => assert_eq!(left_reason, right_reason, "{context}"),
+        _ => panic!(
+            "{context}: expected equivalent arc-arc intersections, left={left:?}, right={right:?}"
+        ),
+    }
+}
+
+fn h_assert_segment_intersection_equivalent(
+    left: &HSegmentIntersection,
+    right: &HSegmentIntersection,
+    context: &str,
+) {
+    match (left, right) {
+        (HSegmentIntersection::LineLine(left), HSegmentIntersection::LineLine(right)) => {
+            h_assert_line_line_intersection_equivalent(left, right, context);
+        }
+        (
+            HSegmentIntersection::LineArc {
+                order: left_order,
+                result: left_result,
+            },
+            HSegmentIntersection::LineArc {
+                order: right_order,
+                result: right_result,
+            },
+        ) => {
+            assert_eq!(left_order, right_order, "{context}");
+            h_assert_line_arc_intersection_equivalent(left_result, right_result, context);
+        }
+        (HSegmentIntersection::ArcArc(left), HSegmentIntersection::ArcArc(right)) => {
+            h_assert_arc_arc_intersection_equivalent(left, right, context);
+        }
+        _ => panic!(
+            "{context}: expected equivalent segment intersections, left={left:?}, right={right:?}"
+        ),
+    }
+}
+
+fn h_assert_curve_string_intersections_equivalent(
+    left: &[HCurveStringIntersection],
+    right: &[HCurveStringIntersection],
+) {
+    assert_eq!(
+        left.len(),
+        right.len(),
+        "curve-string intersection event counts should match"
+    );
+    for (left, right) in left.iter().zip(right) {
+        assert_eq!(
+            left.a_segment_index, right.a_segment_index,
+            "curve-string first operand segment index should match"
+        );
+        assert_eq!(
+            left.b_segment_index, right.b_segment_index,
+            "curve-string second operand segment index should match"
+        );
+        h_assert_segment_intersection_equivalent(
+            &left.relation,
+            &right.relation,
+            "curve-string relation",
+        );
     }
 }
 
@@ -1457,7 +1770,7 @@ pub fn h_assert_events_and_fragments(reader: &mut ByteReader<'_>) {
     );
 }
 
-fn h_curve_string_from_bytes(reader: &mut ByteReader<'_>) -> HCurveString2<HBackend> {
+fn h_curve_string_from_bytes(reader: &mut ByteReader<'_>) -> HCurveString2 {
     let count = reader.usize_range(2, 6);
     let mut x = reader.f64_range(-48.0, 48.0);
     let mut y = reader.f64_range(-48.0, 48.0);
@@ -1483,7 +1796,7 @@ fn h_curve_string_from_bytes(reader: &mut ByteReader<'_>) -> HCurveString2<HBack
     HCurveString2::from_bulge_vertices(&vertices).unwrap()
 }
 
-fn h_assert_aabb_finite(bbox: &HAabb2<HBackend>) {
+fn h_assert_aabb_finite(bbox: &HAabb2) {
     h_assert_point_finite(bbox.min());
     h_assert_point_finite(bbox.max());
     let min_x = bbox.min_x().to_f64_approx().unwrap();
@@ -1494,7 +1807,7 @@ fn h_assert_aabb_finite(bbox: &HAabb2<HBackend>) {
     assert!(min_y <= max_y, "aabb y coordinates are inverted");
 }
 
-fn h_assert_aabb_contains_point(bbox: &HAabb2<HBackend>, point: &HPoint, policy: &HCurvePolicy) {
+fn h_assert_aabb_contains_point(bbox: &HAabb2, point: &HPoint, policy: &HCurvePolicy) {
     assert_eq!(
         bbox.contains_point(point, policy),
         HClassification::Decided(true)
@@ -1502,7 +1815,7 @@ fn h_assert_aabb_contains_point(bbox: &HAabb2<HBackend>, point: &HPoint, policy:
 }
 
 fn h_assert_aabb_contains_segment_endpoints(
-    bbox: &HAabb2<HBackend>,
+    bbox: &HAabb2,
     segment: &HSegment,
     policy: &HCurvePolicy,
 ) {
@@ -1518,7 +1831,7 @@ fn h_assert_aabb_contains_segment_endpoints(
     }
 }
 
-fn h_validate_split_map(map: &HContourSplitMap<HBackend>) {
+fn h_validate_split_map(map: &HContourSplitMap) {
     assert_eq!(
         map.split_points().first().map(|point| point.segment_index),
         Some(0)
@@ -1617,17 +1930,15 @@ pub fn h_assert_bboxes_curve_strings_and_splits(reader: &mut ByteReader<'_>) {
     }
 
     let plain_events = curve_a.intersect_curve_string(&curve_b, &policy).unwrap();
-    assert_eq!(
-        prepared_a
+    h_assert_curve_string_intersections_equivalent(
+        &prepared_a
             .intersect_prepared_curve_string(&prepared_b, &policy)
             .unwrap(),
-        plain_events
+        &plain_events,
     );
-    assert_eq!(
-        prepared_a
-            .intersect_curve_string(&curve_b, &policy)
-            .unwrap(),
-        plain_events
+    h_assert_curve_string_intersections_equivalent(
+        &prepared_a.intersect_curve_string(&curve_b, &policy).unwrap(),
+        &plain_events,
     );
     for event in &plain_events {
         h_validate_segment_intersection(&event.relation);
@@ -1700,5 +2011,418 @@ pub fn h_assert_offsets_and_self_contacts(reader: &mut ByteReader<'_>) {
     }
     if let HClassification::Decided(offset) = rect.offset_left_checked(distance, &policy).unwrap() {
         h_assert_contour_finite(&offset);
+    }
+}
+
+fn h_assert_segment_contains_core(segment: &HSegment, policy: &HCurvePolicy) {
+    assert_eq!(
+        segment.contains_point(segment.start(), policy),
+        HClassification::Decided(true)
+    );
+    assert_eq!(
+        segment.contains_point(segment.end(), policy),
+        HClassification::Decided(true)
+    );
+
+    if let HClassification::Decided(representative) = segment.representative_point(policy).unwrap()
+    {
+        h_assert_point_finite(&representative);
+        assert_eq!(
+            segment.contains_point(&representative, policy),
+            HClassification::Decided(true)
+        );
+        if let HClassification::Decided(bbox) = HAabb2::from_segment(segment, policy).unwrap() {
+            h_assert_aabb_contains_point(&bbox, &representative, policy);
+        }
+    }
+}
+
+/// Fuzz primitive containment, reversal, representative-point, and bbox APIs.
+pub fn h_assert_segment_containment_and_reversal(reader: &mut ByteReader<'_>) {
+    let policy = h_policy();
+    let segment = h_segment_from_bytes(reader);
+    h_assert_segment_finite(&segment);
+    h_assert_segment_contains_core(&segment, &policy);
+
+    let reversed = segment.reversed();
+    h_assert_segment_finite(&reversed);
+    h_assert_segment_contains_core(&reversed, &policy);
+    assert_eq!(reversed.reversed(), segment);
+}
+
+fn h_nested_rect_stack(reader: &mut ByteReader<'_>) -> Vec<HRect> {
+    let depth = reader.usize_range(3, 6);
+    let x = reader.f64_range(-48.0, 48.0);
+    let y = reader.f64_range(-48.0, 48.0);
+    let step = reader.f64_range(1.5, 8.0);
+    let inner_width = reader.f64_range(2.0, 24.0);
+    let inner_height = reader.f64_range(2.0, 24.0);
+    let width = inner_width + 2.0 * step * (depth.saturating_sub(1) as f64);
+    let height = inner_height + 2.0 * step * (depth.saturating_sub(1) as f64);
+
+    (0..depth)
+        .map(|index| {
+            let inset = step * index as f64;
+            HRect {
+                xmin: x + inset,
+                ymin: y + inset,
+                xmax: x + width - inset,
+                ymax: y + height - inset,
+            }
+        })
+        .collect()
+}
+
+/// Fuzz contour nesting into material and hole bins, including prepared classifiers.
+pub fn h_assert_boundary_nesting(reader: &mut ByteReader<'_>) {
+    let policy = h_policy();
+    let rects = h_nested_rect_stack(reader);
+    let contours: Vec<_> = rects.iter().copied().map(h_rectangle_contour).collect();
+    let region = match HRegion2::from_boundary_contours(contours, &policy).unwrap() {
+        HClassification::Decided(region) => region,
+        HClassification::Uncertain(_) => return,
+    };
+    let prepared = region.prepare_topology_queries(&policy);
+
+    assert_eq!(region.material_contours().len(), (rects.len() + 1) / 2);
+    assert_eq!(region.hole_contours().len(), rects.len() / 2);
+
+    for (depth, rect) in rects.iter().enumerate() {
+        let sample = h_point(
+            rect.xmin + rect.width().min(1.0) * 0.25,
+            rect.ymin + rect.height().min(1.0) * 0.25,
+        );
+        let expected = if depth % 2 == 0 {
+            HRegionPointLocation::Inside
+        } else {
+            HRegionPointLocation::Outside
+        };
+        assert_eq!(
+            region.classify_point(&sample, &policy),
+            HClassification::Decided(expected)
+        );
+        assert_eq!(
+            prepared.classify_point(&sample, &policy),
+            HClassification::Decided(expected)
+        );
+    }
+}
+
+fn h_validate_region_fragments(
+    fragments: &hypercurve::RegionFragmentSet,
+    policy: &HCurvePolicy,
+) {
+    for contour_fragments in fragments.contours() {
+        let mut previous_source = 0_usize;
+        for (fragment_index, fragment) in contour_fragments.fragments.fragments().iter().enumerate()
+        {
+            h_assert_segment_finite(&fragment.segment);
+            h_assert_scalar_unit_interval(fragment.source_range.start());
+            h_assert_scalar_unit_interval(fragment.source_range.end());
+            if fragment_index > 0 {
+                assert!(
+                    fragment.source_segment_index >= previous_source,
+                    "region fragments should be emitted in source order"
+                );
+            }
+            previous_source = fragment.source_segment_index;
+            if let HClassification::Decided(sample) =
+                fragment.segment.representative_point(policy).unwrap()
+            {
+                h_assert_point_finite(&sample);
+            }
+        }
+    }
+}
+
+/// Fuzz boolean boundary loops, region fragments, and prepared/plain parity.
+pub fn h_assert_boolean_boundary_pipeline(reader: &mut ByteReader<'_>) {
+    let policy = h_policy();
+    let fill_rule = HFillRule::NonZero;
+    let a = h_region_from_bytes(reader, 2, 1);
+    let b = h_region_from_bytes(reader, 2, 1);
+    let op = h_boolean_op(reader);
+    let prepared_a = a.prepare_topology_queries(&policy);
+    let prepared_b = b.prepare_topology_queries(&policy);
+
+    let plain_events = a.intersect_region(&b, &policy).unwrap();
+    assert_eq!(
+        prepared_a
+            .intersect_prepared_region(&prepared_b, &policy)
+            .unwrap(),
+        plain_events
+    );
+    assert_eq!(
+        prepared_a
+            .intersect_region(&b.as_view(), &policy)
+            .unwrap(),
+        plain_events
+    );
+    assert_eq!(
+        a.as_view()
+            .intersect_prepared_region(&prepared_b, &policy)
+            .unwrap(),
+        plain_events
+    );
+
+    if let HClassification::Decided(fragments) = plain_events
+        .split_regions(&a.as_view(), &b.as_view(), &policy)
+        .unwrap()
+    {
+        h_validate_region_fragments(&fragments, &policy);
+        if let HClassification::Decided(selection) = fragments
+            .classify_for_boolean(&a.as_view(), &b.as_view(), op, &policy)
+            .unwrap()
+        {
+            assert!(selection.len() <= fragments.contours().iter().map(|fragments| {
+                fragments.fragments.len()
+            }).sum());
+            let emitted = selection.emit_boundary_fragments(&fragments).unwrap();
+            assert_eq!(
+                emitted.directed_len() + emitted.unresolved_len(),
+                selection
+                    .classifications()
+                    .iter()
+                    .filter(|classification| classification.action.emits_fragment()
+                        || matches!(
+                            classification.action,
+                            hypercurve::BooleanFragmentAction::BoundaryNeedsResolution
+                        ))
+                    .count()
+            );
+            if emitted.is_ready_for_traversal() {
+                if let HClassification::Decided(chains) = emitted.assemble_chains(&policy) {
+                    assert!(chains.closed_count() <= chains.len());
+                    if let HClassification::Decided(loops) = chains.closed_loops() {
+                        for contour in loops.to_contours(fill_rule).unwrap() {
+                            h_assert_contour_finite(&contour);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    let plain_loops = a.boolean_boundary_loops(&b, op, &policy).unwrap();
+    assert_eq!(
+        prepared_a
+            .boolean_boundary_loops(&prepared_b, op, &policy)
+            .unwrap(),
+        plain_loops
+    );
+    assert_eq!(
+        prepared_a
+            .boolean_boundary_loops_against_region(&b.as_view(), op, &policy)
+            .unwrap(),
+        plain_loops
+    );
+    assert_eq!(
+        a.as_view()
+            .boolean_boundary_loops_against_prepared_region(&prepared_b, op, &policy)
+            .unwrap(),
+        plain_loops
+    );
+
+    let plain_contours = a
+        .boolean_boundary_contours(&b, op, fill_rule, &policy)
+        .unwrap();
+    assert_eq!(
+        prepared_a
+            .boolean_boundary_contours(&prepared_b, op, fill_rule, &policy)
+            .unwrap(),
+        plain_contours
+    );
+    assert_eq!(
+        prepared_a
+            .boolean_boundary_contours_against_region(&b.as_view(), op, fill_rule, &policy)
+            .unwrap(),
+        plain_contours
+    );
+    assert_eq!(
+        a.as_view()
+            .boolean_boundary_contours_against_prepared_region(
+                &prepared_b,
+                op,
+                fill_rule,
+                &policy,
+            )
+            .unwrap(),
+        plain_contours
+    );
+
+    if let (HClassification::Decided(loops), HClassification::Decided(contours)) =
+        (&plain_loops, &plain_contours)
+    {
+        h_assert_contour_boundary_sets_match(&loops.to_contours(fill_rule).unwrap(), contours);
+    }
+
+    let plain_region = a.boolean_region(&b, op, fill_rule, &policy).unwrap();
+    assert_eq!(
+        prepared_a
+            .boolean_region(&prepared_b, op, fill_rule, &policy)
+            .unwrap(),
+        plain_region
+    );
+    assert_eq!(
+        prepared_a
+            .boolean_region_against_region(&b.as_view(), op, fill_rule, &policy)
+            .unwrap(),
+        plain_region
+    );
+    assert_eq!(
+        a.as_view()
+            .boolean_region_against_prepared_region(&prepared_b, op, fill_rule, &policy)
+            .unwrap(),
+        plain_region
+    );
+
+    if let HClassification::Decided(result) = &plain_region {
+        h_assert_region_semantics(&a, &b, result, op);
+    }
+    if let (HClassification::Decided(contours), HClassification::Decided(region)) =
+        (&plain_contours, &plain_region)
+    {
+        if let HClassification::Decided(rebuilt) =
+            HRegion2::from_boundary_contours(contours.clone(), &policy).unwrap()
+        {
+            assert_eq!(rebuilt, *region);
+        }
+    }
+}
+
+fn h_l_path_curve(reader: &mut ByteReader<'_>) -> (HCurveString2, HRealValue) {
+    let horizontal = reader.i32_range(6, 96);
+    let vertical = reader.i32_range(6, 96);
+    let distance = reader.i32_range(1, (horizontal.min(vertical) / 3).max(1));
+    let curve = HCurveString2::try_new(vec![
+        HSegment2::Line(h_line_from_i32((0, 0), (horizontal, 0))),
+        HSegment2::Line(h_line_from_i32((horizontal, 0), (horizontal, vertical))),
+    ])
+    .unwrap();
+    (curve, h_scalar_i32(distance))
+}
+
+/// Fuzz every public offset-outline cap path on line and arc curve strings.
+pub fn h_assert_offset_cap_matrix(reader: &mut ByteReader<'_>) {
+    let policy = h_policy();
+    let (curve, distance) = h_l_path_curve(reader);
+
+    for cap in [HOffsetCap::Round, HOffsetCap::Butt, HOffsetCap::Square] {
+        let dispatched = curve
+            .offset_outline(distance.clone(), cap, &policy)
+            .unwrap();
+        let direct = match cap {
+            HOffsetCap::Round => curve.offset_outline_round_caps(distance.clone(), &policy),
+            HOffsetCap::Butt => curve.offset_outline_butt_caps(distance.clone(), &policy),
+            HOffsetCap::Square => curve.offset_outline_square_caps(distance.clone(), &policy),
+        }
+        .unwrap();
+        assert_eq!(dispatched, direct);
+        let HClassification::Decided(outline) = dispatched else {
+            panic!("simple L-path outline should decide for cap {cap:?}");
+        };
+        h_assert_contour_finite(&outline);
+        assert_eq!(
+            outline.has_self_contacts(&policy).unwrap(),
+            HClassification::Decided(false)
+        );
+    }
+
+    let radius = reader.i32_range(4, 64);
+    let distance = h_scalar_i32(reader.i32_range(1, radius - 1));
+    let arc_curve = HCurveString2::try_new(vec![
+        HSegment2::from_bulge(
+            h_point_i32(-radius, 0),
+            h_point_i32(radius, 0),
+            h_scalar_i32(-1),
+        )
+        .unwrap(),
+    ])
+    .unwrap();
+
+    for cap in [HOffsetCap::Round, HOffsetCap::Butt, HOffsetCap::Square] {
+        if let HClassification::Decided(outline) = arc_curve
+            .offset_outline(distance.clone(), cap, &policy)
+            .unwrap()
+        {
+            h_assert_contour_finite(&outline);
+        }
+    }
+}
+
+/// Fuzz sampled-polyline reconstruction into open curve strings and closed contours.
+pub fn h_assert_polyline_reconstruction(reader: &mut ByteReader<'_>) {
+    let mut options = HPolylineReconstructionOptions::default();
+    options.min_arc_points = reader.usize_range(3, 5);
+    options.distance_tolerance = 1e-6;
+
+    let points = match reader.byte() % 3 {
+        0 => {
+            let count = reader.usize_range(2, 24);
+            let dx = reader.f64_range(0.25, 4.0);
+            let dy = reader.f64_range(-0.25, 0.25);
+            (0..count)
+                .map(|index| h_point(index as f64 * dx, index as f64 * dy))
+                .collect::<Vec<_>>()
+        }
+        1 => {
+            let count = reader.usize_range(3, 24);
+            let cx = reader.f64_range(-8.0, 8.0);
+            let cy = reader.f64_range(-8.0, 8.0);
+            let radius = reader.f64_range(0.5, 16.0);
+            let start = reader.f64_range(-PI, PI);
+            let sweep = reader.f64_range(PI / 12.0, PI);
+            let direction = if reader.bool() { 1.0 } else { -1.0 };
+            (0..count)
+                .map(|index| {
+                    let t = start + direction * sweep * index as f64 / (count - 1) as f64;
+                    h_point(cx + radius * t.cos(), cy + radius * t.sin())
+                })
+                .collect::<Vec<_>>()
+        }
+        _ => {
+            let count = reader.usize_range(3, 24);
+            (0..count)
+                .map(|index| {
+                    let x = index as f64;
+                    let y = if index % 2 == 0 {
+                        0.0
+                    } else {
+                        reader.f64_range(0.25, 2.0)
+                    };
+                    h_point(x, y)
+                })
+                .collect::<Vec<_>>()
+        }
+    };
+
+    let curve = HCurveString2::reconstruct_from_polyline(&points, options).unwrap();
+    h_assert_curve_string_finite(&curve);
+    assert!(curve.len() <= points.len().saturating_sub(1));
+
+    let rectangle = [
+        h_point(0.0, 0.0),
+        h_point(reader.f64_range(1.0, 16.0), 0.0),
+        h_point(reader.f64_range(1.0, 16.0), reader.f64_range(1.0, 16.0)),
+        h_point(0.0, reader.f64_range(1.0, 16.0)),
+    ];
+    let contour = HContour2::reconstruct_from_closed_polyline(&rectangle, options).unwrap();
+    h_assert_contour_finite(&contour);
+}
+
+/// Aggregate hypercurve fuzz entrypoint covering public APIs and cross-path invariants.
+pub fn h_assert_full_api(reader: &mut ByteReader<'_>) {
+    match reader.byte() % 11 {
+        0 => h_assert_segment_intersections(reader),
+        1 => h_assert_segment_containment_and_reversal(reader),
+        2 => h_assert_contour_region_classification(reader),
+        3 => h_assert_region_boolean(reader),
+        4 => h_assert_events_and_fragments(reader),
+        5 => h_assert_bboxes_curve_strings_and_splits(reader),
+        6 => h_assert_offsets_and_self_contacts(reader),
+        7 => h_assert_boundary_nesting(reader),
+        8 => h_assert_boolean_boundary_pipeline(reader),
+        9 => h_assert_offset_cap_matrix(reader),
+        _ => h_assert_polyline_reconstruction(reader),
     }
 }

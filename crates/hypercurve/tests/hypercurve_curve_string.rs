@@ -1,17 +1,17 @@
 use hypercurve::{
-    BulgeVertex2, CircularArc2, CurvePolicy, CurveString2, DefaultBackend, LineArcIntersection,
-    LineArcOrder, LineSeg2, Point2, Scalar, Segment2, SegmentIntersection,
+    BulgeVertex2, CircularArc2, CurvePolicy, CurveString2, LineArcIntersection, LineArcOrder,
+    LineSeg2, Point2, Real, Segment2, SegmentIntersection,
 };
 
-fn s(value: i32) -> Scalar<DefaultBackend> {
+fn s(value: i32) -> Real {
     value.into()
 }
 
-fn p(x: i32, y: i32) -> Point2<DefaultBackend> {
+fn p(x: i32, y: i32) -> Point2 {
     Point2::new(s(x), s(y))
 }
 
-fn line_segment(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> Segment2<DefaultBackend> {
+fn line_segment(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> Segment2 {
     Segment2::Line(LineSeg2::try_new(p(start_x, start_y), p(end_x, end_y)).unwrap())
 }
 
@@ -19,7 +19,7 @@ fn policy() -> CurvePolicy {
     CurvePolicy::certified()
 }
 
-fn sparse_zigzag(segment_count: i32) -> CurveString2<DefaultBackend> {
+fn sparse_zigzag(segment_count: i32) -> CurveString2 {
     let mut segments = Vec::with_capacity(segment_count as usize);
     let mut previous = p(0, 0);
     for index in 1..=segment_count {

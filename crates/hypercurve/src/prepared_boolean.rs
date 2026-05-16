@@ -6,8 +6,6 @@
 //! representative-point classification through [`crate::PreparedRegionView2`]
 //! caches.
 
-use hyperlattice::Backend;
-
 use crate::prepared::{PreparedContourView2, PreparedRegionView2};
 use crate::{
     BooleanBoundaryLoopSet, BooleanFragmentSelection, BooleanOp, Classification, Contour2,
@@ -30,12 +28,12 @@ enum PreparedBoundaryContactResolution {
     },
 }
 
-pub(crate) fn boolean_boundary_loops_between_prepared<B: Backend>(
-    first: &PreparedRegionView2<'_, B>,
-    second: &PreparedRegionView2<'_, B>,
+pub(crate) fn boolean_boundary_loops_between_prepared(
+    first: &PreparedRegionView2<'_>,
+    second: &PreparedRegionView2<'_>,
     op: BooleanOp,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<BooleanBoundaryLoopSet<B>>> {
+) -> CurveResult<Classification<BooleanBoundaryLoopSet>> {
     let first_view = first.as_region_view();
     let second_view = second.as_region_view();
     let intersections = first.intersect_prepared_region(second, policy)?;
@@ -64,13 +62,13 @@ pub(crate) fn boolean_boundary_loops_between_prepared<B: Backend>(
     Ok(chains.into_closed_loops())
 }
 
-pub(crate) fn boolean_boundary_contours_between_prepared<B: Backend>(
-    first: &PreparedRegionView2<'_, B>,
-    second: &PreparedRegionView2<'_, B>,
+pub(crate) fn boolean_boundary_contours_between_prepared(
+    first: &PreparedRegionView2<'_>,
+    second: &PreparedRegionView2<'_>,
     op: BooleanOp,
     fill_rule: FillRule,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Vec<Contour2<B>>>> {
+) -> CurveResult<Classification<Vec<Contour2>>> {
     let first_view = first.as_region_view();
     let second_view = second.as_region_view();
     if crate::region_boolean::same_region_view(&first_view, &second_view) {
@@ -125,13 +123,13 @@ pub(crate) fn boolean_boundary_contours_between_prepared<B: Backend>(
     }
 }
 
-pub(crate) fn boolean_region_between_prepared<B: Backend>(
-    first: &PreparedRegionView2<'_, B>,
-    second: &PreparedRegionView2<'_, B>,
+pub(crate) fn boolean_region_between_prepared(
+    first: &PreparedRegionView2<'_>,
+    second: &PreparedRegionView2<'_>,
     op: BooleanOp,
     fill_rule: FillRule,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Region2<B>>> {
+) -> CurveResult<Classification<Region2>> {
     let first_view = first.as_region_view();
     let second_view = second.as_region_view();
     if crate::region_boolean::same_region_view(&first_view, &second_view) {
@@ -185,12 +183,12 @@ pub(crate) fn boolean_region_between_prepared<B: Backend>(
     }
 }
 
-fn xor_boundary_contours_by_prepared_region<B: Backend>(
-    first: &PreparedRegionView2<'_, B>,
-    second: &PreparedRegionView2<'_, B>,
+fn xor_boundary_contours_by_prepared_region(
+    first: &PreparedRegionView2<'_>,
+    second: &PreparedRegionView2<'_>,
     fill_rule: FillRule,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Vec<Contour2<B>>>> {
+) -> CurveResult<Classification<Vec<Contour2>>> {
     match xor_region_by_prepared_difference_union(first, second, fill_rule, policy)? {
         Classification::Decided(region) => Ok(Classification::Decided(
             crate::region_boolean::clone_boundary_contours(&region.as_view()),
@@ -199,9 +197,9 @@ fn xor_boundary_contours_by_prepared_region<B: Backend>(
     }
 }
 
-fn boundary_contact_resolution_prepared<B: Backend>(
-    first: &PreparedRegionView2<'_, B>,
-    second: &PreparedRegionView2<'_, B>,
+fn boundary_contact_resolution_prepared(
+    first: &PreparedRegionView2<'_>,
+    second: &PreparedRegionView2<'_>,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Option<PreparedBoundaryContactResolution>>> {
     let intersections = first.intersect_prepared_region(second, policy)?;
@@ -254,10 +252,10 @@ fn boundary_contact_resolution_prepared<B: Backend>(
     )))
 }
 
-fn split_contact_interiors_are_disjoint_prepared<B: Backend>(
-    first: &PreparedRegionView2<'_, B>,
-    second: &PreparedRegionView2<'_, B>,
-    intersections: &RegionIntersectionSet<B>,
+fn split_contact_interiors_are_disjoint_prepared(
+    first: &PreparedRegionView2<'_>,
+    second: &PreparedRegionView2<'_>,
+    intersections: &RegionIntersectionSet,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<bool>> {
     let first_view = first.as_region_view();
@@ -302,9 +300,9 @@ fn split_contact_interiors_are_disjoint_prepared<B: Backend>(
     ))
 }
 
-fn unsplit_contact_interiors_are_disjoint_prepared<B: Backend>(
-    first: &PreparedRegionView2<'_, B>,
-    second: &PreparedRegionView2<'_, B>,
+fn unsplit_contact_interiors_are_disjoint_prepared(
+    first: &PreparedRegionView2<'_>,
+    second: &PreparedRegionView2<'_>,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<bool>> {
     let mut first_has_outside_sample = false;
@@ -356,9 +354,9 @@ fn unsplit_contact_interiors_are_disjoint_prepared<B: Backend>(
     ))
 }
 
-fn scan_unsplit_prepared_contact_samples<B: Backend>(
-    contours: &[PreparedContourView2<'_, B>],
-    opposite: &PreparedRegionView2<'_, B>,
+fn scan_unsplit_prepared_contact_samples(
+    contours: &[PreparedContourView2<'_>],
+    opposite: &PreparedRegionView2<'_>,
     has_outside_sample: &mut bool,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<bool>> {
@@ -386,9 +384,9 @@ fn scan_unsplit_prepared_contact_samples<B: Backend>(
     Ok(Classification::Decided(true))
 }
 
-fn boundary_contact_containment_relation_prepared<B: Backend>(
-    first: &PreparedRegionView2<'_, B>,
-    second: &PreparedRegionView2<'_, B>,
+fn boundary_contact_containment_relation_prepared(
+    first: &PreparedRegionView2<'_>,
+    second: &PreparedRegionView2<'_>,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Option<crate::region_boolean::BoundaryContainmentRelation>>> {
     let first_contains_second =
@@ -416,9 +414,9 @@ fn boundary_contact_containment_relation_prepared<B: Backend>(
     ))
 }
 
-fn prepared_region_contains_region_boundary_samples<B: Backend>(
-    container: &PreparedRegionView2<'_, B>,
-    candidate: &PreparedRegionView2<'_, B>,
+fn prepared_region_contains_region_boundary_samples(
+    container: &PreparedRegionView2<'_>,
+    candidate: &PreparedRegionView2<'_>,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<bool>> {
     crate::region_boolean::boundary_contours_inside_or_on_region(
@@ -437,12 +435,12 @@ fn prepared_region_contains_region_boundary_samples<B: Backend>(
     )
 }
 
-fn containment_boundary_contours_prepared<B: Backend>(
-    first: &PreparedRegionView2<'_, B>,
-    second: &PreparedRegionView2<'_, B>,
+fn containment_boundary_contours_prepared(
+    first: &PreparedRegionView2<'_>,
+    second: &PreparedRegionView2<'_>,
     op: BooleanOp,
     relation: crate::region_boolean::BoundaryContainmentRelation,
-) -> Option<Vec<Contour2<B>>> {
+) -> Option<Vec<Contour2>> {
     let first_view = first.as_region_view();
     let second_view = second.as_region_view();
     match (relation, op) {
@@ -478,12 +476,12 @@ fn containment_boundary_contours_prepared<B: Backend>(
     }
 }
 
-fn containment_region_prepared<B: Backend>(
-    first: &PreparedRegionView2<'_, B>,
-    second: &PreparedRegionView2<'_, B>,
+fn containment_region_prepared(
+    first: &PreparedRegionView2<'_>,
+    second: &PreparedRegionView2<'_>,
     op: BooleanOp,
     relation: crate::region_boolean::BoundaryContainmentRelation,
-) -> Option<Region2<B>> {
+) -> Option<Region2> {
     let first_view = first.as_region_view();
     let second_view = second.as_region_view();
     match (relation, op) {
@@ -519,12 +517,12 @@ fn containment_region_prepared<B: Backend>(
     }
 }
 
-fn containment_difference_boundary_contours_prepared<B: Backend>(
-    first: &PreparedRegionView2<'_, B>,
-    second: &PreparedRegionView2<'_, B>,
+fn containment_difference_boundary_contours_prepared(
+    first: &PreparedRegionView2<'_>,
+    second: &PreparedRegionView2<'_>,
     fill_rule: FillRule,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Vec<Contour2<B>>>> {
+) -> CurveResult<Classification<Vec<Contour2>>> {
     let first_view = first.as_region_view();
     let second_view = second.as_region_view();
     let intersections = first.intersect_prepared_region(second, policy)?;
@@ -548,14 +546,14 @@ fn containment_difference_boundary_contours_prepared<B: Backend>(
     )
 }
 
-fn boundary_contact_boundary_contours_prepared<B: Backend>(
-    first: &PreparedRegionView2<'_, B>,
-    second: &PreparedRegionView2<'_, B>,
+fn boundary_contact_boundary_contours_prepared(
+    first: &PreparedRegionView2<'_>,
+    second: &PreparedRegionView2<'_>,
     op: BooleanOp,
     fill_rule: FillRule,
     policy: &CurvePolicy,
     kind: PreparedBoundaryContactKind,
-) -> CurveResult<Classification<Vec<Contour2<B>>>> {
+) -> CurveResult<Classification<Vec<Contour2>>> {
     let first_view = first.as_region_view();
     let second_view = second.as_region_view();
     Ok(Classification::Decided(match op {
@@ -576,13 +574,13 @@ fn boundary_contact_boundary_contours_prepared<B: Backend>(
     }))
 }
 
-fn boundary_overlap_union_contours_prepared<B: Backend>(
-    first: &PreparedRegionView2<'_, B>,
-    second: &PreparedRegionView2<'_, B>,
+fn boundary_overlap_union_contours_prepared(
+    first: &PreparedRegionView2<'_>,
+    second: &PreparedRegionView2<'_>,
     op: BooleanOp,
     fill_rule: FillRule,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Vec<Contour2<B>>>> {
+) -> CurveResult<Classification<Vec<Contour2>>> {
     let first_view = first.as_region_view();
     let second_view = second.as_region_view();
     let intersections = first.intersect_prepared_region(second, policy)?;
@@ -601,14 +599,14 @@ fn boundary_overlap_union_contours_prepared<B: Backend>(
     )
 }
 
-fn boundary_contact_region_prepared<B: Backend>(
-    first: &PreparedRegionView2<'_, B>,
-    second: &PreparedRegionView2<'_, B>,
+fn boundary_contact_region_prepared(
+    first: &PreparedRegionView2<'_>,
+    second: &PreparedRegionView2<'_>,
     op: BooleanOp,
     fill_rule: FillRule,
     policy: &CurvePolicy,
     kind: PreparedBoundaryContactKind,
-) -> CurveResult<Classification<Region2<B>>> {
+) -> CurveResult<Classification<Region2>> {
     let first_view = first.as_region_view();
     let second_view = second.as_region_view();
     Ok(Classification::Decided(match op {
@@ -635,10 +633,10 @@ fn boundary_contact_region_prepared<B: Backend>(
     }))
 }
 
-fn classify_fragments_with_prepared_regions<B: Backend>(
-    fragments: &RegionFragmentSet<B>,
-    first: &PreparedRegionView2<'_, B>,
-    second: &PreparedRegionView2<'_, B>,
+fn classify_fragments_with_prepared_regions(
+    fragments: &RegionFragmentSet,
+    first: &PreparedRegionView2<'_>,
+    second: &PreparedRegionView2<'_>,
     op: BooleanOp,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<BooleanFragmentSelection>> {
@@ -650,12 +648,12 @@ fn classify_fragments_with_prepared_regions<B: Backend>(
     })
 }
 
-fn xor_region_by_prepared_difference_union<B: Backend>(
-    first: &PreparedRegionView2<'_, B>,
-    second: &PreparedRegionView2<'_, B>,
+fn xor_region_by_prepared_difference_union(
+    first: &PreparedRegionView2<'_>,
+    second: &PreparedRegionView2<'_>,
     fill_rule: FillRule,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Region2<B>>> {
+) -> CurveResult<Classification<Region2>> {
     let first_only = match boolean_region_between_prepared(
         first,
         second,

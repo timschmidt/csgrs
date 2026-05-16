@@ -2,23 +2,23 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BulgeVertex2, Classification, Contour2, ContourPointLocation, CurvePolicy, CurveResult,
-    DefaultBackend, Point2, Region2, RegionPointLocation, Scalar,
+    BulgeVertex2, Classification, Contour2, ContourPointLocation, CurvePolicy, CurveResult, Point2,
+    Real, Region2, RegionPointLocation,
 };
 
-fn s(value: i32) -> Scalar<DefaultBackend> {
+fn s(value: i32) -> Real {
     value.into()
 }
 
-fn p(x: i32, y: i32) -> Point2<DefaultBackend> {
+fn p(x: i32, y: i32) -> Point2 {
     Point2::new(s(x), s(y))
 }
 
-fn vertex(x: i32, y: i32) -> BulgeVertex2<DefaultBackend> {
+fn vertex(x: i32, y: i32) -> BulgeVertex2 {
     BulgeVertex2::new(p(x, y), s(0))
 }
 
-fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2<DefaultBackend> {
+fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
     Contour2::from_bulge_vertices(&[
         vertex(xmin, ymin),
         vertex(xmax, ymin),
@@ -28,7 +28,7 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2<DefaultBack
     .unwrap()
 }
 
-fn sparse_region(contour_count: i32) -> Region2<DefaultBackend> {
+fn sparse_region(contour_count: i32) -> Region2 {
     let mut contours = Vec::with_capacity(contour_count as usize);
     for index in 0..contour_count {
         let x = index * 10;

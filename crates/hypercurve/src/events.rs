@@ -1,9 +1,17 @@
 //! Normalized topology events for contour-level algorithms.
+//!
+//! Event collection is deliberately a candidate-filtered pair scan today, not
+//! a sweep-line implementation. Bounding boxes only remove pairs whose
+//! disjointness is decided; every remaining candidate goes through the exact
+//! segment kernels. Bentley and Ottmann, "Algorithms for Reporting and Counting
+//! Geometric Intersections" (*IEEE Transactions on Computers* C-28(9),
+//! 643-647, 1979), is the reference point for replacing this flat scan with an
+//! output-sensitive sweep once the crate needs larger arrangements.
 
-use hyperlattice::{Backend, DefaultBackend, Scalar};
+use hyperreal::Real;
 
 use crate::bbox::{Aabb2, aabbs_decided_disjoint, decided_contour_aabb, decided_segment_aabb};
-use crate::classify::{compare_scalars, min_scalar};
+use crate::classify::{compare_reals, is_zero, min_real};
 use crate::{
     ArcArcIntersection, Classification, Contour2, CurvePolicy, CurveResult, IntersectionKind,
     LineArcIntersection, LineArcOrder, LineLineIntersection, ParamRange, Point2, Segment2,
@@ -21,23 +29,23 @@ pub enum ContourOperand {
 
 /// A normalized set of contour-pair topology events.
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct ContourIntersectionSet<B: Backend = DefaultBackend> {
-    events: Vec<ContourIntersection<B>>,
+pub struct ContourIntersectionSet {
+    events: Vec<ContourIntersection>,
 }
 
-impl<B: Backend> ContourIntersectionSet<B> {
+impl ContourIntersectionSet {
     /// Constructs an event set from already-normalized events.
-    pub const fn new(events: Vec<ContourIntersection<B>>) -> Self {
+    pub const fn new(events: Vec<ContourIntersection>) -> Self {
         Self { events }
     }
 
     /// Returns all events in segment-pair scan order.
-    pub fn events(&self) -> &[ContourIntersection<B>] {
+    pub fn events(&self) -> &[ContourIntersection] {
         &self.events
     }
 
     /// Consumes the set and returns its events.
-    pub fn into_events(self) -> Vec<ContourIntersection<B>> {
+    pub fn into_events(self) -> Vec<ContourIntersection> {
         self.events
     }
 
@@ -57,8 +65,8 @@ impl<B: Backend> ContourIntersectionSet<B> {
         operand: ContourOperand,
         segment_index: usize,
         policy: &CurvePolicy,
-    ) -> Classification<Vec<&'a ContourIntersection<B>>> {
-        let mut sorted: Vec<(&ContourIntersection<B>, Scalar<B>)> = Vec::new();
+    ) -> Classification<Vec<&'a ContourIntersection>> {
+        let mut sorted: Vec<(&ContourIntersection, Real)> = Vec::new();
 
         for event in self.events.iter() {
             if event.segment_index(operand) != Some(segment_index) {
@@ -73,6 +81,10 @@ impl<B: Backend> ContourIntersectionSet<B> {
             let Some(insert_at) = insertion_index(&sorted, &order_param, policy) else {
                 return Classification::Uncertain(UncertaintyReason::Ordering);
             };
+            // Sorted local events are the contour-level analogue of the event
+            // ordering used by sweep-line clipping algorithms. We keep the
+            // order proof explicit because a wrong tie-breaker here can create
+            // branch vertices in the downstream boundary graph.
             sorted.insert(insert_at, (event, order_param));
         }
 
@@ -82,16 +94,16 @@ impl<B: Backend> ContourIntersectionSet<B> {
 
 /// One normalized contour-pair topology event.
 #[derive(Clone, Debug, PartialEq)]
-pub enum ContourIntersection<B: Backend = DefaultBackend> {
+pub enum ContourIntersection {
     /// A single point event.
-    Point(ContourPointIntersection<B>),
+    Point(ContourPointIntersection),
     /// A finite overlap event.
-    Overlap(ContourOverlapIntersection<B>),
+    Overlap(ContourOverlapIntersection),
     /// Segment-pair classification could not be completed.
     Uncertain(ContourUncertainIntersection),
 }
 
-impl<B: Backend> ContourIntersection<B> {
+impl ContourIntersection {
     /// Returns the segment index on one side of the event.
     pub const fn segment_index(&self, operand: ContourOperand) -> Option<usize> {
         match self {
@@ -114,7 +126,7 @@ impl<B: Backend> ContourIntersection<B> {
         &self,
         operand: ContourOperand,
         policy: &CurvePolicy,
-    ) -> Result<Scalar<B>, UncertaintyReason> {
+    ) -> Result<Real, UncertaintyReason> {
         match self {
             Self::Point(event) => Ok(match operand {
                 ContourOperand::First => event.a_param.clone(),
@@ -125,7 +137,7 @@ impl<B: Backend> ContourIntersection<B> {
                     ContourOperand::First => &event.a_range,
                     ContourOperand::Second => &event.b_range,
                 };
-                min_scalar(range.start().clone(), range.end().clone(), policy)
+                min_real(range.start().clone(), range.end().clone(), policy)
                     .ok_or(UncertaintyReason::Ordering)
             }
             Self::Uncertain(event) => Err(event.reason),
@@ -135,34 +147,34 @@ impl<B: Backend> ContourIntersection<B> {
 
 /// A point event between two contours.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ContourPointIntersection<B: Backend = DefaultBackend> {
+pub struct ContourPointIntersection {
     /// Segment index in the first contour.
     pub a_segment_index: usize,
     /// Segment index in the second contour.
     pub b_segment_index: usize,
     /// Intersection point.
-    pub point: Point2<B>,
+    pub point: Point2,
     /// Local parameter on the first contour segment.
-    pub a_param: Scalar<B>,
+    pub a_param: Real,
     /// Local parameter on the second contour segment.
-    pub b_param: Scalar<B>,
+    pub b_param: Real,
     /// Local contact kind.
     pub kind: IntersectionKind,
 }
 
 /// A finite overlap event between two contours.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ContourOverlapIntersection<B: Backend = DefaultBackend> {
+pub struct ContourOverlapIntersection {
     /// Segment index in the first contour.
     pub a_segment_index: usize,
     /// Segment index in the second contour.
     pub b_segment_index: usize,
     /// Overlap geometry.
-    pub segment: Segment2<B>,
+    pub segment: Segment2,
     /// Parameter range on the first contour segment.
-    pub a_range: ParamRange<B>,
+    pub a_range: ParamRange,
     /// Parameter range on the second contour segment.
-    pub b_range: ParamRange<B>,
+    pub b_range: ParamRange,
 }
 
 /// An uncertain segment-pair relation.
@@ -176,11 +188,11 @@ pub struct ContourUncertainIntersection {
     pub reason: UncertaintyReason,
 }
 
-pub(crate) fn intersect_contours<B: Backend>(
-    a: &Contour2<B>,
-    b: &Contour2<B>,
+pub(crate) fn intersect_contours(
+    a: &Contour2,
+    b: &Contour2,
     policy: &CurvePolicy,
-) -> CurveResult<ContourIntersectionSet<B>> {
+) -> CurveResult<ContourIntersectionSet> {
     // The bounding-box broad phase is only a candidate filter. Bentley and
     // Ottmann's sweep-line algorithm uses ordering structures to reduce
     // candidate pairs asymptotically; this crate currently keeps the simpler
@@ -209,15 +221,28 @@ pub(crate) fn intersect_contours<B: Backend>(
     )
 }
 
-pub(crate) fn intersect_contours_with_cached_aabbs<B: Backend>(
-    a: &Contour2<B>,
-    b: &Contour2<B>,
-    a_box: Option<&Aabb2<B>>,
-    b_box: Option<&Aabb2<B>>,
-    a_segment_boxes: &[Option<Aabb2<B>>],
-    b_segment_boxes: &[Option<Aabb2<B>>],
+pub(crate) fn intersect_contour_self(
+    contour: &Contour2,
     policy: &CurvePolicy,
-) -> CurveResult<ContourIntersectionSet<B>> {
+) -> CurveResult<ContourIntersectionSet> {
+    let segment_boxes: Vec<_> = contour
+        .segments()
+        .iter()
+        .map(|segment| decided_segment_aabb(segment, policy))
+        .collect();
+
+    intersect_contour_self_with_cached_aabbs(contour, &segment_boxes, policy)
+}
+
+pub(crate) fn intersect_contours_with_cached_aabbs(
+    a: &Contour2,
+    b: &Contour2,
+    a_box: Option<&Aabb2>,
+    b_box: Option<&Aabb2>,
+    a_segment_boxes: &[Option<Aabb2>],
+    b_segment_boxes: &[Option<Aabb2>],
+    policy: &CurvePolicy,
+) -> CurveResult<ContourIntersectionSet> {
     if let (Some(a_box), Some(b_box)) = (a_box, b_box) {
         if aabbs_decided_disjoint(a_box, b_box, policy) {
             return Ok(ContourIntersectionSet::new(Vec::new()));
@@ -253,13 +278,63 @@ pub(crate) fn intersect_contours_with_cached_aabbs<B: Backend>(
     Ok(ContourIntersectionSet::new(events))
 }
 
-fn append_segment_relation_events<B: Backend>(
-    events: &mut Vec<ContourIntersection<B>>,
+pub(crate) fn intersect_contour_self_with_cached_aabbs(
+    contour: &Contour2,
+    segment_boxes: &[Option<Aabb2>],
+    policy: &CurvePolicy,
+) -> CurveResult<ContourIntersectionSet> {
+    let segments = contour.segments();
+    let mut events = Vec::new();
+
+    for first_index in 0..segments.len() {
+        for second_index in (first_index + 1)..segments.len() {
+            if let (Some(Some(first_box)), Some(Some(second_box))) = (
+                segment_boxes.get(first_index),
+                segment_boxes.get(second_index),
+            ) {
+                if aabbs_decided_disjoint(first_box, second_box, policy) {
+                    continue;
+                }
+            }
+
+            let relation =
+                segments[first_index].intersect_segment(&segments[second_index], policy)?;
+            let mut pair_events = Vec::new();
+            append_segment_relation_events(
+                &mut pair_events,
+                first_index,
+                second_index,
+                &segments[first_index],
+                &segments[second_index],
+                relation,
+                policy,
+            )?;
+
+            for event in pair_events {
+                if is_contour_connectivity_event(
+                    &event,
+                    segments,
+                    first_index,
+                    second_index,
+                    policy,
+                ) {
+                    continue;
+                }
+                events.push(event);
+            }
+        }
+    }
+
+    Ok(ContourIntersectionSet::new(events))
+}
+
+fn append_segment_relation_events(
+    events: &mut Vec<ContourIntersection>,
     a_segment_index: usize,
     b_segment_index: usize,
-    a_segment: &Segment2<B>,
-    b_segment: &Segment2<B>,
-    relation: SegmentIntersection<B>,
+    a_segment: &Segment2,
+    b_segment: &Segment2,
+    relation: SegmentIntersection,
     policy: &CurvePolicy,
 ) -> CurveResult<()> {
     match relation {
@@ -354,14 +429,14 @@ fn append_segment_relation_events<B: Backend>(
     Ok(())
 }
 
-fn append_line_arc_events<B: Backend>(
-    events: &mut Vec<ContourIntersection<B>>,
+fn append_line_arc_events(
+    events: &mut Vec<ContourIntersection>,
     a_segment_index: usize,
     b_segment_index: usize,
-    a_segment: &Segment2<B>,
-    b_segment: &Segment2<B>,
+    a_segment: &Segment2,
+    b_segment: &Segment2,
     order: LineArcOrder,
-    result: LineArcIntersection<B>,
+    result: LineArcIntersection,
     policy: &CurvePolicy,
 ) -> CurveResult<()> {
     match result {
@@ -406,14 +481,14 @@ fn append_line_arc_events<B: Backend>(
     Ok(())
 }
 
-fn append_line_arc_hit<B: Backend>(
-    events: &mut Vec<ContourIntersection<B>>,
+fn append_line_arc_hit(
+    events: &mut Vec<ContourIntersection>,
     a_segment_index: usize,
     b_segment_index: usize,
-    a_segment: &Segment2<B>,
-    b_segment: &Segment2<B>,
+    a_segment: &Segment2,
+    b_segment: &Segment2,
     order: LineArcOrder,
-    hit: crate::LineArcIntersectionPoint<B>,
+    hit: crate::LineArcIntersectionPoint,
 ) -> CurveResult<()> {
     let point = hit.point;
     let (a_param, b_param) = match order {
@@ -439,13 +514,13 @@ fn append_line_arc_hit<B: Backend>(
     Ok(())
 }
 
-fn append_point_from_segments<B: Backend>(
-    events: &mut Vec<ContourIntersection<B>>,
+fn append_point_from_segments(
+    events: &mut Vec<ContourIntersection>,
     a_segment_index: usize,
     b_segment_index: usize,
-    a_segment: &Segment2<B>,
-    b_segment: &Segment2<B>,
-    point: Point2<B>,
+    a_segment: &Segment2,
+    b_segment: &Segment2,
+    point: Point2,
     kind: IntersectionKind,
 ) -> CurveResult<()> {
     let a_param = segment_chord_param(a_segment, &point)?;
@@ -461,8 +536,8 @@ fn append_point_from_segments<B: Backend>(
     Ok(())
 }
 
-fn append_uncertain<B: Backend>(
-    events: &mut Vec<ContourIntersection<B>>,
+fn append_uncertain(
+    events: &mut Vec<ContourIntersection>,
     a_segment_index: usize,
     b_segment_index: usize,
     reason: UncertaintyReason,
@@ -476,10 +551,58 @@ fn append_uncertain<B: Backend>(
     ));
 }
 
-fn segment_chord_param<B: Backend>(
-    segment: &Segment2<B>,
-    point: &Point2<B>,
-) -> CurveResult<Scalar<B>> {
+fn is_contour_connectivity_event(
+    event: &ContourIntersection,
+    segments: &[Segment2],
+    first_index: usize,
+    second_index: usize,
+    policy: &CurvePolicy,
+) -> bool {
+    let Some(shared_point) = connected_contour_vertex(segments, first_index, second_index) else {
+        return false;
+    };
+
+    match event {
+        ContourIntersection::Point(point) => {
+            points_match_for_connectivity(&point.point, shared_point, policy)
+        }
+        ContourIntersection::Overlap(_) | ContourIntersection::Uncertain(_) => false,
+    }
+}
+
+fn connected_contour_vertex(
+    segments: &[Segment2],
+    first_index: usize,
+    second_index: usize,
+) -> Option<&Point2> {
+    if first_index + 1 == second_index {
+        return Some(segments[first_index].end());
+    }
+
+    if first_index == 0 && second_index + 1 == segments.len() {
+        return Some(segments[first_index].start());
+    }
+
+    None
+}
+
+fn points_match_for_connectivity(point: &Point2, expected: &Point2, policy: &CurvePolicy) -> bool {
+    let distance = point.distance_squared(expected);
+    if is_zero(&distance, policy) == Some(true) {
+        return true;
+    }
+
+    if matches!(policy.numeric_mode, crate::NumericMode::EdgePreview)
+        && let (Some(distance), Some(tolerance)) = (distance.to_f64_approx(), policy.tolerance)
+    {
+        let tolerance = tolerance.absolute.max(tolerance.relative);
+        return distance.is_finite() && distance <= tolerance * tolerance;
+    }
+
+    false
+}
+
+fn segment_chord_param(segment: &Segment2, point: &Point2) -> CurveResult<Real> {
     let (dx, dy) = segment.end().delta_from(segment.start());
     let (px, py) = point.delta_from(segment.start());
     let numerator = (&px * &dx) + (&py * &dy);
@@ -487,13 +610,13 @@ fn segment_chord_param<B: Backend>(
     (numerator / denominator).map_err(Into::into)
 }
 
-fn insertion_index<B: Backend>(
-    sorted: &[(&ContourIntersection<B>, Scalar<B>)],
-    order_param: &Scalar<B>,
+fn insertion_index(
+    sorted: &[(&ContourIntersection, Real)],
+    order_param: &Real,
     policy: &CurvePolicy,
 ) -> Option<usize> {
     for (index, (_, existing_param)) in sorted.iter().enumerate() {
-        match compare_scalars(order_param, existing_param, policy)? {
+        match compare_reals(order_param, existing_param, policy)? {
             std::cmp::Ordering::Less => return Some(index),
             std::cmp::Ordering::Equal | std::cmp::Ordering::Greater => {}
         }

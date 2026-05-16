@@ -3,22 +3,22 @@ use std::time::Instant;
 
 use hypercurve::{
     ArcArcIntersection, BulgeVertex2, CircularArc2, Classification, Contour2, CurvePolicy,
-    CurveResult, CurveString2, DefaultBackend, LineSeg2, Point2, Region2, Scalar, Segment2,
+    CurveResult, CurveString2, LineSeg2, Point2, Real, Region2, Segment2,
 };
 
-fn s(value: i32) -> Scalar<DefaultBackend> {
+fn s(value: i32) -> Real {
     value.into()
 }
 
-fn p(x: i32, y: i32) -> Point2<DefaultBackend> {
+fn p(x: i32, y: i32) -> Point2 {
     Point2::new(s(x), s(y))
 }
 
-fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2<DefaultBackend> {
+fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2 {
     BulgeVertex2::new(p(x, y), s(bulge))
 }
 
-fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2<DefaultBackend> {
+fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
     Contour2::from_bulge_vertices(&[
         vertex(xmin, ymin, 0),
         vertex(xmax, ymin, 0),
@@ -28,26 +28,18 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2<DefaultBack
     .unwrap()
 }
 
-fn arc(
-    start: Point2<DefaultBackend>,
-    end: Point2<DefaultBackend>,
-    center: Point2<DefaultBackend>,
-    clockwise: bool,
-) -> CircularArc2<DefaultBackend> {
+fn arc(start: Point2, end: Point2, center: Point2, clockwise: bool) -> CircularArc2 {
     CircularArc2::try_from_center(start, end, center, clockwise).unwrap()
 }
 
-fn line_segment(
-    start: Point2<DefaultBackend>,
-    end: Point2<DefaultBackend>,
-) -> Segment2<DefaultBackend> {
+fn line_segment(start: Point2, end: Point2) -> Segment2 {
     Segment2::Line(LineSeg2::try_new(start, end).unwrap())
 }
 
 fn bench_arc_arc_case(
     name: &str,
-    first: &CircularArc2<DefaultBackend>,
-    second: &CircularArc2<DefaultBackend>,
+    first: &CircularArc2,
+    second: &CircularArc2,
     iterations: u32,
 ) -> CurveResult<()> {
     let policy = CurvePolicy::certified();

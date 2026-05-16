@@ -1,13 +1,12 @@
 use hypercurve::{
-    CurvePolicy, DefaultBackend, LineArcIntersection, LineSeg2, Point2, Scalar, Segment2,
-    SegmentIntersection,
+    CurvePolicy, LineArcIntersection, LineSeg2, Point2, Real, Segment2, SegmentIntersection,
 };
 
-fn s(value: i32) -> Scalar<DefaultBackend> {
+fn s(value: i32) -> Real {
     value.into()
 }
 
-fn p(x: i32, y: i32) -> Point2<DefaultBackend> {
+fn p(x: i32, y: i32) -> Point2 {
     Point2::new(s(x), s(y))
 }
 

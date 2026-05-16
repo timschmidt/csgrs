@@ -1,25 +1,25 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, ContourIntersection, ContourOperand,
-    CurvePolicy, DefaultBackend, IntersectionKind, LineSeg2, Scalar, Segment2,
+    CurvePolicy, IntersectionKind, LineSeg2, Real, Segment2,
 };
 
-fn s(value: i32) -> Scalar<DefaultBackend> {
+fn s(value: i32) -> Real {
     value.into()
 }
 
-fn p(x: i32, y: i32) -> hypercurve::Point2<DefaultBackend> {
+fn p(x: i32, y: i32) -> hypercurve::Point2 {
     hypercurve::Point2::new(s(x), s(y))
 }
 
-fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2<DefaultBackend> {
+fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2 {
     BulgeVertex2::new(p(x, y), s(bulge))
 }
 
-fn contour(vertices: &[BulgeVertex2<DefaultBackend>]) -> Contour2<DefaultBackend> {
+fn contour(vertices: &[BulgeVertex2]) -> Contour2 {
     Contour2::from_bulge_vertices(vertices).unwrap()
 }
 
-fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2<DefaultBackend> {
+fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
     contour(&[
         vertex(xmin, ymin, 0),
         vertex(xmax, ymin, 0),
@@ -32,9 +32,7 @@ fn policy() -> CurvePolicy {
     CurvePolicy::certified()
 }
 
-fn point_event_point(
-    event: &ContourIntersection<DefaultBackend>,
-) -> hypercurve::Point2<DefaultBackend> {
+fn point_event_point(event: &ContourIntersection) -> hypercurve::Point2 {
     let ContourIntersection::Point(point) = event else {
         panic!("expected point event");
     };
@@ -109,7 +107,7 @@ fn contour_events_preserve_line_overlap() {
     assert!(matches!(overlap.segment, Segment2::Line(_)));
 }
 
-fn arc_overlap_cutter() -> Contour2<DefaultBackend> {
+fn arc_overlap_cutter() -> Contour2 {
     Contour2::try_new(vec![
         Segment2::Arc(CircularArc2::try_from_center(p(1, -1), p(2, 0), p(1, 0), false).unwrap()),
         Segment2::Line(LineSeg2::try_new(p(2, 0), p(2, -2)).unwrap()),
@@ -164,6 +162,72 @@ fn contour_event_broad_phase_skips_decided_disjoint_boxes() {
     let events = a.intersect_contour(&b, &policy()).unwrap();
 
     assert!(events.is_empty());
+}
+
+#[test]
+fn contour_self_events_ignore_ordinary_connectivity() {
+    let rectangle = rectangle(0, 0, 4, 4);
+
+    let events = rectangle.intersect_self(&policy()).unwrap();
+
+    assert!(events.is_empty());
+}
+
+#[test]
+fn contour_self_events_keep_nonadjacent_line_arc_crossing() {
+    let contour = contour(&[
+        vertex(0, 0, 1),
+        vertex(2, 0, 0),
+        vertex(3, 2, 0),
+        vertex(1, 2, 0),
+        vertex(1, -2, 0),
+        vertex(3, -3, 0),
+        vertex(-1, -3, 0),
+    ]);
+
+    let events = contour.intersect_self(&policy()).unwrap();
+
+    assert!(events.events().iter().any(|event| {
+        matches!(
+            event,
+            ContourIntersection::Point(point)
+                if point.a_segment_index == 0
+                    && point.b_segment_index == 3
+                    && point.point == p(1, -1)
+                    && point.kind == IntersectionKind::Crossing
+        )
+    }));
+}
+
+#[test]
+fn contour_self_events_keep_adjacent_line_arc_crossing_but_drop_shared_endpoint() {
+    let contour = contour(&[
+        vertex(0, 0, 1),
+        vertex(2, 0, 0),
+        vertex(0, -2, 0),
+        vertex(-1, 0, 0),
+    ]);
+
+    let events = contour.intersect_self(&policy()).unwrap();
+
+    assert!(events.events().iter().any(|event| {
+        matches!(
+            event,
+            ContourIntersection::Point(point)
+                if point.a_segment_index == 0
+                    && point.b_segment_index == 1
+                    && point.point == p(1, -1)
+        )
+    }));
+    assert!(!events.events().iter().any(|event| {
+        matches!(
+            event,
+            ContourIntersection::Point(point)
+                if point.a_segment_index == 0
+                    && point.b_segment_index == 1
+                    && point.point == p(2, 0)
+        )
+    }));
 }
 
 #[test]
@@ -231,4 +295,24 @@ fn prepared_contour_events_match_plain_events_for_arc_overlap() {
             ContourIntersection::Overlap(overlap) if matches!(overlap.segment, Segment2::Arc(_))
         )
     }));
+}
+
+#[test]
+fn prepared_contour_self_events_match_plain_events() {
+    let contour = contour(&[
+        vertex(0, 0, 1),
+        vertex(2, 0, 0),
+        vertex(3, 2, 0),
+        vertex(1, 2, 0),
+        vertex(1, -2, 0),
+        vertex(3, -3, 0),
+        vertex(-1, -3, 0),
+    ]);
+    let policy = policy();
+    let prepared = contour.prepare_topology_queries(&policy);
+
+    assert_eq!(
+        prepared.intersect_self(&policy).unwrap(),
+        contour.intersect_self(&policy).unwrap()
+    );
 }

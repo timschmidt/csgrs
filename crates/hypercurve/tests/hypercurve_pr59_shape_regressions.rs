@@ -8,26 +8,25 @@
 //! membership semantics.
 
 use hypercurve::{
-    BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy, DefaultBackend, FillRule,
-    Point2, Region2, RegionPointLocation, Scalar,
+    BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, Point2, Real,
+    Region2, RegionPointLocation,
 };
 
-type Backend = DefaultBackend;
-type HPoint = Point2<Backend>;
-type HScalar = Scalar<Backend>;
-type HContour = Contour2<Backend>;
-type HRegion = Region2<Backend>;
+type HPoint = Point2;
+type HReal = Real;
+type HContour = Contour2;
+type HRegion = Region2;
 type Rect = (f64, f64, f64, f64);
 
-fn s(value: f64) -> HScalar {
-    HScalar::try_from(value).unwrap()
+fn s(value: f64) -> HReal {
+    HReal::try_from(value).unwrap()
 }
 
 fn p(x: f64, y: f64) -> HPoint {
     HPoint::new(s(x), s(y))
 }
 
-fn vertex(x: f64, y: f64) -> BulgeVertex2<Backend> {
+fn vertex(x: f64, y: f64) -> BulgeVertex2 {
     BulgeVertex2::new(p(x, y), s(0.0))
 }
 

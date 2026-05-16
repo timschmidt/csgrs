@@ -32,6 +32,7 @@ cargo +nightly fuzz run hypercurve_region_boolean
 cargo +nightly fuzz run hypercurve_events_fragments
 cargo +nightly fuzz run hypercurve_bboxes_curve_strings_splits
 cargo +nightly fuzz run hypercurve_offsets
+cargo +nightly fuzz run hypercurve_full_api
 ```
 
 Replay a minimized case with:
@@ -56,3 +57,5 @@ The native harnesses cover the same high-value areas as the deterministic
 - bbox construction/overlap, prepared curve-string broad-phase consistency, and
   split-map ordering
 - primitive, curve-string, contour, checked, and outline offset entry points
+- full public API cross-checks for prepared/plain parity, nesting,
+  boundary-loop/contour/region consistency, and all offset cap styles

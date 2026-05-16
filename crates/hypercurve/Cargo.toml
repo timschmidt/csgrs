@@ -8,8 +8,8 @@ readme = "README.md"
 all-features = true
 
 [dependencies]
-hyperlattice = { path = "../hyperlattice", version = "0.4.0", default-features = false, features = ["hyperreal-backend"] }
-hyperlimit = { path = "../hyperlimit", version = "0.2.0", default-features = false, features = ["std", "hyperlattice", "hyperreal"], optional = true }
+hyperreal = { path = "../hyperreal", version = "0.11.1", default-features = false }
+hyperlimit = { path = "../hyperlimit", version = "0.2.0", default-features = false, features = ["std"], optional = true }
 
 [dev-dependencies]
 cavalier_contours = { path = "../cavalier_contours/cavalier_contours" }
@@ -36,4 +36,8 @@ harness = false
 
 [[bench]]
 name = "offset"
+harness = false
+
+[[bench]]
+name = "reconstruction"
 harness = false

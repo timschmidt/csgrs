@@ -2,10 +2,10 @@
 
 use std::cmp::Ordering;
 
-use hyperlattice::{Backend, DefaultBackend, Scalar, ZeroStatus};
+use hyperreal::{Real, ZeroKnowledge as ZeroStatus};
 
 use crate::bbox::{Aabb2, aabb_decided_misses_point, decided_contour_aabb, decided_segment_aabb};
-use crate::classify::{classify_oriented_line, compare_scalars};
+use crate::classify::{classify_oriented_line, compare_reals};
 use crate::{
     BulgeVertex2, Classification, CurveError, CurvePolicy, CurveResult, CurveString2, LineSide,
     Point2, Segment2, UncertaintyReason,
@@ -33,20 +33,20 @@ pub enum ContourPointLocation {
 
 /// A closed sequence of connected native segments.
 #[derive(Clone, Debug, PartialEq)]
-pub struct Contour2<B: Backend = DefaultBackend> {
-    curve: CurveString2<B>,
+pub struct Contour2 {
+    curve: CurveString2,
     fill_rule: FillRule,
 }
 
-impl<B: Backend> Contour2<B> {
+impl Contour2 {
     /// Constructs a closed contour with the non-zero winding fill rule.
-    pub fn try_new(segments: Vec<Segment2<B>>) -> CurveResult<Self> {
+    pub fn try_new(segments: Vec<Segment2>) -> CurveResult<Self> {
         Self::try_new_with_fill_rule(segments, FillRule::NonZero)
     }
 
     /// Constructs a closed contour with an explicit fill rule.
     pub fn try_new_with_fill_rule(
-        segments: Vec<Segment2<B>>,
+        segments: Vec<Segment2>,
         fill_rule: FillRule,
     ) -> CurveResult<Self> {
         let curve = CurveString2::try_new(segments)?;
@@ -55,20 +55,20 @@ impl<B: Backend> Contour2<B> {
     }
 
     /// Constructs a closed contour without checking connectivity or closure.
-    pub const fn new_unchecked(curve: CurveString2<B>, fill_rule: FillRule) -> Self {
+    pub const fn new_unchecked(curve: CurveString2, fill_rule: FillRule) -> Self {
         Self { curve, fill_rule }
     }
 
     /// Constructs a closed contour from Cavalier-style bulge vertices.
     ///
     /// The final vertex's bulge defines the segment back to the first vertex.
-    pub fn from_bulge_vertices(vertices: &[BulgeVertex2<B>]) -> CurveResult<Self> {
+    pub fn from_bulge_vertices(vertices: &[BulgeVertex2]) -> CurveResult<Self> {
         Self::from_bulge_vertices_with_fill_rule(vertices, FillRule::NonZero)
     }
 
     /// Constructs a closed contour from Cavalier-style bulge vertices and a fill rule.
     pub fn from_bulge_vertices_with_fill_rule(
-        vertices: &[BulgeVertex2<B>],
+        vertices: &[BulgeVertex2],
         fill_rule: FillRule,
     ) -> CurveResult<Self> {
         if vertices.len() < 2 {
@@ -84,12 +84,12 @@ impl<B: Backend> Contour2<B> {
     }
 
     /// Returns the underlying closed curve string.
-    pub const fn curve_string(&self) -> &CurveString2<B> {
+    pub const fn curve_string(&self) -> &CurveString2 {
         &self.curve
     }
 
     /// Returns the segments in contour order.
-    pub fn segments(&self) -> &[Segment2<B>] {
+    pub fn segments(&self) -> &[Segment2] {
         self.curve.segments()
     }
 
@@ -121,13 +121,14 @@ impl<B: Backend> Contour2<B> {
 
     /// Computes the winding number for a point not on the boundary.
     ///
-    /// Boundary points return `Uncertain(Boundary)` because a scalar winding
+    /// Boundary points return `Uncertain(Boundary)` because a Real winding
     /// number is not well-defined there. A decided bounding-box miss returns
     /// zero before boundary and winding scans; otherwise this follows the
     /// boundary-first point-in-contour structure discussed by Hormann and
-    /// Agathos, "The Point in Polygon Problem for Arbitrary Polygons" (2001),
-    /// extended here to native circular-arc segments.
-    pub fn winding_number(&self, point: &Point2<B>, policy: &CurvePolicy) -> Classification<i32> {
+    /// Agathos, "The Point in Polygon Problem for Arbitrary Polygons"
+    /// (*Computational Geometry* 20(3), 131-144, 2001), extended here to
+    /// native circular-arc segments.
+    pub fn winding_number(&self, point: &Point2, policy: &CurvePolicy) -> Classification<i32> {
         let contour_box = decided_contour_aabb(self, policy);
         let segment_boxes = decided_segment_boxes(self.segments(), policy);
         contour_winding_number_with_cached_aabbs(
@@ -144,11 +145,12 @@ impl<B: Backend> Contour2<B> {
     /// The query first uses the contour bounding box as a conservative rejection
     /// test, then checks the boundary explicitly before applying the fill rule
     /// to the winding number. Hormann and Agathos, "The Point in Polygon
-    /// Problem for Arbitrary Polygons" (2001), survey the boundary and winding
-    /// issues that motivate keeping those stages separate.
+    /// Problem for Arbitrary Polygons" (*Computational Geometry* 20(3),
+    /// 131-144, 2001), survey the boundary and winding issues that motivate
+    /// keeping those stages separate.
     pub fn classify_point(
         &self,
-        point: &Point2<B>,
+        point: &Point2,
         policy: &CurvePolicy,
     ) -> Classification<ContourPointLocation> {
         let contour_box = decided_contour_aabb(self, policy);
@@ -167,11 +169,7 @@ impl<B: Backend> Contour2<B> {
     /// Segment boxes are used only to skip decided misses. A box hit or
     /// uncertain ordering still falls back to exact segment containment so edge
     /// and vertex boundary cases remain explicit.
-    pub fn point_on_boundary(
-        &self,
-        point: &Point2<B>,
-        policy: &CurvePolicy,
-    ) -> Classification<bool> {
+    pub fn point_on_boundary(&self, point: &Point2, policy: &CurvePolicy) -> Classification<bool> {
         let contour_box = decided_contour_aabb(self, policy);
         let segment_boxes = decided_segment_boxes(self.segments(), policy);
         point_on_contour_boundary_with_cached_aabbs(
@@ -188,33 +186,59 @@ impl<B: Backend> Contour2<B> {
         &self,
         other: &Self,
         policy: &CurvePolicy,
-    ) -> CurveResult<crate::ContourIntersectionSet<B>> {
+    ) -> CurveResult<crate::ContourIntersectionSet> {
         crate::events::intersect_contours(self, other, policy)
+    }
+
+    /// Collects normalized topology events between segments of this contour.
+    ///
+    /// Adjacent segment endpoint contacts are ordinary contour connectivity and
+    /// are filtered out. Crossings, tangencies, endpoint contacts, and overlaps
+    /// that are not just the connected vertex remain in the result. This keeps
+    /// the same exact pair enumeration used for contour-pair intersections,
+    /// with the bounding-box candidate pruning pattern described by Bentley
+    /// and Ottmann, "Algorithms for Reporting and Counting Geometric
+    /// Intersections" (1979).
+    pub fn intersect_self(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<crate::ContourIntersectionSet> {
+        crate::events::intersect_contour_self(self, policy)
     }
 
     /// Splits this contour into traversal-order fragments at events from one
     /// contour-pair intersection set.
     pub fn split_at_intersections(
         &self,
-        intersections: &crate::ContourIntersectionSet<B>,
+        intersections: &crate::ContourIntersectionSet,
         operand: crate::ContourOperand,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<crate::ContourFragmentSet<B>>> {
+    ) -> CurveResult<Classification<crate::ContourFragmentSet>> {
         crate::fragment::split_contour_at_intersections(self, intersections, operand, policy)
+    }
+
+    /// Splits this contour into traversal-order fragments at self-intersection
+    /// events collected from this same contour.
+    pub fn split_at_self_intersections(
+        &self,
+        intersections: &crate::ContourIntersectionSet,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<crate::ContourFragmentSet>> {
+        crate::fragment::split_contour_at_self_intersections(self, intersections, policy)
     }
 }
 
-pub(crate) fn classify_contour_point_with_cached_aabbs<B: Backend>(
-    contour: &Contour2<B>,
-    point: &Point2<B>,
-    contour_box: Option<&Aabb2<B>>,
-    segment_boxes: &[Option<Aabb2<B>>],
+pub(crate) fn classify_contour_point_with_cached_aabbs(
+    contour: &Contour2,
+    point: &Point2,
+    contour_box: Option<&Aabb2>,
+    segment_boxes: &[Option<Aabb2>],
     policy: &CurvePolicy,
 ) -> Classification<ContourPointLocation> {
     // Keep the boundary-first structure from Hormann and Agathos, "The Point
-    // in Polygon Problem for Arbitrary Polygons" (2001). Cached boxes only
-    // reject decided misses; they never replace exact segment-boundary checks
-    // or the winding pass.
+    // in Polygon Problem for Arbitrary Polygons" (Computational Geometry
+    // 20(3), 131-144, 2001). Cached boxes only reject decided misses; they
+    // never replace exact segment-boundary checks or the winding pass.
     if contour_box_misses_point(contour_box, point, policy) {
         return Classification::Decided(ContourPointLocation::Outside);
     }
@@ -255,11 +279,11 @@ pub(crate) fn classify_contour_point_with_cached_aabbs<B: Backend>(
     })
 }
 
-pub(crate) fn contour_winding_number_with_cached_aabbs<B: Backend>(
-    contour: &Contour2<B>,
-    point: &Point2<B>,
-    contour_box: Option<&Aabb2<B>>,
-    segment_boxes: &[Option<Aabb2<B>>],
+pub(crate) fn contour_winding_number_with_cached_aabbs(
+    contour: &Contour2,
+    point: &Point2,
+    contour_box: Option<&Aabb2>,
+    segment_boxes: &[Option<Aabb2>],
     policy: &CurvePolicy,
 ) -> Classification<i32> {
     if contour_box_misses_point(contour_box, point, policy) {
@@ -283,11 +307,11 @@ pub(crate) fn contour_winding_number_with_cached_aabbs<B: Backend>(
     contour_winding_number_unchecked_with_cached_aabb(contour, point, contour_box, policy)
 }
 
-pub(crate) fn point_on_contour_boundary_with_cached_aabbs<B: Backend>(
-    contour: &Contour2<B>,
-    point: &Point2<B>,
-    contour_box: Option<&Aabb2<B>>,
-    segment_boxes: &[Option<Aabb2<B>>],
+pub(crate) fn point_on_contour_boundary_with_cached_aabbs(
+    contour: &Contour2,
+    point: &Point2,
+    contour_box: Option<&Aabb2>,
+    segment_boxes: &[Option<Aabb2>],
     policy: &CurvePolicy,
 ) -> Classification<bool> {
     if contour_box_misses_point(contour_box, point, policy) {
@@ -313,10 +337,10 @@ pub(crate) fn point_on_contour_boundary_with_cached_aabbs<B: Backend>(
     Classification::Decided(false)
 }
 
-fn contour_winding_number_unchecked_with_cached_aabb<B: Backend>(
-    contour: &Contour2<B>,
-    point: &Point2<B>,
-    contour_box: Option<&Aabb2<B>>,
+fn contour_winding_number_unchecked_with_cached_aabb(
+    contour: &Contour2,
+    point: &Point2,
+    contour_box: Option<&Aabb2>,
     policy: &CurvePolicy,
 ) -> Classification<i32> {
     if contour_box_misses_point(contour_box, point, policy) {
@@ -338,25 +362,22 @@ fn contour_winding_number_unchecked_with_cached_aabb<B: Backend>(
     Classification::Decided(winding)
 }
 
-fn contour_box_misses_point<B: Backend>(
-    contour_box: Option<&Aabb2<B>>,
-    point: &Point2<B>,
+fn contour_box_misses_point(
+    contour_box: Option<&Aabb2>,
+    point: &Point2,
     policy: &CurvePolicy,
 ) -> bool {
     contour_box.is_some_and(|bbox| aabb_decided_misses_point(bbox, point, policy))
 }
 
-fn decided_segment_boxes<B: Backend>(
-    segments: &[Segment2<B>],
-    policy: &CurvePolicy,
-) -> Vec<Option<Aabb2<B>>> {
+fn decided_segment_boxes(segments: &[Segment2], policy: &CurvePolicy) -> Vec<Option<Aabb2>> {
     segments
         .iter()
         .map(|segment| decided_segment_aabb(segment, policy))
         .collect()
 }
 
-fn validate_closed_curve_string<B: Backend>(curve: &CurveString2<B>) -> CurveResult<()> {
+fn validate_closed_curve_string(curve: &CurveString2) -> CurveResult<()> {
     let start = curve.start().ok_or(CurveError::EmptyCurveString)?;
     let end = curve.end().ok_or(CurveError::EmptyCurveString)?;
     match start.distance_squared(end).zero_status() {
@@ -366,7 +387,7 @@ fn validate_closed_curve_string<B: Backend>(curve: &CurveString2<B>) -> CurveRes
     }
 }
 
-fn same_exact_segment_cycle<B: Backend>(first: &[Segment2<B>], second: &[Segment2<B>]) -> bool {
+fn same_exact_segment_cycle(first: &[Segment2], second: &[Segment2]) -> bool {
     if first.len() != second.len() {
         return false;
     }
@@ -377,7 +398,7 @@ fn same_exact_segment_cycle<B: Backend>(first: &[Segment2<B>], second: &[Segment
     same_directed_segment_cycle(first, second) || same_reversed_segment_cycle(first, second)
 }
 
-fn same_directed_segment_cycle<B: Backend>(first: &[Segment2<B>], second: &[Segment2<B>]) -> bool {
+fn same_directed_segment_cycle(first: &[Segment2], second: &[Segment2]) -> bool {
     let len = first.len();
     (0..len).any(|offset| {
         first
@@ -387,7 +408,7 @@ fn same_directed_segment_cycle<B: Backend>(first: &[Segment2<B>], second: &[Segm
     })
 }
 
-fn same_reversed_segment_cycle<B: Backend>(first: &[Segment2<B>], second: &[Segment2<B>]) -> bool {
+fn same_reversed_segment_cycle(first: &[Segment2], second: &[Segment2]) -> bool {
     let len = first.len();
     (0..len).any(|offset| {
         first.iter().enumerate().all(|(index, segment)| {
@@ -397,30 +418,36 @@ fn same_reversed_segment_cycle<B: Backend>(first: &[Segment2<B>], second: &[Segm
     })
 }
 
-fn process_line_winding<B: Backend>(
-    start: &Point2<B>,
-    end: &Point2<B>,
-    point: &Point2<B>,
+fn process_line_winding(
+    start: &Point2,
+    end: &Point2,
+    point: &Point2,
     policy: &CurvePolicy,
 ) -> Option<i32> {
-    if le_scalar(start.y(), point.y(), policy)? {
-        if gt_scalar(end.y(), point.y(), policy)? && is_left(start, end, point, policy)? {
+    if le_real(start.y(), point.y(), policy)? {
+        if gt_real(end.y(), point.y(), policy)? && is_left(start, end, point, policy)? {
             Some(1)
         } else {
             Some(0)
         }
-    } else if le_scalar(end.y(), point.y(), policy)? && !is_left(start, end, point, policy)? {
+    } else if le_real(end.y(), point.y(), policy)? && !is_left(start, end, point, policy)? {
         Some(-1)
     } else {
         Some(0)
     }
 }
 
-fn process_arc_winding<B: Backend>(
-    arc: &crate::CircularArc2<B>,
-    point: &Point2<B>,
+fn process_arc_winding(
+    arc: &crate::CircularArc2,
+    point: &Point2,
     policy: &CurvePolicy,
 ) -> Option<i32> {
+    // Arc winding is the circular-arc extension of the boundary-first winding
+    // classifier used for polygon point containment. The tests below split the
+    // arc by its endpoint chord and circle interior so the horizontal-ray count
+    // changes exactly when the directed arc crosses the query ray. The
+    // boundary and degeneracy discipline follows Hormann and Agathos,
+    // "The Point in Polygon Problem for Arbitrary Polygons" (2001).
     let start = arc.start();
     let end = arc.end();
     let is_ccw = !arc.is_clockwise();
@@ -432,8 +459,8 @@ fn process_arc_winding<B: Backend>(
 
     let inside_circle = point_inside_circle(arc, point, policy)?;
 
-    if le_scalar(start.y(), point.y(), policy)? {
-        if gt_scalar(end.y(), point.y(), policy)? {
+    if le_real(start.y(), point.y(), policy)? {
+        if gt_real(end.y(), point.y(), policy)? {
             if is_ccw {
                 if point_is_left || inside_circle {
                     Some(1)
@@ -447,22 +474,22 @@ fn process_arc_winding<B: Backend>(
             }
         } else if is_ccw
             && !point_is_left
-            && lt_scalar(end.x(), point.x(), policy)?
-            && lt_scalar(point.x(), start.x(), policy)?
+            && lt_real(end.x(), point.x(), policy)?
+            && lt_real(point.x(), start.x(), policy)?
             && inside_circle
         {
             Some(1)
         } else if !is_ccw
             && point_is_left
-            && lt_scalar(start.x(), point.x(), policy)?
-            && lt_scalar(point.x(), end.x(), policy)?
+            && lt_real(start.x(), point.x(), policy)?
+            && lt_real(point.x(), end.x(), policy)?
             && inside_circle
         {
             Some(-1)
         } else {
             Some(0)
         }
-    } else if le_scalar(end.y(), point.y(), policy)? {
+    } else if le_real(end.y(), point.y(), policy)? {
         if is_ccw {
             if !point_is_left && !inside_circle {
                 Some(-1)
@@ -476,15 +503,15 @@ fn process_arc_winding<B: Backend>(
         }
     } else if is_ccw
         && !point_is_left
-        && lt_scalar(start.x(), point.x(), policy)?
-        && lt_scalar(point.x(), end.x(), policy)?
+        && lt_real(start.x(), point.x(), policy)?
+        && lt_real(point.x(), end.x(), policy)?
         && inside_circle
     {
         Some(1)
     } else if !is_ccw
         && point_is_left
-        && lt_scalar(end.x(), point.x(), policy)?
-        && lt_scalar(point.x(), start.x(), policy)?
+        && lt_real(end.x(), point.x(), policy)?
+        && lt_real(point.x(), start.x(), policy)?
         && inside_circle
     {
         Some(-1)
@@ -493,34 +520,29 @@ fn process_arc_winding<B: Backend>(
     }
 }
 
-fn point_inside_circle<B: Backend>(
-    arc: &crate::CircularArc2<B>,
-    point: &Point2<B>,
+fn point_inside_circle(
+    arc: &crate::CircularArc2,
+    point: &Point2,
     policy: &CurvePolicy,
 ) -> Option<bool> {
     let distance_squared = point.distance_squared(arc.center());
     Some(matches!(
-        compare_scalars(&distance_squared, &arc.radius_squared(), policy)?,
+        compare_reals(&distance_squared, &arc.radius_squared(), policy)?,
         Ordering::Less
     ))
 }
 
-fn is_left<B: Backend>(
-    start: &Point2<B>,
-    end: &Point2<B>,
-    point: &Point2<B>,
-    policy: &CurvePolicy,
-) -> Option<bool> {
+fn is_left(start: &Point2, end: &Point2, point: &Point2, policy: &CurvePolicy) -> Option<bool> {
     match classify_oriented_line(start, end, point, policy) {
         Classification::Decided(side) => Some(side == LineSide::Left),
         Classification::Uncertain(_) => None,
     }
 }
 
-fn is_left_or_equal<B: Backend>(
-    start: &Point2<B>,
-    end: &Point2<B>,
-    point: &Point2<B>,
+fn is_left_or_equal(
+    start: &Point2,
+    end: &Point2,
+    point: &Point2,
     policy: &CurvePolicy,
 ) -> Option<bool> {
     match classify_oriented_line(start, end, point, policy) {
@@ -529,35 +551,23 @@ fn is_left_or_equal<B: Backend>(
     }
 }
 
-fn le_scalar<B: Backend>(
-    left: &Scalar<B>,
-    right: &Scalar<B>,
-    policy: &CurvePolicy,
-) -> Option<bool> {
+fn le_real(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<bool> {
     Some(!matches!(
-        compare_scalars(left, right, policy)?,
+        compare_reals(left, right, policy)?,
         Ordering::Greater
     ))
 }
 
-fn lt_scalar<B: Backend>(
-    left: &Scalar<B>,
-    right: &Scalar<B>,
-    policy: &CurvePolicy,
-) -> Option<bool> {
+fn lt_real(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<bool> {
     Some(matches!(
-        compare_scalars(left, right, policy)?,
+        compare_reals(left, right, policy)?,
         Ordering::Less
     ))
 }
 
-fn gt_scalar<B: Backend>(
-    left: &Scalar<B>,
-    right: &Scalar<B>,
-    policy: &CurvePolicy,
-) -> Option<bool> {
+fn gt_real(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<bool> {
     Some(matches!(
-        compare_scalars(left, right, policy)?,
+        compare_reals(left, right, policy)?,
         Ordering::Greater
     ))
 }

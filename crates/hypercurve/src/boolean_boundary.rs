@@ -4,34 +4,32 @@
 //! fragments are already classified, oriented, and ready to be connected into
 //! chains. It deliberately stops before material/hole role assignment.
 
-use hyperlattice::{Backend, DefaultBackend};
-
 use crate::boolean::BooleanFragmentClassification;
 use crate::classify::is_zero;
 use crate::{Classification, Contour2, CurvePolicy, CurveResult, FillRule, Segment2};
 
 /// A selected fragment with geometry already oriented for result traversal.
 #[derive(Clone, Debug, PartialEq)]
-pub struct DirectedBooleanFragment<B: Backend = DefaultBackend> {
+pub struct DirectedBooleanFragment {
     /// Source keyed contour.
     pub key: crate::RegionContourKey,
     /// Index within [`crate::RegionContourFragments::fragments`].
     pub fragment_index: usize,
     /// Segment geometry in result traversal direction.
-    pub segment: Segment2<B>,
+    pub segment: Segment2,
 }
 
 /// Boundary fragments selected by a boolean operation.
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct BooleanBoundaryFragmentSet<B: Backend = DefaultBackend> {
-    directed_fragments: Vec<DirectedBooleanFragment<B>>,
+pub struct BooleanBoundaryFragmentSet {
+    directed_fragments: Vec<DirectedBooleanFragment>,
     unresolved_boundaries: Vec<BooleanFragmentClassification>,
 }
 
-impl<B: Backend> BooleanBoundaryFragmentSet<B> {
+impl BooleanBoundaryFragmentSet {
     /// Constructs a boundary-fragment set from preclassified pieces.
     pub const fn new(
-        directed_fragments: Vec<DirectedBooleanFragment<B>>,
+        directed_fragments: Vec<DirectedBooleanFragment>,
         unresolved_boundaries: Vec<BooleanFragmentClassification>,
     ) -> Self {
         Self {
@@ -41,7 +39,7 @@ impl<B: Backend> BooleanBoundaryFragmentSet<B> {
     }
 
     /// Returns fragments that can be passed to graph traversal immediately.
-    pub fn directed_fragments(&self) -> &[DirectedBooleanFragment<B>] {
+    pub fn directed_fragments(&self) -> &[DirectedBooleanFragment] {
         &self.directed_fragments
     }
 
@@ -83,10 +81,7 @@ impl<B: Backend> BooleanBoundaryFragmentSet<B> {
     /// state and event ordering, not by choosing an arbitrary local successor
     /// (B. R. Vatti, "A generic solution to polygon clipping," Communications
     /// of the ACM 35(7), 56-63, 1992).
-    pub fn assemble_chains(
-        &self,
-        policy: &CurvePolicy,
-    ) -> Classification<BooleanBoundaryChainSet<B>> {
+    pub fn assemble_chains(&self, policy: &CurvePolicy) -> Classification<BooleanBoundaryChainSet> {
         if !self.unresolved_boundaries.is_empty() {
             return Classification::Uncertain(crate::UncertaintyReason::Boundary);
         }
@@ -132,24 +127,24 @@ impl<B: Backend> BooleanBoundaryFragmentSet<B> {
 
 /// One endpoint-connected directed boundary chain.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BooleanBoundaryChain<B: Backend = DefaultBackend> {
-    fragments: Vec<DirectedBooleanFragment<B>>,
+pub struct BooleanBoundaryChain {
+    fragments: Vec<DirectedBooleanFragment>,
     closed: bool,
 }
 
-impl<B: Backend> BooleanBoundaryChain<B> {
+impl BooleanBoundaryChain {
     /// Constructs a boundary chain from already-ordered fragments.
-    pub const fn new(fragments: Vec<DirectedBooleanFragment<B>>, closed: bool) -> Self {
+    pub const fn new(fragments: Vec<DirectedBooleanFragment>, closed: bool) -> Self {
         Self { fragments, closed }
     }
 
     /// Returns fragments in traversal order.
-    pub fn fragments(&self) -> &[DirectedBooleanFragment<B>] {
+    pub fn fragments(&self) -> &[DirectedBooleanFragment] {
         &self.fragments
     }
 
     /// Consumes the chain and returns fragments in traversal order.
-    pub fn into_fragments(self) -> Vec<DirectedBooleanFragment<B>> {
+    pub fn into_fragments(self) -> Vec<DirectedBooleanFragment> {
         self.fragments
     }
 
@@ -171,23 +166,23 @@ impl<B: Backend> BooleanBoundaryChain<B> {
 
 /// Endpoint-connected boundary chains.
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct BooleanBoundaryChainSet<B: Backend = DefaultBackend> {
-    chains: Vec<BooleanBoundaryChain<B>>,
+pub struct BooleanBoundaryChainSet {
+    chains: Vec<BooleanBoundaryChain>,
 }
 
-impl<B: Backend> BooleanBoundaryChainSet<B> {
+impl BooleanBoundaryChainSet {
     /// Constructs a chain set from already-assembled chains.
-    pub const fn new(chains: Vec<BooleanBoundaryChain<B>>) -> Self {
+    pub const fn new(chains: Vec<BooleanBoundaryChain>) -> Self {
         Self { chains }
     }
 
     /// Returns chains in assembly order.
-    pub fn chains(&self) -> &[BooleanBoundaryChain<B>] {
+    pub fn chains(&self) -> &[BooleanBoundaryChain] {
         &self.chains
     }
 
     /// Consumes the set and returns the chains.
-    pub fn into_chains(self) -> Vec<BooleanBoundaryChain<B>> {
+    pub fn into_chains(self) -> Vec<BooleanBoundaryChain> {
         self.chains
     }
 
@@ -219,7 +214,7 @@ impl<B: Backend> BooleanBoundaryChainSet<B> {
     /// Communications of the ACM 35(7), 56-63, 1992). Keeping this conversion
     /// separate avoids assigning hole/material roles before the graph is fully
     /// resolved.
-    pub fn closed_loops(&self) -> Classification<BooleanBoundaryLoopSet<B>> {
+    pub fn closed_loops(&self) -> Classification<BooleanBoundaryLoopSet> {
         if self.chains.iter().any(|chain| !chain.is_closed()) {
             return Classification::Uncertain(crate::UncertaintyReason::Unsupported);
         }
@@ -233,7 +228,7 @@ impl<B: Backend> BooleanBoundaryChainSet<B> {
     }
 
     /// Consumes the chain set and extracts closed chains as boundary loops.
-    pub fn into_closed_loops(self) -> Classification<BooleanBoundaryLoopSet<B>> {
+    pub fn into_closed_loops(self) -> Classification<BooleanBoundaryLoopSet> {
         if self.chains.iter().any(|chain| !chain.is_closed()) {
             return Classification::Uncertain(crate::UncertaintyReason::Unsupported);
         }
@@ -254,23 +249,23 @@ impl<B: Backend> BooleanBoundaryChainSet<B> {
 /// point. The loop may later become either a material contour or a hole after a
 /// nesting pass.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BooleanBoundaryLoop<B: Backend = DefaultBackend> {
-    fragments: Vec<DirectedBooleanFragment<B>>,
+pub struct BooleanBoundaryLoop {
+    fragments: Vec<DirectedBooleanFragment>,
 }
 
-impl<B: Backend> BooleanBoundaryLoop<B> {
+impl BooleanBoundaryLoop {
     /// Constructs a loop from already-ordered directed fragments.
-    pub const fn new(fragments: Vec<DirectedBooleanFragment<B>>) -> Self {
+    pub const fn new(fragments: Vec<DirectedBooleanFragment>) -> Self {
         Self { fragments }
     }
 
     /// Returns directed fragments in traversal order.
-    pub fn fragments(&self) -> &[DirectedBooleanFragment<B>] {
+    pub fn fragments(&self) -> &[DirectedBooleanFragment] {
         &self.fragments
     }
 
     /// Consumes the loop and returns its directed fragments.
-    pub fn into_fragments(self) -> Vec<DirectedBooleanFragment<B>> {
+    pub fn into_fragments(self) -> Vec<DirectedBooleanFragment> {
         self.fragments
     }
 
@@ -293,7 +288,7 @@ impl<B: Backend> BooleanBoundaryLoop<B> {
     /// with degenerate intersections," Computers & Graphics: X 2, 100007,
     /// 2019), so this API keeps geometric validation visible at the conversion
     /// point.
-    pub fn to_contour(&self, fill_rule: FillRule) -> CurveResult<Contour2<B>> {
+    pub fn to_contour(&self, fill_rule: FillRule) -> CurveResult<Contour2> {
         Contour2::try_new_with_fill_rule(
             self.fragments
                 .iter()
@@ -304,7 +299,7 @@ impl<B: Backend> BooleanBoundaryLoop<B> {
     }
 
     /// Consumes loop geometry into a checked closed contour.
-    pub fn into_contour(self, fill_rule: FillRule) -> CurveResult<Contour2<B>> {
+    pub fn into_contour(self, fill_rule: FillRule) -> CurveResult<Contour2> {
         Contour2::try_new_with_fill_rule(
             self.fragments
                 .into_iter()
@@ -317,23 +312,23 @@ impl<B: Backend> BooleanBoundaryLoop<B> {
 
 /// Closed boolean boundary loops before material/hole role assignment.
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct BooleanBoundaryLoopSet<B: Backend = DefaultBackend> {
-    loops: Vec<BooleanBoundaryLoop<B>>,
+pub struct BooleanBoundaryLoopSet {
+    loops: Vec<BooleanBoundaryLoop>,
 }
 
-impl<B: Backend> BooleanBoundaryLoopSet<B> {
+impl BooleanBoundaryLoopSet {
     /// Constructs a loop set from already-extracted loops.
-    pub const fn new(loops: Vec<BooleanBoundaryLoop<B>>) -> Self {
+    pub const fn new(loops: Vec<BooleanBoundaryLoop>) -> Self {
         Self { loops }
     }
 
     /// Returns loops in extraction order.
-    pub fn loops(&self) -> &[BooleanBoundaryLoop<B>] {
+    pub fn loops(&self) -> &[BooleanBoundaryLoop] {
         &self.loops
     }
 
     /// Consumes the set and returns loops in extraction order.
-    pub fn into_loops(self) -> Vec<BooleanBoundaryLoop<B>> {
+    pub fn into_loops(self) -> Vec<BooleanBoundaryLoop> {
         self.loops
     }
 
@@ -348,7 +343,7 @@ impl<B: Backend> BooleanBoundaryLoopSet<B> {
     }
 
     /// Clones every loop into a checked closed contour.
-    pub fn to_contours(&self, fill_rule: FillRule) -> CurveResult<Vec<Contour2<B>>> {
+    pub fn to_contours(&self, fill_rule: FillRule) -> CurveResult<Vec<Contour2>> {
         self.loops
             .iter()
             .map(|boundary_loop| boundary_loop.to_contour(fill_rule))
@@ -356,7 +351,7 @@ impl<B: Backend> BooleanBoundaryLoopSet<B> {
     }
 
     /// Consumes every loop into a checked closed contour.
-    pub fn into_contours(self, fill_rule: FillRule) -> CurveResult<Vec<Contour2<B>>> {
+    pub fn into_contours(self, fill_rule: FillRule) -> CurveResult<Vec<Contour2>> {
         self.loops
             .into_iter()
             .map(|boundary_loop| boundary_loop.into_contour(fill_rule))
@@ -366,8 +361,8 @@ impl<B: Backend> BooleanBoundaryLoopSet<B> {
 
 type EndpointAdjacency = (Vec<Option<usize>>, Vec<Option<usize>>);
 
-fn endpoint_adjacency<B: Backend>(
-    fragments: &[DirectedBooleanFragment<B>],
+fn endpoint_adjacency(
+    fragments: &[DirectedBooleanFragment],
     policy: &CurvePolicy,
 ) -> Classification<EndpointAdjacency> {
     let mut successors = vec![None; fragments.len()];
@@ -398,12 +393,12 @@ fn endpoint_adjacency<B: Backend>(
     Classification::Decided((successors, predecessors))
 }
 
-fn follow_chain<B: Backend>(
+fn follow_chain(
     start: usize,
-    fragments: &[DirectedBooleanFragment<B>],
+    fragments: &[DirectedBooleanFragment],
     successors: &[Option<usize>],
     used: &mut [bool],
-) -> Classification<BooleanBoundaryChain<B>> {
+) -> Classification<BooleanBoundaryChain> {
     let mut chain = Vec::new();
     let mut current = start;
     let mut closed = false;
@@ -434,14 +429,14 @@ fn follow_chain<B: Backend>(
     Classification::Decided(BooleanBoundaryChain::new(chain, closed))
 }
 
-fn points_match<B: Backend>(
-    left: &crate::Point2<B>,
-    right: &crate::Point2<B>,
+fn points_match(
+    left: &crate::Point2,
+    right: &crate::Point2,
     policy: &CurvePolicy,
 ) -> Classification<bool> {
     let distance = left.distance_squared(right);
     match is_zero(&distance, policy) {
         Some(matches) => Classification::Decided(matches),
-        None => Classification::Uncertain(crate::UncertaintyReason::ScalarSign),
+        None => Classification::Uncertain(crate::UncertaintyReason::RealSign),
     }
 }

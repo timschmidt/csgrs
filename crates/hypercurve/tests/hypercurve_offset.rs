@@ -1,33 +1,29 @@
 use hypercurve::{
-    BulgeVertex2, CircularArc2, Classification, Contour2, CurvePolicy, CurveString2,
-    DefaultBackend, LineSeg2, OffsetCap, Point2, Scalar, Segment2, UncertaintyReason,
+    BulgeVertex2, CircularArc2, Classification, Contour2, CurvePolicy, CurveString2, LineSeg2,
+    OffsetCap, Point2, Real, Segment2, UncertaintyReason,
 };
 
-fn s(value: i32) -> Scalar<DefaultBackend> {
+fn s(value: i32) -> Real {
     value.into()
 }
 
-fn q(numerator: i32, denominator: i32) -> Scalar<DefaultBackend> {
+fn q(numerator: i32, denominator: i32) -> Real {
     (s(numerator) / s(denominator)).unwrap()
 }
 
-fn p(x: i32, y: i32) -> Point2<DefaultBackend> {
+fn p(x: i32, y: i32) -> Point2 {
     Point2::new(s(x), s(y))
 }
 
-fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2<DefaultBackend> {
+fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2 {
     BulgeVertex2::new(p(x, y), s(bulge))
 }
 
-fn line_segment(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> Segment2<DefaultBackend> {
+fn line_segment(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> Segment2 {
     Segment2::Line(LineSeg2::try_new(p(start_x, start_y), p(end_x, end_y)).unwrap())
 }
 
-fn assert_line(
-    segment: &Segment2<DefaultBackend>,
-    start: Point2<DefaultBackend>,
-    end: Point2<DefaultBackend>,
-) {
+fn assert_line(segment: &Segment2, start: Point2, end: Point2) {
     let Segment2::Line(line) = segment else {
         panic!("expected line segment");
     };

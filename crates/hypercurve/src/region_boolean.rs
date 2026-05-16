@@ -5,8 +5,6 @@
 //! shared-boundary cases that also involve interior containment remain explicit
 //! uncertainty instead of being guessed through.
 
-use hyperlattice::Backend;
-
 use crate::{
     BooleanBoundaryFragmentSet, BooleanBoundaryLoopSet, BooleanFragmentSelection, BooleanOp,
     Classification, Contour2, ContourIntersection, CurvePolicy, CurveResult, FillRule,
@@ -36,7 +34,7 @@ enum BoundaryContactResolution {
     },
 }
 
-impl<B: Backend> Region2<B> {
+impl Region2 {
     /// Computes closed boolean boundary loops against another owned region.
     ///
     /// This is a convenience wrapper over [`RegionView2::boolean_boundary_loops`].
@@ -45,7 +43,7 @@ impl<B: Backend> Region2<B> {
         other: &Self,
         op: BooleanOp,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<BooleanBoundaryLoopSet<B>>> {
+    ) -> CurveResult<Classification<BooleanBoundaryLoopSet>> {
         self.as_view()
             .boolean_boundary_loops(&other.as_view(), op, policy)
     }
@@ -61,7 +59,7 @@ impl<B: Backend> Region2<B> {
         op: BooleanOp,
         fill_rule: FillRule,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Vec<Contour2<B>>>> {
+    ) -> CurveResult<Classification<Vec<Contour2>>> {
         self.as_view()
             .boolean_boundary_contours(&other.as_view(), op, fill_rule, policy)
     }
@@ -83,7 +81,7 @@ impl<B: Backend> Region2<B> {
     }
 }
 
-impl<B: Backend> RegionView2<'_, B> {
+impl RegionView2<'_> {
     /// Computes closed boolean boundary loops against another region view.
     ///
     /// Algorithm note: this method wires together the standard polygon clipping
@@ -101,10 +99,10 @@ impl<B: Backend> RegionView2<'_, B> {
     /// can stop the pipeline instead of being resolved by a global epsilon.
     pub fn boolean_boundary_loops(
         &self,
-        other: &RegionView2<'_, B>,
+        other: &RegionView2<'_>,
         op: BooleanOp,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<BooleanBoundaryLoopSet<B>>> {
+    ) -> CurveResult<Classification<BooleanBoundaryLoopSet>> {
         boolean_boundary_loops_between(self, other, op, policy)
     }
 
@@ -114,11 +112,11 @@ impl<B: Backend> RegionView2<'_, B> {
     /// Open chains and unresolved shared boundaries are returned as uncertainty.
     pub fn boolean_boundary_contours(
         &self,
-        other: &RegionView2<'_, B>,
+        other: &RegionView2<'_>,
         op: BooleanOp,
         fill_rule: FillRule,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Vec<Contour2<B>>>> {
+    ) -> CurveResult<Classification<Vec<Contour2>>> {
         boolean_boundary_contours_between(self, other, op, fill_rule, policy)
     }
 
@@ -134,21 +132,21 @@ impl<B: Backend> RegionView2<'_, B> {
     /// degeneracy-specific resolver.
     pub fn boolean_region(
         &self,
-        other: &RegionView2<'_, B>,
+        other: &RegionView2<'_>,
         op: BooleanOp,
         fill_rule: FillRule,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Region2<B>>> {
+    ) -> CurveResult<Classification<Region2>> {
         boolean_region_between(self, other, op, fill_rule, policy)
     }
 }
 
-pub(crate) fn boolean_boundary_loops_between<B: Backend>(
-    first: &RegionView2<'_, B>,
-    second: &RegionView2<'_, B>,
+pub(crate) fn boolean_boundary_loops_between(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
     op: BooleanOp,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<BooleanBoundaryLoopSet<B>>> {
+) -> CurveResult<Classification<BooleanBoundaryLoopSet>> {
     let intersections = first.intersect_region(second, policy)?;
 
     let fragments = match intersections.split_regions(first, second, policy)? {
@@ -170,13 +168,13 @@ pub(crate) fn boolean_boundary_loops_between<B: Backend>(
     Ok(chains.into_closed_loops())
 }
 
-pub(crate) fn boolean_boundary_contours_between<B: Backend>(
-    first: &RegionView2<'_, B>,
-    second: &RegionView2<'_, B>,
+pub(crate) fn boolean_boundary_contours_between(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
     op: BooleanOp,
     fill_rule: FillRule,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Vec<Contour2<B>>>> {
+) -> CurveResult<Classification<Vec<Contour2>>> {
     if same_region_view(first, second) {
         return Ok(Classification::Decided(match op {
             BooleanOp::Union | BooleanOp::Intersection => clone_boundary_contours(first),
@@ -221,12 +219,12 @@ pub(crate) fn boolean_boundary_contours_between<B: Backend>(
     }
 }
 
-fn xor_boundary_contours_by_region<B: Backend>(
-    first: &RegionView2<'_, B>,
-    second: &RegionView2<'_, B>,
+fn xor_boundary_contours_by_region(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
     fill_rule: FillRule,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Vec<Contour2<B>>>> {
+) -> CurveResult<Classification<Vec<Contour2>>> {
     // The checked-contour API can express the boundary loops of a symmetric
     // difference, but it cannot attach material/hole roles to them. Build the
     // role-aware region first, then expose its checked boundary contours.
@@ -244,13 +242,13 @@ fn xor_boundary_contours_by_region<B: Backend>(
     }
 }
 
-pub(crate) fn boolean_region_between<B: Backend>(
-    first: &RegionView2<'_, B>,
-    second: &RegionView2<'_, B>,
+pub(crate) fn boolean_region_between(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
     op: BooleanOp,
     fill_rule: FillRule,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Region2<B>>> {
+) -> CurveResult<Classification<Region2>> {
     if same_region_view(first, second) {
         return Ok(Classification::Decided(match op {
             BooleanOp::Union | BooleanOp::Intersection => clone_region(first),
@@ -300,9 +298,9 @@ pub(crate) fn boolean_region_between<B: Backend>(
     }
 }
 
-fn boundary_contact_resolution<B: Backend>(
-    first: &RegionView2<'_, B>,
-    second: &RegionView2<'_, B>,
+fn boundary_contact_resolution(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Option<BoundaryContactResolution>>> {
     let intersections = first.intersect_region(second, policy)?;
@@ -351,8 +349,8 @@ fn boundary_contact_resolution<B: Backend>(
     )))
 }
 
-pub(crate) fn boundary_contact_overlap_flag<B: Backend>(
-    intersections: &RegionIntersectionSet<B>,
+pub(crate) fn boundary_contact_overlap_flag(
+    intersections: &RegionIntersectionSet,
 ) -> Classification<Option<bool>> {
     let mut saw_contact = false;
     let mut saw_overlap = false;
@@ -381,10 +379,10 @@ pub(crate) fn boundary_contact_overlap_flag<B: Backend>(
     Classification::Decided(saw_contact.then_some(saw_overlap))
 }
 
-fn split_contact_interiors_are_disjoint<B: Backend>(
-    first: &RegionView2<'_, B>,
-    second: &RegionView2<'_, B>,
-    intersections: &crate::RegionIntersectionSet<B>,
+fn split_contact_interiors_are_disjoint(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
+    intersections: &crate::RegionIntersectionSet,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<bool>> {
     let fragments = match intersections.split_regions(first, second, policy)? {
@@ -428,9 +426,9 @@ fn split_contact_interiors_are_disjoint<B: Backend>(
     ))
 }
 
-fn unsplit_contact_interiors_are_disjoint<B: Backend>(
-    first: &RegionView2<'_, B>,
-    second: &RegionView2<'_, B>,
+fn unsplit_contact_interiors_are_disjoint(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<bool>> {
     let mut first_has_outside_sample = false;
@@ -482,9 +480,9 @@ fn unsplit_contact_interiors_are_disjoint<B: Backend>(
     ))
 }
 
-fn scan_unsplit_contact_samples<B: Backend>(
-    contours: &[&Contour2<B>],
-    opposite: &RegionView2<'_, B>,
+fn scan_unsplit_contact_samples(
+    contours: &[&Contour2],
+    opposite: &RegionView2<'_>,
     has_outside_sample: &mut bool,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<bool>> {
@@ -512,9 +510,9 @@ fn scan_unsplit_contact_samples<B: Backend>(
     Ok(Classification::Decided(true))
 }
 
-fn boundary_contact_containment_relation<B: Backend>(
-    first: &RegionView2<'_, B>,
-    second: &RegionView2<'_, B>,
+fn boundary_contact_containment_relation(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Option<BoundaryContainmentRelation>>> {
     let first_contains_second =
@@ -538,9 +536,9 @@ fn boundary_contact_containment_relation<B: Backend>(
     ))
 }
 
-fn region_contains_region_boundary_samples<B: Backend>(
-    container: &RegionView2<'_, B>,
-    candidate: &RegionView2<'_, B>,
+fn region_contains_region_boundary_samples(
+    container: &RegionView2<'_>,
+    candidate: &RegionView2<'_>,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<bool>> {
     boundary_contours_inside_or_on_region(
@@ -554,15 +552,14 @@ fn region_contains_region_boundary_samples<B: Backend>(
     )
 }
 
-pub(crate) fn boundary_contours_inside_or_on_region<'a, B, I, F>(
+pub(crate) fn boundary_contours_inside_or_on_region<'a, I, F>(
     contours: I,
     mut classify_point: F,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<bool>>
 where
-    B: Backend + 'a,
-    I: IntoIterator<Item = &'a Contour2<B>>,
-    F: FnMut(&Point2<B>) -> Classification<RegionPointLocation>,
+    I: IntoIterator<Item = &'a Contour2>,
+    F: FnMut(&Point2) -> Classification<RegionPointLocation>,
 {
     for contour in contours {
         for segment in contour.segments() {
@@ -598,12 +595,9 @@ where
     Ok(Classification::Decided(true))
 }
 
-fn point_is_inside_or_boundary<B: Backend, F>(
-    point: &Point2<B>,
-    classify_point: &mut F,
-) -> Classification<bool>
+fn point_is_inside_or_boundary<F>(point: &Point2, classify_point: &mut F) -> Classification<bool>
 where
-    F: FnMut(&Point2<B>) -> Classification<RegionPointLocation>,
+    F: FnMut(&Point2) -> Classification<RegionPointLocation>,
 {
     match classify_point(point) {
         Classification::Decided(RegionPointLocation::Inside | RegionPointLocation::Boundary) => {
@@ -614,12 +608,12 @@ where
     }
 }
 
-fn containment_boundary_contours<B: Backend>(
-    first: &RegionView2<'_, B>,
-    second: &RegionView2<'_, B>,
+fn containment_boundary_contours(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
     op: BooleanOp,
     relation: BoundaryContainmentRelation,
-) -> Option<Vec<Contour2<B>>> {
+) -> Option<Vec<Contour2>> {
     // These containment identities are regularized set identities, not graph
     // traversal guesses. They cover the subset cases Foster, Hormann, and Popa
     // separate from ordinary entry/exit traversal for degenerate polygon
@@ -657,12 +651,12 @@ fn containment_boundary_contours<B: Backend>(
     }
 }
 
-fn containment_region<B: Backend>(
-    first: &RegionView2<'_, B>,
-    second: &RegionView2<'_, B>,
+fn containment_region(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
     op: BooleanOp,
     relation: BoundaryContainmentRelation,
-) -> Option<Region2<B>> {
+) -> Option<Region2> {
     match (relation, op) {
         (
             BoundaryContainmentRelation::FirstContainsSecond,
@@ -693,12 +687,12 @@ fn containment_region<B: Backend>(
     }
 }
 
-fn containment_difference_boundary_contours<B: Backend>(
-    first: &RegionView2<'_, B>,
-    second: &RegionView2<'_, B>,
+fn containment_difference_boundary_contours(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
     fill_rule: FillRule,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Vec<Contour2<B>>>> {
+) -> CurveResult<Classification<Vec<Contour2>>> {
     let intersections = first.intersect_region(second, policy)?;
     let fragments = match intersections.split_regions(first, second, policy)? {
         Classification::Decided(fragments) => fragments,
@@ -713,14 +707,14 @@ fn containment_difference_boundary_contours<B: Backend>(
     boundary_contours_dropping_unresolved(&fragments, &selection, fill_rule, policy)
 }
 
-fn boundary_contact_boundary_contours<B: Backend>(
-    first: &RegionView2<'_, B>,
-    second: &RegionView2<'_, B>,
+fn boundary_contact_boundary_contours(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
     op: BooleanOp,
     fill_rule: FillRule,
     policy: &CurvePolicy,
     kind: BoundaryContactKind,
-) -> CurveResult<Classification<Vec<Contour2<B>>>> {
+) -> CurveResult<Classification<Vec<Contour2>>> {
     // Boundary-only contacts carry no filled area. Foster, Hormann, and Popa
     // identify these contact degeneracies as cases that should be handled
     // separately from ordinary traversal (E. L. Foster, K. Hormann, and R. T.
@@ -744,13 +738,13 @@ fn boundary_contact_boundary_contours<B: Backend>(
     }))
 }
 
-fn boundary_overlap_union_contours<B: Backend>(
-    first: &RegionView2<'_, B>,
-    second: &RegionView2<'_, B>,
+fn boundary_overlap_union_contours(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
     op: BooleanOp,
     fill_rule: FillRule,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Vec<Contour2<B>>>> {
+) -> CurveResult<Classification<Vec<Contour2>>> {
     let intersections = first.intersect_region(second, policy)?;
     let fragments = match intersections.split_regions(first, second, policy)? {
         Classification::Decided(fragments) => fragments,
@@ -764,12 +758,12 @@ fn boundary_overlap_union_contours<B: Backend>(
     boundary_contours_dropping_unresolved(&fragments, &selection, fill_rule, policy)
 }
 
-pub(crate) fn boundary_contours_dropping_unresolved<B: Backend>(
-    fragments: &RegionFragmentSet<B>,
+pub(crate) fn boundary_contours_dropping_unresolved(
+    fragments: &RegionFragmentSet,
     selection: &BooleanFragmentSelection,
     fill_rule: FillRule,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Vec<Contour2<B>>>> {
+) -> CurveResult<Classification<Vec<Contour2>>> {
     let emitted = selection.emit_boundary_fragments(fragments)?;
 
     // Certified contact handlers call this only after proving that every
@@ -795,14 +789,14 @@ pub(crate) fn boundary_contours_dropping_unresolved<B: Backend>(
     }
 }
 
-fn boundary_contact_region<B: Backend>(
-    first: &RegionView2<'_, B>,
-    second: &RegionView2<'_, B>,
+fn boundary_contact_region(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
     op: BooleanOp,
     fill_rule: FillRule,
     policy: &CurvePolicy,
     kind: BoundaryContactKind,
-) -> CurveResult<Classification<Region2<B>>> {
+) -> CurveResult<Classification<Region2>> {
     Ok(Classification::Decided(match op {
         BooleanOp::Union | BooleanOp::Xor => match kind {
             BoundaryContactKind::PointOnly => {
@@ -823,12 +817,12 @@ fn boundary_contact_region<B: Backend>(
     }))
 }
 
-fn xor_region_by_difference_union<B: Backend>(
-    first: &RegionView2<'_, B>,
-    second: &RegionView2<'_, B>,
+fn xor_region_by_difference_union(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
     fill_rule: FillRule,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Region2<B>>> {
+) -> CurveResult<Classification<Region2>> {
     // Region XOR is the symmetric difference `(A - B) union (B - A)`. Martinez,
     // Rueda, and Feito describe polygon boolean operations as combinations of
     // selected classified segments (F. Martinez, A. J. Rueda, and F. R. Feito,
@@ -854,10 +848,7 @@ fn xor_region_by_difference_union<B: Backend>(
     )))
 }
 
-pub(crate) fn merge_disjoint_region_bins<B: Backend>(
-    first: Region2<B>,
-    second: Region2<B>,
-) -> Region2<B> {
+pub(crate) fn merge_disjoint_region_bins(first: Region2, second: Region2) -> Region2 {
     // The two symmetric-difference halves are interior-disjoint by set
     // definition. Directly merging their signed contour bins preserves
     // boundary-only contacts that a contour-only nesting pass would reject as
@@ -873,15 +864,12 @@ pub(crate) fn merge_disjoint_region_bins<B: Backend>(
     Region2::new(material_contours, hole_contours)
 }
 
-pub(crate) fn same_region_view<B: Backend>(
-    first: &RegionView2<'_, B>,
-    second: &RegionView2<'_, B>,
-) -> bool {
+pub(crate) fn same_region_view(first: &RegionView2<'_>, second: &RegionView2<'_>) -> bool {
     same_contour_multiset(first.material_contours(), second.material_contours())
         && same_contour_multiset(first.hole_contours(), second.hole_contours())
 }
 
-fn same_contour_multiset<B: Backend>(first: &[&Contour2<B>], second: &[&Contour2<B>]) -> bool {
+fn same_contour_multiset(first: &[&Contour2], second: &[&Contour2]) -> bool {
     if first.len() != second.len() {
         return false;
     }
@@ -904,7 +892,7 @@ fn same_contour_multiset<B: Backend>(first: &[&Contour2<B>], second: &[&Contour2
     true
 }
 
-pub(crate) fn clone_boundary_contours<B: Backend>(region: &RegionView2<'_, B>) -> Vec<Contour2<B>> {
+pub(crate) fn clone_boundary_contours(region: &RegionView2<'_>) -> Vec<Contour2> {
     // Exact contour-bin identity fast paths keep coincident boundaries out of
     // the general traversal graph. Foster, Hormann, and Popa show that
     // degenerate polygon clipping benefits from separating coincident-boundary
@@ -922,7 +910,7 @@ pub(crate) fn clone_boundary_contours<B: Backend>(region: &RegionView2<'_, B>) -
         .collect()
 }
 
-pub(crate) fn clone_region<B: Backend>(region: &RegionView2<'_, B>) -> Region2<B> {
+pub(crate) fn clone_region(region: &RegionView2<'_>) -> Region2 {
     // Region-level identity fast paths preserve explicit contour roles without
     // re-entering the nesting pass. Vatti describes boolean output in terms of
     // fill-state transitions (B. R. Vatti, "A generic solution to polygon
@@ -945,11 +933,11 @@ pub(crate) fn clone_region<B: Backend>(region: &RegionView2<'_, B>) -> Region2<B
     )
 }
 
-pub(crate) fn empty_operand_boundary_contours<B: Backend>(
-    first: &RegionView2<'_, B>,
-    second: &RegionView2<'_, B>,
+pub(crate) fn empty_operand_boundary_contours(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
     op: BooleanOp,
-) -> Vec<Contour2<B>> {
+) -> Vec<Contour2> {
     // Empty-set identities are regularized boolean identities, so they should
     // not enter the clipping graph at all. Vatti's scanline formulation
     // describes boolean construction in terms of fill-state transitions
@@ -965,11 +953,11 @@ pub(crate) fn empty_operand_boundary_contours<B: Backend>(
     }
 }
 
-pub(crate) fn empty_operand_region<B: Backend>(
-    first: &RegionView2<'_, B>,
-    second: &RegionView2<'_, B>,
+pub(crate) fn empty_operand_region(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
     op: BooleanOp,
-) -> Region2<B> {
+) -> Region2 {
     match (first.is_empty(), second.is_empty(), op) {
         (true, _, BooleanOp::Union | BooleanOp::Xor) => clone_region(second),
         (_, true, BooleanOp::Union | BooleanOp::Xor | BooleanOp::Difference) => clone_region(first),

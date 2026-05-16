@@ -5,7 +5,7 @@ edition = "2024"
 publish = false
 
 [dependencies]
-hypercurve = { path = "../..", default-features = false, features = ["approx"] }
+hypercurve = { path = "../..", default-features = false, features = ["predicates"] }
 eframe = { version = "0.33.0", default-features = false, features = [
     "accesskit",
     "default_fonts",

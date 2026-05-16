@@ -1,8 +1,17 @@
 //! Primitive parallel offsets for line and circular-arc segments.
+//!
+//! Offsetting is split into primitive parallel curves, joins/caps, and later
+//! trimming/rebuild work. The staged construction follows Tiller and Hanson,
+//! "Offsets of Two-Dimensional Profiles" (*IEEE Computer Graphics and
+//! Applications* 4(9), 36-46, 1984). The reason checked offsets reject raw
+//! self-intersections instead of accepting them is the offset-curve topology
+//! described by Farouki and Neff, "Analytic Properties of Plane Offset Curves"
+//! (*Computer Aided Geometric Design* 7(1-4), 83-99, 1990), where offsets may
+//! form cusps and extraneous loops that require trimming.
 
-use hyperlattice::{Backend, Scalar, ScalarSign};
+use hyperreal::{Real, RealSign};
 
-use crate::classify::{is_zero, scalar_sign};
+use crate::classify::{is_zero, real_sign};
 use crate::contour::Contour2;
 use crate::curve_string::CurveString2;
 use crate::segment::{CircularArc2, LineSeg2, Segment2};
@@ -25,7 +34,7 @@ pub enum OffsetCap {
     Square,
 }
 
-impl<B: Backend> LineSeg2<B> {
+impl LineSeg2 {
     /// Returns the constant-distance segment on this segment's left side.
     ///
     /// The offset direction is the normalized left normal `(-dy, dx) / length`.
@@ -34,7 +43,7 @@ impl<B: Backend> LineSeg2<B> {
     /// trim self-intersections, and rebuild topology. See Tiller and Hanson,
     /// "Offsets of Two-Dimensional Profiles" (1984), for the line/arc
     /// primitive plus trim-and-join framing used by many CAD offset pipelines.
-    pub fn offset_left(&self, distance: Scalar<B>) -> CurveResult<Self> {
+    pub fn offset_left(&self, distance: Real) -> CurveResult<Self> {
         let length = self.length_squared().sqrt()?;
         let (dx, dy) = self.delta();
         let normal_x = ((-dy) / &length)?;
@@ -49,7 +58,7 @@ impl<B: Backend> LineSeg2<B> {
     }
 }
 
-impl<B: Backend> CircularArc2<B> {
+impl CircularArc2 {
     /// Returns the constant-distance arc on this arc's left side.
     ///
     /// Counter-clockwise arcs have their left normal on the circle interior, so
@@ -62,7 +71,7 @@ impl<B: Backend> CircularArc2<B> {
     /// profile offset pipeline.
     pub fn offset_left(
         &self,
-        distance: Scalar<B>,
+        distance: Real,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
         let radius = self.radius_squared().sqrt()?;
@@ -72,12 +81,12 @@ impl<B: Backend> CircularArc2<B> {
             &radius - &distance
         };
 
-        match scalar_sign(&offset_radius, policy) {
-            Some(ScalarSign::Positive) => {}
-            Some(ScalarSign::Zero | ScalarSign::Negative) => {
+        match real_sign(&offset_radius, policy) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero | RealSign::Negative) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             }
-            None => return Ok(Classification::Uncertain(UncertaintyReason::ScalarSign)),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
 
         let radius_scale = (offset_radius / &radius)?;
@@ -92,7 +101,7 @@ impl<B: Backend> CircularArc2<B> {
     }
 }
 
-impl<B: Backend> Segment2<B> {
+impl Segment2 {
     /// Returns this segment's left-side primitive offset.
     ///
     /// Lines always produce a translated line. Arcs produce a concentric arc
@@ -101,7 +110,7 @@ impl<B: Backend> Segment2<B> {
     /// topology.
     pub fn offset_left(
         &self,
-        distance: Scalar<B>,
+        distance: Real,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
         match self {
@@ -116,7 +125,7 @@ impl<B: Backend> Segment2<B> {
     }
 }
 
-impl<B: Backend> CurveString2<B> {
+impl CurveString2 {
     /// Returns a left offset of this open curve string with straight-line joins.
     ///
     /// This is a raw offset-construction layer, not a full offset engine. Each
@@ -130,7 +139,7 @@ impl<B: Backend> CurveString2<B> {
     /// two-dimensional profile offsets.
     pub fn offset_left_with_line_joins(
         &self,
-        distance: Scalar<B>,
+        distance: Real,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
         if is_zero(&distance, policy) == Some(true) {
@@ -154,10 +163,13 @@ impl<B: Backend> CurveString2<B> {
     /// runs the joined open offset construction and then classifies the result
     /// with [`CurveString2::has_self_contacts`]. A detected self contact is
     /// reported as explicit uncertainty so callers can choose a future trimming
-    /// path instead of consuming invalid raw linework.
+    /// path instead of consuming invalid raw linework. Farouki and Neff,
+    /// "Analytic Properties of Plane Offset Curves" (1990), describe exactly
+    /// these self-intersections and extraneous loops as offset topology that
+    /// must be trimmed before the curve can represent the intended profile.
     pub fn offset_left_checked(
         &self,
-        distance: Scalar<B>,
+        distance: Real,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
         let offset = match self.offset_left_with_line_joins(distance, policy)? {
@@ -187,10 +199,10 @@ impl<B: Backend> CurveString2<B> {
     /// trim/rebuild stage exists.
     pub fn offset_outline(
         &self,
-        distance: Scalar<B>,
+        distance: Real,
         cap: OffsetCap,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Contour2<B>>> {
+    ) -> CurveResult<Classification<Contour2>> {
         match cap {
             OffsetCap::Round => self.offset_outline_round_caps(distance, policy),
             OffsetCap::Butt => self.offset_outline_butt_caps(distance, policy),
@@ -211,9 +223,9 @@ impl<B: Backend> CurveString2<B> {
     /// primitive offset, cap, and trim decomposition for open profile offsets.
     pub fn offset_outline_round_caps(
         &self,
-        distance: Scalar<B>,
+        distance: Real,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Contour2<B>>> {
+    ) -> CurveResult<Classification<Contour2>> {
         let offsets = match checked_outline_offsets(self, distance, policy)? {
             Classification::Decided(offsets) => offsets,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -255,9 +267,9 @@ impl<B: Backend> CurveString2<B> {
     /// self-contacting input or output instead of trimming the raw outline.
     pub fn offset_outline_butt_caps(
         &self,
-        distance: Scalar<B>,
+        distance: Real,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Contour2<B>>> {
+    ) -> CurveResult<Classification<Contour2>> {
         let offsets = match checked_outline_offsets(self, distance, policy)? {
             Classification::Decided(offsets) => offsets,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -299,9 +311,9 @@ impl<B: Backend> CurveString2<B> {
     /// rejected as uncertainty until the trim/rebuild stage exists.
     pub fn offset_outline_square_caps(
         &self,
-        distance: Scalar<B>,
+        distance: Real,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Contour2<B>>> {
+    ) -> CurveResult<Classification<Contour2>> {
         let offsets = match checked_outline_offsets(self, distance.clone(), policy)? {
             Classification::Decided(offsets) => offsets,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -367,7 +379,7 @@ impl<B: Backend> CurveString2<B> {
     }
 }
 
-impl<B: Backend> Contour2<B> {
+impl Contour2 {
     /// Returns a left offset of this closed contour with straight-line joins.
     ///
     /// Line-line corners are mitered at the exact supporting-line intersection
@@ -379,7 +391,7 @@ impl<B: Backend> Contour2<B> {
     /// and Hanson, "Offsets of Two-Dimensional Profiles" (1984).
     pub fn offset_left_with_line_joins(
         &self,
-        distance: Scalar<B>,
+        distance: Real,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
         if is_zero(&distance, policy) == Some(true) {
@@ -406,10 +418,12 @@ impl<B: Backend> Contour2<B> {
     /// construction and then classifies the result with
     /// [`Contour2::has_self_contacts`]. A detected self contact is reported as
     /// explicit uncertainty so callers do not mistake an untrimmed raw offset
-    /// for a regularized contour.
+    /// for a regularized contour. This matches Farouki and Neff's offset-curve
+    /// treatment of self-intersections and extraneous loops as a separate
+    /// trimming stage, not a property of the primitive parallel curve itself.
     pub fn offset_left_checked(
         &self,
-        distance: Scalar<B>,
+        distance: Real,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
         let offset = match self.offset_left_with_line_joins(distance, policy)? {
@@ -427,11 +441,7 @@ impl<B: Backend> Contour2<B> {
     }
 }
 
-fn scale_from_center<B: Backend>(
-    point: &Point2<B>,
-    center: &Point2<B>,
-    scale: &Scalar<B>,
-) -> Point2<B> {
+fn scale_from_center(point: &Point2, center: &Point2, scale: &Real) -> Point2 {
     let radius = point.delta_from(center);
     Point2::new(
         center.x() + (&radius.0 * scale),
@@ -439,32 +449,32 @@ fn scale_from_center<B: Backend>(
     )
 }
 
-struct OutlineOffsets<B: Backend> {
-    left: CurveString2<B>,
-    right: CurveString2<B>,
-    start_center: Point2<B>,
-    end_center: Point2<B>,
-    left_start: Point2<B>,
-    left_end: Point2<B>,
-    right_start: Point2<B>,
-    right_end: Point2<B>,
+struct OutlineOffsets {
+    left: CurveString2,
+    right: CurveString2,
+    start_center: Point2,
+    end_center: Point2,
+    left_start: Point2,
+    left_end: Point2,
+    right_start: Point2,
+    right_end: Point2,
 }
 
 // Shared setup for open-profile outlines. The public cap variants differ only
 // in how they connect the two offset traces; both must enforce the same
 // positive-distance and no-self-contact preconditions before exposing a closed
 // contour to callers.
-fn checked_outline_offsets<B: Backend>(
-    source: &CurveString2<B>,
-    distance: Scalar<B>,
+fn checked_outline_offsets(
+    source: &CurveString2,
+    distance: Real,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<OutlineOffsets<B>>> {
-    match scalar_sign(&distance, policy) {
-        Some(ScalarSign::Positive) => {}
-        Some(ScalarSign::Zero | ScalarSign::Negative) => {
+) -> CurveResult<Classification<OutlineOffsets>> {
+    match real_sign(&distance, policy) {
+        Some(RealSign::Positive) => {}
+        Some(RealSign::Zero | RealSign::Negative) => {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
-        None => return Ok(Classification::Uncertain(UncertaintyReason::ScalarSign)),
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     }
 
     match source.has_self_contacts(policy)? {
@@ -499,17 +509,17 @@ fn checked_outline_offsets<B: Backend>(
 // Contour closure and self-contact checks are deliberately centralized so every
 // open-outline cap style preserves the same "raw construction, no trimming"
 // contract described by Tiller and Hanson (1984).
-fn checked_outline_contour<B: Backend>(
-    segments: Vec<Segment2<B>>,
+fn checked_outline_contour(
+    segments: Vec<Segment2>,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Contour2<B>>> {
+) -> CurveResult<Classification<Contour2>> {
     let outline = match Contour2::try_new(segments) {
         Ok(outline) => outline,
         Err(CurveError::DisconnectedCurveString) => {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
         Err(CurveError::AmbiguousCurveStringConnection) => {
-            return Ok(Classification::Uncertain(UncertaintyReason::ScalarSign));
+            return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
         }
         Err(error) => return Err(error),
     };
@@ -522,11 +532,11 @@ fn checked_outline_contour<B: Backend>(
     }
 }
 
-fn extend_square_cap_trace<B: Backend>(
-    mut segments: Vec<Segment2<B>>,
-    extended_start: Point2<B>,
-    extended_end: Point2<B>,
-) -> CurveResult<Classification<Vec<Segment2<B>>>> {
+fn extend_square_cap_trace(
+    mut segments: Vec<Segment2>,
+    extended_start: Point2,
+    extended_end: Point2,
+) -> CurveResult<Classification<Vec<Segment2>>> {
     if segments.is_empty() {
         return Err(CurveError::EmptyCurveString);
     }
@@ -563,34 +573,27 @@ fn extend_square_cap_trace<B: Backend>(
     Ok(Classification::Decided(segments))
 }
 
-fn unit_tangent_at_segment_start<B: Backend>(
-    segment: &Segment2<B>,
-) -> CurveResult<(Scalar<B>, Scalar<B>)> {
+fn unit_tangent_at_segment_start(segment: &Segment2) -> CurveResult<(Real, Real)> {
     match segment {
         Segment2::Line(line) => unit_tangent_for_line(line),
         Segment2::Arc(arc) => unit_tangent_for_arc_at_point(arc, arc.start()),
     }
 }
 
-fn unit_tangent_at_segment_end<B: Backend>(
-    segment: &Segment2<B>,
-) -> CurveResult<(Scalar<B>, Scalar<B>)> {
+fn unit_tangent_at_segment_end(segment: &Segment2) -> CurveResult<(Real, Real)> {
     match segment {
         Segment2::Line(line) => unit_tangent_for_line(line),
         Segment2::Arc(arc) => unit_tangent_for_arc_at_point(arc, arc.end()),
     }
 }
 
-fn unit_tangent_for_line<B: Backend>(line: &LineSeg2<B>) -> CurveResult<(Scalar<B>, Scalar<B>)> {
+fn unit_tangent_for_line(line: &LineSeg2) -> CurveResult<(Real, Real)> {
     let length = line.length_squared().sqrt()?;
     let (dx, dy) = line.delta();
     Ok(((dx / &length)?, (dy / &length)?))
 }
 
-fn unit_tangent_for_arc_at_point<B: Backend>(
-    arc: &CircularArc2<B>,
-    point: &Point2<B>,
-) -> CurveResult<(Scalar<B>, Scalar<B>)> {
+fn unit_tangent_for_arc_at_point(arc: &CircularArc2, point: &Point2) -> CurveResult<(Real, Real)> {
     let radius = arc.radius_squared().sqrt()?;
     let (rx, ry) = point.delta_from(arc.center());
     if arc.is_clockwise() {
@@ -600,11 +603,11 @@ fn unit_tangent_for_arc_at_point<B: Backend>(
     }
 }
 
-fn offset_segments_left<B: Backend>(
-    segments: &[Segment2<B>],
-    distance: &Scalar<B>,
+fn offset_segments_left(
+    segments: &[Segment2],
+    distance: &Real,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Vec<Segment2<B>>>> {
+) -> CurveResult<Classification<Vec<Segment2>>> {
     let mut offsets = Vec::with_capacity(segments.len());
     for segment in segments {
         match segment.offset_left(distance.clone(), policy)? {
@@ -616,17 +619,17 @@ fn offset_segments_left<B: Backend>(
 }
 
 #[derive(Clone, Debug, PartialEq)]
-enum OffsetJoin<B: Backend> {
-    Miter(Point2<B>),
-    Round { center: Point2<B> },
+enum OffsetJoin {
+    Miter(Point2),
+    Round { center: Point2 },
 }
 
-fn joined_offset_segments<B: Backend>(
-    source: &[Segment2<B>],
-    offsets: &[Segment2<B>],
+fn joined_offset_segments(
+    source: &[Segment2],
+    offsets: &[Segment2],
     closed: bool,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Vec<Segment2<B>>>> {
+) -> CurveResult<Classification<Vec<Segment2>>> {
     if offsets.is_empty() {
         return Err(CurveError::EmptyCurveString);
     }
@@ -687,13 +690,13 @@ fn joined_offset_segments<B: Backend>(
     Ok(Classification::Decided(joined))
 }
 
-fn classify_offset_join<B: Backend>(
-    source_previous: &Segment2<B>,
-    source_next: &Segment2<B>,
-    offset_previous: &Segment2<B>,
-    offset_next: &Segment2<B>,
+fn classify_offset_join(
+    source_previous: &Segment2,
+    source_next: &Segment2,
+    offset_previous: &Segment2,
+    offset_next: &Segment2,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<OffsetJoin<B>>> {
+) -> CurveResult<Classification<OffsetJoin>> {
     match (offset_previous, offset_next) {
         (Segment2::Line(previous), Segment2::Line(next)) => {
             match line_support_intersection(previous, next, policy)? {
@@ -714,40 +717,40 @@ fn classify_offset_join<B: Backend>(
     }
 }
 
-fn round_join<B: Backend>(previous: &Segment2<B>, next: &Segment2<B>) -> OffsetJoin<B> {
+fn round_join(previous: &Segment2, next: &Segment2) -> OffsetJoin {
     let _ = next;
     OffsetJoin::Round {
         center: previous.end().clone(),
     }
 }
 
-fn line_support_intersection<B: Backend>(
-    previous: &LineSeg2<B>,
-    next: &LineSeg2<B>,
+fn line_support_intersection(
+    previous: &LineSeg2,
+    next: &LineSeg2,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Option<Point2<B>>>> {
+) -> CurveResult<Classification<Option<Point2>>> {
     let (rx, ry) = previous.delta();
     let (sx, sy) = next.delta();
     let denominator = cross(&rx, &ry, &sx, &sy);
 
-    match scalar_sign(&denominator, policy) {
-        Some(ScalarSign::Zero) => Ok(Classification::Decided(None)),
-        Some(ScalarSign::Positive | ScalarSign::Negative) => {
+    match real_sign(&denominator, policy) {
+        Some(RealSign::Zero) => Ok(Classification::Decided(None)),
+        Some(RealSign::Positive | RealSign::Negative) => {
             let qmp = next.start().delta_from(previous.start());
             let numerator = cross(&qmp.0, &qmp.1, &sx, &sy);
             let t = (numerator / &denominator)?;
             Ok(Classification::Decided(Some(previous.point_at(t))))
         }
-        None => Ok(Classification::Uncertain(UncertaintyReason::ScalarSign)),
+        None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     }
 }
 
-fn start_miter_for_segment<B: Backend>(
+fn start_miter_for_segment(
     index: usize,
     segment_count: usize,
     closed: bool,
-    joins: &[OffsetJoin<B>],
-) -> Option<Point2<B>> {
+    joins: &[OffsetJoin],
+) -> Option<Point2> {
     if !closed && index == 0 {
         return None;
     }
@@ -762,18 +765,18 @@ fn start_miter_for_segment<B: Backend>(
     }
 }
 
-fn end_miter_for_segment<B: Backend>(index: usize, joins: &[OffsetJoin<B>]) -> Option<Point2<B>> {
+fn end_miter_for_segment(index: usize, joins: &[OffsetJoin]) -> Option<Point2> {
     match joins.get(index) {
         Some(OffsetJoin::Miter(point)) => Some(point.clone()),
         _ => None,
     }
 }
 
-fn adjust_offset_segment<B: Backend>(
-    segment: &Segment2<B>,
-    start_override: Option<&Point2<B>>,
-    end_override: Option<&Point2<B>>,
-) -> CurveResult<Classification<Segment2<B>>> {
+fn adjust_offset_segment(
+    segment: &Segment2,
+    start_override: Option<&Point2>,
+    end_override: Option<&Point2>,
+) -> CurveResult<Classification<Segment2>> {
     match segment {
         Segment2::Line(line) => {
             let start = start_override
@@ -795,11 +798,11 @@ fn adjust_offset_segment<B: Backend>(
     }
 }
 
-fn append_round_join_if_needed<B: Backend>(
-    joined: &mut Vec<Segment2<B>>,
-    from: &Point2<B>,
-    to: &Point2<B>,
-    center: &Point2<B>,
+fn append_round_join_if_needed(
+    joined: &mut Vec<Segment2>,
+    from: &Point2,
+    to: &Point2,
+    center: &Point2,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<()>> {
     let distance = from.distance_squared(to);
@@ -818,16 +821,16 @@ fn append_round_join_if_needed<B: Backend>(
             )?));
             Ok(Classification::Decided(()))
         }
-        None => Ok(Classification::Uncertain(UncertaintyReason::ScalarSign)),
+        None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     }
 }
 
-fn round_cap_arc<B: Backend>(
-    from: &Point2<B>,
-    to: &Point2<B>,
-    center: &Point2<B>,
+fn round_cap_arc(
+    from: &Point2,
+    to: &Point2,
+    center: &Point2,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<CircularArc2<B>>> {
+) -> CurveResult<Classification<CircularArc2>> {
     match is_zero(&from.distance_squared(to), policy) {
         Some(true) => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
         Some(false) => {
@@ -838,14 +841,11 @@ fn round_cap_arc<B: Backend>(
             CircularArc2::try_from_center(from.clone(), to.clone(), center.clone(), clockwise)
                 .map(Classification::Decided)
         }
-        None => Ok(Classification::Uncertain(UncertaintyReason::ScalarSign)),
+        None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     }
 }
 
-fn cap_line<B: Backend>(
-    from: &Point2<B>,
-    to: &Point2<B>,
-) -> CurveResult<Classification<LineSeg2<B>>> {
+fn cap_line(from: &Point2, to: &Point2) -> CurveResult<Classification<LineSeg2>> {
     match LineSeg2::try_new(from.clone(), to.clone()) {
         Ok(line) => Ok(Classification::Decided(line)),
         Err(CurveError::ZeroLengthLine) => {
@@ -855,28 +855,28 @@ fn cap_line<B: Backend>(
     }
 }
 
-fn reversed_segments<B: Backend>(segments: Vec<Segment2<B>>) -> impl Iterator<Item = Segment2<B>> {
+fn reversed_segments(segments: Vec<Segment2>) -> impl Iterator<Item = Segment2> {
     segments.into_iter().rev().map(|segment| segment.reversed())
 }
 
-fn round_join_clockwise<B: Backend>(
-    center: &Point2<B>,
-    from: &Point2<B>,
-    to: &Point2<B>,
+fn round_join_clockwise(
+    center: &Point2,
+    from: &Point2,
+    to: &Point2,
     policy: &CurvePolicy,
 ) -> Classification<bool> {
     let from_radius = from.delta_from(center);
     let to_radius = to.delta_from(center);
     let turn = cross(&from_radius.0, &from_radius.1, &to_radius.0, &to_radius.1);
 
-    match scalar_sign(&turn, policy) {
-        Some(ScalarSign::Positive) => Classification::Decided(false),
-        Some(ScalarSign::Negative) => Classification::Decided(true),
-        Some(ScalarSign::Zero) => Classification::Decided(true),
-        None => Classification::Uncertain(UncertaintyReason::ScalarSign),
+    match real_sign(&turn, policy) {
+        Some(RealSign::Positive) => Classification::Decided(false),
+        Some(RealSign::Negative) => Classification::Decided(true),
+        Some(RealSign::Zero) => Classification::Decided(true),
+        None => Classification::Uncertain(UncertaintyReason::RealSign),
     }
 }
 
-fn cross<B: Backend>(ax: &Scalar<B>, ay: &Scalar<B>, bx: &Scalar<B>, by: &Scalar<B>) -> Scalar<B> {
+fn cross(ax: &Real, ay: &Real, bx: &Real, by: &Real) -> Real {
     (ax * by) - (ay * bx)
 }

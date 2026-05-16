@@ -26,10 +26,14 @@ pub enum CurveError {
     DisconnectedCurveString,
     /// Adjacent curve-string segment connectivity could not be classified.
     AmbiguousCurveStringConnection,
+    /// Polyline reconstruction options contain non-finite or unsupported values.
+    InvalidReconstructionOptions,
+    /// Polyline reconstruction needs coordinates with finite `f64` approximations.
+    NonFiniteReconstructionPoint,
     /// A topology pipeline referenced inconsistent internal state.
     Topology(String),
-    /// A scalar division or elementary scalar operation failed.
-    Scalar(String),
+    /// A `Real` division or elementary operation failed.
+    Real(String),
 }
 
 impl fmt::Display for CurveError {
@@ -48,16 +52,22 @@ impl fmt::Display for CurveError {
             Self::AmbiguousCurveStringConnection => {
                 write!(f, "curve string segment connectivity is ambiguous")
             }
+            Self::InvalidReconstructionOptions => {
+                write!(f, "polyline reconstruction options are invalid")
+            }
+            Self::NonFiniteReconstructionPoint => {
+                write!(f, "polyline reconstruction point is not finite")
+            }
             Self::Topology(message) => write!(f, "topology operation failed: {message}"),
-            Self::Scalar(message) => write!(f, "scalar operation failed: {message}"),
+            Self::Real(message) => write!(f, "Real operation failed: {message}"),
         }
     }
 }
 
 impl std::error::Error for CurveError {}
 
-impl From<hyperlattice::Problem> for CurveError {
-    fn from(value: hyperlattice::Problem) -> Self {
-        Self::Scalar(value.to_string())
+impl From<hyperreal::Problem> for CurveError {
+    fn from(value: hyperreal::Problem) -> Self {
+        Self::Real(value.to_string())
     }
 }

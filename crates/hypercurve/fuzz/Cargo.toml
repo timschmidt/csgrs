@@ -137,3 +137,10 @@ path = "fuzz_targets/hypercurve_offsets.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "hypercurve_full_api"
+path = "fuzz_targets/hypercurve_full_api.rs"
+test = false
+doc = false
+bench = false

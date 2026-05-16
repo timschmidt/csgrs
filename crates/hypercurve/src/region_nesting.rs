@@ -4,13 +4,11 @@
 //! bins used by [`crate::Region2`]. It assumes intersections and overlaps have
 //! already been resolved by earlier topology stages.
 
-use hyperlattice::Backend;
-
 use crate::{
     Classification, Contour2, ContourPointLocation, CurveError, CurvePolicy, CurveResult, Region2,
 };
 
-impl<B: Backend> Region2<B> {
+impl Region2 {
     /// Builds a region by nesting closed boundary contours into material/hole bins.
     ///
     /// Contours at even containment depth become material. Contours at odd
@@ -18,17 +16,17 @@ impl<B: Backend> Region2<B> {
     /// commonly used after boolean traversal has produced disjoint closed
     /// output loops.
     pub fn from_boundary_contours(
-        contours: Vec<Contour2<B>>,
+        contours: Vec<Contour2>,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
         contours_to_nested_region(contours, policy)
     }
 }
 
-pub(crate) fn contours_to_nested_region<B: Backend>(
-    contours: Vec<Contour2<B>>,
+pub(crate) fn contours_to_nested_region(
+    contours: Vec<Contour2>,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<Region2<B>>> {
+) -> CurveResult<Classification<Region2>> {
     let depths = match contour_nesting_depths(&contours, policy)? {
         Classification::Decided(depths) => depths,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -51,8 +49,8 @@ pub(crate) fn contours_to_nested_region<B: Backend>(
     )))
 }
 
-fn contour_nesting_depths<B: Backend>(
-    contours: &[Contour2<B>],
+fn contour_nesting_depths(
+    contours: &[Contour2],
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Vec<usize>>> {
     let mut depths = Vec::with_capacity(contours.len());

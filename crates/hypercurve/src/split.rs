@@ -1,10 +1,20 @@
 //! Split markers extracted from normalized contour events.
+//!
+//! This is the intersection-insertion stage used by later boolean selection:
+//! every event becomes an ordered marker on each affected source segment before
+//! fragments are rebuilt. Greiner and Hormann's clipping pipeline uses the same
+//! "insert intersections, then traverse classified pieces" shape in "Efficient
+//! Clipping of Arbitrary Polygons" (*ACM Transactions on Graphics* 17(2),
+//! 71-83, 1998). Finite display output can disturb marker order, so the
+//! preview-only comparator is intentionally isolated here; see Hobby,
+//! "Practical Segment Intersection with Finite Precision Output"
+//! (*Computational Geometry* 13(4), 199-214, 1999).
 
 use std::cmp::Ordering;
 
-use hyperlattice::{Backend, DefaultBackend, Scalar};
+use hyperreal::Real;
 
-use crate::classify::{compare_scalars, is_zero};
+use crate::classify::{compare_reals_for_split_ordering, is_zero};
 use crate::{
     Classification, Contour2, ContourIntersection, ContourIntersectionSet, ContourOperand,
     CurvePolicy, Point2, UncertaintyReason,
@@ -12,49 +22,49 @@ use crate::{
 
 /// A local split parameter on one contour segment.
 #[derive(Clone, Debug, PartialEq)]
-pub struct SegmentSplitPoint<B: Backend = DefaultBackend> {
+pub struct SegmentSplitPoint {
     /// Segment index in the source contour.
     pub segment_index: usize,
     /// Local segment parameter.
-    pub param: Scalar<B>,
+    pub param: Real,
 }
 
 /// A local split marker with both ordering parameter and geometric point.
 #[derive(Clone, Debug, PartialEq)]
-pub struct SegmentSplitMarker<B: Backend = DefaultBackend> {
+pub struct SegmentSplitMarker {
     /// Segment index in the source contour.
     pub segment_index: usize,
     /// Local segment ordering parameter.
-    pub param: Scalar<B>,
+    pub param: Real,
     /// Exact split point on the source segment.
-    pub point: Point2<B>,
+    pub point: Point2,
 }
 
 /// Point-bearing split markers grouped by source contour segment.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ContourSplitMarkers<B: Backend = DefaultBackend> {
-    segment_markers: Vec<Vec<SegmentSplitMarker<B>>>,
+pub struct ContourSplitMarkers {
+    segment_markers: Vec<Vec<SegmentSplitMarker>>,
 }
 
-impl<B: Backend> ContourSplitMarkers<B> {
+impl ContourSplitMarkers {
     /// Constructs split markers from already-normalized per-segment markers.
-    pub const fn new(segment_markers: Vec<Vec<SegmentSplitMarker<B>>>) -> Self {
+    pub const fn new(segment_markers: Vec<Vec<SegmentSplitMarker>>) -> Self {
         Self { segment_markers }
     }
 
     /// Constructs a marker set containing only each segment's endpoints.
-    pub fn with_contour_endpoints(contour: &Contour2<B>) -> Self {
+    pub fn with_contour_endpoints(contour: &Contour2) -> Self {
         let mut segment_markers = Vec::with_capacity(contour.len());
         for (segment_index, segment) in contour.segments().iter().enumerate() {
             segment_markers.push(vec![
                 SegmentSplitMarker {
                     segment_index,
-                    param: Scalar::<B>::zero(),
+                    param: Real::zero(),
                     point: segment.start().clone(),
                 },
                 SegmentSplitMarker {
                     segment_index,
-                    param: Scalar::<B>::one(),
+                    param: Real::one(),
                     point: segment.end().clone(),
                 },
             ]);
@@ -65,8 +75,8 @@ impl<B: Backend> ContourSplitMarkers<B> {
 
     /// Builds split markers from one contour-pair event set.
     pub fn from_intersections(
-        contour: &Contour2<B>,
-        intersections: &ContourIntersectionSet<B>,
+        contour: &Contour2,
+        intersections: &ContourIntersectionSet,
         operand: ContourOperand,
         policy: &CurvePolicy,
     ) -> Classification<Self> {
@@ -77,13 +87,30 @@ impl<B: Backend> ContourSplitMarkers<B> {
         }
     }
 
+    /// Builds split markers from self-intersection events on one contour.
+    ///
+    /// Each retained event contributes markers for both participating source
+    /// segments. Ordinary adjacent connectivity points should already have
+    /// been filtered by the self-intersection collector.
+    pub fn from_self_intersections(
+        contour: &Contour2,
+        intersections: &ContourIntersectionSet,
+        policy: &CurvePolicy,
+    ) -> Classification<Self> {
+        let mut markers = Self::with_contour_endpoints(contour);
+        match markers.merge_self_intersections(intersections, policy) {
+            Classification::Decided(()) => Classification::Decided(markers),
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        }
+    }
+
     /// Returns all segment marker bins.
-    pub fn segments(&self) -> &[Vec<SegmentSplitMarker<B>>] {
+    pub fn segments(&self) -> &[Vec<SegmentSplitMarker>] {
         &self.segment_markers
     }
 
     /// Returns markers for one segment.
-    pub fn markers_for_segment(&self, segment_index: usize) -> Option<&[SegmentSplitMarker<B>]> {
+    pub fn markers_for_segment(&self, segment_index: usize) -> Option<&[SegmentSplitMarker]> {
         self.segment_markers
             .get(segment_index)
             .map(std::vec::Vec::as_slice)
@@ -102,7 +129,7 @@ impl<B: Backend> ContourSplitMarkers<B> {
     /// Merges another contour-pair event set into this marker set.
     pub fn merge_intersections(
         &mut self,
-        intersections: &ContourIntersectionSet<B>,
+        intersections: &ContourIntersectionSet,
         operand: ContourOperand,
         policy: &CurvePolicy,
     ) -> Classification<()> {
@@ -116,8 +143,28 @@ impl<B: Backend> ContourSplitMarkers<B> {
         Classification::Decided(())
     }
 
+    /// Merges self-intersection events into this marker set.
+    pub fn merge_self_intersections(
+        &mut self,
+        intersections: &ContourIntersectionSet,
+        policy: &CurvePolicy,
+    ) -> Classification<()> {
+        for event in intersections.events() {
+            match self.merge_event(event, ContourOperand::First, policy) {
+                Ok(()) => {}
+                Err(reason) => return Classification::Uncertain(reason),
+            }
+            match self.merge_event(event, ContourOperand::Second, policy) {
+                Ok(()) => {}
+                Err(reason) => return Classification::Uncertain(reason),
+            }
+        }
+
+        Classification::Decided(())
+    }
+
     /// Returns all markers flattened in segment order.
-    pub fn split_markers(&self) -> Vec<SegmentSplitMarker<B>> {
+    pub fn split_markers(&self) -> Vec<SegmentSplitMarker> {
         let mut split_markers = Vec::new();
         for markers in &self.segment_markers {
             for marker in markers {
@@ -129,7 +176,7 @@ impl<B: Backend> ContourSplitMarkers<B> {
 
     fn merge_event(
         &mut self,
-        event: &ContourIntersection<B>,
+        event: &ContourIntersection,
         operand: ContourOperand,
         policy: &CurvePolicy,
     ) -> Result<(), UncertaintyReason> {
@@ -184,7 +231,7 @@ impl<B: Backend> ContourSplitMarkers<B> {
 
     fn insert_marker(
         &mut self,
-        marker: SegmentSplitMarker<B>,
+        marker: SegmentSplitMarker,
         policy: &CurvePolicy,
     ) -> Result<(), UncertaintyReason> {
         let Some(markers) = self.segment_markers.get_mut(marker.segment_index) else {
@@ -200,13 +247,13 @@ impl<B: Backend> ContourSplitMarkers<B> {
 /// Every segment starts with `0` and `1` so downstream fragment assembly can
 /// build intervals directly after event parameters are merged in.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ContourSplitMap<B: Backend = DefaultBackend> {
-    segment_splits: Vec<Vec<Scalar<B>>>,
+pub struct ContourSplitMap {
+    segment_splits: Vec<Vec<Real>>,
 }
 
-impl<B: Backend> ContourSplitMap<B> {
+impl ContourSplitMap {
     /// Constructs a split map from already-normalized per-segment parameters.
-    pub const fn new(segment_splits: Vec<Vec<Scalar<B>>>) -> Self {
+    pub const fn new(segment_splits: Vec<Vec<Real>>) -> Self {
         Self { segment_splits }
     }
 
@@ -214,7 +261,7 @@ impl<B: Backend> ContourSplitMap<B> {
     pub fn with_segment_count(segment_count: usize) -> Self {
         let mut segment_splits = Vec::with_capacity(segment_count);
         for _ in 0..segment_count {
-            segment_splits.push(vec![Scalar::<B>::zero(), Scalar::<B>::one()]);
+            segment_splits.push(vec![Real::zero(), Real::one()]);
         }
         Self { segment_splits }
     }
@@ -222,7 +269,7 @@ impl<B: Backend> ContourSplitMap<B> {
     /// Builds a split map from one contour-pair event set.
     pub fn from_intersections(
         segment_count: usize,
-        intersections: &ContourIntersectionSet<B>,
+        intersections: &ContourIntersectionSet,
         operand: ContourOperand,
         policy: &CurvePolicy,
     ) -> Classification<Self> {
@@ -234,12 +281,12 @@ impl<B: Backend> ContourSplitMap<B> {
     }
 
     /// Returns the split parameters for all segments.
-    pub fn segments(&self) -> &[Vec<Scalar<B>>] {
+    pub fn segments(&self) -> &[Vec<Real>] {
         &self.segment_splits
     }
 
     /// Returns the split parameters for one segment.
-    pub fn params_for_segment(&self, segment_index: usize) -> Option<&[Scalar<B>]> {
+    pub fn params_for_segment(&self, segment_index: usize) -> Option<&[Real]> {
         self.segment_splits
             .get(segment_index)
             .map(std::vec::Vec::as_slice)
@@ -258,7 +305,7 @@ impl<B: Backend> ContourSplitMap<B> {
     /// Merges another contour-pair event set into this split map.
     pub fn merge_intersections(
         &mut self,
-        intersections: &ContourIntersectionSet<B>,
+        intersections: &ContourIntersectionSet,
         operand: ContourOperand,
         policy: &CurvePolicy,
     ) -> Classification<()> {
@@ -273,7 +320,7 @@ impl<B: Backend> ContourSplitMap<B> {
     }
 
     /// Returns all split points flattened in segment order.
-    pub fn split_points(&self) -> Vec<SegmentSplitPoint<B>> {
+    pub fn split_points(&self) -> Vec<SegmentSplitPoint> {
         let mut split_points = Vec::new();
         for (segment_index, params) in self.segment_splits.iter().enumerate() {
             for param in params {
@@ -288,7 +335,7 @@ impl<B: Backend> ContourSplitMap<B> {
 
     fn merge_event(
         &mut self,
-        event: &ContourIntersection<B>,
+        event: &ContourIntersection,
         operand: ContourOperand,
         policy: &CurvePolicy,
     ) -> Result<(), UncertaintyReason> {
@@ -323,7 +370,7 @@ impl<B: Backend> ContourSplitMap<B> {
     fn insert_param(
         &mut self,
         segment_index: usize,
-        param: Scalar<B>,
+        param: Real,
         policy: &CurvePolicy,
     ) -> Result<(), UncertaintyReason> {
         let Some(params) = self.segment_splits.get_mut(segment_index) else {
@@ -334,13 +381,13 @@ impl<B: Backend> ContourSplitMap<B> {
     }
 }
 
-fn insert_unique_sorted<B: Backend>(
-    params: &mut Vec<Scalar<B>>,
-    param: Scalar<B>,
+fn insert_unique_sorted(
+    params: &mut Vec<Real>,
+    param: Real,
     policy: &CurvePolicy,
 ) -> Result<(), UncertaintyReason> {
     for index in 0..params.len() {
-        match compare_scalars(&param, &params[index], policy) {
+        match compare_reals_for_split_ordering(&param, &params[index], policy) {
             Some(Ordering::Equal) => return Ok(()),
             Some(Ordering::Less) => {
                 params.insert(index, param);
@@ -355,19 +402,23 @@ fn insert_unique_sorted<B: Backend>(
     Ok(())
 }
 
-fn insert_unique_sorted_marker<B: Backend>(
-    markers: &mut Vec<SegmentSplitMarker<B>>,
-    marker: SegmentSplitMarker<B>,
+fn insert_unique_sorted_marker(
+    markers: &mut Vec<SegmentSplitMarker>,
+    marker: SegmentSplitMarker,
     policy: &CurvePolicy,
 ) -> Result<(), UncertaintyReason> {
     for index in 0..markers.len() {
-        match compare_scalars(&marker.param, &markers[index].param, policy) {
+        match compare_reals_for_split_ordering(&marker.param, &markers[index].param, policy) {
             Some(Ordering::Equal) => {
                 let distance = marker.point.distance_squared(&markers[index].point);
+                // Equal parameters must also be the same geometric marker. Two
+                // different points at one parameter would represent a broken
+                // split graph, the kind of degeneracy Greiner-Hormann style
+                // traversal cannot resolve by local ordering alone.
                 return match is_zero(&distance, policy) {
                     Some(true) => Ok(()),
                     Some(false) => Err(UncertaintyReason::Unsupported),
-                    None => Err(UncertaintyReason::ScalarSign),
+                    None => Err(UncertaintyReason::RealSign),
                 };
             }
             Some(Ordering::Less) => {

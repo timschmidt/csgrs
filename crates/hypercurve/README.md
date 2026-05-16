@@ -16,10 +16,32 @@ rules.
 
 ## Numeric Model
 
-`hypercurve` stores and decides core geometry with hyperreal-backed
-`hyperlattice::Scalar` values. Primitive `f64` appears only in named edge
+`hypercurve` stores and decides core geometry with `hyperreal::Real`
+values. Primitive `f64` appears only in named edge
 conversions, tests, benchmarks, rendering/IO helpers, and compatibility
-harnesses. There is no approximate scalar backend feature.
+harnesses. There is no approximate numeric mode feature.
+
+## Semantic Boundary and Structural Facts
+
+`hypercurve` owns planar curve and region semantics: line and circular-arc
+segments, curve strings, closed contours, material/hole bins, prepared
+broad-phase views, boolean boundary traversal, offset policy, and uncertainty
+for curve-topology cases that are not yet resolved.
+
+It does not own Real representation, small linear algebra kernels, generic
+predicate policy, triangulation topology, solver active sets, or PCB/CAM domain
+metadata. Real facts come from `hyperreal`, optional vector and transform
+facts come from `hyperlattice`, exact sidedness/incidence decisions from
+`hyperlimit`, and line-only triangulation should be delegated to `hypertri`.
+
+Prepared curve and region objects should continue to retain structural metadata
+where it is discovered cheaply: bounding boxes, segment kind, endpoint equality
+classes, exact ring area/winding, material-versus-hole role, monotone arc spans,
+parameter ranges, tangent/contact hints, and source ids. Those facts are
+valuable for selecting exact line-line, line-arc, and arc-arc kernels and for
+reducing broad-phase work. They should not collapse into primitive-float
+topology decisions; lossy chordization or export must stay behind explicit
+policies.
 
 ## Current Status
 
@@ -71,6 +93,9 @@ harnesses. There is no approximate scalar backend feature.
   their explicit signed bins, preserving boundary-touching components.
 - Checked boundary-contour xor uses the same symmetric-difference region path
   before exposing unassigned boundary loops.
+- Polyline reconstruction can collapse sampled point runs into native line and
+  circular-arc curve strings or closed contours, using finite-difference
+  curvature witnesses and conservative tolerances at the IO boundary.
 - Boundary-only contacts are certified before traversal: point contacts use
   regularized set identities, and external shared-edge contacts drop coincident
   zero-area edges for union/xor output.
@@ -111,6 +136,10 @@ trunk serve examples/hypercurve_ui/index.html
 
 If Trunk 0.21 rejects `NO_COLOR=1` in the local environment, run the Trunk
 command as `env -u NO_COLOR trunk serve examples/hypercurve_ui/index.html`.
+The `.github/workflows/deploy-ui-pages.yml` workflow builds this same Trunk app
+on pushes to `main` and deploys the release artifact with GitHub Pages Actions;
+the repository's Pages source must be set to GitHub Actions for the first
+deployment.
 
 ## Benchmarks
 
@@ -126,33 +155,59 @@ cargo bench --bench boolean_pipeline
 cargo bench --bench containment
 cargo bench --bench intersection
 cargo bench --bench offset
+cargo bench --bench reconstruction
 ```
 
 ## References
-
-Foster, Erich L., Kai Hormann, and Romeo Traian Popa. "Clipping Simple Polygons
-with Degenerate Intersections." *Computers & Graphics: X*, vol. 2, 2019,
-article 100007. https://doi.org/10.1016/j.cagx.2019.100007.
 
 Bentley, Jon Louis, and Thomas A. Ottmann. "Algorithms for Reporting and
 Counting Geometric Intersections." *IEEE Transactions on Computers*, vol. C-28,
 no. 9, 1979, pp. 643-647.
 
+de Berg, Mark, et al. *Computational Geometry: Algorithms and Applications*. 3rd
+ed., Springer, 2008. https://doi.org/10.1007/978-3-540-77974-2.
+
+Farouki, Rida T., and C. Andrew Neff. "Analytic Properties of Plane Offset
+Curves." *Computer Aided Geometric Design*, vol. 7, nos. 1-4, 1990, pp. 83-99.
+
+Foster, Erich L., Kai Hormann, and Romeo Traian Popa. "Clipping Simple Polygons
+with Degenerate Intersections." *Computers & Graphics: X*, vol. 2, 2019,
+article 100007. https://doi.org/10.1016/j.cagx.2019.100007.
+
 Greiner, Gunther, and Kai Hormann. "Efficient Clipping of Arbitrary Polygons."
 *ACM Transactions on Graphics*, vol. 17, no. 2, 1998, pp. 71-83.
 https://doi.org/10.1145/274363.274364.
 
+Hobby, John D. "Practical Segment Intersection with Finite Precision Output."
+*Computational Geometry*, vol. 13, no. 4, 1999, pp. 199-214.
+https://doi.org/10.1016/S0925-7721(99)00021-8.
+
 Hormann, Kai, and Alexander Agathos. "The Point in Polygon Problem for
 Arbitrary Polygons." *Computational Geometry*, vol. 20, no. 3, 2001, pp.
 131-144. https://doi.org/10.1016/S0925-7721(01)00012-8.
+
+Kåsa, I. "A Circle Fitting Procedure and Its Error Analysis." *IEEE
+Transactions on Instrumentation and Measurement*, vol. IM-25, no. 1, Mar.
+1976, pp. 8-14. https://doi.org/10.1109/TIM.1976.6312298.
 
 Martinez, Francisco, Antonio J. Rueda, and Francisco R. Feito. "A New Algorithm
 for Computing Boolean Operations on Polygons." *Computers & Geosciences*,
 vol. 35, no. 6, 2009, pp. 1177-1185.
 https://doi.org/10.1016/j.cageo.2008.08.009.
 
+Menger, K. "Untersuchungen über allgemeine Metrik." *Mathematische Annalen*,
+vol. 100, 1928, pp. 75-163. http://eudml.org/doc/159284.
+
+Schneider, Philip J., and David H. Eberly. *Geometric Tools for Computer
+Graphics*. Morgan Kaufmann, 2002.
+
+Shewchuk, Jonathan Richard. "Adaptive Precision Floating-Point Arithmetic and
+Fast Robust Geometric Predicates." *Discrete & Computational Geometry*, vol.
+18, no. 3, 1997, pp. 305-363. https://doi.org/10.1007/PL00009321.
+
 Tiller, Wayne, and Eric G. Hanson. "Offsets of Two-Dimensional Profiles." *IEEE
 Computer Graphics and Applications*, vol. 4, no. 9, 1984, pp. 36-46.
+https://doi.org/10.1109/MCG.1984.275995.
 
 Vatti, Bala R. "A Generic Solution to Polygon Clipping." *Communications of the
 ACM*, vol. 35, no. 7, 1992, pp. 56-63.

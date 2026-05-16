@@ -4,8 +4,6 @@
 //! loop assembly. It deliberately does not resolve shared-boundary fragments:
 //! those need overlap-aware traversal, not a midpoint guess.
 
-use hyperlattice::Backend;
-
 use crate::boolean_boundary::{BooleanBoundaryFragmentSet, DirectedBooleanFragment};
 use crate::{
     Classification, CurveError, CurvePolicy, CurveResult, RegionContourRole, RegionFragmentSet,
@@ -115,10 +113,10 @@ impl BooleanFragmentSelection {
     /// intersections," Computers & Graphics: X 2, 100007, 2019, show that
     /// boundary coincidences need explicit handling separate from ordinary
     /// enter/exit classification.
-    pub fn emit_boundary_fragments<B: Backend>(
+    pub fn emit_boundary_fragments(
         &self,
-        fragments: &RegionFragmentSet<B>,
-    ) -> CurveResult<BooleanBoundaryFragmentSet<B>> {
+        fragments: &RegionFragmentSet,
+    ) -> CurveResult<BooleanBoundaryFragmentSet> {
         let mut directed_fragments = Vec::new();
         let mut unresolved_boundaries = Vec::new();
 
@@ -219,10 +217,10 @@ fn reverse_emitted_action(action: BooleanFragmentAction) -> BooleanFragmentActio
     }
 }
 
-fn fragment_for_classification<'a, B: Backend>(
-    fragments: &'a RegionFragmentSet<B>,
+fn fragment_for_classification<'a>(
+    fragments: &'a RegionFragmentSet,
     classification: &BooleanFragmentClassification,
-) -> CurveResult<&'a crate::ContourFragment<B>> {
+) -> CurveResult<&'a crate::ContourFragment> {
     let contour_fragments = fragments
         .fragments_for_contour(classification.key)
         .ok_or_else(|| {
@@ -237,7 +235,7 @@ fn fragment_for_classification<'a, B: Backend>(
         })
 }
 
-impl<B: Backend> RegionFragmentSet<B> {
+impl RegionFragmentSet {
     /// Classifies fragments against the opposite region for a boolean operation.
     ///
     /// Algorithm note: this is the local selection stage used by many planar
@@ -256,8 +254,8 @@ impl<B: Backend> RegionFragmentSet<B> {
     /// boundaries into an epsilon-based inside/outside decision.
     pub fn classify_for_boolean(
         &self,
-        first: &RegionView2<'_, B>,
-        second: &RegionView2<'_, B>,
+        first: &RegionView2<'_>,
+        second: &RegionView2<'_>,
         op: BooleanOp,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<BooleanFragmentSelection>> {
@@ -282,7 +280,7 @@ impl<B: Backend> RegionFragmentSet<B> {
         mut classify_opposite: F,
     ) -> CurveResult<Classification<BooleanFragmentSelection>>
     where
-        F: FnMut(RegionSide, &crate::Point2<B>) -> Classification<RegionPointLocation>,
+        F: FnMut(RegionSide, &crate::Point2) -> Classification<RegionPointLocation>,
     {
         let mut classifications = Vec::new();
 

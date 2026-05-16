@@ -1,0 +1,78 @@
+name: Deploy hypercurve UI to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build WASM UI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache Cargo build output
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+            examples/hypercurve_ui -> examples/hypercurve_ui/target
+
+      - name: Install Trunk
+        run: cargo install --locked trunk --version 0.21.14
+
+      - name: Build UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          unset NO_COLOR
+
+          if [[ "${{ github.event.repository.name }}" == "${{ github.repository_owner }}.github.io" ]]; then
+            public_url="/"
+          else
+            public_url="/${{ github.event.repository.name }}/"
+          fi
+
+          trunk build examples/hypercurve_ui/index.html \
+            --release \
+            --dist dist \
+            --public-url "${public_url}"
+
+          touch dist/.nojekyll
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

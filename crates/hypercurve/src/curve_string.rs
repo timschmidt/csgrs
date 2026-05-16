@@ -1,7 +1,5 @@
 //! Ordered open curve strings.
 
-use hyperlattice::{Backend, DefaultBackend};
-
 use crate::bbox::{Aabb2, aabbs_decided_disjoint, decided_segment_aabb};
 use crate::{
     BulgeVertex2, CurveError, CurvePolicy, CurveResult, Point2, Segment2, SegmentIntersection,
@@ -9,24 +7,24 @@ use crate::{
 
 /// One segment-pair event between two curve strings.
 #[derive(Clone, Debug, PartialEq)]
-pub struct CurveStringIntersection<B: Backend = DefaultBackend> {
+pub struct CurveStringIntersection {
     /// Segment index in the first curve string.
     pub a_segment_index: usize,
     /// Segment index in the second curve string.
     pub b_segment_index: usize,
     /// Segment relation for this pair.
-    pub relation: SegmentIntersection<B>,
+    pub relation: SegmentIntersection,
 }
 
 /// An ordered sequence of connected native segments.
 #[derive(Clone, Debug, PartialEq)]
-pub struct CurveString2<B: Backend = DefaultBackend> {
-    segments: Vec<Segment2<B>>,
+pub struct CurveString2 {
+    segments: Vec<Segment2>,
 }
 
-impl<B: Backend> CurveString2<B> {
+impl CurveString2 {
     /// Constructs a curve string from validated connected segments.
-    pub fn try_new(segments: Vec<Segment2<B>>) -> CurveResult<Self> {
+    pub fn try_new(segments: Vec<Segment2>) -> CurveResult<Self> {
         if segments.is_empty() {
             return Err(CurveError::EmptyCurveString);
         }
@@ -34,11 +32,11 @@ impl<B: Backend> CurveString2<B> {
         for adjacent in segments.windows(2) {
             let distance = adjacent[0].end().distance_squared(adjacent[1].start());
             match distance.zero_status() {
-                hyperlattice::ZeroStatus::Zero => {}
-                hyperlattice::ZeroStatus::NonZero => {
+                hyperreal::ZeroKnowledge::Zero => {}
+                hyperreal::ZeroKnowledge::NonZero => {
                     return Err(CurveError::DisconnectedCurveString);
                 }
-                hyperlattice::ZeroStatus::Unknown => {
+                hyperreal::ZeroKnowledge::Unknown => {
                     return Err(CurveError::AmbiguousCurveStringConnection);
                 }
             }
@@ -48,12 +46,12 @@ impl<B: Backend> CurveString2<B> {
     }
 
     /// Constructs a curve string without checking connectivity.
-    pub const fn new_unchecked(segments: Vec<Segment2<B>>) -> Self {
+    pub const fn new_unchecked(segments: Vec<Segment2>) -> Self {
         Self { segments }
     }
 
     /// Constructs an open curve string from Cavalier-style bulge vertices.
-    pub fn from_bulge_vertices(vertices: &[BulgeVertex2<B>]) -> CurveResult<Self> {
+    pub fn from_bulge_vertices(vertices: &[BulgeVertex2]) -> CurveResult<Self> {
         if vertices.len() < 2 {
             return Err(CurveError::InsufficientVertices);
         }
@@ -66,12 +64,12 @@ impl<B: Backend> CurveString2<B> {
     }
 
     /// Returns the segments in order.
-    pub fn segments(&self) -> &[Segment2<B>] {
+    pub fn segments(&self) -> &[Segment2] {
         &self.segments
     }
 
     /// Consumes the curve string and returns its segments.
-    pub fn into_segments(self) -> Vec<Segment2<B>> {
+    pub fn into_segments(self) -> Vec<Segment2> {
         self.segments
     }
 
@@ -86,12 +84,12 @@ impl<B: Backend> CurveString2<B> {
     }
 
     /// Returns the first point of the curve string.
-    pub fn start(&self) -> Option<&Point2<B>> {
+    pub fn start(&self) -> Option<&Point2> {
         self.segments.first().map(Segment2::start)
     }
 
     /// Returns the final point of the curve string.
-    pub fn end(&self) -> Option<&Point2<B>> {
+    pub fn end(&self) -> Option<&Point2> {
         self.segments.last().map(Segment2::end)
     }
 
@@ -108,7 +106,7 @@ impl<B: Backend> CurveString2<B> {
         &self,
         other: &Self,
         policy: &CurvePolicy,
-    ) -> CurveResult<Vec<CurveStringIntersection<B>>> {
+    ) -> CurveResult<Vec<CurveStringIntersection>> {
         let self_boxes: Vec<_> = self
             .segments
             .iter()
@@ -124,13 +122,13 @@ impl<B: Backend> CurveString2<B> {
     }
 }
 
-pub(crate) fn intersect_curve_strings_with_cached_aabbs<B: Backend>(
-    first: &CurveString2<B>,
-    second: &CurveString2<B>,
-    first_segment_boxes: &[Option<Aabb2<B>>],
-    second_segment_boxes: &[Option<Aabb2<B>>],
+pub(crate) fn intersect_curve_strings_with_cached_aabbs(
+    first: &CurveString2,
+    second: &CurveString2,
+    first_segment_boxes: &[Option<Aabb2>],
+    second_segment_boxes: &[Option<Aabb2>],
     policy: &CurvePolicy,
-) -> CurveResult<Vec<CurveStringIntersection<B>>> {
+) -> CurveResult<Vec<CurveStringIntersection>> {
     let mut intersections = Vec::new();
 
     for (a_segment_index, a_segment) in first.segments.iter().enumerate() {

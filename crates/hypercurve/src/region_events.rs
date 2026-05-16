@@ -1,6 +1,9 @@
 //! Region-level intersection event collection.
-
-use hyperlattice::{Backend, DefaultBackend};
+//!
+//! Region event collection lifts contour-pair events into material/hole keyed
+//! operands. It keeps broad-phase pruning conservative for the same reason as
+//! Bentley and Ottmann's intersection reporting work: candidate generation may
+//! be optimized, but topology still depends on the exact segment relation.
 
 use crate::bbox::{aabbs_decided_disjoint, decided_contour_aabb};
 use crate::{Classification, ContourIntersectionSet, CurvePolicy, CurveResult, RegionView2};
@@ -43,34 +46,34 @@ impl RegionContourKey {
 
 /// Intersections between two keyed contours from a region-pair query.
 #[derive(Clone, Debug, PartialEq)]
-pub struct RegionContourIntersection<B: Backend = DefaultBackend> {
+pub struct RegionContourIntersection {
     /// Contour in the first region.
     pub first: RegionContourKey,
     /// Contour in the second region.
     pub second: RegionContourKey,
     /// Normalized contour-level intersections for this pair.
-    pub intersections: ContourIntersectionSet<B>,
+    pub intersections: ContourIntersectionSet,
 }
 
 /// Normalized contour-pair intersections between two regions.
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct RegionIntersectionSet<B: Backend = DefaultBackend> {
-    pairs: Vec<RegionContourIntersection<B>>,
+pub struct RegionIntersectionSet {
+    pairs: Vec<RegionContourIntersection>,
 }
 
-impl<B: Backend> RegionIntersectionSet<B> {
+impl RegionIntersectionSet {
     /// Constructs a set from already-normalized region contour pairs.
-    pub const fn new(pairs: Vec<RegionContourIntersection<B>>) -> Self {
+    pub const fn new(pairs: Vec<RegionContourIntersection>) -> Self {
         Self { pairs }
     }
 
     /// Returns nonempty contour-pair event sets.
-    pub fn pairs(&self) -> &[RegionContourIntersection<B>] {
+    pub fn pairs(&self) -> &[RegionContourIntersection] {
         &self.pairs
     }
 
     /// Consumes the set and returns contour-pair event sets.
-    pub fn into_pairs(self) -> Vec<RegionContourIntersection<B>> {
+    pub fn into_pairs(self) -> Vec<RegionContourIntersection> {
         self.pairs
     }
 
@@ -88,7 +91,7 @@ impl<B: Backend> RegionIntersectionSet<B> {
     pub fn pairs_for_contour(
         &self,
         key: RegionContourKey,
-    ) -> impl Iterator<Item = &RegionContourIntersection<B>> {
+    ) -> impl Iterator<Item = &RegionContourIntersection> {
         self.pairs
             .iter()
             .filter(move |pair| pair.first == key || pair.second == key)
@@ -97,19 +100,19 @@ impl<B: Backend> RegionIntersectionSet<B> {
     /// Splits every contour in both region views at this event set.
     pub fn split_regions(
         &self,
-        first: &RegionView2<'_, B>,
-        second: &RegionView2<'_, B>,
+        first: &RegionView2<'_>,
+        second: &RegionView2<'_>,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<crate::RegionFragmentSet<B>>> {
+    ) -> CurveResult<Classification<crate::RegionFragmentSet>> {
         crate::region_fragments::split_region_views_at_intersections(first, second, self, policy)
     }
 }
 
-pub(crate) fn intersect_region_views<B: Backend>(
-    first: &RegionView2<'_, B>,
-    second: &RegionView2<'_, B>,
+pub(crate) fn intersect_region_views(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
     policy: &CurvePolicy,
-) -> CurveResult<RegionIntersectionSet<B>> {
+) -> CurveResult<RegionIntersectionSet> {
     let mut pairs = Vec::new();
 
     collect_role_pairs(
@@ -148,11 +151,11 @@ pub(crate) fn intersect_region_views<B: Backend>(
     Ok(RegionIntersectionSet::new(pairs))
 }
 
-fn collect_role_pairs<B: Backend>(
-    pairs: &mut Vec<RegionContourIntersection<B>>,
-    first_contours: &[&crate::Contour2<B>],
+fn collect_role_pairs(
+    pairs: &mut Vec<RegionContourIntersection>,
+    first_contours: &[&crate::Contour2],
     first_role: RegionContourRole,
-    second_contours: &[&crate::Contour2<B>],
+    second_contours: &[&crate::Contour2],
     second_role: RegionContourRole,
     policy: &CurvePolicy,
 ) -> CurveResult<()> {
@@ -171,7 +174,9 @@ fn collect_role_pairs<B: Backend>(
             // Bentley and Ottmann's intersection-reporting work, bounding
             // intervals are only candidate filters here: decided disjoint boxes
             // skip the pair, while uncertain boxes fall through to exact
-            // contour events.
+            // contour events. Reference: Bentley and Ottmann, "Algorithms for
+            // Reporting and Counting Geometric Intersections," IEEE
+            // Transactions on Computers C-28(9), 643-647, 1979.
             if let (Some(first_box), Some(second_box)) =
                 (&first_boxes[first_index], &second_boxes[second_index])
             {

@@ -1,26 +1,26 @@
 use hypercurve::{
     BooleanBoundaryFragmentSet, BooleanFragmentAction, BooleanOp, BulgeVertex2, Classification,
-    Contour2, CurvePolicy, DefaultBackend, DirectedBooleanFragment, FillRule, Region2,
-    RegionContourKey, RegionContourRole, RegionSide, Scalar, Segment2, UncertaintyReason,
+    Contour2, CurvePolicy, DirectedBooleanFragment, FillRule, Real, Region2, RegionContourKey,
+    RegionContourRole, RegionSide, Segment2, UncertaintyReason,
 };
 
-fn s(value: i32) -> Scalar<DefaultBackend> {
+fn s(value: i32) -> Real {
     value.into()
 }
 
-fn p(x: i32, y: i32) -> hypercurve::Point2<DefaultBackend> {
+fn p(x: i32, y: i32) -> hypercurve::Point2 {
     hypercurve::Point2::new(s(x), s(y))
 }
 
-fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2<DefaultBackend> {
+fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2 {
     BulgeVertex2::new(p(x, y), s(bulge))
 }
 
-fn contour(vertices: &[BulgeVertex2<DefaultBackend>]) -> Contour2<DefaultBackend> {
+fn contour(vertices: &[BulgeVertex2]) -> Contour2 {
     Contour2::from_bulge_vertices(vertices).unwrap()
 }
 
-fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2<DefaultBackend> {
+fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
     contour(&[
         vertex(xmin, ymin, 0),
         vertex(xmax, ymin, 0),
@@ -33,15 +33,11 @@ fn policy() -> CurvePolicy {
     CurvePolicy::certified()
 }
 
-fn line_segment(x0: i32, y0: i32, x1: i32, y1: i32) -> Segment2<DefaultBackend> {
+fn line_segment(x0: i32, y0: i32, x1: i32, y1: i32) -> Segment2 {
     Segment2::Line(hypercurve::LineSeg2::try_new(p(x0, y0), p(x1, y1)).unwrap())
 }
 
-fn overlapping_fragments() -> (
-    Region2<DefaultBackend>,
-    Region2<DefaultBackend>,
-    hypercurve::RegionFragmentSet<DefaultBackend>,
-) {
+fn overlapping_fragments() -> (Region2, Region2, hypercurve::RegionFragmentSet) {
     let first = Region2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
     let second = Region2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
     let intersections = first.intersect_region(&second, &policy()).unwrap();

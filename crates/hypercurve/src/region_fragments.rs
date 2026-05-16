@@ -1,6 +1,13 @@
 //! Region-pair fragments produced from region intersection events.
-
-use hyperlattice::{Backend, DefaultBackend};
+//!
+//! Region booleans operate on all material and hole contours from both
+//! operands. This module applies the contour-level intersection-insertion pass
+//! to each keyed contour, matching the split-boundary preparation used before
+//! entry/exit or fill-state classification in Greiner and Hormann, "Efficient
+//! Clipping of Arbitrary Polygons" (*ACM Transactions on Graphics* 17(2),
+//! 71-83, 1998), and Martinez, Rueda, and Feito, "A New Algorithm for
+//! Computing Boolean Operations on Polygons" (*Computers & Geosciences* 35(6),
+//! 1177-1185, 2009).
 
 use crate::{
     Classification, Contour2, ContourFragmentSet, ContourOperand, ContourSplitMarkers, CurvePolicy,
@@ -10,32 +17,32 @@ use crate::{
 
 /// Fragments for one keyed contour in a region-pair query.
 #[derive(Clone, Debug, PartialEq)]
-pub struct RegionContourFragments<B: Backend = DefaultBackend> {
+pub struct RegionContourFragments {
     /// Source contour key.
     pub key: RegionContourKey,
     /// Source contour split into traversal-order fragments.
-    pub fragments: ContourFragmentSet<B>,
+    pub fragments: ContourFragmentSet,
 }
 
 /// Fragment inventory for both regions in a region-pair query.
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct RegionFragmentSet<B: Backend = DefaultBackend> {
-    contours: Vec<RegionContourFragments<B>>,
+pub struct RegionFragmentSet {
+    contours: Vec<RegionContourFragments>,
 }
 
-impl<B: Backend> RegionFragmentSet<B> {
+impl RegionFragmentSet {
     /// Constructs a fragment set from already-built keyed contour fragments.
-    pub const fn new(contours: Vec<RegionContourFragments<B>>) -> Self {
+    pub const fn new(contours: Vec<RegionContourFragments>) -> Self {
         Self { contours }
     }
 
     /// Returns keyed contour fragments.
-    pub fn contours(&self) -> &[RegionContourFragments<B>] {
+    pub fn contours(&self) -> &[RegionContourFragments] {
         &self.contours
     }
 
     /// Consumes the set and returns keyed contour fragments.
-    pub fn into_contours(self) -> Vec<RegionContourFragments<B>> {
+    pub fn into_contours(self) -> Vec<RegionContourFragments> {
         self.contours
     }
 
@@ -50,20 +57,17 @@ impl<B: Backend> RegionFragmentSet<B> {
     }
 
     /// Returns fragments for a keyed contour.
-    pub fn fragments_for_contour(
-        &self,
-        key: RegionContourKey,
-    ) -> Option<&RegionContourFragments<B>> {
+    pub fn fragments_for_contour(&self, key: RegionContourKey) -> Option<&RegionContourFragments> {
         self.contours.iter().find(|fragments| fragments.key == key)
     }
 }
 
-pub(crate) fn split_region_views_at_intersections<B: Backend>(
-    first: &RegionView2<'_, B>,
-    second: &RegionView2<'_, B>,
-    intersections: &RegionIntersectionSet<B>,
+pub(crate) fn split_region_views_at_intersections(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
+    intersections: &RegionIntersectionSet,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<RegionFragmentSet<B>>> {
+) -> CurveResult<Classification<RegionFragmentSet>> {
     let mut contours = Vec::new();
 
     match append_region_contours(
@@ -114,12 +118,12 @@ pub(crate) fn split_region_views_at_intersections<B: Backend>(
     Ok(Classification::Decided(RegionFragmentSet::new(contours)))
 }
 
-fn append_region_contours<B: Backend>(
-    out: &mut Vec<RegionContourFragments<B>>,
+fn append_region_contours(
+    out: &mut Vec<RegionContourFragments>,
     side: RegionSide,
-    contours: &[&Contour2<B>],
+    contours: &[&Contour2],
     role: RegionContourRole,
-    intersections: &RegionIntersectionSet<B>,
+    intersections: &RegionIntersectionSet,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<()>> {
     for (index, contour) in contours.iter().enumerate() {
@@ -134,12 +138,12 @@ fn append_region_contours<B: Backend>(
     Ok(Classification::Decided(()))
 }
 
-fn split_keyed_contour<B: Backend>(
-    contour: &Contour2<B>,
+fn split_keyed_contour(
+    contour: &Contour2,
     key: RegionContourKey,
-    intersections: &RegionIntersectionSet<B>,
+    intersections: &RegionIntersectionSet,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<ContourFragmentSet<B>>> {
+) -> CurveResult<Classification<ContourFragmentSet>> {
     let mut markers = ContourSplitMarkers::with_contour_endpoints(contour);
 
     for pair in intersections.pairs_for_contour(key) {

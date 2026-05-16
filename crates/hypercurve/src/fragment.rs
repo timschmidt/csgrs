@@ -1,42 +1,50 @@
 //! Contour fragments produced from split markers.
+//!
+//! After intersections are inserted, fragment construction rebuilds the
+//! source geometry between adjacent split markers so boolean selection can work
+//! on atomic boundary pieces. This mirrors the split-then-classify structure in
+//! Greiner and Hormann, "Efficient Clipping of Arbitrary Polygons" (*ACM
+//! Transactions on Graphics* 17(2), 71-83, 1998), with explicit uncertainty for
+//! ordering or finite-preview cases that would otherwise create invalid graph
+//! topology.
 
 use std::cmp::Ordering;
 
-use hyperlattice::{Backend, DefaultBackend};
+use hyperreal::Real;
 
-use crate::classify::{compare_scalars, is_zero};
+use crate::classify::{compare_reals_for_split_ordering, is_zero};
 use crate::{
     CircularArc2, Classification, Contour2, ContourSplitMarkers, CurvePolicy, CurveResult,
-    LineSeg2, ParamRange, Segment2, SegmentSplitMarker, UncertaintyReason,
+    LineSeg2, NumericMode, ParamRange, Segment2, SegmentSplitMarker, UncertaintyReason,
 };
 
 /// One source-contour fragment between adjacent split markers.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ContourFragment<B: Backend = DefaultBackend> {
+pub struct ContourFragment {
     /// Source segment index in the original contour.
     pub source_segment_index: usize,
     /// Parameter interval on the source segment.
-    pub source_range: ParamRange<B>,
+    pub source_range: ParamRange,
     /// Fragment geometry in source traversal direction.
-    pub segment: Segment2<B>,
+    pub segment: Segment2,
 }
 
 /// Ordered fragments from a split contour.
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct ContourFragmentSet<B: Backend = DefaultBackend> {
-    fragments: Vec<ContourFragment<B>>,
+pub struct ContourFragmentSet {
+    fragments: Vec<ContourFragment>,
 }
 
-impl<B: Backend> ContourFragmentSet<B> {
+impl ContourFragmentSet {
     /// Constructs a fragment set from already-built fragments.
-    pub const fn new(fragments: Vec<ContourFragment<B>>) -> Self {
+    pub const fn new(fragments: Vec<ContourFragment>) -> Self {
         Self { fragments }
     }
 
     /// Builds fragments from point-bearing contour split markers.
     pub fn from_split_markers(
-        contour: &Contour2<B>,
-        markers: &ContourSplitMarkers<B>,
+        contour: &Contour2,
+        markers: &ContourSplitMarkers,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Self>> {
         if contour.len() != markers.segment_count() {
@@ -65,12 +73,12 @@ impl<B: Backend> ContourFragmentSet<B> {
     }
 
     /// Returns fragments in contour traversal order.
-    pub fn fragments(&self) -> &[ContourFragment<B>] {
+    pub fn fragments(&self) -> &[ContourFragment] {
         &self.fragments
     }
 
     /// Consumes the set and returns the fragments.
-    pub fn into_fragments(self) -> Vec<ContourFragment<B>> {
+    pub fn into_fragments(self) -> Vec<ContourFragment> {
         self.fragments
     }
 
@@ -85,12 +93,12 @@ impl<B: Backend> ContourFragmentSet<B> {
     }
 }
 
-pub(crate) fn split_contour_at_intersections<B: Backend>(
-    contour: &Contour2<B>,
-    intersections: &crate::ContourIntersectionSet<B>,
+pub(crate) fn split_contour_at_intersections(
+    contour: &Contour2,
+    intersections: &crate::ContourIntersectionSet,
     operand: crate::ContourOperand,
     policy: &CurvePolicy,
-) -> CurveResult<Classification<ContourFragmentSet<B>>> {
+) -> CurveResult<Classification<ContourFragmentSet>> {
     let markers =
         match ContourSplitMarkers::from_intersections(contour, intersections, operand, policy) {
             Classification::Decided(markers) => markers,
@@ -100,18 +108,32 @@ pub(crate) fn split_contour_at_intersections<B: Backend>(
     ContourFragmentSet::from_split_markers(contour, &markers, policy)
 }
 
-fn append_segment_fragments<B: Backend>(
-    fragments: &mut Vec<ContourFragment<B>>,
-    source_segment: &Segment2<B>,
+pub(crate) fn split_contour_at_self_intersections(
+    contour: &Contour2,
+    intersections: &crate::ContourIntersectionSet,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<ContourFragmentSet>> {
+    let markers = match ContourSplitMarkers::from_self_intersections(contour, intersections, policy)
+    {
+        Classification::Decided(markers) => markers,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+
+    ContourFragmentSet::from_split_markers(contour, &markers, policy)
+}
+
+fn append_segment_fragments(
+    fragments: &mut Vec<ContourFragment>,
+    source_segment: &Segment2,
     segment_index: usize,
-    markers: &[SegmentSplitMarker<B>],
+    markers: &[SegmentSplitMarker],
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<()>> {
     for adjacent in markers.windows(2) {
         let start = &adjacent[0];
         let end = &adjacent[1];
 
-        match compare_scalars(&start.param, &end.param, policy) {
+        match compare_reals_for_split_ordering(&start.param, &end.param, policy) {
             Some(Ordering::Less) => {}
             Some(Ordering::Equal) => continue,
             Some(Ordering::Greater) => {
@@ -124,10 +146,13 @@ fn append_segment_fragments<B: Backend>(
         match is_zero(&distance, policy) {
             Some(true) => continue,
             Some(false) => {}
-            None => return Ok(Classification::Uncertain(UncertaintyReason::ScalarSign)),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
 
-        let segment = build_fragment_segment(source_segment, start, end)?;
+        let segment = match build_fragment_segment(source_segment, start, end, policy)? {
+            Classification::Decided(segment) => segment,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
         fragments.push(ContourFragment {
             source_segment_index: segment_index,
             source_range: ParamRange::new(start.param.clone(), end.param.clone()),
@@ -138,25 +163,84 @@ fn append_segment_fragments<B: Backend>(
     Ok(Classification::Decided(()))
 }
 
-fn build_fragment_segment<B: Backend>(
-    source_segment: &Segment2<B>,
-    start: &SegmentSplitMarker<B>,
-    end: &SegmentSplitMarker<B>,
-) -> CurveResult<Segment2<B>> {
+fn build_fragment_segment(
+    source_segment: &Segment2,
+    start: &SegmentSplitMarker,
+    end: &SegmentSplitMarker,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Segment2>> {
     if start.point == *source_segment.start() && end.point == *source_segment.end() {
-        return Ok(source_segment.clone());
+        return Ok(Classification::Decided(source_segment.clone()));
     }
 
     match source_segment {
-        Segment2::Line(_) => {
-            LineSeg2::try_new(start.point.clone(), end.point.clone()).map(Segment2::Line)
-        }
-        Segment2::Arc(arc) => CircularArc2::try_from_center(
-            start.point.clone(),
-            end.point.clone(),
-            arc.center().clone(),
-            arc.is_clockwise(),
-        )
-        .map(Segment2::Arc),
+        Segment2::Line(_) => LineSeg2::try_new(start.point.clone(), end.point.clone())
+            .map(Segment2::Line)
+            .map(Classification::Decided),
+        Segment2::Arc(arc) => build_arc_fragment_segment(arc, start, end, policy),
     }
+}
+
+fn build_arc_fragment_segment(
+    source_arc: &CircularArc2,
+    start: &SegmentSplitMarker,
+    end: &SegmentSplitMarker,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Segment2>> {
+    // Intersection points in the f64 interop comparison path can be infinitesimally off
+    // the source circle after square roots and line solves. The fragment still
+    // belongs to the original arc when both split markers are on that source
+    // circle under the active policy, so preserve the source radius instead of
+    // revalidating with the exact public constructor. This is a finite-output
+    // normalization step in the sense of Hobby, "Practical Segment Intersection
+    // with Finite Precision Output" (Computational Geometry 13(4), 199-214,
+    // 1999), and is limited to fragment reconstruction after the source arc has
+    // already supplied the circle.
+    let radius_squared = source_arc.radius_squared();
+    let start_radius_delta = start.point.distance_squared(source_arc.center()) - &radius_squared;
+    let end_radius_delta = end.point.distance_squared(source_arc.center()) - &radius_squared;
+    match (
+        radius_delta_is_zero(&start_radius_delta, &radius_squared, policy),
+        radius_delta_is_zero(&end_radius_delta, &radius_squared, policy),
+    ) {
+        (Some(true), Some(true)) => Ok(Classification::Decided(Segment2::Arc(
+            CircularArc2::new_unchecked_with_radius(
+                start.point.clone(),
+                end.point.clone(),
+                source_arc.center().clone(),
+                radius_squared,
+                source_arc.is_clockwise(),
+                None,
+            ),
+        ))),
+        (Some(false), _) | (_, Some(false)) => {
+            Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+        }
+        _ => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    }
+}
+
+fn radius_delta_is_zero(delta: &Real, radius_squared: &Real, policy: &CurvePolicy) -> Option<bool> {
+    if is_zero(delta, policy) == Some(true) {
+        return Some(true);
+    }
+
+    if matches!(policy.numeric_mode, NumericMode::EdgePreview) {
+        let (absolute, relative) = policy
+            .tolerance
+            .map(|tolerance| (tolerance.absolute, tolerance.relative))
+            .unwrap_or((1e-12, 1e-12));
+        let radius_scale = radius_squared
+            .to_f64_approx()
+            .filter(|value| value.is_finite())
+            .map(|value| value.abs().max(1.0))
+            .unwrap_or(1.0);
+        let tolerance = absolute.max(relative * radius_scale);
+        return delta
+            .to_f64_approx()
+            .filter(|value| value.is_finite())
+            .map(|value| value.abs() <= tolerance);
+    }
+
+    is_zero(delta, policy)
 }

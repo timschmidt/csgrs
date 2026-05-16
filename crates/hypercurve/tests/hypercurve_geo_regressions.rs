@@ -8,26 +8,24 @@
 
 use geo::{BooleanOps as _, Contains as _, Coord, LineString, MultiPolygon, Point, Polygon};
 use hypercurve::{
-    BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy, DefaultBackend, FillRule,
-    IntersectionKind, LineLineIntersection, LineSeg2, Point2, Region2, RegionPointLocation, Scalar,
-    UncertaintyReason,
+    BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, IntersectionKind,
+    LineLineIntersection, LineSeg2, Point2, Real, Region2, RegionPointLocation, UncertaintyReason,
 };
 
-type Backend = DefaultBackend;
-type HPoint = Point2<Backend>;
-type HScalar = Scalar<Backend>;
-type HContour = Contour2<Backend>;
-type HRegion = Region2<Backend>;
+type HPoint = Point2;
+type HReal = Real;
+type HContour = Contour2;
+type HRegion = Region2;
 
-fn s(value: f64) -> HScalar {
-    HScalar::try_from(value).unwrap()
+fn s(value: f64) -> HReal {
+    HReal::try_from(value).unwrap()
 }
 
 fn p(x: f64, y: f64) -> HPoint {
     HPoint::new(s(x), s(y))
 }
 
-fn vertex(x: f64, y: f64) -> BulgeVertex2<Backend> {
+fn vertex(x: f64, y: f64) -> BulgeVertex2 {
     BulgeVertex2::new(p(x, y), s(0.0))
 }
 
@@ -62,7 +60,7 @@ fn geo_polygon(ring: &[(f64, f64)]) -> Polygon<f64> {
     )
 }
 
-fn line(start: (f64, f64), end: (f64, f64)) -> LineSeg2<Backend> {
+fn line(start: (f64, f64), end: (f64, f64)) -> LineSeg2 {
     LineSeg2::try_new(p(start.0, start.1), p(end.0, end.1)).unwrap()
 }
 

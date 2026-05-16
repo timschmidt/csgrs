@@ -336,25 +336,16 @@ version = "0.1.0"
 dependencies = [
  "cavalier_contours",
  "geo",
- "hyperlattice",
  "hyperlimit",
+ "hyperreal",
  "proptest",
  "static_aabb2d_index",
-]
-
-[[package]]
-name = "hyperlattice"
-version = "0.4.0"
-dependencies = [
- "hyperreal",
- "num",
 ]
 
 [[package]]
 name = "hyperlimit"
 version = "0.2.0"
 dependencies = [
- "hyperlattice",
  "hyperreal",
 ]
 

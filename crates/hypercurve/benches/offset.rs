@@ -3,22 +3,22 @@ use std::time::Instant;
 
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurvePolicy, CurveResult, CurveString2,
-    DefaultBackend, LineSeg2, OffsetCap, Point2, Scalar, Segment2,
+    LineSeg2, OffsetCap, Point2, Real, Segment2,
 };
 
-fn s(value: i32) -> Scalar<DefaultBackend> {
+fn s(value: i32) -> Real {
     value.into()
 }
 
-fn p(x: i32, y: i32) -> Point2<DefaultBackend> {
+fn p(x: i32, y: i32) -> Point2 {
     Point2::new(s(x), s(y))
 }
 
-fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2<DefaultBackend> {
+fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2 {
     BulgeVertex2::new(p(x, y), s(bulge))
 }
 
-fn line_segment(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> Segment2<DefaultBackend> {
+fn line_segment(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> Segment2 {
     Segment2::Line(LineSeg2::try_new(p(start_x, start_y), p(end_x, end_y)).unwrap())
 }
 
@@ -40,11 +40,7 @@ fn bench_line_offset(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
-fn bench_arc_offset(
-    name: &str,
-    segment: &Segment2<DefaultBackend>,
-    iterations: u32,
-) -> CurveResult<()> {
+fn bench_arc_offset(name: &str, segment: &Segment2, iterations: u32) -> CurveResult<()> {
     let policy = CurvePolicy::certified();
     let started = Instant::now();
     let mut checksum = 0_usize;

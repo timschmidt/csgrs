@@ -1,25 +1,25 @@
 use hypercurve::{
-    BooleanOp, BulgeVertex2, Classification, Contour2, ContourPointLocation, CurvePolicy,
-    DefaultBackend, FillRule, Region2, RegionPointLocation, Scalar, UncertaintyReason,
+    BooleanOp, BulgeVertex2, Classification, Contour2, ContourPointLocation, CurvePolicy, FillRule,
+    Real, Region2, RegionPointLocation, UncertaintyReason,
 };
 
-fn s(value: i32) -> Scalar<DefaultBackend> {
+fn s(value: i32) -> Real {
     value.into()
 }
 
-fn p(x: i32, y: i32) -> hypercurve::Point2<DefaultBackend> {
+fn p(x: i32, y: i32) -> hypercurve::Point2 {
     hypercurve::Point2::new(s(x), s(y))
 }
 
-fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2<DefaultBackend> {
+fn vertex(x: i32, y: i32, bulge: i32) -> BulgeVertex2 {
     BulgeVertex2::new(p(x, y), s(bulge))
 }
 
-fn contour(vertices: &[BulgeVertex2<DefaultBackend>]) -> Contour2<DefaultBackend> {
+fn contour(vertices: &[BulgeVertex2]) -> Contour2 {
     Contour2::from_bulge_vertices(vertices).unwrap()
 }
 
-fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2<DefaultBackend> {
+fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
     contour(&[
         vertex(xmin, ymin, 0),
         vertex(xmax, ymin, 0),
@@ -28,7 +28,7 @@ fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2<DefaultBack
     ])
 }
 
-fn rectangle_rotated_start(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2<DefaultBackend> {
+fn rectangle_rotated_start(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
     contour(&[
         vertex(xmax, ymax, 0),
         vertex(xmin, ymax, 0),
@@ -37,7 +37,7 @@ fn rectangle_rotated_start(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contou
     ])
 }
 
-fn rectangle_reversed(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2<DefaultBackend> {
+fn rectangle_reversed(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
     contour(&[
         vertex(xmin, ymin, 0),
         vertex(xmin, ymax, 0),
@@ -46,26 +46,23 @@ fn rectangle_reversed(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2<De
     ])
 }
 
-fn region(contours: Vec<Contour2<DefaultBackend>>) -> Region2<DefaultBackend> {
+fn region(contours: Vec<Contour2>) -> Region2 {
     Region2::from_material_contours(contours)
 }
 
-fn donut(
-    outer: Contour2<DefaultBackend>,
-    hole: Contour2<DefaultBackend>,
-) -> Region2<DefaultBackend> {
+fn donut(outer: Contour2, hole: Contour2) -> Region2 {
     Region2::new(vec![outer], vec![hole])
 }
 
-fn touching_material_bins() -> Region2<DefaultBackend> {
+fn touching_material_bins() -> Region2 {
     Region2::from_material_contours(vec![rectangle(0, 0, 2, 2), rectangle(2, 0, 4, 2)])
 }
 
-fn touching_material_bins_reordered() -> Region2<DefaultBackend> {
+fn touching_material_bins_reordered() -> Region2 {
     Region2::from_material_contours(vec![rectangle(2, 0, 4, 2), rectangle(0, 0, 2, 2)])
 }
 
-fn touching_material_bins_rotated_and_reversed() -> Region2<DefaultBackend> {
+fn touching_material_bins_rotated_and_reversed() -> Region2 {
     Region2::from_material_contours(vec![
         rectangle_reversed(2, 0, 4, 2),
         rectangle_rotated_start(0, 0, 2, 2),
@@ -77,8 +74,8 @@ fn policy() -> CurvePolicy {
 }
 
 fn assert_contour_location(
-    contour: &Contour2<DefaultBackend>,
-    point: hypercurve::Point2<DefaultBackend>,
+    contour: &Contour2,
+    point: hypercurve::Point2,
     expected: ContourPointLocation,
 ) {
     assert_eq!(
@@ -88,8 +85,8 @@ fn assert_contour_location(
 }
 
 fn assert_region_location(
-    region: &Region2<DefaultBackend>,
-    point: hypercurve::Point2<DefaultBackend>,
+    region: &Region2,
+    point: hypercurve::Point2,
     expected: RegionPointLocation,
 ) {
     assert_eq!(
@@ -430,8 +427,8 @@ fn prepared_region_boolean_identity_fast_paths_match_plain() {
             touching_material_bins(),
             touching_material_bins_rotated_and_reversed(),
         ),
-        (Region2::<DefaultBackend>::empty(), touching_material_bins()),
-        (touching_material_bins(), Region2::<DefaultBackend>::empty()),
+        (Region2::empty(), touching_material_bins()),
+        (touching_material_bins(), Region2::empty()),
     ];
     let policy = policy();
 
@@ -651,7 +648,7 @@ fn region_boolean_region_identical_donut_identities_are_decided() {
 
 #[test]
 fn region_boolean_region_empty_identities_preserve_donut_roles() {
-    let empty = Region2::<DefaultBackend>::empty();
+    let empty = Region2::empty();
     let ring = donut(rectangle(0, 0, 10, 10), rectangle(3, 3, 7, 7));
 
     let Classification::Decided(union_left) = empty
@@ -836,7 +833,7 @@ fn region_boolean_region_identity_accepts_rotated_and_reversed_bins() {
 
 #[test]
 fn region_boolean_region_empty_identity_preserves_touching_material_bins() {
-    let empty = Region2::<DefaultBackend>::empty();
+    let empty = Region2::empty();
     let touching = touching_material_bins();
 
     let Classification::Decided(union_left) = empty

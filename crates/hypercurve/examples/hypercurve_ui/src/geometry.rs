@@ -3,21 +3,24 @@ use std::ops::{Index, IndexMut};
 
 use geo::{BooleanOps, Buffer, Coord, LineString, MultiPolygon, Polygon};
 use hypercurve::{
-    BooleanOp as HBooleanOp, BulgeVertex2, Classification, Contour2,
-    ContourIntersection, CurvePolicy, CurveString2, FillRule, OffsetCap, Point2, Region2, Scalar,
-    Segment2, Tolerance, HyperrealBackend,
+    BooleanOp as HBooleanOp, BulgeVertex2, Classification, Contour2, ContourFragmentSet,
+    ContourIntersection, ContourIntersectionSet, ContourOperand, ContourSplitMarkers, CurvePolicy,
+    CurveString2, FillRule, OffsetCap, Point2, Real, Region2, Segment2, Tolerance,
 };
 use serde::{Deserialize, Serialize};
 
-type Backend = HyperrealBackend;
-type HPoint = Point2<Backend>;
-type HScalar = Scalar<Backend>;
-type HSegment = Segment2<Backend>;
-type HContour = Contour2<Backend>;
+type HPoint = Point2;
+type HReal = Real;
+type HSegment = Segment2;
+type HContour = Contour2;
 const DISPLAY_COORD_EPS: f64 = 2e-5;
 const MIN_DISPLAY_LOOP_AREA: f64 = 1e-6;
 
 /// A Cavalier-style polyline vertex. `bulge` describes the outgoing segment.
+///
+/// These `f64` fields are UI/editor records and Geo compatibility data only.
+/// Geometry operations lift them into hyperreal-backed `hypercurve` values at
+/// the operation boundary before asking the exact curve kernel for topology.
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Vertex {
     pub x: f64,
@@ -28,6 +31,12 @@ pub struct Vertex {
 impl Vertex {
     pub const fn new(x: f64, y: f64, bulge: f64) -> Self {
         Self { x, y, bulge }
+    }
+
+    fn validate_finite(self, index: usize) -> Result<(), String> {
+        validate_finite(self.x, &format!("vertex {index} x"))?;
+        validate_finite(self.y, &format!("vertex {index} y"))?;
+        validate_finite(self.bulge, &format!("vertex {index} bulge"))
     }
 }
 
@@ -140,11 +149,25 @@ impl Polyline {
         self.signed_area_estimate() >= 0.0
     }
 
-    pub fn to_curve_string(&self) -> Result<CurveString2<Backend>, String> {
+    /// Validate that all editable UI coordinates are finite primitive floats.
+    ///
+    /// The UI stores `f64` values because egui, plotting, and Geo interop are
+    /// primitive-float boundaries. Before any topology operation, those values
+    /// must lift cleanly into hyperreal-backed Real values; non-finite values are
+    /// reported as ordinary UI errors instead of reaching exact kernels.
+    pub fn validate_finite(&self) -> Result<(), String> {
+        for (index, vertex) in self.vertex_data.iter().copied().enumerate() {
+            vertex.validate_finite(index)?;
+        }
+        Ok(())
+    }
+
+    pub fn to_curve_string(&self) -> Result<CurveString2, String> {
         if self.vertex_data.len() < 2 {
             return Err("a curve string needs at least two vertices".into());
         }
-        CurveString2::from_bulge_vertices(&self.hyper_vertices()[..]).map_err(|e| e.to_string())
+        let vertices = self.hyper_vertices()?;
+        CurveString2::from_bulge_vertices(&vertices[..]).map_err(|e| e.to_string())
     }
 
     pub fn to_contour(&self) -> Result<HContour, String> {
@@ -154,15 +177,17 @@ impl Polyline {
         if self.vertex_data.len() < 2 {
             return Err("a closed contour needs at least two vertices".into());
         }
-        Contour2::from_bulge_vertices_with_fill_rule(&self.hyper_vertices()[..], FillRule::NonZero)
+        let vertices = self.hyper_vertices()?;
+        Contour2::from_bulge_vertices_with_fill_rule(&vertices[..], FillRule::NonZero)
             .map_err(|e| e.to_string())
     }
 
     #[cfg(test)]
     pub fn offset_checked(&self, distance: f64) -> Result<Option<Self>, String> {
         let contour = self.to_contour()?;
+        let distance = real_checked(distance, "offset distance")?;
         match contour
-            .offset_left_checked(scalar(distance), &policy())
+            .offset_left_checked(distance, &policy())
             .map_err(|e| e.to_string())?
         {
             Classification::Decided(contour) => Ok(Some(Self::from_contour(&contour))),
@@ -176,6 +201,8 @@ impl Polyline {
     }
 
     pub fn offsets_for_display(&self, distance: f64) -> Result<Vec<Self>, String> {
+        self.validate_finite()?;
+        validate_finite(distance, "offset distance")?;
         if self.is_closed
             && let Some(polygon) = polyline_to_geo_polygon(self)
         {
@@ -187,10 +214,11 @@ impl Polyline {
     }
 
     pub fn raw_offset(&self, distance: f64) -> Result<Option<Self>, String> {
+        let distance = real_checked(distance, "offset distance")?;
         if self.is_closed {
             let contour = self.to_contour()?;
             match contour
-                .offset_left_with_line_joins(scalar(distance), &policy())
+                .offset_left_with_line_joins(distance, &policy())
                 .map_err(|e| e.to_string())?
             {
                 Classification::Decided(contour) => Ok(Some(Self::from_contour(&contour))),
@@ -199,7 +227,7 @@ impl Polyline {
         } else {
             let curve = self.to_curve_string()?;
             match curve
-                .offset_left_with_line_joins(scalar(distance), &policy())
+                .offset_left_with_line_joins(distance, &policy())
                 .map_err(|e| e.to_string())?
             {
                 Classification::Decided(curve) => {
@@ -212,8 +240,9 @@ impl Polyline {
 
     pub fn outline(&self, distance: f64, cap: OffsetCap) -> Result<Option<Self>, String> {
         let curve = self.to_curve_string()?;
+        let distance = real_checked(distance, "outline distance")?;
         match curve
-            .offset_outline(scalar(distance), cap, &policy())
+            .offset_outline(distance, cap, &policy())
             .map_err(|e| e.to_string())?
         {
             Classification::Decided(contour) => Ok(Some(Self::from_contour(&contour))),
@@ -222,6 +251,7 @@ impl Polyline {
     }
 
     pub fn raw_offset_segments(&self, distance: f64) -> Result<Vec<Self>, String> {
+        let distance = real_checked(distance, "offset distance")?;
         let segments = if self.is_closed {
             self.to_contour()?.segments().to_vec()
         } else {
@@ -230,7 +260,7 @@ impl Polyline {
         let mut out = Vec::new();
         for segment in segments {
             match segment
-                .offset_left(scalar(distance), &policy())
+                .offset_left(distance.clone(), &policy())
                 .map_err(|e| e.to_string())?
             {
                 Classification::Decided(offset) => out.push(Self::from_segments(&[offset], false)),
@@ -259,14 +289,18 @@ impl Polyline {
         }
     }
 
-    fn hyper_vertices(&self) -> Vec<BulgeVertex2<Backend>> {
+    fn hyper_vertices(&self) -> Result<Vec<BulgeVertex2>, String> {
         self.vertex_data
             .iter()
-            .map(|vertex| {
-                BulgeVertex2::new(
-                    Point2::new(scalar(vertex.x), scalar(vertex.y)),
-                    scalar(vertex.bulge),
-                )
+            .enumerate()
+            .map(|(index, vertex)| {
+                Ok(BulgeVertex2::new(
+                    Point2::new(
+                        real_checked(vertex.x, &format!("vertex {index} x"))?,
+                        real_checked(vertex.y, &format!("vertex {index} y"))?,
+                    ),
+                    real_checked(vertex.bulge, &format!("vertex {index} bulge"))?,
+                ))
             })
             .collect()
     }
@@ -317,7 +351,7 @@ impl Shape {
         Self { materials, holes }
     }
 
-    pub fn from_region(region: &Region2<Backend>) -> Self {
+    pub fn from_region(region: &Region2) -> Self {
         Self {
             materials: region
                 .material_contours()
@@ -339,7 +373,21 @@ impl Shape {
         self
     }
 
-    pub fn to_region(&self) -> Result<Region2<Backend>, String> {
+    pub fn validate_finite(&self) -> Result<(), String> {
+        for (index, material) in self.materials.iter().enumerate() {
+            material
+                .validate_finite()
+                .map_err(|error| format!("material {index}: {error}"))?;
+        }
+        for (index, hole) in self.holes.iter().enumerate() {
+            hole.validate_finite()
+                .map_err(|error| format!("hole {index}: {error}"))?;
+        }
+        Ok(())
+    }
+
+    pub fn to_region(&self) -> Result<Region2, String> {
+        self.validate_finite()?;
         let materials = self
             .materials
             .iter()
@@ -365,6 +413,8 @@ impl Shape {
     }
 
     pub fn boolean(&self, other: &Self, op: BooleanMode) -> Result<Option<Self>, String> {
+        self.validate_finite()?;
+        other.validate_finite()?;
         let op = match op {
             BooleanMode::Union => HBooleanOp::Union,
             BooleanMode::Intersection => HBooleanOp::Intersection,
@@ -400,6 +450,13 @@ pub enum BooleanMode {
 }
 
 pub fn policy() -> CurvePolicy {
+    // The test article is an interactive rendering and compatibility boundary,
+    // so it uses `EdgePreview` for curve-local display tolerances. Hypercurve's
+    // predicate policy inside this value remains strict, and the UI must not
+    // treat sampled `f64`/Geo fallback output as exact topology provenance.
+    // Hobby, "Practical Segment Intersection with Finite Precision Output"
+    // (Computational Geometry 13(4), 199-214, 1999), is the relevant warning:
+    // finite output is useful, but it needs explicit boundary handling.
     CurvePolicy::edge_preview(Tolerance::new(1e-7, 1e-7))
 }
 
@@ -444,20 +501,9 @@ pub fn contour_slices(
     let events = first_contour
         .intersect_contour(&second_contour, &policy())
         .map_err(|e| e.to_string())?;
-    let first_fragments = match first_contour
-        .split_at_intersections(&events, hypercurve::ContourOperand::First, &policy())
-        .map_err(|e| e.to_string())?
-    {
-        Classification::Decided(fragments) => fragments,
-        Classification::Uncertain(_) => return Ok((Vec::new(), Vec::new())),
-    };
-    let second_fragments = match second_contour
-        .split_at_intersections(&events, hypercurve::ContourOperand::Second, &policy())
-        .map_err(|e| e.to_string())?
-    {
-        Classification::Decided(fragments) => fragments,
-        Classification::Uncertain(_) => return Ok((Vec::new(), Vec::new())),
-    };
+    let first_fragments = split_contour_for_slices(&first_contour, &events, ContourOperand::First)?;
+    let second_fragments =
+        split_contour_for_slices(&second_contour, &events, ContourOperand::Second)?;
     Ok((
         first_fragments
             .fragments()
@@ -470,6 +516,56 @@ pub fn contour_slices(
             .map(|fragment| Polyline::from_segments(&[fragment.segment.clone()], false))
             .collect(),
     ))
+}
+
+fn split_contour_for_slices(
+    contour: &HContour,
+    pair_events: &ContourIntersectionSet,
+    operand: ContourOperand,
+) -> Result<ContourFragmentSet, String> {
+    // Slice mode is a visualization tool: it should expose every displayable
+    // split but remain drawable when preview ordering cannot be certified. The
+    // fallback to source fragments is intentionally local to the UI boundary;
+    // exact library booleans still propagate uncertainty. This follows the
+    // finite-output separation described by Hobby (1999) and avoids presenting
+    // a broken branch graph as if it were exact topology.
+    let policy = policy();
+    let self_events = contour
+        .intersect_self(&policy)
+        .map_err(|error| error.to_string())?;
+    let mut markers = ContourSplitMarkers::with_contour_endpoints(contour);
+
+    match markers.merge_intersections(pair_events, operand, &policy) {
+        Classification::Decided(()) => {}
+        Classification::Uncertain(_) => return Ok(source_contour_fragments(contour)),
+    }
+    match markers.merge_self_intersections(&self_events, &policy) {
+        Classification::Decided(()) => {}
+        Classification::Uncertain(_) => return Ok(source_contour_fragments(contour)),
+    }
+
+    match ContourFragmentSet::from_split_markers(contour, &markers, &policy)
+        .map_err(|error| error.to_string())?
+    {
+        Classification::Decided(fragments) => Ok(fragments),
+        Classification::Uncertain(_) => Ok(source_contour_fragments(contour)),
+    }
+}
+
+fn source_contour_fragments(contour: &HContour) -> ContourFragmentSet {
+    ContourFragmentSet::new(
+        contour
+            .segments()
+            .iter()
+            .cloned()
+            .enumerate()
+            .map(|(source_segment_index, segment)| hypercurve::ContourFragment {
+                source_segment_index,
+                source_range: hypercurve::ParamRange::new(Real::zero(), Real::one()),
+                segment,
+            })
+            .collect(),
+    )
 }
 
 fn signed_area_of_points(points: &[[f64; 2]]) -> f64 {
@@ -503,7 +599,7 @@ fn signed_area_of_coords(coords: &[Coord<f64>]) -> f64 {
 fn regularized_region(
     materials: &[HContour],
     holes: &[HContour],
-) -> Result<Option<Region2<Backend>>, String> {
+) -> Result<Option<Region2>, String> {
     let mut region = Region2::empty();
 
     for contour in materials {
@@ -532,6 +628,9 @@ fn regularized_region(
 }
 
 fn geo_boolean_fallback(first: &Shape, second: &Shape, op: HBooleanOp) -> Result<Shape, String> {
+    // UI fallback only: this keeps the demo interactive for topology cases that
+    // hypercurve reports as uncertain. The result is a lossy display artifact,
+    // not a replacement for exact hypercurve boolean semantics.
     let first = shape_to_geo(first);
     let second = shape_to_geo(second);
     let result = match op {
@@ -680,8 +779,19 @@ fn close_geo_ring(coords: &mut Vec<Coord<f64>>) -> Option<()> {
 
 const SAMPLE_ANGLE_STEP_FOR_GEO: f64 = 0.04;
 
-pub fn scalar(value: f64) -> HScalar {
-    HScalar::try_from(value).unwrap_or_else(|_| HScalar::from(0_i8))
+fn real_checked(value: f64, label: &str) -> Result<HReal, String> {
+    // UI/editor coordinates are accepted only as finite edge values and are
+    // lifted to the exact binary rational represented by the `f64`.
+    validate_finite(value, label)?;
+    HReal::try_from(value).map_err(|_| format!("{label} could not be lifted exactly"))
+}
+
+fn validate_finite(value: f64, label: &str) -> Result<(), String> {
+    if value.is_finite() {
+        Ok(())
+    } else {
+        Err(format!("{label} must be finite"))
+    }
 }
 
 fn hpoint_array(point: &HPoint) -> [f64; 2] {
@@ -690,10 +800,10 @@ fn hpoint_array(point: &HPoint) -> [f64; 2] {
 }
 
 fn hpoint_xy(point: &HPoint) -> (f64, f64) {
-    (scalar_to_f64(point.x()), scalar_to_f64(point.y()))
+    (real_to_f64(point.x()), real_to_f64(point.y()))
 }
 
-fn scalar_to_f64(value: &HScalar) -> f64 {
+fn real_to_f64(value: &HReal) -> f64 {
     value
         .to_f64_approx()
         .unwrap_or_else(|| f64::from(value.clone()))
@@ -712,9 +822,9 @@ fn vertex_for_segment_start(segment: &HSegment) -> Vertex {
     }
 }
 
-fn bulge_for_arc(arc: &hypercurve::CircularArc2<Backend>) -> f64 {
+fn bulge_for_arc(arc: &hypercurve::CircularArc2) -> f64 {
     if let Some(bulge) = arc.bulge() {
-        return scalar_to_f64(bulge);
+        return real_to_f64(bulge);
     }
 
     let (sx, sy) = hpoint_xy(arc.start());
@@ -798,6 +908,257 @@ mod tests {
         );
         assert!(source.offset_for_display(1.0).unwrap().is_some());
         assert_valid_offset_set(&source.offsets_for_display(1.0).unwrap(), true);
+    }
+
+    #[test]
+    fn contour_slices_include_nonadjacent_line_arc_self_intersections() {
+        let first = Polyline::closed(&[
+            (0.0, 0.0, 1.0),
+            (2.0, 0.0, 0.0),
+            (3.0, 2.0, 0.0),
+            (1.0, 2.0, 0.0),
+            (1.0, -2.0, 0.0),
+            (3.0, -3.0, 0.0),
+            (-1.0, -3.0, 0.0),
+        ]);
+        let second = Polyline::closed(&[
+            (20.0, 20.0, 0.0),
+            (22.0, 20.0, 0.0),
+            (22.0, 22.0, 0.0),
+            (20.0, 22.0, 0.0),
+        ]);
+
+        let (first_slices, second_slices) = contour_slices(&first, &second).unwrap();
+
+        assert_eq!(first_slices.len(), 9);
+        assert_eq!(second_slices.len(), 4);
+    }
+
+    #[test]
+    fn contour_slices_include_adjacent_line_arc_crossings_beyond_shared_endpoint() {
+        let first = Polyline::closed(&[
+            (0.0, 0.0, 1.0),
+            (2.0, 0.0, 0.0),
+            (0.0, -2.0, 0.0),
+            (-1.0, 0.0, 0.0),
+        ]);
+        let second = Polyline::closed(&[
+            (20.0, 20.0, 0.0),
+            (22.0, 20.0, 0.0),
+            (22.0, 22.0, 0.0),
+            (20.0, 22.0, 0.0),
+        ]);
+
+        let (first_slices, second_slices) = contour_slices(&first, &second).unwrap();
+
+        assert_eq!(first_slices.len(), 6);
+        assert_eq!(second_slices.len(), 4);
+    }
+
+    #[test]
+    fn contour_slices_handle_dense_multipolygon_style_linework() {
+        let first = alternating_band_polyline(9, 0.0, 0.0, 1.0);
+        let second = alternating_band_polyline(9, 0.45, 0.25, -1.0);
+
+        let (first_slices, second_slices) = contour_slices(&first, &second).unwrap();
+
+        assert_valid_slice_set(&first_slices, true);
+        assert_valid_slice_set(&second_slices, true);
+    }
+
+    #[test]
+    fn contour_slices_keep_display_fragments_for_many_line_arc_events() {
+        let first = radial_polyline_with_transform(
+            9,
+            &[
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+                1.0102264538592962,
+                0.753525233986273,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+            ],
+            &[0.0; 12],
+            0.0,
+            0.0,
+            0.0,
+        );
+        let second = radial_polyline_with_transform(
+            9,
+            &[
+                0.55,
+                0.55,
+                0.55,
+                1.0777534861273332,
+                1.2886771796815553,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+            ],
+            &[
+                0.0,
+                0.0,
+                0.0,
+                -0.5614702594038522,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+            ],
+            0.6637692991378273,
+            -1.7664711101724753,
+            0.6566402803495361,
+        );
+
+        assert!(contour_has_slice_events(&first, &second).unwrap());
+        let (first_slices, second_slices) = contour_slices(&first, &second).unwrap();
+
+        assert_valid_slice_set(&first_slices, true);
+        assert_valid_slice_set(&second_slices, true);
+    }
+
+    #[test]
+    fn contour_slices_keep_display_fragments_for_self_arc_events() {
+        let first = radial_polyline_with_transform(
+            11,
+            &[
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+                1.3184567971532413,
+                0.9584085075790264,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+            ],
+            &[
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.8094809229883586,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+            ],
+            0.0,
+            0.0,
+            0.0,
+        );
+        let second = radial_polyline_with_transform(
+            11,
+            &[
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+                1.245577180132649,
+                0.6548306493289698,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+            ],
+            &[0.0; 12],
+            0.0,
+            -2.408158343355632,
+            0.7955786457885817,
+        );
+
+        assert!(contour_has_slice_events(&first, &second).unwrap());
+        let (first_slices, second_slices) = contour_slices(&first, &second).unwrap();
+
+        assert_valid_slice_set(&first_slices, true);
+        assert_valid_slice_set(&second_slices, true);
+    }
+
+    #[test]
+    fn contour_slices_keep_display_fragments_for_small_arc_triangle() {
+        let first = radial_polyline_with_transform(
+            3,
+            &[
+                1.0006825808205817,
+                1.0673754962372333,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+            ],
+            &[
+                0.0,
+                -0.7886604849578752,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+            ],
+            0.0,
+            0.0,
+            0.0,
+        );
+        let second = radial_polyline_with_transform(
+            3,
+            &[
+                0.55,
+                1.2160624638373176,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+                0.55,
+            ],
+            &[0.0; 12],
+            3.0610844304447027,
+            3.025470516022391,
+            0.8196939276745006,
+        );
+
+        assert!(contour_has_slice_events(&first, &second).unwrap());
+        let (first_slices, second_slices) = contour_slices(&first, &second).unwrap();
+
+        assert_valid_slice_set(&first_slices, true);
+        assert_valid_slice_set(&second_slices, true);
     }
 
     #[test]
@@ -900,6 +1261,26 @@ mod tests {
         assert_valid_offset_set(&offset.holes, false);
     }
 
+    #[test]
+    fn non_finite_ui_values_are_reported_before_exact_lifting() {
+        let invalid = Polyline::closed(&[(0.0, 0.0, 0.0), (f64::NAN, 0.0, 0.0), (1.0, 1.0, 0.0)]);
+        let valid = Polyline::closed(&[(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)]);
+
+        assert!(invalid.to_contour().unwrap_err().contains("must be finite"));
+        assert!(
+            invalid
+                .offsets_for_display(1.0)
+                .unwrap_err()
+                .contains("must be finite")
+        );
+        assert!(
+            Shape::from_materials(vec![invalid])
+                .boolean(&Shape::from_materials(vec![valid]), BooleanMode::Union)
+                .unwrap_err()
+                .contains("must be finite")
+        );
+    }
+
     proptest! {
         #![proptest_config(ProptestConfig {
             cases: 512,
@@ -918,6 +1299,58 @@ mod tests {
             let source = radial_fuzz_polyline(vertex_count, &radius_scale, &bulge_values);
             let offsets = source.offsets_for_display(distance).unwrap();
             assert_valid_offset_set(&offsets, false);
+        }
+
+        #[test]
+        fn contour_slices_fuzz_dense_intersection_sets(
+            bands in 4_usize..14,
+            dx in -1.25_f64..1.25,
+            dy in -1.25_f64..1.25,
+            first_skew in -0.85_f64..0.85,
+            second_skew in -0.85_f64..0.85,
+        ) {
+            let first = alternating_band_polyline(bands, first_skew, 0.0, 1.0);
+            let second = alternating_band_polyline(bands, second_skew + dx, dy, -1.0);
+
+            let (first_slices, second_slices) = contour_slices(&first, &second).unwrap();
+
+            assert_valid_slice_set(&first_slices, true);
+            assert_valid_slice_set(&second_slices, true);
+        }
+
+        #[test]
+        fn contour_slices_fuzz_arc_heavy_display_state(
+            vertex_count in 3_usize..12,
+            first_radii in proptest::collection::vec(0.55_f64..1.45, 12),
+            second_radii in proptest::collection::vec(0.55_f64..1.45, 12),
+            first_bulges in proptest::collection::vec(-0.95_f64..0.95, 12),
+            second_bulges in proptest::collection::vec(-0.95_f64..0.95, 12),
+            dx in -4.0_f64..4.0,
+            dy in -4.0_f64..4.0,
+            angle_shift in 0.0_f64..0.9,
+        ) {
+            let first = radial_polyline_with_transform(
+                vertex_count,
+                &first_radii,
+                &first_bulges,
+                0.0,
+                0.0,
+                0.0,
+            );
+            let second = radial_polyline_with_transform(
+                vertex_count,
+                &second_radii,
+                &second_bulges,
+                dx,
+                dy,
+                angle_shift,
+            );
+
+            let first_has_events = contour_has_slice_events(&first, &second).unwrap();
+            let (first_slices, second_slices) = contour_slices(&first, &second).unwrap();
+
+            assert_valid_slice_set(&first_slices, first_has_events);
+            assert_valid_slice_set(&second_slices, first_has_events);
         }
     }
 
@@ -939,19 +1372,95 @@ mod tests {
         radius_scale: &[f64],
         bulge_values: &[f64],
     ) -> Polyline {
+        radial_polyline_with_transform(vertex_count, radius_scale, bulge_values, 0.0, 0.0, 0.0)
+    }
+
+    fn radial_polyline_with_transform(
+        vertex_count: usize,
+        radius_scale: &[f64],
+        bulge_values: &[f64],
+        dx: f64,
+        dy: f64,
+        angle_shift: f64,
+    ) -> Polyline {
         let vertices: Vec<_> = (0..vertex_count)
             .map(|index| {
-                let angle = index as f64 * std::f64::consts::TAU / vertex_count as f64;
+                let angle =
+                    angle_shift + index as f64 * std::f64::consts::TAU / vertex_count as f64;
                 let radius = 12.0 * radius_scale[index];
-                let bulge = if index % 3 == 0 {
+                let bulge = if index % 4 == 0 {
                     0.0
                 } else {
                     bulge_values[index]
                 };
-                (radius * angle.cos(), radius * angle.sin(), bulge)
+                (dx + radius * angle.cos(), dy + radius * angle.sin(), bulge)
             })
             .collect();
         Polyline::closed(&vertices)
+    }
+
+    fn contour_has_slice_events(first: &Polyline, second: &Polyline) -> Result<bool, String> {
+        let first = first.to_contour()?;
+        let second = second.to_contour()?;
+        let policy = policy();
+        Ok(!first
+            .intersect_contour(&second, &policy)
+            .map_err(|error| error.to_string())?
+            .is_empty()
+            || !first
+                .intersect_self(&policy)
+                .map_err(|error| error.to_string())?
+                .is_empty()
+            || !second
+                .intersect_self(&policy)
+                .map_err(|error| error.to_string())?
+                .is_empty())
+    }
+
+    fn alternating_band_polyline(bands: usize, skew: f64, y_offset: f64, direction: f64) -> Polyline {
+        let mut vertices = Vec::with_capacity(bands * 2 + 2);
+        let height = 18.0;
+        let step = 2.0;
+        vertices.push((0.0, y_offset, 0.0));
+        for index in 0..=bands {
+            let x = index as f64 * step;
+            let top_x = x + skew * (index as f64 / bands.max(1) as f64);
+            if index % 2 == 0 {
+                vertices.push((top_x, y_offset + direction * height, 0.0));
+            } else {
+                vertices.push((x - skew, y_offset - direction * height * 0.12, 0.0));
+            }
+        }
+        vertices.push((bands as f64 * step + 1.5, y_offset, 0.0));
+        Polyline::closed(&vertices)
+    }
+
+    fn assert_valid_slice_set(slices: &[Polyline], require_non_empty: bool) {
+        if require_non_empty {
+            assert!(!slices.is_empty(), "expected at least one slice");
+        }
+
+        for slice in slices {
+            assert!(!slice.is_closed(), "slices should be open fragments");
+            assert!(
+                slice.vertex_data.len() >= 2,
+                "slice fragments should have at least two vertices"
+            );
+            for vertex in &slice.vertex_data {
+                assert!(vertex.x.is_finite(), "slice vertex x must be finite");
+                assert!(vertex.y.is_finite(), "slice vertex y must be finite");
+                assert!(vertex.bulge.is_finite(), "slice vertex bulge must be finite");
+            }
+            let points = slice.sample_points(SAMPLE_STEP);
+            assert!(
+                points.len() >= 2,
+                "slice sampling should retain at least two points"
+            );
+            assert!(
+                points.windows(2).any(|pair| !nearly_same_point(pair[0], pair[1])),
+                "slice should not collapse to a zero-length display fragment"
+            );
+        }
     }
 
     fn assert_valid_offset_set(polylines: &[Polyline], require_non_empty: bool) {

@@ -1,21 +1,21 @@
 use hypercurve::{
     Aabb2, BulgeVertex2, CircularArc2, Classification, Contour2, CurvePolicy, CurveString2,
-    DefaultBackend, LineSeg2, Point2, Region2, Scalar, Segment2, UncertaintyReason,
+    LineSeg2, Point2, Real, Region2, Segment2, UncertaintyReason,
 };
 
-fn s(value: i32) -> Scalar<DefaultBackend> {
+fn s(value: i32) -> Real {
     value.into()
 }
 
-fn p(x: i32, y: i32) -> Point2<DefaultBackend> {
+fn p(x: i32, y: i32) -> Point2 {
     Point2::new(s(x), s(y))
 }
 
-fn line(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> LineSeg2<DefaultBackend> {
+fn line(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> LineSeg2 {
     LineSeg2::try_new(p(start_x, start_y), p(end_x, end_y)).unwrap()
 }
 
-fn line_segment(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> Segment2<DefaultBackend> {
+fn line_segment(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> Segment2 {
     Segment2::Line(line(start_x, start_y, end_x, end_y))
 }
 
@@ -23,11 +23,7 @@ fn policy() -> CurvePolicy {
     CurvePolicy::certified()
 }
 
-fn assert_bbox(
-    bbox: &Aabb2<DefaultBackend>,
-    min: Point2<DefaultBackend>,
-    max: Point2<DefaultBackend>,
-) {
+fn assert_bbox(bbox: &Aabb2, min: Point2, max: Point2) {
     assert_eq!(bbox.min(), &min);
     assert_eq!(bbox.max(), &max);
 }
@@ -141,7 +137,7 @@ fn region_aabb_unions_material_and_hole_boundaries() {
 #[test]
 fn empty_region_aabb_is_explicitly_unsupported() {
     assert_eq!(
-        Aabb2::from_region(&Region2::<DefaultBackend>::empty(), &policy()).unwrap(),
+        Aabb2::from_region(&Region2::empty(), &policy()).unwrap(),
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
 }
