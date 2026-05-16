@@ -214,16 +214,22 @@ fn resolve_auto_algorithm(
 ) -> Result<PolygonTriangulationAlgorithm> {
     // Structural-dispatch note: `Auto` consumes only facts already retained on
     // `PolygonInput`; it does not probe primitive coordinates or run topology
-    // predicates early. Degenerate or unknown-zero ring edges are a conservative
-    // reason to keep the boundary-preserving earcut path when it is available,
-    // because the CDT route has to materialize every ring edge as a constraint
-    // before legalization. This is advisory scheduling in Yap's sense, not a
+    // predicates early. Degenerate/unknown-zero edges, uncertified ring
+    // orientation, and unknown local turn consistency are conservative reasons
+    // to keep the boundary-preserving earcut path when it is available, because
+    // the CDT route has to materialize every ring edge as a constraint before
+    // legalization. This is advisory scheduling in Yap's sense, not a
     // correctness certificate; the selected algorithm still owns exact
-    // orientation and containment predicates. See Yap, "Towards Exact Geometric
-    // Computation," *Computational Geometry* 7.1-2 (1997).
+    // orientation and containment predicates. See Yap, "Towards Exact
+    // Geometric Computation," *Computational Geometry* 7.1-2 (1997).
     let boundary_cleanup_preferred = facts.is_some_and(|facts| {
-        facts.known_degenerate_edge_count() > 0 || facts.unknown_edge_zero_status_count() > 0
+        facts.known_degenerate_edge_count() > 0
+            || facts.unknown_edge_zero_status_count() > 0
+            || !facts.all_ring_orientations_certified()
+            || facts.unknown_convexity_ring_count() > 0
     });
+    #[cfg(not(all(feature = "cdt", feature = "earcut")))]
+    let _ = boundary_cleanup_preferred;
     let algorithm = match quality {
         #[cfg(all(feature = "cdt", feature = "earcut"))]
         QualityPolicy::PreferDelaunay if boundary_cleanup_preferred => {

@@ -66,6 +66,27 @@ pub type Triangle = [usize; 3];
 /// Flat earcut-compatible triangle index buffer.
 pub type TriangleIndices = Vec<usize>;
 
+/// Local turn consistency known for one polygon ring.
+///
+/// This is advisory scheduling metadata for exact triangulation algorithms. It
+/// summarizes certified signs of adjacent edge turns, but it is not a polygon
+/// simplicity proof and must not replace exact containment, visibility, or
+/// constraint predicates. The separation follows Yap's object-fact layer: cheap
+/// certified structure can select algorithms, while predicates still certify
+/// topology. See Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RingConvexity {
+    /// Fewer than three useful vertices, or every certified local turn is zero.
+    Degenerate,
+    /// Every certified nonzero local turn has the same sign and no turn is unknown.
+    LocallyConvex,
+    /// Certified nonzero local turns contain both signs.
+    MixedTurns,
+    /// At least one local turn could not be certified.
+    Unknown,
+}
+
 /// Structural facts retained for one polygon input ring.
 ///
 /// These facts are inexpensive summaries over exact `Real` coordinates. They
@@ -84,6 +105,14 @@ pub struct RingInputFacts {
     pub known_axis_aligned_edges: usize,
     /// Number of edges with at least one coordinate-zero status that remains unknown.
     pub unknown_edge_zero_status: usize,
+    /// Certified sign of twice the signed ring area, when available.
+    ///
+    /// Positive and negative signs are orientation facts; zero means the
+    /// shoelace area is exactly zero. `None` means the fact was not certified
+    /// cheaply under the predicate policy used while building input facts.
+    pub signed_area: Option<Sign>,
+    /// Certified local turn consistency for the ring.
+    pub convexity: RingConvexity,
 }
 
 impl RingInputFacts {
@@ -174,6 +203,19 @@ impl PolygonInputFacts {
             .iter()
             .map(|ring| ring.unknown_edge_zero_status)
             .sum()
+    }
+
+    /// Return true when every ring has certified exact area orientation.
+    pub fn all_ring_orientations_certified(&self) -> bool {
+        self.rings.iter().all(|ring| ring.signed_area.is_some())
+    }
+
+    /// Return the number of rings whose local turns could not all be certified.
+    pub fn unknown_convexity_ring_count(&self) -> usize {
+        self.rings
+            .iter()
+            .filter(|ring| ring.convexity == RingConvexity::Unknown)
+            .count()
     }
 }
 
@@ -284,6 +326,8 @@ impl RingInputFacts {
             known_degenerate_edges: 0,
             known_axis_aligned_edges: 0,
             unknown_edge_zero_status: 0,
+            signed_area: ring_area_sign(vertices, start, end),
+            convexity: ring_convexity(vertices, start, end),
         };
 
         let len = end.saturating_sub(start);
@@ -313,6 +357,90 @@ impl RingInputFacts {
         }
 
         facts
+    }
+}
+
+fn ring_area_sign(vertices: &[ExactPoint], start: usize, end: usize) -> Option<Sign> {
+    let ring = predicate_ring(vertices, start, end);
+    if ring.len() < 3 {
+        return Some(Sign::Zero);
+    }
+
+    // The shoelace determinant is the standard signed-area predicate from
+    // polygon geometry; see de Berg et al., *Computational Geometry:
+    // Algorithms and Applications*, 3rd ed. (2008). `hypertri` stores only the
+    // certified sign as an object fact, while `hyperlimit` owns the predicate.
+    hyperlimit::ring_area_sign_with_policy(&ring, fact_predicate_policy())
+        .value()
+        .map(map_hyperlimit_sign)
+}
+
+fn ring_convexity(vertices: &[ExactPoint], start: usize, end: usize) -> RingConvexity {
+    let ring = predicate_ring(vertices, start, end);
+    if ring.len() < 3 {
+        return RingConvexity::Degenerate;
+    }
+
+    let mut saw_positive = false;
+    let mut saw_negative = false;
+    for index in 0..ring.len() {
+        let previous = &ring[(index + ring.len() - 1) % ring.len()];
+        let current = &ring[index];
+        let next = &ring[(index + 1) % ring.len()];
+        let Some(sign) =
+            hyperlimit::orient2d_with_policy(previous, current, next, fact_predicate_policy())
+                .value()
+        else {
+            return RingConvexity::Unknown;
+        };
+
+        match sign {
+            hyperlimit::Sign::Positive => saw_positive = true,
+            hyperlimit::Sign::Negative => saw_negative = true,
+            hyperlimit::Sign::Zero => {}
+        }
+
+        if saw_positive && saw_negative {
+            return RingConvexity::MixedTurns;
+        }
+    }
+
+    if saw_positive || saw_negative {
+        RingConvexity::LocallyConvex
+    } else {
+        RingConvexity::Degenerate
+    }
+}
+
+fn predicate_ring(vertices: &[ExactPoint], start: usize, end: usize) -> Vec<hyperlimit::Point2> {
+    let mut open_end = end.min(vertices.len());
+    let start = start.min(open_end);
+    if open_end > start + 1 && vertices[start] == vertices[open_end - 1] {
+        open_end -= 1;
+    }
+
+    vertices[start..open_end]
+        .iter()
+        .map(predicate_point)
+        .collect()
+}
+
+fn predicate_point(point: &ExactPoint) -> hyperlimit::Point2 {
+    hyperlimit::Point2::new(point.x.clone(), point.y.clone())
+}
+
+fn fact_predicate_policy() -> hyperlimit::PredicatePolicy {
+    hyperlimit::PredicatePolicy {
+        allow_refinement: false,
+        ..hyperlimit::PredicatePolicy::STRICT
+    }
+}
+
+fn map_hyperlimit_sign(sign: hyperlimit::Sign) -> Sign {
+    match sign {
+        hyperlimit::Sign::Negative => Sign::Negative,
+        hyperlimit::Sign::Zero => Sign::Zero,
+        hyperlimit::Sign::Positive => Sign::Positive,
     }
 }
 

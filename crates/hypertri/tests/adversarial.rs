@@ -44,13 +44,59 @@ fn polygon_input_retains_ring_structural_facts() {
     assert_eq!(facts.rings[0].known_degenerate_edges, 1);
     assert_eq!(facts.rings[0].known_axis_aligned_edges, 4);
     assert_eq!(facts.rings[0].unknown_edge_zero_status, 0);
+    assert_eq!(facts.rings[0].signed_area, Some(hypertri::Sign::Positive));
+    assert_eq!(
+        facts.rings[0].convexity,
+        hypertri::RingConvexity::LocallyConvex
+    );
     assert_eq!(facts.rings[1].start, 5);
     assert_eq!(facts.rings[1].end, 8);
     assert_eq!(facts.rings[1].known_degenerate_edges, 1);
     assert_eq!(facts.rings[1].known_axis_aligned_edges, 2);
     assert_eq!(facts.rings[1].unknown_edge_zero_status, 0);
+    assert_eq!(facts.rings[1].signed_area, Some(hypertri::Sign::Zero));
+    assert_eq!(
+        facts.rings[1].convexity,
+        hypertri::RingConvexity::Degenerate
+    );
     assert_eq!(facts.known_degenerate_edge_count(), 2);
     assert_eq!(facts.unknown_edge_zero_status_count(), 0);
+    assert!(facts.all_ring_orientations_certified());
+    assert_eq!(facts.unknown_convexity_ring_count(), 0);
+}
+
+#[test]
+fn polygon_input_retains_exact_ring_orientation_and_turn_facts() {
+    let convex = hypertri::PolygonInput::new(vec![p(0, 0), p(4, 0), p(4, 3), p(0, 3)], vec![]);
+    assert_eq!(
+        convex.facts().rings[0].signed_area,
+        Some(hypertri::Sign::Positive)
+    );
+    assert_eq!(
+        convex.facts().rings[0].convexity,
+        hypertri::RingConvexity::LocallyConvex
+    );
+
+    let concave =
+        hypertri::PolygonInput::new(vec![p(0, 0), p(4, 0), p(4, 4), p(2, 1), p(0, 4)], vec![]);
+    assert_eq!(
+        concave.facts().rings[0].signed_area,
+        Some(hypertri::Sign::Positive)
+    );
+    assert_eq!(
+        concave.facts().rings[0].convexity,
+        hypertri::RingConvexity::MixedTurns
+    );
+
+    let reversed = hypertri::PolygonInput::new(vec![p(0, 3), p(4, 3), p(4, 0), p(0, 0)], vec![]);
+    assert_eq!(
+        reversed.facts().rings[0].signed_area,
+        Some(hypertri::Sign::Negative)
+    );
+    assert_eq!(
+        reversed.facts().rings[0].convexity,
+        hypertri::RingConvexity::LocallyConvex
+    );
 }
 
 #[test]

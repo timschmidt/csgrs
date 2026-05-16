@@ -50,7 +50,11 @@ proptest! {
         ];
 
         let triangles = hypertri::earcut(&vertices, &[]).unwrap();
+        let facts = hypertri::PolygonInput::new(vertices.clone(), vec![]).facts().clone();
 
+        prop_assert_eq!(facts.rings[0].signed_area, Some(hypertri::Sign::Positive));
+        prop_assert_eq!(facts.rings[0].convexity, hypertri::RingConvexity::MixedTurns);
+        prop_assert!(facts.all_ring_orientations_certified());
         prop_assert_eq!(triangles.len(), 12);
         for triangle in triangles.chunks_exact(3) {
             prop_assert!(triangle.iter().all(|&index| index < vertices.len()));
@@ -108,6 +112,10 @@ proptest! {
             p(x, y + height),
         ];
         let constraints = vec![Constraint::new(1, 3)];
+        let facts = hypertri::PolygonInput::new(points.clone(), vec![]).facts().clone();
+
+        prop_assert_eq!(facts.rings[0].signed_area, Some(hypertri::Sign::Positive));
+        prop_assert_eq!(facts.rings[0].convexity, hypertri::RingConvexity::LocallyConvex);
 
         let triangulation = hypertri::cdt::constrained_delaunay(&points, &constraints).unwrap();
 

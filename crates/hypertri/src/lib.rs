@@ -33,7 +33,7 @@ pub use runtime::{
     plan_polygon_triangulation, triangulate_polygon,
 };
 pub use types::{
-    Constraint, ExactPoint, Point2, PolygonInput, PolygonInputFacts, Rational, Real,
+    Constraint, ExactPoint, Point2, PolygonInput, PolygonInputFacts, Rational, Real, RingConvexity,
     RingInputFacts, Sign, Triangle, TriangleIndices, TriangleLocation,
 };
 

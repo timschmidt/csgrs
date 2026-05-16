@@ -10,6 +10,11 @@ validated and lifted into exact hyperreal-backed coordinates before topology is
 decided. The default feature set exposes the exact hyperreal APIs; enable
 `f64-interop` only at IO, rendering, or compatibility boundaries.
 
+## WASM Demo
+
+The deployed WASM app is available at
+<https://timschmidt.github.io/hypertri/>.
+
 The current owned implementation includes simple and holed earcut-style polygon
 triangulation with exact local-intersection curing and split fallback, exact
 incremental Delaunay triangulation for point sets, and closed-ring constrained
@@ -44,17 +49,17 @@ production dependencies of `hypertri`.
 `hypertri` owns triangulation topology: polygon normalization, ring and hole
 inputs, linked earcut nodes, CDT/DCEL records, constraint graphs, protected edge
 metadata, runtime algorithm selection, output validation, and triangulation
-result records. Exact orientation and in-circle signs are delegated to
-`hyperlimit`, while polygon object facts consume scalar summaries from
-`hyperreal::Real`.
+result records. Exact orientation, ring area, local turn, and in-circle signs
+are delegated to `hyperlimit`, while polygon object facts consume scalar
+summaries from `hyperreal::Real`.
 
 Structural metadata should be retained when it is cheap to discover: source
-vertex ids, duplicate classes, collinear chains, exact ring area signs,
-integer-grid, dyadic-scale, shared-denominator, symbolic dependency facts,
-bounding boxes, convex/reflex bits, constraint-subsegment provenance,
-protected-edge flags, and cavity boundary facts. These facts select faster
-exact algorithms and reduce candidate sets; they do not permit lossy topology
-decisions.
+vertex ids, duplicate classes, collinear chains, exact ring area signs, local
+turn consistency, integer-grid, dyadic-scale, shared-denominator, symbolic
+dependency facts, bounding boxes, convex/reflex bits, constraint-subsegment
+provenance, protected-edge flags, and cavity boundary facts. These facts select
+faster exact algorithms and reduce candidate sets; they do not permit lossy
+topology decisions.
 
 ## Testing
 

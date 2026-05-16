@@ -52,6 +52,8 @@ fn bench_exact_triangulation(c: &mut Criterion) {
                 facts.all_coordinates_exact_rational(),
                 facts.has_shared_denominator_schedule(),
                 facts.rings[0].known_axis_aligned_edges,
+                facts.rings[0].signed_area,
+                facts.rings[0].convexity,
             )
         })
     });
