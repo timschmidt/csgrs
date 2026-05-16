@@ -92,7 +92,7 @@ fn test_nurbs_rectangle_bbox_and_transform() {
 #[cfg(all(feature = "nurbs", feature = "sketch"))]
 fn test_nurbs_to_sketch_tessellates_region() {
     let circle = crate::nurbs::Nurbs::<()>::circle(1.0, ()).unwrap();
-    let sketch = circle.to_sketch(Some(1e-3));
+    let sketch = circle.to_sketch_with_tolerance(Some(1e-3));
     let mp = sketch.to_multipolygon();
 
     assert_eq!(mp.0.len(), 1);
@@ -116,7 +116,7 @@ fn test_nurbs_boolean_intersection() {
 #[cfg(all(feature = "nurbs", feature = "sketch", feature = "mesh"))]
 fn test_nurbs_extrudes_to_mesh() {
     let rect = crate::nurbs::Nurbs::<()>::rectangle(2.0, 2.0, ());
-    let mesh = rect.extrude_vector(Vector3::new(0.0, 0.0, 1.0), Some(1e-3));
+    let mesh = rect.extrude_vector_with_tolerance(Vector3::new(0.0, 0.0, 1.0), Some(1e-3));
 
     assert!(!mesh.polygons.is_empty());
     assert!(mesh.bounding_box().maxs.z > 0.9);

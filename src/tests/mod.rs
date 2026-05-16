@@ -3,6 +3,8 @@
 mod support;
 
 mod bug_tests;
+#[cfg(feature = "cavalier")]
+mod cavalier_tests;
 mod csg_tests;
 mod extrude_slice_tests;
 mod flatten_slice_tests;

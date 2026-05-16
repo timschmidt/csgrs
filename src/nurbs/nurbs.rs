@@ -56,7 +56,10 @@ impl<M: Clone + Send + Sync + Debug> Nurbs<M> {
     }
 
     /// Return this NURBS geometry with replacement metadata.
-    pub fn with_metadata<T: Clone + Send + Sync + Debug>(self, metadata: T) -> Nurbs<T> {
+    pub fn with_metadata<NewM: Clone + Send + Sync + Debug>(
+        self,
+        metadata: NewM,
+    ) -> Nurbs<NewM> {
         Nurbs {
             regions: self.regions,
             bounding_box: OnceLock::new(),
@@ -65,9 +68,9 @@ impl<M: Clone + Send + Sync + Debug> Nurbs<M> {
     }
 
     /// Map this NURBS geometry's metadata while preserving its regions.
-    pub fn map_metadata<T: Clone + Send + Sync + Debug, F>(self, f: F) -> Nurbs<T>
+    pub fn map_metadata<NewM: Clone + Send + Sync + Debug, F>(self, f: F) -> Nurbs<NewM>
     where
-        F: FnOnce(M) -> T,
+        F: FnOnce(M) -> NewM,
     {
         Nurbs {
             regions: self.regions,
@@ -165,7 +168,15 @@ impl<M: Clone + Send + Sync + Debug> Nurbs<M> {
     }
 
     /// Convert the NURBS regions into geo polygons via tessellation.
-    pub fn to_multipolygon(&self, tolerance: Option<Real>) -> MultiPolygon<Real> {
+    pub fn to_multipolygon(&self) -> MultiPolygon<Real> {
+        self.to_multipolygon_with_tolerance(None)
+    }
+
+    /// Convert the NURBS regions into geo polygons with an explicit tessellation tolerance.
+    pub fn to_multipolygon_with_tolerance(
+        &self,
+        tolerance: Option<Real>,
+    ) -> MultiPolygon<Real> {
         MultiPolygon(
             self.tessellate_regions(tolerance)
                 .into_iter()
@@ -191,11 +202,17 @@ impl<M: Clone + Send + Sync + Debug> Nurbs<M> {
         )
     }
 
-    /// Convert into a `Sketch` by tessellating the NURBS boundaries.
+    /// Convert into a `Sketch` by tessellating the NURBS boundaries while preserving metadata.
     #[cfg(feature = "sketch")]
-    pub fn to_sketch(&self, tolerance: Option<Real>) -> Sketch<M> {
+    pub fn to_sketch(&self) -> Sketch<M> {
+        self.to_sketch_with_tolerance(None)
+    }
+
+    /// Convert into a `Sketch` with an explicit tessellation tolerance while preserving metadata.
+    #[cfg(feature = "sketch")]
+    pub fn to_sketch_with_tolerance(&self, tolerance: Option<Real>) -> Sketch<M> {
         let geometry = self
-            .to_multipolygon(tolerance)
+            .to_multipolygon_with_tolerance(tolerance)
             .0
             .into_iter()
             .map(Geometry::Polygon)
@@ -203,14 +220,21 @@ impl<M: Clone + Send + Sync + Debug> Nurbs<M> {
         Sketch::from_geo(GeometryCollection(geometry), self.metadata.clone())
     }
 
-    /// Convert into a `Mesh` by tessellating to a sketch and extruding.
+    /// Convert into a `Mesh` by tessellating to a sketch and extruding while preserving metadata.
     #[cfg(all(feature = "sketch", feature = "mesh"))]
-    pub fn extrude_vector(
+    pub fn extrude_vector(&self, direction: Vector3<Real>) -> Mesh<M> {
+        self.extrude_vector_with_tolerance(direction, None)
+    }
+
+    /// Convert into a `Mesh` with an explicit tessellation tolerance while preserving metadata.
+    #[cfg(all(feature = "sketch", feature = "mesh"))]
+    pub fn extrude_vector_with_tolerance(
         &self,
         direction: Vector3<Real>,
         tolerance: Option<Real>,
     ) -> Mesh<M> {
-        self.to_sketch(tolerance).extrude_vector(direction)
+        self.to_sketch_with_tolerance(tolerance)
+            .extrude_vector(direction)
     }
 
     fn boolean_regions(

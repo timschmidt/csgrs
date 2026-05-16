@@ -13,6 +13,7 @@
 //! - **metaballs**: enables an implementation of [metaballs](https://en.wikipedia.org/wiki/Metaballs)
 //! - **sdf**: signed distance fields ([sdf](https://en.wikipedia.org/wiki/Signed_distance_function)) using [fast-surface-nets](https://crates.io/crates/fast-surface-nets)
 //! - **offset**: use `geo` buffer operations
+//! - **cavalier**: use `cavalier_contours` for arc-preserving 2D booleans and offsets
 //! - **delaunay**: use `geo`s `spade` feature for triangulation
 //!
 //! #### Optional
@@ -31,6 +32,8 @@
 #![deny(unused)]
 #![warn(clippy::missing_const_for_fn, clippy::approx_constant, clippy::all)]
 
+#[cfg(feature = "cavalier")]
+pub mod cavalier;
 pub mod errors;
 pub mod float_types;
 pub mod io;

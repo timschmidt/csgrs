@@ -847,10 +847,10 @@ proptest! {
         use csgrs::nurbs::Nurbs;
 
         let nurbs: Nurbs<()> = Nurbs::rectangle(width, height, ());
-        let sketch = nurbs.to_sketch(None);
+        let sketch = nurbs.to_sketch();
         assert_triangles_finite(&sketch.triangulate());
 
-        let mesh = nurbs.extrude_vector(Vector3::new(0.0, 0.0, depth), ());
+        let mesh = nurbs.extrude_vector(Vector3::new(0.0, 0.0, depth));
         assert_mesh_sane(&mesh);
     }
 
