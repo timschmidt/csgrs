@@ -1,9 +1,9 @@
 # hypertri
 
-`hypertri` is a triangulation crate for the hyperreal geometry stack. It ports
-earcut-style polygon triangulation and spade-style constrained Delaunay
-triangulation into code owned by this crate, with topology decisions routed
-through crate-local exact predicates over `hyperreal::Real`.
+`hypertri` is a triangulation crate for the hyperreal geometry stack. It owns
+earcut-style polygon triangulation and incremental Delaunay / constrained
+Delaunay topology, with irreversible topology decisions routed through exact
+predicate helpers over `hyperreal::Real`.
 
 The crate treats `f64` as an interop boundary. Finite `f64` coordinates are
 validated and lifted into exact hyperreal-backed coordinates before topology is
@@ -15,15 +15,31 @@ decided. The default feature set exposes the exact hyperreal APIs; enable
 The deployed WASM app is available at
 <https://timschmidt.github.io/hypertri/>.
 
-The current owned implementation includes simple and holed earcut-style polygon
-triangulation with exact local-intersection curing and split fallback, exact
-incremental Delaunay triangulation for point sets, and closed-ring constrained
-triangulation for one exterior ring plus holes. The CDT path also recovers
-constraint segments by exact edge flips, inserts exact vertices at proper
-constraint intersections, splits constraints at those vertices and at existing
-collinear vertices, and re-legalizes unconstrained edges with exact in-circle
-predicates. Full DCEL cavity deletion/remeshing remains the next CDT porting
-surface.
+The app links back to the project repository and exercises the polygon earcut,
+point-set Delaunay, constrained CDT, and runtime-selection surfaces.
+
+## Current Status
+
+Implemented and tested:
+
+- Exact point and polygon input types backed by `hyperreal::Real`.
+- Ring normalization from flat vertices plus `hole_indices`.
+- Polygon structural facts for vertex/ring counts, known degenerate and
+  axis-aligned edges, exact-rational coordinate summaries, symbolic dependency
+  summaries, signed ring area, and local turn consistency.
+- Earcut-style triangulation for simple and holed polygons.
+- Local-intersection curing and split fallback for difficult earcut inputs.
+- Exact incremental Delaunay triangulation for point sets.
+- Closed-ring constrained triangulation for one exterior ring plus holes.
+- Constraint recovery by exact edge flips.
+- Exact vertex insertion at proper constraint intersections.
+- Constraint splitting at inserted intersection vertices and existing collinear
+  vertices.
+- Re-legalization of unconstrained edges with exact in-circle predicates.
+- Runtime polygon algorithm selection when `runtime-select` is enabled.
+- Optional `f64` entry points that reject non-finite input and exact-lift finite
+  coordinates before topology is decided.
+- WASM UI example built with Trunk and deployed through GitHub Pages.
 
 For constrained output, `constraints()` reports the caller's original
 constraints and `constraint_edges()` reports the planarized protected
@@ -31,6 +47,52 @@ subsegments that are actually present as triangulation edges. Exact results
 provide `validate()` for topology checks and
 `validate_unconstrained_edges_are_delaunay()` for the local constrained
 Delaunay legality check on unprotected interior edges.
+
+Still incomplete:
+
+- Full DCEL cavity deletion/remeshing is not yet ported.
+- The constrained triangulation path is intentionally conservative around cases
+  that need more complete cavity rebuilding or richer exact object facts.
+- Common-scale / homogeneous rational polygon facts are planned but not yet
+  first-class inputs.
+- `serde` is reserved but not yet a public topology serialization surface.
+
+## API Shape
+
+The exact API is the default:
+
+```rust
+use hypertri::{Point2, Real};
+
+fn main() -> hypertri::Result<()> {
+    let points = vec![
+        Point2::new(Real::from(0), Real::from(0)),
+        Point2::new(Real::from(1), Real::from(0)),
+        Point2::new(Real::from(0), Real::from(1)),
+    ];
+
+    let triangles = hypertri::earcut(&points, &[])?;
+    assert_eq!(triangles.len(), 3);
+    Ok(())
+}
+```
+
+The optional `f64` module is for IO, rendering, tests, and compatibility:
+
+```rust
+fn main() -> hypertri::Result<()> {
+    let triangles = hypertri::f64::earcut(
+        &[[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]],
+        &[],
+    )?;
+
+    assert_eq!(triangles.len(), 3);
+    Ok(())
+}
+```
+
+Those APIs lift finite primitive floats into exact `Real` values before
+topology branches run.
 
 ## Feature Flags
 
@@ -47,7 +109,7 @@ production dependencies of `hypertri`.
 ## Semantic Boundary
 
 `hypertri` owns triangulation topology: polygon normalization, ring and hole
-inputs, linked earcut nodes, CDT/DCEL records, constraint graphs, protected edge
+inputs, linked earcut nodes, CDT records, constraint graphs, protected edge
 metadata, runtime algorithm selection, output validation, and triangulation
 result records. Exact orientation, ring area, local turn, and in-circle signs
 are delegated to `hyperlimit`, while polygon object facts consume scalar
@@ -68,6 +130,21 @@ generators over exact integer and rational inputs. The fuzz properties check
 topology invariants such as valid triangle indices, non-degenerate triangle
 index triples, constrained edges preserved by the accepted CDT subset, and
 exact local Delaunay legality on unconstrained interior edges.
+
+Useful local checks:
+
+```text
+cargo test
+cargo test --features f64-interop
+cargo check --manifest-path examples/hypertri_ui/Cargo.toml --target wasm32-unknown-unknown
+cargo bench --bench earcut --features earcut,f64-interop
+cargo bench --bench delaunay --features cdt,f64-interop
+cargo bench --bench exact --features earcut,cdt
+```
+
+The GitHub Pages workflow checks out `hypertri`, `hyperreal`, and `hyperlimit`
+as sibling repositories because the manifests intentionally use local path
+dependencies while the crates are being developed together.
 
 ## References
 
