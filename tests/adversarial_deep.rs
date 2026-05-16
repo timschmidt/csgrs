@@ -773,16 +773,17 @@ fn adversarial_deep_nurbs_catalog_and_booleans_are_contained() {
         let result =
             catch_unwind(AssertUnwindSafe(|| Nurbs::<&str>::polyline(&points, "poly")));
         if let Ok(Ok(nurbs)) = result {
-            let mp = nurbs.to_multipolygon(Some(0.1));
+            let mp = nurbs.to_multipolygon_with_tolerance(Some(0.1));
             for polygon in mp.0 {
                 for coord in &polygon.exterior().0 {
                     assert!(coord.x.is_finite());
                     assert!(coord.y.is_finite());
                 }
             }
-            let sketch = nurbs.to_sketch(Some(0.1));
+            let sketch = nurbs.to_sketch_with_tolerance(Some(0.1));
             assert_sketch_sane(&sketch);
-            let mesh = nurbs.extrude_vector(Vector3::new(0.0, 0.0, 1.0), Some(0.1));
+            let mesh =
+                nurbs.extrude_vector_with_tolerance(Vector3::new(0.0, 0.0, 1.0), Some(0.1));
             assert_mesh_sane(&mesh);
         }
     }
@@ -796,7 +797,7 @@ fn adversarial_deep_nurbs_catalog_and_booleans_are_contained() {
         catch_unwind(AssertUnwindSafe(|| rect.try_intersection(&empty))),
     ] {
         if let Ok(Ok(nurbs)) = result {
-            let sketch = nurbs.to_sketch(Some(0.1));
+            let sketch = nurbs.to_sketch_with_tolerance(Some(0.1));
             assert_sketch_sane(&sketch);
         }
     }
@@ -807,7 +808,7 @@ fn adversarial_deep_nurbs_catalog_and_booleans_are_contained() {
             catch_unwind(AssertUnwindSafe(|| rect.try_intersection(&circle))),
         ] {
             if let Ok(Ok(nurbs)) = result {
-                let sketch = nurbs.to_sketch(Some(0.1));
+                let sketch = nurbs.to_sketch_with_tolerance(Some(0.1));
                 assert_sketch_sane(&sketch);
             }
         }

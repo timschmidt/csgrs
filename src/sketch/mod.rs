@@ -74,7 +74,7 @@ pub struct Sketch<M> {
     /// Lazily calculated AABB that spans `geometry`.
     pub bounding_box: OnceLock<Aabb>,
 
-    /// Whole-sketch metadata. Use `M = ()` for no metadata and `M = Option<T>`
+    /// Whole-sketch metadata. Use `M = ()` for no metadata and `M = Option<YourMetadata>`
     /// for optional metadata.
     pub metadata: M,
 
@@ -123,7 +123,10 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
     }
 
     /// Return this sketch with replacement metadata.
-    pub fn with_metadata<T: Clone + Send + Sync + Debug>(self, metadata: T) -> Sketch<T> {
+    pub fn with_metadata<NewM: Clone + Send + Sync + Debug>(
+        self,
+        metadata: NewM,
+    ) -> Sketch<NewM> {
         Sketch {
             geometry: self.geometry,
             bounding_box: OnceLock::new(),
@@ -134,9 +137,9 @@ impl<M: Clone + Send + Sync + Debug> Sketch<M> {
     }
 
     /// Map this sketch's metadata while preserving its geometry and origin.
-    pub fn map_metadata<T: Clone + Send + Sync + Debug, F>(self, f: F) -> Sketch<T>
+    pub fn map_metadata<NewM: Clone + Send + Sync + Debug, F>(self, f: F) -> Sketch<NewM>
     where
-        F: FnOnce(M) -> T,
+        F: FnOnce(M) -> NewM,
     {
         Sketch {
             geometry: self.geometry,

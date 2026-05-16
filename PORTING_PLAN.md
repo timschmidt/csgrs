@@ -5,23 +5,32 @@ This plan describes how `csgrs` should be ported onto the `hyperlimit`,
 The goal is to make `csgrs` more robust while keeping it focused on CSG and CAD
 modeling rather than turning it into a numeric kernel.
 
-The immediate transition should not jump straight from `csgrs`'s current
-f64/epsilon behavior to full `hyperreal` semantics. First, audit the existing
-f64 predicates and epsilon guards, teach `hyperlimit` to match or exceed those
-needs through an approximate backend, and then remove the duplicated
-`csgrs`-local epsilon system. Once `csgrs` depends on `hyperlimit` for
-approximate predicate behavior, porting the same predicate surface to
-`hyperreal` becomes a backend upgrade instead of a simultaneous semantic and API
-rewrite.
+The immediate transition should make `hyperreal` the primary numerical
+backbone. Auditing the current f64/epsilon behavior is still necessary, but only
+to capture compatibility fixtures, document old failure modes, and identify
+edge adapters. The replacement implementation should route scalar semantics
+through `hyperreal`, geometry storage and transforms through `hyperlattice`,
+and geometric decisions through `hyperlimit` predicates.
 
-The approximate f64 phase should evaluate
-[`decorum`](https://github.com/olson-sean-k/decorum) as a bridge for making
-floating-point behavior explicit before the full `hyperreal` port. `decorum`
-provides constrained IEEE-754 proxy types with total ordering, equivalence,
-hashing, configurable handling of non-real values, and `approx` integration.
-Those properties map directly to several current `csgrs` pain points: finite
-coordinate enforcement, deterministic map/set keys, explicit NaN/infinity
-policy, and centralized approximate comparisons.
+f64 support is allowed only at explicit interaction boundaries: existing public
+compatibility constructors, WASM/FFI bindings, file import/export, and
+third-party libraries that have not yet been harvested into the hyperreal stack.
+Adapters may use tools such as
+[`decorum`](https://github.com/olson-sean-k/decorum) to make finite IEEE-754
+policy explicit, but those adapters are not a core numerical backend and must
+not make silent topology decisions.
+
+## Numerical backbone policy
+
+- Hyperreal-backed values are the canonical internal numeric representation.
+- f64 is an edge format for compatibility, external libraries, and language
+  bindings.
+- Every f64 boundary must be named, centralized, tested, and documented as
+  exact lifting, lossy approximation, rejected input, or lossy export.
+- No f64-only algorithm should become a permanent core dependency for boolean,
+  predicate, triangulation, contour, offset, or construction decisions.
+- Approximate witnesses may propose candidates, but hyperlimit/hyperreal
+  predicates must certify topology or return explicit uncertainty.
 
 ## Branch and commit discipline during the port
 
@@ -333,15 +342,16 @@ The goal is not to freeze every old epsilon decision forever. The goal is to
 make the intended compatibility surface explicit, then let `hyperlimit` exceed
 it with better uncertainty handling and clearer classifications.
 
-### Phase 3: Add the `hyperlimit` approximate backend needed by `csgrs`
+### Phase 3: Add `hyperlimit` f64-boundary compatibility needed by `csgrs`
 
-Implement the `hyperlimit` approximate backend as the first replacement target
-for `csgrs`'s current f64 system.
+Implement only the f64-boundary compatibility needed to replace `csgrs`'s
+current scattered f64 system while keeping hyperreal as the target internal
+numeric model.
 
-This backend should:
+This boundary layer should:
 
 - accept current `csgrs` f64-like coordinate data through adapters
-- evaluate `decorum` constrained f64 proxy types for the approximate backend's
+- evaluate `decorum` constrained f64 proxy types for adapter-local
   scalar carrier, especially where finite-real invariants, total ordering,
   equality, hashing, or `approx` traits are required
 - use `decorum` at adapter and predicate boundaries first, not as a broad public
@@ -352,18 +362,20 @@ This backend should:
 - represent uncertainty explicitly
 - support the current classification cases, including `COPLANAR`, `FRONT`,
   `BACK`, and `SPANNING` translation at the `csgrs` boundary
-- centralize epsilon or approximate comparison behavior in `hyperlimit`
-- leave room for a later `hyperreal` backend behind the same predicate surface
+- centralize legacy epsilon or approximate comparison behavior at named
+  boundaries
+- feed the hyperreal-backed predicate surface rather than becoming a parallel
+  topology backend
 
 After this phase, `hyperlimit` should be able to replace the f64/epsilon
-predicate machinery in `csgrs` without requiring a full scalar or public API
-port.
+predicate machinery in `csgrs` without spreading primitive f64 decisions through
+the port.
 
 `decorum` should remain a transition and evaluation tool unless it proves to be
-the right implementation detail for the approximate backend. The long-term
-numeric ownership model still routes scalar semantics through `hyperreal`; any
-`decorum` use should either disappear behind `hyperlimit`/`hyperlattice`
-backend traits or become an internal f64 compatibility backend.
+the right implementation detail for f64 edge adapters. The long-term numeric
+ownership model routes scalar semantics through `hyperreal`; any `decorum` use
+should either disappear behind `hyperlimit`/`hyperlattice` traits or remain an
+internal f64 compatibility adapter.
 
 ### Phase 4: Introduce explicit adapter boundaries
 
@@ -430,7 +442,8 @@ correctness, not public API churn.
 ### Phase 5: Replace predicate calls and rip out local epsilon guards
 
 Replace direct robust predicate usage and local f64/epsilon guards in `csgrs`
-with `hyperlimit` approximate-backend calls.
+with `hyperlimit` calls that feed the hyperreal-backed predicate surface. f64
+compatibility behavior should remain confined to named boundary adapters.
 
 Initial targets:
 
@@ -549,7 +562,7 @@ Implementation plan:
 - add deprecation notes that point old `*_vector` and component methods toward
   the new trait-based input forms
 - route all coordinate conversion through the same finite/non-finite policy used
-  by the approximate backend adapters
+  by the f64 boundary adapters
 - add examples that demonstrate tuple, array, nalgebra, and future
   hyperlattice-compatible input forms side by side
 - add hyperreal constructor examples that demonstrate exact rational sketches,
@@ -614,19 +627,19 @@ are unavoidable, introduce them in a single documented release boundary.
 Today `csgrs` selects `Real` through `f32` and `f64` features. After the
 predicate and linear algebra ports are stable, decide whether `csgrs` should:
 
-- keep `f32` / `f64` as the primary public modes and use the new stack
-  internally for robustness, or
-- become generic over a `hyperlattice` backend, or
-- offer a small set of backend feature modes.
+- make the hyperreal-backed mode the primary public mode,
+- keep `f32` / `f64` only as compatibility/interop constructor and export
+  features, or
+- expose a very small set of backend feature modes for advanced users.
 
 The conservative default should be to preserve the current `Real`-based public
-API until the benefits of exposing backend generics are clear.
+API shape where possible while changing its internal backbone to hyperreal.
 
-### Phase 9: Port the predicate backend toward `hyperreal`
+### Phase 9: Complete and optimize the hyperreal predicate backend
 
-After the f64/epsilon system has been replaced by `hyperlimit`'s approximate
-backend, add or enable a `hyperreal`-backed implementation behind the same
-predicate-facing API.
+As the f64/epsilon system is replaced by `hyperlimit` boundary adapters and
+hyperreal-backed predicates, complete the `hyperreal` implementation behind the
+same predicate-facing API.
 
 At this point, the semantic boundary should already be correct:
 
@@ -835,12 +848,12 @@ Required fuzz targets:
 
 - fuzz 2D predicate triples and compare classification invariants
 - fuzz 3D predicate quadruples and compare classification invariants
-- fuzz finite/non-finite scalar payloads into approximate backend adapters
+- fuzz finite/non-finite scalar payloads into f64 boundary adapters
 - fuzz serialized parity fixtures so corpus entries survive backend changes
 
-### Phase 3 approximate backend and decorum tests
+### Phase 3 f64 boundary and decorum tests
 
-The approximate backend must prove that it centralizes f64 policy:
+The f64 boundary layer must prove that it centralizes f64 policy:
 
 - finite scalar wrapper tests
   - accepts ordinary finite values
@@ -863,7 +876,7 @@ The approximate backend must prove that it centralizes f64 policy:
   - uncertain results can be logged or inspected in diagnostics
   - uncertainty is not silently coerced in lower crates
 - epsilon centralization tests
-  - there is one source of tolerance policy for f64 approximate predicates
+  - there is one source of tolerance policy for f64 boundary predicates
   - per-call override behavior, if any, is explicit
   - old local tolerance helpers are not used after replacement
 
@@ -1241,7 +1254,7 @@ When moving 2D contour logic toward a hyperreal-aware path:
   - winding normalization
 - differential tests:
   - current `geo-buffer`/offset behavior vs new contour backend
-  - f64 transitional path vs hyperreal path
+  - f64 boundary path vs hyperreal path
   - known simple analytic offsets
 - fuzz tests:
   - random closed polylines
@@ -1318,7 +1331,7 @@ internals:
   - threshold sweeps
   - large images and memory bounds
 - cross-backend:
-  - exported geometry from f64 approximate backend imports under hyperreal mode
+  - exported geometry from f64 boundary adapters imports under hyperreal mode
   - hyperreal-generated output can be approximated for ordinary file formats
   - IO paths never require `hyperreal` public types unless explicitly enabled
 
@@ -1515,10 +1528,10 @@ Implementation plan:
   decisions
 - add lint/search gates that prevent direct `Real` determinant signs in CSG
   control flow once the predicate layer is active
-- model the first backend after CGAL's exact-predicate/inexact-construction
-  split: f64 storage with robust predicate classification
-- add a second backend that uses exact or hyperreal constructions for selected
-  operations, starting with polygon splitting and surface intersection points
+- model the primary backend after a hyperreal exact-predicate/exact-or-certified
+  construction split
+- allow inexact/f64 construction adapters only at import/export or third-party
+  library boundaries
 - include "construction poisoning" tests where an inexact split point is reused
   by later predicates; the test should prove whether the backend refines,
   reports uncertainty, or preserves the current f64 behavior intentionally
@@ -1863,8 +1876,8 @@ Implementation plan:
   plane classification, and convex hull-style examples
 - keep each demo minimal enough to explain in a failing assertion message
 - add README or developer-doc snippets showing why each demo matters
-- run the same demos against f64 approximate, `hyperlimit`, and hyperreal
-  backends
+- run the same demos against f64 boundary adapters, `hyperlimit`, and hyperreal
+  paths
 - preserve any old f64 failures as ignored tests or documented divergence tests
   until replacement is complete
 
@@ -1935,8 +1948,9 @@ Show-off examples:
 - IO formats should not leak lower-stack internals into public file APIs.
 - WASM is a supported platform target and binding layer, not a consumed or
   produced geometry file format.
-- Non-`csgrs` algorithms start behind explicit f64 conversion adapters, then
-  move toward harvested or native hyperreal implementations.
+- Non-`csgrs` algorithms start behind explicit f64 conversion adapters only
+  when unavoidable, then move toward harvested or native hyperreal
+  implementations.
 - Avoid moving a type downward just because it contains coordinates.
 - Avoid making `hyperlimit` responsible for CSG concepts such as polygon
   splitting policy or manifold repair.
@@ -1955,7 +1969,8 @@ behavior is under test. A focused first change would:
 
 1. Audit the existing `mesh::plane` f64/epsilon behavior.
 2. Add `hyperlimit` parity and stress tests for that behavior.
-3. Implement any approximate-backend features needed by those tests.
+3. Implement any hyperlimit predicate or f64-boundary adapter features needed by
+   those tests.
 4. Add conversion helpers from `csgrs::vertex::Vertex` and
    `csgrs::mesh::plane::Plane` into `hyperlimit` predicate inputs.
 5. Replace direct `robust::orient3d` comparisons with `hyperlimit::orient3d` or

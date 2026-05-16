@@ -28,7 +28,7 @@ pub struct BMesh<M: Clone + Send + Sync + Debug> {
     pub manifold: Option<Manifold>,
     /// Lazily computed Parry AABB for the solid.
     pub bounding_box: OnceLock<Aabb>,
-    /// Whole-shape metadata. Use `M = ()` for no metadata and `M = Option<T>`
+    /// Whole-shape metadata. Use `M = ()` for no metadata and `M = Option<YourMetadata>`
     /// for optional metadata.
     pub metadata: M,
 }
@@ -61,7 +61,10 @@ impl<M: Clone + Send + Sync + Debug> BMesh<M> {
     }
 
     /// Return this boolmesh wrapper with replacement metadata.
-    pub fn with_metadata<T: Clone + Send + Sync + Debug>(self, metadata: T) -> BMesh<T> {
+    pub fn with_metadata<NewM: Clone + Send + Sync + Debug>(
+        self,
+        metadata: NewM,
+    ) -> BMesh<NewM> {
         BMesh {
             manifold: self.manifold,
             bounding_box: OnceLock::new(),
@@ -70,9 +73,9 @@ impl<M: Clone + Send + Sync + Debug> BMesh<M> {
     }
 
     /// Map this boolmesh wrapper's metadata while preserving geometry.
-    pub fn map_metadata<T: Clone + Send + Sync + Debug, F>(self, f: F) -> BMesh<T>
+    pub fn map_metadata<NewM: Clone + Send + Sync + Debug, F>(self, f: F) -> BMesh<NewM>
     where
-        F: FnOnce(M) -> T,
+        F: FnOnce(M) -> NewM,
     {
         BMesh {
             manifold: self.manifold,

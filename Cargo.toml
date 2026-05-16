@@ -34,6 +34,7 @@ features = [
   "metaballs",
   "sdf",
   "offset",
+  "cavalier",
   "delaunay",
   "truetype-text",
   "hershey-text",
@@ -69,6 +70,7 @@ spade = { version = "2.15.0", optional = true }
 earcutr = { version = "0.5.0", optional = true }
 delaunay-triangulator = { package = "delaunay", version = "0.7.6", optional = true }
 boolmesh = { version = "0.1.5", optional = true }
+cavalier_contours = { version = "0.7.0", path = "../cavalier_contours/cavalier_contours", optional = true }
 
 rapier3d-f64 = { version = "0.31.0", optional = true }
 rapier3d = { version = "0.31.0", optional = true }
@@ -119,7 +121,7 @@ serde = { version = "1.0.228", optional = true }
 uuid = { version = "1.18", features = ["js"] }
 
 [features]
-default = ["f64", "bmesh", "mesh", "sketch", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "gerber-io", "chull-io", "image-io", "metaballs", "sdf", "offset", "delaunay", "truetype-text", "hershey-text"]
+default = ["f64", "bmesh", "mesh", "sketch", "cavalier", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "gerber-io", "chull-io", "image-io", "metaballs", "sdf", "offset", "delaunay", "truetype-text", "hershey-text"]
 parallel = [
   "rayon",
   "geo/multithreading",
@@ -148,6 +150,9 @@ sketch = [
 ]
 bmesh = [
   "boolmesh",
+]
+cavalier = [
+  "dep:cavalier_contours",
 ]
 # convex hull and minkowski sum
 chull-io = [

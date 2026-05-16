@@ -83,7 +83,7 @@ pub struct Mesh<M: Clone + Send + Sync + Debug> {
     /// Lazily built Parry TriMesh reused by query operations.
     pub query_trimesh: OnceLock<Option<TriMesh>>,
 
-    /// Whole-mesh metadata. Use `M = ()` for no metadata and `M = Option<T>`
+    /// Whole-mesh metadata. Use `M = ()` for no metadata and `M = Option<YourMetadata>`
     /// for optional metadata.
     pub metadata: M,
 }
@@ -136,7 +136,10 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     }
 
     /// Return this mesh with replacement metadata on the mesh and every polygon.
-    pub fn with_metadata<T: Clone + Send + Sync + Debug>(self, metadata: T) -> Mesh<T> {
+    pub fn with_metadata<NewM: Clone + Send + Sync + Debug>(
+        self,
+        metadata: NewM,
+    ) -> Mesh<NewM> {
         let polygons = self
             .polygons
             .into_iter()
@@ -152,9 +155,9 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     }
 
     /// Map metadata on the mesh and every polygon while preserving geometry.
-    pub fn map_metadata<T: Clone + Send + Sync + Debug, F>(self, mut f: F) -> Mesh<T>
+    pub fn map_metadata<NewM: Clone + Send + Sync + Debug, F>(self, mut f: F) -> Mesh<NewM>
     where
-        F: FnMut(M) -> T,
+        F: FnMut(M) -> NewM,
     {
         let polygons = self
             .polygons

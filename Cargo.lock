@@ -856,6 +856,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e748733b7cbc798e1434b6ac524f0c1ff2ab456fe201501e6497c8417a4fc33"
 
 [[package]]
+name = "cavalier_contours"
+version = "0.7.0"
+dependencies = [
+ "num-traits 0.2.19",
+ "static_aabb2d_index",
+]
+
+[[package]]
 name = "cc"
 version = "1.2.61"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1088,6 +1096,7 @@ dependencies = [
  "bevy_asset",
  "bevy_mesh",
  "boolmesh",
+ "cavalier_contours",
  "chull",
  "contour_tracing",
  "curvo",
@@ -3696,6 +3705,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "115beb9c69db2393ff10b75a1b8587a51716e5551d015001e55320ed279d32f9"
 dependencies = [
  "const_panic",
+]
+
+[[package]]
+name = "static_aabb2d_index"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1204bd3057a2225dc60d157bd921aaeaa4d318527bd32af4678cad39e5279849"
+dependencies = [
+ "num-traits 0.2.19",
 ]
 
 [[package]]
