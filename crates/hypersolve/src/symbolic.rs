@@ -369,6 +369,18 @@ fn pow_degree(value: ExprDegree, exponent: i64) -> ExprDegree {
 #[derive(Clone, Debug)]
 pub enum ExprEvalError {
     UnboundSymbol(SymbolRef),
+    /// A prepared expression object no longer matches the model shape it was
+    /// derived from.
+    ///
+    /// Exact-computation metadata is only valid while its structural
+    /// assumptions still hold. Yap frames this as choosing an arithmetic and
+    /// representation package for the current problem formulation, not as
+    /// creating a model-independent scalar cache. See Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    PreparedShapeMismatch {
+        expected_coefficients: usize,
+        actual_variables: usize,
+    },
     Hyperreal(HyperProblem),
 }
 

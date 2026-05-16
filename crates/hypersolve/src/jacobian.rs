@@ -2,6 +2,7 @@ use hyperreal::{Real, RealSign};
 
 use crate::eval::{EvalError, EvaluationContext};
 use crate::model::{ConstraintKind, Problem};
+use crate::prepared::PreparedProblem;
 
 #[derive(Clone, Debug)]
 pub struct FiniteDifferenceConfig {
@@ -24,7 +25,7 @@ pub fn finite_difference_jacobian(
     let step_estimate =
         config
             .step
-            .to_f64_approx()
+            .to_f64_lossy()
             .ok_or(EvalError::DenseSolverEstimateUnavailable(
                 "finite-difference step is not f64-estimable",
             ))?;
@@ -57,8 +58,36 @@ pub fn symbolic_jacobian(
     problem: &Problem,
     context: &EvaluationContext,
 ) -> Result<Vec<Vec<f64>>, EvalError> {
+    symbolic_jacobian_with_sparsity(problem, context, None)
+}
+
+/// Evaluate a symbolic Jacobian using cached dependency sparsity.
+///
+/// The returned matrix is still the dense `f64` adapter shape required by the
+/// current normal-equation backend. The difference is semantic ownership:
+/// structural zero columns are selected from [`PreparedProblem`] facts instead
+/// of rediscovered by differentiating every variable in every row. That follows
+/// Yap's exact-geometric-computation split between preserved object structure
+/// and approximate arithmetic adapters; see Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997).
+pub fn symbolic_jacobian_prepared(
+    prepared: &PreparedProblem<'_>,
+    context: &EvaluationContext,
+) -> Result<Vec<Vec<f64>>, EvalError> {
+    symbolic_jacobian_with_sparsity(
+        prepared.problem(),
+        context,
+        Some(prepared.jacobian_sparsity()),
+    )
+}
+
+fn symbolic_jacobian_with_sparsity(
+    problem: &Problem,
+    context: &EvaluationContext,
+    structural_sparsity: Option<&[Vec<bool>]>,
+) -> Result<Vec<Vec<f64>>, EvalError> {
     let mut rows = Vec::new();
-    for constraint in &problem.constraints {
+    for (constraint_index, constraint) in problem.constraints.iter().enumerate() {
         if !constraint.active {
             continue;
         }
@@ -80,7 +109,15 @@ pub fn symbolic_jacobian(
             rows.push(row);
             continue;
         }
-        for variable in &problem.variables {
+        let sparsity_row = structural_sparsity.and_then(|rows| rows.get(constraint_index));
+        for (column, variable) in problem.variables.iter().enumerate() {
+            if sparsity_row
+                .and_then(|row| row.get(column))
+                .is_some_and(|depends| !depends)
+            {
+                row.push(0.0);
+                continue;
+            }
             let derivative = constraint.residual.derivative(variable.symbol);
             let value = derivative.eval_real(context.bindings())?;
             // Structural-dispatch note: derivative expressions can carry a
@@ -90,7 +127,7 @@ pub fn symbolic_jacobian(
             // solvers.
             row.push(
                 (value * constraint.weight.clone())
-                    .to_f64_approx()
+                    .to_f64_lossy()
                     .unwrap_or(0.0),
             );
         }

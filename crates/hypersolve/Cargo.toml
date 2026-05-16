@@ -6,3 +6,6 @@ edition = "2024"
 [dependencies]
 hyperreal = { path = "../hyperreal" }
 hyperlattice = { path = "../hyperlattice", default-features = false }
+
+[dev-dependencies]
+proptest = "1.7.0"

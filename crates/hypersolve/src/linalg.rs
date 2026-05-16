@@ -1,13 +1,100 @@
+//! Linear-solver adapter boundary for `hypersolve`.
+//!
+//! The problem model, residual expressions, and structural sparsity facts live
+//! in exact `hyperreal::Real` space. This module is the named dense `f64`
+//! adapter used by the current iterative solver. Keeping that boundary explicit
+//! follows Yap's exact-geometric-computation separation: approximate numerical
+//! methods may be selected as adapters, but exact structure and combinatorial
+//! facts must not be silently replaced by primitive-float predicates. See Yap,
+//! "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+//! (1997).
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum LinearSolveError {
     Singular,
     DimensionMismatch,
 }
 
+/// Numerical adapter that produced a linear solve step.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LinearAdapterKind {
+    /// Dense primitive-float normal-equation adapter.
+    ///
+    /// This is a lossy numerical edge. It is suitable for iteration steps and
+    /// diagnostics, not for exact topology or symbolic rank decisions.
+    DenseF64NormalEquations,
+}
+
+/// Precision boundary crossed by a linear-solver adapter.
+///
+/// Solver iterations may use approximate numerical adapters, but that adapter
+/// status must remain visible to callers rather than becoming an implicit
+/// backend mode. This mirrors Yap's exact-geometric-computation separation
+/// between exact symbolic/geometric structure and approximate numerical stages;
+/// see Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LinearAdapterPrecision {
+    /// The adapter lowered exact residual/Jacobian data to primitive `f64`.
+    LossyF64,
+}
+
+impl LinearAdapterKind {
+    /// Return the precision boundary implied by this adapter.
+    pub const fn precision(self) -> LinearAdapterPrecision {
+        match self {
+            Self::DenseF64NormalEquations => LinearAdapterPrecision::LossyF64,
+        }
+    }
+
+    /// Return whether this adapter crosses a lossy primitive-float boundary.
+    pub const fn is_lossy(self) -> bool {
+        matches!(self.precision(), LinearAdapterPrecision::LossyF64)
+    }
+}
+
+/// Diagnostics returned by a linear-solver adapter.
+///
+/// These values describe the approximate adapter route, not a proof of exact
+/// rank or feasibility. The pivot metadata follows the standard Gaussian
+/// elimination diagnostic practice described by Higham, *Accuracy and
+/// Stability of Numerical Algorithms*, 2nd ed., SIAM, 2002. Future exact or
+/// mixed backends should add their own adapter variants rather than hiding
+/// exact/approximate status behind the same report.
 #[derive(Clone, Debug)]
 pub struct LinearSolveReport {
+    /// Adapter route used to compute the step.
+    pub adapter: LinearAdapterKind,
+    /// Whether the result crossed a lossy primitive-float boundary.
+    pub lossy: bool,
+    /// Structural rank hint observed by the adapter.
+    ///
+    /// For the dense f64 adapter this is only a pivot count after damping and
+    /// must not be treated as an exact symbolic rank.
     pub rank_hint: Option<usize>,
+    /// Damping added to the normal-equation diagonal.
     pub damping: f64,
+    /// Number of successful elimination pivots.
+    pub pivot_count: usize,
+    /// Number of row swaps performed during elimination.
+    pub row_swaps: usize,
+    /// Smallest absolute pivot accepted by the dense adapter.
+    pub min_abs_pivot: Option<f64>,
+    /// Largest absolute pivot accepted by the dense adapter.
+    pub max_abs_pivot: Option<f64>,
+}
+
+impl LinearSolveReport {
+    /// Return the precision boundary crossed by the adapter that produced this
+    /// report.
+    pub const fn precision(&self) -> LinearAdapterPrecision {
+        self.adapter.precision()
+    }
+
+    /// Return whether this report came from a lossy primitive-float adapter.
+    pub const fn is_lossy(&self) -> bool {
+        self.adapter.is_lossy() || self.lossy
+    }
 }
 
 pub trait LinearBackend {
@@ -42,8 +129,14 @@ impl LinearBackend for DenseLinearBackend {
             return Ok((
                 Vec::new(),
                 LinearSolveReport {
+                    adapter: LinearAdapterKind::DenseF64NormalEquations,
+                    lossy: true,
                     rank_hint: Some(0),
                     damping,
+                    pivot_count: 0,
+                    row_swaps: 0,
+                    min_abs_pivot: None,
+                    max_abs_pivot: None,
                 },
             ));
         };
@@ -65,19 +158,54 @@ impl LinearBackend for DenseLinearBackend {
             row[i] += damping;
         }
 
-        let step = solve_dense(normal, rhs)?;
+        let (step, diagnostics) = solve_dense(normal, rhs)?;
         Ok((
             step,
             LinearSolveReport {
+                adapter: LinearAdapterKind::DenseF64NormalEquations,
+                lossy: true,
                 rank_hint: Some(width),
                 damping,
+                pivot_count: diagnostics.pivot_count,
+                row_swaps: diagnostics.row_swaps,
+                min_abs_pivot: diagnostics.min_abs_pivot,
+                max_abs_pivot: diagnostics.max_abs_pivot,
             },
         ))
     }
 }
 
-fn solve_dense(mut matrix: Vec<Vec<f64>>, mut rhs: Vec<f64>) -> Result<Vec<f64>, LinearSolveError> {
+#[derive(Clone, Debug, Default, PartialEq)]
+struct DensePivotDiagnostics {
+    pivot_count: usize,
+    row_swaps: usize,
+    min_abs_pivot: Option<f64>,
+    max_abs_pivot: Option<f64>,
+}
+
+impl DensePivotDiagnostics {
+    fn record_pivot(&mut self, abs_pivot: f64, swapped: bool) {
+        self.pivot_count += 1;
+        if swapped {
+            self.row_swaps += 1;
+        }
+        self.min_abs_pivot = Some(
+            self.min_abs_pivot
+                .map_or(abs_pivot, |current| current.min(abs_pivot)),
+        );
+        self.max_abs_pivot = Some(
+            self.max_abs_pivot
+                .map_or(abs_pivot, |current| current.max(abs_pivot)),
+        );
+    }
+}
+
+fn solve_dense(
+    mut matrix: Vec<Vec<f64>>,
+    mut rhs: Vec<f64>,
+) -> Result<(Vec<f64>, DensePivotDiagnostics), LinearSolveError> {
     let n = rhs.len();
+    let mut diagnostics = DensePivotDiagnostics::default();
     for pivot in 0..n {
         let mut best = pivot;
         let mut best_abs = matrix[pivot][pivot].abs();
@@ -91,6 +219,7 @@ fn solve_dense(mut matrix: Vec<Vec<f64>>, mut rhs: Vec<f64>) -> Result<Vec<f64>,
         if best_abs <= f64::EPSILON {
             return Err(LinearSolveError::Singular);
         }
+        diagnostics.record_pivot(best_abs, best != pivot);
         if best != pivot {
             matrix.swap(best, pivot);
             rhs.swap(best, pivot);
@@ -114,5 +243,5 @@ fn solve_dense(mut matrix: Vec<Vec<f64>>, mut rhs: Vec<f64>) -> Result<Vec<f64>,
             rhs[row] -= factor * rhs[pivot];
         }
     }
-    Ok(rhs)
+    Ok((rhs, diagnostics))
 }

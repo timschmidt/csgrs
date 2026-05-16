@@ -77,8 +77,8 @@ pub fn evaluate_residuals(
         let weighted = signed.clone() * constraint.weight.clone();
         residuals.push(ResidualEvaluation {
             name: constraint.name.clone(),
-            dense_solver_estimate: signed.to_f64_approx(),
-            weighted_dense_solver_estimate: weighted.to_f64_approx(),
+            dense_solver_estimate: signed.to_f64_lossy(),
+            weighted_dense_solver_estimate: weighted.to_f64_lossy(),
             sign: facts.sign,
             value: signed,
         });
@@ -86,7 +86,7 @@ pub fn evaluate_residuals(
     Ok(residuals)
 }
 
-fn positive_part(value: Real) -> Real {
+pub(crate) fn positive_part(value: Real) -> Real {
     match value.structural_facts().sign {
         Some(RealSign::Negative) => Real::zero(),
         Some(RealSign::Zero) => Real::zero(),
