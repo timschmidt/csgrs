@@ -15,9 +15,6 @@ decided. The default feature set exposes the exact hyperreal APIs; enable
 The deployed WASM app is available at
 <https://timschmidt.github.io/hypertri/>.
 
-The app links back to the project repository and exercises the polygon earcut,
-point-set Delaunay, constrained CDT, and runtime-selection surfaces.
-
 ## Current Status
 
 Implemented and tested:
