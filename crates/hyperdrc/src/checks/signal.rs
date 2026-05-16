@@ -58,6 +58,7 @@ pub fn sensitive_net_spacing_readiness(
     );
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
+    let mut exact_pair_count = 0_usize;
 
     for &sensitive_index in &sensitive_indices {
         let sensitive = features[sensitive_index];
@@ -73,6 +74,7 @@ pub fn sensitive_net_spacing_readiness(
             if !sketches_within_clearance(&sensitive.sketch, &noisy.sketch, clearance) {
                 continue;
             }
+            exact_pair_count += 1;
 
             let overlap = sensitive
                 .sketch
@@ -109,11 +111,13 @@ pub fn sensitive_net_spacing_readiness(
     }
 
     log::trace!(
-        "sensitive-net spacing readiness: source={} candidate_pairs={} violations={}",
+        "sensitive-net spacing readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
         board.source,
         candidate_count,
+        exact_pair_count,
         violations.len()
     );
+    debug_assert!(exact_pair_count <= candidate_count);
 
     violations
 }
@@ -145,6 +149,7 @@ pub fn sensitive_return_readiness(
     let mut violations = Vec::new();
     let mut sensitive_count = 0_usize;
     let mut candidate_count = 0_usize;
+    let mut exact_guard_checks = 0_usize;
 
     for feature in features {
         let Some(net) = &feature.net else {
@@ -158,6 +163,7 @@ pub fn sensitive_return_readiness(
         let guard_candidates = ground_index.same_layer_near_feature(feature, guard_distance);
         candidate_count += guard_candidates.len();
         let has_guard = guard_candidates.into_iter().any(|ground_index| {
+            exact_guard_checks += 1;
             copper_features_touch(feature, ground_features[ground_index], guard_distance)
         });
         if has_guard {
@@ -178,12 +184,14 @@ pub fn sensitive_return_readiness(
     }
 
     log::trace!(
-        "sensitive-return readiness: source={} sensitive={} candidate_ground={} violations={}",
+        "sensitive-return readiness: source={} sensitive={} candidate_ground={} exact_guard_checks={} violations={}",
         board.source,
         sensitive_count,
         candidate_count,
+        exact_guard_checks,
         violations.len()
     );
+    debug_assert!(exact_guard_checks <= candidate_count);
 
     violations
 }
@@ -249,7 +257,9 @@ pub fn mixed_signal_partition_readiness(
     );
     let mut violations = Vec::new();
     let mut digital_candidate_count = 0_usize;
+    let mut exact_digital_pair_count = 0_usize;
     let mut guard_candidate_count = 0_usize;
+    let mut exact_guard_checks = 0_usize;
 
     for &sensitive_index in &sensitive_indices {
         let sensitive = features[sensitive_index];
@@ -266,10 +276,12 @@ pub fn mixed_signal_partition_readiness(
             if !sketches_within_clearance(&sensitive.sketch, &digital.sketch, separation) {
                 continue;
             }
+            exact_digital_pair_count += 1;
 
             let guard_candidates = ground_index.same_layer_near_feature(sensitive, guard_distance);
             guard_candidate_count += guard_candidates.len();
             let has_guard = guard_candidates.into_iter().any(|ground_index| {
+                exact_guard_checks += 1;
                 copper_features_touch(sensitive, ground_features[ground_index], guard_distance)
             });
             if has_guard {
@@ -311,12 +323,16 @@ pub fn mixed_signal_partition_readiness(
     }
 
     log::trace!(
-        "mixed-signal partition readiness: source={} digital_candidates={} guard_candidates={} violations={}",
+        "mixed-signal partition readiness: source={} digital_candidates={} exact_digital_pairs={} guard_candidates={} exact_guard_checks={} violations={}",
         board.source,
         digital_candidate_count,
+        exact_digital_pair_count,
         guard_candidate_count,
+        exact_guard_checks,
         violations.len()
     );
+    debug_assert!(exact_digital_pair_count <= digital_candidate_count);
+    debug_assert!(exact_guard_checks <= guard_candidate_count);
 
     violations
 }

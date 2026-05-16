@@ -93,7 +93,14 @@ pub fn component_edge_clearance_readiness(
     violations
 }
 
-/// Run the `component_hole_clearance_readiness` design-readiness check or report helper.
+/// Review component-pad proxies against non-plated mechanical-hole keepouts.
+///
+/// IPC-7351B treats component placement envelopes, courtyard spacing, and
+/// board-edge/process keepouts as assembly constraints. Because the current
+/// model does not carry full package bodies, this check uses parsed pads as
+/// conservative component proxies and applies a spatial broad phase before
+/// exact circular keepout intersection, following the broad/narrow query
+/// pattern in Ericson, *Real-Time Collision Detection* (2005).
 pub fn component_hole_clearance_readiness(
     board: &BoardModel,
     extra_drills: &[DrillFeature],
@@ -180,7 +187,12 @@ pub fn component_hole_clearance_readiness(
     violations
 }
 
-/// Run the `component_spacing_readiness` design-readiness check or report helper.
+/// Review spacing between large component-pad proxies on the same side.
+///
+/// IPC-7351B frames courtyard spacing as an assembly-process contract rather
+/// than only a copper DRC rule. Until parsed package courtyards are available,
+/// this readiness check uses large KiCad pads as conservative body proxies and
+/// runs exact polygon distance only after shared spatial candidate generation.
 pub fn component_spacing_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -202,12 +214,15 @@ pub fn component_spacing_readiness(
         pads.len(),
         candidate_pairs.len()
     );
+    let candidate_pair_count = candidate_pairs.len();
+    let mut exact_pair_count = 0usize;
     for (left_index, right_index) in candidate_pairs {
         let left = pads[left_index];
         let right = pads[right_index];
         if !sketches_within_clearance(&left.sketch, &right.sketch, clearance) {
             continue;
         }
+        exact_pair_count += 1;
 
         let gap = polygon_boundary_distance(
             &left.sketch.to_multipolygon(),
@@ -236,10 +251,24 @@ pub fn component_spacing_readiness(
         ));
     }
 
+    log::trace!(
+        "component spacing readiness: source={} exact_pairs={} violations={}",
+        board.source,
+        exact_pair_count,
+        violations.len()
+    );
+    debug_assert!(exact_pair_count <= candidate_pair_count);
+
     violations
 }
 
-/// Run the `connector_rework_clearance_readiness` design-readiness check or report helper.
+/// Review rework clearance around likely connector pads.
+///
+/// IPC-7711/7721 rework guidance treats connector replacement as a
+/// tool-access, thermal-control, and neighboring-component risk. This check
+/// infers connector pads from net names, uses the same spatial candidate pass as
+/// component spacing, and then reports exact polygon gaps below the configured
+/// rework clearance.
 pub fn connector_rework_clearance_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -270,6 +299,8 @@ pub fn connector_rework_clearance_readiness(
         connector_pads.len(),
         candidate_pairs.len()
     );
+    let candidate_pair_count = candidate_pairs.len();
+    let mut exact_pair_count = 0usize;
     for (left_index, right_index) in candidate_pairs {
         let (connector_index, neighbor_index) = match (
             connector_pads.contains(&left_index),
@@ -286,6 +317,7 @@ pub fn connector_rework_clearance_readiness(
         if connector.net.is_some() && connector.net == neighbor.net {
             continue;
         }
+        exact_pair_count += 1;
 
         let gap = polygon_boundary_distance(
             &connector.sketch.to_multipolygon(),
@@ -312,6 +344,14 @@ pub fn connector_rework_clearance_readiness(
             )),
         ));
     }
+
+    log::trace!(
+        "connector rework clearance readiness: source={} exact_pairs={} violations={}",
+        board.source,
+        exact_pair_count,
+        violations.len()
+    );
+    debug_assert!(exact_pair_count <= candidate_pair_count);
 
     violations
 }
@@ -350,11 +390,13 @@ pub fn pad_pair_asymmetry_readiness(
         .map(|(feature, _, _)| *feature)
         .collect::<Vec<_>>();
     let candidate_pairs = same_layer_feature_candidate_pairs(&pad_features, max_pair_gap);
+    let candidate_pair_count = candidate_pairs.len();
+    let mut exact_pair_count = 0_usize;
     log::trace!(
         "pad-pair asymmetry readiness: source={} pads={} candidate_pairs={} max_pair_gap={max_pair_gap:.6} max_area_ratio={max_area_ratio:.3} max_pad_dimension={max_pad_dimension:.6}",
         board.source,
         pads.len(),
-        candidate_pairs.len()
+        candidate_pair_count
     );
     for (left_index, right_index) in candidate_pairs {
         let (left, left_area, _) = pads[left_index];
@@ -373,6 +415,7 @@ pub fn pad_pair_asymmetry_readiness(
         if gap > max_pair_gap {
             continue;
         }
+        exact_pair_count += 1;
 
         let area_ratio = left_area.max(right_area) / left_area.min(right_area);
         if area_ratio <= max_area_ratio {
@@ -391,6 +434,14 @@ pub fn pad_pair_asymmetry_readiness(
             )),
         ));
     }
+
+    log::trace!(
+        "pad-pair asymmetry readiness: source={} exact_pairs={} violations={}",
+        board.source,
+        exact_pair_count,
+        violations.len()
+    );
+    debug_assert!(exact_pair_count <= candidate_pair_count);
 
     violations
 }
@@ -721,7 +772,7 @@ fn testpoint_bucket(location: [f64; 2], cell_size: f64) -> (i64, i64) {
     )
 }
 
-/// Run the `testpoint_copper_clearance_readiness` design-readiness check or report helper.
+/// Review IPC-D-356 probe keepouts against unrelated parsed copper.
 ///
 /// The probe keepout is a circular fixture envelope around each IPC-D-356 test
 /// access point. Candidate copper is found with the shared broad-phase grid
@@ -742,6 +793,7 @@ pub fn testpoint_copper_clearance_readiness(
     let copper_index = CopperSpatialIndex::new(&copper, minimum_diameter / 2.0 + clearance);
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
+    let mut exact_pair_count = 0_usize;
     log::trace!(
         "testpoint copper clearance readiness: source={} points={} copper={} buckets={} minimum_diameter={minimum_diameter:.6} clearance={clearance:.6} min_area={min_area:.9}",
         board.source,
@@ -777,6 +829,7 @@ pub fn testpoint_copper_clearance_readiness(
             if !feature_may_touch_circle(feature, point.location, keepout_radius) {
                 continue;
             }
+            exact_pair_count += 1;
 
             // IPC-9252B and DFT fixture practice treat probe access as both an
             // electrical and mechanical condition: nearby unrelated copper can
@@ -809,11 +862,13 @@ pub fn testpoint_copper_clearance_readiness(
     }
 
     log::trace!(
-        "testpoint copper clearance readiness: source={} candidate_pairs={} violations={}",
+        "testpoint copper clearance readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
         board.source,
         candidate_count,
+        exact_pair_count,
         violations.len()
     );
+    debug_assert!(exact_pair_count <= candidate_count);
 
     violations
 }
@@ -916,12 +971,14 @@ fn copper_layer_access_side(layer: &str) -> Option<Ipc356AccessSide> {
     }
 }
 
-/// Run the `tooling_hole_readiness` design-readiness check or report helper.
+/// Review likely non-plated tooling holes for count and edge clearance.
 ///
 /// Tooling holes are filtered by plated state and finished diameter before
 /// outline proximity is checked. The edge review stays exact through
-/// boundary-distance geometry, while trace counters make sparse drill-table
-/// behavior visible in fixture and package smoke runs.
+/// boundary-distance geometry. IPC-7351B and IPC-9252B-style assembly/test
+/// planning both rely on repeatable fixture registration, so sparse drill-table
+/// trace counters make missing or edge-crowded tooling evidence visible before
+/// release.
 pub fn tooling_hole_readiness(
     board: &BoardModel,
     extra_drills: &[DrillFeature],
@@ -1209,7 +1266,12 @@ pub fn fiducial_readiness(
     violations
 }
 
-/// Run the `fiducial_keepout_readiness` design-readiness check or report helper.
+/// Review likely fiducial targets for same-layer copper keepout intrusions.
+///
+/// IPC-7351B treats fiducials as placement registration features. This check
+/// models the optical clearance annulus as an offset target region, uses a
+/// feature-grid broad phase, and then reports exact CSG or boundary-touch
+/// intrusions that can reduce camera contrast.
 pub fn fiducial_keepout_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -1229,6 +1291,7 @@ pub fn fiducial_keepout_readiness(
     let blocker_index = FeatureGridIndex::new(&blockers, clearance);
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
+    let mut exact_pair_count = 0_usize;
     log::trace!(
         "fiducial keepout readiness: source={} fiducials={} blockers={} buckets={} clearance={clearance:.6} min_area={min_area:.9}",
         board.source,
@@ -1250,6 +1313,7 @@ pub fn fiducial_keepout_readiness(
             if !sketches_within_clearance(&fiducial.sketch, &blocker.sketch, clearance) {
                 continue;
             }
+            exact_pair_count += 1;
 
             // IPC-7351B treats fiducials as assembly registration features. A
             // clear copper-free annulus around the target improves optical
@@ -1281,22 +1345,25 @@ pub fn fiducial_keepout_readiness(
     }
 
     log::trace!(
-        "fiducial keepout readiness: source={} candidate_pairs={} violations={}",
+        "fiducial keepout readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
         board.source,
         candidate_count,
+        exact_pair_count,
         violations.len()
     );
+    debug_assert!(exact_pair_count <= candidate_count);
 
     violations
 }
 
-/// Review solder-process clearance around likely through-hole solder features.
+/// Review likely wave/selective-solder process holes against nearby pads.
 ///
-/// This is a process-readiness heuristic, not a solder-flow simulation. IPC
-/// J-STD-001H treats through-hole soldering workmanship as process controlled;
-/// hyperdrc therefore flags likely wave/selective solder features that are
-/// close to other pads so the engineer can confirm pallet, solder-thief, and
-/// masking intent before release.
+/// IPC J-STD-001H treats soldering as a controlled process, and IPC-7530
+/// profiling guidance reinforces that solder process windows are not captured
+/// by copper spacing alone. This check uses plated, solder-process-like drill
+/// nets as conservative anchors so reviewers can confirm pallet, solder-thief,
+/// and masking intent. It applies Ericson-style broad/narrow filtering before
+/// exact circular keepout intersection.
 pub fn selective_wave_solder_keepout_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -1317,6 +1384,7 @@ pub fn selective_wave_solder_keepout_readiness(
         .collect::<Vec<_>>();
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
+    let mut exact_pair_count = 0_usize;
     log::trace!(
         "selective/wave solder keepout readiness: source={} drills={} pads={} buckets={} keepout={keepout:.6} min_area={min_area:.9}",
         board.source,
@@ -1342,6 +1410,7 @@ pub fn selective_wave_solder_keepout_readiness(
             if !feature_may_touch_circle(pad, drill.location, keepout_radius) {
                 continue;
             }
+            exact_pair_count += 1;
             let overlap = keepout_sketch.intersection(&pad.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
             let touching = shapes.is_empty()
@@ -1369,11 +1438,13 @@ pub fn selective_wave_solder_keepout_readiness(
     }
 
     log::trace!(
-        "selective/wave solder keepout readiness: source={} candidate_pairs={} violations={}",
+        "selective/wave solder keepout readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
         board.source,
         candidate_count,
+        exact_pair_count,
         violations.len()
     );
+    debug_assert!(exact_pair_count <= candidate_count);
 
     violations
 }
@@ -1381,8 +1452,10 @@ pub fn selective_wave_solder_keepout_readiness(
 /// Review press-fit insertion clearance around likely connector holes.
 ///
 /// Press-fit hardware needs insertion-tool and deformation clearance that is not
-/// represented by copper clearance alone. This check intentionally keys off
-/// connector-like net names and plated drill geometry so it stays conservative.
+/// represented by copper clearance alone. IEC 60352-5 press-in connection
+/// guidance and the broad/narrow collision-query pattern in Ericson, *Real-Time
+/// Collision Detection* (2005), motivate the conservative net-name filter plus
+/// exact keepout/pad intersection used here.
 pub fn press_fit_keepout_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -1428,6 +1501,7 @@ pub fn conformal_coating_keepout_readiness(
     let pad_index = FeatureGridIndex::new(&pads, keepout);
     let mut violations = Vec::new();
     let mut candidate_count = 0usize;
+    let mut exact_pair_count = 0usize;
 
     for &no_coat in &no_coat_features {
         let keepout_sketch = no_coat.sketch.offset(keepout);
@@ -1447,6 +1521,7 @@ pub fn conformal_coating_keepout_readiness(
             if no_coat.net.is_some() && no_coat.net == neighbor.net {
                 continue;
             }
+            exact_pair_count += 1;
             let overlap = keepout_sketch.intersection(&neighbor.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
             if shapes.is_empty() {
@@ -1469,14 +1544,16 @@ pub fn conformal_coating_keepout_readiness(
     }
 
     log::trace!(
-        "conformal-coating keepout readiness: source={} no_coat_features={} pads={} buckets={} candidate_pairs={} keepout={keepout:.6} violations={}",
+        "conformal-coating keepout readiness: source={} no_coat_features={} pads={} buckets={} candidate_pairs={} exact_pairs={} keepout={keepout:.6} violations={}",
         board.source,
         no_coat_features.len(),
         pads.len(),
         pad_index.bucket_count(),
         candidate_count,
+        exact_pair_count,
         violations.len()
     );
+    debug_assert!(exact_pair_count <= candidate_count);
 
     violations
 }
@@ -1730,6 +1807,7 @@ fn process_drill_keepout_readiness(
         .collect::<Vec<_>>();
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
+    let mut exact_pair_count = 0_usize;
     log::trace!(
         "{check}: source={} process={} drills={} pads={} buckets={} keepout={keepout:.6} min_area={min_area:.9}",
         board.source,
@@ -1756,6 +1834,7 @@ fn process_drill_keepout_readiness(
             if !feature_may_touch_circle(pad, drill.location, keepout_radius) {
                 continue;
             }
+            exact_pair_count += 1;
             let overlap = keepout_sketch.intersection(&pad.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
             if shapes.is_empty() {
@@ -1777,11 +1856,13 @@ fn process_drill_keepout_readiness(
     }
 
     log::trace!(
-        "{check}: source={} candidate_pairs={} violations={}",
+        "{check}: source={} candidate_pairs={} exact_pairs={} violations={}",
         board.source,
         candidate_count,
+        exact_pair_count,
         violations.len()
     );
+    debug_assert!(exact_pair_count <= candidate_count);
 
     violations
 }

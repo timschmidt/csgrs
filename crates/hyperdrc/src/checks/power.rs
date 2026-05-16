@@ -17,7 +17,14 @@ use crate::geometry::multipolygon_to_shapes;
 use crate::kicad::{BoardModel, CopperFeature};
 use crate::report::{Severity, Violation};
 
-/// Run the `switch_node_keepout_readiness` design-readiness check or report helper.
+/// Review likely switching nodes for nearby non-ground copper.
+///
+/// This is an EMI/layout-readiness heuristic, not a loop-area solver. It uses
+/// net-name intent plus same-layer geometry to flag copper that should be
+/// reviewed against regulator or motor-drive layout guidance. The broad/narrow
+/// geometry pass follows Lin and Canny, "A Fast Algorithm for Incremental
+/// Distance Calculation", IEEE ICRA, 1991: spatial candidates first, exact
+/// offset/intersection or boundary distance second.
 pub fn switch_node_keepout_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -40,6 +47,7 @@ pub fn switch_node_keepout_readiness(
     );
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
+    let mut exact_pair_count = 0_usize;
 
     for switch_feature in switching {
         for neighbor_index in feature_index.same_layer_near_feature(switch_feature, keepout) {
@@ -57,6 +65,7 @@ pub fn switch_node_keepout_readiness(
             if !sketches_within_clearance(&switch_feature.sketch, &neighbor.sketch, keepout) {
                 continue;
             }
+            exact_pair_count += 1;
 
             let overlap = switch_feature
                 .sketch
@@ -88,11 +97,13 @@ pub fn switch_node_keepout_readiness(
     }
 
     log::trace!(
-        "switch-node keepout readiness: source={} candidate_pairs={} violations={}",
+        "switch-node keepout readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
         board.source,
         candidate_count,
+        exact_pair_count,
         violations.len()
     );
+    debug_assert!(exact_pair_count <= candidate_count);
 
     violations
 }
@@ -141,6 +152,7 @@ pub fn inductor_copper_keepout_readiness(
     );
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
+    let mut exact_pair_count = 0_usize;
 
     for inductor in inductors {
         for neighbor_index in feature_index.same_layer_near_feature(inductor, keepout) {
@@ -155,6 +167,7 @@ pub fn inductor_copper_keepout_readiness(
             if !sketches_within_clearance(&inductor.sketch, &neighbor.sketch, keepout) {
                 continue;
             }
+            exact_pair_count += 1;
 
             let overlap = inductor
                 .sketch
@@ -186,11 +199,13 @@ pub fn inductor_copper_keepout_readiness(
     }
 
     log::trace!(
-        "inductor copper keepout readiness: source={} candidate_pairs={} violations={}",
+        "inductor copper keepout readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
         board.source,
         candidate_count,
+        exact_pair_count,
         violations.len()
     );
+    debug_assert!(exact_pair_count <= candidate_count);
 
     violations
 }

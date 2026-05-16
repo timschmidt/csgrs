@@ -21,6 +21,12 @@ use crate::report::{Severity, Violation};
 
 /// Warn when likely RF/antenna copper is too near non-ground copper on the same
 /// selected layer.
+///
+/// RF layout review is strongly geometry-dependent. This check uses the shared
+/// spatial index as a broad phase and only reports after exact offset/CSG or
+/// boundary-distance confirmation, following the broad/narrow pattern in Lin
+/// and Canny, "A Fast Algorithm for Incremental Distance Calculation", IEEE
+/// ICRA, 1991. Findings should still be checked against the RF layout plan.
 pub fn rf_keepout_readiness(
     board: &BoardModel,
     clearance: f64,
@@ -48,6 +54,7 @@ pub fn rf_keepout_readiness(
         .collect::<Vec<_>>();
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
+    let mut exact_pair_count = 0_usize;
 
     for &rf_index in &rf_indices {
         let rf = features[rf_index];
@@ -71,6 +78,7 @@ pub fn rf_keepout_readiness(
             if !sketches_within_clearance(&rf.sketch, &neighbor.sketch, clearance) {
                 continue;
             }
+            exact_pair_count += 1;
 
             let overlap = rf.sketch.offset(clearance).intersection(&neighbor.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
@@ -104,12 +112,14 @@ pub fn rf_keepout_readiness(
     }
 
     log::trace!(
-        "RF keepout readiness: source={} rf_features={} candidate_pairs={} violations={}",
+        "RF keepout readiness: source={} rf_features={} candidate_pairs={} exact_pairs={} violations={}",
         board.source,
         rf_indices.len(),
         candidate_count,
+        exact_pair_count,
         violations.len()
     );
+    debug_assert!(exact_pair_count <= candidate_count);
 
     violations
 }
@@ -147,6 +157,7 @@ pub fn antenna_copper_keepout_readiness(
     let mut violations = Vec::new();
     let mut antenna_count = 0_usize;
     let mut candidate_count = 0_usize;
+    let mut exact_pair_count = 0_usize;
 
     for antenna_index in features.iter().enumerate().filter_map(|(index, feature)| {
         feature
@@ -166,6 +177,7 @@ pub fn antenna_copper_keepout_readiness(
             if !sketches_within_clearance(&antenna.sketch, &neighbor.sketch, keepout) {
                 continue;
             }
+            exact_pair_count += 1;
 
             let overlap = antenna
                 .sketch
@@ -202,12 +214,14 @@ pub fn antenna_copper_keepout_readiness(
     }
 
     log::trace!(
-        "antenna copper keepout readiness: source={} antenna_features={} candidate_pairs={} violations={}",
+        "antenna copper keepout readiness: source={} antenna_features={} candidate_pairs={} exact_pairs={} violations={}",
         board.source,
         antenna_count,
         candidate_count,
+        exact_pair_count,
         violations.len()
     );
+    debug_assert!(exact_pair_count <= candidate_count);
 
     violations
 }
@@ -243,6 +257,7 @@ pub fn rf_via_fence_readiness(
     let mut violations = Vec::new();
     let mut rf_feature_count = 0_usize;
     let mut candidate_count = 0_usize;
+    let mut exact_distance_count = 0_usize;
 
     for feature in features {
         let Some(net) = &feature.net else {
@@ -259,7 +274,12 @@ pub fn rf_via_fence_readiness(
             fence_distance,
         );
         candidate_count += candidates.len();
-        let has_fence = !candidates.is_empty();
+        let has_fence = candidates.into_iter().any(|ground_index| {
+            exact_distance_count += 1;
+            let ground = ground_vias[ground_index];
+            ground.net.as_deref().is_some_and(looks_ground_net)
+                && distance(feature.location, ground.location) <= fence_distance
+        });
         if has_fence {
             continue;
         }
@@ -278,12 +298,14 @@ pub fn rf_via_fence_readiness(
     }
 
     log::trace!(
-        "RF via-fence readiness: source={} rf_features={} candidate_ground_vias={} violations={}",
+        "RF via-fence readiness: source={} rf_features={} candidate_ground_vias={} exact_distance_checks={} violations={}",
         board.source,
         rf_feature_count,
         candidate_count,
+        exact_distance_count,
         violations.len()
     );
+    debug_assert!(exact_distance_count <= candidate_count);
 
     violations
 }
@@ -315,6 +337,12 @@ fn sketches_within_clearance(
         && left_bounds.max().x + clearance >= right_bounds.min().x
         && left_bounds.min().y - clearance <= right_bounds.max().y
         && left_bounds.max().y + clearance >= right_bounds.min().y
+}
+
+fn distance(left: [f64; 2], right: [f64; 2]) -> f64 {
+    let dx = left[0] - right[0];
+    let dy = left[1] - right[1];
+    (dx * dx + dy * dy).sqrt()
 }
 
 fn looks_rf_or_antenna_net(net: &str) -> bool {

@@ -249,12 +249,16 @@ pub fn thermal_via_distribution_readiness(
     violations
 }
 
-/// Run the `thermal_pad_via_readiness` design-readiness check or report helper.
+/// Review large thermal/power pads for same-net via-in-pad evidence.
 ///
 /// Same-layer via candidates use `CopperSpatialIndex` before exact via/pad CSG
 /// intersection. The index is only a conservative broad phase, matching the
 /// Ericson, *Real-Time Collision Detection* (2005) pattern used across the
-/// readiness suite.
+/// readiness suite. Hollstein, Yang, and Weide-Zaage, "Thermal analysis of the
+/// design parameters of a QFN package soldered on a PCB using a simulation
+/// approach," *Microelectronics Reliability* 120 (2021), article 114118,
+/// motivates treating exposed-pad and via geometry as package-level thermal
+/// review data rather than a simple copper DRC.
 pub fn thermal_pad_via_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -269,6 +273,7 @@ pub fn thermal_pad_via_readiness(
     let via_index = CopperSpatialIndex::new(&vias, 0.0);
     let mut violations = Vec::new();
     let mut candidate_vias = 0usize;
+    let mut exact_via_checks = 0usize;
 
     for pad in &features {
         if pad.kind != CopperKind::Pad {
@@ -294,12 +299,15 @@ pub fn thermal_pad_via_readiness(
         candidate_vias += candidates.len();
         let has_same_net_via = candidates.into_iter().any(|via_index| {
             let via = vias[via_index];
-            via.net == pad.net
-                && !multipolygon_to_shapes(
-                    &via.sketch.intersection(&pad.sketch).to_multipolygon(),
-                    1.0e-9,
-                )
-                .is_empty()
+            if via.net != pad.net {
+                return false;
+            }
+            exact_via_checks += 1;
+            !multipolygon_to_shapes(
+                &via.sketch.intersection(&pad.sketch).to_multipolygon(),
+                1.0e-9,
+            )
+            .is_empty()
         });
         if has_same_net_via {
             continue;
@@ -318,19 +326,27 @@ pub fn thermal_pad_via_readiness(
         ));
     }
     log::trace!(
-        "thermal-pad via readiness: source={} features={} vias={} via_buckets={} candidate_vias={} violations={}",
+        "thermal-pad via readiness: source={} features={} vias={} via_buckets={} candidate_vias={} exact_via_checks={} violations={}",
         board.source,
         features.len(),
         vias.len(),
         via_index.bucket_count(),
         candidate_vias,
+        exact_via_checks,
         violations.len()
     );
+    debug_assert!(exact_via_checks <= candidate_vias);
 
     violations
 }
 
-/// Run the `thermal_copper_area_readiness` design-readiness check or report helper.
+/// Review likely hot or high-current features for nearby same-net copper area.
+///
+/// IPC-2152 treats current capacity as a board-level design decision, and
+/// package thermal studies such as Hollstein, Yang, and Weide-Zaage (2021) show
+/// that local copper area changes heat spreading. This check verifies parsed
+/// same-net zone evidence near likely thermal/power features; it does not prove
+/// a temperature-rise target.
 pub fn thermal_copper_area_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -406,7 +422,12 @@ pub fn thermal_copper_area_readiness(
     violations
 }
 
-/// Run the `hot_component_spacing_readiness` design-readiness check or report helper.
+/// Review spacing from likely hot features to neighboring non-ground copper.
+///
+/// This is not thermal simulation. It follows an Ericson-style broad/narrow
+/// geometry pass, then reports exact offset intersections that should be
+/// reviewed against derating, airflow, enclosure, and package thermal data such
+/// as Hollstein, Yang, and Weide-Zaage (2021).
 pub fn hot_component_spacing_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -432,6 +453,7 @@ pub fn hot_component_spacing_readiness(
     );
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
+    let mut exact_pair_count = 0_usize;
 
     for hot in hot_features {
         for neighbor_index in feature_index.same_layer_near_feature(hot, spacing) {
@@ -446,6 +468,7 @@ pub fn hot_component_spacing_readiness(
             if !sketches_within_clearance(&hot.sketch, &neighbor.sketch, spacing) {
                 continue;
             }
+            exact_pair_count += 1;
 
             let overlap = hot.sketch.offset(spacing).intersection(&neighbor.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
@@ -474,16 +497,24 @@ pub fn hot_component_spacing_readiness(
     }
 
     log::trace!(
-        "hot-component spacing readiness: source={} candidate_pairs={} violations={}",
+        "hot-component spacing readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
         board.source,
         candidate_count,
+        exact_pair_count,
         violations.len()
     );
+    debug_assert!(exact_pair_count <= candidate_count);
 
     violations
 }
 
-/// Run the `thermal_mechanical_keepout_readiness` design-readiness check or report helper.
+/// Review likely hot copper against mechanical keepout holes.
+///
+/// Heatsink screws, standoffs, chassis contacts, and airflow blockers are
+/// mechanical/thermal constraints that copper DRC alone cannot prove. This
+/// check uses non-plated drill keepouts and exact CSG overlap after spatial
+/// culling to flag packages that need heatsink, enclosure, or assembly drawing
+/// review.
 pub fn thermal_mechanical_keepout_readiness(
     board: &BoardModel,
     extra_drills: &[DrillFeature],
@@ -518,6 +549,7 @@ pub fn thermal_mechanical_keepout_readiness(
     );
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
+    let mut exact_pair_count = 0_usize;
 
     for drill in mechanical_drills {
         let keepout_radius = drill.diameter / 2.0 + keepout;
@@ -534,6 +566,7 @@ pub fn thermal_mechanical_keepout_readiness(
             if !feature_may_touch_circle(hot, drill.location, keepout_radius) {
                 continue;
             }
+            exact_pair_count += 1;
             let overlap = keepout_sketch.intersection(&hot.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
@@ -561,11 +594,13 @@ pub fn thermal_mechanical_keepout_readiness(
     }
 
     log::trace!(
-        "thermal mechanical-keepout readiness: source={} candidate_pairs={} violations={}",
+        "thermal mechanical-keepout readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
         board.source,
         candidate_count,
+        exact_pair_count,
         violations.len()
     );
+    debug_assert!(exact_pair_count <= candidate_count);
 
     violations
 }

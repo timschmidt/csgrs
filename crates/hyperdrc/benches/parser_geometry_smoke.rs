@@ -20,7 +20,8 @@ use hyperdrc::checks::{
     duplicate_layer_island_readiness, edge_plating_intent_readiness, edge_stitching_readiness,
     esd_protection_readiness, esd_return_path_readiness, exposed_copper,
     fiducial_keepout_readiness, fiducial_readiness, gold_finger_drill_keepout_readiness,
-    gold_finger_spacing_readiness, high_current_readiness, high_speed_edge_readiness,
+    gold_finger_edge_readiness, gold_finger_readiness, gold_finger_spacing_readiness,
+    high_current_neck_readiness, high_current_readiness, high_speed_edge_readiness,
     high_voltage_edge_readiness, hot_component_spacing_readiness,
     inductor_copper_keepout_readiness, ipc356_coverage, ipc356_drill_diameter,
     local_copper_density_readiness, local_fiducial_readiness, mask_island_keepout,
@@ -29,9 +30,10 @@ use hyperdrc::checks::{
     mounting_hole_edge_clearance_readiness, mounting_hole_grounding_readiness,
     mounting_hole_plating_intent_readiness, mounting_hole_spacing_readiness, mouse_bite_readiness,
     net_constraint_readiness, net_spacing, orphaned_zone_readiness, pad_pair_asymmetry_readiness,
-    panelization_clearance, paste_aperture_coverage, paste_aperture_ratio, paste_aperture_spacing,
-    paste_mask_alignment, paste_overhang, paste_via_exposure_readiness, plane_clearance_readiness,
-    plating_intent, power_pad_entry_readiness, power_via_array_readiness,
+    panel_feature_outline_readiness, panelization_clearance, paste_aperture_coverage,
+    paste_aperture_ratio, paste_aperture_spacing, paste_mask_alignment, paste_overhang,
+    paste_via_exposure_readiness, plane_clearance_readiness, plating_intent,
+    power_pad_entry_readiness, power_plane_readiness, power_via_array_readiness,
     power_via_return_readiness, press_fit_keepout_readiness, production_artifact_readiness,
     protective_earth_spacing_readiness, reference_plane_readiness, reference_plane_void_readiness,
     registration_tolerance, return_path_proximity_readiness, return_path_readiness,
@@ -1488,6 +1490,29 @@ fn main() {
             let _ = switch_node_keepout_readiness(&switch_node_board, &[], 0.60, 1.0e-9);
         }
     });
+    let sparse_power_summary_board = BoardModel {
+        source: "bench".to_string(),
+        copper: (0..2_000)
+            .map(|index| {
+                let x = index as f64 * 2.0;
+                bench_segment("GPIO", [x, 0.0], [x + 1.0, 0.0], 0.12)
+            })
+            .chain([bench_segment("VBUS", [0.0, 2.0], [1.0, 2.0], 0.18)])
+            .collect(),
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let power_plane_elapsed = time("power_plane_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = power_plane_readiness(&sparse_power_summary_board, &[]);
+        }
+    });
+    let high_current_neck_elapsed = time("high_current_neck_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = high_current_neck_readiness(&sparse_power_summary_board, &[], 0.30);
+        }
+    });
     let pad_entry_board = BoardModel {
         source: "bench".to_string(),
         copper: vec![
@@ -2316,6 +2341,45 @@ fn main() {
             let _ = gold_finger_spacing_readiness(&gold_finger_spacing_board, &[], 0.10, 1.0e-9);
         }
     });
+    let gold_finger_intent_board = BoardModel {
+        source: "bench".to_string(),
+        copper: (0..2_000)
+            .map(|index| bench_via("SIG", [100.0 + index as f64 * 2.0, 50.0], 0.20))
+            .chain([bench_via("EDGE_CONN_1", [0.0, 0.0], 0.20)])
+            .collect(),
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let gold_finger_intent_elapsed = time("gold_finger_intent_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = gold_finger_readiness(&gold_finger_intent_board, &[]);
+        }
+    });
+    let gold_finger_edge_board = BoardModel {
+        source: "bench".to_string(),
+        copper: (0..2_000)
+            .map(|index| {
+                let x = 2.0 + (index % 100) as f64 * 0.10;
+                let y = 2.0 + (index / 100) as f64 * 0.10;
+                bench_pad("SIG", [x, y], [0.04, 0.04])
+            })
+            .chain([bench_pad("GOLD_FINGER_CENTER", [9.5, 9.5], [1.0, 1.0])])
+            .collect(),
+        drills: Vec::new(),
+        board_outline: Some(polygons_to_sketch(
+            vec![rect_polygon([10.0, 10.0], [20.0, 20.0], 0.0)],
+            Some(LayerMetadata {
+                name: "bench gold finger outline".to_string(),
+            }),
+        )),
+        panel_features: None,
+    };
+    let gold_finger_edge_elapsed = time("gold_finger_edge_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = gold_finger_edge_readiness(&gold_finger_edge_board, &[], 1.0);
+        }
+    });
     let gold_finger_keepout_board = BoardModel {
         source: "bench".to_string(),
         copper: (0..1_000)
@@ -2371,6 +2435,41 @@ fn main() {
     let edge_plating_elapsed = time("edge_plating_rect_sparse_1k", || {
         for _ in 0..1_000 {
             let _ = edge_plating_intent_readiness(&edge_plating_board, &[], 0.5, 1.0e-9);
+        }
+    });
+
+    let panel_feature_outline_board = BoardModel {
+        source: "bench".to_string(),
+        copper: Vec::new(),
+        drills: Vec::new(),
+        board_outline: Some(polygons_to_sketch(
+            vec![rect_polygon([5.0, 5.0], [10.0, 10.0], 0.0)],
+            Some(LayerMetadata {
+                name: "bench panel outline".to_string(),
+            }),
+        )),
+        panel_features: Some(polygons_to_sketch(
+            (0..1_000)
+                .map(|index| {
+                    rect_polygon(
+                        [
+                            0.10 + (index % 50) as f64 * 0.001,
+                            0.10 + (index / 50) as f64 * 0.001,
+                        ],
+                        [0.05, 0.05],
+                        0.0,
+                    )
+                })
+                .chain([rect_polygon([5.0, 5.0], [0.5, 0.5], 0.0)])
+                .collect(),
+            Some(LayerMetadata {
+                name: "bench panel features".to_string(),
+            }),
+        )),
+    };
+    let panel_feature_outline_elapsed = time("panel_feature_outline_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = panel_feature_outline_readiness(&panel_feature_outline_board, 0.5, 1.0e-9);
         }
     });
 
@@ -2882,6 +2981,8 @@ fn main() {
             + rf_via_fence_elapsed
             + inductor_keepout_elapsed
             + switch_node_elapsed
+            + power_plane_elapsed
+            + high_current_neck_elapsed
             + power_pad_entry_elapsed
             + power_pad_entry_sparse_elapsed
             + power_via_return_elapsed
@@ -2926,8 +3027,11 @@ fn main() {
             + mounting_hole_edge_elapsed
             + mounting_hole_plating_elapsed
             + gold_finger_spacing_elapsed
+            + gold_finger_intent_elapsed
+            + gold_finger_edge_elapsed
             + gold_finger_keepout_elapsed
             + edge_plating_elapsed
+            + panel_feature_outline_elapsed
             + castellation_pitch_elapsed
             + short_elapsed
             + controlled_impedance_elapsed

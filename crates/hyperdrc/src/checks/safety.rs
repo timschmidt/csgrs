@@ -124,6 +124,7 @@ pub fn voltage_clearance_readiness(
     );
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
+    let mut exact_pair_count = 0_usize;
 
     for &left_index in &high_voltage_indices {
         let left = features[left_index];
@@ -147,6 +148,7 @@ pub fn voltage_clearance_readiness(
             if !sketches_within_clearance(&left.sketch, &right.sketch, clearance) {
                 continue;
             }
+            exact_pair_count += 1;
 
             let overlap = left.sketch.offset(clearance).intersection(&right.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
@@ -181,11 +183,13 @@ pub fn voltage_clearance_readiness(
     }
 
     log::trace!(
-        "voltage-clearance readiness: source={} candidate_pairs={} violations={}",
+        "voltage-clearance readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
         board.source,
         candidate_count,
+        exact_pair_count,
         violations.len()
     );
+    debug_assert!(exact_pair_count <= candidate_count);
 
     violations
 }
@@ -232,6 +236,7 @@ pub fn protective_earth_spacing_readiness(
 
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
+    let mut exact_pair_count = 0_usize;
     for hv in high_voltage {
         for pe_index in protective_index.same_layer_near_feature(hv, clearance) {
             candidate_count += 1;
@@ -242,6 +247,7 @@ pub fn protective_earth_spacing_readiness(
             if !sketches_within_clearance(&hv.sketch, &pe.sketch, clearance) {
                 continue;
             }
+            exact_pair_count += 1;
 
             let overlap = hv.sketch.offset(clearance).intersection(&pe.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
@@ -274,11 +280,13 @@ pub fn protective_earth_spacing_readiness(
     }
 
     log::trace!(
-        "protective-earth spacing readiness: source={} candidate_pairs={} violations={}",
+        "protective-earth spacing readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
         board.source,
         candidate_count,
+        exact_pair_count,
         violations.len()
     );
+    debug_assert!(exact_pair_count <= candidate_count);
 
     violations
 }
@@ -320,6 +328,7 @@ pub fn surge_protection_keepout_readiness(
 
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
+    let mut exact_pair_count = 0_usize;
     for source in surge {
         for neighbor_index in feature_index.same_layer_near_feature(source, keepout) {
             candidate_count += 1;
@@ -338,6 +347,7 @@ pub fn surge_protection_keepout_readiness(
             if !sketches_within_clearance(&source.sketch, &neighbor.sketch, keepout) {
                 continue;
             }
+            exact_pair_count += 1;
 
             let overlap = source.sketch.offset(keepout).intersection(&neighbor.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
@@ -370,11 +380,13 @@ pub fn surge_protection_keepout_readiness(
     }
 
     log::trace!(
-        "surge protection keepout readiness: source={} candidate_pairs={} violations={}",
+        "surge protection keepout readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
         board.source,
         candidate_count,
+        exact_pair_count,
         violations.len()
     );
+    debug_assert!(exact_pair_count <= candidate_count);
 
     violations
 }
@@ -436,6 +448,7 @@ pub fn esd_protection_readiness(
     let mut violations = Vec::new();
     let mut edge_candidate_count = 0_usize;
     let mut protection_candidate_count = 0_usize;
+    let mut exact_protection_checks = 0_usize;
 
     for feature in features {
         let Some(net) = feature.net.as_deref() else {
@@ -460,9 +473,10 @@ pub fn esd_protection_readiness(
             protection_search_radius,
         );
         protection_candidate_count += protection_candidates.len();
-        let has_protection = protection_candidates
-            .into_iter()
-            .any(|protection_index| !std::ptr::eq(protection_features[protection_index], feature));
+        let has_protection = protection_candidates.into_iter().any(|protection_index| {
+            exact_protection_checks += 1;
+            !std::ptr::eq(protection_features[protection_index], feature)
+        });
         if has_protection {
             continue;
         }
@@ -481,12 +495,14 @@ pub fn esd_protection_readiness(
     }
 
     log::trace!(
-        "ESD protection readiness: source={} edge_candidates={} protection_candidates={} violations={}",
+        "ESD protection readiness: source={} edge_candidates={} protection_candidates={} exact_protection_checks={} violations={}",
         board.source,
         edge_candidate_count,
         protection_candidate_count,
+        exact_protection_checks,
         violations.len()
     );
+    debug_assert!(exact_protection_checks <= protection_candidate_count);
 
     violations
 }
@@ -528,6 +544,7 @@ pub fn esd_return_path_readiness(
     let mut violations = Vec::new();
     let mut esd_count = 0_usize;
     let mut return_candidate_count = 0_usize;
+    let mut exact_return_checks = 0_usize;
 
     for feature in features {
         let Some(net) = feature.net.as_deref() else {
@@ -544,9 +561,10 @@ pub fn esd_return_path_readiness(
             return_search_radius,
         );
         return_candidate_count += return_candidates.len();
-        let has_return = return_candidates
-            .into_iter()
-            .any(|return_index| !std::ptr::eq(return_features[return_index], feature));
+        let has_return = return_candidates.into_iter().any(|return_index| {
+            exact_return_checks += 1;
+            !std::ptr::eq(return_features[return_index], feature)
+        });
         if has_return {
             continue;
         }
@@ -565,12 +583,14 @@ pub fn esd_return_path_readiness(
     }
 
     log::trace!(
-        "ESD return-path readiness: source={} esd_features={} return_candidates={} violations={}",
+        "ESD return-path readiness: source={} esd_features={} return_candidates={} exact_return_checks={} violations={}",
         board.source,
         esd_count,
         return_candidate_count,
+        exact_return_checks,
         violations.len()
     );
+    debug_assert!(exact_return_checks <= return_candidate_count);
 
     violations
 }

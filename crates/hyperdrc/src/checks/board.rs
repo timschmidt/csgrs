@@ -1612,9 +1612,16 @@ pub fn power_via_array_readiness(
     violations
 }
 
-/// Run the `power_plane_readiness` design-readiness check or report helper.
+/// Warn when likely high-current nets have no parsed same-net copper zone.
+///
+/// IPC-2152 frames current carrying capacity as a board-specific design
+/// decision rather than a simple trace-width constant. This readiness check is
+/// therefore conservative: it infers power intent from net names and asks for a
+/// parsed pour/plane/zone on each selected high-current net so reviewers can
+/// confirm current-spreading intent before release.
 pub fn power_plane_readiness(board: &BoardModel, selected_layers: &[String]) -> Vec<Violation> {
     let mut nets: BTreeMap<String, NetLayerUse> = BTreeMap::new();
+    let mut high_current_features = 0usize;
 
     for feature in selected_copper_features(board, selected_layers) {
         let Some(net) = &feature.net else {
@@ -1623,6 +1630,7 @@ pub fn power_plane_readiness(board: &BoardModel, selected_layers: &[String]) -> 
         if !looks_high_current_net(net) {
             continue;
         }
+        high_current_features += 1;
 
         let entry = nets.entry(net.clone()).or_default();
         entry.layers.insert(feature.layer.clone());
@@ -1632,7 +1640,9 @@ pub fn power_plane_readiness(board: &BoardModel, selected_layers: &[String]) -> 
         }
     }
 
-    nets.into_iter()
+    let net_count = nets.len();
+    let violations = nets
+        .into_iter()
         .filter(|(_, usage)| !usage.has_zone)
         .map(|(net, usage)| {
             Violation::new(
@@ -1647,40 +1657,80 @@ pub fn power_plane_readiness(board: &BoardModel, selected_layers: &[String]) -> 
                 )),
             )
         })
-        .collect()
+        .collect::<Vec<_>>();
+    log::trace!(
+        "power-plane readiness: source={} high_current_features={} high_current_nets={} selected_layers={} violations={}",
+        board.source,
+        high_current_features,
+        net_count,
+        selected_layers.len(),
+        violations.len()
+    );
+
+    violations
 }
 
-/// Run the `high_current_neck_readiness` design-readiness check or report helper.
+/// Warn when likely high-current copper has a narrow local neck.
+///
+/// IPC-2152 covers board-level current-carrying capacity, and Black's
+/// "Electromigration--A Brief Survey and Some Recent Results", IEEE
+/// Transactions on Electron Devices, 1969, motivates reviewing local current
+/// density constrictions. This check uses parsed copper bounds as a conservative
+/// neck proxy, so suspect findings should be verified against native geometry,
+/// stackup, copper weight, temperature rise, and current requirements.
 pub fn high_current_neck_readiness(
     board: &BoardModel,
     selected_layers: &[String],
     minimum_power_width: f64,
 ) -> Vec<Violation> {
-    selected_copper_features(board, selected_layers)
-        .into_iter()
-        .filter_map(|feature| {
-            let net = feature.net.as_deref()?;
-            if !looks_high_current_net(net) {
-                return None;
-            }
+    let features = selected_copper_features(board, selected_layers);
+    let mut high_current_features = 0usize;
+    let mut measured_features = 0usize;
+    let mut violations = Vec::new();
 
-            let width = minimum_bounding_dimension(&feature.sketch);
-            (width > 0.0 && width < minimum_power_width).then(|| {
-                Violation::new(
-                    "high-current-neck-readiness",
-                    Severity::Warning,
-                    vec![feature.layer.clone()],
-                    None,
-                    Vec::new(),
-                    vec![feature.location],
-                    Some(format!(
-                        "likely high-current net {net} has {:?} copper neck width {width:.6} below preferred power width {minimum_power_width:.6}",
-                        feature.kind
-                    )),
-                )
-            })
-        })
-        .collect()
+    for feature in &features {
+        let Some(net) = feature.net.as_deref() else {
+            continue;
+        };
+        if !looks_high_current_net(net) {
+            continue;
+        }
+        high_current_features += 1;
+
+        let width = minimum_bounding_dimension(&feature.sketch);
+        if width <= 0.0 {
+            continue;
+        }
+        measured_features += 1;
+        if width >= minimum_power_width {
+            continue;
+        }
+
+        violations.push(Violation::new(
+            "high-current-neck-readiness",
+            Severity::Warning,
+            vec![feature.layer.clone()],
+            None,
+            Vec::new(),
+            vec![feature.location],
+            Some(format!(
+                "likely high-current net {net} has {:?} copper neck width {width:.6} below preferred power width {minimum_power_width:.6}",
+                feature.kind
+            )),
+        ));
+    }
+
+    log::trace!(
+        "high-current neck readiness: source={} selected_features={} high_current_features={} measured_features={} selected_layers={} minimum_power_width={minimum_power_width:.6} violations={}",
+        board.source,
+        features.len(),
+        high_current_features,
+        measured_features,
+        selected_layers.len(),
+        violations.len()
+    );
+
+    violations
 }
 
 /// Warn when chassis/shield nets appear without a nearby parsed ground via for
@@ -1754,66 +1804,129 @@ pub fn chassis_stitching_readiness(
     violations
 }
 
-/// Run the `gold_finger_readiness` design-readiness check or report helper.
+/// Warn when likely card-edge/gold-finger nets contain via copper.
+///
+/// IPC-4552B and IPC-4553A surface-finish guidance treats edge-contact finish,
+/// plating, and wear surfaces as explicit fabrication intent. This readiness
+/// check is deliberately conservative: it infers finger nets from names and
+/// reports vias on those nets so reviewers can confirm no-via finger geometry,
+/// bevel keepouts, and plating notes before release.
 pub fn gold_finger_readiness(board: &BoardModel, selected_layers: &[String]) -> Vec<Violation> {
-    selected_copper_features(board, selected_layers)
-        .into_iter()
-        .filter(|feature| {
-            feature.kind == CopperKind::Via
-                && feature.net.as_deref().is_some_and(looks_gold_finger_net)
-        })
-        .map(|feature| {
-            Violation::new(
-                "gold-finger-readiness",
-                Severity::Warning,
-                vec![feature.layer.clone()],
-                None,
-                Vec::new(),
-                vec![feature.location],
-                Some(format!(
-                    "likely gold-finger net {:?} has via copper; review no-via finger plating and bevel keepout rules",
-                    feature.net
-                )),
-            )
-        })
-        .collect()
+    let features = selected_copper_features(board, selected_layers);
+    let mut finger_features = 0usize;
+    let mut finger_vias = 0usize;
+    let mut violations = Vec::new();
+
+    for feature in &features {
+        let Some(net) = feature.net.as_deref() else {
+            continue;
+        };
+        if !looks_gold_finger_net(net) {
+            continue;
+        }
+        finger_features += 1;
+        if feature.kind != CopperKind::Via {
+            continue;
+        }
+        finger_vias += 1;
+
+        violations.push(Violation::new(
+            "gold-finger-readiness",
+            Severity::Warning,
+            vec![feature.layer.clone()],
+            None,
+            Vec::new(),
+            vec![feature.location],
+            Some(format!(
+                "likely gold-finger net {net} has via copper; review no-via finger plating and bevel keepout rules"
+            )),
+        ));
+    }
+
+    log::trace!(
+        "gold-finger readiness: source={} selected_features={} finger_features={} finger_vias={} selected_layers={} violations={}",
+        board.source,
+        features.len(),
+        finger_features,
+        finger_vias,
+        selected_layers.len(),
+        violations.len()
+    );
+
+    violations
 }
 
-/// Run the `gold_finger_edge_readiness` design-readiness check or report helper.
+/// Warn when likely card-edge contact copper is not close to the board edge.
+///
+/// IPC-4552B and IPC-4553A surface-finish guidance makes contact plating an
+/// explicit fabrication handoff. Card-edge contacts also depend on bevel and
+/// edge placement, so this check treats likely finger pads/segments far from the
+/// parsed outline as suspect release data. It uses exact polygon boundary
+/// distance; naming and outline inference are still conservative readiness
+/// signals that should be confirmed against the fabrication drawing.
 pub fn gold_finger_edge_readiness(
     board: &BoardModel,
     selected_layers: &[String],
     edge_distance: f64,
 ) -> Vec<Violation> {
     let Some(outline) = &board.board_outline else {
+        log::trace!(
+            "gold-finger edge readiness: source={} selected_layers={} has_outline=false edge_distance={edge_distance:.6} violations=0",
+            board.source,
+            selected_layers.len()
+        );
         return Vec::new();
     };
 
-    selected_copper_features(board, selected_layers)
-        .into_iter()
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_gold_finger_net))
-        .filter(|feature| matches!(feature.kind, CopperKind::Pad | CopperKind::Segment))
-        .filter_map(|feature| {
-            let gap = polygon_boundary_distance(
-                &feature.sketch.to_multipolygon(),
-                &outline.to_multipolygon(),
-            );
-            (gap > edge_distance).then(|| {
-                Violation::new(
-                    "gold-finger-edge-readiness",
-                    Severity::Warning,
-                    vec![feature.layer.clone()],
-                    None,
-                    Vec::new(),
-                    vec![feature.location],
-                    Some(format!(
-                        "likely gold-finger net {:?} is {gap:.6} from board edge, beyond expected edge-finger band {edge_distance:.6}; review card-edge placement and bevel intent",
-                        feature.net
-                    )),
-                )
-            })
-        })
-        .collect()
+    let features = selected_copper_features(board, selected_layers);
+    let mut finger_features = 0usize;
+    let mut measured_features = 0usize;
+    let mut violations = Vec::new();
+    let outline_geometry = outline.to_multipolygon();
+
+    for feature in &features {
+        let Some(net) = feature.net.as_deref() else {
+            continue;
+        };
+        if !looks_gold_finger_net(net)
+            || !matches!(feature.kind, CopperKind::Pad | CopperKind::Segment)
+        {
+            continue;
+        }
+        finger_features += 1;
+        let gap = polygon_boundary_distance(&feature.sketch.to_multipolygon(), &outline_geometry);
+        if !gap.is_finite() {
+            continue;
+        }
+        measured_features += 1;
+        if gap <= edge_distance {
+            continue;
+        }
+
+        violations.push(Violation::new(
+            "gold-finger-edge-readiness",
+            Severity::Warning,
+            vec![feature.layer.clone()],
+            None,
+            Vec::new(),
+            vec![feature.location],
+            Some(format!(
+                "likely gold-finger net {net} is {gap:.6} from board edge, beyond expected edge-finger band {edge_distance:.6}; review card-edge placement and bevel intent"
+            )),
+        ));
+    }
+
+    log::trace!(
+        "gold-finger edge readiness: source={} selected_features={} finger_features={} measured_features={} selected_layers={} has_outline=true edge_distance={edge_distance:.6} violations={}",
+        board.source,
+        features.len(),
+        finger_features,
+        measured_features,
+        selected_layers.len(),
+        violations.len()
+    );
+
+    violations
 }
 
 /// Run the `gold_finger_spacing_readiness` design-readiness check or report helper.
@@ -5467,6 +5580,33 @@ mod tests {
     }
 
     #[test]
+    fn power_plane_readiness_handles_large_sparse_power_fields() {
+        let mut copper = (0..2_000)
+            .map(|index| {
+                let x = index as f64 * 2.0;
+                copper_line("GPIO1", CopperKind::Segment, [x, 0.0], [x + 1.0, 0.0], 0.12)
+            })
+            .collect::<Vec<_>>();
+        copper.push(copper_line(
+            "VBUS",
+            CopperKind::Segment,
+            [0.0, 2.0],
+            [1.0, 2.0],
+            0.25,
+        ));
+        let board = board_with_copper(copper);
+
+        let started = std::time::Instant::now();
+        let violations = power_plane_readiness(&board, &[]);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "power-plane readiness should stay linear over sparse low-current fields"
+        );
+    }
+
+    #[test]
     fn high_current_neck_readiness_reports_narrow_power_copper() {
         let board = board_with_copper(vec![copper_line(
             "VBUS",
@@ -5507,6 +5647,33 @@ mod tests {
         assert_eq!(
             high_current_neck_readiness(&board, &["B.Cu".to_string()], 0.30).len(),
             1
+        );
+    }
+
+    #[test]
+    fn high_current_neck_readiness_handles_large_sparse_power_fields() {
+        let mut copper = (0..2_000)
+            .map(|index| {
+                let x = index as f64 * 2.0;
+                copper_line("GPIO1", CopperKind::Segment, [x, 0.0], [x + 1.0, 0.0], 0.12)
+            })
+            .collect::<Vec<_>>();
+        copper.push(copper_line(
+            "VBUS",
+            CopperKind::Segment,
+            [0.0, 2.0],
+            [1.0, 2.0],
+            0.18,
+        ));
+        let board = board_with_copper(copper);
+
+        let started = std::time::Instant::now();
+        let violations = high_current_neck_readiness(&board, &[], 0.30);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "high-current neck readiness should stay linear over sparse low-current fields"
         );
     }
 
@@ -5894,6 +6061,36 @@ mod tests {
     }
 
     #[test]
+    fn gold_finger_readiness_handles_large_sparse_non_finger_fields() {
+        let mut copper = (0..2_000)
+            .map(|index| {
+                copper_disc(
+                    "SIG",
+                    CopperKind::Via,
+                    [100.0 + index as f64 * 2.0, 50.0],
+                    0.10,
+                )
+            })
+            .collect::<Vec<_>>();
+        copper.push(copper_disc(
+            "EDGE_CONN_1",
+            CopperKind::Via,
+            [0.0, 0.0],
+            0.12,
+        ));
+        let board = board_with_copper(copper);
+
+        let started = Instant::now();
+        let violations = gold_finger_readiness(&board, &[]);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "gold-finger via-intent review should stay linear over sparse non-finger fields"
+        );
+    }
+
+    #[test]
     fn gold_finger_edge_readiness_reports_finger_copper_away_from_edge() {
         let mut board = board_with_outline(square(0.0, 0.0, 20.0, 20.0));
         board.copper = vec![copper_rect(
@@ -5942,6 +6139,36 @@ mod tests {
 
         assert!(gold_finger_edge_readiness(&board, &[], 1.0).is_empty());
         assert!(gold_finger_edge_readiness(&no_outline, &[], 1.0).is_empty());
+    }
+
+    #[test]
+    fn gold_finger_edge_readiness_handles_sparse_non_finger_fields() {
+        let mut board = board_with_outline(square(0.0, 0.0, 20.0, 20.0));
+        board.copper = (0..2_000)
+            .map(|index| {
+                let x = 2.0 + (index % 100) as f64 * 0.10;
+                let y = 2.0 + (index / 100) as f64 * 0.10;
+                copper_rect("SIG", CopperKind::Pad, "F.Cu", x, y, x + 0.04, y + 0.04)
+            })
+            .chain([copper_rect(
+                "GOLD_FINGER_1",
+                CopperKind::Pad,
+                "F.Cu",
+                9.0,
+                9.0,
+                10.0,
+                10.0,
+            )])
+            .collect();
+
+        let started = Instant::now();
+        let violations = gold_finger_edge_readiness(&board, &[], 1.0);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "gold-finger edge review should stay linear over sparse non-finger fields"
+        );
     }
 
     #[test]

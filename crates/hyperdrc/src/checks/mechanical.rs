@@ -23,7 +23,13 @@ use crate::geometry::{circle_polygon, multipolygon_to_shapes, polygons_to_sketch
 use crate::kicad::{BoardModel, CopperFeature, DrillFeature};
 use crate::report::{Severity, Violation};
 
-/// Run the `mounting_hole_grounding_readiness` design-readiness check or report helper.
+/// Review likely mounting holes for nearby ground or chassis bonding copper.
+///
+/// IPC-2221B treats mounting holes and conductive hardware as part of the
+/// board-level mechanical/electrical design envelope. This readiness check uses
+/// large non-plated drill geometry as a conservative hardware proxy and applies
+/// the shared spatial broad phase before exact center-distance review for
+/// parsed ground/chassis copper.
 pub fn mounting_hole_grounding_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -43,6 +49,7 @@ pub fn mounting_hole_grounding_readiness(
     let grounding_index = CopperSpatialIndex::new(&grounding_features, grounding_distance);
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
+    let mut exact_distance_count = 0_usize;
     log::trace!(
         "mounting-hole grounding readiness: source={} holes={} grounding_features={} buckets={} grounding_distance={grounding_distance:.6}",
         board.source,
@@ -59,6 +66,7 @@ pub fn mounting_hole_grounding_readiness(
             .any(|feature_index| {
                 candidate_count += 1;
                 let feature = grounding_features[feature_index];
+                exact_distance_count += 1;
                 distance(drill.location, feature.location) <= search_radius
             });
         if has_grounding_intent {
@@ -80,16 +88,23 @@ pub fn mounting_hole_grounding_readiness(
     }
 
     log::trace!(
-        "mounting-hole grounding readiness: source={} candidate_pairs={} violations={}",
+        "mounting-hole grounding readiness: source={} candidate_pairs={} exact_distance_checks={} violations={}",
         board.source,
         candidate_count,
+        exact_distance_count,
         violations.len()
     );
+    debug_assert!(exact_distance_count <= candidate_count);
 
     violations
 }
 
-/// Run the `mounting_hole_copper_keepout_readiness` design-readiness check or report helper.
+/// Review likely mounting-hole screw/standoff keepouts against non-ground copper.
+///
+/// IPC-2221B frames mounting hardware, edge constraints, and conductor clearance
+/// as layout review data. This check models the hardware region as a circular
+/// keepout, uses the copper spatial index as a broad phase, then reports exact
+/// CSG or boundary-distance hits against non-ground copper.
 pub fn mounting_hole_copper_keepout_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -100,6 +115,7 @@ pub fn mounting_hole_copper_keepout_readiness(
     let copper_index = CopperSpatialIndex::new(&copper, keepout);
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
+    let mut exact_pair_count = 0_usize;
     log::trace!(
         "mounting-hole copper keepout readiness: source={} holes={} copper={} buckets={} keepout={keepout:.6} min_area={min_area:.9}",
         board.source,
@@ -121,6 +137,7 @@ pub fn mounting_hole_copper_keepout_readiness(
             {
                 continue;
             }
+            exact_pair_count += 1;
 
             // IPC-2221B treats mounting holes, conductive hardware, and board
             // edge/mechanical constraints as layout-clearance concerns. This is
@@ -158,16 +175,23 @@ pub fn mounting_hole_copper_keepout_readiness(
     }
 
     log::trace!(
-        "mounting-hole copper keepout readiness: source={} candidate_pairs={} violations={}",
+        "mounting-hole copper keepout readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
         board.source,
         candidate_count,
+        exact_pair_count,
         violations.len()
     );
+    debug_assert!(exact_pair_count <= candidate_count);
 
     violations
 }
 
-/// Run the `mounting_hole_edge_clearance_readiness` design-readiness check or report helper.
+/// Review mounting-hole screw/washer keepouts against the parsed board outline.
+///
+/// Rectangular board outlines use an analytic containment fast path, while
+/// general outlines fall back to exact CSG difference. This keeps common board
+/// shapes cheap without weakening the release-review signal for enclosure,
+/// clamp, washer, and edge-clearance intent.
 pub fn mounting_hole_edge_clearance_readiness(
     board: &BoardModel,
     edge_clearance: f64,
@@ -224,7 +248,12 @@ pub fn mounting_hole_edge_clearance_readiness(
     violations
 }
 
-/// Run the `mounting_hole_plating_intent_readiness` design-readiness check or report helper.
+/// Review large plated mounting-style holes for explicit bonding intent.
+///
+/// Plated hardware holes can be intentional chassis bonds or accidental plating
+/// ambiguity. IPC-2221B treats conductive hardware and bonding as design intent,
+/// so this check accepts either a ground/chassis drill net or nearby parsed
+/// bonding copper after spatial candidate filtering.
 pub fn mounting_hole_plating_intent_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -244,6 +273,7 @@ pub fn mounting_hole_plating_intent_readiness(
     let grounding_index = CopperSpatialIndex::new(&grounding_features, grounding_distance);
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
+    let mut exact_distance_count = 0_usize;
     log::trace!(
         "mounting-hole plating intent readiness: source={} plated_holes={} grounding_features={} buckets={} grounding_distance={grounding_distance:.6}",
         board.source,
@@ -264,6 +294,7 @@ pub fn mounting_hole_plating_intent_readiness(
             .any(|feature_index| {
                 candidate_count += 1;
                 let feature = grounding_features[feature_index];
+                exact_distance_count += 1;
                 distance(drill.location, feature.location) <= search_radius
             });
         if drill_net_is_ground || has_grounding_copper {
@@ -285,11 +316,13 @@ pub fn mounting_hole_plating_intent_readiness(
     }
 
     log::trace!(
-        "mounting-hole plating intent readiness: source={} candidate_pairs={} violations={}",
+        "mounting-hole plating intent readiness: source={} candidate_pairs={} exact_distance_checks={} violations={}",
         board.source,
         candidate_count,
+        exact_distance_count,
         violations.len()
     );
+    debug_assert!(exact_distance_count <= candidate_count);
 
     violations
 }
@@ -360,7 +393,13 @@ pub fn mounting_hole_distribution_readiness(
     )]
 }
 
-/// Run the `mounting_hole_spacing_readiness` design-readiness check or report helper.
+/// Review edge-to-edge spacing between likely hardware holes.
+///
+/// Hardware holes are filtered first, then the shared drill spatial index
+/// provides broad-phase candidates before exact center and edge-spacing math.
+/// This follows the broad/narrow geometric-query pattern in Ericson,
+/// *Real-Time Collision Detection* (2005), while the finding itself remains a
+/// mechanical review prompt for screw heads, washers, standoffs, and breakout.
 pub fn mounting_hole_spacing_readiness(
     board: &BoardModel,
     minimum_edge_spacing: f64,
@@ -378,15 +417,19 @@ pub fn mounting_hole_spacing_readiness(
         hole_index.bucket_count()
     );
     let mut violations = Vec::new();
+    let mut candidate_count = 0_usize;
+    let mut exact_pair_count = 0_usize;
 
     for left_index in 0..holes.len() {
         let left = holes[left_index];
         for right_index in
             hole_index.later_candidates_within_spacing(left_index, minimum_edge_spacing)
         {
+            candidate_count += 1;
             let right = holes[right_index];
             let center_spacing = distance(left.location, right.location);
             let edge_spacing = center_spacing - (left.diameter + right.diameter) / 2.0;
+            exact_pair_count += 1;
             if edge_spacing >= minimum_edge_spacing {
                 continue;
             }
@@ -405,10 +448,28 @@ pub fn mounting_hole_spacing_readiness(
         }
     }
 
+    log::trace!(
+        "mounting-hole spacing readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
+        board.source,
+        candidate_count,
+        exact_pair_count,
+        violations.len()
+    );
+    debug_assert!(exact_pair_count <= candidate_count);
+
     violations
 }
 
-/// Run the `panel_feature_outline_readiness` design-readiness check or report helper.
+/// Review parsed panel/rout graphics against the board outline.
+///
+/// IPC-2221B treats routed profiles and board mechanical definition as release
+/// package data, while IPC-7351B discusses fiducial/panel setup as part of the
+/// assembly datum system. This check keeps that review geometric: each parsed
+/// panel feature is measured against the board outline and reported when it is
+/// too far away to be credible tab-route, V-score, rail, or routed-panel
+/// evidence. Trace output records feature and exact boundary-distance counts so
+/// large decorative mechanical layers can be separated from real panelization
+/// issues during fixture triage.
 pub fn panel_feature_outline_readiness(
     board: &BoardModel,
     edge_distance: f64,
@@ -435,17 +496,17 @@ pub fn panel_feature_outline_readiness(
 
     let outline_geometry = outline.to_multipolygon();
     let mut violations = Vec::new();
+    let mut feature_count = 0_usize;
+    let mut exact_boundary_count = 0_usize;
     for polygon in panel_features.to_multipolygon().0 {
+        feature_count += 1;
         let feature = polygons_to_sketch(
             vec![polygon],
             Some(LayerMetadata {
                 name: "KiCad panel feature".to_string(),
             }),
         );
-        // IPC-2221B treats board outline and panel/mechanical definition as
-        // release-package data, not just drawing decoration. A panel graphic
-        // that is not close to the routed outline may be a valid note, but it
-        // is weak evidence for tabs, rails, V-scores, or route paths.
+        exact_boundary_count += 1;
         if polygon_boundary_distance(&feature.to_multipolygon(), &outline_geometry) <= edge_distance
         {
             continue;
@@ -469,10 +530,26 @@ pub fn panel_feature_outline_readiness(
         ));
     }
 
+    log::trace!(
+        "panel-feature outline readiness: source={} features={} exact_boundary_checks={} violations={} edge_distance={edge_distance:.6} min_area={min_area:.9}",
+        board.source,
+        feature_count,
+        exact_boundary_count,
+        violations.len()
+    );
+    debug_assert!(exact_boundary_count <= feature_count);
+
     violations
 }
 
-/// Run the `edge_plating_intent_readiness` design-readiness check or report helper.
+/// Review edge-reaching copper for explicit plated-edge or pullback intent.
+///
+/// IPC-2221B and IPC-6012D both make board-edge fabrication details part of the
+/// release handoff: exposed edge copper may be intentional castellations,
+/// plated edges, card fingers, or a pullback omission. Rectangular outlines use
+/// an AABB edge classifier before exact difference geometry; general outlines
+/// use exact boundary distance. The check reports review findings rather than
+/// deciding that edge copper is electrically wrong.
 pub fn edge_plating_intent_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -552,7 +629,13 @@ pub fn edge_plating_intent_readiness(
     violations
 }
 
-/// Run the `castellation_pitch_readiness` design-readiness check or report helper.
+/// Review edge-to-edge pitch between likely castellated holes.
+///
+/// IPC-6012D and IPC-2221B frame plated through-hole and edge features as
+/// fabrication capability/intent data. This check first classifies plated holes
+/// near the board outline, then applies the shared drill spatial index before
+/// exact center and edge-spacing math, matching the broad/narrow collision-query
+/// pattern described by Ericson, *Real-Time Collision Detection* (2005).
 pub fn castellation_pitch_readiness(
     board: &BoardModel,
     minimum_edge_spacing: f64,
@@ -570,15 +653,19 @@ pub fn castellation_pitch_readiness(
         hole_index.bucket_count()
     );
     let mut violations = Vec::new();
+    let mut candidate_count = 0_usize;
+    let mut exact_pair_count = 0_usize;
 
     for left_index in 0..holes.len() {
         let left = holes[left_index];
         for right_index in
             hole_index.later_candidates_within_spacing(left_index, minimum_edge_spacing)
         {
+            candidate_count += 1;
             let right = holes[right_index];
             let edge_spacing =
                 distance(left.location, right.location) - (left.diameter + right.diameter) / 2.0;
+            exact_pair_count += 1;
             if edge_spacing >= minimum_edge_spacing {
                 continue;
             }
@@ -596,6 +683,15 @@ pub fn castellation_pitch_readiness(
             ));
         }
     }
+
+    log::trace!(
+        "castellation pitch readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
+        board.source,
+        candidate_count,
+        exact_pair_count,
+        violations.len()
+    );
+    debug_assert!(exact_pair_count <= candidate_count);
 
     violations
 }
@@ -1206,6 +1302,39 @@ mod tests {
             }),
         ));
         assert!(panel_feature_outline_readiness(&near_edge, 0.5, 1.0e-9).is_empty());
+    }
+
+    #[test]
+    fn panel_feature_outline_readiness_handles_sparse_panel_artwork() {
+        let mut board = board_with(vec![], vec![]);
+        board.board_outline = Some(outline());
+        board.panel_features = Some(polygons_to_sketch(
+            (0..1_000)
+                .map(|index| {
+                    crate::geometry::rect_polygon(
+                        [
+                            0.10 + (index % 50) as f64 * 0.001,
+                            0.10 + (index / 50) as f64 * 0.001,
+                        ],
+                        [0.05, 0.05],
+                        0.0,
+                    )
+                })
+                .chain([crate::geometry::rect_polygon([5.0, 5.0], [0.5, 0.5], 0.0)])
+                .collect(),
+            Some(LayerMetadata {
+                name: "panel".to_string(),
+            }),
+        ));
+
+        let started = std::time::Instant::now();
+        let violations = panel_feature_outline_readiness(&board, 0.5, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "panel-feature outline review should keep sparse decorative panel artwork bounded"
+        );
     }
 
     #[test]

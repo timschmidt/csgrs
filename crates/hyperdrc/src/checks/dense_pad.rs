@@ -19,7 +19,12 @@ use crate::report::{Severity, Violation};
 
 const DENSE_PAD_CLUSTER_MIN_PADS: usize = 16;
 
-/// Run the `local_fiducial_readiness` design-readiness check or report helper.
+/// Review dense fine-pitch pad clusters for nearby local fiducials.
+///
+/// IPC-7351B treats local fiducials as assembly registration features for
+/// fine-pitch placement. This check uses dense pad pitch as a conservative
+/// package proxy and uses the shared copper spatial broad phase before exact
+/// center-distance review of same-layer fiducial candidates.
 pub fn local_fiducial_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -52,6 +57,7 @@ pub fn local_fiducial_readiness(
 
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
+    let mut exact_distance_count = 0_usize;
     for (layer, pads) in pads_by_layer {
         if pads.len() < DENSE_PAD_CLUSTER_MIN_PADS {
             continue;
@@ -66,7 +72,10 @@ pub fn local_fiducial_readiness(
         candidate_count += fiducial_candidates.len();
         let nearby_fiducials = fiducial_candidates
             .into_iter()
-            .filter(|&index| distance(fiducials[index].location, cluster_center) <= search_radius)
+            .filter(|&index| {
+                exact_distance_count += 1;
+                distance(fiducials[index].location, cluster_center) <= search_radius
+            })
             .count();
         if nearby_fiducials >= 2 {
             continue;
@@ -86,16 +95,23 @@ pub fn local_fiducial_readiness(
     }
 
     log::trace!(
-        "local fiducial readiness: source={} fiducial_candidates={} violations={}",
+        "local fiducial readiness: source={} fiducial_candidates={} exact_distance_checks={} violations={}",
         board.source,
         candidate_count,
+        exact_distance_count,
         violations.len()
     );
+    debug_assert!(exact_distance_count <= candidate_count);
 
     violations
 }
 
-/// Run the `dense_pad_escape_readiness` design-readiness check or report helper.
+/// Review dense pad clusters for nearby escape-via evidence.
+///
+/// Dense BGA/CSP and fine-pitch fanout strategy depends on available escape
+/// vias, dogbones, and via-in-pad decisions. This check reports dense clusters
+/// with no parsed nearby via after spatial candidate filtering and exact
+/// center-distance confirmation.
 pub fn dense_pad_escape_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -113,6 +129,7 @@ pub fn dense_pad_escape_readiness(
     );
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
+    let mut exact_distance_count = 0_usize;
 
     for (layer, pads) in pads_by_layer {
         let Some((min_pitch, cluster_center)) = dense_cluster_context(&pads, pitch_threshold)
@@ -121,9 +138,10 @@ pub fn dense_pad_escape_readiness(
         };
         let via_candidates = via_index.all_layers_near_circle(cluster_center, via_search_radius);
         candidate_count += via_candidates.len();
-        let has_escape_via = via_candidates
-            .into_iter()
-            .any(|index| distance(vias[index].location, cluster_center) <= via_search_radius);
+        let has_escape_via = via_candidates.into_iter().any(|index| {
+            exact_distance_count += 1;
+            distance(vias[index].location, cluster_center) <= via_search_radius
+        });
         if has_escape_via {
             continue;
         }
@@ -142,11 +160,13 @@ pub fn dense_pad_escape_readiness(
     }
 
     log::trace!(
-        "dense-pad escape readiness: source={} via_candidates={} violations={}",
+        "dense-pad escape readiness: source={} via_candidates={} exact_distance_checks={} violations={}",
         board.source,
         candidate_count,
+        exact_distance_count,
         violations.len()
     );
+    debug_assert!(exact_distance_count <= candidate_count);
 
     violations
 }
@@ -189,7 +209,9 @@ pub fn dense_pad_via_spacing_readiness(
     );
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
+    let mut exact_via_distance_count = 0_usize;
     let mut pad_candidate_count = 0_usize;
+    let mut exact_pad_clearance_count = 0_usize;
     let mut pad_bucket_count = 0_usize;
 
     for (layer, pads) in pads_by_layer {
@@ -205,7 +227,10 @@ pub fn dense_pad_via_spacing_readiness(
         for via in via_candidates
             .into_iter()
             .map(|index| vias[index])
-            .filter(|via| distance(via.location, cluster_center) <= via_search_radius)
+            .filter(|via| {
+                exact_via_distance_count += 1;
+                distance(via.location, cluster_center) <= via_search_radius
+            })
         {
             let Some((pad, clearance, pad_candidates)) =
                 nearest_pad_to_via(&pads, &pad_index, via, min_via_clearance)
@@ -213,6 +238,7 @@ pub fn dense_pad_via_spacing_readiness(
                 continue;
             };
             pad_candidate_count += pad_candidates;
+            exact_pad_clearance_count += pad_candidates;
             if clearance >= min_via_clearance {
                 continue;
             }
@@ -237,13 +263,17 @@ pub fn dense_pad_via_spacing_readiness(
     }
 
     log::trace!(
-        "dense pad/via spacing readiness: source={} via_candidates={} pad_buckets={} pad_candidates={} violations={}",
+        "dense pad/via spacing readiness: source={} via_candidates={} exact_via_distance_checks={} pad_buckets={} pad_candidates={} exact_pad_clearance_checks={} violations={}",
         board.source,
         candidate_count,
+        exact_via_distance_count,
         pad_bucket_count,
         pad_candidate_count,
+        exact_pad_clearance_count,
         violations.len()
     );
+    debug_assert!(exact_via_distance_count <= candidate_count);
+    debug_assert!(exact_pad_clearance_count <= pad_candidate_count);
 
     violations
 }
@@ -290,17 +320,18 @@ pub fn dense_pad_mask_bridge_readiness(
         let Some((min_pitch, _)) = dense_cluster_context(&pads, pitch_threshold) else {
             continue;
         };
-        let (nearest_pair, candidate_pairs) = nearest_feature_pair_within(&pads, min_mask_web);
+        let (nearest_pair, candidate_pairs, exact_pairs) =
+            nearest_feature_pair_within(&pads, min_mask_web);
         let Some((left, right, clearance)) = nearest_pair else {
             log::trace!(
-                "dense pad mask-bridge readiness: source={} layer={layer} pads={} candidate_pairs={candidate_pairs} violations=0",
+                "dense pad mask-bridge readiness: source={} layer={layer} pads={} candidate_pairs={candidate_pairs} exact_pairs={exact_pairs} violations=0",
                 board.source,
                 pads.len()
             );
             continue;
         };
         log::trace!(
-            "dense pad mask-bridge readiness: source={} layer={layer} pads={} candidate_pairs={candidate_pairs} violations=1",
+            "dense pad mask-bridge readiness: source={} layer={layer} pads={} candidate_pairs={candidate_pairs} exact_pairs={exact_pairs} violations=1",
             board.source,
             pads.len()
         );
@@ -418,14 +449,19 @@ fn pitch_cell(location: [f64; 2], cell_size: f64) -> (i64, i64) {
 fn nearest_feature_pair_within<'a>(
     features: &[&'a CopperFeature],
     threshold: f64,
-) -> (Option<(&'a CopperFeature, &'a CopperFeature, f64)>, usize) {
+) -> (
+    Option<(&'a CopperFeature, &'a CopperFeature, f64)>,
+    usize,
+    usize,
+) {
     if threshold <= 0.0 {
-        return (None, 0);
+        return (None, 0, 0);
     }
 
     let index = CopperSpatialIndex::new(features, threshold);
     let mut nearest = None;
     let mut candidate_pairs = 0_usize;
+    let mut exact_pairs = 0_usize;
     for (left_index, left) in features.iter().enumerate() {
         let Some(left_bounds) = left.sketch.geometry.bounding_rect() else {
             continue;
@@ -442,6 +478,7 @@ fn nearest_feature_pair_within<'a>(
             if !rects_within_clearance(&left_bounds, &right_bounds, threshold) {
                 continue;
             }
+            exact_pairs += 1;
             let clearance = copper_clearance(&left.sketch, &right.sketch);
             if clearance >= threshold {
                 continue;
@@ -459,13 +496,14 @@ fn nearest_feature_pair_within<'a>(
     // *Real-Time Collision Detection* (2005); exact boundary distance remains
     // the readiness predicate so false positives from large cells are harmless.
     log::trace!(
-        "nearest dense-pad mask-web pair: pads={} buckets={} candidate_pairs={} threshold={threshold:.6}",
+        "nearest dense-pad mask-web pair: pads={} buckets={} candidate_pairs={} exact_pairs={} threshold={threshold:.6}",
         features.len(),
         index.bucket_count(),
-        candidate_pairs
+        candidate_pairs,
+        exact_pairs
     );
 
-    (nearest, candidate_pairs)
+    (nearest, candidate_pairs, exact_pairs)
 }
 
 fn rects_within_clearance(left: &geo::Rect<f64>, right: &geo::Rect<f64>, clearance: f64) -> bool {

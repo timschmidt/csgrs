@@ -41,6 +41,7 @@ pub fn power_pad_entry_readiness(
     let feature_index = CopperSpatialIndex::new(&features, support_distance);
     let mut candidate_pads = 0usize;
     let mut candidate_supports = 0usize;
+    let mut exact_supports = 0usize;
     let mut violations = Vec::new();
 
     for pad in features
@@ -55,9 +56,10 @@ pub fn power_pad_entry_readiness(
             continue;
         }
         candidate_pads += 1;
-        let (support, support_candidates) =
+        let (support, support_candidates, support_exact) =
             local_pad_support(pad, &features, &feature_index, support_distance);
         candidate_supports += support_candidates;
+        exact_supports += support_exact;
         if support.has_zone
             || support.via_count >= minimum_parallel_vias
             || support.maximum_segment_width >= minimum_entry_width
@@ -82,18 +84,20 @@ pub fn power_pad_entry_readiness(
     }
 
     log::trace!(
-        "power pad entry readiness: source={} features={} buckets={} candidate_pads={} candidate_supports={} selected_layers={} support_distance={:.6} min_width={:.6} min_vias={} violations={}",
+        "power pad entry readiness: source={} features={} buckets={} candidate_pads={} candidate_supports={} exact_support_checks={} selected_layers={} support_distance={:.6} min_width={:.6} min_vias={} violations={}",
         board.source,
         features.len(),
         feature_index.bucket_count(),
         candidate_pads,
         candidate_supports,
+        exact_supports,
         selected_layers.len(),
         support_distance,
         minimum_entry_width,
         minimum_parallel_vias,
         violations.len()
     );
+    debug_assert!(exact_supports <= candidate_supports);
 
     violations
 }
@@ -127,6 +131,7 @@ pub fn power_via_return_readiness(
     let return_index = CopperSpatialIndex::new(&return_features, return_distance);
     let mut candidate_vias = 0usize;
     let mut candidate_returns = 0usize;
+    let mut exact_returns = 0usize;
     let mut violations = Vec::new();
 
     for via in features
@@ -141,9 +146,10 @@ pub fn power_via_return_readiness(
             continue;
         }
         candidate_vias += 1;
-        let (has_return, return_candidates) =
+        let (has_return, return_candidates, return_exact) =
             has_nearby_return(via, &return_features, &return_index, return_distance);
         candidate_returns += return_candidates;
+        exact_returns += return_exact;
         if has_return {
             continue;
         }
@@ -162,16 +168,18 @@ pub fn power_via_return_readiness(
     }
 
     log::trace!(
-        "power via return readiness: source={} candidate_vias={} return_features={} return_buckets={} candidate_returns={} selected_layers={} return_distance={:.6} violations={}",
+        "power via return readiness: source={} candidate_vias={} return_features={} return_buckets={} candidate_returns={} exact_return_checks={} selected_layers={} return_distance={:.6} violations={}",
         board.source,
         candidate_vias,
         return_features.len(),
         return_index.bucket_count(),
         candidate_returns,
+        exact_returns,
         selected_layers.len(),
         return_distance,
         violations.len()
     );
+    debug_assert!(exact_returns <= candidate_returns);
 
     violations
 }
@@ -188,14 +196,15 @@ fn local_pad_support(
     features: &[&CopperFeature],
     feature_index: &CopperSpatialIndex<'_>,
     support_distance: f64,
-) -> (PadSupport, usize) {
+) -> (PadSupport, usize, usize) {
     let mut support = PadSupport::default();
     let Some(pad_bounds) = pad.sketch.to_multipolygon().bounding_rect() else {
-        return (support, 0);
+        return (support, 0, 0);
     };
     let pad_geometry = pad.sketch.to_multipolygon();
     let candidates = feature_index.same_layer_near_feature(pad, support_distance);
     let candidate_count = candidates.len();
+    let mut exact_count = 0usize;
 
     for feature_index in candidates {
         let feature = features[feature_index];
@@ -214,6 +223,7 @@ fn local_pad_support(
         if !expanded_rects_overlap(&pad_bounds, &feature_bounds, support_distance) {
             continue;
         }
+        exact_count += 1;
         let distance = polygon_boundary_distance(&pad_geometry, &feature.sketch.to_multipolygon());
         if distance > support_distance {
             continue;
@@ -231,7 +241,7 @@ fn local_pad_support(
         }
     }
 
-    (support, candidate_count)
+    (support, candidate_count, exact_count)
 }
 
 fn has_nearby_return(
@@ -239,28 +249,35 @@ fn has_nearby_return(
     return_features: &[&CopperFeature],
     return_index: &CopperSpatialIndex<'_>,
     return_distance: f64,
-) -> (bool, usize) {
+) -> (bool, usize, usize) {
     let Some(via_bounds) = via.sketch.to_multipolygon().bounding_rect() else {
-        return (false, 0);
+        return (false, 0, 0);
     };
     let via_geometry = via.sketch.to_multipolygon();
     let candidates = return_index.same_layer_near_feature(via, return_distance);
     let candidate_count = candidates.len();
+    let mut exact_count = 0usize;
 
-    let has_return = candidates.into_iter().any(|feature_index| {
+    let mut has_return = false;
+    for feature_index in candidates {
         let feature = return_features[feature_index];
         let Some(feature_bounds) = feature.sketch.to_multipolygon().bounding_rect() else {
-            return false;
+            continue;
         };
         if !expanded_rects_overlap(&via_bounds, &feature_bounds, return_distance) {
-            return false;
+            continue;
         }
 
-        polygon_boundary_distance(&via_geometry, &feature.sketch.to_multipolygon())
+        exact_count += 1;
+        if polygon_boundary_distance(&via_geometry, &feature.sketch.to_multipolygon())
             <= return_distance
-    });
+        {
+            has_return = true;
+            break;
+        }
+    }
 
-    (has_return, candidate_count)
+    (has_return, candidate_count, exact_count)
 }
 
 fn selected_copper_features<'a>(

@@ -286,6 +286,12 @@ exact feature/outline CSG on common rectangular boards. Board-edge and chassis
 stitching checks also use a point spatial index for parsed ground-stitch via
 centers before exact center-distance review, avoiding sparse ground-via scans
 during EMC readiness sweeps.
+`gold-finger-readiness` emits selected feature, inferred finger feature, and
+finger-via counts so fixture runs can distinguish naming coverage from actual
+via-intent findings.
+`gold-finger-edge-readiness` emits selected, inferred finger, and measured
+feature counts when an outline is available so edge-placement triage is visible
+in large package runs.
 - `chassis-stitching-readiness`
 - `gold-finger-readiness`
 - `gold-finger-edge-readiness`
@@ -317,6 +323,9 @@ copper-area support, hot-component spacing, and mechanical thermal keepout
 checks use the shared copper spatial index before exact center-distance, via
 spread, or CSG intersection review, keeping sparse heat-spreading layouts
 bounded.
+Thermal pad-via, hot-component spacing, and thermal-mechanical keepout traces
+now separate broad candidate counts from exact via/intersection work for
+pathological fixture triage.
 - `different-net-spacing`
 - `layer-registration-tolerance`
 - `panelization-clearance`
@@ -427,6 +436,10 @@ exact center-distance or keepout-overlap review. Edge-clearance readiness
 compares that same keepout against the parsed board outline and skips exact CSG
 difference for rectangular outlines when the circular keepout is fully inside
 the board rectangle.
+Mounting-hole grounding, copper keepout, plating-intent, spacing, panel-feature,
+and castellation-pitch traces now separate broad spatial candidates or parsed
+feature counts from exact distance, keepout, outline-distance, or edge-spacing
+checks so fixture runs can expose pathological mechanical packages directly.
 Panel-feature outline readiness checks that parsed route, tab, V-score, or rail
 graphics can be registered against the board outline instead of floating as
 unverifiable mechanical notes. Plating-intent readiness reports large plated
@@ -496,13 +509,18 @@ spatial index before exact guard-distance review.
 `reference-plane-readiness`, and `high-current-readiness` emit trace summaries
 with parsed feature, inferred net/pair, selected-layer, and violation counts so
 large fixture runs can be triaged without dumping every candidate.
+`power-plane-readiness` and `high-current-neck-readiness` add the same style of
+high-current feature/net/measurement counts for power-intent triage.
 `power-via-array-readiness` reports isolated likely high-current vias; same-net
 via centers use a point spatial index before exact pitch review.
 `power-via-return-readiness` reports likely high-current vias whose same-layer
 parsed copper lacks a nearby ground return feature, making large loop-area
 review visible alongside the via-array capacity check. `power-pad-entry-readiness`
 and `power-via-return-readiness` use the shared copper spatial index before
-exact local-support or return-distance review.
+exact local-support or return-distance review, and their traces separate broad
+candidate support/return features from exact boundary-distance checks.
+Switch-node and inductor copper keepout traces expose broad candidates and exact
+offset/intersection pairs for power-stage EMI triage.
 `split-plane-crossing-readiness` reports likely high-speed segments that cross
 between separated same-layer ground-zone islands, returning the uncovered trace
 region as the review shape. `return-path-proximity-readiness` reports likely
@@ -512,6 +530,11 @@ select same-layer ground candidates before exact distance review.
 `return-path-readiness` uses a point spatial index for parsed ground stitching
 via centers before exact center-distance review, keeping sparse via fields
 bounded.
+RF keepout, antenna copper keepout, RF via fence, sensitive-net spacing,
+sensitive return, mixed-signal partition, voltage clearance, protective-earth
+spacing, surge keepout, ESD protection, and ESD return checks now separate broad
+candidate counts from exact spacing, guard, distance, or protection checks in
+trace output.
 `same-net-island-readiness` reports disconnected same-net copper components on
 one selected layer. Connectivity candidate edges use the shared copper spatial
 index before exact overlap/distance review.
@@ -550,11 +573,23 @@ KiCad copper, so true routed path reconstruction remains a deeper future input.
 
 - `component-edge-clearance-readiness`
 - `component-hole-clearance-readiness`
+- `component-spacing-readiness`
 - `connector-rework-clearance-readiness`
 - `pad-pair-asymmetry-readiness`
 - `testpoint-coverage-readiness`
 - `testpoint-accessibility-readiness`
 - `testpoint-copper-clearance-readiness`
+
+Component-hole, component-spacing, and connector-rework readiness checks emit
+broad-phase candidate, exact-pair, and violation counters so large sparse
+assembly fixtures can be triaged without enabling per-feature dumps.
+Pad-pair asymmetry and process keepout checks expose the same broad/exact split
+for tombstoning, wave/selective-solder, press-fit, and conformal-coating
+triage.
+Testpoint copper clearance, fiducial keepout, local-fiducial, dense-pad escape,
+dense-pad via-spacing, and dense-pad mask-bridge traces also split broad
+candidates from exact distance, CSG, or copper-clearance work so fixture and
+fine-pitch package runs identify expensive geometry directly.
 - `tooling-hole-readiness`
 - `mouse-bite-readiness`
 - `fiducial-readiness`
