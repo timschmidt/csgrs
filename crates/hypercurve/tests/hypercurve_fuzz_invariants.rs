@@ -212,6 +212,60 @@ proptest! {
     })]
 
     #[test]
+    fn prepared_line_segment_classifier_matches_plain_for_integer_grid(
+        x0 in -64_i32..64,
+        y0 in -64_i32..64,
+        dx in -16_i32..16,
+        dy in -16_i32..16,
+        qx in -96_i32..96,
+        qy in -96_i32..96,
+    ) {
+        prop_assume!(dx != 0 || dy != 0);
+        let line = LineSeg2::try_new(p(x0, y0), p(x0 + dx, y0 + dy)).unwrap();
+        let query = p(qx, qy);
+        let prepared = line.prepare_topology_queries();
+
+        // Fuzz the curve/predicate boundary rather than the determinant
+        // itself: Yap's EGC model requires prepared objects to preserve the
+        // same exact branch decisions as unprepared objects while carrying
+        // extra structure for cheaper dispatch.
+        prop_assert_eq!(
+            prepared.classify_point(&query, &policy()),
+            line.classify_point(&query, &policy())
+        );
+    }
+
+    #[test]
+    fn prepared_circular_arc_classifiers_match_plain_for_integer_grid(
+        x in -48_i32..48,
+        y in -48_i32..48,
+        radius in 1_i32..32,
+        clockwise in any::<bool>(),
+        qx in -96_i32..96,
+        qy in -96_i32..96,
+    ) {
+        let arc = CircularArc2::from_bulge(
+            p(x - radius, y),
+            p(x + radius, y),
+            s(if clockwise { -1 } else { 1 }),
+        ).unwrap();
+        let query = p(qx, qy);
+        let prepared = arc.prepare_topology_queries();
+
+        // The prepared arc caches radial line predicates and scalar facts, but
+        // the radius and sweep decisions must stay identical to the ordinary
+        // exact classifiers across adversarial integer-grid queries.
+        prop_assert_eq!(
+            prepared.contains_sweep_point(&query, &policy()),
+            arc.contains_sweep_point(&query, &policy())
+        );
+        prop_assert_eq!(
+            prepared.contains_point(&query, &policy()),
+            arc.contains_point(&query, &policy())
+        );
+    }
+
+    #[test]
     fn primitive_segments_reversal_containment_and_bbox(
         x in -128_i32..128,
         y in -128_i32..128,

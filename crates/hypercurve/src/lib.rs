@@ -64,7 +64,10 @@ pub use intersect::{
 pub use offset::OffsetCap;
 pub use point::Point2;
 pub use policy::{CurvePolicy, NumericMode, Tolerance};
-pub use prepared::{PreparedContourView2, PreparedCurveStringView2, PreparedRegionView2};
+pub use prepared::{
+    PreparedCircularArc2, PreparedContourView2, PreparedCurveStringView2, PreparedLineSeg2,
+    PreparedRegionView2, PreparedSegment2,
+};
 pub use reconstruct::PolylineReconstructionOptions;
 pub use region::{Region2, RegionPointLocation, RegionView2};
 pub use region_events::{

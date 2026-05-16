@@ -10,11 +10,255 @@
 use crate::bbox::{Aabb2, aabb_decided_misses_point, decided_segment_aabb};
 use crate::facts::{CurveStringFacts, RegionFacts};
 use crate::{
-    BooleanBoundaryLoopSet, BooleanOp, Classification, Contour2, ContourIntersectionSet,
-    ContourPointLocation, CurvePolicy, CurveResult, CurveString2, CurveStringIntersection,
-    FillRule, Point2, Region2, RegionContourIntersection, RegionContourKey, RegionContourRole,
-    RegionIntersectionSet, RegionPointLocation, RegionSide, RegionView2, UncertaintyReason,
+    BooleanBoundaryLoopSet, BooleanOp, CircularArc2, CircularArc2Facts, Classification, Contour2,
+    ContourIntersectionSet, ContourPointLocation, CurvePolicy, CurveResult, CurveString2,
+    CurveStringIntersection, FillRule, LineSeg2, LineSeg2Facts, LineSide, Point2, Region2,
+    RegionContourIntersection, RegionContourKey, RegionContourRole, RegionIntersectionSet,
+    RegionPointLocation, RegionSide, RegionView2, Segment2, UncertaintyReason,
 };
+
+/// Prepared point-line classifier for a fixed [`LineSeg2`].
+///
+/// This view caches the segment's structural facts and, when the `predicates`
+/// feature is enabled, the converted `hyperlimit` endpoints used by repeated
+/// orientation tests. It deliberately does not own finite-segment containment
+/// semantics: those remain on [`LineSeg2`], while this type accelerates the
+/// exact supporting-line predicate. That split follows Yap's EGC model of
+/// carrying object structure forward without moving combinatorial decisions
+/// out of the predicate layer; see Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997).
+#[derive(Clone, Debug, PartialEq)]
+pub struct PreparedLineSeg2<'a> {
+    line: &'a LineSeg2,
+    facts: LineSeg2Facts,
+    #[cfg(feature = "predicates")]
+    predicate_start: hyperlimit::Point2,
+    #[cfg(feature = "predicates")]
+    predicate_end: hyperlimit::Point2,
+    #[cfg(feature = "predicates")]
+    predicate_facts: hyperlimit::PreparedPredicateFacts,
+}
+
+impl<'a> PreparedLineSeg2<'a> {
+    /// Builds a prepared borrowed line segment.
+    pub fn from_line_segment(line: &'a LineSeg2) -> Self {
+        let facts = line.structural_facts();
+        #[cfg(feature = "predicates")]
+        {
+            let predicate_start = predicate_point(line.start());
+            let predicate_end = predicate_point(line.end());
+            let predicate_facts =
+                hyperlimit::PreparedLine2::new(&predicate_start, &predicate_end).facts();
+            Self {
+                line,
+                facts,
+                predicate_start,
+                predicate_end,
+                predicate_facts,
+            }
+        }
+
+        #[cfg(not(feature = "predicates"))]
+        {
+            Self { line, facts }
+        }
+    }
+
+    /// Returns the borrowed source line segment.
+    pub const fn line_segment(&self) -> &'a LineSeg2 {
+        self.line
+    }
+
+    /// Returns conservative structural facts collected during preparation.
+    ///
+    /// Structural-dispatch note: future line-only curve paths can use these
+    /// facts to choose axis-aligned, common-denominator, or symbolic-family
+    /// batches before issuing certified orientation predicates. The facts are
+    /// advisory and never replace exact predicate outcomes.
+    pub const fn facts(&self) -> &LineSeg2Facts {
+        &self.facts
+    }
+
+    /// Classifies a point relative to this segment's oriented supporting line.
+    pub fn classify_point(&self, point: &Point2, policy: &CurvePolicy) -> Classification<LineSide> {
+        #[cfg(feature = "predicates")]
+        if !matches!(policy.numeric_mode, crate::NumericMode::EdgePreview) {
+            // Reuse the fixed endpoint conversion and prepared facts, then let
+            // hyperlimit select the exact determinant schedule. This is the
+            // Shewchuk-style orientation predicate at the curve-object
+            // boundary, with Yap's exact/approximate split preserved by
+            // keeping EdgePreview outside the certified path.
+            let query = predicate_point(point);
+            return classify_prepared_line(
+                &self.predicate_start,
+                &self.predicate_end,
+                self.predicate_facts,
+                &query,
+                policy,
+            );
+        }
+
+        self.line.classify_point(point, policy)
+    }
+}
+
+/// Prepared sweep and circle classifier for a fixed [`CircularArc2`].
+///
+/// The prepared arc stores the two radial oriented lines that bound the arc
+/// sweep. Point-on-arc checks still compare exact squared radius first, then
+/// use those prepared radial predicates for angular containment. This mirrors
+/// Schneider and Eberly's circle/arc primitive decomposition while preserving
+/// Yap's EGC split between exact topology predicates and approximate output
+/// adapters. See Schneider and Eberly, *Geometric Tools for Computer Graphics*
+/// (Morgan Kaufmann, 2002), and Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997).
+#[derive(Clone, Debug, PartialEq)]
+pub struct PreparedCircularArc2<'a> {
+    arc: &'a CircularArc2,
+    facts: CircularArc2Facts,
+    #[cfg(feature = "predicates")]
+    predicate_center: hyperlimit::Point2,
+    #[cfg(feature = "predicates")]
+    predicate_start: hyperlimit::Point2,
+    #[cfg(feature = "predicates")]
+    predicate_end: hyperlimit::Point2,
+    #[cfg(feature = "predicates")]
+    center_start_facts: hyperlimit::PreparedPredicateFacts,
+    #[cfg(feature = "predicates")]
+    center_end_facts: hyperlimit::PreparedPredicateFacts,
+}
+
+impl<'a> PreparedCircularArc2<'a> {
+    /// Builds a prepared borrowed circular arc.
+    pub fn from_circular_arc(arc: &'a CircularArc2) -> Self {
+        let facts = arc.structural_facts();
+        #[cfg(feature = "predicates")]
+        {
+            let predicate_center = predicate_point(arc.center());
+            let predicate_start = predicate_point(arc.start());
+            let predicate_end = predicate_point(arc.end());
+            let center_start_facts =
+                hyperlimit::PreparedLine2::new(&predicate_center, &predicate_start).facts();
+            let center_end_facts =
+                hyperlimit::PreparedLine2::new(&predicate_center, &predicate_end).facts();
+            Self {
+                arc,
+                facts,
+                predicate_center,
+                predicate_start,
+                predicate_end,
+                center_start_facts,
+                center_end_facts,
+            }
+        }
+
+        #[cfg(not(feature = "predicates"))]
+        {
+            Self { arc, facts }
+        }
+    }
+
+    /// Returns the borrowed source arc.
+    pub const fn circular_arc(&self) -> &'a CircularArc2 {
+        self.arc
+    }
+
+    /// Returns conservative structural facts collected during preparation.
+    ///
+    /// Structural-dispatch note: exact-rational radius and endpoint scale facts
+    /// are the right hooks for future line-circle and circle-circle batches.
+    /// They select candidate kernels; certified sign and orientation predicates
+    /// still decide topology.
+    pub const fn facts(&self) -> &CircularArc2Facts {
+        &self.facts
+    }
+
+    /// Classifies whether a point lies inside this arc's angular sweep.
+    pub fn contains_sweep_point(
+        &self,
+        point: &Point2,
+        policy: &CurvePolicy,
+    ) -> Classification<bool> {
+        #[cfg(feature = "predicates")]
+        if !matches!(policy.numeric_mode, crate::NumericMode::EdgePreview) {
+            let query = predicate_point(point);
+            let start_side = classify_prepared_line(
+                &self.predicate_center,
+                &self.predicate_start,
+                self.center_start_facts,
+                &query,
+                policy,
+            );
+            let end_side = classify_prepared_line(
+                &self.predicate_center,
+                &self.predicate_end,
+                self.center_end_facts,
+                &query,
+                policy,
+            );
+            let (Classification::Decided(start_side), Classification::Decided(end_side)) =
+                (start_side, end_side)
+            else {
+                return Classification::Uncertain(UncertaintyReason::Predicate);
+            };
+
+            let contains = if self.arc.is_clockwise() {
+                matches!(start_side, LineSide::Right | LineSide::On)
+                    && matches!(end_side, LineSide::Left | LineSide::On)
+            } else {
+                matches!(start_side, LineSide::Left | LineSide::On)
+                    && matches!(end_side, LineSide::Right | LineSide::On)
+            };
+            return Classification::Decided(contains);
+        }
+
+        self.arc.contains_sweep_point(point, policy)
+    }
+
+    /// Classifies whether a point lies on this finite circular arc.
+    pub fn contains_point(&self, point: &Point2, policy: &CurvePolicy) -> Classification<bool> {
+        let radius_delta = point.distance_squared(self.arc.center()) - self.arc.radius_squared();
+        match crate::classify::is_zero(&radius_delta, policy) {
+            Some(false) => Classification::Decided(false),
+            Some(true) => self.contains_sweep_point(point, policy),
+            None => Classification::Uncertain(UncertaintyReason::RealSign),
+        }
+    }
+}
+
+/// Prepared exact-predicate handle for a native segment.
+///
+/// This enum mirrors [`Segment2`] at the prepared-object layer. It gives curve
+/// strings and contours a place to retain per-segment line/arc predicate
+/// handles discovered during preparation, while keeping segment topology owned
+/// by `hypercurve` and scalar/predicate decisions owned by `hyperlimit`.
+#[derive(Clone, Debug, PartialEq)]
+pub enum PreparedSegment2<'a> {
+    /// Prepared line-segment predicates.
+    Line(PreparedLineSeg2<'a>),
+    /// Prepared circular-arc predicates.
+    Arc(PreparedCircularArc2<'a>),
+}
+
+impl<'a> PreparedSegment2<'a> {
+    /// Builds a prepared borrowed segment handle.
+    pub fn from_segment(segment: &'a Segment2) -> Self {
+        match segment {
+            Segment2::Line(line) => Self::Line(PreparedLineSeg2::from_line_segment(line)),
+            Segment2::Arc(arc) => Self::Arc(PreparedCircularArc2::from_circular_arc(arc)),
+        }
+    }
+
+    /// Returns whether this handle prepares a line segment.
+    pub const fn is_line(&self) -> bool {
+        matches!(self, Self::Line(_))
+    }
+
+    /// Returns whether this handle prepares a circular arc.
+    pub const fn is_arc(&self) -> bool {
+        matches!(self, Self::Arc(_))
+    }
+}
 
 /// A borrowed curve string with cached segment and whole-string bounding boxes.
 ///
@@ -27,6 +271,7 @@ use crate::{
 #[derive(Clone, Debug, PartialEq)]
 pub struct PreparedCurveStringView2<'a> {
     curve: &'a CurveString2,
+    prepared_segments: Vec<PreparedSegment2<'a>>,
     segment_boxes: Vec<Option<Aabb2>>,
     curve_box: Option<Aabb2>,
     facts: CurveStringFacts,
@@ -47,9 +292,11 @@ impl<'a> PreparedCurveStringView2<'a> {
             segment_boxes.iter().filter(|bbox| bbox.is_some()).count(),
             curve_box.is_some(),
         );
+        let prepared_segments = prepared_segments(curve.segments());
 
         Self {
             curve,
+            prepared_segments,
             segment_boxes,
             curve_box,
             facts,
@@ -69,6 +316,16 @@ impl<'a> PreparedCurveStringView2<'a> {
     /// Returns cached segment boxes in source segment order.
     pub fn segment_boxes(&self) -> &[Option<Aabb2>] {
         &self.segment_boxes
+    }
+
+    /// Returns prepared per-segment predicate handles in source segment order.
+    ///
+    /// These handles are retained for future all-line, line/arc, and arc/arc
+    /// batches. Current broad-phase query methods still delegate through the
+    /// ordinary segment APIs so behavior remains unchanged while the object
+    /// cache boundary is established.
+    pub fn prepared_segments(&self) -> &[PreparedSegment2<'a>] {
+        &self.prepared_segments
     }
 
     /// Returns conservative structural facts collected while preparing.
@@ -131,6 +388,7 @@ impl<'a> PreparedCurveStringView2<'a> {
 #[derive(Clone, Debug, PartialEq)]
 pub struct PreparedContourView2<'a> {
     contour: &'a Contour2,
+    prepared_segments: Vec<PreparedSegment2<'a>>,
     segment_boxes: Vec<Option<Aabb2>>,
     contour_box: Option<Aabb2>,
     facts: CurveStringFacts,
@@ -150,9 +408,11 @@ impl<'a> PreparedContourView2<'a> {
             segment_boxes.iter().filter(|bbox| bbox.is_some()).count(),
             contour_box.is_some(),
         );
+        let prepared_segments = prepared_segments(contour.segments());
 
         Self {
             contour,
+            prepared_segments,
             segment_boxes,
             contour_box,
             facts,
@@ -172,6 +432,11 @@ impl<'a> PreparedContourView2<'a> {
     /// Returns cached segment boxes in source segment order.
     pub fn segment_boxes(&self) -> &[Option<Aabb2>] {
         &self.segment_boxes
+    }
+
+    /// Returns prepared per-segment predicate handles in source segment order.
+    pub fn prepared_segments(&self) -> &[PreparedSegment2<'a>] {
+        &self.prepared_segments
     }
 
     /// Returns conservative structural facts collected while preparing.
@@ -715,6 +980,46 @@ fn decided_segment_boxes(segments: &[crate::Segment2], policy: &CurvePolicy) -> 
         .iter()
         .map(|segment| decided_segment_aabb(segment, policy))
         .collect()
+}
+
+fn prepared_segments(segments: &[Segment2]) -> Vec<PreparedSegment2<'_>> {
+    segments
+        .iter()
+        .map(PreparedSegment2::from_segment)
+        .collect()
+}
+
+#[cfg(feature = "predicates")]
+fn predicate_point(point: &Point2) -> hyperlimit::Point2 {
+    hyperlimit::Point2::new(point.x().clone(), point.y().clone())
+}
+
+#[cfg(feature = "predicates")]
+fn classify_prepared_line(
+    from: &hyperlimit::Point2,
+    to: &hyperlimit::Point2,
+    facts: hyperlimit::PreparedPredicateFacts,
+    point: &hyperlimit::Point2,
+    policy: &CurvePolicy,
+) -> Classification<LineSide> {
+    let prepared = hyperlimit::PreparedLine2::from_facts(from, to, facts);
+    match prepared.classify_point_with_policy(point, policy.predicate_policy) {
+        hyperlimit::PredicateOutcome::Decided { value, .. } => {
+            Classification::Decided(line_side_from_hyperlimit(value))
+        }
+        hyperlimit::PredicateOutcome::Unknown { .. } => {
+            Classification::Uncertain(UncertaintyReason::Predicate)
+        }
+    }
+}
+
+#[cfg(feature = "predicates")]
+const fn line_side_from_hyperlimit(side: hyperlimit::LineSide) -> LineSide {
+    match side {
+        hyperlimit::LineSide::Left => LineSide::Left,
+        hyperlimit::LineSide::Right => LineSide::Right,
+        hyperlimit::LineSide::On => LineSide::On,
+    }
 }
 
 fn union_all_decided_boxes<'a, I>(boxes: I, policy: &CurvePolicy) -> Option<Aabb2>

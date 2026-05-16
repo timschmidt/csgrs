@@ -14,6 +14,11 @@ the native APIs expose explicit uncertainty for tangent, overlap, boundary, and
 unsupported cases instead of silently resolving them through global epsilon
 rules.
 
+## WASM Demo
+
+The deployed WASM app is available at
+<https://timschmidt.github.io/hypercurve/>.
+
 ## Numeric Model
 
 `hypercurve` stores and decides core geometry with `hyperreal::Real`
@@ -66,10 +71,16 @@ policies.
 - Prepared borrowed curve-string, contour, and region views cache segment,
   contour, and whole-region boxes for repeated self-contact, curve-string
   intersection, contour/region point classification, and contour/region event
-  queries, plus prepared region boolean-boundary loop, checked-contour, and
-  region-result traversal. Mixed prepared-vs-region event and boolean wrappers
-  reuse either prepared operand while transiently preparing the ordinary side,
-  without changing exact boundary semantics.
+  queries. They also retain per-segment prepared predicate handles for future
+  line/arc batches, plus prepared region boolean-boundary loop,
+  checked-contour, and region-result traversal. Mixed prepared-vs-region event
+  and boolean wrappers reuse either prepared operand while transiently
+  preparing the ordinary side, without changing exact boundary semantics.
+- Prepared line-segment views cache exact predicate endpoint conversion and
+  structural facts for repeated supporting-line classifications while keeping
+  finite-segment containment semantics on the native segment type.
+- Prepared circular-arc views cache radial sweep predicates and structural arc
+  facts for repeated sweep and point-on-arc classification.
 - Owned and borrowed regions with material and hole contour bins.
 - Region-pair event collection and point-bearing fragment splitting.
 - Boolean fragment classification for union, intersection, difference, and xor.

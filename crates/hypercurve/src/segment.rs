@@ -64,6 +64,15 @@ impl LineSeg2 {
         classify_oriented_line(&self.start, &self.end, point, policy)
     }
 
+    /// Prepares this line segment for repeated supporting-line classifications.
+    ///
+    /// The prepared view caches segment facts and predicate endpoint
+    /// conversion, but it delegates every sidedness branch to the same exact
+    /// predicate policy as [`LineSeg2::classify_point`].
+    pub fn prepare_topology_queries(&self) -> crate::PreparedLineSeg2<'_> {
+        crate::PreparedLineSeg2::from_line_segment(self)
+    }
+
     /// Classifies whether a point lies on this finite line segment.
     pub fn contains_point(&self, point: &Point2, policy: &CurvePolicy) -> Classification<bool> {
         match self.classify_point(point, policy) {
@@ -269,6 +278,15 @@ impl CircularArc2 {
             Some(true) => self.contains_sweep_point(point, policy),
             None => Classification::Uncertain(crate::UncertaintyReason::RealSign),
         }
+    }
+
+    /// Prepares this arc for repeated sweep and point-on-arc classifications.
+    ///
+    /// The prepared view caches the two radial supporting-line predicates used
+    /// by [`CircularArc2::contains_sweep_point`] and delegates radius equality
+    /// checks to the same exact scalar policy as [`CircularArc2::contains_point`].
+    pub fn prepare_topology_queries(&self) -> crate::PreparedCircularArc2<'_> {
+        crate::PreparedCircularArc2::from_circular_arc(self)
     }
 
     /// Returns conservative structural facts for this arc.
