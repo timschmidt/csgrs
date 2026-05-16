@@ -37,6 +37,8 @@ impl eframe::App for MainApp {
                 ui.selectable_value(&mut self.active, Scene::Points, "Delaunay Points");
                 ui.selectable_value(&mut self.active, Scene::Constraints, "Constrained CDT");
                 ui.selectable_value(&mut self.active, Scene::Compare, "Runtime Compare");
+                ui.separator();
+                ui.hyperlink_to("GitHub", "https://github.com/timschmidt/hypertri");
             });
         });
 

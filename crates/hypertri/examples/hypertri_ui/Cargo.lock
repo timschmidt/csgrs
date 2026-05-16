@@ -1445,6 +1445,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "hyperlimit"
+version = "0.2.0"
+dependencies = [
+ "hyperreal",
+]
+
+[[package]]
 name = "hyperreal"
 version = "0.11.1"
 dependencies = [
@@ -1458,6 +1465,7 @@ dependencies = [
 name = "hypertri"
 version = "0.1.0"
 dependencies = [
+ "hyperlimit",
  "hyperreal",
 ]
 
