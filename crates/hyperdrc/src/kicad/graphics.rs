@@ -6,10 +6,14 @@
 
 use geo::Polygon;
 
-use crate::geometry::{arc_line_polygons, circle_polygon, line_polygon, polygon_from_points};
+use crate::geometry::{
+    arc_line_polygons, bezier_line_polygons, circle_polygon, line_polygon, polygon_from_points,
+};
 use crate::sexp::Sexp;
 
-use super::xy_from_child;
+use super::{
+    arcs::arc_center_start_angle, points_from_pts, polygons_from_pts, stroke_width, xy_from_child,
+};
 
 pub(super) fn parse_graphics(
     root: &Sexp,
@@ -25,10 +29,7 @@ pub(super) fn parse_graphics(
         let Some(end) = xy_from_child(line, "end") else {
             continue;
         };
-        let width = line
-            .named_child("width")
-            .and_then(|width| width.f64_at(1))
-            .unwrap_or(0.05);
+        let width = stroke_width(line, 0.05);
         if is_edge_cuts(line) {
             edge_lines.push((start, end));
         } else if is_panel_layer(line)
@@ -79,6 +80,26 @@ pub(super) fn parse_graphics(
         }
     }
 
+    for poly in root.named_children("gr_poly") {
+        let polygons = polygons_from_pts(poly);
+        if polygons.is_empty() {
+            continue;
+        }
+        if is_edge_cuts(poly) {
+            log::trace!(
+                "parsed KiCad Edge.Cuts polygon graphics: count={}",
+                polygons.len()
+            );
+            edge_polygons.extend(polygons);
+        } else if is_panel_layer(poly) {
+            log::trace!(
+                "parsed KiCad panel polygon graphics: count={}",
+                polygons.len()
+            );
+            panel_polygons.extend(polygons);
+        }
+    }
+
     for arc in root.named_children("gr_arc") {
         let Some(center) = xy_from_child(arc, "start").or_else(|| xy_from_child(arc, "center"))
         else {
@@ -90,11 +111,7 @@ pub(super) fn parse_graphics(
         let Some(end) = xy_from_child(arc, "end") else {
             continue;
         };
-        let width = arc
-            .named_child("width")
-            .and_then(|width| width.f64_at(1))
-            .unwrap_or(0.05)
-            .max(0.01);
+        let width = stroke_width(arc, 0.05).max(0.01);
         let Some((arc_center, start, angle)) = arc_center_start_angle(center, mid, end) else {
             continue;
         };
@@ -105,59 +122,32 @@ pub(super) fn parse_graphics(
             panel_polygons.extend(polygons);
         }
     }
-}
 
-fn arc_center_start_angle(
-    start: [f64; 2],
-    mid: [f64; 2],
-    end: [f64; 2],
-) -> Option<([f64; 2], [f64; 2], f64)> {
-    // Circumcircle through start/mid/end. The midpoint determines whether the
-    // represented arc follows the counter-clockwise or clockwise sweep.
-    let d = 2.0
-        * (start[0] * (mid[1] - end[1])
-            + mid[0] * (end[1] - start[1])
-            + end[0] * (start[1] - mid[1]));
-    if d.abs() < 1.0e-9 {
-        return None;
+    for curve_name in ["bezier", "gr_curve"] {
+        for curve in root.named_children(curve_name) {
+            let points = points_from_pts(curve);
+            let width = stroke_width(curve, 0.05).max(0.01);
+            let polygons = bezier_line_polygons(&points, width, 24);
+            if polygons.is_empty() {
+                continue;
+            }
+            if is_edge_cuts(curve) {
+                log::trace!(
+                    "parsed KiCad Edge.Cuts Bezier graphics: control_points={} segments={}",
+                    points.len(),
+                    polygons.len()
+                );
+                edge_polygons.extend(polygons);
+            } else if is_panel_layer(curve) {
+                log::trace!(
+                    "parsed KiCad panel Bezier graphics: control_points={} segments={}",
+                    points.len(),
+                    polygons.len()
+                );
+                panel_polygons.extend(polygons);
+            }
+        }
     }
-
-    let start_sq = start[0] * start[0] + start[1] * start[1];
-    let mid_sq = mid[0] * mid[0] + mid[1] * mid[1];
-    let end_sq = end[0] * end[0] + end[1] * end[1];
-    let center = [
-        (start_sq * (mid[1] - end[1])
-            + mid_sq * (end[1] - start[1])
-            + end_sq * (start[1] - mid[1]))
-            / d,
-        (start_sq * (end[0] - mid[0])
-            + mid_sq * (start[0] - end[0])
-            + end_sq * (mid[0] - start[0]))
-            / d,
-    ];
-    let start_angle = (start[1] - center[1]).atan2(start[0] - center[0]);
-    let mid_angle = (mid[1] - center[1]).atan2(mid[0] - center[0]);
-    let end_angle = (end[1] - center[1]).atan2(end[0] - center[0]);
-    let ccw_delta = positive_angle_delta(start_angle, end_angle);
-    let mid_delta = positive_angle_delta(start_angle, mid_angle);
-    let angle = if mid_delta <= ccw_delta {
-        ccw_delta.to_degrees()
-    } else {
-        -(std::f64::consts::TAU - ccw_delta).to_degrees()
-    };
-
-    Some((center, start, angle))
-}
-
-fn positive_angle_delta(start: f64, end: f64) -> f64 {
-    let mut delta = end - start;
-    while delta < 0.0 {
-        delta += std::f64::consts::TAU;
-    }
-    while delta >= std::f64::consts::TAU {
-        delta -= std::f64::consts::TAU;
-    }
-    delta
 }
 
 fn closed_polygon_from_lines(lines: &[([f64; 2], [f64; 2])]) -> Option<Polygon<f64>> {

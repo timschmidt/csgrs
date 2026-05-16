@@ -668,6 +668,178 @@ pub fn solder_mask_opening_coverage(
     )
 }
 
+/// Warn when paired solder-mask openings are unusually small or large for copper.
+///
+/// This is a flattened-layer proxy for NSMD/SMD and BGA mask-opening review:
+/// each copper island is matched to indexed nearby mask openings, exact
+/// copper/mask intersection confirms the candidate, and the total opening area
+/// is compared with the copper island area. Merged openings, under-opened pads,
+/// and excessive growth can all change solder joint geometry, so HyperDRC
+/// reports the ratio for release review instead of inferring the intended mask
+/// definition.
+///
+/// The manufacturing motivation follows Chin and Ramakrishna, "Impact of BGA
+/// Escape Trace Design on Performance of Solder Joint," *SMTA International*
+/// (Cisco Systems), where BGA escape geometry and pad definition choices affect
+/// solder-joint performance. Candidate selection uses Ericson,
+/// *Real-Time Collision Detection* (2005), as a broad phase before exact CSG.
+pub fn solder_mask_opening_ratio_readiness(
+    copper_name: &str,
+    copper: &PcbSketch,
+    mask_name: &str,
+    mask_openings: &PcbSketch,
+    min_ratio: f64,
+    max_ratio: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    let mut violations = Vec::new();
+    let mask_polygons = mask_openings.to_multipolygon().0;
+    let mask_index = LayerPolygonSpatialIndex::new(&mask_polygons, 0.0);
+    log::trace!(
+        "solder-mask opening-ratio readiness: copper_layer={copper_name} mask_layer={mask_name} mask_openings={} mask_buckets={} min_ratio={min_ratio:.3} max_ratio={max_ratio:.3}",
+        mask_polygons.len(),
+        mask_index.bucket_count()
+    );
+    let mut candidate_openings = 0usize;
+
+    for (island_index, copper_polygon) in copper.to_multipolygon().0.into_iter().enumerate() {
+        let copper_area = copper_polygon.unsigned_area();
+        if copper_area <= min_area {
+            continue;
+        }
+
+        let island = polygon_to_sketch(copper_polygon.clone(), Some(metadata(copper_name)));
+        let candidate_indexes = mask_index.candidates_near_polygon(&copper_polygon, 0.0);
+        candidate_openings += candidate_indexes.len();
+        let opening_area = candidate_indexes
+            .into_iter()
+            .map(|index| &mask_polygons[index])
+            .filter(|mask_polygon| {
+                let mask_island =
+                    polygon_to_sketch((*mask_polygon).clone(), Some(metadata(mask_name)));
+                island
+                    .intersection(&mask_island)
+                    .to_multipolygon()
+                    .unsigned_area()
+                    > min_area
+            })
+            .map(Polygon::unsigned_area)
+            .sum::<f64>();
+        let ratio = opening_area / copper_area;
+
+        if ratio >= min_ratio && ratio <= max_ratio {
+            continue;
+        }
+
+        violations.push(Violation::new(
+            "solder-mask-opening-ratio-readiness",
+            Severity::Warning,
+            vec![copper_name.to_string(), mask_name.to_string()],
+            Some(island_index),
+            multipolygon_to_shapes(&island.to_multipolygon(), min_area),
+            Vec::new(),
+            Some(format!(
+                "solder-mask opening-to-copper area ratio {ratio:.3} is outside configured range {min_ratio:.3}..{max_ratio:.3}; review NSMD/SMD pad definition and BGA mask opening growth"
+            )),
+        ));
+    }
+
+    log::trace!(
+        "solder-mask opening-ratio readiness finished: copper_layer={copper_name} mask_layer={mask_name} candidate_openings={} violations={}",
+        candidate_openings,
+        violations.len()
+    );
+
+    violations
+}
+
+/// Warn when solder-mask openings do not provide minimum relief around copper.
+///
+/// This complements [`solder_mask_opening_coverage`]: coverage catches
+/// mask-on-pad, while this check asks whether the opening still covers the pad
+/// after expanding copper by the configured mask annular ring. It is a
+/// manufacturability proxy for mask registration tolerance and avoids claiming
+/// exact soldermask-process capability from Gerber polygons alone.
+///
+/// The per-island candidate lookup follows the broad/narrow-phase pattern from
+/// Ericson, *Real-Time Collision Detection* (2005). The fabrication motivation
+/// is the same mask-registration problem studied by Tang et al., "Study on Wet
+/// Chemical Etching of Flexible Printed Circuit Board with 16-um Line Pitch,"
+/// *Journal of Electronic Materials* 52 (2023),
+/// <https://doi.org/10.1007/s11664-023-10368-z>, for fine PCB features near
+/// process limits: lateral process variation must be budgeted before release.
+pub fn solder_mask_annular_ring_readiness(
+    copper_name: &str,
+    copper: &PcbSketch,
+    mask_name: &str,
+    mask_openings: &PcbSketch,
+    min_mask_annular_ring: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    if min_mask_annular_ring <= 0.0 {
+        return Vec::new();
+    }
+
+    let copper_polygons = copper.to_multipolygon().0;
+    let copper_count = copper_polygons.len();
+    let mask_polygons = mask_openings.to_multipolygon().0;
+    let mask_index = LayerPolygonSpatialIndex::new(&mask_polygons, min_mask_annular_ring);
+    log::trace!(
+        "solder-mask annular-ring readiness: copper={copper_name} copper_islands={} mask={mask_name} mask_openings={} mask_buckets={} min_ring={min_mask_annular_ring:.6}",
+        copper_count,
+        mask_polygons.len(),
+        mask_index.bucket_count()
+    );
+
+    let mut violations = Vec::new();
+    let mut candidate_openings = 0usize;
+
+    for (island_index, copper_polygon) in copper_polygons.into_iter().enumerate() {
+        if copper_polygon.unsigned_area() <= min_area {
+            continue;
+        }
+
+        let candidates = mask_index.candidates_near_polygon(&copper_polygon, min_mask_annular_ring);
+        candidate_openings += candidates.len();
+        let required_opening = polygon_to_sketch(copper_polygon, Some(metadata(copper_name)))
+            .offset(min_mask_annular_ring);
+        let missing_relief = if candidates.is_empty() {
+            required_opening
+        } else {
+            let candidate_openings = candidates
+                .into_iter()
+                .map(|index| mask_polygons[index].clone())
+                .collect::<Vec<_>>();
+            let mask_sketch = polygons_to_sketch(candidate_openings, Some(metadata(mask_name)));
+            required_opening.difference(&mask_sketch)
+        };
+        let shapes = multipolygon_to_shapes(&missing_relief.to_multipolygon(), min_area);
+        if shapes.is_empty() {
+            continue;
+        }
+
+        violations.push(Violation::new(
+            "solder-mask-annular-ring-readiness",
+            Severity::Warning,
+            vec![copper_name.to_string(), mask_name.to_string()],
+            Some(island_index),
+            shapes,
+            Vec::new(),
+            Some(format!(
+                "solder mask opening does not cover copper expanded by minimum mask annular ring {min_mask_annular_ring:.6}; review mask registration and opening growth"
+            )),
+        ));
+    }
+
+    log::trace!(
+        "solder-mask annular-ring readiness finished: copper={copper_name} mask={mask_name} candidate_openings={} violations={}",
+        candidate_openings,
+        violations.len()
+    );
+
+    violations
+}
+
 /// Run the `solder_mask_expansion` design-readiness check or report helper.
 ///
 /// Mask openings are compared to indexed nearby copper, expanded only for exact
@@ -807,6 +979,80 @@ pub fn silkscreen_min_width(
             "silkscreen features are removed by opening with width {min_width}"
         )),
     )]
+}
+
+/// Warn when disconnected silkscreen islands are smaller than a text-height budget.
+///
+/// Flattened Gerber geometry has already lost true text strings, font metrics,
+/// and bottom-side mirroring semantics. This check therefore uses the larger
+/// bounding-box dimension of each disconnected island as a conservative
+/// readability proxy for tiny glyphs, pin-1 dots, polarity marks, and small
+/// reference-designator fragments.
+///
+/// The readability motivation comes from classic typography experiments such
+/// as Paterson and Tinker, "Studies of Typographical Factors Influencing Speed
+/// of Reading. II. Size of Type," *Journal of Applied Psychology* 13.2 (1929),
+/// <https://doi.org/10.1037/h0074167>, and later legibility work: small
+/// physical character size should be a release-review parameter instead of an
+/// implicit artifact of the CAD font.
+pub fn silkscreen_text_height_readiness(
+    silk_name: &str,
+    silk: &PcbSketch,
+    min_text_height: f64,
+    min_area: f64,
+) -> Vec<Violation> {
+    if min_text_height <= 0.0 {
+        return Vec::new();
+    }
+
+    let polygons = silk.to_multipolygon().0;
+    log::trace!(
+        "silkscreen text-height readiness: layer={silk_name} islands={} min_text_height={min_text_height:.6}",
+        polygons.len()
+    );
+    let mut violations = Vec::new();
+    let mut measured_islands = 0usize;
+
+    for (island_index, polygon) in polygons.into_iter().enumerate() {
+        let area = polygon.unsigned_area();
+        if area <= min_area {
+            continue;
+        }
+        let Some(bounds) = polygon.bounding_rect() else {
+            continue;
+        };
+        measured_islands += 1;
+        let width = bounds.max().x - bounds.min().x;
+        let height = bounds.max().y - bounds.min().y;
+        let apparent_height = width.max(height);
+        if apparent_height >= min_text_height {
+            continue;
+        }
+
+        let island = polygon_to_sketch(polygon, Some(metadata(silk_name)));
+        violations.push(Violation::new(
+            "silkscreen-text-height-readiness",
+            Severity::Warning,
+            vec![silk_name.to_string()],
+            Some(island_index),
+            multipolygon_to_shapes(&island.to_multipolygon(), min_area),
+            vec![[
+                (bounds.min().x + bounds.max().x) / 2.0,
+                (bounds.min().y + bounds.max().y) / 2.0,
+            ]],
+            Some(format!(
+                "silkscreen island apparent text height {apparent_height:.6} is below minimum {min_text_height:.6}; review legend, polarity, and pin-1 mark legibility"
+            )),
+        ));
+    }
+
+    log::trace!(
+        "silkscreen text-height readiness finished: layer={silk_name} measured_islands={} violations={}",
+        measured_islands,
+        violations.len()
+    );
+
+    violations
 }
 
 /// Run the `min_copper_neck_width` design-readiness check or report helper.
@@ -2476,9 +2722,11 @@ mod tests {
         minimum_paste_aperture, paste_aperture_coverage, paste_aperture_ratio,
         paste_aperture_spacing, paste_mask_alignment, paste_overhang,
         silkscreen_board_edge_clearance, silkscreen_clearance, silkscreen_min_width,
-        silkscreen_overlap, skinny_layer_feature_readiness, solder_mask_board_edge_clearance,
-        solder_mask_expansion, solder_mask_opening_coverage, solder_mask_opening_spacing,
-        solder_mask_overlap_clearance, solder_mask_sliver, tiny_layer_feature_readiness,
+        silkscreen_overlap, silkscreen_text_height_readiness, skinny_layer_feature_readiness,
+        solder_mask_annular_ring_readiness, solder_mask_board_edge_clearance,
+        solder_mask_expansion, solder_mask_opening_coverage, solder_mask_opening_ratio_readiness,
+        solder_mask_opening_spacing, solder_mask_overlap_clearance, solder_mask_sliver,
+        tiny_layer_feature_readiness,
     };
     use crate::LayerMetadata;
     use crate::geometry::{empty_sketch, line_polygon, polygons_to_sketch, rect_polygon};
@@ -3554,6 +3802,150 @@ mod tests {
     }
 
     #[test]
+    fn solder_mask_opening_ratio_reports_under_and_over_openings() {
+        let copper = sketch(
+            "top",
+            vec![
+                square(0.0, 0.0, 1.0, 1.0),
+                square(3.0, 0.0, 4.0, 1.0),
+                square(6.0, 0.0, 7.0, 1.0),
+            ],
+        );
+        let mask_openings = sketch(
+            "mask",
+            vec![
+                square(0.1, 0.1, 0.9, 0.9),
+                square(2.95, -0.05, 4.05, 1.05),
+                square(5.5, -0.5, 7.5, 1.5),
+            ],
+        );
+
+        let violations = solder_mask_opening_ratio_readiness(
+            "top",
+            &copper,
+            "mask",
+            &mask_openings,
+            1.0,
+            1.5,
+            1.0e-9,
+        );
+
+        assert_eq!(violations.len(), 2);
+        assert!(violations.iter().all(|violation| {
+            violation.check == "solder-mask-opening-ratio-readiness"
+                && violation
+                    .message
+                    .as_deref()
+                    .is_some_and(|message| message.contains("NSMD/SMD"))
+        }));
+    }
+
+    #[test]
+    fn solder_mask_opening_ratio_allows_configured_range() {
+        let copper = sketch("top", vec![square(0.0, 0.0, 1.0, 1.0)]);
+        let mask_openings = sketch("mask", vec![square(-0.05, -0.05, 1.05, 1.05)]);
+
+        assert!(
+            solder_mask_opening_ratio_readiness(
+                "top",
+                &copper,
+                "mask",
+                &mask_openings,
+                1.0,
+                1.5,
+                1.0e-9,
+            )
+            .is_empty()
+        );
+    }
+
+    #[test]
+    fn solder_mask_opening_ratio_culls_sparse_mask_fields() {
+        let copper = sketch("top", vec![square(0.0, 0.0, 1.0, 1.0)]);
+        let mask_openings = sketch(
+            "mask",
+            (0..2_000)
+                .map(|index| {
+                    let x = 100.0 + index as f64 * 3.0;
+                    square(x, 10.0, x + 1.1, 11.1)
+                })
+                .chain([square(-0.05, -0.05, 1.05, 1.05)])
+                .collect(),
+        );
+
+        let start = Instant::now();
+        let violations = solder_mask_opening_ratio_readiness(
+            "top",
+            &copper,
+            "mask",
+            &mask_openings,
+            1.0,
+            1.5,
+            1.0e-9,
+        );
+
+        assert!(violations.is_empty());
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "solder-mask opening-ratio review should index sparse opening fields"
+        );
+    }
+
+    #[test]
+    fn solder_mask_annular_ring_reports_tight_openings() {
+        let copper = sketch("top", vec![square(0.0, 0.0, 1.0, 1.0)]);
+        let tight_mask = sketch("mask", vec![square(-0.03, -0.03, 1.03, 1.03)]);
+
+        let violations =
+            solder_mask_annular_ring_readiness("top", &copper, "mask", &tight_mask, 0.08, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "solder-mask-annular-ring-readiness");
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("minimum mask annular ring"))
+        );
+    }
+
+    #[test]
+    fn solder_mask_annular_ring_allows_configured_relief() {
+        let copper = sketch("top", vec![square(0.0, 0.0, 1.0, 1.0)]);
+        let mask = sketch("mask", vec![square(-0.10, -0.10, 1.10, 1.10)]);
+
+        assert!(
+            solder_mask_annular_ring_readiness("top", &copper, "mask", &mask, 0.08, 1.0e-9)
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn solder_mask_annular_ring_culls_sparse_mask_opening_fields() {
+        let copper = sketch("top", vec![square(0.0, 0.0, 1.0, 1.0)]);
+        let mask = sketch(
+            "mask",
+            (0..2_000)
+                .map(|index| {
+                    let x = 100.0 + index as f64 * 3.0;
+                    square(x, 10.0, x + 0.5, 10.5)
+                })
+                .chain([square(-0.03, -0.03, 1.03, 1.03)])
+                .collect(),
+        );
+
+        let start = Instant::now();
+        let violations =
+            solder_mask_annular_ring_readiness("top", &copper, "mask", &mask, 0.08, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "solder-mask annular-ring check should index sparse opening fields"
+        );
+    }
+
+    #[test]
     fn solder_mask_opening_coverage_culls_sparse_mask_fields() {
         let copper = sketch("top", vec![square(0.0, 0.0, 1.0, 1.0)]);
         let mask_openings = sketch(
@@ -3822,6 +4214,30 @@ mod tests {
         let violations = silkscreen_min_width("silk", &silk, 0.12, 1.0e-9);
 
         assert!(violations.is_empty());
+    }
+
+    #[test]
+    fn silkscreen_text_height_reports_tiny_legend_islands() {
+        let silk = sketch("silk", vec![square(0.0, 0.0, 0.45, 0.55)]);
+
+        let violations = silkscreen_text_height_readiness("silk", &silk, 0.80, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "silkscreen-text-height-readiness");
+        assert_eq!(violations[0].locations.len(), 1);
+    }
+
+    #[test]
+    fn silkscreen_text_height_allows_tall_legend_islands_and_long_lines() {
+        let silk = sketch(
+            "silk",
+            vec![
+                square(0.0, 0.0, 0.60, 0.90),
+                line_polygon([2.0, 0.0], [3.2, 0.0], 0.08).unwrap(),
+            ],
+        );
+
+        assert!(silkscreen_text_height_readiness("silk", &silk, 0.80, 1.0e-9).is_empty());
     }
 
     #[test]

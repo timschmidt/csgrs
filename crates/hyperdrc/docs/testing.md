@@ -50,15 +50,27 @@ These tests exercise the runtime pipeline around the checks:
   preserves useful path context instead of failing opaquely.
 - Manifest tests build synthetic layers and KiCad board models to verify
   declared copper count, KiCad copper layer count, board outline presence, and
-  drill availability are passed into `file-manifest-readiness`. Manifest unit
-  tests also verify revision/date/project token consistency, invalid generated
-  dates, stale generated dates, future generated dates, and backup/archive name
-  detection, including the configurable generated-date freshness window, named
-  package profiles, and field-level required-artifact and required-layer
+  drill availability are passed into `file-manifest-readiness`, including X2
+  Part/FileFunction/FilePolarity/SameCoordinates/CreationDate/
+  GenerationSoftware/ProjectId/MD5 metadata parsed from Gerber headers. Manifest
+  unit tests also verify
+  revision/date/project token consistency, invalid generated dates, stale
+  generated dates, future generated dates, and backup/archive name detection,
+  filename layer-count convention parity, negative-copper-polarity review,
+  invalid X2 Part/FileFunction/FilePolarity/CreationDate/GenerationSoftware/ProjectId/MD5
+  diagnostics, partial X2 FileFunction role-evidence coverage, partial and mixed
+  X2 FilePolarity evidence, X2 Part single/panel/coupon intent consistency, SameCoordinates
+  alignment-evidence consistency, X2 CreationDate freshness, GenerationSoftware and ProjectId provenance gaps, X2 MD5 checksum-evidence coverage, including the configurable generated-date freshness window,
+  named package profiles, and field-level required-artifact and required-layer
   policies.
+- Parser geometry tests feed KiCad boards with rotated drill offsets,
+  chamfered/rounded/trapezoid pads, custom pad primitives, footprint copper
+  graphics, explicit unfilled graphic strokes, board-declared wildcard copper
+  layer expansion, footprint Bezier aliases, and board/panel graphics to verify
+  parser objects land in the same geometry path used by checks.
 - Parser diagnostic tests feed malformed Excellon and IPC-D-356 sidecars and
-  verify their parser issues are collected separately from active DRC
-  violations.
+  malformed Gerber X2 metadata, then verify their parser issues are collected
+  separately from active DRC violations.
 - Binary sidecar tests feed non-UTF-8 spreadsheet-like bytes and verify the run
   remains non-fatal so production-artifact checks can report missing structure.
 
@@ -79,6 +91,10 @@ Layer tests verify flattened 2D geometry checks:
 
 - Mask, paste, solder-mask, and silkscreen tests compare paired layers with
   boolean intersection, difference, erosion, or expansion.
+- Solder-mask opening-ratio and annular-ring tests check undersized, oversized,
+  tight, and compliant paired mask openings plus sparse-opening culling;
+  silkscreen text-height tests check tiny legend islands while allowing
+  compliant tall glyphs and long rule lines.
 - Board-outline tests build rectangles, cutouts, bow ties, duplicate contours,
   reversed contours, nested regions, and sharp notches to verify outline
   sanity, fragment detection, self-intersection detection, notch detection,
@@ -121,8 +137,19 @@ Drill tests verify hole and drill-table readiness:
 - Drill-table consistency tests compare nearby KiCad, Excellon, and IPC-D-356
   drill diameters and allow exact matches within tolerance.
 - Excellon readiness tests construct reports with missing units, unit conflicts,
-  duplicate/redefined tools, unknown tool selections, empty drill sets, and
-  mixed batch units.
+  zero-suppression and unsupported-unit declarations, duplicate/redefined tools,
+  unknown tool selections, routed-slot commands, empty drill sets, duplicate
+  drill geometry, drill-diameter outliers, plated/non-plated split conflicts,
+  and mixed batch units.
+- Gerber metadata parser tests construct image setup commands, image polarity
+  commands, image transform commands, interpolation and quadrant mode commands,
+  coordinate operations, region-mode transitions, step-and-repeat transitions, aperture macro
+  definitions, aperture definitions and uses, attribute-delete commands, X2 headers with valid attributes, standardized
+  `G04 #@!` comments, missing required values, duplicate attributes, conflicting
+  redefinitions, and structural validation for the FileFunction role forms HyperDRC consumes. They also cover X2/X3
+  `.AperFunction` extraction and common malformed aperture-function forms, plus
+  `.N`, `.C`, and `.P` object attributes for net, component-refdes, and
+  component-pin parser evidence.
 
 ### Board Context
 
@@ -205,8 +232,11 @@ Constraint tests use typed config structures and synthetic KiCad copper:
   clearance, voltage-class clearance, maximum layer count, minimum via count for
   layer-changing nets, maximum via count, explicit differential-pair side and
   spacing rules, approximate parsed copper length/skew limits,
-  reference-plane intent, and impedance-control target/tolerance handoff
-  metadata.
+  inherited class defaults, rectangular region scopes,
+  missing/cyclic/conflicting inheritance diagnostics,
+  reference-plane intent, impedance-control target/tolerance handoff metadata,
+  and first-pass single-ended outer-layer microstrip plus centered-stripline
+  impedance estimates for complete stackups.
 - Passing tests build compliant or unmatched nets to ensure explicit config
   constraints do not affect unrelated copper.
 
@@ -267,11 +297,17 @@ Locations:
 Manifest and artifact tests use synthetic filenames and short text sidecars:
 
 - Manifest tests classify Gerber names into copper, mask, paste, silkscreen,
-  outline, drill, and companion roles. They verify missing required roles,
-  duplicate core roles, odd copper counts, inner layers without outers, orphan
-  side outputs, single-copper packages with opposite-side outputs, paste exports
-  without same-side mask companions, side-token filename conflicts, mixed
-  project/revision/date tags, stale backup/archive names, and complete packages.
+  outline, drill, and companion roles, with X2 FileFunction coverage for opaque
+  filenames. They verify missing required roles, duplicate core roles, odd
+  copper counts, inner layers without outers, orphan side outputs,
+  single-copper packages with opposite-side outputs, paste exports without
+  same-side mask companions, side-token filename conflicts, X2 negative copper
+  polarity, invalid X2 Part/FileFunction/FilePolarity/CreationDate/GenerationSoftware/ProjectId/MD5 values, partial X2 FileFunction role evidence, partial or mixed X2 Part intent, partial or mixed X2
+  FilePolarity evidence, partial or mixed X2 SameCoordinates evidence, mixed X2 CreationDate values, partial or mixed X2
+  GenerationSoftware provenance,
+  partial or mixed X2 ProjectId revision provenance, partial X2 MD5 checksum evidence, mixed
+  project/revision/date tags, filename layer-count conflicts, stale
+  backup/archive names, and complete packages.
 - BOM tests parse CSV/TSV/semicolon/whitespace tables and check required
   columns, blank parts, grouped reference expansion, quantity/refdes agreement,
   DNP/DNI handling, duplicate refs, lifecycle risk vocabulary, approved
@@ -286,8 +322,9 @@ Manifest and artifact tests use synthetic filenames and short text sidecars:
 - README tests check revision and manufacturing notes, order parameters,
   contradictory fabrication/assembly/test/coating/programming intent, panel and
   double-sided handoff parity, preflight evidence, variant handoff, surface
-  finish notes, marking/serialization/packaging notes, and conditional process
-  notes.
+  finish notes, marking/serialization/packaging notes, conditional process
+  notes, preflight overlay/waiver-diff evidence, and claimed
+  engineering-review-packet completeness.
 - Drawing tests check filename role clarity, common extensions, non-empty
   content, placeholder-sized files, and parity with special fabrication or
   assembly requests.
@@ -335,10 +372,19 @@ KiCad tests parse small `.kicad_pcb` snippets:
   S-expressions return errors.
 - Basic board tests check nets, pads, tracks, vias, zones, drills, and outlines
   are extracted into the simplified model.
-- Custom pad tests verify primitive lines and shapes are rotated, transformed,
-  and skipped when degenerate.
+- Pad geometry tests cover rounded rectangles, trapezoid `rect_delta` pads,
+  rotations, and expanded copper layers.
+- Drill parser tests verify offset pad drill centers are rotated into board
+  coordinates before checks see them.
+- Custom pad tests verify primitive lines, Bezier strokes, conservative text
+  bounding boxes, and shapes are rotated, transformed, and skipped when
+  degenerate.
+- Footprint copper-graphics tests verify `fp_*` lines, rectangles, circles,
+  arcs, polygons, Bezier curves, and text become unnetted copper while
+  non-copper graphics are ignored.
 - Oval and rectangular drill tests verify current conservative keepout behavior.
-- Panel graphic tests parse common panelization layer names and arcs.
+- Panel graphic tests parse common panelization layer names, arcs, and Bezier
+  strokes.
 - Edge-line stitching tests verify unordered outline segments are stitched into
   a single outline polygon.
 - Zone tests skip underdefined polygons while preserving valid zones.
@@ -352,14 +398,21 @@ Locations:
 Parser tests verify manufacturing sidecars:
 
 - Excellon tests parse metric and inch drill hits, unit declarations, tool
-  conflicts, unknown tools, non-numeric coordinates, missing units with parsed
-  geometry, and hits before active tool selection.
+  conflicts, unknown tools, non-numeric coordinates, routed-slot commands,
+  `M71`/`M72` unit commands, `M48`/`%`/`M30` program-structure markers,
+  unit-declaration summary counters, tool-table summary counters, routed-command summary counters,
+  drill-hit and drill-geometry summary counters, unsupported unit-like declarations, missing units with parsed geometry,
+  filename-inferred PTH/NPTH plating intent, and hits before active tool
+  selection.
 - Excellon property tests generate metric hits and arbitrary text to verify
   finite drill geometry and panic-free parsing.
 - IPC-D-356 tests parse loose and fixed test records, ignore comments and
   unknown record types, report malformed recognized records, preserve optional
-  access-side/feature/soldermask metadata, and preserve finite coordinates from
-  generated records.
+  access-side/feature/soldermask metadata, count recognized `317`/`327`/`367`
+  record classes, summarize access-side/feature/soldermask coverage at the
+  report boundary, summarize net-name, reference/pin, and diameter-field
+  coverage, summarize coordinate/dia range envelopes, summarize parser issue
+  categories, and preserve finite coordinates from generated records.
 - IPC-D-356 property tests feed arbitrary text to ensure malformed netlists do
   not panic the parser.
 
@@ -405,7 +458,10 @@ Location: [`../benches`](../benches/README.md)
 
 The benchmark target is not a correctness suite. It is a smoke-performance
 entry point for parser, geometry, local copper-density, and trace-junction
-acid-trap hot paths, plus dense-pad via-spacing and mask-bridge review.
+acid-trap hot paths, plus dense-pad via-spacing, mask-bridge review, and
+single-ended net-class microstrip/centered-stripline impedance estimation.
+It also exercises inherited and region-scoped net-class clearance defaults so
+selector, resolver, and diagnostics overhead remain visible in the smoke path.
 Behavioral expectations belong in the module-level unit and property tests
 above.
 

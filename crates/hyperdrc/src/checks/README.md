@@ -4,6 +4,23 @@ This folder contains the design-readiness checks that turn parsed geometry,
 board context, and sidecar data into `hyperdrc` violations. Checks are grouped
 by the data model they need.
 
+## Check Design Choices
+
+Checks are intentionally scoped as review gates rather than authoritative CAM
+signoff. They should be deterministic, explainable, and conservative:
+
+- Prefer a specific warning with source context over silently ignoring ambiguous
+  package evidence.
+- Use parser summaries and sidecar diagnostics when evidence quality matters;
+  do not require every check to rescan raw source text.
+- Keep broad-phase culling private to the owning module. Public check behavior
+  should be described in PCB terms, not spatial-index implementation details.
+- Emit stable `Violation` records with enough geometry or point context for
+  waivers, baselines, SVG overlays, and CI reports.
+- Split checks by the data model they need. A layer-only check should not learn
+  about KiCad nets; a KiCad/Excellon/IPC-D-356 check belongs with board or drill
+  context.
+
 ## Module Map
 
 - [`mod.rs`](mod.rs) exposes the check modules and documents the broad grouping.
@@ -27,6 +44,13 @@ by the data model they need.
 - [`constraints.rs`](constraints.rs) contains config-driven stackup and
   net-class checks that compare parsed KiCad copper against explicit project
   constraints.
+- [`impedance.rs`](impedance.rs) contains first-pass single-ended outer-layer
+  microstrip and centered stripline estimates used by config-driven
+  impedance-readiness checks.
+- [`net_class.rs`](net_class.rs) resolves inherited `net_classes` policy
+  defaults before config-driven checks consume the flat rule set.
+- [`net_scope.rs`](net_scope.rs) evaluates exact-name, wildcard, and optional
+  rectangular region scopes for config-driven net-class checks.
 - [`continuity.rs`](continuity.rs) contains same-net continuity checks for
   geometry that can sever routed copper before bare-board electrical test.
 - [`differential.rs`](differential.rs) contains inferred differential width,
@@ -114,6 +138,8 @@ flowchart TB
 - `paste-mask-alignment`
 - `exposed-copper`
 - `solder-mask-opening-coverage`
+- `solder-mask-opening-ratio-readiness`
+- `solder-mask-annular-ring-readiness`
 - `solder-mask-expansion`
 - `solder-mask-overlap-clearance`
 - `solder-mask-board-edge-clearance`
@@ -121,6 +147,7 @@ flowchart TB
 - `silkscreen-clearance`
 - `silkscreen-board-edge-clearance`
 - `silkscreen-min-width`
+- `silkscreen-text-height-readiness`
 - `minimum-copper-neck-width`
 - `solder-mask-sliver`
 - `minimum-mask-opening`
@@ -143,12 +170,13 @@ the former compares whole-layer copper area, while the latter scans matching
 windows for local plating/etch-density imbalance.
 Paste aperture overhang, coverage, ratio, paste/mask alignment,
 exposed-copper review, mask-island keepout, paste aperture spacing, solder-mask
-coverage/expansion/overlap-clearance, and solder-mask opening spacing use a
-private layer-polygon spatial index before exact intersection, subtraction, or
-offset/intersection review. Silkscreen overlap and clearance use the same index
-for blocker candidate selection, keeping sparse Gerber aperture and legend
-layers bounded without exposing bbox-center candidates as public geometry
-semantics.
+coverage/opening-ratio/annular-ring/expansion/overlap-clearance, and solder-mask opening
+spacing use a private layer-polygon spatial index before exact intersection,
+subtraction, or offset/intersection review. Silkscreen overlap and clearance
+use the same index for blocker candidate selection, while silkscreen text-height
+readiness scans disconnected islands as flattened legend/marking proxies.
+Together these keep sparse Gerber aperture and legend layers bounded without
+exposing bbox-center candidates as public geometry semantics.
 `acid-trap` and `acid-trap-trace-junction` are also separate CLI checks:
 polygon-vertex traps operate on flattened copper, while trace-junction traps use
 KiCad segment identity before the board copper is flattened into layer shapes.
@@ -553,24 +581,36 @@ candidates.
 same-layer copper overlaps between different named nets as a conservative
 bare-board isolation signal. `net-constraint-readiness` applies optional JSON
 `net_classes` entries. It
-matches nets by exact name or simple `*` wildcard pattern, then checks configured
-minimum width, current-carrying minimum width, minimum clearance, voltage-class
+first resolves optional `extends` parent classes so repeated policy defaults can
+be shared without inheriting parent `nets`, `net_patterns`, or rectangular
+`regions`. It then matches nets by exact name or simple `*` wildcard pattern,
+optionally scopes matching copper to configured rectangular regions, and checks
+configured minimum width, current-carrying minimum width, minimum clearance, voltage-class
 clearance, maximum layer count, minimum via count for layer-changing nets,
 maximum via count, explicit differential-pair positive/negative side presence,
 pair layer agreement, pair spacing bounds, approximate parsed copper length,
 approximate pair skew, reference-plane intent, and impedance-control handoff
-metadata. Configured clearance and voltage-clearance rules use the shared copper
-spatial broad phase before exact polygon-boundary distance, keeping sparse
-same-layer net-class sweeps bounded. Configured differential-pair spacing uses
-the same broad phase over the opposite pair side before exact side-to-side
-polygon distance and reports max-spacing as the nearest side gap. The impedance
+metadata. Missing parents, duplicate class names, inheritance cycles, and
+conflicting inherited parent defaults are reported as non-fatal readiness
+warnings. Configured clearance and
+voltage-clearance rules use the shared copper spatial broad phase before exact
+polygon-boundary distance, keeping sparse same-layer net-class sweeps bounded.
+Configured differential-pair spacing uses the same broad phase over the opposite
+pair side before exact side-to-side polygon distance and reports max-spacing as
+the nearest side gap. The impedance
 check is deliberately a readiness gate: it verifies stackup/reference metadata
-exists when a class asks for impedance control, not that the geometry solves to a
-target impedance. Classes that require impedance control can also declare `target_impedance_ohms` and
-`impedance_tolerance_ohms`; missing or invalid values are reported as handoff
-risks. Differential-pair checks use nearest same-layer side-to-side copper
-spacing; length and skew checks use segment bounding-box estimates from parsed
-KiCad copper, so true routed path reconstruction remains a deeper future input.
+exists when a class asks for impedance control, reports missing or invalid
+`target_impedance_ohms` and `impedance_tolerance_ohms`, and estimates
+single-ended outer-layer microstrip impedance when the stackup has a positive
+laminate Dk plus an adjacent copper reference separated by configured
+dielectric/core/prepreg thickness. It also estimates centered single-ended
+stripline when the trace layer has adjacent copper references above and below
+with symmetric dielectric spacing. Unsupported asymmetric stripline, coupled,
+coplanar, or underdefined stackups are skipped rather than guessed.
+Differential-pair checks use nearest same-layer side-to-side copper
+spacing; length and skew checks use the longest exterior edge from parsed
+KiCad segment copper, so full routed path reconstruction remains a deeper
+future input.
 
 ## Assembly Checks
 
@@ -680,7 +720,9 @@ manufacturing-note content, order parameters, contradictory fabrication,
 layer-count, assembly, coating, programming, and test-fixture notes, rout
 drawing parity for panelized jobs, release preflight evidence, assembly handoff
 evidence for double-sided BOM or placement data, and conditional process notes for
-selective/wave solder or conformal coating. It also infers likely through-hole,
+selective/wave solder or conformal coating. Release preflight evidence includes
+overlay artifact generation plus waiver/baseline diff review so the package
+records both the checker run and finding-set drift. It also infers likely through-hole,
 BGA/CSP/LGA, and programmable BOM rows and expects README handoff notes for
 solder process, X-ray/AOI/inspection, firmware/programming/test coverage,
 firmware revision traceability, programming method, and test-acceptance
@@ -711,7 +753,10 @@ assembly processes against the presence of fabrication or assembly drawing
 sidecars. Fabrication markings also require explicit allowed-zone, label
 location, silkscreen/legend location, or fab-drawing marking callout language.
 It also checks serialization/barcode handoff and packaging/ESD/moisture notes
-when README release notes mention those workflows. It checks surface-finish
+when README release notes mention those workflows. Claimed engineering,
+manufacturing, release, or design review packets must also name the checklist
+summary, stackup, rule deck, plots, DRC/ERC reports, BOM/centroid checks, and
+open manufacturing questions. It checks surface-finish
 compatibility notes for edge contacts, fine-pitch packages,
 press-fit hardware, and wire bonding. It checks
 revision and generated/release date markers across sidecar filenames and README
@@ -724,9 +769,10 @@ placeholder-sized content, and role-specific filename tokens.
 ## Manifest Checks
 
 [`manifest.rs`](manifest.rs) owns `file-manifest-readiness`. It classifies
-Gerber-like input names into core manufacturing roles and warns when a package
-is missing recognizable copper, outline/profile, drill data, or matching solder
-mask, paste, and silkscreen layers. `package_profile` sets the default
+Gerber-like input names and Gerber X2 `.FileFunction` attributes into core
+manufacturing roles, then warns when a package is missing recognizable copper,
+outline/profile, drill data, or matching solder mask, paste, and silkscreen
+layers. `package_profile` sets the default
 deliverable set for `full-production`, `fabrication-only`, `assembly-only`, or
 `electrical-test` handoffs; `required_layers` can then override outline, drill,
 mask, paste, or silkscreen expectations field-by-field. Duplicated core roles
@@ -739,12 +785,23 @@ these artifacts optional or required through `required_artifacts`; duplicates
 are still reported because multiple copies usually mean an ambiguous upload
 package. If KiCad input is provided the check also compares the count of KiCad copper layers and an
 optional declared manifest copper count against Gerber-recognized copper roles
-to catch probable layer-stack mismatches before downstream checks. It reports
+to catch probable layer-stack mismatches before downstream checks. It also
+extracts conservative filename layer-count tags such as `4layer`, `4-layer`, or
+`4L` and compares them with the recognized copper-role count, while mixed
+filename layer-count tags are reported as package conflicts. It reports
 inner copper without both outer copper layers, odd recognized copper layer
 counts, side-specific mask/paste/silkscreen files without matching copper,
 single-copper packages that also contain opposite-side outputs, paste files
 without matching same-side mask files, and filenames whose side tokens conflict
-with their inferred Gerber role. It also compares
+with their inferred Gerber role. When X2 `.FilePolarity=Negative` appears on a
+recognized copper layer, it raises an explicit CAM polarity review warning
+instead of silently treating the geometry as positive copper. Partial
+`.FilePolarity` coverage is also surfaced, and mixed polarity evidence is
+reviewed across copper roles while ordinary positive artwork plus negative
+soldermask packages stay clean. X2
+`.SameCoordinates` evidence is also checked for partial layer coverage and
+mixed identifiers so origin/alignment attestations do not silently conflict
+inside one upload. It also compares
 recognizable revision and generated-date tokens across Gerber and package
 artifact filenames, warns when generated-date tags are older than the package
 freshness window or later than the current run date. The freshness window
@@ -756,7 +813,11 @@ name prefixes, and warns on stale-looking backup/archive filename tokens.
 
 [`excellon.rs`](excellon.rs) owns `excellon-readiness`. It consumes parsed Excellon
 reports and reports parser-level and data-integrity issues before geometry checks
-consume drill hits.
+consume drill hits. Unit conflicts, unsupported zero-suppression declarations,
+unsupported unit-like declarations, tool definition problems, unresolved tool
+selections, invalid coordinates, routed-slot commands, duplicate drill geometry
+across files, drill-diameter outliers, filename-declared plated/non-plated split
+conflicts, and empty drill sets are surfaced as readiness warnings.
 
 - `excellon-readiness`
 

@@ -51,6 +51,10 @@ pub enum Check {
     ExposedCopper,
     /// Variant `SolderMaskOpeningCoverage`.
     SolderMaskOpeningCoverage,
+    /// Variant `SolderMaskOpeningRatioReadiness`.
+    SolderMaskOpeningRatioReadiness,
+    /// Variant `SolderMaskAnnularRingReadiness`.
+    SolderMaskAnnularRingReadiness,
     /// Variant `SolderMaskExpansion`.
     SolderMaskExpansion,
     /// Variant `SolderMaskOverlapClearance`.
@@ -65,6 +69,8 @@ pub enum Check {
     SilkscreenBoardEdgeClearance,
     /// Variant `SilkscreenMinWidth`.
     SilkscreenMinWidth,
+    /// Variant `SilkscreenTextHeightReadiness`.
+    SilkscreenTextHeightReadiness,
     /// Variant `MinCopperNeck`.
     MinCopperNeck,
     /// Variant `AcidTrap`.
@@ -343,6 +349,8 @@ pub const DEFAULT_CHECKS: &[Check] = &[
     Check::PasteMaskAlignment,
     Check::ExposedCopper,
     Check::SolderMaskOpeningCoverage,
+    Check::SolderMaskOpeningRatioReadiness,
+    Check::SolderMaskAnnularRingReadiness,
     Check::SolderMaskExpansion,
     Check::SolderMaskOverlapClearance,
     Check::SolderMaskBoardEdgeClearance,
@@ -350,6 +358,7 @@ pub const DEFAULT_CHECKS: &[Check] = &[
     Check::SilkscreenClearance,
     Check::SilkscreenBoardEdgeClearance,
     Check::SilkscreenMinWidth,
+    Check::SilkscreenTextHeightReadiness,
     Check::MinCopperNeck,
     Check::AcidTrap,
     Check::AcidTrapTraceJunction,
@@ -746,6 +755,26 @@ pub struct Cli {
     /// Field `min_mask_width`.
     pub min_mask_width: Option<f64>,
 
+    /// Minimum solder-mask opening-to-copper area ratio for paired mask openings.
+    #[arg(long = "min-solder-mask-opening-area-ratio")]
+    /// Field `min_solder_mask_opening_area_ratio`.
+    pub min_solder_mask_opening_area_ratio: Option<f64>,
+
+    /// Maximum solder-mask opening-to-copper area ratio for paired mask openings.
+    #[arg(long = "max-solder-mask-opening-area-ratio")]
+    /// Field `max_solder_mask_opening_area_ratio`.
+    pub max_solder_mask_opening_area_ratio: Option<f64>,
+
+    /// Minimum solder mask relief beyond copper for mask annular-ring readiness.
+    #[arg(long = "min-solder-mask-annular-ring")]
+    /// Field `min_solder_mask_annular_ring`.
+    pub min_solder_mask_annular_ring: Option<f64>,
+
+    /// Minimum apparent silkscreen text or marking height.
+    #[arg(long = "min-silkscreen-text-height")]
+    /// Field `min_silkscreen_text_height`.
+    pub min_silkscreen_text_height: Option<f64>,
+
     /// Maximum interior angle to report as an acid-trap candidate.
     #[arg(long)]
     /// Field `acid_trap_angle`.
@@ -1090,6 +1119,8 @@ mod tests {
             "--check",
             "solder-mask-opening-coverage",
             "--check",
+            "solder-mask-opening-ratio-readiness",
+            "--check",
             "solder-mask-expansion",
             "--check",
             "solder-mask-overlap-clearance",
@@ -1273,6 +1304,7 @@ mod tests {
                 Check::DifferentNetSpacing,
                 Check::LayerRegistrationTolerance,
                 Check::SolderMaskOpeningCoverage,
+                Check::SolderMaskOpeningRatioReadiness,
                 Check::SolderMaskExpansion,
                 Check::SolderMaskOverlapClearance,
                 Check::SilkscreenClearance,
@@ -1401,6 +1433,41 @@ mod tests {
         );
         assert_eq!(cli.generated_date_stale_days, Some(14));
         assert_eq!(cli.declared_copper_layer_count, Some(4));
+    }
+
+    #[test]
+    fn parses_new_mask_and_legend_readiness_knobs() {
+        let cli = Cli::parse_from([
+            "hyperdrc",
+            "--check",
+            "solder-mask-annular-ring-readiness",
+            "--check",
+            "solder-mask-opening-ratio-readiness",
+            "--check",
+            "silkscreen-text-height-readiness",
+            "--min-solder-mask-opening-area-ratio",
+            "1.05",
+            "--max-solder-mask-opening-area-ratio",
+            "2.25",
+            "--min-solder-mask-annular-ring",
+            "0.075",
+            "--min-silkscreen-text-height",
+            "0.9",
+            "top.gbr",
+        ]);
+
+        assert_eq!(
+            cli.checks,
+            vec![
+                Check::SolderMaskAnnularRingReadiness,
+                Check::SolderMaskOpeningRatioReadiness,
+                Check::SilkscreenTextHeightReadiness
+            ]
+        );
+        assert_eq!(cli.min_solder_mask_opening_area_ratio, Some(1.05));
+        assert_eq!(cli.max_solder_mask_opening_area_ratio, Some(2.25));
+        assert_eq!(cli.min_solder_mask_annular_ring, Some(0.075));
+        assert_eq!(cli.min_silkscreen_text_height, Some(0.9));
     }
 
     #[test]

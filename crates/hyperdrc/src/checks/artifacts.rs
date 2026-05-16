@@ -171,9 +171,10 @@ pub fn production_artifact_readiness(
     let release_mentions_fabrication_marking = readme_mentions_fabrication_marking(&release_notes);
     let release_mentions_marking_zone_handoff =
         mentions_fabrication_marking_zone_handoff(&release_notes);
+    let release_mentions_review_packet = readme_mentions_engineering_review_packet(&release_notes);
 
     log::trace!(
-        "production artifact readiness: bom_refs={} centroid_refs={} netlist_refs={} polarized_refs={} polarized_orientation_mismatch_groups={} msl_sensitive_refs={} reflow_sensitive_refs={} tall_component_refs={} thermal_validation_refs={} low_standoff_refs={} press_fit_refs={} wire_bond_refs={} through_hole_refs={} inspection_sensitive_refs={} programmable_refs={} marking_request={} marking_zone_handoff={} readme_files={} fab_drawings={} assembly_drawings={} rout_drawings={}",
+        "production artifact readiness: bom_refs={} centroid_refs={} netlist_refs={} polarized_refs={} polarized_orientation_mismatch_groups={} msl_sensitive_refs={} reflow_sensitive_refs={} tall_component_refs={} thermal_validation_refs={} low_standoff_refs={} press_fit_refs={} wire_bond_refs={} through_hole_refs={} inspection_sensitive_refs={} programmable_refs={} marking_request={} marking_zone_handoff={} review_packet_request={} readme_files={} fab_drawings={} assembly_drawings={} rout_drawings={}",
         bom_refs.len(),
         centroid_refs.len(),
         netlist_refs.len(),
@@ -191,6 +192,7 @@ pub fn production_artifact_readiness(
         programmable_refs.len(),
         release_mentions_fabrication_marking,
         release_mentions_marking_zone_handoff,
+        release_mentions_review_packet,
         readme_files.len(),
         fab_drawing_files.len(),
         assembly_drawing_files.len(),
@@ -741,6 +743,11 @@ struct ReadmeRequirement {
     needles: &'static [&'static str],
 }
 
+struct ReadmeGroupedRequirement {
+    label: &'static str,
+    groups: &'static [&'static [&'static str]],
+}
+
 const README_ORDER_REQUIREMENTS: &[ReadmeRequirement] = &[
     ReadmeRequirement {
         label: "board thickness",
@@ -817,6 +824,10 @@ const README_ORDER_REQUIREMENTS: &[ReadmeRequirement] = &[
     },
 ];
 
+// OASIS SARIF 2.1.0 and IEEE Std 828-2012 both frame findings/release records
+// as durable review artifacts. The preflight vocabulary therefore asks for
+// generated overlays and waiver/baseline drift evidence, not only a pass/fail
+// statement from the checker.
 const README_PREFLIGHT_REQUIREMENTS: &[ReadmeRequirement] = &[
     ReadmeRequirement {
         label: "EDA DRC/ERC",
@@ -849,8 +860,33 @@ const README_PREFLIGHT_REQUIREMENTS: &[ReadmeRequirement] = &[
         needles: &["hyperdrc"],
     },
     ReadmeRequirement {
+        label: "review overlay artifacts",
+        needles: &[
+            "svg overlay",
+            "violation overlay",
+            "review overlay",
+            "overlay artifact",
+            "overlays generated",
+            "geojson artifact",
+            "html report",
+        ],
+    },
+    ReadmeRequirement {
         label: "waiver review",
         needles: &["waiver", "waivers", "no waivers"],
+    },
+    ReadmeRequirement {
+        label: "waiver or baseline diff",
+        needles: &[
+            "waiver diff",
+            "waiver delta",
+            "baseline diff",
+            "baseline comparison",
+            "finding baseline",
+            "finding-set diff",
+            "new/resolved findings",
+            "waiver stubs",
+        ],
     },
     ReadmeRequirement {
         label: "submitted package archive",
@@ -903,6 +939,87 @@ const README_ASSEMBLY_REQUIREMENTS: &[ReadmeRequirement] = &[
             "certificate of conformance",
             "traveler",
         ],
+    },
+];
+
+const README_REVIEW_PACKET_REQUIREMENTS: &[ReadmeGroupedRequirement] = &[
+    ReadmeGroupedRequirement {
+        label: "checklist summary",
+        groups: &[&[
+            "checklist summary",
+            "checklist",
+            "readiness summary",
+            "summary table",
+            "finding summary",
+        ]],
+    },
+    ReadmeGroupedRequirement {
+        label: "stackup",
+        groups: &[&["stackup", "layer stack", "laminate stack", "board stack"]],
+    },
+    ReadmeGroupedRequirement {
+        label: "rule deck",
+        groups: &[&[
+            "rule deck",
+            "rule-deck",
+            "ruleset",
+            "drc rules",
+            "hyperdrc config",
+            "hyperdrc rules",
+        ]],
+    },
+    ReadmeGroupedRequirement {
+        label: "plots",
+        groups: &[&[
+            "plot",
+            "plots",
+            "plotted",
+            "gerber plot",
+            "gerber plots",
+            "pdf plot",
+            "pdf plots",
+        ]],
+    },
+    ReadmeGroupedRequirement {
+        label: "DRC/ERC reports",
+        groups: &[&[
+            "drc/erc report",
+            "drc/erc reports",
+            "drc report",
+            "erc report",
+            "design rule check report",
+            "electrical rule check report",
+        ]],
+    },
+    ReadmeGroupedRequirement {
+        label: "BOM/centroid checks",
+        groups: &[
+            &["bom", "bill of materials"],
+            &["centroid", "pick and place", "pick-and-place", "placement"],
+            &[
+                "check",
+                "checked",
+                "review",
+                "reviewed",
+                "validated",
+                "parity",
+            ],
+        ],
+    },
+    ReadmeGroupedRequirement {
+        label: "open manufacturing questions",
+        groups: &[&[
+            "open manufacturing question",
+            "open manufacturing questions",
+            "manufacturing questions",
+            "open questions",
+            "fabricator questions",
+            "assembly questions",
+            "assembler questions",
+            "unresolved manufacturing",
+            "no open manufacturing questions",
+            "no open questions",
+        ]],
     },
 ];
 
@@ -2362,11 +2479,38 @@ fn analyze_readme(artifact: &TextArtifact) -> Vec<Violation> {
         ));
     }
 
+    violations.extend(readme_review_packet_violations(&artifact.path, &normalized));
     violations.extend(readme_surface_finish_compatibility(
         &artifact.path,
         &normalized,
     ));
     violations.extend(readme_contradictions(&artifact.path, &normalized));
+
+    violations
+}
+
+fn readme_review_packet_violations(path: &str, normalized: &str) -> Vec<Violation> {
+    if !readme_mentions_engineering_review_packet(normalized) {
+        return Vec::new();
+    }
+
+    let mut violations = Vec::new();
+    for requirement in README_REVIEW_PACKET_REQUIREMENTS {
+        if !readme_has_grouped_requirement(normalized, requirement.groups) {
+            // IEEE Std 828-2012 treats release baselines as configuration
+            // records that must be identifiable and reviewable. A claimed PCB
+            // engineering review packet should therefore name the concrete
+            // DFM/DRC evidence and the unresolved manufacturing questions a
+            // release reviewer would need to reproduce the handoff decision.
+            violations.push(artifact_violation(
+                path,
+                Some(format!(
+                    "README artifact mentions an engineering review packet but does not mention {} review-packet evidence",
+                    requirement.label
+                )),
+            ));
+        }
+    }
 
     violations
 }
@@ -3231,6 +3375,24 @@ fn readme_mentions_packaging_handoff(text: &str) -> bool {
     )
 }
 
+fn readme_mentions_engineering_review_packet(text: &str) -> bool {
+    has_any(
+        text,
+        &[
+            "engineering review packet",
+            "manufacturing review packet",
+            "release review packet",
+            "design review packet",
+            "review packet",
+            "review bundle",
+        ],
+    )
+}
+
+fn readme_has_grouped_requirement(text: &str, groups: &[&[&str]]) -> bool {
+    groups.iter().all(|needles| has_any(text, needles))
+}
+
 fn readme_requests_controlled_impedance(text: &str) -> bool {
     has_any(
         text,
@@ -3948,7 +4110,7 @@ mod tests {
              Panelization: no panel, single board only.\n\
              Via treatment: tented vias. Edge plating: no edge plating. Castellations: no castellation.\n\
              Preflight: DRC/ERC passed, zones refilled, outputs generated and reloaded in Gerber viewer.\n\
-             HyperDRC reviewed with no waivers. Submitted package archived.\n\
+             HyperDRC reviewed with no waivers. SVG overlay artifact generated; waiver diff and baseline diff reviewed. Submitted package archived.\n\
              Assembly: double-sided assembly, pin-1 and polarity reviewed. Test fixture and programming handoff complete.\n\
              First article approval required before production. Acceptance criteria: pass/fail functional test and AQL inspection.\n\
              Lot traceability: supplier lot, date code, COC, and traveler records retained.\n",
@@ -5894,7 +6056,7 @@ mod tests {
              Panelization: no panel, single board only.\n\
              Via treatment: tented vias. Edge plating: no edge plating. Castellations: no castellation.\n\
              Preflight: DRC/ERC passed, zones refilled, outputs generated and reloaded in Gerber viewer.\n\
-             HyperDRC reviewed with no waivers. Submitted package archived.\n\
+             HyperDRC reviewed with no waivers. SVG overlay artifact generated; waiver diff and baseline diff reviewed. Submitted package archived.\n\
              Assembly: pin-1 and polarity reviewed. Test fixture and programming handoff complete.\n\
              First article approval required before production. Acceptance criteria: pass/fail functional test and AQL inspection.\n\
              Lot traceability: supplier lot, date code, COC, and traveler records retained.\n",
@@ -6588,7 +6750,89 @@ mod tests {
         assert!(
             messages
                 .iter()
+                .any(|message| message.contains("review overlay artifacts preflight evidence"))
+        );
+        assert!(
+            messages
+                .iter()
+                .any(|message| message.contains("waiver or baseline diff preflight evidence"))
+        );
+        assert!(
+            messages
+                .iter()
                 .any(|message| message.contains("submitted package archive preflight evidence"))
+        );
+    }
+
+    #[test]
+    fn readme_readiness_requires_review_packet_evidence_when_claimed() {
+        let readme = artifact(
+            "README.md",
+            "Revision ERP. Fabrication package. Stackup 4 layer, thickness 1.6mm, copper weight 1 oz, \
+             ENIG finish, soldermask green, no impedance, panelization none, tented vias, no edge plating, \
+             no castellation. Preflight: DRC/ERC passed, zones refilled, outputs generated, Gerber viewer \
+             checked, HyperDRC reviewed, no waivers, SVG overlay artifact generated, waiver diff and baseline diff reviewed, archive created. Assembly: pin-1 and polarity reviewed. \
+             Test fixture handoff complete. First article approval required before production. Acceptance \
+             criteria: pass/fail functional test and AQL inspection. Lot traceability retained. Engineering \
+             review packet ready.\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[],
+            &[],
+        ));
+
+        for expected in [
+            "checklist summary",
+            "rule deck",
+            "plots",
+            "DRC/ERC reports",
+            "BOM/centroid checks",
+            "open manufacturing questions",
+        ] {
+            assert!(
+                messages
+                    .iter()
+                    .any(|message| message.contains("review packet") && message.contains(expected)),
+                "missing review-packet warning containing {expected}: {messages:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn readme_readiness_accepts_complete_review_packet_evidence() {
+        let readme = artifact(
+            "README.md",
+            "Revision ERP2. Fabrication package. Stackup 4 layer, thickness 1.6mm, copper weight 1 oz, \
+             ENIG finish, soldermask green, no impedance, panelization none, tented vias, no edge plating, \
+             no castellation. Preflight: DRC/ERC passed, zones refilled, outputs generated, Gerber viewer \
+             checked, HyperDRC reviewed, no waivers, SVG overlay artifact generated, waiver diff and baseline diff reviewed, archive created. Assembly: pin-1 and polarity reviewed. \
+             Test fixture handoff complete. First article approval required before production. Acceptance \
+             criteria: pass/fail functional test and AQL inspection. Lot traceability retained. Engineering \
+             review packet: checklist summary, stackup, HyperDRC rule deck, Gerber plots, DRC/ERC reports, \
+             BOM/centroid checks, and no open manufacturing questions.\n",
+        );
+
+        let messages = messages(&production_artifact_readiness(
+            &[],
+            &[],
+            &[],
+            &[readme],
+            &[],
+            &[],
+            &[],
+        ));
+
+        assert!(
+            !messages
+                .iter()
+                .any(|message| message.contains("review packet")),
+            "complete review packet evidence should not warn: {messages:?}"
         );
     }
 

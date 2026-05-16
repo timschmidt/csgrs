@@ -4,6 +4,10 @@
   "paste_tolerance": 0.0,
   "min_width": 0.15,
   "min_mask_width": 0.1,
+  "min_solder_mask_opening_area_ratio": 1.0,
+  "max_solder_mask_opening_area_ratio": 3.0,
+  "min_solder_mask_annular_ring": 0.05,
+  "min_silkscreen_text_height": 0.8,
   "acid_trap_angle": 30.0,
   "annular_ring": 0.15,
   "drill_clearance": 0.25,
@@ -93,9 +97,33 @@
   },
   "net_classes": [
     {
+      "name": "controlled signal defaults",
+      "min_width": 0.12,
+      "min_clearance": 0.12,
+      "max_layer_count": 2,
+      "min_via_count": 1,
+      "requires_reference_plane": true,
+      "requires_impedance_control": true,
+      "target_impedance_ohms": 90.0,
+      "impedance_tolerance_ohms": 10.0,
+      "min_pair_spacing": 0.12,
+      "max_pair_spacing": 0.22,
+      "max_pair_skew": 0.15
+    },
+    {
       "name": "power",
       "nets": ["VBUS"],
       "net_patterns": ["PWR_*"],
+      "regions": [
+        {
+          "name": "power-entry",
+          "min_x": 0.0,
+          "min_y": 0.0,
+          "max_x": 60.0,
+          "max_y": 40.0,
+          "layers": ["F.Cu", "B.Cu"]
+        }
+      ],
       "min_width": 0.5,
       "min_clearance": 0.25,
       "max_layer_count": 2,
@@ -111,6 +139,7 @@
     },
     {
       "name": "usb positive",
+      "extends": ["controlled signal defaults"],
       "nets": ["USB_D+"],
       "min_width": 0.12,
       "min_clearance": 0.12,
@@ -128,6 +157,7 @@
     },
     {
       "name": "usb negative",
+      "extends": ["controlled signal defaults"],
       "nets": ["USB_D-"],
       "min_width": 0.12,
       "min_clearance": 0.12,

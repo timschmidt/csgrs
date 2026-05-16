@@ -3,29 +3,30 @@ use std::time::Instant;
 use hyperdrc::LayerMetadata;
 use hyperdrc::baseline::report_to_waiver_stubs;
 use hyperdrc::checks::{
-    FileArtifact, TextArtifact, antenna_copper_keepout_readiness, apply_ipc356_nets,
-    board_edge_exposure, board_outline_drill_clearance, castellation_pitch_readiness,
-    chassis_stitching_readiness, component_edge_clearance_readiness,
-    component_hole_clearance_readiness, component_spacing_readiness,
-    conformal_coating_keepout_readiness, connector_return_path_readiness,
-    connector_rework_clearance_readiness, controlled_impedance_readiness, copper_net_intent,
-    copper_width_readiness, decoupling_proximity_readiness, dense_pad_escape_readiness,
-    dense_pad_mask_bridge_readiness, dense_pad_via_spacing_readiness,
-    different_net_short_readiness, differential_pair_neckdown_readiness,
-    differential_pair_readiness, differential_pair_return_readiness,
-    differential_pair_skew_readiness, differential_pair_spacing_readiness,
-    differential_pair_to_pair_spacing_readiness, differential_pair_via_proximity_readiness,
-    differential_pair_via_return_readiness, differential_pair_width_readiness, drill_spacing,
-    drill_table_consistency, drill_to_copper_clearance, duplicate_layer_geometry_readiness,
+    FileArtifact, ManifestGerberLayer, ManifestInput, TextArtifact,
+    antenna_copper_keepout_readiness, apply_ipc356_nets, board_edge_exposure,
+    board_outline_drill_clearance, castellation_pitch_readiness, chassis_stitching_readiness,
+    component_edge_clearance_readiness, component_hole_clearance_readiness,
+    component_spacing_readiness, conformal_coating_keepout_readiness,
+    connector_return_path_readiness, connector_rework_clearance_readiness,
+    controlled_impedance_readiness, copper_net_intent, copper_width_readiness,
+    decoupling_proximity_readiness, dense_pad_escape_readiness, dense_pad_mask_bridge_readiness,
+    dense_pad_via_spacing_readiness, different_net_short_readiness,
+    differential_pair_neckdown_readiness, differential_pair_readiness,
+    differential_pair_return_readiness, differential_pair_skew_readiness,
+    differential_pair_spacing_readiness, differential_pair_to_pair_spacing_readiness,
+    differential_pair_via_proximity_readiness, differential_pair_via_return_readiness,
+    differential_pair_width_readiness, drill_spacing, drill_table_consistency,
+    drill_to_copper_clearance, duplicate_layer_geometry_readiness,
     duplicate_layer_island_readiness, edge_plating_intent_readiness, edge_stitching_readiness,
-    esd_protection_readiness, esd_return_path_readiness, exposed_copper,
-    fiducial_keepout_readiness, fiducial_readiness, gold_finger_drill_keepout_readiness,
-    gold_finger_edge_readiness, gold_finger_readiness, gold_finger_spacing_readiness,
-    high_current_neck_readiness, high_current_readiness, high_speed_edge_readiness,
-    high_voltage_edge_readiness, hot_component_spacing_readiness,
-    inductor_copper_keepout_readiness, ipc356_coverage, ipc356_drill_diameter,
-    local_copper_density_readiness, local_fiducial_readiness, mask_island_keepout,
-    min_copper_neck_width, mixed_signal_partition_readiness,
+    esd_protection_readiness, esd_return_path_readiness, excellon_batch_readiness,
+    excellon_readiness, exposed_copper, fiducial_keepout_readiness, fiducial_readiness,
+    file_manifest_readiness, gold_finger_drill_keepout_readiness, gold_finger_edge_readiness,
+    gold_finger_readiness, gold_finger_spacing_readiness, high_current_neck_readiness,
+    high_current_readiness, high_speed_edge_readiness, high_voltage_edge_readiness,
+    hot_component_spacing_readiness, inductor_copper_keepout_readiness, ipc356_coverage,
+    ipc356_drill_diameter, local_copper_density_readiness, local_fiducial_readiness,
+    mask_island_keepout, min_copper_neck_width, mixed_signal_partition_readiness,
     mounting_hole_copper_keepout_readiness, mounting_hole_distribution_readiness,
     mounting_hole_edge_clearance_readiness, mounting_hole_grounding_readiness,
     mounting_hole_plating_intent_readiness, mounting_hole_spacing_readiness, mouse_bite_readiness,
@@ -40,21 +41,33 @@ use hyperdrc::checks::{
     rf_keepout_readiness, rf_via_fence_readiness, same_net_drill_break_readiness,
     same_net_island_readiness, selective_wave_solder_keepout_readiness,
     sensitive_net_spacing_readiness, sensitive_return_readiness, silkscreen_clearance,
-    silkscreen_overlap, skinny_layer_feature_readiness, solder_mask_expansion,
-    solder_mask_opening_coverage, solder_mask_opening_spacing, solder_mask_overlap_clearance,
-    split_plane_crossing_readiness, surge_protection_keepout_readiness,
-    switch_node_keepout_readiness, teardrop_readiness, testpoint_accessibility_readiness,
-    testpoint_copper_clearance_readiness, testpoint_coverage_readiness,
-    thermal_copper_area_readiness, thermal_mechanical_keepout_readiness,
-    thermal_pad_paste_windowpane_readiness, thermal_pad_via_readiness, thermal_relief_readiness,
-    thermal_via_distribution_readiness, thermal_via_readiness, tiny_layer_feature_readiness,
-    tombstone_paste_imbalance_readiness, tooling_hole_readiness,
-    trace_junction_acid_trap_readiness, via_in_pad_readiness, voltage_clearance_readiness,
+    silkscreen_overlap, silkscreen_text_height_readiness, skinny_layer_feature_readiness,
+    solder_mask_annular_ring_readiness, solder_mask_expansion, solder_mask_opening_coverage,
+    solder_mask_opening_ratio_readiness, solder_mask_opening_spacing,
+    solder_mask_overlap_clearance, split_plane_crossing_readiness,
+    surge_protection_keepout_readiness, switch_node_keepout_readiness, teardrop_readiness,
+    testpoint_accessibility_readiness, testpoint_copper_clearance_readiness,
+    testpoint_coverage_readiness, thermal_copper_area_readiness,
+    thermal_mechanical_keepout_readiness, thermal_pad_paste_windowpane_readiness,
+    thermal_pad_via_readiness, thermal_relief_readiness, thermal_via_distribution_readiness,
+    thermal_via_readiness, tiny_layer_feature_readiness, tombstone_paste_imbalance_readiness,
+    tooling_hole_readiness, trace_junction_acid_trap_readiness, via_in_pad_readiness,
+    voltage_clearance_readiness,
 };
-use hyperdrc::constraint_policy::{DifferentialRole, NetClassConfig};
-use hyperdrc::geometry::{circle_polygon, line_polygon, polygons_to_sketch, rect_polygon};
-use hyperdrc::ipc356::{Ipc356AccessSide, Ipc356FeatureType, Ipc356Point, Ipc356Soldermask};
-use hyperdrc::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
+use hyperdrc::constraint_policy::{
+    DifferentialRole, NetClassConfig, NetClassRegionConfig, StackupConfig, StackupLayerConfig,
+    StackupLayerKind, SurfaceFinish,
+};
+use hyperdrc::excellon::parse_excellon_report;
+use hyperdrc::geometry::{
+    arc_line_polygons, bezier_line_polygons, chamfered_rect_polygon, circle_polygon, line_polygon,
+    polygons_to_sketch, rect_polygon, rounded_rect_polygon, trapezoid_polygon,
+};
+use hyperdrc::gerber_metadata::parse_gerber_metadata_report;
+use hyperdrc::ipc356::{
+    Ipc356AccessSide, Ipc356FeatureType, Ipc356Point, Ipc356Soldermask, parse_ipc356_report,
+};
+use hyperdrc::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature, load_kicad_pcb};
 use hyperdrc::report::{Report, Severity, Violation, report_summary};
 use hyperdrc::sexp;
 use hyperdrc::waiver::{Waiver, governance_violations};
@@ -76,17 +89,167 @@ fn main() {
     let geometry_elapsed = time("geometry_build_10k", || {
         for index in 0..10_000 {
             let x = index as f64 * 0.001;
-            let _ = polygons_to_sketch(
-                vec![
-                    rect_polygon([x, x], [1.0, 2.0], 35.0),
-                    circle_polygon([x + 2.0, x], 0.5, 32),
+            let mut polygons = vec![
+                rect_polygon([x, x], [1.0, 2.0], 35.0),
+                trapezoid_polygon([x + 0.8, x + 0.8], [1.2, 0.8], [0.1, 0.05], 15.0),
+                rounded_rect_polygon([x + 1.5, x], [1.8, 1.0], 0.2, 25.0, 8),
+                chamfered_rect_polygon(
+                    [x + 1.7, x + 1.0],
+                    [1.6, 0.9],
+                    0.18,
+                    [true, false, true, false],
+                    20.0,
+                ),
+                circle_polygon([x + 2.0, x], 0.5, 32),
+            ];
+            polygons.extend(arc_line_polygons([x + 3.0, x], [x + 3.5, x], 135.0, 0.1, 8));
+            polygons.extend(bezier_line_polygons(
+                &[
+                    [x + 4.0, x],
+                    [x + 4.0, x + 0.5],
+                    [x + 4.8, x + 0.5],
+                    [x + 4.8, x],
                 ],
+                0.08,
+                8,
+            ));
+            let _ = polygons_to_sketch(
+                polygons,
                 Some(LayerMetadata {
                     name: "bench".to_string(),
                 }),
             );
         }
     });
+    let gerber_metadata_input = "%MOMM*%\n%FSLAX46Y46*%\n%AMTHERM*1,1,0.5,0,0,0*%\n%ADD10C,0.5*%\n%ADD11R,1.0X0.5*%\n%LPD*%\n%LMN*%\n%LR0*%\n%LS1*%\n%SRX2Y1I1.0J0.0*%\nD10*\nG75*\nG36*\nG01X0Y0D02*\nG02X10Y0I5J0D01*\nG37*\n%LPC*%\nX10Y10D03*\n%SR*%\n%TF.FileFunction,Copper,L1,Top*%\n%TF.FilePolarity,Positive*%\n%TF.SameCoordinates,PXbench*%\n%TA.AperFunction,Conductor*%\n%TA.AperFunction,SMDPad,CuDef*%\n%TO.N,GND*%\n%TO.C,U1*%\n%TO.P,U1,1*%\n%TD.N*%\n%TD*%\n";
+    let gerber_metadata_elapsed = time("gerber_metadata_parse_10k", || {
+        for _ in 0..10_000 {
+            let _ = parse_gerber_metadata_report(gerber_metadata_input.as_bytes());
+        }
+    });
+    let ipc356_input = "317 /GND U1 1 X010000Y020000D000600 ACCESS=TOP FEATURE=SMD MASK=OPEN\n327 /VCC U2 2 X030000Y040000D000700 ACCESS=BOTTOM FEATURE=VIA MASK=COVERED\n367 malformed\n";
+    let ipc356_parse_elapsed = time("ipc356_parse_mixed_10k", || {
+        for _ in 0..10_000 {
+            let _ = parse_ipc356_report(ipc356_input, std::path::Path::new("bench.ipc"));
+        }
+    });
+    let ipc356_metadata_input = "\
+317 /GND U1 1 X010000Y020000D000600 ACCESS=TOP FEATURE=SMD MASK=OPEN
+327 /VCC U2 2 X030000Y040000D000700 ACCESS=BOTTOM FEATURE=VIA MASK=COVERED
+327 /PGND TP1 1 X050000Y060000D000800 ACCESS=BOTH FEATURE=TH MASK=UNKNOWN
+327 /FID FID1 1 X070000Y080000D000900 FEATURE=TOOLING
+327 /EDGE J1 1 X090000Y100000D001000 FEATURE=CONNECTOR MASK=OPEN
+327 /MISC U3 3 X110000Y120000D000500 FEATURE=OTHER
+";
+    let ipc356_metadata_elapsed = time("ipc356_metadata_summary_parse_10k", || {
+        for _ in 0..10_000 {
+            let _ = parse_ipc356_report(ipc356_metadata_input, std::path::Path::new("bench.ipc"));
+        }
+    });
+    let ipc356_net_summary_input = "\
+327 /GND U1 1 X010000Y020000D000600
+327 /GND U2 2 X030000Y040000D000600
+327 /VCC U3 3 X050000Y060000D000600
+327 / U4 4 X070000Y080000D000600
+";
+    let ipc356_net_summary_elapsed = time("ipc356_net_summary_parse_10k", || {
+        for _ in 0..10_000 {
+            let _ =
+                parse_ipc356_report(ipc356_net_summary_input, std::path::Path::new("bench.ipc"));
+        }
+    });
+    let ipc356_field_summary_input = "\
+327 /GND U1 1 X010000Y020000D000600
+327 /VCC U1 2 X030000Y040000D000000
+327 /SIG U2 3 X050000Y060000D000700
+327 /NO_DIAM U3 4 X070000Y080000
+";
+    let ipc356_field_summary_elapsed = time("ipc356_field_summary_parse_10k", || {
+        for _ in 0..10_000 {
+            let _ = parse_ipc356_report(
+                ipc356_field_summary_input,
+                std::path::Path::new("bench.ipc"),
+            );
+        }
+    });
+    let ipc356_geometry_summary_input = "\
+327 /GND U1 1 X010000Y020000D000600
+327 /VCC U2 2 X030000Y010000D000000
+327 /SIG U3 3 X005000Y040000D000900
+327 /NO_DIAM U4 4 X070000Y080000
+";
+    let ipc356_geometry_summary_elapsed = time("ipc356_geometry_summary_parse_10k", || {
+        for _ in 0..10_000 {
+            let _ = parse_ipc356_report(
+                ipc356_geometry_summary_input,
+                std::path::Path::new("bench.ipc"),
+            );
+        }
+    });
+    let ipc356_issue_summary_input = "\
+317 /GND U1 1 X010000Y020000D000600
+327 missing-coordinates
+367 malformed
+999 ignored-unknown-record
+";
+    let ipc356_issue_summary_elapsed = time("ipc356_issue_summary_parse_10k", || {
+        for _ in 0..10_000 {
+            let _ = parse_ipc356_report(
+                ipc356_issue_summary_input,
+                std::path::Path::new("bench.ipc"),
+            );
+        }
+    });
+    let kicad_graphics_path = std::env::temp_dir().join(format!(
+        "hyperdrc-bench-kicad-graphics-{}.kicad_pcb",
+        std::process::id()
+    ));
+    std::fs::write(
+        &kicad_graphics_path,
+        r#"
+        (kicad_pcb
+            (layers
+              (0 "F.Cu" signal)
+              (1 "In1.Cu" signal)
+              (2 "In2.Cu" signal)
+              (31 "B.Cu" signal))
+            (footprint "GRAPHICS"
+              (at 10 20 90)
+              (pad "1" thru_hole circle
+                (at 2 0 90)
+                (size 1.4 1.4)
+                (drill 0.5 (offset 0.4 0.0))
+                (layers "*.Cu" "*.Mask")
+                (net 1 "GND"))
+              (pad "2" smd roundrect
+                (at 4 0)
+                (size 1.8 0.9)
+                (layers "F.Cu" "F.Mask")
+                (roundrect_rratio 0.25)
+                (chamfer_ratio 0.2)
+                (chamfer top_left bottom_right)
+                (net 1 "GND"))
+              (fp_line (start 0 0) (end 1 0) (layer "F.Cu") (stroke (width 0.1) (type default)))
+            (fp_rect (start 0 0) (end 1 1) (layer "F.Cu") (stroke (width 0.1) (type default)) (fill yes))
+            (fp_circle (center 2 0) (end 2.5 0) (layer "F.Cu") (stroke (width 0.1) (type default)))
+            (fp_arc (start 1 0) (mid 0 1) (end -1 0) (layer "F.Cu") (stroke (width 0.1) (type default)))
+            (fp_poly (pts (xy 0 0) (xy 1 0) (xy 0 1)) (layer "F.Cu") (stroke (width 0.1) (type default)) (fill yes))
+            (fp_rect (start 3 0) (end 4 1) (layer "F.Cu") (stroke (width 0.1) (type default)) (fill no))
+            (fp_circle (center 5 0) (end 5.5 0) (layer "F.Cu") (stroke (width 0.1) (type default)) (fill no))
+            (fp_poly (pts (xy 6 0) (xy 7 0) (xy 6.5 0.8)) (layer "F.Cu") (stroke (width 0.1) (type default)) (fill no))
+            (fp_line (start 8 0) (end 9 0) (layer "*.Cu") (stroke (width 0.1) (type default)))
+            (fp_curve (pts (xy 0 0) (xy 0 1) (xy 1 1) (xy 1 0)) (layer "F.Cu") (stroke (width 0.1) (type default)))
+            (bezier (pts (xy 9 0) (xy 9 1) (xy 10 1) (xy 10 0)) (layer "F.Cu") (stroke (width 0.1) (type default)))
+            (fp_text user "CU" (at 0.5 0.5 45) (layer "F.Cu") (effects (font (size 0.5 0.4) (thickness 0.05))))))
+        "#,
+    )
+    .expect("benchmark KiCad file should be writable");
+    let kicad_footprint_graphics_elapsed = time("kicad_footprint_graphics_load_1k", || {
+        for _ in 0..1_000 {
+            let _ = load_kicad_pcb(&kicad_graphics_path).expect("benchmark KiCad file should load");
+        }
+    });
+    let _ = std::fs::remove_file(&kicad_graphics_path);
     let duplicate_layers = (0..16)
         .map(|index| {
             let x = (index % 4) as f64 * 12.0;
@@ -300,6 +463,31 @@ fn main() {
             );
         }
     });
+    let mask_opening_ratio_sparse_elapsed = time("solder_mask_opening_ratio_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = solder_mask_opening_ratio_readiness(
+                "bench sparse ratio copper",
+                &sparse_ratio_copper,
+                "bench sparse apertures",
+                &sparse_apertures,
+                1.0,
+                3.0,
+                1.0e-9,
+            );
+        }
+    });
+    let mask_annular_ring_sparse_elapsed = time("solder_mask_annular_ring_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = solder_mask_annular_ring_readiness(
+                "bench sparse ratio copper",
+                &sparse_ratio_copper,
+                "bench sparse apertures",
+                &sparse_apertures,
+                0.08,
+                1.0e-9,
+            );
+        }
+    });
     let exposed_copper_sparse_elapsed = time("exposed_copper_sparse_1k", || {
         for _ in 0..1_000 {
             let _ = exposed_copper(
@@ -394,6 +582,12 @@ fn main() {
             );
         }
     });
+    let silkscreen_text_height_elapsed = time("silkscreen_text_height_10k", || {
+        for _ in 0..10_000 {
+            let _ =
+                silkscreen_text_height_readiness("bench sparse silk", &sparse_silk, 0.80, 1.0e-9);
+        }
+    });
     let tombstone_copper = polygons_to_sketch(
         (0..1_000)
             .map(|index| {
@@ -486,12 +680,19 @@ fn main() {
                 );
             }
         });
-    let net_constraint_classes = vec![NetClassConfig {
-        name: "bench-power".to_string(),
-        nets: vec!["VBUS".to_string()],
-        min_clearance: Some(0.4),
-        ..NetClassConfig::default()
-    }];
+    let net_constraint_classes = vec![
+        NetClassConfig {
+            name: "bench-power-base".to_string(),
+            min_clearance: Some(0.4),
+            ..NetClassConfig::default()
+        },
+        NetClassConfig {
+            name: "bench-power".to_string(),
+            extends: vec!["bench-power-base".to_string()],
+            nets: vec!["VBUS".to_string()],
+            ..NetClassConfig::default()
+        },
+    ];
     let mut net_constraint_copper = (0..1_000)
         .map(|index| {
             bench_pad(
@@ -510,7 +711,7 @@ fn main() {
         board_outline: None,
         panel_features: None,
     };
-    let net_constraint_elapsed = time("net_constraint_clearance_sparse_1k", || {
+    let net_constraint_elapsed = time("net_constraint_inherited_clearance_sparse_1k", || {
         for _ in 0..1_000 {
             let _ = net_constraint_readiness(
                 &net_constraint_classes,
@@ -520,6 +721,50 @@ fn main() {
             );
         }
     });
+    let net_constraint_region_classes = vec![NetClassConfig {
+        name: "bench-front-end".to_string(),
+        nets: vec!["REGION_SIG".to_string()],
+        regions: vec![NetClassRegionConfig {
+            name: "front-end".to_string(),
+            min_x: Some(-1.0),
+            min_y: Some(-1.0),
+            max_x: Some(1.0),
+            max_y: Some(1.0),
+            layers: vec!["F.Cu".to_string()],
+        }],
+        min_width: Some(0.4),
+        min_clearance: Some(0.4),
+        ..NetClassConfig::default()
+    }];
+    let mut net_constraint_region_copper = (0..1_000)
+        .map(|index| {
+            bench_pad(
+                "REGION_SIG",
+                [100.0 + (index % 50) as f64 * 5.0, (index / 50) as f64 * 5.0],
+                [0.2, 0.2],
+            )
+        })
+        .collect::<Vec<_>>();
+    net_constraint_region_copper.push(bench_pad("REGION_SIG", [0.0, 0.0], [0.2, 0.2]));
+    net_constraint_region_copper.push(bench_pad("REGION_NEAR", [0.3, 0.0], [0.2, 0.2]));
+    let net_constraint_region_board = BoardModel {
+        source: "bench".to_string(),
+        copper: net_constraint_region_copper,
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let net_constraint_region_elapsed =
+        time("net_constraint_region_scoped_clearance_sparse_1k", || {
+            for _ in 0..1_000 {
+                let _ = net_constraint_readiness(
+                    &net_constraint_region_classes,
+                    None,
+                    std::slice::from_ref(&net_constraint_region_board),
+                    &[],
+                );
+            }
+        });
     let net_constraint_pair_classes = vec![
         NetClassConfig {
             name: "bench-pair-p".to_string(),
@@ -565,6 +810,92 @@ fn main() {
                 std::slice::from_ref(&net_constraint_pair_board),
                 &[],
             );
+        }
+    });
+    let net_constraint_impedance_classes = vec![
+        NetClassConfig {
+            name: "bench-rf-microstrip".to_string(),
+            nets: vec!["RF_MICRO".to_string()],
+            requires_impedance_control: Some(true),
+            target_impedance_ohms: Some(50.0),
+            impedance_tolerance_ohms: Some(10.0),
+            ..NetClassConfig::default()
+        },
+        NetClassConfig {
+            name: "bench-rf-stripline".to_string(),
+            nets: vec!["RF_STRIP".to_string()],
+            requires_impedance_control: Some(true),
+            target_impedance_ohms: Some(50.0),
+            impedance_tolerance_ohms: Some(10.0),
+            ..NetClassConfig::default()
+        },
+    ];
+    let net_constraint_impedance_stackup = StackupConfig {
+        copper_layer_count: Some(3),
+        finished_thickness: Some(0.54),
+        impedance_controlled: Some(true),
+        material_family: Some("FR-4".to_string()),
+        material_dielectric_constant: Some(4.2),
+        material_loss_tangent: Some(0.018),
+        surface_finish: Some(SurfaceFinish::Enig),
+        layers: vec![
+            StackupLayerConfig {
+                name: "F.Cu".to_string(),
+                kind: StackupLayerKind::Copper,
+                copper_weight_oz: Some(1.0),
+                dielectric_thickness: None,
+            },
+            StackupLayerConfig {
+                name: "Prepreg".to_string(),
+                kind: StackupLayerKind::Prepreg,
+                copper_weight_oz: None,
+                dielectric_thickness: Some(0.18),
+            },
+            StackupLayerConfig {
+                name: "In1.Cu".to_string(),
+                kind: StackupLayerKind::Copper,
+                copper_weight_oz: Some(1.0),
+                dielectric_thickness: None,
+            },
+            StackupLayerConfig {
+                name: "Core".to_string(),
+                kind: StackupLayerKind::Core,
+                copper_weight_oz: None,
+                dielectric_thickness: Some(0.18),
+            },
+            StackupLayerConfig {
+                name: "B.Cu".to_string(),
+                kind: StackupLayerKind::Copper,
+                copper_weight_oz: Some(1.0),
+                dielectric_thickness: None,
+            },
+        ],
+        ..StackupConfig::default()
+    };
+    let net_constraint_impedance_board = BoardModel {
+        source: "bench".to_string(),
+        copper: (0..500)
+            .flat_map(|index| {
+                let y = index as f64 * 0.30;
+                [
+                    bench_segment("RF_MICRO", [0.0, y], [1.0, y], 0.32),
+                    bench_segment_on_layer("In1.Cu", "RF_STRIP", [2.0, y], [3.0, y], 0.17),
+                ]
+            })
+            .collect(),
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let net_constraint_impedance_elapsed = time("net_constraint_impedance_1k", || {
+        for _ in 0..1_000 {
+            let violations = net_constraint_readiness(
+                &net_constraint_impedance_classes,
+                Some(&net_constraint_impedance_stackup),
+                std::slice::from_ref(&net_constraint_impedance_board),
+                &[],
+            );
+            assert!(violations.is_empty());
         }
     });
     let different_net_spacing_board = BoardModel {
@@ -2834,6 +3165,151 @@ fn main() {
         }
     });
 
+    let manifest_input = ManifestInput {
+        gerber_layers: vec![
+            manifest_x2_layer("opaque-a", "Widget_4layer_a.gbr", "Copper,L1,Top"),
+            manifest_x2_layer("opaque-b", "Widget_4layer_b.gbr", "Copper,L2,Inr,Plane"),
+            manifest_x2_layer("opaque-c", "Widget_4layer_c.gbr", "Copper,L3,Inr,Signal"),
+            manifest_x2_layer("opaque-d", "Widget_4layer_d.gbr", "Copper,L4,Bot"),
+            manifest_x2_layer("opaque-e", "Widget_4layer_e.gbr", "Soldermask,Top"),
+            manifest_x2_layer("opaque-f", "Widget_4layer_f.gbr", "Soldermask,Bot"),
+            manifest_x2_layer("opaque-g", "Widget_4layer_g.gbr", "Paste,Top"),
+            manifest_x2_layer("opaque-h", "Widget_4layer_h.gbr", "Paste,Bot"),
+            manifest_x2_layer("opaque-i", "Widget_4layer_i.gbr", "Legend,Top"),
+            manifest_x2_layer("opaque-j", "Widget_4layer_j.gbr", "Legend,Bot"),
+            manifest_x2_layer("opaque-k", "Widget_4layer_k.gbr", "Profile,NP"),
+            manifest_without_file_function_layer("opaque-notes", "Widget_4layer_notes.gbr"),
+        ],
+        has_board_outline: true,
+        has_drill_data: true,
+        bom_file_count: 1,
+        centroid_file_count: 1,
+        netlist_file_count: 1,
+        fab_drawing_file_count: 1,
+        assembly_drawing_file_count: 1,
+        readme_file_count: 1,
+        rout_drawing_file_count: 1,
+        ..Default::default()
+    };
+    let manifest_elapsed = time("file_manifest_filename_layer_count_5k", || {
+        for _ in 0..5_000 {
+            let _ = file_manifest_readiness(&manifest_input);
+        }
+    });
+    let mut polarity_manifest = manifest_input.clone();
+    polarity_manifest.gerber_layers[1].file_polarity = Some("Negative".to_string());
+    polarity_manifest.gerber_layers[11].file_polarity = None;
+    let manifest_polarity_elapsed = time("file_manifest_x2_file_polarity_5k", || {
+        for _ in 0..5_000 {
+            let _ = file_manifest_readiness(&polarity_manifest);
+        }
+    });
+    let excellon_smoke = "M48\nMETRIC,TZ\nT01C0.300\nT02C0.600\n%\nT01\nG85X010000Y020000X010500Y020500\nX010000Y020000\nT02X011000Y021000\nM30\n";
+    let excellon_elapsed = time("excellon_zero_suppression_parse_5k", || {
+        for _ in 0..5_000 {
+            let _ = parse_excellon_report(excellon_smoke, std::path::Path::new("bench.drl"));
+        }
+    });
+    let excellon_unit_dialect = "M48\nM71\nT01C0.300\n%\nT01\nX010000Y020000\nM30\n";
+    let excellon_unit_dialect_elapsed = time("excellon_m71_unit_parse_5k", || {
+        for _ in 0..5_000 {
+            let _ =
+                parse_excellon_report(excellon_unit_dialect, std::path::Path::new("bench-m71.drl"));
+        }
+    });
+    let excellon_unsupported_units = "M48\nMILS\nT01C0.300\n%\nT01\nX010000Y020000\nM30\n";
+    let excellon_unsupported_units_elapsed = time("excellon_unsupported_unit_parse_5k", || {
+        for _ in 0..5_000 {
+            let _ = parse_excellon_report(
+                excellon_unsupported_units,
+                std::path::Path::new("bench-mils.drl"),
+            );
+        }
+    });
+    let excellon_unit_summary =
+        "M48\nMETRIC,TZ\nINCH,LZ\nMILS\nT01C0.300\n%\nT01\nX010000Y020000\nM30\n";
+    let excellon_unit_summary_elapsed = time("excellon_unit_summary_parse_5k", || {
+        for _ in 0..5_000 {
+            let _ = parse_excellon_report(
+                excellon_unit_summary,
+                std::path::Path::new("bench-units.drl"),
+            );
+        }
+    });
+    let excellon_program_structure = "M48\nMETRIC\nT01C0.300\n%\nT01\nX010000Y020000\nM30\n";
+    let excellon_program_elapsed = time("excellon_program_structure_parse_5k", || {
+        for _ in 0..5_000 {
+            let _ = parse_excellon_report(
+                excellon_program_structure,
+                std::path::Path::new("bench-program.drl"),
+            );
+        }
+    });
+    let excellon_tool_table =
+        "M48\nMETRIC\nT01C0.300\nT01C0.300\nT01C0.450\nT02C0.000\n%\nT01\nX010000Y020000\nM30\n";
+    let excellon_tool_table_elapsed = time("excellon_tool_table_summary_parse_5k", || {
+        for _ in 0..5_000 {
+            let _ =
+                parse_excellon_report(excellon_tool_table, std::path::Path::new("bench-tools.drl"));
+        }
+    });
+    let excellon_routing_summary = "M48\nMETRIC\nT01C0.800\n%\nT01\nG00X010000Y010000\nG01X012000Y010000\nG85X014000Y010000X018000Y010000\nX020000Y020000\nM30\n";
+    let excellon_routing_elapsed = time("excellon_routing_summary_parse_5k", || {
+        for _ in 0..5_000 {
+            let _ = parse_excellon_report(
+                excellon_routing_summary,
+                std::path::Path::new("bench-routing.drl"),
+            );
+        }
+    });
+    let excellon_hit_summary = "M48\nMETRIC\nT03C0.000\nT01C0.600\n%\nX001000Y001000\nT02X002000Y002000\nT03X003000Y003000\nT01X004000Y004000\nX005000Y005000\nX00600AY006000\nM30\n";
+    let excellon_hit_summary_elapsed = time("excellon_hit_summary_parse_5k", || {
+        for _ in 0..5_000 {
+            let _ =
+                parse_excellon_report(excellon_hit_summary, std::path::Path::new("bench-hits.drl"));
+        }
+    });
+    let excellon_drill_summary = "M48\nMETRIC\nT01C0.300\nT02C0.600\n%\nT01\nX010000Y020000\nX011000Y020000\nT02\nX012000Y020000\nM30\n";
+    let excellon_drill_summary_elapsed = time("excellon_drill_summary_parse_5k", || {
+        for _ in 0..5_000 {
+            let _ = parse_excellon_report(
+                excellon_drill_summary,
+                std::path::Path::new("bench-PTH.drl"),
+            );
+        }
+    });
+    let duplicate_drill_a = parse_excellon_report(excellon_smoke, std::path::Path::new("a.drl"));
+    let duplicate_drill_b = parse_excellon_report(excellon_smoke, std::path::Path::new("b.drl"));
+    let excellon_duplicate_elapsed = time("excellon_duplicate_geometry_batch_5k", || {
+        for _ in 0..5_000 {
+            let _ =
+                excellon_batch_readiness(&[duplicate_drill_a.clone(), duplicate_drill_b.clone()]);
+        }
+    });
+    let outlier_drill_report = parse_excellon_report(
+        "M48\nMETRIC,TZ\nT01C0.300\nT02C12.700\n%\nT01\nX010000Y020000\nX011000Y020000\nX012000Y020000\nX013000Y020000\nT02\nX014000Y020000\nM30\n",
+        std::path::Path::new("diameter-outlier.drl"),
+    );
+    let excellon_outlier_elapsed = time("excellon_diameter_outlier_5k", || {
+        for _ in 0..5_000 {
+            let _ = excellon_readiness(&outlier_drill_report);
+        }
+    });
+    let plated_split_pth = parse_excellon_report(
+        "M48\nMETRIC,TZ\nT01C0.600\nT02C0.800\n%\nT01\nX001000Y002000\nT02\nX003000Y004000\nM30\n",
+        std::path::Path::new("bench-PTH.drl"),
+    );
+    let plated_split_npth = parse_excellon_report(
+        "M48\nMETRIC,TZ\nT01C0.600\nT02C3.200\n%\nT01\nX001000Y002000\nT02\nX008000Y009000\nM30\n",
+        std::path::Path::new("bench-NPTH.drl"),
+    );
+    let excellon_plating_split_elapsed = time("excellon_plating_split_batch_5k", || {
+        for _ in 0..5_000 {
+            let _ =
+                excellon_batch_readiness(&[plated_split_pth.clone(), plated_split_npth.clone()]);
+        }
+    });
+
     let artifact_bom = TextArtifact {
         path: "bench_bom.csv".to_string(),
         text: "Reference,Quantity,MPN,Value,Footprint,Manufacturer,Supplier,Lifecycle,Approved Alternate,Polarity,MSL,Height,Side\nD1,1,LED0603,LED,0603 LED,LiteOn,SKU-D,Active,ALT-D,Cathode mark,1,0.8mm,Top\nU1,1,MCU123,MCU,QFN32,Vendor,SKU-U,Active,ALT-U,Pin 1 dot,3,0.9mm,Top\nU2,1,COB-DIE-1,Bare die wire bond sensor,chip-on-board bond pad array,Vendor,SKU-WB,Active,ALT-WB,Die corner 1,3,0.4mm,Top\nU3,1,BUCK-10A,10A buck regulator with exposed pad,QFN32 thermal pad,Vendor,SKU-TH,Active,ALT-TH,Pin 1 dot,3,0.9mm,Top\nJ1,1,USB-C,USB connector,USB-C,Vendor,SKU-J,Active,ALT-J,Pin 1 shell,1,8.0mm,Top\nJ2,1,PF-100,Press-fit compliant pin connector,2x20 press-fit,Vendor,SKU-PF,Active,ALT-PF,Pin 1 mark,1,12.0mm,Top\n".to_string(),
@@ -2844,7 +3320,7 @@ fn main() {
     };
     let artifact_readme = TextArtifact {
         path: "README.md".to_string(),
-        text: "Revision bench package. Stackup: 4 layer, 1.6mm board thickness, 1 oz copper weight. Finish: ENEPIG soft gold for wire bond pads. Soldermask: green. Controlled impedance: no impedance. Panelization: no panel. Via treatment: tented vias. Edge plating: no edge plating. Castellations: no castellation. Date code and revision text use label location in fab drawing. Preflight: DRC/ERC passed, zones refilled, outputs generated and reloaded in Gerber viewer. HyperDRC reviewed with no waivers. Submitted package archived. Assembly: pin-1 and polarity reviewed against assembly drawing. X-ray inspection for QFN. Selective solder and hand solder process notes cover the USB connector. Component height and enclosure clearance reviewed against mechanical keepout. Thermal validation: temperature rise, derating, airflow, thermal vias, and heat spreader reviewed. Press-fit process: compliant-pin insertion force, finished-hole tolerance, press tooling, and support fixture reviewed. Wire bonding: die attach, bond map, loop height, and bond pull test handoff reviewed. Packaging: MSL dry pack with desiccant, humidity card, moisture barrier bag, ESD bag, and lot label. Reflow profile: validated oven recipe with soak, peak temperature, ramp rate, and time above liquidus. Cleanliness: no-clean flux residue and ionic contamination controls reviewed for low-standoff packages.".to_string(),
+        text: "Revision bench package. Stackup: 4 layer, 1.6mm board thickness, 1 oz copper weight. Finish: ENEPIG soft gold for wire bond pads. Soldermask: green. Controlled impedance: no impedance. Panelization: no panel. Via treatment: tented vias. Edge plating: no edge plating. Castellations: no castellation. Date code and revision text use label location in fab drawing. Preflight: DRC/ERC passed, zones refilled, outputs generated and reloaded in Gerber viewer. HyperDRC reviewed with no waivers. SVG overlay artifact generated; waiver diff and baseline diff reviewed. Submitted package archived. Assembly: pin-1 and polarity reviewed against assembly drawing. X-ray inspection for QFN. Selective solder and hand solder process notes cover the USB connector. Component height and enclosure clearance reviewed against mechanical keepout. Thermal validation: temperature rise, derating, airflow, thermal vias, and heat spreader reviewed. Press-fit process: compliant-pin insertion force, finished-hole tolerance, press tooling, and support fixture reviewed. Wire bonding: die attach, bond map, loop height, and bond pull test handoff reviewed. Packaging: MSL dry pack with desiccant, humidity card, moisture barrier bag, ESD bag, and lot label. Reflow profile: validated oven recipe with soak, peak temperature, ramp rate, and time above liquidus. Cleanliness: no-clean flux residue and ionic contamination controls reviewed for low-standoff packages. Engineering review packet: checklist summary, stackup, HyperDRC rule deck, Gerber plots, DRC/ERC reports, BOM/centroid checks, and no open manufacturing questions.".to_string(),
     };
     let artifact_fab = FileArtifact {
         path: "bench_fab.pdf".to_string(),
@@ -2917,6 +3393,14 @@ fn main() {
         "parser_geometry_smoke total_ms={:.3}",
         (parse_elapsed
             + geometry_elapsed
+            + gerber_metadata_elapsed
+            + ipc356_parse_elapsed
+            + ipc356_metadata_elapsed
+            + ipc356_net_summary_elapsed
+            + ipc356_field_summary_elapsed
+            + ipc356_geometry_summary_elapsed
+            + ipc356_issue_summary_elapsed
+            + kicad_footprint_graphics_elapsed
             + duplicate_layer_elapsed
             + duplicate_island_elapsed
             + tiny_feature_elapsed
@@ -2928,6 +3412,8 @@ fn main() {
             + paste_coverage_sparse_elapsed
             + paste_overhang_sparse_elapsed
             + mask_coverage_sparse_elapsed
+            + mask_opening_ratio_sparse_elapsed
+            + mask_annular_ring_sparse_elapsed
             + exposed_copper_sparse_elapsed
             + mask_expansion_sparse_elapsed
             + paste_mask_alignment_sparse_elapsed
@@ -2937,11 +3423,14 @@ fn main() {
             + mask_island_sparse_elapsed
             + silkscreen_overlap_sparse_elapsed
             + silkscreen_clearance_sparse_elapsed
+            + silkscreen_text_height_elapsed
             + tombstone_elapsed
             + paste_via_elapsed
             + thermal_pad_windowpane_sparse_elapsed
             + net_constraint_elapsed
+            + net_constraint_region_elapsed
             + net_constraint_pair_elapsed
+            + net_constraint_impedance_elapsed
             + different_net_spacing_elapsed
             + registration_elapsed
             + acid_trap_elapsed
@@ -3056,12 +3545,56 @@ fn main() {
             + reference_plane_void_sparse_elapsed
             + orphaned_zone_sparse_elapsed
             + return_path_stitching_sparse_elapsed
+            + manifest_elapsed
+            + manifest_polarity_elapsed
+            + excellon_elapsed
+            + excellon_unit_dialect_elapsed
+            + excellon_unsupported_units_elapsed
+            + excellon_unit_summary_elapsed
+            + excellon_program_elapsed
+            + excellon_tool_table_elapsed
+            + excellon_routing_elapsed
+            + excellon_hit_summary_elapsed
+            + excellon_drill_summary_elapsed
+            + excellon_duplicate_elapsed
+            + excellon_outlier_elapsed
+            + excellon_plating_split_elapsed
             + artifact_elapsed
             + waiver_governance_elapsed
             + waiver_stub_elapsed)
             .as_secs_f64()
             * 1000.0
     );
+}
+
+fn manifest_x2_layer(name: &str, source_path: &str, file_function: &str) -> ManifestGerberLayer {
+    ManifestGerberLayer {
+        name: name.to_string(),
+        source_path: source_path.to_string(),
+        part: Some("Single".to_string()),
+        file_function: Some(file_function.to_string()),
+        file_polarity: Some("Positive".to_string()),
+        same_coordinates: Some("PXbench".to_string()),
+        creation_date: Some("2026-05-16T12:00:00Z".to_string()),
+        generation_software: Some("KiCad,KiCad,9.0".to_string()),
+        project_id: Some("Bench,550e8400-e29b-41d4-a716-446655440000,A".to_string()),
+        md5: Some("d41d8cd98f00b204e9800998ecf8427e".to_string()),
+    }
+}
+
+fn manifest_without_file_function_layer(name: &str, source_path: &str) -> ManifestGerberLayer {
+    ManifestGerberLayer {
+        name: name.to_string(),
+        source_path: source_path.to_string(),
+        part: Some("Single".to_string()),
+        file_function: None,
+        file_polarity: Some("Positive".to_string()),
+        same_coordinates: Some("PXbench".to_string()),
+        creation_date: Some("2026-05-16T12:00:00Z".to_string()),
+        generation_software: Some("KiCad,KiCad,9.0".to_string()),
+        project_id: Some("Bench,550e8400-e29b-41d4-a716-446655440000,A".to_string()),
+        md5: Some("d41d8cd98f00b204e9800998ecf8427e".to_string()),
+    }
 }
 
 fn bench_testpoint(net: &str, location: [f64; 2], diameter: f64) -> Ipc356Point {

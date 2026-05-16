@@ -32,6 +32,10 @@ pub struct RuleConfig {
     pub min_paste_area_ratio: Option<f64>,
     /// Field `max_paste_area_ratio`.
     pub max_paste_area_ratio: Option<f64>,
+    /// Field `min_solder_mask_opening_area_ratio`.
+    pub min_solder_mask_opening_area_ratio: Option<f64>,
+    /// Field `max_solder_mask_opening_area_ratio`.
+    pub max_solder_mask_opening_area_ratio: Option<f64>,
     /// Field `stencil_thickness`.
     pub stencil_thickness: Option<f64>,
     /// Field `min_stencil_area_ratio`.
@@ -40,6 +44,10 @@ pub struct RuleConfig {
     pub min_width: Option<f64>,
     /// Field `min_mask_width`.
     pub min_mask_width: Option<f64>,
+    /// Field `min_solder_mask_annular_ring`.
+    pub min_solder_mask_annular_ring: Option<f64>,
+    /// Field `min_silkscreen_text_height`.
+    pub min_silkscreen_text_height: Option<f64>,
     /// Field `acid_trap_angle`.
     pub acid_trap_angle: Option<f64>,
     /// Field `max_copper_imbalance_ratio`.
@@ -97,6 +105,10 @@ pub struct EffectiveRules {
     pub min_paste_area_ratio: f64,
     /// Field `max_paste_area_ratio`.
     pub max_paste_area_ratio: f64,
+    /// Field `min_solder_mask_opening_area_ratio`.
+    pub min_solder_mask_opening_area_ratio: f64,
+    /// Field `max_solder_mask_opening_area_ratio`.
+    pub max_solder_mask_opening_area_ratio: f64,
     /// Field `stencil_thickness`.
     pub stencil_thickness: f64,
     /// Field `min_stencil_area_ratio`.
@@ -105,6 +117,10 @@ pub struct EffectiveRules {
     pub min_width: f64,
     /// Field `min_mask_width`.
     pub min_mask_width: f64,
+    /// Field `min_solder_mask_annular_ring`.
+    pub min_solder_mask_annular_ring: f64,
+    /// Field `min_silkscreen_text_height`.
+    pub min_silkscreen_text_height: f64,
     /// Field `acid_trap_angle`.
     pub acid_trap_angle: f64,
     /// Field `max_copper_imbalance_ratio`.
@@ -164,6 +180,10 @@ pub struct RuleOverrides {
     pub min_paste_area_ratio: Option<f64>,
     /// Field `max_paste_area_ratio`.
     pub max_paste_area_ratio: Option<f64>,
+    /// Field `min_solder_mask_opening_area_ratio`.
+    pub min_solder_mask_opening_area_ratio: Option<f64>,
+    /// Field `max_solder_mask_opening_area_ratio`.
+    pub max_solder_mask_opening_area_ratio: Option<f64>,
     /// Field `stencil_thickness`.
     pub stencil_thickness: Option<f64>,
     /// Field `min_stencil_area_ratio`.
@@ -172,6 +192,10 @@ pub struct RuleOverrides {
     pub min_width: Option<f64>,
     /// Field `min_mask_width`.
     pub min_mask_width: Option<f64>,
+    /// Field `min_solder_mask_annular_ring`.
+    pub min_solder_mask_annular_ring: Option<f64>,
+    /// Field `min_silkscreen_text_height`.
+    pub min_silkscreen_text_height: Option<f64>,
     /// Field `acid_trap_angle`.
     pub acid_trap_angle: Option<f64>,
     /// Field `max_copper_imbalance_ratio`.
@@ -221,6 +245,16 @@ pub fn effective_rules(config: &RuleConfig, overrides: RuleOverrides) -> Effecti
             config.max_paste_area_ratio,
             1.20,
         ),
+        min_solder_mask_opening_area_ratio: pick(
+            overrides.min_solder_mask_opening_area_ratio,
+            config.min_solder_mask_opening_area_ratio,
+            1.00,
+        ),
+        max_solder_mask_opening_area_ratio: pick(
+            overrides.max_solder_mask_opening_area_ratio,
+            config.max_solder_mask_opening_area_ratio,
+            3.00,
+        ),
         stencil_thickness: pick(overrides.stencil_thickness, config.stencil_thickness, 0.12),
         min_stencil_area_ratio: pick(
             overrides.min_stencil_area_ratio,
@@ -229,6 +263,16 @@ pub fn effective_rules(config: &RuleConfig, overrides: RuleOverrides) -> Effecti
         ),
         min_width,
         min_mask_width: pick(overrides.min_mask_width, config.min_mask_width, 0.1),
+        min_solder_mask_annular_ring: pick(
+            overrides.min_solder_mask_annular_ring,
+            config.min_solder_mask_annular_ring,
+            0.05,
+        ),
+        min_silkscreen_text_height: pick(
+            overrides.min_silkscreen_text_height,
+            config.min_silkscreen_text_height,
+            0.80,
+        ),
         acid_trap_angle: pick(overrides.acid_trap_angle, config.acid_trap_angle, 30.0),
         max_copper_imbalance_ratio: pick(
             overrides.max_copper_imbalance_ratio,
@@ -303,10 +347,14 @@ mod tests {
                 paste_tolerance: None,
                 min_paste_area_ratio: None,
                 max_paste_area_ratio: None,
+                min_solder_mask_opening_area_ratio: None,
+                max_solder_mask_opening_area_ratio: None,
                 stencil_thickness: None,
                 min_stencil_area_ratio: None,
                 min_width: None,
                 min_mask_width: None,
+                min_solder_mask_annular_ring: None,
+                min_silkscreen_text_height: None,
                 acid_trap_angle: None,
                 max_copper_imbalance_ratio: None,
                 annular_ring: None,
@@ -326,6 +374,10 @@ mod tests {
         assert_eq!(rules.keepout, 0.3);
         assert_eq!(rules.min_area, 0.01);
         assert_eq!(rules.clearance, 0.25);
+        assert_eq!(rules.min_solder_mask_opening_area_ratio, 1.0);
+        assert_eq!(rules.max_solder_mask_opening_area_ratio, 3.0);
+        assert_eq!(rules.min_solder_mask_annular_ring, 0.05);
+        assert_eq!(rules.min_silkscreen_text_height, 0.80);
         assert_eq!(rules.generated_date_stale_days, 30);
         assert_eq!(rules.assembly.profile, AssemblyProfile::ProductionSmt);
         assert_eq!(rules.assembly.component_edge_clearance, 0.5);
@@ -412,10 +464,14 @@ mod tests {
                 paste_tolerance: None,
                 min_paste_area_ratio: None,
                 max_paste_area_ratio: None,
+                min_solder_mask_opening_area_ratio: None,
+                max_solder_mask_opening_area_ratio: None,
                 stencil_thickness: None,
                 min_stencil_area_ratio: None,
                 min_width: None,
                 min_mask_width: None,
+                min_solder_mask_annular_ring: None,
+                min_silkscreen_text_height: None,
                 acid_trap_angle: None,
                 max_copper_imbalance_ratio: None,
                 annular_ring: None,
@@ -463,10 +519,14 @@ mod tests {
                 paste_tolerance: None,
                 min_paste_area_ratio: None,
                 max_paste_area_ratio: None,
+                min_solder_mask_opening_area_ratio: None,
+                max_solder_mask_opening_area_ratio: None,
                 stencil_thickness: None,
                 min_stencil_area_ratio: None,
                 min_width: None,
                 min_mask_width: None,
+                min_solder_mask_annular_ring: None,
+                min_silkscreen_text_height: None,
                 acid_trap_angle: None,
                 max_copper_imbalance_ratio: None,
                 annular_ring: None,
@@ -565,6 +625,16 @@ mod tests {
                   "name": "power",
                   "nets": ["VBUS"],
                   "net_patterns": ["PWR_*"],
+                  "regions": [
+                    {
+                      "name": "power-entry",
+                      "min_x": 0.0,
+                      "min_y": 0.0,
+                      "max_x": 25.0,
+                      "max_y": 15.0,
+                      "layers": ["F.Cu", "B.Cu"]
+                    }
+                  ],
                   "min_width": 0.5,
                   "min_clearance": 0.25,
                   "max_layer_count": 1,
@@ -580,6 +650,7 @@ mod tests {
                 },
                 {
                   "name": "usb-p",
+                  "extends": ["power"],
                   "nets": ["USB_D+"],
                   "differential_pair": "usb",
                   "differential_role": "positive",
@@ -621,6 +692,12 @@ mod tests {
         assert_eq!(stackup.fabrication_capability.min_tg_c, Some(130.0));
         assert_eq!(config.net_classes[0].name, "power");
         assert_eq!(config.net_classes[0].net_patterns, vec!["PWR_*"]);
+        assert_eq!(config.net_classes[0].regions[0].name, "power-entry");
+        assert_eq!(config.net_classes[0].regions[0].max_x, Some(25.0));
+        assert_eq!(
+            config.net_classes[0].regions[0].layers,
+            vec!["F.Cu", "B.Cu"]
+        );
         assert_eq!(config.net_classes[0].min_current_width, Some(0.75));
         assert_eq!(config.net_classes[0].min_voltage_clearance, Some(0.5));
         assert_eq!(config.net_classes[0].requires_reference_plane, Some(true));
@@ -633,6 +710,7 @@ mod tests {
             config.net_classes[1].differential_pair.as_deref(),
             Some("usb")
         );
+        assert_eq!(config.net_classes[1].extends, vec!["power"]);
         assert_eq!(config.net_classes[1].min_pair_spacing, Some(0.12));
         assert_eq!(config.net_classes[1].max_pair_spacing, Some(0.22));
         assert_eq!(config.net_classes[1].max_pair_skew, Some(0.15));

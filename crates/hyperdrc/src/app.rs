@@ -6,6 +6,12 @@ use csgrs::io::gerber::FromGerber;
 
 use crate::cli::{Check, Cli, DEFAULT_CHECKS, OutputFormat};
 use crate::config::{self, EffectiveRules};
+use crate::gerber_metadata::{
+    GerberApertureDefinition, GerberApertureMacro, GerberApertureUse, GerberAttributeDelete,
+    GerberCoordinateOperation, GerberImageSetup, GerberImageTransform, GerberInterpolationEvent,
+    GerberLayerMetadata, GerberMetadataIssue, GerberObjectMetadata, GerberPolarityChange,
+    GerberQuadrantEvent, GerberRegionEvent, GerberStepRepeatEvent, parse_gerber_metadata_report,
+};
 use crate::io::{self, SourceRecord};
 use crate::report::{Diagnostic, Report, Severity, Violation, report_summary, report_to_geojson};
 use crate::{LayerMetadata, PcbSketch};
@@ -20,6 +26,21 @@ const LOCAL_COPPER_DENSITY_WINDOW_MULTIPLIER: f64 = 100.0;
 struct Layer {
     path: PathBuf,
     source: SourceRecord,
+    gerber_image_setup: GerberImageSetup,
+    gerber_metadata: GerberLayerMetadata,
+    gerber_aperture_definitions: Vec<GerberApertureDefinition>,
+    gerber_aperture_macros: Vec<GerberApertureMacro>,
+    gerber_aperture_uses: Vec<GerberApertureUse>,
+    gerber_coordinate_operations: Vec<GerberCoordinateOperation>,
+    gerber_polarity_changes: Vec<GerberPolarityChange>,
+    gerber_image_transforms: Vec<GerberImageTransform>,
+    gerber_region_events: Vec<GerberRegionEvent>,
+    gerber_step_repeat_events: Vec<GerberStepRepeatEvent>,
+    gerber_interpolation_events: Vec<GerberInterpolationEvent>,
+    gerber_quadrant_events: Vec<GerberQuadrantEvent>,
+    gerber_object_metadata: Vec<GerberObjectMetadata>,
+    gerber_attribute_deletes: Vec<GerberAttributeDelete>,
+    gerber_metadata_issues: Vec<GerberMetadataIssue>,
     sketch: PcbSketch,
 }
 
@@ -76,10 +97,14 @@ pub fn run(cli: Cli) -> Result<RunOutcome> {
                     paste_tolerance: cli.paste_tolerance,
                     min_paste_area_ratio: cli.min_paste_area_ratio,
                     max_paste_area_ratio: cli.max_paste_area_ratio,
+                    min_solder_mask_opening_area_ratio: cli.min_solder_mask_opening_area_ratio,
+                    max_solder_mask_opening_area_ratio: cli.max_solder_mask_opening_area_ratio,
                     stencil_thickness: cli.stencil_thickness,
                     min_stencil_area_ratio: cli.min_stencil_area_ratio,
                     min_width: cli.min_width,
                     min_mask_width: cli.min_mask_width,
+                    min_solder_mask_annular_ring: cli.min_solder_mask_annular_ring,
+                    min_silkscreen_text_height: cli.min_silkscreen_text_height,
                     acid_trap_angle: cli.acid_trap_angle,
                     max_copper_imbalance_ratio: cli.max_copper_imbalance_ratio,
                     annular_ring: cli.annular_ring,
@@ -244,7 +269,7 @@ pub fn run(cli: Cli) -> Result<RunOutcome> {
                     .chain(package_input_paths_flat(&package_inputs))
                     .collect(),
                 inputs: input_manifest(&cli, &layers, &package_inputs),
-                diagnostics: parser_diagnostics(&excellon_reports, &ipc356_reports),
+                diagnostics: parser_diagnostics(&layers, &excellon_reports, &ipc356_reports),
                 violation_count: violations.len(),
                 waived_count: waived.len(),
                 summary,
@@ -821,6 +846,39 @@ fn run_checks(
                         ));
                     }
                 }
+                Check::SolderMaskOpeningRatioReadiness => {
+                    for (copper_index, mask_index) in
+                        explicit_layer_pairs(layers.len(), &cli.mask_pairs)?
+                    {
+                        let copper = &layers[copper_index];
+                        let mask = &layers[mask_index];
+                        violations.extend(checks::solder_mask_opening_ratio_readiness(
+                            &layer_name(copper),
+                            &copper.sketch,
+                            &layer_name(mask),
+                            &mask.sketch,
+                            rules.min_solder_mask_opening_area_ratio,
+                            rules.max_solder_mask_opening_area_ratio,
+                            rules.min_area,
+                        ));
+                    }
+                }
+                Check::SolderMaskAnnularRingReadiness => {
+                    for (copper_index, mask_index) in
+                        explicit_layer_pairs(layers.len(), &cli.mask_pairs)?
+                    {
+                        let copper = &layers[copper_index];
+                        let mask = &layers[mask_index];
+                        violations.extend(checks::solder_mask_annular_ring_readiness(
+                            &layer_name(copper),
+                            &copper.sketch,
+                            &layer_name(mask),
+                            &mask.sketch,
+                            rules.min_solder_mask_annular_ring,
+                            rules.min_area,
+                        ));
+                    }
+                }
                 Check::SolderMaskExpansion => {
                     for (copper_index, mask_index) in
                         explicit_layer_pairs(layers.len(), &cli.mask_pairs)?
@@ -933,6 +991,27 @@ fn run_checks(
                             &name,
                             &silk.sketch,
                             rules.min_width,
+                            rules.min_area,
+                        ));
+                    }
+                }
+                Check::SilkscreenTextHeightReadiness => {
+                    let silk_layers = selected_layers(layers.len(), &cli.silk_layers);
+                    let item_count = silk_layers.len();
+                    for (item_index, silk_index) in silk_layers.into_iter().enumerate() {
+                        let silk = &layers[silk_index];
+                        let name = layer_name(silk);
+                        progress_check_item(
+                            check_name,
+                            item_index,
+                            item_count,
+                            &format!("checking text height on silk layer {name}"),
+                            check_started,
+                        );
+                        violations.extend(checks::silkscreen_text_height_readiness(
+                            &name,
+                            &silk.sketch,
+                            rules.min_silkscreen_text_height,
                             rules.min_area,
                         ));
                     }
@@ -2397,6 +2476,8 @@ fn check_slug(check: Check) -> &'static str {
         Check::PasteMaskAlignment => "paste-mask-alignment",
         Check::ExposedCopper => "exposed-copper",
         Check::SolderMaskOpeningCoverage => "solder-mask-opening-coverage",
+        Check::SolderMaskOpeningRatioReadiness => "solder-mask-opening-ratio-readiness",
+        Check::SolderMaskAnnularRingReadiness => "solder-mask-annular-ring-readiness",
         Check::SolderMaskExpansion => "solder-mask-expansion",
         Check::SolderMaskOverlapClearance => "solder-mask-overlap-clearance",
         Check::SolderMaskBoardEdgeClearance => "solder-mask-board-edge-clearance",
@@ -2404,6 +2485,7 @@ fn check_slug(check: Check) -> &'static str {
         Check::SilkscreenClearance => "silkscreen-clearance",
         Check::SilkscreenBoardEdgeClearance => "silkscreen-board-edge-clearance",
         Check::SilkscreenMinWidth => "silkscreen-min-width",
+        Check::SilkscreenTextHeightReadiness => "silkscreen-text-height-readiness",
         Check::MinCopperNeck => "min-copper-neck",
         Check::AcidTrap => "acid-trap",
         Check::AcidTrapTraceJunction => "acid-trap-trace-junction",
@@ -2865,9 +2947,25 @@ fn load_discovered_layers(files: &[io::DiscoveredFile]) -> Result<Vec<Layer>> {
                 .to_string();
             let sketch = PcbSketch::from_gerber(&bytes, Some(LayerMetadata { name }))
                 .with_context(|| format!("failed to parse Gerber {}", file.path.display()))?;
+            let gerber_metadata_report = parse_gerber_metadata_report(&bytes);
             Ok(Layer {
                 path: file.path.clone(),
                 source: file.source.clone(),
+                gerber_image_setup: gerber_metadata_report.image_setup,
+                gerber_metadata: gerber_metadata_report.metadata,
+                gerber_aperture_definitions: gerber_metadata_report.aperture_definitions,
+                gerber_aperture_macros: gerber_metadata_report.aperture_macros,
+                gerber_aperture_uses: gerber_metadata_report.aperture_uses,
+                gerber_coordinate_operations: gerber_metadata_report.coordinate_operations,
+                gerber_polarity_changes: gerber_metadata_report.polarity_changes,
+                gerber_image_transforms: gerber_metadata_report.image_transforms,
+                gerber_region_events: gerber_metadata_report.region_events,
+                gerber_step_repeat_events: gerber_metadata_report.step_repeat_events,
+                gerber_interpolation_events: gerber_metadata_report.interpolation_events,
+                gerber_quadrant_events: gerber_metadata_report.quadrant_events,
+                gerber_object_metadata: gerber_metadata_report.object_attributes,
+                gerber_attribute_deletes: gerber_metadata_report.attribute_deletes,
+                gerber_metadata_issues: gerber_metadata_report.issues,
                 sketch,
             })
         })
@@ -2978,6 +3076,14 @@ fn manifest_input(
             .map(|layer| checks::ManifestGerberLayer {
                 name: layer_name(layer),
                 source_path: layer.source.path.clone(),
+                part: layer.gerber_metadata.part.clone(),
+                file_function: layer.gerber_metadata.file_function.clone(),
+                file_polarity: layer.gerber_metadata.file_polarity.clone(),
+                same_coordinates: layer.gerber_metadata.same_coordinates.clone(),
+                creation_date: layer.gerber_metadata.creation_date.clone(),
+                generation_software: layer.gerber_metadata.generation_software.clone(),
+                project_id: layer.gerber_metadata.project_id.clone(),
+                md5: layer.gerber_metadata.md5.clone(),
             })
             .collect(),
         artifact_paths: cli
@@ -3054,10 +3160,94 @@ fn load_ipc356_points(files: &[PathBuf]) -> Result<Vec<ipc356::Ipc356Point>> {
 }
 
 fn parser_diagnostics(
+    layers: &[Layer],
     excellon_reports: &[excellon::ExcellonReport],
     ipc356_reports: &[ipc356::Ipc356Report],
 ) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
+    let gerber_object_attribute_count = layers
+        .iter()
+        .map(|layer| layer.gerber_object_metadata.len())
+        .sum::<usize>();
+    let gerber_attribute_delete_count = layers
+        .iter()
+        .map(|layer| layer.gerber_attribute_deletes.len())
+        .sum::<usize>();
+    let gerber_aperture_definition_count = layers
+        .iter()
+        .map(|layer| layer.gerber_aperture_definitions.len())
+        .sum::<usize>();
+    let gerber_aperture_macro_count = layers
+        .iter()
+        .map(|layer| layer.gerber_aperture_macros.len())
+        .sum::<usize>();
+    let gerber_aperture_use_count = layers
+        .iter()
+        .map(|layer| layer.gerber_aperture_uses.len())
+        .sum::<usize>();
+    let gerber_coordinate_operation_count = layers
+        .iter()
+        .map(|layer| layer.gerber_coordinate_operations.len())
+        .sum::<usize>();
+    let gerber_polarity_change_count = layers
+        .iter()
+        .map(|layer| layer.gerber_polarity_changes.len())
+        .sum::<usize>();
+    let gerber_image_transform_count = layers
+        .iter()
+        .map(|layer| layer.gerber_image_transforms.len())
+        .sum::<usize>();
+    let gerber_region_event_count = layers
+        .iter()
+        .map(|layer| layer.gerber_region_events.len())
+        .sum::<usize>();
+    let gerber_step_repeat_event_count = layers
+        .iter()
+        .map(|layer| layer.gerber_step_repeat_events.len())
+        .sum::<usize>();
+    let gerber_interpolation_event_count = layers
+        .iter()
+        .map(|layer| layer.gerber_interpolation_events.len())
+        .sum::<usize>();
+    let gerber_quadrant_event_count = layers
+        .iter()
+        .map(|layer| layer.gerber_quadrant_events.len())
+        .sum::<usize>();
+    let gerber_unit_count = layers
+        .iter()
+        .filter(|layer| layer.gerber_image_setup.units.is_some())
+        .count();
+    let gerber_format_count = layers
+        .iter()
+        .filter(|layer| layer.gerber_image_setup.coordinate_format.is_some())
+        .count();
+    log::trace!(
+        "parser diagnostics input metadata: gerber_layers={} gerber_unit_declarations={} gerber_coordinate_formats={} gerber_aperture_definitions={} gerber_aperture_macros={} gerber_aperture_uses={} gerber_coordinate_operations={} gerber_polarity_changes={} gerber_image_transforms={} gerber_region_events={} gerber_step_repeat_events={} gerber_interpolation_events={} gerber_quadrant_events={} gerber_object_attributes={} gerber_attribute_deletes={}",
+        layers.len(),
+        gerber_unit_count,
+        gerber_format_count,
+        gerber_aperture_definition_count,
+        gerber_aperture_macro_count,
+        gerber_aperture_use_count,
+        gerber_coordinate_operation_count,
+        gerber_polarity_change_count,
+        gerber_image_transform_count,
+        gerber_region_event_count,
+        gerber_step_repeat_event_count,
+        gerber_interpolation_event_count,
+        gerber_quadrant_event_count,
+        gerber_object_attribute_count,
+        gerber_attribute_delete_count
+    );
+    for layer in layers {
+        diagnostics.extend(layer.gerber_metadata_issues.iter().map(|issue| Diagnostic {
+            source: layer.source.path.clone(),
+            line: Some(issue.line),
+            severity: Severity::Warning,
+            code: gerber_metadata_issue_code(&issue.kind).to_string(),
+            message: issue.message(),
+        }));
+    }
     for report in excellon_reports {
         diagnostics.extend(report.issues.iter().map(|issue| Diagnostic {
             source: report.source.clone(),
@@ -3079,10 +3269,119 @@ fn parser_diagnostics(
     diagnostics
 }
 
+fn gerber_metadata_issue_code(
+    kind: &crate::gerber_metadata::GerberMetadataIssueKind,
+) -> &'static str {
+    match kind {
+        crate::gerber_metadata::GerberMetadataIssueKind::MissingFileAttributeValue { .. } => {
+            "gerber::missing-file-attribute-value"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::DuplicateFileAttribute { .. } => {
+            "gerber::duplicate-file-attribute"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::ConflictingFileAttribute { .. } => {
+            "gerber::conflicting-file-attribute"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::InvalidFileAttributeValue { .. } => {
+            "gerber::invalid-file-attribute-value"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::MissingApertureAttributeValue {
+            ..
+        } => "gerber::missing-aperture-attribute-value",
+        crate::gerber_metadata::GerberMetadataIssueKind::InvalidApertureAttributeValue {
+            ..
+        } => "gerber::invalid-aperture-attribute-value",
+        crate::gerber_metadata::GerberMetadataIssueKind::MissingApertureDefinitionValue {
+            ..
+        } => "gerber::missing-aperture-definition-value",
+        crate::gerber_metadata::GerberMetadataIssueKind::InvalidApertureDefinitionValue {
+            ..
+        } => "gerber::invalid-aperture-definition-value",
+        crate::gerber_metadata::GerberMetadataIssueKind::DuplicateApertureDefinition { .. } => {
+            "gerber::duplicate-aperture-definition"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::ConflictingApertureDefinition {
+            ..
+        } => "gerber::conflicting-aperture-definition",
+        crate::gerber_metadata::GerberMetadataIssueKind::MissingApertureMacroValue { .. } => {
+            "gerber::missing-aperture-macro-value"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::InvalidApertureMacroValue { .. } => {
+            "gerber::invalid-aperture-macro-value"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::DuplicateApertureMacro { .. } => {
+            "gerber::duplicate-aperture-macro"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::ConflictingApertureMacro { .. } => {
+            "gerber::conflicting-aperture-macro"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::UndefinedApertureSelection { .. } => {
+            "gerber::undefined-aperture-selection"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::MissingCurrentAperture { .. } => {
+            "gerber::missing-current-aperture"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::MissingPolarityCommandValue { .. } => {
+            "gerber::missing-polarity-command-value"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::InvalidPolarityCommandValue { .. } => {
+            "gerber::invalid-polarity-command-value"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::NestedRegion { .. } => {
+            "gerber::nested-region"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::UnmatchedRegionEnd => {
+            "gerber::unmatched-region-end"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::UnterminatedRegion { .. } => {
+            "gerber::unterminated-region"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::InvalidStepRepeatCommandValue {
+            ..
+        } => "gerber::invalid-step-repeat-command-value",
+        crate::gerber_metadata::GerberMetadataIssueKind::NestedStepRepeat { .. } => {
+            "gerber::nested-step-repeat"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::UnmatchedStepRepeatEnd => {
+            "gerber::unmatched-step-repeat-end"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::UnterminatedStepRepeat { .. } => {
+            "gerber::unterminated-step-repeat"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::MissingObjectAttributeValue { .. } => {
+            "gerber::missing-object-attribute-value"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::InvalidObjectAttributeValue { .. } => {
+            "gerber::invalid-object-attribute-value"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::InvalidAttributeDeleteValue { .. } => {
+            "gerber::invalid-attribute-delete-value"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::MissingImageCommandValue { .. } => {
+            "gerber::missing-image-command-value"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::InvalidImageCommandValue { .. } => {
+            "gerber::invalid-image-command-value"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::DuplicateImageCommand { .. } => {
+            "gerber::duplicate-image-command"
+        }
+        crate::gerber_metadata::GerberMetadataIssueKind::ConflictingImageCommand { .. } => {
+            "gerber::conflicting-image-command"
+        }
+    }
+}
+
 fn excellon_issue_code(kind: &excellon::ExcellonIssueKind) -> &'static str {
     match kind {
         excellon::ExcellonIssueKind::MissingUnitDeclaration => "excellon::missing-unit",
         excellon::ExcellonIssueKind::UnitConflict { .. } => "excellon::unit-conflict",
+        excellon::ExcellonIssueKind::ZeroSuppressionDeclaration { .. } => {
+            "excellon::zero-suppression"
+        }
+        excellon::ExcellonIssueKind::UnsupportedUnitDeclaration { .. } => {
+            "excellon::unsupported-unit"
+        }
         excellon::ExcellonIssueKind::InvalidToolDefinition { .. } => {
             "excellon::invalid-tool-definition"
         }
@@ -3106,6 +3405,7 @@ fn excellon_issue_code(kind: &excellon::ExcellonIssueKind) -> &'static str {
             "excellon::hit-without-diameter"
         }
         excellon::ExcellonIssueKind::InvalidCoordinate { .. } => "excellon::invalid-coordinate",
+        excellon::ExcellonIssueKind::RoutedSlotCommand { .. } => "excellon::routed-slot-command",
     }
 }
 
@@ -3357,6 +3657,21 @@ mod tests {
                 path,
                 Option::<&Path>::None,
             ),
+            gerber_image_setup: crate::gerber_metadata::GerberImageSetup::default(),
+            gerber_metadata: crate::gerber_metadata::GerberLayerMetadata::default(),
+            gerber_aperture_definitions: Vec::new(),
+            gerber_aperture_macros: Vec::new(),
+            gerber_aperture_uses: Vec::new(),
+            gerber_coordinate_operations: Vec::new(),
+            gerber_polarity_changes: Vec::new(),
+            gerber_image_transforms: Vec::new(),
+            gerber_region_events: Vec::new(),
+            gerber_step_repeat_events: Vec::new(),
+            gerber_interpolation_events: Vec::new(),
+            gerber_quadrant_events: Vec::new(),
+            gerber_object_metadata: Vec::new(),
+            gerber_attribute_deletes: Vec::new(),
+            gerber_metadata_issues: Vec::new(),
             sketch: empty_sketch(None),
         }
     }
@@ -3429,10 +3744,14 @@ mod tests {
                 paste_tolerance: None,
                 min_paste_area_ratio: None,
                 max_paste_area_ratio: None,
+                min_solder_mask_opening_area_ratio: None,
+                max_solder_mask_opening_area_ratio: None,
                 stencil_thickness: None,
                 min_stencil_area_ratio: None,
                 min_width: None,
                 min_mask_width: None,
+                min_solder_mask_annular_ring: None,
+                min_silkscreen_text_height: None,
                 acid_trap_angle: None,
                 max_copper_imbalance_ratio: None,
                 annular_ring: None,
@@ -3749,12 +4068,14 @@ mod tests {
 
     #[test]
     fn parser_diagnostics_collect_excellon_and_ipc356_issues() {
-        let excellon_report =
-            crate::excellon::parse_excellon_report("T01\nXbadY0200\n", Path::new("panel.drl"));
+        let excellon_report = crate::excellon::parse_excellon_report(
+            "T01\nXbadY0200\nG85X010000Y010000X012000Y010000\n",
+            Path::new("panel.drl"),
+        );
         let ipc356_report =
             crate::ipc356::parse_ipc356_report("327 missing-coordinates\n", Path::new("board.ipc"));
 
-        let diagnostics = parser_diagnostics(&[excellon_report], &[ipc356_report]);
+        let diagnostics = parser_diagnostics(&[], &[excellon_report], &[ipc356_report]);
 
         assert!(diagnostics.iter().any(|diagnostic| {
             diagnostic.code == "excellon::unknown-tool-selection"
@@ -3764,6 +4085,180 @@ mod tests {
             diagnostics
                 .iter()
                 .any(|diagnostic| diagnostic.code == "ipc356::malformed-test-record")
+        );
+        assert!(
+            diagnostics
+                .iter()
+                .any(|diagnostic| diagnostic.code == "excellon::routed-slot-command")
+        );
+    }
+
+    #[test]
+    fn parser_diagnostics_collect_gerber_metadata_issues() {
+        let mut layer = make_layer("board.gbr");
+        layer
+            .gerber_metadata_issues
+            .push(crate::gerber_metadata::GerberMetadataIssue {
+                line: 3,
+                kind: crate::gerber_metadata::GerberMetadataIssueKind::ConflictingFileAttribute {
+                    attribute: "TF.FileFunction".to_string(),
+                    first: "Copper,L1,Top".to_string(),
+                    duplicate: "Copper,L2,Inr".to_string(),
+                },
+            });
+        layer
+            .gerber_metadata_issues
+            .push(crate::gerber_metadata::GerberMetadataIssue {
+                line: 4,
+                kind: crate::gerber_metadata::GerberMetadataIssueKind::InvalidFileAttributeValue {
+                    attribute: "TF.FilePolarity".to_string(),
+                    value: "Inverted".to_string(),
+                },
+            });
+        layer
+            .gerber_metadata_issues
+            .push(crate::gerber_metadata::GerberMetadataIssue {
+                line: 5,
+                kind:
+                    crate::gerber_metadata::GerberMetadataIssueKind::InvalidApertureAttributeValue {
+                        attribute: "TA.AperFunction".to_string(),
+                        value: "SMDPad".to_string(),
+                    },
+            });
+        layer
+            .gerber_metadata_issues
+            .push(crate::gerber_metadata::GerberMetadataIssue {
+                line: 6,
+                kind:
+                    crate::gerber_metadata::GerberMetadataIssueKind::InvalidObjectAttributeValue {
+                        attribute: "TO.P".to_string(),
+                        value: ",1".to_string(),
+                    },
+            });
+        layer
+            .gerber_metadata_issues
+            .push(crate::gerber_metadata::GerberMetadataIssue {
+                line: 7,
+                kind: crate::gerber_metadata::GerberMetadataIssueKind::InvalidImageCommandValue {
+                    command: "FS".to_string(),
+                    value: "LAX35Y35".to_string(),
+                },
+            });
+        layer
+            .gerber_metadata_issues
+            .push(crate::gerber_metadata::GerberMetadataIssue {
+            line: 8,
+            kind: crate::gerber_metadata::GerberMetadataIssueKind::InvalidApertureDefinitionValue {
+                command: "ADD".to_string(),
+                value: "9C,0.5".to_string(),
+            },
+        });
+        layer
+            .gerber_metadata_issues
+            .push(crate::gerber_metadata::GerberMetadataIssue {
+                line: 9,
+                kind: crate::gerber_metadata::GerberMetadataIssueKind::UndefinedApertureSelection {
+                    d_code: 99,
+                },
+            });
+        layer
+            .gerber_metadata_issues
+            .push(crate::gerber_metadata::GerberMetadataIssue {
+                line: 10,
+                kind: crate::gerber_metadata::GerberMetadataIssueKind::MissingCurrentAperture {
+                    operation: "D03".to_string(),
+                },
+            });
+        layer
+            .gerber_metadata_issues
+            .push(crate::gerber_metadata::GerberMetadataIssue {
+                line: 11,
+                kind:
+                    crate::gerber_metadata::GerberMetadataIssueKind::InvalidPolarityCommandValue {
+                        command: "LP".to_string(),
+                        value: "X".to_string(),
+                    },
+            });
+        layer
+            .gerber_metadata_issues
+            .push(crate::gerber_metadata::GerberMetadataIssue {
+                line: 12,
+                kind: crate::gerber_metadata::GerberMetadataIssueKind::UnterminatedRegion {
+                    open_line: 12,
+                },
+            });
+        layer
+            .gerber_metadata_issues
+            .push(crate::gerber_metadata::GerberMetadataIssue {
+                line: 13,
+                kind: crate::gerber_metadata::GerberMetadataIssueKind::UnterminatedStepRepeat {
+                    open_line: 13,
+                },
+            });
+        layer
+            .gerber_metadata_issues
+            .push(crate::gerber_metadata::GerberMetadataIssue {
+                line: 14,
+                kind: crate::gerber_metadata::GerberMetadataIssueKind::InvalidApertureMacroValue {
+                    command: "AM".to_string(),
+                    value: "BAD*99,1,2".to_string(),
+                },
+            });
+        layer
+            .gerber_metadata_issues
+            .push(crate::gerber_metadata::GerberMetadataIssue {
+                line: 15,
+                kind:
+                    crate::gerber_metadata::GerberMetadataIssueKind::InvalidAttributeDeleteValue {
+                        command: "TD".to_string(),
+                        value: "N".to_string(),
+                    },
+            });
+
+        let diagnostics = parser_diagnostics(&[layer], &[], &[]);
+
+        assert_eq!(diagnostics.len(), 13);
+        assert_eq!(diagnostics[0].source, "board.gbr");
+        assert_eq!(diagnostics[0].line, Some(3));
+        assert_eq!(diagnostics[0].code, "gerber::conflicting-file-attribute");
+        assert_eq!(diagnostics[1].line, Some(4));
+        assert_eq!(diagnostics[1].code, "gerber::invalid-file-attribute-value");
+        assert_eq!(diagnostics[2].line, Some(5));
+        assert_eq!(
+            diagnostics[2].code,
+            "gerber::invalid-aperture-attribute-value"
+        );
+        assert_eq!(diagnostics[3].line, Some(6));
+        assert_eq!(
+            diagnostics[3].code,
+            "gerber::invalid-object-attribute-value"
+        );
+        assert_eq!(diagnostics[4].line, Some(7));
+        assert_eq!(diagnostics[4].code, "gerber::invalid-image-command-value");
+        assert_eq!(diagnostics[5].line, Some(8));
+        assert_eq!(
+            diagnostics[5].code,
+            "gerber::invalid-aperture-definition-value"
+        );
+        assert_eq!(diagnostics[6].line, Some(9));
+        assert_eq!(diagnostics[6].code, "gerber::undefined-aperture-selection");
+        assert_eq!(diagnostics[7].line, Some(10));
+        assert_eq!(diagnostics[7].code, "gerber::missing-current-aperture");
+        assert_eq!(diagnostics[8].line, Some(11));
+        assert_eq!(
+            diagnostics[8].code,
+            "gerber::invalid-polarity-command-value"
+        );
+        assert_eq!(diagnostics[9].line, Some(12));
+        assert_eq!(diagnostics[9].code, "gerber::unterminated-region");
+        assert_eq!(diagnostics[10].line, Some(13));
+        assert_eq!(diagnostics[10].code, "gerber::unterminated-step-repeat");
+        assert_eq!(diagnostics[11].line, Some(14));
+        assert_eq!(diagnostics[11].code, "gerber::invalid-aperture-macro-value");
+        assert_eq!(diagnostics[12].line, Some(15));
+        assert_eq!(
+            diagnostics[12].code,
+            "gerber::invalid-attribute-delete-value"
         );
     }
 
@@ -3968,6 +4463,74 @@ mod tests {
         );
 
         let _ = fs::remove_dir_all(workspace);
+    }
+
+    #[test]
+    fn load_layers_preserves_gerber_x2_file_metadata_for_manifest() {
+        let process_id = process::id();
+        let path = PathBuf::from(format!("/tmp/hyperdrc-x2-metadata-{process_id}.gbr"));
+        fs::write(
+            &path,
+            "%TF.FileFunction,Copper,L1,Top*%\n%TF.FilePolarity,Positive*%\n%TF.SameCoordinates,PX1*%\n%TO.N,GND*%\n%TO.C,U1*%\n%TO.P,U1,1*%\n%TD.N*%\n%TD*%\n%LPD*%\n%SRX2Y1I1.0J0.0*%\nG04 trace*\n%MOMM*%\n%FSLAX46Y46*%\n%AMTHERM*1,1,0.5,0,0,0*%\n%ADD10C,1*%\nD10*\nG75*\nG36*\nG01X0Y0D02*\nG02X4000000Y0I2000000J0D01*\nG37*\n%SR*%\nM02*\n",
+        )
+        .unwrap();
+
+        let layers = load_layers(std::slice::from_ref(&path)).unwrap();
+        assert_eq!(
+            layers[0].gerber_metadata.file_function.as_deref(),
+            Some("Copper,L1,Top")
+        );
+        assert_eq!(
+            layers[0].gerber_metadata.file_polarity.as_deref(),
+            Some("Positive")
+        );
+        assert_eq!(
+            layers[0].gerber_metadata.same_coordinates.as_deref(),
+            Some("PX1")
+        );
+        assert_eq!(
+            layers[0].gerber_image_setup.units,
+            Some(crate::gerber_metadata::GerberUnits::Millimeters)
+        );
+        assert_eq!(
+            layers[0].gerber_image_setup.coordinate_format,
+            Some(crate::gerber_metadata::GerberCoordinateFormat {
+                integer_digits: 4,
+                decimal_digits: 6
+            })
+        );
+        assert_eq!(layers[0].gerber_aperture_definitions.len(), 1);
+        assert_eq!(layers[0].gerber_aperture_macros.len(), 1);
+        assert_eq!(layers[0].gerber_aperture_definitions[0].d_code, 10);
+        assert_eq!(layers[0].gerber_aperture_uses.len(), 2);
+        assert_eq!(layers[0].gerber_coordinate_operations.len(), 2);
+        assert_eq!(layers[0].gerber_polarity_changes.len(), 1);
+        assert_eq!(layers[0].gerber_region_events.len(), 2);
+        assert_eq!(layers[0].gerber_step_repeat_events.len(), 2);
+        assert_eq!(layers[0].gerber_interpolation_events.len(), 2);
+        assert_eq!(layers[0].gerber_quadrant_events.len(), 1);
+        assert_eq!(layers[0].gerber_object_metadata.len(), 3);
+        assert_eq!(layers[0].gerber_attribute_deletes.len(), 2);
+
+        let cli = Cli::parse_from(["hyperdrc", path.to_str().unwrap()]);
+        let package_inputs = package_inputs(&cli, Default::default());
+        let rules = default_rules();
+        let manifest = manifest_input(&cli, &rules, &layers, &[], &package_inputs);
+
+        assert_eq!(
+            manifest.gerber_layers[0].file_function.as_deref(),
+            Some("Copper,L1,Top")
+        );
+        assert_eq!(
+            manifest.gerber_layers[0].file_polarity.as_deref(),
+            Some("Positive")
+        );
+        assert_eq!(
+            manifest.gerber_layers[0].same_coordinates.as_deref(),
+            Some("PX1")
+        );
+
+        let _ = fs::remove_file(path);
     }
 
     #[test]

@@ -3,10 +3,10 @@
 //! Geometry checks can prove local design-rule problems, but pre-production
 //! review also needs the uploaded file set to be coherent. This module catches
 //! missing or duplicated manufacturing deliverables using conservative filename
-//! role inference. The goal is to catch file-set mismatches before geometry and
-//! electrical checks begin.
+//! role inference and Gerber X2 metadata. The goal is to catch file-set
+//! mismatches before geometry and electrical checks begin.
 
-use crate::date::{current_day_number, parse_compact_day};
+use crate::date::{current_day_number, parse_compact_day, parse_iso_day};
 use crate::report::{Severity, Violation};
 
 const DEFAULT_GENERATED_DATE_STALE_DAYS: i64 = 90;
@@ -14,10 +14,30 @@ const DEFAULT_GENERATED_DATE_STALE_DAYS: i64 = 90;
 #[derive(Clone, Debug)]
 /// Public data model for `ManifestGerberLayer`.
 pub struct ManifestGerberLayer {
-    /// Field `name`.
+    /// Human-readable layer name from the geometry parser.
     pub name: String,
-    /// Field `source_path`.
+    /// Source filename or path for manifest diagnostics.
     pub source_path: String,
+    /// Optional Gerber X2 `.Part` attribute, for example `Single`, `Array`,
+    /// `FabricationPanel`, `Coupon`, or `Other,<field>`.
+    pub part: Option<String>,
+    /// Optional Gerber X2 `.FileFunction` attribute, for example
+    /// `Copper,L1,Top`.
+    pub file_function: Option<String>,
+    /// Optional Gerber X2 `.FilePolarity` attribute, for example `Positive` or
+    /// `Negative`.
+    pub file_polarity: Option<String>,
+    /// Optional Gerber X2 `.SameCoordinates` identifier. An empty string means
+    /// the attribute was present without an identifier.
+    pub same_coordinates: Option<String>,
+    /// Optional Gerber X2 `.CreationDate` value.
+    pub creation_date: Option<String>,
+    /// Optional Gerber X2 `.GenerationSoftware` value.
+    pub generation_software: Option<String>,
+    /// Optional Gerber X2 `.ProjectId` value.
+    pub project_id: Option<String>,
+    /// Optional Gerber X2 `.MD5` file signature/checksum value.
+    pub md5: Option<String>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -160,7 +180,76 @@ pub fn file_manifest_readiness(input: &ManifestInput) -> Vec<Violation> {
     let bottom_paste_count = role_count(&classified, GerberRole::BottomPaste);
     let top_silk_count = role_count(&classified, GerberRole::TopSilk);
     let bottom_silk_count = role_count(&classified, GerberRole::BottomSilk);
+    let x2_file_function_count = input
+        .gerber_layers
+        .iter()
+        .filter(|layer| layer.file_function.is_some())
+        .count();
+    let x2_part_count = input
+        .gerber_layers
+        .iter()
+        .filter(|layer| layer.part.is_some())
+        .count();
+    let x2_negative_polarity_count = input
+        .gerber_layers
+        .iter()
+        .filter(|layer| {
+            layer
+                .file_polarity
+                .as_deref()
+                .is_some_and(is_negative_file_polarity)
+        })
+        .count();
+    let x2_same_coordinates_count = input
+        .gerber_layers
+        .iter()
+        .filter(|layer| layer.same_coordinates.is_some())
+        .count();
+    let x2_creation_date_count = input
+        .gerber_layers
+        .iter()
+        .filter(|layer| layer.creation_date.is_some())
+        .count();
+    let x2_generation_software_count = input
+        .gerber_layers
+        .iter()
+        .filter(|layer| layer.generation_software.is_some())
+        .count();
+    let x2_project_id_count = input
+        .gerber_layers
+        .iter()
+        .filter(|layer| layer.project_id.is_some())
+        .count();
+    let x2_md5_count = input
+        .gerber_layers
+        .iter()
+        .filter(|layer| layer.md5.is_some())
+        .count();
     let mut violations = Vec::new();
+
+    log::trace!(
+        "file-manifest-readiness roles: gerber_layers={} x2_parts={} x2_file_functions={} x2_negative_file_polarities={} x2_same_coordinates={} x2_creation_dates={} x2_generation_software={} x2_project_ids={} x2_md5={} copper={} top_copper={} bottom_copper={} inner_copper={} outline={} mask={}/{} paste={}/{} silk={}/{}",
+        input.gerber_layers.len(),
+        x2_part_count,
+        x2_file_function_count,
+        x2_negative_polarity_count,
+        x2_same_coordinates_count,
+        x2_creation_date_count,
+        x2_generation_software_count,
+        x2_project_id_count,
+        x2_md5_count,
+        copper_count,
+        top_copper,
+        bottom_copper,
+        inner_copper,
+        outline_count,
+        top_mask_count,
+        bottom_mask_count,
+        top_paste_count,
+        bottom_paste_count,
+        top_silk_count,
+        bottom_silk_count
+    );
 
     if copper_count == 0 {
         violations.push(package_violation(
@@ -289,6 +378,14 @@ pub fn file_manifest_readiness(input: &ManifestInput) -> Vec<Violation> {
         &mut violations,
     );
     check_layer_name_side_conflicts(&classified, &mut violations);
+    check_negative_copper_file_polarity(&classified, &mut violations);
+    check_file_polarity_evidence(input, &classified, &mut violations);
+    check_file_function_evidence(input, &mut violations);
+    check_part_evidence(input, &mut violations);
+    check_same_coordinates_evidence(input, &mut violations);
+    check_generation_software_evidence(input, &mut violations);
+    check_project_id_evidence(input, &mut violations);
+    check_md5_evidence(input, &mut violations);
 
     check_layer_role_coherence(
         top_copper,
@@ -368,9 +465,17 @@ pub fn file_manifest_readiness(input: &ManifestInput) -> Vec<Violation> {
         copper_count,
         &mut violations,
     );
+    check_filename_layer_count_consistency(input, copper_count, &mut violations);
     check_revision_consistency(input, &mut violations);
     check_generated_date_consistency(input, &mut violations);
+    check_x2_creation_date_consistency(input, &mut violations);
     check_generated_date_age(
+        input,
+        current_day_number(),
+        generated_date_stale_days(input),
+        &mut violations,
+    );
+    check_x2_creation_date_age(
         input,
         current_day_number(),
         generated_date_stale_days(input),
@@ -438,6 +543,59 @@ fn check_generated_date_age(
     }
 }
 
+fn check_x2_creation_date_age(
+    input: &ManifestInput,
+    today: Option<i64>,
+    stale_days: i64,
+    violations: &mut Vec<Violation>,
+) {
+    let Some(today) = today else {
+        return;
+    };
+
+    let dated_layers = x2_creation_date_tags(input);
+    let stale = dated_layers
+        .iter()
+        .filter(|(_, date)| parse_compact_day(date).is_some_and(|day| today - day > stale_days))
+        .map(|(path, date)| format!("{path} ({date})"))
+        .collect::<Vec<_>>();
+    let future = dated_layers
+        .iter()
+        .filter(|(_, date)| parse_compact_day(date).is_some_and(|day| day > today))
+        .map(|(path, date)| format!("{path} ({date})"))
+        .collect::<Vec<_>>();
+
+    if !stale.is_empty() {
+        violations.push(Violation::new(
+            "file-manifest-readiness",
+            Severity::Warning,
+            vec!["package:stale-x2-creation-date".to_string()],
+            None,
+            Vec::new(),
+            Vec::new(),
+            Some(format!(
+                "Gerber X2 CreationDate values are older than {stale_days} days: {}",
+                stale.join(", ")
+            )),
+        ));
+    }
+
+    if !future.is_empty() {
+        violations.push(Violation::new(
+            "file-manifest-readiness",
+            Severity::Warning,
+            vec!["package:future-x2-creation-date".to_string()],
+            None,
+            Vec::new(),
+            Vec::new(),
+            Some(format!(
+                "Gerber X2 CreationDate values are later than the current run date: {}",
+                future.join(", ")
+            )),
+        ));
+    }
+}
+
 fn generated_date_stale_days(input: &ManifestInput) -> i64 {
     input
         .generated_date_stale_days
@@ -492,6 +650,150 @@ fn verify_declared_copper_layer_count(
             )),
         ));
     }
+}
+
+fn check_filename_layer_count_consistency(
+    input: &ManifestInput,
+    observed_copper_count: usize,
+    violations: &mut Vec<Violation>,
+) {
+    let filename_counts = filename_layer_count_tags(input);
+    if filename_counts.is_empty() {
+        return;
+    }
+
+    if filename_counts.len() > 1 {
+        let summary = filename_counts
+            .into_iter()
+            .map(|(count, paths)| format!("{count}: {}", paths.join(", ")))
+            .collect::<Vec<_>>()
+            .join("; ");
+        violations.push(Violation::new(
+            "file-manifest-readiness",
+            Severity::Warning,
+            vec!["package:filename-layer-count-conflict".to_string()],
+            None,
+            Vec::new(),
+            Vec::new(),
+            Some(format!(
+                "input package appears to mix filename layer-count tags across files: {summary}"
+            )),
+        ));
+        return;
+    }
+
+    let (filename_count, paths) = filename_counts
+        .into_iter()
+        .next()
+        .expect("non-empty filename layer-count map has one entry");
+    let path_summary = paths.join(", ");
+
+    if observed_copper_count > 0 && filename_count != observed_copper_count {
+        // IEEE Std 828-2012 treats controlled release files as configuration
+        // items. Conservative filename-count parsing catches package baselines
+        // where the Gerber set and the advertised layer-count convention cannot
+        // both describe the submitted manufacturing stack.
+        violations.push(Violation::new(
+            "file-manifest-readiness",
+            Severity::Warning,
+            vec!["package:filename-copper-layer-parity".to_string()],
+            None,
+            Vec::new(),
+            Vec::new(),
+            Some(format!(
+                "filename layer-count tag ({filename_count}) does not match observed recognized copper layer role count ({observed_copper_count}): {path_summary}"
+            )),
+        ));
+    }
+
+    if let Some(declared_count) = input.declared_copper_layer_count
+        && declared_count != filename_count
+    {
+        violations.push(Violation::new(
+            "file-manifest-readiness",
+            Severity::Warning,
+            vec!["package:filename-declared-copper-layer-parity".to_string()],
+            None,
+            Vec::new(),
+            Vec::new(),
+            Some(format!(
+                "filename layer-count tag ({filename_count}) does not match declared manifest copper layer count ({declared_count}): {path_summary}"
+            )),
+        ));
+    }
+
+    if let Some(kicad_count) = input.kicad_copper_layer_count
+        && kicad_count != filename_count
+    {
+        violations.push(Violation::new(
+            "file-manifest-readiness",
+            Severity::Warning,
+            vec!["package:filename-kicad-copper-layer-parity".to_string()],
+            None,
+            Vec::new(),
+            Vec::new(),
+            Some(format!(
+                "filename layer-count tag ({filename_count}) does not match KiCad copper layer count ({kicad_count}): {path_summary}"
+            )),
+        ));
+    }
+}
+
+fn filename_layer_count_tags(
+    input: &ManifestInput,
+) -> std::collections::BTreeMap<usize, Vec<String>> {
+    let mut counts = std::collections::BTreeMap::<usize, Vec<String>>::new();
+    for path in manifest_paths(input) {
+        if let Some(count) = filename_layer_count_tag(&path) {
+            counts.entry(count).or_default().push(path);
+        }
+    }
+    counts
+}
+
+fn filename_layer_count_tag(path: &str) -> Option<usize> {
+    let stem = std::path::Path::new(path)
+        .file_stem()
+        .and_then(|stem| stem.to_str())
+        .unwrap_or(path);
+    let tokens = stem
+        .split(|ch: char| !ch.is_ascii_alphanumeric())
+        .filter(|token| !token.is_empty())
+        .map(str::to_ascii_lowercase)
+        .collect::<Vec<_>>();
+
+    for token in &tokens {
+        if let Some(number) = token
+            .strip_suffix("layers")
+            .or_else(|| token.strip_suffix("layer"))
+            .or_else(|| token.strip_suffix("lyr"))
+            .or_else(|| token.strip_suffix('l'))
+            .and_then(parse_filename_layer_count_number)
+        {
+            return Some(number);
+        }
+    }
+
+    for window in tokens.windows(2) {
+        let [count, label] = window else {
+            continue;
+        };
+        if matches!(label.as_str(), "layer" | "layers" | "lyr")
+            && let Some(number) = parse_filename_layer_count_number(count)
+        {
+            return Some(number);
+        }
+    }
+
+    None
+}
+
+fn parse_filename_layer_count_number(value: &str) -> Option<usize> {
+    if value.is_empty() || !value.chars().all(|ch| ch.is_ascii_digit()) {
+        return None;
+    }
+    let count = value.parse::<usize>().ok()?;
+    (1..=64).contains(&count).then_some(count)
 }
 
 fn check_single_file(
@@ -697,6 +999,38 @@ fn check_generated_date_consistency(input: &ManifestInput, violations: &mut Vec<
     ));
 }
 
+fn check_x2_creation_date_consistency(input: &ManifestInput, violations: &mut Vec<Violation>) {
+    let mut dates = std::collections::BTreeMap::<String, Vec<String>>::new();
+    for (path, date) in x2_creation_date_tags(input) {
+        dates.entry(date).or_default().push(path);
+    }
+
+    if dates.len() <= 1 {
+        return;
+    }
+
+    // Ucamco Gerber Layer Format Specification, rev. 2024.05, section 5.6.6:
+    // `.CreationDate` defines each Gerber file creation timestamp. Mixed dates
+    // across parseable Gerber headers can indicate a stale layer was left in
+    // the release package even when filenames are opaque.
+    let summary = dates
+        .into_iter()
+        .map(|(date, paths)| format!("{date}: {}", paths.join(", ")))
+        .collect::<Vec<_>>()
+        .join("; ");
+    violations.push(Violation::new(
+        "file-manifest-readiness",
+        Severity::Warning,
+        vec!["package:mixed-x2-creation-dates".to_string()],
+        None,
+        Vec::new(),
+        Vec::new(),
+        Some(format!(
+            "Gerber X2 CreationDate values differ across layers: {summary}"
+        )),
+    ));
+}
+
 fn check_project_name_consistency(input: &ManifestInput, violations: &mut Vec<Violation>) {
     let mut names = std::collections::BTreeMap::<String, Vec<String>>::new();
     for path in manifest_paths(input) {
@@ -758,6 +1092,36 @@ fn manifest_paths(input: &ManifestInput) -> Vec<String> {
         .map(|layer| layer.source_path.clone())
         .chain(input.artifact_paths.iter().cloned())
         .collect()
+}
+
+fn x2_creation_date_tags(input: &ManifestInput) -> Vec<(String, String)> {
+    input
+        .gerber_layers
+        .iter()
+        .filter_map(|layer| {
+            layer
+                .creation_date
+                .as_deref()
+                .and_then(normalize_x2_creation_date)
+                .map(|date| (layer.source_path.clone(), date))
+        })
+        .collect()
+}
+
+fn normalize_x2_creation_date(value: &str) -> Option<String> {
+    let trimmed = value.trim();
+    if let Some(date) = trimmed.get(0..10)
+        && parse_iso_day(date).is_some()
+    {
+        return Some(format!("{}{}{}", &date[0..4], &date[5..7], &date[8..10]));
+    }
+
+    let digits = trimmed
+        .chars()
+        .filter(|ch| ch.is_ascii_digit())
+        .take(8)
+        .collect::<String>();
+    normalize_date_token(&digits)
 }
 
 fn has_stale_name_token(path: &str) -> bool {
@@ -934,6 +1298,14 @@ fn looks_revision_value(value: &str) -> bool {
 }
 
 fn classify_gerber_role(layer: &ManifestGerberLayer) -> GerberRole {
+    if let Some(role) = layer
+        .file_function
+        .as_deref()
+        .and_then(classify_file_function)
+    {
+        return role;
+    }
+
     let path = layer.source_path.to_ascii_lowercase();
     let name = layer.name.to_ascii_lowercase();
     let combined = format!("{path} {name}");
@@ -1052,6 +1424,67 @@ fn classify_gerber_role(layer: &ManifestGerberLayer) -> GerberRole {
     }
 }
 
+fn classify_file_function(file_function: &str) -> Option<GerberRole> {
+    let tokens = file_function_tokens(file_function);
+    let function = tokens.first()?;
+
+    match function.as_str() {
+        "copper" => match file_function_side(&tokens) {
+            Some(GerberSide::Top) => Some(GerberRole::TopCopper),
+            Some(GerberSide::Bottom) => Some(GerberRole::BottomCopper),
+            None => Some(GerberRole::InnerCopper),
+        },
+        "soldermask" | "mask" => match file_function_side(&tokens) {
+            Some(GerberSide::Top) => Some(GerberRole::TopMask),
+            Some(GerberSide::Bottom) => Some(GerberRole::BottomMask),
+            None => None,
+        },
+        "paste" | "solderpaste" => match file_function_side(&tokens) {
+            Some(GerberSide::Top) => Some(GerberRole::TopPaste),
+            Some(GerberSide::Bottom) => Some(GerberRole::BottomPaste),
+            None => None,
+        },
+        "legend" | "silk" | "silkscreen" => match file_function_side(&tokens) {
+            Some(GerberSide::Top) => Some(GerberRole::TopSilk),
+            Some(GerberSide::Bottom) => Some(GerberRole::BottomSilk),
+            None => None,
+        },
+        "profile" | "outline" => Some(GerberRole::Outline),
+        _ => None,
+    }
+}
+
+fn file_function_tokens(file_function: &str) -> Vec<String> {
+    file_function
+        .split(',')
+        .map(|field| {
+            field
+                .trim()
+                .chars()
+                .filter(|ch| !ch.is_ascii_whitespace() && *ch != '-' && *ch != '_')
+                .collect::<String>()
+                .to_ascii_lowercase()
+        })
+        .filter(|field| !field.is_empty())
+        .collect()
+}
+
+fn file_function_side(tokens: &[String]) -> Option<GerberSide> {
+    if tokens
+        .iter()
+        .any(|token| matches!(token.as_str(), "top" | "front" | "l1"))
+    {
+        Some(GerberSide::Top)
+    } else if tokens
+        .iter()
+        .any(|token| matches!(token.as_str(), "bot" | "bottom" | "back"))
+    {
+        Some(GerberSide::Bottom)
+    } else {
+        None
+    }
+}
+
 fn has_any(haystack: &str, needles: &[&str]) -> bool {
     needles.iter().any(|needle| haystack.contains(needle))
 }
@@ -1128,6 +1561,548 @@ fn check_layer_name_side_conflicts(
     }
 }
 
+fn check_negative_copper_file_polarity(
+    classified: &[(&ManifestGerberLayer, GerberRole)],
+    violations: &mut Vec<Violation>,
+) {
+    let negative_copper_paths = classified
+        .iter()
+        .filter(|(layer, role)| {
+            is_copper_role(*role)
+                && layer
+                    .file_polarity
+                    .as_deref()
+                    .is_some_and(is_negative_file_polarity)
+        })
+        .map(|(layer, _)| layer.source_path.clone())
+        .collect::<Vec<_>>();
+
+    if negative_copper_paths.is_empty() {
+        return;
+    }
+
+    // Ucamco Gerber Layer Format Specification, rev. 2024.05, section 5.6.4:
+    // `.FilePolarity` changes interpretation, not image geometry. Negative
+    // copper means image objects represent absence of copper, so the release
+    // package needs explicit CAM review before fabrication.
+    violations.push(Violation::new(
+        "file-manifest-readiness",
+        Severity::Warning,
+        vec!["package:negative-copper-file-polarity".to_string()],
+        None,
+        Vec::new(),
+        Vec::new(),
+        Some(format!(
+            "copper Gerber layer(s) declare X2 FilePolarity=Negative; review negative-plane CAM polarity before fabrication: {}",
+            negative_copper_paths.join(", ")
+        )),
+    ));
+}
+
+fn is_copper_role(role: GerberRole) -> bool {
+    matches!(
+        role,
+        GerberRole::TopCopper | GerberRole::BottomCopper | GerberRole::InnerCopper
+    )
+}
+
+fn is_negative_file_polarity(file_polarity: &str) -> bool {
+    file_polarity.trim().eq_ignore_ascii_case("negative")
+}
+
+fn check_file_polarity_evidence(
+    input: &ManifestInput,
+    classified: &[(&ManifestGerberLayer, GerberRole)],
+    violations: &mut Vec<Violation>,
+) {
+    let attested_layers = input
+        .gerber_layers
+        .iter()
+        .filter(|layer| layer.file_polarity.is_some())
+        .count();
+    if attested_layers == 0 {
+        return;
+    }
+
+    if attested_layers < input.gerber_layers.len() {
+        let missing = input
+            .gerber_layers
+            .iter()
+            .filter(|layer| layer.file_polarity.is_none())
+            .map(|layer| layer.source_path.clone())
+            .collect::<Vec<_>>();
+        violations.push(Violation::new(
+            "file-manifest-readiness",
+            Severity::Warning,
+            vec!["package:partial-x2-file-polarity-evidence".to_string()],
+            None,
+            Vec::new(),
+            Vec::new(),
+            Some(format!(
+                "some Gerber layers declare X2 FilePolarity but others do not; review CAM polarity evidence: {}",
+                missing.join(", ")
+            )),
+        ));
+    }
+
+    let mut polarities = std::collections::BTreeMap::<String, Vec<String>>::new();
+    for (layer, role) in classified {
+        if !is_copper_role(*role) {
+            continue;
+        }
+        let Some(value) = layer.file_polarity.as_deref() else {
+            continue;
+        };
+        let normalized = normalize_file_polarity(value);
+        if normalized.is_empty() {
+            continue;
+        }
+        polarities
+            .entry(normalized)
+            .or_default()
+            .push(layer.source_path.clone());
+    }
+
+    if polarities.len() <= 1 {
+        return;
+    }
+
+    // Ucamco Gerber Layer Format Specification, rev. 2024.05, section 5.6.4:
+    // `.FilePolarity` declares whether the file image is positive or negative.
+    // Mixed polarity is expected between positive artwork and negative
+    // soldermask openings, so this review is intentionally scoped to copper
+    // roles where it can change the CAM interpretation of conductive material.
+    let summary = polarities
+        .into_iter()
+        .map(|(value, paths)| format!("{value}: {}", paths.join(", ")))
+        .collect::<Vec<_>>()
+        .join("; ");
+    violations.push(Violation::new(
+        "file-manifest-readiness",
+        Severity::Warning,
+        vec!["package:mixed-x2-file-polarities".to_string()],
+        None,
+        Vec::new(),
+        Vec::new(),
+        Some(format!(
+            "Gerber X2 FilePolarity values differ across layers: {summary}"
+        )),
+    ));
+}
+
+fn normalize_file_polarity(value: &str) -> String {
+    match value.trim().to_ascii_lowercase().as_str() {
+        "positive" => "Positive".to_string(),
+        "negative" => "Negative".to_string(),
+        _ => value.trim().to_string(),
+    }
+}
+
+fn check_file_function_evidence(input: &ManifestInput, violations: &mut Vec<Violation>) {
+    let attested_layers = input
+        .gerber_layers
+        .iter()
+        .filter(|layer| layer.file_function.is_some())
+        .count();
+    if attested_layers == 0 || attested_layers == input.gerber_layers.len() {
+        return;
+    }
+
+    let missing = input
+        .gerber_layers
+        .iter()
+        .filter(|layer| layer.file_function.is_none())
+        .map(|layer| layer.source_path.clone())
+        .collect::<Vec<_>>();
+
+    // Ucamco Gerber Layer Format Specification, rev. 2024.05, section 5.6.3:
+    // `.FileFunction` is the machine-readable layer role. Partial coverage
+    // means some layers are explicitly attested while others still depend on
+    // filename conventions, which weakens release-package traceability.
+    violations.push(Violation::new(
+        "file-manifest-readiness",
+        Severity::Warning,
+        vec!["package:partial-x2-file-function-evidence".to_string()],
+        None,
+        Vec::new(),
+        Vec::new(),
+        Some(format!(
+            "some Gerber layers declare X2 FileFunction but others do not; review layer-role provenance: {}",
+            missing.join(", ")
+        )),
+    ));
+}
+
+fn check_part_evidence(input: &ManifestInput, violations: &mut Vec<Violation>) {
+    let attested_layers = input
+        .gerber_layers
+        .iter()
+        .filter(|layer| layer.part.is_some())
+        .count();
+    if attested_layers == 0 {
+        return;
+    }
+
+    if attested_layers < input.gerber_layers.len() {
+        let missing = input
+            .gerber_layers
+            .iter()
+            .filter(|layer| layer.part.is_none())
+            .map(|layer| layer.source_path.clone())
+            .collect::<Vec<_>>();
+        violations.push(Violation::new(
+            "file-manifest-readiness",
+            Severity::Warning,
+            vec!["package:partial-x2-part-evidence".to_string()],
+            None,
+            Vec::new(),
+            Vec::new(),
+            Some(format!(
+                "some Gerber layers declare X2 Part but others do not; review single/panel/coupon package intent: {}",
+                missing.join(", ")
+            )),
+        ));
+    }
+
+    let mut parts = std::collections::BTreeMap::<String, Vec<String>>::new();
+    for layer in &input.gerber_layers {
+        let Some(value) = layer.part.as_deref() else {
+            continue;
+        };
+        let normalized = normalize_part(value);
+        if normalized.is_empty() {
+            continue;
+        }
+        parts
+            .entry(normalized)
+            .or_default()
+            .push(layer.source_path.clone());
+    }
+
+    if parts.len() <= 1 {
+        return;
+    }
+
+    // Ucamco Gerber Layer Format Specification, rev. 2024.05, section 5.6.2:
+    // `.Part` distinguishes Single, Array, FabricationPanel, Coupon, and
+    // Other-part files. Mixing those values in one ordinary layer set often
+    // means a panel, coupon, or stale single-board layer was packaged with the
+    // wrong release artifact.
+    let summary = parts
+        .into_iter()
+        .map(|(value, paths)| format!("{value}: {}", paths.join(", ")))
+        .collect::<Vec<_>>()
+        .join("; ");
+    violations.push(Violation::new(
+        "file-manifest-readiness",
+        Severity::Warning,
+        vec!["package:mixed-x2-parts".to_string()],
+        None,
+        Vec::new(),
+        Vec::new(),
+        Some(format!(
+            "Gerber X2 Part values differ across layers: {summary}"
+        )),
+    ));
+}
+
+fn normalize_part(value: &str) -> String {
+    let fields = value
+        .split(',')
+        .map(str::trim)
+        .filter(|field| !field.is_empty())
+        .collect::<Vec<_>>();
+    let Some(kind) = fields.first() else {
+        return String::new();
+    };
+    let kind = kind.to_ascii_lowercase();
+    match kind.as_str() {
+        "single" => "Single".to_string(),
+        "array" => "Array".to_string(),
+        "fabricationpanel" | "fabrication-panel" | "fabrication_panel" => {
+            "FabricationPanel".to_string()
+        }
+        "coupon" => "Coupon".to_string(),
+        "other" => {
+            if fields.len() > 1 {
+                format!("Other,{}", fields[1..].join(","))
+            } else {
+                "Other".to_string()
+            }
+        }
+        _ => fields.join(","),
+    }
+}
+
+fn check_same_coordinates_evidence(input: &ManifestInput, violations: &mut Vec<Violation>) {
+    let attested_layers = input
+        .gerber_layers
+        .iter()
+        .filter(|layer| layer.same_coordinates.is_some())
+        .count();
+    if attested_layers == 0 {
+        return;
+    }
+
+    if attested_layers < input.gerber_layers.len() {
+        let missing = input
+            .gerber_layers
+            .iter()
+            .filter(|layer| layer.same_coordinates.is_none())
+            .map(|layer| layer.source_path.clone())
+            .collect::<Vec<_>>();
+        violations.push(Violation::new(
+            "file-manifest-readiness",
+            Severity::Warning,
+            vec!["package:partial-same-coordinates-evidence".to_string()],
+            None,
+            Vec::new(),
+            Vec::new(),
+            Some(format!(
+                "some Gerber layers declare X2 SameCoordinates but others do not; review package alignment evidence: {}",
+                missing.join(", ")
+            )),
+        ));
+    }
+
+    let mut identifiers = std::collections::BTreeMap::<String, Vec<String>>::new();
+    for layer in &input.gerber_layers {
+        let Some(identifier) = layer.same_coordinates.as_deref() else {
+            continue;
+        };
+        let identifier = identifier.trim();
+        if !identifier.is_empty() {
+            identifiers
+                .entry(identifier.to_string())
+                .or_default()
+                .push(layer.source_path.clone());
+        }
+    }
+
+    if identifiers.len() <= 1 {
+        return;
+    }
+
+    // Ucamco Gerber Layer Format Specification, rev. 2024.05, section 5.6.5:
+    // `.SameCoordinates` can carry an identifier so files generated after a CAD
+    // origin change do not falsely claim alignment with older output. Mixed
+    // identifiers therefore deserve release-package review.
+    let summary = identifiers
+        .into_iter()
+        .map(|(identifier, paths)| format!("{identifier}: {}", paths.join(", ")))
+        .collect::<Vec<_>>()
+        .join("; ");
+    violations.push(Violation::new(
+        "file-manifest-readiness",
+        Severity::Warning,
+        vec!["package:mixed-same-coordinates-identifiers".to_string()],
+        None,
+        Vec::new(),
+        Vec::new(),
+        Some(format!(
+            "Gerber layers declare different X2 SameCoordinates identifiers: {summary}"
+        )),
+    ));
+}
+
+fn check_generation_software_evidence(input: &ManifestInput, violations: &mut Vec<Violation>) {
+    let attested_layers = input
+        .gerber_layers
+        .iter()
+        .filter(|layer| layer.generation_software.is_some())
+        .count();
+    if attested_layers == 0 {
+        return;
+    }
+
+    if attested_layers < input.gerber_layers.len() {
+        let missing = input
+            .gerber_layers
+            .iter()
+            .filter(|layer| layer.generation_software.is_none())
+            .map(|layer| layer.source_path.clone())
+            .collect::<Vec<_>>();
+        violations.push(Violation::new(
+            "file-manifest-readiness",
+            Severity::Warning,
+            vec!["package:partial-x2-generation-software-evidence".to_string()],
+            None,
+            Vec::new(),
+            Vec::new(),
+            Some(format!(
+                "some Gerber layers declare X2 GenerationSoftware but others do not; review output provenance: {}",
+                missing.join(", ")
+            )),
+        ));
+    }
+
+    let mut software = std::collections::BTreeMap::<String, Vec<String>>::new();
+    for layer in &input.gerber_layers {
+        let Some(value) = layer.generation_software.as_deref() else {
+            continue;
+        };
+        let normalized = normalize_generation_software(value);
+        if normalized.is_empty() {
+            continue;
+        }
+        software
+            .entry(normalized)
+            .or_default()
+            .push(layer.source_path.clone());
+    }
+
+    if software.len() <= 1 {
+        return;
+    }
+
+    // Ucamco Gerber Layer Format Specification, rev. 2024.05, section 5.6.7:
+    // `.GenerationSoftware` identifies the program that created the layer.
+    // Mixed tools or versions in one release can be legitimate, but they are a
+    // strong signal for stale CAM output or post-processed layers.
+    let summary = software
+        .into_iter()
+        .map(|(value, paths)| format!("{value}: {}", paths.join(", ")))
+        .collect::<Vec<_>>()
+        .join("; ");
+    violations.push(Violation::new(
+        "file-manifest-readiness",
+        Severity::Warning,
+        vec!["package:mixed-x2-generation-software".to_string()],
+        None,
+        Vec::new(),
+        Vec::new(),
+        Some(format!(
+            "Gerber X2 GenerationSoftware values differ across layers: {summary}"
+        )),
+    ));
+}
+
+fn normalize_generation_software(value: &str) -> String {
+    value
+        .split(',')
+        .map(str::trim)
+        .filter(|field| !field.is_empty())
+        .collect::<Vec<_>>()
+        .join(",")
+}
+
+fn check_project_id_evidence(input: &ManifestInput, violations: &mut Vec<Violation>) {
+    let attested_layers = input
+        .gerber_layers
+        .iter()
+        .filter(|layer| layer.project_id.is_some())
+        .count();
+    if attested_layers == 0 {
+        return;
+    }
+
+    if attested_layers < input.gerber_layers.len() {
+        let missing = input
+            .gerber_layers
+            .iter()
+            .filter(|layer| layer.project_id.is_none())
+            .map(|layer| layer.source_path.clone())
+            .collect::<Vec<_>>();
+        violations.push(Violation::new(
+            "file-manifest-readiness",
+            Severity::Warning,
+            vec!["package:partial-x2-project-id-evidence".to_string()],
+            None,
+            Vec::new(),
+            Vec::new(),
+            Some(format!(
+                "some Gerber layers declare X2 ProjectId but others do not; review project/revision provenance: {}",
+                missing.join(", ")
+            )),
+        ));
+    }
+
+    let mut project_ids = std::collections::BTreeMap::<String, Vec<String>>::new();
+    for layer in &input.gerber_layers {
+        let Some(value) = layer.project_id.as_deref() else {
+            continue;
+        };
+        let normalized = normalize_project_id(value);
+        if normalized.is_empty() {
+            continue;
+        }
+        project_ids
+            .entry(normalized)
+            .or_default()
+            .push(layer.source_path.clone());
+    }
+
+    if project_ids.len() <= 1 {
+        return;
+    }
+
+    // Ucamco Gerber Layer Format Specification, rev. 2024.05, section 5.6.8:
+    // `.ProjectId` is intended to identify the project and revision across a
+    // fabrication set. Mixed values therefore map directly to release-baseline
+    // consistency review, just like filename revision tags but without relying
+    // on naming conventions.
+    let summary = project_ids
+        .into_iter()
+        .map(|(value, paths)| format!("{value}: {}", paths.join(", ")))
+        .collect::<Vec<_>>()
+        .join("; ");
+    violations.push(Violation::new(
+        "file-manifest-readiness",
+        Severity::Warning,
+        vec!["package:mixed-x2-project-ids".to_string()],
+        None,
+        Vec::new(),
+        Vec::new(),
+        Some(format!(
+            "Gerber X2 ProjectId values differ across layers: {summary}"
+        )),
+    ));
+}
+
+fn normalize_project_id(value: &str) -> String {
+    value
+        .split(',')
+        .map(str::trim)
+        .filter(|field| !field.is_empty())
+        .collect::<Vec<_>>()
+        .join(",")
+}
+
+fn check_md5_evidence(input: &ManifestInput, violations: &mut Vec<Violation>) {
+    let attested_layers = input
+        .gerber_layers
+        .iter()
+        .filter(|layer| layer.md5.is_some())
+        .count();
+    if attested_layers == 0 || attested_layers == input.gerber_layers.len() {
+        return;
+    }
+
+    let missing = input
+        .gerber_layers
+        .iter()
+        .filter(|layer| layer.md5.is_none())
+        .map(|layer| layer.source_path.clone())
+        .collect::<Vec<_>>();
+
+    // Ucamco Gerber Layer Format Specification, rev. 2024.05, section 5.6.9:
+    // `.MD5` is per-file checksum evidence. HyperDRC does not recompute the
+    // digest yet, but partial coverage still matters: it tells review that only
+    // part of the fabrication set carries integrity evidence.
+    violations.push(Violation::new(
+        "file-manifest-readiness",
+        Severity::Warning,
+        vec!["package:partial-x2-md5-evidence".to_string()],
+        None,
+        Vec::new(),
+        Vec::new(),
+        Some(format!(
+            "some Gerber layers declare X2 MD5 checksums but others do not; review package integrity evidence: {}",
+            missing.join(", ")
+        )),
+    ));
+}
+
 #[derive(Copy, Clone)]
 enum GerberSide {
     Top,
@@ -1180,7 +2155,8 @@ mod tests {
 
     use super::{
         GerberRole, ManifestGerberLayer, ManifestInput, ManifestLayerRequirements,
-        ManifestRequirements, check_generated_date_age, classify_gerber_role,
+        ManifestRequirements, check_generated_date_age, check_x2_creation_date_age,
+        check_x2_creation_date_consistency, classify_file_function, classify_gerber_role,
         file_manifest_readiness, normalize_date_token,
     };
 
@@ -1210,7 +2186,8 @@ mod tests {
             ..Default::default()
         };
 
-        assert!(file_manifest_readiness(&input).is_empty());
+        let violations = file_manifest_readiness(&input);
+        assert!(violations.is_empty(), "{violations:#?}");
     }
 
     #[test]
@@ -1302,7 +2279,8 @@ mod tests {
             ..Default::default()
         };
 
-        assert!(file_manifest_readiness(&input).is_empty());
+        let violations = file_manifest_readiness(&input);
+        assert!(violations.is_empty(), "{violations:#?}");
     }
 
     #[test]
@@ -1495,6 +2473,74 @@ mod tests {
     }
 
     #[test]
+    fn filename_layer_count_tags_are_checked_against_manifest_stack() {
+        let input = ManifestInput {
+            gerber_layers: vec![
+                layer("Widget_4layer_TopCopper.GTL"),
+                layer("Widget_4layer_BottomCopper.GBL"),
+                layer("Widget_4layer_TopMask.GTS"),
+                layer("Widget_4layer_BottomMask.GBS"),
+                layer("Widget_4layer_TopPaste.GTP"),
+                layer("Widget_4layer_BottomPaste.GBP"),
+                layer("Widget_4layer_TopSilk.GTO"),
+                layer("Widget_4layer_BottomSilk.GBO"),
+                layer("Widget_4layer_Outline.GKO"),
+            ],
+            has_board_outline: true,
+            has_drill_data: true,
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            ..Default::default()
+        };
+        let violations = file_manifest_readiness(&input);
+        let slugs = violation_slugs(&violations);
+
+        assert!(slugs.contains(&"package:filename-copper-layer-parity".to_string()));
+        assert!(violations.iter().any(|violation| {
+            violation.message.as_deref().is_some_and(|message| {
+                message.contains("filename layer-count tag (4)") && message.contains("observed")
+            })
+        }));
+    }
+
+    #[test]
+    fn conflicting_filename_layer_count_tags_are_reported() {
+        let input = ManifestInput {
+            gerber_layers: vec![
+                layer("Widget_4layer_TopCopper.GTL"),
+                layer("Widget_6layer_BottomCopper.GBL"),
+                layer("Widget_4layer_TopMask.GTS"),
+                layer("Widget_6layer_BottomMask.GBS"),
+                layer("Widget_4layer_TopPaste.GTP"),
+                layer("Widget_6layer_BottomPaste.GBP"),
+                layer("Widget_4layer_TopSilk.GTO"),
+                layer("Widget_6layer_BottomSilk.GBO"),
+                layer("Widget_4layer_Outline.GKO"),
+            ],
+            has_board_outline: true,
+            has_drill_data: true,
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            ..Default::default()
+        };
+        let violations = file_manifest_readiness(&input);
+        let slugs = violation_slugs(&violations);
+
+        assert!(slugs.contains(&"package:filename-layer-count-conflict".to_string()));
+        assert!(!slugs.contains(&"package:filename-copper-layer-parity".to_string()));
+    }
+
+    #[test]
     fn orphan_side_outputs_are_reported_without_matching_copper() {
         let input = ManifestInput {
             gerber_layers: vec![
@@ -1683,6 +2729,237 @@ mod tests {
                 "mismatch for {}",
                 layer.source_path
             );
+        }
+    }
+
+    #[test]
+    fn x2_file_function_attributes_classify_opaque_layer_names() {
+        let input = ManifestInput {
+            gerber_layers: vec![
+                x2_layer("Widget_opaque01.gbr", "Copper,L1,Top", "Positive"),
+                x2_layer("Widget_opaque02.gbr", "Copper,L2,Inr,Plane", "Positive"),
+                x2_layer("Widget_opaque03.gbr", "Copper,L3,Inr,Signal", "Positive"),
+                x2_layer("Widget_opaque04.gbr", "Copper,L4,Bot", "Positive"),
+                x2_layer("Widget_opaque05.gbr", "Soldermask,Top", "Negative"),
+                x2_layer("Widget_opaque06.gbr", "Soldermask,Bot", "Negative"),
+                x2_layer("Widget_opaque07.gbr", "Paste,Top", "Positive"),
+                x2_layer("Widget_opaque08.gbr", "Paste,Bot", "Positive"),
+                x2_layer("Widget_opaque09.gbr", "Legend,Top", "Positive"),
+                x2_layer("Widget_opaque10.gbr", "Legend,Bot", "Positive"),
+                x2_layer("Widget_opaque11.gbr", "Profile,NP", "Positive"),
+            ],
+            has_board_outline: false,
+            has_drill_data: true,
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            ..Default::default()
+        };
+
+        let violations = file_manifest_readiness(&input);
+        assert!(violations.is_empty(), "{violations:#?}");
+    }
+
+    #[test]
+    fn partial_x2_file_function_role_evidence_is_reported() {
+        let input = ManifestInput {
+            gerber_layers: vec![
+                x2_layer("Widget_opaque01.gbr", "Copper,L1,Top", "Positive"),
+                layer("Widget_B_Cu.gbl"),
+            ],
+            has_board_outline: true,
+            has_drill_data: true,
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            ..Default::default()
+        };
+        let slugs = violation_slugs(&file_manifest_readiness(&input));
+
+        assert!(slugs.contains(&"package:partial-x2-file-function-evidence".to_string()));
+    }
+
+    #[test]
+    fn negative_x2_copper_file_polarity_is_reported() {
+        let input = ManifestInput {
+            gerber_layers: vec![
+                x2_layer("plane.gbr", "Copper,L2,Inr,Plane", "Negative"),
+                x2_layer("top.gbr", "Copper,L1,Top", "Positive"),
+                x2_layer("bottom.gbr", "Copper,L4,Bot", "Positive"),
+            ],
+            has_board_outline: true,
+            has_drill_data: true,
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            required_layers: ManifestLayerRequirements {
+                top_mask: false,
+                bottom_mask: false,
+                top_paste: false,
+                bottom_paste: false,
+                top_silkscreen: false,
+                bottom_silkscreen: false,
+                ..ManifestLayerRequirements::default()
+            },
+            ..Default::default()
+        };
+        let violations = file_manifest_readiness(&input);
+
+        assert!(
+            violation_slugs(&violations)
+                .contains(&"package:negative-copper-file-polarity".to_string())
+        );
+        assert!(violations.iter().any(|violation| {
+            violation
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("plane.gbr"))
+        }));
+    }
+
+    #[test]
+    fn partial_and_mixed_x2_file_polarity_evidence_is_reported() {
+        let input = ManifestInput {
+            gerber_layers: vec![
+                x2_layer("top.gbr", "Copper,L1,Top", "Positive"),
+                x2_layer("plane.gbr", "Copper,L2,Inr,Plane", "Negative"),
+                layer("bottom.gbr"),
+            ],
+            has_board_outline: true,
+            has_drill_data: true,
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            required_layers: ManifestLayerRequirements {
+                top_mask: false,
+                bottom_mask: false,
+                top_paste: false,
+                bottom_paste: false,
+                top_silkscreen: false,
+                bottom_silkscreen: false,
+                ..ManifestLayerRequirements::default()
+            },
+            ..Default::default()
+        };
+        let violations = file_manifest_readiness(&input);
+        let slugs = violation_slugs(&violations);
+
+        assert!(slugs.contains(&"package:partial-x2-file-polarity-evidence".to_string()));
+        assert!(slugs.contains(&"package:mixed-x2-file-polarities".to_string()));
+        assert!(violations.iter().any(|violation| {
+            violation
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("bottom.gbr"))
+        }));
+    }
+
+    #[test]
+    fn partial_x2_same_coordinates_evidence_is_reported() {
+        let mut top = x2_layer("Widget_top.gbr", "Copper,L1,Top", "Positive");
+        top.same_coordinates = Some("PX1".to_string());
+        let bottom = x2_layer("Widget_bottom.gbr", "Copper,L2,Bot", "Positive");
+        let input = ManifestInput {
+            gerber_layers: vec![top, bottom],
+            has_board_outline: true,
+            has_drill_data: true,
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            required_layers: ManifestLayerRequirements {
+                top_mask: false,
+                bottom_mask: false,
+                top_paste: false,
+                bottom_paste: false,
+                top_silkscreen: false,
+                bottom_silkscreen: false,
+                ..ManifestLayerRequirements::default()
+            },
+            ..Default::default()
+        };
+        let violations = file_manifest_readiness(&input);
+
+        assert!(
+            violation_slugs(&violations)
+                .contains(&"package:partial-same-coordinates-evidence".to_string())
+        );
+        assert!(violations.iter().any(|violation| {
+            violation
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("Widget_bottom.gbr"))
+        }));
+    }
+
+    #[test]
+    fn mixed_x2_same_coordinates_identifiers_are_reported() {
+        let mut top = x2_layer("Widget_top.gbr", "Copper,L1,Top", "Positive");
+        top.same_coordinates = Some("PX1".to_string());
+        let mut bottom = x2_layer("Widget_bottom.gbr", "Copper,L2,Bot", "Positive");
+        bottom.same_coordinates = Some("PX2".to_string());
+        let input = ManifestInput {
+            gerber_layers: vec![top, bottom],
+            has_board_outline: true,
+            has_drill_data: true,
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            required_layers: ManifestLayerRequirements {
+                top_mask: false,
+                bottom_mask: false,
+                top_paste: false,
+                bottom_paste: false,
+                top_silkscreen: false,
+                bottom_silkscreen: false,
+                ..ManifestLayerRequirements::default()
+            },
+            ..Default::default()
+        };
+        let slugs = violation_slugs(&file_manifest_readiness(&input));
+
+        assert!(slugs.contains(&"package:mixed-same-coordinates-identifiers".to_string()));
+        assert!(!slugs.contains(&"package:partial-same-coordinates-evidence".to_string()));
+    }
+
+    #[test]
+    fn file_function_parser_maps_standard_fabrication_roles() {
+        let cases = [
+            ("Copper,L1,Top", Some(GerberRole::TopCopper)),
+            ("Copper,L4,Bot", Some(GerberRole::BottomCopper)),
+            ("Copper,L2,Inr,Plane", Some(GerberRole::InnerCopper)),
+            ("Soldermask,Top", Some(GerberRole::TopMask)),
+            ("Paste,Bot", Some(GerberRole::BottomPaste)),
+            ("Legend,Top", Some(GerberRole::TopSilk)),
+            ("Profile,NP", Some(GerberRole::Outline)),
+            ("Drillmap", None),
+        ];
+
+        for (file_function, expected) in cases {
+            assert_eq!(classify_file_function(file_function), expected);
         }
     }
 
@@ -1925,6 +3202,183 @@ mod tests {
     }
 
     #[test]
+    fn x2_creation_dates_are_checked_for_mixed_stale_and_future_outputs() {
+        let mut old_top = layer("opaque-top.gbr");
+        old_top.creation_date = Some("2026-01-01T08:00:00Z".to_string());
+        let mut fresh_bottom = layer("opaque-bottom.gbr");
+        fresh_bottom.creation_date = Some("2026-05-14T08:00:00Z".to_string());
+        let mut future_outline = layer("opaque-outline.gbr");
+        future_outline.creation_date = Some("2026-05-18T08:00:00Z".to_string());
+        let input = ManifestInput {
+            gerber_layers: vec![old_top, fresh_bottom, future_outline],
+            has_board_outline: true,
+            has_drill_data: true,
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            ..Default::default()
+        };
+        let mut violations = Vec::new();
+
+        check_x2_creation_date_consistency(&input, &mut violations);
+        check_x2_creation_date_age(&input, parse_iso_day("2026-05-13"), 90, &mut violations);
+        let slugs = violation_slugs(&violations);
+
+        assert!(slugs.contains(&"package:mixed-x2-creation-dates".to_string()));
+        assert!(slugs.contains(&"package:stale-x2-creation-date".to_string()));
+        assert!(slugs.contains(&"package:future-x2-creation-date".to_string()));
+    }
+
+    #[test]
+    fn x2_part_intent_gaps_are_reported() {
+        let mut top = layer("top.gbr");
+        top.part = Some("Single".to_string());
+        let mut bottom = layer("bottom.gbr");
+        bottom.part = Some("Array".to_string());
+        let input = ManifestInput {
+            gerber_layers: vec![top, bottom, layer("coupon.gbr")],
+            has_board_outline: true,
+            has_drill_data: true,
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            ..Default::default()
+        };
+        let slugs = violation_slugs(&file_manifest_readiness(&input));
+
+        assert!(slugs.contains(&"package:partial-x2-part-evidence".to_string()));
+        assert!(slugs.contains(&"package:mixed-x2-parts".to_string()));
+    }
+
+    #[test]
+    fn x2_part_normalization_allows_consistent_other_values() {
+        let mut top = layer("top.gbr");
+        top.part = Some("Other, impedance coupon carrier".to_string());
+        let mut bottom = layer("bottom.gbr");
+        bottom.part = Some("Other,impedance coupon carrier".to_string());
+        let input = ManifestInput {
+            gerber_layers: vec![top, bottom],
+            has_board_outline: true,
+            has_drill_data: true,
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            ..Default::default()
+        };
+        let slugs = violation_slugs(&file_manifest_readiness(&input));
+
+        assert!(!slugs.contains(&"package:mixed-x2-parts".to_string()));
+    }
+
+    #[test]
+    fn x2_generation_software_provenance_gaps_are_reported() {
+        let mut top = layer("top.gbr");
+        top.generation_software = Some("KiCad, KiCad, 9.0".to_string());
+        let mut bottom = layer("bottom.gbr");
+        bottom.generation_software = Some("KiCad,KiCad,8.0".to_string());
+        let input = ManifestInput {
+            gerber_layers: vec![top, bottom, layer("outline.gbr")],
+            has_board_outline: true,
+            has_drill_data: true,
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            ..Default::default()
+        };
+        let slugs = violation_slugs(&file_manifest_readiness(&input));
+
+        assert!(slugs.contains(&"package:partial-x2-generation-software-evidence".to_string()));
+        assert!(slugs.contains(&"package:mixed-x2-generation-software".to_string()));
+    }
+
+    #[test]
+    fn x2_project_id_revision_gaps_are_reported() {
+        let mut top = layer("top.gbr");
+        top.project_id = Some("Widget,550e8400-e29b-41d4-a716-446655440000,A".to_string());
+        let mut bottom = layer("bottom.gbr");
+        bottom.project_id = Some("Widget,550e8400-e29b-41d4-a716-446655440000,B".to_string());
+        let input = ManifestInput {
+            gerber_layers: vec![top, bottom, layer("outline.gbr")],
+            has_board_outline: true,
+            has_drill_data: true,
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            ..Default::default()
+        };
+        let slugs = violation_slugs(&file_manifest_readiness(&input));
+
+        assert!(slugs.contains(&"package:partial-x2-project-id-evidence".to_string()));
+        assert!(slugs.contains(&"package:mixed-x2-project-ids".to_string()));
+    }
+
+    #[test]
+    fn x2_md5_integrity_evidence_gaps_are_reported() {
+        let mut top = layer("top.gbr");
+        top.md5 = Some("d41d8cd98f00b204e9800998ecf8427e".to_string());
+        let input = ManifestInput {
+            gerber_layers: vec![top, layer("bottom.gbr")],
+            has_board_outline: true,
+            has_drill_data: true,
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            ..Default::default()
+        };
+        let slugs = violation_slugs(&file_manifest_readiness(&input));
+
+        assert!(slugs.contains(&"package:partial-x2-md5-evidence".to_string()));
+    }
+
+    #[test]
+    fn x2_md5_integrity_evidence_is_clean_when_all_layers_have_checksums() {
+        let mut top = layer("top.gbr");
+        top.md5 = Some("d41d8cd98f00b204e9800998ecf8427e".to_string());
+        let mut bottom = layer("bottom.gbr");
+        bottom.md5 = Some("0cc175b9c0f1b6a831c399e269772661".to_string());
+        let input = ManifestInput {
+            gerber_layers: vec![top, bottom],
+            has_board_outline: true,
+            has_drill_data: true,
+            bom_file_count: 1,
+            centroid_file_count: 1,
+            netlist_file_count: 1,
+            fab_drawing_file_count: 1,
+            assembly_drawing_file_count: 1,
+            readme_file_count: 1,
+            rout_drawing_file_count: 1,
+            ..Default::default()
+        };
+        let slugs = violation_slugs(&file_manifest_readiness(&input));
+
+        assert!(!slugs.contains(&"package:partial-x2-md5-evidence".to_string()));
+    }
+
+    #[test]
     fn mixed_project_name_tags_are_reported_across_layers_and_artifacts() {
         let input = ManifestInput {
             gerber_layers: vec![
@@ -2023,6 +3477,29 @@ mod tests {
         ManifestGerberLayer {
             name: path.to_string(),
             source_path: path.to_string(),
+            part: None,
+            file_function: None,
+            file_polarity: None,
+            same_coordinates: None,
+            creation_date: None,
+            generation_software: None,
+            project_id: None,
+            md5: None,
+        }
+    }
+
+    fn x2_layer(path: &str, file_function: &str, file_polarity: &str) -> ManifestGerberLayer {
+        ManifestGerberLayer {
+            name: path.to_string(),
+            source_path: path.to_string(),
+            part: None,
+            file_function: Some(file_function.to_string()),
+            file_polarity: Some(file_polarity.to_string()),
+            same_coordinates: None,
+            creation_date: None,
+            generation_software: None,
+            project_id: None,
+            md5: None,
         }
     }
 

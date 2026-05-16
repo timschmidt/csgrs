@@ -2,16 +2,26 @@
 
 This folder contains small user-facing examples for configuring `hyperdrc`.
 
+## Example Choices
+
+Examples are intentionally compact starting points, not recommended universal
+rule decks. Copy them into a project, then adjust thresholds, package profiles,
+assembly profiles, stackup metadata, and net-class policy to match the board,
+fabricator, assembly process, and release contract being reviewed.
+
 ## Contents
 
 - [`hyperdrc-config.json`](hyperdrc-config.json) demonstrates rule thresholds,
   KiCad copper-layer selection, generated-output freshness, package-profile
   selection, assembly-profile thresholds for SMT, fixture, hand, soldering,
-  press-fit, and coating processes, required production artifacts/layers,
+  press-fit, and coating processes, mask-opening-ratio, mask-annular-ring, and
+  silkscreen text-height thresholds, required production artifacts/layers,
   stackup process/material metadata, fabrication capability thresholds, and
-  net-class constraints for width, clearance, current, voltage, reference-plane,
-  approximate length/skew, differential-pair, and impedance-control
-  target/tolerance intent that can be loaded with `--config`.
+  inherited net-class constraints for width, clearance, current, voltage,
+  reference-plane, approximate length/skew, region scoping, differential-pair, and
+  impedance-control target/tolerance intent, including single-ended microstrip
+  and centered stripline estimation for complete stackups, that can be loaded
+  with `--config`.
 
 ## Usage
 

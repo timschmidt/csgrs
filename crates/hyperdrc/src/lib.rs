@@ -13,6 +13,11 @@
 //!   helpers used by checks and tests.
 //! - [`kicad`], [`excellon`], and [`ipc356`] parse supported PCB source and
 //!   sidecar formats into stable data models.
+//! - [`gerber_metadata`] extracts Gerber image setup, image polarity and transforms,
+//!   interpolation and quadrant modes, region mode, step-and-repeat, aperture
+//!   macros, aperture definitions and uses, coordinate-operation evidence,
+//!   attribute-delete evidence, and X2/X3 file, aperture, and object attributes that feed package manifest
+//!   checks and parser diagnostics.
 //! - [`config`], [`assembly_policy`], [`constraint_policy`], and
 //!   [`package_policy`] resolve rule decks and profile defaults.
 //! - [`report`] defines the serializable report model used by JSON, SARIF,
@@ -58,6 +63,7 @@ pub mod conversion;
 pub mod date;
 pub mod excellon;
 pub mod geometry;
+pub mod gerber_metadata;
 pub mod github_annotations;
 pub mod html_report;
 pub mod io;
@@ -81,6 +87,10 @@ pub use report::{Diagnostic, Report, ReportSummary, Severity, Violation};
 use csgrs::sketch::Sketch;
 
 /// PCB geometry sketch tagged with layer/source metadata.
+///
+/// This is the current `csgrs` compatibility boundary. Keep application checks
+/// from learning more about the `csgrs` numeric model so the future hyperreal
+/// sketch port can replace this alias without changing parser/report APIs.
 pub type PcbSketch = Sketch<LayerMetadata>;
 
 /// Metadata carried with [`PcbSketch`] geometry.

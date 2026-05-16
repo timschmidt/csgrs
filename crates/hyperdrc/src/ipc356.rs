@@ -6,6 +6,7 @@
 //! instead of guessing geometry. See IPC-D-356B, *Bare Substrate Electrical Test
 //! Data Format* (IPC, 2002).
 
+use std::collections::HashSet;
 use std::path::Path;
 
 use anyhow::{Context, Result};
@@ -29,6 +30,164 @@ pub struct Ipc356Point {
     pub feature_type: Option<Ipc356FeatureType>,
     /// Field `soldermask`.
     pub soldermask: Option<Ipc356Soldermask>,
+}
+
+/// Recognized IPC-D-356 test-record code.
+///
+/// IPC-D-356B standardizes several electrical-test record classes. HyperDRC
+/// keeps the raw class as parser evidence so future checks can distinguish
+/// dialect-specific record sources without changing geometry consumers.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum Ipc356RecordCode {
+    /// IPC-D-356 `317` test record.
+    Code317,
+    /// IPC-D-356 `327` test record.
+    Code327,
+    /// IPC-D-356 `367` test record.
+    Code367,
+}
+
+/// Per-code IPC-D-356 parser summary.
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub struct Ipc356RecordStats {
+    /// Recognized `317` records.
+    pub code_317: usize,
+    /// Recognized `327` records.
+    pub code_327: usize,
+    /// Recognized `367` records.
+    pub code_367: usize,
+    /// Recognized records that were malformed and emitted parser diagnostics.
+    pub malformed: usize,
+}
+
+/// Report-level IPC-D-356 sidecar metadata summary.
+///
+/// IPC-D-356B is primarily an electrical-test netlist. Common CAD/CAM
+/// exporters add sidecar tokens for probe side, feature class, and soldermask
+/// exposure; this summary keeps those pragmatic DFT hints visible at the report
+/// boundary. The underlying standard reference is IPC-D-356B, *Bare Substrate
+/// Electrical Test Data Format* (IPC, 2002).
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub struct Ipc356MetadataStats {
+    /// Records with any parsed access-side hint.
+    pub access_side_records: usize,
+    /// Records explicitly marked top-side accessible.
+    pub top_access: usize,
+    /// Records explicitly marked bottom-side accessible.
+    pub bottom_access: usize,
+    /// Records explicitly marked accessible from either side.
+    pub both_access: usize,
+    /// Records with any parsed feature-type hint.
+    pub feature_type_records: usize,
+    /// Records marked as through-hole features.
+    pub through_hole_features: usize,
+    /// Records marked as surface-mount features.
+    pub smd_features: usize,
+    /// Records marked as vias.
+    pub via_features: usize,
+    /// Records marked as tooling or fiducial features.
+    pub tooling_features: usize,
+    /// Records marked as connector or edge-contact features.
+    pub connector_features: usize,
+    /// Records marked with a known but uncategorized feature class.
+    pub other_features: usize,
+    /// Records with any parsed soldermask hint.
+    pub soldermask_records: usize,
+    /// Records marked as exposed to the probe.
+    pub open_soldermask: usize,
+    /// Records marked as covered by soldermask.
+    pub covered_soldermask: usize,
+    /// Records with an explicit but unknown soldermask-access state.
+    pub unknown_soldermask: usize,
+}
+
+/// Report-level IPC-D-356 net-name summary.
+///
+/// IPC-D-356B records carry electrical-test net identity. HyperDRC preserves a
+/// compact net-name summary so DFT and release-package checks can distinguish a
+/// useful netlist from coordinate-only probe data before cross-checking against
+/// KiCad, Gerber attributes, or assembly fixtures.
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub struct Ipc356NetStats {
+    /// Parsed point records with a non-empty net name.
+    pub named_records: usize,
+    /// Parsed point records whose net field is blank after normalization.
+    pub blank_records: usize,
+    /// Number of distinct non-empty net names.
+    pub unique_nets: usize,
+}
+
+/// Report-level IPC-D-356 component/pin field summary.
+///
+/// IPC-D-356B test records can carry reference-designator and pin evidence in
+/// addition to net identity. Keeping these counts at report scope helps future
+/// BOM/centroid/netlist parity checks decide whether a sidecar can support
+/// component-level DFT validation.
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub struct Ipc356ComponentStats {
+    /// Parsed point records with a reference designator.
+    pub reference_records: usize,
+    /// Parsed point records with a pin designator.
+    pub pin_records: usize,
+    /// Parsed point records with both reference and pin fields.
+    pub reference_pin_records: usize,
+    /// Number of distinct parsed reference designators.
+    pub unique_references: usize,
+}
+
+/// Report-level IPC-D-356 drill/probe diameter summary.
+///
+/// IPC-D-356B supports test-access diameter evidence that HyperDRC uses for
+/// drill-table and fixture-access checks. These counters expose whether the
+/// source file has enough diameter coverage for those checks before comparing
+/// against KiCad or Excellon geometry.
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub struct Ipc356DiameterStats {
+    /// Parsed point records with any diameter field.
+    pub diameter_records: usize,
+    /// Parsed point records without a diameter field.
+    pub missing_diameter_records: usize,
+    /// Parsed point records whose diameter is zero or negative.
+    pub non_positive_diameter_records: usize,
+}
+
+/// Report-level IPC-D-356 geometry summary.
+///
+/// IPC-D-356B records carry test-access coordinates and optional probe/drill
+/// diameters. HyperDRC keeps this compact geometry envelope so coverage,
+/// fixture-access, and drill-diameter checks can inspect package scale and
+/// diameter range without rescanning every parsed point.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Ipc356GeometryStats {
+    /// Parsed point records included in the geometry summary.
+    pub point_records: usize,
+    /// Minimum parsed X coordinate.
+    pub min_x: Option<f64>,
+    /// Maximum parsed X coordinate.
+    pub max_x: Option<f64>,
+    /// Minimum parsed Y coordinate.
+    pub min_y: Option<f64>,
+    /// Maximum parsed Y coordinate.
+    pub max_y: Option<f64>,
+    /// Smallest positive parsed diameter.
+    pub min_positive_diameter: Option<f64>,
+    /// Largest positive parsed diameter.
+    pub max_positive_diameter: Option<f64>,
+}
+
+/// Report-level IPC-D-356 parser diagnostic summary.
+///
+/// IPC-D-356B files are often produced by CAM/test tooling that may preserve
+/// usable records beside malformed or dialect-specific records. HyperDRC keeps
+/// diagnostic counters at report scope so release checks can fail on parser
+/// confidence without re-walking every diagnostic. See IPC-D-356B, *Bare
+/// Substrate Electrical Test Data Format* (IPC, 2002).
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub struct Ipc356IssueStats {
+    /// Total parser diagnostics emitted for recognized IPC-D-356 records.
+    pub total_issues: usize,
+    /// Malformed recognized test records that could not produce a point.
+    pub malformed_test_records: usize,
 }
 
 /// Probe-side hints from common IPC-D-356 sidecar exports.
@@ -104,6 +263,20 @@ pub struct Ipc356Report {
     pub points: Vec<Ipc356Point>,
     /// Field `issues`.
     pub issues: Vec<Ipc356Issue>,
+    /// Counts of recognized IPC-D-356 test-record classes.
+    pub record_stats: Ipc356RecordStats,
+    /// Counts of parsed access-side, feature-type, and soldermask sidecar hints.
+    pub metadata_stats: Ipc356MetadataStats,
+    /// Counts of parsed net-name coverage.
+    pub net_stats: Ipc356NetStats,
+    /// Counts of parsed reference-designator and pin coverage.
+    pub component_stats: Ipc356ComponentStats,
+    /// Counts of parsed diameter-field coverage.
+    pub diameter_stats: Ipc356DiameterStats,
+    /// Parsed coordinate and positive-diameter envelope.
+    pub geometry_stats: Ipc356GeometryStats,
+    /// Counts of parser diagnostics grouped by recognized issue category.
+    pub issue_stats: Ipc356IssueStats,
 }
 
 impl Ipc356Issue {
@@ -114,6 +287,157 @@ impl Ipc356Issue {
                 "line {}: recognized IPC-D-356 test record could not be parsed",
                 self.line
             ),
+        }
+    }
+}
+
+impl Ipc356RecordStats {
+    fn count(&mut self, code: Ipc356RecordCode) {
+        match code {
+            Ipc356RecordCode::Code317 => self.code_317 += 1,
+            Ipc356RecordCode::Code327 => self.code_327 += 1,
+            Ipc356RecordCode::Code367 => self.code_367 += 1,
+        }
+    }
+}
+
+impl Ipc356MetadataStats {
+    fn count_point(&mut self, point: &Ipc356Point) {
+        match point.access_side {
+            Some(Ipc356AccessSide::Top) => {
+                self.access_side_records += 1;
+                self.top_access += 1;
+            }
+            Some(Ipc356AccessSide::Bottom) => {
+                self.access_side_records += 1;
+                self.bottom_access += 1;
+            }
+            Some(Ipc356AccessSide::Both) => {
+                self.access_side_records += 1;
+                self.both_access += 1;
+            }
+            None => {}
+        }
+
+        match point.feature_type {
+            Some(Ipc356FeatureType::ThroughHole) => {
+                self.feature_type_records += 1;
+                self.through_hole_features += 1;
+            }
+            Some(Ipc356FeatureType::Smd) => {
+                self.feature_type_records += 1;
+                self.smd_features += 1;
+            }
+            Some(Ipc356FeatureType::Via) => {
+                self.feature_type_records += 1;
+                self.via_features += 1;
+            }
+            Some(Ipc356FeatureType::Tooling) => {
+                self.feature_type_records += 1;
+                self.tooling_features += 1;
+            }
+            Some(Ipc356FeatureType::Connector) => {
+                self.feature_type_records += 1;
+                self.connector_features += 1;
+            }
+            Some(Ipc356FeatureType::Other) => {
+                self.feature_type_records += 1;
+                self.other_features += 1;
+            }
+            None => {}
+        }
+
+        match point.soldermask {
+            Some(Ipc356Soldermask::Open) => {
+                self.soldermask_records += 1;
+                self.open_soldermask += 1;
+            }
+            Some(Ipc356Soldermask::Covered) => {
+                self.soldermask_records += 1;
+                self.covered_soldermask += 1;
+            }
+            Some(Ipc356Soldermask::Unknown) => {
+                self.soldermask_records += 1;
+                self.unknown_soldermask += 1;
+            }
+            None => {}
+        }
+    }
+}
+
+impl Ipc356ComponentStats {
+    fn count_point(&mut self, point: &Ipc356Point) {
+        let has_reference = point
+            .reference
+            .as_deref()
+            .is_some_and(|value| !value.trim().is_empty());
+        let has_pin = point
+            .pin
+            .as_deref()
+            .is_some_and(|value| !value.trim().is_empty());
+        if has_reference {
+            self.reference_records += 1;
+        }
+        if has_pin {
+            self.pin_records += 1;
+        }
+        if has_reference && has_pin {
+            self.reference_pin_records += 1;
+        }
+    }
+}
+
+impl Ipc356DiameterStats {
+    fn count_point(&mut self, point: &Ipc356Point) {
+        match point.diameter {
+            Some(diameter) => {
+                self.diameter_records += 1;
+                if diameter <= 0.0 {
+                    self.non_positive_diameter_records += 1;
+                }
+            }
+            None => self.missing_diameter_records += 1,
+        }
+    }
+}
+
+impl Ipc356GeometryStats {
+    fn count_point(&mut self, point: &Ipc356Point) {
+        self.point_records += 1;
+        self.min_x = Some(
+            self.min_x
+                .map_or(point.location[0], |value| value.min(point.location[0])),
+        );
+        self.max_x = Some(
+            self.max_x
+                .map_or(point.location[0], |value| value.max(point.location[0])),
+        );
+        self.min_y = Some(
+            self.min_y
+                .map_or(point.location[1], |value| value.min(point.location[1])),
+        );
+        self.max_y = Some(
+            self.max_y
+                .map_or(point.location[1], |value| value.max(point.location[1])),
+        );
+        if let Some(diameter) = point.diameter.filter(|diameter| *diameter > 0.0) {
+            self.min_positive_diameter = Some(
+                self.min_positive_diameter
+                    .map_or(diameter, |value| value.min(diameter)),
+            );
+            self.max_positive_diameter = Some(
+                self.max_positive_diameter
+                    .map_or(diameter, |value| value.max(diameter)),
+            );
+        }
+    }
+}
+
+impl Ipc356IssueStats {
+    fn count(&mut self, kind: &Ipc356IssueKind) {
+        self.total_issues += 1;
+        match kind {
+            Ipc356IssueKind::MalformedTestRecord => self.malformed_test_records += 1,
         }
     }
 }
@@ -139,6 +463,15 @@ pub fn parse_ipc356(input: &str) -> Vec<Ipc356Point> {
 pub fn parse_ipc356_report(input: &str, source: &Path) -> Ipc356Report {
     let mut points = Vec::new();
     let mut issues = Vec::new();
+    let mut record_stats = Ipc356RecordStats::default();
+    let mut metadata_stats = Ipc356MetadataStats::default();
+    let mut component_stats = Ipc356ComponentStats::default();
+    let mut diameter_stats = Ipc356DiameterStats::default();
+    let mut geometry_stats = Ipc356GeometryStats::default();
+    let mut issue_stats = Ipc356IssueStats::default();
+    let mut unique_nets = HashSet::<String>::new();
+    let mut unique_references = HashSet::<String>::new();
+    let mut blank_net_records = 0usize;
     for (index, raw_line) in input.lines().enumerate() {
         let line = raw_line.trim();
         if line.is_empty()
@@ -148,23 +481,97 @@ pub fn parse_ipc356_report(input: &str, source: &Path) -> Ipc356Report {
         {
             continue;
         }
-        if !is_test_record(line) {
+        let Some(record_code) = test_record_code(line) else {
             continue;
-        }
+        };
+        record_stats.count(record_code);
         match parse_record(line) {
-            Some(point) => points.push(point),
-            None => issues.push(Ipc356Issue {
-                line: index + 1,
-                kind: Ipc356IssueKind::MalformedTestRecord,
-                detail: line.to_string(),
-            }),
+            Some(point) => {
+                metadata_stats.count_point(&point);
+                component_stats.count_point(&point);
+                diameter_stats.count_point(&point);
+                geometry_stats.count_point(&point);
+                if point.net.trim().is_empty() {
+                    blank_net_records += 1;
+                } else {
+                    unique_nets.insert(point.net.clone());
+                }
+                if let Some(reference) = point.reference.as_deref() {
+                    let reference = reference.trim();
+                    if !reference.is_empty() {
+                        unique_references.insert(reference.to_string());
+                    }
+                }
+                points.push(point);
+            }
+            None => {
+                record_stats.malformed += 1;
+                let kind = Ipc356IssueKind::MalformedTestRecord;
+                issue_stats.count(&kind);
+                issues.push(Ipc356Issue {
+                    line: index + 1,
+                    kind,
+                    detail: line.to_string(),
+                });
+            }
         }
     }
+    let net_stats = Ipc356NetStats {
+        named_records: points.len().saturating_sub(blank_net_records),
+        blank_records: blank_net_records,
+        unique_nets: unique_nets.len(),
+    };
+    component_stats.unique_references = unique_references.len();
+
+    log::trace!(
+        "ipc356 parse: points={} issues={} issue_stats_total={} malformed_test_record_issues={} code_317={} code_327={} code_367={} malformed={} named_net_records={} blank_net_records={} unique_nets={} reference_records={} pin_records={} reference_pin_records={} unique_references={} diameter_records={} missing_diameter_records={} non_positive_diameter_records={} geometry_points={} min_x={:?} max_x={:?} min_y={:?} max_y={:?} min_positive_diameter={:?} max_positive_diameter={:?} access_side_records={} feature_type_records={} soldermask_records={} top_access={} bottom_access={} both_access={} open_soldermask={} covered_soldermask={} unknown_soldermask={}",
+        points.len(),
+        issues.len(),
+        issue_stats.total_issues,
+        issue_stats.malformed_test_records,
+        record_stats.code_317,
+        record_stats.code_327,
+        record_stats.code_367,
+        record_stats.malformed,
+        net_stats.named_records,
+        net_stats.blank_records,
+        net_stats.unique_nets,
+        component_stats.reference_records,
+        component_stats.pin_records,
+        component_stats.reference_pin_records,
+        component_stats.unique_references,
+        diameter_stats.diameter_records,
+        diameter_stats.missing_diameter_records,
+        diameter_stats.non_positive_diameter_records,
+        geometry_stats.point_records,
+        geometry_stats.min_x,
+        geometry_stats.max_x,
+        geometry_stats.min_y,
+        geometry_stats.max_y,
+        geometry_stats.min_positive_diameter,
+        geometry_stats.max_positive_diameter,
+        metadata_stats.access_side_records,
+        metadata_stats.feature_type_records,
+        metadata_stats.soldermask_records,
+        metadata_stats.top_access,
+        metadata_stats.bottom_access,
+        metadata_stats.both_access,
+        metadata_stats.open_soldermask,
+        metadata_stats.covered_soldermask,
+        metadata_stats.unknown_soldermask
+    );
 
     Ipc356Report {
         source: source.display().to_string(),
         points,
         issues,
+        record_stats,
+        metadata_stats,
+        net_stats,
+        component_stats,
+        diameter_stats,
+        geometry_stats,
+        issue_stats,
     }
 }
 
@@ -177,8 +584,16 @@ fn parse_record(raw_line: &str) -> Option<Ipc356Point> {
     }
 }
 
-fn is_test_record(line: &str) -> bool {
-    line.starts_with("327") || line.starts_with("317") || line.starts_with("367")
+fn test_record_code(line: &str) -> Option<Ipc356RecordCode> {
+    if line.starts_with("317") {
+        Some(Ipc356RecordCode::Code317)
+    } else if line.starts_with("327") {
+        Some(Ipc356RecordCode::Code327)
+    } else if line.starts_with("367") {
+        Some(Ipc356RecordCode::Code367)
+    } else {
+        None
+    }
 }
 
 fn parse_fixed_record(line: &str) -> Option<Ipc356Point> {
@@ -446,6 +861,133 @@ mod tests {
             Ipc356IssueKind::MalformedTestRecord
         ));
         assert!(report.issues[0].message().contains("line 4"));
+    }
+
+    #[test]
+    fn records_parser_issue_summary_counts() {
+        let report = parse_ipc356_report(
+            "\
+317 /GND U1 1 X010000Y020000D000600
+327 missing-coordinates
+367 malformed
+999 ignored-unknown-record
+",
+            std::path::Path::new("board.ipc"),
+        );
+
+        assert_eq!(report.points.len(), 1);
+        assert_eq!(report.issues.len(), 2);
+        assert_eq!(report.issue_stats.total_issues, 2);
+        assert_eq!(report.issue_stats.malformed_test_records, 2);
+        assert_eq!(report.record_stats.malformed, 2);
+    }
+
+    #[test]
+    fn records_recognized_test_record_code_counts() {
+        let report = parse_ipc356_report(
+            "317 /GND U1 1 X010000Y020000D000600\n327 /VCC U2 2 X030000Y040000D000700\n367 missing-coordinates\n999 /IGNORED X010000Y020000\n",
+            std::path::Path::new("board.ipc"),
+        );
+
+        assert_eq!(report.points.len(), 2);
+        assert_eq!(report.record_stats.code_317, 1);
+        assert_eq!(report.record_stats.code_327, 1);
+        assert_eq!(report.record_stats.code_367, 1);
+        assert_eq!(report.record_stats.malformed, 1);
+    }
+
+    #[test]
+    fn records_metadata_summary_counts() {
+        let report = parse_ipc356_report(
+            "\
+317 /GND U1 1 X010000Y020000D000600 ACCESS=TOP FEATURE=SMD MASK=OPEN
+327 /VCC U2 2 X030000Y040000D000700 ACCESS=BOTTOM FEATURE=VIA MASK=COVERED
+327 /PGND TP1 1 X050000Y060000D000800 ACCESS=BOTH FEATURE=TH MASK=UNKNOWN
+327 /FID FID1 1 X070000Y080000D000900 FEATURE=TOOLING
+327 /EDGE J1 1 X090000Y100000D001000 FEATURE=CONNECTOR MASK=OPEN
+327 /MISC U3 3 X110000Y120000D000500 FEATURE=OTHER
+327 /NO_META U4 4 X130000Y140000D000500
+",
+            std::path::Path::new("board.ipc"),
+        );
+
+        assert_eq!(report.points.len(), 7);
+        assert_eq!(report.metadata_stats.access_side_records, 3);
+        assert_eq!(report.metadata_stats.top_access, 1);
+        assert_eq!(report.metadata_stats.bottom_access, 1);
+        assert_eq!(report.metadata_stats.both_access, 1);
+        assert_eq!(report.metadata_stats.feature_type_records, 6);
+        assert_eq!(report.metadata_stats.through_hole_features, 1);
+        assert_eq!(report.metadata_stats.smd_features, 1);
+        assert_eq!(report.metadata_stats.via_features, 1);
+        assert_eq!(report.metadata_stats.tooling_features, 1);
+        assert_eq!(report.metadata_stats.connector_features, 1);
+        assert_eq!(report.metadata_stats.other_features, 1);
+        assert_eq!(report.metadata_stats.soldermask_records, 4);
+        assert_eq!(report.metadata_stats.open_soldermask, 2);
+        assert_eq!(report.metadata_stats.covered_soldermask, 1);
+        assert_eq!(report.metadata_stats.unknown_soldermask, 1);
+    }
+
+    #[test]
+    fn records_net_name_summary_counts() {
+        let report = parse_ipc356_report(
+            "\
+327 /GND U1 1 X010000Y020000D000600
+327 /GND U2 2 X030000Y040000D000600
+327 /VCC U3 3 X050000Y060000D000600
+327 / U4 4 X070000Y080000D000600
+",
+            std::path::Path::new("board.ipc"),
+        );
+
+        assert_eq!(report.points.len(), 4);
+        assert_eq!(report.net_stats.named_records, 3);
+        assert_eq!(report.net_stats.blank_records, 1);
+        assert_eq!(report.net_stats.unique_nets, 2);
+    }
+
+    #[test]
+    fn records_component_pin_and_diameter_summary_counts() {
+        let report = parse_ipc356_report(
+            "\
+327 /GND U1 1 X010000Y020000D000600
+327 /VCC U1 2 X030000Y040000D000000
+327 /SIG U2  X050000Y060000D000700
+327 /NO_DIAM U3 3 X070000Y080000
+",
+            std::path::Path::new("board.ipc"),
+        );
+
+        assert_eq!(report.points.len(), 4);
+        assert_eq!(report.component_stats.reference_records, 4);
+        assert_eq!(report.component_stats.pin_records, 4);
+        assert_eq!(report.component_stats.reference_pin_records, 4);
+        assert_eq!(report.component_stats.unique_references, 3);
+        assert_eq!(report.diameter_stats.diameter_records, 3);
+        assert_eq!(report.diameter_stats.missing_diameter_records, 1);
+        assert_eq!(report.diameter_stats.non_positive_diameter_records, 1);
+    }
+
+    #[test]
+    fn records_geometry_summary_bounds_and_positive_diameter_range() {
+        let report = parse_ipc356_report(
+            "\
+327 /GND U1 1 X010000Y020000D000600
+327 /VCC U2 2 X030000Y010000D000000
+327 /SIG U3 3 X005000Y040000D000900
+327 /NO_DIAM U4 4 X070000Y080000
+",
+            std::path::Path::new("board.ipc"),
+        );
+
+        assert_eq!(report.geometry_stats.point_records, 4);
+        assert_eq!(report.geometry_stats.min_x, Some(0.5));
+        assert_eq!(report.geometry_stats.max_x, Some(7.0));
+        assert_eq!(report.geometry_stats.min_y, Some(1.0));
+        assert_eq!(report.geometry_stats.max_y, Some(8.0));
+        assert_eq!(report.geometry_stats.min_positive_diameter, Some(0.06));
+        assert_eq!(report.geometry_stats.max_positive_diameter, Some(0.09));
     }
 
     #[test]

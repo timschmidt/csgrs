@@ -4,6 +4,23 @@ This folder contains the Rust implementation of `hyperdrc`. The code is kept
 shallow on purpose: top-level modules own the CLI, IO, parsers, reports, and
 application orchestration, while subfolders hold the larger semantic areas.
 
+## Architectural Choices
+
+The source tree follows a few explicit boundaries:
+
+- Parsers recover useful manufacturing evidence and diagnostics; they do not
+  decide whether a design is acceptable.
+- Checks consume normalized geometry, board models, sidecar summaries, and
+  resolved policy. They emit violations but do not own output formatting.
+- Reports are stable data contracts. Output renderers translate the same report
+  into text, JSON, JSON Lines, GeoJSON, SARIF, HTML, JUnit, GitHub annotations,
+  and SVG overlays.
+- The CLI layer maps user intent into library inputs and process exit status.
+  It does not contain separate checking behavior.
+- Module boundaries follow PCB concepts where possible: layer geometry, drill
+  fabrication, board context, assembly, artifacts, stackup constraints, and
+  source-format parsing.
+
 ## Entry Points
 
 - [`main.rs`](main.rs) is the thin binary entry point. It parses the CLI and
@@ -61,6 +78,26 @@ application orchestration, while subfolders hold the larger semantic areas.
   common package sidecars in the same directory, including Excellon, IPC-D-356,
   BOM, centroid, netlist, README, fabrication drawing, assembly drawing, and
   rout/panel drawing files.
+- [`gerber_metadata.rs`](gerber_metadata.rs) extracts Gerber image setup
+  commands such as `%MO...*%` units and `%FS...*%` coordinate format, plus the
+  `%LP...*%` dark/clear image polarity stream, `%LM/%LR/%LS` image
+  transform stream, `G01`/`G02`/`G03`
+  interpolation modes, `G74`/`G75` quadrant modes, `G36*`/`G37*` region-mode
+  transitions, `%SR...*%` step-and-repeat transitions, `%AM...*%` aperture
+  macros, `%ADD...*%` aperture definitions, `D01`/`D02`/`D03` coordinate
+  operations, `%TD...*%` attribute deletes, and `Dnn` aperture-use commands needed for parser diagnostics, and the
+  file-level Gerber X2 attributes consumed by manifest checks, currently `.FileFunction`,
+  `.Part`, `.FilePolarity`, `.SameCoordinates`, `.CreationDate`, and
+  `.GenerationSoftware`, `.ProjectId`, and `.MD5`, plus aperture-level
+  `.AperFunction` and object-level `.N`, `.C`, and `.P` intent for structured
+  parser diagnostics, without duplicating the geometry parser. Missing,
+  duplicate, or conflicting metadata attributes are reported as structured
+  parser diagnostics, along with structurally invalid consumed `.FileFunction`
+  role forms and non-standard `.Part`, `.FilePolarity`, `.CreationDate`,
+  `.GenerationSoftware`, `.ProjectId`, and `.MD5` values, plus malformed common
+  image-setup, image-polarity, region-mode, step-and-repeat, aperture-macro,
+  aperture-definition/use,
+  `.AperFunction`, net, component-refdes, and component-pin forms.
 - Production manifest-sidecar flags are now tracked through the same provenance model:
   `--bom`, `--centroid`, `--netlist`, `--fab-drawing`, `--assembly-drawing`,
   `--readme`, and `--rout-drawing` are surfaced in the report input list and
@@ -80,14 +117,24 @@ application orchestration, while subfolders hold the larger semantic areas.
   provides backend-specific pass-through flags so additional converter options can
   be surfaced without redesigning the adapter surface.
 - [`excellon.rs`](excellon.rs) parses common Excellon drill files into drill
-  features and parser diagnostics used by spacing, clearance, aspect-ratio,
-  panel, and table checks.
+  features and parser diagnostics, including `METRIC`/`INCH` plus `M71`/`M72`
+  unit commands, `M48`/`%`/`M30` program-structure evidence, unsupported
+  unit-like declarations, zero-suppression/tool, unit-declaration summary
+  evidence, tool-table summary evidence, routed-command summary evidence,
+  drill-hit and drill-geometry summary evidence, routed-slot
+  command warnings, and filename-inferred PTH/NPTH plating intent
+  used by spacing, clearance, aspect-ratio, panel, and table checks.
 - [`ipc356.rs`](ipc356.rs) parses common IPC-D-356 electrical-test records into
   point reports. Parsed points can annotate nearby KiCad copper and drills,
   support coverage checks, cross-check drill diameters, and carry optional
-  access-side, feature-type, and soldermask hints for fixture-access readiness;
-  malformed recognized test records are surfaced as parser diagnostics instead
-  of being silently dropped.
+  access-side, feature-type, and soldermask hints for fixture-access readiness.
+  Report-level record-code and sidecar-metadata counts preserve recognized
+  `317`/`327`/`367` dialect evidence, access-side coverage, feature-class
+  coverage, soldermask-access coverage, net-name coverage,
+  reference-designator/pin coverage, diameter-field coverage, and coordinate
+  envelope coverage; malformed recognized test records are surfaced as parser
+  diagnostics with report-level diagnostic summary counters instead of being
+  silently dropped.
 - [`sexp.rs`](sexp.rs) is a small S-expression parser used by the KiCad loader.
 
 ## Reports And Artifacts

@@ -3,6 +3,14 @@
 This folder contains project-level documentation and visual assets for
 `hyperdrc`.
 
+## Documentation Choices
+
+The root README explains the current product shape and how to run it. This
+folder holds longer material that would make the root README harder to use:
+roadmap context, design-readiness rationale, test coverage expectations, and
+assets. When a feature changes project scope, update the root README; when it
+changes implementation coverage or future work, update the documents here.
+
 ## Contents
 
 - [`design-readiness-plan.md`](design-readiness-plan.md) is the long-form

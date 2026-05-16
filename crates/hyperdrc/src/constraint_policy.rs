@@ -131,10 +131,23 @@ pub enum SurfaceFinish {
 pub struct NetClassConfig {
     /// Field `name`.
     pub name: String,
+    /// Field `extends`.
+    ///
+    /// Parent class names contribute unset constraint fields. Net selectors
+    /// (`nets` and `net_patterns`) stay local to each class so abstract parent
+    /// classes can safely carry only policy defaults.
+    pub extends: Vec<String>,
     /// Field `nets`.
     pub nets: Vec<String>,
     /// Field `net_patterns`.
     pub net_patterns: Vec<String>,
+    /// Field `regions`.
+    ///
+    /// Optional rectangular scoping windows. When present, this class applies
+    /// only to matching-net copper whose parsed feature location falls inside
+    /// at least one region. Parent class regions are not inherited because they
+    /// are selectors, not scalar policy defaults.
+    pub regions: Vec<NetClassRegionConfig>,
     /// Field `min_width`.
     pub min_width: Option<f64>,
     /// Field `min_clearance`.
@@ -169,6 +182,24 @@ pub struct NetClassConfig {
     pub max_pair_skew: Option<f64>,
     /// Field `max_via_count`.
     pub max_via_count: Option<usize>,
+}
+
+#[derive(Clone, Debug, Deserialize, Default)]
+#[serde(default)]
+/// Public data model for `NetClassRegionConfig`.
+pub struct NetClassRegionConfig {
+    /// Field `name`.
+    pub name: String,
+    /// Field `min_x`.
+    pub min_x: Option<f64>,
+    /// Field `min_y`.
+    pub min_y: Option<f64>,
+    /// Field `max_x`.
+    pub max_x: Option<f64>,
+    /// Field `max_y`.
+    pub max_y: Option<f64>,
+    /// Field `layers`.
+    pub layers: Vec<String>,
 }
 
 #[derive(Copy, Clone, Debug, Deserialize, Eq, PartialEq)]
