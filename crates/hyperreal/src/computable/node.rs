@@ -314,6 +314,8 @@ impl SharedConstant {
         let msd = match self {
             SharedConstant::E | SharedConstant::Pi | SharedConstant::Ln10 => Some(1),
             SharedConstant::InvPi => Some(-2),
+            SharedConstant::AtanInv2 => Some(-2),
+            SharedConstant::AtanInv5 => Some(-3),
             SharedConstant::Tau => Some(2),
             SharedConstant::Ln2 => Some(-1),
             SharedConstant::Asinh1 => Some(-1),
@@ -348,6 +350,14 @@ impl SharedConstant {
             Self::Tau => (
                 Rational::fraction(333, 53).unwrap(),
                 Rational::fraction(710, 113).unwrap(),
+            ),
+            Self::AtanInv5 => (
+                Rational::fraction(19, 100).unwrap(),
+                Rational::fraction(1, 5).unwrap(),
+            ),
+            Self::AtanInv2 => (
+                Rational::fraction(46, 100).unwrap(),
+                Rational::fraction(47, 100).unwrap(),
             ),
             Self::Ln2 => (
                 Rational::fraction(69, 100).unwrap(),
@@ -727,6 +737,16 @@ impl Computable {
     pub(crate) fn pi_inverse_constant() -> Computable {
         crate::trace_dispatch!("computable", "constructor", "cached-inv-pi");
         Self::shared_constant(SharedConstant::InvPi)
+    }
+
+    pub(crate) fn atan_inv5_constant() -> Computable {
+        crate::trace_dispatch!("computable", "constructor", "cached-atan-inv5");
+        Self::shared_constant(SharedConstant::AtanInv5)
+    }
+
+    pub(crate) fn atan_inv2_constant() -> Computable {
+        crate::trace_dispatch!("computable", "constructor", "cached-atan-inv2");
+        Self::shared_constant(SharedConstant::AtanInv2)
     }
 
     /// Approximate τ, the ratio of a circle's circumference to its radius.
@@ -2245,7 +2265,7 @@ impl Computable {
                 crate::trace_dispatch!("computable", "cos", "exact-zero-one");
                 return Self::one();
             }
-            if rational.msd_exact().is_some_and(|msd| msd >= 3) {
+            if rational.magnitude_at_least_power_of_two(2) {
                 crate::trace_dispatch!("computable", "cos", "large-rational-deferred");
                 return Self::cos_large_rational_deferred(rational);
             }
@@ -2309,7 +2329,7 @@ impl Computable {
                 crate::trace_dispatch!("computable", "sin", "exact-zero");
                 return Self::zero();
             }
-            if rational.msd_exact().is_some_and(|msd| msd >= 3) {
+            if rational.magnitude_at_least_power_of_two(2) {
                 crate::trace_dispatch!("computable", "sin", "large-rational-deferred");
                 return Self::sin_large_rational_deferred(rational);
             }
@@ -2423,7 +2443,17 @@ impl Computable {
                     result
                 };
             }
-            if rational.msd_exact().is_some_and(|msd| msd >= 3) {
+            let near_large_threshold = Rational::fraction(79, 20).expect("nonzero denominator");
+            let magnitude = if rational.sign() == Sign::Minus {
+                -rational.clone()
+            } else {
+                rational.clone()
+            };
+            if magnitude >= near_large_threshold {
+                crate::trace_dispatch!("computable", "tan", "near-large-rational-deferred");
+                return Self::tan_large_rational_deferred(rational);
+            }
+            if rational.magnitude_at_least_power_of_two(2) {
                 crate::trace_dispatch!("computable", "tan", "large-rational-deferred");
                 return Self::tan_large_rational_deferred(rational);
             }
@@ -2568,7 +2598,7 @@ impl Computable {
                 result
             };
         }
-        if rational.magnitude_at_least_power_of_two(3) {
+        if rational.magnitude_at_least_power_of_two(2) {
             crate::trace_dispatch!("computable", "tan", "large-rational-deferred");
             return Self::tan_large_rational_deferred(rational);
         }
@@ -2682,6 +2712,41 @@ impl Computable {
         None
     }
 
+    fn ln_binary_scaled_exact_rational(rational: &Rational) -> Option<Self> {
+        // If exact binary scaling already puts a nonsmooth rational in the
+        // ln1p kernel's convergence window, skip the generic Ratio -> ln()
+        // recursion. That avoids re-discovering the same dyadic scale and
+        // constructing a short-lived Offset tree for adversarial ln(1+x^2)
+        // cases while preserving the existing smooth-log fast paths above.
+        let three_halves = Rational::fraction(3, 2).expect("nonzero denominator");
+        if rational < &three_halves {
+            let fraction = rational.clone() - Rational::one();
+            return Some(Self::prescaled_ln(Self::rational(fraction)));
+        }
+
+        let mut shift = rational.msd_exact()?;
+        if shift < 0 {
+            return None;
+        }
+
+        let mut scaled = rational.divide_by_power_of_two(shift)?;
+
+        if scaled >= three_halves {
+            shift = shift.checked_add(1)?;
+            scaled = rational.divide_by_power_of_two(shift)?;
+        }
+
+        let half = Rational::fraction(1, 2).expect("nonzero denominator");
+        if scaled <= half || scaled >= three_halves {
+            return None;
+        }
+
+        let fraction = scaled - Rational::one();
+        let reduced = Self::prescaled_ln(Self::rational(fraction));
+        let shift: BigInt = shift.into();
+        Some(reduced.add(Self::integer(shift).multiply(Self::ln2())))
+    }
+
     fn ln_exact_rational(rational: Rational) -> Self {
         // Internal exact-rational log constructor for reductions that already
         // have a positive rational argument. It reuses the shared small-log
@@ -2701,6 +2766,10 @@ impl Computable {
         if let Some(reduced) = Self::ln_shared_or_smooth_rational(&rational) {
             return reduced;
         }
+        if let Some(reduced) = Self::ln_binary_scaled_exact_rational(&rational) {
+            crate::trace_dispatch!("computable", "ln", "exact-rational-binary-scaled-ln1p");
+            return reduced;
+        }
         crate::trace_dispatch!("computable", "ln", "exact-rational-generic");
         Self::rational(rational).ln()
     }
@@ -2714,6 +2783,12 @@ impl Computable {
         if let Approximation::Ratio(r) = &*self.internal
             && r.sign() == Sign::Plus
         {
+            let three_halves = Rational::fraction(3, 2).expect("nonzero denominator");
+            if r >= &Rational::one() && r < &three_halves {
+                let fraction = r.clone() - Rational::one();
+                crate::trace_dispatch!("computable", "ln", "exact-rational-direct-ln1p");
+                return Self::prescaled_ln(Self::rational(fraction));
+            }
             let (shift, reduced) = r.factor_two_powers();
             if shift != 0 {
                 // ln(r * 2^k) = ln(r) + k ln(2). Pulling dyadic scale out keeps
@@ -2752,20 +2827,23 @@ impl Computable {
                 crate::trace_dispatch!("computable", "ln", "small-inverse-rewrite-structural");
                 return self.inverse().ln().negate();
             }
-            if known_sign == Some(Sign::Plus) && msd == 5 {
-                let quarter = self.sqrt().sqrt().ln();
-                crate::trace_dispatch!("computable", "ln", "sqrt-range-reduction");
-                return quarter.shift_left(2);
-            }
-            if known_sign == Some(Sign::Plus) && msd >= 7 {
-                // |x| >= 128 always exceeds the rough high-magnitude branch,
-                // so scale first and skip the initial rough probe.
-                let mut extra_bits: i32 = (msd as i32 - 5).try_into().expect(
+            if known_sign == Some(Sign::Plus) && msd >= 2 {
+                // Structurally large exact values can be reduced by powers of
+                // two before probing. This avoids building sqrt/sqrt/log graphs
+                // for moderate exact-rational logs such as ln(1+x^2).
+                let mut extra_bits: i32 = msd.try_into().expect(
                     "Approximation should have few enough bits to fit in a 32-bit signed integer",
                 );
 
                 let mut scaled = self.clone().shift_right(extra_bits);
                 let mut scaled_rough = scaled.approx(low_prec);
+                while scaled_rough <= *low_ln_limit {
+                    extra_bits = extra_bits.checked_sub(1).expect(
+                        "Approximation should have few enough bits to fit in a 32-bit signed integer",
+                    );
+                    scaled = self.clone().shift_right(extra_bits);
+                    scaled_rough = scaled.approx(low_prec);
+                }
                 while scaled_rough >= *high_ln_limit {
                     extra_bits = extra_bits.checked_add(1).expect(
                         "Approximation should have few enough bits to fit in a 32-bit signed integer",
@@ -3187,16 +3265,16 @@ impl Computable {
             crate::trace_dispatch!("computable", "asinh", "known-negative-symmetry");
             return self.negate().asinh().negate();
         }
-        let exact_tiny = exact_rational
+        let exact_small = exact_rational
             .as_ref()
             .and_then(Rational::msd_exact)
-            .is_some_and(|msd| msd <= -4);
+            .is_some_and(|msd| msd <= -1);
         let exact_large = exact_rational
             .as_ref()
             .and_then(Rational::msd_exact)
             .is_some_and(|msd| msd >= 3);
-        if exact_tiny {
-            crate::trace_dispatch!("computable", "asinh", "exact-tiny-prescaled");
+        if exact_small {
+            crate::trace_dispatch!("computable", "asinh", "exact-small-rational-series");
             if let Some(rational) = exact_rational {
                 return Self::asinh_rational_deferred(rational);
             }

@@ -20,6 +20,26 @@ use std::sync::LazyLock;
 // choices added to avoid construction, allocation, or cache duplication costs.
 
 static HALF_RATIONAL: LazyLock<Rational> = LazyLock::new(|| Rational::fraction(1, 2).unwrap());
+static SEVENTY_NINE_TWENTIETHS_RATIONAL: LazyLock<Rational> =
+    LazyLock::new(|| Rational::fraction(79, 20).unwrap());
+static FOUR_RATIONAL: LazyLock<Rational> = LazyLock::new(|| Rational::new(4));
+static TWENTY_SEVEN_FIFTHS_RATIONAL: LazyLock<Rational> =
+    LazyLock::new(|| Rational::fraction(27, 5).unwrap());
+static ELEVEN_HALVES_RATIONAL: LazyLock<Rational> =
+    LazyLock::new(|| Rational::fraction(11, 2).unwrap());
+static SEVEN_RATIONAL: LazyLock<Rational> = LazyLock::new(|| Rational::new(7));
+static SEVENTEEN_HALVES_RATIONAL: LazyLock<Rational> =
+    LazyLock::new(|| Rational::fraction(17, 2).unwrap());
+static NEG_FOUR_RATIONAL: LazyLock<Rational> = LazyLock::new(|| Rational::new(-4));
+static NEG_SEVENTY_NINE_TWENTIETHS_RATIONAL: LazyLock<Rational> =
+    LazyLock::new(|| Rational::fraction(-79, 20).unwrap());
+static NEG_TWENTY_SEVEN_FIFTHS_RATIONAL: LazyLock<Rational> =
+    LazyLock::new(|| Rational::fraction(-27, 5).unwrap());
+static NEG_ELEVEN_HALVES_RATIONAL: LazyLock<Rational> =
+    LazyLock::new(|| Rational::fraction(-11, 2).unwrap());
+static NEG_SEVEN_RATIONAL: LazyLock<Rational> = LazyLock::new(|| Rational::new(-7));
+static NEG_SEVENTEEN_HALVES_RATIONAL: LazyLock<Rational> =
+    LazyLock::new(|| Rational::fraction(-17, 2).unwrap());
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub(super) enum Approximation {
@@ -152,10 +172,12 @@ pub(super) enum SharedConstant {
     Sqrt3,
     Acosh2,
     Asinh1,
+    AtanInv2,
+    AtanInv5,
 }
 
 impl SharedConstant {
-    pub(super) const COUNT: usize = 14;
+    pub(super) const COUNT: usize = 16;
 
     pub(super) fn cache_index(self) -> usize {
         match self {
@@ -173,6 +195,8 @@ impl SharedConstant {
             Self::Sqrt3 => 11,
             Self::Acosh2 => 12,
             Self::Asinh1 => 13,
+            Self::AtanInv2 => 14,
+            Self::AtanInv5 => 15,
         }
     }
 }
@@ -254,6 +278,8 @@ impl SharedConstant {
             Self::Sqrt3 => sqrt_constant(signal, Rational::new(3), p),
             Self::Acosh2 => acosh2_constant(signal, p),
             Self::Asinh1 => asinh1_constant(signal, p),
+            Self::AtanInv2 => atan(signal, &BigInt::from(2_u8), p),
+            Self::AtanInv5 => atan(signal, &BigInt::from(5_u8), p),
         }
     }
 }
@@ -833,6 +859,10 @@ fn large_rational_half_pi_multiple(signal: &Option<Signal>, r: &Rational) -> Big
     // reducer was the remaining hot path in exact 1e6/1e30 benchmarks. This is
     // the exact-rational Payne-Hanek quotient estimate from the constructor
     // layer, with the residual correction performed directly from cached pi.
+    if let Some(multiple) = fixed_small_large_rational_half_pi_multiple(r) {
+        return multiple;
+    }
+
     let mut multiple = Computable::half_pi_multiple_exact_rational(r)
         .unwrap_or_else(|| Computable::rational(r.clone()).half_pi_multiple());
     let rough_appr = large_rational_half_pi_residual(signal, r, &multiple, -1);
@@ -844,6 +874,58 @@ fn large_rational_half_pi_multiple(signal: &Option<Signal>, r: &Rational) -> Big
     }
 
     multiple
+}
+
+fn fixed_small_large_rational_half_pi_multiple(r: &Rational) -> Option<BigInt> {
+    // For |r| in [79/20, 4], the nearest half-pi multiple is exactly +/-3.
+    // This catches tan rows just below the large-rational threshold while
+    // staying above 5*pi/4.
+    if r >= SEVENTY_NINE_TWENTIETHS_RATIONAL.deref() && r <= FOUR_RATIONAL.deref() {
+        crate::trace_dispatch!("computable_approx", "trig", "fixed-half-pi-multiple-3");
+        return Some(BigInt::from(3));
+    }
+    if r <= NEG_SEVENTY_NINE_TWENTIETHS_RATIONAL.deref() && r >= NEG_FOUR_RATIONAL.deref() {
+        crate::trace_dispatch!("computable_approx", "trig", "fixed-half-pi-multiple-neg3");
+        return Some(BigInt::from(-3));
+    }
+
+    // For |r| in [4, 27/5], the nearest half-pi multiple is exactly +/-3.
+    // The upper bound is kept conservatively below 7*pi/4, so the shortcut
+    // remains a cheap certificate rather than a fresh pi-dependent comparison.
+    if r.msd_exact() != Some(2) {
+        return None;
+    }
+    if r >= FOUR_RATIONAL.deref() && r <= TWENTY_SEVEN_FIFTHS_RATIONAL.deref() {
+        crate::trace_dispatch!("computable_approx", "trig", "fixed-half-pi-multiple-3");
+        return Some(BigInt::from(3));
+    }
+    if r <= NEG_FOUR_RATIONAL.deref() && r >= NEG_TWENTY_SEVEN_FIFTHS_RATIONAL.deref() {
+        crate::trace_dispatch!("computable_approx", "trig", "fixed-half-pi-multiple-neg3");
+        return Some(BigInt::from(-3));
+    }
+    // For |r| in [11/2, 7], the nearest half-pi multiple is exactly +/-4.
+    // The lower bound is above 7*pi/4 and the upper bound is below 9*pi/4,
+    // covering the next promoted tan cluster without a pi-dependent probe.
+    if r >= ELEVEN_HALVES_RATIONAL.deref() && r <= SEVEN_RATIONAL.deref() {
+        crate::trace_dispatch!("computable_approx", "trig", "fixed-half-pi-multiple-4");
+        return Some(BigInt::from(4));
+    }
+    if r <= NEG_ELEVEN_HALVES_RATIONAL.deref() && r >= NEG_SEVEN_RATIONAL.deref() {
+        crate::trace_dispatch!("computable_approx", "trig", "fixed-half-pi-multiple-neg4");
+        return Some(BigInt::from(-4));
+    }
+    // For |r| in [7, 17/2], the nearest half-pi multiple is exactly +/-5.
+    // This sits between 9*pi/4 and 11*pi/4 and covers the next promoted tan
+    // cluster without opening the full large-rational Payne-Hanek path.
+    if r >= SEVEN_RATIONAL.deref() && r <= SEVENTEEN_HALVES_RATIONAL.deref() {
+        crate::trace_dispatch!("computable_approx", "trig", "fixed-half-pi-multiple-5");
+        return Some(BigInt::from(5));
+    }
+    if r <= NEG_SEVEN_RATIONAL.deref() && r >= NEG_SEVENTEEN_HALVES_RATIONAL.deref() {
+        crate::trace_dispatch!("computable_approx", "trig", "fixed-half-pi-multiple-neg5");
+        return Some(BigInt::from(-5));
+    }
+    None
 }
 
 fn large_rational_half_pi_residual(
@@ -950,6 +1032,63 @@ fn sin_large_rational_residual(
         current_sum += &current_term;
     }
     scale(current_sum, calc_precision - p)
+}
+
+fn sin_cos_large_rational_residual(
+    signal: &Option<Signal>,
+    r: &Rational,
+    multiple: &BigInt,
+    p: Precision,
+) -> (BigInt, BigInt) {
+    if p >= 1 {
+        return (Zero::zero(), signed::ONE.deref().clone());
+    }
+    let iterations_needed = -p / 2 + 4;
+
+    if should_stop(signal) {
+        return (Zero::zero(), signed::ONE.deref().clone());
+    }
+
+    let calc_precision = p - bound_log2(2 * iterations_needed) - 4;
+    let op_prec = p - 2;
+    let op_appr = large_rational_half_pi_residual(signal, r, multiple, op_prec);
+    let op_squared = scale(&op_appr * &op_appr, op_prec);
+
+    let max_trunc_error = BigUint::one()
+        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
+
+    let mut sin_n = 1;
+    let mut sin_term = scale(op_appr, op_prec - calc_precision);
+    let mut sin_sum = sin_term.clone();
+
+    while sin_term.magnitude() > &max_trunc_error {
+        if should_stop(signal) {
+            break;
+        }
+        sin_n += 2;
+        sin_term = scale(sin_term * &op_squared, op_prec);
+        sin_term /= -(sin_n * (sin_n - 1));
+        sin_sum += &sin_term;
+    }
+
+    let mut cos_n = 0;
+    let mut cos_term = signed::ONE.deref() << (-calc_precision);
+    let mut cos_sum = cos_term.clone();
+
+    while cos_term.magnitude() > &max_trunc_error {
+        if should_stop(signal) {
+            break;
+        }
+        cos_n += 2;
+        cos_term = scale(cos_term * &op_squared, op_prec);
+        cos_term /= -(cos_n * (cos_n - 1));
+        cos_sum += &cos_term;
+    }
+
+    (
+        scale(sin_sum, calc_precision - p),
+        scale(cos_sum, calc_precision - p),
+    )
 }
 
 fn cos_large_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
@@ -1161,6 +1300,65 @@ fn sin_half_pi_minus_rational(signal: &Option<Signal>, r: &Rational, p: Precisio
     scale(current_sum, calc_precision - p)
 }
 
+fn sin_cos_half_pi_minus_rational(
+    signal: &Option<Signal>,
+    r: &Rational,
+    p: Precision,
+) -> (BigInt, BigInt) {
+    // Shared complement kernel for cot(pi/2-r): compute the exact-rational
+    // residual once, then feed both Taylor sums. This keeps the medium tangent
+    // shortcut from paying two pi/rational subtractions per approximation.
+    if p >= 1 {
+        return (Zero::zero(), signed::ONE.deref().clone());
+    }
+    let iterations_needed = -p / 2 + 4;
+
+    if should_stop(signal) {
+        return (Zero::zero(), signed::ONE.deref().clone());
+    }
+
+    let calc_precision = p - bound_log2(2 * iterations_needed) - 4;
+    let op_prec = p - 2;
+    let op_appr = half_pi_minus_rational(signal, r, op_prec);
+    let op_squared = scale(&op_appr * &op_appr, op_prec);
+
+    let max_trunc_error = BigUint::one()
+        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
+
+    let mut sin_n = 1;
+    let mut sin_term = scale(op_appr, op_prec - calc_precision);
+    let mut sin_sum = sin_term.clone();
+
+    while sin_term.magnitude() > &max_trunc_error {
+        if should_stop(signal) {
+            break;
+        }
+        sin_n += 2;
+        sin_term = scale(sin_term * &op_squared, op_prec);
+        sin_term /= -(sin_n * (sin_n - 1));
+        sin_sum += &sin_term;
+    }
+
+    let mut cos_n = 0;
+    let mut cos_term = signed::ONE.deref() << (-calc_precision);
+    let mut cos_sum = cos_term.clone();
+
+    while cos_term.magnitude() > &max_trunc_error {
+        if should_stop(signal) {
+            break;
+        }
+        cos_n += 2;
+        cos_term = scale(cos_term * &op_squared, op_prec);
+        cos_term /= -(cos_n * (cos_n - 1));
+        cos_sum += &cos_term;
+    }
+
+    (
+        scale(sin_sum, calc_precision - p),
+        scale(cos_sum, calc_precision - p),
+    )
+}
+
 fn cot_half_pi_minus_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
     // tan(r) near pi/2 is cot(pi/2-r). Reusing the direct exact-rational
     // residual for both numerator and denominator avoids the generic
@@ -1170,8 +1368,7 @@ fn cot_half_pi_minus_rational(signal: &Option<Signal>, r: &Rational, p: Precisio
     }
 
     let working_prec = p - 8;
-    let sin_appr = sin_half_pi_minus_rational(signal, r, working_prec);
-    let cos_appr = cos_half_pi_minus_rational(signal, r, working_prec);
+    let (sin_appr, cos_appr) = sin_cos_half_pi_minus_rational(signal, r, working_prec);
     let abs_sin = sin_appr.abs();
 
     if abs_sin.is_zero() {
@@ -1267,23 +1464,13 @@ fn tan_large_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> Bi
 
     let working_prec = p - 8;
     let multiple = large_rational_half_pi_multiple(signal, r);
+    let (sin_residual, cos_residual) =
+        sin_cos_large_rational_residual(signal, r, &multiple, working_prec);
     let (sin_appr, cos_appr) = match large_rational_quadrant(&multiple).to_u8() {
-        Some(0) => (
-            sin_large_rational_residual(signal, r, &multiple, working_prec),
-            cos_large_rational_residual(signal, r, &multiple, working_prec),
-        ),
-        Some(1) => (
-            cos_large_rational_residual(signal, r, &multiple, working_prec),
-            -sin_large_rational_residual(signal, r, &multiple, working_prec),
-        ),
-        Some(2) => (
-            -sin_large_rational_residual(signal, r, &multiple, working_prec),
-            -cos_large_rational_residual(signal, r, &multiple, working_prec),
-        ),
-        Some(3) => (
-            -cos_large_rational_residual(signal, r, &multiple, working_prec),
-            sin_large_rational_residual(signal, r, &multiple, working_prec),
-        ),
+        Some(0) => (sin_residual, cos_residual),
+        Some(1) => (cos_residual, -sin_residual),
+        Some(2) => (-sin_residual, -cos_residual),
+        Some(3) => (-cos_residual, sin_residual),
         _ => unreachable!("quadrant reduction is modulo four"),
     };
     let abs_cos = cos_appr.abs();
@@ -1519,6 +1706,41 @@ fn atan_rational_small(signal: &Option<Signal>, r: &Rational, p: Precision) -> B
     scale(sum, calc_precision - p)
 }
 
+fn atan_sqrt_rational_small(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
+    // Same Taylor kernel as atan_rational_small for inputs known to satisfy
+    // sqrt(r) <= 1/2. The sqrt is formed as an integer approximation directly
+    // from the Rational, avoiding a transient Sqrt node followed by PrescaledAtan.
+    if p >= 1 {
+        return Zero::zero();
+    }
+
+    let iterations_needed: i32 = -p / 2 + 4;
+    let calc_precision = p - bound_log2(2 * iterations_needed) - 5;
+    let op_prec = calc_precision - 3;
+    let sqrt_extra = 8;
+    let op_appr = shift(ratio(r, 2 * op_prec - sqrt_extra).sqrt(), -(sqrt_extra / 2));
+    let op_squared = scale(&op_appr * &op_appr, op_prec);
+
+    let max_trunc_error = BigUint::one()
+        << usize::try_from(p - 4 - calc_precision).expect("truncation shift is nonnegative");
+    let mut current_term = scale(op_appr, op_prec - calc_precision);
+    let mut sum = current_term.clone();
+    let mut n = 1;
+
+    while current_term.magnitude() > &max_trunc_error {
+        if should_stop(signal) {
+            break;
+        }
+        n += 2;
+        current_term = scale(current_term * &op_squared, op_prec);
+        current_term *= -(n - 2);
+        current_term /= n;
+        sum += &current_term;
+    }
+
+    scale(sum, calc_precision - p)
+}
+
 fn atan_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt {
     // Exact rational atan keeps the public constructor shallow and performs
     // range reduction directly here. The identities are the same as
@@ -1564,7 +1786,30 @@ fn atan_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -> BigInt 
 
     let extra = 3;
     let work_precision = p - extra;
-    if r <= &Rational::one() {
+    let three_halves = Rational::fraction(3, 2).expect("nonzero denominator");
+    if r >= &Rational::fraction(7, 4).expect("nonzero denominator") && r <= &Rational::new(2) {
+        crate::trace_dispatch!("computable_approx", "atan", "two-anchor-half-pi");
+        let half_pi = Computable::pi().approx_signal(signal, work_precision + 1);
+        let anchor_tail =
+            Computable::atan_inv2_constant().approx_signal(signal, work_precision + 1);
+        let numerator = r.clone() - Rational::new(2);
+        let denominator = Rational::one() + r.clone() * Rational::new(2);
+        let residual = numerator / denominator;
+        let reduced = atan_rational_small(signal, &residual, work_precision);
+        return scale(half_pi - anchor_tail + reduced, -extra);
+    }
+    if r >= &Rational::fraction(4, 3).expect("nonzero denominator") && r <= &Rational::new(2) {
+        crate::trace_dispatch!("computable_approx", "atan", "three-halves-anchor");
+        let quarter_pi = Computable::pi().approx_signal(signal, work_precision + 2);
+        let anchor_tail =
+            Computable::atan_inv5_constant().approx_signal(signal, work_precision + 2);
+        let numerator = r.clone() - three_halves.clone();
+        let denominator = Rational::one() + r.clone() * three_halves;
+        let residual = numerator / denominator;
+        let reduced = atan_rational_small(signal, &residual, work_precision);
+        return scale(quarter_pi + anchor_tail + scale(reduced, 2), -(extra + 2));
+    }
+    if r <= &Rational::new(2) {
         crate::trace_dispatch!("computable_approx", "atan", "unit-anchor-pi-quarter");
         let quarter_pi = Computable::pi().approx_signal(signal, work_precision + 2);
         let numerator = r.clone() - Rational::one();
@@ -1691,6 +1936,10 @@ fn acos_positive_rational(signal: &Option<Signal>, r: &Rational, p: Precision) -
     // residual directly. This follows the same cancellation-avoiding reduction
     // as `acos_positive` while avoiding a temporary Computable division tree.
     let residual = (Rational::one() - r.clone()) / (Rational::one() + r.clone());
+    if residual <= Rational::fraction(1, 4).expect("nonzero denominator") {
+        crate::trace_dispatch!("computable_approx", "acos", "small-rational-residual");
+        return atan_sqrt_rational_small(signal, &residual, p - 1);
+    }
     Computable::sqrt_rational(residual)
         .atan()
         .shift_left(1)

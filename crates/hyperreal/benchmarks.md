@@ -1,3 +1,74 @@
+<!-- BEGIN promoted_slow_offender_score -->
+## `promoted_slow_offender_score`
+
+Deterministic lexicase score for the current 100 promoted slow offenders. The score is the average current best-of-five wall-clock probe across the promoted set; lower is better. Delta compares with the previous score recorded in this file, and derivative is the change in delta.
+
+<!-- promoted_slow_score_nanos: 4173 -->
+<!-- promoted_slow_previous_score_nanos: 4173 -->
+<!-- promoted_slow_score_delta_nanos: 0 -->
+
+| Metric | Value |
+| --- | ---: |
+| Cases scored | 100 |
+| Average score | 4.173 us |
+| Delta | 0 ns |
+| Delta derivative | 0 ns |
+
+| Rank | Current Time | Operation | Input |
+| ---: | ---: | --- | --- |
+| 1 | 5.909 us | `generated_ln_abs_plus_one_p96` | `generated[9457] -3 23/90` |
+| 2 | 5.839 us | `generated_ln_abs_plus_one_p96` | `generated[15472] -3 13/50` |
+| 3 | 5.750 us | `generated_ln_abs_plus_one_p96` | `generated[9862] -1 221/492` |
+| 4 | 5.719 us | `generated_ln_abs_plus_one_p96` | `generated[18352] -1 133/500` |
+| 5 | 5.690 us | `generated_ln_abs_plus_one_p96` | `generated[14947] 3 11/222` |
+| 6 | 5.669 us | `generated_ln_abs_plus_one_p96` | `generated[8152] 3 11/62` |
+| 7 | 5.650 us | `generated_ln_abs_plus_one_p96` | `generated[6592] 1 109/348` |
+| 8 | 5.630 us | `generated_ln_abs_plus_one_p96` | `generated[6877] -9 34/77` |
+| 9 | 5.629 us | `generated_ln_abs_plus_one_p96` | `generated[1297] -1 83/188` |
+| 10 | 5.609 us | `generated_ln_abs_plus_one_p96` | `generated[15082] 1 181/356` |
+
+<!-- END promoted_slow_offender_score -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 <!-- BEGIN numerical_micro -->
@@ -69,12 +140,12 @@ Low-level approximation kernels and deep expression-tree stress cases.
 | `computable_transcendentals/exp_zero_cold_p128` | 72.59 ns | 72.29 ns - 72.94 ns | Approximates exp(0). |
 | `computable_transcendentals/ln_cold_p128` | 4.198 us | 4.192 us - 4.205 us | Approximates ln(11/7). |
 | `computable_transcendentals/ln_cached_p128` | 21.81 ns | 21.75 ns - 21.88 ns | Repeats a cached ln(11/7) approximation. |
-| `computable_transcendentals/ln_smooth_rational_cold_p128` | 608.68 ns | 603.97 ns - 613.53 ns | Approximates ln(45/14), which can decompose into shared prime-log constants. |
-| `computable_transcendentals/ln_nonsmooth_rational_cold_p128` | 2.522 us | 2.508 us - 2.540 us | Approximates ln(11/13), guarding the generic exact-rational log fallback. |
-| `computable_transcendentals/ln_large_cold_p128` | 294.47 ns | 293.72 ns - 295.36 ns | Approximates ln(1024), exercising large-input reduction. |
+| `computable_transcendentals/ln_smooth_rational_cold_p128` | 732.27 ns | 725.52 ns - 738.51 ns | Approximates ln(45/14), which can decompose into shared prime-log constants. |
+| `computable_transcendentals/ln_nonsmooth_rational_cold_p128` | 2.540 us | 2.467 us - 2.632 us | Approximates ln(11/13), guarding the generic exact-rational log fallback. |
+| `computable_transcendentals/ln_large_cold_p128` | 245.62 ns | 241.02 ns - 252.07 ns | Approximates ln(1024), exercising large-input reduction. |
 | `computable_transcendentals/ln_large_cached_p128` | 21.80 ns | 21.76 ns - 21.83 ns | Repeats a cached ln(1024) approximation. |
 | `computable_transcendentals/ln_tiny_cold_p128` | 190.35 ns | 189.59 ns - 191.17 ns | Approximates ln(2^-1024), exercising tiny-input reduction. |
-| `computable_transcendentals/ln_near_limit_cold_p128` | 7.022 us | 7.007 us - 7.041 us | Approximates ln near the prescaled-ln limit. |
+| `computable_transcendentals/ln_near_limit_cold_p128` | 3.420 us | 3.334 us - 3.520 us | Approximates ln near the prescaled-ln limit. |
 | `computable_transcendentals/ln_near_limit_cached_p128` | 21.84 ns | 21.79 ns - 21.89 ns | Repeats a cached near-limit ln approximation. |
 | `computable_transcendentals/ln_one_cold_p128` | 35.07 ns | 34.88 ns - 35.27 ns | Approximates ln(1). |
 | `computable_transcendentals/sqrt_cold_p128` | 746.58 ns | 731.98 ns - 772.57 ns | Approximates sqrt(2). |
@@ -134,13 +205,13 @@ Low-level approximation kernels and deep expression-tree stress cases.
 | `computable_transcendentals/sqrt_scaled_square_chain_cold_p128` | not run | not run | Approximates sqrt of a scaled-square chain. |
 | `computable_transcendentals/warmed_zero_product_cold_p128` | not run | not run | Approximates a product involving a warmed zero sum. |
 | `computable_transcendentals/inverse_scaled_product_chain_cold_p128` | 701.64 ns | 626.73 ns - 833.05 ns | Approximates the inverse of a deep scaled product. |
-| `computable_transcendentals/deep_inverse_pair_chain_cold_p128` | 124.61 ns | 120.53 ns - 128.75 ns | Approximates a chain of inverse(inverse(x)) pairs. |
+| `computable_transcendentals/deep_inverse_pair_chain_cold_p128` | 115.44 ns | 111.89 ns - 119.09 ns | Approximates a chain of inverse(inverse(x)) pairs. |
 | `computable_transcendentals/deep_negated_square_chain_cold_p128` | not run | not run | Approximates repeated negate-square-sqrt transformations. |
 | `computable_transcendentals/deep_negative_one_product_chain_cold_p128` | 88.57 ns | 88.36 ns - 88.82 ns | Approximates repeated multiplication by -1. |
 | `computable_transcendentals/deep_half_product_chain_cold_p128` | 132.39 ns | 131.34 ns - 133.52 ns | Approximates repeated multiplication by 1/2. |
 | `computable_transcendentals/deep_half_square_chain_cold_p128` | not run | not run | Approximates repeated squaring after scaling by 1/2. |
 | `computable_transcendentals/deep_sqrt_square_chain_cold_p128` | not run | not run | Approximates repeated sqrt-square simplification. |
-| `computable_transcendentals/inverse_half_product_chain_cold_p128` | 141.75 ns | 137.12 ns - 146.56 ns | Approximates the inverse of a deep half-product chain. |
+| `computable_transcendentals/inverse_half_product_chain_cold_p128` | 145.10 ns | 140.31 ns - 150.06 ns | Approximates the inverse of a deep half-product chain. |
 
 <!-- END numerical_micro -->
 
@@ -511,19 +582,20 @@ Cold approximation of sine, cosine, and tangent at exact, tiny, huge, and near-s
 | `trig_adversarial_approx/tan_tiny_rational_p96` | not run | not run | Approximates tan(1e-12), stressing direct tiny-argument setup. |
 | `trig_adversarial_approx/sin_medium_rational_p96` | not run | not run | Approximates sin(7/5), a moderate non-pi rational. |
 | `trig_adversarial_approx/cos_medium_rational_p96` | not run | not run | Approximates cos(7/5), a moderate non-pi rational. |
-| `trig_adversarial_approx/tan_medium_rational_p96` | not run | not run | Approximates tan(7/5), a moderate non-pi rational. |
+| `trig_adversarial_approx/tan_medium_rational_p96` | 4.379 us | 3.837 us - 4.913 us | Approximates tan(7/5), a moderate non-pi rational. |
 | `trig_adversarial_approx/sin_f64_exact_p96` | not run | not run | Approximates sin(1.23456789 imported as an exact dyadic rational). |
 | `trig_adversarial_approx/cos_f64_exact_p96` | not run | not run | Approximates cos(1.23456789 imported as an exact dyadic rational). |
 | `trig_adversarial_approx/sin_1e6_p96` | not run | not run | Approximates sin(1000000), stressing integer argument reduction. |
 | `trig_adversarial_approx/cos_1e6_p96` | not run | not run | Approximates cos(1000000), stressing integer argument reduction. |
 | `trig_adversarial_approx/tan_1e6_p96` | not run | not run | Approximates tan(1000000), stressing integer argument reduction. |
-| `trig_adversarial_approx/sin_1e30_p96` | not run | not run | Approximates sin(10^30), stressing very large integer reduction. |
-| `trig_adversarial_approx/cos_1e30_p96` | not run | not run | Approximates cos(10^30), stressing very large integer reduction. |
-| `trig_adversarial_approx/tan_1e30_p96` | not run | not run | Approximates tan(10^30), stressing very large integer reduction. |
+| `trig_adversarial_approx/sin_1e30_p96` | 2.083 us | 2.077 us - 2.089 us | Approximates sin(10^30), stressing very large integer reduction. |
+| `trig_adversarial_approx/cos_1e30_p96` | 2.197 us | 2.163 us - 2.242 us | Approximates cos(10^30), stressing very large integer reduction. |
+| `trig_adversarial_approx/tan_1e30_p96` | 3.432 us | 3.398 us - 3.488 us | Approximates tan(10^30), stressing very large integer reduction. |
 | `trig_adversarial_approx/sin_huge_pi_plus_offset_p96` | not run | not run | Approximates sin(2^512*pi + 7/5), stressing exact pi-multiple cancellation. |
 | `trig_adversarial_approx/cos_huge_pi_plus_offset_p96` | not run | not run | Approximates cos(2^512*pi + 7/5), stressing exact pi-multiple cancellation. |
-| `trig_adversarial_approx/tan_huge_pi_plus_offset_p96` | not run | not run | Approximates tan(2^512*pi + 7/5), stressing exact pi-multiple cancellation. |
-| `trig_adversarial_approx/tan_near_half_pi_p96` | not run | not run | Approximates tan(pi/2 - 2^-40), stressing the cotangent complement path. |
+| `trig_adversarial_approx/tan_huge_pi_plus_offset_p96` | 3.801 us | 3.709 us - 3.931 us | Approximates tan(2^512*pi + 7/5), stressing exact pi-multiple cancellation. |
+| `trig_adversarial_approx/tan_near_half_pi_p96` | 5.432 us | 5.343 us - 5.548 us | Approximates tan(pi/2 - 2^-40), stressing the cotangent complement path. |
+| `trig_adversarial_approx/tan_promoted_generated_604_125_p96` | 6.559 us | 6.504 us - 6.644 us | Promoted slow-performer tan(604/125), a generated top offender from the library-wide fuzz history. |
 
 ### `inverse_trig_adversarial_approx`
 
@@ -534,17 +606,19 @@ Cold approximation of asin, acos, and atan near exact values, zero, endpoints, a
 | `inverse_trig_adversarial_approx/asin_zero_p96` | not run | not run | Approximates asin(0), which should collapse before the generic inverse-trig path. |
 | `inverse_trig_adversarial_approx/acos_zero_p96` | not run | not run | Approximates acos(0), which should reduce to pi/2. |
 | `inverse_trig_adversarial_approx/atan_zero_p96` | not run | not run | Approximates atan(0), which should collapse to zero. |
-| `inverse_trig_adversarial_approx/asin_tiny_positive_p96` | 430.37 ns | 424.97 ns - 436.45 ns | Approximates asin(1e-12), stressing the tiny odd series. |
-| `inverse_trig_adversarial_approx/acos_tiny_positive_p96` | 768.82 ns | 767.20 ns - 770.25 ns | Approximates acos(1e-12), stressing pi/2 minus the tiny asin path. |
+| `inverse_trig_adversarial_approx/asin_tiny_positive_p96` | 794.29 ns | 769.26 ns - 825.79 ns | Approximates asin(1e-12), stressing the tiny odd series. |
+| `inverse_trig_adversarial_approx/acos_tiny_positive_p96` | 1.456 us | 1.450 us - 1.463 us | Approximates acos(1e-12), stressing pi/2 minus the tiny asin path. |
 | `inverse_trig_adversarial_approx/atan_tiny_positive_p96` | not run | not run | Approximates atan(1e-12), stressing direct tiny atan setup. |
-| `inverse_trig_adversarial_approx/asin_mid_positive_p96` | 8.365 us | 8.333 us - 8.404 us | Approximates asin(7/10), a generic in-domain value. |
-| `inverse_trig_adversarial_approx/acos_mid_positive_p96` | 8.102 us | 8.061 us - 8.159 us | Approximates acos(7/10), a generic in-domain value. |
-| `inverse_trig_adversarial_approx/atan_mid_positive_p96` | 3.712 us | 3.691 us - 3.739 us | Approximates atan(7/10), a generic in-domain value. |
-| `inverse_trig_adversarial_approx/asin_near_one_p96` | 4.076 us | 4.067 us - 4.084 us | Approximates asin(0.999999), stressing endpoint transforms. |
-| `inverse_trig_adversarial_approx/acos_near_one_p96` | 3.636 us | 3.525 us - 3.753 us | Approximates acos(0.999999), stressing endpoint transforms. |
-| `inverse_trig_adversarial_approx/asin_near_minus_one_p96` | 4.212 us | 4.198 us - 4.235 us | Approximates asin(-0.999999), stressing odd symmetry near the endpoint. |
-| `inverse_trig_adversarial_approx/acos_near_minus_one_p96` | 3.637 us | 3.626 us - 3.649 us | Approximates acos(-0.999999), stressing negative endpoint transforms. |
-| `inverse_trig_adversarial_approx/atan_large_p96` | 1.620 us | 1.598 us - 1.644 us | Approximates atan(8), stressing reciprocal reduction. |
+| `inverse_trig_adversarial_approx/asin_mid_positive_p96` | 6.527 us | 6.474 us - 6.612 us | Approximates asin(7/10), a generic in-domain value. |
+| `inverse_trig_adversarial_approx/acos_mid_positive_p96` | 6.199 us | 6.163 us - 6.241 us | Approximates acos(7/10), a generic in-domain value. |
+| `inverse_trig_adversarial_approx/atan_mid_positive_p96` | 3.878 us | 3.824 us - 3.944 us | Approximates atan(7/10), a generic in-domain value. |
+| `inverse_trig_adversarial_approx/asin_near_one_p96` | 2.781 us | 2.776 us - 2.786 us | Approximates asin(0.999999), stressing endpoint transforms. |
+| `inverse_trig_adversarial_approx/acos_near_one_p96` | 2.268 us | 2.261 us - 2.276 us | Approximates acos(0.999999), stressing endpoint transforms. |
+| `inverse_trig_adversarial_approx/asin_near_minus_one_p96` | 2.959 us | 2.913 us - 3.033 us | Approximates asin(-0.999999), stressing odd symmetry near the endpoint. |
+| `inverse_trig_adversarial_approx/acos_near_minus_one_p96` | 2.516 us | 2.403 us - 2.726 us | Approximates acos(-0.999999), stressing negative endpoint transforms. |
+| `inverse_trig_adversarial_approx/atan_large_p96` | 1.625 us | 1.613 us - 1.642 us | Approximates atan(8), stressing reciprocal reduction. |
+| `inverse_trig_adversarial_approx/atan_promoted_generated_783_412_p96` | 2.871 us | 2.844 us - 2.907 us | Promoted slow-performer atan(783/412), the generated exact-rational atan top offender. |
+| `inverse_trig_adversarial_approx/ln_square_plus_one_promoted_generated_677_222_p96` | 2.932 us | 2.908 us - 2.964 us | Promoted slow-performer ln((677/222)^2 + 1), the generated exact-rational log top offender. |
 | `inverse_trig_adversarial_approx/atan_huge_p96` | 637.59 ns | 630.68 ns - 647.40 ns | Approximates atan(10^30), stressing very large reciprocal reduction. |
 
 ### `trig_fuzz_adversarial_approx`
@@ -554,11 +628,19 @@ Deterministic broad sweeps of sine, cosine, and tangent over tiny, ordinary, hug
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
 | `trig_fuzz_adversarial_approx/sin_sweep_768_p96` | 1.763 ms | 1.740 ms - 1.801 ms | Approximates sin over 768 deterministic exact inputs spanning tiny, ordinary, huge, dyadic, rational, and pi-offset cases. |
-| `trig_fuzz_adversarial_approx/cos_sweep_768_p96` | not run | not run | Approximates cos over the same 768-input deterministic fuzz sweep. |
-| `trig_fuzz_adversarial_approx/tan_sweep_768_p96` | not run | not run | Approximates tan over the same deterministic sweep, including near-half-pi stress cases. |
-| `trig_fuzz_adversarial_approx/sin_promoted_slow_candidates_p96` | 17.250 us | 16.904 us - 17.771 us | Approximates sin over promoted slow candidates found by prior sweep-style runs. |
-| `trig_fuzz_adversarial_approx/cos_promoted_slow_candidates_p96` | 18.142 us | 17.793 us - 18.549 us | Approximates cos over promoted slow candidates found by prior sweep-style runs. |
-| `trig_fuzz_adversarial_approx/tan_promoted_slow_candidates_p96` | 32.258 us | 31.911 us - 32.732 us | Approximates tan over promoted near-pole and large-reduction slow candidates. |
+| `trig_fuzz_adversarial_approx/cos_sweep_768_p96` | 1.760 ms | 1.755 ms - 1.765 ms | Approximates cos over the same 768-input deterministic fuzz sweep. |
+| `trig_fuzz_adversarial_approx/tan_sweep_768_p96` | 3.256 ms | 3.245 ms - 3.271 ms | Approximates tan over the same deterministic sweep, including near-half-pi stress cases. |
+| `trig_fuzz_adversarial_approx/sin_promoted_slow_candidates_p96` | 16.769 us | 16.740 us - 16.799 us | Approximates sin over promoted slow candidates found by prior sweep-style runs. |
+| `trig_fuzz_adversarial_approx/cos_promoted_slow_candidates_p96` | 17.499 us | 17.409 us - 17.635 us | Approximates cos over promoted slow candidates found by prior sweep-style runs. |
+| `trig_fuzz_adversarial_approx/tan_promoted_slow_candidates_p96` | 30.067 us | 29.919 us - 30.241 us | Approximates tan over promoted near-pole and large-reduction slow candidates. |
+
+### `promoted_library_slow_offenders_approx`
+
+Fifty structurally varied worst offenders promoted from the library-wide slow-performer history.
+
+| Benchmark output | Mean | 95% CI | What it measures |
+| --- | ---: | ---: | --- |
+| `promoted_library_slow_offenders_approx/promoted_50_structural_slow_offenders_p96` | not run | not run | Approximates 50 individual promoted slow cases spanning ln(1+x^2), atan, tan, sin, and cos over varied exact-rational structures. |
 
 ### `inverse_hyperbolic_adversarial_approx`
 
@@ -566,18 +648,18 @@ Cold approximation of inverse hyperbolic functions at tiny, moderate, large, and
 
 | Benchmark output | Mean | 95% CI | What it measures |
 | --- | ---: | ---: | --- |
-| `inverse_hyperbolic_adversarial_approx/asinh_tiny_positive_p128` | 592.23 ns | 579.06 ns - 610.33 ns | Approximates asinh(1e-12), stressing cancellation avoidance near zero. |
-| `inverse_hyperbolic_adversarial_approx/asinh_mid_positive_p128` | 7.602 us | 7.565 us - 7.642 us | Approximates asinh(1/2), a moderate positive value. |
-| `inverse_hyperbolic_adversarial_approx/asinh_large_positive_p128` | 7.147 us | 7.075 us - 7.236 us | Approximates asinh(10^6), stressing large-input logarithmic behavior. |
-| `inverse_hyperbolic_adversarial_approx/asinh_large_negative_p128` | 7.233 us | 7.207 us - 7.259 us | Approximates asinh(-10^6), stressing odd symmetry for large inputs. |
-| `inverse_hyperbolic_adversarial_approx/acosh_one_plus_tiny_p128` | 6.765 us | 6.625 us - 6.932 us | Approximates acosh(1 + 1e-12), stressing the near-one endpoint. |
+| `inverse_hyperbolic_adversarial_approx/asinh_tiny_positive_p128` | 592.97 ns | 591.06 ns - 595.48 ns | Approximates asinh(1e-12), stressing cancellation avoidance near zero. |
+| `inverse_hyperbolic_adversarial_approx/asinh_mid_positive_p128` | 7.112 us | 6.969 us - 7.278 us | Approximates asinh(1/2), a moderate positive value. |
+| `inverse_hyperbolic_adversarial_approx/asinh_large_positive_p128` | 8.537 us | 8.355 us - 8.734 us | Approximates asinh(10^6), stressing large-input logarithmic behavior. |
+| `inverse_hyperbolic_adversarial_approx/asinh_large_negative_p128` | 8.536 us | 8.471 us - 8.611 us | Approximates asinh(-10^6), stressing odd symmetry for large inputs. |
+| `inverse_hyperbolic_adversarial_approx/acosh_one_plus_tiny_p128` | 6.701 us | 6.630 us - 6.790 us | Approximates acosh(1 + 1e-12), stressing the near-one endpoint. |
 | `inverse_hyperbolic_adversarial_approx/acosh_sqrt_two_p128` | 128.95 ns | 126.43 ns - 131.96 ns | Approximates acosh(sqrt(2)), a symbolic square-root input. |
-| `inverse_hyperbolic_adversarial_approx/acosh_two_p128` | 94.91 ns | 93.64 ns - 96.06 ns | Approximates acosh(2), a moderate exact rational. |
-| `inverse_hyperbolic_adversarial_approx/acosh_large_positive_p128` | 7.277 us | 7.185 us - 7.398 us | Approximates acosh(10^6), stressing large-input logarithmic behavior. |
+| `inverse_hyperbolic_adversarial_approx/acosh_two_p128` | 100.74 ns | 93.07 ns - 114.21 ns | Approximates acosh(2), a moderate exact rational. |
+| `inverse_hyperbolic_adversarial_approx/acosh_large_positive_p128` | 8.797 us | 8.692 us - 8.924 us | Approximates acosh(10^6), stressing large-input logarithmic behavior. |
 | `inverse_hyperbolic_adversarial_approx/atanh_tiny_positive_p128` | 540.27 ns | 535.23 ns - 546.50 ns | Approximates atanh(1e-12), stressing the tiny odd series. |
 | `inverse_hyperbolic_adversarial_approx/atanh_mid_positive_p128` | 268.55 ns | 263.71 ns - 274.73 ns | Approximates atanh(1/2), a moderate exact rational. |
-| `inverse_hyperbolic_adversarial_approx/atanh_near_one_p128` | 6.224 us | 6.155 us - 6.317 us | Approximates atanh(0.999999), stressing endpoint logarithmic behavior. |
-| `inverse_hyperbolic_adversarial_approx/atanh_near_minus_one_p128` | 6.667 us | 6.508 us - 6.843 us | Approximates atanh(-0.999999), stressing odd symmetry near the endpoint. |
+| `inverse_hyperbolic_adversarial_approx/atanh_near_one_p128` | 5.350 us | 5.254 us - 5.482 us | Approximates atanh(0.999999), stressing endpoint logarithmic behavior. |
+| `inverse_hyperbolic_adversarial_approx/atanh_near_minus_one_p128` | 5.449 us | 5.422 us - 5.478 us | Approximates atanh(-0.999999), stressing odd symmetry near the endpoint. |
 
 ### `real_shortcut_adversarial`
 

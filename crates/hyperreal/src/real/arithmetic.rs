@@ -1166,6 +1166,24 @@ impl Real {
         )))
     }
 
+    /// Return a fused sum of signed exact-rational products after the caller
+    /// has already proved every factor is an exact rational.
+    ///
+    /// This deliberately bypasses per-factor class checks. It is for prepared
+    /// exact matrix kernels that cache an aggregate exact-rational certificate
+    /// before entering dense cofactor algebra.
+    pub fn exact_rational_signed_product_sum_known_exact<
+        const TERMS: usize,
+        const FACTORS: usize,
+    >(
+        positive_terms: [bool; TERMS],
+        terms: [[&Real; FACTORS]; TERMS],
+    ) -> Real {
+        let rational_terms = terms.map(|term| term.map(|factor| &factor.rational));
+        crate::trace_dispatch!("real", "product_sum", "exact-rational-known-shared-denom");
+        Real::new(Rational::signed_product_sum(positive_terms, rational_terms))
+    }
+
     /// Conservatively inspect public structural facts about this value.
     #[inline]
     pub fn structural_facts(&self) -> RealStructuralFacts {

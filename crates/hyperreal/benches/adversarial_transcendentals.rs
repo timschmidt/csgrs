@@ -1,6 +1,7 @@
 use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main};
 use hyperreal::{Computable, Problem, Rational, Real};
 use num::bigint::{BigInt, BigUint};
+use std::fs;
 use std::ops::Neg;
 use std::time::Duration;
 
@@ -86,6 +87,10 @@ const ADVERSARIAL_TRANSCENDENTAL_GROUPS: &[BenchGroupDoc] = &[
                 name: "tan_near_half_pi_p96",
                 description: "Approximates tan(pi/2 - 2^-40), stressing the cotangent complement path.",
             },
+            BenchDoc {
+                name: "tan_promoted_generated_604_125_p96",
+                description: "Promoted slow-performer tan(604/125), a generated top offender from the library-wide fuzz history.",
+            },
         ],
     },
     BenchGroupDoc {
@@ -149,6 +154,14 @@ const ADVERSARIAL_TRANSCENDENTAL_GROUPS: &[BenchGroupDoc] = &[
                 description: "Approximates atan(8), stressing reciprocal reduction.",
             },
             BenchDoc {
+                name: "atan_promoted_generated_783_412_p96",
+                description: "Promoted slow-performer atan(783/412), the generated exact-rational atan top offender.",
+            },
+            BenchDoc {
+                name: "ln_square_plus_one_promoted_generated_677_222_p96",
+                description: "Promoted slow-performer ln((677/222)^2 + 1), the generated exact-rational log top offender.",
+            },
+            BenchDoc {
                 name: "atan_huge_p96",
                 description: "Approximates atan(10^30), stressing very large reciprocal reduction.",
             },
@@ -183,6 +196,14 @@ const ADVERSARIAL_TRANSCENDENTAL_GROUPS: &[BenchGroupDoc] = &[
                 description: "Approximates tan over promoted near-pole and large-reduction slow candidates.",
             },
         ],
+    },
+    BenchGroupDoc {
+        name: "promoted_library_slow_offenders_approx",
+        description: "Fifty structurally varied worst offenders promoted from the library-wide slow-performer history.",
+        benches: &[BenchDoc {
+            name: "promoted_50_structural_slow_offenders_p96",
+            description: "Approximates 50 individual promoted slow cases spanning ln(1+x^2), atan, tan, sin, and cos over varied exact-rational structures.",
+        }],
     },
     BenchGroupDoc {
         name: "inverse_hyperbolic_adversarial_approx",
@@ -292,6 +313,40 @@ const ADVERSARIAL_TRANSCENDENTAL_GROUPS: &[BenchGroupDoc] = &[
 
 fn rational(n: i64, d: u64) -> Rational {
     Rational::fraction(n, d).unwrap()
+}
+
+fn mixed_rational(whole: i64, n: u64, d: u64) -> Rational {
+    let fraction =
+        Rational::fraction(i64::try_from(n).expect("small numerator fits i64"), d).unwrap();
+    if whole < 0 {
+        Rational::new(whole) - fraction
+    } else {
+        Rational::new(whole) + fraction
+    }
+}
+
+fn parse_generated_promoted_rational(value: &str) -> Option<Rational> {
+    if let Some((whole, fraction)) = value.split_once(' ') {
+        let whole = whole.parse::<i64>().ok()?;
+        let (numerator, denominator) = fraction.split_once('/')?;
+        return Some(mixed_rational(
+            whole,
+            numerator.parse::<u64>().ok()?,
+            denominator.parse::<u64>().ok()?,
+        ));
+    }
+    if let Some((numerator, denominator)) = value.split_once('/') {
+        return Some(rational(
+            numerator.parse::<i64>().ok()?,
+            denominator.parse::<u64>().ok()?,
+        ));
+    }
+    Some(Rational::new(value.parse::<i64>().ok()?))
+}
+
+fn parse_generated_promoted_input(input: &str) -> Option<Rational> {
+    let (_, rational) = input.strip_prefix("generated[")?.split_once("] ")?;
+    parse_generated_promoted_rational(rational)
 }
 
 fn rational_big(n: BigInt, d: BigUint) -> Rational {
@@ -427,6 +482,321 @@ fn promoted_trig_slow_candidates() -> Vec<Computable> {
     ]
 }
 
+#[derive(Clone, Copy)]
+enum PromotedSlowOp {
+    LnAbsPlusOne,
+    Atan,
+    Tan,
+    Sin,
+    Cos,
+}
+
+impl PromotedSlowOp {
+    fn apply(self, value: Computable) -> Computable {
+        match self {
+            Self::LnAbsPlusOne => value.square().add(Computable::one()).ln(),
+            Self::Atan => value.atan(),
+            Self::Tan => value.tan(),
+            Self::Sin => value.sin(),
+            Self::Cos => value.cos(),
+        }
+    }
+}
+
+fn promoted_slow_op_from_report(operation: &str) -> Option<PromotedSlowOp> {
+    match operation {
+        "generated_ln_abs_plus_one_p96" => Some(PromotedSlowOp::LnAbsPlusOne),
+        "generated_atan_p96" => Some(PromotedSlowOp::Atan),
+        "generated_tan_p96" => Some(PromotedSlowOp::Tan),
+        "generated_sin_p96" => Some(PromotedSlowOp::Sin),
+        "generated_cos_p96" => Some(PromotedSlowOp::Cos),
+        _ => None,
+    }
+}
+
+fn generated_promoted_library_slow_offenders()
+-> Option<Vec<(&'static str, PromotedSlowOp, Rational)>> {
+    let contents = fs::read_to_string("promoted_slow_offenders.txt").ok()?;
+    let promoted: Vec<_> = contents
+        .lines()
+        .filter(|line| !line.trim().is_empty() && !line.trim_start().starts_with('#'))
+        .filter_map(|line| {
+            let mut parts = line.splitn(4, '\t');
+            let operation = parts.next()?;
+            let input = parts.next()?;
+            let _nanos = parts.next()?;
+            let name = parts.next()?;
+            Some((
+                Box::leak(name.to_owned().into_boxed_str()) as &'static str,
+                promoted_slow_op_from_report(operation)?,
+                parse_generated_promoted_input(input)?,
+            ))
+        })
+        .collect();
+    (!promoted.is_empty()).then_some(promoted)
+}
+
+fn promoted_library_slow_offenders() -> Vec<(&'static str, PromotedSlowOp, Rational)> {
+    use PromotedSlowOp::{Atan, Cos, LnAbsPlusOne, Sin, Tan};
+
+    if let Some(promoted) = generated_promoted_library_slow_offenders() {
+        return promoted;
+    }
+
+    vec![
+        (
+            "ln_generated_14947_pos_3_11_222_p96",
+            LnAbsPlusOne,
+            mixed_rational(3, 11, 222),
+        ),
+        (
+            "ln_generated_11497_pos_1_137_564_p96",
+            LnAbsPlusOne,
+            mixed_rational(1, 137, 564),
+        ),
+        (
+            "ln_generated_9862_neg_1_221_492_p96",
+            LnAbsPlusOne,
+            mixed_rational(-1, 221, 492),
+        ),
+        (
+            "ln_generated_11317_neg_8_21_53_p96",
+            LnAbsPlusOne,
+            mixed_rational(-8, 21, 53),
+        ),
+        (
+            "ln_generated_2632_neg_10_37_73_p96",
+            LnAbsPlusOne,
+            mixed_rational(-10, 37, 73),
+        ),
+        (
+            "ln_generated_154_pos_13_146_p96",
+            LnAbsPlusOne,
+            rational(13, 146),
+        ),
+        (
+            "ln_generated_227_neg_1_434_p96",
+            LnAbsPlusOne,
+            rational(-1, 434),
+        ),
+        (
+            "ln_generated_234_pos_19_158_p96",
+            LnAbsPlusOne,
+            rational(19, 158),
+        ),
+        (
+            "ln_generated_239_neg_1_990_p96",
+            LnAbsPlusOne,
+            rational(-1, 990),
+        ),
+        (
+            "ln_generated_250_pos_1_454_459_p96",
+            LnAbsPlusOne,
+            mixed_rational(1, 454, 459),
+        ),
+        (
+            "ln_generated_14977_pos_6_22_141_p96",
+            LnAbsPlusOne,
+            mixed_rational(6, 22, 141),
+        ),
+        (
+            "ln_generated_17197_neg_7_29_43_p96",
+            LnAbsPlusOne,
+            mixed_rational(-7, 29, 43),
+        ),
+        (
+            "atan_generated_10704_pos_1_371_412_p96",
+            Atan,
+            mixed_rational(1, 371, 412),
+        ),
+        (
+            "atan_generated_15474_neg_1_13_19_p96",
+            Atan,
+            mixed_rational(-1, 13, 19),
+        ),
+        (
+            "atan_generated_14949_pos_1_407_416_p96",
+            Atan,
+            mixed_rational(1, 407, 416),
+        ),
+        (
+            "atan_generated_15339_neg_1_83_90_p96",
+            Atan,
+            mixed_rational(-1, 83, 90),
+        ),
+        (
+            "atan_generated_3579_pos_1_95_104_p96",
+            Atan,
+            mixed_rational(1, 95, 104),
+        ),
+        (
+            "atan_generated_849_neg_1_391_600_p96",
+            Atan,
+            mixed_rational(-1, 391, 600),
+        ),
+        (
+            "atan_generated_11034_pos_1_367_518_p96",
+            Atan,
+            mixed_rational(1, 367, 518),
+        ),
+        (
+            "atan_generated_15504_neg_1_228_413_p96",
+            Atan,
+            mixed_rational(-1, 228, 413),
+        ),
+        (
+            "atan_generated_5094_neg_1_347_604_p96",
+            Atan,
+            mixed_rational(-1, 347, 604),
+        ),
+        (
+            "atan_generated_4824_neg_1_335_336_p96",
+            Atan,
+            mixed_rational(-1, 335, 336),
+        ),
+        (
+            "tan_generated_14946_pos_4_104_125_p96",
+            Tan,
+            mixed_rational(4, 104, 125),
+        ),
+        (
+            "tan_generated_17331_pos_4_66_83_p96",
+            Tan,
+            mixed_rational(4, 66, 83),
+        ),
+        (
+            "tan_generated_11841_neg_5_2_17_p96",
+            Tan,
+            mixed_rational(-5, 2, 17),
+        ),
+        (
+            "tan_generated_12561_pos_4_19_21_p96",
+            Tan,
+            mixed_rational(4, 19, 21),
+        ),
+        (
+            "tan_generated_13446_neg_5_15_187_p96",
+            Tan,
+            mixed_rational(-5, 15, 187),
+        ),
+        (
+            "tan_generated_18666_pos_5_15_17_p96",
+            Tan,
+            mixed_rational(5, 15, 17),
+        ),
+        (
+            "tan_generated_11421_neg_4_55_57_p96",
+            Tan,
+            mixed_rational(-4, 55, 57),
+        ),
+        (
+            "tan_generated_9231_neg_7_5_6_p96",
+            Tan,
+            mixed_rational(-7, 5, 6),
+        ),
+        (
+            "tan_generated_15306_pos_5_49_50_p96",
+            Tan,
+            mixed_rational(5, 49, 50),
+        ),
+        (
+            "tan_generated_3321_neg_4_17_107_p96",
+            Tan,
+            mixed_rational(-4, 17, 107),
+        ),
+        (
+            "tan_generated_4791_pos_7_2_7_p96",
+            Tan,
+            mixed_rational(7, 2, 7),
+        ),
+        (
+            "tan_generated_15861_neg_3_6_7_p96",
+            Tan,
+            mixed_rational(-3, 6, 7),
+        ),
+        (
+            "sin_generated_12694_pos_5_1_4_p96",
+            Sin,
+            mixed_rational(5, 1, 4),
+        ),
+        (
+            "sin_generated_17464_pos_4_43_53_p96",
+            Sin,
+            mixed_rational(4, 43, 53),
+        ),
+        (
+            "sin_generated_13219_pos_4_31_51_p96",
+            Sin,
+            mixed_rational(4, 31, 51),
+        ),
+        (
+            "sin_generated_9499_pos_4_35_88_p96",
+            Sin,
+            mixed_rational(4, 35, 88),
+        ),
+        (
+            "sin_generated_8974_pos_4_19_49_p96",
+            Sin,
+            mixed_rational(4, 19, 49),
+        ),
+        (
+            "sin_generated_1594_neg_6_25_28_p96",
+            Sin,
+            mixed_rational(-6, 25, 28),
+        ),
+        (
+            "sin_generated_10834_pos_4_34_61_p96",
+            Sin,
+            mixed_rational(4, 34, 61),
+        ),
+        (
+            "sin_generated_16220_neg_4_47_75_p96",
+            Sin,
+            mixed_rational(-4, 47, 75),
+        ),
+        (
+            "cos_generated_9365_pos_7_14_139_p96",
+            Cos,
+            mixed_rational(7, 14, 139),
+        ),
+        (
+            "cos_generated_14000_neg_5_53_87_p96",
+            Cos,
+            mixed_rational(-5, 53, 87),
+        ),
+        (
+            "cos_generated_13775_neg_4_137_196_p96",
+            Cos,
+            mixed_rational(-4, 137, 196),
+        ),
+        (
+            "cos_generated_11975_neg_5_32_71_p96",
+            Cos,
+            mixed_rational(-5, 32, 71),
+        ),
+        (
+            "cos_generated_15605_pos_3_1_16_p96",
+            Cos,
+            mixed_rational(3, 1, 16),
+        ),
+        (
+            "cos_generated_8645_pos_4_45_89_p96",
+            Cos,
+            mixed_rational(4, 45, 89),
+        ),
+        (
+            "cos_generated_7145_pos_5_91_151_p96",
+            Cos,
+            mixed_rational(5, 91, 151),
+        ),
+        (
+            "cos_generated_9560_neg_6_104_111_p96",
+            Cos,
+            mixed_rational(-6, 104, 111),
+        ),
+    ]
+}
+
 fn bench_approx<F>(
     group: &mut criterion::BenchmarkGroup<'_, criterion::measurement::WallTime>,
     name: &'static str,
@@ -520,6 +890,7 @@ fn bench_trig_adversarial(c: &mut Criterion) {
     let e30_input = computable(Rational::from_bigint(BigInt::from(10_u8).pow(30)));
     let huge_pi_input = huge_pi_plus_offset();
     let near_pole_input = near_half_pi();
+    let promoted_tan_top = computable(rational(604, 125));
 
     bench_approx(
         &mut group,
@@ -635,6 +1006,13 @@ fn bench_trig_adversarial(c: &mut Criterion) {
         p,
         Computable::tan,
     );
+    bench_approx(
+        &mut group,
+        "tan_promoted_generated_604_125_p96",
+        promoted_tan_top,
+        p,
+        Computable::tan,
+    );
     group.finish();
 }
 
@@ -649,6 +1027,8 @@ fn bench_inverse_trig_adversarial(c: &mut Criterion) {
     let near_minus_one_input = computable(near_one().neg());
     let large_input = computable(Rational::new(8));
     let huge_input = computable(Rational::from_bigint(BigInt::from(10_u8).pow(30)));
+    let promoted_atan_top = computable(rational(783, 412));
+    let promoted_ln_top = computable(rational(677, 222));
 
     bench_approx(
         &mut group,
@@ -742,6 +1122,20 @@ fn bench_inverse_trig_adversarial(c: &mut Criterion) {
         p,
         Computable::atan,
     );
+    bench_approx(
+        &mut group,
+        "atan_promoted_generated_783_412_p96",
+        promoted_atan_top,
+        p,
+        Computable::atan,
+    );
+    bench_approx(
+        &mut group,
+        "ln_square_plus_one_promoted_generated_677_222_p96",
+        promoted_ln_top.square().add(Computable::one()).ln(),
+        p,
+        |value| value,
+    );
     bench_approx(&mut group, "atan_huge_p96", huge_input, p, Computable::atan);
     group.finish();
 }
@@ -777,6 +1171,23 @@ fn bench_trig_fuzz_adversarial(c: &mut Criterion) {
         p,
         Computable::tan,
     );
+    group.finish();
+}
+
+fn bench_promoted_library_slow_offenders(c: &mut Criterion) {
+    let mut group = c.benchmark_group("promoted_library_slow_offenders_approx");
+    configure_group(&mut group);
+    let p = -96;
+    for (name, op, rational) in promoted_library_slow_offenders() {
+        let input = computable(rational);
+        group.bench_function(name, |b| {
+            b.iter_batched(
+                || input.clone(),
+                |value| black_box(op.apply(value).approx(p)),
+                BatchSize::SmallInput,
+            )
+        });
+    }
     group.finish();
 }
 
@@ -948,6 +1359,7 @@ criterion_group!(
     bench_trig_adversarial,
     bench_inverse_trig_adversarial,
     bench_trig_fuzz_adversarial,
+    bench_promoted_library_slow_offenders,
     bench_inverse_hyperbolic_adversarial,
     bench_real_shortcut_adversarial
 );

@@ -40,6 +40,19 @@ fn rational(numerator: i64, denominator: u64) -> Rational {
     Rational::fraction(numerator, denominator).unwrap()
 }
 
+fn mixed_rational(whole: i64, numerator: u64, denominator: u64) -> Rational {
+    let fraction = Rational::fraction(
+        i64::try_from(numerator).expect("small numerator fits i64"),
+        denominator,
+    )
+    .unwrap();
+    if whole < 0 {
+        Rational::new(whole) - fraction
+    } else {
+        Rational::new(whole) + fraction
+    }
+}
+
 fn rational_big(numerator: BigInt, denominator: BigUint) -> Rational {
     Rational::from_bigint_fraction(numerator, denominator).unwrap()
 }
@@ -712,6 +725,235 @@ fn collect_rows(
             black_box(computable(rational(11, 13)).ln().approx(-128));
         },
     );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/ln_square_plus_one_promoted_generated_677_222",
+        || {
+            let value = computable(rational(677, 222));
+            black_box(value.square().add(Computable::one()).ln().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/ln_generated_14947_pos_3_11_222",
+        || {
+            let value = computable(mixed_rational(3, 11, 222));
+            black_box(value.square().add(Computable::one()).ln().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/ln_generated_11497_pos_1_137_564",
+        || {
+            let value = computable(mixed_rational(1, 137, 564));
+            black_box(value.square().add(Computable::one()).ln().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/ln_generated_9862_neg_1_221_492",
+        || {
+            let value = computable(mixed_rational(-1, 221, 492));
+            black_box(value.square().add(Computable::one()).ln().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/ln_generated_9457_neg_3_23_90",
+        || {
+            let value = computable(mixed_rational(-3, 23, 90));
+            black_box(value.square().add(Computable::one()).ln().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/ln_generated_15472_neg_3_13_50",
+        || {
+            let value = computable(mixed_rational(-3, 13, 50));
+            black_box(value.square().add(Computable::one()).ln().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/ln_generated_18352_neg_1_133_500",
+        || {
+            let value = computable(mixed_rational(-1, 133, 500));
+            black_box(value.square().add(Computable::one()).ln().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/ln_generated_11317_neg_8_21_53",
+        || {
+            let value = computable(mixed_rational(-8, 21, 53));
+            black_box(value.square().add(Computable::one()).ln().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/ln_generated_7447_pos_1_53_76",
+        || {
+            let value = computable(mixed_rational(1, 53, 76));
+            black_box(value.square().add(Computable::one()).ln().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/ln_generated_7642_neg_1_25_36",
+        || {
+            let value = computable(mixed_rational(-1, 25, 36));
+            black_box(value.square().add(Computable::one()).ln().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/ln_generated_14377_neg_1_189_764",
+        || {
+            let value = computable(mixed_rational(-1, 189, 764));
+            black_box(value.square().add(Computable::one()).ln().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/ln_generated_16417_pos_41_241",
+        || {
+            let value = computable(rational(41, 241));
+            black_box(value.square().add(Computable::one()).ln().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/ln_generated_17797_pos_1_328_503",
+        || {
+            let value = computable(mixed_rational(1, 328, 503));
+            black_box(value.square().add(Computable::one()).ln().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/atan_generated_10704_pos_1_371_412",
+        || {
+            black_box(computable(mixed_rational(1, 371, 412)).atan().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/tan_generated_13446_neg_5_15_187",
+        || {
+            black_box(computable(mixed_rational(-5, 15, 187)).tan().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/tan_generated_9591_neg_3_125_127",
+        || {
+            black_box(computable(mixed_rational(-3, 125, 127)).tan().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/tan_generated_16806_pos_5_3_22",
+        || {
+            black_box(computable(mixed_rational(5, 3, 22)).tan().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/tan_generated_11841_neg_5_2_17",
+        || {
+            black_box(computable(mixed_rational(-5, 2, 17)).tan().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/tan_generated_14421_pos_5_25_47",
+        || {
+            black_box(computable(mixed_rational(5, 25, 47)).tan().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/tan_generated_13866_neg_5_1_2",
+        || {
+            black_box(computable(mixed_rational(-5, 1, 2)).tan().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/tan_generated_15891_neg_5_23_33",
+        || {
+            black_box(computable(mixed_rational(-5, 23, 33)).tan().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/tan_generated_18666_pos_5_15_17",
+        || {
+            black_box(computable(mixed_rational(5, 15, 17)).tan().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/tan_generated_9231_neg_7_5_6",
+        || {
+            black_box(computable(mixed_rational(-7, 5, 6)).tan().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/cos_generated_9365_pos_7_14_139",
+        || {
+            black_box(computable(mixed_rational(7, 14, 139)).cos().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/cos_generated_16610_pos_7_4_19",
+        || {
+            black_box(computable(mixed_rational(7, 4, 19)).cos().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/sin_generated_10834_pos_4_34_61",
+        || {
+            black_box(computable(mixed_rational(4, 34, 61)).sin().approx(-96));
+        },
+    );
+    trace_row(
+        &mut rows,
+        filters,
+        "computable/promoted_library_slow/sin_generated_11359_pos_4_66_139",
+        || {
+            black_box(computable(mixed_rational(4, 66, 139)).sin().approx(-96));
+        },
+    );
     let trig_p = -96;
     let tiny_input = computable(tiny());
     let medium_input = computable(rational(7, 5));
@@ -720,6 +962,7 @@ fn collect_rows(
     let e30_input = computable(Rational::from_bigint(BigInt::from(10_u8).pow(30)));
     let huge_pi_input = huge_pi_plus_offset();
     let near_pole_input = near_half_pi();
+    let trig_promoted_tan = computable(rational(604, 125));
     trace_computable_approx(
         &mut rows,
         filters,
@@ -864,6 +1107,14 @@ fn collect_rows(
         trig_p,
         Computable::tan,
     );
+    trace_computable_approx(
+        &mut rows,
+        filters,
+        "computable/trig_adversarial/tan_promoted_generated_604_125",
+        trig_promoted_tan,
+        trig_p,
+        Computable::tan,
+    );
     let inverse_zero = computable(Rational::zero());
     let inverse_tiny = computable(tiny());
     let inverse_mid = computable(rational(7, 10));
@@ -871,6 +1122,8 @@ fn collect_rows(
     let inverse_near_minus_one = computable(near_one().neg());
     let inverse_large = computable(Rational::new(8));
     let inverse_huge = computable(Rational::from_bigint(BigInt::from(10_u8).pow(30)));
+    let inverse_generated_positive = computable(rational(783, 412));
+    let inverse_generated_negative = computable(rational(-32, 19));
     trace_computable_approx(
         &mut rows,
         filters,
@@ -980,6 +1233,22 @@ fn collect_rows(
         filters,
         "computable/inverse_trig_adversarial/atan_large",
         inverse_large,
+        trig_p,
+        Computable::atan,
+    );
+    trace_computable_approx(
+        &mut rows,
+        filters,
+        "computable/inverse_trig_adversarial/atan_generated_783_412",
+        inverse_generated_positive,
+        trig_p,
+        Computable::atan,
+    );
+    trace_computable_approx(
+        &mut rows,
+        filters,
+        "computable/inverse_trig_adversarial/atan_generated_minus_32_19",
+        inverse_generated_negative,
         trig_p,
         Computable::atan,
     );

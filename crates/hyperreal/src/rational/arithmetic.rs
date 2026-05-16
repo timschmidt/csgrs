@@ -951,6 +951,28 @@ impl Rational {
         )
     }
 
+    pub(crate) fn divide_by_power_of_two(&self, shift: i32) -> Option<Self> {
+        if shift < 0 {
+            return None;
+        }
+        if self.sign == NoSign || self.numerator.is_zero() {
+            return Some(Self::zero());
+        }
+
+        let shift = u64::try_from(shift).ok()?;
+        let numerator_shift = self
+            .numerator
+            .trailing_zeros()
+            .expect("non-zero numerator has trailing zeros")
+            .min(shift);
+        let denominator_shift = shift - numerator_shift;
+        let numerator =
+            &self.numerator >> usize::try_from(numerator_shift).expect("shift should fit");
+        let denominator =
+            &self.denominator << usize::try_from(denominator_shift).expect("shift should fit");
+        Some(Self::from_fraction_parts(self.sign, numerator, denominator))
+    }
+
     #[inline]
     pub(crate) fn power_of_two_shift(&self) -> Option<(i32, Sign)> {
         // Identify exact +/-2^k scales. Computable multiplication consumes these as
