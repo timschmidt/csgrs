@@ -29,6 +29,12 @@ jobs:
           repository: ${{ github.repository_owner }}/hyperreal
           path: hyperreal
 
+      - name: Checkout hyperlimit sibling
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/hyperlimit
+          path: hyperlimit
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
