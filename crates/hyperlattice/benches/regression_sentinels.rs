@@ -1,25 +1,19 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use hyperlattice::{Matrix3, Matrix4, Scalar, Vector3, Vector4, sqrt};
+use hyperlattice::{Matrix3, Matrix4, Real, Vector3, Vector4, sqrt};
 
-fn r(value: i32) -> Scalar {
+fn r(value: i32) -> Real {
     value.into()
 }
 
-#[cfg(feature = "hyperreal-backend")]
-fn frac(numerator: i64, denominator: u64) -> Scalar {
+fn frac(numerator: i64, denominator: u64) -> Real {
     hyperlattice::Rational::fraction(numerator, denominator)
         .unwrap()
         .into()
 }
 
-#[cfg(not(feature = "hyperreal-backend"))]
-fn frac(numerator: i64, denominator: u64) -> Scalar {
-    Scalar::try_from(numerator as f64 / denominator as f64).unwrap()
-}
-
 fn bench_regression_sentinels(c: &mut Criterion) {
     c.bench_function("sentinel/scalar/cancellation_zero_status", |b| {
-        let value: Scalar = ((Scalar::pi() * Scalar::e()) / Scalar::e()).unwrap() - Scalar::pi();
+        let value: Real = ((Real::pi() * Real::e()) / Real::e()).unwrap() - Real::pi();
         b.iter(|| value.zero_status())
     });
 
@@ -29,10 +23,18 @@ fn bench_regression_sentinels(c: &mut Criterion) {
     });
 
     c.bench_function("sentinel/vector/dot_sparse_symbolic", |b| {
-        let left = Vector3::new([Scalar::pi(), r(0), sqrt(r(2)).unwrap()]);
-        let right = Vector3::new([frac(2, 3), Scalar::e(), r(0)]);
+        let left = Vector3::new([Real::pi(), r(0), sqrt(r(2)).unwrap()]);
+        let right = Vector3::new([frac(2, 3), Real::e(), r(0)]);
         b.iter(|| left.dot(&right))
     });
+
+    c.bench_function(
+        "sentinel/vector/shared_scale_view_common_denominator",
+        |b| {
+            let vector = Vector4::new([frac(1, 7), frac(-2, 7), frac(3, 7), frac(4, 7)]);
+            b.iter(|| vector.shared_scale_view())
+        },
+    );
 
     c.bench_function("sentinel/matrix3/inverse_fractional", |b| {
         let matrix = Matrix3::new([
@@ -41,6 +43,19 @@ fn bench_regression_sentinels(c: &mut Criterion) {
             [frac(5, 8), frac(17, 16), frac(19, 8)],
         ]);
         b.iter(|| matrix.clone().inverse_checked().unwrap())
+    });
+
+    c.bench_function("sentinel/matrix3/prepared_inverse_fractional", |b| {
+        let matrix = Matrix3::new([
+            [frac(9, 8), frac(3, 16), frac(-5, 8)],
+            [frac(7, 4), frac(-11, 8), frac(13, 16)],
+            [frac(5, 8), frac(17, 16), frac(19, 8)],
+        ]);
+        b.iter_batched(
+            || matrix.prepare(),
+            |mut prepared| prepared.inverse_checked().unwrap(),
+            criterion::BatchSize::SmallInput,
+        )
     });
 
     c.bench_function("sentinel/matrix3/dense_transform_handle", |b| {
@@ -99,6 +114,21 @@ fn bench_regression_sentinels(c: &mut Criterion) {
                 .div_matrix_checked(divisor.clone())
                 .unwrap()
         })
+    });
+
+    c.bench_function("sentinel/matrix4/prepared_division_fractional", |b| {
+        let numerator = Matrix4::identity();
+        let divisor = Matrix4::new([
+            [frac(11, 10), frac(2, 10), frac(3, 10), frac(4, 10)],
+            [frac(5, 10), frac(17, 10), frac(7, 10), frac(-8, 10)],
+            [frac(9, 10), frac(-10, 10), frac(23, 10), frac(12, 10)],
+            [frac(-13, 10), frac(14, 10), frac(-15, 10), frac(19, 10)],
+        ]);
+        b.iter_batched(
+            || divisor.prepare(),
+            |mut prepared| prepared.divide_left_checked(numerator.clone()).unwrap(),
+            criterion::BatchSize::SmallInput,
+        )
     });
 
     c.bench_function(

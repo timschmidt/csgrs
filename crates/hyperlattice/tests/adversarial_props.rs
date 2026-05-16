@@ -1,10 +1,10 @@
 mod common;
 
 use common::frac;
-use hyperlattice::{Complex, Matrix3, Matrix4, Problem, Scalar, ScalarSign, Vector3, ZeroStatus};
+use hyperlattice::{Complex, Matrix3, Matrix4, Problem, Real, RealSign, Vector3, ZeroStatus};
 use proptest::prelude::*;
 
-fn scalar_i(value: i32) -> Scalar {
+fn scalar_i(value: i32) -> Real {
     value.into()
 }
 
@@ -12,17 +12,17 @@ fn nonzero_i32() -> impl Strategy<Value = i32> {
     (-16_i32..=16).prop_filter("nonzero", |value| *value != 0)
 }
 
-fn small_scalar() -> impl Strategy<Value = Scalar> {
+fn small_scalar() -> impl Strategy<Value = Real> {
     prop_oneof![
         (-64_i32..=64).prop_map(scalar_i),
         (-64_i64..=64, 1_u64..=64).prop_map(|(n, d)| frac(n, d)),
-        Just(Scalar::pi()),
-        Just(Scalar::e()),
+        Just(Real::pi()),
+        Just(Real::e()),
         Just(hyperlattice::sqrt(scalar_i(2)).unwrap()),
     ]
 }
 
-fn small_exact_scalar() -> impl Strategy<Value = Scalar> {
+fn small_exact_scalar() -> impl Strategy<Value = Real> {
     prop_oneof![
         (-64_i32..=64).prop_map(scalar_i),
         (-64_i64..=64, 1_u64..=64).prop_map(|(n, d)| frac(n, d)),
@@ -95,11 +95,11 @@ proptest! {
         prop_assert_eq!(value.zero_status(), facts.zero);
         prop_assert_eq!(value.definitely_zero(), facts.zero == ZeroStatus::Zero);
         if facts.zero == ZeroStatus::Zero {
-            prop_assert_eq!(facts.sign, Some(ScalarSign::Zero));
+            prop_assert_eq!(facts.sign, Some(RealSign::Zero));
             prop_assert!(facts.magnitude.is_none());
         }
         if facts.zero == ZeroStatus::NonZero {
-            prop_assert_ne!(facts.sign, Some(ScalarSign::Zero));
+            prop_assert_ne!(facts.sign, Some(RealSign::Zero));
             prop_assert!(facts.magnitude.is_some());
         }
     }

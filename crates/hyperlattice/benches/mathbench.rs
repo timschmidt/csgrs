@@ -1,15 +1,10 @@
 use std::{cell::Cell, collections::BTreeMap, env, fs, hint::black_box, path::Path};
 
-use criterion::{BatchSize, BenchmarkGroup, BenchmarkId, Criterion};
+use criterion::{BatchSize, BenchmarkGroup, Criterion};
 use hyperlattice::Rational;
-use hyperlattice::{
-    ApproxBackend, Backend, Complex, HyperrealBackend, Matrix3, Matrix4, Scalar, SignedAxis4,
-    Vector3, Vector4,
-};
+use hyperlattice::{Complex, Matrix3, Matrix4, Real, SignedAxis4, Vector3, Vector4};
 
-type HyperrealScalar = Scalar<HyperrealBackend>;
-
-include!("mathbench/backends.rs");
+include!("mathbench/engines.rs");
 include!("mathbench/fixtures.rs");
 include!("mathbench/comparisons.rs");
 include!("mathbench/scalar_ops.rs");
@@ -17,7 +12,6 @@ include!("mathbench/complex_ops.rs");
 include!("mathbench/vector_ops.rs");
 include!("mathbench/matrix_ops.rs");
 include!("mathbench/borrowed_ops.rs");
-include!("mathbench/precision.rs");
 include!("mathbench/dispatch_trace.rs");
 include!("mathbench/report.rs");
 
@@ -93,7 +87,6 @@ fn main() {
     bench_matrix_operations(&mut criterion);
     bench_targeted_matrix_forms(&mut criterion);
     bench_borrowed_operations(&mut criterion);
-    bench_precisions(&mut criterion);
     if trace_only {
         write_dispatch_trace_report();
     } else {

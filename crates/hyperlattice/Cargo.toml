@@ -2,7 +2,7 @@
 name = "hyperlattice"
 version = "0.4.0"
 edition = "2024"
-description = "A small Rust linear algebra library with a crate-owned Scalar type and realistic or approximate backends."
+description = "A small Rust linear algebra library with hyperreal-backed scalar, vector, and matrix types."
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/timschmidt/hyperlattice"
@@ -11,33 +11,24 @@ keywords = ["math", "blas", "matrices", "vectors", "linear-algebra"]
 categories = ["mathematics"]
 
 [dependencies]
-num = { version = "0.4.3", optional = true }
-# dev dep, do not remove
-hyperreal = { path = "../hyperreal/", version = "0.11.1", optional = true }
-# dev dep, do not remove
-#hyperreal = { version = "0.11.1", optional = true }
+hyperreal = { path = "../hyperreal/", version = "0.11.1" }
 arbitrary = { version = "1", features = ["derive"], optional = true }
 
 [dev-dependencies]
-astro-float = "0.9.5"
 criterion = "0.7.0"
 proptest = "1.7.0"
 serde_json = "1.0.145"
 symbolica = "1.5.0"
 
 [features]
-default = ["hyperreal-backend", "approx-backend"]
-hyperreal-backend = ["dep:num", "dep:hyperreal"]
-approx-backend = []
-hyperreal-dispatch-trace = ["dep:num", "dep:hyperreal", "hyperreal/dispatch-trace"]
+default = []
+hyperreal-dispatch-trace = ["hyperreal/dispatch-trace"]
 arbitrary = ["dep:arbitrary"]
 
 [[bench]]
 name = "mathbench"
 harness = false
-required-features = ["hyperreal-backend", "approx-backend"]
 
 [[bench]]
 name = "regression_sentinels"
 harness = false
-required-features = ["hyperreal-backend", "approx-backend"]

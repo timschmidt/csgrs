@@ -1,91 +1,39 @@
-//! Scalar constants, elementary functions, and zero-classification helpers.
+//! [`Real`](crate::Real) constants, elementary functions, and zero-classification helpers.
 
 use crate::complex::Complex;
-use crate::{AbortSignal, Backend, BlasResult, CheckedBlasResult, Problem, Scalar};
+use crate::{
+    AbortSignal, BlasResult, CheckedBlasResult, Problem, Real, RealDomainStatus, ZeroStatus,
+};
 use std::sync::atomic::Ordering;
 
-/// Classification of whether a scalar is zero.
-///
-/// `Unknown` is important for computable reals and approximate intervals:
-/// ordinary APIs may choose optimistic behavior, while checked APIs reject
-/// unknown-zero values.
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum ZeroStatus {
-    /// The value is definitely zero.
-    Zero,
-    /// The value is definitely non-zero.
-    NonZero,
-    /// The backend cannot prove whether the value is zero.
-    Unknown,
-}
-
-/// Exact sign knowledge exposed through [`Scalar`](crate::Scalar).
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum ScalarSign {
-    /// The scalar is definitely negative.
-    Negative,
-    /// The scalar is definitely zero.
-    Zero,
-    /// The scalar is definitely positive.
-    Positive,
-}
-
-/// Known most-significant binary digit for a non-zero scalar.
-///
-/// `exact_msd` is true when `msd` is known exactly. When it is false, `msd` is
-/// a conservative backend-provided bound suitable for filtering but not for
-/// reconstructing the value.
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub struct ScalarMagnitudeBits {
-    /// Most-significant binary digit or conservative binary magnitude bound.
-    pub msd: i32,
-    /// Whether [`ScalarMagnitudeBits::msd`] is exact.
-    pub exact_msd: bool,
-}
-
-/// Conservative scalar facts available without exposing backend internals.
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub struct ScalarFacts {
-    /// Known sign, if the backend can prove it.
-    pub sign: Option<ScalarSign>,
-    /// Known zero/non-zero status.
-    pub zero: ZeroStatus,
-    /// Whether an exact rational representation is structurally available.
-    pub exact_rational: bool,
-    /// Conservative binary magnitude information for known non-zero values.
-    pub magnitude: Option<ScalarMagnitudeBits>,
-}
-
 #[inline(always)]
-pub(crate) fn with_abort<B: Backend>(mut value: Scalar<B>, signal: &AbortSignal) -> Scalar<B> {
-    crate::trace_dispatch!("hyperlattice", "abort", "attach-owned-scalar");
+pub(crate) fn with_abort(mut value: Real, signal: &AbortSignal) -> Real {
+    crate::trace_dispatch!("hyperlattice", "abort", "attach-owned-real");
     value.abort(signal.clone());
     value
 }
 
 #[inline(always)]
-pub(crate) fn clone_with_abort<B: Backend>(value: &Scalar<B>, signal: &AbortSignal) -> Scalar<B> {
+pub(crate) fn clone_with_abort(value: &Real, signal: &AbortSignal) -> Real {
     crate::trace_dispatch!("hyperlattice", "abort", "clone-and-attach");
     with_abort(value.clone(), signal)
 }
 
-/// Classifies a scalar as zero, non-zero, or unknown.
+/// Classifies a real value as zero, non-zero, or unknown.
 #[inline(always)]
-pub fn zero_status<B: Backend>(value: &Scalar<B>) -> ZeroStatus {
-    crate::trace_dispatch!("hyperlattice", "zero_status", "scalar-query");
+pub fn zero_status(value: &Real) -> ZeroStatus {
+    crate::trace_dispatch!("hyperlattice", "zero_status", "real-query");
     value.zero_status()
 }
 
-/// Classifies a scalar after attaching an abort signal.
+/// Classifies a real value after attaching an abort signal.
 ///
-/// With the hyperreal backend, this allows long-running zero checks to observe
-/// cancellation. With the approx backend, the signal is accepted as a no-op.
+/// This lets long-running zero checks on opaque computable reals observe
+/// cancellation while keeping the structural fast path allocation-free.
 #[inline(always)]
-pub fn zero_status_with_abort<B: Backend>(value: &Scalar<B>, signal: &AbortSignal) -> ZeroStatus {
+pub fn zero_status_with_abort(value: &Real, signal: &AbortSignal) -> ZeroStatus {
     let status = zero_status(value);
     if status != ZeroStatus::Unknown || !signal.load(Ordering::Relaxed) {
-        // Fast path for the common case: known structural status, or no active abort
-        // request. Cloning just to attach a signal showed up in predicate-heavy benches.
         crate::trace_dispatch!("hyperlattice", "zero_status_abort", "no-clone-fast-path");
         return status;
     }
@@ -99,7 +47,7 @@ pub fn zero_status_with_abort<B: Backend>(value: &Scalar<B>, signal: &AbortSigna
 }
 
 #[inline(always)]
-pub(crate) fn reject_definite_zero<B: Backend>(value: &Scalar<B>) -> BlasResult<()> {
+pub(crate) fn reject_definite_zero(value: &Real) -> BlasResult<()> {
     if value.definitely_zero() {
         crate::trace_dispatch!("hyperlattice", "zero_guard", "definite-zero-rejected");
         Err(Problem::DivideByZero)
@@ -110,7 +58,7 @@ pub(crate) fn reject_definite_zero<B: Backend>(value: &Scalar<B>) -> BlasResult<
 }
 
 #[inline(always)]
-pub(crate) fn require_known_nonzero<B: Backend>(value: &Scalar<B>) -> CheckedBlasResult<()> {
+pub(crate) fn require_known_nonzero(value: &Real) -> CheckedBlasResult<()> {
     match zero_status(value) {
         ZeroStatus::Zero => {
             crate::trace_dispatch!("hyperlattice", "zero_guard", "checked-zero-rejected");
@@ -128,8 +76,8 @@ pub(crate) fn require_known_nonzero<B: Backend>(value: &Scalar<B>) -> CheckedBla
 }
 
 #[inline(always)]
-pub(crate) fn require_known_nonzero_with_abort<B: Backend>(
-    value: &Scalar<B>,
+pub(crate) fn require_known_nonzero_with_abort(
+    value: &Real,
     signal: &AbortSignal,
 ) -> CheckedBlasResult<()> {
     match zero_status_with_abort(value, signal) {
@@ -140,35 +88,33 @@ pub(crate) fn require_known_nonzero_with_abort<B: Backend>(
 }
 
 /// Returns the additive identity.
-pub fn zero() -> Scalar {
+pub fn zero() -> Real {
     crate::trace_dispatch!("hyperlattice", "free_function", "zero");
-    Scalar::zero()
+    Real::zero()
 }
 
 /// Returns the multiplicative identity.
-pub fn one() -> Scalar {
+pub fn one() -> Real {
     crate::trace_dispatch!("hyperlattice", "free_function", "one");
-    Scalar::one()
+    Real::one()
 }
 
 /// Returns Euler's number.
-pub fn e() -> Scalar {
+pub fn e() -> Real {
     crate::trace_dispatch!("hyperlattice", "free_function", "e");
-    Scalar::e()
+    Real::e()
 }
 
 /// Returns pi.
-pub fn pi() -> Scalar {
+pub fn pi() -> Real {
     crate::trace_dispatch!("hyperlattice", "free_function", "pi");
-    Scalar::pi()
+    Real::pi()
 }
 
 /// Returns tau, equal to `2 * pi`.
-pub fn tau() -> Scalar {
-    // Route through the backend hook so exact backends can return symbolic tau
-    // instead of rebuilding `2 * pi` through multiplication.
+pub fn tau() -> Real {
     crate::trace_dispatch!("hyperlattice", "free_function", "tau");
-    Scalar::tau()
+    Real::tau()
 }
 
 /// Returns the imaginary unit as a complex scalar.
@@ -177,36 +123,33 @@ pub fn i() -> Complex {
 }
 
 /// Returns the multiplicative inverse of `value`.
-pub fn reciprocal<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+pub fn reciprocal(value: Real) -> BlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "reciprocal-owned");
     value.inverse()
 }
 
 /// Returns the multiplicative inverse of `value` without consuming it.
-pub fn reciprocal_ref<B: Backend>(value: &Scalar<B>) -> BlasResult<Scalar<B>> {
+pub fn reciprocal_ref(value: &Real) -> BlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "reciprocal-ref");
     value.inverse_ref()
 }
 
 /// Returns the multiplicative inverse after rejecting zero and unknown-zero values.
-pub fn reciprocal_checked<B: Backend>(value: Scalar<B>) -> CheckedBlasResult<Scalar<B>> {
+pub fn reciprocal_checked(value: Real) -> CheckedBlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "reciprocal-checked-owned");
     require_known_nonzero(&value)?;
     value.inverse()
 }
 
 /// Returns the checked multiplicative inverse without consuming `value`.
-pub fn reciprocal_ref_checked<B: Backend>(value: &Scalar<B>) -> CheckedBlasResult<Scalar<B>> {
+pub fn reciprocal_ref_checked(value: &Real) -> CheckedBlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "reciprocal-checked-ref");
     require_known_nonzero(value)?;
     value.inverse_ref()
 }
 
 /// Returns the checked multiplicative inverse after attaching an abort signal.
-pub fn reciprocal_checked_with_abort<B: Backend>(
-    value: Scalar<B>,
-    signal: &AbortSignal,
-) -> CheckedBlasResult<Scalar<B>> {
+pub fn reciprocal_checked_with_abort(value: Real, signal: &AbortSignal) -> CheckedBlasResult<Real> {
     crate::trace_dispatch!(
         "hyperlattice",
         "free_function",
@@ -218,7 +161,7 @@ pub fn reciprocal_checked_with_abort<B: Backend>(
 }
 
 /// Raises `base` to a scalar exponent.
-pub fn pow<B: Backend>(base: Scalar<B>, exponent: Scalar<B>) -> BlasResult<Scalar<B>> {
+pub fn pow(base: Real, exponent: Real) -> BlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "pow");
     base.pow(exponent)
 }
@@ -227,39 +170,37 @@ pub fn pow<B: Backend>(base: Scalar<B>, exponent: Scalar<B>) -> BlasResult<Scala
 ///
 /// Negative exponents require the result to be invertible. `0^0` returns
 /// [`Problem::NotANumber`].
-pub fn powi<B: Backend>(base: Scalar<B>, exponent: i64) -> BlasResult<Scalar<B>> {
+pub fn powi(base: Real, exponent: i64) -> BlasResult<Real> {
     if exponent == 0 {
         if base.definitely_zero() {
             crate::trace_dispatch!("hyperlattice", "powi", "zero-to-zero-domain-error");
             return Err(Problem::NotANumber);
         }
         crate::trace_dispatch!("hyperlattice", "powi", "exponent-zero-one");
-        return Ok(Scalar::<B>::one());
+        return Ok(Real::one());
     }
 
     let exp = exponent.unsigned_abs();
-    // The hyperreal backend opts into hard-coded tiny exponents because the generic
-    // squaring loop clones enough symbolic state to show up in scalar and matrix benches.
-    let positive = match (B::SPECIALIZE_SCALAR_POWI, exp) {
-        (_, 1) => {
+    let positive = match exp {
+        1 => {
             crate::trace_dispatch!("hyperlattice", "powi", "exponent-one");
             base
         }
-        (true, 2) => {
+        2 => {
             crate::trace_dispatch!("hyperlattice", "powi", "specialized-square");
             base.clone() * base
         }
-        (true, 3) => {
+        3 => {
             crate::trace_dispatch!("hyperlattice", "powi", "specialized-cube");
             let square = base.clone() * base.clone();
             square * base
         }
-        (true, 4) => {
+        4 => {
             crate::trace_dispatch!("hyperlattice", "powi", "specialized-fourth");
             let square = base.clone() * base;
             square.clone() * square
         }
-        (true, 5) => {
+        5 => {
             crate::trace_dispatch!("hyperlattice", "powi", "specialized-fifth");
             let square = base.clone() * base.clone();
             let fourth = square.clone() * square;
@@ -279,7 +220,7 @@ pub fn powi<B: Backend>(base: Scalar<B>, exponent: i64) -> BlasResult<Scalar<B>>
     }
 }
 
-fn powi_by_squaring<B: Backend>(base: Scalar<B>, exponent: u64) -> Scalar<B> {
+fn powi_by_squaring(base: Real, exponent: u64) -> Real {
     let mut exp = exponent;
     let mut result = None;
     let mut factor = base;
@@ -300,181 +241,173 @@ fn powi_by_squaring<B: Backend>(base: Scalar<B>, exponent: u64) -> Scalar<B> {
 }
 
 /// Returns `e` raised to `value`.
-pub fn exp<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+pub fn exp(value: Real) -> BlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "exp");
     value.exp()
 }
 
 /// Returns the natural logarithm of `value`.
-pub fn ln<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+pub fn ln(value: Real) -> BlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "ln");
+    reject_invalid_domain(value.log_domain(), Problem::NotANumber)?;
     value.ln()
 }
 
 /// Returns the base-10 logarithm of `value`.
-pub fn log10<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+pub fn log10(value: Real) -> BlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "log10");
+    reject_invalid_domain(value.log_domain(), Problem::NotANumber)?;
     value.log10()
 }
 
 /// Returns the base-10 logarithm after attaching an abort signal.
-pub fn log10_with_abort<B: Backend>(
-    value: Scalar<B>,
-    signal: &AbortSignal,
-) -> BlasResult<Scalar<B>> {
+pub fn log10_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "log10-with-abort");
+    reject_invalid_domain(value.log_domain(), Problem::NotANumber)?;
     with_abort(value, signal).log10()
 }
 
 /// Returns the principal square root of `value`.
-pub fn sqrt<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+pub fn sqrt(value: Real) -> BlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "sqrt");
+    reject_invalid_domain(value.sqrt_domain(), Problem::SqrtNegative)?;
     value.sqrt()
 }
 
 /// Returns the sine of `value`.
-pub fn sin<B: Backend>(value: Scalar<B>) -> Scalar<B> {
+pub fn sin(value: Real) -> Real {
     crate::trace_dispatch!("hyperlattice", "free_function", "sin");
     value.sin()
 }
 
 /// Returns the cosine of `value`.
-pub fn cos<B: Backend>(value: Scalar<B>) -> Scalar<B> {
+pub fn cos(value: Real) -> Real {
     crate::trace_dispatch!("hyperlattice", "free_function", "cos");
     value.cos()
 }
 
 /// Returns the tangent of `value`.
-pub fn tan<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+pub fn tan(value: Real) -> BlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "tan");
     value.tan()
 }
 
 /// Returns the hyperbolic sine of `value`.
-pub fn sinh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
-    if B::USE_BACKEND_HYPERBOLIC {
-        crate::trace_dispatch!("hyperlattice", "free_function", "sinh-backend");
-        value.sinh()
-    } else {
-        crate::trace_dispatch!("hyperlattice", "free_function", "sinh-exp-formula");
-        let positive = value.clone().exp()?;
-        let negative = (-value).exp()?;
-        (positive - negative) / Scalar::<B>::from(2_i8)
-    }
+pub fn sinh(value: Real) -> BlasResult<Real> {
+    crate::trace_dispatch!("hyperlattice", "free_function", "sinh-exp-formula");
+    let positive = value.clone().exp()?;
+    let negative = (-value).exp()?;
+    (positive - negative) / Real::from(2_i8)
 }
 
 /// Returns the hyperbolic cosine of `value`.
-pub fn cosh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
-    if B::USE_BACKEND_HYPERBOLIC {
-        crate::trace_dispatch!("hyperlattice", "free_function", "cosh-backend");
-        value.cosh()
-    } else {
-        crate::trace_dispatch!("hyperlattice", "free_function", "cosh-exp-formula");
-        let positive = value.clone().exp()?;
-        let negative = (-value).exp()?;
-        (positive + negative) / Scalar::<B>::from(2_i8)
-    }
+pub fn cosh(value: Real) -> BlasResult<Real> {
+    crate::trace_dispatch!("hyperlattice", "free_function", "cosh-exp-formula");
+    let positive = value.clone().exp()?;
+    let negative = (-value).exp()?;
+    (positive + negative) / Real::from(2_i8)
 }
 
 /// Returns the hyperbolic tangent of `value`.
-pub fn tanh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
-    if B::USE_BACKEND_HYPERBOLIC || B::USE_BACKEND_TANH {
-        crate::trace_dispatch!("hyperlattice", "free_function", "tanh-backend");
-        value.tanh()
-    } else {
-        crate::trace_dispatch!("hyperlattice", "free_function", "tanh-exp-formula");
-        let positive = value.clone().exp()?;
-        let negative = (-value).exp()?;
-        (positive.clone() - negative.clone()) / (positive + negative)
-    }
+pub fn tanh(value: Real) -> BlasResult<Real> {
+    crate::trace_dispatch!("hyperlattice", "free_function", "tanh-exp-formula");
+    let positive = value.clone().exp()?;
+    let negative = (-value).exp()?;
+    (positive.clone() - negative.clone()) / (positive + negative)
 }
 
 /// Returns the inverse sine of `value`.
-pub fn asin<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+pub fn asin(value: Real) -> BlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "asin");
+    reject_invalid_domain(value.asin_acos_domain(), Problem::NotANumber)?;
     value.asin()
 }
 
 /// Returns the inverse sine after attaching an abort signal.
-pub fn asin_with_abort<B: Backend>(
-    value: Scalar<B>,
-    signal: &AbortSignal,
-) -> BlasResult<Scalar<B>> {
+pub fn asin_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "asin-with-abort");
+    reject_invalid_domain(value.asin_acos_domain(), Problem::NotANumber)?;
     with_abort(value, signal).asin()
 }
 
 /// Returns the inverse cosine of `value`.
-pub fn acos<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+pub fn acos(value: Real) -> BlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "acos");
+    reject_invalid_domain(value.asin_acos_domain(), Problem::NotANumber)?;
     value.acos()
 }
 
 /// Returns the inverse cosine after attaching an abort signal.
-pub fn acos_with_abort<B: Backend>(
-    value: Scalar<B>,
-    signal: &AbortSignal,
-) -> BlasResult<Scalar<B>> {
+pub fn acos_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "acos-with-abort");
+    reject_invalid_domain(value.asin_acos_domain(), Problem::NotANumber)?;
     with_abort(value, signal).acos()
 }
 
 /// Returns the inverse tangent of `value`.
-pub fn atan<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+pub fn atan(value: Real) -> BlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "atan");
     value.atan()
 }
 
 /// Returns the inverse tangent after attaching an abort signal.
-pub fn atan_with_abort<B: Backend>(
-    value: Scalar<B>,
-    signal: &AbortSignal,
-) -> BlasResult<Scalar<B>> {
+pub fn atan_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "atan-with-abort");
     with_abort(value, signal).atan()
 }
 
 /// Returns the inverse hyperbolic sine of `value`.
-pub fn asinh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+pub fn asinh(value: Real) -> BlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "asinh");
     value.asinh()
 }
 
 /// Returns the inverse hyperbolic sine after attaching an abort signal.
-pub fn asinh_with_abort<B: Backend>(
-    value: Scalar<B>,
-    signal: &AbortSignal,
-) -> BlasResult<Scalar<B>> {
+pub fn asinh_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "asinh-with-abort");
     with_abort(value, signal).asinh()
 }
 
 /// Returns the inverse hyperbolic cosine of `value`.
-pub fn acosh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+pub fn acosh(value: Real) -> BlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "acosh");
+    reject_invalid_domain(value.acosh_domain(), Problem::NotANumber)?;
     value.acosh()
 }
 
 /// Returns the inverse hyperbolic cosine after attaching an abort signal.
-pub fn acosh_with_abort<B: Backend>(
-    value: Scalar<B>,
-    signal: &AbortSignal,
-) -> BlasResult<Scalar<B>> {
+pub fn acosh_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "acosh-with-abort");
+    reject_invalid_domain(value.acosh_domain(), Problem::NotANumber)?;
     with_abort(value, signal).acosh()
 }
 
 /// Returns the inverse hyperbolic tangent of `value`.
-pub fn atanh<B: Backend>(value: Scalar<B>) -> BlasResult<Scalar<B>> {
+pub fn atanh(value: Real) -> BlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "atanh");
     value.atanh()
 }
 
 /// Returns the inverse hyperbolic tangent after attaching an abort signal.
-pub fn atanh_with_abort<B: Backend>(
-    value: Scalar<B>,
-    signal: &AbortSignal,
-) -> BlasResult<Scalar<B>> {
+pub fn atanh_with_abort(value: Real, signal: &AbortSignal) -> BlasResult<Real> {
     crate::trace_dispatch!("hyperlattice", "free_function", "atanh-with-abort");
     with_abort(value, signal).atanh()
+}
+
+#[inline(always)]
+fn reject_invalid_domain(status: RealDomainStatus, problem: Problem) -> BlasResult<()> {
+    match status {
+        RealDomainStatus::Invalid => {
+            crate::trace_dispatch!("hyperlattice", "domain", "structural-invalid");
+            Err(problem)
+        }
+        RealDomainStatus::Valid => {
+            crate::trace_dispatch!("hyperlattice", "domain", "structural-valid");
+            Ok(())
+        }
+        RealDomainStatus::Unknown => {
+            crate::trace_dispatch!("hyperlattice", "domain", "structural-unknown");
+            Ok(())
+        }
+    }
 }

@@ -11,19 +11,18 @@
 use std::sync::{Arc, atomic::AtomicBool};
 
 use arbitrary::Arbitrary;
+use hyperlattice::{Real, Vector3, Vector4, ZeroStatus};
 use libfuzzer_sys::fuzz_target;
-use hyperlattice::{ApproxBackend, HyperrealBackend, Scalar, Vector3, Vector4, ZeroStatus};
 
 #[derive(Debug)]
-struct Input<Backend: hyperlattice::Backend> {
-    v3a: Vector3<Backend>,
-    v3b: Vector3<Backend>,
-    v4a: Vector4<Backend>,
-    v4b: Vector4<Backend>,
+struct Input {
+    v3a: Vector3,
+    v3b: Vector3,
+    v4a: Vector4,
+    v4b: Vector4,
 }
 
-impl<'a, Backend: hyperlattice::Backend> Arbitrary<'a> for Input<Backend>
-where Vector3<Backend>: Arbitrary<'a>, Vector4<Backend>: Arbitrary<'a> {
+impl<'a> Arbitrary<'a> for Input {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self {
             v3a: Arbitrary::arbitrary(u)?,
@@ -34,13 +33,11 @@ where Vector3<Backend>: Arbitrary<'a>, Vector4<Backend>: Arbitrary<'a> {
     }
 }
 
-fuzz_target!(|input: (Input<ApproxBackend>, Input<HyperrealBackend>)| {
-    let (approx_input, hyperreal_input) = input;
-    vector_fuzz(approx_input);
-    vector_fuzz(hyperreal_input);
+fuzz_target!(|input: Input| {
+    vector_fuzz(input);
 });
 
-fn vector_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
+fn vector_fuzz(input: Input) {
     let Input { v3a, v3b, v4a, v4b } = input;
 
     let signal = Arc::new(AtomicBool::new(false));
@@ -69,6 +66,8 @@ fn vector_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
 
     // ── Vector3: no-panic — geometric operations ─────────────────────────────
     let _ = v3a.dot(&v3b);
+    let _ = v3a.shared_scale_view();
+    let _ = v3b.shared_scale_view();
     let _ = v3a.dot_with_abort(&v3b, &signal);
     let _ = v3a.magnitude();
     let _ = v3a.magnitude_with_abort(&signal);
@@ -76,7 +75,9 @@ fn vector_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
     let _ = v3a.normalize_checked();
     let _ = v3a.normalize_checked_with_abort(&signal);
     let _ = v3a.clone().div_scalar_checked(v3b[0].clone());
-    let _ = v3a.clone().div_scalar_checked_with_abort(v3b[0].clone(), &signal);
+    let _ = v3a
+        .clone()
+        .div_scalar_checked_with_abort(v3b[0].clone(), &signal);
 
     // ── Vector4: no-panic — vector-vector arithmetic ─────────────────────────
     let _ = v4a.clone() + v4b.clone();
@@ -102,6 +103,8 @@ fn vector_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
 
     // ── Vector4: no-panic — geometric operations ─────────────────────────────
     let _ = v4a.dot(&v4b);
+    let _ = v4a.shared_scale_view();
+    let _ = v4b.shared_scale_view();
     let _ = v4a.dot_with_abort(&v4b, &signal);
     let _ = v4a.magnitude();
     let _ = v4a.magnitude_with_abort(&signal);
@@ -109,12 +112,18 @@ fn vector_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
     let _ = v4a.normalize_checked();
     let _ = v4a.normalize_checked_with_abort(&signal);
     let _ = v4a.clone().div_scalar_checked(v4b[0].clone());
-    let _ = v4a.clone().div_scalar_checked_with_abort(v4b[0].clone(), &signal);
+    let _ = v4a
+        .clone()
+        .div_scalar_checked_with_abort(v4b[0].clone(), &signal);
 
     // ── Vector3: algebraic invariants ────────────────────────────────────────
 
     // −(−v) is the exact identity for each component.
-    assert_eq!(-(-v3a.clone()), v3a, "Vector3 double negation must be identity");
+    assert_eq!(
+        -(-v3a.clone()),
+        v3a,
+        "Vector3 double negation must be identity"
+    );
 
     // Each component of v + (−v) must be within error bounds of zero.
     let zero3 = v3a.clone() + (-v3a.clone());
@@ -134,14 +143,22 @@ fn vector_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
     );
 
     // Dot product is symmetric.
-    assert_eq!(v3a.dot(&v3b), v3b.dot(&v3a), "Vector3 dot product must be commutative");
+    assert_eq!(
+        v3a.dot(&v3b),
+        v3b.dot(&v3a),
+        "Vector3 dot product must be commutative"
+    );
 
-    // Scalar multiplicative identity: v * 1 == v component-wise.
-    let one = Scalar::<Backend>::one();
-    assert_eq!(v3a.clone() * one.clone(), v3a, "Vector3 * 1 must equal the vector");
+    // Real multiplicative identity: v * 1 == v component-wise.
+    let one = Real::one();
+    assert_eq!(
+        v3a.clone() * one.clone(),
+        v3a,
+        "Vector3 * 1 must equal the vector"
+    );
 
-    // Scalar zero annihilator: every component of v * 0 is exactly zero.
-    let scalar_zero = Scalar::<Backend>::zero();
+    // Real zero annihilator: every component of v * 0 is exactly zero.
+    let scalar_zero = Real::zero();
     let scaled_zero3 = v3a.clone() * scalar_zero.clone();
     for i in 0..3 {
         assert!(
@@ -159,7 +176,11 @@ fn vector_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
 
     // ── Vector4: algebraic invariants ────────────────────────────────────────
 
-    assert_eq!(-(-v4a.clone()), v4a, "Vector4 double negation must be identity");
+    assert_eq!(
+        -(-v4a.clone()),
+        v4a,
+        "Vector4 double negation must be identity"
+    );
 
     let zero4 = v4a.clone() + (-v4a.clone());
     for i in 0..4 {
@@ -176,9 +197,17 @@ fn vector_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
         "Vector4 addition must be commutative"
     );
 
-    assert_eq!(v4a.dot(&v4b), v4b.dot(&v4a), "Vector4 dot product must be commutative");
+    assert_eq!(
+        v4a.dot(&v4b),
+        v4b.dot(&v4a),
+        "Vector4 dot product must be commutative"
+    );
 
-    assert_eq!(v4a.clone() * one.clone(), v4a, "Vector4 * 1 must equal the vector");
+    assert_eq!(
+        v4a.clone() * one.clone(),
+        v4a,
+        "Vector4 * 1 must equal the vector"
+    );
 
     let scaled_zero4 = v4a.clone() * scalar_zero.clone();
     for i in 0..4 {

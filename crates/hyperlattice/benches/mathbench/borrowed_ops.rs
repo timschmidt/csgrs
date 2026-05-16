@@ -1,10 +1,9 @@
-fn bench_borrowed_operations_for<B, F>(
+fn bench_borrowed_operations_for<F>(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
     make_scalar: F,
 ) where
-    B: Backend,
-    F: Copy + Fn(f64) -> Scalar<B>,
+    F: Copy + Fn(f64) -> Real,
 {
     let scalar_pairs = [
         (make_scalar(2.5), make_scalar(1.25)),
@@ -401,22 +400,22 @@ fn bench_borrowed_operations_for<B, F>(
 
 fn bench_borrowed_operations(c: &mut Criterion) {
     let mut group = c.benchmark_group("borrowed_ops");
-    bench_borrowed_operations_for::<ApproxBackend, _>(&mut group, "approx", s::<ApproxBackend>);
-    bench_borrowed_operations_for::<HyperrealBackend, _>(
+    bench_borrowed_operations_for::<_>(
         &mut group,
         "hyperreal",
-        s::<HyperrealBackend>,
+        s,
     );
-    bench_borrowed_operations_for::<HyperrealBackend, _>(&mut group, "hyperreal-rational", qr);
+    bench_borrowed_operations_for::<_>(&mut group, "hyperreal-rational", qr);
+    bench_numerica_borrowed_operations(&mut group, "numerica128");
     bench_symbolica_borrowed_operations(&mut group, "symbolica");
     group.finish();
 }
 
-fn bench_symbolica_borrowed_operations(
-    group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
-    label: &str,
-) {
-    let ctx = symbolica_backend::Ctx::new(128);
+macro_rules! bench_external_borrowed_operations {
+    ($engine:ident, $group:expr, $label:expr) => {{
+    let group = $group;
+    let label = $label;
+    let ctx = $engine::Ctx::new(128);
     let scalar_pairs = [
         (ctx.f(2.5), ctx.f(1.25)),
         (ctx.f(1.0e-12), ctx.f(-1.0e-12)),
@@ -425,28 +424,28 @@ fn bench_symbolica_borrowed_operations(
     ];
     let scalar_cases = [2.0, 1.0e-9, -1.0e9, std::f64::consts::PI].map(|value| ctx.f(value));
     let vec3_lhs =
-        sample_vec3_cases().map(|value| symbolica_backend::Vec3::new(&ctx, value.x, value.y, value.z));
+        sample_vec3_cases().map(|value| $engine::Vec3::new(&ctx, value.x, value.y, value.z));
     let vec3_rhs = sample_vec3_b_cases()
-        .map(|value| symbolica_backend::Vec3::new(&ctx, value.x, value.y, value.z));
+        .map(|value| $engine::Vec3::new(&ctx, value.x, value.y, value.z));
     let vec4_lhs = sample_vec4_cases()
-        .map(|value| symbolica_backend::Vec4::new(&ctx, value.x, value.y, value.z, value.w));
+        .map(|value| $engine::Vec4::new(&ctx, value.x, value.y, value.z, value.w));
     let vec4_rhs = sample_vec4_b_cases()
-        .map(|value| symbolica_backend::Vec4::new(&ctx, value.x, value.y, value.z, value.w));
-    let mat3_lhs = sample_mat3_cases().map(|value| symbolica_backend::Mat3::new(&ctx, value.m));
-    let mat3_rhs = sample_mat3_b_cases().map(|value| symbolica_backend::Mat3::new(&ctx, value.m));
-    let mat4_lhs = sample_mat4_cases().map(|value| symbolica_backend::Mat4::new(&ctx, value.m));
-    let mat4_rhs = sample_mat4_b_cases().map(|value| symbolica_backend::Mat4::new(&ctx, value.m));
+        .map(|value| $engine::Vec4::new(&ctx, value.x, value.y, value.z, value.w));
+    let mat3_lhs = sample_mat3_cases().map(|value| $engine::Mat3::new(&ctx, value.m));
+    let mat3_rhs = sample_mat3_b_cases().map(|value| $engine::Mat3::new(&ctx, value.m));
+    let mat4_lhs = sample_mat4_cases().map(|value| $engine::Mat4::new(&ctx, value.m));
+    let mat4_rhs = sample_mat4_b_cases().map(|value| $engine::Mat4::new(&ctx, value.m));
     let complex_lhs = [
-        symbolica_backend::Complex::new(&ctx, 3.0, 4.0),
-        symbolica_backend::Complex::new(&ctx, 1.0e-9, -1.0e-9),
-        symbolica_backend::Complex::new(&ctx, 1.0e9, -1.0),
-        symbolica_backend::Complex::new(&ctx, std::f64::consts::PI, -std::f64::consts::E),
+        $engine::Complex::new(&ctx, 3.0, 4.0),
+        $engine::Complex::new(&ctx, 1.0e-9, -1.0e-9),
+        $engine::Complex::new(&ctx, 1.0e9, -1.0),
+        $engine::Complex::new(&ctx, std::f64::consts::PI, -std::f64::consts::E),
     ];
     let complex_rhs = [
-        symbolica_backend::Complex::new(&ctx, 1.5, -2.0),
-        symbolica_backend::Complex::new(&ctx, -1.0e-9, 2.0e-9),
-        symbolica_backend::Complex::new(&ctx, -1.0e9, 2.0),
-        symbolica_backend::Complex::new(&ctx, std::f64::consts::SQRT_2, std::f64::consts::FRAC_1_PI),
+        $engine::Complex::new(&ctx, 1.5, -2.0),
+        $engine::Complex::new(&ctx, -1.0e-9, 2.0e-9),
+        $engine::Complex::new(&ctx, -1.0e9, 2.0),
+        $engine::Complex::new(&ctx, std::f64::consts::SQRT_2, std::f64::consts::FRAC_1_PI),
     ];
 
     for name in ["add", "sub", "mul", "div"] {
@@ -483,6 +482,32 @@ fn bench_symbolica_borrowed_operations(
                     "sub" => ctx.sub(lhs, rhs),
                     "mul" => ctx.mul(lhs, rhs),
                     _ => ctx.div(lhs, rhs),
+                })
+            })
+        });
+        group.bench_function(format!("{label}/scalar {name} owned_ref_with_clone"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let (lhs, rhs) = next_case(&scalar_pairs, &cursor);
+                let lhs = lhs.clone();
+                black_box(match name {
+                    "add" => ctx.add(&lhs, rhs),
+                    "sub" => ctx.sub(&lhs, rhs),
+                    "mul" => ctx.mul(&lhs, rhs),
+                    _ => ctx.div(&lhs, rhs),
+                })
+            })
+        });
+        group.bench_function(format!("{label}/scalar {name} ref_owned_with_clone"), |b| {
+            let cursor = Cell::new(0);
+            b.iter(|| {
+                let (lhs, rhs) = next_case(&scalar_pairs, &cursor);
+                let rhs = rhs.clone();
+                black_box(match name {
+                    "add" => ctx.add(lhs, &rhs),
+                    "sub" => ctx.sub(lhs, &rhs),
+                    "mul" => ctx.mul(lhs, &rhs),
+                    _ => ctx.div(lhs, &rhs),
                 })
             })
         });
@@ -553,7 +578,7 @@ fn bench_symbolica_borrowed_operations(
         b.iter(|| {
             let index = cursor.get();
             cursor.set((index + 1) % mat3_lhs.len());
-            black_box(mat3_lhs[index].combine(&mat3_rhs[index], &ctx, symbolica_backend::Ctx::add))
+            black_box(mat3_lhs[index].combine(&mat3_rhs[index], &ctx, $engine::Ctx::add))
         })
     });
     group.bench_function(format!("{label}/mat3 sub refs"), |b| {
@@ -561,7 +586,7 @@ fn bench_symbolica_borrowed_operations(
         b.iter(|| {
             let index = cursor.get();
             cursor.set((index + 1) % mat3_lhs.len());
-            black_box(mat3_lhs[index].combine(&mat3_rhs[index], &ctx, symbolica_backend::Ctx::sub))
+            black_box(mat3_lhs[index].combine(&mat3_rhs[index], &ctx, $engine::Ctx::sub))
         })
     });
     group.bench_function(format!("{label}/mat3 mul refs"), |b| {
@@ -589,7 +614,7 @@ fn bench_symbolica_borrowed_operations(
         b.iter(|| {
             let index = cursor.get();
             cursor.set((index + 1) % mat3_lhs.len());
-            black_box(mat3_lhs[index].map_scalar(&scalar_cases[index], &ctx, symbolica_backend::Ctx::add))
+            black_box(mat3_lhs[index].map_scalar(&scalar_cases[index], &ctx, $engine::Ctx::add))
         })
     });
     group.bench_function(format!("{label}/mat3 sub_scalar_ref"), |b| {
@@ -597,7 +622,7 @@ fn bench_symbolica_borrowed_operations(
         b.iter(|| {
             let index = cursor.get();
             cursor.set((index + 1) % mat3_lhs.len());
-            black_box(mat3_lhs[index].map_scalar(&scalar_cases[index], &ctx, symbolica_backend::Ctx::sub))
+            black_box(mat3_lhs[index].map_scalar(&scalar_cases[index], &ctx, $engine::Ctx::sub))
         })
     });
     group.bench_function(format!("{label}/mat3 mul_scalar_ref"), |b| {
@@ -605,7 +630,7 @@ fn bench_symbolica_borrowed_operations(
         b.iter(|| {
             let index = cursor.get();
             cursor.set((index + 1) % mat3_lhs.len());
-            black_box(mat3_lhs[index].map_scalar(&scalar_cases[index], &ctx, symbolica_backend::Ctx::mul))
+            black_box(mat3_lhs[index].map_scalar(&scalar_cases[index], &ctx, $engine::Ctx::mul))
         })
     });
     group.bench_function(format!("{label}/mat3 div_scalar_ref"), |b| {
@@ -613,7 +638,7 @@ fn bench_symbolica_borrowed_operations(
         b.iter(|| {
             let index = cursor.get();
             cursor.set((index + 1) % mat3_lhs.len());
-            black_box(mat3_lhs[index].map_scalar(&scalar_cases[index], &ctx, symbolica_backend::Ctx::div))
+            black_box(mat3_lhs[index].map_scalar(&scalar_cases[index], &ctx, $engine::Ctx::div))
         })
     });
 
@@ -622,7 +647,7 @@ fn bench_symbolica_borrowed_operations(
         b.iter(|| {
             let index = cursor.get();
             cursor.set((index + 1) % mat4_lhs.len());
-            black_box(mat4_lhs[index].combine(&mat4_rhs[index], &ctx, symbolica_backend::Ctx::add))
+            black_box(mat4_lhs[index].combine(&mat4_rhs[index], &ctx, $engine::Ctx::add))
         })
     });
     group.bench_function(format!("{label}/mat4 sub refs"), |b| {
@@ -630,7 +655,7 @@ fn bench_symbolica_borrowed_operations(
         b.iter(|| {
             let index = cursor.get();
             cursor.set((index + 1) % mat4_lhs.len());
-            black_box(mat4_lhs[index].combine(&mat4_rhs[index], &ctx, symbolica_backend::Ctx::sub))
+            black_box(mat4_lhs[index].combine(&mat4_rhs[index], &ctx, $engine::Ctx::sub))
         })
     });
     group.bench_function(format!("{label}/mat4 mul refs"), |b| {
@@ -658,7 +683,7 @@ fn bench_symbolica_borrowed_operations(
         b.iter(|| {
             let index = cursor.get();
             cursor.set((index + 1) % mat4_lhs.len());
-            black_box(mat4_lhs[index].map_scalar(&scalar_cases[index], &ctx, symbolica_backend::Ctx::add))
+            black_box(mat4_lhs[index].map_scalar(&scalar_cases[index], &ctx, $engine::Ctx::add))
         })
     });
     group.bench_function(format!("{label}/mat4 sub_scalar_ref"), |b| {
@@ -666,7 +691,7 @@ fn bench_symbolica_borrowed_operations(
         b.iter(|| {
             let index = cursor.get();
             cursor.set((index + 1) % mat4_lhs.len());
-            black_box(mat4_lhs[index].map_scalar(&scalar_cases[index], &ctx, symbolica_backend::Ctx::sub))
+            black_box(mat4_lhs[index].map_scalar(&scalar_cases[index], &ctx, $engine::Ctx::sub))
         })
     });
     group.bench_function(format!("{label}/mat4 mul_scalar_ref"), |b| {
@@ -674,7 +699,7 @@ fn bench_symbolica_borrowed_operations(
         b.iter(|| {
             let index = cursor.get();
             cursor.set((index + 1) % mat4_lhs.len());
-            black_box(mat4_lhs[index].map_scalar(&scalar_cases[index], &ctx, symbolica_backend::Ctx::mul))
+            black_box(mat4_lhs[index].map_scalar(&scalar_cases[index], &ctx, $engine::Ctx::mul))
         })
     });
     group.bench_function(format!("{label}/mat4 div_scalar_ref"), |b| {
@@ -682,7 +707,7 @@ fn bench_symbolica_borrowed_operations(
         b.iter(|| {
             let index = cursor.get();
             cursor.set((index + 1) % mat4_lhs.len());
-            black_box(mat4_lhs[index].map_scalar(&scalar_cases[index], &ctx, symbolica_backend::Ctx::div))
+            black_box(mat4_lhs[index].map_scalar(&scalar_cases[index], &ctx, $engine::Ctx::div))
         })
     });
 
@@ -730,4 +755,19 @@ fn bench_symbolica_borrowed_operations(
             black_box(complex_lhs[index].div_real(&scalar_cases[index], &ctx))
         })
     });
+    }};
+}
+
+fn bench_numerica_borrowed_operations(
+    group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
+    label: &str,
+) {
+    bench_external_borrowed_operations!(numerica_engine, group, label);
+}
+
+fn bench_symbolica_borrowed_operations(
+    group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
+    label: &str,
+) {
+    bench_external_borrowed_operations!(symbolica_engine, group, label);
 }

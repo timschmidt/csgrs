@@ -14,4 +14,8 @@ mod ops;
 mod transform;
 mod types;
 
-pub use core::{Matrix3, Matrix4, PreparedRightDivisor3, PreparedRightDivisor4, SignedAxis4};
+pub use core::{
+    Matrix3, Matrix3StructuralFacts, Matrix4, Matrix4StructuralFacts,
+    MatrixDeterminantScheduleHint, PreparedMatrix3, PreparedMatrix4, PreparedRightDivisor3,
+    PreparedRightDivisor4, SignedAxis4,
+};

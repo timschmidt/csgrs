@@ -19,10 +19,7 @@ fn complex_negative_one_power_uses_reciprocal_semantics() {
 fn complex_display_forwards_real_formatting() {
     let value = Complex::new(frac(1, 2), r(2));
 
-    #[cfg(feature = "hyperreal-backend")]
     assert_eq!(format!("{value}"), "(1/2 + 2i)");
-    #[cfg(not(feature = "hyperreal-backend"))]
-    assert_eq!(format!("{value}"), "(0.5 + 2i)");
     assert_eq!(format!("{value:#}"), "(0.5 + 2i)");
 }
 

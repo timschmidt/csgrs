@@ -1,7 +1,7 @@
 mod common;
 
 use common::{frac, r, unknown_zero};
-use hyperlattice::{Complex, Matrix3, Matrix4, Problem, Scalar, Vector3, Vector4, ZeroStatus};
+use hyperlattice::{Complex, Matrix3, Matrix4, Problem, Real, Vector3, Vector4, ZeroStatus};
 
 #[test]
 fn complex_zero_and_unknown_norms_are_rejected_by_checked_division() {
@@ -33,7 +33,7 @@ fn matrix_power_edges_do_not_hide_domain_errors() {
 
 #[test]
 fn hidden_singular_matrix_by_symbolic_cancellation_is_detected() {
-    let pi_minus_pi = Scalar::pi() - Scalar::pi();
+    let pi_minus_pi = Real::pi() - Real::pi();
     let matrix = Matrix3::new([
         [r(1), r(2), r(3)],
         [r(1) + pi_minus_pi, r(2), r(3)],

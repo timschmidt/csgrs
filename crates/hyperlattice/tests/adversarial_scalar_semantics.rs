@@ -2,11 +2,11 @@ mod common;
 
 use common::{frac, r, unknown_zero};
 use hyperlattice::{
-    Problem, Scalar, ScalarFacts, ScalarSign, ZeroStatus, acos, acosh, asin, atanh, cos, e, ln,
-    log10, one, pi, reciprocal_checked, reciprocal_ref_checked, sin, sqrt, tan, zero, zero_status,
+    Problem, Real, RealFacts, RealSign, ZeroStatus, acos, acosh, asin, atanh, cos, e, ln, log10,
+    one, pi, reciprocal_checked, reciprocal_ref_checked, sin, sqrt, tan, zero, zero_status,
 };
 
-fn assert_stable_facts(value: &Scalar) {
+fn assert_stable_facts(value: &Real) {
     let facts = value.structural_facts();
 
     for _ in 0..8 {
@@ -15,16 +15,16 @@ fn assert_stable_facts(value: &Scalar) {
         assert_eq!(zero_status(value), facts.zero);
         assert_eq!(value.definitely_zero(), facts.zero == ZeroStatus::Zero);
         if facts.zero == ZeroStatus::Zero {
-            assert_eq!(facts.sign, Some(ScalarSign::Zero));
+            assert_eq!(facts.sign, Some(RealSign::Zero));
             assert!(facts.magnitude.is_none());
         }
         if facts.zero == ZeroStatus::NonZero {
-            assert_ne!(facts.sign, Some(ScalarSign::Zero));
+            assert_ne!(facts.sign, Some(RealSign::Zero));
         }
     }
 }
 
-fn assert_same_semantics(left: Scalar, right: Scalar) {
+fn assert_same_semantics(left: Real, right: Real) {
     assert_eq!(left, right);
     assert_eq!(left.zero_status(), right.zero_status());
     assert_eq!(left.structural_facts(), right.structural_facts());
@@ -135,7 +135,7 @@ fn float_import_regressions_cover_zero_subnormals_decimals_and_large_values() {
     ];
 
     for value in cases {
-        let imported = Scalar::try_from(value).unwrap();
+        let imported = Real::try_from(value).unwrap();
         assert_stable_facts(&imported);
         if value == 0.0 {
             assert_eq!(imported.zero_status(), ZeroStatus::Zero);
@@ -157,7 +157,7 @@ fn fact_api_invariants_are_self_consistent_for_adversarial_forms() {
 
     for value in cases {
         let facts = value.structural_facts();
-        let expected_facts = ScalarFacts {
+        let expected_facts = RealFacts {
             sign: facts.sign,
             zero: facts.zero,
             exact_rational: facts.exact_rational,

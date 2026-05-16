@@ -815,29 +815,6 @@ const MATRIX_OP_ROWS: &[BenchRow] = &[
     },
 ];
 
-const PRECISION_ROWS: &[BenchRow] = &[
-    BenchRow {
-        title: "astro sin 128",
-        group: "scalar_trig_by_precision",
-        id: "astro_sin/128",
-    },
-    BenchRow {
-        title: "astro sin 160",
-        group: "scalar_trig_by_precision",
-        id: "astro_sin/160",
-    },
-    BenchRow {
-        title: "astro sin 192",
-        group: "scalar_trig_by_precision",
-        id: "astro_sin/192",
-    },
-    BenchRow {
-        title: "astro sin 256",
-        group: "scalar_trig_by_precision",
-        id: "astro_sin/256",
-    },
-];
-
 fn estimate_key(group: &str, variant: &str, id: &str) -> String {
     format!("{group}/{}_{}", variant, id.replace('/', "_"))
 }
@@ -931,45 +908,24 @@ fn format_ratio(numerator: Option<f64>, denominator: Option<f64>) -> String {
 
 fn render_table(estimates: &BTreeMap<String, f64>, rows: &[BenchRow]) -> String {
     let mut out = String::new();
-    out.push_str("| Benchmark | Approx | Hyperreal from f64 | Hyperreal rational | astro-float 128 | numerica128 | symbolica | Hyperreal f64 / approx | Hyperreal f64 / astro | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |\n");
-    out.push_str("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |\n");
+    out.push_str("| Benchmark | Hyperreal from f64 | Hyperreal rational | numerica128 | symbolica | Hyperreal f64 / numerica128 | Hyperreal f64 / symbolica |\n");
+    out.push_str("| --- | ---: | ---: | ---: | ---: | ---: | ---: |\n");
     for row in rows {
-        let approx = estimate_value(estimates, row.group, "approx", row.id);
         let hyperreal = estimate_value(estimates, row.group, "hyperreal", row.id)
             .or_else(|| estimate_value(estimates, row.group, "realistic", row.id));
         let rational = estimate_value(estimates, row.group, "hyperreal-rational", row.id)
             .or_else(|| estimate_value(estimates, row.group, "realistic-rational", row.id));
-        let astro = estimate_value(estimates, row.group, "astro128", row.id);
         let numerica = estimate_value(estimates, row.group, "numerica128", row.id);
         let symbolica = estimate_value(estimates, row.group, "symbolica", row.id);
         out.push_str(&format!(
-            "| `{}` | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |\n",
+            "| `{}` | {} | {} | {} | {} | {} | {} |\n",
             row.title,
-            format_duration(approx),
             format_duration(hyperreal),
             format_duration(rational),
-            format_duration(astro),
             format_duration(numerica),
             format_duration(symbolica),
-            format_ratio(hyperreal, approx),
-            format_ratio(hyperreal, astro),
             format_ratio(hyperreal, numerica),
             format_ratio(hyperreal, symbolica),
-        ));
-    }
-    out
-}
-
-fn render_precision_table(estimates: &BTreeMap<String, f64>) -> String {
-    let mut out = String::new();
-    out.push_str("| Benchmark | Median |\n");
-    out.push_str("| --- | ---: |\n");
-    for row in PRECISION_ROWS {
-        let key = format!("{}/{}", row.group, row.id);
-        out.push_str(&format!(
-            "| `{}` | {} |\n",
-            row.title,
-            format_duration(estimates.get(&key).copied())
         ));
     }
     out
@@ -980,18 +936,18 @@ fn render_benchmarks_md(estimates: &BTreeMap<String, f64>) -> String {
     out.push_str(
         "# Benchmarks\n\nRun the Criterion benchmark suite:\n\n```sh\ncargo bench --bench mathbench\n```\n\nRun dispatch path tracing separately:\n\n```sh\ncargo bench --bench mathbench --features hyperreal-dispatch-trace -- --write-dispatch-trace-md\n```\n\nRefresh this file from existing Criterion estimates without rerunning the full suite:\n\n```sh\ncargo bench --bench mathbench -- --update-benchmarks-md\n```\n\n",
     );
-    out.push_str("The `mathbench` suite benchmarks both crate backends and writes this file from Criterion's median estimates after a real benchmark run. The `astro-float 128` and `numerica128` comparison columns run at 128-bit precision, while the `symbolica` column exercises Symbolica's symbolic expression engine. Missing cells mean that the corresponding estimate was not present in `target/criterion` when this file was generated, or that the external library does not expose a directly comparable operation in this suite.\n\n");
+    out.push_str("The `mathbench` suite benchmarks the Real-primary crate path and writes this file from Criterion's median estimates after a real benchmark run. The `numerica128` comparison column runs at 128-bit precision, while the `symbolica` column exercises Symbolica's symbolic expression engine. Missing cells mean that the corresponding estimate was not present in `target/criterion` when this file was generated.\n\n");
     out.push_str("Each benchmarked operation rotates through adversarial inputs for its valid domain: near-zero values, large and tiny magnitudes, cancellation-prone vectors, near-singular matrices, range-reduction-heavy trigonometric arguments, and boundary-adjacent inverse trigonometric and inverse hyperbolic values.\n\n");
     out.push_str("## Operation Coverage\n\n");
-    out.push_str("- Scalar construction/constants, arithmetic, reciprocal, powers, exponentials, logarithms, square root, trigonometric and hyperbolic functions, inverse helpers, zero-status checks, and abort-aware variants.\n");
+    out.push_str("- Real construction/constants, arithmetic, reciprocal, powers, exponentials, logarithms, square root, trigonometric and hyperbolic functions, inverse helpers, zero-status checks, and abort-aware variants.\n");
     out.push_str("- Complex construction/constants, conjugate, norm squared, reciprocal, powers, checked division, scalar conversion, arithmetic, and real scalar division.\n");
     out.push_str("- Vector construction, zero, dot product, magnitude, normalization, vector/vector arithmetic, vector/scalar arithmetic, scalar division, and checked/abort-aware variants for 3D and 4D vectors.\n");
     out.push_str("- Matrix construction, zero, identity, transpose, determinant, inverse, reciprocal, powers, matrix/matrix arithmetic, matrix/scalar arithmetic, matrix/vector transformation, scalar division, matrix division, and checked/abort-aware variants for 3x3 and 4x4 matrices.\n");
     out.push_str("- Borrowed API operator coverage for scalar, vector, matrix, matrix/vector, and complex reference combinations.\n\n");
     out.push_str("## Benchmark Results\n\nThe following Criterion median estimates were collected on an AMD Ryzen 7 5800X3D on Fedora. Values are formatted to two digits after the decimal.\n\n");
-    out.push_str("### Scalar Operations\n\n#### Scalar Trigonometric And Inverse Comparisons\n\n");
+    out.push_str("### Real Operations\n\n#### Real Trigonometric And Inverse Comparisons\n\n");
     out.push_str(&render_table(estimates, &scalar_trig_rows()));
-    out.push_str("\n#### Scalar API Operations\n\n");
+    out.push_str("\n#### Real API Operations\n\n");
     out.push_str(&render_table(estimates, SCALAR_OP_ROWS));
     out.push_str("\n### Complex Operations\n\n");
     out.push_str(&render_table(estimates, COMPLEX_OP_ROWS));
@@ -1005,8 +961,6 @@ fn render_benchmarks_md(estimates: &BTreeMap<String, f64>) -> String {
     out.push_str(&render_table(estimates, MATRIX_OP_ROWS));
     out.push_str("\n### Borrowed API Operations\n\n");
     out.push_str(&render_table(estimates, &borrowed_op_rows()));
-    out.push_str("\n### Precision Scaling\n\n");
-    out.push_str(&render_precision_table(estimates));
     out
 }
 

@@ -125,21 +125,10 @@ mod enabled {
                 ("scalar_fast_path", "add-cached") => profile.adds += count.count,
                 ("scalar_fast_path", "sub-cached") => profile.subs += count.count,
                 ("scalar_fast_path", "mul-cached") => profile.muls += count.count,
-                ("scalar_fast_path", "dot3-backend") => {
-                    // Dot-product fast paths intentionally hide their scalar
-                    // adds/muls from the generic operator trace. Expand them
-                    // here so matrix kernels remain comparable across inputs.
-                    profile.muls += count.count * 3;
-                    profile.adds += count.count * 2;
-                }
                 ("scalar_fast_path", "dot3-active" | "dot3-same-active") => {
                     profile.muls += count.count * 3;
                     profile.adds += count.count * 2;
                     profile.signed_product_sums += count.count;
-                }
-                ("scalar_fast_path", "dot4-backend") => {
-                    profile.muls += count.count * 4;
-                    profile.adds += count.count * 3;
                 }
                 ("scalar_fast_path", "dot4-active" | "dot4-same-active") => {
                     profile.muls += count.count * 4;
@@ -189,18 +178,6 @@ mod enabled {
                 _ => {}
             }
         }
-        for count in counts.iter().filter(|count| {
-            matches!(
-                count.layer,
-                "hyperlattice_backend_trait"
-                    | "hyperlattice_hyperreal_backend"
-                    | "hyperlattice_approx_backend"
-            )
-        }) {
-            if count.operation == "op" && count.path.starts_with("signed-product-sum2-") {
-                profile.signed_product_sums += count.count;
-            }
-        }
         profile
     }
 
@@ -232,16 +209,15 @@ mod enabled {
         hyperreal::dispatch_trace::with_recording(|| {
             sample();
         });
-        let counts = hyperreal::dispatch_trace::take();
-        let rational_stats = hyperreal::dispatch_trace::take_rational_stats();
+        let trace = hyperreal::dispatch_trace::take_trace();
         let row = MatrixProfileRow {
             matrix: matrix.to_owned(),
             kernel: kernel.to_owned(),
             input: input.to_owned(),
             calls: calls as u64,
-            scalar_ops: scalar_op_profile(&counts),
-            rational_stats,
-            constructor_events: constructor_events(&counts),
+            scalar_ops: scalar_op_profile(&trace.dispatch),
+            rational_stats: trace.rational,
+            constructor_events: constructor_events(&trace.dispatch),
         };
 
         matrix_profile_rows()
@@ -303,7 +279,7 @@ mod enabled {
         if !matrix_rows.is_empty() {
             out.push_str("## Matrix Kernel Profile\n\n");
             out.push_str("Per-call values are one unmeasured sample pass divided by the sampled calls. `dot3`/`dot4` and `linear`/`affine` fast paths are expanded into their scalar add/mul counts. `Signed product sums` counts the short determinant/cofactor polynomial hooks that delay exact-rational canonicalization. Common-factor buckets are rational reduction events per call; `pow2` is the dyadic shift-only path.\n\n");
-            out.push_str("| Matrix | Kernel | Input | Calls | Scalar +/call | Scalar -/call | Scalar */call | Scalar div/call | Scalar inv/call | Signed product sums/call | Rational reductions/call | GCDs/call | Temps/ctors/call | Peak operand bits | Common factors/call |\n");
+            out.push_str("| Matrix | Kernel | Input | Calls | Real +/call | Real -/call | Real */call | Real div/call | Real inv/call | Signed product sums/call | Rational reductions/call | GCDs/call | Temps/ctors/call | Peak operand bits | Common factors/call |\n");
             out.push_str("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |\n");
             let mut rows = matrix_rows.clone();
             rows.sort_by(|left, right| {

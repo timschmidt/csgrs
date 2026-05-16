@@ -1,24 +1,23 @@
-//! Complex numbers backed by [`Scalar`](crate::Scalar).
+//! Complex numbers backed by [`Real`](crate::Real).
 
 use std::fmt;
 use std::ops::{Add, BitXor, Div, Mul, Neg, Sub};
 
-use crate::backend::ExactRationalKind;
 use crate::scalar::require_known_nonzero;
-use crate::{Backend, BlasResult, CheckedBlasResult, DefaultBackend, Problem, Scalar};
+use crate::{BlasResult, CheckedBlasResult, ExactRationalKind, Problem, Real, RealKernelExt};
 
 /// Complex scalar with real and imaginary components.
 #[derive(Clone, Debug, PartialEq)]
-pub struct Complex<B: Backend = DefaultBackend> {
+pub struct Complex {
     /// Real component.
-    pub re: Scalar<B>,
+    pub re: Real,
     /// Imaginary component.
-    pub im: Scalar<B>,
+    pub im: Real,
 }
 
-impl<B: Backend> Complex<B> {
+impl Complex {
     /// Constructs a complex value from real and imaginary components.
-    pub fn new(re: Scalar<B>, im: Scalar<B>) -> Self {
+    pub fn new(re: Real, im: Real) -> Self {
         crate::trace_dispatch!("hyperlattice_complex", "constructor", "new");
         Self { re, im }
     }
@@ -26,19 +25,19 @@ impl<B: Backend> Complex<B> {
     /// Returns `0 + 0i`.
     pub fn zero() -> Self {
         crate::trace_dispatch!("hyperlattice_complex", "constructor", "zero");
-        Self::new(Scalar::zero(), Scalar::zero())
+        Self::new(Real::zero(), Real::zero())
     }
 
     /// Returns `1 + 0i`.
     pub fn one() -> Self {
         crate::trace_dispatch!("hyperlattice_complex", "constructor", "one");
-        Self::new(Scalar::one(), Scalar::zero())
+        Self::new(Real::one(), Real::zero())
     }
 
     /// Returns the imaginary unit `0 + 1i`.
     pub fn i() -> Self {
         crate::trace_dispatch!("hyperlattice_complex", "constructor", "i");
-        Self::new(Scalar::zero(), Scalar::one())
+        Self::new(Real::zero(), Real::one())
     }
 
     /// Returns the complex conjugate.
@@ -48,11 +47,11 @@ impl<B: Backend> Complex<B> {
     }
 
     /// Returns `re^2 + im^2`.
-    pub fn norm_squared(&self) -> Scalar<B> {
+    pub fn norm_squared(&self) -> Real {
         crate::trace_dispatch!("hyperlattice_complex", "method", "norm-squared");
-        if B::FUSE_SIGNED_PRODUCT_SUM {
+        if true {
             // Isolated exact complex norms are two positive product terms. Fuse
-            // only this public norm query so exact-rational hyperreal backends
+            // only this public norm query so exact-rational hyperreal Real kernels
             // can share one denominator and reduce once, following the same
             // fraction-delaying principle as Bareiss fraction-free elimination
             // (Bareiss, Math. Comp. 22(103), 1968,
@@ -60,7 +59,7 @@ impl<B: Backend> Complex<B> {
             // use `norm_squared_direct`; targeted Criterion showed their larger
             // arithmetic kernels regress when this fused expression is inlined
             // into denominator construction.
-            Scalar::signed_product_sum2([true, true], [[&self.re, &self.re], [&self.im, &self.im]])
+            Real::signed_product_sum2([true, true], [[&self.re, &self.re], [&self.im, &self.im]])
         } else {
             &self.re * &self.re + &self.im * &self.im
         }
@@ -71,7 +70,7 @@ impl<B: Backend> Complex<B> {
         crate::trace_dispatch!("hyperlattice_complex", "method", "reciprocal");
         let inv_denom = (&self.re * &self.re + &self.im * &self.im).inverse()?;
         // Apply the shared denominator by borrowed cached multiplication; cloning it for
-        // both real and imaginary components is visible with symbolic scalar backends.
+        // both real and imaginary components is visible with symbolic Real arithmetics.
         Ok(Self::new(
             self.re.mul_cached(&inv_denom),
             (-self.im).mul_cached(&inv_denom),
@@ -157,7 +156,7 @@ impl<B: Backend> Complex<B> {
     }
 
     /// Divides by a real scalar after rejecting unknown-zero divisors.
-    pub fn div_real_checked(self, rhs: Scalar<B>) -> CheckedBlasResult<Self> {
+    pub fn div_real_checked(self, rhs: Real) -> CheckedBlasResult<Self> {
         crate::trace_dispatch!("hyperlattice_complex", "method", "div-real-checked");
         require_known_nonzero(&rhs)?;
         let inv_rhs = rhs.inverse()?;
@@ -169,9 +168,9 @@ impl<B: Backend> Complex<B> {
     }
 }
 
-fn complex_powi_positive<B: Backend>(base: Complex<B>, exponent: u64) -> Complex<B> {
+fn complex_powi_positive(base: Complex, exponent: u64) -> Complex {
     // Small powers are common in BLAS-style polynomial kernels.  Writing them out avoids
-    // loop bookkeeping and keeps clone placement tuned for the borrowed scalar backend.
+    // loop bookkeeping and keeps clone placement tuned for the borrowed Real arithmetic.
     match exponent {
         1 => {
             crate::trace_dispatch!("hyperlattice_complex", "powi", "exponent-one");
@@ -205,8 +204,8 @@ fn complex_powi_positive<B: Backend>(base: Complex<B>, exponent: u64) -> Complex
 }
 
 #[inline(always)]
-fn complex_multiply_for_powi<B: Backend>(lhs: Complex<B>, rhs: Complex<B>) -> Complex<B> {
-    if B::FUSE_SIGNED_PRODUCT_SUM {
+fn complex_multiply_for_powi(lhs: Complex, rhs: Complex) -> Complex {
+    if true {
         crate::trace_dispatch!("hyperlattice_complex", "powi", "mul-fused-exact");
         let (re, im) = complex_multiply_components(&lhs, &rhs);
         Complex::new(re, im)
@@ -217,11 +216,8 @@ fn complex_multiply_for_powi<B: Backend>(lhs: Complex<B>, rhs: Complex<B>) -> Co
 }
 
 #[inline(always)]
-fn complex_division_numerators<B: Backend>(
-    lhs: &Complex<B>,
-    rhs: &Complex<B>,
-) -> (Scalar<B>, Scalar<B>) {
-    if B::FUSE_SIGNED_PRODUCT_SUM {
+fn complex_division_numerators(lhs: &Complex, rhs: &Complex) -> (Real, Real) {
+    if true {
         let known_exact_rational = lhs.re.exact_rational_kind() != ExactRationalKind::NonRational
             && lhs.im.exact_rational_kind() != ExactRationalKind::NonRational
             && rhs.re.exact_rational_kind() != ExactRationalKind::NonRational
@@ -233,11 +229,11 @@ fn complex_division_numerators<B: Backend>(
                 "div-numerators-fused-known-exact-rational"
             );
             return (
-                Scalar::active_signed_product_sum2_known_exact_rational(
+                Real::active_signed_product_sum2_known_exact_rational(
                     [true, true],
                     [[&lhs.re, &rhs.re], [&lhs.im, &rhs.im]],
                 ),
-                Scalar::active_signed_product_sum2_known_exact_rational(
+                Real::active_signed_product_sum2_known_exact_rational(
                     [true, false],
                     [[&lhs.im, &rhs.re], [&lhs.re, &rhs.im]],
                 ),
@@ -245,11 +241,11 @@ fn complex_division_numerators<B: Backend>(
         }
         crate::trace_dispatch!("hyperlattice_complex", "op", "div-numerators-fused-exact");
         return (
-            Scalar::active_signed_product_sum2(
+            Real::active_signed_product_sum2(
                 [true, true],
                 [[&lhs.re, &rhs.re], [&lhs.im, &rhs.im]],
             ),
-            Scalar::active_signed_product_sum2(
+            Real::active_signed_product_sum2(
                 [true, false],
                 [[&lhs.im, &rhs.re], [&lhs.re, &rhs.im]],
             ),
@@ -264,18 +260,15 @@ fn complex_division_numerators<B: Backend>(
 }
 
 #[inline]
-fn complex_multiply_components<B: Backend>(
-    lhs: &Complex<B>,
-    rhs: &Complex<B>,
-) -> (Scalar<B>, Scalar<B>) {
-    if B::FUSE_SIGNED_PRODUCT_SUM {
+fn complex_multiply_components(lhs: &Complex, rhs: &Complex) -> (Real, Real) {
+    if true {
         crate::trace_dispatch!("hyperlattice_complex", "op", "mul-components-fused-exact");
         return (
-            Scalar::active_signed_product_sum2(
+            Real::active_signed_product_sum2(
                 [true, false],
                 [[&lhs.re, &rhs.re], [&lhs.im, &rhs.im]],
             ),
-            Scalar::active_signed_product_sum2(
+            Real::active_signed_product_sum2(
                 [true, true],
                 [[&lhs.re, &rhs.im], [&lhs.im, &rhs.re]],
             ),
@@ -289,7 +282,7 @@ fn complex_multiply_components<B: Backend>(
     )
 }
 
-fn complex_powi_by_squaring<B: Backend>(base: Complex<B>, exponent: u64) -> Complex<B> {
+fn complex_powi_by_squaring(base: Complex, exponent: u64) -> Complex {
     let mut exp = exponent;
     let mut result = None;
     let mut factor = base;
@@ -309,14 +302,14 @@ fn complex_powi_by_squaring<B: Backend>(base: Complex<B>, exponent: u64) -> Comp
     result.expect("non-zero exponent sets at least one result bit")
 }
 
-impl<B: Backend> From<Scalar<B>> for Complex<B> {
-    fn from(value: Scalar<B>) -> Self {
+impl From<Real> for Complex {
+    fn from(value: Real) -> Self {
         crate::trace_dispatch!("hyperlattice_complex", "constructor", "from-scalar");
-        Self::new(value, Scalar::zero())
+        Self::new(value, Real::zero())
     }
 }
 
-impl<B: Backend> fmt::Display for Complex<B> {
+impl fmt::Display for Complex {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if f.alternate() {
             write!(f, "({:#} + {:#}i)", self.re, self.im)
@@ -326,7 +319,7 @@ impl<B: Backend> fmt::Display for Complex<B> {
     }
 }
 
-impl<B: Backend> Add for Complex<B> {
+impl Add for Complex {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -335,34 +328,34 @@ impl<B: Backend> Add for Complex<B> {
     }
 }
 
-impl<B: Backend> Add<&Complex<B>> for Complex<B> {
+impl Add<&Complex> for Complex {
     type Output = Self;
 
-    fn add(self, rhs: &Complex<B>) -> Self::Output {
+    fn add(self, rhs: &Complex) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "add-owned-ref");
         Self::new(self.re.add_cached(&rhs.re), self.im.add_cached(&rhs.im))
     }
 }
 
-impl<B: Backend> Add<Complex<B>> for &Complex<B> {
-    type Output = Complex<B>;
+impl Add<Complex> for &Complex {
+    type Output = Complex;
 
-    fn add(self, rhs: Complex<B>) -> Self::Output {
+    fn add(self, rhs: Complex) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "add-ref-owned");
         Complex::new(&self.re + rhs.re, &self.im + rhs.im)
     }
 }
 
-impl<B: Backend> Add<&Complex<B>> for &Complex<B> {
-    type Output = Complex<B>;
+impl Add<&Complex> for &Complex {
+    type Output = Complex;
 
-    fn add(self, rhs: &Complex<B>) -> Self::Output {
+    fn add(self, rhs: &Complex) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "add-ref-ref");
         Complex::new(&self.re + &rhs.re, &self.im + &rhs.im)
     }
 }
 
-impl<B: Backend> Sub for Complex<B> {
+impl Sub for Complex {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -371,34 +364,34 @@ impl<B: Backend> Sub for Complex<B> {
     }
 }
 
-impl<B: Backend> Sub<&Complex<B>> for Complex<B> {
+impl Sub<&Complex> for Complex {
     type Output = Self;
 
-    fn sub(self, rhs: &Complex<B>) -> Self::Output {
+    fn sub(self, rhs: &Complex) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "sub-owned-ref");
         Self::new(self.re.sub_cached(&rhs.re), self.im.sub_cached(&rhs.im))
     }
 }
 
-impl<B: Backend> Sub<Complex<B>> for &Complex<B> {
-    type Output = Complex<B>;
+impl Sub<Complex> for &Complex {
+    type Output = Complex;
 
-    fn sub(self, rhs: Complex<B>) -> Self::Output {
+    fn sub(self, rhs: Complex) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "sub-ref-owned");
         Complex::new(&self.re - rhs.re, &self.im - rhs.im)
     }
 }
 
-impl<B: Backend> Sub<&Complex<B>> for &Complex<B> {
-    type Output = Complex<B>;
+impl Sub<&Complex> for &Complex {
+    type Output = Complex;
 
-    fn sub(self, rhs: &Complex<B>) -> Self::Output {
+    fn sub(self, rhs: &Complex) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "sub-ref-ref");
         Complex::new(&self.re - &rhs.re, &self.im - &rhs.im)
     }
 }
 
-impl<B: Backend> Neg for Complex<B> {
+impl Neg for Complex {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -407,8 +400,8 @@ impl<B: Backend> Neg for Complex<B> {
     }
 }
 
-impl<B: Backend> Neg for &Complex<B> {
-    type Output = Complex<B>;
+impl Neg for &Complex {
+    type Output = Complex;
 
     fn neg(self) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "neg-ref");
@@ -416,7 +409,7 @@ impl<B: Backend> Neg for &Complex<B> {
     }
 }
 
-impl<B: Backend> Mul for Complex<B> {
+impl Mul for Complex {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
@@ -427,10 +420,10 @@ impl<B: Backend> Mul for Complex<B> {
     }
 }
 
-impl<B: Backend> Mul<&Complex<B>> for Complex<B> {
+impl Mul<&Complex> for Complex {
     type Output = Self;
 
-    fn mul(self, rhs: &Complex<B>) -> Self::Output {
+    fn mul(self, rhs: &Complex) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "mul-owned-ref");
         let re = &self.re * &rhs.re - &self.im * &rhs.im;
         let im = &self.re * &rhs.im + &self.im * &rhs.re;
@@ -438,10 +431,10 @@ impl<B: Backend> Mul<&Complex<B>> for Complex<B> {
     }
 }
 
-impl<B: Backend> Mul<Complex<B>> for &Complex<B> {
-    type Output = Complex<B>;
+impl Mul<Complex> for &Complex {
+    type Output = Complex;
 
-    fn mul(self, rhs: Complex<B>) -> Self::Output {
+    fn mul(self, rhs: Complex) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "mul-ref-owned");
         let re = &self.re * &rhs.re - &self.im * &rhs.im;
         let im = &self.re * &rhs.im + &self.im * &rhs.re;
@@ -449,10 +442,10 @@ impl<B: Backend> Mul<Complex<B>> for &Complex<B> {
     }
 }
 
-impl<B: Backend> Mul<&Complex<B>> for &Complex<B> {
-    type Output = Complex<B>;
+impl Mul<&Complex> for &Complex {
+    type Output = Complex;
 
-    fn mul(self, rhs: &Complex<B>) -> Self::Output {
+    fn mul(self, rhs: &Complex) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "mul-ref-ref");
         let re = &self.re * &rhs.re - &self.im * &rhs.im;
         let im = &self.re * &rhs.im + &self.im * &rhs.re;
@@ -460,7 +453,7 @@ impl<B: Backend> Mul<&Complex<B>> for &Complex<B> {
     }
 }
 
-impl<B: Backend> Div for Complex<B> {
+impl Div for Complex {
     type Output = BlasResult<Self>;
 
     fn div(self, rhs: Self) -> Self::Output {
@@ -474,10 +467,10 @@ impl<B: Backend> Div for Complex<B> {
     }
 }
 
-impl<B: Backend> Div<&Complex<B>> for Complex<B> {
+impl Div<&Complex> for Complex {
     type Output = BlasResult<Self>;
 
-    fn div(self, rhs: &Complex<B>) -> Self::Output {
+    fn div(self, rhs: &Complex) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "div-owned-ref");
         let inv_denom = (&rhs.re * &rhs.re + &rhs.im * &rhs.im).inverse()?;
         let (re, im) = complex_division_numerators(&self, rhs);
@@ -488,10 +481,10 @@ impl<B: Backend> Div<&Complex<B>> for Complex<B> {
     }
 }
 
-impl<B: Backend> Div<Complex<B>> for &Complex<B> {
-    type Output = BlasResult<Complex<B>>;
+impl Div<Complex> for &Complex {
+    type Output = BlasResult<Complex>;
 
-    fn div(self, rhs: Complex<B>) -> Self::Output {
+    fn div(self, rhs: Complex) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "div-ref-owned");
         let inv_denom = (&rhs.re * &rhs.re + &rhs.im * &rhs.im).inverse()?;
         let (re, im) = complex_division_numerators(self, &rhs);
@@ -502,10 +495,10 @@ impl<B: Backend> Div<Complex<B>> for &Complex<B> {
     }
 }
 
-impl<B: Backend> Div<&Complex<B>> for &Complex<B> {
-    type Output = BlasResult<Complex<B>>;
+impl Div<&Complex> for &Complex {
+    type Output = BlasResult<Complex>;
 
-    fn div(self, rhs: &Complex<B>) -> Self::Output {
+    fn div(self, rhs: &Complex) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "div-ref-ref");
         let inv_denom = (&rhs.re * &rhs.re + &rhs.im * &rhs.im).inverse()?;
         let (re, im) = complex_division_numerators(self, rhs);
@@ -516,10 +509,10 @@ impl<B: Backend> Div<&Complex<B>> for &Complex<B> {
     }
 }
 
-impl<B: Backend> Div<Scalar<B>> for Complex<B> {
+impl Div<Real> for Complex {
     type Output = BlasResult<Self>;
 
-    fn div(self, rhs: Scalar<B>) -> Self::Output {
+    fn div(self, rhs: Real) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "div-real-owned");
         let inv_rhs = rhs.inverse()?;
         Ok(Self::new(
@@ -529,10 +522,10 @@ impl<B: Backend> Div<Scalar<B>> for Complex<B> {
     }
 }
 
-impl<B: Backend> Div<&Scalar<B>> for Complex<B> {
+impl Div<&Real> for Complex {
     type Output = BlasResult<Self>;
 
-    fn div(self, rhs: &Scalar<B>) -> Self::Output {
+    fn div(self, rhs: &Real) -> Self::Output {
         crate::trace_dispatch!("hyperlattice_complex", "op", "div-real-ref");
         let inv_rhs = rhs.inverse_ref()?;
         Ok(Self::new(
@@ -542,7 +535,7 @@ impl<B: Backend> Div<&Scalar<B>> for Complex<B> {
     }
 }
 
-impl<B: Backend> BitXor<i64> for Complex<B> {
+impl BitXor<i64> for Complex {
     type Output = BlasResult<Self>;
 
     fn bitxor(self, rhs: i64) -> Self::Output {

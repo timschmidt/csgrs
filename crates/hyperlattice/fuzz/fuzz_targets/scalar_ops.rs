@@ -2,45 +2,56 @@
 //!
 //! Covers all arithmetic operations across every ownership variant, free
 //! functions (`powi`, `reciprocal`, `sinh`, `cosh`, `tanh`, …), and a
-//! comprehensive set of algebraic invariants for [`ApproxBackend`] scalars.
+//! comprehensive set of algebraic invariants for hyperreal-backed scalars.
 //!
 //! Run with: `cargo +nightly fuzz run scalar_ops` from the `fuzz/` directory.
 
 #![no_main]
 
-use arbitrary::Arbitrary;
-use libfuzzer_sys::fuzz_target;
+use arbitrary::{Arbitrary, Error, Unstructured};
 use hyperlattice::{
-    ApproxBackend, HyperrealBackend, Scalar, ZeroStatus,
-    cosh, powi, reciprocal, reciprocal_checked, reciprocal_ref, reciprocal_ref_checked, sinh,
-    tanh,
+    Real, ZeroStatus, cosh, powi, reciprocal, reciprocal_checked, reciprocal_ref,
+    reciprocal_ref_checked, sinh, tanh,
 };
+use libfuzzer_sys::fuzz_target;
 
 #[derive(Debug)]
-struct Input<Backend: hyperlattice::Backend> {
-    a: Scalar<Backend>,
-    b: Scalar<Backend>,
+struct Input {
+    a: Real,
+    b: Real,
     /// Bounded exponent so powi computation stays tractable.
     exp: i8,
 }
 
-impl<'a, Backend: hyperlattice::Backend> Arbitrary<'a> for Input<Backend> where Scalar<Backend>: Arbitrary<'a> {
+impl<'a> Arbitrary<'a> for Input {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self {
-            a: Arbitrary::arbitrary(u)?,
-            b: Arbitrary::arbitrary(u)?,
+            a: arbitrary_real(u)?,
+            b: arbitrary_real(u)?,
             exp: Arbitrary::arbitrary(u)?,
         })
     }
 }
 
-fuzz_target!(|input: (Input<ApproxBackend>, Input<HyperrealBackend>)| {
-    let (approx_input, hyperreal_input) = input;
-    scalar_fuzz(approx_input);
-    scalar_fuzz(hyperreal_input);
+fn finite_f64(u: &mut Unstructured<'_>) -> arbitrary::Result<f64> {
+    let bits = u64::arbitrary(u)?;
+    let f = f64::from_bits(bits);
+    if f.is_finite() { Ok(f) } else { Ok(0.0) }
+}
+
+fn arbitrary_real(u: &mut Unstructured<'_>) -> arbitrary::Result<Real> {
+    if u.ratio(1, 2)? {
+        Real::try_from(finite_f64(u)?).map_err(|_| Error::IncorrectFormat)
+    } else {
+        Ok(Real::from(i128::arbitrary(u)?))
+    }
+}
+
+fuzz_target!(|input: Input| {
+    scalar_fuzz(input);
 });
 
-fn scalar_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
+fn scalar_fuzz(input: Input) {
     let Input { a, b, exp } = input;
 
     // ── No-panic: owned and borrowed arithmetic ──────────────────────────────
@@ -114,25 +125,33 @@ fn scalar_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
     );
 
     // ── Invariant: commutativity ─────────────────────────────────────────────
-    assert_eq!(a.clone() + b.clone(), b.clone() + a.clone(), "addition must be commutative");
-    assert_eq!(a.clone() * b.clone(), b.clone() * a.clone(), "multiplication must be commutative");
+    assert_eq!(
+        a.clone() + b.clone(),
+        b.clone() + a.clone(),
+        "addition must be commutative"
+    );
+    assert_eq!(
+        a.clone() * b.clone(),
+        b.clone() * a.clone(),
+        "multiplication must be commutative"
+    );
 
     // ── Invariant: owned and borrowed operators agree ────────────────────────
     // Both paths delegate to add_refs / mul_refs so results must be identical.
     assert_eq!(
         a.clone() + b.clone(),
         a.clone() + &b,
-        "Scalar + Scalar must equal Scalar + &Scalar"
+        "Real + Real must equal Real + &Real"
     );
     assert_eq!(
         a.clone() * b.clone(),
         a.clone() * &b,
-        "Scalar * Scalar must equal Scalar * &Scalar"
+        "Real * Real must equal Real * &Real"
     );
 
     // ── Invariant: additive identity ─────────────────────────────────────────
-    let zero = Scalar::<Backend>::zero();
-    let one = Scalar::<Backend>::one();
+    let zero = Real::zero();
+    let one = Real::one();
     assert_eq!(a.clone() + zero.clone(), a, "a + 0 must equal a");
     assert_eq!(zero.clone() + a.clone(), a, "0 + a must equal a");
 
@@ -159,14 +178,6 @@ fn scalar_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
             a.zero_status(),
             ZeroStatus::Zero,
             "definitely_zero() implies Zero status"
-        );
-    }
-
-    // ── Invariant: ApproxBackend never claims exact rational representation ───
-    if std::any::TypeId::of::<Backend>() == std::any::TypeId::of::<ApproxBackend>() {
-        assert!(
-            !a.structural_facts().exact_rational,
-            "ApproxBackend must not claim exact_rational"
         );
     }
 

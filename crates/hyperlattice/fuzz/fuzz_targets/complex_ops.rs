@@ -10,16 +10,16 @@
 #![no_main]
 
 use arbitrary::Arbitrary;
+use hyperlattice::{Complex, ZeroStatus};
 use libfuzzer_sys::fuzz_target;
-use hyperlattice::{ApproxBackend, HyperrealBackend, Complex, ZeroStatus};
 
 #[derive(Debug)]
-struct Input<Backend: hyperlattice::Backend> {
-    z: Complex<Backend>,
-    w: Complex<Backend>,
+struct Input {
+    z: Complex,
+    w: Complex,
 }
 
-impl<'a, Backend: hyperlattice::Backend> Arbitrary<'a> for Input<Backend> where Complex<Backend>: Arbitrary<'a> {
+impl<'a> Arbitrary<'a> for Input {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self {
             z: Arbitrary::arbitrary(u)?,
@@ -28,13 +28,11 @@ impl<'a, Backend: hyperlattice::Backend> Arbitrary<'a> for Input<Backend> where 
     }
 }
 
-fuzz_target!(|input: (Input<ApproxBackend>, Input<HyperrealBackend>)| {
-    let (approx_input, hyperreal_input) = input;
-    complex_fuzz(approx_input);
-    complex_fuzz(hyperreal_input);
+fuzz_target!(|input: Input| {
+    complex_fuzz(input);
 });
 
-fn complex_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
+fn complex_fuzz(input: Input) {
     let Input { z, w } = input;
 
     // ── No-panic: owned and borrowed arithmetic ──────────────────────────────
@@ -120,12 +118,12 @@ fn complex_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
     );
 
     // ── Invariant: additive identity ─────────────────────────────────────────
-    let complex_zero = Complex::<Backend>::zero();
+    let complex_zero = Complex::zero();
     assert_eq!(z.clone() + complex_zero.clone(), z, "z + 0 must equal z");
     assert_eq!(complex_zero + z.clone(), z, "0 + z must equal z");
 
     // ── Invariant: multiplicative identity ───────────────────────────────────
-    let complex_one = Complex::<Backend>::one();
+    let complex_one = Complex::one();
     assert_eq!(z.clone() * complex_one.clone(), z, "z * 1 must equal z");
     assert_eq!(complex_one * z.clone(), z, "1 * z must equal z");
 
@@ -151,11 +149,7 @@ fn complex_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
     let is_zero_im = z.im.zero_status() == ZeroStatus::Zero;
     if !is_zero_re || !is_zero_im {
         if let Ok(result) = z.clone().powi(0) {
-            assert_eq!(
-                result,
-                Complex::<Backend>::one(),
-                "powi(non-zero z, 0) must equal 1"
-            );
+            assert_eq!(result, Complex::one(), "powi(non-zero z, 0) must equal 1");
         }
     }
 
@@ -175,7 +169,7 @@ fn complex_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
     // norm_squared = 0·0 + 0·0 = 0 exactly (every cross term in product_epsilon
     // vanishes when both value and epsilon are 0.0).
     assert!(
-        Complex::<Backend>::zero().norm_squared().definitely_zero(),
+        Complex::zero().norm_squared().definitely_zero(),
         "norm_squared of Complex::zero() must be exactly zero"
     );
 }

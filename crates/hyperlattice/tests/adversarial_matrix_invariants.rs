@@ -1,7 +1,7 @@
 mod common;
 
 use common::{frac, r, unknown_zero};
-use hyperlattice::{Matrix3, Matrix4, Problem, Scalar, Vector3, Vector4, ZeroStatus};
+use hyperlattice::{Matrix3, Matrix4, Problem, Real, Vector3, Vector4, ZeroStatus};
 
 fn assert_matrix3_inverse_invariants(matrix: Matrix3) {
     let inverse = matrix.clone().inverse().unwrap();
@@ -110,7 +110,7 @@ fn singular_and_unknown_pivot_cases_remain_rejected_by_checked_paths() {
 #[test]
 fn sparse_symbolic_transform_preserves_zero_and_sign_facts() {
     let matrix = Matrix4::new([
-        [Scalar::pi(), r(0), Scalar::e(), r(0)],
+        [Real::pi(), r(0), Real::e(), r(0)],
         [r(0), r(0), r(0), r(0)],
         [r(0), frac(-2, 1), r(0), r(0)],
         [r(0), r(0), r(0), r(1)],

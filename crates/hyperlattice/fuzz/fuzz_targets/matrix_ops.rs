@@ -12,23 +12,20 @@
 use std::sync::{Arc, atomic::AtomicBool};
 
 use arbitrary::Arbitrary;
+use hyperlattice::{Matrix3, Matrix4, Real, Vector3, Vector4, ZeroStatus};
 use libfuzzer_sys::fuzz_target;
-use hyperlattice::{ApproxBackend, HyperrealBackend, Matrix3, Matrix4, Scalar, Vector3, Vector4, ZeroStatus};
 
 #[derive(Debug)]
-struct Input<Backend: hyperlattice::Backend> {
-    m3a: Matrix3<Backend>,
-    m3b: Matrix3<Backend>,
-    m4a: Matrix4<Backend>,
-    m4b: Matrix4<Backend>,
-    v3: Vector3<Backend>,
-    v4: Vector4<Backend>,
+struct Input {
+    m3a: Matrix3,
+    m3b: Matrix3,
+    m4a: Matrix4,
+    m4b: Matrix4,
+    v3: Vector3,
+    v4: Vector4,
 }
 
-impl<'a, Backend: hyperlattice::Backend> Arbitrary<'a> for Input<Backend>
-where Matrix3<Backend>: Arbitrary<'a>, Matrix4<Backend>: Arbitrary<'a>,
-    Vector3<Backend>: Arbitrary<'a>, Vector4<Backend>: Arbitrary<'a>
-{
+impl<'a> Arbitrary<'a> for Input {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         Ok(Self {
             m3a: Arbitrary::arbitrary(u)?,
@@ -41,14 +38,19 @@ where Matrix3<Backend>: Arbitrary<'a>, Matrix4<Backend>: Arbitrary<'a>,
     }
 }
 
-fuzz_target!(|input: (Input<ApproxBackend>, Input<HyperrealBackend>)| {
-    let (approx_input, hyperreal_input) = input;
-    matrix_fuzz(approx_input);
-    matrix_fuzz(hyperreal_input);
+fuzz_target!(|input: Input| {
+    matrix_fuzz(input);
 });
 
-fn matrix_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
-    let Input { m3a, m3b, m4a, m4b, v3, v4 } = input;
+fn matrix_fuzz(input: Input) {
+    let Input {
+        m3a,
+        m3b,
+        m4a,
+        m4b,
+        v3,
+        v4,
+    } = input;
 
     let signal = Arc::new(AtomicBool::new(false));
 
@@ -101,9 +103,28 @@ fn matrix_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
     let _ = m3a.clone() / &m3b;
     let _ = &m3a / m3b.clone();
     let _ = m3a.clone().div_matrix_checked(m3b.clone());
-    let _ = m3a.clone().div_matrix_checked_with_abort(m3b.clone(), &signal);
+    let _ = m3a
+        .clone()
+        .div_matrix_checked_with_abort(m3b.clone(), &signal);
     let _ = m3a.clone().div_scalar_checked(m3b[0][0].clone());
-    let _ = m3a.clone().div_scalar_checked_with_abort(m3b[0][0].clone(), &signal);
+    let _ = m3a
+        .clone()
+        .div_scalar_checked_with_abort(m3b[0][0].clone(), &signal);
+    let mut prepared3 = m3b.prepare();
+    let facts3 = prepared3.structural_facts();
+    assert_eq!(
+        prepared3.determinant_schedule_hint(),
+        facts3.determinant_schedule_hint(),
+        "PreparedMatrix3 must reuse the same determinant schedule hint as its cached facts"
+    );
+    let _ = prepared3.exact_facts();
+    let _ = prepared3.right_divisor().determinant_schedule_hint();
+    let _ = prepared3.inverse();
+    let _ = prepared3.inverse_checked();
+    let _ = prepared3.inverse_checked_with_abort(&signal);
+    let _ = prepared3.divide_left(m3a.clone());
+    let _ = prepared3.divide_left_checked(m3a.clone());
+    let _ = prepared3.divide_left_checked_with_abort(m3a.clone(), &signal);
 
     // ── Matrix3: no-panic — ^ (BitXor) operator ──────────────────────────────
     let _ = m3a.clone() ^ 0_i32;
@@ -160,9 +181,29 @@ fn matrix_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
     let _ = m4a.clone() / &m4b;
     let _ = &m4a / m4b.clone();
     let _ = m4a.clone().div_matrix_checked(m4b.clone());
-    let _ = m4a.clone().div_matrix_checked_with_abort(m4b.clone(), &signal);
+    let _ = m4a
+        .clone()
+        .div_matrix_checked_with_abort(m4b.clone(), &signal);
     let _ = m4a.clone().div_scalar_checked(m4b[0][0].clone());
-    let _ = m4a.clone().div_scalar_checked_with_abort(m4b[0][0].clone(), &signal);
+    let _ = m4a
+        .clone()
+        .div_scalar_checked_with_abort(m4b[0][0].clone(), &signal);
+    let mut prepared4 = m4b.prepare();
+    let facts4 = prepared4.structural_facts();
+    assert_eq!(
+        prepared4.determinant_schedule_hint(),
+        facts4.determinant_schedule_hint(),
+        "PreparedMatrix4 must reuse the same determinant schedule hint as its cached facts"
+    );
+    let _ = prepared4.exact_facts();
+    let _ = prepared4.right_divisor().determinant_schedule_hint();
+    let _ = prepared4.inverse();
+    let _ = prepared4.inverse_checked();
+    let _ = prepared4.inverse_checked_with_abort(&signal);
+    let _ = prepared4.divide_left(m4a.clone());
+    let _ = prepared4.divide_exact_rational_left(m4a.clone());
+    let _ = prepared4.divide_left_checked(m4a.clone());
+    let _ = prepared4.divide_left_checked_with_abort(m4a.clone(), &signal);
 
     // ── Matrix4: no-panic — ^ (BitXor) operator ──────────────────────────────
     let _ = m4a.clone() ^ 0_i32;
@@ -173,7 +214,11 @@ fn matrix_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
     // ── Matrix3: algebraic invariants ────────────────────────────────────────
 
     // −(−M) is the exact identity for every entry.
-    assert_eq!(-(-m3a.clone()), m3a, "Matrix3 double negation must be identity");
+    assert_eq!(
+        -(-m3a.clone()),
+        m3a,
+        "Matrix3 double negation must be identity"
+    );
 
     // Transpose is an involution: (M^T)^T == M exactly (clone then rearrange).
     assert_eq!(
@@ -202,9 +247,17 @@ fn matrix_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
     );
 
     // Identity multiplication: I·M == M and M·I == M.
-    let i3 = Matrix3::<Backend>::identity();
-    assert_eq!(i3.clone() * m3a.clone(), m3a, "I · M must equal M for Matrix3");
-    assert_eq!(m3a.clone() * i3.clone(), m3a, "M · I must equal M for Matrix3");
+    let i3 = Matrix3::identity();
+    assert_eq!(
+        i3.clone() * m3a.clone(),
+        m3a,
+        "I · M must equal M for Matrix3"
+    );
+    assert_eq!(
+        m3a.clone() * i3.clone(),
+        m3a,
+        "M · I must equal M for Matrix3"
+    );
 
     // powi(M, 0) always returns the identity, regardless of M.
     match m3a.clone().powi(0) {
@@ -227,7 +280,7 @@ fn matrix_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
 
     // determinant(I) == 1: all integer arithmetic on exact scalars, so the
     // computed value is 1.0 and PartialEq (interval) trivially holds.
-    let one = Scalar::<Backend>::one();
+    let one = Real::one();
     assert_eq!(
         i3.clone().determinant(),
         one.clone(),
@@ -236,7 +289,7 @@ fn matrix_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
 
     // M · 0_vector == 0_vector: every dot product with a zero right-hand side
     // produces value=0.0, epsilon=0.0 exactly (all cross terms vanish).
-    let zero_v3 = Vector3::<Backend>::zero();
+    let zero_v3 = Vector3::zero();
     let mv_zero3 = m3a.clone() * zero_v3.clone();
     for i in 0..3 {
         assert!(
@@ -246,7 +299,11 @@ fn matrix_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
     }
 
     // I · v == v for any vector (dot of a basis row with v returns v's component).
-    assert_eq!(i3.clone() * v3.clone(), v3, "I₃ · v must equal v for Vector3");
+    assert_eq!(
+        i3.clone() * v3.clone(),
+        v3,
+        "I₃ · v must equal v for Vector3"
+    );
 
     // Owned + borrowed agrees with owned + owned.
     assert_eq!(
@@ -257,7 +314,11 @@ fn matrix_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
 
     // ── Matrix4: algebraic invariants ────────────────────────────────────────
 
-    assert_eq!(-(-m4a.clone()), m4a, "Matrix4 double negation must be identity");
+    assert_eq!(
+        -(-m4a.clone()),
+        m4a,
+        "Matrix4 double negation must be identity"
+    );
 
     assert_eq!(
         m4a.clone().transpose().transpose(),
@@ -282,9 +343,17 @@ fn matrix_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
         "Matrix4 addition must be commutative"
     );
 
-    let i4 = Matrix4::<Backend>::identity();
-    assert_eq!(i4.clone() * m4a.clone(), m4a, "I · M must equal M for Matrix4");
-    assert_eq!(m4a.clone() * i4.clone(), m4a, "M · I must equal M for Matrix4");
+    let i4 = Matrix4::identity();
+    assert_eq!(
+        i4.clone() * m4a.clone(),
+        m4a,
+        "I · M must equal M for Matrix4"
+    );
+    assert_eq!(
+        m4a.clone() * i4.clone(),
+        m4a,
+        "M · I must equal M for Matrix4"
+    );
 
     match m4a.clone().powi(0) {
         Ok(result) => assert_eq!(result, i4.clone(), "Matrix4 powi(M, 0) must equal identity"),
@@ -302,9 +371,13 @@ fn matrix_fuzz<Backend: hyperlattice::Backend>(input: Input<Backend>) {
         Err(e) => panic!("Matrix4 powi(M, 2) must succeed; got {e:?}"),
     }
 
-    assert_eq!(i4.clone().determinant(), one.clone(), "det(I₄) must equal 1");
+    assert_eq!(
+        i4.clone().determinant(),
+        one.clone(),
+        "det(I₄) must equal 1"
+    );
 
-    let zero_v4 = Vector4::<Backend>::zero();
+    let zero_v4 = Vector4::zero();
     let mv_zero4 = m4a.clone() * zero_v4.clone();
     for i in 0..4 {
         assert!(

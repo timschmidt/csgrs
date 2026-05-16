@@ -14,7 +14,7 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 arbitrary = { version = "1", features = ["derive"] }
-hyperlattice = { path = "..", default-features = false, features = ["arbitrary", "approx-backend", "hyperreal-backend"] }
+hyperlattice = { path = "..", default-features = false, features = ["arbitrary"] }
 
 [[bin]]
 name = "scalar_ops"

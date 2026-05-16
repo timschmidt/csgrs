@@ -1,7 +1,7 @@
-use hyperlattice::{Scalar, Vector3, ZeroStatus};
+use hyperlattice::{Real, Vector3, ZeroStatus};
 use proptest::prelude::*;
 
-fn s(value: i32) -> Scalar {
+fn s(value: i32) -> Real {
     value.into()
 }
 
@@ -16,7 +16,7 @@ fn nonzero_direction3() -> impl Strategy<Value = Vector3> {
     })
 }
 
-fn squared_distance(a: &Vector3, b: &Vector3) -> Scalar {
+fn squared_distance(a: &Vector3, b: &Vector3) -> Real {
     let delta = a - b;
     delta.dot(&delta)
 }

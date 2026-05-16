@@ -727,14 +727,26 @@ fn next_case<'a, T>(cases: &'a [T], cursor: &Cell<usize>) -> &'a T {
     &cases[index]
 }
 
-fn blas_vec3<B: Backend>(value: SampleVec3) -> Vector3<B> {
-    blas_vec3_with(value, s::<B>)
+fn s(value: f64) -> Real {
+    Real::try_from(value).expect("finite benchmark scalar")
 }
 
-fn blas_vec3_with<B, F>(value: SampleVec3, make_scalar: F) -> Vector3<B>
+fn q(numerator: i64, denominator: u64) -> Real {
+    Real::from(Rational::fraction(numerator, denominator).expect("valid benchmark rational"))
+}
+
+fn qr(value: f64) -> Real {
+    let scaled = (value * 1_000_000_000_000_000.0).round() as i64;
+    q(scaled, 1_000_000_000_000_000)
+}
+
+fn blas_vec3(value: SampleVec3) -> Vector3 {
+    blas_vec3_with(value, s)
+}
+
+fn blas_vec3_with<F>(value: SampleVec3, make_scalar: F) -> Vector3
 where
-    B: Backend,
-    F: Copy + Fn(f64) -> Scalar<B>,
+    F: Copy + Fn(f64) -> Real,
 {
     Vector3::new([
         make_scalar(value.x),
@@ -743,14 +755,13 @@ where
     ])
 }
 
-fn blas_vec4<B: Backend>(value: SampleVec4) -> Vector4<B> {
-    blas_vec4_with(value, s::<B>)
+fn blas_vec4(value: SampleVec4) -> Vector4 {
+    blas_vec4_with(value, s)
 }
 
-fn blas_vec4_with<B, F>(value: SampleVec4, make_scalar: F) -> Vector4<B>
+fn blas_vec4_with<F>(value: SampleVec4, make_scalar: F) -> Vector4
 where
-    B: Backend,
-    F: Copy + Fn(f64) -> Scalar<B>,
+    F: Copy + Fn(f64) -> Real,
 {
     Vector4::new([
         make_scalar(value.x),
@@ -760,31 +771,29 @@ where
     ])
 }
 
-fn blas_mat3<B: Backend>(value: SampleMat3) -> Matrix3<B> {
-    blas_mat3_with(value, s::<B>)
+fn blas_mat3(value: SampleMat3) -> Matrix3 {
+    blas_mat3_with(value, s)
 }
 
-fn blas_mat3_with<B, F>(value: SampleMat3, make_scalar: F) -> Matrix3<B>
+fn blas_mat3_with<F>(value: SampleMat3, make_scalar: F) -> Matrix3
 where
-    B: Backend,
-    F: Copy + Fn(f64) -> Scalar<B>,
+    F: Copy + Fn(f64) -> Real,
 {
     Matrix3::new(value.m.map(|row| row.map(make_scalar)))
 }
 
-fn blas_mat4<B: Backend>(value: SampleMat4) -> Matrix4<B> {
-    blas_mat4_with(value, s::<B>)
+fn blas_mat4(value: SampleMat4) -> Matrix4 {
+    blas_mat4_with(value, s)
 }
 
-fn blas_mat4_with<B, F>(value: SampleMat4, make_scalar: F) -> Matrix4<B>
+fn blas_mat4_with<F>(value: SampleMat4, make_scalar: F) -> Matrix4
 where
-    B: Backend,
-    F: Copy + Fn(f64) -> Scalar<B>,
+    F: Copy + Fn(f64) -> Real,
 {
     Matrix4::new(value.m.map(|row| row.map(make_scalar)))
 }
 
-fn blas_vec3_rational() -> Vector3<HyperrealBackend> {
+fn blas_vec3_rational() -> Vector3 {
     Vector3::new([
         q(123_456_789_012_345, 100_000_000_000_000),
         q(-234_567_890_123_456, 100_000_000_000_000),
@@ -792,7 +801,7 @@ fn blas_vec3_rational() -> Vector3<HyperrealBackend> {
     ])
 }
 
-fn blas_vec3_b_rational() -> Vector3<HyperrealBackend> {
+fn blas_vec3_b_rational() -> Vector3 {
     Vector3::new([
         q(-98_765_432_101_234, 100_000_000_000_000),
         q(421_098_765_432_109, 100_000_000_000_000),
@@ -800,11 +809,11 @@ fn blas_vec3_b_rational() -> Vector3<HyperrealBackend> {
     ])
 }
 
-fn blas_vec4_rational() -> Vector4<HyperrealBackend> {
+fn blas_vec4_rational() -> Vector4 {
     Vector4::new([3.into(), 4.into(), 5.into(), 1.into()])
 }
 
-fn blas_mat3_rational() -> Matrix3<HyperrealBackend> {
+fn blas_mat3_rational() -> Matrix3 {
     Matrix3::new([
         [q(12, 10), q(3, 10), q(-7, 10)],
         [q(21, 10), q(-15, 10), q(9, 10)],
@@ -812,7 +821,7 @@ fn blas_mat3_rational() -> Matrix3<HyperrealBackend> {
     ])
 }
 
-fn blas_mat3_b_rational() -> Matrix3<HyperrealBackend> {
+fn blas_mat3_b_rational() -> Matrix3 {
     Matrix3::new([
         [q(-8, 10), q(11, 10), q(5, 10)],
         [q(27, 10), q(6, 10), q(-14, 10)],
@@ -820,7 +829,7 @@ fn blas_mat3_b_rational() -> Matrix3<HyperrealBackend> {
     ])
 }
 
-fn blas_mat4_rational() -> Matrix4<HyperrealBackend> {
+fn blas_mat4_rational() -> Matrix4 {
     Matrix4::new([
         [1.into(), 2.into(), 3.into(), 4.into()],
         [0.into(), 1.into(), 4.into(), 2.into()],
@@ -829,7 +838,7 @@ fn blas_mat4_rational() -> Matrix4<HyperrealBackend> {
     ])
 }
 
-fn blas_mat4_b_rational() -> Matrix4<HyperrealBackend> {
+fn blas_mat4_b_rational() -> Matrix4 {
     Matrix4::new([
         [2.into(), 0.into(), 1.into(), 3.into()],
         [3.into(), 5.into(), 7.into(), 11.into()],
@@ -838,35 +847,32 @@ fn blas_mat4_b_rational() -> Matrix4<HyperrealBackend> {
     ])
 }
 
-fn ratio_matrix3_with<B, F>(entries: [[(i64, u64); 3]; 3], make_ratio: F) -> Matrix3<B>
+fn ratio_matrix3_with<F>(entries: [[(i64, u64); 3]; 3], make_ratio: F) -> Matrix3
 where
-    B: Backend,
-    F: Copy + Fn(i64, u64) -> Scalar<B>,
+    F: Copy + Fn(i64, u64) -> Real,
 {
     Matrix3::new(entries.map(|row| row.map(|(n, d)| make_ratio(n, d))))
 }
 
-fn ratio_matrix4_with<B, F>(entries: [[(i64, u64); 4]; 4], make_ratio: F) -> Matrix4<B>
+fn ratio_matrix4_with<F>(entries: [[(i64, u64); 4]; 4], make_ratio: F) -> Matrix4
 where
-    B: Backend,
-    F: Copy + Fn(i64, u64) -> Scalar<B>,
+    F: Copy + Fn(i64, u64) -> Real,
 {
     Matrix4::new(entries.map(|row| row.map(|(n, d)| make_ratio(n, d))))
 }
 
 #[derive(Clone)]
-struct TargetedMatrixForm<B: Backend> {
+struct TargetedMatrixForm {
     name: &'static str,
-    lhs3: Matrix3<B>,
-    rhs3: Matrix3<B>,
-    lhs4: Matrix4<B>,
-    rhs4: Matrix4<B>,
+    lhs3: Matrix3,
+    rhs3: Matrix3,
+    lhs4: Matrix4,
+    rhs4: Matrix4,
 }
 
-fn targeted_matrix_forms_with<B, F>(make_ratio: F) -> [TargetedMatrixForm<B>; 4]
+fn targeted_matrix_forms_with<F>(make_ratio: F) -> [TargetedMatrixForm; 4]
 where
-    B: Backend,
-    F: Copy + Fn(i64, u64) -> Scalar<B>,
+    F: Copy + Fn(i64, u64) -> Real,
 {
     [
         TargetedMatrixForm {

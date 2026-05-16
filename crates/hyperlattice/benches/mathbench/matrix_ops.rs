@@ -1,10 +1,9 @@
-fn bench_matrix_operations_for<B, F>(
+fn bench_matrix_operations_for<F>(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
     make_scalar: F,
 ) where
-    B: Backend,
-    F: Copy + Fn(f64) -> Scalar<B>,
+    F: Copy + Fn(f64) -> Real,
 {
     let lhs3_cases = sample_mat3_cases().map(|value| blas_mat3_with(value, make_scalar));
     let rhs3_cases = sample_mat3_b_cases().map(|value| blas_mat3_with(value, make_scalar));
@@ -138,12 +137,12 @@ fn bench_matrix_operations_for<B, F>(
         });
         trace_matrix_profile_row("mat3", "known_uniform_scale_inverse", input, 1, || {
             black_box(
-                Matrix3::<B>::uniform_scale_inverse(black_box(uniform_scale_value.clone()))
+                Matrix3::uniform_scale_inverse(black_box(uniform_scale_value.clone()))
                     .unwrap(),
             );
         });
         trace_matrix_profile_row("mat3", "known_diagonal_inverse", input, 1, || {
-            black_box(Matrix3::<B>::diagonal_inverse(black_box(diagonal_values3.clone())).unwrap());
+            black_box(Matrix3::diagonal_inverse(black_box(diagonal_values3.clone())).unwrap());
         });
         trace_matrix_profile_row("mat3", "known_upper_triangular_inverse", input, 1, || {
             black_box(black_box(upper_triangular_matrix3.clone()).upper_triangular_inverse().unwrap());
@@ -485,7 +484,7 @@ fn bench_matrix_operations_for<B, F>(
             black_box(black_box(diagonal_affine_matrix.clone()).reciprocal().unwrap());
         });
         trace_matrix_profile_row("mat4", "known_translation_inverse", input, 1, || {
-            black_box(Matrix4::<B>::affine_translation_inverse(black_box(
+            black_box(Matrix4::affine_translation_inverse(black_box(
                 translation_values4.clone(),
             )));
         });
@@ -496,7 +495,7 @@ fn bench_matrix_operations_for<B, F>(
             );
         });
         trace_matrix_profile_row("mat4", "known_orthonormal_inverse", input, 1, || {
-            black_box(Matrix4::<B>::affine_orthonormal_inverse(
+            black_box(Matrix4::affine_orthonormal_inverse(
                 black_box(orthonormal_linear4.clone()),
                 black_box(translation_values4.clone()),
             ));
@@ -508,7 +507,7 @@ fn bench_matrix_operations_for<B, F>(
             ));
         });
         trace_matrix_profile_row("mat4", "known_signed_permutation_inverse", input, 1, || {
-            black_box(Matrix4::<B>::signed_permutation_inverse(black_box(
+            black_box(Matrix4::signed_permutation_inverse(black_box(
                 signed_permutation_rows4,
             )));
         });
@@ -519,13 +518,13 @@ fn bench_matrix_operations_for<B, F>(
             );
         });
         trace_matrix_profile_row("mat4", "known_signed_permutation_transform", input, 1, || {
-            black_box(Matrix4::<B>::transform_signed_permutation_vector(
+            black_box(Matrix4::transform_signed_permutation_vector(
                 black_box(signed_permutation_rows4),
                 black_box(&vector4_cases[0]),
             ));
         });
         trace_matrix_profile_row("mat4", "known_signed_permutation_batch", input, 1, || {
-            black_box(Matrix4::<B>::transform_signed_permutation_batch(
+            black_box(Matrix4::transform_signed_permutation_batch(
                 black_box(signed_permutation_rows4),
                 black_box(&translated_diagonal_point_batch),
             ));
@@ -535,12 +534,12 @@ fn bench_matrix_operations_for<B, F>(
         });
         trace_matrix_profile_row("mat4", "known_uniform_scale_inverse", input, 1, || {
             black_box(
-                Matrix4::<B>::uniform_scale_inverse(black_box(uniform_scale_value.clone()))
+                Matrix4::uniform_scale_inverse(black_box(uniform_scale_value.clone()))
                     .unwrap(),
             );
         });
         trace_matrix_profile_row("mat4", "known_diagonal_inverse", input, 1, || {
-            black_box(Matrix4::<B>::diagonal_inverse(black_box(diagonal_values4.clone())).unwrap());
+            black_box(Matrix4::diagonal_inverse(black_box(diagonal_values4.clone())).unwrap());
         });
         trace_matrix_profile_row("mat4", "known_upper_triangular_inverse", input, 1, || {
             black_box(black_box(upper_triangular_matrix4.clone()).upper_triangular_inverse().unwrap());
@@ -1225,11 +1224,11 @@ fn bench_matrix_operations_for<B, F>(
     });
     trace_dispatch_row(format!("matrix_ops/{label}/mat3 known_uniform_scale_inverse"), || {
         black_box(
-            Matrix3::<B>::uniform_scale_inverse(black_box(uniform_scale_value.clone())).unwrap(),
+            Matrix3::uniform_scale_inverse(black_box(uniform_scale_value.clone())).unwrap(),
         );
     });
     trace_dispatch_row(format!("matrix_ops/{label}/mat3 known_diagonal_inverse"), || {
-        black_box(Matrix3::<B>::diagonal_inverse(black_box(diagonal_values3.clone())).unwrap());
+        black_box(Matrix3::diagonal_inverse(black_box(diagonal_values3.clone())).unwrap());
     });
     trace_dispatch_row(format!("matrix_ops/{label}/mat3 known_upper_triangular_inverse"), || {
         black_box(black_box(upper_triangular_matrix3.clone()).upper_triangular_inverse().unwrap());
@@ -1526,7 +1525,7 @@ fn bench_matrix_operations_for<B, F>(
         black_box(black_box(diagonal_affine_matrix.clone()).reciprocal().unwrap());
     });
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_translation_inverse"), || {
-        black_box(Matrix4::<B>::affine_translation_inverse(black_box(
+        black_box(Matrix4::affine_translation_inverse(black_box(
             translation_values4.clone(),
         )));
     });
@@ -1537,7 +1536,7 @@ fn bench_matrix_operations_for<B, F>(
         );
     });
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_orthonormal_inverse"), || {
-        black_box(Matrix4::<B>::affine_orthonormal_inverse(
+        black_box(Matrix4::affine_orthonormal_inverse(
             black_box(orthonormal_linear4.clone()),
             black_box(translation_values4.clone()),
         ));
@@ -1551,7 +1550,7 @@ fn bench_matrix_operations_for<B, F>(
     trace_dispatch_row(
         format!("matrix_ops/{label}/mat4 known_signed_permutation_inverse"),
         || {
-            black_box(Matrix4::<B>::signed_permutation_inverse(black_box(
+            black_box(Matrix4::signed_permutation_inverse(black_box(
                 signed_permutation_rows4,
             )));
         },
@@ -1568,7 +1567,7 @@ fn bench_matrix_operations_for<B, F>(
     trace_dispatch_row(
         format!("matrix_ops/{label}/mat4 known_signed_permutation_transform"),
         || {
-            black_box(Matrix4::<B>::transform_signed_permutation_vector(
+            black_box(Matrix4::transform_signed_permutation_vector(
                 black_box(signed_permutation_rows4),
                 black_box(&vector4_cases[0]),
             ));
@@ -1577,7 +1576,7 @@ fn bench_matrix_operations_for<B, F>(
     trace_dispatch_row(
         format!("matrix_ops/{label}/mat4 known_signed_permutation_batch"),
         || {
-            black_box(Matrix4::<B>::transform_signed_permutation_batch(
+            black_box(Matrix4::transform_signed_permutation_batch(
                 black_box(signed_permutation_rows4),
                 black_box(&translated_diagonal_point_batch),
             ));
@@ -1588,11 +1587,11 @@ fn bench_matrix_operations_for<B, F>(
     });
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_uniform_scale_inverse"), || {
         black_box(
-            Matrix4::<B>::uniform_scale_inverse(black_box(uniform_scale_value.clone())).unwrap(),
+            Matrix4::uniform_scale_inverse(black_box(uniform_scale_value.clone())).unwrap(),
         );
     });
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_diagonal_inverse"), || {
-        black_box(Matrix4::<B>::diagonal_inverse(black_box(diagonal_values4.clone())).unwrap());
+        black_box(Matrix4::diagonal_inverse(black_box(diagonal_values4.clone())).unwrap());
     });
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 known_upper_triangular_inverse"), || {
         black_box(black_box(upper_triangular_matrix4.clone()).upper_triangular_inverse().unwrap());
@@ -2197,10 +2196,10 @@ fn bench_matrix_operations_for<B, F>(
         b.iter(|| black_box(blas_mat3_with(*next_case(&raw_cases, &cursor), make_scalar)))
     });
     group.bench_function(format!("{label}/mat3 zero"), |b| {
-        b.iter(|| black_box(Matrix3::<B>::zero()))
+        b.iter(|| black_box(Matrix3::zero()))
     });
     group.bench_function(format!("{label}/mat3 identity"), |b| {
-        b.iter(|| black_box(Matrix3::<B>::identity()))
+        b.iter(|| black_box(Matrix3::identity()))
     });
     group.bench_function(format!("{label}/mat3 transpose"), |b| {
         let cursor = Cell::new(0);
@@ -2222,14 +2221,14 @@ fn bench_matrix_operations_for<B, F>(
     group.bench_function(format!("{label}/mat3 known_uniform_scale_inverse"), |b| {
         b.iter(|| {
             black_box(
-                Matrix3::<B>::uniform_scale_inverse(black_box(uniform_scale_value.clone()))
+                Matrix3::uniform_scale_inverse(black_box(uniform_scale_value.clone()))
                     .unwrap(),
             )
         })
     });
         group.bench_function(format!("{label}/mat3 known_diagonal_inverse"), |b| {
             b.iter(|| {
-                black_box(Matrix3::<B>::diagonal_inverse(black_box(diagonal_values3.clone())).unwrap())
+                black_box(Matrix3::diagonal_inverse(black_box(diagonal_values3.clone())).unwrap())
             })
         });
     group.bench_function(format!("{label}/mat3 known_upper_triangular_inverse"), |b| {
@@ -2623,10 +2622,10 @@ fn bench_matrix_operations_for<B, F>(
     });
 
     group.bench_function(format!("{label}/mat4 zero"), |b| {
-        b.iter(|| black_box(Matrix4::<B>::zero()))
+        b.iter(|| black_box(Matrix4::zero()))
     });
     group.bench_function(format!("{label}/mat4 identity"), |b| {
-        b.iter(|| black_box(Matrix4::<B>::identity()))
+        b.iter(|| black_box(Matrix4::identity()))
     });
     group.bench_function(format!("{label}/mat4 transpose"), |b| {
         let cursor = Cell::new(0);
@@ -2647,7 +2646,7 @@ fn bench_matrix_operations_for<B, F>(
     });
     group.bench_function(format!("{label}/mat4 known_translation_inverse"), |b| {
         b.iter(|| {
-            black_box(Matrix4::<B>::affine_translation_inverse(black_box(
+            black_box(Matrix4::affine_translation_inverse(black_box(
                 translation_values4.clone(),
             )))
         })
@@ -2662,7 +2661,7 @@ fn bench_matrix_operations_for<B, F>(
     });
     group.bench_function(format!("{label}/mat4 known_orthonormal_inverse"), |b| {
         b.iter(|| {
-            black_box(Matrix4::<B>::affine_orthonormal_inverse(
+            black_box(Matrix4::affine_orthonormal_inverse(
                 black_box(orthonormal_linear4.clone()),
                 black_box(translation_values4.clone()),
             ))
@@ -2678,7 +2677,7 @@ fn bench_matrix_operations_for<B, F>(
     });
     group.bench_function(format!("{label}/mat4 known_signed_permutation_inverse"), |b| {
         b.iter(|| {
-            black_box(Matrix4::<B>::signed_permutation_inverse(black_box(
+            black_box(Matrix4::signed_permutation_inverse(black_box(
                 signed_permutation_rows4,
             )))
         })
@@ -2693,7 +2692,7 @@ fn bench_matrix_operations_for<B, F>(
     });
     group.bench_function(format!("{label}/mat4 known_signed_permutation_transform"), |b| {
         b.iter(|| {
-            black_box(Matrix4::<B>::transform_signed_permutation_vector(
+            black_box(Matrix4::transform_signed_permutation_vector(
                 black_box(signed_permutation_rows4),
                 black_box(&vector4_cases[0]),
             ))
@@ -2701,7 +2700,7 @@ fn bench_matrix_operations_for<B, F>(
     });
     group.bench_function(format!("{label}/mat4 known_signed_permutation_batch"), |b| {
         b.iter(|| {
-            black_box(Matrix4::<B>::transform_signed_permutation_batch(
+            black_box(Matrix4::transform_signed_permutation_batch(
                 black_box(signed_permutation_rows4),
                 black_box(&translated_diagonal_point_batch),
             ))
@@ -2713,14 +2712,14 @@ fn bench_matrix_operations_for<B, F>(
     group.bench_function(format!("{label}/mat4 known_uniform_scale_inverse"), |b| {
         b.iter(|| {
             black_box(
-                Matrix4::<B>::uniform_scale_inverse(black_box(uniform_scale_value.clone()))
+                Matrix4::uniform_scale_inverse(black_box(uniform_scale_value.clone()))
                     .unwrap(),
             )
         })
     });
     group.bench_function(format!("{label}/mat4 known_diagonal_inverse"), |b| {
         b.iter(|| {
-            black_box(Matrix4::<B>::diagonal_inverse(black_box(diagonal_values4.clone())).unwrap())
+            black_box(Matrix4::diagonal_inverse(black_box(diagonal_values4.clone())).unwrap())
         })
     });
     group.bench_function(format!("{label}/mat4 known_upper_triangular_inverse"), |b| {
@@ -3414,26 +3413,23 @@ fn bench_matrix_operations_for<B, F>(
 
 fn bench_matrix_operations(c: &mut Criterion) {
     let mut group = c.benchmark_group("matrix_ops");
-    bench_matrix_operations_for::<ApproxBackend, _>(&mut group, "approx", s::<ApproxBackend>);
-    bench_matrix_operations_for::<HyperrealBackend, _>(
+    bench_matrix_operations_for::<_>(
         &mut group,
         "hyperreal",
-        s::<HyperrealBackend>,
+        s,
     );
-    bench_matrix_operations_for::<HyperrealBackend, _>(&mut group, "hyperreal-rational", qr);
-    bench_astro_matrix_operations(&mut group, "astro128");
+    bench_matrix_operations_for::<_>(&mut group, "hyperreal-rational", qr);
     bench_numerica_matrix_operations(&mut group, "numerica128");
     bench_symbolica_matrix_operations(&mut group, "symbolica");
     group.finish();
 }
 
-fn bench_targeted_matrix_forms_for<B, F>(
+fn bench_targeted_matrix_forms_for<F>(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
     make_ratio: F,
 ) where
-    B: Backend,
-    F: Copy + Fn(i64, u64) -> Scalar<B>,
+    F: Copy + Fn(i64, u64) -> Real,
 {
     let forms = targeted_matrix_forms_with(make_ratio);
     for form in forms {
@@ -3511,15 +3507,18 @@ fn bench_targeted_matrix_forms_for<B, F>(
     }
 }
 
-fn approx_ratio<B: Backend>(numerator: i64, denominator: u64) -> Scalar<B> {
-    Scalar::try_from(numerator as f64 / denominator as f64).unwrap()
+fn dyadic_from_f64_ratio(numerator: i64, denominator: u64) -> Real {
+    Real::try_from(numerator as f64 / denominator as f64).unwrap()
 }
 
 fn bench_targeted_matrix_forms(c: &mut Criterion) {
     let mut group = c.benchmark_group("matrix_forms");
-    bench_targeted_matrix_forms_for::<ApproxBackend, _>(&mut group, "approx", approx_ratio);
-    bench_targeted_matrix_forms_for::<HyperrealBackend, _>(&mut group, "hyperreal", approx_ratio);
-    bench_targeted_matrix_forms_for::<HyperrealBackend, _>(
+    bench_targeted_matrix_forms_for::<_>(
+        &mut group,
+        "hyperreal",
+        dyadic_from_f64_ratio,
+    );
+    bench_targeted_matrix_forms_for::<_>(
         &mut group,
         "hyperreal-rational",
         q,
@@ -3527,225 +3526,32 @@ fn bench_targeted_matrix_forms(c: &mut Criterion) {
     group.finish();
 }
 
-fn bench_astro_matrix_operations(
-    group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
-    label: &str,
-) {
-    let ctx = astro_backend::Ctx::new(128);
-    let lhs3_cases = sample_mat3_cases().map(|value| astro_backend::Mat3::new(&ctx, value.m));
-    let rhs3_cases = sample_mat3_b_cases().map(|value| astro_backend::Mat3::new(&ctx, value.m));
-    let lhs4_cases = sample_mat4_cases().map(|value| astro_backend::Mat4::new(&ctx, value.m));
-    let rhs4_cases = sample_mat4_b_cases().map(|value| astro_backend::Mat4::new(&ctx, value.m));
-    let scalar_cases = [2.0, 1.0e-9, -1.0e9, std::f64::consts::PI].map(|value| ctx.f(value));
-
-    group.bench_function(format!("{label}/mat3 new"), |b| {
-        let raw_cases = sample_mat3_cases();
-        let cursor = Cell::new(0);
-        b.iter(|| {
-            black_box(astro_backend::Mat3::new(
-                &ctx,
-                next_case(&raw_cases, &cursor).m,
-            ))
-        })
-    });
-    group.bench_function(format!("{label}/mat3 zero"), |b| {
-        b.iter(|| black_box(astro_backend::Mat3::zero(&ctx)))
-    });
-    group.bench_function(format!("{label}/mat3 identity"), |b| {
-        b.iter(|| black_box(astro_backend::Mat3::identity(&ctx)))
-    });
-    group.bench_function(format!("{label}/mat3 transpose"), |b| {
-        let cursor = Cell::new(0);
-        b.iter(|| black_box(next_case(&lhs3_cases, &cursor).transpose()))
-    });
-    for name in [
-        "reciprocal",
-        "reciprocal_checked",
-        "inverse_checked",
-        "inverse_checked_abort",
-    ] {
-        group.bench_function(format!("{label}/mat3 {name}"), |b| {
-            let cursor = Cell::new(0);
-            b.iter(|| black_box(next_case(&lhs3_cases, &cursor).inverse(&ctx)))
-        });
-    }
-    for name in ["powi", "powi_checked", "powi_checked_abort", "bitxor"] {
-        group.bench_function(format!("{label}/mat3 {name}"), |b| {
-            let cursor = Cell::new(0);
-            b.iter(|| black_box(next_case(&lhs3_cases, &cursor).powi(3, &ctx)))
-        });
-    }
-    for name in [
-        "div_scalar_checked",
-        "div_scalar_checked_abort",
-        "div_scalar",
-    ] {
-        group.bench_function(format!("{label}/mat3 {name}"), |b| {
-            let cursor = Cell::new(0);
-            b.iter(|| {
-                let index = cursor.get();
-                cursor.set((index + 1) % lhs3_cases.len());
-                black_box(lhs3_cases[index].map_scalar(
-                    &scalar_cases[index],
-                    &ctx,
-                    astro_backend::Ctx::div,
-                ))
-            })
-        });
-    }
-    for name in [
-        "div_matrix_checked",
-        "div_matrix_checked_abort",
-        "div_matrix",
-    ] {
-        group.bench_function(format!("{label}/mat3 {name}"), |b| {
-            let cursor = Cell::new(0);
-            b.iter(|| {
-                let index = cursor.get();
-                cursor.set((index + 1) % lhs3_cases.len());
-                black_box(lhs3_cases[index].div_matrix(&rhs3_cases[index], &ctx))
-            })
-        });
-    }
-    for name in [
-        "add",
-        "add_scalar",
-        "sub",
-        "sub_scalar",
-        "neg",
-        "mul_scalar",
-    ] {
-        group.bench_function(format!("{label}/mat3 {name}"), |b| {
-            let cursor = Cell::new(0);
-            b.iter(|| {
-                let index = cursor.get();
-                cursor.set((index + 1) % lhs3_cases.len());
-                black_box(match name {
-                    "add" => {
-                        lhs3_cases[index].combine(&rhs3_cases[index], &ctx, astro_backend::Ctx::add)
-                    }
-                    "add_scalar" => lhs3_cases[index].map_scalar(
-                        &scalar_cases[index],
-                        &ctx,
-                        astro_backend::Ctx::add,
-                    ),
-                    "sub" => {
-                        lhs3_cases[index].combine(&rhs3_cases[index], &ctx, astro_backend::Ctx::sub)
-                    }
-                    "sub_scalar" => lhs3_cases[index].map_scalar(
-                        &scalar_cases[index],
-                        &ctx,
-                        astro_backend::Ctx::sub,
-                    ),
-                    "neg" => lhs3_cases[index].neg(&ctx),
-                    _ => lhs3_cases[index].map_scalar(
-                        &scalar_cases[index],
-                        &ctx,
-                        astro_backend::Ctx::mul,
-                    ),
-                })
-            })
-        });
-    }
-
-    group.bench_function(format!("{label}/mat4 zero"), |b| {
-        b.iter(|| black_box(astro_backend::Mat4::zero(&ctx)))
-    });
-    group.bench_function(format!("{label}/mat4 identity"), |b| {
-        b.iter(|| black_box(astro_backend::Mat4::identity(&ctx)))
-    });
-    group.bench_function(format!("{label}/mat4 transpose"), |b| {
-        let cursor = Cell::new(0);
-        b.iter(|| black_box(next_case(&lhs4_cases, &cursor).transpose()))
-    });
-    for name in ["reciprocal", "reciprocal_checked"] {
-        group.bench_function(format!("{label}/mat4 {name}"), |b| {
-            let cursor = Cell::new(0);
-            b.iter(|| black_box(next_case(&lhs4_cases, &cursor).inverse(&ctx)))
-        });
-    }
-    for name in ["powi", "powi_checked", "bitxor"] {
-        group.bench_function(format!("{label}/mat4 {name}"), |b| {
-            let cursor = Cell::new(0);
-            b.iter(|| black_box(next_case(&lhs4_cases, &cursor).powi(3, &ctx)))
-        });
-    }
-    for name in [
-        "div_scalar",
-        "add",
-        "add_scalar",
-        "sub",
-        "sub_scalar",
-        "neg",
-        "mul_scalar",
-        "div_matrix",
-    ] {
-        group.bench_function(format!("{label}/mat4 {name}"), |b| {
-            let cursor = Cell::new(0);
-            b.iter(|| {
-                let index = cursor.get();
-                cursor.set((index + 1) % lhs4_cases.len());
-                black_box(match name {
-                    "div_scalar" => lhs4_cases[index].map_scalar(
-                        &scalar_cases[index],
-                        &ctx,
-                        astro_backend::Ctx::div,
-                    ),
-                    "add" => {
-                        lhs4_cases[index].combine(&rhs4_cases[index], &ctx, astro_backend::Ctx::add)
-                    }
-                    "add_scalar" => lhs4_cases[index].map_scalar(
-                        &scalar_cases[index],
-                        &ctx,
-                        astro_backend::Ctx::add,
-                    ),
-                    "sub" => {
-                        lhs4_cases[index].combine(&rhs4_cases[index], &ctx, astro_backend::Ctx::sub)
-                    }
-                    "sub_scalar" => lhs4_cases[index].map_scalar(
-                        &scalar_cases[index],
-                        &ctx,
-                        astro_backend::Ctx::sub,
-                    ),
-                    "neg" => lhs4_cases[index].neg(&ctx),
-                    "mul_scalar" => lhs4_cases[index].map_scalar(
-                        &scalar_cases[index],
-                        &ctx,
-                        astro_backend::Ctx::mul,
-                    ),
-                    _ => lhs4_cases[index].div_matrix(&rhs4_cases[index], &ctx),
-                })
-            })
-        });
-    }
-}
-
 fn bench_numerica_matrix_operations(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
 ) {
-    let ctx = numerica_backend::Ctx::new(128);
-    let lhs3_cases = sample_mat3_cases().map(|value| numerica_backend::Mat3::new(&ctx, value.m));
-    let rhs3_cases = sample_mat3_b_cases().map(|value| numerica_backend::Mat3::new(&ctx, value.m));
-    let lhs4_cases = sample_mat4_cases().map(|value| numerica_backend::Mat4::new(&ctx, value.m));
-    let rhs4_cases = sample_mat4_b_cases().map(|value| numerica_backend::Mat4::new(&ctx, value.m));
+    let ctx = numerica_engine::Ctx::new(128);
+    let lhs3_cases = sample_mat3_cases().map(|value| numerica_engine::Mat3::new(&ctx, value.m));
+    let rhs3_cases = sample_mat3_b_cases().map(|value| numerica_engine::Mat3::new(&ctx, value.m));
+    let lhs4_cases = sample_mat4_cases().map(|value| numerica_engine::Mat4::new(&ctx, value.m));
+    let rhs4_cases = sample_mat4_b_cases().map(|value| numerica_engine::Mat4::new(&ctx, value.m));
     let scalar_cases = [2.0, 1.0e-9, -1.0e9, std::f64::consts::PI].map(|value| ctx.f(value));
 
     group.bench_function(format!("{label}/mat3 new"), |b| {
         let raw_cases = sample_mat3_cases();
         let cursor = Cell::new(0);
         b.iter(|| {
-            black_box(numerica_backend::Mat3::new(
+            black_box(numerica_engine::Mat3::new(
                 &ctx,
                 next_case(&raw_cases, &cursor).m,
             ))
         })
     });
     group.bench_function(format!("{label}/mat3 zero"), |b| {
-        b.iter(|| black_box(numerica_backend::Mat3::zero(&ctx)))
+        b.iter(|| black_box(numerica_engine::Mat3::zero(&ctx)))
     });
     group.bench_function(format!("{label}/mat3 identity"), |b| {
-        b.iter(|| black_box(numerica_backend::Mat3::identity(&ctx)))
+        b.iter(|| black_box(numerica_engine::Mat3::identity(&ctx)))
     });
     group.bench_function(format!("{label}/mat3 transpose"), |b| {
         let cursor = Cell::new(0);
@@ -3781,7 +3587,7 @@ fn bench_numerica_matrix_operations(
                 black_box(lhs3_cases[index].map_scalar(
                     &scalar_cases[index],
                     &ctx,
-                    numerica_backend::Ctx::div,
+                    numerica_engine::Ctx::div,
                 ))
             })
         });
@@ -3814,23 +3620,23 @@ fn bench_numerica_matrix_operations(
                 let index = cursor.get();
                 cursor.set((index + 1) % lhs3_cases.len());
                 black_box(match name {
-                    "add" => lhs3_cases[index].combine(&rhs3_cases[index], &ctx, numerica_backend::Ctx::add),
+                    "add" => lhs3_cases[index].combine(&rhs3_cases[index], &ctx, numerica_engine::Ctx::add),
                     "add_scalar" => lhs3_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
-                        numerica_backend::Ctx::add,
+                        numerica_engine::Ctx::add,
                     ),
-                    "sub" => lhs3_cases[index].combine(&rhs3_cases[index], &ctx, numerica_backend::Ctx::sub),
+                    "sub" => lhs3_cases[index].combine(&rhs3_cases[index], &ctx, numerica_engine::Ctx::sub),
                     "sub_scalar" => lhs3_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
-                        numerica_backend::Ctx::sub,
+                        numerica_engine::Ctx::sub,
                     ),
                     "neg" => lhs3_cases[index].neg(&ctx),
                     _ => lhs3_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
-                        numerica_backend::Ctx::mul,
+                        numerica_engine::Ctx::mul,
                     ),
                 })
             })
@@ -3838,10 +3644,10 @@ fn bench_numerica_matrix_operations(
     }
 
     group.bench_function(format!("{label}/mat4 zero"), |b| {
-        b.iter(|| black_box(numerica_backend::Mat4::zero(&ctx)))
+        b.iter(|| black_box(numerica_engine::Mat4::zero(&ctx)))
     });
     group.bench_function(format!("{label}/mat4 identity"), |b| {
-        b.iter(|| black_box(numerica_backend::Mat4::identity(&ctx)))
+        b.iter(|| black_box(numerica_engine::Mat4::identity(&ctx)))
     });
     group.bench_function(format!("{label}/mat4 transpose"), |b| {
         let cursor = Cell::new(0);
@@ -3878,25 +3684,25 @@ fn bench_numerica_matrix_operations(
                     "div_scalar" => lhs4_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
-                        numerica_backend::Ctx::div,
+                        numerica_engine::Ctx::div,
                     ),
-                    "add" => lhs4_cases[index].combine(&rhs4_cases[index], &ctx, numerica_backend::Ctx::add),
+                    "add" => lhs4_cases[index].combine(&rhs4_cases[index], &ctx, numerica_engine::Ctx::add),
                     "add_scalar" => lhs4_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
-                        numerica_backend::Ctx::add,
+                        numerica_engine::Ctx::add,
                     ),
-                    "sub" => lhs4_cases[index].combine(&rhs4_cases[index], &ctx, numerica_backend::Ctx::sub),
+                    "sub" => lhs4_cases[index].combine(&rhs4_cases[index], &ctx, numerica_engine::Ctx::sub),
                     "sub_scalar" => lhs4_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
-                        numerica_backend::Ctx::sub,
+                        numerica_engine::Ctx::sub,
                     ),
                     "neg" => lhs4_cases[index].neg(&ctx),
                     "mul_scalar" => lhs4_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
-                        numerica_backend::Ctx::mul,
+                        numerica_engine::Ctx::mul,
                     ),
                     _ => lhs4_cases[index].div_matrix(&rhs4_cases[index], &ctx),
                 })
@@ -3909,28 +3715,28 @@ fn bench_symbolica_matrix_operations(
     group: &mut BenchmarkGroup<'_, criterion::measurement::WallTime>,
     label: &str,
 ) {
-    let ctx = symbolica_backend::Ctx::new(128);
-    let lhs3_cases = sample_mat3_cases().map(|value| symbolica_backend::Mat3::new(&ctx, value.m));
-    let rhs3_cases = sample_mat3_b_cases().map(|value| symbolica_backend::Mat3::new(&ctx, value.m));
-    let lhs4_cases = sample_mat4_cases().map(|value| symbolica_backend::Mat4::new(&ctx, value.m));
-    let rhs4_cases = sample_mat4_b_cases().map(|value| symbolica_backend::Mat4::new(&ctx, value.m));
+    let ctx = symbolica_engine::Ctx::new(128);
+    let lhs3_cases = sample_mat3_cases().map(|value| symbolica_engine::Mat3::new(&ctx, value.m));
+    let rhs3_cases = sample_mat3_b_cases().map(|value| symbolica_engine::Mat3::new(&ctx, value.m));
+    let lhs4_cases = sample_mat4_cases().map(|value| symbolica_engine::Mat4::new(&ctx, value.m));
+    let rhs4_cases = sample_mat4_b_cases().map(|value| symbolica_engine::Mat4::new(&ctx, value.m));
     let scalar_cases = [2.0, 1.0e-9, -1.0e9, std::f64::consts::PI].map(|value| ctx.f(value));
 
     group.bench_function(format!("{label}/mat3 new"), |b| {
         let raw_cases = sample_mat3_cases();
         let cursor = Cell::new(0);
         b.iter(|| {
-            black_box(symbolica_backend::Mat3::new(
+            black_box(symbolica_engine::Mat3::new(
                 &ctx,
                 next_case(&raw_cases, &cursor).m,
             ))
         })
     });
     group.bench_function(format!("{label}/mat3 zero"), |b| {
-        b.iter(|| black_box(symbolica_backend::Mat3::zero(&ctx)))
+        b.iter(|| black_box(symbolica_engine::Mat3::zero(&ctx)))
     });
     group.bench_function(format!("{label}/mat3 identity"), |b| {
-        b.iter(|| black_box(symbolica_backend::Mat3::identity(&ctx)))
+        b.iter(|| black_box(symbolica_engine::Mat3::identity(&ctx)))
     });
     group.bench_function(format!("{label}/mat3 transpose"), |b| {
         let cursor = Cell::new(0);
@@ -3966,7 +3772,7 @@ fn bench_symbolica_matrix_operations(
                 black_box(lhs3_cases[index].map_scalar(
                     &scalar_cases[index],
                     &ctx,
-                    symbolica_backend::Ctx::div,
+                    symbolica_engine::Ctx::div,
                 ))
             })
         });
@@ -3999,23 +3805,23 @@ fn bench_symbolica_matrix_operations(
                 let index = cursor.get();
                 cursor.set((index + 1) % lhs3_cases.len());
                 black_box(match name {
-                    "add" => lhs3_cases[index].combine(&rhs3_cases[index], &ctx, symbolica_backend::Ctx::add),
+                    "add" => lhs3_cases[index].combine(&rhs3_cases[index], &ctx, symbolica_engine::Ctx::add),
                     "add_scalar" => lhs3_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
-                        symbolica_backend::Ctx::add,
+                        symbolica_engine::Ctx::add,
                     ),
-                    "sub" => lhs3_cases[index].combine(&rhs3_cases[index], &ctx, symbolica_backend::Ctx::sub),
+                    "sub" => lhs3_cases[index].combine(&rhs3_cases[index], &ctx, symbolica_engine::Ctx::sub),
                     "sub_scalar" => lhs3_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
-                        symbolica_backend::Ctx::sub,
+                        symbolica_engine::Ctx::sub,
                     ),
                     "neg" => lhs3_cases[index].neg(&ctx),
                     _ => lhs3_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
-                        symbolica_backend::Ctx::mul,
+                        symbolica_engine::Ctx::mul,
                     ),
                 })
             })
@@ -4023,10 +3829,10 @@ fn bench_symbolica_matrix_operations(
     }
 
     group.bench_function(format!("{label}/mat4 zero"), |b| {
-        b.iter(|| black_box(symbolica_backend::Mat4::zero(&ctx)))
+        b.iter(|| black_box(symbolica_engine::Mat4::zero(&ctx)))
     });
     group.bench_function(format!("{label}/mat4 identity"), |b| {
-        b.iter(|| black_box(symbolica_backend::Mat4::identity(&ctx)))
+        b.iter(|| black_box(symbolica_engine::Mat4::identity(&ctx)))
     });
     group.bench_function(format!("{label}/mat4 transpose"), |b| {
         let cursor = Cell::new(0);
@@ -4063,25 +3869,25 @@ fn bench_symbolica_matrix_operations(
                     "div_scalar" => lhs4_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
-                        symbolica_backend::Ctx::div,
+                        symbolica_engine::Ctx::div,
                     ),
-                    "add" => lhs4_cases[index].combine(&rhs4_cases[index], &ctx, symbolica_backend::Ctx::add),
+                    "add" => lhs4_cases[index].combine(&rhs4_cases[index], &ctx, symbolica_engine::Ctx::add),
                     "add_scalar" => lhs4_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
-                        symbolica_backend::Ctx::add,
+                        symbolica_engine::Ctx::add,
                     ),
-                    "sub" => lhs4_cases[index].combine(&rhs4_cases[index], &ctx, symbolica_backend::Ctx::sub),
+                    "sub" => lhs4_cases[index].combine(&rhs4_cases[index], &ctx, symbolica_engine::Ctx::sub),
                     "sub_scalar" => lhs4_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
-                        symbolica_backend::Ctx::sub,
+                        symbolica_engine::Ctx::sub,
                     ),
                     "neg" => lhs4_cases[index].neg(&ctx),
                     "mul_scalar" => lhs4_cases[index].map_scalar(
                         &scalar_cases[index],
                         &ctx,
-                        symbolica_backend::Ctx::mul,
+                        symbolica_engine::Ctx::mul,
                     ),
                     _ => lhs4_cases[index].div_matrix(&rhs4_cases[index], &ctx),
                 })
