@@ -25,6 +25,8 @@ input records, but they should be lifted before core geometry decisions.
   layer as the target island, offset that island and the remaining mask geometry
   by the requested keepout distance, intersect the two offset regions, and report
   the resulting coordinates as a violation when a non-empty shape remains.
+  Island-neighbor selection uses a layer polygon spatial index before exact
+  expanded-island intersection review.
 - `copper-overlap`: intersect one copper layer with another copper layer and
   report overlapping geometry that may create unintended capacitance.
 - `board-edge-clearance`: erode the board outline by the requested clearance,
@@ -46,48 +48,68 @@ input records, but they should be lifted before core geometry decisions.
   one contour is fully contained by another, which can indicate malformed profile
   structure.
 - `paste-overhang`: subtract paired copper, optionally expanded by a tolerance,
-  from paste apertures.
+  from paste apertures. Copper candidates use a layer polygon spatial index
+  before exact expanded-copper subtraction.
 - `paste-aperture-coverage`: subtract paste apertures from paired copper and
-  report copper that does not have paste coverage.
+  report copper that does not have paste coverage. Paste candidates use the
+  layer polygon spatial index before exact copper/paste subtraction.
 - `paste-aperture-ratio`: compare paste area over each paired copper island
-  against configured minimum and maximum paste-to-copper ratios.
+  against configured minimum and maximum paste-to-copper ratios. Candidate paste
+  apertures use a layer polygon spatial index before exact copper/paste
+  intersection and ratio review.
 - `thermal-pad-paste-windowpane-readiness`: warn when a large copper island has
   one high-coverage paste aperture instead of a split or reduced windowpane
-  pattern.
+  pattern. Paste apertures use the layer polygon spatial index before exact
+  copper/paste intersection.
 - `stencil-area-ratio-readiness`: warn when explicit paste apertures have low
   estimated IPC-7525-style area ratio for the configured stencil thickness.
 - `paste-aperture-aspect-ratio-readiness`: warn when paste apertures have high
   aspect ratio, calling out stencil release and paste slumping risk.
 - `tombstone-paste-imbalance-readiness`: warn when neighboring similarly sized
   copper pads have a large paste-ratio mismatch that can increase tombstoning
-  risk. Candidate pad centers use a spatial broad phase before ratio review.
+  risk. Candidate pad centers and per-pad paste apertures use spatial broad
+  phases before exact ratio review.
 - `paste-via-exposure-readiness`: warn when explicit paste apertures overlap
   parsed KiCad via drill openings so via fill, cap, tent, or stencil keepout
-  intent is reviewed before assembly.
+  intent is reviewed before assembly. Paste apertures use the layer polygon
+  spatial index before exact via-opening intersection.
 - `minimum-paste-aperture`: warn when explicit paste layers contain apertures
   whose minimum bounding dimension is below the configured minimum width.
 - `paste-aperture-spacing`: warn when apertures on an explicit paste layer are
   closer than the configured minimum width, catching stencil bridge risk.
+  Aperture-neighbor selection uses a layer polygon spatial index before exact
+  offset/intersection review.
 - `paste-mask-alignment`: join explicit paste/copper and copper/mask pairs by
   their shared copper layer and warn when paste extends outside the matching
-  solder mask opening.
+  solder mask opening. Mask-opening candidates use the layer polygon spatial
+  index before exact paste-minus-mask subtraction.
 - `exposed-copper`: intersect paired copper and solder mask opening geometry.
+  Mask-opening candidates use the layer polygon spatial index before exact
+  intersection review.
 - `solder-mask-opening-coverage`: subtract solder mask openings from paired
-  copper and report copper that would remain covered by mask.
+  copper and report copper that would remain covered by mask. Mask-opening
+  candidates use the layer polygon spatial index before exact subtraction.
 - `solder-mask-expansion`: subtract copper expanded by the configured clearance
-  from paired solder mask openings and warn on excessive opening growth.
+  from paired solder mask openings and warn on excessive opening growth. Copper
+  candidates use the layer polygon spatial index before exact expanded-copper
+  subtraction.
 - `solder-mask-overlap-clearance`: expand paired solder mask openings by the
   configured clearance, subtract the intentional opening, and warn on covered
-  copper in that vulnerable band.
+  copper in that vulnerable band. Mask-opening candidates use the layer polygon
+  spatial index before exact offset-ring intersection.
 - `solder-mask-board-edge-clearance`: warn when explicit mask-opening layers
   fall outside the board outline eroded by the configured clearance.
 - `solder-mask-opening-spacing`: warn when openings on an explicit mask layer
-  are closer than the configured minimum mask bridge width.
+  are closer than the configured minimum mask bridge width. Opening-neighbor
+  selection uses the layer polygon spatial index before exact expanded-opening
+  intersection review.
 - `silkscreen-overlap`: intersect silkscreen with explicitly paired blocker
-  geometry such as copper, paste, or mask openings.
+  geometry such as copper, paste, or mask openings. Blocker candidates use the
+  layer polygon spatial index before exact intersection review.
 - `silkscreen-clearance`: expand explicitly paired blocker geometry by the
   configured clearance and warn when silkscreen falls inside that clipping
-  region.
+  region. Blocker candidates use the layer polygon spatial index before exact
+  expanded-blocker intersection review.
 - `silkscreen-board-edge-clearance`: warn when explicit silkscreen layers fall
   outside the board outline eroded by the configured clearance.
 - `waiver-governance`: warn when waiver entries are underspecified. Scope
@@ -123,7 +145,9 @@ input records, but they should be lifted before core geometry decisions.
   configured annular ring but fails after subtracting the configured
   registration tolerance.
 - `plating-intent`: warn when a KiCad NPTH drill has nearby copper or when a
-  plated drill has no nearby same-net pad or via copper.
+  plated drill has no nearby same-net pad or via copper. Copper candidates use
+  the shared spatial broad phase before exact net, pad/via kind, and center
+  distance review.
 - `routed-slot-readiness`: warn when KiCad non-plated mechanical drill
   diameters are below the configured minimum width, as an initial routed cutter
   manufacturability signal.
@@ -140,7 +164,9 @@ input records, but they should be lifted before core geometry decisions.
   intersection so sparse drill fields stay bounded.
 - `board-outline-drill-clearance`: offset KiCad and Excellon drill holes by
   their radius plus the configured drill clearance and report keepout area that
-  is not contained by the KiCad board outline.
+  is not contained by the KiCad board outline. Axis-aligned rectangular board
+  outlines use an analytic circle-containment fast path before exact CSG
+  difference so large inset drill tables stay bounded.
 - `drill-spacing`: compare KiCad and Excellon drill edge-to-edge clearance and
   report holes closer than the configured drill clearance. Drill centers use a
   spatial broad phase before exact edge-gap review so large sparse drill tables
@@ -155,28 +181,36 @@ input records, but they should be lifted before core geometry decisions.
   table integrity, unknown-tool/undefined-tool drill hits, and malformed hit
   lines before downstream drill spacing and consistency checks consume geometry.
 - `copper-width-readiness`: warn when parsed KiCad copper features on selected
-  layers have a minimum bounding width below the configured threshold.
+  layers have a minimum bounding width below the configured threshold. Trace
+  output records selected and measured feature counts for sparse fixture triage.
 - `copper-net-intent`: warn when parsed KiCad copper still has no net after
-  native board parsing and IPC-D-356 annotation.
+  native board parsing and IPC-D-356 annotation. Trace output records selected
+  feature and violation counts after layer filtering.
 - `teardrop-readiness`: warn when a narrow KiCad same-net segment enters a pad
   or via on the same layer below the configured minimum width. Pad/via anchors
   use the shared copper spatial index before exact segment-entry overlap.
 - `thermal-relief-readiness`: warn when KiCad same-net pad or via copper
   intersects a copper zone on the same layer, so direct plane connections and
-  thermal-relief intent can be reviewed before fabrication.
+  thermal-relief intent can be reviewed before fabrication. Same-net zones use
+  the shared copper spatial broad phase before exact intersection.
 - `plane-clearance-readiness`: warn when KiCad non-plated mechanical holes
   intersect copper zones on selected layers, so antipad and pour-clearance
   intent can be reviewed. Zone candidates use the shared copper spatial index
   before exact drill-keepout overlap review.
 - `board-edge-exposure`: warn when parsed KiCad copper extends outside the
   parsed board outline, so edge plating, castellations, and copper pullback can
-  be reviewed.
+  be reviewed. Rectangular board outlines use shared analytic bounds checks to
+  skip interior copper before exact feature/outline CSG difference.
 - `high-speed-edge-readiness`: warn when likely high-speed KiCad copper is
-  inside the configured board-edge clearance band.
+  inside the configured board-edge clearance band. Rectangular board outlines
+  use the shared strict edge-band bounds check before exact difference review.
 - `edge-copper-pullback-readiness`: warn when non-edge-intent copper intrudes into
-  the board-edge clearance band, catching accidental near-edge traces and planes.
+  the board-edge clearance band, catching accidental near-edge traces and
+  planes. Rectangular board outlines use the same shared edge-band bounds check
+  before exact difference and boundary-distance fallback.
 - `high-voltage-edge-readiness`: warn when likely high-voltage KiCad copper is
-  inside the configured board-edge clearance band.
+  inside the configured board-edge clearance band. Rectangular board outlines
+  use the shared strict edge-band bounds check before exact difference review.
 - `edge-stitching-readiness`: warn when likely high-speed or RF/antenna copper is
   near the board edge without nearby parsed ground stitch vias. Stitch-via
   centers use a point spatial index before exact center-distance review.
@@ -186,6 +220,9 @@ input records, but they should be lifted before core geometry decisions.
   are missing their mate or put pair sides on different selected copper layers.
 - `differential-pair-spacing-readiness`: warn when likely differential-pair
   KiCad copper sides are farther apart than the configured review threshold.
+  Same-layer opposite-side candidates use the shared copper spatial broad phase
+  before exact boundary-distance review, with exact nearest-distance fallback
+  when no close side exists.
 - `differential-pair-width-readiness`: warn when inferred differential-pair
   segments are below the width review threshold or have side-width imbalance.
 - `differential-pair-neckdown-readiness`: warn when inferred differential-pair
@@ -206,17 +243,25 @@ input records, but they should be lifted before core geometry decisions.
   distance. Same-layer ground candidates use the shared copper spatial index
   before exact guard-distance review.
 - `reference-plane-readiness`: warn when likely high-speed KiCad nets are
-  present without a parsed ground zone on selected copper layers.
+  present without a parsed ground zone on selected copper layers. Trace output
+  records feature, net, selected-layer, and violation counts for fixture
+  triage.
 - `reference-plane-void-readiness`: warn when likely high-speed KiCad copper
   does not overlap parsed ground-zone coverage on selected copper layers.
+  Ground-zone candidates use the shared copper spatial broad phase before exact
+  feature-minus-reference-plane subtraction.
 - `split-plane-crossing-readiness`: warn when likely high-speed KiCad segments
-  cross between separated same-layer ground-zone islands.
+  cross between separated same-layer ground-zone islands. Ground-zone candidates
+  use the shared copper spatial broad phase before exact distance and
+  feature-minus-ground review.
 - `return-path-proximity-readiness`: warn when likely high-speed KiCad segment
   or pad copper is too far from parsed same-layer ground copper. Same-layer
   ground candidates use the shared copper spatial index before exact
   return-distance review.
 - `orphaned-zone-readiness`: warn when a KiCad copper zone has no parsed
   same-net pad, via, or segment anchor within the configured net clearance.
+  Anchor candidates use the shared copper spatial broad phase before exact
+  zone-contact or boundary-distance review.
 - `same-net-island-readiness`: warn when one net appears as disconnected
   copper islands on the same selected layer. Same-net connectivity uses the
   shared copper spatial index before exact overlap/distance review.
@@ -228,24 +273,31 @@ input records, but they should be lifted before core geometry decisions.
   Ground-stitch centers use a point spatial index before exact center-distance
   review.
 - `high-current-readiness`: warn when likely power KiCad nets span multiple
-  selected copper layers with fewer than two parsed same-net vias.
+  selected copper layers with fewer than two parsed same-net vias. Trace output
+  records likely high-current feature and net counts before applying the via
+  redundancy rule.
 - `power-via-array-readiness`: warn when likely power KiCad vias are isolated
   from the rest of their same-net via array. Same-net via centers use a point
   spatial index before exact pitch review.
 - `power-via-return-readiness`: warn when likely high-current KiCad vias have
-  no nearby parsed same-layer ground return copper.
+  no nearby parsed same-layer ground return copper. Ground-return candidates use
+  the shared copper spatial broad phase before exact boundary-distance review.
 - `thermal-via-readiness`: warn when likely power or thermal KiCad zones have
-  too few parsed same-net vias.
+  too few parsed same-net vias. Same-layer via candidates use the shared copper
+  spatial broad phase before exact zone/via contact review.
 - `thermal-via-distribution-readiness`: warn when a likely thermal/power zone
   has enough same-net vias by count, but their maximum spread is below the
   configured heat-spreading review distance. Via-field spread is computed from
-  a convex-hull diameter pass instead of all-pairs via distances.
+  a convex-hull diameter pass instead of all-pairs via distances, and candidate
+  vias are bucketed before exact same-net zone anchoring.
 - `power-plane-readiness`: warn when likely power KiCad nets have no parsed
   same-net copper zone on selected layers.
 - `high-current-neck-readiness`: warn when likely power KiCad nets have copper
   neck widths below the preferred power width.
 - `power-pad-entry-readiness`: warn when likely high-current pads lack local
   same-net pour support, parallel vias, or a sufficiently wide entry segment.
+  Local support candidates use the shared copper spatial broad phase before
+  exact same-net distance review.
 - `voltage-clearance-readiness`: warn when likely high-voltage KiCad nets are
   close to different-net copper using an expanded net-clearance threshold.
   Different-net candidates use the shared layer-aware grid before exact
@@ -292,7 +344,9 @@ input records, but they should be lifted before core geometry decisions.
   uses the same copper broad phase before exact keepout intersection.
 - `component-edge-clearance-readiness`: warn when parsed KiCad component pads
   sit inside the configured board-edge assembly clearance band, skipping likely
-  edge connectors and fiducials.
+  edge connectors and fiducials. Simple rectangular board outlines now reject
+  clearly interior pad bounds before exact boundary-distance review, with trace
+  counters for skipped interior pads and exact edge checks.
 - `component-hole-clearance-readiness`: warn when parsed KiCad component pads
   intersect a clearance band around non-plated KiCad or Excellon mechanical
   holes, slots, screw holes, standoffs, or chassis keepouts. Pad candidates use
@@ -336,7 +390,10 @@ input records, but they should be lifted before core geometry decisions.
   same grid broad phase before exact copper-free-region review.
 - `testpoint-coverage-readiness`: warn when likely critical KiCad nets have no
   matching IPC-D-356 test record, giving production test coverage an early
-  sidecar-driven review signal.
+  sidecar-driven review signal. Critical-net features are grouped by normalized
+  IPC-D-356 net name before reporting, and trace counters expose parsed points,
+  covered nets, required features, and missing-net counts for fixture smoke
+  runs.
 - `testpoint-accessibility-readiness`: warn when IPC-D-356 testpoints have no
   parsed probe diameter, undersized probe diameter, tight probe-to-probe
   spacing, insufficient board-edge fixture clearance, missing access-side
@@ -353,13 +410,18 @@ input records, but they should be lifted before core geometry decisions.
   intersection so sparse fixture/copper fields stay bounded.
 - `tooling-hole-readiness`: warn when parsed KiCad or Excellon drill data has
   fewer than two likely non-plated tooling holes, or when tooling candidates sit
-  inside the fixture edge-clearance review band.
+  inside the fixture edge-clearance review band. Drill candidates are filtered
+  by plating and finished diameter before exact outline-distance review, with
+  trace counters for sparse drill-table behavior.
 - `mouse-bite-readiness`: warn when likely small non-plated mouse-bite drills
   have undersized diameters or nearest-neighbor spacing outside the expected
-  perforation range.
+  perforation range. Drill-center neighbors use a point spatial index before
+  exact spacing review so sparse routed-tab rows stay bounded.
 - `fiducial-readiness`: infer likely unnetted circular fiducial pads and warn
   when populated copper sides have fewer than two or when candidates sit inside
-  the configured edge-clearance review band.
+  the configured edge-clearance review band. Simple rectangular board outlines
+  reject clearly interior fiducial bounds before exact boundary-distance review,
+  and trace counters expose candidate, rejection, and exact edge-check counts.
 - `local-fiducial-readiness`: warn when dense fine-pitch pad clusters do not
   have at least two likely local fiducials nearby on the same side. Fiducial
   candidates use the layer-aware copper spatial index before exact center
@@ -373,9 +435,12 @@ input records, but they should be lifted before core geometry decisions.
   The same check path also reports `dense-pad-via-spacing-readiness` when
   nearby vias are inside the configured pad/via spacing review threshold. Escape
   and spacing via candidates use the shared broad phase before exact distance
-  and pad-clearance review.
+  and pad-clearance review. Dense pad/via spacing also indexes each dense pad
+  cluster before exact pad/via boundary-distance review.
   `dense-pad-mask-bridge-readiness` now also reports dense pad clusters whose
   nearest copper spacing is below the configured mask-web review threshold.
+  Mask-web pad candidates use the same copper spatial broad phase before exact
+  boundary-distance review.
 - `selective-wave-solder-keepout-readiness`: warn when likely through-hole
   solder process features sit too close to neighboring pads for wave/selective
   solder pallet, solder-thief, or masking review. Neighbor pads are selected
@@ -387,8 +452,11 @@ input records, but they should be lifted before core geometry decisions.
   connector fields avoid all-pad scans.
 - `conformal-coating-keepout-readiness`: warn when likely contacts,
   testpoints, or fiducials have neighboring pads inside a no-coat keepout band.
+  Neighboring pad candidates use the assembly feature grid before exact
+  keepout/pad intersection review.
 - `thermal-pad-via-readiness`: warn when large ground or power pads that look
-  like exposed thermal pads have no parsed same-net via in pad.
+  like exposed thermal pads have no parsed same-net via in pad. Same-layer vias
+  use the shared copper spatial broad phase before exact pad/via intersection.
 - `thermal-copper-area-readiness`: warn when likely heat or power pads, vias, or
   traces have no parsed same-net copper zone nearby for heat spreading and
   current return. Same-net zones use the shared layer-aware center-radius index
@@ -436,11 +504,16 @@ input records, but they should be lifted before core geometry decisions.
   outlines fall back to exact outline boundary distance. Plated edge-hole
   candidates are then spatially indexed before exact pitch review.
 - `different-net-spacing`: offset same-layer KiCad copper features by a
-  configured clearance and report different-net proximity.
+  configured clearance and report different-net proximity. Same-layer copper
+  candidates use the shared spatial broad phase before exact offset/intersection
+  review so large sparse routed fields avoid all-pairs CSG.
 - `layer-registration-tolerance`: compare KiCad copper layers with an offset
-  tolerance to identify features vulnerable to registration shifts.
+  tolerance to identify features vulnerable to registration shifts. Cross-layer
+  feature pairs use the shared spatial broad phase before exact
+  offset/intersection review, keeping sparse layer stacks bounded.
 - `panelization-clearance`: check copper against KiCad panel graphics, KiCad
-  NPTH drills, and Excellon drill hits.
+  NPTH drills, and Excellon drill hits. Copper/blocker pairs use an AABB broad
+  phase before exact intersection or boundary-distance review.
 - `ipc356-coverage`: warn when IPC-D-356 electrical test records do not have
   nearby parsed KiCad copper. Test-record and copper centers use a spatial
   index before exact tolerance matching.
@@ -939,7 +1012,9 @@ example before it is considered production-ready.
   islands, disconnected thermal spokes, and trace severed by holes or slots.
   Initial KiCad checks warn when a net appears as disconnected copper islands
   on the same selected layer and when non-plated drill/slot keepouts intersect
-  netted routed copper as a pre-test continuity risk.
+  netted routed copper as a pre-test continuity risk. Drill-break keepout CSG is
+  constructed lazily after the copper spatial broad phase returns a nearby
+  routed candidate, so sparse drill tables do not pay exact geometry cost.
 - Different-net shorts: copper overlap with net awareness, inner-layer antipad
   shorts, drill breakout shorts, and paste/mask-induced assembly short risk.
   Initial KiCad checks now flag same-layer copper overlap between different
@@ -955,7 +1030,9 @@ example before it is considered production-ready.
   threshold, when layer-change vias are not physically paired or lack nearby
   ground stitching vias, when separate inferred pairs run inside the pair-to-pair
   spacing review threshold, and when pair-side copper lacks nearby same-layer
-  ground guard/return copper.
+  ground guard/return copper. Pair-to-pair spacing now uses the shared copper
+  spatial broad phase before exact boundary-distance review so sparse
+  differential fields stay bounded.
 - High-speed return paths: reference-plane void crossings, split-plane
   crossings, missing stitching vias at layer changes, and loop-area excursions.
   Initial KiCad checks warn on likely high-speed copper outside parsed

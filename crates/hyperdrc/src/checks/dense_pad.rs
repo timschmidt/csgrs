@@ -163,7 +163,9 @@ pub fn dense_pad_escape_readiness(
 /// via-in-pad as an HDI enabler for high-I/O BGA/CSP products while still
 /// requiring reliability review of the surrounding structure. HyperDRC reports
 /// close pad/via geometry for that review instead of assuming a specific
-/// filled, capped, dogbone, or open-via fabrication process.
+/// filled, capped, dogbone, or open-via fabrication process. Per-cluster pad
+/// candidates use the shared broad-phase grid pattern from Ericson, *Real-Time
+/// Collision Detection* (2005), before exact pad/via boundary-distance review.
 pub fn dense_pad_via_spacing_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -187,12 +189,16 @@ pub fn dense_pad_via_spacing_readiness(
     );
     let mut violations = Vec::new();
     let mut candidate_count = 0_usize;
+    let mut pad_candidate_count = 0_usize;
+    let mut pad_bucket_count = 0_usize;
 
     for (layer, pads) in pads_by_layer {
         let Some((min_pitch, cluster_center)) = dense_cluster_context(&pads, pitch_threshold)
         else {
             continue;
         };
+        let pad_index = CopperSpatialIndex::new(&pads, min_via_clearance);
+        pad_bucket_count += pad_index.bucket_count();
 
         let via_candidates = via_index.all_layers_near_circle(cluster_center, via_search_radius);
         candidate_count += via_candidates.len();
@@ -201,9 +207,12 @@ pub fn dense_pad_via_spacing_readiness(
             .map(|index| vias[index])
             .filter(|via| distance(via.location, cluster_center) <= via_search_radius)
         {
-            let Some((pad, clearance)) = nearest_pad_to_via(&pads, via) else {
+            let Some((pad, clearance, pad_candidates)) =
+                nearest_pad_to_via(&pads, &pad_index, via, min_via_clearance)
+            else {
                 continue;
             };
+            pad_candidate_count += pad_candidates;
             if clearance >= min_via_clearance {
                 continue;
             }
@@ -228,9 +237,11 @@ pub fn dense_pad_via_spacing_readiness(
     }
 
     log::trace!(
-        "dense pad/via spacing readiness: source={} via_candidates={} violations={}",
+        "dense pad/via spacing readiness: source={} via_candidates={} pad_buckets={} pad_candidates={} violations={}",
         board.source,
         candidate_count,
+        pad_bucket_count,
+        pad_candidate_count,
         violations.len()
     );
 
@@ -279,10 +290,20 @@ pub fn dense_pad_mask_bridge_readiness(
         let Some((min_pitch, _)) = dense_cluster_context(&pads, pitch_threshold) else {
             continue;
         };
-        let Some((left, right, clearance)) = nearest_feature_pair_within(&pads, min_mask_web)
-        else {
+        let (nearest_pair, candidate_pairs) = nearest_feature_pair_within(&pads, min_mask_web);
+        let Some((left, right, clearance)) = nearest_pair else {
+            log::trace!(
+                "dense pad mask-bridge readiness: source={} layer={layer} pads={} candidate_pairs={candidate_pairs} violations=0",
+                board.source,
+                pads.len()
+            );
             continue;
         };
+        log::trace!(
+            "dense pad mask-bridge readiness: source={} layer={layer} pads={} candidate_pairs={candidate_pairs} violations=1",
+            board.source,
+            pads.len()
+        );
 
         violations.push(Violation::new(
             "dense-pad-mask-bridge-readiness",
@@ -397,37 +418,28 @@ fn pitch_cell(location: [f64; 2], cell_size: f64) -> (i64, i64) {
 fn nearest_feature_pair_within<'a>(
     features: &[&'a CopperFeature],
     threshold: f64,
-) -> Option<(&'a CopperFeature, &'a CopperFeature, f64)> {
+) -> (Option<(&'a CopperFeature, &'a CopperFeature, f64)>, usize) {
     if threshold <= 0.0 {
-        return None;
+        return (None, 0);
     }
 
-    let mut bounded = features
-        .iter()
-        .filter_map(|feature| {
-            feature
-                .sketch
-                .geometry
-                .bounding_rect()
-                .map(|bounds| (*feature, bounds))
-        })
-        .collect::<Vec<_>>();
-    bounded.sort_by(|left, right| {
-        left.1
-            .min()
-            .x
-            .total_cmp(&right.1.min().x)
-            .then(left.1.min().y.total_cmp(&right.1.min().y))
-    });
-
+    let index = CopperSpatialIndex::new(features, threshold);
     let mut nearest = None;
-    for index in 0..bounded.len() {
-        let (left, left_bounds) = bounded[index];
-        for (right, right_bounds) in &bounded[(index + 1)..] {
-            if right_bounds.min().x - left_bounds.max().x >= threshold {
-                break;
+    let mut candidate_pairs = 0_usize;
+    for (left_index, left) in features.iter().enumerate() {
+        let Some(left_bounds) = left.sketch.geometry.bounding_rect() else {
+            continue;
+        };
+        for right_index in index.same_layer_near_feature(left, threshold) {
+            if right_index <= left_index {
+                continue;
             }
-            if !rects_within_clearance(&left_bounds, right_bounds, threshold) {
+            candidate_pairs += 1;
+            let right = features[right_index];
+            let Some(right_bounds) = right.sketch.geometry.bounding_rect() else {
+                continue;
+            };
+            if !rects_within_clearance(&left_bounds, &right_bounds, threshold) {
                 continue;
             }
             let clearance = copper_clearance(&left.sketch, &right.sketch);
@@ -438,12 +450,22 @@ fn nearest_feature_pair_within<'a>(
                 .as_ref()
                 .is_none_or(|(_, _, current): &(_, _, f64)| clearance < *current)
             {
-                nearest = Some((left, *right, clearance));
+                nearest = Some((*left, right, clearance));
             }
         }
     }
 
-    nearest
+    // The broad phase intentionally mirrors Ericson's grid partition from
+    // *Real-Time Collision Detection* (2005); exact boundary distance remains
+    // the readiness predicate so false positives from large cells are harmless.
+    log::trace!(
+        "nearest dense-pad mask-web pair: pads={} buckets={} candidate_pairs={} threshold={threshold:.6}",
+        features.len(),
+        index.bucket_count(),
+        candidate_pairs
+    );
+
+    (nearest, candidate_pairs)
 }
 
 fn rects_within_clearance(left: &geo::Rect<f64>, right: &geo::Rect<f64>, clearance: f64) -> bool {
@@ -455,11 +477,22 @@ fn rects_within_clearance(left: &geo::Rect<f64>, right: &geo::Rect<f64>, clearan
 
 fn nearest_pad_to_via<'a>(
     pads: &[&'a CopperFeature],
+    pad_index: &CopperSpatialIndex<'_>,
     via: &CopperFeature,
-) -> Option<(&'a CopperFeature, f64)> {
-    pads.iter()
-        .copied()
-        .map(|pad| (pad, copper_clearance(&pad.sketch, &via.sketch)))
+    clearance: f64,
+) -> Option<(&'a CopperFeature, f64, usize)> {
+    let candidates = pad_index.all_layers_near_feature(via, clearance);
+    let candidate_count = candidates.len();
+    candidates
+        .into_iter()
+        .map(|index| {
+            let pad = pads[index];
+            (
+                pad,
+                copper_clearance(&pad.sketch, &via.sketch),
+                candidate_count,
+            )
+        })
         .min_by(|left, right| {
             left.1
                 .partial_cmp(&right.1)
@@ -669,6 +702,37 @@ mod tests {
     }
 
     #[test]
+    fn dense_pad_via_spacing_readiness_culls_large_pad_clusters_per_via() {
+        let mut copper = (0..2_000)
+            .map(|index| {
+                copper_pad(
+                    &format!("P{index}"),
+                    [(index % 50) as f64 * 0.5, (index / 50) as f64 * 0.5],
+                    0.20,
+                    0.20,
+                )
+            })
+            .collect::<Vec<_>>();
+        copper.push(copper_via("ESC_NEAR", [0.32, 0.0], 0.20));
+
+        let started = std::time::Instant::now();
+        let violations = dense_pad_via_spacing_readiness(
+            &board_with_copper(copper),
+            &[],
+            0.8,
+            25.0,
+            0.15,
+            1.0e-9,
+        );
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "dense-pad via spacing should index large pad clusters before exact pad/via review"
+        );
+    }
+
+    #[test]
     fn dense_pad_mask_bridge_readiness_reports_tight_dense_pad_web() {
         let board = board_with_copper(dense_pad_cluster_with_size(0.45));
 
@@ -724,6 +788,34 @@ mod tests {
                 0.10
             )
             .is_empty()
+        );
+    }
+
+    #[test]
+    fn dense_pad_mask_bridge_readiness_culls_sparse_pad_fields() {
+        let mut copper = (0..2_000)
+            .map(|index| {
+                copper_pad(
+                    &format!("P{index}"),
+                    [
+                        100.0 + (index % 50) as f64 * 1.0,
+                        100.0 + (index / 50) as f64 * 1.0,
+                    ],
+                    0.25,
+                    0.25,
+                )
+            })
+            .collect::<Vec<_>>();
+        copper.extend(dense_pad_cluster_with_size(0.45));
+
+        let started = std::time::Instant::now();
+        let violations =
+            dense_pad_mask_bridge_readiness(&board_with_copper(copper), &[], 0.8, 0.10);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "dense-pad mask bridge should spatially cull distant pad fields before exact boundary distance"
         );
     }
 

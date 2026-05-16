@@ -34,6 +34,7 @@ mod excellon;
 pub mod layer;
 pub mod manifest;
 pub mod mechanical;
+mod outline;
 pub mod power;
 pub mod power_integrity;
 pub mod return_path;

@@ -144,22 +144,21 @@ pub fn same_net_drill_break_readiness(
     // Collision Detection, 2005: it only proposes possible drill/copper
     // contacts, while exact CSG intersection below remains authoritative.
     let copper_index = CopperSpatialIndex::new(&copper, maximum_drill_radius);
-    log::trace!(
-        "same-net drill break readiness: source={} netted_routing_features={} non_plated_drills={} spatial_buckets={}",
-        board.source,
-        copper.len(),
-        drills.len(),
-        copper_index.bucket_count()
-    );
-
     let mut violations = Vec::new();
-    for drill in drills {
-        let drill_sketch = drill_keepout_sketch(drill);
+    let mut candidate_pairs = 0_usize;
+    let mut keepouts_built = 0_usize;
+    for drill in &drills {
         let drill_radius = drill.diameter / 2.0;
+        let mut drill_sketch = None;
 
         for candidate_index in copper_index.all_layers_near_circle(drill.location, drill_radius) {
+            candidate_pairs += 1;
             let feature = copper[candidate_index];
 
+            let drill_sketch = drill_sketch.get_or_insert_with(|| {
+                keepouts_built += 1;
+                drill_keepout_sketch(drill)
+            });
             let overlap = drill_sketch.intersection(&feature.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
             if shapes.is_empty()
@@ -186,6 +185,17 @@ pub fn same_net_drill_break_readiness(
             ));
         }
     }
+
+    log::trace!(
+        "same-net drill break readiness: source={} netted_routing_features={} non_plated_drills={} spatial_buckets={} candidate_pairs={} keepouts_built={} violations={}",
+        board.source,
+        copper.len(),
+        drills.len(),
+        copper_index.bucket_count(),
+        candidate_pairs,
+        keepouts_built,
+        violations.len()
+    );
 
     violations
 }
@@ -387,6 +397,24 @@ mod tests {
         assert!(
             start.elapsed() < std::time::Duration::from_secs(2),
             "continuity drill-break checks should cull distant copper by bounds"
+        );
+    }
+
+    #[test]
+    fn same_net_drill_break_culls_large_sparse_drill_fields() {
+        let mut board = board_with_copper(vec![segment("SIG", [-1.0, 0.0], [1.0, 0.0], 0.30)]);
+        board.drills = (0..2_000)
+            .map(|index| npth([10.0 + index as f64 * 2.0, 10.0], 0.60))
+            .collect();
+        board.drills.push(npth([0.0, 0.0], 0.60));
+
+        let start = std::time::Instant::now();
+        let violations = same_net_drill_break_readiness(&board, &[], &[], 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed() < std::time::Duration::from_secs(2),
+            "continuity drill-break checks should not build exact keepout CSG for distant drills"
         );
     }
 

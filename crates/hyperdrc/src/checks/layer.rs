@@ -17,6 +17,7 @@ use geo::{
 };
 
 use crate::checks::distance::polygon_boundary_distance;
+use crate::checks::spatial::LayerPolygonSpatialIndex;
 use crate::geometry::{
     multipolygon_to_shapes, polygon_to_sketch, polygons_to_sketch, rect_polygon,
 };
@@ -29,6 +30,11 @@ const DUPLICATE_LAYER_OVERLAP_RATIO: f64 = 0.999_999;
 const DUPLICATE_LAYER_SIGNATURE_SCALE: f64 = 1_000_000.0;
 
 /// Run the `mask_island_keepout` design-readiness check or report helper.
+///
+/// Mask-island neighbors use `LayerPolygonSpatialIndex` before exact expanded
+/// island intersection. As in Ericson, *Real-Time Collision Detection* (2005),
+/// the grid is only a broad phase: bbox-center candidates are never reported
+/// until the offset CSG predicate produces non-trivial shapes.
 pub fn mask_island_keepout(
     layer_name: &str,
     sketch: &PcbSketch,
@@ -36,14 +42,19 @@ pub fn mask_island_keepout(
     min_area: f64,
 ) -> Vec<Violation> {
     let polygons = sketch.to_multipolygon().0;
+    let index = LayerPolygonSpatialIndex::new(&polygons, keepout * 2.0);
     log::trace!(
-        "mask-island keepout: layer={layer_name} islands={} keepout={keepout:.6}",
-        polygons.len()
+        "mask-island keepout: layer={layer_name} islands={} buckets={} keepout={keepout:.6}",
+        polygons.len(),
+        index.bucket_count()
     );
     let mut violations = Vec::new();
+    let mut candidate_pairs = 0usize;
 
     for island_index in 0..polygons.len() {
-        for neighbor_index in (island_index + 1)..polygons.len() {
+        let candidate_indexes = index.later_candidates_near(island_index, keepout * 2.0);
+        candidate_pairs += candidate_indexes.len();
+        for neighbor_index in candidate_indexes {
             if !polygons_within_clearance(
                 &polygons[island_index],
                 &polygons[neighbor_index],
@@ -80,6 +91,12 @@ pub fn mask_island_keepout(
             }
         }
     }
+
+    log::trace!(
+        "mask-island keepout finished: layer={layer_name} candidate_pairs={} violations={}",
+        candidate_pairs,
+        violations.len()
+    );
 
     violations
 }
@@ -288,6 +305,12 @@ pub fn solder_mask_board_edge_clearance(
 }
 
 /// Run the `paste_overhang` design-readiness check or report helper.
+///
+/// Paste apertures are differenced against only nearby copper candidates before
+/// the exact CSG subtraction. The candidate search follows Ericson,
+/// *Real-Time Collision Detection* (2005): conservative spatial partition first,
+/// exact geometry second. This keeps sparse copper/paste layers bounded without
+/// reporting bbox-only approximations.
 pub fn paste_overhang(
     paste_name: &str,
     paste: &PcbSketch,
@@ -296,8 +319,14 @@ pub fn paste_overhang(
     tolerance: f64,
     min_area: f64,
 ) -> Vec<Violation> {
-    let allowed = copper.offset(tolerance);
-    let overhang = paste.difference(&allowed);
+    let overhang = indexed_difference(
+        paste_name,
+        paste,
+        copper_name,
+        copper,
+        tolerance,
+        IndexedDifferenceMode::CoverOffset(tolerance),
+    );
     shapes_violation(
         "paste-aperture-overhang",
         Severity::Warning,
@@ -309,6 +338,11 @@ pub fn paste_overhang(
 }
 
 /// Run the `paste_aperture_coverage` design-readiness check or report helper.
+///
+/// Coverage is checked per copper island against indexed nearby paste apertures.
+/// The private layer-polygon index is a broad phase in the sense of Ericson,
+/// *Real-Time Collision Detection* (2005); exact CSG subtraction still decides
+/// whether uncovered copper exists.
 pub fn paste_aperture_coverage(
     paste_name: &str,
     paste: &PcbSketch,
@@ -316,7 +350,14 @@ pub fn paste_aperture_coverage(
     copper: &PcbSketch,
     min_area: f64,
 ) -> Vec<Violation> {
-    let uncovered_copper = copper.difference(paste);
+    let uncovered_copper = indexed_difference(
+        copper_name,
+        copper,
+        paste_name,
+        paste,
+        0.0,
+        IndexedDifferenceMode::CoverAsIs,
+    );
     shapes_violation(
         "paste-aperture-coverage",
         Severity::Warning,
@@ -328,6 +369,11 @@ pub fn paste_aperture_coverage(
 }
 
 /// Run the `solder_mask_overlap_clearance` design-readiness check or report helper.
+///
+/// Mask opening clearance bands are built from indexed nearby openings before
+/// exact intersection with copper. The broad/narrow split follows Ericson,
+/// *Real-Time Collision Detection* (2005): bbox candidates only bound the CSG
+/// workload, while the offset-ring intersection decides the warning geometry.
 pub fn solder_mask_overlap_clearance(
     copper_name: &str,
     copper: &PcbSketch,
@@ -336,8 +382,14 @@ pub fn solder_mask_overlap_clearance(
     clearance: f64,
     min_area: f64,
 ) -> Vec<Violation> {
-    let mask_clearance_band = mask.offset(clearance).difference(mask);
-    let vulnerable_copper = copper.intersection(&mask_clearance_band);
+    let vulnerable_copper = indexed_intersection_with_mode(
+        copper_name,
+        copper,
+        mask_name,
+        mask,
+        clearance,
+        IndexedCoverMode::OffsetRing(clearance),
+    );
     shapes_violation(
         "solder-mask-overlap-clearance",
         Severity::Warning,
@@ -349,6 +401,12 @@ pub fn solder_mask_overlap_clearance(
 }
 
 /// Run the `paste_aperture_ratio` design-readiness check or report helper.
+///
+/// Paste candidates for each copper island are selected with the private
+/// layer-polygon spatial index before exact copper/paste intersection. This
+/// follows the same Ericson, *Real-Time Collision Detection* (2005),
+/// broad-phase pattern used by the spacing checks and keeps sparse stencil
+/// layers from scanning every aperture for every pad.
 pub fn paste_aperture_ratio(
     paste_name: &str,
     paste: &PcbSketch,
@@ -360,6 +418,13 @@ pub fn paste_aperture_ratio(
 ) -> Vec<Violation> {
     let mut violations = Vec::new();
     let paste_polygons = paste.to_multipolygon().0;
+    let paste_index = LayerPolygonSpatialIndex::new(&paste_polygons, 0.0);
+    log::trace!(
+        "paste-aperture-ratio: paste_layer={paste_name} copper_layer={copper_name} paste_apertures={} paste_buckets={} min_ratio={min_ratio:.3} max_ratio={max_ratio:.3}",
+        paste_polygons.len(),
+        paste_index.bucket_count()
+    );
+    let mut candidate_apertures = 0usize;
 
     for (island_index, copper_polygon) in copper.to_multipolygon().0.into_iter().enumerate() {
         let copper_area = copper_polygon.unsigned_area();
@@ -367,9 +432,12 @@ pub fn paste_aperture_ratio(
             continue;
         }
 
-        let island = polygon_to_sketch(copper_polygon, Some(metadata(copper_name)));
-        let paste_area = paste_polygons
-            .iter()
+        let island = polygon_to_sketch(copper_polygon.clone(), Some(metadata(copper_name)));
+        let candidate_indexes = paste_index.candidates_near_polygon(&copper_polygon, 0.0);
+        candidate_apertures += candidate_indexes.len();
+        let paste_area = candidate_indexes
+            .into_iter()
+            .map(|index| &paste_polygons[index])
             .filter(|paste_polygon| {
                 let paste_island =
                     polygon_to_sketch((*paste_polygon).clone(), Some(metadata(paste_name)));
@@ -399,6 +467,12 @@ pub fn paste_aperture_ratio(
             )),
         ));
     }
+
+    log::trace!(
+        "paste-aperture-ratio finished: paste_layer={paste_name} copper_layer={copper_name} candidate_apertures={} violations={}",
+        candidate_apertures,
+        violations.len()
+    );
 
     violations
 }
@@ -442,6 +516,12 @@ pub fn minimum_paste_aperture(
 }
 
 /// Run the `paste_aperture_spacing` design-readiness check or report helper.
+///
+/// Candidate aperture neighbors are selected through `LayerPolygonSpatialIndex`
+/// before exact offset/intersection review. The index is only a conservative
+/// broad phase, following Ericson, *Real-Time Collision Detection* (2005), so
+/// sparse paste layers avoid repeated whole-layer CSG unions without changing
+/// the exact violation predicate.
 pub fn paste_aperture_spacing(
     paste_name: &str,
     paste: &PcbSketch,
@@ -449,22 +529,29 @@ pub fn paste_aperture_spacing(
     min_area: f64,
 ) -> Vec<Violation> {
     let polygons = paste.to_multipolygon().0;
+    let index = LayerPolygonSpatialIndex::new(&polygons, min_spacing);
+    log::trace!(
+        "paste-aperture-spacing: layer={paste_name} apertures={} buckets={} min_spacing={min_spacing:.6}",
+        polygons.len(),
+        index.bucket_count()
+    );
     let mut violations = Vec::new();
     let expansion = min_spacing / 2.0;
+    let mut candidate_pairs = 0usize;
 
     for island_index in 0..polygons.len() {
-        let island = polygon_to_sketch(polygons[island_index].clone(), Some(metadata(paste_name)));
-        let remaining_polygons = polygons
-            .iter()
-            .enumerate()
-            .filter_map(|(index, polygon)| (index != island_index).then_some(polygon.clone()))
-            .collect::<Vec<_>>();
-
-        if remaining_polygons.is_empty() {
+        let candidate_indexes = index.candidates_near(island_index, min_spacing);
+        candidate_pairs += candidate_indexes.len();
+        if candidate_indexes.is_empty() {
             continue;
         }
 
-        let remaining = polygons_to_sketch(remaining_polygons, Some(metadata(paste_name)));
+        let island = polygon_to_sketch(polygons[island_index].clone(), Some(metadata(paste_name)));
+        let candidate_polygons = candidate_indexes
+            .into_iter()
+            .map(|index| polygons[index].clone())
+            .collect::<Vec<_>>();
+        let remaining = polygons_to_sketch(candidate_polygons, Some(metadata(paste_name)));
         let overlap = island
             .offset(expansion)
             .intersection(&remaining.offset(expansion));
@@ -486,10 +573,21 @@ pub fn paste_aperture_spacing(
         ));
     }
 
+    log::trace!(
+        "paste-aperture-spacing finished: layer={paste_name} candidate_pairs={} violations={}",
+        candidate_pairs,
+        violations.len()
+    );
+
     violations
 }
 
 /// Run the `paste_mask_alignment` design-readiness check or report helper.
+///
+/// Paste islands are differenced against only indexed nearby solder-mask
+/// openings before exact CSG subtraction. This uses the conservative
+/// broad-phase approach described by Ericson, *Real-Time Collision Detection*
+/// (2005), without treating bbox proximity as a finding by itself.
 pub fn paste_mask_alignment(
     paste_name: &str,
     paste: &PcbSketch,
@@ -497,7 +595,14 @@ pub fn paste_mask_alignment(
     mask: &PcbSketch,
     min_area: f64,
 ) -> Vec<Violation> {
-    let outside_mask_opening = paste.difference(mask);
+    let outside_mask_opening = indexed_difference(
+        paste_name,
+        paste,
+        mask_name,
+        mask,
+        0.0,
+        IndexedDifferenceMode::CoverAsIs,
+    );
     shapes_violation(
         "paste-mask-alignment",
         Severity::Warning,
@@ -509,6 +614,11 @@ pub fn paste_mask_alignment(
 }
 
 /// Run the `exposed_copper` design-readiness check or report helper.
+///
+/// Copper islands are intersected only with indexed nearby mask openings before
+/// exact CSG. This is the same conservative broad/narrow split described by
+/// Ericson, *Real-Time Collision Detection* (2005): the index only bounds
+/// candidate generation, while polygon intersection decides the finding.
 pub fn exposed_copper(
     copper_name: &str,
     copper: &PcbSketch,
@@ -516,21 +626,23 @@ pub fn exposed_copper(
     mask_openings: &PcbSketch,
     min_area: f64,
 ) -> Vec<Violation> {
-    intersection_violation(
-        PairCheck {
-            check: "exposed-copper",
-            severity: Severity::Warning,
-            message: "copper intersects solder mask openings",
-        },
-        copper_name,
-        copper,
-        mask_name,
-        mask_openings,
+    let overlap = indexed_intersection(copper_name, copper, mask_name, mask_openings, 0.0);
+    shapes_violation(
+        "exposed-copper",
+        Severity::Warning,
+        vec![copper_name.to_string(), mask_name.to_string()],
+        overlap,
         min_area,
+        "copper intersects solder mask openings".to_string(),
     )
 }
 
 /// Run the `solder_mask_opening_coverage` design-readiness check or report helper.
+///
+/// Copper islands are differenced against indexed nearby solder-mask openings,
+/// then exact CSG decides the uncovered shape. This avoids whole-layer boolean
+/// work on sparse mask-opening exports while preserving the existing rule
+/// semantics.
 pub fn solder_mask_opening_coverage(
     copper_name: &str,
     copper: &PcbSketch,
@@ -538,7 +650,14 @@ pub fn solder_mask_opening_coverage(
     mask_openings: &PcbSketch,
     min_area: f64,
 ) -> Vec<Violation> {
-    let covered_copper = copper.difference(mask_openings);
+    let covered_copper = indexed_difference(
+        copper_name,
+        copper,
+        mask_name,
+        mask_openings,
+        0.0,
+        IndexedDifferenceMode::CoverAsIs,
+    );
     shapes_violation(
         "solder-mask-opening-coverage",
         Severity::Error,
@@ -550,6 +669,11 @@ pub fn solder_mask_opening_coverage(
 }
 
 /// Run the `solder_mask_expansion` design-readiness check or report helper.
+///
+/// Mask openings are compared to indexed nearby copper, expanded only for exact
+/// candidate subtraction. The spatial index is conservative and cites the
+/// broad/narrow-phase pattern from Ericson, *Real-Time Collision Detection*
+/// (2005), so large sparse mask-opening fields avoid global copper offsets.
 pub fn solder_mask_expansion(
     copper_name: &str,
     copper: &PcbSketch,
@@ -558,8 +682,14 @@ pub fn solder_mask_expansion(
     max_expansion: f64,
     min_area: f64,
 ) -> Vec<Violation> {
-    let allowed_opening = copper.offset(max_expansion);
-    let excessive_opening = mask_openings.difference(&allowed_opening);
+    let excessive_opening = indexed_difference(
+        mask_name,
+        mask_openings,
+        copper_name,
+        copper,
+        max_expansion,
+        IndexedDifferenceMode::CoverOffset(max_expansion),
+    );
     shapes_violation(
         "solder-mask-expansion",
         Severity::Warning,
@@ -571,6 +701,11 @@ pub fn solder_mask_expansion(
 }
 
 /// Run the `silkscreen_overlap` design-readiness check or report helper.
+///
+/// Silkscreen geometry is intersected only with indexed nearby blocker
+/// candidates before exact CSG. This broad/narrow split follows Ericson,
+/// *Real-Time Collision Detection* (2005), and keeps sparse legend/blocker
+/// exports bounded without changing the reported geometry predicate.
 pub fn silkscreen_overlap(
     silk_name: &str,
     silk: &PcbSketch,
@@ -578,21 +713,30 @@ pub fn silkscreen_overlap(
     blocker: &PcbSketch,
     min_area: f64,
 ) -> Vec<Violation> {
-    intersection_violation(
-        PairCheck {
-            check: "silkscreen-overlap",
-            severity: Severity::Warning,
-            message: "silkscreen overlaps copper or exposed-pad geometry",
-        },
+    let overlap = indexed_intersection_with_mode(
         silk_name,
         silk,
         blocker_name,
         blocker,
+        0.0,
+        IndexedCoverMode::AsIs,
+    );
+    shapes_violation(
+        "silkscreen-overlap",
+        Severity::Warning,
+        vec![silk_name.to_string(), blocker_name.to_string()],
+        overlap,
         min_area,
+        "silkscreen overlaps copper or exposed-pad geometry".to_string(),
     )
 }
 
 /// Run the `silkscreen_clearance` design-readiness check or report helper.
+///
+/// Blocker candidates are selected through `LayerPolygonSpatialIndex`, then
+/// expanded and intersected exactly. The index is only a broad phase, following
+/// Ericson, *Real-Time Collision Detection* (2005), so clearance findings remain
+/// CSG-derived.
 pub fn silkscreen_clearance(
     silk_name: &str,
     silk: &PcbSketch,
@@ -601,8 +745,14 @@ pub fn silkscreen_clearance(
     clearance: f64,
     min_area: f64,
 ) -> Vec<Violation> {
-    let clearance_region = blocker.offset(clearance);
-    let intrusion = silk.intersection(&clearance_region);
+    let intrusion = indexed_intersection_with_mode(
+        silk_name,
+        silk,
+        blocker_name,
+        blocker,
+        clearance,
+        IndexedCoverMode::Offset(clearance),
+    );
     shapes_violation(
         "silkscreen-clearance",
         Severity::Warning,
@@ -814,6 +964,11 @@ pub fn minimum_mask_opening(
 }
 
 /// Run the `solder_mask_opening_spacing` design-readiness check or report helper.
+///
+/// Opening-neighbor selection uses the same private layer-polygon spatial index
+/// as paste spacing before the exact expanded-opening intersection. This keeps
+/// sparse mask-opening layers bounded while retaining the CSG predicate that
+/// reports actual solder-mask bridge conflicts.
 pub fn solder_mask_opening_spacing(
     mask_name: &str,
     mask: &PcbSketch,
@@ -821,15 +976,20 @@ pub fn solder_mask_opening_spacing(
     min_area: f64,
 ) -> Vec<Violation> {
     let openings = mask.to_multipolygon().0;
+    let index = LayerPolygonSpatialIndex::new(&openings, min_spacing);
     log::trace!(
-        "solder-mask-opening-spacing: layer={mask_name} openings={} min_spacing={min_spacing:.6}",
-        openings.len()
+        "solder-mask-opening-spacing: layer={mask_name} openings={} buckets={} min_spacing={min_spacing:.6}",
+        openings.len(),
+        index.bucket_count()
     );
     let mut violations = Vec::new();
     let expansion = min_spacing / 2.0;
+    let mut candidate_pairs = 0usize;
 
     for opening_index in 0..openings.len() {
-        for neighbor_index in (opening_index + 1)..openings.len() {
+        let candidate_indexes = index.later_candidates_near(opening_index, min_spacing);
+        candidate_pairs += candidate_indexes.len();
+        for neighbor_index in candidate_indexes {
             if !polygons_within_clearance(
                 &openings[opening_index],
                 &openings[neighbor_index],
@@ -863,6 +1023,12 @@ pub fn solder_mask_opening_spacing(
             ));
         }
     }
+
+    log::trace!(
+        "solder-mask-opening-spacing finished: layer={mask_name} candidate_pairs={} violations={}",
+        candidate_pairs,
+        violations.len()
+    );
 
     violations
 }
@@ -2058,6 +2224,139 @@ fn vector_length(vector: (f64, f64)) -> f64 {
     (vector.0 * vector.0 + vector.1 * vector.1).sqrt()
 }
 
+#[derive(Copy, Clone)]
+enum IndexedDifferenceMode {
+    CoverAsIs,
+    CoverOffset(f64),
+}
+
+#[derive(Copy, Clone)]
+enum IndexedCoverMode {
+    AsIs,
+    Offset(f64),
+    OffsetRing(f64),
+}
+
+fn indexed_difference(
+    subject_name: &str,
+    subject: &PcbSketch,
+    cover_name: &str,
+    cover: &PcbSketch,
+    search_radius: f64,
+    mode: IndexedDifferenceMode,
+) -> PcbSketch {
+    let subject_polygons = subject.to_multipolygon().0;
+    let subject_count = subject_polygons.len();
+    let cover_polygons = cover.to_multipolygon().0;
+    let cover_index = LayerPolygonSpatialIndex::new(&cover_polygons, search_radius);
+    let mut remainder_polygons = Vec::new();
+    let mut candidate_polygons = 0usize;
+
+    for subject_polygon in subject_polygons {
+        let candidates = cover_index.candidates_near_polygon(&subject_polygon, search_radius);
+        candidate_polygons += candidates.len();
+        let subject_island =
+            polygon_to_sketch(subject_polygon.clone(), Some(metadata(subject_name)));
+
+        if candidates.is_empty() {
+            remainder_polygons.push(subject_polygon);
+            continue;
+        }
+
+        let cover_candidates = candidates
+            .into_iter()
+            .map(|index| cover_polygons[index].clone())
+            .collect::<Vec<_>>();
+        let cover_sketch = polygons_to_sketch(cover_candidates, Some(metadata(cover_name)));
+        let cover_sketch = match mode {
+            IndexedDifferenceMode::CoverAsIs => cover_sketch,
+            IndexedDifferenceMode::CoverOffset(distance) => cover_sketch.offset(distance),
+        };
+        remainder_polygons.extend(subject_island.difference(&cover_sketch).to_multipolygon().0);
+    }
+
+    log::trace!(
+        "indexed layer difference: subject={subject_name} subject_islands={} cover={cover_name} cover_islands={} cover_buckets={} candidate_polygons={} search_radius={search_radius:.6}",
+        subject_count,
+        cover_polygons.len(),
+        cover_index.bucket_count(),
+        candidate_polygons
+    );
+
+    polygons_to_sketch(remainder_polygons, Some(metadata(subject_name)))
+}
+
+fn indexed_intersection(
+    subject_name: &str,
+    subject: &PcbSketch,
+    cover_name: &str,
+    cover: &PcbSketch,
+    search_radius: f64,
+) -> PcbSketch {
+    indexed_intersection_with_mode(
+        subject_name,
+        subject,
+        cover_name,
+        cover,
+        search_radius,
+        IndexedCoverMode::AsIs,
+    )
+}
+
+fn indexed_intersection_with_mode(
+    subject_name: &str,
+    subject: &PcbSketch,
+    cover_name: &str,
+    cover: &PcbSketch,
+    search_radius: f64,
+    mode: IndexedCoverMode,
+) -> PcbSketch {
+    let subject_polygons = subject.to_multipolygon().0;
+    let subject_count = subject_polygons.len();
+    let cover_polygons = cover.to_multipolygon().0;
+    let cover_index = LayerPolygonSpatialIndex::new(&cover_polygons, search_radius);
+    let mut overlap_polygons = Vec::new();
+    let mut candidate_polygons = 0usize;
+
+    for subject_polygon in subject_polygons {
+        let candidates = cover_index.candidates_near_polygon(&subject_polygon, search_radius);
+        candidate_polygons += candidates.len();
+        if candidates.is_empty() {
+            continue;
+        }
+
+        let subject_island = polygon_to_sketch(subject_polygon, Some(metadata(subject_name)));
+        let cover_candidates = candidates
+            .into_iter()
+            .map(|index| cover_polygons[index].clone())
+            .collect::<Vec<_>>();
+        let cover_sketch = polygons_to_sketch(cover_candidates, Some(metadata(cover_name)));
+        let cover_sketch = match mode {
+            IndexedCoverMode::AsIs => cover_sketch,
+            IndexedCoverMode::Offset(distance) => cover_sketch.offset(distance),
+            IndexedCoverMode::OffsetRing(distance) => {
+                cover_sketch.offset(distance).difference(&cover_sketch)
+            }
+        };
+        overlap_polygons.extend(
+            subject_island
+                .intersection(&cover_sketch)
+                .to_multipolygon()
+                .0,
+        );
+    }
+
+    log::trace!(
+        "indexed layer intersection: subject={subject_name} subject_islands={} cover={cover_name} cover_islands={} cover_buckets={} candidate_polygons={} search_radius={search_radius:.6}",
+        subject_count,
+        cover_polygons.len(),
+        cover_index.bucket_count(),
+        candidate_polygons
+    );
+
+    polygons_to_sketch(overlap_polygons, Some(metadata(subject_name)))
+}
+
 struct PairCheck<'a> {
     check: &'a str,
     severity: Severity,
@@ -2212,6 +2511,28 @@ mod tests {
         let violations = mask_island_keepout("mask", &layer, 0.1, 1.0e-9);
 
         assert!(violations.is_empty());
+    }
+
+    #[test]
+    fn mask_island_keepout_culls_sparse_island_fields() {
+        let mut islands = (0..2_000)
+            .map(|index| {
+                let x = 100.0 + index as f64 * 3.0;
+                square(x, 10.0, x + 0.5, 10.5)
+            })
+            .collect::<Vec<_>>();
+        islands.push(square(0.0, 0.0, 1.0, 1.0));
+        islands.push(square(1.1, 0.0, 2.1, 1.0));
+        let layer = sketch("mask", islands);
+
+        let start = Instant::now();
+        let violations = mask_island_keepout("mask", &layer, 0.1, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "mask-island keepout should index sparse island fields"
+        );
     }
 
     #[test]
@@ -2393,6 +2714,30 @@ mod tests {
     }
 
     #[test]
+    fn paste_overhang_culls_sparse_copper_fields() {
+        let copper = sketch(
+            "top",
+            (0..2_000)
+                .map(|index| {
+                    let x = 100.0 + index as f64 * 3.0;
+                    square(x, 10.0, x + 0.5, 10.5)
+                })
+                .chain([square(0.0, 0.0, 0.8, 1.0)])
+                .collect(),
+        );
+        let paste = sketch("paste", vec![square(0.0, 0.0, 1.0, 1.0)]);
+
+        let start = Instant::now();
+        let violations = paste_overhang("paste", &paste, "top", &copper, 0.0, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "paste overhang should index sparse copper fields"
+        );
+    }
+
+    #[test]
     fn paste_aperture_coverage_reports_undersized_or_missing_apertures() {
         let copper = sketch(
             "top",
@@ -2404,6 +2749,30 @@ mod tests {
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "paste-aperture-coverage");
+    }
+
+    #[test]
+    fn paste_aperture_coverage_culls_sparse_paste_fields() {
+        let copper = sketch("top", vec![square(0.0, 0.0, 1.0, 1.0)]);
+        let paste = sketch(
+            "paste",
+            (0..2_000)
+                .map(|index| {
+                    let x = 100.0 + index as f64 * 3.0;
+                    square(x, 10.0, x + 0.5, 10.5)
+                })
+                .chain([square(0.0, 0.0, 0.8, 1.0)])
+                .collect(),
+        );
+
+        let start = Instant::now();
+        let violations = paste_aperture_coverage("paste", &paste, "top", &copper, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "paste coverage should index sparse paste fields"
+        );
     }
 
     #[test]
@@ -2443,6 +2812,30 @@ mod tests {
         let paste = sketch("paste", vec![square(0.0, 0.0, 0.8, 1.0)]);
 
         assert!(paste_aperture_ratio("paste", &paste, "top", &copper, 0.5, 1.2, 1.0e-9).is_empty());
+    }
+
+    #[test]
+    fn paste_aperture_ratio_culls_sparse_paste_fields() {
+        let copper = sketch("top", vec![square(0.0, 0.0, 1.0, 1.0)]);
+        let paste = sketch(
+            "paste",
+            (0..2_000)
+                .map(|index| {
+                    let x = 100.0 + index as f64 * 3.0;
+                    square(x, 10.0, x + 0.5, 10.5)
+                })
+                .chain([square(0.0, 0.0, 0.25, 1.0)])
+                .collect(),
+        );
+
+        let start = Instant::now();
+        let violations = paste_aperture_ratio("paste", &paste, "top", &copper, 0.5, 1.2, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "paste aperture ratio should index sparse paste fields"
+        );
     }
 
     #[test]
@@ -2490,6 +2883,28 @@ mod tests {
     }
 
     #[test]
+    fn paste_aperture_spacing_culls_sparse_aperture_fields() {
+        let mut apertures = (0..2_000)
+            .map(|index| {
+                let x = 100.0 + index as f64 * 3.0;
+                square(x, 10.0, x + 0.5, 10.5)
+            })
+            .collect::<Vec<_>>();
+        apertures.push(square(0.0, 0.0, 1.0, 1.0));
+        apertures.push(square(1.05, 0.0, 2.05, 1.0));
+        let paste = sketch("paste", apertures);
+
+        let start = Instant::now();
+        let violations = paste_aperture_spacing("paste", &paste, 0.1, 1.0e-9);
+
+        assert_eq!(violations.len(), 2);
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "paste aperture spacing should index sparse aperture fields"
+        );
+    }
+
+    #[test]
     fn paste_mask_alignment_reports_paste_outside_mask_opening() {
         let paste = sketch("paste", vec![square(0.0, 0.0, 1.0, 1.0)]);
         let mask = sketch("mask", vec![square(0.1, 0.0, 1.0, 1.0)]);
@@ -2498,6 +2913,30 @@ mod tests {
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "paste-mask-alignment");
+    }
+
+    #[test]
+    fn paste_mask_alignment_culls_sparse_mask_fields() {
+        let paste = sketch("paste", vec![square(0.0, 0.0, 1.0, 1.0)]);
+        let mask = sketch(
+            "mask",
+            (0..2_000)
+                .map(|index| {
+                    let x = 100.0 + index as f64 * 3.0;
+                    square(x, 10.0, x + 0.5, 10.5)
+                })
+                .chain([square(0.1, 0.0, 1.0, 1.0)])
+                .collect(),
+        );
+
+        let start = Instant::now();
+        let violations = paste_mask_alignment("paste", &paste, "mask", &mask, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "paste-mask alignment should index sparse mask-opening fields"
+        );
     }
 
     #[test]
@@ -2559,6 +2998,28 @@ mod tests {
         );
 
         assert!(solder_mask_opening_spacing("mask", &mask, 0.1, 1.0e-9).is_empty());
+    }
+
+    #[test]
+    fn solder_mask_opening_spacing_culls_sparse_opening_fields() {
+        let mut openings = (0..2_000)
+            .map(|index| {
+                let x = 100.0 + index as f64 * 3.0;
+                square(x, 10.0, x + 0.5, 10.5)
+            })
+            .collect::<Vec<_>>();
+        openings.push(square(0.0, 0.0, 1.0, 1.0));
+        openings.push(square(1.05, 0.0, 2.05, 1.0));
+        let mask = sketch("mask", openings);
+
+        let start = Instant::now();
+        let violations = solder_mask_opening_spacing("mask", &mask, 0.1, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "solder-mask opening spacing should index sparse opening fields"
+        );
     }
 
     #[test]
@@ -3043,6 +3504,30 @@ mod tests {
     }
 
     #[test]
+    fn exposed_copper_culls_sparse_mask_fields() {
+        let copper = sketch("top", vec![square(0.0, 0.0, 1.0, 1.0)]);
+        let mask_opening = sketch(
+            "mask",
+            (0..2_000)
+                .map(|index| {
+                    let x = 100.0 + index as f64 * 3.0;
+                    square(x, 10.0, x + 0.5, 10.5)
+                })
+                .chain([square(0.2, 0.2, 0.8, 0.8)])
+                .collect(),
+        );
+
+        let start = Instant::now();
+        let violations = exposed_copper("top", &copper, "mask", &mask_opening, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "exposed copper should index sparse mask-opening fields"
+        );
+    }
+
+    #[test]
     fn solder_mask_opening_coverage_reports_undersized_or_missing_openings() {
         let copper = sketch(
             "top",
@@ -3069,6 +3554,31 @@ mod tests {
     }
 
     #[test]
+    fn solder_mask_opening_coverage_culls_sparse_mask_fields() {
+        let copper = sketch("top", vec![square(0.0, 0.0, 1.0, 1.0)]);
+        let mask_openings = sketch(
+            "mask",
+            (0..2_000)
+                .map(|index| {
+                    let x = 100.0 + index as f64 * 3.0;
+                    square(x, 10.0, x + 0.5, 10.5)
+                })
+                .chain([square(0.0, 0.0, 0.8, 1.0)])
+                .collect(),
+        );
+
+        let start = Instant::now();
+        let violations =
+            solder_mask_opening_coverage("top", &copper, "mask", &mask_openings, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "solder-mask coverage should index sparse opening fields"
+        );
+    }
+
+    #[test]
     fn solder_mask_expansion_reports_oversized_opening() {
         let copper = sketch("top", vec![square(0.0, 0.0, 1.0, 1.0)]);
         let mask_openings = sketch("mask", vec![square(-0.2, -0.2, 1.2, 1.2)]);
@@ -3077,6 +3587,30 @@ mod tests {
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "solder-mask-expansion");
+    }
+
+    #[test]
+    fn solder_mask_expansion_culls_sparse_copper_fields() {
+        let copper = sketch(
+            "top",
+            (0..2_000)
+                .map(|index| {
+                    let x = 100.0 + index as f64 * 3.0;
+                    square(x, 10.0, x + 0.5, 10.5)
+                })
+                .chain([square(0.0, 0.0, 1.0, 1.0)])
+                .collect(),
+        );
+        let mask_openings = sketch("mask", vec![square(-0.2, -0.2, 1.2, 1.2)]);
+
+        let start = Instant::now();
+        let violations = solder_mask_expansion("top", &copper, "mask", &mask_openings, 0.1, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "solder-mask expansion should index sparse copper fields"
+        );
     }
 
     #[test]
@@ -3124,6 +3658,31 @@ mod tests {
     }
 
     #[test]
+    fn solder_mask_overlap_clearance_culls_sparse_opening_fields() {
+        let copper = sketch("top", vec![square(1.05, 0.0, 1.20, 1.0)]);
+        let mask_openings = sketch(
+            "mask",
+            (0..2_000)
+                .map(|index| {
+                    let x = 100.0 + index as f64 * 3.0;
+                    square(x, 10.0, x + 0.5, 10.5)
+                })
+                .chain([square(0.0, 0.0, 1.0, 1.0)])
+                .collect(),
+        );
+
+        let start = Instant::now();
+        let violations =
+            solder_mask_overlap_clearance("top", &copper, "mask", &mask_openings, 0.1, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "solder-mask overlap clearance should index sparse opening fields"
+        );
+    }
+
+    #[test]
     fn silkscreen_overlap_reports_legend_over_pad_or_slot() {
         let pad_opening = sketch("mask", vec![square(0.0, 0.0, 1.0, 1.0)]);
         let silk_text_stroke = sketch(
@@ -3161,6 +3720,33 @@ mod tests {
     }
 
     #[test]
+    fn silkscreen_overlap_culls_sparse_blocker_fields() {
+        let blockers = sketch(
+            "mask",
+            (0..2_000)
+                .map(|index| {
+                    let x = 100.0 + index as f64 * 3.0;
+                    square(x, 10.0, x + 0.5, 10.5)
+                })
+                .chain([square(0.0, 0.0, 1.0, 1.0)])
+                .collect(),
+        );
+        let silk_text_stroke = sketch(
+            "silk",
+            vec![line_polygon([-0.2, 0.5], [1.2, 0.5], 0.08).unwrap()],
+        );
+
+        let start = Instant::now();
+        let violations = silkscreen_overlap("silk", &silk_text_stroke, "mask", &blockers, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "silkscreen overlap should index sparse blocker fields"
+        );
+    }
+
+    #[test]
     fn silkscreen_clearance_reports_legend_near_blocker() {
         let pad_opening = sketch("mask", vec![square(0.0, 0.0, 1.0, 1.0)]);
         let silk_text_stroke = sketch(
@@ -3186,6 +3772,34 @@ mod tests {
         assert!(
             silkscreen_clearance("silk", &silk_text_stroke, "mask", &pad_opening, 0.1, 1.0e-9)
                 .is_empty()
+        );
+    }
+
+    #[test]
+    fn silkscreen_clearance_culls_sparse_blocker_fields() {
+        let blockers = sketch(
+            "mask",
+            (0..2_000)
+                .map(|index| {
+                    let x = 100.0 + index as f64 * 3.0;
+                    square(x, 10.0, x + 0.5, 10.5)
+                })
+                .chain([square(0.0, 0.0, 1.0, 1.0)])
+                .collect(),
+        );
+        let silk_text_stroke = sketch(
+            "silk",
+            vec![line_polygon([1.08, 0.5], [1.8, 0.5], 0.05).unwrap()],
+        );
+
+        let start = Instant::now();
+        let violations =
+            silkscreen_clearance("silk", &silk_text_stroke, "mask", &blockers, 0.1, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "silkscreen clearance should index sparse blocker fields"
         );
     }
 

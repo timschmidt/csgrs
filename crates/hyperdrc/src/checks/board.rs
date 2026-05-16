@@ -12,6 +12,9 @@ use csgrs::csg::CSG;
 use geo::{Area, BoundingRect};
 
 use super::distance::polygon_boundary_distance;
+use super::outline::{
+    axis_aligned_outline_rect, feature_bounds_inside_rect, feature_bounds_inside_rect_margin,
+};
 use super::spatial::{CopperSpatialIndex, DrillSpatialIndex, PointSpatialIndex};
 use crate::checks::drill::drills_to_sketch;
 use crate::geometry::{circle_polygon, multipolygon_to_shapes, polygons_to_sketch};
@@ -20,54 +23,98 @@ use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbSketch};
 
-/// Run the `copper_width_readiness` design-readiness check or report helper.
+/// Warn when parsed KiCad copper is narrower than the configured width.
+///
+/// IPC-2221B treats conductor geometry as a board-level design constraint, and
+/// Tang et al., "Study on Wet Chemical Etching of Flexible Printed Circuit
+/// Board with 16-um Line Pitch", *Journal of Electronic Materials*, 2023,
+/// motivates keeping etch-sensitive narrow copper visible during readiness
+/// review. This check uses the parsed feature bounding box as a conservative
+/// proxy, so suspect findings should be verified against the native CAD rule
+/// deck and fabrication limits.
 pub fn copper_width_readiness(
     board: &BoardModel,
     selected_layers: &[String],
     minimum_width: f64,
 ) -> Vec<Violation> {
-    selected_copper_features(board, selected_layers)
-        .into_iter()
-        .filter_map(|feature| {
-            let width = minimum_bounding_dimension(&feature.sketch);
-            (width > 0.0 && width < minimum_width).then(|| {
-                Violation::new(
-                    "copper-width-readiness",
-                    Severity::Error,
-                    vec![feature.layer.clone()],
-                    None,
-                    Vec::new(),
-                    vec![feature.location],
-                    Some(format!(
-                        "parsed {:?} copper width {width:.6} is below minimum {minimum_width:.6}",
-                        feature.kind
-                    )),
-                )
-            })
-        })
-        .collect()
+    let features = selected_copper_features(board, selected_layers);
+    let mut measured_features = 0usize;
+    let mut violations = Vec::new();
+
+    for feature in &features {
+        let width = minimum_bounding_dimension(&feature.sketch);
+        if width <= 0.0 {
+            continue;
+        }
+        measured_features += 1;
+        if width >= minimum_width {
+            continue;
+        }
+
+        violations.push(Violation::new(
+            "copper-width-readiness",
+            Severity::Error,
+            vec![feature.layer.clone()],
+            None,
+            Vec::new(),
+            vec![feature.location],
+            Some(format!(
+                "parsed {:?} copper width {width:.6} is below minimum {minimum_width:.6}",
+                feature.kind
+            )),
+        ));
+    }
+
+    log::trace!(
+        "copper-width readiness: source={} selected_features={} measured_features={} selected_layers={} minimum_width={minimum_width:.6} violations={}",
+        board.source,
+        features.len(),
+        measured_features,
+        selected_layers.len(),
+        violations.len()
+    );
+
+    violations
 }
 
-/// Run the `copper_net_intent` design-readiness check or report helper.
+/// Warn when parsed KiCad copper has no assigned net.
+///
+/// IPC-D-356B exists to exchange bare-board electrical test intent; after KiCad
+/// parsing and any IPC-D-356 annotation pass, remaining unnetted copper is
+/// suspect for intentional shields, mechanical copper, parser misses, or true
+/// release-data gaps. This check only reports the ambiguity so a reviewer can
+/// confirm the source board and test handoff.
 pub fn copper_net_intent(board: &BoardModel, selected_layers: &[String]) -> Vec<Violation> {
-    selected_copper_features(board, selected_layers)
-        .into_iter()
-        .filter(|feature| feature.net.is_none())
-        .map(|feature| {
-            Violation::new(
-                "copper-net-intent",
-                Severity::Warning,
-                vec![feature.layer.clone()],
-                None,
-                Vec::new(),
-                vec![feature.location],
-                Some(format!(
-                    "parsed {:?} copper has no net after KiCad parsing and IPC-D-356 annotation",
-                    feature.kind
-                )),
-            )
-        })
-        .collect()
+    let features = selected_copper_features(board, selected_layers);
+    let mut violations = Vec::new();
+
+    for feature in &features {
+        if feature.net.is_some() {
+            continue;
+        }
+        violations.push(Violation::new(
+            "copper-net-intent",
+            Severity::Warning,
+            vec![feature.layer.clone()],
+            None,
+            Vec::new(),
+            vec![feature.location],
+            Some(format!(
+                "parsed {:?} copper has no net after KiCad parsing and IPC-D-356 annotation",
+                feature.kind
+            )),
+        ));
+    }
+
+    log::trace!(
+        "copper-net intent: source={} selected_features={} selected_layers={} violations={}",
+        board.source,
+        features.len(),
+        selected_layers.len(),
+        violations.len()
+    );
+
+    violations
 }
 
 /// Run the `via_in_pad_readiness` design-readiness check or report helper.
@@ -313,9 +360,21 @@ pub fn board_edge_exposure(
     let Some(outline) = &board.board_outline else {
         return Vec::new();
     };
+    let outline_rect = axis_aligned_outline_rect(outline);
     let mut violations = Vec::new();
+    let mut skipped_rect_inside = 0_usize;
+    let mut exact_difference_count = 0_usize;
 
     for feature in selected_copper_features(board, selected_layers) {
+        if outline_rect
+            .as_ref()
+            .is_some_and(|rect| feature_bounds_inside_rect(feature, rect))
+        {
+            skipped_rect_inside += 1;
+            continue;
+        }
+
+        exact_difference_count += 1;
         let outside_outline = feature.sketch.difference(outline);
         let shapes = multipolygon_to_shapes(&outside_outline.to_multipolygon(), min_area);
         if shapes.is_empty() {
@@ -336,6 +395,16 @@ pub fn board_edge_exposure(
         ));
     }
 
+    log::trace!(
+        "board-edge exposure: source={} selected_layers={} outline_fast_path={} skipped_rect_inside={} exact_difference_checks={} violations={}",
+        board.source,
+        selected_layers.len(),
+        outline_rect.is_some(),
+        skipped_rect_inside,
+        exact_difference_count,
+        violations.len()
+    );
+
     violations
 }
 
@@ -349,8 +418,11 @@ pub fn high_speed_edge_readiness(
     let Some(outline) = &board.board_outline else {
         return Vec::new();
     };
+    let outline_rect = axis_aligned_outline_rect(outline);
     let allowed = outline.offset(-edge_clearance);
     let mut violations = Vec::new();
+    let mut skipped_rect_inside = 0_usize;
+    let mut exact_difference_count = 0_usize;
 
     for feature in selected_copper_features(board, selected_layers) {
         let Some(net) = &feature.net else {
@@ -359,7 +431,15 @@ pub fn high_speed_edge_readiness(
         if !looks_high_speed_net(net) {
             continue;
         }
+        if outline_rect
+            .as_ref()
+            .is_some_and(|rect| feature_bounds_inside_rect_margin(feature, rect, edge_clearance))
+        {
+            skipped_rect_inside += 1;
+            continue;
+        }
 
+        exact_difference_count += 1;
         let intrusion = feature.sketch.difference(&allowed);
         let shapes = multipolygon_to_shapes(&intrusion.to_multipolygon(), min_area);
         if shapes.is_empty() {
@@ -379,6 +459,16 @@ pub fn high_speed_edge_readiness(
         ));
     }
 
+    log::trace!(
+        "high-speed edge readiness: source={} selected_layers={} outline_fast_path={} skipped_rect_inside={} exact_difference_checks={} edge_clearance={edge_clearance:.6} violations={}",
+        board.source,
+        selected_layers.len(),
+        outline_rect.is_some(),
+        skipped_rect_inside,
+        exact_difference_count,
+        violations.len()
+    );
+
     violations
 }
 
@@ -392,8 +482,11 @@ pub fn edge_copper_pullback_readiness(
     let Some(outline) = &board.board_outline else {
         return Vec::new();
     };
+    let outline_rect = axis_aligned_outline_rect(outline);
     let allowed = outline.offset(-edge_clearance);
     let mut violations = Vec::new();
+    let mut skipped_rect_inside = 0_usize;
+    let mut exact_difference_count = 0_usize;
 
     for feature in selected_copper_features(board, selected_layers) {
         if let Some(net) = &feature.net {
@@ -404,7 +497,15 @@ pub fn edge_copper_pullback_readiness(
                 continue;
             }
         }
+        if outline_rect
+            .as_ref()
+            .is_some_and(|rect| feature_bounds_inside_rect_margin(feature, rect, edge_clearance))
+        {
+            skipped_rect_inside += 1;
+            continue;
+        }
 
+        exact_difference_count += 1;
         let intrusion = feature.sketch.difference(&allowed);
         let shapes = multipolygon_to_shapes(&intrusion.to_multipolygon(), min_area);
         let has_edge_intrusion = !shapes.is_empty()
@@ -429,6 +530,16 @@ pub fn edge_copper_pullback_readiness(
         ));
     }
 
+    log::trace!(
+        "edge copper-pullback readiness: source={} selected_layers={} outline_fast_path={} skipped_rect_inside={} exact_difference_checks={} edge_clearance={edge_clearance:.6} violations={}",
+        board.source,
+        selected_layers.len(),
+        outline_rect.is_some(),
+        skipped_rect_inside,
+        exact_difference_count,
+        violations.len()
+    );
+
     violations
 }
 
@@ -449,6 +560,7 @@ pub fn edge_stitching_readiness(
     let Some(outline) = &board.board_outline else {
         return Vec::new();
     };
+    let outline_rect = axis_aligned_outline_rect(outline);
     let allowed = outline.offset(-edge_clearance);
     let features = selected_copper_features(board, selected_layers);
     let ground_vias = features
@@ -465,6 +577,7 @@ pub fn edge_stitching_readiness(
 
     let mut violations = Vec::new();
     let mut candidate_features = 0usize;
+    let mut skipped_rect_inside = 0usize;
     let mut stitch_hits = 0usize;
     for feature in &features {
         let feature = *feature;
@@ -475,6 +588,13 @@ pub fn edge_stitching_readiness(
             continue;
         }
         candidate_features += 1;
+        if outline_rect
+            .as_ref()
+            .is_some_and(|rect| feature_bounds_inside_rect_margin(feature, rect, edge_clearance))
+        {
+            skipped_rect_inside += 1;
+            continue;
+        }
 
         let intrusion = feature.sketch.difference(&allowed);
         let shapes = multipolygon_to_shapes(&intrusion.to_multipolygon(), min_area);
@@ -508,12 +628,14 @@ pub fn edge_stitching_readiness(
     }
 
     log::trace!(
-        "edge stitching readiness: source={} candidate_features={} ground_vias={} ground_buckets={} stitch_hits={} edge_clearance={edge_clearance:.6} stitching_distance={stitching_distance:.6} violations={}",
+        "edge stitching readiness: source={} candidate_features={} ground_vias={} ground_buckets={} stitch_hits={} outline_fast_path={} skipped_rect_inside={} edge_clearance={edge_clearance:.6} stitching_distance={stitching_distance:.6} violations={}",
         board.source,
         candidate_features,
         ground_vias.len(),
         ground_index.bucket_count(),
         stitch_hits,
+        outline_rect.is_some(),
+        skipped_rect_inside,
         violations.len()
     );
 
@@ -619,11 +741,20 @@ pub fn trace_junction_acid_trap_readiness(
 }
 
 /// Run the `controlled_impedance_readiness` design-readiness check or report helper.
+/// Warn when likely high-speed nets change layers without a parsed via.
+///
+/// This is not an impedance solver. It is a release-readiness guard based on
+/// IPC-2221B's requirement to treat controlled routing and conductor geometry
+/// as explicit board-design constraints: when a high-speed net appears on
+/// multiple selected copper layers without a same-net via, the parser view is
+/// internally inconsistent and should be reviewed before relying on downstream
+/// field or stackup checks.
 pub fn controlled_impedance_readiness(
     board: &BoardModel,
     selected_layers: &[String],
 ) -> Vec<Violation> {
     let mut nets: BTreeMap<String, NetLayerUse> = BTreeMap::new();
+    let mut high_speed_features = 0usize;
 
     for feature in selected_copper_features(board, selected_layers) {
         let Some(net) = &feature.net else {
@@ -632,6 +763,7 @@ pub fn controlled_impedance_readiness(
         if !looks_high_speed_net(net) {
             continue;
         }
+        high_speed_features += 1;
 
         let entry = nets.entry(net.clone()).or_default();
         entry.layers.insert(feature.layer.clone());
@@ -641,7 +773,9 @@ pub fn controlled_impedance_readiness(
         }
     }
 
-    nets.into_iter()
+    let net_count = nets.len();
+    let violations = nets
+        .into_iter()
         .filter(|(_, usage)| usage.layers.len() > 1 && !usage.has_via)
         .map(|(net, usage)| {
             let layers = usage.layers.into_iter().collect::<Vec<_>>();
@@ -658,15 +792,34 @@ pub fn controlled_impedance_readiness(
                 )),
             )
         })
-        .collect()
+        .collect::<Vec<_>>();
+    log::trace!(
+        "controlled-impedance readiness: source={} high_speed_features={} high_speed_nets={} selected_layers={} violations={}",
+        board.source,
+        high_speed_features,
+        net_count,
+        selected_layers.len(),
+        violations.len()
+    );
+
+    violations
 }
 
-/// Run the `differential_pair_readiness` design-readiness check or report helper.
+/// Warn when inferred differential-pair sides are missing or split by layer.
+///
+/// Pair membership is inferred from common suffixes, so the result is a
+/// readiness prompt rather than a formal constraint proof. Kirschning and
+/// Jansen, "Accurate Wide-Range Design Equations for the Frequency-Dependent
+/// Characteristic of Parallel Coupled Microstrip Lines", IEEE Transactions on
+/// Microwave Theory and Techniques, 1984, motivates treating coupled pair
+/// structure as explicit design intent; this check makes missing or
+/// layer-divergent inferred sides visible before release.
 pub fn differential_pair_readiness(
     board: &BoardModel,
     selected_layers: &[String],
 ) -> Vec<Violation> {
     let mut pairs: BTreeMap<String, DifferentialPairUse> = BTreeMap::new();
+    let mut inferred_features = 0usize;
 
     for feature in selected_copper_features(board, selected_layers) {
         let Some(net) = &feature.net else {
@@ -675,6 +828,7 @@ pub fn differential_pair_readiness(
         let Some((pair, side)) = differential_pair_key(net) else {
             continue;
         };
+        inferred_features += 1;
 
         let entry = pairs.entry(pair).or_default();
         match side {
@@ -689,6 +843,7 @@ pub fn differential_pair_readiness(
         }
     }
 
+    let pair_count = pairs.len();
     let mut violations = Vec::new();
     for (pair, usage) in pairs {
         let has_positive = !usage.positive_layers.is_empty();
@@ -732,16 +887,36 @@ pub fn differential_pair_readiness(
         }
     }
 
+    log::trace!(
+        "differential-pair readiness: source={} inferred_features={} inferred_pairs={} selected_layers={} violations={}",
+        board.source,
+        inferred_features,
+        pair_count,
+        selected_layers.len(),
+        violations.len()
+    );
+
     violations
 }
 
-/// Run the `differential_pair_spacing_readiness` design-readiness check or report helper.
+/// Warn when inferred differential-pair sides are farther apart than expected.
+///
+/// This is a readiness heuristic over parsed copper, not a coupled-line field
+/// solver. Kirschning and Jansen, "Accurate Wide-Range Design Equations for the
+/// Frequency-Dependent Characteristic of Parallel Coupled Microstrip Lines",
+/// IEEE Transactions on Microwave Theory and Techniques, 1984, motivates
+/// treating pair spacing as explicit routing intent. Candidate positive/negative
+/// side matches use the shared copper spatial broad phase from Ericson,
+/// *Real-Time Collision Detection* (2005), before exact boundary-distance
+/// checks. If no close candidate exists, the check falls back to exact nearest
+/// distance so true "too far apart" findings still include a measured gap.
 pub fn differential_pair_spacing_readiness(
     board: &BoardModel,
     selected_layers: &[String],
     maximum_pair_gap: f64,
 ) -> Vec<Violation> {
     let mut pairs: BTreeMap<String, DifferentialPairFeatureUse<'_>> = BTreeMap::new();
+    let mut inferred_features = 0usize;
 
     for feature in selected_copper_features(board, selected_layers) {
         let Some(net) = &feature.net else {
@@ -750,6 +925,7 @@ pub fn differential_pair_spacing_readiness(
         let Some((pair, side)) = differential_pair_key(net) else {
             continue;
         };
+        inferred_features += 1;
 
         let entry = pairs.entry(pair).or_default();
         match side {
@@ -758,6 +934,9 @@ pub fn differential_pair_spacing_readiness(
         }
     }
 
+    let pair_count = pairs.len();
+    let mut candidate_pairs = 0usize;
+    let mut exact_pairs = 0usize;
     let mut violations = Vec::new();
     for (pair, usage) in pairs {
         let mut layers = BTreeSet::new();
@@ -781,19 +960,37 @@ pub fn differential_pair_spacing_readiness(
                 continue;
             }
 
+            let negative_index = CopperSpatialIndex::new(&negatives, maximum_pair_gap);
+            let has_close_side = positives.iter().any(|positive| {
+                negative_index
+                    .same_layer_near_feature(positive, maximum_pair_gap)
+                    .into_iter()
+                    .any(|negative_index| {
+                        candidate_pairs += 1;
+                        exact_pairs += 1;
+                        polygon_boundary_distance(
+                            &positive.sketch.to_multipolygon(),
+                            &negatives[negative_index].sketch.to_multipolygon(),
+                        ) <= maximum_pair_gap
+                    })
+            });
+            if has_close_side {
+                continue;
+            }
+
             let nearest = positives
                 .iter()
-                .flat_map(|positive| {
-                    negatives.iter().map(move |negative| {
-                        (
-                            polygon_boundary_distance(
-                                &positive.sketch.to_multipolygon(),
-                                &negative.sketch.to_multipolygon(),
-                            ),
-                            positive.location,
-                            negative.location,
-                        )
-                    })
+                .flat_map(|positive| negatives.iter().map(move |negative| (*positive, *negative)))
+                .map(|(positive, negative)| {
+                    exact_pairs += 1;
+                    (
+                        polygon_boundary_distance(
+                            &positive.sketch.to_multipolygon(),
+                            &negative.sketch.to_multipolygon(),
+                        ),
+                        positive.location,
+                        negative.location,
+                    )
                 })
                 .min_by(|left, right| {
                     left.0
@@ -803,9 +1000,6 @@ pub fn differential_pair_spacing_readiness(
             let Some((gap, positive_location, negative_location)) = nearest else {
                 continue;
             };
-            if gap <= maximum_pair_gap {
-                continue;
-            }
 
             violations.push(Violation::new(
                 "differential-pair-spacing-readiness",
@@ -820,6 +1014,17 @@ pub fn differential_pair_spacing_readiness(
             ));
         }
     }
+
+    log::trace!(
+        "differential-pair spacing readiness: source={} inferred_features={} inferred_pairs={} candidate_pairs={} exact_pairs={} selected_layers={} threshold={maximum_pair_gap:.6} violations={}",
+        board.source,
+        inferred_features,
+        pair_count,
+        candidate_pairs,
+        exact_pairs,
+        selected_layers.len(),
+        violations.len()
+    );
 
     violations
 }
@@ -972,18 +1177,30 @@ pub fn differential_pair_return_readiness(
     violations
 }
 
-/// Run the `reference_plane_readiness` design-readiness check or report helper.
+/// Warn when likely high-speed nets have no parsed ground-zone context.
+///
+/// IPC-2221B treats return-path and layer-stack planning as board-design
+/// constraints. This coarse check only verifies that at least one parsed ground
+/// zone exists on the selected copper set before higher-fidelity void and
+/// split-plane checks try to reason about coverage.
 pub fn reference_plane_readiness(board: &BoardModel, selected_layers: &[String]) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
     let has_ground_zone = features.iter().any(|feature| {
         feature.kind == CopperKind::Zone && feature.net.as_deref().is_some_and(looks_ground_net)
     });
     if has_ground_zone {
+        log::trace!(
+            "reference-plane readiness: source={} features={} selected_layers={} has_ground_zone=true violations=0",
+            board.source,
+            features.len(),
+            selected_layers.len()
+        );
         return Vec::new();
     }
 
     let mut nets: BTreeMap<String, NetLayerUse> = BTreeMap::new();
-    for feature in features {
+    for feature in &features {
+        let feature = *feature;
         let Some(net) = &feature.net else {
             continue;
         };
@@ -996,7 +1213,9 @@ pub fn reference_plane_readiness(board: &BoardModel, selected_layers: &[String])
         entry.locations.push(feature.location);
     }
 
-    nets.into_iter()
+    let high_speed_nets = nets.len();
+    let violations = nets
+        .into_iter()
         .map(|(net, usage)| {
             Violation::new(
                 "reference-plane-readiness",
@@ -1010,34 +1229,47 @@ pub fn reference_plane_readiness(board: &BoardModel, selected_layers: &[String])
                 )),
             )
         })
-        .collect()
+        .collect::<Vec<_>>();
+    log::trace!(
+        "reference-plane readiness: source={} features={} high_speed_nets={} selected_layers={} has_ground_zone=false violations={}",
+        board.source,
+        features.len(),
+        high_speed_nets,
+        selected_layers.len(),
+        violations.len()
+    );
+
+    violations
 }
 
 /// Run the `reference_plane_void_readiness` design-readiness check or report helper.
+///
+/// Ground-zone candidates use the shared copper spatial index before exact
+/// feature-minus-reference-plane CSG subtraction. This keeps reference-plane
+/// review on the same deterministic broad-phase/narrow-phase footing described
+/// by Ericson, *Real-Time Collision Detection* (2005), while preserving exact
+/// geometry for the final void decision.
 pub fn reference_plane_void_readiness(
     board: &BoardModel,
     selected_layers: &[String],
     min_area: f64,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
-    let ground_polygons = features
+    let ground_features = features
         .iter()
+        .copied()
         .filter(|feature| {
             feature.kind == CopperKind::Zone && feature.net.as_deref().is_some_and(looks_ground_net)
         })
-        .flat_map(|feature| feature.sketch.to_multipolygon().0)
         .collect::<Vec<_>>();
-    if ground_polygons.is_empty() {
+    if ground_features.is_empty() {
         return Vec::new();
     }
-    let ground = polygons_to_sketch(
-        ground_polygons,
-        Some(LayerMetadata {
-            name: "KiCad ground zones".to_string(),
-        }),
-    );
+    let ground_index = CopperSpatialIndex::new(&ground_features, 0.0);
 
     let mut violations = Vec::new();
+    let mut candidate_features = 0usize;
+    let mut candidate_ground_zones = 0usize;
     for feature in features {
         let Some(net) = &feature.net else {
             continue;
@@ -1045,9 +1277,26 @@ pub fn reference_plane_void_readiness(
         if !looks_high_speed_net(net) || feature.kind == CopperKind::Via {
             continue;
         }
+        candidate_features += 1;
 
-        let uncovered = feature.sketch.difference(&ground);
-        let shapes = multipolygon_to_shapes(&uncovered.to_multipolygon(), min_area);
+        let candidates = ground_index.all_layers_near_feature(feature, 0.0);
+        candidate_ground_zones += candidates.len();
+        let shapes = if candidates.is_empty() {
+            multipolygon_to_shapes(&feature.sketch.to_multipolygon(), min_area)
+        } else {
+            let ground_polygons = candidates
+                .into_iter()
+                .flat_map(|ground_index| ground_features[ground_index].sketch.to_multipolygon().0)
+                .collect::<Vec<_>>();
+            let ground = polygons_to_sketch(
+                ground_polygons,
+                Some(LayerMetadata {
+                    name: "KiCad ground zones".to_string(),
+                }),
+            );
+            let uncovered = feature.sketch.difference(&ground);
+            multipolygon_to_shapes(&uncovered.to_multipolygon(), min_area)
+        };
         if shapes.is_empty() {
             continue;
         }
@@ -1065,17 +1314,40 @@ pub fn reference_plane_void_readiness(
         ));
     }
 
+    log::trace!(
+        "reference-plane void readiness: source={} high_speed_features={} ground_zones={} ground_buckets={} candidate_ground_zones={} violations={}",
+        board.source,
+        candidate_features,
+        ground_features.len(),
+        ground_index.bucket_count(),
+        candidate_ground_zones,
+        violations.len()
+    );
+
     violations
 }
 
 /// Run the `orphaned_zone_readiness` design-readiness check or report helper.
+///
+/// Parsed pad, via, and segment anchors are indexed once, then each zone only
+/// reviews same-layer nearby anchor candidates before exact CSG or boundary
+/// distance confirmation. This follows Ericson, *Real-Time Collision
+/// Detection* (2005): the grid is a conservative broad phase, while zone
+/// connectivity remains an exact geometry decision.
 pub fn orphaned_zone_readiness(
     board: &BoardModel,
     selected_layers: &[String],
     anchor_tolerance: f64,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
+    let anchors = features
+        .iter()
+        .copied()
+        .filter(|feature| feature.kind != CopperKind::Zone)
+        .collect::<Vec<_>>();
+    let anchor_index = CopperSpatialIndex::new(&anchors, anchor_tolerance);
     let mut violations = Vec::new();
+    let mut candidate_anchors = 0usize;
 
     for zone in features
         .iter()
@@ -1084,10 +1356,12 @@ pub fn orphaned_zone_readiness(
         let Some(net) = &zone.net else {
             continue;
         };
-        let has_anchor = features.iter().any(|feature| {
-            feature.kind != CopperKind::Zone
-                && feature.net.as_deref() == Some(net.as_str())
-                && (feature
+        let candidates = anchor_index.same_layer_near_feature(zone, anchor_tolerance);
+        candidate_anchors += candidates.len();
+        let has_anchor = candidates.into_iter().any(|anchor_index| {
+            let anchor = anchors[anchor_index];
+            anchor.net.as_deref() == Some(net.as_str())
+                && (anchor
                     .sketch
                     .intersection(&zone.sketch)
                     .to_multipolygon()
@@ -1095,7 +1369,7 @@ pub fn orphaned_zone_readiness(
                     .iter()
                     .any(|polygon| polygon.unsigned_area() > 0.0)
                     || polygon_boundary_distance(
-                        &feature.sketch.to_multipolygon(),
+                        &anchor.sketch.to_multipolygon(),
                         &zone.sketch.to_multipolygon(),
                     ) <= anchor_tolerance)
         });
@@ -1115,6 +1389,19 @@ pub fn orphaned_zone_readiness(
             )),
         ));
     }
+
+    log::trace!(
+        "orphaned-zone readiness: source={} zones={} anchors={} anchor_buckets={} candidate_anchors={} violations={}",
+        board.source,
+        features
+            .iter()
+            .filter(|feature| feature.kind == CopperKind::Zone)
+            .count(),
+        anchors.len(),
+        anchor_index.bucket_count(),
+        candidate_anchors,
+        violations.len()
+    );
 
     violations
 }
@@ -1182,9 +1469,18 @@ pub fn same_net_island_readiness(
     violations
 }
 
-/// Run the `high_current_readiness` design-readiness check or report helper.
+/// Warn when likely high-current nets change layers with too few parsed vias.
+///
+/// IPC-2152 frames current carrying capacity as a design-specific board
+/// constraint, while Black's electromigration survey, "Electromigration--A
+/// Brief Survey and Some Recent Results", IEEE Transactions on Electron
+/// Devices, 1969, motivates reviewing current density bottlenecks before
+/// release. This check is intentionally conservative: it only flags
+/// layer-changing likely power nets whose parsed same-net via count is below the
+/// redundancy threshold used by this readiness profile.
 pub fn high_current_readiness(board: &BoardModel, selected_layers: &[String]) -> Vec<Violation> {
     let mut nets: BTreeMap<String, NetLayerUse> = BTreeMap::new();
+    let mut high_current_features = 0usize;
 
     for feature in selected_copper_features(board, selected_layers) {
         let Some(net) = &feature.net else {
@@ -1193,6 +1489,7 @@ pub fn high_current_readiness(board: &BoardModel, selected_layers: &[String]) ->
         if !looks_high_current_net(net) {
             continue;
         }
+        high_current_features += 1;
 
         let entry = nets.entry(net.clone()).or_default();
         entry.layers.insert(feature.layer.clone());
@@ -1202,7 +1499,9 @@ pub fn high_current_readiness(board: &BoardModel, selected_layers: &[String]) ->
         }
     }
 
-    nets.into_iter()
+    let net_count = nets.len();
+    let violations = nets
+        .into_iter()
         .filter(|(_, usage)| usage.layers.len() > 1 && usage.via_count < 2)
         .map(|(net, usage)| {
             let layers = usage.layers.into_iter().collect::<Vec<_>>();
@@ -1220,7 +1519,17 @@ pub fn high_current_readiness(board: &BoardModel, selected_layers: &[String]) ->
                 )),
             )
         })
-        .collect()
+        .collect::<Vec<_>>();
+    log::trace!(
+        "high-current readiness: source={} high_current_features={} high_current_nets={} selected_layers={} violations={}",
+        board.source,
+        high_current_features,
+        net_count,
+        selected_layers.len(),
+        violations.len()
+    );
+
+    violations
 }
 
 /// Run the `power_via_array_readiness` design-readiness check or report helper.
@@ -2048,53 +2357,70 @@ fn looks_edge_intent_net(net: &str) -> bool {
     looks_gold_finger_net(net) || looks_chassis_net(net)
 }
 
-/// Run the `net_spacing` design-readiness check or report helper.
+/// Review selected same-layer KiCad copper for different-net spacing.
+///
+/// Candidate generation uses the shared broad/narrow-phase grid described by
+/// Ericson, *Real-Time Collision Detection* (2005), and every surviving pair
+/// still runs the exact offset/intersection predicate below. The exact
+/// clearance test models the Minkowski-style offset region discussed in Lee and
+/// Preparata, "Computational Geometry - A Survey", IEEE TC, 1984.
 pub fn net_spacing(
     board: &BoardModel,
     clearance: f64,
     selected_layers: &[String],
     min_area: f64,
 ) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let mut by_layer: BTreeMap<String, Vec<(&CopperFeature, geo::Rect<f64>)>> = BTreeMap::new();
-    for feature in features {
-        let Some(bounds) = feature.sketch.geometry.bounding_rect() else {
-            continue;
-        };
-        by_layer
-            .entry(feature.layer.clone())
-            .or_default()
-            .push((feature, bounds));
-    }
-    for candidates in by_layer.values_mut() {
-        candidates.sort_by(|left, right| {
-            left.1
-                .min()
-                .x
-                .total_cmp(&right.1.min().x)
-                .then(left.1.min().y.total_cmp(&right.1.min().y))
-        });
-    }
-
+    let features = selected_copper_features(board, selected_layers)
+        .into_iter()
+        .filter(|feature| feature.sketch.geometry.bounding_rect().is_some())
+        .collect::<Vec<_>>();
+    let bounds = features
+        .iter()
+        .map(|feature| {
+            feature
+                .sketch
+                .geometry
+                .bounding_rect()
+                .expect("net-spacing features are filtered to bounded geometry")
+        })
+        .collect::<Vec<_>>();
+    let feature_index = CopperSpatialIndex::new(&features, clearance);
     let mut violations = Vec::new();
+    let mut candidate_pairs = 0_usize;
+    let mut exact_pairs = 0_usize;
 
-    for candidates in by_layer.values() {
-        for left_index in 0..candidates.len() {
-            let (left, left_bounds) = candidates[left_index];
-            for (right, right_bounds) in &candidates[(left_index + 1)..] {
-                if right_bounds.min().x - left_bounds.max().x > clearance {
-                    break;
-                }
-                if left.net.is_none() || left.net == right.net {
-                    continue;
-                }
-                if !rects_within_clearance(&left_bounds, right_bounds, clearance) {
-                    continue;
-                }
-                collect_net_spacing_violation(left, right, clearance, min_area, &mut violations);
+    for left_index in 0..features.len() {
+        let left = features[left_index];
+        if left.net.is_none() {
+            continue;
+        }
+        for right_index in feature_index.same_layer_near_feature(left, clearance) {
+            if right_index <= left_index {
+                continue;
             }
+            candidate_pairs += 1;
+            let right = features[right_index];
+            if left.net == right.net {
+                continue;
+            }
+            if !rects_within_clearance(&bounds[left_index], &bounds[right_index], clearance) {
+                continue;
+            }
+            exact_pairs += 1;
+            collect_net_spacing_violation(left, right, clearance, min_area, &mut violations);
         }
     }
+
+    log::trace!(
+        "different-net spacing: source={} features={} buckets={} candidate_pairs={} exact_pairs={} clearance={clearance:.6} selected_layers={} violations={}",
+        board.source,
+        features.len(),
+        feature_index.bucket_count(),
+        candidate_pairs,
+        exact_pairs,
+        selected_layers.len(),
+        violations.len()
+    );
 
     violations
 }
@@ -2152,65 +2478,82 @@ fn rects_within_clearance(left: &geo::Rect<f64>, right: &geo::Rect<f64>, clearan
         && left.max().y + clearance >= right.min().y
 }
 
-/// Run the `registration_tolerance` design-readiness check or report helper.
+/// Review cross-layer copper proximity under fabrication registration tolerance.
+///
+/// Like [`net_spacing`], this uses Ericson's broad/narrow-phase pattern from
+/// *Real-Time Collision Detection* (2005): a layer-aware spatial grid proposes
+/// cross-layer feature pairs, and the exact offset/intersection predicate makes
+/// the finding decision. The exact test is the same Minkowski-style offset
+/// region described by Lee and Preparata, "Computational Geometry - A Survey",
+/// IEEE TC, 1984.
 pub fn registration_tolerance(board: &BoardModel, tolerance: f64, min_area: f64) -> Vec<Violation> {
-    let mut by_layer: BTreeMap<String, Vec<(&CopperFeature, geo::Rect<f64>)>> = BTreeMap::new();
-    for feature in selected_copper_features(board, &[]) {
-        let Some(bounds) = feature.sketch.geometry.bounding_rect() else {
-            continue;
-        };
-        by_layer
-            .entry(feature.layer.clone())
-            .or_default()
-            .push((feature, bounds));
-    }
-    for features in by_layer.values_mut() {
-        features.sort_by(|left, right| {
-            left.1
-                .min()
-                .x
-                .total_cmp(&right.1.min().x)
-                .then(left.1.min().y.total_cmp(&right.1.min().y))
-        });
-    }
-    let layer_names = by_layer.keys().cloned().collect::<Vec<_>>();
-    log::trace!(
-        "registration tolerance: source={} layers={} tolerance={tolerance:.6}",
-        board.source,
-        layer_names.len()
-    );
-
+    let features = selected_copper_features(board, &[])
+        .into_iter()
+        .filter(|feature| feature.sketch.geometry.bounding_rect().is_some())
+        .collect::<Vec<_>>();
+    let bounds = features
+        .iter()
+        .map(|feature| {
+            feature
+                .sketch
+                .geometry
+                .bounding_rect()
+                .expect("registration-tolerance features are filtered to bounded geometry")
+        })
+        .collect::<Vec<_>>();
+    let feature_index = CopperSpatialIndex::new(&features, tolerance);
     let mut violations = Vec::new();
+    let layers = features
+        .iter()
+        .map(|feature| feature.layer.clone())
+        .collect::<BTreeSet<_>>();
+    let mut candidate_pairs = 0_usize;
+    let mut exact_pairs = 0_usize;
 
-    for layer_index in 0..layer_names.len() {
-        for other_layer in &layer_names[(layer_index + 1)..] {
-            let left_layer = &layer_names[layer_index];
-            let left_features = &by_layer[left_layer];
-            let right_features = &by_layer[other_layer];
-            for (left, left_bounds) in left_features {
-                for (right, right_bounds) in right_features {
-                    if right_bounds.max().x < left_bounds.min().x - tolerance {
-                        continue;
-                    }
-                    if right_bounds.min().x - left_bounds.max().x > tolerance {
-                        break;
-                    }
-                    if !rects_within_clearance(left_bounds, right_bounds, tolerance) {
-                        continue;
-                    }
-                    collect_registration_tolerance_violation(
-                        left,
-                        right,
-                        left_layer,
-                        other_layer,
-                        tolerance,
-                        min_area,
-                        &mut violations,
-                    );
-                }
+    for left_index in 0..features.len() {
+        let left = features[left_index];
+        for right_index in feature_index.all_layers_near_feature(left, tolerance) {
+            if right_index <= left_index {
+                continue;
             }
+            let right = features[right_index];
+            if left.layer == right.layer {
+                continue;
+            }
+            candidate_pairs += 1;
+            if !rects_within_clearance(&bounds[left_index], &bounds[right_index], tolerance) {
+                continue;
+            }
+            exact_pairs += 1;
+            let (first, second) = if left.layer <= right.layer {
+                (left, right)
+            } else {
+                (right, left)
+            };
+            let first_layer = first.layer.clone();
+            let second_layer = second.layer.clone();
+            collect_registration_tolerance_violation(
+                first,
+                second,
+                &first_layer,
+                &second_layer,
+                tolerance,
+                min_area,
+                &mut violations,
+            );
         }
     }
+
+    log::trace!(
+        "registration tolerance: source={} features={} layers={} buckets={} candidate_pairs={} exact_pairs={} tolerance={tolerance:.6} violations={}",
+        board.source,
+        features.len(),
+        layers.len(),
+        feature_index.bucket_count(),
+        candidate_pairs,
+        exact_pairs,
+        violations.len()
+    );
 
     violations
 }
@@ -2263,6 +2606,11 @@ fn collect_registration_tolerance_violation(
 }
 
 /// Run the `panelization_clearance` design-readiness check or report helper.
+///
+/// Panel tabs, V-scores, route graphics, and stamp-hole drills are treated as
+/// blocker geometry. Copper/blocker pairs first pass an AABB broad phase in the
+/// Ericson, *Real-Time Collision Detection* (2005) sense; exact intersection
+/// and boundary-distance checks still decide every reported clearance finding.
 pub fn panelization_clearance(
     board: &BoardModel,
     extra_drills: &[DrillFeature],
@@ -2301,6 +2649,11 @@ pub fn panelization_clearance(
         })
         .collect::<Vec<_>>();
     let mut violations = Vec::new();
+    let blocker_count = blockers.len();
+    let mut blocker_polygon_count = 0_usize;
+    let mut candidate_pairs = 0_usize;
+    let mut exact_intersections = 0_usize;
+    let mut fallback_hits = 0_usize;
     for blocker in blockers {
         let mut shapes = Vec::new();
         let mut fallback_hit = false;
@@ -2308,6 +2661,7 @@ pub fn panelization_clearance(
         let mut layers = BTreeSet::new();
 
         for blocker_polygon in blocker.to_multipolygon().0 {
+            blocker_polygon_count += 1;
             let blocker_piece = polygons_to_sketch(vec![blocker_polygon], None);
             let blocker_geometry = blocker_piece.to_multipolygon();
             let Some(blocker_bounds) = blocker_piece.geometry.bounding_rect() else {
@@ -2319,11 +2673,13 @@ pub fn panelization_clearance(
                     continue;
                 }
 
+                candidate_pairs += 1;
                 // Panel features can be long routed tabs or score lines.
                 // Offsetting the entire panel sketch is unnecessarily expensive
                 // on dense boards, so use exact feature intersections plus the
                 // same boundary distance predicate the offset fallback used to
                 // represent copper inside the requested keepout band.
+                exact_intersections += 1;
                 let overlap = blocker_piece.intersection(&copper.sketch);
                 let feature_shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
                 if feature_shapes.is_empty()
@@ -2333,6 +2689,7 @@ pub fn panelization_clearance(
                     ) <= clearance
                 {
                     fallback_hit = true;
+                    fallback_hits += 1;
                     locations.push(copper.location);
                 }
                 shapes.extend(feature_shapes);
@@ -2360,6 +2717,18 @@ pub fn panelization_clearance(
             )),
         ));
     }
+
+    log::trace!(
+        "panelization clearance: source={} blockers={} blocker_polygons={} bounded_copper={} candidate_pairs={} exact_intersections={} fallback_hits={} clearance={clearance:.6} min_area={min_area:.9} violations={}",
+        board.source,
+        blocker_count,
+        blocker_polygon_count,
+        bounded_copper.len(),
+        candidate_pairs,
+        exact_intersections,
+        fallback_hits,
+        violations.len()
+    );
 
     violations
 }
@@ -2944,6 +3313,58 @@ mod tests {
     }
 
     #[test]
+    fn plating_intent_culls_sparse_copper_fields() {
+        let mut copper = (0..2_000)
+            .map(|index| {
+                copper_disc(
+                    &format!("SIG{index}"),
+                    CopperKind::Pad,
+                    [100.0 + index as f64 * 2.0, 100.0],
+                    0.4,
+                )
+            })
+            .collect::<Vec<_>>();
+        copper.push(copper_disc("GND", CopperKind::Pad, [0.01, 0.0], 0.4));
+        copper.push(copper_disc("SIG_NEAR", CopperKind::Pad, [0.0, 2.0], 0.4));
+        let board = BoardModel {
+            source: "test".to_string(),
+            copper,
+            drills: vec![
+                DrillFeature {
+                    location: [0.0, 0.0],
+                    diameter: 0.3,
+                    net: Some("GND".to_string()),
+                    plated: true,
+                },
+                DrillFeature {
+                    location: [0.0, 2.0],
+                    diameter: 0.6,
+                    net: None,
+                    plated: false,
+                },
+            ],
+            board_outline: None,
+            panel_features: None,
+        };
+
+        let started = std::time::Instant::now();
+        let violations = plating_intent(&board, &[], 0.05);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .unwrap()
+                .contains("non-plated")
+        );
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "plating intent should cull sparse copper fields before exact center checks"
+        );
+    }
+
+    #[test]
     fn routed_slot_readiness_reports_small_npth_mechanical_drills() {
         let board = BoardModel {
             source: "test".to_string(),
@@ -3166,6 +3587,26 @@ mod tests {
     }
 
     #[test]
+    fn copper_width_readiness_handles_large_sparse_feature_sets() {
+        let copper = (0..2_000)
+            .map(|index| {
+                let x = index as f64 * 2.0;
+                copper_line("SIG", CopperKind::Segment, [x, 0.0], [x + 1.0, 0.0], 0.16)
+            })
+            .collect::<Vec<_>>();
+        let board = board_with_copper(copper);
+
+        let started = std::time::Instant::now();
+        let violations = copper_width_readiness(&board, &[], 0.12);
+
+        assert!(violations.is_empty());
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "copper width readiness should stay linear over sparse feature sets"
+        );
+    }
+
+    #[test]
     fn copper_net_intent_reports_unnetted_kicad_copper() {
         let mut unnetted = copper_disc("GND", CopperKind::Zone, [0.0, 0.0], 0.5);
         unnetted.net = None;
@@ -3195,6 +3636,27 @@ mod tests {
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].layers, vec!["B.Cu".to_string()]);
+    }
+
+    #[test]
+    fn copper_net_intent_handles_large_sparse_feature_sets() {
+        let mut copper = (0..2_000)
+            .map(|index| {
+                let x = index as f64 * 2.0;
+                copper_line("SIG", CopperKind::Segment, [x, 0.0], [x + 1.0, 0.0], 0.16)
+            })
+            .collect::<Vec<_>>();
+        copper.push(unnetted_copper_disc_on_layer("F.Cu", [0.0, 2.0], 0.20));
+        let board = board_with_copper(copper);
+
+        let started = std::time::Instant::now();
+        let violations = copper_net_intent(&board, &[]);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "copper net-intent readiness should stay linear over sparse feature sets"
+        );
     }
 
     #[test]
@@ -3595,6 +4057,39 @@ mod tests {
     }
 
     #[test]
+    fn board_edge_exposure_culls_rectangular_interior_copper_fields() {
+        let mut board = board_with_outline(square(0.0, 0.0, 100.0, 100.0));
+        board.copper = (0..2_000)
+            .map(|index| {
+                copper_disc(
+                    &format!("SIG{index}"),
+                    CopperKind::Pad,
+                    [
+                        5.0 + (index % 50) as f64 * 1.5,
+                        5.0 + (index / 50) as f64 * 1.5,
+                    ],
+                    0.30,
+                )
+            })
+            .collect();
+        board.copper.push(copper_disc(
+            "EDGE",
+            CopperKind::Segment,
+            [99.95, 50.0],
+            0.30,
+        ));
+
+        let started = Instant::now();
+        let violations = board_edge_exposure(&board, &[], 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed().as_secs_f64() < 2.0,
+            "board-edge exposure should skip rectangular interior copper before exact difference"
+        );
+    }
+
+    #[test]
     fn high_speed_edge_readiness_reports_edge_rate_copper_near_outline() {
         let mut board = board_with_outline(square(0.0, 0.0, 10.0, 10.0));
         board.copper = vec![copper_line(
@@ -3638,6 +4133,44 @@ mod tests {
         assert_eq!(
             high_speed_edge_readiness(&board, &["B.Cu".to_string()], 0.50, 1.0e-9).len(),
             1
+        );
+    }
+
+    #[test]
+    fn high_speed_edge_readiness_culls_rectangular_interior_copper_fields() {
+        let mut board = board_with_outline(square(0.0, 0.0, 100.0, 100.0));
+        board.copper = (0..2_000)
+            .map(|index| {
+                copper_line(
+                    &format!("USB_D{index}+"),
+                    CopperKind::Segment,
+                    [
+                        5.0 + (index % 50) as f64 * 1.5,
+                        5.0 + (index / 50) as f64 * 1.5,
+                    ],
+                    [
+                        5.5 + (index % 50) as f64 * 1.5,
+                        5.0 + (index / 50) as f64 * 1.5,
+                    ],
+                    0.10,
+                )
+            })
+            .collect();
+        board.copper.push(copper_line(
+            "PCIE_RX0",
+            CopperKind::Segment,
+            [0.10, 50.0],
+            [0.90, 50.0],
+            0.10,
+        ));
+
+        let started = Instant::now();
+        let violations = high_speed_edge_readiness(&board, &[], 0.50, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed().as_secs_f64() < 2.0,
+            "high-speed edge review should skip rectangular interior copper before exact difference"
         );
     }
 
@@ -4078,6 +4611,48 @@ mod tests {
     }
 
     #[test]
+    fn differential_pair_spacing_readiness_culls_large_passing_pair_fields() {
+        let mut copper = vec![
+            copper_line("USB_D+", CopperKind::Segment, [0.0, 0.0], [1.0, 0.0], 0.10),
+            copper_line(
+                "USB_D-",
+                CopperKind::Segment,
+                [0.0, 0.20],
+                [1.0, 0.20],
+                0.10,
+            ),
+        ];
+        for index in 0..800 {
+            let x = 100.0 + index as f64 * 2.0;
+            copper.push(copper_line(
+                "USB_D+",
+                CopperKind::Segment,
+                [x, 10.0],
+                [x + 0.5, 10.0],
+                0.10,
+            ));
+            copper.push(copper_line(
+                "USB_D-",
+                CopperKind::Segment,
+                [x, 20.0],
+                [x + 0.5, 20.0],
+                0.10,
+            ));
+        }
+        let board = board_with_copper(copper);
+
+        let started = std::time::Instant::now();
+        let violations = differential_pair_spacing_readiness(&board, &[], 0.30);
+        let elapsed = started.elapsed();
+
+        assert!(violations.is_empty());
+        assert!(
+            elapsed < std::time::Duration::from_secs(2),
+            "passing pair spacing should stop after a spatially nearby side match, took {elapsed:?}"
+        );
+    }
+
+    #[test]
     fn differential_pair_spacing_readiness_respects_selected_layers() {
         let board = board_with_copper(vec![
             copper_line_on_layer(
@@ -4438,6 +5013,43 @@ mod tests {
     }
 
     #[test]
+    fn reference_plane_void_readiness_culls_sparse_ground_zones() {
+        let mut copper = (0..2_000)
+            .map(|index| {
+                let x = 100.0 + (index % 100) as f64 * 3.0;
+                let y = (index / 100) as f64 * 3.0;
+                copper_rect("GND", CopperKind::Zone, "B.Cu", x, y, x + 0.5, y + 0.5)
+            })
+            .collect::<Vec<_>>();
+        copper.push(copper_line(
+            "USB_D+",
+            CopperKind::Segment,
+            [0.0, 0.0],
+            [1.0, 0.0],
+            0.12,
+        ));
+        copper.push(copper_rect(
+            "GND",
+            CopperKind::Zone,
+            "B.Cu",
+            -1.0,
+            -1.0,
+            2.0,
+            1.0,
+        ));
+        let board = board_with_copper(copper);
+
+        let started = std::time::Instant::now();
+        let violations = reference_plane_void_readiness(&board, &[], 1.0e-9);
+
+        assert!(violations.is_empty());
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "reference-plane void should index sparse ground zones before exact subtraction"
+        );
+    }
+
+    #[test]
     fn orphaned_zone_readiness_reports_zone_without_same_net_anchor() {
         let board = board_with_copper(vec![copper_rect(
             "GND",
@@ -4483,6 +5095,37 @@ mod tests {
         assert_eq!(
             orphaned_zone_readiness(&board, &["B.Cu".to_string()], 0.10).len(),
             1
+        );
+    }
+
+    #[test]
+    fn orphaned_zone_readiness_culls_sparse_anchor_fields() {
+        let mut copper = (0..2_000)
+            .map(|index| {
+                let x = 100.0 + (index % 100) as f64 * 3.0;
+                let y = (index / 100) as f64 * 3.0;
+                copper_disc("GND", CopperKind::Via, [x, y], 0.10)
+            })
+            .collect::<Vec<_>>();
+        copper.push(copper_rect(
+            "GND",
+            CopperKind::Zone,
+            "F.Cu",
+            -1.0,
+            -1.0,
+            1.0,
+            1.0,
+        ));
+        copper.push(copper_disc("GND", CopperKind::Via, [0.0, 0.0], 0.12));
+        let board = board_with_copper(copper);
+
+        let started = std::time::Instant::now();
+        let violations = orphaned_zone_readiness(&board, &[], 0.10);
+
+        assert!(violations.is_empty());
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "orphaned-zone readiness should index sparse anchors before exact zone connectivity"
         );
     }
 
@@ -5523,6 +6166,37 @@ mod tests {
     }
 
     #[test]
+    fn component_edge_clearance_readiness_culls_sparse_rectangular_boards() {
+        let mut board = board_with_outline(square(0.0, 0.0, 200.0, 200.0));
+        board.copper = (0..2_000)
+            .map(|index| {
+                copper_disc(
+                    &format!("U{index}_IO"),
+                    CopperKind::Pad,
+                    [
+                        20.0 + (index % 80) as f64 * 2.0,
+                        20.0 + (index / 80) as f64 * 2.0,
+                    ],
+                    0.50,
+                )
+            })
+            .collect();
+        board
+            .copper
+            .push(copper_disc("U_NEAR", CopperKind::Pad, [0.65, 100.0], 0.30));
+
+        let started = std::time::Instant::now();
+        let violations = component_edge_clearance_readiness(&board, &[], 0.5);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].layers, vec!["F.Cu".to_string()]);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "component-edge clearance should reject interior rectangular-board pads before exact outline distance"
+        );
+    }
+
+    #[test]
     fn component_hole_clearance_readiness_reports_pads_near_mechanical_holes() {
         let board = board_with_copper(vec![copper_disc(
             "U1_IO",
@@ -5845,6 +6519,49 @@ mod tests {
     }
 
     #[test]
+    fn testpoint_coverage_readiness_handles_sparse_critical_nets() {
+        let mut copper = (0..2_000)
+            .map(|index| {
+                copper_disc(
+                    &format!("VBUS_{index}"),
+                    CopperKind::Pad,
+                    [index as f64 * 2.0, 0.0],
+                    0.4,
+                )
+            })
+            .collect::<Vec<_>>();
+        copper.push(copper_disc(
+            "VDD_MISSING",
+            CopperKind::Pad,
+            [9_000.0, 0.0],
+            0.4,
+        ));
+        let points = (0..2_000)
+            .map(|index| Ipc356Point {
+                net: format!("VBUS_{index}"),
+                reference: Some(format!("TP{index}")),
+                pin: Some("1".to_string()),
+                location: [index as f64 * 2.0, 0.0],
+                diameter: None,
+                access_side: None,
+                feature_type: None,
+                soldermask: None,
+            })
+            .collect::<Vec<_>>();
+        let board = board_with_copper(copper);
+
+        let started = std::time::Instant::now();
+        let violations = testpoint_coverage_readiness(&board, &points, &[]);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].layers, vec!["VDD_MISSING"]);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "testpoint coverage should stay bounded on sparse critical-net sets"
+        );
+    }
+
+    #[test]
     fn testpoint_accessibility_readiness_reports_probe_diameter_spacing_and_edge_risks() {
         let board = board_with_outline(square(0.0, 0.0, 20.0, 20.0));
         let ipc_points = vec![
@@ -6127,6 +6844,42 @@ mod tests {
     }
 
     #[test]
+    fn tooling_hole_readiness_filters_sparse_drill_tables() {
+        let mut board = board_with_outline(square(0.0, 0.0, 100.0, 100.0));
+        board.drills = (0..2_000)
+            .map(|index| DrillFeature {
+                location: [200.0 + index as f64 * 2.0, 200.0],
+                diameter: 0.40,
+                net: None,
+                plated: false,
+            })
+            .chain([
+                DrillFeature {
+                    location: [10.0, 10.0],
+                    diameter: 1.50,
+                    net: None,
+                    plated: false,
+                },
+                DrillFeature {
+                    location: [90.0, 90.0],
+                    diameter: 1.50,
+                    net: None,
+                    plated: false,
+                },
+            ])
+            .collect();
+
+        let started = std::time::Instant::now();
+        let violations = tooling_hole_readiness(&board, &[], 0.8, 4.0, 1.0);
+
+        assert!(violations.is_empty());
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "tooling-hole readiness should filter sparse drill tables before outline edge review"
+        );
+    }
+
+    #[test]
     fn mouse_bite_readiness_reports_bad_diameter_and_spacing() {
         let sidecar_drills = vec![
             DrillFeature {
@@ -6246,6 +6999,32 @@ mod tests {
         ];
 
         assert!(fiducial_readiness(&board, &[], 1.0).is_empty());
+    }
+
+    #[test]
+    fn fiducial_readiness_culls_sparse_rectangular_interior_targets() {
+        let mut board = board_with_outline(square(0.0, 0.0, 200.0, 200.0));
+        board.copper = (0..2_000)
+            .map(|index| {
+                unnetted_copper_disc_on_layer(
+                    "F.Cu",
+                    [
+                        20.0 + (index % 80) as f64 * 2.0,
+                        20.0 + (index / 80) as f64 * 2.0,
+                    ],
+                    0.30,
+                )
+            })
+            .collect();
+
+        let started = std::time::Instant::now();
+        let violations = fiducial_readiness(&board, &[], 1.0);
+
+        assert!(violations.is_empty());
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "fiducial readiness should reject interior rectangular-board fiducials before exact outline distance"
+        );
     }
 
     #[test]
@@ -6599,6 +7378,32 @@ mod tests {
         ]);
 
         assert!(net_spacing(&board, 0.10, &[], 1.0e-9).is_empty());
+    }
+
+    #[test]
+    fn net_spacing_culls_sparse_different_net_fields() {
+        let mut copper = (0..2_000)
+            .map(|index| {
+                copper_disc(
+                    &format!("SIG{index}"),
+                    CopperKind::Pad,
+                    [100.0 + index as f64 * 2.0, 100.0],
+                    0.10,
+                )
+            })
+            .collect::<Vec<_>>();
+        copper.push(copper_disc("A", CopperKind::Pad, [0.0, 0.0], 0.20));
+        copper.push(copper_disc("B", CopperKind::Pad, [0.25, 0.0], 0.20));
+
+        let started = Instant::now();
+        let violations = net_spacing(&board_with_copper(copper), 0.10, &[], 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "different-net-spacing");
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "different-net spacing should use the copper spatial index before exact offsets"
+        );
     }
 
     #[test]

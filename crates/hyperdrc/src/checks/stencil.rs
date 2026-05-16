@@ -14,7 +14,7 @@ use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbSketch};
 
-use super::spatial::PointSpatialIndex;
+use super::spatial::{LayerPolygonSpatialIndex, PointSpatialIndex};
 
 /// Warn when a large copper island is pasted as one broad aperture.
 ///
@@ -24,6 +24,10 @@ use super::spatial::PointSpatialIndex;
 /// thermal pad solder geometry and vias to voiding risk; see Wilcoxon, Pearson,
 /// and Hillman, "Modeling the Effects of Thermal Pad Voiding on Quad Flatpack
 /// No-lead (QFN) Components," Journal of SMT, 2023, doi:10.37665/smt.v36i2.37.
+/// Paste apertures are selected through the shared layer-polygon broad phase
+/// before exact copper/paste intersection, following Ericson, *Real-Time
+/// Collision Detection* (2005), so sparse stencil exports do not force every
+/// thermal pad candidate to scan every aperture.
 pub fn thermal_pad_paste_windowpane_readiness(
     paste_name: &str,
     paste: &PcbSketch,
@@ -34,7 +38,9 @@ pub fn thermal_pad_paste_windowpane_readiness(
     min_area: f64,
 ) -> Vec<Violation> {
     let paste_polygons = paste.to_multipolygon().0;
+    let paste_index = LayerPolygonSpatialIndex::new(&paste_polygons, 0.0);
     let mut violations = Vec::new();
+    let mut candidate_apertures = 0usize;
 
     for (island_index, copper_polygon) in copper.to_multipolygon().0.into_iter().enumerate() {
         let copper_area = copper_polygon.unsigned_area();
@@ -42,11 +48,16 @@ pub fn thermal_pad_paste_windowpane_readiness(
             continue;
         }
 
+        let paste_candidates = paste_index.candidates_near_polygon(&copper_polygon, 0.0);
+        candidate_apertures += paste_candidates.len();
         let island = polygon_to_sketch(copper_polygon, Some(metadata(copper_name)));
         let mut intersecting_apertures = 0usize;
         let mut paste_area = 0.0;
-        for paste_polygon in &paste_polygons {
-            let paste_island = polygon_to_sketch(paste_polygon.clone(), Some(metadata(paste_name)));
+        for paste_index in paste_candidates {
+            let paste_island = polygon_to_sketch(
+                paste_polygons[paste_index].clone(),
+                Some(metadata(paste_name)),
+            );
             let overlap = island.intersection(&paste_island).to_multipolygon();
             let overlap_area = overlap.unsigned_area();
             if overlap_area <= min_area {
@@ -73,6 +84,16 @@ pub fn thermal_pad_paste_windowpane_readiness(
             )),
         ));
     }
+
+    log::trace!(
+        "thermal pad paste windowpane readiness: paste={} copper={} paste_apertures={} paste_buckets={} candidate_apertures={} violations={}",
+        paste_name,
+        copper_name,
+        paste_polygons.len(),
+        paste_index.bucket_count(),
+        candidate_apertures,
+        violations.len()
+    );
 
     violations
 }
@@ -196,7 +217,9 @@ pub fn paste_aperture_aspect_ratio_readiness(
 /// conditions across the two terminations increase tombstoning risk. Candidate
 /// pad pairs are selected with a deterministic point-grid broad phase before
 /// area-ratio and paste-ratio checks, following Ericson, *Real-Time Collision
-/// Detection* (2005).
+/// Detection* (2005). Paste coverage for each pad uses the same broad-phase
+/// idea over aperture polygons before exact copper/paste intersection, so large
+/// sparse stencil exports do not force every pad to intersect every aperture.
 pub fn tombstone_paste_imbalance_readiness(
     paste_name: &str,
     paste: &PcbSketch,
@@ -208,7 +231,9 @@ pub fn tombstone_paste_imbalance_readiness(
 ) -> Vec<Violation> {
     let copper_polygons = copper.to_multipolygon().0;
     let paste_polygons = paste.to_multipolygon().0;
+    let paste_index = LayerPolygonSpatialIndex::new(&paste_polygons, 0.0);
     let mut islands = Vec::new();
+    let mut paste_candidate_polygons = 0usize;
     for (index, polygon) in copper_polygons.into_iter().enumerate() {
         let area = polygon.unsigned_area();
         if area <= min_area {
@@ -217,12 +242,16 @@ pub fn tombstone_paste_imbalance_readiness(
         let Some(center) = polygon_center(&polygon) else {
             continue;
         };
+        let paste_candidates = paste_index.candidates_near_polygon(&polygon, 0.0);
+        paste_candidate_polygons += paste_candidates.len();
         let island = polygon_to_sketch(polygon, Some(metadata(copper_name)));
-        let paste_area = paste_polygons
-            .iter()
-            .map(|paste_polygon| {
-                let paste_island =
-                    polygon_to_sketch(paste_polygon.clone(), Some(metadata(paste_name)));
+        let paste_area = paste_candidates
+            .into_iter()
+            .map(|paste_index| {
+                let paste_island = polygon_to_sketch(
+                    paste_polygons[paste_index].clone(),
+                    Some(metadata(paste_name)),
+                );
                 island
                     .intersection(&paste_island)
                     .to_multipolygon()
@@ -272,10 +301,12 @@ pub fn tombstone_paste_imbalance_readiness(
         }
     }
     log::trace!(
-        "tombstone paste imbalance readiness: paste={} copper={} islands={} spatial_buckets={} candidate_pairs={} max_pair_gap={max_pair_gap:.6} violations={}",
+        "tombstone paste imbalance readiness: paste={} copper={} islands={} paste_buckets={} paste_candidate_polygons={} pair_buckets={} candidate_pairs={} max_pair_gap={max_pair_gap:.6} violations={}",
         paste_name,
         copper_name,
         islands.len(),
+        paste_index.bucket_count(),
+        paste_candidate_polygons,
         center_index.bucket_count(),
         candidate_pairs,
         violations.len()
@@ -301,9 +332,12 @@ pub fn paste_via_exposure_readiness(
         .into_iter()
         .filter(|feature| feature.kind == CopperKind::Via)
         .collect::<Vec<_>>();
+    let paste_polygons = paste.to_multipolygon().0;
+    let paste_index = LayerPolygonSpatialIndex::new(&paste_polygons, 0.0);
     let mut violations = Vec::new();
+    let mut candidate_apertures = 0usize;
 
-    for via in vias {
+    for via in &vias {
         let via_opening = matching_plated_drill(board, via)
             .map(|drill| {
                 polygons_to_sketch(
@@ -314,8 +348,23 @@ pub fn paste_via_exposure_readiness(
                 )
             })
             .unwrap_or_else(|| via.sketch.clone());
+        let via_polygons = via_opening.to_multipolygon().0;
+        let paste_candidates = via_polygons
+            .iter()
+            .flat_map(|polygon| paste_index.candidates_near_polygon(polygon, 0.0))
+            .collect::<std::collections::BTreeSet<_>>();
+        candidate_apertures += paste_candidates.len();
+        if paste_candidates.is_empty() {
+            continue;
+        }
+        let paste_candidates = paste_candidates
+            .into_iter()
+            .map(|index| paste_polygons[index].clone())
+            .collect::<Vec<_>>();
+        let paste_candidate_sketch =
+            polygons_to_sketch(paste_candidates, Some(metadata(paste_name)));
 
-        let overlap = paste.intersection(&via_opening);
+        let overlap = paste_candidate_sketch.intersection(&via_opening);
         let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
         if shapes.is_empty() {
             continue;
@@ -334,6 +383,16 @@ pub fn paste_via_exposure_readiness(
             ),
         ));
     }
+
+    log::trace!(
+        "paste-via exposure readiness: paste={} vias={} paste_apertures={} paste_buckets={} candidate_apertures={} selected_layers={}",
+        paste_name,
+        vias.len(),
+        paste_polygons.len(),
+        paste_index.bucket_count(),
+        candidate_apertures,
+        selected_layers.len()
+    );
 
     violations
 }
@@ -451,6 +510,32 @@ mod tests {
                 1.0e-9
             )
             .is_empty()
+        );
+    }
+
+    #[test]
+    fn thermal_pad_paste_windowpane_readiness_culls_sparse_paste_fields() {
+        let copper = sketch("top", vec![square(0.0, 0.0, 4.0, 4.0)]);
+        let paste = sketch(
+            "paste",
+            (0..2_000)
+                .map(|index| {
+                    let x = 100.0 + index as f64 * 5.0;
+                    square(x, 0.0, x + 1.0, 1.0)
+                })
+                .chain([square(0.2, 0.2, 3.8, 3.8)])
+                .collect(),
+        );
+
+        let started = std::time::Instant::now();
+        let violations = thermal_pad_paste_windowpane_readiness(
+            "paste", &paste, "top", &copper, 4.0, 0.65, 1.0e-9,
+        );
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "thermal-pad paste windowpane should index sparse paste fields"
         );
     }
 
@@ -601,6 +686,34 @@ mod tests {
     }
 
     #[test]
+    fn tombstone_paste_imbalance_readiness_culls_sparse_paste_fields() {
+        let copper = sketch(
+            "top",
+            vec![square(0.0, 0.0, 1.0, 1.0), square(1.4, 0.0, 2.4, 1.0)],
+        );
+        let paste = sketch(
+            "paste",
+            (0..2_000)
+                .map(|index| {
+                    let x = 100.0 + index as f64 * 5.0;
+                    square(x, 0.0, x + 1.0, 1.0)
+                })
+                .chain([square(0.0, 0.0, 1.0, 1.0), square(1.4, 0.0, 1.9, 1.0)])
+                .collect(),
+        );
+
+        let started = std::time::Instant::now();
+        let violations =
+            tombstone_paste_imbalance_readiness("paste", &paste, "top", &copper, 2.0, 0.30, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "tombstone paste imbalance should index sparse paste fields before paste-ratio review"
+        );
+    }
+
+    #[test]
     fn paste_via_exposure_readiness_reports_paste_over_via_drill() {
         let board = BoardModel {
             source: "test".to_string(),
@@ -663,6 +776,41 @@ mod tests {
                 1.0e-9
             )
             .is_empty()
+        );
+    }
+
+    #[test]
+    fn paste_via_exposure_readiness_culls_sparse_paste_fields() {
+        let board = BoardModel {
+            source: "test".to_string(),
+            copper: vec![copper_disc("GND", CopperKind::Via, [0.0, 0.0], 0.16)],
+            drills: vec![DrillFeature {
+                location: [0.0, 0.0],
+                diameter: 0.20,
+                net: Some("GND".to_string()),
+                plated: true,
+            }],
+            board_outline: None,
+            panel_features: None,
+        };
+        let paste = sketch(
+            "paste",
+            (0..2_000)
+                .map(|index| {
+                    let x = 100.0 + index as f64 * 5.0;
+                    square(x, 0.0, x + 1.0, 1.0)
+                })
+                .chain([square(-0.2, -0.2, 0.2, 0.2)])
+                .collect(),
+        );
+
+        let started = std::time::Instant::now();
+        let violations = paste_via_exposure_readiness("F.Paste", &paste, &board, &[], 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "paste-via exposure should index sparse paste fields before via-opening review"
         );
     }
 

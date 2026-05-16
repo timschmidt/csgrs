@@ -11,6 +11,7 @@
 use geo::BoundingRect;
 
 use super::distance::polygon_boundary_distance;
+use super::spatial::CopperSpatialIndex;
 use crate::PcbSketch;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
@@ -26,7 +27,9 @@ use crate::report::{Severity, Violation};
 /// reliability reference; Bhargava et al., "DC-DC Buck Converter EMI Reduction
 /// Using PCB Layout Modification", IEEE Transactions on Electromagnetic
 /// Compatibility, 2011, motivates local loop and copper-entry review around
-/// power-conversion layouts.
+/// power-conversion layouts. Same-layer support candidates use the deterministic
+/// broad-phase grid pattern from Ericson, *Real-Time Collision Detection*
+/// (2005), before exact boundary-distance review.
 pub fn power_pad_entry_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -35,7 +38,9 @@ pub fn power_pad_entry_readiness(
     minimum_parallel_vias: usize,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
+    let feature_index = CopperSpatialIndex::new(&features, support_distance);
     let mut candidate_pads = 0usize;
+    let mut candidate_supports = 0usize;
     let mut violations = Vec::new();
 
     for pad in features
@@ -50,7 +55,9 @@ pub fn power_pad_entry_readiness(
             continue;
         }
         candidate_pads += 1;
-        let support = local_pad_support(pad, &features, support_distance);
+        let (support, support_candidates) =
+            local_pad_support(pad, &features, &feature_index, support_distance);
+        candidate_supports += support_candidates;
         if support.has_zone
             || support.via_count >= minimum_parallel_vias
             || support.maximum_segment_width >= minimum_entry_width
@@ -75,13 +82,17 @@ pub fn power_pad_entry_readiness(
     }
 
     log::trace!(
-        "power pad entry readiness: source={} candidate_pads={} selected_layers={} support_distance={:.6} min_width={:.6} min_vias={}",
+        "power pad entry readiness: source={} features={} buckets={} candidate_pads={} candidate_supports={} selected_layers={} support_distance={:.6} min_width={:.6} min_vias={} violations={}",
         board.source,
+        features.len(),
+        feature_index.bucket_count(),
         candidate_pads,
+        candidate_supports,
         selected_layers.len(),
         support_distance,
         minimum_entry_width,
-        minimum_parallel_vias
+        minimum_parallel_vias,
+        violations.len()
     );
 
     violations
@@ -98,6 +109,10 @@ pub fn power_pad_entry_readiness(
 /// "DC-DC Buck Converter EMI Reduction Using PCB Layout Modification", IEEE
 /// Transactions on Electromagnetic Compatibility, 2011, motivates local
 /// loop-area review around power-conversion copper.
+///
+/// Ground-return candidates use `CopperSpatialIndex` as a conservative broad
+/// phase in the Ericson, *Real-Time Collision Detection* (2005) sense; the
+/// return decision still uses exact polygon boundary distance.
 pub fn power_via_return_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -109,7 +124,9 @@ pub fn power_via_return_readiness(
         .copied()
         .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
         .collect::<Vec<_>>();
+    let return_index = CopperSpatialIndex::new(&return_features, return_distance);
     let mut candidate_vias = 0usize;
+    let mut candidate_returns = 0usize;
     let mut violations = Vec::new();
 
     for via in features
@@ -124,7 +141,10 @@ pub fn power_via_return_readiness(
             continue;
         }
         candidate_vias += 1;
-        if has_nearby_return(via, &return_features, return_distance) {
+        let (has_return, return_candidates) =
+            has_nearby_return(via, &return_features, &return_index, return_distance);
+        candidate_returns += return_candidates;
+        if has_return {
             continue;
         }
 
@@ -142,12 +162,15 @@ pub fn power_via_return_readiness(
     }
 
     log::trace!(
-        "power via return readiness: source={} candidate_vias={} return_features={} selected_layers={} return_distance={:.6}",
+        "power via return readiness: source={} candidate_vias={} return_features={} return_buckets={} candidate_returns={} selected_layers={} return_distance={:.6} violations={}",
         board.source,
         candidate_vias,
         return_features.len(),
+        return_index.bucket_count(),
+        candidate_returns,
         selected_layers.len(),
-        return_distance
+        return_distance,
+        violations.len()
     );
 
     violations
@@ -163,17 +186,20 @@ struct PadSupport {
 fn local_pad_support(
     pad: &CopperFeature,
     features: &[&CopperFeature],
+    feature_index: &CopperSpatialIndex<'_>,
     support_distance: f64,
-) -> PadSupport {
+) -> (PadSupport, usize) {
     let mut support = PadSupport::default();
     let Some(pad_bounds) = pad.sketch.to_multipolygon().bounding_rect() else {
-        return support;
+        return (support, 0);
     };
     let pad_geometry = pad.sketch.to_multipolygon();
+    let candidates = feature_index.same_layer_near_feature(pad, support_distance);
+    let candidate_count = candidates.len();
 
-    for feature in features {
-        if std::ptr::eq(pad, *feature)
-            || feature.layer != pad.layer
+    for feature_index in candidates {
+        let feature = features[feature_index];
+        if std::ptr::eq(pad, feature)
             || feature.net != pad.net
             || !matches!(
                 feature.kind,
@@ -205,23 +231,24 @@ fn local_pad_support(
         }
     }
 
-    support
+    (support, candidate_count)
 }
 
 fn has_nearby_return(
     via: &CopperFeature,
     return_features: &[&CopperFeature],
+    return_index: &CopperSpatialIndex<'_>,
     return_distance: f64,
-) -> bool {
+) -> (bool, usize) {
     let Some(via_bounds) = via.sketch.to_multipolygon().bounding_rect() else {
-        return false;
+        return (false, 0);
     };
     let via_geometry = via.sketch.to_multipolygon();
+    let candidates = return_index.same_layer_near_feature(via, return_distance);
+    let candidate_count = candidates.len();
 
-    return_features.iter().any(|feature| {
-        if feature.layer != via.layer {
-            return false;
-        }
+    let has_return = candidates.into_iter().any(|feature_index| {
+        let feature = return_features[feature_index];
         let Some(feature_bounds) = feature.sketch.to_multipolygon().bounding_rect() else {
             return false;
         };
@@ -231,7 +258,9 @@ fn has_nearby_return(
 
         polygon_boundary_distance(&via_geometry, &feature.sketch.to_multipolygon())
             <= return_distance
-    })
+    });
+
+    (has_return, candidate_count)
 }
 
 fn selected_copper_features<'a>(
@@ -417,19 +446,30 @@ mod tests {
     #[test]
     fn power_pad_entry_culls_sparse_support_features() {
         let mut copper = vec![pad("VIN", [0.0, 0.0], [1.0, 1.0])];
-        for index in 0..500 {
+        for index in 0..2_000 {
             copper.push(segment(
                 "VIN",
-                [100.0 + index as f64 * 2.0, 100.0],
-                [101.0 + index as f64 * 2.0, 100.0],
+                [
+                    100.0 + (index % 100) as f64 * 2.0,
+                    100.0 + (index / 100) as f64 * 2.0,
+                ],
+                [
+                    101.0 + (index % 100) as f64 * 2.0,
+                    100.0 + (index / 100) as f64 * 2.0,
+                ],
                 0.50,
             ));
         }
         let board = board(copper);
 
+        let started = std::time::Instant::now();
         let violations = power_pad_entry_readiness(&board, &[], 0.20, 0.30, 2);
 
         assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "power-pad entry should index sparse support features before exact distance review"
+        );
     }
 
     #[test]
@@ -472,18 +512,29 @@ mod tests {
     #[test]
     fn power_via_return_culls_sparse_return_features() {
         let mut copper = vec![via("VIN", [0.0, 0.0])];
-        for index in 0..500 {
+        for index in 0..2_000 {
             copper.push(segment(
                 "GND",
-                [100.0 + index as f64 * 2.0, 100.0],
-                [101.0 + index as f64 * 2.0, 100.0],
+                [
+                    100.0 + (index % 100) as f64 * 2.0,
+                    100.0 + (index / 100) as f64 * 2.0,
+                ],
+                [
+                    101.0 + (index % 100) as f64 * 2.0,
+                    100.0 + (index / 100) as f64 * 2.0,
+                ],
                 0.20,
             ));
         }
         let board = board(copper);
 
+        let started = std::time::Instant::now();
         let violations = power_via_return_readiness(&board, &[], 0.50);
 
         assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "power-via return should index sparse ground returns before exact distance review"
+        );
     }
 }

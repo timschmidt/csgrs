@@ -13,6 +13,9 @@ use csgrs::csg::CSG;
 use geo::BoundingRect;
 
 use super::distance::polygon_boundary_distance;
+use super::outline::{
+    axis_aligned_outline_rect, drill_keepout_inside_rect, feature_bounds_inside_rect,
+};
 use super::spatial::{CopperSpatialIndex, DrillSpatialIndex};
 use super::spread::maximum_point_spread;
 use crate::LayerMetadata;
@@ -665,35 +668,6 @@ fn plated_edge_holes(board: &BoardModel, edge_distance: f64) -> Vec<&DrillFeatur
     holes
 }
 
-fn axis_aligned_outline_rect(outline: &crate::PcbSketch) -> Option<geo::Rect<f64>> {
-    let outline_geometry = outline.to_multipolygon();
-    let [polygon] = outline_geometry.0.as_slice() else {
-        return None;
-    };
-    if !polygon.interiors().is_empty() {
-        return None;
-    }
-    let bounds = polygon.bounding_rect()?;
-    let exterior = &polygon.exterior().0;
-    if exterior.len() != 5 || exterior.first() != exterior.last() {
-        return None;
-    }
-
-    let min = bounds.min();
-    let max = bounds.max();
-    let on_rect_edges = exterior.iter().take(exterior.len() - 1).all(|coord| {
-        approx_eq(coord.x, min.x)
-            || approx_eq(coord.x, max.x)
-            || approx_eq(coord.y, min.y)
-            || approx_eq(coord.y, max.y)
-    });
-    if !on_rect_edges {
-        return None;
-    }
-
-    Some(bounds)
-}
-
 fn drill_near_rect_outline(
     drill: &DrillFeature,
     rect: &geo::Rect<f64>,
@@ -731,26 +705,6 @@ fn drill_near_rect_outline(
     // general fallback. The broad/narrow split follows Ericson, Real-Time
     // Collision Detection (2005), applied here to fabrication edge-hole review.
     boundary_gap <= edge_distance
-}
-
-fn drill_keepout_inside_rect(
-    drill: &DrillFeature,
-    rect: &geo::Rect<f64>,
-    edge_clearance: f64,
-) -> bool {
-    let radius = drill.diameter / 2.0 + edge_clearance;
-    let min = rect.min();
-    let max = rect.max();
-    let x = drill.location[0];
-    let y = drill.location[1];
-
-    // For axis-aligned rectangular outlines, containment of a circular
-    // screw/washer keepout reduces to four signed distances. This is the same
-    // cheap broad-phase idea described by Ericson, Real-Time Collision
-    // Detection (2005), but it is exact for the rectangle/circle containment
-    // predicate and avoids CSG difference construction for clear interior
-    // mounting holes.
-    x - radius >= min.x && x + radius <= max.x && y - radius >= min.y && y + radius <= max.y
 }
 
 fn feature_near_rect_outline(
@@ -800,25 +754,6 @@ fn feature_near_rect_outline(
     // ordinary interior copper and still lets the existing difference geometry
     // catch actual outline crossings.
     inside_gap <= edge_distance
-}
-
-fn feature_bounds_inside_rect(feature: &CopperFeature, rect: &geo::Rect<f64>) -> bool {
-    let Some(bounds) = feature.sketch.geometry.bounding_rect() else {
-        return false;
-    };
-    let min = rect.min();
-    let max = rect.max();
-    let feature_min = bounds.min();
-    let feature_max = bounds.max();
-
-    feature_min.x >= min.x
-        && feature_max.x <= max.x
-        && feature_min.y >= min.y
-        && feature_max.y <= max.y
-}
-
-fn approx_eq(left: f64, right: f64) -> bool {
-    (left - right).abs() <= 1.0e-9
 }
 
 fn drill_keepout(drill: &DrillFeature, keepout: f64) -> crate::PcbSketch {

@@ -17,11 +17,16 @@ use crate::geometry::multipolygon_to_shapes;
 use crate::kicad::{BoardModel, CopperFeature};
 use crate::report::{Severity, Violation};
 
+use super::outline::{axis_aligned_outline_rect, feature_bounds_inside_rect_margin};
+
 /// Warn when likely high-voltage copper enters the board-edge review band.
 ///
 /// This is a heuristic readiness check over parsed KiCad copper. It uses
 /// net-name intent and the parsed board outline to make edge creepage and
-/// clearance review visible before release documentation is assembled.
+/// clearance review visible before release documentation is assembled. On the
+/// common rectangular-board path, it first applies the shared strict edge-band
+/// bounds predicate from Ericson's broad/narrow-phase pattern in *Real-Time
+/// Collision Detection* (2005), then keeps exact CSG as the reporting decision.
 pub fn high_voltage_edge_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -31,8 +36,11 @@ pub fn high_voltage_edge_readiness(
     let Some(outline) = &board.board_outline else {
         return Vec::new();
     };
+    let outline_rect = axis_aligned_outline_rect(outline);
     let allowed = outline.offset(-edge_clearance);
     let mut violations = Vec::new();
+    let mut skipped_rect_inside = 0_usize;
+    let mut exact_difference_count = 0_usize;
 
     for feature in selected_copper_features(board, selected_layers) {
         let Some(net) = &feature.net else {
@@ -41,7 +49,15 @@ pub fn high_voltage_edge_readiness(
         if !looks_high_voltage_net(net) {
             continue;
         }
+        if outline_rect
+            .as_ref()
+            .is_some_and(|rect| feature_bounds_inside_rect_margin(feature, rect, edge_clearance))
+        {
+            skipped_rect_inside += 1;
+            continue;
+        }
 
+        exact_difference_count += 1;
         let intrusion = feature.sketch.difference(&allowed);
         let shapes = multipolygon_to_shapes(&intrusion.to_multipolygon(), min_area);
         if shapes.is_empty() {
@@ -60,6 +76,16 @@ pub fn high_voltage_edge_readiness(
             )),
         ));
     }
+
+    log::trace!(
+        "high-voltage edge readiness: source={} selected_layers={} outline_fast_path={} skipped_rect_inside={} exact_difference_checks={} edge_clearance={edge_clearance:.6} violations={}",
+        board.source,
+        selected_layers.len(),
+        outline_rect.is_some(),
+        skipped_rect_inside,
+        exact_difference_count,
+        violations.len()
+    );
 
     violations
 }
@@ -678,6 +704,8 @@ fn allowed_surge_neighbor_net(net: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use std::time::Instant;
+
     use crate::LayerMetadata;
     use crate::geometry::{circle_polygon, polygons_to_sketch, rect_polygon};
     use crate::kicad::{BoardModel, CopperFeature, CopperKind};
@@ -933,6 +961,44 @@ mod tests {
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "high-voltage-edge-readiness");
+    }
+
+    #[test]
+    fn high_voltage_edge_readiness_culls_rectangular_interior_copper_fields() {
+        let mut board = board_with_outline(square(0.0, 0.0, 100.0, 100.0));
+        board.copper = (0..2_000)
+            .map(|index| {
+                let x = 5.0 + (index % 50) as f64 * 1.5;
+                let y = 5.0 + (index / 50) as f64 * 1.5;
+                copper_rect(
+                    &format!("HV_BUS_{index}"),
+                    CopperKind::Segment,
+                    "F.Cu",
+                    x,
+                    y,
+                    x + 0.5,
+                    y + 0.2,
+                )
+            })
+            .collect();
+        board.copper.push(copper_rect(
+            "MAINS_L",
+            CopperKind::Segment,
+            "F.Cu",
+            0.20,
+            50.0,
+            1.0,
+            50.2,
+        ));
+
+        let started = Instant::now();
+        let violations = high_voltage_edge_readiness(&board, &[], 0.80, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed().as_secs_f64() < 2.0,
+            "high-voltage edge review should skip rectangular interior copper before exact difference"
+        );
     }
 
     #[test]

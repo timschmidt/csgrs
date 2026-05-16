@@ -8,8 +8,6 @@
 //! default readiness sweeps, but suspect for waiver-quality decisions until the
 //! stackup, adjacent reference layer, and source CAD constraints are reviewed.
 
-use std::collections::BTreeMap;
-
 use csgrs::csg::CSG;
 use geo::BoundingRect;
 
@@ -28,9 +26,11 @@ use crate::report::{Severity, Violation};
 /// Reduction Using PCB Layout Modification", IEEE Transactions on
 /// Electromagnetic Compatibility, 2011, demonstrates how PCB loop geometry
 /// changes radiated emissions. The implementation keeps the geometry exact only
-/// after an AABB broad phase; Lin and Canny, "A Fast Algorithm for Incremental
-/// Distance Calculation", IEEE ICRA, 1991, is the collision/distance-processing
-/// context for doing inexpensive spatial rejection before exact work.
+/// after an indexed broad phase; Ericson, *Real-Time Collision Detection*
+/// (2005), gives the broad-phase grid pattern, while Lin and Canny, "A Fast
+/// Algorithm for Incremental Distance Calculation", IEEE ICRA, 1991, is the
+/// collision/distance-processing context for doing inexpensive spatial
+/// rejection before exact work.
 pub fn split_plane_crossing_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -38,23 +38,32 @@ pub fn split_plane_crossing_readiness(
     min_area: f64,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
-    let mut zones_by_layer: BTreeMap<String, Vec<GroundZone<'_>>> = BTreeMap::new();
-
-    for feature in &features {
-        if feature.kind != CopperKind::Zone || !feature.net.as_deref().is_some_and(looks_ground_net)
-        {
-            continue;
-        }
-        let Some(bounds) = feature.sketch.to_multipolygon().bounding_rect() else {
-            continue;
-        };
-        zones_by_layer
-            .entry(feature.layer.clone())
-            .or_default()
-            .push(GroundZone { feature, bounds });
-    }
+    let ground_features = features
+        .iter()
+        .copied()
+        .filter(|feature| {
+            feature.kind == CopperKind::Zone && feature.net.as_deref().is_some_and(looks_ground_net)
+        })
+        .collect::<Vec<_>>();
+    let ground_zones = ground_features
+        .iter()
+        .filter_map(|feature| {
+            feature
+                .sketch
+                .to_multipolygon()
+                .bounding_rect()
+                .map(|bounds| GroundZone { feature, bounds })
+        })
+        .collect::<Vec<_>>();
+    let indexed_ground_features = ground_zones
+        .iter()
+        .map(|zone| zone.feature)
+        .collect::<Vec<_>>();
+    let ground_index = CopperSpatialIndex::new(&indexed_ground_features, search_distance);
 
     let mut candidate_segments = 0usize;
+    let mut candidate_ground_zones = 0usize;
+    let mut exact_ground_zones = 0usize;
     let mut violations = Vec::new();
     for feature in &features {
         if feature.kind != CopperKind::Segment {
@@ -70,15 +79,16 @@ pub fn split_plane_crossing_readiness(
         let Some(segment_bounds) = feature.sketch.to_multipolygon().bounding_rect() else {
             continue;
         };
-        let Some(zones) = zones_by_layer.get(&feature.layer) else {
-            continue;
-        };
 
         let segment_geometry = feature.sketch.to_multipolygon();
-        let nearby = zones
-            .iter()
+        let candidates = ground_index.same_layer_near_feature(feature, search_distance);
+        candidate_ground_zones += candidates.len();
+        let nearby = candidates
+            .into_iter()
+            .filter_map(|ground_index| ground_zones.get(ground_index))
             .filter(|zone| expanded_rects_overlap(&segment_bounds, &zone.bounds, search_distance))
             .filter(|zone| {
+                exact_ground_zones += 1;
                 polygon_boundary_distance(&segment_geometry, &zone.feature.sketch.to_multipolygon())
                     <= search_distance
             })
@@ -118,12 +128,16 @@ pub fn split_plane_crossing_readiness(
     }
 
     log::trace!(
-        "split plane crossing readiness: source={} candidate_segments={} ground_layers={} selected_layers={} search_distance={:.6}",
+        "split plane crossing readiness: source={} candidate_segments={} ground_zones={} ground_buckets={} candidate_ground_zones={} exact_ground_zones={} selected_layers={} search_distance={:.6} violations={}",
         board.source,
         candidate_segments,
-        zones_by_layer.len(),
+        ground_zones.len(),
+        ground_index.bucket_count(),
+        candidate_ground_zones,
+        exact_ground_zones,
         selected_layers.len(),
-        search_distance
+        search_distance,
+        violations.len()
     );
 
     violations
@@ -413,14 +427,26 @@ mod tests {
     #[test]
     fn split_plane_crossing_culls_sparse_large_cases() {
         let mut copper = vec![segment("USB_DP", [-2.0, 0.0], [2.0, 0.0], 0.10)];
-        for index in 0..500 {
-            copper.push(zone("GND", [100.0 + index as f64 * 3.0, 100.0], [1.0, 1.0]));
+        for index in 0..2_000 {
+            copper.push(zone(
+                "GND",
+                [
+                    100.0 + (index % 100) as f64 * 3.0,
+                    100.0 + (index / 100) as f64 * 3.0,
+                ],
+                [1.0, 1.0],
+            ));
         }
         let board = board(copper);
 
+        let started = Instant::now();
         let violations = split_plane_crossing_readiness(&board, &[], 0.05, 1.0e-9);
 
         assert!(violations.is_empty());
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "split-plane crossing should index sparse ground zones before exact distance review"
+        );
     }
 
     #[test]

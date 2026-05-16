@@ -17,6 +17,7 @@ use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbSketch};
 
+use super::outline::{axis_aligned_outline_rect, drill_keepout_inside_rect};
 use super::spatial::{CopperSpatialIndex, DrillSpatialIndex, PointSpatialIndex};
 
 /// Run the `annular_ring` design-readiness check or report helper.
@@ -101,17 +102,26 @@ pub fn annular_ring_tolerance(
 }
 
 /// Run the `plating_intent` design-readiness check or report helper.
+///
+/// Copper candidates use the shared Ericson-style broad/narrow phase from
+/// *Real-Time Collision Detection* (2005): a deterministic grid proposes
+/// nearby copper by parsed location, then exact center distance, net, and
+/// pad/via kind remain the readiness decision.
 pub fn plating_intent(
     board: &BoardModel,
     selected_layers: &[String],
     tolerance: f64,
 ) -> Vec<Violation> {
     let copper_features = selected_copper_features(board, selected_layers);
+    let copper_index = CopperSpatialIndex::new(&copper_features, tolerance);
     let mut violations = Vec::new();
+    let mut candidate_hits = 0_usize;
 
     for drill in &board.drills {
         if drill.plated {
-            if has_plated_drill_copper(drill, &copper_features, tolerance) {
+            let candidates = copper_index.all_layers_near_circle(drill.location, tolerance);
+            candidate_hits += candidates.len();
+            if has_plated_drill_copper(drill, &copper_features, &candidates, tolerance) {
                 continue;
             }
 
@@ -124,11 +134,14 @@ pub fn plating_intent(
                 vec![drill.location],
                 Some("plated drill has no nearby same-net pad or via copper".to_string()),
             ));
-        } else if has_nearby_copper(
-            drill.location,
-            &copper_features,
-            drill.diameter / 2.0 + tolerance,
-        ) {
+        } else {
+            let search_radius = drill.diameter / 2.0 + tolerance;
+            let candidates = copper_index.all_layers_near_circle(drill.location, search_radius);
+            candidate_hits += candidates.len();
+            if !has_nearby_copper(drill.location, &copper_features, &candidates, search_radius) {
+                continue;
+            }
+
             violations.push(Violation::new(
                 "plating-intent",
                 Severity::Warning,
@@ -143,6 +156,17 @@ pub fn plating_intent(
             ));
         }
     }
+
+    log::trace!(
+        "plating intent: source={} drills={} copper_features={} copper_buckets={} candidate_hits={} selected_layers={} tolerance={tolerance:.6} violations={}",
+        board.source,
+        board.drills.len(),
+        copper_features.len(),
+        copper_index.bucket_count(),
+        candidate_hits,
+        selected_layers.len(),
+        violations.len()
+    );
 
     violations
 }
@@ -317,8 +341,19 @@ pub fn board_outline_drill_clearance(
     let mut drills = board_drills.to_vec();
     drills.extend_from_slice(extra_drills);
     let mut violations = Vec::new();
+    let outline_rect = axis_aligned_outline_rect(outline);
+    let mut skipped_rect_inside = 0_usize;
+    let mut exact_difference_count = 0_usize;
 
     for drill in drills {
+        if outline_rect
+            .as_ref()
+            .is_some_and(|rect| drill_keepout_inside_rect(&drill, rect, clearance))
+        {
+            skipped_rect_inside += 1;
+            continue;
+        }
+
         let keepout = polygons_to_sketch(
             vec![circle_polygon(
                 drill.location,
@@ -329,6 +364,7 @@ pub fn board_outline_drill_clearance(
                 name: "drill edge keepout".to_string(),
             }),
         );
+        exact_difference_count += 1;
         let outside_outline = keepout.difference(outline);
         let shapes = multipolygon_to_shapes(&outside_outline.to_multipolygon(), min_area);
         if shapes.is_empty() {
@@ -347,6 +383,15 @@ pub fn board_outline_drill_clearance(
             )),
         ));
     }
+
+    log::trace!(
+        "board-outline drill clearance: drill_source={drill_source} outline={outline_name} drills={} outline_fast_path={} skipped_rect_inside={} exact_difference_checks={} violations={} clearance={clearance:.6} min_area={min_area:.9}",
+        board_drills.len() + extra_drills.len(),
+        outline_rect.is_some(),
+        skipped_rect_inside,
+        exact_difference_count,
+        violations.len()
+    );
 
     violations
 }
@@ -574,9 +619,11 @@ fn nearest_matching_copper<'a>(
 fn has_plated_drill_copper(
     drill: &DrillFeature,
     copper_features: &[&CopperFeature],
+    candidate_indices: &[usize],
     tolerance: f64,
 ) -> bool {
-    copper_features.iter().any(|feature| {
+    candidate_indices.iter().any(|&feature_index| {
+        let feature = copper_features[feature_index];
         matches!(feature.kind, CopperKind::Pad | CopperKind::Via)
             && (drill.net.is_none() || feature.net == drill.net)
             && distance(feature.location, drill.location) <= tolerance
@@ -586,11 +633,12 @@ fn has_plated_drill_copper(
 fn has_nearby_copper(
     location: [f64; 2],
     copper_features: &[&CopperFeature],
+    candidate_indices: &[usize],
     tolerance: f64,
 ) -> bool {
-    copper_features
-        .iter()
-        .any(|feature| distance(feature.location, location) <= tolerance)
+    candidate_indices.iter().any(|&feature_index| {
+        distance(copper_features[feature_index].location, location) <= tolerance
+    })
 }
 
 fn selected_copper_features<'a>(
@@ -646,7 +694,9 @@ fn distance(left: [f64; 2], right: [f64; 2]) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{drill_table_consistency, drill_to_copper_clearance};
+    use super::{
+        board_outline_drill_clearance, drill_table_consistency, drill_to_copper_clearance,
+    };
     use crate::LayerMetadata;
     use crate::geometry::{line_polygon, polygons_to_sketch, rect_polygon};
     use crate::ipc356::Ipc356Point;
@@ -740,6 +790,42 @@ mod tests {
     }
 
     #[test]
+    fn board_outline_drill_clearance_skips_rectangular_interior_drill_fields() {
+        let outline = sketch(vec![rect_polygon([50.0, 50.0], [100.0, 100.0], 0.0)]);
+        let mut drills = (0..2_000)
+            .map(|index| {
+                drill(
+                    None,
+                    [
+                        5.0 + (index % 50) as f64 * 1.5,
+                        5.0 + (index / 50) as f64 * 1.5,
+                    ],
+                    0.30,
+                    false,
+                )
+            })
+            .collect::<Vec<_>>();
+        drills.push(drill(None, [0.35, 50.0], 0.30, false));
+
+        let started = std::time::Instant::now();
+        let violations = board_outline_drill_clearance(
+            "KiCad drills",
+            "KiCad Edge.Cuts",
+            &outline,
+            &drills,
+            &[],
+            0.25,
+            1.0e-9,
+        );
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "board-outline drill clearance should skip inset drills on rectangular outlines before exact CSG"
+        );
+    }
+
+    #[test]
     fn drill_table_consistency_reports_nearby_cross_source_conflicts() {
         let board_drills = vec![drill(None, [0.0, 0.0], 0.40, true)];
         let extra_drills = vec![drill(None, [0.05, 0.0], 0.60, true)];
@@ -785,6 +871,15 @@ mod tests {
             board_outline: None,
             panel_features: None,
         }
+    }
+
+    fn sketch(polygons: Vec<geo::Polygon<f64>>) -> crate::PcbSketch {
+        polygons_to_sketch(
+            polygons,
+            Some(LayerMetadata {
+                name: "outline".to_string(),
+            }),
+        )
     }
 
     fn segment(net: &str, start: [f64; 2], end: [f64; 2], width: f64) -> CopperFeature {

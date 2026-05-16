@@ -14,7 +14,8 @@ use csgrs::csg::CSG;
 use geo::{Area, BoundingRect};
 
 use crate::checks::distance::polygon_boundary_distance;
-use crate::checks::spatial::CopperSpatialIndex;
+use crate::checks::outline::{axis_aligned_outline_rect, feature_bounds_inside_rect_margin};
+use crate::checks::spatial::{CopperSpatialIndex, PointSpatialIndex};
 use crate::geometry::{circle_polygon, multipolygon_to_shapes, polygons_to_sketch};
 use crate::ipc356::{Ipc356AccessSide, Ipc356FeatureType, Ipc356Point, Ipc356Soldermask};
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
@@ -24,7 +25,13 @@ use crate::{LayerMetadata, PcbSketch};
 const TESTPOINT_GRID_EPSILON: f64 = 1.0e-9;
 const FEATURE_GRID_EPSILON: f64 = 1.0e-9;
 
-/// Run the `component_edge_clearance_readiness` design-readiness check or report helper.
+/// Review component-pad proxies against the assembly edge-clearance band.
+///
+/// IPC-7351B treats component placement courtyard and fabrication/assembly
+/// tolerances as process constraints. Until parsed package courtyards are
+/// available, this check uses non-fiducial KiCad pads as conservative body
+/// proxies, then applies an Ericson-style rectangular broad phase before exact
+/// outline distance review on simple board rectangles.
 pub fn component_edge_clearance_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -34,17 +41,26 @@ pub fn component_edge_clearance_readiness(
         return Vec::new();
     };
 
-    selected_copper_features(board, selected_layers)
+    let outline_rect = axis_aligned_outline_rect(outline);
+    let candidate_pads = selected_copper_features(board, selected_layers)
         .into_iter()
         .filter(|feature| feature.kind == CopperKind::Pad)
         .filter(|feature| !likely_fiducial(feature))
-        .filter(|feature| {
-            !feature
-                .net
-                .as_deref()
-                .is_some_and(looks_edge_intent_net)
-        })
+        .filter(|feature| !feature.net.as_deref().is_some_and(looks_edge_intent_net))
+        .collect::<Vec<_>>();
+    let mut rect_rejections = 0_usize;
+    let mut exact_checks = 0_usize;
+    let violations = candidate_pads
+        .iter()
         .filter_map(|feature| {
+            if outline_rect
+                .as_ref()
+                .is_some_and(|rect| feature_bounds_inside_rect_margin(feature, rect, clearance))
+            {
+                rect_rejections += 1;
+                return None;
+            }
+            exact_checks += 1;
             let edge_gap = polygon_boundary_distance(
                 &feature.sketch.to_multipolygon(),
                 &outline.to_multipolygon(),
@@ -63,7 +79,18 @@ pub fn component_edge_clearance_readiness(
                 )
             })
         })
-        .collect()
+        .collect::<Vec<_>>();
+
+    log::trace!(
+        "component-edge clearance readiness: source={} pads={} rect_rejections={} exact_checks={} clearance={clearance:.6} violations={}",
+        board.source,
+        candidate_pads.len(),
+        rect_rejections,
+        exact_checks,
+        violations.len()
+    );
+
+    violations
 }
 
 /// Run the `component_hole_clearance_readiness` design-readiness check or report helper.
@@ -368,7 +395,13 @@ pub fn pad_pair_asymmetry_readiness(
     violations
 }
 
-/// Run the `testpoint_coverage_readiness` design-readiness check or report helper.
+/// Compare likely critical KiCad nets against IPC-D-356 test records.
+///
+/// IPC-9252-style fixture planning and practical DFT guidance such as the
+/// FixturFab bed-of-nails notes both reduce to the same early-readiness signal:
+/// every critical production net needs parsed, repeatable probe evidence before
+/// the board is ready for fixture build. This check treats normalized IPC-D-356
+/// net records as that evidence and reports missing critical KiCad nets.
 pub fn testpoint_coverage_readiness(
     board: &BoardModel,
     points: &[Ipc356Point],
@@ -379,6 +412,7 @@ pub fn testpoint_coverage_readiness(
         .map(|point| normalize_net(&point.net))
         .collect::<BTreeSet<_>>();
     let mut required_nets: BTreeMap<String, Vec<[f64; 2]>> = BTreeMap::new();
+    let mut required_feature_count = 0_usize;
 
     for feature in selected_copper_features(board, selected_layers) {
         let Some(net) = feature.net.as_deref() else {
@@ -387,13 +421,14 @@ pub fn testpoint_coverage_readiness(
         if !looks_testpoint_required_net(net) {
             continue;
         }
+        required_feature_count += 1;
         required_nets
             .entry(net.to_string())
             .or_default()
             .push(feature.location);
     }
 
-    required_nets
+    let violations = required_nets
         .into_iter()
         .filter(|(net, _)| !covered_nets.contains(&normalize_net(net)))
         .map(|(net, locations)| {
@@ -409,7 +444,19 @@ pub fn testpoint_coverage_readiness(
                 )),
             )
         })
-        .collect()
+        .collect::<Vec<_>>();
+
+    log::trace!(
+        "testpoint coverage readiness: source={} ipc_points={} covered_nets={} required_features={} missing_nets={} selected_layers={}",
+        board.source,
+        points.len(),
+        covered_nets.len(),
+        required_feature_count,
+        violations.len(),
+        selected_layers.len()
+    );
+
+    violations
 }
 
 /// Check fixture-probe diameter, edge clearance, and nearest-neighbor spacing.
@@ -870,6 +917,11 @@ fn copper_layer_access_side(layer: &str) -> Option<Ipc356AccessSide> {
 }
 
 /// Run the `tooling_hole_readiness` design-readiness check or report helper.
+///
+/// Tooling holes are filtered by plated state and finished diameter before
+/// outline proximity is checked. The edge review stays exact through
+/// boundary-distance geometry, while trace counters make sparse drill-table
+/// behavior visible in fixture and package smoke runs.
 pub fn tooling_hole_readiness(
     board: &BoardModel,
     extra_drills: &[DrillFeature],
@@ -886,6 +938,7 @@ pub fn tooling_hole_readiness(
         .filter(|drill| drill.diameter >= minimum_diameter && drill.diameter <= maximum_diameter)
         .collect::<Vec<_>>();
     let mut violations = Vec::new();
+    let mut edge_checks = 0_usize;
 
     if candidates.len() < 2 {
         violations.push(Violation::new(
@@ -903,7 +956,8 @@ pub fn tooling_hole_readiness(
     }
 
     if let Some(outline) = &board.board_outline {
-        for drill in candidates {
+        for drill in &candidates {
+            edge_checks += 1;
             let keepout = polygons_to_sketch(
                 vec![circle_polygon(drill.location, drill.diameter / 2.0, 32)],
                 Some(LayerMetadata {
@@ -930,10 +984,26 @@ pub fn tooling_hole_readiness(
         }
     }
 
+    log::trace!(
+        "tooling-hole readiness: source={} board_drills={} extra_drills={} candidates={} edge_checks={} minimum_diameter={minimum_diameter:.6} maximum_diameter={maximum_diameter:.6} edge_clearance={edge_clearance:.6} violations={}",
+        board.source,
+        board.drills.len(),
+        extra_drills.len(),
+        candidates.len(),
+        edge_checks,
+        violations.len()
+    );
+
     violations
 }
 
 /// Run the `mouse_bite_readiness` design-readiness check or report helper.
+///
+/// Mouse-bite rows are center-spacing patterns, so candidate selection uses the
+/// same Ericson-style broad/narrow phase as other readiness checks: a point grid
+/// from *Real-Time Collision Detection* (2005) finds nearby drill centers, then
+/// exact Euclidean spacing decides whether the drill pitch is too tight,
+/// acceptable, or isolated beyond the maximum expected row pitch.
 pub fn mouse_bite_readiness(
     board: &BoardModel,
     extra_drills: &[DrillFeature],
@@ -948,7 +1018,13 @@ pub fn mouse_bite_readiness(
         .iter()
         .filter(|drill| !drill.plated && drill.diameter <= maximum_diameter)
         .collect::<Vec<_>>();
+    let candidate_points = candidates
+        .iter()
+        .map(|drill| drill.location)
+        .collect::<Vec<_>>();
+    let point_index = PointSpatialIndex::new(candidate_points, maximum_spacing);
     let mut violations = Vec::new();
+    let mut neighbor_hits = 0_usize;
 
     for drill in &candidates {
         if drill.diameter >= minimum_diameter {
@@ -970,13 +1046,34 @@ pub fn mouse_bite_readiness(
     }
 
     for (left_index, left) in candidates.iter().enumerate() {
-        let Some((right, center_spacing)) = candidates
-            .iter()
-            .enumerate()
-            .filter(|(right_index, _)| *right_index != left_index)
-            .map(|(_, right)| (*right, distance(left.location, right.location)))
+        let nearby = point_index
+            .centers_within(left.location, maximum_spacing)
+            .into_iter()
+            .filter(|&right_index| right_index != left_index)
+            .collect::<Vec<_>>();
+        neighbor_hits += nearby.len();
+
+        let Some((right, center_spacing)) = nearby
+            .into_iter()
+            .map(|right_index| {
+                (
+                    candidates[right_index],
+                    distance(left.location, candidates[right_index].location),
+                )
+            })
             .min_by(|left, right| left.1.total_cmp(&right.1))
         else {
+            violations.push(Violation::new(
+                "mouse-bite-readiness",
+                Severity::Warning,
+                vec!["mouse-bites".to_string()],
+                None,
+                Vec::new(),
+                vec![left.location],
+                Some(format!(
+                    "likely mouse-bite drill has no neighboring mouse-bite center within maximum expected spacing {maximum_spacing:.6}"
+                )),
+            ));
             continue;
         };
         if center_spacing >= minimum_spacing && center_spacing <= maximum_spacing {
@@ -996,10 +1093,25 @@ pub fn mouse_bite_readiness(
         ));
     }
 
+    log::trace!(
+        "mouse-bite readiness: source={} candidates={} point_buckets={} neighbor_hits={} minimum_diameter={minimum_diameter:.6} maximum_diameter={maximum_diameter:.6} minimum_spacing={minimum_spacing:.6} maximum_spacing={maximum_spacing:.6} violations={}",
+        board.source,
+        candidates.len(),
+        point_index.bucket_count(),
+        neighbor_hits,
+        violations.len()
+    );
+
     violations
 }
 
-/// Run the `fiducial_readiness` design-readiness check or report helper.
+/// Infer global fiducials and review count plus edge clearance by board side.
+///
+/// IPC-7351B treats fiducials as assembly registration targets with optical
+/// keepout needs. This readiness check infers likely unnetted pad targets and,
+/// on rectangular boards, uses the same broad/narrow phase from Ericson,
+/// *Real-Time Collision Detection* (2005) to reject clearly interior candidates
+/// before exact outline-distance review.
 pub fn fiducial_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -1027,6 +1139,13 @@ pub fn fiducial_readiness(
     }
 
     let mut violations = Vec::new();
+    let outline_rect = board
+        .board_outline
+        .as_ref()
+        .and_then(axis_aligned_outline_rect);
+    let mut edge_candidates = 0_usize;
+    let mut rect_rejections = 0_usize;
+    let mut exact_edge_checks = 0_usize;
     for layer in expected_layers {
         let candidates = candidates_by_layer.get(&layer).cloned().unwrap_or_default();
         if candidates.len() < 2 {
@@ -1046,6 +1165,14 @@ pub fn fiducial_readiness(
 
         if let Some(outline) = &board.board_outline {
             for candidate in candidates {
+                edge_candidates += 1;
+                if outline_rect.as_ref().is_some_and(|rect| {
+                    feature_bounds_inside_rect_margin(candidate, rect, edge_clearance)
+                }) {
+                    rect_rejections += 1;
+                    continue;
+                }
+                exact_edge_checks += 1;
                 let distance_to_edge = polygon_boundary_distance(
                     &candidate.sketch.to_multipolygon(),
                     &outline.to_multipolygon(),
@@ -1068,6 +1195,16 @@ pub fn fiducial_readiness(
             }
         }
     }
+
+    log::trace!(
+        "fiducial readiness: source={} layers={} edge_candidates={} rect_rejections={} exact_edge_checks={} edge_clearance={edge_clearance:.6} violations={}",
+        board.source,
+        candidates_by_layer.len(),
+        edge_candidates,
+        rect_rejections,
+        exact_edge_checks,
+        violations.len()
+    );
 
     violations
 }
@@ -1267,7 +1404,10 @@ pub fn press_fit_keepout_readiness(
 ///
 /// IPC J-STD-001H treats conformal coating as a workmanship/process control
 /// item. Geometry cannot prove a coating mask exists, but nearby copper around
-/// likely no-coat features is a useful release-review prompt.
+/// likely no-coat features is a useful release-review prompt. Neighboring pad
+/// candidates use the lightweight assembly feature grid, following Ericson,
+/// *Real-Time Collision Detection* (2005), before exact keepout/pad CSG
+/// intersection.
 pub fn conformal_coating_keepout_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -1279,59 +1419,29 @@ pub fn conformal_coating_keepout_readiness(
         .iter()
         .copied()
         .filter(|feature| likely_no_coat_feature(feature))
-        .filter_map(|feature| {
-            feature
-                .sketch
-                .geometry
-                .bounding_rect()
-                .map(|bounds| (feature, bounds))
-        })
         .collect::<Vec<_>>();
-    let mut pads_by_layer: BTreeMap<String, Vec<(&CopperFeature, geo::Rect<f64>)>> =
-        BTreeMap::new();
-    for pad in features
-        .into_iter()
+    let pads = features
+        .iter()
+        .copied()
         .filter(|feature| feature.kind == CopperKind::Pad)
-        .filter_map(|feature| {
-            feature
-                .sketch
-                .geometry
-                .bounding_rect()
-                .map(|bounds| (feature, bounds))
-        })
-    {
-        pads_by_layer
-            .entry(pad.0.layer.clone())
-            .or_default()
-            .push(pad);
-    }
-    for pads in pads_by_layer.values_mut() {
-        pads.sort_by(|left, right| {
-            left.1
-                .min()
-                .x
-                .total_cmp(&right.1.min().x)
-                .then(left.1.min().y.total_cmp(&right.1.min().y))
-        });
-    }
+        .collect::<Vec<_>>();
+    let pad_index = FeatureGridIndex::new(&pads, keepout);
     let mut violations = Vec::new();
+    let mut candidate_count = 0usize;
 
-    for (no_coat, no_coat_bounds) in no_coat_features {
+    for &no_coat in &no_coat_features {
         let keepout_sketch = no_coat.sketch.offset(keepout);
-        let Some(pads) = pads_by_layer.get(&no_coat.layer) else {
-            continue;
-        };
-        for (neighbor, neighbor_bounds) in pads {
-            if neighbor_bounds.min().x - no_coat_bounds.max().x > keepout {
-                break;
-            }
-            if no_coat_bounds.min().x - neighbor_bounds.max().x > keepout {
+        let query_radius = feature_query_radius(no_coat, keepout);
+        for neighbor_index in pad_index.near_circle(no_coat.location, query_radius) {
+            candidate_count += 1;
+            let neighbor = pads[neighbor_index];
+            if std::ptr::eq(no_coat, neighbor) {
                 continue;
             }
-            if std::ptr::eq(no_coat, *neighbor) {
+            if no_coat.layer != neighbor.layer {
                 continue;
             }
-            if !rects_within_clearance(&no_coat_bounds, neighbor_bounds, keepout) {
+            if !sketches_within_clearance(&no_coat.sketch, &neighbor.sketch, keepout) {
                 continue;
             }
             if no_coat.net.is_some() && no_coat.net == neighbor.net {
@@ -1357,6 +1467,16 @@ pub fn conformal_coating_keepout_readiness(
             ));
         }
     }
+
+    log::trace!(
+        "conformal-coating keepout readiness: source={} no_coat_features={} pads={} buckets={} candidate_pairs={} keepout={keepout:.6} violations={}",
+        board.source,
+        no_coat_features.len(),
+        pads.len(),
+        pad_index.bucket_count(),
+        candidate_count,
+        violations.len()
+    );
 
     violations
 }
@@ -1552,13 +1672,6 @@ fn sketches_within_clearance(left: &PcbSketch, right: &PcbSketch, clearance: f64
         && left_bounds.max().x + clearance >= right_bounds.min().x
         && left_bounds.min().y - clearance <= right_bounds.max().y
         && left_bounds.max().y + clearance >= right_bounds.min().y
-}
-
-fn rects_within_clearance(left: &geo::Rect<f64>, right: &geo::Rect<f64>, clearance: f64) -> bool {
-    left.min().x - clearance <= right.max().x
-        && left.max().x + clearance >= right.min().x
-        && left.min().y - clearance <= right.max().y
-        && left.max().y + clearance >= right.min().y
 }
 
 fn feature_may_touch_circle(feature: &CopperFeature, center: [f64; 2], radius: f64) -> bool {
@@ -1820,9 +1933,9 @@ mod tests {
     use super::{
         component_hole_clearance_readiness, component_spacing_readiness,
         conformal_coating_keepout_readiness, connector_rework_clearance_readiness,
-        fiducial_keepout_readiness, pad_pair_asymmetry_readiness, press_fit_keepout_readiness,
-        selective_wave_solder_keepout_readiness, testpoint_accessibility_readiness,
-        testpoint_copper_clearance_readiness,
+        fiducial_keepout_readiness, mouse_bite_readiness, pad_pair_asymmetry_readiness,
+        press_fit_keepout_readiness, selective_wave_solder_keepout_readiness,
+        testpoint_accessibility_readiness, testpoint_copper_clearance_readiness,
     };
     use crate::LayerMetadata;
     use crate::geometry::{polygons_to_sketch, rect_polygon};
@@ -1939,10 +2052,13 @@ mod tests {
     #[test]
     fn conformal_coating_keepout_culls_large_sparse_pad_fields() {
         let mut copper = vec![copper_pad("USB_DP", [0.0, 0.0], 0.4, 0.4)];
-        for index in 0..900 {
+        for index in 0..2_000 {
             copper.push(copper_pad(
                 &format!("SIG{index}"),
-                [10.0 + (index % 45) as f64 * 3.0, (index / 45) as f64 * 3.0],
+                [
+                    10.0 + (index % 50) as f64 * 3.0,
+                    10.0 + (index / 50) as f64 * 3.0,
+                ],
                 0.3,
                 0.3,
             ));
@@ -1956,7 +2072,7 @@ mod tests {
         assert_eq!(violations.len(), 1);
         assert!(
             start.elapsed() < std::time::Duration::from_secs(2),
-            "conformal-coating keepout should cull distant pads by layer and bounds"
+            "conformal-coating keepout should cull distant pads by spatial index"
         );
     }
 
@@ -1973,6 +2089,57 @@ mod tests {
         assert!(selective_wave_solder_keepout_readiness(&board, &[], 0.25, 1.0e-9).is_empty());
         assert!(press_fit_keepout_readiness(&board, &[], 0.35, 1.0e-9).is_empty());
         assert!(conformal_coating_keepout_readiness(&board, &[], 0.3, 1.0e-9).is_empty());
+    }
+
+    #[test]
+    fn mouse_bite_readiness_culls_sparse_drill_rows() {
+        let mut drills = (0..1_000)
+            .flat_map(|index| {
+                let x = index as f64 * 10.0;
+                [
+                    DrillFeature {
+                        location: [x, 0.0],
+                        diameter: 0.30,
+                        net: None,
+                        plated: false,
+                    },
+                    DrillFeature {
+                        location: [x + 0.70, 0.0],
+                        diameter: 0.30,
+                        net: None,
+                        plated: false,
+                    },
+                ]
+            })
+            .collect::<Vec<_>>();
+        drills.push(DrillFeature {
+            location: [50_000.0, 0.0],
+            diameter: 0.30,
+            net: None,
+            plated: false,
+        });
+
+        let start = std::time::Instant::now();
+        let violations = mouse_bite_readiness(
+            &board_with_copper(Vec::new()),
+            &drills,
+            0.25,
+            0.50,
+            0.40,
+            1.20,
+        );
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            violations[0]
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("no neighboring mouse-bite center"))
+        );
+        assert!(
+            start.elapsed() < std::time::Duration::from_secs(2),
+            "mouse-bite spacing should use point buckets instead of all-candidate nearest scans"
+        );
     }
 
     #[test]

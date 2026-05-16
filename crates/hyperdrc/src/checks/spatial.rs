@@ -7,7 +7,7 @@
 
 use std::collections::BTreeMap;
 
-use geo::BoundingRect;
+use geo::{BoundingRect, Polygon};
 
 use crate::kicad::{CopperFeature, DrillFeature};
 
@@ -22,10 +22,12 @@ const SPATIAL_GRID_EPSILON: f64 = 1.0e-9;
 /// *Real-Time Collision Detection* (2005): a cheap spatial partition proposes
 /// candidate pairs, then exact geometry rejects false positives. HyperDRC uses
 /// the same pattern for PCB readiness so large sparse boards do not require a
-/// full all-pairs CSG pass.
+/// full all-pairs CSG pass. Buckets are grouped by layer so same-layer queries
+/// borrow the layer key once instead of allocating one key per bucket probe.
 pub(super) struct CopperSpatialIndex<'a> {
     features: &'a [&'a CopperFeature],
-    buckets: BTreeMap<(String, i64, i64), Vec<usize>>,
+    buckets_by_layer: BTreeMap<String, BTreeMap<(i64, i64), Vec<usize>>>,
+    all_layer_buckets: BTreeMap<(i64, i64), Vec<usize>>,
     cell_size: f64,
     maximum_span: f64,
 }
@@ -38,16 +40,28 @@ impl<'a> CopperSpatialIndex<'a> {
             .map(|feature| feature_span(feature))
             .fold(0.0_f64, f64::max);
         let cell_size = nominal_radius.max(maximum_span).max(SPATIAL_GRID_EPSILON);
-        let mut buckets: BTreeMap<(String, i64, i64), Vec<usize>> = BTreeMap::new();
+        let mut buckets_by_layer: BTreeMap<String, BTreeMap<(i64, i64), Vec<usize>>> =
+            BTreeMap::new();
+        let mut all_layer_buckets: BTreeMap<(i64, i64), Vec<usize>> = BTreeMap::new();
 
         for (index, feature) in features.iter().enumerate() {
-            let key = bucket_key(&feature.layer, feature.location, cell_size);
-            buckets.entry(key).or_default().push(index);
+            let (bucket_x, bucket_y) = center_bucket_key(feature.location, cell_size);
+            buckets_by_layer
+                .entry(feature.layer.clone())
+                .or_default()
+                .entry((bucket_x, bucket_y))
+                .or_default()
+                .push(index);
+            all_layer_buckets
+                .entry((bucket_x, bucket_y))
+                .or_default()
+                .push(index);
         }
 
         Self {
             features,
-            buckets,
+            buckets_by_layer,
+            all_layer_buckets,
             cell_size,
             maximum_span,
         }
@@ -55,7 +69,7 @@ impl<'a> CopperSpatialIndex<'a> {
 
     /// Number of populated grid buckets, useful for trace diagnostics.
     pub(super) fn bucket_count(&self) -> usize {
-        self.buckets.len()
+        self.buckets_by_layer.values().map(BTreeMap::len).sum()
     }
 
     /// Return same-layer candidate features near the queried feature.
@@ -66,6 +80,22 @@ impl<'a> CopperSpatialIndex<'a> {
     ) -> Vec<usize> {
         let query_radius = radius + feature_span(feature) / 2.0 + self.maximum_span / 2.0;
         self.near_center_on_layer(feature.location, &feature.layer, query_radius)
+    }
+
+    /// Return candidate features on any layer near the queried feature.
+    ///
+    /// This supports checks such as reference-plane review, where signal copper
+    /// on one layer is intentionally compared with ground copper on another
+    /// layer. It is still only a conservative broad phase in the Ericson,
+    /// *Real-Time Collision Detection* (2005) sense; callers must run exact CSG
+    /// or distance predicates on returned candidates.
+    pub(super) fn all_layers_near_feature(
+        &self,
+        feature: &CopperFeature,
+        radius: f64,
+    ) -> Vec<usize> {
+        let query_radius = radius + feature_span(feature) / 2.0 + self.maximum_span / 2.0;
+        self.near_center_all_layers(feature.location, query_radius)
     }
 
     /// Return same-layer candidate centers within a circle.
@@ -97,15 +127,26 @@ impl<'a> CopperSpatialIndex<'a> {
     /// mechanical drills. Callers still need their exact shape predicate.
     pub(super) fn all_layers_near_circle(&self, center: [f64; 2], radius: f64) -> Vec<usize> {
         let query_radius = radius + self.maximum_span / 2.0;
-        let min_x = bucket_coordinate(center[0] - query_radius, self.cell_size);
-        let max_x = bucket_coordinate(center[0] + query_radius, self.cell_size);
-        let min_y = bucket_coordinate(center[1] - query_radius, self.cell_size);
-        let max_y = bucket_coordinate(center[1] + query_radius, self.cell_size);
+        self.near_center_all_layers(center, query_radius)
+    }
+
+    fn near_center_all_layers(&self, center: [f64; 2], radius: f64) -> Vec<usize> {
+        let min_x = bucket_coordinate(center[0] - radius, self.cell_size);
+        let max_x = bucket_coordinate(center[0] + radius, self.cell_size);
+        let min_y = bucket_coordinate(center[1] - radius, self.cell_size);
+        let max_y = bucket_coordinate(center[1] + radius, self.cell_size);
         let mut candidates = Vec::new();
 
-        for ((_, x, y), bucket) in &self.buckets {
-            if (min_x..=max_x).contains(x) && (min_y..=max_y).contains(y) {
-                candidates.extend(bucket.iter().copied());
+        // Keep a second layerless bucket map for source geometry such as NPTH
+        // drills that can interact with copper on any selected layer. This is
+        // still Ericson's broad/narrow-phase grid from *Real-Time Collision
+        // Detection* (2005), but avoids scanning every layer-qualified bucket
+        // for every mechanical feature on sparse, multi-layer boards.
+        for x in min_x..=max_x {
+            for y in min_y..=max_y {
+                if let Some(bucket) = self.all_layer_buckets.get(&(x, y)) {
+                    candidates.extend(bucket.iter().copied());
+                }
             }
         }
 
@@ -115,6 +156,9 @@ impl<'a> CopperSpatialIndex<'a> {
     }
 
     fn near_center_on_layer(&self, center: [f64; 2], layer: &str, radius: f64) -> Vec<usize> {
+        let Some(layer_buckets) = self.buckets_by_layer.get(layer) else {
+            return Vec::new();
+        };
         let min_x = bucket_coordinate(center[0] - radius, self.cell_size);
         let max_x = bucket_coordinate(center[0] + radius, self.cell_size);
         let min_y = bucket_coordinate(center[1] - radius, self.cell_size);
@@ -123,7 +167,7 @@ impl<'a> CopperSpatialIndex<'a> {
 
         for x in min_x..=max_x {
             for y in min_y..=max_y {
-                if let Some(bucket) = self.buckets.get(&(layer.to_string(), x, y)) {
+                if let Some(bucket) = layer_buckets.get(&(x, y)) {
                     candidates.extend(bucket.iter().copied());
                 }
             }
@@ -132,6 +176,103 @@ impl<'a> CopperSpatialIndex<'a> {
         candidates.sort_unstable();
         candidates.dedup();
         candidates
+    }
+}
+
+/// Deterministic broad-phase index for flattened layer polygons.
+///
+/// The index stores polygon bounding-box centers and inflates each query by the
+/// queried polygon span plus the largest indexed span. This is intentionally a
+/// conservative broad phase in the style of Ericson, *Real-Time Collision
+/// Detection* (2005): every returned candidate still goes through the exact
+/// offset/intersection predicate in the caller. Keeping this helper
+/// `pub(super)` avoids exposing bbox-center approximations as public geometry
+/// semantics while letting layer checks share tested spatial infrastructure.
+pub(super) struct LayerPolygonSpatialIndex {
+    buckets: BTreeMap<(i64, i64), Vec<usize>>,
+    bounds: Vec<Option<geo::Rect<f64>>>,
+    cell_size: f64,
+    maximum_span: f64,
+}
+
+impl LayerPolygonSpatialIndex {
+    /// Build an index over polygon bounds with a nominal query radius.
+    pub(super) fn new(polygons: &[Polygon<f64>], nominal_radius: f64) -> Self {
+        let bounds = polygons
+            .iter()
+            .map(Polygon::bounding_rect)
+            .collect::<Vec<_>>();
+        let maximum_span = bounds
+            .iter()
+            .flatten()
+            .map(rect_span)
+            .fold(0.0_f64, f64::max);
+        let cell_size = nominal_radius.max(maximum_span).max(SPATIAL_GRID_EPSILON);
+        let mut buckets = BTreeMap::new();
+
+        for (index, bounds) in bounds.iter().enumerate() {
+            let Some(bounds) = bounds else {
+                continue;
+            };
+            buckets
+                .entry(center_bucket_key(rect_center(bounds), cell_size))
+                .or_insert_with(Vec::new)
+                .push(index);
+        }
+
+        Self {
+            buckets,
+            bounds,
+            cell_size,
+            maximum_span,
+        }
+    }
+
+    /// Number of populated grid buckets, useful for trace diagnostics.
+    pub(super) fn bucket_count(&self) -> usize {
+        self.buckets.len()
+    }
+
+    /// Return candidate polygons near a stored polygon, excluding itself.
+    pub(super) fn candidates_near(&self, polygon_index: usize, radius: f64) -> Vec<usize> {
+        let Some(bounds) = self.bounds[polygon_index] else {
+            return (0..self.bounds.len())
+                .filter(|&index| index != polygon_index)
+                .collect();
+        };
+        self.candidates_near_bounds(bounds, radius)
+            .into_iter()
+            .filter(|&index| index != polygon_index)
+            .collect()
+    }
+
+    /// Return candidate indexed polygons near an external polygon.
+    pub(super) fn candidates_near_polygon(
+        &self,
+        polygon: &Polygon<f64>,
+        radius: f64,
+    ) -> Vec<usize> {
+        let Some(bounds) = polygon.bounding_rect() else {
+            return (0..self.bounds.len()).collect();
+        };
+        self.candidates_near_bounds(bounds, radius)
+    }
+
+    /// Return later candidate indexes near a stored polygon.
+    ///
+    /// This supports same-layer unordered-pair checks without allocating a
+    /// separate visited-pair set.
+    pub(super) fn later_candidates_near(&self, polygon_index: usize, radius: f64) -> Vec<usize> {
+        self.candidates_near(polygon_index, radius)
+            .into_iter()
+            .filter(|&index| index > polygon_index)
+            .collect()
+    }
+
+    fn candidates_near_bounds(&self, bounds: geo::Rect<f64>, radius: f64) -> Vec<usize> {
+        let query_radius = radius + rect_span(&bounds) / 2.0 + self.maximum_span / 2.0;
+        let center = rect_center(&bounds);
+        candidate_centers_within(&self.buckets, self.cell_size, center, query_radius)
     }
 }
 
@@ -269,14 +410,6 @@ impl PointSpatialIndex {
     }
 }
 
-fn bucket_key(layer: &str, location: [f64; 2], cell_size: f64) -> (String, i64, i64) {
-    (
-        layer.to_string(),
-        bucket_coordinate(location[0], cell_size),
-        bucket_coordinate(location[1], cell_size),
-    )
-}
-
 fn center_bucket_key(location: [f64; 2], cell_size: f64) -> (i64, i64) {
     (
         bucket_coordinate(location[0], cell_size),
@@ -319,6 +452,19 @@ fn squared_distance(left: [f64; 2], right: [f64; 2]) -> f64 {
     dx * dx + dy * dy
 }
 
+fn rect_center(bounds: &geo::Rect<f64>) -> [f64; 2] {
+    [
+        (bounds.min().x + bounds.max().x) / 2.0,
+        (bounds.min().y + bounds.max().y) / 2.0,
+    ]
+}
+
+fn rect_span(bounds: &geo::Rect<f64>) -> f64 {
+    let width = bounds.max().x - bounds.min().x;
+    let height = bounds.max().y - bounds.min().y;
+    (width * width + height * height).sqrt()
+}
+
 fn feature_span(feature: &CopperFeature) -> f64 {
     let Some(bounds) = feature.sketch.geometry.bounding_rect() else {
         return 0.0;
@@ -331,10 +477,12 @@ fn feature_span(feature: &CopperFeature) -> f64 {
 #[cfg(test)]
 mod tests {
     use crate::LayerMetadata;
-    use crate::geometry::{line_polygon, polygons_to_sketch};
+    use crate::geometry::{line_polygon, polygons_to_sketch, rect_polygon};
     use crate::kicad::{CopperFeature, CopperKind, DrillFeature};
 
-    use super::{CopperSpatialIndex, DrillSpatialIndex, PointSpatialIndex};
+    use super::{
+        CopperSpatialIndex, DrillSpatialIndex, LayerPolygonSpatialIndex, PointSpatialIndex,
+    };
 
     #[test]
     fn same_layer_near_feature_keeps_large_remote_centers_reachable() {
@@ -389,6 +537,45 @@ mod tests {
         assert!(candidates.contains(&0));
         assert!(candidates.contains(&1));
         assert!(!candidates.contains(&2));
+    }
+
+    #[test]
+    fn all_layers_near_feature_covers_cross_layer_reference_candidates() {
+        let signal = copper_line("USB_D+", "F.Cu", [0.0, 0.0], [1.0, 0.0], 0.10);
+        let reference = copper_line("GND", "In1.Cu", [0.0, 0.1], [1.0, 0.1], 0.10);
+        let far_reference = copper_line("GND", "In1.Cu", [8.0, 0.0], [9.0, 0.0], 0.10);
+        let features = vec![&reference, &far_reference];
+        let index = CopperSpatialIndex::new(&features, 0.0);
+
+        let candidates = index.all_layers_near_feature(&signal, 0.0);
+
+        assert_eq!(candidates, vec![0]);
+    }
+
+    #[test]
+    fn layer_polygon_index_culls_sparse_bounds_and_excludes_self() {
+        let polygons = vec![
+            rect_polygon([0.0, 0.0], [1.0, 1.0], 0.0),
+            rect_polygon([1.08, 0.0], [1.0, 1.0], 0.0),
+            rect_polygon([100.0, 0.0], [1.0, 1.0], 0.0),
+        ];
+        let index = LayerPolygonSpatialIndex::new(&polygons, 0.10);
+
+        assert_eq!(index.candidates_near(0, 0.10), vec![1]);
+        assert_eq!(index.later_candidates_near(0, 0.10), vec![1]);
+        assert!(index.candidates_near(2, 0.10).is_empty());
+    }
+
+    #[test]
+    fn layer_polygon_index_accepts_external_query_polygons() {
+        let polygons = vec![
+            rect_polygon([0.0, 0.0], [1.0, 1.0], 0.0),
+            rect_polygon([50.0, 0.0], [1.0, 1.0], 0.0),
+        ];
+        let query = rect_polygon([0.8, 0.0], [0.2, 0.2], 0.0);
+        let index = LayerPolygonSpatialIndex::new(&polygons, 0.0);
+
+        assert_eq!(index.candidates_near_polygon(&query, 0.0), vec![0]);
     }
 
     #[test]

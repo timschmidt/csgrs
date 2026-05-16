@@ -20,6 +20,11 @@ use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbSketch};
 
 /// Run the `thermal_relief_readiness` design-readiness check or report helper.
+///
+/// Same-net zone candidates use the shared copper spatial index before exact
+/// pad/via-to-zone CSG intersection. This follows Ericson, *Real-Time Collision
+/// Detection* (2005): deterministic broad-phase culling first, exact geometry
+/// second, so sparse power/ground pours do not devolve into all-zone scans.
 pub fn thermal_relief_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -36,17 +41,19 @@ pub fn thermal_relief_readiness(
         .filter(|feature| feature.kind == CopperKind::Zone)
         .copied()
         .collect::<Vec<_>>();
-    log::trace!(
-        "thermal-relief readiness: source={} anchors={} zones={}",
-        board.source,
-        anchors.len(),
-        zones.len()
-    );
+    let zone_index = CopperSpatialIndex::new(&zones, 0.0);
     let mut violations = Vec::new();
+    let mut candidate_zones = 0usize;
 
-    for anchor in anchors {
-        for zone in &zones {
-            if anchor.layer != zone.layer || anchor.net.is_none() || anchor.net != zone.net {
+    for anchor in &anchors {
+        if anchor.net.is_none() {
+            continue;
+        }
+        let candidates = zone_index.same_layer_near_feature(anchor, 0.0);
+        candidate_zones += candidates.len();
+        for zone_index in candidates {
+            let zone = zones[zone_index];
+            if anchor.net != zone.net {
                 continue;
             }
 
@@ -70,11 +77,25 @@ pub fn thermal_relief_readiness(
             ));
         }
     }
+    log::trace!(
+        "thermal-relief readiness: source={} anchors={} zones={} zone_buckets={} candidate_zones={} violations={}",
+        board.source,
+        anchors.len(),
+        zones.len(),
+        zone_index.bucket_count(),
+        candidate_zones,
+        violations.len()
+    );
 
     violations
 }
 
 /// Run the `thermal_via_readiness` design-readiness check or report helper.
+///
+/// Same-layer via candidates use the shared copper spatial index before exact
+/// zone/via touch review. This keeps the check in the broad-phase/narrow-phase
+/// pattern from Ericson, *Real-Time Collision Detection* (2005), while still
+/// requiring exact CSG or boundary-distance confirmation before a via counts.
 pub fn thermal_via_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -82,12 +103,14 @@ pub fn thermal_via_readiness(
     anchor_tolerance: f64,
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
-    log::trace!(
-        "thermal-via readiness: source={} features={} minimum_vias={minimum_vias}",
-        board.source,
-        features.len()
-    );
+    let vias = features
+        .iter()
+        .copied()
+        .filter(|feature| feature.kind == CopperKind::Via)
+        .collect::<Vec<_>>();
+    let via_index = CopperSpatialIndex::new(&vias, anchor_tolerance);
     let mut violations = Vec::new();
+    let mut candidate_vias = 0usize;
 
     for zone in features
         .iter()
@@ -100,7 +123,10 @@ pub fn thermal_via_readiness(
             continue;
         }
 
-        let via_count = thermal_zone_vias(&features, zone, anchor_tolerance).len();
+        let (zone_vias, zone_candidate_vias) =
+            thermal_zone_vias_indexed(&vias, &via_index, zone, anchor_tolerance);
+        candidate_vias += zone_candidate_vias;
+        let via_count = zone_vias.len();
         if via_count >= minimum_vias {
             continue;
         }
@@ -117,6 +143,17 @@ pub fn thermal_via_readiness(
             )),
         ));
     }
+
+    log::trace!(
+        "thermal-via readiness: source={} features={} vias={} via_buckets={} candidate_vias={} minimum_vias={} violations={}",
+        board.source,
+        features.len(),
+        vias.len(),
+        via_index.bucket_count(),
+        candidate_vias,
+        minimum_vias,
+        violations.len()
+    );
 
     violations
 }
@@ -144,13 +181,14 @@ pub fn thermal_via_distribution_readiness(
     }
 
     let features = selected_copper_features(board, selected_layers);
-    log::trace!(
-        "thermal-via distribution readiness: source={} features={} minimum_vias={} minimum_spread={minimum_spread:.6}",
-        board.source,
-        features.len(),
-        minimum_vias
-    );
+    let vias = features
+        .iter()
+        .copied()
+        .filter(|feature| feature.kind == CopperKind::Via)
+        .collect::<Vec<_>>();
+    let via_index = CopperSpatialIndex::new(&vias, anchor_tolerance);
     let mut violations = Vec::new();
+    let mut candidate_vias = 0usize;
 
     for zone in features
         .iter()
@@ -163,15 +201,17 @@ pub fn thermal_via_distribution_readiness(
             continue;
         }
 
-        let vias = thermal_zone_vias(&features, zone, anchor_tolerance);
-        if vias.len() < minimum_vias {
+        let (zone_vias, zone_candidate_vias) =
+            thermal_zone_vias_indexed(&vias, &via_index, zone, anchor_tolerance);
+        candidate_vias += zone_candidate_vias;
+        if zone_vias.len() < minimum_vias {
             continue;
         }
-        let spread = maximum_point_spread(vias.iter().map(|via| via.location));
+        let spread = maximum_point_spread(zone_vias.iter().map(|via| via.location));
         log::trace!(
             "thermal-via distribution readiness: source={} zone_net={net} vias={} hull_points={} caliper_steps={} spread={:.6}",
             board.source,
-            vias.len(),
+            zone_vias.len(),
             spread.hull_points,
             spread.caliper_steps,
             spread.distance
@@ -186,19 +226,35 @@ pub fn thermal_via_distribution_readiness(
             vec![zone.layer.clone()],
             None,
             Vec::new(),
-            vias.iter().map(|via| via.location).collect(),
+            zone_vias.iter().map(|via| via.location).collect(),
             Some(format!(
                 "likely power or thermal zone {net} has {} parsed same-net vias but via-field spread {:.6} is below {minimum_spread:.6}; review thermal via distribution and heat spreading",
-                vias.len(),
+                zone_vias.len(),
                 spread.distance
             )),
         ));
     }
 
+    log::trace!(
+        "thermal-via distribution readiness: source={} features={} vias={} via_buckets={} candidate_vias={} minimum_vias={} minimum_spread={minimum_spread:.6} violations={}",
+        board.source,
+        features.len(),
+        vias.len(),
+        via_index.bucket_count(),
+        candidate_vias,
+        minimum_vias,
+        violations.len()
+    );
+
     violations
 }
 
 /// Run the `thermal_pad_via_readiness` design-readiness check or report helper.
+///
+/// Same-layer via candidates use `CopperSpatialIndex` before exact via/pad CSG
+/// intersection. The index is only a conservative broad phase, matching the
+/// Ericson, *Real-Time Collision Detection* (2005) pattern used across the
+/// readiness suite.
 pub fn thermal_pad_via_readiness(
     board: &BoardModel,
     selected_layers: &[String],
@@ -210,15 +266,11 @@ pub fn thermal_pad_via_readiness(
         .copied()
         .filter(|feature| feature.kind == CopperKind::Via)
         .collect::<Vec<_>>();
-    log::trace!(
-        "thermal-pad via readiness: source={} features={} vias={}",
-        board.source,
-        features.len(),
-        vias.len()
-    );
+    let via_index = CopperSpatialIndex::new(&vias, 0.0);
     let mut violations = Vec::new();
+    let mut candidate_vias = 0usize;
 
-    for pad in features {
+    for pad in &features {
         if pad.kind != CopperKind::Pad {
             continue;
         }
@@ -238,17 +290,17 @@ pub fn thermal_pad_via_readiness(
             continue;
         }
 
-        let has_same_net_via = vias
-            .iter()
-            .filter(|via| via.layer == pad.layer)
-            .filter(|via| via.net == pad.net)
-            .any(|via| {
-                !multipolygon_to_shapes(
+        let candidates = via_index.same_layer_near_feature(pad, 0.0);
+        candidate_vias += candidates.len();
+        let has_same_net_via = candidates.into_iter().any(|via_index| {
+            let via = vias[via_index];
+            via.net == pad.net
+                && !multipolygon_to_shapes(
                     &via.sketch.intersection(&pad.sketch).to_multipolygon(),
                     1.0e-9,
                 )
                 .is_empty()
-            });
+        });
         if has_same_net_via {
             continue;
         }
@@ -265,6 +317,15 @@ pub fn thermal_pad_via_readiness(
             )),
         ));
     }
+    log::trace!(
+        "thermal-pad via readiness: source={} features={} vias={} via_buckets={} candidate_vias={} violations={}",
+        board.source,
+        features.len(),
+        vias.len(),
+        via_index.bucket_count(),
+        candidate_vias,
+        violations.len()
+    );
 
     violations
 }
@@ -509,20 +570,23 @@ pub fn thermal_mechanical_keepout_readiness(
     violations
 }
 
-fn thermal_zone_vias<'a>(
-    features: &[&'a CopperFeature],
+fn thermal_zone_vias_indexed<'a>(
+    vias: &[&'a CopperFeature],
+    via_index: &CopperSpatialIndex<'a>,
     zone: &CopperFeature,
     anchor_tolerance: f64,
-) -> Vec<&'a CopperFeature> {
-    features
-        .iter()
-        .copied()
-        .filter(|feature| {
-            feature.kind == CopperKind::Via
-                && feature.net == zone.net
-                && copper_features_touch(feature, zone, anchor_tolerance)
+) -> (Vec<&'a CopperFeature>, usize) {
+    let candidates = via_index.same_layer_near_feature(zone, anchor_tolerance);
+    let candidate_count = candidates.len();
+    let zone_vias = candidates
+        .into_iter()
+        .filter_map(|via_index| {
+            let via = vias[via_index];
+            (via.net == zone.net && copper_features_touch(via, zone, anchor_tolerance))
+                .then_some(via)
         })
-        .collect()
+        .collect();
+    (zone_vias, candidate_count)
 }
 
 fn copper_features_touch(left: &CopperFeature, right: &CopperFeature, tolerance: f64) -> bool {
@@ -719,6 +783,38 @@ mod tests {
     }
 
     #[test]
+    fn thermal_via_distribution_culls_sparse_via_fields_per_zone() {
+        let mut copper = (0..2_000)
+            .map(|index| {
+                let x = 100.0 + (index % 100) as f64 * 3.0;
+                let y = (index / 100) as f64 * 3.0;
+                copper_disc("VOUT", CopperKind::Via, [x, y], 0.02)
+            })
+            .collect::<Vec<_>>();
+        copper.push(copper_rect(
+            "VOUT",
+            CopperKind::Zone,
+            "F.Cu",
+            -1.0,
+            -1.0,
+            1.0,
+            1.0,
+        ));
+        copper.push(copper_disc("VOUT", CopperKind::Via, [0.0, 0.0], 0.20));
+        copper.push(copper_disc("VOUT", CopperKind::Via, [0.25, 0.0], 0.20));
+        let board = board_with_copper(copper);
+
+        let started = std::time::Instant::now();
+        let violations = thermal_via_distribution_readiness(&board, &[], 2, 1.0, 0.10);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "thermal-via distribution should index sparse via fields before exact zone anchoring"
+        );
+    }
+
+    #[test]
     fn thermal_relief_readiness_reports_pad_embedded_in_same_net_zone() {
         let board = board_with_copper(vec![
             copper_disc("GND", CopperKind::Pad, [0.0, 0.0], 0.5),
@@ -729,6 +825,40 @@ mod tests {
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "thermal-relief-readiness");
+    }
+
+    #[test]
+    fn thermal_relief_readiness_culls_sparse_zone_fields() {
+        let mut copper = sparse_rects("GND", CopperKind::Zone, 2_000, 100.0);
+        copper.push(copper_disc("GND", CopperKind::Pad, [0.0, 0.0], 0.5));
+        copper.push(copper_rect(
+            "GND",
+            CopperKind::Zone,
+            "F.Cu",
+            -1.0,
+            -1.0,
+            1.0,
+            1.0,
+        ));
+        copper.push(copper_rect(
+            "GND",
+            CopperKind::Zone,
+            "B.Cu",
+            -1.0,
+            -1.0,
+            1.0,
+            1.0,
+        ));
+        let board = board_with_copper(copper);
+
+        let started = std::time::Instant::now();
+        let violations = thermal_relief_readiness(&board, &[], 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "thermal relief should index sparse same-layer zones before exact intersection"
+        );
     }
 
     #[test]
@@ -750,6 +880,36 @@ mod tests {
     }
 
     #[test]
+    fn thermal_via_readiness_culls_sparse_via_fields_per_zone() {
+        let mut copper = (0..2_000)
+            .map(|index| {
+                let x = 100.0 + (index % 100) as f64 * 3.0;
+                let y = (index / 100) as f64 * 3.0;
+                copper_disc("VDD_3V3", CopperKind::Via, [x, y], 0.02)
+            })
+            .collect::<Vec<_>>();
+        copper.push(copper_rect(
+            "VDD_3V3",
+            CopperKind::Zone,
+            "F.Cu",
+            -1.0,
+            -1.0,
+            1.0,
+            1.0,
+        ));
+        let board = board_with_copper(copper);
+
+        let started = std::time::Instant::now();
+        let violations = thermal_via_readiness(&board, &[], 2, 0.10);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "thermal-via readiness should index sparse via fields before exact zone anchoring"
+        );
+    }
+
+    #[test]
     fn thermal_pad_via_readiness_reports_large_power_or_ground_pads_without_vias() {
         let board = board_with_copper(vec![copper_rect(
             "GND",
@@ -765,6 +925,36 @@ mod tests {
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "thermal-pad-via-readiness");
+    }
+
+    #[test]
+    fn thermal_pad_via_readiness_culls_sparse_via_fields() {
+        let mut copper = (0..2_000)
+            .map(|index| {
+                let x = 100.0 + (index % 100) as f64 * 3.0;
+                let y = (index / 100) as f64 * 3.0;
+                copper_disc("GND", CopperKind::Via, [x, y], 0.20)
+            })
+            .collect::<Vec<_>>();
+        copper.push(copper_rect(
+            "GND",
+            CopperKind::Pad,
+            "F.Cu",
+            -1.5,
+            -1.5,
+            1.5,
+            1.5,
+        ));
+        let board = board_with_copper(copper);
+
+        let started = std::time::Instant::now();
+        let violations = thermal_pad_via_readiness(&board, &[], 2.0);
+
+        assert_eq!(violations.len(), 1);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(2),
+            "thermal-pad via should index sparse via fields before exact pad overlap review"
+        );
     }
 
     #[test]

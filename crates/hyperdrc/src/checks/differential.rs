@@ -13,7 +13,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use geo::BoundingRect;
 
 use super::distance::polygon_boundary_distance;
-use super::spatial::PointSpatialIndex;
+use super::spatial::{CopperSpatialIndex, PointSpatialIndex};
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
 
@@ -454,16 +454,19 @@ pub fn differential_pair_via_return_readiness(
 /// and Techniques, 1984, shows why pair-to-pair coupling deserves separate
 /// review from simple same-net clearance. This readiness check is deliberately
 /// conservative: it infers pair membership from common suffixes, performs a
-/// sorted axis-aligned bounding-box broad phase, then measures exact polygon
-/// boundary distance for nearby features. The broad/narrow phase follows the
+/// shared copper spatial broad phase, then measures exact polygon boundary
+/// distance for nearby features. The broad/narrow phase follows the
 /// collision-query pattern described by Lin and Canny, "A Fast Algorithm for
-/// Incremental Distance Calculation", IEEE ICRA, 1991.
+/// Incremental Distance Calculation", IEEE ICRA, 1991, and keeps sparse
+/// differential-pair fields from devolving into all-pairs comparisons.
 pub fn differential_pair_to_pair_spacing_readiness(
     board: &BoardModel,
     selected_layers: &[String],
     minimum_pair_to_pair_gap: f64,
 ) -> Vec<Violation> {
-    let mut by_layer = BTreeMap::<String, Vec<PairFeature<'_>>>::new();
+    let mut features = Vec::new();
+    let mut pairs = Vec::new();
+    let mut bounds = Vec::new();
     for feature in selected_copper_features(board, selected_layers) {
         if feature.kind == CopperKind::Via {
             continue;
@@ -474,81 +477,82 @@ pub fn differential_pair_to_pair_spacing_readiness(
         let Some((pair, _side)) = differential_pair_key(net) else {
             continue;
         };
-        let Some(bounds) = feature.sketch.geometry.bounding_rect() else {
+        let Some(feature_bounds) = feature.sketch.geometry.bounding_rect() else {
             continue;
         };
-        by_layer
-            .entry(feature.layer.clone())
-            .or_default()
-            .push(PairFeature {
-                feature,
-                pair,
-                bounds,
-            });
+        features.push(feature);
+        pairs.push(pair);
+        bounds.push(feature_bounds);
     }
-    for features in by_layer.values_mut() {
-        features.sort_by(|left, right| {
-            left.bounds
-                .min()
-                .x
-                .total_cmp(&right.bounds.min().x)
-                .then(left.bounds.min().y.total_cmp(&right.bounds.min().y))
-        });
-    }
+    let feature_index = CopperSpatialIndex::new(&features, minimum_pair_to_pair_gap);
     log::trace!(
-        "differential pair-to-pair spacing readiness: source={} layers={} selected_layers={} threshold={:.6}",
+        "differential pair-to-pair spacing readiness: source={} features={} buckets={} selected_layers={} threshold={:.6}",
         board.source,
-        by_layer.len(),
+        features.len(),
+        feature_index.bucket_count(),
         selected_layers.len(),
         minimum_pair_to_pair_gap
     );
 
     let mut seen_pairs = BTreeSet::<(String, String, String)>::new();
+    let mut candidate_pairs = 0_usize;
+    let mut exact_pairs = 0_usize;
     let mut violations = Vec::new();
-    for (layer, features) in by_layer {
-        for left_index in 0..features.len() {
-            let left = &features[left_index];
-            for right in &features[(left_index + 1)..] {
-                if right.bounds.min().x - left.bounds.max().x > minimum_pair_to_pair_gap {
-                    break;
-                }
-                if left.pair == right.pair
-                    || !expanded_rects_overlap(
-                        &left.bounds,
-                        &right.bounds,
-                        minimum_pair_to_pair_gap,
-                    )
-                {
-                    continue;
-                }
 
-                let gap = polygon_boundary_distance(
-                    &left.feature.sketch.to_multipolygon(),
-                    &right.feature.sketch.to_multipolygon(),
-                );
-                if !gap.is_finite() || gap > minimum_pair_to_pair_gap {
-                    continue;
-                }
-
-                let (first_pair, second_pair) = ordered_pair_names(&left.pair, &right.pair);
-                if !seen_pairs.insert((layer.clone(), first_pair.clone(), second_pair.clone())) {
-                    continue;
-                }
-
-                violations.push(Violation::new(
-                    "differential-pair-to-pair-spacing-readiness",
-                    Severity::Warning,
-                    vec![layer.clone()],
-                    None,
-                    Vec::new(),
-                    vec![left.feature.location, right.feature.location],
-                    Some(format!(
-                        "likely differential pairs {first_pair} and {second_pair} have pair-to-pair copper spacing {gap:.6} on {layer}, below review threshold {minimum_pair_to_pair_gap:.6}; review crosstalk, impedance, and routing constraints"
-                    )),
-                ));
+    for left_index in 0..features.len() {
+        let left = features[left_index];
+        for right_index in feature_index.same_layer_near_feature(left, minimum_pair_to_pair_gap) {
+            if right_index <= left_index {
+                continue;
             }
+            candidate_pairs += 1;
+            if pairs[left_index] == pairs[right_index]
+                || !expanded_rects_overlap(
+                    &bounds[left_index],
+                    &bounds[right_index],
+                    minimum_pair_to_pair_gap,
+                )
+            {
+                continue;
+            }
+            exact_pairs += 1;
+            let right = features[right_index];
+            let gap = polygon_boundary_distance(
+                &left.sketch.to_multipolygon(),
+                &right.sketch.to_multipolygon(),
+            );
+            if !gap.is_finite() || gap > minimum_pair_to_pair_gap {
+                continue;
+            }
+
+            let (first_pair, second_pair) =
+                ordered_pair_names(&pairs[left_index], &pairs[right_index]);
+            if !seen_pairs.insert((left.layer.clone(), first_pair.clone(), second_pair.clone())) {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "differential-pair-to-pair-spacing-readiness",
+                Severity::Warning,
+                vec![left.layer.clone()],
+                None,
+                Vec::new(),
+                vec![left.location, right.location],
+                Some(format!(
+                    "likely differential pairs {first_pair} and {second_pair} have pair-to-pair copper spacing {gap:.6} on {}, below review threshold {minimum_pair_to_pair_gap:.6}; review crosstalk, impedance, and routing constraints",
+                    left.layer
+                )),
+            ));
         }
     }
+
+    log::trace!(
+        "differential pair-to-pair spacing readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
+        board.source,
+        candidate_pairs,
+        exact_pairs,
+        violations.len()
+    );
 
     violations
 }
@@ -557,12 +561,6 @@ pub fn differential_pair_to_pair_spacing_readiness(
 enum DifferentialSide {
     Positive,
     Negative,
-}
-
-struct PairFeature<'a> {
-    feature: &'a CopperFeature,
-    pair: String,
-    bounds: geo::Rect<f64>,
 }
 
 #[derive(Default)]
@@ -1267,11 +1265,17 @@ mod tests {
         }
         let board = board_with_copper(copper);
 
+        let started = std::time::Instant::now();
         let violations = differential_pair_to_pair_spacing_readiness(&board, &[], 0.20);
+        let elapsed = started.elapsed();
 
         assert!(
             violations.is_empty(),
             "pair-to-pair checks should cull distant pair features by bounds"
+        );
+        assert!(
+            elapsed < std::time::Duration::from_secs(2),
+            "sparse pair-to-pair field should stay in the spatial-index fast path, took {elapsed:?}"
         );
     }
 

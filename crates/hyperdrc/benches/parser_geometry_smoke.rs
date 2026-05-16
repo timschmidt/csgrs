@@ -4,37 +4,50 @@ use hyperdrc::LayerMetadata;
 use hyperdrc::baseline::report_to_waiver_stubs;
 use hyperdrc::checks::{
     FileArtifact, TextArtifact, antenna_copper_keepout_readiness, apply_ipc356_nets,
-    castellation_pitch_readiness, chassis_stitching_readiness, component_hole_clearance_readiness,
-    component_spacing_readiness, connector_return_path_readiness,
-    connector_rework_clearance_readiness, decoupling_proximity_readiness,
-    dense_pad_escape_readiness, dense_pad_mask_bridge_readiness, dense_pad_via_spacing_readiness,
+    board_edge_exposure, board_outline_drill_clearance, castellation_pitch_readiness,
+    chassis_stitching_readiness, component_edge_clearance_readiness,
+    component_hole_clearance_readiness, component_spacing_readiness,
+    conformal_coating_keepout_readiness, connector_return_path_readiness,
+    connector_rework_clearance_readiness, controlled_impedance_readiness, copper_net_intent,
+    copper_width_readiness, decoupling_proximity_readiness, dense_pad_escape_readiness,
+    dense_pad_mask_bridge_readiness, dense_pad_via_spacing_readiness,
     different_net_short_readiness, differential_pair_neckdown_readiness,
-    differential_pair_return_readiness, differential_pair_skew_readiness,
+    differential_pair_readiness, differential_pair_return_readiness,
+    differential_pair_skew_readiness, differential_pair_spacing_readiness,
     differential_pair_to_pair_spacing_readiness, differential_pair_via_proximity_readiness,
     differential_pair_via_return_readiness, differential_pair_width_readiness, drill_spacing,
     drill_table_consistency, drill_to_copper_clearance, duplicate_layer_geometry_readiness,
     duplicate_layer_island_readiness, edge_plating_intent_readiness, edge_stitching_readiness,
-    esd_protection_readiness, esd_return_path_readiness, fiducial_keepout_readiness,
-    gold_finger_drill_keepout_readiness, gold_finger_spacing_readiness,
-    hot_component_spacing_readiness, inductor_copper_keepout_readiness, ipc356_coverage,
-    ipc356_drill_diameter, local_copper_density_readiness, local_fiducial_readiness,
+    esd_protection_readiness, esd_return_path_readiness, exposed_copper,
+    fiducial_keepout_readiness, fiducial_readiness, gold_finger_drill_keepout_readiness,
+    gold_finger_spacing_readiness, high_current_readiness, high_speed_edge_readiness,
+    high_voltage_edge_readiness, hot_component_spacing_readiness,
+    inductor_copper_keepout_readiness, ipc356_coverage, ipc356_drill_diameter,
+    local_copper_density_readiness, local_fiducial_readiness, mask_island_keepout,
     min_copper_neck_width, mixed_signal_partition_readiness,
     mounting_hole_copper_keepout_readiness, mounting_hole_distribution_readiness,
     mounting_hole_edge_clearance_readiness, mounting_hole_grounding_readiness,
-    mounting_hole_plating_intent_readiness, mounting_hole_spacing_readiness,
-    net_constraint_readiness, pad_pair_asymmetry_readiness, plane_clearance_readiness,
-    power_pad_entry_readiness, power_via_array_readiness, power_via_return_readiness,
-    press_fit_keepout_readiness, production_artifact_readiness, protective_earth_spacing_readiness,
-    return_path_proximity_readiness, return_path_readiness, rf_keepout_readiness,
-    rf_via_fence_readiness, same_net_drill_break_readiness, same_net_island_readiness,
-    selective_wave_solder_keepout_readiness, sensitive_net_spacing_readiness,
-    sensitive_return_readiness, skinny_layer_feature_readiness, split_plane_crossing_readiness,
-    surge_protection_keepout_readiness, switch_node_keepout_readiness, teardrop_readiness,
-    testpoint_accessibility_readiness, testpoint_copper_clearance_readiness,
+    mounting_hole_plating_intent_readiness, mounting_hole_spacing_readiness, mouse_bite_readiness,
+    net_constraint_readiness, net_spacing, orphaned_zone_readiness, pad_pair_asymmetry_readiness,
+    panelization_clearance, paste_aperture_coverage, paste_aperture_ratio, paste_aperture_spacing,
+    paste_mask_alignment, paste_overhang, paste_via_exposure_readiness, plane_clearance_readiness,
+    plating_intent, power_pad_entry_readiness, power_via_array_readiness,
+    power_via_return_readiness, press_fit_keepout_readiness, production_artifact_readiness,
+    protective_earth_spacing_readiness, reference_plane_readiness, reference_plane_void_readiness,
+    registration_tolerance, return_path_proximity_readiness, return_path_readiness,
+    rf_keepout_readiness, rf_via_fence_readiness, same_net_drill_break_readiness,
+    same_net_island_readiness, selective_wave_solder_keepout_readiness,
+    sensitive_net_spacing_readiness, sensitive_return_readiness, silkscreen_clearance,
+    silkscreen_overlap, skinny_layer_feature_readiness, solder_mask_expansion,
+    solder_mask_opening_coverage, solder_mask_opening_spacing, solder_mask_overlap_clearance,
+    split_plane_crossing_readiness, surge_protection_keepout_readiness,
+    switch_node_keepout_readiness, teardrop_readiness, testpoint_accessibility_readiness,
+    testpoint_copper_clearance_readiness, testpoint_coverage_readiness,
     thermal_copper_area_readiness, thermal_mechanical_keepout_readiness,
-    thermal_via_distribution_readiness, tiny_layer_feature_readiness,
-    tombstone_paste_imbalance_readiness, trace_junction_acid_trap_readiness, via_in_pad_readiness,
-    voltage_clearance_readiness,
+    thermal_pad_paste_windowpane_readiness, thermal_pad_via_readiness, thermal_relief_readiness,
+    thermal_via_distribution_readiness, thermal_via_readiness, tiny_layer_feature_readiness,
+    tombstone_paste_imbalance_readiness, tooling_hole_readiness,
+    trace_junction_acid_trap_readiness, via_in_pad_readiness, voltage_clearance_readiness,
 };
 use hyperdrc::constraint_policy::{DifferentialRole, NetClassConfig};
 use hyperdrc::geometry::{circle_polygon, line_polygon, polygons_to_sketch, rect_polygon};
@@ -179,6 +192,206 @@ fn main() {
             let _ = local_copper_density_readiness(&density_layers, 10.0, 3.0, 1.0e-9);
         }
     });
+    let sparse_copper_intent_board = BoardModel {
+        source: "bench".to_string(),
+        copper: (0..2_000)
+            .map(|index| {
+                let x = index as f64 * 2.0;
+                bench_segment("SIG", [x, 0.0], [x + 1.0, 0.0], 0.16)
+            })
+            .chain([
+                bench_segment("NARROW", [0.0, 2.0], [1.0, 2.0], 0.08),
+                bench_unnetted_pad([2.0, 2.0], [0.30, 0.30]),
+            ])
+            .collect(),
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let copper_width_elapsed = time("copper_width_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = copper_width_readiness(&sparse_copper_intent_board, &[], 0.12);
+        }
+    });
+    let copper_net_intent_elapsed = time("copper_net_intent_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = copper_net_intent(&sparse_copper_intent_board, &[]);
+        }
+    });
+    let sparse_apertures = polygons_to_sketch(
+        (0..2_000)
+            .map(|index| rect_polygon([100.0 + index as f64 * 3.0, 10.0], [0.5, 0.5], 0.0))
+            .chain([
+                rect_polygon([0.5, 0.5], [1.0, 1.0], 0.0),
+                rect_polygon([1.55, 0.5], [1.0, 1.0], 0.0),
+            ])
+            .collect(),
+        Some(LayerMetadata {
+            name: "bench sparse apertures".to_string(),
+        }),
+    );
+    let paste_spacing_sparse_elapsed = time("paste_aperture_spacing_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ =
+                paste_aperture_spacing("bench sparse apertures", &sparse_apertures, 0.10, 1.0e-9);
+        }
+    });
+    let sparse_ratio_copper = polygons_to_sketch(
+        vec![rect_polygon([0.5, 0.5], [1.0, 1.0], 0.0)],
+        Some(LayerMetadata {
+            name: "bench sparse ratio copper".to_string(),
+        }),
+    );
+    let sparse_cover_copper = polygons_to_sketch(
+        (0..2_000)
+            .map(|index| rect_polygon([100.0 + index as f64 * 3.0, 10.0], [0.5, 0.5], 0.0))
+            .chain([rect_polygon([0.4, 0.5], [0.8, 1.0], 0.0)])
+            .collect(),
+        Some(LayerMetadata {
+            name: "bench sparse cover copper".to_string(),
+        }),
+    );
+    let paste_ratio_sparse_elapsed = time("paste_aperture_ratio_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = paste_aperture_ratio(
+                "bench sparse apertures",
+                &sparse_apertures,
+                "bench sparse ratio copper",
+                &sparse_ratio_copper,
+                0.50,
+                1.20,
+                1.0e-9,
+            );
+        }
+    });
+    let paste_coverage_sparse_elapsed = time("paste_aperture_coverage_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = paste_aperture_coverage(
+                "bench sparse apertures",
+                &sparse_apertures,
+                "bench sparse ratio copper",
+                &sparse_ratio_copper,
+                1.0e-9,
+            );
+        }
+    });
+    let paste_overhang_sparse_elapsed = time("paste_overhang_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = paste_overhang(
+                "bench sparse apertures",
+                &sparse_ratio_copper,
+                "bench sparse cover copper",
+                &sparse_cover_copper,
+                0.0,
+                1.0e-9,
+            );
+        }
+    });
+    let mask_coverage_sparse_elapsed = time("solder_mask_opening_coverage_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = solder_mask_opening_coverage(
+                "bench sparse ratio copper",
+                &sparse_ratio_copper,
+                "bench sparse apertures",
+                &sparse_apertures,
+                1.0e-9,
+            );
+        }
+    });
+    let exposed_copper_sparse_elapsed = time("exposed_copper_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = exposed_copper(
+                "bench sparse ratio copper",
+                &sparse_ratio_copper,
+                "bench sparse apertures",
+                &sparse_apertures,
+                1.0e-9,
+            );
+        }
+    });
+    let mask_expansion_sparse_elapsed = time("solder_mask_expansion_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = solder_mask_expansion(
+                "bench sparse cover copper",
+                &sparse_cover_copper,
+                "bench sparse apertures",
+                &sparse_ratio_copper,
+                0.10,
+                1.0e-9,
+            );
+        }
+    });
+    let paste_mask_alignment_sparse_elapsed = time("paste_mask_alignment_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = paste_mask_alignment(
+                "bench sparse apertures",
+                &sparse_ratio_copper,
+                "bench sparse apertures",
+                &sparse_apertures,
+                1.0e-9,
+            );
+        }
+    });
+    let mask_overlap_clearance_sparse_elapsed =
+        time("solder_mask_overlap_clearance_sparse_1k", || {
+            for _ in 0..1_000 {
+                let _ = solder_mask_overlap_clearance(
+                    "bench sparse ratio copper",
+                    &sparse_ratio_copper,
+                    "bench sparse apertures",
+                    &sparse_apertures,
+                    0.10,
+                    1.0e-9,
+                );
+            }
+        });
+    let mask_spacing_sparse_elapsed = time("solder_mask_opening_spacing_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = solder_mask_opening_spacing(
+                "bench sparse apertures",
+                &sparse_apertures,
+                0.10,
+                1.0e-9,
+            );
+        }
+    });
+    let mask_island_sparse_elapsed = time("mask_island_keepout_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = mask_island_keepout("bench sparse apertures", &sparse_apertures, 0.10, 1.0e-9);
+        }
+    });
+    let sparse_silk = polygons_to_sketch(
+        vec![
+            line_polygon([-0.2, 0.5], [1.2, 0.5], 0.08)
+                .expect("benchmark silkscreen line should be valid"),
+        ],
+        Some(LayerMetadata {
+            name: "bench sparse silk".to_string(),
+        }),
+    );
+    let silkscreen_overlap_sparse_elapsed = time("silkscreen_overlap_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = silkscreen_overlap(
+                "bench sparse silk",
+                &sparse_silk,
+                "bench sparse apertures",
+                &sparse_apertures,
+                1.0e-9,
+            );
+        }
+    });
+    let silkscreen_clearance_sparse_elapsed = time("silkscreen_clearance_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = silkscreen_clearance(
+                "bench sparse silk",
+                &sparse_silk,
+                "bench sparse apertures",
+                &sparse_apertures,
+                0.10,
+                1.0e-9,
+            );
+        }
+    });
     let tombstone_copper = polygons_to_sketch(
         (0..1_000)
             .map(|index| {
@@ -216,6 +429,61 @@ fn main() {
             );
         }
     });
+    let paste_via_sparse_board = BoardModel {
+        source: "bench".to_string(),
+        copper: vec![bench_via("GND", [0.0, 0.0], 0.20)],
+        drills: vec![DrillFeature {
+            location: [0.0, 0.0],
+            diameter: 0.20,
+            net: Some("GND".to_string()),
+            plated: true,
+        }],
+        board_outline: None,
+        panel_features: None,
+    };
+    let paste_via_sparse_paste = polygons_to_sketch(
+        (0..2_000)
+            .map(|index| {
+                let x = 100.0 + index as f64 * 5.0;
+                rect_polygon([x + 0.5, 0.5], [1.0, 1.0], 0.0)
+            })
+            .chain([rect_polygon([0.0, 0.0], [0.4, 0.4], 0.0)])
+            .collect(),
+        Some(LayerMetadata {
+            name: "bench paste via sparse paste".to_string(),
+        }),
+    );
+    let thermal_pad_windowpane_copper = polygons_to_sketch(
+        vec![rect_polygon([0.0, 0.0], [4.0, 4.0], 0.0)],
+        Some(LayerMetadata {
+            name: "bench thermal copper".to_string(),
+        }),
+    );
+    let paste_via_elapsed = time("paste_via_exposure_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = paste_via_exposure_readiness(
+                "bench paste via sparse paste",
+                &paste_via_sparse_paste,
+                &paste_via_sparse_board,
+                &[],
+                1.0e-9,
+            );
+        }
+    });
+    let thermal_pad_windowpane_sparse_elapsed =
+        time("thermal_pad_paste_windowpane_sparse_1k", || {
+            for _ in 0..1_000 {
+                let _ = thermal_pad_paste_windowpane_readiness(
+                    "bench paste via sparse paste",
+                    &paste_via_sparse_paste,
+                    "bench thermal copper",
+                    &thermal_pad_windowpane_copper,
+                    4.0,
+                    0.65,
+                    1.0e-9,
+                );
+            }
+        });
     let net_constraint_classes = vec![NetClassConfig {
         name: "bench-power".to_string(),
         nets: vec!["VBUS".to_string()],
@@ -295,6 +563,59 @@ fn main() {
                 std::slice::from_ref(&net_constraint_pair_board),
                 &[],
             );
+        }
+    });
+    let different_net_spacing_board = BoardModel {
+        source: "bench".to_string(),
+        copper: (0..2_000)
+            .map(|index| {
+                bench_pad(
+                    &format!("SIG{index}"),
+                    [100.0 + index as f64 * 2.0, 100.0],
+                    [0.10, 0.10],
+                )
+            })
+            .chain([
+                bench_pad("A", [0.0, 0.0], [0.20, 0.20]),
+                bench_pad("B", [0.25, 0.0], [0.20, 0.20]),
+            ])
+            .collect(),
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let different_net_spacing_elapsed = time("different_net_spacing_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = net_spacing(&different_net_spacing_board, 0.10, &[], 1.0e-9);
+        }
+    });
+    let registration_board = BoardModel {
+        source: "bench".to_string(),
+        copper: (0..1_000)
+            .flat_map(|index| {
+                let location = [100.0 + index as f64 * 2.0, 100.0];
+                [
+                    bench_pad_on_layer("F.Cu", &format!("F{index}"), location, [0.10, 0.10]),
+                    bench_pad_on_layer(
+                        "B.Cu",
+                        &format!("B{index}"),
+                        [location[0] + 0.8, location[1] + 0.8],
+                        [0.10, 0.10],
+                    ),
+                ]
+            })
+            .chain([
+                bench_pad_on_layer("F.Cu", "F_NEAR", [0.0, 0.0], [0.20, 0.20]),
+                bench_pad_on_layer("B.Cu", "B_NEAR", [0.25, 0.0], [0.20, 0.20]),
+            ])
+            .collect(),
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let registration_elapsed = time("registration_tolerance_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = registration_tolerance(&registration_board, 0.10, 1.0e-9);
         }
     });
 
@@ -428,10 +749,62 @@ fn main() {
             let _ = dense_pad_via_spacing_readiness(&dense_pad_board, &[], 0.8, 2.0, 0.15, 1.0e-9);
         }
     });
+    let dense_pad_via_sparse_pads_board = BoardModel {
+        source: "bench".to_string(),
+        copper: (0..2_000)
+            .map(|index| {
+                bench_pad(
+                    &format!("P{index}"),
+                    [(index % 50) as f64 * 0.5, (index / 50) as f64 * 0.5],
+                    [0.20, 0.20],
+                )
+            })
+            .chain([bench_via("ESC_NEAR", [0.32, 0.0], 0.20)])
+            .collect(),
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let dense_pad_via_sparse_pads_elapsed = time("dense_pad_via_spacing_sparse_pads_1k", || {
+        for _ in 0..1_000 {
+            let _ = dense_pad_via_spacing_readiness(
+                &dense_pad_via_sparse_pads_board,
+                &[],
+                0.8,
+                25.0,
+                0.15,
+                1.0e-9,
+            );
+        }
+    });
 
     let dense_pad_mask_elapsed = time("dense_pad_mask_bridge_10k", || {
         for _ in 0..10_000 {
             let _ = dense_pad_mask_bridge_readiness(&dense_pad_board, &[], 0.8, 0.10);
+        }
+    });
+    let dense_pad_mask_sparse_board = BoardModel {
+        source: "bench".to_string(),
+        copper: (0..2_000)
+            .map(|index| {
+                bench_pad(
+                    &format!("P{index}"),
+                    [
+                        100.0 + (index % 50) as f64 * 1.0,
+                        100.0 + (index / 50) as f64 * 1.0,
+                    ],
+                    [0.25, 0.25],
+                )
+            })
+            .chain(bench_dense_pad_cluster_with_size(0.45))
+            .collect(),
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let dense_pad_mask_sparse_elapsed = time("dense_pad_mask_bridge_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = dense_pad_mask_bridge_readiness(&dense_pad_mask_sparse_board, &[], 0.8, 0.10);
         }
     });
 
@@ -453,6 +826,35 @@ fn main() {
     let component_spacing_elapsed = time("component_spacing_1k", || {
         for _ in 0..1_000 {
             let _ = component_spacing_readiness(&assembly_sparse_board, &[], 0.25, 0.5);
+        }
+    });
+    let component_edge_board = BoardModel {
+        source: "bench".to_string(),
+        copper: (0..2_000)
+            .map(|index| {
+                bench_pad(
+                    &format!("U{index}_IO"),
+                    [
+                        20.0 + (index % 80) as f64 * 2.0,
+                        20.0 + (index / 80) as f64 * 2.0,
+                    ],
+                    [0.3, 0.3],
+                )
+            })
+            .chain([bench_pad("U_NEAR", [0.65, 100.0], [0.3, 0.3])])
+            .collect(),
+        drills: Vec::new(),
+        board_outline: Some(polygons_to_sketch(
+            vec![rect_polygon([100.0, 100.0], [200.0, 200.0], 0.0)],
+            Some(LayerMetadata {
+                name: "bench component edge outline".to_string(),
+            }),
+        )),
+        panel_features: None,
+    };
+    let component_edge_elapsed = time("component_edge_clearance_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = component_edge_clearance_readiness(&component_edge_board, &[], 0.5);
         }
     });
     let component_hole_board = BoardModel {
@@ -549,6 +951,89 @@ fn main() {
             let _ = edge_stitching_readiness(&edge_stitching_sparse_board, &[], 0.50, 0.30, 1.0e-9);
         }
     });
+    let rectangular_edge_board = BoardModel {
+        source: "bench".to_string(),
+        copper: (0..2_000)
+            .map(|index| {
+                bench_pad(
+                    &format!("SIG{index}"),
+                    [
+                        5.0 + (index % 50) as f64 * 1.5,
+                        5.0 + (index / 50) as f64 * 1.5,
+                    ],
+                    [0.30, 0.30],
+                )
+            })
+            .chain([bench_pad("EDGE", [99.95, 50.0], [0.30, 0.30])])
+            .collect(),
+        drills: Vec::new(),
+        board_outline: Some(polygons_to_sketch(
+            vec![rect_polygon([50.0, 50.0], [100.0, 100.0], 0.0)],
+            Some(LayerMetadata {
+                name: "bench rectangular edge outline".to_string(),
+            }),
+        )),
+        panel_features: None,
+    };
+    let board_edge_exposure_elapsed = time("board_edge_exposure_rect_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = board_edge_exposure(&rectangular_edge_board, &[], 1.0e-9);
+        }
+    });
+    let rectangular_high_speed_edge_board = BoardModel {
+        source: "bench".to_string(),
+        copper: (0..2_000)
+            .map(|index| {
+                let y = 5.0 + (index / 50) as f64 * 1.5;
+                let x = 5.0 + (index % 50) as f64 * 1.5;
+                bench_segment(&format!("USB_D{index}_P"), [x, y], [x + 0.5, y], 0.10)
+            })
+            .chain([bench_segment("PCIE_RX0", [0.10, 50.0], [0.90, 50.0], 0.10)])
+            .collect(),
+        drills: Vec::new(),
+        board_outline: Some(polygons_to_sketch(
+            vec![rect_polygon([50.0, 50.0], [100.0, 100.0], 0.0)],
+            Some(LayerMetadata {
+                name: "bench rectangular high-speed edge outline".to_string(),
+            }),
+        )),
+        panel_features: None,
+    };
+    let high_speed_edge_elapsed = time("high_speed_edge_rect_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ =
+                high_speed_edge_readiness(&rectangular_high_speed_edge_board, &[], 0.50, 1.0e-9);
+        }
+    });
+    let rectangular_high_voltage_edge_board = BoardModel {
+        source: "bench".to_string(),
+        copper: (0..2_000)
+            .map(|index| {
+                let y = 5.0 + (index / 50) as f64 * 1.5;
+                let x = 5.0 + (index % 50) as f64 * 1.5;
+                bench_segment(&format!("HV_BUS_{index}"), [x, y], [x + 0.5, y], 0.10)
+            })
+            .chain([bench_segment("MAINS_L", [0.20, 50.0], [1.0, 50.0], 0.10)])
+            .collect(),
+        drills: Vec::new(),
+        board_outline: Some(polygons_to_sketch(
+            vec![rect_polygon([50.0, 50.0], [100.0, 100.0], 0.0)],
+            Some(LayerMetadata {
+                name: "bench rectangular high-voltage edge outline".to_string(),
+            }),
+        )),
+        panel_features: None,
+    };
+    let high_voltage_edge_elapsed = time("high_voltage_edge_rect_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = high_voltage_edge_readiness(
+                &rectangular_high_voltage_edge_board,
+                &[],
+                0.80,
+                1.0e-9,
+            );
+        }
+    });
     let chassis_stitching_sparse_board = BoardModel {
         source: "bench".to_string(),
         copper: (0..2_000)
@@ -611,6 +1096,33 @@ fn main() {
             let _ = fiducial_keepout_readiness(&fiducial_keepout_board, &[], 0.25, 1.0e-9);
         }
     });
+    let fiducial_edge_board = BoardModel {
+        source: "bench".to_string(),
+        copper: (0..2_000)
+            .map(|index| {
+                bench_fiducial(
+                    [
+                        20.0 + (index % 80) as f64 * 2.0,
+                        20.0 + (index / 80) as f64 * 2.0,
+                    ],
+                    0.5,
+                )
+            })
+            .collect(),
+        drills: Vec::new(),
+        board_outline: Some(polygons_to_sketch(
+            vec![rect_polygon([100.0, 100.0], [200.0, 200.0], 0.0)],
+            Some(LayerMetadata {
+                name: "bench fiducial outline".to_string(),
+            }),
+        )),
+        panel_features: None,
+    };
+    let fiducial_edge_elapsed = time("fiducial_edge_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = fiducial_readiness(&fiducial_edge_board, &[], 1.0);
+        }
+    });
     let process_keepout_board = BoardModel {
         source: "bench".to_string(),
         copper: (0..400)
@@ -650,6 +1162,112 @@ fn main() {
             let _ = press_fit_keepout_readiness(&process_keepout_board, &[], 0.35, 1.0e-9);
         }
     });
+    let mouse_bite_drills = (0..1_000)
+        .flat_map(|index| {
+            let x = index as f64 * 10.0;
+            [
+                DrillFeature {
+                    location: [x, 0.0],
+                    diameter: 0.30,
+                    net: None,
+                    plated: false,
+                },
+                DrillFeature {
+                    location: [x + 0.70, 0.0],
+                    diameter: 0.30,
+                    net: None,
+                    plated: false,
+                },
+            ]
+        })
+        .chain([DrillFeature {
+            location: [50_000.0, 0.0],
+            diameter: 0.30,
+            net: None,
+            plated: false,
+        }])
+        .collect::<Vec<_>>();
+    let mouse_bite_board = BoardModel {
+        source: "bench".to_string(),
+        copper: Vec::new(),
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let mouse_bite_elapsed = time("mouse_bite_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = mouse_bite_readiness(
+                &mouse_bite_board,
+                &mouse_bite_drills,
+                0.25,
+                0.50,
+                0.40,
+                1.20,
+            );
+        }
+    });
+    let tooling_hole_board = BoardModel {
+        source: "bench".to_string(),
+        copper: Vec::new(),
+        drills: (0..2_000)
+            .map(|index| DrillFeature {
+                location: [200.0 + index as f64 * 2.0, 200.0],
+                diameter: 0.40,
+                net: None,
+                plated: false,
+            })
+            .chain([
+                DrillFeature {
+                    location: [10.0, 10.0],
+                    diameter: 1.50,
+                    net: None,
+                    plated: false,
+                },
+                DrillFeature {
+                    location: [90.0, 90.0],
+                    diameter: 1.50,
+                    net: None,
+                    plated: false,
+                },
+            ])
+            .collect(),
+        board_outline: Some(polygons_to_sketch(
+            vec![rect_polygon([50.0, 50.0], [100.0, 100.0], 0.0)],
+            Some(LayerMetadata {
+                name: "bench tooling outline".to_string(),
+            }),
+        )),
+        panel_features: None,
+    };
+    let tooling_hole_elapsed = time("tooling_hole_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = tooling_hole_readiness(&tooling_hole_board, &[], 0.8, 4.0, 1.0);
+        }
+    });
+    let conformal_coating_board = BoardModel {
+        source: "bench".to_string(),
+        copper: std::iter::once(bench_pad("USB_DP", [0.0, 0.0], [0.4, 0.4]))
+            .chain((0..2_000).map(|index| {
+                bench_pad(
+                    &format!("SIG{index}"),
+                    [
+                        10.0 + (index % 50) as f64 * 3.0,
+                        10.0 + (index / 50) as f64 * 3.0,
+                    ],
+                    [0.3, 0.3],
+                )
+            }))
+            .chain([bench_pad("SIG_NEAR", [0.55, 0.0], [0.3, 0.3])])
+            .collect(),
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let conformal_coating_elapsed = time("conformal_coating_keepout_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = conformal_coating_keepout_readiness(&conformal_coating_board, &[], 0.3, 1.0e-9);
+        }
+    });
 
     let testpoints = (0..400)
         .map(|index| {
@@ -671,6 +1289,30 @@ fn main() {
         for _ in 0..1_000 {
             let _ =
                 testpoint_accessibility_readiness(&testpoint_board, &testpoints, 0.40, 0.25, 1.0);
+        }
+    });
+    let coverage_board = BoardModel {
+        source: "bench".to_string(),
+        copper: (0..2_000)
+            .map(|index| {
+                bench_pad(
+                    &format!("VBUS_{index}"),
+                    [index as f64 * 2.0, 0.0],
+                    [0.3, 0.3],
+                )
+            })
+            .chain([bench_pad("VDD_MISSING", [9_000.0, 0.0], [0.3, 0.3])])
+            .collect(),
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let coverage_points = (0..2_000)
+        .map(|index| bench_testpoint(&format!("VBUS_{index}"), [index as f64 * 2.0, 0.0], 0.4))
+        .collect::<Vec<_>>();
+    let testpoint_coverage_elapsed = time("testpoint_coverage_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = testpoint_coverage_readiness(&coverage_board, &coverage_points, &[]);
         }
     });
     let testpoint_side_board = BoardModel {
@@ -861,6 +1503,33 @@ fn main() {
             let _ = power_pad_entry_readiness(&pad_entry_board, &[], 0.20, 0.30, 2);
         }
     });
+    let sparse_pad_entry_board = BoardModel {
+        source: "bench".to_string(),
+        copper: std::iter::once(bench_pad("VIN", [0.0, 0.0], [1.0, 1.0]))
+            .chain((0..2_000).map(|index| {
+                bench_segment(
+                    "VIN",
+                    [
+                        100.0 + (index % 100) as f64 * 2.0,
+                        100.0 + (index / 100) as f64 * 2.0,
+                    ],
+                    [
+                        101.0 + (index % 100) as f64 * 2.0,
+                        100.0 + (index / 100) as f64 * 2.0,
+                    ],
+                    0.50,
+                )
+            }))
+            .collect(),
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let power_pad_entry_sparse_elapsed = time("power_pad_entry_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = power_pad_entry_readiness(&sparse_pad_entry_board, &[], 0.20, 0.30, 2);
+        }
+    });
     let power_via_return_board = BoardModel {
         source: "bench".to_string(),
         copper: vec![
@@ -874,6 +1543,33 @@ fn main() {
     let power_via_return_elapsed = time("power_via_return_10k", || {
         for _ in 0..10_000 {
             let _ = power_via_return_readiness(&power_via_return_board, &[], 0.50);
+        }
+    });
+    let sparse_power_via_return_board = BoardModel {
+        source: "bench".to_string(),
+        copper: std::iter::once(bench_via("VIN", [0.0, 0.0], 0.20))
+            .chain((0..2_000).map(|index| {
+                bench_segment(
+                    "GND",
+                    [
+                        100.0 + (index % 100) as f64 * 2.0,
+                        100.0 + (index / 100) as f64 * 2.0,
+                    ],
+                    [
+                        101.0 + (index % 100) as f64 * 2.0,
+                        100.0 + (index / 100) as f64 * 2.0,
+                    ],
+                    0.20,
+                )
+            }))
+            .collect(),
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let power_via_return_sparse_elapsed = time("power_via_return_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = power_via_return_readiness(&sparse_power_via_return_board, &[], 0.50);
         }
     });
     let power_via_array_board = BoardModel {
@@ -943,6 +1639,45 @@ fn main() {
                 thermal_via_distribution_readiness(&thermal_via_cluster_board, &[], 2, 5.0, 0.0);
         }
     });
+    let thermal_via_sparse_board = BoardModel {
+        source: "bench".to_string(),
+        copper: std::iter::once(bench_zone("VOUT", [0.0, 0.0], [2.0, 2.0]))
+            .chain((0..1_000).map(|index| {
+                bench_via(
+                    "VOUT",
+                    [
+                        100.0 + (index % 50) as f64 * 3.0,
+                        100.0 + (index / 50) as f64 * 3.0,
+                    ],
+                    0.02,
+                )
+            }))
+            .chain([
+                bench_via("VOUT", [0.0, 0.0], 0.20),
+                bench_via("VOUT", [0.25, 0.0], 0.20),
+            ])
+            .collect(),
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let thermal_via_elapsed = time("thermal_via_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = thermal_via_readiness(&thermal_via_sparse_board, &[], 3, 0.10);
+        }
+    });
+    let thermal_via_distribution_sparse_elapsed =
+        time("thermal_via_distribution_sparse_1k", || {
+            for _ in 0..1_000 {
+                let _ = thermal_via_distribution_readiness(
+                    &thermal_via_sparse_board,
+                    &[],
+                    2,
+                    1.0,
+                    0.10,
+                );
+            }
+        });
     let thermal_sparse_board = BoardModel {
         source: "bench".to_string(),
         copper: (0..400)
@@ -967,6 +1702,16 @@ fn main() {
     let thermal_copper_area_elapsed = time("thermal_copper_area_1k", || {
         for _ in 0..1_000 {
             let _ = thermal_copper_area_readiness(&thermal_sparse_board, &[], 2.0);
+        }
+    });
+    let thermal_relief_elapsed = time("thermal_relief_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = thermal_relief_readiness(&thermal_sparse_board, &[], 1.0e-9);
+        }
+    });
+    let thermal_pad_via_elapsed = time("thermal_pad_via_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = thermal_pad_via_readiness(&thermal_sparse_board, &[], 0.75);
         }
     });
     let hot_component_spacing_elapsed = time("hot_component_spacing_1k", || {
@@ -1137,6 +1882,32 @@ fn main() {
             let _ = same_net_drill_break_readiness(&continuity_board, &[], &[], 1.0e-9);
         }
     });
+    let continuity_sparse_drill_board = BoardModel {
+        source: "bench".to_string(),
+        copper: vec![bench_segment("SIG", [-1.0, 0.0], [1.0, 0.0], 0.30)],
+        drills: (0..2_000)
+            .map(|index| DrillFeature {
+                location: [10.0 + index as f64 * 2.0, 10.0],
+                diameter: 0.60,
+                net: None,
+                plated: false,
+            })
+            .chain(std::iter::once(DrillFeature {
+                location: [0.0, 0.0],
+                diameter: 0.60,
+                net: None,
+                plated: false,
+            }))
+            .collect(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let continuity_sparse_drills_elapsed = time("same_net_drill_break_sparse_drills_1k", || {
+        for _ in 0..1_000 {
+            let _ =
+                same_net_drill_break_readiness(&continuity_sparse_drill_board, &[], &[], 1.0e-9);
+        }
+    });
     let same_net_island_sparse_board = BoardModel {
         source: "bench".to_string(),
         copper: (0..2_000)
@@ -1178,6 +1949,38 @@ fn main() {
             let _ = plane_clearance_readiness(&plane_clearance_sparse_board, &[], 1.0e-9);
         }
     });
+    let panelization_sparse_board = BoardModel {
+        source: "bench".to_string(),
+        copper: (0..2_000)
+            .map(|index| {
+                bench_pad(
+                    &format!("SIG{index}"),
+                    [
+                        100.0 + (index % 50) as f64 * 5.0,
+                        100.0 + (index / 50) as f64 * 5.0,
+                    ],
+                    [0.08, 0.08],
+                )
+            })
+            .chain([bench_pad("NEAR_TAB", [0.12, 0.0], [0.08, 0.08])])
+            .collect(),
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: Some(polygons_to_sketch(
+            vec![
+                line_polygon([0.0, -1.0], [0.0, 1.0], 0.05)
+                    .expect("benchmark panel route line should be valid"),
+            ],
+            Some(LayerMetadata {
+                name: "bench sparse panel features".to_string(),
+            }),
+        )),
+    };
+    let panelization_clearance_elapsed = time("panelization_clearance_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = panelization_clearance(&panelization_sparse_board, &[], 0.25, 1.0e-9);
+        }
+    });
 
     let drill_clearance_sparse_board = BoardModel {
         source: "bench".to_string(),
@@ -1209,6 +2012,75 @@ fn main() {
         for _ in 0..1_000 {
             let _ =
                 drill_to_copper_clearance(&drill_clearance_sparse_board, &[], 0.20, &[], 1.0e-9);
+        }
+    });
+    let plating_intent_board = BoardModel {
+        source: "bench".to_string(),
+        copper: (0..2_000)
+            .map(|index| {
+                bench_pad(
+                    &format!("SIG{index}"),
+                    [100.0 + index as f64 * 2.0, 100.0],
+                    [0.4, 0.4],
+                )
+            })
+            .chain([
+                bench_pad("GND", [0.01, 0.0], [0.4, 0.4]),
+                bench_pad("SIG_NEAR", [0.0, 2.0], [0.4, 0.4]),
+            ])
+            .collect(),
+        drills: vec![
+            DrillFeature {
+                location: [0.0, 0.0],
+                diameter: 0.30,
+                net: Some("GND".to_string()),
+                plated: true,
+            },
+            DrillFeature {
+                location: [0.0, 2.0],
+                diameter: 0.60,
+                net: None,
+                plated: false,
+            },
+        ],
+        board_outline: None,
+        panel_features: None,
+    };
+    let plating_intent_elapsed = time("plating_intent_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = plating_intent(&plating_intent_board, &[], 0.05);
+        }
+    });
+    let drill_outline = polygons_to_sketch(
+        vec![rect_polygon([50.0, 50.0], [100.0, 100.0], 0.0)],
+        Some(LayerMetadata {
+            name: "bench outline".to_string(),
+        }),
+    );
+    let mut outline_clearance_drills = (0..2_000)
+        .map(|index| {
+            bench_drill(
+                [
+                    5.0 + (index % 50) as f64 * 1.5,
+                    5.0 + (index / 50) as f64 * 1.5,
+                ],
+                0.30,
+                false,
+            )
+        })
+        .collect::<Vec<_>>();
+    outline_clearance_drills.push(bench_drill([0.35, 50.0], 0.30, false));
+    let board_outline_drill_elapsed = time("board_outline_drill_clearance_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = board_outline_drill_clearance(
+                "KiCad drills",
+                "KiCad Edge.Cuts",
+                &drill_outline,
+                &outline_clearance_drills,
+                &[],
+                0.25,
+                1.0e-9,
+            );
         }
     });
 
@@ -1542,6 +2414,65 @@ fn main() {
         }
     });
 
+    let net_usage_board = BoardModel {
+        source: "bench".to_string(),
+        copper: vec![
+            bench_segment("PCIE_RX0", [0.0, 0.0], [1.0, 0.0], 0.10),
+            bench_segment_on_layer("B.Cu", "PCIE_RX0", [2.0, 0.0], [3.0, 0.0], 0.10),
+            bench_segment("USB3_DP", [0.0, 1.0], [1.0, 1.0], 0.10),
+            bench_segment("VBUS", [0.0, 2.0], [1.0, 2.0], 0.20),
+            bench_segment_on_layer("B.Cu", "VBUS", [2.0, 2.0], [3.0, 2.0], 0.20),
+            bench_via("VBUS", [1.5, 2.0], 0.25),
+        ],
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let controlled_impedance_elapsed = time("controlled_impedance_10k", || {
+        for _ in 0..10_000 {
+            let _ = controlled_impedance_readiness(&net_usage_board, &[]);
+        }
+    });
+    let differential_pair_presence_elapsed = time("differential_pair_presence_10k", || {
+        for _ in 0..10_000 {
+            let _ = differential_pair_readiness(&net_usage_board, &[]);
+        }
+    });
+    let reference_plane_elapsed = time("reference_plane_presence_10k", || {
+        for _ in 0..10_000 {
+            let _ = reference_plane_readiness(&net_usage_board, &[]);
+        }
+    });
+    let high_current_elapsed = time("high_current_layer_change_10k", || {
+        for _ in 0..10_000 {
+            let _ = high_current_readiness(&net_usage_board, &[]);
+        }
+    });
+    let intra_pair_sparse_board = BoardModel {
+        source: "bench".to_string(),
+        copper: [
+            bench_segment("USB_D+", [0.0, 0.0], [1.0, 0.0], 0.10),
+            bench_segment("USB_D-", [0.0, 0.20], [1.0, 0.20], 0.10),
+        ]
+        .into_iter()
+        .chain((0..2_000).flat_map(|index| {
+            let x = 100.0 + index as f64 * 2.0;
+            [
+                bench_segment("USB_D+", [x, 10.0], [x + 0.5, 10.0], 0.10),
+                bench_segment("USB_D-", [x, 20.0], [x + 0.5, 20.0], 0.10),
+            ]
+        }))
+        .collect(),
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let intra_pair_sparse_elapsed = time("differential_pair_spacing_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = differential_pair_spacing_readiness(&intra_pair_sparse_board, &[], 0.30);
+        }
+    });
+
     let differential_pair_board = BoardModel {
         source: "bench".to_string(),
         copper: vec![
@@ -1561,6 +2492,32 @@ fn main() {
         for _ in 0..10_000 {
             let _ =
                 differential_pair_to_pair_spacing_readiness(&differential_pair_board, &[], 0.40);
+        }
+    });
+    let pair_to_pair_sparse_board = BoardModel {
+        source: "bench".to_string(),
+        copper: (0..2_000)
+            .map(|index| {
+                bench_segment(
+                    &format!("PAIR{index}_DP"),
+                    [100.0 + index as f64 * 2.0, 20.0],
+                    [100.5 + index as f64 * 2.0, 20.0],
+                    0.10,
+                )
+            })
+            .chain([
+                bench_segment("LANE1_DP", [0.0, 0.0], [2.0, 0.0], 0.10),
+                bench_segment("LANE2_DP", [0.0, 0.25], [2.0, 0.25], 0.10),
+            ])
+            .collect(),
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let pair_to_pair_sparse_elapsed = time("differential_pair_to_pair_spacing_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ =
+                differential_pair_to_pair_spacing_readiness(&pair_to_pair_sparse_board, &[], 0.30);
         }
     });
     let pair_skew_elapsed = time("differential_pair_skew_10k", || {
@@ -1661,6 +2618,29 @@ fn main() {
             let _ = split_plane_crossing_readiness(&split_plane_board, &[], 0.05, 1.0e-9);
         }
     });
+    let split_plane_sparse_board = BoardModel {
+        source: "bench".to_string(),
+        copper: std::iter::once(bench_segment("USB_DP", [-2.0, 0.0], [2.0, 0.0], 0.10))
+            .chain((0..2_000).map(|index| {
+                bench_zone(
+                    "GND",
+                    [
+                        100.0 + (index % 100) as f64 * 3.0,
+                        100.0 + (index / 100) as f64 * 3.0,
+                    ],
+                    [1.0, 1.0],
+                )
+            }))
+            .collect(),
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let split_plane_sparse_elapsed = time("split_plane_crossing_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = split_plane_crossing_readiness(&split_plane_sparse_board, &[], 0.05, 1.0e-9);
+        }
+    });
     let return_path_proximity_elapsed = time("return_path_proximity_10k", || {
         for _ in 0..10_000 {
             let _ = return_path_proximity_readiness(&split_plane_board, &[], 0.50);
@@ -1685,6 +2665,58 @@ fn main() {
     let return_path_proximity_sparse_elapsed = time("return_path_proximity_sparse_1k", || {
         for _ in 0..1_000 {
             let _ = return_path_proximity_readiness(&sparse_return_path_board, &[], 0.50);
+        }
+    });
+    let mut sparse_reference_plane_copper =
+        vec![bench_segment("USB_DP", [0.0, 0.0], [1.0, 0.0], 0.10)];
+    for index in 0..2_000 {
+        sparse_reference_plane_copper.push(bench_zone(
+            "GND",
+            [
+                100.0 + (index % 100) as f64 * 3.0,
+                100.0 + (index / 100) as f64 * 3.0,
+            ],
+            [0.5, 0.5],
+        ));
+    }
+    sparse_reference_plane_copper.push(bench_zone("GND", [0.5, 0.0], [2.0, 1.0]));
+    let sparse_reference_plane_board = BoardModel {
+        source: "bench".to_string(),
+        copper: sparse_reference_plane_copper,
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let reference_plane_void_sparse_elapsed = time("reference_plane_void_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = reference_plane_void_readiness(&sparse_reference_plane_board, &[], 1.0e-9);
+        }
+    });
+    let orphaned_zone_sparse_board = BoardModel {
+        source: "bench".to_string(),
+        copper: (0..2_000)
+            .map(|index| {
+                bench_via(
+                    "GND",
+                    [
+                        100.0 + (index % 100) as f64 * 3.0,
+                        100.0 + (index / 100) as f64 * 3.0,
+                    ],
+                    0.10,
+                )
+            })
+            .chain([
+                bench_zone("GND", [0.0, 0.0], [2.0, 2.0]),
+                bench_via("GND", [0.0, 0.0], 0.12),
+            ])
+            .collect(),
+        drills: Vec::new(),
+        board_outline: None,
+        panel_features: None,
+    };
+    let orphaned_zone_sparse_elapsed = time("orphaned_zone_sparse_1k", || {
+        for _ in 0..1_000 {
+            let _ = orphaned_zone_readiness(&orphaned_zone_sparse_board, &[], 0.10);
         }
     });
     let return_path_stitching_sparse_board = BoardModel {
@@ -1791,9 +2823,28 @@ fn main() {
             + tiny_feature_elapsed
             + skinny_feature_elapsed
             + density_elapsed
+            + copper_width_elapsed
+            + copper_net_intent_elapsed
+            + paste_ratio_sparse_elapsed
+            + paste_coverage_sparse_elapsed
+            + paste_overhang_sparse_elapsed
+            + mask_coverage_sparse_elapsed
+            + exposed_copper_sparse_elapsed
+            + mask_expansion_sparse_elapsed
+            + paste_mask_alignment_sparse_elapsed
+            + mask_overlap_clearance_sparse_elapsed
+            + paste_spacing_sparse_elapsed
+            + mask_spacing_sparse_elapsed
+            + mask_island_sparse_elapsed
+            + silkscreen_overlap_sparse_elapsed
+            + silkscreen_clearance_sparse_elapsed
             + tombstone_elapsed
+            + paste_via_elapsed
+            + thermal_pad_windowpane_sparse_elapsed
             + net_constraint_elapsed
             + net_constraint_pair_elapsed
+            + different_net_spacing_elapsed
+            + registration_elapsed
             + acid_trap_elapsed
             + acid_trap_sparse_elapsed
             + via_in_pad_elapsed
@@ -1801,18 +2852,29 @@ fn main() {
             + local_fiducial_elapsed
             + dense_pad_escape_elapsed
             + dense_pad_via_elapsed
+            + dense_pad_via_sparse_pads_elapsed
             + dense_pad_mask_elapsed
+            + dense_pad_mask_sparse_elapsed
             + component_spacing_elapsed
+            + component_edge_elapsed
             + component_hole_elapsed
             + connector_rework_elapsed
             + connector_return_sparse_elapsed
             + edge_stitching_sparse_elapsed
+            + board_edge_exposure_elapsed
+            + high_speed_edge_elapsed
+            + high_voltage_edge_elapsed
             + chassis_stitching_sparse_elapsed
             + pad_pair_asymmetry_elapsed
             + fiducial_keepout_elapsed
+            + fiducial_edge_elapsed
             + selective_wave_elapsed
             + press_fit_elapsed
+            + mouse_bite_elapsed
+            + tooling_hole_elapsed
+            + conformal_coating_elapsed
             + testpoint_access_elapsed
+            + testpoint_coverage_elapsed
             + testpoint_side_elapsed
             + testpoint_copper_elapsed
             + antenna_keepout_elapsed
@@ -1821,12 +2883,18 @@ fn main() {
             + inductor_keepout_elapsed
             + switch_node_elapsed
             + power_pad_entry_elapsed
+            + power_pad_entry_sparse_elapsed
             + power_via_return_elapsed
+            + power_via_return_sparse_elapsed
             + power_via_array_sparse_elapsed
             + decoupling_sparse_elapsed
             + thermal_via_distribution_elapsed
             + thermal_via_cluster_elapsed
+            + thermal_via_elapsed
+            + thermal_via_distribution_sparse_elapsed
             + thermal_copper_area_elapsed
+            + thermal_relief_elapsed
+            + thermal_pad_via_elapsed
             + hot_component_spacing_elapsed
             + thermal_mechanical_elapsed
             + esd_return_path_elapsed
@@ -1839,9 +2907,13 @@ fn main() {
             + sensitive_return_elapsed
             + min_copper_neck_elapsed
             + continuity_elapsed
+            + continuity_sparse_drills_elapsed
             + same_net_island_sparse_elapsed
             + plane_clearance_sparse_elapsed
+            + panelization_clearance_elapsed
             + drill_clearance_elapsed
+            + plating_intent_elapsed
+            + board_outline_drill_elapsed
             + drill_spacing_elapsed
             + drill_table_elapsed
             + ipc356_apply_elapsed
@@ -1858,7 +2930,13 @@ fn main() {
             + edge_plating_elapsed
             + castellation_pitch_elapsed
             + short_elapsed
+            + controlled_impedance_elapsed
+            + differential_pair_presence_elapsed
+            + reference_plane_elapsed
+            + high_current_elapsed
+            + intra_pair_sparse_elapsed
             + pair_to_pair_elapsed
+            + pair_to_pair_sparse_elapsed
             + pair_skew_elapsed
             + pair_width_elapsed
             + pair_neckdown_elapsed
@@ -1868,8 +2946,11 @@ fn main() {
             + pair_via_return_sparse_elapsed
             + pair_return_sparse_elapsed
             + split_plane_elapsed
+            + split_plane_sparse_elapsed
             + return_path_proximity_elapsed
             + return_path_proximity_sparse_elapsed
+            + reference_plane_void_sparse_elapsed
+            + orphaned_zone_sparse_elapsed
             + return_path_stitching_sparse_elapsed
             + artifact_elapsed
             + waiver_governance_elapsed
@@ -1893,8 +2974,18 @@ fn bench_testpoint(net: &str, location: [f64; 2], diameter: f64) -> Ipc356Point 
 }
 
 fn bench_segment(net: &str, start: [f64; 2], end: [f64; 2], width: f64) -> CopperFeature {
+    bench_segment_on_layer("F.Cu", net, start, end, width)
+}
+
+fn bench_segment_on_layer(
+    layer: &str,
+    net: &str,
+    start: [f64; 2],
+    end: [f64; 2],
+    width: f64,
+) -> CopperFeature {
     CopperFeature {
-        layer: "F.Cu".to_string(),
+        layer: layer.to_string(),
         net: Some(net.to_string()),
         kind: CopperKind::Segment,
         location: [(start[0] + end[0]) / 2.0, (start[1] + end[1]) / 2.0],
@@ -1908,22 +2999,42 @@ fn bench_segment(net: &str, start: [f64; 2], end: [f64; 2], width: f64) -> Coppe
 }
 
 fn bench_dense_pad_cluster() -> Vec<CopperFeature> {
+    let mut copper = bench_dense_pad_cluster_with_size(0.25);
+    copper.push(bench_via("ESC", [0.32, 0.0], 0.20));
+    copper
+}
+
+fn bench_dense_pad_cluster_with_size(size: f64) -> Vec<CopperFeature> {
     let mut copper = Vec::new();
     for x in 0..4 {
         for y in 0..4 {
             copper.push(bench_pad(
                 &format!("BGA_{x}_{y}"),
                 [x as f64 * 0.5, y as f64 * 0.5],
-                [0.25, 0.25],
+                [size, size],
             ));
         }
     }
-    copper.push(bench_via("ESC", [0.32, 0.0], 0.20));
     copper
 }
 
 fn bench_pad(net: &str, location: [f64; 2], size: [f64; 2]) -> CopperFeature {
     bench_pad_on_layer("F.Cu", net, location, size)
+}
+
+fn bench_unnetted_pad(location: [f64; 2], size: [f64; 2]) -> CopperFeature {
+    CopperFeature {
+        layer: "F.Cu".to_string(),
+        net: None,
+        kind: CopperKind::Pad,
+        location,
+        sketch: polygons_to_sketch(
+            vec![rect_polygon(location, size, 0.0)],
+            Some(LayerMetadata {
+                name: "bench unnetted pad".to_string(),
+            }),
+        ),
+    }
 }
 
 fn bench_pad_on_layer(layer: &str, net: &str, location: [f64; 2], size: [f64; 2]) -> CopperFeature {
