@@ -213,13 +213,18 @@ until exact routed-slot geometry is modeled. `plating-intent` uses the shared
 spatial broad phase before exact copper proximity, net, and pad/via kind review.
 `drill-to-copper-clearance` uses the same broad phase before exact
 keepout/copper CSG intersection so sparse drill fields do not devolve into
-all-copper scans.
+all-copper scans, and its trace separates broad drill/copper candidates from
+exact keepout intersections.
 `board-outline-drill-clearance` skips exact difference geometry for circular
 keepouts analytically contained by rectangular board outlines. `drill-spacing`
 uses a drill-center grid before exact edge-gap review so large sparse drill
-tables do not require an all-pairs distance pass. `drill-table-consistency` also
+tables do not require an all-pairs distance pass, with broad and exact pair
+counts in trace output. Castellation intent and undersized castellation-hole
+checks now trace plated-hole counts and exact outline-difference work so edge
+hole geometry stays visible in fixture runs. `drill-table-consistency` also
 indexes cross-source drill and IPC-D-356 centers before exact diameter-conflict
-review.
+review, and traces KiCad/Excellon and Excellon/IPC-D-356 candidate versus exact
+match counts separately.
 
 ## Board Checks
 

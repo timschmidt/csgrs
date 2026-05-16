@@ -150,18 +150,21 @@ input records, but they should be lifted before core geometry decisions.
   distance review.
 - `routed-slot-readiness`: warn when KiCad non-plated mechanical drill
   diameters are below the configured minimum width, as an initial routed cutter
-  manufacturability signal.
+  manufacturability signal until exact routed-slot geometry is preserved.
 - `castellation-intent`: warn when a plated KiCad drill hole crosses the board
-  outline, so castellated-hole or plated-edge intent can be reviewed.
+  outline, so castellated-hole or plated-edge intent can be reviewed. Trace
+  output records plated-hole and exact outline-difference counts.
 - `castellation-hole-readiness`: warn when a plated KiCad drill hole crossing
-  the board outline is below the configured minimum castellation diameter.
+  the board outline is below the configured minimum castellation diameter. Trace
+  output records undersized plated-hole and exact outline-difference counts.
 - `via-in-pad-readiness`: warn when KiCad via copper overlaps a same-net pad on
   the same layer, so fill, tenting, and paste treatment can be reviewed. Pad
   candidates use the shared copper spatial index before exact CSG overlap.
 - `drill-to-copper-clearance`: offset KiCad and Excellon drill holes by a
   configured clearance and intersect against other-net KiCad copper. Selected
   copper now uses the shared spatial broad phase before exact keepout/copper CSG
-  intersection so sparse drill fields stay bounded.
+  intersection so sparse drill fields stay bounded. Trace output records broad
+  drill/copper candidates and exact keepout intersections.
 - `board-outline-drill-clearance`: offset KiCad and Excellon drill holes by
   their radius plus the configured drill clearance and report keepout area that
   is not contained by the KiCad board outline. Axis-aligned rectangular board
@@ -170,13 +173,16 @@ input records, but they should be lifted before core geometry decisions.
 - `drill-spacing`: compare KiCad and Excellon drill edge-to-edge clearance and
   report holes closer than the configured drill clearance. Drill centers use a
   spatial broad phase before exact edge-gap review so large sparse drill tables
-  avoid all-pairs scans.
+  avoid all-pairs scans. Trace output records broad candidate pairs and exact
+  edge-gap checks.
 - `drill-aspect-ratio`: compare finished board thickness against KiCad and
   Excellon drill diameters and warn when the configured aspect-ratio limit is
   exceeded.
 - `drill-table-consistency`: compare nearby KiCad, Excellon, and IPC-D-356
   drill records and warn when sidecar drill diameters conflict. Cross-source
-  center matching uses spatial indexes before exact diameter-difference review.
+  center matching uses spatial indexes before exact diameter-difference review,
+  with trace output separating KiCad/Excellon and Excellon/IPC-D-356 candidate
+  matches from exact diameter checks.
 - `excellon-readiness`: validate Excellon sidecars for unit declarations, tool
   table integrity, unknown-tool/undefined-tool drill hits, and malformed hit
   lines before downstream drill spacing and consistency checks consume geometry.

@@ -20,7 +20,14 @@ use crate::{LayerMetadata, PcbSketch};
 use super::outline::{axis_aligned_outline_rect, drill_keepout_inside_rect};
 use super::spatial::{CopperSpatialIndex, DrillSpatialIndex, PointSpatialIndex};
 
-/// Run the `annular_ring` design-readiness check or report helper.
+/// Review plated drill land margin using an area-equivalent copper radius.
+///
+/// IPC-2221B and IPC-6012D treat annular ring as a registration-sensitive
+/// finished-hole-to-land margin. Parsed KiCad pad geometry can be rectangular,
+/// oval, or custom, so this readiness check uses an area-equivalent circular
+/// radius as a conservative, shape-agnostic proxy and reports suspect rings for
+/// drill drawing/CAM verification rather than claiming exact pad-stack
+/// containment.
 pub fn annular_ring(
     board: &BoardModel,
     minimum_ring: f64,
@@ -62,7 +69,13 @@ pub fn annular_ring(
     violations
 }
 
-/// Run the `annular_ring_tolerance` design-readiness check or report helper.
+/// Review nominal annular rings against a registration-tolerance budget.
+///
+/// IPC-6012D distinguishes nominal finished geometry from manufacturing
+/// acceptance, and IPC-2221B frames annular-ring clearance as a design margin.
+/// This check reports holes that pass nominally but fail after subtracting the
+/// configured registration tolerance, keeping tolerance-sensitive drill/pad
+/// stacks visible before fabrication release.
 pub fn annular_ring_tolerance(
     board: &BoardModel,
     minimum_ring: f64,
@@ -171,7 +184,13 @@ pub fn plating_intent(
     violations
 }
 
-/// Run the `routed_slot_readiness` design-readiness check or report helper.
+/// Review small non-plated mechanical drills as likely routed-slot risks.
+///
+/// Exact slot geometry is not fully preserved by every input path yet, so this
+/// check treats small NPTH mechanical drill diameters as a cutter-capability
+/// proxy. The finding is intentionally a warning: IPC-2221B mechanical-outline
+/// guidance and common fabricator DFM rules require the routed cutter width to
+/// be explicit in drawings or drill/rout files.
 pub fn routed_slot_readiness(board: &BoardModel, minimum_route_width: f64) -> Vec<Violation> {
     board
         .drills
@@ -194,7 +213,13 @@ pub fn routed_slot_readiness(board: &BoardModel, minimum_route_width: f64) -> Ve
         .collect()
 }
 
-/// Run the `drill_to_copper_clearance` design-readiness check or report helper.
+/// Review drill keepouts against selected copper.
+///
+/// Drill openings are modeled as circular keepouts with the configured
+/// clearance, then checked against KiCad copper. The copper grid is a broad
+/// phase in the sense of Ericson, *Real-Time Collision Detection* (2005); exact
+/// CSG intersection still decides violations. Slot-like drill records remain
+/// conservative circular proxies until exact routed-slot geometry is preserved.
 pub fn drill_to_copper_clearance(
     board: &BoardModel,
     extra_drills: &[DrillFeature],
@@ -221,12 +246,15 @@ pub fn drill_to_copper_clearance(
         copper_index.bucket_count()
     );
     let mut violations = Vec::new();
+    let mut candidate_pairs = 0_usize;
+    let mut exact_intersections = 0_usize;
 
     for drill in drills {
         let keepout_radius = drill.diameter / 2.0 + clearance;
         let mut keepout = None;
 
         for candidate_index in copper_index.all_layers_near_circle(drill.location, keepout_radius) {
+            candidate_pairs += 1;
             let copper = copper_features[candidate_index];
             if drill.plated && drill.net.is_some() && drill.net == copper.net {
                 continue;
@@ -243,6 +271,7 @@ pub fn drill_to_copper_clearance(
                     }),
                 )
             });
+            exact_intersections += 1;
             let overlap = keepout.intersection(&copper.sketch);
             let shapes = multipolygon_to_shapes(&overlap.to_multipolygon(), min_area);
             if shapes.is_empty() {
@@ -262,6 +291,15 @@ pub fn drill_to_copper_clearance(
             ));
         }
     }
+
+    log::trace!(
+        "drill-to-copper clearance: source={} candidate_pairs={} exact_intersections={} violations={}",
+        board.source,
+        candidate_pairs,
+        exact_intersections,
+        violations.len()
+    );
+    debug_assert!(exact_intersections <= candidate_pairs);
 
     violations
 }
@@ -284,7 +322,12 @@ fn copper_may_touch_drill_keepout(
         && drill_location[1] + keepout_radius >= bounds.min().y
 }
 
-/// Run the `drill_spacing` design-readiness check or report helper.
+/// Review edge-to-edge spacing between KiCad and sidecar drills.
+///
+/// Drill centers use the shared grid broad phase before exact center and
+/// edge-gap math, following the broad/narrow query split described by Ericson,
+/// *Real-Time Collision Detection* (2005). This keeps sparse drill tables and
+/// Excellon sidecars bounded while still reporting exact edge-spacing values.
 pub fn drill_spacing(
     board_drills: &[DrillFeature],
     extra_drills: &[DrillFeature],
@@ -299,14 +342,18 @@ pub fn drill_spacing(
         drill_index.bucket_count()
     );
     let mut violations = Vec::new();
+    let mut candidate_pairs = 0_usize;
+    let mut exact_pairs = 0_usize;
 
     for left_index in 0..drills.len() {
         let left = &drills[left_index];
         for right_index in drill_index.later_candidates_within_spacing(left_index, clearance) {
+            candidate_pairs += 1;
             let right = &drills[right_index];
             let edge_gap = distance(left.location, right.location)
                 - left.diameter / 2.0
                 - right.diameter / 2.0;
+            exact_pairs += 1;
             if edge_gap >= clearance {
                 continue;
             }
@@ -324,6 +371,14 @@ pub fn drill_spacing(
             ));
         }
     }
+
+    log::trace!(
+        "drill spacing: candidate_pairs={} exact_pairs={} violations={}",
+        candidate_pairs,
+        exact_pairs,
+        violations.len()
+    );
+    debug_assert!(exact_pairs <= candidate_pairs);
 
     violations
 }
@@ -396,17 +451,26 @@ pub fn board_outline_drill_clearance(
     violations
 }
 
-/// Run the `castellation_intent` design-readiness check or report helper.
+/// Review plated holes that cross the board outline for castellation intent.
+///
+/// IPC-6012D and IPC-2221B make plated holes and edge features fabrication
+/// intent, not decoration. This check subtracts the parsed board outline from
+/// each plated hole and reports exact outside-outline geometry so half-hole,
+/// plated-edge, or accidental-outline-crossing cases are visible before
+/// release.
 pub fn castellation_intent(board: &BoardModel, min_area: f64) -> Vec<Violation> {
     let Some(outline) = &board.board_outline else {
         return Vec::new();
     };
     let mut violations = Vec::new();
+    let mut plated_holes = 0_usize;
+    let mut exact_difference_count = 0_usize;
 
     for drill in &board.drills {
         if !drill.plated {
             continue;
         }
+        plated_holes += 1;
 
         let hole = polygons_to_sketch(
             vec![circle_polygon(drill.location, drill.diameter / 2.0, 64)],
@@ -414,6 +478,7 @@ pub fn castellation_intent(board: &BoardModel, min_area: f64) -> Vec<Violation> 
                 name: "plated drill hole".to_string(),
             }),
         );
+        exact_difference_count += 1;
         let outside_outline = hole.difference(outline);
         let shapes = multipolygon_to_shapes(&outside_outline.to_multipolygon(), min_area);
         if shapes.is_empty() {
@@ -434,10 +499,25 @@ pub fn castellation_intent(board: &BoardModel, min_area: f64) -> Vec<Violation> 
         ));
     }
 
+    log::trace!(
+        "castellation intent: source={} plated_holes={} exact_difference_checks={} violations={} min_area={min_area:.9}",
+        board.source,
+        plated_holes,
+        exact_difference_count,
+        violations.len()
+    );
+    debug_assert!(exact_difference_count <= plated_holes);
+
     violations
 }
 
-/// Run the `castellation_hole_readiness` design-readiness check or report helper.
+/// Review undersized plated edge holes that look like castellations.
+///
+/// IPC-6012D classifies plated-hole workmanship and acceptance separately from
+/// design intent, while fabricators often set minimum half-hole diameter and
+/// edge breakout limits. This check reports exact outside-outline geometry for
+/// plated holes below the configured castellation diameter so routed-edge
+/// plating capability can be reviewed before release.
 pub fn castellation_hole_readiness(
     board: &BoardModel,
     minimum_diameter: f64,
@@ -447,11 +527,14 @@ pub fn castellation_hole_readiness(
         return Vec::new();
     };
     let mut violations = Vec::new();
+    let mut undersized_plated_holes = 0_usize;
+    let mut exact_difference_count = 0_usize;
 
     for drill in &board.drills {
         if !drill.plated || drill.diameter >= minimum_diameter {
             continue;
         }
+        undersized_plated_holes += 1;
 
         let hole = polygons_to_sketch(
             vec![circle_polygon(drill.location, drill.diameter / 2.0, 64)],
@@ -459,6 +542,7 @@ pub fn castellation_hole_readiness(
                 name: "plated drill hole".to_string(),
             }),
         );
+        exact_difference_count += 1;
         let outside_outline = hole.difference(outline);
         let shapes = multipolygon_to_shapes(&outside_outline.to_multipolygon(), min_area);
         if shapes.is_empty() {
@@ -478,6 +562,15 @@ pub fn castellation_hole_readiness(
             )),
         ));
     }
+
+    log::trace!(
+        "castellation hole readiness: source={} undersized_plated_holes={} exact_difference_checks={} violations={} minimum_diameter={minimum_diameter:.6} min_area={min_area:.9}",
+        board.source,
+        undersized_plated_holes,
+        exact_difference_count,
+        violations.len()
+    );
+    debug_assert!(exact_difference_count <= undersized_plated_holes);
 
     violations
 }
@@ -526,7 +619,13 @@ pub fn drill_aspect_ratio(
     violations
 }
 
-/// Run the `drill_table_consistency` design-readiness check or report helper.
+/// Cross-check KiCad, Excellon, and IPC-D-356 drill diameters.
+///
+/// IPC-D-356 can carry test-point drill evidence while Excellon carries
+/// fabrication drill hits. Cross-source center matching uses drill/point grids
+/// before exact diameter conflict review, keeping sparse sidecars bounded while
+/// still requiring a real tolerance-exceeding diameter mismatch before a
+/// warning is emitted.
 pub fn drill_table_consistency(
     board_drills: &[DrillFeature],
     extra_drills: &[DrillFeature],
@@ -545,10 +644,16 @@ pub fn drill_table_consistency(
         extra_drill_index.bucket_count(),
         ipc_point_index.bucket_count()
     );
+    let mut board_extra_candidates = 0_usize;
+    let mut board_extra_exact = 0_usize;
+    let mut extra_ipc_candidates = 0_usize;
+    let mut extra_ipc_exact = 0_usize;
 
     for board_drill in board_drills {
         for extra_index in extra_drill_index.centers_within(board_drill.location, tolerance) {
+            board_extra_candidates += 1;
             let extra_drill = &extra_drills[extra_index];
+            board_extra_exact += 1;
             if !diameters_conflict(board_drill.diameter, extra_drill.diameter, tolerance) {
                 continue;
             }
@@ -565,10 +670,12 @@ pub fn drill_table_consistency(
 
     for extra_drill in extra_drills {
         for point_index in ipc_point_index.centers_within(extra_drill.location, tolerance) {
+            extra_ipc_candidates += 1;
             let point = &ipc356_points[point_index];
             let Some(ipc_diameter) = point.diameter else {
                 continue;
             };
+            extra_ipc_exact += 1;
             if !diameters_conflict(extra_drill.diameter, ipc_diameter, tolerance) {
                 continue;
             }
@@ -582,6 +689,17 @@ pub fn drill_table_consistency(
             ));
         }
     }
+
+    log::trace!(
+        "drill table consistency: board_extra_candidates={} board_extra_exact={} extra_ipc_candidates={} extra_ipc_exact={} violations={}",
+        board_extra_candidates,
+        board_extra_exact,
+        extra_ipc_candidates,
+        extra_ipc_exact,
+        violations.len()
+    );
+    debug_assert!(board_extra_exact <= board_extra_candidates);
+    debug_assert!(extra_ipc_exact <= extra_ipc_candidates);
 
     violations
 }
