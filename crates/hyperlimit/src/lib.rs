@@ -71,8 +71,9 @@ pub use plane::{
     classify_point_plane,
 };
 pub use predicate::{
-    Certainty, DeterminantScheduleHint, Escalation, ExactPredicateKernel, PredicateCertificate,
-    PredicateOutcome, PredicatePolicy, PredicateReport, Sign, SignKnowledge,
+    Certainty, DeterminantScheduleHint, Escalation, ExactPredicateKernel, PredicateApiSemantics,
+    PredicateCertificate, PredicateOutcome, PredicatePolicy, PredicatePrecisionStage,
+    PredicateReport, Sign, SignKnowledge,
 };
 pub use predicates::aabb::{
     PreparedAabb2, aabb2s_intersect, aabb2s_intersect_with_policy, classify_aabb2_intersection,
@@ -84,7 +85,8 @@ pub use predicates::distance::{
     compare_point2_distance_squared, compare_point2_distance_squared_with_policy,
 };
 pub use predicates::filters::{
-    certified_interval_sign, certified_interval_sign_report,
+    certified_ball_sign, certified_ball_sign_report, certified_ball_sign_report_with_policy,
+    certified_ball_sign_with_policy, certified_interval_sign, certified_interval_sign_report,
     certified_interval_sign_report_with_policy, certified_interval_sign_with_policy,
 };
 pub use predicates::interval::{
@@ -94,8 +96,11 @@ pub use predicates::interval::{
     real_in_closed_interval_with_policy,
 };
 pub use predicates::order::{
-    compare_point2_lexicographic, compare_point2_lexicographic_with_policy, compare_reals,
-    compare_reals_with_policy, point2_equal, point2_equal_with_policy,
+    compare_point2_lexicographic, compare_point2_lexicographic_report,
+    compare_point2_lexicographic_report_with_policy, compare_point2_lexicographic_with_policy,
+    compare_reals, compare_reals_report, compare_reals_report_with_policy,
+    compare_reals_with_policy, point2_equal, point2_equal_report, point2_equal_report_with_policy,
+    point2_equal_with_policy,
 };
 pub use predicates::ring::{
     classify_point_ring_even_odd, classify_point_ring_even_odd_with_policy, point_in_ring_even_odd,

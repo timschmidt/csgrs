@@ -125,7 +125,8 @@ pub fn orient3d_report_with_policy(
     policy: PredicatePolicy,
 ) -> PredicateReport<Sign> {
     if let Some(report) = exact_report(policy, ExactPredicateKernel::Orient3dRationalDet3, || {
-        super::exact::orient3d(a, b, c, d)
+        super::exact::orient3d_shared_scale(a, b, c, d)
+            .or_else(|| super::exact::orient3d(a, b, c, d))
     }) {
         return report;
     }
@@ -163,7 +164,10 @@ pub fn orient3d_report_with_policy(
         &det,
         policy,
         || None,
-        || super::exact::orient3d(a, b, c, d),
+        || {
+            super::exact::orient3d_shared_scale(a, b, c, d)
+                .or_else(|| super::exact::orient3d(a, b, c, d))
+        },
         RefinementNeed::RealRefinement,
     ))
 }
@@ -467,6 +471,22 @@ impl<'a> PreparedLine2<'a> {
         }
     }
 
+    /// Prepare the oriented line from already-collected fixed-coordinate facts.
+    ///
+    /// Higher-level geometry objects often collect structural facts while
+    /// preparing their own topology caches. Reusing those facts preserves
+    /// Yap's object-level EGC boundary: the owning curve layer can remember
+    /// common-scale or dyadic eligibility, while `hyperlimit` remains the
+    /// predicate layer that decides sidedness. See Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    pub const fn from_facts(
+        from: &'a Point2,
+        to: &'a Point2,
+        facts: PreparedPredicateFacts,
+    ) -> Self {
+        Self { from, to, facts }
+    }
+
     /// Return cheap fixed-coordinate facts collected at preparation time.
     pub const fn facts(&self) -> PreparedPredicateFacts {
         self.facts
@@ -534,7 +554,10 @@ pub fn incircle2d_report_with_policy(
     if let Some(report) = exact_report(
         policy,
         ExactPredicateKernel::Incircle2dRationalLiftedDet3,
-        || super::exact::incircle2d(a, b, c, d),
+        || {
+            super::exact::incircle2d_shared_scale(a, b, c, d)
+                .or_else(|| super::exact::incircle2d(a, b, c, d))
+        },
     ) {
         return report;
     }
@@ -585,7 +608,10 @@ fn incircle2d_real_expr(
         &det,
         policy,
         || None,
-        || super::exact::incircle2d(a, b, c, d),
+        || {
+            super::exact::incircle2d_shared_scale(a, b, c, d)
+                .or_else(|| super::exact::incircle2d(a, b, c, d))
+        },
         RefinementNeed::RealRefinement,
     )
 }
@@ -674,7 +700,10 @@ impl<'a> PreparedIncircle2<'a> {
         if let Some(report) = exact_report(
             policy,
             ExactPredicateKernel::Incircle2dRationalLiftedDet3,
-            || super::exact::incircle2d(self.a, self.b, self.c, point),
+            || {
+                super::exact::incircle2d_shared_scale(self.a, self.b, self.c, point)
+                    .or_else(|| super::exact::incircle2d(self.a, self.b, self.c, point))
+            },
         ) {
             return report.outcome;
         }
@@ -692,7 +721,10 @@ impl<'a> PreparedIncircle2<'a> {
             &det,
             policy,
             || None,
-            || super::exact::incircle2d(self.a, self.b, self.c, point),
+            || {
+                super::exact::incircle2d_shared_scale(self.a, self.b, self.c, point)
+                    .or_else(|| super::exact::incircle2d(self.a, self.b, self.c, point))
+            },
             RefinementNeed::RealRefinement,
         )
     }
@@ -748,7 +780,10 @@ pub fn insphere3d_report_with_policy(
     if let Some(report) = exact_report(
         policy,
         ExactPredicateKernel::Insphere3dRationalLiftedDet4,
-        || super::exact::insphere3d(a, b, c, d, e),
+        || {
+            super::exact::insphere3d_shared_scale(a, b, c, d, e)
+                .or_else(|| super::exact::insphere3d(a, b, c, d, e))
+        },
     ) {
         return report;
     }
@@ -862,7 +897,10 @@ fn insphere3d_real_expr(
         &det,
         policy,
         || signed_term_filter(&[(&left, Sign::Positive), (&right, Sign::Negative)]),
-        || super::exact::insphere3d(a, b, c, d, e),
+        || {
+            super::exact::insphere3d_shared_scale(a, b, c, d, e)
+                .or_else(|| super::exact::insphere3d(a, b, c, d, e))
+        },
         RefinementNeed::RealRefinement,
     )
 }
@@ -980,7 +1018,10 @@ impl<'a> PreparedInsphere3<'a> {
         if let Some(report) = exact_report(
             policy,
             ExactPredicateKernel::Insphere3dRationalLiftedDet4,
-            || super::exact::insphere3d(self.a, self.b, self.c, self.d, point),
+            || {
+                super::exact::insphere3d_shared_scale(self.a, self.b, self.c, self.d, point)
+                    .or_else(|| super::exact::insphere3d(self.a, self.b, self.c, self.d, point))
+            },
         ) {
             return report.outcome;
         }
@@ -1000,7 +1041,10 @@ impl<'a> PreparedInsphere3<'a> {
             &det,
             policy,
             || None,
-            || super::exact::insphere3d(self.a, self.b, self.c, self.d, point),
+            || {
+                super::exact::insphere3d_shared_scale(self.a, self.b, self.c, self.d, point)
+                    .or_else(|| super::exact::insphere3d(self.a, self.b, self.c, self.d, point))
+            },
             RefinementNeed::RealRefinement,
         )
     }
@@ -1265,6 +1309,12 @@ mod tests {
     use hyperreal::Rational;
     use proptest::prelude::*;
 
+    #[cfg(feature = "dispatch-trace")]
+    fn dispatch_trace_test_lock() -> &'static std::sync::Mutex<()> {
+        static LOCK: std::sync::OnceLock<std::sync::Mutex<()>> = std::sync::OnceLock::new();
+        LOCK.get_or_init(|| std::sync::Mutex::new(()))
+    }
+
     fn real(value: f64) -> Real {
         Real::try_from(value).expect("finite test Real")
     }
@@ -1411,6 +1461,9 @@ mod tests {
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn orient2d_consumes_borrowed_shared_scale_views_before_rational_fallback() {
+        let _trace_lock = dispatch_trace_test_lock()
+            .lock()
+            .expect("dispatch trace test lock poisoned");
         let point = |x, y| {
             Point2::new(
                 Real::from(Rational::fraction(x, 5).unwrap()),
@@ -1446,6 +1499,188 @@ mod tests {
         assert_eq!(
             trace.path_count("real", "product_sum", "exact-rational-known-shared-denom"),
             1
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn orient3d_consumes_borrowed_shared_scale_views_before_rational_fallback() {
+        let _trace_lock = dispatch_trace_test_lock()
+            .lock()
+            .expect("dispatch trace test lock poisoned");
+        let point = |x, y, z| {
+            Point3::new(
+                Real::from(Rational::fraction(x, 7).unwrap()),
+                Real::from(Rational::fraction(y, 7).unwrap()),
+                Real::from(Rational::fraction(z, 7).unwrap()),
+            )
+        };
+        let a = point(1, 1, 1);
+        let b = point(4, 1, 1);
+        let c = point(1, 4, 1);
+        let d = point(1, 1, 3);
+
+        hyperreal::dispatch_trace::reset();
+        let report = hyperreal::dispatch_trace::with_recording(|| {
+            orient3d_report_with_policy(&a, &b, &c, &d, PredicatePolicy::STRICT)
+        });
+
+        assert_eq!(report.outcome.value(), Some(Sign::Negative));
+        assert_eq!(
+            report.certificate,
+            PredicateCertificate::ExactRationalKernel {
+                kernel: ExactPredicateKernel::Orient3dRationalDet3
+            }
+        );
+
+        let trace = hyperreal::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count("hyperlimit", "exact_orient3d", "shared-scale-view-det3"),
+            1
+        );
+        assert_eq!(
+            trace.path_count("hyperlimit", "exact_orient3d", "rational-det3"),
+            0
+        );
+        assert_eq!(
+            trace.path_count("real", "product_sum", "exact-rational-known-shared-denom"),
+            1
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn incircle2d_consumes_borrowed_shared_scale_views_before_rational_fallback() {
+        let _trace_lock = dispatch_trace_test_lock()
+            .lock()
+            .expect("dispatch trace test lock poisoned");
+        let point = |x, y| {
+            Point2::new(
+                Real::from(Rational::fraction(x, 7).unwrap()),
+                Real::from(Rational::fraction(y, 7).unwrap()),
+            )
+        };
+        let a = point(1, 1);
+        let b = point(4, 1);
+        let c = point(1, 4);
+        let d = point(2, 2);
+
+        hyperreal::dispatch_trace::reset();
+        let report = hyperreal::dispatch_trace::with_recording(|| {
+            incircle2d_report_with_policy(&a, &b, &c, &d, PredicatePolicy::STRICT)
+        });
+
+        assert_eq!(report.outcome.value(), Some(Sign::Positive));
+        assert_eq!(
+            report.certificate,
+            PredicateCertificate::ExactRationalKernel {
+                kernel: ExactPredicateKernel::Incircle2dRationalLiftedDet3
+            }
+        );
+
+        let trace = hyperreal::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count(
+                "hyperlimit",
+                "exact_incircle2d",
+                "shared-scale-view-lifted-det3"
+            ),
+            1
+        );
+        assert_eq!(
+            trace.path_count("hyperlimit", "exact_incircle2d", "rational-det3-lifted"),
+            0
+        );
+        assert_eq!(
+            trace.path_count("real", "product_sum", "exact-rational-known-shared-denom"),
+            4
+        );
+
+        let prepared = PreparedIncircle2::new(&a, &b, &c);
+        hyperreal::dispatch_trace::reset();
+        let prepared_outcome = hyperreal::dispatch_trace::with_recording(|| {
+            prepared.test_point_with_policy(&d, PredicatePolicy::STRICT)
+        });
+        assert_eq!(prepared_outcome.value(), Some(Sign::Positive));
+        let trace = hyperreal::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count(
+                "hyperlimit",
+                "exact_incircle2d",
+                "shared-scale-view-lifted-det3"
+            ),
+            1
+        );
+        assert_eq!(
+            trace.path_count("hyperlimit", "exact_incircle2d", "rational-det3-lifted"),
+            0
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn insphere3d_consumes_borrowed_shared_scale_views_before_rational_fallback() {
+        let _trace_lock = dispatch_trace_test_lock()
+            .lock()
+            .expect("dispatch trace test lock poisoned");
+        let point = |x, y, z| {
+            Point3::new(
+                Real::from(Rational::fraction(x, 7).unwrap()),
+                Real::from(Rational::fraction(y, 7).unwrap()),
+                Real::from(Rational::fraction(z, 7).unwrap()),
+            )
+        };
+        let a = point(1, 1, 1);
+        let b = point(4, 1, 1);
+        let c = point(1, 4, 1);
+        let d = point(1, 1, 4);
+        let e = point(2, 2, 2);
+
+        hyperreal::dispatch_trace::reset();
+        let report = hyperreal::dispatch_trace::with_recording(|| {
+            insphere3d_report_with_policy(&a, &b, &c, &d, &e, PredicatePolicy::STRICT)
+        });
+
+        assert_eq!(report.outcome.value(), Some(Sign::Negative));
+        assert_eq!(
+            report.certificate,
+            PredicateCertificate::ExactRationalKernel {
+                kernel: ExactPredicateKernel::Insphere3dRationalLiftedDet4
+            }
+        );
+
+        let trace = hyperreal::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count(
+                "hyperlimit",
+                "exact_insphere3d",
+                "shared-scale-view-lifted-det4"
+            ),
+            1
+        );
+        assert_eq!(
+            trace.path_count("hyperlimit", "exact_insphere3d", "rational-det4-lifted"),
+            0
+        );
+
+        let prepared = PreparedInsphere3::new(&a, &b, &c, &d);
+        hyperreal::dispatch_trace::reset();
+        let prepared_outcome = hyperreal::dispatch_trace::with_recording(|| {
+            prepared.test_point_with_policy(&e, PredicatePolicy::STRICT)
+        });
+        assert_eq!(prepared_outcome.value(), Some(Sign::Negative));
+        let trace = hyperreal::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count(
+                "hyperlimit",
+                "exact_insphere3d",
+                "shared-scale-view-lifted-det4"
+            ),
+            1
+        );
+        assert_eq!(
+            trace.path_count("hyperlimit", "exact_insphere3d", "rational-det4-lifted"),
+            0
         );
     }
 

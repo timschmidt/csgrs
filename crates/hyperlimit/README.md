@@ -55,10 +55,13 @@ Implemented:
 - `RealZeroKnowledge`, `Point2DisplacementFacts`, `Segment2Facts`,
   `Triangle2Facts`, `TriangleEdge2`, and `Aabb2Facts` for predicate-facing
   structural dispatch metadata
-- `compare_reals`, `compare_point2_lexicographic`
-- `point2_equal`, `compare_point2_distance_squared`
+- `compare_reals`, `compare_point2_lexicographic`, `point2_equal`, and
+  report-bearing variants that expose predicate provenance
+- `compare_point2_distance_squared`
 - `classify_real_closed_interval`, `real_in_closed_interval`,
   `classify_closed_interval_intersection`, `closed_intervals_intersect`
+- `certified_interval_sign` and `certified_ball_sign` as proof-producing
+  pre-refinement sign filters over exact enclosures
 - `classify_point_aabb2`, `point_in_aabb2`,
   `classify_aabb2_intersection`, `aabb2s_intersect`
 - `orient2d`, `orient3d`
@@ -199,6 +202,41 @@ let outcome = orient2d_with_policy(&a, &b, &c, policy);
 println!("{outcome:?}");
 ```
 
+Report-bearing APIs also expose `PredicateCertificate`. Use
+`PredicateCertificate::precision_stage()` when callers need a stable public
+classification of the exact-computation ladder without coupling to determinant
+internals:
+
+| Precision stage | Meaning |
+| --- | --- |
+| `StructuralFact` | Cached Real or object facts proved the predicate. |
+| `ExactReducer` | Exact arithmetic or a fixed exact kernel proved it. |
+| `CertifiedFilter` | A conservative exact enclosure/filter proved it. |
+| `BoundedRefinement` | Bounded Real refinement proved it. |
+| `ExplicitApproximatePolicy` | An opt-in approximate edge policy decided it. |
+| `Unknown` | No proof-producing stage is known. |
+
+`PredicateCertificate::is_proof_producing()` is `false` for explicit
+approximate policy fallbacks and unknown certificates. This keeps rendering and
+interop convenience separate from exact topology decisions.
+
+`PredicateApiSemantics` is the coarser API-boundary label:
+
+| API semantic | Use |
+| --- | --- |
+| `ExactPreserving` | Decided predicate reports backed by proof-producing certificates. |
+| `ApproximationDeferring` | APIs that return explicit uncertainty instead of approximating. |
+| `ApproximationForcing` | Explicit approximate edge policies or views. |
+| `CachePopulating` | Prepared facts and versioned caches that aid scheduling but do not prove topology. |
+| `PolicyDependent` | APIs whose escalation behavior is chosen by `PredicatePolicy`. |
+
+Reports expose this with `PredicateReport::api_semantics()`, certificates with
+`PredicateCertificate::api_semantics()`, and policies with
+`PredicatePolicy::api_semantics()`. Session-level carriers mirror the same
+labels: `CachedApproximateView` is `ApproximationForcing`, `VersionedFacts` is
+`CachePopulating`, `ConstructionCertificate` follows its predicate route, and
+`ExactGeometrySession` is `PolicyDependent`.
+
 ## Real Model
 
 Predicate coordinates are `hyperreal::Real`. The predicate layer reads:
@@ -230,6 +268,8 @@ can reuse them across many predicates.
 - `predicates::distance`: exact squared-distance comparison predicates
 - `predicates::interval`: exact Real interval containment and intersection
   classifiers
+- `predicates::filters`: certified interval and ball sign filters that return
+  explicit uncertainty instead of approximate tolerance decisions
 - `predicates::order`: exact Real and point ordering predicates
 - `orient`: points and orientation/circle/sphere predicates
 - `predicates::segment`: exact point-on-segment and segment-intersection
@@ -255,6 +295,8 @@ de Berg, Mark, Otfried Cheong, Marc van Kreveld, and Mark Overmars.
 Hormann, Kai, and Alexander Agathos. "The Point in Polygon Problem for
 Arbitrary Polygons." *Computational Geometry*, vol. 20, no. 3, 2001, pp.
 131-144.
+
+Moore, Ramon E. *Interval Analysis*. Prentice-Hall, 1966.
 
 Shewchuk, Jonathan Richard. "Adaptive Precision Floating-Point Arithmetic and
 Fast Robust Geometric Predicates." *Discrete & Computational Geometry*, vol.

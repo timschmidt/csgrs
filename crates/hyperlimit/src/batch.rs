@@ -10,16 +10,21 @@ use crate::plane::{
 };
 use crate::predicate::{PredicateOutcome, PredicatePolicy, Sign};
 
-/// Case tuple accepted by [`orient2d_batch`] and [`orient2d_batch_parallel`].
+/// Case tuple accepted by [`orient2d_batch`] and, with the `parallel` feature,
+/// `orient2d_batch_parallel`.
 pub type Orient2dCase = (Point2, Point2, Point2);
-/// Case tuple accepted by [`orient3d_batch`] and [`orient3d_batch_parallel`].
+/// Case tuple accepted by [`orient3d_batch`] and, with the `parallel` feature,
+/// `orient3d_batch_parallel`.
 pub type Orient3dCase = (Point3, Point3, Point3, Point3);
-/// Case tuple accepted by [`incircle2d_batch`] and [`incircle2d_batch_parallel`].
+/// Case tuple accepted by [`incircle2d_batch`] and, with the `parallel`
+/// feature, `incircle2d_batch_parallel`.
 pub type Incircle2dCase = (Point2, Point2, Point2, Point2);
-/// Case tuple accepted by [`insphere3d_batch`] and [`insphere3d_batch_parallel`].
+/// Case tuple accepted by [`insphere3d_batch`] and, with the `parallel`
+/// feature, `insphere3d_batch_parallel`.
 pub type Insphere3dCase = (Point3, Point3, Point3, Point3, Point3);
 /// Case tuple accepted by [`classify_point_plane_batch`] and
-/// [`classify_point_plane_batch_parallel`].
+/// `classify_point_plane_batch_parallel` when the `parallel` feature is
+/// enabled.
 pub type PointPlaneCase = (Point3, Plane3);
 
 /// Evaluate a batch of 2D orientation predicates.

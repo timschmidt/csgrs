@@ -12,7 +12,10 @@ use crate::classify::{
     SegmentIntersection, TriangleLocation,
 };
 use crate::geometry::Point2;
-use crate::predicate::{PredicateCertificate, PredicateOutcome, PredicatePolicy, PredicateReport};
+use crate::predicate::{
+    PredicateApiSemantics, PredicateCertificate, PredicateOutcome, PredicatePolicy,
+    PredicateReport,
+};
 use crate::predicates::aabb::PreparedAabb2;
 use crate::predicates::segment::PreparedSegment2;
 use crate::predicates::triangle::PreparedTriangle2;
@@ -230,6 +233,15 @@ impl<T> CachedApproximateView<T> {
         self.freshness_for(session).is_current()
     }
 
+    /// Return the API semantic class for approximate views.
+    ///
+    /// Approximate views are explicit edge artifacts for rendering, IO, and
+    /// broad-phase adapters. They are therefore approximation-forcing metadata,
+    /// not predicate certificates.
+    pub const fn api_semantics(&self) -> PredicateApiSemantics {
+        PredicateApiSemantics::ApproximationForcing
+    }
+
     /// Return freshness diagnostics for this approximate view.
     pub fn freshness_for(&self, session: ExactGeometrySession) -> ConstructionFreshness {
         freshness_from_source(self.source_version, session.version())
@@ -270,6 +282,11 @@ impl ConstructionCertificate {
     /// Return the predicate route certified for this construction version.
     pub const fn predicate(self) -> PredicateCertificate {
         self.predicate
+    }
+
+    /// Return the API semantic class implied by the stored predicate route.
+    pub const fn api_semantics(self) -> PredicateApiSemantics {
+        self.predicate.api_semantics()
     }
 
     /// Return whether this certificate was produced by the current session.
@@ -420,6 +437,11 @@ impl<T> VersionedPredicateReport<T> {
     pub fn freshness_for(&self, session: ExactGeometrySession) -> ConstructionFreshness {
         self.certificate.freshness_for(session)
     }
+
+    /// Return the API semantic class implied by the underlying report.
+    pub const fn api_semantics(&self) -> PredicateApiSemantics {
+        self.report.api_semantics()
+    }
 }
 
 impl<F> VersionedFacts<F> {
@@ -495,6 +517,15 @@ impl<F> VersionedFacts<F> {
         self.payoff
     }
 
+    /// Return the API semantic class for versioned fact carriers.
+    ///
+    /// Versioned facts populate reusable structural metadata. They can guide
+    /// faster exact schedules, but they are not topology proofs unless an exact
+    /// predicate report later certifies a decision.
+    pub const fn api_semantics(&self) -> PredicateApiSemantics {
+        PredicateApiSemantics::CachePopulating
+    }
+
     /// Return whether these facts were computed for the session's current version.
     pub fn is_current_for(&self, session: ExactGeometrySession) -> bool {
         self.freshness_for(session).is_current()
@@ -563,6 +594,16 @@ impl ExactGeometrySession {
     /// Return the predicate policy used by this session.
     pub const fn policy(self) -> PredicatePolicy {
         self.policy
+    }
+
+    /// Return the semantic class for session predicate APIs.
+    ///
+    /// A session is policy-dependent: it carries the caller's exact/refinement
+    /// policy into prepared predicates and versioned reports. Individual
+    /// reports still expose their proof-producing or approximation-deferring
+    /// certificate semantics.
+    pub const fn api_semantics(self) -> PredicateApiSemantics {
+        self.policy.api_semantics()
     }
 
     /// Return the current construction version.
@@ -1117,6 +1158,10 @@ mod tests {
         assert_eq!(view.source_version(), ConstructionVersion::ZERO);
         assert_eq!(view.precision_bits(), 53);
         assert_eq!(view.max_abs_error(), 0.25);
+        assert_eq!(
+            view.api_semantics(),
+            PredicateApiSemantics::ApproximationForcing
+        );
         assert!(view.is_current_for(session));
         assert_eq!(view.freshness_for(session), ConstructionFreshness::Current);
 
@@ -1150,6 +1195,7 @@ mod tests {
 
         assert_eq!(certificate.version(), ConstructionVersion::ZERO);
         assert_eq!(certificate.predicate(), report.certificate);
+        assert_eq!(certificate.api_semantics(), report.certificate.api_semantics());
         assert!(certificate.is_current_for(session));
         assert_eq!(
             certificate.freshness_for(session),
@@ -1188,6 +1234,10 @@ mod tests {
         assert_eq!(versioned.dependencies().len(), 2);
         assert_eq!(versioned.certificate(), Some(certificate));
         assert_eq!(versioned.facts().known_non_degenerate(), Some(true));
+        assert_eq!(
+            versioned.api_semantics(),
+            PredicateApiSemantics::CachePopulating
+        );
         assert_eq!(
             versioned.freshness_for(session),
             ConstructionFreshness::Current
@@ -1276,6 +1326,14 @@ mod tests {
 
         assert_eq!(report.value(), Some(Sign::Positive));
         assert_eq!(report.certificate().version(), ConstructionVersion::ZERO);
+        assert_eq!(
+            session.api_semantics(),
+            PredicateApiSemantics::PolicyDependent
+        );
+        assert_eq!(
+            report.api_semantics(),
+            report.report().certificate.api_semantics()
+        );
         assert_eq!(
             report.certificate().predicate(),
             report.report().certificate

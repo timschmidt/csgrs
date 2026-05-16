@@ -7,9 +7,9 @@ use criterion::{BenchmarkId, Criterion, black_box};
 use dispatch_trace::{begin_dispatch_trace_run, trace_dispatch_cases, write_dispatch_trace_report};
 use hyperlimit::{
     LineSide, Plane3, PlaneSide, Point2, Point3, PredicateOutcome, PreparedIncircle2,
-    PreparedInsphere3, PreparedLine2, PreparedOrientedPlane3, Sign, classify_point_line,
-    classify_point_oriented_plane, classify_point_plane, incircle2d, insphere3d, orient2d,
-    orient3d,
+    PreparedInsphere3, PreparedLine2, PreparedOrientedPlane3, Sign, certified_ball_sign,
+    classify_point_line, classify_point_oriented_plane, classify_point_plane, incircle2d,
+    insphere3d, orient2d, orient3d,
 };
 
 const BATCH: usize = 512;
@@ -38,6 +38,7 @@ impl Workload {
 
 fn bench_predicates(c: &mut Criterion) {
     bench_representation(c, "hyperreal", hyperreal_real);
+    bench_certified_filters(c);
     bench_exact_rational_kernels(c);
     bench_shared_scale_views(c);
 
@@ -45,6 +46,24 @@ fn bench_predicates(c: &mut Criterion) {
     // currently keeps local refinement caches behind `RefCell`, so exact
     // hyperreal benchmark rows stay sequential until the real layer exposes a
     // thread-safe sharing mode.
+}
+
+fn bench_certified_filters(c: &mut Criterion) {
+    let mut group = c.benchmark_group("certified_filters");
+    let balls = certified_ball_cases();
+    group.bench_function("ball_sign/rational", |bench| {
+        bench.iter(|| {
+            let mut score = 0_i64;
+            for (center, radius) in &balls {
+                score += maybe_sign_score(black_box(certified_ball_sign(
+                    black_box(center),
+                    black_box(radius),
+                )));
+            }
+            black_box(score)
+        });
+    });
+    group.finish();
 }
 
 fn bench_representation(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyperreal::Real) {
@@ -139,6 +158,68 @@ fn bench_shared_scale_views(c: &mut Criterion) {
     group.bench_function("point3/common_denominator", |bench| {
         bench.iter(|| black_box(point3.shared_scale_view()))
     });
+
+    // Shared-scale predicate rows use nonzero rational coordinates so each
+    // point can prove a point-local common denominator. This gives Criterion
+    // and dispatch traces a direct view of Yap's "preserve object structure
+    // before scalar expansion" route; see Yap, "Towards Exact Geometric
+    // Computation," *Computational Geometry* 7.1-2 (1997).
+    let incircle_cases = shared_scale_incircle2d_cases();
+    group.bench_function("incircle2d/common_denominator_predicate", |bench| {
+        bench.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c, d) in &incircle_cases {
+                score += sign_score(black_box(incircle2d(
+                    black_box(a),
+                    black_box(b),
+                    black_box(c),
+                    black_box(d),
+                )));
+            }
+            black_box(score)
+        });
+    });
+    if let Some((a, b, c, _)) = incircle_cases.first() {
+        let prepared = PreparedIncircle2::new(a, b, c);
+        group.bench_function("incircle2d/common_denominator_prepared", |bench| {
+            bench.iter(|| {
+                let mut score = 0_i64;
+                for (_, _, _, d) in &incircle_cases {
+                    score += sign_score(black_box(prepared.test_point(black_box(d))));
+                }
+                black_box(score)
+            });
+        });
+    }
+
+    let insphere_cases = shared_scale_insphere3d_cases();
+    group.bench_function("insphere3d/common_denominator_predicate", |bench| {
+        bench.iter(|| {
+            let mut score = 0_i64;
+            for (a, b, c, d, e) in &insphere_cases {
+                score += sign_score(black_box(insphere3d(
+                    black_box(a),
+                    black_box(b),
+                    black_box(c),
+                    black_box(d),
+                    black_box(e),
+                )));
+            }
+            black_box(score)
+        });
+    });
+    if let Some((a, b, c, d, _)) = insphere_cases.first() {
+        let prepared = PreparedInsphere3::new(a, b, c, d);
+        group.bench_function("insphere3d/common_denominator_prepared", |bench| {
+            bench.iter(|| {
+                let mut score = 0_i64;
+                for (_, _, _, _, e) in &insphere_cases {
+                    score += sign_score(black_box(prepared.test_point(black_box(e))));
+                }
+                black_box(score)
+            });
+        });
+    }
     group.finish();
 }
 
@@ -749,6 +830,42 @@ fn exact_rational_insphere3d_cases() -> Vec<Insphere3Case> {
     cases
 }
 
+fn shared_scale_incircle2d_cases() -> Vec<Incircle2Case> {
+    let a = rational_point2(1, 7, 1, 7);
+    let b = rational_point2(4, 7, 1, 7);
+    let c = rational_point2(1, 7, 4, 7);
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        cases.push((
+            a.clone(),
+            b.clone(),
+            c.clone(),
+            rational_point2(j % 3 + 2, 7, (j / 3) % 3 + 2, 7),
+        ));
+    }
+    cases
+}
+
+fn shared_scale_insphere3d_cases() -> Vec<Insphere3Case> {
+    let a = rational_point3(1, 7, 1, 7, 1, 7);
+    let b = rational_point3(4, 7, 1, 7, 1, 7);
+    let c = rational_point3(1, 7, 4, 7, 1, 7);
+    let d = rational_point3(1, 7, 1, 7, 4, 7);
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        cases.push((
+            a.clone(),
+            b.clone(),
+            c.clone(),
+            d.clone(),
+            rational_point3(j % 3 + 2, 7, (j / 3) % 3 + 2, 7, (j / 9) % 3 + 2, 7),
+        ));
+    }
+    cases
+}
+
 fn point2(x: f64, y: f64, real: fn(f64) -> hyperreal::Real) -> Point2 {
     Point2::new(real(x), real(y))
 }
@@ -784,6 +901,20 @@ fn rational_real(numerator: i64, denominator: u64) -> hyperreal::Real {
     hyperreal::Real::new(hyperreal::Rational::fraction(numerator, denominator).unwrap())
 }
 
+fn certified_ball_cases() -> Vec<(hyperreal::Real, hyperreal::Real)> {
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let magnitude = (i % 17 + 3) as i64;
+        let radius = (i % 5 + 1) as i64;
+        let sign = if i.is_multiple_of(2) { 1 } else { -1 };
+        cases.push((
+            rational_real(sign * magnitude, 7),
+            rational_real(radius, 14),
+        ));
+    }
+    cases
+}
+
 fn unit(index: usize) -> f64 {
     let mut x = index as u64;
     x = x.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1);
@@ -807,6 +938,10 @@ fn sign_score(outcome: PredicateOutcome<Sign>) -> i64 {
         },
         PredicateOutcome::Unknown { .. } => 7,
     }
+}
+
+fn maybe_sign_score(outcome: Option<PredicateOutcome<Sign>>) -> i64 {
+    outcome.map_or(11, sign_score)
 }
 
 fn line_score(outcome: PredicateOutcome<LineSide>) -> i64 {
