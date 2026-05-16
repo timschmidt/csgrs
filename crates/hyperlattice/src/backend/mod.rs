@@ -269,6 +269,19 @@ pub trait BackendScalar:
         crate::trace_dispatch!("hyperlattice_backend_trait", "op", "active-dot3-default");
         Self::dot3(left, right)
     }
+    /// Returns a three-lane dot product after the caller has already proved every
+    /// factor is an exact rational.
+    ///
+    /// Backends without a cheaper certified path use the active dot reducer.
+    #[inline]
+    fn active_dot3_known_exact_rational(left: [&Self; 3], right: [&Self; 3]) -> Self {
+        crate::trace_dispatch!(
+            "hyperlattice_backend_trait",
+            "op",
+            "active-dot3-known-exact-rational-default"
+        );
+        Self::active_dot3(left, right)
+    }
     /// Returns the four-lane dot product.
     #[inline]
     fn dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
@@ -284,6 +297,20 @@ pub trait BackendScalar:
     fn active_dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
         crate::trace_dispatch!("hyperlattice_backend_trait", "op", "active-dot4-default");
         Self::dot4(left, right)
+    }
+
+    /// Returns a four-lane dot product after the caller has already proved every
+    /// factor is an exact rational.
+    ///
+    /// Backends without a cheaper certified path use the active dot reducer.
+    #[inline]
+    fn active_dot4_known_exact_rational(left: [&Self; 4], right: [&Self; 4]) -> Self {
+        crate::trace_dispatch!(
+            "hyperlattice_backend_trait",
+            "op",
+            "active-dot4-known-exact-rational-default"
+        );
+        Self::active_dot4(left, right)
     }
     /// Returns the three-lane linear combination `c0 * x0 + c1 * x1 + c2 * x2`.
     ///
@@ -487,6 +514,22 @@ pub trait BackendScalar:
             });
         }
         total.unwrap_or_else(Self::zero)
+    }
+    /// Returns a fused signed sum of already-active two-factor products after
+    /// the caller has proved every factor is an exact rational.
+    ///
+    /// Backends without a cheaper certified path use the active reducer.
+    #[inline]
+    fn active_signed_product_sum2_known_exact_rational<const TERMS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Self; 2]; TERMS],
+    ) -> Self {
+        crate::trace_dispatch!(
+            "hyperlattice_backend_trait",
+            "op",
+            "active-signed-product-sum2-known-exact-rational-default"
+        );
+        Self::active_signed_product_sum2(positive_terms, terms)
     }
     /// Returns `e` raised to this value.
     fn exp(self) -> BlasResult<Self>;

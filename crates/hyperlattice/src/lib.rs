@@ -896,6 +896,22 @@ impl<B: Backend> Scalar<B> {
     }
 
     #[inline]
+    pub(crate) fn active_signed_product_sum2_known_exact_rational<const TERMS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Self; 2]; TERMS],
+    ) -> Self {
+        crate::trace_dispatch!(
+            "hyperlattice",
+            "scalar_fast_path",
+            "active-signed-product-sum2-known-exact-rational"
+        );
+        Self(B::Repr::active_signed_product_sum2_known_exact_rational(
+            positive_terms,
+            terms.map(|term| [&term[0].0, &term[1].0]),
+        ))
+    }
+
+    #[inline]
     pub(crate) fn active_positive_product_sum2(terms: [[&Self; 2]; 2]) -> Self {
         if B::FUSE_SIGNED_PRODUCT_SUM {
             crate::trace_dispatch!(

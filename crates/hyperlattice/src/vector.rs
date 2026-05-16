@@ -370,13 +370,14 @@ macro_rules! impl_vector {
 
             fn sub(self, rhs: Scalar<B>) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "sub-scalar-owned");
+                let rhs = -rhs;
                 let rhs = &rhs;
                 if B::MOVE_ELEMENTWISE {
-                    Self(self.0.map(|value| value.sub_cached(rhs)))
+                    Self(self.0.map(|value| value.add_cached(rhs)))
                 } else {
                     let mut values = self.0;
                     for value in &mut values {
-                        *value = value.clone().sub_cached(rhs);
+                        *value = value.clone().add_cached(rhs);
                     }
                     Self(values)
                 }
@@ -388,7 +389,8 @@ macro_rules! impl_vector {
 
             fn sub(self, rhs: &Scalar<B>) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_vector", "op", "sub-scalar-ref");
-                Self(self.0.map(|value| value.sub_cached(rhs)))
+                let rhs = -rhs.clone();
+                Self(self.0.map(|value| value.add_cached(&rhs)))
             }
         }
 

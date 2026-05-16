@@ -236,6 +236,25 @@ impl BackendScalarTrait for BackendScalar {
     }
 
     #[inline]
+    fn active_dot3_known_exact_rational(left: [&Self; 3], right: [&Self; 3]) -> Self {
+        crate::trace_dispatch!(
+            "hyperlattice_hyperreal_backend",
+            "op",
+            "active-dot3-known-exact-rational"
+        );
+        Self(
+            hyperreal::Real::exact_rational_signed_product_sum_known_exact(
+                [true, true, true],
+                [
+                    [&left[0].0, &right[0].0],
+                    [&left[1].0, &right[1].0],
+                    [&left[2].0, &right[2].0],
+                ],
+            ),
+        )
+    }
+
+    #[inline]
     fn dot4(left: [&Self; 4], right: [&Self; 4]) -> Self {
         // See `dot3`; this is the hottest matrix multiply shape and benefits
         // most from hyperreal's shared-denominator exact-rational path. Keep
@@ -255,6 +274,26 @@ impl BackendScalarTrait for BackendScalar {
             [&left[0].0, &left[1].0, &left[2].0, &left[3].0],
             [&right[0].0, &right[1].0, &right[2].0, &right[3].0],
         ))
+    }
+
+    #[inline]
+    fn active_dot4_known_exact_rational(left: [&Self; 4], right: [&Self; 4]) -> Self {
+        crate::trace_dispatch!(
+            "hyperlattice_hyperreal_backend",
+            "op",
+            "active-dot4-known-exact-rational"
+        );
+        Self(
+            hyperreal::Real::exact_rational_signed_product_sum_known_exact(
+                [true, true, true, true],
+                [
+                    [&left[0].0, &right[0].0],
+                    [&left[1].0, &right[1].0],
+                    [&left[2].0, &right[2].0],
+                    [&left[3].0, &right[3].0],
+                ],
+            ),
+        )
     }
 
     #[inline]
@@ -396,6 +435,24 @@ impl BackendScalarTrait for BackendScalar {
             });
         }
         total.unwrap_or_else(Self::zero)
+    }
+
+    #[inline]
+    fn active_signed_product_sum2_known_exact_rational<const TERMS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Self; 2]; TERMS],
+    ) -> Self {
+        crate::trace_dispatch!(
+            "hyperlattice_hyperreal_backend",
+            "op",
+            "active-signed-product-sum2-known-exact-rational"
+        );
+        Self(
+            hyperreal::Real::exact_rational_signed_product_sum_known_exact(
+                positive_terms,
+                terms.map(|term| [&term[0].0, &term[1].0]),
+            ),
+        )
     }
 
     #[inline]

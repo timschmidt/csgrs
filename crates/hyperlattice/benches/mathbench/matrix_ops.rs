@@ -1837,6 +1837,19 @@ fn bench_matrix_operations_for<B, F>(
             );
         }
     });
+    trace_dispatch_row(
+        format!("matrix_ops/{label}/mat4 prepared_div_matrix_exact_left"),
+        || {
+            let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+            for index in 0..lhs4_cases.len() {
+                black_box(
+                    black_box(lhs4_cases[index].clone())
+                        .div_exact_rational_matrix_with_prepared(&mut prepared)
+                        .unwrap(),
+                );
+            }
+        },
+    );
     trace_dispatch_row(format!("matrix_ops/{label}/mat4 prepared_div_matrix_checked"), || {
         let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
         for index in 0..lhs4_cases.len() {
@@ -3188,6 +3201,22 @@ fn bench_matrix_operations_for<B, F>(
             )
         })
     });
+    group.bench_function(
+        format!("{label}/mat4 prepared_div_matrix_exact_left"),
+        |b| {
+            let cursor = Cell::new(0);
+            let mut prepared = rhs4_cases[0].prepare_right_divisor();
+            b.iter(|| {
+                let index = cursor.get();
+                cursor.set((index + 1) % lhs4_cases.len());
+                black_box(
+                    black_box(lhs4_cases[index].clone())
+                        .div_exact_rational_matrix_with_prepared(&mut prepared)
+                        .unwrap(),
+                )
+            })
+        },
+    );
     group.bench_function(format!("{label}/mat4 prepared_div_matrix_checked"), |b| {
         let cursor = Cell::new(0);
         let mut prepared = rhs4_cases[0].prepare_right_divisor();
@@ -3252,6 +3281,17 @@ fn bench_matrix_operations_for<B, F>(
         let mut prepared = rhs4_cases[0].prepare_right_divisor();
         b.iter(|| black_box(prepared.powi(-1).unwrap()))
     });
+    group.bench_function(
+        format!("{label}/mat4 translated_diagonal_direction_transform"),
+        |b| {
+            b.iter(|| {
+                black_box(
+                    translated_diagonal_direction_matrix
+                        .transform_vec4_direction(black_box(&translated_diagonal_direction)),
+                )
+            })
+        },
+    );
     group.bench_function(format!("{label}/mat4 translated_diagonal_direction_batch"), |b| {
         let handle = translated_diagonal_direction_matrix.transform_vec4_handle();
         b.iter(|| black_box(handle.transform_vector_batch(black_box(&translated_diagonal_direction_batch))))

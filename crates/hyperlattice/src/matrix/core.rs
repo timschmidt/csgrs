@@ -302,7 +302,11 @@ impl<'a, B: Backend> PreparedRightDivisor3<'a, B> {
                 "method",
                 "prepared-right-divisor3-cache-shared-adjugate"
             );
-            let (adjugate, determinant) = if self.is_definitely_dense_for_inverse {
+            let known_rational = self.right_exact_rational_kind == ExactRationalKind::ExactRational;
+            let (adjugate, determinant) = if self.is_definitely_dense_for_inverse && known_rational
+            {
+                matrix3_adjugate_and_determinant_dense_exact_known_rational(&self.divisor.0)
+            } else if self.is_definitely_dense_for_inverse {
                 matrix3_adjugate_and_determinant_dense_exact(&self.divisor.0)
             } else {
                 matrix3_adjugate_and_determinant(&self.divisor.0)
@@ -325,7 +329,11 @@ impl<'a, B: Backend> PreparedRightDivisor3<'a, B> {
                 "method",
                 "prepared-right-divisor3-cache-shared-adjugate-checked"
             );
-            let (adjugate, determinant) = if self.is_definitely_dense_for_inverse {
+            let known_rational = self.right_exact_rational_kind == ExactRationalKind::ExactRational;
+            let (adjugate, determinant) = if self.is_definitely_dense_for_inverse && known_rational
+            {
+                matrix3_adjugate_and_determinant_dense_exact_known_rational(&self.divisor.0)
+            } else if self.is_definitely_dense_for_inverse {
                 matrix3_adjugate_and_determinant_dense_exact(&self.divisor.0)
             } else {
                 matrix3_adjugate_and_determinant(&self.divisor.0)
@@ -352,7 +360,11 @@ impl<'a, B: Backend> PreparedRightDivisor3<'a, B> {
                 "method",
                 "prepared-right-divisor3-cache-shared-adjugate-checked-abort"
             );
-            let (adjugate, determinant) = if self.is_definitely_dense_for_inverse {
+            let known_rational = self.right_exact_rational_kind == ExactRationalKind::ExactRational;
+            let (adjugate, determinant) = if self.is_definitely_dense_for_inverse && known_rational
+            {
+                matrix3_adjugate_and_determinant_dense_exact_known_rational(&self.divisor.0)
+            } else if self.is_definitely_dense_for_inverse {
                 matrix3_adjugate_and_determinant_dense_exact(&self.divisor.0)
             } else {
                 matrix3_adjugate_and_determinant(&self.divisor.0)
@@ -621,21 +633,34 @@ impl<'a, B: Backend> PreparedRightDivisor4<'a, B> {
                 "prepared-right-divisor4-cache-shared-adjugate"
             );
             let dense_exact = self.is_definitely_dense_for_inverse;
+            let known_rational = self.right_exact_rational_kind != ExactRationalKind::NonRational;
             let factors = self.factors.get_or_insert_with(|| {
                 // Cache the six fixed 4×4 minors once for all prepared
                 // applications. Reusing the same cache lets repeated
                 // right-divisions avoid re-materializing minors while still
                 // delaying scalar canonicalization until the final shared
                 // reciprocal scale.
-                if dense_exact {
+                if dense_exact && known_rational {
+                    matrix4_factors_dense_exact_known_rational(&self.divisor.0)
+                } else if dense_exact {
                     matrix4_factors_dense_exact(&self.divisor.0)
                 } else {
                     matrix4_factors(&self.divisor.0)
                 }
             });
-            let determinant = determinant4_from_factors(&factors.0, &factors.1);
+            let determinant = if dense_exact && known_rational {
+                determinant4_from_factors_known_rational(&factors.0, &factors.1)
+            } else {
+                determinant4_from_factors(&factors.0, &factors.1)
+            };
             let reciprocal_determinant = determinant.inverse_ref()?;
-            let adjugate = if dense_exact {
+            let adjugate = if dense_exact && known_rational {
+                matrix4_adjugate_from_factors_dense_exact_known_rational(
+                    &self.divisor.0,
+                    &factors.0,
+                    &factors.1,
+                )
+            } else if dense_exact {
                 matrix4_adjugate_from_factors_dense_exact(&self.divisor.0, &factors.0, &factors.1)
             } else {
                 matrix4_adjugate_from_factors(&self.divisor.0, &factors.0, &factors.1)
@@ -658,22 +683,35 @@ impl<'a, B: Backend> PreparedRightDivisor4<'a, B> {
                 "prepared-right-divisor4-cache-shared-adjugate-checked"
             );
             let dense_exact = self.is_definitely_dense_for_inverse;
+            let known_rational = self.right_exact_rational_kind != ExactRationalKind::NonRational;
             let factors = self.factors.get_or_insert_with(|| {
                 // Keep the cached factors in the prepared handle so checked and
                 // abort-aware division variants can share the exact same
                 // structural work in each pass. This is a direct application
                 // of Yap-style object-level reuse for repeated geometry
                 // kernels (Yap, 1997).
-                if dense_exact {
+                if dense_exact && known_rational {
+                    matrix4_factors_dense_exact_known_rational(&self.divisor.0)
+                } else if dense_exact {
                     matrix4_factors_dense_exact(&self.divisor.0)
                 } else {
                     matrix4_factors(&self.divisor.0)
                 }
             });
-            let determinant = determinant4_from_factors(&factors.0, &factors.1);
+            let determinant = if dense_exact && known_rational {
+                determinant4_from_factors_known_rational(&factors.0, &factors.1)
+            } else {
+                determinant4_from_factors(&factors.0, &factors.1)
+            };
             require_known_nonzero(&determinant)?;
             let reciprocal_determinant = determinant.inverse_ref()?;
-            let adjugate = if dense_exact {
+            let adjugate = if dense_exact && known_rational {
+                matrix4_adjugate_from_factors_dense_exact_known_rational(
+                    &self.divisor.0,
+                    &factors.0,
+                    &factors.1,
+                )
+            } else if dense_exact {
                 matrix4_adjugate_from_factors_dense_exact(&self.divisor.0, &factors.0, &factors.1)
             } else {
                 matrix4_adjugate_from_factors(&self.divisor.0, &factors.0, &factors.1)
@@ -699,20 +737,36 @@ impl<'a, B: Backend> PreparedRightDivisor4<'a, B> {
                 "prepared-right-divisor4-cache-shared-adjugate-checked-abort"
             );
             let dense_exact = self.is_definitely_dense_for_inverse;
+            let known_rational = self.right_exact_rational_kind != ExactRationalKind::NonRational;
             let factors = self.factors.get_or_insert_with(|| {
                 // Keep this branch aligned with the checked variant so only one
                 // factorization runs for a prepared divisor, then every abort-aware
                 // caller shares that cache.
-                if dense_exact {
+                if dense_exact && known_rational {
+                    matrix4_factors_dense_exact_known_rational(&self.divisor.0)
+                } else if dense_exact {
                     matrix4_factors_dense_exact(&self.divisor.0)
                 } else {
                     matrix4_factors(&self.divisor.0)
                 }
             });
-            let determinant = with_abort(determinant4_from_factors(&factors.0, &factors.1), signal);
+            let determinant = if dense_exact && known_rational {
+                with_abort(
+                    determinant4_from_factors_known_rational(&factors.0, &factors.1),
+                    signal,
+                )
+            } else {
+                with_abort(determinant4_from_factors(&factors.0, &factors.1), signal)
+            };
             require_known_nonzero(&determinant)?;
             let reciprocal_determinant = determinant.inverse_ref()?;
-            let adjugate = if dense_exact {
+            let adjugate = if dense_exact && known_rational {
+                matrix4_adjugate_from_factors_dense_exact_known_rational(
+                    &self.divisor.0,
+                    &factors.0,
+                    &factors.1,
+                )
+            } else if dense_exact {
                 matrix4_adjugate_from_factors_dense_exact(&self.divisor.0, &factors.0, &factors.1)
             } else {
                 matrix4_adjugate_from_factors(&self.divisor.0, &factors.0, &factors.1)
@@ -741,6 +795,25 @@ impl<'a, B: Backend> PreparedRightDivisor4<'a, B> {
             "prepared-right-divisor4-divide"
         );
         right_divide_matrix4_prepared(left, self)
+    }
+
+    /// Divides a caller-certified exact-rational left operand by this prepared
+    /// divisor.
+    ///
+    /// This is intentionally an explicit API: generic callers still use
+    /// [`PreparedRightDivisor4::divide`], while solver/geometry code that
+    /// already carries an exact-rational matrix certificate can avoid rescanning
+    /// the left matrix before selecting the known-rational multiply schedule.
+    pub fn divide_exact_rational_left(
+        &mut self,
+        left: [[Scalar<B>; 4]; 4],
+    ) -> BlasResult<[[Scalar<B>; 4]; 4]> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "prepared-right-divisor4-divide-exact-rational-left"
+        );
+        right_divide_matrix4_prepared_exact_rational_left(left, self)
     }
 
     /// Divides with checked zero-determinant behavior using cached factors.
@@ -937,7 +1010,12 @@ impl<'a, B: Backend> PreparedRightDivisor4<'a, B> {
         } else {
             self.divisor.0.clone()
         };
-        Ok(Matrix4(matrix_power4(base, exponent.unsigned_abs())))
+        let power = if self.right_exact_rational_kind != ExactRationalKind::NonRational {
+            matrix_power4_known_rational(base, exponent.unsigned_abs())
+        } else {
+            matrix_power4(base, exponent.unsigned_abs())
+        };
+        Ok(Matrix4(power))
     }
 
     /// Checked integer power of the prepared divisor.
@@ -960,7 +1038,12 @@ impl<'a, B: Backend> PreparedRightDivisor4<'a, B> {
         } else {
             self.divisor.0.clone()
         };
-        Ok(Matrix4(matrix_power4(base, exponent.unsigned_abs())))
+        let power = if self.right_exact_rational_kind != ExactRationalKind::NonRational {
+            matrix_power4_known_rational(base, exponent.unsigned_abs())
+        } else {
+            matrix_power4(base, exponent.unsigned_abs())
+        };
+        Ok(Matrix4(power))
     }
 
     /// Abort-aware checked integer power of the prepared divisor.
@@ -987,7 +1070,12 @@ impl<'a, B: Backend> PreparedRightDivisor4<'a, B> {
         } else {
             self.divisor.0.clone()
         };
-        Ok(Matrix4(matrix_power4(base, exponent.unsigned_abs())))
+        let power = if self.right_exact_rational_kind != ExactRationalKind::NonRational {
+            matrix_power4_known_rational(base, exponent.unsigned_abs())
+        } else {
+            matrix_power4(base, exponent.unsigned_abs())
+        };
+        Ok(Matrix4(power))
     }
 }
 
@@ -1478,6 +1566,38 @@ fn matrix_power4<B: Backend>(base: [[Scalar<B>; 4]; 4], exponent: u32) -> [[Scal
     matrix_power_with(base, exponent, multiply_arrays4::<B>)
 }
 
+#[inline]
+fn matrix_power4_known_rational<B: Backend>(
+    base: [[Scalar<B>; 4]; 4],
+    exponent: u32,
+) -> [[Scalar<B>; 4]; 4] {
+    crate::trace_dispatch!(
+        "hyperlattice_matrix",
+        "helper",
+        "matrix-power4-known-rational"
+    );
+    if B::FUSE_SIGNED_PRODUCT_SUM {
+        if exponent == 2 {
+            crate::trace_dispatch!(
+                "hyperlattice_matrix",
+                "helper",
+                "matrix-power4-known-rational-square"
+            );
+            return multiply_arrays4_dense_known_rational_ref(&base, &base);
+        }
+        if exponent == 3 {
+            crate::trace_dispatch!(
+                "hyperlattice_matrix",
+                "helper",
+                "matrix-power4-known-rational-cube"
+            );
+            let square = multiply_arrays4_dense_known_rational_ref(&base, &base);
+            return multiply_arrays4_dense_known_rational_ref(&square, &base);
+        }
+    }
+    matrix_power4(base, exponent)
+}
+
 fn ordinary_pivot<B: Backend, const N: usize>(
     left: &[[Scalar<B>; N]; N],
     col: usize,
@@ -1758,7 +1878,38 @@ fn prefer_shared_adjugate_right_division<B: Backend, const N: usize>(
         );
         return true;
     }
+    if B::FUSE_SIGNED_PRODUCT_SUM && N == 3 && right_kind == ExactRationalKind::ExactRational {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "helper",
+            "right-divide3-exact-right-skip-left-kind"
+        );
+        return true;
+    }
     let left_kind = matrix_exact_rational_kind(left);
+    matches!(
+        combine_exact_rational_kind(left_kind, right_kind),
+        ExactRationalKind::ExactDyadicRational | ExactRationalKind::ExactRational
+    )
+}
+
+fn prefer_shared_adjugate_right_division_ref3<B: Backend>(
+    left: &[[Scalar<B>; 3]; 3],
+    right: &[[Scalar<B>; 3]; 3],
+) -> bool {
+    let right_kind = matrix3_exact_rational_kind(right);
+    if right_kind == ExactRationalKind::NonRational {
+        return false;
+    }
+    if B::FUSE_SIGNED_PRODUCT_SUM && right_kind == ExactRationalKind::ExactRational {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "helper",
+            "right-divide3-ref-exact-right-skip-left-kind"
+        );
+        return true;
+    }
+    let left_kind = matrix3_exact_rational_kind(left);
     matches!(
         combine_exact_rational_kind(left_kind, right_kind),
         ExactRationalKind::ExactDyadicRational | ExactRationalKind::ExactRational
@@ -1782,6 +1933,35 @@ fn matrix4_direction_linear_is_diagonal<B: Backend>(matrix: &[[Scalar<B>; 4]; 4]
         && matrix[3][0].definitely_zero()
         && matrix[3][1].definitely_zero()
         && matrix[3][2].definitely_zero()
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum Matrix4DirectionLinearKind {
+    Identity,
+    Diagonal,
+    General,
+}
+
+#[inline]
+fn matrix4_direction_linear_kind<B: Backend>(
+    matrix: &[[Scalar<B>; 4]; 4],
+) -> Matrix4DirectionLinearKind {
+    // Narrow one-shot direction predicate: translations do not affect
+    // homogeneous directions. Classify the one-shot public direction path once
+    // and feed the retained result into the transform helper; this avoids the
+    // rejected pattern of asking the same zero questions again when the matrix
+    // is diagonal but not identity.
+    if !matrix4_direction_linear_is_diagonal(matrix) {
+        return Matrix4DirectionLinearKind::General;
+    }
+    if matrix[0][0].definitely_one()
+        && matrix[1][1].definitely_one()
+        && matrix[2][2].definitely_one()
+    {
+        Matrix4DirectionLinearKind::Identity
+    } else {
+        Matrix4DirectionLinearKind::Diagonal
+    }
 }
 
 #[inline]
@@ -6008,7 +6188,7 @@ fn right_divide_matrix3_ref<B: Backend>(
         }
         return divide_matrix3_by_affine_ref_no_translation(left, right);
     }
-    if !prefer_shared_adjugate_right_division(left, right) {
+    if !prefer_shared_adjugate_right_division_ref3(left, right) {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
@@ -6997,14 +7177,16 @@ fn right_divide_matrix4_dense_exact_shared<B: Backend>(
     left: &[[Scalar<B>; 4]; 4],
     right: &[[Scalar<B>; 4]; 4],
 ) -> BlasResult<[[Scalar<B>; 4]; 4]> {
-    let (s, c) = matrix4_factors_dense_exact(right);
-    let det = determinant4_from_factors(&s, &c);
+    let (s, c) = matrix4_factors_dense_exact_known_rational(right);
+    let det = determinant4_from_factors_known_rational(&s, &c);
     let inv_det = det.inverse()?;
-    let adjugate = matrix4_adjugate_from_factors_dense_exact(right, &s, &c);
-    Ok(scale_matrix4(
-        multiply_arrays4_ref_with_dense_certificate(left, &adjugate),
-        &inv_det,
-    ))
+    let adjugate = matrix4_adjugate_from_factors_dense_exact_known_rational(right, &s, &c);
+    let product = if matrix4_exact_rational_kind(left) != ExactRationalKind::NonRational {
+        multiply_arrays4_dense_known_rational_ref(left, &adjugate)
+    } else {
+        multiply_arrays4_ref_with_dense_certificate(left, &adjugate)
+    };
+    Ok(scale_matrix4(product, &inv_det))
 }
 
 #[inline]
@@ -7012,15 +7194,17 @@ fn right_divide_matrix4_dense_exact_shared_checked<B: Backend>(
     left: &[[Scalar<B>; 4]; 4],
     right: &[[Scalar<B>; 4]; 4],
 ) -> CheckedBlasResult<[[Scalar<B>; 4]; 4]> {
-    let (s, c) = matrix4_factors_dense_exact(right);
-    let det = determinant4_from_factors(&s, &c);
+    let (s, c) = matrix4_factors_dense_exact_known_rational(right);
+    let det = determinant4_from_factors_known_rational(&s, &c);
     require_known_nonzero(&det)?;
     let inv_det = det.inverse()?;
-    let adjugate = matrix4_adjugate_from_factors_dense_exact(right, &s, &c);
-    Ok(scale_matrix4(
-        multiply_arrays4_ref_with_dense_certificate(left, &adjugate),
-        &inv_det,
-    ))
+    let adjugate = matrix4_adjugate_from_factors_dense_exact_known_rational(right, &s, &c);
+    let product = if matrix4_exact_rational_kind(left) != ExactRationalKind::NonRational {
+        multiply_arrays4_dense_known_rational_ref(left, &adjugate)
+    } else {
+        multiply_arrays4_ref_with_dense_certificate(left, &adjugate)
+    };
+    Ok(scale_matrix4(product, &inv_det))
 }
 
 #[inline]
@@ -7029,15 +7213,17 @@ fn right_divide_matrix4_dense_exact_shared_checked_with_abort<B: Backend>(
     right: &[[Scalar<B>; 4]; 4],
     signal: &AbortSignal,
 ) -> CheckedBlasResult<[[Scalar<B>; 4]; 4]> {
-    let (s, c) = matrix4_factors_dense_exact(right);
-    let det = with_abort(determinant4_from_factors(&s, &c), signal);
+    let (s, c) = matrix4_factors_dense_exact_known_rational(right);
+    let det = with_abort(determinant4_from_factors_known_rational(&s, &c), signal);
     require_known_nonzero(&det)?;
     let inv_det = det.inverse()?;
-    let adjugate = matrix4_adjugate_from_factors_dense_exact(right, &s, &c);
-    Ok(scale_matrix4(
-        multiply_arrays4_ref_with_dense_certificate(left, &adjugate),
-        &inv_det,
-    ))
+    let adjugate = matrix4_adjugate_from_factors_dense_exact_known_rational(right, &s, &c);
+    let product = if matrix4_exact_rational_kind(left) != ExactRationalKind::NonRational {
+        multiply_arrays4_dense_known_rational_ref(left, &adjugate)
+    } else {
+        multiply_arrays4_ref_with_dense_certificate(left, &adjugate)
+    };
+    Ok(scale_matrix4(product, &inv_det))
 }
 
 fn right_divide_matrix4_prepared<B: Backend>(
@@ -7199,10 +7385,42 @@ fn right_divide_matrix4_prepared<B: Backend>(
         .adjugate
         .as_ref()
         .expect("adjugate cache should be present");
-    Ok(scale_matrix4(
-        multiply_arrays4_rhs_ref_with_dense_certificate(left, adjugate),
-        inv_det,
-    ))
+    let product = if prepared.right_exact_rational_kind != ExactRationalKind::NonRational
+        && matrix4_exact_rational_kind(&left) != ExactRationalKind::NonRational
+    {
+        multiply_arrays4_dense_known_rational_ref(&left, adjugate)
+    } else {
+        multiply_arrays4_rhs_ref_with_dense_certificate(left, adjugate)
+    };
+    Ok(scale_matrix4(product, inv_det))
+}
+
+fn right_divide_matrix4_prepared_exact_rational_left<B: Backend>(
+    left: [[Scalar<B>; 4]; 4],
+    prepared: &mut PreparedRightDivisor4<B>,
+) -> BlasResult<[[Scalar<B>; 4]; 4]> {
+    if B::FUSE_SIGNED_PRODUCT_SUM
+        && prepared.right_exact_rational_kind != ExactRationalKind::NonRational
+    {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "helper",
+            "right-divide4-prepared-certified-left-exact-shared-adjugate"
+        );
+        let _ = prepared.prepare_shared_adjugate()?;
+        let inv_det = prepared
+            .reciprocal_determinant
+            .as_ref()
+            .expect("reciprocal determinant cache should be present");
+        let adjugate = prepared
+            .adjugate
+            .as_ref()
+            .expect("adjugate cache should be present");
+        let product = multiply_arrays4_dense_known_rational_ref(&left, adjugate);
+        return Ok(scale_matrix4(product, inv_det));
+    }
+
+    right_divide_matrix4_prepared(left, prepared)
 }
 
 fn right_divide_matrix4_prepared_checked<B: Backend>(
@@ -7369,10 +7587,14 @@ fn right_divide_matrix4_prepared_checked<B: Backend>(
         .adjugate
         .as_ref()
         .expect("adjugate cache should be present");
-    Ok(scale_matrix4(
-        multiply_arrays4_rhs_ref_with_dense_certificate(left, adjugate),
-        inv_det,
-    ))
+    let product = if prepared.right_exact_rational_kind != ExactRationalKind::NonRational
+        && matrix4_exact_rational_kind(&left) != ExactRationalKind::NonRational
+    {
+        multiply_arrays4_dense_known_rational_ref(&left, adjugate)
+    } else {
+        multiply_arrays4_rhs_ref_with_dense_certificate(left, adjugate)
+    };
+    Ok(scale_matrix4(product, inv_det))
 }
 
 fn right_divide_matrix4_prepared_checked_with_abort<B: Backend>(
@@ -7567,10 +7789,14 @@ fn right_divide_matrix4_prepared_checked_with_abort<B: Backend>(
         .adjugate
         .as_ref()
         .expect("adjugate cache should be present");
-    Ok(scale_matrix4(
-        multiply_arrays4_rhs_ref_with_dense_certificate(left, adjugate),
-        inv_det,
-    ))
+    let product = if prepared.right_exact_rational_kind != ExactRationalKind::NonRational
+        && matrix4_exact_rational_kind(&left) != ExactRationalKind::NonRational
+    {
+        multiply_arrays4_dense_known_rational_ref(&left, adjugate)
+    } else {
+        multiply_arrays4_rhs_ref_with_dense_certificate(left, adjugate)
+    };
+    Ok(scale_matrix4(product, inv_det))
 }
 
 fn right_divide_matrix4_ref<B: Backend>(
@@ -8576,6 +8802,39 @@ fn multiply_arrays4_dense_ref<B: Backend>(
                 [&r0.0, &r1.0, &r2.0, &r3.0],
             ))
         }
+    };
+
+    [
+        [cell(0, 0), cell(0, 1), cell(0, 2), cell(0, 3)],
+        [cell(1, 0), cell(1, 1), cell(1, 2), cell(1, 3)],
+        [cell(2, 0), cell(2, 1), cell(2, 2), cell(2, 3)],
+        [cell(3, 0), cell(3, 1), cell(3, 2), cell(3, 3)],
+    ]
+}
+
+#[inline]
+fn multiply_arrays4_dense_known_rational_ref<B: Backend>(
+    left: &[[Scalar<B>; 4]; 4],
+    right: &[[Scalar<B>; 4]; 4],
+) -> [[Scalar<B>; 4]; 4] {
+    crate::trace_dispatch!(
+        "hyperlattice_matrix",
+        "helper",
+        "multiply4-dense-known-rational-ref"
+    );
+    let cell = |row: usize, col: usize| {
+        let l0 = &left[row][0];
+        let l1 = &left[row][1];
+        let l2 = &left[row][2];
+        let l3 = &left[row][3];
+        let r0 = &right[0][col];
+        let r1 = &right[1][col];
+        let r2 = &right[2][col];
+        let r3 = &right[3][col];
+        Scalar(B::Repr::active_dot4_known_exact_rational(
+            [&l0.0, &l1.0, &l2.0, &l3.0],
+            [&r0.0, &r1.0, &r2.0, &r3.0],
+        ))
     };
 
     [
@@ -10395,6 +10654,24 @@ fn mul_sub_dense_exact<B: Backend>(
     Scalar::active_signed_product_sum2([true, false], [[left_a, right_a], [left_b, right_b]])
 }
 
+#[inline]
+fn mul_sub_dense_exact_known_rational<B: Backend>(
+    left_a: &Scalar<B>,
+    right_a: &Scalar<B>,
+    left_b: &Scalar<B>,
+    right_b: &Scalar<B>,
+) -> Scalar<B> {
+    crate::trace_dispatch!(
+        "hyperlattice_matrix",
+        "helper",
+        "mul-sub-dense-exact-known-rational"
+    );
+    Scalar::active_signed_product_sum2_known_exact_rational(
+        [true, false],
+        [[left_a, right_a], [left_b, right_b]],
+    )
+}
+
 fn mul_add<B: Backend>(
     left_a: &Scalar<B>,
     right_a: &Scalar<B>,
@@ -10506,6 +10783,26 @@ fn mul_add_sub_dense_exact<B: Backend>(
     )
 }
 
+#[inline]
+fn mul_add_sub_dense_exact_known_rational<B: Backend>(
+    left_a: &Scalar<B>,
+    right_a: &Scalar<B>,
+    left_b: &Scalar<B>,
+    right_b: &Scalar<B>,
+    left_c: &Scalar<B>,
+    right_c: &Scalar<B>,
+) -> Scalar<B> {
+    crate::trace_dispatch!(
+        "hyperlattice_matrix",
+        "helper",
+        "mul-add-sub-dense-exact-known-rational"
+    );
+    Scalar::active_signed_product_sum2_known_exact_rational(
+        [true, true, false],
+        [[left_a, right_a], [left_b, right_b], [left_c, right_c]],
+    )
+}
+
 fn mul_sub_add<B: Backend>(
     left_a: &Scalar<B>,
     right_a: &Scalar<B>,
@@ -10584,6 +10881,26 @@ fn mul_sub_add_dense_exact<B: Backend>(
 }
 
 #[inline]
+fn mul_sub_add_dense_exact_known_rational<B: Backend>(
+    left_a: &Scalar<B>,
+    right_a: &Scalar<B>,
+    left_b: &Scalar<B>,
+    right_b: &Scalar<B>,
+    left_c: &Scalar<B>,
+    right_c: &Scalar<B>,
+) -> Scalar<B> {
+    crate::trace_dispatch!(
+        "hyperlattice_matrix",
+        "helper",
+        "mul-sub-add-dense-exact-known-rational"
+    );
+    Scalar::active_signed_product_sum2_known_exact_rational(
+        [true, false, false],
+        [[left_a, right_a], [left_b, right_b], [left_c, right_c]],
+    )
+}
+
+#[inline]
 fn determinant3<B: Backend>(m: &[[Scalar<B>; 3]; 3]) -> Scalar<B> {
     crate::trace_dispatch!("hyperlattice_matrix", "helper", "determinant3");
     // Keep determinant infallible and division-free. A Bareiss prototype would
@@ -10645,6 +10962,32 @@ fn matrix3_adjugate_and_determinant_dense_exact<B: Backend>(
     let c22 = mul_sub_dense_exact(&m[0][0], &m[1][1], &m[0][1], &m[1][0]);
     let det =
         Scalar::active_linear_combination3([&m[0][0], &m[0][1], &m[0][2]], [&c00, &c10, &c20]);
+    ([[c00, c01, c02], [c10, c11, c12], [c20, c21, c22]], det)
+}
+
+#[inline(never)]
+fn matrix3_adjugate_and_determinant_dense_exact_known_rational<B: Backend>(
+    matrix: &[[Scalar<B>; 3]; 3],
+) -> ([[Scalar<B>; 3]; 3], Scalar<B>) {
+    crate::trace_dispatch!(
+        "hyperlattice_matrix",
+        "helper",
+        "matrix3-adjugate-and-determinant-dense-exact-known-rational"
+    );
+    let m = &matrix;
+    let c00 = mul_sub_dense_exact_known_rational(&m[1][1], &m[2][2], &m[1][2], &m[2][1]);
+    let c01 = mul_sub_dense_exact_known_rational(&m[0][2], &m[2][1], &m[0][1], &m[2][2]);
+    let c02 = mul_sub_dense_exact_known_rational(&m[0][1], &m[1][2], &m[0][2], &m[1][1]);
+    let c10 = mul_sub_dense_exact_known_rational(&m[1][2], &m[2][0], &m[1][0], &m[2][2]);
+    let c11 = mul_sub_dense_exact_known_rational(&m[0][0], &m[2][2], &m[0][2], &m[2][0]);
+    let c12 = mul_sub_dense_exact_known_rational(&m[0][2], &m[1][0], &m[0][0], &m[1][2]);
+    let c20 = mul_sub_dense_exact_known_rational(&m[1][0], &m[2][1], &m[1][1], &m[2][0]);
+    let c21 = mul_sub_dense_exact_known_rational(&m[0][1], &m[2][0], &m[0][0], &m[2][1]);
+    let c22 = mul_sub_dense_exact_known_rational(&m[0][0], &m[1][1], &m[0][1], &m[1][0]);
+    let det = Scalar::active_signed_product_sum2_known_exact_rational(
+        [true, true, true],
+        [[&m[0][0], &c00], [&m[0][1], &c10], [&m[0][2], &c20]],
+    );
     ([[c00, c01, c02], [c10, c11, c12], [c20, c21, c22]], det)
 }
 
@@ -10981,6 +11324,34 @@ fn matrix4_factors_dense_exact<B: Backend>(
     (s, c)
 }
 
+#[inline(never)]
+fn matrix4_factors_dense_exact_known_rational<B: Backend>(
+    m: &[[Scalar<B>; 4]; 4],
+) -> ([Scalar<B>; 6], [Scalar<B>; 6]) {
+    crate::trace_dispatch!(
+        "hyperlattice_matrix",
+        "helper",
+        "matrix4-factors-dense-exact-known-rational"
+    );
+    let s = [
+        mul_sub_dense_exact_known_rational(&m[0][0], &m[1][1], &m[1][0], &m[0][1]),
+        mul_sub_dense_exact_known_rational(&m[0][0], &m[1][2], &m[1][0], &m[0][2]),
+        mul_sub_dense_exact_known_rational(&m[0][0], &m[1][3], &m[1][0], &m[0][3]),
+        mul_sub_dense_exact_known_rational(&m[0][1], &m[1][2], &m[1][1], &m[0][2]),
+        mul_sub_dense_exact_known_rational(&m[0][1], &m[1][3], &m[1][1], &m[0][3]),
+        mul_sub_dense_exact_known_rational(&m[0][2], &m[1][3], &m[1][2], &m[0][3]),
+    ];
+    let c = [
+        mul_sub_dense_exact_known_rational(&m[2][0], &m[3][1], &m[3][0], &m[2][1]),
+        mul_sub_dense_exact_known_rational(&m[2][0], &m[3][2], &m[3][0], &m[2][2]),
+        mul_sub_dense_exact_known_rational(&m[2][0], &m[3][3], &m[3][0], &m[2][3]),
+        mul_sub_dense_exact_known_rational(&m[2][1], &m[3][2], &m[3][1], &m[2][2]),
+        mul_sub_dense_exact_known_rational(&m[2][1], &m[3][3], &m[3][1], &m[2][3]),
+        mul_sub_dense_exact_known_rational(&m[2][2], &m[3][3], &m[3][2], &m[2][3]),
+    ];
+    (s, c)
+}
+
 fn determinant4_from_factors<B: Backend>(s: &[Scalar<B>; 6], c: &[Scalar<B>; 6]) -> Scalar<B> {
     crate::trace_dispatch!("hyperlattice_matrix", "helper", "determinant4-from-factors");
     // This is the fixed six-minor determinant polynomial
@@ -11007,6 +11378,28 @@ fn determinant4_from_factors<B: Backend>(s: &[Scalar<B>; 6], c: &[Scalar<B>; 6])
         let negative = &s[1] * &c[4] + &s[4] * &c[1];
         positive - negative
     }
+}
+
+fn determinant4_from_factors_known_rational<B: Backend>(
+    s: &[Scalar<B>; 6],
+    c: &[Scalar<B>; 6],
+) -> Scalar<B> {
+    crate::trace_dispatch!(
+        "hyperlattice_matrix",
+        "helper",
+        "determinant4-from-factors-known-rational"
+    );
+    Scalar::active_signed_product_sum2_known_exact_rational(
+        [true, false, true, true, false, true],
+        [
+            [&s[0], &c[5]],
+            [&s[1], &c[4]],
+            [&s[2], &c[3]],
+            [&s[3], &c[2]],
+            [&s[4], &c[1]],
+            [&s[5], &c[0]],
+        ],
+    )
 }
 
 #[inline]
@@ -11512,6 +11905,77 @@ fn matrix4_adjugate_from_factors_dense_exact<B: Backend>(
     ]
 }
 
+#[inline(never)]
+fn matrix4_adjugate_from_factors_dense_exact_known_rational<B: Backend>(
+    m: &[[Scalar<B>; 4]; 4],
+    s: &[Scalar<B>; 6],
+    c: &[Scalar<B>; 6],
+) -> [[Scalar<B>; 4]; 4] {
+    crate::trace_dispatch!(
+        "hyperlattice_matrix",
+        "helper",
+        "matrix4-unscaled-adjugate-dense-exact-known-rational"
+    );
+    [
+        [
+            mul_add_sub_dense_exact_known_rational(
+                &m[1][1], &c[5], &m[1][3], &c[3], &m[1][2], &c[4],
+            ),
+            mul_sub_add_dense_exact_known_rational(
+                &m[0][2], &c[4], &m[0][1], &c[5], &m[0][3], &c[3],
+            ),
+            mul_add_sub_dense_exact_known_rational(
+                &m[3][1], &s[5], &m[3][3], &s[3], &m[3][2], &s[4],
+            ),
+            mul_sub_add_dense_exact_known_rational(
+                &m[2][2], &s[4], &m[2][1], &s[5], &m[2][3], &s[3],
+            ),
+        ],
+        [
+            mul_sub_add_dense_exact_known_rational(
+                &m[1][2], &c[2], &m[1][0], &c[5], &m[1][3], &c[1],
+            ),
+            mul_add_sub_dense_exact_known_rational(
+                &m[0][0], &c[5], &m[0][3], &c[1], &m[0][2], &c[2],
+            ),
+            mul_sub_add_dense_exact_known_rational(
+                &m[3][2], &s[2], &m[3][0], &s[5], &m[3][3], &s[1],
+            ),
+            mul_add_sub_dense_exact_known_rational(
+                &m[2][0], &s[5], &m[2][3], &s[1], &m[2][2], &s[2],
+            ),
+        ],
+        [
+            mul_add_sub_dense_exact_known_rational(
+                &m[1][0], &c[4], &m[1][3], &c[0], &m[1][1], &c[2],
+            ),
+            mul_sub_add_dense_exact_known_rational(
+                &m[0][1], &c[2], &m[0][0], &c[4], &m[0][3], &c[0],
+            ),
+            mul_add_sub_dense_exact_known_rational(
+                &m[3][0], &s[4], &m[3][3], &s[0], &m[3][1], &s[2],
+            ),
+            mul_sub_add_dense_exact_known_rational(
+                &m[2][1], &s[2], &m[2][0], &s[4], &m[2][3], &s[0],
+            ),
+        ],
+        [
+            mul_sub_add_dense_exact_known_rational(
+                &m[1][1], &c[1], &m[1][0], &c[3], &m[1][2], &c[0],
+            ),
+            mul_add_sub_dense_exact_known_rational(
+                &m[0][0], &c[3], &m[0][2], &c[0], &m[0][1], &c[1],
+            ),
+            mul_sub_add_dense_exact_known_rational(
+                &m[3][1], &s[1], &m[3][0], &s[3], &m[3][2], &s[0],
+            ),
+            mul_add_sub_dense_exact_known_rational(
+                &m[2][0], &s[3], &m[2][2], &s[0], &m[2][1], &s[1],
+            ),
+        ],
+    ]
+}
+
 macro_rules! impl_matrix {
     (
         $name:ident,
@@ -11873,14 +12337,15 @@ macro_rules! impl_matrix {
 
             fn sub(self, rhs: Scalar<B>) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_matrix", "op", "sub-scalar-owned");
+                let rhs = -rhs;
                 let rhs = &rhs;
                 if B::MOVE_ELEMENTWISE {
-                    Self(self.0.map(|row| row.map(|value| value.sub_cached(rhs))))
+                    Self(self.0.map(|row| row.map(|value| value.add_cached(rhs))))
                 } else {
                     let mut values = self.0;
                     for row in &mut values {
                         for value in row {
-                            *value = value.clone().sub_cached(rhs);
+                            *value = value.clone().add_cached(rhs);
                         }
                     }
                     Self(values)
@@ -11893,7 +12358,8 @@ macro_rules! impl_matrix {
 
             fn sub(self, rhs: &Scalar<B>) -> Self::Output {
                 crate::trace_dispatch!("hyperlattice_matrix", "op", "sub-scalar-ref");
-                Self(self.0.map(|row| row.map(|value| value.sub_cached(rhs))))
+                let rhs = -rhs.clone();
+                Self(self.0.map(|row| row.map(|value| value.add_cached(&rhs))))
             }
         }
 
@@ -13308,6 +13774,24 @@ impl<B: Backend> Matrix4<B> {
         Ok(Self(divisor.divide(self.0)?))
     }
 
+    /// Divides this caller-certified exact-rational matrix by a prepared right
+    /// divisor.
+    ///
+    /// Use this only when the caller already retains the exact-rational fact for
+    /// `self`. It exposes the prepared/shared-adjugate fast path without paying a
+    /// second 16-lane exact-rational-kind scan in the hot loop.
+    pub fn div_exact_rational_matrix_with_prepared(
+        self,
+        divisor: &mut PreparedRightDivisor4<'_, B>,
+    ) -> BlasResult<Self> {
+        crate::trace_dispatch!(
+            "hyperlattice_matrix",
+            "method",
+            "div-exact-rational-matrix-with-prepared"
+        );
+        Ok(Self(divisor.divide_exact_rational_left(self.0)?))
+    }
+
     /// Divides by a prepared right divisor with checked determinant validation.
     ///
     /// The divisor cache is reused, but the known-nonzero requirement is still
@@ -13425,6 +13909,28 @@ impl<B: Backend> Matrix4<B> {
     /// Transforms a direction vector assuming `rhs[3] == 0`, keeping the fast
     /// 3-term affine-less form.
     pub fn transform_vec4_direction(&self, rhs: &Vector4<B>) -> Vector4<B> {
+        if B::FUSE_SIGNED_PRODUCT_SUM {
+            match matrix4_direction_linear_kind(&self.0) {
+                Matrix4DirectionLinearKind::Identity => {
+                    crate::trace_dispatch!(
+                        "hyperlattice_matrix",
+                        "method",
+                        "transform-vector-vec4-direction-linear-identity"
+                    );
+                    return rhs.clone();
+                }
+                Matrix4DirectionLinearKind::Diagonal => {
+                    return Vector4(transform_vector4_rhs_direction_ref_cached(
+                        &self.0, &rhs.0, true,
+                    ));
+                }
+                Matrix4DirectionLinearKind::General => {
+                    return Vector4(transform_vector4_rhs_direction_ref_cached(
+                        &self.0, &rhs.0, false,
+                    ));
+                }
+            }
+        }
         Vector4(transform_vector4_rhs_direction_ref_cached(
             &self.0,
             &rhs.0,

@@ -3,6 +3,7 @@
 use std::fmt;
 use std::ops::{Add, BitXor, Div, Mul, Neg, Sub};
 
+use crate::backend::ExactRationalKind;
 use crate::scalar::require_known_nonzero;
 use crate::{Backend, BlasResult, CheckedBlasResult, DefaultBackend, Problem, Scalar};
 
@@ -221,6 +222,27 @@ fn complex_division_numerators<B: Backend>(
     rhs: &Complex<B>,
 ) -> (Scalar<B>, Scalar<B>) {
     if B::FUSE_SIGNED_PRODUCT_SUM {
+        let known_exact_rational = lhs.re.exact_rational_kind() != ExactRationalKind::NonRational
+            && lhs.im.exact_rational_kind() != ExactRationalKind::NonRational
+            && rhs.re.exact_rational_kind() != ExactRationalKind::NonRational
+            && rhs.im.exact_rational_kind() != ExactRationalKind::NonRational;
+        if known_exact_rational {
+            crate::trace_dispatch!(
+                "hyperlattice_complex",
+                "op",
+                "div-numerators-fused-known-exact-rational"
+            );
+            return (
+                Scalar::active_signed_product_sum2_known_exact_rational(
+                    [true, true],
+                    [[&lhs.re, &rhs.re], [&lhs.im, &rhs.im]],
+                ),
+                Scalar::active_signed_product_sum2_known_exact_rational(
+                    [true, false],
+                    [[&lhs.im, &rhs.re], [&lhs.re, &rhs.im]],
+                ),
+            );
+        }
         crate::trace_dispatch!("hyperlattice_complex", "op", "div-numerators-fused-exact");
         return (
             Scalar::active_signed_product_sum2(
