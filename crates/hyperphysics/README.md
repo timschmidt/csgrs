@@ -7,7 +7,9 @@ representation for authored geometry and configuration, while primitive
 `f32`/`f64` appear only at rendering, simulation-engine interop, file IO,
 diagnostics, or external-library adapters.
 
-## Hyper Stack Links
+## Hyper Ecosystem Role And Links
+
+Stack links:
 
 - [hyperreal](../hyperreal/README.md): exact rational, symbolic, and computable
   real arithmetic.
