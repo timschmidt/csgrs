@@ -8,35 +8,29 @@ design-readiness checks over Gerber, KiCad, Excellon, and IPC-D-356 inputs. It
 uses the latest git version of [`csgrs`](https://github.com/timschmidt/csgrs)
 for Gerber parsing, polygon offsets, and boolean geometry.
 
-Within the Hyper ecosystem, `hyperdrc` is the first domain crate: it turns the
-lower exactness work into manufacturing package evidence. It uses `hyperreal`
-and `hyperlimit` for exact-aware coordinate and predicate handling where those
-paths are wired, keeps `csgrs` as the current CAM/polygon backend, and records
-source-grid provenance so future `hypercurve`/`hypertri` replacements can make
-the same checks with stronger certificates.
+## Hyper Ecosystem
 
-## Hyper Ecosystem Role And Links
+`hyperdrc` is the first domain crate: it turns exact-aware geometry, parser
+diagnostics, and source-grid provenance into PCB manufacturing package evidence.
 
-Stack links:
-
-- [hyperreal](../hyperreal/README.md): exact rational, symbolic, and computable
+- [hyperreal](https://github.com/timschmidt/hyperreal): exact rational, symbolic, and computable
   real arithmetic.
-- [hyperlimit](../hyperlimit/README.md): exact predicate policy and certified
+- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate policy and certified
   geometric decisions.
-- [hyperlattice](../hyperlattice/README.md): small exact vector, matrix, and
+- [hyperlattice](https://github.com/timschmidt/hyperlattice): small exact vector, matrix, and
   transform algebra.
-- [hypercurve](../hypercurve/README.md): planar curve, contour, region, and
+- [hypercurve](https://github.com/timschmidt/hypercurve): planar curve, contour, region, and
   boolean geometry.
-- [hypertri](../hypertri/README.md): exact polygon triangulation and constrained
+- [hypertri](https://github.com/timschmidt/hypertri): exact polygon triangulation and constrained
   Delaunay topology.
-- [hypermesh](../hypermesh/README.md): 3D mesh boolean experiments and the
+- [hypermesh](https://github.com/timschmidt/boolmesh): 3D mesh boolean experiments and the
   future exact-aware mesh-topology layer.
-- [hypersolve](../hypersolve/README.md): experimental exact-aware solver layer.
-- [hyperdrc](../hyperdrc/README.md): PCB design-readiness checks over exact-aware
+- [hypersolve](https://github.com/timschmidt/hypersolve): experimental exact-aware solver layer.
+- [hyperdrc](https://github.com/timschmidt/hyperdrc): PCB design-readiness checks over exact-aware
   geometry adapters.
-- [hyperphysics](../hyperphysics/README.md): placeholder physics-domain crate
+- [hyperphysics](https://github.com/timschmidt/hyperphysics): placeholder physics-domain crate
   for the exact geometry stack.
-- [csgrs](../csgrs/readme.md): constructive solid geometry and polygon boolean
+- [csgrs](https://github.com/timschmidt/csgrs): constructive solid geometry and polygon boolean
   engine used by HyperDRC and available as an interop target.
 
 ## Current Status
