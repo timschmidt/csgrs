@@ -3,8 +3,12 @@ name = "hypertri"
 version = "0.1.0"
 edition = "2024"
 description = "Hyperreal-backed triangulation algorithms with exact geometric predicates"
+authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/timschmidt/hypertri"
 readme = "README.md"
+keywords = ["triangulation", "geometry", "hyperreal", "predicates"]
+categories = ["mathematics", "graphics", "algorithms"]
 
 [features]
 default = []
