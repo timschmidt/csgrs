@@ -26,7 +26,9 @@ manufacturing-readiness checks.
 The deployed WASM app is available at
 <https://timschmidt.github.io/hypercurve/>.
 
-## Hyper Stack Links
+## Hyper Ecosystem Role And Links
+
+Stack links:
 
 - [hyperreal](../hyperreal/README.md): exact rational, symbolic, and computable
   real arithmetic.
