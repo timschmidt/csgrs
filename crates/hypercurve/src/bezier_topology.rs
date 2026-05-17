@@ -371,7 +371,7 @@ impl CubicBezier2 {
     /// existential point-on-cubic solver. It tests the dyadic parameters that
     /// the subdivision relation already materializes exactly and re-evaluates
     /// the cubic before returning a parameter. The current candidate set is
-    /// the non-endpoint dyadic bisection parameters through eighths, so it
+    /// the non-endpoint dyadic bisection parameters through thirty-seconds, so it
     /// remains a certified finite shortcut rather than a premature cubic
     /// resultant solver. That
     /// keeps the branch boundary in Yap's exact-geometric-computation sense;
@@ -810,8 +810,8 @@ where
     // This is a finite exact-candidate slice of the same-parameter algebraic
     // curve/curve problem. Degree-normalize quadratic inputs to cubic
     // Bernstein controls, keep cubic inputs native, test non-endpoint dyadic
-    // bisection parameters through eighths that the subdivision solver already
-    // exposes exactly, and only then emit certified shared points. This
+    // bisection parameters through thirty-seconds that the subdivision solver
+    // already exposes exactly, and only then emit certified shared points. This
     // promotes useful algebraic candidates while remaining explicit that it is
     // not a complete resultant solve. The
     // Bernstein/de Casteljau identities are the standard ones in Farin, Curves
@@ -880,21 +880,11 @@ fn cubic_dyadic_parameters_for_point(
 }
 
 fn dyadic_subdivision_candidate_parameters() -> Vec<Real> {
-    let eighth =
-        (Real::one() / Real::from(8_i8)).expect("division by positive integer constant is defined");
-    let quarter =
-        (Real::one() / Real::from(4_i8)).expect("division by positive integer constant is defined");
-    let half =
-        (Real::one() / Real::from(2_i8)).expect("division by positive integer constant is defined");
-    vec![
-        eighth.clone(),
-        quarter,
-        &eighth * &Real::from(3_i8),
-        half,
-        &eighth * &Real::from(5_i8),
-        &eighth * &Real::from(6_i8),
-        &eighth * &Real::from(7_i8),
-    ]
+    let thirty_second = (Real::one() / Real::from(32_i8))
+        .expect("division by positive integer constant is defined");
+    (1_i8..32_i8)
+        .map(|numerator| &thirty_second * &Real::from(numerator))
+        .collect()
 }
 
 fn cubic_difference_zero_at_parameter(

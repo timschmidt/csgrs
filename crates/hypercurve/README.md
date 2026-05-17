@@ -136,7 +136,7 @@ Core geometry:
   sign-separated in Bernstein form.
 - Exact degree-elevated quadratic/cubic polynomial image equality, reported
   before endpoint-only overlap checks.
-- Exact same-parameter dyadic candidate promotion through eighths for mixed
+- Exact same-parameter dyadic candidate promotion through thirty-seconds for mixed
   quadratic/cubic and native cubic/cubic polynomial Bezier pairs after degree
   normalization.
 - Certified dyadic point-parameter probes for cubic Beziers, reused to promote

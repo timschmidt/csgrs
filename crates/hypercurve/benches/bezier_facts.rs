@@ -273,8 +273,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
     let midpoint_hit_cubic = CubicBezier2::new(p(0, 120), p(20, 0), p(40, 0), p(60, 120));
     let quarter_hit_quadratic = QuadraticBezier2::new(p(0, 0), p(30, 620), p(60, 0));
     let quarter_hit_cubic = CubicBezier2::new(p(0, 480), p(20, 0), p(40, 0), p(60, 1920));
+    let thirty_second_hit_quadratic = QuadraticBezier2::new(p(0, 0), p(30, 150), p(60, 0));
+    let thirty_second_hit_cubic = CubicBezier2::new(p(0, 10), p(20, 0), p(40, 0), p(60, -310));
     let cubic_quarter_hit = CubicBezier2::new(p(0, 40), p(20, 0), p(40, 0), p(60, 360));
     let cubic_eighth_hit = CubicBezier2::new(p(0, 10), p(20, 0), p(40, 0), p(60, 3290));
+    let cubic_sixteenth_hit = CubicBezier2::new(p(0, 10), p(20, 0), p(40, 0), p(60, -4950));
+    let cubic_thirty_second_hit = CubicBezier2::new(p(0, 10), p(20, 0), p(40, 0), p(60, -178870));
     let quarter = (Real::one() / Real::from(4_i8)).unwrap();
     let cubic_endpoint_probe = QuadraticBezier2::new(
         p(200, 200),
@@ -309,16 +313,22 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
             black_box(&degree_normalized_arch).relation_to_cubic(&midpoint_hit_cubic, &policy);
         let mixed_degree_quarter_relation =
             black_box(&quarter_hit_quadratic).relation_to_cubic(&quarter_hit_cubic, &policy);
+        let mixed_degree_thirty_second_relation = black_box(&thirty_second_hit_quadratic)
+            .relation_to_cubic(&thirty_second_hit_cubic, &policy);
         let cubic_quarter_relation =
             black_box(&degree_elevated_arch).relation_to_cubic(&cubic_quarter_hit, &policy);
         let cubic_eighth_relation =
             black_box(&degree_elevated_arch).relation_to_cubic(&cubic_eighth_hit, &policy);
+        let cubic_sixteenth_relation =
+            black_box(&degree_elevated_arch).relation_to_cubic(&cubic_sixteenth_hit, &policy);
+        let cubic_thirty_second_relation =
+            black_box(&degree_elevated_arch).relation_to_cubic(&cubic_thirty_second_hit, &policy);
         let cubic_endpoint_relation =
             black_box(&cubic_endpoint_probe).relation_to_cubic(&degree_elevated_arch, &policy);
         let inflections = black_box(cubic).inflection_classification(&policy);
 
         checksum ^= format!(
-            "{y_roots:?}{spans:?}{bounds:?}{line_relation:?}{point_parameters:?}{cubic_line_relation:?}{mixed_relation:?}{region_relation:?}{line_image_relation:?}{line_image_curve_relation:?}{endpoint_relation:?}{same_axis_no_hit_relation:?}{degree_normalized_no_hit_relation:?}{degree_elevated_identity_relation:?}{mixed_degree_midpoint_relation:?}{mixed_degree_quarter_relation:?}{cubic_quarter_relation:?}{cubic_eighth_relation:?}{cubic_endpoint_relation:?}{inflections:?}"
+            "{y_roots:?}{spans:?}{bounds:?}{line_relation:?}{point_parameters:?}{cubic_line_relation:?}{mixed_relation:?}{region_relation:?}{line_image_relation:?}{line_image_curve_relation:?}{endpoint_relation:?}{same_axis_no_hit_relation:?}{degree_normalized_no_hit_relation:?}{degree_elevated_identity_relation:?}{mixed_degree_midpoint_relation:?}{mixed_degree_quarter_relation:?}{mixed_degree_thirty_second_relation:?}{cubic_quarter_relation:?}{cubic_eighth_relation:?}{cubic_sixteenth_relation:?}{cubic_thirty_second_relation:?}{cubic_endpoint_relation:?}{inflections:?}"
         )
         .len();
     }

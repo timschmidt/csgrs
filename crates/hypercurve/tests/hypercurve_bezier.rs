@@ -637,6 +637,30 @@ fn polynomial_bezier_curve_relation_certifies_mixed_degree_quarter_hit() {
 }
 
 #[test]
+fn polynomial_bezier_curve_relation_certifies_mixed_degree_thirty_second_hit() {
+    let quadratic = QuadraticBezier2::new(point(0, 0), point(3, 15), point(6, 0));
+    let cubic = CubicBezier2::new(point(0, 1), point(2, 0), point(4, 0), point(6, -31));
+
+    let thirty_second = (Real::one() / Real::from(32_i8)).unwrap();
+    let relation = quadratic.relation_to_cubic(&cubic, &policy());
+    let Classification::Decided(BezierCurveRelation::IntersectionPoints { points }) = relation
+    else {
+        panic!(
+            "mixed-degree same-parameter thirty-second hit should be promoted exactly: {relation:?}"
+        );
+    };
+    assert_eq!(points.len(), 1);
+    assert_eq!(points[0].point(), &quadratic.point_at(thirty_second));
+
+    let Classification::Decided(BezierCurveRelation::IntersectionPoints { points }) =
+        cubic.relation_to_quadratic(&quadratic, &policy())
+    else {
+        panic!("mixed-degree same-parameter thirty-second hit should be symmetric");
+    };
+    assert_eq!(points.len(), 1);
+}
+
+#[test]
 fn polynomial_bezier_curve_relation_certifies_cubic_quarter_hit() {
     let first = CubicBezier2::new(point(0, 0), point(2, 4), point(4, 4), point(6, 0));
     let second = CubicBezier2::new(point(0, 4), point(2, 0), point(4, 0), point(6, 36));
@@ -661,8 +685,8 @@ fn polynomial_bezier_curve_relation_certifies_cubic_quarter_hit() {
 #[test]
 fn cubic_dyadic_point_solver_promotes_endpoint_on_cubic() {
     let cubic = CubicBezier2::new(point(0, 0), point(2, 4), point(4, 4), point(6, 0));
-    let eighth = (Real::one() / Real::from(8_i8)).unwrap();
-    let cubic_point = cubic.point_at(eighth.clone());
+    let thirty_second = (Real::one() / Real::from(32_i8)).unwrap();
+    let cubic_point = cubic.point_at(thirty_second.clone());
     let probe = QuadraticBezier2::new(
         Point2::new(cubic_point.x().clone(), cubic_point.y() + Real::from(20_i8)),
         Point2::new(
@@ -674,7 +698,7 @@ fn cubic_dyadic_point_solver_promotes_endpoint_on_cubic() {
 
     assert_eq!(
         cubic.dyadic_parameters_for_point(&cubic_point, &policy()),
-        Classification::Decided(vec![eighth])
+        Classification::Decided(vec![thirty_second])
     );
     assert_eq!(
         cubic.dyadic_parameters_for_point(&point(3, 4), &policy()),
@@ -703,6 +727,36 @@ fn polynomial_bezier_curve_relation_certifies_cubic_eighth_hit() {
     };
     assert_eq!(points.len(), 1);
     assert_eq!(points[0].point(), &first.point_at(eighth));
+}
+
+#[test]
+fn polynomial_bezier_curve_relation_certifies_cubic_sixteenth_hit() {
+    let first = CubicBezier2::new(point(0, 0), point(2, 4), point(4, 4), point(6, 0));
+    let second = CubicBezier2::new(point(0, 1), point(2, 0), point(4, 0), point(6, -495));
+
+    let sixteenth = (Real::one() / Real::from(16_i8)).unwrap();
+    let relation = first.relation_to_cubic(&second, &policy());
+    let Classification::Decided(BezierCurveRelation::IntersectionPoints { points }) = relation
+    else {
+        panic!("cubic same-parameter sixteenth hit should be promoted exactly: {relation:?}");
+    };
+    assert_eq!(points.len(), 1);
+    assert_eq!(points[0].point(), &first.point_at(sixteenth));
+}
+
+#[test]
+fn polynomial_bezier_curve_relation_certifies_cubic_thirty_second_hit() {
+    let first = CubicBezier2::new(point(0, 0), point(2, 4), point(4, 4), point(6, 0));
+    let second = CubicBezier2::new(point(0, 1), point(2, 0), point(4, 0), point(6, -17887));
+
+    let thirty_second = (Real::one() / Real::from(32_i8)).unwrap();
+    let relation = first.relation_to_cubic(&second, &policy());
+    let Classification::Decided(BezierCurveRelation::IntersectionPoints { points }) = relation
+    else {
+        panic!("cubic same-parameter thirty-second hit should be promoted exactly: {relation:?}");
+    };
+    assert_eq!(points.len(), 1);
+    assert_eq!(points[0].point(), &first.point_at(thirty_second));
 }
 
 #[test]
@@ -2317,6 +2371,42 @@ proptest! {
     }
 
     #[test]
+    fn mixed_degree_thirty_second_hits_are_generated_exact_points(
+        ax in 0_i32..2,
+        ay in 0_i32..2,
+        width in 1_i32..4,
+        height in 1_i32..3,
+    ) {
+        let quadratic = QuadraticBezier2::new(
+            point(ax, ay),
+            point(ax + 3 * width, ay + 15 * height),
+            point(ax + 6 * width, ay),
+        );
+        let cubic = CubicBezier2::new(
+            point(ax, ay + height),
+            point(ax + 2 * width, ay),
+            point(ax + 4 * width, ay),
+            point(ax + 6 * width, ay - 31 * height),
+        );
+
+        let thirty_second = (Real::one() / Real::from(32_i8)).unwrap();
+        let relation = quadratic.relation_to_cubic(&cubic, &policy());
+        let Classification::Decided(BezierCurveRelation::IntersectionPoints { points }) = relation
+        else {
+            panic!("generated mixed-degree thirty-second hit should be promoted exactly: {relation:?}");
+        };
+        prop_assert_eq!(points.len(), 1);
+        prop_assert_eq!(points[0].point(), &quadratic.point_at(thirty_second));
+
+        let Classification::Decided(BezierCurveRelation::IntersectionPoints { points }) =
+            cubic.relation_to_quadratic(&quadratic, &policy())
+        else {
+            panic!("generated mixed-degree thirty-second hit should be symmetric");
+        };
+        prop_assert_eq!(points.len(), 1);
+    }
+
+    #[test]
     fn cubic_quarter_hits_are_generated_exact_points(
         ax in -16_i32..16,
         ay in -16_i32..16,
@@ -2354,7 +2444,7 @@ proptest! {
     }
 
     #[test]
-    fn endpoint_on_cubic_relation_handles_generated_eighth_points(
+    fn endpoint_on_cubic_relation_handles_generated_thirty_second_points(
         ax in -16_i32..16,
         ay in -16_i32..16,
         width in 1_i32..16,
@@ -2366,8 +2456,8 @@ proptest! {
             point(ax + 4 * width, ay + 4 * height),
             point(ax + 6 * width, ay),
         );
-        let eighth = (Real::one() / Real::from(8_i8)).unwrap();
-        let cubic_point = cubic.point_at(eighth.clone());
+        let thirty_second = (Real::one() / Real::from(32_i8)).unwrap();
+        let cubic_point = cubic.point_at(thirty_second.clone());
         let probe = QuadraticBezier2::new(
             Point2::new(
                 cubic_point.x().clone(),
@@ -2382,12 +2472,12 @@ proptest! {
 
         prop_assert_eq!(
             cubic.dyadic_parameters_for_point(&cubic_point, &policy()),
-            Classification::Decided(vec![eighth])
+            Classification::Decided(vec![thirty_second])
         );
         let relation = probe.relation_to_cubic(&cubic, &policy());
         let Classification::Decided(BezierCurveRelation::EndpointIntersections { points }) = relation
         else {
-            panic!("generated endpoint on cubic eighth point should be certified: {relation:?}");
+            panic!("generated endpoint on cubic thirty-second point should be certified: {relation:?}");
         };
         prop_assert_eq!(points.len(), 1);
         prop_assert_eq!(points[0].point(), &cubic_point);
@@ -2421,6 +2511,66 @@ proptest! {
         };
         prop_assert_eq!(points.len(), 1);
         prop_assert_eq!(points[0].point(), &first.point_at(eighth));
+    }
+
+    #[test]
+    fn cubic_sixteenth_hits_are_generated_exact_points(
+        ax in -16_i32..16,
+        ay in -16_i32..16,
+        width in 1_i32..16,
+        height in 1_i32..16,
+    ) {
+        let first = CubicBezier2::new(
+            point(ax, ay),
+            point(ax + 2 * width, ay + 4 * height),
+            point(ax + 4 * width, ay + 4 * height),
+            point(ax + 6 * width, ay),
+        );
+        let second = CubicBezier2::new(
+            point(ax, ay + height),
+            point(ax + 2 * width, ay),
+            point(ax + 4 * width, ay),
+            point(ax + 6 * width, ay - 495 * height),
+        );
+
+        let sixteenth = (Real::one() / Real::from(16_i8)).unwrap();
+        let relation = first.relation_to_cubic(&second, &policy());
+        let Classification::Decided(BezierCurveRelation::IntersectionPoints { points }) = relation
+        else {
+            panic!("generated cubic sixteenth hit should be promoted exactly: {relation:?}");
+        };
+        prop_assert_eq!(points.len(), 1);
+        prop_assert_eq!(points[0].point(), &first.point_at(sixteenth));
+    }
+
+    #[test]
+    fn cubic_thirty_second_hits_are_generated_exact_points(
+        ax in -16_i32..16,
+        ay in -16_i32..16,
+        width in 1_i32..16,
+        height in 1_i32..16,
+    ) {
+        let first = CubicBezier2::new(
+            point(ax, ay),
+            point(ax + 2 * width, ay + 4 * height),
+            point(ax + 4 * width, ay + 4 * height),
+            point(ax + 6 * width, ay),
+        );
+        let second = CubicBezier2::new(
+            point(ax, ay + height),
+            point(ax + 2 * width, ay),
+            point(ax + 4 * width, ay),
+            point(ax + 6 * width, ay - 17887 * height),
+        );
+
+        let thirty_second = (Real::one() / Real::from(32_i8)).unwrap();
+        let relation = first.relation_to_cubic(&second, &policy());
+        let Classification::Decided(BezierCurveRelation::IntersectionPoints { points }) = relation
+        else {
+            panic!("generated cubic thirty-second hit should be promoted exactly: {relation:?}");
+        };
+        prop_assert_eq!(points.len(), 1);
+        prop_assert_eq!(points[0].point(), &first.point_at(thirty_second));
     }
 
     #[test]
