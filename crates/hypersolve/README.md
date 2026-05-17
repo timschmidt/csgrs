@@ -10,7 +10,9 @@ preparation, and diagnostics layer for testing how exact scalar facts and
 prepared residual structure should flow into future nonlinear, geometric, PCB,
 toolpath, and physics solvers.
 
-## Hyper Stack Links
+## Hyper Ecosystem Role And Links
+
+Stack links:
 
 - [hyperreal](../hyperreal/README.md): exact rational, symbolic, and computable
   real arithmetic.
