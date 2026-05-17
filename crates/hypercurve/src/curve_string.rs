@@ -50,7 +50,7 @@ impl CurveString2 {
         Self { segments }
     }
 
-    /// Constructs an open curve string from Cavalier-style bulge vertices.
+    /// Constructs an open curve string from exact bulge vertices.
     pub fn from_bulge_vertices(vertices: &[BulgeVertex2]) -> CurveResult<Self> {
         if vertices.len() < 2 {
             return Err(CurveError::InsufficientVertices);

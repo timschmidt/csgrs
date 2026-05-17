@@ -171,7 +171,7 @@ impl CircularArc2 {
         Ok(arc)
     }
 
-    /// Constructs a circular arc from Cavalier/CAD bulge geometry.
+    /// Constructs a circular arc from CAD bulge geometry.
     ///
     /// The formula keeps the center computation in rational operations:
     /// `center = midpoint + left_perp(chord) * ((1 - b^2) / (4b))`.
@@ -373,15 +373,6 @@ impl Segment2 {
         }
     }
 
-    /// Constructs a segment from a Cavalier-compatible bulge.
-    ///
-    /// Cavalier's public semantics support single arc segments up to a half
-    /// circle. Larger sweeps should be split before import.
-    pub fn from_cavalier_bulge(start: Point2, end: Point2, bulge: Real) -> CurveResult<Self> {
-        reject_cavalier_unsupported_bulge(&bulge)?;
-        Self::from_bulge(start, end, bulge)
-    }
-
     /// Returns the segment start point.
     pub const fn start(&self) -> &Point2 {
         match self {
@@ -484,22 +475,6 @@ fn clockwise_from_bulge(bulge: &Real) -> CurveResult<bool> {
         Some(RealSign::Positive) => Ok(false),
         Some(RealSign::Zero) => Err(CurveError::AmbiguousBulge),
         None => Err(CurveError::AmbiguousBulge),
-    }
-}
-
-fn reject_cavalier_unsupported_bulge(bulge: &Real) -> CurveResult<()> {
-    if bulge.zero_status() == ZeroStatus::Zero {
-        return Ok(());
-    }
-
-    let Some(approx) = bulge.to_f64_lossy() else {
-        return Ok(());
-    };
-
-    if approx.abs() > 1.0 {
-        Err(CurveError::UnsupportedBulge)
-    } else {
-        Ok(())
     }
 }
 

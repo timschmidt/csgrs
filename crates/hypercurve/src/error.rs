@@ -18,8 +18,6 @@ pub enum CurveError {
     RadiusMismatch,
     /// A bulge value is too close to zero to choose line versus arc semantics.
     AmbiguousBulge,
-    /// Cavalier-compatible bulge import only accepts arcs up to a half circle.
-    UnsupportedBulge,
     /// A curve string needs at least two vertices or one segment.
     InsufficientVertices,
     /// A curve string cannot be empty when built through checked constructors.
@@ -56,9 +54,6 @@ impl fmt::Display for CurveError {
             }
             Self::RadiusMismatch => write!(f, "arc endpoints do not share the supplied radius"),
             Self::AmbiguousBulge => write!(f, "bulge sign or zero status is ambiguous"),
-            Self::UnsupportedBulge => {
-                write!(f, "Cavalier-compatible bulge exceeds half-circle support")
-            }
             Self::InsufficientVertices => write!(f, "curve string has insufficient vertices"),
             Self::EmptyCurveString => write!(f, "curve string has no segments"),
             Self::DisconnectedCurveString => write!(f, "curve string segments are disconnected"),

@@ -1,4 +1,4 @@
-//! Cavalier-compatible bulge vertex helpers.
+//! Exact bulge vertex helpers for line and circular-arc chains.
 
 use hyperreal::Real;
 
@@ -29,6 +29,6 @@ impl BulgeVertex2 {
 
     /// Builds the outgoing segment from this vertex to `next`.
     pub fn segment_to(&self, next: &Self) -> CurveResult<Segment2> {
-        Segment2::from_cavalier_bulge(self.point.clone(), next.point.clone(), self.bulge.clone())
+        Segment2::from_bulge(self.point.clone(), next.point.clone(), self.bulge.clone())
     }
 }

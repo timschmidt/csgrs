@@ -20,6 +20,14 @@ use crate::{
     LineSide, Point2, QuadraticBezier2, UncertaintyReason,
 };
 
+/// Current finite dyadic frontier for exact same-parameter Bezier candidates.
+///
+/// This is deliberately a named implementation boundary rather than a hidden
+/// tolerance. It marks the bisection parameters that the polynomial
+/// curve/curve shortcuts prove exactly before handing remaining cases to
+/// conservative subdivision.
+const DYADIC_CANDIDATE_DENOMINATOR: i32 = 512;
+
 /// Coordinate axis used by Bezier monotonicity and bounds predicates.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Axis2 {
@@ -371,9 +379,9 @@ impl CubicBezier2 {
     /// existential point-on-cubic solver. It tests the dyadic parameters that
     /// the subdivision relation already materializes exactly and re-evaluates
     /// the cubic before returning a parameter. The current candidate set is
-    /// the non-endpoint dyadic bisection parameters through thirty-seconds, so it
-    /// remains a certified finite shortcut rather than a premature cubic
-    /// resultant solver. That
+    /// the non-endpoint dyadic bisection parameters through
+    /// five-hundred-twelfths, so it remains a certified finite shortcut
+    /// rather than a premature cubic resultant solver. That
     /// keeps the branch boundary in Yap's exact-geometric-computation sense;
     /// see Yap, "Towards Exact Geometric Computation," *Computational
     /// Geometry* 7.1-2 (1997). The exact de Casteljau evaluation and dyadic
@@ -611,7 +619,7 @@ where
             return Classification::Decided(BezierCurveRelation::SameCurveImage);
         }
         Classification::Decided(false) => {}
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        Classification::Uncertain(_) => {}
     }
 
     let first_hull = match Aabb2::from_points(first_controls.iter().copied(), policy) {
@@ -707,6 +715,25 @@ where
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     }
 
+    match same_parameter_graph_cubic_relation(first, &first_controls, &second_controls, policy) {
+        Classification::Decided(Some(relation)) => return Classification::Decided(relation),
+        Classification::Decided(None) => {}
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    }
+
+    match same_parameter_cubic_candidate_relation(first, &first_controls, &second_controls, policy)
+    {
+        Classification::Decided(Some(relation)) => return Classification::Decided(relation),
+        Classification::Decided(None) => {}
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    }
+
+    match same_parameter_quadratic_relation(&first_controls, &second_controls, policy) {
+        Classification::Decided(Some(relation)) => return Classification::Decided(relation),
+        Classification::Decided(_) => {}
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    }
+
     match same_parameter_dyadic_intersections(
         first,
         second,
@@ -718,12 +745,6 @@ where
             return Classification::Decided(BezierCurveRelation::IntersectionPoints { points });
         }
         Classification::Decided(None) => {}
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    }
-
-    match same_parameter_quadratic_relation(&first_controls, &second_controls, policy) {
-        Classification::Decided(Some(relation)) => return Classification::Decided(relation),
-        Classification::Decided(_) => {}
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     }
 
@@ -791,7 +812,7 @@ where
 
 fn same_parameter_dyadic_intersections<A, B>(
     first: &A,
-    second: &B,
+    _second: &B,
     first_controls: &[&Point2],
     second_controls: &[&Point2],
     policy: &CurvePolicy,
@@ -810,57 +831,462 @@ where
     // This is a finite exact-candidate slice of the same-parameter algebraic
     // curve/curve problem. Degree-normalize quadratic inputs to cubic
     // Bernstein controls, keep cubic inputs native, test non-endpoint dyadic
-    // bisection parameters through thirty-seconds that the subdivision solver
-    // already exposes exactly, and only then emit certified shared points. This
-    // promotes useful algebraic candidates while remaining explicit that it is
-    // not a complete resultant solve. The
+    // bisection parameters through five-hundred-twelfths that the
+    // subdivision solver already exposes exactly, and only then emit certified
+    // shared points. This promotes useful algebraic candidates while remaining
+    // explicit that it is not a complete resultant solve. The
     // Bernstein/de Casteljau identities are the standard ones in Farin, Curves
     // and Surfaces for CAGD, 5th ed. (2002), and the exact candidate boundary
     // follows Yap, "Towards Exact Geometric Computation," Computational
     // Geometry 7.1-2 (1997).
     let mut points = Vec::new();
-    for parameter in dyadic_subdivision_candidate_parameters() {
-        let x_equal = match cubic_difference_zero_at_parameter(
+    let mut undecided_candidate = false;
+    let axis_plan = dyadic_candidate_axis_plan(first_controls, second_controls, policy);
+    let numerators =
+        dyadic_candidate_numerators(first_controls, second_controls, &axis_plan, policy);
+    for candidate in numerators.into_iter().map(DyadicBezierCandidate::new) {
+        let primary_equal = match bezier_difference_zero_at_dyadic_parameter(
             first_controls,
             second_controls,
-            Axis2::X,
-            parameter.clone(),
+            axis_plan.primary,
+            &candidate,
             policy,
         ) {
             Some(equal) => equal,
-            None => return Classification::Uncertain(UncertaintyReason::RealSign),
+            None => {
+                undecided_candidate = true;
+                continue;
+            }
         };
-        if !x_equal {
+        if !primary_equal {
             continue;
         }
-        let y_equal = match cubic_difference_zero_at_parameter(
-            first_controls,
-            second_controls,
-            Axis2::Y,
-            parameter.clone(),
-            policy,
-        ) {
-            Some(equal) => equal,
-            None => return Classification::Uncertain(UncertaintyReason::RealSign),
-        };
-        if !y_equal {
-            continue;
+        if let Some(secondary) = axis_plan.secondary {
+            let secondary_equal = match bezier_difference_zero_at_dyadic_parameter(
+                first_controls,
+                second_controls,
+                secondary,
+                &candidate,
+                policy,
+            ) {
+                Some(equal) => equal,
+                None => {
+                    undecided_candidate = true;
+                    continue;
+                }
+            };
+            if !secondary_equal {
+                continue;
+            }
         }
 
-        let first_point = first.point_at(parameter.clone());
-        let second_point = second.point_at(parameter);
-        match point_equal(&first_point, &second_point, policy) {
-            Some(true) => push_unique_intersection_point(&mut points, first_point, policy),
-            Some(false) => {}
-            None => return Classification::Uncertain(UncertaintyReason::RealSign),
-        }
+        // The two coordinate Bernstein differences were just certified zero at
+        // this dyadic parameter by the fixed exact product-sum evaluator. Emit
+        // one de Casteljau point as the witness without rebuilding a second
+        // nested expression tree and asking the scalar layer to rediscover the
+        // same equality.
+        let parameter = candidate.parameter();
+        push_unique_intersection_point(&mut points, first.point_at(parameter), policy);
     }
 
-    if points.is_empty() {
-        Classification::Decided(None)
-    } else {
+    if !points.is_empty() {
         Classification::Decided(Some(points))
+    } else if undecided_candidate {
+        Classification::Uncertain(UncertaintyReason::RealSign)
+    } else {
+        Classification::Decided(None)
     }
+}
+
+fn same_parameter_graph_cubic_relation<A>(
+    first: &A,
+    first_controls: &[&Point2],
+    second_controls: &[&Point2],
+    policy: &CurvePolicy,
+) -> Classification<Option<BezierCurveRelation>>
+where
+    A: BezierCurveLike,
+{
+    if !matches!(
+        (first_controls.len(), second_controls.len()),
+        (3, 4) | (4, 3) | (4, 4)
+    ) {
+        return Classification::Decided(None);
+    }
+
+    for shared_axis in [Axis2::X, Axis2::Y] {
+        let shared = match shared_strictly_monotone_axis(
+            first_controls,
+            second_controls,
+            shared_axis,
+            policy,
+        ) {
+            Classification::Decided(shared) => shared,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        if !shared {
+            continue;
+        }
+
+        let solve_axis = match shared_axis {
+            Axis2::X => Axis2::Y,
+            Axis2::Y => Axis2::X,
+        };
+        let Some(difference_controls) =
+            cubic_axis_difference_controls(first_controls, second_controls, solve_axis)
+        else {
+            return Classification::Decided(None);
+        };
+        if difference_controls
+            .iter()
+            .all(|value| is_zero(value, policy) == Some(true))
+        {
+            return Classification::Decided(None);
+        }
+
+        // A certified shared strictly monotone coordinate is injective, so any
+        // geometric image intersection must use the same parameter on both
+        // curves. The remaining coordinate difference is a scalar cubic
+        // Bernstein polynomial after degree normalization; exact
+        // sign-subdivision isolates all of its roots without inventing a
+        // primitive-float tolerance. This is the Bezier clipping
+        // convex-hull/sign-variation argument of Sederberg and Nishita,
+        // "Curve intersection using Bezier clipping" (1990), used under
+        // Yap's exact geometric computation model, and the degree-normalized
+        // Bernstein identities are Farin, Curves and Surfaces for CAGD, 5th
+        // ed. (2002).
+        let mut exact_parameters = Vec::new();
+        let mut spans = Vec::new();
+        if let Err(reason) = isolate_scalar_cubic_roots(
+            difference_controls,
+            Real::zero(),
+            Real::one(),
+            0,
+            policy,
+            &mut exact_parameters,
+            &mut spans,
+        ) {
+            return Classification::Uncertain(reason);
+        }
+
+        if !spans.is_empty() {
+            merge_exact_parameters_into_spans(&mut spans, exact_parameters, policy);
+            let regions = spans
+                .into_iter()
+                .map(|span| BezierCurveIntersectionRegion::new(span.clone(), span))
+                .collect::<Vec<_>>();
+            return Classification::Decided(Some(BezierCurveRelation::IntersectionRegions {
+                regions,
+            }));
+        }
+
+        if !exact_parameters.is_empty() {
+            let mut points = Vec::new();
+            for parameter in exact_parameters {
+                push_unique_intersection_point(&mut points, first.point_at(parameter), policy);
+            }
+            return Classification::Decided(Some(BezierCurveRelation::IntersectionPoints {
+                points,
+            }));
+        }
+
+        return Classification::Decided(Some(BezierCurveRelation::NoIntersection));
+    }
+
+    Classification::Decided(None)
+}
+
+#[derive(Clone, Debug)]
+enum CubicRootCover {
+    All,
+    Isolated {
+        exact: Vec<Real>,
+        spans: Vec<BezierMonotoneSpan>,
+    },
+}
+
+fn same_parameter_cubic_candidate_relation<A>(
+    first: &A,
+    first_controls: &[&Point2],
+    second_controls: &[&Point2],
+    policy: &CurvePolicy,
+) -> Classification<Option<BezierCurveRelation>>
+where
+    A: BezierCurveLike,
+{
+    if !matches!(
+        (first_controls.len(), second_controls.len()),
+        (3, 4) | (4, 3) | (4, 4)
+    ) {
+        return Classification::Decided(None);
+    }
+
+    let Some(x_difference) =
+        cubic_axis_difference_controls(first_controls, second_controls, Axis2::X)
+    else {
+        return Classification::Decided(None);
+    };
+    let Some(y_difference) =
+        cubic_axis_difference_controls(first_controls, second_controls, Axis2::Y)
+    else {
+        return Classification::Decided(None);
+    };
+
+    // This is the non-graph companion to `same_parameter_graph_cubic_relation`.
+    // It does not claim unrelated-parameter intersections are absent. Instead it
+    // isolates algebraic candidates of the degree-normalized same-parameter
+    // vector difference and returns exact points only when both coordinate roots
+    // are represented exactly; otherwise it returns conservative same-parameter
+    // brackets. Keeping candidates as exact spans follows Yap's exact
+    // geometric-computation boundary, while the cubic Bernstein
+    // sign-subdivision is the Bezier clipping idea of Sederberg and Nishita,
+    // "Curve intersection using Bezier clipping" (1990), using the
+    // degree-normalized Bernstein identities from Farin, Curves and Surfaces
+    // for CAGD, 5th ed. (2002).
+    let x_cover = match cubic_root_cover(x_difference, policy) {
+        Ok(cover) => cover,
+        Err(reason) => return Classification::Uncertain(reason),
+    };
+    let y_cover = match cubic_root_cover(y_difference, policy) {
+        Ok(cover) => cover,
+        Err(reason) => return Classification::Uncertain(reason),
+    };
+
+    if matches!(
+        (&x_cover, &y_cover),
+        (CubicRootCover::All, CubicRootCover::All)
+    ) {
+        return Classification::Decided(None);
+    }
+
+    let mut points = Vec::new();
+    if let Err(reason) =
+        collect_exact_same_parameter_cubic_points(first, &x_cover, &y_cover, policy, &mut points)
+    {
+        return Classification::Uncertain(reason);
+    }
+
+    let mut regions = Vec::new();
+    if let Err(reason) =
+        collect_same_parameter_cubic_regions(&x_cover, &y_cover, policy, &mut regions)
+    {
+        return Classification::Uncertain(reason);
+    }
+
+    if !regions.is_empty() {
+        return Classification::Decided(Some(BezierCurveRelation::IntersectionRegions { regions }));
+    }
+    if !points.is_empty() {
+        return Classification::Decided(Some(BezierCurveRelation::IntersectionPoints { points }));
+    }
+    Classification::Decided(None)
+}
+
+fn cubic_root_cover(
+    controls: [Real; 4],
+    policy: &CurvePolicy,
+) -> Result<CubicRootCover, UncertaintyReason> {
+    if controls
+        .iter()
+        .all(|value| is_zero(value, policy) == Some(true))
+    {
+        return Ok(CubicRootCover::All);
+    }
+
+    let mut exact = Vec::new();
+    let mut spans = Vec::new();
+    isolate_scalar_cubic_roots(
+        controls,
+        Real::zero(),
+        Real::one(),
+        0,
+        policy,
+        &mut exact,
+        &mut spans,
+    )?;
+    Ok(CubicRootCover::Isolated { exact, spans })
+}
+
+fn collect_exact_same_parameter_cubic_points<A>(
+    first: &A,
+    x_cover: &CubicRootCover,
+    y_cover: &CubicRootCover,
+    policy: &CurvePolicy,
+    points: &mut Vec<BezierCurveIntersectionPoint>,
+) -> Result<(), UncertaintyReason>
+where
+    A: BezierCurveLike,
+{
+    match (x_cover, y_cover) {
+        (CubicRootCover::All, CubicRootCover::All) => {}
+        (CubicRootCover::All, CubicRootCover::Isolated { exact, .. })
+        | (CubicRootCover::Isolated { exact, .. }, CubicRootCover::All) => {
+            for parameter in exact {
+                push_unique_intersection_point(points, first.point_at(parameter.clone()), policy);
+            }
+        }
+        (
+            CubicRootCover::Isolated { exact: left, .. },
+            CubicRootCover::Isolated { exact: right, .. },
+        ) => {
+            let Some(common) = common_parameters(left, right, policy) else {
+                return Err(UncertaintyReason::Ordering);
+            };
+            for parameter in common {
+                push_unique_intersection_point(points, first.point_at(parameter), policy);
+            }
+        }
+    }
+    Ok(())
+}
+
+fn collect_same_parameter_cubic_regions(
+    x_cover: &CubicRootCover,
+    y_cover: &CubicRootCover,
+    policy: &CurvePolicy,
+    regions: &mut Vec<BezierCurveIntersectionRegion>,
+) -> Result<(), UncertaintyReason> {
+    match (x_cover, y_cover) {
+        (CubicRootCover::All, CubicRootCover::All) => {}
+        (CubicRootCover::All, CubicRootCover::Isolated { exact, spans })
+        | (CubicRootCover::Isolated { exact, spans }, CubicRootCover::All) => {
+            if spans.is_empty() {
+                return Ok(());
+            }
+            for span in spans_with_exact_parameters(exact, spans, policy) {
+                push_unique_curve_region(
+                    regions,
+                    BezierCurveIntersectionRegion::new(span.clone(), span),
+                    policy,
+                )?;
+            }
+        }
+        (
+            CubicRootCover::Isolated {
+                exact: x_exact,
+                spans: x_spans,
+            },
+            CubicRootCover::Isolated {
+                exact: y_exact,
+                spans: y_spans,
+            },
+        ) => {
+            if x_spans.is_empty() && y_spans.is_empty() {
+                return Ok(());
+            }
+            let x_all = spans_with_exact_parameters(x_exact, x_spans, policy);
+            let y_all = spans_with_exact_parameters(y_exact, y_spans, policy);
+            for x_span in &x_all {
+                for y_span in &y_all {
+                    let Some(overlap) = span_intersection(x_span, y_span, policy)? else {
+                        continue;
+                    };
+                    push_unique_curve_region(
+                        regions,
+                        BezierCurveIntersectionRegion::new(overlap.clone(), overlap),
+                        policy,
+                    )?;
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn spans_with_exact_parameters(
+    exact: &[Real],
+    spans: &[BezierMonotoneSpan],
+    policy: &CurvePolicy,
+) -> Vec<BezierMonotoneSpan> {
+    let mut all = spans.to_vec();
+    for parameter in exact {
+        push_unique_span(
+            &mut all,
+            BezierMonotoneSpan::new(parameter.clone(), parameter.clone()),
+            policy,
+        );
+    }
+    all
+}
+
+fn span_intersection(
+    first: &BezierMonotoneSpan,
+    second: &BezierMonotoneSpan,
+    policy: &CurvePolicy,
+) -> Result<Option<BezierMonotoneSpan>, UncertaintyReason> {
+    let start = match compare_reals(first.start(), second.start(), policy) {
+        Some(Ordering::Less | Ordering::Equal) => second.start().clone(),
+        Some(Ordering::Greater) => first.start().clone(),
+        None => return Err(UncertaintyReason::Ordering),
+    };
+    let end = match compare_reals(first.end(), second.end(), policy) {
+        Some(Ordering::Less | Ordering::Equal) => first.end().clone(),
+        Some(Ordering::Greater) => second.end().clone(),
+        None => return Err(UncertaintyReason::Ordering),
+    };
+    match compare_reals(&start, &end, policy) {
+        Some(Ordering::Less | Ordering::Equal) => Ok(Some(BezierMonotoneSpan::new(start, end))),
+        Some(Ordering::Greater) => Ok(None),
+        None => Err(UncertaintyReason::Ordering),
+    }
+}
+
+#[derive(Clone, Copy)]
+struct DyadicAxisPlan {
+    primary: Axis2,
+    secondary: Option<Axis2>,
+}
+
+fn dyadic_candidate_axis_plan(
+    first_controls: &[&Point2],
+    second_controls: &[&Point2],
+    policy: &CurvePolicy,
+) -> DyadicAxisPlan {
+    // If one degree-normalized coordinate polynomial is certified identical,
+    // same-parameter candidates are equal on that axis for every t. Test only
+    // the other coordinate instead of spending every dyadic candidate on a
+    // tautological predicate. This is the same retained-object principle used
+    // throughout Yap, "Towards Exact Geometric Computation," Computational
+    // Geometry 7.1-2 (1997), applied to a Bernstein coordinate polynomial
+    // rather than to an expanded scalar expression; the degree-normalized
+    // Bernstein identities are the standard Farin, Curves and Surfaces for
+    // CAGD, 5th ed. (2002), formulas.
+    if shared_axis_controls_equal(first_controls, second_controls, Axis2::X, policy) {
+        return DyadicAxisPlan {
+            primary: Axis2::Y,
+            secondary: None,
+        };
+    }
+    if shared_axis_controls_equal(first_controls, second_controls, Axis2::Y, policy) {
+        return DyadicAxisPlan {
+            primary: Axis2::X,
+            secondary: None,
+        };
+    }
+    DyadicAxisPlan {
+        primary: Axis2::X,
+        secondary: Some(Axis2::Y),
+    }
+}
+
+fn shared_axis_controls_equal(
+    first_controls: &[&Point2],
+    second_controls: &[&Point2],
+    axis: Axis2,
+    policy: &CurvePolicy,
+) -> bool {
+    let Some(first_values) = cubic_axis_values(first_controls, axis) else {
+        return false;
+    };
+    let Some(second_values) = cubic_axis_values(second_controls, axis) else {
+        return false;
+    };
+    first_values
+        .iter()
+        .zip(second_values.iter())
+        .all(|(first, second)| {
+            matches!(compare_reals(first, second, policy), Some(Ordering::Equal))
+        })
 }
 
 fn cubic_dyadic_parameters_for_point(
@@ -880,29 +1306,227 @@ fn cubic_dyadic_parameters_for_point(
 }
 
 fn dyadic_subdivision_candidate_parameters() -> Vec<Real> {
-    let thirty_second = (Real::one() / Real::from(32_i8))
-        .expect("division by positive integer constant is defined");
-    (1_i8..32_i8)
-        .map(|numerator| &thirty_second * &Real::from(numerator))
+    (1_i32..DYADIC_CANDIDATE_DENOMINATOR)
+        .map(dyadic_subdivision_candidate_parameter)
         .collect()
 }
 
-fn cubic_difference_zero_at_parameter(
+fn dyadic_candidate_numerators(
+    first_controls: &[&Point2],
+    second_controls: &[&Point2],
+    axis_plan: &DyadicAxisPlan,
+    policy: &CurvePolicy,
+) -> Vec<i32> {
+    let Some(numerators) = shared_axis_sign_pruned_dyadic_numerators(
+        first_controls,
+        second_controls,
+        axis_plan,
+        policy,
+    ) else {
+        return (1_i32..DYADIC_CANDIDATE_DENOMINATOR).collect();
+    };
+    numerators
+}
+
+fn shared_axis_sign_pruned_dyadic_numerators(
+    first_controls: &[&Point2],
+    second_controls: &[&Point2],
+    axis_plan: &DyadicAxisPlan,
+    policy: &CurvePolicy,
+) -> Option<Vec<i32>> {
+    if axis_plan.secondary.is_some() {
+        return None;
+    }
+    let controls =
+        cubic_axis_difference_controls(first_controls, second_controls, axis_plan.primary)?;
+    let mut numerators = Vec::new();
+    collect_sign_pruned_dyadic_numerators(
+        controls,
+        0,
+        DYADIC_CANDIDATE_DENOMINATOR,
+        policy,
+        &mut numerators,
+    )?;
+    numerators.sort_unstable();
+    numerators.dedup();
+    Some(numerators)
+}
+
+fn collect_sign_pruned_dyadic_numerators(
+    controls: [Real; 4],
+    start: i32,
+    end: i32,
+    policy: &CurvePolicy,
+    numerators: &mut Vec<i32>,
+) -> Option<()> {
+    // A Bernstein control polygon with one strict sign cannot contain a zero
+    // value by the convex-hull property. Recursively bisecting only mixed-sign
+    // or zero-touching cells is the Bezier clipping principle of Sederberg and
+    // Nishita, "Curve intersection using Bezier clipping" (1990), kept here as
+    // an exact candidate scheduler under Yap's EGC model rather than as a
+    // floating filter.
+    if controls_have_common_strict_sign(&controls, policy)? {
+        return Some(());
+    }
+    if end - start <= 1 {
+        if start > 0 {
+            numerators.push(start);
+        }
+        if end < DYADIC_CANDIDATE_DENOMINATOR {
+            numerators.push(end);
+        }
+        return Some(());
+    }
+    let midpoint = (start + end) / 2;
+    let (left, right) = subdivide_cubic_controls_half(controls);
+    collect_sign_pruned_dyadic_numerators(left, start, midpoint, policy, numerators)?;
+    collect_sign_pruned_dyadic_numerators(right, midpoint, end, policy, numerators)
+}
+
+fn controls_have_common_strict_sign(controls: &[Real; 4], policy: &CurvePolicy) -> Option<bool> {
+    let mut common_sign = None;
+    for control in controls {
+        let sign = real_sign(control, policy)?;
+        match (common_sign, sign) {
+            (_, RealSign::Zero) => return Some(false),
+            (None, RealSign::Positive | RealSign::Negative) => common_sign = Some(sign),
+            (Some(previous), RealSign::Positive | RealSign::Negative) if previous == sign => {}
+            (Some(_), RealSign::Positive | RealSign::Negative) => return Some(false),
+        }
+    }
+    Some(common_sign.is_some())
+}
+
+fn subdivide_cubic_controls_half(controls: [Real; 4]) -> ([Real; 4], [Real; 4]) {
+    let p01 = midpoint_real(&controls[0], &controls[1]);
+    let p12 = midpoint_real(&controls[1], &controls[2]);
+    let p23 = midpoint_real(&controls[2], &controls[3]);
+    let p012 = midpoint_real(&p01, &p12);
+    let p123 = midpoint_real(&p12, &p23);
+    let p0123 = midpoint_real(&p012, &p123);
+    (
+        [
+            controls[0].clone(),
+            p01.clone(),
+            p012.clone(),
+            p0123.clone(),
+        ],
+        [p0123, p123, p23, controls[3].clone()],
+    )
+}
+
+fn cubic_axis_difference_controls(
     first_controls: &[&Point2],
     second_controls: &[&Point2],
     axis: Axis2,
-    parameter: Real,
+) -> Option<[Real; 4]> {
+    let first = cubic_axis_values(first_controls, axis)?;
+    let second = cubic_axis_values(second_controls, axis)?;
+    Some([
+        &first[0] - &second[0],
+        &first[1] - &second[1],
+        &first[2] - &second[2],
+        &first[3] - &second[3],
+    ])
+}
+
+fn dyadic_subdivision_candidate_parameter(numerator: i32) -> Real {
+    let frontier_unit = (Real::one() / Real::from(DYADIC_CANDIDATE_DENOMINATOR))
+        .expect("division by positive integer constant is defined");
+    &frontier_unit * &Real::from(numerator)
+}
+
+struct DyadicBezierCandidate {
+    numerator: i32,
+    quadratic_scaled_weights: [Real; 3],
+    cubic_weights: [Real; 4],
+}
+
+impl DyadicBezierCandidate {
+    fn new(numerator: i32) -> Self {
+        let denominator = DYADIC_CANDIDATE_DENOMINATOR;
+        let complement = denominator - numerator;
+        Self {
+            numerator,
+            quadratic_scaled_weights: [
+                Real::from(denominator * complement * complement),
+                Real::from(denominator * 2 * complement * numerator),
+                Real::from(denominator * numerator * numerator),
+            ],
+            cubic_weights: [
+                Real::from(complement * complement * complement),
+                Real::from(3 * complement * complement * numerator),
+                Real::from(3 * complement * numerator * numerator),
+                Real::from(numerator * numerator * numerator),
+            ],
+        }
+    }
+
+    fn parameter(&self) -> Real {
+        dyadic_subdivision_candidate_parameter(self.numerator)
+    }
+}
+
+fn bezier_difference_zero_at_dyadic_parameter(
+    first_controls: &[&Point2],
+    second_controls: &[&Point2],
+    axis: Axis2,
+    candidate: &DyadicBezierCandidate,
     policy: &CurvePolicy,
 ) -> Option<bool> {
-    let first_values = cubic_axis_values(first_controls, axis)?;
-    let second_values = cubic_axis_values(second_controls, axis)?;
-    let difference = [
-        &first_values[0] - &second_values[0],
-        &first_values[1] - &second_values[1],
-        &first_values[2] - &second_values[2],
-        &first_values[3] - &second_values[3],
-    ];
-    is_zero(&scalar_cubic_at_parameter(&difference, parameter), policy)
+    let first_value =
+        bezier_axis_scaled_numerator_at_dyadic_parameter(first_controls, axis, candidate)?;
+    let second_value =
+        bezier_axis_scaled_numerator_at_dyadic_parameter(second_controls, axis, candidate)?;
+    is_zero(&(first_value - second_value), policy)
+}
+
+fn bezier_axis_scaled_numerator_at_dyadic_parameter(
+    controls: &[&Point2],
+    axis: Axis2,
+    candidate: &DyadicBezierCandidate,
+) -> Option<Real> {
+    // Evaluate the original Bernstein form at k/D, where D is the named dyadic
+    // frontier, using a prepared integer-weight candidate and one fixed
+    // product-sum over the control coordinates. Quadratic inputs use weights
+    // scaled to the cubic denominator so mixed-degree comparisons share one
+    // integer scale. Avoiding both intermediate quadratic-to-cubic elevation
+    // and per-curve division is intentional: it preserves the object-level
+    // polynomial shape until
+    // `Real::signed_product_sum` can consume the exact factors, following
+    // Yap's exact-computation separation of representation from predicate
+    // decisions; see Yap, "Towards Exact Geometric Computation,"
+    // Computational Geometry 7.1-2 (1997), and Farin, Curves and Surfaces for
+    // CAGD, 5th ed. (2002), for the Bernstein basis identities used here.
+    match controls.len() {
+        3 => Some(Real::signed_product_sum(
+            [true; 3],
+            [
+                [
+                    &candidate.quadratic_scaled_weights[0],
+                    coordinate(controls[0], axis),
+                ],
+                [
+                    &candidate.quadratic_scaled_weights[1],
+                    coordinate(controls[1], axis),
+                ],
+                [
+                    &candidate.quadratic_scaled_weights[2],
+                    coordinate(controls[2], axis),
+                ],
+            ],
+        )),
+        4 => Some(Real::signed_product_sum(
+            [true; 4],
+            [
+                [&candidate.cubic_weights[0], coordinate(controls[0], axis)],
+                [&candidate.cubic_weights[1], coordinate(controls[1], axis)],
+                [&candidate.cubic_weights[2], coordinate(controls[2], axis)],
+                [&candidate.cubic_weights[3], coordinate(controls[3], axis)],
+            ],
+        )),
+        _ => None,
+    }
 }
 
 fn same_parameter_quadratic_relation(
@@ -1603,13 +2227,7 @@ fn isolate_cubic_line_roots(
         return Classification::Uncertain(reason);
     }
     if !spans.is_empty() {
-        for parameter in exact_parameters {
-            push_unique_span(
-                &mut spans,
-                BezierMonotoneSpan::new(parameter.clone(), parameter),
-                policy,
-            );
-        }
+        merge_exact_parameters_into_spans(&mut spans, exact_parameters, policy);
         return Classification::Decided(BezierLineRelation::IsolatedIntersections { spans });
     }
     if !exact_parameters.is_empty() {
@@ -1618,6 +2236,26 @@ fn isolate_cubic_line_roots(
         });
     }
     Classification::Decided(BezierLineRelation::Unresolved)
+}
+
+fn merge_exact_parameters_into_spans(
+    spans: &mut Vec<BezierMonotoneSpan>,
+    exact_parameters: Vec<Real>,
+    policy: &CurvePolicy,
+) {
+    // When a scalar cubic has both represented roots and non-represented
+    // algebraic roots, expose one uniform isolating-span shape by embedding
+    // represented roots as zero-width spans. This preserves all candidates as
+    // exact objects, matching Yap's separation between algebraic construction
+    // and later topology decisions; see Yap, "Towards Exact Geometric
+    // Computation," Computational Geometry 7.1-2 (1997).
+    for parameter in exact_parameters {
+        push_unique_span(
+            spans,
+            BezierMonotoneSpan::new(parameter.clone(), parameter),
+            policy,
+        );
+    }
 }
 
 fn isolate_scalar_cubic_roots(
@@ -1658,7 +2296,6 @@ fn isolate_scalar_cubic_roots(
     let mid_value = scalar_cubic_at_half(&controls);
     if is_zero(&mid_value, policy) == Some(true) {
         push_unique_sorted(exact_parameters, mid.clone(), policy);
-        return Ok(());
     }
 
     if depth >= 32 {
@@ -1687,19 +2324,6 @@ fn scalar_cubic_at_half(controls: &[Real; 4]) -> Real {
         + controls[3].clone())
         / eight)
         .expect("division by positive integer constant is defined")
-}
-
-fn scalar_cubic_at_parameter(controls: &[Real; 4], t: Real) -> Real {
-    let p01 = lerp_real(&controls[0], &controls[1], t.clone());
-    let p12 = lerp_real(&controls[1], &controls[2], t.clone());
-    let p23 = lerp_real(&controls[2], &controls[3], t.clone());
-    let p012 = lerp_real(&p01, &p12, t.clone());
-    let p123 = lerp_real(&p12, &p23, t.clone());
-    lerp_real(&p012, &p123, t)
-}
-
-fn lerp_real(first: &Real, second: &Real, t: Real) -> Real {
-    first + &(&t * &(second - first))
 }
 
 fn subdivide_scalar_cubic_half(controls: [Real; 4]) -> ([Real; 4], [Real; 4]) {
@@ -2094,4 +2718,56 @@ fn all_same(values: &[&Real], policy: &CurvePolicy) -> Option<bool> {
 
 fn cross(ax: &Real, ay: &Real, bx: &Real, by: &Real) -> Real {
     (ax * by) - (ay * bx)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn p(x: i32, y: i32) -> Point2 {
+        Point2::new(Real::from(x), Real::from(y))
+    }
+
+    fn refs(points: &[Point2]) -> Vec<&Point2> {
+        points.iter().collect()
+    }
+
+    #[test]
+    fn shared_axis_sign_pruned_schedule_discards_strictly_separated_graphs() {
+        let policy = CurvePolicy::certified();
+        let quadratic = [p(0, 0), p(3, 10), p(6, 0)];
+        let cubic = [p(0, 20), p(2, 20), p(4, 20), p(6, 20)];
+        let quadratic_refs = refs(&quadratic);
+        let cubic_refs = refs(&cubic);
+
+        let axis_plan = dyadic_candidate_axis_plan(&quadratic_refs, &cubic_refs, &policy);
+        let numerators =
+            dyadic_candidate_numerators(&quadratic_refs, &cubic_refs, &axis_plan, &policy);
+
+        assert_eq!(axis_plan.primary, Axis2::Y);
+        assert_eq!(axis_plan.secondary, None);
+        assert!(
+            numerators.is_empty(),
+            "strict Bernstein sign separation should leave no dyadic candidates"
+        );
+    }
+
+    #[test]
+    fn shared_axis_sign_pruned_schedule_keeps_frontier_boundary_roots() {
+        let policy = CurvePolicy::certified();
+        let quadratic = [p(0, 0), p(3, 255), p(6, 0)];
+        let cubic = [p(0, 1), p(2, 0), p(4, 0), p(6, -511)];
+        let quadratic_refs = refs(&quadratic);
+        let cubic_refs = refs(&cubic);
+
+        let axis_plan = dyadic_candidate_axis_plan(&quadratic_refs, &cubic_refs, &policy);
+        let numerators =
+            dyadic_candidate_numerators(&quadratic_refs, &cubic_refs, &axis_plan, &policy);
+
+        assert!(numerators.contains(&1));
+        assert!(
+            numerators.len() < 64,
+            "Bezier sign pruning should avoid the full 1/512 candidate grid"
+        );
+    }
 }

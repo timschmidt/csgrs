@@ -232,7 +232,7 @@ fn even_odd_fill_uses_winding_parity() {
 }
 
 #[test]
-fn circular_contour_matches_cavalier_winding_direction() {
+fn circular_contour_winds_positive_semicircle_counter_clockwise() {
     let contour = Contour2::from_bulge_vertices(&[vertex(0, 0, 1), vertex(2, 0, 1)]).unwrap();
 
     assert_eq!(

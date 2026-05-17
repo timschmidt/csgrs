@@ -1,7 +1,7 @@
 # hypercurve UI Test Article
 
-This is a small egui test article modeled after `cavalier_contours_ui`, but all
-geometry operations are routed through `hypercurve`.
+This is a small egui test article for `hypercurve`; all geometry operations are
+routed through the native `hypercurve` kernel.
 
 Run natively:
 
@@ -23,9 +23,9 @@ Trunk on pushes to `main` and publishes the resulting `dist` directory through
 GitHub Pages Actions. Set the repository's Pages source to GitHub Actions before
 the first deployment.
 
-The app keeps a Cavalier-style bulge vertex editor because that is convenient
-for UI testing. The editor data is converted to `hypercurve` curve strings,
-contours, and regions at the operation boundary.
+The app keeps a bulge vertex editor because that is convenient for UI testing.
+The editor data is converted to `hypercurve` curve strings, contours, and
+regions at the operation boundary.
 
 The editor and plotting layers store coordinates as `f64` because egui, Geo,
 and rendering APIs require primitive floats. Core `hypercurve` operations lift

@@ -14,6 +14,70 @@ fn half() -> Real {
     (Real::one() / Real::from(2_i8)).unwrap()
 }
 
+fn ratio(numerator: i32, denominator: i32) -> Real {
+    (Real::from(numerator) / Real::from(denominator)).unwrap()
+}
+
+fn quadratic_through_point_at(
+    parameter: Real,
+    target: &Point2,
+    first_offset: (i32, i32),
+    second_offset: (i32, i32),
+) -> QuadraticBezier2 {
+    let one_minus_t = Real::one() - &parameter;
+    let b0 = &one_minus_t * &one_minus_t;
+    let b1 = Real::from(2_i8) * &parameter * &one_minus_t;
+    let b2 = &parameter * &parameter;
+    let p0 = Point2::new(
+        target.x() + &Real::from(first_offset.0),
+        target.y() + &Real::from(first_offset.1),
+    );
+    let p1 = Point2::new(
+        target.x() + &Real::from(second_offset.0),
+        target.y() + &Real::from(second_offset.1),
+    );
+    let numerator_x = target.x() - &(&b0 * p0.x()) - &(&b1 * p1.x());
+    let numerator_y = target.y() - &(&b0 * p0.y()) - &(&b1 * p1.y());
+    let p2_x = (numerator_x / &b2)
+        .expect("nonzero parameter gives nonzero quadratic Bernstein endpoint weight");
+    let p2_y = (numerator_y / &b2)
+        .expect("nonzero parameter gives nonzero quadratic Bernstein endpoint weight");
+    QuadraticBezier2::new(p0, p1, Point2::new(p2_x, p2_y))
+}
+
+fn cubic_through_point_at(
+    parameter: Real,
+    target: &Point2,
+    first_offset: (i32, i32),
+    second_offset: (i32, i32),
+    third_offset: (i32, i32),
+) -> CubicBezier2 {
+    let one_minus_t = Real::one() - &parameter;
+    let b0 = &one_minus_t * &one_minus_t * &one_minus_t;
+    let b1 = Real::from(3_i8) * &parameter * &one_minus_t * &one_minus_t;
+    let b2 = Real::from(3_i8) * &parameter * &parameter * &one_minus_t;
+    let b3 = &parameter * &parameter * &parameter;
+    let p0 = Point2::new(
+        target.x() + &Real::from(first_offset.0),
+        target.y() + &Real::from(first_offset.1),
+    );
+    let p1 = Point2::new(
+        target.x() + &Real::from(second_offset.0),
+        target.y() + &Real::from(second_offset.1),
+    );
+    let p2 = Point2::new(
+        target.x() + &Real::from(third_offset.0),
+        target.y() + &Real::from(third_offset.1),
+    );
+    let numerator_x = target.x() - &(&b0 * p0.x()) - &(&b1 * p1.x()) - &(&b2 * p2.x());
+    let numerator_y = target.y() - &(&b0 * p0.y()) - &(&b1 * p1.y()) - &(&b2 * p2.y());
+    let p3_x = (numerator_x / &b3)
+        .expect("nonzero parameter gives nonzero cubic Bernstein endpoint weight");
+    let p3_y = (numerator_y / &b3)
+        .expect("nonzero parameter gives nonzero cubic Bernstein endpoint weight");
+    CubicBezier2::new(p0, p1, p2, Point2::new(p3_x, p3_y))
+}
+
 fn main() {
     let quadratic = QuadraticBezier2::new(p(0, 0), p(17, 23), p(41, -5));
     let cubic = CubicBezier2::new(p(-11, 7), p(3, 31), p(29, -37), p(53, 2));
@@ -187,6 +251,24 @@ fn bench_rational_quadratic_facts(curve: &RationalQuadraticBezier2) {
         Real::from(4_i8),
     )
     .unwrap();
+    let matching_weight_crossing = RationalQuadraticBezier2::try_new(
+        Point2::new(Real::from(0_i8), Real::from(1_i8)),
+        Point2::new(Real::from(17_i8), Real::from(23_i8) - ratio(1, 4)),
+        Point2::new(Real::from(41_i8), Real::from(-7_i8)),
+        Real::one(),
+        Real::from(2_i8),
+        Real::one(),
+    )
+    .unwrap();
+    let dyadic_parameter = ratio(1, 512);
+    let dyadic_target = match curve.point_at(dyadic_parameter.clone(), &policy) {
+        hypercurve::Classification::Decided(point) => point,
+        hypercurve::Classification::Uncertain(_) => p(0, 0),
+    };
+    let dyadic_polynomial =
+        quadratic_through_point_at(dyadic_parameter, &dyadic_target, (5, 7), (-3, 11));
+    let dyadic_cubic =
+        cubic_through_point_at(ratio(1, 512), &dyadic_target, (5, 7), (-3, 11), (13, -5));
     let polynomial = QuadraticBezier2::new(p(100, 100), p(117, 123), p(141, 95));
     let polynomial_baseline = QuadraticBezier2::new(p(0, 0), p(17, 0), p(41, 0));
     let cubic = CubicBezier2::new(p(-120, -100), p(-117, -123), p(-141, -95), p(-155, -90));
@@ -246,6 +328,21 @@ fn bench_rational_quadratic_facts(curve: &RationalQuadraticBezier2) {
             black_box(curve).relation_to_rational_quadratic(&projective_scaled, &policy)
         )
         .len() as u8;
+        checksum ^= format!(
+            "{:?}",
+            black_box(curve).relation_to_rational_quadratic(&matching_weight_crossing, &policy)
+        )
+        .len() as u8;
+        checksum ^= format!(
+            "{:?}",
+            black_box(curve).relation_to_quadratic(&dyadic_polynomial, &policy)
+        )
+        .len() as u8;
+        checksum ^= format!(
+            "{:?}",
+            black_box(curve).relation_to_cubic(&dyadic_cubic, &policy)
+        )
+        .len() as u8;
         checksum ^=
             format!("{:?}", black_box(curve).relation_to_cubic(&cubic, &policy)).len() as u8;
     }
@@ -275,10 +372,85 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
     let quarter_hit_cubic = CubicBezier2::new(p(0, 480), p(20, 0), p(40, 0), p(60, 1920));
     let thirty_second_hit_quadratic = QuadraticBezier2::new(p(0, 0), p(30, 150), p(60, 0));
     let thirty_second_hit_cubic = CubicBezier2::new(p(0, 10), p(20, 0), p(40, 0), p(60, -310));
+    let sixty_fourth_hit_quadratic = QuadraticBezier2::new(p(0, 0), p(30, 310), p(60, 0));
+    let sixty_fourth_hit_cubic = CubicBezier2::new(p(0, 10), p(20, 0), p(40, 0), p(60, -630));
+    let one_hundred_twenty_eighth_hit_quadratic =
+        QuadraticBezier2::new(p(0, 0), p(30, 630), p(60, 0));
+    let one_hundred_twenty_eighth_hit_cubic =
+        CubicBezier2::new(p(0, 10), p(20, 0), p(40, 0), p(60, -1270));
+    let two_hundred_fifty_sixth_hit_quadratic =
+        QuadraticBezier2::new(p(0, 0), p(30, 1270), p(60, 0));
+    let two_hundred_fifty_sixth_hit_cubic =
+        CubicBezier2::new(p(0, 10), p(20, 0), p(40, 0), p(60, -2550));
+    let five_hundred_twelfth_hit_quadratic = QuadraticBezier2::new(p(0, 0), p(30, 2550), p(60, 0));
+    let five_hundred_twelfth_hit_cubic =
+        CubicBezier2::new(p(0, 10), p(20, 0), p(40, 0), p(60, -5110));
+    let non_dyadic_graph_quadratic = QuadraticBezier2::new(p(0, 0), p(30, 0), p(60, 0));
+    let non_dyadic_graph_cubic = CubicBezier2::new(p(0, 10), p(20, 0), p(40, -10), p(60, -10));
+    let non_dyadic_quadratic_root_first = QuadraticBezier2::new(p(0, 0), p(30, 20), p(60, 0));
+    let non_dyadic_quadratic_root_second = QuadraticBezier2::new(p(0, -10), p(30, 25), p(60, 20));
+    let non_graph_cubic_base = [p(0, 0), p(30, 70), p(60, -20), p(90, 30)];
+    let non_graph_deep_dyadic_difference = [
+        ratio(-1, 1024),
+        ratio(1021, 3072),
+        ratio(2045, 3072),
+        ratio(1023, 1024),
+    ];
+    let non_graph_deep_dyadic_first = CubicBezier2::new(
+        non_graph_cubic_base[0].clone(),
+        non_graph_cubic_base[1].clone(),
+        non_graph_cubic_base[2].clone(),
+        non_graph_cubic_base[3].clone(),
+    );
+    let non_graph_deep_dyadic_second = CubicBezier2::new(
+        Point2::new(
+            non_graph_cubic_base[0].x() - &non_graph_deep_dyadic_difference[0],
+            non_graph_cubic_base[0].y() - &non_graph_deep_dyadic_difference[0],
+        ),
+        Point2::new(
+            non_graph_cubic_base[1].x() - &non_graph_deep_dyadic_difference[1],
+            non_graph_cubic_base[1].y() - &non_graph_deep_dyadic_difference[1],
+        ),
+        Point2::new(
+            non_graph_cubic_base[2].x() - &non_graph_deep_dyadic_difference[2],
+            non_graph_cubic_base[2].y() - &non_graph_deep_dyadic_difference[2],
+        ),
+        Point2::new(
+            non_graph_cubic_base[3].x() - &non_graph_deep_dyadic_difference[3],
+            non_graph_cubic_base[3].y() - &non_graph_deep_dyadic_difference[3],
+        ),
+    );
+    let non_graph_irreducible_difference =
+        [Real::from(-1_i8), Real::one(), Real::one(), Real::one()];
+    let non_graph_irreducible_second = CubicBezier2::new(
+        Point2::new(
+            non_graph_cubic_base[0].x() - &non_graph_irreducible_difference[0],
+            non_graph_cubic_base[0].y() - &non_graph_irreducible_difference[0],
+        ),
+        Point2::new(
+            non_graph_cubic_base[1].x() - &non_graph_irreducible_difference[1],
+            non_graph_cubic_base[1].y() - &non_graph_irreducible_difference[1],
+        ),
+        Point2::new(
+            non_graph_cubic_base[2].x() - &non_graph_irreducible_difference[2],
+            non_graph_cubic_base[2].y() - &non_graph_irreducible_difference[2],
+        ),
+        Point2::new(
+            non_graph_cubic_base[3].x() - &non_graph_irreducible_difference[3],
+            non_graph_cubic_base[3].y() - &non_graph_irreducible_difference[3],
+        ),
+    );
     let cubic_quarter_hit = CubicBezier2::new(p(0, 40), p(20, 0), p(40, 0), p(60, 360));
     let cubic_eighth_hit = CubicBezier2::new(p(0, 10), p(20, 0), p(40, 0), p(60, 3290));
     let cubic_sixteenth_hit = CubicBezier2::new(p(0, 10), p(20, 0), p(40, 0), p(60, -4950));
     let cubic_thirty_second_hit = CubicBezier2::new(p(0, 10), p(20, 0), p(40, 0), p(60, -178870));
+    let cubic_sixty_fourth_hit = CubicBezier2::new(p(0, 10), p(20, 0), p(40, 0), p(60, -2016630));
+    let cubic_one_hundred_twenty_eighth_hit =
+        CubicBezier2::new(p(0, 10), p(20, 0), p(40, 0), p(60, -18533110));
+    let cubic_two_hundred_fifty_sixth_hit =
+        CubicBezier2::new(p(0, 10), p(20, 0), p(40, 0), p(60, -157980150));
+    let cubic_five_hundred_twelfth_hit =
+        CubicBezier2::new(p(0, 10), p(20, 0), p(40, 0), p(60, -1302932470));
     let quarter = (Real::one() / Real::from(4_i8)).unwrap();
     let cubic_endpoint_probe = QuadraticBezier2::new(
         p(200, 200),
@@ -315,6 +487,25 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
             black_box(&quarter_hit_quadratic).relation_to_cubic(&quarter_hit_cubic, &policy);
         let mixed_degree_thirty_second_relation = black_box(&thirty_second_hit_quadratic)
             .relation_to_cubic(&thirty_second_hit_cubic, &policy);
+        let mixed_degree_sixty_fourth_relation = black_box(&sixty_fourth_hit_quadratic)
+            .relation_to_cubic(&sixty_fourth_hit_cubic, &policy);
+        let mixed_degree_one_hundred_twenty_eighth_relation =
+            black_box(&one_hundred_twenty_eighth_hit_quadratic)
+                .relation_to_cubic(&one_hundred_twenty_eighth_hit_cubic, &policy);
+        let mixed_degree_two_hundred_fifty_sixth_relation =
+            black_box(&two_hundred_fifty_sixth_hit_quadratic)
+                .relation_to_cubic(&two_hundred_fifty_sixth_hit_cubic, &policy);
+        let mixed_degree_five_hundred_twelfth_relation =
+            black_box(&five_hundred_twelfth_hit_quadratic)
+                .relation_to_cubic(&five_hundred_twelfth_hit_cubic, &policy);
+        let mixed_degree_non_dyadic_graph_relation = black_box(&non_dyadic_graph_quadratic)
+            .relation_to_cubic(&non_dyadic_graph_cubic, &policy);
+        let non_dyadic_quadratic_root_relation = black_box(&non_dyadic_quadratic_root_first)
+            .relation_to_quadratic(&non_dyadic_quadratic_root_second, &policy);
+        let non_graph_deep_dyadic_relation = black_box(&non_graph_deep_dyadic_first)
+            .relation_to_cubic(&non_graph_deep_dyadic_second, &policy);
+        let non_graph_irreducible_relation = black_box(&non_graph_deep_dyadic_first)
+            .relation_to_cubic(&non_graph_irreducible_second, &policy);
         let cubic_quarter_relation =
             black_box(&degree_elevated_arch).relation_to_cubic(&cubic_quarter_hit, &policy);
         let cubic_eighth_relation =
@@ -323,12 +514,20 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
             black_box(&degree_elevated_arch).relation_to_cubic(&cubic_sixteenth_hit, &policy);
         let cubic_thirty_second_relation =
             black_box(&degree_elevated_arch).relation_to_cubic(&cubic_thirty_second_hit, &policy);
+        let cubic_sixty_fourth_relation =
+            black_box(&degree_elevated_arch).relation_to_cubic(&cubic_sixty_fourth_hit, &policy);
+        let cubic_one_hundred_twenty_eighth_relation = black_box(&degree_elevated_arch)
+            .relation_to_cubic(&cubic_one_hundred_twenty_eighth_hit, &policy);
+        let cubic_two_hundred_fifty_sixth_relation = black_box(&degree_elevated_arch)
+            .relation_to_cubic(&cubic_two_hundred_fifty_sixth_hit, &policy);
+        let cubic_five_hundred_twelfth_relation = black_box(&degree_elevated_arch)
+            .relation_to_cubic(&cubic_five_hundred_twelfth_hit, &policy);
         let cubic_endpoint_relation =
             black_box(&cubic_endpoint_probe).relation_to_cubic(&degree_elevated_arch, &policy);
         let inflections = black_box(cubic).inflection_classification(&policy);
 
         checksum ^= format!(
-            "{y_roots:?}{spans:?}{bounds:?}{line_relation:?}{point_parameters:?}{cubic_line_relation:?}{mixed_relation:?}{region_relation:?}{line_image_relation:?}{line_image_curve_relation:?}{endpoint_relation:?}{same_axis_no_hit_relation:?}{degree_normalized_no_hit_relation:?}{degree_elevated_identity_relation:?}{mixed_degree_midpoint_relation:?}{mixed_degree_quarter_relation:?}{mixed_degree_thirty_second_relation:?}{cubic_quarter_relation:?}{cubic_eighth_relation:?}{cubic_sixteenth_relation:?}{cubic_thirty_second_relation:?}{cubic_endpoint_relation:?}{inflections:?}"
+            "{y_roots:?}{spans:?}{bounds:?}{line_relation:?}{point_parameters:?}{cubic_line_relation:?}{mixed_relation:?}{region_relation:?}{line_image_relation:?}{line_image_curve_relation:?}{endpoint_relation:?}{same_axis_no_hit_relation:?}{degree_normalized_no_hit_relation:?}{degree_elevated_identity_relation:?}{mixed_degree_midpoint_relation:?}{mixed_degree_quarter_relation:?}{mixed_degree_thirty_second_relation:?}{mixed_degree_sixty_fourth_relation:?}{mixed_degree_one_hundred_twenty_eighth_relation:?}{mixed_degree_two_hundred_fifty_sixth_relation:?}{mixed_degree_five_hundred_twelfth_relation:?}{mixed_degree_non_dyadic_graph_relation:?}{non_dyadic_quadratic_root_relation:?}{non_graph_deep_dyadic_relation:?}{non_graph_irreducible_relation:?}{cubic_quarter_relation:?}{cubic_eighth_relation:?}{cubic_sixteenth_relation:?}{cubic_thirty_second_relation:?}{cubic_sixty_fourth_relation:?}{cubic_one_hundred_twenty_eighth_relation:?}{cubic_two_hundred_fifty_sixth_relation:?}{cubic_five_hundred_twelfth_relation:?}{cubic_endpoint_relation:?}{inflections:?}"
         )
         .len();
     }

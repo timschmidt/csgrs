@@ -452,6 +452,12 @@ impl RationalQuadraticBezier2 {
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         }
 
+        match same_parameter_matching_weight_rational_relation(self, other, policy) {
+            Classification::Decided(Some(relation)) => return Classification::Decided(relation),
+            Classification::Decided(None) => {}
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        }
+
         if self.weights_known_positive(policy) == Some(true)
             && other.weights_known_positive(policy) == Some(true)
         {
@@ -765,32 +771,45 @@ fn relation_to_polynomial_bezier(
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     }
 
+    let mut deferred_uncertainty = None;
     if rational.weights_known_positive(policy) == Some(true) {
-        let rational_box = match Aabb2::from_points(rational.control_points(), policy) {
-            Classification::Decided(bbox) => bbox,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
-        let polynomial_box = match Aabb2::from_points(polynomial_controls.iter().copied(), policy) {
-            Classification::Decided(bbox) => bbox,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
-        match rational_box.overlaps(&polynomial_box, policy) {
-            Classification::Decided(false) => {
-                return Classification::Decided(BezierCurveRelation::BoundingBoxesDisjoint);
+        let boxes = match (
+            Aabb2::from_points(rational.control_points(), policy),
+            Aabb2::from_points(polynomial_controls.iter().copied(), policy),
+        ) {
+            (Classification::Decided(rational_box), Classification::Decided(polynomial_box)) => {
+                Some((rational_box, polynomial_box))
             }
-            Classification::Decided(true) => {}
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+                deferred_uncertainty = Some(reason);
+                None
+            }
+        };
+        if let Some((rational_box, polynomial_box)) = boxes {
+            match rational_box.overlaps(&polynomial_box, policy) {
+                Classification::Decided(false) => {
+                    return Classification::Decided(BezierCurveRelation::BoundingBoxesDisjoint);
+                }
+                Classification::Decided(true) => {}
+                Classification::Uncertain(reason) => deferred_uncertainty = Some(reason),
+            }
         }
     }
 
     let rational_line_image = match rational_line_segment_image(rational, policy) {
         Classification::Decided(line) => line,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        Classification::Uncertain(reason) => {
+            deferred_uncertainty.get_or_insert(reason);
+            None
+        }
     };
     let polynomial_line_image = match line_segment_image_from_controls(polynomial_controls, policy)
     {
         Classification::Decided(line) => line,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        Classification::Uncertain(reason) => {
+            deferred_uncertainty.get_or_insert(reason);
+            None
+        }
     };
     match (&rational_line_image, &polynomial_line_image) {
         (Some(first), Some(second)) => {
@@ -844,6 +863,17 @@ fn relation_to_polynomial_bezier(
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     }
 
+    match same_parameter_dyadic_rational_polynomial_relation(rational, polynomial_controls, policy)
+    {
+        Classification::Decided(Some(relation)) => return Classification::Decided(relation),
+        Classification::Decided(None) => {}
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    }
+
+    if let Some(reason) = deferred_uncertainty {
+        return Classification::Uncertain(reason);
+    }
+
     if rational.weights_known_positive(policy) == Some(true) {
         return isolate_curve_regions(
             RationalSubdivisionNode::from_rational(rational),
@@ -853,6 +883,52 @@ fn relation_to_polynomial_bezier(
     }
 
     Classification::Decided(BezierCurveRelation::Unresolved)
+}
+
+const RATIONAL_POLYNOMIAL_DYADIC_CANDIDATE_DENOMINATOR: i16 = 512;
+
+fn same_parameter_dyadic_rational_polynomial_relation(
+    rational: &RationalQuadraticBezier2,
+    polynomial_controls: &[&Point2],
+    policy: &CurvePolicy,
+) -> Classification<Option<BezierCurveRelation>> {
+    let denominator = Real::from(RATIONAL_POLYNOMIAL_DYADIC_CANDIDATE_DENOMINATOR);
+    let mut points = Vec::new();
+    for numerator in 1..RATIONAL_POLYNOMIAL_DYADIC_CANDIDATE_DENOMINATOR {
+        let parameter = (Real::from(numerator) / &denominator)
+            .expect("division by positive dyadic-grid denominator is defined");
+        let rational_point = match rational.point_at(parameter.clone(), policy) {
+            Classification::Decided(point) => point,
+            // Denominator-boundary candidates are not promoted. The caller keeps
+            // the conservative subdivision/uncertainty path for topology.
+            Classification::Uncertain(_) => continue,
+        };
+        let polynomial_point = polynomial_point_at(polynomial_controls, parameter);
+        match point_coordinates_equal(&rational_point, &polynomial_point, policy) {
+            Some(true) => push_unique_intersection_point(&mut points, rational_point, policy),
+            Some(false) => {}
+            // The finite grid is an opportunistic promotion pass, not a
+            // no-intersection proof. If a non-hit candidate cannot be signed
+            // cheaply, keep scanning and let the caller's conservative fallback
+            // cover the unresolved topology.
+            None => {}
+        }
+    }
+
+    if points.is_empty() {
+        Classification::Decided(None)
+    } else {
+        // This finite same-parameter grid is the conic/polynomial analogue of
+        // the low-degree dyadic promotions used for polynomial Beziers. It
+        // follows Yap's exact-geometric-computation boundary by promoting only
+        // points that survive exact homogeneous rational evaluation and exact
+        // de Casteljau polynomial evaluation; see Yap, "Towards Exact Geometric
+        // Computation," Computational Geometry 7.1-2 (1997). The homogeneous
+        // rational evaluation is Farin's rational Bezier form, *Curves and
+        // Surfaces for CAGD* (5th ed., 2002), while the subdivision/evaluation
+        // model is de Casteljau's algorithm (1959).
+        Classification::Decided(Some(BezierCurveRelation::IntersectionPoints { points }))
+    }
 }
 
 fn polynomial_relation_for_equal_weight_rationals(
@@ -1019,6 +1095,137 @@ fn rational_rational_endpoint_intersections(
     Classification::Decided(points)
 }
 
+fn same_parameter_matching_weight_rational_relation(
+    first: &RationalQuadraticBezier2,
+    second: &RationalQuadraticBezier2,
+    policy: &CurvePolicy,
+) -> Classification<Option<BezierCurveRelation>> {
+    match matching_rational_weights(first, second, policy) {
+        Some(true) => {}
+        Some(false) | None => return Classification::Decided(None),
+    }
+
+    let x_roots = match matching_weight_axis_difference_root_set(first, second, Axis2::X, policy) {
+        Classification::Decided(Some(roots)) => roots,
+        Classification::Decided(None) => return Classification::Decided(None),
+        Classification::Uncertain(_) => return Classification::Decided(None),
+    };
+    let y_roots = match matching_weight_axis_difference_root_set(first, second, Axis2::Y, policy) {
+        Classification::Decided(Some(roots)) => roots,
+        Classification::Decided(None) => return Classification::Decided(None),
+        Classification::Uncertain(_) => return Classification::Decided(None),
+    };
+
+    let candidates = match same_parameter_candidates_from_root_sets(x_roots, y_roots, policy) {
+        Classification::Decided(candidates) => candidates,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    let mut points = Vec::new();
+    for parameter in candidates {
+        let first_point = match first.point_at(parameter.clone(), policy) {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(_) => return Classification::Decided(None),
+        };
+        let second_point = match second.point_at(parameter, policy) {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(_) => return Classification::Decided(None),
+        };
+        match point_equal(&first_point, &second_point, policy) {
+            Some(true) => push_unique_intersection_point(&mut points, first_point, policy),
+            Some(false) => {}
+            None => return Classification::Decided(None),
+        }
+    }
+
+    if points.is_empty() {
+        Classification::Decided(None)
+    } else {
+        Classification::Decided(Some(BezierCurveRelation::IntersectionPoints { points }))
+    }
+}
+
+fn matching_rational_weights(
+    first: &RationalQuadraticBezier2,
+    second: &RationalQuadraticBezier2,
+    policy: &CurvePolicy,
+) -> Option<bool> {
+    first
+        .weights()
+        .iter()
+        .zip(second.weights().iter())
+        .map(|(a, b)| is_zero(&(*a - *b), policy))
+        .try_fold(true, |same, item| item.map(|item| same && item))
+}
+
+fn matching_weight_axis_difference_root_set(
+    first: &RationalQuadraticBezier2,
+    second: &RationalQuadraticBezier2,
+    axis: Axis2,
+    policy: &CurvePolicy,
+) -> Classification<Option<RationalPointRootSet>> {
+    let first_controls = first.control_points();
+    let second_controls = second.control_points();
+    let weights = first.weights();
+    let values = [
+        weights[0] * &(coordinate(first_controls[0], axis) - coordinate(second_controls[0], axis)),
+        weights[1] * &(coordinate(first_controls[1], axis) - coordinate(second_controls[1], axis)),
+        weights[2] * &(coordinate(first_controls[2], axis) - coordinate(second_controls[2], axis)),
+    ];
+    if values
+        .iter()
+        .all(|value| is_zero(value, policy) == Some(true))
+    {
+        return Classification::Decided(Some(RationalPointRootSet::All));
+    }
+
+    // Matching rational weights give both curves the same Bernstein denominator,
+    // so same-parameter equality reduces to zeros of the weighted homogeneous
+    // numerator difference. This is Farin's rational Bezier model kept at Yap's
+    // certified predicate boundary: exact scalar roots are promoted, while roots
+    // outside the current scalar proof surface fall back to conservative
+    // subdivision regions; see Farin, *Curves and Surfaces for CAGD* (2002), and
+    // Yap, "Towards Exact Geometric Computation," Computational Geometry 7.1-2
+    // (1997).
+    let (c0, c1, c2) = quadratic_bernstein_to_power(values);
+    match polynomial_roots_in_unit_interval(c0, c1, c2, policy) {
+        Classification::Decided(roots) => {
+            Classification::Decided(Some(RationalPointRootSet::Roots(roots)))
+        }
+        Classification::Uncertain(_) => Classification::Decided(None),
+    }
+}
+
+fn same_parameter_candidates_from_root_sets(
+    x_roots: RationalPointRootSet,
+    y_roots: RationalPointRootSet,
+    policy: &CurvePolicy,
+) -> Classification<Vec<Real>> {
+    let mut candidates = Vec::new();
+    match (&x_roots, &y_roots) {
+        (RationalPointRootSet::All, RationalPointRootSet::All) => {}
+        (RationalPointRootSet::All, RationalPointRootSet::Roots(roots))
+        | (RationalPointRootSet::Roots(roots), RationalPointRootSet::All) => {
+            candidates.extend(roots.iter().cloned());
+        }
+        (RationalPointRootSet::Roots(left), RationalPointRootSet::Roots(right)) => {
+            for left_root in left {
+                if right
+                    .iter()
+                    .any(|right_root| is_zero(&(left_root - right_root), policy) == Some(true))
+                {
+                    match push_unique_real(&mut candidates, left_root.clone(), policy) {
+                        Classification::Decided(()) => {}
+                        Classification::Uncertain(reason) => {
+                            return Classification::Uncertain(reason);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Classification::Decided(candidates)
+}
+
 fn rational_polynomial_endpoint_intersections(
     rational: &RationalQuadraticBezier2,
     polynomial_controls: &[&Point2],
@@ -1175,6 +1382,27 @@ fn push_unique_intersection_point(
         return;
     }
     points.push(BezierCurveIntersectionPoint::new(point));
+}
+
+fn push_unique_real(
+    values: &mut Vec<Real>,
+    value: Real,
+    policy: &CurvePolicy,
+) -> Classification<()> {
+    if values
+        .iter()
+        .any(|existing| is_zero(&(existing - &value), policy) == Some(true))
+    {
+        return Classification::Decided(());
+    }
+    values.push(value);
+    Classification::Decided(())
+}
+
+fn point_coordinates_equal(a: &Point2, b: &Point2, policy: &CurvePolicy) -> Option<bool> {
+    let same_x = is_zero(&(a.x() - b.x()), policy)?;
+    let same_y = is_zero(&(a.y() - b.y()), policy)?;
+    Some(same_x && same_y)
 }
 
 #[derive(Clone, Debug)]

@@ -16,9 +16,9 @@ type HContour = Contour2;
 const DISPLAY_COORD_EPS: f64 = 2e-5;
 const MIN_DISPLAY_LOOP_AREA: f64 = 1e-6;
 
-/// A Cavalier-style polyline vertex. `bulge` describes the outgoing segment.
+/// A bulge polyline vertex. `bulge` describes the outgoing segment.
 ///
-/// These `f64` fields are UI/editor records and Geo compatibility data only.
+/// These `f64` fields are UI/editor records and Geo display data only.
 /// Geometry operations lift them into hyperreal-backed `hypercurve` values at
 /// the operation boundary before asking the exact curve kernel for topology.
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
@@ -450,8 +450,8 @@ pub enum BooleanMode {
 }
 
 pub fn policy() -> CurvePolicy {
-    // The test article is an interactive rendering and compatibility boundary,
-    // so it uses `EdgePreview` for curve-local display tolerances. Hypercurve's
+    // The test article is an interactive rendering boundary, so it uses
+    // `EdgePreview` for curve-local display tolerances. Hypercurve's
     // predicate policy inside this value remains strict, and the UI must not
     // treat sampled `f64`/Geo fallback output as exact topology provenance.
     // Hobby, "Practical Segment Intersection with Finite Precision Output"

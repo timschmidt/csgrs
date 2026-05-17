@@ -10,10 +10,10 @@ exactness-aware topology: segment intersections, closed-contour containment,
 signed region views, region-pair event extraction, fragment splitting, prepared
 query views, and the first region boolean / offset pipeline.
 
-The crate keeps Cavalier-compatible bulge semantics where they are useful, but
-the native APIs expose explicit uncertainty for tangent, overlap, boundary, and
-unsupported cases instead of silently resolving them through global epsilon
-rules.
+The crate keeps exact bulge-derived line and circular-arc semantics where they
+are useful, but the native APIs expose explicit uncertainty for tangent,
+overlap, boundary, and unsupported cases instead of silently resolving them
+through global epsilon rules.
 
 ## WASM Demo
 
@@ -48,9 +48,9 @@ offsets, and curve relations while `hypertri` handles line-only triangulation.
 ## Numeric Model
 
 `hypercurve` stores and decides core geometry with `hyperreal::Real`
-values. Primitive `f64` appears only in named edge
-conversions, tests, benchmarks, rendering/IO helpers, and compatibility
-harnesses. There is no approximate numeric mode feature.
+values. Primitive `f64` appears only in named edge conversions, tests,
+benchmarks, and rendering/IO helpers. There is no approximate numeric mode
+feature.
 
 ## Traditional Curve Problems
 
@@ -119,7 +119,9 @@ Core geometry:
   projective homogeneous weight-scaling identity, positive-weight convex-hull
   disjointness, exact native line-line intersection dispatch for certified
   endpoint line-segment images, equal-weight collapse into polynomial Bezier
-  predicates, and exact shared endpoints.
+  predicates, exact shared endpoints, endpoint-on-conic hits, and
+  same-parameter matching-weight conic roots when the scalar numerator
+  difference is certified by the current exact quadratic solver.
 - Mixed polynomial quadratic/cubic curve relation through exact shared
   endpoints and certified Bezier bounds, with overlapping boxes left explicit
   for a later root-isolation solver.
@@ -133,9 +135,27 @@ Core geometry:
   sign-separated in Bernstein form.
 - Exact degree-elevated quadratic/cubic polynomial image equality, reported
   before endpoint-only overlap checks.
-- Exact same-parameter dyadic candidate promotion through thirty-seconds for mixed
-  quadratic/cubic and native cubic/cubic polynomial Bezier pairs after degree
-  normalization.
+- Exact same-parameter dyadic candidate promotion through
+  five-hundred-twelfths for mixed quadratic/cubic and native cubic/cubic
+  polynomial Bezier pairs after degree normalization, with prepared integer
+  Bernstein weights reused across coordinate predicates at each candidate and
+  certified shared-coordinate schedules that skip tautological axis predicates
+  and sign-prune dyadic graph candidates by Bernstein control polygons before
+  exact evaluation.
+- Exact same-parameter cubic Bernstein root isolation for graph-shaped
+  quadratic/cubic and cubic/cubic pairs with a certified shared strictly
+  monotone coordinate, returning exact no-hit decisions, exact point regions
+  for representable roots, and retained same-parameter brackets for
+  irreducible roots instead of hiding additional graph intersections behind a
+  finite dyadic hit.
+- Broader non-graph same-parameter cubic candidate isolation for
+  degree-normalized quadratic/cubic and cubic/cubic pairs. This path does not
+  claim unrelated-parameter intersections are absent; it promotes represented
+  algebraic candidates such as deep dyadic roots beyond the finite grid and
+  retains conservative brackets for irreducible cubic candidates.
+- Same-parameter quadratic/quadratic algebraic roots are dispatched before the
+  finite dyadic grid, including non-dyadic rational parameters that the
+  five-hundred-twelfth frontier cannot represent.
 - Certified dyadic point-parameter probes for cubic Beziers, reused to promote
   endpoint-on-cubic intersections before generic subdivision while keeping the
   complete point-on-cubic solver explicit future work.
@@ -163,8 +183,9 @@ Core geometry:
   disjointness, exact native line-line intersection dispatch for certified
   endpoint line-segment images, exact supporting-line root dispatch when one
   side is a certified endpoint line image, exact shared endpoints,
-  endpoint-on-conic hits, and homogeneous subdivision regions for overlapping
-  positive-weight cases.
+  endpoint-on-conic hits, exact same-parameter dyadic point promotion through
+  five-hundred-twelfths for quadratic and cubic polynomial partners, and
+  homogeneous subdivision regions for overlapping positive-weight cases.
 - Certified polynomial Bezier flattening adapter that emits a polyline only
   when exact hull-to-chord flatness is within the requested error budget.
 - Zero-error certified polyline simplification for flattened Beziers that only
@@ -183,8 +204,8 @@ Core geometry:
 - A full-circle/full-circle predicate surface that classifies coincident,
   disjoint, tangent, secant, and uncertain outcomes before finite arc-sweep
   filters are applied.
-- Cavalier-compatible bulge vertex helpers and bulge import/export for
-  supported line and circular-arc sweeps.
+- Exact bulge vertex helpers and bulge import/export for line and circular-arc
+  sweeps.
 - Axis-aligned bounding boxes for points, segments, curve strings, contours, and
   regions, used as conservative broad-phase filters before exact curve
   intersections, contour/region event collection, point classification, and
@@ -258,9 +279,6 @@ Boolean and region pipeline:
 - Container-minus-boundary-touching-subset difference is rebuilt for certified
   shared-edge containment by dropping the coincident zero-area boundary and
   assembling the remaining directed fragments into the notched result.
-- Imported Cavalier deterministic and fuzz suites are present as compatibility
-  references.
-
 Known limits:
 
 - This crate is not yet a complete boolean or offset engine.
@@ -296,10 +314,9 @@ fn main() -> hypercurve::CurveResult<()> {
 }
 ```
 
-For Cavalier-style polyline data, `BulgeVertex2` and reconstruction helpers sit
-at the adapter boundary. They are useful for compatibility and UI workflows,
-but topology decisions should still flow through native `Segment2`, `Contour2`,
-`Region2`, and prepared query views.
+For bulge polyline data, `BulgeVertex2` and reconstruction helpers sit at the
+adapter boundary. Topology decisions should still flow through native
+`Segment2`, `Contour2`, `Region2`, and prepared query views.
 
 ## Documentation
 
@@ -311,8 +328,8 @@ RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps
 
 ## UI Test Article
 
-The `examples/hypercurve_ui` package recreates the Cavalier UI test article
-around `hypercurve` operations. It keeps a bulge-vertex editor for convenient
+The `examples/hypercurve_ui` package is an egui test article around
+`hypercurve` operations. It keeps a bulge-vertex editor for convenient
 interactive testing, then converts that data into `hypercurve` contours and
 regions for booleans, intersections, slices, and offsets.
 
@@ -354,12 +371,6 @@ no. 9, 1979, pp. 643-647.
 
 de Casteljau, Paul. "Outillage methodes calcul." Andre Citroen Automobiles SA,
 1959.
-
-cavalier_contours. "2D Polyline/Shape Library for Offsetting, Combining, etc."
-Rust crate and repository. https://github.com/jbuckmccready/cavalier_contours.
-
-CavalierContours. C++ polyline offsetting and combining library.
-https://github.com/jbuckmccready/CavalierContours.
 
 de Berg, Mark, et al. *Computational Geometry: Algorithms and Applications*. 3rd
 ed., Springer, 2008. https://doi.org/10.1007/978-3-540-77974-2.

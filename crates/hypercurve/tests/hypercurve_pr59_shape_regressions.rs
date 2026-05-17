@@ -1,11 +1,10 @@
-//! Native `hypercurve` coverage for closed-loop shape cases from
-//! `cavalier_contours` PR #59.
+//! Native `hypercurve` coverage for closed-loop shape cases from an upstream
+//! shape-boolean regression set.
 //!
-//! The source PR also covers Cavalier-specific shape transforms, open
-//! polyline clipping, spatial-index refresh, and full shape area accounting.
-//! This file ports the cases that map directly to `hypercurve`'s current
-//! region model: closed material contours, hole contours, and boolean
-//! membership semantics.
+//! The source cases also covered shape transforms, open polyline clipping,
+//! spatial-index refresh, and full shape area accounting. This file keeps only
+//! the cases that map directly to `hypercurve`'s current region model: closed
+//! material contours, hole contours, and boolean membership semantics.
 
 use hypercurve::{
     BooleanOp, BulgeVertex2, Classification, Contour2, CurvePolicy, FillRule, Point2, Real,

@@ -59,14 +59,14 @@ impl Contour2 {
         Self { curve, fill_rule }
     }
 
-    /// Constructs a closed contour from Cavalier-style bulge vertices.
+    /// Constructs a closed contour from exact bulge vertices.
     ///
     /// The final vertex's bulge defines the segment back to the first vertex.
     pub fn from_bulge_vertices(vertices: &[BulgeVertex2]) -> CurveResult<Self> {
         Self::from_bulge_vertices_with_fill_rule(vertices, FillRule::NonZero)
     }
 
-    /// Constructs a closed contour from Cavalier-style bulge vertices and a fill rule.
+    /// Constructs a closed contour from exact bulge vertices and a fill rule.
     pub fn from_bulge_vertices_with_fill_rule(
         vertices: &[BulgeVertex2],
         fill_rule: FillRule,

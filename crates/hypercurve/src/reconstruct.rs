@@ -98,8 +98,7 @@ impl Default for PolylineReconstructionOptions {
 }
 
 impl BulgeVertex2 {
-    /// Reconstructs Cavalier-style bulge vertices from an open sampled
-    /// polyline.
+    /// Reconstructs exact bulge vertices from an open sampled polyline.
     ///
     /// Flat runs are collapsed to one zero-bulge line segment. Runs with
     /// consistent three-point finite curvature are represented as circular

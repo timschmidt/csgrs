@@ -15,15 +15,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 
 [[package]]
-name = "cavalier_contours"
-version = "0.7.0"
-source = "git+https://github.com/timschmidt/cavalier_contours?branch=shape-boolean-transformation#8e448adae78be6f1efddd0f3112c46a9ed5d6b7a"
-dependencies = [
- "num-traits",
- "static_aabb2d_index",
-]
-
-[[package]]
 name = "cc"
 version = "1.2.62"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -112,10 +103,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "hypercurve-cavalier-compat-fuzz"
+name = "hypercurve-fuzz"
 version = "0.0.0"
 dependencies = [
- "cavalier_contours",
  "hypercurve",
  "libfuzzer-sys",
 ]
@@ -323,15 +313,6 @@ name = "shlex"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
-
-[[package]]
-name = "static_aabb2d_index"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1204bd3057a2225dc60d157bd921aaeaa4d318527bd32af4678cad39e5279849"
-dependencies = [
- "num-traits",
-]
 
 [[package]]
 name = "syn"

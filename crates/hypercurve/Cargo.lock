@@ -57,15 +57,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
 
 [[package]]
-name = "cavalier_contours"
-version = "0.7.0"
-source = "git+https://github.com/timschmidt/cavalier_contours?branch=shape-boolean-transformation#8e448adae78be6f1efddd0f3112c46a9ed5d6b7a"
-dependencies = [
- "num-traits",
- "static_aabb2d_index",
-]
-
-[[package]]
 name = "cfg-if"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -335,7 +326,6 @@ checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 name = "hypercurve"
 version = "0.1.0"
 dependencies = [
- "cavalier_contours",
  "geo",
  "hyperlimit",
  "hyperreal",

@@ -1,9 +1,8 @@
 //! Curve primitives built on the hyper geometry stack.
 //!
-//! This crate starts with the narrow line/circular-arc core needed to preserve
-//! Cavalier-style polyline semantics while using [`hyperreal::Real`] coordinates
-//! and the `hyperlimit` predicate policy model. The core topology follows the
-//! robust-computation principle of deciding predicates before branching; see
+//! This crate starts with a line/circular-arc core using [`hyperreal::Real`]
+//! coordinates and the `hyperlimit` predicate policy model. The core topology
+//! follows the robust-computation principle of deciding predicates before branching; see
 //! Shewchuk, "Adaptive Precision Floating-Point Arithmetic and Fast Robust
 //! Geometric Predicates" (*Discrete & Computational Geometry* 18(3), 305-363,
 //! 1997).
@@ -168,13 +167,6 @@ mod tests {
         assert_eq!(arc.center(), &p(1, 0));
         assert!(arc.is_clockwise());
         assert_eq!(arc.bulge(), Some(&s(-1)));
-    }
-
-    #[test]
-    fn cavalier_bulge_import_rejects_larger_than_half_circle() {
-        let err = Segment2::from_cavalier_bulge(p(0, 0), p(1, 0), s(2))
-            .expect_err("Cavalier-compatible import should reject unsupported sweeps");
-        assert_eq!(err, CurveError::UnsupportedBulge);
     }
 
     #[test]
