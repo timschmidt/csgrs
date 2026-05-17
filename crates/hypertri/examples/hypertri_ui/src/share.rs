@@ -2,11 +2,13 @@ use std::io::{Read, Write};
 
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use lzma_rust2::{XzOptions, XzReader, XzWriter};
+use lzma_rust2::{EncodeMode, LzmaOptions, MfType, XzOptions, XzReader, XzWriter};
 use serde::{Serialize, de::DeserializeOwned};
 
 const STATE_PARAM: &str = "state";
-const LZMA_PRESET: u32 = 9;
+const LZMA_COMPRESSION_LEVEL: u32 = 11;
+const LZMA_BASE_PRESET: u32 = 9;
+const LZMA_ULTRA_DEPTH_LIMIT: i32 = 4096;
 const MAX_ENCODED_STATE_CHARS: usize = 1_048_576;
 const MAX_DECOMPRESSED_STATE_BYTES: u64 = 2 * 1024 * 1024;
 
@@ -102,7 +104,7 @@ fn set_state_param(href: &str, encoded_state: &str) -> String {
 }
 
 fn compress_json(json: &[u8]) -> Result<Vec<u8>, String> {
-    let mut writer = XzWriter::new(Vec::new(), XzOptions::with_preset(LZMA_PRESET))
+    let mut writer = XzWriter::new(Vec::new(), xz_options())
         .map_err(|error| format!("failed to start LZMA compressor: {error}"))?;
     writer
         .write_all(json)
@@ -125,6 +127,27 @@ fn decompress_json(compressed: &[u8]) -> Result<Vec<u8>, String> {
         ));
     }
     Ok(decompressed)
+}
+
+fn xz_options() -> XzOptions {
+    let mut options = XzOptions::with_preset(LZMA_BASE_PRESET);
+    if LZMA_COMPRESSION_LEVEL >= 11 {
+        // `lzma-rust2` follows the LZMA preset table and clamps presets above 9.
+        // Level 11 is therefore a UI-specific ultra profile: keep preset 9's
+        // 64 MiB dictionary, then maximize match length and search deeper with
+        // the slower BT4 matcher.
+        options.lzma_options = LzmaOptions::new(
+            options.lzma_options.dict_size,
+            LzmaOptions::LC_DEFAULT,
+            LzmaOptions::LP_DEFAULT,
+            LzmaOptions::PB_DEFAULT,
+            EncodeMode::Normal,
+            LzmaOptions::NICE_LEN_MAX,
+            MfType::Bt4,
+            LZMA_ULTRA_DEPTH_LIMIT,
+        );
+    }
+    options
 }
 
 #[cfg(test)]

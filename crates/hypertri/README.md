@@ -24,7 +24,9 @@ entry points you need.
 The deployed WASM app is available at
 <https://timschmidt.github.io/hypertri/>.
 
-## Hyper Stack Links
+## Hyper Ecosystem Role And Links
+
+Stack links:
 
 - [hyperreal](../hyperreal/README.md): exact rational, symbolic, and computable
   real arithmetic.
