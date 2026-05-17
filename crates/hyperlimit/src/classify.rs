@@ -192,3 +192,26 @@ impl Aabb2Intersection {
         !matches!(self, Self::Disjoint)
     }
 }
+
+/// Intersection relation between two closed 3D axis-aligned boxes.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Aabb3Intersection {
+    /// The boxes are disjoint on at least one axis.
+    Disjoint,
+    /// The boxes intersect, but at least one axis has zero-width overlap.
+    Touching,
+    /// The boxes overlap with positive extent on all three axes.
+    Overlapping,
+}
+
+impl Aabb3Intersection {
+    /// Returns whether the boxes intersect inclusively.
+    pub const fn intersects(self) -> bool {
+        !matches!(self, Self::Disjoint)
+    }
+
+    /// Returns whether a broad-phase user must keep this pair for narrow phase.
+    pub const fn needs_narrow_phase(self) -> bool {
+        self.intersects()
+    }
+}

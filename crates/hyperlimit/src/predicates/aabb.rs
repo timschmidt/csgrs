@@ -6,9 +6,10 @@
 //! borrowed min/max points.
 
 use crate::classify::{
-    Aabb2Intersection, Aabb2PointLocation, ClosedIntervalIntersection, RealIntervalLocation,
+    Aabb2Intersection, Aabb2PointLocation, Aabb3Intersection, ClosedIntervalIntersection,
+    RealIntervalLocation,
 };
-use crate::geometry::{Aabb2Facts, Point2};
+use crate::geometry::{Aabb2Facts, Point2, Point3};
 use crate::predicate::{Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed};
 use crate::predicates::interval::{
     classify_closed_interval_intersection_with_policy, classify_real_closed_interval_with_policy,
@@ -412,6 +413,153 @@ pub fn aabb2s_intersect_with_policy(
     }
 }
 
+/// Classify the intersection relation between two closed 3D axis-aligned boxes.
+pub fn classify_aabb3_intersection(
+    first_min: &Point3,
+    first_max: &Point3,
+    second_min: &Point3,
+    second_max: &Point3,
+) -> PredicateOutcome<Aabb3Intersection> {
+    classify_aabb3_intersection_with_policy(
+        first_min,
+        first_max,
+        second_min,
+        second_max,
+        PredicatePolicy::default(),
+    )
+}
+
+/// Classify the intersection relation between two closed 3D axis-aligned boxes
+/// with an explicit predicate escalation policy.
+///
+/// This is the 3D counterpart to [`classify_aabb2_intersection_with_policy`].
+/// It is a certified broad-phase predicate: `Disjoint` may reject a pair, while
+/// `Touching` and `Overlapping` are still only candidates for exact
+/// narrow-phase predicates before topology is mutated. This follows Yap's
+/// exact-geometric-computation boundary and the broad-phase interval role used
+/// in intersection-reporting algorithms such as Bentley and Ottmann,
+/// "Algorithms for Reporting and Counting Geometric Intersections," *IEEE
+/// Transactions on Computers* C-28.9 (1979).
+pub fn classify_aabb3_intersection_with_policy(
+    first_min: &Point3,
+    first_max: &Point3,
+    second_min: &Point3,
+    second_max: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<Aabb3Intersection> {
+    let mut trace = DecisionTrace::default();
+
+    let x = match decided(
+        classify_closed_interval_intersection_with_policy(
+            &first_min.x,
+            &first_max.x,
+            &second_min.x,
+            &second_max.x,
+            policy,
+        ),
+        &mut trace,
+    ) {
+        Ok(intersection) => intersection,
+        Err(unknown) => return unknown.into_outcome(),
+    };
+    if x == ClosedIntervalIntersection::Disjoint {
+        return PredicateOutcome::decided(
+            Aabb3Intersection::Disjoint,
+            trace.certainty,
+            trace.stage,
+        );
+    }
+
+    let y = match decided(
+        classify_closed_interval_intersection_with_policy(
+            &first_min.y,
+            &first_max.y,
+            &second_min.y,
+            &second_max.y,
+            policy,
+        ),
+        &mut trace,
+    ) {
+        Ok(intersection) => intersection,
+        Err(unknown) => return unknown.into_outcome(),
+    };
+    if y == ClosedIntervalIntersection::Disjoint {
+        return PredicateOutcome::decided(
+            Aabb3Intersection::Disjoint,
+            trace.certainty,
+            trace.stage,
+        );
+    }
+
+    let z = match decided(
+        classify_closed_interval_intersection_with_policy(
+            &first_min.z,
+            &first_max.z,
+            &second_min.z,
+            &second_max.z,
+            policy,
+        ),
+        &mut trace,
+    ) {
+        Ok(intersection) => intersection,
+        Err(unknown) => return unknown.into_outcome(),
+    };
+    if z == ClosedIntervalIntersection::Disjoint {
+        return PredicateOutcome::decided(
+            Aabb3Intersection::Disjoint,
+            trace.certainty,
+            trace.stage,
+        );
+    }
+
+    let relation = if x == ClosedIntervalIntersection::Touching
+        || y == ClosedIntervalIntersection::Touching
+        || z == ClosedIntervalIntersection::Touching
+    {
+        Aabb3Intersection::Touching
+    } else {
+        Aabb3Intersection::Overlapping
+    };
+    PredicateOutcome::decided(relation, trace.certainty, trace.stage)
+}
+
+/// Return whether two closed 3D axis-aligned boxes intersect inclusively.
+pub fn aabb3s_intersect(
+    first_min: &Point3,
+    first_max: &Point3,
+    second_min: &Point3,
+    second_max: &Point3,
+) -> PredicateOutcome<bool> {
+    aabb3s_intersect_with_policy(
+        first_min,
+        first_max,
+        second_min,
+        second_max,
+        PredicatePolicy::default(),
+    )
+}
+
+/// Return whether two closed 3D axis-aligned boxes intersect with an explicit
+/// predicate escalation policy.
+pub fn aabb3s_intersect_with_policy(
+    first_min: &Point3,
+    first_max: &Point3,
+    second_min: &Point3,
+    second_max: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<bool> {
+    match classify_aabb3_intersection_with_policy(
+        first_min, first_max, second_min, second_max, policy,
+    ) {
+        PredicateOutcome::Decided {
+            value,
+            certainty,
+            stage,
+        } => PredicateOutcome::decided(value.intersects(), certainty, stage),
+        PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
+    }
+}
+
 fn is_interval_boundary(location: RealIntervalLocation) -> bool {
     matches!(
         location,
@@ -505,6 +653,14 @@ mod tests {
         Point2::new(hyperreal::Real::from(x), hyperreal::Real::from(y))
     }
 
+    fn p3(x: i32, y: i32, z: i32) -> Point3 {
+        Point3::new(
+            hyperreal::Real::from(x),
+            hyperreal::Real::from(y),
+            hyperreal::Real::from(z),
+        )
+    }
+
     #[test]
     fn point_aabb_classifier_distinguishes_inside_boundary_and_outside() {
         let min = p2(0, 0);
@@ -541,6 +697,29 @@ mod tests {
         );
         assert_eq!(
             aabb2s_intersect(&p2(0, 0), &p2(2, 2), &p2(2, 2), &p2(5, 5)).value(),
+            Some(true)
+        );
+    }
+
+    #[test]
+    fn aabb3_intersection_distinguishes_disjoint_touching_and_overlap() {
+        assert_eq!(
+            classify_aabb3_intersection(&p3(0, 0, 0), &p3(2, 2, 2), &p3(3, 0, 0), &p3(5, 2, 2))
+                .value(),
+            Some(Aabb3Intersection::Disjoint)
+        );
+        assert_eq!(
+            classify_aabb3_intersection(&p3(0, 0, 0), &p3(2, 2, 2), &p3(2, 1, 1), &p3(4, 3, 3))
+                .value(),
+            Some(Aabb3Intersection::Touching)
+        );
+        assert_eq!(
+            classify_aabb3_intersection(&p3(0, 0, 0), &p3(3, 3, 3), &p3(2, 1, 1), &p3(4, 4, 4))
+                .value(),
+            Some(Aabb3Intersection::Overlapping)
+        );
+        assert_eq!(
+            aabb3s_intersect(&p3(0, 0, 0), &p3(2, 2, 2), &p3(2, 2, 2), &p3(5, 5, 5)).value(),
             Some(true)
         );
     }

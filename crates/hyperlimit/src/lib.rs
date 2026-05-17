@@ -56,8 +56,8 @@ pub use batch::{
     orient3d_batch_parallel_with_policy,
 };
 pub use classify::{
-    Aabb2Intersection, Aabb2PointLocation, ClosedIntervalIntersection, LineSide, PlaneSide,
-    PointSegmentLocation, RealIntervalLocation, RingPointLocation, SegmentIntersection,
+    Aabb2Intersection, Aabb2PointLocation, Aabb3Intersection, ClosedIntervalIntersection, LineSide,
+    PlaneSide, PointSegmentLocation, RealIntervalLocation, RingPointLocation, SegmentIntersection,
     TriangleLocation,
 };
 pub use geometry::{
@@ -84,9 +84,11 @@ pub use predicate::{
     PredicateReport, Sign, SignKnowledge,
 };
 pub use predicates::aabb::{
-    PreparedAabb2, aabb2s_intersect, aabb2s_intersect_with_policy, classify_aabb2_intersection,
+    PreparedAabb2, aabb2s_intersect, aabb2s_intersect_with_policy, aabb3s_intersect,
+    aabb3s_intersect_with_policy, classify_aabb2_intersection,
     classify_aabb2_intersection_with_facts, classify_aabb2_intersection_with_policy,
-    classify_aabb2_intersection_with_policy_and_facts, classify_point_aabb2,
+    classify_aabb2_intersection_with_policy_and_facts, classify_aabb3_intersection,
+    classify_aabb3_intersection_with_policy, classify_point_aabb2,
     classify_point_aabb2_with_policy, point_in_aabb2, point_in_aabb2_with_policy,
 };
 pub use predicates::distance::{
