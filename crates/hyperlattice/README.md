@@ -7,19 +7,64 @@
 `hyperreal::Real`. `Real` is the coordinate and scalar type for complex
 numbers, 2D/3D/4D vectors, and 3x3/4x4 matrices.
 
+It is the object-algebra layer of the Hyper ecosystem: `hyperreal` owns scalar
+facts, `hyperlattice` preserves vector/matrix structure around those facts, and
+`hyperlimit` plus geometry crates consume that structure when making exact
+predicate or topology decisions.
+
 Primitive `f32` and `f64` are accepted only at named boundaries for checked
 input lifting, rendering, IO, diagnostics, or third-party interop. Lossy output
 is explicit through `Real::to_f64_lossy`.
 
-## Relationship to Other Crates
+## Hyper Stack Links
+
+- [hyperreal](../hyperreal/README.md): exact rational, symbolic, and computable
+  real arithmetic.
+- [hyperlimit](../hyperlimit/README.md): exact predicate policy and certified
+  geometric decisions.
+- [hyperlattice](../hyperlattice/README.md): small exact vector, matrix, and
+  transform algebra.
+- [hypercurve](../hypercurve/README.md): planar curve, contour, region, and
+  boolean geometry.
+- [hypertri](../hypertri/README.md): exact polygon triangulation and constrained
+  Delaunay topology.
+- [hypermesh](../hypermesh/README.md): 3D mesh boolean experiments and the
+  future exact-aware mesh-topology layer.
+- [hypersolve](../hypersolve/README.md): experimental exact-aware solver layer.
+- [hyperdrc](../hyperdrc/README.md): PCB design-readiness checks over exact-aware
+  geometry adapters.
+- [hyperphysics](../hyperphysics/README.md): placeholder physics-domain crate
+  for the exact geometry stack.
+- [csgrs](../csgrs/readme.md): constructive solid geometry and polygon boolean
+  engine used by HyperDRC and available as an interop target.
+
+## Role In The Hyper Ecosystem
 
 - `hyperreal` owns exact/symbolic numeric semantics and structural facts.
 - `hyperlattice` owns complex, vector, matrix, and short exact product-sum
   kernels over `Real`.
 - `hyperlimit` consumes `Real` structural facts for exact predicate decisions.
+- `hypercurve`, `hypertri`, `hypermesh`, `hypersolve`, and `hyperdrc` use these
+  exact-aware algebra objects when they need retained transforms, denominator
+  schedules, or sparse structure rather than anonymous coordinate arrays.
 
 `hyperlattice` does not own predicate policy, triangulation topology, curve
 topology, solver active sets, or domain geometry.
+
+## Traditional Numerical Problems
+
+Small linear algebra sits directly on the fault line between performance and
+exactness. Floating matrices are fast but can hide singular pivots, near-zero
+determinants, and transform-kind assumptions. Full symbolic expansion keeps
+meaning but can explode operand size before a caller knows whether a cheap
+structural fact was enough.
+
+`hyperlattice` approaches that tradeoff by keeping objects small and facts
+local. It carries zero masks, homogeneous point/direction tags, determinant
+schedule categories, sparse-support hints, shared-scale views, and prepared
+matrix cache summaries. Those facts let callers skip known-zero terms, choose
+fraction-free or shared-denominator reducers, reuse inverse/cofactor work, and
+delay scalar canonicalization until the result is actually needed.
 
 ## Structural Facts
 
@@ -28,6 +73,12 @@ hot kernels: known coordinate zeros, point/direction tags, homogeneous
 coordinate shape, sparsity masks, determinant/cofactor state, and exact rational
 facts. Those facts select faster exact vector and matrix paths without becoming
 geometry predicates.
+
+Exactness is not implemented by eagerly canonicalizing every coordinate after
+each operation. In the sense of Yap's exact geometric computation model,
+`hyperlattice` preserves conservative object-level structure so later exact
+reducers and predicate crates can either certify a decision or report
+uncertainty. Missing facts are missed optimizations; false facts are bugs.
 
 Future APIs should expose structural metadata in stable value objects so higher
 crates can reuse it without reinterpreting internal layouts.

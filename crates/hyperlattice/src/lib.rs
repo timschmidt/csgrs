@@ -11,6 +11,14 @@
 //! [`ZeroStatus`] and reject both definite zero and unknown-zero divisors,
 //! returning [`Problem::UnknownZero`] for the latter.
 //!
+//! Exactness is carried as conservative structure, not by eagerly
+//! canonicalizing every coordinate after every vector or matrix operation.
+//! Following Yap's exact geometric computation model, lattice-owned facts such
+//! as sparsity, shared scales, determinant schedules, and transform kinds are
+//! non-certifying scheduling metadata until an exact `Real` or predicate route
+//! consumes them. See Yap, "Towards Exact Geometric Computation,"
+//! *Computational Geometry*, 1997, pp. 3-23.
+//!
 //! # Examples
 //!
 //! ```
