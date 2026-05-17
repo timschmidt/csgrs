@@ -18,7 +18,20 @@ object facts from `hyperlattice`, and provides predicate outcomes that
 `hypercurve`, `hypertri`, `hypermesh`, `hypersolve`, and `hyperdrc` can use
 without inventing local epsilon rules.
 
-## Hyper Stack Links
+## Hyper Ecosystem Role And Links
+
+- `hyperreal` supplies exact/symbolic Real facts and bounded sign refinement
+  through `hyperreal::Real`.
+- `hyperlattice` uses the same `hyperreal::Real` type for vector and matrix
+  code and shares Real structural facts with `hyperlimit`.
+- `hyperlimit` owns predicate policy, escalation order, and result provenance.
+- Higher crates own geometry objects and topology. They call `hyperlimit` for
+  reusable signs, interval relations, point/segment/triangle tests, and
+  report-bearing certificates.
+
+`hyperlimit` does not own Real expression internals or linear algebra types.
+
+Stack links:
 
 - [hyperreal](../hyperreal/README.md): exact rational, symbolic, and computable
   real arithmetic.
@@ -39,19 +52,6 @@ without inventing local epsilon rules.
   for the exact geometry stack.
 - [csgrs](../csgrs/readme.md): constructive solid geometry and polygon boolean
   engine used by HyperDRC and available as an interop target.
-
-## Role In The Hyper Ecosystem
-
-- `hyperreal` supplies exact/symbolic Real facts and bounded sign refinement
-  through `hyperreal::Real`.
-- `hyperlattice` uses the same `hyperreal::Real` type for vector and matrix
-  code and shares Real structural facts with `hyperlimit`.
-- `hyperlimit` owns predicate policy, escalation order, and result provenance.
-- Higher crates own geometry objects and topology. They call `hyperlimit` for
-  reusable signs, interval relations, point/segment/triangle tests, and
-  report-bearing certificates.
-
-`hyperlimit` does not own Real expression internals or linear algebra types.
 
 ## Traditional Predicate Problems
 
