@@ -3,7 +3,7 @@
 #![doc = " This module provides export functionality for AMF (Additive Manufacturing File Format),"]
 #![doc = " an XML-based format specifically designed for 3D printing and additive manufacturing."]
 
-use crate::float_types::{Real, tolerance};
+use crate::float_types::{Real, hpoints_within_epsilon, tolerance};
 use crate::triangulated::Triangulated3D;
 use nalgebra::Point3;
 use std::fmt::Debug;
@@ -12,7 +12,7 @@ use std::io::Write;
 /// Add a vertex to the list, reusing an existing one if position is within `tolerance()`.
 fn add_unique_vertex_amf(vertices: &mut Vec<Point3<Real>>, vertex: Point3<Real>) -> usize {
     for (i, existing) in vertices.iter().enumerate() {
-        if (existing.coords - vertex.coords).norm() < tolerance() {
+        if hpoints_within_epsilon(existing, &vertex, tolerance()) {
             return i;
         }
     }

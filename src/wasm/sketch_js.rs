@@ -30,7 +30,7 @@ impl SketchJs {
 
     #[wasm_bindgen(js_name = isEmpty)]
     pub fn is_empty(&self) -> bool {
-        self.inner.geometry.0.is_empty()
+        self.inner.geometry().0.is_empty()
     }
 
     #[wasm_bindgen(js_name = toArrays)]

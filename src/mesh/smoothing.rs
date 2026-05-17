@@ -26,9 +26,16 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - **Volume Preservation**: Better volume preservation than local smoothing
     ///
     /// ## **Algorithm Improvements**
-    /// - **Tolerance-based Vertex Matching**: Robust floating-point coordinate handling
+    /// - **Tolerance-based Vertex Matching**: Robust boundary-coordinate handling
     /// - **Manifold Preservation**: Ensures mesh topology is maintained
     /// - **Feature Detection**: Can preserve sharp features based on neighbor count
+    ///
+    /// Vertex lookup reuses [`VertexIndexMap`](crate::mesh::connectivity::VertexIndexMap),
+    /// whose matching predicate compares squared distance through
+    /// `hyperlattice::Vector3` and `hyperreal::Real`. This keeps the discrete
+    /// Laplacian's adjacency relation stable before applying the uniform
+    /// smoothing stencil described in Botsch et al., *Polygon Mesh Processing*,
+    /// 2010 (<https://doi.org/10.1201/b10688>).
     pub fn laplacian_smooth(
         &self,
         lambda: Real,
@@ -43,12 +50,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             let mut current_positions: HashMap<usize, Point3<Real>> = HashMap::new();
             for polygon in &smoothed_polygons {
                 for vertex in &polygon.vertices {
-                    // Find the global index for this position (with tolerance)
-                    for (position, idx) in &vertex_map.position_to_index {
-                        if (vertex.position - position).norm() < vertex_map.epsilon {
-                            current_positions.insert(*idx, vertex.position);
-                            break;
-                        }
+                    if let Some(idx) = vertex_map.find_index(&vertex.position) {
+                        current_positions.insert(idx, vertex.position);
                     }
                 }
             }
@@ -90,13 +93,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             // Apply updates to mesh vertices
             for polygon in &mut smoothed_polygons {
                 for vertex in &mut polygon.vertices {
-                    // Find the global index for this vertex
-                    for (position, idx) in &vertex_map.position_to_index {
-                        if (vertex.position - position).norm() < vertex_map.epsilon {
-                            if let Some(&new_position) = laplacian_updates.get(idx) {
-                                vertex.position = new_position;
-                            }
-                            break;
+                    if let Some(idx) = vertex_map.find_index(&vertex.position) {
+                        if let Some(&new_position) = laplacian_updates.get(&idx) {
+                            vertex.position = new_position;
                         }
                     }
                 }
@@ -148,11 +147,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             let mut current_positions: HashMap<usize, Point3<Real>> = HashMap::new();
             for polygon in &smoothed_polygons {
                 for vertex in &polygon.vertices {
-                    for (position, idx) in &vertex_map.position_to_index {
-                        if (vertex.position - position).norm() < vertex_map.epsilon {
-                            current_positions.insert(*idx, vertex.position);
-                            break;
-                        }
+                    if let Some(idx) = vertex_map.find_index(&vertex.position) {
+                        current_positions.insert(idx, vertex.position);
                     }
                 }
             }
@@ -185,12 +181,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
             for polygon in &mut smoothed_polygons {
                 for vertex in &mut polygon.vertices {
-                    for (position, idx) in &vertex_map.position_to_index {
-                        if (vertex.position - position).norm() < vertex_map.epsilon {
-                            if let Some(&new_position) = updates.get(idx) {
-                                vertex.position = new_position;
-                            }
-                            break;
+                    if let Some(idx) = vertex_map.find_index(&vertex.position) {
+                        if let Some(&new_position) = updates.get(&idx) {
+                            vertex.position = new_position;
                         }
                     }
                 }
@@ -200,11 +193,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             current_positions.clear();
             for polygon in &smoothed_polygons {
                 for vertex in &polygon.vertices {
-                    for (position, idx) in &vertex_map.position_to_index {
-                        if (vertex.position - position).norm() < vertex_map.epsilon {
-                            current_positions.insert(*idx, vertex.position);
-                            break;
-                        }
+                    if let Some(idx) = vertex_map.find_index(&vertex.position) {
+                        current_positions.insert(idx, vertex.position);
                     }
                 }
             }
@@ -237,12 +227,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
 
             for polygon in &mut smoothed_polygons {
                 for vertex in &mut polygon.vertices {
-                    for (position, idx) in &vertex_map.position_to_index {
-                        if (vertex.position - position).norm() < vertex_map.epsilon {
-                            if let Some(&new_position) = updates.get(idx) {
-                                vertex.position = new_position;
-                            }
-                            break;
+                    if let Some(idx) = vertex_map.find_index(&vertex.position) {
+                        if let Some(&new_position) = updates.get(&idx) {
+                            vertex.position = new_position;
                         }
                     }
                 }

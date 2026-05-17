@@ -50,6 +50,18 @@ fn test_plane_split_polygon() {
     }
 }
 
+#[test]
+fn test_plane_orient_point_uses_hyperreal_tolerance_band() {
+    let plane = Plane::from_normal(Vector3::y(), 0.0);
+    let near = Point3::new(0.0, tolerance() * 0.25, 0.0);
+    let front = Point3::new(0.0, tolerance() * 2.0, 0.0);
+    let back = Point3::new(0.0, -tolerance() * 2.0, 0.0);
+
+    assert_eq!(plane.orient_point(&near), crate::mesh::plane::COPLANAR);
+    assert_eq!(plane.orient_point(&front), crate::mesh::plane::FRONT);
+    assert_eq!(plane.orient_point(&back), crate::mesh::plane::BACK);
+}
+
 // ------------------------------------------------------------
 // Polygon tests
 // ------------------------------------------------------------

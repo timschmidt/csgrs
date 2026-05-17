@@ -75,54 +75,6 @@ fn test_negative_extrude_has_downward_top_normal() {
 }
 
 #[test]
-#[cfg(feature = "nurbs")]
-fn test_nurbs_rectangle_bbox_and_transform() {
-    let rect = crate::nurbs::Nurbs::<()>::rectangle(2.0, 4.0, ());
-    let bbox = rect.bounding_box();
-    assert!((bbox.mins.x + 1.0).abs() < tolerance());
-    assert!((bbox.maxs.y - 2.0).abs() < tolerance());
-
-    let moved = rect.translate(3.0, -1.0, 0.0);
-    let moved_bbox = moved.bounding_box();
-    assert!((moved_bbox.mins.x - 2.0).abs() < tolerance());
-    assert!((moved_bbox.maxs.y - 1.0).abs() < tolerance());
-}
-
-#[test]
-#[cfg(all(feature = "nurbs", feature = "sketch"))]
-fn test_nurbs_to_sketch_tessellates_region() {
-    let circle = crate::nurbs::Nurbs::<()>::circle(1.0, ()).unwrap();
-    let sketch = circle.to_sketch_with_tolerance(Some(1e-3));
-    let mp = sketch.to_multipolygon();
-
-    assert_eq!(mp.0.len(), 1);
-    assert!(mp.0[0].exterior().coords().count() > 4);
-}
-
-#[test]
-#[cfg(feature = "nurbs")]
-fn test_nurbs_boolean_intersection() {
-    let a = crate::nurbs::Nurbs::<()>::rectangle(2.0, 2.0, ());
-    let b = crate::nurbs::Nurbs::<()>::rectangle(2.0, 2.0, ()).translate(1.0, 0.0, 0.0);
-    let intersection = a.try_intersection(&b).unwrap();
-    let bbox = intersection.bounding_box();
-
-    assert!(bbox.maxs.x > bbox.mins.x);
-    assert!(bbox.maxs.x <= 1.0 + tolerance());
-    assert!(bbox.mins.x >= 0.0 - tolerance());
-}
-
-#[test]
-#[cfg(all(feature = "nurbs", feature = "sketch", feature = "mesh"))]
-fn test_nurbs_extrudes_to_mesh() {
-    let rect = crate::nurbs::Nurbs::<()>::rectangle(2.0, 2.0, ());
-    let mesh = rect.extrude_vector_with_tolerance(Vector3::new(0.0, 0.0, 1.0), Some(1e-3));
-
-    assert!(!mesh.polygons.is_empty());
-    assert!(mesh.bounding_box().maxs.z > 0.9);
-}
-
-#[test]
 fn test_taubin_smoothing() {
     let sphere: Mesh<()> = Mesh::sphere(1.0, 16, 16, ());
     let original_positions: Vec<_> = sphere

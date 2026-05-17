@@ -148,7 +148,7 @@ fn test_flatten_cube() {
 
     // The flattened cube should have 1 polygon1, now in z=0
     assert_eq!(
-        flattened.geometry.len(),
+        flattened.geometry().len(),
         1,
         "Flattened cube should have 1 face in z=0"
     );
@@ -173,17 +173,17 @@ fn test_slice_cylinder() {
     // (unless the top or bottom also exactly intersect z=0, which they do not in this scenario).
     // So we expect exactly 1 polygon.
     assert_eq!(
-        cross_section.geometry.len(),
+        cross_section.geometry().len(),
         1,
         "Slicing a cylinder at z=0 should yield exactly 1 cross-section polygon"
     );
+    assert_eq!(cross_section.material_contour_count(), 1);
 
-    let poly_geom = &cross_section.geometry.0[0];
-    // Geometry → Polygon
-    let poly = match poly_geom {
-        Geometry::Polygon(p) => p,
-        _ => panic!("Cross-section geometry is not a polygon"),
-    };
+    let shell = cross_section.to_multipolygon();
+    let poly = shell
+        .0
+        .first()
+        .expect("Cross-section geometry is not an area shell");
 
     // `geo::Polygon` stores a closed ring – skip the last (repeat) vertex.
     let vcount = poly.exterior().0.len() - 1;

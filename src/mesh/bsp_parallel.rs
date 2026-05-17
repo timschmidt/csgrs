@@ -15,9 +15,6 @@ use crate::polygon::Polygon;
 #[cfg(feature = "parallel")]
 use crate::mesh::Vertex;
 
-#[cfg(feature = "parallel")]
-use crate::float_types::tolerance;
-
 impl<M: Clone + Send + Sync + Debug> Node<M> {
     /// Invert all polygons in the BSP tree using iterative approach to avoid stack overflow
     #[cfg(feature = "parallel")]
@@ -209,16 +206,9 @@ impl<M: Clone + Send + Sync + Debug> Node<M> {
                             let vj = &poly.vertices[j];
 
                             if (ti | tj) == SPANNING {
-                                // The param intersection at which plane intersects the edge [vi -> vj].
-                                // Avoid dividing by zero:
-                                let denom =
-                                    slicing_plane.normal().dot(&(vj.position - vi.position));
-                                if denom.abs() > tolerance() {
-                                    let intersection = (slicing_plane.offset()
-                                        - slicing_plane.normal().dot(&vi.position.coords))
-                                        / denom;
-                                    // Interpolate:
-                                    let intersect_vert = vi.interpolate(vj, intersection);
+                                if let Some(intersect_vert) =
+                                    slicing_plane.intersect_edge(vi, vj)
+                                {
                                     crossing_points.push(intersect_vert);
                                 }
                             }

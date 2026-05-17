@@ -1,20 +1,20 @@
 //! Provides functions for flattening a `Mesh` against the Z=0 `Plane`
 //! or slicing a `Mesh` with an arbitrary `Plane` into a `Sketch`
 
-use crate::float_types::{Real, tolerance};
+use crate::float_types::{Real, hpoints_within_epsilon};
 use crate::mesh::Mesh;
 use crate::mesh::bsp::Node;
 use crate::mesh::plane::Plane;
 use crate::sketch::Sketch;
 use crate::vertex::Vertex;
 use geo::{
-    BooleanOps, Geometry, GeometryCollection, LineString, MultiPolygon, Orient,
-    Polygon as GeoPolygon, coord, orient::Direction,
+    BooleanOps, Geometry, GeometryCollection, LineString, MultiPolygon, Orient, coord,
+    orient::Direction,
 };
 use hashbrown::HashMap;
+use hypercurve::Region2;
 use nalgebra::Point3;
 use std::fmt::Debug;
-use std::sync::OnceLock;
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// Flattens any 3D polygons by projecting them onto the XY plane (z=0),
@@ -64,14 +64,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let mut new_gc = GeometryCollection::default();
         new_gc.0.push(Geometry::MultiPolygon(oriented));
 
-        // Return a Sketch: polygons empty, geometry has the final shape
-        Sketch {
-            geometry: new_gc,
-            bounding_box: OnceLock::new(),
-            metadata: self.metadata.clone(),
-            origin: Vertex::default(),
-            origin_transform: Sketch::<M>::prepare_origin_transform(Vertex::default()),
-        }
+        Sketch::from_compat_geometry_with_origin(
+            new_gc,
+            self.metadata.clone(),
+            Vertex::default(),
+            Sketch::<M>::prepare_origin_transform(Vertex::default()),
+        )
     }
 
     /// Slice this solid by a given `plane`, returning a new `Sketch` whose polygons
@@ -83,6 +81,13 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// - **Closed polygons** that are coplanar,
     /// - **Open polygons** (poly-lines) if the plane cuts through edges,
     /// - Potentially **closed loops** if the intersection lines form a cycle.
+    ///
+    /// Loop closure uses the shared hyperreal point predicate, promoting
+    /// boundary `Point3<f64>` endpoints into `hyperlattice::Vector3` before
+    /// testing squared distance. This keeps slice topology decisions aligned
+    /// with Yap's exact-geometric-computation model, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     ///
     /// # Example
     /// ```
@@ -116,7 +121,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             result_polygons.push(p);
         }
 
-        let mut new_gc = GeometryCollection::default();
+        let mut open_geometry = Vec::new();
+        let mut material_contours = Vec::new();
 
         // Convert the "chains" or loops into open/closed polygons
         for mut chain in polylines_3d {
@@ -126,39 +132,62 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 continue;
             }
 
-            // check if first and last point are within tolerance of each other
-            let dist_sq = (chain[0].position - chain[n - 1].position).norm_squared();
-            if dist_sq < tolerance() * tolerance() {
+            // Check loop closure with the shared hyperreal point predicate.
+            if hpoints_within_epsilon(
+                &chain[0].position,
+                &chain[n - 1].position,
+                crate::float_types::tolerance(),
+            ) {
                 // Force them to be exactly the same, closing the line
                 chain[n - 1] = chain[0];
             }
 
-            let polyline = LineString::new(
-                chain
-                    .iter()
-                    .map(|vertex| {
-                        coord! {x: vertex.position.x, y: vertex.position.y}
-                    })
-                    .collect(),
-            );
+            let points = chain
+                .iter()
+                .map(|vertex| [vertex.position.x, vertex.position.y])
+                .collect::<Vec<_>>();
 
-            if polyline.is_closed() {
-                let polygon = GeoPolygon::new(polyline, vec![]);
-                let oriented = polygon.orient(Direction::Default);
-                new_gc.0.push(Geometry::Polygon(oriented));
+            let closed = points
+                .first()
+                .zip(points.last())
+                .is_some_and(|(first, last)| {
+                    (first[0] - last[0]).abs() <= crate::float_types::tolerance()
+                        && (first[1] - last[1]).abs() <= crate::float_types::tolerance()
+                });
+
+            if closed {
+                if let Some(contour) = Sketch::<M>::contour_from_points(&points) {
+                    material_contours.push(contour);
+                }
             } else {
-                new_gc.0.push(Geometry::LineString(polyline));
+                open_geometry.push(Geometry::LineString(LineString::new(
+                    points
+                        .iter()
+                        .map(|point| coord! {x: point[0], y: point[1]})
+                        .collect(),
+                )));
             }
         }
 
-        // Return Sketch
-        Sketch {
-            geometry: new_gc,
-            bounding_box: OnceLock::new(),
-            metadata: self.metadata.clone(),
-            origin: Vertex::default(),
-            origin_transform: Sketch::<M>::prepare_origin_transform(Vertex::default()),
-        }
+        let region = if material_contours.is_empty() {
+            Region2::empty()
+        } else {
+            Region2::from_material_contours(material_contours)
+        };
+        let mut new_gc = if region.is_empty() {
+            GeometryCollection::default()
+        } else {
+            Sketch::<M>::geometry_from_region(&region)
+        };
+        new_gc.0.extend(open_geometry);
+
+        Sketch::from_region_and_compat_geometry_with_origin(
+            region,
+            new_gc,
+            self.metadata.clone(),
+            Vertex::default(),
+            Sketch::<M>::prepare_origin_transform(Vertex::default()),
+        )
     }
 }
 

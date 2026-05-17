@@ -8,7 +8,7 @@ use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|bytes: &[u8]| {
     let text = String::from_utf8_lossy(bytes);
-    if let Ok(sketch) = Sketch::<()>::from_svg(&text, None) {
+    if let Ok(sketch) = Sketch::<()>::from_svg(&text, ()) {
         for triangle in sketch.triangulate() {
             for point in triangle {
                 assert!(point.x.is_finite());

@@ -9,7 +9,7 @@ pub use crate::mesh::plane::Plane;
 pub use crate::polygon::Polygon;
 pub use crate::sketch::Sketch;
 pub use crate::vertex::{Vertex, VertexCluster};
-pub use geo::{Area, Geometry, HasDimensions};
+pub use geo::{Area, HasDimensions};
 pub use hashbrown::HashMap;
 pub use nalgebra::{Point3, Vector3};
 

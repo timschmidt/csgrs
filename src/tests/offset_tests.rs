@@ -2,13 +2,24 @@
 
 use super::support::*;
 
+fn signed_ring_area(ring: &[[Real; 2]]) -> Real {
+    ring.windows(2)
+        .map(|edge| edge[0][0] * edge[1][1] - edge[1][0] * edge[0][1])
+        .sum::<Real>()
+        * 0.5
+}
+
+fn first_material_area(sketch: &Sketch<()>) -> Real {
+    let rings = sketch.region_rings();
+    signed_ring_area(&rings.material[0])
+}
+
 #[test]
 fn test_square_ccw_ordering() {
     let square = Sketch::<()>::square(2.0, ());
-    let mp = square.to_multipolygon();
-    assert_eq!(mp.0.len(), 1);
-    let poly = &mp.0[0];
-    let area = poly.signed_area();
+    let rings = square.region_rings();
+    assert_eq!(rings.material.len(), 1);
+    let area = signed_ring_area(&rings.material[0]);
     assert!(area > 0.0, "Square vertices are not CCW ordered");
 }
 
@@ -20,10 +31,9 @@ fn test_offset_2d_positive_distance_grows() {
 
     // The original square has area 4.0
     // The offset square should have area greater than 4.0
-    let mp = offset.to_multipolygon();
-    assert_eq!(mp.0.len(), 1);
-    let poly = &mp.0[0];
-    let area = poly.signed_area();
+    let rings = offset.region_rings();
+    assert_eq!(rings.material.len(), 1);
+    let area = signed_ring_area(&rings.material[0]);
     assert!(
         area > 4.0,
         "Offset with positive distance did not grow the square"
@@ -38,10 +48,9 @@ fn test_offset_2d_negative_distance_shrinks() {
 
     // The original square has area 4.0
     // The offset square should have area less than 4.0
-    let mp = offset.to_multipolygon();
-    assert_eq!(mp.0.len(), 1);
-    let poly = &mp.0[0];
-    let area = poly.signed_area();
+    let rings = offset.region_rings();
+    assert_eq!(rings.material.len(), 1);
+    let area = signed_ring_area(&rings.material[0]);
     assert!(
         area < 4.0,
         "Offset with negative distance did not shrink the square"
@@ -55,7 +64,7 @@ fn test_straight_skeleton_2d_non_empty() {
     let skeleton = square.straight_skeleton(true);
 
     assert!(
-        !skeleton.geometry.0.is_empty(),
+        !skeleton.geometry().0.is_empty(),
         "Straight skeleton should produce line geometry for a valid square"
     );
 }
@@ -66,9 +75,8 @@ fn test_polygon_2d_enforce_ccw_ordering() {
     let points_cw = vec![[0.0, 0.0], [1.0, 0.0], [0.5, 1.0]];
     let csg_cw = Sketch::<()>::polygon(&points_cw, ());
     // Enforce CCW ordering
-    csg_cw.renormalize();
-    let poly = &csg_cw.geometry.0[0];
-    let area = poly.signed_area();
+    let normalized = csg_cw.renormalize();
+    let area = first_material_area(&normalized);
     assert!(area > 0.0, "Polygon ordering was not corrected to CCW");
 }
 
@@ -79,10 +87,8 @@ fn test_circle_offset_2d() {
     let offset_grow = circle.offset(0.2); // Should grow the circle
     let offset_shrink = circle.offset(-0.2); // Should shrink the circle
 
-    let grow = offset_grow.to_multipolygon();
-    let shrink = offset_shrink.to_multipolygon();
-    let grow_area = grow.0[0].signed_area();
-    let shrink_area = shrink.0[0].signed_area();
+    let grow_area = first_material_area(&offset_grow);
+    let shrink_area = first_material_area(&offset_shrink);
 
     // Original circle has area ~3.1416
     let original_area = 3.141592653589793;

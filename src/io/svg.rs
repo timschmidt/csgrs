@@ -2,16 +2,14 @@
 
 use crate::csg::CSG;
 use crate::float_types::Real;
-use crate::sketch::Sketch;
-use geo::{
-    BoundingRect, Coord, CoordNum, CoordsIter, LineString, MapCoords, MultiLineString, Polygon,
-};
+use crate::sketch::{Sketch, wire_from_points};
+use geo::{BoundingRect, Coord, CoordNum, CoordsIter, LineString, MapCoords, MultiLineString};
 use std::fmt::Debug;
 use svg::node::element::path;
 
 use super::IoError;
 
-/// A helper struct to build [`geo::MultiLineString`] from SVG Path commands.
+/// A helper struct to build finite path command runs from SVG Path commands.
 ///
 /// The API aims to be compatible with the [SVG 1.1 Paths specification][svg-paths].
 /// The single instance of this struct is meant to be used for building paths from a single
@@ -23,6 +21,13 @@ use super::IoError;
 /// - Method names correspond to SVG Path commands
 /// - Method suffix `_to` indicates a command that uses absolute coordinates
 /// - Method suffix `_by` indicates a command that uses relative coordinates
+///
+/// Parsed finite runs are promoted into `hypercurve::Region2` or
+/// `hypercurve::CurveString2` at the Sketch boundary. Keeping SVG's finite
+/// interchange coordinates at the boundary while native CAD ownership lives in
+/// hyper geometry follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 ///
 /// **At the moment, curves are not supported.**
 /// When support for curves is implemented, the underlying data structure may change to accommodate that.
@@ -444,14 +449,23 @@ where
                     //
                     // This is a bit advanced, so (for now) this code just assumes that:
                     // - every closed subpath is a polygon (as if with solid fill and zero stroke thickness)
-                    // - every unclosed subpath is a line (as if with no fill)
+                    // - every unclosed subpath is a zero-width native wire (as if with no fill)
                     //
-                    // The lines are then (for now) discarded as expanding lines requires knowing current stroke-width.
+                    // Stroke expansion still requires current stroke-width; preserving the
+                    // path as `CurveString2` keeps source topology available for that later pass.
 
                     for ls in mls.0.into_iter() {
                         if ls.is_closed() {
-                            let polygon = Polygon::new(ls, vec![]);
-                            let sketch = Self::from_geo(polygon.into(), metadata.clone());
+                            let points = ls
+                                .coords_iter()
+                                .map(|coord| [coord.x, coord.y])
+                                .collect::<Vec<_>>();
+                            let sketch = Self::polygon(&points, metadata.clone());
+                            sketch_union = sketch_union.union(&sketch);
+                        } else if let Some(wire) =
+                            wire_from_points(ls.coords_iter().map(|coord| [coord.x, coord.y]))
+                        {
+                            let sketch = Self::from_wires(vec![wire], metadata.clone());
                             sketch_union = sketch_union.union(&sketch);
                         }
                     }
@@ -504,26 +518,36 @@ where
                 },
 
                 Event::Tag(tag::Line, Empty, attrs) => {
-                    let _x1 = expect_attr!(attrs, "x1")?;
-                    let _y1 = expect_attr!(attrs, "y1")?;
-                    let _x2 = expect_attr!(attrs, "x2")?;
-                    let _y2 = expect_attr!(attrs, "y2")?;
+                    let x1: Real = expect_attr!(attrs, "x1")?.parse()?;
+                    let y1: Real = expect_attr!(attrs, "y1")?.parse()?;
+                    let x2: Real = expect_attr!(attrs, "x2")?.parse()?;
+                    let y2: Real = expect_attr!(attrs, "y2")?.parse()?;
 
-                    // TODO: This needs knowing current stroke-width
+                    if let Some(wire) = wire_from_points([[x1, y1], [x2, y2]]) {
+                        let sketch = Self::from_wires(vec![wire], metadata.clone());
+                        sketch_union = sketch_union.union(&sketch);
+                    }
                 },
 
                 Event::Tag(tag::Polygon, Empty, attrs) => {
                     let points = expect_attr!(attrs, "points")?;
-                    let polygon = Polygon::new(svg_points_to_line_string(points)?, vec![]);
-                    let sketch = Self::from_geo(polygon.into(), metadata.clone());
+                    let points = svg_points_to_line_string(points)?
+                        .coords_iter()
+                        .map(|coord| [coord.x, coord.y])
+                        .collect::<Vec<_>>();
+                    let sketch = Self::polygon(&points, metadata.clone());
                     sketch_union = sketch_union.union(&sketch);
                 },
 
                 Event::Tag(tag::Polyline, Empty, attrs) => {
                     let points = expect_attr!(attrs, "points")?;
-                    let _ls = svg_points_to_line_string::<Real>(points)?;
-
-                    // TODO: This needs knowing current stroke-width
+                    let line_string = svg_points_to_line_string::<Real>(points)?;
+                    if let Some(wire) = wire_from_points(
+                        line_string.coords_iter().map(|coord| [coord.x, coord.y]),
+                    ) {
+                        let sketch = Self::from_wires(vec![wire], metadata.clone());
+                        sketch_union = sketch_union.union(&sketch);
+                    }
                 },
 
                 tag => {
@@ -542,12 +566,57 @@ pub trait ToSVG {
     fn to_svg(&self) -> String;
 }
 
-impl<M: Clone> ToSVG for Sketch<M> {
+impl<M: Clone + Send + Sync + Debug> ToSVG for Sketch<M> {
     fn to_svg(&self) -> String {
         use geo::Geometry::*;
         use svg::node::element;
 
         let mut g = element::Group::new();
+
+        let make_region_path = |rings: &[Vec<[Real; 2]>]| {
+            let mut data = path::Data::new();
+
+            for ring in rings {
+                let mut points = ring.iter();
+                let Some(start) = points.next() else {
+                    continue;
+                };
+                data = data.move_to((start[0], start[1]));
+                for point in points {
+                    data = data.line_to((point[0], point[1]));
+                }
+                data = data.close();
+            }
+
+            element::Path::new()
+                .set("fill", "black")
+                .set("fill-rule", "evenodd")
+                .set("stroke", "none")
+                .set("d", data)
+        };
+
+        // Region-only export keeps fill topology in the hypercurve model and
+        // emits one SVG even-odd path from finite boundary rings. The even-odd
+        // interpretation is the same crossing-number point-in-polygon family
+        // surveyed by Hormann and Agathos, "The point in polygon problem for
+        // arbitrary polygons," Computational Geometry 20(3), 2001
+        // (<https://doi.org/10.1016/S0925-7721(01)00012-8>).
+        if !self.as_region().is_empty() && self.compat_geometry_is_area_only() {
+            let region_rings = self.region_rings();
+            if !region_rings.is_empty() {
+                let mut rings = region_rings.material;
+                rings.extend(region_rings.holes);
+                g = g.add(make_region_path(&rings));
+
+                let (min_x, min_y, max_x, max_y) =
+                    self.region_xy_bounds().unwrap_or((0.0, 0.0, 1.0, 1.0));
+                let doc = svg::Document::new()
+                    .set("viewBox", (min_x, min_y, max_x - min_x, max_y - min_y))
+                    .add(g);
+
+                return doc.to_string();
+            }
+        }
 
         let make_line_string = |line_string: &geo::LineString<Real>| {
             let mut data = path::Data::new();
@@ -604,12 +673,13 @@ impl<M: Clone> ToSVG for Sketch<M> {
                 .set("d", data)
         };
 
-        let bounds = self.geometry.bounding_rect().unwrap_or(geo::Rect::new(
+        let geometry = self.effective_geometry();
+        let bounds = geometry.bounding_rect().unwrap_or(geo::Rect::new(
             Coord { x: 0.0, y: 0.0 },
             Coord { x: 1.0, y: 1.0 },
         ));
 
-        for geometry in self.geometry.iter() {
+        for geometry in geometry.iter() {
             match geometry {
                 Line(line) => {
                     g = g.add(

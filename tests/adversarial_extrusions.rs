@@ -16,25 +16,11 @@ use proptest::prelude::*;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 fn finite_real() -> impl Strategy<Value = Real> {
-    #[cfg(feature = "f32")]
-    {
-        (-250.0f32..250.0f32).prop_filter("finite", |v| v.is_finite())
-    }
-    #[cfg(feature = "f64")]
-    {
-        (-250.0f64..250.0f64).prop_filter("finite", |v| v.is_finite())
-    }
+    (-250.0f64..250.0f64).prop_filter("finite", |v| v.is_finite())
 }
 
 fn positive_real() -> impl Strategy<Value = Real> {
-    #[cfg(feature = "f32")]
-    {
-        (1.0e-4f32..50.0f32).prop_filter("positive finite", |v| v.is_finite() && *v > 0.0)
-    }
-    #[cfg(feature = "f64")]
-    {
-        (1.0e-6f64..50.0f64).prop_filter("positive finite", |v| v.is_finite() && *v > 0.0)
-    }
+    (1.0e-6f64..50.0f64).prop_filter("positive finite", |v| v.is_finite() && *v > 0.0)
 }
 
 fn assert_mesh_finite<M: Clone + Send + Sync + std::fmt::Debug>(mesh: &Mesh<M>) {
@@ -239,6 +225,22 @@ fn adversarial_extrude_height_and_direction_catalog_is_finite() {
             assert_mesh_finite(&mesh);
         }
     }
+}
+
+#[test]
+fn adversarial_extrude_vector_rejects_hyperreal_degenerate_direction() {
+    let sketch = Sketch::<()>::rectangle(1.0, 1.0, ());
+    let near_zero = sketch.extrude_vector(Vector3::new(tolerance() * 0.25, 0.0, 0.0));
+    let nonfinite = sketch.extrude_vector(Vector3::new(Real::NAN, 0.0, 1.0));
+
+    assert!(
+        near_zero.polygons.is_empty(),
+        "near-zero extrusion direction should produce an empty mesh"
+    );
+    assert!(
+        nonfinite.polygons.is_empty(),
+        "non-finite extrusion direction should produce an empty mesh"
+    );
 }
 
 #[test]

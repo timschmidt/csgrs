@@ -6,7 +6,6 @@ use crate::polygon::Polygon;
 use crate::sketch::Sketch;
 use crate::triangulated::Triangulated3D;
 use crate::vertex::Vertex;
-use geo::{Polygon as GeoPolygon, line_string};
 use nalgebra::{Point3, Vector3};
 use std::error::Error;
 use std::fmt::Debug;
@@ -81,18 +80,13 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                         solid.extrusion_direction.y as Real,
                         solid.extrusion_direction.z as Real,
                     );
-                    let extruded = Sketch::from_geo(
-                        GeoPolygon::new(
-                            line_string![
-                                (x: solid.first_corner.x  as Real, y: solid.first_corner.y  as Real),
-                                (x: solid.second_corner.x as Real, y: solid.second_corner.y as Real),
-                                (x: solid.third_corner.x  as Real, y: solid.third_corner.y  as Real),
-                                (x: solid.fourth_corner.x as Real, y: solid.fourth_corner.y as Real),
-                                (x: solid.first_corner.x  as Real, y: solid.first_corner.y  as Real),
-                            ],
-                            Vec::new(),
-                        )
-                        .into(),
+                    let extruded = Sketch::polygon(
+                        &[
+                            [solid.first_corner.x as Real, solid.first_corner.y as Real],
+                            [solid.second_corner.x as Real, solid.second_corner.y as Real],
+                            [solid.third_corner.x as Real, solid.third_corner.y as Real],
+                            [solid.fourth_corner.x as Real, solid.fourth_corner.y as Real],
+                        ],
                         metadata.clone(),
                     )
                     .extrude_vector(extrusion_direction * thickness)

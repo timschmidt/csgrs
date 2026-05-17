@@ -2,16 +2,26 @@
 
 use crate::csg::CSG;
 use crate::float_types::{FRAC_PI_2, PI, Real, TAU, tolerance};
-use crate::sketch::Sketch;
-use crate::vertex::Vertex;
-use geo::{
-    BoundingRect, Contains, Geometry, GeometryCollection, LineString, Orient, Point,
-    Polygon as GeoPolygon, coord, line_string, orient::Direction,
-};
+use crate::sketch::{Sketch, wire_from_points};
+use geo::BoundingRect;
+use hypercurve::Region2;
 use std::fmt::Debug;
-use std::sync::OnceLock;
 
 impl<M: Clone + Debug + Send + Sync> Sketch<M> {
+    /// Build a finite boundary sketch as a native hypercurve region.
+    ///
+    /// API callers still pass ordinary `Real` coordinates, but the boundary is
+    /// immediately promoted into `hyperreal` control points. Keeping this
+    /// conversion at the API edge follows the exact-geometric-computation model
+    /// described by Yap, "Towards exact geometric computation",
+    /// Computational Geometry 7(1-2), 1997, DOI: 10.1016/0925-7721(95)00040-2.
+    fn polygonal_region(points: Vec<[Real; 2]>, metadata: M) -> Self {
+        let Some(contour) = Self::contour_from_points(&points) else {
+            return Sketch::empty(metadata);
+        };
+        Sketch::from_region(Region2::from_material_contours(vec![contour]), metadata)
+    }
+
     /// Creates a 2D rectangle in the XY plane.
     ///
     /// # Parameters
@@ -26,20 +36,11 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// let sq2 = Sketch::<()>::rectangle(2.0, 3.0, ());
     /// ```
     pub fn rectangle(width: Real, length: Real, metadata: M) -> Self {
-        // In geo, a Polygon is basically (outer: LineString, Vec<LineString> for holes).
-        let outer = line_string![
-            (x: 0.0,     y: 0.0),
-            (x: width,   y: 0.0),
-            (x: width,   y: length),
-            (x: 0.0,     y: length),
-            (x: 0.0,     y: 0.0),  // close explicitly
-        ];
-        let polygon_2d = GeoPolygon::new(outer, vec![]);
-
-        Sketch::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
-            metadata,
-        )
+        let points = [[0.0, 0.0], [width, 0.0], [width, length], [0.0, length]];
+        let Some(contour) = Self::contour_from_points(&points) else {
+            return Sketch::empty(metadata);
+        };
+        Sketch::from_region(Region2::from_material_contours(vec![contour]), metadata)
     }
 
     /// Creates a 2D square in the XY plane.
@@ -101,31 +102,22 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         if segments < 3 {
             return Sketch::empty(metadata);
         }
-        let mut coords: Vec<(Real, Real)> = (0..segments)
+        let points = (0..segments)
             .map(|i| {
                 let theta = 2.0 * PI * (i as Real) / (segments as Real);
-                (radius * theta.cos(), radius * theta.sin())
+                [radius * theta.cos(), radius * theta.sin()]
             })
             .collect();
-        // close it
-        coords.push((coords[0].0, coords[0].1));
-        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-
-        Sketch::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
-            metadata,
-        )
+        Self::polygonal_region(points, metadata)
     }
 
     /// Right triangle from (0,0) to (width,0) to (0,height).
     pub fn right_triangle(width: Real, height: Real, metadata: M) -> Self {
-        let line_string = LineString::new(vec![
-            coord! {x: 0.0, y: 0.0},
-            coord! {x: width, y: 0.0},
-            coord! {x: 0.0, y: height},
-        ]);
-        let polygon = GeoPolygon::new(line_string, vec![]);
-        Sketch::from_geo(GeometryCollection(vec![Geometry::Polygon(polygon)]), metadata)
+        let points = [[0.0, 0.0], [width, 0.0], [0.0, height]];
+        let Some(contour) = Self::contour_from_points(&points) else {
+            return Sketch::empty(metadata);
+        };
+        Sketch::from_region(Region2::from_material_contours(vec![contour]), metadata)
     }
 
     /// Creates a 2D polygon in the XY plane from a list of `[x, y]` points.
@@ -139,20 +131,10 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// let pts = vec![[0.0, 0.0], [2.0, 0.0], [1.0, 1.5]];
     /// let poly2d = Sketch::polygon(&pts, metadata);
     pub fn polygon(points: &[[Real; 2]], metadata: M) -> Self {
-        if points.len() < 3 {
+        let Some(contour) = Self::contour_from_points(points) else {
             return Sketch::empty(metadata);
-        }
-        let mut coords: Vec<(Real, Real)> = points.iter().map(|p| (p[0], p[1])).collect();
-        // close
-        if coords[0] != *coords.last().unwrap() {
-            coords.push(coords[0]);
-        }
-        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-
-        Sketch::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
-            metadata,
-        )
+        };
+        Sketch::from_region(Region2::from_material_contours(vec![contour]), metadata)
     }
 
     /// **Mathematical Foundation: Parametric Ellipse Generation**
@@ -208,18 +190,13 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         }
         let rx = 0.5 * width;
         let ry = 0.5 * height;
-        let mut coords: Vec<(Real, Real)> = (0..segments)
+        let points = (0..segments)
             .map(|i| {
                 let theta = TAU * (i as Real) / (segments as Real);
-                (rx * theta.cos(), ry * theta.sin())
+                [rx * theta.cos(), ry * theta.sin()]
             })
             .collect();
-        coords.push(coords[0]);
-        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        Sketch::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
-            metadata,
-        )
+        Self::polygonal_region(points, metadata)
     }
 
     /// **Mathematical Foundation: Regular Polygon Construction**
@@ -278,18 +255,13 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         if sides < 3 {
             return Sketch::empty(metadata);
         }
-        let mut coords: Vec<(Real, Real)> = (0..sides)
+        let points = (0..sides)
             .map(|i| {
                 let theta = TAU * (i as Real) / (sides as Real);
-                (radius * theta.cos(), radius * theta.sin())
+                [radius * theta.cos(), radius * theta.sin()]
             })
             .collect();
-        coords.push(coords[0]);
-        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        Sketch::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
-            metadata,
-        )
+        Self::polygonal_region(points, metadata)
     }
 
     /// Creates a 2D arrow in the XY plane.
@@ -350,18 +322,13 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         top_offset: Real,
         metadata: M,
     ) -> Self {
-        let coords = vec![
-            (0.0, 0.0),
-            (bottom_width, 0.0),
-            (top_width + top_offset, height),
-            (top_offset, height),
-            (0.0, 0.0), // close
+        let points = vec![
+            [0.0, 0.0],
+            [bottom_width, 0.0],
+            [top_width + top_offset, height],
+            [top_offset, height],
         ];
-        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        Sketch::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
-            metadata,
-        )
+        Self::polygonal_region(points, metadata)
     }
 
     /// Star shape (typical "spiky star") with `num_points`, outer_radius, inner_radius.
@@ -376,27 +343,22 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             return Sketch::empty(metadata);
         }
         let step = TAU / (num_points as Real);
-        let mut coords: Vec<(Real, Real)> = (0..num_points)
+        let points = (0..num_points)
             .flat_map(|i| {
                 let theta_out = i as Real * step;
-                let outer_point =
-                    (outer_radius * theta_out.cos(), outer_radius * theta_out.sin());
+                let outer_point = [
+                    outer_radius * theta_out.cos(),
+                    outer_radius * theta_out.sin(),
+                ];
 
                 let theta_in = theta_out + 0.5 * step;
                 let inner_point =
-                    (inner_radius * theta_in.cos(), inner_radius * theta_in.sin());
+                    [inner_radius * theta_in.cos(), inner_radius * theta_in.sin()];
 
                 [outer_point, inner_point]
             })
             .collect();
-        // close
-        coords.push(coords[0]);
-
-        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        Sketch::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
-            metadata,
-        )
+        Self::polygonal_region(points, metadata)
     }
 
     /// Teardrop shape.  A simple approach:
@@ -413,20 +375,15 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         let center_y = length - r;
         let half_seg = segments / 2;
 
-        let mut coords = vec![(0.0, 0.0)]; // Start at the tip
-        coords.extend((0..=half_seg).map(|i| {
+        let mut points = vec![[0.0, 0.0]]; // Start at the tip
+        points.extend((0..=half_seg).map(|i| {
             let t = PI * (i as Real / half_seg as Real); // Corrected angle for semi-circle
             let x = -r * t.cos();
             let y = center_y + r * t.sin();
-            (x, y)
+            [x, y]
         }));
-        coords.push((0.0, 0.0)); // Close path to the tip
 
-        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        Sketch::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
-            metadata,
-        )
+        Self::polygonal_region(points, metadata)
     }
 
     /// Egg outline.  Approximate an egg shape using a parametric approach.
@@ -437,23 +394,18 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         }
         let rx = 0.5 * width;
         let ry = 0.5 * length;
-        let mut coords: Vec<(Real, Real)> = (0..segments)
+        let points = (0..segments)
             .map(|i| {
                 let theta = TAU * (i as Real) / (segments as Real);
                 // toy distortion approach
                 let distort = 1.0 + 0.2 * theta.cos();
                 let x = rx * theta.sin();
                 let y = ry * theta.cos() * distort * 0.8;
-                (-x, y) // mirrored
+                [-x, y] // mirrored
             })
             .collect();
-        coords.push(coords[0]);
 
-        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        Sketch::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
-            metadata,
-        )
+        Self::polygonal_region(points, metadata)
     }
 
     /// Rounded rectangle in XY plane, from (0,0) to (width,height) with radius for corners.
@@ -479,19 +431,14 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             })
         };
 
-        let mut coords: Vec<(Real, Real)> = corner(r, r, PI) // Bottom-left
+        let points: Vec<[Real; 2]> = corner(r, r, PI) // Bottom-left
             .chain(corner(width - r, r, 1.5 * PI)) // Bottom-right
             .chain(corner(width - r, height - r, 0.0)) // Top-right
             .chain(corner(r, height - r, 0.5 * PI)) // Top-left
+            .map(|(x, y)| [x, y])
             .collect();
 
-        coords.push(coords[0]); // close
-
-        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        Sketch::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
-            metadata,
-        )
+        Self::polygonal_region(points, metadata)
     }
 
     /// Squircle (superellipse) centered at (0,0) with bounding box width×height.
@@ -503,21 +450,16 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         let rx = 0.5 * width;
         let ry = 0.5 * height;
         let m = 4.0;
-        let mut coords: Vec<(Real, Real)> = (0..segments)
+        let points = (0..segments)
             .map(|i| {
                 let t = TAU * (i as Real) / (segments as Real);
                 let ct = t.cos().abs().powf(2.0 / m) * t.cos().signum();
                 let st = t.sin().abs().powf(2.0 / m) * t.sin().signum();
-                (rx * ct, ry * st)
+                [rx * ct, ry * st]
             })
             .collect();
-        coords.push(coords[0]);
 
-        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        Sketch::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
-            metadata,
-        )
+        Self::polygonal_region(points, metadata)
     }
 
     /// Keyhole shape (simple version): a large circle + a rectangle "handle".
@@ -592,13 +534,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             acc.intersection(&disk)
         });
 
-        Sketch {
-            geometry: shape.geometry,
-            bounding_box: OnceLock::new(),
-            metadata,
-            origin: Vertex::default(),
-            origin_transform: Sketch::<M>::prepare_origin_transform(Vertex::default()),
-        }
+        shape.with_metadata(metadata)
     }
 
     /// Outer diameter = `id + 2*thickness`. This yields an annulus in the XY plane.
@@ -638,22 +574,17 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         let sweep = end_rad - start_rad;
 
         // Build a ring of coordinates starting at (0,0), going around the arc, and closing at (0,0).
-        let mut coords = Vec::with_capacity(segments + 2);
-        coords.push((0.0, 0.0));
+        let mut points = Vec::with_capacity(segments + 2);
+        points.push([0.0, 0.0]);
         for i in 0..=segments {
             let t = i as Real / (segments as Real);
             let angle = start_rad + t * sweep;
             let x = radius * angle.cos();
             let y = radius * angle.sin();
-            coords.push((x, y));
+            points.push([x, y]);
         }
-        coords.push((0.0, 0.0)); // close explicitly
 
-        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        Sketch::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
-            metadata,
-        )
+        Self::polygonal_region(points, metadata)
     }
 
     /// Create a 2D supershape in the XY plane, approximated by `segments` edges.
@@ -694,7 +625,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             (term1 + term2).powf(-1.0 / n1)
         }
 
-        let mut coords = Vec::with_capacity(segments + 1);
+        let mut points = Vec::with_capacity(segments);
         for i in 0..segments {
             let frac = i as Real / (segments as Real);
             let theta = TAU * frac;
@@ -702,16 +633,10 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
 
             let x = r * theta.cos();
             let y = r * theta.sin();
-            coords.push((x, y));
+            points.push([x, y]);
         }
-        // close it
-        coords.push(coords[0]);
 
-        let polygon_2d = geo::Polygon::new(LineString::from(coords), vec![]);
-        Sketch::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
-            metadata,
-        )
+        Self::polygonal_region(points, metadata)
     }
 
     /// Creates a 2D circle with a rectangular keyway slot cut out on the +X side.
@@ -788,8 +713,15 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         with_top_flat.difference(&bottom_rect)
     }
 
-    /// Sample an arbitrary-degree Bézier curve (de Casteljau).
-    /// Returns a poly-line (closed if the first = last point).
+    /// Sample an arbitrary-degree Bezier curve with de Casteljau evaluation.
+    /// Returns a poly-line, or a hypercurve-backed filled region when the
+    /// tessellated boundary is closed.
+    ///
+    /// The recursive evaluation is the de Casteljau algorithm developed at
+    /// Citroen in 1959; see Farin, *Curves and Surfaces for CAGD*, 5th ed.,
+    /// 2002, Chapter 4. Closed output is promoted immediately to a
+    /// `hypercurve::Region2` so downstream topology uses exact predicates
+    /// rather than the finite tessellation cache.
     ///
     /// * `control`: list of 2-D control points
     /// * `segments`: number of straight-line segments used for the tessellation
@@ -812,31 +744,40 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             (points[0][0], points[0][1])
         }
 
-        let pts: Vec<(Real, Real)> = (0..=segments)
+        let pts: Vec<[Real; 2]> = (0..=segments)
             .map(|i| {
                 let t = i as Real / segments as Real;
-                de_casteljau(control, t)
+                let (x, y) = de_casteljau(control, t);
+                [x, y]
             })
             .collect();
 
         let is_closed = {
             let first = pts[0];
             let last = pts[segments];
-            (first.0 - last.0).abs() < tolerance() && (first.1 - last.1).abs() < tolerance()
+            (first[0] - last[0]).abs() < tolerance()
+                && (first[1] - last[1]).abs() < tolerance()
         };
 
-        let geometry = if is_closed {
-            let ring: LineString<Real> = pts.into();
-            Geometry::Polygon(GeoPolygon::new(ring, vec![]))
-        } else {
-            Geometry::LineString(pts.into())
-        };
+        if is_closed {
+            return Self::polygonal_region(pts, metadata);
+        }
 
-        Sketch::from_geo(GeometryCollection(vec![geometry]), metadata)
+        wire_from_points(pts)
+            .map(|wire| Sketch::from_wires(vec![wire], metadata.clone()))
+            .unwrap_or_else(|| Sketch::empty(metadata))
     }
 
     /// Sample an open-uniform B-spline of arbitrary degree (`p`) using the
-    /// Cox-de Boor recursion. Returns a poly-line (or a filled region if closed).
+    /// Cox-de Boor recursion. Returns a poly-line, or a hypercurve-backed
+    /// filled region when the sampled spline closes.
+    ///
+    /// The basis evaluation follows de Boor, "On calculating with B-splines",
+    /// *Journal of Approximation Theory* 6(1), 1972,
+    /// DOI: 10.1016/0021-9045(72)90080-9. Closed output is converted to
+    /// `hypercurve::Region2` at the API boundary; open output becomes native
+    /// `hypercurve::CurveString2` wires and is projected to finite line strings
+    /// only for compatibility/export boundaries.
     ///
     /// * `control`: control points  
     /// * `p`:       spline degree (e.g. 3 for a cubic)  
@@ -893,7 +834,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         let _max_u = span_count as Real; // parametric upper bound
         let dt = 1.0 / segments_per_span as Real; // step in local span coords
 
-        let mut pts = Vec::<(Real, Real)>::new();
+        let mut pts = Vec::<[Real; 2]>::new();
         for span in 0..=span_count {
             for s in 0..=segments_per_span {
                 if span == span_count && s == segments_per_span {
@@ -908,21 +849,21 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
                     x += b * px;
                     y += b * py;
                 }
-                pts.push((x, y));
+                pts.push([x, y]);
             }
         }
 
-        let closed = (pts.first().unwrap().0 - pts.last().unwrap().0).abs() < tolerance()
-            && (pts.first().unwrap().1 - pts.last().unwrap().1).abs() < tolerance();
+        let first = *pts.first().unwrap();
+        let last = *pts.last().unwrap();
+        let closed = (first[0] - last[0]).abs() < tolerance()
+            && (first[1] - last[1]).abs() < tolerance();
         if !closed {
-            let ls: LineString<Real> = pts.into();
-            let mut gc = GeometryCollection::default();
-            gc.0.push(Geometry::LineString(ls));
-            return Sketch::from_geo(gc, metadata);
+            return wire_from_points(pts)
+                .map(|wire| Sketch::from_wires(vec![wire], metadata.clone()))
+                .unwrap_or_else(|| Sketch::empty(metadata));
         }
 
-        let poly_2d = GeoPolygon::new(LineString::from(pts), vec![]);
-        Sketch::from_geo(GeometryCollection(vec![Geometry::Polygon(poly_2d)]), metadata)
+        Self::polygonal_region(pts, metadata)
     }
 
     /// 2-D heart outline (closed polygon) sized to `width` × `height`.
@@ -936,7 +877,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         let step = TAU / segments as Real;
 
         // classic analytic “cardioid-style” heart
-        let mut pts: Vec<(Real, Real)> = (0..segments)
+        let pts: Vec<(Real, Real)> = (0..segments)
             .map(|i| {
                 let t = i as Real * step;
                 let x = 16.0 * (t.sin().powi(3));
@@ -947,7 +888,6 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
                 (x, y)
             })
             .collect();
-        pts.push(pts[0]); // close
 
         // normalise & scale to desired bounding box ---------------------
         let (min_x, max_x) = pts.iter().fold((Real::MAX, -Real::MAX), |(lo, hi), &(x, _)| {
@@ -959,16 +899,12 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         let s_x = width / (max_x - min_x);
         let s_y = height / (max_y - min_y);
 
-        let coords: Vec<(Real, Real)> = pts
+        let points = pts
             .into_iter()
-            .map(|(x, y)| ((x - min_x) * s_x, (y - min_y) * s_y))
+            .map(|(x, y)| [(x - min_x) * s_x, (y - min_y) * s_y])
             .collect();
 
-        let polygon_2d = GeoPolygon::new(LineString::from(coords), vec![]);
-        Self::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
-            metadata,
-        )
+        Self::polygonal_region(points, metadata)
     }
 
     /// 2-D crescent obtained by subtracting a displaced smaller circle
@@ -1381,6 +1317,11 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     ///
     /// The function returns a single closed polygon lying in the *XY* plane with its
     /// leading edge at the origin and the chord running along +X.
+    ///
+    /// The 4-digit thickness and camber equations trace back to Jacobs, Ward,
+    /// and Pinkerton, "The characteristics of 78 related airfoil sections from
+    /// tests in the variable-density wind tunnel", NACA Report 460, 1933.
+    /// The sampled boundary is promoted directly into `hypercurve::Region2`.
     pub fn airfoil_naca4(
         max_camber: Real,
         camber_position: Real,
@@ -1418,7 +1359,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
 
         // sample upper & lower surfaces
         let n = samples as Real;
-        let mut coords: Vec<(Real, Real)> = Vec::with_capacity(2 * samples + 1);
+        let mut points: Vec<[Real; 2]> = Vec::with_capacity(2 * samples);
 
         // leading-edge → trailing-edge (upper)
         for i in 0..=samples {
@@ -1430,7 +1371,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
 
             let xu = x - t * theta.sin();
             let yu = chord * (yc_val + t * theta.cos());
-            coords.push((xu, yu));
+            points.push([xu, yu]);
         }
 
         // trailing-edge → leading-edge (lower)
@@ -1443,38 +1384,35 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
 
             let xl = x + t * theta.sin();
             let yl = chord * (yc_val - t * theta.cos());
-            coords.push((xl, yl));
+            points.push([xl, yl]);
         }
 
-        coords.push(coords[0]); // close
-
-        let polygon_2d =
-            GeoPolygon::new(LineString::from(coords), vec![]).orient(Direction::Default);
-        Sketch::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(polygon_2d)]),
-            metadata,
-        )
+        Self::polygonal_region(points, metadata)
     }
 
     /// Build a Hilbert-curve path that fills this sketch.
     /// - `order`: recursion order (number of points ≈ 4^order).
     /// - `padding`: optional inset from the bounding-box edges (same units as the sketch).
-    ///   Returns a new `Sketch` containing only the inside segments as `LineString`s.
+    ///   Returns a new `Sketch` containing only the inside segments as native wires.
     pub fn hilbert_curve(&self, order: usize, padding: Real) -> Sketch<M> {
         if order == 0 {
             return Sketch::empty(self.metadata.clone());
         }
-        let Some(rect) = self.geometry.bounding_rect() else {
+        let bounds = self.region_xy_bounds().or_else(|| {
+            let geometry = self.effective_geometry();
+            geometry
+                .bounding_rect()
+                .map(|rect| (rect.min().x, rect.min().y, rect.max().x, rect.max().y))
+        });
+        let Some((min_x, min_y, max_x, max_y)) = bounds else {
             return Sketch::empty(self.metadata.clone());
         };
 
         // Bounding box and usable region (with padding).
-        let min = rect.min();
-        let max = rect.max();
-        let w = (max.x - min.x).max(tolerance());
-        let h = (max.y - min.y).max(tolerance());
-        let ox = min.x + padding;
-        let oy = min.y + padding;
+        let w = (max_x - min_x).max(tolerance());
+        let h = (max_y - min_y).max(tolerance());
+        let ox = min_x + padding;
+        let oy = min_y + padding;
         let sx = (w - 2.0 * padding).max(tolerance());
         let sy = (h - 2.0 * padding).max(tolerance());
 
@@ -1485,22 +1423,15 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             .map(|(u, v)| (ox + u * sx, oy + v * sy))
             .collect();
 
-        // We keep segments whose midpoints are inside the sketch polygons.
-        let shell = self.to_multipolygon();
-        let has_shell = !shell.0.is_empty();
-
         let mut runs: Vec<Vec<(Real, Real)>> = Vec::new();
         let mut run: Vec<(Real, Real)> = Vec::new();
 
         for w in pts.windows(2) {
             let a = w[0];
             let b = w[1];
-            let mid = Point::new((a.0 + b.0) * 0.5, (a.1 + b.1) * 0.5);
-            let keep = if has_shell {
-                shell.contains(&mid)
-            } else {
-                true
-            };
+            let mid_x = (a.0 + b.0) * 0.5;
+            let mid_y = (a.1 + b.1) * 0.5;
+            let keep = self.contains_xy(mid_x, mid_y).unwrap_or(true);
 
             if keep {
                 if run.is_empty() {
@@ -1518,12 +1449,15 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             runs.push(run);
         }
 
-        // Emit as LineStrings only (no original geometry).
-        let mut geoms = Vec::with_capacity(runs.len());
-        for r in runs {
-            geoms.push(Geometry::LineString(LineString::from(r)));
-        }
-        Sketch::from_geo(GeometryCollection(geoms), self.metadata.clone())
+        // Emit as native hypercurve wires only. Hilbert's space-filling curve
+        // is a classical locality-preserving infill path; see Hilbert, "Ueber
+        // die stetige Abbildung einer Linie auf ein Flächenstück," *Math.
+        // Ann.* 38, 1891 (<https://doi.org/10.1007/BF01199431>).
+        let wires = runs
+            .into_iter()
+            .filter_map(|run| wire_from_points(run.into_iter().map(|(x, y)| [x, y])))
+            .collect::<Vec<_>>();
+        Sketch::from_wires(wires, self.metadata.clone())
     }
 }
 

@@ -1,9 +1,6 @@
 //! [BSP](https://en.wikipedia.org/wiki/Binary_space_partitioning) tree node structure and operations
 
 #[cfg(not(feature = "parallel"))]
-use crate::float_types::tolerance;
-
-#[cfg(not(feature = "parallel"))]
 use crate::vertex::Vertex;
 
 use crate::float_types::Real;
@@ -282,16 +279,7 @@ impl<M: Clone + Send + Sync + Debug> Node<M> {
                             let vj = &poly.vertices[j];
 
                             if (ti | tj) == SPANNING {
-                                let denom =
-                                    slicing_plane.normal().dot(&(vj.position - vi.position));
-                                if denom.abs() > tolerance() {
-                                    let intersection = (slicing_plane.offset()
-                                        - slicing_plane.normal().dot(&vi.position.coords))
-                                        / denom;
-                                    Some(vi.interpolate(vj, intersection))
-                                } else {
-                                    None
-                                }
+                                slicing_plane.intersect_edge(vi, vj)
                             } else {
                                 None
                             }

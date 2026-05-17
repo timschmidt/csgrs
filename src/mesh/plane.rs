@@ -13,9 +13,9 @@
 //!
 //! ### **Orientation Testing Algorithms**
 //!
-//! **Robust Geometric Predicates**: This implementation uses the `robust` crate's
-//! `orient3d` predicate, which implements Shewchuk's exact arithmetic methods for
-//! robust orientation testing. The predicate computes the sign of the determinant:
+//! **Robust Geometric Predicates**: This implementation promotes finite boundary
+//! coordinates to `hyperreal::Real` before making orientation and splitting
+//! topology decisions. The predicate computes the determinant:
 //!
 //! ```text
 //! |ax  ay  az  1|
@@ -54,26 +54,43 @@
 //!
 //! ## **Numerical Stability**
 //!
-//! - **Robust Predicates**: Uses exact arithmetic for orientation tests
-//! - **Tolerances**: Governed by `float_types::tolerance()` for floating-point comparisons
+//! - **Robust Predicates**: Uses hyperreal arithmetic for orientation tests,
+//!   with the current BSP tolerance applied as a hyperreal threshold
+//! - **Boundary Tolerances**: Governed by `float_types::tolerance()` where the
+//!   legacy f64 API still needs degeneracy filters
 //! - **Degenerate Case Handling**: Proper fallbacks for collinear points and zero-area triangles
+//!
+//! The predicate split follows Yap's exact geometric computation model
+//! (*Computational Geometry* 7(1-2), 1997,
+//! <https://doi.org/10.1016/0925-7721(95)00040-2>) and the robust-predicate
+//! motivation from Shewchuk, "Adaptive Precision Floating-Point Arithmetic and
+//! Fast Robust Geometric Predicates" (*Discrete & Computational Geometry*
+//! 18(3), 1997, <https://doi.org/10.1007/PL00009321>). The clipping workflow is
+//! the Sutherland-Hodgman polygon clipping algorithm (Communications of the ACM
+//! 17(1), 1974, <https://doi.org/10.1145/360767.360802>).
 //!
 //! ## **Algorithm Complexity**
 //!
 //! - **Plane Construction**: O(n²) for optimal triangle selection, O(1) for basic construction
-//! - **Orientation Testing**: O(1) per point with robust predicates
+//! - **Orientation Testing**: O(1) expression construction per point; sign
+//!   refinement depends on the hyperreal expression
 //! - **Polygon Splitting**: O(n) per polygon, where n is the number of vertices
 //!
-//! Unless stated otherwise, all tolerances are governed by `float_types::tolerance()`.
+//! Unless stated otherwise, boundary degeneracy filters are governed by
+//! `float_types::tolerance()`.
 
-use crate::float_types::{Real, tolerance};
+use crate::float_types::{
+    HReal, Real, hreal_from_f64, hreal_sign, hreal_to_f64, hvector3_from_point3, tolerance,
+};
 use crate::polygon::Polygon;
 use crate::vertex::Vertex;
+use hyperlattice::Vector3 as HVector3;
+use hyperreal::RealSign;
 use nalgebra::{Isometry3, Matrix4, Point3, Rotation3, Translation3, Vector3};
-use robust::{Coord3D, orient3d};
 
-/// Classification of a polygon or point that lies exactly in the plane
-/// (i.e. within `±tolerance` of the plane).
+/// Classification of a polygon or point whose hyperreal orientation determinant
+/// is inside the current BSP tolerance band, or whose boundary coordinates
+/// cannot be promoted.
 pub const COPLANAR: i8 = 0;
 
 /// Classification of a polygon or point that lies strictly on the
@@ -96,6 +113,23 @@ pub struct Plane {
     pub point_c: Point3<Real>,
 }
 
+fn hreal_sign_with_tolerance(value: &HReal) -> Option<RealSign> {
+    let tolerance = hreal_from_f64(tolerance()).ok()?;
+    if matches!(
+        hreal_sign(&(value.clone() - tolerance.clone())),
+        Some(RealSign::Positive)
+    ) {
+        return Some(RealSign::Positive);
+    }
+    if matches!(
+        hreal_sign(&(value.clone() + tolerance)),
+        Some(RealSign::Negative)
+    ) {
+        return Some(RealSign::Negative);
+    }
+    Some(RealSign::Zero)
+}
+
 impl PartialEq for Plane {
     fn eq(&self, other: &Self) -> bool {
         if self.point_a == other.point_a
@@ -105,33 +139,10 @@ impl PartialEq for Plane {
             true
         } else {
             // check if co-planar
-            robust::orient3d(
-                point_to_coord3d(self.point_a),
-                point_to_coord3d(self.point_b),
-                point_to_coord3d(self.point_c),
-                point_to_coord3d(other.point_a),
-            ) == 0.0
-                && robust::orient3d(
-                    point_to_coord3d(self.point_a),
-                    point_to_coord3d(self.point_b),
-                    point_to_coord3d(self.point_c),
-                    point_to_coord3d(other.point_b),
-                ) == 0.0
-                && robust::orient3d(
-                    point_to_coord3d(self.point_a),
-                    point_to_coord3d(self.point_b),
-                    point_to_coord3d(self.point_c),
-                    point_to_coord3d(other.point_c),
-                ) == 0.0
+            self.orient_point(&other.point_a) == COPLANAR
+                && self.orient_point(&other.point_b) == COPLANAR
+                && self.orient_point(&other.point_c) == COPLANAR
         }
-    }
-}
-
-fn point_to_coord3d(point: Point3<Real>) -> robust::Coord3D<Real> {
-    robust::Coord3D {
-        x: point.coords.x,
-        y: point.coords.y,
-        z: point.coords.z,
     }
 }
 
@@ -257,39 +268,13 @@ impl Plane {
 
     #[inline]
     pub fn orient_point(&self, point: &Point3<Real>) -> i8 {
-        // Returns a positive value if the point `pd` lies below the plane passing through `pa`, `pb`, and `pc`
-        // ("below" is defined so that `pa`, `pb`, and `pc` appear in counterclockwise order when viewed from above the plane).
-        // Returns a negative value if `pd` lies above the plane.
-        // Returns `0` if they are **coplanar**.
-        let sign = orient3d(
-            Coord3D {
-                x: self.point_a.x,
-                y: self.point_a.y,
-                z: self.point_a.z,
-            },
-            Coord3D {
-                x: self.point_b.x,
-                y: self.point_b.y,
-                z: self.point_b.z,
-            },
-            Coord3D {
-                x: self.point_c.x,
-                y: self.point_c.y,
-                z: self.point_c.z,
-            },
-            Coord3D {
-                x: point.x,
-                y: point.y,
-                z: point.z,
-            },
-        );
-        #[allow(clippy::useless_conversion)]
-        if sign > tolerance().into() {
-            BACK
-        } else if sign < (-tolerance()).into() {
-            FRONT
-        } else {
-            COPLANAR
+        let Some(det) = self.orient_point_hreal(point) else {
+            return COPLANAR;
+        };
+        match hreal_sign_with_tolerance(&det) {
+            Some(RealSign::Positive) => FRONT,
+            Some(RealSign::Negative) => BACK,
+            Some(RealSign::Zero) | None => COPLANAR,
         }
     }
 
@@ -326,6 +311,66 @@ impl Plane {
         polygon_type
     }
 
+    fn orient_point_hreal(&self, point: &Point3<Real>) -> Option<HReal> {
+        let a = hvector3_from_point3(&self.point_a)?;
+        let b = hvector3_from_point3(&self.point_b)?;
+        let c = hvector3_from_point3(&self.point_c)?;
+        let d = hvector3_from_point3(point)?;
+        let ab = &b - &a;
+        let ac = &c - &a;
+        let ad = &d - &a;
+        Some(ab.cross(&ac).dot(&ad))
+    }
+
+    fn unscaled_hreal_normal(&self) -> Option<HVector3> {
+        let a = hvector3_from_point3(&self.point_a)?;
+        let b = hvector3_from_point3(&self.point_b)?;
+        let c = hvector3_from_point3(&self.point_c)?;
+        Some((&b - &a).cross(&(&c - &a)))
+    }
+
+    fn edge_intersection_parameter(
+        &self,
+        start: &Vertex,
+        end: &Vertex,
+        normal: Option<&HVector3>,
+    ) -> Option<Real> {
+        let normal = normal?;
+        let plane_point = hvector3_from_point3(&self.point_a)?;
+        let start_point = hvector3_from_point3(&start.position)?;
+        let end_point = hvector3_from_point3(&end.position)?;
+        let direction = &end_point - &start_point;
+        let denom = normal.dot(&direction);
+        if !matches!(
+            hreal_sign(&denom),
+            Some(RealSign::Positive | RealSign::Negative)
+        ) {
+            return None;
+        }
+
+        let numerator = normal.dot(&(&plane_point - &start_point));
+        let parameter = (numerator / denom).ok()?;
+        hreal_to_f64(&parameter).filter(|parameter| parameter.is_finite())
+    }
+
+    /// Intersect an edge with this plane using the same hyperreal point-normal
+    /// algebra as polygon splitting.
+    ///
+    /// The returned vertex is still an API-boundary `f64` [`Vertex`] because
+    /// the mesh data model has not been fully moved to hyper geometry yet, but
+    /// the topological decision and line-plane parameter are evaluated in
+    /// `hyperreal::Real` through `hyperlattice::Vector3`. Keeping the
+    /// determinant and dot-product work in the hyper geometry layer follows
+    /// Yap's exact-geometric-computation split between geometric objects and
+    /// scalar arithmetic (<https://doi.org/10.1016/0925-7721(95)00040-2>);
+    /// the line-plane solve is the Sutherland-Hodgman clipping intersection
+    /// used by this module (<https://doi.org/10.1145/360767.360802>).
+    pub(crate) fn intersect_edge(&self, start: &Vertex, end: &Vertex) -> Option<Vertex> {
+        let normal = self.unscaled_hreal_normal()?;
+        let parameter = self.edge_intersection_parameter(start, end, Some(&normal))?;
+        Some(start.interpolate(end, parameter))
+    }
+
     /// Splits a polygon by this plane, returning four buckets:
     /// `(coplanar_front, coplanar_back, front, back)`.
     #[allow(clippy::type_complexity)]
@@ -344,6 +389,7 @@ impl Plane {
         let mut back = Vec::new();
 
         let normal = self.normal();
+        let hnormal = self.unscaled_hreal_normal();
 
         let types: Vec<i8> = polygon
             .vertices
@@ -394,12 +440,11 @@ impl Plane {
                     // If the edge between these two vertices crosses the plane,
                     // compute intersection and add that intersection to both sets
                     if (type_i | type_j) == SPANNING {
-                        let denom = normal.dot(&(vertex_j.position - vertex_i.position));
-                        // Avoid dividing by zero
-                        if denom.abs() > tolerance() {
-                            let intersection = (self.offset()
-                                - normal.dot(&vertex_i.position.coords))
-                                / denom;
+                        if let Some(intersection) = self.edge_intersection_parameter(
+                            vertex_i,
+                            vertex_j,
+                            hnormal.as_ref(),
+                        ) {
                             let vertex_new = vertex_i.interpolate(vertex_j, intersection);
                             split_front.push(vertex_new);
                             split_back.push(vertex_new);

@@ -1,6 +1,9 @@
 //! Struct and functions for working with `Vertex`s.
 
-use crate::float_types::{PI, Real, tolerance};
+use crate::float_types::{
+    PI, Real, hpoints_within_epsilon, hreal_from_f64, hreal_gt_f64, hreal_lt_f64,
+    hreal_to_f64, hvector3_from_point3, tolerance,
+};
 use hashbrown::HashMap;
 use nalgebra::{Point3, Vector3};
 
@@ -195,31 +198,41 @@ impl Vertex {
     /// n_avg = normalize(Σᵢ(wᵢ · nᵢ))
     /// ```
     ///
-    /// This is fundamental for Laplacian smoothing and normal averaging.
+    /// This is fundamental for Laplacian smoothing and normal averaging. The
+    /// incoming scalar weights are normalized through `hyperreal::Real` before
+    /// the affine combination is evaluated at the current f64 vertex boundary.
+    /// Keeping the normalization decision in the hyperreal path follows Yap's
+    /// exact-geometric-computation separation between geometric decisions and
+    /// primitive floating-point boundaries (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    /// The averaging itself is the local linear operation used by Laplacian
+    /// mesh smoothing; see Taubin, "A Signal Processing Approach to Fair
+    /// Surface Design," SIGGRAPH 1995
+    /// (<https://doi.org/10.1145/218380.218473>).
     pub fn weighted_average(vertices: &[(Vertex, Real)]) -> Option<Vertex> {
         if vertices.is_empty() {
             return None;
         }
 
-        let total_weight: Real = vertices.iter().map(|(_, w)| *w).sum();
-        if total_weight < tolerance() {
-            return None;
-        }
+        let normalized_weights = hyper_normalized_weights(vertices.iter().map(|(_, w)| *w))?;
 
         let weighted_position = vertices
             .iter()
-            .fold(Point3::origin(), |acc, (v, w)| acc + v.position.coords * (*w))
-            / total_weight;
+            .zip(normalized_weights.iter().copied())
+            .fold(Point3::origin(), |acc, ((v, _), w)| {
+                acc + v.position.coords * w
+            });
 
         let weighted_normal = vertices
             .iter()
-            .fold(Vector3::zeros(), |acc, (v, w)| acc + v.normal * (*w));
+            .zip(normalized_weights.iter().copied())
+            .fold(Vector3::zeros(), |acc, ((v, _), w)| acc + v.normal * w);
 
-        let normalized_normal = if weighted_normal.norm() > tolerance() {
-            weighted_normal.normalize()
-        } else {
-            Vector3::z() // Fallback normal
-        };
+        let normalized_normal =
+            if let Some(normal) = weighted_normal.try_normalize(tolerance()) {
+                normal
+            } else {
+                Vector3::z() // Fallback normal
+            };
 
         Some(Vertex::new(
             Point3::from(weighted_position),
@@ -235,7 +248,16 @@ impl Vertex {
     /// n = normalize(u·n₁ + v·n₂ + w·n₃)
     /// ```
     ///
-    /// This is fundamental for triangle interpolation and surface parameterization.
+    /// This is fundamental for triangle interpolation and surface
+    /// parameterization. The incoming f64 weights are promoted to
+    /// `hyperreal::Real` for the normalization decision and division, then
+    /// exported back to the current f64 vertex boundary. That keeps the
+    /// barycentric affine-combination predicate in the hyperreal path while
+    /// this crate is still storing mesh vertices as boundary floats. For the
+    /// mathematical role of barycentric coordinates in interpolation and
+    /// geometry processing, see Floater, "Generalized barycentric coordinates
+    /// and applications," *Acta Numerica* 24, 2015
+    /// (<https://doi.org/10.1017/S0962492914000129>).
     pub fn barycentric_interpolate(
         v1: &Vertex,
         v2: &Vertex,
@@ -244,23 +266,92 @@ impl Vertex {
         v: Real,
         w: Real,
     ) -> Vertex {
-        // Ensure barycentric coordinates sum to 1 (normalize if needed)
-        let total = u + v + w;
-        let (u, v, w) = if total.abs() > tolerance() {
-            (u / total, v / total, w / total)
-        } else {
-            (1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0) // Fallback to centroid
-        };
+        let weights = hyper_normalized_barycentric_weights(u, v, w).unwrap_or((
+            1.0 / 3.0,
+            1.0 / 3.0,
+            1.0 / 3.0,
+        ));
+        let (u, v, w) = weights;
 
         let new_position = Point3::from(
             u * v1.position.coords + v * v2.position.coords + w * v3.position.coords,
         );
 
-        let new_normal = (u * v1.normal + v * v2.normal + w * v3.normal).normalize();
+        let blended_normal = u * v1.normal + v * v2.normal + w * v3.normal;
+        let new_normal = if let Some(normal) = blended_normal.try_normalize(tolerance()) {
+            normal
+        } else {
+            Vector3::z()
+        };
 
         Vertex::new(new_position, new_normal)
     }
+}
 
+fn hyper_normalized_barycentric_weights(
+    u: Real,
+    v: Real,
+    w: Real,
+) -> Option<(Real, Real, Real)> {
+    let u_h = hreal_from_f64(u).ok()?;
+    let v_h = hreal_from_f64(v).ok()?;
+    let w_h = hreal_from_f64(w).ok()?;
+    let total = u_h.clone() + v_h.clone() + w_h.clone();
+
+    if !hreal_gt_f64(&total, tolerance()) && !hreal_lt_f64(&total, -tolerance()) {
+        return None;
+    }
+
+    Some((
+        hreal_to_f64(&(u_h / total.clone()).ok()?)?,
+        hreal_to_f64(&(v_h / total.clone()).ok()?)?,
+        hreal_to_f64(&(w_h / total).ok()?)?,
+    ))
+}
+
+fn hyper_normalized_weights(weights: impl IntoIterator<Item = Real>) -> Option<Vec<Real>> {
+    let weights_h: Vec<_> = weights
+        .into_iter()
+        .map(hreal_from_f64)
+        .collect::<Result<_, _>>()
+        .ok()?;
+    if weights_h.is_empty() {
+        return None;
+    }
+
+    let total = weights_h
+        .iter()
+        .cloned()
+        .fold(hyperreal::Real::zero(), |acc, weight| acc + weight);
+    if !hreal_gt_f64(&total, tolerance()) {
+        return None;
+    }
+
+    weights_h
+        .into_iter()
+        .map(|weight| hreal_to_f64(&(weight / total.clone()).ok()?))
+        .collect()
+}
+
+fn hyper_cotangent_at_opposite(
+    center: &Vertex,
+    neighbor: &Vertex,
+    opposite: &Vertex,
+) -> Option<Real> {
+    let center = hvector3_from_point3(&center.position)?;
+    let neighbor = hvector3_from_point3(&neighbor.position)?;
+    let opposite = hvector3_from_point3(&opposite.position)?;
+    let edge1 = center - &opposite;
+    let edge2 = neighbor - opposite;
+    let cross = edge1.cross(&edge2);
+    let cross_len = cross.dot(&cross).sqrt().ok()?;
+    if !hreal_gt_f64(&cross_len, tolerance()) {
+        return None;
+    }
+    hreal_to_f64(&(edge1.dot(&edge2) / cross_len).ok()?)
+}
+
+impl Vertex {
     /// **Mathematical Foundation: Edge-Length-Based Weighting**
     ///
     /// Compute cotangent weights for discrete Laplacian operators:
@@ -269,8 +360,16 @@ impl Vertex {
     /// ```
     /// Where α and β are the angles opposite to edge ij in adjacent triangles.
     ///
-    /// This provides a better approximation to the continuous Laplacian operator
-    /// compared to uniform weights.
+    /// This provides a better approximation to the continuous Laplacian
+    /// operator compared to uniform weights. The cotangent ratio is evaluated
+    /// as `(e1 · e2) / |e1 × e2|` with `hyperlattice::Vector3` and
+    /// `hyperreal::Real`, avoiding local normalized f64 vectors for the
+    /// degenerate-triangle decision. Cotangent weights are the standard local
+    /// stencil used by discrete differential-geometry operators on triangle
+    /// meshes; see Meyer, Desbrun, Schröder, and Barr, "Discrete
+    /// Differential-Geometry Operators for Triangulated 2-Manifolds,"
+    /// *Visualization and Mathematics III*, 2003
+    /// (<https://doi.org/10.1007/978-3-662-05105-4_2>).
     pub fn compute_cotangent_weight(
         center: &Vertex,
         neighbor: &Vertex,
@@ -310,14 +409,10 @@ impl Vertex {
                     v3
                 };
 
-                // Compute cotangent of angle at opposite vertex
-                let edge1 = center.position - opposite.position;
-                let edge2 = neighbor.position - opposite.position;
-                let cos_angle = edge1.normalize().dot(&edge2.normalize());
-                let sin_angle = edge1.normalize().cross(&edge2.normalize()).norm();
-
-                if sin_angle > tolerance() {
-                    cot_sum += cos_angle / sin_angle;
+                if let Some(cotangent) =
+                    hyper_cotangent_at_opposite(center, neighbor, opposite)
+                {
+                    cot_sum += cotangent;
                     weight_count += 1;
                 }
             }
@@ -375,6 +470,13 @@ impl Vertex {
     /// by position matching (with tolerance). This is slower but more convenient
     /// when you don't have the global vertex index readily available.
     ///
+    /// The position equality test promotes both candidate points into
+    /// `hyperlattice::Vector3` and compares squared distance in
+    /// `hyperreal::Real`, so the topological lookup avoids a local f64 square
+    /// root and fails closed for non-finite boundary coordinates. This follows
+    /// Yap's exact-geometric-computation boundary discipline
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    ///
     /// **Note**: This is a convenience method. For performance-critical applications,
     /// use `analyze_connectivity_with_index` with pre-computed vertex indices.
     pub fn analyze_connectivity_by_position(
@@ -386,7 +488,7 @@ impl Vertex {
         // Find the vertex index by position matching
         let mut vertex_index = None;
         for (&idx, &position) in vertex_positions {
-            if (self.position - position).norm() < epsilon {
+            if hpoints_within_epsilon(&self.position, &position, epsilon) {
                 vertex_index = Some(idx);
                 break;
             }

@@ -1,12 +1,12 @@
 //! Functions to extrude, revolve, loft, and otherwise transform 2D `Sketch`s into 3D `Mesh`s
 
 use crate::errors::ValidationError;
-use crate::float_types::{Real, tolerance};
+use crate::float_types::{Real, hvector3_from_vector3, hvectors_within_epsilon, tolerance};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
 use crate::sketch::{OriginTransform, Sketch};
 use crate::vertex::Vertex;
-use geo::{Area, CoordsIter, LineString, Polygon as GeoPolygon};
+use geo::CoordsIter;
 use nalgebra::{Matrix4, Point3, Rotation3, Translation3, Vector3};
 use std::fmt::Debug;
 use std::sync::OnceLock;
@@ -83,20 +83,33 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     ///
     /// # Parameters
     /// - `direction`: 3D vector defining extrusion direction and magnitude
+    ///
+    /// Direction degeneracy is tested by promoting the boundary `Vector3<f64>`
+    /// into `hyperlattice::Vector3` and comparing squared length in
+    /// `hyperreal::Real`. This keeps the decision to emit no solid for a
+    /// near-zero extrusion on the same exact-aware predicate path used by mesh
+    /// topology; see Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn extrude_vector(&self, direction: Vector3<Real>) -> Mesh<M> {
         let tol = tolerance();
-        if !direction.x.is_finite()
-            || !direction.y.is_finite()
-            || !direction.z.is_finite()
-            || direction.norm_squared() < tol * tol
+        if hvector3_from_vector3(&direction).is_none()
+            || hvectors_within_epsilon(&direction, &Vector3::zeros(), tol)
         {
             return Mesh::empty(self.metadata.clone());
         }
 
+        if !self.region.material_contours().is_empty()
+            || !self.region.hole_contours().is_empty()
+        {
+            return self.extrude_region_vector(direction);
+        }
+
         // Collect 3-D polygons generated from every `geo` geometry in the sketch
         let mut out: Vec<Polygon<M>> = Vec::new();
+        let geometry = self.effective_geometry();
 
-        for geom in &self.geometry {
+        for geom in geometry.iter() {
             Self::extrude_geometry(
                 geom,
                 direction,
@@ -114,6 +127,130 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         }
     }
 
+    /// Extrude the native hypercurve region without routing through a separate
+    /// 2D backend type.
+    ///
+    /// Hypercurve contours are approximated only at the mesh boundary, while cap
+    /// triangulation is delegated to `Sketch::triangulate_with_holes`, which
+    /// promotes finite boundary coordinates back to hyperreal predicates before
+    /// ear clipping. This keeps the data model aligned with Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>), and Meisters,
+    /// "Polygons Have Ears," *American Mathematical Monthly* 82(6), 1975
+    /// (<https://doi.org/10.2307/2319703>).
+    fn extrude_region_vector(&self, direction: Vector3<Real>) -> Mesh<M> {
+        let dir_unit = direction
+            .try_normalize(tolerance())
+            .unwrap_or_else(Vector3::z);
+        let flip = direction.dot(&Vector3::z()) < 0.0;
+        let bottom_normal = -dir_unit;
+        let top_normal = dir_unit;
+        let mut polygons = Vec::new();
+
+        let rings = self.region_rings();
+        for (index, exterior) in rings.material.into_iter().enumerate() {
+            let holes = if index == 0 {
+                rings.holes.clone()
+            } else {
+                Vec::new()
+            };
+            let exterior = close_region_ring(exterior);
+            let holes = holes.into_iter().map(close_region_ring).collect::<Vec<_>>();
+            let hole_refs = holes.iter().map(Vec::as_slice).collect::<Vec<_>>();
+            let triangles = Sketch::<()>::triangulate_with_holes(&exterior, &hole_refs);
+
+            for tri in &triangles {
+                let (a, b, c) = if flip {
+                    (tri[0], tri[1], tri[2])
+                } else {
+                    (tri[2], tri[1], tri[0])
+                };
+                polygons.push(Polygon::new(
+                    vec![
+                        Self::apply_origin_transform_vertex(
+                            Vertex::new(a, bottom_normal),
+                            self.origin_transform,
+                        ),
+                        Self::apply_origin_transform_vertex(
+                            Vertex::new(b, bottom_normal),
+                            self.origin_transform,
+                        ),
+                        Self::apply_origin_transform_vertex(
+                            Vertex::new(c, bottom_normal),
+                            self.origin_transform,
+                        ),
+                    ],
+                    self.metadata.clone(),
+                ));
+            }
+
+            for tri in &triangles {
+                let p0 = tri[0] + direction;
+                let p1 = tri[1] + direction;
+                let p2 = tri[2] + direction;
+                let (a, b, c) = if flip { (p2, p1, p0) } else { (p0, p1, p2) };
+                polygons.push(Polygon::new(
+                    vec![
+                        Self::apply_origin_transform_vertex(
+                            Vertex::new(a, top_normal),
+                            self.origin_transform,
+                        ),
+                        Self::apply_origin_transform_vertex(
+                            Vertex::new(b, top_normal),
+                            self.origin_transform,
+                        ),
+                        Self::apply_origin_transform_vertex(
+                            Vertex::new(c, top_normal),
+                            self.origin_transform,
+                        ),
+                    ],
+                    self.metadata.clone(),
+                ));
+            }
+
+            self.push_region_ring_sides(&exterior, direction, flip, &mut polygons);
+            for hole in &holes {
+                self.push_region_ring_sides(hole, direction, flip, &mut polygons);
+            }
+        }
+
+        Mesh::from_polygons(&polygons, self.metadata.clone())
+    }
+
+    fn push_region_ring_sides(
+        &self,
+        ring: &[[Real; 2]],
+        direction: Vector3<Real>,
+        flip: bool,
+        polygons: &mut Vec<Polygon<M>>,
+    ) {
+        for window in ring.windows(2) {
+            let b_i = Point3::new(window[0][0], window[0][1], 0.0);
+            let b_j = Point3::new(window[1][0], window[1][1], 0.0);
+            let t_i = b_i + direction;
+            let t_j = b_j + direction;
+            let Some(raw_normal) = (b_j - b_i).cross(&direction).try_normalize(tolerance())
+            else {
+                continue;
+            };
+            let normal = if flip { -raw_normal } else { raw_normal };
+            let vertices = if flip {
+                [b_j, b_i, t_i, t_j]
+            } else {
+                [b_i, b_j, t_j, t_i]
+            }
+            .into_iter()
+            .map(|point| {
+                Self::apply_origin_transform_vertex(
+                    Vertex::new(point, normal),
+                    self.origin_transform,
+                )
+            })
+            .collect::<Vec<_>>();
+            polygons.push(Polygon::new(vertices, self.metadata.clone()));
+        }
+    }
+
     /// A helper to handle any Geometry
     fn extrude_geometry(
         geom: &geo::Geometry<Real>,
@@ -122,10 +259,8 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         metadata: &M,
         out_polygons: &mut Vec<Polygon<M>>,
     ) {
-        if !direction.x.is_finite()
-            || !direction.y.is_finite()
-            || !direction.z.is_finite()
-            || direction.norm_squared() < tolerance() * tolerance()
+        if hvector3_from_vector3(&direction).is_none()
+            || hvectors_within_epsilon(&direction, &Vector3::zeros(), tolerance())
         {
             return;
         }
@@ -663,6 +798,12 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// - **Degeneracy handling**: Skips zero-length edges
     /// - **Precision**: Maintains accuracy for small angles
     ///
+    /// Native area profiles are consumed from hypercurve region rings before
+    /// finite mesh generation. This keeps profile topology in hyper geometry
+    /// and treats mesh vertices as boundary output, following Yap, "Towards
+    /// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    ///
     /// # Parameters
     /// - `angle_degs`: Revolution angle in degrees (0-360)
     /// - `segments`: Number of angular subdivisions (≥ 2)
@@ -695,12 +836,18 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             Point3::new(x * cos_t, y, x * sin_t)
         }
 
-        // Another helper to determine if a ring (LineString) is CCW or CW in Geo.
-        // In `geo`, ring.exterior() is CCW for an outer boundary, CW for holes.
-        // If the signed area > 0 => CCW; < 0 => CW.
-        fn is_ccw(ring: &LineString<Real>) -> bool {
-            let poly = GeoPolygon::new(ring.clone(), vec![]);
-            poly.signed_area() > 0.0
+        fn signed_ring_area(ring: &[[Real; 2]]) -> Real {
+            if ring.len() < 3 {
+                return 0.0;
+            }
+            ring.windows(2)
+                .map(|edge| edge[0][0] * edge[1][1] - edge[1][0] * edge[0][1])
+                .sum::<Real>()
+                * 0.5
+        }
+
+        fn is_ccw(ring: &[[Real; 2]]) -> bool {
+            signed_ring_area(ring) > 0.0
         }
 
         // A helper to extrude one ring of coordinates (including the last->first if needed),
@@ -711,7 +858,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         // - `segments`: how many discrete slices around the revolve.
         // - `metadata`: user metadata to attach to side polygons.
         fn revolve_ring<M: Clone + Send + Sync>(
-            ring_coords: &[geo::Coord<Real>],
+            ring_coords: &[[Real; 2]],
             ring_is_ccw: bool,
             angle_radians: Real,
             segments: usize,
@@ -734,7 +881,9 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
                 let c_j = ring_coords[i + 1];
 
                 // If these two points are the same, skip degenerate edge
-                if (c_i.x - c_j.x).abs() < tolerance() && (c_i.y - c_j.y).abs() < tolerance() {
+                if (c_i[0] - c_j[0]).abs() < tolerance()
+                    && (c_i[1] - c_j[1]).abs() < tolerance()
+                {
                     continue;
                 }
 
@@ -744,11 +893,11 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
                     let th1 = (s as Real + 1.0) * step;
 
                     // revolve bottom edge endpoints at angle th0
-                    let b_i = revolve_around_y(c_i.x, c_i.y, th0);
-                    let b_j = revolve_around_y(c_j.x, c_j.y, th0);
+                    let b_i = revolve_around_y(c_i[0], c_i[1], th0);
+                    let b_j = revolve_around_y(c_j[0], c_j[1], th0);
                     // revolve top edge endpoints at angle th1
-                    let t_i = revolve_around_y(c_i.x, c_i.y, th1);
-                    let t_j = revolve_around_y(c_j.x, c_j.y, th1);
+                    let t_i = revolve_around_y(c_i[0], c_i[1], th1);
+                    let t_j = revolve_around_y(c_j[0], c_j[1], th1);
 
                     // Build a 4-vertex side polygon for the ring edge.
                     // The orientation depends on ring_is_ccw:
@@ -773,7 +922,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         //  - revolve each 2D point by `angle`, produce a 3D ring
         //  - if `flip` is true, reverse the ring so the normal is inverted
         fn build_cap_polygon<M: Clone + Send + Sync>(
-            ring_coords: &[geo::Coord<Real>],
+            ring_coords: &[[Real; 2]],
             angle: Real,
             flip: bool,
             metadata: &M,
@@ -784,7 +933,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             // revolve each coordinate at the given angle
             let mut pts_3d: Vec<_> = ring_coords
                 .iter()
-                .map(|c| revolve_around_y(c.x, c.y, angle))
+                .map(|c| revolve_around_y(c[0], c[1], angle))
                 .collect();
 
             // ensure closed if the ring wasn't strictly closed
@@ -824,105 +973,85 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         let full_revolve = (angle_degs - 360.0).abs() < tolerance(); // or angle_degs >= 359.999..., etc.
         let do_caps = !full_revolve && (angle_degs > 0.0);
 
-        for geom in &self.geometry {
-            match geom {
-                geo::Geometry::Polygon(poly2d) => {
-                    // Exterior ring
-                    let ext_ring = poly2d.exterior();
-                    let ext_ccw = is_ccw(ext_ring);
+        let mut emit_profile = |outer: &[[Real; 2]], holes: &[Vec<[Real; 2]>]| {
+            let ext_ccw = is_ccw(outer);
 
-                    // (A) side walls
-                    new_polygons.extend(revolve_ring(
-                        &ext_ring.0,
-                        ext_ccw,
-                        angle_radians,
-                        segments,
-                        &self.metadata,
-                    ));
+            new_polygons.extend(revolve_ring(
+                outer,
+                ext_ccw,
+                angle_radians,
+                segments,
+                &self.metadata,
+            ));
 
-                    // (B) cap(s) if partial revolve
-                    if do_caps {
-                        // start-cap at angle=0
-                        //   flip if ext_ccw == true
-                        if let Some(cap) = build_cap_polygon(
-                            &ext_ring.0,
-                            0.0,
-                            ext_ccw, // exterior ring => flip the start cap
-                            &self.metadata,
-                        ) {
-                            new_polygons.push(cap);
+            if do_caps {
+                if let Some(cap) = build_cap_polygon(outer, 0.0, ext_ccw, &self.metadata) {
+                    new_polygons.push(cap);
+                }
+                if let Some(cap) =
+                    build_cap_polygon(outer, angle_radians, !ext_ccw, &self.metadata)
+                {
+                    new_polygons.push(cap);
+                }
+            }
+
+            for hole in holes {
+                let hole_ccw = is_ccw(hole);
+                new_polygons.extend(revolve_ring(
+                    hole,
+                    hole_ccw,
+                    angle_radians,
+                    segments,
+                    &self.metadata,
+                ));
+            }
+        };
+
+        let region_rings = self.region_rings();
+        if !region_rings.material.is_empty() {
+            for (index, outer) in region_rings.material.iter().enumerate() {
+                let holes = if index == 0 {
+                    region_rings.holes.as_slice()
+                } else {
+                    &[]
+                };
+                emit_profile(outer, holes);
+            }
+        } else {
+            let geometry = self.effective_geometry();
+            for geom in geometry.iter() {
+                match geom {
+                    geo::Geometry::Polygon(poly2d) => {
+                        let outer = poly2d
+                            .exterior()
+                            .coords_iter()
+                            .map(|c| [c.x, c.y])
+                            .collect::<Vec<_>>();
+                        let holes = poly2d
+                            .interiors()
+                            .iter()
+                            .map(|hole| hole.coords_iter().map(|c| [c.x, c.y]).collect())
+                            .collect::<Vec<_>>();
+                        emit_profile(&outer, &holes);
+                    },
+                    geo::Geometry::MultiPolygon(mpoly) => {
+                        for poly2d in &mpoly.0 {
+                            let outer = poly2d
+                                .exterior()
+                                .coords_iter()
+                                .map(|c| [c.x, c.y])
+                                .collect::<Vec<_>>();
+                            let holes = poly2d
+                                .interiors()
+                                .iter()
+                                .map(|hole| hole.coords_iter().map(|c| [c.x, c.y]).collect())
+                                .collect::<Vec<_>>();
+                            emit_profile(&outer, &holes);
                         }
-
-                        // end-cap at angle= angle_radians
-                        //   flip if ext_ccw == false
-                        if let Some(cap) = build_cap_polygon(
-                            &ext_ring.0,
-                            angle_radians,
-                            !ext_ccw, // exterior ring => keep normal orientation for end
-                            &self.metadata,
-                        ) {
-                            new_polygons.push(cap);
-                        }
-                    }
-
-                    // Interior rings (holes)
-                    for hole in poly2d.interiors() {
-                        let hole_ccw = is_ccw(hole);
-                        new_polygons.extend(revolve_ring(
-                            &hole.0,
-                            hole_ccw,
-                            angle_radians,
-                            segments,
-                            &self.metadata,
-                        ));
-                    }
-                },
-
-                geo::Geometry::MultiPolygon(mpoly) => {
-                    // Each Polygon inside
-                    for poly2d in &mpoly.0 {
-                        let ext_ring = poly2d.exterior();
-                        let ext_ccw = is_ccw(ext_ring);
-
-                        new_polygons.extend(revolve_ring(
-                            &ext_ring.0,
-                            ext_ccw,
-                            angle_radians,
-                            segments,
-                            &self.metadata,
-                        ));
-                        if do_caps {
-                            if let Some(cap) =
-                                build_cap_polygon(&ext_ring.0, 0.0, ext_ccw, &self.metadata)
-                            {
-                                new_polygons.push(cap);
-                            }
-                            if let Some(cap) = build_cap_polygon(
-                                &ext_ring.0,
-                                angle_radians,
-                                !ext_ccw,
-                                &self.metadata,
-                            ) {
-                                new_polygons.push(cap);
-                            }
-                        }
-
-                        // holes
-                        for hole in poly2d.interiors() {
-                            let hole_ccw = is_ccw(hole);
-                            new_polygons.extend(revolve_ring(
-                                &hole.0,
-                                hole_ccw,
-                                angle_radians,
-                                segments,
-                                &self.metadata,
-                            ));
-                        }
-                    }
-                },
-
-                // We should implement revolve for Lines and PolyLines, but we may ignore points, etc.
-                _ => {},
+                    },
+                    // We should implement revolve for Lines and PolyLines, but we may ignore points, etc.
+                    _ => {},
+                }
             }
         }
 
@@ -942,6 +1071,17 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// aims the sketch’s +Z at the local path tangent,
     /// stitches side walls, and caps open ends.
     ///
+    /// Closed area profiles are read from Sketch's native hypercurve
+    /// [`Region2`](hypercurve::Region2) boundary rings. The path frames and
+    /// mesh vertices are finite output, while the swept profile topology stays
+    /// in hyper geometry until the mesh boundary. This follows Yap, "Towards
+    /// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>). The frame propagation
+    /// is the standard rotation-minimizing/parallel-transport sweep approach;
+    /// see Bishop, "There is more than one way to frame a curve," *American
+    /// Mathematical Monthly* 82(3), 1975
+    /// (<https://doi.org/10.2307/2319846>).
+    ///
     /// * `path` - ordered list of 3-D points. If the first and last points
     ///   coincide (`norm(p[0] - p[n]) < tolerance()`) the path is treated as
     ///   **closed** and no caps are added.
@@ -949,7 +1089,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// * returns - a `Mesh<M>` containing all side quads plus automatically triangulated caps (respecting any holes).
     pub fn sweep(&self, path: &[Point3<Real>]) -> Mesh<M> {
         // sanity checks
-        if path.len() < 2 || self.geometry.0.is_empty() {
+        if path.len() < 2 {
             return Mesh::empty(self.metadata.clone());
         }
         if path
@@ -1030,25 +1170,81 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             });
         };
 
-        use geo::Geometry;
-        for geom in &self.geometry {
-            match geom {
-                Geometry::Polygon(poly) => {
-                    add_ring(poly.exterior().coords_iter().map(|c| [c.x, c.y]).collect());
-                    for hole in poly.interiors() {
-                        add_ring(hole.coords_iter().map(|c| [c.x, c.y]).collect());
-                    }
-                },
-                Geometry::MultiPolygon(mp) => {
-                    for poly in &mp.0 {
-                        add_ring(poly.exterior().coords_iter().map(|c| [c.x, c.y]).collect());
-                        for hole in poly.interiors() {
-                            add_ring(hole.coords_iter().map(|c| [c.x, c.y]).collect());
-                        }
-                    }
-                },
-                _ => {},
+        let mut cap_profiles: Vec<(Vec<[Real; 2]>, Vec<Vec<[Real; 2]>>)> = Vec::new();
+        let region_rings = self.region_rings();
+        if !region_rings.material.is_empty() {
+            for ring in &region_rings.material {
+                add_ring(ring.clone());
             }
+            for ring in &region_rings.holes {
+                add_ring(ring.clone());
+            }
+            for (index, outer) in region_rings.material.iter().enumerate() {
+                let holes = if index == 0 {
+                    region_rings.holes.clone()
+                } else {
+                    Vec::new()
+                };
+                cap_profiles.push((outer.clone(), holes));
+            }
+        } else {
+            let geometry = self.effective_geometry();
+            if geometry.0.is_empty() {
+                return Mesh::empty(self.metadata.clone());
+            }
+
+            use geo::Geometry;
+            for geom in geometry.iter() {
+                match geom {
+                    Geometry::Polygon(poly) => {
+                        let outer = poly
+                            .exterior()
+                            .coords_iter()
+                            .map(|c| [c.x, c.y])
+                            .collect::<Vec<_>>();
+                        add_ring(outer.clone());
+                        let holes = poly
+                            .interiors()
+                            .iter()
+                            .map(|hole| {
+                                let ring =
+                                    hole.coords_iter().map(|c| [c.x, c.y]).collect::<Vec<_>>();
+                                add_ring(ring.clone());
+                                ring
+                            })
+                            .collect::<Vec<_>>();
+                        cap_profiles.push((outer, holes));
+                    },
+                    Geometry::MultiPolygon(mp) => {
+                        for poly in &mp.0 {
+                            let outer = poly
+                                .exterior()
+                                .coords_iter()
+                                .map(|c| [c.x, c.y])
+                                .collect::<Vec<_>>();
+                            add_ring(outer.clone());
+                            let holes = poly
+                                .interiors()
+                                .iter()
+                                .map(|hole| {
+                                    let ring = hole
+                                        .coords_iter()
+                                        .map(|c| [c.x, c.y])
+                                        .collect::<Vec<_>>();
+                                    add_ring(ring.clone());
+                                    ring
+                                })
+                                .collect::<Vec<_>>();
+                            cap_profiles.push((outer, holes));
+                        }
+                    },
+                    _ => {},
+                }
+            }
+        }
+
+        if rings.is_empty() {
+            return Mesh::empty(self.metadata.clone());
         }
 
         // build polygons
@@ -1098,17 +1294,10 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             // then reuse the triangles for both ends.
 
             // helper so we don’t repeat the capping code twice
-            let mut add_caps = |poly2d: &GeoPolygon<Real>| {
-                let ext: Vec<[Real; 2]> =
-                    poly2d.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
-                let holes: Vec<Vec<[Real; 2]>> = poly2d
-                    .interiors()
-                    .iter()
-                    .map(|r| r.coords_iter().map(|c| [c.x, c.y]).collect())
-                    .collect();
+            let mut add_caps = |ext: &[[Real; 2]], holes: &[Vec<[Real; 2]>]| {
                 let hole_refs: Vec<&[[Real; 2]]> = holes.iter().map(|v| &v[..]).collect();
 
-                let tris = Sketch::<()>::triangulate_with_holes(&ext, &hole_refs);
+                let tris = Sketch::<()>::triangulate_with_holes(ext, &hole_refs);
 
                 // cap at the start of the path (flip winding)
                 for t in &tris {
@@ -1141,16 +1330,8 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
                 }
             };
 
-            for geom in &self.geometry {
-                match geom {
-                    Geometry::Polygon(poly2d) => add_caps(poly2d),
-                    Geometry::MultiPolygon(mp) => {
-                        for poly2d in &mp.0 {
-                            add_caps(poly2d);
-                        }
-                    },
-                    _ => {},
-                }
+            for (outer, holes) in &cap_profiles {
+                add_caps(outer, holes);
             }
         }
 
@@ -1184,4 +1365,21 @@ fn _polygon_from_slice<M: Clone + Send + Sync>(
     }
 
     Polygon::new(verts, metadata)
+}
+
+fn close_region_ring(mut points: Vec<[Real; 2]>) -> Vec<[Real; 2]> {
+    if points.len() >= 2
+        && points
+            .first()
+            .zip(points.last())
+            .is_some_and(|(first, last)| !same_xy((first[0], first[1]), (last[0], last[1])))
+    {
+        let first = points[0];
+        points.push(first);
+    }
+    points
+}
+
+fn same_xy(a: (Real, Real), b: (Real, Real)) -> bool {
+    (a.0 - b.0).abs() <= tolerance() && (a.1 - b.1).abs() <= tolerance()
 }

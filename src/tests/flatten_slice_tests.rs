@@ -14,7 +14,7 @@ fn test_flatten_and_union_single_polygon() {
 
     // Expect the same bounding box
     assert!(
-        !flat_csg.geometry.0[0].is_empty(),
+        !flat_csg.geometry().0[0].is_empty(),
         "Result should not be empty"
     );
     let bb = flat_csg.bounding_box();
@@ -36,7 +36,7 @@ fn test_flatten_and_union_two_overlapping_squares() {
 
     let flat_csg = csg.flatten();
     assert!(
-        !flat_csg.geometry.0[0].is_empty(),
+        !flat_csg.geometry().0[0].is_empty(),
         "Union should not be empty"
     );
 
@@ -59,7 +59,7 @@ fn test_flatten_and_union_two_disjoint_squares() {
     let csg = Mesh::from_polygons(&[square_a, square_b], ());
 
     let flat_csg = csg.flatten();
-    assert!(!flat_csg.geometry.0[0].is_empty());
+    assert!(!flat_csg.geometry().0[0].is_empty());
 }
 
 /// Test `flatten_and_union` when polygons are not perfectly in the XY plane,
@@ -82,7 +82,7 @@ fn test_flatten_and_union_near_xy_plane() {
     let flat_csg = csg.flatten();
 
     assert!(
-        !flat_csg.geometry.0[0].is_empty(),
+        !flat_csg.geometry().0[0].is_empty(),
         "Should flatten to a valid polygon"
     );
     let bb = flat_csg.bounding_box();
@@ -109,7 +109,7 @@ fn test_flatten_and_union_collinear_edges() {
     let flat_csg = csg.flatten();
 
     // Expect 1 polygon from x=0..4, y=0..~1.0ish
-    assert!(!flat_csg.geometry.0[0].is_empty());
+    assert!(!flat_csg.geometry().0[0].is_empty());
     let bb = flat_csg.bounding_box();
     assert!((bb.maxs.x - 4.0).abs() < 1e-5, "Should span up to x=4.0");
     // Also check the y-range is ~1.001
@@ -124,9 +124,10 @@ fn test_flatten_and_union_debug() {
     let cube = Mesh::<()>::cube(2.0, ());
     let flattened = cube.flatten();
     assert!(
-        !flattened.geometry.0[0].is_empty(),
+        !flattened.geometry().0[0].is_empty(),
         "Flattened cube should not be empty"
     );
-    let area = flattened.geometry.0[0].signed_area();
+    let geometry = flattened.geometry();
+    let area = geometry.0[0].signed_area();
     assert!(area > 3.9, "Flattened cube too small");
 }

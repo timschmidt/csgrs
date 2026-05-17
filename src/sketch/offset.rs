@@ -27,7 +27,20 @@
 //!
 //! ## **Algorithm Implementation**
 //!
-//! This implementation uses `geo`'s buffer operations, which provide:
+//! This compatibility implementation currently uses `geo`'s buffer operations
+//! over the finite boundary view reconstructed from [`Sketch::region`] when the
+//! legacy geometry cache is empty. The offset result is immediately promoted
+//! back into hypercurve contours, keeping exact-aware topology as the Sketch
+//! data model while this module migrates to native hypercurve offsets.
+//!
+//! Offset construction and trimming are classical CAD problems; see Farouki
+//! and Neff, "Analytic properties of plane offset curves," *Computer Aided
+//! Geometric Design* 7(1-4), 1990
+//! (<https://doi.org/10.1016/0167-8396(90)90023-K>), and Tiller and Hanson,
+//! "Offsets of two-dimensional profiles," *IEEE Computer Graphics and
+//! Applications* 4(9), 1984 (<https://doi.org/10.1109/MCG.1984.276011>).
+//!
+//! `geo`'s buffer operations provide:
 //! - **Robust intersection handling**: Resolves self-intersections
 //! - **Topological correctness**: Maintains polygon validity
 //! - **Multi-polygon support**: Handles complex geometry with holes
@@ -48,8 +61,8 @@ use geo::{
     Buffer, Coord, Geometry, GeometryCollection, LineString, MultiPolygon, Polygon,
     algorithm::buffer::{BufferStyle, LineJoin},
 };
+use std::borrow::Cow;
 use std::fmt::Debug;
-use std::sync::OnceLock;
 
 #[allow(clippy::unnecessary_cast)]
 fn skel_poly(poly: &Polygon<Real>, inward: bool) -> Vec<LineString<Real>> {
@@ -88,6 +101,26 @@ fn skel_multi_poly(mpoly: &MultiPolygon<Real>, inward: bool) -> Vec<LineString<R
 }
 
 impl<M: Clone + Debug + Send + Sync> Sketch<M> {
+    /// Finite offsetting/skeleton input regenerated from native hypercurve
+    /// regions when possible.
+    ///
+    /// The current offset backend remains a `geo` compatibility bridge, but
+    /// area topology is sourced from `Region2` rather than from the temporary
+    /// cache. This preserves csgrs' hyperreal boundary discipline while the
+    /// native hypercurve offset path is being brought over; see Yap, "Towards
+    /// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>), and Farouki and Neff,
+    /// "Analytic properties of plane offset curves," *Computer Aided Geometric
+    /// Design* 7(1-4), 1990
+    /// (<https://doi.org/10.1016/0167-8396(90)90023-K>).
+    fn offset_compat_geometry(&self) -> Cow<'_, GeometryCollection<Real>> {
+        if !self.as_region().is_empty() && self.compat_geometry_is_area_only() {
+            Cow::Owned(Self::geometry_from_region(self.as_region()))
+        } else {
+            self.effective_geometry()
+        }
+    }
+
     /// **Mathematical Foundation: Sharp Corner Polygon Offsetting**
     ///
     /// Grows/shrinks/offsets all polygons in the XY plane by `distance` using georust.
@@ -129,8 +162,8 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// **Note**: Sharp corners may create very acute angles for large offset distances.
     #[allow(clippy::unnecessary_cast)]
     pub fn offset(&self, distance: Real) -> Sketch<M> {
-        let offset_geoms = self
-            .geometry
+        let geometry = self.offset_compat_geometry();
+        let offset_geoms = geometry
             .iter()
             .filter_map(|geom| match geom {
                 Geometry::Polygon(poly) => {
@@ -151,14 +184,12 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         // Construct a new GeometryCollection from the offset geometries
         let new_collection = GeometryCollection::<Real>(offset_geoms);
 
-        // Return a new CSG using the offset geometry collection and the old polygons/metadata
-        Sketch {
-            geometry: new_collection,
-            bounding_box: OnceLock::new(),
-            metadata: self.metadata.clone(),
-            origin: self.origin,
-            origin_transform: self.origin_transform,
-        }
+        Sketch::from_compat_geometry_with_origin(
+            new_collection,
+            self.metadata.clone(),
+            self.origin,
+            self.origin_transform,
+        )
     }
 
     /// **Mathematical Foundation: Rounded Corner Polygon Offsetting**
@@ -212,8 +243,8 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// - **Other geometries**: Excluded from processing
     #[allow(clippy::unnecessary_cast)]
     pub fn offset_rounded(&self, distance: Real) -> Sketch<M> {
-        let offset_geoms = self
-            .geometry
+        let geometry = self.offset_compat_geometry();
+        let offset_geoms = geometry
             .iter()
             .filter_map(|geom| match geom {
                 Geometry::Polygon(poly) => {
@@ -232,14 +263,12 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         // Construct a new GeometryCollection from the offset geometries
         let new_collection = GeometryCollection::<Real>(offset_geoms);
 
-        // Return a new Sketch using the offset geometry collection and the old polygons/metadata
-        Sketch {
-            geometry: new_collection,
-            bounding_box: OnceLock::new(),
-            metadata: self.metadata.clone(),
-            origin: self.origin,
-            origin_transform: self.origin_transform,
-        }
+        Sketch::from_compat_geometry_with_origin(
+            new_collection,
+            self.metadata.clone(),
+            self.origin,
+            self.origin_transform,
+        )
     }
 
     /// This function returns a Sketch which represents an instantiated straight skeleton of Sketch upon which it's called.
@@ -253,8 +282,8 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     ///     * `true` to create the straight skeleton on the inward region of the polygon, and,
     ///     * `false` to create on the outward region of the polygon.
     pub fn straight_skeleton(&self, orientation: bool) -> Sketch<M> {
-        let skeleton = self
-            .geometry
+        let geometry = self.offset_compat_geometry();
+        let skeleton = geometry
             .iter()
             .filter_map(|geom| match geom {
                 Geometry::Polygon(poly) => {
@@ -272,13 +301,11 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         // Construct a new GeometryCollection from the offset geometries
         let new_collection = GeometryCollection::<Real>(skeleton);
 
-        // Return a new Sketch using the offset geometry collection and the old polygons/metadata
-        Sketch {
-            geometry: new_collection,
-            bounding_box: OnceLock::new(),
-            metadata: self.metadata.clone(),
-            origin: self.origin,
-            origin_transform: self.origin_transform,
-        }
+        Sketch::from_compat_geometry_with_origin(
+            new_collection,
+            self.metadata.clone(),
+            self.origin,
+            self.origin_transform,
+        )
     }
 }
