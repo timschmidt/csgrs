@@ -3,7 +3,7 @@
 #![doc = " This module provides export functionality for Stanford PLY files,"]
 #![doc = " a popular format for 3D scanning, research, and mesh processing applications."]
 
-use crate::float_types::{Real, tolerance};
+use crate::float_types::{Real, hpoints_within_epsilon, hvectors_within_epsilon, tolerance};
 use crate::triangulated::Triangulated3D;
 use crate::vertex::Vertex;
 use nalgebra::{Point3, Vector3};
@@ -18,8 +18,8 @@ fn add_unique_vertex_ply(
     normal: Vector3<Real>,
 ) -> usize {
     for (i, existing) in vertices.iter().enumerate() {
-        if (existing.position.coords - position.coords).norm() < tolerance()
-            && (existing.normal - normal).norm() < tolerance()
+        if hpoints_within_epsilon(&existing.position, &position, tolerance())
+            && hvectors_within_epsilon(&existing.normal, &normal, tolerance())
         {
             return i;
         }

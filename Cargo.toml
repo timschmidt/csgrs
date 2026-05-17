@@ -17,7 +17,6 @@ categories = ["game-development", "graphics", "mathematics", "simulation", "wasm
 [package.metadata.docs.rs]
 no-default-features = true
 features = [
-  "f64",
   "bmesh",
   "mesh",
   "sketch",
@@ -34,11 +33,8 @@ features = [
   "metaballs",
   "sdf",
   "offset",
-  "cavalier",
-  "delaunay",
   "truetype-text",
   "hershey-text",
-  "nurbs",
   "wasm",
 ]
 
@@ -60,22 +56,18 @@ opt-level = "z"
 # geometry
 nalgebra = { version = "0.34.1", features = ["serde-serialize"] }
 #alum = "0.6.1"
-curvo = { version = "0.1.88", optional = true }
-robust = { version = "1.1.0", default-features = false, features = ["no_std"] }
 geo = { version = "0.31.0", default-features = false, features = ["use-serde"] }
 geo-buffer = { version = "0.2.0", optional = true }
 #geo-booleanop = "0.3.2" # alternative boolean implementation has fewer dependencies
 chull = { version = "0.2.4", optional = true }
-spade = { version = "2.15.0", optional = true }
-earcutr = { version = "0.5.0", optional = true }
-delaunay-triangulator = { package = "delaunay", version = "0.7.6", optional = true }
 boolmesh = { version = "0.1.5", optional = true }
-cavalier_contours = { version = "0.7.0", path = "../cavalier_contours/cavalier_contours", optional = true }
+hypercurve = { version = "0.1.0", path = "../hypercurve" }
+hyperlattice = { version = "0.4.0", path = "../hyperlattice" }
+hyperreal = { version = "0.11.1", path = "../hyperreal", default-features = false }
+hypertri = { version = "0.1.0", path = "../hypertri", default-features = false, features = ["earcut"] }
 
-rapier3d-f64 = { version = "0.31.0", optional = true }
-rapier3d = { version = "0.31.0", optional = true }
-parry3d-f64  = { version = "0.25.3", optional = true }
-parry3d  = { version = "0.25.3", optional = true }
+rapier3d-f64 = { version = "0.31.0" }
+parry3d-f64  = { version = "0.25.3" }
 
 # bevy mesh conversion
 bevy_mesh = { version = "0.18", optional = true }
@@ -121,23 +113,13 @@ serde = { version = "1.0.228", optional = true }
 uuid = { version = "1.18", features = ["js"] }
 
 [features]
-default = ["f64", "bmesh", "mesh", "sketch", "cavalier", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "gerber-io", "chull-io", "image-io", "metaballs", "sdf", "offset", "delaunay", "truetype-text", "hershey-text"]
+default = ["bmesh", "mesh", "sketch", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "gerber-io", "chull-io", "image-io", "metaballs", "sdf", "offset", "truetype-text", "hershey-text"]
 parallel = [
   "rayon",
   "geo/multithreading",
   "hashbrown/rayon",
-  "parry3d?/parallel",
-  "parry3d-f64?/parallel",
-  "rapier3d?/parallel",
-  "rapier3d-f64?/parallel"
-]
-f64 = [
-  "rapier3d-f64",
-  "parry3d-f64",
-]
-f32 = [
-  "rapier3d",
-  "parry3d",
+  "parry3d-f64/parallel",
+  "rapier3d-f64/parallel"
 ]
 mesh = [
   # BSP backed Mesh datatype
@@ -150,9 +132,6 @@ sketch = [
 ]
 bmesh = [
   "boolmesh",
-]
-cavalier = [
-  "dep:cavalier_contours",
 ]
 # convex hull and minkowski sum
 chull-io = [
@@ -205,35 +184,27 @@ sdf = [
 offset = [
   "dep:geo-buffer",
 ]
-delaunay = [
-  "spade",
-  "geo/spade",
-]
-delaunay-rs = [
-  "dep:delaunay-triangulator",
-]
-earcut = [
-  "earcutr",
-  "geo/earcutr",
-]
 bevymesh = [
   "dep:bevy_mesh",
   "dep:bevy_asset",
   "dep:wgpu-types"
 ]
-nurbs = [
-  "dep:curvo",
-]
 wasm = [
+  "mesh",
+  "sketch",
+  "svg-io",
+  "stl-io",
+  "amf-io",
+  "gltf-io",
+  "chull-io",
+  "sdf",
   "uuid",
   "wasm-bindgen",
   "js-sys",
   "serde-wasm-bindgen",
   "serde_json",
   "serde",
-  "earcutr",
 ]
-spade = ["dep:spade"]
 
 [[example]]
 name = "readme_renders"

@@ -12,20 +12,40 @@ to be light weight and full featured through integration with the
 and [`Rapier`](https://crates.io/crates/rapier3d)) and
 [`geo`](https://crates.io/crates/geo) for robust processing of
 [Simple Features](https://en.wikipedia.org/wiki/Simple_Features).
-**csgrs** has a number of functions useful for generating CNC toolpaths.  The
-library can be built for 32bit or 64bit floats, and for WASM.  Dependencies are
-100% rust and nearly all optional.
+**csgrs** has a number of functions useful for generating CNC toolpaths. The
+crate accepts finite primitive floats at API boundaries, uses the hyperreal
+stack for new exact-aware internals, and can be built for WASM. Dependencies
+are 100% Rust and nearly all optional.
 
-[Earcut](https://docs.rs/geo/latest/geo/algorithm/triangulate_earcut/trait.TriangulateEarcut.html)
-and
-[constrained delaunay](https://docs.rs/geo/latest/geo/algorithm/triangulate_delaunay/trait.TriangulateDelaunay.html#method.constrained_triangulation)
-and
-[delaunay](https://crates.io/crates/delaunay)
-algorithms used for triangulation work only in 2D, so **csgrs** rotates
-3D polygons into 2D for triangulation then back to 3D. Enable exactly one
-triangulation feature: `delaunay` (spade), `earcut`, or `delaunay-rs`.
+Finite `f32`/`f64` values are accepted at API and IO boundaries, then promoted
+into the hyperreal stack for exact-aware geometry work.  Polygon triangulation
+uses [hypertri](../hypertri/README.md): **csgrs** rotates 3D polygons into 2D,
+lifts projected coordinates to hyperreals, runs exact predicate triangulation,
+then maps triangle indices back onto the original 3D vertices.
 
 ![Example CSG output](docs/csg.png)
+
+## Hyper Stack Links
+
+- [hyperreal](../hyperreal/README.md): exact rational, symbolic, and computable
+  real arithmetic.
+- [hyperlimit](../hyperlimit/README.md): exact predicate policy and certified
+  geometric decisions.
+- [hyperlattice](../hyperlattice/README.md): small exact vector, matrix, and
+  transform algebra.
+- [hypercurve](../hypercurve/README.md): planar curve, contour, region, and
+  boolean geometry.
+- [hypertri](../hypertri/README.md): exact polygon triangulation and constrained
+  Delaunay topology.
+- [hypermesh](../hypermesh/README.md): 3D mesh boolean experiments and the
+  future exact-aware mesh-topology layer.
+- [hypersolve](../hypersolve/README.md): experimental exact-aware solver layer.
+- [hyperdrc](../hyperdrc/README.md): PCB design-readiness checks over exact-aware
+  geometry adapters.
+- [hyperphysics](../hyperphysics/README.md): placeholder physics-domain crate
+  for the exact geometry stack.
+- [csgrs](../csgrs/readme.md): constructive solid geometry and polygon boolean
+  engine used by HyperDRC and available as an interop target.
 
 ## Community
 [![](https://dcbadge.limes.pink/api/server/https://discord.gg/9WkD3WFxMC)](https://discord.gg/9WkD3WFxMC)
@@ -437,7 +457,7 @@ let hit = trimesh.cast_local_ray(&ray, 100.0, false);
 
 ```rust
 use nalgebra::Vector3;
-use csgrs::float_types::rapier3d::prelude::*;  // re-exported for f32/f64 support
+use csgrs::float_types::rapier3d::prelude::*;  // f64 physics boundary
 use csgrs::float_types::FRAC_PI_2;
 use csgrs::traits::CSG;
 use csgrs::mesh::Mesh;
@@ -575,14 +595,13 @@ The project is also intentionally experimental in several areas:
 - **Boolean kernels**: BSP booleans are the compatibility baseline. `BMesh`
   exposes a boolmesh-backed layer behind the `bmesh` feature, and future work is
   aimed at making indexed mesh booleans lower cost and more robust.
-- **Triangulation**: exactly one of `delaunay`, `earcut`, or `delaunay-rs` must
-  be selected. Delaunay through `geo`/Spade is the current default.
-- **Numeric model**: `Real` is selected by `f64` or `f32`, with `f64` default.
-  The tolerance can be configured through `CSGRS_TOLERANCE` or
-  `set_tolerance`.
-- **NURBS and curves**: Curvo-backed NURBS support is available behind the
-  `nurbs` feature, but it should be treated as an integration layer rather than
-  the final curve kernel.
+- **Triangulation**: hypertri is the single triangulation backend. It replaces
+  the former Spade, Earcut, and `delaunay` dependency matrix.
+- **Numeric model**: hyperreals are the target internal scalar model. The
+  current compatibility boundary still exposes `Real = f64` in older modules
+  while new code promotes primitive input at the edge.
+- **Curves and offsets**: hcurve/hypercurve is the arc-preserving 2D backend.
+  The former Curvo-backed NURBS integration layer has been removed.
 - **WASM**: JavaScript bindings cover the core mesh/sketch APIs and are useful
   for browser previews, but the Rust API remains the source of truth.
 - **Toolpaths**: contour, pocket, FDM layer, lathe roughing, and G-code helpers
@@ -615,21 +634,19 @@ README_RENDER_OUTPUT_DIR=/tmp/csgrs-readme-renders cargo run --example readme_re
   boolmesh-backed boolean path, reduce excess polygon production by testing
   only polygons whose cached bounding boxes intersect, and add indexed mesh
   conversion/merge utilities.
-- **Numeric backend**: continue the f64 default path while preparing a cleaner
-  tolerance/ordering layer around `Real`, including better use of exact or
-  robust predicates where the current tolerance model is weak.
+- **Numeric backend**: continue replacing tolerance-driven internals with
+  hyperreal predicates and explicit f32/f64 boundary conversions.
 - **Triangulation and polygon validity**: finish T-junction repair, coplanar
-  polygon merging, validation hooks, and consistent triangulation through Spade,
-  Earcut, or Delaunay backends.
-- **Curves and offsets**: harden Bezier, B-spline, NURBS, offset, straight
-  skeleton, and TrueType text paths; keep Curvo useful immediately while
-  harvesting algorithms that can be owned with a lower maintenance cost.
+  polygon merging, validation hooks, and richer hypertri constrained
+  triangulation integration.
+- **Curves and offsets**: harden Bezier, B-spline, hcurve offsets, straight
+  skeleton, and TrueType text paths.
 - **Feature-complete modeling operations**: add rounded cuboids, chamfers,
   fillets, 3D offsets, bending, threaded parts, richer gear options, and
   attachment/alignment helpers.
 - **Representations**: add indexed mesh APIs, half-edge/radial-edge adapters,
   metadata deduplication, UV support, and better conversion among `Mesh`,
-  `BMesh`, `Sketch`, `Nurbs`, `TriMesh`, and file formats.
+  `BMesh`, `Sketch`, `TriMesh`, and file formats.
 - **Performance**: broaden Rayon use in operations that are embarrassingly
   parallel, preserve borrowed-slice APIs, minimize allocations, and use cached
   AABBs/TriMesh acceleration structures in query-heavy code.
@@ -651,7 +668,8 @@ README_RENDER_OUTPUT_DIR=/tmp/csgrs-readme-renders cargo run --example readme_re
 > de Berg, Mark, et al. *Computational Geometry: Algorithms and Applications*.
 > 3rd ed., Springer, 2008.
 
-> “Earcut.” *GitHub*, Mapbox, https://github.com/mapbox/earcut.
+> Meisters, Gary H. “Polygons Have Ears.” *The American Mathematical Monthly*,
+> vol. 82, no. 6, 1975, pp. 648-651, https://doi.org/10.2307/2319703.
 
 > Fabien Sanglard. “Floating Point Visually Explained.” *Fabien Sanglard's
 > Website*, 2020, https://fabiensanglard.net/floating_point_visually_explained/.
@@ -692,13 +710,15 @@ README_RENDER_OUTPUT_DIR=/tmp/csgrs-readme-renders cargo run --example readme_re
 
 > Shewchuk, Jonathan Richard. “Adaptive Precision Floating-Point Arithmetic and
 > Fast Robust Geometric Predicates.” *Discrete & Computational Geometry*, vol.
-> 18, no. 3, 1997, pp. 305-363.
+> 18, no. 3, 1997, pp. 305-363, https://doi.org/10.1007/PL00009321.
 
 > Shewchuk, Jonathan Richard. “Robust Adaptive Floating-Point Geometric
 > Predicates.” *Proceedings of the Twelfth Annual Symposium on Computational
 > Geometry*, ACM, 1996, pp. 141-150.
 
-> “Spade.” *crates.io*, https://crates.io/crates/spade.
+> Yap, Chee K. “Towards Exact Geometric Computation.” *Computational Geometry*,
+> vol. 7, nos. 1-2, 1997, pp. 3-23,
+> https://doi.org/10.1016/0925-7721(95)00040-2.
 
 > “The OpenSCAD Language.” *OpenSCAD*, https://openscad.org/documentation.html.
 

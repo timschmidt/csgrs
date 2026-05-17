@@ -15,25 +15,11 @@ use std::num::NonZeroU32;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 fn finite_real() -> impl Strategy<Value = Real> {
-    #[cfg(feature = "f32")]
-    {
-        (-1.0e3f32..1.0e3f32).prop_filter("finite", |v| v.is_finite())
-    }
-    #[cfg(feature = "f64")]
-    {
-        (-1.0e3f64..1.0e3f64).prop_filter("finite", |v| v.is_finite())
-    }
+    (-1.0e3f64..1.0e3f64).prop_filter("finite", |v| v.is_finite())
 }
 
 fn positive_real() -> impl Strategy<Value = Real> {
-    #[cfg(feature = "f32")]
-    {
-        (1.0e-4f32..50.0f32).prop_filter("finite positive", |v| v.is_finite() && *v > 0.0)
-    }
-    #[cfg(feature = "f64")]
-    {
-        (1.0e-6f64..50.0f64).prop_filter("finite positive", |v| v.is_finite() && *v > 0.0)
-    }
+    (1.0e-6f64..50.0f64).prop_filter("finite positive", |v| v.is_finite() && *v > 0.0)
 }
 
 fn finite_point() -> impl Strategy<Value = Point3<Real>> {
@@ -90,20 +76,23 @@ fn assert_mesh_sane<M: Clone + Send + Sync + std::fmt::Debug>(mesh: &Mesh<M>) {
 }
 
 fn assert_sketch_sane<M: Clone + Send + Sync + std::fmt::Debug>(sketch: &Sketch<M>) {
-    for coord in sketch.geometry.coords_iter() {
+    let geometry = sketch.geometry();
+    for coord in geometry.coords_iter() {
         assert!(coord.x.is_finite(), "non-finite sketch x: {coord:?}");
         assert!(coord.y.is_finite(), "non-finite sketch y: {coord:?}");
     }
-    if sketch.geometry.coords_iter().next().is_some() {
+    if geometry.coords_iter().next().is_some() {
         let bbox = sketch.bounding_box();
         assert!(bbox.mins.x.is_finite() && bbox.maxs.x.is_finite(), "{bbox:?}");
         assert!(bbox.mins.y.is_finite() && bbox.maxs.y.is_finite(), "{bbox:?}");
     }
 }
 
-fn sketch_all_coords_finite<M>(sketch: &Sketch<M>) -> bool {
+fn sketch_all_coords_finite<M: Clone + Send + Sync + std::fmt::Debug>(
+    sketch: &Sketch<M>,
+) -> bool {
     sketch
-        .geometry
+        .geometry()
         .coords_iter()
         .all(|coord| coord.x.is_finite() && coord.y.is_finite())
 }
@@ -742,75 +731,6 @@ fn adversarial_deep_toolpath_all_generators_emit_finite_gcode() {
             let gcode = post.write(toolpath);
             assert!(!gcode.contains("NaN"));
             assert!(!gcode.contains("inf"));
-        }
-    }
-}
-
-#[test]
-#[cfg(feature = "nurbs")]
-fn adversarial_deep_nurbs_catalog_and_booleans_are_contained() {
-    use csgrs::nurbs::Nurbs;
-    use nalgebra::Point2;
-
-    let point_sets = [
-        vec![],
-        vec![Point2::origin()],
-        vec![Point2::origin(), Point2::new(1.0, 0.0)],
-        vec![
-            Point2::origin(),
-            Point2::new(1.0, 0.0),
-            Point2::new(0.0, 1.0),
-        ],
-        vec![
-            Point2::origin(),
-            Point2::new(1.0, 1.0),
-            Point2::new(0.0, 1.0),
-            Point2::new(1.0, 0.0),
-        ],
-    ];
-
-    for points in point_sets {
-        let result =
-            catch_unwind(AssertUnwindSafe(|| Nurbs::<&str>::polyline(&points, "poly")));
-        if let Ok(Ok(nurbs)) = result {
-            let mp = nurbs.to_multipolygon_with_tolerance(Some(0.1));
-            for polygon in mp.0 {
-                for coord in &polygon.exterior().0 {
-                    assert!(coord.x.is_finite());
-                    assert!(coord.y.is_finite());
-                }
-            }
-            let sketch = nurbs.to_sketch_with_tolerance(Some(0.1));
-            assert_sketch_sane(&sketch);
-            let mesh =
-                nurbs.extrude_vector_with_tolerance(Vector3::new(0.0, 0.0, 1.0), Some(0.1));
-            assert_mesh_sane(&mesh);
-        }
-    }
-
-    let empty = Nurbs::<&str>::empty("empty");
-    let rect = Nurbs::rectangle(2.0, 2.0, "rect");
-    let circle = Nurbs::circle(1.0, "circle");
-    for result in [
-        catch_unwind(AssertUnwindSafe(|| empty.try_union(&rect))),
-        catch_unwind(AssertUnwindSafe(|| rect.try_difference(&empty))),
-        catch_unwind(AssertUnwindSafe(|| rect.try_intersection(&empty))),
-    ] {
-        if let Ok(Ok(nurbs)) = result {
-            let sketch = nurbs.to_sketch_with_tolerance(Some(0.1));
-            assert_sketch_sane(&sketch);
-        }
-    }
-    if let Ok(circle) = circle {
-        for result in [
-            catch_unwind(AssertUnwindSafe(|| rect.try_union(&circle))),
-            catch_unwind(AssertUnwindSafe(|| rect.try_difference(&circle))),
-            catch_unwind(AssertUnwindSafe(|| rect.try_intersection(&circle))),
-        ] {
-            if let Ok(Ok(nurbs)) = result {
-                let sketch = nurbs.to_sketch_with_tolerance(Some(0.1));
-                assert_sketch_sane(&sketch);
-            }
         }
     }
 }

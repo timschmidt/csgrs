@@ -9,7 +9,7 @@
 use crate::csg::CSG;
 use crate::float_types::{PI, Real, TAU, tolerance};
 use crate::sketch::Sketch;
-use geo::{Coord, Geometry, GeometryCollection, LineString, Polygon as GeoPolygon};
+use geo::{Coord, Geometry, LineString, Polygon as GeoPolygon};
 use gerber_types::{
     Aperture, ApertureDefinition, AxisSelect, Circle, Command, CommentContent,
     CoordinateFormat, CoordinateMode, CoordinateNumber, CoordinateOffset, Coordinates, DCode,
@@ -142,8 +142,26 @@ where
             FunctionCode::GCode(GCode::InterpolationMode(InterpolationMode::Linear)).into(),
         ];
 
-        for geometry in self.geometry.iter() {
-            emit_geometry(geometry, &mut commands, options)?;
+        // Closed-region export can consume the native hypercurve boundary
+        // directly. The finite Gerber coordinates are serialization output,
+        // while geometric classification stays with Region2; that split follows
+        // Yap, "Towards Exact Geometric Computation," Computational Geometry
+        // 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+        if !self.as_region().is_empty() && self.compat_geometry_is_area_only() {
+            let region_rings = self.region_rings();
+            if !region_rings.is_empty() {
+                emit_region_rings(
+                    &region_rings.material,
+                    &region_rings.holes,
+                    &mut commands,
+                    options,
+                )?;
+            }
+        } else {
+            let geometry = self.effective_geometry();
+            for geometry in geometry.iter() {
+                emit_geometry(geometry, &mut commands, options)?;
+            }
         }
 
         commands.push(FunctionCode::MCode(MCode::EndOfFile).into());
@@ -396,8 +414,8 @@ where
 }
 
 struct RegionBuilder {
-    current_ring: Vec<Coord<Real>>,
-    rings: Vec<LineString<Real>>,
+    current_ring: Vec<[Real; 2]>,
+    rings: Vec<Vec<[Real; 2]>>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -456,14 +474,14 @@ impl RegionBuilder {
 
     fn move_to(&mut self, point: Coord<Real>) {
         self.finish_ring();
-        self.current_ring.push(point);
+        self.current_ring.push(point_from_coord(point));
     }
 
     fn line_to(&mut self, start: Coord<Real>, end: Coord<Real>) {
         if self.current_ring.is_empty() {
-            self.current_ring.push(start);
+            self.current_ring.push(point_from_coord(start));
         }
-        self.current_ring.push(end);
+        self.current_ring.push(point_from_coord(end));
     }
 
     fn finish_ring(&mut self) {
@@ -477,8 +495,7 @@ impl RegionBuilder {
             self.current_ring.push(first);
         }
 
-        self.rings
-            .push(LineString::new(std::mem::take(&mut self.current_ring)));
+        self.rings.push(std::mem::take(&mut self.current_ring));
     }
 
     fn into_sketch<M>(mut self, metadata: M) -> Option<Sketch<M>>
@@ -490,16 +507,19 @@ impl RegionBuilder {
         let mut rings = self
             .rings
             .into_iter()
-            .filter(|ring| ring.0.len() >= 4)
+            .filter(|ring| ring.len() >= 4)
             .collect::<Vec<_>>();
         if rings.is_empty() {
             return None;
         }
 
-        let exterior = rings.remove(0);
-        let polygon = GeoPolygon::new(exterior, rings);
-        Some(Sketch::from_geo(
-            GeometryCollection(vec![Geometry::Polygon(polygon)]),
+        let exterior = Sketch::<M>::contour_from_points(&rings.remove(0))?;
+        let holes = rings
+            .iter()
+            .filter_map(|ring| Sketch::<M>::contour_from_points(ring))
+            .collect::<Vec<_>>();
+        Some(Sketch::from_region(
+            hypercurve::Region2::new(vec![exterior], holes),
             metadata,
         ))
     }
@@ -543,6 +563,59 @@ fn emit_polygon(
         emit_ring(interior, commands, options)?;
     }
     commands.push(FunctionCode::GCode(GCode::RegionMode(false)).into());
+    Ok(())
+}
+
+fn emit_region_rings(
+    material: &[Vec<[Real; 2]>],
+    holes: &[Vec<[Real; 2]>],
+    commands: &mut Vec<Command>,
+    options: GerberExportOptions,
+) -> Result<(), IoError> {
+    commands.push(FunctionCode::GCode(GCode::RegionMode(true)).into());
+    for ring in material.iter().chain(holes) {
+        emit_point_ring(ring, commands, options)?;
+    }
+    commands.push(FunctionCode::GCode(GCode::RegionMode(false)).into());
+    Ok(())
+}
+
+fn emit_point_ring(
+    ring: &[[Real; 2]],
+    commands: &mut Vec<Command>,
+    options: GerberExportOptions,
+) -> Result<(), IoError> {
+    let Some(first) = ring.first() else {
+        return Ok(());
+    };
+
+    commands.push(
+        FunctionCode::DCode(DCode::Operation(Operation::Move(Some(gerber_coordinates(
+            Coord {
+                x: first[0],
+                y: first[1],
+            },
+            options,
+        )?))))
+        .into(),
+    );
+
+    for point in ring.iter().skip(1) {
+        commands.push(
+            FunctionCode::DCode(DCode::Operation(Operation::Interpolate(
+                Some(gerber_coordinates(
+                    Coord {
+                        x: point[0],
+                        y: point[1],
+                    },
+                    options,
+                )?),
+                None,
+            )))
+            .into(),
+        );
+    }
+
     Ok(())
 }
 
@@ -1039,13 +1112,15 @@ where
     if points.first() != points.last() {
         points.push(points[0]);
     }
-    Some(Sketch::from_geo(
-        GeometryCollection(vec![Geometry::Polygon(GeoPolygon::new(
-            LineString::new(points),
-            Vec::new(),
-        ))]),
-        metadata,
-    ))
+    let points = points
+        .into_iter()
+        .map(|coord| [coord.x, coord.y])
+        .collect::<Vec<_>>();
+    Some(Sketch::polygon(&points, metadata))
+}
+
+fn point_from_coord(coord: Coord<Real>) -> [Real; 2] {
+    [coord.x, coord.y]
 }
 
 fn repeat_sketches<M>(
@@ -1192,7 +1267,7 @@ mod tests {
         assert!(gerber_text.contains("G37*"));
 
         let parsed = Sketch::<()>::from_gerber(&gerber, ()).unwrap();
-        let bounds = parsed.geometry.bounding_rect().unwrap();
+        let bounds = parsed.geometry().bounding_rect().unwrap();
         assert_eq!(bounds.min().x, 0.0);
         assert_eq!(bounds.min().y, 0.0);
         assert_eq!(bounds.max().x, 5.0);
@@ -1200,11 +1275,27 @@ mod tests {
     }
 
     #[test]
+    fn imports_region_as_native_hypercurve_region() {
+        let gerber = b"G04 region*\n%MOMM*%\n%FSLAX46Y46*%\nG36*\nX0Y0D02*\nX4000000Y0D01*\nX4000000Y3000000D01*\nX0Y3000000D01*\nX0Y0D01*\nG37*\nM02*\n";
+
+        let mut parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
+        assert_eq!(parsed.material_contour_count(), 1);
+        assert!(!parsed.as_region().is_empty());
+
+        parsed.geometry = geo::GeometryCollection::default();
+        let bounds = parsed.geometry().bounding_rect().unwrap();
+        assert_eq!(bounds.min().x, 0.0);
+        assert_eq!(bounds.min().y, 0.0);
+        assert_eq!(bounds.max().x, 4.0);
+        assert_eq!(bounds.max().y, 3.0);
+    }
+
+    #[test]
     fn imports_circle_flash() {
         let gerber = b"G04 flash*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,2*%\nD10*\nX3000000Y4000000D03*\nM02*\n";
 
         let parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
-        let bounds = parsed.geometry.bounding_rect().unwrap();
+        let bounds = parsed.geometry().bounding_rect().unwrap();
         assert!((bounds.min().x - 2.0).abs() < 1.0e-6);
         assert!((bounds.max().x - 4.0).abs() < 1.0e-6);
         assert!((bounds.min().y - 3.0).abs() < 1.0e-6);
@@ -1216,7 +1307,7 @@ mod tests {
         let gerber = b"G04 trace*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,1*%\nD10*\nX0Y0D02*\nX4000000Y0D01*\nM02*\n";
 
         let parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
-        let bounds = parsed.geometry.bounding_rect().unwrap();
+        let bounds = parsed.geometry().bounding_rect().unwrap();
         assert!((bounds.min().x + 0.5).abs() < 1.0e-6);
         assert!((bounds.max().x - 4.5).abs() < 1.0e-6);
         assert!((bounds.min().y + 0.5).abs() < 1.0e-6);
@@ -1228,7 +1319,7 @@ mod tests {
         let gerber = b"G04 trace*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10R,1X2*%\nD10*\nX0Y0D02*\nX4000000Y0D01*\nM02*\n";
 
         let parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
-        let bounds = parsed.geometry.bounding_rect().unwrap();
+        let bounds = parsed.geometry().bounding_rect().unwrap();
         assert!((bounds.min().x + 0.5).abs() < 1.0e-6);
         assert!((bounds.max().x - 4.5).abs() < 1.0e-6);
         assert!((bounds.min().y + 1.0).abs() < 1.0e-6);
@@ -1240,7 +1331,7 @@ mod tests {
         let gerber = b"G04 arc*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,0.2*%\nD10*\nX1000000Y0D02*\nG03X0Y1000000I-1000000J0D01*\nM02*\n";
 
         let parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
-        let bounds = parsed.geometry.bounding_rect().unwrap();
+        let bounds = parsed.geometry().bounding_rect().unwrap();
         assert!(bounds.min().x >= -0.11);
         assert!(bounds.min().y >= -0.11);
         assert!((bounds.max().x - 1.1).abs() < 0.02);
@@ -1252,7 +1343,7 @@ mod tests {
         let gerber = b"G04 step repeat*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,1*%\nD10*\n%SRX2Y2I2J3*%\nX0Y0D03*\n%SR*%\nM02*\n";
 
         let parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
-        let bounds = parsed.geometry.bounding_rect().unwrap();
+        let bounds = parsed.geometry().bounding_rect().unwrap();
         assert!((bounds.min().x + 0.5).abs() < 1.0e-6);
         assert!((bounds.max().x - 2.5).abs() < 1.0e-6);
         assert!((bounds.min().y + 0.5).abs() < 1.0e-6);
@@ -1264,7 +1355,7 @@ mod tests {
         let gerber = b"G04 rotated flash*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10R,1X2*%\nD10*\n%LR90*%\nX0Y0D03*\nM02*\n";
 
         let parsed = Sketch::<()>::from_gerber(gerber, ()).unwrap();
-        let bounds = parsed.geometry.bounding_rect().unwrap();
+        let bounds = parsed.geometry().bounding_rect().unwrap();
         assert!((bounds.min().x + 1.0).abs() < 1.0e-6);
         assert!((bounds.max().x - 1.0).abs() < 1.0e-6);
         assert!((bounds.min().y + 0.5).abs() < 1.0e-6);

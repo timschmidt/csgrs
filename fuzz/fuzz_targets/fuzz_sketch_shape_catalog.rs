@@ -16,17 +16,12 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     value.clamp(-1.0e3, 1.0e3) as Real
 }
 
-fn assert_sketch_finite(sketch: &Sketch<()>) {
-    for polygon in sketch.to_multipolygon().0 {
-        for coord in &polygon.exterior().0 {
-            assert!(coord.x.is_finite());
-            assert!(coord.y.is_finite());
-        }
-        for ring in polygon.interiors() {
-            for coord in &ring.0 {
-                assert!(coord.x.is_finite());
-                assert!(coord.y.is_finite());
-            }
+fn assert_sketch_finite<M: Clone + Send + Sync + std::fmt::Debug>(sketch: &Sketch<M>) {
+    let rings = sketch.region_rings();
+    for ring in rings.iter_all() {
+        for point in ring {
+            assert!(point[0].is_finite());
+            assert!(point[1].is_finite());
         }
     }
 }
@@ -46,7 +41,7 @@ fuzz_target!(|bytes: &[u8]| {
     let positive_a = a.abs().max(tolerance());
     let positive_b = b.abs().max(tolerance());
 
-    let sketch = match tag {
+    let sketch: Sketch<Option<()>> = match tag {
         0 => Sketch::rectangle(a, b, None),
         1 => Sketch::square(a, None),
         2 => Sketch::circle(a, segments, None),

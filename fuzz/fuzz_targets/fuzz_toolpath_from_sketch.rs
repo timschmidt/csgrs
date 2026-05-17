@@ -29,7 +29,7 @@ fuzz_target!(|bytes: &[u8]| {
     let z = decode_real(bytes, &mut idx).clamp(-100.0, 100.0);
     let kerf = decode_real(bytes, &mut idx).clamp(-10.0, 10.0);
 
-    let sketch: Sketch<()> = Sketch::rectangle(width, height, None);
+    let sketch: Sketch<()> = Sketch::rectangle(width, height, ());
     let feeds = Feeds {
         travel: 3000.0,
         xy: 1200.0,

@@ -7,7 +7,7 @@ use csgrs::sketch::Sketch;
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|bytes: &[u8]| {
-    if let Ok(sketch) = Sketch::<()>::from_gerber(bytes, None) {
+    if let Ok(sketch) = Sketch::<()>::from_gerber(bytes, ()) {
         for triangle in sketch.triangulate() {
             for point in triangle {
                 assert!(point.x.is_finite());

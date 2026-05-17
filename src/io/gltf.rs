@@ -3,7 +3,7 @@
 #![doc = " This module provides export functionality for glTF 2.0 files,"]
 #![doc = " a modern, efficient, and widely supported 3D asset format."]
 
-use crate::float_types::{Real, tolerance};
+use crate::float_types::{Real, hpoints_within_epsilon, hvectors_within_epsilon, tolerance};
 use crate::triangulated::Triangulated3D;
 use crate::vertex::Vertex;
 use base64::Engine;
@@ -20,8 +20,8 @@ fn add_unique_vertex_gltf(
     normal: Vector3<Real>,
 ) -> u32 {
     for (i, existing) in vertices.iter().enumerate() {
-        if (existing.position.coords - position.coords).norm() < tolerance()
-            && (existing.normal - normal).norm() < tolerance()
+        if hpoints_within_epsilon(&existing.position, &position, tolerance())
+            && hvectors_within_epsilon(&existing.normal, &normal, tolerance())
         {
             return i as u32;
         }

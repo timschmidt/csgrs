@@ -1,7 +1,7 @@
 //! Mesh connectivity helpers for tolerance-aware vertex indexing and topology
 //! analysis.
 
-use crate::float_types::{Real, tolerance};
+use crate::float_types::{Real, hpoints_within_epsilon, tolerance};
 use crate::mesh::Mesh;
 use hashbrown::HashMap;
 use nalgebra::Point3;
@@ -9,10 +9,17 @@ use std::fmt::Debug;
 
 /// **Mathematical Foundation: Robust Vertex Indexing for Mesh Connectivity**
 ///
-/// Handles floating-point coordinate comparison with tolerance:
+/// Handles boundary-coordinate comparison with tolerance:
 /// - **Spatial Hashing**: Groups nearby vertices for efficient lookup
 /// - **Tolerance Matching**: Considers vertices within tolerance as identical
 /// - **Global Indexing**: Maintains consistent vertex indices across mesh
+///
+/// The tolerance predicate promotes candidate positions into
+/// `hyperlattice::Vector3` and compares squared distance in `hyperreal::Real`.
+/// That keeps mesh-topology equivalence decisions on the exact-aware side of
+/// the API boundary, following Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
 #[derive(Debug, Clone)]
 pub struct VertexIndexMap {
     /// Maps vertex positions to global indices (with tolerance)
@@ -33,13 +40,20 @@ impl VertexIndexMap {
         }
     }
 
+    /// Get the existing index for a position within this map's tolerance.
+    pub fn find_index(&self, position: &Point3<Real>) -> Option<usize> {
+        self.position_to_index
+            .iter()
+            .find_map(|(existing_position, existing_index)| {
+                hpoints_within_epsilon(position, existing_position, self.epsilon)
+                    .then_some(*existing_index)
+            })
+    }
+
     /// Get or create an index for a vertex position
     pub fn get_or_create_index(&mut self, position: Point3<Real>) -> usize {
-        // Look for existing vertex within epsilon tolerance
-        for (existing_position, existing_index) in &self.position_to_index {
-            if (position - existing_position).norm() < self.epsilon {
-                return *existing_index;
-            }
+        if let Some(existing_index) = self.find_index(&position) {
+            return existing_index;
         }
 
         // Create new index

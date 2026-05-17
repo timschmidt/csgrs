@@ -21,16 +21,11 @@ fn assert_mesh_finite<M: Clone + Send + Sync + std::fmt::Debug>(mesh: &Mesh<M>) 
 }
 
 fn assert_sketch_finite<M: Clone + Send + Sync + std::fmt::Debug>(sketch: &Sketch<M>) {
-    for polygon in sketch.to_multipolygon().0 {
-        for coord in &polygon.exterior().0 {
-            assert!(coord.x.is_finite());
-            assert!(coord.y.is_finite());
-        }
-        for ring in polygon.interiors() {
-            for coord in &ring.0 {
-                assert!(coord.x.is_finite());
-                assert!(coord.y.is_finite());
-            }
+    let rings = sketch.region_rings();
+    for ring in rings.iter_all() {
+        for point in ring {
+            assert!(point[0].is_finite());
+            assert!(point[1].is_finite());
         }
     }
 }

@@ -3,7 +3,7 @@
 #![doc = " This module provides import and export functionality for Wavefront OBJ files,"]
 #![doc = " a widely-supported 3D file format used by many modeling and rendering applications."]
 
-use crate::float_types::{Real, tolerance};
+use crate::float_types::{Real, hpoints_within_epsilon, hvectors_within_epsilon, tolerance};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
 use crate::sketch::Sketch;
@@ -15,7 +15,7 @@ use std::io::{BufRead, Write};
 
 fn add_unique_vertex(vertices: &mut Vec<Point3<Real>>, vertex: Point3<Real>) -> usize {
     for (i, existing) in vertices.iter().enumerate() {
-        if (existing.coords - vertex.coords).norm() < tolerance() {
+        if hpoints_within_epsilon(existing, &vertex, tolerance()) {
             return i;
         }
     }
@@ -25,7 +25,7 @@ fn add_unique_vertex(vertices: &mut Vec<Point3<Real>>, vertex: Point3<Real>) -> 
 
 fn add_unique_normal(normals: &mut Vec<Vector3<Real>>, normal: Vector3<Real>) -> usize {
     for (i, existing) in normals.iter().enumerate() {
-        if (*existing - normal).norm() < tolerance() {
+        if hvectors_within_epsilon(existing, &normal, tolerance()) {
             return i;
         }
     }

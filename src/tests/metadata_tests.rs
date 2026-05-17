@@ -184,54 +184,6 @@ fn test_transform_metadata() {
 }
 
 #[test]
-#[cfg(feature = "nurbs")]
-fn test_nurbs_metadata_preserved_by_backend_ops() {
-    let rect = crate::nurbs::Nurbs::rectangle(2.0, 2.0, "rect");
-    let moved = rect.translate(1.0, 0.0, 0.0);
-    assert_eq!(moved.metadata, "rect");
-
-    let remapped = moved.map_metadata(|metadata| format!("{metadata}-mapped"));
-    assert_eq!(remapped.metadata, "rect-mapped");
-
-    let replaced = remapped.with_metadata("replacement");
-    assert_eq!(replaced.metadata, "replacement");
-
-    let cutter = crate::nurbs::Nurbs::rectangle(1.0, 1.0, "cutter");
-    let difference = replaced.try_difference(&cutter).unwrap();
-    assert_eq!(difference.metadata, "replacement");
-}
-
-#[test]
-#[cfg(all(feature = "nurbs", feature = "sketch", feature = "mesh"))]
-fn test_nurbs_metadata_preserved_by_conversions() {
-    let rect = crate::nurbs::Nurbs::rectangle(2.0, 2.0, "profile");
-
-    let sketch = rect.to_sketch();
-    assert_eq!(sketch.metadata, "profile");
-
-    let sketch_precise = rect.to_sketch_with_tolerance(Some(1e-3));
-    assert_eq!(sketch_precise.metadata, "profile");
-
-    let mesh = rect.extrude_vector(Vector3::new(0.0, 0.0, 1.0));
-    assert_eq!(mesh.metadata, "profile");
-    assert!(
-        mesh.polygons
-            .iter()
-            .all(|polygon| polygon.metadata() == &"profile")
-    );
-
-    let mesh_precise =
-        rect.extrude_vector_with_tolerance(Vector3::new(0.0, 0.0, 1.0), Some(1e-3));
-    assert_eq!(mesh_precise.metadata, "profile");
-    assert!(
-        mesh_precise
-            .polygons
-            .iter()
-            .all(|polygon| polygon.metadata() == &"profile")
-    );
-}
-
-#[test]
 fn test_complex_metadata_struct_in_boolean_ops() {
     #[derive(Debug, Clone, PartialEq)]
     struct Color(u8, u8, u8);

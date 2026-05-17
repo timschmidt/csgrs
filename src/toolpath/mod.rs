@@ -126,23 +126,16 @@ pub struct Feeds {
     pub pierce_ms: Option<u64>, // pierce dwell for plasma/laser
 }
 
-// ==================
-// 2D Ring extraction
-// ==================
-
-use geo::{CoordsIter, Geometry, MultiPolygon};
+// ==============================
+// 2D native path extraction
+// ==============================
 
 /// Iterate all rings (exterior + holes) as `Vec<(x,y)>`. Exteriors first, then holes.
 fn rings_of<M: Clone + Send + Sync + Debug>(sk: &Sketch<M>) -> Vec<Vec<(Real, Real)>> {
-    let mp: MultiPolygon<Real> = sk.to_multipolygon();
-    let mut rings = Vec::new();
-    for poly in mp.0 {
-        rings.push(poly.exterior().coords_iter().map(|c| (c.x, c.y)).collect());
-        for hole in poly.interiors() {
-            rings.push(hole.coords_iter().map(|c| (c.x, c.y)).collect());
-        }
-    }
-    rings
+    sk.region_rings()
+        .iter_all()
+        .map(|ring| ring.iter().map(|point| (point[0], point[1])).collect())
+        .collect()
 }
 
 // ================================
@@ -240,28 +233,24 @@ pub fn fdm_layer_from_sketch<M: Clone + Send + Sync + Debug>(
 
     // We will downsample segments to achieve the target density.
     let keep_every = (1.0 / cfg.infill_density.max(0.01)).round().max(1.0) as usize;
-    for geom in curve.geometry {
-        if let Geometry::LineString(ls) = geom {
-            let coords: Vec<_> = ls.0;
-            if coords.len() < 2 {
+    for coords in curve.wire_polylines() {
+        if coords.len() < 2 {
+            continue;
+        }
+        let [sx, sy] = coords[0];
+        tp.travel_to(Point3::new(sx, sy, z));
+        let mut last = (sx, sy);
+        for (i, [x, y]) in coords.into_iter().enumerate().skip(1) {
+            if i % keep_every != 0 {
                 continue;
             }
-            let (sx, sy) = (coords[0].x, coords[0].y);
-            tp.travel_to(Point3::new(sx, sy, z));
-            let mut last = (sx, sy);
-            for (i, c) in coords.iter().enumerate().skip(1) {
-                if i % keep_every != 0 {
-                    continue;
-                }
-                let (x, y) = (c.x, c.y);
-                let seg_len = ((x - last.0).powi(2) + (y - last.1).powi(2)).sqrt();
-                tp.cut_to(
-                    Point3::new(x, y, z),
-                    Some(feeds.xy),
-                    Some(cfg.e_per_mm * seg_len),
-                );
-                last = (x, y);
-            }
+            let seg_len = ((x - last.0).powi(2) + (y - last.1).powi(2)).sqrt();
+            tp.cut_to(
+                Point3::new(x, y, z),
+                Some(feeds.xy),
+                Some(cfg.e_per_mm * seg_len),
+            );
+            last = (x, y);
         }
     }
 
@@ -527,11 +516,11 @@ pub fn lathe_rough_from_profile<M: Clone + Send + Sync + Debug>(
     let mut tp = Toolpath::new(MachineKind::Lathe);
 
     // Sample target radius r(z) by intersecting horizontal lines with polygon exterior
-    let mp = profile_xy.to_multipolygon();
-    let poly = if mp.0.is_empty() {
+    let rings = profile_xy.region_rings();
+    let exterior = if rings.material.is_empty() {
         return tp;
     } else {
-        mp.0[0].clone()
+        rings.material[0].clone()
     };
 
     let dz = ((z_max - z_min).abs() / 200.0).max(0.25); // ~200 steps or 0.25mm
@@ -541,11 +530,9 @@ pub fn lathe_rough_from_profile<M: Clone + Send + Sync + Debug>(
     while z <= z_end + tolerance() {
         // Walk edges, find intersections with y = z, choose max x (outer radius)
         let mut xs: Vec<Real> = Vec::new();
-        let ext = poly.exterior();
-        let coords = &ext.0;
-        for w in coords.windows(2) {
-            let (x1, y1) = (w[0].x, w[0].y);
-            let (x2, y2) = (w[1].x, w[1].y);
+        for w in exterior.windows(2) {
+            let (x1, y1) = (w[0][0], w[0][1]);
+            let (x2, y2) = (w[1][0], w[1][1]);
             // Does segment cross the horizontal line?
             if (y1 <= z && y2 >= z) || (y2 <= z && y1 >= z) {
                 let dy = y2 - y1;

@@ -2,6 +2,7 @@
 
 use crate::errors::ValidationError;
 use crate::float_types::{
+    hpoints_within_epsilon, hreal_gt_f64, hreal_lt_f64, hreal_to_f64, hvector3_from_point3,
     parry3d::{bounding_volume::Aabb, query::RayCast, shape::Shape},
     rapier3d::prelude::{
         ColliderBuilder, ColliderSet, Ray, RigidBodyBuilder, RigidBodyHandle, RigidBodySet,
@@ -86,6 +87,43 @@ pub struct Mesh<M: Clone + Send + Sync + Debug> {
     /// Whole-mesh metadata. Use `M = ()` for no metadata and `M = Option<YourMetadata>`
     /// for optional metadata.
     pub metadata: M,
+}
+
+fn hyper_edge_projection_parameter(
+    point: &Point3<Real>,
+    edge_start: &Point3<Real>,
+    edge_end: &Point3<Real>,
+    epsilon: Real,
+) -> Option<Real> {
+    let a = hvector3_from_point3(edge_start)?;
+    let b = hvector3_from_point3(edge_end)?;
+    let p = hvector3_from_point3(point)?;
+    let ab = &b - &a;
+    let av = &p - &a;
+    let bv = &p - &b;
+
+    let eps2 = epsilon * epsilon;
+    let ab_len_sq = ab.dot(&ab);
+    if !hreal_gt_f64(&ab_len_sq, eps2) {
+        return None;
+    }
+
+    if !hreal_gt_f64(&av.dot(&av), eps2) || !hreal_gt_f64(&bv.dot(&bv), eps2) {
+        return None;
+    }
+
+    let t_h = (ab.dot(&av) / ab_len_sq).ok()?;
+    if !hreal_gt_f64(&t_h, epsilon) || !hreal_lt_f64(&t_h, 1.0 - epsilon) {
+        return None;
+    }
+
+    let projected = a + ab * &t_h;
+    let delta = p - projected;
+    if hreal_gt_f64(&delta.dot(&delta), eps2) {
+        return None;
+    }
+
+    hreal_to_f64(&t_h)
 }
 
 impl<M: Clone + Send + Sync + Debug + PartialEq> Mesh<M> {
@@ -206,6 +244,19 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
 
     /// Pre-pass to remove T-junctions between polygons by inserting missing
     /// vertices on shared or colinear overlapping edges before triangulation.
+    ///
+    /// Edge projection and point-edge distance checks are evaluated in
+    /// `hyperreal::Real` through `hyperlattice::Vector3`; only the accepted
+    /// insertion parameter is exported back to `f64` so existing mesh vertices
+    /// can still be stored at the public API boundary. Retaining the point and
+    /// edge as hyper geometry objects before scalar fallback follows Yap's
+    /// exact-geometric-computation model, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>). The repair addresses
+    /// T-vertices before triangulation because mesh cracks violate the
+    /// watertightness assumptions behind triangle mesh processing; see
+    /// Botsch et al., *Polygon Mesh Processing*, 2010
+    /// (<https://doi.org/10.1201/b10688>).
     fn fix_t_junctions_on_shared_edges(polygons: &mut [Polygon<M>]) {
         let eps = tolerance();
         let eps2 = eps * eps;
@@ -234,27 +285,14 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                     for edge_start in 0..n_j {
                         let a = &verts_j[edge_start];
                         let b = &verts_j[(edge_start + 1) % n_j];
-                        let ab = b.position - a.position;
-                        let ab_len_sq = ab.norm_squared();
-                        if ab_len_sq < eps2 {
+                        let Some(t) = hyper_edge_projection_parameter(
+                            &vert.position,
+                            &a.position,
+                            &b.position,
+                            eps,
+                        ) else {
                             continue;
-                        }
-
-                        let av = vert.position - a.position;
-                        let bv = vert.position - b.position;
-                        if av.norm_squared() < eps2 || bv.norm_squared() < eps2 {
-                            continue;
-                        }
-
-                        let t = ab.dot(&av) / ab_len_sq;
-                        if t <= eps || t >= 1.0 - eps {
-                            continue;
-                        }
-
-                        let projected = a.position + ab * t;
-                        if (vert.position - projected).norm_squared() > eps2 {
-                            continue;
-                        }
+                        };
 
                         let new_vertex = Vertex::new(vert.position, poly_j.plane.normal());
                         let entry = edge_splits[j].entry(edge_start).or_default();
@@ -539,7 +577,12 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     /// triangulated surface.
     ///
     /// Each consecutive pair of points defines one segment. Hits are deduplicated
-    /// locally and returned in polyline order.
+    /// locally and returned in polyline order. Deduplication compares squared
+    /// hit-point distance through `hyperlattice::Vector3` and
+    /// `hyperreal::Real`, keeping this topology-affecting equality decision out
+    /// of local f64 square-root arithmetic. This follows Yap's
+    /// exact-geometric-computation boundary discipline
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn intersect_polyline(&self, polyline: &[Point3<Real>]) -> Vec<Point3<Real>> {
         if polyline.len() < 2 {
             return Vec::new();
@@ -585,7 +628,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
 
             for (point, _) in seg_hits {
                 if let Some(last) = hits.last() {
-                    if (point - last).norm() < tol {
+                    if hpoints_within_epsilon(&point, last, tol) {
                         continue;
                     }
                 }
@@ -1089,7 +1132,50 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
 #[cfg(feature = "sketch")]
 impl<M: Clone + Send + Sync + Debug> From<Sketch<M>> for Mesh<M> {
     /// Convert a Sketch into a Mesh.
+    ///
+    /// Closed area sketches are consumed from Sketch's native hypercurve
+    /// [`Region2`](hypercurve::Region2) projection before consulting the
+    /// temporary `geo` compatibility cache. This keeps the conversion aligned
+    /// with the exact-geometric-computation boundary discipline from Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
+    /// 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>): topology lives
+    /// in hyper geometry, while mesh vertices are the finite API-boundary
+    /// realization.
     fn from(sketch: Sketch<M>) -> Self {
+        fn ring_to_vertices(ring: &[[Real; 2]]) -> Vec<Vertex> {
+            let mut vertices: Vec<_> = ring
+                .iter()
+                .map(|p| Vertex::new(Point3::new(p[0], p[1], 0.0), Vector3::z()))
+                .collect();
+            if vertices.first() == vertices.last() {
+                vertices.pop();
+            }
+            vertices
+        }
+
+        fn ring_to_polygon<M: Clone + Send + Sync>(
+            ring: &[[Real; 2]],
+            metadata: &M,
+        ) -> Option<Polygon<M>> {
+            let vertices = ring_to_vertices(ring);
+            (vertices.len() >= 3).then(|| Polygon::new(vertices, metadata.clone()))
+        }
+
+        let region_rings = sketch.region_rings();
+        if !region_rings.is_empty() {
+            let final_polygons = region_rings
+                .iter_all()
+                .filter_map(|ring| ring_to_polygon(ring, &sketch.metadata))
+                .collect();
+
+            return Mesh {
+                polygons: final_polygons,
+                bounding_box: OnceLock::new(),
+                query_trimesh: OnceLock::new(),
+                metadata: sketch.metadata.clone(),
+            };
+        }
+
         /// Helper function to convert a geo::LineString to a Vec<crate::vertex::Vertex>
         fn geo_line_string_to_vertices(line_string: &geo::LineString<Real>) -> Vec<Vertex> {
             let mut vertices: Vec<_> = line_string
@@ -1127,8 +1213,8 @@ impl<M: Clone + Send + Sync + Debug> From<Sketch<M>> for Mesh<M> {
             all_polygons
         }
 
-        let final_polygons = sketch
-            .geometry
+        let sketch_geometry = sketch.geometry();
+        let final_polygons = sketch_geometry
             .iter()
             .flat_map(|geom| -> Vec<Polygon<M>> {
                 match geom {
@@ -1200,5 +1286,34 @@ impl<M: Clone + Send + Sync + Debug> From<BMesh<M>> for Mesh<M> {
         }
 
         Mesh::from_polygons(&polygons, bmesh.metadata.clone())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn hyper_edge_projection_parameter_accepts_exact_t_vertex() {
+        let point = Point3::new(1.0, 0.0, 0.0);
+        let edge_start = Point3::new(0.0, 0.0, 0.0);
+        let edge_end = Point3::new(2.0, 0.0, 0.0);
+
+        let t = hyper_edge_projection_parameter(&point, &edge_start, &edge_end, tolerance())
+            .expect("point lies strictly inside the edge");
+
+        assert!((t - 0.5).abs() < tolerance());
+    }
+
+    #[test]
+    fn hyper_edge_projection_parameter_rejects_off_edge_point() {
+        let point = Point3::new(1.0, tolerance() * 4.0, 0.0);
+        let edge_start = Point3::new(0.0, 0.0, 0.0);
+        let edge_end = Point3::new(2.0, 0.0, 0.0);
+
+        assert!(
+            hyper_edge_projection_parameter(&point, &edge_start, &edge_end, tolerance())
+                .is_none()
+        );
     }
 }

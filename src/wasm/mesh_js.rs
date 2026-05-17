@@ -1,7 +1,7 @@
 //! JavaScript wrapper for [`Mesh`].
 
 use crate::csg::CSG;
-use crate::float_types::Real;
+use crate::float_types::{Real, hreal_from_f64};
 use crate::mesh::{Mesh, plane::Plane};
 use crate::wasm::{
     js_metadata_to_string, matrix_js::Matrix4Js, plane_js::PlaneJs, point_js::Point3Js,
@@ -126,8 +126,20 @@ impl MeshJs {
 
         use crate::polygon::Polygon;
 
-        let indices = earcutr::earcut(&flat_2d, &holes, 2)
-            .map_err(|err| JsValue::from_str(&format!("earcut failed: {err:?}")))?;
+        let exact_points = flat_2d
+            .chunks_exact(2)
+            .map(|xy| {
+                Ok(hypertri::Point2::new(
+                    hreal_from_f64(xy[0])
+                        .map_err(|err| JsValue::from_str(&format!("invalid x: {err:?}")))?,
+                    hreal_from_f64(xy[1])
+                        .map_err(|err| JsValue::from_str(&format!("invalid y: {err:?}")))?,
+                ))
+            })
+            .collect::<Result<Vec<_>, JsValue>>()?;
+
+        let indices = hypertri::earcut(&exact_points, &holes)
+            .map_err(|err| JsValue::from_str(&format!("hypertri earcut failed: {err:?}")))?;
         let meta = js_metadata_to_string(metadata).unwrap_or(None);
         let mut polygons = Vec::with_capacity(indices.len() / 3);
 

@@ -429,7 +429,7 @@ fn test_csg_text() {
     // and returns some polygons for normal ASCII letters.
     let font_data = include_bytes!("../../asar.ttf");
     let text_csg: Sketch<()> = Sketch::text("ABC", font_data, 10.0, ());
-    assert!(!text_csg.geometry.is_empty());
+    assert!(!text_csg.geometry().is_empty());
 }
 
 #[cfg(feature = "truetype-text")]

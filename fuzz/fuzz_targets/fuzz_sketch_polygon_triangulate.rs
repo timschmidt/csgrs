@@ -29,7 +29,7 @@ fuzz_target!(|bytes: &[u8]| {
         points.push([x, y]);
     }
 
-    let sketch: Sketch<()> = Sketch::polygon(&points, None);
+    let sketch: Sketch<Option<()>> = Sketch::polygon(&points, None);
     for triangle in sketch.triangulate() {
         for point in triangle {
             assert!(point.x.is_finite());

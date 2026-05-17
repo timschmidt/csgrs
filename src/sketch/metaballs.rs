@@ -2,11 +2,12 @@
 
 use crate::float_types::{Real, tolerance};
 use crate::sketch::Sketch;
-use geo::{
-    CoordsIter, Geometry, GeometryCollection, LineString, Polygon as GeoPolygon, coord,
-};
 use hashbrown::HashMap;
+use hypercurve::Region2;
 use std::fmt::Debug;
+
+type Point = [Real; 2];
+type Segment = [Point; 2];
 
 impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// Create a 2D metaball iso-contour in XY plane from a set of 2D metaballs.
@@ -15,6 +16,16 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// - `iso_value`: threshold for the iso-surface.
     /// - `padding`: extra boundary beyond each ball's radius.
     /// - `metadata`: optional user metadata.
+    ///
+    /// This samples a Wyvill-style soft object field and extracts 2D
+    /// isocontours with the marching-squares analogue of Lorensen and Cline's
+    /// marching-cubes cell traversal. Closed contour loops are promoted
+    /// directly into `hypercurve::Region2` so CAD topology is carried by
+    /// hyper geometry instead of by a temporary `geo::Polygon`. See Wyvill,
+    /// McPheeters, and Wyvill, "Data structure for soft objects", *The Visual
+    /// Computer* 2(4), 1986, DOI: 10.1007/BF01900346, and Lorensen and Cline,
+    /// "Marching Cubes: A High Resolution 3D Surface Construction Algorithm",
+    /// SIGGRAPH 1987, DOI: 10.1145/37401.37422.
     pub fn metaballs(
         balls: &[(nalgebra::Point2<Real>, Real)],
         resolution: (usize, usize),
@@ -85,8 +96,12 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             }
         }
 
-        // 3) Marching squares -> line segments
-        let mut contours = Vec::<LineString<Real>>::new();
+        // 3) Marching squares -> native finite line segments.
+        //
+        // The samples are finite because marching squares is an extraction
+        // boundary for a sampled implicit field; closed stitched loops are
+        // promoted immediately to hypercurve contours below.
+        let mut contours = Vec::<Segment>::new();
 
         // Interpolator:
         let interpolate = |(x1, y1, v1): (Real, Real, Real),
@@ -150,53 +165,52 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
                 check_edge(4, 8, 2, 3);
                 check_edge(8, 1, 3, 0);
 
-                // we might get 2 intersection points => single line segment
-                // or 4 => two line segments, etc.
-                // For simplicity, we just store them in a small open polyline:
-                if pts.len() >= 2 {
-                    let mut pl = LineString::new(vec![]);
-                    for &(px, py) in &pts {
-                        pl.0.push(coord! {x: px, y: py});
-                    }
-                    // Do not close. These are just line segments from this cell.
-                    contours.push(pl);
+                // 2 intersections => one segment; 4 intersections in ambiguous
+                // cells => two segments. Keep these as native point pairs so
+                // `geo` is not the source representation for metaball topology.
+                for pair in pts.chunks_exact(2) {
+                    contours.push([[pair[0].0, pair[0].1], [pair[1].0, pair[1].1]]);
                 }
             }
         }
 
-        // 4) Convert these line segments into geo::LineStrings or geo::Polygons if closed.
-        //    We store them in a GeometryCollection.
-        let mut gc = GeometryCollection::default();
-
+        // 4) Stitch line segments and promote closed loops directly to Region2.
         let stitched = stitch(&contours);
+        let material = stitched
+            .iter()
+            .filter(|line| line.len() >= 4 && same_point(line[0], *line.last().unwrap()))
+            .filter_map(|line| Sketch::<M>::contour_from_points(line))
+            .collect::<Vec<_>>();
 
-        for pl in stitched {
-            if pl.is_closed() && pl.coords_count() >= 4 {
-                let polygon = GeoPolygon::new(pl, vec![]);
-                gc.0.push(Geometry::Polygon(polygon));
-            }
+        if material.is_empty() {
+            return Sketch::empty(metadata);
         }
 
-        Sketch::from_geo(gc, metadata)
+        Sketch::from_region(Region2::from_material_contours(material), metadata)
     }
 }
 
 // helper – quantise to avoid FP noise
 #[inline]
-fn key(x: Real, y: Real) -> (i64, i64) {
-    ((x * 1e8).round() as i64, (y * 1e8).round() as i64)
+fn key(point: Point) -> (i64, i64) {
+    (
+        (point[0] * 1e8).round() as i64,
+        (point[1] * 1e8).round() as i64,
+    )
+}
+
+fn same_point(a: Point, b: Point) -> bool {
+    key(a) == key(b)
 }
 
 /// stitch all 2-point segments into longer polylines,
 /// close them when the ends meet
-fn stitch(contours: &[LineString<Real>]) -> Vec<LineString<Real>> {
+fn stitch(contours: &[Segment]) -> Vec<Vec<Point>> {
     // adjacency map  endpoint -> (line index, end-id 0|1)
     let mut adj: HashMap<(i64, i64), Vec<(usize, usize)>> = HashMap::new();
-    for (idx, ls) in contours.iter().enumerate() {
-        let p0 = ls[0]; // first point
-        let p1 = ls[1]; // second point
-        adj.entry(key(p0.x, p0.y)).or_default().push((idx, 0));
-        adj.entry(key(p1.x, p1.y)).or_default().push((idx, 1));
+    for (idx, segment) in contours.iter().enumerate() {
+        adj.entry(key(segment[0])).or_default().push((idx, 0));
+        adj.entry(key(segment[1])).or_default().push((idx, 1));
     }
 
     let mut used = vec![false; contours.len()];
@@ -209,36 +223,52 @@ fn stitch(contours: &[LineString<Real>]) -> Vec<LineString<Real>> {
         used[start] = true;
 
         // current chain of points
-        let mut chain = contours[start].0.clone();
+        let mut chain = vec![contours[start][0], contours[start][1]];
 
-        // walk forward
-        loop {
-            let last = *chain.last().unwrap();
-            let Some(cands) = adj.get(&key(last.x, last.y)) else {
-                break;
-            };
-            let mut found = None;
-            for &(idx, end_id) in cands {
-                if used[idx] {
-                    continue;
-                }
-                used[idx] = true;
-                // choose the *other* endpoint
-                let other = contours[idx][1 - end_id];
-                chain.push(other);
-                found = Some(());
-                break;
-            }
-            if found.is_none() {
-                break;
-            }
-        }
+        extend_chain(&mut chain, contours, &adj, &mut used, true);
+        extend_chain(&mut chain, contours, &adj, &mut used, false);
 
-        // close if ends coincide
-        if chain.len() >= 3 && (chain[0] != *chain.last().unwrap()) {
+        if chain.len() >= 3 && !same_point(chain[0], *chain.last().unwrap()) {
             chain.push(chain[0]);
         }
-        chains.push(LineString::new(chain));
+        chains.push(chain);
     }
     chains
+}
+
+fn extend_chain(
+    chain: &mut Vec<Point>,
+    contours: &[Segment],
+    adj: &HashMap<(i64, i64), Vec<(usize, usize)>>,
+    used: &mut [bool],
+    forward: bool,
+) {
+    loop {
+        let endpoint = if forward {
+            *chain.last().unwrap()
+        } else {
+            chain[0]
+        };
+        let Some(cands) = adj.get(&key(endpoint)) else {
+            break;
+        };
+        let mut found = None;
+        for &(idx, end_id) in cands {
+            if used[idx] {
+                continue;
+            }
+            used[idx] = true;
+            let other = contours[idx][1 - end_id];
+            found = Some(other);
+            break;
+        }
+        let Some(other) = found else {
+            break;
+        };
+        if forward {
+            chain.push(other);
+        } else {
+            chain.insert(0, other);
+        }
+    }
 }

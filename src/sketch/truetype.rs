@@ -1,11 +1,8 @@
 //! Create `Sketch`s using ttf fonts
 
 use crate::float_types::{Real, tolerance};
-use crate::sketch::Sketch;
-use geo::{
-    Area, Geometry, GeometryCollection, LineString, Orient, Polygon as GeoPolygon,
-    orient::Direction,
-};
+use crate::sketch::{Sketch, wire_from_points};
+use hypercurve::Region2;
 use std::fmt::Debug;
 use ttf_parser::{Face, GlyphId, OutlineBuilder};
 use ttf_utils::Outline;
@@ -16,8 +13,14 @@ const CURVE_STEPS: usize = 8;
 impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// Create **2D text** (outlines only) in the XY plane using ttf-utils + ttf-parser.
     ///
-    /// Each glyph’s closed contours become one or more `Polygon`s (with holes if needed),
-    /// and any open contours become `LineString`s.
+    /// Each glyph's closed contours become native `hypercurve::Region2`
+    /// contours, and any open contours become native `hypercurve::CurveString2`
+    /// wires. The finite outline flattening is an API-edge tessellation of the
+    /// font's quadratic/cubic curves; storage is immediately promoted into
+    /// hyperreal-backed topology following Yap, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>). TrueType outline
+    /// semantics follow Apple Computer, *The TrueType Reference Manual*, 1995.
     ///
     /// # Arguments
     /// - `text`: the text string
@@ -26,11 +29,8 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// - `metadata`: optional metadata for the resulting `Sketch`
     ///
     /// # Returns
-    /// A `Sketch` whose `geometry` contains:
-    /// - One or more `Polygon`s for each glyph,
-    /// - A set of `LineString`s for any open contours (rare in standard fonts),
-    ///
-    /// all positioned in the XY plane at z=0.
+    /// A `Sketch` whose filled glyph outlines are stored as a native region and
+    /// whose rare open glyph contours are stored as native wires.
     pub fn text(text: &str, font_data: &[u8], scale: Real, metadata: M) -> Self {
         // 1) Parse the TTF font
         let face = match ttf_parser::Face::parse(font_data, 0) {
@@ -51,8 +51,9 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         let line_advance = line_advance(&face, font_scale);
         let tab_advance = default_advance * 4.0;
 
-        // 2) We'll collect all glyph geometry into one GeometryCollection
-        let mut geo_coll = GeometryCollection::default();
+        let mut material_contours = Vec::new();
+        let mut hole_contours = Vec::new();
+        let mut wires = Vec::new();
 
         // 3) A simple "pen" cursor for horizontal text layout
         let mut cursor_x = 0.0 as Real;
@@ -98,69 +99,28 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
                     outline.emit(&mut collector);
                     collector.finish_open_subpath();
 
-                    // Now `collector.contours` holds closed subpaths,
-                    // and `collector.open_contours` holds open polylines.
-
-                    // -------------------------
-                    // Handle all CLOSED subpaths (which might be outer shapes or holes):
-                    // -------------------------
-                    if !collector.contours.is_empty() {
-                        // We can have multiple outer loops and multiple inner loops (holes).
-                        let mut outer_rings = Vec::new();
-                        let mut hole_rings = Vec::new();
-
-                        for closed_pts in collector.contours {
-                            if closed_pts.len() < 3 {
-                                continue; // degenerate
-                            }
-
-                            let ring = LineString::from(closed_pts);
-
-                            // We need to measure signed area.  The `signed_area` method works on a Polygon,
-                            // so construct a temporary single-ring polygon:
-                            let tmp_poly = GeoPolygon::new(ring.clone(), vec![]);
-                            let area = tmp_poly.signed_area();
-
-                            // ttf files store outer loops as CW and inner loops as CCW
-                            if area < 0.0 {
-                                // This is an outer ring
-                                outer_rings.push(ring);
-                            } else {
-                                // This is a hole ring
-                                hole_rings.push(ring);
-                            }
+                    // TrueType stores outer loops clockwise and holes
+                    // counter-clockwise. We classify with signed area before
+                    // promoting rings into native hypercurve contours.
+                    for closed_pts in collector.contours {
+                        if closed_pts.len() < 3 {
+                            continue;
                         }
-
-                        // Typically, a TrueType glyph has exactly one outer ring and 0+ holes.
-                        // But in some tricky glyphs, you might see multiple separate outer rings.
-                        // We'll create one Polygon for the first outer ring with all holes,
-                        // then if there are additional outer rings, each becomes its own separate Polygon.
-                        if !outer_rings.is_empty() {
-                            let first_outer = outer_rings.remove(0);
-
-                            // The “primary” polygon: first outer + all holes
-                            let polygon_2d = GeoPolygon::new(first_outer, hole_rings);
-                            let oriented = polygon_2d.orient(Direction::Default);
-                            geo_coll.0.push(Geometry::Polygon(oriented));
-
-                            // If there are leftover outer rings, push them each as a separate polygon (no holes):
-                            // todo: test bounding boxes and sort holes appropriately
-                            for extra_outer in outer_rings {
-                                let poly_2d = GeoPolygon::new(extra_outer, vec![]);
-                                let oriented = poly_2d.orient(Direction::Default);
-                                geo_coll.0.push(Geometry::Polygon(oriented));
-                            }
+                        let area = signed_ring_area(&closed_pts);
+                        let Some(contour) = Sketch::<M>::contour_from_points(&closed_pts)
+                        else {
+                            continue;
+                        };
+                        if area < 0.0 {
+                            material_contours.push(contour);
+                        } else {
+                            hole_contours.push(contour);
                         }
                     }
 
-                    // -------------------------
-                    // Handle all OPEN subpaths => store as LineStrings:
-                    // -------------------------
                     for open_pts in collector.open_contours {
-                        if open_pts.len() >= 2 {
-                            geo_coll
-                                .0
-                                .push(Geometry::LineString(LineString::from(open_pts)));
+                        if let Some(wire) = wire_from_points(open_pts) {
+                            wires.push(wire);
                         }
                     }
                 }
@@ -174,9 +134,22 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             }
         }
 
-        // Build a 2D Sketch from the collected geometry
-        Sketch::from_geo(geo_coll, metadata)
+        Sketch::from_region_and_wires_with_origin(
+            Region2::new(material_contours, hole_contours),
+            wires,
+            metadata,
+            crate::vertex::Vertex::default(),
+            Sketch::<M>::prepare_origin_transform(crate::vertex::Vertex::default()),
+        )
     }
+}
+
+fn signed_ring_area(points: &[[Real; 2]]) -> Real {
+    points
+        .windows(2)
+        .map(|edge| edge[0][0] * edge[1][1] - edge[1][0] * edge[0][1])
+        .sum::<Real>()
+        * 0.5
 }
 
 fn glyph_advance(
@@ -290,11 +263,11 @@ struct OutlineFlattener {
     offset_y: Real,
 
     // We gather shapes: each "subpath" can be closed or open
-    contours: Vec<Vec<(Real, Real)>>,      // closed polygons
-    open_contours: Vec<Vec<(Real, Real)>>, // open polylines
+    contours: Vec<Vec<[Real; 2]>>,      // closed polygons
+    open_contours: Vec<Vec<[Real; 2]>>, // open polylines
 
-    current: Vec<(Real, Real)>, // points for the subpath
-    last_pt: (Real, Real),      // current "cursor" in flattening
+    current: Vec<[Real; 2]>, // points for the subpath
+    last_pt: [Real; 2],      // current "cursor" in flattening
     subpath_open: bool,
 }
 
@@ -307,17 +280,17 @@ impl OutlineFlattener {
             contours: Vec::new(),
             open_contours: Vec::new(),
             current: Vec::new(),
-            last_pt: (0.0, 0.0),
+            last_pt: [0.0, 0.0],
             subpath_open: false,
         }
     }
 
     /// Helper: transform TTF coordinates => final (x,y)
     #[inline]
-    fn tx(&self, x: f32, y: f32) -> (Real, Real) {
+    fn tx(&self, x: f32, y: f32) -> [Real; 2] {
         let sx = x as Real * self.scale + self.offset_x;
         let sy = y as Real * self.scale + self.offset_y;
-        (sx, sy)
+        [sx, sy]
     }
 
     /// Start a fresh subpath
@@ -345,17 +318,17 @@ impl OutlineFlattener {
 
     /// Flatten a line from `last_pt` to `(x,y)`.
     fn line_to_impl(&mut self, x: f32, y: f32) {
-        let (xx, yy) = self.tx(x, y);
-        self.current.push((xx, yy));
-        self.last_pt = (xx, yy);
+        let point = self.tx(x, y);
+        self.current.push(point);
+        self.last_pt = point;
     }
 
     /// Flatten a quadratic Bézier from last_pt -> (x1,y1) -> (x2,y2)
     fn quad_to_impl(&mut self, x1: f32, y1: f32, x2: f32, y2: f32) {
         let steps = CURVE_STEPS;
-        let (px0, py0) = self.last_pt;
-        let (px1, py1) = self.tx(x1, y1);
-        let (px2, py2) = self.tx(x2, y2);
+        let [px0, py0] = self.last_pt;
+        let [px1, py1] = self.tx(x1, y1);
+        let [px2, py2] = self.tx(x2, y2);
 
         // B(t) = (1 - t)^2 * p0 + 2(1 - t)t * cp + t^2 * p2
         for i in 1..=steps {
@@ -363,18 +336,18 @@ impl OutlineFlattener {
             let mt = 1.0 - t;
             let bx = mt * mt * px0 + 2.0 * mt * t * px1 + t * t * px2;
             let by = mt * mt * py0 + 2.0 * mt * t * py1 + t * t * py2;
-            self.current.push((bx, by));
+            self.current.push([bx, by]);
         }
-        self.last_pt = (px2, py2);
+        self.last_pt = [px2, py2];
     }
 
     /// Flatten a cubic Bézier from last_pt -> (x1,y1) -> (x2,y2) -> (x3,y3)
     fn curve_to_impl(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) {
         let steps = CURVE_STEPS;
-        let (px0, py0) = self.last_pt;
-        let (cx1, cy1) = self.tx(x1, y1);
-        let (cx2, cy2) = self.tx(x2, y2);
-        let (px3, py3) = self.tx(x3, y3);
+        let [px0, py0] = self.last_pt;
+        let [cx1, cy1] = self.tx(x1, y1);
+        let [cx2, cy2] = self.tx(x2, y2);
+        let [px3, py3] = self.tx(x3, y3);
 
         // B(t) = (1-t)^3 p0 + 3(1-t)^2 t c1 + 3(1-t) t^2 c2 + t^3 p3
         for i in 1..=steps {
@@ -384,9 +357,9 @@ impl OutlineFlattener {
             let t2 = t * t;
             let bx = mt2 * mt * px0 + 3.0 * mt2 * t * cx1 + 3.0 * mt * t2 * cx2 + t2 * t * px3;
             let by = mt2 * mt * py0 + 3.0 * mt2 * t * cy1 + 3.0 * mt * t2 * cy2 + t2 * t * py3;
-            self.current.push((bx, by));
+            self.current.push([bx, by]);
         }
-        self.last_pt = (px3, py3);
+        self.last_pt = [px3, py3];
     }
 
     /// Called when `close()` is invoked => store as a closed polygon.
@@ -397,7 +370,8 @@ impl OutlineFlattener {
             // If the last point != the first, close it.
             let first = self.current[0];
             let last = self.current[n - 1];
-            if (first.0 - last.0).abs() > tolerance() || (first.1 - last.1).abs() > tolerance()
+            if (first[0] - last[0]).abs() > tolerance()
+                || (first[1] - last[1]).abs() > tolerance()
             {
                 self.current.push(first);
             }

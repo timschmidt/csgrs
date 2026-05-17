@@ -5,35 +5,24 @@ use csgrs::float_types::{Real, tolerance};
 #[cfg(feature = "svg-io")]
 use csgrs::io::svg::FromSVG;
 use csgrs::mesh::Mesh;
+use csgrs::mesh::bsp::Node;
+use csgrs::mesh::connectivity::VertexIndexMap;
 use csgrs::mesh::plane::Plane;
 use csgrs::polygon::Polygon;
 use csgrs::sketch::Sketch;
 use csgrs::vertex::Vertex;
+use hashbrown::HashMap;
 use nalgebra::{Matrix4, Point3, Vector3};
 use proptest::prelude::*;
 use std::io::Cursor;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 fn finite_real() -> impl Strategy<Value = Real> {
-    #[cfg(feature = "f32")]
-    {
-        (-1.0e4f32..1.0e4f32).prop_filter("finite", |v| v.is_finite())
-    }
-    #[cfg(feature = "f64")]
-    {
-        (-1.0e4f64..1.0e4f64).prop_filter("finite", |v| v.is_finite())
-    }
+    (-1.0e4f64..1.0e4f64).prop_filter("finite", |v| v.is_finite())
 }
 
 fn positive_real() -> impl Strategy<Value = Real> {
-    #[cfg(feature = "f32")]
-    {
-        (1.0e-4f32..100.0f32).prop_filter("finite positive", |v| v.is_finite() && *v > 0.0)
-    }
-    #[cfg(feature = "f64")]
-    {
-        (1.0e-6f64..100.0f64).prop_filter("finite positive", |v| v.is_finite() && *v > 0.0)
-    }
+    (1.0e-6f64..100.0f64).prop_filter("finite positive", |v| v.is_finite() && *v > 0.0)
 }
 
 fn point3_strategy() -> impl Strategy<Value = Point3<Real>> {
@@ -129,6 +118,19 @@ fn assert_triangles_finite(triangles: &[[Point3<Real>; 3]]) {
     }
 }
 
+fn assert_slice_edges_on_plane(edges: &[[Vertex; 2]], plane: &Plane) {
+    for edge in edges {
+        for vertex in edge {
+            assert_vertex_finite(vertex);
+            assert_eq!(
+                plane.orient_point(&vertex.position),
+                csgrs::mesh::plane::COPLANAR,
+                "BSP slice edge vertex drifted off slicing plane: {vertex:?}"
+            );
+        }
+    }
+}
+
 fn simple_triangle(a: Point3<Real>, b: Point3<Real>, c: Point3<Real>) -> Option<Polygon<()>> {
     let ab = b - a;
     let ac = c - a;
@@ -144,6 +146,30 @@ fn simple_triangle(a: Point3<Real>, b: Point3<Real>, c: Point3<Real>) -> Option<
         ],
         (),
     ))
+}
+
+fn near_duplicate_triangle_mesh() -> Mesh<()> {
+    let normal = Vector3::z();
+    let near_origin = Point3::new(tolerance() * 0.25, 0.0, 0.0);
+    let polygons = vec![
+        Polygon::new(
+            vec![
+                Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
+                Vertex::new(Point3::new(1.0, 0.0, 0.0), normal),
+                Vertex::new(Point3::new(0.0, 1.0, 0.0), normal),
+            ],
+            (),
+        ),
+        Polygon::new(
+            vec![
+                Vertex::new(near_origin, normal),
+                Vertex::new(Point3::new(1.0, 1.0, 0.0), normal),
+                Vertex::new(Point3::new(0.0, 1.0, 0.0), normal),
+            ],
+            (),
+        ),
+    ];
+    Mesh::from_polygons(&polygons, ())
 }
 
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
@@ -454,6 +480,205 @@ fn adversarial_zero_normal_angle_regression_is_finite() {
 }
 
 #[test]
+fn adversarial_barycentric_interpolate_zero_weight_sum_and_normals_is_finite() {
+    let a = Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::zeros());
+    let b = Vertex::new(Point3::new(3.0, 0.0, 0.0), Vector3::zeros());
+    let c = Vertex::new(Point3::new(0.0, 3.0, 0.0), Vector3::zeros());
+
+    let interpolated = Vertex::barycentric_interpolate(&a, &b, &c, 1.0, -1.0, 0.0);
+
+    assert_vertex_finite(&interpolated);
+    assert!((interpolated.position.x - 1.0).abs() < tolerance());
+    assert!((interpolated.position.y - 1.0).abs() < tolerance());
+    assert_eq!(interpolated.normal, Vector3::z());
+}
+
+#[test]
+fn adversarial_weighted_average_uses_hyperreal_weight_normalization() {
+    let a = Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::zeros());
+    let b = Vertex::new(Point3::new(2.0, 0.0, 0.0), Vector3::zeros());
+    let c = Vertex::new(Point3::new(0.0, 2.0, 0.0), Vector3::zeros());
+
+    let averaged = Vertex::weighted_average(&[(a, 1.0), (b, -1.0), (c, 3.0)])
+        .expect("positive total weight should normalize");
+
+    assert_vertex_finite(&averaged);
+    assert!((averaged.position.x + 2.0 / 3.0).abs() < tolerance());
+    assert!((averaged.position.y - 2.0).abs() < tolerance());
+    assert_eq!(averaged.normal, Vector3::z());
+    assert!(Vertex::weighted_average(&[(a, 1.0), (b, -1.0)]).is_none());
+}
+
+#[test]
+fn adversarial_cotangent_weight_degenerate_triangle_falls_back() {
+    let center = Vertex::new(Point3::new(0.0, 0.0, 0.0), Vector3::z());
+    let neighbor = Vertex::new(Point3::new(1.0, 0.0, 0.0), Vector3::z());
+    let collinear = Vertex::new(Point3::new(0.5, 0.0, 0.0), Vector3::z());
+    let refs = [&center, &neighbor, &collinear];
+
+    let weight = Vertex::compute_cotangent_weight(&center, &neighbor, &refs);
+
+    assert_eq!(weight, 1.0);
+}
+
+#[test]
+fn adversarial_connectivity_lookup_uses_hyperreal_distance() {
+    let vertex = Vertex::new(Point3::new(1.0, 2.0, 3.0), Vector3::z());
+    let mut adjacency = HashMap::new();
+    adjacency.insert(7usize, vec![1, 2, 3]);
+    let mut positions = HashMap::new();
+    positions.insert(7usize, Point3::new(1.0 + tolerance() * 0.25, 2.0, 3.0));
+    positions.insert(9usize, Point3::new(10.0, 10.0, 10.0));
+
+    let (valence, regularity) =
+        vertex.analyze_connectivity_by_position(&adjacency, &positions, tolerance());
+
+    assert_eq!(valence, 3);
+    assert!(regularity.is_finite());
+
+    let outside = Vertex::new(Point3::new(1.0 + tolerance() * 4.0, 2.0, 3.0), Vector3::z());
+    let (valence, regularity) =
+        outside.analyze_connectivity_by_position(&adjacency, &positions, tolerance());
+    assert_eq!((valence, regularity), (0, 0.0));
+}
+
+#[test]
+fn adversarial_bsp_slice_intersections_remain_hyperreal_coplanar() {
+    let mesh: Mesh<()> = Mesh::cube(2.0, ());
+    let plane = Plane::from_normal(Vector3::new(1.0, -2.0, 0.5), 0.0);
+    let node = Node::from_polygons(&mesh.polygons);
+
+    let (_coplanar, edges) = node.slice(&plane);
+
+    assert!(!edges.is_empty(), "central oblique slice should cut the cube");
+    assert_slice_edges_on_plane(&edges, &plane);
+}
+
+#[test]
+fn adversarial_triangulate_repairs_t_junction_with_hyperreal_projection() {
+    let normal = Vector3::z();
+    let t_point = Point3::new(1.0, 0.0, 0.0);
+    let polygons = vec![
+        Polygon::new(
+            vec![
+                Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
+                Vertex::new(Point3::new(2.0, 0.0, 0.0), normal),
+                Vertex::new(Point3::new(2.0, 1.0, 0.0), normal),
+                Vertex::new(Point3::new(0.0, 1.0, 0.0), normal),
+            ],
+            (),
+        ),
+        Polygon::new(
+            vec![
+                Vertex::new(t_point, normal),
+                Vertex::new(Point3::new(1.5, -0.5, 0.0), normal),
+                Vertex::new(Point3::new(0.5, -0.5, 0.0), normal),
+            ],
+            (),
+        ),
+    ];
+
+    let triangulated = Mesh::from_polygons(&polygons, ()).triangulate();
+    assert_mesh_sane(&triangulated);
+}
+
+#[test]
+fn adversarial_polygon_triangulate_filters_near_degenerate_hyperreal_winding() {
+    let normal = Vector3::z();
+    let polygon = Polygon::new(
+        vec![
+            Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
+            Vertex::new(Point3::new(1.0, 0.0, 0.0), normal),
+            Vertex::new(Point3::new(1.0, tolerance() * 0.25, 0.0), normal),
+            Vertex::new(Point3::new(0.0, 1.0, 0.0), normal),
+        ],
+        (),
+    );
+
+    let triangles = polygon.triangulate();
+
+    for triangle in triangles {
+        let winding = (triangle[1].position - triangle[0].position)
+            .cross(&(triangle[2].position - triangle[0].position));
+        assert!(
+            winding.norm_squared() >= tolerance() * tolerance(),
+            "near-degenerate triangle should be filtered: {triangle:?}"
+        );
+        assert!(
+            winding.dot(&normal) >= 0.0,
+            "triangle winding should be aligned with polygon normal: {triangle:?}"
+        );
+    }
+}
+
+#[test]
+fn adversarial_vertex_index_map_uses_hyperreal_distance() {
+    let mut map = VertexIndexMap::new(tolerance());
+    let base = Point3::new(4.0, -2.0, 9.0);
+    let near = Point3::new(4.0 + tolerance() * 0.25, -2.0, 9.0);
+    let far = Point3::new(4.0 + tolerance() * 4.0, -2.0, 9.0);
+    let nonfinite = Point3::new(Real::NAN, -2.0, 9.0);
+
+    let base_idx = map.get_or_create_index(base);
+    assert_eq!(map.find_index(&near), Some(base_idx));
+    assert_eq!(map.get_or_create_index(near), base_idx);
+
+    let far_idx = map.get_or_create_index(far);
+    assert_ne!(far_idx, base_idx);
+    assert_eq!(map.find_index(&nonfinite), None);
+}
+
+#[test]
+fn adversarial_polyline_intersection_deduplicates_segment_junction_hit() {
+    let mesh: Mesh<()> = Mesh::cube(2.0, ());
+    let hits = mesh.intersect_polyline(&[
+        Point3::new(-2.0, 0.0, 0.0),
+        Point3::new(-1.0, 0.0, 0.0),
+        Point3::new(2.0, 0.0, 0.0),
+    ]);
+
+    assert!(
+        hits.len() <= 2,
+        "surface hit at polyline segment junction should be deduplicated: {hits:?}"
+    );
+    for window in hits.windows(2) {
+        assert!((window[0] - window[1]).norm() >= tolerance());
+    }
+}
+
+#[test]
+#[cfg(feature = "obj-io")]
+fn adversarial_obj_export_deduplicates_vertices_with_hyperreal_distance() {
+    let obj = near_duplicate_triangle_mesh().to_obj("near_duplicate");
+    let vertex_lines = obj.lines().filter(|line| line.starts_with("v ")).count();
+    let normal_lines = obj.lines().filter(|line| line.starts_with("vn ")).count();
+
+    assert_eq!(
+        vertex_lines, 4,
+        "near-identical boundary vertices should be coalesced during OBJ export:\n{obj}"
+    );
+    assert_eq!(
+        normal_lines, 1,
+        "identical normals should be coalesced during OBJ export:\n{obj}"
+    );
+}
+
+#[test]
+#[cfg(feature = "amf-io")]
+fn adversarial_amf_export_deduplicates_vertices_with_hyperreal_distance() {
+    let amf = near_duplicate_triangle_mesh().to_amf("near_duplicate", "millimeter");
+    let vertex_tags = amf
+        .lines()
+        .filter(|line| line.trim_start().starts_with("<vertex id="))
+        .count();
+
+    assert_eq!(
+        vertex_tags, 4,
+        "near-identical boundary vertices should be coalesced during AMF export:\n{amf}"
+    );
+}
+
+#[test]
 #[cfg(feature = "obj-io")]
 fn adversarial_obj_zero_face_index_regression_is_error_not_panic() {
     let obj = "v 0 0 0\nv 1 0 0\nv 0 1 0\nf 0 1 2\n";
@@ -596,6 +821,90 @@ proptest! {
     }
 
     #[test]
+    fn proptest_barycentric_interpolation_stays_finite(
+        a in point3_strategy(),
+        b in point3_strategy(),
+        c in point3_strategy(),
+        u in -10.0f64..10.0f64,
+        v in -10.0f64..10.0f64,
+        w in -10.0f64..10.0f64,
+    ) {
+        let va = Vertex::new(a, Vector3::zeros());
+        let vb = Vertex::new(b, Vector3::zeros());
+        let vc = Vertex::new(c, Vector3::zeros());
+        let interpolated = Vertex::barycentric_interpolate(&va, &vb, &vc, u as Real, v as Real, w as Real);
+        assert_vertex_finite(&interpolated);
+    }
+
+    #[test]
+    fn proptest_weighted_average_stays_finite_when_defined(
+        a in point3_strategy(),
+        b in point3_strategy(),
+        c in point3_strategy(),
+        wa in -10.0f64..10.0f64,
+        wb in -10.0f64..10.0f64,
+        wc in -10.0f64..10.0f64,
+    ) {
+        let va = Vertex::new(a, Vector3::zeros());
+        let vb = Vertex::new(b, Vector3::zeros());
+        let vc = Vertex::new(c, Vector3::zeros());
+        if let Some(averaged) = Vertex::weighted_average(&[(va, wa as Real), (vb, wb as Real), (vc, wc as Real)]) {
+            assert_vertex_finite(&averaged);
+        }
+    }
+
+    #[test]
+    fn proptest_cotangent_weight_stays_finite(
+        a in point3_strategy(),
+        b in point3_strategy(),
+        c in point3_strategy(),
+    ) {
+        let center = Vertex::new(a, Vector3::z());
+        let neighbor = Vertex::new(b, Vector3::z());
+        let opposite = Vertex::new(c, Vector3::z());
+        let refs = [&center, &neighbor, &opposite];
+        let weight = Vertex::compute_cotangent_weight(&center, &neighbor, &refs);
+        prop_assert!(weight.is_finite());
+    }
+
+    #[test]
+    fn proptest_connectivity_lookup_by_position_stays_finite(
+        point in point3_strategy(),
+        dx in -1.0e-5f64..1.0e-5f64,
+        dy in -1.0e-5f64..1.0e-5f64,
+        dz in -1.0e-5f64..1.0e-5f64,
+    ) {
+        let vertex = Vertex::new(point, Vector3::z());
+        let mut adjacency = HashMap::new();
+        adjacency.insert(0usize, vec![1, 2]);
+        let mut positions = HashMap::new();
+        positions.insert(0usize, Point3::new(point.x + dx as Real, point.y + dy as Real, point.z + dz as Real));
+
+        let (_valence, regularity) =
+            vertex.analyze_connectivity_by_position(&adjacency, &positions, tolerance() * 32.0);
+        prop_assert!(regularity.is_finite());
+    }
+
+    #[test]
+    fn proptest_vertex_index_map_coalesces_only_within_tolerance(
+        point in point3_strategy(),
+        offset in -2.0f64..2.0f64,
+    ) {
+        let epsilon = tolerance() * 16.0;
+        let mut map = VertexIndexMap::new(epsilon);
+        let base_idx = map.get_or_create_index(point);
+        let candidate = Point3::new(point.x + offset as Real * epsilon, point.y, point.z);
+        let candidate_idx = map.get_or_create_index(candidate);
+
+        if offset.abs() < 0.5 {
+            prop_assert_eq!(candidate_idx, base_idx);
+        } else if offset.abs() > 1.25 {
+            prop_assert_ne!(candidate_idx, base_idx);
+        }
+        prop_assert!(map.vertex_count() >= 1);
+    }
+
+    #[test]
     fn proptest_mesh_bytecode_fuzz_style_harness(bytes in prop::collection::vec(any::<u8>(), 0..256)) {
         run_mesh_bytecode(&bytes);
     }
@@ -669,6 +978,65 @@ proptest! {
             prop_assert!(quality.max_angle.is_finite());
             prop_assert!(quality.quality_score.is_finite());
         }
+    }
+
+    #[test]
+    fn proptest_bsp_slice_edges_are_coplanar_after_hyperreal_intersection(
+        size in positive_real(),
+        nx in -8.0f64..8.0f64,
+        ny in -8.0f64..8.0f64,
+        nz in -8.0f64..8.0f64,
+        offset_fraction in -0.25f64..0.25f64,
+    ) {
+        let normal = Vector3::new(nx as Real, ny as Real, nz as Real);
+        let normal_len = normal.norm();
+        prop_assume!(normal_len > tolerance() * 128.0 && normal_len.is_finite());
+
+        let mesh: Mesh<()> = Mesh::cube(size, ());
+        let offset = offset_fraction as Real * size * normal_len;
+        let plane = Plane::from_normal(normal, offset);
+        let node = Node::from_polygons(&mesh.polygons);
+        let (_coplanar, edges) = node.slice(&plane);
+
+        assert_slice_edges_on_plane(&edges, &plane);
+    }
+
+    #[test]
+    fn proptest_triangulate_repairs_axis_aligned_t_junction(
+        width in 1.0f64..100.0f64,
+        height in 1.0f64..100.0f64,
+        t in 0.05f64..0.95f64,
+        drop in 0.1f64..10.0f64,
+    ) {
+        let width = width as Real;
+        let height = height as Real;
+        let t = t as Real;
+        let drop = drop as Real;
+        let normal = Vector3::z();
+        let t_point = Point3::new(width * t, 0.0, 0.0);
+        let polygons = vec![
+            Polygon::new(
+                vec![
+                    Vertex::new(Point3::new(0.0, 0.0, 0.0), normal),
+                    Vertex::new(Point3::new(width, 0.0, 0.0), normal),
+                    Vertex::new(Point3::new(width, height, 0.0), normal),
+                    Vertex::new(Point3::new(0.0, height, 0.0), normal),
+                ],
+                (),
+            ),
+            Polygon::new(
+                vec![
+                    Vertex::new(t_point, normal),
+                    Vertex::new(Point3::new((width * t + width).min(width * 1.5), -drop, 0.0), normal),
+                    Vertex::new(Point3::new((width * t - width).max(-width * 0.5), -drop, 0.0), normal),
+                ],
+                (),
+            ),
+        ];
+
+        let triangulated = Mesh::from_polygons(&polygons, ()).triangulate();
+        assert_mesh_sane(&triangulated);
+        prop_assert!(!triangulated.polygons.is_empty());
     }
 
     #[test]
@@ -842,19 +1210,6 @@ proptest! {
     }
 
     #[test]
-    #[cfg(feature = "nurbs")]
-    fn proptest_nurbs_rectangle_to_sketch_and_mesh(width in positive_real(), height in positive_real(), depth in positive_real()) {
-        use csgrs::nurbs::Nurbs;
-
-        let nurbs: Nurbs<()> = Nurbs::rectangle(width, height, ());
-        let sketch = nurbs.to_sketch();
-        assert_triangles_finite(&sketch.triangulate());
-
-        let mesh = nurbs.extrude_vector(Vector3::new(0.0, 0.0, depth));
-        assert_mesh_sane(&mesh);
-    }
-
-    #[test]
     #[cfg(feature = "chull-io")]
     fn proptest_convex_hull_and_minkowski_are_finite(size_a in positive_real(), size_b in positive_real(), dx in -10.0f64..10.0f64) {
         let a: Mesh<()> = Mesh::cube(size_a, ());
@@ -895,10 +1250,13 @@ proptest! {
             Point3::new(wiggle as Real, 0.0, z1 as Real),
         ];
         let hits = mesh.intersect_polyline(&polyline);
-        for hit in hits {
+        for hit in &hits {
             prop_assert!(hit.x.is_finite());
             prop_assert!(hit.y.is_finite());
             prop_assert!(hit.z.is_finite());
+        }
+        for window in hits.windows(2) {
+            prop_assert!((window[0] - window[1]).norm() >= tolerance());
         }
     }
 }

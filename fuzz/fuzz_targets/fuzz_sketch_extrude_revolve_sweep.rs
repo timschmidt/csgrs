@@ -19,7 +19,7 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     value.clamp(-1.0e3, 1.0e3) as Real
 }
 
-fn assert_mesh_finite(mesh: &Mesh<()>) {
+fn assert_mesh_finite<M: Clone + Send + Sync + std::fmt::Debug>(mesh: &Mesh<M>) {
     for vertex in mesh.vertices() {
         assert!(vertex.position.x.is_finite());
         assert!(vertex.position.y.is_finite());
@@ -37,7 +37,7 @@ fuzz_target!(|bytes: &[u8]| {
     let mut idx = 0usize;
     let width = decode_real(bytes, &mut idx).abs().max(tolerance());
     let height = decode_real(bytes, &mut idx).abs().max(tolerance());
-    let sketch = Sketch::rectangle(width, height, None);
+    let sketch: Sketch<Option<()>> = Sketch::rectangle(width, height, None);
     let tag = bytes[idx % bytes.len()] % 4;
     idx += 1;
     let mesh = match tag {
@@ -52,7 +52,7 @@ fuzz_target!(|bytes: &[u8]| {
             let segments = (bytes[idx % bytes.len()] as usize % 16) + 2;
             match sketch.translate(width, 0.0, 0.0).revolve(angle, segments) {
                 Ok(mesh) => mesh,
-                Err(_) => Mesh::new(),
+                Err(_) => Mesh::empty(None),
             }
         },
         _ => {
