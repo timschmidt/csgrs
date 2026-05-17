@@ -1279,6 +1279,44 @@ impl Real {
         Real::new(Rational::signed_product_sum(positive_terms, rational_terms))
     }
 
+    /// Return a fused exact-rational product sum using a carried shared-scale
+    /// certificate.
+    ///
+    /// This is the denominator-specialized counterpart to
+    /// [`Self::exact_rational_signed_product_sum_known_exact`]. It is intended
+    /// for geometric objects that already retained a common reduced
+    /// denominator fact across all factors. `Rational` still validates the
+    /// certificate before using the faster schedule, so stale or over-broad
+    /// object facts fall back to the generic exact reducer instead of becoming
+    /// arithmetic assumptions. This follows Yap's exact-geometric-computation
+    /// rule to preserve object structure until a certified arithmetic package
+    /// can consume it; see Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997), and the delayed fraction
+    /// normalization strategy of Bareiss, "Sylvester's Identity and Multistep
+    /// Integer-Preserving Gaussian Elimination," *Mathematics of Computation*
+    /// 22.103 (1968).
+    pub fn exact_rational_signed_product_sum_known_shared_denominator<
+        const TERMS: usize,
+        const FACTORS: usize,
+    >(
+        positive_terms: [bool; TERMS],
+        terms: [[&Real; FACTORS]; TERMS],
+    ) -> Real {
+        let rational_terms = terms.map(|term| term.map(|factor| &factor.rational));
+        if let Some(value) =
+            Rational::signed_product_sum_shared_denominator(positive_terms, rational_terms)
+        {
+            crate::trace_dispatch!("real", "product_sum", "exact-rational-known-common-scale");
+            return Real::new(value);
+        }
+        crate::trace_dispatch!(
+            "real",
+            "product_sum",
+            "exact-rational-known-common-scale-fallback"
+        );
+        Real::new(Rational::signed_product_sum(positive_terms, rational_terms))
+    }
+
     /// Return a fixed-size signed sum of products while preserving its shape.
     ///
     /// This is the general expression-layer counterpart to the matrix dot

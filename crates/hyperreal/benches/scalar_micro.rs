@@ -493,6 +493,10 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Computes an exact rational six-term signed product sum with mixed denominators.",
             },
             BenchDoc {
+                name: "signed_product_sum_common_scale_6x2",
+                description: "Computes an exact rational six-term signed product sum through the carried common-scale reducer.",
+            },
+            BenchDoc {
                 name: "signed_product_sum_sparse_single_6x2",
                 description: "Computes a sparse exact rational six-term signed product sum with one active product.",
             },
@@ -1225,6 +1229,33 @@ fn bench_exact_product_sums(c: &mut Criterion) {
             ))
         })
     });
+
+    let common_scale_terms = [
+        [real(7, 15), real(13, 15)],
+        [real(8, 15), real(-2, 15)],
+        [real(11, 15), real(14, 15)],
+        [real(-4, 15), real(7, 15)],
+        [real(2, 15), real(-8, 15)],
+        [real(13, 15), real(11, 15)],
+    ];
+    group.bench_function("signed_product_sum_common_scale_6x2", |b| {
+        b.iter(|| {
+            black_box(
+                Real::exact_rational_signed_product_sum_known_shared_denominator(
+                    [true, false, true, true, false, true],
+                    [
+                        [&common_scale_terms[0][0], &common_scale_terms[0][1]],
+                        [&common_scale_terms[1][0], &common_scale_terms[1][1]],
+                        [&common_scale_terms[2][0], &common_scale_terms[2][1]],
+                        [&common_scale_terms[3][0], &common_scale_terms[3][1]],
+                        [&common_scale_terms[4][0], &common_scale_terms[4][1]],
+                        [&common_scale_terms[5][0], &common_scale_terms[5][1]],
+                    ],
+                ),
+            )
+        })
+    });
+
     group.bench_function("signed_product_sum_sparse_single_6x2", |b| {
         b.iter(|| {
             black_box(Real::exact_rational_signed_product_sum(

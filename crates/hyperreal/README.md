@@ -6,10 +6,33 @@
 `hyperreal` provides exact rational arithmetic, symbolic real values, and lazy
 computable real approximation.
 
-It is useful when code needs more information than an `f64` can provide:
-structural sign facts, exact zero/nonzero knowledge, exact rational access,
-bounded sign refinement, and recognizable forms such as `pi`, `e`, square
-roots, logarithms, and rational trig constants.
+It is the scalar substrate for the Hyper ecosystem. Higher crates use it when
+they need more information than an `f64` can provide: structural sign facts,
+exact zero/nonzero knowledge, exact rational access, bounded sign refinement,
+and recognizable forms such as `pi`, `e`, square roots, logarithms, and rational
+trig constants.
+
+## Hyper Stack Links
+
+- [hyperreal](../hyperreal/README.md): exact rational, symbolic, and computable
+  real arithmetic.
+- [hyperlimit](../hyperlimit/README.md): exact predicate policy and certified
+  geometric decisions.
+- [hyperlattice](../hyperlattice/README.md): small exact vector, matrix, and
+  transform algebra.
+- [hypercurve](../hypercurve/README.md): planar curve, contour, region, and
+  boolean geometry.
+- [hypertri](../hypertri/README.md): exact polygon triangulation and constrained
+  Delaunay topology.
+- [hypermesh](../hypermesh/README.md): 3D mesh boolean experiments and the
+  future exact-aware mesh-topology layer.
+- [hypersolve](../hypersolve/README.md): experimental exact-aware solver layer.
+- [hyperdrc](../hyperdrc/README.md): PCB design-readiness checks over exact-aware
+  geometry adapters.
+- [hyperphysics](../hyperphysics/README.md): placeholder physics-domain crate
+  for the exact geometry stack.
+- [csgrs](../csgrs/readme.md): constructive solid geometry and polygon boolean
+  engine used by HyperDRC and available as an interop target.
 
 ## Numeric Model
 
@@ -32,7 +55,7 @@ symbolic information available before approximation:
 - `Simple`: a small Lisp-like expression parser, enabled by the optional
   `simple` feature.
 
-## Relationship to Other Crates
+## Role In The Hyper Ecosystem
 
 - `hyperlattice` uses `hyperreal::Real` as its default exact/symbolic scalar
   backend. It forwards `hyperreal` structural facts through its `Scalar` type
@@ -40,6 +63,9 @@ symbolic information available before approximation:
 - `hyperlimit` can consume `hyperreal::Real` directly, using structural facts,
   exact scalar arithmetic, and bounded sign refinement. It must not ask
   `hyperreal` for primitive-float predicate decisions.
+- `hypercurve`, `hypertri`, `hypermesh`, and `hyperdrc` depend on the lower
+  layers preserving exact input structure so topology and manufacturing
+  decisions are not accidentally made from display approximations.
 - `hypersolve` is the experimental solver layer. Its current direction is to
   evaluate constraints through symbolic references to variables, reuse
   reductions across iterations, and route repeated residual and geometry
@@ -107,12 +133,25 @@ and forms such as `pi`, `e`, selected roots, logarithms, and trig constants
 carry symbolic classes. Computable expression graphs provide lazy
 approximation when symbolic structure is no longer enough.
 
+In Yap's exact geometric computation sense, exactness is not eager
+canonicalization of every scalar expression. The crate preserves enough
+certified structure to answer later questions exactly, select exact reducers,
+or report explicit uncertainty. Primitive-float views are named lossy edge
+exports, not hidden predicate fallbacks.
+
 This does not make real arithmetic free, and it is not a full computer algebra
 system. Some equality questions remain undecidable without more context, and
 some expressions eventually require refinement. The difference is that callers
 can ask better questions before rounding: known zero or nonzero, structural
 sign, exact-rational access, conservative magnitude, or bounded sign
 refinement. That is the niche this stack targets.
+
+Traditional robust-geometry stacks often choose between fast floating filters
+with exact fallbacks, full rational canonicalization, or domain-specific
+epsilon rules. `hyperreal` supports the Hyper stack by keeping those choices
+visible. It preserves exact rationals and recognizable symbolic forms, exposes
+cheap facts before expensive refinement, and makes lossy primitive-float export
+an explicit API edge rather than a hidden shortcut.
 
 ## Avoiding Numerical Explosion
 

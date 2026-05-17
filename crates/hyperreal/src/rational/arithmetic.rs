@@ -601,6 +601,79 @@ impl Rational {
         ))
     }
 
+    /// Evaluate a signed product sum when every live factor shares one
+    /// reduced denominator.
+    ///
+    /// The caller is expected to have carried an object-level common-scale
+    /// certificate, but this method still validates the denominator fact before
+    /// using it. Returning `None` means the certificate was too weak for this
+    /// particular product shape, so callers should fall back to
+    /// [`Self::signed_product_sum`]. Keeping the validation in `Rational`
+    /// preserves scalar storage ownership while giving geometric kernels the
+    /// denominator-specialized schedule requested by Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997). The
+    /// final delayed reduction is the same Bareiss-style fraction-delay idea
+    /// used by the generic reducer; see Bareiss, "Sylvester's Identity and
+    /// Multistep Integer-Preserving Gaussian Elimination," *Mathematics of
+    /// Computation* 22.103 (1968).
+    pub fn signed_product_sum_shared_denominator<const TERMS: usize, const FACTORS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Self; FACTORS]; TERMS],
+    ) -> Option<Self> {
+        debug_assert!(FACTORS > 0);
+        let mut signs = [NoSign; TERMS];
+        let mut nonzero_count = 0_usize;
+        let mut shared_denominator = None::<&BigUint>;
+        for i in 0..TERMS {
+            let sign = Self::product_term_sign(positive_terms[i], terms[i]);
+            if sign == NoSign {
+                signs[i] = sign;
+                continue;
+            }
+            nonzero_count += 1;
+            signs[i] = sign;
+            for factor in terms[i] {
+                match shared_denominator {
+                    None => shared_denominator = Some(&factor.denominator),
+                    Some(shared) if shared == &factor.denominator => {}
+                    Some(_) => return None,
+                }
+            }
+        }
+        if nonzero_count == 0 {
+            crate::trace_dispatch!(
+                "rational",
+                "product_sum",
+                "shared-factor-denominator-all-zero"
+            );
+            return Some(Self::zero());
+        }
+        let exponent = u32::try_from(FACTORS).ok()?;
+        let denominator = shared_denominator
+            .expect("nonzero product sum has a live factor denominator")
+            .pow(exponent);
+        let mut positive = BigUint::ZERO;
+        let mut negative = BigUint::ZERO;
+        for i in 0..TERMS {
+            let sign = signs[i];
+            if sign == NoSign {
+                continue;
+            }
+            let magnitude = Self::product_term_magnitude(terms[i]);
+            match sign {
+                Plus => positive += magnitude,
+                Minus => negative += magnitude,
+                NoSign => {}
+            }
+        }
+        crate::trace_dispatch!("rational", "product_sum", "shared-factor-denominator");
+        Some(Self::from_signed_magnitude_difference(
+            positive,
+            negative,
+            denominator,
+        ))
+    }
+
     /// Evaluate a fixed-size signed sum of products exactly.
     ///
     /// Each row in `terms` is multiplied, then added or subtracted according to
@@ -2291,6 +2364,51 @@ mod tests {
             ),
             &(&terms[0][0] * &terms[0][1]) - &(&terms[1][0] * &terms[1][1])
                 + &(&terms[2][0] * &terms[2][1])
+        );
+    }
+
+    #[test]
+    fn signed_product_sum_shared_denominator_consumes_common_scale() {
+        let terms = [
+            [
+                Rational::fraction(7, 15).unwrap(),
+                Rational::fraction(13, 15).unwrap(),
+            ],
+            [
+                Rational::fraction(8, 15).unwrap(),
+                Rational::fraction(-2, 15).unwrap(),
+            ],
+            [
+                Rational::fraction(11, 15).unwrap(),
+                Rational::fraction(14, 15).unwrap(),
+            ],
+        ];
+        let expected = &(&terms[0][0] * &terms[0][1]) - &(&terms[1][0] * &terms[1][1])
+            + &(&terms[2][0] * &terms[2][1]);
+
+        assert_eq!(
+            Rational::signed_product_sum_shared_denominator(
+                [true, false, true],
+                [
+                    [&terms[0][0], &terms[0][1]],
+                    [&terms[1][0], &terms[1][1]],
+                    [&terms[2][0], &terms[2][1]],
+                ],
+            ),
+            Some(expected)
+        );
+
+        let mixed = Rational::fraction(1, 7).unwrap();
+        assert_eq!(
+            Rational::signed_product_sum_shared_denominator(
+                [true, false, true],
+                [
+                    [&terms[0][0], &terms[0][1]],
+                    [&terms[1][0], &mixed],
+                    [&terms[2][0], &terms[2][1]],
+                ],
+            ),
+            None
         );
     }
 
