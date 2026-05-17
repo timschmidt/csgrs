@@ -5,12 +5,6 @@ earcut-style polygon triangulation and incremental Delaunay / constrained
 Delaunay topology, with irreversible topology decisions routed through exact
 predicate helpers over `hyperreal::Real`.
 
-In the Hyper ecosystem, `hypertri` is the straight-edge topology layer.
-`hypercurve` owns curved contours and regions, `hyperlimit` supplies exact
-orientation/in-circle predicates, and `hypertri` turns line-only polygon and
-PSLG inputs into validated triangles without treating primitive floats as
-topology values.
-
 The crate treats `f64` as an interop boundary. Finite `f64` coordinates are
 validated and lifted into exact hyperreal-backed coordinates before topology is
 decided. The default feature set is intentionally core-only: enable each
@@ -24,28 +18,29 @@ entry points you need.
 The deployed WASM app is available at
 <https://timschmidt.github.io/hypertri/>.
 
-## Hyper Ecosystem Role And Links
+## Hyper Ecosystem
 
-Stack links:
+`hypertri` is the straight-edge topology layer: it turns line-only polygon and
+PSLG inputs into validated triangles using exact predicates from `hyperlimit`.
 
-- [hyperreal](../hyperreal/README.md): exact rational, symbolic, and computable
+- [hyperreal](https://github.com/timschmidt/hyperreal): exact rational, symbolic, and computable
   real arithmetic.
-- [hyperlimit](../hyperlimit/README.md): exact predicate policy and certified
+- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate policy and certified
   geometric decisions.
-- [hyperlattice](../hyperlattice/README.md): small exact vector, matrix, and
+- [hyperlattice](https://github.com/timschmidt/hyperlattice): small exact vector, matrix, and
   transform algebra.
-- [hypercurve](../hypercurve/README.md): planar curve, contour, region, and
+- [hypercurve](https://github.com/timschmidt/hypercurve): planar curve, contour, region, and
   boolean geometry.
-- [hypertri](../hypertri/README.md): exact polygon triangulation and constrained
+- [hypertri](https://github.com/timschmidt/hypertri): exact polygon triangulation and constrained
   Delaunay topology.
-- [hypermesh](../hypermesh/README.md): 3D mesh boolean experiments and the
+- [hypermesh](https://github.com/timschmidt/boolmesh): 3D mesh boolean experiments and the
   future exact-aware mesh-topology layer.
-- [hypersolve](../hypersolve/README.md): experimental exact-aware solver layer.
-- [hyperdrc](../hyperdrc/README.md): PCB design-readiness checks over exact-aware
+- [hypersolve](https://github.com/timschmidt/hypersolve): experimental exact-aware solver layer.
+- [hyperdrc](https://github.com/timschmidt/hyperdrc): PCB design-readiness checks over exact-aware
   geometry adapters.
-- [hyperphysics](../hyperphysics/README.md): placeholder physics-domain crate
+- [hyperphysics](https://github.com/timschmidt/hyperphysics): placeholder physics-domain crate
   for the exact geometry stack.
-- [csgrs](../csgrs/readme.md): constructive solid geometry and polygon boolean
+- [csgrs](https://github.com/timschmidt/csgrs): constructive solid geometry and polygon boolean
   engine used by HyperDRC and available as an interop target.
 
 ## Current Status
