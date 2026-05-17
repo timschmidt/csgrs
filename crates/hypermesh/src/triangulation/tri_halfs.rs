@@ -1,8 +1,9 @@
 //--- Copyright (C) 2025 Saki Komikado <komietty@gmail.com>,
 //--- This Source Code Form is subject to the terms of the Mozilla Public License v.2.0.
 
-use crate::{next_of, Half, Vec3u};
-#[cfg(feature = "rayon")] use rayon::prelude::*;
+use crate::{Half, Vec3u, next_of};
+#[cfg(feature = "rayon")]
+use rayon::prelude::*;
 
 const REMOVE_FLAG: usize = usize::MAX - 1;
 
@@ -32,7 +33,9 @@ pub fn tri_halfs_single(ts: &[Vec3u]) -> Vec<Half> {
     is.sort_by_key(|&i| ky[i]);
 
     let mut ini = 0;
-    for i in 0..ne { ini = step(&mut is, &mut hs, i, ini); }
+    for i in 0..ne {
+        ini = step(&mut is, &mut hs, i, ini);
+    }
 
     for i in 0..ne {
         let i0 = is[i];
@@ -49,11 +52,17 @@ pub fn tri_halfs_single(ts: &[Vec3u]) -> Vec<Half> {
     // reorder halfedges: step 1
     for t in 0..nt {
         let i = t * 3;
-        let f = [hs[i].clone(), hs[i + 1].clone(), hs[i + 2].clone(), ];
+        let f = [hs[i].clone(), hs[i + 1].clone(), hs[i + 2].clone()];
         let mut mini = 0;
-        if f[1].tail < f[mini].tail { mini = 1; }
-        if f[2].tail < f[mini].tail { mini = 2; }
-        for j in 0..3 { hs[i + j] = f[(mini + j) % 3].clone(); }
+        if f[1].tail < f[mini].tail {
+            mini = 1;
+        }
+        if f[2].tail < f[mini].tail {
+            mini = 2;
+        }
+        for j in 0..3 {
+            hs[i + j] = f[(mini + j) % 3].clone();
+        }
     }
 
     // reorder halfedges: step 2
@@ -61,10 +70,14 @@ pub fn tri_halfs_single(ts: &[Vec3u]) -> Vec<Half> {
         for i in t * 3..(t + 1) * 3 {
             let tail = hs[i].tail;
             let pair = hs[i].pair;
-            if pair == REMOVE_FLAG || pair >= hs.len() { continue; }
+            if pair == REMOVE_FLAG || pair >= hs.len() {
+                continue;
+            }
             let j = (pair / 3) * 3;
             let f = (0..3).find(|&k| hs[j + k].head == tail);
-            if let Some(k) = f { hs[i].pair = j + k; }
+            if let Some(k) = f {
+                hs[i].pair = j + k;
+            }
         }
     }
     hs
@@ -75,7 +88,7 @@ pub fn tri_halfs_multi(ts: &[Vec3u]) -> Vec<Half> {
     let nh = ts.len() * 3;
     let ne = nh / 2;
     let nt = nh / 3;
-    let mut hs  = vec![Half::default(); nh];
+    let mut hs = vec![Half::default(); nh];
     let mut is = (0..nh).collect::<Vec<_>>();
     let mut ky = vec![0u64; nh];
 
@@ -84,7 +97,7 @@ pub fn tri_halfs_multi(ts: &[Vec3u]) -> Vec<Half> {
         .zip(ts.par_iter())
         .for_each(|((hs_, ky_), t)| {
             for i in 0..3 {
-                let j  = (i + 1) % 3;
+                let j = (i + 1) % 3;
                 let i0 = t[i];
                 let i1 = t[j];
                 hs_[i].tail = i0;
@@ -99,7 +112,9 @@ pub fn tri_halfs_multi(ts: &[Vec3u]) -> Vec<Half> {
     is.par_sort_by_key(|&i| ky[i]);
 
     let mut ini = 0;
-    for i in 0..ne { ini = step(&mut is, &mut hs, i, ini); }
+    for i in 0..ne {
+        ini = step(&mut is, &mut hs, i, ini);
+    }
 
     for i in 0..ne {
         let i0 = is[i];
@@ -117,9 +132,15 @@ pub fn tri_halfs_multi(ts: &[Vec3u]) -> Vec<Half> {
     hs.par_chunks_mut(3).for_each(|t| {
         let f = [t[0].clone(), t[1].clone(), t[2].clone()];
         let mut mini = 0;
-        if f[1].tail < f[mini].tail { mini = 1; }
-        if f[2].tail < f[mini].tail { mini = 2; }
-        for j in 0..3 { t[j] = f[(mini + j) % 3].clone(); }
+        if f[1].tail < f[mini].tail {
+            mini = 1;
+        }
+        if f[2].tail < f[mini].tail {
+            mini = 2;
+        }
+        for j in 0..3 {
+            t[j] = f[(mini + j) % 3].clone();
+        }
     });
 
     // reorder halfedges: step 2
@@ -127,25 +148,23 @@ pub fn tri_halfs_multi(ts: &[Vec3u]) -> Vec<Half> {
         for i in t * 3..(t + 1) * 3 {
             let tail = hs[i].tail;
             let pair = hs[i].pair;
-            if pair == REMOVE_FLAG || pair >= hs.len() { continue; }
+            if pair == REMOVE_FLAG || pair >= hs.len() {
+                continue;
+            }
             let j = (pair / 3) * 3;
             let f = (0..3).find(|&k| hs[j + k].head == tail);
-            if let Some(k) = f { hs[i].pair = j + k; }
+            if let Some(k) = f {
+                hs[i].pair = j + k;
+            }
         }
     }
     hs
 }
 
-
 // By sorting forward and backward halfedges by key,
 // now halfedges of the same mini ids are sorted in a sequence.
 // It treats the triangle overlap case here, also considers 4-manifold case.
-fn step(
-    is: &mut [usize],
-    hs: &mut [Half],
-    i: usize,
-    consecutive_ini: usize,
-) -> usize {
+fn step(is: &mut [usize], hs: &mut [Half], i: usize, consecutive_ini: usize) -> usize {
     let nh = hs.len();
     let ne = nh / 2;
     let i0 = is[i];
@@ -153,22 +172,35 @@ fn step(
     let j = i + ne;
     let mut k = consecutive_ini + ne;
     loop {
-        if k >= nh { break; }
+        if k >= nh {
+            break;
+        }
         let i1 = is[k];
         let h1 = hs[i1].clone();
 
-        if !(h0.tail == h1.head && h0.head == h1.tail) { break; }
-        if hs[next_of(i0)].head == hs[next_of(i1)].head { // overlap
+        if !(h0.tail == h1.head && h0.head == h1.tail) {
+            break;
+        }
+        if hs[next_of(i0)].head == hs[next_of(i1)].head {
+            // overlap
             hs[i0].pair = REMOVE_FLAG;
             hs[i1].pair = REMOVE_FLAG;
-            if k != j { is.swap(j, k); }
+            if k != j {
+                is.swap(j, k);
+            }
             break;
         }
         k += 1;
     }
 
-    if i + 1 == ne { return consecutive_ini; }
+    if i + 1 == ne {
+        return consecutive_ini;
+    }
     let i2 = is[i + 1];
     let h2 = hs[i2].clone();
-    if h0.tail == h2.tail && h0.head == h2.head { consecutive_ini } else { i + 1 }
+    if h0.tail == h2.tail && h0.head == h2.head {
+        consecutive_ini
+    } else {
+        i + 1
+    }
 }

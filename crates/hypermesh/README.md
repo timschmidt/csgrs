@@ -1,8 +1,9 @@
 # hypermesh
 
 `hypermesh` is the experimental 3D mesh-boolean crate in the Hyper workspace.
-Today it is still packaged internally as `boolmesh` and carries the original
-float-oriented mesh boolean engine, inspired by Manifold-style robust mesh CSG.
+It carries a legacy float-oriented mesh boolean engine, inspired by
+Manifold-style robust mesh CSG, while the new `hypermesh::exact` API ports mesh
+validation toward Hyper's exact predicate stack.
 
 The current implementation exposes a simple `Manifold` buffer and
 `compute_boolean` entry point for union, subtraction, and intersection over
@@ -14,9 +15,9 @@ contract.
 
 ## Hyper Ecosystem
 
-`hypermesh` is the experimental 3D mesh-topology layer. It is being adapted from
-`boolmesh` toward exact predicates, retained topology facts, and manifold
-validation.
+`hypermesh` is the experimental 3D mesh-topology layer: legacy mesh booleans,
+exact-stack validation, retained mesh facts, and future exact construction
+geometry.
 
 - [hyperreal](https://github.com/timschmidt/hyperreal): exact rational, symbolic, and computable
   real arithmetic.
@@ -28,7 +29,7 @@ validation.
   boolean geometry.
 - [hypertri](https://github.com/timschmidt/hypertri): exact polygon triangulation and constrained
   Delaunay topology.
-- [hypermesh](https://github.com/timschmidt/boolmesh): 3D mesh boolean experiments and the
+- [hypermesh](https://github.com/timschmidt/hypermesh): 3D mesh boolean experiments and the
   future exact-aware mesh-topology layer.
 - [hypersolve](https://github.com/timschmidt/hypersolve): experimental exact-aware solver layer.
 - [hyperdrc](https://github.com/timschmidt/hyperdrc): PCB design-readiness checks over exact-aware
@@ -61,6 +62,8 @@ needs it.
 
 Implemented in the current engine:
 
+- feature-gated exact validation (`exact`) and legacy boolean
+  (`legacy-boolean`) paths so users do not build algorithms they do not use;
 - `Manifold::new` for vertex/index buffers with manifold validation;
 - `compute_boolean` for add, subtract, and intersect operations;
 - Morton-code broad-phase collision candidate generation;
@@ -69,22 +72,25 @@ Implemented in the current engine:
   edges;
 - ear-clipping triangulation for reconstructed polygonal faces;
 - optional `rayon` and demo-only `bevy` features;
-- unit tests and example models inherited from the imported engine.
+- exact `f64` edge import through `hyperreal::Real` dyadic lifting;
+- `MeshFacts`, vertex/edge/face/triangle fact carriers, predicate provenance,
+  and structured validation diagnostics in `hypermesh::exact`;
+- unit tests, proptests, a fuzz target, and benchmarks for exact validation.
 
 Known limits:
 
-- the crate package metadata still says `boolmesh`;
 - primitive floating-point coordinates are still the operational model;
 - input meshes must already be closed and manifold;
 - exact Hyper predicates, structural facts, provenance records, and exact-aware
-  validation are future integration work;
+  validation are implemented for the new validation boundary but not yet for
+  every boolean/intersection/simplification kernel;
 - primitive generation and transformation helpers intentionally live outside
   the mesh boolean core.
 
 ## Usage
 
 ```rust
-use boolmesh::{compute_boolean, Manifold, OpType};
+use hypermesh::prelude::*;
 
 let left = Manifold::new(&positions_a, &indices_a)?;
 let right = Manifold::new(&positions_b, &indices_b)?;
@@ -95,12 +101,17 @@ let result = compute_boolean(&left, &right, OpType::Subtract)?;
 Run the demo examples from this crate:
 
 ```sh
-cargo run --package boolmesh --release --example menger_sponge --features bevy,rayon,f32
+cargo run --package hypermesh --release --example menger_sponge --features bevy,rayon,f32
+```
+
+Build only the exact validation boundary without legacy boolean kernels:
+
+```sh
+cargo test --no-default-features --features exact
 ```
 
 ## Roadmap
 
-- Rename/package-align the crate once its Hyper-facing API is stable.
 - Replace local float predicates at topology branch points with `hyperlimit`
   predicates over exact-aware coordinates.
 - Preserve mesh facts: manifoldness certificates, face planes, edge incidence,

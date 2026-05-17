@@ -1,17 +1,18 @@
 //--- Copyright (C) 2025 Saki Komikado <komietty@gmail.com>,
 //--- This Source Code Form is subject to the terms of the Mozilla Public License v.2.0.
 
-pub mod hmesh;
 pub mod bounds;
 pub mod collider;
+pub mod hmesh;
 
+use super::hmesh::Hmesh;
+use crate::collider::{K_NO_CODE, MortonCollider, morton_code};
+use crate::{Half, K_PRECISION, Real, Vec3, Vec3u, next_of};
+use bounds::BBox;
+#[cfg(feature = "rayon")]
+use rayon::prelude::*;
 use std::cmp::Ordering;
 use std::collections::HashMap;
-use bounds::BBox;
-use crate::collider::{morton_code, MortonCollider, K_NO_CODE};
-use crate::{Real, Half, Vec3, Vec3u, K_PRECISION, next_of, Mat3};
-use super::hmesh::Hmesh;
-#[cfg(feature = "rayon")] use rayon::prelude::*;
 
 // The core struct for all boolean operations. Avoid modifying properties directly, as the struct
 // maintains internal face index sorting based on vertex positions—a prerequisite for all subsequent operations.
@@ -33,21 +34,45 @@ pub struct Manifold {
 }
 
 impl Manifold {
+    /// Build a legacy floating-point manifold from flat coordinates and indices.
+    ///
+    /// New exact-topology callers should prefer [`crate::exact::ExactMesh`].
+    /// This adapter remains the boolmesh-derived runtime path and therefore
+    /// validates primitive-float input before it reaches epsilon-based legacy
+    /// code.
     pub fn new(pos: &[f64], idx: &[usize]) -> Result<Self, String> {
-
-        if pos.len() % 3 != 0 { return Err("pos must be a multiple of 3".into()); }
-        if idx.len() % 3 != 0 { return Err("idx must be a multiple of 3".into()); }
+        if pos.len() % 3 != 0 {
+            return Err("pos must be a multiple of 3".into());
+        }
+        if idx.len() % 3 != 0 {
+            return Err("idx must be a multiple of 3".into());
+        }
+        if let Some(i) = pos.iter().position(|coordinate| !coordinate.is_finite()) {
+            return Err(format!("pos[{i}] must be finite"));
+        }
+        let vertex_count = pos.len() / 3;
+        if let Some((i, vertex)) = idx
+            .iter()
+            .copied()
+            .enumerate()
+            .find(|(_, vertex)| *vertex >= vertex_count)
+        {
+            return Err(format!(
+                "idx[{i}] references vertex {vertex}, but only {vertex_count} vertices exist"
+            ));
+        }
 
         // dedup vertices
-        let mut hash  = HashMap::with_capacity(pos.len() / 3);
-        let mut weld  = Vec::with_capacity(pos.len() / 3);
+        let mut hash = HashMap::with_capacity(pos.len() / 3);
+        let mut weld = Vec::with_capacity(pos.len() / 3);
         let mut rmap = vec![0; pos.len()];
 
         for (i, p) in pos.chunks(3).enumerate() {
             let v = Vec3::new(p[0] as Real, p[1] as Real, p[2] as Real);
             let k = (v.x.to_bits(), v.y.to_bits(), v.z.to_bits());
-            if let Some(&w) = hash.get(&k) { rmap[i] = w; }
-            else {
+            if let Some(&w) = hash.get(&k) {
+                rmap[i] = w;
+            } else {
                 let n = weld.len();
                 weld.push(v);
                 hash.insert(k, n);
@@ -66,7 +91,7 @@ impl Manifold {
     }
 
     pub(crate) fn new_impl(
-        ps : Vec<Vec3>,
+        ps: Vec<Vec3>,
         idx: Vec<Vec3u>,
         eps: Option<Real>,
         tol: Option<Real>,
@@ -74,7 +99,11 @@ impl Manifold {
         let bb = BBox::new(None, &ps);
         let (mut f_bb, mut f_mt) = compute_face_morton(&ps, &idx, &bb);
         let hm = sort_faces(&ps, &idx, &mut f_bb, &mut f_mt)?;
-        let hs = hm.half.iter().map(|&i| Half::new(hm.tail[i], hm.head[i], hm.twin[i])).collect::<Vec<_>>();
+        let hs = hm
+            .half
+            .iter()
+            .map(|&i| Half::new(hm.tail[i], hm.head[i], hm.twin[i]))
+            .collect::<Vec<_>>();
 
         let mut e = K_PRECISION * bb.scale();
         e = if e.is_finite() { e } else { -1. };
@@ -99,15 +128,19 @@ impl Manifold {
             coplanar,
         };
 
-        if !mfd.is_manifold() { return Err("The input mesh is not manifold".into()); }
+        if !mfd.is_manifold() {
+            return Err("The input mesh is not manifold".into());
+        }
         Ok(mfd)
     }
 
     pub fn is_manifold(&self) -> bool {
         self.hs.iter().enumerate().all(|(i, h)| {
-            if h.tail().is_none() || h.head().is_none() { return true; }
+            if h.tail().is_none() || h.head().is_none() {
+                return true;
+            }
             match h.pair() {
-                None => { false },
+                None => false,
                 Some(pair) => {
                     let mut good = true;
                     good &= self.hs[pair].pair() == Some(i);
@@ -119,19 +152,15 @@ impl Manifold {
             }
         })
     }
-
 }
 
-fn compute_face_morton(
-    pos: &[Vec3],
-    idx: &[Vec3u],
-    bb: &BBox
-) -> (Vec<BBox>, Vec<u32>) {
+fn compute_face_morton(pos: &[Vec3], idx: &[Vec3u], bb: &BBox) -> (Vec<BBox>, Vec<u32>) {
     let n = idx.len();
     let mut bbs = vec![BBox::default(); n];
     let mut mts = vec![0; n];
 
-    #[cfg(feature = "rayon")] {
+    #[cfg(feature = "rayon")]
+    {
         bbs.par_iter_mut()
             .zip(mts.par_iter_mut())
             .zip(idx.par_iter())
@@ -146,7 +175,8 @@ fn compute_face_morton(
             });
     }
 
-    #[cfg(not(feature = "rayon"))] {
+    #[cfg(not(feature = "rayon"))]
+    {
         for (i, f) in idx.iter().enumerate() {
             let p0 = pos[f.x];
             let p1 = pos[f.y];
@@ -158,7 +188,6 @@ fn compute_face_morton(
         }
     }
 
-
     (bbs, mts)
 }
 
@@ -166,29 +195,29 @@ fn sort_faces(
     pos: &[Vec3],
     idx: &[Vec3u],
     face_bboxes: &mut Vec<BBox>,
-    face_morton: &mut Vec<u32>
+    face_morton: &mut Vec<u32>,
 ) -> Result<Hmesh, String> {
     let mut map = (0..face_morton.len()).collect::<Vec<_>>();
     map.sort_by_key(|&i| face_morton[i]);
-    *face_bboxes = map.iter().map(|&i| face_bboxes[i].clone()).collect::<Vec<_>>();
+    *face_bboxes = map
+        .iter()
+        .map(|&i| face_bboxes[i].clone())
+        .collect::<Vec<_>>();
     *face_morton = map.iter().map(|&i| face_morton[i]).collect::<Vec<_>>();
 
     Hmesh::new(pos, &map.iter().map(|&i| idx[i]).collect::<Vec<_>>())
 }
 
-fn compute_coplanar_idx(
-    ps: &[Vec3],
-    ns: &[Vec3],
-    hs: &[Half],
-    tol: Real
-) -> Vec<i32> {
+fn compute_coplanar_idx(ps: &[Vec3], ns: &[Vec3], hs: &[Half], tol: Real) -> Vec<i32> {
     let nt = hs.len() / 3;
     let mut priority = vec![];
     let mut res = vec![-1; nt];
 
     for t in 0..nt {
         let i = t * 3;
-        let area = if hs[i].tail().is_none() { 0.} else {
+        let area = if hs[i].tail().is_none() {
+            0.
+        } else {
             let p0 = ps[hs[i].tail];
             let p1 = ps[hs[i].head];
             let p2 = ps[hs[i + 1].head];
@@ -201,7 +230,9 @@ fn compute_coplanar_idx(
 
     let mut interior = vec![];
     for (_, t) in priority.iter() {
-        if res[*t] != -1 { continue; }
+        if res[*t] != -1 {
+            continue;
+        }
         res[*t] = *t as i32;
 
         let i = t * 3;
@@ -215,12 +246,17 @@ fn compute_coplanar_idx(
             let h1 = next_of(hs[hi].pair);
             let t1 = h1 / 3;
 
-            if res[t1] != -1 { continue; }
+            if res[t1] != -1 {
+                continue;
+            }
 
             if (ps[hs[h1].head] - p).dot(n).abs() < tol {
                 res[t1] = *t as i32;
-                if interior.last().copied() == Some(hs[h1].pair) { interior.pop(); }
-                else { interior.push(h1); }
+                if interior.last().copied() == Some(hs[h1].pair) {
+                    interior.pop();
+                } else {
+                    interior.push(h1);
+                }
                 interior.push(next_of(h1));
             }
         }
@@ -228,21 +264,22 @@ fn compute_coplanar_idx(
     res
 }
 
-pub fn cleanup_unused_verts(
-    ps: &mut Vec<Vec3>,
-    hs: &mut Vec<Half>
-) {
+pub fn cleanup_unused_verts(ps: &mut Vec<Vec3>, hs: &mut Vec<Half>) {
     let bb = BBox::new(None, ps);
     let mt = ps.iter().map(|p| morton_code(p, &bb)).collect::<Vec<_>>();
 
     let mut new2old = (0..ps.len()).collect::<Vec<_>>();
     let mut old2new = vec![0; ps.len()];
     new2old.sort_by_key(|&i| mt[i]);
-    for (new, &old) in new2old.iter().enumerate() { old2new[old] = new; }
+    for (new, &old) in new2old.iter().enumerate() {
+        old2new[old] = new;
+    }
 
     // reindex verts
     for h in hs.iter_mut() {
-        if h.pair().is_none() { continue; }
+        if h.pair().is_none() {
+            continue;
+        }
         h.tail = old2new[h.tail];
         h.head = old2new[h.head];
     }
@@ -258,4 +295,3 @@ pub fn cleanup_unused_verts(
     *ps = new2old.iter().map(|&i| ps[i]).collect();
     *hs = hs.iter().filter(|h| h.pair().is_some()).cloned().collect();
 }
-

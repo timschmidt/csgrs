@@ -2,7 +2,7 @@
 //--- This Source Code Form is subject to the terms of the Mozilla Public License v.2.0.
 
 use crate::Vec3;
-use crate::bounds::{union_bbs, BBox, Query};
+use crate::bounds::{BBox, Query, union_bbs};
 
 pub const K_NO_CODE: u32 = 0xFFFFFFFF;
 const K_INITIAL_LENGTH: i32 = 128;
@@ -20,53 +20,85 @@ fn spread_bits_3(v: u32) -> u32 {
 }
 
 pub fn morton_code(p: &Vec3, bb: &BBox) -> u32 {
-    if p.x.is_nan() { return K_NO_CODE; }
+    if p.x.is_nan() {
+        return K_NO_CODE;
+    }
     let mut xyz = (p - bb.min) / (bb.max - bb.min);
-    xyz = (1024. * xyz).max(Vec3::ZERO).min(Vec3::new(1023., 1023., 1023.));
+    xyz = (1024. * xyz)
+        .max(Vec3::ZERO)
+        .min(Vec3::new(1023., 1023., 1023.));
     let x = spread_bits_3(xyz.x as u32);
     let y = spread_bits_3(xyz.y as u32);
     let z = spread_bits_3(xyz.z as u32);
     x * 4 + y * 2 + z
 }
 
-fn node2intl(node: i32) -> Option<i32> { if node % 2 == 1 { Some((node - 1) / 2) } else { None } }
-fn node2leaf(node: i32) -> Option<i32> { if node % 2 == 0 { Some(node / 2) } else { None } }
-fn intl2node(intl: i32) -> i32 { intl * 2 + 1 }
-fn leaf2node(leaf: i32) -> i32 { leaf * 2 }
-fn prefix_length(a: u32, b: u32) -> u32 { (a ^ b).leading_zeros() }
+fn node2intl(node: i32) -> Option<i32> {
+    if node % 2 == 1 {
+        Some((node - 1) / 2)
+    } else {
+        None
+    }
+}
+fn node2leaf(node: i32) -> Option<i32> {
+    if node % 2 == 0 { Some(node / 2) } else { None }
+}
+fn intl2node(intl: i32) -> i32 {
+    intl * 2 + 1
+}
+fn leaf2node(leaf: i32) -> i32 {
+    leaf * 2
+}
+fn prefix_length(a: u32, b: u32) -> u32 {
+    (a ^ b).leading_zeros()
+}
 
 struct RadixTree<'a> {
-    parent:  &'a mut [i32],
+    parent: &'a mut [i32],
     children: &'a mut [(i32, i32)],
     leaf_morton: &'a [u32],
 }
 
 impl<'a> RadixTree<'a> {
     fn prefix_length(&self, i: i32, j: i32) -> i32 {
-        if j < 0 || j >= self.leaf_morton.len() as i32 { return -1; }
+        if j < 0 || j >= self.leaf_morton.len() as i32 {
+            return -1;
+        }
         let lmi = self.leaf_morton[i as usize];
         let lmj = self.leaf_morton[j as usize];
-        if lmi == lmj { return 32 + prefix_length(i as u32, j as u32) as i32; }
+        if lmi == lmj {
+            return 32 + prefix_length(i as u32, j as u32) as i32;
+        }
         prefix_length(lmi, lmj) as i32
     }
 
-   fn range_end(&self, i: i32) -> i32 {
+    fn range_end(&self, i: i32) -> i32 {
         let mut dir = self.prefix_length(i, i + 1) - self.prefix_length(i, i - 1);
-        dir = if dir > 0 { 1 } else if dir < 0 { -1 } else { 0 };
+        dir = if dir > 0 {
+            1
+        } else if dir < 0 {
+            -1
+        } else {
+            0
+        };
 
         let common = self.prefix_length(i, i - dir);
         let mut max = K_INITIAL_LENGTH;
-        while self.prefix_length(i, i + dir * max) > common { max *= K_LENGTH_MULTIPLE; }
+        while self.prefix_length(i, i + dir * max) > common {
+            max *= K_LENGTH_MULTIPLE;
+        }
 
         // compute precise range length with binary search
         let mut len = 0;
         let mut stp = max / 2;
         while stp > 0 {
-            if self.prefix_length(i, i + dir * (len + stp)) > common { len += stp; }
+            if self.prefix_length(i, i + dir * (len + stp)) > common {
+                len += stp;
+            }
             stp /= 2;
         }
         i + dir * len
-   }
+    }
 
     fn find_split(&self, bgn: i32, end: i32) -> i32 {
         let common = self.prefix_length(bgn, end);
@@ -78,8 +110,12 @@ impl<'a> RadixTree<'a> {
         loop {
             step = (step + 1) >> 1; // divide by 2, rounding up
             let new_split = split + step;
-            if new_split < end && self.prefix_length(bgn, new_split) > common { split = new_split; }
-            if step <= 1 { break; }
+            if new_split < end && self.prefix_length(bgn, new_split) > common {
+                split = new_split;
+            }
+            if step <= 1 {
+                break;
+            }
         }
 
         split
@@ -88,7 +124,9 @@ impl<'a> RadixTree<'a> {
     fn op(&mut self, intl: i32) {
         let mut bgn = intl;
         let mut end = self.range_end(bgn);
-        if bgn > end { std::mem::swap(&mut bgn, &mut end); }
+        if bgn > end {
+            std::mem::swap(&mut bgn, &mut end);
+        }
 
         let mut s = self.find_split(bgn, end);
         let child1 = if s == bgn { leaf2node(s) } else { intl2node(s) };
@@ -111,15 +149,19 @@ fn build_internal_boxes(
     let mut node = leaf2node(leaf);
     let mut flag = false;
     loop {
-        if flag && node == K_ROOT { return; }
+        if flag && node == K_ROOT {
+            return;
+        }
         node = node_parent[node as usize];
         let intl_idx = node2intl(node).unwrap() as usize;
         let c = counter[intl_idx];
         counter[intl_idx] += 1;
-        if c == 0 { return; }
+        if c == 0 {
+            return;
+        }
         node_bb[node as usize] = union_bbs(
             &node_bb[intl_children[intl_idx].0 as usize],
-            &node_bb[intl_children[intl_idx].1 as usize]
+            &node_bb[intl_children[intl_idx].1 as usize],
         );
         flag = true;
     }
@@ -133,8 +175,16 @@ pub struct MortonCollider {
 }
 
 impl MortonCollider {
-    fn num_intl(&self) -> usize { self.intl_children.len() }
-    fn num_leaf(&self) -> usize { if self.intl_children.is_empty() { 0 } else { self.num_intl() + 1 } }
+    fn num_intl(&self) -> usize {
+        self.intl_children.len()
+    }
+    fn num_leaf(&self) -> usize {
+        if self.intl_children.is_empty() {
+            0
+        } else {
+            self.num_intl() + 1
+        }
+    }
 
     fn update_boxes(&mut self, leaf_bb: &[BBox]) {
         for (i, box_val) in leaf_bb.iter().enumerate() {
@@ -152,10 +202,7 @@ impl MortonCollider {
         }
     }
 
-    pub fn new(
-        leaf_bb: &[BBox],
-        leaf_morton: &[u32]
-    ) -> Self {
+    pub fn new(leaf_bb: &[BBox], leaf_morton: &[u32]) -> Self {
         let n_intl = leaf_bb.len() - 1;
         let n_node = 2 * leaf_bb.len() - 1;
         let mut node_parent = vec![-1; n_node];
@@ -166,19 +213,24 @@ impl MortonCollider {
             leaf_morton,
         };
 
-        for i in 0..n_intl { tree.op(i as i32); }
+        for i in 0..n_intl {
+            tree.op(i as i32);
+        }
 
         let mut res = MortonCollider {
             node_bb: vec![BBox::default(); n_node],
             node_parent,
-            intl_children
+            intl_children,
         };
 
         res.update_boxes(leaf_bb);
         res
     }
 
-    pub fn collision<F>(&self, queries: &[Query], record:&mut F) where F: FnMut(usize, usize) {
+    pub fn collision<F>(&self, queries: &[Query], record: &mut F)
+    where
+        F: FnMut(usize, usize),
+    {
         for i in 0..queries.len() {
             find_collisions(
                 queries,
@@ -199,7 +251,9 @@ fn find_collisions<F>(
     query_idx: usize,
     record: &mut F,
     self_collision: bool,
-) where F: FnMut(usize, usize) {
+) where
+    F: FnMut(usize, usize),
+{
     // depth-first search
     let mut stack = [0; 64];
     let mut top = -1i32;
@@ -211,8 +265,16 @@ fn find_collisions<F>(
         if overlap && let Some(il) = node2leaf(node) {
             if !self_collision || il != query_idx as i32 {
                 match q {
-                    Query::Bb(q) => { if let Some(iq) = q.id { record(iq, il as usize); }},
-                    Query::Pt(q) => { if let Some(iq) = q.id { record(iq, il as usize); }},
+                    Query::Bb(q) => {
+                        if let Some(iq) = q.id {
+                            record(iq, il as usize);
+                        }
+                    }
+                    Query::Pt(q) => {
+                        if let Some(iq) = q.id {
+                            record(iq, il as usize);
+                        }
+                    }
                 }
             }
         }
@@ -225,7 +287,9 @@ fn find_collisions<F>(
         let traverse1 = rec(c1);
         let traverse2 = rec(c2);
         if !traverse1 && !traverse2 {
-            if top < 0 { break; } // done
+            if top < 0 {
+                break;
+            } // done
             node = stack[top as usize];
             top -= 1;
         } else {
@@ -237,4 +301,3 @@ fn find_collisions<F>(
         }
     }
 }
-

@@ -1,13 +1,13 @@
 //--- Copyright (C) 2025 Saki Komikado <komietty@gmail.com>,
 //--- This Source Code Form is subject to the terms of the Mozilla Public License v.2.0.
 
-use boolmesh::prelude::*;
-use bevy::prelude::*;
-use bevy::pbr::wireframe::{WireframePlugin, Wireframe, WireframeColor};
-use bevy::color::palettes::css::*;
 use bevy::asset::RenderAssetUsages;
+use bevy::color::palettes::css::*;
+use bevy::pbr::wireframe::{Wireframe, WireframeColor, WireframePlugin};
+use bevy::prelude::*;
 use bevy::render::mesh::PrimitiveTopology;
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
+use hypermesh::prelude::*;
 
 #[derive(Component)]
 struct ToggleableMesh;
@@ -29,31 +29,49 @@ fn main() {
 fn setup(
     mut cmds: Commands,
     mut mats: ResMut<Assets<StandardMaterial>>,
-    mut meshes: ResMut<Assets<Mesh>>
+    mut meshes: ResMut<Assets<Mesh>>,
 ) {
     let obj_path_1 = "examples/models/gargoyle.obj";
     let obj_path_2 = "examples/models/double-torus.obj";
-    let (m0, _) = tobj::load_obj(obj_path_1, &tobj::LoadOptions { ..Default::default() }).expect("Failed to load the first obj file");
-    let (m1, _) = tobj::load_obj(obj_path_2, &tobj::LoadOptions { ..Default::default() }).expect("Failed to load the second obj file");
+    let (m0, _) = tobj::load_obj(
+        obj_path_1,
+        &tobj::LoadOptions {
+            ..Default::default()
+        },
+    )
+    .expect("Failed to load the first obj file");
+    let (m1, _) = tobj::load_obj(
+        obj_path_2,
+        &tobj::LoadOptions {
+            ..Default::default()
+        },
+    )
+    .expect("Failed to load the second obj file");
 
     let mut mfs = vec![];
     for m in vec![&m0[0].mesh, &m1[0].mesh] {
-        mfs.push(Manifold::new(
-            &m.positions.iter().map(|&v| v as f64).collect::<Vec<_>>(),
-            &m.indices.iter().map(|&v| v as usize).collect::<Vec<_>>(),
-        ).unwrap());
+        mfs.push(
+            Manifold::new(
+                &m.positions.iter().map(|&v| v as f64).collect::<Vec<_>>(),
+                &m.indices.iter().map(|&v| v as usize).collect::<Vec<_>>(),
+            )
+            .unwrap(),
+        );
     }
     mfs.push(compute_boolean(&mfs[0], &mfs[1], OpType::Subtract).unwrap());
 
     for (i, mf) in mfs.iter().enumerate() {
-        let mut m = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::default());
+        let mut m = Mesh::new(
+            PrimitiveTopology::TriangleList,
+            RenderAssetUsages::default(),
+        );
         let mut pos = vec![];
         let mut vns = vec![];
         for (fid, hs) in mf.hs.chunks(3).enumerate() {
             let p0 = mf.ps[hs[0].tail];
             let p1 = mf.ps[hs[1].tail];
             let p2 = mf.ps[hs[2].tail];
-            let n  = mf.face_normals[fid];
+            let n = mf.face_normals[fid];
             pos.push([p0.x as f32, p0.y as f32, p0.z as f32]);
             pos.push([p1.x as f32, p1.y as f32, p1.z as f32]);
             pos.push([p2.x as f32, p2.y as f32, p2.z as f32]);
@@ -69,13 +87,22 @@ fn setup(
             MeshMaterial3d(mats.add(StandardMaterial { ..default() })),
             Transform::default(),
             Wireframe,
-            WireframeColor { color: BLACK.into() },
+            WireframeColor {
+                color: BLACK.into(),
+            },
             ToggleableMesh,
-            if i == 2 { Visibility::Visible } else { Visibility::Hidden },
+            if i == 2 {
+                Visibility::Visible
+            } else {
+                Visibility::Hidden
+            },
         ));
     }
     cmds.spawn((PointLight::default(), Transform::from_xyz(2., 5., 2.)));
-    cmds.spawn((Transform::from_translation(Vec3::new(0., 2., 3.)), PanOrbitCamera::default(),));
+    cmds.spawn((
+        Transform::from_translation(Vec3::new(0., 2., 3.)),
+        PanOrbitCamera::default(),
+    ));
 }
 
 fn toggle_mesh_visibility(
@@ -90,6 +117,8 @@ fn toggle_mesh_visibility(
         };
     };
     let mut vis: Vec<_> = query.iter_mut().collect();
-    if keyboard.just_pressed(KeyCode::Space)  { cb(&mut vis[0]); cb(&mut vis[1]); }
+    if keyboard.just_pressed(KeyCode::Space) {
+        cb(&mut vis[0]);
+        cb(&mut vis[1]);
+    }
 }
-

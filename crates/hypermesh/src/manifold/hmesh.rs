@@ -2,9 +2,10 @@
 //--- This Source Code Form is subject to the terms of the Mozilla Public License v.2.0.
 #![allow(clippy::needless_range_loop)]
 
+use crate::{Real, Vec2u, Vec3, Vec3u};
+#[cfg(feature = "rayon")]
+use rayon::prelude::*;
 use std::f64::consts::PI;
-use crate::{Vec3, Vec2u, Vec3u, Real};
-#[cfg(feature = "rayon")] use rayon::prelude::*;
 
 /// Hmesh preserves the order of pos and idx in any cases.
 /// Edges are ordered so as the edge is forward (tail idx < head idx)
@@ -28,23 +29,32 @@ fn edge_topology(
     e2f: &mut Vec<Vec2u>,
     f2e: &mut Vec<Vec3u>,
 ) -> Result<(), String> {
-    if pos.is_empty() { return Err("empty pos matrix".into()); }
-    if idx.is_empty() { return Err("empty idx matrix".into()); }
+    if pos.is_empty() {
+        return Err("empty pos matrix".into());
+    }
+    if idx.is_empty() {
+        return Err("empty idx matrix".into());
+    }
 
     let mut ett: Vec<[usize; 4]> = vec![];
 
     for (i, idx_) in idx.iter().enumerate() {
-    for j in 0..3 {
-        let mut v1 = idx_[j];
-        let mut v2 = idx_[(j + 1) % 3];
-        if v1 > v2 { std::mem::swap(&mut v1, &mut v2); }
-        ett.push([v1, v2, i, j]);
-    }}
+        for j in 0..3 {
+            let mut v1 = idx_[j];
+            let mut v2 = idx_[(j + 1) % 3];
+            if v1 > v2 {
+                std::mem::swap(&mut v1, &mut v2);
+            }
+            ett.push([v1, v2, i, j]);
+        }
+    }
     ett.sort();
 
     let mut ne = 1;
     for i in 0..ett.len() - 1 {
-        if !(ett[i][0] == ett[i + 1][0] && ett[i][1] == ett[i + 1][1]) { ne += 1; }
+        if !(ett[i][0] == ett[i + 1][0] && ett[i][1] == ett[i + 1][1]) {
+            ne += 1;
+        }
     }
 
     e2v.resize(ne, Vec2u::MAX);
@@ -54,13 +64,13 @@ fn edge_topology(
 
     let mut i = 0;
     while i < ett.len() {
-        if i == ett.len() - 1 || !((ett[i][0] == ett[i+1][0]) && (ett[i][1] == ett[i + 1][1])) {
+        if i == ett.len() - 1 || !((ett[i][0] == ett[i + 1][0]) && (ett[i][1] == ett[i + 1][1])) {
             // Border edge
             let [v1, v2, i, j] = ett[i];
             e2v[ne][0] = v1;
             e2v[ne][1] = v2;
             e2f[ne][0] = i;
-            f2e[i][j]  = ne;
+            f2e[i][j] = ne;
         } else {
             let r1 = ett[i];
             let r2 = ett[i + 1];
@@ -95,10 +105,7 @@ fn edge_topology(
 }
 
 impl Hmesh {
-    pub fn new(
-        pos: &[Vec3],
-        idx: &[Vec3u],
-    ) -> Result<Self, String> {
+    pub fn new(pos: &[Vec3], idx: &[Vec3u]) -> Result<Self, String> {
         let mut e2v = Default::default();
         let mut e2f = Default::default();
         let mut f2e = Default::default();
@@ -109,9 +116,9 @@ impl Hmesh {
         let ne = e2v.len();
         let nh = e2v.len() * 2;
         let np = 3;
-        let mut v2h  = vec![usize::MAX; nv];
-        let mut e2h  = vec![usize::MAX; ne];
-        let mut f2h  = vec![usize::MAX; nf];
+        let mut v2h = vec![usize::MAX; nv];
+        let mut e2h = vec![usize::MAX; ne];
+        let mut f2h = vec![usize::MAX; nf];
         let mut next = vec![usize::MAX; nh];
         let mut prev = vec![usize::MAX; nh];
         let mut twin = vec![usize::MAX; nh];
@@ -121,45 +128,53 @@ impl Hmesh {
         let mut face = vec![usize::MAX; nh];
 
         for it in 0..nf {
-        for ip in 0..np {
-            let ih_bgn = it * np;
-            let iv = idx[it][ip];
-            let ie = f2e[it][ip];
-            let ih = ih_bgn + ip;
-            next[ih] = ih_bgn + (ip + 1) % np;
-            prev[ih] = ih_bgn + (ip + np - 1) % np;
-            head[ih] = idx[it][(ip + 1) % np];
-            tail[ih] = iv;
-            edge[ih] = ie;
-            face[ih] = it;
-            if f2h[it] == usize::MAX { f2h[it] = ih; }
-            if v2h[iv] == usize::MAX { v2h[iv] = ih; }
-            if e2h[ie] == usize::MAX { e2h[ie] = ih; }
-            else {
-                twin[ih] = e2h[ie];
-                twin[e2h[ie]] = ih;
+            for ip in 0..np {
+                let ih_bgn = it * np;
+                let iv = idx[it][ip];
+                let ie = f2e[it][ip];
+                let ih = ih_bgn + ip;
+                next[ih] = ih_bgn + (ip + 1) % np;
+                prev[ih] = ih_bgn + (ip + np - 1) % np;
+                head[ih] = idx[it][(ip + 1) % np];
+                tail[ih] = iv;
+                edge[ih] = ie;
+                face[ih] = it;
+                if f2h[it] == usize::MAX {
+                    f2h[it] = ih;
+                }
+                if v2h[iv] == usize::MAX {
+                    v2h[iv] = ih;
+                }
+                if e2h[ie] == usize::MAX {
+                    e2h[ie] = ih;
+                } else {
+                    twin[ih] = e2h[ie];
+                    twin[e2h[ie]] = ih;
+                }
             }
-        }}
+        }
 
         if twin.iter().any(|v| v == &usize::MAX) {
             return Err("Input mesh must not contain boundary edges.".into());
         }
 
         let mut half = vec![];
-        for i in 0..nh { half.push(i); }
+        for i in 0..nh {
+            half.push(i);
+        }
         let mut vns = vec![Vec3::ZERO; nv];
         let mut fns = vec![Vec3::ZERO; nf];
 
         #[cfg(feature = "rayon")]
         fns.par_iter_mut().enumerate().for_each(|(i, n)| {
-                let ih = f2h[i];
-                let p2 = pos[head[ih]];
-                let p1 = pos[tail[ih]];
-                let p0 = pos[tail[prev[ih]]];
-                let x = p2 - p1;
-                let t = (p1 - p0) * -1.;
-                *n = x.cross(t).normalize();
-            });
+            let ih = f2h[i];
+            let p2 = pos[head[ih]];
+            let p1 = pos[tail[ih]];
+            let p0 = pos[tail[prev[ih]]];
+            let x = p2 - p1;
+            let t = (p1 - p0) * -1.;
+            *n = x.cross(t).normalize();
+        });
 
         #[cfg(not(feature = "rayon"))]
         for i in 0..nf {
@@ -173,28 +188,46 @@ impl Hmesh {
         }
 
         for i in 0..nf {
-        for j in 0..3  {
-            let i_curr = idx[i][j];
-            let v_prev = pos[idx[i][(j + 2) % 3]];
-            let v_curr = pos[i_curr];
-            let v_next = pos[idx[i][(j + 1) % 3]];
-            let e_curr = (v_next - v_curr).normalize();
-            let e_prev = (v_curr - v_prev).normalize();
-            if e_curr.is_nan() || e_prev.is_nan() { continue; }
-            let dot = -e_prev.dot(e_curr);
-            let phi = if      dot >=  1. { 0. }
-                      else if dot <= -1. { PI as Real }
-                      else               { dot.acos() };
-            vns[i_curr] += fns[i] * phi;
-        }}
-
+            for j in 0..3 {
+                let i_curr = idx[i][j];
+                let v_prev = pos[idx[i][(j + 2) % 3]];
+                let v_curr = pos[i_curr];
+                let v_next = pos[idx[i][(j + 1) % 3]];
+                let e_curr = (v_next - v_curr).normalize();
+                let e_prev = (v_curr - v_prev).normalize();
+                if e_curr.is_nan() || e_prev.is_nan() {
+                    continue;
+                }
+                let dot = -e_prev.dot(e_curr);
+                let phi = if dot >= 1. {
+                    0.
+                } else if dot <= -1. {
+                    PI as Real
+                } else {
+                    dot.acos()
+                };
+                vns[i_curr] += fns[i] * phi;
+            }
+        }
 
         #[cfg(feature = "rayon")]
         vns.par_iter_mut().for_each(|n| *n = n.normalize_or_zero());
 
         #[cfg(not(feature = "rayon"))]
-        for n in &mut vns { *n = n.normalize_or_zero(); }
+        for n in &mut vns {
+            *n = n.normalize_or_zero();
+        }
 
-        Ok(Hmesh{ nv, nf, nh, twin, head, tail, half, vns, fns })
+        Ok(Hmesh {
+            nv,
+            nf,
+            nh,
+            twin,
+            head,
+            tail,
+            half,
+            vns,
+            fns,
+        })
     }
 }

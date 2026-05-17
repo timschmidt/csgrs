@@ -1,35 +1,45 @@
 //--- Copyright (C) 2025 Saki Komikado <komietty@gmail.com>,
 //--- This Source Code Form is subject to the terms of the Mozilla Public License v.2.0.
 
-use crate::{Real, Vec2};
 use crate::triangulation::Pt;
+use crate::{Real, Vec2};
 
 pub fn compute_flat_tree(pts: &mut [Pt]) {
-    if pts.len() <= 8 { return; }
+    if pts.len() <= 8 {
+        return;
+    }
     compute_flat_tree_impl(pts, true);
 }
 
 fn compute_flat_tree_impl(pts: &mut [Pt], sort_x: bool) {
     let eq = std::cmp::Ordering::Equal;
-    if sort_x { pts.sort_by(|a, b| a.pos.x.partial_cmp(&b.pos.x).unwrap_or(eq)); }
-    else      { pts.sort_by(|a, b| a.pos.y.partial_cmp(&b.pos.y).unwrap_or(eq)); }
+    if sort_x {
+        pts.sort_by(|a, b| a.pos.x.partial_cmp(&b.pos.x).unwrap_or(eq));
+    } else {
+        pts.sort_by(|a, b| a.pos.y.partial_cmp(&b.pos.y).unwrap_or(eq));
+    }
 
-    if pts.len() < 2 { return; }
+    if pts.len() < 2 {
+        return;
+    }
 
     let (l, mr) = pts.split_at_mut(pts.len() / 2);
     if !mr.is_empty() {
-        let (_, r)  = mr.split_first_mut().unwrap();
+        let (_, r) = mr.split_first_mut().unwrap();
         compute_flat_tree_impl(l, !sort_x);
         compute_flat_tree_impl(r, !sort_x);
     }
 }
 
-pub fn compute_query_flat_tree<F>(
-    pts: &[Pt],
-    rect: &Rect,
-    mut func: F,
-) where F: FnMut(&Pt) {
-    for p in pts.iter() { if rect.contains(&p.pos) { func(p);} }
+pub fn compute_query_flat_tree<F>(pts: &[Pt], rect: &Rect, mut func: F)
+where
+    F: FnMut(&Pt),
+{
+    for p in pts.iter() {
+        if rect.contains(&p.pos) {
+            func(p);
+        }
+    }
 
     //if pts.len() <= 8 {
     //    for p in pts.iter() { if rect.contains(&p.pos) { func(p);} }
@@ -38,7 +48,10 @@ pub fn compute_query_flat_tree<F>(
     //}
 }
 
-pub fn query_two_d_tree<F>(pts: &[Pt], r: Rect, mut f: F) where F: FnMut(&Pt) {
+pub fn query_two_d_tree<F>(pts: &[Pt], r: Rect, mut f: F)
+where
+    F: FnMut(&Pt),
+{
     let mut cur: Rect = Rect::default();
     let mut lev: i32 = 0;
     let mut bgn: usize = 0;
@@ -54,7 +67,9 @@ pub fn query_two_d_tree<F>(pts: &[Pt], r: Rect, mut f: F) where F: FnMut(&Pt) {
         if len <= 2 {
             for i in 0..len {
                 let p = &pts[bgn + i];
-                if r.contains(&p.pos) { f(p); }
+                if r.contains(&p.pos) {
+                    f(p);
+                }
             }
             if let Some((r, b, ln, lv)) = stack.pop() {
                 cur = r;
@@ -62,12 +77,14 @@ pub fn query_two_d_tree<F>(pts: &[Pt], r: Rect, mut f: F) where F: FnMut(&Pt) {
                 len = ln;
                 lev = lv;
                 continue;
-            } else { break; }
+            } else {
+                break;
+            }
         }
 
         let mid_oft = len / 2;
         let mid_idx = bgn + mid_oft;
-        let mid     = &pts[mid_idx];
+        let mid = &pts[mid_idx];
 
         let mut rect_l = cur.clone();
         let mut rect_r = cur.clone();
@@ -79,7 +96,9 @@ pub fn query_two_d_tree<F>(pts: &[Pt], r: Rect, mut f: F) where F: FnMut(&Pt) {
             rect_r.min.y = mid.pos.y;
         }
 
-        if r.contains(&mid.pos) { f(mid); }
+        if r.contains(&mid.pos) {
+            f(mid);
+        }
 
         let overlaps_l = rect_l.overlap(&r);
         let overlaps_r = rect_r.overlap(&r);
@@ -110,21 +129,26 @@ pub struct Rect {
 
 impl Rect {
     pub fn default() -> Self {
-        Self { min: Vec2::MAX, max: Vec2::MIN }
+        Self {
+            min: Vec2::MAX,
+            max: Vec2::MIN,
+        }
     }
 
     pub fn new(a: &Vec2, b: &Vec2) -> Self {
-        Self { min: a.min(*b), max: a.max(*b) }
+        Self {
+            min: a.min(*b),
+            max: a.max(*b),
+        }
     }
 
     pub fn contains(&self, p: &Vec2) -> bool {
-        p.x >= self.min.x &&
-        p.x <= self.max.x &&
-        p.y >= self.min.y &&
-        p.y <= self.max.y
+        p.x >= self.min.x && p.x <= self.max.x && p.y >= self.min.y && p.y <= self.max.y
     }
 
-    pub fn size(&self) -> Vec2 { self.max - self.min }
+    pub fn size(&self) -> Vec2 {
+        self.max - self.min
+    }
 
     pub fn scale(&self) -> Real {
         let a_min = self.min.x.abs().max(self.min.y.abs());
@@ -133,16 +157,14 @@ impl Rect {
     }
 
     pub fn overlap(&self, r: &Rect) -> bool {
-        self.max.x >= r.min.x &&
-        self.max.y >= r.min.y &&
-        self.min.x <= r.max.x &&
-        self.min.y <= r.max.y
+        self.max.x >= r.min.x
+            && self.max.y >= r.min.y
+            && self.min.x <= r.max.x
+            && self.min.y <= r.max.y
     }
-
 
     pub fn union(&mut self, p: Vec2) {
         self.min = self.min.min(p);
         self.max = self.max.max(p);
     }
-
 }

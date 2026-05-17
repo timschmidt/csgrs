@@ -5,13 +5,17 @@ pub mod ear_clip;
 pub mod flat_tree;
 pub mod tri_halfs;
 
-use std::collections::{BTreeMap, VecDeque};
 use crate::boolean45::Boolean45;
-use crate::{Manifold, Vec2, Vec3, Vec3u, Half, Tref, get_aa_proj_matrix, compute_aa_proj, is_ccw_3d, Real};
 use crate::triangulation::ear_clip::EarClip;
+#[cfg(feature = "rayon")]
+use crate::triangulation::tri_halfs::tri_halfs_multi;
 use crate::triangulation::tri_halfs::tri_halfs_single;
-#[cfg(feature = "rayon")] use rayon::prelude::*;
-#[cfg(feature = "rayon")] use crate::triangulation::tri_halfs::tri_halfs_multi;
+use crate::{
+    Half, Manifold, Real, Tref, Vec2, Vec3, Vec3u, compute_aa_proj, get_aa_proj_matrix, is_ccw_3d,
+};
+#[cfg(feature = "rayon")]
+use rayon::prelude::*;
+use std::collections::{BTreeMap, VecDeque};
 
 pub struct Triangulation {
     pub hs: Vec<Half>,
@@ -25,8 +29,8 @@ pub fn triangulate(
     b45: &Boolean45,
     eps: Real,
 ) -> Result<Triangulation, String> {
-
-    #[cfg(feature = "rayon")] {
+    #[cfg(feature = "rayon")]
+    {
         let (mut ts, mut rs, ns) = (0..b45.hid_per_f.len() - 1)
             .into_par_iter()
             .map(|fid| {
@@ -46,10 +50,15 @@ pub fn triangulate(
                 },
             );
         update_reference(mp, mq, &mut rs);
-        Ok(Triangulation { hs: tri_halfs_multi(&mut ts), ns, rs })
+        Ok(Triangulation {
+            hs: tri_halfs_multi(&mut ts),
+            ns,
+            rs,
+        })
     }
 
-    #[cfg(not(feature = "rayon"))] {
+    #[cfg(not(feature = "rayon"))]
+    {
         let mut ts = vec![];
         let mut ns = vec![];
         let mut rs = vec![];
@@ -64,21 +73,20 @@ pub fn triangulate(
             ts.extend(t);
         }
         update_reference(mp, mq, &mut rs);
-        Ok(Triangulation { hs: tri_halfs_single(&ts), ns, rs })
+        Ok(Triangulation {
+            hs: tri_halfs_single(&ts),
+            ns,
+            rs,
+        })
     }
-
 }
 
-fn process_face(
-    b45: &Boolean45,
-    fid: usize,
-    eps: Real
-) -> Vec<Vec3u> {
+fn process_face(b45: &Boolean45, fid: usize, eps: Real) -> Vec<Vec3u> {
     let e0 = b45.hid_per_f[fid] as usize;
     let e1 = b45.hid_per_f[fid + 1] as usize;
     match e1 - e0 {
-        3 =>  single_triangulate(b45, e0),
-        4 =>  square_triangulate(b45, fid, eps),
+        3 => single_triangulate(b45, e0),
+        4 => square_triangulate(b45, fid, eps),
         _ => general_triangulate(b45, fid, eps),
     }
 }
@@ -99,7 +107,9 @@ fn assemble_halfs(hs: &[Half], hid_f: &[i32], fid: usize) -> Vec<Vec<usize>> {
     let mut hid1 = 0;
     loop {
         if hid1 == hid0 {
-            if v2h.is_empty() { break; }
+            if v2h.is_empty() {
+                break;
+            }
             hid0 = v2h.first_entry().unwrap().get().back().copied().unwrap();
             hid1 = hid0;
             loops.push(Vec::new());
@@ -111,10 +121,7 @@ fn assemble_halfs(hs: &[Half], hid_f: &[i32], fid: usize) -> Vec<Vec<usize>> {
     loops
 }
 
-fn single_triangulate(
-    b45: &Boolean45,
-    hid: usize
-) -> Vec<Vec3u> {
+fn single_triangulate(b45: &Boolean45, hid: usize) -> Vec<Vec3u> {
     let mut idcs = [hid, hid + 1, hid + 2];
     let mut tails = vec![];
     let mut heads = vec![];
@@ -122,7 +129,9 @@ fn single_triangulate(
         tails.push(b45.hs[*id].tail);
         heads.push(b45.hs[*id].head);
     }
-    if heads[0] == tails[2] { idcs.swap(1, 2); }
+    if heads[0] == tails[2] {
+        idcs.swap(1, 2);
+    }
 
     vec![Vec3u::new(
         b45.hs[idcs[0]].tail,
@@ -131,18 +140,14 @@ fn single_triangulate(
     )]
 }
 
-fn square_triangulate(
-    b45: &Boolean45,
-    fid: usize,
-    eps: Real
-) -> Vec<Vec3u> {
+fn square_triangulate(b45: &Boolean45, fid: usize, eps: Real) -> Vec<Vec3u> {
     let ccw = |tri: Vec3u| {
         is_ccw_3d(
             &b45.ps[b45.hs[tri[0]].tail],
             &b45.ps[b45.hs[tri[1]].tail],
             &b45.ps[b45.hs[tri[2]].tail],
             &b45.ns[fid],
-            eps
+            eps,
         ) >= 0
     };
 
@@ -158,57 +163,54 @@ fn square_triangulate(
     } else if ccw(tris[1][0]) && ccw(tris[1][1]) {
         let diag0 = b45.ps[b45.hs[q[0]].tail] - b45.ps[b45.hs[q[2]].tail];
         let diag1 = b45.ps[b45.hs[q[1]].tail] - b45.ps[b45.hs[q[3]].tail];
-        if diag0.length() > diag1.length() { choice = 1; }
+        if diag0.length() > diag1.length() {
+            choice = 1;
+        }
     }
 
-    tris[choice].iter().map(|t| Vec3u::new(
-        b45.hs[t.x].tail,
-        b45.hs[t.y].tail,
-        b45.hs[t.z].tail
-    )).collect()
+    tris[choice]
+        .iter()
+        .map(|t| Vec3u::new(b45.hs[t.x].tail, b45.hs[t.y].tail, b45.hs[t.z].tail))
+        .collect()
 }
 
-fn general_triangulate(
-    b45: &Boolean45,
-    fid: usize,
-    eps: Real
-) -> Vec<Vec3u> {
-    let proj  = get_aa_proj_matrix(&b45.ns[fid]);
+fn general_triangulate(b45: &Boolean45, fid: usize, eps: Real) -> Vec<Vec3u> {
+    let proj = get_aa_proj_matrix(&b45.ns[fid]);
     let loops = assemble_halfs(&b45.hs, &b45.hid_per_f, fid);
-    let polys = loops.iter().map(|poly|
-        poly.iter().map(|&e| {
-            let i = b45.hs[e].tail;
-            let p = compute_aa_proj(&proj, &b45.ps[i]);
-            Pt { pos: p, idx: e }
-        }).collect()
-    ).collect::<Vec<Vec<_>>>();
+    let polys = loops
+        .iter()
+        .map(|poly| {
+            poly.iter()
+                .map(|&e| {
+                    let i = b45.hs[e].tail;
+                    let p = compute_aa_proj(&proj, &b45.ps[i]);
+                    Pt { pos: p, idx: e }
+                })
+                .collect()
+        })
+        .collect::<Vec<Vec<_>>>();
 
-    EarClip::new(&polys, eps).triangulate().iter().map(|t| Vec3u::new(
-        b45.hs[t.x].tail,
-        b45.hs[t.y].tail,
-        b45.hs[t.z].tail
-    )).collect()
+    EarClip::new(&polys, eps)
+        .triangulate()
+        .iter()
+        .map(|t| Vec3u::new(b45.hs[t.x].tail, b45.hs[t.y].tail, b45.hs[t.z].tail))
+        .collect()
 }
-
 
 #[derive(Debug, Clone)]
 pub struct Pt {
     pub pos: Vec2,
-    pub idx: usize
+    pub idx: usize,
 }
 
-fn update_reference(
-    mp: &Manifold,
-    mq: &Manifold,
-    rs: &mut[Tref],
-) {
+fn update_reference(mp: &Manifold, mq: &Manifold, rs: &mut [Tref]) {
     for r in rs.iter_mut() {
         let fid = r.fid;
-        let pq  = r.mid == 0;
-        r.pid = if pq { mp.coplanar[fid] } else { mq.coplanar[fid] };
+        let pq = r.mid == 0;
+        r.pid = if pq {
+            mp.coplanar[fid]
+        } else {
+            mq.coplanar[fid]
+        };
     }
 }
-
-
-
-

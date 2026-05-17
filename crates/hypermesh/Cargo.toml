@@ -1,31 +1,43 @@
 [package]
-name = "boolmesh"
+name = "hypermesh"
 version = "0.1.9"
 edition = "2024"
-description = "Robust 3D mesh boolean library"
+description = "Robust 3D mesh boolean and topology library for the hyper geometry stack"
 license = "MPL-2.0"
 readme = "README.md"
-repository = "https://github.com/komietty/boolmesh"
-authors = ["Saki Komikado <komietty@gmail.com>"]
-keywords = ["3d", "geometry", "graphics", "modeling"]
+repository = "https://github.com/timschmidt/hypermesh"
+authors = ["Saki Komikado <komietty@gmail.com>", "Timothy Schmidt <timschmidt@gmail.com>"]
+keywords = ["3d", "geometry", "graphics", "modeling", "mesh"]
 categories = ["algorithms", "mathematics", "graphics", "simulation", "game-development"]
 exclude = ["/examples", ".gitignore"]
 
 [dependencies]
-glam = "0.30.9"
+glam = { version = "0.30.9", optional = true }
+hyperlattice = { path = "../hyperlattice", version = "0.4.0", optional = true }
+hyperlimit = { path = "../hyperlimit", version = "0.2.0", optional = true }
+hyperreal = { path = "../hyperreal", version = "0.11.1", optional = true }
+hypertri = { path = "../hypertri", version = "0.1.0", default-features = false, optional = true }
 rayon =  { version = "1.11.0", optional = true }
 
 tobj = {version = "4.0.3", optional = true}
 bevy = { version = "0.16.1", optional = true }
 bevy_panorbit_camera = { version = "0.26.0", optional = true }
 
+[dev-dependencies]
+criterion = "0.5"
+proptest = "1.7.0"
+
 [features]
-default = []
+default = ["exact", "legacy-boolean"]
+exact = ["dep:hyperlattice", "dep:hyperlimit", "dep:hyperreal"]
+exact-triangulation = ["exact", "dep:hypertri", "hypertri/earcut"]
+legacy-boolean = ["dep:glam"]
 verbose = []
-f32 = []
-rayon = ["dep:rayon"]
+f32 = ["legacy-boolean"]
+rayon = ["legacy-boolean", "dep:rayon"]
 
 bevy = [
+    "legacy-boolean",
     "dep:tobj",
     "dep:bevy",
     "dep:bevy_panorbit_camera",
@@ -40,3 +52,8 @@ required-features = ["bevy"]
 name = "multiple_models"
 path = "examples/multiple_models.rs"
 required-features = ["bevy"]
+
+[[bench]]
+name = "exact_validation"
+harness = false
+required-features = ["exact"]

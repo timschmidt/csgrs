@@ -1,48 +1,48 @@
 //--- Copyright (C) 2025 Saki Komikado <komietty@gmail.com>,
 //--- This Source Code Form is subject to the terms of the Mozilla Public License v.2.0.
 
-use crate::{Real, Half, Tref, is_ccw_3d, Vec3};
-use super::{collapse_triangle, form_loops, head_of, next_of, pair_of, remove_if_folded, hids_of, update_vid_around_star};
+use super::{
+    collapse_triangle, form_loops, head_of, hids_of, next_of, pair_of, remove_if_folded,
+    update_vid_around_star,
+};
+use crate::{Half, Real, Tref, Vec3, is_ccw_3d};
 
 // Check around a halfedges from the same tail vertex.
 // If they consist of only two tris, then their edge is collapsable.
-fn record_if_collinear(
-    hs: &[Half],
-    rs: &[Tref],
-    hid: usize,
-    nv: usize,
-) -> bool {
+fn record_if_collinear(hs: &[Half], rs: &[Tref], hid: usize, nv: usize) -> bool {
     let h = &hs[hid];
-    if h.pair().is_none() || (h.tail < nv) { return false; }
+    if h.pair().is_none() || (h.tail < nv) {
+        return false;
+    }
 
     let cw_next = |i: usize| next_of(hs[i].pair);
 
-    let     bgn = hid;
+    let bgn = hid;
     let mut cur = cw_next(bgn);
-    let     r0 = &rs[bgn / 3];
+    let r0 = &rs[bgn / 3];
     let mut r1 = &rs[cur / 3];
     let mut same = is_coplanar(r0, r1);
     while cur != bgn {
         cur = cw_next(cur);
         let r2 = &rs[cur / 3];
         if !is_coplanar(r2, r0) && !is_coplanar(r2, r1) {
-            if same { r1 = r2; same = false; } else { return false; }
+            if same {
+                r1 = r2;
+                same = false;
+            } else {
+                return false;
+            }
         }
     }
     true
 }
 
-fn record_if_short(
-    hs: &[Half],
-    ps: &[Vec3],
-    hid: usize,
-    nv: usize,
-    ep: Real,
-) -> bool {
+fn record_if_short(hs: &[Half], ps: &[Vec3], hid: usize, nv: usize, ep: Real) -> bool {
     let h = &hs[hid];
-    if h.pair().is_none() || (h.tail < nv && h.head < nv) { return false; }
+    if h.pair().is_none() || (h.tail < nv && h.head < nv) {
+        return false;
+    }
     (ps[hs[hid].head] - ps[hs[hid].tail]).length_squared() < ep.powi(2)
-
 }
 
 pub fn collapse_edge(
@@ -54,9 +54,10 @@ pub fn collapse_edge(
     eps: Real,
     store: &mut Vec<usize>, // storing the halfedge data for form_loops
 ) -> bool {
-
     let to_rmv = &hs[hid];
-    if to_rmv.pair().is_none() { return false; }
+    if to_rmv.pair().is_none() {
+        return false;
+    }
 
     let vid_keep = to_rmv.head;
     let vid_delt = to_rmv.tail;
@@ -67,7 +68,7 @@ pub fn collapse_edge(
     let t1 = hids_of(to_rmv.pair);
 
     let mut bgn = pair_of(hs, t1.1); // the bgn half heading delt vert
-    let     end = t0.2;              // the end half heading delt vert
+    let end = t0.2; // the end half heading delt vert
 
     // check validity by orbiting start vert ccw order
     if (pos_keep - pos_delt).length_squared() >= eps.powi(2) {
@@ -84,16 +85,22 @@ pub fn collapse_edge(
             if !is_coplanar(r_curr, tr0) {
                 let tr2 = tr0;
                 tr0 = &rs[hid / 3];
-                if !is_coplanar(r_curr, tr0) { return false; }
+                if !is_coplanar(r_curr, tr0) {
+                    return false;
+                }
                 if tr0.mid != tr2.mid || n_pair.dot(*n_curr) < -0.5 {
                     // Restrict collapse to co-linear edges when the edge separates faces or the edge is sharp.
                     // This ensures large shifts are not introduced parallel to the tangent plane.
-                    if ccw(&p_prev, &pos_delt, &pos_keep) != 0 { return false; }
+                    if ccw(&p_prev, &pos_delt, &pos_keep) != 0 {
+                        return false;
+                    }
                 }
             }
 
             // Don't collapse edge if it would cause a triangle to invert
-            if ccw(&p_next, &p_prev, &pos_keep) < 0 { return false; }
+            if ccw(&p_next, &p_prev, &pos_keep) < 0 {
+                return false;
+            }
 
             p_prev = p_next;
             cur = pair_of(hs, cur); // outgoing half around delt vert
@@ -113,10 +120,14 @@ pub fn collapse_edge(
 
     let mut cur = bgn;
     while cur != end {
-        cur      = next_of(cur);
+        cur = next_of(cur);
         let pair = pair_of(hs, cur);
         let head = head_of(hs, cur);
-        if let Some((i, &v)) = store.iter().enumerate().find(|&(_, &s)| head_of(hs, s) == head) {
+        if let Some((i, &v)) = store
+            .iter()
+            .enumerate()
+            .find(|&(_, &s)| head_of(hs, s) == head)
+        {
             form_loops(hs, ps, v, cur);
             bgn = pair;
             store.truncate(i);
@@ -137,18 +148,22 @@ pub fn collapse_collinear_edges(
     ns: &mut [Vec3],
     rs: &mut [Tref],
     nv: usize,
-    ep: Real
+    ep: Real,
 ) {
     let mut _flag = 0;
     let rec = (0..hs.len())
         .filter(|&hid| record_if_collinear(hs, rs, hid, nv))
         .collect::<Vec<_>>();
     for hid in rec {
-        if collapse_edge(hs, ps, ns, rs, hid, ep, &mut vec![]) { _flag += 1; }
+        if collapse_edge(hs, ps, ns, rs, hid, ep, &mut vec![]) {
+            _flag += 1;
+        }
     }
 
     #[cfg(feature = "verbose")]
-    if _flag > 0 { println!("{} collinear edge collapsed", _flag);}
+    if _flag > 0 {
+        println!("{} collinear edge collapsed", _flag);
+    }
 }
 
 pub fn collapse_short_edges(
@@ -157,7 +172,7 @@ pub fn collapse_short_edges(
     ns: &mut [Vec3],
     rs: &mut [Tref],
     nv: usize,
-    ep: Real
+    ep: Real,
 ) {
     loop {
         let mut flag = 0;
@@ -165,9 +180,13 @@ pub fn collapse_short_edges(
             .filter(|&hid| record_if_short(hs, ps, hid, nv, ep))
             .collect::<Vec<_>>();
         for hid in rec {
-            if collapse_edge(hs, ps, ns, rs, hid, ep, &mut vec![]) { flag += 1; }
+            if collapse_edge(hs, ps, ns, rs, hid, ep, &mut vec![]) {
+                flag += 1;
+            }
         }
-        if flag == 0 { break; }
+        if flag == 0 {
+            break;
+        }
 
         #[cfg(feature = "verbose")]
         println!("{} short edges collapsed", flag);
@@ -175,4 +194,6 @@ pub fn collapse_short_edges(
 }
 
 #[inline]
-fn is_coplanar(t0: &Tref, t1: &Tref) -> bool { t0.mid == t1.mid && t0.pid == t1.pid }
+fn is_coplanar(t0: &Tref, t1: &Tref) -> bool {
+    t0.mid == t1.mid && t0.pid == t1.pid
+}
