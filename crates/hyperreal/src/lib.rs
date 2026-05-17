@@ -21,11 +21,12 @@ pub use crate::rational::Rational;
 
 mod structural;
 pub use crate::structural::{
-    CertifiedRealEquality, CertifiedRealSign, DomainFacts, DomainStatus, ExpressionDegree,
-    IdentityFacts, MagnitudeBits, OrderingFacts, PrimitiveFacts, PrimitiveFloatStatus,
-    RationalFacts, RationalStorageClass, RealDetailedFacts, RealEqualityCertificate, RealSign,
-    RealSignCertificate, RealStructuralFacts, StructuralComparison, StructuralKind,
-    SymbolicDependencyMask, SymbolicFacts, ZeroKnowledge, ZeroOneMinusOneStatus, ZeroOneStatus,
+    CertifiedRealEquality, CertifiedRealOrdering, CertifiedRealSign, DomainFacts, DomainStatus,
+    ExpressionDegree, IdentityFacts, MagnitudeBits, OrderingFacts, PrimitiveFacts,
+    PrimitiveFloatStatus, RationalFacts, RationalStorageClass, RealDetailedFacts,
+    RealEqualityCertificate, RealOrderingCertificate, RealSign, RealSignCertificate,
+    RealStructuralFacts, StructuralComparison, StructuralKind, SymbolicDependencyMask,
+    SymbolicFacts, ZeroKnowledge, ZeroOneMinusOneStatus, ZeroOneStatus,
 };
 
 mod trace;

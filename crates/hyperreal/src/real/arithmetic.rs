@@ -1,11 +1,12 @@
 use crate::{
-    CertifiedRealEquality, CertifiedRealSign, Computable, DomainFacts, DomainStatus,
-    ExpressionDegree, IdentityFacts, MagnitudeBits, OrderingFacts, PrimitiveFacts,
+    CertifiedRealEquality, CertifiedRealOrdering, CertifiedRealSign, Computable, DomainFacts,
+    DomainStatus, ExpressionDegree, IdentityFacts, MagnitudeBits, OrderingFacts, PrimitiveFacts,
     PrimitiveFloatStatus, Problem, Rational, RationalFacts, RationalStorageClass,
-    RealDetailedFacts, RealEqualityCertificate, RealSign, RealSignCertificate, RealStructuralFacts,
-    StructuralComparison, StructuralKind, SymbolicDependencyMask, SymbolicFacts, ZeroKnowledge,
-    ZeroOneMinusOneStatus, ZeroOneStatus,
+    RealDetailedFacts, RealEqualityCertificate, RealOrderingCertificate, RealSign,
+    RealSignCertificate, RealStructuralFacts, StructuralComparison, StructuralKind,
+    SymbolicDependencyMask, SymbolicFacts, ZeroKnowledge, ZeroOneMinusOneStatus, ZeroOneStatus,
 };
+use core::cmp::Ordering;
 use num::ToPrimitive;
 use num::bigint::{BigInt, BigUint, Sign};
 
@@ -979,6 +980,13 @@ impl Clone for Real {
 }
 
 impl Real {
+    /// Refinement floor used by the `PartialOrd` implementation.
+    ///
+    /// The value is deliberately a bounded exact-real policy: comparisons never
+    /// return an approximate result, but generic callers get substantially more
+    /// than structural facts before `partial_cmp` reports `None`.
+    pub const PARTIAL_CMP_MIN_PRECISION: i32 = -2048;
+
     fn exact_rational_unchecked(rational: Rational) -> Real {
         Self {
             rational,
@@ -1784,6 +1792,49 @@ impl Real {
             CertifiedRealSign::Unknown { .. } => {
                 crate::trace_dispatch!("real", "certified_eq_until", "unknown");
                 CertifiedRealEquality::Unknown { min_precision }
+            }
+        }
+    }
+
+    /// Compare two values with a certified structural/refinement predicate.
+    ///
+    /// The comparison first uses representation equality and exact-rational
+    /// ordering, then proves the sign of `self - other` through the same
+    /// structural facts and bounded exact-real refinement used by
+    /// [`Real::certified_sign_until`]. `Unknown` means the requested refinement
+    /// budget did not certify an ordering; it is not an approximate equality.
+    #[inline]
+    pub fn certified_cmp_until(&self, other: &Self, min_precision: i32) -> CertifiedRealOrdering {
+        if self == other {
+            crate::trace_dispatch!("real", "certified_cmp_until", "structural-equality");
+            return CertifiedRealOrdering::Known {
+                ordering: Ordering::Equal,
+                certificate: RealOrderingCertificate::StructuralEquality,
+            };
+        }
+
+        if let (Some(left), Some(right)) = (self.exact_rational_ref(), other.exact_rational_ref()) {
+            crate::trace_dispatch!("real", "certified_cmp_until", "exact-rational-comparison");
+            return CertifiedRealOrdering::Known {
+                ordering: left
+                    .partial_cmp(right)
+                    .expect("exact rationals should be comparable"),
+                certificate: RealOrderingCertificate::ExactRationalComparison,
+            };
+        }
+
+        let difference = self - other;
+        match difference.certified_sign_until(min_precision) {
+            CertifiedRealSign::Known { sign, certificate } => {
+                crate::trace_dispatch!("real", "certified_cmp_until", "difference-sign");
+                CertifiedRealOrdering::Known {
+                    ordering: ordering_from_real_sign(sign),
+                    certificate: ordering_certificate_from_sign_certificate(certificate),
+                }
+            }
+            CertifiedRealSign::Unknown { .. } => {
+                crate::trace_dispatch!("real", "certified_cmp_until", "unknown");
+                CertifiedRealOrdering::Unknown { min_precision }
             }
         }
     }
@@ -4261,11 +4312,32 @@ fn equality_certificate_from_sign_certificate(
     }
 }
 
-fn structural_cmp_from_ordering(ordering: std::cmp::Ordering) -> StructuralComparison {
+fn ordering_certificate_from_sign_certificate(
+    certificate: RealSignCertificate,
+) -> RealOrderingCertificate {
+    match certificate {
+        RealSignCertificate::StructuralFacts | RealSignCertificate::ExactZeroScale => {
+            RealOrderingCertificate::DifferenceStructuralFacts
+        }
+        RealSignCertificate::BoundedRefinement { min_precision } => {
+            RealOrderingCertificate::BoundedRefinement { min_precision }
+        }
+    }
+}
+
+fn ordering_from_real_sign(sign: RealSign) -> Ordering {
+    match sign {
+        RealSign::Negative => Ordering::Less,
+        RealSign::Zero => Ordering::Equal,
+        RealSign::Positive => Ordering::Greater,
+    }
+}
+
+fn structural_cmp_from_ordering(ordering: Ordering) -> StructuralComparison {
     match ordering {
-        std::cmp::Ordering::Less => StructuralComparison::Less,
-        std::cmp::Ordering::Equal => StructuralComparison::Equal,
-        std::cmp::Ordering::Greater => StructuralComparison::Greater,
+        Ordering::Less => StructuralComparison::Less,
+        Ordering::Equal => StructuralComparison::Equal,
+        Ordering::Greater => StructuralComparison::Greater,
     }
 }
 
@@ -5652,6 +5724,13 @@ impl<T: AsRef<Real>> Div<T> for Real {
 impl PartialEq for Real {
     fn eq(&self, other: &Self) -> bool {
         self.rational == other.rational && self.class == other.class
+    }
+}
+
+impl PartialOrd for Real {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.certified_cmp_until(other, Self::PARTIAL_CMP_MIN_PRECISION)
+            .ordering()
     }
 }
 

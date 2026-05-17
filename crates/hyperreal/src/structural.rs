@@ -108,6 +108,58 @@ pub enum RealEqualityCertificate {
     },
 }
 
+/// Source of a certified ordering decision between two `Real` values.
+///
+/// The certificate describes how the sign of `left - right` was proved.
+/// `PartialOrd` uses this same scalar predicate and returns `None` when its
+/// bounded exact-real proof budget cannot certify an ordering.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RealOrderingCertificate {
+    /// The operands were structurally equal.
+    StructuralEquality,
+    /// Both operands were exact rationals and compared as rationals.
+    ExactRationalComparison,
+    /// Cheap structural facts about `left - right` proved the ordering.
+    DifferenceStructuralFacts,
+    /// Bounded exact-real refinement of `left - right` proved the ordering.
+    BoundedRefinement {
+        /// Lowest binary precision the proof was allowed to request.
+        min_precision: i32,
+    },
+}
+
+/// Result of asking for a certified ordering under a bounded exact-real policy.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CertifiedRealOrdering {
+    /// Ordering was proved.
+    Known {
+        /// Proven ordering.
+        ordering: core::cmp::Ordering,
+        /// Proof route used to establish the ordering.
+        certificate: RealOrderingCertificate,
+    },
+    /// The requested bounded exact-real proof did not decide the ordering.
+    Unknown {
+        /// Lowest binary precision the proof was allowed to request.
+        min_precision: i32,
+    },
+}
+
+impl CertifiedRealOrdering {
+    /// Return the certified ordering, if known.
+    pub const fn ordering(self) -> Option<core::cmp::Ordering> {
+        match self {
+            Self::Known { ordering, .. } => Some(ordering),
+            Self::Unknown { .. } => None,
+        }
+    }
+
+    /// Return whether ordering was proved.
+    pub const fn is_known(self) -> bool {
+        matches!(self, Self::Known { .. })
+    }
+}
+
 /// Result of asking whether two `Real` values are mathematically equal under a
 /// bounded exact-real policy.
 ///

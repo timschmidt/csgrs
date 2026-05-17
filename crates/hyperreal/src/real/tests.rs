@@ -2,12 +2,13 @@
 mod tests {
     use crate::real::arithmetic::curve;
     use crate::{
-        CertifiedRealEquality, CertifiedRealSign, DomainStatus, ExpressionDegree, MagnitudeBits,
-        PrimitiveFloatStatus, Problem, Rational, RationalStorageClass, Real,
-        RealEqualityCertificate, RealExactSetDenominatorKind, RealExactSetDyadicExponentClass,
-        RealExactSetFacts, RealExactSetSignPattern, RealSign, RealSignCertificate,
-        RealStructuralFacts, StructuralComparison, StructuralKind, SymbolicDependencyMask,
-        ZeroKnowledge, ZeroOneMinusOneStatus,
+        CertifiedRealEquality, CertifiedRealOrdering, CertifiedRealSign, DomainStatus,
+        ExpressionDegree, MagnitudeBits, PrimitiveFloatStatus, Problem, Rational,
+        RationalStorageClass, Real, RealEqualityCertificate, RealExactSetDenominatorKind,
+        RealExactSetDyadicExponentClass, RealExactSetFacts, RealExactSetSignPattern,
+        RealOrderingCertificate, RealSign, RealSignCertificate, RealStructuralFacts,
+        StructuralComparison, StructuralKind, SymbolicDependencyMask, ZeroKnowledge,
+        ZeroOneMinusOneStatus,
     };
 
     #[test]
@@ -725,6 +726,53 @@ mod tests {
                 certificate: RealEqualityCertificate::BoundedRefinement { min_precision: -64 },
             }
         );
+    }
+
+    #[test]
+    fn certified_cmp_until_reports_structural_exact_and_refined_ordering() {
+        use core::cmp::Ordering;
+
+        let two = Real::from(2);
+        assert_eq!(
+            two.certified_cmp_until(&Real::from(2), -16),
+            CertifiedRealOrdering::Known {
+                ordering: Ordering::Equal,
+                certificate: RealOrderingCertificate::StructuralEquality,
+            }
+        );
+        assert_eq!(
+            two.certified_cmp_until(&Real::from(3), -16),
+            CertifiedRealOrdering::Known {
+                ordering: Ordering::Less,
+                certificate: RealOrderingCertificate::ExactRationalComparison,
+            }
+        );
+
+        let near_pi = Real::new(Rational::fraction(103_993, 33_102).unwrap());
+        assert_eq!(
+            Real::pi().certified_cmp_until(&near_pi, 0),
+            CertifiedRealOrdering::Unknown { min_precision: 0 }
+        );
+        assert_eq!(
+            Real::pi().certified_cmp_until(&near_pi, -64),
+            CertifiedRealOrdering::Known {
+                ordering: Ordering::Greater,
+                certificate: RealOrderingCertificate::BoundedRefinement { min_precision: -64 },
+            }
+        );
+    }
+
+    #[test]
+    fn partial_ord_uses_certified_real_comparison() {
+        use core::cmp::Ordering;
+
+        assert_eq!(
+            Real::from(1).partial_cmp(&Real::from(2)),
+            Some(Ordering::Less)
+        );
+
+        let near_pi = Real::new(Rational::fraction(103_993, 33_102).unwrap());
+        assert_eq!(Real::pi().partial_cmp(&near_pi), Some(Ordering::Greater));
     }
 
     #[test]
