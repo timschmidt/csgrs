@@ -3,8 +3,6 @@
 `hypermesh` is the experimental 3D mesh-boolean crate in the Hyper workspace.
 Today it is still packaged internally as `boolmesh` and carries the original
 float-oriented mesh boolean engine, inspired by Manifold-style robust mesh CSG.
-This README describes its role in the Hyper ecosystem rather than as a
-standalone upstream release.
 
 The current implementation exposes a simple `Manifold` buffer and
 `compute_boolean` entry point for union, subtraction, and intersection over
@@ -14,41 +12,30 @@ ear-clipping triangulation. Inputs are expected to be manifold; boundaries,
 overlapping geometry, and non-manifold cases remain outside the accepted
 contract.
 
-## Hyper Ecosystem Role And Links
+## Hyper Ecosystem
 
-`hypermesh` is intended to become the 3D counterpart to `hypercurve` and
-`hypertri`: solid mesh topology, manifold validation, triangle/plane
-intersection, remeshing, and boolean result reconstruction. The lower layers
-should eventually supply exact scalar values (`hyperreal`), vector/matrix facts
-(`hyperlattice`), and orientation/incidence predicates (`hyperlimit`).
-`hypersolve` and `hyperphysics` can then consume prepared mesh facts for
-constraints and simulation adapters.
+`hypermesh` is the experimental 3D mesh-topology layer. It is being adapted from
+`boolmesh` toward exact predicates, retained topology facts, and manifold
+validation.
 
-The current code does not yet use those lower Hyper layers for its core boolean
-decisions. Treat it as an imported/experimental engine whose public surface is
-being evaluated before exact-aware predicates and retained topology facts are
-threaded through it.
-
-Stack links:
-
-- [hyperreal](../hyperreal/README.md): exact rational, symbolic, and computable
+- [hyperreal](https://github.com/timschmidt/hyperreal): exact rational, symbolic, and computable
   real arithmetic.
-- [hyperlimit](../hyperlimit/README.md): exact predicate policy and certified
+- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate policy and certified
   geometric decisions.
-- [hyperlattice](../hyperlattice/README.md): small exact vector, matrix, and
+- [hyperlattice](https://github.com/timschmidt/hyperlattice): small exact vector, matrix, and
   transform algebra.
-- [hypercurve](../hypercurve/README.md): planar curve, contour, region, and
+- [hypercurve](https://github.com/timschmidt/hypercurve): planar curve, contour, region, and
   boolean geometry.
-- [hypertri](../hypertri/README.md): exact polygon triangulation and constrained
+- [hypertri](https://github.com/timschmidt/hypertri): exact polygon triangulation and constrained
   Delaunay topology.
-- [hypermesh](../hypermesh/README.md): 3D mesh boolean experiments and the
+- [hypermesh](https://github.com/timschmidt/boolmesh): 3D mesh boolean experiments and the
   future exact-aware mesh-topology layer.
-- [hypersolve](../hypersolve/README.md): experimental exact-aware solver layer.
-- [hyperdrc](../hyperdrc/README.md): PCB design-readiness checks over exact-aware
+- [hypersolve](https://github.com/timschmidt/hypersolve): experimental exact-aware solver layer.
+- [hyperdrc](https://github.com/timschmidt/hyperdrc): PCB design-readiness checks over exact-aware
   geometry adapters.
-- [hyperphysics](../hyperphysics/README.md): placeholder physics-domain crate
+- [hyperphysics](https://github.com/timschmidt/hyperphysics): placeholder physics-domain crate
   for the exact geometry stack.
-- [csgrs](../csgrs/readme.md): constructive solid geometry and polygon boolean
+- [csgrs](https://github.com/timschmidt/csgrs): constructive solid geometry and polygon boolean
   engine used by HyperDRC and available as an interop target.
 
 ## Traditional Mesh Boolean Problems
