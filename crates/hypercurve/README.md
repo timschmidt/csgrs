@@ -15,39 +15,34 @@ the native APIs expose explicit uncertainty for tangent, overlap, boundary, and
 unsupported cases instead of silently resolving them through global epsilon
 rules.
 
-In the Hyper ecosystem it is the 2D curved-topology layer: `hyperreal`,
-`hyperlattice`, and `hyperlimit` provide scalar/algebra/predicate support;
-`hypercurve` owns contours, regions, offsets, and curve relations; `hypertri`
-handles line-only triangulation; and `hyperdrc` consumes this work for
-manufacturing-readiness checks.
-
 ## WASM Demo
 
 The deployed WASM app is available at
 <https://timschmidt.github.io/hypercurve/>.
 
-## Hyper Ecosystem Role And Links
+## Hyper Ecosystem
 
-Stack links:
+`hypercurve` is the 2D curved-topology layer: it owns contours, regions,
+offsets, and curve relations while `hypertri` handles line-only triangulation.
 
-- [hyperreal](../hyperreal/README.md): exact rational, symbolic, and computable
+- [hyperreal](https://github.com/timschmidt/hyperreal): exact rational, symbolic, and computable
   real arithmetic.
-- [hyperlimit](../hyperlimit/README.md): exact predicate policy and certified
+- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate policy and certified
   geometric decisions.
-- [hyperlattice](../hyperlattice/README.md): small exact vector, matrix, and
+- [hyperlattice](https://github.com/timschmidt/hyperlattice): small exact vector, matrix, and
   transform algebra.
-- [hypercurve](../hypercurve/README.md): planar curve, contour, region, and
+- [hypercurve](https://github.com/timschmidt/hypercurve): planar curve, contour, region, and
   boolean geometry.
-- [hypertri](../hypertri/README.md): exact polygon triangulation and constrained
+- [hypertri](https://github.com/timschmidt/hypertri): exact polygon triangulation and constrained
   Delaunay topology.
-- [hypermesh](../hypermesh/README.md): 3D mesh boolean experiments and the
+- [hypermesh](https://github.com/timschmidt/boolmesh): 3D mesh boolean experiments and the
   future exact-aware mesh-topology layer.
-- [hypersolve](../hypersolve/README.md): experimental exact-aware solver layer.
-- [hyperdrc](../hyperdrc/README.md): PCB design-readiness checks over exact-aware
+- [hypersolve](https://github.com/timschmidt/hypersolve): experimental exact-aware solver layer.
+- [hyperdrc](https://github.com/timschmidt/hyperdrc): PCB design-readiness checks over exact-aware
   geometry adapters.
-- [hyperphysics](../hyperphysics/README.md): placeholder physics-domain crate
+- [hyperphysics](https://github.com/timschmidt/hyperphysics): placeholder physics-domain crate
   for the exact geometry stack.
-- [csgrs](../csgrs/readme.md): constructive solid geometry and polygon boolean
+- [csgrs](https://github.com/timschmidt/csgrs): constructive solid geometry and polygon boolean
   engine used by HyperDRC and available as an interop target.
 
 ## Numeric Model
