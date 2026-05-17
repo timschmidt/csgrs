@@ -128,7 +128,7 @@ fn append_region_contours(
 ) -> CurveResult<Classification<()>> {
     for (index, contour) in contours.iter().enumerate() {
         let key = RegionContourKey::new(side, role, index);
-        let fragments = match split_keyed_contour(*contour, key, intersections, policy)? {
+        let fragments = match split_keyed_contour(contour, key, intersections, policy)? {
             Classification::Decided(fragments) => fragments,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };

@@ -94,6 +94,7 @@ impl ContourIntersectionSet {
 
 /// One normalized contour-pair topology event.
 #[derive(Clone, Debug, PartialEq)]
+#[allow(clippy::large_enum_variant)]
 pub enum ContourIntersection {
     /// A single point event.
     Point(ContourPointIntersection),
@@ -243,10 +244,10 @@ pub(crate) fn intersect_contours_with_cached_aabbs(
     b_segment_boxes: &[Option<Aabb2>],
     policy: &CurvePolicy,
 ) -> CurveResult<ContourIntersectionSet> {
-    if let (Some(a_box), Some(b_box)) = (a_box, b_box) {
-        if aabbs_decided_disjoint(a_box, b_box, policy) {
-            return Ok(ContourIntersectionSet::new(Vec::new()));
-        }
+    if let (Some(a_box), Some(b_box)) = (a_box, b_box)
+        && aabbs_decided_disjoint(a_box, b_box, policy)
+    {
+        return Ok(ContourIntersectionSet::new(Vec::new()));
     }
 
     let mut events = Vec::new();
@@ -256,10 +257,9 @@ pub(crate) fn intersect_contours_with_cached_aabbs(
             if let (Some(Some(a_box)), Some(Some(b_box))) = (
                 a_segment_boxes.get(a_segment_index),
                 b_segment_boxes.get(b_segment_index),
-            ) {
-                if aabbs_decided_disjoint(a_box, b_box, policy) {
-                    continue;
-                }
+            ) && aabbs_decided_disjoint(a_box, b_box, policy)
+            {
+                continue;
             }
 
             let relation = a_segment.intersect_segment(b_segment, policy)?;
@@ -291,10 +291,9 @@ pub(crate) fn intersect_contour_self_with_cached_aabbs(
             if let (Some(Some(first_box)), Some(Some(second_box))) = (
                 segment_boxes.get(first_index),
                 segment_boxes.get(second_index),
-            ) {
-                if aabbs_decided_disjoint(first_box, second_box, policy) {
-                    continue;
-                }
+            ) && aabbs_decided_disjoint(first_box, second_box, policy)
+            {
+                continue;
             }
 
             let relation =
@@ -429,6 +428,7 @@ fn append_segment_relation_events(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 fn append_line_arc_events(
     events: &mut Vec<ContourIntersection>,
     a_segment_index: usize,
@@ -593,7 +593,7 @@ fn points_match_for_connectivity(point: &Point2, expected: &Point2, policy: &Cur
     }
 
     if matches!(policy.numeric_mode, crate::NumericMode::EdgePreview)
-        && let (Some(distance), Some(tolerance)) = (distance.to_f64_approx(), policy.tolerance)
+        && let (Some(distance), Some(tolerance)) = (distance.to_f64_lossy(), policy.tolerance)
     {
         let tolerance = tolerance.absolute.max(tolerance.relative);
         return distance.is_finite() && distance <= tolerance * tolerance;

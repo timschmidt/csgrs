@@ -26,6 +26,16 @@ pub enum Classification<T> {
 }
 
 impl<T> Classification<T> {
+    /// Returns true when this classification contains a decided value.
+    pub const fn is_decided(&self) -> bool {
+        matches!(self, Self::Decided(_))
+    }
+
+    /// Returns true when this classification carries an explicit uncertainty reason.
+    pub const fn is_uncertain(&self) -> bool {
+        matches!(self, Self::Uncertain(_))
+    }
+
     /// Maps a decided value while preserving uncertainty unchanged.
     pub fn map<U, F>(self, f: F) -> Classification<U>
     where
@@ -145,7 +155,7 @@ pub(crate) fn orient2d_real_expr(from: &Point2, to: &Point2, point: &Point2) -> 
 
 pub(crate) fn real_sign(value: &Real, policy: &CurvePolicy) -> Option<RealSign> {
     if matches!(policy.numeric_mode, NumericMode::EdgePreview)
-        && let Some(value) = value.to_f64_approx()
+        && let Some(value) = value.to_f64_lossy()
         && value.is_finite()
     {
         // Edge-preview mode is allowed to collapse a hyperreal value to the
@@ -208,7 +218,7 @@ pub(crate) fn compare_reals_for_split_ordering(
     policy: &CurvePolicy,
 ) -> Option<Ordering> {
     if matches!(policy.numeric_mode, NumericMode::EdgePreview)
-        && let (Some(left), Some(right)) = (left.to_f64_approx(), right.to_f64_approx())
+        && let (Some(left), Some(right)) = (left.to_f64_lossy(), right.to_f64_lossy())
         && left.is_finite()
         && right.is_finite()
     {
@@ -250,7 +260,7 @@ pub(crate) fn in_closed_unit_interval(value: &Real, policy: &CurvePolicy) -> Opt
     // out-of-range values cannot represent finite segment hits, while
     // near-boundary values still fall through to exact comparison.
     if matches!(policy.numeric_mode, NumericMode::EdgePreview)
-        && let Some(approx) = value.to_f64_approx()
+        && let Some(approx) = value.to_f64_lossy()
     {
         let tolerance = policy
             .tolerance

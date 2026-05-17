@@ -1,7 +1,7 @@
 use hypercurve::{
-    Aabb2, BooleanFragmentAction, BooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2,
-    ContourPointLocation, CurvePolicy, CurveString2, FillRule, LineSeg2, OffsetCap, Point2, Real,
-    Region2, RegionPointLocation, Segment2,
+    Aabb2, BooleanFragmentAction, BooleanOp, BulgeVertex2, CircleCircleRelation, CircularArc2,
+    Classification, Contour2, ContourPointLocation, CurvePolicy, CurveString2, FillRule,
+    LineCircleRelation, LineSeg2, OffsetCap, Point2, Real, Region2, RegionPointLocation, Segment2,
 };
 use proptest::prelude::*;
 
@@ -266,6 +266,89 @@ proptest! {
     }
 
     #[test]
+    fn line_circle_relation_matches_integer_distance_classification(
+        x in -48_i32..48,
+        y in -48_i32..48,
+        radius in 1_i32..32,
+        y_offset in -48_i32..48,
+    ) {
+        let arc = CircularArc2::from_bulge(
+            p(x - radius, y),
+            p(x + radius, y),
+            s(1),
+        ).unwrap();
+        let line = LineSeg2::try_new(
+            p(x - radius * 3, y + y_offset),
+            p(x + radius * 3, y + y_offset),
+        ).unwrap();
+
+        let relation = line.supporting_line_circle_relation(&arc, &policy()).unwrap();
+        let offset_squared = y_offset * y_offset;
+        let radius_squared = radius * radius;
+        if offset_squared > radius_squared {
+            prop_assert!(
+                relation.is_disjoint(),
+                "horizontal line farther than the radius must be disjoint"
+            );
+        } else if offset_squared == radius_squared {
+            match relation {
+                LineCircleRelation::Tangent { point, .. } => {
+                    prop_assert_eq!(point, p(x, y + y_offset));
+                }
+                other => prop_assert!(false, "expected exact tangent relation, got {other:?}"),
+            }
+        } else {
+            prop_assert!(
+                relation.is_secant(),
+                "horizontal line inside the radius must be secant"
+            );
+        }
+    }
+
+    #[test]
+    fn circle_circle_relation_matches_integer_distance_classification(
+        x in -32_i32..32,
+        y in -32_i32..32,
+        radius in 2_i32..32,
+        center_dx in -48_i32..48,
+    ) {
+        prop_assume!(center_dx != 0);
+        let first = CircularArc2::from_bulge(
+            p(x - radius, y),
+            p(x + radius, y),
+            s(1),
+        ).unwrap();
+        let second = CircularArc2::from_bulge(
+            p(x + center_dx - radius, y),
+            p(x + center_dx + radius, y),
+            s(-1),
+        ).unwrap();
+
+        let relation = first.circle_relation(&second, &policy()).unwrap();
+        let center_distance = center_dx.abs();
+        let diameter = radius * 2;
+        if center_distance > diameter {
+            prop_assert!(
+                relation.is_disjoint(),
+                "equal-radius circles farther than one diameter must be disjoint"
+            );
+        } else if center_distance == diameter {
+            match relation {
+                CircleCircleRelation::Tangent { point } => {
+                    let tangent_x = x + center_dx / 2;
+                    prop_assert_eq!(point, p(tangent_x, y));
+                }
+                other => prop_assert!(false, "expected exact tangent relation, got {other:?}"),
+            }
+        } else {
+            prop_assert!(
+                relation.is_secant(),
+                "distinct equal-radius circles closer than one diameter must be secant"
+            );
+        }
+    }
+
+    #[test]
     fn primitive_segments_reversal_containment_and_bbox(
         x in -128_i32..128,
         y in -128_i32..128,
@@ -439,12 +522,10 @@ proptest! {
             }
             if let (Classification::Decided(contours), Classification::Decided(region)) =
                 (&plain_contours, &plain_region)
-            {
-                if let Classification::Decided(rebuilt) =
+                && let Classification::Decided(rebuilt) =
                     Region2::from_boundary_contours(contours.clone(), &policy).unwrap()
-                {
-                    prop_assert_eq!(rebuilt, region.clone());
-                }
+            {
+                prop_assert_eq!(rebuilt, region.clone());
             }
         }
     }
@@ -471,7 +552,7 @@ proptest! {
         };
         let prepared = region.prepare_topology_queries(&policy);
 
-        prop_assert_eq!(region.material_contours().len(), (depth + 1) / 2);
+        prop_assert_eq!(region.material_contours().len(), depth.div_ceil(2));
         prop_assert_eq!(region.hole_contours().len(), depth / 2);
 
         for (index, rect) in rects.iter().enumerate() {

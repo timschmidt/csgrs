@@ -5,6 +5,7 @@ mod editor;
 mod geometry;
 mod plotting;
 mod scenes;
+mod share;
 mod theme;
 
 #[cfg(not(target_arch = "wasm32"))]

@@ -2,8 +2,9 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    ArcArcIntersection, BulgeVertex2, CircularArc2, Classification, Contour2, CurvePolicy,
-    CurveResult, CurveString2, LineSeg2, Point2, Real, Region2, Segment2,
+    ArcArcIntersection, BulgeVertex2, CircleCircleRelation, CircularArc2, Classification, Contour2,
+    CurvePolicy, CurveResult, CurveString2, LineCircleRelation, LineSeg2, Point2, Real, Region2,
+    Segment2,
 };
 
 fn s(value: i32) -> Real {
@@ -62,6 +63,61 @@ fn bench_arc_arc_case(
     let elapsed = started.elapsed();
     println!(
         "{name}: {iterations} iterations in {elapsed:?} ({:?}/iter), total weight={total_weight}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
+fn bench_line_circle_relation(iterations: u32) -> CurveResult<()> {
+    let line = LineSeg2::try_new(p(-100, 0), p(100, 0))?;
+    let circle = arc(p(25, 0), p(-25, 0), p(0, 0), false);
+    let policy = CurvePolicy::certified();
+    let started = Instant::now();
+    let mut total_weight = 0_usize;
+
+    for _ in 0..iterations {
+        let weight = match line.supporting_line_circle_relation(&circle, &policy)? {
+            LineCircleRelation::Disjoint => 0,
+            LineCircleRelation::Tangent { .. } => 1,
+            LineCircleRelation::Secant { .. } => 2,
+            LineCircleRelation::Uncertain { reason } => {
+                panic!("line_circle_relation became uncertain during benchmark: {reason:?}");
+            }
+        };
+        total_weight += black_box(weight);
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "line_circle_relation_secant: {iterations} iterations in {elapsed:?} ({:?}/iter), total weight={total_weight}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
+fn bench_circle_circle_relation(iterations: u32) -> CurveResult<()> {
+    let first = arc(p(4, 3), p(4, -3), p(0, 0), true);
+    let second = arc(p(4, -3), p(4, 3), p(8, 0), true);
+    let policy = CurvePolicy::certified();
+    let started = Instant::now();
+    let mut total_weight = 0_usize;
+
+    for _ in 0..iterations {
+        let weight = match first.circle_relation(&second, &policy)? {
+            CircleCircleRelation::Coincident => 3,
+            CircleCircleRelation::Disjoint => 0,
+            CircleCircleRelation::Tangent { .. } => 1,
+            CircleCircleRelation::Secant { .. } => 2,
+            CircleCircleRelation::Uncertain { reason } => {
+                panic!("circle_circle_relation became uncertain during benchmark: {reason:?}");
+            }
+        };
+        total_weight += black_box(weight);
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "circle_circle_relation_secant: {iterations} iterations in {elapsed:?} ({:?}/iter), total weight={total_weight}",
         elapsed / iterations
     );
     Ok(())
@@ -273,6 +329,9 @@ fn bench_prepared_sparse_region_events(contour_count: i32, iterations: u32) -> C
 }
 
 fn main() -> CurveResult<()> {
+    bench_line_circle_relation(100_000)?;
+    bench_circle_circle_relation(100_000)?;
+
     let same_circle_a = arc(p(5, 0), p(-5, 0), p(0, 0), false);
     let same_circle_overlap_b = arc(p(0, 5), p(0, -5), p(0, 0), false);
     bench_arc_arc_case(

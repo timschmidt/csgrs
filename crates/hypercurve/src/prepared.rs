@@ -7,14 +7,14 @@
 //! generation role of Bentley and Ottmann's intersection-reporting framework,
 //! while preserving Shewchuk-style certified predicates for topology branches.
 
-use crate::bbox::{Aabb2, aabb_decided_misses_point, decided_segment_aabb};
+use crate::bbox::{Aabb2, aabb_decided_misses_point, aabbs_decided_disjoint, decided_segment_aabb};
 use crate::facts::{CurveStringFacts, RegionFacts};
 use crate::{
     BooleanBoundaryLoopSet, BooleanOp, CircularArc2, CircularArc2Facts, Classification, Contour2,
     ContourIntersectionSet, ContourPointLocation, CurvePolicy, CurveResult, CurveString2,
     CurveStringIntersection, FillRule, LineSeg2, LineSeg2Facts, LineSide, Point2, Region2,
     RegionContourIntersection, RegionContourKey, RegionContourRole, RegionIntersectionSet,
-    RegionPointLocation, RegionSide, RegionView2, Segment2, UncertaintyReason,
+    RegionPointLocation, RegionSide, RegionView2, Segment2, SegmentIntersection, UncertaintyReason,
 };
 
 /// Prepared point-line classifier for a fixed [`LineSeg2`].
@@ -233,6 +233,7 @@ impl<'a> PreparedCircularArc2<'a> {
 /// handles discovered during preparation, while keeping segment topology owned
 /// by `hypercurve` and scalar/predicate decisions owned by `hyperlimit`.
 #[derive(Clone, Debug, PartialEq)]
+#[allow(clippy::large_enum_variant)]
 pub enum PreparedSegment2<'a> {
     /// Prepared line-segment predicates.
     Line(PreparedLineSeg2<'a>),
@@ -257,6 +258,45 @@ impl<'a> PreparedSegment2<'a> {
     /// Returns whether this handle prepares a circular arc.
     pub const fn is_arc(&self) -> bool {
         matches!(self, Self::Arc(_))
+    }
+
+    /// Intersects two prepared native segment handles.
+    ///
+    /// This is the prepared segment-pair batch boundary used by prepared curve
+    /// strings and contours. It deliberately returns the same
+    /// [`SegmentIntersection`] shape as [`Segment2::intersect_segment`]: cached
+    /// line and arc facts can select faster exact kernels, but finite segment
+    /// topology and uncertainty remain represented by `hypercurve`'s public
+    /// intersection enums. This follows Yap's EGC separation between carried
+    /// object facts and certified predicate decisions; see Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    pub fn intersect_prepared_segment(
+        &self,
+        other: &PreparedSegment2<'a>,
+        policy: &CurvePolicy,
+    ) -> CurveResult<SegmentIntersection> {
+        match (self, other) {
+            (Self::Line(first), Self::Line(second)) => first
+                .line_segment()
+                .intersect_line(second.line_segment(), policy)
+                .map(SegmentIntersection::LineLine),
+            (Self::Line(line), Self::Arc(arc)) => Ok(SegmentIntersection::LineArc {
+                order: crate::LineArcOrder::LineThenArc,
+                result: line
+                    .line_segment()
+                    .intersect_arc(arc.circular_arc(), policy)?,
+            }),
+            (Self::Arc(arc), Self::Line(line)) => Ok(SegmentIntersection::LineArc {
+                order: crate::LineArcOrder::ArcThenLine,
+                result: line
+                    .line_segment()
+                    .intersect_arc(arc.circular_arc(), policy)?,
+            }),
+            (Self::Arc(first), Self::Arc(second)) => first
+                .circular_arc()
+                .intersect_arc(second.circular_arc(), policy)
+                .map(SegmentIntersection::ArcArc),
+        }
     }
 }
 
@@ -345,11 +385,13 @@ impl<'a> PreparedCurveStringView2<'a> {
         other: &PreparedCurveStringView2<'_>,
         policy: &CurvePolicy,
     ) -> CurveResult<Vec<CurveStringIntersection>> {
-        crate::curve_string::intersect_curve_strings_with_cached_aabbs(
-            self.curve,
-            other.curve,
-            &self.segment_boxes,
-            &other.segment_boxes,
+        intersect_prepared_segment_pairs_with_cached_aabbs(
+            &self.prepared_segments,
+            &other.prepared_segments,
+            self.curve.segments(),
+            other.curve.segments(),
+            self.segment_boxes(),
+            other.segment_boxes(),
             policy,
         )
     }
@@ -987,6 +1029,61 @@ fn prepared_segments(segments: &[Segment2]) -> Vec<PreparedSegment2<'_>> {
         .iter()
         .map(PreparedSegment2::from_segment)
         .collect()
+}
+
+fn intersect_prepared_segment_pairs_with_cached_aabbs(
+    first_prepared_segments: &[PreparedSegment2<'_>],
+    second_prepared_segments: &[PreparedSegment2<'_>],
+    first_segments: &[Segment2],
+    second_segments: &[Segment2],
+    first_segment_boxes: &[Option<Aabb2>],
+    second_segment_boxes: &[Option<Aabb2>],
+    policy: &CurvePolicy,
+) -> CurveResult<Vec<CurveStringIntersection>> {
+    let mut intersections = Vec::new();
+
+    for (a_segment_index, a_segment) in first_prepared_segments.iter().enumerate() {
+        for (b_segment_index, b_segment) in second_prepared_segments.iter().enumerate() {
+            // Prepared pair batches use the same conservative broad phase as
+            // ordinary curve strings. Bentley and Ottmann's sweep-line paper
+            // motivates candidate pruning, but the prepared flat scan keeps
+            // exact segment relations authoritative until a later index can
+            // consume retained all-line/axis/monotone facts.
+            if let (Some(Some(a_box)), Some(Some(b_box))) = (
+                first_segment_boxes.get(a_segment_index),
+                second_segment_boxes.get(b_segment_index),
+            ) && aabbs_decided_disjoint(a_box, b_box, policy)
+            {
+                continue;
+            }
+
+            let relation = match (a_segment, b_segment) {
+                (PreparedSegment2::Line(_), PreparedSegment2::Line(_))
+                | (PreparedSegment2::Line(_), PreparedSegment2::Arc(_))
+                | (PreparedSegment2::Arc(_), PreparedSegment2::Line(_))
+                | (PreparedSegment2::Arc(_), PreparedSegment2::Arc(_)) => {
+                    a_segment.intersect_prepared_segment(b_segment, policy)?
+                }
+            };
+
+            debug_assert_eq!(
+                relation,
+                first_segments[a_segment_index]
+                    .intersect_segment(&second_segments[b_segment_index], policy)
+                    .expect("ordinary segment intersection should match prepared segment pair")
+            );
+
+            if !relation.is_none() {
+                intersections.push(CurveStringIntersection {
+                    a_segment_index,
+                    b_segment_index,
+                    relation,
+                });
+            }
+        }
+    }
+
+    Ok(intersections)
 }
 
 #[cfg(feature = "predicates")]

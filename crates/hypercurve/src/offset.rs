@@ -813,13 +813,13 @@ fn append_round_join_if_needed(
                 Classification::Decided(clockwise) => clockwise,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
-            joined.push(Segment2::Arc(CircularArc2::try_from_center(
-                from.clone(),
-                to.clone(),
-                center.clone(),
-                clockwise,
-            )?));
-            Ok(Classification::Decided(()))
+            match round_join_arc(from, to, center, clockwise) {
+                Classification::Decided(arc) => {
+                    joined.push(Segment2::Arc(arc));
+                    Ok(Classification::Decided(()))
+                }
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            }
         }
         None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     }
@@ -838,10 +838,30 @@ fn round_cap_arc(
                 Classification::Decided(clockwise) => clockwise,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
-            CircularArc2::try_from_center(from.clone(), to.clone(), center.clone(), clockwise)
-                .map(Classification::Decided)
+            Ok(round_join_arc(from, to, center, clockwise))
         }
         None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    }
+}
+
+fn round_join_arc(
+    from: &Point2,
+    to: &Point2,
+    center: &Point2,
+    clockwise: bool,
+) -> Classification<CircularArc2> {
+    match CircularArc2::try_from_center(from.clone(), to.clone(), center.clone(), clockwise) {
+        Ok(arc) => Classification::Decided(arc),
+        // A round join is only valid when both offset endpoints are certified
+        // to lie on the circle around the source vertex. If exact radii differ,
+        // the primitive join stage has reached the unsupported trim/rebuild
+        // boundary described by Tiller-Hanson and Farouki-Neff above.
+        Err(CurveError::ZeroRadiusArc | CurveError::RadiusMismatch) => {
+            Classification::Uncertain(UncertaintyReason::Unsupported)
+        }
+        Err(error) => {
+            unreachable!("round join arc construction returned unexpected error: {error}")
+        }
     }
 }
 

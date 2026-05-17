@@ -169,10 +169,10 @@ impl<'a> RegionView2<'a> {
     /// Polygon Problem for Arbitrary Polygons" (2001), while avoiding work for
     /// sparse material/hole bins.
     pub fn signed_depth(&self, point: &Point2, policy: &CurvePolicy) -> Classification<i32> {
-        if let Ok(Classification::Decided(region_bbox)) = Aabb2::from_region_view(self, policy) {
-            if aabb_decided_misses_point(&region_bbox, point, policy) {
-                return Classification::Decided(0);
-            }
+        if let Ok(Classification::Decided(region_bbox)) = Aabb2::from_region_view(self, policy)
+            && aabb_decided_misses_point(&region_bbox, point, policy)
+        {
+            return Classification::Decided(0);
         }
 
         let mut depth = 0;

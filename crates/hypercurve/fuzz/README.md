@@ -8,7 +8,7 @@ target. The `hypercurve_*` targets exercise the native kernel directly.
 Run them with `cargo fuzz` from the `hypercurve` repository root. The sanitizer
 build uses nightly-only compiler flags, so invoke the subcommand through a
 nightly toolchain when stable is your default. In ptrace-hosted runners where
-LeakSanitizer reports a fatal post-run error, set `LSAN_OPTIONS=detect_leaks=0`.
+LeakSanitizer reports a fatal post-run error, set `ASAN_OPTIONS=detect_leaks=0`.
 
 Useful commands:
 
@@ -32,6 +32,7 @@ cargo +nightly fuzz run hypercurve_region_boolean
 cargo +nightly fuzz run hypercurve_events_fragments
 cargo +nightly fuzz run hypercurve_bboxes_curve_strings_splits
 cargo +nightly fuzz run hypercurve_offsets
+cargo +nightly fuzz run hypercurve_adversarial_polygons
 cargo +nightly fuzz run hypercurve_full_api
 ```
 
@@ -57,5 +58,7 @@ The native harnesses cover the same high-value areas as the deterministic
 - bbox construction/overlap, prepared curve-string broad-phase consistency, and
   split-map ordering
 - primitive, curve-string, contour, checked, and outline offset entry points
+- adversarial polygon pipelines with holes, deep/slender concavities,
+  self-intersections, clipping, closed-polyline reconstruction, and offsets
 - full public API cross-checks for prepared/plain parity, nesting,
   boundary-loop/contour/region consistency, and all offset cap styles

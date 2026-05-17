@@ -17,6 +17,7 @@ checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 [[package]]
 name = "cavalier_contours"
 version = "0.7.0"
+source = "git+https://github.com/timschmidt/cavalier_contours?branch=shape-boolean-transformation#8e448adae78be6f1efddd0f3112c46a9ed5d6b7a"
 dependencies = [
  "num-traits",
  "static_aabb2d_index",

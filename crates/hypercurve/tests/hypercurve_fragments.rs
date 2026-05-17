@@ -1,3 +1,5 @@
+#![allow(clippy::too_many_arguments)]
+
 use hypercurve::{
     ArcArcIntersection, BulgeVertex2, CircularArc2, Classification, Contour2, ContourFragmentSet,
     ContourIntersection, ContourOperand, ContourSplitMarkers, CurveError, CurvePolicy,

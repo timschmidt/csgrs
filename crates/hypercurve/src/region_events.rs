@@ -179,10 +179,9 @@ fn collect_role_pairs(
             // Transactions on Computers C-28(9), 643-647, 1979.
             if let (Some(first_box), Some(second_box)) =
                 (&first_boxes[first_index], &second_boxes[second_index])
+                && aabbs_decided_disjoint(first_box, second_box, policy)
             {
-                if aabbs_decided_disjoint(first_box, second_box, policy) {
-                    continue;
-                }
+                continue;
             }
 
             let intersections = first_contour.intersect_contour(second_contour, policy)?;

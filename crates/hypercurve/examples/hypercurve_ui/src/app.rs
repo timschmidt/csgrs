@@ -12,7 +12,7 @@ impl MainApp {
             }
         });
         Self {
-            scenes: DemoScenes::default(),
+            scenes: DemoScenes::new(),
         }
     }
 }

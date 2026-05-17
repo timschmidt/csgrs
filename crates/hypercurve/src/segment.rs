@@ -353,6 +353,7 @@ impl CircularArc2 {
 
 /// A native line or circular-arc segment.
 #[derive(Clone, Debug, PartialEq)]
+#[allow(clippy::large_enum_variant)]
 pub enum Segment2 {
     /// Straight line segment.
     Line(LineSeg2),
@@ -433,6 +434,7 @@ impl Segment2 {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 enum ParameterOnLine {
     Decided(Real),
     Uncertain(crate::UncertaintyReason),
@@ -490,7 +492,7 @@ fn reject_cavalier_unsupported_bulge(bulge: &Real) -> CurveResult<()> {
         return Ok(());
     }
 
-    let Some(approx) = bulge.to_f64_approx() else {
+    let Some(approx) = bulge.to_f64_lossy() else {
         return Ok(());
     };
 

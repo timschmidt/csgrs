@@ -12,6 +12,8 @@ pub enum CurveError {
     ZeroLengthLine,
     /// A circular arc has zero radius.
     ZeroRadiusArc,
+    /// A rational Bezier weight is structurally zero.
+    ZeroRationalBezierWeight,
     /// A circular arc start/end pair does not lie on a common supplied circle.
     RadiusMismatch,
     /// A bulge value is too close to zero to choose line versus arc semantics.
@@ -28,6 +30,14 @@ pub enum CurveError {
     AmbiguousCurveStringConnection,
     /// Polyline reconstruction options contain non-finite or unsupported values.
     InvalidReconstructionOptions,
+    /// Bezier flattening options cannot certify a positive error budget.
+    InvalidFlatteningOptions,
+    /// A Bezier parameter is certified outside the closed unit interval.
+    InvalidBezierParameter,
+    /// A Bezier segment range is outside the stored path facts.
+    InvalidBezierRange,
+    /// A requested Bezier arc length is certified outside the curve length range.
+    InvalidBezierArcLengthTarget,
     /// Polyline reconstruction needs coordinates with finite `f64` approximations.
     NonFiniteReconstructionPoint,
     /// A topology pipeline referenced inconsistent internal state.
@@ -41,6 +51,9 @@ impl fmt::Display for CurveError {
         match self {
             Self::ZeroLengthLine => write!(f, "line segment has zero length"),
             Self::ZeroRadiusArc => write!(f, "circular arc has zero radius"),
+            Self::ZeroRationalBezierWeight => {
+                write!(f, "rational Bezier weight is structurally zero")
+            }
             Self::RadiusMismatch => write!(f, "arc endpoints do not share the supplied radius"),
             Self::AmbiguousBulge => write!(f, "bulge sign or zero status is ambiguous"),
             Self::UnsupportedBulge => {
@@ -54,6 +67,17 @@ impl fmt::Display for CurveError {
             }
             Self::InvalidReconstructionOptions => {
                 write!(f, "polyline reconstruction options are invalid")
+            }
+            Self::InvalidFlatteningOptions => write!(f, "Bezier flattening options are invalid"),
+            Self::InvalidBezierParameter => {
+                write!(f, "Bezier parameter is outside the closed unit interval")
+            }
+            Self::InvalidBezierRange => write!(f, "Bezier segment range is invalid"),
+            Self::InvalidBezierArcLengthTarget => {
+                write!(
+                    f,
+                    "Bezier arc-length target is outside the certified length range"
+                )
             }
             Self::NonFiniteReconstructionPoint => {
                 write!(f, "polyline reconstruction point is not finite")

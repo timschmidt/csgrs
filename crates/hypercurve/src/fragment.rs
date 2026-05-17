@@ -231,13 +231,13 @@ fn radius_delta_is_zero(delta: &Real, radius_squared: &Real, policy: &CurvePolic
             .map(|tolerance| (tolerance.absolute, tolerance.relative))
             .unwrap_or((1e-12, 1e-12));
         let radius_scale = radius_squared
-            .to_f64_approx()
+            .to_f64_lossy()
             .filter(|value| value.is_finite())
             .map(|value| value.abs().max(1.0))
             .unwrap_or(1.0);
         let tolerance = absolute.max(relative * radius_scale);
         return delta
-            .to_f64_approx()
+            .to_f64_lossy()
             .filter(|value| value.is_finite())
             .map(|value| value.abs() <= tolerance);
     }

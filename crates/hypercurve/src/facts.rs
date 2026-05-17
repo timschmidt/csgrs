@@ -11,7 +11,10 @@
 
 use hyperreal::{Real, RealExactSetFacts, SymbolicDependencyMask, ZeroKnowledge};
 
-use crate::{CircularArc2, Contour2, CurveString2, LineSeg2, Point2, RegionView2, Segment2};
+use crate::{
+    CircularArc2, Contour2, CubicBezier2, CurveString2, LineSeg2, Point2, QuadraticBezier2,
+    RationalQuadraticBezier2, RegionView2, Segment2,
+};
 
 /// Structural facts for a [`Point2`].
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -82,6 +85,150 @@ pub struct CircularArc2Facts {
     pub has_source_bulge: bool,
     /// Whether the stored radius-squared scalar is exact rational.
     pub radius_squared_exact_rational: bool,
+}
+
+/// Polynomial Bezier curve degree.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierDegree {
+    /// A quadratic Bezier with three control points.
+    Quadratic,
+    /// A cubic Bezier with four control points.
+    Cubic,
+}
+
+impl BezierDegree {
+    /// Returns the number of control points for this degree.
+    pub const fn control_point_count(self) -> usize {
+        match self {
+            Self::Quadratic => 3,
+            Self::Cubic => 4,
+        }
+    }
+}
+
+/// Structural facts for polynomial Bezier curves.
+///
+/// These facts describe cheap exact algebra visible from the control polygon:
+/// coordinate scale, symbolic dependencies, endpoint equality, derivative
+/// control-vector zero status, second differences, and curvature witnesses.
+/// They are scheduling facts only. Curve topology must still be decided by
+/// certified predicates in Yap's sense; see Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997). The derivative and
+/// curvature witnesses correspond to the standard Bezier derivative control
+/// polygon used by Farin, *Curves and Surfaces for Computer-Aided Geometric
+/// Design* (5th ed., 2002).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Bezier2Facts {
+    /// Polynomial degree family.
+    pub degree: BezierDegree,
+    /// Exact-rational facts for all control-point coordinates.
+    pub coordinate_exact: RealExactSetFacts,
+    /// Coarse symbolic dependency families present in control coordinates.
+    pub symbolic_dependencies: SymbolicDependencyMask,
+    /// Structural zero status of the start/end squared distance.
+    pub endpoint_coincidence: ZeroKnowledge,
+    /// Bit mask for endpoint delta `(dx, dy)` components structurally known zero.
+    pub endpoint_delta_known_zero_mask: u8,
+    /// Bit mask for endpoint delta `(dx, dy)` components structurally known nonzero.
+    pub endpoint_delta_known_nonzero_mask: u8,
+    /// Bit mask for endpoint delta `(dx, dy)` components whose zero status is unknown.
+    pub endpoint_delta_unknown_zero_mask: u8,
+    /// Bit mask for derivative control-vector coordinates structurally known zero.
+    ///
+    /// Bits are packed as `2 * edge + component`, with `component = 0` for x
+    /// and `1` for y. Quadratics use two edges; cubics use three.
+    pub derivative_known_zero_mask: u16,
+    /// Bit mask for derivative control-vector coordinates structurally known nonzero.
+    pub derivative_known_nonzero_mask: u16,
+    /// Bit mask for derivative control-vector coordinates whose zero status is unknown.
+    pub derivative_unknown_zero_mask: u16,
+    /// Bit mask for second-difference coordinates structurally known zero.
+    ///
+    /// Quadratics have one second difference; cubics have two. The same
+    /// `2 * witness + component` packing is used.
+    pub second_difference_known_zero_mask: u16,
+    /// Bit mask for second-difference coordinates structurally known nonzero.
+    pub second_difference_known_nonzero_mask: u16,
+    /// Bit mask for second-difference coordinates whose zero status is unknown.
+    pub second_difference_unknown_zero_mask: u16,
+    /// Bit mask for scalar curvature witnesses structurally known zero.
+    ///
+    /// Quadratics use the cross product of the two derivative edges. Cubics use
+    /// the three pairwise cross products of derivative edges, which are cheap
+    /// candidates for later inflection and degeneracy classifiers.
+    pub curvature_known_zero_mask: u8,
+    /// Bit mask for scalar curvature witnesses structurally known nonzero.
+    pub curvature_known_nonzero_mask: u8,
+    /// Bit mask for scalar curvature witnesses whose zero status is unknown.
+    pub curvature_unknown_zero_mask: u8,
+}
+
+impl Bezier2Facts {
+    /// Returns whether every control coordinate is an exact rational.
+    pub const fn all_exact_rational(self) -> bool {
+        self.coordinate_exact.all_exact_rational
+    }
+
+    /// Returns whether exact-rational control coordinates share one scale.
+    pub const fn has_shared_denominator_schedule(self) -> bool {
+        self.coordinate_exact.shared_denominator
+    }
+
+    /// Returns whether the endpoints are structurally known to coincide.
+    pub const fn endpoints_known_coincident(self) -> bool {
+        matches!(self.endpoint_coincidence, ZeroKnowledge::Zero)
+    }
+
+    /// Returns whether all derivative control vectors have known zero y components.
+    ///
+    /// This is a cheap candidate for a horizontal-monotone or horizontal-line
+    /// specialization. It is not a proof that all later curve predicates can
+    /// skip exact checks.
+    pub const fn derivative_y_components_known_zero(self) -> bool {
+        match self.degree {
+            BezierDegree::Quadratic => self.derivative_known_zero_mask & 0b1010 == 0b1010,
+            BezierDegree::Cubic => self.derivative_known_zero_mask & 0b10_1010 == 0b10_1010,
+        }
+    }
+}
+
+/// Structural facts for rational quadratic Bezier/conic segments.
+///
+/// The facts retain affine control coordinates and homogeneous weights so
+/// conic predicates can dispatch on exact-rational/common-scale schedules
+/// without normalizing away projective structure. This follows Yap's
+/// object-layer guidance for exact geometric computation, while the weight
+/// discriminant is the standard rational-quadratic conic classifier described
+/// by Farin, *Curves and Surfaces for Computer-Aided Geometric Design* (5th
+/// ed., 2002).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct RationalQuadraticBezier2Facts {
+    /// Exact-rational facts for all control coordinates and weights.
+    pub scalar_exact: RealExactSetFacts,
+    /// Coarse symbolic dependency families present in coordinates or weights.
+    pub symbolic_dependencies: SymbolicDependencyMask,
+    /// Structural zero status of the start/end squared distance.
+    pub endpoint_coincidence: ZeroKnowledge,
+    /// Bit mask for weights structurally known zero.
+    pub weight_known_zero_mask: u8,
+    /// Bit mask for weights structurally known nonzero.
+    pub weight_known_nonzero_mask: u8,
+    /// Bit mask for weights whose zero status is unknown.
+    pub weight_unknown_zero_mask: u8,
+    /// Structural zero status of `middle_weight^2 - start_weight * end_weight`.
+    pub conic_discriminant_zero_status: ZeroKnowledge,
+}
+
+impl RationalQuadraticBezier2Facts {
+    /// Returns whether all coordinates and weights are exact rationals.
+    pub const fn all_exact_rational(self) -> bool {
+        self.scalar_exact.all_exact_rational
+    }
+
+    /// Returns whether all exact rationals share one denominator schedule.
+    pub const fn has_shared_denominator_schedule(self) -> bool {
+        self.scalar_exact.shared_denominator
+    }
 }
 
 /// Structural facts for a native [`Segment2`].
@@ -227,6 +374,63 @@ pub fn circular_arc_facts(arc: &CircularArc2) -> CircularArc2Facts {
     }
 }
 
+/// Collect structural facts for a quadratic Bezier curve.
+pub fn quadratic_bezier_facts(bezier: &QuadraticBezier2) -> Bezier2Facts {
+    bezier_facts(
+        BezierDegree::Quadratic,
+        &[bezier.start(), bezier.control(), bezier.end()],
+    )
+}
+
+/// Collect structural facts for a cubic Bezier curve.
+pub fn cubic_bezier_facts(bezier: &CubicBezier2) -> Bezier2Facts {
+    bezier_facts(
+        BezierDegree::Cubic,
+        &[
+            bezier.start(),
+            bezier.control1(),
+            bezier.control2(),
+            bezier.end(),
+        ],
+    )
+}
+
+/// Collect structural facts for a rational quadratic Bezier/conic segment.
+pub fn rational_quadratic_bezier_facts(
+    bezier: &RationalQuadraticBezier2,
+) -> RationalQuadraticBezier2Facts {
+    let scalars = [
+        bezier.start().x(),
+        bezier.start().y(),
+        bezier.control().x(),
+        bezier.control().y(),
+        bezier.end().x(),
+        bezier.end().y(),
+        bezier.start_weight(),
+        bezier.control_weight(),
+        bezier.end_weight(),
+    ];
+    let weights = [
+        bezier.start_weight(),
+        bezier.control_weight(),
+        bezier.end_weight(),
+    ];
+    let (weight_known_zero_mask, weight_known_nonzero_mask, weight_unknown_zero_mask) =
+        zero_status_masks(weights);
+    let discriminant = (bezier.control_weight() * bezier.control_weight())
+        - (bezier.start_weight() * bezier.end_weight());
+
+    RationalQuadraticBezier2Facts {
+        scalar_exact: Real::exact_set_facts(scalars),
+        symbolic_dependencies: symbolic_dependencies(scalars),
+        endpoint_coincidence: bezier.start().distance_squared(bezier.end()).zero_status(),
+        weight_known_zero_mask,
+        weight_known_nonzero_mask,
+        weight_unknown_zero_mask,
+        conic_discriminant_zero_status: discriminant.zero_status(),
+    }
+}
+
 /// Collect structural facts for a native segment.
 pub fn segment_facts(segment: &Segment2) -> Segment2Facts {
     match segment {
@@ -363,6 +567,98 @@ fn append_arc_scalars<'a>(scalars: &mut Vec<&'a Real>, arc: &'a CircularArc2) {
     }
 }
 
+fn bezier_facts(degree: BezierDegree, points: &[&Point2]) -> Bezier2Facts {
+    debug_assert_eq!(degree.control_point_count(), points.len());
+
+    let scalars = bezier_scalars(points);
+    let endpoint_delta = points[points.len() - 1].delta_from(points[0]);
+    let (
+        endpoint_delta_known_zero_mask,
+        endpoint_delta_known_nonzero_mask,
+        endpoint_delta_unknown_zero_mask,
+    ) = zero_status_masks([&endpoint_delta.0, &endpoint_delta.1]);
+    let endpoint_coincidence = points[0]
+        .distance_squared(points[points.len() - 1])
+        .zero_status();
+
+    let derivative_edges = derivative_edges(points);
+    let (derivative_known_zero_mask, derivative_known_nonzero_mask, derivative_unknown_zero_mask) =
+        packed_coordinate_zero_masks(&derivative_edges);
+
+    let second_differences = second_differences(points);
+    let (
+        second_difference_known_zero_mask,
+        second_difference_known_nonzero_mask,
+        second_difference_unknown_zero_mask,
+    ) = packed_coordinate_zero_masks(&second_differences);
+
+    let curvature_witnesses = curvature_witnesses(&derivative_edges);
+    let (curvature_known_zero_mask, curvature_known_nonzero_mask, curvature_unknown_zero_mask) =
+        packed_scalar_zero_masks(&curvature_witnesses);
+
+    Bezier2Facts {
+        degree,
+        coordinate_exact: Real::exact_set_facts(scalars.iter().copied()),
+        symbolic_dependencies: symbolic_dependencies(scalars.iter().copied()),
+        endpoint_coincidence,
+        endpoint_delta_known_zero_mask,
+        endpoint_delta_known_nonzero_mask,
+        endpoint_delta_unknown_zero_mask,
+        derivative_known_zero_mask,
+        derivative_known_nonzero_mask,
+        derivative_unknown_zero_mask,
+        second_difference_known_zero_mask,
+        second_difference_known_nonzero_mask,
+        second_difference_unknown_zero_mask,
+        curvature_known_zero_mask,
+        curvature_known_nonzero_mask,
+        curvature_unknown_zero_mask,
+    }
+}
+
+fn bezier_scalars<'a>(points: &[&'a Point2]) -> Vec<&'a Real> {
+    let mut scalars = Vec::with_capacity(points.len() * 2);
+    for point in points {
+        scalars.push(point.x());
+        scalars.push(point.y());
+    }
+    scalars
+}
+
+fn derivative_edges(points: &[&Point2]) -> Vec<(Real, Real)> {
+    points
+        .windows(2)
+        .map(|window| window[1].delta_from(window[0]))
+        .collect()
+}
+
+fn second_differences(points: &[&Point2]) -> Vec<(Real, Real)> {
+    points
+        .windows(3)
+        .map(|window| {
+            let two = Real::from(2_i8);
+            (
+                window[0].x() - (&two * window[1].x()) + window[2].x(),
+                window[0].y() - (&two * window[1].y()) + window[2].y(),
+            )
+        })
+        .collect()
+}
+
+fn curvature_witnesses(derivative_edges: &[(Real, Real)]) -> Vec<Real> {
+    let mut witnesses = Vec::new();
+    for left in 0..derivative_edges.len() {
+        for right in (left + 1)..derivative_edges.len() {
+            witnesses.push(cross(&derivative_edges[left], &derivative_edges[right]));
+        }
+    }
+    witnesses
+}
+
+fn cross(left: &(Real, Real), right: &(Real, Real)) -> Real {
+    (&left.0 * &right.1) - (&left.1 * &right.0)
+}
+
 fn symbolic_dependencies<'a, I>(values: I) -> SymbolicDependencyMask
 where
     I: IntoIterator<Item = &'a Real>,
@@ -379,6 +675,38 @@ fn zero_status_masks<const N: usize>(values: [&Real; N]) -> (u8, u8, u8) {
     let mut known_nonzero_mask = 0_u8;
     let mut unknown_zero_mask = 0_u8;
     for (index, value) in values.into_iter().enumerate() {
+        let bit = 1_u8 << index;
+        match value.structural_facts().zero {
+            ZeroKnowledge::Zero => known_zero_mask |= bit,
+            ZeroKnowledge::NonZero => known_nonzero_mask |= bit,
+            ZeroKnowledge::Unknown => unknown_zero_mask |= bit,
+        }
+    }
+    (known_zero_mask, known_nonzero_mask, unknown_zero_mask)
+}
+
+fn packed_coordinate_zero_masks(values: &[(Real, Real)]) -> (u16, u16, u16) {
+    let mut known_zero_mask = 0_u16;
+    let mut known_nonzero_mask = 0_u16;
+    let mut unknown_zero_mask = 0_u16;
+    for (index, (x, y)) in values.iter().enumerate() {
+        for (component, value) in [x, y].into_iter().enumerate() {
+            let bit = 1_u16 << (2 * index + component);
+            match value.structural_facts().zero {
+                ZeroKnowledge::Zero => known_zero_mask |= bit,
+                ZeroKnowledge::NonZero => known_nonzero_mask |= bit,
+                ZeroKnowledge::Unknown => unknown_zero_mask |= bit,
+            }
+        }
+    }
+    (known_zero_mask, known_nonzero_mask, unknown_zero_mask)
+}
+
+fn packed_scalar_zero_masks(values: &[Real]) -> (u8, u8, u8) {
+    let mut known_zero_mask = 0_u8;
+    let mut known_nonzero_mask = 0_u8;
+    let mut unknown_zero_mask = 0_u8;
+    for (index, value) in values.iter().enumerate() {
         let bit = 1_u8 << index;
         match value.structural_facts().zero {
             ZeroKnowledge::Zero => known_zero_mask |= bit,

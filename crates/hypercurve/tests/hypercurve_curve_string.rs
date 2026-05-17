@@ -90,6 +90,30 @@ fn prepared_curve_string_intersections_preserve_line_arc_hits() {
 }
 
 #[test]
+fn prepared_segment_pair_intersection_matches_plain_segment_relation() {
+    let line = Segment2::Line(LineSeg2::try_new(p(1, -2), p(1, 2)).unwrap());
+    let arc = Segment2::Arc(CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap());
+    let prepared_line = hypercurve::PreparedSegment2::from_segment(&line);
+    let prepared_arc = hypercurve::PreparedSegment2::from_segment(&arc);
+    let policy = policy();
+
+    let plain = line.intersect_segment(&arc, &policy).unwrap();
+    let prepared = prepared_line
+        .intersect_prepared_segment(&prepared_arc, &policy)
+        .unwrap();
+
+    assert_eq!(prepared, plain);
+    let SegmentIntersection::LineArc {
+        order: LineArcOrder::LineThenArc,
+        result: LineArcIntersection::Point(hit),
+    } = prepared
+    else {
+        panic!("expected prepared line-arc pair to preserve point relation");
+    };
+    assert_eq!(hit.point, p(1, -1));
+}
+
+#[test]
 fn prepared_curve_string_intersections_skip_decided_disjoint_boxes() {
     let first = CurveString2::from_bulge_vertices(&[
         BulgeVertex2::new(p(0, 0), s(0)),

@@ -1,6 +1,7 @@
 use egui::{CentralPanel, ScrollArea, SidePanel, Slider, TopBottomPanel};
 use egui_plot::Plot;
 use hypercurve::OffsetCap;
+use serde::{Deserialize, Serialize};
 
 use crate::editor::PolylineEditor;
 use crate::geometry::{
@@ -15,6 +16,8 @@ pub struct DemoScenes {
     pline_offset: PlineOffsetScene,
     multi_boolean: MultiPlineBooleanScene,
     multi_offset: MultiPlineOffsetScene,
+    #[cfg(target_arch = "wasm32")]
+    share_status: Option<String>,
 }
 
 impl Default for DemoScenes {
@@ -25,11 +28,31 @@ impl Default for DemoScenes {
             pline_offset: PlineOffsetScene::default(),
             multi_boolean: MultiPlineBooleanScene::default(),
             multi_offset: MultiPlineOffsetScene::default(),
+            #[cfg(target_arch = "wasm32")]
+            share_status: None,
         }
     }
 }
 
 impl DemoScenes {
+    pub fn new() -> Self {
+        #[cfg(target_arch = "wasm32")]
+        {
+            match crate::share::load_from_location::<DemoScenesState>() {
+                Ok(Some(state)) => match Self::from_state(state) {
+                    Ok(scenes) => return scenes,
+                    Err(error) => {
+                        log::warn!("ignoring invalid shared hypercurve UI state: {error}")
+                    }
+                },
+                Ok(None) => {}
+                Err(error) => log::warn!("ignoring invalid shared hypercurve UI state: {error}"),
+            }
+        }
+
+        Self::default()
+    }
+
     pub fn ui(&mut self, ctx: &egui::Context) {
         TopBottomPanel::top("scene_tabs").show(ctx, |ui| {
             ui.horizontal_wrapped(|ui| {
@@ -46,6 +69,25 @@ impl DemoScenes {
                 }
                 ui.separator();
                 ui.hyperlink_to("GitHub", "https://github.com/timschmidt/hypercurve");
+                #[cfg(target_arch = "wasm32")]
+                {
+                    if ui
+                        .button("Share")
+                        .on_hover_text("Copy a URL for this demo state")
+                        .clicked()
+                    {
+                        match crate::share::share_url(&self.state()) {
+                            Ok(url) => {
+                                ctx.copy_text(url);
+                                self.share_status = Some("Copied share URL".to_owned());
+                            }
+                            Err(error) => self.share_status = Some(error),
+                        }
+                    }
+                    if let Some(status) = &self.share_status {
+                        ui.label(status);
+                    }
+                }
             });
         });
 
@@ -57,9 +99,51 @@ impl DemoScenes {
             _ => self.multi_offset.ui(ctx, &theme),
         }
     }
+
+    fn from_state(state: DemoScenesState) -> Result<Self, String> {
+        if state.version != 1 {
+            return Err(format!("unsupported state version {}", state.version));
+        }
+        let mut scenes = Self::default();
+        scenes.active = state.active.min(3);
+        scenes.pline_boolean.apply_state(state.pline_boolean)?;
+        scenes.pline_offset.apply_state(state.pline_offset)?;
+        scenes.multi_boolean.apply_state(state.multi_boolean)?;
+        scenes.multi_offset.apply_state(state.multi_offset)?;
+        Ok(scenes)
+    }
+
+    fn state(&self) -> DemoScenesState {
+        DemoScenesState {
+            version: 1,
+            active: self.active,
+            pline_boolean: self.pline_boolean.state(),
+            pline_offset: self.pline_offset.state(),
+            multi_boolean: self.multi_boolean.state(),
+            multi_offset: self.multi_offset.state(),
+        }
+    }
 }
 
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct DemoScenesState {
+    version: u8,
+    active: usize,
+    pline_boolean: PlineBooleanSceneState,
+    pline_offset: PlineOffsetSceneState,
+    multi_boolean: MultiPlineBooleanSceneState,
+    multi_offset: MultiPlineOffsetSceneState,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct PlineBooleanSceneState {
+    polylines: Vec<Polyline>,
+    mode: BooleanSceneMode,
+    fill: bool,
+    show_vertices: bool,
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
 enum BooleanSceneMode {
     #[default]
     None,
@@ -144,6 +228,29 @@ impl Default for PlineBooleanScene {
 }
 
 impl PlineBooleanScene {
+    fn state(&self) -> PlineBooleanSceneState {
+        PlineBooleanSceneState {
+            polylines: self.polylines.clone(),
+            mode: self.mode,
+            fill: self.fill,
+            show_vertices: self.show_vertices,
+        }
+    }
+
+    fn apply_state(&mut self, state: PlineBooleanSceneState) -> Result<(), String> {
+        validate_polylines(&state.polylines, 2, "polyline boolean")?;
+        validate_closed_polylines(&state.polylines, "polyline boolean")?;
+        self.polylines = state.polylines;
+        self.mode = state.mode;
+        self.fill = state.fill;
+        self.show_vertices = state.show_vertices;
+        self.drag = DragState::default();
+        self.editor
+            .initialize_with_polylines(self.polylines.clone());
+        self.last_error = None;
+        Ok(())
+    }
+
     fn ui(&mut self, ctx: &egui::Context, theme: &Theme) {
         SidePanel::right("pline_boolean_controls")
             .default_width(240.0)
@@ -260,7 +367,7 @@ impl PlineBooleanScene {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
 enum OffsetMode {
     Offset,
     RawOffset,
@@ -277,6 +384,14 @@ impl OffsetMode {
             Self::Outline => "Open Outline",
         }
     }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct PlineOffsetSceneState {
+    polylines: Vec<Polyline>,
+    mode: OffsetMode,
+    offset: f64,
+    max_offset_count: usize,
 }
 
 pub struct PlineOffsetScene {
@@ -317,6 +432,29 @@ impl Default for PlineOffsetScene {
 }
 
 impl PlineOffsetScene {
+    fn state(&self) -> PlineOffsetSceneState {
+        PlineOffsetSceneState {
+            polylines: self.polylines.clone(),
+            mode: self.mode,
+            offset: self.offset,
+            max_offset_count: self.max_offset_count,
+        }
+    }
+
+    fn apply_state(&mut self, state: PlineOffsetSceneState) -> Result<(), String> {
+        validate_polylines(&state.polylines, 1, "polyline offset")?;
+        validate_finite_state(state.offset, "polyline offset distance")?;
+        self.polylines = state.polylines;
+        self.mode = state.mode;
+        self.offset = state.offset.clamp(-50.0, 50.0);
+        self.max_offset_count = state.max_offset_count.min(50);
+        self.drag = DragState::default();
+        self.editor
+            .initialize_with_polylines(self.polylines.clone());
+        self.last_error = None;
+        Ok(())
+    }
+
     fn ui(&mut self, ctx: &egui::Context, theme: &Theme) {
         SidePanel::right("pline_offset_controls")
             .default_width(240.0)
@@ -422,6 +560,13 @@ impl PlineOffsetScene {
     }
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct MultiPlineBooleanSceneState {
+    first: Shape,
+    second: Shape,
+    op: Option<BooleanMode>,
+}
+
 pub struct MultiPlineBooleanScene {
     first: Shape,
     second: Shape,
@@ -444,6 +589,25 @@ impl Default for MultiPlineBooleanScene {
 }
 
 impl MultiPlineBooleanScene {
+    fn state(&self) -> MultiPlineBooleanSceneState {
+        MultiPlineBooleanSceneState {
+            first: self.first.clone(),
+            second: self.second.clone(),
+            op: self.op,
+        }
+    }
+
+    fn apply_state(&mut self, state: MultiPlineBooleanSceneState) -> Result<(), String> {
+        validate_shape(&state.first, "first multi-polyline boolean shape")?;
+        validate_shape(&state.second, "second multi-polyline boolean shape")?;
+        self.first = state.first;
+        self.second = state.second;
+        self.op = state.op;
+        self.drag = ShapeDragState::default();
+        self.last_error = None;
+        Ok(())
+    }
+
     fn ui(&mut self, ctx: &egui::Context, theme: &Theme) {
         SidePanel::right("multi_boolean_controls")
             .default_width(240.0)
@@ -507,12 +671,20 @@ impl MultiPlineBooleanScene {
     }
 }
 
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
 enum MultiOffsetMode {
     #[default]
     Offset,
     OffsetIntersects,
     OffsetLoops,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct MultiPlineOffsetSceneState {
+    polylines: Vec<Polyline>,
+    mode: MultiOffsetMode,
+    offset: f64,
+    max_offset_count: usize,
 }
 
 pub struct MultiPlineOffsetScene {
@@ -543,6 +715,30 @@ impl Default for MultiPlineOffsetScene {
 }
 
 impl MultiPlineOffsetScene {
+    fn state(&self) -> MultiPlineOffsetSceneState {
+        MultiPlineOffsetSceneState {
+            polylines: self.polylines.clone(),
+            mode: self.mode,
+            offset: self.offset,
+            max_offset_count: self.max_offset_count,
+        }
+    }
+
+    fn apply_state(&mut self, state: MultiPlineOffsetSceneState) -> Result<(), String> {
+        validate_polylines(&state.polylines, 1, "multi-polyline offset")?;
+        validate_closed_polylines(&state.polylines, "multi-polyline offset")?;
+        validate_finite_state(state.offset, "multi-polyline offset distance")?;
+        self.polylines = state.polylines;
+        self.mode = state.mode;
+        self.offset = state.offset.clamp(-50.0, 50.0);
+        self.max_offset_count = state.max_offset_count.min(50);
+        self.drag = DragState::default();
+        self.editor
+            .initialize_with_polylines(self.polylines.clone());
+        self.last_error = None;
+        Ok(())
+    }
+
     fn ui(&mut self, ctx: &egui::Context, theme: &Theme) {
         SidePanel::right("multi_offset_controls")
             .default_width(240.0)
@@ -671,6 +867,68 @@ struct DragState {
 struct ShapeDragState {
     grabbed: Option<(usize, usize, usize)>,
     dragging_plot: bool,
+}
+
+const MAX_SHARED_POLYLINES: usize = 256;
+const MAX_SHARED_VERTICES: usize = 16_384;
+
+fn validate_polylines(polylines: &[Polyline], min_count: usize, label: &str) -> Result<(), String> {
+    if polylines.len() < min_count {
+        return Err(format!("{label} needs at least {min_count} polyline(s)"));
+    }
+    if polylines.len() > MAX_SHARED_POLYLINES {
+        return Err(format!(
+            "{label} has {} polylines; the shared-state limit is {MAX_SHARED_POLYLINES}",
+            polylines.len()
+        ));
+    }
+
+    let mut vertices = 0usize;
+    for (index, polyline) in polylines.iter().enumerate() {
+        if polyline.vertex_data.len() < 2 {
+            return Err(format!(
+                "{label} polyline {index} needs at least two vertices"
+            ));
+        }
+        vertices = vertices.saturating_add(polyline.vertex_data.len());
+        polyline
+            .validate_finite()
+            .map_err(|error| format!("{label} polyline {index}: {error}"))?;
+    }
+    if vertices > MAX_SHARED_VERTICES {
+        return Err(format!(
+            "{label} has {vertices} vertices; the shared-state limit is {MAX_SHARED_VERTICES}"
+        ));
+    }
+    Ok(())
+}
+
+fn validate_closed_polylines(polylines: &[Polyline], label: &str) -> Result<(), String> {
+    for (index, polyline) in polylines.iter().enumerate() {
+        if !polyline.is_closed() {
+            return Err(format!("{label} polyline {index} must be closed"));
+        }
+    }
+    Ok(())
+}
+
+fn validate_shape(shape: &Shape, label: &str) -> Result<(), String> {
+    let polylines = shape
+        .materials
+        .iter()
+        .chain(shape.holes.iter())
+        .cloned()
+        .collect::<Vec<_>>();
+    validate_polylines(&polylines, 1, label)?;
+    validate_closed_polylines(&polylines, label)
+}
+
+fn validate_finite_state(value: f64, label: &str) -> Result<(), String> {
+    if value.is_finite() {
+        Ok(())
+    } else {
+        Err(format!("{label} must be finite"))
+    }
 }
 
 fn handle_polyline_drag(
@@ -902,5 +1160,39 @@ mod tests {
                 || !source.offset_once(2.0).holes.is_empty(),
             "default multi-polyline offset scene should produce at least one visible offset"
         );
+    }
+
+    #[test]
+    fn demo_state_round_trips_through_share_encoding() {
+        let scenes = DemoScenes::default();
+        let encoded = crate::share::encode_state(&scenes.state()).unwrap();
+        let decoded = crate::share::decode_state::<DemoScenesState>(&encoded).unwrap();
+        let restored = DemoScenes::from_state(decoded).unwrap();
+
+        assert_eq!(restored.active, scenes.active);
+        assert_eq!(
+            restored.pline_boolean.polylines.len(),
+            scenes.pline_boolean.polylines.len()
+        );
+        assert_eq!(
+            restored.multi_offset.polylines.len(),
+            scenes.multi_offset.polylines.len()
+        );
+    }
+
+    #[test]
+    fn demo_state_rejects_non_finite_offsets() {
+        let mut state = DemoScenes::default().state();
+        state.pline_offset.offset = f64::NAN;
+
+        assert!(DemoScenes::from_state(state).is_err());
+    }
+
+    #[test]
+    fn demo_state_rejects_incomplete_boolean_inputs() {
+        let mut state = DemoScenes::default().state();
+        state.pline_boolean.polylines.pop();
+
+        assert!(DemoScenes::from_state(state).is_err());
     }
 }

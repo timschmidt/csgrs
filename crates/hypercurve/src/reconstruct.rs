@@ -230,10 +230,10 @@ fn sample_open_points(
 }
 
 fn sample_point(point: &Point2) -> CurveResult<SamplePoint> {
-    let Some(x) = point.x().to_f64_approx() else {
+    let Some(x) = point.x().to_f64_lossy() else {
         return Err(CurveError::NonFiniteReconstructionPoint);
     };
-    let Some(y) = point.y().to_f64_approx() else {
+    let Some(y) = point.y().to_f64_lossy() else {
         return Err(CurveError::NonFiniteReconstructionPoint);
     };
     if !x.is_finite() || !y.is_finite() {

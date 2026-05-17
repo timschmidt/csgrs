@@ -142,10 +142,9 @@ pub(crate) fn intersect_curve_strings_with_cached_aabbs(
             if let (Some(Some(a_box)), Some(Some(b_box))) = (
                 first_segment_boxes.get(a_segment_index),
                 second_segment_boxes.get(b_segment_index),
-            ) {
-                if aabbs_decided_disjoint(a_box, b_box, policy) {
-                    continue;
-                }
+            ) && aabbs_decided_disjoint(a_box, b_box, policy)
+            {
+                continue;
             }
 
             let relation = a_segment.intersect_segment(b_segment, policy)?;

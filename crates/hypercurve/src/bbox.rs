@@ -105,9 +105,9 @@ impl Aabb2 {
             // rotation; keeping the full circle envelope prevents broad-phase
             // pruning from hiding true line/arc slice events.
             if let (Some(center_x), Some(center_y), Some(radius_squared)) = (
-                arc.center().x().to_f64_approx(),
-                arc.center().y().to_f64_approx(),
-                arc.radius_squared().to_f64_approx(),
+                arc.center().x().to_f64_lossy(),
+                arc.center().y().to_f64_lossy(),
+                arc.radius_squared().to_f64_lossy(),
             ) && center_x.is_finite()
                 && center_y.is_finite()
                 && radius_squared.is_finite()
@@ -390,11 +390,8 @@ fn include_coordinate(
     policy: &CurvePolicy,
 ) -> Option<()> {
     if matches!(policy.numeric_mode, crate::NumericMode::EdgePreview)
-        && let (Some(value_approx), Some(min_approx), Some(max_approx)) = (
-            value.to_f64_approx(),
-            min.to_f64_approx(),
-            max.to_f64_approx(),
-        )
+        && let (Some(value_approx), Some(min_approx), Some(max_approx)) =
+            (value.to_f64_lossy(), min.to_f64_lossy(), max.to_f64_lossy())
         && value_approx.is_finite()
         && min_approx.is_finite()
         && max_approx.is_finite()
@@ -419,7 +416,7 @@ fn include_coordinate(
 
 fn real_less(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<bool> {
     if matches!(policy.numeric_mode, crate::NumericMode::EdgePreview)
-        && let (Some(left), Some(right)) = (left.to_f64_approx(), right.to_f64_approx())
+        && let (Some(left), Some(right)) = (left.to_f64_lossy(), right.to_f64_lossy())
         && left.is_finite()
         && right.is_finite()
     {
@@ -434,11 +431,8 @@ fn real_less(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<bool> {
 
 fn real_between(value: &Real, min: &Real, max: &Real, policy: &CurvePolicy) -> Option<bool> {
     if matches!(policy.numeric_mode, crate::NumericMode::EdgePreview)
-        && let (Some(value), Some(min), Some(max)) = (
-            value.to_f64_approx(),
-            min.to_f64_approx(),
-            max.to_f64_approx(),
-        )
+        && let (Some(value), Some(min), Some(max)) =
+            (value.to_f64_lossy(), min.to_f64_lossy(), max.to_f64_lossy())
         && value.is_finite()
         && min.is_finite()
         && max.is_finite()

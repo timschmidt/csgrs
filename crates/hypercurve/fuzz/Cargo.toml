@@ -8,7 +8,7 @@ edition = "2024"
 cargo-fuzz = true
 
 [dependencies]
-cavalier_contours = { path = "../../cavalier_contours/cavalier_contours" }
+cavalier_contours = { git = "https://github.com/timschmidt/cavalier_contours", branch = "shape-boolean-transformation" }
 hypercurve = { path = ".." }
 libfuzzer-sys = "0.4"
 
@@ -134,6 +134,13 @@ bench = false
 [[bin]]
 name = "hypercurve_offsets"
 path = "fuzz_targets/hypercurve_offsets.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "hypercurve_adversarial_polygons"
+path = "fuzz_targets/hypercurve_adversarial_polygons.rs"
 test = false
 doc = false
 bench = false

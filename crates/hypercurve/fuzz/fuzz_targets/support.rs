@@ -14,18 +14,19 @@ use cavalier_contours::polyline::{
 use cavalier_contours::shape_algorithms::Shape;
 use cavalier_contours::static_aabb2d_index::AABB;
 use hypercurve::{
-    Aabb2 as HAabb2, ArcArcIntersection as HArcArcIntersection, BooleanOp as HBooleanOp,
-    ArcArcIntersectionPoint as HArcArcIntersectionPoint, BulgeVertex2 as HBulgeVertex2,
-    CircularArc2 as HCircularArc2, Classification as HClassification, Contour2 as HContour2,
-    ContourOperand as HContourOperand, ContourPointLocation as HContourPointLocation,
-    ContourSplitMap as HContourSplitMap, CurvePolicy as HCurvePolicy, FillRule as HFillRule,
-    CurveString2 as HCurveString2, CurveStringIntersection as HCurveStringIntersection,
+    Aabb2 as HAabb2, ArcArcIntersection as HArcArcIntersection,
+    ArcArcIntersectionPoint as HArcArcIntersectionPoint, BooleanOp as HBooleanOp,
+    BulgeVertex2 as HBulgeVertex2, CircularArc2 as HCircularArc2,
+    Classification as HClassification, Contour2 as HContour2, ContourOperand as HContourOperand,
+    ContourPointLocation as HContourPointLocation, ContourSplitMap as HContourSplitMap,
+    CurvePolicy as HCurvePolicy, CurveString2 as HCurveString2,
+    CurveStringIntersection as HCurveStringIntersection, FillRule as HFillRule,
     LineArcIntersection as HLineArcIntersection,
     LineArcIntersectionPoint as HLineArcIntersectionPoint,
     LineLineIntersection as HLineLineIntersection, LineSeg2 as HLineSeg2, OffsetCap as HOffsetCap,
     ParamRange as HParamRange, Point2 as HPoint2,
-    PolylineReconstructionOptions as HPolylineReconstructionOptions, Region2 as HRegion2,
-    RegionPointLocation as HRegionPointLocation, Real as HReal, Segment2 as HSegment2,
+    PolylineReconstructionOptions as HPolylineReconstructionOptions, Real as HReal,
+    Region2 as HRegion2, RegionPointLocation as HRegionPointLocation, Segment2 as HSegment2,
     SegmentIntersection as HSegmentIntersection, Tolerance as HTolerance,
 };
 use std::f64::consts::PI;
@@ -1127,29 +1128,17 @@ fn h_assert_point_approx_eq(left: &HPoint, right: &HPoint, context: &str) {
     h_assert_scalar_approx_eq(left.y(), right.y(), context);
 }
 
-fn h_assert_param_range_approx_eq(
-    left: &HParamRange,
-    right: &HParamRange,
-    context: &str,
-) {
+fn h_assert_param_range_approx_eq(left: &HParamRange, right: &HParamRange, context: &str) {
     h_assert_scalar_approx_eq(left.start(), right.start(), context);
     h_assert_scalar_approx_eq(left.end(), right.end(), context);
 }
 
-fn h_assert_line_segment_approx_eq(
-    left: &HLineSeg2,
-    right: &HLineSeg2,
-    context: &str,
-) {
+fn h_assert_line_segment_approx_eq(left: &HLineSeg2, right: &HLineSeg2, context: &str) {
     h_assert_point_approx_eq(left.start(), right.start(), context);
     h_assert_point_approx_eq(left.end(), right.end(), context);
 }
 
-fn h_assert_arc_segment_approx_eq(
-    left: &HCircularArc2,
-    right: &HCircularArc2,
-    context: &str,
-) {
+fn h_assert_arc_segment_approx_eq(left: &HCircularArc2, right: &HCircularArc2, context: &str) {
     h_assert_point_approx_eq(left.start(), right.start(), context);
     h_assert_point_approx_eq(left.end(), right.end(), context);
     h_assert_point_approx_eq(left.center(), right.center(), context);
@@ -1165,7 +1154,9 @@ fn h_assert_segment_approx_eq(left: &HSegment, right: &HSegment, context: &str) 
         (HSegment2::Arc(left), HSegment2::Arc(right)) => {
             h_assert_arc_segment_approx_eq(left, right, context);
         }
-        _ => panic!("{context}: expected matching segment variants, left={left:?}, right={right:?}"),
+        _ => {
+            panic!("{context}: expected matching segment variants, left={left:?}, right={right:?}")
+        }
     }
 }
 
@@ -1198,6 +1189,16 @@ fn h_assert_contour_finite(contour: &HContour) {
     h_assert_curve_string_finite(contour.curve_string());
 }
 
+fn h_assert_region_finite(region: &HRegion) {
+    for contour in region
+        .material_contours()
+        .iter()
+        .chain(region.hole_contours().iter())
+    {
+        h_assert_contour_finite(contour);
+    }
+}
+
 fn h_assert_contour_boundary_sets_match(left: &[HContour], right: &[HContour]) {
     assert_eq!(
         left.len(),
@@ -1206,13 +1207,9 @@ fn h_assert_contour_boundary_sets_match(left: &[HContour], right: &[HContour]) {
     );
     let mut matched = vec![false; right.len()];
     for contour in left {
-        let Some((index, _)) = right
-            .iter()
-            .enumerate()
-            .find(|(index, candidate)| {
-                !matched[*index] && contour.has_same_exact_boundary(candidate)
-            })
-        else {
+        let Some((index, _)) = right.iter().enumerate().find(|(index, candidate)| {
+            !matched[*index] && contour.has_same_exact_boundary(candidate)
+        }) else {
             panic!("boundary contour set is missing {contour:?}");
         };
         matched[index] = true;
@@ -1937,7 +1934,9 @@ pub fn h_assert_bboxes_curve_strings_and_splits(reader: &mut ByteReader<'_>) {
         &plain_events,
     );
     h_assert_curve_string_intersections_equivalent(
-        &prepared_a.intersect_curve_string(&curve_b, &policy).unwrap(),
+        &prepared_a
+            .intersect_curve_string(&curve_b, &policy)
+            .unwrap(),
         &plain_events,
     );
     for event in &plain_events {
@@ -2108,10 +2107,7 @@ pub fn h_assert_boundary_nesting(reader: &mut ByteReader<'_>) {
     }
 }
 
-fn h_validate_region_fragments(
-    fragments: &hypercurve::RegionFragmentSet,
-    policy: &HCurvePolicy,
-) {
+fn h_validate_region_fragments(fragments: &hypercurve::RegionFragmentSet, policy: &HCurvePolicy) {
     for contour_fragments in fragments.contours() {
         let mut previous_source = 0_usize;
         for (fragment_index, fragment) in contour_fragments.fragments.fragments().iter().enumerate()
@@ -2153,9 +2149,7 @@ pub fn h_assert_boolean_boundary_pipeline(reader: &mut ByteReader<'_>) {
         plain_events
     );
     assert_eq!(
-        prepared_a
-            .intersect_region(&b.as_view(), &policy)
-            .unwrap(),
+        prepared_a.intersect_region(&b.as_view(), &policy).unwrap(),
         plain_events
     );
     assert_eq!(
@@ -2174,9 +2168,14 @@ pub fn h_assert_boolean_boundary_pipeline(reader: &mut ByteReader<'_>) {
             .classify_for_boolean(&a.as_view(), &b.as_view(), op, &policy)
             .unwrap()
         {
-            assert!(selection.len() <= fragments.contours().iter().map(|fragments| {
-                fragments.fragments.len()
-            }).sum());
+            assert!(
+                selection.len()
+                    <= fragments
+                        .contours()
+                        .iter()
+                        .map(|fragments| { fragments.fragments.len() })
+                        .sum()
+            );
             let emitted = selection.emit_boundary_fragments(&fragments).unwrap();
             assert_eq!(
                 emitted.directed_len() + emitted.unresolved_len(),
@@ -2240,12 +2239,7 @@ pub fn h_assert_boolean_boundary_pipeline(reader: &mut ByteReader<'_>) {
     );
     assert_eq!(
         a.as_view()
-            .boolean_boundary_contours_against_prepared_region(
-                &prepared_b,
-                op,
-                fill_rule,
-                &policy,
-            )
+            .boolean_boundary_contours_against_prepared_region(&prepared_b, op, fill_rule, &policy,)
             .unwrap(),
         plain_contours
     );
@@ -2300,6 +2294,196 @@ fn h_l_path_curve(reader: &mut ByteReader<'_>) -> (HCurveString2, HRealValue) {
     ])
     .unwrap();
     (curve, h_scalar_i32(distance))
+}
+
+fn h_polygon_reconstruction_options() -> HPolylineReconstructionOptions {
+    let mut options = HPolylineReconstructionOptions::default();
+    // These inputs are intentionally polygonal. Disabling arc promotion keeps
+    // this harness focused on closed-polyline reconstruction, clipping, and
+    // raw offset topology instead of sampled circle fitting.
+    options.min_arc_points = 64;
+    options.distance_tolerance = 1e-8;
+    options.duplicate_point_tolerance = 1e-12;
+    options
+}
+
+fn h_contour_from_i32_points(points: &[(i32, i32)]) -> HContour {
+    let vertices: Vec<_> = points.iter().map(|&(x, y)| h_vertex_i32(x, y, 0)).collect();
+    HContour2::from_bulge_vertices_with_fill_rule(&vertices, HFillRule::NonZero).unwrap()
+}
+
+fn h_rectangle_i32(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> HContour {
+    h_contour_from_i32_points(&[(xmin, ymin), (xmax, ymin), (xmax, ymax), (xmin, ymax)])
+}
+
+fn h_large_concavity(width: i32, height: i32, throat: i32) -> Vec<(i32, i32)> {
+    let arm = throat.max(1);
+    vec![
+        (0, 0),
+        (width, 0),
+        (width, height),
+        (width - arm, height),
+        (width - arm, arm),
+        (arm, arm),
+        (arm, height),
+        (0, height),
+    ]
+}
+
+fn h_slender_concavity(width: i32, height: i32, slot_x: i32) -> Vec<(i32, i32)> {
+    let left = slot_x.clamp(1, width - 2);
+    let right = left + 1;
+    vec![
+        (0, 0),
+        (width, 0),
+        (width, height),
+        (right, height),
+        (right, 1),
+        (left, 1),
+        (left, height),
+        (0, height),
+    ]
+}
+
+fn h_comb_concavity(width: i32, height: i32, teeth: usize) -> Vec<(i32, i32)> {
+    let mut points = vec![(0, 0), (width, 0), (width, height)];
+    let step = (width / (teeth as i32 * 2 + 1)).max(1);
+    for tooth in (0..teeth).rev() {
+        let x_outer = (2 * tooth as i32 + 2) * step;
+        let x_inner = (2 * tooth as i32 + 1) * step;
+        points.push((x_outer, height));
+        points.push((x_outer, 1));
+        points.push((x_inner, 1));
+        points.push((x_inner, height));
+    }
+    points.push((0, height));
+    points
+}
+
+fn h_bowtie(size: i32) -> Vec<(i32, i32)> {
+    vec![(0, 0), (size, size), (0, size), (size, 0)]
+}
+
+fn h_adversarial_polygon_points(reader: &mut ByteReader<'_>) -> Vec<(i32, i32)> {
+    let width = reader.i32_range(12, 96);
+    let height = reader.i32_range(12, 96);
+    let offset = reader.i32_range(1, 32);
+    match reader.byte() % 5 {
+        0 => h_large_concavity(width, height, offset.min(width.min(height) / 3).max(2)),
+        1 => h_slender_concavity(width, height, offset.min(width - 2)),
+        2 => h_comb_concavity(width, height, reader.usize_range(2, 5)),
+        3 => {
+            let mut points = h_large_concavity(width, height, 2);
+            points.splice(3..3, [(width / 2, height + offset)]);
+            points
+        }
+        _ => h_bowtie(width.min(height)),
+    }
+}
+
+fn h_exercise_adversarial_offset(contour: &HContour, distance: HRealValue, policy: &HCurvePolicy) {
+    h_assert_contour_finite(contour);
+    let _ = contour.has_self_contacts(policy).unwrap();
+    if let HClassification::Decided(raw) = contour
+        .offset_left_with_line_joins(distance.clone(), policy)
+        .unwrap()
+    {
+        h_assert_contour_finite(&raw);
+    }
+    if let HClassification::Decided(checked) =
+        contour.offset_left_checked(distance, policy).unwrap()
+    {
+        h_assert_contour_finite(&checked);
+        assert_eq!(
+            checked.has_self_contacts(policy).unwrap(),
+            HClassification::Decided(false)
+        );
+    }
+}
+
+/// Fuzz adversarial polygon offsetting, clipping, and reconstruction.
+pub fn h_assert_adversarial_polygon_pipeline(reader: &mut ByteReader<'_>) {
+    let policy = h_policy();
+    let points = h_adversarial_polygon_points(reader);
+    let material = h_contour_from_i32_points(&points);
+    let width = points
+        .iter()
+        .map(|point| point.0)
+        .max()
+        .unwrap_or(16)
+        .max(16);
+    let height = points
+        .iter()
+        .map(|point| point.1)
+        .max()
+        .unwrap_or(16)
+        .max(16);
+    let hole = h_rectangle_i32(
+        width / 3,
+        2,
+        (width / 3 + 2).min(width - 2),
+        4.min(height - 2),
+    );
+    let region = HRegion2::new(vec![material.clone()], vec![hole.clone()]);
+    let cutter = HRegion2::from_material_contours(vec![h_rectangle_i32(
+        width / 4,
+        -1,
+        width + reader.i32_range(2, 32),
+        (height / 2).max(3),
+    )]);
+
+    let distance = h_scalar_i32(reader.i32_range(1, 3));
+    h_exercise_adversarial_offset(&material, distance.clone(), &policy);
+    h_exercise_adversarial_offset(&hole, -distance.clone(), &policy);
+
+    let prepared_region = region.prepare_topology_queries(&policy);
+    let prepared_cutter = cutter.prepare_topology_queries(&policy);
+    for op in [
+        HBooleanOp::Union,
+        HBooleanOp::Intersection,
+        HBooleanOp::Difference,
+        HBooleanOp::Xor,
+    ] {
+        let contours = region
+            .boolean_boundary_contours(&cutter, op, HFillRule::NonZero, &policy)
+            .unwrap();
+        assert_eq!(
+            prepared_region
+                .boolean_boundary_contours(&prepared_cutter, op, HFillRule::NonZero, &policy)
+                .unwrap(),
+            contours
+        );
+        if let HClassification::Decided(contours) = &contours {
+            for contour in contours {
+                h_assert_contour_finite(contour);
+            }
+        }
+
+        let boolean_region = region
+            .boolean_region(&cutter, op, HFillRule::NonZero, &policy)
+            .unwrap();
+        assert_eq!(
+            prepared_region
+                .boolean_region(&prepared_cutter, op, HFillRule::NonZero, &policy)
+                .unwrap(),
+            boolean_region
+        );
+        if let HClassification::Decided(result) = &boolean_region {
+            h_assert_region_finite(result);
+        }
+    }
+
+    let mut samples: Vec<_> = points.iter().map(|&(x, y)| h_point_i32(x, y)).collect();
+    if samples.len() > 3 {
+        samples.insert(1, samples[1].clone());
+        samples.push(samples[0].clone());
+    }
+    let reconstructed =
+        HContour2::reconstruct_from_closed_polyline(&samples, h_polygon_reconstruction_options())
+            .unwrap();
+    h_assert_contour_finite(&reconstructed);
+    let _ = reconstructed.intersect_self(&policy).unwrap();
+    h_exercise_adversarial_offset(&reconstructed, h_scalar_i32(1), &policy);
 }
 
 /// Fuzz every public offset-outline cap path on line and arc curve strings.
@@ -2412,7 +2596,7 @@ pub fn h_assert_polyline_reconstruction(reader: &mut ByteReader<'_>) {
 
 /// Aggregate hypercurve fuzz entrypoint covering public APIs and cross-path invariants.
 pub fn h_assert_full_api(reader: &mut ByteReader<'_>) {
-    match reader.byte() % 11 {
+    match reader.byte() % 12 {
         0 => h_assert_segment_intersections(reader),
         1 => h_assert_segment_containment_and_reversal(reader),
         2 => h_assert_contour_region_classification(reader),
@@ -2423,6 +2607,7 @@ pub fn h_assert_full_api(reader: &mut ByteReader<'_>) {
         7 => h_assert_boundary_nesting(reader),
         8 => h_assert_boolean_boundary_pipeline(reader),
         9 => h_assert_offset_cap_matrix(reader),
-        _ => h_assert_polyline_reconstruction(reader),
+        10 => h_assert_polyline_reconstruction(reader),
+        _ => h_assert_adversarial_polygon_pipeline(reader),
     }
 }

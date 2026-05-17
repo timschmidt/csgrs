@@ -9,6 +9,12 @@
 //! 1997).
 
 mod bbox;
+mod bezier;
+mod bezier_fit;
+mod bezier_flatten;
+mod bezier_metric;
+mod bezier_moment;
+mod bezier_topology;
 mod boolean;
 mod boolean_boundary;
 mod bulge;
@@ -25,6 +31,7 @@ mod point;
 mod policy;
 mod prepared;
 mod prepared_boolean;
+mod rational_bezier;
 mod reconstruct;
 mod region;
 mod region_boolean;
@@ -36,6 +43,22 @@ mod self_intersect;
 mod split;
 
 pub use bbox::Aabb2;
+pub use bezier::{BezierEndpoint, CubicBezier2, EndpointTangent2, QuadraticBezier2};
+pub use bezier_fit::{
+    BezierLineFitRelation, BezierLineImageFitRelation, CertifiedBezierLineFit2,
+    CertifiedBezierLineImage2, CertifiedBezierLineImageOffset2, CertifiedBezierLineOffset2,
+};
+pub use bezier_flatten::{
+    BezierFlatteningCertificate, BezierFlatteningOptions, CertifiedBezierPolyline2,
+    DisplayBezierOffsetPolyline2,
+};
+pub use bezier_metric::{BezierArcLengthParameterRegion2, BezierLengthBounds2};
+pub use bezier_moment::{BezierAreaMomentPrefixSums2, BezierAreaMoments2, BezierAreaPrefixSums2};
+pub use bezier_topology::{
+    Axis2, BezierCurveIntersectionPoint, BezierCurveIntersectionRegion, BezierCurveRelation,
+    BezierCuspClassification, BezierInflectionClassification, BezierLineRelation,
+    BezierMonotoneSpan,
+};
 pub use boolean::{
     BooleanFragmentAction, BooleanFragmentClassification, BooleanFragmentSelection, BooleanOp,
 };
@@ -53,13 +76,14 @@ pub use events::{
     ContourPointIntersection, ContourUncertainIntersection,
 };
 pub use facts::{
-    CircularArc2Facts, CurveStringFacts, LineSeg2Facts, Point2Facts, RegionFacts, Segment2Facts,
-    SegmentKind, SegmentKindCounts,
+    Bezier2Facts, BezierDegree, CircularArc2Facts, CurveStringFacts, LineSeg2Facts, Point2Facts,
+    RationalQuadraticBezier2Facts, RegionFacts, Segment2Facts, SegmentKind, SegmentKindCounts,
 };
 pub use fragment::{ContourFragment, ContourFragmentSet};
 pub use intersect::{
-    ArcArcIntersection, ArcArcIntersectionPoint, IntersectionKind, LineArcIntersection,
-    LineArcIntersectionPoint, LineArcOrder, LineLineIntersection, ParamRange, SegmentIntersection,
+    ArcArcIntersection, ArcArcIntersectionPoint, CircleCircleRelation, IntersectionKind,
+    LineArcIntersection, LineArcIntersectionPoint, LineArcOrder, LineCircleRelation,
+    LineLineIntersection, ParamRange, SegmentIntersection,
 };
 pub use offset::OffsetCap;
 pub use point::Point2;
@@ -68,6 +92,7 @@ pub use prepared::{
     PreparedCircularArc2, PreparedContourView2, PreparedCurveStringView2, PreparedLineSeg2,
     PreparedRegionView2, PreparedSegment2,
 };
+pub use rational_bezier::{RationalQuadraticBezier2, RationalQuadraticConicKind};
 pub use reconstruct::PolylineReconstructionOptions;
 pub use region::{Region2, RegionPointLocation, RegionView2};
 pub use region_events::{

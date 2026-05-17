@@ -67,10 +67,9 @@ pub(crate) fn segments_have_self_contacts_with_cached_aabbs(
             // segment topology below remains authoritative.
             if let (Some(Some(first_box)), Some(Some(second_box))) =
                 (boxes.get(first_index), boxes.get(second_index))
+                && aabbs_decided_disjoint(first_box, second_box, policy)
             {
-                if aabbs_decided_disjoint(first_box, second_box, policy) {
-                    continue;
-                }
+                continue;
             }
 
             let relation =
@@ -202,7 +201,7 @@ fn point_is_connectivity(
     }
 
     if matches!(policy.numeric_mode, crate::NumericMode::EdgePreview)
-        && let (Some(distance), Some(tolerance)) = (distance.to_f64_approx(), policy.tolerance)
+        && let (Some(distance), Some(tolerance)) = (distance.to_f64_lossy(), policy.tolerance)
     {
         let tolerance = tolerance.absolute.max(tolerance.relative);
         return distance.is_finite() && distance <= tolerance * tolerance;

@@ -12,7 +12,7 @@ hyperreal = { path = "../hyperreal", version = "0.11.1", default-features = fals
 hyperlimit = { path = "../hyperlimit", version = "0.2.0", default-features = false, features = ["std"], optional = true }
 
 [dev-dependencies]
-cavalier_contours = { path = "../cavalier_contours/cavalier_contours" }
+cavalier_contours = { git = "https://github.com/timschmidt/cavalier_contours", branch = "shape-boolean-transformation" }
 geo = "0.32"
 proptest = "1"
 static_aabb2d_index = "2.0"
@@ -40,4 +40,8 @@ harness = false
 
 [[bench]]
 name = "reconstruction"
+harness = false
+
+[[bench]]
+name = "bezier_facts"
 harness = false

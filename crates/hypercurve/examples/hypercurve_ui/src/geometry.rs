@@ -321,7 +321,7 @@ impl IndexMut<usize> for Polyline {
 }
 
 /// Multi-contour shape with explicit material and hole bins.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Shape {
     pub materials: Vec<Polyline>,
     pub holes: Vec<Polyline>,
@@ -441,7 +441,7 @@ impl Shape {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub enum BooleanMode {
     Union,
     Intersection,
@@ -559,11 +559,13 @@ fn source_contour_fragments(contour: &HContour) -> ContourFragmentSet {
             .iter()
             .cloned()
             .enumerate()
-            .map(|(source_segment_index, segment)| hypercurve::ContourFragment {
-                source_segment_index,
-                source_range: hypercurve::ParamRange::new(Real::zero(), Real::one()),
-                segment,
-            })
+            .map(
+                |(source_segment_index, segment)| hypercurve::ContourFragment {
+                    source_segment_index,
+                    source_range: hypercurve::ParamRange::new(Real::zero(), Real::one()),
+                    segment,
+                },
+            )
             .collect(),
     )
 }
@@ -805,7 +807,7 @@ fn hpoint_xy(point: &HPoint) -> (f64, f64) {
 
 fn real_to_f64(value: &HReal) -> f64 {
     value
-        .to_f64_approx()
+        .to_f64_lossy()
         .unwrap_or_else(|| f64::from(value.clone()))
 }
 
@@ -1417,7 +1419,12 @@ mod tests {
                 .is_empty())
     }
 
-    fn alternating_band_polyline(bands: usize, skew: f64, y_offset: f64, direction: f64) -> Polyline {
+    fn alternating_band_polyline(
+        bands: usize,
+        skew: f64,
+        y_offset: f64,
+        direction: f64,
+    ) -> Polyline {
         let mut vertices = Vec::with_capacity(bands * 2 + 2);
         let height = 18.0;
         let step = 2.0;
@@ -1449,7 +1456,10 @@ mod tests {
             for vertex in &slice.vertex_data {
                 assert!(vertex.x.is_finite(), "slice vertex x must be finite");
                 assert!(vertex.y.is_finite(), "slice vertex y must be finite");
-                assert!(vertex.bulge.is_finite(), "slice vertex bulge must be finite");
+                assert!(
+                    vertex.bulge.is_finite(),
+                    "slice vertex bulge must be finite"
+                );
             }
             let points = slice.sample_points(SAMPLE_STEP);
             assert!(
@@ -1457,7 +1467,9 @@ mod tests {
                 "slice sampling should retain at least two points"
             );
             assert!(
-                points.windows(2).any(|pair| !nearly_same_point(pair[0], pair[1])),
+                points
+                    .windows(2)
+                    .any(|pair| !nearly_same_point(pair[0], pair[1])),
                 "slice should not collapse to a zero-length display fragment"
             );
         }

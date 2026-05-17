@@ -3,8 +3,9 @@
   <img src="./doc/hypercurve.png" alt="Hyper, a clever mathematician" width="144" align="right">
 </h1>
 
-`hypercurve` is a planar curve kernel for line and circular-arc geometry in the
-hyperreal geometry stack. The current implementation focuses on
+`hypercurve` is a planar curve kernel for line, circular-arc, and first
+polynomial Bezier geometry in the hyperreal geometry stack. The current
+implementation focuses on
 exactness-aware topology: segment intersections, closed-contour containment,
 signed region views, region-pair event extraction, fragment splitting, prepared
 query views, and the first region boolean / offset pipeline.
@@ -14,10 +15,38 @@ the native APIs expose explicit uncertainty for tangent, overlap, boundary, and
 unsupported cases instead of silently resolving them through global epsilon
 rules.
 
+In the Hyper ecosystem it is the 2D curved-topology layer: `hyperreal`,
+`hyperlattice`, and `hyperlimit` provide scalar/algebra/predicate support;
+`hypercurve` owns contours, regions, offsets, and curve relations; `hypertri`
+handles line-only triangulation; and `hyperdrc` consumes this work for
+manufacturing-readiness checks.
+
 ## WASM Demo
 
 The deployed WASM app is available at
 <https://timschmidt.github.io/hypercurve/>.
+
+## Hyper Stack Links
+
+- [hyperreal](../hyperreal/README.md): exact rational, symbolic, and computable
+  real arithmetic.
+- [hyperlimit](../hyperlimit/README.md): exact predicate policy and certified
+  geometric decisions.
+- [hyperlattice](../hyperlattice/README.md): small exact vector, matrix, and
+  transform algebra.
+- [hypercurve](../hypercurve/README.md): planar curve, contour, region, and
+  boolean geometry.
+- [hypertri](../hypertri/README.md): exact polygon triangulation and constrained
+  Delaunay topology.
+- [hypermesh](../hypermesh/README.md): 3D mesh boolean experiments and the
+  future exact-aware mesh-topology layer.
+- [hypersolve](../hypersolve/README.md): experimental exact-aware solver layer.
+- [hyperdrc](../hyperdrc/README.md): PCB design-readiness checks over exact-aware
+  geometry adapters.
+- [hyperphysics](../hyperphysics/README.md): placeholder physics-domain crate
+  for the exact geometry stack.
+- [csgrs](../csgrs/readme.md): constructive solid geometry and polygon boolean
+  engine used by HyperDRC and available as an interop target.
 
 ## Numeric Model
 
@@ -25,6 +54,23 @@ The deployed WASM app is available at
 values. Primitive `f64` appears only in named edge
 conversions, tests, benchmarks, rendering/IO helpers, and compatibility
 harnesses. There is no approximate numeric mode feature.
+
+## Traditional Curve Problems
+
+Curved planar geometry combines all the usual robust-predicate failures with
+extra representation problems: tangent contacts, overlapping arcs, nearly
+coincident boundaries, Bezier roots, offset self-intersections, and lossy
+chordization. A fixed epsilon can make a boolean pass one fixture and fail the
+next; eager exact algebra can also explode before broad-phase filters have
+removed obvious misses.
+
+`hypercurve` therefore stages work. It keeps native curve objects and exact
+control structure, uses boxes and prepared views to cut candidate sets, promotes
+low-degree exact certificates when they are available, and returns explicit
+uncertainty or parameter regions for cases needing a complete root solver.
+Flattening, fitting, simplification, and display offsets are represented as
+certified or display-only adapters rather than hidden replacements for the
+topology model.
 
 ## Semantic Boundary and Structural Facts
 
@@ -54,6 +100,91 @@ Core geometry:
 
 - Line and circular-arc segments with explicit intersection result types,
   including finite same-circle arc overlap intervals.
+- Polynomial quadratic and cubic Bezier object types that store exact `Real`
+  control points, evaluate with de Casteljau subdivision, expose certified
+  control-hull boxes, and retain structural facts for derivative edges, second
+  differences, curvature witnesses, exact-rational schedules, and symbolic
+  dependencies.
+- First polynomial Bezier topology predicates: exact derivative-root monotone
+  decomposition, certified endpoint/extrema bounds, quadratic line-root
+  relation, cubic supporting-line root isolation, coarse curve/curve
+  disjoint/shared-endpoint relations, exact cusp checks from common derivative
+  roots, and cubic inflection parameters.
+- Rational quadratic Bezier/conic object type with exact homogeneous
+  evaluation, structural coordinate/weight facts, and certified conic-family
+  classification from the weight discriminant.
+- First rational-conic predicates for parameterized point membership and
+  exact point-on-conic parameter recovery through homogeneous coordinate
+  equations, supporting-line relation through the exact weighted Bernstein
+  numerator, plus quotient-derivative monotone decomposition and certified
+  bounds, with projective denominator boundaries reported as uncertainty.
+- Coarse rational-conic curve/curve relation for exact homogeneous identity,
+  projective homogeneous weight-scaling identity, positive-weight convex-hull
+  disjointness, exact native line-line intersection dispatch for certified
+  endpoint line-segment images, equal-weight collapse into polynomial Bezier
+  predicates, and exact shared endpoints.
+- Mixed polynomial quadratic/cubic curve relation through exact shared
+  endpoints and certified Bezier bounds, with overlapping boxes left explicit
+  for a later root-isolation solver.
+- Polynomial Bezier curve/curve subdivision regions that cover all remaining
+  possible intersections after exact control-hull box pruning and narrower
+  algebraic dispatches.
+- Exact same-parameter polynomial quadratic/quadratic intersection dispatch,
+  returning certified interior crossing points before generic subdivision, and
+  certifying no-intersection for degree-normalized shared-axis strictly
+  monotone quadratic/cubic graph pairs whose remaining coordinate is
+  sign-separated in Bernstein form.
+- Exact degree-elevated quadratic/cubic polynomial image equality, reported
+  before endpoint-only overlap checks.
+- Exact same-parameter dyadic candidate promotion for mixed quadratic/cubic
+  and native cubic/cubic polynomial Bezier pairs after degree normalization.
+- Certified dyadic point-parameter probes for cubic Beziers, reused to promote
+  endpoint-on-cubic intersections before generic subdivision while keeping the
+  complete point-on-cubic solver explicit future work.
+- Exact native line-line intersection dispatch when polynomial Bezier control
+  polygons are certified to trace their endpoint line segments.
+- Exact supporting-line root dispatch when one polynomial Bezier is a certified
+  endpoint line image and the other curve has certified line roots, yielding
+  exact intersection points or certified no-intersection after finite-segment
+  containment.
+- Exact endpoint-on-quadratic dispatch for polynomial Bezier curve relations,
+  certifying endpoint hits that occur at interior quadratic parameters before
+  falling back to subdivision regions.
+- Exact polynomial quadratic point-on-curve parameter recovery, exposed as a
+  certified API and reused by endpoint-on-quadratic relation dispatch.
+- Certified polynomial Bezier length intervals using exact endpoint-chord lower
+  bounds and exact control-polygon upper bounds, with exact de Casteljau
+  subdivision refinement and prefix-interval bounds for tighter metric
+  enclosures plus inverse arc-length parameter regions.
+- Exact polynomial Bezier signed-area and first area-moment contributions,
+  prefix contributions through Green's-theorem boundary integrals, plus exact
+  signed-area and area-moment prefix-sum tables for fitting and simplification
+  ranges.
+- Mixed rational-conic/polynomial Bezier curve relation in both directions,
+  certifying equal-weight quadratic identity, positive-weight hull
+  disjointness, exact native line-line intersection dispatch for certified
+  endpoint line-segment images, exact supporting-line root dispatch when one
+  side is a certified endpoint line image, exact shared endpoints,
+  endpoint-on-conic hits, and homogeneous subdivision regions for overlapping
+  positive-weight cases.
+- Certified polynomial Bezier flattening adapter that emits a polyline only
+  when exact hull-to-chord flatness is within the requested error budget.
+- Zero-error certified polyline simplification for flattened Beziers that only
+  removes exactly collinear interior vertices.
+- Zero-error exact-line fitting for certified flattened Bezier polylines, with
+  the source flattening certificate retained on successful fits.
+- Direct zero-error exact-line-image fitting for polynomial Bezier control
+  polygons and positive-weight rational quadratic conics, with true
+  line-primitive offsets for certified line images.
+- True line-primitive offsets for certified zero-error Bezier line fits.
+- Display-only offset previews for certified flattened Bezier polylines, with
+  no topology claim beyond the source flattening certificate.
+- A supporting-line/full-circle predicate surface that classifies disjoint,
+  tangent, secant, and uncertain outcomes before finite segment and arc-sweep
+  filters are applied.
+- A full-circle/full-circle predicate surface that classifies coincident,
+  disjoint, tangent, secant, and uncertain outcomes before finite arc-sweep
+  filters are applied.
 - Cavalier-compatible bulge vertex helpers and bulge import/export for
   supported line and circular-arc sweeps.
 - Axis-aligned bounding boxes for points, segments, curve strings, contours, and
@@ -84,7 +215,8 @@ Prepared and repeated-query paths:
   contour, and whole-region boxes for repeated self-contact, curve-string
   intersection, contour/region point classification, and contour/region event
   queries. They also retain per-segment prepared predicate handles for future
-  line/arc batches, plus prepared region boolean-boundary loop,
+  line/arc batches, route prepared curve-string pairs through those segment
+  handles, plus prepared region boolean-boundary loop,
   checked-contour, and region-result traversal. Mixed prepared-vs-region event
   and boolean wrappers reuse either prepared operand while transiently
   preparing the ordinary side, without changing exact boundary semantics.
@@ -140,8 +272,8 @@ Known limits:
   intentionally unresolved until the general overlap resolver is implemented.
 - Joined offsets are not yet self-intersection trimmed; checked offset entry
   points reject cases that need that trimming.
-- Circular arcs are first-class, but general conics, Beziers, and NURBS are not
-  part of the current implementation.
+- General implicit conics, full rational-conic and Bezier curve/curve root
+  isolation, and NURBS are not part of the current implementation.
 - Primitive-float reconstruction and tessellation are IO/display helpers, not
   the internal topology model.
 
@@ -222,6 +354,9 @@ Bentley, Jon Louis, and Thomas A. Ottmann. "Algorithms for Reporting and
 Counting Geometric Intersections." *IEEE Transactions on Computers*, vol. C-28,
 no. 9, 1979, pp. 643-647.
 
+de Casteljau, Paul. "Outillage methodes calcul." Andre Citroen Automobiles SA,
+1959.
+
 cavalier_contours. "2D Polyline/Shape Library for Offsetting, Combining, etc."
 Rust crate and repository. https://github.com/jbuckmccready/cavalier_contours.
 
@@ -233,6 +368,9 @@ ed., Springer, 2008. https://doi.org/10.1007/978-3-540-77974-2.
 
 Farouki, Rida T., and C. Andrew Neff. "Analytic Properties of Plane Offset
 Curves." *Computer Aided Geometric Design*, vol. 7, nos. 1-4, 1990, pp. 83-99.
+
+Farin, Gerald. *Curves and Surfaces for Computer-Aided Geometric Design: A
+Practical Guide*. 5th ed., Morgan Kaufmann, 2002.
 
 Foster, Erich L., Kai Hormann, and Romeo Traian Popa. "Clipping Simple Polygons
 with Degenerate Intersections." *Computers & Graphics: X*, vol. 2, 2019,
@@ -276,3 +414,7 @@ https://doi.org/10.1109/MCG.1984.275995.
 Vatti, Bala R. "A Generic Solution to Polygon Clipping." *Communications of the
 ACM*, vol. 35, no. 7, 1992, pp. 56-63.
 https://doi.org/10.1145/129902.129906.
+
+Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry*,
+vol. 7, nos. 1-2, 1997, pp. 3-23.
+https://doi.org/10.1016/0925-7721(95)00040-2.

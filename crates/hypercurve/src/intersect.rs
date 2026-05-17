@@ -61,6 +61,7 @@ pub enum IntersectionKind {
 
 /// Intersection between two line segments.
 #[derive(Clone, Debug, PartialEq)]
+#[allow(clippy::large_enum_variant)]
 pub enum LineLineIntersection {
     /// No intersection.
     None,
@@ -98,6 +99,65 @@ impl LineLineIntersection {
     }
 }
 
+/// Relation between an oriented supporting line and a full circle.
+///
+/// The line is represented by a finite [`LineSeg2`], but this relation is
+/// intentionally about the infinite supporting line. The returned parameters
+/// are affine coordinates on that segment's support, so downstream segment and
+/// arc filters can reuse the same roots without recomputing the quadratic. This
+/// is the line-circle primitive described in Schneider and Eberly, *Geometric
+/// Tools for Computer Graphics* (Morgan Kaufmann, 2002), exposed as a separate
+/// exact predicate boundary in Yap's sense: derive the algebraic relation once,
+/// then let higher-level objects decide which roots lie on their finite
+/// topology. See Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997).
+#[derive(Clone, Debug, PartialEq)]
+#[allow(clippy::large_enum_variant)]
+pub enum LineCircleRelation {
+    /// The supporting line does not meet the circle.
+    Disjoint,
+    /// The supporting line touches the circle at one point.
+    Tangent {
+        /// Tangency point.
+        point: Point2,
+        /// Affine parameter on the line support.
+        line_param: Real,
+    },
+    /// The supporting line crosses the circle at two points.
+    Secant {
+        /// First point in increasing line-parameter order.
+        first_point: Point2,
+        /// First affine parameter on the line support.
+        first_param: Real,
+        /// Second point in increasing line-parameter order.
+        second_point: Point2,
+        /// Second affine parameter on the line support.
+        second_param: Real,
+    },
+    /// The active policy could not decide the relation.
+    Uncertain {
+        /// Why classification stopped.
+        reason: UncertaintyReason,
+    },
+}
+
+impl LineCircleRelation {
+    /// Returns true when the supporting line is disjoint from the circle.
+    pub const fn is_disjoint(&self) -> bool {
+        matches!(self, Self::Disjoint)
+    }
+
+    /// Returns true when the supporting line has exactly one tangent contact.
+    pub const fn is_tangent(&self) -> bool {
+        matches!(self, Self::Tangent { .. })
+    }
+
+    /// Returns true when the supporting line crosses the circle at two points.
+    pub const fn is_secant(&self) -> bool {
+        matches!(self, Self::Secant { .. })
+    }
+}
+
 /// One point in a line-arc intersection result.
 #[derive(Clone, Debug, PartialEq)]
 pub struct LineArcIntersectionPoint {
@@ -111,6 +171,7 @@ pub struct LineArcIntersectionPoint {
 
 /// Intersection between a line segment and a circular arc.
 #[derive(Clone, Debug, PartialEq)]
+#[allow(clippy::large_enum_variant)]
 pub enum LineArcIntersection {
     /// No intersection.
     None,
@@ -137,6 +198,64 @@ impl LineArcIntersection {
     }
 }
 
+/// Relation between two full circles supporting circular arcs.
+///
+/// This is deliberately a circle predicate, not an arc predicate: coincident,
+/// disjoint, tangent, and secant outcomes are classified before either arc's
+/// angular sweep is considered. Arc-arc intersection then filters the returned
+/// point witnesses through finite sweep predicates. The radical-axis
+/// construction is the standard circle-circle primitive in Schneider and
+/// Eberly, *Geometric Tools for Computer Graphics* (Morgan Kaufmann, 2002);
+/// exposing it separately follows Yap's recommendation to keep exact algebraic
+/// predicates at explicit object boundaries.
+#[derive(Clone, Debug, PartialEq)]
+#[allow(clippy::large_enum_variant)]
+pub enum CircleCircleRelation {
+    /// The two full circles are the same circle.
+    Coincident,
+    /// The two full circles do not meet.
+    Disjoint,
+    /// The two full circles touch at one point.
+    Tangent {
+        /// Tangency point.
+        point: Point2,
+    },
+    /// The two full circles cross at two points.
+    Secant {
+        /// First point in deterministic radical-axis construction order.
+        first_point: Point2,
+        /// Second point in deterministic radical-axis construction order.
+        second_point: Point2,
+    },
+    /// The active policy could not decide the relation.
+    Uncertain {
+        /// Why classification stopped.
+        reason: UncertaintyReason,
+    },
+}
+
+impl CircleCircleRelation {
+    /// Returns true when the circles are coincident.
+    pub const fn is_coincident(&self) -> bool {
+        matches!(self, Self::Coincident)
+    }
+
+    /// Returns true when the circles are disjoint.
+    pub const fn is_disjoint(&self) -> bool {
+        matches!(self, Self::Disjoint)
+    }
+
+    /// Returns true when the circles have exactly one tangent contact.
+    pub const fn is_tangent(&self) -> bool {
+        matches!(self, Self::Tangent { .. })
+    }
+
+    /// Returns true when the circles have two crossings.
+    pub const fn is_secant(&self) -> bool {
+        matches!(self, Self::Secant { .. })
+    }
+}
+
 /// One point in an arc-arc intersection result.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ArcArcIntersectionPoint {
@@ -148,6 +267,7 @@ pub struct ArcArcIntersectionPoint {
 
 /// Intersection between two circular arcs.
 #[derive(Clone, Debug, PartialEq)]
+#[allow(clippy::large_enum_variant)]
 pub enum ArcArcIntersection {
     /// No intersection.
     None,
@@ -195,6 +315,7 @@ pub enum LineArcOrder {
 
 /// Intersection between two native segments.
 #[derive(Clone, Debug, PartialEq)]
+#[allow(clippy::large_enum_variant)]
 pub enum SegmentIntersection {
     /// Line-line relation.
     LineLine(LineLineIntersection),
@@ -275,15 +396,58 @@ impl LineSeg2 {
     /// Intersects this line segment with a circular arc.
     ///
     /// Substitutes the segment's affine parameter into the circle equation and
-    /// classifies the resulting quadratic roots before filtering by the arc
-    /// sweep. The root interval helper below compares squared exact terms where
-    /// possible to avoid throwing away near-endpoint hits through finite root
-    /// rounding.
+    /// classifies the resulting quadratic roots once at the supporting-line
+    /// layer, then filters those roots by the finite line interval and by the
+    /// arc sweep. Keeping the line-circle relation explicit gives future
+    /// line/arc batches a reusable exact predicate surface without moving arc
+    /// topology into the algebraic primitive.
     pub fn intersect_arc(
         &self,
         arc: &CircularArc2,
         policy: &CurvePolicy,
     ) -> CurveResult<LineArcIntersection> {
+        match self.supporting_line_circle_relation(arc, policy)? {
+            LineCircleRelation::Disjoint => Ok(LineArcIntersection::None),
+            LineCircleRelation::Tangent { line_param, .. } => {
+                match line_arc_hit_candidate(
+                    self,
+                    arc,
+                    line_param,
+                    IntersectionKind::Tangent,
+                    policy,
+                )? {
+                    LineArcCandidate::Hit(hit) => Ok(LineArcIntersection::Point(hit)),
+                    LineArcCandidate::Miss => Ok(LineArcIntersection::None),
+                    LineArcCandidate::Uncertain(reason) => {
+                        Ok(LineArcIntersection::Uncertain { reason })
+                    }
+                }
+            }
+            LineCircleRelation::Secant {
+                first_param,
+                second_param,
+                ..
+            } => line_arc_two_candidates(self, arc, first_param, second_param, policy),
+            LineCircleRelation::Uncertain { reason } => {
+                Ok(LineArcIntersection::Uncertain { reason })
+            }
+        }
+    }
+
+    /// Classifies the relation between this segment's supporting line and an
+    /// arc's full circle.
+    ///
+    /// This method ignores the finite line interval and the finite arc sweep.
+    /// It returns affine parameters on the line support so callers can perform
+    /// those object-level filters without recomputing the line-circle
+    /// quadratic. Structural-dispatch note: exact-rational line and circle
+    /// facts carried by prepared curve objects can later select specialized
+    /// discriminant reducers here while preserving this public relation shape.
+    pub fn supporting_line_circle_relation(
+        &self,
+        arc: &CircularArc2,
+        policy: &CurvePolicy,
+    ) -> CurveResult<LineCircleRelation> {
         let (dx, dy) = self.delta();
         let start_from_center = self.start().delta_from(arc.center());
         let a = dot(&dx, &dy, &dx, &dy);
@@ -297,36 +461,39 @@ impl LineSeg2 {
         let discriminant = (&half_b * &half_b) - (&a * &c);
 
         match crate::classify::real_sign(&discriminant, policy) {
-            Some(RealSign::Negative) => Ok(LineArcIntersection::None),
+            Some(RealSign::Negative) => Ok(LineCircleRelation::Disjoint),
             Some(RealSign::Zero) => {
                 let t = ((-half_b) / &a)?;
-                match line_arc_hit_candidate(self, arc, t, IntersectionKind::Tangent, policy)? {
-                    LineArcCandidate::Hit(hit) => Ok(LineArcIntersection::Point(hit)),
-                    LineArcCandidate::Miss => Ok(LineArcIntersection::None),
-                    LineArcCandidate::Uncertain(reason) => {
-                        Ok(LineArcIntersection::Uncertain { reason })
-                    }
-                }
+                let point = line_point_at_for_policy(self, &t, policy)?;
+                Ok(LineCircleRelation::Tangent {
+                    point,
+                    line_param: t,
+                })
             }
             Some(RealSign::Positive) => {
                 let sqrt_discriminant = discriminant.clone().sqrt()?;
                 let negative_half_b = -half_b;
                 let t0 = ((&negative_half_b - &sqrt_discriminant) / &a)?;
                 let t1 = ((negative_half_b.clone() + sqrt_discriminant) / &a)?;
-                line_arc_two_candidates(
-                    self,
-                    arc,
-                    t0,
-                    t1,
-                    QuadraticRootContext {
-                        numerator: &negative_half_b,
-                        discriminant: &discriminant,
-                        denominator: &a,
-                    },
-                    policy,
-                )
+                let (first_param, second_param) = match compare_reals(&t0, &t1, policy) {
+                    Some(Ordering::Greater) => (t1, t0),
+                    Some(Ordering::Less | Ordering::Equal) => (t0, t1),
+                    None => {
+                        return Ok(LineCircleRelation::Uncertain {
+                            reason: UncertaintyReason::Ordering,
+                        });
+                    }
+                };
+                let first_point = line_point_at_for_policy(self, &first_param, policy)?;
+                let second_point = line_point_at_for_policy(self, &second_param, policy)?;
+                Ok(LineCircleRelation::Secant {
+                    first_point,
+                    first_param,
+                    second_point,
+                    second_param,
+                })
             }
-            None => Ok(LineArcIntersection::Uncertain {
+            None => Ok(LineCircleRelation::Uncertain {
                 reason: UncertaintyReason::RealSign,
             }),
         }
@@ -334,6 +501,51 @@ impl LineSeg2 {
 }
 
 impl CircularArc2 {
+    /// Classifies the relation between this arc's full circle and another.
+    ///
+    /// This ignores both finite arc sweeps. The returned point witnesses are
+    /// therefore suitable for exact arc-arc filtering, containment probes, and
+    /// future batch dispatch without recomputing the radical-axis algebra.
+    /// Structural-dispatch note: cached exact-rational radius and center facts
+    /// can later select specialized circle-circle reducers here, while this
+    /// API remains the semantic boundary seen by curve topology.
+    pub fn circle_relation(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<CircleCircleRelation> {
+        let center_delta = other.center().delta_from(self.center());
+        let center_distance_squared = dot(
+            &center_delta.0,
+            &center_delta.1,
+            &center_delta.0,
+            &center_delta.1,
+        );
+
+        match is_zero(&center_distance_squared, policy) {
+            Some(true) => {
+                let radius_delta = self.radius_squared() - other.radius_squared();
+                match is_zero(&radius_delta, policy) {
+                    Some(true) => Ok(CircleCircleRelation::Coincident),
+                    Some(false) => Ok(CircleCircleRelation::Disjoint),
+                    None => Ok(CircleCircleRelation::Uncertain {
+                        reason: UncertaintyReason::RealSign,
+                    }),
+                }
+            }
+            Some(false) => circle_relation_for_distinct_centers(
+                self,
+                other,
+                center_delta,
+                center_distance_squared,
+                policy,
+            ),
+            None => Ok(CircleCircleRelation::Uncertain {
+                reason: UncertaintyReason::RealSign,
+            }),
+        }
+    }
+
     /// Intersects this circular arc with another circular arc.
     ///
     /// Distinct centers use the usual radical-axis construction; coincident
@@ -527,7 +739,6 @@ fn line_arc_two_candidates(
     arc: &CircularArc2,
     t0: Real,
     t1: Real,
-    root_context: QuadraticRootContext<'_>,
     policy: &CurvePolicy,
 ) -> CurveResult<LineArcIntersection> {
     let ordered = match compare_reals(&t0, &t1, policy) {
@@ -540,22 +751,8 @@ fn line_arc_two_candidates(
         }
     };
 
-    let first =
-        if quadratic_root_in_closed_unit_interval(&root_context, QuadraticRoot::Lower, policy)
-            == Some(false)
-        {
-            LineArcCandidate::Miss
-        } else {
-            line_arc_hit_candidate(line, arc, ordered.0, IntersectionKind::Crossing, policy)?
-        };
-    let second =
-        if quadratic_root_in_closed_unit_interval(&root_context, QuadraticRoot::Upper, policy)
-            == Some(false)
-        {
-            LineArcCandidate::Miss
-        } else {
-            line_arc_hit_candidate(line, arc, ordered.1, IntersectionKind::Crossing, policy)?
-        };
+    let first = line_arc_hit_candidate(line, arc, ordered.0, IntersectionKind::Crossing, policy)?;
+    let second = line_arc_hit_candidate(line, arc, ordered.1, IntersectionKind::Crossing, policy)?;
 
     match (first, second) {
         (LineArcCandidate::Hit(first), LineArcCandidate::Hit(second)) => {
@@ -569,87 +766,6 @@ fn line_arc_two_candidates(
         (LineArcCandidate::Uncertain(reason), _) | (_, LineArcCandidate::Uncertain(reason)) => {
             Ok(LineArcIntersection::Uncertain { reason })
         }
-    }
-}
-
-struct QuadraticRootContext<'a> {
-    numerator: &'a Real,
-    discriminant: &'a Real,
-    denominator: &'a Real,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum QuadraticRoot {
-    Lower,
-    Upper,
-}
-
-fn quadratic_root_in_closed_unit_interval(
-    context: &QuadraticRootContext<'_>,
-    root: QuadraticRoot,
-    policy: &CurvePolicy,
-) -> Option<bool> {
-    // Structural-dispatch note: line/arc intersections already know the root
-    // shape `(n +/- sqrt(D)) / a`. Carrying that shape lets us compare the root
-    // against interval endpoints by squaring exact terms, avoiding a lossy
-    // `f64` parameter rejection and avoiding a harder sign query on an
-    // expression containing `sqrt(D)`.
-    let zero = Real::zero();
-    let lower = quadratic_root_numerator_sign(
-        context.numerator,
-        context.discriminant,
-        &zero,
-        root,
-        policy,
-    )?;
-    if lower == RealSign::Negative {
-        return Some(false);
-    }
-
-    let upper = quadratic_root_numerator_sign(
-        context.numerator,
-        context.discriminant,
-        context.denominator,
-        root,
-        policy,
-    )?;
-    Some(upper != RealSign::Positive)
-}
-
-fn quadratic_root_numerator_sign(
-    numerator: &Real,
-    discriminant: &Real,
-    shift: &Real,
-    root: QuadraticRoot,
-    policy: &CurvePolicy,
-) -> Option<RealSign> {
-    let offset = numerator - shift;
-    let offset_sign = crate::classify::real_sign(&offset, policy)?;
-    match root {
-        QuadraticRoot::Lower => match offset_sign {
-            RealSign::Negative => Some(RealSign::Negative),
-            RealSign::Zero => match crate::classify::real_sign(discriminant, policy)? {
-                RealSign::Zero => Some(RealSign::Zero),
-                RealSign::Positive => Some(RealSign::Negative),
-                RealSign::Negative => None,
-            },
-            RealSign::Positive => {
-                let squared_gap = (&offset * &offset) - discriminant;
-                crate::classify::real_sign(&squared_gap, policy)
-            }
-        },
-        QuadraticRoot::Upper => match offset_sign {
-            RealSign::Positive => Some(RealSign::Positive),
-            RealSign::Zero => match crate::classify::real_sign(discriminant, policy)? {
-                RealSign::Zero => Some(RealSign::Zero),
-                RealSign::Positive => Some(RealSign::Positive),
-                RealSign::Negative => None,
-            },
-            RealSign::Negative => {
-                let squared_gap = discriminant - (&offset * &offset);
-                crate::classify::real_sign(&squared_gap, policy)
-            }
-        },
     }
 }
 
@@ -848,6 +964,34 @@ fn intersect_distinct_circle_arcs(
         return Ok(result);
     }
 
+    match circle_relation_for_distinct_centers(a, b, center_delta, center_distance_squared, policy)?
+    {
+        CircleCircleRelation::Disjoint => Ok(ArcArcIntersection::None),
+        CircleCircleRelation::Tangent { point } => {
+            match arc_arc_hit_candidate(a, b, point, IntersectionKind::Tangent, policy)? {
+                ArcArcCandidate::Hit(hit) => Ok(ArcArcIntersection::Point(hit)),
+                ArcArcCandidate::Miss => Ok(ArcArcIntersection::None),
+                ArcArcCandidate::Uncertain(reason) => Ok(ArcArcIntersection::Uncertain { reason }),
+            }
+        }
+        CircleCircleRelation::Secant {
+            first_point,
+            second_point,
+        } => arc_arc_two_candidates(a, b, first_point, second_point, policy),
+        CircleCircleRelation::Uncertain { reason } => Ok(ArcArcIntersection::Uncertain { reason }),
+        CircleCircleRelation::Coincident => Ok(ArcArcIntersection::Uncertain {
+            reason: UncertaintyReason::Unsupported,
+        }),
+    }
+}
+
+fn circle_relation_for_distinct_centers(
+    a: &CircularArc2,
+    b: &CircularArc2,
+    center_delta: (Real, Real),
+    center_distance_squared: Real,
+    policy: &CurvePolicy,
+) -> CurveResult<CircleCircleRelation> {
     let radius_a_squared = a.radius_squared();
     let radius_b_squared = b.radius_squared();
     // Radical-axis circle intersection: project from `a.center` toward
@@ -865,23 +1009,20 @@ fn intersect_distinct_circle_arcs(
     let height_squared = radius_a_squared - ((&along * &along) * &center_distance_squared);
 
     match crate::classify::real_sign(&height_squared, policy) {
-        Some(RealSign::Negative) => Ok(ArcArcIntersection::None),
-        Some(RealSign::Zero) => {
-            match arc_arc_hit_candidate(a, b, base, IntersectionKind::Tangent, policy)? {
-                ArcArcCandidate::Hit(hit) => Ok(ArcArcIntersection::Point(hit)),
-                ArcArcCandidate::Miss => Ok(ArcArcIntersection::None),
-                ArcArcCandidate::Uncertain(reason) => Ok(ArcArcIntersection::Uncertain { reason }),
-            }
-        }
+        Some(RealSign::Negative) => Ok(CircleCircleRelation::Disjoint),
+        Some(RealSign::Zero) => Ok(CircleCircleRelation::Tangent { point: base }),
         Some(RealSign::Positive) => {
             let offset_scale = (height_squared / &center_distance_squared)?.sqrt()?;
             let offset_x = &center_delta.1 * &offset_scale;
             let offset_y = &center_delta.0 * &offset_scale;
             let first = Point2::new(base.x() - &offset_x, base.y() + &offset_y);
             let second = Point2::new(base.x() + offset_x, base.y() - offset_y);
-            arc_arc_two_candidates(a, b, first, second, policy)
+            Ok(CircleCircleRelation::Secant {
+                first_point: first,
+                second_point: second,
+            })
         }
-        None => Ok(ArcArcIntersection::Uncertain {
+        None => Ok(CircleCircleRelation::Uncertain {
             reason: UncertaintyReason::RealSign,
         }),
     }
@@ -950,12 +1091,12 @@ fn intersect_distinct_circle_arcs_edge_preview(
 
 fn preview_circle_data(a: &CircularArc2, b: &CircularArc2) -> Option<[f64; 6]> {
     let data = [
-        a.center().x().to_f64_approx()?,
-        a.center().y().to_f64_approx()?,
-        b.center().x().to_f64_approx()?,
-        b.center().y().to_f64_approx()?,
-        a.radius_squared().to_f64_approx()?,
-        b.radius_squared().to_f64_approx()?,
+        a.center().x().to_f64_lossy()?,
+        a.center().y().to_f64_lossy()?,
+        b.center().x().to_f64_lossy()?,
+        b.center().y().to_f64_lossy()?,
+        a.radius_squared().to_f64_lossy()?,
+        b.radius_squared().to_f64_lossy()?,
     ];
 
     data.iter().all(|value| value.is_finite()).then_some(data)
@@ -992,6 +1133,7 @@ fn arc_arc_two_candidates(
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 enum ArcArcCandidate {
     Hit(ArcArcIntersectionPoint),
     Miss,
@@ -1034,6 +1176,7 @@ fn arc_arc_hit_candidate(
     }))
 }
 
+#[allow(clippy::large_enum_variant)]
 enum LineArcCandidate {
     Hit(LineArcIntersectionPoint),
     Miss,
@@ -1089,11 +1232,11 @@ fn line_point_at_for_policy(
 ) -> CurveResult<Point2> {
     if matches!(policy.numeric_mode, NumericMode::EdgePreview)
         && let (Some(t), Some(start_x), Some(start_y), Some(end_x), Some(end_y)) = (
-            line_param.to_f64_approx(),
-            line.start().x().to_f64_approx(),
-            line.start().y().to_f64_approx(),
-            line.end().x().to_f64_approx(),
-            line.end().y().to_f64_approx(),
+            line_param.to_f64_lossy(),
+            line.start().x().to_f64_lossy(),
+            line.start().y().to_f64_lossy(),
+            line.end().x().to_f64_lossy(),
+            line.end().y().to_f64_lossy(),
         )
     {
         // Edge-preview mode is intentionally approximate. Re-lifting the
