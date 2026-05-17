@@ -1,20 +1,39 @@
+use std::io::{Read, Write};
+
+use base64::Engine;
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use lzma_rust2::{XzOptions, XzReader, XzWriter};
 use serde::{Serialize, de::DeserializeOwned};
 
 const STATE_PARAM: &str = "state";
+const LZMA_PRESET: u32 = 9;
+const MAX_ENCODED_STATE_CHARS: usize = 1_048_576;
+const MAX_DECOMPRESSED_STATE_BYTES: u64 = 2 * 1024 * 1024;
 
-/// Serialize application state into a URL-safe percent-encoded JSON payload.
+/// Serialize application state into base64url-encoded LZMA-compressed JSON.
 ///
-/// The demo state is deliberately plain JSON before encoding so shared links
-/// remain debuggable while still being safe inside one query parameter.
+/// The payload uses an XZ/LZMA2 stream at preset 9, then RFC 4648 section 5's
+/// URL-safe base64 alphabet without padding. The state remains structured JSON
+/// before compression, while repeated field names and coordinate arrays shrink
+/// aggressively for share links.
 pub fn encode_state<T: Serialize>(state: &T) -> Result<String, String> {
     let json = serde_json::to_string(state)
         .map_err(|error| format!("failed to serialize state: {error}"))?;
-    Ok(percent_encode(json.as_bytes()))
+    let compressed = compress_json(json.as_bytes())?;
+    Ok(URL_SAFE_NO_PAD.encode(compressed))
 }
 
 /// Decode a URL-safe state payload produced by [`encode_state`].
 pub fn decode_state<T: DeserializeOwned>(encoded: &str) -> Result<T, String> {
-    let bytes = percent_decode(encoded)?;
+    if encoded.len() > MAX_ENCODED_STATE_CHARS {
+        return Err(format!(
+            "state is too large; encoded state is limited to {MAX_ENCODED_STATE_CHARS} characters"
+        ));
+    }
+    let compressed = URL_SAFE_NO_PAD
+        .decode(encoded)
+        .map_err(|error| format!("state was not URL-safe base64: {error}"))?;
+    let bytes = decompress_json(&compressed)?;
     let json = String::from_utf8(bytes).map_err(|error| format!("state was not UTF-8: {error}"))?;
     serde_json::from_str(&json).map_err(|error| format!("failed to parse state: {error}"))
 }
@@ -82,68 +101,30 @@ fn set_state_param(href: &str, encoded_state: &str) -> String {
     url
 }
 
-fn percent_encode(bytes: &[u8]) -> String {
-    let mut encoded = String::with_capacity(bytes.len());
-    for &byte in bytes {
-        if is_unreserved(byte) {
-            encoded.push(byte as char);
-        } else {
-            encoded.push('%');
-            encoded.push(hex_digit(byte >> 4));
-            encoded.push(hex_digit(byte & 0x0f));
-        }
-    }
-    encoded
+fn compress_json(json: &[u8]) -> Result<Vec<u8>, String> {
+    let mut writer = XzWriter::new(Vec::new(), XzOptions::with_preset(LZMA_PRESET))
+        .map_err(|error| format!("failed to start LZMA compressor: {error}"))?;
+    writer
+        .write_all(json)
+        .map_err(|error| format!("failed to compress state: {error}"))?;
+    writer
+        .finish()
+        .map_err(|error| format!("failed to finish compressed state: {error}"))
 }
 
-fn percent_decode(encoded: &str) -> Result<Vec<u8>, String> {
-    let mut decoded = Vec::with_capacity(encoded.len());
-    let bytes = encoded.as_bytes();
-    let mut index = 0;
-    while index < bytes.len() {
-        match bytes[index] {
-            b'%' => {
-                let high = bytes
-                    .get(index + 1)
-                    .copied()
-                    .and_then(hex_value)
-                    .ok_or("state contains an invalid percent escape")?;
-                let low = bytes
-                    .get(index + 2)
-                    .copied()
-                    .and_then(hex_value)
-                    .ok_or("state contains an invalid percent escape")?;
-                decoded.push((high << 4) | low);
-                index += 3;
-            }
-            byte => {
-                decoded.push(byte);
-                index += 1;
-            }
-        }
+fn decompress_json(compressed: &[u8]) -> Result<Vec<u8>, String> {
+    let reader = XzReader::new(compressed, false);
+    let mut limited = reader.take(MAX_DECOMPRESSED_STATE_BYTES + 1);
+    let mut decompressed = Vec::new();
+    limited
+        .read_to_end(&mut decompressed)
+        .map_err(|error| format!("failed to decompress state: {error}"))?;
+    if decompressed.len() as u64 > MAX_DECOMPRESSED_STATE_BYTES {
+        return Err(format!(
+            "state expands beyond {MAX_DECOMPRESSED_STATE_BYTES} bytes"
+        ));
     }
-    Ok(decoded)
-}
-
-fn is_unreserved(byte: u8) -> bool {
-    byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'.' | b'_' | b'~')
-}
-
-fn hex_digit(value: u8) -> char {
-    match value {
-        0..=9 => (b'0' + value) as char,
-        10..=15 => (b'A' + value - 10) as char,
-        _ => unreachable!("hex nibble must be in range"),
-    }
-}
-
-fn hex_value(byte: u8) -> Option<u8> {
-    match byte {
-        b'0'..=b'9' => Some(byte - b'0'),
-        b'a'..=b'f' => Some(byte - b'a' + 10),
-        b'A'..=b'F' => Some(byte - b'A' + 10),
-        _ => None,
-    }
+    Ok(decompressed)
 }
 
 #[cfg(test)]
@@ -167,7 +148,14 @@ mod tests {
         let encoded = encode_state(&state).unwrap();
         assert!(!encoded.contains('&'));
         assert!(!encoded.contains('#'));
+        assert!(!encoded.contains('%'));
+        assert!(!encoded.contains('='));
         assert_eq!(decode_state::<RoundTrip>(&encoded).unwrap(), state);
+    }
+
+    #[test]
+    fn invalid_base64_state_is_rejected() {
+        assert!(decode_state::<RoundTrip>("not+url/safe").is_err());
     }
 
     #[test]

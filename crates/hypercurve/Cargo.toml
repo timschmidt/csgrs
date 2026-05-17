@@ -2,7 +2,13 @@
 name = "hypercurve"
 version = "0.1.0"
 edition = "2024"
+description = "Hyperreal-backed planar curves, contours, and regions for CAD topology"
+authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
+license = "Apache-2.0"
+repository = "https://github.com/timschmidt/hypercurve"
 readme = "README.md"
+keywords = ["cad", "curves", "geometry", "hyperreal", "topology"]
+categories = ["mathematics", "graphics", "algorithms"]
 
 [package.metadata.docs.rs]
 all-features = true

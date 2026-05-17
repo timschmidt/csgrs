@@ -370,12 +370,15 @@ impl CubicBezier2 {
     /// This is intentionally a finite candidate probe, not the complete
     /// existential point-on-cubic solver. It tests the dyadic parameters that
     /// the subdivision relation already materializes exactly and re-evaluates
-    /// the cubic before returning a parameter. That keeps the branch boundary
-    /// in Yap's exact-geometric-computation sense while avoiding a premature
-    /// cubic resultant solver; see Yap, "Towards Exact Geometric Computation,"
-    /// *Computational Geometry* 7.1-2 (1997). The exact de Casteljau
-    /// evaluation and dyadic subdivision identities follow Farin, *Curves and
-    /// Surfaces for Computer-Aided Geometric Design* (5th ed., 2002).
+    /// the cubic before returning a parameter. The current candidate set is
+    /// the non-endpoint dyadic bisection parameters through eighths, so it
+    /// remains a certified finite shortcut rather than a premature cubic
+    /// resultant solver. That
+    /// keeps the branch boundary in Yap's exact-geometric-computation sense;
+    /// see Yap, "Towards Exact Geometric Computation," *Computational
+    /// Geometry* 7.1-2 (1997). The exact de Casteljau evaluation and dyadic
+    /// subdivision identities follow Farin, *Curves and Surfaces for
+    /// Computer-Aided Geometric Design* (5th ed., 2002).
     pub fn dyadic_parameters_for_point(
         &self,
         point: &Point2,
@@ -806,10 +809,11 @@ where
 
     // This is a finite exact-candidate slice of the same-parameter algebraic
     // curve/curve problem. Degree-normalize quadratic inputs to cubic
-    // Bernstein controls, keep cubic inputs native, test dyadic parameters
-    // that the subdivision solver already exposes exactly, and only then emit
-    // certified shared points. This promotes useful algebraic candidates while
-    // remaining explicit that it is not a complete resultant solve. The
+    // Bernstein controls, keep cubic inputs native, test non-endpoint dyadic
+    // bisection parameters through eighths that the subdivision solver already
+    // exposes exactly, and only then emit certified shared points. This
+    // promotes useful algebraic candidates while remaining explicit that it is
+    // not a complete resultant solve. The
     // Bernstein/de Casteljau identities are the standard ones in Farin, Curves
     // and Surfaces for CAGD, 5th ed. (2002), and the exact candidate boundary
     // follows Yap, "Towards Exact Geometric Computation," Computational
@@ -875,13 +879,22 @@ fn cubic_dyadic_parameters_for_point(
     Classification::Decided(parameters)
 }
 
-fn dyadic_subdivision_candidate_parameters() -> [Real; 3] {
+fn dyadic_subdivision_candidate_parameters() -> Vec<Real> {
+    let eighth =
+        (Real::one() / Real::from(8_i8)).expect("division by positive integer constant is defined");
     let quarter =
         (Real::one() / Real::from(4_i8)).expect("division by positive integer constant is defined");
     let half =
         (Real::one() / Real::from(2_i8)).expect("division by positive integer constant is defined");
-    let three_quarters = (&quarter * &Real::from(3_i8)).clone();
-    [quarter, half, three_quarters]
+    vec![
+        eighth.clone(),
+        quarter,
+        &eighth * &Real::from(3_i8),
+        half,
+        &eighth * &Real::from(5_i8),
+        &eighth * &Real::from(6_i8),
+        &eighth * &Real::from(7_i8),
+    ]
 }
 
 fn cubic_difference_zero_at_parameter(

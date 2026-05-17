@@ -661,8 +661,8 @@ fn polynomial_bezier_curve_relation_certifies_cubic_quarter_hit() {
 #[test]
 fn cubic_dyadic_point_solver_promotes_endpoint_on_cubic() {
     let cubic = CubicBezier2::new(point(0, 0), point(2, 4), point(4, 4), point(6, 0));
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-    let cubic_point = cubic.point_at(quarter.clone());
+    let eighth = (Real::one() / Real::from(8_i8)).unwrap();
+    let cubic_point = cubic.point_at(eighth.clone());
     let probe = QuadraticBezier2::new(
         Point2::new(cubic_point.x().clone(), cubic_point.y() + Real::from(20_i8)),
         Point2::new(
@@ -674,7 +674,7 @@ fn cubic_dyadic_point_solver_promotes_endpoint_on_cubic() {
 
     assert_eq!(
         cubic.dyadic_parameters_for_point(&cubic_point, &policy()),
-        Classification::Decided(vec![quarter])
+        Classification::Decided(vec![eighth])
     );
     assert_eq!(
         cubic.dyadic_parameters_for_point(&point(3, 4), &policy()),
@@ -688,6 +688,21 @@ fn cubic_dyadic_point_solver_promotes_endpoint_on_cubic() {
     };
     assert_eq!(points.len(), 1);
     assert_eq!(points[0].point(), &cubic_point);
+}
+
+#[test]
+fn polynomial_bezier_curve_relation_certifies_cubic_eighth_hit() {
+    let first = CubicBezier2::new(point(0, 0), point(2, 4), point(4, 4), point(6, 0));
+    let second = CubicBezier2::new(point(0, 1), point(2, 0), point(4, 0), point(6, 329));
+
+    let eighth = (Real::one() / Real::from(8_i8)).unwrap();
+    let relation = first.relation_to_cubic(&second, &policy());
+    let Classification::Decided(BezierCurveRelation::IntersectionPoints { points }) = relation
+    else {
+        panic!("cubic same-parameter eighth hit should be promoted exactly: {relation:?}");
+    };
+    assert_eq!(points.len(), 1);
+    assert_eq!(points[0].point(), &first.point_at(eighth));
 }
 
 #[test]
@@ -2339,7 +2354,7 @@ proptest! {
     }
 
     #[test]
-    fn endpoint_on_cubic_relation_handles_generated_quarter_points(
+    fn endpoint_on_cubic_relation_handles_generated_eighth_points(
         ax in -16_i32..16,
         ay in -16_i32..16,
         width in 1_i32..16,
@@ -2351,8 +2366,8 @@ proptest! {
             point(ax + 4 * width, ay + 4 * height),
             point(ax + 6 * width, ay),
         );
-        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-        let cubic_point = cubic.point_at(quarter.clone());
+        let eighth = (Real::one() / Real::from(8_i8)).unwrap();
+        let cubic_point = cubic.point_at(eighth.clone());
         let probe = QuadraticBezier2::new(
             Point2::new(
                 cubic_point.x().clone(),
@@ -2367,15 +2382,45 @@ proptest! {
 
         prop_assert_eq!(
             cubic.dyadic_parameters_for_point(&cubic_point, &policy()),
-            Classification::Decided(vec![quarter])
+            Classification::Decided(vec![eighth])
         );
         let relation = probe.relation_to_cubic(&cubic, &policy());
         let Classification::Decided(BezierCurveRelation::EndpointIntersections { points }) = relation
         else {
-            panic!("generated endpoint on cubic quarter point should be certified: {relation:?}");
+            panic!("generated endpoint on cubic eighth point should be certified: {relation:?}");
         };
         prop_assert_eq!(points.len(), 1);
         prop_assert_eq!(points[0].point(), &cubic_point);
+    }
+
+    #[test]
+    fn cubic_eighth_hits_are_generated_exact_points(
+        ax in -16_i32..16,
+        ay in -16_i32..16,
+        width in 1_i32..16,
+        height in 1_i32..16,
+    ) {
+        let first = CubicBezier2::new(
+            point(ax, ay),
+            point(ax + 2 * width, ay + 4 * height),
+            point(ax + 4 * width, ay + 4 * height),
+            point(ax + 6 * width, ay),
+        );
+        let second = CubicBezier2::new(
+            point(ax, ay + height),
+            point(ax + 2 * width, ay),
+            point(ax + 4 * width, ay),
+            point(ax + 6 * width, ay + 329 * height),
+        );
+
+        let eighth = (Real::one() / Real::from(8_i8)).unwrap();
+        let relation = first.relation_to_cubic(&second, &policy());
+        let Classification::Decided(BezierCurveRelation::IntersectionPoints { points }) = relation
+        else {
+            panic!("generated cubic eighth hit should be promoted exactly: {relation:?}");
+        };
+        prop_assert_eq!(points.len(), 1);
+        prop_assert_eq!(points[0].point(), &first.point_at(eighth));
     }
 
     #[test]
