@@ -16,7 +16,20 @@ Primitive `f32` and `f64` are accepted only at named boundaries for checked
 input lifting, rendering, IO, diagnostics, or third-party interop. Lossy output
 is explicit through `Real::to_f64_lossy`.
 
-## Hyper Stack Links
+## Hyper Ecosystem Role And Links
+
+- `hyperreal` owns exact/symbolic numeric semantics and structural facts.
+- `hyperlattice` owns complex, vector, matrix, and short exact product-sum
+  kernels over `Real`.
+- `hyperlimit` consumes `Real` structural facts for exact predicate decisions.
+- `hypercurve`, `hypertri`, `hypermesh`, `hypersolve`, and `hyperdrc` use these
+  exact-aware algebra objects when they need retained transforms, denominator
+  schedules, or sparse structure rather than anonymous coordinate arrays.
+
+`hyperlattice` does not own predicate policy, triangulation topology, curve
+topology, solver active sets, or domain geometry.
+
+Stack links:
 
 - [hyperreal](../hyperreal/README.md): exact rational, symbolic, and computable
   real arithmetic.
@@ -37,19 +50,6 @@ is explicit through `Real::to_f64_lossy`.
   for the exact geometry stack.
 - [csgrs](../csgrs/readme.md): constructive solid geometry and polygon boolean
   engine used by HyperDRC and available as an interop target.
-
-## Role In The Hyper Ecosystem
-
-- `hyperreal` owns exact/symbolic numeric semantics and structural facts.
-- `hyperlattice` owns complex, vector, matrix, and short exact product-sum
-  kernels over `Real`.
-- `hyperlimit` consumes `Real` structural facts for exact predicate decisions.
-- `hypercurve`, `hypertri`, `hypermesh`, `hypersolve`, and `hyperdrc` use these
-  exact-aware algebra objects when they need retained transforms, denominator
-  schedules, or sparse structure rather than anonymous coordinate arrays.
-
-`hyperlattice` does not own predicate policy, triangulation topology, curve
-topology, solver active sets, or domain geometry.
 
 ## Traditional Numerical Problems
 
