@@ -7,48 +7,33 @@
 `hyperreal::Real`. `Real` is the coordinate and scalar type for complex
 numbers, 2D/3D/4D vectors, and 3x3/4x4 matrices.
 
-It is the object-algebra layer of the Hyper ecosystem: `hyperreal` owns scalar
-facts, `hyperlattice` preserves vector/matrix structure around those facts, and
-`hyperlimit` plus geometry crates consume that structure when making exact
-predicate or topology decisions.
-
 Primitive `f32` and `f64` are accepted only at named boundaries for checked
 input lifting, rendering, IO, diagnostics, or third-party interop. Lossy output
 is explicit through `Real::to_f64_lossy`.
 
-## Hyper Ecosystem Role And Links
+## Hyper Ecosystem
 
-- `hyperreal` owns exact/symbolic numeric semantics and structural facts.
-- `hyperlattice` owns complex, vector, matrix, and short exact product-sum
-  kernels over `Real`.
-- `hyperlimit` consumes `Real` structural facts for exact predicate decisions.
-- `hypercurve`, `hypertri`, `hypermesh`, `hypersolve`, and `hyperdrc` use these
-  exact-aware algebra objects when they need retained transforms, denominator
-  schedules, or sparse structure rather than anonymous coordinate arrays.
+`hyperlattice` is the object-algebra layer: small vectors, matrices, transforms,
+and product-sum structure over `hyperreal::Real`.
 
-`hyperlattice` does not own predicate policy, triangulation topology, curve
-topology, solver active sets, or domain geometry.
-
-Stack links:
-
-- [hyperreal](../hyperreal/README.md): exact rational, symbolic, and computable
+- [hyperreal](https://github.com/timschmidt/hyperreal): exact rational, symbolic, and computable
   real arithmetic.
-- [hyperlimit](../hyperlimit/README.md): exact predicate policy and certified
+- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate policy and certified
   geometric decisions.
-- [hyperlattice](../hyperlattice/README.md): small exact vector, matrix, and
+- [hyperlattice](https://github.com/timschmidt/hyperlattice): small exact vector, matrix, and
   transform algebra.
-- [hypercurve](../hypercurve/README.md): planar curve, contour, region, and
+- [hypercurve](https://github.com/timschmidt/hypercurve): planar curve, contour, region, and
   boolean geometry.
-- [hypertri](../hypertri/README.md): exact polygon triangulation and constrained
+- [hypertri](https://github.com/timschmidt/hypertri): exact polygon triangulation and constrained
   Delaunay topology.
-- [hypermesh](../hypermesh/README.md): 3D mesh boolean experiments and the
+- [hypermesh](https://github.com/timschmidt/boolmesh): 3D mesh boolean experiments and the
   future exact-aware mesh-topology layer.
-- [hypersolve](../hypersolve/README.md): experimental exact-aware solver layer.
-- [hyperdrc](../hyperdrc/README.md): PCB design-readiness checks over exact-aware
+- [hypersolve](https://github.com/timschmidt/hypersolve): experimental exact-aware solver layer.
+- [hyperdrc](https://github.com/timschmidt/hyperdrc): PCB design-readiness checks over exact-aware
   geometry adapters.
-- [hyperphysics](../hyperphysics/README.md): placeholder physics-domain crate
+- [hyperphysics](https://github.com/timschmidt/hyperphysics): placeholder physics-domain crate
   for the exact geometry stack.
-- [csgrs](../csgrs/readme.md): constructive solid geometry and polygon boolean
+- [csgrs](https://github.com/timschmidt/csgrs): constructive solid geometry and polygon boolean
   engine used by HyperDRC and available as an interop target.
 
 ## Traditional Numerical Problems
