@@ -165,7 +165,7 @@ impl<'a> PreparedPlane3<'a> {
         point: &Point3,
         policy: PredicatePolicy,
     ) -> PredicateOutcome<PlaneSide> {
-        classify_point_plane_prepared(point, self.plane, policy)
+        classify_point_plane_prepared(point, self.plane, self.facts, policy)
     }
 }
 
@@ -231,7 +231,7 @@ impl PreparedOrientedPlane3 {
         point: &Point3,
         policy: PredicatePolicy,
     ) -> PredicateOutcome<PlaneSide> {
-        classify_point_plane_prepared(point, &self.plane, policy)
+        classify_point_plane_prepared(point, &self.plane, self.facts, policy)
     }
 }
 
@@ -239,9 +239,10 @@ impl PreparedOrientedPlane3 {
 fn classify_point_plane_prepared(
     point: &Point3,
     plane: &Plane3,
+    facts: Plane3Facts,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<PlaneSide> {
-    classify_point_plane_real(point, plane, policy)
+    classify_point_plane_real(point, plane, Some(facts), policy)
 }
 
 /// Classify a point relative to a plane.
@@ -255,27 +256,26 @@ pub fn classify_point_plane_with_policy(
     plane: &Plane3,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<PlaneSide> {
-    classify_point_plane_real(point, plane, policy)
+    classify_point_plane_real(point, plane, None, policy)
 }
 
 fn classify_point_plane_real(
     point: &Point3,
     plane: &Plane3,
+    plane_facts: Option<Plane3Facts>,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<PlaneSide> {
     crate::trace_dispatch!("hyperlimit", "classify_point_plane", "real-dot");
-    let x_term = mul(&plane.normal.x, &point.x);
-    let y_term = mul(&plane.normal.y, &point.y);
-    let z_term = mul(&plane.normal.z, &point.z);
-    let xy = add(&x_term, &y_term);
-    let xyz = add(&xy, &z_term);
-    let value = add(&xyz, &plane.offset);
+    let value = point_plane_expression(point, plane, plane_facts);
 
     map_outcome(
         resolve_real_sign(
             &value,
             policy,
             || {
+                let x_term = mul(&plane.normal.x, &point.x);
+                let y_term = mul(&plane.normal.y, &point.y);
+                let z_term = mul(&plane.normal.z, &point.z);
                 signed_term_filter(&[
                     (&x_term, Sign::Positive),
                     (&y_term, Sign::Positive),
@@ -288,6 +288,52 @@ fn classify_point_plane_real(
         ),
         PlaneSide::from,
     )
+}
+
+/// Build `normal . point + offset` as one fixed product-sum when the object
+/// facts make that route valid.
+///
+/// Prepared planes carry coefficient exactness and sparse-support facts beside
+/// the plane rather than forcing every query to rediscover them. This helper
+/// consumes those facts at the predicate-object boundary and passes the whole
+/// point-plane polynomial to `hyperreal` before scalar expansion. That is the
+/// representation separation advocated by Yap's exact geometric computation
+/// model; see Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997). The exact-rational path uses the same
+/// delayed-normalization idea as Bareiss, "Sylvester's Identity and Multistep
+/// Integer-Preserving Gaussian Elimination," *Mathematics of Computation*
+/// 22.103 (1968).
+fn point_plane_expression(
+    point: &Point3,
+    plane: &Plane3,
+    plane_facts: Option<Plane3Facts>,
+) -> Real {
+    let one = Real::one();
+    let terms = [
+        [&plane.normal.x, &point.x],
+        [&plane.normal.y, &point.y],
+        [&plane.normal.z, &point.z],
+        [&plane.offset, &one],
+    ];
+
+    if let Some(plane_facts) = plane_facts {
+        let point_exact = point.structural_facts().exact;
+        if plane_facts.coefficient_exact.all_exact_rational && point_exact.all_exact_rational {
+            crate::trace_dispatch!(
+                "hyperlimit",
+                "classify_point_plane",
+                "prepared-exact-product-sum"
+            );
+            return Real::exact_rational_signed_product_sum_known_exact([true; 4], terms);
+        }
+    }
+
+    crate::trace_dispatch!(
+        "hyperlimit",
+        "classify_point_plane",
+        "fixed-real-product-sum"
+    );
+    Real::signed_product_sum([true; 4], terms)
 }
 
 fn plane3_facts(plane: &Plane3) -> Plane3Facts {
@@ -375,6 +421,14 @@ fn sub(left: &Real, right: &Real) -> Real {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(feature = "dispatch-trace")]
+    use hyperreal::Rational;
+
+    #[cfg(feature = "dispatch-trace")]
+    fn dispatch_trace_test_lock() -> &'static std::sync::Mutex<()> {
+        static LOCK: std::sync::OnceLock<std::sync::Mutex<()>> = std::sync::OnceLock::new();
+        LOCK.get_or_init(|| std::sync::Mutex::new(()))
+    }
 
     fn real(value: f64) -> Real {
         Real::try_from(value).expect("finite test Real")
@@ -498,6 +552,46 @@ mod tests {
         assert_eq!(
             prepared.facts().coefficient_symbolic_dependencies,
             facts.coefficient_symbolic_dependencies
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn prepared_point_plane_reuses_coefficients_for_one_exact_product_sum() {
+        let _trace_lock = dispatch_trace_test_lock()
+            .lock()
+            .expect("dispatch trace test lock poisoned");
+        let fifth = |value| Real::from(Rational::fraction(value, 5).unwrap());
+        let plane = Plane3::new(Point3::new(fifth(2), fifth(-3), fifth(4)), fifth(-6));
+        let point = Point3::new(fifth(5), fifth(5), fifth(5));
+        let prepared = plane.prepare();
+
+        hyperreal::dispatch_trace::reset();
+        let outcome = hyperreal::dispatch_trace::with_recording(|| {
+            prepared.classify_point_with_policy(&point, PredicatePolicy::STRICT)
+        });
+
+        assert_eq!(outcome.value(), Some(PlaneSide::Below));
+        let trace = hyperreal::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count(
+                "hyperlimit",
+                "classify_point_plane",
+                "prepared-exact-product-sum"
+            ),
+            1
+        );
+        assert_eq!(
+            trace.path_count(
+                "hyperlimit",
+                "classify_point_plane",
+                "fixed-real-product-sum"
+            ),
+            0
+        );
+        assert_eq!(
+            trace.path_count("real", "product_sum", "exact-rational-known-shared-denom"),
+            1
         );
     }
 }

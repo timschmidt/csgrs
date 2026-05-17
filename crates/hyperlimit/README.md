@@ -12,15 +12,62 @@ facts, exact structural term-sign filters, exact arithmetic, and bounded
 hyperreal sign refinement. Primitive `f32` and `f64` are not predicate Real
 values; they should only appear at rendering, IO, and interop boundaries.
 
-## Relationship to Other Crates
+Within the Hyper ecosystem, this crate is the decision layer between retained
+numeric structure and topology. It consumes scalar facts from `hyperreal`,
+object facts from `hyperlattice`, and provides predicate outcomes that
+`hypercurve`, `hypertri`, `hypermesh`, `hypersolve`, and `hyperdrc` can use
+without inventing local epsilon rules.
+
+## Hyper Stack Links
+
+- [hyperreal](../hyperreal/README.md): exact rational, symbolic, and computable
+  real arithmetic.
+- [hyperlimit](../hyperlimit/README.md): exact predicate policy and certified
+  geometric decisions.
+- [hyperlattice](../hyperlattice/README.md): small exact vector, matrix, and
+  transform algebra.
+- [hypercurve](../hypercurve/README.md): planar curve, contour, region, and
+  boolean geometry.
+- [hypertri](../hypertri/README.md): exact polygon triangulation and constrained
+  Delaunay topology.
+- [hypermesh](../hypermesh/README.md): 3D mesh boolean experiments and the
+  future exact-aware mesh-topology layer.
+- [hypersolve](../hypersolve/README.md): experimental exact-aware solver layer.
+- [hyperdrc](../hyperdrc/README.md): PCB design-readiness checks over exact-aware
+  geometry adapters.
+- [hyperphysics](../hyperphysics/README.md): placeholder physics-domain crate
+  for the exact geometry stack.
+- [csgrs](../csgrs/readme.md): constructive solid geometry and polygon boolean
+  engine used by HyperDRC and available as an interop target.
+
+## Role In The Hyper Ecosystem
 
 - `hyperreal` supplies exact/symbolic Real facts and bounded sign refinement
   through `hyperreal::Real`.
 - `hyperlattice` uses the same `hyperreal::Real` type for vector and matrix
   code and shares Real structural facts with `hyperlimit`.
 - `hyperlimit` owns predicate policy, escalation order, and result provenance.
+- Higher crates own geometry objects and topology. They call `hyperlimit` for
+  reusable signs, interval relations, point/segment/triangle tests, and
+  report-bearing certificates.
 
 `hyperlimit` does not own Real expression internals or linear algebra types.
+
+## Traditional Predicate Problems
+
+Geometry algorithms usually fail at branch points: a determinant whose sign is
+nearly zero, a point exactly on a segment, a circle test on cospherical points,
+or a broad-phase filter that silently disagrees with the exact topology. Pure
+`f64` code often papers over those cases with tolerances, but one wrong sign can
+change a triangulation, boolean result, or clearance report.
+
+`hyperlimit` makes the escalation ladder part of the API. It tries structural
+facts first, then exact reducers and certified interval/ball filters, then
+bounded `Real` refinement. If those stages cannot certify a result under the
+caller policy, it returns `Unknown` with provenance instead of manufacturing a
+float decision. The performance goal is not to run the most expensive exact
+path every time; it is to make common exact cases cheap while preserving a
+clear proof boundary for hard cases.
 
 ## Semantic Boundary and Structural Dispatch
 
@@ -39,6 +86,11 @@ exact structural certificates, and source normalization facts. Those facts
 should select faster determinant expansions or skip known-zero terms before
 generic expression construction; they must not reintroduce primitive-float
 predicate filters.
+
+In Yap's exact geometric computation sense, a predicate result is exact because
+its decision path is exact, filtered by a proof-producing certificate, or
+reported as unknown. `hyperlimit` therefore preserves and consumes structural
+facts instead of eagerly canonicalizing every scalar expression up front.
 
 `hyperlimit` should keep reusable predicates here and leave object ownership
 above it: segment/ring storage in `hypercurve` or `hypertri`, DCEL state in

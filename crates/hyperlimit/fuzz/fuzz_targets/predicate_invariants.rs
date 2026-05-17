@@ -121,8 +121,7 @@ fn predicate_invariants(input: Input) {
 
     let session = hyperlimit::ExactGeometrySession::default();
     let payoff = CachePayoff::new(3, 2, 2).expect("generated prepared line should repay");
-    let prepared =
-        session.versioned_prepared_with_payoff(session.prepare_line2(&a, &b), payoff);
+    let prepared = session.versioned_prepared_with_payoff(session.prepare_line2(&a, &b), payoff);
     assert_eq!(prepared.source_version(), ConstructionVersion::ZERO);
     assert_eq!(prepared.payoff(), Some(payoff));
     assert_eq!(
@@ -289,6 +288,33 @@ fn predicate_invariants(input: Input) {
         // form: exact rational predicates are not primitive-float filters.
         assert_eq!(no_refine.value(), Some(sign));
     }
+
+    let common_a = common_scale_point3(input.p.x_num, input.p.y_num, input.p.z_num);
+    let common_b = common_scale_point3(input.q.x_num, input.q.y_num, input.q.z_num);
+    let common_c = common_scale_point3(input.r.x_num, input.r.y_num, input.r.z_num);
+    let common_d = common_scale_point3(input.s.x_num, input.s.y_num, input.s.z_num);
+    let common = hyperlimit::orient3d_with_policy(
+        &common_a,
+        &common_b,
+        &common_c,
+        &common_d,
+        strict_no_refine,
+    );
+    let swapped = hyperlimit::orient3d_with_policy(
+        &common_b,
+        &common_a,
+        &common_c,
+        &common_d,
+        strict_no_refine,
+    );
+    if let (Some(sign), Some(swapped)) = (common.value(), swapped.value()) {
+        // These generated points all use one unreduced prime denominator, so
+        // they cover the common-scale rational-vector regime Yap identifies
+        // before scalar expansion. The public invariant remains purely
+        // predicate-level: swapping two vertices reverses the certified
+        // tetrahedron orientation sign.
+        assert_eq!(sign.reversed(), swapped);
+    }
 }
 
 fn rational(numerator: i16, denominator_byte: u8) -> Real {
@@ -296,6 +322,24 @@ fn rational(numerator: i16, denominator_byte: u8) -> Real {
     Rational::fraction(i64::from(numerator), denominator)
         .expect("positive generated denominator")
         .into()
+}
+
+fn common_scale_point3(x: i16, y: i16, z: i16) -> Point3 {
+    fn nonzero_mod17(value: i16) -> i64 {
+        i64::from(value).rem_euclid(16) + 1
+    }
+
+    Point3::new(
+        Rational::fraction(nonzero_mod17(x), 17)
+            .expect("prime denominator")
+            .into(),
+        Rational::fraction(nonzero_mod17(y), 17)
+            .expect("prime denominator")
+            .into(),
+        Rational::fraction(nonzero_mod17(z), 17)
+            .expect("prime denominator")
+            .into(),
+    )
 }
 
 fn assert_decided_zero(outcome: PredicateOutcome<Sign>) {

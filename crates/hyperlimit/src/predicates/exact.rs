@@ -10,6 +10,41 @@ use crate::geometry::{Point2, Point3};
 use crate::predicate::Sign;
 use hyperreal::{Rational, Real, RealSign};
 
+/// Try the exact 2D orientation kernel when the whole predicate input shares
+/// one reduced denominator.
+///
+/// This is narrower than [`orient2d_shared_scale`]: it requires a single
+/// common scale across all six point coordinates, not just point-local common
+/// scales. In return, the scalar layer can skip the generic denominator
+/// discovery used by arbitrary exact rationals and evaluate the determinant
+/// through a validated shared-denominator product-sum schedule. This is the
+/// common-scale rational-vector case called out by Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997). The delayed
+/// final reduction follows Bareiss, "Sylvester's Identity and Multistep
+/// Integer-Preserving Gaussian Elimination," *Mathematics of Computation*
+/// 22.103 (1968).
+pub(super) fn orient2d_common_denominator(a: &Point2, b: &Point2, c: &Point2) -> Option<Sign> {
+    let coordinates = [&a.x, &a.y, &b.x, &b.y, &c.x, &c.y];
+    if !Real::exact_set_facts(coordinates).has_shared_denominator_schedule() {
+        return None;
+    }
+
+    crate::trace_dispatch!("hyperlimit", "exact_orient2d", "common-denominator-det2");
+
+    let determinant = Real::exact_rational_signed_product_sum_known_shared_denominator(
+        [true, true, true, false, false, false],
+        [
+            [&a.x, &b.y],
+            [&b.x, &c.y],
+            [&c.x, &a.y],
+            [&a.y, &b.x],
+            [&b.y, &c.x],
+            [&c.y, &a.x],
+        ],
+    );
+    sign_from_real(&determinant)
+}
+
 /// Try the exact 2D orientation kernel through borrowed point-local
 /// shared-scale views.
 ///
@@ -26,6 +61,10 @@ use hyperreal::{Rational, Real, RealSign};
 /// Integer-Preserving Gaussian Elimination," *Mathematics of Computation*
 /// 22.103 (1968).
 pub(super) fn orient2d_shared_scale(a: &Point2, b: &Point2, c: &Point2) -> Option<Sign> {
+    if let Some(sign) = orient2d_common_denominator(a, b, c) {
+        return Some(sign);
+    }
+
     let a = a.shared_scale_view()?;
     let b = b.shared_scale_view()?;
     let c = c.shared_scale_view()?;
@@ -72,6 +111,70 @@ pub(super) fn orient2d(a: &Point2, b: &Point2, c: &Point2) -> Option<Sign> {
     Some(sign_from_rational(&det))
 }
 
+/// Try the exact 3D orientation kernel when all input coordinates share one
+/// reduced denominator.
+///
+/// Unlike the translated 3x3 formula, this route evaluates the equivalent
+/// homogeneous 4x4 determinant with the final column fixed to one. Expanding
+/// along that column yields twenty-four three-coordinate products, and when
+/// every coordinate shares one reduced denominator each live product has the
+/// same denominator. That lets `hyperreal` use its validated common-scale
+/// product-sum reducer directly, preserving the rational-vector structure
+/// emphasized by Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997). The final normalization is still delayed in the
+/// Bareiss fraction-free spirit; see Bareiss, "Sylvester's Identity and
+/// Multistep Integer-Preserving Gaussian Elimination," *Mathematics of
+/// Computation* 22.103 (1968).
+pub(super) fn orient3d_common_denominator(
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    d: &Point3,
+) -> Option<Sign> {
+    let coordinates = [
+        &a.x, &a.y, &a.z, &b.x, &b.y, &b.z, &c.x, &c.y, &c.z, &d.x, &d.y, &d.z,
+    ];
+    if !Real::exact_set_facts(coordinates).has_shared_denominator_schedule() {
+        return None;
+    }
+
+    crate::trace_dispatch!("hyperlimit", "exact_orient3d", "common-denominator-det4");
+
+    let determinant = Real::exact_rational_signed_product_sum_known_shared_denominator(
+        [
+            false, false, false, true, true, true, true, true, true, false, false, false, false,
+            false, false, true, true, true, true, true, true, false, false, false,
+        ],
+        [
+            [&b.x, &c.y, &d.z],
+            [&b.y, &c.z, &d.x],
+            [&b.z, &c.x, &d.y],
+            [&b.z, &c.y, &d.x],
+            [&b.y, &c.x, &d.z],
+            [&b.x, &c.z, &d.y],
+            [&a.x, &c.y, &d.z],
+            [&a.y, &c.z, &d.x],
+            [&a.z, &c.x, &d.y],
+            [&a.z, &c.y, &d.x],
+            [&a.y, &c.x, &d.z],
+            [&a.x, &c.z, &d.y],
+            [&a.x, &b.y, &d.z],
+            [&a.y, &b.z, &d.x],
+            [&a.z, &b.x, &d.y],
+            [&a.z, &b.y, &d.x],
+            [&a.y, &b.x, &d.z],
+            [&a.x, &b.z, &d.y],
+            [&a.x, &b.y, &c.z],
+            [&a.y, &b.z, &c.x],
+            [&a.z, &b.x, &c.y],
+            [&a.z, &b.y, &c.x],
+            [&a.y, &b.x, &c.z],
+            [&a.x, &b.z, &c.y],
+        ],
+    );
+    sign_from_real(&determinant)
+}
+
 /// Try the exact 3D orientation kernel through borrowed point-local
 /// shared-scale views.
 ///
@@ -92,6 +195,10 @@ pub(super) fn orient3d_shared_scale(
     c: &Point3,
     d: &Point3,
 ) -> Option<Sign> {
+    if let Some(sign) = orient3d_common_denominator(a, b, c, d) {
+        return Some(sign);
+    }
+
     let a = a.shared_scale_view()?;
     let b = b.shared_scale_view()?;
     let c = c.shared_scale_view()?;

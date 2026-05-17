@@ -4,6 +4,14 @@
 //! application geometry code. It asks `hyperreal::Real` for facts such as known
 //! sign, exact zero, rational structure, and refinement capability before
 //! escalating a predicate.
+//!
+//! Predicate exactness means the reported classification has an exact or
+//! certified decision path, not that all input expressions were eagerly
+//! canonicalized first. This follows Yap's exact geometric computation model:
+//! filters may exploit preserved structure, but unresolved cases return
+//! explicit uncertainty or escalate through exact hyperreal refinement instead
+//! of falling back to primitive-float tolerances. See Yap, "Towards Exact
+//! Geometric Computation," *Computational Geometry*, 1997, pp. 3-23.
 
 mod trace;
 pub(crate) use trace::trace_dispatch;

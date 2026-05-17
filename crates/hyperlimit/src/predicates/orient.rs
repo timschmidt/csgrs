@@ -1460,7 +1460,7 @@ mod tests {
 
     #[cfg(feature = "dispatch-trace")]
     #[test]
-    fn orient2d_consumes_borrowed_shared_scale_views_before_rational_fallback() {
+    fn orient2d_consumes_global_common_denominator_before_generic_shared_scale() {
         let _trace_lock = dispatch_trace_test_lock()
             .lock()
             .expect("dispatch trace test lock poisoned");
@@ -1489,6 +1489,58 @@ mod tests {
 
         let trace = hyperreal::dispatch_trace::take_trace();
         assert_eq!(
+            trace.path_count("hyperlimit", "exact_orient2d", "common-denominator-det2"),
+            1
+        );
+        assert_eq!(
+            trace.path_count("hyperlimit", "exact_orient2d", "shared-scale-view-det2"),
+            0
+        );
+        assert_eq!(
+            trace.path_count("hyperlimit", "exact_orient2d", "rational-det2"),
+            0
+        );
+        assert_eq!(
+            trace.path_count("real", "product_sum", "exact-rational-known-common-scale"),
+            1
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn orient2d_keeps_point_local_shared_scale_when_global_denominator_differs() {
+        let _trace_lock = dispatch_trace_test_lock()
+            .lock()
+            .expect("dispatch trace test lock poisoned");
+        let point = |x, y, denominator| {
+            Point2::new(
+                Real::from(Rational::fraction(x, denominator).unwrap()),
+                Real::from(Rational::fraction(y, denominator).unwrap()),
+            )
+        };
+        let a = point(1, 1, 5);
+        let b = point(4, 1, 7);
+        let c = point(1, 3, 11);
+
+        hyperreal::dispatch_trace::reset();
+        let report = hyperreal::dispatch_trace::with_recording(|| {
+            orient2d_report_with_policy(&a, &b, &c, PredicatePolicy::STRICT)
+        });
+
+        assert_eq!(report.outcome.value(), Some(Sign::Positive));
+        assert_eq!(
+            report.certificate,
+            PredicateCertificate::ExactRationalKernel {
+                kernel: ExactPredicateKernel::Orient2dRationalDet2
+            }
+        );
+
+        let trace = hyperreal::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count("hyperlimit", "exact_orient2d", "common-denominator-det2"),
+            0
+        );
+        assert_eq!(
             trace.path_count("hyperlimit", "exact_orient2d", "shared-scale-view-det2"),
             1
         );
@@ -1496,15 +1548,11 @@ mod tests {
             trace.path_count("hyperlimit", "exact_orient2d", "rational-det2"),
             0
         );
-        assert_eq!(
-            trace.path_count("real", "product_sum", "exact-rational-known-shared-denom"),
-            1
-        );
     }
 
     #[cfg(feature = "dispatch-trace")]
     #[test]
-    fn orient3d_consumes_borrowed_shared_scale_views_before_rational_fallback() {
+    fn orient3d_consumes_global_common_denominator_before_generic_shared_scale() {
         let _trace_lock = dispatch_trace_test_lock()
             .lock()
             .expect("dispatch trace test lock poisoned");
@@ -1535,16 +1583,66 @@ mod tests {
 
         let trace = hyperreal::dispatch_trace::take_trace();
         assert_eq!(
-            trace.path_count("hyperlimit", "exact_orient3d", "shared-scale-view-det3"),
+            trace.path_count("hyperlimit", "exact_orient3d", "common-denominator-det4"),
             1
+        );
+        assert_eq!(
+            trace.path_count("hyperlimit", "exact_orient3d", "shared-scale-view-det3"),
+            0
         );
         assert_eq!(
             trace.path_count("hyperlimit", "exact_orient3d", "rational-det3"),
             0
         );
         assert_eq!(
-            trace.path_count("real", "product_sum", "exact-rational-known-shared-denom"),
+            trace.path_count("real", "product_sum", "exact-rational-known-common-scale"),
             1
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn orient3d_keeps_point_local_shared_scale_when_global_denominator_differs() {
+        let _trace_lock = dispatch_trace_test_lock()
+            .lock()
+            .expect("dispatch trace test lock poisoned");
+        let point = |x, y, z, denominator| {
+            Point3::new(
+                Real::from(Rational::fraction(x, denominator).unwrap()),
+                Real::from(Rational::fraction(y, denominator).unwrap()),
+                Real::from(Rational::fraction(z, denominator).unwrap()),
+            )
+        };
+        let a = point(1, 1, 1, 5);
+        let b = point(4, 1, 1, 7);
+        let c = point(1, 4, 1, 11);
+        let d = point(1, 1, 3, 13);
+
+        hyperreal::dispatch_trace::reset();
+        let report = hyperreal::dispatch_trace::with_recording(|| {
+            orient3d_report_with_policy(&a, &b, &c, &d, PredicatePolicy::STRICT)
+        });
+
+        assert_eq!(report.outcome.value(), Some(Sign::Positive));
+        assert_eq!(
+            report.certificate,
+            PredicateCertificate::ExactRationalKernel {
+                kernel: ExactPredicateKernel::Orient3dRationalDet3
+            }
+        );
+
+        let trace = hyperreal::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count("hyperlimit", "exact_orient3d", "common-denominator-det4"),
+            0
+        );
+        assert_eq!(
+            trace.path_count("hyperlimit", "exact_orient3d", "shared-scale-view-det3"),
+            1
+        );
+        assert_eq!(
+            trace.path_count("hyperlimit", "exact_orient3d", "rational-det3"),
+            0
         );
     }
 
