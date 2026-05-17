@@ -2,6 +2,12 @@
 name = "hyperphysics"
 version = "0.1.0"
 edition = "2024"
+description = "Hyperreal-backed physical simulation primitives"
+authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
+license = "Apache-2.0"
+repository = "https://github.com/timschmidt/hyperphysics"
 readme = "README.md"
+keywords = ["physics", "simulation", "hyperreal", "dynamics"]
+categories = ["science", "simulation", "mathematics"]
 
 [dependencies]
