@@ -12,7 +12,29 @@ exact zero/nonzero knowledge, exact rational access, bounded sign refinement,
 and recognizable forms such as `pi`, `e`, square roots, logarithms, and rational
 trig constants.
 
-## Hyper Stack Links
+## Hyper Ecosystem Role And Links
+
+- `hyperlattice` uses `hyperreal::Real` as its default exact/symbolic scalar
+  backend. It forwards `hyperreal` structural facts through its `Scalar` type
+  and adds vector, matrix, transform, and retained-geometry facts around them.
+- `hyperlimit` can consume `hyperreal::Real` directly, using structural facts,
+  exact scalar arithmetic, and bounded sign refinement. It must not ask
+  `hyperreal` for primitive-float predicate decisions.
+- `hypercurve`, `hypertri`, `hypermesh`, and `hyperdrc` depend on the lower
+  layers preserving exact input structure so topology and manufacturing
+  decisions are not accidentally made from display approximations.
+- `hypersolve` is the experimental solver layer. Its current direction is to
+  evaluate constraints through symbolic references to variables, reuse
+  reductions across iterations, and route repeated residual and geometry
+  kernels through `hyperreal` and `hyperlattice` instead of rebuilding scalar
+  expressions from scratch.
+
+`hyperreal` owns scalar representation and approximation. It does not own vector
+or matrix algebra, and it does not decide geometry topology. The stack is
+layered intentionally: scalar facts live here, object-level facts live in
+`hyperlattice`/geometry layers, and decision procedures live above them.
+
+Stack links:
 
 - [hyperreal](../hyperreal/README.md): exact rational, symbolic, and computable
   real arithmetic.
@@ -54,28 +76,6 @@ symbolic information available before approximation:
   magnitude, and exact-rational state.
 - `Simple`: a small Lisp-like expression parser, enabled by the optional
   `simple` feature.
-
-## Role In The Hyper Ecosystem
-
-- `hyperlattice` uses `hyperreal::Real` as its default exact/symbolic scalar
-  backend. It forwards `hyperreal` structural facts through its `Scalar` type
-  and adds vector, matrix, transform, and retained-geometry facts around them.
-- `hyperlimit` can consume `hyperreal::Real` directly, using structural facts,
-  exact scalar arithmetic, and bounded sign refinement. It must not ask
-  `hyperreal` for primitive-float predicate decisions.
-- `hypercurve`, `hypertri`, `hypermesh`, and `hyperdrc` depend on the lower
-  layers preserving exact input structure so topology and manufacturing
-  decisions are not accidentally made from display approximations.
-- `hypersolve` is the experimental solver layer. Its current direction is to
-  evaluate constraints through symbolic references to variables, reuse
-  reductions across iterations, and route repeated residual and geometry
-  kernels through `hyperreal` and `hyperlattice` instead of rebuilding scalar
-  expressions from scratch.
-
-`hyperreal` owns scalar representation and approximation. It does not own vector
-or matrix algebra, and it does not decide geometry topology. The stack is
-layered intentionally: scalar facts live here, object-level facts live in
-`hyperlattice`/geometry layers, and decision procedures live above them.
 
 ## Semantic Boundary and Structural Facts
 
