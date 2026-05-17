@@ -8,6 +8,37 @@ design-readiness checks over Gerber, KiCad, Excellon, and IPC-D-356 inputs. It
 uses the latest git version of [`csgrs`](https://github.com/timschmidt/csgrs)
 for Gerber parsing, polygon offsets, and boolean geometry.
 
+Within the Hyper ecosystem, `hyperdrc` is the first domain crate: it turns the
+lower exactness work into manufacturing package evidence. It uses `hyperreal`
+and `hyperlimit` for exact-aware coordinate and predicate handling where those
+paths are wired, keeps `csgrs` as the current CAM/polygon backend, and records
+source-grid provenance so future `hypercurve`/`hypertri` replacements can make
+the same checks with stronger certificates.
+
+## Hyper Ecosystem Role And Links
+
+Stack links:
+
+- [hyperreal](../hyperreal/README.md): exact rational, symbolic, and computable
+  real arithmetic.
+- [hyperlimit](../hyperlimit/README.md): exact predicate policy and certified
+  geometric decisions.
+- [hyperlattice](../hyperlattice/README.md): small exact vector, matrix, and
+  transform algebra.
+- [hypercurve](../hypercurve/README.md): planar curve, contour, region, and
+  boolean geometry.
+- [hypertri](../hypertri/README.md): exact polygon triangulation and constrained
+  Delaunay topology.
+- [hypermesh](../hypermesh/README.md): 3D mesh boolean experiments and the
+  future exact-aware mesh-topology layer.
+- [hypersolve](../hypersolve/README.md): experimental exact-aware solver layer.
+- [hyperdrc](../hyperdrc/README.md): PCB design-readiness checks over exact-aware
+  geometry adapters.
+- [hyperphysics](../hyperphysics/README.md): placeholder physics-domain crate
+  for the exact geometry stack.
+- [csgrs](../csgrs/readme.md): constructive solid geometry and polygon boolean
+  engine used by HyperDRC and available as an interop target.
+
 ## Current Status
 
 `hyperdrc` is an active prototype with a broad regression suite for
@@ -35,6 +66,25 @@ focuses on common test records, recognized record-code counts, and optional
 access-side/feature/soldermask hints plus report-level metadata summaries
 and net/reference/pin/diameter/geometry summaries rather than the full
 fixed-column dialect.
+
+## Traditional PCB Readiness Problems
+
+PCB release packages are not just geometry. A board can fail review because
+copper spacing is risky, but also because layer roles are ambiguous, drill
+files do not match the board, net/test sidecars are malformed, stackup evidence
+is incomplete, or the handoff relies on CAD intent that Gerber alone cannot
+encode. Traditional DRC tools also tend to mix precise CAD coordinates, CAM
+polygon approximations, file parser assumptions, and rule-deck policy into one
+report.
+
+`hyperdrc` approaches this as evidence preservation. Parser diagnostics,
+source units, grid provenance, sidecar roles, conversion history, waivers, and
+report formats are first-class data. Geometry checks are conservative review
+prompts rather than fabricator guarantees. Precision work focuses on retaining
+exact decimal/source-grid facts at import, lifting finite geometry into
+`hyperreal`/`hyperlimit` where possible, and keeping lossy `geo`/`csgrs`
+adapters explicit until the Hyper curve and triangulation layers cover more of
+the CAM pipeline.
 
 ## Project Choices
 
