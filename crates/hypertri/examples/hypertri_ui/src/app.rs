@@ -1,6 +1,7 @@
 use egui::{CentralPanel, Color32, RichText, ScrollArea, SidePanel, Stroke, TopBottomPanel};
 use egui_plot::{Line, Plot, PlotPoint, PlotPoints, PlotUi, Points, Text};
 use hypertri::{Constraint, QualityPolicy, Triangle};
+use serde::{Deserialize, Serialize};
 
 pub struct MainApp {
     active: Scene,
@@ -9,6 +10,8 @@ pub struct MainApp {
     constraints: ConstraintScene,
     compare: CompareScene,
     view: ViewOptions,
+    #[cfg(target_arch = "wasm32")]
+    share_status: Option<String>,
 }
 
 impl MainApp {
@@ -18,6 +21,54 @@ impl MainApp {
                 font_id.size += 1.0;
             }
         });
+        Self::load_or_default()
+    }
+
+    fn load_or_default() -> Self {
+        #[cfg(target_arch = "wasm32")]
+        {
+            match crate::share::load_from_location::<MainAppState>() {
+                Ok(Some(state)) => match Self::from_state(state) {
+                    Ok(app) => return app,
+                    Err(error) => log::warn!("ignoring invalid shared hypertri UI state: {error}"),
+                },
+                Ok(None) => {}
+                Err(error) => log::warn!("ignoring invalid shared hypertri UI state: {error}"),
+            }
+        }
+
+        Self::default()
+    }
+
+    fn from_state(state: MainAppState) -> Result<Self, String> {
+        if state.version != 1 {
+            return Err(format!("unsupported state version {}", state.version));
+        }
+        let mut app = Self::default();
+        app.active = state.active;
+        app.view = state.view;
+        app.polygon.apply_state(state.polygon)?;
+        app.points.apply_state(state.points)?;
+        app.constraints.apply_state(state.constraints)?;
+        app.compare.apply_state(state.compare);
+        Ok(app)
+    }
+
+    fn state(&self) -> MainAppState {
+        MainAppState {
+            version: 1,
+            active: self.active,
+            polygon: self.polygon.state(),
+            points: self.points.state(),
+            constraints: self.constraints.state(),
+            compare: self.compare.state(),
+            view: self.view.clone(),
+        }
+    }
+}
+
+impl Default for MainApp {
+    fn default() -> Self {
         Self {
             active: Scene::Polygon,
             polygon: PolygonScene::default(),
@@ -25,6 +76,8 @@ impl MainApp {
             constraints: ConstraintScene::default(),
             compare: CompareScene::default(),
             view: ViewOptions::default(),
+            #[cfg(target_arch = "wasm32")]
+            share_status: None,
         }
     }
 }
@@ -39,6 +92,25 @@ impl eframe::App for MainApp {
                 ui.selectable_value(&mut self.active, Scene::Compare, "Runtime Compare");
                 ui.separator();
                 ui.hyperlink_to("GitHub", "https://github.com/timschmidt/hypertri");
+                #[cfg(target_arch = "wasm32")]
+                {
+                    if ui
+                        .button("Share")
+                        .on_hover_text("Copy a URL for this demo state")
+                        .clicked()
+                    {
+                        match crate::share::share_url(&self.state()) {
+                            Ok(url) => {
+                                ctx.copy_text(url);
+                                self.share_status = Some("Copied share URL".to_owned());
+                            }
+                            Err(error) => self.share_status = Some(error),
+                        }
+                    }
+                    if let Some(status) = &self.share_status {
+                        ui.label(status);
+                    }
+                }
             });
         });
 
@@ -72,7 +144,18 @@ impl eframe::App for MainApp {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct MainAppState {
+    version: u8,
+    active: Scene,
+    polygon: PolygonSceneState,
+    points: PointSceneState,
+    constraints: ConstraintSceneState,
+    compare: CompareSceneState,
+    view: ViewOptions,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
 enum Scene {
     Polygon,
     Points,
@@ -80,6 +163,7 @@ enum Scene {
     Compare,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
 struct ViewOptions {
     show_input: bool,
     show_triangles: bool,
@@ -111,6 +195,12 @@ impl ViewOptions {
     }
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct PolygonSceneState {
+    case: PolygonCase,
+    input: PolygonInput,
+}
+
 struct PolygonScene {
     case: PolygonCase,
     input: PolygonInput,
@@ -129,6 +219,21 @@ impl Default for PolygonScene {
 }
 
 impl PolygonScene {
+    fn state(&self) -> PolygonSceneState {
+        PolygonSceneState {
+            case: self.case,
+            input: self.input.clone(),
+        }
+    }
+
+    fn apply_state(&mut self, state: PolygonSceneState) -> Result<(), String> {
+        validate_polygon_input(&state.input, "polygon scene")?;
+        self.case = state.case;
+        self.input = state.input;
+        self.drag = None;
+        Ok(())
+    }
+
     fn controls(&mut self, ui: &mut egui::Ui) {
         ui.heading("Earcut Polygon");
         let mut changed = false;
@@ -197,6 +302,12 @@ impl PolygonScene {
     }
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct PointSceneState {
+    case: PointCase,
+    points: Vec<[f64; 2]>,
+}
+
 struct PointScene {
     case: PointCase,
     points: Vec<[f64; 2]>,
@@ -215,6 +326,21 @@ impl Default for PointScene {
 }
 
 impl PointScene {
+    fn state(&self) -> PointSceneState {
+        PointSceneState {
+            case: self.case,
+            points: self.points.clone(),
+        }
+    }
+
+    fn apply_state(&mut self, state: PointSceneState) -> Result<(), String> {
+        validate_points(&state.points, 3, "point scene")?;
+        self.case = state.case;
+        self.points = state.points;
+        self.drag = None;
+        Ok(())
+    }
+
     fn controls(&mut self, ui: &mut egui::Ui) {
         ui.heading("Delaunay Points");
         let mut changed = false;
@@ -269,6 +395,12 @@ impl PointScene {
     }
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct ConstraintSceneState {
+    case: ConstraintCase,
+    input: ConstraintInputState,
+}
+
 struct ConstraintScene {
     case: ConstraintCase,
     input: ConstraintInput,
@@ -287,6 +419,21 @@ impl Default for ConstraintScene {
 }
 
 impl ConstraintScene {
+    fn state(&self) -> ConstraintSceneState {
+        ConstraintSceneState {
+            case: self.case,
+            input: self.input.state(),
+        }
+    }
+
+    fn apply_state(&mut self, state: ConstraintSceneState) -> Result<(), String> {
+        validate_constraint_input(&state.input, "constraint scene")?;
+        self.case = state.case;
+        self.input = ConstraintInput::from_state(state.input);
+        self.drag = None;
+        Ok(())
+    }
+
     fn controls(&mut self, ui: &mut egui::Ui) {
         ui.heading("Constrained CDT");
         let mut changed = false;
@@ -360,6 +507,11 @@ impl ConstraintScene {
     }
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct CompareSceneState {
+    quality: QualityPolicyState,
+}
+
 struct CompareScene {
     quality: QualityPolicy,
 }
@@ -373,6 +525,16 @@ impl Default for CompareScene {
 }
 
 impl CompareScene {
+    fn state(&self) -> CompareSceneState {
+        CompareSceneState {
+            quality: QualityPolicyState::from_quality(self.quality),
+        }
+    }
+
+    fn apply_state(&mut self, state: CompareSceneState) {
+        self.quality = state.quality.into_quality();
+    }
+
     fn controls(&mut self, ui: &mut egui::Ui) {
         ui.heading("Runtime Compare");
         ui.radio_value(
@@ -430,7 +592,29 @@ impl CompareScene {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
+enum QualityPolicyState {
+    PreserveBoundary,
+    PreferDelaunay,
+}
+
+impl QualityPolicyState {
+    fn from_quality(quality: QualityPolicy) -> Self {
+        match quality {
+            QualityPolicy::PreserveBoundary => Self::PreserveBoundary,
+            QualityPolicy::PreferDelaunay => Self::PreferDelaunay,
+        }
+    }
+
+    fn into_quality(self) -> QualityPolicy {
+        match self {
+            Self::PreserveBoundary => QualityPolicy::PreserveBoundary,
+            Self::PreferDelaunay => QualityPolicy::PreferDelaunay,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
 enum PolygonCase {
     Concave,
     Holed,
@@ -482,7 +666,7 @@ impl PolygonCase {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
 enum PointCase {
     Cloud,
     Grid,
@@ -523,7 +707,7 @@ impl PointCase {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
 enum ConstraintCase {
     BoxWithHole,
     Crossing,
@@ -586,14 +770,130 @@ impl ConstraintCase {
     }
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
 struct PolygonInput {
     vertices: Vec<[f64; 2]>,
     holes: Vec<usize>,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct ConstraintInputState {
+    points: Vec<[f64; 2]>,
+    constraints: Vec<ConstraintState>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
+struct ConstraintState {
+    from: usize,
+    to: usize,
+}
+
 struct ConstraintInput {
     points: Vec<[f64; 2]>,
     constraints: Vec<Constraint>,
+}
+
+impl ConstraintInput {
+    fn state(&self) -> ConstraintInputState {
+        ConstraintInputState {
+            points: self.points.clone(),
+            constraints: self
+                .constraints
+                .iter()
+                .map(|constraint| ConstraintState {
+                    from: constraint.from,
+                    to: constraint.to,
+                })
+                .collect(),
+        }
+    }
+
+    fn from_state(state: ConstraintInputState) -> Self {
+        Self {
+            points: state.points,
+            constraints: state
+                .constraints
+                .into_iter()
+                .map(|constraint| Constraint::new(constraint.from, constraint.to))
+                .collect(),
+        }
+    }
+}
+
+const MAX_SHARED_POINTS: usize = 16_384;
+const MAX_SHARED_CONSTRAINTS: usize = 32_768;
+
+fn validate_polygon_input(input: &PolygonInput, label: &str) -> Result<(), String> {
+    validate_points(&input.vertices, 3, label)?;
+    if input.holes.len() >= input.vertices.len() {
+        return Err(format!("{label} has too many hole starts"));
+    }
+
+    let mut previous = 0usize;
+    for (index, &hole) in input.holes.iter().enumerate() {
+        if hole == 0 || hole >= input.vertices.len() {
+            return Err(format!(
+                "{label} hole start {index} is outside the vertex range"
+            ));
+        }
+        if hole <= previous {
+            return Err(format!("{label} hole starts must be strictly increasing"));
+        }
+        if hole - previous < 3 {
+            return Err(format!(
+                "{label} ring {index} needs at least three vertices"
+            ));
+        }
+        previous = hole;
+    }
+
+    if input.vertices.len() - previous < 3 {
+        return Err(format!("{label} final ring needs at least three vertices"));
+    }
+    Ok(())
+}
+
+fn validate_constraint_input(input: &ConstraintInputState, label: &str) -> Result<(), String> {
+    validate_points(&input.points, 2, label)?;
+    if input.constraints.len() > MAX_SHARED_CONSTRAINTS {
+        return Err(format!(
+            "{label} has {} constraints; the shared-state limit is {MAX_SHARED_CONSTRAINTS}",
+            input.constraints.len()
+        ));
+    }
+    for (index, constraint) in input.constraints.iter().enumerate() {
+        if constraint.from >= input.points.len() || constraint.to >= input.points.len() {
+            return Err(format!(
+                "{label} constraint {index} references a missing point"
+            ));
+        }
+        if constraint.from == constraint.to {
+            return Err(format!(
+                "{label} constraint {index} has identical endpoints"
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn validate_points(points: &[[f64; 2]], min_count: usize, label: &str) -> Result<(), String> {
+    if points.len() < min_count {
+        return Err(format!("{label} needs at least {min_count} point(s)"));
+    }
+    if points.len() > MAX_SHARED_POINTS {
+        return Err(format!(
+            "{label} has {} points; the shared-state limit is {MAX_SHARED_POINTS}",
+            points.len()
+        ));
+    }
+    for (index, point) in points.iter().enumerate() {
+        if !point[0].is_finite() || !point[1].is_finite() {
+            return Err(format!(
+                "{label} point {index} must have finite coordinates"
+            ));
+        }
+    }
+    Ok(())
 }
 
 fn ring_constraints(start: usize, len: usize) -> Vec<Constraint> {
@@ -819,3 +1119,44 @@ const WARNING: Color32 = Color32::from_rgb(238, 191, 73);
 const ERROR: Color32 = Color32::from_rgb(255, 93, 93);
 const VERTEX: Color32 = Color32::from_rgb(247, 230, 121);
 const LABEL: Color32 = Color32::from_rgb(214, 221, 232);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn app_state_round_trips_through_share_encoding() {
+        let app = MainApp::default();
+        let encoded = crate::share::encode_state(&app.state()).unwrap();
+        let decoded = crate::share::decode_state::<MainAppState>(&encoded).unwrap();
+        let restored = MainApp::from_state(decoded).unwrap();
+
+        assert_eq!(restored.active, app.active);
+        assert_eq!(restored.view.show_triangles, app.view.show_triangles);
+        assert_eq!(
+            restored.polygon.input.vertices.len(),
+            app.polygon.input.vertices.len()
+        );
+        assert_eq!(restored.points.points.len(), app.points.points.len());
+        assert_eq!(
+            restored.constraints.input.constraints.len(),
+            app.constraints.input.constraints.len()
+        );
+    }
+
+    #[test]
+    fn app_state_rejects_invalid_polygon_holes() {
+        let mut state = MainApp::default().state();
+        state.polygon.input.holes = vec![state.polygon.input.vertices.len() + 1];
+
+        assert!(MainApp::from_state(state).is_err());
+    }
+
+    #[test]
+    fn app_state_rejects_constraints_with_missing_vertices() {
+        let mut state = MainApp::default().state();
+        state.constraints.input.constraints[0].to = state.constraints.input.points.len();
+
+        assert!(MainApp::from_state(state).is_err());
+    }
+}

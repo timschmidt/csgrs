@@ -354,6 +354,8 @@ dependencies = [
  "hyperlimit",
  "hyperreal",
  "proptest",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

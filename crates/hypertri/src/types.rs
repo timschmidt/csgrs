@@ -1,10 +1,13 @@
 //! Public data types shared by exact and runtime `f64` APIs.
 
 use hyperreal::{RealExactSetFacts, SymbolicDependencyMask, ZeroKnowledge};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 pub use hyperreal::{Rational, Real};
 
 /// 2D point with exact Real coordinates.
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub struct Point2 {
     /// X coordinate.
@@ -24,6 +27,7 @@ impl Point2 {
 pub type ExactPoint = Point2;
 
 /// Exact sign used by triangulation predicates.
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Sign {
     /// Negative sign.
@@ -46,6 +50,7 @@ impl Sign {
 }
 
 /// Point location relative to a triangle.
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum TriangleLocation {
     /// The triangle itself is degenerate.
@@ -76,6 +81,7 @@ pub type TriangleIndices = Vec<usize>;
 /// topology. See Yap, "Towards Exact Geometric Computation," *Computational
 /// Geometry* 7.1-2 (1997).
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum RingConvexity {
     /// Fewer than three useful vertices, or every certified local turn is zero.
     Degenerate,
@@ -229,6 +235,50 @@ pub struct PolygonInput {
     vertices: Vec<ExactPoint>,
     hole_indices: Vec<usize>,
     facts: PolygonInputFacts,
+}
+
+#[cfg(feature = "serde")]
+impl Serialize for PolygonInput {
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        /// Wire form for polygon inputs.
+        ///
+        /// Cached structural facts are intentionally excluded. Deserialization
+        /// rebuilds them from exact coordinates so the serialized form cannot
+        /// smuggle stale scheduling metadata across an API boundary. That keeps
+        /// with Yap's object-fact discipline: facts are useful only when they
+        /// remain tied to the exact object that produced them.
+        #[derive(Serialize)]
+        struct Wire<'a> {
+            vertices: &'a [ExactPoint],
+            hole_indices: &'a [usize],
+        }
+
+        Wire {
+            vertices: &self.vertices,
+            hole_indices: &self.hole_indices,
+        }
+        .serialize(serializer)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for PolygonInput {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct Wire {
+            vertices: Vec<ExactPoint>,
+            hole_indices: Vec<usize>,
+        }
+
+        let wire = Wire::deserialize(deserializer)?;
+        Ok(Self::new(wire.vertices, wire.hole_indices))
+    }
 }
 
 impl PolygonInput {
@@ -445,6 +495,7 @@ fn map_hyperlimit_sign(sign: hyperlimit::Sign) -> Sign {
 }
 
 /// A constrained segment expressed as input vertex indices.
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct Constraint {
     /// Start vertex index.

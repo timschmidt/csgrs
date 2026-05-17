@@ -1,10 +1,11 @@
 //! Infinite-precision triangulation algorithms built on hyperreal.
 //!
 //! This crate owns source ports of earcut-style polygon triangulation and
-//! spade-style Delaunay/CDT topology. The exact API uses [`Real`]
-//! directly, while the optional `f64` module exposes boundary entry points that lift finite
-//! `f64` coordinates into exact hyperreal-backed values before topology is
-//! decided.
+//! spade-style Delaunay/CDT topology. Algorithm modules are individually
+//! feature-gated (`earcut`, `cdt`, and `nd`) so applications only compile the
+//! triangulators they use. The exact API uses [`Real`] directly, while the
+//! optional `f64` module exposes boundary entry points that lift finite `f64`
+//! coordinates into exact hyperreal-backed values before topology is decided.
 
 #[cfg(feature = "cdt")]
 pub mod cdt;
@@ -20,6 +21,8 @@ pub mod error;
 #[cfg(feature = "f64-interop")]
 pub mod f64;
 pub mod kernel;
+#[cfg(feature = "nd")]
+pub mod nd;
 pub mod polygon;
 pub mod predicates;
 #[cfg(feature = "runtime-select")]
@@ -27,6 +30,8 @@ pub mod runtime;
 pub mod types;
 
 pub use error::{Error, Result};
+#[cfg(feature = "nd")]
+pub use nd::{DelaunayComplex, PointD, Simplex};
 #[cfg(feature = "runtime-select")]
 pub use runtime::{
     PolygonTriangulationAlgorithm, PolygonTriangulationPlan, QualityPolicy, TriangulationOptions,

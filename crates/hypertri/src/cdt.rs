@@ -14,6 +14,7 @@ use crate::types::{Constraint, ExactPoint, Point2, Real, Triangle};
 use crate::types::{Sign, TriangleLocation};
 
 /// Triangulation result for an unconstrained 2D point set.
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub struct DelaunayTriangulation {
     points: Vec<ExactPoint>,
@@ -57,6 +58,7 @@ impl DelaunayTriangulation {
 /// constraints properly intersect. [`Self::constraints`] returns the original
 /// caller constraints, while [`Self::triangles`] indexes into [`Self::points`],
 /// which may be longer than the caller's input point buffer.
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub struct ConstrainedDelaunayTriangulation {
     points: Vec<ExactPoint>,
@@ -190,11 +192,18 @@ pub fn delaunay(points: &[ExactPoint]) -> Result<DelaunayTriangulation> {
 
 /// Triangulate exact points with constraints.
 ///
-/// The current constrained slice recognizes closed boundary cycles, appends
-/// exact intersection vertices for proper constraint crossings, normalizes
-/// constraints into internal PSLG subsegments, and recovers those subsegments
-/// with exact edge flips. Full DCEL cavity deletion/remeshing remains part of
-/// the port.
+/// The constrained path appends exact intersection vertices for proper
+/// constraint crossings, normalizes constraints into internal PSLG
+/// subsegments, and recovers those subsegments with exact edge flips.
+///
+/// Closed polygon-with-hole inputs are routed through the boundary-preserving
+/// polygon path when `earcut` is enabled. Other planar straight-line graphs are
+/// triangulated over their convex hull, with protected subsegments excluded
+/// from local Delaunay flips. This is the edge-recovery form of incremental CDT
+/// construction described by Shewchuk and Brown, while the local legality check
+/// follows Lee and Lin's Constrained Delaunay Lemma. The exact predicates and
+/// object/predicate split follow Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997).
 pub fn constrained_delaunay(
     points: &[ExactPoint],
     constraints: &[Constraint],
@@ -257,40 +266,38 @@ pub fn constrained_delaunay(
 
         #[cfg(not(feature = "earcut"))]
         {
+            // Without the boundary-preserving polygon module, a closed ring is
+            // still a valid PSLG. Fall through to exact edge recovery over the
+            // convex hull instead of rejecting the input. This keeps the
+            // feature matrix faithful to Yap's exact-computation contract:
+            // a missing fast object-level algorithm must not force an
+            // approximate or absent topology decision when the exact predicate
+            // path can still decide it.
             let _ = polygon;
-            return Err(Error::UnsupportedFeature {
-                feature: "closed-ring constrained triangulation requires earcut feature",
-            });
         }
     }
 
-    if !constraint_graph_is_all_cycles(points.len(), &internal_constraints) {
-        if let Some(triangulation) =
-            constrained_edges_already_delaunay(&points, &internal_constraints, constraints)?
-        {
-            return Ok(triangulation);
-        }
-
-        let base = delaunay(&points)?;
-        let triangles = crate::cdt_insert::insert_constraints::<ExactKernel>(
-            &points,
-            base.triangles().to_vec(),
-            &internal_constraints,
-        )?;
-        let triangulation = ConstrainedDelaunayTriangulation::from_parts_with_constraint_edges(
-            points,
-            constraints.to_vec(),
-            internal_constraints,
-            triangles,
-        );
-        triangulation.validate()?;
-        triangulation.validate_unconstrained_edges_are_delaunay()?;
+    if let Some(triangulation) =
+        constrained_edges_already_delaunay(&points, &internal_constraints, constraints)?
+    {
         return Ok(triangulation);
     }
 
-    Err(Error::UnsupportedFeature {
-        feature: "general constrained Delaunay insertion",
-    })
+    let base = delaunay(&points)?;
+    let triangles = crate::cdt_insert::insert_constraints::<ExactKernel>(
+        &points,
+        base.triangles().to_vec(),
+        &internal_constraints,
+    )?;
+    let triangulation = ConstrainedDelaunayTriangulation::from_parts_with_constraint_edges(
+        points,
+        constraints.to_vec(),
+        internal_constraints,
+        triangles,
+    );
+    triangulation.validate()?;
+    triangulation.validate_unconstrained_edges_are_delaunay()?;
+    Ok(triangulation)
 }
 
 fn delaunay_triangles<K>(points: &[Point2]) -> Result<Vec<Triangle>>
@@ -766,23 +773,6 @@ fn triangle_contains_edge(triangle: Triangle, first: usize, second: usize) -> bo
     triangle.contains(&first) && triangle.contains(&second)
 }
 
-fn constraint_graph_is_all_cycles(point_count: usize, constraints: &[Constraint]) -> bool {
-    if constraints.is_empty() {
-        return false;
-    }
-
-    let mut degrees = vec![0usize; point_count];
-    for constraint in constraints {
-        degrees[constraint.from] += 1;
-        degrees[constraint.to] += 1;
-    }
-
-    degrees
-        .into_iter()
-        .filter(|degree| *degree > 0)
-        .all(|degree| degree == 2)
-}
-
 fn validate_unique_points<K>(points: &[Point2]) -> Result<()>
 where
     K: Kernel,
@@ -905,6 +895,31 @@ mod tests {
         assert_eq!(triangulation.triangles().len(), 2);
     }
 
+    #[cfg(not(feature = "earcut"))]
+    #[test]
+    fn constrained_closed_ring_falls_back_to_general_cdt_without_earcut() {
+        let points = vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2)];
+        let constraints = vec![
+            Constraint::new(0, 1),
+            Constraint::new(1, 2),
+            Constraint::new(2, 3),
+            Constraint::new(3, 0),
+        ];
+
+        let triangulation = constrained_delaunay(&points, &constraints).unwrap();
+
+        triangulation.validate().unwrap();
+        triangulation
+            .validate_unconstrained_edges_are_delaunay()
+            .unwrap();
+        assert_eq!(triangulation.constraints(), constraints.as_slice());
+        assert!(
+            constraints
+                .iter()
+                .all(|constraint| triangulation_has_edge(triangulation.triangles(), *constraint))
+        );
+    }
+
     #[cfg(feature = "earcut")]
     #[test]
     fn constrained_closed_rings_with_hole_use_exact_polygon_path() {
@@ -943,7 +958,7 @@ mod tests {
     }
 
     #[test]
-    fn separated_closed_rings_remain_general_cdt_work() {
+    fn separated_closed_rings_use_general_cdt_recovery() {
         let points = vec![
             p(0, 0),
             p(1, 0),
@@ -965,13 +980,17 @@ mod tests {
             Constraint::new(7, 4),
         ];
 
-        let error = constrained_delaunay(&points, &constraints).unwrap_err();
+        let triangulation = constrained_delaunay(&points, &constraints).unwrap();
 
-        assert_eq!(
-            error,
-            Error::UnsupportedFeature {
-                feature: "general constrained Delaunay insertion"
-            }
+        triangulation.validate().unwrap();
+        triangulation
+            .validate_unconstrained_edges_are_delaunay()
+            .unwrap();
+        assert_eq!(triangulation.constraints(), constraints.as_slice());
+        assert!(
+            constraints
+                .iter()
+                .all(|constraint| triangulation_has_edge(triangulation.triangles(), *constraint))
         );
     }
 

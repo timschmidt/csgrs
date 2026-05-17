@@ -19,10 +19,10 @@ pub enum Error {
     },
     /// The current implementation could not find an ear in a polygon ring.
     NoEarFound,
-    /// The public API is reserved, but the ported implementation is not wired
-    /// yet.
+    /// The requested feature is not compiled or cannot be satisfied by the
+    /// active exact policy.
     UnsupportedFeature {
-        /// Feature that is not available yet.
+        /// Feature that is not available in the current build or policy.
         feature: &'static str,
     },
 }

@@ -1,4 +1,4 @@
-#![cfg(any(feature = "earcut", feature = "cdt"))]
+#![cfg(any(feature = "earcut", feature = "cdt", feature = "nd"))]
 
 #[cfg(feature = "cdt")]
 use hypertri::Constraint;
@@ -10,11 +10,27 @@ fn p(x: i32, y: i32) -> ExactPoint {
     Point2::new(Real::from(x), Real::from(y))
 }
 
+#[cfg(any(feature = "earcut", feature = "cdt", feature = "f64-interop"))]
 fn q(xn: i64, xd: u64, yn: i64, yd: u64) -> ExactPoint {
     Point2::new(
         Real::from(Rational::fraction(xn, xd).unwrap()),
         Real::from(Rational::fraction(yn, yd).unwrap()),
     )
+}
+
+#[cfg(feature = "nd")]
+fn point_d(values: &[Real]) -> hypertri::nd::PointD {
+    hypertri::nd::PointD::new(values.to_vec())
+}
+
+#[cfg(feature = "nd")]
+fn r(value: i64) -> Real {
+    Real::from(value)
+}
+
+#[cfg(feature = "nd")]
+fn rq(numerator: i64, denominator: u64) -> Real {
+    Real::from(Rational::fraction(numerator, denominator).unwrap())
 }
 
 #[test]
@@ -97,6 +113,51 @@ fn polygon_input_retains_exact_ring_orientation_and_turn_facts() {
         reversed.facts().rings[0].convexity,
         hypertri::RingConvexity::LocallyConvex
     );
+}
+
+#[test]
+#[cfg(feature = "nd")]
+fn exact_nd_delaunay_stars_3d_simplex_around_rational_interior_point() {
+    let points = vec![
+        point_d(&[r(0), r(0), r(0)]),
+        point_d(&[r(1), r(0), r(0)]),
+        point_d(&[r(0), r(1), r(0)]),
+        point_d(&[r(0), r(0), r(1)]),
+        point_d(&[rq(1, 4), rq(1, 4), rq(1, 4)]),
+    ];
+
+    let complex = hypertri::nd::delaunay_complex(&points).unwrap();
+
+    assert_eq!(complex.dimension(), 3);
+    assert_eq!(complex.cells().len(), 4);
+    assert!(
+        complex
+            .cells()
+            .iter()
+            .all(|cell| cell.indices().contains(&4))
+    );
+    complex.validate().unwrap();
+}
+
+#[test]
+#[cfg(feature = "nd")]
+fn exact_nd_delaunay_preserves_cospherical_cells_as_complex() {
+    let points = vec![
+        point_d(&[r(0), r(0)]),
+        point_d(&[r(1), r(0)]),
+        point_d(&[r(1), r(1)]),
+        point_d(&[r(0), r(1)]),
+    ];
+
+    let complex = hypertri::nd::delaunay_complex(&points).unwrap();
+
+    assert_eq!(complex.dimension(), 2);
+    assert_eq!(
+        complex.cells().len(),
+        4,
+        "cospherical square is represented as a Delaunay complex, not an arbitrary float tie-break"
+    );
+    complex.validate().unwrap();
 }
 
 #[test]
@@ -240,6 +301,29 @@ fn cdt_splits_tiny_exact_rational_constraint_crossing() {
 }
 
 #[test]
+#[cfg(all(feature = "serde", feature = "cdt"))]
+fn serde_roundtrips_public_topology_and_rebuilds_polygon_facts() {
+    let input = hypertri::PolygonInput::new(vec![p(0, 0), p(4, 0), p(4, 3), p(0, 3)], vec![]);
+    let encoded = serde_json::to_string(&input).unwrap();
+    let decoded: hypertri::PolygonInput = serde_json::from_str(&encoded).unwrap();
+
+    assert_eq!(decoded.vertices(), input.vertices());
+    assert_eq!(decoded.hole_indices(), input.hole_indices());
+    assert_eq!(decoded.facts(), input.facts());
+
+    let triangulation =
+        hypertri::cdt::constrained_delaunay(decoded.vertices(), &[Constraint::new(1, 3)]).unwrap();
+    let encoded = serde_json::to_string(&triangulation).unwrap();
+    let decoded: hypertri::cdt::ConstrainedDelaunayTriangulation =
+        serde_json::from_str(&encoded).unwrap();
+
+    decoded.validate().unwrap();
+    assert_eq!(decoded.constraints(), triangulation.constraints());
+    assert_eq!(decoded.constraint_edges(), triangulation.constraint_edges());
+    assert_eq!(decoded.triangles(), triangulation.triangles());
+}
+
+#[test]
 #[cfg(feature = "earcut")]
 fn exact_earcut_hole_bridge_uses_exact_visibility() {
     let vertices = vec![
@@ -374,8 +458,22 @@ proptest! {
         ];
 
         let triangles = hypertri::earcut(&vertices, &[]).unwrap();
+        let report = hypertri::earcut_report(&vertices, &[]).unwrap();
 
+        prop_assert_eq!(&report.triangles, &triangles);
         prop_assert_eq!(triangles.len(), 6);
+        prop_assert!(
+            report.diagnostics.containment_convex_rejects
+                + report.diagnostics.containment_bbox_rejects
+                + report.diagnostics.containment_tests
+                <= report.diagnostics.containment_candidates,
+            "containment diagnostic stages must account for no more than the candidates scanned"
+        );
+        prop_assert_eq!(
+            report.diagnostics.containment_prepared_reflex_lookups,
+            report.diagnostics.containment_candidates,
+            "every scanned containment candidate should use the prepared reflex/convex table"
+        );
         for triangle in triangles.chunks_exact(3) {
             prop_assert!(triangle.iter().all(|&index| index < vertices.len()));
             prop_assert_ne!(triangle[0], triangle[1]);
@@ -403,8 +501,22 @@ proptest! {
         ];
 
         let triangles = hypertri::earcut(&vertices, &[4]).unwrap();
+        let report = hypertri::earcut_report(&vertices, &[4]).unwrap();
 
+        prop_assert_eq!(&report.triangles, &triangles);
         prop_assert_eq!(triangles.len(), 24);
+        prop_assert!(
+            report.diagnostics.containment_convex_rejects
+                + report.diagnostics.containment_bbox_rejects
+                + report.diagnostics.containment_tests
+                <= report.diagnostics.containment_candidates,
+            "containment diagnostic stages must account for no more than the candidates scanned"
+        );
+        prop_assert_eq!(
+            report.diagnostics.containment_prepared_reflex_lookups,
+            report.diagnostics.containment_candidates,
+            "every scanned containment candidate should use the prepared reflex/convex table"
+        );
         for triangle in triangles.chunks_exact(3) {
             prop_assert!(triangle.iter().all(|&index| index < vertices.len()));
             prop_assert_ne!(triangle[0], triangle[1]);

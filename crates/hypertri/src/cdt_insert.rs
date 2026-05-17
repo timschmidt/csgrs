@@ -1,14 +1,16 @@
 //! Constraint recovery and local legalization for the CDT port.
 //!
 //! The public [`crate::cdt`] module owns API shape and result records; this
-//! module keeps the incremental segment-insertion machinery local. The current
-//! implementation starts from the exact Delaunay triangulation, recovers each
-//! non-crossing constraint by flipping crossed unconstrained edges, then
-//! re-legalizes only unconstrained edges. This follows the incremental CDT
-//! construction family described by Shewchuk and Brown, where segment insertion
-//! deletes or mutates crossed structure and the Constrained Delaunay Lemma of
-//! Lee and Lin reduces correctness to local Delaunay checks on non-segment
-//! edges.
+//! module keeps the incremental segment-insertion machinery local. The
+//! implementation starts from the exact Delaunay triangulation, planarizes
+//! crossing constraints into exact Steiner vertices, recovers each protected
+//! subsegment by flipping crossed unconstrained edges, then re-legalizes only
+//! unconstrained edges. This follows the incremental CDT construction family
+//! described by Shewchuk and Brown, where segment insertion deletes or mutates
+//! crossed structure, and the Constrained Delaunay Lemma of Lee and Lin reduces
+//! correctness to local Delaunay checks on non-segment edges. Exact predicate
+//! ownership stays in the kernel/predicate layer in the sense of Yap's
+//! exact-geometric-computation architecture.
 
 use crate::error::{Error, Result};
 use crate::kernel::Kernel;
@@ -40,12 +42,13 @@ pub(crate) fn insert_constraints<K>(
 where
     K: Kernel,
 {
-    // Structural-dispatch note: constraint recovery currently processes caller
-    // order. A future PSLG layer should carry segment facts such as
-    // axis-alignment, endpoint order, exact-rational denominator class, and
-    // crossing count estimates so independent constraints can be batched and
-    // local legalization can choose between sparse edge flips and cavity
-    // remeshing.
+    // Structural-dispatch note: constraint recovery processes the planarized
+    // subsegments in caller-derived order. The retained PSLG facts already
+    // keep intersection vertices and split subsegments explicit; richer
+    // prepared objects can add axis-alignment, endpoint order, and
+    // exact-rational denominator classes without changing the topology
+    // contract. This is Yap's "beyond BigNumber" object layer: preserve useful
+    // structure beside exact arithmetic rather than leaking scalar internals.
     let mut constrained_edges = Vec::new();
     for &constraint in constraints {
         let edge = EdgeKey::new(constraint.from, constraint.to);

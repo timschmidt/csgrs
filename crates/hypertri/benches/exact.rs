@@ -32,6 +32,12 @@ fn bench_exact_triangulation(c: &mut Criterion) {
             (
                 report.triangles.len(),
                 report.diagnostics.ear_tests,
+                report.diagnostics.containment_candidates,
+                report.diagnostics.containment_prepared_reflex_lookups,
+                report.diagnostics.containment_convex_rejects,
+                report.diagnostics.prepared_reflex_rebuilds,
+                report.diagnostics.prepared_reflex_updates,
+                report.diagnostics.containment_bbox_rejects,
                 report.diagnostics.containment_tests,
                 report.diagnostics.emitted_triangles,
             )
@@ -58,6 +64,12 @@ fn bench_exact_triangulation(c: &mut Criterion) {
             (
                 report.triangles.len(),
                 report.diagnostics.ear_tests,
+                report.diagnostics.containment_candidates,
+                report.diagnostics.containment_prepared_reflex_lookups,
+                report.diagnostics.containment_convex_rejects,
+                report.diagnostics.prepared_reflex_rebuilds,
+                report.diagnostics.prepared_reflex_updates,
+                report.diagnostics.containment_bbox_rejects,
                 report.diagnostics.containment_tests,
                 report.diagnostics.split_fallbacks,
             )
@@ -70,6 +82,38 @@ fn bench_exact_triangulation(c: &mut Criterion) {
     c.bench_function("exact_cdt_crossing_constraint_split", |b| {
         b.iter(|| {
             hypertri::cdt::constrained_delaunay(&crossing_points, &crossing_constraints).unwrap()
+        })
+    });
+
+    let separated_cycles = vec![
+        p(r(0), r(0)),
+        p(r(2), r(0)),
+        p(r(2), r(2)),
+        p(r(0), r(2)),
+        p(r(5), r(0)),
+        p(r(7), r(0)),
+        p(r(7), r(3)),
+        p(r(5), r(3)),
+    ];
+    let separated_constraints = vec![
+        Constraint::new(0, 1),
+        Constraint::new(1, 2),
+        Constraint::new(2, 3),
+        Constraint::new(3, 0),
+        Constraint::new(4, 5),
+        Constraint::new(5, 6),
+        Constraint::new(6, 7),
+        Constraint::new(7, 4),
+    ];
+
+    c.bench_function("exact_cdt_separated_cycles_general_pslg", |b| {
+        b.iter(|| {
+            // This is not a polygon-with-holes shortcut. It measures the exact
+            // PSLG path that starts from an exact Delaunay triangulation,
+            // recovers protected cycle edges, then re-legalizes unprotected
+            // edges using Lee-Lin constrained-Delaunay local legality under
+            // Yap-style exact predicates.
+            hypertri::cdt::constrained_delaunay(&separated_cycles, &separated_constraints).unwrap()
         })
     });
 
@@ -94,6 +138,19 @@ fn bench_exact_triangulation(c: &mut Criterion) {
                 facts.rings[0].convexity,
             )
         })
+    });
+
+    let nd_points = vec![
+        hypertri::nd::PointD::new(vec![r(0), r(0), r(0), r(0)]),
+        hypertri::nd::PointD::new(vec![r(1), r(0), r(0), r(0)]),
+        hypertri::nd::PointD::new(vec![r(0), r(1), r(0), r(0)]),
+        hypertri::nd::PointD::new(vec![r(0), r(0), r(1), r(0)]),
+        hypertri::nd::PointD::new(vec![r(0), r(0), r(0), r(1)]),
+        hypertri::nd::PointD::new(vec![q(1, 5), q(1, 5), q(1, 5), q(1, 5)]),
+    ];
+
+    c.bench_function("exact_nd_4d_delaunay_complex", |b| {
+        b.iter(|| hypertri::nd::delaunay_complex(&nd_points).unwrap())
     });
 }
 

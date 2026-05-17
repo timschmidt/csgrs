@@ -25,11 +25,24 @@ use crate::types::{ExactPoint, Point2, Real, TriangleIndices};
 /// (1997). The ear candidate loop itself follows the two-ears theorem; see
 /// Meisters, "Polygons Have Ears," *The American Mathematical Monthly* 82.6
 /// (1975).
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct EarcutDiagnostics {
     /// Number of vertices tested as ear candidates.
     pub ear_tests: usize,
-    /// Number of non-triangle vertices tested for containment in candidate ears.
+    /// Number of non-triangle vertices considered for candidate-ear containment.
+    pub containment_candidates: usize,
+    /// Number of containment candidates rejected because their local vertex is strictly convex.
+    pub containment_convex_rejects: usize,
+    /// Number of containment candidates classified through prepared local reflex facts.
+    pub containment_prepared_reflex_lookups: usize,
+    /// Number of full-ring prepared reflex/convex fact rebuilds.
+    pub prepared_reflex_rebuilds: usize,
+    /// Number of local prepared reflex/convex fact updates after clipping.
+    pub prepared_reflex_updates: usize,
+    /// Number of containment candidates rejected by an exact triangle AABB.
+    pub containment_bbox_rejects: usize,
+    /// Number of non-triangle vertices tested with exact triangle containment.
     pub containment_tests: usize,
     /// Number of triangles emitted by clipping, curing, or split fallback.
     pub emitted_triangles: usize,
@@ -40,6 +53,7 @@ pub struct EarcutDiagnostics {
 }
 
 /// Triangle indices paired with hot-loop diagnostics.
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct EarcutReport {
     /// Flat earcut-compatible triangle index buffer.
@@ -486,6 +500,7 @@ where
     let mut cursor = 0;
     let mut misses = 0;
     let mut guard = ring.len() * ring.len() * 4 + 1;
+    let mut prepared_convex = prepare_local_convexity::<K>(vertices, &ring, winding, diagnostics)?;
 
     while ring.len() > 3 {
         if guard == 0 {
@@ -506,7 +521,7 @@ where
         }
         guard -= 1;
 
-        if is_ear::<K>(vertices, &ring, cursor, winding, diagnostics)? {
+        if is_ear::<K>(vertices, &ring, &prepared_convex, cursor, diagnostics)? {
             let len = ring.len();
             let prev = ring[(cursor + len - 1) % len];
             let curr = ring[cursor];
@@ -514,9 +529,18 @@ where
             push_triangle(&mut triangles, prev, curr, next, winding);
             diagnostics.emitted_triangles += 1;
             ring.remove(cursor);
+            prepared_convex.remove(cursor);
             if cursor == ring.len() {
                 cursor = 0;
             }
+            update_prepared_convexity_after_clip::<K>(
+                vertices,
+                &ring,
+                &mut prepared_convex,
+                cursor,
+                winding,
+                diagnostics,
+            )?;
             misses = 0;
             continue;
         }
@@ -530,6 +554,7 @@ where
             if ring.len() < 3 {
                 return Ok(triangles);
             }
+            prepared_convex = prepare_local_convexity::<K>(vertices, &ring, winding, diagnostics)?;
             if ring.len() == previous_len {
                 let (cured_ring, mut cured_triangles, cured) =
                     cure_local_intersections::<K>(vertices, ring, winding)?;
@@ -538,6 +563,8 @@ where
                     diagnostics.local_intersection_cures += 1;
                     diagnostics.emitted_triangles += cured_triangles.len() / 3;
                     ring = cured_ring;
+                    prepared_convex =
+                        prepare_local_convexity::<K>(vertices, &ring, winding, diagnostics)?;
                     cursor = 0;
                     misses = 0;
                     guard = ring.len() * ring.len() * 4 + 1;
@@ -820,8 +847,8 @@ fn ordered_positions(first: usize, second: usize) -> (usize, usize) {
 fn is_ear<K>(
     vertices: &[Point2],
     ring: &[usize],
+    prepared_convex: &[bool],
     cursor: usize,
-    winding: Sign,
     diagnostics: &mut EarcutDiagnostics,
 ) -> Result<bool>
 where
@@ -838,17 +865,37 @@ where
     // that theorem; containment below rejects ears that would cover another
     // vertex. See Meisters, "Polygons Have Ears" (1975).
     //
-    // Structural-dispatch note: carrying a per-vertex reflex/convex bitset and
-    // a bounding interval for each ear candidate would let this loop inspect
-    // only reflex vertices whose boxes overlap the ear triangle, matching the
-    // acceleration used by production earcut variants without making `f64`
-    // ordering part of the topology proof.
-    if predicates::orient2d::<K>(&vertices[prev], &vertices[curr], &vertices[next])? != winding {
+    // Structural-dispatch note: the loop uses two exact object facts before
+    // the full containment predicate: the local reflex/convex turn and the
+    // candidate triangle AABB. Keeping these as facts, rather than as
+    // floating-point heuristics, mirrors Yap's EGC advice to preserve useful
+    // geometric structure before changing arithmetic packages; see Yap,
+    // "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+    // (1997).
+    debug_assert_eq!(ring.len(), prepared_convex.len());
+    if !prepared_convex[cursor] {
         return Ok(false);
     }
 
-    for &candidate in ring {
+    for (candidate_cursor, &candidate) in ring.iter().enumerate() {
         if candidate == prev || candidate == curr || candidate == next {
+            continue;
+        }
+
+        diagnostics.containment_candidates += 1;
+        diagnostics.containment_prepared_reflex_lookups += 1;
+        if prepared_convex[candidate_cursor] {
+            diagnostics.containment_convex_rejects += 1;
+            continue;
+        }
+
+        if !point_in_triangle_bbox::<K>(
+            &vertices[prev],
+            &vertices[curr],
+            &vertices[next],
+            &vertices[candidate],
+        )? {
+            diagnostics.containment_bbox_rejects += 1;
             continue;
         }
 
@@ -864,6 +911,110 @@ where
     }
 
     Ok(true)
+}
+
+fn prepare_local_convexity<K>(
+    vertices: &[Point2],
+    ring: &[usize],
+    winding: Sign,
+    diagnostics: &mut EarcutDiagnostics,
+) -> Result<Vec<bool>>
+where
+    K: Kernel,
+{
+    diagnostics.prepared_reflex_rebuilds += 1;
+    (0..ring.len())
+        .map(|cursor| local_vertex_is_strictly_convex::<K>(vertices, ring, cursor, winding))
+        .collect()
+}
+
+fn update_prepared_convexity_after_clip<K>(
+    vertices: &[Point2],
+    ring: &[usize],
+    prepared_convex: &mut [bool],
+    cursor: usize,
+    winding: Sign,
+    diagnostics: &mut EarcutDiagnostics,
+) -> Result<()>
+where
+    K: Kernel,
+{
+    if ring.len() < 3 {
+        return Ok(());
+    }
+    let next = cursor % ring.len();
+    let prev = (next + ring.len() - 1) % ring.len();
+    prepared_convex[prev] = local_vertex_is_strictly_convex::<K>(vertices, ring, prev, winding)?;
+    diagnostics.prepared_reflex_updates += 1;
+    if next != prev {
+        prepared_convex[next] =
+            local_vertex_is_strictly_convex::<K>(vertices, ring, next, winding)?;
+        diagnostics.prepared_reflex_updates += 1;
+    }
+    Ok(())
+}
+
+fn local_vertex_is_strictly_convex<K>(
+    vertices: &[Point2],
+    ring: &[usize],
+    cursor: usize,
+    winding: Sign,
+) -> Result<bool>
+where
+    K: Kernel,
+{
+    // Standard ear-clipping implementations only need to test reflex vertices
+    // for containment in a candidate ear. Hypertri prepares that local
+    // convex/reflex bit once per active ring state, then updates only the two
+    // vertices whose neighborhoods changed after clipping. This is the
+    // object-fact reuse pattern Yap recommends in "Towards Exact Geometric
+    // Computation," *Computational Geometry* 7.1-2 (1997), applied to the
+    // exact orientation predicate used by Meisters' two-ears theorem; see
+    // Meisters, "Polygons Have Ears," *The American Mathematical Monthly*
+    // 82.6 (1975). Collinear vertices remain non-convex here so degeneracies
+    // still flow to AABB and containment predicates.
+    let len = ring.len();
+    let prev = ring[(cursor + len - 1) % len];
+    let curr = ring[cursor];
+    let next = ring[(cursor + 1) % len];
+    Ok(predicates::orient2d::<K>(&vertices[prev], &vertices[curr], &vertices[next])? == winding)
+}
+
+fn point_in_triangle_bbox<K>(a: &Point2, b: &Point2, c: &Point2, point: &Point2) -> Result<bool>
+where
+    K: Kernel,
+{
+    // This is only a rejection filter. Exact coordinate comparisons prove that
+    // a point outside the triangle's axis-aligned bounding box cannot be inside
+    // the triangle, while points inside the box still go through the exact
+    // orientation-based containment predicate. The filter is the
+    // axis-aligned-box stage described in broad-phase geometry texts such as
+    // Ericson, *Real-Time Collision Detection* (2005), but it is evaluated with
+    // the crate's exact kernel rather than primitive floats.
+    let mut min_x = &a.x;
+    let mut max_x = &a.x;
+    let mut min_y = &a.y;
+    let mut max_y = &a.y;
+
+    for vertex in [b, c] {
+        if K::cmp(&vertex.x, min_x)? == Ordering::Less {
+            min_x = &vertex.x;
+        }
+        if K::cmp(&vertex.x, max_x)? == Ordering::Greater {
+            max_x = &vertex.x;
+        }
+        if K::cmp(&vertex.y, min_y)? == Ordering::Less {
+            min_y = &vertex.y;
+        }
+        if K::cmp(&vertex.y, max_y)? == Ordering::Greater {
+            max_y = &vertex.y;
+        }
+    }
+
+    Ok(K::cmp(&point.x, min_x)? != Ordering::Less
+        && K::cmp(&point.x, max_x)? != Ordering::Greater
+        && K::cmp(&point.y, min_y)? != Ordering::Less
+        && K::cmp(&point.y, max_y)? != Ordering::Greater)
 }
 
 fn ring_area_sign<K>(vertices: &[Point2], ring: &[usize]) -> Result<Sign>
@@ -1024,7 +1175,36 @@ mod tests {
         assert_eq!(report.triangles, plain);
         assert_eq!(report.diagnostics.emitted_triangles * 3, plain.len());
         assert!(report.diagnostics.ear_tests > 0);
-        assert!(report.diagnostics.containment_tests > 0);
+        assert!(report.diagnostics.containment_candidates > 0);
+        assert!(
+            report.diagnostics.prepared_reflex_rebuilds > 0,
+            "earcut should prepare exact local convexity facts before scanning ears"
+        );
+        assert!(
+            report.diagnostics.prepared_reflex_updates > 0,
+            "ear clipping should update the prepared local convexity facts after removing vertices"
+        );
+        assert_eq!(
+            report.diagnostics.containment_prepared_reflex_lookups,
+            report.diagnostics.containment_candidates,
+            "every containment candidate should route through the prepared reflex/convex fact table"
+        );
+        assert!(
+            report.diagnostics.containment_convex_rejects > 0,
+            "exact reflex filter should reject at least one strictly convex candidate"
+        );
+        assert!(
+            report.diagnostics.containment_convex_rejects
+                + report.diagnostics.containment_bbox_rejects
+                > 0,
+            "at least one exact containment prefilter should reject a candidate"
+        );
+        assert!(
+            report.diagnostics.containment_tests
+                <= report.diagnostics.containment_candidates
+                    - report.diagnostics.containment_convex_rejects
+                    - report.diagnostics.containment_bbox_rejects
+        );
     }
 
     #[test]

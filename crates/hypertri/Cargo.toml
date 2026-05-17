@@ -7,21 +7,27 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 
 [features]
-default = ["earcut", "cdt", "runtime-select"]
+default = []
+all-algorithms = ["earcut", "cdt", "nd"]
 earcut = []
 cdt = []
+nd = []
 runtime-select = []
 f64-interop = []
-serde = []
+serde = ["dep:serde"]
 
 [dependencies]
 hyperreal = { path = "../hyperreal", version = "0.11.1" }
 hyperlimit = { path = "../hyperlimit", version = "0.2.0", default-features = false, features = ["std"] }
+serde = { version = "1.0.228", features = ["derive"], optional = true }
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
+# Dev-only differential oracle for ordinary polygon cases. Production code owns
+# its exact ear-clipping port and must not build or link `earcutr`.
 earcutr = { path = "../earcutr" }
 proptest = "1.7.0"
+serde_json = "1.0.149"
 
 [[bench]]
 name = "earcut"
@@ -36,4 +42,4 @@ required-features = ["cdt", "f64-interop"]
 [[bench]]
 name = "exact"
 harness = false
-required-features = ["earcut", "cdt"]
+required-features = ["earcut", "cdt", "nd"]

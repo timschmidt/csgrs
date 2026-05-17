@@ -1480,6 +1480,8 @@ dependencies = [
  "getrandom 0.2.17",
  "hypertri",
  "log",
+ "serde",
+ "serde_json",
  "wasm-bindgen-futures",
  "web-sys",
 ]
