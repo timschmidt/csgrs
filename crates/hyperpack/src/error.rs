@@ -10,6 +10,14 @@ pub enum PackError {
     EmptyIdentifier,
     /// A dimension was not certified positive.
     NonPositiveDimension,
+    /// A support area-ratio policy had an invalid denominator.
+    InvalidSupportRatio,
+    /// A load, weight, or capacity value was certified negative.
+    NegativeLoadValue,
+    /// A requested clearance was certified negative.
+    NegativeClearance,
     /// A placement referenced an unknown item.
     MissingItem,
+    /// A placement referenced an unknown bin.
+    MissingBin,
 }
