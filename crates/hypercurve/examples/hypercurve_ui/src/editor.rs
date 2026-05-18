@@ -264,22 +264,28 @@ impl PolylineEditor {
 
 fn vertex_table(ui: &mut egui::Ui, polyline: &mut Polyline) {
     let mut delete = None;
+    let handles = polyline.handles();
     egui::Grid::new(ui.next_auto_id())
         .striped(true)
-        .num_columns(5)
+        .num_columns(4)
         .show(ui, |ui| {
-            ui.label("Index");
+            ui.label("Handle");
             ui.label("X");
             ui.label("Y");
-            ui.label("Bulge");
             ui.label("");
             ui.end_row();
-            for (index, vertex) in polyline.vertex_data.iter_mut().enumerate() {
+            for (index, mut vertex) in handles.into_iter().enumerate() {
                 ui.label(index.to_string());
-                ui.add(egui::DragValue::new(&mut vertex.x).speed(0.1));
-                ui.add(egui::DragValue::new(&mut vertex.y).speed(0.1));
-                ui.add(egui::DragValue::new(&mut vertex.bulge).speed(0.01));
-                if ui.button("Delete").clicked() {
+                let x_changed = ui
+                    .add(egui::DragValue::new(&mut vertex.x).speed(0.1))
+                    .changed();
+                let y_changed = ui
+                    .add(egui::DragValue::new(&mut vertex.y).speed(0.1))
+                    .changed();
+                if x_changed || y_changed {
+                    polyline.set_handle(index, vertex.x, vertex.y);
+                }
+                if polyline.curve_data.is_empty() && ui.button("Delete").clicked() {
                     delete = Some(index);
                 }
                 ui.end_row();

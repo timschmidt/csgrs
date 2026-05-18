@@ -4,8 +4,9 @@ use std::ops::{Index, IndexMut};
 use geo::{BooleanOps, Buffer, Coord, LineString, MultiPolygon, Polygon};
 use hypercurve::{
     BooleanOp as HBooleanOp, BulgeVertex2, Classification, Contour2, ContourFragmentSet,
-    ContourIntersection, ContourIntersectionSet, ContourOperand, ContourSplitMarkers, CurvePolicy,
-    CurveString2, FillRule, OffsetCap, Point2, Real, Region2, Segment2, Tolerance,
+    ContourIntersection, ContourIntersectionSet, ContourOperand, ContourSplitMarkers, CubicBezier2,
+    CurvePolicy, CurveString2, FillRule, OffsetCap, Point2, QuadraticBezier2,
+    RationalQuadraticBezier2, Real, Region2, Segment2, Tolerance,
 };
 use serde::{Deserialize, Serialize};
 
@@ -40,50 +41,373 @@ impl Vertex {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum CurvePrimitive {
+    Line {
+        start: Vertex,
+        end: Vertex,
+    },
+    CircularArc {
+        start: Vertex,
+        end: Vertex,
+        bulge: f64,
+    },
+    QuadraticBezier {
+        start: Vertex,
+        control: Vertex,
+        end: Vertex,
+    },
+    CubicBezier {
+        start: Vertex,
+        control1: Vertex,
+        control2: Vertex,
+        end: Vertex,
+    },
+    RationalQuadratic {
+        start: Vertex,
+        control: Vertex,
+        end: Vertex,
+        control_weight: f64,
+    },
+}
+
+impl CurvePrimitive {
+    fn handle_count(&self) -> usize {
+        match self {
+            Self::Line { .. } | Self::CircularArc { .. } => 2,
+            Self::QuadraticBezier { .. } | Self::RationalQuadratic { .. } => 3,
+            Self::CubicBezier { .. } => 4,
+        }
+    }
+
+    fn handles(&self) -> Vec<Vertex> {
+        match *self {
+            Self::Line { start, end } | Self::CircularArc { start, end, .. } => vec![start, end],
+            Self::QuadraticBezier {
+                start,
+                control,
+                end,
+            }
+            | Self::RationalQuadratic {
+                start,
+                control,
+                end,
+                ..
+            } => vec![start, control, end],
+            Self::CubicBezier {
+                start,
+                control1,
+                control2,
+                end,
+            } => vec![start, control1, control2, end],
+        }
+    }
+
+    fn set_handle(&mut self, index: usize, x: f64, y: f64) {
+        let target = match self {
+            Self::Line { start, end } | Self::CircularArc { start, end, .. } => match index {
+                0 => Some(start),
+                1 => Some(end),
+                _ => None,
+            },
+            Self::QuadraticBezier {
+                start,
+                control,
+                end,
+            }
+            | Self::RationalQuadratic {
+                start,
+                control,
+                end,
+                ..
+            } => match index {
+                0 => Some(start),
+                1 => Some(control),
+                2 => Some(end),
+                _ => None,
+            },
+            Self::CubicBezier {
+                start,
+                control1,
+                control2,
+                end,
+            } => match index {
+                0 => Some(start),
+                1 => Some(control1),
+                2 => Some(control2),
+                3 => Some(end),
+                _ => None,
+            },
+        };
+        if let Some(vertex) = target {
+            vertex.x = x;
+            vertex.y = y;
+        }
+    }
+
+    fn set_matching_handles(&mut self, old: Vertex, x: f64, y: f64) {
+        for index in 0..self.handle_count() {
+            if self
+                .handles()
+                .get(index)
+                .is_some_and(|handle| same_vertex_position(*handle, old))
+            {
+                self.set_handle(index, x, y);
+            }
+        }
+    }
+
+    fn translate_mut(&mut self, dx: f64, dy: f64) {
+        for index in 0..self.handle_count() {
+            if let Some(vertex) = self.handles().get(index).copied() {
+                self.set_handle(index, vertex.x + dx, vertex.y + dy);
+            }
+        }
+    }
+
+    fn validate_finite(&self, index: usize) -> Result<(), String> {
+        for (handle_index, handle) in self.handles().into_iter().enumerate() {
+            handle.validate_finite(handle_index)?;
+        }
+        if let Self::RationalQuadratic { control_weight, .. } = self {
+            validate_finite(
+                *control_weight,
+                &format!("primitive {index} control weight"),
+            )?;
+        }
+        Ok(())
+    }
+
+    fn append_samples(&self, points: &mut Vec<[f64; 2]>, max_angle_step: f64) {
+        match *self {
+            Self::Line { start, end } => {
+                push_sample_point(points, [start.x, start.y]);
+                push_sample_point(points, [end.x, end.y]);
+            }
+            Self::CircularArc { start, end, bulge } => {
+                push_sample_point(points, [start.x, start.y]);
+                append_segment_samples(
+                    points,
+                    Vertex::new(start.x, start.y, bulge),
+                    end,
+                    max_angle_step,
+                );
+            }
+            Self::QuadraticBezier {
+                start,
+                control,
+                end,
+            } => {
+                let curve = QuadraticBezier2::new(
+                    point_from_vertex(start),
+                    point_from_vertex(control),
+                    point_from_vertex(end),
+                );
+                for vertex in sample_quadratic_vertices(&curve, 18) {
+                    push_sample_point(points, [vertex.x, vertex.y]);
+                }
+            }
+            Self::CubicBezier {
+                start,
+                control1,
+                control2,
+                end,
+            } => {
+                let curve = CubicBezier2::new(
+                    point_from_vertex(start),
+                    point_from_vertex(control1),
+                    point_from_vertex(control2),
+                    point_from_vertex(end),
+                );
+                for vertex in sample_cubic_vertices(&curve, 24) {
+                    push_sample_point(points, [vertex.x, vertex.y]);
+                }
+            }
+            Self::RationalQuadratic {
+                start,
+                control,
+                end,
+                control_weight,
+            } => {
+                let Ok(curve) = RationalQuadraticBezier2::try_unit_end_weights(
+                    point_from_vertex(start),
+                    point_from_vertex(control),
+                    point_from_vertex(end),
+                    Real::try_from(control_weight).unwrap_or_else(|_| Real::one()),
+                ) else {
+                    return;
+                };
+                for vertex in sample_rational_quadratic_vertices(&curve, 24) {
+                    push_sample_point(points, [vertex.x, vertex.y]);
+                }
+            }
+        }
+    }
+
+    fn reversed(self) -> Self {
+        match self {
+            Self::Line { start, end } => Self::Line {
+                start: end,
+                end: start,
+            },
+            Self::CircularArc { start, end, bulge } => Self::CircularArc {
+                start: end,
+                end: start,
+                bulge: -bulge,
+            },
+            Self::QuadraticBezier {
+                start,
+                control,
+                end,
+            } => Self::QuadraticBezier {
+                start: end,
+                control,
+                end: start,
+            },
+            Self::CubicBezier {
+                start,
+                control1,
+                control2,
+                end,
+            } => Self::CubicBezier {
+                start: end,
+                control1: control2,
+                control2: control1,
+                end: start,
+            },
+            Self::RationalQuadratic {
+                start,
+                control,
+                end,
+                control_weight,
+            } => Self::RationalQuadratic {
+                start: end,
+                control,
+                end: start,
+                control_weight,
+            },
+        }
+    }
+}
+
+fn push_sample_point(points: &mut Vec<[f64; 2]>, point: [f64; 2]) {
+    if points.last().is_none_or(|last| {
+        (last[0] - point[0]).abs() > DISPLAY_COORD_EPS
+            || (last[1] - point[1]).abs() > DISPLAY_COORD_EPS
+    }) {
+        points.push(point);
+    }
+}
+
+fn same_vertex_position(first: Vertex, second: Vertex) -> bool {
+    (first.x - second.x).abs() <= DISPLAY_COORD_EPS
+        && (first.y - second.y).abs() <= DISPLAY_COORD_EPS
+}
+
+fn point_from_vertex(vertex: Vertex) -> Point2 {
+    Point2::new(
+        real_checked(vertex.x, "curve handle x").expect("finite curve handle x"),
+        real_checked(vertex.y, "curve handle y").expect("finite curve handle y"),
+    )
+}
+
 /// Editable bulge polyline used by the UI. Geometry operations convert this to
 /// hypercurve curve strings or contours before doing any topology work.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Polyline {
+    #[serde(default)]
+    pub curve_data: Vec<CurvePrimitive>,
+    #[serde(default)]
     pub vertex_data: Vec<Vertex>,
     pub is_closed: bool,
+    #[serde(default)]
+    pub is_hole: bool,
 }
 
 impl Polyline {
     pub const fn new() -> Self {
         Self {
+            curve_data: Vec::new(),
             vertex_data: Vec::new(),
             is_closed: false,
+            is_hole: false,
         }
     }
 
+    pub fn from_curve_data(curve_data: Vec<CurvePrimitive>, is_closed: bool) -> Self {
+        Self {
+            curve_data,
+            vertex_data: Vec::new(),
+            is_closed,
+            is_hole: false,
+        }
+    }
+
+    pub fn marked_hole(mut self) -> Self {
+        self.is_hole = true;
+        self
+    }
+
+    #[cfg(test)]
     pub fn closed(vertices: &[(f64, f64, f64)]) -> Self {
         Self {
+            curve_data: Vec::new(),
             vertex_data: vertices
                 .iter()
                 .map(|&(x, y, bulge)| Vertex::new(x, y, bulge))
                 .collect(),
             is_closed: true,
+            is_hole: false,
         }
     }
 
     pub fn add(&mut self, x: f64, y: f64, bulge: f64) {
-        self.vertex_data.push(Vertex::new(x, y, bulge));
+        if self.curve_data.is_empty() {
+            self.vertex_data.push(Vertex::new(x, y, bulge));
+        }
     }
 
     pub fn remove(&mut self, index: usize) {
-        if index < self.vertex_data.len() {
+        if self.curve_data.is_empty() && index < self.vertex_data.len() {
             self.vertex_data.remove(index);
         }
     }
 
-    pub fn set(&mut self, index: usize, x: f64, y: f64, bulge: f64) {
-        if let Some(vertex) = self.vertex_data.get_mut(index) {
-            *vertex = Vertex::new(x, y, bulge);
+    pub fn handle(&self, index: usize) -> Option<Vertex> {
+        if self.curve_data.is_empty() {
+            self.vertex_data.get(index).copied()
+        } else {
+            self.handles().get(index).copied()
         }
     }
 
-    pub fn get(&self, index: usize) -> Option<&Vertex> {
-        self.vertex_data.get(index)
+    pub fn set_handle(&mut self, index: usize, x: f64, y: f64) {
+        if self.curve_data.is_empty() {
+            if let Some(vertex) = self.vertex_data.get_mut(index) {
+                vertex.x = x;
+                vertex.y = y;
+            }
+            return;
+        }
+
+        let mut remaining = index;
+        let mut old = None;
+        for primitive in &mut self.curve_data {
+            let count = primitive.handle_count();
+            if remaining < count {
+                old = primitive.handles().get(remaining).copied();
+                primitive.set_handle(remaining, x, y);
+                break;
+            }
+            remaining -= count;
+        }
+
+        if let Some(old) = old {
+            for primitive in &mut self.curve_data {
+                primitive.set_matching_handles(old, x, y);
+            }
+        }
     }
 
     pub const fn is_closed(&self) -> bool {
@@ -94,7 +418,17 @@ impl Polyline {
         self.vertex_data.iter()
     }
 
-    pub fn segments(&self) -> Vec<(Vertex, Vertex)> {
+    pub fn handles(&self) -> Vec<Vertex> {
+        if self.curve_data.is_empty() {
+            return self.vertex_data.clone();
+        }
+        self.curve_data
+            .iter()
+            .flat_map(CurvePrimitive::handles)
+            .collect()
+    }
+
+    pub fn legacy_segments(&self) -> Vec<(Vertex, Vertex)> {
         let mut segments: Vec<_> = self
             .vertex_data
             .windows(2)
@@ -110,23 +444,33 @@ impl Polyline {
     }
 
     pub fn translate_mut(&mut self, dx: f64, dy: f64) {
+        if !self.curve_data.is_empty() {
+            for primitive in &mut self.curve_data {
+                primitive.translate_mut(dx, dy);
+            }
+            return;
+        }
         for vertex in &mut self.vertex_data {
             vertex.x += dx;
             vertex.y += dy;
         }
     }
 
-    pub fn scale_mut(&mut self, scale: f64) {
-        for vertex in &mut self.vertex_data {
-            vertex.x *= scale;
-            vertex.y *= scale;
-        }
-    }
-
     pub fn sample_points(&self, max_angle_step: f64) -> Vec<[f64; 2]> {
+        if !self.curve_data.is_empty() {
+            let mut points = Vec::new();
+            for primitive in &self.curve_data {
+                primitive.append_samples(&mut points, max_angle_step);
+            }
+            points.dedup_by(|a, b| {
+                (a[0] - b[0]).abs() <= DISPLAY_COORD_EPS && (a[1] - b[1]).abs() <= DISPLAY_COORD_EPS
+            });
+            return points;
+        }
+
         let mut points = Vec::new();
         let mut first = true;
-        for (start, end) in self.segments() {
+        for (start, end) in self.legacy_segments() {
             if first {
                 points.push([start.x, start.y]);
                 first = false;
@@ -137,7 +481,7 @@ impl Polyline {
     }
 
     pub fn signed_area_estimate(&self) -> f64 {
-        if !self.is_closed || self.vertex_data.len() < 2 {
+        if !self.is_closed || self.handles().len() < 2 {
             return 0.0;
         }
 
@@ -159,10 +503,18 @@ impl Polyline {
         for (index, vertex) in self.vertex_data.iter().copied().enumerate() {
             vertex.validate_finite(index)?;
         }
+        for (index, primitive) in self.curve_data.iter().enumerate() {
+            primitive
+                .validate_finite(index)
+                .map_err(|error| format!("curve primitive {index}: {error}"))?;
+        }
         Ok(())
     }
 
     pub fn to_curve_string(&self) -> Result<CurveString2, String> {
+        if !self.curve_data.is_empty() {
+            return self.to_sampled_polyline(0.04).to_curve_string();
+        }
         if self.vertex_data.len() < 2 {
             return Err("a curve string needs at least two vertices".into());
         }
@@ -171,6 +523,9 @@ impl Polyline {
     }
 
     pub fn to_contour(&self) -> Result<HContour, String> {
+        if !self.curve_data.is_empty() {
+            return self.to_sampled_polyline(0.04).to_contour();
+        }
         if !self.is_closed {
             return Err("polyline must be closed".into());
         }
@@ -284,8 +639,23 @@ impl Polyline {
             vertices.push(Vertex::new(x, y, 0.0));
         }
         Self {
+            curve_data: Vec::new(),
             vertex_data: vertices,
             is_closed: closed,
+            is_hole: false,
+        }
+    }
+
+    fn to_sampled_polyline(&self, max_angle_step: f64) -> Self {
+        Self {
+            curve_data: Vec::new(),
+            vertex_data: self
+                .sample_points(max_angle_step)
+                .into_iter()
+                .map(|point| Vertex::new(point[0], point[1], 0.0))
+                .collect(),
+            is_closed: self.is_closed,
+            is_hole: self.is_hole,
         }
     }
 
@@ -327,6 +697,82 @@ pub struct Shape {
     pub holes: Vec<Polyline>,
 }
 
+pub fn curve_showcase_contour(origin_x: f64, origin_y: f64, scale: f64) -> Polyline {
+    let a = demo_vertex(origin_x, origin_y, scale, -3.0, -1.0, 0.0);
+    let b = demo_vertex(origin_x, origin_y, scale, -1.9, -1.25, 0.0);
+    let c = demo_vertex(origin_x, origin_y, scale, -0.65, -0.7, 0.0);
+    let d = demo_vertex(origin_x, origin_y, scale, 0.65, -0.65, 0.0);
+    let e = demo_vertex(origin_x, origin_y, scale, 2.2, -0.8, 0.0);
+    let f = demo_vertex(origin_x, origin_y, scale, 3.25, 1.1, 0.0);
+    let g = demo_vertex(origin_x, origin_y, scale, 1.2, 1.75, 0.0);
+    let h = demo_vertex(origin_x, origin_y, scale, -2.65, 1.15, 0.0);
+
+    Polyline::from_curve_data(
+        vec![
+            CurvePrimitive::Line { start: a, end: b },
+            CurvePrimitive::CircularArc {
+                start: b,
+                end: c,
+                bulge: 0.46,
+            },
+            CurvePrimitive::QuadraticBezier {
+                start: c,
+                control: demo_vertex(origin_x, origin_y, scale, -0.05, 1.15, 0.0),
+                end: d,
+            },
+            CurvePrimitive::CubicBezier {
+                start: d,
+                control1: demo_vertex(origin_x, origin_y, scale, 0.8, -2.15, 0.0),
+                control2: demo_vertex(origin_x, origin_y, scale, 1.75, 0.95, 0.0),
+                end: e,
+            },
+            CurvePrimitive::RationalQuadratic {
+                start: e,
+                control: demo_vertex(origin_x, origin_y, scale, 3.05, 1.0, 0.0),
+                end: f,
+                control_weight: 0.36,
+            },
+            CurvePrimitive::Line { start: f, end: g },
+            CurvePrimitive::Line { start: g, end: h },
+            CurvePrimitive::Line { start: h, end: a },
+        ],
+        true,
+    )
+}
+
+pub fn curve_showcase_polylines(origin_x: f64, origin_y: f64, scale: f64) -> Vec<Polyline> {
+    vec![
+        curve_showcase_contour(origin_x, origin_y, scale),
+        quadratic_lens(
+            origin_x - 1.15 * scale,
+            origin_y + 0.18 * scale,
+            0.48 * scale,
+            false,
+        )
+        .marked_hole(),
+        cubic_lens(
+            origin_x + 0.55 * scale,
+            origin_y + 0.18 * scale,
+            0.46 * scale,
+            true,
+        ),
+        rational_lens(
+            origin_x + 1.85 * scale,
+            origin_y + 0.18 * scale,
+            0.43 * scale,
+            false,
+        )
+        .marked_hole(),
+        circular_lens(
+            origin_x + 0.15 * scale,
+            origin_y - 0.56 * scale,
+            0.38 * scale,
+            false,
+        )
+        .marked_hole(),
+    ]
+}
+
 impl Shape {
     pub fn from_materials(materials: Vec<Polyline>) -> Self {
         Self {
@@ -339,10 +785,12 @@ impl Shape {
         let mut materials = Vec::new();
         let mut holes = Vec::new();
         for polyline in polylines {
-            if polyline.vertex_data.len() < 2 {
+            if polyline.handles().len() < 2 {
                 continue;
             }
-            if polyline.is_counter_clockwise() {
+            if polyline.is_hole {
+                holes.push(polyline);
+            } else if polyline.is_counter_clockwise() {
                 materials.push(polyline);
             } else {
                 holes.push(polyline);
@@ -718,11 +1166,13 @@ fn polyline_from_geo_ring(ring: &LineString<f64>) -> Option<Polyline> {
         return None;
     }
     Some(Polyline {
+        curve_data: Vec::new(),
         vertex_data: coords
             .into_iter()
             .map(|coord| Vertex::new(coord.x, coord.y, 0.0))
             .collect(),
         is_closed: true,
+        is_hole: false,
     })
 }
 
@@ -809,6 +1259,145 @@ fn real_to_f64(value: &HReal) -> f64 {
     value
         .to_f64_lossy()
         .unwrap_or_else(|| f64::from(value.clone()))
+}
+
+fn demo_vertex(origin_x: f64, origin_y: f64, scale: f64, x: f64, y: f64, bulge: f64) -> Vertex {
+    Vertex::new(origin_x + x * scale, origin_y + y * scale, bulge)
+}
+
+fn quadratic_lens(origin_x: f64, origin_y: f64, scale: f64, ccw: bool) -> Polyline {
+    let a = demo_vertex(origin_x, origin_y, scale, -1.0, 0.0, 0.0);
+    let b = demo_vertex(origin_x, origin_y, scale, 1.0, 0.0, 0.0);
+    let c = demo_vertex(origin_x, origin_y, scale, 1.0, -0.42, 0.0);
+    let d = demo_vertex(origin_x, origin_y, scale, -1.0, -0.42, 0.0);
+    oriented_curve_data(
+        vec![
+            CurvePrimitive::QuadraticBezier {
+                start: a,
+                control: demo_vertex(origin_x, origin_y, scale, 0.0, 0.85, 0.0),
+                end: b,
+            },
+            CurvePrimitive::Line { start: b, end: c },
+            CurvePrimitive::Line { start: c, end: d },
+            CurvePrimitive::Line { start: d, end: a },
+        ],
+        ccw,
+    )
+}
+
+fn cubic_lens(origin_x: f64, origin_y: f64, scale: f64, ccw: bool) -> Polyline {
+    let a = demo_vertex(origin_x, origin_y, scale, -1.0, -0.1, 0.0);
+    let b = demo_vertex(origin_x, origin_y, scale, 1.0, 0.12, 0.0);
+    oriented_curve_data(
+        vec![
+            CurvePrimitive::CubicBezier {
+                start: a,
+                control1: demo_vertex(origin_x, origin_y, scale, -0.45, 0.95, 0.0),
+                control2: demo_vertex(origin_x, origin_y, scale, 0.45, -0.75, 0.0),
+                end: b,
+            },
+            CurvePrimitive::CubicBezier {
+                start: b,
+                control1: demo_vertex(origin_x, origin_y, scale, 0.5, -0.9, 0.0),
+                control2: demo_vertex(origin_x, origin_y, scale, -0.55, 0.35, 0.0),
+                end: a,
+            },
+        ],
+        ccw,
+    )
+}
+
+fn rational_lens(origin_x: f64, origin_y: f64, scale: f64, ccw: bool) -> Polyline {
+    let a = demo_vertex(origin_x, origin_y, scale, -1.0, -0.05, 0.0);
+    let b = demo_vertex(origin_x, origin_y, scale, 1.0, -0.05, 0.0);
+    let c = demo_vertex(origin_x, origin_y, scale, 1.0, -0.48, 0.0);
+    let d = demo_vertex(origin_x, origin_y, scale, -1.0, -0.48, 0.0);
+    oriented_curve_data(
+        vec![
+            CurvePrimitive::RationalQuadratic {
+                start: a,
+                control: demo_vertex(origin_x, origin_y, scale, 0.0, 1.1, 0.0),
+                end: b,
+                control_weight: 0.34,
+            },
+            CurvePrimitive::Line { start: b, end: c },
+            CurvePrimitive::Line { start: c, end: d },
+            CurvePrimitive::Line { start: d, end: a },
+        ],
+        ccw,
+    )
+}
+
+fn circular_lens(origin_x: f64, origin_y: f64, scale: f64, ccw: bool) -> Polyline {
+    let a = demo_vertex(origin_x, origin_y, scale, -0.9, 0.0, 0.0);
+    let b = demo_vertex(origin_x, origin_y, scale, 0.9, 0.0, 0.0);
+    oriented_curve_data(
+        vec![
+            CurvePrimitive::CircularArc {
+                start: a,
+                end: b,
+                bulge: 0.42,
+            },
+            CurvePrimitive::CircularArc {
+                start: b,
+                end: a,
+                bulge: 0.42,
+            },
+        ],
+        ccw,
+    )
+}
+
+fn sample_quadratic_vertices(curve: &QuadraticBezier2, steps: usize) -> Vec<Vertex> {
+    (0..=steps)
+        .map(|index| curve.point_at(Real::try_from(index as f64 / steps as f64).unwrap()))
+        .map(vertex_from_point)
+        .collect()
+}
+
+fn sample_cubic_vertices(curve: &CubicBezier2, steps: usize) -> Vec<Vertex> {
+    (0..=steps)
+        .map(|index| curve.point_at(Real::try_from(index as f64 / steps as f64).unwrap()))
+        .map(vertex_from_point)
+        .collect()
+}
+
+fn sample_rational_quadratic_vertices(
+    curve: &RationalQuadraticBezier2,
+    steps: usize,
+) -> Vec<Vertex> {
+    (0..=steps)
+        .filter_map(|index| {
+            match curve.point_at(
+                Real::try_from(index as f64 / steps as f64).unwrap(),
+                &policy(),
+            ) {
+                Classification::Decided(point) => Some(vertex_from_point(point)),
+                Classification::Uncertain(_) => None,
+            }
+        })
+        .collect()
+}
+
+fn vertex_from_point(point: Point2) -> Vertex {
+    let (x, y) = hpoint_xy(&point);
+    Vertex::new(x, y, 0.0)
+}
+
+fn oriented_curve_data(mut curve_data: Vec<CurvePrimitive>, ccw: bool) -> Polyline {
+    let polyline = Polyline::from_curve_data(curve_data.clone(), true);
+    if polyline.is_counter_clockwise() != ccw {
+        curve_data = reverse_curve_data(curve_data);
+    }
+    Polyline::from_curve_data(curve_data, true)
+}
+
+fn reverse_curve_data(curve_data: Vec<CurvePrimitive>) -> Vec<CurvePrimitive> {
+    curve_data
+        .into_iter()
+        .rev()
+        .map(CurvePrimitive::reversed)
+        .collect()
 }
 
 fn vertex_for_segment_start(segment: &HSegment) -> Vertex {

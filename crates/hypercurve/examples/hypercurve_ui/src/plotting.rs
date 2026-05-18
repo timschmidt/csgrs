@@ -65,7 +65,7 @@ pub fn find_near_vertex(
     polylines: &[Polyline],
 ) -> Option<(usize, usize)> {
     for (pline_index, polyline) in polylines.iter().enumerate() {
-        for (vertex_index, vertex) in polyline.iter_vertexes().enumerate() {
+        for (vertex_index, vertex) in polyline.handles().into_iter().enumerate() {
             let screen = plot_ui.screen_from_plot(PlotPoint::new(vertex.x, vertex.y));
             let hit_size = 2.0 * (plot_ui.ctx().input(|i| i.aim_radius()) + PLOT_VERTEX_RADIUS);
             let hit_box = egui::Rect::from_center_size(screen, egui::Vec2::splat(hit_size));
@@ -90,7 +90,7 @@ impl DrawPolyline {
         points.dedup_by(|a, b| points_equal(*a, *b));
         Self {
             points,
-            vertices: polyline.iter_vertexes().map(|v| [v.x, v.y]).collect(),
+            vertices: polyline.handles().into_iter().map(|v| [v.x, v.y]).collect(),
             closed: polyline.is_closed(),
         }
     }

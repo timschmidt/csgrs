@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::editor::PolylineEditor;
 use crate::geometry::{
     BooleanMode, Polyline, Shape, boolean_polylines, contour_intersections, contour_slices,
+    curve_showcase_contour, curve_showcase_polylines,
 };
 use crate::plotting::{draw_points, draw_polyline, draw_shape, find_near_vertex};
 use crate::theme::Theme;
@@ -191,27 +192,8 @@ pub struct PlineBooleanScene {
 
 impl Default for PlineBooleanScene {
     fn default() -> Self {
-        let first = Polyline::closed(&[
-            (10.0, 10.0, -0.5),
-            (0.3, 1.0, 0.374794619217547),
-            (21.0, 0.0, 0.0),
-            (23.0, 0.0, 1.0),
-            (32.0, 0.0, -0.5),
-            (28.0, 0.0, 0.5),
-            (39.0, 21.0, 0.0),
-            (28.0, 12.0, 0.5),
-        ]);
-        let mut second = Polyline::closed(&[
-            (10.0, 10.0, -0.5),
-            (8.0, 9.0, 0.374794619217547),
-            (21.0, 0.0, 0.0),
-            (23.0, 0.0, 1.0),
-            (32.0, 0.0, -0.5),
-            (28.0, 0.0, 0.5),
-            (38.0, 19.0, 0.0),
-            (28.0, 12.0, 0.5),
-        ]);
-        second.scale_mut(0.5);
+        let first = curve_showcase_contour(0.0, 0.0, 6.2);
+        let second = curve_showcase_contour(3.5, 1.8, 4.2);
         let polylines = vec![first, second];
         let mut editor = PolylineEditor::dual("Polyline Editor");
         editor.initialize_with_polylines(polylines.clone());
@@ -406,16 +388,7 @@ pub struct PlineOffsetScene {
 
 impl Default for PlineOffsetScene {
     fn default() -> Self {
-        let polyline = Polyline::closed(&[
-            (10.0, 10.0, -0.5),
-            (8.0, 9.0, 0.374794619217547),
-            (21.0, 0.0, 0.0),
-            (23.0, 0.0, 1.0),
-            (32.0, 0.0, -0.5),
-            (28.0, 0.0, 0.5),
-            (39.0, 21.0, 0.0),
-            (28.0, 12.0, 0.5),
-        ]);
+        let polyline = curve_showcase_contour(0.0, 0.0, 6.4);
         let polylines = vec![polyline];
         let mut editor = PolylineEditor::single("Vertex Editor");
         editor.initialize_with_polylines(polylines.clone());
@@ -865,8 +838,14 @@ struct DragState {
 
 #[derive(Default)]
 struct ShapeDragState {
-    grabbed: Option<(usize, usize, usize)>,
+    grabbed: Option<(usize, ShapeContourRole, usize, usize)>,
     dragging_plot: bool,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ShapeContourRole {
+    Material,
+    Hole,
 }
 
 const MAX_SHARED_POLYLINES: usize = 256;
@@ -885,12 +864,12 @@ fn validate_polylines(polylines: &[Polyline], min_count: usize, label: &str) -> 
 
     let mut vertices = 0usize;
     for (index, polyline) in polylines.iter().enumerate() {
-        if polyline.vertex_data.len() < 2 {
+        if polyline.handles().len() < 2 {
             return Err(format!(
                 "{label} polyline {index} needs at least two vertices"
             ));
         }
-        vertices = vertices.saturating_add(polyline.vertex_data.len());
+        vertices = vertices.saturating_add(polyline.handles().len());
         polyline
             .validate_finite()
             .map_err(|error| format!("{label} polyline {index}: {error}"))?;
@@ -945,14 +924,12 @@ fn handle_polyline_drag(
         let delta = plot_ui.pointer_coordinate_drag_delta();
         if let Some(vertex) = polylines
             .get(pline_index)
-            .and_then(|polyline| polyline.get(vertex_index))
-            .copied()
+            .and_then(|polyline| polyline.handle(vertex_index))
         {
-            polylines[pline_index].set(
+            polylines[pline_index].set_handle(
                 vertex_index,
                 vertex.x + f64::from(delta.x),
                 vertex.y + f64::from(delta.y),
-                vertex.bulge,
             );
         }
         return;
@@ -980,20 +957,21 @@ fn handle_shape_drag(
         state.dragging_plot = false;
         return;
     }
-    if let Some((shape_index, pline_index, vertex_index)) = state.grabbed {
+    if let Some((shape_index, role, pline_index, vertex_index)) = state.grabbed {
         let delta = plot_ui.pointer_coordinate_drag_delta();
         let shape = if shape_index == 0 { first } else { second };
-        if let Some(vertex) = shape
-            .materials
+        let polylines = match role {
+            ShapeContourRole::Material => &mut shape.materials,
+            ShapeContourRole::Hole => &mut shape.holes,
+        };
+        if let Some(vertex) = polylines
             .get(pline_index)
-            .and_then(|polyline| polyline.get(vertex_index))
-            .copied()
+            .and_then(|polyline| polyline.handle(vertex_index))
         {
-            shape.materials[pline_index].set(
+            polylines[pline_index].set_handle(
                 vertex_index,
                 vertex.x + f64::from(delta.x),
                 vertex.y + f64::from(delta.y),
-                vertex.bulge,
             );
         }
         return;
@@ -1005,14 +983,24 @@ fn handle_shape_drag(
     if plot_ui.ctx().input(|i| i.pointer.any_pressed())
         && let Some(coord) = plot_ui.ctx().pointer_interact_pos()
     {
-        state.grabbed = find_near_vertex(plot_ui, coord, &first.materials)
-            .map(|(pline, vertex)| (0, pline, vertex))
-            .or_else(|| {
-                find_near_vertex(plot_ui, coord, &second.materials)
-                    .map(|(pline, vertex)| (1, pline, vertex))
-            });
+        state.grabbed = find_near_shape_vertex(plot_ui, coord, 0, first)
+            .or_else(|| find_near_shape_vertex(plot_ui, coord, 1, second));
         state.dragging_plot = state.grabbed.is_none();
     }
+}
+
+fn find_near_shape_vertex(
+    plot_ui: &egui_plot::PlotUi<'_>,
+    coord: egui::Pos2,
+    shape_index: usize,
+    shape: &Shape,
+) -> Option<(usize, ShapeContourRole, usize, usize)> {
+    find_near_vertex(plot_ui, coord, &shape.materials)
+        .map(|(pline, vertex)| (shape_index, ShapeContourRole::Material, pline, vertex))
+        .or_else(|| {
+            find_near_vertex(plot_ui, coord, &shape.holes)
+                .map(|(pline, vertex)| (shape_index, ShapeContourRole::Hole, pline, vertex))
+        })
 }
 
 fn mode_combo(ui: &mut egui::Ui, id: &str, mode: &mut BooleanSceneMode) {
@@ -1034,46 +1022,11 @@ fn mode_combo(ui: &mut egui::Ui, id: &str, mode: &mut BooleanSceneMode) {
 }
 
 fn default_multi_boolean_plines() -> Vec<Polyline> {
-    vec![
-        Polyline::closed(&[
-            (100.0, 100.0, -0.5),
-            (80.0, 90.0, 0.374794619217547),
-            (210.0, 0.0, 0.0),
-            (230.0, 0.0, 1.0),
-            (320.0, 0.0, -0.5),
-            (280.0, 0.0, 0.5),
-            (390.0, 210.0, 0.0),
-            (280.0, 120.0, 0.5),
-        ]),
-        Polyline::closed(&[
-            (150.0, 50.0, 0.0),
-            (150.0, 100.0, 0.0),
-            (223.74732137849435, 142.16931273980475, 0.0),
-            (199.491310072685, 52.51543504258919, 0.5),
-        ]),
-        Polyline::closed(&[
-            (261.11232783167395, 35.79686193615828, -1.0),
-            (250.0, 100.0, -1.0),
-        ]),
-        Polyline::closed(&[
-            (320.2986109239592, 103.52378781211337, 0.0),
-            (320.5065990423979, 76.14222955572362, -1.0),
-        ]),
-        Polyline::closed(&[
-            (273.6131273938006, -13.968608715397636, -0.3),
-            (256.61336060995995, -25.49387433156079, 0.0),
-            (249.69820124026208, 27.234215862385582, 0.0),
-        ]),
-    ]
+    curve_showcase_polylines(0.0, 0.0, 55.0)
 }
 
 fn default_multi_offset_plines() -> Vec<Polyline> {
-    let mut plines = default_multi_boolean_plines();
-    plines[3] = Polyline::closed(&[
-        (320.5065990423979, 76.14222955572362, -1.0),
-        (320.2986109239592, 103.52378781211337, 0.0),
-    ]);
-    plines
+    curve_showcase_polylines(0.0, 0.0, 55.0)
 }
 
 fn multi_color(index: usize) -> egui::Color32 {
