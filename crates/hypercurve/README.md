@@ -3,356 +3,133 @@
   <img src="./doc/hypercurve.png" alt="Hyper, a clever mathematician" width="144" align="right">
 </h1>
 
-`hypercurve` is a planar curve kernel for line, circular-arc, and first
-polynomial Bezier geometry in the hyperreal geometry stack. The current
-implementation focuses on
-exactness-aware topology: segment intersections, closed-contour containment,
-signed region views, region-pair event extraction, fragment splitting, prepared
-query views, and the first region boolean / offset pipeline.
+`hypercurve` is the planar curved-topology crate for the Hyper geometry stack. It owns
+line, circular-arc, polynomial Bezier, rational-conic, contour, region,
+boolean-boundary, offset, fitting, flattening, and prepared-query surfaces over
+`hyperreal::Real` values.
 
-The crate keeps exact bulge-derived line and circular-arc semantics where they
-are useful, but the native APIs expose explicit uncertainty for tangent,
-overlap, boundary, and unsupported cases instead of silently resolving them
-through global epsilon rules.
+The crate is not yet a complete general boolean or offset engine. It is already useful
+as a native exact-aware curve model and as the place where unresolved tangent, overlap,
+root-isolation, trimming, and boundary cases stay explicit instead of being hidden by
+display polylines.
 
 ## WASM Demo
 
-The deployed WASM app is available at
-<https://timschmidt.github.io/hypercurve/>.
+The deployed WASM app is available at <https://timschmidt.github.io/hypercurve/>.
 
 ## Hyper Ecosystem
 
-`hypercurve` is the 2D curved-topology layer: it owns contours, regions,
-offsets, and curve relations while `hypertri` handles line-only triangulation.
+`hypercurve` is the 2D curved-geometry layer.
 
-- [hyperreal](https://github.com/timschmidt/hyperreal): exact rational, symbolic, and computable
-  real arithmetic.
-- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate policy and certified
-  geometric decisions.
-- [hyperlattice](https://github.com/timschmidt/hyperlattice): small exact vector, matrix, and
-  transform algebra.
-- [hypercurve](https://github.com/timschmidt/hypercurve): planar curve, contour, region, and
-  boolean geometry.
-- [hypertri](https://github.com/timschmidt/hypertri): exact polygon triangulation and constrained
-  Delaunay topology.
-- [hypermesh](https://github.com/timschmidt/boolmesh): 3D mesh boolean experiments and the
-  future exact-aware mesh-topology layer.
-- [hypersolve](https://github.com/timschmidt/hypersolve): experimental exact-aware solver layer.
-- [hyperdrc](https://github.com/timschmidt/hyperdrc): PCB design-readiness checks over exact-aware
-  geometry adapters.
-- [hyperphysics](https://github.com/timschmidt/hyperphysics): placeholder physics-domain crate
-  for the exact geometry stack.
-- [csgrs](https://github.com/timschmidt/csgrs): constructive solid geometry and polygon boolean
-  engine used by HyperDRC and available as an interop target.
+- [hyperreal](https://github.com/timschmidt/hyperreal): exact scalar values for curve
+  coordinates, parameters, and certificates.
+- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate policy for
+  sidedness, incidence, and sign decisions.
+- [hyperlattice](https://github.com/timschmidt/hyperlattice): vector and transform
+  facts used by higher geometry and domain crates.
+- [hypertri](https://github.com/timschmidt/hypertri): line-only triangulation target for
+  polygonalized or straight-edge regions.
+- [hyperdrc](https://github.com/timschmidt/hyperdrc),
+  [hyperpath](https://github.com/timschmidt/hyperpath), and
+  [hyperparts](https://github.com/timschmidt/hyperparts): domain crates that should
+  hand curve, contour, and region evidence here instead of resolving topology with local
+  float tolerances.
 
-## Numeric Model
+## Typical Curve Problems
 
-`hypercurve` stores and decides core geometry with `hyperreal::Real`
-values. Primitive `f64` appears only in named edge conversions, tests,
-benchmarks, and rendering/IO helpers. There is no approximate numeric mode
-feature.
+Curved planar geometry combines robust-predicate failures with representation failures:
+tangent contacts, overlapping arcs, nearly coincident boundaries, Bezier roots, offset
+self-intersections, and lossy chordization. Fixed epsilons can make one fixture pass and
+the next fail; eager exact algebra can also expand before broad-phase filters eliminate
+obvious misses.
 
-## Traditional Curve Problems
+`hypercurve` stages the work. Native curve objects keep exact control structure,
+prepared views and boxes reduce candidate sets, low-degree certificates are promoted
+when available, and unresolved tangent, overlap, root-isolation, trimming, or topology
+cases are reported explicitly instead of hidden behind display polylines.
 
-Curved planar geometry combines all the usual robust-predicate failures with
-extra representation problems: tangent contacts, overlapping arcs, nearly
-coincident boundaries, Bezier roots, offset self-intersections, and lossy
-chordization. A fixed epsilon can make a boolean pass one fixture and fail the
-next; eager exact algebra can also explode before broad-phase filters have
-removed obvious misses.
+## Main Types
 
-`hypercurve` therefore stages work. It keeps native curve objects and exact
-control structure, uses boxes and prepared views to cut candidate sets, promotes
-low-degree exact certificates when they are available, and returns explicit
-uncertainty or parameter regions for cases needing a complete root solver.
-Flattening, fitting, simplification, and display offsets are represented as
-certified or display-only adapters rather than hidden replacements for the
-topology model.
+- `Point2`, `LineSeg2`, `CircularArc2`, `Segment2`, `CurveString2`, `Contour2`,
+  `Region2`, and `RegionView2` are the main planar geometry objects.
+- `QuadraticBezier2`, `CubicBezier2`, `RationalQuadraticBezier2`, and their fact,
+  relation, metric, fitting, flattening, and offset reports represent polynomial and
+  rational curve work.
+- `Aabb2`, prepared line/arc/curve-string/contour/region views, and segment/region fact
+  types preserve repeated-query structure.
+- Boolean, event, fragment, split, and boundary-loop types describe staged region
+  boolean assembly.
+- `CurvePolicy`, `Classification<T>`, and uncertainty enums make exact, unresolved, and
+  adapter-facing decisions explicit.
+- Finite projection, reconstruction, bulge, and display/certified polyline types define
+  IO and display boundaries.
 
-## Semantic Boundary and Structural Facts
+## Precision Model
 
-`hypercurve` owns planar curve and region semantics: line and circular-arc
-segments, curve strings, closed contours, material/hole bins, prepared
-broad-phase views, boolean boundary traversal, offset policy, and uncertainty
-for curve-topology cases that are not yet resolved.
+Native geometry uses `Real` coordinates. Primitive floats appear only in named finite
+projection, reconstruction, test, benchmark, rendering, or IO helpers. Bulge imports,
+flattened polylines, display offsets, and finite projections carry certificates or
+adapter status so callers can tell whether they are using topology evidence or display
+geometry.
 
-It does not own Real representation, small linear algebra kernels, generic
-predicate policy, triangulation topology, solver active sets, or PCB/CAM domain
-metadata. Real facts come from `hyperreal`, optional vector and transform
-facts come from `hyperlattice`, exact sidedness/incidence decisions from
-`hyperlimit`, and line-only triangulation should be delegated to `hypertri`.
+The crate promotes exact low-degree certificates where it can: line/arc relations,
+selected Bezier roots, monotone graph ordering, exact area and moment contributions,
+length intervals, zero-error simplification, and zero-error line/point fitting. Cases
+that need a more complete root solver or offset trimmer return unresolved regions or
+explicit uncertainty.
 
-Prepared curve and region objects should continue to retain structural metadata
-where it is discovered cheaply: bounding boxes, segment kind, endpoint equality
-classes, exact ring area/winding, material-versus-hole role, monotone arc spans,
-parameter ranges, tangent/contact hints, and source ids. Those facts are
-valuable for selecting exact line-line, line-arc, and arc-arc kernels and for
-reducing broad-phase work. They should not collapse into primitive-float
-topology decisions; lossy chordization or export must stay behind explicit
-policies.
+## Performance Model
+
+`hypercurve` avoids numerical explosion by keeping curve objects native and using
+structure before generic algebra. Bounding boxes, segment kind, endpoint equality,
+monotone spans, material/hole role, prepared views, low-degree dispatch, dyadic
+candidate promotion, and source metadata all reduce the number of exact predicates and
+root checks.
+
+Prepared curve-string, contour, and region views cache conservative boxes and predicate
+handles for repeated containment, self-contact, event, and boolean-boundary queries.
+Benchmarks track ordinary, prepared, and mixed-prepared paths so exactness work can be
+optimized where it matters.
 
 ## Current Status
 
-Core geometry:
+Implemented today:
 
-- Line and circular-arc segments with explicit intersection result types,
-  including finite same-circle arc overlap intervals.
-- Polynomial quadratic and cubic Bezier object types that store exact `Real`
-  control points, evaluate with de Casteljau subdivision, expose certified
-  control-hull boxes, and retain structural facts for derivative edges, second
-  differences, curvature witnesses, exact-rational schedules, and symbolic
-  dependencies.
-- First polynomial Bezier topology predicates: exact derivative-root monotone
-  decomposition, certified endpoint/extrema bounds, quadratic line-root
-  relation, represented line-root crossing/tangent contact classification,
-  cubic supporting-line root isolation, coarse curve/curve disjoint/shared-
-  endpoint relations, exact cusp checks from common derivative roots, and
-  cubic inflection parameters.
-- Rational quadratic Bezier/conic object type with exact homogeneous
-  evaluation, structural coordinate/weight facts, and certified conic-family
-  classification from the weight discriminant.
-- First rational-conic predicates for parameterized point membership and
-  exact point-on-conic parameter recovery through homogeneous coordinate
-  equations, supporting-line relation through the exact weighted Bernstein
-  numerator, represented line-contact crossing/tangent classification through
-  the weighted numerator derivative, plus quotient-derivative monotone
-  decomposition and certified bounds, with projective denominator boundaries
-  reported as uncertainty.
-- Coarse rational-conic curve/curve relation for exact homogeneous identity,
-  projective homogeneous weight-scaling identity, same-sign convex-hull
-  disjointness, exact native line-line intersection dispatch for certified
-  endpoint line-segment images, equal-weight collapse into polynomial Bezier
-  predicates, exact shared endpoints, endpoint-on-conic hits, and
-  same-parameter matching-weight conic roots when the scalar numerator
-  difference is certified by the current exact quadratic solver.
-- Mixed polynomial quadratic/cubic curve relation through exact shared
-  endpoints and certified Bezier bounds, with overlapping boxes left explicit
-  for a later root-isolation solver.
-- Polynomial Bezier curve/curve subdivision regions that cover all remaining
-  possible intersections after exact control-hull box pruning and narrower
-  algebraic dispatches.
-- Exact same-parameter polynomial quadratic/quadratic intersection dispatch,
-  returning certified interior crossing points before generic subdivision, and
-  certifying no-intersection for degree-normalized shared-axis strictly
-  monotone quadratic/cubic graph pairs whose remaining coordinate is
-  sign-separated in Bernstein form.
-- Exact degree-elevated quadratic/cubic polynomial image equality, reported
-  before endpoint-only overlap checks.
-- Exact same-parameter dyadic candidate promotion through
-  five-hundred-twelfths for mixed quadratic/cubic and native cubic/cubic
-  polynomial Bezier pairs after degree normalization, with prepared integer
-  Bernstein weights reused across coordinate predicates at each candidate and
-  certified shared-coordinate schedules that skip tautological axis predicates
-  and sign-prune dyadic graph candidates by Bernstein control polygons before
-  exact evaluation.
-- Exact same-parameter cubic Bernstein root isolation for graph-shaped
-  quadratic/cubic and cubic/cubic pairs with a certified shared strictly
-  monotone coordinate, returning exact no-hit decisions, exact point regions
-  for representable roots, and retained same-parameter brackets for
-  irreducible roots instead of hiding additional graph intersections behind a
-  finite dyadic hit.
-- Certified monotone graph-order predicates for polynomial Bezier pairs with
-  one shared strictly monotone degree-normalized coordinate, returning strict
-  ordering or retained same-parameter touch/crossing candidates for future
-  path-operation boolean dispatch.
-- Certified monotone graph-order predicate for matching-weight rational
-  quadratic conics with one shared strictly monotone coordinate, sign-normalized
-  across uniformly negative homogeneous weights and retaining exact/bracketed
-  same-parameter candidates instead of sampling around possible contacts.
-- Mixed rational/polynomial graph-order predicates for the equal-weight conic
-  case, where the rational quadratic collapses exactly to the polynomial
-  quadratic image before ordering against polynomial quadratic or cubic
-  partners. Non-equal rational/polynomial graph pairs can also certify strict
-  order when one coordinate is exactly shared and the homogeneous Bernstein
-  numerator has one strict sign: degree 4 for quadratic partners and degree 5
-  for cubic partners. Non-strict mixed quartic/quintic graph roots are retained
-  by exact Bernstein sign subdivision as represented parameters or isolating
-  spans. The curve/curve relation dispatcher consumes strict certificates as
-  exact no-intersection decisions and graph-root certificates as exact points
-  or conservative same-parameter regions.
-- Broader non-graph same-parameter cubic candidate isolation for
-  degree-normalized quadratic/cubic and cubic/cubic pairs. This path does not
-  claim unrelated-parameter intersections are absent; it promotes represented
-  algebraic candidates such as deep dyadic roots beyond the finite grid and
-  retains conservative brackets for irreducible cubic candidates.
-- Same-parameter quadratic/quadratic algebraic roots are dispatched before the
-  finite dyadic grid, including non-dyadic rational parameters that the
-  five-hundred-twelfth frontier cannot represent.
-- Certified dyadic point-parameter probes for cubic Beziers, reused to promote
-  endpoint-on-cubic intersections before generic subdivision while keeping the
-  complete point-on-cubic solver explicit future work.
-- Exact native line-line intersection dispatch when polynomial Bezier control
-  polygons are certified to trace their endpoint line segments.
-- Exact supporting-line root dispatch when one polynomial Bezier is a certified
-  endpoint line image and the other curve has certified line roots, yielding
-  exact intersection points or certified no-intersection after finite-segment
-  containment.
-- Exact endpoint-on-quadratic dispatch for polynomial Bezier curve relations,
-  certifying endpoint hits that occur at interior quadratic parameters before
-  falling back to subdivision regions.
-- Exact polynomial quadratic point-on-curve parameter recovery, exposed as a
-  certified API and reused by endpoint-on-quadratic relation dispatch.
-- Certified polynomial Bezier length intervals using exact endpoint-chord lower
-  bounds and exact control-polygon upper bounds, with exact de Casteljau
-  subdivision refinement and prefix-interval bounds for tighter metric
-  enclosures plus inverse arc-length parameter regions. Exact degree-elevated
-  line parameterizations return zero-width inverse-length certificates for
-  non-dyadic targets without using sampled bisection.
-- Exact polynomial Bezier signed-area and first area-moment contributions,
-  prefix contributions through Green's-theorem boundary integrals, plus exact
-  signed-area and area-moment prefix-sum tables for fitting and simplification
-  ranges.
-- Mixed rational-conic/polynomial Bezier curve relation in both directions,
-  certifying equal-weight quadratic identity, same-sign hull
-  disjointness, exact native line-line intersection dispatch for certified
-  endpoint line-segment images, exact supporting-line root dispatch when one
-  side is a certified endpoint line image, exact shared endpoints,
-  endpoint-on-conic hits, exact same-parameter dyadic point promotion through
-  five-hundred-twelfths for quadratic and cubic polynomial partners, and
-  homogeneous subdivision regions for overlapping same-sign cases.
-- Certified polynomial Bezier flattening adapter that emits a polyline only
-  when exact hull-to-chord flatness is within the requested error budget,
-  retaining both the error budget and subdivision-depth budget.
-- Zero-error certified polyline simplification for flattened Beziers that only
-  removes exactly collinear interior vertices and emits a structured
-  simplification certificate with source/retained vertex counts and a
-  proven-zero polyline-image error bound, source flattening budget, and
-  construction policy.
-- Zero-error exact-line fitting for certified flattened Bezier polylines, with
-  the source flattening certificate retained on successful fits and a
-  structured fit certificate carrying source range, exact-zero error metric,
-  proven bound kind, source flattening budget, and construction policy. Left
-  and right exact primitive offsets retain both certificates.
-- Zero-error exact-point fitting for certified flattened Bezier polylines, with
-  the same structured fit certificate retained on successful fits.
-- Direct zero-error exact-line-image fitting for polynomial Bezier control
-  polygons and same-sign nonzero rational quadratic conics, with true left and
-  right line-primitive offsets for certified line images. Both the image fit
-  and its exact offset retain the control-range fit certificate.
-- Direct zero-error exact-point-image fitting for collapsed polynomial Bezier
-  control polygons and same-sign nonzero rational quadratic conics, with
-  control-range fit certificates.
-- Certified Bezier offset preflight reports polynomial cusp, inflection,
-  all-curvature-zero, endpoint-normal, closed-endpoint, and rational
-  projective-denominator risks before any parallel-curve approximation is
-  allowed to make a topology claim.
-- Staged polynomial and rational-quadratic Bezier left- and right-offset entry
-  points now emit exact line-primitive offsets for certified line images and
-  otherwise return an explicit unresolved payload carrying the signed
-  left-normal distance and offset preflight certificate. Exact staged line
-  offsets also retain the preflight certificate, and degenerate point images
-  keep an unresolved preflight payload instead of failing during the exact-line
-  primitive fit.
-- Exact point-image curve/curve dispatch for collapsed Bezier and rational
-  conic images, promoting certified hits and complete quadratic/conic misses
-  through exact point-parameter solvers.
-- Complete same-parameter graph dispatch for matching-weight rational conics
-  with a shared strictly monotone coordinate, certifying exact hits or no-hit
-  outcomes before homogeneous subdivision regions.
-- True line-primitive offsets for certified zero-error Bezier line fits, with
-  the flattened-source fit certificate preserved on the offset product.
-- Display-only left and right offset previews for certified flattened Bezier
-  polylines, with no topology claim beyond the source flattening certificate.
-- Checked left- and right-offset adapters for certified flattened Bezier
-  polylines. These route the certified chord string through the existing exact
-  curve-string offset/self-contact predicates, retaining the source flattening certificate
-  and returning explicit uncertainty when trimming would be required.
-- A supporting-line/full-circle predicate surface that classifies disjoint,
-  tangent, secant, and uncertain outcomes before finite segment and arc-sweep
-  filters are applied.
-- A full-circle/full-circle predicate surface that classifies coincident,
-  disjoint, tangent, secant, and uncertain outcomes before finite arc-sweep
-  filters are applied.
-- Exact bulge vertex helpers and bulge import/export for line and circular-arc
-  sweeps.
-- Axis-aligned bounding boxes for points, segments, curve strings, contours, and
-  regions, used as conservative broad-phase filters before exact curve
-  intersections, contour/region event collection, point classification, and
-  self-contact checks.
-- Closed contours with winding and boundary classification.
-- Owned and borrowed regions with explicit material and hole contour bins.
-- Polyline reconstruction can collapse sampled point runs into native line and
-  circular-arc curve strings or closed contours, using finite-difference
-  curvature witnesses and conservative tolerances at the IO boundary.
+- exact point, line-segment, circular-arc, bulge, curve-string, contour, region, and
+  bounding-box APIs;
+- polynomial quadratic/cubic Bezier and rational quadratic/conic objects with structural
+  facts, evaluation, subdivision, certified bounds, monotone spans, graph-order
+  predicates, and exact low-degree relation fast paths;
+- intersection surfaces for line/line, line/arc, arc/arc, Bezier contact cases, curve
+  strings, contours, regions, and prepared repeated-query views;
+- signed area, area moment, length interval, flattening, simplification, fitting, and
+  display/certified polyline offset adapters;
+- primitive line/arc offsets, checked offsets, cap styles, region event/fragment
+  extraction, boolean-boundary assembly, and conservative unresolved states.
 
-Offsets:
+Known limits: shared-boundary overlap beyond certified fast paths, full Bezier/rational
+root isolation, NURBS, and offset self-intersection trimming remain future work.
 
-- Primitive left offsets for line and circular-arc segments, with explicit
-  uncertainty when an arc offset would collapse or reverse radius.
-- Raw open curve-string and closed-contour left offsets with line joins:
-  line-line corners are mitered, while parallel, arc, and mixed joins use
-  circular join arcs until the full offset trim/rebuild pipeline is implemented.
-- Curve-string/contour self-contact detection and checked offset entry points
-  that reject raw joined offsets requiring self-intersection trimming.
-- Checked closed outlines for open curve strings using left/right offsets and a
-  selectable `OffsetCap` style: circular, straight butt, or square end caps.
+## Installation
 
-Prepared and repeated-query paths:
+```toml
+[dependencies]
+hypercurve = "0.1.0"
+```
 
-- Prepared borrowed curve-string, contour, and region views cache segment,
-  contour, and whole-region boxes for repeated self-contact, curve-string
-  intersection, contour/region point classification, and contour/region event
-  queries. They also retain per-segment prepared predicate handles for future
-  line/arc batches, route prepared curve-string pairs through those segment
-  handles, plus prepared region boolean-boundary loop,
-  checked-contour, and region-result traversal. Mixed prepared-vs-region event
-  and boolean wrappers reuse either prepared operand while transiently
-  preparing the ordinary side, without changing exact boundary semantics.
-- Prepared line-segment views cache exact predicate endpoint conversion and
-  structural facts for repeated supporting-line classifications while keeping
-  finite-segment containment semantics on the native segment type.
-- Prepared circular-arc views cache radial sweep predicates and structural arc
-  facts for repeated sweep and point-on-arc classification.
-- Region point classification skips contours whose bounding boxes are decidably
-  missed before exact boundary and winding tests.
+For sibling checkouts:
 
-Boolean and region pipeline:
+```toml
+[dependencies]
+hypercurve = { path = "../hypercurve" }
+```
 
-- Region-pair event collection and point-bearing fragment splitting.
-- Boolean fragment classification for union, intersection, difference, and xor.
-- Directed boundary-fragment emission, endpoint-connected chain assembly, and
-  closed-loop reconstruction into checked contours.
-- Region-level boolean boundary pipeline for producing closed result loops or
-  checked boundary contours when no unresolved topology remains.
-- Resolved boolean boundary contours can be nested into material/hole bins to
-  produce a `Region2` result.
-- Exact contour-bin boolean identities, including reordered bins, rotated start
-  vertices, and reversed traversal, are handled before general traversal so
-  coincident boundaries do not force uncertainty for `A op A`.
-- Empty-operand boolean identities are handled before traversal, preserving
-  material/hole roles for the nonempty region.
-- Region-result identity and empty-set fast paths clone explicit material/hole
-  bins directly, so valid touching-bin regions are not reinterpreted by
-  boundary-only nesting.
-- Boolean fragment emission is role-aware: selected fragments from hole
-  contours are oriented as negative-fill edges before chain assembly.
-- Region-level xor is assembled from the two one-sided differences and merges
-  their explicit signed bins, preserving boundary-touching components.
-- Checked boundary-contour xor uses the same symmetric-difference region path
-  before exposing unassigned boundary loops.
-- Boundary-only contacts are certified before traversal: point contacts use
-  regularized set identities, and external shared-edge contacts drop coincident
-  zero-area edges for union/xor output.
-- Boundary-touching containment identities are handled before traversal for
-  union, intersection, and contained-minus-container difference.
-- Container-minus-boundary-touching-subset difference is rebuilt for certified
-  shared-edge containment by dropping the coincident zero-area boundary and
-  assembling the remaining directed fragments into the notched result.
-Known limits:
+Feature summary:
 
-- This crate is not yet a complete boolean or offset engine.
-- Shared-boundary fragments with positive-area overlap beyond the certified
-  containment/contact fast paths still report unresolved topology.
-- Some point-touching containment branches and otherwise ambiguous topology are
-  intentionally unresolved until the general overlap resolver is implemented.
-- Joined offsets are not yet self-intersection trimmed; checked offset entry
-  points reject cases that need that trimming.
-- General implicit conics, full rational-conic and Bezier curve/curve root
-  isolation, and NURBS are not part of the current implementation.
-- Primitive-float reconstruction and tessellation are IO/display helpers, not
-  the internal topology model.
+- `predicates`: default feature enabling `hyperlimit` predicate integration.
+- `serde`: enables serialization for public records that support it.
 
-## API Shape
+## Usage
 
 The native API uses `hyperreal::Real` coordinates:
 
@@ -360,66 +137,35 @@ The native API uses `hyperreal::Real` coordinates:
 use hypercurve::{CurvePolicy, LineSeg2, Point2, Real};
 
 fn main() -> hypercurve::CurveResult<()> {
-    let a = Point2::new(Real::from(0), Real::from(0));
-    let b = Point2::new(Real::from(1), Real::from(0));
-    let segment = LineSeg2::try_new(a, b)?;
+    let segment = LineSeg2::try_new(
+        Point2::new(Real::from(0), Real::from(0)),
+        Point2::new(Real::from(1), Real::from(0)),
+    )?;
 
-    let policy = CurvePolicy::certified();
-    let query = Point2::new(Real::from(0), Real::from(1));
-    let side = segment.classify_point(&query, &policy);
+    let side = segment.classify_point(
+        &Point2::new(Real::from(0), Real::from(1)),
+        &CurvePolicy::certified(),
+    );
 
     assert!(matches!(side, hypercurve::Classification::Decided(_)));
     Ok(())
 }
 ```
 
-For bulge polyline data, `BulgeVertex2` and reconstruction helpers sit at the
-adapter boundary. Topology decisions should still flow through native
-`Segment2`, `Contour2`, `Region2`, and prepared query views.
+## Development
 
-## Documentation
-
-Public APIs are written to build cleanly on docs.rs. Local verification uses:
+Useful local checks:
 
 ```text
 RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps
-```
-
-## UI Test Article
-
-The `examples/hypercurve_ui` package is an egui test article around
-`hypercurve` operations. It keeps a bulge-vertex editor for convenient
-interactive testing, then converts that data into `hypercurve` contours and
-regions for booleans, intersections, slices, and offsets.
-
-```text
 cargo run --manifest-path examples/hypercurve_ui/Cargo.toml
 cargo check --manifest-path examples/hypercurve_ui/Cargo.toml --target wasm32-unknown-unknown
-trunk serve examples/hypercurve_ui/index.html
-```
-
-If Trunk 0.21 rejects `NO_COLOR=1` in the local environment, run the Trunk
-command as `env -u NO_COLOR trunk serve examples/hypercurve_ui/index.html`.
-The `.github/workflows/deploy-ui-pages.yml` workflow builds this same Trunk app
-on pushes to `main` and deploys the release artifact with GitHub Pages Actions;
-the repository's Pages source must be set to GitHub Actions for the first
-deployment.
-
-## Benchmarks
-
-Small no-dependency benchmark targets exercise the current ordinary, prepared,
-and mixed-prepared boolean boundary pipeline, containment hot paths including
-prepared contour and region repeated-query classifiers, segment-intersection
-hot paths, ordinary and prepared curve-string intersections, ordinary and
-prepared bounding-box filtered self-contact scans, ordinary and prepared
-region-event scans, and primitive plus open-outline offsets:
-
-```text
 cargo bench --bench boolean_pipeline
 cargo bench --bench containment
 cargo bench --bench intersection
 cargo bench --bench offset
 cargo bench --bench reconstruction
+cargo bench --bench bezier_facts
 ```
 
 ## References
