@@ -1,10 +1,35 @@
 #![cfg(all(feature = "earcut", feature = "cdt"))]
 
+#[cfg(feature = "nd")]
+use hypertri::Rational;
 use hypertri::{Constraint, ExactPoint, Point2, Real};
 use proptest::prelude::*;
 
 fn p(x: i32, y: i32) -> ExactPoint {
     Point2::new(Real::from(x), Real::from(y))
+}
+
+#[cfg(feature = "nd")]
+fn rational_point_d(xn: i64, xd: u64, yn: i64, yd: u64) -> hypertri::PointD {
+    hypertri::PointD::new(vec![
+        Real::from(Rational::fraction(xn, xd).unwrap()),
+        Real::from(Rational::fraction(yn, yd).unwrap()),
+    ])
+}
+
+#[cfg(feature = "nd")]
+fn canonical_cells(complex: &hypertri::DelaunayComplex) -> Vec<Vec<usize>> {
+    let mut cells = complex
+        .cells()
+        .iter()
+        .map(|cell| {
+            let mut indices = cell.indices().to_vec();
+            indices.sort_unstable();
+            indices
+        })
+        .collect::<Vec<_>>();
+    cells.sort();
+    cells
 }
 
 fn selected_triangle_edges(mask: u8) -> Vec<Constraint> {
@@ -290,5 +315,44 @@ proptest! {
                         && triangle.contains(&constraint.to))
             );
         }
+    }
+
+    #[test]
+    #[cfg(feature = "nd")]
+    fn fuzz_nd_bistellar_flip_round_trips_on_cospherical_rectangles(
+        x in -50i32..50,
+        y in -50i32..50,
+        width in 1i32..50,
+        height in 1i32..50,
+        denominator in 1u64..32,
+    ) {
+        let points = vec![
+            rational_point_d(x as i64, denominator, y as i64, denominator),
+            rational_point_d((x + width) as i64, denominator, y as i64, denominator),
+            rational_point_d((x + width) as i64, denominator, (y + height) as i64, denominator),
+            rational_point_d(x as i64, denominator, (y + height) as i64, denominator),
+        ];
+        let original = hypertri::DelaunayComplex::from_parts(
+            2,
+            points,
+            vec![
+                hypertri::Simplex::new(vec![0, 1, 2]),
+                hypertri::Simplex::new(vec![0, 2, 3]),
+            ],
+        );
+        original.validate().unwrap();
+
+        let forward = hypertri::BistellarFlipD::new(vec![0, 1, 2, 3], vec![1, 3]);
+        let flipped = original.flip_oracle(&forward).unwrap();
+        prop_assert!(flipped.validation().is_valid());
+        prop_assert_eq!(
+            canonical_cells(flipped.result()),
+            vec![vec![0, 1, 3], vec![1, 2, 3]]
+        );
+
+        let reverse = hypertri::BistellarFlipD::new(vec![0, 1, 2, 3], vec![0, 2]);
+        let round_trip = flipped.result().flip_oracle(&reverse).unwrap();
+        prop_assert!(round_trip.validation().is_valid());
+        prop_assert_eq!(canonical_cells(round_trip.result()), canonical_cells(&original));
     }
 }

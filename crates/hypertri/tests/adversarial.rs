@@ -141,6 +141,36 @@ fn exact_nd_delaunay_stars_3d_simplex_around_rational_interior_point() {
 
 #[test]
 #[cfg(feature = "nd")]
+fn exact_nd_delaunay_oracle_insertion_reports_conflict_boundary() {
+    let base = vec![
+        point_d(&[r(0), r(0), r(0)]),
+        point_d(&[r(1), r(0), r(0)]),
+        point_d(&[r(0), r(1), r(0)]),
+        point_d(&[r(0), r(0), r(1)]),
+    ];
+    let complex = hypertri::nd::delaunay_complex(&base).unwrap();
+
+    let report = complex
+        .insert_point_oracle(point_d(&[rq(1, 4), rq(1, 4), rq(1, 4)]))
+        .unwrap();
+
+    assert_eq!(report.inserted_vertex(), 4);
+    assert_eq!(report.old_cell_count(), 1);
+    assert_eq!(report.conflict_cells().len(), 1);
+    assert_eq!(report.boundary_facets().len(), 4);
+    assert_eq!(report.new_cell_count(), 4);
+    assert!(
+        report
+            .result()
+            .cells()
+            .iter()
+            .all(|cell| cell.indices().contains(&4))
+    );
+    report.result().validate().unwrap();
+}
+
+#[test]
+#[cfg(feature = "nd")]
 fn exact_nd_delaunay_preserves_cospherical_cells_as_complex() {
     let points = vec![
         point_d(&[r(0), r(0)]),
@@ -158,6 +188,250 @@ fn exact_nd_delaunay_preserves_cospherical_cells_as_complex() {
         "cospherical square is represented as a Delaunay complex, not an arbitrary float tie-break"
     );
     complex.validate().unwrap();
+}
+
+#[test]
+#[cfg(feature = "nd")]
+fn exact_nd_bistellar_flip_report_validates_circuit_and_delaunay_legality() {
+    let points = vec![
+        point_d(&[r(0), r(0)]),
+        point_d(&[r(1), r(0)]),
+        point_d(&[r(1), r(1)]),
+        point_d(&[r(0), r(1)]),
+    ];
+    let complex = hypertri::nd::DelaunayComplex::from_parts(
+        2,
+        points,
+        vec![
+            hypertri::nd::Simplex::new(vec![0, 1, 2]),
+            hypertri::nd::Simplex::new(vec![0, 2, 3]),
+        ],
+    );
+    complex.validate().unwrap();
+
+    let flip = hypertri::BistellarFlipD::new(vec![0, 1, 2, 3], vec![1, 3]);
+    let report = complex.validate_bistellar_flip(&flip);
+
+    assert!(report.is_valid(), "{report:?}");
+    assert_eq!(report.p(), 2);
+    assert_eq!(report.q(), 2);
+    assert_eq!(report.removed_cells().len(), 2);
+    assert_eq!(report.inserted_cells().len(), 2);
+    assert!(!report.blocks_delaunay());
+
+    let applied = complex.flip_oracle(&flip).unwrap();
+    assert!(applied.validation().is_valid());
+    assert_eq!(applied.result().cells().len(), 2);
+    assert!(
+        applied
+            .result()
+            .cells()
+            .iter()
+            .any(|cell| cell.indices() == [0, 1, 3])
+    );
+    assert!(
+        applied
+            .result()
+            .cells()
+            .iter()
+            .any(|cell| cell.indices() == [1, 2, 3])
+    );
+    applied.result().validate().unwrap();
+
+    let bad = hypertri::BistellarFlipD::new(vec![0, 1, 2, 3], vec![0, 1]);
+    let bad_report = complex.validate_bistellar_flip(&bad);
+    assert_eq!(
+        bad_report.reason(),
+        Some("D-dimensional flip removed cell is not present")
+    );
+}
+
+#[test]
+#[cfg(feature = "nd")]
+fn exact_nd_tds_validates_reciprocal_neighbor_facets() {
+    let mut tds = hypertri::TriangulationDataStructureD::new(2).unwrap();
+    let v0 = tds.add_finite_vertex(point_d(&[r(0), r(0)])).unwrap();
+    let v1 = tds.add_finite_vertex(point_d(&[r(1), r(0)])).unwrap();
+    let v2 = tds.add_finite_vertex(point_d(&[r(0), r(1)])).unwrap();
+    let v3 = tds.add_finite_vertex(point_d(&[r(1), r(1)])).unwrap();
+
+    let c0 = tds
+        .add_cell(hypertri::Cell::new(
+            vec![v0, v1, v2],
+            vec![Some(hypertri::CellHandle::new(1)), None, None],
+        ))
+        .unwrap();
+    let c1 = tds
+        .add_cell(hypertri::Cell::new(
+            vec![v3, v2, v1],
+            vec![Some(c0), None, None],
+        ))
+        .unwrap();
+
+    assert_eq!(c0, hypertri::CellHandle::new(0));
+    assert_eq!(c1, hypertri::CellHandle::new(1));
+    let facet = tds.facet(c0, 0).unwrap();
+    assert_eq!(facet.opposite_vertex(), 0);
+    assert_eq!(tds.facet_key(facet).unwrap().vertices(), &[v1, v2]);
+    let report = tds.validate_combinatorial_report();
+    assert!(report.is_valid(), "{report:?}");
+    assert_eq!(report.dimension(), 2);
+    assert_eq!(report.vertex_count(), 4);
+    assert_eq!(report.cell_count(), 2);
+    assert_eq!(report.facet_count(), 5);
+    assert_eq!(report.interior_facet_count(), 2);
+    assert_eq!(report.boundary_facet_count(), 4);
+    tds.validate_combinatorial().unwrap();
+    let manifold = tds.validate_manifold_report(hypertri::TdsBoundaryPolicyD::AllowBoundary);
+    assert!(manifold.is_valid(), "{manifold:?}");
+    assert_eq!(manifold.finite_facet_count(), 5);
+    assert_eq!(manifold.interior_facet_count(), 1);
+    assert_eq!(manifold.boundary_facet_count(), 4);
+    assert_eq!(
+        tds.validate_manifold(hypertri::TdsBoundaryPolicyD::Closed)
+            .unwrap_err(),
+        hypertri::Error::InvalidInput {
+            reason: "finite facet has boundary degree under closed policy"
+        }
+    );
+    let geometric = tds.validate_geometric_report();
+    assert!(geometric.is_valid(), "{geometric:?}");
+    assert_eq!(geometric.finite_cell_count(), 2);
+    assert_eq!(geometric.cospherical_boundary_count(), 2);
+    tds.validate_geometric().unwrap();
+    hypertri::TriangulationD::new(tds).unwrap();
+}
+
+#[test]
+#[cfg(feature = "nd")]
+fn exact_nd_tds_geometric_report_rejects_affinely_dependent_cell() {
+    let mut tds = hypertri::TriangulationDataStructureD::new(2).unwrap();
+    let v0 = tds.add_finite_vertex(point_d(&[r(0), r(0)])).unwrap();
+    let v1 = tds.add_finite_vertex(point_d(&[r(1), r(0)])).unwrap();
+    let v2 = tds.add_finite_vertex(point_d(&[r(2), r(0)])).unwrap();
+
+    tds.add_cell(hypertri::Cell::new(
+        vec![v0, v1, v2],
+        vec![None, None, None],
+    ))
+    .unwrap();
+
+    tds.validate_combinatorial().unwrap();
+    let report = tds.validate_geometric_report();
+    assert!(!report.is_valid());
+    assert_eq!(report.finite_cell_count(), 1);
+    assert!(
+        report
+            .violations()
+            .iter()
+            .any(|violation| violation.reason() == "D-dimensional simplex is affinely dependent")
+    );
+}
+
+#[test]
+#[cfg(feature = "nd")]
+fn exact_nd_tds_manifold_report_rejects_same_induced_facet_orientation() {
+    let mut tds = hypertri::TriangulationDataStructureD::new(2).unwrap();
+    let v0 = tds.add_finite_vertex(point_d(&[r(0), r(0)])).unwrap();
+    let v1 = tds.add_finite_vertex(point_d(&[r(1), r(0)])).unwrap();
+    let v2 = tds.add_finite_vertex(point_d(&[r(0), r(1)])).unwrap();
+    let v3 = tds.add_finite_vertex(point_d(&[r(1), r(1)])).unwrap();
+
+    let c0 = tds
+        .add_cell(hypertri::Cell::new(
+            vec![v0, v1, v2],
+            vec![Some(hypertri::CellHandle::new(1)), None, None],
+        ))
+        .unwrap();
+    tds.add_cell(hypertri::Cell::new(
+        vec![v3, v1, v2],
+        vec![Some(c0), None, None],
+    ))
+    .unwrap();
+
+    tds.validate_combinatorial().unwrap();
+    let report = tds.validate_manifold_report(hypertri::TdsBoundaryPolicyD::AllowBoundary);
+    assert!(!report.is_valid());
+    assert!(
+        report
+            .violations()
+            .iter()
+            .any(|violation| violation.reason()
+                == "adjacent cells have the same induced facet orientation")
+    );
+}
+
+#[test]
+#[cfg(feature = "nd")]
+fn exact_nd_tds_rejects_nonreciprocal_neighbor_links() {
+    let mut tds = hypertri::TriangulationDataStructureD::new(2).unwrap();
+    let v0 = tds.add_finite_vertex(point_d(&[r(0), r(0)])).unwrap();
+    let v1 = tds.add_finite_vertex(point_d(&[r(1), r(0)])).unwrap();
+    let v2 = tds.add_finite_vertex(point_d(&[r(0), r(1)])).unwrap();
+    let v3 = tds.add_finite_vertex(point_d(&[r(1), r(1)])).unwrap();
+
+    tds.add_cell(hypertri::Cell::new(
+        vec![v0, v1, v2],
+        vec![Some(hypertri::CellHandle::new(1)), None, None],
+    ))
+    .unwrap();
+    tds.add_cell(hypertri::Cell::new(
+        vec![v3, v2, v1],
+        vec![None, None, None],
+    ))
+    .unwrap();
+
+    let report = tds.validate_combinatorial_report();
+    assert!(!report.is_valid());
+    assert!(
+        report
+            .violations()
+            .iter()
+            .any(|violation| violation.reason() == "TDS neighbor link is not reciprocal")
+    );
+    assert_eq!(
+        tds.validate_combinatorial().unwrap_err(),
+        hypertri::Error::InvalidInput {
+            reason: "TDS neighbor link is not reciprocal"
+        }
+    );
+}
+
+#[test]
+#[cfg(feature = "nd")]
+fn exact_nd_tds_rejects_repeated_vertices_and_bad_infinite_status() {
+    let mut tds = hypertri::TriangulationDataStructureD::new(2).unwrap();
+    let v0 = tds.add_finite_vertex(point_d(&[r(0), r(0)])).unwrap();
+    let v1 = tds.add_finite_vertex(point_d(&[r(1), r(0)])).unwrap();
+    let inf = tds.add_infinite_vertex().unwrap();
+
+    assert_eq!(
+        tds.add_cell(hypertri::Cell::new(
+            vec![v0, v0, v1],
+            vec![None, None, None]
+        ))
+        .unwrap_err(),
+        hypertri::Error::InvalidInput {
+            reason: "TDS cell repeats a vertex handle"
+        }
+    );
+    assert_eq!(
+        tds.add_cell(hypertri::Cell::new(
+            vec![v0, v1, inf],
+            vec![None, None, None]
+        ))
+        .unwrap_err(),
+        hypertri::Error::InvalidInput {
+            reason: "TDS cell finite/infinite status does not match vertices"
+        }
+    );
+    tds.add_cell(hypertri::Cell::with_infinite_status(
+        vec![v0, v1, inf],
+        vec![None, None, None],
+        true,
+    ))
+    .unwrap();
+    tds.validate_combinatorial().unwrap();
 }
 
 #[test]

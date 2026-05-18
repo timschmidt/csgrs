@@ -1,6 +1,6 @@
 [package]
 name = "hypertri"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 description = "Hyperreal-backed triangulation algorithms with exact geometric predicates"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
@@ -21,8 +21,8 @@ f64-interop = []
 serde = ["dep:serde"]
 
 [dependencies]
-hyperreal = { path = "../hyperreal", version = "0.11.1" }
-hyperlimit = { path = "../hyperlimit", version = "0.2.0", default-features = false, features = ["std"] }
+hyperreal = { version = "0.12.0" }
+hyperlimit = { version = "0.3.0", default-features = false, features = ["std"] }
 serde = { version = "1.0.228", features = ["derive"], optional = true }
 
 [dev-dependencies]

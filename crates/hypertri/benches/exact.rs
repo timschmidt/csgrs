@@ -152,6 +152,123 @@ fn bench_exact_triangulation(c: &mut Criterion) {
     c.bench_function("exact_nd_4d_delaunay_complex", |b| {
         b.iter(|| hypertri::nd::delaunay_complex(&nd_points).unwrap())
     });
+
+    let insertion_base = hypertri::nd::delaunay_complex(&nd_points[..5]).unwrap();
+    let insertion_point = hypertri::nd::PointD::new(vec![q(1, 5), q(1, 5), q(1, 5), q(1, 5)]);
+    c.bench_function("exact_nd_4d_oracle_insertion_report", |b| {
+        b.iter(|| {
+            let report = insertion_base
+                .insert_point_oracle(insertion_point.clone())
+                .unwrap();
+            (
+                report.old_cell_count(),
+                report.new_cell_count(),
+                report.conflict_cells().len(),
+                report.boundary_facets().len(),
+            )
+        })
+    });
+
+    let flip_complex = hypertri::DelaunayComplex::from_parts(
+        2,
+        vec![
+            hypertri::PointD::new(vec![r(0), r(0)]),
+            hypertri::PointD::new(vec![r(1), r(0)]),
+            hypertri::PointD::new(vec![r(1), r(1)]),
+            hypertri::PointD::new(vec![r(0), r(1)]),
+        ],
+        vec![
+            hypertri::Simplex::new(vec![0, 1, 2]),
+            hypertri::Simplex::new(vec![0, 2, 3]),
+        ],
+    );
+    let flip = hypertri::BistellarFlipD::new(vec![0, 1, 2, 3], vec![1, 3]);
+    c.bench_function("exact_nd_bistellar_flip_validate", |b| {
+        b.iter(|| {
+            let report = flip_complex.validate_bistellar_flip(&flip);
+            (
+                report.is_valid(),
+                report.p(),
+                report.q(),
+                report.removed_cells().len(),
+                report.inserted_cells().len(),
+                report.blocks_delaunay(),
+            )
+        })
+    });
+    c.bench_function("exact_nd_bistellar_flip_oracle_apply", |b| {
+        b.iter(|| {
+            let report = flip_complex.flip_oracle(&flip).unwrap();
+            (
+                report.validation().p(),
+                report.validation().q(),
+                report.result().cells().len(),
+            )
+        })
+    });
+
+    let mut tds = hypertri::TriangulationDataStructureD::new(3).unwrap();
+    let v0 = tds
+        .add_finite_vertex(hypertri::PointD::new(vec![r(0), r(0), r(0)]))
+        .unwrap();
+    let v1 = tds
+        .add_finite_vertex(hypertri::PointD::new(vec![r(1), r(0), r(0)]))
+        .unwrap();
+    let v2 = tds
+        .add_finite_vertex(hypertri::PointD::new(vec![r(0), r(1), r(0)]))
+        .unwrap();
+    let v3 = tds
+        .add_finite_vertex(hypertri::PointD::new(vec![r(0), r(0), r(1)]))
+        .unwrap();
+    tds.add_cell(hypertri::Cell::new(
+        vec![v0, v1, v2, v3],
+        vec![None, None, None, None],
+    ))
+    .unwrap();
+
+    c.bench_function("exact_nd_tds_combinatorial_validate", |b| {
+        b.iter(|| tds.validate_combinatorial().unwrap())
+    });
+
+    c.bench_function("exact_nd_tds_combinatorial_report", |b| {
+        b.iter(|| {
+            let report = tds.validate_combinatorial_report();
+            (
+                report.is_valid(),
+                report.facet_count(),
+                report.boundary_facet_count(),
+                report.interior_facet_count(),
+                report.violations().len(),
+            )
+        })
+    });
+
+    c.bench_function("exact_nd_tds_manifold_report", |b| {
+        b.iter(|| {
+            let report = tds.validate_manifold_report(hypertri::TdsBoundaryPolicyD::AllowBoundary);
+            (
+                report.is_valid(),
+                report.finite_facet_count(),
+                report.boundary_facet_count(),
+                report.interior_facet_count(),
+                report.violations().len(),
+            )
+        })
+    });
+
+    c.bench_function("exact_nd_tds_geometric_report", |b| {
+        b.iter(|| {
+            let report = tds.validate_geometric_report();
+            (
+                report.is_valid(),
+                report.finite_cell_count(),
+                report.positive_orientation_count(),
+                report.negative_orientation_count(),
+                report.cospherical_boundary_count(),
+                report.violations().len(),
+            )
+        })
+    });
 }
 
 criterion_group!(benches, bench_exact_triangulation);

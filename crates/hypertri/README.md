@@ -2,8 +2,9 @@
 
 `hypertri` owns exact-aware triangulation for the Hyper geometry stack. It provides
 earcut-style polygon triangulation, incremental Delaunay and constrained Delaunay
-topology, a small exact D-dimensional Delaunay oracle, and optional `f64` interop that
-lifts finite inputs into `hyperreal::Real` before topology is decided.
+topology, a D-dimensional TDS model plus a small exact Delaunay oracle, and optional
+`f64` interop that lifts finite inputs into `hyperreal::Real` before topology is
+decided.
 
 The crate is intentionally algorithm-feature-gated. Downstream crates can compile only
 the triangulation surfaces they use while keeping exact predicate semantics consistent.
@@ -19,7 +20,8 @@ The deployed WASM app is available at <https://timschmidt.github.io/hypertri/>.
 - [hyperreal](https://github.com/timschmidt/hyperreal): exact coordinate and scalar
   values.
 - [hyperlimit](https://github.com/timschmidt/hyperlimit): exact orientation,
-  in-circle, segment, ring, and classification predicates.
+  in-circle, in-sphere, D-dimensional determinant, segment, ring, and
+  classification predicates.
 - [hypercurve](https://github.com/timschmidt/hypercurve): curved-region owner that can
   hand off line-only inputs after certified projection or flattening.
 - [hypermesh](https://github.com/timschmidt/hypermesh): 3D mesh layer that can reuse
@@ -50,8 +52,13 @@ APIs.
 - `EarcutReport` and `EarcutDiagnostics` expose polygon triangulation diagnostics.
 - `DelaunayTriangulation` and `ConstrainedDelaunayTriangulation` describe 2D Delaunay
   outputs and protected constraint edges.
-- `PointD`, `Simplex`, and `DelaunayComplex` provide the small exact D-dimensional
-  oracle surface.
+- `PointD`, `VertexHandle`, `CellHandle`, `FacetKey`, `Facet`, `Face`, `Cell`,
+  `TriangulationDataStructureD`, `TriangulationD`, `DelaunayTriangulationD`,
+  `TdsCombinatorialValidationReportD`, `TdsManifoldValidationReportD`,
+  `TdsGeometricValidationReportD`, `Simplex`, `DelaunayComplex`,
+  `DelaunayInsertionReportD`, `BistellarFlipD`, `BistellarFlipReportD`, and
+  `BistellarFlipApplyReportD` provide the D-dimensional model, TDS,
+  validation, flip precondition/rewrite, and small exact oracle surfaces.
 - `TriangulationOptions`, `PolygonTriangulationAlgorithm`, `QualityPolicy`, and
   `PolygonTriangulationPlan` describe runtime selection when enabled.
 - Optional `f64` entry points are boundary adapters that reject non-finite coordinates
@@ -61,7 +68,8 @@ APIs.
 
 Native inputs use `Real`. Optional `f64` APIs are for IO, rendering, tests, and
 compatibility; they exact-lift finite floats before topology branches execute. Exact
-orientation, ring-area, segment, and in-circle signs flow through `hyperlimit`.
+orientation, ring-area, segment, in-circle, in-sphere, and D-dimensional determinant
+signs flow through `hyperlimit`.
 
 Topology validation is part of the precision story. Results expose validation helpers,
 and constrained output distinguishes caller constraints from planarized protected
@@ -85,12 +93,26 @@ Implemented today:
   local-intersection curing, and split fallback;
 - incremental Delaunay and constrained Delaunay triangulation, including constraint
   recovery, splitting, and exact in-circle re-legalization;
-- small exact D-dimensional Delaunay complex construction for validation/oracle
-  workloads;
+- a dynamic D-dimensional TDS model with stable handles, explicit infinite
+  vertex/cell semantics, canonical facet keys, report-bearing reciprocal
+  neighbor, finite-facet manifold, and finite-cell geometric validation, and
+  small exact D-dimensional Delaunay complex construction backed by
+  `hyperlimit` determinant predicates for validation/oracle workloads;
+- oracle-backed D-dimensional insertion reports that identify exact
+  empty-sphere conflict cells, canonical conflict-boundary facets, and the
+  rebuilt exact complex while the production TDS cavity-stitcher remains future
+  work;
+- non-mutating D-dimensional bistellar flip reports that validate local
+  Lawson/Pachner circuit arity, removed-cell presence, inserted-cell affine
+  independence, and exact Delaunay legality before any future TDS mutation
+  scheduler exists;
+- functional D-dimensional flip rewrites on the exact complex oracle, replacing
+  removed cells with inserted cells and validating the resulting complex before
+  returning it;
 - runtime polygon algorithm selection when enabled;
 - optional finite-`f64` entry points and optional `serde` support;
 - topology validation, local constrained-Delaunay validation, property tests, fuzz
-  targets, and benchmarks.
+  targets including exact D-dimensional flip round trips, and benchmarks.
 
 Known limits: prepared polygon schedules and DCEL storage are still future performance
 work. The accepted topology contract is exact and validation-heavy by design.
@@ -101,7 +123,7 @@ Enable only the algorithms you use:
 
 ```toml
 [dependencies]
-hypertri = { version = "0.1", default-features = false, features = ["earcut"] }
+hypertri = { version = "0.2.0", default-features = false, features = ["earcut"] }
 ```
 
 Feature summary:

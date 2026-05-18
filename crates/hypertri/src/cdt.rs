@@ -183,7 +183,7 @@ impl ConstrainedDelaunayTriangulation {
 /// triangulation; the in-circle predicate is evaluated exactly through the
 /// crate-local kernel.
 pub fn delaunay(points: &[ExactPoint]) -> Result<DelaunayTriangulation> {
-    validate_unique_points::<ExactKernel>(points)?;
+    validate_unique_points(points)?;
     let triangles = delaunay_triangles::<ExactKernel>(points)?;
     let triangulation = DelaunayTriangulation::from_parts(points.to_vec(), triangles);
     triangulation.validate()?;
@@ -209,7 +209,7 @@ pub fn constrained_delaunay(
     constraints: &[Constraint],
 ) -> Result<ConstrainedDelaunayTriangulation> {
     validate_constraints(points.len(), constraints)?;
-    validate_unique_points::<ExactKernel>(points)?;
+    validate_unique_points(points)?;
 
     if constraints.is_empty() {
         let triangulation = delaunay(points)?;
@@ -773,10 +773,7 @@ fn triangle_contains_edge(triangle: Triangle, first: usize, second: usize) -> bo
     triangle.contains(&first) && triangle.contains(&second)
 }
 
-fn validate_unique_points<K>(points: &[Point2]) -> Result<()>
-where
-    K: Kernel,
-{
+fn validate_unique_points(points: &[Point2]) -> Result<()> {
     for i in 0..points.len() {
         for j in i + 1..points.len() {
             if points[i] == points[j] {

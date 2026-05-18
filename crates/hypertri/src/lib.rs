@@ -31,7 +31,14 @@ pub mod types;
 
 pub use error::{Error, Result};
 #[cfg(feature = "nd")]
-pub use nd::{DelaunayComplex, PointD, Simplex};
+pub use nd::{
+    BistellarFlipApplyReportD, BistellarFlipD, BistellarFlipReportD, Cell, CellHandle,
+    DelaunayComplex, DelaunayInsertionReportD, DelaunayTriangulationD, Face, Facet, FacetKey,
+    PointD, Simplex, TdsBoundaryPolicyD, TdsCombinatorialValidationReportD,
+    TdsCombinatorialViolationD, TdsGeometricValidationReportD, TdsGeometricViolationD,
+    TdsManifoldValidationReportD, TdsManifoldViolationD, TriangulationD,
+    TriangulationDataStructureD, VertexD, VertexHandle,
+};
 #[cfg(feature = "runtime-select")]
 pub use runtime::{
     PolygonTriangulationAlgorithm, PolygonTriangulationPlan, QualityPolicy, TriangulationOptions,
