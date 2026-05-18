@@ -1,6 +1,6 @@
 [package]
 name = "hypercurve"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 description = "Hyperreal-backed planar curves, contours, and regions for CAD topology"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
@@ -14,9 +14,8 @@ categories = ["mathematics", "graphics", "algorithms"]
 all-features = true
 
 [dependencies]
-hyperreal = { path = "../hyperreal", version = "0.11.1", default-features = false }
-hyperlimit = { path = "../hyperlimit", version = "0.2.0", default-features = false, features = ["std"], optional = true }
-
+hyperreal = { version = "0.12.0", default-features = false }
+hyperlimit = { version = "0.3.0", default-features = false, features = ["std"], optional = true }
 [dev-dependencies]
 geo = "0.32"
 proptest = "1"

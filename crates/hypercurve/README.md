@@ -114,7 +114,7 @@ root isolation, NURBS, and offset self-intersection trimming remain future work.
 
 ```toml
 [dependencies]
-hypercurve = "0.1.0"
+hypercurve = "0.2.0"
 ```
 
 For sibling checkouts:
