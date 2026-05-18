@@ -104,7 +104,7 @@ adapter work.
 
 ```toml
 [dependencies]
-hyperphysics = "0.1.0"
+hyperphysics = "0.2.0"
 ```
 
 For sibling checkouts:
