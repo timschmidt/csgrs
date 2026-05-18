@@ -2,5 +2,16 @@
 name = "hyperparts"
 version = "0.1.0"
 edition = "2024"
+description = "Source-attributed part knowledge graph carriers for the Hyper ecosystem"
+license = "Apache-2.0"
+readme = "README.md"
 
 [dependencies]
+hyperreal = { path = "../hyperreal", version = "0.11.1" }
+
+[dev-dependencies]
+proptest = "1.7.0"
+
+[[bench]]
+name = "queries"
+harness = false
