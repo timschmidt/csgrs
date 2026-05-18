@@ -38,6 +38,7 @@ Geometry and solver layers:
   and exact-aware boolean preflight.
 - [hypersolve](https://github.com/timschmidt/hypersolve): symbolic residuals,
   solver preparation, and candidate certification.
+- [csgrs](https://github.com/timschmidt/csgrs/tree/hyperreal): Multi-modal CAD kernel, owns CSG
 
 Domain and proposal layers:
 
