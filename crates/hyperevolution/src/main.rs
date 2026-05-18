@@ -1,3 +1,3 @@
 fn main() {
-    println!("Hello, world!");
+    // Library-first crate: executable entry point is intentionally empty.
 }
