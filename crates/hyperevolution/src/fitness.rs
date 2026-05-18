@@ -1,4 +1,12 @@
 //! Exact fitness values and comparisons.
+//!
+//! Fitness is report-bearing evidence, not a primitive score. Exact scalar and
+//! vector comparisons use `hyperreal::Real`; interval comparisons keep overlap
+//! and invalid bounds visible instead of ranking candidates through lossy
+//! midpoint or endpoint floats. This follows Moore-style interval analysis for
+//! enclosure comparisons and Yap's exact-geometric-computation boundary:
+//! proposal search may be heuristic, but archive promotion needs exact or
+//! explicitly uncertain evidence.
 
 use std::cmp::Ordering;
 
@@ -24,6 +32,17 @@ pub enum FitnessValue {
     Lexicographic(Vec<Real>),
     /// Pareto objective vector.
     Pareto(Vec<Real>),
+    /// Certified interval enclosure for one objective.
+    Interval(Box<FitnessInterval>),
+}
+
+/// Exact interval enclosure for one objective.
+#[derive(Clone, Debug, PartialEq)]
+pub struct FitnessInterval {
+    /// Lower enclosure endpoint.
+    pub lower: Real,
+    /// Upper enclosure endpoint.
+    pub upper: Real,
 }
 
 /// Fitness report with replay evidence.
@@ -49,6 +68,23 @@ pub enum FitnessComparison {
     /// Reports tie under the selected objective order.
     Equal,
     /// Exact comparison could not certify an ordering.
+    Unknown,
+}
+
+/// Explicit comparison result for interval fitness enclosures.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum FitnessIntervalComparison {
+    /// Left interval is strictly better than right.
+    Better,
+    /// Right interval is strictly better than left.
+    Worse,
+    /// Endpoints are exactly equal.
+    Equal,
+    /// Intervals overlap, so the ordering is policy-dependent.
+    Overlapping,
+    /// At least one interval has `lower > upper`.
+    InvalidBounds,
+    /// Exact endpoint ordering could not be certified.
     Unknown,
 }
 
@@ -85,6 +121,14 @@ impl FitnessValue {
                     Ordering::Greater => FitnessComparison::Better,
                 }
             }
+            (Self::Interval(left), Self::Interval(right)) => match left.compare(right, direction) {
+                FitnessIntervalComparison::Better => FitnessComparison::Better,
+                FitnessIntervalComparison::Worse => FitnessComparison::Worse,
+                FitnessIntervalComparison::Equal => FitnessComparison::Equal,
+                FitnessIntervalComparison::Overlapping
+                | FitnessIntervalComparison::InvalidBounds
+                | FitnessIntervalComparison::Unknown => FitnessComparison::Unknown,
+            },
             _ => FitnessComparison::Unknown,
         }
     }
@@ -113,6 +157,77 @@ impl FitnessValue {
             (true, false) => ParetoRelation::Dominates,
             (false, true) => ParetoRelation::Dominated,
             (true, true) => ParetoRelation::NonDominated,
+        }
+    }
+}
+
+impl FitnessInterval {
+    /// Creates an exact interval enclosure.
+    pub fn new(lower: Real, upper: Real) -> Self {
+        Self { lower, upper }
+    }
+
+    /// Returns true when `lower <= upper` can be certified exactly.
+    pub fn has_valid_bounds(&self) -> Option<bool> {
+        match self.lower.partial_cmp(&self.upper) {
+            Some(Ordering::Less | Ordering::Equal) => Some(true),
+            Some(Ordering::Greater) => Some(false),
+            None => None,
+        }
+    }
+
+    /// Compares two interval enclosures without midpoint or float fallback.
+    ///
+    /// For minimization, `self` is strictly better only when its upper endpoint
+    /// is less than the other's lower endpoint. For maximization, the direction
+    /// is reversed. Overlapping intervals return [`FitnessIntervalComparison::Overlapping`]
+    /// so selection policies can refine, keep both, or use a named surrogate
+    /// rather than silently inventing an ordering.
+    pub fn compare(&self, other: &Self, direction: FitnessDirection) -> FitnessIntervalComparison {
+        match (self.has_valid_bounds(), other.has_valid_bounds()) {
+            (Some(true), Some(true)) => {}
+            (Some(false), _) | (_, Some(false)) => {
+                return FitnessIntervalComparison::InvalidBounds;
+            }
+            (None, _) | (_, None) => return FitnessIntervalComparison::Unknown,
+        }
+        if self.lower == other.lower && self.upper == other.upper {
+            return FitnessIntervalComparison::Equal;
+        }
+
+        match direction {
+            FitnessDirection::Minimize => {
+                if matches!(self.upper.partial_cmp(&other.lower), Some(Ordering::Less)) {
+                    FitnessIntervalComparison::Better
+                } else if matches!(
+                    self.lower.partial_cmp(&other.upper),
+                    Some(Ordering::Greater)
+                ) {
+                    FitnessIntervalComparison::Worse
+                } else if self.upper.partial_cmp(&other.lower).is_none()
+                    || self.lower.partial_cmp(&other.upper).is_none()
+                {
+                    FitnessIntervalComparison::Unknown
+                } else {
+                    FitnessIntervalComparison::Overlapping
+                }
+            }
+            FitnessDirection::Maximize => {
+                if matches!(
+                    self.lower.partial_cmp(&other.upper),
+                    Some(Ordering::Greater)
+                ) {
+                    FitnessIntervalComparison::Better
+                } else if matches!(self.upper.partial_cmp(&other.lower), Some(Ordering::Less)) {
+                    FitnessIntervalComparison::Worse
+                } else if self.lower.partial_cmp(&other.upper).is_none()
+                    || self.upper.partial_cmp(&other.lower).is_none()
+                {
+                    FitnessIntervalComparison::Unknown
+                } else {
+                    FitnessIntervalComparison::Overlapping
+                }
+            }
         }
     }
 }

@@ -1,14 +1,20 @@
 [package]
 name = "hyperevolution"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 description = "Exact-aware evolutionary and proposal-search carriers for the Hyper ecosystem"
 license = "Apache-2.0"
 readme = "README.md"
+repository = "https://github.com/timschmidt/hyperevolution"
+keywords = ["evolution", "optimization", "search", "hyperreal", "simulation"]
+categories = ["algorithms", "science", "simulation"]
 
 [dependencies]
-hyperreal = { path = "../hyperreal", version = "0.11.1" }
-
+# Hyper ecosystem dependencies: keep the crate-official release references and
+# the commented workspace references below. Switch to the workspace form for
+# local development, then switch back to crates.io versions before publishing.
+hyperreal = { version = "0.12.0" }
+# hyperreal = { path = "../hyperreal" }
 [dev-dependencies]
 proptest = "1.7.0"
 
