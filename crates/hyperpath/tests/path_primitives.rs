@@ -14,17 +14,17 @@ use hyperpath::{
     PocketPlanStopReason, QuadraticBezier, RationalQuadraticBezier, RationalQuadraticBezierError,
     RectangularPocket, RectangularRegionRelation, RouteCertificationError, SegmentParameterOrder,
     SourceLengthUnit, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError,
-    SpecctraParseError, SupportFootprintStatus, SupportPlanError, SweptLineSegment,
-    TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan, TraceLayer,
-    ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass, ViaLayerSpanRelation,
-    ViaLayerTransitionClass, build_alternating_detour_meander, build_g1_join_problem,
-    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
-    build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
-    build_rectangular_bead_plan, build_rectangular_pocket_plan,
-    build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
-    build_single_detour_meander, build_tangent_alignment_problem, certify_constant_feed_time,
-    certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
-    certify_length_extension, certify_tangent_alignment_candidate,
+    SpecctraLayerAlias, SpecctraNetAlias, SpecctraParseError, SupportFootprintStatus,
+    SupportPlanError, SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport,
+    TangentSpan, TraceLayer, ViaAnnularRingReport, ViaDrillIntent, ViaDrillPolicyClass,
+    ViaLayerSpanRelation, ViaLayerTransitionClass, build_alternating_detour_meander,
+    build_g1_join_problem, build_length_match_problem, build_multi_detour_meander,
+    build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
+    build_oriented_tangent_alignment_problem, build_rectangular_bead_plan,
+    build_rectangular_pocket_plan, build_rectangular_serpentine_infill_graph,
+    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
+    certify_constant_feed_time, certify_differential_pair_skew, certify_g1_chain,
+    certify_g1_join_candidate, certify_length_extension, certify_tangent_alignment_candidate,
     check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
     check_rect_pad_board_clearance, check_trace_board_clearance,
     check_trace_cardinal_rect_pad_clearance, check_trace_clearance,
@@ -3105,6 +3105,7 @@ fn specctra_grid_via_import_preserves_exact_source_grid() {
         y: -50,
         land_diameter: 12,
         drill_diameter: 6,
+        drill_intent: ViaDrillIntent::NonPlated,
         grid_denominator: 10,
     })
     .unwrap();
@@ -3125,6 +3126,8 @@ fn specctra_grid_via_import_preserves_exact_source_grid() {
         via.drill_diameter().unwrap(),
         &Real::new(Rational::fraction(3, 5).unwrap())
     );
+    assert_eq!(record.drill_intent, ViaDrillIntent::NonPlated);
+    assert_eq!(via.drill_intent(), ViaDrillIntent::NonPlated);
 }
 
 #[test]
@@ -3137,6 +3140,7 @@ fn specctra_grid_via_import_rejects_invalid_geometry() {
         y: 0,
         land_diameter: 10,
         drill_diameter: 4,
+        drill_intent: ViaDrillIntent::Plated,
         grid_denominator: 1,
     })
     .and_then(|record| import_specctra_via_record(&record))
@@ -3149,6 +3153,7 @@ fn specctra_grid_via_import_rejects_invalid_geometry() {
         y: 0,
         land_diameter: 10,
         drill_diameter: -4,
+        drill_intent: ViaDrillIntent::Plated,
         grid_denominator: 1,
     })
     .and_then(|record| import_specctra_via_record(&record))
@@ -3213,9 +3218,12 @@ fn specctra_grid_route_text_round_trips_vias_and_wires() {
         y: 10,
         land_diameter: 12,
         drill_diameter: 6,
+        drill_intent: ViaDrillIntent::Plated,
         grid_denominator: 10,
     };
     let text = serialize_specctra_grid_route_records(&hyperpath::SpecctraGridRouteRecords {
+        net_aliases: Vec::new(),
+        layer_aliases: Vec::new(),
         traces: vec![wire],
         vias: vec![via],
     });
@@ -3228,6 +3236,42 @@ fn specctra_grid_route_text_round_trips_vias_and_wires() {
     assert_eq!(route.vias().len(), 1);
     assert_eq!(route.vias()[0].start_layer(), TraceLayer(0));
     assert_eq!(route.vias()[0].end_layer(), TraceLayer(3));
+    assert_eq!(route.vias()[0].drill_intent(), ViaDrillIntent::Plated);
+}
+
+#[test]
+fn specctra_grid_route_text_round_trips_net_aliases() {
+    let alias = SpecctraNetAlias {
+        net: NetId(7),
+        name: "USB_DP".to_owned(),
+    };
+    let layer_alias = SpecctraLayerAlias {
+        layer: TraceLayer(3),
+        name: "F_Cu".to_owned(),
+    };
+    let wire = SpecctraGridTraceRecord {
+        net: NetId(7),
+        layer: TraceLayer(3),
+        start_x: 0,
+        start_y: 10,
+        end_x: 50,
+        end_y: 10,
+        width: 6,
+        grid_denominator: 10,
+    };
+    let text = serialize_specctra_grid_route_records(&hyperpath::SpecctraGridRouteRecords {
+        net_aliases: vec![alias.clone()],
+        layer_aliases: vec![layer_alias.clone()],
+        traces: vec![wire],
+        vias: Vec::new(),
+    });
+    let parsed = parse_specctra_grid_route_records(&text).unwrap();
+    let route = import_specctra_text_route(&text).unwrap();
+
+    assert_eq!(parsed.net_aliases, vec![alias]);
+    assert_eq!(parsed.layer_aliases, vec![layer_alias]);
+    assert_eq!(parsed.traces, vec![wire]);
+    assert_eq!(route.traces()[0].net(), NetId(7));
 }
 
 #[test]
@@ -3263,6 +3307,38 @@ fn specctra_grid_route_text_rejects_malformed_and_invalid_routes() {
         )
         .unwrap_err(),
         SpecctraParseError::NegativeDiameter
+    );
+    assert_eq!(
+        parse_specctra_grid_route_records(
+            "(routes (via (net 1) (layers 0 1) (at 0 0) (land 10) (drill 4) (grid 1)))"
+        )
+        .unwrap()
+        .vias[0]
+            .drill_intent,
+        ViaDrillIntent::Unspecified
+    );
+    assert_eq!(
+        parse_specctra_grid_route_records(
+            "(routes (via (net 1) (layers 0 1) (at 0 0) (land 10) (drill 4) (intent mystery) (grid 1)))"
+        )
+        .unwrap_err(),
+        SpecctraParseError::InvalidDrillIntent
+    );
+    assert_eq!(
+        parse_specctra_grid_route_records("(routes (net 1 A) (net 1 B))").unwrap_err(),
+        SpecctraParseError::InvalidNetAlias
+    );
+    assert_eq!(
+        parse_specctra_grid_route_records("(routes (net 1 A) (net 2 A))").unwrap_err(),
+        SpecctraParseError::InvalidNetAlias
+    );
+    assert_eq!(
+        parse_specctra_grid_route_records("(routes (layer 1 F_Cu) (layer 1 B_Cu))").unwrap_err(),
+        SpecctraParseError::InvalidLayerAlias
+    );
+    assert_eq!(
+        parse_specctra_grid_route_records("(routes (layer 1 F_Cu) (layer 2 F_Cu))").unwrap_err(),
+        SpecctraParseError::InvalidLayerAlias
     );
 }
 
@@ -3494,6 +3570,7 @@ proptest! {
             y: i64::from(y),
             land_diameter: i64::from(land),
             drill_diameter: i64::from(drill),
+            drill_intent: ViaDrillIntent::Plated,
             grid_denominator,
         }];
 
@@ -3506,6 +3583,52 @@ proptest! {
         prop_assert_eq!(route.vias().len(), 1);
         prop_assert_eq!(route.vias()[0].start_layer(), TraceLayer(start_layer));
         prop_assert_eq!(route.vias()[0].end_layer(), TraceLayer(end_layer));
+        prop_assert_eq!(route.vias()[0].drill_intent(), ViaDrillIntent::Plated);
+    }
+
+    #[test]
+    fn specctra_grid_net_aliases_round_trip_generated_atoms(
+        net in 0_u32..=128,
+        suffix in 0_u16..=999,
+    ) {
+        let alias = SpecctraNetAlias {
+            net: NetId(net),
+            name: format!("NET_{}", suffix),
+        };
+        let text = serialize_specctra_grid_route_records(&hyperpath::SpecctraGridRouteRecords {
+            net_aliases: vec![alias.clone()],
+            layer_aliases: Vec::new(),
+            traces: Vec::new(),
+            vias: Vec::new(),
+        });
+        let parsed = parse_specctra_grid_route_records(&text).unwrap();
+
+        prop_assert_eq!(parsed.net_aliases, vec![alias]);
+        prop_assert!(parsed.traces.is_empty());
+        prop_assert!(parsed.vias.is_empty());
+    }
+
+    #[test]
+    fn specctra_grid_layer_aliases_round_trip_generated_atoms(
+        layer in 0_u16..=128,
+        suffix in 0_u16..=999,
+    ) {
+        let alias = SpecctraLayerAlias {
+            layer: TraceLayer(layer),
+            name: format!("LAYER_{}", suffix),
+        };
+        let text = serialize_specctra_grid_route_records(&hyperpath::SpecctraGridRouteRecords {
+            net_aliases: Vec::new(),
+            layer_aliases: vec![alias.clone()],
+            traces: Vec::new(),
+            vias: Vec::new(),
+        });
+        let parsed = parse_specctra_grid_route_records(&text).unwrap();
+
+        prop_assert_eq!(parsed.layer_aliases, vec![alias]);
+        prop_assert!(parsed.net_aliases.is_empty());
+        prop_assert!(parsed.traces.is_empty());
+        prop_assert!(parsed.vias.is_empty());
     }
 
     #[test]

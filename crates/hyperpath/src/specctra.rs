@@ -13,10 +13,41 @@ use hyperlimit::Point2;
 use hyperreal::{Rational, Real};
 use std::fmt::Write;
 
-use crate::pcb::{NetId, PcbTrace, PcbViaStack, TraceLayer};
+use crate::pcb::{NetId, PcbTrace, PcbViaStack, TraceLayer, ViaDrillIntent};
 use crate::provenance::{PathProvenance, PathSourceFormat};
 use crate::segment::LinePathSegment;
 use crate::swept::SweptLineSegment;
+
+/// Exact route-level net alias retained from a Specctra DSN/SES-style file.
+///
+/// Real DSN/SES files carry human net names as well as router-internal
+/// identifiers. This canonical subset keeps the alias table separate from
+/// geometric records: `(net N NAME)` records validate that `N` lowers to the
+/// exact [`NetId`] used by wires and vias while retaining `NAME` for diagnostics
+/// and round-trips. The split follows Yap's exact object boundary: net labels
+/// are source metadata, while numeric net ids remain the exact predicate key.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SpecctraNetAlias {
+    /// Exact numeric net identifier used by route geometry.
+    pub net: NetId,
+    /// Source net name as one canonical non-whitespace atom.
+    pub name: String,
+}
+
+/// Exact route-level layer alias retained from a Specctra DSN/SES-style file.
+///
+/// Layer names are source metadata, not geometric predicates. The canonical
+/// `(layer N NAME)` record maps a human board-layer name onto the exact
+/// [`TraceLayer`] identifier used by wires and vias. This keeps diagnostics and
+/// interchange round-trips close to DSN/SES practice while preserving Yap's
+/// object split: route predicates consume exact numeric layer ids.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SpecctraLayerAlias {
+    /// Exact numeric layer identifier used by route geometry.
+    pub layer: TraceLayer,
+    /// Source layer name as one canonical non-whitespace atom.
+    pub name: String,
+}
 
 /// Exact straight trace record in a Specctra DSN/SES-style route exchange.
 #[derive(Clone, Debug, PartialEq)]
@@ -71,6 +102,8 @@ pub struct SpecctraViaRecord {
     pub land_diameter: Real,
     /// Exact drill diameter.
     pub drill_diameter: Real,
+    /// Retained drill plating intent from the route interchange boundary.
+    pub drill_intent: ViaDrillIntent,
     /// Source provenance for the route token.
     pub provenance: PathProvenance,
 }
@@ -92,6 +125,8 @@ pub struct SpecctraGridViaRecord {
     pub land_diameter: i64,
     /// Drill diameter in source grid units.
     pub drill_diameter: i64,
+    /// Retained drill plating intent from the route interchange boundary.
+    pub drill_intent: ViaDrillIntent,
     /// Denominator of one source unit.
     pub grid_denominator: u64,
 }
@@ -181,6 +216,12 @@ pub enum SpecctraParseError {
     NegativeDiameter,
     /// Via start layer was above its end layer.
     ReversedLayerSpan,
+    /// Route-level net alias was empty, malformed, or duplicated.
+    InvalidNetAlias,
+    /// Route-level layer alias was empty, malformed, or duplicated.
+    InvalidLayerAlias,
+    /// Via drill intent was not one of the canonical supported atoms.
+    InvalidDrillIntent,
 }
 
 impl From<SpecctraImportError> for SpecctraParseError {
@@ -224,9 +265,11 @@ pub fn specctra_grid_trace_record(
 /// Convert a fixed-grid DSN/SES via token into an exact via record.
 ///
 /// This is the via analogue of [`specctra_grid_trace_record`]. It preserves
-/// land and drill dimensions as exact rationals so annular-ring, drill, layer
-/// span, and clearance predicates can validate the imported object without
-/// reconstructing intent from rounded coordinates.
+/// land and drill dimensions as exact rationals and keeps drill plating intent
+/// as a discrete fabrication fact. The split follows Yap's exact
+/// object/predicate model: route import preserves source intent, while
+/// annular-ring, drill, layer-span, and clearance predicates certify the
+/// resulting exact objects.
 pub fn specctra_grid_via_record(
     record: SpecctraGridViaRecord,
 ) -> Result<SpecctraViaRecord, SpecctraImportError> {
@@ -243,6 +286,7 @@ pub fn specctra_grid_via_record(
         ),
         land_diameter: grid_real(record.land_diameter, record.grid_denominator)?,
         drill_diameter: grid_real(record.drill_diameter, record.grid_denominator)?,
+        drill_intent: record.drill_intent,
         provenance,
     })
 }
@@ -265,13 +309,14 @@ pub fn import_specctra_trace_record(
 pub fn import_specctra_via_record(
     record: &SpecctraViaRecord,
 ) -> Result<PcbViaStack, SpecctraImportError> {
-    PcbViaStack::with_drill(
+    PcbViaStack::with_drill_intent(
         record.net,
         record.start_layer,
         record.end_layer,
         record.center.clone(),
         record.land_diameter.clone(),
         record.drill_diameter.clone(),
+        record.drill_intent,
     )
     .map_err(|message| match message {
         "via start layer must not be above end layer" => SpecctraImportError::ReversedLayerSpan,
@@ -303,6 +348,7 @@ pub fn export_specctra_via_record(via: &PcbViaStack) -> Option<SpecctraViaRecord
         center: via.center().clone(),
         land_diameter: via.land_diameter().clone(),
         drill_diameter: via.drill_diameter()?.clone(),
+        drill_intent: via.drill_intent(),
         provenance: PathProvenance::native(),
     })
 }
@@ -335,6 +381,10 @@ pub fn serialize_specctra_grid_via_records(records: &[SpecctraGridViaRecord]) ->
 /// Parsed canonical fixed-grid Specctra route tokens.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct SpecctraGridRouteRecords {
+    /// Route-level net aliases retained for diagnostics and round-trips.
+    pub net_aliases: Vec<SpecctraNetAlias>,
+    /// Route-level layer aliases retained for diagnostics and round-trips.
+    pub layer_aliases: Vec<SpecctraLayerAlias>,
     /// Fixed-grid wire records.
     pub traces: Vec<SpecctraGridTraceRecord>,
     /// Fixed-grid via records.
@@ -348,6 +398,12 @@ pub struct SpecctraGridRouteRecords {
 /// typed trace and via records before exact import and predicate validation.
 pub fn serialize_specctra_grid_route_records(records: &SpecctraGridRouteRecords) -> String {
     let mut output = String::from("(routes");
+    for alias in &records.net_aliases {
+        write_net_alias(&mut output, alias);
+    }
+    for alias in &records.layer_aliases {
+        write_layer_alias(&mut output, alias);
+    }
     for record in &records.traces {
         write_wire_record(&mut output, record);
     }
@@ -373,8 +429,10 @@ pub fn parse_specctra_grid_trace_records(
 
 /// Parse canonical fixed-grid wire and via records.
 ///
+/// Supported route-level net aliases have the form `(net N NAME)`.
+/// Supported route-level layer aliases have the form `(layer N NAME)`.
 /// Supported via records have the form
-/// `(via (net N) (layers A B) (at X Y) (land D) (drill H) (grid G))`.
+/// `(via (net N) (layers A B) (at X Y) (land D) (drill H) (intent plated) (grid G))`.
 /// This remains intentionally narrower than full DSN/SES, but it gives
 /// autorouter fixtures an exact typed boundary for layer transitions and drill
 /// fabrication predicates instead of leaving vias as unvalidated text.
@@ -388,6 +446,28 @@ pub fn parse_specctra_grid_route_records(
     let mut records = SpecctraGridRouteRecords::default();
     while parser.peek() == Some("(") {
         match parser.peek_record_kind()? {
+            "net" => {
+                let alias = parser.parse_net_alias()?;
+                if records
+                    .net_aliases
+                    .iter()
+                    .any(|existing| existing.net == alias.net || existing.name == alias.name)
+                {
+                    return Err(SpecctraParseError::InvalidNetAlias);
+                }
+                records.net_aliases.push(alias);
+            }
+            "layer" => {
+                let alias = parser.parse_layer_alias()?;
+                if records
+                    .layer_aliases
+                    .iter()
+                    .any(|existing| existing.layer == alias.layer || existing.name == alias.name)
+                {
+                    return Err(SpecctraParseError::InvalidLayerAlias);
+                }
+                records.layer_aliases.push(alias);
+            }
             "wire" => records.traces.push(parser.parse_wire()?),
             "via" => records.vias.push(parser.parse_via()?),
             _ => return Err(SpecctraParseError::InvalidSyntax),
@@ -422,6 +502,16 @@ fn grid_real(value: i64, denominator: u64) -> Result<Real, SpecctraImportError> 
         .map_err(|_| SpecctraImportError::InvalidGrid)
 }
 
+fn write_net_alias(output: &mut String, alias: &SpecctraNetAlias) {
+    write!(output, " (net {} {})", alias.net.0, alias.name)
+        .expect("writing to a String cannot fail");
+}
+
+fn write_layer_alias(output: &mut String, alias: &SpecctraLayerAlias) {
+    write!(output, " (layer {} {})", alias.layer.0, alias.name)
+        .expect("writing to a String cannot fail");
+}
+
 fn write_wire_record(output: &mut String, record: &SpecctraGridTraceRecord) {
     write!(
         output,
@@ -441,7 +531,7 @@ fn write_wire_record(output: &mut String, record: &SpecctraGridTraceRecord) {
 fn write_via_record(output: &mut String, record: &SpecctraGridViaRecord) {
     write!(
         output,
-        " (via (net {}) (layers {} {}) (at {} {}) (land {}) (drill {}) (grid {}))",
+        " (via (net {}) (layers {} {}) (at {} {}) (land {}) (drill {}) (intent {}) (grid {}))",
         record.net.0,
         record.start_layer.0,
         record.end_layer.0,
@@ -449,9 +539,18 @@ fn write_via_record(output: &mut String, record: &SpecctraGridViaRecord) {
         record.y,
         record.land_diameter,
         record.drill_diameter,
+        drill_intent_atom(record.drill_intent),
         record.grid_denominator
     )
     .expect("writing to a String cannot fail");
+}
+
+fn drill_intent_atom(intent: ViaDrillIntent) -> &'static str {
+    match intent {
+        ViaDrillIntent::Unspecified => "unspecified",
+        ViaDrillIntent::Plated => "plated",
+        ViaDrillIntent::NonPlated => "nonplated",
+    }
 }
 
 fn tokenize(input: &str) -> Vec<String> {
@@ -520,6 +619,36 @@ impl<'a> Parser<'a> {
             .ok_or(SpecctraParseError::InvalidSyntax)
     }
 
+    fn parse_net_alias(&mut self) -> Result<SpecctraNetAlias, SpecctraParseError> {
+        self.expect("(")?;
+        self.expect("net")?;
+        let net = self.parse_u32()?;
+        let name = self.next()?.to_owned();
+        self.expect(")")?;
+        if !is_valid_alias_name(&name) {
+            return Err(SpecctraParseError::InvalidNetAlias);
+        }
+        Ok(SpecctraNetAlias {
+            net: NetId(net),
+            name,
+        })
+    }
+
+    fn parse_layer_alias(&mut self) -> Result<SpecctraLayerAlias, SpecctraParseError> {
+        self.expect("(")?;
+        self.expect("layer")?;
+        let layer = self.parse_u16()?;
+        let name = self.next()?.to_owned();
+        self.expect(")")?;
+        if !is_valid_alias_name(&name) {
+            return Err(SpecctraParseError::InvalidLayerAlias);
+        }
+        Ok(SpecctraLayerAlias {
+            layer: TraceLayer(layer),
+            name,
+        })
+    }
+
     fn parse_wire(&mut self) -> Result<SpecctraGridTraceRecord, SpecctraParseError> {
         self.expect("(")?;
         self.expect("wire")?;
@@ -553,6 +682,11 @@ impl<'a> Parser<'a> {
         let (x, y) = self.parse_i64_pair_field("at")?;
         let land_diameter = self.parse_i64_field("land")?;
         let drill_diameter = self.parse_i64_field("drill")?;
+        let drill_intent = if self.peek_field_name() == Some("intent") {
+            self.parse_drill_intent_field()?
+        } else {
+            ViaDrillIntent::Unspecified
+        };
         let grid_denominator = self.parse_u64_field("grid")?;
         self.expect(")")?;
         if grid_denominator == 0 {
@@ -566,8 +700,30 @@ impl<'a> Parser<'a> {
             y,
             land_diameter,
             drill_diameter,
+            drill_intent,
             grid_denominator,
         })
+    }
+
+    fn peek_field_name(&self) -> Option<&str> {
+        if self.peek() == Some("(") {
+            self.tokens.get(self.index + 1).map(String::as_str)
+        } else {
+            None
+        }
+    }
+
+    fn parse_drill_intent_field(&mut self) -> Result<ViaDrillIntent, SpecctraParseError> {
+        self.expect("(")?;
+        self.expect("intent")?;
+        let intent = match self.next()? {
+            "unspecified" => ViaDrillIntent::Unspecified,
+            "plated" => ViaDrillIntent::Plated,
+            "nonplated" => ViaDrillIntent::NonPlated,
+            _ => return Err(SpecctraParseError::InvalidDrillIntent),
+        };
+        self.expect(")")?;
+        Ok(intent)
     }
 
     fn parse_i64_field(&mut self, name: &str) -> Result<i64, SpecctraParseError> {
@@ -583,8 +739,18 @@ impl<'a> Parser<'a> {
         u32::try_from(value).map_err(|_| SpecctraParseError::InvalidInteger)
     }
 
+    fn parse_u32(&mut self) -> Result<u32, SpecctraParseError> {
+        let value = self.parse_u64()?;
+        u32::try_from(value).map_err(|_| SpecctraParseError::InvalidInteger)
+    }
+
     fn parse_u16_field(&mut self, name: &str) -> Result<u16, SpecctraParseError> {
         let value = self.parse_u64_field(name)?;
+        u16::try_from(value).map_err(|_| SpecctraParseError::InvalidInteger)
+    }
+
+    fn parse_u16(&mut self) -> Result<u16, SpecctraParseError> {
+        let value = self.parse_u64()?;
         u16::try_from(value).map_err(|_| SpecctraParseError::InvalidInteger)
     }
 
@@ -628,4 +794,11 @@ impl<'a> Parser<'a> {
             .parse()
             .map_err(|_| SpecctraParseError::InvalidInteger)
     }
+}
+
+fn is_valid_alias_name(name: &str) -> bool {
+    !name.is_empty()
+        && name
+            .chars()
+            .all(|character| !character.is_whitespace() && character != '(' && character != ')')
 }

@@ -1,13 +1,12 @@
 [package]
 name = "hyperpath"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 
 [dependencies]
-hyperlimit = { path = "../hyperlimit", version = "0.2.0", default-features = false }
-hyperreal = { path = "../hyperreal", version = "0.11.1", default-features = false }
-hypersolve = { path = "../hypersolve", version = "0.1.0", default-features = false }
-
+hyperlimit = { version = "0.3.0", default-features = false }
+hyperreal = { version = "0.12.0", default-features = false }
+hypersolve = { version = "0.2.0", default-features = false }
 [dev-dependencies]
 criterion = "0.5"
 proptest = "1.7.0"

@@ -7,9 +7,9 @@ use hyperpath::{
     PathSourceFormat, PcbBoardOutline, PcbCardinalRectPad, PcbCircularPad, PcbConvexBoardOutline,
     PcbOrthogonalBoardOutline, PcbRectPad, PcbTrace, PcbViaStack, QuadraticBezier,
     RationalQuadraticBezier, RectangularPocket, SourceLengthUnit, SpecctraGridTraceRecord,
-    SpecctraGridViaRecord, SweptLineSegment, TangentSpan, TraceLayer,
-    build_alternating_detour_meander, build_g1_join_problem, build_length_match_problem,
-    build_multi_detour_meander, build_nonuniform_detour_meander,
+    SpecctraGridViaRecord, SpecctraLayerAlias, SpecctraNetAlias, SweptLineSegment, TangentSpan,
+    TraceLayer, ViaDrillIntent, build_alternating_detour_meander, build_g1_join_problem,
+    build_length_match_problem, build_multi_detour_meander, build_nonuniform_detour_meander,
     build_obstacle_aware_detour_meander, build_oriented_tangent_alignment_problem,
     build_rectangular_bead_plan, build_rectangular_pocket_plan,
     build_rectangular_serpentine_infill_graph, build_rectangular_support_plan,
@@ -578,6 +578,7 @@ fn path_predicates(c: &mut Criterion) {
         y: 0,
         land_diameter: 24,
         drill_diameter: 10,
+        drill_intent: ViaDrillIntent::Plated,
         grid_denominator: 10,
     })
     .unwrap();
@@ -606,6 +607,7 @@ fn path_predicates(c: &mut Criterion) {
         y: 0,
         land_diameter: 24,
         drill_diameter: 10,
+        drill_intent: ViaDrillIntent::Plated,
         grid_denominator: 10,
     };
     let via_text = serialize_specctra_grid_via_records(&[via_record_text]);
@@ -613,6 +615,14 @@ fn path_predicates(c: &mut Criterion) {
         b.iter(|| parse_specctra_grid_route_records(&via_text))
     });
     let mixed_text = serialize_specctra_grid_route_records(&hyperpath::SpecctraGridRouteRecords {
+        net_aliases: vec![SpecctraNetAlias {
+            net: NetId(3),
+            name: "CLK_P".to_owned(),
+        }],
+        layer_aliases: vec![SpecctraLayerAlias {
+            layer: TraceLayer(1),
+            name: "F_Cu".to_owned(),
+        }],
         traces: vec![SpecctraGridTraceRecord {
             net: NetId(3),
             layer: TraceLayer(1),

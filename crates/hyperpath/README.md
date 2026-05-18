@@ -94,7 +94,7 @@ and autorouting are not complete.
 
 ```toml
 [dependencies]
-hyperpath = "0.1.0"
+hyperpath = "0.2.0"
 ```
 
 For sibling checkouts:

@@ -78,12 +78,12 @@ pub use routing::{
 pub use segment::{Axis, LinePathSegment, LinePathSegmentFacts, SegmentParameterOrder};
 pub use specctra::{
     SpecctraGridRouteRecords, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError,
-    SpecctraParseError, SpecctraRoute, SpecctraTraceRecord, SpecctraViaRecord,
-    export_specctra_trace_record, export_specctra_via_record, import_specctra_text_route,
-    import_specctra_trace_record, import_specctra_via_record, parse_specctra_grid_route_records,
-    parse_specctra_grid_trace_records, serialize_specctra_grid_route_records,
-    serialize_specctra_grid_trace_records, serialize_specctra_grid_via_records,
-    specctra_grid_trace_record, specctra_grid_via_record,
+    SpecctraLayerAlias, SpecctraNetAlias, SpecctraParseError, SpecctraRoute, SpecctraTraceRecord,
+    SpecctraViaRecord, export_specctra_trace_record, export_specctra_via_record,
+    import_specctra_text_route, import_specctra_trace_record, import_specctra_via_record,
+    parse_specctra_grid_route_records, parse_specctra_grid_trace_records,
+    serialize_specctra_grid_route_records, serialize_specctra_grid_trace_records,
+    serialize_specctra_grid_via_records, specctra_grid_trace_record, specctra_grid_via_record,
 };
 pub use swept::{SweptLineSegment, SweptLineSegmentFacts};
 pub use tangent::{
