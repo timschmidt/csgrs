@@ -8,8 +8,8 @@ use dispatch_trace::{begin_dispatch_trace_run, trace_dispatch_cases, write_dispa
 use hyperlimit::{
     ExactGeometrySession, LineSide, Plane3, PlaneSide, Point2, Point3, PredicateOutcome,
     PreparedIncircle2, PreparedInsphere3, PreparedLine2, PreparedOrientedPlane3, Sign,
-    certified_ball_sign, classify_point_line, classify_point_oriented_plane, classify_point_plane,
-    incircle2d, insphere3d, orient2d, orient3d,
+    affine_independent_d, certified_ball_sign, classify_point_line, classify_point_oriented_plane,
+    classify_point_plane, incircle2d, insphere_d, insphere3d, orient_d, orient2d, orient3d,
 };
 
 const BATCH: usize = 512;
@@ -201,6 +201,43 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                     black_box(d),
                     black_box(e),
                 )));
+            }
+            black_box(score)
+        });
+    });
+
+    // These rows keep the D-dimensional predicate boundary visible while it is
+    // still intentionally generic. They measure exact determinant ownership in
+    // `hyperlimit` before `hypertri` or mesh crates add prepared common-scale
+    // schedules, following Yap's object/predicate layering in "Towards Exact
+    // Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    let orient_d_cases = exact_rational_orient_d_cases();
+    group.bench_function("orient_d/4d_common_denominator", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for case in &orient_d_cases {
+                score += sign_score(black_box(orient_d(black_box(case))));
+            }
+            black_box(score)
+        });
+    });
+
+    let insphere_d_cases = exact_rational_insphere_d_cases();
+    group.bench_function("insphere_d/4d_common_denominator", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for (simplex, query) in &insphere_d_cases {
+                score += sign_score(black_box(insphere_d(black_box(simplex), black_box(query))));
+            }
+            black_box(score)
+        });
+    });
+
+    group.bench_function("affine_independent_d/4d_common_denominator", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for case in &orient_d_cases {
+                score += bool_score(black_box(affine_independent_d(black_box(case))));
             }
             black_box(score)
         });
@@ -998,6 +1035,40 @@ fn exact_rational_insphere3d_cases() -> Vec<Insphere3Case> {
     cases
 }
 
+fn exact_rational_orient_d_cases() -> Vec<Vec<Vec<hyperreal::Real>>> {
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        cases.push(vec![
+            rational_point_d(&[0, 0, 0, 0], 17),
+            rational_point_d(&[9, 0, 0, 0], 17),
+            rational_point_d(&[0, 9, 0, 0], 17),
+            rational_point_d(&[0, 0, 9, 0], 17),
+            rational_point_d(&[j % 5, j % 7, j % 11, 9 + j % 3], 17),
+        ]);
+    }
+    cases
+}
+
+fn exact_rational_insphere_d_cases() -> Vec<(Vec<Vec<hyperreal::Real>>, Vec<hyperreal::Real>)> {
+    let simplex = vec![
+        rational_point_d(&[0, 0, 0, 0], 19),
+        rational_point_d(&[8, 0, 0, 0], 19),
+        rational_point_d(&[0, 8, 0, 0], 19),
+        rational_point_d(&[0, 0, 8, 0], 19),
+        rational_point_d(&[0, 0, 0, 8], 19),
+    ];
+    let mut cases = Vec::with_capacity(BATCH);
+    for i in 0..BATCH {
+        let j = i as i64;
+        cases.push((
+            simplex.clone(),
+            rational_point_d(&[j % 13 + 1, j % 17 + 1, j % 19 + 1, j % 23 + 1], 19),
+        ));
+    }
+    cases
+}
+
 fn large_rational_near_degenerate_orient2d_cases() -> Vec<Orient2Case> {
     let den = 1_000_003_u64;
     let den_sq = den * den;
@@ -1179,6 +1250,13 @@ fn rational_point3(
     )
 }
 
+fn rational_point_d(numerators: &[i64], denominator: u64) -> Vec<hyperreal::Real> {
+    numerators
+        .iter()
+        .map(|&numerator| rational_real(numerator, denominator))
+        .collect()
+}
+
 fn rational_real(numerator: i64, denominator: u64) -> hyperreal::Real {
     hyperreal::Real::new(hyperreal::Rational::fraction(numerator, denominator).unwrap())
 }
@@ -1218,6 +1296,13 @@ fn sign_score(outcome: PredicateOutcome<Sign>) -> i64 {
             Sign::Zero => 0,
             Sign::Positive => 1,
         },
+        PredicateOutcome::Unknown { .. } => 7,
+    }
+}
+
+fn bool_score(outcome: PredicateOutcome<bool>) -> i64 {
+    match outcome {
+        PredicateOutcome::Decided { value, .. } => i64::from(value),
         PredicateOutcome::Unknown { .. } => 7,
     }
 }

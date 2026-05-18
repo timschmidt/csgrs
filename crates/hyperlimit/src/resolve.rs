@@ -132,20 +132,10 @@ fn exact_evaluation_if_allowed(
         return None;
     }
 
-    match exact() {
-        Some(sign) => {
-            crate::trace_dispatch!("hyperlimit", "exact_evaluation", "decided");
-            Some(PredicateOutcome::decided(
-                sign,
-                Certainty::Exact,
-                Escalation::Exact,
-            ))
-        }
-        None => {
-            crate::trace_dispatch!("hyperlimit", "exact_evaluation", "unavailable");
-            None
-        }
-    }
+    exact().map(|sign| {
+        crate::trace_dispatch!("hyperlimit", "exact_evaluation", "decided");
+        PredicateOutcome::decided(sign, Certainty::Exact, Escalation::Exact)
+    })
 }
 
 fn refine_real_sign_if_allowed(
@@ -157,10 +147,7 @@ fn refine_real_sign_if_allowed(
         return None;
     }
 
-    let Some(precision) = policy.max_refinement_precision else {
-        crate::trace_dispatch!("hyperlimit", "refine_real_sign", "no-precision-budget");
-        return None;
-    };
+    let precision = policy.max_refinement_precision?;
     match value.refine_sign_knowledge_until(precision) {
         SignKnowledge::Known { sign, certainty } => {
             crate::trace_dispatch!("hyperlimit", "refine_real_sign", "decided");
@@ -197,7 +184,7 @@ pub(crate) fn signed_term_filter(terms: &[(&Real, Sign)]) -> Option<PredicateOut
     let mut nonzero = [Sign::Zero; 4];
     let mut nonzero_len = 0usize;
     for (term, multiplier) in terms {
-        let Some(sign) = signed_nonzero_term(*term, *multiplier)? else {
+        let Some(sign) = signed_nonzero_term(term, *multiplier)? else {
             continue;
         };
         nonzero[nonzero_len] = sign;
@@ -212,7 +199,7 @@ fn signed_term_filter_dynamic(terms: &[(&Real, Sign)]) -> Option<PredicateOutcom
     let mut nonzero = Vec::with_capacity(terms.len());
 
     for (term, multiplier) in terms {
-        let Some(sign) = signed_nonzero_term(*term, *multiplier)? else {
+        let Some(sign) = signed_nonzero_term(term, *multiplier)? else {
             continue;
         };
         nonzero.push(sign);
@@ -229,10 +216,7 @@ fn signed_nonzero_term(term: &Real, multiplier: Sign) -> Option<Option<Sign>> {
         return Some(None);
     }
 
-    let Some(sign) = facts.sign.map(crate::real::map_real_sign) else {
-        crate::trace_dispatch!("hyperlimit", "signed_term_filter", "missing-sign");
-        return None;
-    };
+    let sign = facts.sign.map(crate::real::map_real_sign)?;
     let sign = multiply_sign(sign, multiplier);
     if sign == Sign::Zero {
         crate::trace_dispatch!("hyperlimit", "signed_term_filter", "zero-after-multiplier");

@@ -351,9 +351,9 @@ fn plane3_facts(plane: &Plane3) -> Plane3Facts {
         coefficient_exact,
         coefficient_symbolic_dependencies: plane_coefficient_symbolic_dependencies(coefficients),
         normal: plane.normal.structural_facts(),
-        coefficient_zero_mask: coefficient_zero_mask as u8,
-        coefficient_nonzero_mask: coefficient_nonzero_mask as u8,
-        coefficient_unknown_zero_mask: coefficient_unknown_zero_mask as u8,
+        coefficient_zero_mask,
+        coefficient_nonzero_mask,
+        coefficient_unknown_zero_mask,
     }
 }
 

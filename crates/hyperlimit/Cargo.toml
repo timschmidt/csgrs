@@ -1,6 +1,6 @@
 [package]
 name = "hyperlimit"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 description = "Hyperreal-backed exact predicates with structural Real awareness."
 license = "MIT OR Apache-2.0"
@@ -11,7 +11,7 @@ keywords = ["exact", "geometric", "predicates", "boundary", "orientation"]
 categories = ["mathematics", "games", "simulation"]
 
 [dependencies]
-hyperreal = { path = "../hyperreal/", version = "0.11.1" }
+hyperreal = { version = "0.12.0" }
 rayon = { version = "1.10", optional = true }
 
 [dev-dependencies]

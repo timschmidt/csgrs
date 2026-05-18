@@ -51,6 +51,8 @@ than inventing a float decision.
 - `PredicatePolicy` controls refinement and approximate-edge behavior.
 - `Sign`, `LineSide`, `PlaneSide`, `TriangleLocation`, `SegmentIntersection`,
   `RingPointLocation`, interval, and AABB classifications are the common result enums.
+- `orient_d`, `insphere_d`, and `affine_independent_d` provide the first exact
+  D-dimensional determinant predicate boundary for triangulation and mesh crates.
 - Prepared segment, triangle, AABB, line, circle/sphere, and plane helpers retain facts
   for repeated decisions.
 - Session types such as `ExactGeometrySession`, `ConstructionCertificate`,
@@ -85,7 +87,8 @@ Version `0.2.0` is an early but usable predicate crate. It currently includes:
 
 - `Point2`, `Point3`, `Plane3`, and predicate-facing structural fact carriers;
 - exact real and point ordering, squared-distance comparison, interval, AABB, segment,
-  ring, triangle, line, plane, orientation, in-circle, and in-sphere predicates;
+  ring, triangle, line, plane, orientation, in-circle, in-sphere, and
+  D-dimensional orientation/in-sphere/affine-independence predicates;
 - prepared segment, triangle, AABB, line, circle/sphere, and plane helpers for repeated
   decisions;
 - `PredicateOutcome`, `PredicateReport`, `PredicateCertificate`, certainty,
@@ -101,7 +104,7 @@ domain-specific geometry.
 
 ```toml
 [dependencies]
-hyperlimit = "0.2.0"
+hyperlimit = "0.3.0"
 ```
 
 Feature summary:

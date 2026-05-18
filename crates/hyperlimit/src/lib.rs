@@ -81,7 +81,7 @@ pub use plane::{
 pub use predicate::{
     Certainty, DeterminantScheduleHint, Escalation, ExactPredicateKernel, PredicateApiSemantics,
     PredicateCertificate, PredicateOutcome, PredicatePolicy, PredicatePrecisionStage,
-    PredicateReport, Sign, SignKnowledge,
+    PredicateReport, RefinementNeed, Sign, SignKnowledge,
 };
 pub use predicates::aabb::{
     PreparedAabb2, aabb2s_intersect, aabb2s_intersect_with_policy, aabb3s_intersect,
@@ -104,6 +104,10 @@ pub use predicates::interval::{
     classify_real_closed_interval, classify_real_closed_interval_with_policy,
     closed_intervals_intersect, closed_intervals_intersect_with_policy, real_in_closed_interval,
     real_in_closed_interval_with_policy,
+};
+pub use predicates::nd::{
+    affine_independent_d, affine_independent_d_with_policy, insphere_d, insphere_d_with_policy,
+    orient_d, orient_d_with_policy,
 };
 pub use predicates::order::{
     compare_point2_lexicographic, compare_point2_lexicographic_report,
