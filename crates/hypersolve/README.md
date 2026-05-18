@@ -1,4 +1,7 @@
-# hypersolve
+<h1>
+  hypersolve
+  <img src="./doc/hypersolve.png" alt="hypersolve logo" width="144" align="right">
+</h1>
 
 `hypersolve` is the experimental exact-aware solver layer for the Hyper stack. It models
 variables, constraints, symbolic residuals, preparation facts, interval and candidate
@@ -55,8 +58,9 @@ than internal truth.
   expose reusable exact subproblems.
 - `CandidateCertificationReport`, residual balls, interval certification helpers,
   affine Krawczyk reports, and predicate reports describe proof or uncertainty.
-- `DenseLinearBackend`, `LinearSolveReport`, `SolverConfig`, `SolverState`, and
-  `SolveReport` make lossy dense solving explicit.
+- `ProposalEngineKind`, `ProposalEngineReport`, `DenseLinearBackend`,
+  `LinearSolveReport`, `SolverConfig`, `SolverState`, and `SolveReport` make
+  lossy candidate generation explicit.
 
 ## Precision Model
 
@@ -79,7 +83,10 @@ helpers handle small exact cases before a generic nonlinear loop is needed.
 
 Future backend work should exploit the same records: skip structural zeros, reuse
 prepared Jacobians, route affine blocks to exact/direct solvers, and report when a dense
-or sparse numeric adapter has crossed a lossy boundary.
+or sparse numeric adapter has crossed a lossy boundary. Alternative engines such as
+Powell hybrid, Levenberg-Marquardt, dogleg, BFGS, and SQP are named proposal choices;
+unsupported choices are reported rather than silently mapped to the current dense
+damped least-squares implementation.
 
 ## Current Status
 
@@ -92,7 +99,7 @@ Implemented today:
   analysis, exact substitution-class construction, and non-mutating affine row
   elimination reports;
 - candidate, interval, and affine Krawczyk certification surfaces;
-- a dense damped least-squares prototype with adapter diagnostics;
+- a dense damped least-squares prototype with proposal-engine and adapter diagnostics;
 - geometry, PCB, and toolpath constraint helper modules.
 
 Known limits: nonlinear solve policy is still experimental, dense linear solving is
@@ -111,6 +118,41 @@ For sibling checkouts:
 [dependencies]
 hypersolve = { path = "../hypersolve" }
 ```
+
+## Usage
+
+Define residuals symbolically, evaluate candidates, and certify the result instead of
+trusting a proposal loop by itself:
+
+```rust,ignore
+use hypersolve::{
+    Constraint, ConstraintKind, Expr, Problem, SolverConfig, SolverState, Variable, VariableId,
+    certify_candidate, solve_damped_least_squares,
+};
+use hyperreal::Real;
+
+let x = VariableId(0);
+let problem = Problem {
+    variables: vec![Variable::new(x, "x")],
+    constraints: vec![Constraint {
+        kind: ConstraintKind::Equality,
+        residual: Expr::symbol(x) * Expr::symbol(x) - Expr::constant(Real::from(4)),
+    }],
+};
+
+let proposal = solve_damped_least_squares(SolverState {
+    problem: problem.clone(),
+    values: vec![Real::from(2)],
+    config: SolverConfig::default(),
+});
+
+let certification = certify_candidate(&problem, &proposal.values);
+assert!(!certification.rows.is_empty());
+```
+
+Prepared affine/quadratic residuals, direct equality substitution, interval and
+Krawczyk reports, dense linear adapter diagnostics, predicate reports, and domain helper
+modules keep solver structure visible across geometry, PCB, and toolpath problems.
 
 ## Development
 

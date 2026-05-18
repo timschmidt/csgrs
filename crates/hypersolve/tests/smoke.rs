@@ -4,20 +4,21 @@ use hypersolve::{
     CandidateCertificationConfig, CandidateResidualBall, CertifiedCandidateStatus, Constraint,
     ConstraintKind, ConvergenceReason, DenseLinearBackend, Expr, ExprDegree, LinearAdapterKind,
     LinearAdapterPrecision, LinearBackend, PcbConstraintSet, PreparedProblem, PreparedSolverBlock,
-    Problem, RectangularRegion, SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState,
-    SymbolId, ToolpathConstraintSet, VariableBall, apply_equality_substitutions,
-    bezier_offset_sample_constraints, build_equality_substitution_classes,
-    center_clearance_squared_constraint, certify_affine_interval_candidate,
-    certify_affine_krawczyk_box, certify_candidate, certify_candidate_with_config,
-    certify_candidate_with_residual_balls, certify_multivariate_quadratic_interval_candidate,
-    certify_quadratic_interval_candidate, constant_feed_time_equation, context_from_problem,
-    differential_pair_skew_equation, eliminate_affine_rows_with_substitution_classes,
-    evaluate_residuals, facts_depend_on_symbol, find_equality_substitutions, length_match_equation,
-    point_coincidence_equations, rectangular_difference_area_equation,
-    rectangular_region_area_equation, rectangular_region_containment_constraints,
-    solve_damped_least_squares, solve_direct_affine_equalities,
-    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
-    tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
+    Problem, ProposalEngineKind, ProposalEnginePrecision, RectangularRegion, SolverBlockRowKind,
+    SolverConfig, SolverPoint2, SolverState, SymbolId, ToolpathConstraintSet, VariableBall,
+    apply_equality_substitutions, bezier_offset_sample_constraints,
+    build_equality_substitution_classes, center_clearance_squared_constraint,
+    certify_affine_interval_candidate, certify_affine_krawczyk_box, certify_candidate,
+    certify_candidate_with_config, certify_candidate_with_residual_balls,
+    certify_multivariate_quadratic_interval_candidate, certify_quadratic_interval_candidate,
+    constant_feed_time_equation, context_from_problem, differential_pair_skew_equation,
+    eliminate_affine_rows_with_substitution_classes, evaluate_residuals, facts_depend_on_symbol,
+    find_equality_substitutions, length_match_equation, point_coincidence_equations,
+    rectangular_difference_area_equation, rectangular_region_area_equation,
+    rectangular_region_containment_constraints, solve_damped_least_squares,
+    solve_direct_affine_equalities, solve_direct_univariate_quadratic_equalities,
+    squared_distance_equation, tangent_parallel_equation, tangent_same_direction_constraint,
+    validate_equality_substitutions,
 };
 
 fn real(value: i64) -> Real {
@@ -65,6 +66,7 @@ fn symbolic_derivative_solves_one_variable_linear_equation() {
             residual_tolerance: edge_real(1.0e-6),
             step_tolerance: edge_real(1.0e-12),
             damping: edge_real(1.0e-9),
+            proposal_engine: ProposalEngineKind::DampedLeastSquares,
         },
     });
 
@@ -77,12 +79,48 @@ fn symbolic_derivative_solves_one_variable_linear_equation() {
         "top-level solve reports should expose dense adapter diagnostics"
     );
     assert!(report.linear_reports.iter().all(|row| row.is_lossy()));
+    assert_eq!(
+        report.proposal_engine.requested,
+        ProposalEngineKind::DampedLeastSquares
+    );
+    assert_eq!(
+        report.proposal_engine.used,
+        Some(ProposalEngineKind::DampedLeastSquares)
+    );
+    assert_eq!(
+        report.proposal_engine.precision,
+        ProposalEnginePrecision::LossyF64
+    );
     assert!(
         report
             .linear_reports
             .iter()
             .all(|row| row.precision() == LinearAdapterPrecision::LossyF64)
     );
+}
+
+#[test]
+fn unsupported_proposal_engine_is_reported_without_dense_fallback() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_constraint(Constraint::equality("x minus two", x - Expr::int(2)));
+    let config = SolverConfig {
+        proposal_engine: ProposalEngineKind::Dogleg,
+        ..SolverConfig::default()
+    };
+
+    let report = solve_damped_least_squares(SolverState { problem, config });
+
+    assert_eq!(report.reason, ConvergenceReason::UnsupportedProposalEngine);
+    assert_eq!(report.iterations, 0);
+    assert_eq!(report.proposal_engine.requested, ProposalEngineKind::Dogleg);
+    assert_eq!(report.proposal_engine.used, None);
+    assert_eq!(
+        report.proposal_engine.precision,
+        ProposalEnginePrecision::Unsupported
+    );
+    assert!(report.linear_reports.is_empty());
 }
 
 #[test]

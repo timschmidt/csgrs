@@ -1,6 +1,9 @@
 use hyperreal::Real;
 
-use crate::diagnostics::{ConvergenceReason, SolveReport};
+use crate::diagnostics::{
+    ConvergenceReason, ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport,
+    SolveReport,
+};
 use crate::eval::context_from_problem;
 use crate::jacobian::{
     FiniteDifferenceConfig, finite_difference_jacobian, symbolic_jacobian_prepared,
@@ -15,6 +18,12 @@ pub struct SolverConfig {
     pub residual_tolerance: Real,
     pub step_tolerance: Real,
     pub damping: Real,
+    /// Numerical engine used only to propose candidate coordinates.
+    ///
+    /// The current implementation supports dense damped least squares. Other
+    /// named engines are exposed so callers and tests can distinguish
+    /// unsupported proposal requests from exact certification failures.
+    pub proposal_engine: ProposalEngineKind,
 }
 
 impl Default for SolverConfig {
@@ -24,6 +33,7 @@ impl Default for SolverConfig {
             residual_tolerance: real_from_dense_solver_f64(1.0e-9),
             step_tolerance: real_from_dense_solver_f64(1.0e-9),
             damping: real_from_dense_solver_f64(1.0e-6),
+            proposal_engine: ProposalEngineKind::DampedLeastSquares,
         }
     }
 }
@@ -38,6 +48,16 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
     let backend = DenseLinearBackend;
     let mut last_residuals = Vec::new();
     let mut linear_reports = Vec::new();
+    let proposal_engine = proposal_engine_report(state.config.proposal_engine);
+    if !proposal_engine.supported {
+        return SolveReport {
+            reason: ConvergenceReason::UnsupportedProposalEngine,
+            iterations: 0,
+            proposal_engine,
+            residuals: last_residuals,
+            linear_reports,
+        };
+    }
     let residual_tolerance = state
         .config
         .residual_tolerance
@@ -53,6 +73,7 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
             return SolveReport {
                 reason: ConvergenceReason::EvaluationFailed,
                 iterations: iteration,
+                proposal_engine,
                 residuals: last_residuals,
                 linear_reports,
             };
@@ -71,6 +92,7 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
             return SolveReport {
                 reason: ConvergenceReason::Converged,
                 iterations: iteration,
+                proposal_engine,
                 residuals: last_residuals,
                 linear_reports,
             };
@@ -87,6 +109,7 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
                     return SolveReport {
                         reason: ConvergenceReason::EvaluationFailed,
                         iterations: iteration,
+                        proposal_engine,
                         residuals: last_residuals,
                         linear_reports,
                     };
@@ -101,6 +124,7 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
             return SolveReport {
                 reason: ConvergenceReason::LinearSolveFailed,
                 iterations: iteration,
+                proposal_engine,
                 residuals: last_residuals,
                 linear_reports,
             };
@@ -111,6 +135,7 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
             return SolveReport {
                 reason: ConvergenceReason::StepTooSmall,
                 iterations: iteration,
+                proposal_engine,
                 residuals: last_residuals,
                 linear_reports,
             };
@@ -134,8 +159,27 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
     SolveReport {
         reason: ConvergenceReason::MaxIterations,
         iterations: state.config.max_iterations,
+        proposal_engine,
         residuals: last_residuals,
         linear_reports,
+    }
+}
+
+fn proposal_engine_report(requested: ProposalEngineKind) -> ProposalEngineReport {
+    if requested.is_implemented() {
+        ProposalEngineReport {
+            requested,
+            used: Some(requested),
+            precision: ProposalEnginePrecision::LossyF64,
+            supported: true,
+        }
+    } else {
+        ProposalEngineReport {
+            requested,
+            used: None,
+            precision: ProposalEnginePrecision::Unsupported,
+            supported: false,
+        }
     }
 }
 

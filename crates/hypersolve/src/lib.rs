@@ -28,7 +28,10 @@ pub use certification::{
     CertifiedCandidateRow, CertifiedCandidateStatus, certify_candidate,
     certify_candidate_with_config, certify_candidate_with_residual_balls,
 };
-pub use diagnostics::{ConvergenceReason, SolveReport};
+pub use diagnostics::{
+    ConvergenceReason, ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport,
+    SolveReport,
+};
 pub use direct::{
     DirectAffineSolution, DirectQuadraticSolution, DirectSolveError, EliminatedAffineRow,
     EqualitySubstitution, EqualitySubstitutionClass, EqualitySubstitutionClassMember,

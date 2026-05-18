@@ -11,9 +11,15 @@ keywords = ["solver", "constraints", "hyperreal", "numerics", "cad"]
 categories = ["mathematics", "science", "algorithms"]
 
 [dependencies]
+# Hyper ecosystem dependencies: keep the crate-official release references and
+# the commented workspace references below. Switch to the workspace form for
+# local development, then switch back to crates.io versions before publishing.
 hyperreal = { version = "0.12.0", default-features = false }
 hyperlattice = { version = "0.5.0", default-features = false }
 hyperlimit = { version = "0.3.0", default-features = false }
+# hyperreal = { path = "../hyperreal", default-features = false }
+# hyperlattice = { path = "../hyperlattice", default-features = false }
+# hyperlimit = { path = "../hyperlimit", default-features = false }
 [dev-dependencies]
 criterion = "0.5"
 proptest = "1.7.0"
