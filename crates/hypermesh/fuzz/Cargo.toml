@@ -11,6 +11,9 @@ cargo-fuzz = true
 hypermesh = { path = "..", default-features = false, features = ["exact"] }
 libfuzzer-sys = "0.4"
 
+[features]
+exact-triangulation = ["hypermesh/exact-triangulation"]
+
 [[bin]]
 name = "exact_mesh_input"
 path = "fuzz_targets/exact_mesh_input.rs"
@@ -24,3 +27,11 @@ path = "fuzz_targets/exact_integer_mesh_input.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "exact_boolean_preflight"
+path = "fuzz_targets/exact_boolean_preflight.rs"
+test = false
+doc = false
+bench = false
+required-features = ["exact-triangulation"]

@@ -36,6 +36,8 @@ jobs:
             command: cargo bench --no-run --no-default-features --features exact-triangulation
           - name: fuzz-targets
             command: cargo check --manifest-path fuzz/Cargo.toml
+          - name: fuzz-targets-exact-triangulation
+            command: cargo check --manifest-path fuzz/Cargo.toml --features exact-triangulation
 
     steps:
       - uses: actions/checkout@v4

@@ -19,7 +19,7 @@ use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::{
-    Point3, SegmentIntersection, Sign, TriangleLocation, compare_reals, orient3d_report,
+    PlaneSide, Point3, SegmentIntersection, Sign, TriangleLocation, compare_reals, orient3d_report,
 };
 
 use super::construction::{SegmentPlaneIntersection, SegmentPlaneRelation};
@@ -59,6 +59,9 @@ pub enum IntersectionEvent {
         point: Option<Point3>,
         /// Exact edge parameter when available.
         parameter: Option<ExactReal>,
+        /// Certified endpoint side facts retained from segment/plane
+        /// classification.
+        endpoint_sides: [Option<PlaneSide>; 2],
     },
     /// A projected coplanar edge-pair relation.
     CoplanarEdge {
@@ -165,6 +168,31 @@ impl ExactIntersectionGraph {
         graph_vertex_plan(&self.edge_split_plan())
     }
 
+    /// Merge coincident split points after validating edge split facts.
+    ///
+    /// This checked entry point rejects invalid segment/plane construction
+    /// facts before point equality is used to form graph vertices. That keeps
+    /// the merge plan in Yap's certified-object layer rather than letting
+    /// topology consume coordinates whose construction context has already
+    /// been lost. See Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997).
+    pub fn checked_graph_vertex_plan(
+        &self,
+    ) -> Result<ExactGraphVertexPlan, SplitPlanValidationReport> {
+        let edge_splits = self.edge_split_plan();
+        let edge_report = edge_splits.validate();
+        if !edge_report.is_valid() {
+            return Err(edge_report);
+        }
+        let graph_vertices = graph_vertex_plan(&edge_splits);
+        let graph_report = graph_vertices.validate();
+        if graph_report.is_valid() {
+            Ok(graph_vertices)
+        } else {
+            Err(graph_report)
+        }
+    }
+
     /// Build a non-mutating split-topology plan.
     ///
     /// The plan maps each split edge to an ordered chain from the original
@@ -180,6 +208,38 @@ impl ExactIntersectionGraph {
         split_topology_plan(&edge_splits, &graph_vertices)
     }
 
+    /// Build a non-mutating split-topology plan after validating split events.
+    ///
+    /// This checked entry point enforces the edge-split handoff contract before
+    /// graph-vertex merging. It is the preferred path for production exact
+    /// boolean topology because it rejects missing side facts, non-crossing
+    /// split facts, and uncertified edge ordering before later stages can
+    /// consume them. The staged rejection follows Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997): exact
+    /// constructions become topology only after their combinatorial
+    /// assumptions have been validated.
+    pub fn checked_split_topology_plan(
+        &self,
+    ) -> Result<ExactSplitTopologyPlan, SplitPlanValidationReport> {
+        let edge_splits = self.edge_split_plan();
+        let edge_report = edge_splits.validate();
+        if !edge_report.is_valid() {
+            return Err(edge_report);
+        }
+        let graph_vertices = graph_vertex_plan(&edge_splits);
+        let graph_report = graph_vertices.validate();
+        if !graph_report.is_valid() {
+            return Err(graph_report);
+        }
+        let topology = split_topology_plan(&edge_splits, &graph_vertices);
+        let topology_report = topology.validate();
+        if topology_report.is_valid() {
+            Ok(topology)
+        } else {
+            Err(topology_report)
+        }
+    }
+
     /// Build face-local split work items from the split topology plan.
     ///
     /// The result tells later triangulation which original face boundary edges
@@ -187,6 +247,23 @@ impl ExactIntersectionGraph {
     /// decision; those remain exact downstream steps.
     pub fn face_split_plan(&self) -> ExactFaceSplitPlan {
         face_split_plan(&self.split_topology_plan())
+    }
+
+    /// Build and validate face-local split work items from checked topology.
+    ///
+    /// This keeps the face-local handoff explicit: topology chains are checked
+    /// first, then face work items must prove every referenced graph vertex has
+    /// a matching exact source use on that face edge before boundary geometry
+    /// is materialized.
+    pub fn checked_face_split_plan(&self) -> Result<ExactFaceSplitPlan, SplitPlanValidationReport> {
+        let topology = self.checked_split_topology_plan()?;
+        let face_plan = face_split_plan(&topology);
+        let face_report = face_plan.validate_against_topology(&topology);
+        if face_report.is_valid() {
+            Ok(face_plan)
+        } else {
+            Err(face_report)
+        }
     }
 
     /// Build exact face-boundary geometry for later triangulation.
@@ -201,8 +278,14 @@ impl ExactIntersectionGraph {
         left: &ExactMesh,
         right: &ExactMesh,
     ) -> Result<ExactFaceSplitGeometryPlan, MeshError> {
-        let topology = self.split_topology_plan();
+        let topology = self
+            .checked_split_topology_plan()
+            .map_err(split_plan_report_to_mesh_error)?;
         let face_plan = face_split_plan(&topology);
+        let face_report = face_plan.validate_against_topology(&topology);
+        if !face_report.is_valid() {
+            return Err(split_plan_report_to_mesh_error(face_report));
+        }
         face_split_geometry_plan(left, right, &topology, &face_plan)
     }
 }
@@ -242,6 +325,8 @@ pub struct EdgeSplitPoint {
     pub parameter: ExactReal,
     /// Exact constructed point.
     pub point: Point3,
+    /// Endpoint side facts that certified this split event.
+    pub endpoint_sides: [Option<PlaneSide>; 2],
 }
 
 /// Edge split extraction result.
@@ -258,6 +343,18 @@ impl ExactEdgeSplitPlan {
     pub fn point_count(&self) -> usize {
         self.splits.iter().map(|split| split.points.len()).sum()
     }
+
+    /// Validate exact edge split events before graph-vertex merging.
+    ///
+    /// This is the first handoff after segment/plane construction. It keeps
+    /// Yap's exact-computation separation intact by checking that each split
+    /// point still carries certified opposite endpoint-side facts before later
+    /// stages collapse points into graph vertices and topology chains. See
+    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7.1-2 (1997).
+    pub fn validate(&self) -> SplitPlanValidationReport {
+        validate_edge_split_plan(self)
+    }
 }
 
 /// One merged exact graph vertex.
@@ -270,7 +367,7 @@ pub struct ExactGraphVertex {
 }
 
 /// One source use of a merged graph vertex.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ExactGraphVertexUse {
     /// Mesh side owning the split edge.
     pub side: MeshSide,
@@ -280,6 +377,10 @@ pub struct ExactGraphVertexUse {
     pub face_pair: [usize; 2],
     /// Opposite face whose plane produced the split.
     pub plane_face: usize,
+    /// Exact parameter on the directed edge for this source use.
+    pub parameter: ExactReal,
+    /// Endpoint side facts that certified this source use.
+    pub endpoint_sides: [Option<PlaneSide>; 2],
 }
 
 /// Exact graph-vertex merge result.
@@ -289,6 +390,24 @@ pub struct ExactGraphVertexPlan {
     pub vertices: Vec<ExactGraphVertex>,
     /// Equality checks that could not be certified.
     pub unresolved_equalities: usize,
+}
+
+impl ExactGraphVertexPlan {
+    /// Count retained source uses across all graph vertices.
+    pub fn source_use_count(&self) -> usize {
+        self.vertices.iter().map(|vertex| vertex.uses.len()).sum()
+    }
+
+    /// Validate merged graph vertices before topology consumes them.
+    ///
+    /// The graph-vertex plan is the first place where multiple exact
+    /// constructions may collapse to one topological vertex. Following Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+    /// (1997), this handoff preserves and validates the construction-side
+    /// facts instead of trusting the representative coordinate alone.
+    pub fn validate(&self) -> SplitPlanValidationReport {
+        validate_graph_vertex_plan(self)
+    }
 }
 
 /// One node in an ordered split-edge chain.
@@ -418,6 +537,10 @@ pub enum SplitPlanDiagnosticKind {
     UnresolvedEquality,
     /// A split point could not be matched to a graph vertex.
     UnresolvedVertexLookup,
+    /// A segment/plane split point is missing endpoint side facts.
+    MissingEndpointSideFacts,
+    /// A segment/plane split point was not certified by opposite strict sides.
+    NonCrossingEndpointSideFacts,
     /// A split chain has no usable endpoint-to-endpoint path.
     EmptyOrShortEdgeChain,
     /// A split chain does not begin at its directed edge start.
@@ -496,6 +619,29 @@ impl SplitPlanDiagnostic {
         self.graph_vertex = Some(graph_vertex);
         self
     }
+}
+
+fn split_plan_report_to_mesh_error(report: SplitPlanValidationReport) -> MeshError {
+    MeshError::new(
+        report
+            .diagnostics
+            .into_iter()
+            .map(|diagnostic| {
+                let mut mesh = MeshDiagnostic::new(
+                    Severity::Error,
+                    DiagnosticKind::UnsupportedExactOperation,
+                    diagnostic.message,
+                );
+                if let Some(face) = diagnostic.face {
+                    mesh = mesh.with_face(face);
+                }
+                if let Some(edge) = diagnostic.edge {
+                    mesh = mesh.with_edge(edge);
+                }
+                mesh
+            })
+            .collect(),
+    )
 }
 
 /// Validation report for exact split topology and face split plans.
@@ -709,6 +855,7 @@ fn edge_split_plan(graph: &ExactIntersectionGraph) -> ExactEdgeSplitPlan {
                 plane_face,
                 point: Some(point),
                 parameter: Some(parameter),
+                endpoint_sides,
                 ..
             } = event
             else {
@@ -728,6 +875,7 @@ fn edge_split_plan(graph: &ExactIntersectionGraph) -> ExactEdgeSplitPlan {
                     plane_face: *plane_face,
                     parameter: parameter.clone(),
                     point: point.clone(),
+                    endpoint_sides: *endpoint_sides,
                 });
         }
     }
@@ -754,6 +902,8 @@ fn graph_vertex_plan(split_plan: &ExactEdgeSplitPlan) -> ExactGraphVertexPlan {
                 edge: split.edge,
                 face_pair: point.face_pair,
                 plane_face: point.plane_face,
+                parameter: point.parameter.clone(),
+                endpoint_sides: point.endpoint_sides,
             };
 
             let mut matched = None;
@@ -783,6 +933,57 @@ fn graph_vertex_plan(split_plan: &ExactEdgeSplitPlan) -> ExactGraphVertexPlan {
         vertices,
         unresolved_equalities,
     }
+}
+
+fn validate_graph_vertex_plan(plan: &ExactGraphVertexPlan) -> SplitPlanValidationReport {
+    let mut diagnostics = Vec::new();
+
+    for _ in 0..plan.unresolved_equalities {
+        diagnostics.push(SplitPlanDiagnostic::new(
+            SplitPlanDiagnosticKind::UnresolvedEquality,
+            "graph-vertex equality could not be certified",
+        ));
+    }
+
+    for (index, vertex) in plan.vertices.iter().enumerate() {
+        if vertex.uses.is_empty() {
+            diagnostics.push(
+                SplitPlanDiagnostic::new(
+                    SplitPlanDiagnosticKind::EmptyGraphVertexUses,
+                    "graph vertex has no exact source uses",
+                )
+                .with_graph_vertex(index),
+            );
+            continue;
+        }
+
+        for vertex_use in &vertex.uses {
+            match vertex_use.endpoint_sides {
+                [Some(PlaneSide::Above), Some(PlaneSide::Below)]
+                | [Some(PlaneSide::Below), Some(PlaneSide::Above)] => {}
+                [Some(_), Some(_)] => diagnostics.push(
+                    SplitPlanDiagnostic::new(
+                        SplitPlanDiagnosticKind::NonCrossingEndpointSideFacts,
+                        "graph vertex source use was not certified by opposite strict endpoint sides",
+                    )
+                    .with_side(vertex_use.side)
+                    .with_edge(vertex_use.edge)
+                    .with_graph_vertex(index),
+                ),
+                _ => diagnostics.push(
+                    SplitPlanDiagnostic::new(
+                        SplitPlanDiagnosticKind::MissingEndpointSideFacts,
+                        "graph vertex source use is missing endpoint side facts",
+                    )
+                    .with_side(vertex_use.side)
+                    .with_edge(vertex_use.edge)
+                    .with_graph_vertex(index),
+                ),
+            }
+        }
+    }
+
+    SplitPlanValidationReport { diagnostics }
 }
 
 fn split_topology_plan(
@@ -823,6 +1024,44 @@ fn split_topology_plan(
         unresolved_equalities: graph_vertices.unresolved_equalities,
         unknown_orderings: split_plan.unknown_orderings,
     }
+}
+
+fn validate_edge_split_plan(split_plan: &ExactEdgeSplitPlan) -> SplitPlanValidationReport {
+    let mut diagnostics = Vec::new();
+
+    for _ in 0..split_plan.unknown_orderings {
+        diagnostics.push(SplitPlanDiagnostic::new(
+            SplitPlanDiagnosticKind::UnknownOrdering,
+            "edge split parameters have an uncertified ordering",
+        ));
+    }
+
+    for split in &split_plan.splits {
+        for point in &split.points {
+            match point.endpoint_sides {
+                [Some(PlaneSide::Above), Some(PlaneSide::Below)]
+                | [Some(PlaneSide::Below), Some(PlaneSide::Above)] => {}
+                [Some(_), Some(_)] => diagnostics.push(
+                    SplitPlanDiagnostic::new(
+                        SplitPlanDiagnosticKind::NonCrossingEndpointSideFacts,
+                        "edge split point was not certified by opposite strict endpoint sides",
+                    )
+                    .with_side(split.side)
+                    .with_edge(split.edge),
+                ),
+                _ => diagnostics.push(
+                    SplitPlanDiagnostic::new(
+                        SplitPlanDiagnosticKind::MissingEndpointSideFacts,
+                        "edge split point is missing endpoint side facts",
+                    )
+                    .with_side(split.side)
+                    .with_edge(split.edge),
+                ),
+            }
+        }
+    }
+
+    SplitPlanValidationReport { diagnostics }
 }
 
 fn face_split_plan(topology: &ExactSplitTopologyPlan) -> ExactFaceSplitPlan {
@@ -1479,6 +1718,7 @@ fn append_segment_plane_events(
             relation: event.relation,
             point: event.point.clone(),
             parameter: event.parameter.clone(),
+            endpoint_sides: event.endpoint_sides,
         });
     }
 }

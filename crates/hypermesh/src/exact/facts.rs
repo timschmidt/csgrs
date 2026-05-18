@@ -6,6 +6,7 @@
 //! arithmetic kernels, and certified predicate decisions.
 
 use super::provenance::PredicateUse;
+use super::scalar::ExactReal;
 
 /// Facts known for one mesh vertex.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -82,13 +83,32 @@ pub struct OrientedFaceFacts {
     pub directed_edges: [[usize; 2]; 3],
 }
 
+/// Exact oriented plane equation retained for one face.
+///
+/// The coefficients satisfy `normal.x * x + normal.y * y + normal.z * z +
+/// offset = 0` for every source vertex on the face. Hypermesh deliberately
+/// stores the unnormalized determinant form rather than a unit normal: Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997), emphasizes retaining numerical structure so later predicates can
+/// reuse exact object facts instead of re-deriving topology from rounded
+/// representatives.
+#[derive(Clone, Debug, PartialEq)]
+pub struct FacePlaneFacts {
+    /// Oriented plane normal from the indexed triangle order.
+    pub normal: [ExactReal; 3],
+    /// Exact plane offset.
+    pub offset: ExactReal,
+}
+
 /// Facts known for one face.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct FaceFacts {
     /// Triangle facts.
     pub triangle: TriangleFacts,
     /// Oriented edge facts.
     pub oriented: OrientedFaceFacts,
+    /// Exact oriented plane equation.
+    pub plane: FacePlaneFacts,
 }
 
 /// Topology and exactness facts for a whole mesh.
@@ -119,7 +139,7 @@ pub struct MeshFacts {
 }
 
 /// Expanded validation facts for vertices, edges, and faces.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct MeshValidationFacts {
     /// Whole-mesh summary.
     pub mesh: MeshFacts,

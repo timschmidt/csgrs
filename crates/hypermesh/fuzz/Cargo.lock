@@ -115,6 +115,7 @@ dependencies = [
  "hyperlattice",
  "hyperlimit",
  "hyperreal",
+ "hypertri",
 ]
 
 [[package]]
@@ -133,6 +134,14 @@ dependencies = [
  "num",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "hypertri"
+version = "0.1.0"
+dependencies = [
+ "hyperlimit",
+ "hyperreal",
 ]
 
 [[package]]

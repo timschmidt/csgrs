@@ -12,13 +12,18 @@
 //! `hyperlimit`, and Yap's exact-geometric-computation boundary keeps the
 //! certificate with the classification.
 
-use hyperlimit::{PlaneSide, Point3, Sign, orient3d_report};
+use core::cmp::Ordering;
+
+use hyperlimit::{PlaneSide, Point3, Sign, compare_reals, orient3d_report};
 
 use super::construction::{SegmentPlaneIntersection, intersect_segment_with_face_plane};
 use super::coplanar::{
     CoplanarTriangleClassification, CoplanarTriangleRelation, classify_coplanar_triangles,
 };
+use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
+use super::mesh::ExactMesh;
 use super::provenance::PredicateUse;
+use super::scalar::ExactReal;
 
 /// Exact relation between one triangle and another triangle's oriented plane.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -153,6 +158,51 @@ pub fn classify_triangle_against_face_plane(
     }
 }
 
+/// Classify a mesh triangle against a retained exact face plane.
+///
+/// This is the cached-object counterpart to
+/// [`classify_triangle_against_face_plane`]. It evaluates the unnormalized
+/// determinant-form plane coefficients retained in [`super::facts::FacePlaneFacts`]
+/// and compares the exact `Real` result to zero. Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997), motivates
+/// this shape directly: object-level numerical structure should survive so
+/// later topology stages can reuse exact facts instead of reconstructing
+/// normals or representative floats.
+pub fn classify_mesh_triangle_against_retained_face_plane(
+    plane_mesh: &ExactMesh,
+    plane_face: usize,
+    query_mesh: &ExactMesh,
+    query_face: usize,
+) -> Result<TrianglePlaneClassification, MeshError> {
+    if plane_face >= plane_mesh.triangles().len() {
+        return Err(index_error(
+            "plane face index is out of range",
+            Some(plane_face),
+            None,
+        ));
+    }
+    if query_face >= query_mesh.triangles().len() {
+        return Err(index_error(
+            "query face index is out of range",
+            Some(query_face),
+            None,
+        ));
+    }
+    let plane = &plane_mesh.facts().faces[plane_face].plane;
+    let query = query_mesh.triangles()[query_face].0;
+    let mut sides = [None, None, None];
+    for (side, vertex) in sides.iter_mut().zip(query) {
+        let point = query_mesh.vertices()[vertex].to_hyperlimit_point();
+        *side = retained_plane_side(plane, &point);
+    }
+
+    Ok(TrianglePlaneClassification {
+        relation: relation_from_sides(sides),
+        vertex_sides: sides,
+        predicates: Vec::new(),
+    })
+}
+
 /// Coarsely classify two triangles using certified plane-side predicates.
 pub fn classify_triangle_triangle(
     points: &[Point3],
@@ -195,6 +245,47 @@ pub fn classify_triangle_triangle(
         left_edge_events,
         coplanar,
     }
+}
+
+fn retained_plane_side(plane: &super::facts::FacePlaneFacts, point: &Point3) -> Option<PlaneSide> {
+    let value = add(
+        &add(
+            &add(
+                &mul(&plane.normal[0], &point.x),
+                &mul(&plane.normal[1], &point.y),
+            ),
+            &mul(&plane.normal[2], &point.z),
+        ),
+        &plane.offset,
+    );
+    // `hyperlimit::orient3d_report(a, b, c, p)` uses the opposite sign
+    // convention from this stored `(b - a) x (c - a)` dot-product form, so the
+    // exact comparison is inverted to preserve the public `PlaneSide` contract.
+    match compare_reals(&value, &ExactReal::from(0)).value()? {
+        Ordering::Less => Some(PlaneSide::Above),
+        Ordering::Equal => Some(PlaneSide::On),
+        Ordering::Greater => Some(PlaneSide::Below),
+    }
+}
+
+fn index_error(message: &'static str, face: Option<usize>, vertex: Option<usize>) -> MeshError {
+    let mut diagnostic =
+        MeshDiagnostic::new(Severity::Error, DiagnosticKind::IndexOutOfBounds, message);
+    if let Some(face) = face {
+        diagnostic = diagnostic.with_face(face);
+    }
+    if let Some(vertex) = vertex {
+        diagnostic = diagnostic.with_vertex(vertex);
+    }
+    MeshError::one(diagnostic)
+}
+
+fn add(left: &ExactReal, right: &ExactReal) -> ExactReal {
+    left.clone() + right
+}
+
+fn mul(left: &ExactReal, right: &ExactReal) -> ExactReal {
+    left.clone() * right
 }
 
 fn side_from_sign(sign: Sign) -> PlaneSide {

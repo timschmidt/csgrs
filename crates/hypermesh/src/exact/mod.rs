@@ -22,17 +22,22 @@ pub mod predicates;
 pub mod provenance;
 pub mod region;
 pub mod scalar;
+pub mod solid;
+pub mod surface;
 pub mod validation;
 
 #[cfg(feature = "exact-triangulation")]
 pub use boolean::{
-    ExactBooleanOperation, ExactBooleanPolicy, ExactBooleanPreflight, ExactBooleanResult,
-    ExactBooleanSupport, boolean_exact, boolean_selected_regions, preflight_boolean_exact,
+    ExactBooleanBlocker, ExactBooleanBlockerKind, ExactBooleanOperation, ExactBooleanPolicy,
+    ExactBooleanPreflight, ExactBooleanResult, ExactBooleanSupport, ExactBoundaryBooleanPolicy,
+    ExactSameSurfaceReport, ExactSameSurfaceStatus, boolean_exact,
+    boolean_exact_with_boundary_policy, boolean_selected_regions, certify_same_surface_report,
+    preflight_boolean_exact,
 };
 pub use bounds::{AabbIntersectionKind, ExactAabb3, MeshBounds};
 pub use construction::{
     SegmentPlaneIntersection, SegmentPlaneRelation, intersect_segment_with_face_plane,
-    intersect_segment_with_oriented_plane,
+    intersect_segment_with_oriented_plane, intersect_segment_with_retained_face_plane,
 };
 pub use coplanar::{
     CoplanarProjection, CoplanarTriangleClassification, CoplanarTriangleRelation,
@@ -40,8 +45,8 @@ pub use coplanar::{
 };
 pub use error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 pub use facts::{
-    EdgeFacts, FaceFacts, MeshFacts, MeshValidationFacts, OrientedFaceFacts, TriangleFacts,
-    VertexFacts, VertexLinkKind,
+    EdgeFacts, FaceFacts, FacePlaneFacts, MeshFacts, MeshValidationFacts, OrientedFaceFacts,
+    TriangleFacts, VertexFacts, VertexLinkKind,
 };
 pub use graph::{
     EdgeSplit, EdgeSplitPoint, ExactEdgeSplitPlan, ExactFaceRegionPlan, ExactFaceSplitGeometryPlan,
@@ -58,7 +63,8 @@ pub use intersection::{
 pub use mesh::{ExactMesh, ExactPoint3, Triangle};
 pub use narrow::{
     TrianglePlaneClassification, TrianglePlaneRelation, TriangleTriangleClassification,
-    TriangleTriangleRelation, classify_triangle_against_face_plane, classify_triangle_triangle,
+    TriangleTriangleRelation, classify_mesh_triangle_against_retained_face_plane,
+    classify_triangle_against_face_plane, classify_triangle_triangle,
 };
 pub use predicates::{TriangleDegeneracy, TrianglePredicateReport};
 pub use provenance::{
@@ -67,13 +73,30 @@ pub use provenance::{
 #[cfg(feature = "exact-triangulation")]
 pub use region::{
     ExactBooleanAssemblyPlan, ExactOutputTriangle, ExactOutputVertex, ExactRegionSelection,
-    FaceRegionTriangulation, build_selected_region_mesh, triangulate_face_regions_with_earcut,
+    FaceRegionTriangulation, build_selected_region_mesh,
+    checked_classify_face_regions_against_opposite_planes,
+    checked_triangulate_face_regions_with_earcut, triangulate_face_regions_with_earcut,
 };
 pub use region::{
     FaceRegionPlaneClassification, FaceRegionPlaneRelation,
     classify_face_regions_against_opposite_planes,
 };
 pub use scalar::{ExactReal, LossyF64Import};
+pub use solid::{
+    ClosedMeshOrientation, ConvexSolidClassification, ConvexSolidFacts,
+    ConvexSolidMeshClassification, ConvexSolidMeshRelation, ConvexSolidPointClassification,
+    ConvexSolidPointRelation, certify_convex_solid, classify_mesh_vertices_against_convex_solid,
+    classify_mesh_vertices_against_convex_solid_report, classify_point_against_convex_solid,
+    classify_point_against_convex_solid_report,
+};
+pub use surface::{
+    CoplanarSurfaceContainment, CoplanarSurfaceContainmentReport, CoplanarSurfaceContainmentStatus,
+    CoplanarTriangleDifference, CoplanarTriangleIntersection, CoplanarTriangleUnion,
+    certify_single_triangle_coplanar_containment,
+    certify_single_triangle_coplanar_containment_report,
+    difference_single_triangle_coplanar_surfaces, intersect_single_triangle_coplanar_surfaces,
+    union_single_triangle_coplanar_surfaces,
+};
 pub use validation::{
     BoundaryPolicy, ValidationPolicy, ValidationReport, validate_triangles,
     validate_triangles_with_policy,

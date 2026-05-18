@@ -4,7 +4,10 @@
 //! triangle/triangle coarse classifier.  It is still a scheduler and event
 //! collector, not the final boolean graph builder: `BoundsDisjoint` and
 //! `PlaneSeparated` may reject work, while coplanar and candidate outcomes must
-//! continue into exact overlap-graph construction.  That boundary follows Yap,
+//! continue into exact overlap-graph construction. Retained exact face-plane
+//! coefficients are used as a cached plane-separation filter before the full
+//! triangle classifier is rebuilt, and candidate split events reuse those
+//! retained planes for segment/plane construction. That boundary follows Yap,
 //! "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
 //! (1997): acceleration facts can remove impossible events, but topological
 //! mutations wait for certified predicates and exact constructions.
@@ -12,10 +15,12 @@
 use hyperlimit::PredicateOutcome;
 
 use super::bounds::AabbIntersectionKind;
+use super::construction::{SegmentPlaneIntersection, intersect_segment_with_retained_face_plane};
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::mesh::ExactMesh;
 use super::narrow::{
-    TriangleTriangleClassification, TriangleTriangleRelation, classify_triangle_triangle,
+    TrianglePlaneRelation, TriangleTriangleClassification, TriangleTriangleRelation,
+    classify_mesh_triangle_against_retained_face_plane, classify_triangle_triangle,
 };
 
 /// Coarse exact relation for one pair of mesh faces.
@@ -92,6 +97,30 @@ pub fn classify_mesh_face_pair(
         });
     }
 
+    let right_against_left =
+        classify_mesh_triangle_against_retained_face_plane(left, left_face, right, right_face)?;
+    if triangle_is_strictly_one_sided(right_against_left.relation) {
+        return Ok(MeshFacePairClassification {
+            left_face,
+            right_face,
+            bounds,
+            triangle: None,
+            relation: MeshFacePairRelation::PlaneSeparated,
+        });
+    }
+
+    let left_against_right =
+        classify_mesh_triangle_against_retained_face_plane(right, right_face, left, left_face)?;
+    if triangle_is_strictly_one_sided(left_against_right.relation) {
+        return Ok(MeshFacePairClassification {
+            left_face,
+            right_face,
+            bounds,
+            triangle: None,
+            relation: MeshFacePairRelation::PlaneSeparated,
+        });
+    }
+
     let mut points = left
         .vertices()
         .iter()
@@ -110,7 +139,13 @@ pub fn classify_mesh_face_pair(
     right_tri
         .iter_mut()
         .for_each(|vertex| *vertex += right_offset);
-    let triangle = classify_triangle_triangle(&points, left_tri, right_tri);
+    let mut triangle = classify_triangle_triangle(&points, left_tri, right_tri);
+    if triangle.relation == TriangleTriangleRelation::Candidate {
+        triangle.right_edge_events =
+            retained_triangle_edge_events(left, left_face, right, right_face);
+        triangle.left_edge_events =
+            retained_triangle_edge_events(right, right_face, left, left_face);
+    }
     let relation = mesh_relation_from_triangle(triangle.relation);
 
     Ok(MeshFacePairClassification {
@@ -143,6 +178,38 @@ pub fn classify_mesh_face_pairs(
         }
     }
     Ok(retained)
+}
+
+fn triangle_is_strictly_one_sided(relation: TrianglePlaneRelation) -> bool {
+    matches!(
+        relation,
+        TrianglePlaneRelation::StrictlyAbove | TrianglePlaneRelation::StrictlyBelow
+    )
+}
+
+fn retained_triangle_edge_events(
+    plane_mesh: &ExactMesh,
+    plane_face: usize,
+    segment_mesh: &ExactMesh,
+    segment_face: usize,
+) -> Vec<SegmentPlaneIntersection> {
+    let plane = &plane_mesh.facts().faces[plane_face].plane;
+    triangle_edges(segment_mesh.triangles()[segment_face].0)
+        .into_iter()
+        .map(|edge| {
+            let p0 = segment_mesh.vertices()[edge[0]].to_hyperlimit_point();
+            let p1 = segment_mesh.vertices()[edge[1]].to_hyperlimit_point();
+            intersect_segment_with_retained_face_plane(plane, &p0, &p1)
+        })
+        .collect()
+}
+
+fn triangle_edges(triangle: [usize; 3]) -> [[usize; 2]; 3] {
+    [
+        [triangle[0], triangle[1]],
+        [triangle[1], triangle[2]],
+        [triangle[2], triangle[0]],
+    ]
 }
 
 fn mesh_relation_from_triangle(relation: TriangleTriangleRelation) -> MeshFacePairRelation {

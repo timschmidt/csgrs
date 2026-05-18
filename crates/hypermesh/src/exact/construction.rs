@@ -21,6 +21,7 @@ use hyperlimit::{
     Plane3, PlaneSide, Point3, PreparedOrientedPlane3, compare_reals, orient3d_report,
 };
 
+use super::facts::FacePlaneFacts;
 use super::provenance::PredicateUse;
 use super::scalar::ExactReal;
 
@@ -87,6 +88,93 @@ pub fn intersect_segment_with_face_plane(
         &points[segment[0]],
         &points[segment[1]],
     )
+}
+
+/// Intersect a closed segment with a retained exact face plane.
+///
+/// This is the cached construction path for validated mesh faces. It consumes
+/// the determinant-form coefficients retained in [`FacePlaneFacts`] and builds
+/// the same segment event as [`intersect_segment_with_oriented_plane`] without
+/// reconstructing a point-defined plane. Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997), treats this retained
+/// numerical structure as part of the object model: exact constructions should
+/// reuse certified object facts rather than reintroducing representative
+/// primitive normals.
+pub fn intersect_segment_with_retained_face_plane(
+    plane: &FacePlaneFacts,
+    p0: &Point3,
+    p1: &Point3,
+) -> SegmentPlaneIntersection {
+    let d0 = retained_point_plane_value(plane, p0);
+    let d1 = retained_point_plane_value(plane, p1);
+    let sides = [retained_plane_side(&d0), retained_plane_side(&d1)];
+    let predicates = Vec::new();
+
+    let Some([side0, side1]) = transpose_sides(sides) else {
+        return event(
+            SegmentPlaneRelation::Unknown,
+            None,
+            None,
+            None,
+            sides,
+            predicates,
+        );
+    };
+
+    match (side0, side1) {
+        (PlaneSide::On, PlaneSide::On) => event(
+            SegmentPlaneRelation::Coplanar,
+            None,
+            None,
+            None,
+            sides,
+            predicates,
+        ),
+        (PlaneSide::On, _) => event(
+            SegmentPlaneRelation::EndpointOnPlane,
+            Some(p0.clone()),
+            Some(ExactReal::from(0)),
+            Some(0),
+            sides,
+            predicates,
+        ),
+        (_, PlaneSide::On) => event(
+            SegmentPlaneRelation::EndpointOnPlane,
+            Some(p1.clone()),
+            Some(ExactReal::from(1)),
+            Some(1),
+            sides,
+            predicates,
+        ),
+        (PlaneSide::Above, PlaneSide::Above) | (PlaneSide::Below, PlaneSide::Below) => event(
+            SegmentPlaneRelation::Disjoint,
+            None,
+            None,
+            None,
+            sides,
+            predicates,
+        ),
+        (PlaneSide::Above, PlaneSide::Below) | (PlaneSide::Below, PlaneSide::Above) => {
+            match construct_crossing_from_values(&d0, &d1, p0, p1) {
+                Some((parameter, point)) => event(
+                    SegmentPlaneRelation::ProperCrossing,
+                    Some(point),
+                    Some(parameter),
+                    None,
+                    sides,
+                    predicates,
+                ),
+                None => event(
+                    SegmentPlaneRelation::ConstructionFailed,
+                    None,
+                    None,
+                    None,
+                    sides,
+                    predicates,
+                ),
+            }
+        }
+    }
 }
 
 /// Intersect a closed segment with an oriented point-defined plane.
@@ -178,6 +266,15 @@ pub fn intersect_segment_with_oriented_plane(
 fn construct_crossing(plane: &Plane3, p0: &Point3, p1: &Point3) -> Option<(ExactReal, Point3)> {
     let d0 = point_plane_value(plane, p0);
     let d1 = point_plane_value(plane, p1);
+    construct_crossing_from_values(&d0, &d1, p0, p1)
+}
+
+fn construct_crossing_from_values(
+    d0: &ExactReal,
+    d1: &ExactReal,
+    p0: &Point3,
+    p1: &Point3,
+) -> Option<(ExactReal, Point3)> {
     let denominator = sub(&d0, &d1);
     if matches!(
         compare_reals(&denominator, &ExactReal::from(0)).value(),
@@ -203,6 +300,23 @@ fn point_plane_value(plane: &Plane3, point: &Point3) -> ExactReal {
     let y = mul(&plane.normal.y, &point.y);
     let z = mul(&plane.normal.z, &point.z);
     add(&add(&add(&x, &y), &z), &plane.offset)
+}
+
+fn retained_point_plane_value(plane: &FacePlaneFacts, point: &Point3) -> ExactReal {
+    let x = mul(&plane.normal[0], &point.x);
+    let y = mul(&plane.normal[1], &point.y);
+    let z = mul(&plane.normal[2], &point.z);
+    add(&add(&add(&x, &y), &z), &plane.offset)
+}
+
+fn retained_plane_side(value: &ExactReal) -> Option<PlaneSide> {
+    // `hyperlimit::orient3d_report(a, b, c, p)` uses the opposite sign
+    // convention from the stored `(b - a) x (c - a)` dot-product form.
+    match compare_reals(value, &ExactReal::from(0)).value()? {
+        core::cmp::Ordering::Less => Some(PlaneSide::Above),
+        core::cmp::Ordering::Equal => Some(PlaneSide::On),
+        core::cmp::Ordering::Greater => Some(PlaneSide::Below),
+    }
 }
 
 fn event(

@@ -11,13 +11,14 @@ use hyperlimit::Point3;
 
 use super::error::{DiagnosticKind, MeshDiagnostic, Severity};
 use super::facts::{
-    EdgeFacts, FaceFacts, MeshFacts, MeshValidationFacts, OrientedFaceFacts, TriangleFacts,
-    VertexFacts, VertexLinkKind,
+    EdgeFacts, FaceFacts, FacePlaneFacts, MeshFacts, MeshValidationFacts, OrientedFaceFacts,
+    TriangleFacts, VertexFacts, VertexLinkKind,
 };
 use super::predicates::{TriangleDegeneracy, classify_triangle_degeneracy};
+use super::scalar::ExactReal;
 
 /// Validation result for a triangle mesh.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ValidationReport {
     /// Exact facts collected during validation.
     pub facts: MeshValidationFacts,
@@ -144,6 +145,7 @@ pub fn validate_triangles_with_policy(
                 degeneracy_predicates: predicate_report.predicates,
             },
             oriented: OrientedFaceFacts { directed_edges },
+            plane: face_plane_facts(points, tri),
         });
     }
 
@@ -372,4 +374,41 @@ fn sorted_edge(edge: [usize; 2]) -> [usize; 2] {
     } else {
         [edge[1], edge[0]]
     }
+}
+
+fn face_plane_facts(points: &[Point3], tri: [usize; 3]) -> FacePlaneFacts {
+    let a = &points[tri[0]];
+    let b = &points[tri[1]];
+    let c = &points[tri[2]];
+    let ux = sub(&b.x, &a.x);
+    let uy = sub(&b.y, &a.y);
+    let uz = sub(&b.z, &a.z);
+    let vx = sub(&c.x, &a.x);
+    let vy = sub(&c.y, &a.y);
+    let vz = sub(&c.z, &a.z);
+    let normal = [
+        sub(&mul(&uy, &vz), &mul(&uz, &vy)),
+        sub(&mul(&uz, &vx), &mul(&ux, &vz)),
+        sub(&mul(&ux, &vy), &mul(&uy, &vx)),
+    ];
+    let offset = sub(
+        &ExactReal::from(0),
+        &add(
+            &add(&mul(&normal[0], &a.x), &mul(&normal[1], &a.y)),
+            &mul(&normal[2], &a.z),
+        ),
+    );
+    FacePlaneFacts { normal, offset }
+}
+
+fn add(left: &ExactReal, right: &ExactReal) -> ExactReal {
+    left.clone() + right
+}
+
+fn sub(left: &ExactReal, right: &ExactReal) -> ExactReal {
+    left.clone() - right
+}
+
+fn mul(left: &ExactReal, right: &ExactReal) -> ExactReal {
+    left.clone() * right
 }
