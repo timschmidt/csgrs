@@ -23,6 +23,16 @@ pub struct DemoScenes {
 
 impl Default for DemoScenes {
     fn default() -> Self {
+        Self::shared_url_default()
+    }
+}
+
+impl DemoScenes {
+    /// No-query startup state decoded from the requested shared demo URL.
+    ///
+    /// Keep this constructor semantic instead of storing a compressed payload:
+    /// the demo's source of truth is the editable hypercurve primitive model.
+    fn shared_url_default() -> Self {
         Self {
             active: 0,
             pline_boolean: PlineBooleanScene::default(),
@@ -33,9 +43,7 @@ impl Default for DemoScenes {
             share_status: None,
         }
     }
-}
 
-impl DemoScenes {
     pub fn new() -> Self {
         #[cfg(target_arch = "wasm32")]
         {
@@ -1130,6 +1138,31 @@ mod tests {
         assert_eq!(
             restored.multi_offset.polylines.len(),
             scenes.multi_offset.polylines.len()
+        );
+    }
+
+    #[test]
+    fn default_state_matches_requested_share_url_layout() {
+        let state = DemoScenes::default().state();
+
+        assert_eq!(state.active, 0);
+        assert_eq!(state.pline_boolean.polylines.len(), 2);
+        assert_eq!(state.pline_boolean.polylines[0].curve_data.len(), 8);
+        assert_eq!(state.pline_boolean.polylines[1].curve_data.len(), 8);
+        assert_eq!(state.pline_offset.polylines.len(), 1);
+        assert_eq!(state.pline_offset.polylines[0].curve_data.len(), 8);
+        assert_eq!(state.multi_boolean.first.materials.len(), 2);
+        assert_eq!(state.multi_boolean.first.holes.len(), 3);
+        assert_eq!(state.multi_boolean.second.materials.len(), 2);
+        assert_eq!(state.multi_boolean.second.holes.len(), 3);
+        assert_eq!(
+            state
+                .multi_offset
+                .polylines
+                .iter()
+                .map(|polyline| polyline.curve_data.len())
+                .collect::<Vec<_>>(),
+            vec![8, 4, 2, 4, 2]
         );
     }
 
