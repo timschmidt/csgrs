@@ -129,6 +129,29 @@ impl LinePathSegment {
         Real::signed_product_sum([true, true], [[&dx, &dx], [&dy, &dy]])
     }
 
+    /// Return the exact tangent vector at the segment start.
+    ///
+    /// Straight-segment tangents are the retained endpoint displacement
+    /// `(end - start)`. The vector is not unit-normalized; this keeps G1
+    /// continuity predicates in Yap's exact object layer and avoids square-root
+    /// normalization before `hyperlimit`/`hyperpath::tangent` classify joins.
+    pub fn start_tangent(&self) -> Point2 {
+        self.direction_vector()
+    }
+
+    /// Return the exact tangent vector at the segment end.
+    pub fn end_tangent(&self) -> Point2 {
+        self.direction_vector()
+    }
+
+    /// Return the exact directed displacement from start to end.
+    pub fn direction_vector(&self) -> Point2 {
+        Point2::new(
+            self.end.x.clone() - self.start.x.clone(),
+            self.end.y.clone() - self.start.y.clone(),
+        )
+    }
+
     /// Return exact axis length when the segment is certified axis-aligned.
     pub fn axis_length(&self, policy: PredicatePolicy) -> Option<Real> {
         match self.facts.axis_aligned? {
