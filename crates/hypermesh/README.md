@@ -1,4 +1,7 @@
-# hypermesh
+<h1>
+  hypermesh
+  <img src="./doc/ChatGPT%20Image%20May%2012,%202026,%2005_22_15%20AM.png" alt="hypermesh logo" width="144" align="right">
+</h1>
 
 `hypermesh` is the experimental 3D mesh-topology crate in the Hyper workspace. It
 contains a legacy float-oriented closed-mesh boolean engine and a newer exact-stack
@@ -96,26 +99,52 @@ kernel.
 
 ```toml
 [dependencies]
-hypermesh = "0.1.9"
+hypermesh = "0.2.0"
 ```
 
 For exact validation without legacy boolean kernels:
 
 ```toml
 [dependencies]
-hypermesh = { version = "0.1.9", default-features = false, features = ["exact"] }
+hypermesh = { version = "0.2.0", default-features = false, features = ["exact"] }
 ```
 
 ## Usage
 
-```rust
+The exact-facing path is the default feature set and is the preferred boundary for new
+code:
+
+```rust,ignore
+use hypermesh::prelude::*;
+
+let mesh = ExactMesh::from_triangles(vec![
+    Triangle::new(0, 1, 2),
+], vec![
+    ExactPoint3::from_i64(0, 0, 0),
+    ExactPoint3::from_i64(1, 0, 0),
+    ExactPoint3::from_i64(0, 1, 0),
+])?;
+
+let facts = mesh.facts();
+let validation = mesh.validate();
+assert!(validation.is_manifold_boundary_reported());
+```
+
+The legacy boolean adapter is opt-in and should be treated as an approximate runtime
+surface:
+
+```rust,ignore
 use hypermesh::prelude::*;
 
 let left = Manifold::new(&positions_a, &indices_a)?;
 let right = Manifold::new(&positions_b, &indices_b)?;
 let result = compute_boolean(&left, &right, OpType::Subtract)?;
-# Ok::<(), String>(())
 ```
+
+Use exact validation, face-pair classification, split-plan, and preflight reports to
+audit topology before relying on boolean output.
+
+## Development
 
 Useful local checks:
 

@@ -26,7 +26,7 @@ use super::provenance::PredicateUse;
 #[cfg(feature = "exact-triangulation")]
 use super::region::{
     ExactBooleanAssemblyPlan, ExactRegionSelection, FaceRegionPlaneClassification,
-    FaceRegionPlaneValidationError, FaceRegionTriangulation,
+    FaceRegionPlaneRelation, FaceRegionPlaneValidationError, FaceRegionTriangulation,
 };
 
 /// Validation failure for an exact report object.
@@ -52,8 +52,26 @@ pub enum ExactReportValidationError {
     UnexpectedRegionFacts,
     /// A winding-ready report did not retain checked region facts.
     MissingRegionFacts,
+    /// A selected-region triangulation has no matching retained region/plane
+    /// classification for its source region.
+    UnclassifiedRegionTriangulation,
+    /// A retained region/plane classification has no matching triangulated
+    /// source region.
+    OrphanedRegionClassification,
+    /// An assembled selected-region output triangle has no matching retained
+    /// source-region triangulation.
+    UntriangulatedAssemblyRegion,
+    /// An assembled selected-region output triangle uses a vertex source that
+    /// is absent from the retained triangulation for its source region.
+    AssemblyVertexOutsideTriangulation,
+    /// A selected-region assembly retained an output vertex that no output
+    /// triangle references.
+    UnreferencedAssemblyVertex,
     /// A retained region/plane classification failed its own side-fact audit.
     InvalidRegionClassification(FaceRegionPlaneValidationError),
+    /// A winding-ready report retained a region/plane classification that still
+    /// depends on undecided or non-proof-producing predicate evidence.
+    RegionClassificationNotProofProducing,
     /// A retained split-region triangulation failed its own audit.
     InvalidTriangulation,
     /// A retained output assembly plan failed its own audit.
@@ -68,6 +86,9 @@ pub enum ExactReportValidationError {
     /// A certified shortcut or boundary-policy result claimed unresolved graph
     /// events after materializing output topology.
     ShortcutResultHasUnknownGraph,
+    /// A selected-region result claimed unresolved graph events after
+    /// materializing output topology.
+    SelectedRegionResultHasUnknownGraph,
     /// A selected-region result retained output triangles from a source side
     /// excluded by its declared selection policy.
     SelectedRegionAssemblyViolatesSelection,
@@ -88,6 +109,9 @@ pub enum ExactReportValidationError {
     InvalidArrangementReadiness,
     /// The report's unknown-graph flag contradicts its status.
     GraphUnknownStatusMismatch,
+    /// The report status contradicts retained preconditions, relation counts,
+    /// operation class, or graph evidence.
+    StatusEvidenceMismatch,
     /// Planar-arrangement blocker counts and retained readiness counts
     /// disagree.
     ArrangementReadinessMismatch,
@@ -135,13 +159,53 @@ fn validate_blocker_count_bounds(
     retained_face_pairs: usize,
     retained_events: usize,
 ) -> Result<(), ExactReportValidationError> {
-    if blocker_pair_count(blocker) > retained_face_pairs
+    let blocker_pairs = blocker_pair_count(blocker);
+    if (retained_face_pairs == 0 && retained_events != 0)
+        || (retained_face_pairs != 0 && retained_events == 0)
+        || (retained_face_pairs != 0 && blocker_pairs == 0)
+        || blocker_pairs > retained_face_pairs
         || blocker.construction_failed_events > retained_events
     {
         Err(ExactReportValidationError::InvalidBlockerCounts)
     } else {
         Ok(())
     }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_arrangement_readiness_matches_blocker(
+    readiness: &CoplanarArrangementReadinessReport,
+    blocker: &ExactBooleanBlocker,
+) -> Result<(), ExactReportValidationError> {
+    // The compact readiness report and the blocker are two public views of the
+    // same retained coplanar graph state. Yap, "Towards Exact Geometric
+    // Computation," Comput. Geom. 7.1-2 (1997), treats retained numerical
+    // structure as part of the exact state; a later planar-cell or winding
+    // policy must not be able to consume a summary with relabeled graph counts.
+    if readiness.overlapping_graphs != blocker.coplanar_overlapping_pairs
+        || readiness.touching_graphs != blocker.coplanar_touching_pairs
+        || readiness.graph_count
+            != blocker.coplanar_overlapping_pairs + blocker.coplanar_touching_pairs
+    {
+        Err(ExactReportValidationError::ArrangementReadinessMismatch)
+    } else {
+        Ok(())
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn blocker_has_any_evidence(blocker: &ExactBooleanBlocker) -> bool {
+    blocker_pair_count(blocker) != 0 || blocker.construction_failed_events != 0
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn blocker_has_refinement_evidence(blocker: &ExactBooleanBlocker) -> bool {
+    blocker.unknown_pairs != 0 || blocker.construction_failed_events != 0
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn operation_is_selected_region(operation: ExactBooleanOperation) -> bool {
+    matches!(operation, ExactBooleanOperation::SelectedRegions(_))
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -156,6 +220,18 @@ fn checked_region_facts(
         classification
             .validate()
             .map_err(ExactReportValidationError::InvalidRegionClassification)?;
+        // A winding-ready handoff is stronger than a stored classification
+        // artifact: future inside/outside policy must be able to consume
+        // decided side facts, not an "unknown" region/plane relation. This is
+        // Yap's exact-computation boundary applied to report state: undecided
+        // predicates remain explicit blockers instead of being mislabeled as a
+        // ready topological decision. See Yap, "Towards Exact Geometric
+        // Computation," Computational Geometry 7.1-2 (1997).
+        if !classification.all_proof_producing()
+            || matches!(classification.relation, FaceRegionPlaneRelation::Unknown)
+        {
+            return Err(ExactReportValidationError::RegionClassificationNotProofProducing);
+        }
     }
     Ok(())
 }
@@ -238,6 +314,8 @@ pub enum ExactBooleanShortcutKind {
     CoplanarConvexSurfaceArrangementUnion,
     /// Certified simple-loop difference of convex coplanar surface meshes.
     CoplanarConvexSurfaceArrangementDifference,
+    /// Certified multi-component difference of convex coplanar surface meshes.
+    CoplanarConvexSurfaceMultiDifference,
     /// Exact coplanar convex surface containment, modulo triangulation.
     CoplanarConvexSurfaceContainment,
     /// Certified one-hole coplanar convex surface difference.
@@ -274,10 +352,28 @@ impl ExactBooleanResult {
     /// region/plane classification,
     /// triangulation, assembly invariant, and the materialized output mesh,
     /// then checks that assembly vertices and triangles still match the mesh.
-    /// That keeps the final boolean handoff aligned with Yap, "Towards Exact
-    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997):
-    /// downstream topology receives a coherent chain of exact evidence rather
-    /// than an opaque output mesh.
+    /// A selected-region result must retain nonempty region classifications
+    /// and triangulations because those are the checked handoff facts that
+    /// justify the assembly; otherwise a caller could relabel an empty
+    /// shortcut-like object as a selected-region boolean.
+    /// Every retained triangulation must also have at least one matching
+    /// retained region/plane classification for its source side and face, so
+    /// the mesh handoff cannot contain triangulated topology disconnected from
+    /// the exact side facts prepared for winding policy. Conversely, every
+    /// retained region/plane classification must belong to a triangulated
+    /// source region so stale or relabeled side facts cannot be interpreted as
+    /// part of the output proof. Selected-region reports also require those
+    /// side facts to be proof-producing and decided, rather than carrying an
+    /// unknown relation beside a materialized output. Output assembly triangles
+    /// must likewise point back to retained triangulated source regions,
+    /// preventing post-hoc provenance relabeling after materialization, and
+    /// their vertex sources must be members of the retained triangulation
+    /// boundary for that source region. The retained assembly must also avoid
+    /// dead vertices so the topology handoff is the exact set consumed by mesh
+    /// materialization. That keeps the final boolean handoff aligned with Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+    /// (1997): downstream topology receives a coherent chain of exact evidence
+    /// rather than an opaque output mesh.
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
         if !matches!(self.kind, ExactBooleanResultKind::SelectedRegions { .. })
             && (!self.region_classifications.is_empty()
@@ -292,16 +388,99 @@ impl ExactBooleanResult {
         {
             return Err(ExactReportValidationError::ShortcutResultHasUnknownGraph);
         }
+        if matches!(self.kind, ExactBooleanResultKind::SelectedRegions { .. })
+            && self.graph_had_unknowns
+        {
+            return Err(ExactReportValidationError::SelectedRegionResultHasUnknownGraph);
+        }
+        if matches!(self.kind, ExactBooleanResultKind::SelectedRegions { .. })
+            && (self.region_classifications.is_empty() || self.triangulations.is_empty())
+        {
+            return Err(ExactReportValidationError::MissingRegionFacts);
+        }
 
         for classification in &self.region_classifications {
             classification
                 .validate()
                 .map_err(ExactReportValidationError::InvalidRegionClassification)?;
+            if matches!(self.kind, ExactBooleanResultKind::SelectedRegions { .. })
+                && (!classification.all_proof_producing()
+                    || matches!(classification.relation, FaceRegionPlaneRelation::Unknown))
+            {
+                return Err(ExactReportValidationError::RegionClassificationNotProofProducing);
+            }
         }
         for triangulation in &self.triangulations {
             triangulation
                 .validate()
                 .map_err(|_| ExactReportValidationError::InvalidTriangulation)?;
+        }
+        if matches!(self.kind, ExactBooleanResultKind::SelectedRegions { .. })
+            && self.triangulations.iter().any(|triangulation| {
+                !self.region_classifications.iter().any(|classification| {
+                    classification.region_side == triangulation.side
+                        && classification.region_face == triangulation.face
+                })
+            })
+        {
+            return Err(ExactReportValidationError::UnclassifiedRegionTriangulation);
+        }
+        if matches!(self.kind, ExactBooleanResultKind::SelectedRegions { .. })
+            && self.region_classifications.iter().any(|classification| {
+                !self.triangulations.iter().any(|triangulation| {
+                    triangulation.side == classification.region_side
+                        && triangulation.face == classification.region_face
+                })
+            })
+        {
+            return Err(ExactReportValidationError::OrphanedRegionClassification);
+        }
+        if matches!(self.kind, ExactBooleanResultKind::SelectedRegions { .. })
+            && self.assembly.triangles.iter().any(|triangle| {
+                !self.triangulations.iter().any(|triangulation| {
+                    triangulation.side == triangle.source_side
+                        && triangulation.face == triangle.source_face
+                })
+            })
+        {
+            return Err(ExactReportValidationError::UntriangulatedAssemblyRegion);
+        }
+        if matches!(self.kind, ExactBooleanResultKind::SelectedRegions { .. }) {
+            for triangle in &self.assembly.triangles {
+                let Some(triangulation) = self.triangulations.iter().find(|triangulation| {
+                    triangulation.side == triangle.source_side
+                        && triangulation.face == triangle.source_face
+                }) else {
+                    return Err(ExactReportValidationError::UntriangulatedAssemblyRegion);
+                };
+                for &vertex in &triangle.vertices {
+                    let Some(assembly_vertex) = self.assembly.vertices.get(vertex) else {
+                        return Err(ExactReportValidationError::InvalidAssembly);
+                    };
+                    if !triangulation
+                        .boundary
+                        .iter()
+                        .any(|source| source == &assembly_vertex.source)
+                    {
+                        return Err(ExactReportValidationError::AssemblyVertexOutsideTriangulation);
+                    }
+                }
+            }
+            if self
+                .assembly
+                .vertices
+                .iter()
+                .enumerate()
+                .any(|(vertex, _)| {
+                    !self
+                        .assembly
+                        .triangles
+                        .iter()
+                        .any(|triangle| triangle.vertices.contains(&vertex))
+                })
+            {
+                return Err(ExactReportValidationError::UnreferencedAssemblyVertex);
+            }
         }
         self.assembly
             .validate()
@@ -404,6 +583,9 @@ pub enum ExactBooleanSupport {
     /// Difference was materialized by a simple-loop arrangement between
     /// convex coplanar surface meshes.
     CertifiedCoplanarConvexSurfaceArrangementDifference,
+    /// Difference was materialized as multiple exact simple-loop components
+    /// between convex coplanar surface meshes.
+    CertifiedCoplanarConvexSurfaceMultiDifference,
     /// A named operation was answered by exact coplanar convex surface
     /// containment, ignoring triangulation.
     CertifiedCoplanarConvexSurfaceContainment,
@@ -497,6 +679,16 @@ pub struct ExactBooleanPreflight {
 impl ExactBooleanPreflight {
     /// Validate support, blocker, and retained artifact consistency.
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+        // Preflight is the public contract between exact graph construction and
+        // later boolean policy. Yap, "Towards Exact Geometric Computation,"
+        // Computational Geometry 7.1-2 (1997), requires this boundary to
+        // expose exact state rather than hide contradictions behind a boolean
+        // success/failure bit.
+        if (self.retained_face_pairs == 0 && self.retained_events != 0)
+            || (self.retained_face_pairs != 0 && self.retained_events == 0)
+        {
+            return Err(ExactReportValidationError::StatusEvidenceMismatch);
+        }
         match self.support {
             ExactBooleanSupport::CertifiedEmptyOperand
             | ExactBooleanSupport::CertifiedBoundsDisjoint
@@ -506,6 +698,7 @@ impl ExactBooleanPreflight {
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceIntersection
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementUnion
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementDifference
+            | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceMultiDifference
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment
             | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceHoledDifference
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
@@ -524,9 +717,19 @@ impl ExactBooleanPreflight {
                 if self.arrangement_readiness.is_some() {
                     return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
                 }
+                if operation_is_selected_region(self.operation)
+                    || self.graph_had_unknowns
+                    || self.retained_face_pairs != 0
+                    || self.retained_events != 0
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactBooleanSupport::RequiresBoundaryPolicy => {
+                if operation_is_selected_region(self.operation) || self.graph_had_unknowns {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
                 blocker_kind(
                     self.blocker.as_ref(),
                     ExactBooleanBlockerKind::NeedsBoundaryPolicy,
@@ -546,6 +749,12 @@ impl ExactBooleanPreflight {
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactBooleanSupport::RequiresPlanarArrangement => {
+                if operation_is_selected_region(self.operation)
+                    || matches!(self.operation, ExactBooleanOperation::Intersection)
+                    || self.graph_had_unknowns
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
                 blocker_kind(
                     self.blocker.as_ref(),
                     ExactBooleanBlockerKind::NeedsPlanarArrangement,
@@ -566,15 +775,24 @@ impl ExactBooleanPreflight {
                 readiness
                     .validate()
                     .map_err(|_| ExactReportValidationError::InvalidArrangementReadiness)?;
+                validate_arrangement_readiness_matches_blocker(
+                    readiness,
+                    self.blocker.as_ref().unwrap(),
+                )?;
                 if !readiness.needs_planar_cells()
-                    || readiness.overlapping_graphs
-                        != self.blocker.as_ref().unwrap().coplanar_overlapping_pairs
+                    || self.blocker.as_ref().unwrap().coplanar_touching_pairs != 0
                 {
                     return Err(ExactReportValidationError::ArrangementReadinessMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactBooleanSupport::RequiresCertifiedWinding => {
+                if operation_is_selected_region(self.operation)
+                    || self.graph_had_unknowns
+                    || self.retained_face_pairs == 0
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
                 blocker_kind(self.blocker.as_ref(), ExactBooleanBlockerKind::NeedsWinding)?;
                 self.blocker
                     .as_ref()
@@ -591,6 +809,14 @@ impl ExactBooleanPreflight {
                 checked_region_facts(self.region_count, &self.region_classifications)
             }
             ExactBooleanSupport::UnresolvedGraph => {
+                if !self.graph_had_unknowns
+                    && !self
+                        .blocker
+                        .as_ref()
+                        .is_some_and(blocker_has_refinement_evidence)
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
                 blocker_kind(
                     self.blocker.as_ref(),
                     ExactBooleanBlockerKind::NeedsRefinement,
@@ -613,7 +839,17 @@ impl ExactBooleanPreflight {
                 if self.arrangement_readiness.is_some() {
                     return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
                 }
-                Ok(())
+                if !operation_is_selected_region(self.operation)
+                    || self.graph_had_unknowns
+                    || self.blocker.is_some()
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+                if self.retained_face_pairs == 0 {
+                    no_region_facts(self.region_count, &self.region_classifications)
+                } else {
+                    checked_region_facts(self.region_count, &self.region_classifications)
+                }
             }
         }
     }
@@ -759,6 +995,11 @@ impl ExactRefinementReport {
 
     /// Validate status, retained counts, and refinement blocker consistency.
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
+        if (self.retained_face_pairs == 0 && self.retained_events != 0)
+            || (self.retained_face_pairs != 0 && self.retained_events == 0)
+        {
+            return Err(ExactReportValidationError::InvalidBlockerCounts);
+        }
         match self.status {
             ExactRefinementStatus::Required => {
                 blocker_kind(
@@ -852,23 +1093,94 @@ impl ExactSameSurfaceReport {
     }
 
     /// Validate same-surface report invariants.
+    ///
+    /// Rejection statuses are still evidence states: count mismatches must not
+    /// retain coordinate predicates, vertex-matching failures may keep only the
+    /// partial left-to-right matches and predicate trail, and triangle-set
+    /// mismatches must retain a valid full vertex permutation. This keeps a
+    /// failed shortcut auditable under Yap, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7.1-2 (1997), instead of
+    /// allowing callers to attach arbitrary topology artifacts to a rejection.
     pub fn validate(&self) -> Result<(), ExactReportValidationError> {
-        if !self.is_certified() {
-            return Ok(());
-        }
-        if self.left_to_right.len() != self.right_to_left.len() {
-            return Err(ExactReportValidationError::InvalidPermutation);
-        }
-        for (left, &right) in self.left_to_right.iter().enumerate() {
-            if right >= self.right_to_left.len() || self.right_to_left[right] != left {
-                return Err(ExactReportValidationError::InvalidPermutation);
+        match self.status {
+            ExactSameSurfaceStatus::VertexCountMismatch
+            | ExactSameSurfaceStatus::TriangleCountMismatch => {
+                if !self.left_to_right.is_empty()
+                    || !self.right_to_left.is_empty()
+                    || !self.left_triangles.is_empty()
+                    || !self.right_triangles.is_empty()
+                    || !self.predicates.is_empty()
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
             }
-        }
-        if self.left_triangles != self.right_triangles {
-            return Err(ExactReportValidationError::MismatchedTriangleSets);
+            ExactSameSurfaceStatus::VertexMatchingUndecided
+            | ExactSameSurfaceStatus::VertexCoordinateMismatch => {
+                if !self.right_to_left.is_empty()
+                    || !self.left_triangles.is_empty()
+                    || !self.right_triangles.is_empty()
+                    || self.predicates.is_empty()
+                    || !is_partial_injective_mapping(&self.left_to_right)
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+                if matches!(
+                    self.status,
+                    ExactSameSurfaceStatus::VertexCoordinateMismatch
+                ) && !self.all_proof_producing()
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactSameSurfaceStatus::TriangleSetMismatch => {
+                validate_full_permutation(&self.left_to_right, &self.right_to_left)?;
+                if self.left_triangles.is_empty()
+                    || self.right_triangles.is_empty()
+                    || self.left_triangles == self.right_triangles
+                {
+                    return Err(ExactReportValidationError::MismatchedTriangleSets);
+                }
+            }
+            ExactSameSurfaceStatus::Certified => {
+                validate_full_permutation(&self.left_to_right, &self.right_to_left)?;
+                if self.left_triangles != self.right_triangles {
+                    return Err(ExactReportValidationError::MismatchedTriangleSets);
+                }
+                if !self.all_proof_producing() {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
         }
         Ok(())
     }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn validate_full_permutation(
+    left_to_right: &[usize],
+    right_to_left: &[usize],
+) -> Result<(), ExactReportValidationError> {
+    if left_to_right.len() != right_to_left.len() {
+        return Err(ExactReportValidationError::InvalidPermutation);
+    }
+    for (left, &right) in left_to_right.iter().enumerate() {
+        if right >= right_to_left.len() || right_to_left[right] != left {
+            return Err(ExactReportValidationError::InvalidPermutation);
+        }
+    }
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn is_partial_injective_mapping(mapping: &[usize]) -> bool {
+    let mut seen = Vec::with_capacity(mapping.len());
+    for &right in mapping {
+        if seen.contains(&right) {
+            return false;
+        }
+        seen.push(right);
+    }
+    true
 }
 
 /// Certification status for an open-surface disjoint shortcut.
@@ -925,7 +1237,18 @@ impl ExactOpenSurfaceDisjointReport {
         {
             return Err(ExactReportValidationError::GraphUnknownStatusMismatch);
         }
-        if self.blocker.kind != ExactBooleanBlockerKind::NeedsWinding {
+        // Graph unknowns are refinement state, not open-surface topology
+        // policy. Keeping this partition explicit follows Yap, "Towards Exact
+        // Geometric Computation," Computational Geometry 7.1-2 (1997): a
+        // later policy stage must not consume an unresolved predicate as if it
+        // were certified no-intersection or winding evidence.
+        let expected_kind = if matches!(self.status, ExactOpenSurfaceDisjointStatus::GraphUnknowns)
+        {
+            ExactBooleanBlockerKind::NeedsRefinement
+        } else {
+            ExactBooleanBlockerKind::NeedsWinding
+        };
+        if self.blocker.kind != expected_kind {
             return Err(ExactReportValidationError::WrongBlockerKind);
         }
         validate_blocker_count_bounds(
@@ -933,6 +1256,41 @@ impl ExactOpenSurfaceDisjointReport {
             self.retained_face_pairs,
             self.retained_events,
         )?;
+        // Status is certified combinatorial state, not a label layered over
+        // arbitrary counts. Yap, "Towards Exact Geometric Computation,"
+        // Computational Geometry 7.1-2 (1997), keeps these states explicit so
+        // refinement, topology policy, and certified shortcuts are not
+        // accidentally conflated.
+        match self.status {
+            ExactOpenSurfaceDisjointStatus::NotOpenSurface => {
+                if (self.left_open_surface && self.right_open_surface)
+                    || self.graph_had_unknowns
+                    || self.retained_face_pairs != 0
+                    || self.retained_events != 0
+                    || blocker_has_any_evidence(&self.blocker)
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactOpenSurfaceDisjointStatus::GraphUnknowns => {
+                if !self.left_open_surface
+                    || !self.right_open_surface
+                    || !blocker_has_refinement_evidence(&self.blocker)
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactOpenSurfaceDisjointStatus::GraphHasFacePairs => {
+                if !self.left_open_surface || !self.right_open_surface {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactOpenSurfaceDisjointStatus::Certified => {
+                if !self.left_open_surface || !self.right_open_surface {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+        }
         if self.is_certified() && (self.retained_face_pairs != 0 || self.retained_events != 0) {
             return Err(ExactReportValidationError::UnexpectedGraphEvents);
         }
@@ -993,7 +1351,16 @@ impl ExactBoundaryTouchingReport {
         {
             return Err(ExactReportValidationError::GraphUnknownStatusMismatch);
         }
-        if self.blocker.kind != ExactBooleanBlockerKind::NeedsBoundaryPolicy {
+        // A boundary-only policy is meaningful only after the graph is
+        // resolved. Unknown graph events remain refinement blockers, preserving
+        // Yap's exact-state separation between undecided predicates and
+        // application-level topology policy.
+        let expected_kind = if matches!(self.status, ExactBoundaryTouchingStatus::GraphUnknowns) {
+            ExactBooleanBlockerKind::NeedsRefinement
+        } else {
+            ExactBooleanBlockerKind::NeedsBoundaryPolicy
+        };
+        if self.blocker.kind != expected_kind {
             return Err(ExactReportValidationError::WrongBlockerKind);
         }
         validate_blocker_count_bounds(
@@ -1001,6 +1368,28 @@ impl ExactBoundaryTouchingReport {
             self.retained_face_pairs,
             self.retained_events,
         )?;
+        // Boundary-only contact is an application policy boundary. Keep its
+        // evidence separated from graph refinement and non-boundary winding
+        // cases as required by Yap, "Towards Exact Geometric Computation,"
+        // Computational Geometry 7.1-2 (1997).
+        match self.status {
+            ExactBoundaryTouchingStatus::GraphUnknowns => {
+                if !blocker_has_refinement_evidence(&self.blocker) {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactBoundaryTouchingStatus::NotBoundaryOnly => {
+                if self.retained_face_pairs != 0
+                    && self
+                        .blocker
+                        .validate_for_kind(ExactBooleanBlockerKind::NeedsBoundaryPolicy)
+                        .is_ok()
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactBoundaryTouchingStatus::Certified => {}
+        }
         if self.is_certified() && self.blocker.coplanar_touching_pairs == 0 {
             return Err(ExactReportValidationError::MissingRelationCount);
         }
@@ -1074,7 +1463,15 @@ impl ExactPlanarArrangementReport {
         {
             return Err(ExactReportValidationError::GraphUnknownStatusMismatch);
         }
-        if self.blocker.kind != ExactBooleanBlockerKind::NeedsPlanarArrangement {
+        // A graph-unknown arrangement report has not reached planar-cell
+        // policy. It is still blocked on predicate/construction refinement, a
+        // distinct exact-computation state in Yap's sense.
+        let expected_kind = if matches!(self.status, ExactPlanarArrangementStatus::GraphUnknowns) {
+            ExactBooleanBlockerKind::NeedsRefinement
+        } else {
+            ExactBooleanBlockerKind::NeedsPlanarArrangement
+        };
+        if self.blocker.kind != expected_kind {
             return Err(ExactReportValidationError::WrongBlockerKind);
         }
         validate_blocker_count_bounds(
@@ -1082,6 +1479,43 @@ impl ExactPlanarArrangementReport {
             self.retained_face_pairs,
             self.retained_events,
         )?;
+        // Planar-cell extraction is a distinct topological obligation. These
+        // checks preserve the exact-state partition advocated by Yap, "Towards
+        // Exact Geometric Computation," Computational Geometry 7.1-2 (1997):
+        // selected-region calls, unresolved graphs, already materialized
+        // shortcuts, and missing planar arrangements must not masquerade as
+        // one another.
+        match self.status {
+            ExactPlanarArrangementStatus::NotNamedOperation => {
+                if !matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
+                    || self.graph_had_unknowns
+                    || self.retained_face_pairs != 0
+                    || self.retained_events != 0
+                    || blocker_has_any_evidence(&self.blocker)
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactPlanarArrangementStatus::GraphUnknowns => {
+                if !blocker_has_refinement_evidence(&self.blocker) {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactPlanarArrangementStatus::AlreadyMaterialized
+            | ExactPlanarArrangementStatus::NoPositiveOverlap => {
+                if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+            ExactPlanarArrangementStatus::Required => {
+                if matches!(
+                    self.operation,
+                    ExactBooleanOperation::SelectedRegions(_) | ExactBooleanOperation::Intersection
+                ) {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
+            }
+        }
         if self.is_required() && self.blocker.coplanar_overlapping_pairs == 0 {
             return Err(ExactReportValidationError::MissingRelationCount);
         }
@@ -1094,8 +1528,9 @@ impl ExactPlanarArrangementReport {
                 readiness
                     .validate()
                     .map_err(|_| ExactReportValidationError::InvalidArrangementReadiness)?;
+                validate_arrangement_readiness_matches_blocker(readiness, &self.blocker)?;
                 if !readiness.needs_planar_cells()
-                    || readiness.overlapping_graphs != self.blocker.coplanar_overlapping_pairs
+                    || self.blocker.coplanar_touching_pairs != 0
                     || readiness.graph_count
                         != self.blocker.coplanar_overlapping_pairs
                             + self.blocker.coplanar_touching_pairs
@@ -1109,6 +1544,7 @@ impl ExactPlanarArrangementReport {
                     readiness
                         .validate()
                         .map_err(|_| ExactReportValidationError::InvalidArrangementReadiness)?;
+                    validate_arrangement_readiness_matches_blocker(readiness, &self.blocker)?;
                     if readiness.status == CoplanarArrangementReadinessStatus::NoCoplanarOverlap
                         && self.blocker.coplanar_overlapping_pairs
                             + self.blocker.coplanar_touching_pairs
@@ -1216,6 +1652,9 @@ impl ExactWindingReadinessReport {
                 if self.arrangement_readiness.is_some() {
                     return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
                 }
+                if !blocker_has_refinement_evidence(&self.blocker) {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
                 blocker_kind(
                     Some(&self.blocker),
                     ExactBooleanBlockerKind::NeedsRefinement,
@@ -1233,6 +1672,9 @@ impl ExactWindingReadinessReport {
                 if self.arrangement_readiness.is_some() {
                     return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
                 }
+                if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
                 blocker_kind(
                     Some(&self.blocker),
                     ExactBooleanBlockerKind::NeedsBoundaryPolicy,
@@ -1247,6 +1689,12 @@ impl ExactWindingReadinessReport {
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::PlanarArrangementRequired => {
+                if matches!(
+                    self.operation,
+                    ExactBooleanOperation::SelectedRegions(_) | ExactBooleanOperation::Intersection
+                ) {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
                 blocker_kind(
                     Some(&self.blocker),
                     ExactBooleanBlockerKind::NeedsPlanarArrangement,
@@ -1265,14 +1713,16 @@ impl ExactWindingReadinessReport {
                 readiness
                     .validate()
                     .map_err(|_| ExactReportValidationError::InvalidArrangementReadiness)?;
-                if !readiness.needs_planar_cells()
-                    || readiness.overlapping_graphs != self.blocker.coplanar_overlapping_pairs
-                {
+                validate_arrangement_readiness_matches_blocker(readiness, &self.blocker)?;
+                if !readiness.needs_planar_cells() || self.blocker.coplanar_touching_pairs != 0 {
                     return Err(ExactReportValidationError::ArrangementReadinessMismatch);
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized => {
+                if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                }
                 blocker_kind(
                     Some(&self.blocker),
                     ExactBooleanBlockerKind::NeedsPlanarArrangement,
@@ -1288,15 +1738,18 @@ impl ExactWindingReadinessReport {
                     readiness
                         .validate()
                         .map_err(|_| ExactReportValidationError::InvalidArrangementReadiness)?;
-                    if readiness.overlapping_graphs != self.blocker.coplanar_overlapping_pairs {
-                        return Err(ExactReportValidationError::ArrangementReadinessMismatch);
-                    }
+                    validate_arrangement_readiness_matches_blocker(readiness, &self.blocker)?;
                 }
                 no_region_facts(self.region_count, &self.region_classifications)
             }
             ExactWindingReadinessStatus::Ready => {
                 if self.arrangement_readiness.is_some() {
                     return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                }
+                if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
+                    || self.retained_face_pairs == 0
+                {
+                    return Err(ExactReportValidationError::StatusEvidenceMismatch);
                 }
                 blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::NeedsWinding)?;
                 self.blocker
@@ -1312,6 +1765,20 @@ impl ExactWindingReadinessReport {
             | ExactWindingReadinessStatus::NoNontrivialOverlap => {
                 if self.arrangement_readiness.is_some() {
                     return Err(ExactReportValidationError::UnexpectedArrangementReadiness);
+                }
+                match self.status {
+                    ExactWindingReadinessStatus::NotNamedOperation
+                        if !matches!(self.operation, ExactBooleanOperation::SelectedRegions(_)) =>
+                    {
+                        return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    }
+                    ExactWindingReadinessStatus::NoNontrivialOverlap
+                        if matches!(self.operation, ExactBooleanOperation::SelectedRegions(_))
+                            || self.retained_face_pairs != 0 =>
+                    {
+                        return Err(ExactReportValidationError::StatusEvidenceMismatch);
+                    }
+                    _ => {}
                 }
                 blocker_kind(Some(&self.blocker), ExactBooleanBlockerKind::NeedsWinding)?;
                 validate_blocker_count_bounds(

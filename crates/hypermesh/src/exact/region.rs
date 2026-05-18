@@ -84,6 +84,13 @@ pub struct FaceRegionPlaneClassification {
 /// tied to certified predicate facts and explicit unknowns.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum FaceRegionPlaneValidationError {
+    /// A region cannot be classified against a plane from the same mesh side.
+    SameRegionAndPlaneSide {
+        /// Side that owns the split region.
+        region_side: MeshSide,
+        /// Side that owns the retained plane.
+        plane_side: MeshSide,
+    },
     /// A region/plane classification cannot be derived from an empty boundary.
     EmptyNodeSides,
     /// The retained predicate count does not match the retained node-side
@@ -117,8 +124,19 @@ impl FaceRegionPlaneClassification {
     /// This check is deliberately local: split-region topology and source-face
     /// incidence are validated by [`ExactFaceRegionPlan`],
     /// while this method verifies that the predicate-derived side vector still
-    /// justifies the stored relation.
+    /// justifies the stored relation. It also checks that the retained plane
+    /// came from the opposite mesh side, because winding and inside/outside
+    /// policies consume these facts as cross-mesh evidence. Keeping that
+    /// provenance executable follows Yap, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7.1-2 (1997): a combinatorial
+    /// handoff should retain the exact predicate context it depends on.
     pub fn validate(&self) -> Result<(), FaceRegionPlaneValidationError> {
+        if self.region_side == self.plane_side {
+            return Err(FaceRegionPlaneValidationError::SameRegionAndPlaneSide {
+                region_side: self.region_side,
+                plane_side: self.plane_side,
+            });
+        }
         if self.node_sides.is_empty() {
             return Err(FaceRegionPlaneValidationError::EmptyNodeSides);
         }
@@ -374,8 +392,10 @@ impl ExactBooleanAssemblyPlan {
     /// Each output vertex stores both a materialized exact point and the
     /// boundary node that produced it. Validating their exact equality keeps
     /// the construction provenance attached to the topology that consumes it,
-    /// and validating triangle point distinctness catches zero-area assembly
-    /// artifacts before they reach mesh construction. These are exact
+    /// rejecting unreferenced vertices keeps the handoff compact to the exact
+    /// topology materialization consumes, and validating triangle point
+    /// distinctness catches zero-area assembly artifacts before they reach mesh
+    /// construction. These are exact
     /// `hyperlimit::compare_reals` checks, not tolerance comparisons,
     /// following Yap, "Towards Exact Geometric Computation," *Computational
     /// Geometry* 7.1-2 (1997): geometric decisions carry certified object
@@ -384,6 +404,7 @@ impl ExactBooleanAssemblyPlan {
         for vertex in &self.vertices {
             validate_output_vertex_source(vertex)?;
         }
+        let mut referenced_vertices = vec![false; self.vertices.len()];
         for triangle in &self.triangles {
             if triangle
                 .vertices
@@ -400,22 +421,36 @@ impl ExactBooleanAssemblyPlan {
                     reason: "assembled output triangle has repeated vertex handles",
                 });
             }
+            referenced_vertices[a] = true;
+            referenced_vertices[b] = true;
+            referenced_vertices[c] = true;
             validate_output_triangle_distinct_points(self, triangle)?;
+        }
+        if referenced_vertices.iter().any(|&referenced| !referenced) {
+            return Err(hypertri::Error::InvalidInput {
+                reason: "assembled output retained an unreferenced vertex",
+            });
         }
         Ok(())
     }
 
-    /// Materialize the assembly plan as an [`ExactMesh`] through the normal
-    /// validation pipeline.
+    /// Validate and materialize the assembly plan as an [`ExactMesh`].
     ///
     /// This is the exact replacement boundary for the legacy boolean mutation
     /// path: constructed output triangles are converted back into hypermesh
-    /// exact vertices and triangle handles, then checked by the same manifold
-    /// and geometric validators used for caller-supplied exact meshes.
+    /// exact vertices and triangle handles only after local assembly invariants
+    /// have been audited. The resulting mesh is then checked by the same
+    /// manifold and geometric validators used for caller-supplied exact meshes.
+    ///
+    /// The local validation step follows Yap, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7.1-2 (1997): constructed
+    /// combinatorics must carry certified source and incidence facts before a
+    /// topology consumer treats them as mesh state.
     pub fn to_exact_mesh(
         &self,
         policy: ValidationPolicy,
     ) -> Result<ExactMesh, super::error::MeshError> {
+        self.validate().map_err(assembly_validation_error)?;
         let vertices = self
             .vertices
             .iter()
@@ -453,13 +488,6 @@ impl ExactBooleanAssemblyPlan {
         &self,
         policy: ValidationPolicy,
     ) -> Result<ExactMesh, super::error::MeshError> {
-        self.validate().map_err(|error| {
-            super::error::MeshError::one(super::error::MeshDiagnostic::new(
-                super::error::Severity::Error,
-                super::error::DiagnosticKind::IndexOutOfBounds,
-                format!("exact boolean assembly validation failed: {error}"),
-            ))
-        })?;
         self.to_exact_mesh(policy)
     }
 
@@ -478,13 +506,7 @@ impl ExactBooleanAssemblyPlan {
         right: &ExactMesh,
         policy: ValidationPolicy,
     ) -> Result<ExactMesh, super::error::MeshError> {
-        self.validate().map_err(|error| {
-            super::error::MeshError::one(super::error::MeshDiagnostic::new(
-                super::error::Severity::Error,
-                super::error::DiagnosticKind::IndexOutOfBounds,
-                format!("exact boolean assembly validation failed: {error}"),
-            ))
-        })?;
+        self.validate().map_err(assembly_validation_error)?;
         self.validate_source_face_incidence(left, right)
             .map_err(|error| {
                 super::error::MeshError::one(super::error::MeshDiagnostic::new(
@@ -597,8 +619,73 @@ fn validate_assembly_source_face_incidence(
                 }
             }
         }
+        validate_output_triangle_source_orientation(assembly, triangle, mesh, source_triangle)?;
     }
     Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Validate that an output triangle preserves its retained source-face
+/// orientation.
+///
+/// Source-face incidence only proves that emitted vertices remain on the source
+/// plane. For boundary topology, the triangle also has to keep the same
+/// projected orientation as the source face it claims. The projection is chosen
+/// by a certified nonzero `hyperlimit::orient2d_report`, then both source and
+/// output signs are compared exactly. This follows Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): a topology
+/// handoff must retain the predicate facts that make orientation meaningful,
+/// rather than trusting vertex order as an unchecked label.
+fn validate_output_triangle_source_orientation(
+    assembly: &ExactBooleanAssemblyPlan,
+    triangle: &ExactOutputTriangle,
+    mesh: &ExactMesh,
+    source_triangle: [usize; 3],
+) -> hypertri::Result<()> {
+    let projection = choose_region_projection(mesh, triangle.source_face)?;
+    let source_points = [
+        mesh.vertices()[source_triangle[0]].to_hyperlimit_point(),
+        mesh.vertices()[source_triangle[1]].to_hyperlimit_point(),
+        mesh.vertices()[source_triangle[2]].to_hyperlimit_point(),
+    ];
+    let source_sign = orient2d_report(
+        &project_for_predicate(&source_points[0], projection),
+        &project_for_predicate(&source_points[1], projection),
+        &project_for_predicate(&source_points[2], projection),
+    )
+    .value()
+    .ok_or(hypertri::Error::PredicateUndecided {
+        predicate: "assembly_source_orientation",
+    })?;
+    let output_sign = orient2d_report(
+        &project_for_predicate(&assembly.vertices[triangle.vertices[0]].point, projection),
+        &project_for_predicate(&assembly.vertices[triangle.vertices[1]].point, projection),
+        &project_for_predicate(&assembly.vertices[triangle.vertices[2]].point, projection),
+    )
+    .value()
+    .ok_or(hypertri::Error::PredicateUndecided {
+        predicate: "assembly_output_orientation",
+    })?;
+    if output_sign == Sign::Zero {
+        return Err(hypertri::Error::InvalidInput {
+            reason: "assembled output triangle has zero projected source orientation",
+        });
+    }
+    if source_sign != output_sign {
+        return Err(hypertri::Error::InvalidInput {
+            reason: "assembled output triangle reverses its source face orientation",
+        });
+    }
+    Ok(())
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn assembly_validation_error(error: hypertri::Error) -> super::error::MeshError {
+    super::error::MeshError::one(super::error::MeshDiagnostic::new(
+        super::error::Severity::Error,
+        super::error::DiagnosticKind::IndexOutOfBounds,
+        format!("exact boolean assembly validation failed: {error}"),
+    ))
 }
 
 /// Triangulate split face-region loops with `hypertri` exact earcut.
@@ -730,15 +817,15 @@ fn assemble_region_triangulations(
             continue;
         }
 
-        let base = vertices.len();
-        vertices.extend(triangulation.boundary.iter().cloned().map(|source| {
-            let point = boundary_node_point(&source).clone();
-            ExactOutputVertex { point, source }
-        }));
+        let mut remap = vec![None; triangulation.boundary.len()];
 
         for tri in triangulation.triangles.chunks_exact(3) {
             triangles.push(ExactOutputTriangle {
-                vertices: [base + tri[0], base + tri[1], base + tri[2]],
+                vertices: [
+                    remap_region_vertex(triangulation, &mut remap, &mut vertices, tri[0]),
+                    remap_region_vertex(triangulation, &mut remap, &mut vertices, tri[1]),
+                    remap_region_vertex(triangulation, &mut remap, &mut vertices, tri[2]),
+                ],
                 source_side: triangulation.side,
                 source_face: triangulation.face,
             });
@@ -751,6 +838,31 @@ fn assemble_region_triangulations(
     };
     plan.validate()?;
     Ok(plan)
+}
+
+#[cfg(feature = "exact-triangulation")]
+/// Map a region-local boundary vertex into the compact output assembly.
+///
+/// Region boundaries may carry split nodes that exact earcut does not consume in
+/// any emitted triangle after degeneracy handling. The selected-region output
+/// only exports vertices referenced by output topology, preserving each retained
+/// vertex's certified source node. That keeps the representation aligned with
+/// Yap's exact-geometric-computation discipline: downstream topology receives
+/// the exact object set it consumes, not a tolerance-expanded scratch buffer.
+/// See Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997).
+fn remap_region_vertex(
+    triangulation: &FaceRegionTriangulation,
+    remap: &mut [Option<usize>],
+    vertices: &mut Vec<ExactOutputVertex>,
+    region_vertex: usize,
+) -> usize {
+    *remap[region_vertex].get_or_insert_with(|| {
+        let source = triangulation.boundary[region_vertex].clone();
+        let point = boundary_node_point(&source).clone();
+        vertices.push(ExactOutputVertex { point, source });
+        vertices.len() - 1
+    })
 }
 
 fn classify_region_against_face_plane(

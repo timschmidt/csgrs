@@ -3,3 +3,4 @@
 .nx
 /.idea
 /.vscode
+/fuzz/target

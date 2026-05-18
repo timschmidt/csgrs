@@ -52,7 +52,7 @@ pub use facts::{
 };
 pub use graph::{
     CoplanarArrangementReadinessReport, CoplanarArrangementReadinessStatus,
-    CoplanarArrangementReadinessValidationError, CoplanarEdgeOverlap,
+    CoplanarArrangementReadinessValidationError, CoplanarEdgeInterval, CoplanarEdgeOverlap,
     CoplanarEdgeSplitConstruction, CoplanarEdgeSplitPoint, CoplanarOverlapGraph,
     CoplanarOverlapGraphValidationError, CoplanarOverlapSplitGraph, CoplanarOverlapSplitPlan,
     CoplanarOverlapSplitValidationError, CoplanarVertexOverlap, EdgeSplit, EdgeSplitPoint,
@@ -112,12 +112,13 @@ pub use solid::{
 };
 #[cfg(feature = "exact-triangulation")]
 pub use surface::{
-    CoplanarConvexArrangement, CoplanarConvexHoledArrangement, CoplanarConvexSurfaceContainment,
-    CoplanarConvexSurfaceContainmentCertificate, CoplanarConvexSurfaceEquivalence,
-    CoplanarConvexSurfaceReport, CoplanarConvexSurfaceReportError,
-    CoplanarConvexSurfaceReportStatus, CoplanarTriangleArrangement,
-    CoplanarTriangleHoledArrangement, arrange_coplanar_convex_surface_difference,
-    arrange_coplanar_convex_surface_holed_difference, arrange_coplanar_convex_surface_intersection,
+    CoplanarConvexArrangement, CoplanarConvexHoledArrangement, CoplanarConvexMultiArrangement,
+    CoplanarConvexSurfaceContainment, CoplanarConvexSurfaceContainmentCertificate,
+    CoplanarConvexSurfaceEquivalence, CoplanarConvexSurfaceReport,
+    CoplanarConvexSurfaceReportError, CoplanarConvexSurfaceReportStatus,
+    CoplanarTriangleArrangement, CoplanarTriangleHoledArrangement,
+    arrange_coplanar_convex_surface_difference, arrange_coplanar_convex_surface_holed_difference,
+    arrange_coplanar_convex_surface_intersection, arrange_coplanar_convex_surface_multi_difference,
     arrange_coplanar_convex_surface_union, arrange_single_triangle_coplanar_difference,
     arrange_single_triangle_coplanar_holed_difference, arrange_single_triangle_coplanar_union,
     certify_coplanar_convex_surface_containment, certify_coplanar_convex_surface_equivalence,

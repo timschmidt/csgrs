@@ -3,8 +3,9 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use hyperlimit::Point3;
 use hypermesh::exact::{
-    ExactMesh, MeshFacePairClassification, ValidationPolicy,
-    arrange_coplanar_convex_surface_difference, arrange_coplanar_convex_surface_intersection,
+    ExactMesh, ExactReportValidationError, FaceRegionPlaneRelation, MeshFacePairClassification,
+    PredicateUse, ValidationPolicy, arrange_coplanar_convex_surface_difference,
+    arrange_coplanar_convex_surface_intersection, arrange_coplanar_convex_surface_multi_difference,
     arrange_coplanar_convex_surface_union, arrange_single_triangle_coplanar_holed_difference,
     arrange_single_triangle_coplanar_union, build_intersection_graph,
     certify_boundary_touching_report, certify_convex_solid,
@@ -326,9 +327,10 @@ fn exact_coplanar_overlap_graph_handoff(c: &mut Criterion) {
                 .collect::<Vec<_>>();
             (
                 graph.validate(),
+                graph.validate_against_meshes(&left, &right),
                 overlap_graphs,
                 validations,
-                split_plan.validate(),
+                split_plan.validate_against_meshes(&left, &right),
                 readiness.validate(),
                 split_plan,
                 readiness,
@@ -573,6 +575,38 @@ fn exact_face_region_earcut(c: &mut Criterion) {
                 .unwrap()
             })
         });
+        let triangulations = hypermesh::exact::checked_triangulate_face_regions_with_earcut(
+            &region_plan,
+            &left,
+            &right,
+        )
+        .unwrap();
+        let assembly = hypermesh::exact::ExactBooleanAssemblyPlan::from_region_triangulations(
+            &triangulations,
+            hypermesh::exact::ExactRegionSelection::KeepAll,
+        )
+        .unwrap();
+        c.bench_function("exact_boolean_assembly_materialization", |b| {
+            b.iter(|| {
+                assembly
+                    .to_exact_mesh(ValidationPolicy::ALLOW_BOUNDARY)
+                    .unwrap()
+            })
+        });
+        c.bench_function(
+            "exact_boolean_assembly_source_checked_materialization",
+            |b| {
+                b.iter(|| {
+                    assembly
+                        .checked_to_exact_mesh_with_sources(
+                            &left,
+                            &right,
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        )
+                        .unwrap()
+                })
+            },
+        );
     }
     #[cfg(not(feature = "exact-triangulation"))]
     {
@@ -609,6 +643,154 @@ fn exact_boolean_selected_regions(c: &mut Criterion) {
                 .unwrap();
                 let validation = result.validate();
                 (result, validation)
+            })
+        });
+    }
+    #[cfg(not(feature = "exact-triangulation"))]
+    {
+        let _ = c;
+    }
+}
+
+fn exact_selected_region_undecided_validation(c: &mut Criterion) {
+    #[cfg(feature = "exact-triangulation")]
+    {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 0, 0, 2, 0, 0, 0, 2, 0, //
+                20, 0, 0, 22, 0, 0, 20, 2, 0,
+            ],
+            &[0, 1, 2, 3, 4, 5],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, -1, 2, 0, 1, 0, 2, 1],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let mut result = hypermesh::exact::boolean_selected_regions(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanPolicy::KEEP_ALL_BOUNDARY,
+        )
+        .unwrap();
+        let classification = result
+            .region_classifications
+            .first_mut()
+            .expect("fixture must produce selected-region side facts");
+        classification.relation = FaceRegionPlaneRelation::Unknown;
+        classification.node_sides.fill(None);
+
+        c.bench_function("exact_selected_region_undecided_validation", |b| {
+            b.iter(|| {
+                assert_eq!(
+                    result.validate().unwrap_err(),
+                    ExactReportValidationError::RegionClassificationNotProofProducing
+                );
+            })
+        });
+    }
+    #[cfg(not(feature = "exact-triangulation"))]
+    {
+        let _ = c;
+    }
+}
+
+fn exact_selected_region_preflight(c: &mut Criterion) {
+    #[cfg(feature = "exact-triangulation")]
+    {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 0, 0, 2, 0, 0, 0, 2, 0, //
+                20, 0, 0, 22, 0, 0, 20, 2, 0,
+            ],
+            &[0, 1, 2, 3, 4, 5],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, -1, 2, 0, 1, 0, 2, 1],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+
+        c.bench_function("exact_selected_region_preflight", |b| {
+            b.iter(|| {
+                let preflight = hypermesh::exact::preflight_boolean_exact(
+                    &left,
+                    &right,
+                    hypermesh::exact::ExactBooleanOperation::SelectedRegions(
+                        hypermesh::exact::ExactRegionSelection::KeepAll,
+                    ),
+                )
+                .unwrap();
+                (preflight.validate(), preflight)
+            })
+        });
+        c.bench_function("exact_preflight_orphan_event_validation", |b| {
+            b.iter(|| {
+                let mut preflight = hypermesh::exact::preflight_boolean_exact(
+                    &left,
+                    &right,
+                    hypermesh::exact::ExactBooleanOperation::SelectedRegions(
+                        hypermesh::exact::ExactRegionSelection::KeepAll,
+                    ),
+                )
+                .unwrap();
+                preflight.retained_face_pairs = 0;
+                preflight.retained_events = 1;
+                preflight.region_count = 0;
+                preflight.region_classifications.clear();
+                assert_eq!(
+                    preflight.validate().unwrap_err(),
+                    hypermesh::exact::ExactReportValidationError::StatusEvidenceMismatch
+                );
+            })
+        });
+        c.bench_function("exact_blocker_relation_evidence_validation", |b| {
+            b.iter(|| {
+                let report = hypermesh::exact::ExactRefinementReport {
+                    operation: hypermesh::exact::ExactBooleanOperation::Union,
+                    status: hypermesh::exact::ExactRefinementStatus::Required,
+                    graph_had_unknowns: false,
+                    retained_face_pairs: 1,
+                    retained_events: 1,
+                    blocker: Some(hypermesh::exact::ExactBooleanBlocker {
+                        kind: hypermesh::exact::ExactBooleanBlockerKind::NeedsRefinement,
+                        candidate_pairs: 0,
+                        coplanar_overlapping_pairs: 0,
+                        coplanar_touching_pairs: 0,
+                        unknown_pairs: 0,
+                        construction_failed_events: 1,
+                    }),
+                };
+                assert_eq!(
+                    report.validate().unwrap_err(),
+                    hypermesh::exact::ExactReportValidationError::InvalidBlockerCounts
+                );
+            })
+        });
+        c.bench_function("exact_preflight_empty_pair_validation", |b| {
+            b.iter(|| {
+                let mut preflight = hypermesh::exact::preflight_boolean_exact(
+                    &left,
+                    &right,
+                    hypermesh::exact::ExactBooleanOperation::SelectedRegions(
+                        hypermesh::exact::ExactRegionSelection::KeepAll,
+                    ),
+                )
+                .unwrap();
+                preflight.retained_face_pairs = 1;
+                preflight.retained_events = 0;
+                preflight.region_count = 0;
+                preflight.region_classifications.clear();
+                assert_eq!(
+                    preflight.validate().unwrap_err(),
+                    hypermesh::exact::ExactReportValidationError::StatusEvidenceMismatch
+                );
             })
         });
     }
@@ -665,6 +847,57 @@ fn exact_boolean_preflight(c: &mut Criterion) {
                     winding.validate(),
                     winding,
                 )
+            })
+        });
+    }
+    #[cfg(not(feature = "exact-triangulation"))]
+    {
+        let _ = c;
+    }
+}
+
+fn exact_winding_readiness_undecided_validation(c: &mut Criterion) {
+    #[cfg(feature = "exact-triangulation")]
+    {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[
+                0, 0, 0, 2, 0, 0, 0, 2, 0, //
+                20, 0, 0, 22, 0, 0, 20, 2, 0,
+            ],
+            &[0, 1, 2, 3, 4, 5],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, -1, 2, 0, 1, 0, 2, 1],
+            &[0, 1, 2],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let mut report = certify_winding_readiness_report(
+            &left,
+            &right,
+            hypermesh::exact::ExactBooleanOperation::Union,
+        )
+        .unwrap();
+        let classification = report
+            .region_classifications
+            .first_mut()
+            .expect("fixture must produce a winding-ready region classification");
+        classification.relation = FaceRegionPlaneRelation::Unknown;
+        classification.node_sides.fill(None);
+        classification.predicates = classification
+            .node_sides
+            .iter()
+            .map(|_| PredicateUse::from_certificate(hyperlimit::PredicateCertificate::Unknown))
+            .collect();
+
+        c.bench_function("exact_winding_readiness_undecided_validation", |b| {
+            b.iter(|| {
+                assert_eq!(
+                    report.validate().unwrap_err(),
+                    ExactReportValidationError::RegionClassificationNotProofProducing
+                );
             })
         });
     }
@@ -732,6 +965,16 @@ fn exact_boolean_same_surface(c: &mut Criterion) {
         let reversed =
             ExactMesh::from_i64_triangles(&vertices, &[0, 1, 2, 0, 3, 1, 1, 3, 2, 2, 3, 0])
                 .unwrap();
+        let shifted = ExactMesh::from_i64_triangles(
+            &[
+                0, 0, 1, //
+                1, 0, 1, //
+                0, 1, 1, //
+                0, 0, 2,
+            ],
+            &[0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3],
+        )
+        .unwrap();
 
         c.bench_function("exact_boolean_same_surface", |b| {
             b.iter(|| {
@@ -745,6 +988,16 @@ fn exact_boolean_same_surface(c: &mut Criterion) {
                     )
                     .unwrap(),
                 )
+            })
+        });
+        c.bench_function("exact_same_surface_rejection_validation", |b| {
+            b.iter(|| {
+                let mut report = certify_same_surface_report(&mesh, &shifted);
+                report.right_to_left.push(0);
+                assert_eq!(
+                    report.validate().unwrap_err(),
+                    ExactReportValidationError::StatusEvidenceMismatch
+                );
             })
         });
     }
@@ -974,6 +1227,55 @@ fn exact_boolean_coplanar_convex_surface_arrangement_difference(c: &mut Criterio
     }
 }
 
+fn exact_boolean_coplanar_convex_surface_multi_difference(c: &mut Criterion) {
+    #[cfg(feature = "exact-triangulation")]
+    {
+        let left = ExactMesh::from_i64_triangles_with_policy(
+            &[0, 0, 0, 4, 0, 0, 4, 4, 0, 0, 4, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+        let right = ExactMesh::from_i64_triangles_with_policy(
+            &[1, -1, 0, 3, -1, 0, 3, 5, 0, 1, 5, 0],
+            &[0, 1, 2, 0, 2, 3],
+            ValidationPolicy::ALLOW_BOUNDARY,
+        )
+        .unwrap();
+
+        c.bench_function(
+            "exact_boolean_coplanar_convex_surface_multi_difference",
+            |b| {
+                b.iter(|| {
+                    let arrangement =
+                        arrange_coplanar_convex_surface_multi_difference(&left, &right);
+                    (
+                        arrangement.as_ref().map(|output| output.validate()),
+                        arrangement,
+                        hypermesh::exact::preflight_boolean_exact(
+                            &left,
+                            &right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                        )
+                        .map(|report| report.validate()),
+                        hypermesh::exact::boolean_exact(
+                            &left,
+                            &right,
+                            hypermesh::exact::ExactBooleanOperation::Difference,
+                            ValidationPolicy::ALLOW_BOUNDARY,
+                        )
+                        .unwrap(),
+                    )
+                })
+            },
+        );
+    }
+    #[cfg(not(feature = "exact-triangulation"))]
+    {
+        let _ = c;
+    }
+}
+
 fn exact_convex_solid_classification(c: &mut Criterion) {
     let outer = ExactMesh::from_i64_triangles(
         &[
@@ -1044,6 +1346,18 @@ fn exact_boolean_coplanar_surface_containment(c: &mut Criterion) {
                 )
             })
         });
+        c.bench_function("exact_coplanar_containment_status_validation", |b| {
+            b.iter(|| {
+                let mut report =
+                    certify_single_triangle_coplanar_containment_report(&inner, &outer);
+                report.status =
+                    hypermesh::exact::CoplanarSurfaceContainmentStatus::DisjointOrUnknown;
+                assert_eq!(
+                    report.validate().unwrap_err(),
+                    hypermesh::exact::CoplanarSurfaceContainmentReportError::StatusRelationMismatch
+                );
+            })
+        });
     }
     #[cfg(not(feature = "exact-triangulation"))]
     {
@@ -1079,6 +1393,57 @@ fn exact_boolean_open_surface_disjoint(c: &mut Criterion) {
                     .unwrap(),
                     certify_open_surface_disjoint_report(&left, &right).unwrap(),
                 )
+            })
+        });
+    }
+    #[cfg(not(feature = "exact-triangulation"))]
+    {
+        let _ = c;
+    }
+}
+
+fn exact_policy_report_refinement_blocker_validation(c: &mut Criterion) {
+    #[cfg(feature = "exact-triangulation")]
+    {
+        c.bench_function("exact_policy_report_refinement_blocker_validation", |b| {
+            b.iter(|| {
+                let open = hypermesh::exact::ExactOpenSurfaceDisjointReport {
+                    status: hypermesh::exact::ExactOpenSurfaceDisjointStatus::GraphUnknowns,
+                    left_open_surface: true,
+                    right_open_surface: true,
+                    graph_had_unknowns: true,
+                    retained_face_pairs: 1,
+                    retained_events: 1,
+                    blocker: hypermesh::exact::ExactBooleanBlocker {
+                        kind: hypermesh::exact::ExactBooleanBlockerKind::NeedsRefinement,
+                        candidate_pairs: 0,
+                        coplanar_overlapping_pairs: 0,
+                        coplanar_touching_pairs: 0,
+                        unknown_pairs: 1,
+                        construction_failed_events: 0,
+                    },
+                };
+                let mut boundary = hypermesh::exact::ExactBoundaryTouchingReport {
+                    status: hypermesh::exact::ExactBoundaryTouchingStatus::GraphUnknowns,
+                    graph_had_unknowns: true,
+                    retained_face_pairs: 1,
+                    retained_events: 1,
+                    blocker: open.blocker.clone(),
+                };
+                let planar = hypermesh::exact::ExactPlanarArrangementReport {
+                    operation: hypermesh::exact::ExactBooleanOperation::Union,
+                    status: hypermesh::exact::ExactPlanarArrangementStatus::GraphUnknowns,
+                    graph_had_unknowns: true,
+                    retained_face_pairs: 1,
+                    retained_events: 1,
+                    blocker: open.blocker.clone(),
+                    arrangement_readiness: None,
+                };
+                let valid = (open.validate(), boundary.validate(), planar.validate());
+                boundary.blocker.kind =
+                    hypermesh::exact::ExactBooleanBlockerKind::NeedsBoundaryPolicy;
+                let invalid = boundary.validate().unwrap_err();
+                (valid, invalid)
             })
         });
     }
@@ -1130,6 +1495,34 @@ fn exact_boolean_coplanar_surface_intersection(c: &mut Criterion) {
                     )
                     .unwrap(),
                 )
+            })
+        });
+        c.bench_function("exact_simple_loop_orientation_validation", |b| {
+            b.iter(|| {
+                let mut union = arrange_single_triangle_coplanar_union(&left, &right)
+                    .expect("fixture should produce a simple-loop arrangement");
+                let valid = union.validate();
+                union.polygon.reverse();
+                let invalid = union.validate().unwrap_err();
+                (valid, invalid)
+            })
+        });
+        c.bench_function("exact_planar_readiness_count_validation", |b| {
+            b.iter(|| {
+                let report = certify_planar_arrangement_report(
+                    &left,
+                    &right,
+                    hypermesh::exact::ExactBooleanOperation::Union,
+                )
+                .unwrap();
+                let valid = report.validate();
+                let mut invalid_report = report;
+                if let Some(readiness) = invalid_report.arrangement_readiness.as_mut() {
+                    readiness.graph_count += 1;
+                    readiness.touching_graphs += 1;
+                }
+                let invalid = invalid_report.validate().unwrap_err();
+                (valid, invalid)
             })
         });
     }
@@ -1408,7 +1801,10 @@ criterion_group!(
     exact_face_region_plan,
     exact_face_region_earcut,
     exact_boolean_selected_regions,
+    exact_selected_region_undecided_validation,
+    exact_selected_region_preflight,
     exact_boolean_preflight,
+    exact_winding_readiness_undecided_validation,
     exact_boolean_boundary_preflight,
     exact_boolean_same_surface,
     exact_boolean_coplanar_convex_surface_equivalence,
@@ -1416,9 +1812,11 @@ criterion_group!(
     exact_boolean_coplanar_convex_surface_arrangement_union,
     exact_boolean_coplanar_convex_surface_intersection,
     exact_boolean_coplanar_convex_surface_arrangement_difference,
+    exact_boolean_coplanar_convex_surface_multi_difference,
     exact_convex_solid_classification,
     exact_boolean_coplanar_surface_containment,
     exact_boolean_open_surface_disjoint,
+    exact_policy_report_refinement_blocker_validation,
     exact_boolean_coplanar_surface_intersection,
     exact_boolean_coplanar_surface_convex_union,
     exact_boolean_coplanar_surface_arrangement_union,
