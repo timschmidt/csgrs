@@ -1,0 +1,23 @@
+[package]
+name = "hypervoxel-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[workspace]
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+arbitrary = { version = "1", features = ["derive"] }
+libfuzzer-sys = "0.4"
+hypervoxel = { path = ".." }
+hyperreal = { path = "../../hyperreal" }
+
+[[bin]]
+name = "grid_address"
+path = "fuzz_targets/grid_address.rs"
+test = false
+doc = false
+bench = false

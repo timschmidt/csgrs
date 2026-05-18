@@ -1,0 +1,125 @@
+//! Process-grid artifact reports.
+//!
+//! `hypervoxel` does not own CAM, resin chemistry, or physics. It can,
+//! however, package exact occupancy/sample grids with process provenance so
+//! `hyperpath` and `hyperphysics` can consume them without guessing whether a
+//! grid is additive material, subtractive removal, dose, conversion, or support
+//! state. The boundary follows Yap, "Towards Exact Geometric Computation,"
+//! *Computational Geometry* 7(1-2), 1997: store exact object facts and explicit
+//! provenance, not hidden interpretation.
+
+use crate::{GridSource, VoxelAggregateFacts};
+
+/// Intended process role for a voxel artifact.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum ProcessGridRole {
+    /// Material added by a process.
+    AdditiveOccupancy,
+    /// Material removed by a process.
+    SubtractiveOccupancy,
+    /// Support/accessibility mask.
+    SupportMask,
+    /// Photopolymer exposure dose field.
+    PhotopolymerDose,
+    /// Photopolymer conversion/gel-state field.
+    PhotopolymerConversion,
+    /// Porous, scaffold, fluid, thermal, EM, or mechanical sample field.
+    PhysicalFieldSample,
+    /// Swept-volume broad-phase or process cache.
+    SweptVolumeCache,
+    /// Stock/removal or remaining-material cache.
+    StockRemovalCache,
+    /// Controller-facing preview artifact.
+    ControllerPreview,
+}
+
+/// Provenance for a swept-volume or path-derived voxel cache.
+///
+/// `hypervoxel` intentionally stores only the replay facts needed to identify
+/// the cache. Exact path geometry and clearance predicates remain in
+/// `hyperpath`/`hyperlimit`; this report lets callers reject stale or lossy
+/// process grids before they are used as broad-phase evidence. This follows
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7(1-2), 1997, by keeping the source construction and approximation policy
+/// explicit next to the voxel artifact.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SweptVolumeProvenance {
+    /// Path, route, exposure, or tool-sweep source.
+    pub source: Option<GridSource>,
+    /// Tool, beam, nozzle, cutter, or trace-width label supplied by a domain crate.
+    pub tool_or_beam: Option<String>,
+    /// Whether exact path/source replay is available outside this voxel cache.
+    pub exact_source_replay_available: bool,
+    /// Whether this voxel cache is only a conservative broad-phase artifact.
+    pub broad_phase_only: bool,
+    /// Human-readable quantization or sampling policy.
+    pub quantization_policy: String,
+}
+
+/// Safety report for path/process-derived voxel caches.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SweptVolumeReport {
+    /// Source freshness/provenance.
+    pub source: Option<GridSource>,
+    /// Whether exact replay is available in the owning domain crate.
+    pub exact_source_replay_available: bool,
+    /// Whether downstream consumers must treat the grid as broad-phase only.
+    pub broad_phase_only: bool,
+    /// Whether this artifact is acceptable as exact path/clearance truth.
+    pub can_stand_in_for_exact_path: bool,
+    /// Human-readable quantization or sampling policy.
+    pub quantization_policy: String,
+}
+
+impl SweptVolumeProvenance {
+    /// Builds a swept-volume safety report.
+    pub fn report(&self) -> SweptVolumeReport {
+        SweptVolumeReport {
+            source: self.source.clone(),
+            exact_source_replay_available: self.exact_source_replay_available,
+            broad_phase_only: self.broad_phase_only,
+            can_stand_in_for_exact_path: self.exact_source_replay_available
+                && !self.broad_phase_only,
+            quantization_policy: self.quantization_policy.clone(),
+        }
+    }
+}
+
+/// Provenance report for a process-oriented voxel grid.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ProcessGridArtifact {
+    /// Artifact role.
+    pub role: ProcessGridRole,
+    /// Source path, exposure, material lot, or simulation handle.
+    pub source: Option<GridSource>,
+    /// Process-state labels or IDs supplied by the owning domain crate.
+    pub process_tags: Vec<String>,
+    /// Conservative aggregate facts for the grid.
+    pub aggregate: VoxelAggregateFacts,
+    /// Optional swept-volume/path provenance for process caches.
+    pub swept_volume: Option<SweptVolumeProvenance>,
+}
+
+impl ProcessGridArtifact {
+    /// Creates a process-grid artifact report.
+    pub fn new(
+        role: ProcessGridRole,
+        source: Option<GridSource>,
+        process_tags: Vec<String>,
+        aggregate: VoxelAggregateFacts,
+    ) -> Self {
+        Self {
+            role,
+            source,
+            process_tags,
+            aggregate,
+            swept_volume: None,
+        }
+    }
+
+    /// Attaches swept-volume provenance to a process grid.
+    pub fn with_swept_volume(mut self, swept_volume: SweptVolumeProvenance) -> Self {
+        self.swept_volume = Some(swept_volume);
+        self
+    }
+}

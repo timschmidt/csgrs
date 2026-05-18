@@ -1,135 +1,123 @@
-<h1 align="center">
-  <img src="https://raw.githubusercontent.com/WildPixelGames/voxelis/master/docs/voxelis_logo.png"
-       alt="Voxelis" width="480"><br>
-  <sub>Tiny voxels. Huge worlds. Zero hassle.</sub>
-</h1>
+# hypervoxel
 
-<p align="center">
-  <a href="https://crates.io/crates/voxelis"><img src="https://img.shields.io/crates/v/voxelis.svg?style=for-the-badge&color=orange"></a>
-  <a href="https://docs.rs/voxelis"><img src="https://img.shields.io/badge/docs‑rs-online-orange.svg?style=for-the-badge"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-orange?style=for-the-badge"></a>
-</p>
+`hypervoxel` owns exact-aware voxel grid frames, sparse-grid facts, voxelization
+reports, and adapter manifests for the Hyper ecosystem. The repository still carries
+harvested `voxelis` SVO-DAG storage code, but this crate is the Hyper semantic layer:
+grid frames are expressed with `hyperreal::Real`, addresses are integer grid
+coordinates, and lossy voxelizers or renderers must report their numeric contract.
 
-> **"Need voxels? Reach for Voxelis."**
-> Powered by VoxTree — a deliciously crafted SVO DAG with batching. Drop it into your Rust, C++, Godot, or Bevy project and start carving worlds down to centimetre-level detail — while your memory bill stays shockingly low.
+The crate is not a production renderer or full voxelization suite yet. It is the place
+where voxel evidence, aggregate facts, grid provenance, and adapter status are preserved
+before storage, meshing, simulation, or visualization layers consume them.
 
----
+## Hyper Ecosystem
 
-## 🚀 Why Voxelis?
+`hypervoxel` consumes exact scalar, vector, and predicate facts from the core stack.
 
-* **Tiny voxels** (4 cm resolution) without melting your RAM.
-* **Shared memory** — DAG compression at 99.999% ratio.
-* **Batch edits** — mutate hundreds of thousands of voxels in a blink.
-* **Zero garbage collection** — just deterministic reference counting with generations.
-* **Built for gamedev** — chunk grids, paging hooks, multithread-ready.
-* **Fearless Rust** — no UB, no data races, only pure, undiluted speed.
+- [hyperreal](https://github.com/timschmidt/hyperreal): exact grid-frame origin, scale,
+  spacing, and policy values.
+- [hyperlattice](https://github.com/timschmidt/hyperlattice): vector and transform
+  values for frame, AABB, affine, and field reports.
+- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact classification policy
+  for boxes, half-spaces, and future solid predicates.
+- [hypermesh](https://github.com/timschmidt/hypermesh) and
+  [hyperphysics](https://github.com/timschmidt/hyperphysics): mesh, mass, collision,
+  support, field, and simulation handoff consumers.
+- [hyperpath](https://github.com/timschmidt/hyperpath) and
+  [hyperdrc](https://github.com/timschmidt/hyperdrc): process, routing, and
+  manufacturing contexts that can use sparse-grid evidence.
 
-> This isn't just another voxel crate. It's a foundation for colossal, high-fidelity worlds.
+## Typical Voxel Problems
 
----
+Voxel systems often collapse many decisions into one sampled grid: coordinate frame,
+quantization, boundary policy, material labels, LOD aggregation, compression, meshing,
+and rendering. Once that happens, it is hard to tell whether a cell is truly occupied,
+conservatively covered, unknown, or merely a display approximation. Compression and
+meshing can also erase provenance unless their replay status is recorded.
 
-## ✨ Benchmarks: "Speed so fast, it hurts."
+`hypervoxel` treats a grid as evidence rather than just pixels in 3D. It keeps exact
+frames and integer addresses, stores conservative aggregate facts, distinguishes
+occupied/empty/mixed/unknown states, and records adapter, quantization, compression,
+export, and handoff reports.
 
-| Operation                       | 32³ Voxels | Single Op   | Batch Op    | Notes |
-|----------------------------------|-------------|-------------|-------------|-------|
-| **fill()**                      | 32K         | **9 ns**    | **10.6 ns** | ⚡ Single leaf collapse |
-| **set_uniform()**               | 32K         | **5.17 ms** | **23.1 μs** | 🚀 ~224× faster |
-| **set_checkerboard()**          | 32K         | **2.52 ms** | **116.6 μs** | 🚀 ~22× faster |
-| **set_sum() (high-entropy)**     | 32K         | **5.92 ms** | **194.1 μs** | 🌪️ Complex pattern, ~30× faster |
-| **perlin dunes (high-entropy)**  | 32K         | -           | **~12 μs**  | 🌎 ~1380 chunks/frame (60 FPS) |
+## Main Types
 
-> Full raw results? Check [benches-raw.md](https://github.com/WildPixelGames/voxelis/blob/master/docs/benches-raw.md).
->
-> Summary tables? See [benches-tables.md](https://github.com/WildPixelGames/voxelis/blob/master/docs/benches-tables.md).
->
-> Full commentary and insights? Dive into [benches.md](https://github.com/WildPixelGames/voxelis/blob/master/docs/benches.md).
+- `GridFrame`, `GridAxis`, `GridBasis`, `GridFrameFacts`, and frame manifests describe
+  exact grid coordinate systems.
+- `VoxelAddress`, `CellBounds`, `VoxelCell`, `VoxelPayload`, `SparseVoxelGrid`, and
+  edit batches describe sparse voxel data.
+- `VoxelAggregateFacts`, `VoxelSpatialAggregateFacts`, `LodSelectionReport`, and
+  prepared-query reports preserve conservative grid summaries.
+- `ExactBox`, `ExactHalfSpace`, `ExactConvexHalfSpaceSet`, and classifier reports
+  provide the current exact voxelization surfaces.
+- `VoxelSideTables`, material/field/process records, and query reports connect sparse
+  cells to domain data.
+- Mesh, support, path trace, compression, IO, artifact, coupling, export, and handoff
+  report types preserve adapter status.
 
----
+## Precision Model
 
-## 🔧 Quick Start
+Grid frames use `Real` values; voxel addresses are integer grid coordinates. Exact box,
+half-space, and convex-half-space classification use exact cell bounds and return
+inside/outside/boundary or mixed states as appropriate. Quantization, preview export,
+legacy storage, and lossy mesh output are report-bearing adapter surfaces, not silent
+replacements for exact occupancy evidence.
 
-```rust
-use glam::IVec3;
-use voxelis::{
-    MaxDepth, VoxInterner,
-    spatial::{VoxOpsBatch, VoxOpsRead, VoxOpsWrite, VoxTree},
-};
+## Performance Model
 
-fn main() {
-    let mut interner = VoxInterner::<u8>::with_memory_budget(256 * 1024 * 1024);
-    let mut tree = VoxTree::new(MaxDepth::new(5)); // 32³ voxels (chunk)
+`hypervoxel` keeps dense data out of the semantic layer where possible. Sparse grids,
+chunk summaries, aggregate facts, LOD selection, deterministic snapshots, side tables,
+and adapter manifests let callers reason about large grids without materializing every
+downstream representation. Exposed-face extraction and greedy face patch planning are
+kept as explicit lossy/export steps.
 
-    let mut batch = tree.create_batch();
-    batch.set(&mut interner, IVec3::new(3, 0, 4), 1); // stone
+The harvested `voxelis` SVO-DAG code remains available behind `legacy-voxelis` for
+storage experiments, but Hyper-native reports should preserve replay and provenance even
+when compressed storage is used.
 
-    tree.apply_batch(&mut interner, &batch);
-    assert_eq!(tree.get(&interner, IVec3::new(3, 0, 4)), Some(1));
-}
+## Current Status
+
+Implemented today:
+
+- exact grid frames, source units, manifests, and frame facts;
+- voxel addresses, sparse grids, edit batches, chunk summaries, side tables, and
+  deterministic snapshots;
+- occupancy, material, field, process, aggregate, LOD, neighbor, connected-component,
+  and prepared-query reports;
+- exact box, half-space, and convex-half-space-set voxelization/classification;
+- AABB, affine, axis-permutation, support-mask, ray/path trace, distance-field preview,
+  sparse-grid diff, mesh export, compression, memory-budget, IO, artifact, coupling, and
+  handoff reports.
+
+Known limits: full production voxelizers, out-of-core pipelines, GPU renderers, and
+complete mesh/field solver bridges remain adapter work.
+
+## Installation
+
+```toml
+[dependencies]
+hypervoxel = "0.1.0"
 ```
 
-Add via Cargo:
+For sibling checkouts:
 
-```bash
-cargo add voxelis glam@0.29.3 # Requires Rust 1.86+, optionally use `wide` for SIMD meshing
+```toml
+[dependencies]
+hypervoxel = { path = "../hypervoxel" }
 ```
 
----
+Feature summary:
 
-## 🔍 Under the Hood
+- `legacy-voxelis`: enables the harvested `voxelis` integration.
 
-| Concept | Purpose |
-|:--------|:--------|
-| **VoxTree** | The SVO-DAG — compressed octree core. |
-| **VoxInterner** | Shared memory for leaves/branches. Hash-consed. |
-| **Batch** | Bottom-up batched editing — mutate at light speed. |
-| **VoxOps** | Trait for per-voxel manipulation — set, get, fill, clear. |
-| **BlockId** | 64-bit magic to encode voxel state compactly. |
-| **Mesher** | SIMD greedy meshing (WIP) — turn voxels into worlds. |
+## Development
 
-More? Crack open **The Voxelis Bible** ([docs/The Voxelis Bible_ From Pixels to Worlds - An In-Depth Guide v2.3.pdf](https://github.com/WildPixelGames/voxelis/blob/master/docs/The%20Voxelis%20Bible_%20From%20Pixels%20to%20Worlds%20-%20An%20In-Depth%20Guide%20v2.3.pdf)) — 38 pages of dangerously concentrated nerdery.
+Useful local checks:
 
----
-
-## 🌏 Roadmap: Into the Voxelverse
-
-* Multithreaded interner with Rayon.
-* GreedyMesh v2 (distance-field LOD magic).
-* GPU frustum-culling traversals.
-* OBJ / glTF import/export.
-* True out-of-core paging (MMAP + LRU).
-
-> PRs welcome. Bonus points if your patch makes the CI bot 🐈‍🔄 purr.
-
----
-
-## 🚡 Run Your Own Benches
-
-```bash
-cargo bench -p voxelis_bench
+```sh
+cargo test
+cargo bench --bench grid_frame
 ```
 
-Hardware: Apple M3 Max, Rust 1.86 stable, `-C target-cpu=native`, final profile.
-
-Want real numbers? We've got them — [benches-tables.md](https://github.com/WildPixelGames/voxelis/blob/master/docs/benches-tables.md) and [benches-raw.md](https://github.com/WildPixelGames/voxelis/blob/master/docs/benches-raw.md) await.
-
----
-
-## 👍 Contributing
-
-1. Fork and branch (`feat/my-magnificent-contribution`).
-2. `cargo test && cargo bench`
-3. Open PR, include new benchmark delta.
-4. Bask in voxel-induced glory.
-
----
-
-## 🌐 License
-
-Dual licensed under MIT / Apache-2.0.
-Pick your poison, build something massive.
-
----
-
-## ⚠️ Warning
-
-Voxelis may cause extreme enthusiasm, uncontrollable world-building, and compulsive Rust evangelism. Consult your GPU before operating heavy voxel engines. 😜
+The legacy workspace members retain their own crate metadata and documentation for
+`voxelis` internals.

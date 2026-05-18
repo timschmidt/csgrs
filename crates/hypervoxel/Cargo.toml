@@ -1,3 +1,15 @@
+[package]
+name = "hypervoxel"
+version = "0.1.0"
+edition = "2024"
+description = "Exact-aware voxel grid frames, aggregate facts, and sparse-grid reports for the Hyper stack"
+authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
+license = "Apache-2.0"
+repository = "https://github.com/timschmidt/hypervoxel"
+readme = "README.md"
+keywords = ["voxel", "exact", "geometry", "hyperreal", "simulation"]
+categories = ["data-structures", "science", "simulation", "mathematics"]
+
 [workspace]
 resolver = "3"
 members = [
@@ -11,6 +23,24 @@ members = [
   "vtm-voxelize",
 ]
 default-members = ["voxelis", "voxelis-memory"]
+
+[dependencies]
+hyperreal = { path = "../hyperreal" }
+hyperlattice = { path = "../hyperlattice" }
+hyperlimit = { path = "../hyperlimit" }
+voxelis = { path = "voxelis", optional = true }
+
+[dev-dependencies]
+criterion = "0.5"
+proptest = "1.7.0"
+
+[features]
+default = []
+legacy-voxelis = ["dep:voxelis"]
+
+[[bench]]
+name = "grid_frame"
+harness = false
 
 [workspace.package]
 version = "25.4.0"

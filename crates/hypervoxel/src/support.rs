@@ -1,0 +1,154 @@
+//! Conservative support-mask reports.
+//!
+//! Packing, additive manufacturing, and process planning often need support
+//! masks, but a voxel support mask is not a replacement for exact contact,
+//! load, or stability predicates. This module reports support evidence over
+//! integer grid addresses while preserving unknown and lossy cells explicitly.
+//! That follows Yap, "Towards Exact Geometric Computation," *Computational
+//! Geometry* 7(1-2), 1997: combinatorial decisions must be traced to exact
+//! object facts or reported as uncertainty, not inferred from approximate
+//! samples.
+
+use crate::{HypervoxelResult, OccupancyState, SparseVoxelGrid, VoxelAddress};
+
+/// Axis-aligned support direction.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct SupportDirection {
+    /// Axis index in `0..3`.
+    pub axis: usize,
+    /// Direction of gravity/load along the axis, either `-1` or `1`.
+    pub sign: i8,
+}
+
+impl SupportDirection {
+    /// Creates a support direction after validating the axis and sign.
+    pub fn new(axis: usize, sign: i8) -> HypervoxelResult<Self> {
+        if axis >= 3 || !matches!(sign, -1 | 1) {
+            return Err(crate::HypervoxelError::InvalidSupportDirection);
+        }
+        Ok(Self { axis, sign })
+    }
+}
+
+/// Conservative support status for a target cell.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum SupportCellStatus {
+    /// A support cell was explicitly present opposite the load direction.
+    Supported,
+    /// No support cell was present and the target is not on the support plane.
+    Unsupported,
+    /// The target is on the domain boundary/support plane.
+    OnSupportPlane,
+    /// Target or support evidence was unknown.
+    Unknown,
+    /// Target or support evidence came from a lossy adapter.
+    Lossy,
+}
+
+/// Per-cell support classification.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SupportCellReport {
+    /// Target address.
+    pub address: VoxelAddress,
+    /// Conservative support status.
+    pub status: SupportCellStatus,
+}
+
+/// Aggregate support-mask report.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SupportMaskReport {
+    /// Support/load direction.
+    pub direction: SupportDirection,
+    /// Number of checked non-empty target cells.
+    pub checked_cells: usize,
+    /// Number of cells with explicit support.
+    pub supported_cells: usize,
+    /// Number of cells without support evidence.
+    pub unsupported_cells: usize,
+    /// Number of cells on the support plane.
+    pub support_plane_cells: usize,
+    /// Number of cells with explicit unknown evidence.
+    pub unknown_cells: usize,
+    /// Number of cells with lossy evidence.
+    pub lossy_cells: usize,
+    /// Per-cell reports in deterministic address order.
+    pub cells: Vec<SupportCellReport>,
+}
+
+impl SupportMaskReport {
+    /// Returns whether all checked cells are supported or on the support plane.
+    pub fn is_conservatively_supported(&self) -> bool {
+        self.unsupported_cells == 0 && self.unknown_cells == 0 && self.lossy_cells == 0
+    }
+}
+
+/// Classifies target cells against a support mask on the same integer grid.
+pub fn classify_support_mask(
+    target: &SparseVoxelGrid,
+    support: &SparseVoxelGrid,
+    direction: SupportDirection,
+) -> HypervoxelResult<SupportMaskReport> {
+    let mut report = SupportMaskReport {
+        direction,
+        checked_cells: 0,
+        supported_cells: 0,
+        unsupported_cells: 0,
+        support_plane_cells: 0,
+        unknown_cells: 0,
+        lossy_cells: 0,
+        cells: Vec::new(),
+    };
+
+    for (address, cell) in target.iter() {
+        if cell.occupancy == OccupancyState::Empty {
+            continue;
+        }
+        report.checked_cells += 1;
+        let status = match cell.occupancy {
+            OccupancyState::Unknown => SupportCellStatus::Unknown,
+            OccupancyState::LossyAdapterValue => SupportCellStatus::Lossy,
+            _ => classify_one(*address, support, direction)?,
+        };
+        match status {
+            SupportCellStatus::Supported => report.supported_cells += 1,
+            SupportCellStatus::Unsupported => report.unsupported_cells += 1,
+            SupportCellStatus::OnSupportPlane => report.support_plane_cells += 1,
+            SupportCellStatus::Unknown => report.unknown_cells += 1,
+            SupportCellStatus::Lossy => report.lossy_cells += 1,
+        }
+        report.cells.push(SupportCellReport {
+            address: *address,
+            status,
+        });
+    }
+
+    Ok(report)
+}
+
+fn classify_one(
+    address: VoxelAddress,
+    support: &SparseVoxelGrid,
+    direction: SupportDirection,
+) -> HypervoxelResult<SupportCellStatus> {
+    let mut below = address.xyz;
+    if direction.sign < 0 {
+        if below[direction.axis] == 0 {
+            return Ok(SupportCellStatus::OnSupportPlane);
+        }
+        below[direction.axis] -= 1;
+    } else {
+        let cells = 1_u64 << address.depth;
+        if below[direction.axis] + 1 >= cells {
+            return Ok(SupportCellStatus::OnSupportPlane);
+        }
+        below[direction.axis] += 1;
+    }
+
+    let support_cell = support.get(VoxelAddress::new(address.depth, below)?)?;
+    Ok(match support_cell.occupancy {
+        OccupancyState::Empty => SupportCellStatus::Unsupported,
+        OccupancyState::Unknown => SupportCellStatus::Unknown,
+        OccupancyState::LossyAdapterValue => SupportCellStatus::Lossy,
+        _ => SupportCellStatus::Supported,
+    })
+}
