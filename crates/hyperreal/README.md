@@ -34,7 +34,7 @@ Geometry and solver layers:
   regions, offsets, and boolean-boundary work.
 - [hypertri](https://github.com/timschmidt/hypertri): exact polygon triangulation,
   Delaunay, and constrained Delaunay topology.
-- [hypermesh](https://github.com/timschmidt/hypermesh): 3D mesh validation, topology,
+- [hypermesh](https://github.com/timschmidt/hypermesh/tree/hyperreal): 3D mesh validation, topology,
   and exact-aware boolean preflight.
 - [hypersolve](https://github.com/timschmidt/hypersolve): symbolic residuals,
   solver preparation, and candidate certification.
@@ -53,7 +53,7 @@ Domain and proposal layers:
   interface, process, and compatibility facts.
 - [hyperpack](https://github.com/timschmidt/hyperpack): exact-aware packing models and
   feasibility replay.
-- [hypervoxel](https://github.com/timschmidt/hypervoxel): exact-aware voxel grid
+- [hypervoxel](https://github.com/timschmidt/hypervoxel/tree/hyperreal): exact-aware voxel grid
   frames, sparse-grid facts, and adapter manifests.
 - [hyperevolution](https://github.com/timschmidt/hyperevolution): exact-aware search,
   fitness, archive, and replay-policy carriers.
