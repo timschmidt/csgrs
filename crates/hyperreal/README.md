@@ -185,14 +185,14 @@ object-level facts rather than asking the scalar layer to infer geometry or topo
 
 ```toml
 [dependencies]
-hyperreal = "0.11.1"
+hyperreal = "0.12.0"
 ```
 
 With the `Simple` parser and calculator binary:
 
 ```toml
 [dependencies]
-hyperreal = { version = "0.11.1", features = ["simple"] }
+hyperreal = { version = "0.12.0", features = ["simple"] }
 ```
 
 Feature flags:
