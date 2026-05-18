@@ -13,7 +13,7 @@
 use hyperreal::Real;
 use std::cmp::Ordering;
 
-use crate::classify::{compare_reals, in_closed_unit_interval};
+use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
 use crate::{
     BezierMonotoneSpan, Classification, CubicBezier2, CurveError, CurvePolicy, CurveResult, Point2,
     QuadraticBezier2, UncertaintyReason,
@@ -167,13 +167,15 @@ impl QuadraticBezier2 {
 
     /// Returns a certified parameter region for an inverse arc-length query.
     ///
-    /// This is not a floating inverse-length solve. It repeatedly bisects the
-    /// parameter interval and compares `target_length` with certified prefix
-    /// length intervals. If exact signs prove the target is before or after the
-    /// midpoint, the bracket is reduced; if the prefix interval straddles the
-    /// target, the remaining parameter span is returned. This follows Yap's
-    /// exact-computation boundary: metric approximants may guide refinement,
-    /// but only certified comparisons decide branches.
+    /// This is not a floating inverse-length solve. Exact degree-elevated line
+    /// parameterizations first return a zero-width region from the linear
+    /// length law. Other curves repeatedly bisect the parameter interval and
+    /// compare `target_length` with certified prefix length intervals. If exact
+    /// signs prove the target is before or after the midpoint, the bracket is
+    /// reduced; if the prefix interval straddles the target, the remaining
+    /// parameter span is returned. This follows Yap's exact-computation
+    /// boundary: metric approximants may guide refinement, but only certified
+    /// comparisons decide branches.
     pub fn inverse_length_parameter_region(
         &self,
         target_length: Real,
@@ -249,6 +251,11 @@ impl CubicBezier2 {
     }
 
     /// Returns a certified parameter region for an inverse arc-length query.
+    ///
+    /// Exact degree-elevated line parameterizations are solved directly before
+    /// interval bisection; general collinear-but-nonlinear line images are not
+    /// collapsed to that fast path because their arc-length parameter is not
+    /// the affine Bezier parameter.
     pub fn inverse_length_parameter_region(
         &self,
         target_length: Real,
@@ -334,6 +341,12 @@ fn inverse_length_parameter_region_for_controls(
         None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
     }
 
+    match exact_linear_parameter_inverse_length_region(&controls, target_length.clone(), policy)? {
+        Classification::Decided(Some(region)) => return Ok(Classification::Decided(region)),
+        Classification::Decided(None) => {}
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+
     let mut low = Real::zero();
     let mut high = Real::one();
     let two = Real::from(2_i8);
@@ -379,6 +392,88 @@ fn inverse_length_parameter_region_for_controls(
             high_bounds,
         ),
     ))
+}
+
+fn exact_linear_parameter_inverse_length_region(
+    controls: &[Point2],
+    target_length: Real,
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<Option<BezierArcLengthParameterRegion2>>> {
+    match controls_are_degree_elevated_linear_parameterization(controls, policy) {
+        Classification::Decided(true) => {}
+        Classification::Decided(false) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+
+    let total = distance(
+        controls
+            .first()
+            .expect("Bezier controls always contain a start point"),
+        controls
+            .last()
+            .expect("Bezier controls always contain an end point"),
+    )?;
+    match compare_reals(&target_length, &total, policy) {
+        Some(Ordering::Greater) => return Err(CurveError::InvalidBezierArcLengthTarget),
+        Some(Ordering::Less | Ordering::Equal) => {}
+        None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+    }
+    match compare_reals(&total, &Real::zero(), policy) {
+        Some(Ordering::Equal) => return Err(CurveError::InvalidBezierArcLengthTarget),
+        Some(Ordering::Greater) => {}
+        Some(Ordering::Less) => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+    }
+
+    let parameter = (target_length.clone() / total)?;
+    let bounds = BezierLengthBounds2::new(target_length.clone(), target_length.clone());
+    Ok(Classification::Decided(Some(
+        BezierArcLengthParameterRegion2::new(
+            target_length,
+            BezierMonotoneSpan::new(parameter.clone(), parameter),
+            bounds,
+        ),
+    )))
+}
+
+fn controls_are_degree_elevated_linear_parameterization(
+    controls: &[Point2],
+    policy: &CurvePolicy,
+) -> Classification<bool> {
+    let Some(start) = controls.first() else {
+        return Classification::Decided(false);
+    };
+    let Some(end) = controls.last() else {
+        return Classification::Decided(false);
+    };
+    if controls.len() <= 1 {
+        return Classification::Decided(false);
+    }
+
+    // A collinear control polygon is not enough: `P0, P1, P2 = 0, 1, 4`
+    // traces a line image with nonlinear speed. The exact inverse-length
+    // shortcut is valid only for the degree-elevated linear Bezier controls
+    // `P_i = lerp(P0, P_n, i/n)`. This is the standard Bernstein
+    // degree-elevation identity in Farin (2002), used as a certified metric
+    // fact under Yap's exact-computation boundary (1997).
+    let degree = controls.len() - 1;
+    let denominator = Real::from(degree as i32);
+    for (index, control) in controls
+        .iter()
+        .enumerate()
+        .skip(1)
+        .take(controls.len().saturating_sub(2))
+    {
+        let parameter = (Real::from(index as i32) / &denominator)
+            .expect("division by positive degree is defined");
+        let expected = start.lerp(end, parameter);
+        match is_zero(&expected.distance_squared(control), policy) {
+            Some(true) => {}
+            Some(false) => return Classification::Decided(false),
+            None => return Classification::Uncertain(UncertaintyReason::RealSign),
+        }
+    }
+    Classification::Decided(true)
 }
 
 fn accumulate_refined_length_bounds(

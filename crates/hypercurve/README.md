@@ -104,19 +104,22 @@ Core geometry:
   dependencies.
 - First polynomial Bezier topology predicates: exact derivative-root monotone
   decomposition, certified endpoint/extrema bounds, quadratic line-root
-  relation, cubic supporting-line root isolation, coarse curve/curve
-  disjoint/shared-endpoint relations, exact cusp checks from common derivative
-  roots, and cubic inflection parameters.
+  relation, represented line-root crossing/tangent contact classification,
+  cubic supporting-line root isolation, coarse curve/curve disjoint/shared-
+  endpoint relations, exact cusp checks from common derivative roots, and
+  cubic inflection parameters.
 - Rational quadratic Bezier/conic object type with exact homogeneous
   evaluation, structural coordinate/weight facts, and certified conic-family
   classification from the weight discriminant.
 - First rational-conic predicates for parameterized point membership and
   exact point-on-conic parameter recovery through homogeneous coordinate
   equations, supporting-line relation through the exact weighted Bernstein
-  numerator, plus quotient-derivative monotone decomposition and certified
-  bounds, with projective denominator boundaries reported as uncertainty.
+  numerator, represented line-contact crossing/tangent classification through
+  the weighted numerator derivative, plus quotient-derivative monotone
+  decomposition and certified bounds, with projective denominator boundaries
+  reported as uncertainty.
 - Coarse rational-conic curve/curve relation for exact homogeneous identity,
-  projective homogeneous weight-scaling identity, positive-weight convex-hull
+  projective homogeneous weight-scaling identity, same-sign convex-hull
   disjointness, exact native line-line intersection dispatch for certified
   endpoint line-segment images, equal-weight collapse into polynomial Bezier
   predicates, exact shared endpoints, endpoint-on-conic hits, and
@@ -148,6 +151,25 @@ Core geometry:
   for representable roots, and retained same-parameter brackets for
   irreducible roots instead of hiding additional graph intersections behind a
   finite dyadic hit.
+- Certified monotone graph-order predicates for polynomial Bezier pairs with
+  one shared strictly monotone degree-normalized coordinate, returning strict
+  ordering or retained same-parameter touch/crossing candidates for future
+  path-operation boolean dispatch.
+- Certified monotone graph-order predicate for matching-weight rational
+  quadratic conics with one shared strictly monotone coordinate, sign-normalized
+  across uniformly negative homogeneous weights and retaining exact/bracketed
+  same-parameter candidates instead of sampling around possible contacts.
+- Mixed rational/polynomial graph-order predicates for the equal-weight conic
+  case, where the rational quadratic collapses exactly to the polynomial
+  quadratic image before ordering against polynomial quadratic or cubic
+  partners. Non-equal rational/polynomial graph pairs can also certify strict
+  order when one coordinate is exactly shared and the homogeneous Bernstein
+  numerator has one strict sign: degree 4 for quadratic partners and degree 5
+  for cubic partners. Non-strict mixed quartic/quintic graph roots are retained
+  by exact Bernstein sign subdivision as represented parameters or isolating
+  spans. The curve/curve relation dispatcher consumes strict certificates as
+  exact no-intersection decisions and graph-root certificates as exact points
+  or conservative same-parameter regions.
 - Broader non-graph same-parameter cubic candidate isolation for
   degree-normalized quadratic/cubic and cubic/cubic pairs. This path does not
   claim unrelated-parameter intersections are absent; it promotes represented
@@ -173,31 +195,47 @@ Core geometry:
 - Certified polynomial Bezier length intervals using exact endpoint-chord lower
   bounds and exact control-polygon upper bounds, with exact de Casteljau
   subdivision refinement and prefix-interval bounds for tighter metric
-  enclosures plus inverse arc-length parameter regions.
+  enclosures plus inverse arc-length parameter regions. Exact degree-elevated
+  line parameterizations return zero-width inverse-length certificates for
+  non-dyadic targets without using sampled bisection.
 - Exact polynomial Bezier signed-area and first area-moment contributions,
   prefix contributions through Green's-theorem boundary integrals, plus exact
   signed-area and area-moment prefix-sum tables for fitting and simplification
   ranges.
 - Mixed rational-conic/polynomial Bezier curve relation in both directions,
-  certifying equal-weight quadratic identity, positive-weight hull
+  certifying equal-weight quadratic identity, same-sign hull
   disjointness, exact native line-line intersection dispatch for certified
   endpoint line-segment images, exact supporting-line root dispatch when one
   side is a certified endpoint line image, exact shared endpoints,
   endpoint-on-conic hits, exact same-parameter dyadic point promotion through
   five-hundred-twelfths for quadratic and cubic polynomial partners, and
-  homogeneous subdivision regions for overlapping positive-weight cases.
+  homogeneous subdivision regions for overlapping same-sign cases.
 - Certified polynomial Bezier flattening adapter that emits a polyline only
   when exact hull-to-chord flatness is within the requested error budget.
 - Zero-error certified polyline simplification for flattened Beziers that only
   removes exactly collinear interior vertices.
 - Zero-error exact-line fitting for certified flattened Bezier polylines, with
   the source flattening certificate retained on successful fits.
+- Zero-error exact-point fitting for certified flattened Bezier polylines, with
+  the source flattening certificate retained on successful fits.
 - Direct zero-error exact-line-image fitting for polynomial Bezier control
-  polygons and positive-weight rational quadratic conics, with true
+  polygons and same-sign nonzero rational quadratic conics, with true
   line-primitive offsets for certified line images.
+- Direct zero-error exact-point-image fitting for collapsed polynomial Bezier
+  control polygons and same-sign nonzero rational quadratic conics.
+- Exact point-image curve/curve dispatch for collapsed Bezier and rational
+  conic images, promoting certified hits and complete quadratic/conic misses
+  through exact point-parameter solvers.
+- Complete same-parameter graph dispatch for matching-weight rational conics
+  with a shared strictly monotone coordinate, certifying exact hits or no-hit
+  outcomes before homogeneous subdivision regions.
 - True line-primitive offsets for certified zero-error Bezier line fits.
 - Display-only offset previews for certified flattened Bezier polylines, with
   no topology claim beyond the source flattening certificate.
+- Checked left-offset adapters for certified flattened Bezier polylines. These
+  route the certified chord string through the existing exact curve-string
+  offset/self-contact predicates, retaining the source flattening certificate
+  and returning explicit uncertainty when trimming would be required.
 - A supporting-line/full-circle predicate surface that classifies disjoint,
   tangent, secant, and uncertain outcomes before finite segment and arc-sweep
   filters are applied.

@@ -17,8 +17,8 @@ use crate::classify::{
     classify_oriented_line, compare_reals, is_zero, orient2d_real_expr, real_sign,
 };
 use crate::{
-    Aabb2, Classification, CubicBezier2, CurveError, CurvePolicy, CurveResult, LineSeg2, LineSide,
-    Point2, QuadraticBezier2, UncertaintyReason,
+    Aabb2, Classification, CubicBezier2, CurveError, CurvePolicy, CurveResult, CurveString2,
+    LineSeg2, LineSide, Point2, QuadraticBezier2, Segment2, UncertaintyReason,
 };
 
 /// Options for certified Bezier-to-polyline flattening.
@@ -90,6 +90,25 @@ pub struct DisplayBezierOffsetPolyline2 {
     distance: Real,
 }
 
+/// Checked offset of a certified flattened Bezier polyline.
+///
+/// This is still an approximation-boundary product: the source is a certified
+/// polyline view of a Bezier, not the analytic Bezier offset curve. Unlike
+/// [`DisplayBezierOffsetPolyline2`], this adapter routes the polyline through
+/// the crate's checked curve-string offset path, so self-contacting raw offset
+/// output is reported as explicit uncertainty. That keeps the branch boundary
+/// aligned with Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997). The primitive/join/trim staging follows Tiller and
+/// Hanson, "Offsets of Two-Dimensional Profiles" (1984), and the rejection of
+/// self-intersecting raw offsets follows Farouki and Neff, "Analytic
+/// Properties of Plane Offset Curves" (1990).
+#[derive(Clone, Debug, PartialEq)]
+pub struct CertifiedBezierPolylineOffset2 {
+    curve: CurveString2,
+    source_certificate: BezierFlatteningCertificate,
+    distance: Real,
+}
+
 impl DisplayBezierOffsetPolyline2 {
     /// Returns the offset chord segments.
     pub fn segments(&self) -> &[LineSeg2] {
@@ -102,6 +121,23 @@ impl DisplayBezierOffsetPolyline2 {
     }
 
     /// Returns the requested display offset distance.
+    pub const fn distance(&self) -> &Real {
+        &self.distance
+    }
+}
+
+impl CertifiedBezierPolylineOffset2 {
+    /// Returns the checked joined offset curve string.
+    pub const fn curve(&self) -> &CurveString2 {
+        &self.curve
+    }
+
+    /// Returns the flattening certificate for the source polyline.
+    pub const fn source_certificate(&self) -> &BezierFlatteningCertificate {
+        &self.source_certificate
+    }
+
+    /// Returns the requested checked offset distance.
     pub const fn distance(&self) -> &Real {
         &self.distance
     }
@@ -190,6 +226,52 @@ impl CertifiedBezierPolyline2 {
             distance,
         })
     }
+
+    /// Builds a checked left-offset adapter from the certified flattened polyline.
+    ///
+    /// Each retained chord becomes an exact line segment, then the existing
+    /// curve-string offset pipeline applies primitive line offsets, joins
+    /// adjacent offset segments, and rejects self-contacting output. This is a
+    /// certified approximation adapter, not an analytic Bezier offset: callers
+    /// get the source flattening certificate plus an explicit uncertainty when
+    /// the raw offset topology needs the later trim/rebuild stage described by
+    /// Tiller-Hanson (1984) and Farouki-Neff (1990). Yap's exact-geometric
+    /// computation discipline is preserved because all topology decisions are
+    /// delegated to exact curve-string predicates.
+    pub fn checked_offset_left(
+        &self,
+        distance: Real,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<CertifiedBezierPolylineOffset2>> {
+        let source = certified_polyline_curve_string(self)?;
+        match source.offset_left_checked(distance.clone(), policy)? {
+            Classification::Decided(curve) => {
+                Ok(Classification::Decided(CertifiedBezierPolylineOffset2 {
+                    curve,
+                    source_certificate: self.certificate.clone(),
+                    distance,
+                }))
+            }
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
+    }
+}
+
+fn certified_polyline_curve_string(
+    polyline: &CertifiedBezierPolyline2,
+) -> CurveResult<CurveString2> {
+    let mut segments = Vec::new();
+    for window in polyline.points.windows(2) {
+        match LineSeg2::try_new(window[0].clone(), window[1].clone()) {
+            Ok(segment) => segments.push(Segment2::Line(segment)),
+            Err(CurveError::ZeroLengthLine) => {}
+            Err(error) => return Err(error),
+        }
+    }
+    if segments.is_empty() {
+        return Err(CurveError::ZeroLengthLine);
+    }
+    CurveString2::try_new(segments)
 }
 
 fn can_remove_collinear_vertex(

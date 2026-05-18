@@ -51,6 +51,38 @@ pub struct BezierCurveIntersectionRegion {
     second: BezierMonotoneSpan,
 }
 
+/// Certified order of two Bezier graph curves over one shared monotone axis.
+///
+/// This is the path-operation predicate shape used before full Bezier boolean
+/// support: first prove that both curves have the same degree-normalized
+/// coordinate on `shared_axis` and that this coordinate is strictly monotone,
+/// then classify the remaining coordinate difference. That follows the
+/// monotone range ordering model discussed in Raph Levien's path operations
+/// notes (GitHub issue 79, 2019), while keeping every branch at Yap's exact
+/// predicate boundary; see Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997). The degree-normalized Bernstein
+/// controls and derivative monotonicity test are standard Farin identities,
+/// *Curves and Surfaces for CAGD* (5th ed., 2002), and crossing brackets use
+/// Sederberg and Nishita, "Curve intersection using Bezier clipping" (1990).
+#[derive(Clone, Debug, PartialEq)]
+pub enum BezierMonotoneGraphOrder {
+    /// The requested coordinate is not certified as one shared strictly monotone graph axis.
+    NotSharedStrictlyMonotone,
+    /// The degree-normalized polynomial images are identical over the graph range.
+    Coincident,
+    /// The first curve is certified strictly less than the second on the other coordinate.
+    FirstLess,
+    /// The first curve is certified strictly greater than the second on the other coordinate.
+    FirstGreater,
+    /// The two graphs touch or cross at retained same-parameter candidates.
+    IntersectsOrTouches {
+        /// Exact represented same-parameter roots.
+        parameters: Vec<Real>,
+        /// Isolating spans for roots not represented by the current scalar root API.
+        spans: Vec<BezierMonotoneSpan>,
+    },
+}
+
 /// Certified geometric intersection point between two Bezier segments.
 ///
 /// This point is emitted only after exact predicates prove that a candidate
@@ -136,6 +168,73 @@ pub enum BezierLineRelation {
     },
     /// The relation needs a higher-degree root or overlap solver.
     Unresolved,
+}
+
+/// Certified contact kind for a represented Bezier/supporting-line root.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierLineContactKind {
+    /// The signed line-distance polynomial changes with nonzero first derivative.
+    Crossing,
+    /// The signed line-distance polynomial has a zero first derivative at the root.
+    Tangent,
+}
+
+/// Certified represented root of a Bezier/supporting-line predicate.
+///
+/// The contact kind is decided from the exact derivative of the scalar
+/// Bernstein signed-distance polynomial at the represented root. This keeps
+/// tangent/contact classification in the algebraic predicate layer, following
+/// Yap's exact geometric computation boundary; see Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997). The
+/// signed-distance Bernstein polynomial and derivative identities are the
+/// standard Bezier formulas in Farin, *Curves and Surfaces for CAGD* (5th
+/// ed., 2002), while bracket-only roots remain Sederberg-Nishita
+/// Bezier-clipping regions rather than sampled contacts.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierLineContact {
+    parameter: Real,
+    kind: BezierLineContactKind,
+}
+
+/// Supporting-line relation with represented root contact classification.
+#[derive(Clone, Debug, PartialEq)]
+pub enum BezierLineContactRelation {
+    /// The Bezier control hull is certified to lie strictly on one side.
+    ControlHullDisjoint {
+        /// The side containing the control hull.
+        side: LineSide,
+    },
+    /// Every Bezier control point is certified on the supporting line.
+    OnSupportingLine,
+    /// Certified represented line roots with crossing/tangent classification.
+    Contacts {
+        /// Sorted unique represented contacts in the closed unit interval.
+        contacts: Vec<BezierLineContact>,
+    },
+    /// Certified isolating spans for roots that are not represented as exact parameters.
+    IsolatedIntersections {
+        /// Sorted closed parameter spans, each retaining at least one line root.
+        spans: Vec<BezierMonotoneSpan>,
+    },
+    /// The relation needs a higher-degree root or overlap solver.
+    Unresolved,
+}
+
+impl BezierLineContact {
+    /// Constructs a represented Bezier/supporting-line contact.
+    pub const fn new(parameter: Real, kind: BezierLineContactKind) -> Self {
+        Self { parameter, kind }
+    }
+
+    /// Returns the exact Bezier parameter of the contact.
+    pub const fn parameter(&self) -> &Real {
+        &self.parameter
+    }
+
+    /// Returns the certified contact kind.
+    pub const fn kind(&self) -> BezierLineContactKind {
+        self.kind
+    }
 }
 
 /// Coarse certified relation between two polynomial Bezier segments.
@@ -266,6 +365,19 @@ impl QuadraticBezier2 {
         relation_to_line(self.control_points().as_slice(), line, policy)
     }
 
+    /// Classifies represented supporting-line roots as crossings or tangencies.
+    ///
+    /// This is the contact-detail companion to [`Self::relation_to_line`].
+    /// It preserves bracket-only roots as isolating spans and labels only
+    /// roots whose exact parameter is represented by the current scalar API.
+    pub fn relation_to_line_with_contacts(
+        &self,
+        line: &LineSeg2,
+        policy: &CurvePolicy,
+    ) -> Classification<BezierLineContactRelation> {
+        relation_to_line_with_contacts(self.control_points().as_slice(), line, policy)
+    }
+
     /// Returns all certified parameters where `point` lies on this quadratic.
     ///
     /// This is the existential point-on-curve solver for polynomial
@@ -317,6 +429,43 @@ impl QuadraticBezier2 {
         policy: &CurvePolicy,
     ) -> Classification<BezierCurveRelation> {
         relation_between_curves(self, other, policy)
+    }
+
+    /// Classifies graph order against another quadratic over a shared monotone axis.
+    ///
+    /// See [`BezierMonotoneGraphOrder`] for the exactness contract and
+    /// citations. This predicate is intentionally narrower than arbitrary
+    /// curve ordering: it refuses curves that do not first certify the same
+    /// degree-normalized strictly monotone coordinate.
+    pub fn graph_order_to_quadratic_over_axis(
+        &self,
+        other: &QuadraticBezier2,
+        shared_axis: Axis2,
+        policy: &CurvePolicy,
+    ) -> Classification<BezierMonotoneGraphOrder> {
+        graph_order_over_shared_axis(
+            &self.control_points_vec(),
+            &other.control_points_vec(),
+            shared_axis,
+            policy,
+        )
+    }
+
+    /// Classifies graph order against a cubic over a shared monotone axis.
+    ///
+    /// See [`BezierMonotoneGraphOrder`] for the exactness contract.
+    pub fn graph_order_to_cubic_over_axis(
+        &self,
+        other: &CubicBezier2,
+        shared_axis: Axis2,
+        policy: &CurvePolicy,
+    ) -> Classification<BezierMonotoneGraphOrder> {
+        graph_order_over_shared_axis(
+            &self.control_points_vec(),
+            &other.control_points_vec(),
+            shared_axis,
+            policy,
+        )
     }
 
     /// Classifies cusps visible from the exact first-derivative equations.
@@ -373,6 +522,18 @@ impl CubicBezier2 {
         relation_to_line(self.control_points().as_slice(), line, policy)
     }
 
+    /// Classifies represented supporting-line roots as crossings or tangencies.
+    ///
+    /// See [`QuadraticBezier2::relation_to_line_with_contacts`] for the
+    /// exactness contract.
+    pub fn relation_to_line_with_contacts(
+        &self,
+        line: &LineSeg2,
+        policy: &CurvePolicy,
+    ) -> Classification<BezierLineContactRelation> {
+        relation_to_line_with_contacts(self.control_points().as_slice(), line, policy)
+    }
+
     /// Returns certified dyadic subdivision parameters where `point` lies on this cubic.
     ///
     /// This is intentionally a finite candidate probe, not the complete
@@ -411,6 +572,42 @@ impl CubicBezier2 {
         policy: &CurvePolicy,
     ) -> Classification<BezierCurveRelation> {
         relation_between_curves(self, other, policy)
+    }
+
+    /// Classifies graph order against another cubic over a shared monotone axis.
+    ///
+    /// See [`BezierMonotoneGraphOrder`] for the exactness contract and
+    /// citations. The predicate reports explicit root candidates instead of
+    /// resolving topology through samples.
+    pub fn graph_order_to_cubic_over_axis(
+        &self,
+        other: &CubicBezier2,
+        shared_axis: Axis2,
+        policy: &CurvePolicy,
+    ) -> Classification<BezierMonotoneGraphOrder> {
+        graph_order_over_shared_axis(
+            &self.control_points_vec(),
+            &other.control_points_vec(),
+            shared_axis,
+            policy,
+        )
+    }
+
+    /// Classifies graph order against a quadratic over a shared monotone axis.
+    ///
+    /// See [`BezierMonotoneGraphOrder`] for the exactness contract.
+    pub fn graph_order_to_quadratic_over_axis(
+        &self,
+        other: &QuadraticBezier2,
+        shared_axis: Axis2,
+        policy: &CurvePolicy,
+    ) -> Classification<BezierMonotoneGraphOrder> {
+        graph_order_over_shared_axis(
+            &self.control_points_vec(),
+            &other.control_points_vec(),
+            shared_axis,
+            policy,
+        )
     }
 
     /// Classifies cusps visible from endpoint and common derivative roots.
@@ -493,6 +690,7 @@ trait BezierCurveLike {
     fn certified_bounds(&self, policy: &CurvePolicy) -> Classification<Aabb2>;
     fn subdivision_node(&self) -> BezierSubdivisionNode;
     fn point_at(&self, t: Real) -> Point2;
+    fn exact_point_query_is_complete(&self) -> bool;
     fn exact_parameters_for_point(
         &self,
         point: &Point2,
@@ -515,6 +713,10 @@ impl BezierCurveLike for QuadraticBezier2 {
 
     fn point_at(&self, t: Real) -> Point2 {
         Self::point_at(self, t)
+    }
+
+    fn exact_point_query_is_complete(&self) -> bool {
+        true
     }
 
     fn exact_parameters_for_point(
@@ -547,6 +749,10 @@ impl BezierCurveLike for CubicBezier2 {
         Self::point_at(self, t)
     }
 
+    fn exact_point_query_is_complete(&self) -> bool {
+        false
+    }
+
     fn exact_parameters_for_point(
         &self,
         point: &Point2,
@@ -563,17 +769,22 @@ fn same_polynomial_image_by_degree_elevation(
 ) -> Classification<bool> {
     if !matches!(
         (first_controls.len(), second_controls.len()),
-        (3, 4) | (4, 3)
+        (3 | 4, 3 | 4)
     ) {
         return Classification::Decided(false);
     }
 
     // Quadratic-to-cubic degree elevation preserves the represented Bernstein
-    // polynomial: Q0, (Q0 + 2Q1)/3, (2Q1 + Q2)/3, Q2. Comparing those exact
-    // elevated coordinate controls certifies polynomial-image equality without
-    // sampling or tolerance. This follows the Bernstein basis identities in
-    // Farin, Curves and Surfaces for CAGD, 5th ed. (2002), and keeps the
-    // branch decision at an exact predicate boundary in Yap's EGC sense.
+    // polynomial: Q0, (Q0 + 2Q1)/3, (2Q1 + Q2)/3, Q2. Reversing the normalized
+    // controls represents the same image with parameter `1 - t`. Comparing
+    // those exact coordinate controls certifies polynomial-image equality
+    // without sampling or tolerance. This follows the Bernstein basis
+    // identities in Farin, Curves and Surfaces for CAGD, 5th ed. (2002), and
+    // keeps the branch decision at an exact predicate boundary in Yap's EGC
+    // sense; see Yap, "Towards Exact Geometric Computation," Computational
+    // Geometry 7.1-2 (1997).
+    let mut forward_equal = true;
+    let mut reversed_equal = true;
     for axis in [Axis2::X, Axis2::Y] {
         let Some(first_values) = cubic_axis_values(first_controls, axis) else {
             return Classification::Decided(false);
@@ -581,17 +792,50 @@ fn same_polynomial_image_by_degree_elevation(
         let Some(second_values) = cubic_axis_values(second_controls, axis) else {
             return Classification::Decided(false);
         };
-        for (first, second) in first_values.iter().zip(second_values.iter()) {
-            match compare_reals(first, second, policy) {
-                Some(Ordering::Equal) => {}
-                Some(Ordering::Less | Ordering::Greater) => {
-                    return Classification::Decided(false);
-                }
-                None => return Classification::Uncertain(UncertaintyReason::Ordering),
-            }
+        match cubic_axis_values_equal(&first_values, &second_values, policy) {
+            Ok(equal) => forward_equal &= equal,
+            Err(reason) => return Classification::Uncertain(reason),
+        }
+        match cubic_axis_values_reversed_equal(&first_values, &second_values, policy) {
+            Ok(equal) => reversed_equal &= equal,
+            Err(reason) => return Classification::Uncertain(reason),
         }
     }
-    Classification::Decided(true)
+    Classification::Decided(forward_equal || reversed_equal)
+}
+
+fn cubic_axis_values_equal(
+    first_values: &[Real; 4],
+    second_values: &[Real; 4],
+    policy: &CurvePolicy,
+) -> Result<bool, UncertaintyReason> {
+    cubic_axis_values_match(first_values, second_values.iter(), policy)
+}
+
+fn cubic_axis_values_reversed_equal(
+    first_values: &[Real; 4],
+    second_values: &[Real; 4],
+    policy: &CurvePolicy,
+) -> Result<bool, UncertaintyReason> {
+    cubic_axis_values_match(first_values, second_values.iter().rev(), policy)
+}
+
+fn cubic_axis_values_match<'a, I>(
+    first_values: &[Real; 4],
+    second_values: I,
+    policy: &CurvePolicy,
+) -> Result<bool, UncertaintyReason>
+where
+    I: Iterator<Item = &'a Real>,
+{
+    for (first, second) in first_values.iter().zip(second_values) {
+        match compare_reals(first, second, policy) {
+            Some(Ordering::Equal) => {}
+            Some(Ordering::Less | Ordering::Greater) => return Ok(false),
+            None => return Err(UncertaintyReason::Ordering),
+        }
+    }
+    Ok(true)
 }
 
 fn relation_between_curves<A, B>(
@@ -638,6 +882,49 @@ where
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     }
 
+    let first_point_image = match point_image_from_controls(&first_controls, policy) {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    let second_point_image = match point_image_from_controls(&second_controls, policy) {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    match (&first_point_image, &second_point_image) {
+        (Some(first_point), Some(second_point)) => {
+            match point_equal(first_point, second_point, policy) {
+                Some(true) => {
+                    return Classification::Decided(BezierCurveRelation::IntersectionPoints {
+                        points: vec![BezierCurveIntersectionPoint::new(first_point.clone())],
+                    });
+                }
+                Some(false) => return Classification::Decided(BezierCurveRelation::NoIntersection),
+                None => return Classification::Uncertain(UncertaintyReason::RealSign),
+            }
+        }
+        (Some(point), None) => match point_image_curve_intersections(point, second, policy) {
+            Classification::Decided(Some(points)) if points.is_empty() => {
+                return Classification::Decided(BezierCurveRelation::NoIntersection);
+            }
+            Classification::Decided(Some(points)) => {
+                return Classification::Decided(BezierCurveRelation::IntersectionPoints { points });
+            }
+            Classification::Decided(None) => {}
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        },
+        (None, Some(point)) => match point_image_curve_intersections(point, first, policy) {
+            Classification::Decided(Some(points)) if points.is_empty() => {
+                return Classification::Decided(BezierCurveRelation::NoIntersection);
+            }
+            Classification::Decided(Some(points)) => {
+                return Classification::Decided(BezierCurveRelation::IntersectionPoints { points });
+            }
+            Classification::Decided(None) => {}
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        },
+        (None, None) => {}
+    }
+
     let first_line_image = match line_segment_image_from_controls(&first_controls, policy) {
         Classification::Decided(line) => line,
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
@@ -658,26 +945,24 @@ where
                 Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
             };
         }
-        (Some(line), None) => match line_image_curve_intersections(line, second, policy) {
-            Classification::Decided(Some(points)) if points.is_empty() => {
-                return Classification::Decided(BezierCurveRelation::NoIntersection);
+        (Some(line), None) => {
+            match line_image_curve_relation(line, &first_controls, second, true, policy) {
+                Classification::Decided(Some(relation)) => {
+                    return Classification::Decided(relation);
+                }
+                Classification::Decided(None) => {}
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
             }
-            Classification::Decided(Some(points)) => {
-                return Classification::Decided(BezierCurveRelation::IntersectionPoints { points });
+        }
+        (None, Some(line)) => {
+            match line_image_curve_relation(line, &second_controls, first, false, policy) {
+                Classification::Decided(Some(relation)) => {
+                    return Classification::Decided(relation);
+                }
+                Classification::Decided(None) => {}
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
             }
-            Classification::Decided(None) => {}
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        },
-        (None, Some(line)) => match line_image_curve_intersections(line, first, policy) {
-            Classification::Decided(Some(points)) if points.is_empty() => {
-                return Classification::Decided(BezierCurveRelation::NoIntersection);
-            }
-            Classification::Decided(Some(points)) => {
-                return Classification::Decided(BezierCurveRelation::IntersectionPoints { points });
-            }
-            Classification::Decided(None) => {}
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        },
+        }
         (None, None) => {}
     }
 
@@ -1656,6 +1941,95 @@ fn certifies_shared_axis_control_separation(
     })
 }
 
+fn graph_order_over_shared_axis(
+    first_controls: &[&Point2],
+    second_controls: &[&Point2],
+    shared_axis: Axis2,
+    policy: &CurvePolicy,
+) -> Classification<BezierMonotoneGraphOrder> {
+    match shared_strictly_monotone_axis(first_controls, second_controls, shared_axis, policy) {
+        Classification::Decided(true) => {}
+        Classification::Decided(false) => {
+            return Classification::Decided(BezierMonotoneGraphOrder::NotSharedStrictlyMonotone);
+        }
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    }
+
+    let order_axis = match shared_axis {
+        Axis2::X => Axis2::Y,
+        Axis2::Y => Axis2::X,
+    };
+    let Some(difference_controls) =
+        cubic_axis_difference_controls(first_controls, second_controls, order_axis)
+    else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+
+    if difference_controls
+        .iter()
+        .all(|value| is_zero(value, policy) == Some(true))
+    {
+        return Classification::Decided(BezierMonotoneGraphOrder::Coincident);
+    }
+
+    if let Some(order) = strict_graph_order_from_common_control_sign(&difference_controls, policy) {
+        return Classification::Decided(order);
+    }
+
+    // Once the shared coordinate is certified injective, ordering reduces to
+    // roots of the degree-normalized remaining coordinate difference. We keep
+    // that scalar cubic in Bernstein form and isolate roots by exact
+    // sign-subdivision, so contacts are reported as exact parameters or
+    // brackets instead of as sampled y-range events. This is the
+    // Sederberg-Nishita Bezier-clipping argument (1990) used inside Yap's
+    // exact geometric computation discipline, with Bernstein elevation from
+    // Farin, Curves and Surfaces for CAGD, 5th ed. (2002).
+    match cubic_root_cover(difference_controls.clone(), policy) {
+        Ok(CubicRootCover::All) => Classification::Decided(BezierMonotoneGraphOrder::Coincident),
+        Ok(CubicRootCover::Isolated { exact, spans }) => {
+            if exact.is_empty() && spans.is_empty() {
+                match real_sign(&difference_controls[0], policy) {
+                    Some(RealSign::Positive) => {
+                        Classification::Decided(BezierMonotoneGraphOrder::FirstGreater)
+                    }
+                    Some(RealSign::Negative) => {
+                        Classification::Decided(BezierMonotoneGraphOrder::FirstLess)
+                    }
+                    Some(RealSign::Zero) => Classification::Uncertain(UncertaintyReason::RealSign),
+                    None => Classification::Uncertain(UncertaintyReason::RealSign),
+                }
+            } else {
+                Classification::Decided(BezierMonotoneGraphOrder::IntersectsOrTouches {
+                    parameters: exact,
+                    spans,
+                })
+            }
+        }
+        Err(reason) => Classification::Uncertain(reason),
+    }
+}
+
+fn strict_graph_order_from_common_control_sign(
+    controls: &[Real; 4],
+    policy: &CurvePolicy,
+) -> Option<BezierMonotoneGraphOrder> {
+    let mut common_sign = None;
+    for control in controls {
+        let sign = real_sign(control, policy)?;
+        match (common_sign, sign) {
+            (_, RealSign::Zero) => return None,
+            (None, RealSign::Positive | RealSign::Negative) => common_sign = Some(sign),
+            (Some(previous), RealSign::Positive | RealSign::Negative) if previous == sign => {}
+            (Some(_), RealSign::Positive | RealSign::Negative) => return None,
+        }
+    }
+    match common_sign {
+        Some(RealSign::Positive) => Some(BezierMonotoneGraphOrder::FirstGreater),
+        Some(RealSign::Negative) => Some(BezierMonotoneGraphOrder::FirstLess),
+        Some(RealSign::Zero) | None => None,
+    }
+}
+
 fn control_differences_have_common_strict_sign(
     first_controls: &[&Point2],
     second_controls: &[&Point2],
@@ -1757,18 +2131,28 @@ fn cubic_axis_values(points: &[&Point2], axis: Axis2) -> Option<[Real; 4]> {
     }
 }
 
-fn line_image_curve_intersections<C>(
+fn line_image_curve_relation<C>(
     line: &LineSeg2,
+    line_controls: &[&Point2],
     curve: &C,
+    line_is_first: bool,
     policy: &CurvePolicy,
-) -> Classification<Option<Vec<BezierCurveIntersectionPoint>>>
+) -> Classification<Option<BezierCurveRelation>>
 where
     C: BezierCurveLike,
 {
+    // A line-image Bezier collapses one curve parameter to an exact segment
+    // parameter. Exact roots on the curved side become certified points; roots
+    // represented only as Bernstein brackets are still useful curve/curve
+    // certificates, so retain them with a full `[0, 1]` span on the line-image
+    // side instead of dropping into generic subdivision. This is the
+    // Sederberg-Nishita Bezier-clipping root-bracket idea (1990) applied at
+    // Yap's exact predicate boundary: a bracket is reported as a bracket, not
+    // converted to a floating sample.
     let controls = curve.control_points_vec();
     match relation_to_line(&controls, line, policy) {
         Classification::Decided(BezierLineRelation::ControlHullDisjoint { .. }) => {
-            Classification::Decided(Some(Vec::new()))
+            Classification::Decided(Some(BezierCurveRelation::NoIntersection))
         }
         Classification::Decided(BezierLineRelation::Intersects { parameters }) => {
             let mut points = Vec::new();
@@ -1784,15 +2168,82 @@ where
                     }
                 }
             }
-            Classification::Decided(Some(points))
+            if points.is_empty() {
+                Classification::Decided(Some(BezierCurveRelation::NoIntersection))
+            } else {
+                Classification::Decided(Some(BezierCurveRelation::IntersectionPoints { points }))
+            }
+        }
+        Classification::Decided(BezierLineRelation::IsolatedIntersections { spans }) => {
+            match has_shared_strictly_monotone_axis(line_controls, &controls, policy) {
+                Classification::Decided(true) => return Classification::Decided(None),
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            }
+            let line_span = BezierMonotoneSpan::new(Real::zero(), Real::one());
+            let regions = spans
+                .into_iter()
+                .map(|curve_span| {
+                    if line_is_first {
+                        BezierCurveIntersectionRegion::new(line_span.clone(), curve_span)
+                    } else {
+                        BezierCurveIntersectionRegion::new(curve_span, line_span.clone())
+                    }
+                })
+                .collect();
+            Classification::Decided(Some(BezierCurveRelation::IntersectionRegions { regions }))
         }
         Classification::Decided(
-            BezierLineRelation::OnSupportingLine
-            | BezierLineRelation::IsolatedIntersections { .. }
-            | BezierLineRelation::Unresolved,
+            BezierLineRelation::OnSupportingLine | BezierLineRelation::Unresolved,
         ) => Classification::Decided(None),
         Classification::Uncertain(reason) => Classification::Uncertain(reason),
     }
+}
+
+fn point_image_curve_intersections<C>(
+    point: &Point2,
+    curve: &C,
+    policy: &CurvePolicy,
+) -> Classification<Option<Vec<BezierCurveIntersectionPoint>>>
+where
+    C: BezierCurveLike,
+{
+    // A collapsed Bezier control polygon is a zero-dimensional curve image.
+    // Yap's exact-geometric-computation model treats that as a structural
+    // predicate boundary: once the point image is certified, topology reduces
+    // to the other curve's exact point-parameter predicate. For cubics the
+    // current predicate is explicitly a finite dyadic promotion pass, so an
+    // empty answer cannot certify non-intersection yet; see Yap, "Towards
+    // Exact Geometric Computation," Computational Geometry 7.1-2 (1997), and
+    // Farin's Bernstein/de Casteljau identities in *Curves and Surfaces for
+    // CAGD* (5th ed., 2002).
+    match curve.exact_parameters_for_point(point, policy) {
+        Some(Classification::Decided(parameters)) if !parameters.is_empty() => {
+            Classification::Decided(Some(vec![BezierCurveIntersectionPoint::new(point.clone())]))
+        }
+        Some(Classification::Decided(_)) if curve.exact_point_query_is_complete() => {
+            Classification::Decided(Some(Vec::new()))
+        }
+        Some(Classification::Decided(_)) | None => Classification::Decided(None),
+        Some(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
+    }
+}
+
+fn point_image_from_controls(
+    controls: &[&Point2],
+    policy: &CurvePolicy,
+) -> Classification<Option<Point2>> {
+    let Some(point) = controls.first().copied() else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    for control in controls.iter().skip(1) {
+        match point_equal(point, control, policy) {
+            Some(true) => {}
+            Some(false) => return Classification::Decided(None),
+            None => return Classification::Uncertain(UncertaintyReason::RealSign),
+        }
+    }
+    Classification::Decided(Some(point.clone()))
 }
 
 fn push_unique_intersection_point(
@@ -2069,6 +2520,190 @@ fn relation_to_line(
             BezierLineRelation::Intersects { parameters }
         }
     })
+}
+
+fn relation_to_line_with_contacts(
+    controls: &[&Point2],
+    line: &LineSeg2,
+    policy: &CurvePolicy,
+) -> Classification<BezierLineContactRelation> {
+    let sides = controls
+        .iter()
+        .map(|point| classify_oriented_line(line.start(), line.end(), point, policy))
+        .collect::<Vec<_>>();
+    if let Some(reason) = sides.iter().find_map(|side| match side {
+        Classification::Uncertain(reason) => Some(*reason),
+        Classification::Decided(_) => None,
+    }) {
+        return Classification::Uncertain(reason);
+    }
+
+    let decided_sides = sides
+        .into_iter()
+        .map(|side| match side {
+            Classification::Decided(side) => side,
+            Classification::Uncertain(_) => unreachable!(),
+        })
+        .collect::<Vec<_>>();
+
+    if decided_sides.iter().all(|side| *side == LineSide::On) {
+        return Classification::Decided(BezierLineContactRelation::OnSupportingLine);
+    }
+    if decided_sides
+        .iter()
+        .all(|side| matches!(side, LineSide::Left))
+    {
+        return Classification::Decided(BezierLineContactRelation::ControlHullDisjoint {
+            side: LineSide::Left,
+        });
+    }
+    if decided_sides
+        .iter()
+        .all(|side| matches!(side, LineSide::Right))
+    {
+        return Classification::Decided(BezierLineContactRelation::ControlHullDisjoint {
+            side: LineSide::Right,
+        });
+    }
+
+    let distances = controls
+        .iter()
+        .map(|point| orient2d_real_expr(line.start(), line.end(), point))
+        .collect::<Vec<_>>();
+    match distances.as_slice() {
+        [d0, d1, d2] => quadratic_line_contact_relation(
+            [d0.clone(), d1.clone(), d2.clone()],
+            decided_sides,
+            policy,
+        ),
+        [d0, d1, d2, d3] => {
+            cubic_line_contact_relation([d0.clone(), d1.clone(), d2.clone(), d3.clone()], policy)
+        }
+        _ => Classification::Uncertain(UncertaintyReason::Unsupported),
+    }
+}
+
+fn quadratic_line_contact_relation(
+    distances: [Real; 3],
+    decided_sides: Vec<LineSide>,
+    policy: &CurvePolicy,
+) -> Classification<BezierLineContactRelation> {
+    let two = Real::from(2_i8);
+    let c0 = distances[0].clone();
+    let c1 = &two * &(&distances[1] - &distances[0]);
+    let c2 = &distances[0] - &(&two * &distances[1]) + &distances[2];
+    let roots = match polynomial_roots_in_unit_interval(c0, c1, c2, policy) {
+        Classification::Decided(roots) => roots,
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    if roots.is_empty() {
+        return Classification::Decided(BezierLineContactRelation::ControlHullDisjoint {
+            side: decided_sides
+                .into_iter()
+                .find(|side| *side != LineSide::On)
+                .unwrap_or(LineSide::On),
+        });
+    }
+
+    let mut contacts = Vec::new();
+    for root in roots {
+        let derivative = scalar_quadratic_derivative_at(&distances, &root);
+        let Some(kind) = contact_kind_from_derivative(&derivative, policy) else {
+            return Classification::Uncertain(UncertaintyReason::RealSign);
+        };
+        push_unique_line_contact(&mut contacts, BezierLineContact::new(root, kind), policy);
+    }
+    Classification::Decided(BezierLineContactRelation::Contacts { contacts })
+}
+
+fn cubic_line_contact_relation(
+    distances: [Real; 4],
+    policy: &CurvePolicy,
+) -> Classification<BezierLineContactRelation> {
+    if distances
+        .iter()
+        .all(|value| is_zero(value, policy) == Some(true))
+    {
+        return Classification::Decided(BezierLineContactRelation::OnSupportingLine);
+    }
+    let mut exact_parameters = Vec::new();
+    let mut spans = Vec::new();
+    if let Err(reason) = isolate_scalar_cubic_roots(
+        distances.clone(),
+        Real::zero(),
+        Real::one(),
+        0,
+        policy,
+        &mut exact_parameters,
+        &mut spans,
+    ) {
+        return Classification::Uncertain(reason);
+    }
+    if !spans.is_empty() {
+        merge_exact_parameters_into_spans(&mut spans, exact_parameters, policy);
+        return Classification::Decided(BezierLineContactRelation::IsolatedIntersections { spans });
+    }
+    if exact_parameters.is_empty() {
+        return Classification::Decided(BezierLineContactRelation::Unresolved);
+    }
+
+    let mut contacts = Vec::new();
+    for parameter in exact_parameters {
+        let derivative = scalar_cubic_derivative_at(&distances, &parameter);
+        let Some(kind) = contact_kind_from_derivative(&derivative, policy) else {
+            return Classification::Uncertain(UncertaintyReason::RealSign);
+        };
+        push_unique_line_contact(
+            &mut contacts,
+            BezierLineContact::new(parameter, kind),
+            policy,
+        );
+    }
+    Classification::Decided(BezierLineContactRelation::Contacts { contacts })
+}
+
+fn scalar_quadratic_derivative_at(controls: &[Real; 3], parameter: &Real) -> Real {
+    let one_minus_t = Real::one() - parameter;
+    let left = &controls[1] - &controls[0];
+    let right = &controls[2] - &controls[1];
+    Real::from(2_i8) * ((&one_minus_t * &left) + (parameter * &right))
+}
+
+fn scalar_cubic_derivative_at(controls: &[Real; 4], parameter: &Real) -> Real {
+    let one_minus_t = Real::one() - parameter;
+    let b0 = &one_minus_t * &one_minus_t;
+    let b1 = Real::from(2_i8) * parameter * &one_minus_t;
+    let b2 = parameter * parameter;
+    let d0 = &controls[1] - &controls[0];
+    let d1 = &controls[2] - &controls[1];
+    let d2 = &controls[3] - &controls[2];
+    Real::from(3_i8) * ((&b0 * &d0) + (&b1 * &d1) + (&b2 * &d2))
+}
+
+fn contact_kind_from_derivative(
+    derivative: &Real,
+    policy: &CurvePolicy,
+) -> Option<BezierLineContactKind> {
+    match real_sign(derivative, policy)? {
+        RealSign::Zero => Some(BezierLineContactKind::Tangent),
+        RealSign::Positive | RealSign::Negative => Some(BezierLineContactKind::Crossing),
+    }
+}
+
+fn push_unique_line_contact(
+    contacts: &mut Vec<BezierLineContact>,
+    contact: BezierLineContact,
+    policy: &CurvePolicy,
+) {
+    if contacts.iter().any(|existing| {
+        compare_reals(existing.parameter(), contact.parameter(), policy) == Some(Ordering::Equal)
+    }) {
+        return;
+    }
+    contacts.push(contact);
+    contacts.sort_by(|a, b| {
+        compare_reals(a.parameter(), b.parameter(), policy).unwrap_or(Ordering::Equal)
+    });
 }
 
 fn quadratic_parameters_for_point(

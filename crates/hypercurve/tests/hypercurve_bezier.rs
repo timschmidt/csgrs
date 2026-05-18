@@ -1,10 +1,12 @@
 use hypercurve::{
     Axis2, BezierAreaMomentPrefixSums2, BezierAreaPrefixSums2, BezierCurveRelation,
     BezierCuspClassification, BezierDegree, BezierEndpoint, BezierFlatteningOptions,
-    BezierInflectionClassification, BezierLineFitRelation, BezierLineImageFitRelation,
-    BezierLineRelation, Classification, CubicBezier2, CurvePolicy, IntersectionKind,
-    LineLineIntersection, LineSeg2, Point2, QuadraticBezier2, RationalQuadraticBezier2,
-    RationalQuadraticConicKind, Real, SymbolicDependencyMask, UncertaintyReason, ZeroStatus,
+    BezierInflectionClassification, BezierLineContactKind, BezierLineContactRelation,
+    BezierLineFitRelation, BezierLineImageFitRelation, BezierLineRelation,
+    BezierMonotoneGraphOrder, BezierPointFitRelation, BezierPointImageFitRelation, Classification,
+    CubicBezier2, CurvePolicy, IntersectionKind, LineLineIntersection, LineSeg2, Point2,
+    QuadraticBezier2, RationalQuadraticBezier2, RationalQuadraticConicKind, Real,
+    SymbolicDependencyMask, UncertaintyReason, ZeroStatus,
 };
 use proptest::prelude::*;
 
@@ -456,6 +458,26 @@ fn inverse_length_parameter_region_is_certified_not_sampled() {
         &Real::from(3_i8)
     );
 
+    let one_third = (Real::one() / Real::from(3_i8)).unwrap();
+    let non_dyadic = line
+        .inverse_length_parameter_region(Real::from(2_i8), 0, 0, &policy())
+        .unwrap()
+        .unwrap_decided_for_test();
+    assert_eq!(non_dyadic.parameter_span().start(), &one_third);
+    assert_eq!(non_dyadic.parameter_span().end(), &one_third);
+    assert_eq!(
+        non_dyadic.prefix_bounds_at_span_end().lower(),
+        &Real::from(2_i8)
+    );
+
+    let quadratic_line = QuadraticBezier2::new(point(0, 0), point(3, 0), point(6, 0));
+    let quadratic_non_dyadic = quadratic_line
+        .inverse_length_parameter_region(Real::from(2_i8), 0, 0, &policy())
+        .unwrap()
+        .unwrap_decided_for_test();
+    assert_eq!(quadratic_non_dyadic.parameter_span().start(), &one_third);
+    assert_eq!(quadratic_non_dyadic.parameter_span().end(), &one_third);
+
     assert_eq!(
         line.inverse_length_parameter_region(Real::from(-1_i8), 8, 2, &policy())
             .unwrap_err(),
@@ -465,6 +487,22 @@ fn inverse_length_parameter_region_is_certified_not_sampled() {
         line.inverse_length_parameter_region(Real::from(7_i8), 8, 2, &policy())
             .unwrap_err(),
         hypercurve::CurveError::InvalidBezierArcLengthTarget
+    );
+}
+
+#[test]
+fn inverse_length_does_not_linearize_nonlinear_line_images() {
+    let nonlinear_line = QuadraticBezier2::new(point(0, 0), point(1, 0), point(4, 0));
+    let region = nonlinear_line
+        .inverse_length_parameter_region(Real::from(2_i8), 0, 0, &policy())
+        .unwrap()
+        .unwrap_decided_for_test();
+
+    assert_eq!(region.parameter_span().start(), &Real::zero());
+    assert_eq!(region.parameter_span().end(), &Real::one());
+    assert_ne!(
+        region.parameter_span().start(),
+        region.parameter_span().end()
     );
 }
 
@@ -695,9 +733,45 @@ fn polynomial_bezier_curve_relation_degree_normalizes_same_axis_no_hit() {
 }
 
 #[test]
+fn polynomial_bezier_graph_order_classifies_monotone_ranges() {
+    let lower = QuadraticBezier2::new(point(0, 0), point(3, 6), point(6, 0));
+    let upper = CubicBezier2::new(point(0, 2), point(2, 6), point(4, 6), point(6, 2));
+    let crossing = CubicBezier2::new(point(0, -1), point(2, 6), point(4, 6), point(6, -1));
+    let not_graph = QuadraticBezier2::new(point(0, 0), point(3, 6), point(0, 0));
+
+    assert_eq!(
+        lower.graph_order_to_cubic_over_axis(&upper, Axis2::X, &policy()),
+        Classification::Decided(BezierMonotoneGraphOrder::FirstLess)
+    );
+    assert_eq!(
+        upper.graph_order_to_quadratic_over_axis(&lower, Axis2::X, &policy()),
+        Classification::Decided(BezierMonotoneGraphOrder::FirstGreater)
+    );
+
+    let Classification::Decided(BezierMonotoneGraphOrder::IntersectsOrTouches {
+        parameters,
+        spans,
+    }) = lower.graph_order_to_cubic_over_axis(&crossing, Axis2::X, &policy())
+    else {
+        panic!("shared monotone graph crossing should retain exact or bracketed roots");
+    };
+    assert!(
+        !parameters.is_empty() || !spans.is_empty(),
+        "crossing graph order should expose retained same-parameter candidates"
+    );
+
+    assert_eq!(
+        lower.graph_order_to_quadratic_over_axis(&not_graph, Axis2::X, &policy()),
+        Classification::Decided(BezierMonotoneGraphOrder::NotSharedStrictlyMonotone)
+    );
+}
+
+#[test]
 fn polynomial_bezier_curve_relation_certifies_degree_elevated_same_image() {
     let quadratic = QuadraticBezier2::new(point(0, 0), point(3, 6), point(6, 0));
     let elevated = CubicBezier2::new(point(0, 0), point(2, 4), point(4, 4), point(6, 0));
+    let reversed_quadratic = QuadraticBezier2::new(point(6, 0), point(3, 6), point(0, 0));
+    let reversed_elevated = CubicBezier2::new(point(6, 0), point(4, 4), point(2, 4), point(0, 0));
 
     assert_eq!(
         quadratic.relation_to_cubic(&elevated, &policy()),
@@ -705,6 +779,18 @@ fn polynomial_bezier_curve_relation_certifies_degree_elevated_same_image() {
     );
     assert_eq!(
         elevated.relation_to_quadratic(&quadratic, &policy()),
+        Classification::Decided(BezierCurveRelation::SameCurveImage)
+    );
+    assert_eq!(
+        quadratic.relation_to_quadratic(&reversed_quadratic, &policy()),
+        Classification::Decided(BezierCurveRelation::SameCurveImage)
+    );
+    assert_eq!(
+        elevated.relation_to_cubic(&reversed_elevated, &policy()),
+        Classification::Decided(BezierCurveRelation::SameCurveImage)
+    );
+    assert_eq!(
+        quadratic.relation_to_cubic(&reversed_elevated, &policy()),
         Classification::Decided(BezierCurveRelation::SameCurveImage)
     );
 }
@@ -1255,6 +1341,18 @@ fn polynomial_bezier_line_image_against_curve_uses_supporting_line_roots() {
         clipped_line.relation_to_quadratic(&arch, &policy()),
         Classification::Decided(BezierCurveRelation::NoIntersection)
     );
+
+    let baseline = QuadraticBezier2::new(point(-1, 0), point(1, 0), point(4, 0));
+    let isolated_cubic = CubicBezier2::new(point(0, -1), point(1, 1), point(2, 1), point(3, 1));
+    let Classification::Decided(BezierCurveRelation::IntersectionRegions { regions }) =
+        baseline.relation_to_cubic(&isolated_cubic, &policy())
+    else {
+        panic!("line-image versus cubic isolated roots should retain curve/curve regions");
+    };
+    assert_eq!(regions.len(), 1);
+    assert_eq!(regions[0].first().start(), &Real::zero());
+    assert_eq!(regions[0].first().end(), &Real::one());
+    assert_ne!(regions[0].second().start(), regions[0].second().end());
 }
 
 #[test]
@@ -1284,6 +1382,46 @@ fn cubic_line_relation_reports_exact_and_isolated_roots() {
         spans[0].end(),
         "non-represented cubic root should remain a nonzero bracket"
     );
+}
+
+#[test]
+fn bezier_line_contact_relation_classifies_crossings_and_tangencies() {
+    let baseline = LineSeg2::try_new(point(0, 0), point(4, 0)).unwrap();
+    let crossing = QuadraticBezier2::new(point(0, -2), point(2, 2), point(4, 2));
+    let tangent = QuadraticBezier2::new(point(0, 0), point(2, 4), point(4, 0));
+
+    let Classification::Decided(BezierLineContactRelation::Contacts { contacts }) =
+        crossing.relation_to_line_with_contacts(&baseline, &policy())
+    else {
+        panic!("quadratic crossing should expose represented line contacts");
+    };
+    assert_eq!(contacts.len(), 1);
+    assert_eq!(contacts[0].kind(), BezierLineContactKind::Crossing);
+
+    let tangent_line = LineSeg2::try_new(point(0, 2), point(4, 2)).unwrap();
+    let Classification::Decided(BezierLineContactRelation::Contacts { contacts }) =
+        tangent.relation_to_line_with_contacts(&tangent_line, &policy())
+    else {
+        panic!("quadratic tangent should expose represented line contact");
+    };
+    assert_eq!(contacts.len(), 1);
+    assert_eq!(contacts[0].parameter(), &half());
+    assert_eq!(contacts[0].kind(), BezierLineContactKind::Tangent);
+
+    let cubic_tangent = CubicBezier2::new(point(0, 0), point(1, 2), point(3, 2), point(4, 0));
+    let cubic_tangent_y = (Real::from(3_i8) / Real::from(2_i8)).unwrap();
+    let cubic_tangent_line = LineSeg2::try_new(
+        Point2::new(Real::zero(), cubic_tangent_y.clone()),
+        Point2::new(Real::from(4_i8), cubic_tangent_y),
+    )
+    .unwrap();
+    let Classification::Decided(BezierLineContactRelation::Contacts { contacts }) =
+        cubic_tangent.relation_to_line_with_contacts(&cubic_tangent_line, &policy())
+    else {
+        panic!("cubic tangent should expose represented line contact");
+    };
+    assert!(contacts.iter().any(|contact| contact.parameter() == &half()
+        && contact.kind() == BezierLineContactKind::Tangent));
 }
 
 #[test]
@@ -1565,6 +1703,15 @@ fn rational_quadratic_curve_relation_certifies_projective_weight_identity() {
         Real::from(15_i8),
     )
     .unwrap();
+    let reversed_scaled = RationalQuadraticBezier2::try_new(
+        point(4, 0),
+        point(2, 4),
+        point(0, 0),
+        Real::from(15_i8),
+        Real::from(10_i8),
+        Real::from(5_i8),
+    )
+    .unwrap();
     let non_proportional = RationalQuadraticBezier2::try_new(
         point(0, 0),
         point(2, 4),
@@ -1581,6 +1728,14 @@ fn rational_quadratic_curve_relation_certifies_projective_weight_identity() {
     );
     assert_eq!(
         scaled.relation_to_rational_quadratic(&first, &policy()),
+        Classification::Decided(BezierCurveRelation::SameCurveImage)
+    );
+    assert_eq!(
+        first.relation_to_rational_quadratic(&reversed_scaled, &policy()),
+        Classification::Decided(BezierCurveRelation::SameCurveImage)
+    );
+    assert_eq!(
+        reversed_scaled.relation_to_rational_quadratic(&first, &policy()),
         Classification::Decided(BezierCurveRelation::SameCurveImage)
     );
     assert_ne!(
@@ -1788,6 +1943,24 @@ fn rational_relations_certify_endpoint_on_conic_interior() {
     };
     assert_eq!(points.len(), 1);
     assert_eq!(points[0].point(), &point(2, 2));
+
+    let rational_baseline = RationalQuadraticBezier2::try_unit_end_weights(
+        point(-1, 0),
+        point(1, 0),
+        point(4, 0),
+        Real::from(2_i8),
+    )
+    .unwrap();
+    let isolated_cubic = CubicBezier2::new(point(0, -1), point(1, 1), point(2, 1), point(3, 1));
+    let Classification::Decided(BezierCurveRelation::IntersectionRegions { regions }) =
+        rational_baseline.relation_to_cubic(&isolated_cubic, &policy())
+    else {
+        panic!("rational line-image versus cubic isolated roots should retain curve/curve regions");
+    };
+    assert_eq!(regions.len(), 1);
+    assert_eq!(regions[0].first().start(), &Real::zero());
+    assert_eq!(regions[0].first().end(), &Real::one());
+    assert_ne!(regions[0].second().start(), regions[0].second().end());
 }
 
 #[test]
@@ -1838,6 +2011,96 @@ fn rational_line_image_relations_use_exact_line_intersection() {
         polynomial_vertical.relation_to_rational_quadratic(&horizontal, &policy()),
         horizontal.relation_to_cubic(&polynomial_vertical, &policy())
     );
+
+    let negative_horizontal = RationalQuadraticBezier2::try_new(
+        point(0, 0),
+        point(2, 0),
+        point(4, 0),
+        Real::from(-1_i8),
+        Real::from(-2_i8),
+        Real::from(-1_i8),
+    )
+    .unwrap();
+    let negative_vertical = RationalQuadraticBezier2::try_new(
+        point(2, -2),
+        point(2, 0),
+        point(2, 2),
+        Real::from(-1_i8),
+        Real::from(-2_i8),
+        Real::from(-1_i8),
+    )
+    .unwrap();
+    let Classification::Decided(BezierCurveRelation::LineSegmentIntersection { intersection }) =
+        negative_horizontal.relation_to_rational_quadratic(&negative_vertical, &policy())
+    else {
+        panic!("same-sign negative rational line images should use native line intersection");
+    };
+    assert_eq!(
+        intersection,
+        LineLineIntersection::Point {
+            point: point(2, 0),
+            a_param: half(),
+            b_param: half(),
+            kind: IntersectionKind::Crossing,
+        }
+    );
+}
+
+#[test]
+fn rational_line_contact_relation_classifies_crossings_and_tangencies() {
+    let baseline = LineSeg2::try_new(point(0, 0), point(4, 0)).unwrap();
+    let crossing = RationalQuadraticBezier2::try_unit_end_weights(
+        point(0, -2),
+        point(2, 2),
+        point(4, 2),
+        Real::from(2_i8),
+    )
+    .unwrap();
+    let Classification::Decided(BezierLineContactRelation::Contacts { contacts }) =
+        crossing.relation_to_line_with_contacts(&baseline, &policy())
+    else {
+        panic!("rational conic crossing should expose represented line contacts");
+    };
+    assert_eq!(contacts.len(), 1);
+    assert_eq!(contacts[0].kind(), BezierLineContactKind::Crossing);
+
+    let tangent = RationalQuadraticBezier2::try_unit_end_weights(
+        point(0, 0),
+        point(2, 4),
+        point(4, 0),
+        Real::from(2_i8),
+    )
+    .unwrap();
+    let tangent_y = (Real::from(8_i8) / Real::from(3_i8)).unwrap();
+    let tangent_line = LineSeg2::try_new(
+        Point2::new(Real::zero(), tangent_y.clone()),
+        Point2::new(Real::from(4_i8), tangent_y),
+    )
+    .unwrap();
+    let Classification::Decided(BezierLineContactRelation::Contacts { contacts }) =
+        tangent.relation_to_line_with_contacts(&tangent_line, &policy())
+    else {
+        panic!("rational conic tangent should expose represented line contact");
+    };
+    assert_eq!(contacts.len(), 1);
+    assert_eq!(contacts[0].parameter(), &half());
+    assert_eq!(contacts[0].kind(), BezierLineContactKind::Tangent);
+
+    let negative = RationalQuadraticBezier2::try_new(
+        point(0, 0),
+        point(2, 4),
+        point(4, 0),
+        Real::from(-1_i8),
+        Real::from(-2_i8),
+        Real::from(-1_i8),
+    )
+    .unwrap();
+    let Classification::Decided(BezierLineContactRelation::Contacts { contacts }) =
+        negative.relation_to_line_with_contacts(&tangent_line, &policy())
+    else {
+        panic!("negative same-sign rational conic tangent should classify exactly");
+    };
+    assert_eq!(contacts[0].kind(), BezierLineContactKind::Tangent);
 }
 
 #[test]
@@ -2015,6 +2278,44 @@ fn display_offset_left_offsets_certified_flattened_chords_without_topology_claim
 }
 
 #[test]
+fn checked_offset_left_promotes_certified_polyline_to_checked_curve_string() {
+    let curve = QuadraticBezier2::new(point(0, 0), point(2, 0), point(4, 0));
+    let options = BezierFlatteningOptions::try_new(Real::one(), 12, &policy()).unwrap();
+    let polyline = curve
+        .flatten_certified(&options, &policy())
+        .unwrap_decided_for_test()
+        .simplify_exact_collinear(&policy())
+        .unwrap_decided_for_test();
+    let offset = polyline
+        .checked_offset_left(Real::one(), &policy())
+        .unwrap()
+        .unwrap_decided_for_test();
+
+    assert_eq!(offset.curve().segments().len(), 1);
+    assert_eq!(offset.curve().segments()[0].start(), &point(0, 1));
+    assert_eq!(offset.curve().segments()[0].end(), &point(4, 1));
+    assert_eq!(
+        offset.source_certificate().max_error(),
+        polyline.certificate().max_error()
+    );
+    assert_eq!(offset.distance(), &Real::one());
+}
+
+#[test]
+fn checked_offset_left_rejects_collapsed_certified_polyline() {
+    let curve = CubicBezier2::new(point(2, 3), point(2, 3), point(2, 3), point(2, 3));
+    let options = BezierFlatteningOptions::try_new(Real::one(), 4, &policy()).unwrap();
+    let polyline = curve
+        .flatten_certified(&options, &policy())
+        .unwrap_decided_for_test();
+
+    assert_eq!(
+        polyline.checked_offset_left(Real::one(), &policy()),
+        Err(hypercurve::CurveError::ZeroLengthLine)
+    );
+}
+
+#[test]
 fn certified_flattened_polyline_fits_exact_line_only_for_zero_error_cases() {
     let line_like = QuadraticBezier2::new(point(0, 0), point(2, 0), point(4, 0));
     let curved = QuadraticBezier2::new(point(0, 0), point(2, 4), point(4, 0));
@@ -2074,7 +2375,7 @@ fn polynomial_bezier_line_image_fits_without_flattening() {
 }
 
 #[test]
-fn rational_bezier_line_image_fit_requires_positive_weights() {
+fn rational_bezier_line_image_fit_accepts_same_sign_weights() {
     let rational_line = RationalQuadraticBezier2::try_unit_end_weights(
         point(0, 3),
         point(2, 3),
@@ -2110,7 +2411,26 @@ fn rational_bezier_line_image_fit_requires_positive_weights() {
         BezierLineImageFitRelation::NotLine
     );
 
-    let negative_weight = RationalQuadraticBezier2::try_unit_end_weights(
+    let negative_weights = RationalQuadraticBezier2::try_new(
+        point(0, 3),
+        point(2, 3),
+        point(6, 3),
+        Real::from(-1_i8),
+        Real::from(-1_i8),
+        Real::from(-1_i8),
+    )
+    .unwrap();
+    let fit = negative_weights
+        .fit_exact_line_image(&policy())
+        .unwrap()
+        .unwrap_decided_for_test();
+    let BezierLineImageFitRelation::Fit(fit) = fit else {
+        panic!("same-sign negative collinear conic should normalize to its endpoint line image");
+    };
+    assert_eq!(fit.line().start(), &point(0, 3));
+    assert_eq!(fit.line().end(), &point(6, 3));
+
+    let mixed_weights = RationalQuadraticBezier2::try_unit_end_weights(
         point(0, 3),
         point(2, 3),
         point(6, 3),
@@ -2118,8 +2438,645 @@ fn rational_bezier_line_image_fit_requires_positive_weights() {
     )
     .unwrap();
     assert_eq!(
-        negative_weight.fit_exact_line_image(&policy()).unwrap(),
+        mixed_weights.fit_exact_line_image(&policy()).unwrap(),
         Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+}
+
+#[test]
+fn bezier_point_image_fits_certify_collapsed_control_polygons() {
+    let quadratic = QuadraticBezier2::new(point(3, 5), point(3, 5), point(3, 5));
+    let fit = quadratic
+        .fit_exact_point_image(&policy())
+        .unwrap()
+        .unwrap_decided_for_test();
+    let BezierPointImageFitRelation::Fit(fit) = fit else {
+        panic!("collapsed quadratic should fit one exact point");
+    };
+    assert_eq!(fit.point(), &point(3, 5));
+    assert_eq!(fit.control_point_count(), 3);
+
+    let cubic = CubicBezier2::new(point(3, 5), point(3, 5), point(3, 5), point(3, 5));
+    let fit = cubic
+        .fit_exact_point_image(&policy())
+        .unwrap()
+        .unwrap_decided_for_test();
+    let BezierPointImageFitRelation::Fit(fit) = fit else {
+        panic!("collapsed cubic should fit one exact point");
+    };
+    assert_eq!(fit.point(), &point(3, 5));
+    assert_eq!(fit.control_point_count(), 4);
+
+    let nonpoint = QuadraticBezier2::new(point(3, 5), point(3, 5), point(4, 5));
+    assert_eq!(
+        nonpoint
+            .fit_exact_point_image(&policy())
+            .unwrap()
+            .unwrap_decided_for_test(),
+        BezierPointImageFitRelation::NotPoint
+    );
+}
+
+#[test]
+fn rational_point_image_fit_accepts_same_sign_weights() {
+    let rational = RationalQuadraticBezier2::try_unit_end_weights(
+        point(2, -3),
+        point(2, -3),
+        point(2, -3),
+        Real::from(2_i8),
+    )
+    .unwrap();
+    let fit = rational
+        .fit_exact_point_image(&policy())
+        .unwrap()
+        .unwrap_decided_for_test();
+    let BezierPointImageFitRelation::Fit(fit) = fit else {
+        panic!("same-sign collapsed rational conic should fit one exact point");
+    };
+    assert_eq!(fit.point(), &point(2, -3));
+    assert_eq!(fit.control_point_count(), 3);
+
+    let negative_weights = RationalQuadraticBezier2::try_new(
+        point(2, -3),
+        point(2, -3),
+        point(2, -3),
+        Real::from(-1_i8),
+        Real::from(-1_i8),
+        Real::from(-1_i8),
+    )
+    .unwrap();
+    let fit = negative_weights
+        .fit_exact_point_image(&policy())
+        .unwrap()
+        .unwrap_decided_for_test();
+    let BezierPointImageFitRelation::Fit(fit) = fit else {
+        panic!("same-sign negative collapsed rational conic should fit one exact point");
+    };
+    assert_eq!(fit.point(), &point(2, -3));
+
+    let mixed_weights = RationalQuadraticBezier2::try_unit_end_weights(
+        point(2, -3),
+        point(2, -3),
+        point(2, -3),
+        Real::from(-1_i8),
+    )
+    .unwrap();
+    assert_eq!(
+        mixed_weights.fit_exact_point_image(&policy()).unwrap(),
+        Classification::Uncertain(UncertaintyReason::Unsupported)
+    );
+}
+
+#[test]
+fn point_image_curve_relations_use_exact_point_solvers() {
+    let arch = QuadraticBezier2::new(point(0, 0), point(2, 4), point(4, 0));
+    let point_hit = QuadraticBezier2::new(point(2, 2), point(2, 2), point(2, 2));
+    let Classification::Decided(BezierCurveRelation::IntersectionPoints { points }) =
+        point_hit.relation_to_quadratic(&arch, &policy())
+    else {
+        panic!("collapsed point image on quadratic should promote exact point intersection");
+    };
+    assert_eq!(points.len(), 1);
+    assert_eq!(points[0].point(), &point(2, 2));
+    assert_eq!(
+        arch.relation_to_quadratic(&point_hit, &policy()),
+        Classification::Decided(BezierCurveRelation::IntersectionPoints { points })
+    );
+
+    let point_miss = QuadraticBezier2::new(point(2, 1), point(2, 1), point(2, 1));
+    assert_eq!(
+        point_miss.relation_to_quadratic(&arch, &policy()),
+        Classification::Decided(BezierCurveRelation::NoIntersection)
+    );
+
+    let cubic = CubicBezier2::new(point(0, 0), point(0, 4), point(4, 4), point(4, 0));
+    let cubic_midpoint = QuadraticBezier2::new(point(2, 3), point(2, 3), point(2, 3));
+    let Classification::Decided(BezierCurveRelation::IntersectionPoints { points }) =
+        cubic_midpoint.relation_to_cubic(&cubic, &policy())
+    else {
+        panic!("collapsed point image at dyadic cubic point should promote certified hit");
+    };
+    assert_eq!(points[0].point(), &point(2, 3));
+}
+
+#[test]
+fn rational_point_image_relations_use_exact_point_solvers() {
+    let rational_arch = RationalQuadraticBezier2::try_unit_end_weights(
+        point(0, 0),
+        point(2, 4),
+        point(4, 0),
+        Real::from(2_i8),
+    )
+    .unwrap();
+    let rational_midpoint = rational_arch
+        .point_at(half(), &policy())
+        .unwrap_decided_for_test();
+    let rational_point = RationalQuadraticBezier2::try_new(
+        rational_midpoint.clone(),
+        rational_midpoint.clone(),
+        rational_midpoint.clone(),
+        Real::from(-1_i8),
+        Real::from(-2_i8),
+        Real::from(-1_i8),
+    )
+    .unwrap();
+
+    let Classification::Decided(BezierCurveRelation::IntersectionPoints { points }) =
+        rational_point.relation_to_rational_quadratic(&rational_arch, &policy())
+    else {
+        panic!("collapsed same-sign rational point should promote conic point intersection");
+    };
+    assert_eq!(points.len(), 1);
+    assert_eq!(points[0].point(), &rational_midpoint);
+
+    let polynomial_point = QuadraticBezier2::new(
+        rational_midpoint.clone(),
+        rational_midpoint.clone(),
+        rational_midpoint.clone(),
+    );
+    let Classification::Decided(BezierCurveRelation::IntersectionPoints { points }) =
+        rational_arch.relation_to_quadratic(&polynomial_point, &policy())
+    else {
+        panic!("collapsed polynomial point should promote mixed conic point intersection");
+    };
+    assert_eq!(points[0].point(), &rational_midpoint);
+
+    let miss = RationalQuadraticBezier2::try_new(
+        point(2, 1),
+        point(2, 1),
+        point(2, 1),
+        Real::from(-1_i8),
+        Real::from(-1_i8),
+        Real::from(-1_i8),
+    )
+    .unwrap();
+    assert_eq!(
+        miss.relation_to_rational_quadratic(&rational_arch, &policy()),
+        Classification::Decided(BezierCurveRelation::NoIntersection)
+    );
+}
+
+#[test]
+fn matching_weight_rational_graph_relations_certify_hits_and_no_hits() {
+    let first = RationalQuadraticBezier2::try_unit_end_weights(
+        point(0, 0),
+        point(2, 4),
+        point(4, 0),
+        Real::from(2_i8),
+    )
+    .unwrap();
+    let crossing = RationalQuadraticBezier2::try_unit_end_weights(
+        point(0, 4),
+        point(2, 2),
+        point(4, 4),
+        Real::from(2_i8),
+    )
+    .unwrap();
+    let Classification::Decided(BezierCurveRelation::IntersectionPoints { points }) =
+        first.relation_to_rational_quadratic(&crossing, &policy())
+    else {
+        panic!("matching-weight rational graph crossing should promote exact same-parameter hit");
+    };
+    assert_eq!(points.len(), 1);
+    assert_eq!(
+        points[0].point(),
+        &first.point_at(half(), &policy()).unwrap_decided_for_test()
+    );
+
+    let shifted = RationalQuadraticBezier2::try_unit_end_weights(
+        point(0, 1),
+        point(2, 5),
+        point(4, 1),
+        Real::from(2_i8),
+    )
+    .unwrap();
+    assert_eq!(
+        first.relation_to_rational_quadratic(&shifted, &policy()),
+        Classification::Decided(BezierCurveRelation::NoIntersection)
+    );
+
+    let negative = RationalQuadraticBezier2::try_new(
+        point(0, 0),
+        point(2, 4),
+        point(4, 0),
+        Real::from(-1_i8),
+        Real::from(-2_i8),
+        Real::from(-1_i8),
+    )
+    .unwrap();
+    let negative_shifted = RationalQuadraticBezier2::try_new(
+        point(0, 1),
+        point(2, 5),
+        point(4, 1),
+        Real::from(-1_i8),
+        Real::from(-2_i8),
+        Real::from(-1_i8),
+    )
+    .unwrap();
+    assert_eq!(
+        negative.relation_to_rational_quadratic(&negative_shifted, &policy()),
+        Classification::Decided(BezierCurveRelation::NoIntersection)
+    );
+}
+
+#[test]
+fn matching_weight_rational_graph_order_classifies_monotone_ranges() {
+    let lower = RationalQuadraticBezier2::try_unit_end_weights(
+        point(0, 0),
+        point(2, 4),
+        point(4, 0),
+        Real::from(2_i8),
+    )
+    .unwrap();
+    let upper = RationalQuadraticBezier2::try_unit_end_weights(
+        point(0, 1),
+        point(2, 5),
+        point(4, 1),
+        Real::from(2_i8),
+    )
+    .unwrap();
+
+    assert_eq!(
+        lower.graph_order_to_rational_quadratic_over_axis(&upper, Axis2::X, &policy()),
+        Classification::Decided(BezierMonotoneGraphOrder::FirstLess)
+    );
+    assert_eq!(
+        upper.graph_order_to_rational_quadratic_over_axis(&lower, Axis2::X, &policy()),
+        Classification::Decided(BezierMonotoneGraphOrder::FirstGreater)
+    );
+
+    let negative_lower = RationalQuadraticBezier2::try_new(
+        point(0, 0),
+        point(2, 4),
+        point(4, 0),
+        Real::from(-1_i8),
+        Real::from(-2_i8),
+        Real::from(-1_i8),
+    )
+    .unwrap();
+    let negative_upper = RationalQuadraticBezier2::try_new(
+        point(0, 1),
+        point(2, 5),
+        point(4, 1),
+        Real::from(-1_i8),
+        Real::from(-2_i8),
+        Real::from(-1_i8),
+    )
+    .unwrap();
+    assert_eq!(
+        negative_lower.graph_order_to_rational_quadratic_over_axis(
+            &negative_upper,
+            Axis2::X,
+            &policy()
+        ),
+        Classification::Decided(BezierMonotoneGraphOrder::FirstLess)
+    );
+
+    let crossing = RationalQuadraticBezier2::try_unit_end_weights(
+        point(0, 1),
+        point(2, -4),
+        point(4, 1),
+        Real::from(2_i8),
+    )
+    .unwrap();
+    let Classification::Decided(BezierMonotoneGraphOrder::IntersectsOrTouches {
+        parameters,
+        spans,
+    }) = lower.graph_order_to_rational_quadratic_over_axis(&crossing, Axis2::X, &policy())
+    else {
+        panic!("matching-weight rational graph crossing should retain exact or bracketed roots");
+    };
+    assert!(
+        !parameters.is_empty() || !spans.is_empty(),
+        "crossing rational graph order should expose retained same-parameter candidates"
+    );
+
+    let mismatched_weight = RationalQuadraticBezier2::try_unit_end_weights(
+        point(0, 1),
+        point(2, 5),
+        point(4, 1),
+        Real::from(3_i8),
+    )
+    .unwrap();
+    assert_eq!(
+        lower.graph_order_to_rational_quadratic_over_axis(&mismatched_weight, Axis2::X, &policy(),),
+        Classification::Decided(BezierMonotoneGraphOrder::NotSharedStrictlyMonotone)
+    );
+}
+
+#[test]
+fn equal_weight_rational_polynomial_graph_order_uses_polynomial_collapse() {
+    let lower = RationalQuadraticBezier2::try_new(
+        point(0, 0),
+        point(2, 4),
+        point(4, 0),
+        Real::from(2_i8),
+        Real::from(2_i8),
+        Real::from(2_i8),
+    )
+    .unwrap();
+    let upper = QuadraticBezier2::new(point(0, 1), point(2, 5), point(4, 1));
+
+    assert_eq!(
+        lower.graph_order_to_quadratic_over_axis(&upper, Axis2::X, &policy()),
+        Classification::Decided(BezierMonotoneGraphOrder::FirstLess)
+    );
+    assert_eq!(
+        upper.graph_order_to_rational_quadratic_over_axis(&lower, Axis2::X, &policy()),
+        Classification::Decided(BezierMonotoneGraphOrder::FirstGreater)
+    );
+
+    let negative_lower = RationalQuadraticBezier2::try_new(
+        point(0, 0),
+        point(2, 4),
+        point(4, 0),
+        Real::from(-2_i8),
+        Real::from(-2_i8),
+        Real::from(-2_i8),
+    )
+    .unwrap();
+    assert_eq!(
+        negative_lower.graph_order_to_quadratic_over_axis(&upper, Axis2::X, &policy()),
+        Classification::Decided(BezierMonotoneGraphOrder::FirstLess)
+    );
+
+    let crossing = QuadraticBezier2::new(point(0, 1), point(2, -4), point(4, 1));
+    let Classification::Decided(BezierMonotoneGraphOrder::IntersectsOrTouches {
+        parameters,
+        spans,
+    }) = lower.graph_order_to_quadratic_over_axis(&crossing, Axis2::X, &policy())
+    else {
+        panic!("equal-weight rational/polynomial graph crossing should retain roots");
+    };
+    assert!(
+        !parameters.is_empty() || !spans.is_empty(),
+        "mixed graph order should expose retained same-parameter candidates"
+    );
+
+    let genuinely_rational = RationalQuadraticBezier2::try_unit_end_weights(
+        point(0, 0),
+        point(2, 4),
+        point(4, 0),
+        Real::from(2_i8),
+    )
+    .unwrap();
+    assert_eq!(
+        genuinely_rational.graph_order_to_quadratic_over_axis(&upper, Axis2::X, &policy()),
+        Classification::Decided(BezierMonotoneGraphOrder::NotSharedStrictlyMonotone)
+    );
+    assert_eq!(
+        upper
+            .graph_order_to_rational_quadratic_over_axis(&genuinely_rational, Axis2::X, &policy(),),
+        Classification::Decided(BezierMonotoneGraphOrder::NotSharedStrictlyMonotone)
+    );
+}
+
+#[test]
+fn non_equal_rational_quadratic_graph_order_certifies_strict_polynomial_gap() {
+    let rational = RationalQuadraticBezier2::try_new(
+        Point2::new(r(0), r(1)),
+        Point2::new(ratio(1, 4), r(1)),
+        Point2::new(r(1), r(1)),
+        r(1),
+        r(2),
+        r(3),
+    )
+    .unwrap();
+    let baseline = QuadraticBezier2::new(
+        Point2::new(r(0), r(0)),
+        Point2::new(half(), r(0)),
+        Point2::new(r(1), r(0)),
+    );
+
+    assert_eq!(
+        rational.graph_order_to_quadratic_over_axis(&baseline, Axis2::X, &policy()),
+        Classification::Decided(BezierMonotoneGraphOrder::FirstGreater)
+    );
+    assert_eq!(
+        baseline.graph_order_to_rational_quadratic_over_axis(&rational, Axis2::X, &policy()),
+        Classification::Decided(BezierMonotoneGraphOrder::FirstLess)
+    );
+
+    let crossing = QuadraticBezier2::new(
+        Point2::new(r(0), r(2)),
+        Point2::new(half(), r(0)),
+        Point2::new(r(1), r(2)),
+    );
+    let Classification::Decided(BezierMonotoneGraphOrder::IntersectsOrTouches {
+        parameters,
+        spans,
+    }) = rational.graph_order_to_quadratic_over_axis(&crossing, Axis2::X, &policy())
+    else {
+        panic!("mixed quartic graph roots should be retained exactly or as brackets");
+    };
+    assert!(
+        !parameters.is_empty() || !spans.is_empty(),
+        "non-strict mixed quartic graph order must retain root candidates"
+    );
+}
+
+#[test]
+fn non_equal_rational_quadratic_relation_uses_strict_graph_gap() {
+    let rational = RationalQuadraticBezier2::try_new(
+        Point2::new(r(0), r(1)),
+        Point2::new(ratio(1, 4), r(1)),
+        Point2::new(r(1), r(1)),
+        r(1),
+        r(2),
+        r(3),
+    )
+    .unwrap();
+    let baseline = QuadraticBezier2::new(
+        Point2::new(r(0), r(0)),
+        Point2::new(half(), r(0)),
+        Point2::new(r(1), r(0)),
+    );
+
+    assert_eq!(
+        rational.relation_to_quadratic(&baseline, &policy()),
+        Classification::Decided(BezierCurveRelation::NoIntersection)
+    );
+    assert_eq!(
+        baseline.relation_to_rational_quadratic(&rational, &policy()),
+        Classification::Decided(BezierCurveRelation::NoIntersection)
+    );
+
+    let crossing = QuadraticBezier2::new(
+        Point2::new(r(0), r(2)),
+        Point2::new(half(), r(0)),
+        Point2::new(r(1), r(2)),
+    );
+    assert!(matches!(
+        rational.relation_to_quadratic(&crossing, &policy()),
+        Classification::Decided(BezierCurveRelation::IntersectionPoints { .. })
+            | Classification::Decided(BezierCurveRelation::IntersectionRegions { .. })
+    ));
+}
+
+#[test]
+fn non_equal_rational_cubic_graph_order_certifies_strict_polynomial_gap() {
+    let rational = RationalQuadraticBezier2::try_new(
+        Point2::new(r(0), r(1)),
+        Point2::new(ratio(1, 4), r(1)),
+        Point2::new(r(1), r(1)),
+        r(1),
+        r(2),
+        r(3),
+    )
+    .unwrap();
+    let baseline = CubicBezier2::new(
+        Point2::new(r(0), r(0)),
+        Point2::new(ratio(1, 3), r(0)),
+        Point2::new(ratio(2, 3), r(0)),
+        Point2::new(r(1), r(0)),
+    );
+
+    assert_eq!(
+        rational.graph_order_to_cubic_over_axis(&baseline, Axis2::X, &policy()),
+        Classification::Decided(BezierMonotoneGraphOrder::FirstGreater)
+    );
+    assert_eq!(
+        baseline.graph_order_to_rational_quadratic_over_axis(&rational, Axis2::X, &policy()),
+        Classification::Decided(BezierMonotoneGraphOrder::FirstLess)
+    );
+
+    let negative = RationalQuadraticBezier2::try_new(
+        Point2::new(r(0), r(1)),
+        Point2::new(ratio(1, 4), r(1)),
+        Point2::new(r(1), r(1)),
+        r(-1),
+        r(-2),
+        r(-3),
+    )
+    .unwrap();
+    assert_eq!(
+        negative.graph_order_to_cubic_over_axis(&baseline, Axis2::X, &policy()),
+        Classification::Decided(BezierMonotoneGraphOrder::FirstGreater)
+    );
+
+    let crossing = CubicBezier2::new(
+        Point2::new(r(0), r(2)),
+        Point2::new(ratio(1, 3), r(0)),
+        Point2::new(ratio(2, 3), r(0)),
+        Point2::new(r(1), r(2)),
+    );
+    let Classification::Decided(BezierMonotoneGraphOrder::IntersectsOrTouches {
+        parameters,
+        spans,
+    }) = rational.graph_order_to_cubic_over_axis(&crossing, Axis2::X, &policy())
+    else {
+        panic!("mixed quintic graph roots should be retained exactly or as brackets");
+    };
+    assert!(
+        !parameters.is_empty() || !spans.is_empty(),
+        "non-strict mixed quintic graph order must retain root candidates"
+    );
+}
+
+#[test]
+fn non_equal_rational_cubic_relation_uses_strict_graph_gap() {
+    let rational = RationalQuadraticBezier2::try_new(
+        Point2::new(r(0), r(1)),
+        Point2::new(ratio(1, 4), r(1)),
+        Point2::new(r(1), r(1)),
+        r(1),
+        r(2),
+        r(3),
+    )
+    .unwrap();
+    let baseline = CubicBezier2::new(
+        Point2::new(r(0), r(0)),
+        Point2::new(ratio(1, 3), r(0)),
+        Point2::new(ratio(2, 3), r(0)),
+        Point2::new(r(1), r(0)),
+    );
+
+    assert_eq!(
+        rational.relation_to_cubic(&baseline, &policy()),
+        Classification::Decided(BezierCurveRelation::NoIntersection)
+    );
+    assert_eq!(
+        baseline.relation_to_rational_quadratic(&rational, &policy()),
+        Classification::Decided(BezierCurveRelation::NoIntersection)
+    );
+
+    let crossing = CubicBezier2::new(
+        Point2::new(r(0), r(2)),
+        Point2::new(ratio(1, 3), r(0)),
+        Point2::new(ratio(2, 3), r(0)),
+        Point2::new(r(1), r(2)),
+    );
+    assert!(matches!(
+        rational.relation_to_cubic(&crossing, &policy()),
+        Classification::Decided(BezierCurveRelation::IntersectionPoints { .. })
+            | Classification::Decided(BezierCurveRelation::IntersectionRegions { .. })
+    ));
+}
+
+#[test]
+fn equal_weight_rational_cubic_graph_order_degree_normalizes_after_collapse() {
+    let lower = RationalQuadraticBezier2::try_new(
+        point(0, 0),
+        point(3, 6),
+        point(6, 0),
+        Real::from(2_i8),
+        Real::from(2_i8),
+        Real::from(2_i8),
+    )
+    .unwrap();
+    let upper = CubicBezier2::new(point(0, 2), point(2, 6), point(4, 6), point(6, 2));
+
+    assert_eq!(
+        lower.graph_order_to_cubic_over_axis(&upper, Axis2::X, &policy()),
+        Classification::Decided(BezierMonotoneGraphOrder::FirstLess)
+    );
+    assert_eq!(
+        upper.graph_order_to_rational_quadratic_over_axis(&lower, Axis2::X, &policy()),
+        Classification::Decided(BezierMonotoneGraphOrder::FirstGreater)
+    );
+
+    let negative_lower = RationalQuadraticBezier2::try_new(
+        point(0, 0),
+        point(3, 6),
+        point(6, 0),
+        Real::from(-2_i8),
+        Real::from(-2_i8),
+        Real::from(-2_i8),
+    )
+    .unwrap();
+    assert_eq!(
+        negative_lower.graph_order_to_cubic_over_axis(&upper, Axis2::X, &policy()),
+        Classification::Decided(BezierMonotoneGraphOrder::FirstLess)
+    );
+
+    let crossing = CubicBezier2::new(point(0, -1), point(2, 6), point(4, 6), point(6, -1));
+    let Classification::Decided(BezierMonotoneGraphOrder::IntersectsOrTouches {
+        parameters,
+        spans,
+    }) = lower.graph_order_to_cubic_over_axis(&crossing, Axis2::X, &policy())
+    else {
+        panic!("equal-weight rational/cubic graph crossing should retain roots");
+    };
+    assert!(
+        !parameters.is_empty() || !spans.is_empty(),
+        "mixed rational/cubic graph order should expose retained same-parameter candidates"
+    );
+
+    let genuinely_rational = RationalQuadraticBezier2::try_unit_end_weights(
+        point(0, 0),
+        point(3, 6),
+        point(6, 0),
+        Real::from(2_i8),
+    )
+    .unwrap();
+    assert_eq!(
+        genuinely_rational.graph_order_to_cubic_over_axis(&upper, Axis2::X, &policy()),
+        Classification::Decided(BezierMonotoneGraphOrder::NotSharedStrictlyMonotone)
+    );
+    assert_eq!(
+        upper
+            .graph_order_to_rational_quadratic_over_axis(&genuinely_rational, Axis2::X, &policy(),),
+        Classification::Decided(BezierMonotoneGraphOrder::NotSharedStrictlyMonotone)
     );
 }
 
@@ -2143,6 +3100,29 @@ fn certified_line_fit_offsets_exactly_as_line_primitive() {
     assert_eq!(
         offset.source_certificate().max_error(),
         fit.source_certificate().max_error()
+    );
+}
+
+#[test]
+fn certified_flattened_polyline_fits_exact_point_with_certificate() {
+    let curve = QuadraticBezier2::new(point(4, -2), point(4, -2), point(4, -2));
+    let options = BezierFlatteningOptions::try_new(Real::one(), 4, &policy()).unwrap();
+    let polyline = curve
+        .flatten_certified(&options, &policy())
+        .unwrap_decided_for_test();
+    let fit = polyline.fit_exact_point(&policy()).unwrap();
+    let Classification::Decided(BezierPointFitRelation::Fit(fit)) = fit else {
+        panic!("collapsed certified polyline should fit one exact point");
+    };
+    assert_eq!(fit.point(), &point(4, -2));
+    assert_eq!(fit.source_certificate(), polyline.certificate());
+
+    let nonpoint = QuadraticBezier2::new(point(0, 0), point(0, 0), point(2, 0))
+        .flatten_certified(&options, &policy())
+        .unwrap_decided_for_test();
+    assert_eq!(
+        nonpoint.fit_exact_point(&policy()).unwrap(),
+        Classification::Decided(BezierPointFitRelation::NotPoint)
     );
 }
 
@@ -2339,6 +3319,15 @@ proptest! {
             Real::from(w2 * scale),
         )
         .unwrap();
+        let reversed_scaled = RationalQuadraticBezier2::try_new(
+            point(cx, cy),
+            point(bx, by),
+            point(ax, ay),
+            Real::from(w2 * scale),
+            Real::from(w1 * scale),
+            Real::from(w0 * scale),
+        )
+        .unwrap();
 
         prop_assert_eq!(
             curve.relation_to_rational_quadratic(&scaled, &policy()),
@@ -2346,6 +3335,14 @@ proptest! {
         );
         prop_assert_eq!(
             scaled.relation_to_rational_quadratic(&curve, &policy()),
+            Classification::Decided(BezierCurveRelation::SameCurveImage)
+        );
+        prop_assert_eq!(
+            curve.relation_to_rational_quadratic(&reversed_scaled, &policy()),
+            Classification::Decided(BezierCurveRelation::SameCurveImage)
+        );
+        prop_assert_eq!(
+            reversed_scaled.relation_to_rational_quadratic(&curve, &policy()),
             Classification::Decided(BezierCurveRelation::SameCurveImage)
         );
     }
@@ -2574,6 +3571,23 @@ proptest! {
     }
 
     #[test]
+    fn exact_point_fit_preserves_generated_collapsed_flattened_polylines(
+        ax in -16_i32..16,
+        ay in -16_i32..16,
+    ) {
+        let curve = CubicBezier2::new(point(ax, ay), point(ax, ay), point(ax, ay), point(ax, ay));
+        let options = BezierFlatteningOptions::try_new(Real::from(1000_i32), 4, &policy()).unwrap();
+        let polyline = curve.flatten_certified(&options, &policy()).unwrap_decided_for_test();
+        let Classification::Decided(BezierPointFitRelation::Fit(fit)) =
+            polyline.fit_exact_point(&policy()).unwrap()
+        else {
+            panic!("generated collapsed flattened cubic should fit one exact point");
+        };
+        prop_assert_eq!(fit.point(), &point(ax, ay));
+        prop_assert_eq!(fit.source_certificate().max_error(), polyline.certificate().max_error());
+    }
+
+    #[test]
     fn exact_line_image_fit_preserves_generated_collinear_controls(
         ax in -16_i32..16,
         ay in -16_i32..16,
@@ -2601,20 +3615,93 @@ proptest! {
     }
 
     #[test]
-    fn rational_line_image_fit_preserves_generated_positive_weight_lines(
+    fn exact_point_image_fit_preserves_generated_collapsed_controls(
+        ax in -16_i32..16,
+        ay in -16_i32..16,
+        weight in 1_i32..8,
+        sign in prop_oneof![Just(1_i32), Just(-1_i32)],
+    ) {
+        let quadratic = QuadraticBezier2::new(point(ax, ay), point(ax, ay), point(ax, ay));
+        let cubic = CubicBezier2::new(point(ax, ay), point(ax, ay), point(ax, ay), point(ax, ay));
+        let signed_weight = Real::from(weight * sign);
+        let rational = RationalQuadraticBezier2::try_new(
+            point(ax, ay),
+            point(ax, ay),
+            point(ax, ay),
+            Real::from(sign),
+            signed_weight,
+            Real::from(sign),
+        ).unwrap();
+
+        let Classification::Decided(BezierPointImageFitRelation::Fit(quadratic_fit)) =
+            quadratic.fit_exact_point_image(&policy()).unwrap()
+        else {
+            panic!("generated collapsed quadratic should fit one exact point");
+        };
+        prop_assert_eq!(quadratic_fit.point(), &point(ax, ay));
+        prop_assert_eq!(quadratic_fit.control_point_count(), 3);
+
+        let Classification::Decided(BezierPointImageFitRelation::Fit(cubic_fit)) =
+            cubic.fit_exact_point_image(&policy()).unwrap()
+        else {
+            panic!("generated collapsed cubic should fit one exact point");
+        };
+        prop_assert_eq!(cubic_fit.point(), &point(ax, ay));
+        prop_assert_eq!(cubic_fit.control_point_count(), 4);
+
+        let Classification::Decided(BezierPointImageFitRelation::Fit(rational_fit)) =
+            rational.fit_exact_point_image(&policy()).unwrap()
+        else {
+            panic!("generated same-sign collapsed rational should fit one exact point");
+        };
+        prop_assert_eq!(rational_fit.point(), &point(ax, ay));
+        prop_assert_eq!(rational_fit.control_point_count(), 3);
+    }
+
+    #[test]
+    fn point_image_relations_preserve_generated_quadratic_midpoints(
+        ax in -16_i32..16,
+        ay in -16_i32..16,
+        width in 1_i32..16,
+        height in 1_i32..16,
+    ) {
+        let mid_x = ax + width;
+        let end_x = ax + 2 * width;
+        let arch = QuadraticBezier2::new(
+            point(ax, ay),
+            point(mid_x, ay + 2 * height),
+            point(end_x, ay),
+        );
+        let midpoint = arch.point_at(half());
+        let collapsed = QuadraticBezier2::new(midpoint.clone(), midpoint.clone(), midpoint.clone());
+        let Classification::Decided(BezierCurveRelation::IntersectionPoints { points }) =
+            collapsed.relation_to_quadratic(&arch, &policy())
+        else {
+            panic!("generated collapsed point image at quadratic midpoint should promote a hit");
+        };
+        prop_assert_eq!(points.len(), 1);
+        prop_assert_eq!(points[0].point(), &midpoint);
+    }
+
+    #[test]
+    fn rational_line_image_fit_preserves_generated_same_sign_weight_lines(
         ax in -16_i32..16,
         ay in -16_i32..16,
         ab in 1_i32..16,
         bc in 0_i32..16,
         weight in 1_i32..8,
+        sign in prop_oneof![Just(1_i32), Just(-1_i32)],
     ) {
         let bx = ax + ab;
         let cx = bx + bc;
-        let curve = RationalQuadraticBezier2::try_unit_end_weights(
+        let signed_weight = Real::from(weight * sign);
+        let curve = RationalQuadraticBezier2::try_new(
             point(ax, ay),
             point(bx, ay),
             point(cx, ay),
-            Real::from(weight),
+            Real::from(sign),
+            signed_weight,
+            Real::from(sign),
         )
         .unwrap();
         let fit = curve
@@ -2622,12 +3709,274 @@ proptest! {
             .unwrap()
             .unwrap_decided_for_test();
         let BezierLineImageFitRelation::Fit(fit) = fit else {
-            panic!("generated positive-weight horizontal rational should be a line image");
+            panic!("generated same-sign horizontal rational should be a line image");
         };
 
         prop_assert_eq!(fit.control_point_count(), 3);
         prop_assert_eq!(fit.line().start(), &point(ax, ay));
         prop_assert_eq!(fit.line().end(), &point(cx, ay));
+    }
+
+    #[test]
+    fn rational_line_contact_relation_classifies_generated_tangencies(
+        ax in -16_i32..16,
+        ay in -16_i32..16,
+        width in 1_i32..16,
+        height in 1_i32..16,
+        weight in 1_i32..8,
+        sign in prop_oneof![Just(1_i32), Just(-1_i32)],
+    ) {
+        let mid_x = ax + width;
+        let end_x = ax + 2 * width;
+        let tangent_y = Real::from(ay)
+            + ((Real::from(2_i32 * weight * height) / Real::from(1_i32 + weight)).unwrap());
+        let signed_endpoint_weight = Real::from(sign);
+        let signed_control_weight = Real::from(weight * sign);
+        let curve = RationalQuadraticBezier2::try_new(
+            point(ax, ay),
+            point(mid_x, ay + 2 * height),
+            point(end_x, ay),
+            signed_endpoint_weight.clone(),
+            signed_control_weight,
+            signed_endpoint_weight,
+        )
+        .unwrap();
+        let tangent = LineSeg2::try_new(
+            Point2::new(Real::from(ax), tangent_y.clone()),
+            Point2::new(Real::from(end_x), tangent_y),
+        )
+        .unwrap();
+
+        let Classification::Decided(BezierLineContactRelation::Contacts { contacts }) =
+            curve.relation_to_line_with_contacts(&tangent, &policy())
+        else {
+            panic!("generated same-sign rational tangent should expose represented line contact");
+        };
+        prop_assert!(contacts.iter().any(|contact| contact.parameter() == &half()
+            && contact.kind() == BezierLineContactKind::Tangent));
+    }
+
+    #[test]
+    fn matching_weight_rational_graph_orders_are_generated(
+        ax in -16_i32..16,
+        ay in -16_i32..16,
+        width in 1_i32..16,
+        height in -16_i32..16,
+        gap in 1_i32..16,
+        weight in 1_i32..8,
+        sign in prop_oneof![Just(1_i32), Just(-1_i32)],
+    ) {
+        let signed_endpoint_weight = Real::from(sign);
+        let signed_control_weight = Real::from(weight * sign);
+        let lower = RationalQuadraticBezier2::try_new(
+            point(ax, ay),
+            point(ax + width, ay + 2 * height),
+            point(ax + 2 * width, ay),
+            signed_endpoint_weight.clone(),
+            signed_control_weight.clone(),
+            signed_endpoint_weight.clone(),
+        )
+        .unwrap();
+        let upper = RationalQuadraticBezier2::try_new(
+            point(ax, ay + gap),
+            point(ax + width, ay + 2 * height + gap),
+            point(ax + 2 * width, ay + gap),
+            signed_endpoint_weight,
+            signed_control_weight,
+            Real::from(sign),
+        )
+        .unwrap();
+
+        prop_assert_eq!(
+            lower.graph_order_to_rational_quadratic_over_axis(&upper, Axis2::X, &policy()),
+            Classification::Decided(BezierMonotoneGraphOrder::FirstLess)
+        );
+        prop_assert_eq!(
+            upper.graph_order_to_rational_quadratic_over_axis(&lower, Axis2::X, &policy()),
+            Classification::Decided(BezierMonotoneGraphOrder::FirstGreater)
+        );
+    }
+
+    #[test]
+    fn equal_weight_rational_polynomial_graph_orders_are_generated(
+        ax in -16_i32..16,
+        ay in -16_i32..16,
+        width in 1_i32..16,
+        height in -16_i32..16,
+        gap in 1_i32..16,
+        weight in 1_i32..8,
+        sign in prop_oneof![Just(1_i32), Just(-1_i32)],
+    ) {
+        let signed_weight = Real::from(weight * sign);
+        let lower = RationalQuadraticBezier2::try_new(
+            point(ax, ay),
+            point(ax + width, ay + 2 * height),
+            point(ax + 2 * width, ay),
+            signed_weight.clone(),
+            signed_weight.clone(),
+            signed_weight,
+        )
+        .unwrap();
+        let upper = QuadraticBezier2::new(
+            point(ax, ay + gap),
+            point(ax + width, ay + 2 * height + gap),
+            point(ax + 2 * width, ay + gap),
+        );
+
+        prop_assert_eq!(
+            lower.graph_order_to_quadratic_over_axis(&upper, Axis2::X, &policy()),
+            Classification::Decided(BezierMonotoneGraphOrder::FirstLess)
+        );
+        prop_assert_eq!(
+            upper.graph_order_to_rational_quadratic_over_axis(&lower, Axis2::X, &policy()),
+            Classification::Decided(BezierMonotoneGraphOrder::FirstGreater)
+        );
+    }
+
+    #[test]
+    fn non_equal_rational_polynomial_strict_graph_orders_are_generated(
+        ax in -16_i32..16,
+        ay in -16_i32..16,
+        width in 1_i32..16,
+        gap in 1_i32..16,
+        base_weight in 1_i32..8,
+        extra_weight in 1_i32..8,
+        sign in prop_oneof![Just(1_i32), Just(-1_i32)],
+    ) {
+        let w0_unsigned = base_weight;
+        let w1_unsigned = base_weight + extra_weight;
+        let w2_unsigned = base_weight + 2 * extra_weight;
+        let signed_w0 = Real::from(sign * w0_unsigned);
+        let signed_w1 = Real::from(sign * w1_unsigned);
+        let signed_w2 = Real::from(sign * w2_unsigned);
+        let start_x = Real::from(ax);
+        let end_x = Real::from(ax + width);
+        let control_x_offset =
+            (Real::from(width * w0_unsigned) / Real::from(2 * w1_unsigned)).unwrap();
+        let rational = RationalQuadraticBezier2::try_new(
+            Point2::new(start_x.clone(), Real::from(ay + gap)),
+            Point2::new(&start_x + &control_x_offset, Real::from(ay + gap)),
+            Point2::new(end_x.clone(), Real::from(ay + gap)),
+            signed_w0,
+            signed_w1,
+            signed_w2,
+        )
+        .unwrap();
+        let polynomial = QuadraticBezier2::new(
+            Point2::new(start_x, Real::from(ay)),
+            Point2::new((Real::from(2 * ax + width) / Real::from(2_i8)).unwrap(), Real::from(ay)),
+            Point2::new(end_x, Real::from(ay)),
+        );
+
+        prop_assert_eq!(
+            rational.graph_order_to_quadratic_over_axis(&polynomial, Axis2::X, &policy()),
+            Classification::Decided(BezierMonotoneGraphOrder::FirstGreater)
+        );
+        prop_assert_eq!(
+            polynomial.graph_order_to_rational_quadratic_over_axis(&rational, Axis2::X, &policy()),
+            Classification::Decided(BezierMonotoneGraphOrder::FirstLess)
+        );
+        prop_assert_eq!(
+            rational.relation_to_quadratic(&polynomial, &policy()),
+            Classification::Decided(BezierCurveRelation::NoIntersection)
+        );
+        prop_assert_eq!(
+            polynomial.relation_to_rational_quadratic(&rational, &policy()),
+            Classification::Decided(BezierCurveRelation::NoIntersection)
+        );
+    }
+
+    #[test]
+    fn non_equal_rational_cubic_strict_graph_orders_are_generated(
+        ax in -16_i32..16,
+        ay in -16_i32..16,
+        width in 1_i32..16,
+        gap in 1_i32..16,
+        base_weight in 1_i32..8,
+        extra_weight in 1_i32..8,
+        sign in prop_oneof![Just(1_i32), Just(-1_i32)],
+    ) {
+        let w0_unsigned = base_weight;
+        let w1_unsigned = base_weight + extra_weight;
+        let w2_unsigned = base_weight + 2 * extra_weight;
+        let signed_w0 = Real::from(sign * w0_unsigned);
+        let signed_w1 = Real::from(sign * w1_unsigned);
+        let signed_w2 = Real::from(sign * w2_unsigned);
+        let start_x = Real::from(ax);
+        let end_x = Real::from(ax + width);
+        let control_x_offset =
+            (Real::from(width * w0_unsigned) / Real::from(2 * w1_unsigned)).unwrap();
+        let rational = RationalQuadraticBezier2::try_new(
+            Point2::new(start_x.clone(), Real::from(ay + gap)),
+            Point2::new(&start_x + &control_x_offset, Real::from(ay + gap)),
+            Point2::new(end_x.clone(), Real::from(ay + gap)),
+            signed_w0,
+            signed_w1,
+            signed_w2,
+        )
+        .unwrap();
+        let one_third = (Real::from(width) / Real::from(3_i8)).unwrap();
+        let two_thirds = (Real::from(2 * width) / Real::from(3_i8)).unwrap();
+        let polynomial = CubicBezier2::new(
+            Point2::new(start_x.clone(), Real::from(ay)),
+            Point2::new(&start_x + &one_third, Real::from(ay)),
+            Point2::new(&start_x + &two_thirds, Real::from(ay)),
+            Point2::new(end_x, Real::from(ay)),
+        );
+
+        prop_assert_eq!(
+            rational.graph_order_to_cubic_over_axis(&polynomial, Axis2::X, &policy()),
+            Classification::Decided(BezierMonotoneGraphOrder::FirstGreater)
+        );
+        prop_assert_eq!(
+            polynomial.graph_order_to_rational_quadratic_over_axis(&rational, Axis2::X, &policy()),
+            Classification::Decided(BezierMonotoneGraphOrder::FirstLess)
+        );
+        prop_assert_eq!(
+            rational.relation_to_cubic(&polynomial, &policy()),
+            Classification::Decided(BezierCurveRelation::NoIntersection)
+        );
+        prop_assert_eq!(
+            polynomial.relation_to_rational_quadratic(&rational, &policy()),
+            Classification::Decided(BezierCurveRelation::NoIntersection)
+        );
+    }
+
+    #[test]
+    fn equal_weight_rational_cubic_graph_orders_are_generated(
+        ax in -16_i32..16,
+        ay in -16_i32..16,
+        width in 1_i32..16,
+        height in -16_i32..16,
+        gap in 1_i32..16,
+        weight in 1_i32..8,
+        sign in prop_oneof![Just(1_i32), Just(-1_i32)],
+    ) {
+        let signed_weight = Real::from(weight * sign);
+        let lower = RationalQuadraticBezier2::try_new(
+            point(ax, ay),
+            point(ax + 3 * width, ay + 3 * height),
+            point(ax + 6 * width, ay),
+            signed_weight.clone(),
+            signed_weight.clone(),
+            signed_weight,
+        )
+        .unwrap();
+        let upper = CubicBezier2::new(
+            point(ax, ay + gap),
+            point(ax + 2 * width, ay + 2 * height + gap),
+            point(ax + 4 * width, ay + 2 * height + gap),
+            point(ax + 6 * width, ay + gap),
+        );
+
+        prop_assert_eq!(
+            lower.graph_order_to_cubic_over_axis(&upper, Axis2::X, &policy()),
+            Classification::Decided(BezierMonotoneGraphOrder::FirstLess)
+        );
+        prop_assert_eq!(
+            upper.graph_order_to_rational_quadratic_over_axis(&lower, Axis2::X, &policy()),
+            Classification::Decided(BezierMonotoneGraphOrder::FirstGreater)
+        );
     }
 
     #[test]
@@ -2658,6 +4007,33 @@ proptest! {
         };
         prop_assert_eq!(points.len(), 1);
         prop_assert_eq!(points[0].point(), &point(mid_x, tangent_y));
+    }
+
+    #[test]
+    fn line_contact_relation_classifies_generated_quadratic_tangencies(
+        ax in -16_i32..16,
+        ay in -16_i32..16,
+        width in 1_i32..16,
+        height in 1_i32..16,
+    ) {
+        let mid_x = ax + width;
+        let end_x = ax + 2 * width;
+        let tangent_y = ay + height;
+        let arch = QuadraticBezier2::new(
+            point(ax, ay),
+            point(mid_x, ay + 2 * height),
+            point(end_x, ay),
+        );
+        let tangent = LineSeg2::try_new(point(ax, tangent_y), point(end_x, tangent_y)).unwrap();
+
+        let Classification::Decided(BezierLineContactRelation::Contacts { contacts }) =
+            arch.relation_to_line_with_contacts(&tangent, &policy())
+        else {
+            panic!("generated quadratic tangent should expose represented line contact");
+        };
+        prop_assert_eq!(contacts.len(), 1);
+        prop_assert_eq!(contacts[0].parameter(), &half());
+        prop_assert_eq!(contacts[0].kind(), BezierLineContactKind::Tangent);
     }
 
     #[test]
@@ -2789,6 +4165,46 @@ proptest! {
     }
 
     #[test]
+    fn degree_normalized_same_axis_graph_orders_are_generated(
+        ax in -16_i32..16,
+        ay in -16_i32..16,
+        width in 1_i32..16,
+        height in -16_i32..16,
+        gap in 1_i32..16,
+    ) {
+        let quadratic = QuadraticBezier2::new(
+            point(ax, ay),
+            point(ax + 3 * width, ay + 3 * height),
+            point(ax + 6 * width, ay),
+        );
+        let raised = CubicBezier2::new(
+            point(ax, ay + gap),
+            point(ax + 2 * width, ay + 2 * height + gap),
+            point(ax + 4 * width, ay + 2 * height + gap),
+            point(ax + 6 * width, ay + gap),
+        );
+        let lowered = CubicBezier2::new(
+            point(ax, ay - gap),
+            point(ax + 2 * width, ay + 2 * height - gap),
+            point(ax + 4 * width, ay + 2 * height - gap),
+            point(ax + 6 * width, ay - gap),
+        );
+
+        prop_assert_eq!(
+            quadratic.graph_order_to_cubic_over_axis(&raised, Axis2::X, &policy()),
+            Classification::Decided(BezierMonotoneGraphOrder::FirstLess)
+        );
+        prop_assert_eq!(
+            quadratic.graph_order_to_cubic_over_axis(&lowered, Axis2::X, &policy()),
+            Classification::Decided(BezierMonotoneGraphOrder::FirstGreater)
+        );
+        prop_assert_eq!(
+            raised.graph_order_to_quadratic_over_axis(&quadratic, Axis2::X, &policy()),
+            Classification::Decided(BezierMonotoneGraphOrder::FirstGreater)
+        );
+    }
+
+    #[test]
     fn degree_elevated_quadratic_cubic_pairs_are_generated_same_images(
         ax in -16_i32..16,
         ay in -16_i32..16,
@@ -2806,6 +4222,12 @@ proptest! {
             point(ax + 4 * width, ay + 2 * height),
             point(ax + 6 * width, ay),
         );
+        let reversed_elevated = CubicBezier2::new(
+            point(ax + 6 * width, ay),
+            point(ax + 4 * width, ay + 2 * height),
+            point(ax + 2 * width, ay + 2 * height),
+            point(ax, ay),
+        );
 
         prop_assert_eq!(
             quadratic.relation_to_cubic(&elevated, &policy()),
@@ -2813,6 +4235,14 @@ proptest! {
         );
         prop_assert_eq!(
             elevated.relation_to_quadratic(&quadratic, &policy()),
+            Classification::Decided(BezierCurveRelation::SameCurveImage)
+        );
+        prop_assert_eq!(
+            quadratic.relation_to_cubic(&reversed_elevated, &policy()),
+            Classification::Decided(BezierCurveRelation::SameCurveImage)
+        );
+        prop_assert_eq!(
+            reversed_elevated.relation_to_quadratic(&quadratic, &policy()),
             Classification::Decided(BezierCurveRelation::SameCurveImage)
         );
     }
@@ -3651,6 +5081,54 @@ proptest! {
     }
 
     #[test]
+    fn inverse_length_exact_for_generated_linear_parameterizations(
+        ax in -16_i32..16,
+        ay in -16_i32..16,
+        dx in 3_i32..32,
+        thirds in 1_i32..3,
+    ) {
+        let end_x = ax + dx;
+        let target = (Real::from(dx * thirds) / Real::from(3_i8)).unwrap();
+        let expected_parameter = (Real::from(thirds) / Real::from(3_i8)).unwrap();
+        let quadratic = QuadraticBezier2::new(
+            point(ax, ay),
+            Point2::new(
+                (Real::from((2 * ax) + dx) / Real::from(2_i8)).unwrap(),
+                Real::from(ay),
+            ),
+            point(end_x, ay),
+        );
+        let cubic = CubicBezier2::new(
+            point(ax, ay),
+            Point2::new(
+                (Real::from((3 * ax) + dx) / Real::from(3_i8)).unwrap(),
+                Real::from(ay),
+            ),
+            Point2::new(
+                (Real::from((3 * ax) + (2 * dx)) / Real::from(3_i8)).unwrap(),
+                Real::from(ay),
+            ),
+            point(end_x, ay),
+        );
+
+        let quadratic_region = quadratic
+            .inverse_length_parameter_region(target.clone(), 0, 0, &policy())
+            .unwrap()
+            .unwrap_decided_for_test();
+        let cubic_region = cubic
+            .inverse_length_parameter_region(target.clone(), 0, 0, &policy())
+            .unwrap()
+            .unwrap_decided_for_test();
+
+        prop_assert_eq!(quadratic_region.parameter_span().start(), &expected_parameter);
+        prop_assert_eq!(quadratic_region.parameter_span().end(), &expected_parameter);
+        prop_assert_eq!(quadratic_region.prefix_bounds_at_span_end().lower(), &target);
+        prop_assert_eq!(cubic_region.parameter_span().start(), &expected_parameter);
+        prop_assert_eq!(cubic_region.parameter_span().end(), &expected_parameter);
+        prop_assert_eq!(cubic_region.prefix_bounds_at_span_end().upper(), &target);
+    }
+
+    #[test]
     fn signed_area_contribution_matches_generated_horizontal_line_images(
         ax in -16_i32..16,
         ay in -16_i32..16,
@@ -3780,6 +5258,31 @@ proptest! {
 
         prop_assert_eq!(offset.segments().len(), polyline.points().len() - 1);
         prop_assert_eq!(offset.source_certificate().segment_count(), polyline.certificate().segment_count());
+    }
+
+    #[test]
+    fn checked_offset_left_preserves_generated_line_certificate(
+        ax in -16_i32..16,
+        ay in -16_i32..16,
+        cx in -16_i32..16,
+        distance in 1_i32..8,
+    ) {
+        prop_assume!(ax != cx);
+        let curve = QuadraticBezier2::new(point(ax, ay), point((ax + cx) / 2, ay), point(cx, ay));
+        let options = BezierFlatteningOptions::try_new(Real::from(1000_i32), 4, &policy()).unwrap();
+        let polyline = curve
+            .flatten_certified(&options, &policy())
+            .unwrap_decided_for_test()
+            .simplify_exact_collinear(&policy())
+            .unwrap_decided_for_test();
+        let offset = polyline
+            .checked_offset_left(Real::from(distance), &policy())
+            .unwrap()
+            .unwrap_decided_for_test();
+
+        prop_assert_eq!(offset.curve().segments().len(), 1);
+        prop_assert_eq!(offset.source_certificate().segment_count(), polyline.certificate().segment_count());
+        prop_assert_eq!(offset.distance(), &Real::from(distance));
     }
 }
 

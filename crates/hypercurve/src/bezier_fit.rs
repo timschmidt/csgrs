@@ -18,17 +18,36 @@ use crate::{
     RationalQuadraticBezier2, UncertaintyReason,
 };
 
+/// A Bezier or conic segment certified to be one exact affine point.
+///
+/// This is the zero-dimensional companion to [`CertifiedBezierLineImage2`].
+/// It succeeds only when every control point is certified equal to the endpoint
+/// point, preserving Yap's exact branch boundary instead of treating a tiny
+/// curve as degenerate by tolerance; see Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997). Rational conics also
+/// require certified same-sign nonzero weights so the homogeneous denominator
+/// cannot cross a projective boundary on the affine parameter interval. A
+/// uniformly negative homogeneous lift is sign-normalized to the positive
+/// case without changing the Euclidean image; see Farin, *Curves and Surfaces
+/// for Computer-Aided Geometric Design* (5th ed., 2002).
+#[derive(Clone, Debug, PartialEq)]
+pub struct CertifiedBezierPointImage2 {
+    point: Point2,
+    control_point_count: usize,
+}
+
 /// A Bezier or conic segment certified to trace exactly one endpoint line segment.
 ///
 /// This is a structural fit, not a sampled approximation: every control point
 /// must be certified collinear with and inside the endpoint interval. For
-/// rational quadratics, all weights must also be certified positive so the
-/// Euclidean convex-hull property applies. The certificate follows Yap's exact
+/// rational quadratics, all weights must also be certified with the same
+/// nonzero sign so the homogeneous lift can be sign-normalized before applying
+/// the Euclidean convex-hull property. The certificate follows Yap's exact
 /// geometric-computation model by preserving a proof obligation at the fitting
 /// boundary; see Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997). The positive-weight rational Bezier line-image
-/// condition follows Farin, *Curves and Surfaces for Computer-Aided Geometric
-/// Design* (5th ed., 2002).
+/// Geometry* 7.1-2 (1997). The rational Bezier line-image condition follows
+/// Farin, *Curves and Surfaces for Computer-Aided Geometric Design* (5th ed.,
+/// 2002).
 #[derive(Clone, Debug, PartialEq)]
 pub struct CertifiedBezierLineImage2 {
     line: LineSeg2,
@@ -47,6 +66,13 @@ pub struct CertifiedBezierLineImageOffset2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct CertifiedBezierLineFit2 {
     line: LineSeg2,
+    source_certificate: BezierFlatteningCertificate,
+}
+
+/// A zero-error point fit recovered from a certified flattened Bezier polyline.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CertifiedBezierPointFit2 {
+    point: Point2,
     source_certificate: BezierFlatteningCertificate,
 }
 
@@ -85,13 +111,46 @@ pub enum BezierLineFitRelation {
     NotLine,
 }
 
+/// Certified result of attempting a zero-error point fit.
+#[derive(Clone, Debug, PartialEq)]
+#[allow(clippy::large_enum_variant)]
+pub enum BezierPointFitRelation {
+    /// Every retained source vertex is certified equal to one point.
+    Fit(CertifiedBezierPointFit2),
+    /// At least one retained source vertex is certified different from the point.
+    NotPoint,
+}
+
 /// Certified result of attempting to fit the Bezier/conic object itself to a line.
 #[derive(Clone, Debug, PartialEq)]
+#[allow(clippy::large_enum_variant)]
 pub enum BezierLineImageFitRelation {
     /// Every control point is certified on the endpoint line segment.
     Fit(CertifiedBezierLineImage2),
     /// At least one control point is certified off the endpoint line segment.
     NotLine,
+}
+
+/// Certified result of attempting to fit the Bezier/conic object to one point.
+#[derive(Clone, Debug, PartialEq)]
+#[allow(clippy::large_enum_variant)]
+pub enum BezierPointImageFitRelation {
+    /// Every control point is certified equal to the endpoint point.
+    Fit(CertifiedBezierPointImage2),
+    /// At least one control point is certified different from the endpoint point.
+    NotPoint,
+}
+
+impl CertifiedBezierPointImage2 {
+    /// Returns the exact point image traced by the Bezier.
+    pub const fn point(&self) -> &Point2 {
+        &self.point
+    }
+
+    /// Returns the number of source Bezier control points covered by the fit.
+    pub const fn control_point_count(&self) -> usize {
+        self.control_point_count
+    }
 }
 
 impl CertifiedBezierLineImage2 {
@@ -167,7 +226,27 @@ impl CertifiedBezierLineFit2 {
     }
 }
 
+impl CertifiedBezierPointFit2 {
+    /// Returns the fitted exact point.
+    pub const fn point(&self) -> &Point2 {
+        &self.point
+    }
+
+    /// Returns the flattening certificate of the source polyline.
+    pub const fn source_certificate(&self) -> &BezierFlatteningCertificate {
+        &self.source_certificate
+    }
+}
+
 impl QuadraticBezier2 {
+    /// Fits this quadratic Bezier to one exact point when possible.
+    pub fn fit_exact_point_image(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<BezierPointImageFitRelation>> {
+        fit_control_polygon_point_image(&self.control_points(), policy)
+    }
+
     /// Fits this quadratic Bezier to its exact endpoint line image when possible.
     ///
     /// The fit succeeds only when the interior control point is certified on
@@ -182,6 +261,14 @@ impl QuadraticBezier2 {
 }
 
 impl CubicBezier2 {
+    /// Fits this cubic Bezier to one exact point when possible.
+    pub fn fit_exact_point_image(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<BezierPointImageFitRelation>> {
+        fit_control_polygon_point_image(&self.control_points(), policy)
+    }
+
     /// Fits this cubic Bezier to its exact endpoint line image when possible.
     pub fn fit_exact_line_image(
         &self,
@@ -192,19 +279,36 @@ impl CubicBezier2 {
 }
 
 impl RationalQuadraticBezier2 {
+    /// Fits this rational quadratic to one exact affine point when possible.
+    ///
+    /// Same-sign nonzero weights keep the homogeneous denominator away from
+    /// zero over `[0, 1]`, so equal Euclidean controls certify a constant
+    /// affine image after homogeneous sign normalization.
+    pub fn fit_exact_point_image(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<BezierPointImageFitRelation>> {
+        match weights_known_same_nonzero_sign(self.weights().as_slice(), policy) {
+            Some(true) => fit_control_polygon_point_image(&self.control_points(), policy),
+            Some(false) => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
+            None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+    }
+
     /// Fits this rational quadratic to its exact endpoint line image when possible.
     ///
-    /// A rational quadratic with certified positive weights and collinear
-    /// controls has a Euclidean image inside the control hull. If each control
-    /// is also certified inside the endpoint box, this method returns a true
-    /// endpoint line segment image. Nonpositive or sign-ambiguous weights are
-    /// explicit uncertainty because the endpoint segment image is not certified
-    /// by the positive-weight hull theorem.
+    /// A rational quadratic with certified same-sign nonzero weights and
+    /// collinear controls has a Euclidean image inside the control hull after
+    /// homogeneous sign normalization. If each control is also certified inside
+    /// the endpoint box, this method returns a true endpoint line segment
+    /// image. Mixed-sign or sign-ambiguous weights are explicit uncertainty
+    /// because the endpoint segment image is not certified by the convex-hull
+    /// theorem.
     pub fn fit_exact_line_image(
         &self,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<BezierLineImageFitRelation>> {
-        match weights_known_positive(self.weights().as_slice(), policy) {
+        match weights_known_same_nonzero_sign(self.weights().as_slice(), policy) {
             Some(true) => fit_control_polygon_line_image(&self.control_points(), policy),
             Some(false) => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
             None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
@@ -213,6 +317,40 @@ impl RationalQuadraticBezier2 {
 }
 
 impl CertifiedBezierPolyline2 {
+    /// Fits this certified polyline to one exact point when the fit has zero error.
+    ///
+    /// This is the flattened-polyline companion to
+    /// [`QuadraticBezier2::fit_exact_point_image`]. It succeeds only when every
+    /// retained vertex is certified equal to the first vertex, carrying the
+    /// original flattening certificate across the fitting boundary. This follows
+    /// Yap's exact-geometric-computation discipline for approximation products;
+    /// see Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7.1-2 (1997).
+    pub fn fit_exact_point(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<BezierPointFitRelation>> {
+        let Some(point) = self.points().first() else {
+            return Err(CurveError::InsufficientVertices);
+        };
+        for vertex in self.points().iter().skip(1) {
+            match is_zero(&point.distance_squared(vertex), policy) {
+                Some(true) => {}
+                Some(false) => {
+                    return Ok(Classification::Decided(BezierPointFitRelation::NotPoint));
+                }
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
+        }
+
+        Ok(Classification::Decided(BezierPointFitRelation::Fit(
+            CertifiedBezierPointFit2 {
+                point: point.clone(),
+                source_certificate: self.certificate().clone(),
+            },
+        )))
+    }
+
     /// Fits this certified polyline to one exact line when the fit has zero error.
     ///
     /// The method returns [`BezierLineFitRelation::NotLine`] when any retained
@@ -262,13 +400,51 @@ impl CertifiedBezierPolyline2 {
     }
 }
 
-fn weights_known_positive(weights: &[&Real], policy: &CurvePolicy) -> Option<bool> {
-    weights
-        .iter()
-        .map(|weight| real_sign(weight, policy).map(|sign| sign == RealSign::Positive))
-        .try_fold(true, |all_positive, positive| {
-            positive.map(|positive| all_positive && positive)
-        })
+fn weights_known_same_nonzero_sign(weights: &[&Real], policy: &CurvePolicy) -> Option<bool> {
+    let mut expected = None;
+    for weight in weights {
+        let sign = real_sign(weight, policy)?;
+        match sign {
+            RealSign::Positive | RealSign::Negative => {
+                if let Some(expected) = expected {
+                    if sign != expected {
+                        return Some(false);
+                    }
+                } else {
+                    expected = Some(sign);
+                }
+            }
+            RealSign::Zero => return Some(false),
+        }
+    }
+    Some(expected.is_some())
+}
+
+fn fit_control_polygon_point_image(
+    controls: &[&Point2],
+    policy: &CurvePolicy,
+) -> CurveResult<Classification<BezierPointImageFitRelation>> {
+    let Some(point) = controls.first().copied() else {
+        return Err(CurveError::InsufficientVertices);
+    };
+    for control in controls.iter().skip(1) {
+        match is_zero(&point.distance_squared(control), policy) {
+            Some(true) => {}
+            Some(false) => {
+                return Ok(Classification::Decided(
+                    BezierPointImageFitRelation::NotPoint,
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+    }
+
+    Ok(Classification::Decided(BezierPointImageFitRelation::Fit(
+        CertifiedBezierPointImage2 {
+            point: point.clone(),
+            control_point_count: controls.len(),
+        },
+    )))
 }
 
 fn fit_control_polygon_line_image(

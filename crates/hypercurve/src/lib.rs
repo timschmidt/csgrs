@@ -44,18 +44,21 @@ mod split;
 pub use bbox::Aabb2;
 pub use bezier::{BezierEndpoint, CubicBezier2, EndpointTangent2, QuadraticBezier2};
 pub use bezier_fit::{
-    BezierLineFitRelation, BezierLineImageFitRelation, CertifiedBezierLineFit2,
-    CertifiedBezierLineImage2, CertifiedBezierLineImageOffset2, CertifiedBezierLineOffset2,
+    BezierLineFitRelation, BezierLineImageFitRelation, BezierPointFitRelation,
+    BezierPointImageFitRelation, CertifiedBezierLineFit2, CertifiedBezierLineImage2,
+    CertifiedBezierLineImageOffset2, CertifiedBezierLineOffset2, CertifiedBezierPointFit2,
+    CertifiedBezierPointImage2,
 };
 pub use bezier_flatten::{
     BezierFlatteningCertificate, BezierFlatteningOptions, CertifiedBezierPolyline2,
-    DisplayBezierOffsetPolyline2,
+    CertifiedBezierPolylineOffset2, DisplayBezierOffsetPolyline2,
 };
 pub use bezier_metric::{BezierArcLengthParameterRegion2, BezierLengthBounds2};
 pub use bezier_moment::{BezierAreaMomentPrefixSums2, BezierAreaMoments2, BezierAreaPrefixSums2};
 pub use bezier_topology::{
     Axis2, BezierCurveIntersectionPoint, BezierCurveIntersectionRegion, BezierCurveRelation,
-    BezierCuspClassification, BezierInflectionClassification, BezierLineRelation,
+    BezierCuspClassification, BezierInflectionClassification, BezierLineContact,
+    BezierLineContactKind, BezierLineContactRelation, BezierLineRelation, BezierMonotoneGraphOrder,
     BezierMonotoneSpan,
 };
 pub use boolean::{

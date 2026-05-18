@@ -10,7 +10,12 @@
 use hypercurve::{
     Aabb2 as HAabb2, ArcArcIntersection as HArcArcIntersection,
     ArcArcIntersectionPoint as HArcArcIntersectionPoint,
-    BezierCurveRelation as HBezierCurveRelation, BooleanOp as HBooleanOp,
+    Axis2 as HAxis2, BezierCurveRelation as HBezierCurveRelation,
+    BezierLineContactKind as HBezierLineContactKind,
+    BezierLineContactRelation as HBezierLineContactRelation,
+    BezierMonotoneGraphOrder as HBezierMonotoneGraphOrder,
+    BezierPointFitRelation as HBezierPointFitRelation,
+    BezierPointImageFitRelation as HBezierPointImageFitRelation, BooleanOp as HBooleanOp,
     BulgeVertex2 as HBulgeVertex2, CircularArc2 as HCircularArc2,
     Classification as HClassification, Contour2 as HContour2, ContourOperand as HContourOperand,
     ContourPointLocation as HContourPointLocation, ContourSplitMap as HContourSplitMap,
@@ -1859,11 +1864,426 @@ fn h_assert_bezier_conic_relations(reader: &mut ByteReader<'_>) {
             panic!("dyadic rational/cubic same-parameter hit was not promoted: {relation:?}");
         }
     }
+
+    let graph_gap = HRationalQuadraticBezier2::try_new(
+        h_point_i32(0, 1),
+        h_point_i32(256, lift + 1),
+        h_point_i32(512, 1),
+        HReal::one(),
+        HReal::from(2_i8),
+        HReal::one(),
+    )
+    .unwrap();
+    match rational.relation_to_rational_quadratic(&graph_gap, &policy) {
+        HClassification::Decided(HBezierCurveRelation::NoIntersection) => {}
+        relation => {
+            panic!("matching-weight rational graph gap was not certified as no-hit: {relation:?}");
+        }
+    }
+    match rational.graph_order_to_rational_quadratic_over_axis(&graph_gap, HAxis2::X, &policy) {
+        HClassification::Decided(HBezierMonotoneGraphOrder::FirstLess) => {}
+        relation => {
+            panic!("matching-weight rational graph order did not certify the generated gap: {relation:?}");
+        }
+    }
+    let equal_weight_rational = HRationalQuadraticBezier2::try_new(
+        h_point_i32(0, 0),
+        h_point_i32(256, lift),
+        h_point_i32(512, 0),
+        HReal::from(-3_i8),
+        HReal::from(-3_i8),
+        HReal::from(-3_i8),
+    )
+    .unwrap();
+    let polynomial_graph_gap = HQuadraticBezier2::new(
+        h_point_i32(0, 1),
+        h_point_i32(256, lift + 1),
+        h_point_i32(512, 1),
+    );
+    match equal_weight_rational.graph_order_to_quadratic_over_axis(
+        &polynomial_graph_gap,
+        HAxis2::X,
+        &policy,
+    ) {
+        HClassification::Decided(HBezierMonotoneGraphOrder::FirstLess) => {}
+        relation => {
+            panic!("equal-weight rational/polynomial graph order did not certify the generated gap: {relation:?}");
+        }
+    }
+    match polynomial_graph_gap.graph_order_to_rational_quadratic_over_axis(
+        &equal_weight_rational,
+        HAxis2::X,
+        &policy,
+    ) {
+        HClassification::Decided(HBezierMonotoneGraphOrder::FirstGreater) => {}
+        relation => {
+            panic!("polynomial/equal-weight rational graph order did not certify the generated gap: {relation:?}");
+        }
+    }
+    let non_equal_rational_graph = HRationalQuadraticBezier2::try_new(
+        HPoint2::new(HReal::zero(), HReal::one()),
+        HPoint2::new(h_ratio(1, 4), HReal::one()),
+        HPoint2::new(HReal::one(), HReal::one()),
+        HReal::one(),
+        HReal::from(2_i8),
+        HReal::from(3_i8),
+    )
+    .unwrap();
+    let non_equal_polynomial_baseline = HQuadraticBezier2::new(
+        HPoint2::new(HReal::zero(), HReal::zero()),
+        HPoint2::new(h_ratio(1, 2), HReal::zero()),
+        HPoint2::new(HReal::one(), HReal::zero()),
+    );
+    match non_equal_rational_graph.graph_order_to_quadratic_over_axis(
+        &non_equal_polynomial_baseline,
+        HAxis2::X,
+        &policy,
+    ) {
+        HClassification::Decided(HBezierMonotoneGraphOrder::FirstGreater) => {}
+        relation => {
+            panic!("non-equal rational/polynomial strict graph order did not certify the generated gap: {relation:?}");
+        }
+    }
+    match non_equal_polynomial_baseline.graph_order_to_rational_quadratic_over_axis(
+        &non_equal_rational_graph,
+        HAxis2::X,
+        &policy,
+    ) {
+        HClassification::Decided(HBezierMonotoneGraphOrder::FirstLess) => {}
+        relation => {
+            panic!("polynomial/non-equal rational strict graph order did not certify the generated gap: {relation:?}");
+        }
+    }
+    match non_equal_rational_graph.relation_to_quadratic(&non_equal_polynomial_baseline, &policy) {
+        HClassification::Decided(HBezierCurveRelation::NoIntersection) => {}
+        relation => {
+            panic!("non-equal rational/polynomial strict graph relation did not certify no-hit: {relation:?}");
+        }
+    }
+    let non_equal_polynomial_crossing = HQuadraticBezier2::new(
+        HPoint2::new(HReal::zero(), HReal::from(2_i8)),
+        HPoint2::new(h_ratio(1, 2), HReal::zero()),
+        HPoint2::new(HReal::one(), HReal::from(2_i8)),
+    );
+    match non_equal_rational_graph
+        .graph_order_to_quadratic_over_axis(&non_equal_polynomial_crossing, HAxis2::X, &policy)
+    {
+        HClassification::Decided(HBezierMonotoneGraphOrder::IntersectsOrTouches {
+            parameters,
+            spans,
+        }) if !parameters.is_empty() || !spans.is_empty() => {}
+        relation => {
+            panic!("non-equal rational/polynomial quartic graph roots were not retained: {relation:?}");
+        }
+    }
+    match non_equal_rational_graph.relation_to_quadratic(&non_equal_polynomial_crossing, &policy) {
+        HClassification::Decided(HBezierCurveRelation::IntersectionPoints { .. })
+        | HClassification::Decided(HBezierCurveRelation::IntersectionRegions { .. }) => {}
+        relation => {
+            panic!("non-equal rational/polynomial quartic graph roots did not reach relation dispatch: {relation:?}");
+        }
+    }
+    let non_equal_cubic_baseline = HCubicBezier2::new(
+        HPoint2::new(HReal::zero(), HReal::zero()),
+        HPoint2::new(h_ratio(1, 3), HReal::zero()),
+        HPoint2::new(h_ratio(2, 3), HReal::zero()),
+        HPoint2::new(HReal::one(), HReal::zero()),
+    );
+    match non_equal_rational_graph.graph_order_to_cubic_over_axis(
+        &non_equal_cubic_baseline,
+        HAxis2::X,
+        &policy,
+    ) {
+        HClassification::Decided(HBezierMonotoneGraphOrder::FirstGreater) => {}
+        relation => {
+            panic!("non-equal rational/cubic strict graph order did not certify the generated gap: {relation:?}");
+        }
+    }
+    match non_equal_cubic_baseline.graph_order_to_rational_quadratic_over_axis(
+        &non_equal_rational_graph,
+        HAxis2::X,
+        &policy,
+    ) {
+        HClassification::Decided(HBezierMonotoneGraphOrder::FirstLess) => {}
+        relation => {
+            panic!("cubic/non-equal rational strict graph order did not certify the generated gap: {relation:?}");
+        }
+    }
+    match non_equal_rational_graph.relation_to_cubic(&non_equal_cubic_baseline, &policy) {
+        HClassification::Decided(HBezierCurveRelation::NoIntersection) => {}
+        relation => {
+            panic!("non-equal rational/cubic strict graph relation did not certify no-hit: {relation:?}");
+        }
+    }
+    let non_equal_cubic_crossing = HCubicBezier2::new(
+        HPoint2::new(HReal::zero(), HReal::from(2_i8)),
+        HPoint2::new(h_ratio(1, 3), HReal::zero()),
+        HPoint2::new(h_ratio(2, 3), HReal::zero()),
+        HPoint2::new(HReal::one(), HReal::from(2_i8)),
+    );
+    match non_equal_rational_graph
+        .graph_order_to_cubic_over_axis(&non_equal_cubic_crossing, HAxis2::X, &policy)
+    {
+        HClassification::Decided(HBezierMonotoneGraphOrder::IntersectsOrTouches {
+            parameters,
+            spans,
+        }) if !parameters.is_empty() || !spans.is_empty() => {}
+        relation => {
+            panic!("non-equal rational/cubic quintic graph roots were not retained: {relation:?}");
+        }
+    }
+    match non_equal_rational_graph.relation_to_cubic(&non_equal_cubic_crossing, &policy) {
+        HClassification::Decided(HBezierCurveRelation::IntersectionPoints { .. })
+        | HClassification::Decided(HBezierCurveRelation::IntersectionRegions { .. }) => {}
+        relation => {
+            panic!("non-equal rational/cubic quintic graph roots did not reach relation dispatch: {relation:?}");
+        }
+    }
+    let equal_weight_rational_cubic = HRationalQuadraticBezier2::try_new(
+        h_point_i32(0, 0),
+        h_point_i32(300, 3 * lift),
+        h_point_i32(600, 0),
+        HReal::from(-3_i8),
+        HReal::from(-3_i8),
+        HReal::from(-3_i8),
+    )
+    .unwrap();
+    let cubic_graph_gap = HCubicBezier2::new(
+        h_point_i32(0, 1),
+        h_point_i32(200, 2 * lift + 1),
+        h_point_i32(400, 2 * lift + 1),
+        h_point_i32(600, 1),
+    );
+    match equal_weight_rational_cubic.graph_order_to_cubic_over_axis(
+        &cubic_graph_gap,
+        HAxis2::X,
+        &policy,
+    ) {
+        HClassification::Decided(HBezierMonotoneGraphOrder::FirstLess) => {}
+        relation => {
+            panic!("equal-weight rational/cubic graph order did not certify the generated gap: {relation:?}");
+        }
+    }
+    match cubic_graph_gap.graph_order_to_rational_quadratic_over_axis(
+        &equal_weight_rational_cubic,
+        HAxis2::X,
+        &policy,
+    ) {
+        HClassification::Decided(HBezierMonotoneGraphOrder::FirstGreater) => {}
+        relation => {
+            panic!("cubic/equal-weight rational graph order did not certify the generated gap: {relation:?}");
+        }
+    }
+
+    let reversed = HRationalQuadraticBezier2::try_new(
+        h_point_i32(512, 0),
+        h_point_i32(256, lift),
+        h_point_i32(0, 0),
+        HReal::one(),
+        HReal::from(2_i8),
+        HReal::one(),
+    )
+    .unwrap();
+    match rational.relation_to_rational_quadratic(&reversed, &policy) {
+        HClassification::Decided(HBezierCurveRelation::SameCurveImage) => {}
+        relation => {
+            panic!("reversed rational conic image was not certified exactly: {relation:?}");
+        }
+    }
+
+    let negative_line = HRationalQuadraticBezier2::try_new(
+        h_point_i32(0, 0),
+        h_point_i32(256, 0),
+        h_point_i32(512, 0),
+        HReal::from(-1_i8),
+        HReal::from(-2_i8),
+        HReal::from(-1_i8),
+    )
+    .unwrap();
+    let negative_cross_line = HRationalQuadraticBezier2::try_new(
+        h_point_i32(256, -16),
+        h_point_i32(256, 0),
+        h_point_i32(256, 16),
+        HReal::from(-1_i8),
+        HReal::from(-2_i8),
+        HReal::from(-1_i8),
+    )
+    .unwrap();
+    match negative_line.relation_to_rational_quadratic(&negative_cross_line, &policy) {
+        HClassification::Decided(HBezierCurveRelation::LineSegmentIntersection { .. }) => {}
+        relation => {
+            panic!("same-sign negative rational line images did not dispatch exactly: {relation:?}");
+        }
+    }
+
+    let polynomial_line = HQuadraticBezier2::new(
+        h_point_i32(-1, 0),
+        h_point_i32(128, 0),
+        h_point_i32(512, 0),
+    );
+    let isolated_cubic = HCubicBezier2::new(
+        h_point_i32(0, -1),
+        h_point_i32(170, 1),
+        h_point_i32(340, 1),
+        h_point_i32(512, 1),
+    );
+    match polynomial_line.relation_to_cubic(&isolated_cubic, &policy) {
+        HClassification::Decided(HBezierCurveRelation::IntersectionRegions { regions })
+            if !regions.is_empty() => {}
+        relation => {
+            panic!("line-image cubic isolated roots were not retained as regions: {relation:?}");
+        }
+    }
+
+    let graph_lower = HQuadraticBezier2::new(
+        h_point_i32(0, 0),
+        h_point_i32(3, 3 * lift),
+        h_point_i32(6, 0),
+    );
+    let graph_upper = HCubicBezier2::new(
+        h_point_i32(0, 1),
+        h_point_i32(2, 2 * lift + 1),
+        h_point_i32(4, 2 * lift + 1),
+        h_point_i32(6, 1),
+    );
+    match graph_lower.graph_order_to_cubic_over_axis(&graph_upper, HAxis2::X, &policy) {
+        HClassification::Decided(HBezierMonotoneGraphOrder::FirstLess) => {}
+        relation => panic!("shared-axis graph order did not certify the generated gap: {relation:?}"),
+    }
+
+    let tangent_y = (HReal::from(3 * lift) / HReal::from(2_i8)).unwrap();
+    let tangent_line = HLineSeg2::try_new(
+        HPoint2::new(HReal::zero(), tangent_y.clone()),
+        HPoint2::new(HReal::from(6_i8), tangent_y),
+    )
+    .unwrap();
+    match graph_lower.relation_to_line_with_contacts(&tangent_line, &policy) {
+        HClassification::Decided(HBezierLineContactRelation::Contacts { contacts })
+            if contacts.iter().any(|contact| {
+                contact.kind() == HBezierLineContactKind::Tangent
+                    && contact.parameter() == &h_ratio(1, 2)
+            }) => {}
+        relation => panic!("generated quadratic tangent was not classified exactly: {relation:?}"),
+    }
+
+    let rational_tangent_y = (HReal::from(2 * lift) / HReal::from(3_i8)).unwrap();
+    let rational_tangent = HLineSeg2::try_new(
+        HPoint2::new(HReal::zero(), rational_tangent_y.clone()),
+        HPoint2::new(HReal::from(512_i32), rational_tangent_y),
+    )
+    .unwrap();
+    match rational.relation_to_line_with_contacts(&rational_tangent, &policy) {
+        HClassification::Decided(HBezierLineContactRelation::Contacts { contacts })
+            if contacts.iter().any(|contact| {
+                contact.kind() == HBezierLineContactKind::Tangent
+                    && contact.parameter() == &h_ratio(1, 2)
+            }) => {}
+        relation => panic!("generated rational conic tangent was not classified exactly: {relation:?}"),
+    }
+}
+
+fn h_assert_bezier_point_image_fits(reader: &mut ByteReader<'_>) {
+    let policy = h_policy();
+    let point = h_point_i32(reader.i32_range(-16, 16), reader.i32_range(-16, 16));
+    let sign = if reader.bool() { 1 } else { -1 };
+    let endpoint_weight = HReal::from(sign);
+    let control_weight = HReal::from(reader.i32_range(1, 8) * sign);
+    let quadratic = HQuadraticBezier2::new(point.clone(), point.clone(), point.clone());
+    let cubic = HCubicBezier2::new(point.clone(), point.clone(), point.clone(), point.clone());
+    let rational = HRationalQuadraticBezier2::try_new(
+        point.clone(),
+        point.clone(),
+        point.clone(),
+        endpoint_weight.clone(),
+        control_weight,
+        endpoint_weight,
+    )
+    .unwrap();
+
+    for (count, fit) in [
+        (3, quadratic.fit_exact_point_image(&policy).unwrap()),
+        (4, cubic.fit_exact_point_image(&policy).unwrap()),
+        (3, rational.fit_exact_point_image(&policy).unwrap()),
+    ] {
+        match fit {
+            HClassification::Decided(HBezierPointImageFitRelation::Fit(fit)) => {
+                assert_eq!(fit.point(), &point);
+                assert_eq!(fit.control_point_count(), count);
+            }
+            relation => panic!("collapsed Bezier/conic did not certify point image: {relation:?}"),
+        }
+    }
+
+    match quadratic.relation_to_rational_quadratic(&rational, &policy) {
+        HClassification::Decided(HBezierCurveRelation::SameControlPolygon)
+        | HClassification::Decided(HBezierCurveRelation::SameCurveImage)
+        | HClassification::Decided(HBezierCurveRelation::IntersectionPoints { .. }) => {}
+        relation => panic!("collapsed polynomial/rational point images diverged: {relation:?}"),
+    }
+
+    let options = hypercurve::BezierFlatteningOptions::try_new(HReal::one(), 4, &policy).unwrap();
+    let HClassification::Decided(polyline) = cubic.flatten_certified(&options, &policy) else {
+        panic!("collapsed cubic should flatten under generous fuzz options");
+    };
+    match polyline.fit_exact_point(&policy).unwrap() {
+        HClassification::Decided(HBezierPointFitRelation::Fit(fit)) => {
+            assert_eq!(fit.point(), &point);
+            assert_eq!(fit.source_certificate(), polyline.certificate());
+        }
+        relation => panic!("collapsed certified polyline did not fit one point: {relation:?}"),
+    }
+
+    let line_curve = HQuadraticBezier2::new(
+        h_point_i32(-2, 0),
+        h_point_i32(0, 0),
+        h_point_i32(2, 0),
+    );
+    let HClassification::Decided(line_polyline) = line_curve.flatten_certified(&options, &policy)
+    else {
+        panic!("line-like quadratic should flatten under generous fuzz options");
+    };
+    let simplified_line = match line_polyline.simplify_exact_collinear(&policy) {
+        HClassification::Decided(polyline) => polyline,
+        HClassification::Uncertain(reason) => {
+            panic!("line-like quadratic simplification became uncertain: {reason:?}");
+        }
+    };
+    match simplified_line
+        .checked_offset_left(HReal::one(), &policy)
+        .unwrap()
+    {
+        HClassification::Decided(offset) => {
+            assert_eq!(offset.curve().segments().len(), 1);
+            assert_eq!(offset.source_certificate(), simplified_line.certificate());
+            assert_eq!(offset.distance(), &HReal::one());
+        }
+        relation => panic!("certified flattened line offset was not checked: {relation:?}"),
+    }
+
+    let linear_cubic = HCubicBezier2::new(
+        h_point_i32(0, 0),
+        h_point_i32(3, 0),
+        h_point_i32(6, 0),
+        h_point_i32(9, 0),
+    );
+    let one_third = (HReal::one() / HReal::from(3_i8)).unwrap();
+    match linear_cubic
+        .inverse_length_parameter_region(HReal::from(3_i8), 0, 0, &policy)
+        .unwrap()
+    {
+        HClassification::Decided(region) => {
+            assert_eq!(region.parameter_span().start(), &one_third);
+            assert_eq!(region.parameter_span().end(), &one_third);
+            assert_eq!(region.prefix_bounds_at_span_end().lower(), &HReal::from(3_i8));
+            assert_eq!(region.prefix_bounds_at_span_end().upper(), &HReal::from(3_i8));
+        }
+        relation => panic!("linear cubic inverse length did not certify exactly: {relation:?}"),
+    }
 }
 
 /// Aggregate hypercurve fuzz entrypoint covering public APIs and cross-path invariants.
 pub fn h_assert_full_api(reader: &mut ByteReader<'_>) {
-    match reader.byte() % 13 {
+    match reader.byte() % 14 {
         0 => h_assert_segment_intersections(reader),
         1 => h_assert_segment_containment_and_reversal(reader),
         2 => h_assert_contour_region_classification(reader),
@@ -1876,6 +2296,7 @@ pub fn h_assert_full_api(reader: &mut ByteReader<'_>) {
         9 => h_assert_offset_cap_matrix(reader),
         10 => h_assert_polyline_reconstruction(reader),
         11 => h_assert_bezier_conic_relations(reader),
+        12 => h_assert_bezier_point_image_fits(reader),
         _ => h_assert_adversarial_polygon_pipeline(reader),
     }
 }
