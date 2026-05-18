@@ -595,21 +595,51 @@ impl<M: Clone + Send + Sync + Debug> ToSVG for Sketch<M> {
                 .set("d", data)
         };
 
-        // Region-only export keeps fill topology in the hypercurve model and
-        // emits one SVG even-odd path from finite boundary rings. The even-odd
-        // interpretation is the same crossing-number point-in-polygon family
-        // surveyed by Hormann and Agathos, "The point in polygon problem for
-        // arbitrary polygons," Computational Geometry 20(3), 2001
-        // (<https://doi.org/10.1016/S0925-7721(01)00012-8>).
-        if !self.as_region().is_empty() && self.compat_geometry_is_area_only() {
-            let region_rings = self.region_rings();
-            if !region_rings.is_empty() {
-                let mut rings = region_rings.material;
-                rings.extend(region_rings.holes);
-                g = g.add(make_region_path(&rings));
+        let make_polyline_path = |polyline: &[[Real; 2]]| {
+            let mut data = path::Data::new();
+            let mut points = polyline.iter();
 
-                let (min_x, min_y, max_x, max_y) =
-                    self.region_xy_bounds().unwrap_or((0.0, 0.0, 1.0, 1.0));
+            if let Some(start) = points.next() {
+                data = data.move_to((start[0], start[1]));
+            }
+            for point in points {
+                data = data.line_to((point[0], point[1]));
+            }
+
+            element::Path::new()
+                .set("fill", "none")
+                .set("stroke", "black")
+                .set("stroke-width", 1)
+                .set("vector-effect", "non-scaling-stroke")
+                .set("d", data)
+        };
+
+        let region_rings = self.region_rings();
+        let wire_polylines = self.wire_polylines();
+        let can_export_native = !region_rings.is_empty() || !wire_polylines.is_empty();
+
+        // Native export keeps fill and wire topology in hypercurve and emits
+        // finite SVG path commands only at the file boundary. Filled contours
+        // use even-odd semantics, the same crossing-number point-in-polygon
+        // family surveyed by Hormann and Agathos, "The point in polygon
+        // problem for arbitrary polygons," Computational Geometry 20(3), 2001
+        // (<https://doi.org/10.1016/S0925-7721(01)00012-8>). Keeping finite
+        // SVG coordinates at the API boundary follows Yap, "Towards Exact
+        // Geometric Computation," Computational Geometry 7(1-2), 1997
+        // (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+        if can_export_native {
+            let mut rings = region_rings.material;
+            rings.extend(region_rings.holes);
+
+            if !rings.is_empty() {
+                g = g.add(make_region_path(&rings));
+            }
+
+            for wire in &wire_polylines {
+                g = g.add(make_polyline_path(wire));
+            }
+
+            if let Some((min_x, min_y, max_x, max_y)) = self.native_xy_bounds() {
                 let doc = svg::Document::new()
                     .set("viewBox", (min_x, min_y, max_x - min_x, max_y - min_y))
                     .add(g);

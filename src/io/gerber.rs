@@ -147,7 +147,7 @@ where
         // while geometric classification stays with Region2; that split follows
         // Yap, "Towards Exact Geometric Computation," Computational Geometry
         // 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-        if !self.as_region().is_empty() && self.compat_geometry_is_area_only() {
+        if !self.as_region().is_empty() && Self::region_has_nonzero_area(self.as_region()) {
             let region_rings = self.region_rings();
             if !region_rings.is_empty() {
                 emit_region_rings(

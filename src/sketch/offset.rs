@@ -54,13 +54,14 @@
 //!
 //! All operations preserve the 3D polygon structure while applying 2D offsetting
 //! to the planar projections stored in the geometry collection.
-use crate::float_types::Real;
+use crate::float_types::{Real, hreal_from_f64};
 use crate::sketch::Sketch;
 use geo::algorithm::map_coords::MapCoords;
 use geo::{
     Buffer, Coord, Geometry, GeometryCollection, LineString, MultiPolygon, Polygon,
     algorithm::buffer::{BufferStyle, LineJoin},
 };
+use hypercurve::{Classification, CurvePolicy, Region2};
 use std::borrow::Cow;
 use std::fmt::Debug;
 
@@ -100,25 +101,113 @@ fn skel_multi_poly(mpoly: &MultiPolygon<Real>, inward: bool) -> Vec<LineString<R
         .collect()
 }
 
+fn signed_ring_area(ring: &[[Real; 2]]) -> Real {
+    if ring.len() < 3 {
+        return 0.0;
+    }
+    let mut area = 0.0;
+    for edge in ring.windows(2) {
+        area += edge[0][0] * edge[1][1] - edge[1][0] * edge[0][1];
+    }
+    if let (Some(first), Some(last)) = (ring.first(), ring.last()) {
+        area += last[0] * first[1] - first[0] * last[1];
+    }
+    0.5 * area
+}
+
 impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// Finite offsetting/skeleton input regenerated from native hypercurve
     /// regions when possible.
     ///
     /// The current offset backend remains a `geo` compatibility bridge, but
-    /// area topology is sourced from `Region2` rather than from the temporary
-    /// cache. This preserves csgrs' hyperreal boundary discipline while the
-    /// native hypercurve offset path is being brought over; see Yap, "Towards
-    /// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
-    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>), and Farouki and Neff,
-    /// "Analytic properties of plane offset curves," *Computer Aided Geometric
-    /// Design* 7(1-4), 1990
+    /// area topology is sourced from `Region2` and sidecar open paths are
+    /// preserved as native `CurveString2` wires rather than being inferred from
+    /// the temporary cache. This preserves csgrs' hyperreal boundary discipline
+    /// while the native hypercurve offset path is being brought over; see Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>), and
+    /// Farouki and Neff, "Analytic properties of plane offset curves,"
+    /// *Computer Aided Geometric Design* 7(1-4), 1990
     /// (<https://doi.org/10.1016/0167-8396(90)90023-K>).
     fn offset_compat_geometry(&self) -> Cow<'_, GeometryCollection<Real>> {
-        if !self.as_region().is_empty() && self.compat_geometry_is_area_only() {
+        if !self.as_region().is_empty() && self.geometry.0.is_empty() {
+            Cow::Owned(Self::geometry_from_native(self.as_region(), self.wires()))
+        } else if !self.as_region().is_empty()
+            && self.wires().is_empty()
+            && self.compat_geometry_is_area_only()
+        {
             Cow::Owned(Self::geometry_from_region(self.as_region()))
         } else {
             self.effective_geometry()
         }
+    }
+
+    fn preserve_offset_wires(&self, sketch: &mut Sketch<M>) {
+        if !self.wires().is_empty() {
+            sketch.wires.extend(self.wires().iter().cloned());
+            sketch.geometry = Self::geometry_from_native(sketch.as_region(), sketch.wires());
+        }
+    }
+
+    /// Try a native hypercurve sharp offset before falling back to `geo`.
+    ///
+    /// This covers the conservative material-only case where each contour can
+    /// be offset independently and checked for self-contact by hypercurve. Full
+    /// regularized offsets with holes, splits, and merged components still use
+    /// the finite buffer bridge until the trim/rebuild stage is moved into the
+    /// hyper crates. This follows the primitive-offset staging in Tiller and
+    /// Hanson, "Offsets of Two-Dimensional Profiles," *IEEE Computer Graphics
+    /// and Applications* 4(9), 1984 (<https://doi.org/10.1109/MCG.1984.276011>)
+    /// and the offset-topology caveats in Farouki and Neff, "Analytic
+    /// properties of plane offset curves," *Computer Aided Geometric Design*
+    /// 7(1-4), 1990 (<https://doi.org/10.1016/0167-8396(90)90023-K>).
+    fn native_sharp_offset(&self, distance: Real) -> Option<Sketch<M>> {
+        if self.region.is_empty()
+            || !self.wires.is_empty()
+            || !Self::region_has_nonzero_area(&self.region)
+            || !distance.is_finite()
+            || !self.region.hole_contours().is_empty()
+        {
+            return None;
+        }
+
+        let rings = self.region_rings();
+        if rings.material.len() != self.region.material_contours().len() {
+            return None;
+        }
+
+        let policy = CurvePolicy::certified();
+        let mut material = Vec::with_capacity(self.region.material_contours().len());
+        for (contour, ring) in self
+            .region
+            .material_contours()
+            .iter()
+            .zip(rings.material.iter())
+        {
+            let signed_area = signed_ring_area(ring);
+            if signed_area.abs() <= f64::EPSILON {
+                return None;
+            }
+            let outward_distance = if signed_area.is_sign_positive() {
+                -distance
+            } else {
+                distance
+            };
+            let offset_distance = hreal_from_f64(outward_distance).ok()?;
+            let offset = match contour.offset_left_checked(offset_distance, &policy).ok()? {
+                Classification::Decided(offset) => offset,
+                Classification::Uncertain(_) => return None,
+            };
+            material.push(offset);
+        }
+
+        let mut sketch = Sketch::from_region(
+            Region2::from_material_contours(material),
+            self.metadata.clone(),
+        );
+        sketch.origin = self.origin;
+        sketch.origin_transform = self.origin_transform;
+        Some(sketch)
     }
 
     /// **Mathematical Foundation: Sharp Corner Polygon Offsetting**
@@ -162,6 +251,10 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// **Note**: Sharp corners may create very acute angles for large offset distances.
     #[allow(clippy::unnecessary_cast)]
     pub fn offset(&self, distance: Real) -> Sketch<M> {
+        if let Some(sketch) = self.native_sharp_offset(distance) {
+            return sketch;
+        }
+
         let geometry = self.offset_compat_geometry();
         let offset_geoms = geometry
             .iter()
@@ -181,15 +274,19 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             })
             .collect();
 
-        // Construct a new GeometryCollection from the offset geometries
+        // Construct a new GeometryCollection from the offset geometries, then
+        // immediately recompose it into native hypercurve topology. The buffer
+        // result is a finite compatibility boundary, not Sketch ownership.
         let new_collection = GeometryCollection::<Real>(offset_geoms);
 
-        Sketch::from_compat_geometry_with_origin(
+        let mut sketch = Sketch::from_compat_bridge_geometry_with_origin(
             new_collection,
             self.metadata.clone(),
             self.origin,
             self.origin_transform,
-        )
+        );
+        self.preserve_offset_wires(&mut sketch);
+        sketch
     }
 
     /// **Mathematical Foundation: Rounded Corner Polygon Offsetting**
@@ -260,21 +357,36 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             })
             .collect();
 
-        // Construct a new GeometryCollection from the offset geometries
+        // Construct a new GeometryCollection from the offset geometries, then
+        // immediately recompose it into native hypercurve topology. Farouki
+        // and Neff characterize the exact offset curve; this finite buffer is
+        // only the current approximation boundary.
         let new_collection = GeometryCollection::<Real>(offset_geoms);
 
-        Sketch::from_compat_geometry_with_origin(
+        let mut sketch = Sketch::from_compat_bridge_geometry_with_origin(
             new_collection,
             self.metadata.clone(),
             self.origin,
             self.origin_transform,
-        )
+        );
+        self.preserve_offset_wires(&mut sketch);
+        sketch
     }
 
     /// This function returns a Sketch which represents an instantiated straight skeleton of Sketch upon which it's called.
     /// Each segment of the straight skeleton is represented as a single `LineString`.
     /// If either endpoints of a `LineString` is infinitely far from the other, then this `LineString` will be clipped to one which has shorter length.
     /// The order of these `LineString`s is arbitrary. (There is no guaranteed order on segments of the straight skeleton.)
+    ///
+    /// Area topology is projected from native `Region2`, skeleton linework is
+    /// promoted back into native `CurveString2` wires, and any pre-existing
+    /// open wires are preserved as independent path topology. The straight
+    /// skeleton construction follows Aichholzer et al., "A Novel Type of
+    /// Skeleton for Polygons," *Journal of Universal Computer Science* 1(12),
+    /// 1995 (<https://doi.org/10.3217/jucs-001-12-0752>), while the
+    /// hyperreal/finite boundary follows Yap, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     ///
     /// # Arguments
     ///
@@ -298,14 +410,17 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             })
             .collect();
 
-        // Construct a new GeometryCollection from the offset geometries
+        // Construct a new GeometryCollection from skeleton linework, then
+        // promote it to native open `CurveString2` wires.
         let new_collection = GeometryCollection::<Real>(skeleton);
 
-        Sketch::from_compat_geometry_with_origin(
+        let mut sketch = Sketch::from_compat_bridge_geometry_with_origin(
             new_collection,
             self.metadata.clone(),
             self.origin,
             self.origin_transform,
-        )
+        );
+        self.preserve_offset_wires(&mut sketch);
+        sketch
     }
 }

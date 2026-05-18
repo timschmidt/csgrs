@@ -105,6 +105,10 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             return self.extrude_region_vector(direction);
         }
 
+        if !self.wires().is_empty() {
+            return self.extrude_wires_vector(direction);
+        }
+
         // Collect 3-D polygons generated from every `geo` geometry in the sketch
         let mut out: Vec<Polygon<M>> = Vec::new();
         let geometry = self.effective_geometry();
@@ -127,10 +131,12 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         }
     }
 
-    /// Extrude the native hypercurve region without routing through a separate
-    /// 2D backend type.
+    /// Extrude native hypercurve topology without routing through a separate 2D
+    /// backend type.
     ///
-    /// Hypercurve contours are approximated only at the mesh boundary, while cap
+    /// Filled `Region2` contours receive caps and side walls; open
+    /// `CurveString2` wires are independent ruled side surfaces. Hypercurve
+    /// contours are approximated only at the mesh boundary, while cap
     /// triangulation is delegated to `Sketch::triangulate_with_holes`, which
     /// promotes finite boundary coordinates back to hyperreal predicates before
     /// ear clipping. This keeps the data model aligned with Yap, "Towards Exact
@@ -214,6 +220,27 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             }
         }
 
+        for wire in self.wire_polylines() {
+            self.push_polyline_sides(&wire, direction, flip, &mut polygons);
+        }
+
+        Mesh::from_polygons(&polygons, self.metadata.clone())
+    }
+
+    /// Extrude native open hypercurve wires into ruled side surfaces.
+    ///
+    /// The source topology remains in `CurveString2`; only the final mesh
+    /// boundary samples are finite points. This is the ruled-surface analogue
+    /// of area extrusion and keeps CAD ownership on the exact object side of
+    /// Yap's exact-geometric-computation boundary: Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    fn extrude_wires_vector(&self, direction: Vector3<Real>) -> Mesh<M> {
+        let flip = direction.dot(&Vector3::z()) < 0.0;
+        let mut polygons = Vec::new();
+        for wire in self.wire_polylines() {
+            self.push_polyline_sides(&wire, direction, flip, &mut polygons);
+        }
         Mesh::from_polygons(&polygons, self.metadata.clone())
     }
 
@@ -224,7 +251,19 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         flip: bool,
         polygons: &mut Vec<Polygon<M>>,
     ) {
-        for window in ring.windows(2) {
+        // Closed region rings and open wires share side-strip emission after
+        // crossing the hypercurve-to-mesh sampling boundary.
+        self.push_polyline_sides(ring, direction, flip, polygons);
+    }
+
+    fn push_polyline_sides(
+        &self,
+        polyline: &[[Real; 2]],
+        direction: Vector3<Real>,
+        flip: bool,
+        polygons: &mut Vec<Polygon<M>>,
+    ) {
+        for window in polyline.windows(2) {
             let b_i = Point3::new(window[0][0], window[0][1], 0.0);
             let b_j = Point3::new(window[1][0], window[1][1], 0.0);
             let t_i = b_i + direction;
@@ -799,10 +838,11 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// - **Precision**: Maintains accuracy for small angles
     ///
     /// Native area profiles are consumed from hypercurve region rings before
-    /// finite mesh generation. This keeps profile topology in hyper geometry
-    /// and treats mesh vertices as boundary output, following Yap, "Towards
-    /// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
-    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    /// finite mesh generation. Native open `CurveString2` wires are revolved as
+    /// independent profile curves without end caps. This keeps profile topology
+    /// in hyper geometry and treats mesh vertices as boundary output, following
+    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     ///
     /// # Parameters
     /// - `angle_degs`: Revolution angle in degrees (0-360)
@@ -1055,6 +1095,16 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             }
         }
 
+        for wire in self.wire_polylines() {
+            new_polygons.extend(revolve_ring(
+                &wire,
+                true,
+                angle_radians,
+                segments,
+                &self.metadata,
+            ));
+        }
+
         //----------------------------------------------------------------------
         // 3) Return the new CSG:
         //----------------------------------------------------------------------
@@ -1072,14 +1122,16 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// stitches side walls, and caps open ends.
     ///
     /// Closed area profiles are read from Sketch's native hypercurve
-    /// [`Region2`](hypercurve::Region2) boundary rings. The path frames and
-    /// mesh vertices are finite output, while the swept profile topology stays
-    /// in hyper geometry until the mesh boundary. This follows Yap, "Towards
-    /// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997
-    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>). The frame propagation
-    /// is the standard rotation-minimizing/parallel-transport sweep approach;
-    /// see Bishop, "There is more than one way to frame a curve," *American
-    /// Mathematical Monthly* 82(3), 1975
+    /// [`Region2`](hypercurve::Region2) boundary rings and capped when the path
+    /// is open. Native [`CurveString2`](hypercurve::CurveString2) wires are
+    /// swept as independent open profile curves without caps. The path frames
+    /// and mesh vertices are finite output, while the swept profile topology
+    /// stays in hyper geometry until the mesh boundary. This follows Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>). The
+    /// frame propagation is the standard rotation-minimizing/parallel-transport
+    /// sweep approach; see Bishop, "There is more than one way to frame a
+    /// curve," *American Mathematical Monthly* 82(3), 1975
     /// (<https://doi.org/10.2307/2319846>).
     ///
     /// * `path` - ordered list of 3-D points. If the first and last points
@@ -1147,10 +1199,10 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
                 .expect("homogeneous w != 0")
         }
 
-        // collect every exterior & interior ring of the sketch
+        // collect every closed region ring and open wire profile of the sketch
         #[derive(Debug)]
         struct Ring {
-            coords_2d: Vec<[Real; 2]>,      // original XY coords (first == last)
+            coords_2d: Vec<[Real; 2]>,      // original XY coords
             slices: Vec<Vec<Point3<Real>>>, // one Vec<Point3> per path vertex
         }
         let mut rings: Vec<Ring> = Vec::new();
@@ -1243,6 +1295,10 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             }
         }
 
+        for wire in self.wire_polylines() {
+            add_ring(wire);
+        }
+
         if rings.is_empty() {
             return Mesh::empty(self.metadata.clone());
         }
@@ -1254,7 +1310,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         let end_idx = if path_is_closed { n_path } else { n_path - 1 };
 
         for ring in &rings {
-            let v_per_ring = ring.coords_2d.len() - 1; // last == first
+            let v_per_ring = ring.coords_2d.len() - 1;
             for i in 0..end_idx {
                 let j = (i + 1) % n_path;
                 let slice_i = &ring.slices[i];

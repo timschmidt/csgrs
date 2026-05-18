@@ -5,10 +5,10 @@ use crate::float_types::{Real, hpoints_within_epsilon};
 use crate::mesh::Mesh;
 use crate::mesh::bsp::Node;
 use crate::mesh::plane::Plane;
-use crate::sketch::Sketch;
+use crate::sketch::{Sketch, wire_from_points};
 use crate::vertex::Vertex;
 use geo::{
-    BooleanOps, Geometry, GeometryCollection, LineString, MultiPolygon, Orient, coord,
+    BooleanOps, Geometry, GeometryCollection, LineString, MultiPolygon, Orient,
     orient::Direction,
 };
 use hashbrown::HashMap;
@@ -18,10 +18,16 @@ use std::fmt::Debug;
 
 impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// Flattens any 3D polygons by projecting them onto the XY plane (z=0),
-    /// unifies them into one or more 2D polygons, and returns a purely 2D Sketch.
+    /// unifies them into one or more 2D polygons, and returns a hypercurve-backed
+    /// 2D Sketch.
     ///
     /// - All `polygons` in the Mesh are tessellated, projected into XY, and unioned.
-    /// - The output is a Sketch containing the final 2D shape.
+    /// - The finite union is a transitional interop bridge; the output promotes
+    ///   supported rings directly into `Region2` so Sketch topology is owned by
+    ///   hypercurve. This follows Yap, "Towards Exact Geometric Computation,"
+    ///   *Computational Geometry* 7(1-2), 1997
+    ///   (<https://doi.org/10.1016/0925-7721(95)00040-2>), keeping finite
+    ///   coordinates at algorithm/API boundaries and exact objects internally.
     pub fn flatten(&self) -> Sketch<M> {
         // Convert all 3D polygons into a collection of 2D polygons
         let mut flattened_3d = Vec::new(); // will store geo::Polygon<Real>
@@ -64,7 +70,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         let mut new_gc = GeometryCollection::default();
         new_gc.0.push(Geometry::MultiPolygon(oriented));
 
-        Sketch::from_compat_geometry_with_origin(
+        Sketch::from_compat_bridge_geometry_with_origin(
             new_gc,
             self.metadata.clone(),
             Vertex::default(),
@@ -88,6 +94,9 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// with Yap's exact-geometric-computation model, "Towards Exact Geometric
     /// Computation," *Computational Geometry* 7(1-2), 1997
     /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    /// Open intersection chains are promoted directly to native
+    /// `hypercurve::CurveString2` wires, so the finite `geo` projection is no
+    /// longer the source of slice path topology.
     ///
     /// # Example
     /// ```
@@ -121,7 +130,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             result_polygons.push(p);
         }
 
-        let mut open_geometry = Vec::new();
+        let mut open_wires = Vec::new();
         let mut material_contours = Vec::new();
 
         // Convert the "chains" or loops into open/closed polygons
@@ -159,13 +168,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
                 if let Some(contour) = Sketch::<M>::contour_from_points(&points) {
                     material_contours.push(contour);
                 }
-            } else {
-                open_geometry.push(Geometry::LineString(LineString::new(
-                    points
-                        .iter()
-                        .map(|point| coord! {x: point[0], y: point[1]})
-                        .collect(),
-                )));
+            } else if let Some(wire) = wire_from_points(points.iter().copied()) {
+                open_wires.push(wire);
             }
         }
 
@@ -174,16 +178,10 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         } else {
             Region2::from_material_contours(material_contours)
         };
-        let mut new_gc = if region.is_empty() {
-            GeometryCollection::default()
-        } else {
-            Sketch::<M>::geometry_from_region(&region)
-        };
-        new_gc.0.extend(open_geometry);
 
-        Sketch::from_region_and_compat_geometry_with_origin(
+        Sketch::from_region_and_wires_with_origin(
             region,
-            new_gc,
+            open_wires,
             self.metadata.clone(),
             Vertex::default(),
             Sketch::<M>::prepare_origin_transform(Vertex::default()),
