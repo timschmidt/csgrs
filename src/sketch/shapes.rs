@@ -3,7 +3,6 @@
 use crate::csg::CSG;
 use crate::float_types::{FRAC_PI_2, PI, Real, TAU, tolerance};
 use crate::sketch::{Sketch, wire_from_points};
-use geo::BoundingRect;
 use hypercurve::Region2;
 use std::fmt::Debug;
 
@@ -1394,16 +1393,18 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     /// - `order`: recursion order (number of points ≈ 4^order).
     /// - `padding`: optional inset from the bounding-box edges (same units as the sketch).
     ///   Returns a new `Sketch` containing only the inside segments as native wires.
+    ///
+    /// Bounds are taken from the native hypercurve region/wire topology rather
+    /// than from the temporary `geo` compatibility cache. That keeps Hilbert
+    /// path construction on the same exact-object side of the API boundary as
+    /// the containment tests it uses; see Yap, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
     pub fn hilbert_curve(&self, order: usize, padding: Real) -> Sketch<M> {
         if order == 0 {
             return Sketch::empty(self.metadata.clone());
         }
-        let bounds = self.native_xy_bounds().or_else(|| {
-            let geometry = self.effective_geometry();
-            geometry
-                .bounding_rect()
-                .map(|rect| (rect.min().x, rect.min().y, rect.max().x, rect.max().y))
-        });
+        let bounds = self.native_xy_bounds();
         let Some((min_x, min_y, max_x, max_y)) = bounds else {
             return Sketch::empty(self.metadata.clone());
         };

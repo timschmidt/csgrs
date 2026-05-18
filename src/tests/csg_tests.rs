@@ -488,6 +488,19 @@ fn test_csg_mass_properties() {
 }
 
 #[test]
+fn test_csg_exact_mass_properties_use_hyperphysics_report() {
+    let cube: Mesh<()> = Mesh::cube(2.0, ()).center();
+    let report = cube
+        .exact_mass_properties(1.0)
+        .expect("exact mass properties should build");
+
+    assert_eq!(report.volume, hyperphysics::Real::from(8));
+    assert_eq!(report.mass, hyperphysics::Real::from(8));
+    assert_eq!(report.center_of_mass, hyperphysics::Vector3::zero());
+    assert_eq!(report.certificate.triangle_count, 12);
+}
+
+#[test]
 fn test_csg_to_rigid_body() {
     use crate::float_types::rapier3d::prelude::*;
     let cube: Mesh<()> = Mesh::cube(2.0, ());

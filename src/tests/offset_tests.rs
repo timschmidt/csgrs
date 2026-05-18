@@ -1,25 +1,19 @@
 //! Tests for offset and buffering behavior.
 
 use super::support::*;
-
-fn signed_ring_area(ring: &[[Real; 2]]) -> Real {
-    ring.windows(2)
-        .map(|edge| edge[0][0] * edge[1][1] - edge[1][0] * edge[0][1])
-        .sum::<Real>()
-        * 0.5
-}
+use hypercurve::finite_ring_signed_area;
 
 fn first_material_area(sketch: &Sketch<()>) -> Real {
-    let rings = sketch.region_rings();
-    signed_ring_area(&rings.material[0])
+    let profiles = sketch.region_profiles();
+    finite_ring_signed_area(profiles[0].material().points())
 }
 
 #[test]
 fn test_square_ccw_ordering() {
     let square = Sketch::<()>::square(2.0, ());
-    let rings = square.region_rings();
-    assert_eq!(rings.material.len(), 1);
-    let area = signed_ring_area(&rings.material[0]);
+    let profiles = square.region_profiles();
+    assert_eq!(profiles.len(), 1);
+    let area = finite_ring_signed_area(profiles[0].material().points());
     assert!(area > 0.0, "Square vertices are not CCW ordered");
 }
 
@@ -31,9 +25,9 @@ fn test_offset_2d_positive_distance_grows() {
 
     // The original square has area 4.0
     // The offset square should have area greater than 4.0
-    let rings = offset.region_rings();
-    assert_eq!(rings.material.len(), 1);
-    let area = signed_ring_area(&rings.material[0]);
+    let profiles = offset.region_profiles();
+    assert_eq!(profiles.len(), 1);
+    let area = finite_ring_signed_area(profiles[0].material().points());
     assert!(
         area > 4.0,
         "Offset with positive distance did not grow the square"
@@ -48,9 +42,9 @@ fn test_offset_2d_negative_distance_shrinks() {
 
     // The original square has area 4.0
     // The offset square should have area less than 4.0
-    let rings = offset.region_rings();
-    assert_eq!(rings.material.len(), 1);
-    let area = signed_ring_area(&rings.material[0]);
+    let profiles = offset.region_profiles();
+    assert_eq!(profiles.len(), 1);
+    let area = finite_ring_signed_area(profiles[0].material().points());
     assert!(
         area < 4.0,
         "Offset with negative distance did not shrink the square"

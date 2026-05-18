@@ -1,5 +1,14 @@
-use crate::{csg::CSG, float_types::Real, mesh::Mesh, sketch::Sketch};
+use crate::{
+    csg::CSG,
+    float_types::{Real, hreal_from_f64},
+    mesh::Mesh,
+    sketch::Sketch,
+};
 use geo::{BoundingRect, GeometryCollection};
+use hypercurve::{
+    BulgeVertex2, Classification, Contour2, CurveString2, FiniteProjectionOptions,
+    Point2 as HPoint2, Region2, Segment2,
+};
 use nalgebra::{Point2, Point3, Vector3};
 
 fn assert_close(actual: Real, expected: Real, eps: Real) {
@@ -7,6 +16,26 @@ fn assert_close(actual: Real, expected: Real, eps: Real) {
         (actual - expected).abs() <= eps,
         "expected {expected}, got {actual}"
     );
+}
+
+fn hpoint(x: Real, y: Real) -> HPoint2 {
+    HPoint2::new(hreal_from_f64(x).unwrap(), hreal_from_f64(y).unwrap())
+}
+
+fn bulge_vertex(x: Real, y: Real, bulge: Real) -> BulgeVertex2 {
+    BulgeVertex2::new(hpoint(x, y), hreal_from_f64(bulge).unwrap())
+}
+
+fn quarter_arc_region(metadata: ()) -> Sketch<()> {
+    let bulge = (std::f64::consts::FRAC_PI_4 / 2.0).tan();
+    let contour = Contour2::from_bulge_vertices(&[
+        bulge_vertex(1.0, 0.0, bulge),
+        bulge_vertex(0.0, 1.0, bulge),
+        bulge_vertex(-1.0, 0.0, bulge),
+        bulge_vertex(0.0, -1.0, bulge),
+    ])
+    .unwrap();
+    Sketch::from_region(Region2::from_material_contours(vec![contour]), metadata)
 }
 
 #[test]
@@ -40,6 +69,56 @@ fn sketch_geometry_accessor_prefers_native_region_over_stale_geo_cache() {
 
     assert_close(bounds.max().x, 2.0, 1e-9);
     assert_close(bounds.max().y, 3.0, 1e-9);
+}
+
+#[test]
+fn sketch_projects_region_profiles_as_hypercurve_boundary_products() {
+    let mut sketch = quarter_arc_region(());
+    sketch.geometry =
+        GeometryCollection(vec![geo::Geometry::Point(geo::Point::new(50.0, 50.0))]);
+    let options = FiniteProjectionOptions::try_new(1e-3).unwrap();
+
+    let Classification::Decided(profiles) = sketch.project_region_profiles(&options).unwrap()
+    else {
+        panic!("native region projection should be decided");
+    };
+
+    assert_eq!(profiles.len(), 1);
+    assert_eq!(profiles[0].material().certificate().arc_segment_count(), 4);
+    assert!(
+        profiles[0]
+            .material()
+            .points()
+            .iter()
+            .all(|point| (point[0] - 50.0).abs() > 1e-9),
+        "finite profiles must come from native hypercurve, not stale geo cache"
+    );
+}
+
+#[test]
+fn sketch_projects_wire_polylines_as_hypercurve_boundary_products() {
+    let wire = CurveString2::from_bulge_vertices(&[
+        bulge_vertex(0.0, 0.0, 1.0),
+        bulge_vertex(2.0, 0.0, 0.0),
+    ])
+    .unwrap();
+    let mut sketch = Sketch::from_wires(vec![wire], ());
+    sketch.geometry =
+        GeometryCollection(vec![geo::Geometry::Point(geo::Point::new(50.0, 50.0))]);
+    let options = FiniteProjectionOptions::try_new(1e-3).unwrap();
+
+    let polylines = sketch.project_wire_polylines(&options);
+
+    assert_eq!(polylines.len(), 1);
+    assert_eq!(polylines[0].certificate().arc_segment_count(), 1);
+    assert_eq!(polylines[0].points()[0], [0.0, 0.0]);
+    assert!(
+        polylines[0]
+            .points()
+            .iter()
+            .all(|point| (point[0] - 50.0).abs() > 1e-9),
+        "finite wire polylines must come from native hypercurve, not stale geo cache"
+    );
 }
 
 #[test]
@@ -106,14 +185,14 @@ fn sketch_from_geo_retains_unsupported_boundary_geometry() {
 }
 
 #[test]
-fn sketch_region_rings_and_contains_do_not_need_geo_cache() {
+fn sketch_region_profiles_and_contains_do_not_need_geo_cache() {
     let mut sketch = Sketch::rectangle(2.0, 3.0, ());
     sketch.geometry = GeometryCollection::default();
 
-    let rings = sketch.region_rings();
+    let profiles = sketch.region_profiles();
 
-    assert_eq!(rings.material.len(), 1);
-    assert_eq!(rings.holes.len(), 0);
+    assert_eq!(profiles.len(), 1);
+    assert_eq!(profiles[0].holes().len(), 0);
     assert!(sketch.contains_xy(1.0, 1.0).unwrap());
     assert!(!sketch.contains_xy(3.0, 1.0).unwrap());
 }
@@ -157,6 +236,53 @@ fn sketch_open_wire_transform_refreshes_hypercurve_wires() {
 
     assert_close(first.x, 5.0, 1e-9);
     assert_close(first.y, 7.0, 1e-9);
+}
+
+#[test]
+fn sketch_open_arc_wire_similarity_transform_preserves_hypercurve_arc() {
+    let wire = CurveString2::from_bulge_vertices(&[
+        bulge_vertex(0.0, 0.0, 1.0),
+        bulge_vertex(2.0, 0.0, 0.0),
+    ])
+    .unwrap();
+    let mut sketch = Sketch::from_region_and_wires(Region2::empty(), vec![wire], ());
+    sketch.geometry =
+        GeometryCollection(vec![geo::Geometry::Point(geo::Point::new(50.0, 50.0))]);
+
+    let moved = sketch.translate(3.0, 4.0, 0.0);
+
+    assert_eq!(moved.wires().len(), 1);
+    assert!(
+        matches!(moved.wires()[0].segments()[0], Segment2::Arc(_)),
+        "similarity transforms should preserve native hypercurve arc wires"
+    );
+    assert!(
+        !moved.geometry().0.iter().any(|geometry| matches!(
+            geometry,
+            geo::Geometry::Point(point) if (point.x() - 50.0).abs() <= 1e-9
+        )),
+        "stale finite cache should not drive native arc-wire transform"
+    );
+}
+
+#[test]
+fn sketch_native_bounds_use_hypercurve_arc_aabb_without_geo_cache() {
+    let bulge = (std::f64::consts::FRAC_PI_4 / 2.0).tan();
+    let wire = CurveString2::from_bulge_vertices(&[
+        bulge_vertex(1.0, 0.0, bulge),
+        bulge_vertex(0.0, 1.0, 0.0),
+    ])
+    .unwrap();
+    let mut sketch = Sketch::from_region_and_wires(Region2::empty(), vec![wire], ());
+    sketch.geometry =
+        GeometryCollection(vec![geo::Geometry::Point(geo::Point::new(50.0, 50.0))]);
+
+    let bounds = sketch.native_xy_bounds().expect("native arc bounds");
+
+    assert_close(bounds.0, 0.0, 1e-9);
+    assert_close(bounds.1, 0.0, 1e-9);
+    assert_close(bounds.2, 1.0, 1e-9);
+    assert_close(bounds.3, 1.0, 1e-9);
 }
 
 #[test]
@@ -365,6 +491,72 @@ fn sketch_boolean_fallback_prefers_native_wires_over_stale_sidecar_cache() {
             )
         }),
         "stale finite sidecar cache should not survive native boolean sidecar handling"
+    );
+}
+
+#[test]
+fn sketch_boolean_with_empty_operand_stays_on_native_hypercurve_topology() {
+    let mut left = Sketch::rectangle(2.0, 2.0, ());
+    left.geometry = GeometryCollection(vec![geo::Geometry::Polygon(geo::Polygon::new(
+        geo::LineString::from(vec![
+            (100.0, 100.0),
+            (101.0, 100.0),
+            (101.0, 101.0),
+            (100.0, 101.0),
+            (100.0, 100.0),
+        ]),
+        vec![],
+    ))]);
+
+    let union = left.union(&Sketch::empty(()));
+    let difference = left.difference(&Sketch::empty(()));
+    let intersection = left.intersection(&Sketch::empty(()));
+
+    assert!(union.contains_xy(1.0, 1.0).unwrap());
+    assert!(difference.contains_xy(1.0, 1.0).unwrap());
+    assert!(intersection.as_region().is_empty());
+    assert!(
+        !union.contains_xy(100.5, 100.5).unwrap_or(false),
+        "stale finite area cache must not participate when native Region2 has an empty boolean operand"
+    );
+}
+
+#[test]
+fn sketch_wire_only_boolean_ignores_stale_geo_cache() {
+    let wire = CurveString2::from_bulge_vertices(&[
+        bulge_vertex(0.0, 0.0, 0.0),
+        bulge_vertex(2.0, 0.0, 0.0),
+    ])
+    .unwrap();
+    let mut sketch = Sketch::from_wires(vec![wire], ());
+    sketch.geometry =
+        GeometryCollection(vec![geo::Geometry::LineString(geo::LineString::from(vec![
+            (100.0, 100.0),
+            (101.0, 100.0),
+        ]))]);
+
+    let mut union = sketch.union(&Sketch::empty(()));
+
+    assert_eq!(union.wires().len(), 1);
+    assert!(
+        union
+            .wire_polylines()
+            .iter()
+            .flatten()
+            .all(|point| point[0] < 100.0),
+        "wire-only booleans should preserve CurveString2 sidecars instead of stale finite linework"
+    );
+
+    union.geometry = GeometryCollection::default();
+    let geometry = union.geometry();
+    assert!(
+        geometry.0.iter().all(|geometry| {
+            !matches!(
+                geometry,
+                geo::Geometry::LineString(line) if line.0.iter().any(|coord| coord.x >= 100.0)
+            )
+        }),
+        "regenerated compatibility geometry should come from native hypercurve wires"
     );
 }
 
@@ -617,6 +809,68 @@ fn sketch_svg_prefers_mixed_native_topology_over_stale_geo_cache() {
 }
 
 #[test]
+#[cfg(feature = "svg-io")]
+fn sketch_svg_exports_native_arc_wires_as_arc_commands() {
+    use crate::io::svg::ToSVG;
+
+    let bulge = (std::f64::consts::FRAC_PI_4 / 2.0).tan();
+    let wire = CurveString2::from_bulge_vertices(&[
+        bulge_vertex(1.0, 0.0, bulge),
+        bulge_vertex(0.0, 1.0, 0.0),
+    ])
+    .unwrap();
+    let mut sketch = Sketch::from_region_and_wires(Region2::empty(), vec![wire], ());
+    sketch.geometry =
+        GeometryCollection(vec![geo::Geometry::Point(geo::Point::new(50.0, 50.0))]);
+
+    let svg = sketch.to_svg();
+
+    assert!(
+        svg.contains(" A") || svg.contains("A1"),
+        "native circular arc wire should serialize as an SVG arc command: {svg}"
+    );
+    assert!(
+        !svg.contains("50"),
+        "stale finite cache should not leak into SVG arc-wire export: {svg}"
+    );
+    assert!(
+        svg.contains("viewBox=\"0 0 1 1\""),
+        "native hypercurve arc bounds should define SVG viewBox: {svg}"
+    );
+}
+
+#[test]
+#[cfg(feature = "svg-io")]
+fn sketch_svg_exports_disjoint_native_region_components_separately() {
+    use crate::io::svg::ToSVG;
+
+    let left = Sketch::rectangle(4.0, 4.0, ())
+        .difference(&Sketch::rectangle(1.0, 1.0, ()).translate(1.0, 1.0, 0.0));
+    let right = Sketch::rectangle(4.0, 4.0, ())
+        .translate(10.0, 0.0, 0.0)
+        .difference(&Sketch::rectangle(1.0, 1.0, ()).translate(11.0, 1.0, 0.0));
+    let mut sketch = left.union(&right);
+    sketch.geometry =
+        GeometryCollection(vec![geo::Geometry::Point(geo::Point::new(50.0, 50.0))]);
+
+    let svg = sketch.to_svg();
+
+    assert_eq!(
+        svg.matches("fill=\"black\"").count(),
+        2,
+        "each native material component should serialize as its own SVG path: {svg}"
+    );
+    assert!(
+        svg.contains("viewBox=\"0 0 14 4\""),
+        "native bounds should come from grouped hypercurve contours: {svg}"
+    );
+    assert!(
+        !svg.contains("50"),
+        "stale finite point coordinates should not leak into SVG output: {svg}"
+    );
+}
+
+#[test]
 fn sketch_triangulate_uses_hypercurve_region_when_geo_cache_is_empty() {
     let mut sketch = Sketch::rectangle(2.0, 3.0, ());
     sketch.geometry = GeometryCollection::default();
@@ -671,6 +925,66 @@ fn sketch_mesh_conversion_prefers_native_region_over_stale_geo_cache() {
 }
 
 #[test]
+fn sketch_mesh_conversion_uses_grouped_native_region_profiles() {
+    let left = Sketch::rectangle(4.0, 4.0, "profile")
+        .difference(&Sketch::rectangle(1.0, 1.0, "profile").translate(1.0, 1.0, 0.0));
+    let right = Sketch::rectangle(4.0, 4.0, "profile")
+        .translate(10.0, 0.0, 0.0)
+        .difference(&Sketch::rectangle(1.0, 1.0, "profile").translate(11.0, 1.0, 0.0));
+    let mut sketch = left.union(&right);
+    sketch.geometry =
+        GeometryCollection(vec![geo::Geometry::Point(geo::Point::new(50.0, 50.0))]);
+
+    let mesh = Mesh::from(sketch);
+
+    assert_eq!(mesh.metadata, "profile");
+    assert_eq!(
+        mesh.polygons.len(),
+        4,
+        "two material rings plus their two owned holes should define mesh boundary rings"
+    );
+    let bbox = mesh.bounding_box();
+    assert_close(bbox.mins.x, 0.0, 1e-9);
+    assert_close(bbox.mins.y, 0.0, 1e-9);
+    assert_close(bbox.maxs.x, 14.0, 1e-9);
+    assert_close(bbox.maxs.y, 4.0, 1e-9);
+}
+
+#[test]
+fn sketch_mesh_conversion_ignores_stale_finite_polygon_cache() {
+    let polygon = geo::Polygon::new(
+        geo::LineString::from(vec![
+            (0.0, 0.0),
+            (4.0, 0.0),
+            (4.0, 4.0),
+            (0.0, 4.0),
+            (0.0, 0.0),
+        ]),
+        vec![geo::LineString::from(vec![
+            (1.0, 1.0),
+            (2.0, 1.0),
+            (2.0, 2.0),
+            (1.0, 2.0),
+            (1.0, 1.0),
+        ])],
+    );
+    let mut sketch = Sketch::from_geo(
+        GeometryCollection(vec![geo::Geometry::Polygon(polygon)]),
+        "fallback",
+    );
+    sketch.region = Region2::empty();
+    sketch.wires.clear();
+
+    let mesh = Mesh::from(sketch);
+
+    assert_eq!(mesh.metadata, "fallback");
+    assert!(
+        mesh.polygons.is_empty(),
+        "mesh conversion should not treat stale finite geo cache as authoritative CAD topology"
+    );
+}
+
+#[test]
 #[cfg(feature = "mesh")]
 fn sketch_from_mesh_promotes_flattened_projection_to_hypercurve_region() {
     let mesh = Mesh::cube(2.0, "cube");
@@ -678,7 +992,7 @@ fn sketch_from_mesh_promotes_flattened_projection_to_hypercurve_region() {
 
     assert_eq!(sketch.metadata, "cube");
     assert!(!sketch.as_region().is_empty());
-    assert!(!sketch.region_rings().material.is_empty());
+    assert!(!sketch.region_profiles().is_empty());
 
     sketch.geometry = GeometryCollection::default();
     assert!(!sketch.geometry().is_empty());
@@ -959,6 +1273,34 @@ fn sketch_graphics_prefer_mixed_native_topology_over_stale_geo_cache() {
 }
 
 #[test]
+fn sketch_graphics_project_native_arc_wires_over_stale_geo_cache() {
+    let bulge = (std::f64::consts::FRAC_PI_4 / 2.0).tan();
+    let wire = CurveString2::from_bulge_vertices(&[
+        bulge_vertex(1.0, 0.0, bulge),
+        bulge_vertex(0.0, 1.0, 0.0),
+    ])
+    .unwrap();
+    let mut sketch = Sketch::from_region_and_wires(Region2::empty(), vec![wire], ());
+    sketch.geometry = Sketch::rectangle(100.0, 100.0, ()).geometry().into_owned();
+
+    let lines = sketch.build_graphic_line_strings();
+
+    assert_eq!(lines.line_strings.len(), 1);
+    assert!(
+        lines.line_strings[0].points.len() > 2,
+        "native arc wire should be sampled at the renderer boundary: {lines:?}"
+    );
+    assert!(
+        lines
+            .line_strings
+            .iter()
+            .flat_map(|line| line.points.iter())
+            .all(|point| point[0] <= 1.0_f32 && point[1] <= 1.0_f32),
+        "stale finite cache should not contribute render lines: {lines:?}"
+    );
+}
+
+#[test]
 fn sketch_region_area_paths_ignore_stale_area_geo_cache() {
     let mut sketch = Sketch::rectangle(2.0, 3.0, ());
     sketch.geometry = Sketch::rectangle(100.0, 100.0, ()).geometry().into_owned();
@@ -1008,6 +1350,260 @@ fn sketch_to_multipolygon_projects_hypercurve_region_when_geo_cache_is_empty() {
 }
 
 #[test]
+fn sketch_region_projection_assigns_holes_to_containing_material_contours() {
+    let left = Sketch::rectangle(4.0, 4.0, ())
+        .difference(&Sketch::rectangle(1.0, 1.0, ()).translate(1.0, 1.0, 0.0));
+    let right = Sketch::rectangle(4.0, 4.0, ())
+        .translate(10.0, 0.0, 0.0)
+        .difference(&Sketch::rectangle(1.0, 1.0, ()).translate(11.0, 1.0, 0.0));
+    let mut sketch = left.union(&right);
+    sketch.geometry = Sketch::rectangle(100.0, 100.0, ()).geometry().into_owned();
+
+    assert_eq!(sketch.material_contour_count(), 2);
+    assert_eq!(sketch.hole_contour_count(), 2);
+
+    let multipolygon = sketch.to_multipolygon();
+    assert_eq!(multipolygon.0.len(), 2);
+    assert!(
+        multipolygon
+            .0
+            .iter()
+            .all(|polygon| polygon.interiors().len() == 1),
+        "each native material component should receive only its contained hole: {multipolygon:?}"
+    );
+
+    sketch.geometry = GeometryCollection::default();
+    let geometry = sketch.geometry();
+    let Some(geo::Geometry::MultiPolygon(regenerated)) = geometry.0.first() else {
+        panic!("native region should regenerate as a finite MultiPolygon");
+    };
+    assert_eq!(regenerated.0.len(), 2);
+    assert!(
+        regenerated
+            .0
+            .iter()
+            .all(|polygon| polygon.interiors().len() == 1),
+        "finite compatibility projection should preserve native hole ownership: {regenerated:?}"
+    );
+}
+
+#[test]
+fn sketch_region_profiles_group_holes_with_containing_material_contours() {
+    let left = Sketch::rectangle(4.0, 4.0, ())
+        .difference(&Sketch::rectangle(1.0, 1.0, ()).translate(1.0, 1.0, 0.0));
+    let right = Sketch::rectangle(4.0, 4.0, ())
+        .translate(10.0, 0.0, 0.0)
+        .difference(&Sketch::rectangle(1.0, 1.0, ()).translate(11.0, 1.0, 0.0));
+    let mut sketch = left.union(&right);
+    sketch.geometry = Sketch::rectangle(100.0, 100.0, ()).geometry().into_owned();
+
+    let profiles = sketch.region_profiles();
+
+    assert_eq!(profiles.len(), 2);
+    assert!(
+        profiles.iter().all(|profile| profile.holes().len() == 1),
+        "each native material profile should own exactly its contained hole: {profiles:?}"
+    );
+    assert!(
+        profiles.iter().any(|profile| profile
+            .material()
+            .points()
+            .iter()
+            .any(|point| point[0] >= 10.0)),
+        "right material contour should survive grouped native projection: {profiles:?}"
+    );
+    assert!(
+        profiles.iter().all(|profile| profile.holes().len() + 1 == 2),
+        "hypercurve profile should expose material plus its owned hole: {profiles:?}"
+    );
+}
+
+#[test]
+fn sketch_region_profiles_use_native_contour_ownership_not_hole_centroids() {
+    let small_island =
+        Sketch::<()>::contour_from_points(&[[4.5, 4.5], [5.5, 4.5], [5.5, 5.5], [4.5, 5.5]])
+            .unwrap();
+    let large_material = Sketch::<()>::contour_from_points(&[
+        [0.0, 0.0],
+        [10.0, 0.0],
+        [10.0, 10.0],
+        [0.0, 10.0],
+    ])
+    .unwrap();
+    let surrounding_hole =
+        Sketch::<()>::contour_from_points(&[[4.0, 4.0], [6.0, 4.0], [6.0, 6.0], [4.0, 6.0]])
+            .unwrap();
+    let mut sketch = Sketch::from_region(
+        Region2::new(vec![small_island, large_material], vec![surrounding_hole]),
+        (),
+    );
+    sketch.geometry = Sketch::rectangle(100.0, 100.0, ()).geometry().into_owned();
+
+    let profiles = sketch.region_profiles();
+
+    assert_eq!(profiles.len(), 2);
+    let large = profiles
+        .iter()
+        .find(|profile| {
+            profile
+                .material()
+                .points()
+                .iter()
+                .any(|point| point[0] >= 10.0 && point[1] >= 10.0)
+        })
+        .expect("large material profile");
+    assert_eq!(
+        large.holes().len(),
+        1,
+        "hole whose centroid overlaps another material island should stay with its containing contour: {profiles:?}"
+    );
+    let small = profiles
+        .iter()
+        .find(|profile| {
+            profile.material().points().iter().any(|point| {
+                point[0] > 4.0 && point[0] < 6.0 && point[1] > 4.0 && point[1] < 6.0
+            })
+        })
+        .expect("small island profile");
+    assert!(
+        small.holes().is_empty(),
+        "finite centroid assignment must not attach the surrounding hole to the small island: {profiles:?}"
+    );
+}
+
+#[test]
+fn sketch_region_nonzero_area_uses_grouped_profile_projection() {
+    let donut = Sketch::rectangle(4.0, 4.0, ())
+        .difference(&Sketch::rectangle(1.0, 1.0, ()).translate(1.0, 1.0, 0.0));
+    assert!(Sketch::<()>::region_has_nonzero_area(donut.as_region()));
+
+    let empty = hypercurve::Region2::empty();
+    assert!(!Sketch::<()>::region_has_nonzero_area(&empty));
+}
+
+#[test]
+fn sketch_region_nonzero_area_uses_hypercurve_signed_area_for_bulge_arcs() {
+    let mut sketch = quarter_arc_region(());
+    sketch.geometry = GeometryCollection::default();
+
+    assert!(Sketch::<()>::region_has_nonzero_area(sketch.as_region()));
+}
+
+#[test]
+fn sketch_region_nonzero_area_uses_hypercurve_region_filled_area_for_holes() {
+    let material =
+        Sketch::<()>::contour_from_points(&[[0.0, 0.0], [4.0, 0.0], [4.0, 4.0], [0.0, 4.0]])
+            .unwrap();
+    let hole =
+        Sketch::<()>::contour_from_points(&[[1.0, 1.0], [3.0, 1.0], [3.0, 3.0], [1.0, 3.0]])
+            .unwrap();
+    let mut sketch = Sketch::from_region(Region2::new(vec![material], vec![hole]), ());
+    sketch.geometry = GeometryCollection::default();
+
+    assert!(Sketch::<()>::region_has_nonzero_area(sketch.as_region()));
+}
+
+#[test]
+fn sketch_triangulate_assigns_holes_to_containing_material_contours() {
+    let left = Sketch::rectangle(4.0, 4.0, ())
+        .difference(&Sketch::rectangle(1.0, 1.0, ()).translate(1.0, 1.0, 0.0));
+    let right = Sketch::rectangle(4.0, 4.0, ())
+        .translate(10.0, 0.0, 0.0)
+        .difference(&Sketch::rectangle(1.0, 1.0, ()).translate(11.0, 1.0, 0.0));
+    let mut sketch = left.union(&right);
+    sketch.geometry = Sketch::rectangle(100.0, 100.0, ()).geometry().into_owned();
+
+    let triangles = sketch.triangulate();
+
+    assert!(!triangles.is_empty());
+    assert!(triangles.iter().all(|triangle| {
+        let centroid_x = (triangle[0].x + triangle[1].x + triangle[2].x) / 3.0;
+        let centroid_y = (triangle[0].y + triangle[1].y + triangle[2].y) / 3.0;
+        let in_left_hole =
+            (1.0..=2.0).contains(&centroid_x) && (1.0..=2.0).contains(&centroid_y);
+        let in_right_hole =
+            (11.0..=12.0).contains(&centroid_x) && (1.0..=2.0).contains(&centroid_y);
+        !in_left_hole && !in_right_hole
+    }));
+    assert!(
+        triangles
+            .iter()
+            .flatten()
+            .any(|point| point.x >= 10.0 && point.x <= 14.0),
+        "right material contour should be triangulated with its own hole"
+    );
+}
+
+#[test]
+fn sketch_extrude_assigns_holes_to_containing_material_contours() {
+    fn point_in_triangle(point: [f64; 2], triangle: &[[f64; 2]; 3]) -> bool {
+        let sign = |a: [f64; 2], b: [f64; 2], c: [f64; 2]| {
+            (a[0] - c[0]) * (b[1] - c[1]) - (b[0] - c[0]) * (a[1] - c[1])
+        };
+        let d1 = sign(point, triangle[0], triangle[1]);
+        let d2 = sign(point, triangle[1], triangle[2]);
+        let d3 = sign(point, triangle[2], triangle[0]);
+        let has_neg = d1 < -1e-9 || d2 < -1e-9 || d3 < -1e-9;
+        let has_pos = d1 > 1e-9 || d2 > 1e-9 || d3 > 1e-9;
+        !(has_neg && has_pos)
+    }
+
+    let left = Sketch::rectangle(4.0, 4.0, ())
+        .difference(&Sketch::rectangle(1.0, 1.0, ()).translate(1.0, 1.0, 0.0));
+    let right = Sketch::rectangle(4.0, 4.0, ())
+        .translate(10.0, 0.0, 0.0)
+        .difference(&Sketch::rectangle(1.0, 1.0, ()).translate(11.0, 1.0, 0.0));
+    let mut sketch = left.union(&right);
+    sketch.geometry = Sketch::rectangle(100.0, 100.0, ()).geometry().into_owned();
+
+    let mesh = sketch.extrude(1.0);
+    let cap_triangles = mesh
+        .polygons
+        .iter()
+        .filter(|polygon| {
+            polygon.vertices.len() == 3
+                && polygon
+                    .vertices
+                    .iter()
+                    .all(|vertex| vertex.position.z.abs() <= 1e-9)
+        })
+        .map(|polygon| {
+            [
+                [
+                    polygon.vertices[0].position.x,
+                    polygon.vertices[0].position.y,
+                ],
+                [
+                    polygon.vertices[1].position.x,
+                    polygon.vertices[1].position.y,
+                ],
+                [
+                    polygon.vertices[2].position.x,
+                    polygon.vertices[2].position.y,
+                ],
+            ]
+        })
+        .collect::<Vec<_>>();
+
+    assert!(!cap_triangles.is_empty());
+    for hole_center in [[1.5, 1.5], [11.5, 1.5]] {
+        assert!(
+            cap_triangles
+                .iter()
+                .all(|triangle| !point_in_triangle(hole_center, triangle)),
+            "native extrusion caps should not fill the hole containing {hole_center:?}"
+        );
+    }
+    assert!(
+        cap_triangles
+            .iter()
+            .flatten()
+            .any(|point| point[0] >= 10.0 && point[0] <= 14.0),
+        "right material contour should receive its own cap"
+    );
+}
+
+#[test]
 fn sketch_primitives_start_as_hypercurve_regions() {
     let rectangle = Sketch::rectangle(2.0, 3.0, ());
     let triangle = Sketch::right_triangle(2.0, 3.0, ());
@@ -1024,7 +1620,7 @@ fn sketch_primitives_start_as_hypercurve_regions() {
         assert_eq!(sketch.material_contour_count(), 1);
         assert_eq!(sketch.hole_contour_count(), 0);
         assert!(!sketch.triangulate().is_empty());
-        assert!(!sketch.region_rings().material.is_empty());
+        assert!(!sketch.region_profiles().is_empty());
     }
 }
 
@@ -1046,7 +1642,7 @@ fn sketch_curved_approximations_start_as_hypercurve_regions() {
         assert_eq!(sketch.material_contour_count(), 1);
         assert_eq!(sketch.hole_contour_count(), 0);
         assert!(!sketch.as_region().is_empty());
-        assert!(!sketch.region_rings().material.is_empty());
+        assert!(!sketch.region_profiles().is_empty());
     }
 }
 
@@ -1058,7 +1654,7 @@ fn sketch_metaballs_start_as_hypercurve_regions() {
     let mut sketch = Sketch::metaballs(&balls, (24, 24), 1.0, 0.35, ());
 
     assert!(!sketch.as_region().is_empty());
-    assert!(!sketch.region_rings().material.is_empty());
+    assert!(!sketch.region_profiles().is_empty());
 
     sketch.geometry = GeometryCollection::default();
     assert!(!sketch.geometry().is_empty());
@@ -1124,7 +1720,7 @@ fn sketch_region_feeds_legacy_triangulation_graphics_bounds_and_transform() {
 
     let moved = sketch.translate(5.0, 7.0, 0.0);
     assert_eq!(moved.material_contour_count(), 1);
-    assert!(!moved.region_rings().material.is_empty());
+    assert!(!moved.region_profiles().is_empty());
     let moved_bbox = moved.bounding_box();
     assert_close(moved_bbox.mins.x, 5.0, 1e-9);
     assert_close(moved_bbox.mins.y, 7.0, 1e-9);
@@ -1164,6 +1760,45 @@ fn sketch_region_transform_ignores_stale_non_area_geo_cache() {
     assert_close(bbox.mins.y, 7.0, 1e-9);
     assert_close(bbox.maxs.x, 7.0, 1e-9);
     assert_close(bbox.maxs.y, 10.0, 1e-9);
+}
+
+#[test]
+fn sketch_arc_region_similarity_transform_preserves_hypercurve_arcs() {
+    let mut sketch = quarter_arc_region(());
+    sketch.geometry =
+        GeometryCollection(vec![geo::Geometry::Point(geo::Point::new(50.0, 50.0))]);
+
+    let moved = sketch.translate(3.0, 4.0, 0.0).rotate(0.0, 0.0, 90.0);
+
+    assert_eq!(moved.material_contour_count(), 1);
+    assert!(
+        moved.as_region().material_contours()[0]
+            .segments()
+            .iter()
+            .all(|segment| matches!(segment, Segment2::Arc(_))),
+        "similarity transforms should preserve native hypercurve arc contours"
+    );
+    assert!(
+        !moved.geometry().0.iter().any(|geometry| matches!(
+            geometry,
+            geo::Geometry::Point(point) if (point.x() - 50.0).abs() <= 1e-9
+        )),
+        "stale finite cache should not drive native arc-region transform"
+    );
+}
+
+#[test]
+fn sketch_arc_region_bounds_use_hypercurve_aabb_without_geo_cache() {
+    let mut sketch = quarter_arc_region(());
+    sketch.geometry =
+        GeometryCollection(vec![geo::Geometry::Point(geo::Point::new(50.0, 50.0))]);
+
+    let bounds = sketch.native_xy_bounds().expect("native arc region bounds");
+
+    assert_close(bounds.0, -1.0, 1e-9);
+    assert_close(bounds.1, -1.0, 1e-9);
+    assert_close(bounds.2, 1.0, 1e-9);
+    assert_close(bounds.3, 1.0, 1e-9);
 }
 
 #[test]
@@ -1469,6 +2104,71 @@ fn sketch_gerber_prefers_native_region_over_stale_non_area_geo_cache() {
 }
 
 #[test]
+#[cfg(feature = "gerber-io")]
+fn sketch_gerber_exports_disjoint_native_region_components_separately() {
+    use crate::io::gerber::ToGerber;
+
+    let left = Sketch::rectangle(4.0, 4.0, ())
+        .difference(&Sketch::rectangle(1.0, 1.0, ()).translate(1.0, 1.0, 0.0));
+    let right = Sketch::rectangle(4.0, 4.0, ())
+        .translate(10.0, 0.0, 0.0)
+        .difference(&Sketch::rectangle(1.0, 1.0, ()).translate(11.0, 1.0, 0.0));
+    let mut sketch = left.union(&right);
+    sketch.geometry =
+        GeometryCollection(vec![geo::Geometry::Point(geo::Point::new(50.0, 50.0))]);
+
+    let gerber = String::from_utf8(sketch.to_gerber().expect("native Gerber export"))
+        .expect("Gerber output is UTF-8");
+
+    assert_eq!(
+        gerber.matches("G36*").count(),
+        2,
+        "each native material component should serialize as its own Gerber region: {gerber}"
+    );
+    assert_eq!(
+        gerber.matches("G37*").count(),
+        2,
+        "each native material component should close its Gerber region: {gerber}"
+    );
+    assert!(
+        !gerber.contains("50000000"),
+        "stale point coordinates should not leak into Gerber: {gerber}"
+    );
+}
+
+#[test]
+#[cfg(feature = "gerber-io")]
+fn sketch_gerber_exports_native_arc_wires_as_circular_interpolation() {
+    use crate::io::gerber::ToGerber;
+
+    let bulge = (std::f64::consts::FRAC_PI_4 / 2.0).tan();
+    let wire = CurveString2::from_bulge_vertices(&[
+        bulge_vertex(1.0, 0.0, bulge),
+        bulge_vertex(0.0, 1.0, 0.0),
+    ])
+    .unwrap();
+    let mut sketch = Sketch::from_region_and_wires(Region2::empty(), vec![wire], ());
+    sketch.geometry =
+        GeometryCollection(vec![geo::Geometry::Point(geo::Point::new(50.0, 50.0))]);
+
+    let gerber = String::from_utf8(sketch.to_gerber().expect("native Gerber export"))
+        .expect("Gerber output is UTF-8");
+
+    assert!(
+        gerber.contains("G03") || gerber.contains("G02"),
+        "native circular arc wire should serialize as Gerber circular interpolation: {gerber}"
+    );
+    assert!(
+        gerber.contains('I') && gerber.contains('J'),
+        "Gerber circular interpolation should include center offsets: {gerber}"
+    );
+    assert!(
+        !gerber.contains("50000000"),
+        "stale finite cache should not leak into Gerber arc-wire export: {gerber}"
+    );
+}
+
+#[test]
 fn sketch_extrude_uses_region_when_geo_cache_is_empty() {
     let mut sketch = Sketch::rectangle(2.0, 3.0, "rect");
     sketch.geometry = GeometryCollection::default();
@@ -1551,6 +2251,33 @@ fn sketch_region_extrude_preserves_origin() {
     assert_close(bbox.mins.y, 20.0, 1e-9);
     assert_close(bbox.mins.z, 30.0, 1e-9);
     assert_close(bbox.maxs.z, 32.0, 1e-9);
+}
+
+#[test]
+fn sketch_extrude_ignores_stale_finite_polygon_cache_without_native_topology() {
+    let mut sketch = Sketch::from_geo(
+        GeometryCollection(vec![geo::Geometry::Polygon(geo::Polygon::new(
+            geo::LineString::from(vec![
+                (0.0, 0.0),
+                (4.0, 0.0),
+                (4.0, 4.0),
+                (0.0, 4.0),
+                (0.0, 0.0),
+            ]),
+            vec![],
+        ))]),
+        "stale",
+    );
+    sketch.region = Region2::empty();
+    sketch.wires.clear();
+
+    let mesh = sketch.extrude_vector(Vector3::new(0.0, 0.0, 2.0));
+
+    assert_eq!(mesh.metadata, "stale");
+    assert!(
+        mesh.polygons.is_empty(),
+        "linear extrusion should not treat stale finite geo cache as authoritative CAD topology"
+    );
 }
 
 #[test]

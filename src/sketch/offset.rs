@@ -61,7 +61,9 @@ use geo::{
     Buffer, Coord, Geometry, GeometryCollection, LineString, MultiPolygon, Polygon,
     algorithm::buffer::{BufferStyle, LineJoin},
 };
-use hypercurve::{Classification, CurvePolicy, Region2};
+use hypercurve::{
+    Classification, CurvePolicy, FiniteProjectionOptions, Region2, finite_ring_signed_area,
+};
 use std::borrow::Cow;
 use std::fmt::Debug;
 
@@ -99,20 +101,6 @@ fn skel_multi_poly(mpoly: &MultiPolygon<Real>, inward: bool) -> Vec<LineString<R
             })
         })
         .collect()
-}
-
-fn signed_ring_area(ring: &[[Real; 2]]) -> Real {
-    if ring.len() < 3 {
-        return 0.0;
-    }
-    let mut area = 0.0;
-    for edge in ring.windows(2) {
-        area += edge[0][0] * edge[1][1] - edge[1][0] * edge[0][1];
-    }
-    if let (Some(first), Some(last)) = (ring.first(), ring.last()) {
-        area += last[0] * first[1] - first[0] * last[1];
-    }
-    0.5 * area
 }
 
 impl<M: Clone + Debug + Send + Sync> Sketch<M> {
@@ -171,20 +159,20 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             return None;
         }
 
-        let rings = self.region_rings();
-        if rings.material.len() != self.region.material_contours().len() {
+        let options = FiniteProjectionOptions::try_new(1e-3)
+            .expect("positive finite projection tolerance is valid");
+        let profiles = match self.project_region_profiles(&options) {
+            Ok(Classification::Decided(profiles)) => profiles,
+            Ok(Classification::Uncertain(_)) | Err(_) => return None,
+        };
+        if profiles.len() != self.region.material_contours().len() {
             return None;
         }
 
         let policy = CurvePolicy::certified();
         let mut material = Vec::with_capacity(self.region.material_contours().len());
-        for (contour, ring) in self
-            .region
-            .material_contours()
-            .iter()
-            .zip(rings.material.iter())
-        {
-            let signed_area = signed_ring_area(ring);
+        for (contour, profile) in self.region.material_contours().iter().zip(profiles.iter()) {
+            let signed_area = finite_ring_signed_area(profile.material().points());
             if signed_area.abs() <= f64::EPSILON {
                 return None;
             }

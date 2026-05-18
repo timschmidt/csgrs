@@ -7,12 +7,10 @@ use crate::mesh::bsp::Node;
 use crate::mesh::plane::Plane;
 use crate::sketch::{Sketch, wire_from_points};
 use crate::vertex::Vertex;
-use geo::{
-    BooleanOps, Geometry, GeometryCollection, LineString, MultiPolygon, Orient,
-    orient::Direction,
-};
 use hashbrown::HashMap;
-use hypercurve::Region2;
+use hypercurve::{
+    BooleanOp, Classification, CurvePolicy, FillRule, Region2, finite_ring_signed_area,
+};
 use nalgebra::Point3;
 use std::fmt::Debug;
 
@@ -21,16 +19,20 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// unifies them into one or more 2D polygons, and returns a hypercurve-backed
     /// 2D Sketch.
     ///
-    /// - All `polygons` in the Mesh are tessellated, projected into XY, and unioned.
-    /// - The finite union is a transitional interop bridge; the output promotes
-    ///   supported rings directly into `Region2` so Sketch topology is owned by
-    ///   hypercurve. This follows Yap, "Towards Exact Geometric Computation,"
-    ///   *Computational Geometry* 7(1-2), 1997
-    ///   (<https://doi.org/10.1016/0925-7721(95)00040-2>), keeping finite
-    ///   coordinates at algorithm/API boundaries and exact objects internally.
+    /// - All `polygons` in the Mesh are tessellated, projected into XY, promoted
+    ///   to hypercurve contours, and unioned as `Region2` topology.
+    /// - The XY coordinates are still finite mesh-boundary samples, but the
+    ///   planar set operations now stay in hypercurve rather than routing
+    ///   through `geo`. This follows Yap, "Towards Exact Geometric
+    ///   Computation," *Computational Geometry* 7(1-2), 1997
+    ///   (<https://doi.org/10.1016/0925-7721(95)00040-2>), and the finite-output
+    ///   discipline in Hobby, "Practical Segment Intersection with Finite
+    ///   Precision Output," *Computational Geometry* 13(4), 1999
+    ///   (<https://doi.org/10.1016/S0925-7721(99)00021-8>).
     pub fn flatten(&self) -> Sketch<M> {
-        // Convert all 3D polygons into a collection of 2D polygons
-        let mut flattened_3d = Vec::new(); // will store geo::Polygon<Real>
+        let policy = CurvePolicy::certified();
+        let mut flattened_region = Region2::empty();
+        let mut material_contours = Vec::new();
 
         for poly in &self.polygons {
             // Tessellate this polygon into triangles
@@ -38,40 +40,43 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             // Each triangle has 3 vertices [v0, v1, v2].
             // Project them onto XY => build a 2D polygon (triangle).
             for tri in triangles {
-                let ring = vec![
-                    (tri[0].position.x, tri[0].position.y),
-                    (tri[1].position.x, tri[1].position.y),
-                    (tri[2].position.x, tri[2].position.y),
-                    (tri[0].position.x, tri[0].position.y), // close ring explicitly
+                let mut ring = [
+                    [tri[0].position.x, tri[0].position.y],
+                    [tri[1].position.x, tri[1].position.y],
+                    [tri[2].position.x, tri[2].position.y],
+                    [tri[0].position.x, tri[0].position.y],
                 ];
-                let polygon_2d = geo::Polygon::new(LineString::from(ring), vec![]);
-                flattened_3d.push(polygon_2d);
+                if finite_ring_signed_area(&ring) < 0.0 {
+                    ring.swap(1, 2);
+                    ring[3] = ring[0];
+                }
+                let Some(contour) = Sketch::<M>::contour_from_points(&ring) else {
+                    continue;
+                };
+                let triangle_region = Region2::from_material_contours(vec![contour.clone()]);
+                flattened_region = if flattened_region.is_empty() {
+                    triangle_region
+                } else {
+                    match flattened_region.boolean_region(
+                        &triangle_region,
+                        BooleanOp::Union,
+                        FillRule::NonZero,
+                        &policy,
+                    ) {
+                        Ok(Classification::Decided(region)) => region,
+                        Ok(Classification::Uncertain(_)) | Err(_) => {
+                            material_contours.push(contour);
+                            Region2::from_material_contours(material_contours.clone())
+                        },
+                    }
+                };
+                material_contours = flattened_region.material_contours().to_vec();
             }
         }
 
-        // Union all these polygons together into one MultiPolygon
-        // (We could chain them in a fold-based union.)
-        let unioned_from_3d = if flattened_3d.is_empty() {
-            MultiPolygon::new(Vec::new())
-        } else {
-            // Start with the first polygon as a MultiPolygon
-            let mut mp_acc = MultiPolygon(vec![flattened_3d[0].clone()]);
-            // Union in the rest
-            for p in flattened_3d.iter().skip(1) {
-                mp_acc = mp_acc.union(&MultiPolygon(vec![p.clone()]));
-            }
-            mp_acc
-        };
-
-        // Ensure consistent orientation (CCW for exteriors):
-        let oriented = unioned_from_3d.orient(Direction::Default);
-
-        // Store final polygons as a MultiPolygon in a new GeometryCollection
-        let mut new_gc = GeometryCollection::default();
-        new_gc.0.push(Geometry::MultiPolygon(oriented));
-
-        Sketch::from_compat_bridge_geometry_with_origin(
-            new_gc,
+        Sketch::from_region_and_wires_with_origin(
+            flattened_region,
+            Vec::new(),
             self.metadata.clone(),
             Vertex::default(),
             Sketch::<M>::prepare_origin_transform(Vertex::default()),

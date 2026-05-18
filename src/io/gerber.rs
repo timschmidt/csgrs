@@ -7,7 +7,7 @@
 //! standard apertures by constructing the swept aperture area.
 
 use crate::csg::CSG;
-use crate::float_types::{PI, Real, TAU, tolerance};
+use crate::float_types::{PI, Real, TAU, hreal_to_f64, tolerance};
 use crate::sketch::Sketch;
 use geo::{Coord, Geometry, LineString, Polygon as GeoPolygon};
 use gerber_types::{
@@ -16,6 +16,10 @@ use gerber_types::{
     ExtendedCode, FunctionCode, GCode, GerberCode, ImageMirroring, ImageOffset, ImagePolarity,
     ImageRotation, ImageScaling, InterpolationMode, MCode, Mirroring, Operation, Polarity,
     Rectangular, Rotation, Scaling, StepAndRepeat, Unit, ZeroOmission,
+};
+use hypercurve::{
+    Classification, CurveString2, FiniteProjectionOptions, FiniteRegionProfile2, Point2,
+    Segment2,
 };
 use std::collections::HashMap;
 use std::convert::TryFrom;
@@ -147,16 +151,23 @@ where
         // while geometric classification stays with Region2; that split follows
         // Yap, "Towards Exact Geometric Computation," Computational Geometry
         // 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-        if !self.as_region().is_empty() && Self::region_has_nonzero_area(self.as_region()) {
-            let region_rings = self.region_rings();
-            if !region_rings.is_empty() {
-                emit_region_rings(
-                    &region_rings.material,
-                    &region_rings.holes,
-                    &mut commands,
-                    options,
-                )?;
+        let has_native_region =
+            !self.as_region().is_empty() && Self::region_has_nonzero_area(self.as_region());
+        let has_native_wires = !self.wires().is_empty();
+        if has_native_region || has_native_wires {
+            let projection_options = FiniteProjectionOptions::try_new(1e-3)
+                .expect("positive finite projection tolerance is valid");
+            if let Classification::Decided(region_profiles) = self
+                .project_region_profiles(&projection_options)
+                .map_err(|error| {
+                    IoError::GerberParsing(format!(
+                        "native hypercurve Gerber region projection failed: {error}"
+                    ))
+                })?
+            {
+                emit_region_profiles(&region_profiles, &mut commands, options)?;
             }
+            emit_native_wires(self.wires(), &mut commands, options)?;
         } else {
             let geometry = self.effective_geometry();
             for geometry in geometry.iter() {
@@ -566,17 +577,31 @@ fn emit_polygon(
     Ok(())
 }
 
-fn emit_region_rings(
-    material: &[Vec<[Real; 2]>],
-    holes: &[Vec<[Real; 2]>],
+/// Emit native hypercurve region profiles as Gerber regions grouped by
+/// material-contour ownership.
+///
+/// Gerber regions are finite serialization records; `Region2` remains the
+/// source of topology. Grouping holes by their containing material contour
+/// follows the point-in-polygon classification family surveyed by Hormann and
+/// Agathos, "The point in polygon problem for arbitrary polygons,"
+/// *Computational Geometry* 20(3), 2001
+/// (<https://doi.org/10.1016/S0925-7721(01)00012-8>), while keeping exact
+/// hyper geometry internal follows Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+fn emit_region_profiles(
+    profiles: &[FiniteRegionProfile2],
     commands: &mut Vec<Command>,
     options: GerberExportOptions,
 ) -> Result<(), IoError> {
-    commands.push(FunctionCode::GCode(GCode::RegionMode(true)).into());
-    for ring in material.iter().chain(holes) {
-        emit_point_ring(ring, commands, options)?;
+    for profile in profiles {
+        commands.push(FunctionCode::GCode(GCode::RegionMode(true)).into());
+        emit_point_ring(profile.material().points(), commands, options)?;
+        for hole in profile.holes() {
+            emit_point_ring(hole.points(), commands, options)?;
+        }
+        commands.push(FunctionCode::GCode(GCode::RegionMode(false)).into());
     }
-    commands.push(FunctionCode::GCode(GCode::RegionMode(false)).into());
     Ok(())
 }
 
@@ -619,6 +644,87 @@ fn emit_point_ring(
     Ok(())
 }
 
+/// Emit native open hypercurve wires as Gerber interpolation commands.
+///
+/// Straight segments serialize as linear interpolation and circular arcs as
+/// RS-274X circular interpolation with I/J center offsets. This keeps
+/// `CurveString2` as the CAD representation and converts to finite Gerber
+/// coordinates only at the CAM file boundary, following Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+fn emit_native_wires(
+    wires: &[CurveString2],
+    commands: &mut Vec<Command>,
+    options: GerberExportOptions,
+) -> Result<(), IoError> {
+    for wire in wires {
+        emit_native_wire(wire, commands, options)?;
+    }
+    commands
+        .push(FunctionCode::GCode(GCode::InterpolationMode(InterpolationMode::Linear)).into());
+    Ok(())
+}
+
+fn emit_native_wire(
+    wire: &CurveString2,
+    commands: &mut Vec<Command>,
+    options: GerberExportOptions,
+) -> Result<(), IoError> {
+    let Some(first) = wire.segments().first() else {
+        return Ok(());
+    };
+    commands.push(
+        FunctionCode::DCode(DCode::Operation(Operation::Move(Some(gerber_coordinates(
+            finite_coord(first.start())?,
+            options,
+        )?))))
+        .into(),
+    );
+
+    for segment in wire.segments() {
+        match segment {
+            Segment2::Line(line) => {
+                commands.push(
+                    FunctionCode::GCode(GCode::InterpolationMode(InterpolationMode::Linear))
+                        .into(),
+                );
+                commands.push(
+                    FunctionCode::DCode(DCode::Operation(Operation::Interpolate(
+                        Some(gerber_coordinates(finite_coord(line.end())?, options)?),
+                        None,
+                    )))
+                    .into(),
+                );
+            },
+            Segment2::Arc(arc) => {
+                let start = finite_coord(arc.start())?;
+                let end = finite_coord(arc.end())?;
+                let center = finite_coord(arc.center())?;
+                let offset = Coord {
+                    x: center.x - start.x,
+                    y: center.y - start.y,
+                };
+                let interpolation = if arc.is_clockwise() {
+                    InterpolationMode::ClockwiseCircular
+                } else {
+                    InterpolationMode::CounterclockwiseCircular
+                };
+                commands
+                    .push(FunctionCode::GCode(GCode::InterpolationMode(interpolation)).into());
+                commands.push(
+                    FunctionCode::DCode(DCode::Operation(Operation::Interpolate(
+                        Some(gerber_coordinates(end, options)?),
+                        Some(gerber_coordinate_offset(offset, options)?),
+                    )))
+                    .into(),
+                );
+            },
+        }
+    }
+
+    Ok(())
+}
+
 fn emit_ring(
     ring: &LineString<Real>,
     commands: &mut Vec<Command>,
@@ -655,6 +761,26 @@ fn gerber_coordinates(
     let x = export_coordinate_number(coord.x, options)?;
     let y = export_coordinate_number(coord.y, options)?;
     Ok(Coordinates::new(x, y, options.coordinate_format))
+}
+
+fn gerber_coordinate_offset(
+    coord: Coord<Real>,
+    options: GerberExportOptions,
+) -> Result<CoordinateOffset, IoError> {
+    let x = export_coordinate_number(coord.x, options)?;
+    let y = export_coordinate_number(coord.y, options)?;
+    Ok(CoordinateOffset::new(x, y, options.coordinate_format).validate()?)
+}
+
+fn finite_coord(point: &Point2) -> Result<Coord<Real>, IoError> {
+    Ok(Coord {
+        x: hreal_to_f64(point.x()).ok_or_else(|| {
+            IoError::MalformedInput("non-finite hyperreal x coordinate".into())
+        })?,
+        y: hreal_to_f64(point.y()).ok_or_else(|| {
+            IoError::MalformedInput("non-finite hyperreal y coordinate".into())
+        })?,
+    })
 }
 
 fn export_coordinate_number(
