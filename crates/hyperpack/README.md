@@ -86,7 +86,7 @@ routing clearance, process policy, and optimality certificates are still future 
 
 ```toml
 [dependencies]
-hyperpack = "0.1.0"
+hyperpack = "0.2.0"
 ```
 
 For sibling checkouts:
