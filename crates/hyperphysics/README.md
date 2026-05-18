@@ -1,4 +1,7 @@
-# hyperphysics
+<h1>
+  hyperphysics
+  <img src="./doc/hyperphysics.png" alt="hyperphysics logo" width="144" align="right">
+</h1>
 
 `hyperphysics` owns exact-aware physical carriers for the Hyper ecosystem. It records
 materials, property assertions, bodies, fixtures, shapes, mass properties, contact
@@ -113,6 +116,37 @@ For sibling checkouts:
 [dependencies]
 hyperphysics = { path = "../hyperphysics" }
 ```
+
+## Usage
+
+Create exact setup facts, then hand simulation or field work to explicit adapters:
+
+```rust,ignore
+use hyperlattice::Vector3;
+use hyperphysics::{
+    AxisAlignedBox3, BodyId, BodyKind, ExactBody3, ExactFixture3, ExactMaterial,
+    MaterialId, PhysicsShape3,
+};
+use hyperreal::Real;
+
+let material = ExactMaterial::new(
+    MaterialId::new("aluminum")?,
+    "aluminum",
+    Real::from(2700),
+)?;
+
+let shape = PhysicsShape3::AxisAlignedBox(AxisAlignedBox3::new(
+    Vector3::new([Real::from(0), Real::from(0), Real::from(0)]),
+    Vector3::new([Real::from(1), Real::from(1), Real::from(1)]),
+)?);
+
+let fixture = ExactFixture3::new("fixture-0")?.with_shape(shape);
+let body = ExactBody3::new(BodyId::new("body-0")?, BodyKind::Rigid, vec![fixture]);
+```
+
+Mass properties, contact reports, thermal/optical/electromagnetic/fluid carriers, force
+accumulators, and `hypersolve` residual replay rows all keep authored physical facts
+separate from runtime engine proposals.
 
 ## Development
 
