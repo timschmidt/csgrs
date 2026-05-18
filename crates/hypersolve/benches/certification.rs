@@ -1,12 +1,23 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use hyperreal::{Rational, Real};
 use hypersolve::{
-    Constraint, Expr, PreparedProblem, PreparedSolverBlock, Problem, SymbolId, certify_candidate,
-    context_from_problem,
+    Constraint, EqualitySubstitution, Expr, PreparedProblem, PreparedSolverBlock, Problem,
+    RectangularRegion, SolverPoint2, SymbolId, VariableBall, bezier_offset_sample_constraints,
+    build_equality_substitution_classes, center_clearance_squared_constraint, certify_candidate,
+    certify_multivariate_quadratic_interval_candidate, certify_quadratic_interval_candidate,
+    context_from_problem, differential_pair_skew_equation, rectangular_difference_area_equation,
+    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
 };
 
 fn r(value: i64) -> Real {
     Real::new(Rational::new(value))
+}
+
+fn rect(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> RectangularRegion {
+    RectangularRegion::new(
+        hyperlimit::Point2::new(r(min_x), r(min_y)),
+        hyperlimit::Point2::new(r(max_x), r(max_y)),
+    )
 }
 
 fn affine_problem(row_count: usize) -> Problem {
@@ -22,6 +33,39 @@ fn affine_problem(row_count: usize) -> Problem {
     problem
 }
 
+fn univariate_quadratic_problem(row_count: usize) -> Problem {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", r(3));
+    for index in 0..row_count {
+        let scale = index as i64 + 1;
+        problem.add_constraint(Constraint::equality(
+            format!("quadratic {index}"),
+            x.clone() * x.clone() * Expr::int(scale) - x.clone() * Expr::int(2 * scale)
+                + Expr::int(scale),
+        ));
+    }
+    problem
+}
+
+fn multivariate_quadratic_problem(row_count: usize) -> Problem {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let y = Expr::symbol(SymbolId(1), "y");
+    let mut problem = Problem::default();
+    problem.add_variable("x", r(3));
+    problem.add_variable("y", r(5));
+    for index in 0..row_count {
+        let scale = index as i64 + 1;
+        problem.add_constraint(Constraint::equality(
+            format!("mixed quadratic {index}"),
+            x.clone() * y.clone() * Expr::int(scale) + x.clone().powi(2) * Expr::int(scale + 1)
+                - y.clone() * Expr::int(scale + 2)
+                + Expr::int(scale),
+        ));
+    }
+    problem
+}
+
 fn certification(c: &mut Criterion) {
     let problem = affine_problem(16);
     let prepared = PreparedProblem::new(&problem);
@@ -30,9 +74,155 @@ fn certification(c: &mut Criterion) {
     c.bench_function("prepared_solver_block_affine_rows", |b| {
         b.iter(|| PreparedSolverBlock::new(&prepared))
     });
+    let quadratic_problem = univariate_quadratic_problem(16);
+    c.bench_function("prepared_univariate_quadratic_rows", |b| {
+        b.iter(|| PreparedProblem::new(&quadratic_problem))
+    });
+    let multivariate_quadratic = multivariate_quadratic_problem(16);
+    c.bench_function("prepared_multivariate_quadratic_rows", |b| {
+        b.iter(|| PreparedProblem::new(&multivariate_quadratic))
+    });
+    let prepared_multivariate_quadratic = PreparedProblem::new(&multivariate_quadratic);
+    let multivariate_quadratic_context = context_from_problem(&multivariate_quadratic);
+    let prepared_quadratic = PreparedProblem::new(&quadratic_problem);
+    let quadratic_context = context_from_problem(&quadratic_problem);
+    c.bench_function("solve_direct_univariate_quadratic_rows", |b| {
+        b.iter(|| solve_direct_univariate_quadratic_equalities(&prepared_quadratic))
+    });
+    c.bench_function("certify_quadratic_interval_rows", |b| {
+        b.iter(|| {
+            certify_quadratic_interval_candidate(
+                &prepared_quadratic,
+                &quadratic_context,
+                &[VariableBall {
+                    symbol: SymbolId(0),
+                    radius: r(1),
+                }],
+                hyperlimit::PredicatePolicy::default(),
+            )
+        })
+    });
+    c.bench_function("certify_multivariate_quadratic_interval_rows", |b| {
+        b.iter(|| {
+            certify_multivariate_quadratic_interval_candidate(
+                &prepared_multivariate_quadratic,
+                &multivariate_quadratic_context,
+                &[
+                    VariableBall {
+                        symbol: SymbolId(0),
+                        radius: r(1),
+                    },
+                    VariableBall {
+                        symbol: SymbolId(1),
+                        radius: r(1),
+                    },
+                ],
+                hyperlimit::PredicatePolicy::default(),
+            )
+        })
+    });
     c.bench_function("certify_affine_candidate_exact", |b| {
         b.iter(|| certify_candidate(&prepared, &context))
     });
+
+    let substitutions = (0..16)
+        .map(|index| EqualitySubstitution {
+            constraint_index: index,
+            left: SymbolId(index as u32 + 1),
+            right: SymbolId(index as u32),
+            offset: r(index as i64),
+        })
+        .collect::<Vec<_>>();
+    c.bench_function("build_equality_substitution_classes_exact", |b| {
+        b.iter(|| build_equality_substitution_classes(&substitutions))
+    });
+
+    c.bench_function("domain_geometry_squared_distance_build", |b| {
+        b.iter(|| {
+            let mut problem = Problem::default();
+            let ax = problem.add_variable("ax", r(0));
+            let ay = problem.add_variable("ay", r(0));
+            let bx = problem.add_variable("bx", r(3));
+            let by = problem.add_variable("by", r(4));
+            problem.add_constraint(squared_distance_equation(
+                "3-4-5",
+                SolverPoint2::new(ax, ay),
+                SolverPoint2::new(bx, by),
+                r(25),
+            ));
+            problem
+        })
+    });
+    c.bench_function("domain_pcb_clearance_certification", |b| {
+        let mut problem = Problem::default();
+        let ax = problem.add_variable("ax", r(0));
+        let ay = problem.add_variable("ay", r(0));
+        let bx = problem.add_variable("bx", r(6));
+        let by = problem.add_variable("by", r(8));
+        problem.add_constraint(center_clearance_squared_constraint(
+            "center clearance",
+            SolverPoint2::new(ax, ay),
+            SolverPoint2::new(bx, by),
+            r(10),
+        ));
+        let prepared = PreparedProblem::new(&problem);
+        let context = context_from_problem(&problem);
+        b.iter(|| certify_candidate(&prepared, &context))
+    });
+    c.bench_function("domain_toolpath_bezier_offset_sample_certification", |b| {
+        let mut problem = Problem::default();
+        let x = problem.add_variable("offset_x", r(5));
+        let y = problem.add_variable("offset_y", r(3));
+        for constraint in bezier_offset_sample_constraints(
+            "bezier offset",
+            SolverPoint2::new(x, y),
+            hyperlimit::Point2::new(r(5), r(0)),
+            hyperlimit::Point2::new(r(10), r(0)),
+            hyperlimit::Point2::new(r(0), r(10)),
+            r(9),
+        )
+        .constraints
+        {
+            problem.add_constraint(constraint);
+        }
+        let prepared = PreparedProblem::new(&problem);
+        let context = context_from_problem(&problem);
+        b.iter(|| certify_candidate(&prepared, &context))
+    });
+    c.bench_function("domain_pcb_differential_pair_skew_certification", |b| {
+        let mut problem = Problem::default();
+        let first = problem.add_variable("first_length", r(1050));
+        let second = problem.add_variable("second_length", r(1000));
+        problem.add_constraint(differential_pair_skew_equation(
+            "differential pair skew",
+            Expr::symbol(SymbolId(first.0), "first_length"),
+            Expr::symbol(SymbolId(second.0), "second_length"),
+            r(50),
+        ));
+        let prepared = PreparedProblem::new(&problem);
+        let context = context_from_problem(&problem);
+        b.iter(|| certify_candidate(&prepared, &context))
+    });
+    c.bench_function(
+        "domain_toolpath_rectangular_difference_certification",
+        |b| {
+            let mut problem = Problem::default();
+            problem.add_constraint(rectangular_difference_area_equation(
+                "rectangular difference area",
+                rect(0, 0, 10, 10),
+                Some(rect(3, 4, 7, 8)),
+                vec![
+                    rect(0, 0, 3, 10),
+                    rect(7, 0, 10, 10),
+                    rect(3, 0, 7, 4),
+                    rect(3, 8, 7, 10),
+                ],
+            ));
+            let prepared = PreparedProblem::new(&problem);
+            let context = context_from_problem(&problem);
+            b.iter(|| certify_candidate(&prepared, &context))
+        },
+    );
 }
 
 criterion_group!(benches, certification);

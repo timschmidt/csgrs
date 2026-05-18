@@ -13,6 +13,10 @@
 use crate::affine::{PreparedAffineResidual, prepare_affine_residual};
 use crate::eval::{EvalError, EvaluationContext, ResidualEvaluation, positive_part};
 use crate::model::{ConstraintKind, Problem};
+use crate::polynomial::{
+    PreparedQuadraticResidual, PreparedUnivariateQuadraticResidual, prepare_quadratic_residual,
+    prepare_univariate_quadratic_residual,
+};
 use crate::symbolic::{Expr, ExprDegree, ExprFacts, SymbolId};
 use hyperreal::RealSign;
 
@@ -93,6 +97,10 @@ pub struct PreparedProblemFacts {
     pub prepared_affine_active_rows: usize,
     /// Number of active residual rows that are structurally polynomial.
     pub polynomial_active_rows: usize,
+    /// Number of active polynomial rows with prepared univariate quadratic blocks.
+    pub prepared_univariate_quadratic_active_rows: usize,
+    /// Number of active polynomial rows with prepared degree-at-most-two blocks.
+    pub prepared_quadratic_active_rows: usize,
     /// Number of active residual rows that are structurally non-polynomial.
     pub non_polynomial_active_rows: usize,
     /// Number of active constant residual rows whose exact value is known zero.
@@ -141,6 +149,8 @@ pub struct PreparedProblem<'a> {
     problem: &'a Problem,
     constraints: Vec<PreparedConstraintFacts>,
     affine_residuals: Vec<Option<PreparedAffineResidual>>,
+    univariate_quadratic_residuals: Vec<Option<PreparedUnivariateQuadraticResidual>>,
+    quadratic_residuals: Vec<Option<PreparedQuadraticResidual>>,
     facts: PreparedProblemFacts,
     jacobian_sparsity: Vec<Vec<bool>>,
 }
@@ -159,6 +169,8 @@ impl<'a> PreparedProblem<'a> {
         let mut affine_active_rows = 0_usize;
         let mut prepared_affine_active_rows = 0_usize;
         let mut polynomial_active_rows = 0_usize;
+        let mut prepared_univariate_quadratic_active_rows = 0_usize;
+        let mut prepared_quadratic_active_rows = 0_usize;
         let mut non_polynomial_active_rows = 0_usize;
         let mut known_zero_constant_active_rows = 0_usize;
         let mut known_nonzero_constant_active_rows = 0_usize;
@@ -166,6 +178,8 @@ impl<'a> PreparedProblem<'a> {
         let mut structural_jacobian_nonzeros = 0_usize;
         let mut jacobian_sparsity = Vec::with_capacity(problem.constraints.len());
         let mut affine_residuals = Vec::with_capacity(problem.constraints.len());
+        let mut univariate_quadratic_residuals = Vec::with_capacity(problem.constraints.len());
+        let mut quadratic_residuals = Vec::with_capacity(problem.constraints.len());
 
         for constraint in &problem.constraints {
             let residual = constraint.residual.structural_facts();
@@ -175,6 +189,12 @@ impl<'a> PreparedProblem<'a> {
             let affine_residual = (residual.degree == ExprDegree::Polynomial(1)
                 || residual.degree == ExprDegree::Constant)
                 .then(|| prepare_affine_residual(&constraint.residual, problem))
+                .flatten();
+            let univariate_quadratic_residual = (residual.degree == ExprDegree::Polynomial(2))
+                .then(|| prepare_univariate_quadratic_residual(&constraint.residual, problem))
+                .flatten();
+            let quadratic_residual = (residual.degree == ExprDegree::Polynomial(2))
+                .then(|| prepare_quadratic_residual(&constraint.residual, problem))
                 .flatten();
 
             if constraint.active {
@@ -203,6 +223,12 @@ impl<'a> PreparedProblem<'a> {
                     }
                     ExprDegree::Polynomial(_) => {
                         polynomial_active_rows += 1;
+                        if univariate_quadratic_residual.is_some() {
+                            prepared_univariate_quadratic_active_rows += 1;
+                        }
+                        if quadratic_residual.is_some() {
+                            prepared_quadratic_active_rows += 1;
+                        }
                     }
                     ExprDegree::NonPolynomial => {
                         non_polynomial_active_rows += 1;
@@ -220,6 +246,8 @@ impl<'a> PreparedProblem<'a> {
             });
             jacobian_sparsity.push(row_sparsity);
             affine_residuals.push(affine_residual);
+            univariate_quadratic_residuals.push(univariate_quadratic_residual);
+            quadratic_residuals.push(quadratic_residual);
         }
 
         let facts = PreparedProblemFacts {
@@ -229,6 +257,8 @@ impl<'a> PreparedProblem<'a> {
             affine_active_rows,
             prepared_affine_active_rows,
             polynomial_active_rows,
+            prepared_univariate_quadratic_active_rows,
+            prepared_quadratic_active_rows,
             non_polynomial_active_rows,
             known_zero_constant_active_rows,
             known_nonzero_constant_active_rows,
@@ -240,6 +270,8 @@ impl<'a> PreparedProblem<'a> {
             problem,
             constraints,
             affine_residuals,
+            univariate_quadratic_residuals,
+            quadratic_residuals,
             facts,
             jacobian_sparsity,
         }
@@ -276,6 +308,16 @@ impl<'a> PreparedProblem<'a> {
     /// original expression tree remains authoritative for evaluation.
     pub fn affine_residuals(&self) -> &[Option<PreparedAffineResidual>] {
         &self.affine_residuals
+    }
+
+    /// Returns prepared univariate quadratic residual blocks by source row.
+    pub fn univariate_quadratic_residuals(&self) -> &[Option<PreparedUnivariateQuadraticResidual>] {
+        &self.univariate_quadratic_residuals
+    }
+
+    /// Returns prepared degree-at-most-two residual blocks by source row.
+    pub fn quadratic_residuals(&self) -> &[Option<PreparedQuadraticResidual>] {
+        &self.quadratic_residuals
     }
 
     /// Evaluate residuals against a context using the source problem.

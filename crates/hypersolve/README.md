@@ -1,87 +1,120 @@
 # hypersolve
 
-`hypersolve` is the experimental solver layer for the hyper stack. It currently
-depends on `hyperreal` for exact scalar values and `hyperlattice` for exact-aware
-linear algebra, with the goal of keeping residuals, active sets, and repeated
-constraint kernels explicit instead of lowering silently to primitive floats.
+`hypersolve` is the experimental exact-aware solver layer for the Hyper stack. It models
+variables, constraints, symbolic residuals, preparation facts, interval and candidate
+certification, direct equality helpers, and lossy dense-solver adapters while keeping
+`hyperreal::Real` values visible.
 
-It is not yet a production optimizer. The current crate is a model, expression,
-preparation, and diagnostics layer for testing how exact scalar facts and
-prepared residual structure should flow into future nonlinear, geometric, PCB,
-toolpath, and physics solvers.
+The crate is not a production nonlinear optimizer yet. It is the place where solver
+intent, residual structure, active-set facts, and adapter precision boundaries are made
+auditable before future high-performance backends are introduced.
 
 ## Hyper Ecosystem
 
-`hypersolve` is the experimental exact-aware solver layer, keeping variables,
-constraints, residuals, and diagnostics explicit before any lossy numeric solve.
+`hypersolve` owns solver-domain concepts and delegates the rest of the stack.
 
-- [hyperreal](https://github.com/timschmidt/hyperreal): exact rational, symbolic, and computable
-  real arithmetic.
-- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate policy and certified
-  geometric decisions.
-- [hyperlattice](https://github.com/timschmidt/hyperlattice): small exact vector, matrix, and
-  transform algebra.
-- [hypercurve](https://github.com/timschmidt/hypercurve): planar curve, contour, region, and
-  boolean geometry.
-- [hypertri](https://github.com/timschmidt/hypertri): exact polygon triangulation and constrained
-  Delaunay topology.
-- [hypermesh](https://github.com/timschmidt/boolmesh): 3D mesh boolean experiments and the
-  future exact-aware mesh-topology layer.
-- [hypersolve](https://github.com/timschmidt/hypersolve): experimental exact-aware solver layer.
-- [hyperdrc](https://github.com/timschmidt/hyperdrc): PCB design-readiness checks over exact-aware
-  geometry adapters.
-- [hyperphysics](https://github.com/timschmidt/hyperphysics): placeholder physics-domain crate
-  for the exact geometry stack.
-- [csgrs](https://github.com/timschmidt/csgrs): constructive solid geometry and polygon boolean
-  engine used by HyperDRC and available as an interop target.
+- [hyperreal](https://github.com/timschmidt/hyperreal): exact scalar residual and
+  coefficient values.
+- [hyperlattice](https://github.com/timschmidt/hyperlattice): small exact vector and
+  matrix algebra used by solver helpers.
+- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate decisions for
+  geometry-facing constraints.
+- [hypercurve](https://github.com/timschmidt/hypercurve),
+  [hypertri](https://github.com/timschmidt/hypertri), and
+  [hypermesh](https://github.com/timschmidt/hypermesh): geometry/topology owners for
+  constraints that should not be reduced to local float tests.
+- [hyperpath](https://github.com/timschmidt/hyperpath),
+  [hyperdrc](https://github.com/timschmidt/hyperdrc),
+  [hypercircuit](https://github.com/timschmidt/hypercircuit), and
+  [hyperphysics](https://github.com/timschmidt/hyperphysics): domain crates that can
+  generate residuals and replay accepted candidates.
 
-## Semantic Boundary
-
-`hypersolve` should own solver-domain concepts: variables, constraints,
-prepared residual blocks, active-set state, diagnostics, convergence policy, and
-lossy adapters to dense numerical solvers when an approximation is explicitly
-requested.
-
-It should not own scalar arithmetic, matrix storage, predicate policy, curve or
-triangulation topology, PCB/CAM metadata, or CSG boolean semantics. Those remain
-in the sibling crates linked above.
-
-## Traditional Solver Problems
+## Typical Solver Problems
 
 Solvers often mix symbolic intent, numeric residual evaluation, linear algebra,
-predicate branches, and convergence policy into one opaque loop. That makes it
-hard to tell whether a failure came from bad conditioning, a lossy adapter, an
-incorrect active set, stale Jacobian structure, or a domain constraint that was
-really discrete/topological.
+predicate branches, and convergence policy inside one loop. When a solve fails, barely
+passes, or changes branch, it can be unclear whether the issue was conditioning, stale
+Jacobian structure, a lossy adapter, a wrong active set, or a genuinely discrete
+topology rule.
 
-`hypersolve` keeps those boundaries separate. Expressions carry dependency and
-degree facts; prepared problems retain residual-row summaries, Jacobian
-sparsity, affine residuals, and constant-row certificates; dense primitive
-linear solving is exposed as an explicit lossy adapter with diagnostics rather
-than as the internal truth. The goal is to control numerical explosion by
-reusing symbolic structure, skipping structurally zero work, and reporting
-precision boundaries before a later high-performance backend is introduced.
+`hypersolve` separates those layers. Expressions carry dependency and degree facts;
+prepared problems retain row and Jacobian structure; direct and interval helpers expose
+certificates; dense primitive linear solving is a named adapter with diagnostics rather
+than internal truth.
+
+## Main Types
+
+- `Expr`, `SymbolId`, `ExprFacts`, and `ExprDegree` describe symbolic residual
+  expressions over `Real`.
+- `Problem`, `Variable`, `VariableId`, `Constraint`, and `ConstraintKind` describe the
+  solver model.
+- `EvaluationContext`, `ResidualEvaluation`, Jacobian helpers, and prepared problem
+  types evaluate residuals and preserve structure.
+- `PreparedAffineResidual`, polynomial residual types, solver-block facts, and direct
+  equality helpers expose reusable exact subproblems.
+- `CandidateCertificationReport`, residual balls, interval certification helpers, and
+  predicate reports describe proof or uncertainty.
+- `DenseLinearBackend`, `LinearSolveReport`, `SolverConfig`, `SolverState`, and
+  `SolveReport` make lossy dense solving explicit.
+
+## Precision Model
+
+Residual definitions and structural facts use `Real`. Dense primitive solves are
+explicit adapters and report their precision boundary, pivot diagnostics, and
+convergence outcome. Geometry or topology predicates should be delegated to
+`hyperlimit`, `hypercurve`, `hypertri`, or the domain crate that owns the object.
+
+Unknown certification is a first-class result. The crate should not turn unresolved
+interval, predicate, or residual evidence into a float decision just to make a solve
+look complete.
+
+## Performance Model
+
+`hypersolve` works to keep expensive solving out of cases where structure already gives
+an answer. Prepared facts record constant rows, affine rows, polynomial rows,
+dependency masks, sparse Jacobian structure, and affine residual reuse. Direct equality
+substitution and univariate quadratic helpers handle small exact cases before a generic
+nonlinear loop is needed.
+
+Future backend work should exploit the same records: skip structural zeros, reuse
+prepared Jacobians, route affine blocks to exact/direct solvers, and report when a dense
+or sparse numeric adapter has crossed a lossy boundary.
 
 ## Current Status
 
-Implemented pieces include:
+Implemented today:
 
-- symbolic expressions over `hyperreal::Real`, named symbols, arithmetic,
-  powers, roots, trig/log nodes, simplification, structural facts, and symbolic
-  differentiation;
-- `Problem`, `Variable`, and `Constraint` models with equality constraints and
-  optional variable bounds;
-- evaluation contexts and residual evaluation over exact `Real` bindings;
-- finite-difference and symbolic Jacobian builders, plus prepared symbolic
-  Jacobian evaluation;
-- prepared problem facts for active rows, constant rows, affine rows,
-  polynomial rows, dependency masks, structural Jacobian nonzeros, and affine
-  residual reuse;
-- a dense damped least-squares prototype whose linear solve report records the
-  adapter precision boundary and pivot diagnostics;
-- domain placeholder modules for geometry, PCB, and toolpath constraints;
-- smoke and proptest coverage for residual and preparation invariants.
+- symbolic expressions, simplification, structural facts, and differentiation;
+- exact residual evaluation contexts and finite-difference/symbolic Jacobian builders;
+- prepared problem, affine, polynomial, and solver-block fact records;
+- direct affine and univariate-quadratic equality helpers plus equality-substitution
+  analysis;
+- candidate and interval certification surfaces;
+- a dense damped least-squares prototype with adapter diagnostics;
+- geometry, PCB, and toolpath constraint helper modules.
 
-Known limits: nonlinear solve policy is still experimental, dense linear
-solving is intentionally approximate, and geometry/topology constraints should
-delegate exact predicates to `hyperlimit`, `hypercurve`, and `hypertri`.
+Known limits: nonlinear solve policy is still experimental, dense linear solving is
+intentionally approximate, and domain topology remains delegated to sibling crates.
+
+## Installation
+
+```toml
+[dependencies]
+hypersolve = "0.1.0"
+```
+
+For sibling checkouts:
+
+```toml
+[dependencies]
+hypersolve = { path = "../hypersolve" }
+```
+
+## Development
+
+Useful local checks:
+
+```sh
+cargo test
+cargo bench --bench certification
+```

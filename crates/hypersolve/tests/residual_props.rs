@@ -1,7 +1,12 @@
-use hyperreal::RealSign;
+use hyperreal::{Real, RealSign};
 use hypersolve::{
-    CertifiedCandidateStatus, Constraint, Expr, PreparedProblem, PreparedSolverBlock, Problem,
-    SolverBlockRowKind, SymbolId, certify_candidate, context_from_problem,
+    CertifiedCandidateStatus, Constraint, EqualitySubstitution, EqualitySubstitutionProblem, Expr,
+    PreparedProblem, PreparedSolverBlock, Problem, RectangularRegion, SolverBlockRowKind,
+    SolverPoint2, SymbolId, VariableBall, center_clearance_squared_constraint, certify_candidate,
+    certify_multivariate_quadratic_interval_candidate, certify_quadratic_interval_candidate,
+    context_from_problem, differential_pair_skew_equation, rectangular_difference_area_equation,
+    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
+    validate_equality_substitutions,
 };
 use proptest::prelude::*;
 
@@ -11,6 +16,14 @@ fn expected_sign(value: i64) -> RealSign {
         std::cmp::Ordering::Equal => RealSign::Zero,
         std::cmp::Ordering::Greater => RealSign::Positive,
     }
+}
+
+fn point(x: i64, y: i64) -> hyperlimit::Point2 {
+    hyperlimit::Point2::new(Real::from(x), Real::from(y))
+}
+
+fn rect(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> RectangularRegion {
+    RectangularRegion::new(point(min_x, min_y), point(max_x, max_y))
 }
 
 proptest! {
@@ -173,5 +186,352 @@ proptest! {
             SolverBlockRowKind::ConstantCertifiedZero
                 | SolverBlockRowKind::ConstantCertifiedContradiction
         )));
+    }
+
+    #[test]
+    fn prepared_univariate_quadratic_generated_coefficients_replay_exactly(
+        a in -8_i16..=8,
+        b in -8_i16..=8,
+        c in -8_i16..=8,
+        x_value in -8_i16..=8,
+    ) {
+        prop_assume!(a != 0);
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(i64::from(x_value)));
+        problem.add_constraint(Constraint::equality(
+            "generated univariate quadratic",
+            x.clone() * x.clone() * Expr::int(i64::from(a))
+                + x * Expr::int(i64::from(b))
+                + Expr::int(i64::from(c)),
+        ));
+        let prepared = PreparedProblem::new(&problem);
+        let block = PreparedSolverBlock::new(&prepared);
+        let quadratic = prepared.univariate_quadratic_residuals()[0]
+            .as_ref()
+            .expect("generated univariate quadratic should prepare");
+        let expected = i64::from(a) * i64::from(x_value) * i64::from(x_value)
+            + i64::from(b) * i64::from(x_value)
+            + i64::from(c);
+
+        prop_assert_eq!(prepared.facts().prepared_univariate_quadratic_active_rows, 1);
+        prop_assert_eq!(block.facts().prepared_univariate_quadratic_row_count, 1);
+        prop_assert_eq!(quadratic.quadratic(), &Real::from(i64::from(a)));
+        prop_assert_eq!(quadratic.linear(), &Real::from(i64::from(b)));
+        prop_assert_eq!(quadratic.constant(), &Real::from(i64::from(c)));
+        prop_assert_eq!(
+            quadratic
+                .eval_real(problem.variables.as_slice(), context_from_problem(&problem).bindings())
+                .unwrap(),
+            Real::from(expected)
+        );
+    }
+
+    #[test]
+    fn prepared_multivariate_quadratic_generated_coefficients_replay_exactly(
+        ax2 in -4_i16..=4,
+        bxy in -4_i16..=4,
+        cy2 in -4_i16..=4,
+        dx in -8_i16..=8,
+        ey in -8_i16..=8,
+        f in -16_i16..=16,
+        x_value in -8_i16..=8,
+        y_value in -8_i16..=8,
+    ) {
+        prop_assume!(ax2 != 0 || bxy != 0 || cy2 != 0);
+        let x = Expr::symbol(SymbolId(0), "x");
+        let y = Expr::symbol(SymbolId(1), "y");
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(i64::from(x_value)));
+        problem.add_variable("y", Real::from(i64::from(y_value)));
+        problem.add_constraint(Constraint::equality(
+            "generated multivariate quadratic",
+            x.clone() * x.clone() * Expr::int(i64::from(ax2))
+                + x.clone() * y.clone() * Expr::int(i64::from(bxy))
+                + y.clone() * y.clone() * Expr::int(i64::from(cy2))
+                + x * Expr::int(i64::from(dx))
+                + y * Expr::int(i64::from(ey))
+                + Expr::int(i64::from(f)),
+        ));
+        let prepared = PreparedProblem::new(&problem);
+        let block = PreparedSolverBlock::new(&prepared);
+        let quadratic = prepared.quadratic_residuals()[0]
+            .as_ref()
+            .expect("generated multivariate quadratic should prepare");
+        let expected = i64::from(ax2) * i64::from(x_value) * i64::from(x_value)
+            + i64::from(bxy) * i64::from(x_value) * i64::from(y_value)
+            + i64::from(cy2) * i64::from(y_value) * i64::from(y_value)
+            + i64::from(dx) * i64::from(x_value)
+            + i64::from(ey) * i64::from(y_value)
+            + i64::from(f);
+
+        prop_assert_eq!(prepared.facts().prepared_quadratic_active_rows, 1);
+        prop_assert_eq!(block.facts().prepared_quadratic_row_count, 1);
+        prop_assert_eq!(
+            quadratic
+                .eval_real(problem.variables.as_slice(), context_from_problem(&problem).bindings())
+                .unwrap(),
+            Real::from(expected)
+        );
+        prop_assert_eq!(
+            prepared.evaluate_residuals(&context_from_problem(&problem)).unwrap()[0].value.clone(),
+            Real::from(expected)
+        );
+    }
+
+    #[test]
+    fn direct_quadratic_solver_generated_integer_roots_replay_exactly(
+        first in -16_i16..=16,
+        second in -16_i16..=16,
+    ) {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let first = i64::from(first);
+        let second = i64::from(second);
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(0));
+        problem.add_constraint(Constraint::equality(
+            "generated integer roots",
+            x.clone().powi(2)
+                - x.clone() * Expr::int(first + second)
+                + Expr::int(first * second),
+        ));
+        let prepared = PreparedProblem::new(&problem);
+        let solutions = solve_direct_univariate_quadratic_equalities(&prepared).unwrap();
+
+        prop_assert_eq!(solutions.len(), 1);
+        if first == second {
+            prop_assert_eq!(&solutions[0].roots, &vec![Real::from(first)]);
+        } else {
+            prop_assert_eq!(
+                &solutions[0].roots,
+                &vec![Real::from(first.max(second)), Real::from(first.min(second))]
+            );
+        }
+    }
+
+    #[test]
+    fn quadratic_interval_generated_positive_balls_certify_violation(
+        a in 1_i16..=8,
+        x_value in 10_i16..=20,
+        radius in 0_i16..=2,
+    ) {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(i64::from(x_value)));
+        problem.add_constraint(Constraint::equality(
+            "generated positive quadratic ball",
+            x.clone() * x * Expr::int(i64::from(a)),
+        ));
+        let prepared = PreparedProblem::new(&problem);
+        let report = certify_quadratic_interval_candidate(
+            &prepared,
+            &context_from_problem(&problem),
+            &[VariableBall {
+                symbol: SymbolId(0),
+                radius: Real::from(i64::from(radius)),
+            }],
+            hyperlimit::PredicatePolicy::default(),
+        ).unwrap();
+
+        prop_assert_eq!(report.certified_violation_rows, 1);
+        let ball_certified_positive = matches!(
+            report.rows[0].status,
+            CertifiedCandidateStatus::BallCertified {
+                sign: RealSign::Positive
+            }
+        );
+        prop_assert_eq!(ball_certified_positive, true);
+    }
+
+    #[test]
+    fn multivariate_quadratic_interval_generated_positive_balls_certify_violation(
+        x_value in 10_i16..=20,
+        y_value in 10_i16..=20,
+        x_radius in 0_i16..=2,
+        y_radius in 0_i16..=2,
+    ) {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let y = Expr::symbol(SymbolId(1), "y");
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(i64::from(x_value)));
+        problem.add_variable("y", Real::from(i64::from(y_value)));
+        problem.add_constraint(Constraint::equality(
+            "generated positive cross term ball",
+            x * y,
+        ));
+        let prepared = PreparedProblem::new(&problem);
+        let report = certify_multivariate_quadratic_interval_candidate(
+            &prepared,
+            &context_from_problem(&problem),
+            &[
+                VariableBall {
+                    symbol: SymbolId(0),
+                    radius: Real::from(i64::from(x_radius)),
+                },
+                VariableBall {
+                    symbol: SymbolId(1),
+                    radius: Real::from(i64::from(y_radius)),
+                },
+            ],
+            hyperlimit::PredicatePolicy::default(),
+        ).unwrap();
+
+        let ball_certified_positive = matches!(
+            report.rows[0].status,
+            CertifiedCandidateStatus::BallCertified {
+                sign: RealSign::Positive
+            }
+        );
+        prop_assert_eq!(report.certified_violation_rows, 1);
+        prop_assert_eq!(ball_certified_positive, true);
+    }
+
+    #[test]
+    fn substitution_cycle_validation_sums_generated_offsets_exactly(
+        first in -64_i16..=64,
+        second in -64_i16..=64,
+    ) {
+        let substitutions = vec![
+            EqualitySubstitution {
+                constraint_index: 0,
+                left: SymbolId(0),
+                right: SymbolId(1),
+                offset: Real::from(i64::from(first)),
+            },
+            EqualitySubstitution {
+                constraint_index: 1,
+                left: SymbolId(1),
+                right: SymbolId(0),
+                offset: Real::from(i64::from(second)),
+            },
+        ];
+
+        let report = validate_equality_substitutions(&substitutions);
+        let expected_offset = Real::from(i64::from(first) + i64::from(second));
+        let found_expected_cycle = report.problems.iter().any(|problem| matches!(
+            problem,
+            EqualitySubstitutionProblem::DirectedCycle {
+                symbols,
+                net_offset,
+                consistent,
+            } if symbols == &vec![SymbolId(0), SymbolId(1)]
+                && net_offset == &expected_offset
+                && *consistent == (expected_offset == Real::zero())
+        ));
+
+        prop_assert!(found_expected_cycle);
+        prop_assert_eq!(
+            report.has_inconsistency(),
+            expected_offset != Real::zero()
+        );
+    }
+
+    #[test]
+    fn geometry_domain_generated_squared_distance_certifies_exactly(
+        ax in -32_i16..=32,
+        ay in -32_i16..=32,
+        bx in -32_i16..=32,
+        by in -32_i16..=32,
+    ) {
+        let mut problem = Problem::default();
+        let ax_id = problem.add_variable("ax", Real::from(i64::from(ax)));
+        let ay_id = problem.add_variable("ay", Real::from(i64::from(ay)));
+        let bx_id = problem.add_variable("bx", Real::from(i64::from(bx)));
+        let by_id = problem.add_variable("by", Real::from(i64::from(by)));
+        let dx = i64::from(ax) - i64::from(bx);
+        let dy = i64::from(ay) - i64::from(by);
+        let target_squared = dx * dx + dy * dy;
+        problem.add_constraint(squared_distance_equation(
+            "generated squared distance",
+            SolverPoint2::new(ax_id, ay_id),
+            SolverPoint2::new(bx_id, by_id),
+            Real::from(target_squared),
+        ));
+
+        prop_assert!(
+            certify_candidate(&PreparedProblem::new(&problem), &context_from_problem(&problem))
+                .all_satisfied()
+        );
+    }
+
+    #[test]
+    fn pcb_domain_generated_clearance_threshold_matches_squared_distance(
+        ax in -16_i16..=16,
+        ay in -16_i16..=16,
+        bx in -16_i16..=16,
+        by in -16_i16..=16,
+        required in 0_i16..=8,
+    ) {
+        let mut problem = Problem::default();
+        let ax_id = problem.add_variable("ax", Real::from(i64::from(ax)));
+        let ay_id = problem.add_variable("ay", Real::from(i64::from(ay)));
+        let bx_id = problem.add_variable("bx", Real::from(i64::from(bx)));
+        let by_id = problem.add_variable("by", Real::from(i64::from(by)));
+        problem.add_constraint(center_clearance_squared_constraint(
+            "generated center clearance",
+            SolverPoint2::new(ax_id, ay_id),
+            SolverPoint2::new(bx_id, by_id),
+            Real::from(i64::from(required)),
+        ));
+        let dx = i64::from(ax) - i64::from(bx);
+        let dy = i64::from(ay) - i64::from(by);
+        let expected_satisfied = dx * dx + dy * dy >= i64::from(required) * i64::from(required);
+        let report = certify_candidate(&PreparedProblem::new(&problem), &context_from_problem(&problem));
+
+        prop_assert_eq!(report.all_satisfied(), expected_satisfied);
+        prop_assert_eq!(report.has_certified_violation(), !expected_satisfied);
+    }
+
+    #[test]
+    fn pcb_domain_generated_differential_pair_skew_matches_lengths(
+        first in 0_i16..=512,
+        second in 0_i16..=512,
+        target in -64_i16..=64,
+    ) {
+        let mut problem = Problem::default();
+        let first_id = problem.add_variable("first_length", Real::from(i64::from(first)));
+        let second_id = problem.add_variable("second_length", Real::from(i64::from(second)));
+        problem.add_constraint(differential_pair_skew_equation(
+            "generated differential pair skew",
+            Expr::symbol(SymbolId(first_id.0), "first_length"),
+            Expr::symbol(SymbolId(second_id.0), "second_length"),
+            Real::from(i64::from(target)),
+        ));
+        let report = certify_candidate(&PreparedProblem::new(&problem), &context_from_problem(&problem));
+        let expected_satisfied = i64::from(first) - i64::from(second) == i64::from(target);
+
+        prop_assert_eq!(report.all_satisfied(), expected_satisfied);
+        prop_assert_eq!(report.has_certified_violation(), !expected_satisfied);
+    }
+
+    #[test]
+    fn toolpath_domain_generated_rectangular_difference_area_certifies_exactly(
+        width in 1_i16..=32,
+        height in 1_i16..=32,
+        cut_width in 1_i16..=32,
+        cut_height in 1_i16..=32,
+    ) {
+        let width = i64::from(width);
+        let height = i64::from(height);
+        let cut_width = cut_width.min(width as i16) as i64;
+        let cut_height = cut_height.min(height as i16) as i64;
+        let subject = rect(0, 0, width, height);
+        let removed = rect(0, 0, cut_width, cut_height);
+        let remainder = vec![
+            rect(cut_width, 0, width, height),
+            rect(0, cut_height, cut_width, height),
+        ];
+        let mut problem = Problem::default();
+        problem.add_constraint(rectangular_difference_area_equation(
+            "generated rectangular difference area",
+            subject,
+            Some(removed),
+            remainder,
+        ));
+
+        prop_assert!(
+            certify_candidate(&PreparedProblem::new(&problem), &context_from_problem(&problem))
+                .all_satisfied()
+        );
     }
 }
