@@ -1,100 +1,124 @@
 # hyperphysics
 
-`hyperphysics` is currently a placeholder crate for future exact-aware physics
-and simulation adapters in the Hyper ecosystem. Its numerical policy should
-match the rest of the stack: hyperreal-backed values are the primary
-representation for authored geometry and configuration, while primitive
-`f32`/`f64` appear only at rendering, simulation-engine interop, file IO,
-diagnostics, or external-library adapters.
+`hyperphysics` owns exact-aware physical carriers for the Hyper ecosystem. It records
+materials, property assertions, bodies, fixtures, shapes, mass properties, contact
+reports, field/process handoffs, and residual replay surfaces over `hyperreal::Real`
+and `hyperlattice::Vector3` values.
+
+The crate is not a replacement runtime physics engine. It is an adapter and
+certification layer where authored physical facts stay visible before approximate
+simulation, field, or engine exports are trusted.
 
 ## Hyper Ecosystem
 
-`hyperphysics` is the future adapter layer between exact Hyper geometry facts
-and approximate physics or simulation engines.
+`hyperphysics` connects exact geometry facts to physical interpretation.
 
-- [hyperreal](https://github.com/timschmidt/hyperreal): exact rational, symbolic, and computable
-  real arithmetic.
-- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate policy and certified
-  geometric decisions.
-- [hyperlattice](https://github.com/timschmidt/hyperlattice): small exact vector, matrix, and
-  transform algebra.
-- [hypercurve](https://github.com/timschmidt/hypercurve): planar curve, contour, region, and
-  boolean geometry.
-- [hypertri](https://github.com/timschmidt/hypertri): exact polygon triangulation and constrained
-  Delaunay topology.
-- [hypermesh](https://github.com/timschmidt/boolmesh): 3D mesh boolean experiments and the
-  future exact-aware mesh-topology layer.
-- [hypersolve](https://github.com/timschmidt/hypersolve): experimental exact-aware solver layer.
-- [hyperdrc](https://github.com/timschmidt/hyperdrc): PCB design-readiness checks over exact-aware
-  geometry adapters.
-- [hyperphysics](https://github.com/timschmidt/hyperphysics): placeholder physics-domain crate
-  for the exact geometry stack.
-- [csgrs](https://github.com/timschmidt/csgrs): constructive solid geometry and polygon boolean
-  engine used by HyperDRC and available as an interop target.
+- [hyperreal](https://github.com/timschmidt/hyperreal) and
+  [hyperlattice](https://github.com/timschmidt/hyperlattice): scalar and vector values
+  for material, shape, mass, and field reports.
+- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact contact, sidedness, and
+  incidence predicate policy.
+- [hypercurve](https://github.com/timschmidt/hypercurve),
+  [hypertri](https://github.com/timschmidt/hypertri), and
+  [hypermesh](https://github.com/timschmidt/hypermesh): geometry/topology owners for
+  shapes and mesh facts.
+- [hypersolve](https://github.com/timschmidt/hypersolve): residual replay and future
+  coupled solver certification.
+- [hypercircuit](https://github.com/timschmidt/hypercircuit),
+  [hyperpath](https://github.com/timschmidt/hyperpath), and
+  [hyperdrc](https://github.com/timschmidt/hyperdrc): circuit, routing, and
+  manufacturing context for coupled physical fixtures.
 
-## Semantic Boundary
+## Typical Physics Problems
 
-`hyperphysics` should own physics-domain concepts such as bodies, fixtures,
-materials, contacts, constraints, time integration policy, collision-response
-diagnostics, and adapters to external physics engines. It should not own scalar
-arithmetic, small linear algebra kernels, exact predicate policy, curve/region
-topology, or triangulation data structures.
+Physics engines optimize throughput and stability under finite time steps. Contact
+manifolds, collision margins, mass properties, material data, and constraint solvers
+often combine approximation policy with geometry cleanup. That is useful at runtime, but
+it makes it hard to audit whether a simulation lost a constraint because of tolerance,
+mesh repair, or a real modeling issue.
 
-Expected dependencies by responsibility:
+`hyperphysics` keeps authored physical facts separate from runtime proposals. Exact
+material and geometry-derived reports are retained at setup time, lossy exports are
+named, and coupled or simulated states should be accepted only after exact residual or
+diagnostic replay where possible.
 
-- `hyperreal`: scalar values, exact rationals, symbolic constants, and scalar
-  structural facts.
-- `hyperlattice`: vectors, matrices, transforms, and object-level structural
-  facts such as zero masks, affine transform kind, and cached determinant state.
-- `hyperlimit`: exact/refined geometric predicates for contact, sidedness, and
-  incidence decisions.
-- `hypercurve` and `hypertri`: boundary/region and triangulation preparation
-  when physics shapes originate from exact geometry.
-- `hypermesh`: future manifold mesh preparation and 3D collision/boolean
-  topology when solid inputs are involved.
+## Main Types
 
-## Traditional Physics Problems
+- `ExactMaterial`, `MaterialPropertyGraph`, `MaterialAssertion`, and
+  `ResolvedPropertyReport` store source-attributed material facts.
+- `ExactBody3`, `ExactFixture3`, `PhysicsShape3`, `ClosedTriangleMesh3`,
+  `AxisAlignedBox3`, `Plane3`, `Ray3`, `Segment3`, and `Triangle3` describe physical
+  shapes and fixtures.
+- `MassPropertyReport3`, `SymmetricInertia3`, and `MassPropertyCertificate3` report
+  exact uniform-density mass properties.
+- `ContactMaterial`, `AabbContactReport3`, and contact classification types describe
+  current contact evidence.
+- `ForceAccumulator3`, `StepReplayReport3`, `SystemDiagnostics3`, and
+  `HypersolveResidualReplayReport` record replay and diagnostics.
+- Thermal, optical, electromagnetic, photochemical, reaction-diffusion, and fluid
+  modules define exact-aware handoff/report carriers for future solvers.
 
-Physics engines usually optimize for throughput and stability under finite
-time steps, not for exact authored geometry. Contact manifolds, resting
-contacts, thin features, collision margins, mass properties, and constraint
-solvers all mix approximation policy with topology. That is appropriate for a
-runtime engine, but it makes it hard to audit whether an exported simulation
-lost a constraint because of tolerance, geometry cleanup, or a real modeling
-issue.
+## Precision Model
 
-`hyperphysics` should become an adapter layer rather than a replacement physics
-engine. Exact geometry and material facts should be retained at construction
-time, lossy runtime export should be explicit, and any post-simulation checks
-should use Hyper predicates where possible. Performance work should focus on
-shape classification, broad-phase bounds, transform-kind facts, mass/inertia
-structure, and prepared contact geometry before crossing into an approximate
-engine.
+Physical setup data uses `Real` and exact vectors. Mesh mass properties are computed
+from oriented triangle decompositions using exact arithmetic. Material reports preserve
+exact values, exact intervals, explicit unknowns, conflicts, and external replacement
+status. Contact and shape reports prefer exact classification or explicit uncertainty
+over tolerance inflation.
+
+Primitive floats belong at rendering, external simulation-engine, file IO, diagnostics,
+or adapter boundaries. They are not physical truth inside the crate.
+
+## Performance Model
+
+`hyperphysics` preserves cheap object facts so future adapters can avoid unnecessary
+exact or simulation work: body class, shape kind, AABB bounds, support maps,
+mass/inertia structure, material category, and coupling policy. Exact setup reports are
+small enough to replay in tests and CI, while runtime-heavy work such as contact
+manifold generation, FEM/FVM/FDTD/SPH evolution, and engine bridges remains outside the
+core carrier layer.
+
+Performance improvements should come from prepared shape facts, broad-phase bounds,
+specialized exact queries, and explicit lossy adapters rather than hidden primitive
+predicates.
 
 ## Current Status
 
-`hyperphysics` intentionally has no production physics API yet. The crate is a
-planning and boundary marker while the exact scalar, predicate, curve,
-triangulation, mesh, and solver layers settle. Its README records the intended
-ownership split so future implementation work does not bury lossy simulation
-policy inside geometry constructors or exact predicates.
+Implemented today:
 
-## Structural-Information Opportunities
+- exact material IDs, density validation, property graphs, and elastic derivation;
+- exact bodies, fixtures, closed meshes, AABBs, planes, rays, segments, support maps,
+  and point/query reports;
+- exact uniform-density mass properties for closed triangle meshes;
+- contact material validation and AABB contact classification;
+- force accumulation, explicit step replay, momentum, and kinetic-energy diagnostics;
+- `hypersolve` residual replay rows for coupled candidates;
+- thermal, optical, electromagnetic, photochemical, reaction-diffusion, and fluid
+  handoff/report carriers.
 
-Physics code should carry inexpensive metadata discovered at import or shape
-construction time: static/dynamic body class, convexity, axis alignment,
-circle/sphere/capsule/box kind, transform kind, mass/inertia diagonal shape,
-known-zero velocities, broad-phase bounds, grid scale, and material/contact
-category. These facts can select faster exact setup or narrower external-engine
-adapters while keeping lossy numeric simulation decisions explicitly named.
+Known limits: broad contact generation, impulse solving, continuous collision, richer
+mesh validation, and full field/fluid/thermal evolution are future certified solver or
+adapter work.
 
-## Plan
+## Installation
 
-- Keep the crate minimal until the exact geometry stack surfaces needed by
-  physics shapes are stable.
-- Add exact shape constructors that lift finite external coordinates into
-  hyperreal-backed `hyperlattice` values.
-- Isolate any `f64` physics-engine bridge behind an adapter that documents
-  lossy export, solver tolerance, and exact-result validation where possible.
-- Reuse `hyperlimit` for contact/topology predicates instead of implementing
-  primitive-float predicates locally.
+```toml
+[dependencies]
+hyperphysics = "0.1.0"
+```
+
+For sibling checkouts:
+
+```toml
+[dependencies]
+hyperphysics = { path = "../hyperphysics" }
+```
+
+## Development
+
+Useful local checks:
+
+```sh
+cargo test
+cargo bench --bench mass_properties
+```

@@ -11,3 +11,13 @@ keywords = ["physics", "simulation", "hyperreal", "dynamics"]
 categories = ["science", "simulation", "mathematics"]
 
 [dependencies]
+hyperlattice = { path = "../hyperlattice", version = "0.4.0" }
+hyperreal = { path = "../hyperreal", version = "0.11.1" }
+hypersolve = { path = "../hypersolve", version = "0.1.0" }
+
+[dev-dependencies]
+proptest = "1.7.0"
+
+[[bench]]
+name = "mass_properties"
+harness = false

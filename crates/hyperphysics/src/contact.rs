@@ -1,0 +1,163 @@
+//! Exact contact materials and first contact-query reports.
+//!
+//! Runtime engines usually build contact manifolds with margins, tolerances,
+//! and iterative solvers. This module keeps the first contact boundary exact:
+//! material coefficients are validated as exact values and AABB/AABB contact
+//! state is classified as separated, touching, or intersecting without an
+//! epsilon. That follows Yap, "Towards Exact Geometric Computation,"
+//! *Computational Geometry* 7(1-2), 1997
+//! (<https://doi.org/10.1016/0925-7721(95)00040-2>): approximate manifold
+//! proposals may be useful, but accepted topological contact decisions need
+//! exact/certified replay.
+//!
+//! The report surface is intentionally pre-solver. Complementarity and impulse
+//! policies are named in the integration module after Stewart and Trinkle
+//! (1996), while this module only provides the exact geometric/material facts
+//! those solvers would consume.
+
+use hyperreal::{Real, RealSign};
+
+use crate::{AxisAlignedBox3, PhysicsError, PhysicsResult};
+
+/// Exact contact material coefficients.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ContactMaterial {
+    /// Provenance label or material handle.
+    pub source: String,
+    /// Coulomb friction coefficient.
+    pub friction: Real,
+    /// Normal restitution coefficient in `[0, 1]`.
+    pub restitution: Real,
+}
+
+/// Contact classification for two exact shapes.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ContactClassification {
+    /// Certified strict separation.
+    Separated,
+    /// Certified boundary contact without volume overlap.
+    Touching,
+    /// Certified overlap/intersection.
+    Intersecting,
+    /// Query could not certify a decision.
+    Unknown,
+}
+
+/// Exact AABB/AABB contact report.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AabbContactReport3 {
+    /// Contact classification.
+    pub classification: ContactClassification,
+    /// Per-axis overlap/penetration interval lengths.
+    pub overlaps: [Real; 3],
+    /// Axis with minimum positive overlap when intersecting.
+    pub minimum_overlap_axis: Option<usize>,
+}
+
+impl ContactMaterial {
+    /// Creates a contact material after validating coefficient domains.
+    pub fn new(
+        source: impl Into<String>,
+        friction: Real,
+        restitution: Real,
+    ) -> PhysicsResult<Self> {
+        require_nonnegative(&friction, PhysicsError::NegativeFrictionCoefficient)?;
+        require_fraction(&restitution)?;
+        Ok(Self {
+            source: source.into(),
+            friction,
+            restitution,
+        })
+    }
+}
+
+impl AabbContactReport3 {
+    /// Classifies exact AABB/AABB contact without tolerance inflation.
+    pub fn classify(left: &AxisAlignedBox3, right: &AxisAlignedBox3) -> PhysicsResult<Self> {
+        let mut overlaps = [Real::zero(), Real::zero(), Real::zero()];
+        let mut touching = false;
+
+        for axis in 0..3 {
+            let left_before_right = left.max[axis].clone() - right.min[axis].clone();
+            if sign(&left_before_right)? == RealSign::Negative {
+                return Ok(Self {
+                    classification: ContactClassification::Separated,
+                    overlaps,
+                    minimum_overlap_axis: None,
+                });
+            }
+            let right_before_left = right.max[axis].clone() - left.min[axis].clone();
+            if sign(&right_before_left)? == RealSign::Negative {
+                return Ok(Self {
+                    classification: ContactClassification::Separated,
+                    overlaps,
+                    minimum_overlap_axis: None,
+                });
+            }
+
+            let overlap = min_real(left_before_right, right_before_left)?;
+            if sign(&overlap)? == RealSign::Zero {
+                touching = true;
+            }
+            overlaps[axis] = overlap;
+        }
+
+        if touching {
+            Ok(Self {
+                classification: ContactClassification::Touching,
+                overlaps,
+                minimum_overlap_axis: None,
+            })
+        } else {
+            Ok(Self {
+                minimum_overlap_axis: minimum_overlap_axis(&overlaps)?,
+                classification: ContactClassification::Intersecting,
+                overlaps,
+            })
+        }
+    }
+}
+
+fn minimum_overlap_axis(overlaps: &[Real; 3]) -> PhysicsResult<Option<usize>> {
+    let mut best = 0_usize;
+    for axis in 1..3 {
+        if less(&overlaps[axis], &overlaps[best])? {
+            best = axis;
+        }
+    }
+    Ok(Some(best))
+}
+
+fn min_real(left: Real, right: Real) -> PhysicsResult<Real> {
+    if less(&left, &right)? {
+        Ok(left)
+    } else {
+        Ok(right)
+    }
+}
+
+fn require_nonnegative(value: &Real, error: PhysicsError) -> PhysicsResult<()> {
+    match sign(value)? {
+        RealSign::Positive | RealSign::Zero => Ok(()),
+        RealSign::Negative => Err(error),
+    }
+}
+
+fn require_fraction(value: &Real) -> PhysicsResult<()> {
+    let lower = sign(value)?;
+    let upper = sign(&(Real::one() - value.clone()))?;
+    match (lower, upper) {
+        (RealSign::Positive | RealSign::Zero, RealSign::Positive | RealSign::Zero) => Ok(()),
+        _ => Err(PhysicsError::InvalidRestitutionCoefficient),
+    }
+}
+
+fn less(left: &Real, right: &Real) -> PhysicsResult<bool> {
+    Ok(sign(&(left.clone() - right.clone()))? == RealSign::Negative)
+}
+
+fn sign(value: &Real) -> PhysicsResult<RealSign> {
+    value
+        .refine_sign_until(-64)
+        .ok_or(PhysicsError::UnknownShapeQuery)
+}
