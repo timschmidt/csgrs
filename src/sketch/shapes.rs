@@ -1398,7 +1398,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         if order == 0 {
             return Sketch::empty(self.metadata.clone());
         }
-        let bounds = self.region_xy_bounds().or_else(|| {
+        let bounds = self.native_xy_bounds().or_else(|| {
             let geometry = self.effective_geometry();
             geometry
                 .bounding_rect()

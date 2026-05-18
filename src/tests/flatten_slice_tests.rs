@@ -24,6 +24,80 @@ fn test_flatten_and_union_single_polygon() {
     assert_eq!(bb.maxs.y, 1.0);
 }
 
+#[test]
+fn flatten_promotes_union_projection_to_hypercurve_region() {
+    let square_poly =
+        polygon_from_xy_points(&[[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]);
+    let csg = Mesh::from_polygons(&[square_poly], ());
+
+    let mut flat = csg.flatten();
+
+    assert!(!flat.as_region().is_empty());
+    assert_eq!(flat.material_contour_count(), 1);
+    assert!(flat.contains_xy(0.5, 0.5).unwrap());
+
+    flat.geometry = geo::GeometryCollection::default();
+    assert!(
+        !flat.geometry().is_empty(),
+        "flattened projection should regenerate finite output from native Region2"
+    );
+    assert!(
+        !flat.triangulate().is_empty(),
+        "flattened projection should triangulate from native Region2 after cache removal"
+    );
+}
+
+#[test]
+fn sketch_from_mesh_uses_same_hypercurve_flatten_path() {
+    let square_poly =
+        polygon_from_xy_points(&[[0.0, 0.0], [2.0, 0.0], [2.0, 1.0], [0.0, 1.0]]);
+    let csg = Mesh::from_polygons(&[square_poly], ());
+
+    let mut sketch = Sketch::from(csg);
+
+    assert!(!sketch.as_region().is_empty());
+    assert_eq!(sketch.material_contour_count(), 1);
+    assert!(sketch.contains_xy(1.0, 0.5).unwrap());
+
+    sketch.geometry = geo::GeometryCollection::default();
+    let bbox = sketch.bounding_box();
+    assert_eq!(bbox.mins.x, 0.0);
+    assert_eq!(bbox.maxs.x, 2.0);
+    assert!(
+        !sketch.geometry().is_empty(),
+        "Sketch::from(mesh) should not depend on retained finite union geometry"
+    );
+}
+
+#[test]
+fn slice_open_intersection_chain_is_native_hypercurve_wire() {
+    let polygon = Polygon::new(
+        vec![
+            Vertex::new(Point3::new(-1.0, 0.0, -1.0), Vector3::z()),
+            Vertex::new(Point3::new(1.0, 0.0, 1.0), Vector3::z()),
+            Vertex::new(Point3::new(0.0, 1.0, 1.0), Vector3::z()),
+        ],
+        (),
+    );
+    let mesh = Mesh::from_polygons(&[polygon], ());
+
+    let mut section = mesh.slice(Plane::from_normal(Vector3::z(), 0.0));
+
+    assert!(section.as_region().is_empty());
+    assert_eq!(section.wires().len(), 1);
+    assert_eq!(section.wire_polylines()[0].len(), 2);
+
+    section.geometry = geo::GeometryCollection::default();
+    let geometry = section.geometry();
+    assert!(
+        geometry
+            .0
+            .iter()
+            .all(|geometry| matches!(geometry, geo::Geometry::LineString(_))),
+        "open slice should regenerate finite output from native CurveString2 wires"
+    );
+}
+
 /// Test `flatten_and_union` with two overlapping squares.
 /// The result should be a single unioned polygon covering [0..2, 0..1].
 #[test]

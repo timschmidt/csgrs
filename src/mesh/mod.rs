@@ -25,7 +25,7 @@ use crate::sketch::Sketch;
 use crate::bmesh::BMesh;
 use crate::csg::CSG;
 #[cfg(feature = "sketch")]
-use geo::{CoordsIter, Geometry, Polygon as GeoPolygon};
+use geo::{CoordsIter, Geometry, LineString, Polygon as GeoPolygon};
 use hashbrown::HashMap;
 use nalgebra::{
     Isometry3, Matrix4, Point3, Quaternion, Unit, Vector3, partial_max, partial_min,
@@ -1161,6 +1161,35 @@ impl<M: Clone + Send + Sync + Debug> From<Sketch<M>> for Mesh<M> {
             (vertices.len() >= 3).then(|| Polygon::new(vertices, metadata.clone()))
         }
 
+        fn finite_line_string_to_vertices(line_string: &LineString<Real>) -> Vec<Vertex> {
+            let mut vertices: Vec<_> = line_string
+                .coords_iter()
+                .map(|c| Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z()))
+                .collect();
+            if vertices.first() == vertices.last() {
+                vertices.pop();
+            }
+            vertices
+        }
+
+        fn finite_polygon_to_mesh_polygons<M: Clone + Debug + Send + Sync>(
+            poly2d: &GeoPolygon<Real>,
+            metadata: &M,
+        ) -> Vec<Polygon<M>> {
+            let mut all_polygons = Vec::new();
+            let exterior = finite_line_string_to_vertices(poly2d.exterior());
+            if exterior.len() >= 3 {
+                all_polygons.push(Polygon::new(exterior, metadata.clone()));
+            }
+            for ring in poly2d.interiors() {
+                let hole = finite_line_string_to_vertices(ring);
+                if hole.len() >= 3 {
+                    all_polygons.push(Polygon::new(hole, metadata.clone()));
+                }
+            }
+            all_polygons
+        }
+
         let region_rings = sketch.region_rings();
         if !region_rings.is_empty() {
             let final_polygons = region_rings
@@ -1176,54 +1205,19 @@ impl<M: Clone + Send + Sync + Debug> From<Sketch<M>> for Mesh<M> {
             };
         }
 
-        /// Helper function to convert a geo::LineString to a Vec<crate::vertex::Vertex>
-        fn geo_line_string_to_vertices(line_string: &geo::LineString<Real>) -> Vec<Vertex> {
-            let mut vertices: Vec<_> = line_string
-                .coords_iter()
-                .map(|c| Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z()))
-                .collect();
-            // LineString can closed, which means first and last Coords are the same
-            // but crate::mesh::polygon::Polygon expects can't have conflicting edges so we need to remove last Vertex
-            if vertices.first() == vertices.last() {
-                vertices.pop();
-            }
-            vertices
-        }
-        /// Helper function to convert a geo::Polygon to a Vec<crate::mesh::polygon::Polygon>
-        fn geo_poly_to_csg_polys<M: Clone + Debug + Send + Sync>(
-            poly2d: &GeoPolygon<Real>,
-            metadata: &M,
-        ) -> Vec<Polygon<M>> {
-            let mut all_polygons = Vec::new();
-
-            // Handle the exterior ring
-            let outer_vertices_3d = geo_line_string_to_vertices(poly2d.exterior());
-
-            if outer_vertices_3d.len() >= 3 {
-                all_polygons.push(Polygon::new(outer_vertices_3d, metadata.clone()));
-            }
-
-            // Handle interior rings (holes)
-            for ring in poly2d.interiors() {
-                let hole_vertices_3d = geo_line_string_to_vertices(ring);
-                if hole_vertices_3d.len() >= 3 {
-                    all_polygons.push(Polygon::new(hole_vertices_3d, metadata.clone()));
-                }
-            }
-            all_polygons
-        }
-
         let sketch_geometry = sketch.geometry();
         let final_polygons = sketch_geometry
             .iter()
             .flat_map(|geom| -> Vec<Polygon<M>> {
                 match geom {
                     Geometry::Polygon(poly2d) => {
-                        geo_poly_to_csg_polys(poly2d, &sketch.metadata)
+                        finite_polygon_to_mesh_polygons(poly2d, &sketch.metadata)
                     },
                     Geometry::MultiPolygon(multipoly) => multipoly
                         .iter()
-                        .flat_map(|poly2d| geo_poly_to_csg_polys(poly2d, &sketch.metadata))
+                        .flat_map(|poly2d| {
+                            finite_polygon_to_mesh_polygons(poly2d, &sketch.metadata)
+                        })
                         .collect(),
                     _ => vec![],
                 }
