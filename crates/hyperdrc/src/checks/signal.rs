@@ -433,10 +433,10 @@ fn sketches_within_clearance(
     right: &crate::PcbSketch,
     clearance: f64,
 ) -> bool {
-    let Some(left_bounds) = left.geometry.bounding_rect() else {
+    let Some(left_bounds) = left.geometry().bounding_rect() else {
         return true;
     };
-    let Some(right_bounds) = right.geometry.bounding_rect() else {
+    let Some(right_bounds) = right.geometry().bounding_rect() else {
         return true;
     };
 

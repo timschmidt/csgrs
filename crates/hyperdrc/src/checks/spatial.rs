@@ -408,6 +408,22 @@ impl PointSpatialIndex {
             .filter(|&index| squared_distance(self.points[index], center) <= radius * radius)
             .collect()
     }
+
+    /// Return point indexes from buckets intersecting the query square.
+    ///
+    /// This is an Ericson-style broad phase from *Real-Time Collision
+    /// Detection* (2005): it deliberately does not decide the circular
+    /// center-radius predicate. Callers that need certified topology or
+    /// source-unit-aware distance comparisons must refine every returned
+    /// candidate with their exact predicate.
+    pub(super) fn candidate_centers_near(&self, center: [f64; 2], radius: f64) -> Vec<usize> {
+        candidate_centers_within(&self.buckets, self.cell_size, center, radius)
+    }
+
+    /// Return a stored point by index for narrow-phase refinement.
+    pub(super) fn point(&self, index: usize) -> [f64; 2] {
+        self.points[index]
+    }
 }
 
 fn center_bucket_key(location: [f64; 2], cell_size: f64) -> (i64, i64) {
@@ -466,7 +482,7 @@ fn rect_span(bounds: &geo::Rect<f64>) -> f64 {
 }
 
 fn feature_span(feature: &CopperFeature) -> f64 {
-    let Some(bounds) = feature.sketch.geometry.bounding_rect() else {
+    let Some(bounds) = feature.sketch.geometry().bounding_rect() else {
         return 0.0;
     };
     let width = bounds.max().x - bounds.min().x;

@@ -808,7 +808,7 @@ fn feature_near_rect_outline(
     rect: &geo::Rect<f64>,
     edge_distance: f64,
 ) -> bool {
-    let Some(bounds) = feature.sketch.geometry.bounding_rect() else {
+    let Some(bounds) = feature.sketch.geometry().bounding_rect() else {
         return true;
     };
     let min = rect.min();

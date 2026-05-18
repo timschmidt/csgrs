@@ -15,8 +15,8 @@ use super::graphic_primitives::{
     polygon_polygons as polygon_graphic_polygons, rect_polygons as rect_graphic_polygons,
 };
 use super::{
-    arcs::arc_center_start_angle, points_from_pts, rotate_translate, stroke_width,
-    text::text_bbox_polygon, xy_from_child,
+    arcs::arc_center_start_angle_source, points_from_pts, rotate_translate, stroke_width,
+    text::text_bbox_polygon, xy_from_child, xy_from_child_source,
 };
 
 pub(super) fn custom_pad_polygons(
@@ -94,17 +94,25 @@ pub(super) fn custom_pad_polygons(
                 }
             }
             Some("gr_arc") => {
-                let Some(start) = xy_from_child(primitive, "start") else {
+                let Some(start) = xy_from_child_source(primitive, "start") else {
                     continue;
                 };
-                let Some(mid) = xy_from_child(primitive, "mid") else {
+                let Some(mid) = xy_from_child_source(primitive, "mid") else {
                     continue;
                 };
-                let Some(end) = xy_from_child(primitive, "end") else {
+                let Some(end) = xy_from_child_source(primitive, "end") else {
                     continue;
                 };
                 let width = stroke_width(primitive, 0.01);
-                let Some((arc_center, arc_start, angle)) = arc_center_start_angle(start, mid, end)
+                // Custom-pad arc polygons remain a compatibility approximation
+                // for current `geo`/`csgrs` consumers, but the arc degeneracy
+                // predicate now consumes retained decimal-token `Real`
+                // coordinates before sampling. This mirrors Yap's exact
+                // geometric computation split between certified decisions and
+                // approximation edges. See Yap, "Towards Exact Geometric
+                // Computation," *Computational Geometry* 7.1-2 (1997).
+                let Some((arc_center, arc_start, angle)) =
+                    arc_center_start_angle_source(&start, &mid, &end)
                 else {
                     continue;
                 };

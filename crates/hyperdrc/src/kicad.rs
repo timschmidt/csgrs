@@ -26,11 +26,13 @@ use std::path::Path;
 
 use anyhow::{Context, Result};
 use geo::{Area, Polygon};
+use hyperreal::Real;
 
 use crate::LayerMetadata;
 use crate::geometry::{
-    chamfered_rect_polygon, circle_polygon, line_polygon, polygon_from_points, polygons_to_sketch,
-    rect_polygon, rounded_rect_polygon, trapezoid_polygon,
+    SourceGridFacts, SourceScalar, SourceUnit, chamfered_rect_polygon, circle_polygon,
+    line_polygon, polygon_from_points, polygons_to_sketch, rect_polygon, rounded_rect_polygon,
+    trapezoid_polygon,
 };
 use crate::sexp::{self, Sexp};
 
@@ -504,8 +506,20 @@ pub(super) fn points_from_pts(parent: &Sexp) -> Vec<[f64; 2]> {
 }
 
 pub(super) fn xy_from_child(parent: &Sexp, child_name: &str) -> Option<[f64; 2]> {
+    Some(xy_from_child_source(parent, child_name)?.approximate)
+}
+
+/// Parse a KiCad two-coordinate child while retaining source-token exactness.
+///
+/// Existing parser outputs remain `f64` compatibility geometry, but exact
+/// predicates can consume the retained [`Real`] values and source-grid facts.
+/// This follows Yap's parser-boundary discipline: keep representation
+/// information until a predicate or adapter deliberately chooses an arithmetic
+/// package. See Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997).
+pub(super) fn xy_from_child_source(parent: &Sexp, child_name: &str) -> Option<ParsedPoint2> {
     let child = parent.named_child(child_name)?;
-    Some([child.f64_at(1)?, child.f64_at(2)?])
+    parsed_xy(child)
 }
 
 pub(super) fn stroke_width(parent: &Sexp, default: f64) -> f64 {
@@ -530,6 +544,36 @@ fn atom_values(list: Option<&Sexp>) -> Option<Vec<String>> {
             .filter_map(|item| item.as_atom().map(str::to_string))
             .collect(),
     )
+}
+
+/// KiCad point parsed from decimal millimeter source tokens.
+#[derive(Clone, Debug, PartialEq)]
+pub(super) struct ParsedPoint2 {
+    /// Compatibility coordinates used by current `geo`/`csgrs` geometry.
+    pub approximate: [f64; 2],
+    /// Exact source-token coordinates, when the token grammar was retained.
+    pub exact: Option<[Real; 2]>,
+    /// Combined source-grid facts for both coordinates.
+    pub grid: SourceGridFacts,
+}
+
+impl ParsedPoint2 {
+    /// Merge source facts for two points consumed by one exact predicate.
+    pub fn combined_grid(&self, other: &Self) -> SourceGridFacts {
+        self.grid.combine(other.grid)
+    }
+}
+
+fn parsed_xy(node: &Sexp) -> Option<ParsedPoint2> {
+    let x = SourceScalar::parse(SourceUnit::KiCadMillimeter, node.atom_at(1)?)?;
+    let y = SourceScalar::parse(SourceUnit::KiCadMillimeter, node.atom_at(2)?)?;
+    let grid = x.grid.combine(y.grid);
+    let exact = x.exact.zip(y.exact).map(|(x, y)| [x, y]);
+    Some(ParsedPoint2 {
+        approximate: [x.approximate, y.approximate],
+        exact,
+        grid,
+    })
 }
 
 fn net_name(item: &Sexp, nets: &HashMap<i32, String>) -> Option<String> {
@@ -589,7 +633,10 @@ mod tests {
 
     use geo::Area;
 
-    use super::{CopperKind, load_kicad_pcb};
+    use crate::geometry::{SourceGridFacts, SourceUnit};
+    use crate::sexp;
+
+    use super::{CopperKind, load_kicad_pcb, xy_from_child_source};
 
     #[test]
     fn parses_basic_kicad_board_features() {
@@ -1502,6 +1549,19 @@ mod tests {
             "near but unequal outline endpoints must remain unstiched fallback geometry"
         );
         let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn kicad_decimal_points_retain_exact_source_denominator() {
+        let parsed = sexp::parse("(gr_line (start -1.25 2.500) (end 0 0))").unwrap();
+        let point = xy_from_child_source(&parsed, "start").unwrap();
+
+        assert_eq!(point.approximate, [-1.25, 2.5]);
+        assert_eq!(
+            point.grid,
+            SourceGridFacts::source_grid(SourceUnit::KiCadMillimeter, 1_000)
+        );
+        assert!(point.exact.is_some());
     }
 
     #[test]

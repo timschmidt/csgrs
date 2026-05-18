@@ -20,9 +20,9 @@ arrow-array = "57.3.0"
 arrow-ipc = "57.3.0"
 arrow-schema = "57.3.0"
 clap = { version = "4.5", features = ["derive"] }
-csgrs = { git = "https://github.com/timschmidt/csgrs", default-features = false, features = ["f64", "sketch", "gerber-io", "offset", "delaunay"] }
+csgrs = { path = "../csgrs", version = "0.21.0", default-features = false, features = ["sketch", "gerber-io", "offset"] }
 flate2 = "1.0"
-geo = { version = "0.29.3", default-features = false }
+geo = { version = "0.31.0", default-features = false }
 hyperlimit = { path = "../hyperlimit", version = "0.2.0", default-features = false, features = ["std"] }
 hyperreal = { path = "../hyperreal", version = "0.11.1" }
 log = "0.4"

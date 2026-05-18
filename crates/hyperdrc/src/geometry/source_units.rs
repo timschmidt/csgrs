@@ -5,7 +5,7 @@
 //! rule code a stable place to carry source-grid information until the rest of
 //! `hyperdrc` is ported to hyperreal geometry.
 
-use hyperreal::Real;
+use hyperreal::{Rational, Real};
 
 /// Unit family attached to coordinates parsed from an EDA or fabrication file.
 ///
@@ -60,6 +60,12 @@ pub struct SourceGridFacts {
     pub lift_kind: ExactLiftKind,
 }
 
+impl Default for SourceGridFacts {
+    fn default() -> Self {
+        Self::UNKNOWN
+    }
+}
+
 impl SourceGridFacts {
     /// Unknown source-unit facts.
     pub const UNKNOWN: Self = Self {
@@ -93,9 +99,46 @@ impl SourceGridFacts {
         }
     }
 
+    /// Infer source-grid facts from a plain decimal token.
+    ///
+    /// This helper is meant for EDA text formats such as KiCad S-expressions,
+    /// whose coordinates are usually decimal millimeters before they become
+    /// compatibility `f64` geometry. Retaining the token denominator follows
+    /// Yap's exact-geometric-computation advice to preserve representation
+    /// information near the parser boundary; later predicates can select
+    /// shared-denominator integer arithmetic instead of rediscovering it from
+    /// rounded floats. See Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997).
+    pub fn decimal_token(unit: SourceUnit, token: &str) -> Option<Self> {
+        decimal_denominator_per_unit(token).map(|denominator| Self::source_grid(unit, denominator))
+    }
+
     /// Returns whether repeated coordinates can share one source denominator.
     pub const fn has_shared_denominator(self) -> bool {
         self.denominator_per_unit.is_some()
+    }
+
+    /// Combine facts for coordinates that will be consumed by one predicate.
+    ///
+    /// When all inputs share a source unit and decimal-token provenance, the
+    /// combined denominator is the least common multiple of token denominators.
+    /// This is intentionally a scheduling fact rather than a topology decision:
+    /// exact predicate reports still decide signs and equality.
+    pub fn combine(self, other: Self) -> Self {
+        if self.unit != other.unit {
+            return Self::UNKNOWN;
+        }
+        match (self.denominator_per_unit, other.denominator_per_unit) {
+            (Some(left), Some(right)) => checked_lcm(left, right)
+                .map(|denominator| Self::source_grid(self.unit, denominator))
+                .unwrap_or(Self::UNKNOWN),
+            (None, None) if self.lift_kind == other.lift_kind => Self {
+                unit: self.unit,
+                denominator_per_unit: None,
+                lift_kind: self.lift_kind,
+            },
+            _ => Self::primitive_float_edge(self.unit),
+        }
     }
 
     /// Lift a finite compatibility `f64` into the hyperreal stack.
@@ -107,6 +150,42 @@ impl SourceGridFacts {
     pub fn lift_f64(self, value: f64) -> Option<Real> {
         let _ = self;
         Real::try_from(value).ok()
+    }
+}
+
+/// A parsed scalar with both compatibility and exact source-token forms.
+///
+/// The `approximate` field keeps current `geo`/`csgrs` call sites working at
+/// API edges. The `exact` field lets exact predicates consume the decimal token
+/// directly when the token grammar is supported. This is the local parser
+/// analogue of Yap's separation between geometric structure and numeric
+/// approximation; exact decisions should prefer `exact`, while rendering and
+/// legacy interop can continue using `approximate`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct SourceScalar {
+    /// Compatibility value used by existing `f64` geometry code.
+    pub approximate: f64,
+    /// Exact decimal-token value, when retained.
+    pub exact: Option<Real>,
+    /// Source-grid facts associated with this scalar.
+    pub grid: SourceGridFacts,
+}
+
+impl SourceScalar {
+    /// Parse a source numeric token at a known unit boundary.
+    pub fn parse(unit: SourceUnit, token: &str) -> Option<Self> {
+        let approximate = token.parse::<f64>().ok()?;
+        if !approximate.is_finite() {
+            return None;
+        }
+        let exact = token.parse::<Rational>().ok().map(Real::from);
+        let grid = SourceGridFacts::decimal_token(unit, token)
+            .unwrap_or_else(|| SourceGridFacts::primitive_float_edge(unit));
+        Some(Self {
+            approximate,
+            exact,
+            grid,
+        })
     }
 }
 
@@ -136,6 +215,40 @@ impl RuleGeometryProvenance {
     }
 }
 
+fn decimal_denominator_per_unit(token: &str) -> Option<u64> {
+    let token = token.strip_prefix('-').unwrap_or(token);
+    let token = token.strip_prefix('+').unwrap_or(token);
+    if token.is_empty() || token.contains(['e', 'E', '/', '_']) {
+        return None;
+    }
+    let (whole, fractional) = token.split_once('.').unwrap_or((token, ""));
+    if whole.is_empty() && fractional.is_empty() {
+        return None;
+    }
+    if !whole.chars().all(|ch| ch.is_ascii_digit())
+        || !fractional.chars().all(|ch| ch.is_ascii_digit())
+    {
+        return None;
+    }
+    10_u64.checked_pow(fractional.len() as u32)
+}
+
+fn checked_lcm(left: u64, right: u64) -> Option<u64> {
+    if left == 0 || right == 0 {
+        return None;
+    }
+    left.checked_div(gcd(left, right))?.checked_mul(right)
+}
+
+fn gcd(mut left: u64, mut right: u64) -> u64 {
+    while right != 0 {
+        let remainder = left % right;
+        left = right;
+        right = remainder;
+    }
+    left
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -147,6 +260,33 @@ mod tests {
         assert!(facts.has_shared_denominator());
         assert_eq!(facts.denominator_per_unit, Some(1_000_000));
         assert_eq!(facts.lift_kind, ExactLiftKind::SourceGridDenominator);
+    }
+
+    #[test]
+    fn decimal_tokens_retain_exact_source_grid_facts() {
+        let scalar = SourceScalar::parse(SourceUnit::KiCadMillimeter, "-12.345")
+            .expect("plain KiCad decimal token should parse");
+
+        assert_eq!(scalar.approximate, -12.345);
+        assert_eq!(
+            scalar.exact,
+            Some(Real::from(Rational::fraction(-12_345, 1_000).unwrap()))
+        );
+        assert_eq!(
+            scalar.grid,
+            SourceGridFacts::source_grid(SourceUnit::KiCadMillimeter, 1_000)
+        );
+    }
+
+    #[test]
+    fn source_grid_facts_combine_decimal_denominators() {
+        let left = SourceGridFacts::source_grid(SourceUnit::KiCadMillimeter, 10);
+        let right = SourceGridFacts::source_grid(SourceUnit::KiCadMillimeter, 1_000);
+
+        assert_eq!(
+            left.combine(right),
+            SourceGridFacts::source_grid(SourceUnit::KiCadMillimeter, 1_000)
+        );
     }
 
     #[test]

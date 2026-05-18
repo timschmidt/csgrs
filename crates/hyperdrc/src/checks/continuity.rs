@@ -40,7 +40,7 @@ pub fn different_net_short_readiness(
         .into_iter()
         .filter(|feature| feature.net.is_some())
     {
-        let Some(bounds) = feature.sketch.geometry.bounding_rect() else {
+        let Some(bounds) = feature.sketch.geometry().bounding_rect() else {
             continue;
         };
         by_layer

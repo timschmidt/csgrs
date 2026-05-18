@@ -8,13 +8,14 @@ use geo::Polygon;
 use hyperlimit::{Point2, PredicatePolicy, point2_equal_with_policy};
 
 use crate::geometry::{
-    RuleGeometryProvenance, SourceGridFacts, SourceUnit, arc_line_polygons, bezier_line_polygons,
-    circle_polygon, line_polygon, polygon_from_points,
+    RuleGeometryProvenance, arc_line_polygons, bezier_line_polygons, circle_polygon, line_polygon,
+    polygon_from_points,
 };
 use crate::sexp::Sexp;
 
 use super::{
-    arcs::arc_center_start_angle, points_from_pts, polygons_from_pts, stroke_width, xy_from_child,
+    ParsedPoint2, arcs::arc_center_start_angle_source, points_from_pts, polygons_from_pts,
+    stroke_width, xy_from_child, xy_from_child_source,
 };
 
 pub(super) fn parse_graphics(
@@ -25,17 +26,17 @@ pub(super) fn parse_graphics(
     let mut edge_lines = Vec::new();
 
     for line in root.named_children("gr_line") {
-        let Some(start) = xy_from_child(line, "start") else {
+        let Some(start) = xy_from_child_source(line, "start") else {
             continue;
         };
-        let Some(end) = xy_from_child(line, "end") else {
+        let Some(end) = xy_from_child_source(line, "end") else {
             continue;
         };
         let width = stroke_width(line, 0.05);
         if is_edge_cuts(line) {
-            edge_lines.push((start, end));
+            edge_lines.push(EdgeLine { start, end });
         } else if is_panel_layer(line)
-            && let Some(polygon) = line_polygon(start, end, width.max(0.01))
+            && let Some(polygon) = line_polygon(start.approximate, end.approximate, width.max(0.01))
         {
             panel_polygons.push(polygon);
         }
@@ -44,8 +45,9 @@ pub(super) fn parse_graphics(
     if let Some(outline) = closed_polygon_from_lines(&edge_lines) {
         edge_polygons.push(outline);
     } else {
-        for (start, end) in edge_lines {
-            if let Some(polygon) = line_polygon(start, end, 0.05) {
+        for line in edge_lines {
+            if let Some(polygon) = line_polygon(line.start.approximate, line.end.approximate, 0.05)
+            {
                 edge_polygons.push(polygon);
             }
         }
@@ -103,18 +105,20 @@ pub(super) fn parse_graphics(
     }
 
     for arc in root.named_children("gr_arc") {
-        let Some(center) = xy_from_child(arc, "start").or_else(|| xy_from_child(arc, "center"))
+        let Some(center) =
+            xy_from_child_source(arc, "start").or_else(|| xy_from_child_source(arc, "center"))
         else {
             continue;
         };
-        let Some(mid) = xy_from_child(arc, "mid") else {
+        let Some(mid) = xy_from_child_source(arc, "mid") else {
             continue;
         };
-        let Some(end) = xy_from_child(arc, "end") else {
+        let Some(end) = xy_from_child_source(arc, "end") else {
             continue;
         };
         let width = stroke_width(arc, 0.05).max(0.01);
-        let Some((arc_center, start, angle)) = arc_center_start_angle(center, mid, end) else {
+        let Some((arc_center, start, angle)) = arc_center_start_angle_source(&center, &mid, &end)
+        else {
             continue;
         };
         let polygons = arc_line_polygons(arc_center, start, angle, width, 24);
@@ -152,56 +156,57 @@ pub(super) fn parse_graphics(
     }
 }
 
-fn closed_polygon_from_lines(lines: &[([f64; 2], [f64; 2])]) -> Option<Polygon<f64>> {
-    let (first_start, first_end) = *lines.first()?;
+#[derive(Clone, Debug)]
+struct EdgeLine {
+    start: ParsedPoint2,
+    end: ParsedPoint2,
+}
+
+fn closed_polygon_from_lines(lines: &[EdgeLine]) -> Option<Polygon<f64>> {
+    let first = lines.first()?;
     let mut remaining = lines[1..].to_vec();
-    let mut points = vec![first_start, first_end];
+    let mut points = vec![first.start.clone(), first.end.clone()];
 
     while !remaining.is_empty() {
-        let current = *points.last()?;
+        let current = points.last()?;
         // KiCad Edge.Cuts commonly arrives as unordered line segments. We stitch
         // exact endpoint matches before falling back to stroked line geometry.
-        let (index, next) = remaining
-            .iter()
-            .enumerate()
-            .find_map(|(index, (start, end))| {
-                if same_point(current, *start) {
-                    Some((index, *end))
-                } else if same_point(current, *end) {
-                    Some((index, *start))
-                } else {
-                    None
-                }
-            })?;
+        let (index, next) = remaining.iter().enumerate().find_map(|(index, line)| {
+            if same_point(current, &line.start) {
+                Some((index, line.end.clone()))
+            } else if same_point(current, &line.end) {
+                Some((index, line.start.clone()))
+            } else {
+                None
+            }
+        })?;
 
         points.push(next);
         remaining.remove(index);
     }
 
-    if points.len() >= 4 && same_point(points[0], *points.last()?) {
-        Some(polygon_from_points(points))
+    if points.len() >= 4 && same_point(&points[0], points.last()?) {
+        Some(polygon_from_points(
+            points.into_iter().map(|point| point.approximate).collect(),
+        ))
     } else {
         None
     }
 }
 
-fn same_point(left: [f64; 2], right: [f64; 2]) -> bool {
+fn same_point(left: &ParsedPoint2, right: &ParsedPoint2) -> bool {
     // Outline stitching changes imported topology before board-level checks
     // run, so endpoint equality must be exact after lifting finite parser
-    // coordinates. KiCad coordinates arrive through an f64 parser boundary, but
-    // every finite IEEE-754 value has an exact dyadic `Real` representation.
-    // Route equality through `hyperlimit` rather than a local tolerance, in the
-    // exact-geometric-computation style of Yap, "Towards Exact Geometric
-    // Computation," Computational Geometry 7.1-2 (1997).
-    //
-    let provenance = RuleGeometryProvenance::new(
-        "kicad-edge-stitching",
-        SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter),
-    );
-    let Some(left) = lift_point(left, provenance) else {
+    // coordinates. Decimal KiCad tokens now carry exact `Real` values and
+    // shared-denominator facts; finite f64 lifting remains only a compatibility
+    // fallback. Route equality through `hyperlimit` rather than a local
+    // tolerance, in the exact-geometric-computation style of Yap, "Towards
+    // Exact Geometric Computation," Computational Geometry 7.1-2 (1997).
+    let provenance = RuleGeometryProvenance::new("kicad-edge-stitching", left.combined_grid(right));
+    let Some(left) = exact_or_lift_point(left, provenance) else {
         return false;
     };
-    let Some(right) = lift_point(right, provenance) else {
+    let Some(right) = exact_or_lift_point(right, provenance) else {
         return false;
     };
     point2_equal_with_policy(&left, &right, PredicatePolicy::STRICT)
@@ -209,10 +214,13 @@ fn same_point(left: [f64; 2], right: [f64; 2]) -> bool {
         .unwrap_or(false)
 }
 
-fn lift_point(point: [f64; 2], provenance: RuleGeometryProvenance) -> Option<Point2> {
+fn exact_or_lift_point(point: &ParsedPoint2, provenance: RuleGeometryProvenance) -> Option<Point2> {
+    if let Some([x, y]) = &point.exact {
+        return Some(Point2::new(x.clone(), y.clone()));
+    }
     Some(Point2::new(
-        provenance.lift_f64(point[0])?,
-        provenance.lift_f64(point[1])?,
+        provenance.lift_f64(point.approximate[0])?,
+        provenance.lift_f64(point.approximate[1])?,
     ))
 }
 

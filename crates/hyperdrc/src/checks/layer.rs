@@ -15,11 +15,13 @@ use geo::{
     Area, BoundingRect, Contains, Coord, Line, LineString, MultiPolygon, Point, Polygon,
     line_intersection::{LineIntersection, line_intersection},
 };
+use hyperlimit::{Point2, PredicatePolicy, SegmentIntersection, Sign, compare_reals_with_policy};
 
-use crate::checks::distance::polygon_boundary_distance;
+use crate::checks::distance::polygon_boundary_distance_with_grid;
 use crate::checks::spatial::LayerPolygonSpatialIndex;
 use crate::geometry::{
-    multipolygon_to_shapes, polygon_to_sketch, polygons_to_sketch, rect_polygon,
+    RuleGeometryProvenance, SourceGridFacts, multipolygon_to_shapes, polygon_to_sketch,
+    polygons_to_sketch, rect_polygon,
 };
 use crate::ipc356::Ipc356Point;
 use crate::report::{Severity, Violation};
@@ -246,6 +248,27 @@ pub fn board_outline_cutout_clearance(
     clearance: f64,
     min_area: f64,
 ) -> Vec<Violation> {
+    board_outline_cutout_clearance_with_grid(
+        subject_name,
+        subject,
+        outline_name,
+        outline,
+        clearance,
+        min_area,
+        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+    )
+}
+
+/// Run cutout clearance with retained source-grid facts for exact boundary predicates.
+pub fn board_outline_cutout_clearance_with_grid(
+    subject_name: &str,
+    subject: &PcbSketch,
+    outline_name: &str,
+    outline: &PcbSketch,
+    clearance: f64,
+    min_area: f64,
+    grid: SourceGridFacts,
+) -> Vec<Violation> {
     let mut violations = Vec::new();
     let outline_polygons = outline.to_multipolygon();
     for cutout in board_outline_cutouts(&outline_polygons) {
@@ -259,8 +282,11 @@ pub fn board_outline_cutout_clearance(
         let intrusion = subject.intersection(&clearance_band);
         let shapes = multipolygon_to_shapes(&intrusion.to_multipolygon(), min_area);
         let touches_cutout = shapes.is_empty()
-            && polygon_boundary_distance(&subject.to_multipolygon(), &cutout.to_multipolygon())
-                <= clearance;
+            && polygon_boundary_distance_with_grid(
+                &subject.to_multipolygon(),
+                &cutout.to_multipolygon(),
+                grid,
+            ) <= clearance;
         if shapes.is_empty() && !touches_cutout {
             continue;
         }
@@ -1444,7 +1470,7 @@ pub fn layer_sanity(
         ));
     }
 
-    if sketch.geometry.bounding_rect().is_none() {
+    if sketch.geometry().bounding_rect().is_none() {
         violations.push(Violation::new(
             "layer-sanity",
             Severity::Warning,
@@ -2144,7 +2170,24 @@ pub fn board_outline_self_intersection_readiness(
     layer_name: &str,
     outline: &PcbSketch,
 ) -> Vec<Violation> {
-    let intersections = collect_ring_self_intersections(&outline.to_multipolygon());
+    board_outline_self_intersection_readiness_with_grid(
+        layer_name,
+        outline,
+        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+    )
+}
+
+/// Reject outline rings that self-intersect using retained source-grid facts.
+///
+/// The retained grid is provenance for the exact segment-classification gate.
+/// It is not a report certificate by itself: the returned marker location is
+/// still a compatibility coordinate for human review.
+pub fn board_outline_self_intersection_readiness_with_grid(
+    layer_name: &str,
+    outline: &PcbSketch,
+    grid: SourceGridFacts,
+) -> Vec<Violation> {
+    let intersections = collect_ring_self_intersections_with_grid(&outline.to_multipolygon(), grid);
     if intersections.is_empty() {
         return Vec::new();
     }
@@ -2163,13 +2206,33 @@ pub fn board_outline_self_intersection_readiness(
 /// Flag strong inside-corners on board outlines where a narrow notch is likely to
 /// exceed router capability.
 pub fn board_outline_notch_readiness(layer_name: &str, outline: &PcbSketch) -> Vec<Violation> {
+    board_outline_notch_readiness_with_grid(
+        layer_name,
+        outline,
+        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+    )
+}
+
+/// Flag board-outline notches using retained source-grid facts.
+///
+/// The inside-corner/reflex decision is a topology predicate and is classified
+/// through `hyperlimit::orient2d` after lifting source coordinates. The final
+/// notch angle remains a compatibility metric for reporting and thresholding at
+/// the current `geo`/`csgrs` boundary. This follows Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997): exact
+/// predicates decide topology; approximate quantities stay named adapters.
+pub fn board_outline_notch_readiness_with_grid(
+    layer_name: &str,
+    outline: &PcbSketch,
+    grid: SourceGridFacts,
+) -> Vec<Violation> {
     let mut locations = Vec::new();
 
     let multipolygon = outline.to_multipolygon();
     for polygon in &multipolygon.0 {
-        collect_board_outline_notches(polygon.exterior(), &mut locations);
+        collect_board_outline_notches_with_grid(polygon.exterior(), &mut locations, grid);
         for hole in polygon.interiors() {
-            collect_board_outline_notches(hole, &mut locations);
+            collect_board_outline_notches_with_grid(hole, &mut locations, grid);
         }
     }
 
@@ -2191,6 +2254,24 @@ pub fn board_outline_notch_readiness(layer_name: &str, outline: &PcbSketch) -> V
 /// Warn when the outline contains duplicated contour polygons that would indicate
 /// accidental repeated or merged contour definitions.
 pub fn board_outline_duplicate_readiness(layer_name: &str, outline: &PcbSketch) -> Vec<Violation> {
+    board_outline_duplicate_readiness_with_grid(
+        layer_name,
+        outline,
+        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+    )
+}
+
+/// Warn about duplicated outline contours using retained source-grid facts.
+///
+/// Exact lifted bounding-box predicates reject impossible contour pairs before
+/// the existing CSG overlap-area report path. This keeps the broad phase within
+/// Yap's exact-geometric-computation boundary while preserving current report
+/// geometry semantics.
+pub fn board_outline_duplicate_readiness_with_grid(
+    layer_name: &str,
+    outline: &PcbSketch,
+    grid: SourceGridFacts,
+) -> Vec<Violation> {
     let mut locations = Vec::new();
 
     collect_board_outline_overlapping_exteriors(
@@ -2198,6 +2279,7 @@ pub fn board_outline_duplicate_readiness(layer_name: &str, outline: &PcbSketch) 
         BOARD_OUTLINE_DUPLICATE_OVERLAP_RATIO,
         BOARD_OUTLINE_GEOMETRY_TOLERANCE,
         false,
+        grid,
         &mut locations,
     );
 
@@ -2219,6 +2301,23 @@ pub fn board_outline_duplicate_readiness(layer_name: &str, outline: &PcbSketch) 
 /// Warn when one contour is fully contained by another, which can indicate
 /// malformed nested board cutouts or accidental profile duplication.
 pub fn board_outline_nesting_readiness(layer_name: &str, outline: &PcbSketch) -> Vec<Violation> {
+    board_outline_nesting_readiness_with_grid(
+        layer_name,
+        outline,
+        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+    )
+}
+
+/// Warn about nested outline contours using retained source-grid facts.
+///
+/// The pair broad phase uses exact lifted bounding-box predicates before
+/// falling through to the compatibility CSG overlap calculation, preserving
+/// source-grid provenance at the decision boundary described by Yap.
+pub fn board_outline_nesting_readiness_with_grid(
+    layer_name: &str,
+    outline: &PcbSketch,
+    grid: SourceGridFacts,
+) -> Vec<Violation> {
     let mut locations = Vec::new();
 
     collect_board_outline_overlapping_exteriors(
@@ -2226,6 +2325,7 @@ pub fn board_outline_nesting_readiness(layer_name: &str, outline: &PcbSketch) ->
         BOARD_OUTLINE_NESTED_OVERLAP_RATIO,
         BOARD_OUTLINE_GEOMETRY_TOLERANCE,
         true,
+        grid,
         &mut locations,
     );
 
@@ -2269,19 +2369,30 @@ const BOARD_OUTLINE_DUPLICATE_OVERLAP_RATIO: f64 = 0.999_999;
 const BOARD_OUTLINE_NESTED_OVERLAP_RATIO: f64 = 0.999_99;
 
 fn collect_ring_self_intersections(multipolygon: &MultiPolygon<f64>) -> Vec<[f64; 2]> {
+    collect_ring_self_intersections_with_grid(multipolygon, SourceGridFacts::PRIMITIVE_FLOAT_EDGE)
+}
+
+fn collect_ring_self_intersections_with_grid(
+    multipolygon: &MultiPolygon<f64>,
+    grid: SourceGridFacts,
+) -> Vec<[f64; 2]> {
     let mut locations = Vec::new();
 
     for polygon in &multipolygon.0 {
-        collect_segment_self_intersections(polygon.exterior(), &mut locations);
+        collect_segment_self_intersections_with_grid(polygon.exterior(), &mut locations, grid);
         for hole in polygon.interiors() {
-            collect_segment_self_intersections(hole, &mut locations);
+            collect_segment_self_intersections_with_grid(hole, &mut locations, grid);
         }
     }
 
     locations
 }
 
-fn collect_segment_self_intersections(ring: &LineString<f64>, locations: &mut Vec<[f64; 2]>) {
+fn collect_segment_self_intersections_with_grid(
+    ring: &LineString<f64>,
+    locations: &mut Vec<[f64; 2]>,
+    grid: SourceGridFacts,
+) {
     let coords = open_ring_coords(ring);
     if coords.len() < 4 {
         return;
@@ -2293,12 +2404,21 @@ fn collect_segment_self_intersections(ring: &LineString<f64>, locations: &mut Ve
             if are_ring_edges_adjacent(left, right, edge_count) {
                 continue;
             }
-
-            let intersection = ring_segment_intersection(
+            if !segment_bounding_boxes_overlap(
                 coords[left],
                 coords[(left + 1) % edge_count],
                 coords[right],
                 coords[(right + 1) % edge_count],
+            ) {
+                continue;
+            }
+
+            let intersection = ring_segment_intersection_with_grid(
+                coords[left],
+                coords[(left + 1) % edge_count],
+                coords[right],
+                coords[(right + 1) % edge_count],
+                grid,
             );
 
             if let Some(location) = intersection {
@@ -2308,7 +2428,11 @@ fn collect_segment_self_intersections(ring: &LineString<f64>, locations: &mut Ve
     }
 }
 
-fn collect_board_outline_notches(ring: &LineString<f64>, locations: &mut Vec<[f64; 2]>) {
+fn collect_board_outline_notches_with_grid(
+    ring: &LineString<f64>,
+    locations: &mut Vec<[f64; 2]>,
+    grid: SourceGridFacts,
+) {
     let coords = open_ring_coords(ring);
     if coords.len() < 3 {
         return;
@@ -2321,7 +2445,7 @@ fn collect_board_outline_notches(ring: &LineString<f64>, locations: &mut Vec<[f6
         let next = coords[(index + 1) % coords.len()];
 
         let Some(interior_angle) =
-            board_outline_notch_interior_angle(previous, current, next, is_ccw)
+            board_outline_notch_interior_angle_with_grid(previous, current, next, is_ccw, grid)
         else {
             continue;
         };
@@ -2338,6 +2462,7 @@ fn collect_board_outline_overlapping_exteriors(
     containment_ratio: f64,
     geometry_tolerance: f64,
     detect_nesting: bool,
+    grid: SourceGridFacts,
     locations: &mut Vec<[f64; 2]>,
 ) {
     let polygons = &multipolygon.0;
@@ -2349,25 +2474,38 @@ fn collect_board_outline_overlapping_exteriors(
         for inner_index in (outer_index + 1)..polygons.len() {
             let outer = &polygons[outer_index];
             let inner = &polygons[inner_index];
+            if !polygon_bounding_rects_overlap_with_grid(outer, inner, grid) {
+                continue;
+            }
 
             if detect_nesting {
-                if polygons_are_duplicate(outer, inner, geometry_tolerance) {
+                if polygons_are_duplicate_with_grid(outer, inner, geometry_tolerance, grid) {
                     continue;
                 }
-                if polygon_contains_other_outer(outer, inner, containment_ratio, geometry_tolerance)
-                {
+                if polygon_contains_other_outer_with_grid(
+                    outer,
+                    inner,
+                    containment_ratio,
+                    geometry_tolerance,
+                    grid,
+                ) {
                     if let Some(point) = representative_point(inner) {
                         push_unique_location(locations, point);
                     }
                 }
 
-                if polygon_contains_other_outer(inner, outer, containment_ratio, geometry_tolerance)
-                {
+                if polygon_contains_other_outer_with_grid(
+                    inner,
+                    outer,
+                    containment_ratio,
+                    geometry_tolerance,
+                    grid,
+                ) {
                     if let Some(point) = representative_point(outer) {
                         push_unique_location(locations, point);
                     }
                 }
-            } else if polygons_are_duplicate(outer, inner, geometry_tolerance) {
+            } else if polygons_are_duplicate_with_grid(outer, inner, geometry_tolerance, grid) {
                 if let Some(point) = representative_point(outer) {
                     push_unique_location(locations, point);
                 }
@@ -2377,6 +2515,24 @@ fn collect_board_outline_overlapping_exteriors(
 }
 
 fn polygons_are_duplicate(left: &Polygon<f64>, right: &Polygon<f64>, tolerance: f64) -> bool {
+    polygons_are_duplicate_with_grid(
+        left,
+        right,
+        tolerance,
+        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+    )
+}
+
+fn polygons_are_duplicate_with_grid(
+    left: &Polygon<f64>,
+    right: &Polygon<f64>,
+    tolerance: f64,
+    grid: SourceGridFacts,
+) -> bool {
+    if !polygon_bounding_rects_overlap_with_grid(left, right, grid) {
+        return false;
+    }
+
     let left_area = left.unsigned_area();
     let right_area = right.unsigned_area();
     if left_area <= 0.0 || right_area <= 0.0 {
@@ -2399,6 +2555,26 @@ fn polygon_contains_other_outer(
     ratio: f64,
     tolerance: f64,
 ) -> bool {
+    polygon_contains_other_outer_with_grid(
+        outer,
+        inner,
+        ratio,
+        tolerance,
+        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+    )
+}
+
+fn polygon_contains_other_outer_with_grid(
+    outer: &Polygon<f64>,
+    inner: &Polygon<f64>,
+    ratio: f64,
+    tolerance: f64,
+    grid: SourceGridFacts,
+) -> bool {
+    if !polygon_bounding_rects_overlap_with_grid(outer, inner, grid) {
+        return false;
+    }
+
     let outer_area = outer.unsigned_area();
     let inner_area = inner.unsigned_area();
     if outer_area <= 0.0 || inner_area <= 0.0 || outer_area <= inner_area {
@@ -2445,11 +2621,12 @@ fn areas_approximately_equal(left_area: f64, right_area: f64, tolerance: f64) ->
     diff <= tolerance * scale
 }
 
-fn board_outline_notch_interior_angle(
+fn board_outline_notch_interior_angle_with_grid(
     previous: Coord<f64>,
     current: Coord<f64>,
     next: Coord<f64>,
     is_ccw: bool,
+    grid: SourceGridFacts,
 ) -> Option<f64> {
     let forward_one = vector(current, previous);
     let forward_two = vector(next, current);
@@ -2460,16 +2637,64 @@ fn board_outline_notch_interior_angle(
     let cross = cross_product(forward_one, forward_two);
     let dot = dot_product(forward_one, forward_two);
     let raw_turn = cross.atan2(dot).to_degrees();
-    let is_reflex = if is_ccw {
-        raw_turn < 0.0
-    } else {
-        raw_turn > 0.0
-    };
+    let orientation = orient_coords_with_grid(previous, current, next, grid)?;
+    let is_reflex = matches!(
+        (is_ccw, orientation),
+        (true, Sign::Negative) | (false, Sign::Positive)
+    );
     if !is_reflex {
         return None;
     }
 
     Some(360.0 - raw_turn.abs())
+}
+
+fn orient_coords_with_grid(
+    previous: Coord<f64>,
+    current: Coord<f64>,
+    next: Coord<f64>,
+    grid: SourceGridFacts,
+) -> Option<Sign> {
+    let provenance = RuleGeometryProvenance::new("board-outline-notch-readiness", grid);
+    let previous = lift_coord_with_provenance(previous, provenance)?;
+    let current = lift_coord_with_provenance(current, provenance)?;
+    let next = lift_coord_with_provenance(next, provenance)?;
+    hyperlimit::orient2d_with_policy(&previous, &current, &next, PredicatePolicy::STRICT).value()
+}
+
+fn polygon_bounding_rects_overlap_with_grid(
+    left: &Polygon<f64>,
+    right: &Polygon<f64>,
+    grid: SourceGridFacts,
+) -> bool {
+    let Some(left) = left.bounding_rect() else {
+        return true;
+    };
+    let Some(right) = right.bounding_rect() else {
+        return true;
+    };
+
+    // This is an Ericson-style broad-phase rejection before CSG overlap work,
+    // but the separating-axis comparisons are exact lifted predicates with
+    // source-grid provenance. Possible contacts are never rejected here. See
+    // Ericson, *Real-Time Collision Detection* (2005), and Yap, "Towards Exact
+    // Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    !exact_lt_with_grid(left.max().x, right.min().x, grid)
+        && !exact_lt_with_grid(right.max().x, left.min().x, grid)
+        && !exact_lt_with_grid(left.max().y, right.min().y, grid)
+        && !exact_lt_with_grid(right.max().y, left.min().y, grid)
+}
+
+fn exact_lt_with_grid(left: f64, right: f64, grid: SourceGridFacts) -> bool {
+    exact_cmp_with_grid(left, right, grid)
+        .is_some_and(|ordering| ordering == std::cmp::Ordering::Less)
+}
+
+fn exact_cmp_with_grid(left: f64, right: f64, grid: SourceGridFacts) -> Option<std::cmp::Ordering> {
+    let provenance = RuleGeometryProvenance::new("board-outline-overlap-readiness", grid);
+    let left = provenance.lift_f64(left)?;
+    let right = provenance.lift_f64(right)?;
+    compare_reals_with_policy(&left, &right, PredicatePolicy::STRICT).value()
 }
 
 fn ring_is_ccw(ring: &LineString<f64>) -> bool {
@@ -2480,12 +2705,66 @@ fn are_ring_edges_adjacent(left: usize, right: usize, edge_count: usize) -> bool
     right == left + 1 || right + 1 == left || (left == 0 && right == edge_count - 1)
 }
 
-fn ring_segment_intersection(
+fn segment_bounding_boxes_overlap(
     start_a: Coord<f64>,
     end_a: Coord<f64>,
     start_b: Coord<f64>,
     end_b: Coord<f64>,
+) -> bool {
+    // Ericson, *Real-Time Collision Detection* (2005), describes bounding
+    // volumes as broad-phase rejection before exact narrow predicates. This
+    // f64 test only rejects pairs whose axis-aligned boxes are strictly
+    // separated in the already-imported compatibility geometry; all possible
+    // contacts still flow to the Yap-style exact segment classifier below.
+    let min_ax = start_a.x.min(end_a.x);
+    let max_ax = start_a.x.max(end_a.x);
+    let min_ay = start_a.y.min(end_a.y);
+    let max_ay = start_a.y.max(end_a.y);
+    let min_bx = start_b.x.min(end_b.x);
+    let max_bx = start_b.x.max(end_b.x);
+    let min_by = start_b.y.min(end_b.y);
+    let max_by = start_b.y.max(end_b.y);
+
+    max_ax >= min_bx && max_bx >= min_ax && max_ay >= min_by && max_by >= min_ay
+}
+
+fn ring_segment_intersection_with_grid(
+    start_a: Coord<f64>,
+    end_a: Coord<f64>,
+    start_b: Coord<f64>,
+    end_b: Coord<f64>,
+    grid: SourceGridFacts,
 ) -> Option<[f64; 2]> {
+    // Outline self-intersection is a topology readiness decision, not a visual
+    // nicety. Classify the closed segments through `hyperlimit` before asking
+    // `geo` for a marker coordinate. Carrying source-grid provenance to this
+    // gate follows Yap, "Towards Exact Geometric Computation,"
+    // *Computational Geometry* 7.1-2 (1997): preserve object/source structure
+    // until the exact predicate selects arithmetic. The marker coordinate below
+    // remains a non-certifying report aid.
+    let provenance = RuleGeometryProvenance::new("board-outline-self-intersection", grid);
+    let a = lift_coord_with_provenance(start_a, provenance)?;
+    let b = lift_coord_with_provenance(end_a, provenance)?;
+    let c = lift_coord_with_provenance(start_b, provenance)?;
+    let d = lift_coord_with_provenance(end_b, provenance)?;
+    match hyperlimit::classify_segment_intersection_with_policy(
+        &a,
+        &b,
+        &c,
+        &d,
+        PredicatePolicy::STRICT,
+    )
+    .value()
+    {
+        Some(SegmentIntersection::Disjoint | SegmentIntersection::EndpointTouch) => return None,
+        Some(
+            SegmentIntersection::Proper
+            | SegmentIntersection::CollinearOverlap
+            | SegmentIntersection::Identical,
+        ) => {}
+        None => return Some([(start_a.x + end_a.x) / 2.0, (start_a.y + end_a.y) / 2.0]),
+    }
+
     let segment_a = Line::new(start_a, end_a);
     let segment_b = Line::new(start_b, end_b);
     let intersection = line_intersection(segment_a, segment_b)?;
@@ -2504,6 +2783,16 @@ fn ring_segment_intersection(
             (intersection.start.y + intersection.end.y) / 2.0,
         ]),
     }
+}
+
+fn lift_coord_with_provenance(
+    coord: Coord<f64>,
+    provenance: RuleGeometryProvenance,
+) -> Option<Point2> {
+    Some(Point2::new(
+        provenance.lift_f64(coord.x)?,
+        provenance.lift_f64(coord.y)?,
+    ))
 }
 
 fn push_unique_location(points: &mut Vec<[f64; 2]>, point: [f64; 2]) {
@@ -2779,9 +3068,12 @@ mod tests {
 
     use super::{
         acid_trap_candidates, board_edge_clearance, board_outline_cutout_clearance,
-        board_outline_duplicate_readiness, board_outline_fragments,
-        board_outline_nesting_readiness, board_outline_notch_readiness, board_outline_sanity,
-        board_outline_self_intersection_readiness, copper_balance, copper_overlap,
+        board_outline_duplicate_readiness, board_outline_duplicate_readiness_with_grid,
+        board_outline_fragments, board_outline_nesting_readiness,
+        board_outline_nesting_readiness_with_grid, board_outline_notch_readiness,
+        board_outline_notch_readiness_with_grid, board_outline_sanity,
+        board_outline_self_intersection_readiness,
+        board_outline_self_intersection_readiness_with_grid, copper_balance, copper_overlap,
         copper_overlap_with_ipc356, duplicate_layer_geometry_readiness,
         duplicate_layer_island_readiness, exposed_copper, layer_sanity,
         local_copper_density_readiness, mask_island_keepout, mechanical_layer_geometry,
@@ -2796,7 +3088,9 @@ mod tests {
         tiny_layer_feature_readiness,
     };
     use crate::LayerMetadata;
-    use crate::geometry::{empty_sketch, line_polygon, polygons_to_sketch, rect_polygon};
+    use crate::geometry::{
+        SourceGridFacts, SourceUnit, empty_sketch, line_polygon, polygons_to_sketch, rect_polygon,
+    };
     use crate::ipc356::Ipc356Point;
     use crate::kicad::load_kicad_pcb;
 
@@ -3543,6 +3837,33 @@ mod tests {
     }
 
     #[test]
+    fn board_outline_self_intersection_readiness_accepts_retained_gerber_grid() {
+        let outline = sketch(
+            "edge",
+            vec![Polygon::new(
+                LineString(vec![
+                    Coord { x: 0.0, y: 0.0 },
+                    Coord { x: 4.0, y: 4.0 },
+                    Coord { x: 0.0, y: 4.0 },
+                    Coord { x: 4.0, y: 0.0 },
+                    Coord { x: 0.0, y: 0.0 },
+                ]),
+                vec![],
+            )],
+        );
+        let grid = SourceGridFacts::source_grid(SourceUnit::Gerber, 1_000_000);
+
+        let violations =
+            board_outline_self_intersection_readiness_with_grid("Gerber profile", &outline, grid);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(
+            violations[0].check,
+            "board-outline-self-intersection-readiness"
+        );
+    }
+
+    #[test]
     fn board_outline_self_intersection_readiness_allows_rectangle() {
         let outline = sketch("edge", vec![square(0.0, 0.0, 10.0, 10.0)]);
 
@@ -3575,6 +3896,34 @@ mod tests {
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "board-outline-notch-readiness");
         assert!(!violations[0].locations.is_empty());
+    }
+
+    #[test]
+    fn board_outline_notch_readiness_accepts_retained_gerber_grid() {
+        let outline = sketch(
+            "edge",
+            vec![Polygon::new(
+                LineString(vec![
+                    Coord { x: 0.0, y: 0.0 },
+                    Coord { x: 10.0, y: 0.0 },
+                    Coord { x: 10.0, y: 10.0 },
+                    Coord { x: 6.0, y: 10.0 },
+                    Coord { x: 6.0, y: 9.9 },
+                    Coord { x: 5.0, y: 9.5 },
+                    Coord { x: 4.0, y: 9.9 },
+                    Coord { x: 4.0, y: 10.0 },
+                    Coord { x: 0.0, y: 10.0 },
+                    Coord { x: 0.0, y: 0.0 },
+                ]),
+                vec![],
+            )],
+        );
+        let grid = SourceGridFacts::source_grid(SourceUnit::Gerber, 1_000_000);
+
+        let violations = board_outline_notch_readiness_with_grid("Gerber profile", &outline, grid);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "board-outline-notch-readiness");
     }
 
     #[test]
@@ -3657,6 +4006,21 @@ mod tests {
     }
 
     #[test]
+    fn board_outline_duplicate_readiness_accepts_retained_gerber_grid() {
+        let outline = sketch(
+            "edge",
+            vec![square(0.0, 0.0, 10.0, 10.0), square(0.0, 0.0, 10.0, 10.0)],
+        );
+        let grid = SourceGridFacts::source_grid(SourceUnit::Gerber, 1_000_000);
+
+        let violations =
+            board_outline_duplicate_readiness_with_grid("Gerber profile", &outline, grid);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "board-outline-duplicate-readiness");
+    }
+
+    #[test]
     fn board_outline_duplicate_readiness_allows_discrete_outer_regions() {
         let outline = sketch(
             "edge",
@@ -3678,6 +4042,21 @@ mod tests {
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "board-outline-nesting-readiness");
         assert!(!violations[0].locations.is_empty());
+    }
+
+    #[test]
+    fn board_outline_nesting_readiness_accepts_retained_gerber_grid() {
+        let outline = sketch(
+            "edge",
+            vec![square(0.0, 0.0, 10.0, 10.0), square(2.0, 2.0, 4.0, 4.0)],
+        );
+        let grid = SourceGridFacts::source_grid(SourceUnit::Gerber, 1_000_000);
+
+        let violations =
+            board_outline_nesting_readiness_with_grid("Gerber profile", &outline, grid);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "board-outline-nesting-readiness");
     }
 
     #[test]

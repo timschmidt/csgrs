@@ -13,6 +13,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 
+use crate::geometry::{SourceGridFacts, SourceScalar, SourceUnit};
 use crate::kicad::DrillFeature;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -152,6 +153,15 @@ pub struct ExcellonDrillSummary {
     pub min_diameter: Option<f64>,
     /// Largest parsed drill diameter in millimeters.
     pub max_diameter: Option<f64>,
+    /// Combined source-grid facts for parsed drill hit coordinates.
+    ///
+    /// Existing drill geometry remains normalized `f64` millimeters for report
+    /// and legacy rule compatibility. This field preserves Excellon token-grid
+    /// structure for future exact clearance checks, following Yap's exact
+    /// geometric computation guidance to carry representation facts until an
+    /// arithmetic package is deliberately selected. See Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    pub coordinate_grid: SourceGridFacts,
 }
 
 #[derive(Clone, Debug)]
@@ -536,8 +546,8 @@ pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
 
         if let Some((line_tool, has_coordinate)) = parse_tool_with_optional_hit(normalized) {
             if has_coordinate {
-                match parse_coordinate(normalized) {
-                    Some((x, y)) => {
+                match parse_coordinate_source(normalized) {
+                    Some(coordinate) => {
                         let Some(diameter) = tool_diameter.get(&line_tool) else {
                             hits.hits_with_unknown_tool += 1;
                             issues.push(ExcellonIssue {
@@ -572,11 +582,15 @@ pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
                             &mut drill_summary,
                             &mut unique_diameters,
                             DrillFeature {
-                                location: [x * units_scale, y * units_scale],
+                                location: [
+                                    coordinate.approximate[0] * units_scale,
+                                    coordinate.approximate[1] * units_scale,
+                                ],
                                 diameter: *diameter,
                                 net: None,
                                 plated,
                             },
+                            coordinate.grid,
                         );
                         continue;
                     }
@@ -615,7 +629,7 @@ pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
             continue;
         }
 
-        if let Some((x, y)) = parse_coordinate(normalized) {
+        if let Some(coordinate) = parse_coordinate_source(normalized) {
             let Some(tool) = current_tool.clone() else {
                 hits.hits_without_active_tool += 1;
                 issues.push(ExcellonIssue {
@@ -651,11 +665,15 @@ pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
                 &mut drill_summary,
                 &mut unique_diameters,
                 DrillFeature {
-                    location: [x * units_scale, y * units_scale],
+                    location: [
+                        coordinate.approximate[0] * units_scale,
+                        coordinate.approximate[1] * units_scale,
+                    ],
                     diameter: *diameter,
                     net: None,
                     plated,
                 },
+                coordinate.grid,
             );
             continue;
         } else if normalized.contains('X') && normalized.contains('Y') {
@@ -752,7 +770,13 @@ fn record_drill(
     summary: &mut ExcellonDrillSummary,
     unique_diameters: &mut BTreeSet<i64>,
     drill: DrillFeature,
+    coordinate_grid: SourceGridFacts,
 ) {
+    summary.coordinate_grid = if summary.parsed_drills == 0 {
+        coordinate_grid
+    } else {
+        summary.coordinate_grid.combine(coordinate_grid)
+    };
     summary.parsed_drills += 1;
     if drill.plated {
         summary.plated_drills += 1;
@@ -899,7 +923,13 @@ fn parse_tool_with_optional_hit(line: &str) -> Option<(String, bool)> {
     Some((tool, has_coordinate))
 }
 
-fn parse_coordinate(line: &str) -> Option<(f64, f64)> {
+#[derive(Clone, Debug, PartialEq)]
+struct ExcellonCoordinate {
+    approximate: [f64; 2],
+    grid: SourceGridFacts,
+}
+
+fn parse_coordinate_source(line: &str) -> Option<ExcellonCoordinate> {
     let x_index = line.find('X')?;
     let y_index = line.find('Y')?;
     let x_end = if x_index < y_index {
@@ -913,12 +943,19 @@ fn parse_coordinate(line: &str) -> Option<(f64, f64)> {
         line.len()
     };
 
-    let x = parse_number(&line[x_index + 1..x_end])?;
-    let y = parse_number(&line[y_index + 1..y_end])?;
-    Some((x, y))
+    let x = parse_number_source(&line[x_index + 1..x_end])?;
+    let y = parse_number_source(&line[y_index + 1..y_end])?;
+    Some(ExcellonCoordinate {
+        approximate: [x.approximate, y.approximate],
+        grid: x.grid.combine(y.grid),
+    })
 }
 
 fn parse_number(raw: &str) -> Option<f64> {
+    parse_number_source(raw).map(|number| number.approximate)
+}
+
+fn parse_number_source(raw: &str) -> Option<SourceScalar> {
     let trimmed = raw.trim();
     if !trimmed
         .chars()
@@ -928,7 +965,7 @@ fn parse_number(raw: &str) -> Option<f64> {
     }
 
     if trimmed.contains('.') {
-        return trimmed.parse().ok();
+        return SourceScalar::parse(SourceUnit::Excellon, trimmed);
     }
 
     let sign = trimmed.starts_with('-');
@@ -937,7 +974,7 @@ fn parse_number(raw: &str) -> Option<f64> {
         return None;
     }
     if digits.len() <= 3 {
-        return trimmed.parse().ok();
+        return SourceScalar::parse(SourceUnit::Excellon, trimmed);
     }
 
     let split = digits.len().saturating_sub(3);
@@ -948,7 +985,7 @@ fn parse_number(raw: &str) -> Option<f64> {
     normalized.push_str(&digits[..split]);
     normalized.push('.');
     normalized.push_str(&digits[split..]);
-    normalized.parse().ok()
+    SourceScalar::parse(SourceUnit::Excellon, &normalized)
 }
 
 fn is_supported_axis_line(line: &str) -> bool {
@@ -965,6 +1002,8 @@ fn is_supported_axis_line(line: &str) -> bool {
 mod tests {
     use proptest::prelude::*;
 
+    use crate::geometry::{SourceGridFacts, SourceUnit};
+
     use super::{
         ExcellonIssueKind, ExcellonPlatingIntent, infer_excellon_plating_intent, parse_excellon,
         parse_excellon_report,
@@ -972,7 +1011,7 @@ mod tests {
 
     #[test]
     fn parses_metric_tool_hits() {
-        let drills = parse_excellon(
+        let report = parse_excellon_report(
             r#"
             M48
             METRIC,TZ
@@ -982,11 +1021,16 @@ mod tests {
             X010000Y020000
             M30
             "#,
+            std::path::Path::new("metric.drl"),
         );
 
-        assert_eq!(drills.len(), 1);
-        assert_eq!(drills[0].diameter, 0.6);
-        assert_eq!(drills[0].location, [10.0, 20.0]);
+        assert_eq!(report.drills.len(), 1);
+        assert_eq!(report.drills[0].diameter, 0.6);
+        assert_eq!(report.drills[0].location, [10.0, 20.0]);
+        assert_eq!(
+            report.drill_summary.coordinate_grid,
+            SourceGridFacts::source_grid(SourceUnit::Excellon, 1_000)
+        );
     }
 
     #[test]

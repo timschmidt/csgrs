@@ -477,7 +477,7 @@ pub fn differential_pair_to_pair_spacing_readiness(
         let Some((pair, _side)) = differential_pair_key(net) else {
             continue;
         };
-        let Some(feature_bounds) = feature.sketch.geometry.bounding_rect() else {
+        let Some(feature_bounds) = feature.sketch.geometry().bounding_rect() else {
             continue;
         };
         features.push(feature);

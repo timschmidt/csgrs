@@ -12,71 +12,128 @@ pub(super) fn polygon_boundary_distance(
     left: &MultiPolygon<f64>,
     right: &MultiPolygon<f64>,
 ) -> f64 {
+    polygon_boundary_distance_with_grid(left, right, SourceGridFacts::PRIMITIVE_FLOAT_EDGE)
+}
+
+pub(super) fn polygon_boundary_distance_with_grid(
+    left: &MultiPolygon<f64>,
+    right: &MultiPolygon<f64>,
+    grid: SourceGridFacts,
+) -> f64 {
+    // Boundary-distance fallbacks still return an approximate metric, but
+    // topology gates inside the segment walk should see the parser's retained
+    // source grid whenever the caller has one. This is the object-layer
+    // scheduling discipline from Yap, "Towards Exact Geometric Computation,"
+    // *Computational Geometry* 7.1-2 (1997): preserve source structure at the
+    // geometric boundary before expanding to scalar arithmetic.
     let mut minimum = f64::INFINITY;
     for left_polygon in &left.0 {
         for right_polygon in &right.0 {
             minimum = minimum.min(single_polygon_boundary_distance(
                 left_polygon,
                 right_polygon,
+                grid,
             ));
         }
     }
     minimum
 }
 
-fn single_polygon_boundary_distance(left: &Polygon<f64>, right: &Polygon<f64>) -> f64 {
-    let mut minimum = ring_boundary_distance(left.exterior(), right.exterior());
+fn single_polygon_boundary_distance(
+    left: &Polygon<f64>,
+    right: &Polygon<f64>,
+    grid: SourceGridFacts,
+) -> f64 {
+    let mut minimum = ring_boundary_distance(left.exterior(), right.exterior(), grid);
 
     for left_hole in left.interiors() {
-        minimum = minimum.min(ring_boundary_distance(left_hole, right.exterior()));
+        minimum = minimum.min(ring_boundary_distance(left_hole, right.exterior(), grid));
         for right_hole in right.interiors() {
-            minimum = minimum.min(ring_boundary_distance(left_hole, right_hole));
+            minimum = minimum.min(ring_boundary_distance(left_hole, right_hole, grid));
         }
     }
 
     for right_hole in right.interiors() {
-        minimum = minimum.min(ring_boundary_distance(left.exterior(), right_hole));
+        minimum = minimum.min(ring_boundary_distance(left.exterior(), right_hole, grid));
     }
 
     minimum
 }
 
-fn ring_boundary_distance(left: &LineString<f64>, right: &LineString<f64>) -> f64 {
+fn ring_boundary_distance(
+    left: &LineString<f64>,
+    right: &LineString<f64>,
+    grid: SourceGridFacts,
+) -> f64 {
     let mut minimum = f64::INFINITY;
     for left_segment in left.0.windows(2) {
         for right_segment in right.0.windows(2) {
-            minimum = minimum.min(segment_distance(
+            minimum = minimum.min(segment_distance_with_grid(
                 left_segment[0],
                 left_segment[1],
                 right_segment[0],
                 right_segment[1],
+                grid,
             ));
         }
     }
     minimum
 }
 
+#[cfg(test)]
 fn segment_distance(
     a_start: Coord<f64>,
     a_end: Coord<f64>,
     b_start: Coord<f64>,
     b_end: Coord<f64>,
 ) -> f64 {
+    segment_distance_with_grid(
+        a_start,
+        a_end,
+        b_start,
+        b_end,
+        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+    )
+}
+
+fn segment_distance_with_grid(
+    a_start: Coord<f64>,
+    a_end: Coord<f64>,
+    b_start: Coord<f64>,
+    b_end: Coord<f64>,
+    grid: SourceGridFacts,
+) -> f64 {
     if !coords_are_finite_4(a_start, a_end, b_start, b_end) {
         return f64::INFINITY;
     }
 
-    if segments_intersect(a_start, a_end, b_start, b_end) {
+    if segments_intersect_with_grid(a_start, a_end, b_start, b_end, grid) {
         return 0.0;
     }
 
-    point_segment_distance(a_start, b_start, b_end)
-        .min(point_segment_distance(a_end, b_start, b_end))
-        .min(point_segment_distance(b_start, a_start, a_end))
-        .min(point_segment_distance(b_end, a_start, a_end))
+    point_segment_distance_with_grid(a_start, b_start, b_end, grid)
+        .min(point_segment_distance_with_grid(
+            a_end, b_start, b_end, grid,
+        ))
+        .min(point_segment_distance_with_grid(
+            b_start, a_start, a_end, grid,
+        ))
+        .min(point_segment_distance_with_grid(
+            b_end, a_start, a_end, grid,
+        ))
 }
 
+#[cfg(test)]
 fn point_segment_distance(point: Coord<f64>, start: Coord<f64>, end: Coord<f64>) -> f64 {
+    point_segment_distance_with_grid(point, start, end, SourceGridFacts::PRIMITIVE_FLOAT_EDGE)
+}
+
+fn point_segment_distance_with_grid(
+    point: Coord<f64>,
+    start: Coord<f64>,
+    end: Coord<f64>,
+    grid: SourceGridFacts,
+) -> f64 {
     if !coords_are_finite_3(point, start, end) {
         return f64::INFINITY;
     }
@@ -84,7 +141,7 @@ fn point_segment_distance(point: Coord<f64>, start: Coord<f64>, end: Coord<f64>)
     let dx = end.x - start.x;
     let dy = end.y - start.y;
     let length_squared = dx * dx + dy * dy;
-    if exact_coords_equal(start, end) {
+    if exact_coords_equal_with_grid(start, end, grid) {
         return distance([point.x, point.y], [start.x, start.y]);
     }
     if length_squared == 0.0 {
@@ -102,17 +159,34 @@ fn point_segment_distance(point: Coord<f64>, start: Coord<f64>, end: Coord<f64>)
     distance([point.x, point.y], [start.x + t * dx, start.y + t * dy])
 }
 
+#[cfg(test)]
 fn segments_intersect(
     a_start: Coord<f64>,
     a_end: Coord<f64>,
     b_start: Coord<f64>,
     b_end: Coord<f64>,
 ) -> bool {
+    segments_intersect_with_grid(
+        a_start,
+        a_end,
+        b_start,
+        b_end,
+        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+    )
+}
+
+fn segments_intersect_with_grid(
+    a_start: Coord<f64>,
+    a_end: Coord<f64>,
+    b_start: Coord<f64>,
+    b_end: Coord<f64>,
+    grid: SourceGridFacts,
+) -> bool {
     if !coords_are_finite_4(a_start, a_end, b_start, b_end) {
         return false;
     }
 
-    let Some((a, b, c, d)) = lift_segment_points(a_start, a_end, b_start, b_end) else {
+    let Some((a, b, c, d)) = lift_segment_points(a_start, a_end, b_start, b_end, grid) else {
         return false;
     };
 
@@ -151,11 +225,9 @@ fn lift_segment_points(
     a_end: Coord<f64>,
     b_start: Coord<f64>,
     b_end: Coord<f64>,
+    grid: SourceGridFacts,
 ) -> Option<(Point2, Point2, Point2, Point2)> {
-    let provenance = RuleGeometryProvenance::new(
-        "clearance-segment-topology",
-        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
-    );
+    let provenance = RuleGeometryProvenance::new("clearance-segment-topology", grid);
     Some((
         lift_coord(a_start, provenance)?,
         lift_coord(a_end, provenance)?,
@@ -171,7 +243,16 @@ fn lift_coord(coord: Coord<f64>, provenance: RuleGeometryProvenance) -> Option<P
     ))
 }
 
+#[cfg(test)]
 fn exact_coords_equal(left: Coord<f64>, right: Coord<f64>) -> bool {
+    exact_coords_equal_with_grid(left, right, SourceGridFacts::PRIMITIVE_FLOAT_EDGE)
+}
+
+fn exact_coords_equal_with_grid(
+    left: Coord<f64>,
+    right: Coord<f64>,
+    grid: SourceGridFacts,
+) -> bool {
     // Degenerate segment classification is a topology decision even when the
     // resulting distance magnitude is reported as f64. Lift finite coordinates
     // and ask `hyperlimit` for exact point equality instead of using
@@ -181,10 +262,7 @@ fn exact_coords_equal(left: Coord<f64>, right: Coord<f64>) -> bool {
     // Yap, "Towards Exact Geometric Computation," Computational Geometry 7.1-2
     // (1997).
     //
-    let provenance = RuleGeometryProvenance::new(
-        "clearance-degenerate-segment",
-        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
-    );
+    let provenance = RuleGeometryProvenance::new("clearance-degenerate-segment", grid);
     let Some(left) = lift_coord(left, provenance) else {
         return false;
     };
@@ -239,8 +317,11 @@ fn coords_are_finite_3(first: Coord<f64>, second: Coord<f64>, third: Coord<f64>)
 mod tests {
     use geo::{Coord, LineString, MultiPolygon, Polygon};
 
+    use crate::geometry::{SourceGridFacts, SourceUnit};
+
     use super::{
-        point_segment_distance, polygon_boundary_distance, segment_distance, segments_intersect,
+        point_segment_distance, polygon_boundary_distance, polygon_boundary_distance_with_grid,
+        segment_distance, segments_intersect,
     };
 
     fn square(x: f64, y: f64, size: f64) -> Polygon<f64> {
@@ -334,6 +415,26 @@ mod tests {
         let right = MultiPolygon(vec![square(1.0, 0.0, 1.0)]);
 
         assert_eq!(polygon_boundary_distance(&left, &right), 0.0);
+    }
+
+    #[test]
+    fn polygon_boundary_distance_accepts_retained_source_grid_provenance() {
+        let left = MultiPolygon(vec![square(0.0, 0.0, 1.0)]);
+        let right = MultiPolygon(vec![square(1.0, 0.0, 1.0)]);
+        let grid = SourceGridFacts::source_grid(SourceUnit::Gerber, 1_000_000);
+
+        assert_eq!(
+            polygon_boundary_distance_with_grid(&left, &right, grid),
+            0.0
+        );
+        assert!(!super::exact_coords_equal_with_grid(
+            Coord { x: 0.0, y: 0.0 },
+            Coord {
+                x: 1.0e-200,
+                y: 0.0
+            },
+            grid,
+        ));
     }
 
     #[test]

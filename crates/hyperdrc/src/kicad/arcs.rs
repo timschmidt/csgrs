@@ -6,7 +6,11 @@
 
 use hyperlimit::{Point2, PredicatePolicy, Sign, orient2d_with_policy};
 
-use crate::geometry::{RuleGeometryProvenance, SourceGridFacts, SourceUnit};
+use crate::geometry::RuleGeometryProvenance;
+#[cfg(test)]
+use crate::geometry::{SourceGridFacts, SourceUnit};
+
+use super::ParsedPoint2;
 
 /// Recover a circle center, start point, and signed sweep angle from three arc points.
 ///
@@ -20,6 +24,7 @@ use crate::geometry::{RuleGeometryProvenance, SourceGridFacts, SourceUnit};
 /// and orientation predicates surveyed by Lee and Preparata, "Computational
 /// Geometry - A Survey", IEEE Transactions on Computers, 1984,
 /// <https://doi.org/10.1109/TC.1984.1676388>.
+#[cfg(test)]
 pub(super) fn arc_center_start_angle(
     start: [f64; 2],
     mid: [f64; 2],
@@ -28,7 +33,44 @@ pub(super) fn arc_center_start_angle(
     if !all_finite(start) || !all_finite(mid) || !all_finite(end) {
         return None;
     }
-    if exact_arc_orientation(start, mid, end)? == Sign::Zero {
+    arc_center_start_angle_checked(start, mid, end, exact_arc_orientation(start, mid, end)?)
+}
+
+/// Recover an arc while retaining KiCad decimal-token exactness for degeneracy.
+///
+/// This is the parser-aware companion to [`arc_center_start_angle`]. The
+/// returned center and sweep are still `f64` compatibility geometry for the
+/// existing polygon stroker, but the collinearity decision consumes retained
+/// decimal-token [`Real`](hyperreal::Real) values whenever possible. Yap's EGC
+/// model treats this kind of representation preservation as part of choosing
+/// the right arithmetic package for a geometric predicate; see Yap, "Towards
+/// Exact Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+pub(super) fn arc_center_start_angle_source(
+    start: &ParsedPoint2,
+    mid: &ParsedPoint2,
+    end: &ParsedPoint2,
+) -> Option<([f64; 2], [f64; 2], f64)> {
+    if !all_finite(start.approximate)
+        || !all_finite(mid.approximate)
+        || !all_finite(end.approximate)
+    {
+        return None;
+    }
+    arc_center_start_angle_checked(
+        start.approximate,
+        mid.approximate,
+        end.approximate,
+        exact_arc_orientation_source(start, mid, end)?,
+    )
+}
+
+fn arc_center_start_angle_checked(
+    start: [f64; 2],
+    mid: [f64; 2],
+    end: [f64; 2],
+    orientation: Sign,
+) -> Option<([f64; 2], [f64; 2], f64)> {
+    if orientation == Sign::Zero {
         return None;
     }
 
@@ -86,6 +128,7 @@ fn all_finite(point: [f64; 2]) -> bool {
     point[0].is_finite() && point[1].is_finite()
 }
 
+#[cfg(test)]
 fn exact_arc_orientation(start: [f64; 2], mid: [f64; 2], end: [f64; 2]) -> Option<Sign> {
     // The circumcircle denominator is twice the orientation determinant of the
     // three arc points. Its zero/nonzero status controls whether a KiCad arc is
@@ -107,6 +150,28 @@ fn exact_arc_orientation(start: [f64; 2], mid: [f64; 2], end: [f64; 2]) -> Optio
     orient2d_with_policy(&start, &mid, &end, PredicatePolicy::STRICT).value()
 }
 
+fn exact_arc_orientation_source(
+    start: &ParsedPoint2,
+    mid: &ParsedPoint2,
+    end: &ParsedPoint2,
+) -> Option<Sign> {
+    let provenance = RuleGeometryProvenance::new(
+        "kicad-arc-orientation",
+        start.combined_grid(mid).combine(end.grid),
+    );
+    let start = exact_or_lift_point(start, provenance)?;
+    let mid = exact_or_lift_point(mid, provenance)?;
+    let end = exact_or_lift_point(end, provenance)?;
+    orient2d_with_policy(&start, &mid, &end, PredicatePolicy::STRICT).value()
+}
+
+fn exact_or_lift_point(point: &ParsedPoint2, provenance: RuleGeometryProvenance) -> Option<Point2> {
+    if let Some([x, y]) = &point.exact {
+        return Some(Point2::new(x.clone(), y.clone()));
+    }
+    lift_point(point.approximate, provenance)
+}
+
 fn lift_point(point: [f64; 2], provenance: RuleGeometryProvenance) -> Option<Point2> {
     Some(Point2::new(
         provenance.lift_f64(point[0])?,
@@ -116,7 +181,9 @@ fn lift_point(point: [f64; 2], provenance: RuleGeometryProvenance) -> Option<Poi
 
 #[cfg(test)]
 mod tests {
-    use super::arc_center_start_angle;
+    use super::{arc_center_start_angle, arc_center_start_angle_source};
+    use crate::kicad::xy_from_child_source;
+    use crate::sexp;
 
     #[test]
     fn arc_center_start_angle_rejects_exactly_collinear_points() {
@@ -136,5 +203,21 @@ mod tests {
     #[test]
     fn arc_center_start_angle_rejects_non_finite_inputs() {
         assert!(arc_center_start_angle([f64::NAN, 0.0], [1.0, 1.0], [2.0, 0.0]).is_none());
+    }
+
+    #[test]
+    fn arc_center_start_angle_source_uses_decimal_token_exactness() {
+        let parsed =
+            sexp::parse("(gr_arc (start 0.0 0.0) (mid 1.0 0.000000000001) (end 2.0 0.0))").unwrap();
+        let start = xy_from_child_source(&parsed, "start").unwrap();
+        let mid = xy_from_child_source(&parsed, "mid").unwrap();
+        let end = xy_from_child_source(&parsed, "end").unwrap();
+
+        let arc = arc_center_start_angle_source(&start, &mid, &end)
+            .expect("exact source-token orientation should keep a tiny nonzero arc");
+
+        assert!(arc.0[0].is_finite());
+        assert!(arc.0[1].is_finite());
+        assert!(arc.2.is_finite());
     }
 }

@@ -649,7 +649,7 @@ fn selected_copper_features<'a>(
 }
 
 fn bounding_dimensions(sketch: &PcbSketch) -> Option<(f64, f64)> {
-    sketch.geometry.bounding_rect().map(|bounds| {
+    sketch.geometry().bounding_rect().map(|bounds| {
         let width = bounds.max().x - bounds.min().x;
         let height = bounds.max().y - bounds.min().y;
         (width.min(height), width.max(height))
@@ -657,10 +657,10 @@ fn bounding_dimensions(sketch: &PcbSketch) -> Option<(f64, f64)> {
 }
 
 fn sketches_within_clearance(left: &PcbSketch, right: &PcbSketch, clearance: f64) -> bool {
-    let Some(left_bounds) = left.geometry.bounding_rect() else {
+    let Some(left_bounds) = left.geometry().bounding_rect() else {
         return true;
     };
-    let Some(right_bounds) = right.geometry.bounding_rect() else {
+    let Some(right_bounds) = right.geometry().bounding_rect() else {
         return true;
     };
 
@@ -671,7 +671,7 @@ fn sketches_within_clearance(left: &PcbSketch, right: &PcbSketch, clearance: f64
 }
 
 fn feature_may_touch_circle(feature: &CopperFeature, center: [f64; 2], radius: f64) -> bool {
-    let Some(bounds) = feature.sketch.geometry.bounding_rect() else {
+    let Some(bounds) = feature.sketch.geometry().bounding_rect() else {
         return true;
     };
 

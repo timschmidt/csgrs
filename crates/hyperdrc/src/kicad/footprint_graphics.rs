@@ -18,8 +18,9 @@ use super::graphic_primitives::{
     polygon_polygons as polygon_graphic_polygons, rect_polygons as rect_graphic_polygons,
 };
 use super::{
-    CopperFeature, CopperKind, arcs::arc_center_start_angle, expand_copper_layers, midpoint,
+    CopperFeature, CopperKind, arcs::arc_center_start_angle_source, expand_copper_layers, midpoint,
     points_from_pts, rotate_translate, stroke_width, text::text_bbox_polygon, xy_from_child,
+    xy_from_child_source,
 };
 
 pub(super) fn parse_footprint_graphics(
@@ -215,17 +216,25 @@ fn parse_arc_graphics(
     copper: &mut Vec<CopperFeature>,
 ) {
     for arc in footprint.named_children("fp_arc") {
-        let Some(start) = xy_from_child(arc, "start") else {
+        let Some(start) = xy_from_child_source(arc, "start") else {
             continue;
         };
-        let Some(mid) = xy_from_child(arc, "mid") else {
+        let Some(mid) = xy_from_child_source(arc, "mid") else {
             continue;
         };
-        let Some(end) = xy_from_child(arc, "end") else {
+        let Some(end) = xy_from_child_source(arc, "end") else {
             continue;
         };
         let width = stroke_width(arc, 0.01);
-        let Some((arc_center, arc_start, angle)) = arc_center_start_angle(start, mid, end) else {
+        // Footprint arcs are still converted to compatibility polygons for the
+        // current DRC model, but their degenerate/nondegenerate decision uses
+        // retained decimal-token `Real` coordinates. This follows Yap's EGC
+        // boundary: exact predicates decide topology before approximation
+        // adapters sample geometry. See Yap, "Towards Exact Geometric
+        // Computation," *Computational Geometry* 7.1-2 (1997).
+        let Some((arc_center, arc_start, angle)) =
+            arc_center_start_angle_source(&start, &mid, &end)
+        else {
             continue;
         };
         let polygons = arc_line_polygons(arc_center, arc_start, angle, width, 16)
@@ -236,7 +245,11 @@ fn parse_arc_graphics(
             arc,
             polygons,
             CopperKind::Segment,
-            rotate_translate(midpoint(start, end), footprint_at, footprint_angle),
+            rotate_translate(
+                midpoint(start.approximate, end.approximate),
+                footprint_at,
+                footprint_angle,
+            ),
             "KiCad footprint arc",
             declared_copper_layers,
             copper,

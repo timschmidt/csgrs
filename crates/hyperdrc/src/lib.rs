@@ -104,7 +104,7 @@ use csgrs::sketch::Sketch;
 /// This is the current `csgrs` compatibility boundary. Keep application checks
 /// from learning more about the `csgrs` numeric model so the future hyperreal
 /// sketch port can replace this alias without changing parser/report APIs.
-pub type PcbSketch = Sketch<LayerMetadata>;
+pub type PcbSketch = Sketch<Option<LayerMetadata>>;
 
 /// Metadata carried with [`PcbSketch`] geometry.
 #[derive(Clone, Debug)]

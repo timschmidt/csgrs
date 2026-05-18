@@ -13,6 +13,14 @@ use crate::kicad::{CopperFeature, DrillFeature};
 
 /// Return the board rectangle when the outline is one simple axis-aligned box.
 pub(super) fn axis_aligned_outline_rect(outline: &PcbSketch) -> Option<geo::Rect<f64>> {
+    axis_aligned_outline_rect_with_grid(outline, SourceGridFacts::PRIMITIVE_FLOAT_EDGE)
+}
+
+/// Return the board rectangle using retained source-grid facts for edge tests.
+pub(super) fn axis_aligned_outline_rect_with_grid(
+    outline: &PcbSketch,
+    grid: SourceGridFacts,
+) -> Option<geo::Rect<f64>> {
     let outline_geometry = outline.to_multipolygon();
     let [polygon] = outline_geometry.0.as_slice() else {
         return None;
@@ -30,10 +38,10 @@ pub(super) fn axis_aligned_outline_rect(outline: &PcbSketch) -> Option<geo::Rect
     let min = bounds.min();
     let max = bounds.max();
     let on_rect_edges = exterior.iter().take(exterior.len() - 1).all(|coord| {
-        exact_eq(coord.x, min.x)
-            || exact_eq(coord.x, max.x)
-            || exact_eq(coord.y, min.y)
-            || exact_eq(coord.y, max.y)
+        exact_eq_with_grid(coord.x, min.x, grid)
+            || exact_eq_with_grid(coord.x, max.x, grid)
+            || exact_eq_with_grid(coord.y, min.y, grid)
+            || exact_eq_with_grid(coord.y, max.y, grid)
     });
     on_rect_edges.then_some(bounds)
 }
@@ -44,13 +52,37 @@ pub(super) fn drill_keepout_inside_rect(
     rect: &geo::Rect<f64>,
     edge_clearance: f64,
 ) -> bool {
+    drill_keepout_inside_rect_with_grid(
+        drill,
+        rect,
+        edge_clearance,
+        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+    )
+}
+
+/// Return whether a drill keepout is inside a rectangle using retained grid facts.
+pub(super) fn drill_keepout_inside_rect_with_grid(
+    drill: &DrillFeature,
+    rect: &geo::Rect<f64>,
+    edge_clearance: f64,
+    grid: SourceGridFacts,
+) -> bool {
     let radius = drill.diameter / 2.0 + edge_clearance;
-    circle_inside_rect(drill.location, radius, rect)
+    circle_inside_rect_with_grid(drill.location, radius, rect, grid)
 }
 
 /// Return whether feature bounds are fully inside the rectangular board.
 pub(super) fn feature_bounds_inside_rect(feature: &CopperFeature, rect: &geo::Rect<f64>) -> bool {
-    let Some(bounds) = feature.sketch.geometry.bounding_rect() else {
+    feature_bounds_inside_rect_with_grid(feature, rect, SourceGridFacts::PRIMITIVE_FLOAT_EDGE)
+}
+
+/// Return whether feature bounds are inside a rectangle using retained grid facts.
+pub(super) fn feature_bounds_inside_rect_with_grid(
+    feature: &CopperFeature,
+    rect: &geo::Rect<f64>,
+    grid: SourceGridFacts,
+) -> bool {
+    let Some(bounds) = feature.sketch.geometry().bounding_rect() else {
         return false;
     };
     let min = rect.min();
@@ -58,10 +90,14 @@ pub(super) fn feature_bounds_inside_rect(feature: &CopperFeature, rect: &geo::Re
     let feature_min = bounds.min();
     let feature_max = bounds.max();
 
-    exact_ge(feature_min.x, min.x)
-        && exact_le(feature_max.x, max.x)
-        && exact_ge(feature_min.y, min.y)
-        && exact_le(feature_max.y, max.y)
+    // This rectangular containment gate can skip expensive CSG for clearly
+    // interior copper. Keep the decision certified with source-grid facts as
+    // Yap recommends in "Towards Exact Geometric Computation,"
+    // Computational Geometry 7.1-2 (1997).
+    exact_ge_with_grid(feature_min.x, min.x, grid)
+        && exact_le_with_grid(feature_max.x, max.x, grid)
+        && exact_ge_with_grid(feature_min.y, min.y, grid)
+        && exact_le_with_grid(feature_max.y, max.y, grid)
 }
 
 /// Return whether feature bounds are strictly outside an edge-clearance band.
@@ -70,7 +106,22 @@ pub(super) fn feature_bounds_inside_rect_margin(
     rect: &geo::Rect<f64>,
     margin: f64,
 ) -> bool {
-    let Some(bounds) = feature.sketch.geometry.bounding_rect() else {
+    feature_bounds_inside_rect_margin_with_grid(
+        feature,
+        rect,
+        margin,
+        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+    )
+}
+
+/// Return whether feature bounds clear an edge band using retained grid facts.
+pub(super) fn feature_bounds_inside_rect_margin_with_grid(
+    feature: &CopperFeature,
+    rect: &geo::Rect<f64>,
+    margin: f64,
+    grid: SourceGridFacts,
+) -> bool {
+    let Some(bounds) = feature.sketch.geometry().bounding_rect() else {
         return false;
     };
     let min = rect.min();
@@ -83,42 +134,63 @@ pub(super) fn feature_bounds_inside_rect_margin(
     // the broad/narrow-phase structure in Ericson, *Real-Time Collision
     // Detection* (2005): rectangle predicates reject safe interior candidates,
     // and exact CSG/boundary-distance logic remains authoritative near edges.
-    exact_gt(feature_min.x, min.x + margin)
-        && exact_lt(feature_max.x, max.x - margin)
-        && exact_gt(feature_min.y, min.y + margin)
-        && exact_lt(feature_max.y, max.y - margin)
+    //
+    // Retaining source-grid facts at this gate follows Yap's object-level EGC
+    // boundary: do not discard exact input structure before a predicate chooses
+    // its arithmetic. See Yap, "Towards Exact Geometric Computation,"
+    // Computational Geometry 7.1-2 (1997).
+    exact_gt_with_grid(feature_min.x, min.x + margin, grid)
+        && exact_lt_with_grid(feature_max.x, max.x - margin, grid)
+        && exact_gt_with_grid(feature_min.y, min.y + margin, grid)
+        && exact_lt_with_grid(feature_max.y, max.y - margin, grid)
 }
 
-fn circle_inside_rect(center: [f64; 2], radius: f64, rect: &geo::Rect<f64>) -> bool {
+fn circle_inside_rect_with_grid(
+    center: [f64; 2],
+    radius: f64,
+    rect: &geo::Rect<f64>,
+    grid: SourceGridFacts,
+) -> bool {
     let min = rect.min();
     let max = rect.max();
-    exact_ge(center[0] - radius, min.x)
-        && exact_le(center[0] + radius, max.x)
-        && exact_ge(center[1] - radius, min.y)
-        && exact_le(center[1] + radius, max.y)
+    // This predicate can skip later CSG work for clearly interior drill
+    // keepouts, so its comparisons must remain certified. Carrying parser
+    // source-grid facts to this boundary follows Yap's object-level exactness
+    // discipline: keep representation structure with geometric objects until a
+    // predicate deliberately selects arithmetic. See Yap, "Towards Exact
+    // Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+    exact_ge_with_grid(center[0] - radius, min.x, grid)
+        && exact_le_with_grid(center[0] + radius, max.x, grid)
+        && exact_ge_with_grid(center[1] - radius, min.y, grid)
+        && exact_le_with_grid(center[1] + radius, max.y, grid)
 }
 
-fn exact_eq(left: f64, right: f64) -> bool {
-    exact_cmp(left, right).is_some_and(|ordering| ordering == std::cmp::Ordering::Equal)
+fn exact_eq_with_grid(left: f64, right: f64, grid: SourceGridFacts) -> bool {
+    exact_cmp_with_grid(left, right, grid)
+        .is_some_and(|ordering| ordering == std::cmp::Ordering::Equal)
 }
 
-fn exact_ge(left: f64, right: f64) -> bool {
-    exact_cmp(left, right).is_some_and(|ordering| ordering != std::cmp::Ordering::Less)
+fn exact_ge_with_grid(left: f64, right: f64, grid: SourceGridFacts) -> bool {
+    exact_cmp_with_grid(left, right, grid)
+        .is_some_and(|ordering| ordering != std::cmp::Ordering::Less)
 }
 
-fn exact_gt(left: f64, right: f64) -> bool {
-    exact_cmp(left, right).is_some_and(|ordering| ordering == std::cmp::Ordering::Greater)
+fn exact_gt_with_grid(left: f64, right: f64, grid: SourceGridFacts) -> bool {
+    exact_cmp_with_grid(left, right, grid)
+        .is_some_and(|ordering| ordering == std::cmp::Ordering::Greater)
 }
 
-fn exact_le(left: f64, right: f64) -> bool {
-    exact_cmp(left, right).is_some_and(|ordering| ordering != std::cmp::Ordering::Greater)
+fn exact_le_with_grid(left: f64, right: f64, grid: SourceGridFacts) -> bool {
+    exact_cmp_with_grid(left, right, grid)
+        .is_some_and(|ordering| ordering != std::cmp::Ordering::Greater)
 }
 
-fn exact_lt(left: f64, right: f64) -> bool {
-    exact_cmp(left, right).is_some_and(|ordering| ordering == std::cmp::Ordering::Less)
+fn exact_lt_with_grid(left: f64, right: f64, grid: SourceGridFacts) -> bool {
+    exact_cmp_with_grid(left, right, grid)
+        .is_some_and(|ordering| ordering == std::cmp::Ordering::Less)
 }
 
-fn exact_cmp(left: f64, right: f64) -> Option<std::cmp::Ordering> {
+fn exact_cmp_with_grid(left: f64, right: f64, grid: SourceGridFacts) -> Option<std::cmp::Ordering> {
     // These outline helpers are broad/narrow phase gates: accepting a rectangle
     // or an interior feature may bypass a slower CSG check, so the comparison
     // itself must be a certified predicate. Finite parser coordinates are
@@ -126,14 +198,7 @@ fn exact_cmp(left: f64, right: f64) -> Option<std::cmp::Ordering> {
     // Yap's exact geometric computation boundary. See Yap, "Towards Exact
     // Geometric Computation," Computational Geometry 7.1-2 (1997).
     //
-    // Future KiCad/Gerber parser paths should replace this primitive-float
-    // provenance with token-level [`SourceGridFacts`] so repeated rectangle
-    // checks can choose a cheap shared-scale integer comparison without
-    // re-lifting every f64 edge.
-    let provenance = RuleGeometryProvenance::new(
-        "axis-aligned-outline-rect",
-        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
-    );
+    let provenance = RuleGeometryProvenance::new("axis-aligned-outline-rect", grid);
     let left = provenance.lift_f64(left)?;
     let right = provenance.lift_f64(right)?;
     compare_reals_with_policy(&left, &right, PredicatePolicy::STRICT).value()
@@ -142,7 +207,7 @@ fn exact_cmp(left: f64, right: f64) -> Option<std::cmp::Ordering> {
 #[cfg(test)]
 mod tests {
     use crate::LayerMetadata;
-    use crate::geometry::{polygons_to_sketch, rect_polygon};
+    use crate::geometry::{SourceUnit, polygons_to_sketch, rect_polygon};
     use crate::kicad::CopperKind;
 
     use super::*;
@@ -177,6 +242,21 @@ mod tests {
         assert_eq!(rect.min().y, 0.0);
         assert_eq!(rect.max().x, 100.0);
         assert_eq!(rect.max().y, 100.0);
+    }
+
+    #[test]
+    fn axis_aligned_outline_rect_accepts_retained_gerber_grid() {
+        let outline = sketch_rect([50.0, 50.0], [100.0, 100.0]);
+        let grid = SourceGridFacts::source_grid(SourceUnit::Gerber, 1_000_000);
+
+        let rect = axis_aligned_outline_rect_with_grid(&outline, grid)
+            .expect("simple rectangle should be detected with retained Gerber grid facts");
+
+        assert_eq!(rect.min().x, 0.0);
+        assert!(
+            exact_cmp_with_grid(0.5, rect.min().x, grid)
+                .is_some_and(|ordering| ordering == std::cmp::Ordering::Greater)
+        );
     }
 
     #[test]
@@ -217,5 +297,23 @@ mod tests {
             !feature_bounds_inside_rect_margin(&touches_margin, &rect, 1.0),
             "features touching the review band must stay on the exact CSG path"
         );
+    }
+
+    #[test]
+    fn drill_keepout_inside_rect_accepts_retained_excellon_grid() {
+        let outline = sketch_rect([50.0, 50.0], [100.0, 100.0]);
+        let rect =
+            axis_aligned_outline_rect(&outline).expect("simple rectangle should be detected");
+        let drill = DrillFeature {
+            location: [50.0, 50.0],
+            diameter: 0.30,
+            net: None,
+            plated: false,
+        };
+        let grid = SourceGridFacts::source_grid(SourceUnit::Excellon, 1_000);
+
+        assert!(drill_keepout_inside_rect_with_grid(
+            &drill, &rect, 0.25, grid
+        ));
     }
 }

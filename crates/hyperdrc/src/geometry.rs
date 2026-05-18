@@ -13,7 +13,9 @@ pub use primitives::{
     polygon_from_points, rect_polygon, rounded_rect_polygon, transform_polygon, trapezoid_polygon,
 };
 pub use sketch::{empty_sketch, polygon_to_sketch, polygons_to_sketch};
-pub use source_units::{ExactLiftKind, RuleGeometryProvenance, SourceGridFacts, SourceUnit};
+pub use source_units::{
+    ExactLiftKind, RuleGeometryProvenance, SourceGridFacts, SourceScalar, SourceUnit,
+};
 pub use violations::multipolygon_to_shapes;
 
 #[cfg(test)]

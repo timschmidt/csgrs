@@ -10,14 +10,18 @@
 
 use csgrs::csg::CSG;
 use geo::{Area, BoundingRect};
+use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 
-use crate::geometry::{circle_polygon, multipolygon_to_shapes, polygons_to_sketch};
+use crate::geometry::{
+    RuleGeometryProvenance, SourceGridFacts, SourceUnit, circle_polygon, multipolygon_to_shapes,
+    polygons_to_sketch,
+};
 use crate::ipc356::Ipc356Point;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbSketch};
 
-use super::outline::{axis_aligned_outline_rect, drill_keepout_inside_rect};
+use super::outline::{axis_aligned_outline_rect_with_grid, drill_keepout_inside_rect_with_grid};
 use super::spatial::{CopperSpatialIndex, DrillSpatialIndex, PointSpatialIndex};
 
 /// Review plated drill land margin using an area-equivalent copper radius.
@@ -227,12 +231,51 @@ pub fn drill_to_copper_clearance(
     selected_layers: &[String],
     min_area: f64,
 ) -> Vec<Violation> {
-    let mut drills = board.drills.clone();
-    drills.extend_from_slice(extra_drills);
+    drill_to_copper_clearance_with_grid(
+        board,
+        extra_drills,
+        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+        clearance,
+        selected_layers,
+        min_area,
+    )
+}
+
+/// Review drill keepouts against selected copper with retained extra-drill grid facts.
+///
+/// KiCad board drills are treated as KiCad millimeter compatibility edges,
+/// while sidecar drills carry the caller-provided source grid. The grid only
+/// selects exact comparison provenance for broad-phase rejection; CSG overlap
+/// still decides surviving clearance violations.
+pub fn drill_to_copper_clearance_with_grid(
+    board: &BoardModel,
+    extra_drills: &[DrillFeature],
+    extra_drill_grid: SourceGridFacts,
+    clearance: f64,
+    selected_layers: &[String],
+    min_area: f64,
+) -> Vec<Violation> {
+    let mut drills = board
+        .drills
+        .iter()
+        .cloned()
+        .map(|drill| {
+            (
+                drill,
+                SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter),
+            )
+        })
+        .collect::<Vec<_>>();
+    drills.extend(
+        extra_drills
+            .iter()
+            .cloned()
+            .map(|drill| (drill, extra_drill_grid)),
+    );
     let copper_features = selected_copper_features(board, selected_layers);
     let maximum_keepout_radius = drills
         .iter()
-        .map(|drill| drill.diameter / 2.0 + clearance)
+        .map(|(drill, _)| drill.diameter / 2.0 + clearance)
         .fold(0.0_f64, f64::max);
     // Clearance is still decided by exact geometry below. This grid is only the
     // broad phase described by Ericson, Real-Time Collision Detection, 2005,
@@ -249,7 +292,7 @@ pub fn drill_to_copper_clearance(
     let mut candidate_pairs = 0_usize;
     let mut exact_intersections = 0_usize;
 
-    for drill in drills {
+    for (drill, drill_grid) in drills {
         let keepout_radius = drill.diameter / 2.0 + clearance;
         let mut keepout = None;
 
@@ -259,7 +302,12 @@ pub fn drill_to_copper_clearance(
             if drill.plated && drill.net.is_some() && drill.net == copper.net {
                 continue;
             }
-            if !copper_may_touch_drill_keepout(copper, drill.location, keepout_radius) {
+            if !copper_may_touch_drill_keepout_with_grid(
+                copper,
+                drill.location,
+                keepout_radius,
+                drill_grid,
+            ) {
                 continue;
             }
 
@@ -304,22 +352,47 @@ pub fn drill_to_copper_clearance(
     violations
 }
 
-fn copper_may_touch_drill_keepout(
+fn copper_may_touch_drill_keepout_with_grid(
     copper: &CopperFeature,
     drill_location: [f64; 2],
     keepout_radius: f64,
+    grid: SourceGridFacts,
 ) -> bool {
-    let Some(bounds) = copper.sketch.geometry.bounding_rect() else {
+    let Some(bounds) = copper.sketch.geometry().bounding_rect() else {
         return true;
     };
 
     // The drill keepout is circular, so its broad-phase box is just the drill
     // center expanded by radius. Exact polygon intersection still decides
     // surviving candidates; the box test only rejects impossible contacts.
-    drill_location[0] - keepout_radius <= bounds.max().x
-        && drill_location[0] + keepout_radius >= bounds.min().x
-        && drill_location[1] - keepout_radius <= bounds.max().y
-        && drill_location[1] + keepout_radius >= bounds.min().y
+    //
+    // This is a broad-phase rejection that can skip CSG, so the comparisons
+    // are exact lifted predicates with source-grid provenance. This follows
+    // Yap's instruction to carry object/source representation into geometric
+    // decisions; see Yap, "Towards Exact Geometric Computation,"
+    // *Computational Geometry* 7.1-2 (1997). The grid is non-certifying
+    // metadata: CSG overlap remains the clearance certificate for candidates.
+    exact_le_with_grid(drill_location[0] - keepout_radius, bounds.max().x, grid)
+        && exact_ge_with_grid(drill_location[0] + keepout_radius, bounds.min().x, grid)
+        && exact_le_with_grid(drill_location[1] - keepout_radius, bounds.max().y, grid)
+        && exact_ge_with_grid(drill_location[1] + keepout_radius, bounds.min().y, grid)
+}
+
+fn exact_ge_with_grid(left: f64, right: f64, grid: SourceGridFacts) -> bool {
+    exact_cmp_with_grid(left, right, grid)
+        .is_some_and(|ordering| ordering != std::cmp::Ordering::Less)
+}
+
+fn exact_le_with_grid(left: f64, right: f64, grid: SourceGridFacts) -> bool {
+    exact_cmp_with_grid(left, right, grid)
+        .is_some_and(|ordering| ordering != std::cmp::Ordering::Greater)
+}
+
+fn exact_cmp_with_grid(left: f64, right: f64, grid: SourceGridFacts) -> Option<std::cmp::Ordering> {
+    let provenance = RuleGeometryProvenance::new("drill-copper-broad-phase", grid);
+    let left = provenance.lift_f64(left)?;
+    let right = provenance.lift_f64(right)?;
+    compare_reals_with_policy(&left, &right, PredicatePolicy::STRICT).value()
 }
 
 /// Review edge-to-edge spacing between KiCad and sidecar drills.
@@ -393,17 +466,44 @@ pub fn board_outline_drill_clearance(
     clearance: f64,
     min_area: f64,
 ) -> Vec<Violation> {
+    board_outline_drill_clearance_with_grid(
+        drill_source,
+        outline_name,
+        outline,
+        board_drills,
+        extra_drills,
+        clearance,
+        min_area,
+        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+    )
+}
+
+/// Run board-outline drill clearance with retained source-grid facts.
+///
+/// The grid facts are advisory scheduling metadata for exact rectangle
+/// predicates. They do not certify the clearance outcome by themselves: CSG
+/// difference still handles boundary candidates and non-rectangular outlines.
+pub fn board_outline_drill_clearance_with_grid(
+    drill_source: &str,
+    outline_name: &str,
+    outline: &PcbSketch,
+    board_drills: &[DrillFeature],
+    extra_drills: &[DrillFeature],
+    clearance: f64,
+    min_area: f64,
+    grid: SourceGridFacts,
+) -> Vec<Violation> {
     let mut drills = board_drills.to_vec();
     drills.extend_from_slice(extra_drills);
     let mut violations = Vec::new();
-    let outline_rect = axis_aligned_outline_rect(outline);
+    let outline_rect = axis_aligned_outline_rect_with_grid(outline, grid);
     let mut skipped_rect_inside = 0_usize;
     let mut exact_difference_count = 0_usize;
 
     for drill in drills {
         if outline_rect
             .as_ref()
-            .is_some_and(|rect| drill_keepout_inside_rect(&drill, rect, clearance))
+            .is_some_and(|rect| drill_keepout_inside_rect_with_grid(&drill, rect, clearance, grid))
         {
             skipped_rect_inside += 1;
             continue;
@@ -813,10 +913,13 @@ fn distance(left: [f64; 2], right: [f64; 2]) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::{
-        board_outline_drill_clearance, drill_table_consistency, drill_to_copper_clearance,
+        board_outline_drill_clearance, board_outline_drill_clearance_with_grid,
+        drill_table_consistency, drill_to_copper_clearance, drill_to_copper_clearance_with_grid,
     };
     use crate::LayerMetadata;
-    use crate::geometry::{line_polygon, polygons_to_sketch, rect_polygon};
+    use crate::geometry::{
+        SourceGridFacts, SourceUnit, line_polygon, polygons_to_sketch, rect_polygon,
+    };
     use crate::ipc356::Ipc356Point;
     use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 
@@ -826,6 +929,19 @@ mod tests {
         board.drills = vec![drill(Some("GND"), [0.0, 0.0], 0.40, true)];
 
         let violations = drill_to_copper_clearance(&board, &[], 0.20, &[], 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "drill-to-copper-clearance");
+    }
+
+    #[test]
+    fn drill_to_copper_clearance_accepts_retained_excellon_grid_for_broad_phase() {
+        let board = board_with_copper(vec![segment("SIG", [-1.0, 0.0], [1.0, 0.0], 0.20)]);
+        let extra_drills = vec![drill(None, [0.0, 0.0], 0.40, false)];
+        let grid = SourceGridFacts::source_grid(SourceUnit::Excellon, 1_000);
+
+        let violations =
+            drill_to_copper_clearance_with_grid(&board, &extra_drills, grid, 0.20, &[], 1.0e-9);
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "drill-to-copper-clearance");
@@ -941,6 +1057,31 @@ mod tests {
             started.elapsed() < std::time::Duration::from_secs(2),
             "board-outline drill clearance should skip inset drills on rectangular outlines before exact CSG"
         );
+    }
+
+    #[test]
+    fn board_outline_drill_clearance_accepts_retained_excellon_grid_for_rect_fast_path() {
+        let outline = sketch(vec![rect_polygon([50.0, 50.0], [100.0, 100.0], 0.0)]);
+        let drills = vec![
+            drill(None, [50.0, 50.0], 0.30, false),
+            drill(None, [0.35, 50.0], 0.30, false),
+        ];
+        let grid = SourceGridFacts::source_grid(SourceUnit::Excellon, 1_000);
+
+        let violations = board_outline_drill_clearance_with_grid(
+            "Excellon drills",
+            "Gerber profile",
+            &outline,
+            &[],
+            &drills,
+            0.25,
+            1.0e-9,
+            grid,
+        );
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "board-outline-drill-clearance");
+        assert_eq!(violations[0].locations, vec![[0.35, 50.0]]);
     }
 
     #[test]

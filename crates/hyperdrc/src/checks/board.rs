@@ -10,14 +10,19 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use csgrs::csg::CSG;
 use geo::{Area, BoundingRect};
+use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 
-use super::distance::polygon_boundary_distance;
+use super::distance::{polygon_boundary_distance, polygon_boundary_distance_with_grid};
 use super::outline::{
-    axis_aligned_outline_rect, feature_bounds_inside_rect, feature_bounds_inside_rect_margin,
+    axis_aligned_outline_rect_with_grid, feature_bounds_inside_rect_margin_with_grid,
+    feature_bounds_inside_rect_with_grid,
 };
 use super::spatial::{CopperSpatialIndex, DrillSpatialIndex, PointSpatialIndex};
 use crate::checks::drill::drills_to_sketch;
-use crate::geometry::{circle_polygon, multipolygon_to_shapes, polygons_to_sketch};
+use crate::geometry::{
+    RuleGeometryProvenance, SourceGridFacts, circle_polygon, multipolygon_to_shapes,
+    polygons_to_sketch,
+};
 use crate::ipc356::Ipc356Point;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
@@ -357,10 +362,30 @@ pub fn board_edge_exposure(
     selected_layers: &[String],
     min_area: f64,
 ) -> Vec<Violation> {
+    board_edge_exposure_with_grid(
+        board,
+        selected_layers,
+        min_area,
+        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+    )
+}
+
+/// Run board-edge exposure with retained source-grid facts.
+///
+/// The rectangular fast path is a certified broad-phase decision using exact
+/// lifted comparisons. This follows Yap's EGC boundary from "Towards Exact
+/// Geometric Computation," Computational Geometry 7.1-2 (1997): retain source
+/// representation facts until a predicate chooses arithmetic.
+pub fn board_edge_exposure_with_grid(
+    board: &BoardModel,
+    selected_layers: &[String],
+    min_area: f64,
+    grid: SourceGridFacts,
+) -> Vec<Violation> {
     let Some(outline) = &board.board_outline else {
         return Vec::new();
     };
-    let outline_rect = axis_aligned_outline_rect(outline);
+    let outline_rect = axis_aligned_outline_rect_with_grid(outline, grid);
     let mut violations = Vec::new();
     let mut skipped_rect_inside = 0_usize;
     let mut exact_difference_count = 0_usize;
@@ -368,7 +393,7 @@ pub fn board_edge_exposure(
     for feature in selected_copper_features(board, selected_layers) {
         if outline_rect
             .as_ref()
-            .is_some_and(|rect| feature_bounds_inside_rect(feature, rect))
+            .is_some_and(|rect| feature_bounds_inside_rect_with_grid(feature, rect, grid))
         {
             skipped_rect_inside += 1;
             continue;
@@ -415,10 +440,32 @@ pub fn high_speed_edge_readiness(
     edge_clearance: f64,
     min_area: f64,
 ) -> Vec<Violation> {
+    high_speed_edge_readiness_with_grid(
+        board,
+        selected_layers,
+        edge_clearance,
+        min_area,
+        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+    )
+}
+
+/// Run high-speed edge readiness with retained source-grid facts.
+///
+/// The rectangular edge-band predicate uses exact lifted comparisons with
+/// source-unit provenance before allowing an interior feature to skip CSG,
+/// matching Yap, "Towards Exact Geometric Computation," Computational Geometry
+/// 7.1-2 (1997).
+pub fn high_speed_edge_readiness_with_grid(
+    board: &BoardModel,
+    selected_layers: &[String],
+    edge_clearance: f64,
+    min_area: f64,
+    grid: SourceGridFacts,
+) -> Vec<Violation> {
     let Some(outline) = &board.board_outline else {
         return Vec::new();
     };
-    let outline_rect = axis_aligned_outline_rect(outline);
+    let outline_rect = axis_aligned_outline_rect_with_grid(outline, grid);
     let allowed = outline.offset(-edge_clearance);
     let mut violations = Vec::new();
     let mut skipped_rect_inside = 0_usize;
@@ -431,10 +478,9 @@ pub fn high_speed_edge_readiness(
         if !looks_high_speed_net(net) {
             continue;
         }
-        if outline_rect
-            .as_ref()
-            .is_some_and(|rect| feature_bounds_inside_rect_margin(feature, rect, edge_clearance))
-        {
+        if outline_rect.as_ref().is_some_and(|rect| {
+            feature_bounds_inside_rect_margin_with_grid(feature, rect, edge_clearance, grid)
+        }) {
             skipped_rect_inside += 1;
             continue;
         }
@@ -479,10 +525,33 @@ pub fn edge_copper_pullback_readiness(
     edge_clearance: f64,
     min_area: f64,
 ) -> Vec<Violation> {
+    edge_copper_pullback_readiness_with_grid(
+        board,
+        selected_layers,
+        edge_clearance,
+        min_area,
+        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+    )
+}
+
+/// Run edge-copper pullback readiness with retained source-grid facts.
+///
+/// Both the rectangular edge-band fast path and the boundary-distance fallback
+/// consume exact lifted predicates with rule/source provenance. This keeps the
+/// topology gate aligned with Yap's exact-geometric-computation discipline; the
+/// final CSG shapes remain report geometry at HyperDRC's current compatibility
+/// boundary.
+pub fn edge_copper_pullback_readiness_with_grid(
+    board: &BoardModel,
+    selected_layers: &[String],
+    edge_clearance: f64,
+    min_area: f64,
+    grid: SourceGridFacts,
+) -> Vec<Violation> {
     let Some(outline) = &board.board_outline else {
         return Vec::new();
     };
-    let outline_rect = axis_aligned_outline_rect(outline);
+    let outline_rect = axis_aligned_outline_rect_with_grid(outline, grid);
     let allowed = outline.offset(-edge_clearance);
     let mut violations = Vec::new();
     let mut skipped_rect_inside = 0_usize;
@@ -497,10 +566,9 @@ pub fn edge_copper_pullback_readiness(
                 continue;
             }
         }
-        if outline_rect
-            .as_ref()
-            .is_some_and(|rect| feature_bounds_inside_rect_margin(feature, rect, edge_clearance))
-        {
+        if outline_rect.as_ref().is_some_and(|rect| {
+            feature_bounds_inside_rect_margin_with_grid(feature, rect, edge_clearance, grid)
+        }) {
             skipped_rect_inside += 1;
             continue;
         }
@@ -509,9 +577,10 @@ pub fn edge_copper_pullback_readiness(
         let intrusion = feature.sketch.difference(&allowed);
         let shapes = multipolygon_to_shapes(&intrusion.to_multipolygon(), min_area);
         let has_edge_intrusion = !shapes.is_empty()
-            || polygon_boundary_distance(
+            || polygon_boundary_distance_with_grid(
                 &feature.sketch.to_multipolygon(),
                 &outline.to_multipolygon(),
+                grid,
             ) <= edge_clearance;
         if !has_edge_intrusion {
             continue;
@@ -557,10 +626,37 @@ pub fn edge_stitching_readiness(
     stitching_distance: f64,
     min_area: f64,
 ) -> Vec<Violation> {
+    edge_stitching_readiness_with_grid(
+        board,
+        selected_layers,
+        edge_clearance,
+        stitching_distance,
+        min_area,
+        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+    )
+}
+
+/// Run edge-stitching readiness with retained source-grid facts.
+///
+/// The edge-band fast path and boundary-distance fallback use exact lifted
+/// predicates before allowing any candidate to skip slower geometry. This is
+/// the same "geometric object carries representation facts to the predicate"
+/// discipline Yap argues for in "Towards Exact Geometric Computation,"
+/// Computational Geometry 7.1-2 (1997), applied at HyperDRC's current
+/// compatibility boundary where parsed board geometry is still stored as
+/// `f64`.
+pub fn edge_stitching_readiness_with_grid(
+    board: &BoardModel,
+    selected_layers: &[String],
+    edge_clearance: f64,
+    stitching_distance: f64,
+    min_area: f64,
+    grid: SourceGridFacts,
+) -> Vec<Violation> {
     let Some(outline) = &board.board_outline else {
         return Vec::new();
     };
-    let outline_rect = axis_aligned_outline_rect(outline);
+    let outline_rect = axis_aligned_outline_rect_with_grid(outline, grid);
     let allowed = outline.offset(-edge_clearance);
     let features = selected_copper_features(board, selected_layers);
     let ground_vias = features
@@ -588,10 +684,9 @@ pub fn edge_stitching_readiness(
             continue;
         }
         candidate_features += 1;
-        if outline_rect
-            .as_ref()
-            .is_some_and(|rect| feature_bounds_inside_rect_margin(feature, rect, edge_clearance))
-        {
+        if outline_rect.as_ref().is_some_and(|rect| {
+            feature_bounds_inside_rect_margin_with_grid(feature, rect, edge_clearance, grid)
+        }) {
             skipped_rect_inside += 1;
             continue;
         }
@@ -599,15 +694,22 @@ pub fn edge_stitching_readiness(
         let intrusion = feature.sketch.difference(&allowed);
         let shapes = multipolygon_to_shapes(&intrusion.to_multipolygon(), min_area);
         let has_edge_intrusion = !shapes.is_empty()
-            || polygon_boundary_distance(
+            || polygon_boundary_distance_with_grid(
                 &feature.sketch.to_multipolygon(),
                 &outline.to_multipolygon(),
+                grid,
             ) <= edge_clearance;
         if !has_edge_intrusion {
             continue;
         }
 
-        let nearby_stitches = ground_index.centers_within(feature.location, stitching_distance);
+        let nearby_stitches = point_candidates_within_radius_with_grid(
+            &ground_index,
+            feature.location,
+            stitching_distance,
+            grid,
+            "edge-stitching-readiness",
+        );
         stitch_hits += nearby_stitches.len();
         let has_stitch = !nearby_stitches.is_empty();
         if has_stitch {
@@ -669,7 +771,7 @@ pub fn trace_junction_acid_trap_readiness(
         .collect::<Vec<_>>();
     let segment_bounds = segments
         .iter()
-        .map(|segment| segment.sketch.geometry.bounding_rect())
+        .map(|segment| segment.sketch.geometry().bounding_rect())
         .collect::<Vec<_>>();
     let segment_index = CopperSpatialIndex::new(&segments, 0.0);
     let mut violations = Vec::new();
@@ -1746,6 +1848,29 @@ pub fn chassis_stitching_readiness(
     selected_layers: &[String],
     stitching_distance: f64,
 ) -> Vec<Violation> {
+    chassis_stitching_readiness_with_grid(
+        board,
+        selected_layers,
+        stitching_distance,
+        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+    )
+}
+
+/// Run chassis-stitching readiness with retained source-grid facts.
+///
+/// The point index is only a broad phase. The final center-radius decision
+/// compares squared exact `Real` distances after lifting coordinates with
+/// source-unit provenance, matching Yap's exact-geometric-computation boundary
+/// from "Towards Exact Geometric Computation," Computational Geometry 7.1-2
+/// (1997). The squared-distance reduction avoids a square root, as in
+/// de Berg, Cheong, van Kreveld, and Overmars, *Computational Geometry:
+/// Algorithms and Applications*, 3rd ed., Springer, 2008.
+pub fn chassis_stitching_readiness_with_grid(
+    board: &BoardModel,
+    selected_layers: &[String],
+    stitching_distance: f64,
+    grid: SourceGridFacts,
+) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers);
     let ground_vias = features
         .iter()
@@ -1771,7 +1896,13 @@ pub fn chassis_stitching_readiness(
         }
         candidate_features += 1;
 
-        let nearby_stitches = ground_index.centers_within(feature.location, stitching_distance);
+        let nearby_stitches = point_candidates_within_radius_with_grid(
+            &ground_index,
+            feature.location,
+            stitching_distance,
+            grid,
+            "chassis-stitching-readiness",
+        );
         stitch_hits += nearby_stitches.len();
         let has_stitch = !nearby_stitches.is_empty();
         if has_stitch {
@@ -2485,14 +2616,14 @@ pub fn net_spacing(
 ) -> Vec<Violation> {
     let features = selected_copper_features(board, selected_layers)
         .into_iter()
-        .filter(|feature| feature.sketch.geometry.bounding_rect().is_some())
+        .filter(|feature| feature.sketch.geometry().bounding_rect().is_some())
         .collect::<Vec<_>>();
     let bounds = features
         .iter()
         .map(|feature| {
             feature
                 .sketch
-                .geometry
+                .geometry()
                 .bounding_rect()
                 .expect("net-spacing features are filtered to bounded geometry")
         })
@@ -2602,14 +2733,14 @@ fn rects_within_clearance(left: &geo::Rect<f64>, right: &geo::Rect<f64>, clearan
 pub fn registration_tolerance(board: &BoardModel, tolerance: f64, min_area: f64) -> Vec<Violation> {
     let features = selected_copper_features(board, &[])
         .into_iter()
-        .filter(|feature| feature.sketch.geometry.bounding_rect().is_some())
+        .filter(|feature| feature.sketch.geometry().bounding_rect().is_some())
         .collect::<Vec<_>>();
     let bounds = features
         .iter()
         .map(|feature| {
             feature
                 .sketch
-                .geometry
+                .geometry()
                 .bounding_rect()
                 .expect("registration-tolerance features are filtered to bounded geometry")
         })
@@ -2756,7 +2887,7 @@ pub fn panelization_clearance(
         .filter_map(|copper| {
             copper
                 .sketch
-                .geometry
+                .geometry()
                 .bounding_rect()
                 .map(|bounds| (copper, bounds))
         })
@@ -2777,7 +2908,7 @@ pub fn panelization_clearance(
             blocker_polygon_count += 1;
             let blocker_piece = polygons_to_sketch(vec![blocker_polygon], None);
             let blocker_geometry = blocker_piece.to_multipolygon();
-            let Some(blocker_bounds) = blocker_piece.geometry.bounding_rect() else {
+            let Some(blocker_bounds) = blocker_piece.geometry().bounding_rect() else {
                 continue;
             };
 
@@ -3090,17 +3221,17 @@ fn selected_copper_features<'a>(
 
 fn minimum_bounding_dimension(sketch: &PcbSketch) -> f64 {
     sketch
-        .geometry
+        .geometry()
         .bounding_rect()
         .map(|bounds| (bounds.max().x - bounds.min().x).min(bounds.max().y - bounds.min().y))
         .unwrap_or(0.0)
 }
 
 fn sketches_within_clearance(left: &PcbSketch, right: &PcbSketch, clearance: f64) -> bool {
-    let Some(left_bounds) = left.geometry.bounding_rect() else {
+    let Some(left_bounds) = left.geometry().bounding_rect() else {
         return true;
     };
-    let Some(right_bounds) = right.geometry.bounding_rect() else {
+    let Some(right_bounds) = right.geometry().bounding_rect() else {
         return true;
     };
 
@@ -3113,6 +3244,62 @@ fn sketches_within_clearance(left: &PcbSketch, right: &PcbSketch, clearance: f64
         && left_bounds.max().x + clearance >= right_bounds.min().x
         && left_bounds.min().y - clearance <= right_bounds.max().y
         && left_bounds.max().y + clearance >= right_bounds.min().y
+}
+
+fn point_candidates_within_radius_with_grid(
+    index: &PointSpatialIndex,
+    center: [f64; 2],
+    radius: f64,
+    grid: SourceGridFacts,
+    rule_name: &'static str,
+) -> Vec<usize> {
+    index
+        .candidate_centers_near(center, radius)
+        .into_iter()
+        .filter(|&candidate| {
+            point_within_radius_with_grid(index.point(candidate), center, radius, grid, rule_name)
+        })
+        .collect()
+}
+
+fn point_within_radius_with_grid(
+    point: [f64; 2],
+    center: [f64; 2],
+    radius: f64,
+    grid: SourceGridFacts,
+    rule_name: &'static str,
+) -> bool {
+    // The bucket lookup is only a broad phase. This predicate compares
+    // `dx*dx + dy*dy <= r*r` after lifting all finite compatibility values into
+    // exact `Real`s with source-unit facts. That keeps the center-radius
+    // decision inside Yap's EGC model while using the standard squared-distance
+    // reduction from de Berg et al., *Computational Geometry: Algorithms and
+    // Applications*, 3rd ed., Springer, 2008.
+    let provenance = RuleGeometryProvenance::new(rule_name, grid);
+    let Some(point_x) = provenance.lift_f64(point[0]) else {
+        return false;
+    };
+    let Some(point_y) = provenance.lift_f64(point[1]) else {
+        return false;
+    };
+    let Some(center_x) = provenance.lift_f64(center[0]) else {
+        return false;
+    };
+    let Some(center_y) = provenance.lift_f64(center[1]) else {
+        return false;
+    };
+    let Some(radius) = provenance.lift_f64(radius) else {
+        return false;
+    };
+
+    let dx = &point_x - &center_x;
+    let dy = &point_y - &center_y;
+    let distance_squared = &(&dx * &dx) + &(&dy * &dy);
+    let radius_squared = &radius * &radius;
+
+    compare_reals_with_policy(&distance_squared, &radius_squared, PredicatePolicy::STRICT)
+        .value()
+        .is_some_and(|ordering| ordering != std::cmp::Ordering::Greater)
 }
 
 fn multipolygon_center(multipolygon: &geo::MultiPolygon<f64>) -> Option<[f64; 2]> {
@@ -3173,7 +3360,9 @@ mod tests {
 
     use geo::{Coord, LineString, Polygon};
 
-    use crate::geometry::{circle_polygon, line_polygon, polygons_to_sketch};
+    use crate::geometry::{
+        SourceGridFacts, SourceUnit, circle_polygon, line_polygon, polygons_to_sketch,
+    };
     use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
     use crate::{LayerMetadata, PcbSketch};
 
@@ -3194,15 +3383,18 @@ mod tests {
     use crate::ipc356::{Ipc356AccessSide, Ipc356FeatureType, Ipc356Point, Ipc356Soldermask};
 
     use super::{
-        apply_ipc356_nets, board_edge_exposure, chassis_stitching_readiness,
+        apply_ipc356_nets, board_edge_exposure, board_edge_exposure_with_grid,
+        chassis_stitching_readiness, chassis_stitching_readiness_with_grid,
         connector_return_path_readiness, controlled_impedance_readiness, copper_net_intent,
         copper_width_readiness, decoupling_proximity_readiness, differential_pair_readiness,
         differential_pair_return_readiness, differential_pair_spacing_readiness,
         differential_pair_via_symmetry_readiness, edge_copper_pullback_readiness,
-        edge_stitching_readiness, gold_finger_drill_keepout_readiness, gold_finger_edge_readiness,
-        gold_finger_readiness, gold_finger_spacing_readiness, high_current_neck_readiness,
-        high_current_readiness, high_speed_edge_readiness, ipc356_coverage, ipc356_drill_diameter,
-        net_spacing, orphaned_zone_readiness, panelization_clearance, plane_clearance_readiness,
+        edge_copper_pullback_readiness_with_grid, edge_stitching_readiness,
+        edge_stitching_readiness_with_grid, gold_finger_drill_keepout_readiness,
+        gold_finger_edge_readiness, gold_finger_readiness, gold_finger_spacing_readiness,
+        high_current_neck_readiness, high_current_readiness, high_speed_edge_readiness,
+        high_speed_edge_readiness_with_grid, ipc356_coverage, ipc356_drill_diameter, net_spacing,
+        orphaned_zone_readiness, panelization_clearance, plane_clearance_readiness,
         power_plane_readiness, power_via_array_readiness, reference_plane_readiness,
         reference_plane_void_readiness, registration_tolerance, return_path_readiness,
         same_net_island_readiness, teardrop_readiness, trace_junction_acid_trap_readiness,
@@ -4143,6 +4335,15 @@ mod tests {
     }
 
     #[test]
+    fn board_edge_exposure_accepts_retained_kicad_grid_for_rect_fast_path() {
+        let mut board = board_with_outline(square(0.0, 0.0, 10.0, 10.0));
+        board.copper = vec![copper_disc("SIG", CopperKind::Pad, [1.0, 5.0], 0.3)];
+        let grid = SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter);
+
+        assert!(board_edge_exposure_with_grid(&board, &[], 1.0e-9, grid).is_empty());
+    }
+
+    #[test]
     fn board_edge_exposure_allows_inset_copper_or_missing_outline() {
         let mut board = board_with_outline(square(0.0, 0.0, 10.0, 10.0));
         board.copper = vec![copper_disc("SIG", CopperKind::Pad, [1.0, 5.0], 0.3)];
@@ -4217,6 +4418,21 @@ mod tests {
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "high-speed-edge-readiness");
+    }
+
+    #[test]
+    fn high_speed_edge_readiness_accepts_retained_kicad_grid_for_edge_band() {
+        let mut board = board_with_outline(square(0.0, 0.0, 10.0, 10.0));
+        board.copper = vec![copper_line(
+            "USB_D+",
+            CopperKind::Segment,
+            [2.0, 2.0],
+            [3.0, 2.0],
+            0.10,
+        )];
+        let grid = SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter);
+
+        assert!(high_speed_edge_readiness_with_grid(&board, &[], 0.50, 1.0e-9, grid).is_empty());
     }
 
     #[test]
@@ -4354,6 +4570,24 @@ mod tests {
     }
 
     #[test]
+    fn edge_copper_pullback_readiness_accepts_retained_kicad_grid_for_boundary_distance() {
+        let mut board = board_with_outline(square(0.0, 0.0, 10.0, 10.0));
+        board.copper = vec![copper_line(
+            "SIG1",
+            CopperKind::Segment,
+            [0.10, 1.0],
+            [0.90, 1.0],
+            0.10,
+        )];
+        let grid = SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter);
+
+        let violations = edge_copper_pullback_readiness_with_grid(&board, &[], 0.50, 1.0e-9, grid);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "edge-copper-pullback-readiness");
+    }
+
+    #[test]
     fn edge_copper_pullback_readiness_skips_edge_intent_nets() {
         let mut board = board_with_outline(square(0.0, 0.0, 10.0, 10.0));
         board.copper = vec![
@@ -4429,6 +4663,27 @@ mod tests {
         ];
 
         let violations = edge_stitching_readiness(&board, &[], 0.50, 0.30, 1.0e-9);
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "edge-stitching-readiness");
+    }
+
+    #[test]
+    fn edge_stitching_readiness_accepts_retained_kicad_grid_for_edge_checks() {
+        let mut board = board_with_outline(square(0.0, 0.0, 10.0, 10.0));
+        board.copper = vec![
+            copper_line(
+                "PCIe_TX_P",
+                CopperKind::Segment,
+                [0.10, 1.0],
+                [0.90, 1.0],
+                0.10,
+            ),
+            copper_disc("VDD", CopperKind::Via, [0.30, 1.0], 0.10),
+        ];
+        let grid = SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter);
+
+        let violations = edge_stitching_readiness_with_grid(&board, &[], 0.50, 0.30, 1.0e-9, grid);
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "edge-stitching-readiness");
@@ -5966,6 +6221,22 @@ mod tests {
         ]);
 
         assert!(chassis_stitching_readiness(&board, &[], 0.50).is_empty());
+    }
+
+    #[test]
+    fn chassis_stitching_readiness_accepts_retained_kicad_grid_for_point_radius() {
+        let board = board_with_copper(vec![
+            copper_disc("USB_SHIELD", CopperKind::Via, [0.0, 0.0], 0.20),
+            copper_disc("GND", CopperKind::Via, [0.0, 0.50], 0.12),
+        ]);
+        let grid = SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter);
+
+        assert!(chassis_stitching_readiness_with_grid(&board, &[], 0.50, grid).is_empty());
+        assert_eq!(
+            chassis_stitching_readiness_with_grid(&board, &[], 0.499_999, grid).len(),
+            1,
+            "exact squared-distance comparison must keep the radius boundary strict"
+        );
     }
 
     #[test]

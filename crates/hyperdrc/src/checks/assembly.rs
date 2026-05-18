@@ -1571,14 +1571,14 @@ fn selected_copper_features<'a>(
 
 fn minimum_bounding_dimension(sketch: &PcbSketch) -> f64 {
     sketch
-        .geometry
+        .geometry()
         .bounding_rect()
         .map(|bounds| (bounds.max().x - bounds.min().x).min(bounds.max().y - bounds.min().y))
         .unwrap_or(0.0)
 }
 
 fn bounding_dimensions(sketch: &PcbSketch) -> Option<(f64, f64)> {
-    sketch.geometry.bounding_rect().map(|bounds| {
+    sketch.geometry().bounding_rect().map(|bounds| {
         let width = bounds.max().x - bounds.min().x;
         let height = bounds.max().y - bounds.min().y;
         (width.min(height), width.max(height))
@@ -1588,7 +1588,7 @@ fn bounding_dimensions(sketch: &PcbSketch) -> Option<(f64, f64)> {
 fn feature_query_radius(feature: &CopperFeature, clearance: f64) -> f64 {
     feature
         .sketch
-        .geometry
+        .geometry()
         .bounding_rect()
         .map(|bounds| {
             let width = bounds.max().x - bounds.min().x;
@@ -1735,10 +1735,10 @@ fn feature_bucket(location: [f64; 2], cell_size: f64) -> (i64, i64) {
 }
 
 fn sketches_within_clearance(left: &PcbSketch, right: &PcbSketch, clearance: f64) -> bool {
-    let Some(left_bounds) = left.geometry.bounding_rect() else {
+    let Some(left_bounds) = left.geometry().bounding_rect() else {
         return true;
     };
-    let Some(right_bounds) = right.geometry.bounding_rect() else {
+    let Some(right_bounds) = right.geometry().bounding_rect() else {
         return true;
     };
 
@@ -1752,7 +1752,7 @@ fn sketches_within_clearance(left: &PcbSketch, right: &PcbSketch, clearance: f64
 }
 
 fn feature_may_touch_circle(feature: &CopperFeature, center: [f64; 2], radius: f64) -> bool {
-    let Some(bounds) = feature.sketch.geometry.bounding_rect() else {
+    let Some(bounds) = feature.sketch.geometry().bounding_rect() else {
         return true;
     };
 
@@ -1767,7 +1767,7 @@ fn likely_fiducial(feature: &CopperFeature) -> bool {
         return false;
     }
 
-    let Some(bounds) = feature.sketch.geometry.bounding_rect() else {
+    let Some(bounds) = feature.sketch.geometry().bounding_rect() else {
         return false;
     };
     let width = bounds.max().x - bounds.min().x;

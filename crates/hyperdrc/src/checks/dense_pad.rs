@@ -399,7 +399,7 @@ fn likely_fiducial(feature: &CopperFeature) -> bool {
         return false;
     }
 
-    let Some(bounds) = feature.sketch.geometry.bounding_rect() else {
+    let Some(bounds) = feature.sketch.geometry().bounding_rect() else {
         return false;
     };
     let width = bounds.max().x - bounds.min().x;
@@ -463,7 +463,7 @@ fn nearest_feature_pair_within<'a>(
     let mut candidate_pairs = 0_usize;
     let mut exact_pairs = 0_usize;
     for (left_index, left) in features.iter().enumerate() {
-        let Some(left_bounds) = left.sketch.geometry.bounding_rect() else {
+        let Some(left_bounds) = left.sketch.geometry().bounding_rect() else {
             continue;
         };
         for right_index in index.same_layer_near_feature(left, threshold) {
@@ -472,7 +472,7 @@ fn nearest_feature_pair_within<'a>(
             }
             candidate_pairs += 1;
             let right = features[right_index];
-            let Some(right_bounds) = right.sketch.geometry.bounding_rect() else {
+            let Some(right_bounds) = right.sketch.geometry().bounding_rect() else {
                 continue;
             };
             if !rects_within_clearance(&left_bounds, &right_bounds, threshold) {

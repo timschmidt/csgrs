@@ -9,6 +9,7 @@
 use std::fmt::Debug;
 
 use crate::date::parse_iso_day;
+use crate::geometry::{SourceGridFacts, SourceUnit};
 
 /// Gerber file units declared by the `%MO...*%` mode command.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -138,6 +139,17 @@ pub struct GerberCoordinateOperation {
     pub i: Option<String>,
     /// Raw J arc-offset field, still in the file's fixed coordinate notation.
     pub j: Option<String>,
+    /// Source-grid facts inferred from the active Gerber coordinate format.
+    ///
+    /// This is advisory parser provenance, not a geometry decision. Gerber
+    /// fixed-coordinate notation represents integer ticks on the `%FS...%`
+    /// grid; retaining that denominator lets later exact predicates choose
+    /// shared-denominator arithmetic without rediscovering the grid from
+    /// rounded compatibility coordinates. That follows Yap's exact geometric
+    /// computation rule to preserve representation structure before scalar
+    /// expansion; see Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997).
+    pub grid: SourceGridFacts,
 }
 
 /// Gerber coordinate operation kind.
@@ -966,7 +978,18 @@ fn capture_coordinate_operation(
             y: coordinate_field(command, 'Y'),
             i: coordinate_field(command, 'I'),
             j: coordinate_field(command, 'J'),
+            grid: gerber_coordinate_grid(report.image_setup.coordinate_format),
         });
+}
+
+fn gerber_coordinate_grid(format: Option<GerberCoordinateFormat>) -> SourceGridFacts {
+    let Some(format) = format else {
+        return SourceGridFacts::UNKNOWN;
+    };
+    10_u64
+        .checked_pow(u32::from(format.decimal_digits))
+        .map(|denominator| SourceGridFacts::source_grid(SourceUnit::Gerber, denominator))
+        .unwrap_or(SourceGridFacts::UNKNOWN)
 }
 
 fn capture_image_mode_command(
@@ -2331,6 +2354,7 @@ mod tests {
         GerberObjectMetadata, GerberQuadrantMode, GerberRegionEventKind, GerberStepRepeatEventKind,
         GerberUnits, parse_gerber_metadata, parse_gerber_metadata_report,
     };
+    use crate::geometry::{SourceGridFacts, SourceUnit};
 
     #[test]
     fn extracts_x2_file_function_and_file_polarity() {
@@ -2600,7 +2624,7 @@ mod tests {
     #[test]
     fn extracts_aperture_selections_and_operations() {
         let report = parse_gerber_metadata_report(
-            b"%ADD10C,0.5*%\nD10*\nX0Y0D02*\nX10Y0D01*\nX10Y10D03*\nD11*\n",
+            b"%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,0.5*%\nD10*\nX0Y0D02*\nX10Y0D01*\nX10Y10D03*\nD11*\n",
         );
 
         assert_eq!(
@@ -2627,23 +2651,31 @@ mod tests {
                 ))
                 .collect::<Vec<_>>(),
             vec![
-                (3, GerberCoordinateOperationKind::Move, Some("0"), Some("0")),
+                (5, GerberCoordinateOperationKind::Move, Some("0"), Some("0")),
                 (
-                    4,
+                    6,
                     GerberCoordinateOperationKind::Draw,
                     Some("10"),
                     Some("0")
                 ),
                 (
-                    5,
+                    7,
                     GerberCoordinateOperationKind::Flash,
                     Some("10"),
                     Some("10")
                 ),
             ]
         );
+        assert!(
+            report
+                .coordinate_operations
+                .iter()
+                .all(|operation| operation.grid
+                    == SourceGridFacts::source_grid(SourceUnit::Gerber, 1_000_000)),
+            "Gerber operations should retain the active fixed-coordinate source grid"
+        );
         assert!(report.issues.iter().any(|issue| {
-            issue.line == 6
+            issue.line == 8
                 && matches!(
                     &issue.kind,
                     GerberMetadataIssueKind::UndefinedApertureSelection { d_code }

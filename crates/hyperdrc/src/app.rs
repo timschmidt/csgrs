@@ -6,6 +6,7 @@ use csgrs::io::gerber::FromGerber;
 
 use crate::cli::{Check, Cli, DEFAULT_CHECKS, OutputFormat};
 use crate::config::{self, EffectiveRules};
+use crate::geometry::{SourceGridFacts, SourceUnit};
 use crate::gerber_metadata::{
     GerberApertureDefinition, GerberApertureMacro, GerberApertureUse, GerberAttributeDelete,
     GerberCoordinateFormat, GerberCoordinateOperation, GerberImageSetup, GerberImageTransform,
@@ -33,6 +34,7 @@ struct Layer {
     gerber_aperture_macros: Vec<GerberApertureMacro>,
     gerber_aperture_uses: Vec<GerberApertureUse>,
     gerber_coordinate_operations: Vec<GerberCoordinateOperation>,
+    gerber_coordinate_grid: SourceGridFacts,
     gerber_polarity_changes: Vec<GerberPolarityChange>,
     gerber_image_transforms: Vec<GerberImageTransform>,
     gerber_region_events: Vec<GerberRegionEvent>,
@@ -205,6 +207,13 @@ pub fn run(cli: Cli) -> Result<RunOutcome> {
                 .cloned()
                 .collect::<Vec<_>>())
         })?;
+        let excellon_drill_grid = status_activity("summarize Excellon drill grids", || {
+            Ok(excellon_reports
+                .iter()
+                .map(|report| report.drill_summary.coordinate_grid)
+                .reduce(SourceGridFacts::combine)
+                .unwrap_or(SourceGridFacts::UNKNOWN))
+        })?;
         let ipc356_reports = status_activity("load IPC-D-356 reports", || {
             load_ipc356_reports(&package_input_paths(&package_inputs.ipc356_files))
         })?;
@@ -265,6 +274,7 @@ pub fn run(cli: Cli) -> Result<RunOutcome> {
             &boards,
             &excellon_reports,
             &excellon_drills,
+            excellon_drill_grid,
             &ipc356_points,
             &package_inputs,
         )?;
@@ -624,6 +634,7 @@ fn run_checks(
     boards: &[kicad::BoardModel],
     excellon_reports: &[excellon::ExcellonReport],
     excellon_drills: &[kicad::DrillFeature],
+    excellon_drill_grid: SourceGridFacts,
     ipc356_points: &[ipc356::Ipc356Point],
     package_inputs: &PackageInputs,
 ) -> Result<Vec<Violation>> {
@@ -739,33 +750,43 @@ fn run_checks(
                 Check::BoardOutlineSelfIntersectionReadiness => {
                     if let Some(board_index) = cli.board_outline {
                         let board = &layers[board_index];
-                        violations.extend(checks::board_outline_self_intersection_readiness(
-                            &layer_name(board),
-                            &board.sketch,
-                        ));
+                        violations.extend(
+                            checks::board_outline_self_intersection_readiness_with_grid(
+                                &layer_name(board),
+                                &board.sketch,
+                                board.gerber_coordinate_grid,
+                            ),
+                        );
                     }
                     for board in boards {
                         if let Some(outline) = &board.board_outline {
-                            violations.extend(checks::board_outline_self_intersection_readiness(
-                                "KiCad Edge.Cuts",
-                                outline,
-                            ));
+                            violations.extend(
+                                checks::board_outline_self_intersection_readiness_with_grid(
+                                    "KiCad Edge.Cuts",
+                                    outline,
+                                    SourceGridFacts::primitive_float_edge(
+                                        SourceUnit::KiCadMillimeter,
+                                    ),
+                                ),
+                            );
                         }
                     }
                 }
                 Check::BoardOutlineNotchReadiness => {
                     if let Some(board_index) = cli.board_outline {
                         let board = &layers[board_index];
-                        violations.extend(checks::board_outline_notch_readiness(
+                        violations.extend(checks::board_outline_notch_readiness_with_grid(
                             &layer_name(board),
                             &board.sketch,
+                            board.gerber_coordinate_grid,
                         ));
                     }
                     for board in boards {
                         if let Some(outline) = &board.board_outline {
-                            violations.extend(checks::board_outline_notch_readiness(
+                            violations.extend(checks::board_outline_notch_readiness_with_grid(
                                 "KiCad Edge.Cuts",
                                 outline,
+                                SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter),
                             ));
                         }
                     }
@@ -773,16 +794,18 @@ fn run_checks(
                 Check::BoardOutlineDuplicateReadiness => {
                     if let Some(board_index) = cli.board_outline {
                         let board = &layers[board_index];
-                        violations.extend(checks::board_outline_duplicate_readiness(
+                        violations.extend(checks::board_outline_duplicate_readiness_with_grid(
                             &layer_name(board),
                             &board.sketch,
+                            board.gerber_coordinate_grid,
                         ));
                     }
                     for board in boards {
                         if let Some(outline) = &board.board_outline {
-                            violations.extend(checks::board_outline_duplicate_readiness(
+                            violations.extend(checks::board_outline_duplicate_readiness_with_grid(
                                 "KiCad Edge.Cuts",
                                 outline,
+                                SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter),
                             ));
                         }
                     }
@@ -790,16 +813,18 @@ fn run_checks(
                 Check::BoardOutlineNestingReadiness => {
                     if let Some(board_index) = cli.board_outline {
                         let board = &layers[board_index];
-                        violations.extend(checks::board_outline_nesting_readiness(
+                        violations.extend(checks::board_outline_nesting_readiness_with_grid(
                             &layer_name(board),
                             &board.sketch,
+                            board.gerber_coordinate_grid,
                         ));
                     }
                     for board in boards {
                         if let Some(outline) = &board.board_outline {
-                            violations.extend(checks::board_outline_nesting_readiness(
+                            violations.extend(checks::board_outline_nesting_readiness_with_grid(
                                 "KiCad Edge.Cuts",
                                 outline,
+                                SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter),
                             ));
                         }
                     }
@@ -1527,9 +1552,10 @@ fn run_checks(
                             &format!("checking {}", board.source),
                             check_started,
                         );
-                        violations.extend(checks::drill_to_copper_clearance(
+                        violations.extend(checks::drill_to_copper_clearance_with_grid(
                             board,
                             excellon_drills,
+                            excellon_drill_grid,
                             rules.drill_clearance,
                             kicad_copper_layers,
                             rules.min_area,
@@ -1557,7 +1583,7 @@ fn run_checks(
                                 "Excellon drills"
                             };
 
-                            violations.extend(checks::board_outline_drill_clearance(
+                            violations.extend(checks::board_outline_drill_clearance_with_grid(
                                 drill_source,
                                 &layer_name(outline),
                                 &outline.sketch,
@@ -1565,13 +1591,14 @@ fn run_checks(
                                 excellon_drills,
                                 rules.drill_clearance,
                                 rules.min_area,
+                                outline.gerber_coordinate_grid.combine(excellon_drill_grid),
                             ));
                         }
                     }
 
                     for board in boards {
                         if let Some(outline) = &board.board_outline {
-                            violations.extend(checks::board_outline_drill_clearance(
+                            violations.extend(checks::board_outline_drill_clearance_with_grid(
                                 &format!("{} drills", board.source),
                                 "KiCad Edge.Cuts",
                                 outline,
@@ -1579,6 +1606,8 @@ fn run_checks(
                                 excellon_drills,
                                 rules.drill_clearance,
                                 rules.min_area,
+                                SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter)
+                                    .combine(excellon_drill_grid),
                             ));
                         }
                     }
@@ -1681,30 +1710,33 @@ fn run_checks(
                 }
                 Check::BoardEdgeExposure => {
                     for board in boards {
-                        violations.extend(checks::board_edge_exposure(
+                        violations.extend(checks::board_edge_exposure_with_grid(
                             board,
                             kicad_copper_layers,
                             rules.min_area,
+                            SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter),
                         ));
                     }
                 }
                 Check::HighSpeedEdgeReadiness => {
                     for board in boards {
-                        violations.extend(checks::high_speed_edge_readiness(
+                        violations.extend(checks::high_speed_edge_readiness_with_grid(
                             board,
                             kicad_copper_layers,
                             rules.net_clearance * 2.0,
                             rules.min_area,
+                            SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter),
                         ));
                     }
                 }
                 Check::EdgeCopperPullbackReadiness => {
                     for board in boards {
-                        violations.extend(checks::edge_copper_pullback_readiness(
+                        violations.extend(checks::edge_copper_pullback_readiness_with_grid(
                             board,
                             kicad_copper_layers,
                             rules.net_clearance,
                             rules.min_area,
+                            SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter),
                         ));
                     }
                 }
@@ -2060,21 +2092,23 @@ fn run_checks(
                 }
                 Check::ChassisStitchingReadiness => {
                     for board in boards {
-                        violations.extend(checks::chassis_stitching_readiness(
+                        violations.extend(checks::chassis_stitching_readiness_with_grid(
                             board,
                             kicad_copper_layers,
                             rules.net_clearance * 4.0,
+                            SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter),
                         ));
                     }
                 }
                 Check::EdgeStitchingReadiness => {
                     for board in boards {
-                        violations.extend(checks::edge_stitching_readiness(
+                        violations.extend(checks::edge_stitching_readiness_with_grid(
                             board,
                             kicad_copper_layers,
                             rules.net_clearance,
                             rules.net_clearance * 6.0,
                             rules.min_area,
+                            SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter),
                         ));
                     }
                 }
@@ -3532,13 +3566,16 @@ fn run_board_outline_cutout_clearance(
                 continue;
             }
             let subject = &layers[copper_index];
-            violations.extend(checks::board_outline_cutout_clearance(
+            violations.extend(checks::board_outline_cutout_clearance_with_grid(
                 &layer_name(subject),
                 &subject.sketch,
                 &layer_name(outline),
                 &outline.sketch,
                 rules.clearance,
                 rules.min_area,
+                subject
+                    .gerber_coordinate_grid
+                    .combine(outline.gerber_coordinate_grid),
             ));
         }
     }
@@ -3546,13 +3583,14 @@ fn run_board_outline_cutout_clearance(
     for board in boards {
         if let Some(outline) = &board.board_outline {
             for (layer_name, copper) in board.copper_layers(kicad_copper_layers) {
-                violations.extend(checks::board_outline_cutout_clearance(
+                violations.extend(checks::board_outline_cutout_clearance_with_grid(
                     &format!("{}:{layer_name}", board.source),
                     &copper,
                     "KiCad Edge.Cuts",
                     outline,
                     rules.clearance,
                     rules.min_area,
+                    SourceGridFacts::primitive_float_edge(SourceUnit::KiCadMillimeter),
                 ));
             }
         }
@@ -3897,6 +3935,8 @@ fn load_discovered_layers(files: &[io::DiscoveredFile]) -> Result<Vec<Layer>> {
             let sketch = PcbSketch::from_gerber(&bytes, Some(LayerMetadata { name }))
                 .with_context(|| format!("failed to parse Gerber {}", file.path.display()))?;
             let gerber_metadata_report = parse_gerber_metadata_report(&bytes);
+            let gerber_coordinate_grid =
+                layer_coordinate_grid(&gerber_metadata_report.coordinate_operations);
             let source = file.source.clone().with_unit_context(
                 gerber_metadata_report
                     .image_setup
@@ -3913,6 +3953,7 @@ fn load_discovered_layers(files: &[io::DiscoveredFile]) -> Result<Vec<Layer>> {
                 gerber_aperture_macros: gerber_metadata_report.aperture_macros,
                 gerber_aperture_uses: gerber_metadata_report.aperture_uses,
                 gerber_coordinate_operations: gerber_metadata_report.coordinate_operations,
+                gerber_coordinate_grid,
                 gerber_polarity_changes: gerber_metadata_report.polarity_changes,
                 gerber_image_transforms: gerber_metadata_report.image_transforms,
                 gerber_region_events: gerber_metadata_report.region_events,
@@ -3926,6 +3967,22 @@ fn load_discovered_layers(files: &[io::DiscoveredFile]) -> Result<Vec<Layer>> {
             })
         })
         .collect()
+}
+
+fn layer_coordinate_grid(operations: &[GerberCoordinateOperation]) -> SourceGridFacts {
+    // Gerber operations are the first repeated parser objects downstream
+    // checks can share. Collapsing their retained `%FS...%` grids into one
+    // layer fact keeps source-denominator provenance beside the loaded layer,
+    // rather than forcing every outline or clearance rule to rediscover it
+    // from raw operation strings or rounded `f64` geometry. This follows
+    // Yap's representation-preservation principle for exact geometric
+    // computation; see Yap, "Towards Exact Geometric Computation,"
+    // *Computational Geometry* 7.1-2 (1997).
+    operations
+        .iter()
+        .map(|operation| operation.grid)
+        .reduce(SourceGridFacts::combine)
+        .unwrap_or(SourceGridFacts::UNKNOWN)
 }
 
 fn load_all_layers(
@@ -4225,11 +4282,16 @@ fn parser_diagnostics(
         .iter()
         .filter(|layer| layer.gerber_image_setup.coordinate_format.is_some())
         .count();
+    let gerber_source_grid_count = layers
+        .iter()
+        .filter(|layer| layer.gerber_coordinate_grid.has_shared_denominator())
+        .count();
     log::trace!(
-        "parser diagnostics input metadata: gerber_layers={} gerber_unit_declarations={} gerber_coordinate_formats={} gerber_aperture_definitions={} gerber_aperture_macros={} gerber_aperture_uses={} gerber_coordinate_operations={} gerber_polarity_changes={} gerber_image_transforms={} gerber_region_events={} gerber_step_repeat_events={} gerber_interpolation_events={} gerber_quadrant_events={} gerber_object_attributes={} gerber_attribute_deletes={}",
+        "parser diagnostics input metadata: gerber_layers={} gerber_unit_declarations={} gerber_coordinate_formats={} gerber_source_grids={} gerber_aperture_definitions={} gerber_aperture_macros={} gerber_aperture_uses={} gerber_coordinate_operations={} gerber_polarity_changes={} gerber_image_transforms={} gerber_region_events={} gerber_step_repeat_events={} gerber_interpolation_events={} gerber_quadrant_events={} gerber_object_attributes={} gerber_attribute_deletes={}",
         layers.len(),
         gerber_unit_count,
         gerber_format_count,
+        gerber_source_grid_count,
         gerber_aperture_definition_count,
         gerber_aperture_macro_count,
         gerber_aperture_use_count,
@@ -8337,7 +8399,7 @@ mod tests {
 
     use crate::cli::{Check, Cli};
     use crate::config::{self, RuleOverrides};
-    use crate::geometry::empty_sketch;
+    use crate::geometry::{SourceGridFacts, SourceUnit, empty_sketch};
     use crate::io::{
         DiscoveredFile, IoAdapter, IoRole, SourceRecord, discover_gerber_dir,
         discover_package_sidecars, is_gerber_path,
@@ -8371,6 +8433,7 @@ mod tests {
             gerber_aperture_macros: Vec::new(),
             gerber_aperture_uses: Vec::new(),
             gerber_coordinate_operations: Vec::new(),
+            gerber_coordinate_grid: SourceGridFacts::UNKNOWN,
             gerber_polarity_changes: Vec::new(),
             gerber_image_transforms: Vec::new(),
             gerber_region_events: Vec::new(),
@@ -10690,6 +10753,10 @@ mod tests {
         assert_eq!(
             layers[0].source.normalized_units.as_deref(),
             Some("millimeters")
+        );
+        assert_eq!(
+            layers[0].gerber_coordinate_grid,
+            SourceGridFacts::source_grid(SourceUnit::Gerber, 1_000_000)
         );
         assert_eq!(layers[0].gerber_aperture_definitions.len(), 1);
         assert_eq!(layers[0].gerber_aperture_macros.len(), 1);
