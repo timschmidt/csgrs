@@ -225,9 +225,10 @@ fn solve_dense(
             rhs.swap(best, pivot);
         }
         let pivot_value = matrix[pivot][pivot];
-        for col in pivot..n {
-            matrix[pivot][col] /= pivot_value;
+        for value in matrix[pivot].iter_mut().skip(pivot) {
+            *value /= pivot_value;
         }
+        let pivot_tail = matrix[pivot][pivot..].to_vec();
         rhs[pivot] /= pivot_value;
         for row in 0..n {
             if row == pivot {
@@ -237,8 +238,8 @@ fn solve_dense(
             if factor == 0.0 {
                 continue;
             }
-            for col in pivot..n {
-                matrix[row][col] -= factor * matrix[pivot][col];
+            for (value, pivot_value) in matrix[row].iter_mut().skip(pivot).zip(&pivot_tail) {
+                *value -= factor * pivot_value;
             }
             rhs[row] -= factor * rhs[pivot];
         }

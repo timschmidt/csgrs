@@ -30,11 +30,12 @@ pub use certification::{
 };
 pub use diagnostics::{ConvergenceReason, SolveReport};
 pub use direct::{
-    DirectAffineSolution, DirectQuadraticSolution, DirectSolveError, EqualitySubstitution,
-    EqualitySubstitutionClass, EqualitySubstitutionClassMember, EqualitySubstitutionCycle,
-    EqualitySubstitutionProblem, EqualitySubstitutionValidation, apply_equality_substitutions,
-    build_equality_substitution_classes, find_equality_substitution_cycles,
-    find_equality_substitutions, solve_direct_affine_equalities,
+    DirectAffineSolution, DirectQuadraticSolution, DirectSolveError, EliminatedAffineRow,
+    EqualitySubstitution, EqualitySubstitutionClass, EqualitySubstitutionClassMember,
+    EqualitySubstitutionCycle, EqualitySubstitutionEliminationReport, EqualitySubstitutionProblem,
+    EqualitySubstitutionValidation, apply_equality_substitutions,
+    build_equality_substitution_classes, eliminate_affine_rows_with_substitution_classes,
+    find_equality_substitution_cycles, find_equality_substitutions, solve_direct_affine_equalities,
     solve_direct_univariate_quadratic_equalities, validate_equality_substitutions,
 };
 pub use domain::geometry::{
@@ -54,8 +55,10 @@ pub use eval::{
     EvalError, EvaluationContext, ResidualEvaluation, context_from_problem, evaluate_residuals,
 };
 pub use interval::{
-    AffineIntervalError, QuadraticIntervalError, VariableBall, certify_affine_interval_candidate,
-    certify_multivariate_quadratic_interval_candidate, certify_quadratic_interval_candidate,
+    AffineIntervalError, AffineKrawczykReport, AffineKrawczykStatus, AffineKrawczykVariableStep,
+    QuadraticIntervalError, VariableBall, certify_affine_interval_candidate,
+    certify_affine_krawczyk_box, certify_multivariate_quadratic_interval_candidate,
+    certify_quadratic_interval_candidate,
 };
 pub use linalg::{
     DenseLinearBackend, LinearAdapterKind, LinearAdapterPrecision, LinearBackend, LinearSolveError,

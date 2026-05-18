@@ -7,10 +7,11 @@ use hypersolve::{
     Problem, RectangularRegion, SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState,
     SymbolId, ToolpathConstraintSet, VariableBall, apply_equality_substitutions,
     bezier_offset_sample_constraints, build_equality_substitution_classes,
-    center_clearance_squared_constraint, certify_affine_interval_candidate, certify_candidate,
-    certify_candidate_with_config, certify_candidate_with_residual_balls,
-    certify_multivariate_quadratic_interval_candidate, certify_quadratic_interval_candidate,
-    constant_feed_time_equation, context_from_problem, differential_pair_skew_equation,
+    center_clearance_squared_constraint, certify_affine_interval_candidate,
+    certify_affine_krawczyk_box, certify_candidate, certify_candidate_with_config,
+    certify_candidate_with_residual_balls, certify_multivariate_quadratic_interval_candidate,
+    certify_quadratic_interval_candidate, constant_feed_time_equation, context_from_problem,
+    differential_pair_skew_equation, eliminate_affine_rows_with_substitution_classes,
     evaluate_residuals, facts_depend_on_symbol, find_equality_substitutions, length_match_equation,
     point_coincidence_equations, rectangular_difference_area_equation,
     rectangular_region_area_equation, rectangular_region_containment_constraints,
@@ -935,6 +936,115 @@ fn affine_interval_candidate_rejects_negative_variable_radius() {
 }
 
 #[test]
+fn affine_krawczyk_box_certifies_unique_root_inside_exact_box() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let y = Expr::symbol(SymbolId(1), "y");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(2));
+    problem.add_variable("y", real(2));
+    problem.add_constraint(Constraint::equality(
+        "x plus y minus five",
+        x.clone() + y.clone() - Expr::int(5),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "x minus y minus one",
+        x - y - Expr::int(1),
+    ));
+    let prepared = PreparedProblem::new(&problem);
+    let context = context_from_problem(&problem);
+
+    let report = certify_affine_krawczyk_box(
+        &prepared,
+        &context,
+        &[
+            VariableBall {
+                symbol: SymbolId(0),
+                radius: real(1),
+            },
+            VariableBall {
+                symbol: SymbolId(1),
+                radius: Real::zero(),
+            },
+        ],
+        hyperlimit::PredicatePolicy::default(),
+    );
+
+    assert_eq!(
+        report.status,
+        hypersolve::AffineKrawczykStatus::CertifiedUniqueRoot
+    );
+    assert_eq!(report.variable_count, 2);
+    assert_eq!(report.equality_rows, 2);
+    assert_eq!(report.steps[0].step, real(1));
+    assert_eq!(report.steps[0].certified_root, real(3));
+    assert_eq!(report.steps[1].step, Real::zero());
+    assert_eq!(report.steps[1].certified_root, real(2));
+}
+
+#[test]
+fn affine_krawczyk_box_reports_outside_and_singular_cases() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let y = Expr::symbol(SymbolId(1), "y");
+    let mut outside = Problem::default();
+    outside.add_variable("x", real(2));
+    outside.add_variable("y", real(2));
+    outside.add_constraint(Constraint::equality(
+        "x plus y minus five",
+        x.clone() + y.clone() - Expr::int(5),
+    ));
+    outside.add_constraint(Constraint::equality(
+        "x minus y minus one",
+        x.clone() - y.clone() - Expr::int(1),
+    ));
+    let outside_report = certify_affine_krawczyk_box(
+        &PreparedProblem::new(&outside),
+        &context_from_problem(&outside),
+        &[
+            VariableBall {
+                symbol: SymbolId(0),
+                radius: Real::zero(),
+            },
+            VariableBall {
+                symbol: SymbolId(1),
+                radius: Real::zero(),
+            },
+        ],
+        hyperlimit::PredicatePolicy::default(),
+    );
+    assert_eq!(
+        outside_report.status,
+        hypersolve::AffineKrawczykStatus::RootOutsideBox {
+            symbol: SymbolId(0)
+        }
+    );
+
+    let mut singular = Problem::default();
+    singular.add_variable("x", real(0));
+    singular.add_variable("y", real(0));
+    singular.add_constraint(Constraint::equality("x plus y", x.clone() + y.clone()));
+    singular.add_constraint(Constraint::equality("duplicate x plus y", x + y));
+    let singular_report = certify_affine_krawczyk_box(
+        &PreparedProblem::new(&singular),
+        &context_from_problem(&singular),
+        &[
+            VariableBall {
+                symbol: SymbolId(0),
+                radius: real(1),
+            },
+            VariableBall {
+                symbol: SymbolId(1),
+                radius: real(1),
+            },
+        ],
+        hyperlimit::PredicatePolicy::default(),
+    );
+    assert_eq!(
+        singular_report.status,
+        hypersolve::AffineKrawczykStatus::SingularOrUnsupportedPivot { pivot: 1 }
+    );
+}
+
+#[test]
 fn quadratic_interval_candidate_certifies_taylor_ball_away_from_zero() {
     let x = Expr::symbol(SymbolId(0), "x");
     let mut problem = Problem::default();
@@ -1262,6 +1372,86 @@ fn equality_substitution_classes_preserve_offsets_to_representative() {
     assert_eq!(classes[0].members[1].offset_from_representative, real(-3));
     assert_eq!(classes[0].members[2].symbol, SymbolId(2));
     assert_eq!(classes[0].members[2].offset_from_representative, real(2));
+}
+
+#[test]
+fn equality_substitution_elimination_carries_exact_offsets_into_affine_rows() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let y = Expr::symbol(SymbolId(1), "y");
+    let z = Expr::symbol(SymbolId(2), "z");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_variable("y", real(0));
+    problem.add_variable("z", real(0));
+    problem.add_constraint(Constraint::equality(
+        "x - y + 3",
+        x.clone() - y.clone() + Expr::int(3),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "z - x - 2",
+        z.clone() - x.clone() - Expr::int(2),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "2z + y + 5",
+        z * Expr::int(2) + y + Expr::int(5),
+    ));
+
+    let prepared = PreparedProblem::new(&problem);
+    let substitutions = find_equality_substitutions(&prepared).unwrap();
+    let classes = build_equality_substitution_classes(&substitutions).unwrap();
+    let report = eliminate_affine_rows_with_substitution_classes(&prepared, &classes);
+
+    assert_eq!(report.affine_rows_considered, 3);
+    assert_eq!(report.reduced_variable_rows, 1);
+    assert_eq!(report.reduced_zero_rows, 2);
+    assert_eq!(report.reduced_contradiction_rows, 0);
+    assert_eq!(report.reduced_unknown_constant_rows, 0);
+    assert_eq!(report.rows.len(), 3);
+    assert_eq!(classes[0].representative, SymbolId(0));
+
+    let reduced = &report.rows[2];
+    assert_eq!(reduced.constraint_index, 2);
+    assert_eq!(reduced.constant, real(12));
+    assert_eq!(reduced.coefficients, vec![(SymbolId(0), real(3))]);
+}
+
+#[test]
+fn equality_substitution_elimination_classifies_reduced_constant_rows() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let y = Expr::symbol(SymbolId(1), "y");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_variable("y", real(0));
+    problem.add_constraint(Constraint::equality(
+        "y - x - 3",
+        y.clone() - x.clone() - Expr::int(3),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "y - x - 3 again",
+        y.clone() - x.clone() - Expr::int(3),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "y - x - 4 contradiction",
+        y - x - Expr::int(4),
+    ));
+
+    let prepared = PreparedProblem::new(&problem);
+    let substitutions = vec![hypersolve::EqualitySubstitution {
+        constraint_index: 0,
+        left: SymbolId(1),
+        right: SymbolId(0),
+        offset: real(3),
+    }];
+    let classes = build_equality_substitution_classes(&substitutions).unwrap();
+    let report = eliminate_affine_rows_with_substitution_classes(&prepared, &classes);
+
+    assert_eq!(report.affine_rows_considered, 3);
+    assert_eq!(report.reduced_variable_rows, 0);
+    assert_eq!(report.reduced_zero_rows, 2);
+    assert_eq!(report.reduced_contradiction_rows, 1);
+    assert_eq!(report.reduced_unknown_constant_rows, 0);
+    assert_eq!(report.rows[2].constant, real(-1));
+    assert!(report.rows[2].coefficients.is_empty());
 }
 
 #[test]

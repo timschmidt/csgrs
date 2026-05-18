@@ -1,4 +1,4 @@
-//! Affine interval-box certification for solver candidates.
+//! Interval-box certification for solver candidates.
 //!
 //! This module is the first variable-box proof stage for `hypersolve`. For an
 //! affine residual `c + a*x + b*y`, a box around the candidate maps to an exact
@@ -13,6 +13,7 @@
 //! exact/candidate separation follows Yap, "Towards Exact Geometric
 //! Computation," *Computational Geometry* 7.1-2 (1997).
 
+use std::cmp::Ordering;
 use std::collections::HashMap;
 
 use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
@@ -73,6 +74,103 @@ pub enum QuadraticIntervalError {
     },
 }
 
+/// Status for an affine interval-Newton/Krawczyk box certificate.
+///
+/// This report is intentionally narrow: it only handles square active affine
+/// equality systems. In that case the Jacobian is constant, so an exact Newton
+/// step is the affine Krawczyk image with zero interval remainder. The
+/// certificate proves that the unique affine root lies inside the supplied
+/// variable box; it does not accept nonlinear rows or inequality activation by
+/// approximation. This follows Krawczyk's interval-operator criterion
+/// (R. Krawczyk, "Newton-Algorithmen zur Bestimmung von Nullstellen mit
+/// Fehlerschranken", Computing 4, 1969) while keeping Yap's exact replay
+/// boundary explicit.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum AffineKrawczykStatus {
+    /// The exact affine Newton/Krawczyk image lies inside every variable ball.
+    CertifiedUniqueRoot,
+    /// The active system is not square in all problem variables.
+    ShapeMismatch {
+        /// Number of variables in the source problem.
+        variables: usize,
+        /// Number of active equality rows considered.
+        equality_rows: usize,
+    },
+    /// An active row was not an equality row.
+    NonEqualityRow {
+        /// Source constraint index.
+        constraint_index: usize,
+    },
+    /// An active equality row did not have a prepared affine block.
+    NonAffineRow {
+        /// Source constraint index.
+        constraint_index: usize,
+    },
+    /// The candidate context did not bind a required symbol.
+    UnboundCandidateSymbol {
+        /// Missing symbol.
+        symbol: SymbolId,
+    },
+    /// No radius was supplied for a solved variable.
+    MissingVariableRadius {
+        /// Missing symbol.
+        symbol: SymbolId,
+    },
+    /// One supplied variable radius was negative.
+    NegativeVariableRadius {
+        /// Symbol whose radius was invalid.
+        symbol: SymbolId,
+    },
+    /// A radius sign could not be certified without leaving the exact filter.
+    UnknownVariableRadiusSign {
+        /// Symbol whose radius was undecided.
+        symbol: SymbolId,
+    },
+    /// The affine matrix could not be inverted exactly with certified pivots.
+    SingularOrUnsupportedPivot {
+        /// Pivot column where elimination failed.
+        pivot: usize,
+    },
+    /// A root coordinate could not be proved inside its variable ball.
+    RootOutsideBox {
+        /// Symbol whose Newton/Krawczyk displacement exceeded its radius.
+        symbol: SymbolId,
+    },
+    /// The exact comparison between displacement and radius was undecided.
+    UndecidedContainment {
+        /// Symbol whose containment comparison was undecided.
+        symbol: SymbolId,
+    },
+}
+
+/// Exact displacement for one variable in an affine Krawczyk certificate.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AffineKrawczykVariableStep {
+    /// Solver symbol.
+    pub symbol: SymbolId,
+    /// Candidate center supplied by the caller.
+    pub candidate: Real,
+    /// Exact Newton/Krawczyk displacement from the candidate center.
+    pub step: Real,
+    /// Exact root coordinate `candidate + step`.
+    pub certified_root: Real,
+    /// Exact variable-ball radius used for containment.
+    pub radius: Real,
+}
+
+/// Report for a square affine interval-Newton/Krawczyk proof attempt.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AffineKrawczykReport {
+    /// Final proof status.
+    pub status: AffineKrawczykStatus,
+    /// Number of variables in the source problem.
+    pub variable_count: usize,
+    /// Number of active equality rows considered.
+    pub equality_rows: usize,
+    /// Per-variable exact Newton/Krawczyk displacements.
+    pub steps: Vec<AffineKrawczykVariableStep>,
+}
+
 /// Certify a candidate using affine variable-box residual enclosures.
 ///
 /// Rows without prepared affine residuals fall back to exact point replay. For
@@ -121,6 +219,178 @@ pub fn certify_affine_interval_candidate(
         &residual_balls,
         policy,
     ))
+}
+
+/// Certify a square affine equality system with an exact Krawczyk box.
+///
+/// For affine rows `f(x) = A*x + c`, the interval Newton/Krawczyk operator has
+/// no nonlinear interval remainder when `A` is exactly invertible. This helper
+/// solves `A*step = -f(candidate)` over `Real`, then proves
+/// `|step_i| <= radius_i` for every variable. A successful report therefore
+/// proves that the unique affine root is inside the caller's box.
+pub fn certify_affine_krawczyk_box(
+    prepared: &PreparedProblem<'_>,
+    context: &EvaluationContext,
+    variable_balls: &[VariableBall],
+    policy: PredicatePolicy,
+) -> AffineKrawczykReport {
+    let variable_count = prepared.problem().variables.len();
+    let mut matrix = Vec::new();
+    let mut rhs = Vec::new();
+
+    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+        if !constraint.active {
+            continue;
+        }
+        if constraint.kind != crate::ConstraintKind::Equality {
+            return affine_krawczyk_report(
+                AffineKrawczykStatus::NonEqualityRow { constraint_index },
+                variable_count,
+                matrix.len(),
+                Vec::new(),
+            );
+        }
+        let Some(affine) = &prepared.affine_residuals()[constraint_index] else {
+            return affine_krawczyk_report(
+                AffineKrawczykStatus::NonAffineRow { constraint_index },
+                variable_count,
+                matrix.len(),
+                Vec::new(),
+            );
+        };
+        let residual =
+            match affine.eval_real(prepared.problem().variables.as_slice(), context.bindings()) {
+                Ok(value) => value,
+                Err(error) => {
+                    let symbol = match error {
+                        crate::symbolic::ExprEvalError::UnboundSymbol(symbol) => symbol.id,
+                        crate::symbolic::ExprEvalError::PreparedShapeMismatch { .. } => {
+                            return affine_krawczyk_report(
+                                AffineKrawczykStatus::NonAffineRow { constraint_index },
+                                variable_count,
+                                matrix.len(),
+                                Vec::new(),
+                            );
+                        }
+                        _ => {
+                            return affine_krawczyk_report(
+                                AffineKrawczykStatus::NonAffineRow { constraint_index },
+                                variable_count,
+                                matrix.len(),
+                                Vec::new(),
+                            );
+                        }
+                    };
+                    return affine_krawczyk_report(
+                        AffineKrawczykStatus::UnboundCandidateSymbol { symbol },
+                        variable_count,
+                        matrix.len(),
+                        Vec::new(),
+                    );
+                }
+            };
+        matrix.push(affine.coefficients().to_vec());
+        rhs.push(-residual);
+    }
+
+    if matrix.len() != variable_count {
+        return affine_krawczyk_report(
+            AffineKrawczykStatus::ShapeMismatch {
+                variables: variable_count,
+                equality_rows: matrix.len(),
+            },
+            variable_count,
+            matrix.len(),
+            Vec::new(),
+        );
+    }
+
+    let radius_by_symbol = match validate_krawczyk_variable_balls(variable_balls, policy) {
+        Ok(radii) => radii,
+        Err(status) => {
+            return affine_krawczyk_report(status, variable_count, matrix.len(), Vec::new());
+        }
+    };
+    let step = match solve_exact_linear_system(matrix, rhs, policy) {
+        Ok(step) => step,
+        Err(status) => {
+            return affine_krawczyk_report(status, variable_count, variable_count, Vec::new());
+        }
+    };
+
+    let mut steps = Vec::with_capacity(variable_count);
+    for (variable, step) in prepared.problem().variables.iter().zip(step) {
+        let Some(candidate) = context.bindings().get(&variable.symbol) else {
+            return affine_krawczyk_report(
+                AffineKrawczykStatus::UnboundCandidateSymbol {
+                    symbol: variable.symbol,
+                },
+                variable_count,
+                variable_count,
+                steps,
+            );
+        };
+        let Some(radius) = radius_by_symbol.get(&variable.symbol) else {
+            return affine_krawczyk_report(
+                AffineKrawczykStatus::MissingVariableRadius {
+                    symbol: variable.symbol,
+                },
+                variable_count,
+                variable_count,
+                steps,
+            );
+        };
+        let displacement = match abs_real(&step) {
+            Some(value) => value,
+            None => {
+                return affine_krawczyk_report(
+                    AffineKrawczykStatus::UndecidedContainment {
+                        symbol: variable.symbol,
+                    },
+                    variable_count,
+                    variable_count,
+                    steps,
+                );
+            }
+        };
+        match compare_reals_with_policy(&displacement, radius, policy).value() {
+            Some(Ordering::Less | Ordering::Equal) => {}
+            Some(Ordering::Greater) => {
+                return affine_krawczyk_report(
+                    AffineKrawczykStatus::RootOutsideBox {
+                        symbol: variable.symbol,
+                    },
+                    variable_count,
+                    variable_count,
+                    steps,
+                );
+            }
+            None => {
+                return affine_krawczyk_report(
+                    AffineKrawczykStatus::UndecidedContainment {
+                        symbol: variable.symbol,
+                    },
+                    variable_count,
+                    variable_count,
+                    steps,
+                );
+            }
+        }
+        steps.push(AffineKrawczykVariableStep {
+            symbol: variable.symbol,
+            candidate: candidate.clone(),
+            certified_root: candidate.clone() + step.clone(),
+            step,
+            radius: radius.clone(),
+        });
+    }
+
+    affine_krawczyk_report(
+        AffineKrawczykStatus::CertifiedUniqueRoot,
+        variable_count,
+        variable_count,
+        steps,
+    )
 }
 
 /// Certify a candidate using prepared univariate quadratic interval enclosures.
@@ -310,6 +580,95 @@ fn validate_variable_balls(
         radii.insert(ball.symbol, ball.radius.clone());
     }
     Ok(radii)
+}
+
+fn validate_krawczyk_variable_balls(
+    variable_balls: &[VariableBall],
+    policy: PredicatePolicy,
+) -> Result<HashMap<SymbolId, Real>, AffineKrawczykStatus> {
+    let mut radii = HashMap::new();
+    for ball in variable_balls {
+        match compare_reals_with_policy(&ball.radius, &Real::zero(), policy).value() {
+            Some(Ordering::Less) => {
+                return Err(AffineKrawczykStatus::NegativeVariableRadius {
+                    symbol: ball.symbol,
+                });
+            }
+            Some(Ordering::Equal | Ordering::Greater) => {
+                radii.insert(ball.symbol, ball.radius.clone());
+            }
+            None => {
+                return Err(AffineKrawczykStatus::UnknownVariableRadiusSign {
+                    symbol: ball.symbol,
+                });
+            }
+        }
+    }
+    Ok(radii)
+}
+
+fn solve_exact_linear_system(
+    mut matrix: Vec<Vec<Real>>,
+    mut rhs: Vec<Real>,
+    policy: PredicatePolicy,
+) -> Result<Vec<Real>, AffineKrawczykStatus> {
+    let n = rhs.len();
+    for pivot in 0..n {
+        let pivot_row = (pivot..n).find(|&row| {
+            !matches!(
+                compare_reals_with_policy(&matrix[row][pivot], &Real::zero(), policy).value(),
+                Some(Ordering::Equal) | None
+            )
+        });
+        let Some(pivot_row) = pivot_row else {
+            return Err(AffineKrawczykStatus::SingularOrUnsupportedPivot { pivot });
+        };
+        if pivot_row != pivot {
+            matrix.swap(pivot_row, pivot);
+            rhs.swap(pivot_row, pivot);
+        }
+
+        let pivot_value = matrix[pivot][pivot].clone();
+        for value in matrix[pivot].iter_mut().skip(pivot) {
+            *value = (value.clone() / pivot_value.clone())
+                .map_err(|_| AffineKrawczykStatus::SingularOrUnsupportedPivot { pivot })?;
+        }
+        rhs[pivot] = (rhs[pivot].clone() / pivot_value)
+            .map_err(|_| AffineKrawczykStatus::SingularOrUnsupportedPivot { pivot })?;
+        let pivot_tail = matrix[pivot][pivot..].to_vec();
+        let pivot_rhs = rhs[pivot].clone();
+
+        for row in 0..n {
+            if row == pivot {
+                continue;
+            }
+            let factor = matrix[row][pivot].clone();
+            if compare_reals_with_policy(&factor, &Real::zero(), policy).value()
+                == Some(Ordering::Equal)
+            {
+                continue;
+            }
+            for (value, pivot_value) in matrix[row].iter_mut().skip(pivot).zip(&pivot_tail) {
+                *value = value.clone() - factor.clone() * pivot_value.clone();
+            }
+            rhs[row] = rhs[row].clone() - factor * pivot_rhs.clone();
+        }
+    }
+    Ok(rhs)
+}
+
+fn affine_krawczyk_report(
+    status: AffineKrawczykStatus,
+    variable_count: usize,
+    equality_rows: usize,
+    steps: Vec<AffineKrawczykVariableStep>,
+) -> AffineKrawczykReport {
+    AffineKrawczykReport {
+        status,
+        variable_count,
+        equality_rows,
+        steps,
+    }
 }
 
 fn abs_real(value: &Real) -> Option<Real> {

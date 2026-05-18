@@ -110,6 +110,47 @@ pub struct EqualitySubstitutionClass {
     pub members: Vec<EqualitySubstitutionClassMember>,
 }
 
+/// One affine row rewritten through equality-substitution classes.
+///
+/// The row remains a proposal artifact: it is useful for future affine
+/// elimination and reduced dense blocks, but it does not replace exact
+/// residual replay. Coefficients are keyed by solver symbol after substituting
+/// every class member as `symbol = representative + offset`. This follows
+/// SolveSpace's pre-Newton substitution pattern while preserving Yap's
+/// construction-versus-certification boundary.
+#[derive(Clone, Debug, PartialEq)]
+pub struct EliminatedAffineRow {
+    /// Source constraint index.
+    pub constraint_index: usize,
+    /// Exact constant after carrying substitution offsets.
+    pub constant: Real,
+    /// Exact coefficients keyed by reduced symbol.
+    pub coefficients: Vec<(SymbolId, Real)>,
+}
+
+/// Exact report for applying equality-substitution classes to affine rows.
+///
+/// This is deliberately non-mutating. It records which active affine rows can
+/// be represented in class representatives and exact offset-carrying
+/// constants, leaving problem mutation and candidate certification to later
+/// stages. Silent primitive-float elimination would violate the exact replay
+/// discipline described by Yap, "Towards Exact Geometric Computation" (1997).
+#[derive(Clone, Debug, PartialEq)]
+pub struct EqualitySubstitutionEliminationReport {
+    /// Number of active affine rows considered.
+    pub affine_rows_considered: usize,
+    /// Rewritten rows that still contain at least one reduced variable.
+    pub reduced_variable_rows: usize,
+    /// Rows reduced to an exact zero constant.
+    pub reduced_zero_rows: usize,
+    /// Rows reduced to an exact nonzero constant contradiction.
+    pub reduced_contradiction_rows: usize,
+    /// Rows reduced to a constant whose exact sign is not structurally known.
+    pub reduced_unknown_constant_rows: usize,
+    /// Rewritten active affine rows.
+    pub rows: Vec<EliminatedAffineRow>,
+}
+
 /// One exact issue found in a substitution candidate set.
 #[derive(Clone, Debug, PartialEq)]
 pub enum EqualitySubstitutionProblem {
@@ -544,6 +585,108 @@ pub fn build_equality_substitution_classes(
     }
 
     Ok(classes)
+}
+
+/// Rewrite prepared affine rows through equality-substitution classes.
+///
+/// For every active prepared affine residual `c + sum(a_i*x_i)`, each symbol
+/// that belongs to a substitution class is replaced by
+/// `representative + offset`. The resulting exact row is compacted by symbol
+/// and exact zero coefficients are dropped. This is the first affine
+/// elimination payload; callers must still certify candidates with
+/// `certify_candidate` before accepting a solution.
+pub fn eliminate_affine_rows_with_substitution_classes(
+    prepared: &PreparedProblem<'_>,
+    classes: &[EqualitySubstitutionClass],
+) -> EqualitySubstitutionEliminationReport {
+    let mut substitutions = BTreeMap::new();
+    for class in classes {
+        for member in &class.members {
+            substitutions.insert(
+                member.symbol,
+                (
+                    class.representative,
+                    member.offset_from_representative.clone(),
+                ),
+            );
+        }
+    }
+
+    let mut rows = Vec::new();
+    let mut affine_rows_considered = 0;
+    let mut reduced_variable_rows = 0;
+    let mut reduced_zero_rows = 0;
+    let mut reduced_contradiction_rows = 0;
+    let mut reduced_unknown_constant_rows = 0;
+    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+        if !constraint.active {
+            continue;
+        }
+        let Some(affine) = &prepared.affine_residuals()[constraint_index] else {
+            continue;
+        };
+        affine_rows_considered += 1;
+        let mut constant = affine.constant().clone();
+        let mut coefficients = BTreeMap::<SymbolId, Real>::new();
+        for (column, coefficient) in affine.coefficients().iter().enumerate() {
+            if coefficient.structural_facts().sign == Some(RealSign::Zero) {
+                continue;
+            }
+            let symbol = prepared.problem().variables[column].symbol;
+            let (target, offset) = substitutions
+                .get(&symbol)
+                .cloned()
+                .unwrap_or((symbol, Real::zero()));
+            constant = constant + coefficient.clone() * offset;
+            let entry = coefficients.entry(target).or_insert_with(Real::zero);
+            *entry = entry.clone() + coefficient.clone();
+        }
+        let coefficients = coefficients
+            .into_iter()
+            .filter(|(_, coefficient)| coefficient.structural_facts().sign != Some(RealSign::Zero))
+            .collect::<Vec<_>>();
+        classify_eliminated_affine_row(
+            &constant,
+            &coefficients,
+            &mut reduced_variable_rows,
+            &mut reduced_zero_rows,
+            &mut reduced_contradiction_rows,
+            &mut reduced_unknown_constant_rows,
+        );
+        rows.push(EliminatedAffineRow {
+            constraint_index,
+            constant,
+            coefficients,
+        });
+    }
+
+    EqualitySubstitutionEliminationReport {
+        affine_rows_considered,
+        reduced_variable_rows,
+        reduced_zero_rows,
+        reduced_contradiction_rows,
+        reduced_unknown_constant_rows,
+        rows,
+    }
+}
+
+fn classify_eliminated_affine_row(
+    constant: &Real,
+    coefficients: &[(SymbolId, Real)],
+    reduced_variable_rows: &mut usize,
+    reduced_zero_rows: &mut usize,
+    reduced_contradiction_rows: &mut usize,
+    reduced_unknown_constant_rows: &mut usize,
+) {
+    if !coefficients.is_empty() {
+        *reduced_variable_rows += 1;
+        return;
+    }
+    match constant.structural_facts().sign {
+        Some(RealSign::Zero) => *reduced_zero_rows += 1,
+        Some(RealSign::Positive | RealSign::Negative) => *reduced_contradiction_rows += 1,
+        None => *reduced_unknown_constant_rows += 1,
+    }
 }
 
 /// Find cycles in exact equality-substitution candidates.

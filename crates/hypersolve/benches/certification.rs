@@ -3,9 +3,11 @@ use hyperreal::{Rational, Real};
 use hypersolve::{
     Constraint, EqualitySubstitution, Expr, PreparedProblem, PreparedSolverBlock, Problem,
     RectangularRegion, SolverPoint2, SymbolId, VariableBall, bezier_offset_sample_constraints,
-    build_equality_substitution_classes, center_clearance_squared_constraint, certify_candidate,
+    build_equality_substitution_classes, center_clearance_squared_constraint,
+    certify_affine_krawczyk_box, certify_candidate,
     certify_multivariate_quadratic_interval_candidate, certify_quadratic_interval_candidate,
-    context_from_problem, differential_pair_skew_equation, rectangular_difference_area_equation,
+    context_from_problem, differential_pair_skew_equation,
+    eliminate_affine_rows_with_substitution_classes, rectangular_difference_area_equation,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
 };
 
@@ -28,6 +30,49 @@ fn affine_problem(row_count: usize) -> Problem {
         problem.add_constraint(Constraint::equality(
             format!("row {index}"),
             x.clone() * Expr::int(index as i64 + 1) - Expr::int((index as i64 + 1) * 2),
+        ));
+    }
+    problem
+}
+
+fn affine_krawczyk_problem() -> Problem {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let y = Expr::symbol(SymbolId(1), "y");
+    let mut problem = Problem::default();
+    problem.add_variable("x", r(2));
+    problem.add_variable("y", r(2));
+    problem.add_constraint(Constraint::equality(
+        "x plus y minus five",
+        x.clone() + y.clone() - Expr::int(5),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "x minus y minus one",
+        x - y - Expr::int(1),
+    ));
+    problem
+}
+
+fn substitution_elimination_problem(row_count: usize) -> Problem {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let y = Expr::symbol(SymbolId(1), "y");
+    let z = Expr::symbol(SymbolId(2), "z");
+    let mut problem = Problem::default();
+    problem.add_variable("x", r(0));
+    problem.add_variable("y", r(0));
+    problem.add_variable("z", r(0));
+    problem.add_constraint(Constraint::equality(
+        "y - x - 3",
+        y.clone() - x.clone() - Expr::int(3),
+    ));
+    problem.add_constraint(Constraint::equality(
+        "z - x + 2",
+        z.clone() - x.clone() + Expr::int(2),
+    ));
+    for index in 0..row_count {
+        let scale = index as i64 + 1;
+        problem.add_constraint(Constraint::equality(
+            format!("reduced row {index}"),
+            z.clone() * Expr::int(scale) + y.clone() * Expr::int(scale + 1) - Expr::int(scale),
         ));
     }
     problem
@@ -73,6 +118,53 @@ fn certification(c: &mut Criterion) {
 
     c.bench_function("prepared_solver_block_affine_rows", |b| {
         b.iter(|| PreparedSolverBlock::new(&prepared))
+    });
+    let krawczyk_problem = affine_krawczyk_problem();
+    let krawczyk_prepared = PreparedProblem::new(&krawczyk_problem);
+    let krawczyk_context = context_from_problem(&krawczyk_problem);
+    c.bench_function("certify_affine_krawczyk_box", |b| {
+        b.iter(|| {
+            certify_affine_krawczyk_box(
+                &krawczyk_prepared,
+                &krawczyk_context,
+                &[
+                    VariableBall {
+                        symbol: SymbolId(0),
+                        radius: r(1),
+                    },
+                    VariableBall {
+                        symbol: SymbolId(1),
+                        radius: r(0),
+                    },
+                ],
+                hyperlimit::PredicatePolicy::default(),
+            )
+        })
+    });
+    let elimination_problem = substitution_elimination_problem(16);
+    let elimination_prepared = PreparedProblem::new(&elimination_problem);
+    let substitutions = vec![
+        EqualitySubstitution {
+            constraint_index: 0,
+            left: SymbolId(1),
+            right: SymbolId(0),
+            offset: r(3),
+        },
+        EqualitySubstitution {
+            constraint_index: 1,
+            left: SymbolId(2),
+            right: SymbolId(0),
+            offset: r(-2),
+        },
+    ];
+    let substitution_classes = build_equality_substitution_classes(&substitutions).unwrap();
+    c.bench_function("eliminate_affine_rows_with_substitution_classes", |b| {
+        b.iter(|| {
+            eliminate_affine_rows_with_substitution_classes(
+                &elimination_prepared,
+                &substitution_classes,
+            )
+        })
     });
     let quadratic_problem = univariate_quadratic_problem(16);
     c.bench_function("prepared_univariate_quadratic_rows", |b| {

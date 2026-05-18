@@ -50,10 +50,11 @@ than internal truth.
   solver model.
 - `EvaluationContext`, `ResidualEvaluation`, Jacobian helpers, and prepared problem
   types evaluate residuals and preserve structure.
-- `PreparedAffineResidual`, polynomial residual types, solver-block facts, and direct
-  equality helpers expose reusable exact subproblems.
-- `CandidateCertificationReport`, residual balls, interval certification helpers, and
-  predicate reports describe proof or uncertainty.
+- `PreparedAffineResidual`, polynomial residual types, solver-block facts, equality
+  substitution classes, affine-row elimination reports, and direct equality helpers
+  expose reusable exact subproblems.
+- `CandidateCertificationReport`, residual balls, interval certification helpers,
+  affine Krawczyk reports, and predicate reports describe proof or uncertainty.
 - `DenseLinearBackend`, `LinearSolveReport`, `SolverConfig`, `SolverState`, and
   `SolveReport` make lossy dense solving explicit.
 
@@ -73,8 +74,8 @@ look complete.
 `hypersolve` works to keep expensive solving out of cases where structure already gives
 an answer. Prepared facts record constant rows, affine rows, polynomial rows,
 dependency masks, sparse Jacobian structure, and affine residual reuse. Direct equality
-substitution and univariate quadratic helpers handle small exact cases before a generic
-nonlinear loop is needed.
+substitution, substitution-class affine row elimination, and univariate quadratic
+helpers handle small exact cases before a generic nonlinear loop is needed.
 
 Future backend work should exploit the same records: skip structural zeros, reuse
 prepared Jacobians, route affine blocks to exact/direct solvers, and report when a dense
@@ -88,8 +89,9 @@ Implemented today:
 - exact residual evaluation contexts and finite-difference/symbolic Jacobian builders;
 - prepared problem, affine, polynomial, and solver-block fact records;
 - direct affine and univariate-quadratic equality helpers plus equality-substitution
-  analysis;
-- candidate and interval certification surfaces;
+  analysis, exact substitution-class construction, and non-mutating affine row
+  elimination reports;
+- candidate, interval, and affine Krawczyk certification surfaces;
 - a dense damped least-squares prototype with adapter diagnostics;
 - geometry, PCB, and toolpath constraint helper modules.
 
@@ -100,7 +102,7 @@ intentionally approximate, and domain topology remains delegated to sibling crat
 
 ```toml
 [dependencies]
-hypersolve = "0.1.0"
+hypersolve = "0.2.0"
 ```
 
 For sibling checkouts:

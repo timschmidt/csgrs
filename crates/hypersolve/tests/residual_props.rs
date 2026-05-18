@@ -2,9 +2,11 @@ use hyperreal::{Real, RealSign};
 use hypersolve::{
     CertifiedCandidateStatus, Constraint, EqualitySubstitution, EqualitySubstitutionProblem, Expr,
     PreparedProblem, PreparedSolverBlock, Problem, RectangularRegion, SolverBlockRowKind,
-    SolverPoint2, SymbolId, VariableBall, center_clearance_squared_constraint, certify_candidate,
+    SolverPoint2, SymbolId, VariableBall, center_clearance_squared_constraint,
+    certify_affine_krawczyk_box, certify_candidate,
     certify_multivariate_quadratic_interval_candidate, certify_quadratic_interval_candidate,
-    context_from_problem, differential_pair_skew_equation, rectangular_difference_area_equation,
+    context_from_problem, differential_pair_skew_equation,
+    eliminate_affine_rows_with_substitution_classes, rectangular_difference_area_equation,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     validate_equality_substitutions,
 };
@@ -344,6 +346,57 @@ proptest! {
     }
 
     #[test]
+    fn affine_krawczyk_generated_diagonal_systems_certify_exact_roots(
+        x_root in -32_i16..=32,
+        y_root in -32_i16..=32,
+        x_step in -8_i16..=8,
+        y_step in -8_i16..=8,
+        x_extra_radius in 0_i16..=4,
+        y_extra_radius in 0_i16..=4,
+    ) {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let y = Expr::symbol(SymbolId(1), "y");
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(i64::from(x_root + x_step)));
+        problem.add_variable("y", Real::from(i64::from(y_root + y_step)));
+        problem.add_constraint(Constraint::equality(
+            "x diagonal root",
+            x - Expr::int(i64::from(x_root)),
+        ));
+        problem.add_constraint(Constraint::equality(
+            "y diagonal root",
+            y - Expr::int(i64::from(y_root)),
+        ));
+
+        let x_radius = i64::from(x_step).abs() + i64::from(x_extra_radius);
+        let y_radius = i64::from(y_step).abs() + i64::from(y_extra_radius);
+        let report = certify_affine_krawczyk_box(
+            &PreparedProblem::new(&problem),
+            &context_from_problem(&problem),
+            &[
+                VariableBall {
+                    symbol: SymbolId(0),
+                    radius: Real::from(x_radius),
+                },
+                VariableBall {
+                    symbol: SymbolId(1),
+                    radius: Real::from(y_radius),
+                },
+            ],
+            hyperlimit::PredicatePolicy::default(),
+        );
+
+        prop_assert_eq!(
+            report.status,
+            hypersolve::AffineKrawczykStatus::CertifiedUniqueRoot
+        );
+        prop_assert_eq!(report.steps[0].certified_root.clone(), Real::from(i64::from(x_root)));
+        prop_assert_eq!(report.steps[1].certified_root.clone(), Real::from(i64::from(y_root)));
+        prop_assert_eq!(report.steps[0].step.clone(), Real::from(-i64::from(x_step)));
+        prop_assert_eq!(report.steps[1].step.clone(), Real::from(-i64::from(y_step)));
+    }
+
+    #[test]
     fn multivariate_quadratic_interval_generated_positive_balls_certify_violation(
         x_value in 10_i16..=20,
         y_value in 10_i16..=20,
@@ -424,6 +477,68 @@ proptest! {
             report.has_inconsistency(),
             expected_offset != Real::zero()
         );
+    }
+
+    #[test]
+    fn substitution_class_elimination_carries_generated_offsets(
+        x_to_y_offset in -20_i16..=20,
+        z_to_x_offset in -20_i16..=20,
+        row_z_coeff in -8_i16..=8,
+        row_y_coeff in -8_i16..=8,
+        row_constant in -32_i16..=32,
+    ) {
+        prop_assume!(!(row_z_coeff == 1 && row_y_coeff == -1));
+        prop_assume!(!(row_z_coeff == -1 && row_y_coeff == 1));
+        let x = Expr::symbol(SymbolId(0), "x");
+        let y = Expr::symbol(SymbolId(1), "y");
+        let z = Expr::symbol(SymbolId(2), "z");
+        let mut problem = Problem::default();
+        problem.add_variable("x", Real::from(0));
+        problem.add_variable("y", Real::from(0));
+        problem.add_variable("z", Real::from(0));
+        problem.add_constraint(Constraint::equality(
+            "x to y",
+            x.clone() - y.clone() - Expr::int(i64::from(x_to_y_offset)),
+        ));
+        problem.add_constraint(Constraint::equality(
+            "z to x",
+            z.clone() - x.clone() - Expr::int(i64::from(z_to_x_offset)),
+        ));
+        problem.add_constraint(Constraint::equality(
+            "generated reduced row",
+            z * Expr::int(i64::from(row_z_coeff))
+                + y * Expr::int(i64::from(row_y_coeff))
+                + Expr::int(i64::from(row_constant)),
+        ));
+
+        let prepared = PreparedProblem::new(&problem);
+        let substitutions = hypersolve::find_equality_substitutions(&prepared).unwrap();
+        let classes = hypersolve::build_equality_substitution_classes(&substitutions).unwrap();
+        let report = eliminate_affine_rows_with_substitution_classes(&prepared, &classes);
+        let reduced = &report.rows[2];
+
+        let expected_coefficient = i64::from(row_z_coeff) + i64::from(row_y_coeff);
+        let expected_constant = i64::from(row_constant)
+            + i64::from(row_z_coeff) * i64::from(z_to_x_offset)
+            - i64::from(row_y_coeff) * i64::from(x_to_y_offset);
+        let expected_variable_rows = usize::from(expected_coefficient != 0);
+        let expected_zero_rows = 2 + usize::from(expected_coefficient == 0 && expected_constant == 0);
+        let expected_contradiction_rows =
+            usize::from(expected_coefficient == 0 && expected_constant != 0);
+        prop_assert_eq!(report.affine_rows_considered, 3);
+        prop_assert_eq!(report.reduced_variable_rows, expected_variable_rows);
+        prop_assert_eq!(report.reduced_zero_rows, expected_zero_rows);
+        prop_assert_eq!(report.reduced_contradiction_rows, expected_contradiction_rows);
+        prop_assert_eq!(report.reduced_unknown_constant_rows, 0);
+        prop_assert_eq!(reduced.constant.clone(), Real::from(expected_constant));
+        if expected_coefficient == 0 {
+            prop_assert!(reduced.coefficients.is_empty());
+        } else {
+            prop_assert_eq!(
+                reduced.coefficients.clone(),
+                vec![(SymbolId(0), Real::from(expected_coefficient))]
+            );
+        }
     }
 
     #[test]
