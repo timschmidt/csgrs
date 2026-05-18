@@ -101,7 +101,7 @@ reject definite zero and unknown-zero divisors or pivots.
 
 ```toml
 [dependencies]
-hyperlattice = "0.4.0"
+hyperlattice = "0.5.0"
 ```
 
 For sibling checkouts:
