@@ -1,4 +1,7 @@
-# hypervoxel
+<h1>
+  hypervoxel
+  <img src="./docs/voxelis_logo.png" alt="hypervoxel logo" width="144" align="right">
+</h1>
 
 `hypervoxel` owns exact-aware voxel grid frames, sparse-grid facts, voxelization
 reports, and adapter manifests for the Hyper ecosystem. The repository still carries
@@ -117,6 +120,39 @@ hypervoxel = { path = "../hypervoxel" }
 Feature summary:
 
 - `legacy-voxelis`: enables the harvested `voxelis` integration.
+
+## Usage
+
+Start with an exact frame, then classify or store cells with explicit reports:
+
+```rust,ignore
+use hypervoxel::{
+    ExactBox, GridFrameBuilder, LengthUnit, SparseVoxelGrid, VoxelAddress, VoxelCell,
+    voxelize_exact_box,
+};
+use hyperreal::Real;
+
+let frame = GridFrameBuilder::default()
+    .unit(LengthUnit::Millimeter)
+    .origin([Real::from(0), Real::from(0), Real::from(0)])
+    .pitch(Real::from(1))
+    .build()?;
+
+let solid = ExactBox::new(
+    [Real::from(0), Real::from(0), Real::from(0)],
+    [Real::from(2), Real::from(2), Real::from(2)],
+    None,
+);
+
+let report = voxelize_exact_box(&frame, &solid, 2)?;
+let mut grid = SparseVoxelGrid::new(frame);
+grid.insert(VoxelAddress::new(1, [0, 0, 0])?, VoxelCell::occupied());
+```
+
+Half-space and convex-set voxelizers, sparse-grid diffs, deterministic snapshots,
+distance previews, exposed-face extraction, greedy patch planning, compression reports,
+IO manifests, support masks, and legacy `voxelis` storage diffs follow the same rule:
+they are report-bearing handoffs, not silent replacements for exact grid evidence.
 
 ## Development
 
