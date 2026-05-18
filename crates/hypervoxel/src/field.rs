@@ -71,6 +71,14 @@ impl CertifiedFieldInterval {
 pub struct FieldAggregateFacts {
     /// Number of cells that referenced field samples.
     pub sample_cell_count: usize,
+    /// Whether at least one field-sample cell was observed.
+    ///
+    /// Zero field samples is a precise absence report, not certified field
+    /// evidence. This follows Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997: an exact/certified object fact
+    /// must be backed by object-level evidence rather than by an empty
+    /// iterator convention.
+    pub has_field_samples: bool,
     /// Distinct sample IDs observed.
     pub sample_ids: BTreeSet<FieldSampleId>,
     /// Union interval when every referenced sample has certified bounds.
@@ -81,6 +89,13 @@ pub struct FieldAggregateFacts {
     pub missing_bounds: usize,
     /// Certainty of the aggregate interval.
     pub certainty: AggregateCertainty,
+    /// Whether certified field bounds are complete enough for downstream use.
+    ///
+    /// The voxel layer does not assign physics meaning to field samples. This
+    /// flag only says that every referenced side-table record supplied a
+    /// certified lower/upper scalar interval, matching Yap's separation of
+    /// exact/certified facts from unknown object data.
+    pub certified_field_bounds_ready: bool,
 }
 
 /// Aggregate facts over vector/tensor field envelopes.
@@ -90,6 +105,16 @@ pub struct FieldEnvelopeFacts {
     pub vector_count: usize,
     /// Number of tensor envelopes observed.
     pub tensor_count: usize,
+    /// Total vector and tensor envelopes observed.
+    pub envelope_count: usize,
+    /// Whether at least one vector or tensor envelope was observed.
+    ///
+    /// An empty envelope list is an exact absence report, not evidence that a
+    /// vector/tensor field has a certified envelope. Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997, treats
+    /// exactness as a property of represented objects and predicates; this
+    /// flag keeps an empty iterator from being promoted into object evidence.
+    pub has_envelopes: bool,
     /// Union of vector component intervals when dimensions are consistent.
     pub vector_interval: Option<CertifiedVectorInterval>,
     /// Union of tensor component intervals when shapes are consistent.
@@ -98,6 +123,13 @@ pub struct FieldEnvelopeFacts {
     pub incompatible_shapes: usize,
     /// Certainty of the envelope facts.
     pub certainty: AggregateCertainty,
+    /// Whether every observed vector/tensor envelope contributed compatible
+    /// certified component intervals and at least one envelope was present.
+    ///
+    /// In Yap's EGC terms, incompatible envelope shapes remain explicit
+    /// unknowns rather than being coerced into a lossy common layout, while an
+    /// empty set remains unknown for envelope-certification purposes.
+    pub certified_envelope_ready: bool,
 }
 
 /// Field-sample references observed in a sparse grid.
@@ -149,17 +181,24 @@ impl FieldEnvelopeFacts {
             }
         }
 
+        let envelope_count = vector_count + tensor_count;
+        let has_envelopes = envelope_count > 0;
+        let certified_envelope_ready = has_envelopes && incompatible_shapes == 0;
+
         Ok(Self {
             vector_count,
             tensor_count,
+            envelope_count,
+            has_envelopes,
             vector_interval,
             tensor_interval,
             incompatible_shapes,
-            certainty: if incompatible_shapes == 0 {
+            certainty: if certified_envelope_ready {
                 AggregateCertainty::Certified
             } else {
                 AggregateCertainty::Unknown
             },
+            certified_envelope_ready,
         })
     }
 }
@@ -221,21 +260,24 @@ impl FieldAggregateFacts {
             }
         }
 
-        let certainty = if missing_records > 0 || missing_bounds > 0 {
+        let has_field_samples = sample_cell_count > 0;
+        let certified_field_bounds_ready =
+            has_field_samples && missing_records == 0 && missing_bounds == 0;
+        let certainty = if !certified_field_bounds_ready {
             AggregateCertainty::Unknown
-        } else if interval.is_some() {
-            AggregateCertainty::Certified
         } else {
-            AggregateCertainty::Exact
+            AggregateCertainty::Certified
         };
 
         Ok(Self {
             sample_cell_count,
+            has_field_samples,
             sample_ids,
             interval,
             missing_records,
             missing_bounds,
             certainty,
+            certified_field_bounds_ready,
         })
     }
 

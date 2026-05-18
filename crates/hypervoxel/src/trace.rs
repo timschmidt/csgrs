@@ -69,10 +69,26 @@ pub struct VoxelTraceReport {
     pub lossy_adapter_count: usize,
     /// Number of explicit unknown outcomes preserved in reports.
     pub unknown_count: usize,
+    /// Whether the trace carries at least one semantic operation dimension.
+    pub has_operation_dimension: bool,
+    /// Whether the trace carries at least one exact predicate/comparison.
+    pub has_exact_evidence: bool,
     /// Whether this trace contains any lossy adapter work.
     pub has_lossy_adapter_work: bool,
     /// Whether this trace preserved uncertainty explicitly.
     pub has_unknowns: bool,
+    /// Whether the trace can be consumed as exact operation evidence.
+    ///
+    /// This is intentionally stricter than "contains exact predicates": a trace
+    /// may include exact work and still be unsuitable as exact evidence if any
+    /// step lowered through a primitive-float adapter or ended in an explicit
+    /// unknown. A vacuous trace is also rejected: at least one semantic
+    /// operation dimension and one exact predicate/comparison must be present.
+    /// That follows Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997, by keeping exact decisions
+    /// separated from adapter replay, undecided predicates, and empty timing
+    /// shells.
+    pub exact_trace_evidence_ready: bool,
 }
 
 impl VoxelTraceManifest {
@@ -85,6 +101,8 @@ impl VoxelTraceManifest {
             .collect::<BTreeSet<_>>()
             .into_iter()
             .collect::<Vec<_>>();
+        let has_operation_dimension = !dimensions.is_empty();
+        let has_exact_evidence = self.exact_predicate_count > 0;
         VoxelTraceReport {
             operation: self.operation.clone(),
             dimension_count: dimensions.len(),
@@ -92,8 +110,14 @@ impl VoxelTraceManifest {
             exact_predicate_count: self.exact_predicate_count,
             lossy_adapter_count: self.lossy_adapter_count,
             unknown_count: self.unknown_count,
+            has_operation_dimension,
+            has_exact_evidence,
             has_lossy_adapter_work: self.lossy_adapter_count > 0,
             has_unknowns: self.unknown_count > 0,
+            exact_trace_evidence_ready: has_operation_dimension
+                && has_exact_evidence
+                && self.lossy_adapter_count == 0
+                && self.unknown_count == 0,
         }
     }
 }

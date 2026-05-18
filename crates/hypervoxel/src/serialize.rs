@@ -2,7 +2,10 @@
 //!
 //! This is not the final compressed storage format. It is a stable diagnostic
 //! and fixture format for exact frame, cell, and aggregate data while the
-//! SVO-DAG backend is being ported.
+//! SVO-DAG backend is being ported. The report surface follows Yap, "Towards
+//! Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997: a
+//! serialized artifact must say which exact object facts it preserves instead
+//! of relying on callers to infer that from a byte prefix.
 
 use std::fmt::Write;
 
@@ -29,6 +32,39 @@ pub struct DeterministicSnapshot {
     pub format: SnapshotFormat,
     /// Snapshot bytes.
     pub bytes: Vec<u8>,
+}
+
+/// Semantic replay report for a deterministic snapshot.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct DeterministicSnapshotReport {
+    /// Snapshot format.
+    pub format: SnapshotFormat,
+    /// Number of serialized bytes.
+    pub byte_len: usize,
+    /// Whether exact scalar strings are preserved for frame/side-table values.
+    pub exact_scalar_encoding: bool,
+    /// Whether exact integer address identity is preserved.
+    pub exact_address_encoding: bool,
+    /// Whether full frame metadata is present.
+    pub full_frame_metadata: bool,
+    /// Whether side-table records are included in the snapshot.
+    pub side_table_records_included: bool,
+    /// Number of serialized cell records or cell runs retained by this snapshot.
+    pub serialized_cell_records: usize,
+    /// Whether at least one cell record or run was retained.
+    ///
+    /// An empty snapshot may preserve frame metadata exactly, but it is not
+    /// evidence that voxel cell content was replayed. Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997, keeps
+    /// exactness attached to explicit object facts; this gate prevents a
+    /// header-only fixture from certifying voxel content.
+    pub has_cell_records: bool,
+    /// Whether the snapshot is ready for full exact semantic replay.
+    ///
+    /// RLE snapshots preserve exact cell run identity, but intentionally omit
+    /// full frame and side-table records. They are useful fixtures, not full
+    /// exact artifact replays.
+    pub exact_snapshot_replay_ready: bool,
 }
 
 impl DeterministicSnapshot {
@@ -212,6 +248,88 @@ impl DeterministicSnapshot {
             bytes: out,
         }
     }
+
+    /// Reports which exact semantic facts this snapshot preserves.
+    pub fn report(&self) -> DeterministicSnapshotReport {
+        let (
+            exact_scalar_encoding,
+            exact_address_encoding,
+            full_frame_metadata,
+            side_table_records_included,
+        ) = match self.format {
+            SnapshotFormat::TextV1 | SnapshotFormat::BinaryV1 => (true, true, true, true),
+            SnapshotFormat::RunLengthBinaryV1 => (false, true, false, false),
+        };
+        let serialized_cell_records = self.serialized_cell_records();
+        let has_cell_records = serialized_cell_records > 0;
+        DeterministicSnapshotReport {
+            format: self.format,
+            byte_len: self.bytes.len(),
+            exact_scalar_encoding,
+            exact_address_encoding,
+            full_frame_metadata,
+            side_table_records_included,
+            serialized_cell_records,
+            has_cell_records,
+            exact_snapshot_replay_ready: exact_scalar_encoding
+                && exact_address_encoding
+                && full_frame_metadata
+                && side_table_records_included
+                && has_cell_records,
+        }
+    }
+
+    fn serialized_cell_records(&self) -> usize {
+        match self.format {
+            SnapshotFormat::TextV1 => self
+                .bytes
+                .split(|byte| *byte == b'\n')
+                .filter(|line| line.starts_with(b"cell "))
+                .count(),
+            SnapshotFormat::BinaryV1 => binary_v1_cell_count(&self.bytes).unwrap_or(0),
+            SnapshotFormat::RunLengthBinaryV1 => rle_v1_run_count(&self.bytes).unwrap_or(0),
+        }
+    }
+}
+
+fn binary_v1_cell_count(bytes: &[u8]) -> Option<usize> {
+    let mut cursor = b"HYPERVOXEL-BIN-V1\0".len();
+    read_u8_at(bytes, &mut cursor)?;
+    read_u8_at(bytes, &mut cursor)?;
+    read_u64_at(bytes, &mut cursor)?;
+    read_string_at(bytes, &mut cursor)?;
+    read_u64_at(bytes, &mut cursor)?;
+    for _ in 0..6 {
+        read_string_at(bytes, &mut cursor)?;
+    }
+    usize::try_from(read_u64_at(bytes, &mut cursor)?).ok()
+}
+
+fn rle_v1_run_count(bytes: &[u8]) -> Option<usize> {
+    let mut cursor = b"HYPERVOXEL-RLE-V1\0".len();
+    read_u8_at(bytes, &mut cursor)?;
+    usize::try_from(read_u64_at(bytes, &mut cursor)?).ok()
+}
+
+fn read_u8_at(bytes: &[u8], cursor: &mut usize) -> Option<u8> {
+    let value = *bytes.get(*cursor)?;
+    *cursor += 1;
+    Some(value)
+}
+
+fn read_u64_at(bytes: &[u8], cursor: &mut usize) -> Option<u64> {
+    let end = cursor.checked_add(8)?;
+    let slice = bytes.get(*cursor..end)?;
+    *cursor = end;
+    Some(u64::from_le_bytes(slice.try_into().ok()?))
+}
+
+fn read_string_at<'a>(bytes: &'a [u8], cursor: &mut usize) -> Option<&'a [u8]> {
+    let len = usize::try_from(read_u64_at(bytes, cursor)?).ok()?;
+    let end = cursor.checked_add(len)?;
+    let slice = bytes.get(*cursor..end)?;
+    *cursor = end;
+    Some(slice)
 }
 
 struct Run<'a> {

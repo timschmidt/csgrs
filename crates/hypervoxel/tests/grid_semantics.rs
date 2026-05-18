@@ -1,17 +1,18 @@
 use hyperreal::{Rational, Real};
 use hypervoxel::{
     AdapterNumericContract, AdapterScalarPrecision, AdapterToleranceStatus, AggregateCertainty,
-    BoundaryPolicy, ChunkPageSummary, ChunkShape, FreshnessStatus, GridBasis, GridCoordinateSystem,
-    GridFrame, GridFrameManifest, GridHandedness, GridSource, HypervoxelError, ImageStackContainer,
-    ImageStackManifest, LegacyAdapterKind, LegacyAdapterStatus, LengthUnit, MaterialRegionId,
-    OccupancyState, PreparedSparseVoxelGridExt, PreparedVoxelGrid, QuantizationPolicy,
-    SideTableLinkStatus, SparseVoxelGrid, StorageReplayStatus, VoxelAddress, VoxelAggregateFacts,
-    VoxelArtifactId, VoxelArtifactManifest, VoxelArtifactRole, VoxelCell, VoxelChannelMapping,
-    VoxelHandoffDomain, VoxelIndexConvention, VoxelInterchangeFormat, VoxelInterchangeManifest,
-    VoxelIoCompression, VoxelIoMetadata, VoxelIoMetadataStatus, VoxelIoPaletteStatus,
-    VoxelIoPayloadStatus, VoxelPayload, VoxelPredicateCertificateReport, VoxelSliceNaming,
-    VoxelSliceOrdering, VoxelSpatialAggregateFacts, VoxelTraceDimension, VoxelTraceManifest,
-    VoxelizationPolicy, VoxelizationReport,
+    BoundaryPolicy, ChunkAddress, ChunkPageSummary, ChunkShape, FreshnessStatus, GridBasis,
+    GridCoordinateSystem, GridFrame, GridFrameManifest, GridHandedness, GridSource,
+    HypervoxelError, ImageStackContainer, ImageStackManifest, LegacyAdapterKind,
+    LegacyAdapterStatus, LengthUnit, MaterialRegionId, OccupancyState, PreparedSparseVoxelGridExt,
+    PreparedVoxelGrid, QuantizationPolicy, SideTableLinkStatus, SparseVoxelGrid,
+    StorageReplayStatus, VoxelAddress, VoxelAggregateFacts, VoxelArtifactId, VoxelArtifactManifest,
+    VoxelArtifactRole, VoxelCell, VoxelChannelMapping, VoxelHandoffDomain, VoxelIndexConvention,
+    VoxelInterchangeFormat, VoxelInterchangeManifest, VoxelIoCompression, VoxelIoMetadata,
+    VoxelIoMetadataStatus, VoxelIoPaletteStatus, VoxelIoPayloadStatus, VoxelPayload,
+    VoxelPredicateCertificateReport, VoxelSliceNaming, VoxelSliceOrdering,
+    VoxelSpatialAggregateFacts, VoxelTraceDimension, VoxelTraceManifest, VoxelizationPolicy,
+    VoxelizationReport,
 };
 
 use hypervoxel::SvoVoxelGrid;
@@ -101,7 +102,27 @@ fn chunk_page_summary_partitions_addresses_without_world_coordinates() {
 
     assert_eq!(shape.cells_per_axis(), 4);
     assert_eq!(summary.stored_cells, 3);
+    assert!(summary.has_stored_cells);
     assert_eq!(summary.page_count, 2);
+    assert!(summary.exact_integer_partition);
+    assert_eq!(summary.page_capacity_cells, 128);
+    assert!(summary.exact_page_cover_ready);
+    let empty = ChunkPageSummary::from_addresses(shape, std::iter::empty::<VoxelAddress>());
+    assert_eq!(empty.stored_cells, 0);
+    assert!(!empty.has_stored_cells);
+    assert_eq!(empty.page_count, 0);
+    assert_eq!(empty.page_capacity_cells, 0);
+    assert!(!empty.exact_page_cover_ready);
+    let split = ChunkAddress::split(VoxelAddress::new(4, [6, 7, 8]).unwrap(), shape);
+    assert_eq!(split.chunk.xyz, [1, 1, 2]);
+    assert_eq!(split.local_xyz, [2, 3, 0]);
+    assert_eq!(split.local_extent, 4);
+    assert!(split.local_in_bounds);
+    assert!(split.exact_recompose_ready);
+
+    let coarse_split = ChunkAddress::split(VoxelAddress::new(1, [1, 0, 1]).unwrap(), shape);
+    assert_eq!(coarse_split.local_extent, 2);
+    assert!(coarse_split.exact_recompose_ready);
     assert_eq!(
         ChunkShape::new(22).unwrap_err(),
         HypervoxelError::DepthTooLarge {
@@ -172,13 +193,25 @@ fn image_stack_and_interchange_manifests_report_unknown_metadata_explicitly() {
     let report = incomplete.report();
     assert_eq!(report.freshness, FreshnessStatus::Unknown);
     assert_eq!(report.unknown_metadata_fields, 11);
+    assert_eq!(report.invalid_dimension_axes, 0);
+    assert!(!report.positive_dimensions_ready);
+    assert_eq!(report.declared_channels, Some(2));
+    assert_eq!(report.mapped_channels, 1);
     assert_eq!(report.unmapped_channels, 1);
+    assert_eq!(report.extra_channel_mappings, 0);
+    assert_eq!(report.bit_depth, Some(8));
+    assert_eq!(report.declared_sample_slots, None);
+    assert!(!report.has_sample_evidence);
+    assert!(!report.has_missing_slice_policy);
+    assert!(!report.has_duplicate_slice_policy);
     assert_eq!(report.metadata_status, VoxelIoMetadataStatus::Unknown);
     assert_eq!(report.payload_status, VoxelIoPayloadStatus::Unknown);
     assert_eq!(report.palette_status, VoxelIoPaletteStatus::Lost);
     assert_eq!(report.source_freshness, FreshnessStatus::Stale);
     assert_eq!(report.side_table_links, SideTableLinkStatus::Missing);
     assert!(!report.adapter.exact_replay);
+    assert!(!report.certified_sample_replay_ready);
+    assert!(!report.exact_sample_replay_ready);
 
     let exact = VoxelInterchangeManifest {
         format: VoxelInterchangeFormat::Nrrd,
@@ -208,12 +241,24 @@ fn image_stack_and_interchange_manifests_report_unknown_metadata_explicitly() {
     let report = exact.report();
     assert_eq!(report.freshness, FreshnessStatus::Current);
     assert_eq!(report.unknown_metadata_fields, 0);
+    assert_eq!(report.invalid_dimension_axes, 0);
+    assert!(report.positive_dimensions_ready);
+    assert_eq!(report.declared_channels, None);
+    assert_eq!(report.mapped_channels, 0);
+    assert_eq!(report.extra_channel_mappings, 0);
+    assert_eq!(report.bit_depth, None);
+    assert_eq!(report.declared_sample_slots, Some(64));
+    assert!(report.has_sample_evidence);
+    assert!(report.has_missing_slice_policy);
+    assert!(report.has_duplicate_slice_policy);
     assert_eq!(report.payload_status, VoxelIoPayloadStatus::ExactReplay);
     assert_eq!(report.source_freshness, FreshnessStatus::Current);
     assert_eq!(report.side_table_links, SideTableLinkStatus::Complete);
     assert_eq!(report.index_convention, VoxelIndexConvention::CellCenter);
     assert_eq!(report.compression, VoxelIoCompression::None);
     assert!(report.adapter.exact_replay);
+    assert!(report.certified_sample_replay_ready);
+    assert!(report.exact_sample_replay_ready);
 
     let certified = VoxelInterchangeManifest {
         format: VoxelInterchangeFormat::Vdb,
@@ -245,7 +290,16 @@ fn image_stack_and_interchange_manifests_report_unknown_metadata_explicitly() {
         certified.payload_status,
         VoxelIoPayloadStatus::CertifiedMapping
     );
+    assert_eq!(certified.source_freshness, FreshnessStatus::Unknown);
+    assert_eq!(certified.freshness, FreshnessStatus::Unknown);
+    assert_eq!(certified.invalid_dimension_axes, 0);
+    assert!(certified.positive_dimensions_ready);
+    assert_eq!(certified.declared_sample_slots, Some(512));
+    assert!(certified.has_sample_evidence);
+    assert!(!certified.adapter.exact_replay);
     assert_eq!(certified.palette_status, VoxelIoPaletteStatus::Lost);
+    assert!(certified.certified_sample_replay_ready);
+    assert!(!certified.exact_sample_replay_ready);
 
     let invalid_axis_order = VoxelIoMetadata {
         dimensions: Some([4, 4, 4]),
@@ -279,6 +333,116 @@ fn image_stack_and_interchange_manifests_report_unknown_metadata_explicitly() {
         .metadata_status,
         VoxelIoMetadataStatus::Unknown
     );
+
+    let overdeclared_channels = ImageStackManifest {
+        container: ImageStackContainer::ZstdQoi,
+        slices: 1,
+        channels: 1,
+        bit_depth: 16,
+        channel_mappings: vec![
+            VoxelChannelMapping::OccupancyMask,
+            VoxelChannelMapping::MaterialRegion,
+        ],
+        metadata: VoxelIoMetadata {
+            dimensions: Some([1, 1, 1]),
+            axis_order: Some([0, 1, 2]),
+            has_explicit_origin: true,
+            has_explicit_spacing: true,
+            units: Some(LengthUnit::Unitless),
+            has_payload_mapping: true,
+            has_label_mapping: true,
+            has_missing_slice_policy: true,
+            has_duplicate_slice_policy: true,
+            slice_naming: VoxelSliceNaming::ExplicitIndex,
+            slice_ordering: VoxelSliceOrdering::LowToHigh,
+            index_convention: VoxelIndexConvention::CellCenter,
+            compression: VoxelIoCompression::Zstd,
+        },
+        source: Some(GridSource::new("qoi:overdeclared", 1)),
+        expected_source: Some(GridSource::new("qoi:overdeclared", 1)),
+        required_side_table_links: 0,
+        supplied_side_table_links: 0,
+    }
+    .report();
+    assert_eq!(overdeclared_channels.mapped_channels, 1);
+    assert_eq!(overdeclared_channels.extra_channel_mappings, 1);
+    assert_eq!(overdeclared_channels.declared_sample_slots, Some(1));
+    assert!(overdeclared_channels.has_sample_evidence);
+    assert_eq!(
+        overdeclared_channels.payload_status,
+        VoxelIoPayloadStatus::Unknown
+    );
+    assert_eq!(overdeclared_channels.freshness, FreshnessStatus::Unknown);
+    assert!(!overdeclared_channels.adapter.exact_replay);
+    assert!(!overdeclared_channels.certified_sample_replay_ready);
+    assert!(!overdeclared_channels.exact_sample_replay_ready);
+
+    let zero_axis = VoxelInterchangeManifest {
+        format: VoxelInterchangeFormat::RawWithSidecar,
+        metadata: VoxelIoMetadata {
+            dimensions: Some([4, 0, 2]),
+            axis_order: Some([0, 1, 2]),
+            has_explicit_origin: true,
+            has_explicit_spacing: true,
+            units: Some(LengthUnit::Millimeter),
+            has_payload_mapping: true,
+            has_label_mapping: true,
+            has_missing_slice_policy: true,
+            has_duplicate_slice_policy: true,
+            slice_naming: VoxelSliceNaming::ExplicitIndex,
+            slice_ordering: VoxelSliceOrdering::LowToHigh,
+            index_convention: VoxelIndexConvention::CellCenter,
+            compression: VoxelIoCompression::None,
+        },
+        payload_exact: true,
+        certified_payload_mapping: false,
+        lost_payload_information: false,
+        source: Some(GridSource::new("raw:zero-axis", 1)),
+        expected_source: Some(GridSource::new("raw:zero-axis", 1)),
+        required_side_table_links: 0,
+        supplied_side_table_links: 0,
+    }
+    .report();
+    assert_eq!(zero_axis.unknown_metadata_fields, 0);
+    assert_eq!(zero_axis.invalid_dimension_axes, 1);
+    assert_eq!(zero_axis.declared_sample_slots, Some(0));
+    assert!(!zero_axis.has_sample_evidence);
+    assert!(!zero_axis.positive_dimensions_ready);
+    assert_eq!(zero_axis.metadata_status, VoxelIoMetadataStatus::Unknown);
+    assert!(!zero_axis.certified_sample_replay_ready);
+    assert!(!zero_axis.exact_sample_replay_ready);
+
+    let empty_stack = ImageStackManifest {
+        container: ImageStackContainer::ZippedPng,
+        slices: 0,
+        channels: 1,
+        bit_depth: 8,
+        channel_mappings: vec![VoxelChannelMapping::OccupancyMask],
+        metadata: VoxelIoMetadata {
+            dimensions: Some([4, 4, 4]),
+            axis_order: Some([0, 1, 2]),
+            has_explicit_origin: true,
+            has_explicit_spacing: true,
+            units: Some(LengthUnit::Millimeter),
+            has_payload_mapping: true,
+            has_label_mapping: true,
+            has_missing_slice_policy: true,
+            has_duplicate_slice_policy: true,
+            slice_naming: VoxelSliceNaming::ExplicitIndex,
+            slice_ordering: VoxelSliceOrdering::LowToHigh,
+            index_convention: VoxelIndexConvention::CellCenter,
+            compression: VoxelIoCompression::Zip,
+        },
+        source: Some(GridSource::new("png:empty", 1)),
+        expected_source: Some(GridSource::new("png:empty", 1)),
+        required_side_table_links: 0,
+        supplied_side_table_links: 0,
+    }
+    .report();
+    assert_eq!(empty_stack.declared_sample_slots, Some(0));
+    assert!(!empty_stack.has_sample_evidence);
+    assert!(!empty_stack.certified_sample_replay_ready);
+    assert!(!empty_stack.exact_sample_replay_ready);
 }
 
 #[test]
@@ -293,6 +457,11 @@ fn aggregate_preserves_unknown_boundary_and_lossy_states() {
     assert!(facts.has_unknown);
     assert_eq!(facts.certainty, AggregateCertainty::Unknown);
     assert_eq!(facts.conservative_occupancy(), OccupancyState::Unknown);
+    assert_eq!(facts.occupancy_interval.total_cells, 3);
+    assert_eq!(facts.occupancy_interval.definite_filled_cells, 1);
+    assert_eq!(facts.occupancy_interval.possible_occupied_cells, 3);
+    assert_eq!(facts.occupancy_interval.lower, rf(1, 3));
+    assert_eq!(facts.occupancy_interval.upper, r(1));
 
     let lossy = [
         VoxelCell::material(MaterialRegionId(1)),
@@ -306,6 +475,114 @@ fn aggregate_preserves_unknown_boundary_and_lossy_states() {
     assert_eq!(
         facts.conservative_occupancy(),
         OccupancyState::LossyAdapterValue
+    );
+    assert_eq!(
+        facts.occupancy_interval.certainty,
+        AggregateCertainty::Lossy
+    );
+}
+
+#[test]
+fn voxel_cell_report_rejects_incoherent_payload_occupancy_pairs() {
+    let exact = VoxelCell::material(MaterialRegionId(7)).report();
+    assert!(exact.payload_matches_occupancy);
+    assert!(exact.exact_cell_evidence_ready);
+    assert!(!exact.has_unknown);
+    assert!(!exact.has_lossy);
+
+    let unknown = VoxelCell::unknown().report();
+    assert!(unknown.payload_matches_occupancy);
+    assert!(unknown.has_unknown);
+    assert!(!unknown.exact_cell_evidence_ready);
+
+    let lossy = VoxelCell::lossy_adapter_value(42).report();
+    assert!(lossy.payload_matches_occupancy);
+    assert!(lossy.has_lossy);
+    assert!(!lossy.exact_cell_evidence_ready);
+
+    let incoherent = VoxelCell {
+        occupancy: OccupancyState::Empty,
+        payload: VoxelPayload::MaterialRegion(MaterialRegionId(9)),
+    }
+    .report();
+    assert!(!incoherent.payload_matches_occupancy);
+    assert!(!incoherent.exact_cell_evidence_ready);
+}
+
+#[test]
+fn occupancy_interval_distinguishes_exact_filled_from_certified_boundary_range() {
+    let exact = VoxelAggregateFacts::from_cells([
+        &VoxelCell::material(MaterialRegionId(1)),
+        &VoxelCell::empty(),
+    ]);
+    assert!(exact.occupancy_interval.is_point_interval());
+    assert_eq!(exact.occupancy_interval.lower, rf(1, 2));
+    assert_eq!(
+        exact.occupancy_interval.certainty,
+        AggregateCertainty::Exact
+    );
+
+    let boundary = VoxelAggregateFacts::from_cells([
+        &VoxelCell::material(MaterialRegionId(1)),
+        &VoxelCell::boundary(VoxelPayload::MaterialRegion(MaterialRegionId(1))),
+        &VoxelCell::empty(),
+    ]);
+    assert!(!boundary.occupancy_interval.is_point_interval());
+    assert_eq!(boundary.occupancy_interval.lower, rf(1, 3));
+    assert_eq!(boundary.occupancy_interval.upper, rf(2, 3));
+    assert_eq!(
+        boundary.occupancy_interval.certainty,
+        AggregateCertainty::Certified
+    );
+}
+
+#[test]
+fn empty_aggregate_interval_stays_unknown_not_zero_occupancy() {
+    let empty = VoxelAggregateFacts::from_cells(std::iter::empty::<&VoxelCell>());
+
+    assert_eq!(empty.child_count, 0);
+    assert_eq!(empty.certainty, AggregateCertainty::Unknown);
+    assert_eq!(empty.conservative_occupancy(), OccupancyState::Unknown);
+    assert_eq!(empty.occupancy_interval.total_cells, 0);
+    assert_eq!(empty.occupancy_interval.definite_filled_cells, 0);
+    assert_eq!(empty.occupancy_interval.possible_occupied_cells, 0);
+    assert_eq!(empty.occupancy_interval.lower, r(0));
+    assert_eq!(empty.occupancy_interval.upper, r(1));
+    assert_eq!(
+        empty.occupancy_interval.certainty,
+        AggregateCertainty::Unknown
+    );
+    assert!(!empty.occupancy_interval.is_point_interval());
+
+    let parent = VoxelAggregateFacts::from_aggregates(std::iter::empty::<&VoxelAggregateFacts>());
+    assert_eq!(parent.child_count, 0);
+    assert_eq!(parent.certainty, AggregateCertainty::Unknown);
+    assert_eq!(parent.conservative_occupancy(), OccupancyState::Unknown);
+    assert_eq!(parent.occupancy_interval.lower, r(0));
+    assert_eq!(parent.occupancy_interval.upper, r(1));
+    assert_eq!(
+        parent.occupancy_interval.certainty,
+        AggregateCertainty::Unknown
+    );
+}
+
+#[test]
+fn finite_frame_aggregate_counts_implied_empty_cells_and_rejects_overflow() {
+    let cells = [VoxelCell::material(MaterialRegionId(1))];
+    let aggregate = VoxelAggregateFacts::from_explicit_cells_in_frame(4, cells.iter()).unwrap();
+
+    assert_eq!(aggregate.child_count, 4);
+    assert_eq!(aggregate.certainty, AggregateCertainty::Exact);
+    assert_eq!(aggregate.conservative_occupancy(), OccupancyState::Mixed);
+    assert_eq!(aggregate.occupancy_interval.lower, rf(1, 4));
+    assert_eq!(aggregate.occupancy_interval.upper, rf(1, 4));
+
+    assert_eq!(
+        VoxelAggregateFacts::from_explicit_cells_in_frame(0, cells.iter()).unwrap_err(),
+        HypervoxelError::InvalidAggregateSummary {
+            total_cells: 0,
+            explicit_cells: 1
+        }
     );
 }
 
@@ -340,11 +617,25 @@ fn svo_dag_reuses_collapsed_empty_subtrees_and_preserves_aggregates() {
     let empty_stats = grid.stats();
     assert_eq!(empty_stats.nodes, 1);
     assert!(grid.aggregate().all_empty);
+    let empty_report = grid.report();
+    assert_eq!(empty_report.logical_leaf_cells, 512);
+    assert_eq!(empty_report.root_aggregate.child_count, 512);
+    assert_eq!(
+        empty_report.root_aggregate.occupancy_interval.total_cells,
+        512
+    );
+    assert!(empty_report.root_aggregate_covers_frame);
+    assert!(!empty_report.has_materialized_evidence);
+    assert!(!empty_report.exact_dag_replay_ready);
 
     let a = VoxelAddress::new(3, [0, 0, 0]).unwrap();
     let b = VoxelAddress::new(3, [7, 7, 7]).unwrap();
-    grid.set(a, VoxelCell::material(MaterialRegionId(11)))
+    let edit = grid
+        .set_with_report(a, VoxelCell::material(MaterialRegionId(11)))
         .unwrap();
+    assert!(edit.root_changed);
+    assert!(edit.exact_path_replay_ready);
+    assert_eq!(edit.edit.previous.unwrap(), VoxelCell::empty());
     grid.set(
         b,
         VoxelCell::boundary(VoxelPayload::MaterialRegion(MaterialRegionId(11))),
@@ -354,6 +645,16 @@ fn svo_dag_reuses_collapsed_empty_subtrees_and_preserves_aggregates() {
     assert_eq!(grid.get(a).unwrap().occupancy, OccupancyState::Filled);
     assert_eq!(grid.get(b).unwrap().occupancy, OccupancyState::Boundary);
     assert!(grid.aggregate().has_boundary);
+    let report = grid.report();
+    assert_eq!(report.logical_leaf_cells, 512);
+    assert_eq!(report.root_aggregate.child_count, 512);
+    assert_eq!(
+        report.root_aggregate.occupancy_interval.total_cells,
+        report.logical_leaf_cells
+    );
+    assert!(report.root_aggregate_covers_frame);
+    assert!(report.has_materialized_evidence);
+    assert!(report.exact_dag_replay_ready);
     assert_eq!(
         grid.get(VoxelAddress::new(3, [1, 1, 1]).unwrap())
             .unwrap()
@@ -361,6 +662,16 @@ fn svo_dag_reuses_collapsed_empty_subtrees_and_preserves_aggregates() {
         OccupancyState::Empty
     );
     assert!(grid.stats().nodes < 32);
+
+    let lossy = grid
+        .set_with_report(
+            VoxelAddress::new(3, [1, 1, 1]).unwrap(),
+            VoxelCell::lossy_adapter_value(7),
+        )
+        .unwrap();
+    assert!(!lossy.exact_path_replay_ready);
+    assert!(grid.report().root_aggregate.has_lossy);
+    assert!(!grid.report().exact_dag_replay_ready);
 }
 
 #[test]
@@ -385,11 +696,53 @@ fn voxelization_report_exposes_freshness_and_legacy_status() {
     };
 
     assert_eq!(report.freshness(), FreshnessStatus::Current);
+    assert!(report.source_replay_ready());
     assert!(!report.legacy_adapter.as_ref().unwrap().exact_replay);
+    assert!(!report.exact_topology_ready());
 
     let mut stale = report.clone();
     stale.source = Some(GridSource::new("mesh:gear", 8));
     assert_eq!(stale.freshness(), FreshnessStatus::Stale);
+    assert!(!stale.source_replay_ready());
+
+    let mut exact_adapter = report.clone();
+    exact_adapter.legacy_adapter = Some(LegacyAdapterStatus::exact(
+        LegacyAdapterKind::VoxelisObjVoxelize,
+        "predicate replayed fixture",
+    ));
+    assert!(exact_adapter.exact_topology_ready());
+
+    let mut blank_policy_adapter = exact_adapter.clone();
+    blank_policy_adapter.legacy_adapter = Some(LegacyAdapterStatus::exact(
+        LegacyAdapterKind::VoxelisObjVoxelize,
+        "   ",
+    ));
+    let adapter = blank_policy_adapter.legacy_adapter.as_ref().unwrap();
+    assert!(adapter.exact_replay);
+    assert!(!adapter.has_policy());
+    assert!(!adapter.exact_replay_ready());
+    assert!(!blank_policy_adapter.exact_topology_ready());
+
+    let mut empty_predicates = exact_adapter.clone();
+    empty_predicates.predicate_certificates =
+        VoxelPredicateCertificateReport::from_counts(0, 0, 0, 0);
+    assert!(
+        !empty_predicates
+            .predicate_certificates
+            .has_classified_cells()
+    );
+    assert!(!empty_predicates.predicate_certificates.is_fully_certified());
+    assert!(!empty_predicates.exact_topology_ready());
+
+    let mut unknown_predicate = exact_adapter.clone();
+    unknown_predicate.predicate_certificates =
+        VoxelPredicateCertificateReport::from_counts(0, 0, 0, 1);
+    assert!(
+        !unknown_predicate
+            .predicate_certificates
+            .is_fully_certified()
+    );
+    assert!(!unknown_predicate.exact_topology_ready());
 }
 
 #[test]
@@ -402,9 +755,21 @@ fn adapter_numeric_contract_keeps_float_tolerance_out_of_exact_topology() {
     assert_eq!(exact.scalar_precision, AdapterScalarPrecision::Exact);
     assert!(exact.has_explicit_scale);
     assert!(exact.scale_is_positive);
+    assert!(!exact.has_explicit_error_bound);
+    assert!(exact.tolerance_declaration_complete);
     assert!(!exact.has_unbounded_tolerance);
+    assert!(exact.adapter_policy_ready);
     assert!(exact.can_contribute_certified_values);
     assert!(exact.can_drive_exact_topology);
+
+    let blank_policy_exact = AdapterNumericContract::exact(
+        LegacyAdapterStatus::exact(LegacyAdapterKind::ImportExport, ""),
+        r(1),
+    )
+    .report();
+    assert!(blank_policy_exact.adapter.exact_replay);
+    assert!(!blank_policy_exact.adapter_policy_ready);
+    assert!(!blank_policy_exact.can_drive_exact_topology);
 
     let missing_tolerance = AdapterNumericContract::primitive_float(
         LegacyAdapterStatus::lossy(LegacyAdapterKind::VoxelisObjVoxelize, "triangle epsilon"),
@@ -419,8 +784,22 @@ fn adapter_numeric_contract_keeps_float_tolerance_out_of_exact_topology() {
         AdapterScalarPrecision::PrimitiveFloat
     );
     assert!(missing_tolerance.has_unbounded_tolerance);
+    assert!(!missing_tolerance.tolerance_declaration_complete);
     assert!(!missing_tolerance.can_contribute_certified_values);
     assert!(!missing_tolerance.can_drive_exact_topology);
+
+    let explicit_but_unbounded = AdapterNumericContract::primitive_float(
+        LegacyAdapterStatus::lossy(LegacyAdapterKind::PreviewRenderer, "empty explicit bounds"),
+        Some(r(1)),
+        None,
+        None,
+        AdapterToleranceStatus::Explicit,
+    )
+    .report();
+    assert!(!explicit_but_unbounded.has_explicit_error_bound);
+    assert!(!explicit_but_unbounded.tolerance_declaration_complete);
+    assert!(!explicit_but_unbounded.can_contribute_certified_values);
+    assert!(!explicit_but_unbounded.can_drive_exact_topology);
 
     let negative_epsilon = AdapterNumericContract::primitive_float(
         LegacyAdapterStatus::lossy(LegacyAdapterKind::PreviewRenderer, "bad display epsilon"),
@@ -431,7 +810,21 @@ fn adapter_numeric_contract_keeps_float_tolerance_out_of_exact_topology() {
     )
     .report();
     assert!(!negative_epsilon.epsilon_is_non_negative);
+    assert!(negative_epsilon.has_explicit_error_bound);
+    assert!(!negative_epsilon.tolerance_declaration_complete);
     assert!(!negative_epsilon.can_contribute_certified_values);
+
+    let exact_with_stray_tolerance = AdapterNumericContract {
+        adapter: LegacyAdapterStatus::exact(LegacyAdapterKind::ImportExport, "stray epsilon"),
+        source_scale: Some(r(1)),
+        scalar_precision: AdapterScalarPrecision::Exact,
+        epsilon: Some(r(0)),
+        tolerance: None,
+        tolerance_status: AdapterToleranceStatus::NotApplicable,
+    }
+    .report();
+    assert!(!exact_with_stray_tolerance.tolerance_declaration_complete);
+    assert!(!exact_with_stray_tolerance.can_drive_exact_topology);
 }
 
 #[test]
@@ -491,6 +884,50 @@ fn trace_manifest_deduplicates_dimensions_and_preserves_uncertainty_counts() {
     );
     assert!(report.has_lossy_adapter_work);
     assert!(report.has_unknowns);
+    assert!(report.has_operation_dimension);
+    assert!(report.has_exact_evidence);
+    assert!(!report.exact_trace_evidence_ready);
+
+    let vacuous = VoxelTraceManifest {
+        operation: "empty timing shell".into(),
+        dimensions: Vec::new(),
+        exact_predicate_count: 0,
+        lossy_adapter_count: 0,
+        unknown_count: 0,
+    }
+    .report();
+    assert!(!vacuous.has_operation_dimension);
+    assert!(!vacuous.has_exact_evidence);
+    assert!(!vacuous.exact_trace_evidence_ready);
+
+    let dimension_only = VoxelTraceManifest {
+        operation: "dimension without exact evidence".into(),
+        dimensions: vec![VoxelTraceDimension::PreparedQuery],
+        exact_predicate_count: 0,
+        lossy_adapter_count: 0,
+        unknown_count: 0,
+    }
+    .report();
+    assert!(dimension_only.has_operation_dimension);
+    assert!(!dimension_only.has_exact_evidence);
+    assert!(!dimension_only.exact_trace_evidence_ready);
+
+    let exact_report = VoxelTraceManifest {
+        operation: "exact prepared query".into(),
+        dimensions: vec![
+            VoxelTraceDimension::PreparedQuery,
+            VoxelTraceDimension::DomainHandoffReport,
+        ],
+        exact_predicate_count: 12,
+        lossy_adapter_count: 0,
+        unknown_count: 0,
+    }
+    .report();
+    assert!(!exact_report.has_lossy_adapter_work);
+    assert!(!exact_report.has_unknowns);
+    assert!(exact_report.has_operation_dimension);
+    assert!(exact_report.has_exact_evidence);
+    assert!(exact_report.exact_trace_evidence_ready);
 }
 
 #[test]
@@ -506,7 +943,66 @@ fn voxel_artifact_manifest_prevents_stale_or_incomplete_exact_indexing() {
         intended_domains: vec![VoxelHandoffDomain::Hyperphysics],
     }
     .report();
+    assert!(exact.role_supports_exact_indexing);
+    assert!(exact.stable_id_ready);
+    assert!(exact.intended_domain_ready);
+    assert!(exact.has_aggregate_evidence);
     assert!(exact.indexable_as_exact);
+
+    let empty_aggregate = VoxelAggregateFacts::from_cells(std::iter::empty::<&VoxelCell>());
+    let empty = VoxelArtifactManifest {
+        id: VoxelArtifactId("artifact:empty".into()),
+        role: VoxelArtifactRole::OccupancyCache,
+        freshness: FreshnessStatus::Current,
+        aggregate: empty_aggregate,
+        storage_replay: StorageReplayStatus::Exact,
+        missing_side_table_links: 0,
+        intended_domains: vec![VoxelHandoffDomain::Hyperphysics],
+    }
+    .report();
+    assert!(!empty.has_aggregate_evidence);
+    assert!(!empty.indexable_as_exact);
+
+    let preview = VoxelArtifactManifest {
+        id: VoxelArtifactId("artifact:preview:gear".into()),
+        role: VoxelArtifactRole::PreviewArtifact,
+        freshness: FreshnessStatus::Current,
+        aggregate: aggregate.clone(),
+        storage_replay: StorageReplayStatus::Exact,
+        missing_side_table_links: 0,
+        intended_domains: vec![VoxelHandoffDomain::Hyperparts],
+    }
+    .report();
+    assert!(!preview.role_supports_exact_indexing);
+    assert!(!preview.indexable_as_exact);
+
+    let unnamed = VoxelArtifactManifest {
+        id: VoxelArtifactId("   ".into()),
+        role: VoxelArtifactRole::OccupancyCache,
+        freshness: FreshnessStatus::Current,
+        aggregate: aggregate.clone(),
+        storage_replay: StorageReplayStatus::Exact,
+        missing_side_table_links: 0,
+        intended_domains: vec![VoxelHandoffDomain::Hyperphysics],
+    }
+    .report();
+    assert!(!unnamed.stable_id_ready);
+    assert!(unnamed.intended_domain_ready);
+    assert!(!unnamed.indexable_as_exact);
+
+    let domainless = VoxelArtifactManifest {
+        id: VoxelArtifactId("artifact:occupancy:domainless".into()),
+        role: VoxelArtifactRole::OccupancyCache,
+        freshness: FreshnessStatus::Current,
+        aggregate: aggregate.clone(),
+        storage_replay: StorageReplayStatus::Exact,
+        missing_side_table_links: 0,
+        intended_domains: Vec::new(),
+    }
+    .report();
+    assert!(domainless.stable_id_ready);
+    assert!(!domainless.intended_domain_ready);
+    assert!(!domainless.indexable_as_exact);
 
     let stale = VoxelArtifactManifest {
         id: VoxelArtifactId("artifact:field:thermal".into()),
@@ -545,12 +1041,25 @@ fn spatial_aggregate_reports_exact_bounds_child_mask_and_freshness() {
 
     let spatial = VoxelSpatialAggregateFacts::from_grid(&grid, Some(&report)).unwrap();
     assert_eq!(spatial.stored_cells, 2);
+    assert!(spatial.has_spatial_evidence);
     assert!(spatial.has_child(0));
     assert!(spatial.has_child(7));
     assert_eq!(spatial.freshness, FreshnessStatus::Current);
+    assert!(spatial.exact_bounds_ready);
+    assert!(spatial.source_replay_ready);
     let bounds = spatial.exact_bounds.unwrap();
     assert_eq!(bounds.min, left.bounds(grid.frame()).unwrap().min);
     assert_eq!(bounds.max, right.bounds(grid.frame()).unwrap().max);
+
+    let empty_frame = hypervoxel::GridFrame::builder().depth(2).build().unwrap();
+    let empty =
+        VoxelSpatialAggregateFacts::from_grid(&SparseVoxelGrid::new(empty_frame), None).unwrap();
+    assert_eq!(empty.stored_cells, 0);
+    assert!(!empty.has_spatial_evidence);
+    assert!(empty.exact_bounds.is_none());
+    assert!(!empty.exact_bounds_ready);
+    assert_eq!(empty.freshness, FreshnessStatus::Unknown);
+    assert!(!empty.source_replay_ready);
 }
 
 #[test]
@@ -578,11 +1087,82 @@ fn prepared_query_report_exposes_exact_cache_evidence_and_payoff() {
     let report = prepared.prepared_query_report(true).unwrap();
     assert_eq!(report.stored_cells, 2);
     assert_eq!(report.non_empty_cells, 2);
+    assert!(report.has_query_evidence);
     assert_eq!(report.freshness, FreshnessStatus::Current);
+    assert!(report.report_frame_matches);
     assert!(report.predicate_replay_available);
     assert_eq!(report.aabb_handoffs.len(), 2);
     assert_eq!(report.aabb_handoffs[0].address, first);
     assert_eq!(report.cache_entries, 3);
     assert_eq!(report.estimated_saved_cell_reads, 3);
     assert_eq!(report.aggregate, prepared.aggregate);
+    assert!(!report.exact_query_evidence_ready);
+
+    let mismatched_report = VoxelizationReport {
+        source: Some(GridSource::new("mesh:gear", 7)),
+        frame: GridFrame::builder().depth(2).build().unwrap(),
+        policy: VoxelizationPolicy::conservative_cover(),
+        aggregate: prepared.aggregate.clone(),
+        unknown_cells: 0,
+        boundary_cells: 0,
+        predicate_certificates: VoxelPredicateCertificateReport::from_counts(1, 0, 0, 0),
+        legacy_adapter: None,
+    };
+    let mismatched = PreparedVoxelGrid::new(
+        prepared.frame.clone(),
+        prepared.storage.clone(),
+        prepared.aggregate.clone(),
+    )
+    .with_report(mismatched_report)
+    .prepared_query_report(true)
+    .unwrap();
+    assert_eq!(mismatched.freshness, FreshnessStatus::Stale);
+    assert!(!mismatched.report_frame_matches);
+    assert!(!mismatched.exact_query_evidence_ready);
+
+    let exact_frame = GridFrame::builder()
+        .depth(3)
+        .source(GridSource::new("mesh:gear", 7))
+        .build()
+        .unwrap();
+    let mut exact_grid = SparseVoxelGrid::new(exact_frame.clone());
+    exact_grid
+        .set(first, VoxelCell::material(MaterialRegionId(1)))
+        .unwrap();
+    let exact_aggregate = exact_grid.stored_aggregate();
+    let exact_report = VoxelizationReport {
+        source: Some(GridSource::new("mesh:gear", 7)),
+        frame: exact_frame.clone(),
+        policy: VoxelizationPolicy::conservative_cover(),
+        aggregate: exact_aggregate.clone(),
+        unknown_cells: 0,
+        boundary_cells: 0,
+        predicate_certificates: VoxelPredicateCertificateReport::from_counts(1, 0, 0, 0),
+        legacy_adapter: None,
+    };
+    let exact_prepared =
+        PreparedVoxelGrid::new(exact_frame, exact_grid, exact_aggregate).with_report(exact_report);
+    let exact_ready = exact_prepared.prepared_query_report(true).unwrap();
+    assert!(exact_ready.has_query_evidence);
+    assert!(exact_ready.exact_query_evidence_ready);
+
+    let empty_frame = exact_prepared.frame.clone();
+    let empty_grid = SparseVoxelGrid::new(empty_frame.clone());
+    let empty_aggregate = empty_grid.stored_aggregate();
+    let empty_report = VoxelizationReport {
+        source: Some(GridSource::new("mesh:gear", 7)),
+        frame: empty_frame.clone(),
+        policy: VoxelizationPolicy::conservative_cover(),
+        aggregate: empty_aggregate.clone(),
+        unknown_cells: 0,
+        boundary_cells: 0,
+        predicate_certificates: VoxelPredicateCertificateReport::from_counts(0, 0, 0, 0),
+        legacy_adapter: None,
+    };
+    let empty_prepared =
+        PreparedVoxelGrid::new(empty_frame, empty_grid, empty_aggregate).with_report(empty_report);
+    let empty_query = empty_prepared.prepared_query_report(true).unwrap();
+    assert_eq!(empty_query.non_empty_cells, 0);
+    assert!(!empty_query.has_query_evidence);
+    assert!(!empty_query.exact_query_evidence_ready);
 }

@@ -15,23 +15,47 @@ use crate::{SparseVoxelGrid, VoxelAddress};
 /// Differential report between two sparse semantic grids.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SparseGridDiffReport {
+    /// Whether both grids use the same exact frame.
+    pub frame_matches: bool,
+    /// Number of distinct addresses compared across both grids.
+    pub compared_addresses: usize,
+    /// Whether at least one address was compared.
+    ///
+    /// Comparing two empty sparse maps is a precise no-difference report, but
+    /// it is not evidence that a ported backend preserved any object-level
+    /// voxel facts. Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997, treats exactness as an explicit
+    /// predicate/object contract; this bit keeps empty fixture comparisons from
+    /// becoming vacuous equivalence certificates.
+    pub has_compared_addresses: bool,
     /// Addresses present only in the left grid.
     pub only_left: Vec<VoxelAddress>,
     /// Addresses present only in the right grid.
     pub only_right: Vec<VoxelAddress>,
     /// Addresses present in both grids but carrying different cells.
     pub differing_cells: Vec<VoxelAddress>,
+    /// Total number of address or payload mismatches.
+    pub mismatch_count: usize,
+    /// Whether the two grids are non-vacuously semantically identical.
+    ///
+    /// This is the storage-differential analogue of Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997: a ported
+    /// backend can be treated as matching only when at least one exact address
+    /// and cell fact was compared in the same grid frame, not because a lossy
+    /// fixture looks visually close or because two empty maps share a frame.
+    pub semantic_equivalence_ready: bool,
 }
 
 impl SparseGridDiffReport {
     /// Returns whether the compared grids are semantically identical.
     pub fn is_equal(&self) -> bool {
-        self.only_left.is_empty() && self.only_right.is_empty() && self.differing_cells.is_empty()
+        self.semantic_equivalence_ready
     }
 }
 
 /// Compares two sparse grids by exact address and cell payload.
 pub fn diff_sparse_grids(left: &SparseVoxelGrid, right: &SparseVoxelGrid) -> SparseGridDiffReport {
+    let frame_matches = left.frame() == right.frame();
     let left_addresses = left
         .iter()
         .map(|(address, _)| *address)
@@ -54,10 +78,18 @@ pub fn diff_sparse_grids(left: &SparseVoxelGrid, right: &SparseVoxelGrid) -> Spa
         .copied()
         .filter(|address| left.get(*address).ok() != right.get(*address).ok())
         .collect::<Vec<_>>();
+    let compared_addresses = left_addresses.union(&right_addresses).count();
+    let mismatch_count =
+        usize::from(!frame_matches) + only_left.len() + only_right.len() + differing_cells.len();
 
     SparseGridDiffReport {
+        frame_matches,
+        compared_addresses,
+        has_compared_addresses: compared_addresses > 0,
         only_left,
         only_right,
         differing_cells,
+        mismatch_count,
+        semantic_equivalence_ready: compared_addresses > 0 && frame_matches && mismatch_count == 0,
     }
 }

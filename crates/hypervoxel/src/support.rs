@@ -61,6 +61,13 @@ pub struct SupportMaskReport {
     pub direction: SupportDirection,
     /// Number of checked non-empty target cells.
     pub checked_cells: usize,
+    /// Whether at least one non-empty target cell was checked.
+    ///
+    /// An empty target mask is a precise absence report, but it is not exact
+    /// support evidence. Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997, requires exact decisions to be
+    /// grounded in object-level evidence rather than vacuous count checks.
+    pub has_checked_cells: bool,
     /// Number of cells with explicit support.
     pub supported_cells: usize,
     /// Number of cells without support evidence.
@@ -71,6 +78,8 @@ pub struct SupportMaskReport {
     pub unknown_cells: usize,
     /// Number of cells with lossy evidence.
     pub lossy_cells: usize,
+    /// Whether this mask can be consumed as exact support evidence.
+    pub exact_support_mask_ready: bool,
     /// Per-cell reports in deterministic address order.
     pub cells: Vec<SupportCellReport>,
 }
@@ -78,7 +87,7 @@ pub struct SupportMaskReport {
 impl SupportMaskReport {
     /// Returns whether all checked cells are supported or on the support plane.
     pub fn is_conservatively_supported(&self) -> bool {
-        self.unsupported_cells == 0 && self.unknown_cells == 0 && self.lossy_cells == 0
+        self.exact_support_mask_ready
     }
 }
 
@@ -91,11 +100,13 @@ pub fn classify_support_mask(
     let mut report = SupportMaskReport {
         direction,
         checked_cells: 0,
+        has_checked_cells: false,
         supported_cells: 0,
         unsupported_cells: 0,
         support_plane_cells: 0,
         unknown_cells: 0,
         lossy_cells: 0,
+        exact_support_mask_ready: false,
         cells: Vec::new(),
     };
 
@@ -121,6 +132,16 @@ pub fn classify_support_mask(
             status,
         });
     }
+
+    // This boolean is the support-mask equivalent of the other Hyper report
+    // readiness flags: downstream process planners should not infer exact
+    // usability from counts by convention. Unsupported, unknown, and lossy
+    // cells are all non-ready evidence, following Yap's exact-object boundary.
+    report.has_checked_cells = report.checked_cells > 0;
+    report.exact_support_mask_ready = report.has_checked_cells
+        && report.unsupported_cells == 0
+        && report.unknown_cells == 0
+        && report.lossy_cells == 0;
 
     Ok(report)
 }

@@ -9,7 +9,7 @@
 //! 1997: sampled objects carry provenance and certification status instead of
 //! becoming unqualified scalar truth.
 
-use hyperreal::Real;
+use hyperreal::{Real, RealSign};
 
 use crate::{AggregateCertainty, FreshnessStatus, VoxelAggregateFacts};
 
@@ -60,6 +60,18 @@ pub struct VoxelFieldCouplingReport {
     pub residual_replay_available: bool,
     /// Optional certified absolute adapter error bound for sampled values.
     pub adapter_error_bound: Option<Real>,
+    /// Whether an adapter error bound was supplied.
+    pub has_adapter_error_bound: bool,
+    /// Whether the supplied adapter error bound is structurally non-negative.
+    ///
+    /// A negative or sign-unknown "absolute error" is not a certificate. This
+    /// keeps interval/error-bounded coupling aligned with Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997: adapter
+    /// evidence must carry a valid object-level bound before downstream
+    /// residual code can consume it as certified evidence.
+    pub adapter_error_bound_non_negative: bool,
+    /// Whether the adapter route carries a certified usable error bound.
+    pub certified_adapter_error_bound_ready: bool,
     /// Number of missing field/sample side-table records.
     pub missing_sample_records: usize,
     /// Whether a consumer may use the grid as exact residual evidence.
@@ -71,6 +83,16 @@ pub struct VoxelFieldCouplingReport {
 impl VoxelFieldCouplingManifest {
     /// Builds a coupling report from provenance and aggregate facts.
     pub fn report(&self) -> VoxelFieldCouplingReport {
+        let has_adapter_error_bound = self.adapter_error_bound.is_some();
+        let adapter_error_bound_non_negative =
+            self.adapter_error_bound.as_ref().is_some_and(|bound| {
+                matches!(
+                    bound.structural_facts().sign,
+                    Some(RealSign::Zero | RealSign::Positive)
+                )
+            });
+        let certified_adapter_error_bound_ready =
+            has_adapter_error_bound && adapter_error_bound_non_negative;
         let usable_as_exact_residual_evidence = self.freshness == FreshnessStatus::Current
             && self.aggregate.certainty == AggregateCertainty::Exact
             && self.residual_replay_available
@@ -82,10 +104,13 @@ impl VoxelFieldCouplingManifest {
             aggregate_certainty: self.aggregate.certainty,
             residual_replay_available: self.residual_replay_available,
             adapter_error_bound: self.adapter_error_bound.clone(),
+            has_adapter_error_bound,
+            adapter_error_bound_non_negative,
+            certified_adapter_error_bound_ready,
             missing_sample_records: self.missing_sample_records,
             usable_as_exact_residual_evidence,
             requires_error_bounded_adapter: !usable_as_exact_residual_evidence
-                && self.adapter_error_bound.is_some(),
+                && certified_adapter_error_bound_ready,
         }
     }
 }

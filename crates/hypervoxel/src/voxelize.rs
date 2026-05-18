@@ -31,6 +31,34 @@ pub struct ExactBox {
     pub source: Option<GridSource>,
 }
 
+/// Preflight report for an [`ExactBox`].
+///
+/// Exact voxelization may continue through undecided predicate comparisons as
+/// explicit unknown cells, but source geometry with a certified inverted axis
+/// is not a valid box. The report keeps that distinction visible, following
+/// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7(1-2), 1997: invalid object structure is rejected, while undecided
+/// comparisons remain explicit uncertainty instead of an epsilon repair.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ExactBoxReport {
+    /// Axes where `min <= max` was certified.
+    pub ordered_axes: Vec<usize>,
+    /// Axes where `min == max` was certified.
+    ///
+    /// A zero-thickness axis is ordered, but it is not a valid 3D box volume
+    /// for source-geometry voxelization. Yap, "Towards Exact Geometric
+    /// Computation," *Computational Geometry* 7(1-2), 1997, distinguishes
+    /// exact object structure from predicate accidents; degenerate solids are
+    /// rejected rather than being promoted into boundary-only topology.
+    pub zero_extent_axes: Vec<usize>,
+    /// Axes where `min > max` was certified.
+    pub invalid_axes: Vec<usize>,
+    /// Axes whose endpoint ordering could not be certified.
+    pub unknown_axes: Vec<usize>,
+    /// Whether the box is ready for exact source-geometry use.
+    pub exact_box_ready: bool,
+}
+
 impl ExactBox {
     /// Creates an exact box without proving min/max order up front.
     ///
@@ -39,6 +67,35 @@ impl ExactBox {
     /// panics.
     pub fn new(min: [Real; 3], max: [Real; 3], source: Option<GridSource>) -> Self {
         Self { min, max, source }
+    }
+
+    /// Reports whether the box endpoints form a valid exact AABB.
+    pub fn report(&self) -> ExactBoxReport {
+        let mut ordered_axes = Vec::new();
+        let mut zero_extent_axes = Vec::new();
+        let mut invalid_axes = Vec::new();
+        let mut unknown_axes = Vec::new();
+        for axis in 0..3 {
+            match certified_cmp(&self.min[axis], &self.max[axis], axis) {
+                Ok(Ordering::Less) => ordered_axes.push(axis),
+                Ok(Ordering::Equal) => {
+                    ordered_axes.push(axis);
+                    zero_extent_axes.push(axis);
+                }
+                Ok(Ordering::Greater) => invalid_axes.push(axis),
+                Err(HypervoxelError::UnknownOrdering { .. }) => unknown_axes.push(axis),
+                Err(_) => unknown_axes.push(axis),
+            }
+        }
+        let exact_box_ready =
+            invalid_axes.is_empty() && unknown_axes.is_empty() && zero_extent_axes.is_empty();
+        ExactBoxReport {
+            ordered_axes,
+            zero_extent_axes,
+            invalid_axes,
+            unknown_axes,
+            exact_box_ready,
+        }
     }
 }
 
@@ -101,6 +158,18 @@ pub fn voxelize_exact_box(
     material: MaterialRegionId,
     policy: VoxelizationPolicy,
 ) -> HypervoxelResult<(SparseVoxelGrid, VoxelizationReport)> {
+    let source_report = exact_box.report();
+    if !source_report.invalid_axes.is_empty() {
+        return Err(HypervoxelError::InvalidSourceGeometry {
+            reason: "box minimum exceeds maximum",
+        });
+    }
+    if !source_report.zero_extent_axes.is_empty() {
+        return Err(HypervoxelError::InvalidSourceGeometry {
+            reason: "box has zero extent",
+        });
+    }
+
     let mut grid = SparseVoxelGrid::new(frame.clone());
     let mut boundary_cells = 0;
     let mut unknown_cells = 0;
@@ -168,7 +237,10 @@ pub fn voxelize_exact_box(
         }
     }
 
-    let aggregate = VoxelAggregateFacts::from_cells(grid.iter().map(|(_, cell)| cell));
+    let aggregate = VoxelAggregateFacts::from_explicit_cells_in_frame(
+        usize::try_from(cells_per_axis.pow(3)).map_err(|_| HypervoxelError::AddressOverflow)?,
+        grid.iter().map(|(_, cell)| cell),
+    )?;
     let report = VoxelizationReport {
         source: exact_box.source.clone(),
         frame,

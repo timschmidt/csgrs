@@ -55,6 +55,8 @@ mod support;
 mod svo;
 mod trace;
 mod transform;
+#[cfg(feature = "legacy-voxelis")]
+mod voxelis_adapter;
 mod voxelize;
 
 pub use aabb::{ExactAabb3, GridAabbHandoff, LatticeAabbHandoff};
@@ -63,17 +65,18 @@ pub use adapter::{
 };
 pub use address::{CellBounds, VoxelAddress};
 pub use affine::ExactAffineTransform;
-pub use aggregate::{AggregateCertainty, VoxelAggregateFacts};
+pub use aggregate::{AggregateCertainty, VoxelAggregateFacts, VoxelOccupancyInterval};
 pub use artifact::{
     VoxelArtifactId, VoxelArtifactManifest, VoxelArtifactReport, VoxelArtifactRole,
 };
 pub use audit::VoxelizationAudit;
-pub use batch::{VoxelEdit, VoxelEditBatch};
+pub use batch::{VoxelEdit, VoxelEditBatch, VoxelEditBatchReport};
 pub use candidate::{VoxelCandidateKind, VoxelCandidateManifest, VoxelCandidateReport};
 pub use cell::{
-    FieldSampleId, MaterialRegionId, OccupancyState, ProcessStateId, VoxelCell, VoxelPayload,
+    FieldSampleId, MaterialRegionId, OccupancyState, ProcessStateId, VoxelCell, VoxelCellReport,
+    VoxelPayload,
 };
-pub use chunk::{ChunkAddress, ChunkPageSummary, ChunkShape};
+pub use chunk::{ChunkAddress, ChunkLocalAddress, ChunkPageSummary, ChunkShape};
 pub use compression::{
     CompressedStorageKind, CompressedStorageManifest, CompressedStorageReport, StorageReplayStatus,
     VoxelMemoryBudgetManifest, VoxelMemoryBudgetReport,
@@ -97,8 +100,8 @@ pub use frame::{
     GridFrameManifest, GridFrameManifestReport, GridHandedness, GridSource, LengthUnit,
 };
 pub use halfspace::{
-    ExactHalfSpace, VoxelHalfSpaceClassifier, classify_cell_against_halfspace,
-    voxelize_exact_halfspace,
+    ExactHalfSpace, ExactHalfSpaceReport, VoxelHalfSpaceClassifier,
+    classify_cell_against_halfspace, voxelize_exact_halfspace,
 };
 pub use handoff::{
     SideTableLinkStatus, VoxelHandoffDomain, VoxelHandoffManifest, VoxelHandoffReport,
@@ -112,13 +115,15 @@ pub use io_manifest::{
 pub use legacy::{LegacyAdapterKind, LegacyAdapterStatus};
 pub use lod::{LodCellSelection, LodSelectionReport, select_lod_cells};
 pub use material::{
-    MaterialColorLookupReport, MaterialDisplayColor, MaterialDisplayPalette, MaterialRegionQuery,
-    lookup_material_display_colors, query_material_regions,
+    MaterialColorLookupReport, MaterialDisplayColor, MaterialDisplayPalette,
+    MaterialRegionMetadataReport, MaterialRegionQuery, lookup_material_display_colors,
+    query_material_regions, report_material_region_metadata,
 };
 pub use mesh::{
-    ExactVoxelFace, GreedyFacePatch, GreedyFacePatchPlan, LossyMeshExportReport, LossyObjExport,
-    LossyQuadMesh, VoxelFaceSide, extract_exposed_faces, greedy_face_patch_plan,
-    lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces,
+    ExactFaceExtractionReport, ExactVoxelFace, GreedyFacePatch, GreedyFacePatchPlan,
+    LossyMeshExportReport, LossyObjExport, LossyQuadMesh, VoxelFaceSide, extract_exposed_faces,
+    extract_exposed_faces_with_report, greedy_face_patch_plan, lossy_obj_from_quad_mesh,
+    lossy_quad_mesh_from_faces,
 };
 pub use path::{
     AddressRay, AddressRayTrace, AddressSegmentTrace, SegmentSweepQuery, sweep_address_segment,
@@ -126,20 +131,21 @@ pub use path::{
 };
 pub use process::{ProcessGridArtifact, ProcessGridRole, SweptVolumeProvenance, SweptVolumeReport};
 pub use query::{
-    ConnectedComponentQuery, ManhattanDistanceBand, NeighborQuery, OccupancyQuery,
-    PreparedQueryReport, PreparedSparseVoxelGridExt, QueryRegion, voxel_neighbors6,
+    AabbBroadPhaseCandidate, AabbBroadPhaseQuery, ConnectedComponentQuery, ManhattanDistanceBand,
+    NeighborQuery, OccupancyQuery, PreparedQueryReport, PreparedSparseVoxelGridExt, QueryRegion,
+    voxel_neighbors6,
 };
 pub use report::{
     BoundaryPolicy, FreshnessStatus, PreparedVoxelGrid, QuantizationPolicy,
     VoxelPredicateCertificateReport, VoxelizationPolicy, VoxelizationReport,
 };
-pub use serialize::{DeterministicSnapshot, SnapshotFormat};
+pub use serialize::{DeterministicSnapshot, DeterministicSnapshotReport, SnapshotFormat};
 pub use side_table::{
     FieldSampleRecord, MaterialRegionRecord, ProcessStateRecord, VoxelSideTables,
 };
 pub use solid::{
-    ExactConvexHalfSpaceSet, VoxelConvexClassifier, classify_cell_against_convex_halfspace_set,
-    voxelize_exact_convex_halfspace_set,
+    ExactConvexHalfSpaceSet, ExactConvexHalfSpaceSetReport, VoxelConvexClassifier,
+    classify_cell_against_convex_halfspace_set, voxelize_exact_convex_halfspace_set,
 };
 pub use spatial::VoxelSpatialAggregateFacts;
 pub use storage::{SparseVoxelGrid, VoxelEditReport};
@@ -147,7 +153,9 @@ pub use support::{
     SupportCellReport, SupportCellStatus, SupportDirection, SupportMaskReport,
     classify_support_mask,
 };
-pub use svo::{SvoDagStats, SvoNodeId, SvoVoxelGrid};
+pub use svo::{SvoDagStats, SvoEditReport, SvoNodeId, SvoStorageReport, SvoVoxelGrid};
 pub use trace::{VoxelTraceDimension, VoxelTraceManifest, VoxelTraceReport};
 pub use transform::{AxisPermutationTransform, SignedAxis};
-pub use voxelize::{ExactBox, VoxelBoxClassifier, voxelize_exact_box};
+#[cfg(feature = "legacy-voxelis")]
+pub use voxelis_adapter::{LegacyVoxelisStorageDiffReport, compare_legacy_voxelis_u8_samples};
+pub use voxelize::{ExactBox, ExactBoxReport, VoxelBoxClassifier, voxelize_exact_box};

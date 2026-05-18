@@ -38,7 +38,9 @@ meshing can also erase provenance unless their replay status is recorded.
 `hypervoxel` treats a grid as evidence rather than just pixels in 3D. It keeps exact
 frames and integer addresses, stores conservative aggregate facts, distinguishes
 occupied/empty/mixed/unknown states, and records adapter, quantization, compression,
-export, and handoff reports.
+export, and handoff reports. Readiness flags are intentionally non-vacuous: empty
+batches, empty snapshots, empty sample declarations, collapsed empty SVO roots, and
+zero-byte memory routes are absence reports rather than exact evidence.
 
 ## Main Types
 
@@ -59,9 +61,11 @@ export, and handoff reports.
 
 Grid frames use `Real` values; voxel addresses are integer grid coordinates. Exact box,
 half-space, and convex-half-space classification use exact cell bounds and return
-inside/outside/boundary or mixed states as appropriate. Quantization, preview export,
-legacy storage, and lossy mesh output are report-bearing adapter surfaces, not silent
-replacements for exact occupancy evidence.
+inside/outside/boundary or mixed states as appropriate. Source preflight rejects
+inverted or zero-extent boxes, zero or structurally unknown half-space normals, and
+empty convex predicate sets before topology can be promoted. Quantization, preview
+export, legacy storage, and lossy mesh output are report-bearing adapter surfaces, not
+silent replacements for exact occupancy evidence.
 
 ## Performance Model
 
@@ -72,8 +76,9 @@ downstream representation. Exposed-face extraction and greedy face patch plannin
 kept as explicit lossy/export steps.
 
 The harvested `voxelis` SVO-DAG code remains available behind `legacy-voxelis` for
-storage experiments, but Hyper-native reports should preserve replay and provenance even
-when compressed storage is used.
+storage experiments. The feature exposes sampled `VoxTree<u8>` storage diffs where
+default/nonzero semantics match Hyper cells, but the adapter remains lossy provenance
+under `LegacyAdapterKind::VoxelisStorage` and cannot stand in for exact voxelization.
 
 ## Current Status
 
@@ -87,7 +92,10 @@ Implemented today:
 - exact box, half-space, and convex-half-space-set voxelization/classification;
 - AABB, affine, axis-permutation, support-mask, ray/path trace, distance-field preview,
   sparse-grid diff, mesh export, compression, memory-budget, IO, artifact, coupling, and
-  handoff reports.
+  handoff reports, including non-vacuous sample, memory, query, handoff, artifact, and
+  process provenance gates.
+- feature-gated sampled legacy `voxelis` storage differential reports that keep storage
+  agreement separate from exact source-geometry replay.
 
 Known limits: full production voxelizers, out-of-core pipelines, GPU renderers, and
 complete mesh/field solver bridges remain adapter work.
@@ -96,7 +104,7 @@ complete mesh/field solver bridges remain adapter work.
 
 ```toml
 [dependencies]
-hypervoxel = "0.1.0"
+hypervoxel = "0.2.0"
 ```
 
 For sibling checkouts:

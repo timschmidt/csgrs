@@ -38,8 +38,27 @@ pub struct SignedDistanceSample {
 pub struct DistanceFieldPreview {
     /// Region sampled.
     pub region: QueryRegion,
+    /// Number of explicitly stored non-empty source cells used as distance sites.
+    pub source_cells: usize,
+    /// Whether the preview has at least one source cell to measure from.
+    ///
+    /// A distance transform without sites is a well-defined empty search
+    /// result, but it is not exact distance evidence for downstream planning.
+    /// Keeping that distinction explicit follows Rosenfeld and Pfaltz,
+    /// "Distance functions on digital pictures," *Pattern Recognition* 1(1),
+    /// 1968, and Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997.
+    pub has_distance_source: bool,
     /// Samples in deterministic address order.
     pub samples: Vec<DistanceSample>,
+    /// Whether all samples are exact address-space distance evidence.
+    ///
+    /// This is not a continuous SDF certificate. It only certifies the integer
+    /// Manhattan preview over known voxel occupancy, following Rosenfeld and
+    /// Pfaltz, "Distance functions on digital pictures," *Pattern Recognition*
+    /// 1(1), 1968, and Yap's exact-geometric-computation rule that approximate
+    /// geometry must not be smuggled into exact topology.
+    pub exact_address_distance_ready: bool,
 }
 
 /// Signed distance-field preview over a query region.
@@ -47,8 +66,19 @@ pub struct DistanceFieldPreview {
 pub struct SignedDistanceFieldPreview {
     /// Region sampled.
     pub region: QueryRegion,
+    /// Number of explicitly stored non-empty source cells used as distance sites.
+    pub source_cells: usize,
+    /// Whether the preview has at least one source cell to measure from.
+    pub has_distance_source: bool,
     /// Samples in deterministic address order.
     pub samples: Vec<SignedDistanceSample>,
+    /// Whether all signed samples are exact address-space distance evidence.
+    pub exact_address_distance_ready: bool,
+    /// Whether this preview may be consumed as a continuous signed-distance field.
+    ///
+    /// This is always false for the current integer-lattice helper; continuous
+    /// SDFs must enter through a named preview/export adapter report.
+    pub continuous_sdf_ready: bool,
 }
 
 /// Samples exact address-space Manhattan distances in a query region.
@@ -83,9 +113,19 @@ pub fn sample_manhattan_distance_field(
             }
         }
     }
+    let source_cells = occupied.len();
+    let has_distance_source = source_cells > 0;
+    let exact_address_distance_ready = has_distance_source
+        && grid
+            .iter()
+            .all(|(_, cell)| exact_distance_source_ready(cell.occupancy));
+
     Ok(DistanceFieldPreview {
         region,
+        source_cells,
+        has_distance_source,
         samples: samples.into_values().collect(),
+        exact_address_distance_ready,
     })
 }
 
@@ -98,6 +138,7 @@ pub fn sample_signed_manhattan_distance_field(
     region: QueryRegion,
 ) -> crate::HypervoxelResult<SignedDistanceFieldPreview> {
     let unsigned = sample_manhattan_distance_field(grid, region.clone())?;
+    let exact_address_distance_ready = unsigned.exact_address_distance_ready;
     let samples = unsigned
         .samples
         .into_iter()
@@ -113,9 +154,23 @@ pub fn sample_signed_manhattan_distance_field(
             occupied: sample.occupied,
         })
         .collect();
-    Ok(SignedDistanceFieldPreview { region, samples })
+    Ok(SignedDistanceFieldPreview {
+        region,
+        source_cells: unsigned.source_cells,
+        has_distance_source: unsigned.has_distance_source,
+        samples,
+        exact_address_distance_ready,
+        continuous_sdf_ready: false,
+    })
 }
 
 fn manhattan(left: [u64; 3], right: [u64; 3]) -> u64 {
     left[0].abs_diff(right[0]) + left[1].abs_diff(right[1]) + left[2].abs_diff(right[2])
+}
+
+fn exact_distance_source_ready(occupancy: OccupancyState) -> bool {
+    !matches!(
+        occupancy,
+        OccupancyState::Unknown | OccupancyState::LossyAdapterValue
+    )
 }

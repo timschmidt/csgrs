@@ -63,8 +63,21 @@ pub struct PreviewExportReport {
     pub exact_input_primitives: usize,
     /// Output primitive count.
     pub exported_primitives: usize,
+    /// Whether at least one exact voxel primitive was consumed.
+    ///
+    /// A preview/export route with no input primitives can still describe a
+    /// valid empty export, but it is not topology replay evidence. Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7(1-2), 1997, keeps exact claims attached to explicit object facts.
+    pub has_input_primitives: bool,
+    /// Whether at least one display/export primitive was emitted.
+    pub has_exported_primitives: bool,
     /// Whether the route is exact replay or preview-only.
     pub freshness: FreshnessStatus,
+    /// Whether exact voxel-grid topology was preserved by the route.
+    pub exact_grid_topology_replay: bool,
+    /// Whether this export can certify source CAD/mesh geometry.
+    pub source_geometry_replay: bool,
     /// Explicit adapter status.
     pub adapter: LegacyAdapterStatus,
 }
@@ -72,18 +85,32 @@ pub struct PreviewExportReport {
 impl PreviewExportManifest {
     /// Builds a preview/export report from manifest facts only.
     pub fn report(&self) -> PreviewExportReport {
-        let exact = self.preserves_grid_topology
+        let has_input_primitives = self.exact_input_primitives > 0;
+        let has_exported_primitives = self.exported_primitives > 0;
+        let exact = has_input_primitives
+            && has_exported_primitives
+            && self.preserves_grid_topology
             && self.has_explicit_labels
-            && !matches!(self.scalar_policy, PreviewScalarPolicy::PrimitiveFloat);
+            && !matches!(self.scalar_policy, PreviewScalarPolicy::PrimitiveFloat)
+            && !matches!(self.format, PreviewExportFormat::ContinuousSdfPreview);
         PreviewExportReport {
             format: self.format,
             exact_input_primitives: self.exact_input_primitives,
             exported_primitives: self.exported_primitives,
+            has_input_primitives,
+            has_exported_primitives,
             freshness: if exact {
                 FreshnessStatus::Current
             } else {
                 FreshnessStatus::Unknown
             },
+            exact_grid_topology_replay: exact,
+            // Preview/export routes are derived views of voxel artifacts, not
+            // source CAD or mesh certificates. Lorensen and Cline's marching
+            // cubes work is valuable display extraction; Yap's exact geometry
+            // boundary keeps source-geometry truth in proof-carrying source
+            // objects and voxelization reports.
+            source_geometry_replay: false,
             adapter: if exact {
                 LegacyAdapterStatus::exact(kind(self.format), "preview/export manifest")
             } else {

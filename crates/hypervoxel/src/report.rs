@@ -138,6 +138,29 @@ impl VoxelPredicateCertificateReport {
     pub fn classified_cells(&self) -> usize {
         self.certified_cells() + self.unknown_cells
     }
+
+    /// Returns whether this report contains any classified predicate outcome.
+    ///
+    /// A zero-count certificate packet is a useful absence report, but it is
+    /// not predicate evidence. Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997, treats exactness as a certified
+    /// object-level decision; callers need this gate to reject vacuous
+    /// predicate summaries.
+    pub fn has_classified_cells(&self) -> bool {
+        self.classified_cells() > 0
+    }
+
+    /// Returns whether every predicate outcome was certified.
+    ///
+    /// This is the predicate-accounting boundary from Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997: an
+    /// exact voxel report may preserve boundary outcomes, but it must not hide
+    /// an uncertified predicate as an exact cell decision. It also rejects
+    /// empty predicate packets so a zero-count report cannot become a vacuous
+    /// certificate.
+    pub fn is_fully_certified(&self) -> bool {
+        self.has_classified_cells() && self.unknown_cells == 0
+    }
 }
 
 /// Report from a voxelization or import pass.
@@ -169,6 +192,33 @@ impl VoxelizationReport {
             (Some(_), Some(_)) => FreshnessStatus::Stale,
             _ => FreshnessStatus::Unknown,
         }
+    }
+
+    /// Returns whether the source binding can be replayed as current.
+    pub fn source_replay_ready(&self) -> bool {
+        self.freshness() == Current
+    }
+
+    /// Returns whether the voxelized topology is certified by exact predicates.
+    ///
+    /// This is deliberately separate from [`Self::source_replay_ready`]. A
+    /// local fixture with no source version may still have exact/certified cell
+    /// topology, while a stale source binding must still be rejected by callers
+    /// that need source replay. The decision follows Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997: topology
+    /// is exact only when all combinatorial predicates were certified and no
+    /// lossy adapter or explicit unknown cell participates.
+    pub fn exact_topology_ready(&self) -> bool {
+        self.policy.is_occupancy_policy()
+            && self.policy.is_exact_semantic_role()
+            && self.unknown_cells == 0
+            && self.predicate_certificates.is_fully_certified()
+            && !self.aggregate.has_unknown
+            && !self.aggregate.has_lossy
+            && self
+                .legacy_adapter
+                .as_ref()
+                .is_none_or(|adapter| adapter.exact_replay_ready())
     }
 }
 

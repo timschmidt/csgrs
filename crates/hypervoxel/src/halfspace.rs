@@ -9,7 +9,7 @@
 
 use std::cmp::Ordering;
 
-use hyperreal::{CertifiedRealOrdering, Real};
+use hyperreal::{CertifiedRealOrdering, Real, RealSign};
 
 use crate::{
     BoundaryPolicy, GridFrame, GridSource, HypervoxelError, HypervoxelResult, MaterialRegionId,
@@ -29,6 +29,34 @@ pub struct ExactHalfSpace {
     pub source: Option<GridSource>,
 }
 
+/// Preflight report for an [`ExactHalfSpace`].
+///
+/// A linear half-space needs at least one nonzero normal component. This report
+/// distinguishes a certified zero normal from an undecided one rather than
+/// inventing an epsilon threshold. That is the exact-object boundary described
+/// by Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7(1-2), 1997.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ExactHalfSpaceReport {
+    /// Normal axes structurally known to be nonzero.
+    pub known_nonzero_normal_axes: Vec<usize>,
+    /// Normal axes structurally known to be exactly zero.
+    pub known_zero_normal_axes: Vec<usize>,
+    /// Normal axes whose zero status is not structurally known.
+    pub unknown_normal_axes: Vec<usize>,
+    /// Whether the normal is structurally certified as the zero vector.
+    pub zero_normal_rejected: bool,
+    /// Whether this half-space is ready as exact source predicate geometry.
+    ///
+    /// Readiness requires a certified nonzero normal and no structurally
+    /// unknown normal component. Even if one component is known nonzero, an
+    /// unknown second component still changes the predicate being voxelized.
+    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7(1-2), 1997, requires the represented object to be explicit before its
+    /// predicates can certify topology.
+    pub exact_halfspace_ready: bool,
+}
+
 impl ExactHalfSpace {
     /// Creates an exact half-space.
     pub fn new(normal: [Real; 3], offset: Real, source: Option<GridSource>) -> Self {
@@ -36,6 +64,34 @@ impl ExactHalfSpace {
             normal,
             offset,
             source,
+        }
+    }
+
+    /// Reports structural normal validity without lowering to floats.
+    pub fn report(&self) -> ExactHalfSpaceReport {
+        let mut known_nonzero_normal_axes = Vec::new();
+        let mut known_zero_normal_axes = Vec::new();
+        let mut unknown_normal_axes = Vec::new();
+        for (axis, component) in self.normal.iter().enumerate() {
+            match component.structural_facts().sign {
+                Some(RealSign::Positive | RealSign::Negative) => {
+                    known_nonzero_normal_axes.push(axis);
+                }
+                Some(RealSign::Zero) => known_zero_normal_axes.push(axis),
+                None => unknown_normal_axes.push(axis),
+            }
+        }
+        let zero_normal_rejected =
+            known_nonzero_normal_axes.is_empty() && unknown_normal_axes.is_empty();
+        let exact_halfspace_ready = !zero_normal_rejected
+            && !known_nonzero_normal_axes.is_empty()
+            && unknown_normal_axes.is_empty();
+        ExactHalfSpaceReport {
+            known_nonzero_normal_axes,
+            known_zero_normal_axes,
+            unknown_normal_axes,
+            zero_normal_rejected,
+            exact_halfspace_ready,
         }
     }
 }
@@ -83,6 +139,12 @@ pub fn voxelize_exact_halfspace(
     material: MaterialRegionId,
     policy: VoxelizationPolicy,
 ) -> HypervoxelResult<(SparseVoxelGrid, VoxelizationReport)> {
+    if halfspace.report().zero_normal_rejected {
+        return Err(HypervoxelError::InvalidSourceGeometry {
+            reason: "half-space normal is zero",
+        });
+    }
+
     let mut grid = SparseVoxelGrid::new(frame.clone());
     let mut boundary_cells = 0;
     let mut unknown_cells = 0;
@@ -157,7 +219,10 @@ pub fn voxelize_exact_halfspace(
         }
     }
 
-    let aggregate = VoxelAggregateFacts::from_cells(grid.iter().map(|(_, cell)| cell));
+    let aggregate = VoxelAggregateFacts::from_explicit_cells_in_frame(
+        usize::try_from(cells_per_axis.pow(3)).map_err(|_| HypervoxelError::AddressOverflow)?,
+        grid.iter().map(|(_, cell)| cell),
+    )?;
     let report = VoxelizationReport {
         source: halfspace.source.clone(),
         frame,

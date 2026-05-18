@@ -271,8 +271,40 @@ pub struct VoxelIoReport {
     pub freshness: FreshnessStatus,
     /// Number of unknown metadata fields.
     pub unknown_metadata_fields: usize,
+    /// Number of declared dimension axes with zero length.
+    ///
+    /// A present-but-zero dimension is explicit metadata, but it is not a
+    /// valid voxel grid extent. Keeping this separate from unknown metadata
+    /// follows Yap's EGC distinction between absent facts and invalid object
+    /// facts: callers should see that the adapter supplied a value and that the
+    /// value cannot support exact replay.
+    pub invalid_dimension_axes: usize,
+    /// Whether declared dimensions form a positive 3D index box.
+    pub positive_dimensions_ready: bool,
+    /// Number of declared payload channels, when the adapter exposes channels.
+    pub declared_channels: Option<usize>,
+    /// Number of channels with explicit semantic mappings.
+    pub mapped_channels: usize,
     /// Number of channels without semantic mapping.
     pub unmapped_channels: usize,
+    /// Number of semantic mappings that do not correspond to a declared channel.
+    pub extra_channel_mappings: usize,
+    /// Declared per-channel bit depth, when the adapter exposes sample bits.
+    pub bit_depth: Option<u8>,
+    /// Declared voxel/sample slots represented by the route.
+    pub declared_sample_slots: Option<u128>,
+    /// Whether the route declares at least one sample with usable bit depth.
+    ///
+    /// Complete metadata for an empty array is still an absence report, not
+    /// sample replay evidence. Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997, binds exact claims to represented
+    /// object facts; IO routes therefore expose non-vacuous sample evidence
+    /// separately from metadata completeness.
+    pub has_sample_evidence: bool,
+    /// Whether missing slices or tiles have an explicit policy.
+    pub has_missing_slice_policy: bool,
+    /// Whether duplicate slices or tiles have an explicit policy.
+    pub has_duplicate_slice_policy: bool,
     /// Explicit adapter status.
     pub adapter: LegacyAdapterStatus,
     /// Metadata replay status.
@@ -293,30 +325,80 @@ pub struct VoxelIoReport {
     pub index_convention: VoxelIndexConvention,
     /// Compression/archive status carried by metadata.
     pub compression: VoxelIoCompression,
+    /// Whether payload samples have at least certified semantic replay.
+    ///
+    /// This is the IO-facing form of Yap's exact-object boundary: a decoded
+    /// byte, palette value, or channel sample may enter the Hyper voxel layer
+    /// only after metadata, payload mapping, and side-table links are explicit
+    /// enough to replay its meaning. It may still be a certified mapping rather
+    /// than exact source replay when source freshness is unknown.
+    pub certified_sample_replay_ready: bool,
+    /// Whether samples can stand as current exact Hyper voxel state.
+    ///
+    /// This is stricter than [`Self::certified_sample_replay_ready`]: exact
+    /// replay also requires a current source binding, so a lossless stack with
+    /// missing provenance remains adapter evidence instead of source geometry
+    /// truth. See Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997.
+    pub exact_sample_replay_ready: bool,
 }
 
 impl ImageStackManifest {
     /// Builds an adapter report without reading image bytes.
     pub fn report(&self) -> VoxelIoReport {
         let unknown_metadata_fields = unknown_metadata_fields(&self.metadata);
-        let unmapped_channels = self.channels.saturating_sub(self.channel_mappings.len());
+        let invalid_dimension_axes = invalid_dimension_axes(&self.metadata);
+        let positive_dimensions_ready =
+            invalid_dimension_axes == 0 && self.metadata.dimensions.is_some();
+        let mapped_channels = self.channel_mappings.len().min(self.channels);
+        let unmapped_channels = self.channels.saturating_sub(mapped_channels);
+        let extra_channel_mappings = self.channel_mappings.len().saturating_sub(self.channels);
         let source_freshness =
             source_freshness(self.source.as_ref(), self.expected_source.as_ref());
+        let declared_sample_slots =
+            declared_image_sample_slots(&self.metadata, self.slices, self.channels);
+        let has_sample_evidence =
+            declared_sample_slots.is_some_and(|slots| slots > 0) && self.bit_depth > 0;
         let side_table_links = side_table_links(
             self.required_side_table_links,
             self.supplied_side_table_links,
         );
-        let exact = unknown_metadata_fields == 0
-            && unmapped_channels == 0
-            && source_freshness != FreshnessStatus::Stale
-            && side_table_links != SideTableLinkStatus::Missing;
-        let payload_status = if unmapped_channels > 0 || !self.metadata.has_payload_mapping {
+        let payload_status = if unmapped_channels > 0
+            || extra_channel_mappings > 0
+            || !self.metadata.has_payload_mapping
+        {
             VoxelIoPayloadStatus::Unknown
         } else if self.bit_depth < 8 {
             VoxelIoPayloadStatus::Lossy
         } else {
             VoxelIoPayloadStatus::CertifiedMapping
         };
+        // Channel mappings are part of the combinatorial object identity of an
+        // imported grid. Following Yap's exact-geometric-computation boundary,
+        // an overdeclared or underdeclared mapping is reported as unknown
+        // evidence instead of being silently repaired by byte-layout guesses.
+        let payload_replay_safe = matches!(
+            payload_status,
+            VoxelIoPayloadStatus::ExactReplay | VoxelIoPayloadStatus::CertifiedMapping
+        );
+        // Exact replay needs a current source binding, not merely the absence
+        // of a stale-source proof. Under Yap's object-level model, a grid with
+        // unknown source freshness is still useful adapter evidence, but it is
+        // not the same exact voxel artifact as its source construction.
+        let exact = unknown_metadata_fields == 0
+            && positive_dimensions_ready
+            && has_sample_evidence
+            && payload_replay_safe
+            && source_freshness == FreshnessStatus::Current
+            && side_table_links != SideTableLinkStatus::Missing;
+        let certified_sample_replay_ready = certified_sample_replay_ready(
+            &self.metadata,
+            payload_status,
+            side_table_links,
+            unmapped_channels,
+            extra_channel_mappings,
+            has_sample_evidence,
+        );
         VoxelIoReport {
             freshness: if exact {
                 FreshnessStatus::Current
@@ -324,7 +406,17 @@ impl ImageStackManifest {
                 FreshnessStatus::Unknown
             },
             unknown_metadata_fields,
+            invalid_dimension_axes,
+            positive_dimensions_ready,
+            declared_channels: Some(self.channels),
+            mapped_channels,
             unmapped_channels,
+            extra_channel_mappings,
+            bit_depth: Some(self.bit_depth),
+            declared_sample_slots,
+            has_sample_evidence,
+            has_missing_slice_policy: self.metadata.has_missing_slice_policy,
+            has_duplicate_slice_policy: self.metadata.has_duplicate_slice_policy,
             adapter: adapter(exact, "image-stack manifest"),
             metadata_status: metadata_status(&self.metadata),
             payload_status,
@@ -335,6 +427,8 @@ impl ImageStackManifest {
             slice_ordering: self.metadata.slice_ordering,
             index_convention: self.metadata.index_convention,
             compression: self.metadata.compression,
+            certified_sample_replay_ready,
+            exact_sample_replay_ready: exact,
         }
     }
 }
@@ -343,15 +437,22 @@ impl VoxelInterchangeManifest {
     /// Builds an adapter report without reading volume bytes.
     pub fn report(&self) -> VoxelIoReport {
         let unknown_metadata_fields = unknown_metadata_fields(&self.metadata);
+        let invalid_dimension_axes = invalid_dimension_axes(&self.metadata);
+        let positive_dimensions_ready =
+            invalid_dimension_axes == 0 && self.metadata.dimensions.is_some();
         let source_freshness =
             source_freshness(self.source.as_ref(), self.expected_source.as_ref());
+        let declared_sample_slots = declared_voxel_sample_slots(&self.metadata);
+        let has_sample_evidence = declared_sample_slots.is_some_and(|slots| slots > 0);
         let side_table_links = side_table_links(
             self.required_side_table_links,
             self.supplied_side_table_links,
         );
         let exact = unknown_metadata_fields == 0
+            && positive_dimensions_ready
+            && has_sample_evidence
             && self.payload_exact
-            && source_freshness != FreshnessStatus::Stale
+            && source_freshness == FreshnessStatus::Current
             && side_table_links != SideTableLinkStatus::Missing;
         let payload_status = if self.payload_exact {
             VoxelIoPayloadStatus::ExactReplay
@@ -362,6 +463,14 @@ impl VoxelInterchangeManifest {
         } else {
             VoxelIoPayloadStatus::Unknown
         };
+        let certified_sample_replay_ready = certified_sample_replay_ready(
+            &self.metadata,
+            payload_status,
+            side_table_links,
+            0,
+            0,
+            has_sample_evidence,
+        );
         VoxelIoReport {
             freshness: if exact {
                 FreshnessStatus::Current
@@ -369,7 +478,17 @@ impl VoxelInterchangeManifest {
                 FreshnessStatus::Unknown
             },
             unknown_metadata_fields,
+            invalid_dimension_axes,
+            positive_dimensions_ready,
+            declared_channels: None,
+            mapped_channels: 0,
             unmapped_channels: 0,
+            extra_channel_mappings: 0,
+            bit_depth: None,
+            declared_sample_slots,
+            has_sample_evidence,
+            has_missing_slice_policy: self.metadata.has_missing_slice_policy,
+            has_duplicate_slice_policy: self.metadata.has_duplicate_slice_policy,
             adapter: adapter(exact, "voxel interchange manifest"),
             metadata_status: metadata_status(&self.metadata),
             payload_status,
@@ -380,8 +499,49 @@ impl VoxelInterchangeManifest {
             slice_ordering: self.metadata.slice_ordering,
             index_convention: self.metadata.index_convention,
             compression: self.metadata.compression,
+            certified_sample_replay_ready,
+            exact_sample_replay_ready: exact,
         }
     }
+}
+
+fn certified_sample_replay_ready(
+    metadata: &VoxelIoMetadata,
+    payload_status: VoxelIoPayloadStatus,
+    side_table_links: SideTableLinkStatus,
+    unmapped_channels: usize,
+    extra_channel_mappings: usize,
+    has_sample_evidence: bool,
+) -> bool {
+    metadata.is_exact_replay_metadata()
+        && has_sample_evidence
+        && invalid_dimension_axes(metadata) == 0
+        && matches!(
+            payload_status,
+            VoxelIoPayloadStatus::ExactReplay | VoxelIoPayloadStatus::CertifiedMapping
+        )
+        && side_table_links != SideTableLinkStatus::Missing
+        && unmapped_channels == 0
+        && extra_channel_mappings == 0
+}
+
+fn declared_voxel_sample_slots(metadata: &VoxelIoMetadata) -> Option<u128> {
+    metadata.dimensions.map(|dims| {
+        dims.into_iter()
+            .fold(1_u128, |acc, extent| acc.saturating_mul(u128::from(extent)))
+    })
+}
+
+fn declared_image_sample_slots(
+    metadata: &VoxelIoMetadata,
+    slices: usize,
+    channels: usize,
+) -> Option<u128> {
+    declared_voxel_sample_slots(metadata).map(|voxels| {
+        voxels
+            .saturating_mul(slices as u128)
+            .saturating_mul(channels as u128)
+    })
 }
 
 fn source_freshness(source: Option<&GridSource>, expected: Option<&GridSource>) -> FreshnessStatus {
@@ -417,8 +577,20 @@ fn unknown_metadata_fields(metadata: &VoxelIoMetadata) -> usize {
         + usize::from(metadata.compression == VoxelIoCompression::Unknown)
 }
 
+fn invalid_dimension_axes(metadata: &VoxelIoMetadata) -> usize {
+    metadata
+        .dimensions
+        .map(|dimensions| {
+            dimensions
+                .into_iter()
+                .filter(|dimension| *dimension == 0)
+                .count()
+        })
+        .unwrap_or(0)
+}
+
 fn metadata_status(metadata: &VoxelIoMetadata) -> VoxelIoMetadataStatus {
-    if metadata.is_exact_replay_metadata() {
+    if metadata.is_exact_replay_metadata() && invalid_dimension_axes(metadata) == 0 {
         VoxelIoMetadataStatus::ExactReplay
     } else {
         VoxelIoMetadataStatus::Unknown

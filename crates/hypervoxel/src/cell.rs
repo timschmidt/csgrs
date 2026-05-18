@@ -57,6 +57,29 @@ pub struct VoxelCell {
     pub payload: VoxelPayload,
 }
 
+/// Semantic report for a [`VoxelCell`].
+///
+/// `VoxelCell` is intentionally a compact public value, so callers may build
+/// cells directly when importing side-table IDs or legacy fixtures. This report
+/// makes the exactness boundary explicit: a cell whose occupancy and payload do
+/// not agree is not exact voxel evidence, and unknown/lossy cells stay visible
+/// instead of being repaired by convention. That follows Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7(1-2), 1997, where object
+/// structure and uncertainty must remain part of the geometric state.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct VoxelCellReport {
+    /// Occupancy state carried by the cell.
+    pub occupancy: OccupancyState,
+    /// Whether the payload is semantically compatible with the occupancy.
+    pub payload_matches_occupancy: bool,
+    /// Whether the cell explicitly carries unknown evidence.
+    pub has_unknown: bool,
+    /// Whether the cell explicitly carries lossy adapter evidence.
+    pub has_lossy: bool,
+    /// Whether this cell can be consumed as exact cell evidence.
+    pub exact_cell_evidence_ready: bool,
+}
+
 impl VoxelCell {
     /// Creates an empty cell.
     pub fn empty() -> Self {
@@ -103,6 +126,47 @@ impl VoxelCell {
         Self {
             occupancy: OccupancyState::Unknown,
             payload: VoxelPayload::Occupancy(OccupancyState::Unknown),
+        }
+    }
+
+    /// Creates a lossy adapter cell for preview or compatibility evidence.
+    pub fn lossy_adapter_value(id: u32) -> Self {
+        Self {
+            occupancy: OccupancyState::LossyAdapterValue,
+            payload: VoxelPayload::LossyAdapterValue(id),
+        }
+    }
+
+    /// Reports whether this cell's payload and occupancy are exact-ready.
+    pub fn report(&self) -> VoxelCellReport {
+        let payload_matches_occupancy = match (self.occupancy, self.payload) {
+            (OccupancyState::Empty, VoxelPayload::Occupancy(OccupancyState::Empty)) => true,
+            (OccupancyState::Filled, VoxelPayload::Occupancy(OccupancyState::Filled))
+            | (OccupancyState::Filled, VoxelPayload::MaterialRegion(_))
+            | (OccupancyState::Filled, VoxelPayload::FieldSample(_))
+            | (OccupancyState::Filled, VoxelPayload::ProcessState(_)) => true,
+            (OccupancyState::Boundary, VoxelPayload::Occupancy(OccupancyState::Boundary))
+            | (OccupancyState::Boundary, VoxelPayload::MaterialRegion(_))
+            | (OccupancyState::Boundary, VoxelPayload::FieldSample(_))
+            | (OccupancyState::Boundary, VoxelPayload::ProcessState(_)) => true,
+            (OccupancyState::Mixed, VoxelPayload::Occupancy(OccupancyState::Mixed)) => true,
+            (OccupancyState::Unknown, VoxelPayload::Occupancy(OccupancyState::Unknown)) => true,
+            (OccupancyState::LossyAdapterValue, VoxelPayload::LossyAdapterValue(_)) => true,
+            _ => false,
+        };
+        let has_unknown = self.occupancy == OccupancyState::Unknown
+            || matches!(
+                self.payload,
+                VoxelPayload::Occupancy(OccupancyState::Unknown)
+            );
+        let has_lossy = self.occupancy == OccupancyState::LossyAdapterValue
+            || matches!(self.payload, VoxelPayload::LossyAdapterValue(_));
+        VoxelCellReport {
+            occupancy: self.occupancy,
+            payload_matches_occupancy,
+            has_unknown,
+            has_lossy,
+            exact_cell_evidence_ready: payload_matches_occupancy && !has_unknown && !has_lossy,
         }
     }
 }

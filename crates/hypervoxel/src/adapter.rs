@@ -63,6 +63,12 @@ pub struct AdapterNumericContract {
 pub struct AdapterNumericReport {
     /// Adapter family and replay status.
     pub adapter: LegacyAdapterStatus,
+    /// Whether the adapter supplied non-empty policy/provenance text.
+    ///
+    /// Yap's EGC separation treats approximate stages as auditable proposals.
+    /// An exact replay flag without its boundary policy is therefore
+    /// insufficient evidence for exact topology.
+    pub adapter_policy_ready: bool,
     /// Declared scalar precision at this boundary.
     pub scalar_precision: AdapterScalarPrecision,
     /// Declared epsilon/tolerance status.
@@ -75,6 +81,19 @@ pub struct AdapterNumericReport {
     pub epsilon_is_non_negative: bool,
     /// Whether tolerance, if present, is structurally non-negative.
     pub tolerance_is_non_negative: bool,
+    /// Whether the adapter supplied at least one numeric error bound.
+    ///
+    /// This is evidence, not a request to interpret that bound as geometry.
+    /// Yap's exact-geometric-computation separation requires approximate
+    /// proposals to expose their numerical envelope before an exact layer can
+    /// decide whether the proposal is admissible.
+    pub has_explicit_error_bound: bool,
+    /// Whether the declared tolerance status is internally coherent.
+    ///
+    /// `Explicit` means an epsilon or tolerance value is actually present and
+    /// non-negative. `NotApplicable` means no tolerance value participates.
+    /// Missing or implicit lossy tolerances are deliberately incomplete.
+    pub tolerance_declaration_complete: bool,
     /// Whether decisions include missing or implicit tolerance uncertainty.
     pub has_unbounded_tolerance: bool,
     /// Whether this adapter can contribute certified metric values.
@@ -122,6 +141,14 @@ impl AdapterNumericContract {
             .is_some_and(|scale| scale.structural_facts().sign == Some(RealSign::Positive));
         let epsilon_is_non_negative = non_negative_or_absent(self.epsilon.as_ref());
         let tolerance_is_non_negative = non_negative_or_absent(self.tolerance.as_ref());
+        let has_explicit_error_bound = self.epsilon.is_some() || self.tolerance.is_some();
+        let tolerance_declaration_complete = match self.tolerance_status {
+            AdapterToleranceStatus::NotApplicable => !has_explicit_error_bound,
+            AdapterToleranceStatus::Explicit => {
+                has_explicit_error_bound && epsilon_is_non_negative && tolerance_is_non_negative
+            }
+            AdapterToleranceStatus::Missing | AdapterToleranceStatus::LossyImplicit => false,
+        };
         let has_unbounded_tolerance = matches!(
             self.tolerance_status,
             AdapterToleranceStatus::Missing | AdapterToleranceStatus::LossyImplicit
@@ -131,23 +158,29 @@ impl AdapterNumericContract {
             self.scalar_precision,
             AdapterScalarPrecision::Exact | AdapterScalarPrecision::CertifiedBounded
         );
+        let adapter_policy_ready = self.adapter.has_policy();
         let bounded_tolerance = !has_unbounded_tolerance
+            && tolerance_declaration_complete
             && epsilon_is_non_negative
             && tolerance_is_non_negative
             && scale_is_positive;
 
         AdapterNumericReport {
             adapter: self.adapter.clone(),
+            adapter_policy_ready,
             scalar_precision: self.scalar_precision,
             tolerance_status: self.tolerance_status,
             has_explicit_scale: self.source_scale.is_some(),
             scale_is_positive,
             epsilon_is_non_negative,
             tolerance_is_non_negative,
+            has_explicit_error_bound,
+            tolerance_declaration_complete,
             has_unbounded_tolerance,
             can_contribute_certified_values: certified_scalar && bounded_tolerance,
-            can_drive_exact_topology: self.adapter.exact_replay
+            can_drive_exact_topology: self.adapter.exact_replay_ready()
                 && exact_scalar
+                && tolerance_declaration_complete
                 && self.tolerance_status == AdapterToleranceStatus::NotApplicable
                 && scale_is_positive,
         }

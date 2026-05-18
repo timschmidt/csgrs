@@ -61,6 +61,40 @@ pub struct ExactVoxelFace {
     pub cell_bounds: CellBounds,
 }
 
+/// Report from exact exposed-face extraction.
+///
+/// Exposed faces are exact grid-boundary facts only when every inspected cell
+/// and neighbor has exact-ready cell evidence. Unknown or lossy cells are kept
+/// out of the extracted shell and counted here instead of being treated as
+/// empty space. That follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7(1-2), 1997: undecided object structure remains
+/// explicit and cannot be repaired by a meshing convention.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExactFaceExtractionReport {
+    /// Extracted exact exposed faces.
+    pub faces: Vec<ExactVoxelFace>,
+    /// Number of extracted faces.
+    pub exact_faces: usize,
+    /// Whether at least one exact face was extracted.
+    ///
+    /// An empty shell extraction is a precise no-face report, but it is not
+    /// evidence that any boundary face was certified. Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997, keeps
+    /// exact claims attached to explicit object facts; this flag prevents an
+    /// empty grid from becoming vacuous shell evidence.
+    pub has_exact_faces: bool,
+    /// Stored source cells skipped because their occupancy was unknown.
+    pub skipped_unknown_cells: usize,
+    /// Stored source cells skipped because their occupancy came from a lossy adapter.
+    pub skipped_lossy_cells: usize,
+    /// Neighbor sides whose exposure could not be certified because the neighbor was unknown.
+    pub unknown_neighbor_sides: usize,
+    /// Neighbor sides whose exposure could not be certified because the neighbor was lossy.
+    pub lossy_neighbor_sides: usize,
+    /// Whether non-empty extracted shell facts can be consumed as exact grid-boundary evidence.
+    pub exact_shell_ready: bool,
+}
+
 /// Lossy mesh export report.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LossyMeshExportReport {
@@ -70,6 +104,17 @@ pub struct LossyMeshExportReport {
     pub display_vertices: usize,
     /// Number of emitted display triangles.
     pub display_triangles: usize,
+    /// Whether exact voxel-face identity was retained before display lowering.
+    pub exact_face_identity_preserved: bool,
+    /// Whether emitted vertices/triangles are only a preview adapter product.
+    ///
+    /// Primitive-float mesh topology is not a replacement for exact source
+    /// geometry. The split follows Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997: exact combinatorial faces remain
+    /// the certificate, while display meshes are named approximating adapters.
+    pub display_only: bool,
+    /// Whether this export can be used as exact geometry/topology evidence.
+    pub exact_geometry_replay_ready: bool,
     /// Explicit adapter status.
     pub adapter: LegacyAdapterStatus,
 }
@@ -81,6 +126,9 @@ impl LossyMeshExportReport {
             exact_faces,
             display_vertices: exact_faces * 4,
             display_triangles: exact_faces * 2,
+            exact_face_identity_preserved: true,
+            display_only: true,
+            exact_geometry_replay_ready: false,
             adapter: LegacyAdapterStatus::lossy(LegacyAdapterKind::GreedyMesh, policy),
         }
     }
@@ -102,6 +150,12 @@ pub struct LossyQuadMesh {
 pub struct LossyObjExport {
     /// OBJ text.
     pub text: String,
+    /// Number of OBJ vertex records emitted.
+    pub vertex_records: usize,
+    /// Number of OBJ face records emitted.
+    pub face_records: usize,
+    /// Whether OBJ output is preview-only and not exact source geometry.
+    pub preview_only: bool,
     /// Explicit lossy adapter status.
     pub adapter: LegacyAdapterStatus,
 }
@@ -195,6 +249,9 @@ pub fn lossy_obj_from_quad_mesh(mesh: &LossyQuadMesh) -> LossyObjExport {
     }
     LossyObjExport {
         text,
+        vertex_records: mesh.vertices.len(),
+        face_records: mesh.triangles.len(),
+        preview_only: true,
         adapter: LegacyAdapterStatus::lossy(LegacyAdapterKind::GreedyMesh, "wavefront obj preview"),
     }
 }
@@ -272,12 +329,29 @@ pub fn greedy_face_patch_plan(
 pub fn extract_exposed_faces(
     grid: &SparseVoxelGrid,
 ) -> crate::HypervoxelResult<Vec<ExactVoxelFace>> {
+    extract_exposed_faces_with_report(grid).map(|report| report.faces)
+}
+
+/// Extracts exact exposed faces and reports uncertainty encountered during
+/// shell classification.
+pub fn extract_exposed_faces_with_report(
+    grid: &SparseVoxelGrid,
+) -> crate::HypervoxelResult<ExactFaceExtractionReport> {
     let mut faces = Vec::new();
+    let mut skipped_unknown_cells = 0_usize;
+    let mut skipped_lossy_cells = 0_usize;
+    let mut unknown_neighbor_sides = 0_usize;
+    let mut lossy_neighbor_sides = 0_usize;
     for (address, cell) in grid.iter() {
-        if matches!(
-            cell.occupancy,
-            OccupancyState::Empty | OccupancyState::Unknown | OccupancyState::LossyAdapterValue
-        ) {
+        if cell.occupancy == OccupancyState::Empty {
+            continue;
+        }
+        if cell.occupancy == OccupancyState::Unknown {
+            skipped_unknown_cells += 1;
+            continue;
+        }
+        if cell.occupancy == OccupancyState::LossyAdapterValue {
+            skipped_lossy_cells += 1;
             continue;
         }
         for side in [
@@ -296,16 +370,37 @@ pub fn extract_exposed_faces(
                 });
                 continue;
             };
-            if grid.get(neighbor)?.occupancy == OccupancyState::Empty {
-                faces.push(ExactVoxelFace {
-                    address: *address,
-                    side,
-                    cell_bounds: address.bounds(grid.frame())?,
-                });
+            match grid.get(neighbor)?.occupancy {
+                OccupancyState::Empty => {
+                    faces.push(ExactVoxelFace {
+                        address: *address,
+                        side,
+                        cell_bounds: address.bounds(grid.frame())?,
+                    });
+                }
+                OccupancyState::Unknown => unknown_neighbor_sides += 1,
+                OccupancyState::LossyAdapterValue => lossy_neighbor_sides += 1,
+                _ => {}
             }
         }
     }
-    Ok(faces)
+    let exact_faces = faces.len();
+    let has_exact_faces = exact_faces > 0;
+    let exact_shell_ready = has_exact_faces
+        && skipped_unknown_cells == 0
+        && skipped_lossy_cells == 0
+        && unknown_neighbor_sides == 0
+        && lossy_neighbor_sides == 0;
+    Ok(ExactFaceExtractionReport {
+        faces,
+        exact_faces,
+        has_exact_faces,
+        skipped_unknown_cells,
+        skipped_lossy_cells,
+        unknown_neighbor_sides,
+        lossy_neighbor_sides,
+        exact_shell_ready,
+    })
 }
 
 fn exact_face_corners(face: &ExactVoxelFace) -> [[hyperreal::Real; 3]; 4] {

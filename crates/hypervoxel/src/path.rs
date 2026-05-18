@@ -23,6 +23,10 @@ pub struct AddressSegmentTrace {
     pub end: VoxelAddress,
     /// Addresses visited by the integer-grid segment, including both endpoints.
     pub addresses: Vec<VoxelAddress>,
+    /// Whether the segment was traced entirely in exact integer address space.
+    pub exact_address_trace_ready: bool,
+    /// Whether the trace includes the end address.
+    pub reached_end: bool,
 }
 
 /// Sparse-grid sweep result along an address-space segment.
@@ -34,6 +38,8 @@ pub struct SegmentSweepQuery {
     pub cells: Vec<VoxelCell>,
     /// Conservative aggregate over sampled cells.
     pub aggregate: VoxelAggregateFacts,
+    /// Whether every address-space sample was resolved to a cell value.
+    pub exact_sweep_samples_ready: bool,
 }
 
 /// Axis-aligned address-space ray.
@@ -56,6 +62,17 @@ pub struct AddressRayTrace {
     pub ray: AddressRay,
     /// Addresses visited, including the start address.
     pub addresses: Vec<VoxelAddress>,
+    /// Whether the ray stopped at the grid boundary.
+    pub stopped_at_boundary: bool,
+    /// Whether the ray stopped because `max_steps` was reached first.
+    pub stopped_at_step_limit: bool,
+    /// Whether the trace is exact address-space evidence.
+    ///
+    /// This is a grid-combinatorial fact, not continuous ray casting. It keeps
+    /// the Bresenham-style integer traversal of Bresenham, "Algorithm for
+    /// computer control of a digital plotter," *IBM Systems Journal*, 1965,
+    /// inside Yap's exact-object boundary for voxel addresses.
+    pub exact_address_trace_ready: bool,
 }
 
 /// Traces a deterministic integer-grid segment between two addresses.
@@ -101,6 +118,8 @@ pub fn trace_address_segment(
         start,
         end,
         addresses,
+        exact_address_trace_ready: true,
+        reached_end: true,
     })
 }
 
@@ -121,6 +140,7 @@ pub fn sweep_address_segment(
         trace,
         cells,
         aggregate,
+        exact_sweep_samples_ready: true,
     })
 }
 
@@ -138,19 +158,37 @@ pub fn trace_address_ray(ray: AddressRay) -> HypervoxelResult<AddressRayTrace> {
     let cells = 1_u64 << ray.start.depth;
     let mut addresses = Vec::new();
     let mut current = ray.start;
-    for _ in 0..=ray.max_steps {
+    let mut stopped_at_boundary = false;
+    let mut stopped_at_step_limit = false;
+    for step in 0..=ray.max_steps {
         addresses.push(current);
         let mut xyz = current.xyz;
         match ray.direction {
-            -1 if xyz[ray.axis] == 0 => break,
+            -1 if xyz[ray.axis] == 0 => {
+                stopped_at_boundary = true;
+                break;
+            }
             -1 => xyz[ray.axis] -= 1,
-            1 if xyz[ray.axis] + 1 >= cells => break,
+            1 if xyz[ray.axis] + 1 >= cells => {
+                stopped_at_boundary = true;
+                break;
+            }
             1 => xyz[ray.axis] += 1,
             _ => unreachable!("direction validated above"),
         }
+        if step == ray.max_steps {
+            stopped_at_step_limit = true;
+            break;
+        }
         current = VoxelAddress::new(current.depth, xyz)?;
     }
-    Ok(AddressRayTrace { ray, addresses })
+    Ok(AddressRayTrace {
+        ray,
+        addresses,
+        stopped_at_boundary,
+        stopped_at_step_limit,
+        exact_address_trace_ready: true,
+    })
 }
 
 fn rounded_step(start: u64, delta: i128, step: u64, steps: u64) -> HypervoxelResult<u64> {

@@ -34,6 +34,18 @@ pub enum HypervoxelError {
     InvalidAxisPermutation,
     /// A support-mask direction must use axis `0..3` and sign `-1` or `1`.
     InvalidSupportDirection,
+    /// Explicit aggregate cells exceeded the finite frame they were summarized into.
+    InvalidAggregateSummary {
+        /// Total cells in the finite frame or region.
+        total_cells: usize,
+        /// Explicit cells supplied to the summary.
+        explicit_cells: usize,
+    },
+    /// Source geometry failed a structural preflight check.
+    InvalidSourceGeometry {
+        /// Human-readable validation failure.
+        reason: &'static str,
+    },
 }
 
 impl fmt::Display for HypervoxelError {
@@ -76,6 +88,16 @@ impl fmt::Display for HypervoxelError {
             }
             Self::InvalidSupportDirection => {
                 write!(f, "support direction must use axis 0..3 and sign -1 or 1")
+            }
+            Self::InvalidAggregateSummary {
+                total_cells,
+                explicit_cells,
+            } => write!(
+                f,
+                "aggregate summary has {explicit_cells} explicit cells for {total_cells} total cells"
+            ),
+            Self::InvalidSourceGeometry { reason } => {
+                write!(f, "invalid exact source geometry: {reason}")
             }
         }
     }

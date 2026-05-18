@@ -1,8 +1,11 @@
 //! Minimal exact sparse-grid storage wrapper.
 //!
-//! This is intentionally a semantic storage wrapper, not a full SVO-DAG port.
-//! It gives the first `hypervoxel` APIs a tested exact contract while the
-//! harvested `voxelis` interner/tree implementation is ported underneath.
+//! This is intentionally the simple semantic map backend; the SVO-DAG backend
+//! lives in `svo` behind the same exact cell/address contract. As
+//! Yap argues in "Towards Exact Geometric Computation," *Computational
+//! Geometry* 7(1-2), 1997, exact systems should make object-level decisions
+//! explicit; edit reports therefore expose whether storage was inserted,
+//! removed, or left unchanged instead of making callers infer that from maps.
 
 use std::collections::BTreeMap;
 
@@ -19,6 +22,23 @@ pub struct VoxelEditReport {
     pub previous: Option<VoxelCell>,
     /// New cell.
     pub current: VoxelCell,
+    /// Whether the address was validated against the grid frame.
+    pub frame_validated: bool,
+    /// Whether this edit stored a non-empty explicit cell.
+    pub stored_explicit_cell: bool,
+    /// Whether this edit removed a previously explicit cell.
+    pub removed_explicit_cell: bool,
+    /// Whether this edit left semantic storage unchanged.
+    pub semantic_noop: bool,
+    /// Whether this edit can be replayed as exact voxel-state evidence.
+    ///
+    /// Storage accepts unknown and lossy cells because those are valid Hyper
+    /// evidence states. They are not exact replay states, though. This flag is
+    /// the single-edit version of the batch readiness gate and follows Yap,
+    /// "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7(1-2), 1997: a representation update cannot upgrade undecided or
+    /// approximate object facts into exact facts.
+    pub exact_edit_replay_ready: bool,
 }
 
 /// Sparse semantic grid over exact voxel addresses.
@@ -70,17 +90,26 @@ impl SparseVoxelGrid {
         } else {
             self.cells.insert(address, cell)
         };
+        let stored_explicit_cell = cell.occupancy != OccupancyState::Empty;
+        let removed_explicit_cell = cell.occupancy == OccupancyState::Empty && previous.is_some();
+        let semantic_noop = previous.unwrap_or_else(VoxelCell::empty) == cell;
+        let exact_edit_replay_ready = cell.report().exact_cell_evidence_ready;
         Ok(VoxelEditReport {
             address,
             previous,
             current: cell,
+            frame_validated: true,
+            stored_explicit_cell,
+            removed_explicit_cell,
+            semantic_noop,
+            exact_edit_replay_ready,
         })
     }
 
     /// Returns aggregate facts over explicitly stored cells.
     ///
     /// Empty absent cells are not expanded; callers that need whole-grid facts
-    /// should query the relevant subtree once the SVO-DAG backend lands.
+    /// should use finite-frame aggregate reports or an SVO-DAG aggregate.
     pub fn stored_aggregate(&self) -> VoxelAggregateFacts {
         VoxelAggregateFacts::from_cells(self.cells.values())
     }

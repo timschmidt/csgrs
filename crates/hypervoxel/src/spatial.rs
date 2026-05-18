@@ -20,12 +20,28 @@ use crate::{
 pub struct VoxelSpatialAggregateFacts {
     /// Number of explicitly stored non-empty cells.
     pub stored_cells: usize,
+    /// Whether at least one non-empty cell contributed spatial evidence.
+    ///
+    /// Empty sparse grids can be represented exactly as empty aggregates, but
+    /// they do not provide an enclosing object bound. Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997, keeps
+    /// object evidence explicit; callers should not infer exact spatial
+    /// support from the absence of stored cells.
+    pub has_spatial_evidence: bool,
     /// Root-octant child presence mask.
     pub child_presence_mask: u8,
     /// Exact enclosing AABB of stored non-empty cells, if any.
     pub exact_bounds: Option<ExactAabb3>,
+    /// Whether the spatial bounds packet is exact and complete.
+    ///
+    /// Empty sparse grids have no enclosing AABB and are not bounds-ready;
+    /// their absence is represented by [`Self::has_spatial_evidence`] instead
+    /// of by a vacuous bounding box convention.
+    pub exact_bounds_ready: bool,
     /// Optional source freshness copied from a voxelization report.
     pub freshness: FreshnessStatus,
+    /// Whether the source binding is current enough for source replay.
+    pub source_replay_ready: bool,
 }
 
 impl VoxelSpatialAggregateFacts {
@@ -51,13 +67,20 @@ impl VoxelSpatialAggregateFacts {
             });
         }
 
+        let freshness = report
+            .map(VoxelizationReport::freshness)
+            .unwrap_or(FreshnessStatus::Unknown);
+        let has_spatial_evidence = stored_cells > 0;
+        let exact_bounds_ready = has_spatial_evidence && exact_bounds.is_some();
+
         Ok(Self {
             stored_cells,
+            has_spatial_evidence,
             child_presence_mask,
             exact_bounds,
-            freshness: report
-                .map(VoxelizationReport::freshness)
-                .unwrap_or(FreshnessStatus::Unknown),
+            exact_bounds_ready,
+            freshness,
+            source_replay_ready: exact_bounds_ready && freshness == FreshnessStatus::Current,
         })
     }
 

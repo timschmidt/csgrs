@@ -7,7 +7,7 @@
 //! structural exactness requirement by keeping the object and its provenance
 //! explicit instead of hiding assumptions in payload IDs.
 
-use crate::{FreshnessStatus, GridSource, VoxelAggregateFacts};
+use crate::{AggregateCertainty, FreshnessStatus, GridSource, VoxelAggregateFacts};
 
 /// Downstream domain that can consume a voxel artifact.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -61,6 +61,18 @@ pub struct VoxelHandoffReport {
     pub side_table_links: SideTableLinkStatus,
     /// Conservative aggregate facts exposed to the destination.
     pub aggregate: VoxelAggregateFacts,
+    /// Aggregate certainty exposed beside the full aggregate packet.
+    pub aggregate_certainty: AggregateCertainty,
+    /// Whether the aggregate packet contains at least one retained child fact.
+    ///
+    /// Exact aggregate certainty over an empty packet is still an absence
+    /// report, not handoff evidence for a voxel artifact. Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997, requires
+    /// exact consumers to receive object-level evidence rather than infer it
+    /// from status enums alone.
+    pub has_aggregate_evidence: bool,
+    /// Whether the destination may consume this handoff as exact voxel evidence.
+    pub exact_handoff_ready: bool,
 }
 
 impl VoxelHandoffManifest {
@@ -78,11 +90,19 @@ impl VoxelHandoffManifest {
         } else {
             SideTableLinkStatus::Missing
         };
+        let has_aggregate_evidence = self.aggregate.child_count > 0;
+        let exact_handoff_ready = freshness == FreshnessStatus::Current
+            && self.aggregate.certainty == AggregateCertainty::Exact
+            && has_aggregate_evidence
+            && side_table_links != SideTableLinkStatus::Missing;
         VoxelHandoffReport {
             domain: self.domain,
             freshness,
             side_table_links,
             aggregate: self.aggregate.clone(),
+            aggregate_certainty: self.aggregate.certainty,
+            has_aggregate_evidence,
+            exact_handoff_ready,
         }
     }
 }

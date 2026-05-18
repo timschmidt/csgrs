@@ -13,7 +13,7 @@ cargo-fuzz = true
 arbitrary = { version = "1", features = ["derive"] }
 libfuzzer-sys = "0.4"
 hypervoxel = { path = ".." }
-hyperreal = { path = "../../hyperreal" }
+hyperreal = "0.12.0"
 
 [[bin]]
 name = "grid_address"

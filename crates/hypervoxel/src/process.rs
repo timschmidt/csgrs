@@ -8,7 +8,7 @@
 //! *Computational Geometry* 7(1-2), 1997: store exact object facts and explicit
 //! provenance, not hidden interpretation.
 
-use crate::{GridSource, VoxelAggregateFacts};
+use crate::{FreshnessStatus, GridSource, VoxelAggregateFacts};
 
 /// Intended process role for a voxel artifact.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -46,6 +46,8 @@ pub enum ProcessGridRole {
 pub struct SweptVolumeProvenance {
     /// Path, route, exposure, or tool-sweep source.
     pub source: Option<GridSource>,
+    /// Expected source version for exact path replay, when known.
+    pub expected_source_version: Option<u64>,
     /// Tool, beam, nozzle, cutter, or trace-width label supplied by a domain crate.
     pub tool_or_beam: Option<String>,
     /// Whether exact path/source replay is available outside this voxel cache.
@@ -61,10 +63,24 @@ pub struct SweptVolumeProvenance {
 pub struct SweptVolumeReport {
     /// Source freshness/provenance.
     pub source: Option<GridSource>,
+    /// Whether the source version is current enough to replay exact path facts.
+    pub source_freshness: FreshnessStatus,
+    /// Tool, beam, nozzle, cutter, or trace-width label supplied by a domain crate.
+    pub tool_or_beam: Option<String>,
+    /// Whether a non-empty tool/beam identity was supplied.
+    ///
+    /// A swept voxel cache without tool or beam identity is an acceleration
+    /// artifact, not exact process/path evidence. Yap, "Towards Exact
+    /// Geometric Computation," *Computational Geometry* 7(1-2), 1997, keeps
+    /// exact object claims bound to their source objects; here that includes
+    /// the process object that generated the swept volume.
+    pub has_tool_or_beam: bool,
     /// Whether exact replay is available in the owning domain crate.
     pub exact_source_replay_available: bool,
     /// Whether downstream consumers must treat the grid as broad-phase only.
     pub broad_phase_only: bool,
+    /// Whether a non-empty quantization/sampling policy was supplied.
+    pub has_quantization_policy: bool,
     /// Whether this artifact is acceptable as exact path/clearance truth.
     pub can_stand_in_for_exact_path: bool,
     /// Human-readable quantization or sampling policy.
@@ -73,12 +89,37 @@ pub struct SweptVolumeReport {
 
 impl SweptVolumeProvenance {
     /// Builds a swept-volume safety report.
+    ///
+    /// Exact path evidence is only ready when the path/source construction can
+    /// still be replayed. This is the process-grid analogue of Yap, "Towards
+    /// Exact Geometric Computation," *Computational Geometry* 7(1-2), 1997:
+    /// cached voxel facts may accelerate a query, but a stale or unversioned
+    /// cache is not a certificate for the source object.
     pub fn report(&self) -> SweptVolumeReport {
+        let source_freshness = match (&self.source, self.expected_source_version) {
+            (Some(source), Some(expected)) if source.version == expected => {
+                FreshnessStatus::Current
+            }
+            (Some(_), Some(_)) => FreshnessStatus::Stale,
+            _ => FreshnessStatus::Unknown,
+        };
+        let has_tool_or_beam = self
+            .tool_or_beam
+            .as_ref()
+            .is_some_and(|label| !label.trim().is_empty());
+        let has_quantization_policy = !self.quantization_policy.trim().is_empty();
         SweptVolumeReport {
             source: self.source.clone(),
+            source_freshness,
+            tool_or_beam: self.tool_or_beam.clone(),
+            has_tool_or_beam,
             exact_source_replay_available: self.exact_source_replay_available,
             broad_phase_only: self.broad_phase_only,
+            has_quantization_policy,
             can_stand_in_for_exact_path: self.exact_source_replay_available
+                && source_freshness == FreshnessStatus::Current
+                && has_tool_or_beam
+                && has_quantization_policy
                 && !self.broad_phase_only,
             quantization_policy: self.quantization_policy.clone(),
         }

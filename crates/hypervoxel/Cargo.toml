@@ -1,6 +1,6 @@
 [package]
 name = "hypervoxel"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 description = "Exact-aware voxel grid frames, aggregate facts, and sparse-grid reports for the Hyper stack"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
@@ -25,10 +25,17 @@ members = [
 default-members = ["voxelis", "voxelis-memory"]
 
 [dependencies]
-hyperreal = { path = "../hyperreal" }
-hyperlattice = { path = "../hyperlattice" }
-hyperlimit = { path = "../hyperlimit" }
+# Hyper ecosystem dependencies: keep the crate-official release references and
+# the commented workspace references below. Switch to the workspace form for
+# local development, then switch back to crates.io versions before publishing.
+hyperreal = { version = "0.12.0" }
+hyperlattice = { version = "0.5.0" }
+hyperlimit = { version = "0.3.0" }
+# hyperreal = { path = "../hyperreal" }
+# hyperlattice = { path = "../hyperlattice" }
+# hyperlimit = { path = "../hyperlimit" }
 voxelis = { path = "voxelis", optional = true }
+glam = { workspace = true, optional = true }
 
 [dev-dependencies]
 criterion = "0.5"
@@ -36,7 +43,7 @@ proptest = "1.7.0"
 
 [features]
 default = []
-legacy-voxelis = ["dep:voxelis"]
+legacy-voxelis = ["dep:voxelis", "dep:glam"]
 
 [[bench]]
 name = "grid_frame"

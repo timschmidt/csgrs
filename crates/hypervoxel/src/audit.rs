@@ -35,6 +35,17 @@ pub struct VoxelizationAudit {
     pub predicate_certified_cells: usize,
     /// Number of cells whose predicate outcome was unknown before policy lowering.
     pub predicate_unknown_cells: usize,
+    /// Whether this audit can be consumed as exact voxelization accounting.
+    ///
+    /// Yap's EGC model requires exact consumers to see whether a result depends
+    /// on unresolved predicates or adapter values. The audit is exact-ready
+    /// only when every classified frame cell has certified predicate evidence
+    /// and no stored cell carries explicit unknown or lossy occupancy. A lossy
+    /// legacy adapter also blocks readiness even when the cell counts look
+    /// clean, because adapter provenance is part of the represented object
+    /// boundary in Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997.
+    pub exact_audit_ready: bool,
 }
 
 impl VoxelizationAudit {
@@ -54,6 +65,22 @@ impl VoxelizationAudit {
                 OccupancyState::Empty | OccupancyState::Mixed => {}
             }
         }
+        let predicate_certified_cells = report.predicate_certificates.certified_cells();
+        let predicate_unknown_cells = report.predicate_certificates.unknown_cells;
+        let adapter_replay_ready = report
+            .legacy_adapter
+            .as_ref()
+            .is_none_or(|adapter| adapter.exact_replay_ready());
+        let exact_adapter_replay = report
+            .legacy_adapter
+            .as_ref()
+            .is_some_and(|adapter| adapter.exact_replay_ready());
+        let exact_audit_ready = unknown_cells == 0
+            && lossy_cells == 0
+            && adapter_replay_ready
+            && predicate_unknown_cells == 0
+            && predicate_certified_cells as u64 == total_frame_cells;
+
         Self {
             total_frame_cells,
             stored_cells: grid.len(),
@@ -63,12 +90,10 @@ impl VoxelizationAudit {
             lossy_cells,
             implied_empty_cells: total_frame_cells.saturating_sub(grid.len() as u64),
             freshness: report.freshness(),
-            exact_adapter_replay: report
-                .legacy_adapter
-                .as_ref()
-                .is_some_and(|adapter| adapter.exact_replay),
-            predicate_certified_cells: report.predicate_certificates.certified_cells(),
-            predicate_unknown_cells: report.predicate_certificates.unknown_cells,
+            exact_adapter_replay,
+            predicate_certified_cells,
+            predicate_unknown_cells,
+            exact_audit_ready,
         }
     }
 
