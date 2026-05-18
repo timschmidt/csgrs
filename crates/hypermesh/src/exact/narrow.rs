@@ -40,6 +40,19 @@ pub enum TrianglePlaneRelation {
     Unknown,
 }
 
+/// Structural inconsistency in a triangle/plane classifier report.
+///
+/// This validates the retained side facts and collapsed relation without
+/// replaying predicates. Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), requires topology-facing decisions
+/// to carry enough certified structure that later stages can reject incoherent
+/// artifacts before using them.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TrianglePlaneValidationError {
+    /// The retained vertex sides do not derive the retained relation.
+    RelationMismatch,
+}
+
 /// Certified triangle/plane classification with retained predicate routes.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TrianglePlaneClassification {
@@ -58,6 +71,18 @@ impl TrianglePlaneClassification {
             .iter()
             .copied()
             .all(PredicateUse::is_proof_producing)
+    }
+
+    /// Validate that retained vertex side facts imply the reported relation.
+    ///
+    /// The predicate certificates may be empty for retained-plane classifiers,
+    /// but the side/relation model is the same as the direct predicate route.
+    pub fn validate(&self) -> Result<(), TrianglePlaneValidationError> {
+        if relation_from_sides(self.vertex_sides) == self.relation {
+            Ok(())
+        } else {
+            Err(TrianglePlaneValidationError::RelationMismatch)
+        }
     }
 }
 
@@ -83,6 +108,37 @@ pub enum TriangleTriangleRelation {
     Candidate,
     /// At least one required plane-side predicate was undecided.
     Unknown,
+}
+
+/// Structural inconsistency in a triangle/triangle classifier report.
+///
+/// This is the narrow-phase handoff check before mesh face-pair scheduling.
+/// It verifies that the two plane classifications, optional coplanar report,
+/// and retained segment/plane construction events agree with the collapsed
+/// relation. The check follows Yap's EGC staging: exact predicates and
+/// constructions remain auditable objects until validated by the consumer
+/// layer.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TriangleTriangleValidationError {
+    /// A nested triangle/plane classifier was internally inconsistent.
+    InvalidPlaneClassification,
+    /// The two retained plane classifications do not imply the retained
+    /// triangle/triangle relation before coplanar refinement.
+    PlaneRelationMismatch,
+    /// A coplanar relation did not retain its projected coplanar classifier.
+    CoplanarRelationMissingClassifier,
+    /// The retained projected coplanar classifier does not match the collapsed
+    /// triangle/triangle relation.
+    CoplanarRelationMismatch,
+    /// A non-coplanar relation retained a coplanar classifier.
+    UnexpectedCoplanarClassifier,
+    /// A candidate relation did not retain three edge events for each query
+    /// triangle.
+    CandidateEdgeEventCountMismatch,
+    /// A retained segment/plane construction event was internally invalid.
+    InvalidSegmentPlaneEvent,
+    /// A non-candidate relation retained segment/plane construction events.
+    UnexpectedEdgeEvents,
 }
 
 /// Certified triangle/triangle coarse classification.
@@ -126,6 +182,75 @@ impl TriangleTriangleClassification {
                 .coplanar
                 .as_ref()
                 .is_none_or(CoplanarTriangleClassification::projection_proof_producing)
+    }
+
+    /// Validate retained narrow-phase classifier invariants.
+    ///
+    /// This check is intentionally local to the classifier artifact. It does
+    /// not recompute plane predicates or projected overlap; it verifies that
+    /// the retained subreports and construction events are consistent with the
+    /// public relation.
+    pub fn validate(&self) -> Result<(), TriangleTriangleValidationError> {
+        self.right_against_left_plane
+            .validate()
+            .map_err(|_| TriangleTriangleValidationError::InvalidPlaneClassification)?;
+        self.left_against_right_plane
+            .validate()
+            .map_err(|_| TriangleTriangleValidationError::InvalidPlaneClassification)?;
+
+        let plane_relation = triangle_triangle_relation(
+            self.right_against_left_plane.relation,
+            self.left_against_right_plane.relation,
+        );
+        match self.relation {
+            TriangleTriangleRelation::SeparatedByFirstPlane
+            | TriangleTriangleRelation::SeparatedBySecondPlane
+            | TriangleTriangleRelation::Candidate => {
+                if self.relation != plane_relation {
+                    return Err(TriangleTriangleValidationError::PlaneRelationMismatch);
+                }
+                if self.coplanar.is_some() {
+                    return Err(TriangleTriangleValidationError::UnexpectedCoplanarClassifier);
+                }
+            }
+            TriangleTriangleRelation::CoplanarDisjoint
+            | TriangleTriangleRelation::CoplanarTouching
+            | TriangleTriangleRelation::CoplanarOverlapping => {
+                if plane_relation != TriangleTriangleRelation::CoplanarOverlapping {
+                    return Err(TriangleTriangleValidationError::PlaneRelationMismatch);
+                }
+                let Some(coplanar) = &self.coplanar else {
+                    return Err(TriangleTriangleValidationError::CoplanarRelationMissingClassifier);
+                };
+                coplanar
+                    .validate()
+                    .map_err(|_| TriangleTriangleValidationError::CoplanarRelationMismatch)?;
+                if triangle_relation_from_coplanar(coplanar.relation) != self.relation {
+                    return Err(TriangleTriangleValidationError::CoplanarRelationMismatch);
+                }
+            }
+            TriangleTriangleRelation::Unknown => {
+                if plane_relation != TriangleTriangleRelation::Unknown
+                    && !matches!(
+                        self.coplanar.as_ref().map(|coplanar| coplanar.relation),
+                        Some(CoplanarTriangleRelation::Unknown)
+                    )
+                {
+                    return Err(TriangleTriangleValidationError::PlaneRelationMismatch);
+                }
+            }
+        }
+
+        if self.relation == TriangleTriangleRelation::Candidate {
+            if self.right_edge_events.len() != 3 || self.left_edge_events.len() != 3 {
+                return Err(TriangleTriangleValidationError::CandidateEdgeEventCountMismatch);
+            }
+            validate_segment_events(&self.right_edge_events)?;
+            validate_segment_events(&self.left_edge_events)?;
+        } else if !self.right_edge_events.is_empty() || !self.left_edge_events.is_empty() {
+            return Err(TriangleTriangleValidationError::UnexpectedEdgeEvents);
+        }
+        Ok(())
     }
 }
 
@@ -348,6 +473,26 @@ fn triangle_triangle_relation(
         return TriangleTriangleRelation::CoplanarOverlapping;
     }
     TriangleTriangleRelation::Candidate
+}
+
+fn triangle_relation_from_coplanar(relation: CoplanarTriangleRelation) -> TriangleTriangleRelation {
+    match relation {
+        CoplanarTriangleRelation::Disjoint => TriangleTriangleRelation::CoplanarDisjoint,
+        CoplanarTriangleRelation::Touching => TriangleTriangleRelation::CoplanarTouching,
+        CoplanarTriangleRelation::Overlapping => TriangleTriangleRelation::CoplanarOverlapping,
+        CoplanarTriangleRelation::Unknown => TriangleTriangleRelation::Unknown,
+    }
+}
+
+fn validate_segment_events(
+    events: &[SegmentPlaneIntersection],
+) -> Result<(), TriangleTriangleValidationError> {
+    for event in events {
+        event
+            .validate()
+            .map_err(|_| TriangleTriangleValidationError::InvalidSegmentPlaneEvent)?;
+    }
+    Ok(())
 }
 
 fn triangle_edge_events_against_plane(

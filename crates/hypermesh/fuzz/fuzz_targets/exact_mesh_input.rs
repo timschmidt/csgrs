@@ -1,9 +1,8 @@
 #![no_main]
 
 use hypermesh::exact::{
-    ExactMesh, ExactPoint3, build_intersection_graph,
-    checked_classify_face_regions_against_opposite_planes, classify_coplanar_triangles,
-    classify_mesh_face_pair, classify_mesh_face_pairs,
+    ExactMesh, ExactPoint3, build_intersection_graph, classify_coplanar_triangles,
+    classify_face_regions_against_opposite_planes, classify_mesh_face_pair, classify_mesh_face_pairs,
     classify_mesh_triangle_against_retained_face_plane, classify_triangle_triangle,
     intersect_segment_with_face_plane, intersect_segment_with_retained_face_plane,
 };
@@ -22,10 +21,15 @@ fuzz_target!(|data: &[u8]| {
     }
 
     if let Ok(mesh) = ExactMesh::from_f64_triangles(&pos, &idx) {
+        mesh.validate_retained_state().unwrap();
         assert_eq!(mesh.facts().faces.len(), mesh.triangles().len());
+        mesh.facts().validate().unwrap();
         for face in &mesh.facts().faces {
             let _ = (&face.plane.normal, &face.plane.offset);
         }
+        let _ = mesh
+            .bounds()
+            .validate(mesh.vertices().len(), mesh.triangles().len());
         let _ = mesh.bounds().candidate_face_pairs(mesh.bounds());
         if !mesh.triangles().is_empty() {
             if mesh.vertices().len() >= 2 {
@@ -35,30 +39,62 @@ fuzz_target!(|data: &[u8]| {
                     &mesh.facts().faces[0].plane,
                     &p0,
                     &p1,
-                );
+                )
+                .validate();
             }
-            let _ = classify_mesh_face_pair(&mesh, 0, &mesh, 0);
-            let _ = classify_mesh_triangle_against_retained_face_plane(&mesh, 0, &mesh, 0);
-            let _ = classify_mesh_face_pairs(&mesh, &mesh);
+            let _ = classify_mesh_face_pair(&mesh, 0, &mesh, 0)
+                .map(|classification| classification.validate());
+            let _ = classify_mesh_triangle_against_retained_face_plane(&mesh, 0, &mesh, 0)
+                .map(|classification| classification.validate());
+            let _ = classify_mesh_face_pairs(&mesh, &mesh).map(|classifications| {
+                for classification in classifications {
+                    let _ = classification.validate();
+                }
+            });
             if let Ok(graph) = build_intersection_graph(&mesh, &mesh) {
+                let _ = graph.validate();
+                for overlap in graph.coplanar_overlap_graphs() {
+                    let _ = overlap.validate();
+                }
+                let _ = graph
+                    .coplanar_overlap_split_plan(&mesh, &mesh)
+                    .map(|plan| plan.validate());
+                let _ = graph
+                    .coplanar_arrangement_readiness_report(&mesh, &mesh)
+                    .map(|report| report.validate());
                 let _ = graph.edge_split_plan();
                 let _ = graph.graph_vertex_plan();
                 let topology_plan = graph.split_topology_plan();
-                let _ = topology_plan.validate();
+                let _ = topology_plan.validate().validate();
                 let _ = graph.checked_graph_vertex_plan();
                 let _ = graph.checked_split_topology_plan();
                 let _ = graph.checked_face_split_plan();
                 let face_plan = graph.face_split_plan();
-                let _ = face_plan.validate_against_topology(&topology_plan);
+                let _ = face_plan
+                    .validate_against_topology(&topology_plan)
+                    .validate();
                 if let Ok(geometry_plan) = graph.face_split_geometry_plan(&mesh, &mesh) {
-                    let _ = geometry_plan.validate_boundary_incidence(&mesh, &mesh);
+                    let _ = geometry_plan
+                        .validate_boundary_incidence(&mesh, &mesh)
+                        .validate();
                     let region_plan = geometry_plan.region_plan(&mesh, &mesh);
-                    let _ = region_plan.validate(&mesh, &mesh);
-                    let _ = checked_classify_face_regions_against_opposite_planes(
+                    let _ = region_plan.validate(&mesh, &mesh).validate();
+                    let classifications =
+                        classify_face_regions_against_opposite_planes(&region_plan, &mesh, &mesh);
+                    for classification in classifications {
+                        let _ = classification.validate();
+                    }
+                    #[cfg(feature = "exact-triangulation")]
+                    let _ = hypermesh::exact::checked_classify_face_regions_against_opposite_planes(
                         &region_plan,
                         &mesh,
                         &mesh,
-                    );
+                    )
+                    .map(|classifications| {
+                        for classification in classifications {
+                            let _ = classification.validate();
+                        }
+                    });
                     #[cfg(feature = "exact-triangulation")]
                     {
                         if let Ok(triangulations) =
@@ -96,7 +132,7 @@ fuzz_target!(|data: &[u8]| {
             })
             .collect::<Vec<_>>();
         if points.len() == 5 {
-            let _ = intersect_segment_with_face_plane(&points, [0, 1, 2], [3, 4]);
+            let _ = intersect_segment_with_face_plane(&points, [0, 1, 2], [3, 4]).validate();
         }
     }
 
@@ -111,8 +147,8 @@ fuzz_target!(|data: &[u8]| {
             })
             .collect::<Vec<_>>();
         if points.len() == 6 {
-            let _ = classify_triangle_triangle(&points, [0, 1, 2], [3, 4, 5]);
-            let _ = classify_coplanar_triangles(&points, [0, 1, 2], [3, 4, 5]);
+            let _ = classify_triangle_triangle(&points, [0, 1, 2], [3, 4, 5]).validate();
+            let _ = classify_coplanar_triangles(&points, [0, 1, 2], [3, 4, 5]).validate();
         }
     }
 });

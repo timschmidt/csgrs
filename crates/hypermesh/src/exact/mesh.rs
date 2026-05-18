@@ -8,10 +8,12 @@
 use hyperlattice::Vector3;
 use hyperlimit::Point3;
 
-use super::bounds::MeshBounds;
+use super::bounds::{BoundsValidationError, MeshBounds};
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
-use super::facts::MeshValidationFacts;
-use super::provenance::{ConstructionProvenance, PredicateUse, SourceProvenance};
+use super::facts::{MeshFactsValidationError, MeshValidationFacts};
+use super::provenance::{
+    ConstructionProvenance, ConstructionProvenanceValidationError, PredicateUse, SourceProvenance,
+};
 use super::scalar::{ExactReal, LossyF64Import};
 use super::validation::{ValidationPolicy, ValidationReport, validate_triangles_with_policy};
 
@@ -64,6 +66,40 @@ pub struct ExactMesh {
     bounds: MeshBounds,
     facts: MeshValidationFacts,
     provenance: ConstructionProvenance,
+}
+
+/// Error returned when an [`ExactMesh`] retained-state audit fails.
+///
+/// This is a whole-object consistency check over topology facts, exact bounds,
+/// and construction provenance. It follows Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997), by treating retained
+/// object facts and proof-producing predicate provenance as part of the
+/// certified mesh state rather than as incidental cache entries.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExactMeshValidationError {
+    /// The retained vertex count disagrees with the vertex buffer length.
+    VertexCountMismatch {
+        /// Vertex buffer length.
+        expected: usize,
+        /// Retained mesh-fact count.
+        actual: usize,
+    },
+    /// The retained face count disagrees with the triangle buffer length.
+    FaceCountMismatch {
+        /// Triangle buffer length.
+        expected: usize,
+        /// Retained mesh-fact count.
+        actual: usize,
+    },
+    /// Retained bounds failed their own validation.
+    Bounds(BoundsValidationError),
+    /// Retained mesh facts failed their own validation.
+    Facts(MeshFactsValidationError),
+    /// Retained provenance failed its own validation.
+    Provenance(ConstructionProvenanceValidationError),
+    /// Predicate provenance no longer mirrors the retained face predicate
+    /// certificates.
+    PredicateRetentionMismatch,
 }
 
 impl ExactMesh {
@@ -242,6 +278,48 @@ impl ExactMesh {
     /// Return construction provenance.
     pub const fn provenance(&self) -> &ConstructionProvenance {
         &self.provenance
+    }
+
+    /// Validate all retained state stored on this exact mesh.
+    ///
+    /// Mesh construction already validates inputs before returning `Ok`. This
+    /// method exists for tests, fuzzing, serialization boundaries, and
+    /// downstream exact algorithms that receive an `ExactMesh` artifact and
+    /// want to audit that its retained bounds, topology facts, and provenance
+    /// still agree before consuming them.
+    pub fn validate_retained_state(&self) -> Result<(), ExactMeshValidationError> {
+        if self.vertices.len() != self.facts.mesh.vertex_count {
+            return Err(ExactMeshValidationError::VertexCountMismatch {
+                expected: self.vertices.len(),
+                actual: self.facts.mesh.vertex_count,
+            });
+        }
+        if self.triangles.len() != self.facts.mesh.face_count {
+            return Err(ExactMeshValidationError::FaceCountMismatch {
+                expected: self.triangles.len(),
+                actual: self.facts.mesh.face_count,
+            });
+        }
+        self.bounds
+            .validate(self.vertices.len(), self.triangles.len())
+            .map_err(ExactMeshValidationError::Bounds)?;
+        self.facts
+            .validate()
+            .map_err(ExactMeshValidationError::Facts)?;
+        self.provenance
+            .validate()
+            .map_err(ExactMeshValidationError::Provenance)?;
+
+        let retained_predicates = self
+            .facts
+            .faces
+            .iter()
+            .flat_map(|face| face.triangle.degeneracy_predicates.iter().copied())
+            .collect::<Vec<_>>();
+        if self.provenance.predicates != retained_predicates {
+            return Err(ExactMeshValidationError::PredicateRetentionMismatch);
+        }
+        Ok(())
     }
 }
 

@@ -23,6 +23,38 @@ use super::narrow::{
     classify_mesh_triangle_against_retained_face_plane, classify_triangle_triangle,
 };
 
+/// Structural inconsistency in one exact face-pair scheduler record.
+///
+/// This validates the retained broad/narrow classification record rather than
+/// recomputing predicates. Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), separates certified predicate
+/// decisions from later topology mutation; the scheduler relation, AABB
+/// outcome, triangle classifier, and retained split events must agree before
+/// graph construction consumes the pair.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum MeshFacePairValidationError {
+    /// A bounds-disjoint relation was not backed by a decided disjoint AABB.
+    BoundsDisjointWithoutDisjointBounds,
+    /// A bounds-rejected pair retained a triangle classifier.
+    BoundsDisjointHasTriangle,
+    /// A non-bounds relation is missing the triangle classifier that justified
+    /// it.
+    MissingTriangleClassification,
+    /// The retained triangle classifier relation does not map to the retained
+    /// mesh face-pair relation.
+    TriangleRelationMismatch,
+    /// A candidate pair did not retain both triangle-edge event sets.
+    CandidateMissingEdgeEvents,
+    /// A non-candidate pair retained segment/plane split events.
+    NonCandidateHasEdgeEvents,
+    /// A retained segment/plane construction event was internally invalid.
+    InvalidSegmentPlaneEvent,
+    /// A coplanar mesh relation is missing its projected coplanar classifier.
+    CoplanarRelationMissingCoplanarClassifier,
+    /// A non-coplanar mesh relation retained a coplanar classifier.
+    NonCoplanarRelationHasCoplanarClassifier,
+}
+
 /// Coarse exact relation for one pair of mesh faces.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MeshFacePairRelation {
@@ -66,6 +98,81 @@ impl MeshFacePairClassification {
                 | MeshFacePairRelation::CoplanarOverlapping
                 | MeshFacePairRelation::Unknown
         )
+    }
+
+    /// Validate scheduler relation, broad phase, and retained narrow facts.
+    ///
+    /// This check is the handoff between exact face-pair classification and
+    /// graph construction. It ensures the collapsed relation is recoverable
+    /// from the retained triangle classifier and that candidate split events
+    /// remain valid construction artifacts.
+    pub fn validate(&self) -> Result<(), MeshFacePairValidationError> {
+        if self.relation == MeshFacePairRelation::BoundsDisjoint {
+            if !matches!(
+                self.bounds,
+                PredicateOutcome::Decided {
+                    value: AabbIntersectionKind::Disjoint,
+                    ..
+                }
+            ) {
+                return Err(MeshFacePairValidationError::BoundsDisjointWithoutDisjointBounds);
+            }
+            return if self.triangle.is_none() {
+                Ok(())
+            } else {
+                Err(MeshFacePairValidationError::BoundsDisjointHasTriangle)
+            };
+        }
+
+        let Some(triangle) = &self.triangle else {
+            return if self.relation == MeshFacePairRelation::PlaneSeparated {
+                Ok(())
+            } else {
+                Err(MeshFacePairValidationError::MissingTriangleClassification)
+            };
+        };
+        if mesh_relation_from_triangle(triangle.relation) != self.relation {
+            return Err(MeshFacePairValidationError::TriangleRelationMismatch);
+        }
+
+        match self.relation {
+            MeshFacePairRelation::Candidate => {
+                if triangle.left_edge_events.is_empty() || triangle.right_edge_events.is_empty() {
+                    return Err(MeshFacePairValidationError::CandidateMissingEdgeEvents);
+                }
+                validate_segment_events(&triangle.left_edge_events)?;
+                validate_segment_events(&triangle.right_edge_events)?;
+                if triangle.coplanar.is_some() {
+                    return Err(
+                        MeshFacePairValidationError::NonCoplanarRelationHasCoplanarClassifier,
+                    );
+                }
+            }
+            MeshFacePairRelation::CoplanarTouching | MeshFacePairRelation::CoplanarOverlapping => {
+                if triangle.coplanar.is_none() {
+                    return Err(
+                        MeshFacePairValidationError::CoplanarRelationMissingCoplanarClassifier,
+                    );
+                }
+                if !triangle.left_edge_events.is_empty() || !triangle.right_edge_events.is_empty() {
+                    return Err(MeshFacePairValidationError::NonCandidateHasEdgeEvents);
+                }
+            }
+            MeshFacePairRelation::PlaneSeparated | MeshFacePairRelation::Unknown => {
+                if !triangle.left_edge_events.is_empty() || !triangle.right_edge_events.is_empty() {
+                    return Err(MeshFacePairValidationError::NonCandidateHasEdgeEvents);
+                }
+                if triangle.coplanar.is_some()
+                    && self.relation != MeshFacePairRelation::PlaneSeparated
+                {
+                    return Err(
+                        MeshFacePairValidationError::NonCoplanarRelationHasCoplanarClassifier,
+                    );
+                }
+            }
+            MeshFacePairRelation::BoundsDisjoint => {}
+        }
+        Ok(())
     }
 }
 
@@ -185,6 +292,17 @@ fn triangle_is_strictly_one_sided(relation: TrianglePlaneRelation) -> bool {
         relation,
         TrianglePlaneRelation::StrictlyAbove | TrianglePlaneRelation::StrictlyBelow
     )
+}
+
+fn validate_segment_events(
+    events: &[SegmentPlaneIntersection],
+) -> Result<(), MeshFacePairValidationError> {
+    for event in events {
+        event
+            .validate()
+            .map_err(|_| MeshFacePairValidationError::InvalidSegmentPlaneEvent)?;
+    }
+    Ok(())
 }
 
 fn retained_triangle_edge_events(

@@ -98,6 +98,28 @@ pub struct ConstructionProvenance {
     pub predicates: Vec<PredicateUse>,
 }
 
+/// Error returned when retained construction provenance contradicts its
+/// declared exactness boundary.
+///
+/// Provenance is part of the exact object, not a comment attached after the
+/// fact. Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997), separates exact objects, approximate views, and certified
+/// predicates; these errors make that separation auditable at the hypermesh
+/// API boundary.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ConstructionProvenanceValidationError {
+    /// The human-readable source label is empty.
+    EmptySourceLabel,
+    /// An exact source was not marked exact-only, or an exact-only policy was
+    /// attached to a non-exact source.
+    SourceApproximationMismatch,
+    /// A lossy primitive-float source was not marked as an edge-only
+    /// approximation boundary.
+    LossySourcePolicyMismatch,
+    /// A retained predicate use did not produce an exact-preserving proof.
+    NonProofProducingPredicate,
+}
+
 impl ConstructionProvenance {
     /// Create an empty construction provenance record.
     pub fn new(source: SourceProvenance) -> Self {
@@ -110,5 +132,36 @@ impl ConstructionProvenance {
     /// Append a predicate-use record.
     pub fn push_predicate(&mut self, predicate: PredicateUse) {
         self.predicates.push(predicate);
+    }
+
+    /// Validate source policy and retained predicate certificates.
+    ///
+    /// The check deliberately allows legacy and external adapter sources only
+    /// when they do not masquerade as exact-only sources. Runtime topology
+    /// should consume exact facts and proof-producing predicates, while
+    /// approximate or adapter provenance remains explicit.
+    pub fn validate(&self) -> Result<(), ConstructionProvenanceValidationError> {
+        if self.source.label.trim().is_empty() {
+            return Err(ConstructionProvenanceValidationError::EmptySourceLabel);
+        }
+        match (self.source.source, self.source.approximation) {
+            (MeshSource::Exact, ApproximationPolicy::ExactOnly) => {}
+            (MeshSource::Exact, _) | (_, ApproximationPolicy::ExactOnly) => {
+                return Err(ConstructionProvenanceValidationError::SourceApproximationMismatch);
+            }
+            (MeshSource::LossyF64, ApproximationPolicy::EdgeOnly) => {}
+            (MeshSource::LossyF64, _) => {
+                return Err(ConstructionProvenanceValidationError::LossySourcePolicyMismatch);
+            }
+            (MeshSource::LegacyBoolmeshAdapter | MeshSource::ExternalAdapter, _) => {}
+        }
+        if self
+            .predicates
+            .iter()
+            .any(|predicate| !predicate.is_proof_producing())
+        {
+            return Err(ConstructionProvenanceValidationError::NonProofProducingPredicate);
+        }
+        Ok(())
     }
 }

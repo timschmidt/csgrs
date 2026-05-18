@@ -29,14 +29,28 @@ use super::provenance::PredicateUse;
 #[cfg(feature = "exact-triangulation")]
 use super::region::{
     ExactBooleanAssemblyPlan, ExactRegionSelection, FaceRegionPlaneClassification,
-    FaceRegionTriangulation, checked_classify_face_regions_against_opposite_planes,
+    checked_classify_face_regions_against_opposite_planes,
     checked_triangulate_face_regions_with_earcut,
+};
+#[cfg(feature = "exact-triangulation")]
+use super::reports::{
+    ExactBooleanBlocker, ExactBooleanBlockerKind, ExactBooleanPreflight, ExactBooleanResult,
+    ExactBooleanResultKind, ExactBooleanShortcutKind, ExactBooleanSupport,
+    ExactBoundaryTouchingReport, ExactBoundaryTouchingStatus, ExactOpenSurfaceDisjointReport,
+    ExactOpenSurfaceDisjointStatus, ExactPlanarArrangementReport, ExactPlanarArrangementStatus,
+    ExactRefinementReport, ExactRefinementStatus, ExactSameSurfaceReport, ExactSameSurfaceStatus,
+    ExactWindingReadinessReport, ExactWindingReadinessStatus,
 };
 #[cfg(feature = "exact-triangulation")]
 use super::solid::{ConvexSolidMeshRelation, classify_mesh_vertices_against_convex_solid};
 #[cfg(feature = "exact-triangulation")]
 use super::surface::{
-    CoplanarSurfaceContainment, certify_single_triangle_coplanar_containment,
+    CoplanarConvexSurfaceContainment, CoplanarSurfaceContainment,
+    arrange_coplanar_convex_surface_difference, arrange_coplanar_convex_surface_holed_difference,
+    arrange_coplanar_convex_surface_intersection, arrange_coplanar_convex_surface_union,
+    arrange_single_triangle_coplanar_difference, arrange_single_triangle_coplanar_holed_difference,
+    arrange_single_triangle_coplanar_union, certify_coplanar_convex_surface_containment,
+    certify_coplanar_convex_surface_equivalence, certify_single_triangle_coplanar_containment,
     difference_single_triangle_coplanar_surfaces, intersect_single_triangle_coplanar_surfaces,
     union_single_triangle_coplanar_surfaces,
 };
@@ -113,209 +127,6 @@ pub enum ExactBoundaryBooleanPolicy {
     PreserveSeparateShells,
 }
 
-/// Auditable result of an exact selected-region boolean pipeline.
-#[cfg(feature = "exact-triangulation")]
-#[derive(Clone, Debug, PartialEq)]
-pub struct ExactBooleanResult {
-    /// Whether graph extraction contained unknown events before policy checks.
-    pub graph_had_unknowns: bool,
-    /// Certified classifications of split regions against opposite face
-    /// planes.
-    pub region_classifications: Vec<FaceRegionPlaneClassification>,
-    /// Exact projected triangulations used for assembly.
-    pub triangulations: Vec<FaceRegionTriangulation>,
-    /// Non-mutating exact output assembly.
-    pub assembly: ExactBooleanAssemblyPlan,
-    /// Materialized exact output mesh validated under the requested policy.
-    pub mesh: ExactMesh,
-}
-
-/// Certified support level for a requested exact boolean operation.
-///
-/// This is the named-boolean staging boundary. Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7.1-2 (1997), frames exact geometric
-/// computing as an application-level contract: unresolved combinatorics must be
-/// represented explicitly instead of being decided by approximate arithmetic.
-/// These variants therefore distinguish executable certified shortcuts from
-/// cases whose split regions are available but still need exact winding policy.
-#[cfg(feature = "exact-triangulation")]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactBooleanSupport {
-    /// The request is an explicit selected-region assembly policy.
-    SelectedRegionPolicy,
-    /// A named operation was answered by exact empty-operand semantics.
-    CertifiedEmptyOperand,
-    /// A named operation was answered by certified disjoint AABBs.
-    CertifiedBoundsDisjoint,
-    /// A named operation was answered by exact coordinate and topology identity.
-    CertifiedIdentical,
-    /// A named operation was answered by exact coordinate equality and matching
-    /// triangle vertex sets, ignoring per-face orientation.
-    CertifiedSameSurface,
-    /// A named operation was answered by exact no-intersection facts for open
-    /// surface meshes.
-    CertifiedOpenSurfaceDisjoint,
-    /// A named operation was answered by certified closed-convex containment.
-    CertifiedConvexContainment,
-    /// A named operation was answered by certified single-triangle coplanar
-    /// surface containment.
-    CertifiedCoplanarSurfaceContainment,
-    /// Intersection was materialized by exact clipping of two coplanar
-    /// single-triangle surfaces.
-    CertifiedCoplanarSurfaceIntersection,
-    /// Union was materialized as a certified convex polygon for two coplanar
-    /// single-triangle surfaces.
-    CertifiedCoplanarSurfaceConvexUnion,
-    /// Difference was materialized as a certified one-corner cut from a
-    /// coplanar single-triangle surface.
-    CertifiedCoplanarSurfaceCornerDifference,
-    /// A named operation was answered by a certified no-intersection convex
-    /// separated relation that was not caught by mesh-level AABBs.
-    CertifiedConvexSeparated,
-    /// The retained graph contains only certified coplanar touching events.
-    /// A caller must choose a boundary/shared-feature policy before this can
-    /// become named boolean output.
-    RequiresBoundaryPolicy,
-    /// Coplanar positive-area overlap is certified, but the requested named
-    /// output needs planar arrangement materialization.
-    RequiresPlanarArrangement,
-    /// Split-region facts were produced, but named winding semantics are not
-    /// yet certified for this nontrivial overlap.
-    RequiresCertifiedWinding,
-    /// Graph extraction retained unresolved predicate events; callers must
-    /// refine, reject, or use a policy that explicitly accepts uncertainty.
-    UnresolvedGraph,
-}
-
-/// Certification status for same-surface named boolean shortcuts.
-///
-/// Same-surface detection is stronger than identical storage equality: it
-/// allows vertex reindexing and face orientation changes when exact coordinate
-/// equality proves a bijection and the remapped triangle vertex sets match.
-#[cfg(feature = "exact-triangulation")]
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum ExactSameSurfaceStatus {
-    /// The meshes have different vertex counts.
-    VertexCountMismatch,
-    /// The meshes have different triangle counts.
-    TriangleCountMismatch,
-    /// At least one required coordinate equality predicate was undecided.
-    VertexMatchingUndecided,
-    /// No exact vertex bijection exists.
-    VertexCoordinateMismatch,
-    /// A vertex bijection exists, but remapped triangle sets differ.
-    TriangleSetMismatch,
-    /// Exact vertex bijection and remapped triangle-set equality were certified.
-    Certified,
-}
-
-/// Auditable same-surface certification report.
-///
-/// This is the report form of the same-surface boolean shortcut. It retains
-/// the exact vertex permutation, remapped triangle sets, and scalar equality
-/// predicate certificates used to prove coordinate equality. The design
-/// follows Yap, "Towards Exact Geometric Computation," *Computational
-/// Geometry* 7.1-2 (1997): shortcut topology decisions expose their certified
-/// predicate trail rather than collapsing directly to `bool`.
-#[cfg(feature = "exact-triangulation")]
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ExactSameSurfaceReport {
-    /// Coarse same-surface certification status.
-    pub status: ExactSameSurfaceStatus,
-    /// Mapping from each left vertex index to the matched right vertex index.
-    pub left_to_right: Vec<usize>,
-    /// Mapping from each right vertex index to the matched left vertex index.
-    pub right_to_left: Vec<usize>,
-    /// Sorted left triangle vertex sets.
-    pub left_triangles: Vec<[usize; 3]>,
-    /// Sorted right triangle vertex sets remapped into left vertex indices.
-    pub right_triangles: Vec<[usize; 3]>,
-    /// Predicate certificates used by exact coordinate equality checks.
-    pub predicates: Vec<PredicateUse>,
-}
-
-#[cfg(feature = "exact-triangulation")]
-impl ExactSameSurfaceReport {
-    /// Return whether same-surface equivalence was certified.
-    pub const fn is_certified(&self) -> bool {
-        matches!(self.status, ExactSameSurfaceStatus::Certified)
-    }
-
-    /// Return whether every retained predicate route was proof-producing.
-    pub fn all_proof_producing(&self) -> bool {
-        self.predicates
-            .iter()
-            .copied()
-            .all(PredicateUse::is_proof_producing)
-    }
-}
-
-/// Preflight report for an exact boolean operation request.
-///
-/// The report gives callers a stable way to audit the current implementation
-/// boundary. Shortcut variants are executable by [`boolean_exact`]. For
-/// nontrivial named booleans, the report exposes the certified split-region
-/// plane classifications that a future exact winding/inside-outside rule must
-/// consume, without dispatching to the legacy tolerance kernel.
-#[cfg(feature = "exact-triangulation")]
-#[derive(Clone, Debug, PartialEq)]
-pub struct ExactBooleanPreflight {
-    /// Requested operation.
-    pub operation: ExactBooleanOperation,
-    /// Certified support level for the request.
-    pub support: ExactBooleanSupport,
-    /// Whether retained graph events contain explicit unknowns.
-    pub graph_had_unknowns: bool,
-    /// Retained face-pair records after exact broad/narrow scheduling.
-    pub retained_face_pairs: usize,
-    /// Total retained event records across all retained face pairs.
-    pub retained_events: usize,
-    /// Number of split-region boundaries produced for classification.
-    pub region_count: usize,
-    /// Certified classifications of split regions against opposite face
-    /// planes.
-    pub region_classifications: Vec<FaceRegionPlaneClassification>,
-    /// Structured explanation for named operations that are certified enough
-    /// to inspect but not yet executable by the selected policy.
-    pub blocker: Option<ExactBooleanBlocker>,
-}
-
-/// Missing exact policy or refinement that blocks named boolean output.
-///
-/// This is a report object, not an error. Yap's exact-computation model treats
-/// unresolved application-layer topology as first-class state: a caller should
-/// be able to distinguish "needs exact winding" from "needs a boundary output
-/// policy" or "needs predicate refinement" without interpreting prose
-/// diagnostics.
-#[cfg(feature = "exact-triangulation")]
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ExactBooleanBlocker {
-    /// Missing policy or refinement class.
-    pub kind: ExactBooleanBlockerKind,
-    /// Number of retained non-coplanar candidate face pairs.
-    pub candidate_pairs: usize,
-    /// Number of retained coplanar positive-overlap face pairs.
-    pub coplanar_overlapping_pairs: usize,
-    /// Number of retained coplanar touching face pairs.
-    pub coplanar_touching_pairs: usize,
-    /// Number of retained unknown face pairs.
-    pub unknown_pairs: usize,
-}
-
-/// Exact boolean preflight blocker kind.
-#[cfg(feature = "exact-triangulation")]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactBooleanBlockerKind {
-    /// Predicate or equality refinement is required before policy can run.
-    NeedsRefinement,
-    /// A lower-dimensional shared-boundary output policy is required.
-    NeedsBoundaryPolicy,
-    /// A planar arrangement output model is required for coplanar surfaces.
-    NeedsPlanarArrangement,
-    /// Full winding/inside-outside classification is required.
-    NeedsWinding,
-}
-
 /// Run the exact selected-region boolean pipeline.
 ///
 /// The returned report keeps the audit artifacts needed to inspect why an
@@ -362,6 +173,9 @@ pub fn boolean_selected_regions(
     let mesh = assembly.checked_to_exact_mesh_with_sources(left, right, policy.validation)?;
 
     Ok(ExactBooleanResult {
+        kind: ExactBooleanResultKind::SelectedRegions {
+            selection: policy.selection,
+        },
         graph_had_unknowns,
         region_classifications,
         triangulations,
@@ -417,6 +231,40 @@ pub fn preflight_boolean_exact(
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
         | ExactBooleanOperation::Difference
+            if certify_coplanar_convex_surface_equivalence(left, right).is_some() =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarConvexSurfaceEquivalence
+        }
+        ExactBooleanOperation::Intersection
+            if arrange_coplanar_convex_surface_intersection(left, right).is_some() =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarConvexSurfaceIntersection
+        }
+        ExactBooleanOperation::Union
+            if arrange_coplanar_convex_surface_union(left, right).is_some() =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementUnion
+        }
+        ExactBooleanOperation::Difference
+            if arrange_coplanar_convex_surface_difference(left, right).is_some() =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementDifference
+        }
+        ExactBooleanOperation::Difference
+            if arrange_coplanar_convex_surface_holed_difference(left, right).is_some() =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarConvexSurfaceHoledDifference
+        }
+        ExactBooleanOperation::Union
+        | ExactBooleanOperation::Intersection
+        | ExactBooleanOperation::Difference
+            if certify_coplanar_convex_surface_containment(left, right).is_some() =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment
+        }
+        ExactBooleanOperation::Union
+        | ExactBooleanOperation::Intersection
+        | ExactBooleanOperation::Difference
             if certified_coplanar_surface_boolean_support(left, right, operation).is_some() =>
         {
             ExactBooleanSupport::CertifiedCoplanarSurfaceContainment
@@ -431,15 +279,30 @@ pub fn preflight_boolean_exact(
         {
             ExactBooleanSupport::CertifiedCoplanarSurfaceConvexUnion
         }
+        ExactBooleanOperation::Union
+            if arrange_single_triangle_coplanar_union(left, right).is_some() =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
+        }
         ExactBooleanOperation::Difference
             if difference_single_triangle_coplanar_surfaces(left, right).is_some() =>
         {
             ExactBooleanSupport::CertifiedCoplanarSurfaceCornerDifference
         }
+        ExactBooleanOperation::Difference
+            if arrange_single_triangle_coplanar_difference(left, right).is_some() =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+        }
+        ExactBooleanOperation::Difference
+            if arrange_single_triangle_coplanar_holed_difference(left, right).is_some() =>
+        {
+            ExactBooleanSupport::CertifiedCoplanarSurfaceHoledDifference
+        }
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
         | ExactBooleanOperation::Difference
-            if meshes_are_certified_open_surface_disjoint(left, right)? =>
+            if certify_open_surface_disjoint_report(left, right)?.is_certified() =>
         {
             ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
         }
@@ -455,11 +318,20 @@ pub fn preflight_boolean_exact(
             | ExactBooleanSupport::CertifiedBoundsDisjoint
             | ExactBooleanSupport::CertifiedIdentical
             | ExactBooleanSupport::CertifiedSameSurface
+            | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceEquivalence
+            | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceIntersection
+            | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementUnion
+            | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceArrangementDifference
+            | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceContainment
+            | ExactBooleanSupport::CertifiedCoplanarConvexSurfaceHoledDifference
             | ExactBooleanSupport::CertifiedOpenSurfaceDisjoint
             | ExactBooleanSupport::CertifiedCoplanarSurfaceContainment
             | ExactBooleanSupport::CertifiedCoplanarSurfaceIntersection
             | ExactBooleanSupport::CertifiedCoplanarSurfaceConvexUnion
+            | ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementUnion
             | ExactBooleanSupport::CertifiedCoplanarSurfaceCornerDifference
+            | ExactBooleanSupport::CertifiedCoplanarSurfaceArrangementDifference
+            | ExactBooleanSupport::CertifiedCoplanarSurfaceHoledDifference
             | ExactBooleanSupport::CertifiedConvexContainment
             | ExactBooleanSupport::CertifiedConvexSeparated
     ) {
@@ -472,6 +344,7 @@ pub fn preflight_boolean_exact(
             region_count: 0,
             region_classifications: Vec::new(),
             blocker: None,
+            arrangement_readiness: None,
         });
     }
 
@@ -490,52 +363,63 @@ pub fn preflight_boolean_exact(
             region_count: 0,
             region_classifications: Vec::new(),
             blocker: Some(relation_counts.into_blocker(ExactBooleanBlockerKind::NeedsRefinement)),
+            arrangement_readiness: None,
         });
     }
-    if graph_requires_boundary_policy(&graph) {
+    if relation_counts.construction_failed_events > 0 {
+        return Ok(ExactBooleanPreflight {
+            operation,
+            support: ExactBooleanSupport::UnresolvedGraph,
+            graph_had_unknowns,
+            retained_face_pairs,
+            retained_events,
+            region_count: 0,
+            region_classifications: Vec::new(),
+            blocker: Some(relation_counts.into_blocker(ExactBooleanBlockerKind::NeedsRefinement)),
+            arrangement_readiness: None,
+        });
+    }
+    let boundary_report = boundary_touching_report_from_graph(&graph);
+    if boundary_report.is_certified() {
         return Ok(ExactBooleanPreflight {
             operation,
             support: ExactBooleanSupport::RequiresBoundaryPolicy,
-            graph_had_unknowns,
-            retained_face_pairs,
-            retained_events,
+            graph_had_unknowns: boundary_report.graph_had_unknowns,
+            retained_face_pairs: boundary_report.retained_face_pairs,
+            retained_events: boundary_report.retained_events,
             region_count: 0,
             region_classifications: Vec::new(),
-            blocker: Some(
-                relation_counts.into_blocker(ExactBooleanBlockerKind::NeedsBoundaryPolicy),
-            ),
+            blocker: Some(boundary_report.blocker),
+            arrangement_readiness: None,
         });
     }
-    if graph_requires_planar_arrangement(&graph) && operation != ExactBooleanOperation::Intersection
-    {
+    let planar_report = planar_arrangement_report_from_graph(&graph, left, right, operation)?;
+    if planar_report.is_required() {
         return Ok(ExactBooleanPreflight {
             operation,
             support: ExactBooleanSupport::RequiresPlanarArrangement,
-            graph_had_unknowns,
-            retained_face_pairs,
-            retained_events,
+            graph_had_unknowns: planar_report.graph_had_unknowns,
+            retained_face_pairs: planar_report.retained_face_pairs,
+            retained_events: planar_report.retained_events,
             region_count: 0,
             region_classifications: Vec::new(),
-            blocker: Some(
-                relation_counts.into_blocker(ExactBooleanBlockerKind::NeedsPlanarArrangement),
-            ),
+            blocker: Some(planar_report.blocker),
+            arrangement_readiness: planar_report.arrangement_readiness,
         });
     }
 
-    let geometry = graph.face_split_geometry_plan(left, right)?;
-    let region_plan = geometry.region_plan(left, right);
-    let region_classifications =
-        checked_classify_face_regions_against_opposite_planes(&region_plan, left, right)?;
+    let winding_report = winding_readiness_report_from_graph(&graph, left, right, operation)?;
 
     Ok(ExactBooleanPreflight {
         operation,
         support,
-        graph_had_unknowns,
-        retained_face_pairs,
-        retained_events,
-        region_count: region_plan.regions.len(),
-        region_classifications,
-        blocker: Some(relation_counts.into_blocker(ExactBooleanBlockerKind::NeedsWinding)),
+        graph_had_unknowns: winding_report.graph_had_unknowns,
+        retained_face_pairs: winding_report.retained_face_pairs,
+        retained_events: winding_report.retained_events,
+        region_count: winding_report.region_count,
+        region_classifications: winding_report.region_classifications,
+        blocker: Some(winding_report.blocker),
+        arrangement_readiness: None,
     })
 }
 
@@ -546,6 +430,7 @@ struct GraphRelationCounts {
     coplanar_overlapping_pairs: usize,
     coplanar_touching_pairs: usize,
     unknown_pairs: usize,
+    construction_failed_events: usize,
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -557,6 +442,7 @@ impl GraphRelationCounts {
             coplanar_overlapping_pairs: self.coplanar_overlapping_pairs,
             coplanar_touching_pairs: self.coplanar_touching_pairs,
             unknown_pairs: self.unknown_pairs,
+            construction_failed_events: self.construction_failed_events,
         }
     }
 }
@@ -565,6 +451,10 @@ impl GraphRelationCounts {
 fn graph_relation_counts(graph: &super::graph::ExactIntersectionGraph) -> GraphRelationCounts {
     let mut counts = GraphRelationCounts::default();
     for pair in &graph.face_pairs {
+        let pair_has_unknown_event = pair
+            .events
+            .iter()
+            .any(|event| matches!(event, super::graph::IntersectionEvent::Unknown));
         match pair.relation {
             MeshFacePairRelation::Candidate => counts.candidate_pairs += 1,
             MeshFacePairRelation::CoplanarOverlapping => counts.coplanar_overlapping_pairs += 1,
@@ -572,6 +462,22 @@ fn graph_relation_counts(graph: &super::graph::ExactIntersectionGraph) -> GraphR
             MeshFacePairRelation::Unknown => counts.unknown_pairs += 1,
             MeshFacePairRelation::BoundsDisjoint | MeshFacePairRelation::PlaneSeparated => {}
         }
+        if pair.relation != MeshFacePairRelation::Unknown && pair_has_unknown_event {
+            counts.unknown_pairs += 1;
+        }
+        counts.construction_failed_events += pair
+            .events
+            .iter()
+            .filter(|event| {
+                matches!(
+                    event,
+                    super::graph::IntersectionEvent::SegmentPlane {
+                        relation: super::construction::SegmentPlaneRelation::ConstructionFailed,
+                        ..
+                    }
+                )
+            })
+            .count();
     }
     counts
 }
@@ -672,6 +578,35 @@ pub fn boolean_exact_with_boundary_policy(
         }
         ExactBooleanOperation::Union
         | ExactBooleanOperation::Intersection
+        | ExactBooleanOperation::Difference
+            if certify_coplanar_convex_surface_equivalence(left, right).is_some() =>
+        {
+            boolean_coplanar_convex_equivalent_surfaces(left, operation, validation)
+        }
+        ExactBooleanOperation::Intersection
+            if arrange_coplanar_convex_surface_intersection(left, right).is_some() =>
+        {
+            boolean_coplanar_convex_arrangement_intersection(left, right, validation)
+        }
+        ExactBooleanOperation::Union
+            if arrange_coplanar_convex_surface_union(left, right).is_some() =>
+        {
+            boolean_coplanar_convex_arrangement_union(left, right, validation)
+        }
+        ExactBooleanOperation::Difference
+            if arrange_coplanar_convex_surface_difference(left, right).is_some() =>
+        {
+            boolean_coplanar_convex_arrangement_difference(left, right, validation)
+        }
+        ExactBooleanOperation::Union
+        | ExactBooleanOperation::Intersection
+        | ExactBooleanOperation::Difference
+            if certify_coplanar_convex_surface_containment(left, right).is_some() =>
+        {
+            boolean_coplanar_convex_containment_surfaces(left, right, operation, validation)
+        }
+        ExactBooleanOperation::Union
+        | ExactBooleanOperation::Intersection
         | ExactBooleanOperation::Difference => {
             if let Some(result) =
                 boolean_coplanar_surface_containment(left, right, operation, validation)?
@@ -689,7 +624,22 @@ pub fn boolean_exact_with_boundary_policy(
                 return Ok(result);
             }
             if let Some(result) =
+                boolean_coplanar_surface_arrangement_union(left, right, operation, validation)?
+            {
+                return Ok(result);
+            }
+            if let Some(result) =
                 boolean_coplanar_surface_corner_difference(left, right, operation, validation)?
+            {
+                return Ok(result);
+            }
+            if let Some(result) =
+                boolean_coplanar_surface_arrangement_difference(left, right, operation, validation)?
+            {
+                return Ok(result);
+            }
+            if let Some(result) =
+                boolean_coplanar_surface_holed_difference(left, right, operation, validation)?
             {
                 return Ok(result);
             }
@@ -722,6 +672,63 @@ pub fn boolean_exact_with_boundary_policy(
 }
 
 #[cfg(feature = "exact-triangulation")]
+fn boolean_coplanar_convex_arrangement_union(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    let union = arrange_coplanar_convex_surface_union(left, right)
+        .expect("caller checked convex coplanar arrangement union");
+    let mesh = copy_mesh(
+        &union.mesh,
+        "exact coplanar convex arrangement union",
+        validation,
+    )?;
+    Ok(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::CoplanarConvexSurfaceArrangementUnion,
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean_coplanar_convex_arrangement_intersection(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    let intersection = arrange_coplanar_convex_surface_intersection(left, right)
+        .expect("caller checked convex coplanar arrangement intersection");
+    let mesh = copy_mesh(
+        &intersection.mesh,
+        "exact coplanar convex arrangement intersection",
+        validation,
+    )?;
+    Ok(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::CoplanarConvexSurfaceIntersection,
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean_coplanar_convex_arrangement_difference(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    let difference = arrange_coplanar_convex_surface_difference(left, right)
+        .expect("caller checked convex coplanar arrangement difference");
+    let mesh = copy_mesh(
+        &difference.mesh,
+        "exact coplanar convex arrangement difference",
+        validation,
+    )?;
+    Ok(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::CoplanarConvexSurfaceArrangementDifference,
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
 fn boolean_coplanar_surface_intersection(
     left: &ExactMesh,
     right: &ExactMesh,
@@ -739,7 +746,10 @@ fn boolean_coplanar_surface_intersection(
         "exact coplanar surface partial-overlap intersection",
         validation,
     )?;
-    Ok(Some(shortcut_result(mesh)))
+    Ok(Some(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::CoplanarSurfaceIntersection,
+    )))
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -760,7 +770,34 @@ fn boolean_coplanar_surface_convex_union(
         "exact convex coplanar surface partial-overlap union",
         validation,
     )?;
-    Ok(Some(shortcut_result(mesh)))
+    Ok(Some(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::CoplanarSurfaceConvexUnion,
+    )))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean_coplanar_surface_arrangement_union(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if operation != ExactBooleanOperation::Union {
+        return Ok(None);
+    }
+    let Some(union) = arrange_single_triangle_coplanar_union(left, right) else {
+        return Ok(None);
+    };
+    let mesh = copy_mesh(
+        &union.mesh,
+        "exact planar-arrangement coplanar surface union",
+        validation,
+    )?;
+    Ok(Some(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::CoplanarSurfaceArrangementUnion,
+    )))
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -781,7 +818,58 @@ fn boolean_coplanar_surface_corner_difference(
         "exact one-corner coplanar surface difference",
         validation,
     )?;
-    Ok(Some(shortcut_result(mesh)))
+    Ok(Some(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::CoplanarSurfaceCornerDifference,
+    )))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean_coplanar_surface_arrangement_difference(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if operation != ExactBooleanOperation::Difference {
+        return Ok(None);
+    }
+    let Some(difference) = arrange_single_triangle_coplanar_difference(left, right) else {
+        return Ok(None);
+    };
+    let mesh = copy_mesh(
+        &difference.mesh,
+        "exact planar-arrangement coplanar surface difference",
+        validation,
+    )?;
+    Ok(Some(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::CoplanarSurfaceArrangementDifference,
+    )))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean_coplanar_surface_holed_difference(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<Option<ExactBooleanResult>, MeshError> {
+    if operation != ExactBooleanOperation::Difference {
+        return Ok(None);
+    }
+    let Some(difference) = arrange_single_triangle_coplanar_holed_difference(left, right) else {
+        return Ok(None);
+    };
+    let mesh = copy_mesh(
+        &difference.mesh,
+        "exact holed coplanar surface difference",
+        validation,
+    )?;
+    Ok(Some(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::CoplanarSurfaceHoledDifference,
+    )))
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -791,7 +879,7 @@ fn boolean_open_surface_disjoint_meshes(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if !meshes_are_certified_open_surface_disjoint(left, right)? {
+    if !certify_open_surface_disjoint_report(left, right)?.is_certified() {
         return Ok(None);
     }
 
@@ -814,19 +902,78 @@ fn boolean_open_surface_disjoint_meshes(
         ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
     };
 
-    Ok(Some(shortcut_result(mesh)))
+    Ok(Some(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::OpenSurfaceDisjoint,
+    )))
+}
+
+/// Certify whether two open surface meshes are disjoint by exact graph facts.
+///
+/// This is the report form of the open-surface named-boolean shortcut. It
+/// validates the open-surface precondition from exact mesh facts, then records
+/// the retained graph relation counts that prove no face pair survived exact
+/// scheduling. See Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997): the absence of intersection topology is a certified
+/// graph fact, not a tolerance side effect.
+#[cfg(feature = "exact-triangulation")]
+pub fn certify_open_surface_disjoint_report(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<ExactOpenSurfaceDisjointReport, MeshError> {
+    let left_open_surface = mesh_is_open_surface(left);
+    let right_open_surface = mesh_is_open_surface(right);
+    if !left_open_surface || !right_open_surface {
+        return Ok(open_surface_disjoint_report(
+            ExactOpenSurfaceDisjointStatus::NotOpenSurface,
+            left_open_surface,
+            right_open_surface,
+            false,
+            0,
+            0,
+            GraphRelationCounts::default(),
+        ));
+    }
+    let graph = build_intersection_graph(left, right)?;
+    let graph_had_unknowns = graph.has_unknowns();
+    let counts = graph_relation_counts(&graph);
+    let status = if graph_had_unknowns {
+        ExactOpenSurfaceDisjointStatus::GraphUnknowns
+    } else if graph.face_pairs.is_empty() {
+        ExactOpenSurfaceDisjointStatus::Certified
+    } else {
+        ExactOpenSurfaceDisjointStatus::GraphHasFacePairs
+    };
+    Ok(open_surface_disjoint_report(
+        status,
+        left_open_surface,
+        right_open_surface,
+        graph_had_unknowns,
+        graph.face_pairs.len(),
+        graph.event_count(),
+        counts,
+    ))
 }
 
 #[cfg(feature = "exact-triangulation")]
-fn meshes_are_certified_open_surface_disjoint(
-    left: &ExactMesh,
-    right: &ExactMesh,
-) -> Result<bool, MeshError> {
-    if !mesh_is_open_surface(left) || !mesh_is_open_surface(right) {
-        return Ok(false);
+fn open_surface_disjoint_report(
+    status: ExactOpenSurfaceDisjointStatus,
+    left_open_surface: bool,
+    right_open_surface: bool,
+    graph_had_unknowns: bool,
+    retained_face_pairs: usize,
+    retained_events: usize,
+    counts: GraphRelationCounts,
+) -> ExactOpenSurfaceDisjointReport {
+    ExactOpenSurfaceDisjointReport {
+        status,
+        left_open_surface,
+        right_open_surface,
+        graph_had_unknowns,
+        retained_face_pairs,
+        retained_events,
+        blocker: counts.into_blocker(ExactBooleanBlockerKind::NeedsWinding),
     }
-    let graph = build_intersection_graph(left, right)?;
-    Ok(!graph.has_unknowns() && graph.face_pairs.is_empty())
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -891,7 +1038,10 @@ fn boolean_coplanar_surface_containment(
         ) => unreachable!("unsupported or selected operation filtered by caller"),
     };
 
-    Ok(Some(shortcut_result(mesh)))
+    Ok(Some(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::CoplanarSurfaceContainment,
+    )))
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -939,7 +1089,104 @@ fn boolean_same_surface_meshes(
         ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
     };
 
-    Ok(shortcut_result(mesh))
+    Ok(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::SameSurface,
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean_coplanar_convex_equivalent_surfaces(
+    mesh: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    let mesh = match operation {
+        ExactBooleanOperation::Union | ExactBooleanOperation::Intersection => copy_mesh(
+            mesh,
+            "exact coplanar convex equivalent surface result",
+            validation,
+        )?,
+        ExactBooleanOperation::Difference => empty_mesh(
+            "empty exact coplanar convex equivalent surface difference",
+            validation,
+        )?,
+        ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
+    };
+
+    Ok(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::CoplanarConvexSurfaceEquivalence,
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boolean_coplanar_convex_containment_surfaces(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+    validation: ValidationPolicy,
+) -> Result<ExactBooleanResult, MeshError> {
+    let containment = certify_coplanar_convex_surface_containment(left, right)
+        .expect("caller checked convex coplanar containment");
+    let mesh = match (containment.relation, operation) {
+        (CoplanarConvexSurfaceContainment::LeftInsideRight, ExactBooleanOperation::Union) => {
+            copy_mesh(
+                right,
+                "exact coplanar convex containment union keeps outer right",
+                validation,
+            )?
+        }
+        (
+            CoplanarConvexSurfaceContainment::LeftInsideRight,
+            ExactBooleanOperation::Intersection,
+        ) => copy_mesh(
+            left,
+            "exact coplanar convex containment intersection keeps inner left",
+            validation,
+        )?,
+        (CoplanarConvexSurfaceContainment::LeftInsideRight, ExactBooleanOperation::Difference) => {
+            empty_mesh(
+                "empty exact coplanar convex containment difference",
+                validation,
+            )?
+        }
+        (CoplanarConvexSurfaceContainment::RightInsideLeft, ExactBooleanOperation::Union) => {
+            copy_mesh(
+                left,
+                "exact coplanar convex containment union keeps outer left",
+                validation,
+            )?
+        }
+        (
+            CoplanarConvexSurfaceContainment::RightInsideLeft,
+            ExactBooleanOperation::Intersection,
+        ) => copy_mesh(
+            right,
+            "exact coplanar convex containment intersection keeps inner right",
+            validation,
+        )?,
+        (CoplanarConvexSurfaceContainment::RightInsideLeft, ExactBooleanOperation::Difference) => {
+            let difference = arrange_coplanar_convex_surface_holed_difference(left, right)
+                .expect("right-inside-left containment should materialize one holed sheet");
+            copy_mesh(
+                &difference.mesh,
+                "exact coplanar convex containment holed difference",
+                validation,
+            )?
+        }
+        (_, ExactBooleanOperation::SelectedRegions(_)) => unreachable!("handled by caller"),
+    };
+
+    let shortcut = if containment.relation == CoplanarConvexSurfaceContainment::RightInsideLeft
+        && operation == ExactBooleanOperation::Difference
+    {
+        ExactBooleanShortcutKind::CoplanarConvexSurfaceHoledDifference
+    } else {
+        ExactBooleanShortcutKind::CoplanarConvexSurfaceContainment
+    };
+
+    Ok(certified_shortcut_result(mesh, shortcut))
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -953,8 +1200,7 @@ fn boolean_boundary_touching_meshes(
     if boundary_policy == ExactBoundaryBooleanPolicy::Reject {
         return Ok(None);
     }
-    let graph = build_intersection_graph(left, right)?;
-    if !graph_requires_boundary_policy(&graph) {
+    if !certify_boundary_touching_report(left, right)?.is_certified() {
         return Ok(None);
     }
 
@@ -978,7 +1224,354 @@ fn boolean_boundary_touching_meshes(
         ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
     };
 
-    Ok(Some(shortcut_result(mesh)))
+    Ok(Some(boundary_policy_shortcut_result(mesh, operation)))
+}
+
+/// Certify whether retained graph pairs are exclusively boundary-only contacts.
+///
+/// The report keeps the exact graph relation counts used by boundary-policy
+/// preflight and by [`boolean_exact_with_boundary_policy`]. Boundary-only
+/// topology is intentionally not silently materialized by the default named
+/// boolean API; Yap's exact computation model requires this projection into a
+/// triangle-mesh-only result to be an explicit caller policy.
+#[cfg(feature = "exact-triangulation")]
+pub fn certify_boundary_touching_report(
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<ExactBoundaryTouchingReport, MeshError> {
+    let graph = build_intersection_graph(left, right)?;
+    Ok(boundary_touching_report_from_graph(&graph))
+}
+
+/// Certify whether a named operation needs planar arrangement output.
+///
+/// The report is intentionally narrower than full winding preflight. It only
+/// answers the coplanar positive-area case where exact graph facts prove that
+/// union or difference output is a planar arrangement problem. Existing
+/// single-triangle and convex multi-face coplanar shortcuts are reported as
+/// already materialized so callers can distinguish a missing output model from
+/// a handled certified fragment.
+#[cfg(feature = "exact-triangulation")]
+pub fn certify_planar_arrangement_report(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<ExactPlanarArrangementReport, MeshError> {
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
+        return Ok(planar_arrangement_report(
+            operation,
+            ExactPlanarArrangementStatus::NotNamedOperation,
+            false,
+            0,
+            0,
+            GraphRelationCounts::default(),
+            None,
+        ));
+    }
+
+    let graph = build_intersection_graph(left, right)?;
+    planar_arrangement_report_from_graph(&graph, left, right, operation)
+}
+
+/// Certify whether exact graph construction needs refinement.
+///
+/// This is the standalone report form of the `UnresolvedGraph` preflight
+/// branch. It separates unknown predicate outcomes and failed exact
+/// constructions from later boundary, planar-arrangement, or winding policy,
+/// following Yap's requirement that unresolved combinatorics stay explicit
+/// rather than being folded into a generic unsupported boolean.
+#[cfg(feature = "exact-triangulation")]
+pub fn certify_refinement_report(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<ExactRefinementReport, MeshError> {
+    let graph = build_intersection_graph(left, right)?;
+    Ok(refinement_report_from_graph(&graph, operation))
+}
+
+/// Prepare and report the exact facts needed by a future winding policy.
+///
+/// This function stops at the same boundary as unsupported nontrivial named
+/// booleans: it extracts the certified graph, rejects unresolved/boundary/
+/// planar-arrangement cases into explicit statuses, then validates split
+/// regions and records opposite-plane classifications. It is an auditable
+/// replacement for "try winding with floats" in Yap's exact-computation model.
+#[cfg(feature = "exact-triangulation")]
+pub fn certify_winding_readiness_report(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<ExactWindingReadinessReport, MeshError> {
+    let graph = build_intersection_graph(left, right)?;
+    winding_readiness_report_from_graph(&graph, left, right, operation)
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boundary_touching_report_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+) -> ExactBoundaryTouchingReport {
+    let graph_had_unknowns = graph.has_unknowns();
+    let counts = graph_relation_counts(graph);
+    let status = if graph_had_unknowns {
+        ExactBoundaryTouchingStatus::GraphUnknowns
+    } else if graph_requires_boundary_policy(graph) {
+        ExactBoundaryTouchingStatus::Certified
+    } else {
+        ExactBoundaryTouchingStatus::NotBoundaryOnly
+    };
+    ExactBoundaryTouchingReport {
+        status,
+        graph_had_unknowns,
+        retained_face_pairs: graph.face_pairs.len(),
+        retained_events: graph.event_count(),
+        blocker: counts.into_blocker(ExactBooleanBlockerKind::NeedsBoundaryPolicy),
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn refinement_report_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    operation: ExactBooleanOperation,
+) -> ExactRefinementReport {
+    let counts = graph_relation_counts(graph);
+    let graph_had_unknowns = graph.has_unknowns();
+    let needs_refinement = graph_had_unknowns || counts.construction_failed_events > 0;
+    ExactRefinementReport {
+        operation,
+        status: if needs_refinement {
+            ExactRefinementStatus::Required
+        } else {
+            ExactRefinementStatus::NotRequired
+        },
+        graph_had_unknowns,
+        retained_face_pairs: graph.face_pairs.len(),
+        retained_events: graph.event_count(),
+        blocker: needs_refinement
+            .then(|| counts.into_blocker(ExactBooleanBlockerKind::NeedsRefinement)),
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn planar_arrangement_report_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<ExactPlanarArrangementReport, MeshError> {
+    let graph_had_unknowns = graph.has_unknowns();
+    let counts = graph_relation_counts(graph);
+    let arrangement_readiness = if graph_had_unknowns {
+        None
+    } else {
+        Some(graph.coplanar_arrangement_readiness_report(left, right)?)
+    };
+    let status = if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
+        ExactPlanarArrangementStatus::NotNamedOperation
+    } else if graph_had_unknowns {
+        ExactPlanarArrangementStatus::GraphUnknowns
+    } else if coplanar_surface_output_already_materialized(left, right, operation) {
+        ExactPlanarArrangementStatus::AlreadyMaterialized
+    } else if operation != ExactBooleanOperation::Intersection
+        && graph_requires_planar_arrangement(graph)
+    {
+        ExactPlanarArrangementStatus::Required
+    } else {
+        ExactPlanarArrangementStatus::NoPositiveOverlap
+    };
+    Ok(planar_arrangement_report(
+        operation,
+        status,
+        graph_had_unknowns,
+        graph.face_pairs.len(),
+        graph.event_count(),
+        counts,
+        arrangement_readiness,
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn planar_arrangement_report(
+    operation: ExactBooleanOperation,
+    status: ExactPlanarArrangementStatus,
+    graph_had_unknowns: bool,
+    retained_face_pairs: usize,
+    retained_events: usize,
+    counts: GraphRelationCounts,
+    arrangement_readiness: Option<super::graph::CoplanarArrangementReadinessReport>,
+) -> ExactPlanarArrangementReport {
+    ExactPlanarArrangementReport {
+        operation,
+        status,
+        graph_had_unknowns,
+        retained_face_pairs,
+        retained_events,
+        blocker: counts.into_blocker(ExactBooleanBlockerKind::NeedsPlanarArrangement),
+        arrangement_readiness,
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn coplanar_surface_output_already_materialized(
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> bool {
+    if certify_coplanar_convex_surface_equivalence(left, right).is_some()
+        || certify_coplanar_convex_surface_containment(left, right).is_some()
+    {
+        return true;
+    }
+    match operation {
+        ExactBooleanOperation::Intersection => {
+            arrange_coplanar_convex_surface_intersection(left, right).is_some()
+                || intersect_single_triangle_coplanar_surfaces(left, right).is_some()
+        }
+        ExactBooleanOperation::Union => {
+            arrange_coplanar_convex_surface_union(left, right).is_some()
+                || union_single_triangle_coplanar_surfaces(left, right).is_some()
+                || arrange_single_triangle_coplanar_union(left, right).is_some()
+        }
+        ExactBooleanOperation::Difference => {
+            arrange_coplanar_convex_surface_difference(left, right).is_some()
+                || arrange_coplanar_convex_surface_holed_difference(left, right).is_some()
+                || difference_single_triangle_coplanar_surfaces(left, right).is_some()
+                || arrange_single_triangle_coplanar_difference(left, right).is_some()
+                || arrange_single_triangle_coplanar_holed_difference(left, right).is_some()
+        }
+        ExactBooleanOperation::SelectedRegions(_) => false,
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn winding_readiness_report_from_graph(
+    graph: &super::graph::ExactIntersectionGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+    operation: ExactBooleanOperation,
+) -> Result<ExactWindingReadinessReport, MeshError> {
+    let graph_had_unknowns = graph.has_unknowns();
+    let counts = graph_relation_counts(graph);
+    if matches!(operation, ExactBooleanOperation::SelectedRegions(_)) {
+        return Ok(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::NotNamedOperation,
+            graph_had_unknowns,
+            graph.face_pairs.len(),
+            graph.event_count(),
+            0,
+            Vec::new(),
+            counts.into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+            None,
+        ));
+    }
+    if graph_had_unknowns {
+        return Ok(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::GraphUnknowns,
+            graph_had_unknowns,
+            graph.face_pairs.len(),
+            graph.event_count(),
+            0,
+            Vec::new(),
+            counts.into_blocker(ExactBooleanBlockerKind::NeedsRefinement),
+            None,
+        ));
+    }
+    if graph_requires_boundary_policy(graph) {
+        return Ok(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::BoundaryPolicyRequired,
+            graph_had_unknowns,
+            graph.face_pairs.len(),
+            graph.event_count(),
+            0,
+            Vec::new(),
+            counts.into_blocker(ExactBooleanBlockerKind::NeedsBoundaryPolicy),
+            None,
+        ));
+    }
+    let planar_report = planar_arrangement_report_from_graph(graph, left, right, operation)?;
+    if planar_report.is_required() {
+        return Ok(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::PlanarArrangementRequired,
+            graph_had_unknowns,
+            graph.face_pairs.len(),
+            graph.event_count(),
+            0,
+            Vec::new(),
+            counts.into_blocker(ExactBooleanBlockerKind::NeedsPlanarArrangement),
+            planar_report.arrangement_readiness,
+        ));
+    }
+    if planar_report.status == ExactPlanarArrangementStatus::AlreadyMaterialized {
+        return Ok(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::PlanarArrangementAlreadyMaterialized,
+            graph_had_unknowns,
+            graph.face_pairs.len(),
+            graph.event_count(),
+            0,
+            Vec::new(),
+            counts.into_blocker(ExactBooleanBlockerKind::NeedsPlanarArrangement),
+            planar_report.arrangement_readiness,
+        ));
+    }
+    if graph.face_pairs.is_empty() {
+        return Ok(winding_readiness_report(
+            operation,
+            ExactWindingReadinessStatus::NoNontrivialOverlap,
+            graph_had_unknowns,
+            0,
+            graph.event_count(),
+            0,
+            Vec::new(),
+            counts.into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+            None,
+        ));
+    }
+
+    let geometry = graph.face_split_geometry_plan(left, right)?;
+    let region_plan = geometry.region_plan(left, right);
+    let region_classifications =
+        checked_classify_face_regions_against_opposite_planes(&region_plan, left, right)?;
+    Ok(winding_readiness_report(
+        operation,
+        ExactWindingReadinessStatus::Ready,
+        graph_had_unknowns,
+        graph.face_pairs.len(),
+        graph.event_count(),
+        region_plan.regions.len(),
+        region_classifications,
+        counts.into_blocker(ExactBooleanBlockerKind::NeedsWinding),
+        None,
+    ))
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn winding_readiness_report(
+    operation: ExactBooleanOperation,
+    status: ExactWindingReadinessStatus,
+    graph_had_unknowns: bool,
+    retained_face_pairs: usize,
+    retained_events: usize,
+    region_count: usize,
+    region_classifications: Vec<FaceRegionPlaneClassification>,
+    blocker: ExactBooleanBlocker,
+    arrangement_readiness: Option<super::graph::CoplanarArrangementReadinessReport>,
+) -> ExactWindingReadinessReport {
+    ExactWindingReadinessReport {
+        operation,
+        status,
+        graph_had_unknowns,
+        retained_face_pairs,
+        retained_events,
+        region_count,
+        region_classifications,
+        blocker,
+        arrangement_readiness,
+    }
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -988,9 +1581,9 @@ fn boolean_convex_containment_meshes(
     operation: ExactBooleanOperation,
     validation: ValidationPolicy,
 ) -> Result<Option<ExactBooleanResult>, MeshError> {
-    if certified_convex_boolean_support(left, right)?.is_none() {
+    let Some(support) = certified_convex_boolean_support(left, right)? else {
         return Ok(None);
-    }
+    };
 
     let left_in_right = classify_mesh_vertices_against_convex_solid(left, right);
     let right_in_left = classify_mesh_vertices_against_convex_solid(right, left);
@@ -1060,7 +1653,18 @@ fn boolean_convex_containment_meshes(
         _ => return Ok(None),
     };
 
-    Ok(Some(shortcut_result(mesh)))
+    Ok(Some(certified_shortcut_result(
+        mesh,
+        match support {
+            ExactBooleanSupport::CertifiedConvexContainment => {
+                ExactBooleanShortcutKind::ConvexContainment
+            }
+            ExactBooleanSupport::CertifiedConvexSeparated => {
+                ExactBooleanShortcutKind::ConvexSeparated
+            }
+            _ => unreachable!("convex support helper returns only certified convex shortcuts"),
+        },
+    )))
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -1338,7 +1942,10 @@ fn boolean_disjoint_meshes(
         ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
     };
 
-    Ok(shortcut_result(mesh))
+    Ok(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::BoundsDisjoint,
+    ))
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -1365,7 +1972,10 @@ fn boolean_empty_operand(
         ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
     };
 
-    Ok(shortcut_result(mesh))
+    Ok(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::EmptyOperand,
+    ))
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -1392,7 +2002,10 @@ fn boolean_identical_meshes(
         ExactBooleanOperation::SelectedRegions(_) => unreachable!("handled by caller"),
     };
 
-    Ok(shortcut_result(mesh))
+    Ok(certified_shortcut_result(
+        mesh,
+        ExactBooleanShortcutKind::Identical,
+    ))
 }
 
 #[cfg(feature = "exact-triangulation")]
@@ -1406,8 +2019,30 @@ fn empty_mesh(label: &'static str, validation: ValidationPolicy) -> Result<Exact
 }
 
 #[cfg(feature = "exact-triangulation")]
-fn shortcut_result(mesh: ExactMesh) -> ExactBooleanResult {
+fn certified_shortcut_result(
+    mesh: ExactMesh,
+    shortcut: ExactBooleanShortcutKind,
+) -> ExactBooleanResult {
     ExactBooleanResult {
+        kind: ExactBooleanResultKind::CertifiedShortcut { shortcut },
+        graph_had_unknowns: false,
+        region_classifications: Vec::new(),
+        triangulations: Vec::new(),
+        assembly: ExactBooleanAssemblyPlan {
+            vertices: Vec::new(),
+            triangles: Vec::new(),
+        },
+        mesh,
+    }
+}
+
+#[cfg(feature = "exact-triangulation")]
+fn boundary_policy_shortcut_result(
+    mesh: ExactMesh,
+    operation: ExactBooleanOperation,
+) -> ExactBooleanResult {
+    ExactBooleanResult {
+        kind: ExactBooleanResultKind::BoundaryPolicyShortcut { operation },
         graph_had_unknowns: false,
         region_classifications: Vec::new(),
         triangulations: Vec::new(),

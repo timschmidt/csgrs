@@ -46,6 +46,29 @@ pub enum CoplanarTriangleRelation {
     Unknown,
 }
 
+/// Structural inconsistency in a projected coplanar triangle classifier.
+///
+/// This validates the retained projection, segment relations, vertex-location
+/// facts, and collapsed relation without recomputing predicates. Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997), frames this as the required handoff from certified predicate facts
+/// to combinatorial topology: the retained facts must justify the relation a
+/// later graph builder consumes.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CoplanarTriangleValidationError {
+    /// A decided relation was produced without a certified projection.
+    DecidedRelationWithoutProjection,
+    /// An unknown relation with no projection retained downstream predicate
+    /// facts.
+    ProjectionlessUnknownHasFacts,
+    /// A decided relation did not retain all nine edge-pair classifications.
+    MissingEdgeIntersections,
+    /// A decided relation did not retain all six vertex/triangle locations.
+    MissingVertexLocations,
+    /// Retained edge and vertex facts derive a different relation.
+    RelationMismatch,
+}
+
 impl CoplanarTriangleRelation {
     /// Return whether this relation must be retained for graph construction.
     pub const fn needs_graph_construction(self) -> bool {
@@ -80,6 +103,51 @@ impl CoplanarTriangleClassification {
             .iter()
             .copied()
             .all(PredicateUse::is_proof_producing)
+    }
+
+    /// Validate projection, retained predicate facts, and relation coherence.
+    ///
+    /// Unknown results are allowed to retain a certified projection and a
+    /// prefix of edge facts because the classifier exits as soon as one
+    /// required projected predicate becomes undecided. Decided results must
+    /// retain the complete edge and vertex facts needed to justify the
+    /// collapsed relation.
+    pub fn validate(&self) -> Result<(), CoplanarTriangleValidationError> {
+        if self.projection.is_none() {
+            return if self.relation == CoplanarTriangleRelation::Unknown
+                && self.edge_intersections.is_empty()
+                && self.right_vertices_in_left == [None, None, None]
+                && self.left_vertices_in_right == [None, None, None]
+            {
+                Ok(())
+            } else if self.relation == CoplanarTriangleRelation::Unknown {
+                Err(CoplanarTriangleValidationError::ProjectionlessUnknownHasFacts)
+            } else {
+                Err(CoplanarTriangleValidationError::DecidedRelationWithoutProjection)
+            };
+        }
+
+        if self.relation == CoplanarTriangleRelation::Unknown {
+            return Ok(());
+        }
+        if self.edge_intersections.len() != 9 {
+            return Err(CoplanarTriangleValidationError::MissingEdgeIntersections);
+        }
+        if self.right_vertices_in_left.iter().any(Option::is_none)
+            || self.left_vertices_in_right.iter().any(Option::is_none)
+        {
+            return Err(CoplanarTriangleValidationError::MissingVertexLocations);
+        }
+        if derive_relation(
+            &self.edge_intersections,
+            self.right_vertices_in_left,
+            self.left_vertices_in_right,
+        ) == self.relation
+        {
+            Ok(())
+        } else {
+            Err(CoplanarTriangleValidationError::RelationMismatch)
+        }
     }
 }
 
@@ -239,5 +307,41 @@ fn unknown_with_projection(
         right_vertices_in_left: [None, None, None],
         left_vertices_in_right: [None, None, None],
         predicates,
+    }
+}
+
+fn derive_relation(
+    edge_intersections: &[SegmentIntersection],
+    right_vertices_in_left: [Option<TriangleLocation>; 3],
+    left_vertices_in_right: [Option<TriangleLocation>; 3],
+) -> CoplanarTriangleRelation {
+    let mut saw_touch = false;
+    let mut saw_overlap = false;
+    for relation in edge_intersections {
+        match relation {
+            SegmentIntersection::Proper
+            | SegmentIntersection::CollinearOverlap
+            | SegmentIntersection::Identical => saw_overlap = true,
+            SegmentIntersection::EndpointTouch => saw_touch = true,
+            SegmentIntersection::Disjoint => {}
+        }
+    }
+    for location in right_vertices_in_left
+        .iter()
+        .chain(left_vertices_in_right.iter())
+        .flatten()
+    {
+        match location {
+            TriangleLocation::Inside => saw_overlap = true,
+            TriangleLocation::OnEdge | TriangleLocation::OnVertex => saw_touch = true,
+            TriangleLocation::Degenerate | TriangleLocation::Outside => {}
+        }
+    }
+    if saw_overlap {
+        CoplanarTriangleRelation::Overlapping
+    } else if saw_touch {
+        CoplanarTriangleRelation::Touching
+    } else {
+        CoplanarTriangleRelation::Disjoint
     }
 }

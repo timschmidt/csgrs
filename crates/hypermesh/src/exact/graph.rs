@@ -19,10 +19,14 @@ use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::{
-    PlaneSide, Point3, SegmentIntersection, Sign, TriangleLocation, compare_reals, orient3d_report,
+    PlaneSide, Point2, Point3, SegmentIntersection, Sign, TriangleLocation, compare_reals,
+    orient3d_report, point_on_segment,
 };
 
-use super::construction::{SegmentPlaneIntersection, SegmentPlaneRelation};
+use super::construction::{
+    SegmentPlaneConstructionFailure, SegmentPlaneIntersection, SegmentPlaneParameterRatio,
+    SegmentPlaneRelation,
+};
 use super::coplanar::{CoplanarProjection, CoplanarTriangleClassification};
 use super::error::{DiagnosticKind, MeshDiagnostic, MeshError, Severity};
 use super::intersection::{
@@ -59,6 +63,12 @@ pub enum IntersectionEvent {
         point: Option<Point3>,
         /// Exact edge parameter when available.
         parameter: Option<ExactReal>,
+        /// Determinant ratio that produced the exact edge parameter for a
+        /// proper crossing.
+        parameter_ratio: Option<SegmentPlaneParameterRatio>,
+        /// Structured failure reason when endpoint predicates certified a
+        /// crossing but exact point construction failed.
+        construction_failure: Option<SegmentPlaneConstructionFailure>,
         /// Certified endpoint side facts retained from segment/plane
         /// classification.
         endpoint_sides: [Option<PlaneSide>; 2],
@@ -87,6 +97,376 @@ pub enum IntersectionEvent {
     },
     /// A retained pair could not be completely decided.
     Unknown,
+}
+
+/// Retained projected edge contact in a coplanar face-pair overlap graph.
+///
+/// These records are arrangement inputs, not final topology. They retain the
+/// exact projected segment/segment relation from the Guigue-Devillers style
+/// coplanar decomposition while keeping mutation deferred until the full
+/// planar graph can be assembled. See Guigue and Devillers, "Fast and Robust
+/// Triangle-Triangle Overlap Test Using Orientation Predicates," *Journal of
+/// Graphics Tools* 8.1 (2003), and Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7.1-2 (1997).
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CoplanarEdgeOverlap {
+    /// Edge in the left face.
+    pub left_edge: [usize; 2],
+    /// Edge in the right face.
+    pub right_edge: [usize; 2],
+    /// Certified projected segment relation.
+    pub relation: SegmentIntersection,
+}
+
+/// Retained vertex containment/touching fact in a coplanar overlap graph.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CoplanarVertexOverlap {
+    /// Mesh owning the retained vertex.
+    pub vertex_side: MeshSide,
+    /// Vertex index in the owning mesh.
+    pub vertex: usize,
+    /// Opposite mesh owning the containing/touching triangle.
+    pub triangle_side: MeshSide,
+    /// Face index of the opposite triangle.
+    pub triangle_face: usize,
+    /// Certified projected point/triangle location.
+    pub location: TriangleLocation,
+}
+
+/// Non-mutating exact coplanar overlap graph for one retained face pair.
+///
+/// This is the first explicit arrangement artifact for coplanar triangle
+/// pairs. It groups edge contacts and vertex-in-triangle facts that were
+/// already certified by `hyperlimit`, but deliberately avoids inventing split
+/// vertices or planar cells until a later exact arrangement stage can retain
+/// their construction provenance. That boundary follows Yap, "Towards Exact
+/// Geometric Computation," *Computational Geometry* 7.1-2 (1997).
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CoplanarOverlapGraph {
+    /// Face index in the left mesh.
+    pub left_face: usize,
+    /// Face index in the right mesh.
+    pub right_face: usize,
+    /// Coarse coplanar face-pair relation.
+    pub relation: MeshFacePairRelation,
+    /// Certified projection used for the retained 2D predicates.
+    pub projection: CoplanarProjection,
+    /// Non-disjoint projected edge contacts.
+    pub edge_overlaps: Vec<CoplanarEdgeOverlap>,
+    /// Constructive vertex/triangle facts.
+    pub vertex_overlaps: Vec<CoplanarVertexOverlap>,
+}
+
+/// Exact split point constructed from one coplanar projected edge contact.
+///
+/// Proper edge crossings retain the determinant-ratio parameters on both
+/// participating edges. Endpoint touches retain exact endpoint parameters.
+/// Collinear positive-length overlaps deliberately stay interval records until
+/// a later planar arrangement stage can construct and order interval endpoints
+/// with full provenance.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CoplanarEdgeSplitPoint {
+    /// Exact 3D point on the shared coplanar face plane.
+    pub point: Point3,
+    /// Parameter on [`CoplanarEdgeOverlap::left_edge`].
+    pub left_parameter: ExactReal,
+    /// Parameter on [`CoplanarEdgeOverlap::right_edge`].
+    pub right_parameter: ExactReal,
+}
+
+/// Retained split construction for one coplanar edge contact.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CoplanarEdgeSplitConstruction {
+    /// Original edge contact record.
+    pub overlap: CoplanarEdgeOverlap,
+    /// Constructed point events for proper crossings or endpoint touches.
+    pub points: Vec<CoplanarEdgeSplitPoint>,
+    /// Whether the contact is a positive-length collinear interval whose
+    /// endpoint construction remains a later planar-arrangement step.
+    pub interval_overlap: bool,
+}
+
+impl CoplanarEdgeSplitConstruction {
+    /// Validate point-vs-interval construction consistency for one edge contact.
+    pub fn validate(&self) -> Result<(), CoplanarOverlapSplitValidationError> {
+        validate_coplanar_edge_split(self)
+    }
+}
+
+/// Non-mutating split-construction plan for retained coplanar overlap graphs.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CoplanarOverlapSplitPlan {
+    /// Per-face-pair overlap graph split records.
+    pub graphs: Vec<CoplanarOverlapSplitGraph>,
+}
+
+/// Split construction records for one coplanar face-pair overlap graph.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CoplanarOverlapSplitGraph {
+    /// Face index in the left mesh.
+    pub left_face: usize,
+    /// Face index in the right mesh.
+    pub right_face: usize,
+    /// Projection used to construct the split records.
+    pub projection: CoplanarProjection,
+    /// Edge split/interval constructions.
+    pub edge_splits: Vec<CoplanarEdgeSplitConstruction>,
+    /// Vertex overlap facts copied from the source overlap graph.
+    pub vertex_overlaps: Vec<CoplanarVertexOverlap>,
+}
+
+/// Readiness status for the future exact planar-cell extraction stage.
+///
+/// The current port can already retain certified coplanar edge and
+/// vertex-contact facts. Full planar arrangements need a later stage that
+/// turns those facts into cells, loops, and output regions. Following Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997), this status names that boundary explicitly instead of letting
+/// callers infer it from a generic unsupported boolean result.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CoplanarArrangementReadinessStatus {
+    /// No retained coplanar overlap graph exists.
+    NoCoplanarOverlap,
+    /// Retained coplanar graphs contain boundary-only touching evidence.
+    BoundaryOnly,
+    /// At least one retained positive-area coplanar overlap needs planar-cell
+    /// extraction before named union/difference output can be materialized.
+    NeedsPlanarCells,
+}
+
+/// Auditable summary of retained coplanar overlap evidence.
+///
+/// This report is intentionally compact: it does not replace the underlying
+/// [`CoplanarOverlapGraph`] or [`CoplanarOverlapSplitPlan`], but summarizes
+/// their validated counts at the API boundary where the exact port still lacks
+/// general multi-component planar-cell extraction. It gives fuzzing,
+/// benchmarks, and downstream planners a checked handoff rather than a plain
+/// "not implemented" flag.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CoplanarArrangementReadinessReport {
+    /// Coarse state of the retained coplanar arrangement evidence.
+    pub status: CoplanarArrangementReadinessStatus,
+    /// Number of retained coplanar overlap graphs.
+    pub graph_count: usize,
+    /// Number of graphs whose coarse relation is positive-area overlap.
+    pub overlapping_graphs: usize,
+    /// Number of graphs whose coarse relation is boundary-only touching.
+    pub touching_graphs: usize,
+    /// Number of retained non-disjoint edge contacts.
+    pub edge_overlap_count: usize,
+    /// Number of retained vertex-in-triangle or vertex-on-triangle facts.
+    pub vertex_overlap_count: usize,
+    /// Number of exact point split constructions retained for proper or
+    /// endpoint edge contacts.
+    pub point_split_count: usize,
+    /// Number of positive-length collinear interval contacts retained for the
+    /// future planar arrangement pass.
+    pub interval_overlap_count: usize,
+}
+
+/// Structural inconsistency in a retained coplanar overlap graph.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CoplanarOverlapGraphValidationError {
+    /// The graph relation is not a coplanar retained relation.
+    NonCoplanarRelation,
+    /// The graph has no edge or vertex evidence.
+    EmptyOverlapGraph,
+    /// An edge record retained a disjoint relation.
+    DisjointEdgeOverlap,
+    /// A vertex record retained an outside or degenerate location.
+    NonConstructiveVertexOverlap,
+    /// A vertex record does not connect left and right meshes.
+    SameSideVertexOverlap,
+}
+
+/// Structural inconsistency in retained coplanar split construction records.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CoplanarOverlapSplitValidationError {
+    /// A proper or endpoint contact did not retain exactly one split point.
+    MissingPointConstruction,
+    /// A disjoint edge contact appeared in the split plan.
+    DisjointEdgeSplit,
+    /// A collinear interval contact did not retain interval state.
+    MissingIntervalConstruction,
+    /// A non-interval contact unexpectedly retained interval state.
+    UnexpectedIntervalConstruction,
+    /// A collinear interval unexpectedly retained point construction.
+    UnexpectedPointConstruction,
+}
+
+/// Structural inconsistency in a coplanar arrangement readiness report.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CoplanarArrangementReadinessValidationError {
+    /// `NoCoplanarOverlap` retained nonzero graph or event counts.
+    NoOverlapWithEvidence,
+    /// Boundary-only status retained positive-area overlap graphs.
+    BoundaryOnlyHasOverlap,
+    /// Boundary-only status retained no touching graphs.
+    BoundaryOnlyMissingTouchingGraph,
+    /// Planar-cell status retained no positive-area overlap graphs.
+    NeedsCellsMissingOverlap,
+    /// A nonempty graph summary retained neither edge nor vertex evidence.
+    MissingOverlapEvidence,
+    /// Graph-count fields are internally inconsistent.
+    GraphCountMismatch,
+}
+
+impl CoplanarOverlapGraph {
+    /// Validate that this grouped overlap graph is coherent.
+    pub fn validate(&self) -> Result<(), CoplanarOverlapGraphValidationError> {
+        if !matches!(
+            self.relation,
+            MeshFacePairRelation::CoplanarTouching | MeshFacePairRelation::CoplanarOverlapping
+        ) {
+            return Err(CoplanarOverlapGraphValidationError::NonCoplanarRelation);
+        }
+        if self.edge_overlaps.is_empty() && self.vertex_overlaps.is_empty() {
+            return Err(CoplanarOverlapGraphValidationError::EmptyOverlapGraph);
+        }
+        for edge in &self.edge_overlaps {
+            if edge.relation == SegmentIntersection::Disjoint {
+                return Err(CoplanarOverlapGraphValidationError::DisjointEdgeOverlap);
+            }
+        }
+        for vertex in &self.vertex_overlaps {
+            if vertex.vertex_side == vertex.triangle_side {
+                return Err(CoplanarOverlapGraphValidationError::SameSideVertexOverlap);
+            }
+            if matches!(
+                vertex.location,
+                TriangleLocation::Outside | TriangleLocation::Degenerate
+            ) {
+                return Err(CoplanarOverlapGraphValidationError::NonConstructiveVertexOverlap);
+            }
+        }
+        Ok(())
+    }
+
+    /// Construct exact point/interval records for this coplanar overlap graph.
+    ///
+    /// This is still a pre-topology artifact. It constructs point events for
+    /// proper crossings and endpoint touches, and explicitly marks collinear
+    /// interval contacts as interval topology for a later exact planar
+    /// arrangement pass. The split follows Yap's exact-geometric-computation
+    /// discipline: keep construction evidence with the graph instead of using
+    /// projected predicate labels as if they were enough to mutate topology.
+    pub fn split_constructions(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<CoplanarOverlapSplitGraph, MeshError> {
+        coplanar_overlap_split_graph(self, left, right)
+    }
+}
+
+impl CoplanarArrangementReadinessReport {
+    /// Return whether later planar-cell extraction is required.
+    pub const fn needs_planar_cells(&self) -> bool {
+        matches!(
+            self.status,
+            CoplanarArrangementReadinessStatus::NeedsPlanarCells
+        )
+    }
+
+    /// Validate that the compact readiness summary is internally coherent.
+    ///
+    /// The report validates counts, not source geometry. That is still useful
+    /// because exact topology staging often crosses API or serialization
+    /// boundaries before the next algorithm runs; Yap's exact-computation
+    /// model requires those retained numerical-structure summaries to be
+    /// auditable before they influence combinatorial output.
+    pub fn validate(&self) -> Result<(), CoplanarArrangementReadinessValidationError> {
+        if self.graph_count != self.overlapping_graphs + self.touching_graphs {
+            return Err(CoplanarArrangementReadinessValidationError::GraphCountMismatch);
+        }
+        if self.graph_count > 0 && self.edge_overlap_count == 0 && self.vertex_overlap_count == 0 {
+            return Err(CoplanarArrangementReadinessValidationError::MissingOverlapEvidence);
+        }
+        match self.status {
+            CoplanarArrangementReadinessStatus::NoCoplanarOverlap => {
+                if self.graph_count == 0
+                    && self.edge_overlap_count == 0
+                    && self.vertex_overlap_count == 0
+                    && self.point_split_count == 0
+                    && self.interval_overlap_count == 0
+                {
+                    Ok(())
+                } else {
+                    Err(CoplanarArrangementReadinessValidationError::NoOverlapWithEvidence)
+                }
+            }
+            CoplanarArrangementReadinessStatus::BoundaryOnly => {
+                if self.overlapping_graphs != 0 {
+                    return Err(
+                        CoplanarArrangementReadinessValidationError::BoundaryOnlyHasOverlap,
+                    );
+                }
+                if self.touching_graphs == 0 {
+                    return Err(
+                        CoplanarArrangementReadinessValidationError::BoundaryOnlyMissingTouchingGraph,
+                    );
+                }
+                Ok(())
+            }
+            CoplanarArrangementReadinessStatus::NeedsPlanarCells => {
+                if self.overlapping_graphs > 0 {
+                    Ok(())
+                } else {
+                    Err(CoplanarArrangementReadinessValidationError::NeedsCellsMissingOverlap)
+                }
+            }
+        }
+    }
+}
+
+impl CoplanarOverlapSplitPlan {
+    /// Validate every retained coplanar split construction record.
+    pub fn validate(&self) -> Result<(), CoplanarOverlapSplitValidationError> {
+        for graph in &self.graphs {
+            graph.validate()?;
+        }
+        Ok(())
+    }
+}
+
+impl CoplanarOverlapSplitGraph {
+    /// Validate split-point and interval construction consistency.
+    pub fn validate(&self) -> Result<(), CoplanarOverlapSplitValidationError> {
+        for split in &self.edge_splits {
+            validate_coplanar_edge_split(split)?;
+        }
+        Ok(())
+    }
+}
+
+/// Structural inconsistency in a retained intersection graph event.
+///
+/// This validates the graph record before split extraction or topology
+/// planning consumes it. Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), treats exact predicate and
+/// construction artifacts as the boundary between numerical decisions and
+/// combinatorial mutation; a graph event whose coarse relation and retained
+/// payload disagree must be rejected at that boundary.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum IntersectionGraphValidationError {
+    /// A rejected face-pair relation retained graph-construction events.
+    RejectedPairHasEvents,
+    /// A non-rejected face-pair relation retained no event evidence.
+    RetainedPairHasNoEvents,
+    /// An unknown face pair did not retain an unknown marker.
+    UnknownPairMissingUnknownEvent,
+    /// A coplanar face pair did not retain its certified projection.
+    CoplanarPairMissingProjection,
+    /// A non-coplanar relation retained a coplanar projection.
+    NonCoplanarPairHasProjection,
+    /// A segment/plane graph event retained a disjoint relation.
+    DisjointSegmentPlaneEvent,
+    /// A segment/plane event has inconsistent side facts or construction data.
+    InvalidSegmentPlaneEvent,
+    /// A coplanar edge event retained a disjoint relation.
+    DisjointCoplanarEdgeEvent,
+    /// A coplanar vertex event retained an outside or degenerate location.
+    NonConstructiveCoplanarVertexEvent,
 }
 
 /// Event records for one retained face pair.
@@ -121,6 +501,112 @@ impl FacePairEvents {
             )
         })
     }
+
+    /// Validate one retained face-pair event record.
+    ///
+    /// This is a structural audit of the event graph object, not a recomputed
+    /// triangle/triangle classification. It keeps the retained relation,
+    /// projection, and event payloads consistent before downstream split
+    /// planning converts construction records into topology.
+    pub fn validate(&self) -> Result<(), IntersectionGraphValidationError> {
+        if !face_pair_relation_needs_graph_construction(self.relation) {
+            return if self.events.is_empty() {
+                Ok(())
+            } else {
+                Err(IntersectionGraphValidationError::RejectedPairHasEvents)
+            };
+        }
+        if self.events.is_empty() {
+            return Err(IntersectionGraphValidationError::RetainedPairHasNoEvents);
+        }
+
+        match self.relation {
+            MeshFacePairRelation::CoplanarTouching | MeshFacePairRelation::CoplanarOverlapping => {
+                if self.projection.is_none() {
+                    return Err(IntersectionGraphValidationError::CoplanarPairMissingProjection);
+                }
+            }
+            MeshFacePairRelation::Candidate | MeshFacePairRelation::Unknown => {
+                if self.projection.is_some() {
+                    return Err(IntersectionGraphValidationError::NonCoplanarPairHasProjection);
+                }
+            }
+            MeshFacePairRelation::BoundsDisjoint | MeshFacePairRelation::PlaneSeparated => {}
+        }
+
+        if self.relation == MeshFacePairRelation::Unknown
+            && !self
+                .events
+                .iter()
+                .any(|event| matches!(event, IntersectionEvent::Unknown))
+        {
+            return Err(IntersectionGraphValidationError::UnknownPairMissingUnknownEvent);
+        }
+
+        for event in &self.events {
+            validate_intersection_event(event)?;
+        }
+        Ok(())
+    }
+
+    /// Group retained coplanar events into a non-mutating overlap graph.
+    ///
+    /// The returned graph is a structural arrangement input: it records which
+    /// projected edges and vertices participate in the coplanar contact while
+    /// leaving exact split construction and cell extraction to later stages.
+    pub fn coplanar_overlap_graph(&self) -> Option<CoplanarOverlapGraph> {
+        let projection = self.projection?;
+        if !matches!(
+            self.relation,
+            MeshFacePairRelation::CoplanarTouching | MeshFacePairRelation::CoplanarOverlapping
+        ) {
+            return None;
+        }
+
+        let mut edge_overlaps = Vec::new();
+        let mut vertex_overlaps = Vec::new();
+        for event in &self.events {
+            match event {
+                IntersectionEvent::CoplanarEdge {
+                    left_edge,
+                    right_edge,
+                    relation,
+                } if *relation != SegmentIntersection::Disjoint => {
+                    edge_overlaps.push(CoplanarEdgeOverlap {
+                        left_edge: *left_edge,
+                        right_edge: *right_edge,
+                        relation: *relation,
+                    });
+                }
+                IntersectionEvent::CoplanarVertex {
+                    vertex_side,
+                    vertex,
+                    triangle_side,
+                    triangle_face,
+                    location:
+                        location @ (TriangleLocation::Inside
+                        | TriangleLocation::OnEdge
+                        | TriangleLocation::OnVertex),
+                } => vertex_overlaps.push(CoplanarVertexOverlap {
+                    vertex_side: *vertex_side,
+                    vertex: *vertex,
+                    triangle_side: *triangle_side,
+                    triangle_face: *triangle_face,
+                    location: *location,
+                }),
+                _ => {}
+            }
+        }
+
+        Some(CoplanarOverlapGraph {
+            left_face: self.left_face,
+            right_face: self.right_face,
+            relation: self.relation,
+            projection,
+            edge_overlaps,
+            vertex_overlaps,
+        })
+    }
 }
 
 /// Exact intersection event graph for two meshes.
@@ -146,6 +632,132 @@ impl ExactIntersectionGraph {
                     .iter()
                     .any(|event| matches!(event, IntersectionEvent::Unknown))
         })
+    }
+
+    /// Validate all retained face-pair event records.
+    ///
+    /// Graph validation is the checked handoff between exact face-pair
+    /// classification and split planning. It verifies that every retained
+    /// event is structurally compatible with its coarse relation before edge
+    /// parameters are sorted or graph vertices are merged.
+    pub fn validate(&self) -> Result<(), IntersectionGraphValidationError> {
+        for pair in &self.face_pairs {
+            pair.validate()?;
+        }
+        Ok(())
+    }
+
+    /// Return grouped coplanar overlap graphs for retained coplanar face pairs.
+    pub fn coplanar_overlap_graphs(&self) -> Vec<CoplanarOverlapGraph> {
+        self.face_pairs
+            .iter()
+            .filter_map(FacePairEvents::coplanar_overlap_graph)
+            .collect()
+    }
+
+    /// Construct exact split-point/interval records for coplanar overlap graphs.
+    pub fn coplanar_overlap_split_plan(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<CoplanarOverlapSplitPlan, MeshError> {
+        let graphs = self
+            .coplanar_overlap_graphs()
+            .iter()
+            .map(|graph| graph.split_constructions(left, right))
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(CoplanarOverlapSplitPlan { graphs })
+    }
+
+    /// Summarize retained coplanar overlap evidence for planar-cell extraction.
+    ///
+    /// The report first validates each retained overlap graph and its split
+    /// construction records, then collapses them to counts that explain whether
+    /// a named operation is blocked on boundary policy or true planar-cell
+    /// arrangement. This is a Yap-style exact boundary: certified graph
+    /// evidence is preserved and checked, while the missing cell extraction
+    /// algorithm remains an explicit status rather than a tolerance fallback.
+    pub fn coplanar_arrangement_readiness_report(
+        &self,
+        left: &ExactMesh,
+        right: &ExactMesh,
+    ) -> Result<CoplanarArrangementReadinessReport, MeshError> {
+        let overlap_graphs = self.coplanar_overlap_graphs();
+        if overlap_graphs.is_empty() {
+            return Ok(CoplanarArrangementReadinessReport {
+                status: CoplanarArrangementReadinessStatus::NoCoplanarOverlap,
+                graph_count: 0,
+                overlapping_graphs: 0,
+                touching_graphs: 0,
+                edge_overlap_count: 0,
+                vertex_overlap_count: 0,
+                point_split_count: 0,
+                interval_overlap_count: 0,
+            });
+        }
+
+        let mut overlapping_graphs = 0;
+        let mut touching_graphs = 0;
+        let mut edge_overlap_count = 0;
+        let mut vertex_overlap_count = 0;
+        let mut point_split_count = 0;
+        let mut interval_overlap_count = 0;
+
+        for graph in &overlap_graphs {
+            graph.validate().map_err(|_| MeshError {
+                diagnostics: vec![MeshDiagnostic::new(
+                    Severity::Error,
+                    DiagnosticKind::UnsupportedExactOperation,
+                    "retained coplanar overlap graph failed readiness validation",
+                )],
+            })?;
+            match graph.relation {
+                MeshFacePairRelation::CoplanarOverlapping => overlapping_graphs += 1,
+                MeshFacePairRelation::CoplanarTouching => touching_graphs += 1,
+                _ => {}
+            }
+            edge_overlap_count += graph.edge_overlaps.len();
+            vertex_overlap_count += graph.vertex_overlaps.len();
+
+            let split = graph.split_constructions(left, right)?;
+            split.validate().map_err(|_| MeshError {
+                diagnostics: vec![MeshDiagnostic::new(
+                    Severity::Error,
+                    DiagnosticKind::UnsupportedExactOperation,
+                    "retained coplanar split construction failed readiness validation",
+                )],
+            })?;
+            for edge_split in split.edge_splits {
+                point_split_count += edge_split.points.len();
+                if edge_split.interval_overlap {
+                    interval_overlap_count += 1;
+                }
+            }
+        }
+
+        let status = if overlapping_graphs > 0 {
+            CoplanarArrangementReadinessStatus::NeedsPlanarCells
+        } else {
+            CoplanarArrangementReadinessStatus::BoundaryOnly
+        };
+        let report = CoplanarArrangementReadinessReport {
+            status,
+            graph_count: overlap_graphs.len(),
+            overlapping_graphs,
+            touching_graphs,
+            edge_overlap_count,
+            vertex_overlap_count,
+            point_split_count,
+            interval_overlap_count,
+        };
+        report.validate().map_err(|_| MeshError {
+            diagnostics: vec![MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::UnsupportedExactOperation,
+                "coplanar arrangement readiness report failed validation",
+            )],
+        })?;
+        Ok(report)
     }
 
     /// Extract exact edge split parameters from segment/plane events.
@@ -323,6 +935,8 @@ pub struct EdgeSplitPoint {
     pub plane_face: usize,
     /// Exact parameter on the directed edge.
     pub parameter: ExactReal,
+    /// Determinant ratio that produced [`Self::parameter`].
+    pub parameter_ratio: SegmentPlaneParameterRatio,
     /// Exact constructed point.
     pub point: Point3,
     /// Endpoint side facts that certified this split event.
@@ -379,6 +993,8 @@ pub struct ExactGraphVertexUse {
     pub plane_face: usize,
     /// Exact parameter on the directed edge for this source use.
     pub parameter: ExactReal,
+    /// Determinant ratio that produced [`Self::parameter`].
+    pub parameter_ratio: SegmentPlaneParameterRatio,
     /// Endpoint side facts that certified this source use.
     pub endpoint_sides: [Option<PlaneSide>; 2],
 }
@@ -519,7 +1135,8 @@ impl ExactFaceSplitPlan {
     /// which original face boundary edges were split by exact graph vertices.
     /// Validation keeps that narrow API honest by checking graph-vertex ranges,
     /// duplicate face-edge instructions, and that each referenced graph vertex
-    /// has an exact source use on the requested face edge.
+    /// has an exact source use on the requested face edge whose retained
+    /// construction facts are still valid.
     pub fn validate_against_topology(
         &self,
         topology: &ExactSplitTopologyPlan,
@@ -541,6 +1158,8 @@ pub enum SplitPlanDiagnosticKind {
     MissingEndpointSideFacts,
     /// A segment/plane split point was not certified by opposite strict sides.
     NonCrossingEndpointSideFacts,
+    /// A retained split-point determinant ratio does not match its parameter.
+    InvalidConstructionRatio,
     /// A split chain has no usable endpoint-to-endpoint path.
     EmptyOrShortEdgeChain,
     /// A split chain does not begin at its directed edge start.
@@ -586,6 +1205,31 @@ pub struct SplitPlanDiagnostic {
     pub edge: Option<[usize; 2]>,
     /// Optional graph-vertex index.
     pub graph_vertex: Option<usize>,
+}
+
+/// Error returned when a split-plan validation report is itself malformed.
+///
+/// Split-plan diagnostics are public handoff evidence for exact graph,
+/// topology, and region stages. A diagnostic without the location data needed
+/// to interpret it is not useful to downstream exact-policy code. Keeping that
+/// evidence structured follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): unresolved topology states should be
+/// explicit artifacts, not prose-only failures.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SplitPlanReportValidationError {
+    /// A diagnostic message was empty or whitespace only.
+    EmptyMessage,
+    /// A diagnostic is missing the mesh side required by its kind.
+    MissingSide,
+    /// A diagnostic is missing the face index required by its kind.
+    MissingFace,
+    /// A diagnostic is missing the directed edge required by its kind.
+    MissingEdge,
+    /// A diagnostic is missing the graph-vertex index required by its kind.
+    MissingGraphVertex,
+    /// A missing-source-face diagnostic did not retain either a face or graph
+    /// vertex location.
+    MissingLocation,
 }
 
 impl SplitPlanDiagnostic {
@@ -656,6 +1300,104 @@ impl SplitPlanValidationReport {
     pub fn is_valid(&self) -> bool {
         self.diagnostics.is_empty()
     }
+
+    /// Validate that diagnostics retain the structured locations their kinds
+    /// require.
+    ///
+    /// This does not decide whether the underlying split plan is valid; use
+    /// [`Self::is_valid`] for that. It audits the report object so callers can
+    /// rely on its diagnostics as machine-readable exact handoff evidence.
+    pub fn validate(&self) -> Result<(), SplitPlanReportValidationError> {
+        for diagnostic in &self.diagnostics {
+            validate_split_plan_diagnostic(diagnostic)?;
+        }
+        Ok(())
+    }
+}
+
+fn validate_split_plan_diagnostic(
+    diagnostic: &SplitPlanDiagnostic,
+) -> Result<(), SplitPlanReportValidationError> {
+    if diagnostic.message.trim().is_empty() {
+        return Err(SplitPlanReportValidationError::EmptyMessage);
+    }
+    match diagnostic.kind {
+        SplitPlanDiagnosticKind::UnknownOrdering
+        | SplitPlanDiagnosticKind::UnresolvedEquality
+        | SplitPlanDiagnosticKind::UnresolvedVertexLookup => Ok(()),
+        SplitPlanDiagnosticKind::MissingEndpointSideFacts
+        | SplitPlanDiagnosticKind::NonCrossingEndpointSideFacts
+        | SplitPlanDiagnosticKind::InvalidConstructionRatio
+        | SplitPlanDiagnosticKind::EmptyOrShortEdgeChain
+        | SplitPlanDiagnosticKind::WrongChainStart
+        | SplitPlanDiagnosticKind::WrongChainEnd
+        | SplitPlanDiagnosticKind::ChainSideMismatch => {
+            require_side(diagnostic)?;
+            require_edge(diagnostic)
+        }
+        SplitPlanDiagnosticKind::GraphVertexOutOfRange => {
+            require_side(diagnostic)?;
+            if diagnostic.graph_vertex.is_some() || diagnostic.face.is_some() {
+                Ok(())
+            } else {
+                Err(SplitPlanReportValidationError::MissingLocation)
+            }
+        }
+        SplitPlanDiagnosticKind::EmptyGraphVertexUses => require_graph_vertex(diagnostic),
+        SplitPlanDiagnosticKind::EmptyFaceSplit
+        | SplitPlanDiagnosticKind::EmptyOrShortRegionBoundary
+        | SplitPlanDiagnosticKind::DuplicateConsecutiveRegionNode => {
+            require_side(diagnostic)?;
+            require_face(diagnostic)
+        }
+        SplitPlanDiagnosticKind::EmptyFaceSplitEdge
+        | SplitPlanDiagnosticKind::DuplicateFaceSplitEdge => {
+            require_side(diagnostic)?;
+            require_face(diagnostic)?;
+            require_edge(diagnostic)
+        }
+        SplitPlanDiagnosticKind::MissingFaceSplitSourceUse => {
+            require_side(diagnostic)?;
+            require_face(diagnostic)?;
+            require_edge(diagnostic)?;
+            require_graph_vertex(diagnostic)
+        }
+        SplitPlanDiagnosticKind::UnknownBoundaryIncidence
+        | SplitPlanDiagnosticKind::BoundaryNodeOffFacePlane => {
+            require_side(diagnostic)?;
+            require_face(diagnostic)
+        }
+    }
+}
+
+fn require_side(diagnostic: &SplitPlanDiagnostic) -> Result<(), SplitPlanReportValidationError> {
+    diagnostic
+        .side
+        .map(|_| ())
+        .ok_or(SplitPlanReportValidationError::MissingSide)
+}
+
+fn require_face(diagnostic: &SplitPlanDiagnostic) -> Result<(), SplitPlanReportValidationError> {
+    diagnostic
+        .face
+        .map(|_| ())
+        .ok_or(SplitPlanReportValidationError::MissingFace)
+}
+
+fn require_edge(diagnostic: &SplitPlanDiagnostic) -> Result<(), SplitPlanReportValidationError> {
+    diagnostic
+        .edge
+        .map(|_| ())
+        .ok_or(SplitPlanReportValidationError::MissingEdge)
+}
+
+fn require_graph_vertex(
+    diagnostic: &SplitPlanDiagnostic,
+) -> Result<(), SplitPlanReportValidationError> {
+    diagnostic
+        .graph_vertex
+        .map(|_| ())
+        .ok_or(SplitPlanReportValidationError::MissingGraphVertex)
 }
 
 /// Exact boundary node for a split face.
@@ -855,6 +1597,7 @@ fn edge_split_plan(graph: &ExactIntersectionGraph) -> ExactEdgeSplitPlan {
                 plane_face,
                 point: Some(point),
                 parameter: Some(parameter),
+                parameter_ratio: Some(parameter_ratio),
                 endpoint_sides,
                 ..
             } = event
@@ -874,6 +1617,7 @@ fn edge_split_plan(graph: &ExactIntersectionGraph) -> ExactEdgeSplitPlan {
                     face_pair: [pair.left_face, pair.right_face],
                     plane_face: *plane_face,
                     parameter: parameter.clone(),
+                    parameter_ratio: parameter_ratio.clone(),
                     point: point.clone(),
                     endpoint_sides: *endpoint_sides,
                 });
@@ -903,6 +1647,7 @@ fn graph_vertex_plan(split_plan: &ExactEdgeSplitPlan) -> ExactGraphVertexPlan {
                 face_pair: point.face_pair,
                 plane_face: point.plane_face,
                 parameter: point.parameter.clone(),
+                parameter_ratio: point.parameter_ratio.clone(),
                 endpoint_sides: point.endpoint_sides,
             };
 
@@ -958,32 +1703,223 @@ fn validate_graph_vertex_plan(plan: &ExactGraphVertexPlan) -> SplitPlanValidatio
         }
 
         for vertex_use in &vertex.uses {
-            match vertex_use.endpoint_sides {
-                [Some(PlaneSide::Above), Some(PlaneSide::Below)]
-                | [Some(PlaneSide::Below), Some(PlaneSide::Above)] => {}
-                [Some(_), Some(_)] => diagnostics.push(
-                    SplitPlanDiagnostic::new(
-                        SplitPlanDiagnosticKind::NonCrossingEndpointSideFacts,
-                        "graph vertex source use was not certified by opposite strict endpoint sides",
-                    )
-                    .with_side(vertex_use.side)
-                    .with_edge(vertex_use.edge)
-                    .with_graph_vertex(index),
-                ),
-                _ => diagnostics.push(
-                    SplitPlanDiagnostic::new(
-                        SplitPlanDiagnosticKind::MissingEndpointSideFacts,
-                        "graph vertex source use is missing endpoint side facts",
-                    )
-                    .with_side(vertex_use.side)
-                    .with_edge(vertex_use.edge)
-                    .with_graph_vertex(index),
-                ),
-            }
+            push_graph_vertex_source_use_diagnostics(
+                &mut diagnostics,
+                index,
+                vertex_use,
+                "graph vertex source use determinant ratio does not match its parameter",
+                "graph vertex source use was not certified by opposite strict endpoint sides",
+                "graph vertex source use is missing endpoint side facts",
+            );
         }
     }
 
     SplitPlanValidationReport { diagnostics }
+}
+
+fn push_graph_vertex_source_use_diagnostics(
+    diagnostics: &mut Vec<SplitPlanDiagnostic>,
+    graph_vertex: usize,
+    vertex_use: &ExactGraphVertexUse,
+    ratio_message: &'static str,
+    non_crossing_message: &'static str,
+    missing_message: &'static str,
+) {
+    // Yap's exact-geometric-computation contract is about the retained
+    // construction object, not only the rounded coordinate it produced. Every
+    // later graph/topology handoff therefore rechecks the determinant ratio and
+    // endpoint side facts before consuming a merged graph vertex. See Yap,
+    // "Towards Exact Geometric Computation," Computational Geometry 7.1-2
+    // (1997).
+    if !ratio_matches_parameter(&vertex_use.parameter_ratio, &vertex_use.parameter) {
+        diagnostics.push(
+            SplitPlanDiagnostic::new(
+                SplitPlanDiagnosticKind::InvalidConstructionRatio,
+                ratio_message,
+            )
+            .with_side(vertex_use.side)
+            .with_edge(vertex_use.edge)
+            .with_graph_vertex(graph_vertex),
+        );
+    }
+
+    match vertex_use.endpoint_sides {
+        [Some(PlaneSide::Above), Some(PlaneSide::Below)]
+        | [Some(PlaneSide::Below), Some(PlaneSide::Above)] => {}
+        [Some(_), Some(_)] => diagnostics.push(
+            SplitPlanDiagnostic::new(
+                SplitPlanDiagnosticKind::NonCrossingEndpointSideFacts,
+                non_crossing_message,
+            )
+            .with_side(vertex_use.side)
+            .with_edge(vertex_use.edge)
+            .with_graph_vertex(graph_vertex),
+        ),
+        _ => diagnostics.push(
+            SplitPlanDiagnostic::new(
+                SplitPlanDiagnosticKind::MissingEndpointSideFacts,
+                missing_message,
+            )
+            .with_side(vertex_use.side)
+            .with_edge(vertex_use.edge)
+            .with_graph_vertex(graph_vertex),
+        ),
+    }
+}
+
+fn validate_intersection_event(
+    event: &IntersectionEvent,
+) -> Result<(), IntersectionGraphValidationError> {
+    match event {
+        IntersectionEvent::SegmentPlane {
+            relation,
+            point,
+            parameter,
+            parameter_ratio,
+            construction_failure,
+            endpoint_sides,
+            ..
+        } => validate_graph_segment_plane_event(
+            *relation,
+            point,
+            parameter,
+            parameter_ratio,
+            construction_failure,
+            *endpoint_sides,
+        ),
+        IntersectionEvent::CoplanarEdge { relation, .. } => {
+            if *relation == SegmentIntersection::Disjoint {
+                Err(IntersectionGraphValidationError::DisjointCoplanarEdgeEvent)
+            } else {
+                Ok(())
+            }
+        }
+        IntersectionEvent::CoplanarVertex { location, .. } => match location {
+            TriangleLocation::Inside | TriangleLocation::OnEdge | TriangleLocation::OnVertex => {
+                Ok(())
+            }
+            TriangleLocation::Outside | TriangleLocation::Degenerate => {
+                Err(IntersectionGraphValidationError::NonConstructiveCoplanarVertexEvent)
+            }
+        },
+        IntersectionEvent::Unknown => Ok(()),
+    }
+}
+
+fn face_pair_relation_needs_graph_construction(relation: MeshFacePairRelation) -> bool {
+    matches!(
+        relation,
+        MeshFacePairRelation::Candidate
+            | MeshFacePairRelation::CoplanarTouching
+            | MeshFacePairRelation::CoplanarOverlapping
+            | MeshFacePairRelation::Unknown
+    )
+}
+
+fn validate_graph_segment_plane_event(
+    relation: SegmentPlaneRelation,
+    point: &Option<Point3>,
+    parameter: &Option<ExactReal>,
+    parameter_ratio: &Option<SegmentPlaneParameterRatio>,
+    construction_failure: &Option<SegmentPlaneConstructionFailure>,
+    endpoint_sides: [Option<PlaneSide>; 2],
+) -> Result<(), IntersectionGraphValidationError> {
+    match relation {
+        SegmentPlaneRelation::Disjoint => {
+            if construction_failure.is_none() {
+                Err(IntersectionGraphValidationError::DisjointSegmentPlaneEvent)
+            } else {
+                Err(IntersectionGraphValidationError::InvalidSegmentPlaneEvent)
+            }
+        }
+        SegmentPlaneRelation::Coplanar => {
+            if endpoint_sides == [Some(PlaneSide::On), Some(PlaneSide::On)]
+                && point.is_none()
+                && parameter.is_none()
+                && parameter_ratio.is_none()
+                && construction_failure.is_none()
+            {
+                Ok(())
+            } else {
+                Err(IntersectionGraphValidationError::InvalidSegmentPlaneEvent)
+            }
+        }
+        SegmentPlaneRelation::EndpointOnPlane => {
+            if point.is_some()
+                && parameter.is_some()
+                && parameter_ratio.is_none()
+                && construction_failure.is_none()
+                && endpoint_sides.contains(&Some(PlaneSide::On))
+            {
+                Ok(())
+            } else {
+                Err(IntersectionGraphValidationError::InvalidSegmentPlaneEvent)
+            }
+        }
+        SegmentPlaneRelation::ProperCrossing => {
+            if let (Some(parameter), Some(ratio)) = (parameter, parameter_ratio) {
+                if point.is_some()
+                    && opposite_strict_sides(endpoint_sides)
+                    && construction_failure.is_none()
+                    && ratio_matches_parameter(ratio, parameter)
+                {
+                    Ok(())
+                } else {
+                    Err(IntersectionGraphValidationError::InvalidSegmentPlaneEvent)
+                }
+            } else {
+                Err(IntersectionGraphValidationError::InvalidSegmentPlaneEvent)
+            }
+        }
+        SegmentPlaneRelation::Unknown => {
+            if endpoint_sides.iter().any(Option::is_none)
+                && point.is_none()
+                && parameter.is_none()
+                && parameter_ratio.is_none()
+                && construction_failure.is_none()
+            {
+                Ok(())
+            } else {
+                Err(IntersectionGraphValidationError::InvalidSegmentPlaneEvent)
+            }
+        }
+        SegmentPlaneRelation::ConstructionFailed => {
+            if opposite_strict_sides(endpoint_sides)
+                && point.is_none()
+                && parameter.is_none()
+                && parameter_ratio.is_none()
+                && construction_failure.is_some()
+            {
+                Ok(())
+            } else {
+                Err(IntersectionGraphValidationError::InvalidSegmentPlaneEvent)
+            }
+        }
+    }
+}
+
+fn opposite_strict_sides(sides: [Option<PlaneSide>; 2]) -> bool {
+    matches!(
+        sides,
+        [Some(PlaneSide::Above), Some(PlaneSide::Below)]
+            | [Some(PlaneSide::Below), Some(PlaneSide::Above)]
+    )
+}
+
+fn ratio_matches_parameter(ratio: &SegmentPlaneParameterRatio, parameter: &ExactReal) -> bool {
+    if matches!(
+        compare_reals(&ratio.denominator, &ExactReal::from(0)).value(),
+        Some(Ordering::Equal) | None
+    ) {
+        return false;
+    }
+    let Some(value) = (&ratio.numerator / &ratio.denominator).ok() else {
+        return false;
+    };
+    matches!(
+        compare_reals(&value, parameter).value(),
+        Some(Ordering::Equal)
+    )
 }
 
 fn split_topology_plan(
@@ -1038,6 +1974,16 @@ fn validate_edge_split_plan(split_plan: &ExactEdgeSplitPlan) -> SplitPlanValidat
 
     for split in &split_plan.splits {
         for point in &split.points {
+            if !ratio_matches_parameter(&point.parameter_ratio, &point.parameter) {
+                diagnostics.push(
+                    SplitPlanDiagnostic::new(
+                        SplitPlanDiagnosticKind::InvalidConstructionRatio,
+                        "edge split point determinant ratio does not match its parameter",
+                    )
+                    .with_side(split.side)
+                    .with_edge(split.edge),
+                );
+            }
             match point.endpoint_sides {
                 [Some(PlaneSide::Above), Some(PlaneSide::Below)]
                 | [Some(PlaneSide::Below), Some(PlaneSide::Above)] => {}
@@ -1137,6 +2083,17 @@ fn validate_split_topology_plan(topology: &ExactSplitTopologyPlan) -> SplitPlanV
                     "graph vertex has no exact source uses",
                 )
                 .with_graph_vertex(index),
+            );
+        }
+
+        for vertex_use in &vertex.uses {
+            push_graph_vertex_source_use_diagnostics(
+                &mut diagnostics,
+                index,
+                vertex_use,
+                "split topology graph vertex determinant ratio does not match its parameter",
+                "split topology graph vertex was not certified by opposite strict endpoint sides",
+                "split topology graph vertex is missing endpoint side facts",
             );
         }
     }
@@ -1278,14 +2235,28 @@ fn validate_face_split_plan(
                     continue;
                 };
 
-                if !vertex.uses.iter().any(|vertex_use| {
+                let matching_uses = vertex.uses.iter().filter(|vertex_use| {
                     vertex_use.side == face.side
                         && vertex_use.edge == edge.edge
                         && match face.side {
                             MeshSide::Left => vertex_use.face_pair[0] == face.face,
                             MeshSide::Right => vertex_use.face_pair[1] == face.face,
                         }
-                }) {
+                });
+                let mut matched_source = false;
+                for vertex_use in matching_uses {
+                    matched_source = true;
+                    push_graph_vertex_source_use_diagnostics(
+                        &mut diagnostics,
+                        graph_vertex,
+                        vertex_use,
+                        "face split source use determinant ratio does not match its parameter",
+                        "face split source use was not certified by opposite strict endpoint sides",
+                        "face split source use is missing endpoint side facts",
+                    );
+                }
+
+                if !matched_source {
                     diagnostics.push(
                         SplitPlanDiagnostic::new(
                             SplitPlanDiagnosticKind::MissingFaceSplitSourceUse,
@@ -1646,6 +2617,223 @@ fn validate_face_region_plan(
     SplitPlanValidationReport { diagnostics }
 }
 
+fn coplanar_overlap_split_graph(
+    graph: &CoplanarOverlapGraph,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<CoplanarOverlapSplitGraph, MeshError> {
+    let edge_splits = graph
+        .edge_overlaps
+        .iter()
+        .map(|overlap| coplanar_edge_split_construction(overlap, graph.projection, left, right))
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(CoplanarOverlapSplitGraph {
+        left_face: graph.left_face,
+        right_face: graph.right_face,
+        projection: graph.projection,
+        edge_splits,
+        vertex_overlaps: graph.vertex_overlaps.clone(),
+    })
+}
+
+fn coplanar_edge_split_construction(
+    overlap: &CoplanarEdgeOverlap,
+    projection: CoplanarProjection,
+    left: &ExactMesh,
+    right: &ExactMesh,
+) -> Result<CoplanarEdgeSplitConstruction, MeshError> {
+    let left_edge = edge_points(left, overlap.left_edge)?;
+    let right_edge = edge_points(right, overlap.right_edge)?;
+    let (points, interval_overlap) = match overlap.relation {
+        SegmentIntersection::Disjoint => (Vec::new(), false),
+        SegmentIntersection::EndpointTouch => {
+            let point = endpoint_touch_split_point(left_edge, right_edge, projection);
+            (point.into_iter().collect(), false)
+        }
+        SegmentIntersection::Proper => {
+            let point = proper_coplanar_edge_split_point(left_edge, right_edge, projection);
+            (point.into_iter().collect(), false)
+        }
+        SegmentIntersection::CollinearOverlap | SegmentIntersection::Identical => {
+            (Vec::new(), true)
+        }
+    };
+    Ok(CoplanarEdgeSplitConstruction {
+        overlap: overlap.clone(),
+        points,
+        interval_overlap,
+    })
+}
+
+fn validate_coplanar_edge_split(
+    split: &CoplanarEdgeSplitConstruction,
+) -> Result<(), CoplanarOverlapSplitValidationError> {
+    match split.overlap.relation {
+        SegmentIntersection::Disjoint => {
+            Err(CoplanarOverlapSplitValidationError::DisjointEdgeSplit)
+        }
+        SegmentIntersection::EndpointTouch | SegmentIntersection::Proper => {
+            if split.interval_overlap {
+                return Err(CoplanarOverlapSplitValidationError::UnexpectedIntervalConstruction);
+            }
+            if split.points.len() == 1 {
+                Ok(())
+            } else {
+                Err(CoplanarOverlapSplitValidationError::MissingPointConstruction)
+            }
+        }
+        SegmentIntersection::CollinearOverlap | SegmentIntersection::Identical => {
+            if !split.points.is_empty() {
+                return Err(CoplanarOverlapSplitValidationError::UnexpectedPointConstruction);
+            }
+            if split.interval_overlap {
+                Ok(())
+            } else {
+                Err(CoplanarOverlapSplitValidationError::MissingIntervalConstruction)
+            }
+        }
+    }
+}
+
+fn edge_points(mesh: &ExactMesh, edge: [usize; 2]) -> Result<[Point3; 2], MeshError> {
+    let start = mesh.vertices().get(edge[0]).ok_or_else(|| {
+        MeshError::one(
+            MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::IndexOutOfBounds,
+                "coplanar overlap edge references a missing start vertex",
+            )
+            .with_vertex(edge[0]),
+        )
+    })?;
+    let end = mesh.vertices().get(edge[1]).ok_or_else(|| {
+        MeshError::one(
+            MeshDiagnostic::new(
+                Severity::Error,
+                DiagnosticKind::IndexOutOfBounds,
+                "coplanar overlap edge references a missing end vertex",
+            )
+            .with_vertex(edge[1]),
+        )
+    })?;
+    Ok([start.to_hyperlimit_point(), end.to_hyperlimit_point()])
+}
+
+fn endpoint_touch_split_point(
+    left: [Point3; 2],
+    right: [Point3; 2],
+    projection: CoplanarProjection,
+) -> Option<CoplanarEdgeSplitPoint> {
+    for (left_index, left_point) in left.iter().enumerate() {
+        for (right_index, right_point) in right.iter().enumerate() {
+            if projected_points_equal(left_point, right_point, projection)? {
+                return Some(CoplanarEdgeSplitPoint {
+                    point: left_point.clone(),
+                    left_parameter: ExactReal::from(left_index as i64),
+                    right_parameter: ExactReal::from(right_index as i64),
+                });
+            }
+        }
+    }
+    let right_start = project_point3(&right[0], projection);
+    let right_end = project_point3(&right[1], projection);
+    for (left_index, left_point) in left.iter().enumerate() {
+        let projected = project_point3(left_point, projection);
+        if point_on_segment(&right_start, &right_end, &projected).value() == Some(true) {
+            return Some(CoplanarEdgeSplitPoint {
+                point: left_point.clone(),
+                left_parameter: ExactReal::from(left_index as i64),
+                right_parameter: endpoint_parameter_on_segment(
+                    left_point, &right[0], &right[1], projection,
+                )?,
+            });
+        }
+    }
+
+    let left_start = project_point3(&left[0], projection);
+    let left_end = project_point3(&left[1], projection);
+    for (right_index, right_point) in right.iter().enumerate() {
+        let projected = project_point3(right_point, projection);
+        if point_on_segment(&left_start, &left_end, &projected).value() == Some(true) {
+            return Some(CoplanarEdgeSplitPoint {
+                point: right_point.clone(),
+                left_parameter: endpoint_parameter_on_segment(
+                    right_point,
+                    &left[0],
+                    &left[1],
+                    projection,
+                )?,
+                right_parameter: ExactReal::from(right_index as i64),
+            });
+        }
+    }
+    None
+}
+
+fn endpoint_parameter_on_segment(
+    point: &Point3,
+    start: &Point3,
+    end: &Point3,
+    projection: CoplanarProjection,
+) -> Option<ExactReal> {
+    let point = project_point3(point, projection);
+    let start = project_point3(start, projection);
+    let end = project_point3(end, projection);
+    parameter_from_axis(&point.x, &start.x, &end.x)
+        .or_else(|| parameter_from_axis(&point.y, &start.y, &end.y))
+}
+
+fn parameter_from_axis(point: &ExactReal, start: &ExactReal, end: &ExactReal) -> Option<ExactReal> {
+    let denominator = sub_real(end, start);
+    if matches!(
+        compare_reals(&denominator, &ExactReal::from(0)).value(),
+        Some(Ordering::Equal) | None
+    ) {
+        return None;
+    }
+    (sub_real(point, start) / &denominator).ok()
+}
+
+fn proper_coplanar_edge_split_point(
+    left: [Point3; 2],
+    right: [Point3; 2],
+    projection: CoplanarProjection,
+) -> Option<CoplanarEdgeSplitPoint> {
+    let left_parameter =
+        projected_line_parameter(&left[0], &left[1], &right[0], &right[1], projection)?;
+    let right_parameter =
+        projected_line_parameter(&right[0], &right[1], &left[0], &left[1], projection)?;
+    let point = interpolate_point3(&left[0], &left[1], &left_parameter);
+    Some(CoplanarEdgeSplitPoint {
+        point,
+        left_parameter,
+        right_parameter,
+    })
+}
+
+fn projected_line_parameter(
+    segment_start: &Point3,
+    segment_end: &Point3,
+    line_start: &Point3,
+    line_end: &Point3,
+    projection: CoplanarProjection,
+) -> Option<ExactReal> {
+    let a = project_point3(line_start, projection);
+    let b = project_point3(line_end, projection);
+    let p0 = project_point3(segment_start, projection);
+    let p1 = project_point3(segment_end, projection);
+    let d0 = orient2d_value(&a, &b, &p0);
+    let d1 = orient2d_value(&a, &b, &p1);
+    let denominator = sub_real(&d0, &d1);
+    if matches!(
+        compare_reals(&denominator, &ExactReal::from(0)).value(),
+        Some(Ordering::Equal) | None
+    ) {
+        return None;
+    }
+    (d0 / &denominator).ok()
+}
+
 fn original_boundary_node(mesh: &ExactMesh, vertex: usize) -> FaceSplitBoundaryNode {
     FaceSplitBoundaryNode::OriginalVertex {
         vertex,
@@ -1718,6 +2906,8 @@ fn append_segment_plane_events(
             relation: event.relation,
             point: event.point.clone(),
             parameter: event.parameter.clone(),
+            parameter_ratio: event.parameter_ratio.clone(),
+            construction_failure: event.construction_failure,
             endpoint_sides: event.endpoint_sides,
         });
     }
@@ -1811,4 +3001,52 @@ fn points_equal(left: &Point3, right: &Point3) -> Option<bool> {
     let y = compare_reals(&left.y, &right.y).value()?;
     let z = compare_reals(&left.z, &right.z).value()?;
     Some(x == Ordering::Equal && y == Ordering::Equal && z == Ordering::Equal)
+}
+
+fn projected_points_equal(
+    left: &Point3,
+    right: &Point3,
+    projection: CoplanarProjection,
+) -> Option<bool> {
+    let left = project_point3(left, projection);
+    let right = project_point3(right, projection);
+    let x = compare_reals(&left.x, &right.x).value()?;
+    let y = compare_reals(&left.y, &right.y).value()?;
+    Some(x == Ordering::Equal && y == Ordering::Equal)
+}
+
+fn project_point3(point: &Point3, projection: CoplanarProjection) -> Point2 {
+    match projection {
+        CoplanarProjection::Xy => Point2::new(point.x.clone(), point.y.clone()),
+        CoplanarProjection::Xz => Point2::new(point.x.clone(), point.z.clone()),
+        CoplanarProjection::Yz => Point2::new(point.y.clone(), point.z.clone()),
+    }
+}
+
+fn orient2d_value(a: &Point2, b: &Point2, c: &Point2) -> ExactReal {
+    let bax = sub_real(&b.x, &a.x);
+    let bay = sub_real(&b.y, &a.y);
+    let cax = sub_real(&c.x, &a.x);
+    let cay = sub_real(&c.y, &a.y);
+    sub_real(&mul_real(&bax, &cay), &mul_real(&bay, &cax))
+}
+
+fn interpolate_point3(start: &Point3, end: &Point3, t: &ExactReal) -> Point3 {
+    Point3::new(
+        add_real(&start.x, &mul_real(t, &sub_real(&end.x, &start.x))),
+        add_real(&start.y, &mul_real(t, &sub_real(&end.y, &start.y))),
+        add_real(&start.z, &mul_real(t, &sub_real(&end.z, &start.z))),
+    )
+}
+
+fn add_real(left: &ExactReal, right: &ExactReal) -> ExactReal {
+    left.clone() + right
+}
+
+fn sub_real(left: &ExactReal, right: &ExactReal) -> ExactReal {
+    left.clone() - right
+}
+
+fn mul_real(left: &ExactReal, right: &ExactReal) -> ExactReal {
+    left.clone() * right
 }

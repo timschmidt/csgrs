@@ -17,6 +17,26 @@ use hyperreal::Real;
 /// Exact broad-phase relation between two 3D boxes.
 pub type AabbIntersectionKind = Aabb3Intersection;
 
+/// Structural inconsistency in retained exact bounds.
+///
+/// Bounds are object-level acceleration facts, not topology certificates.
+/// Still, Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+/// 7.1-2 (1997), requires object facts consumed by predicate scheduling to be
+/// validated before they can reject or retain topological work.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BoundsValidationError {
+    /// An axis minimum is certified greater than its maximum.
+    InvertedAxis,
+    /// An axis minimum/maximum relation could not be certified.
+    UnknownAxisOrder,
+    /// Mesh-level bounds are missing for a nonempty vertex set.
+    MissingMeshBounds,
+    /// Mesh-level bounds exist for an empty vertex set.
+    UnexpectedMeshBounds,
+    /// The retained face-bound vector length does not match the face count.
+    FaceBoundsCountMismatch,
+}
+
 /// Exact 3D axis-aligned bounding box.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExactAabb3 {
@@ -68,6 +88,26 @@ impl ExactAabb3 {
     pub fn classify_intersection(&self, other: &Self) -> PredicateOutcome<AabbIntersectionKind> {
         classify_aabb3_intersection(&self.min, &self.max, &other.min, &other.max)
     }
+
+    /// Validate that each retained axis interval is ordered.
+    ///
+    /// Unknown comparisons are rejected here because a bounds object with an
+    /// uncertified min/max ordering cannot safely serve as an exact broad-phase
+    /// fact for later predicate scheduling.
+    pub fn validate(&self) -> Result<(), BoundsValidationError> {
+        for (min, max) in [
+            (&self.min.x, &self.max.x),
+            (&self.min.y, &self.max.y),
+            (&self.min.z, &self.max.z),
+        ] {
+            match compare(min, max) {
+                Some(Ordering::Less | Ordering::Equal) => {}
+                Some(Ordering::Greater) => return Err(BoundsValidationError::InvertedAxis),
+                None => return Err(BoundsValidationError::UnknownAxisOrder),
+            }
+        }
+        Ok(())
+    }
 }
 
 /// Retained mesh and face bounds.
@@ -103,6 +143,31 @@ impl MeshBounds {
             }
         }
         pairs
+    }
+
+    /// Validate retained mesh and face bounds against expected topology sizes.
+    ///
+    /// This validates only the bounds object shape and interval ordering. It
+    /// does not recompute bounds from vertices; construction code owns that
+    /// stronger check when it builds [`MeshBounds`] from exact points.
+    pub fn validate(
+        &self,
+        vertex_count: usize,
+        face_count: usize,
+    ) -> Result<(), BoundsValidationError> {
+        match (&self.mesh, vertex_count) {
+            (Some(bounds), 1..) => bounds.validate()?,
+            (None, 0) => {}
+            (None, _) => return Err(BoundsValidationError::MissingMeshBounds),
+            (Some(_), 0) => return Err(BoundsValidationError::UnexpectedMeshBounds),
+        }
+        if self.faces.len() != face_count {
+            return Err(BoundsValidationError::FaceBoundsCountMismatch);
+        }
+        for face in &self.faces {
+            face.validate()?;
+        }
+        Ok(())
     }
 }
 

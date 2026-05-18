@@ -42,6 +42,39 @@ pub enum ConvexSolidClassification {
     Unknown,
 }
 
+/// Structural inconsistency found in a convex-solid report.
+///
+/// These checks validate the report model itself, not the geometry from
+/// scratch. They are intentionally tied to the certificate-carrying APIs in
+/// this module: Yap, "Towards Exact Geometric Computation," *Computational
+/// Geometry* 7.1-2 (1997), argues that application-level decisions should be
+/// justified by retained exact facts. A report that contradicts those retained
+/// facts must be treated as invalid before a shortcut consumes it.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ConvexSolidReportError {
+    /// `NotClosed` orientation and convexity states were not paired.
+    NotClosedStateMismatch,
+    /// Unknown orientation was paired with a decided convexity state.
+    UnknownOrientationHasDecidedConvexity,
+    /// A certified orientation was paired with `Unknown` or `NotClosed`
+    /// convexity in a way this module never constructs.
+    OrientedStateHasUnsupportedConvexity,
+    /// A non-certified state retained point halfspace predicates.
+    NonCertifiedPointHasPredicates,
+    /// A mesh/solid report claims a certified relation without certified
+    /// convex solid facts.
+    CertifiedMeshRelationWithoutCertifiedSolid,
+    /// A non-certified mesh/solid report retained per-vertex classifications.
+    NonCertifiedMeshHasVertices,
+    /// A per-vertex relation cannot appear in a certified mesh/solid summary.
+    UnexpectedVertexRelation,
+    /// The per-vertex relations do not support the retained mesh/solid
+    /// summary relation.
+    MeshRelationMismatch,
+    /// A nested solid-facts or point-classification report was invalid.
+    NestedReport,
+}
+
 /// Exact facts retained while certifying a closed convex solid.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ConvexSolidFacts {
@@ -72,6 +105,32 @@ impl ConvexSolidFacts {
             .copied()
             .all(PredicateUse::is_proof_producing)
     }
+
+    /// Validate report invariants retained by [`certify_convex_solid`].
+    ///
+    /// This does not recompute convexity. It checks that the state tuple and
+    /// predicate retention are consistent with the certified-construction
+    /// contract used by the exact boolean shortcuts.
+    pub fn validate(&self) -> Result<(), ConvexSolidReportError> {
+        match (self.orientation, self.convexity) {
+            (ClosedMeshOrientation::NotClosed, ConvexSolidClassification::NotClosed) => Ok(()),
+            (ClosedMeshOrientation::NotClosed, _) | (_, ConvexSolidClassification::NotClosed) => {
+                Err(ConvexSolidReportError::NotClosedStateMismatch)
+            }
+            (ClosedMeshOrientation::Unknown, ConvexSolidClassification::Unknown) => Ok(()),
+            (ClosedMeshOrientation::Unknown, _) => {
+                Err(ConvexSolidReportError::UnknownOrientationHasDecidedConvexity)
+            }
+            (
+                ClosedMeshOrientation::Positive | ClosedMeshOrientation::Negative,
+                ConvexSolidClassification::Convex | ConvexSolidClassification::NonConvex,
+            ) => Ok(()),
+            (
+                ClosedMeshOrientation::Positive | ClosedMeshOrientation::Negative,
+                ConvexSolidClassification::Unknown,
+            ) => Ok(()),
+        }
+    }
 }
 
 /// Certified point/solid classification with retained predicate provenance.
@@ -90,6 +149,21 @@ impl ConvexSolidPointClassification {
             .iter()
             .copied()
             .all(PredicateUse::is_proof_producing)
+    }
+
+    /// Validate point/solid classification report invariants.
+    ///
+    /// Non-certified point reports are produced before any face halfspace
+    /// predicate is meaningful, so they must not carry predicate evidence.
+    /// Decided and unknown certified relations may retain a prefix of exact
+    /// face predicates because outside/unknown exits short-circuit.
+    pub fn validate(&self) -> Result<(), ConvexSolidReportError> {
+        if matches!(self.relation, ConvexSolidPointRelation::NotCertifiedConvex)
+            && !self.predicates.is_empty()
+        {
+            return Err(ConvexSolidReportError::NonCertifiedPointHasPredicates);
+        }
+        Ok(())
     }
 }
 
@@ -143,6 +217,69 @@ impl ConvexSolidMeshClassification {
                 .vertices
                 .iter()
                 .all(ConvexSolidPointClassification::all_proof_producing)
+    }
+
+    /// Validate mesh/solid vertex-classification report invariants.
+    ///
+    /// The mesh summary must be derivable from the retained per-vertex point
+    /// reports. This is the local audit check for convex-containment boolean
+    /// shortcuts; it keeps the topological decision coupled to the exact
+    /// predicates that justified it, matching Yap's EGC separation between
+    /// certified decisions and explicit uncertainty.
+    pub fn validate(&self) -> Result<(), ConvexSolidReportError> {
+        self.solid_facts
+            .validate()
+            .map_err(|_| ConvexSolidReportError::NestedReport)?;
+
+        if !self.solid_facts.is_certified_convex() {
+            return if matches!(self.relation, ConvexSolidMeshRelation::NotCertifiedConvex)
+                && self.vertices.is_empty()
+            {
+                Ok(())
+            } else if !self.vertices.is_empty() {
+                Err(ConvexSolidReportError::NonCertifiedMeshHasVertices)
+            } else {
+                Err(ConvexSolidReportError::CertifiedMeshRelationWithoutCertifiedSolid)
+            };
+        }
+
+        if matches!(self.relation, ConvexSolidMeshRelation::NotCertifiedConvex) {
+            return Err(ConvexSolidReportError::CertifiedMeshRelationWithoutCertifiedSolid);
+        }
+        let mut inside = 0_usize;
+        let mut boundary = 0_usize;
+        let mut outside = 0_usize;
+        for vertex in &self.vertices {
+            vertex
+                .validate()
+                .map_err(|_| ConvexSolidReportError::NestedReport)?;
+            match vertex.relation {
+                ConvexSolidPointRelation::Inside => inside += 1,
+                ConvexSolidPointRelation::Boundary => boundary += 1,
+                ConvexSolidPointRelation::Outside => outside += 1,
+                ConvexSolidPointRelation::Unknown => {
+                    return if matches!(self.relation, ConvexSolidMeshRelation::Unknown) {
+                        Ok(())
+                    } else {
+                        Err(ConvexSolidReportError::MeshRelationMismatch)
+                    };
+                }
+                ConvexSolidPointRelation::NotCertifiedConvex => {
+                    return Err(ConvexSolidReportError::UnexpectedVertexRelation);
+                }
+            }
+        }
+
+        let derived = match (inside, boundary, outside) {
+            (_, 0, 0) if inside == self.vertices.len() => ConvexSolidMeshRelation::StrictlyInside,
+            (0, 0, _) => ConvexSolidMeshRelation::Outside,
+            _ => ConvexSolidMeshRelation::BoundaryOrMixed,
+        };
+        if self.relation == derived {
+            Ok(())
+        } else {
+            Err(ConvexSolidReportError::MeshRelationMismatch)
+        }
     }
 }
 

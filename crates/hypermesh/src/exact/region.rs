@@ -74,6 +74,35 @@ pub struct FaceRegionPlaneClassification {
     pub predicates: Vec<PredicateUse>,
 }
 
+/// Error returned when a retained region/plane classification is incoherent.
+///
+/// The classification stores the per-boundary-node plane-side facts used to
+/// derive a coarser relation. Consumers such as future winding policy should
+/// be able to audit that derivation directly, rather than trusting a summary
+/// enum. This follows Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997): combinatorial decisions must remain
+/// tied to certified predicate facts and explicit unknowns.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum FaceRegionPlaneValidationError {
+    /// A region/plane classification cannot be derived from an empty boundary.
+    EmptyNodeSides,
+    /// The retained predicate count does not match the retained node-side
+    /// count.
+    PredicateCountMismatch {
+        /// Number of node-side facts.
+        expected: usize,
+        /// Number of retained predicate certificates.
+        actual: usize,
+    },
+    /// The coarse relation does not match the retained node-side facts.
+    RelationMismatch {
+        /// Relation derived from retained node-side facts.
+        expected: FaceRegionPlaneRelation,
+        /// Relation stored in the artifact.
+        actual: FaceRegionPlaneRelation,
+    },
+}
+
 impl FaceRegionPlaneClassification {
     /// Return whether every retained predicate route was proof-producing.
     pub fn all_proof_producing(&self) -> bool {
@@ -81,6 +110,32 @@ impl FaceRegionPlaneClassification {
             .iter()
             .copied()
             .all(PredicateUse::is_proof_producing)
+    }
+
+    /// Validate the coarse region/plane relation against retained node sides.
+    ///
+    /// This check is deliberately local: split-region topology and source-face
+    /// incidence are validated by [`ExactFaceRegionPlan`],
+    /// while this method verifies that the predicate-derived side vector still
+    /// justifies the stored relation.
+    pub fn validate(&self) -> Result<(), FaceRegionPlaneValidationError> {
+        if self.node_sides.is_empty() {
+            return Err(FaceRegionPlaneValidationError::EmptyNodeSides);
+        }
+        if self.predicates.len() != self.node_sides.len() {
+            return Err(FaceRegionPlaneValidationError::PredicateCountMismatch {
+                expected: self.node_sides.len(),
+                actual: self.predicates.len(),
+            });
+        }
+        let expected = relation_from_sides(&self.node_sides);
+        if self.relation != expected {
+            return Err(FaceRegionPlaneValidationError::RelationMismatch {
+                expected,
+                actual: self.relation,
+            });
+        }
+        Ok(())
     }
 }
 

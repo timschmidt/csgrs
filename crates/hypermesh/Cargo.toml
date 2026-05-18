@@ -28,7 +28,7 @@ criterion = "0.5"
 proptest = "1.7.0"
 
 [features]
-default = ["exact", "legacy-boolean"]
+default = ["exact"]
 exact = ["dep:hyperlattice", "dep:hyperlimit", "dep:hyperreal"]
 exact-triangulation = ["exact", "dep:hypertri", "hypertri/earcut"]
 legacy-boolean = ["dep:glam"]
@@ -56,4 +56,4 @@ required-features = ["bevy"]
 [[bench]]
 name = "exact_validation"
 harness = false
-required-features = ["exact"]
+required-features = ["exact-triangulation"]

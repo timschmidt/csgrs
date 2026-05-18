@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: default
+          - name: default-exact
             command: cargo test
           - name: no-default-features
             command: cargo check --no-default-features
@@ -20,6 +20,8 @@ jobs:
             command: cargo test --no-default-features --features exact
           - name: exact-triangulation
             command: cargo test --no-default-features --features exact-triangulation
+          - name: all-features
+            command: cargo test --all-features
           - name: legacy-only
             command: cargo test --no-default-features --features legacy-boolean
           - name: f32-compat
