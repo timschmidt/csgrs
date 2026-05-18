@@ -3,585 +3,219 @@
   <img src="./docs/hyperdrc.png" alt="hyperdrc logo" width="144" align="right">
 </h1>
 
-`hyperdrc` is a Rust library and thin command line tool for PCB
-design-readiness checks over Gerber, KiCad, Excellon, and IPC-D-356 inputs. It
-uses the latest git version of [`csgrs`](https://github.com/timschmidt/csgrs)
-for Gerber parsing, polygon offsets, and boolean geometry.
+`hyperdrc` is a Rust library and thin command line tool for PCB design-readiness review.
+It loads Gerber, KiCad, Excellon, IPC-D-356, package sidecars, and converted handoff
+artifacts, then emits evidence-rich findings for local review and CI.
+
+The project is a readiness reviewer, not a fabricator-certified CAM engine. Its job is
+to make release-package risk visible before upload and to preserve the evidence behind
+each finding.
 
 ## Hyper Ecosystem
 
-`hyperdrc` is the first domain crate: it turns exact-aware geometry, parser
-diagnostics, and source-grid provenance into PCB manufacturing package evidence.
+`hyperdrc` is a domain crate that bridges current CAM/parser tooling and the exact
+Hyper stack.
 
-- [hyperreal](https://github.com/timschmidt/hyperreal): exact rational, symbolic, and computable
-  real arithmetic.
-- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate policy and certified
-  geometric decisions.
-- [hyperlattice](https://github.com/timschmidt/hyperlattice): small exact vector, matrix, and
-  transform algebra.
-- [hypercurve](https://github.com/timschmidt/hypercurve): planar curve, contour, region, and
-  boolean geometry.
-- [hypertri](https://github.com/timschmidt/hypertri): exact polygon triangulation and constrained
-  Delaunay topology.
-- [hypermesh](https://github.com/timschmidt/boolmesh): 3D mesh boolean experiments and the
-  future exact-aware mesh-topology layer.
-- [hypersolve](https://github.com/timschmidt/hypersolve): experimental exact-aware solver layer.
-- [hyperdrc](https://github.com/timschmidt/hyperdrc): PCB design-readiness checks over exact-aware
-  geometry adapters.
-- [hyperphysics](https://github.com/timschmidt/hyperphysics): placeholder physics-domain crate
-  for the exact geometry stack.
-- [csgrs](https://github.com/timschmidt/csgrs): constructive solid geometry and polygon boolean
-  engine used by HyperDRC and available as an interop target.
+- [hyperreal](https://github.com/timschmidt/hyperreal): exact source-grid, coordinate,
+  stackup, and rule values where checks can preserve them.
+- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate policy for
+  future geometry checks that should not use local epsilon rules.
+- [hypercurve](https://github.com/timschmidt/hypercurve) and
+  [hypertri](https://github.com/timschmidt/hypertri): exact-aware planar geometry and
+  triangulation surfaces for future CAM pipelines.
+- [hyperpath](https://github.com/timschmidt/hyperpath): routing, clearance, tangent,
+  and path provenance carriers.
+- [hyperparts](https://github.com/timschmidt/hyperparts): part, package, interface,
+  process, BOM, and compatibility evidence.
+- [hypercircuit](https://github.com/timschmidt/hypercircuit) and
+  [hyperphysics](https://github.com/timschmidt/hyperphysics): future electrical,
+  thermal, material, and coupled readiness checks.
+- [csgrs](https://github.com/timschmidt/csgrs): current Gerber parsing, polygon offset,
+  and boolean interop target used by the prototype.
+
+## Typical PCB Readiness Problems
+
+PCB release packages are not just copper polygons. Boards fail review because layer
+roles are ambiguous, drill and test files disagree, stackup evidence is incomplete,
+sidecars are stale or malformed, generated outputs do not match source intent, or
+CAD-only assumptions disappear in Gerber handoff. Traditional tools often collapse
+parser assumptions, CAM polygon approximations, rule policy, and manufacturing evidence
+into one report.
+
+`hyperdrc` treats readiness as evidence preservation. Inputs, parser diagnostics, source
+grids, conversion history, waivers, baselines, rule configuration, and report formats
+are first-class data. Geometry findings are conservative review prompts, not fabricator
+guarantees, and lossy adapter status remains visible until exact Hyper geometry covers
+more of the CAM pipeline.
+
+## Main Types And Surfaces
+
+- The library `run` pipeline returns a serializable `Report` through `RunOutcome`
+  instead of terminating the process.
+- Parser modules load Gerber, KiCad, Excellon, IPC-D-356, sidecar tables, drawings,
+  converter outputs, and handoff artifacts with structured diagnostics.
+- Check modules emit stable finding IDs, severity, source context, messages, geometry,
+  and active/waived status.
+- Rule and policy types cover CLI/config thresholds, package profiles, assembly
+  profiles, stackup metadata, net classes, fabricator capability profiles, waivers, and
+  baselines.
+- Report writers produce text, JSON, JSON Lines, GeoJSON, SARIF, GitHub annotations,
+  HTML, JUnit, SQLite, Arrow IPC, Parquet, overlays, and review companions.
+- Repository-local READMEs under `src`, `src/checks`, `src/geometry`, `src/kicad`,
+  `docs`, `examples`, and `benches` document the larger internal map.
+
+## Precision Model
+
+`hyperdrc` currently combines exact-aware metadata with pragmatic CAM adapters.
+Parser diagnostics preserve source units, grid declarations, file roles, X2 attributes,
+sidecar schema evidence, and converter provenance. Geometry checks are conservative
+review prompts, not proof that a board is manufacturable.
+
+Where exact Hyper geometry is not yet wired through the full CAM path, the README and
+reports should keep that boundary visible. Decimal/source-grid facts should be retained
+at import, finite geometry should be lifted into Hyper crates where practical, and
+lossy `geo`/`csgrs` adapters should remain explicit.
+
+## Performance Model
+
+The crate is intended to run in local preflight and CI. It keeps the CLI thin over the
+library pipeline, streams progress for long-running checks to stderr, and supports
+machine-readable output formats for downstream tooling. Rule configuration, sidecar
+discovery, parser diagnostics, baselines, and waivers are resolved once and then reused
+by checks and reports.
+
+Performance work should keep expensive geometry checks observable, avoid hiding parser
+or adapter costs, and prefer reusable source/provenance records over reparsing release
+packages for each output format.
 
 ## Current Status
 
-`hyperdrc` is an active prototype with a broad regression suite for
-fabrication-readiness rules. It supports layer-level Gerber checks, net-aware
-KiCad checks, Excellon drill sidecars, IPC-D-356 electrical-test sidecars,
-JSON/JSON Lines/GeoJSON/SARIF/HTML/JUnit/text reports, GitHub Actions
-annotations, SVG review overlays, JSON waivers, JSON rule configuration,
-TransJLC conversion, Gerber-directory sidecar discovery, and structured input
-provenance with parser diagnostics, including initial Gerber X2 metadata
-diagnostics for image setup, manifest-driving file attributes,
-image polarity and transforms, interpolation and quadrant modes, region mode,
-step-and-repeat, aperture macros, aperture definitions and use,
-coordinate-operation evidence, aperture-function intent, object-level
-net/component/pin intent, and attribute-delete evidence.
+`hyperdrc` is an active prototype with broad regression coverage. Implemented today:
 
-The implemented checks are useful for CI and local design review, but they are
-not a replacement for a fabricator's final DFM/DRC pass. Some geometry and
-electrical intent remains conservative: KiCad oval and rectangular drill declarations are treated as
-circular keepouts using their larger dimension until exact routed-slot geometry
-is modeled, config-driven impedance checks combine stackup/reference metadata
-review with first-pass single-ended outer-layer microstrip estimates only when
-stackup data is complete, plus centered stripline estimates when adjacent
-reference spacing is symmetric enough to avoid guessing, and IPC-D-356 parsing
-focuses on common test records, recognized record-code counts, and optional
-access-side/feature/soldermask hints plus report-level metadata summaries
-and net/reference/pin/diameter/geometry summaries rather than the full
-fixed-column dialect.
+- Gerber directory/package loading, KiCad board parsing, Excellon sidecars, IPC-D-356
+  sidecars, package archives, common manufacturing sidecars, and converter output
+  discovery;
+- parser diagnostics for Gerber/X2, KiCad, Excellon, IPC-D-356, BOM/centroid/netlist
+  tables, spreadsheets, drawings, IPC-2581, ODB++, STEP/mesh/image/test artifacts, and
+  converter manifests;
+- readiness checks for copper/layer geometry, board outline, mask/paste/silkscreen,
+  drills, IPC-D-356, KiCad net/board context, stackup/net-class policies, assembly/test
+  features, generated-output freshness, package completeness, and waiver governance;
+- JSON rule configuration, CLI overrides, package/assembly/fabricator profiles, stackup
+  metadata, net-class constraints, waivers, baselines, and baseline diffs;
+- reports in text, JSON, JSON Lines, GeoJSON, SARIF, GitHub annotations, HTML, JUnit,
+  SQLite, Arrow IPC, and Parquet;
+- review overlays and companions for SVG, Gerber, Excellon, DXF, PDF, KiCad marker
+  boards/rules, IPC-D-356, GenCAD, and IPC-2581.
 
-## Traditional PCB Readiness Problems
+Known limits: findings are conservative preflight evidence, not a replacement for a
+fabricator DFM/DRC pass. Routed-slot geometry, full ODB++/IPC-2581 import,
+glyph-accurate text, custom pad booleans, rich impedance solving, and several
+format-specific dialects remain incomplete.
 
-PCB release packages are not just geometry. A board can fail review because
-copper spacing is risky, but also because layer roles are ambiguous, drill
-files do not match the board, net/test sidecars are malformed, stackup evidence
-is incomplete, or the handoff relies on CAD intent that Gerber alone cannot
-encode. Traditional DRC tools also tend to mix precise CAD coordinates, CAM
-polygon approximations, file parser assumptions, and rule-deck policy into one
-report.
+## Installation
 
-`hyperdrc` approaches this as evidence preservation. Parser diagnostics,
-source units, grid provenance, sidecar roles, conversion history, waivers, and
-report formats are first-class data. Geometry checks are conservative review
-prompts rather than fabricator guarantees. Precision work focuses on retaining
-exact decimal/source-grid facts at import, lifting finite geometry into
-`hyperreal`/`hyperlimit` where possible, and keeping lossy `geo`/`csgrs`
-adapters explicit until the Hyper curve and triangulation layers cover more of
-the CAM pipeline.
+`hyperdrc` is primarily used from a checkout while the Hyper crates are developed
+together:
 
-## Project Choices
-
-`hyperdrc` is built as a readiness reviewer, not as a CAD database or a
-fabricator-certified CAM engine. The project deliberately favors checks that
-make release-package risk visible before upload: missing sidecars, ambiguous
-intent, geometry that is probably manufacturable only by luck, and inconsistencies
-between KiCad, Gerber, drill, test, BOM, and handoff notes.
-
-Several design decisions follow from that goal:
-
-- The library is the product boundary. The CLI is thin so CI jobs, custom
-  release tooling, and tests can all use the same `run` pipeline and report
-  model.
-- Findings are conservative review prompts. A warning means "review this before
-  release", not "the board is impossible to build".
-- Parser diagnostics are first-class report data. Malformed or incomplete sidecar
-  records are preserved as structured evidence instead of being hidden behind a
-  single parse failure.
-- Geometry is normalized to polygons and point features, while source-specific
-  intent stays attached in side models. This lets Gerber-only, KiCad-aware,
-  Excellon-aware, and IPC-D-356-aware checks share enough infrastructure without
-  pretending those formats carry the same information.
-- Configuration is explicit and auditable. Rule decks, package profiles,
-  assembly profiles, stackup metadata, waivers, and baselines are intended to be
-  committed beside the design and reviewed like other release artifacts.
-
-## Workflow Overview
-
-```mermaid
-flowchart LR
-    package["Release package"]
-    gerber["Gerber layers"]
-    kicad["KiCad board"]
-    drill["Excellon drills"]
-    ipc["IPC-D-356 net/test data"]
-    sidecars["BOM, centroid, netlist, drawings, README"]
-    config["JSON config and CLI overrides"]
-
-    package --> gerber
-    package --> kicad
-    package --> drill
-    package --> ipc
-    package --> sidecars
-
-    gerber --> load["Load and normalize inputs"]
-    kicad --> load
-    drill --> load
-    ipc --> load
-    sidecars --> load
-    config --> rules["Resolve rule and package policies"]
-
-    load --> checks["Run readiness checks"]
-    rules --> checks
-    checks --> report["Report model with stable finding IDs"]
-    report --> outputs["Text, JSON, JSONL, GeoJSON, SARIF, HTML, JUnit"]
-    report --> overlays["SVG review overlays"]
-    report --> governance["Waivers, baselines, CI summaries"]
+```sh
+cargo run -- --help
 ```
 
-## Core Concepts
+As a library dependency from sibling checkouts:
 
-- **Input manifest**: the list of loaded files, their roles, parser provenance,
-  and conversion origin. Manifest checks use this to catch incomplete or
-  contradictory manufacturing packages.
-- **Parser diagnostic**: non-fatal evidence that an input was present but partly
-  malformed, unsupported, or ambiguous. Diagnostics travel in the report beside
-  DRC findings.
-- **Violation**: a review finding with stable ID, severity, check name, layer or
-  source context, message, and optional geometry. Violations are the objects
-  waivers, baselines, CI summaries, JSON, SARIF, HTML, and SVG overlays consume.
-- **Readiness check**: a rule that asks whether the package is ready for a
-  manufacturing or assembly review step. Many checks are intentionally about
-  missing evidence, inconsistent metadata, or risky intent rather than exact
-  copper-collision geometry.
-- **Sidecar**: a non-Gerber manufacturing artifact such as Excellon drill files,
-  IPC-D-356 electrical-test data, BOMs, centroids, netlists, drawings, and README
-  handoff notes.
-- **Policy layer**: JSON configuration and CLI overrides that describe project
-  choices such as required artifacts, package profile, assembly profile, stackup,
-  net classes, voltage/current limits, and waiver governance.
+```toml
+[dependencies]
+hyperdrc = { path = "../hyperdrc" }
+```
 
-## Library And CLI Split
+## Library And CLI
 
-The reusable API lives in `src/lib.rs`. It exposes parser modules, check
-modules, report types, rule policy modules, and the crate-root `run` entry
-point. `run` returns a `RunOutcome` containing the serializable `Report` instead
-of terminating the process, so Rust callers can embed `hyperdrc` in services,
-tests, or custom CI tooling.
-
-The binary in `src/main.rs` is intentionally thin: it parses `Cli` with `clap`
-and calls `hyperdrc::run_cli`, which delegates to the library and then maps
-active findings to the traditional non-zero process exit status. Use
-`--allow-findings` for exploratory or report-only automation that should emit
-the full report and still return exit code 0 when findings remain.
+The reusable API lives in `src/lib.rs` and exposes parser modules, checks, report types,
+policies, and the `run` pipeline. The binary in `src/main.rs` parses CLI flags, calls
+the library, and maps active findings to process status. Use `--allow-findings` for
+report-only automation.
 
 ## Quick Start
 
-Run all default checks against one or more Gerber layers:
+Run default checks over files or a Gerber package directory:
 
 ```sh
 cargo run -- path/to/top.gbr path/to/bottom.gbr
-```
-
-Load every Gerber-like file from a directory. The same directory is also scanned
-for common Excellon, IPC-D-356, BOM, centroid, netlist, README, fabrication
-drawing, assembly drawing, and rout/panel drawing sidecars:
-
-```sh
 cargo run -- --gerber-dir path/to/gerber-package
 ```
 
-Include pre-production sidecars for manifest-driven readiness checks:
-
-```sh
-cargo run -- \
-  --check file-manifest-readiness \
-  --package-archive release-package.zip \
-  --bom parts.csv \
-  --centroid placement.txt \
-  --netlist netlist.csv \
-  --fab-drawing fab.dxf \
-  --assembly-drawing assembly.dxf \
-  --readme release-notes.md \
-  --rout-drawing panel.dxf \
-  --declared-copper-layer-count 4 \
-  --kicad-pcb board.kicad_pcb \
-  --excellon board.drl \
-  top.gbr \
-  bottom.gbr
-```
-
-Convert a Gerber package with
-[`TransJLC`](https://github.com/HalfSweet/TransJLC) before loading the converted
-outputs, or export Gerbers directly from a KiCad board with `kicad-cli`:
-
-```sh
-cargo run -- \
-  --convert-input path/to/source-gerbers \
-  --conversion-output-dir build/hyperdrc-converted \
-  --source-eda kicad \
-  --transjlc-bin TransJLC \
-  --conversion-arg --colorize \
-  --conversion-arg --zip-name=upload
-```
-
-```sh
-cargo run -- \
-  --convert-input board.kicad_pcb \
-  --converter kicad-cli \
-  --kicad-cli-bin kicad-cli \
-  --conversion-output-dir build/hyperdrc-kicad-gerbers \
-  --conversion-arg --layers \
-  --conversion-arg F.Cu,B.Cu \
-  --kicad-cli-drill-arg --generate-map \
-  --kicad-cli-pos-arg --smd-only \
-  --kicad-cli-handoff-exports \
-  --kicad-cli-review-exports
-```
-
-The KiCad CLI backend exports Gerbers, Excellon drill files, and a CSV
-`positions.pos` placement file into the conversion output directory, plus an
-IPC-D-356 test netlist at `ipc356.d356` and a JSON DRC report at
-`kicad_drc.json`. With `--kicad-cli-review-exports`, it also writes DXF, SVG,
-and PDF review drawings with sidecar-friendly filenames.
-With `--kicad-cli-handoff-exports`, it also writes IPC-2581, ODB++, STEP, GLB,
-PLY, and JSON statistics handoff outputs into the conversion directory.
-Converted drill, IPC-D-356, placement, and drawing files are discovered as
-sidecars and feed the same Excellon, drill-readiness, IPC-D-356, centroid,
-drawing, and artifact checks as explicit `--excellon`, `--ipc356`,
-`--centroid`, `--fab-drawing`, and `--assembly-drawing` inputs. Converted KiCad
-DRC JSON entries are surfaced as report diagnostics. Converted IPC-2581,
-GenCAD, boundary-scan, flying-probe, AOI/ICT, ODB++, STEP/STEPZ, mesh outputs,
-and visual review images are preserved as manufacturing handoff sidecars;
-IPC-2581 XML, GenCAD text, KiCad statistics JSON, STEP text, mechanical mesh
-files, PNG/JPEG/TIFF/BMP/WebP image headers, and test/inspection reports get
-lightweight parser-evidence diagnostics, including STL/OBJ/PLY/GLB/glTF mesh
-summaries, SVF/JTAG boundary-scan command summaries, and tester-report
-table/column evidence, while ODB++ is recorded as present pending a full
-importer.
-IPC-2581 diagnostics include XML section evidence plus common layer, net,
-refdes, package, drill, coordinate, and unit attributes when present.
-ODB++ diagnostics inspect ZIP/TAR/TGZ or directory package trees for matrix,
-step, layer, feature, profile, netlist, component/EDA, and drill/tool evidence
-without importing proprietary geometry.
-
-Drawing sidecar discovery accepts common CAD/review outputs for fabrication,
-assembly, and rout/panel review, including PDF, DXF/DXB, SVG, DWG, ACIS/SAT,
-PS/EPS, PLT, and HPGL/HPG where the filename declares the drawing role.
-SVG drawings get XML element summaries, DXF drawings get section/entity
-summaries, PDF/PostScript/HPGL and raster drawings get lightweight header or
-command evidence, and binary CAD drawings are retained in the manifest with an
-explicit parser diagnostic.
-
-Run KiCad-aware checks against a `.kicad_pcb` file:
+Run KiCad-aware checks with a config file and sidecars:
 
 ```sh
 cargo run -- \
   --config examples/hyperdrc-config.json \
   --kicad-pcb board.kicad_pcb \
-  --kicad-copper-layer F.Cu \
-  --kicad-copper-layer B.Cu \
-  --excellon panel-holes.drl \
+  --excellon board.drl \
   --ipc356 board.ipc \
   --format geojson
 ```
 
-Generate a release report without failing the surrounding shell recipe on
-findings:
+Generate review artifacts without failing the surrounding shell recipe:
 
 ```sh
 cargo run -- \
   --allow-findings \
   --kicad-pcb board.kicad_pcb \
-  --format geojson
+  --format html \
+  --svg-overlay violations.svg \
+  --summary-file summary.json
 ```
 
-Run a specific check sequence:
-
-```sh
-cargo run -- \
-  --check mask-island-keepout \
-  --check copper-overlap \
-  --keepout 0.2 \
-  --pair 0:1 \
-  --format json \
-  path/to/mask.gbr path/to/copper.gbr
-```
-
-Layer roles can be inferred from standard Gerber extensions, common KiCad-style
-layer names, and X2 `.FileFunction` attributes. Explicit zero-based indexes are
-still available and override inferred roles for ambiguous packages:
-
-```sh
-cargo run -- \
-  --board-outline 2 \
-  --copper-layer 0 \
-  --copper-layer 1 \
-  --paste-pair 3:0 \
-  --mask-pair 0:4 \
-  --silk-layer 5 \
-  --silk-pair 5:4 \
-  top.gbr bottom.gbr edge.gbr paste.gbr mask.gbr silk.gbr
-```
-
-Output formats are `text`, `json`, `jsonl`, `geojson`, `sarif`,
-`github-annotations`, `html`, and `junit`. JSON reports include stable violation
-IDs, severity, layers, polygon coordinates, point locations where applicable,
-short messages, structured parser diagnostics, and a structured input manifest.
-Parser diagnostics cover Gerber metadata/image-syntax evidence, Excellon,
-IPC-D-356, KiCad CLI DRC JSON, IPC-2581/GenCAD/test-inspection/ODB++/KiCad-statistics/STEP/mesh/image handoff evidence,
-BOM/centroid/netlist table parser issues, and converter output manifest issues.
-JSON sidecars can be direct tables or nested
-objects containing common table arrays; nested JSON cells are flattened into
-dotted column names. Spreadsheet sidecars extract matching-header rows across
-multiple populated workbook sheets; `--bom-sheet`, `--centroid-sheet`, and
-`--netlist-sheet` can select named workbook tabs when the release table is not
-the first populated sheet, merging selected tabs by normalized header union when
-they describe related auxiliary data with different columns. Spreadsheet sidecars also emit diagnostics for
-formula cells, defined names, VBA/macro projects, hidden sheets, multiple populated
-sheets, merged regions, native Excel tables, custom number formats, cell
-styles, conditional formatting, data validations, autofilters, cell error
-values, hyperlinks, comments, drawing objects, embedded media, charts, pivot
-tables, and date/time conversion caveats. Formula cells are also preserved in
-the extracted text as ignored `# hyperdrc-workbook-formula` metadata comments.
-During a run, `hyperdrc` writes start/end status lines for runtime phases and
-per-check execution to stderr with elapsed time; each completed check also
-reports its new finding count. Expensive checks such as minimum copper neck,
-mask sliver, aperture/opening spacing, drill-to-copper clearance, and net
-spacing also emit intra-check progress lines so long-running layer or board
-work can be monitored. This leaves stdout safe for the selected report format.
-JSON Lines emits one run/input/diagnostic/violation object per line for
-streaming analytics. `--sqlite-report report.sqlite` writes a queryable SQLite
-database with summary, input, diagnostic, active finding, and waived finding
-tables, and `--arrow-report report.arrow` writes the same report model as an
-Arrow IPC file for columnar analytics. `--parquet-report report.parquet` writes
-the same schema as a Parquet file for warehouse ingestion. SARIF output
-preserves stable hyperdrc finding IDs and PCB geometry in result properties for
-CI/code-review systems. GitHub annotation output emits workflow commands that
-surface findings in Actions logs. HTML
-output embeds the SVG overlay with summary, parser diagnostic, input, and
-finding tables for review packets. JUnit XML output maps active findings into
-testcase failures for CI systems with JUnit publishers. SVG review overlays can
-be written with `--svg-overlay violations.svg`.
-Active-finding waiver stubs and baselines can be written with `--waiver-stubs
-waiver-stubs.json` and `--baseline-file baseline.json`. A current run can also
-be compared to a saved baseline with `--baseline-reference previous.json` and
-`--baseline-diff-file baseline-diff.json`, producing new, resolved, and unchanged
-finding buckets for release review.
-
-Rule thresholds can be placed in a JSON config file and loaded with `--config`.
-CLI flags override config values. See
-[examples/hyperdrc-config.json](examples/hyperdrc-config.json).
-The config also tunes package policy. `package_profile` accepts
-`full-production`, `fabrication-only`, `assembly-only`, or `electrical-test`;
-that profile sets default manifest expectations, and `required_artifacts` plus
-`required_layers` can override individual deliverables. Generated-output
-freshness is controlled with `generated_date_stale_days`. Assembly thresholds
-can be selected with `assembly_profile` (`prototype`, `production-smt`,
-`double-sided-smt`, `test-fixture`, `hand-assembly`, `selective-solder`,
-`wave-solder`, `press-fit`, or `conformal-coating`) and tuned field-by-field in
-`assembly`.
-Stackup readiness accepts process metadata plus built-in or custom
-`fabrication_capability` thresholds for finished thickness, copper layer count,
-copper weight, dielectric thickness, laminate Dk/Df, and Tg. Built-in
-fabricator profiles include generic `prototype-fab`, `standard-fab`, and
-`advanced-fab` decks plus vendor-style `jlcpcb-economy`, `jlcpcb-standard`,
-`jlcpcb-advanced`, `pcbway-standard`, `pcbway-advanced`,
-`eurocircuits-pcb-proto`, `eurocircuits-standard-pool`, and
-`eurocircuits-defined-impedance` service classes. Profiles can distinguish hard
-limits, preferred service limits, and cost-escalation review thresholds.
+Useful converter entry points include `--converter kicad-cli`, `--convert-input`,
+`--conversion-output-dir`, and sidecar export flags for handoff/review artifacts.
 
 ## Readiness Coverage
 
-The default suite covers the main `hyperdrc` readiness surfaces:
+The default suite covers five broad surfaces:
 
-- Layer geometry: copper overlap with optional IPC-D-356 same-net/mixed-net
-  evidence classification, edge clearance, mask and paste alignment,
-  silkscreen clearance, minimum feature width, independently selectable polygon
-  and trace-junction acid traps, whole-layer copper balance, first-class local
-  copper-density balance, and board-outline sanity.
-- Drill and fabrication context: annular ring, drill spacing, drill-to-copper
-  clearance, routed-slot readiness, castellation intent, aspect ratio,
-  Excellon M48/%/M30 program-structure evidence, M71/M72 unit command support,
-  unit-declaration summaries, tool-table summaries, routing-command summaries, drill-hit and drill-geometry summaries,
-  IPC-D-356 record/field/geometry/diagnostic summaries, unit/zero-suppression/tool/routing-command diagnostics, duplicate drill-geometry, drill-diameter outlier,
-  plated/non-plated split review, and cross-source drill-table consistency.
-- KiCad board context: net intent, high-speed and high-current heuristics,
-  reference-plane, split-plane, and return-proximity coverage, RF keepout, antenna copper-free
-  region, and via-fence review, gold fingers, ESD proximity and TVS clamp
-  return-path proximity, bucketed voltage/protective-earth spacing, bucketed ESD protection/return, surge-protection keepouts, panelization clearance, mounting-hole grounding,
-  plating, edge-clearance, distribution, spacing, copper-keepout review,
-  same-net drill-break continuity review, different-net short isolation review,
-  differential pair width, neck-down, skew, via proximity/return, and pair-to-pair spacing review,
-  high-current pad-entry and via-return support review,
-  switch-node and inductor copper keepouts, panel-feature
-  outline registration review, edge-plating intent, castellation pitch,
-  component edge/hole clearance, dense-pad escape, pad/via spacing,
-  mask-bridge review, bucketed thermal copper-area/spacing/keepout review, thermal-via count/distribution, and config-driven
-  stackup/net-class constraints for material, surface finish,
-  laminate Dk/Df/Tg, soldermask process/color, IPC/fabricator class,
-  fabrication capability thresholds, width, clearance, current, voltage,
-  reference-plane, layer-count, via-count, approximate length/skew,
-  differential-pair spacing, differential-pair return/guard proximity,
-  mixed-signal partitioning, inherited net-class policy defaults,
-  rectangular region-scoped net-class rules, and
-  impedance-control target/tolerance intent with first-pass single-ended
-  outer-layer microstrip and centered stripline estimates where stackup data
-  supports them.
-  Companion checks for thermal-via distribution, bucketed thermal copper-area/spacing/keepout review, bucketed RF/antenna keepout,
-  RF via-fence, TVS/ESD return path, bucketed switch-node and inductor copper keepout, bucketed sensitive-net/mixed-signal partitioning, and
-  dense-pad via/mask review are also first-class CLI checks rather than only
-  hidden side effects of broader review groups.
-- Assembly and test readiness: profile-driven component edge and bucketed hole/spacing
-  clearance, bucketed connector rework spacing, fiducials and fiducial copper
-  keepouts with nearby-blocker bucketing, tooling holes, mouse bites, testpoint coverage/accessibility
-  including IPC-D-356 access-side, soldermask, KiCad pad-side parity hints,
-  bucketed component/probe spacing review, testpoint copper clearance, bucketed
-  pad-pair asymmetry, dense-pad escape, bucketed selective/wave solder and
-  press-fit keepouts, conformal-coating keepouts, and IPC-D-356 coverage.
-- Production package readiness: Gerber package completeness, sidecar discovery,
-  BOM/centroid/netlist structure, README release notes, fabrication and assembly
-  drawings, rout drawings, order-parameter consistency, generated-date freshness,
-  duplicate layer/island-geometry detection, tiny and skinny layer-fragment
-  detection, Gerber X2 Part/FileFunction/FilePolarity layer-role metadata
-  including structural FileFunction role-field validation and partial/mixed
-  FilePolarity evidence review,
-  SameCoordinates alignment-evidence consistency, CreationDate freshness and
-  FileFunction/GenerationSoftware/ProjectId provenance checks, Gerber source
-  unit reporting and image unit/coordinate-format consistency,
-  MD5 checksum-evidence coverage, negative-copper-polarity review,
-  side-role filename conflict detection, paste/mask companion checks
-  including solder-mask opening-ratio, annular-ring relief, and silkscreen
-  text-height review,
-  filename layer-count convention parity, configurable required artifacts/layers, centroid unit/origin/rotation
-  convention handoff with KiCad `.pos`, Altium placement CSV, JLCPCB CPL, and
-  generic centroid schema aliases, BOM compliance/traceability/source-control evidence for
-  sensitive rows, package-level polarity/MSL handoffs, polarized same-package
-  centroid orientation review, dense-package reflow-profile handoff,
-  tall-component height/keepout handoff, thermal-validation handoff for
-  heat-dissipating rows, low-standoff cleanliness handoff, press-fit and
-  wire-bond process/drawing handoff, fabrication marking-zone handoff,
-  preflight overlay and waiver/baseline diff evidence, conditional
-  engineering-review-packet completeness, and surface-finish handoff notes.
+- layer geometry: copper overlap, edge clearance, mask/paste alignment, silkscreen
+  clearance, feature width, acid traps, copper balance, density, and outline sanity;
+- drills and fabrication context: annular ring, drill spacing/clearance, routed-slot
+  readiness, castellation intent, aspect ratio, Excellon evidence, and cross-source
+  drill consistency;
+- KiCad board context: net intent, high-speed/current/RF/ESD/thermal heuristics,
+  differential-pair review, panelization, keepouts, grounding, stackup and net-class
+  constraints;
+- assembly and test readiness: component clearances, fiducials, tooling holes, mouse
+  bites, testpoint coverage/accessibility, selective/wave/press-fit/conformal-coating
+  evidence, and IPC-D-356 coverage;
+- package readiness: required artifacts, sidecar discovery, BOM/centroid/netlist
+  structure, drawings, generated-date freshness, polarity/MSL/surface-finish handoff
+  notes, overlays, waivers, and baselines.
 
-The check implementations and exact ownership are documented in
-[src/checks](src/checks/README.md). The roadmap and remaining gaps are tracked
-in [docs/design-readiness-plan.md](docs/design-readiness-plan.md).
-
-Important tunables include `--keepout`, `--clearance`, `--min-width`,
-`--min-mask-width`, `--min-solder-mask-annular-ring`,
-`--min-solder-mask-opening-area-ratio`,
-`--max-solder-mask-opening-area-ratio`, `--min-silkscreen-text-height`,
-`--acid-trap-angle`, `--annular-ring`,
-`--drill-clearance`, `--board-thickness`, `--max-drill-aspect-ratio`,
-`--min-paste-area-ratio`, `--max-paste-area-ratio`, `--stencil-thickness`,
-`--min-stencil-area-ratio`, `--max-copper-imbalance-ratio`, `--net-clearance`,
-`--registration-tolerance`, `--panel-clearance`, `--ipc356-tolerance`,
-`--min-area`, `--max-layer-area`, and `--generated-date-stale-days`.
-
-## Waivers And CI
-
-Waiver files are JSON and can suppress findings by `id`, `check`, `layers`, and
-message text. The default suite includes `waiver-governance`, and it can also be
-selected explicitly; it emits readiness warnings for incomplete waiver metadata
-so production waivers remain auditable: `reason`, `owner`, `review_date`,
-`source`, and `geometry_hash` are expected. `review_date` must be an ISO
-`YYYY-MM-DD` date and is warned when it has expired, so standing exceptions stay
-visible in pre-production review. A compact CI summary can be written with
-`--summary-file`. SVG overlays can be written with `--svg-overlay`, and Gerber
-review overlays can be written with `--gerber-overlay` for loading active
-finding geometry in board or CAM viewers, `--gerber-keepout-overlay` can emit a
-Gerber keepout review layer, Excellon-style marker overlays can be written with
-`--excellon-overlay` for drill-map review, and DXF overlays can be written with
-`--dxf-overlay` for CAD/mechanical review. PDF overlays can be written with
-`--pdf-overlay` for document-centric review packets. KiCad custom-rule decks can
-be generated with `--kicad-dru-output` for early editor feedback on core
-clearance, width, annular-ring, board-edge, silkscreen, and hole-clearance
-thresholds; `--kicad-dru-merge-input` and `--kicad-dru-merge-output` write a
-copy of an existing project rule file with HyperDRC rules inserted between
-generated markers. Standalone KiCad review-marker boards can be generated with
-`--kicad-marker-output`; `--kicad-marker-merge-output` writes a marked-up copy
-of the first input `.kicad_pcb` with HyperDRC user layers and active finding
-geometry inserted, without modifying the source board. IPC-D-356 electrical-test
-review companions can be written with
-`--ipc356-review-output`; they summarize parsed test access by source and net
-and annotate active drill/net/test-related findings, including a stable
-key-value `DIFF_*` comment block for scripts that need machine-readable review
-context. GenCAD-style DFT review
-companions can be written with `--gencad-review-output`; they include sectioned
-summary data, IPC-D-356-derived net names, component references, testpin records,
-and active/waived fixture/manufacturing findings for test engineering review. IPC-2581-style XML manufacturing review
-companions can be written with `--ipc2581-review-output`; they embed HyperDRC
-DRC/DFM annotations, locations, and region summaries for CAM handoff review.
-HTML reports retain waived finding details and provide active/waived filters for review. Proposed waiver stubs and active-finding baselines can be generated without suppressing
-anything. Baseline comparison is an audit artifact: it classifies drift in the
-active finding set, but waivers remain the mechanism for intentionally
-suppressing accepted findings.
-
-```json
-{
-  "waivers": [
-    {
-      "check": "acid-trap-candidate",
-      "layers": ["F.Cu"],
-      "message_contains": "below 30",
-      "reason": "accepted connector footprint geometry",
-      "owner": "DRC reviewer",
-      "review_date": "2027-05-01",
-      "source": "https://jira.example/issues/123",
-      "geometry_hash": "hyperdrc-geometry-v1:0123456789abcdef"
-    }
-  ]
-}
-```
-
-```sh
-cargo run -- \
-  --kicad-pcb board.kicad_pcb \
-  --waiver waivers.json \
-  --summary-file summary.json \
-  --svg-overlay violations.svg \
-  --waiver-stubs waiver-stubs.json \
-  --baseline-file baseline.json \
-  --baseline-reference previous-baseline.json \
-  --baseline-diff-file baseline-diff.json
-```
+The check ownership map is in [src/checks](src/checks/README.md), and the long-form
+roadmap remains in [docs/design-readiness-plan.md](docs/design-readiness-plan.md).
 
 ## Repository Map
 
-Each folder has its own local README with the hyperdrc-specific ownership
-details for that part of the tree:
-
-- [src](src/README.md): Rust crate structure, runtime pipeline, parsers,
-  reports, configuration, and submodule map.
-- [src/checks](src/checks/README.md): all design-readiness checks grouped by
-  layer, drill, board, mechanical, stencil, assembly, manifest, artifact,
-  surface-finish, and helper responsibilities.
-- [src/geometry](src/geometry/README.md): polygon construction, sketch
-  conversion, shape extraction, and geometry-test expectations.
-- [src/kicad](src/kicad/README.md): KiCad board model, S-expression parsing,
-  graphics parsing, and current parser scope.
-- [docs](docs/README.md): roadmap, design-readiness backlog, and visual assets.
-- [docs/testing.md](docs/testing.md): test-suite guide explaining what the
-  current tests look for and how they exercise `hyperdrc`.
+- [src](src/README.md): library structure, runtime pipeline, parsers, reports,
+  configuration, and modules.
+- [src/checks](src/checks/README.md): readiness checks grouped by ownership.
+- [src/geometry](src/geometry/README.md): polygon construction and geometry-test
+  expectations.
+- [src/kicad](src/kicad/README.md): KiCad model and parser scope.
+- [docs](docs/README.md): roadmap and visual assets.
+- [docs/testing.md](docs/testing.md): test-suite guide.
 - [examples](examples/README.md): runnable configuration examples.
 - [benches](benches/README.md): benchmark and smoke-performance entry points.
-- [proptest-regressions](proptest-regressions/README.md): persisted fuzz and
-  property-test regression seeds.
+- [proptest-regressions](proptest-regressions/README.md): persisted property-test
+  regression seeds.
 
-## Known Gaps
+## Development
 
-Not yet modeled: exact routed slot shapes, plated-slot/edge-plating electrical
-semantics, subtractive KiCad custom pad primitive booleans, glyph-accurate
-KiCad silkscreen text rendering and side/mirroring, per-pad paste or mask
-attributes, fabricator-specific rule-deck libraries,
-asymmetric-stripline/coupled/coplanar/vendor-tuned impedance solving, routed
-differential-pair length/skew matching, schema-specific nested JSON sidecar
-dialects, workbook-aware formulas/styles/macros for spreadsheets, richer parser
-diagnostics for all input formats, and ODB++/IPC-2581 input.
+Useful local checks:
 
-See [docs/design-readiness-plan.md](docs/design-readiness-plan.md) for the
-long-form design-readiness roadmap.
+```sh
+cargo test
+cargo bench --bench parser_geometry_smoke
+cargo bench --bench fixture_smoke
+```
 
 ## References
 
