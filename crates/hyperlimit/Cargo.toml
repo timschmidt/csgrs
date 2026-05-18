@@ -11,7 +11,11 @@ keywords = ["exact", "geometric", "predicates", "boundary", "orientation"]
 categories = ["mathematics", "games", "simulation"]
 
 [dependencies]
+# Hyper ecosystem dependencies: keep the crate-official release references and
+# the commented workspace references below. Switch to the workspace form for
+# local development, then switch back to crates.io versions before publishing.
 hyperreal = { version = "0.12.0" }
+# hyperreal = { path = "../hyperreal" }
 rayon = { version = "1.10", optional = true }
 
 [dev-dependencies]
