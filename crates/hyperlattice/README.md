@@ -3,87 +3,99 @@
   <img src="./doc/hyperlattice.png" alt="Hyper, a clever mathematician" width="144" align="right">
 </h1>
 
-`hyperlattice` provides small fixed-size linear algebra over
-`hyperreal::Real`. `Real` is the coordinate and scalar type for complex
-numbers, 2D/3D/4D vectors, and 3x3/4x4 matrices.
+`hyperlattice` provides small fixed-size linear algebra over `hyperreal::Real`: complex
+numbers, 2D/3D/4D vectors, 3x3/4x4 matrices, transforms, and object-level structural
+facts.
 
-Primitive `f32` and `f64` are accepted only at named boundaries for checked
-input lifting, rendering, IO, diagnostics, or third-party interop. Lossy output
-is explicit through `Real::to_f64_lossy`.
+The crate is not a general BLAS replacement. It focuses on the small exact vector and
+matrix objects that geometry, predicates, solvers, and domain crates repeatedly need.
 
 ## Hyper Ecosystem
 
-`hyperlattice` is the object-algebra layer: small vectors, matrices, transforms,
-and product-sum structure over `hyperreal::Real`.
+`hyperlattice` is the object-algebra layer between scalar facts and topology/domain
+crates.
 
-- [hyperreal](https://github.com/timschmidt/hyperreal): exact rational, symbolic, and computable
-  real arithmetic.
-- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate policy and certified
-  geometric decisions.
-- [hyperlattice](https://github.com/timschmidt/hyperlattice): small exact vector, matrix, and
-  transform algebra.
-- [hypercurve](https://github.com/timschmidt/hypercurve): planar curve, contour, region, and
-  boolean geometry.
-- [hypertri](https://github.com/timschmidt/hypertri): exact polygon triangulation and constrained
-  Delaunay topology.
-- [hypermesh](https://github.com/timschmidt/boolmesh): 3D mesh boolean experiments and the
-  future exact-aware mesh-topology layer.
-- [hypersolve](https://github.com/timschmidt/hypersolve): experimental exact-aware solver layer.
-- [hyperdrc](https://github.com/timschmidt/hyperdrc): PCB design-readiness checks over exact-aware
-  geometry adapters.
-- [hyperphysics](https://github.com/timschmidt/hyperphysics): placeholder physics-domain crate
-  for the exact geometry stack.
-- [csgrs](https://github.com/timschmidt/csgrs): constructive solid geometry and polygon boolean
-  engine used by HyperDRC and available as an interop target.
+- [hyperreal](https://github.com/timschmidt/hyperreal): exact scalar values and
+  structural facts.
+- [hyperlimit](https://github.com/timschmidt/hyperlimit): predicate layer that consumes
+  point, vector, determinant, and shared-scale facts.
+- [hypercurve](https://github.com/timschmidt/hypercurve),
+  [hypertri](https://github.com/timschmidt/hypertri), and
+  [hypermesh](https://github.com/timschmidt/hypermesh): geometry crates that reuse
+  exact small-vector and transform structure.
+- [hypersolve](https://github.com/timschmidt/hypersolve): residual and linear-algebra
+  preparation over exact scalars.
+- [hyperphysics](https://github.com/timschmidt/hyperphysics) and
+  [hypervoxel](https://github.com/timschmidt/hypervoxel): domain crates that need exact
+  vectors, transforms, and object-level facts.
 
-## Traditional Numerical Problems
+## Typical Linear-Algebra Problems
 
-Small linear algebra sits directly on the fault line between performance and
-exactness. Floating matrices are fast but can hide singular pivots, near-zero
-determinants, and transform-kind assumptions. Full symbolic expansion keeps
-meaning but can explode operand size before a caller knows whether a cheap
-structural fact was enough.
+Small linear algebra sits on the fault line between performance and exactness. Floating
+matrices are fast but can hide singular pivots, near-zero determinants, and
+transform-kind assumptions. Full symbolic expansion preserves meaning but can grow
+before a caller knows whether a cheap structural fact was enough.
 
-`hyperlattice` approaches that tradeoff by keeping objects small and facts
-local. It carries zero masks, homogeneous point/direction tags, determinant
-schedule categories, sparse-support hints, shared-scale views, and prepared
-matrix cache summaries. Those facts let callers skip known-zero terms, choose
-fraction-free or shared-denominator reducers, reuse inverse/cofactor work, and
-delay scalar canonicalization until the result is actually needed.
+`hyperlattice` keeps objects small and facts local. Zero masks, homogeneous
+point/direction tags, determinant schedule hints, sparse support, shared-scale views,
+and prepared matrix cache summaries let callers skip known-zero work, choose exact
+reducers, and delay scalar canonicalization until a result is needed.
 
-## Structural Facts
+## Main Types
 
-`hyperlattice` carries cheap numerical structure discovered by constructors and
-hot kernels: known coordinate zeros, point/direction tags, homogeneous
-coordinate shape, sparsity masks, determinant/cofactor state, and exact rational
-facts. Those facts select faster exact vector and matrix paths without becoming
-geometry predicates.
+- `Complex` provides exact complex arithmetic and integer powers.
+- `Vector2`, `Vector3`, `Vector4`, homogeneous vector facts, shared-scale views, and
+  signed-axis helpers describe small exact vectors.
+- `Matrix3`, `Matrix4`, transform handles, transformed-vector/matrix views, prepared
+  matrix handles, and prepared right-divisor handles describe small exact matrices.
+- `Matrix3StructuralFacts`, `Matrix4StructuralFacts`, transform-kind enums, determinant
+  schedule hints, and cache summaries preserve matrix structure.
+- `Displacement2Facts`, `ProductTerm2Facts`, `ProductSum2Facts`, and `Orient2Facts`
+  expose exact 2D algebra facts for predicate and curve callers.
+- `AbortSignal`, `BlasResult`, checked result types, zero-status helpers, and scalar
+  function wrappers provide fallible exact operations.
 
-Exactness is not implemented by eagerly canonicalizing every coordinate after
-each operation. In the sense of Yap's exact geometric computation model,
-`hyperlattice` preserves conservative object-level structure so later exact
-reducers and predicate crates can either certify a decision or report
-uncertainty. Missing facts are missed optimizations; false facts are bugs.
+## Precision Model
 
-Future APIs should expose structural metadata in stable value objects so higher
-crates can reuse it without reinterpreting internal layouts.
+All native scalar, vector, complex, and matrix operations use `Real`. Primitive floats
+should appear only at named import/export, rendering, diagnostics, or interop edges.
+Checked operations reject definite-zero and unknown-zero divisors or pivots instead of
+rounding through a singular path.
 
-## Current State
+`hyperlattice` preserves object facts that `hyperreal` cannot know by itself: coordinate
+zero masks, homogeneous shape, shared scale, affine/translation/diagonal/projective
+transform kind, determinant schedule, and prepared cache availability.
 
-Implemented:
+## Performance Model
 
-- `Real` constants and elementary functions
-- `Complex` arithmetic and integer powers
-- `Vector2`, `Vector3`, and `Vector4` arithmetic, dot products, magnitude,
-  normalization, checked division, and abort-aware variants
-- `Vector2Facts` and `Axis2` for coordinate zero-mask metadata
-- exact 2D algebra helpers and facts used by predicates and curves
-- `Matrix3` and `Matrix4` arithmetic, multiplication, determinant, inverse,
-  transpose, reciprocal, integer powers, checked variants, and transform handles
-- `RealFacts`, `RealSign`, `RealMagnitudeBits`, `ZeroStatus`, and `AbortSignal`
+The crate reduces exact cost by exploiting fixed sizes and retained structure. Matrix
+multiplication is unrolled, small powers are specialized before exponentiation by
+squaring, borrowed arithmetic avoids unnecessary cloning, and product-sum reducers
+preserve rational structure. Prepared matrix and right-divisor handles let callers reuse
+determinant, adjugate, reciprocal, minor, and inverse work without exposing internal
+cache storage.
 
-Fallible operations return `BlasResult<T>`. Checked operations reject both
-definite zero and unknown-zero divisors or pivots.
+Benchmarks track scalar, vector, matrix, prepared-cache, and dispatch-trace behavior so
+shortcuts can be accepted only when they help the target surface without destabilizing
+nearby Hyper predicate paths.
+
+## Current Status
+
+Implemented today:
+
+- `Real` constants, zero-status helpers, and elementary-function wrappers;
+- `Complex` arithmetic and integer powers;
+- `Vector2`, `Vector3`, `Vector4`, shared-scale views, homogeneous facts, dot products,
+  normalization, and checked/abort-aware operations;
+- exact 2D algebra helpers and facts for displacement, wedge/dot, product sums, and
+  orientation expressions;
+- `Matrix3`, `Matrix4`, determinant, inverse, transpose, multiplication, powers, checked
+  paths, transform handles, prepared matrix/right-divisor handles, and structural facts;
+- `RealFacts`, sign/magnitude facts, abort signals, `arbitrary` support, regression
+  sentinels, and benchmark hooks.
+
+Fallible operations return `BlasResult<T>` or checked variants. Checked operations
+reject definite zero and unknown-zero divisors or pivots.
 
 ## Installation
 
@@ -92,126 +104,40 @@ definite zero and unknown-zero divisors or pivots.
 hyperlattice = "0.4.0"
 ```
 
-From sibling checkouts:
+For sibling checkouts:
 
 ```toml
 [dependencies]
 hyperlattice = { path = "../hyperlattice" }
 ```
 
-Features:
+Feature summary:
 
-| Feature | Default | Purpose |
-| --- | --- | --- |
-| `arbitrary` | no | Implements `arbitrary::Arbitrary` for lattice-owned types. |
-| `hyperreal-dispatch-trace` | no | Enables hyperreal dispatch tracing during benchmarks. |
+- `arbitrary`: implements `arbitrary::Arbitrary` for lattice-owned types.
+- `hyperreal-dispatch-trace`: enables scalar dispatch tracing during benchmarks.
 
-## Examples
-
-### Real Values
+## Usage
 
 ```rust
-use hyperlattice::{Real, ln, log10, pi, sqrt, tau};
+use hyperlattice::{Matrix3, Real, Vector3};
 
-fn r(value: i32) -> Real {
-    value.into()
-}
-
-let nine = r(9);
-assert_eq!(sqrt(nine).unwrap(), r(3));
-assert_eq!(tau(), r(2) * pi());
-assert_eq!(ln(hyperlattice::e()).unwrap(), r(1));
-assert_eq!(log10(r(100)).unwrap(), r(2));
-```
-
-### Vectors
-
-```rust
-use hyperlattice::{Rational, Real, Vector3, one};
-
-fn r(value: i32) -> Real {
-    value.into()
-}
+fn r(value: i32) -> Real { value.into() }
 
 let v = Vector3::new([r(3), r(4), r(0)]);
-let offset = v.clone() + r(10);
-
 assert_eq!(v.dot(&v), r(25));
-assert_eq!(offset, Vector3::new([r(13), r(14), r(10)]));
-assert_eq!(v.normalize().unwrap().dot(&v.normalize().unwrap()), one());
 
-let half = Rational::fraction(1, 2).unwrap().into();
-let displayed = Vector3::new([half, r(2), r(3)]);
-assert_eq!(format!("{displayed}"), "[1/2, 2, 3]");
-assert_eq!(format!("{displayed:#}"), "[0.5, 2, 3]");
+let m = Matrix3::identity();
+assert_eq!(m.clone() * m.inverse().unwrap(), Matrix3::identity());
 ```
 
-### Matrices
+## Development
 
-```rust
-use hyperlattice::{Matrix3, Real};
-
-fn r(value: i32) -> Real {
-    value.into()
-}
-
-let matrix = Matrix3::new([
-    [r(1), r(2), r(3)],
-    [r(0), r(1), r(4)],
-    [r(5), r(6), r(0)],
-]);
-
-assert_eq!(matrix.determinant(), r(1));
-assert_eq!(matrix.clone() * matrix.clone().inverse().unwrap(), Matrix3::identity());
-assert_eq!((matrix ^ 0).unwrap(), Matrix3::identity());
-```
-
-### Structural Facts
-
-```rust
-use hyperlattice::{RealSign, ZeroStatus, pi};
-
-let facts = pi().structural_facts();
-assert_eq!(facts.sign, Some(RealSign::Positive));
-assert_eq!(facts.zero, ZeroStatus::NonZero);
-assert!(!facts.exact_rational);
-
-let approx = pi().to_f64_lossy().unwrap();
-assert!(approx > 3.0 && approx < 4.0);
-```
-
-## Performance Notes
-
-The crate is optimized for small fixed-size algebra over rich exact values:
-
-- borrowed arithmetic keeps expression cloning low
-- short product-sum reducers preserve exact-rational structure
-- vector, matrix, and complex operations use owned-left/borrowed-right hot paths
-- small powers are specialized before exponentiation by squaring
-- 3x3 and 4x4 matrix multiplication is unrolled
-- checked inverses use exact zero-status paths
-- matrix structural facts expose semantic row/column zero certificates and
-  determinant schedule categories, so consumers can pick exact kernels without
-  depending on mask layouts
-- prepared matrix and right-divisor handles expose `MatrixPreparedCacheState`,
-  a docs.rs-visible cache availability summary for determinant, reciprocal,
-  minor-factor, adjugate, and inverse reuse without exposing cached scalar
-  storage
-- homogeneous matrix facts carry conservative transform-kind provenance for
-  affine, translation, diagonal-linear, signed-permutation, and projective
-  dispatch
-- structural facts are forwarded by borrow so `hyperlimit` can query them cheaply
-
-Run the benchmark suite:
+Useful local checks:
 
 ```sh
+cargo test
 cargo bench --bench mathbench
-```
-
-Run dispatch tracing separately:
-
-```sh
-cargo bench --bench mathbench --features hyperreal-dispatch-trace -- --write-dispatch-trace-md
+cargo bench --bench regression_sentinels
 ```
 
 ## References
