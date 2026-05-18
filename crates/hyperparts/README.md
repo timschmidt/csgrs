@@ -1,4 +1,6 @@
-# hyperparts
+<h1>
+  hyperparts
+</h1>
 
 `hyperparts` is a source-attributed part knowledge graph for the Hyper ecosystem. It
 records part families, variants, revisions, assertions, terminals, interfaces,
@@ -89,7 +91,7 @@ to sibling crates.
 
 ```toml
 [dependencies]
-hyperparts = "0.1.0"
+hyperparts = "0.2.0"
 ```
 
 For sibling checkouts:
@@ -98,6 +100,35 @@ For sibling checkouts:
 [dependencies]
 hyperparts = { path = "../hyperparts" }
 ```
+
+## Usage
+
+Represent catalog facts as source-attributed evidence, not anonymous table cells:
+
+```rust,ignore
+use hyperparts::{
+    Assertion, AssertionStatus, AssertionValue, PartFamily, PartGraph, PartId, SourceRef,
+    VariantId, PartVariant,
+};
+use hyperreal::Real;
+
+let source = SourceRef::new("datasheet", "rev-a-page-4")?;
+let voltage = Assertion {
+    source: source.clone(),
+    status: AssertionStatus::Stated,
+    value: AssertionValue::ExactReal(Real::from(5)),
+    condition: None,
+    confidence: Default::default(),
+};
+
+let mut graph = PartGraph::empty();
+graph.insert_family(PartFamily::new(PartId::new("regulator")?, "linear regulator"));
+graph.insert_variant(PartVariant::new(VariantId::new("regulator-5v")?, None));
+```
+
+Compatibility queries, safe-connection reports, geometry handoffs, physics handoffs,
+and manufacturing-route records use the same source/status pattern so downstream crates
+can distinguish certified facts, missing evidence, and lossy imports.
 
 ## Development
 
