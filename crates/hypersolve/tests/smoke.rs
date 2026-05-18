@@ -1,10 +1,14 @@
 use hyperreal::{Rational, Real, SymbolicDependencyMask};
 use hypersolve::jacobian::{symbolic_jacobian, symbolic_jacobian_prepared};
 use hypersolve::{
-    Constraint, ConvergenceReason, DenseLinearBackend, Expr, ExprDegree, LinearAdapterKind,
-    LinearAdapterPrecision, LinearBackend, PreparedProblem, Problem, SolverConfig, SolverState,
-    SymbolId, context_from_problem, evaluate_residuals, facts_depend_on_symbol,
-    solve_damped_least_squares,
+    CandidateCertificationConfig, CandidateResidualBall, CertifiedCandidateStatus, Constraint,
+    ConstraintKind, ConvergenceReason, DenseLinearBackend, Expr, ExprDegree, LinearAdapterKind,
+    LinearAdapterPrecision, LinearBackend, PreparedProblem, PreparedSolverBlock, Problem,
+    SolverBlockRowKind, SolverConfig, SolverState, SymbolId, VariableBall,
+    apply_equality_substitutions, certify_affine_interval_candidate, certify_candidate,
+    certify_candidate_with_config, certify_candidate_with_residual_balls, context_from_problem,
+    evaluate_residuals, facts_depend_on_symbol, find_equality_substitutions,
+    solve_damped_least_squares, solve_direct_affine_equalities,
 };
 
 fn real(value: i64) -> Real {
@@ -258,6 +262,290 @@ fn prepared_problem_classifies_constant_residual_signs_without_evaluation() {
     assert_eq!(prepared.constraints()[2].residual_constant_sign, None);
     assert!(!prepared.constraints()[3].is_constant_row());
     assert_eq!(prepared.constraints()[3].residual_constant_sign, None);
+}
+
+#[test]
+fn prepared_solver_block_partitions_direct_affine_and_nonlinear_rows() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let y = Expr::symbol(SymbolId(1), "y");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(1));
+    problem.add_variable("y", real(2));
+    problem.add_constraint(Constraint::equality("zero", Expr::zero()));
+    problem.add_constraint(Constraint::equality("contradiction", Expr::int(1)));
+    problem.add_constraint(Constraint::equality("affine", x.clone() + Expr::int(3)));
+    problem.add_constraint(Constraint::equality("quadratic", x.clone() * y.clone()));
+    problem.add_constraint(Constraint {
+        name: "trig".to_string(),
+        kind: ConstraintKind::Equality,
+        residual: x.sin(),
+        weight: Real::one(),
+        active: true,
+    });
+
+    let prepared = PreparedProblem::new(&problem);
+    let block = PreparedSolverBlock::new(&prepared);
+    let facts = block.facts();
+
+    assert_eq!(facts.row_count, 5);
+    assert_eq!(facts.active_row_count, 5);
+    assert_eq!(facts.constant_row_count, 2);
+    assert_eq!(facts.constant_contradiction_count, 1);
+    assert_eq!(facts.prepared_affine_row_count, 1);
+    assert_eq!(facts.polynomial_nonlinear_row_count, 1);
+    assert_eq!(facts.non_polynomial_row_count, 1);
+    assert_eq!(facts.nonlinear_proposal_row_count, 2);
+    assert!(facts.has_exact_constant_contradiction());
+    assert!(!facts.all_active_rows_affine_or_constant());
+
+    assert_eq!(
+        block.rows()[0].kind,
+        SolverBlockRowKind::ConstantCertifiedZero
+    );
+    assert_eq!(
+        block.rows()[1].kind,
+        SolverBlockRowKind::ConstantCertifiedContradiction
+    );
+    assert_eq!(block.rows()[2].kind, SolverBlockRowKind::PreparedAffine);
+    assert_eq!(block.rows()[3].kind, SolverBlockRowKind::Polynomial);
+    assert_eq!(block.rows()[4].kind, SolverBlockRowKind::NonPolynomial);
+}
+
+#[test]
+fn candidate_certification_replays_affine_rows_exactly() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(2));
+    problem.add_constraint(Constraint::equality(
+        "x minus two",
+        x.clone() - Expr::int(2),
+    ));
+    problem.add_constraint(Constraint::equality("x minus three", x - Expr::int(3)));
+
+    let prepared = PreparedProblem::new(&problem);
+    let report = certify_candidate(&prepared, &context_from_problem(&problem));
+
+    assert_eq!(report.rows.len(), 2);
+    assert_eq!(report.certified_satisfied_rows, 1);
+    assert_eq!(report.certified_violation_rows, 1);
+    assert!(!report.all_satisfied());
+    assert!(report.has_certified_violation());
+    assert!(matches!(
+        report.rows[0].status,
+        CertifiedCandidateStatus::CertifiedZero { .. }
+    ));
+    assert!(matches!(
+        report.rows[1].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+}
+
+#[test]
+fn candidate_certification_handles_inequality_active_sets_exactly() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(2));
+    problem.add_constraint(Constraint {
+        name: "x <= 3".to_string(),
+        kind: ConstraintKind::LessOrEqual,
+        residual: x.clone() - Expr::int(3),
+        weight: Real::one(),
+        active: true,
+    });
+    problem.add_constraint(Constraint {
+        name: "x >= 5".to_string(),
+        kind: ConstraintKind::GreaterOrEqual,
+        residual: x - Expr::int(5),
+        weight: Real::one(),
+        active: true,
+    });
+
+    let prepared = PreparedProblem::new(&problem);
+    let report = certify_candidate_with_config(
+        &prepared,
+        &context_from_problem(&problem),
+        CandidateCertificationConfig {
+            min_precision: -128,
+        },
+    );
+
+    assert_eq!(report.certified_satisfied_rows, 1);
+    assert_eq!(report.certified_violation_rows, 1);
+    assert!(matches!(
+        report.rows[0].status,
+        CertifiedCandidateStatus::CertifiedSatisfiedInequality { .. }
+    ));
+    assert!(matches!(
+        report.rows[1].status,
+        CertifiedCandidateStatus::CertifiedViolation { .. }
+    ));
+}
+
+#[test]
+fn residual_ball_certification_uses_hyperlimit_filter_boundary() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(10));
+    problem.add_constraint(Constraint::equality("x minus seven", x - Expr::int(7)));
+
+    let prepared = PreparedProblem::new(&problem);
+    let context = context_from_problem(&problem);
+    let report = certify_candidate_with_residual_balls(
+        &prepared,
+        &context,
+        &[CandidateResidualBall {
+            active_row: 0,
+            radius: real(1),
+        }],
+        hyperlimit::PredicatePolicy::default(),
+    );
+
+    assert_eq!(report.certified_violation_rows, 1);
+    assert!(matches!(
+        report.rows[0].status,
+        CertifiedCandidateStatus::BallCertified {
+            sign: hyperreal::RealSign::Positive
+        }
+    ));
+}
+
+#[test]
+fn residual_ball_certification_rejects_negative_radius() {
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_constraint(Constraint::equality("zero", Expr::zero()));
+
+    let prepared = PreparedProblem::new(&problem);
+    let context = context_from_problem(&problem);
+    let report = certify_candidate_with_residual_balls(
+        &prepared,
+        &context,
+        &[CandidateResidualBall {
+            active_row: 0,
+            radius: real(-1),
+        }],
+        hyperlimit::PredicatePolicy::default(),
+    );
+
+    assert!(matches!(
+        report.rows[0].status,
+        CertifiedCandidateStatus::InvalidBallRadius
+    ));
+}
+
+#[test]
+fn affine_interval_candidate_certifies_box_away_from_zero() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(10));
+    problem.add_constraint(Constraint::equality("x minus seven", x - Expr::int(7)));
+    let prepared = PreparedProblem::new(&problem);
+    let context = context_from_problem(&problem);
+
+    let report = certify_affine_interval_candidate(
+        &prepared,
+        &context,
+        &[VariableBall {
+            symbol: SymbolId(0),
+            radius: real(1),
+        }],
+        hyperlimit::PredicatePolicy::default(),
+    )
+    .expect("affine interval certification should be valid");
+
+    assert_eq!(report.certified_violation_rows, 1);
+    assert!(matches!(
+        report.rows[0].status,
+        CertifiedCandidateStatus::BallCertified {
+            sign: hyperreal::RealSign::Positive
+        }
+    ));
+}
+
+#[test]
+fn affine_interval_candidate_rejects_negative_variable_radius() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(10));
+    problem.add_constraint(Constraint::equality("x minus seven", x - Expr::int(7)));
+    let prepared = PreparedProblem::new(&problem);
+    let context = context_from_problem(&problem);
+
+    let error = certify_affine_interval_candidate(
+        &prepared,
+        &context,
+        &[VariableBall {
+            symbol: SymbolId(0),
+            radius: real(-1),
+        }],
+        hyperlimit::PredicatePolicy::default(),
+    )
+    .expect_err("negative variable radius must be rejected");
+
+    assert_eq!(
+        error,
+        hypersolve::AffineIntervalError::NegativeVariableRadius {
+            symbol: SymbolId(0)
+        }
+    );
+}
+
+#[test]
+fn direct_affine_solver_isolates_one_variable_exactly() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let y = Expr::symbol(SymbolId(1), "y");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_variable("y", real(0));
+    problem.add_constraint(Constraint::equality(
+        "2x - 10",
+        x.clone() * Expr::int(2) - Expr::int(10),
+    ));
+    problem.add_constraint(Constraint::equality("coupled", x + y));
+
+    let prepared = PreparedProblem::new(&problem);
+    let solutions = solve_direct_affine_equalities(&prepared).unwrap();
+
+    assert_eq!(solutions.len(), 1);
+    assert_eq!(solutions[0].constraint_index, 0);
+    assert_eq!(solutions[0].symbol, SymbolId(0));
+    assert_eq!(solutions[0].value, real(5));
+}
+
+#[test]
+fn equality_substitution_finds_unit_difference_rows() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let y = Expr::symbol(SymbolId(1), "y");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_variable("y", real(0));
+    problem.add_constraint(Constraint::equality("x - y + 3", x - y + Expr::int(3)));
+
+    let prepared = PreparedProblem::new(&problem);
+    let substitutions = find_equality_substitutions(&prepared).unwrap();
+
+    assert_eq!(substitutions.len(), 1);
+    assert_eq!(substitutions[0].left, SymbolId(0));
+    assert_eq!(substitutions[0].right, SymbolId(1));
+    assert_eq!(substitutions[0].offset, real(-3));
+}
+
+#[test]
+fn equality_substitution_updates_candidate_context_exactly() {
+    let x = Expr::symbol(SymbolId(0), "x");
+    let y = Expr::symbol(SymbolId(1), "y");
+    let mut problem = Problem::default();
+    problem.add_variable("x", real(0));
+    problem.add_variable("y", real(10));
+    problem.add_constraint(Constraint::equality("x - y + 3", x - y + Expr::int(3)));
+    let prepared = PreparedProblem::new(&problem);
+    let substitutions = find_equality_substitutions(&prepared).unwrap();
+    let mut context = context_from_problem(&problem);
+
+    let applied = apply_equality_substitutions(&mut context, &substitutions).unwrap();
+
+    assert_eq!(applied, 1);
+    assert_eq!(context.bindings().get(&SymbolId(0)), Some(&real(7)));
 }
 
 #[test]

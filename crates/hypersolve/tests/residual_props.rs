@@ -1,5 +1,8 @@
 use hyperreal::RealSign;
-use hypersolve::{Constraint, Expr, PreparedProblem, Problem, SymbolId, context_from_problem};
+use hypersolve::{
+    CertifiedCandidateStatus, Constraint, Expr, PreparedProblem, PreparedSolverBlock, Problem,
+    SolverBlockRowKind, SymbolId, certify_candidate, context_from_problem,
+};
 use proptest::prelude::*;
 
 fn expected_sign(value: i64) -> RealSign {
@@ -112,5 +115,63 @@ proptest! {
             prepared.evaluate_residuals(&context).unwrap()[0].value.clone(),
             problem.constraints[0].residual.eval_real(context.bindings()).unwrap()
         );
+    }
+
+    #[test]
+    fn candidate_certification_matches_generated_affine_zero_status(
+        a in -16_i16..=16,
+        x_value in -16_i16..=16,
+    ) {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", hyperreal::Real::from(i64::from(x_value)));
+        problem.add_constraint(Constraint::equality(
+            "generated affine candidate",
+            x * Expr::int(i64::from(a)) - Expr::int(i64::from(a) * i64::from(x_value)),
+        ));
+        let prepared = PreparedProblem::new(&problem);
+        let report = certify_candidate(&prepared, &context_from_problem(&problem));
+
+        prop_assert_eq!(report.rows.len(), 1);
+        prop_assert_eq!(matches!(
+            report.rows[0].status,
+            CertifiedCandidateStatus::CertifiedZero { .. }
+        ), true);
+        prop_assert!(report.all_satisfied());
+    }
+
+    #[test]
+    fn solver_block_counts_generated_row_families(
+        constants in prop::collection::vec(-8_i16..=8, 1..12),
+        affine_count in 0_usize..8,
+    ) {
+        let x = Expr::symbol(SymbolId(0), "x");
+        let mut problem = Problem::default();
+        problem.add_variable("x", hyperreal::Real::from(1));
+        for (index, constant) in constants.iter().enumerate() {
+            problem.add_constraint(Constraint::equality(
+                format!("constant {index}"),
+                Expr::int(i64::from(*constant)),
+            ));
+        }
+        for index in 0..affine_count {
+            problem.add_constraint(Constraint::equality(
+                format!("affine {index}"),
+                x.clone() + Expr::int(index as i64),
+            ));
+        }
+
+        let prepared = PreparedProblem::new(&problem);
+        let block = PreparedSolverBlock::new(&prepared);
+        let expected_contradictions = constants.iter().filter(|value| **value != 0).count();
+
+        prop_assert_eq!(block.facts().constant_row_count, constants.len());
+        prop_assert_eq!(block.facts().constant_contradiction_count, expected_contradictions);
+        prop_assert_eq!(block.facts().prepared_affine_row_count, affine_count);
+        prop_assert!(block.rows().iter().take(constants.len()).all(|row| matches!(
+            row.kind,
+            SolverBlockRowKind::ConstantCertifiedZero
+                | SolverBlockRowKind::ConstantCertifiedContradiction
+        )));
     }
 }
