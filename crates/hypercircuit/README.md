@@ -1,4 +1,6 @@
-# hypercircuit
+<h1>
+  hypercircuit
+</h1>
 
 `hypercircuit` is the exact-aware circuit carrier crate for the Hyper ecosystem. It
 records circuit identity, device models, Modified Nodal Analysis (MNA) stamps, residual
@@ -104,6 +106,45 @@ For sibling checkouts:
 [dependencies]
 hypercircuit = { path = "../hypercircuit" }
 ```
+
+## Usage
+
+Build circuit facts first, then lower or replay through explicit adapter surfaces:
+
+```rust,ignore
+use hypercircuit::{
+    AdapterKind, Circuit, CircuitId, ComponentId, LinearStamp, Net, NetId,
+    TransientPolicy,
+};
+use hyperreal::Real;
+
+let ground = NetId::new("0")?;
+let out = NetId::new("out")?;
+
+let circuit = Circuit::new(
+    CircuitId::new("divider")?,
+    TransientPolicy::Static,
+    AdapterKind::ExactDenseMna,
+)
+.with_net(Net { id: ground.clone(), is_ground: true })
+.with_net(Net { id: out.clone(), is_ground: false })
+.with_stamp(LinearStamp::Conductance {
+    component: ComponentId::new("r1")?,
+    part: None,
+    pos: Some(out.clone()),
+    neg: None,
+    conductance: Real::from(1),
+});
+
+let system = circuit.linear_mna_system()?;
+let replay = system.replay_residuals(&[Real::zero()])?;
+assert!(replay.accepted);
+```
+
+Other major surfaces follow the same pattern: `NonlinearDeviceReport` records device
+law and event policy before Newton-style proposal engines exist, while
+`ElectrothermalRcReport` and `CircuitAdapterReport` keep coupled physics and numeric
+adapter status separate from circuit truth.
 
 ## Development
 

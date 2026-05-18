@@ -5,9 +5,16 @@ edition = "2024"
 description = "Exact-aware circuit MNA carriers and adapter reports for the Hyper ecosystem"
 license = "Apache-2.0"
 readme = "README.md"
+repository = "https://github.com/timschmidt/hypercircuit"
+keywords = ["circuits", "mna", "simulation", "hyperreal", "electronics"]
+categories = ["science", "simulation", "mathematics"]
 
 [dependencies]
+# Hyper ecosystem dependencies: keep the crate-official release references and
+# the commented workspace references below. Switch to the workspace form for
+# local development, then switch back to crates.io versions before publishing.
 hyperreal = { version = "0.12.0" }
+# hyperreal = { path = "../hyperreal" }
 [dev-dependencies]
 proptest = "1.7.0"
 
