@@ -122,6 +122,24 @@ fn test_flatten_and_union_two_overlapping_squares() {
     assert_eq!(bb.maxs.y, 1.0);
 }
 
+#[test]
+fn flatten_union_normalizes_opposite_projected_winding() {
+    let ccw = polygon_from_xy_points(&[[0.0, 0.0], [2.0, 0.0], [2.0, 2.0], [0.0, 2.0]]);
+    let cw = polygon_from_xy_points(&[[0.0, 0.0], [0.0, 2.0], [2.0, 2.0], [2.0, 0.0]]);
+    let mesh = Mesh::from_polygons(&[ccw, cw], ());
+
+    let mut flat = mesh.flatten();
+
+    assert!(flat.contains_xy(1.0, 1.0).unwrap());
+    assert_eq!(flat.material_contour_count(), 1);
+    flat.geometry = geo::GeometryCollection::default();
+    let bounds = flat.bounding_box();
+    assert_eq!(bounds.mins.x, 0.0);
+    assert_eq!(bounds.mins.y, 0.0);
+    assert_eq!(bounds.maxs.x, 2.0);
+    assert_eq!(bounds.maxs.y, 2.0);
+}
+
 /// Test `flatten_and_union` with two disjoint squares.
 /// The result should have two separate polygons.
 #[test]

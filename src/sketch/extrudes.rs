@@ -4,14 +4,37 @@ use crate::errors::ValidationError;
 use crate::float_types::{Real, hvector3_from_vector3, hvectors_within_epsilon, tolerance};
 use crate::mesh::Mesh;
 use crate::polygon::Polygon;
-use crate::sketch::{OriginTransform, Sketch};
+use crate::sketch::Sketch;
 use crate::vertex::Vertex;
-use geo::CoordsIter;
+use hypercurve::{
+    Classification, FinitePolyline2, FiniteProjectionOptions, FiniteRegionProfile2,
+    finite_ring_signed_area,
+};
 use nalgebra::{Matrix4, Point3, Rotation3, Translation3, Vector3};
 use std::fmt::Debug;
 use std::sync::OnceLock;
 
+fn mesh_projection_options() -> FiniteProjectionOptions {
+    FiniteProjectionOptions::try_new(1e-3)
+        .expect("positive finite projection tolerance is valid")
+}
+
+fn finite_line_string_points(line_string: &geo::LineString<Real>) -> Vec<[Real; 2]> {
+    line_string.0.iter().map(|coord| [coord.x, coord.y]).collect()
+}
+
 impl<M: Clone + Debug + Send + Sync> Sketch<M> {
+    fn projected_region_profiles_for_mesh(&self) -> Vec<FiniteRegionProfile2> {
+        match self.project_region_profiles(&mesh_projection_options()) {
+            Ok(Classification::Decided(profiles)) => profiles,
+            Ok(Classification::Uncertain(_)) | Err(_) => Vec::new(),
+        }
+    }
+
+    fn projected_wire_polylines_for_mesh(&self) -> Vec<FinitePolyline2> {
+        self.project_wire_polylines(&mesh_projection_options())
+    }
+
     /// Linearly extrude this (2D) shape in the +Z direction by `height`.
     ///
     /// This is just a convenience wrapper around extrude_vector using Vector3::new(0.0, 0.0, height)
@@ -109,26 +132,13 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             return self.extrude_wires_vector(direction);
         }
 
-        // Collect 3-D polygons generated from every `geo` geometry in the sketch
-        let mut out: Vec<Polygon<M>> = Vec::new();
-        let geometry = self.effective_geometry();
-
-        for geom in geometry.iter() {
-            Self::extrude_geometry(
-                geom,
-                direction,
-                self.origin_transform,
-                &self.metadata,
-                &mut out,
-            );
-        }
-
-        Mesh {
-            polygons: out,
-            bounding_box: OnceLock::new(),
-            query_trimesh: OnceLock::new(),
-            metadata: self.metadata.clone(),
-        }
+        // The finite `geo` cache is an interop projection, not Sketch's CAD
+        // source of truth. Linear extrusion therefore emits nothing when native
+        // `Region2`/`CurveString2` topology is absent, matching the exact-object
+        // boundary advocated by Yap, "Towards Exact Geometric Computation,"
+        // *Computational Geometry* 7(1-2), 1997
+        // (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+        Mesh::empty(self.metadata.clone())
     }
 
     /// Extrude native hypercurve topology without routing through a separate 2D
@@ -153,13 +163,13 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         let top_normal = dir_unit;
         let mut polygons = Vec::new();
 
-        let rings = self.region_rings();
-        for (index, exterior) in rings.material.into_iter().enumerate() {
-            let holes = if index == 0 {
-                rings.holes.clone()
-            } else {
-                Vec::new()
-            };
+        for profile in self.projected_region_profiles_for_mesh() {
+            let exterior = profile.material().points().to_vec();
+            let holes = profile
+                .holes()
+                .iter()
+                .map(|hole| hole.points().to_vec())
+                .collect::<Vec<_>>();
             let exterior = close_region_ring(exterior);
             let holes = holes.into_iter().map(close_region_ring).collect::<Vec<_>>();
             let hole_refs = holes.iter().map(Vec::as_slice).collect::<Vec<_>>();
@@ -220,8 +230,8 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             }
         }
 
-        for wire in self.wire_polylines() {
-            self.push_polyline_sides(&wire, direction, flip, &mut polygons);
+        for wire in self.projected_wire_polylines_for_mesh() {
+            self.push_polyline_sides(wire.points(), direction, flip, &mut polygons);
         }
 
         Mesh::from_polygons(&polygons, self.metadata.clone())
@@ -238,8 +248,8 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
     fn extrude_wires_vector(&self, direction: Vector3<Real>) -> Mesh<M> {
         let flip = direction.dot(&Vector3::z()) < 0.0;
         let mut polygons = Vec::new();
-        for wire in self.wire_polylines() {
-            self.push_polyline_sides(&wire, direction, flip, &mut polygons);
+        for wire in self.projected_wire_polylines_for_mesh() {
+            self.push_polyline_sides(wire.points(), direction, flip, &mut polygons);
         }
         Mesh::from_polygons(&polygons, self.metadata.clone())
     }
@@ -287,256 +297,6 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             })
             .collect::<Vec<_>>();
             polygons.push(Polygon::new(vertices, self.metadata.clone()));
-        }
-    }
-
-    /// A helper to handle any Geometry
-    fn extrude_geometry(
-        geom: &geo::Geometry<Real>,
-        direction: Vector3<Real>,
-        origin_transform: OriginTransform,
-        metadata: &M,
-        out_polygons: &mut Vec<Polygon<M>>,
-    ) {
-        if hvector3_from_vector3(&direction).is_none()
-            || hvectors_within_epsilon(&direction, &Vector3::zeros(), tolerance())
-        {
-            return;
-        }
-
-        let dir_unit = direction.normalize();
-        // When the extrusion opposes the sketch-plane normal (+Z), the solid is
-        // inverted and face orientations must flip.
-        let flip = direction.dot(&Vector3::z()) < 0.0;
-        let bottom_normal = -dir_unit;
-        let top_normal = dir_unit;
-
-        match geom {
-            geo::Geometry::Polygon(poly) => {
-                let exterior_coords: Vec<[Real; 2]> =
-                    poly.exterior().coords_iter().map(|c| [c.x, c.y]).collect();
-                let interior_rings: Vec<Vec<[Real; 2]>> = poly
-                    .interiors()
-                    .iter()
-                    .map(|ring| ring.coords_iter().map(|c| [c.x, c.y]).collect())
-                    .collect();
-
-                let tris = Sketch::<()>::triangulate_with_holes(
-                    &exterior_coords,
-                    &interior_rings.iter().map(|r| &r[..]).collect::<Vec<_>>(),
-                );
-
-                // bottom
-                for tri in &tris {
-                    let (a, b, c) = if flip {
-                        (tri[0], tri[1], tri[2])
-                    } else {
-                        (tri[2], tri[1], tri[0])
-                    };
-                    out_polygons.push(Polygon::new(
-                        vec![
-                            Self::apply_origin_transform_vertex(
-                                Vertex::new(a, bottom_normal),
-                                origin_transform,
-                            ),
-                            Self::apply_origin_transform_vertex(
-                                Vertex::new(b, bottom_normal),
-                                origin_transform,
-                            ),
-                            Self::apply_origin_transform_vertex(
-                                Vertex::new(c, bottom_normal),
-                                origin_transform,
-                            ),
-                        ],
-                        metadata.clone(),
-                    ));
-                }
-                // top
-                for tri in &tris {
-                    let p0 = tri[0] + direction;
-                    let p1 = tri[1] + direction;
-                    let p2 = tri[2] + direction;
-                    let (a, b, c) = if flip { (p2, p1, p0) } else { (p0, p1, p2) };
-                    out_polygons.push(Polygon::new(
-                        vec![
-                            Self::apply_origin_transform_vertex(
-                                Vertex::new(a, top_normal),
-                                origin_transform,
-                            ),
-                            Self::apply_origin_transform_vertex(
-                                Vertex::new(b, top_normal),
-                                origin_transform,
-                            ),
-                            Self::apply_origin_transform_vertex(
-                                Vertex::new(c, top_normal),
-                                origin_transform,
-                            ),
-                        ],
-                        metadata.clone(),
-                    ));
-                }
-
-                // sides
-                let all_rings = std::iter::once(poly.exterior()).chain(poly.interiors());
-                for ring in all_rings {
-                    let coords: Vec<_> = ring.coords_iter().collect();
-                    for window in coords.windows(2) {
-                        let c_i = window[0];
-                        let c_j = window[1];
-                        let b_i = Point3::new(c_i.x, c_i.y, 0.0);
-                        let b_j = Point3::new(c_j.x, c_j.y, 0.0);
-                        let t_i = b_i + direction;
-                        let t_j = b_j + direction;
-                        let Some(raw_normal) =
-                            (b_j - b_i).cross(&direction).try_normalize(tolerance())
-                        else {
-                            continue;
-                        };
-                        let normal = if flip { -raw_normal } else { raw_normal };
-                        let verts: Vec<_> = if flip {
-                            vec![
-                                Vertex::new(b_j, normal),
-                                Vertex::new(b_i, normal),
-                                Vertex::new(t_i, normal),
-                                Vertex::new(t_j, normal),
-                            ]
-                        } else {
-                            vec![
-                                Vertex::new(b_i, normal),
-                                Vertex::new(b_j, normal),
-                                Vertex::new(t_j, normal),
-                                Vertex::new(t_i, normal),
-                            ]
-                        }
-                        .into_iter()
-                        .map(|vertex| {
-                            Self::apply_origin_transform_vertex(vertex, origin_transform)
-                        })
-                        .collect();
-                        out_polygons.push(Polygon::new(verts, metadata.clone()));
-                    }
-                }
-            },
-            geo::Geometry::MultiPolygon(mp) => {
-                for poly in &mp.0 {
-                    Self::extrude_geometry(
-                        &geo::Geometry::Polygon(poly.clone()),
-                        direction,
-                        origin_transform,
-                        metadata,
-                        out_polygons,
-                    );
-                }
-            },
-            geo::Geometry::GeometryCollection(gc) => {
-                for sub in &gc.0 {
-                    Self::extrude_geometry(
-                        sub,
-                        direction,
-                        origin_transform,
-                        metadata,
-                        out_polygons,
-                    );
-                }
-            },
-            geo::Geometry::LineString(ls) => {
-                // extrude line strings into side surfaces
-                let coords: Vec<_> = ls.coords_iter().collect();
-                for i in 0..coords.len() - 1 {
-                    let c_i = coords[i];
-                    let c_j = coords[i + 1];
-                    let b_i = Point3::new(c_i.x, c_i.y, 0.0);
-                    let b_j = Point3::new(c_j.x, c_j.y, 0.0);
-                    let t_i = b_i + direction;
-                    let t_j = b_j + direction;
-                    let Some(raw_normal) =
-                        (b_j - b_i).cross(&direction).try_normalize(tolerance())
-                    else {
-                        continue;
-                    };
-                    let normal = if flip { -raw_normal } else { raw_normal };
-                    let verts: Vec<_> = if flip {
-                        vec![
-                            Vertex::new(b_j, normal),
-                            Vertex::new(b_i, normal),
-                            Vertex::new(t_i, normal),
-                            Vertex::new(t_j, normal),
-                        ]
-                    } else {
-                        vec![
-                            Vertex::new(b_i, normal),
-                            Vertex::new(b_j, normal),
-                            Vertex::new(t_j, normal),
-                            Vertex::new(t_i, normal),
-                        ]
-                    }
-                    .into_iter()
-                    .map(|vertex| {
-                        Self::apply_origin_transform_vertex(vertex, origin_transform)
-                    })
-                    .collect();
-                    out_polygons.push(Polygon::new(verts, metadata.clone()));
-                }
-            },
-            // Line: single segment ribbon
-            geo::Geometry::Line(line) => {
-                let c0 = line.start;
-                let c1 = line.end;
-                let b0 = Point3::new(c0.x, c0.y, 0.0);
-                let b1 = Point3::new(c1.x, c1.y, 0.0);
-                let t0 = b0 + direction;
-                let t1 = b1 + direction;
-                let Some(raw_normal) = (b1 - b0).cross(&direction).try_normalize(tolerance())
-                else {
-                    return;
-                };
-                let normal = if flip { -raw_normal } else { raw_normal };
-                let verts: Vec<_> = if flip {
-                    vec![
-                        Vertex::new(b1, normal),
-                        Vertex::new(b0, normal),
-                        Vertex::new(t0, normal),
-                        Vertex::new(t1, normal),
-                    ]
-                } else {
-                    vec![
-                        Vertex::new(b0, normal),
-                        Vertex::new(b1, normal),
-                        Vertex::new(t1, normal),
-                        Vertex::new(t0, normal),
-                    ]
-                }
-                .into_iter()
-                .map(|vertex| Self::apply_origin_transform_vertex(vertex, origin_transform))
-                .collect();
-                out_polygons.push(Polygon::new(verts, metadata.clone()));
-            },
-
-            // Rect: convert to polygon and extrude
-            geo::Geometry::Rect(rect) => {
-                let poly2d = rect.to_polygon();
-                Self::extrude_geometry(
-                    &geo::Geometry::Polygon(poly2d),
-                    direction,
-                    origin_transform,
-                    metadata,
-                    out_polygons,
-                );
-            },
-
-            // Triangle: convert to polygon and extrude
-            geo::Geometry::Triangle(tri) => {
-                let poly2d = tri.to_polygon();
-                Self::extrude_geometry(
-                    &geo::Geometry::Polygon(poly2d),
-                    direction,
-                    origin_transform,
-                    metadata,
-                    out_polygons,
-                );
-            },
-            // Other geometry types (Point, etc.) are skipped or could be handled differently:
-            _ => { /* skip */ },
         }
     }
 
@@ -876,18 +636,8 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             Point3::new(x * cos_t, y, x * sin_t)
         }
 
-        fn signed_ring_area(ring: &[[Real; 2]]) -> Real {
-            if ring.len() < 3 {
-                return 0.0;
-            }
-            ring.windows(2)
-                .map(|edge| edge[0][0] * edge[1][1] - edge[1][0] * edge[0][1])
-                .sum::<Real>()
-                * 0.5
-        }
-
         fn is_ccw(ring: &[[Real; 2]]) -> bool {
-            signed_ring_area(ring) > 0.0
+            finite_ring_signed_area(ring) > 0.0
         }
 
         // A helper to extrude one ring of coordinates (including the last->first if needed),
@@ -1047,44 +797,36 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             }
         };
 
-        let region_rings = self.region_rings();
-        if !region_rings.material.is_empty() {
-            for (index, outer) in region_rings.material.iter().enumerate() {
-                let holes = if index == 0 {
-                    region_rings.holes.as_slice()
-                } else {
-                    &[]
-                };
-                emit_profile(outer, holes);
+        let region_profiles = self.projected_region_profiles_for_mesh();
+        if !region_profiles.is_empty() {
+            for profile in region_profiles {
+                let holes = profile
+                    .holes()
+                    .iter()
+                    .map(|hole| hole.points().to_vec())
+                    .collect::<Vec<_>>();
+                emit_profile(profile.material().points(), &holes);
             }
         } else {
             let geometry = self.effective_geometry();
             for geom in geometry.iter() {
                 match geom {
                     geo::Geometry::Polygon(poly2d) => {
-                        let outer = poly2d
-                            .exterior()
-                            .coords_iter()
-                            .map(|c| [c.x, c.y])
-                            .collect::<Vec<_>>();
+                        let outer = finite_line_string_points(poly2d.exterior());
                         let holes = poly2d
                             .interiors()
                             .iter()
-                            .map(|hole| hole.coords_iter().map(|c| [c.x, c.y]).collect())
+                            .map(finite_line_string_points)
                             .collect::<Vec<_>>();
                         emit_profile(&outer, &holes);
                     },
                     geo::Geometry::MultiPolygon(mpoly) => {
                         for poly2d in &mpoly.0 {
-                            let outer = poly2d
-                                .exterior()
-                                .coords_iter()
-                                .map(|c| [c.x, c.y])
-                                .collect::<Vec<_>>();
+                            let outer = finite_line_string_points(poly2d.exterior());
                             let holes = poly2d
                                 .interiors()
                                 .iter()
-                                .map(|hole| hole.coords_iter().map(|c| [c.x, c.y]).collect())
+                                .map(finite_line_string_points)
                                 .collect::<Vec<_>>();
                             emit_profile(&outer, &holes);
                         }
@@ -1095,9 +837,9 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             }
         }
 
-        for wire in self.wire_polylines() {
+        for wire in self.projected_wire_polylines_for_mesh() {
             new_polygons.extend(revolve_ring(
-                &wire,
+                wire.points(),
                 true,
                 angle_radians,
                 segments,
@@ -1223,21 +965,18 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
         };
 
         let mut cap_profiles: Vec<(Vec<[Real; 2]>, Vec<Vec<[Real; 2]>>)> = Vec::new();
-        let region_rings = self.region_rings();
-        if !region_rings.material.is_empty() {
-            for ring in &region_rings.material {
-                add_ring(ring.clone());
-            }
-            for ring in &region_rings.holes {
-                add_ring(ring.clone());
-            }
-            for (index, outer) in region_rings.material.iter().enumerate() {
-                let holes = if index == 0 {
-                    region_rings.holes.clone()
-                } else {
-                    Vec::new()
-                };
-                cap_profiles.push((outer.clone(), holes));
+        let region_profiles = self.projected_region_profiles_for_mesh();
+        if !region_profiles.is_empty() {
+            for profile in region_profiles {
+                let material = profile.material().points().to_vec();
+                add_ring(material.clone());
+                let mut holes = Vec::new();
+                for hole in profile.holes() {
+                    let hole = hole.points().to_vec();
+                    add_ring(hole.clone());
+                    holes.push(hole);
+                }
+                cap_profiles.push((material, holes));
             }
         } else {
             let geometry = self.effective_geometry();
@@ -1249,18 +988,13 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             for geom in geometry.iter() {
                 match geom {
                     Geometry::Polygon(poly) => {
-                        let outer = poly
-                            .exterior()
-                            .coords_iter()
-                            .map(|c| [c.x, c.y])
-                            .collect::<Vec<_>>();
+                        let outer = finite_line_string_points(poly.exterior());
                         add_ring(outer.clone());
                         let holes = poly
                             .interiors()
                             .iter()
                             .map(|hole| {
-                                let ring =
-                                    hole.coords_iter().map(|c| [c.x, c.y]).collect::<Vec<_>>();
+                                let ring = finite_line_string_points(hole);
                                 add_ring(ring.clone());
                                 ring
                             })
@@ -1269,20 +1003,13 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
                     },
                     Geometry::MultiPolygon(mp) => {
                         for poly in &mp.0 {
-                            let outer = poly
-                                .exterior()
-                                .coords_iter()
-                                .map(|c| [c.x, c.y])
-                                .collect::<Vec<_>>();
+                            let outer = finite_line_string_points(poly.exterior());
                             add_ring(outer.clone());
                             let holes = poly
                                 .interiors()
                                 .iter()
                                 .map(|hole| {
-                                    let ring = hole
-                                        .coords_iter()
-                                        .map(|c| [c.x, c.y])
-                                        .collect::<Vec<_>>();
+                                    let ring = finite_line_string_points(hole);
                                     add_ring(ring.clone());
                                     ring
                                 })
@@ -1295,8 +1022,8 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             }
         }
 
-        for wire in self.wire_polylines() {
-            add_ring(wire);
+        for wire in self.projected_wire_polylines_for_mesh() {
+            add_ring(wire.into_points());
         }
 
         if rings.is_empty() {

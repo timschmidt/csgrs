@@ -24,9 +24,14 @@ use crate::sketch::Sketch;
 #[cfg(feature = "bmesh")]
 use crate::bmesh::BMesh;
 use crate::csg::CSG;
-#[cfg(feature = "sketch")]
-use geo::{CoordsIter, Geometry, LineString, Polygon as GeoPolygon};
 use hashbrown::HashMap;
+#[cfg(feature = "sketch")]
+use hypercurve::{Classification, FiniteProjectionOptions};
+use hyperphysics::{
+    ClosedTriangleMesh3 as HyperClosedTriangleMesh3,
+    MassPropertyReport3 as HyperMassPropertyReport3, Triangle3 as HyperTriangle3,
+    Vector3 as HyperVector3,
+};
 use nalgebra::{
     Isometry3, Matrix4, Point3, Quaternion, Unit, Vector3, partial_max, partial_min,
 };
@@ -124,6 +129,19 @@ fn hyper_edge_projection_parameter(
     }
 
     hreal_to_f64(&t_h)
+}
+
+fn hyperphysics_vector3_from_point3(
+    point: &Point3<Real>,
+) -> Result<HyperVector3, ValidationError> {
+    Ok(HyperVector3::new([
+        hyperphysics::Real::try_from(point.x)
+            .map_err(|err| ValidationError::Other(format!("{err:?}"), Some(*point)))?,
+        hyperphysics::Real::try_from(point.y)
+            .map_err(|err| ValidationError::Other(format!("{err:?}"), Some(*point)))?,
+        hyperphysics::Real::try_from(point.z)
+            .map_err(|err| ValidationError::Other(format!("{err:?}"), Some(*point)))?,
+    ]))
 }
 
 impl<M: Clone + Send + Sync + Debug + PartialEq> Mesh<M> {
@@ -715,6 +733,52 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         ))
     }
 
+    /// Exact uniform-density mass properties through `hyperphysics`.
+    ///
+    /// This is the Hyper-native counterpart to [`Mesh::mass_properties`]. Mesh
+    /// coordinates are finite `csgrs` adapter scalars at this boundary; each
+    /// coordinate and the density are lifted into [`hyperphysics::Real`] before
+    /// volume, center of mass, and inertia are accumulated. The report-bearing
+    /// path follows Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>) by keeping the lossy
+    /// `f64` CSG/engine surface explicit and moving physical integrals into the
+    /// exact object layer before any Rapier/Parry adapter is used.
+    pub fn exact_mass_properties(
+        &self,
+        density: Real,
+    ) -> Result<HyperMassPropertyReport3, ValidationError> {
+        let density = hyperphysics::Real::try_from(density)
+            .map_err(|err| ValidationError::Other(format!("{err:?}"), None))?;
+        let mesh = self.to_hyperphysics_closed_triangle_mesh()?;
+        mesh.uniform_density_mass_properties(density)
+            .map_err(|err| ValidationError::Other(format!("{err:?}"), None))
+    }
+
+    /// Converts triangulated mesh polygons into a `hyperphysics` closed mesh
+    /// carrier without going through Parry or Rapier.
+    pub fn to_hyperphysics_closed_triangle_mesh(
+        &self,
+    ) -> Result<HyperClosedTriangleMesh3, ValidationError> {
+        let tri_mesh = self.triangulate();
+        let triangles = tri_mesh
+            .polygons
+            .iter()
+            .map(|polygon| {
+                if polygon.vertices.len() != 3 {
+                    return Err(ValidationError::TooFewPoints(Point3::origin()));
+                }
+                Ok(HyperTriangle3::new([
+                    hyperphysics_vector3_from_point3(&polygon.vertices[0].position)?,
+                    hyperphysics_vector3_from_point3(&polygon.vertices[1].position)?,
+                    hyperphysics_vector3_from_point3(&polygon.vertices[2].position)?,
+                ]))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        HyperClosedTriangleMesh3::new(triangles)
+            .map_err(|err| ValidationError::Other(format!("{err:?}"), None))
+    }
+
     /// Create a Rapier rigid body + collider from this Mesh, using
     /// an axis-angle `rotation` in 3D (the vector’s length is the
     /// rotation in radians, and its direction is the axis).
@@ -1133,13 +1197,20 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
 impl<M: Clone + Send + Sync + Debug> From<Sketch<M>> for Mesh<M> {
     /// Convert a Sketch into a Mesh.
     ///
-    /// Closed area sketches are consumed from Sketch's native hypercurve
-    /// [`Region2`](hypercurve::Region2) projection before consulting the
-    /// temporary `geo` compatibility cache. This keeps the conversion aligned
-    /// with the exact-geometric-computation boundary discipline from Yap,
-    /// "Towards Exact Geometric Computation," *Computational Geometry* 7(1-2),
-    /// 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>): topology lives
-    /// in hyper geometry, while mesh vertices are the finite API-boundary
+    /// Closed area sketches are consumed only from hypercurve-owned finite
+    /// [`hypercurve::FiniteRegionProfile2`] projections. The temporary `geo`
+    /// compatibility cache is deliberately ignored here: once a Sketch has been
+    /// imported, `Region2`/`CurveString2` are the CAD source of truth. The
+    /// grouping follows the
+    /// point-in-polygon ownership structure surveyed by Hormann and Agathos,
+    /// "The point in polygon problem for arbitrary polygons," *Computational
+    /// Geometry* 20(3), 2001
+    /// (<https://doi.org/10.1016/S0925-7721(01)00012-8>). This keeps the
+    /// conversion aligned with the exact-geometric-computation boundary
+    /// discipline from Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>): topology lives in
+    /// hyper geometry, while mesh vertices are the finite API-boundary
     /// realization.
     fn from(sketch: Sketch<M>) -> Self {
         fn ring_to_vertices(ring: &[[Real; 2]]) -> Vec<Vertex> {
@@ -1161,39 +1232,19 @@ impl<M: Clone + Send + Sync + Debug> From<Sketch<M>> for Mesh<M> {
             (vertices.len() >= 3).then(|| Polygon::new(vertices, metadata.clone()))
         }
 
-        fn finite_line_string_to_vertices(line_string: &LineString<Real>) -> Vec<Vertex> {
-            let mut vertices: Vec<_> = line_string
-                .coords_iter()
-                .map(|c| Vertex::new(Point3::new(c.x, c.y, 0.0), Vector3::z()))
-                .collect();
-            if vertices.first() == vertices.last() {
-                vertices.pop();
-            }
-            vertices
-        }
-
-        fn finite_polygon_to_mesh_polygons<M: Clone + Debug + Send + Sync>(
-            poly2d: &GeoPolygon<Real>,
-            metadata: &M,
-        ) -> Vec<Polygon<M>> {
-            let mut all_polygons = Vec::new();
-            let exterior = finite_line_string_to_vertices(poly2d.exterior());
-            if exterior.len() >= 3 {
-                all_polygons.push(Polygon::new(exterior, metadata.clone()));
-            }
-            for ring in poly2d.interiors() {
-                let hole = finite_line_string_to_vertices(ring);
-                if hole.len() >= 3 {
-                    all_polygons.push(Polygon::new(hole, metadata.clone()));
-                }
-            }
-            all_polygons
-        }
-
-        let region_rings = sketch.region_rings();
-        if !region_rings.is_empty() {
-            let final_polygons = region_rings
-                .iter_all()
+        let projection_options = FiniteProjectionOptions::try_new(1e-3)
+            .expect("positive finite projection tolerance is valid");
+        let region_profiles = match sketch.project_region_profiles(&projection_options) {
+            Ok(Classification::Decided(profiles)) => profiles,
+            Ok(Classification::Uncertain(_)) | Err(_) => Vec::new(),
+        };
+        if !region_profiles.is_empty() {
+            let final_polygons = region_profiles
+                .iter()
+                .flat_map(|profile| {
+                    std::iter::once(profile.material().points())
+                        .chain(profile.holes().iter().map(|hole| hole.points()))
+                })
                 .filter_map(|ring| ring_to_polygon(ring, &sketch.metadata))
                 .collect();
 
@@ -1205,27 +1256,8 @@ impl<M: Clone + Send + Sync + Debug> From<Sketch<M>> for Mesh<M> {
             };
         }
 
-        let sketch_geometry = sketch.geometry();
-        let final_polygons = sketch_geometry
-            .iter()
-            .flat_map(|geom| -> Vec<Polygon<M>> {
-                match geom {
-                    Geometry::Polygon(poly2d) => {
-                        finite_polygon_to_mesh_polygons(poly2d, &sketch.metadata)
-                    },
-                    Geometry::MultiPolygon(multipoly) => multipoly
-                        .iter()
-                        .flat_map(|poly2d| {
-                            finite_polygon_to_mesh_polygons(poly2d, &sketch.metadata)
-                        })
-                        .collect(),
-                    _ => vec![],
-                }
-            })
-            .collect();
-
         Mesh {
-            polygons: final_polygons,
+            polygons: Vec::new(),
             bounding_box: OnceLock::new(),
             query_trimesh: OnceLock::new(),
             metadata: sketch.metadata.clone(),

@@ -2,7 +2,7 @@
 
 use crate::float_types::{Real, tolerance};
 use crate::sketch::{Sketch, wire_from_points};
-use hypercurve::Region2;
+use hypercurve::{Region2, finite_ring_signed_area};
 use std::fmt::Debug;
 use ttf_parser::{Face, GlyphId, OutlineBuilder};
 use ttf_utils::Outline;
@@ -106,7 +106,7 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
                         if closed_pts.len() < 3 {
                             continue;
                         }
-                        let area = signed_ring_area(&closed_pts);
+                        let area = finite_ring_signed_area(&closed_pts);
                         let Some(contour) = Sketch::<M>::contour_from_points(&closed_pts)
                         else {
                             continue;
@@ -142,14 +142,6 @@ impl<M: Clone + Debug + Send + Sync> Sketch<M> {
             Sketch::<M>::prepare_origin_transform(crate::vertex::Vertex::default()),
         )
     }
-}
-
-fn signed_ring_area(points: &[[Real; 2]]) -> Real {
-    points
-        .windows(2)
-        .map(|edge| edge[0][0] * edge[1][1] - edge[1][0] * edge[0][1])
-        .sum::<Real>()
-        * 0.5
 }
 
 fn glyph_advance(

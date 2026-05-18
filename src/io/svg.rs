@@ -1,9 +1,13 @@
 //! SVG input and output.
 
 use crate::csg::CSG;
-use crate::float_types::Real;
+use crate::float_types::{Real, hreal_to_f64, tolerance};
 use crate::sketch::{Sketch, wire_from_points};
 use geo::{BoundingRect, Coord, CoordNum, CoordsIter, LineString, MapCoords, MultiLineString};
+use hypercurve::{
+    Classification, CurveString2, FiniteProjectionOptions, FiniteRegionProfile2, Point2,
+    Segment2,
+};
 use std::fmt::Debug;
 use svg::node::element::path;
 
@@ -573,9 +577,11 @@ impl<M: Clone + Send + Sync + Debug> ToSVG for Sketch<M> {
 
         let mut g = element::Group::new();
 
-        let make_region_path = |rings: &[Vec<[Real; 2]>]| {
+        let make_region_path = |profile: &FiniteRegionProfile2| {
             let mut data = path::Data::new();
 
+            let rings = std::iter::once(profile.material().points())
+                .chain(profile.holes().iter().map(|hole| hole.points()));
             for ring in rings {
                 let mut points = ring.iter();
                 let Some(start) = points.next() else {
@@ -595,48 +601,48 @@ impl<M: Clone + Send + Sync + Debug> ToSVG for Sketch<M> {
                 .set("d", data)
         };
 
-        let make_polyline_path = |polyline: &[[Real; 2]]| {
-            let mut data = path::Data::new();
-            let mut points = polyline.iter();
-
-            if let Some(start) = points.next() {
-                data = data.move_to((start[0], start[1]));
-            }
-            for point in points {
-                data = data.line_to((point[0], point[1]));
-            }
-
-            element::Path::new()
-                .set("fill", "none")
-                .set("stroke", "black")
-                .set("stroke-width", 1)
-                .set("vector-effect", "non-scaling-stroke")
-                .set("d", data)
+        let make_wire_path = |wire: &CurveString2| {
+            let Some(data) = native_wire_path_data(wire) else {
+                return None;
+            };
+            Some(
+                element::Path::new()
+                    .set("fill", "none")
+                    .set("stroke", "black")
+                    .set("stroke-width", 1)
+                    .set("vector-effect", "non-scaling-stroke")
+                    .set("d", data),
+            )
         };
 
-        let region_rings = self.region_rings();
-        let wire_polylines = self.wire_polylines();
-        let can_export_native = !region_rings.is_empty() || !wire_polylines.is_empty();
+        let projection_options = FiniteProjectionOptions::try_new(1e-3)
+            .expect("positive finite projection tolerance is valid");
+        let region_profiles = match self.project_region_profiles(&projection_options) {
+            Ok(Classification::Decided(profiles)) => profiles,
+            Ok(Classification::Uncertain(_)) | Err(_) => Vec::new(),
+        };
+        let native_wires = self.wires();
+        let can_export_native = !region_profiles.is_empty() || !native_wires.is_empty();
 
         // Native export keeps fill and wire topology in hypercurve and emits
-        // finite SVG path commands only at the file boundary. Filled contours
-        // use even-odd semantics, the same crossing-number point-in-polygon
-        // family surveyed by Hormann and Agathos, "The point in polygon
-        // problem for arbitrary polygons," Computational Geometry 20(3), 2001
+        // finite SVG path commands only at the file boundary. Material/hole
+        // profiles are grouped by containment before serialization, using the
+        // crossing-number point-in-polygon family surveyed by Hormann and
+        // Agathos, "The point in polygon problem for arbitrary polygons,"
+        // Computational Geometry 20(3), 2001
         // (<https://doi.org/10.1016/S0925-7721(01)00012-8>). Keeping finite
         // SVG coordinates at the API boundary follows Yap, "Towards Exact
         // Geometric Computation," Computational Geometry 7(1-2), 1997
         // (<https://doi.org/10.1016/0925-7721(95)00040-2>).
         if can_export_native {
-            let mut rings = region_rings.material;
-            rings.extend(region_rings.holes);
-
-            if !rings.is_empty() {
-                g = g.add(make_region_path(&rings));
+            for profile in &region_profiles {
+                g = g.add(make_region_path(profile));
             }
 
-            for wire in &wire_polylines {
-                g = g.add(make_polyline_path(wire));
+            for wire in native_wires {
+                if let Some(path) = make_wire_path(wire) {
+                    g = g.add(path);
+                }
             }
 
             if let Some((min_x, min_y, max_x, max_y)) = self.native_xy_bounds() {
@@ -773,6 +779,51 @@ impl<M: Clone + Send + Sync + Debug> ToSVG for Sketch<M> {
 
         doc.to_string()
     }
+}
+
+fn finite_svg_point(point: &Point2) -> Option<(Real, Real)> {
+    Some((hreal_to_f64(point.x())?, hreal_to_f64(point.y())?))
+}
+
+/// Project a native hypercurve wire directly to SVG path commands.
+///
+/// This is a file-format boundary projection only: `CurveString2` remains the
+/// CAD representation and circular arcs are emitted as SVG elliptical-arc
+/// commands instead of being tessellated into line strings. SVG's path grammar
+/// follows the W3C SVG 1.1 path-data specification, while keeping finite
+/// coordinates out at the file boundary follows Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+fn native_wire_path_data(wire: &CurveString2) -> Option<path::Data> {
+    let first = wire.segments().first()?;
+    let start = finite_svg_point(first.start())?;
+    let mut data = path::Data::new().move_to(start);
+
+    for segment in wire.segments() {
+        match segment {
+            Segment2::Line(line) => {
+                data = data.line_to(finite_svg_point(line.end())?);
+            },
+            Segment2::Arc(arc) => {
+                let radius = hreal_to_f64(arc.radius_squared_ref())?.sqrt();
+                if radius <= tolerance() || !radius.is_finite() {
+                    return None;
+                }
+                let end = finite_svg_point(arc.end())?;
+                data = data.elliptical_arc_to((
+                    radius,
+                    radius,
+                    0.0,
+                    0,
+                    i32::from(arc.is_clockwise()),
+                    end.0,
+                    end.1,
+                ));
+            },
+        }
+    }
+
+    Some(data)
 }
 
 fn svg_path_to_multi_line_string<F: CoordNum>(

@@ -63,6 +63,7 @@ chull = { version = "0.2.4", optional = true }
 boolmesh = { version = "0.1.5", optional = true }
 hypercurve = { version = "0.1.0", path = "../hypercurve" }
 hyperlattice = { version = "0.4.0", path = "../hyperlattice" }
+hyperphysics = { version = "0.1.0", path = "../hyperphysics" }
 hyperreal = { version = "0.11.1", path = "../hyperreal", default-features = false }
 hypertri = { version = "0.1.0", path = "../hypertri", default-features = false, features = ["earcut"] }
 

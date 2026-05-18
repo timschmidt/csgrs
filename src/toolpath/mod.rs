@@ -19,6 +19,9 @@ use nalgebra::Point3;
 
 use crate::float_types::{Real, tolerance};
 use crate::sketch::Sketch;
+use hypercurve::{
+    Classification, FinitePolyline2, FiniteProjectionOptions, FiniteRegionProfile2,
+};
 
 // ==========================
 // Public types & primitives
@@ -130,10 +133,46 @@ pub struct Feeds {
 // 2D native path extraction
 // ==============================
 
-/// Iterate all rings (exterior + holes) as `Vec<(x,y)>`. Exteriors first, then holes.
+/// Finite projection options used by CAM boundary adapters.
+fn toolpath_projection_options() -> FiniteProjectionOptions {
+    FiniteProjectionOptions::try_new(1e-3)
+        .expect("positive finite projection tolerance is valid")
+}
+
+fn native_profiles<M: Clone + Send + Sync + Debug>(
+    sk: &Sketch<M>,
+) -> Vec<FiniteRegionProfile2> {
+    match sk.project_region_profiles(&toolpath_projection_options()) {
+        Ok(Classification::Decided(profiles)) => profiles,
+        Ok(Classification::Uncertain(_)) | Err(_) => Vec::new(),
+    }
+}
+
+fn native_wire_polylines<M: Clone + Send + Sync + Debug>(
+    sk: &Sketch<M>,
+) -> Vec<FinitePolyline2> {
+    sk.project_wire_polylines(&toolpath_projection_options())
+}
+
+/// Iterate grouped native profile rings as `Vec<(x,y)>`.
+///
+/// Toolpath generation consumes finite XY coordinates at the machine-output
+/// boundary, but source topology stays in `hypercurve::Region2` and projection
+/// certificates stay in hypercurve-owned [`FiniteRegionProfile2`] values.
+/// Profiles preserve material/hole ownership before the paths are flattened
+/// for a process-specific strategy, following Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>), and the contour ownership
+/// model surveyed by Hormann and Agathos, "The point in polygon problem for
+/// arbitrary polygons," *Computational Geometry* 20(3), 2001
+/// (<https://doi.org/10.1016/S0925-7721(01)00012-8>).
 fn rings_of<M: Clone + Send + Sync + Debug>(sk: &Sketch<M>) -> Vec<Vec<(Real, Real)>> {
-    sk.region_rings()
-        .iter_all()
+    native_profiles(sk)
+        .iter()
+        .flat_map(|profile| {
+            std::iter::once(profile.material().points())
+                .chain(profile.holes().iter().map(|hole| hole.points()))
+        })
         .map(|ring| ring.iter().map(|point| (point[0], point[1])).collect())
         .collect()
 }
@@ -233,14 +272,15 @@ pub fn fdm_layer_from_sketch<M: Clone + Send + Sync + Debug>(
 
     // We will downsample segments to achieve the target density.
     let keep_every = (1.0 / cfg.infill_density.max(0.01)).round().max(1.0) as usize;
-    for coords in curve.wire_polylines() {
+    for polyline in native_wire_polylines(&curve) {
+        let coords = polyline.points();
         if coords.len() < 2 {
             continue;
         }
         let [sx, sy] = coords[0];
         tp.travel_to(Point3::new(sx, sy, z));
         let mut last = (sx, sy);
-        for (i, [x, y]) in coords.into_iter().enumerate().skip(1) {
+        for (i, &[x, y]) in coords.iter().enumerate().skip(1) {
             if i % keep_every != 0 {
                 continue;
             }
@@ -516,12 +556,10 @@ pub fn lathe_rough_from_profile<M: Clone + Send + Sync + Debug>(
     let mut tp = Toolpath::new(MachineKind::Lathe);
 
     // Sample target radius r(z) by intersecting horizontal lines with polygon exterior
-    let rings = profile_xy.region_rings();
-    let exterior = if rings.material.is_empty() {
+    let Some(profile) = native_profiles(profile_xy).into_iter().next() else {
         return tp;
-    } else {
-        rings.material[0].clone()
     };
+    let exterior = profile.material().points();
 
     let dz = ((z_max - z_min).abs() / 200.0).max(0.25); // ~200 steps or 0.25mm
     let mut samples: Vec<(Real, Real)> = Vec::new(); // (z, r)

@@ -392,6 +392,7 @@ dependencies = [
  "hershey",
  "hypercurve",
  "hyperlattice",
+ "hyperphysics",
  "hyperreal",
  "hypertri",
  "image",
@@ -1079,6 +1080,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "hyperphysics"
+version = "0.1.0"
+dependencies = [
+ "hyperlattice",
+ "hyperreal",
+ "hypersolve",
+]
+
+[[package]]
 name = "hyperreal"
 version = "0.11.1"
 dependencies = [
@@ -1086,6 +1096,15 @@ dependencies = [
  "num",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "hypersolve"
+version = "0.1.0"
+dependencies = [
+ "hyperlattice",
+ "hyperlimit",
+ "hyperreal",
 ]
 
 [[package]]

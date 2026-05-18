@@ -18,8 +18,11 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
 }
 
 fn assert_sketch_finite<M: Clone + Send + Sync + std::fmt::Debug>(sketch: &Sketch<M>) {
-    let rings = sketch.region_rings();
-    for ring in rings.iter_all() {
+    let profiles = sketch.region_profiles();
+    for ring in profiles.iter().flat_map(|profile| {
+        std::iter::once(profile.material().points())
+            .chain(profile.holes().iter().map(|hole| hole.points()))
+    }) {
         for point in ring {
             assert!(point[0].is_finite());
             assert!(point[1].is_finite());
