@@ -61,6 +61,53 @@ impl BezierFlatteningOptions {
 pub struct BezierFlatteningCertificate {
     max_error: Real,
     segment_count: usize,
+    max_depth: usize,
+}
+
+/// Error metric used by certified Bezier-polyline simplification.
+///
+/// The current simplifier only removes vertices when exact predicates prove
+/// that the polyline image is unchanged. Naming the metric now keeps the API
+/// ready for later bounded simplifiers that may use Hausdorff or
+/// Fréchet-like contracts, as discussed by Raph Levien, "Simplifying Bezier
+/// paths" (2021), while keeping Yap's proof obligations explicit at the
+/// approximation boundary; see Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierSimplificationErrorMetric {
+    /// Exact distance between the source polyline image and simplified image.
+    ExactPolylineImageDistance,
+}
+
+/// Proof status for a certified Bezier-polyline simplification bound.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierSimplificationBoundKind {
+    /// The simplification error bound is proved exactly by symbolic predicates.
+    ProvenExact,
+}
+
+/// Certificate attached to a simplified certified Bezier polyline.
+///
+/// The source range is half-open over the input polyline vertices passed to
+/// [`CertifiedBezierPolyline2::simplify_exact_collinear`]. `error_bound` is
+/// the simplification error relative to that input polyline image, while
+/// `source_flattening_error` preserves the independent curve-to-polyline
+/// flattening budget and `construction_policy` records the predicate policy
+/// used to prove every removed vertex was redundant. Keeping these facts
+/// separate follows Yap's exact geometric-computation discipline and avoids
+/// treating a simplified approximation as a new exact curve.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierSimplificationCertificate {
+    source_start: usize,
+    source_end: usize,
+    retained_vertex_count: usize,
+    removed_vertex_count: usize,
+    error_bound: Real,
+    source_flattening_error: Real,
+    source_flattening_max_depth: usize,
+    construction_policy: CurvePolicy,
+    metric: BezierSimplificationErrorMetric,
+    bound_kind: BezierSimplificationBoundKind,
 }
 
 impl BezierFlatteningCertificate {
@@ -73,6 +120,85 @@ impl BezierFlatteningCertificate {
     pub const fn segment_count(&self) -> usize {
         self.segment_count
     }
+
+    /// Returns the maximum recursive subdivision depth used by flattening.
+    pub const fn max_depth(&self) -> usize {
+        self.max_depth
+    }
+}
+
+impl BezierSimplificationCertificate {
+    /// Builds a proven zero-error collinear-simplification certificate.
+    fn proven_exact_collinear(
+        source_vertex_count: usize,
+        retained_vertex_count: usize,
+        source_flattening_error: Real,
+        source_flattening_max_depth: usize,
+        construction_policy: &CurvePolicy,
+    ) -> Self {
+        Self {
+            source_start: 0,
+            source_end: source_vertex_count,
+            retained_vertex_count,
+            removed_vertex_count: source_vertex_count.saturating_sub(retained_vertex_count),
+            error_bound: Real::zero(),
+            source_flattening_error,
+            source_flattening_max_depth,
+            construction_policy: construction_policy.clone(),
+            metric: BezierSimplificationErrorMetric::ExactPolylineImageDistance,
+            bound_kind: BezierSimplificationBoundKind::ProvenExact,
+        }
+    }
+
+    /// Returns the half-open start index of the simplified source range.
+    pub const fn source_start(&self) -> usize {
+        self.source_start
+    }
+
+    /// Returns the half-open end index of the simplified source range.
+    pub const fn source_end(&self) -> usize {
+        self.source_end
+    }
+
+    /// Returns the number of vertices retained by the simplification.
+    pub const fn retained_vertex_count(&self) -> usize {
+        self.retained_vertex_count
+    }
+
+    /// Returns the number of source vertices removed by the simplification.
+    pub const fn removed_vertex_count(&self) -> usize {
+        self.removed_vertex_count
+    }
+
+    /// Returns the proven simplification error bound.
+    pub const fn error_bound(&self) -> &Real {
+        &self.error_bound
+    }
+
+    /// Returns the source curve-to-polyline flattening error.
+    pub const fn source_flattening_error(&self) -> &Real {
+        &self.source_flattening_error
+    }
+
+    /// Returns the source flattening recursion budget inherited by this product.
+    pub const fn source_flattening_max_depth(&self) -> usize {
+        self.source_flattening_max_depth
+    }
+
+    /// Returns the policy snapshot used to prove this simplification.
+    pub const fn construction_policy(&self) -> &CurvePolicy {
+        &self.construction_policy
+    }
+
+    /// Returns the simplification error metric.
+    pub const fn metric(&self) -> BezierSimplificationErrorMetric {
+        self.metric
+    }
+
+    /// Returns whether the simplification bound is proven exactly.
+    pub const fn bound_kind(&self) -> BezierSimplificationBoundKind {
+        self.bound_kind
+    }
 }
 
 /// A polyline produced by certified Bezier flattening.
@@ -80,6 +206,7 @@ impl BezierFlatteningCertificate {
 pub struct CertifiedBezierPolyline2 {
     points: Vec<Point2>,
     certificate: BezierFlatteningCertificate,
+    simplification_certificate: Option<BezierSimplificationCertificate>,
 }
 
 /// Display-only offset preview for a certified flattened Bezier polyline.
@@ -120,7 +247,7 @@ impl DisplayBezierOffsetPolyline2 {
         &self.source_certificate
     }
 
-    /// Returns the requested display offset distance.
+    /// Returns the signed display offset distance along each chord's left normal.
     pub const fn distance(&self) -> &Real {
         &self.distance
     }
@@ -137,7 +264,7 @@ impl CertifiedBezierPolylineOffset2 {
         &self.source_certificate
     }
 
-    /// Returns the requested checked offset distance.
+    /// Returns the signed checked offset distance along each chord's left normal.
     pub const fn distance(&self) -> &Real {
         &self.distance
     }
@@ -154,6 +281,12 @@ impl CertifiedBezierPolyline2 {
         &self.certificate
     }
 
+    /// Returns the simplification certificate when this polyline came from a
+    /// certified simplification adapter.
+    pub const fn simplification_certificate(&self) -> Option<&BezierSimplificationCertificate> {
+        self.simplification_certificate.as_ref()
+    }
+
     /// Removes exactly collinear interior vertices without increasing error.
     ///
     /// This is a certified simplification adapter: it only drops a vertex when
@@ -168,7 +301,19 @@ impl CertifiedBezierPolyline2 {
         policy: &CurvePolicy,
     ) -> Classification<CertifiedBezierPolyline2> {
         if self.points.len() <= 2 {
-            return Classification::Decided(self.clone());
+            return Classification::Decided(CertifiedBezierPolyline2 {
+                points: self.points.clone(),
+                certificate: self.certificate.clone(),
+                simplification_certificate: Some(
+                    BezierSimplificationCertificate::proven_exact_collinear(
+                        self.points.len(),
+                        self.points.len(),
+                        self.certificate.max_error.clone(),
+                        self.certificate.max_depth,
+                        policy,
+                    ),
+                ),
+            });
         }
 
         let mut simplified = Vec::with_capacity(self.points.len());
@@ -197,7 +342,17 @@ impl CertifiedBezierPolyline2 {
             certificate: BezierFlatteningCertificate {
                 max_error: self.certificate.max_error.clone(),
                 segment_count,
+                max_depth: self.certificate.max_depth,
             },
+            simplification_certificate: Some(
+                BezierSimplificationCertificate::proven_exact_collinear(
+                    self.points.len(),
+                    segment_count + 1,
+                    self.certificate.max_error.clone(),
+                    self.certificate.max_depth,
+                    policy,
+                ),
+            ),
         })
     }
 
@@ -227,6 +382,21 @@ impl CertifiedBezierPolyline2 {
         })
     }
 
+    /// Builds a display-only right-offset preview from the certified chords.
+    ///
+    /// Right offsets are represented as negative signed left-normal distances,
+    /// the same convention used by exact primitive Bezier line offsets. This is
+    /// still only a display adapter over the certified flattened view: it keeps
+    /// the source certificate but does not claim analytic Bezier offset
+    /// topology. That separation follows Yap's EGC boundary and the
+    /// Tiller-Hanson offset staging cited on [`Self::display_offset_left`].
+    pub fn display_offset_right(
+        &self,
+        distance: Real,
+    ) -> CurveResult<DisplayBezierOffsetPolyline2> {
+        self.display_offset_left(-distance)
+    }
+
     /// Builds a checked left-offset adapter from the certified flattened polyline.
     ///
     /// Each retained chord becomes an exact line segment, then the existing
@@ -254,6 +424,21 @@ impl CertifiedBezierPolyline2 {
             }
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
         }
+    }
+
+    /// Builds a checked right-offset adapter from the certified flattened polyline.
+    ///
+    /// This uses the same exact curve-string predicate path as
+    /// [`Self::checked_offset_left`] and stores the result as a negative signed
+    /// left-normal distance. The returned product is therefore comparable to
+    /// left offsets while remaining an approximation-boundary product of the
+    /// flattened view, not an analytic Bezier offset curve.
+    pub fn checked_offset_right(
+        &self,
+        distance: Real,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<CertifiedBezierPolylineOffset2>> {
+        self.checked_offset_left(-distance, policy)
     }
 }
 
@@ -400,7 +585,9 @@ where
         certificate: BezierFlatteningCertificate {
             max_error: options.max_error().clone(),
             segment_count,
+            max_depth: options.max_depth(),
         },
+        simplification_certificate: None,
     })
 }
 

@@ -30,6 +30,10 @@ pub enum CurveError {
     InvalidReconstructionOptions,
     /// Bezier flattening options cannot certify a positive error budget.
     InvalidFlatteningOptions,
+    /// Finite projection options contain non-finite or unsupported values.
+    InvalidFiniteProjectionOptions,
+    /// A finite affine transform is not a nonsingular planar similarity.
+    InvalidSimilarityTransform,
     /// A Bezier parameter is certified outside the closed unit interval.
     InvalidBezierParameter,
     /// A Bezier segment range is outside the stored path facts.
@@ -38,6 +42,8 @@ pub enum CurveError {
     InvalidBezierArcLengthTarget,
     /// Polyline reconstruction needs coordinates with finite `f64` approximations.
     NonFiniteReconstructionPoint,
+    /// Finite projection needs coordinates with finite `f64` approximations.
+    NonFiniteProjectionPoint,
     /// A topology pipeline referenced inconsistent internal state.
     Topology(String),
     /// A `Real` division or elementary operation failed.
@@ -64,6 +70,12 @@ impl fmt::Display for CurveError {
                 write!(f, "polyline reconstruction options are invalid")
             }
             Self::InvalidFlatteningOptions => write!(f, "Bezier flattening options are invalid"),
+            Self::InvalidFiniteProjectionOptions => {
+                write!(f, "finite projection options are invalid")
+            }
+            Self::InvalidSimilarityTransform => {
+                write!(f, "affine transform is not a planar similarity")
+            }
             Self::InvalidBezierParameter => {
                 write!(f, "Bezier parameter is outside the closed unit interval")
             }
@@ -77,6 +89,7 @@ impl fmt::Display for CurveError {
             Self::NonFiniteReconstructionPoint => {
                 write!(f, "polyline reconstruction point is not finite")
             }
+            Self::NonFiniteProjectionPoint => write!(f, "finite projection point is not finite"),
             Self::Topology(message) => write!(f, "topology operation failed: {message}"),
             Self::Real(message) => write!(f, "Real operation failed: {message}"),
         }

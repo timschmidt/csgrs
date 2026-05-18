@@ -211,30 +211,51 @@ Core geometry:
   five-hundred-twelfths for quadratic and cubic polynomial partners, and
   homogeneous subdivision regions for overlapping same-sign cases.
 - Certified polynomial Bezier flattening adapter that emits a polyline only
-  when exact hull-to-chord flatness is within the requested error budget.
+  when exact hull-to-chord flatness is within the requested error budget,
+  retaining both the error budget and subdivision-depth budget.
 - Zero-error certified polyline simplification for flattened Beziers that only
-  removes exactly collinear interior vertices.
+  removes exactly collinear interior vertices and emits a structured
+  simplification certificate with source/retained vertex counts and a
+  proven-zero polyline-image error bound, source flattening budget, and
+  construction policy.
 - Zero-error exact-line fitting for certified flattened Bezier polylines, with
-  the source flattening certificate retained on successful fits.
+  the source flattening certificate retained on successful fits and a
+  structured fit certificate carrying source range, exact-zero error metric,
+  proven bound kind, source flattening budget, and construction policy. Left
+  and right exact primitive offsets retain both certificates.
 - Zero-error exact-point fitting for certified flattened Bezier polylines, with
-  the source flattening certificate retained on successful fits.
+  the same structured fit certificate retained on successful fits.
 - Direct zero-error exact-line-image fitting for polynomial Bezier control
-  polygons and same-sign nonzero rational quadratic conics, with true
-  line-primitive offsets for certified line images.
+  polygons and same-sign nonzero rational quadratic conics, with true left and
+  right line-primitive offsets for certified line images. Both the image fit
+  and its exact offset retain the control-range fit certificate.
 - Direct zero-error exact-point-image fitting for collapsed polynomial Bezier
-  control polygons and same-sign nonzero rational quadratic conics.
+  control polygons and same-sign nonzero rational quadratic conics, with
+  control-range fit certificates.
+- Certified Bezier offset preflight reports polynomial cusp, inflection,
+  all-curvature-zero, endpoint-normal, closed-endpoint, and rational
+  projective-denominator risks before any parallel-curve approximation is
+  allowed to make a topology claim.
+- Staged polynomial and rational-quadratic Bezier left- and right-offset entry
+  points now emit exact line-primitive offsets for certified line images and
+  otherwise return an explicit unresolved payload carrying the signed
+  left-normal distance and offset preflight certificate. Exact staged line
+  offsets also retain the preflight certificate, and degenerate point images
+  keep an unresolved preflight payload instead of failing during the exact-line
+  primitive fit.
 - Exact point-image curve/curve dispatch for collapsed Bezier and rational
   conic images, promoting certified hits and complete quadratic/conic misses
   through exact point-parameter solvers.
 - Complete same-parameter graph dispatch for matching-weight rational conics
   with a shared strictly monotone coordinate, certifying exact hits or no-hit
   outcomes before homogeneous subdivision regions.
-- True line-primitive offsets for certified zero-error Bezier line fits.
-- Display-only offset previews for certified flattened Bezier polylines, with
-  no topology claim beyond the source flattening certificate.
-- Checked left-offset adapters for certified flattened Bezier polylines. These
-  route the certified chord string through the existing exact curve-string
-  offset/self-contact predicates, retaining the source flattening certificate
+- True line-primitive offsets for certified zero-error Bezier line fits, with
+  the flattened-source fit certificate preserved on the offset product.
+- Display-only left and right offset previews for certified flattened Bezier
+  polylines, with no topology claim beyond the source flattening certificate.
+- Checked left- and right-offset adapters for certified flattened Bezier
+  polylines. These route the certified chord string through the existing exact
+  curve-string offset/self-contact predicates, retaining the source flattening certificate
   and returning explicit uncertainty when trimming would be required.
 - A supporting-line/full-circle predicate surface that classifies disjoint,
   tangent, secant, and uncertain outcomes before finite segment and arc-sweep

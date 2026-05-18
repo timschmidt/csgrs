@@ -7,8 +7,9 @@ use hyperreal::{Real, ZeroKnowledge as ZeroStatus};
 use crate::bbox::{Aabb2, aabb_decided_misses_point, decided_contour_aabb, decided_segment_aabb};
 use crate::classify::{classify_oriented_line, compare_reals};
 use crate::{
-    BulgeVertex2, Classification, CurveError, CurvePolicy, CurveResult, CurveString2, LineSide,
-    Point2, Segment2, UncertaintyReason,
+    BulgeVertex2, Classification, ContourAreaUnsupportedReason, ContourAreaUnsupportedSegment2,
+    ContourSignedAreaReport2, CurveError, CurvePolicy, CurveResult, CurveString2, LineSide, Point2,
+    Segment2, UncertaintyReason,
 };
 
 /// Fill rule used when classifying contour interiors.
@@ -107,6 +108,72 @@ impl Contour2 {
     /// Returns the fill rule.
     pub const fn fill_rule(&self) -> FillRule {
         self.fill_rule
+    }
+
+    /// Returns this contour's exact signed area when every segment can provide
+    /// a Green's-theorem boundary contribution.
+    ///
+    /// The returned value is `1/2 * integral(x dy - y dx)` around the closed
+    /// contour. Straight segments are polynomial and always supported.
+    /// Circular arcs are supported when they carry CAD bulge data, where the
+    /// circular segment term is `r^2 / 2 * (theta - sin(theta))` with
+    /// `theta = 4 atan(bulge)`. Arcs constructed only from center data return
+    /// `Ok(None)` until the crate grows an exact `atan2` sweep primitive.
+    ///
+    /// This is the line/arc counterpart to Green's-theorem area accumulation
+    /// used for Bezier moments in this crate. Keeping area facts on exact
+    /// curve objects follows Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7(1-2), 1997
+    /// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    pub fn signed_area(&self) -> CurveResult<Option<Real>> {
+        Ok(self.signed_area_report()?.signed_area)
+    }
+
+    /// Returns a signed-area report with exact contribution and unsupported
+    /// segment details.
+    ///
+    /// The report is complete only when every segment has an exact
+    /// Green's-theorem contribution. Lines contribute the standard shoelace
+    /// term; bulge arcs contribute the exact circular segment expression used
+    /// by CAD polyarc formats. Center-only arcs are reported explicitly because
+    /// the current scalar surface does not yet expose an exact `atan2` sweep
+    /// object. Exposing that gap follows Yap's "Towards Exact Geometric
+    /// Computation" (1997) requirement that exact pipelines fail visibly at
+    /// unsupported constructions rather than hiding a floating estimate.
+    pub fn signed_area_report(&self) -> CurveResult<ContourSignedAreaReport2> {
+        let mut report = ContourSignedAreaReport2::empty();
+        let mut area = Real::zero();
+
+        for (index, segment) in self.segments().iter().enumerate() {
+            report.segment_count += 1;
+            match segment {
+                Segment2::Line(line) => {
+                    report.line_segment_count += 1;
+                    area = &area + &line_signed_area_contribution(line.start(), line.end())?;
+                }
+                Segment2::Arc(arc) => match arc_signed_area_contribution(arc)? {
+                    Some(contribution) => {
+                        report.bulge_arc_segment_count += 1;
+                        area = &area + &contribution;
+                    }
+                    None => {
+                        report
+                            .unsupported_segments
+                            .push(ContourAreaUnsupportedSegment2 {
+                                segment_index: index,
+                                reason: ContourAreaUnsupportedReason::CenterOnlyArcSweepAngle,
+                            });
+                    }
+                },
+            }
+        }
+
+        report.signed_area = if report.unsupported_segments.is_empty() {
+            Some(area)
+        } else {
+            None
+        };
+        Ok(report)
     }
 
     /// Returns the segment count.
@@ -375,6 +442,26 @@ fn decided_segment_boxes(segments: &[Segment2], policy: &CurvePolicy) -> Vec<Opt
         .iter()
         .map(|segment| decided_segment_aabb(segment, policy))
         .collect()
+}
+
+fn line_signed_area_contribution(start: &Point2, end: &Point2) -> CurveResult<Real> {
+    (((start.x() * end.y()) - (end.x() * start.y())) / Real::from(2_i8)).map_err(CurveError::from)
+}
+
+fn arc_signed_area_contribution(arc: &crate::CircularArc2) -> CurveResult<Option<Real>> {
+    let Some(bulge) = arc.bulge() else {
+        return Ok(None);
+    };
+
+    let chord = line_signed_area_contribution(arc.start(), arc.end())?;
+    let b2 = bulge * bulge;
+    let one_plus_b2 = Real::one() + &b2;
+    let sin_numerator = (Real::from(4_i8) * bulge) * (Real::one() - &b2);
+    let sin_denominator = &one_plus_b2 * &one_plus_b2;
+    let sin_theta = (sin_numerator / sin_denominator)?;
+    let theta = Real::from(4_i8) * bulge.clone().atan()?;
+    let segment = (arc.radius_squared() * (theta - sin_theta) / Real::from(2_i8))?;
+    Ok(Some(chord + segment))
 }
 
 fn validate_closed_curve_string(curve: &CurveString2) -> CurveResult<()> {

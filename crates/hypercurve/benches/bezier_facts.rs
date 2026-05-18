@@ -246,6 +246,9 @@ fn bench_rational_quadratic_facts(curve: &RationalQuadraticBezier2) {
         Real::from(2_i8),
     )
     .unwrap();
+    let collapsed_rational =
+        RationalQuadraticBezier2::try_unit_end_weights(p(3, 4), p(3, 4), p(3, 4), Real::from(2_i8))
+            .unwrap();
     let negative_rational_line = RationalQuadraticBezier2::try_new(
         p(0, 0),
         p(17, 0),
@@ -268,6 +271,12 @@ fn bench_rational_quadratic_facts(curve: &RationalQuadraticBezier2) {
         RationalQuadraticBezier2::try_unit_end_weights(p(0, 0), p(2, 3), p(4, 0), Real::from(2_i8))
             .unwrap();
     let endpoint_probe = CubicBezier2::new(p(2, 2), p(3, 5), p(5, 5), p(6, 4));
+    let shared_endpoint_rational_first =
+        RationalQuadraticBezier2::try_unit_end_weights(p(0, 0), p(1, 2), p(2, 0), Real::from(2_i8))
+            .unwrap();
+    let shared_endpoint_rational_second =
+        RationalQuadraticBezier2::try_unit_end_weights(p(0, 0), p(1, 0), p(2, 8), Real::from(2_i8))
+            .unwrap();
     let equal_weight_arch =
         RationalQuadraticBezier2::try_unit_end_weights(p(0, 0), p(20, 16), p(40, 0), Real::one())
             .unwrap();
@@ -365,6 +374,18 @@ fn bench_rational_quadratic_facts(curve: &RationalQuadraticBezier2) {
         checksum ^= facts.weight_known_nonzero_mask;
         checksum ^= format!("{:?}", black_box(curve).fit_exact_point_image(&policy)).len() as u8;
         checksum ^= format!("{:?}", black_box(curve).fit_exact_line_image(&policy)).len() as u8;
+        checksum ^= format!("{:?}", black_box(curve).offset_preflight(&policy)).len() as u8;
+        checksum ^= format!(
+            "{:?}{:?}",
+            black_box(curve).offset_left_staged(Real::one(), &policy),
+            black_box(curve).offset_right_staged(Real::one(), &policy)
+        )
+        .len() as u8;
+        checksum ^= format!(
+            "{:?}",
+            black_box(&collapsed_rational).offset_left_staged(Real::one(), &policy)
+        )
+        .len() as u8;
         checksum ^= format!("{:?}", black_box(curve).conic_kind(&policy)).len() as u8;
         checksum ^= format!("{:?}", black_box(curve).monotone_spans(&policy)).len() as u8;
         checksum ^= format!("{:?}", black_box(curve).certified_bounds(&policy)).len() as u8;
@@ -413,6 +434,12 @@ fn bench_rational_quadratic_facts(curve: &RationalQuadraticBezier2) {
         checksum ^= format!(
             "{:?}",
             black_box(&endpoint_arch).relation_to_cubic(&endpoint_probe, &policy)
+        )
+        .len() as u8;
+        checksum ^= format!(
+            "{:?}",
+            black_box(&shared_endpoint_rational_first)
+                .relation_to_rational_quadratic(&shared_endpoint_rational_second, &policy)
         )
         .len() as u8;
         checksum ^= format!(
@@ -598,6 +625,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
     let tangent_line_image = QuadraticBezier2::new(p(0, 8), p(20, 8), p(40, 8));
     let tangent_arch = QuadraticBezier2::new(p(0, 0), p(20, 16), p(40, 0));
     let endpoint_probe = CubicBezier2::new(p(20, 8), p(23, 20), p(50, 20), p(52, 19));
+    let shared_endpoint_midpoint_first = QuadraticBezier2::new(p(0, 0), p(30, 60), p(60, 0));
+    let shared_endpoint_midpoint_second = QuadraticBezier2::new(p(0, 0), p(30, 0), p(60, 120));
     let raised_arch = QuadraticBezier2::new(p(0, 4), p(20, 20), p(40, 4));
     let degree_normalized_arch = QuadraticBezier2::new(p(0, 0), p(30, 60), p(60, 0));
     let degree_elevated_arch = CubicBezier2::new(p(0, 0), p(20, 40), p(40, 40), p(60, 0));
@@ -720,6 +749,8 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
             black_box(&tangent_line_image).relation_to_quadratic(&tangent_arch, &policy);
         let endpoint_relation =
             black_box(&endpoint_probe).relation_to_quadratic(&tangent_arch, &policy);
+        let shared_endpoint_midpoint_relation = black_box(&shared_endpoint_midpoint_first)
+            .relation_to_quadratic(&shared_endpoint_midpoint_second, &policy);
         let same_axis_no_hit_relation =
             black_box(&tangent_arch).relation_to_quadratic(&raised_arch, &policy);
         let degree_normalized_no_hit_relation = black_box(&degree_normalized_arch)
@@ -728,6 +759,12 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
             .graph_order_to_cubic_over_axis(&degree_elevated_raised_arch, Axis2::X, &policy);
         let degree_normalized_crossing_graph_order = black_box(&degree_normalized_arch)
             .graph_order_to_cubic_over_axis(&degree_elevated_crossing_arch, Axis2::X, &policy);
+        let degree_normalized_graph_contact_order = black_box(&degree_normalized_arch)
+            .graph_contact_order_to_cubic_over_axis(
+                &degree_elevated_crossing_arch,
+                Axis2::X,
+                &policy,
+            );
         let degree_elevated_identity_relation =
             black_box(&degree_normalized_arch).relation_to_cubic(&degree_elevated_arch, &policy);
         let mixed_degree_midpoint_relation =
@@ -774,9 +811,16 @@ fn bench_bezier_topology(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
         let cubic_endpoint_relation =
             black_box(&cubic_endpoint_probe).relation_to_cubic(&degree_elevated_arch, &policy);
         let inflections = black_box(cubic).inflection_classification(&policy);
+        let quadratic_offset_preflight = black_box(quadratic).offset_preflight(&policy);
+        let cubic_offset_preflight = black_box(cubic).offset_preflight(&policy);
+        let quadratic_staged_offset = black_box(quadratic).offset_left_staged(Real::one(), &policy);
+        let cubic_staged_offset = black_box(cubic).offset_left_staged(Real::one(), &policy);
+        let quadratic_staged_right_offset =
+            black_box(quadratic).offset_right_staged(Real::one(), &policy);
+        let cubic_staged_right_offset = black_box(cubic).offset_right_staged(Real::one(), &policy);
 
         checksum ^= format!(
-            "{y_roots:?}{spans:?}{bounds:?}{line_relation:?}{line_contact_relation:?}{point_parameters:?}{cubic_line_relation:?}{cubic_line_contact_relation:?}{mixed_relation:?}{region_relation:?}{line_image_relation:?}{line_image_isolated_relation:?}{point_image_relation:?}{line_image_curve_relation:?}{endpoint_relation:?}{same_axis_no_hit_relation:?}{degree_normalized_no_hit_relation:?}{degree_normalized_graph_order:?}{degree_normalized_crossing_graph_order:?}{degree_elevated_identity_relation:?}{mixed_degree_midpoint_relation:?}{mixed_degree_quarter_relation:?}{mixed_degree_thirty_second_relation:?}{mixed_degree_sixty_fourth_relation:?}{mixed_degree_one_hundred_twenty_eighth_relation:?}{mixed_degree_two_hundred_fifty_sixth_relation:?}{mixed_degree_five_hundred_twelfth_relation:?}{mixed_degree_non_dyadic_graph_relation:?}{non_dyadic_quadratic_root_relation:?}{non_graph_deep_dyadic_relation:?}{non_graph_irreducible_relation:?}{cubic_quarter_relation:?}{cubic_eighth_relation:?}{cubic_sixteenth_relation:?}{cubic_thirty_second_relation:?}{cubic_sixty_fourth_relation:?}{cubic_one_hundred_twenty_eighth_relation:?}{cubic_two_hundred_fifty_sixth_relation:?}{cubic_five_hundred_twelfth_relation:?}{cubic_endpoint_relation:?}{inflections:?}"
+            "{y_roots:?}{spans:?}{bounds:?}{line_relation:?}{line_contact_relation:?}{point_parameters:?}{cubic_line_relation:?}{cubic_line_contact_relation:?}{mixed_relation:?}{region_relation:?}{line_image_relation:?}{line_image_isolated_relation:?}{point_image_relation:?}{line_image_curve_relation:?}{endpoint_relation:?}{shared_endpoint_midpoint_relation:?}{same_axis_no_hit_relation:?}{degree_normalized_no_hit_relation:?}{degree_normalized_graph_order:?}{degree_normalized_crossing_graph_order:?}{degree_normalized_graph_contact_order:?}{degree_elevated_identity_relation:?}{mixed_degree_midpoint_relation:?}{mixed_degree_quarter_relation:?}{mixed_degree_thirty_second_relation:?}{mixed_degree_sixty_fourth_relation:?}{mixed_degree_one_hundred_twenty_eighth_relation:?}{mixed_degree_two_hundred_fifty_sixth_relation:?}{mixed_degree_five_hundred_twelfth_relation:?}{mixed_degree_non_dyadic_graph_relation:?}{non_dyadic_quadratic_root_relation:?}{non_graph_deep_dyadic_relation:?}{non_graph_irreducible_relation:?}{cubic_quarter_relation:?}{cubic_eighth_relation:?}{cubic_sixteenth_relation:?}{cubic_thirty_second_relation:?}{cubic_sixty_fourth_relation:?}{cubic_one_hundred_twenty_eighth_relation:?}{cubic_two_hundred_fifty_sixth_relation:?}{cubic_five_hundred_twelfth_relation:?}{cubic_endpoint_relation:?}{inflections:?}{quadratic_offset_preflight:?}{cubic_offset_preflight:?}{quadratic_staged_offset:?}{cubic_staged_offset:?}{quadratic_staged_right_offset:?}{cubic_staged_right_offset:?}"
         )
         .len();
     }
@@ -798,15 +842,29 @@ fn bench_bezier_flattening(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
         let simplified = quadratic_polyline
             .clone()
             .map(|polyline| polyline.simplify_exact_collinear(&policy));
+        let simplification_certificate = simplified.clone().map(|simplified| match simplified {
+            hypercurve::Classification::Decided(polyline) => {
+                format!("{:?}", polyline.simplification_certificate())
+            }
+            hypercurve::Classification::Uncertain(reason) => format!("{reason:?}"),
+        });
         let offset_preview = simplified.clone().map(|simplified| match simplified {
             hypercurve::Classification::Decided(polyline) => {
-                format!("{:?}", polyline.display_offset_left(Real::one()))
+                format!(
+                    "{:?}{:?}",
+                    polyline.display_offset_left(Real::one()),
+                    polyline.display_offset_right(Real::one())
+                )
             }
             hypercurve::Classification::Uncertain(reason) => format!("{reason:?}"),
         });
         let checked_offset = simplified.clone().map(|simplified| match simplified {
             hypercurve::Classification::Decided(polyline) => {
-                format!("{:?}", polyline.checked_offset_left(Real::one(), &policy))
+                format!(
+                    "{:?}{:?}",
+                    polyline.checked_offset_left(Real::one(), &policy),
+                    polyline.checked_offset_right(Real::one(), &policy)
+                )
             }
             hypercurve::Classification::Uncertain(reason) => format!("{reason:?}"),
         });
@@ -816,6 +874,15 @@ fn bench_bezier_flattening(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
         let point_fit = quadratic_polyline
             .clone()
             .map(|polyline| format!("{:?}", polyline.fit_exact_point(&policy)));
+        let fit_certificate =
+            quadratic_polyline
+                .clone()
+                .map(|polyline| match polyline.fit_exact_point(&policy) {
+                    Ok(hypercurve::Classification::Decided(
+                        hypercurve::BezierPointFitRelation::Fit(fit),
+                    )) => format!("{:?}", fit.fit_certificate()),
+                    other => format!("{other:?}"),
+                });
         let exact_line_offset =
             quadratic_polyline
                 .clone()
@@ -823,12 +890,19 @@ fn bench_bezier_flattening(quadratic: &QuadraticBezier2, cubic: &CubicBezier2) {
                     Ok(hypercurve::Classification::Decided(
                         hypercurve::BezierLineFitRelation::Fit(fit),
                     )) => {
-                        format!("{:?}", fit.offset_left_exact(Real::one()))
+                        let offset = fit.offset_left_exact(Real::one());
+                        let right_offset = fit.offset_right_exact(Real::one());
+                        format!(
+                            "{:?}{:?}{:?}",
+                            offset,
+                            right_offset,
+                            offset.as_ref().map(|offset| offset.fit_certificate())
+                        )
                     }
                     other => format!("{other:?}"),
                 });
         checksum ^= format!(
-            "{quadratic_polyline:?}{cubic_polyline:?}{simplified:?}{offset_preview:?}{checked_offset:?}{line_fit:?}{point_fit:?}{exact_line_offset:?}"
+            "{quadratic_polyline:?}{cubic_polyline:?}{simplified:?}{simplification_certificate:?}{offset_preview:?}{checked_offset:?}{line_fit:?}{point_fit:?}{fit_certificate:?}{exact_line_offset:?}"
         )
         .len();
     }

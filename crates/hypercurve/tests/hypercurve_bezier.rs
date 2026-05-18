@@ -1,12 +1,14 @@
 use hypercurve::{
     Axis2, BezierAreaMomentPrefixSums2, BezierAreaPrefixSums2, BezierCurveRelation,
-    BezierCuspClassification, BezierDegree, BezierEndpoint, BezierFlatteningOptions,
-    BezierInflectionClassification, BezierLineContactKind, BezierLineContactRelation,
-    BezierLineFitRelation, BezierLineImageFitRelation, BezierLineRelation,
-    BezierMonotoneGraphOrder, BezierPointFitRelation, BezierPointImageFitRelation, Classification,
-    CubicBezier2, CurvePolicy, IntersectionKind, LineLineIntersection, LineSeg2, Point2,
-    QuadraticBezier2, RationalQuadraticBezier2, RationalQuadraticConicKind, Real,
-    SymbolicDependencyMask, UncertaintyReason, ZeroStatus,
+    BezierCuspClassification, BezierDegree, BezierEndpoint, BezierFitBoundKind,
+    BezierFitErrorMetric, BezierFlatteningOptions, BezierInflectionClassification,
+    BezierLineContactKind, BezierLineContactRelation, BezierLineFitRelation,
+    BezierLineImageFitRelation, BezierLineRelation, BezierMonotoneGraphContactOrder,
+    BezierMonotoneGraphOrder, BezierOffsetCandidate2, BezierOffsetRisk, BezierPointFitRelation,
+    BezierPointImageFitRelation, BezierSimplificationBoundKind, BezierSimplificationErrorMetric,
+    Classification, CubicBezier2, CurvePolicy, IntersectionKind, LineLineIntersection, LineSeg2,
+    NumericMode, Point2, QuadraticBezier2, RationalQuadraticBezier2, RationalQuadraticConicKind,
+    Real, SymbolicDependencyMask, UncertaintyReason, ZeroStatus,
 };
 use proptest::prelude::*;
 
@@ -375,6 +377,284 @@ fn cubic_inflection_and_coarse_curve_relation_are_certified() {
 }
 
 #[test]
+fn bezier_offset_preflight_reports_exact_hazards_before_approximation() {
+    let cusp = QuadraticBezier2::new(point(0, 0), point(1, 0), point(0, 0));
+    let Classification::Decided(preflight) = cusp.offset_preflight(&policy()) else {
+        panic!("integer quadratic cusp preflight should be decided");
+    };
+    assert_eq!(preflight.degree(), BezierDegree::Quadratic);
+    assert_eq!(
+        preflight.cusp_classification(),
+        &BezierCuspClassification::Cusps {
+            parameters: vec![half()]
+        }
+    );
+    assert_eq!(
+        preflight.inflection_classification(),
+        &BezierInflectionClassification::NotApplicable
+    );
+    assert_eq!(preflight.start_tangent_status(), ZeroStatus::NonZero);
+    assert_eq!(preflight.end_tangent_status(), ZeroStatus::NonZero);
+    assert_eq!(preflight.endpoint_coincidence(), ZeroStatus::Zero);
+    assert!(preflight.risks().contains(&BezierOffsetRisk::Cusp));
+    assert!(
+        preflight
+            .risks()
+            .contains(&BezierOffsetRisk::CoincidentEndpoints)
+    );
+    assert!(!preflight.is_clear());
+    assert_eq!(
+        preflight.construction_policy().numeric_mode,
+        NumericMode::Certified
+    );
+
+    let inflected = CubicBezier2::new(point(0, 0), point(1, 2), point(2, -2), point(3, 0));
+    let Classification::Decided(preflight) = inflected.offset_preflight(&policy()) else {
+        panic!("integer cubic inflection preflight should be decided");
+    };
+    assert_eq!(preflight.degree(), BezierDegree::Cubic);
+    assert!(preflight.risks().contains(&BezierOffsetRisk::Inflection));
+    assert_eq!(preflight.endpoint_coincidence(), ZeroStatus::NonZero);
+
+    let collapsed = CubicBezier2::new(point(4, 4), point(4, 4), point(4, 4), point(4, 4));
+    let Classification::Decided(preflight) = collapsed.offset_preflight(&policy()) else {
+        panic!("collapsed cubic preflight should be decided");
+    };
+    assert!(
+        preflight
+            .risks()
+            .contains(&BezierOffsetRisk::DegeneratePoint)
+    );
+    assert!(
+        preflight
+            .risks()
+            .contains(&BezierOffsetRisk::UndefinedEndpointNormal {
+                endpoint: BezierEndpoint::Start
+            })
+    );
+    assert!(
+        preflight
+            .risks()
+            .contains(&BezierOffsetRisk::UndefinedEndpointNormal {
+                endpoint: BezierEndpoint::End
+            })
+    );
+}
+
+#[test]
+fn staged_bezier_offset_emits_exact_line_or_unresolved_preflight() {
+    let line = QuadraticBezier2::new(point(0, 3), point(2, 3), point(6, 3));
+    let Classification::Decided(candidate) = line
+        .offset_left_staged(Real::from(2_i8), &policy())
+        .unwrap()
+    else {
+        panic!("certified line image should produce a decided staged offset");
+    };
+    let BezierOffsetCandidate2::ExactLineImage { offset, preflight } = candidate else {
+        panic!("certified line image should offset as an exact line primitive");
+    };
+    assert!(preflight.is_clear());
+    assert_eq!(preflight.degree(), BezierDegree::Quadratic);
+    assert_eq!(offset.line().start(), &point(0, 5));
+    assert_eq!(offset.line().end(), &point(6, 5));
+    assert_eq!(offset.control_point_count(), 3);
+    assert_eq!(offset.fit_certificate().source_end(), 3);
+    assert_eq!(offset.distance(), &Real::from(2_i8));
+
+    let arch = QuadraticBezier2::new(point(0, 0), point(2, 4), point(4, 0));
+    let Classification::Decided(candidate) =
+        arch.offset_left_staged(Real::one(), &policy()).unwrap()
+    else {
+        panic!("free-form quadratic should decide as unresolved, not uncertain");
+    };
+    let BezierOffsetCandidate2::Unresolved {
+        preflight,
+        distance,
+    } = &candidate
+    else {
+        panic!("free-form quadratic offset should remain explicitly unresolved");
+    };
+    assert!(preflight.is_clear());
+    assert_eq!(preflight.degree(), BezierDegree::Quadratic);
+    assert_eq!(distance, &Real::one());
+    assert_eq!(candidate.distance(), &Real::one());
+    assert_eq!(
+        candidate.unresolved_preflight().unwrap().degree(),
+        BezierDegree::Quadratic
+    );
+}
+
+#[test]
+fn staged_bezier_right_offset_uses_negative_signed_left_distance() {
+    let line = CubicBezier2::new(point(0, 3), point(2, 3), point(4, 3), point(6, 3));
+    let Classification::Decided(candidate) = line
+        .offset_right_staged(Real::from(2_i8), &policy())
+        .unwrap()
+    else {
+        panic!("certified cubic line image should produce a decided right offset");
+    };
+    let BezierOffsetCandidate2::ExactLineImage { offset, preflight } = candidate else {
+        panic!("certified cubic line image should offset as an exact line primitive");
+    };
+    assert!(
+        preflight
+            .risks()
+            .contains(&BezierOffsetRisk::AllCurvatureZero)
+    );
+    assert_eq!(preflight.degree(), BezierDegree::Cubic);
+    assert_eq!(offset.line().start(), &point(0, 1));
+    assert_eq!(offset.line().end(), &point(6, 1));
+    assert_eq!(offset.control_point_count(), 4);
+    assert_eq!(offset.distance(), &Real::from(-2_i8));
+
+    let arch = CubicBezier2::new(point(0, 0), point(1, 4), point(3, 4), point(4, 0));
+    let Classification::Decided(candidate) = arch
+        .offset_right_staged(Real::from(3_i8), &policy())
+        .unwrap()
+    else {
+        panic!("free-form cubic should decide as unresolved, not uncertain");
+    };
+    let BezierOffsetCandidate2::Unresolved {
+        preflight,
+        distance,
+    } = &candidate
+    else {
+        panic!("free-form cubic right offset should remain explicitly unresolved");
+    };
+    assert!(preflight.is_clear());
+    assert_eq!(preflight.degree(), BezierDegree::Cubic);
+    assert_eq!(distance, &Real::from(-3_i8));
+    assert_eq!(candidate.distance(), &Real::from(-3_i8));
+}
+
+#[test]
+fn staged_rational_bezier_offset_preserves_denominator_preflight() {
+    let rational_line = RationalQuadraticBezier2::try_unit_end_weights(
+        point(0, 3),
+        point(2, 3),
+        point(6, 3),
+        Real::from(2_i8),
+    )
+    .unwrap();
+    let Classification::Decided(preflight) = rational_line.offset_preflight(&policy()) else {
+        panic!("same-sign rational line preflight should be decided");
+    };
+    assert!(preflight.is_clear());
+    assert_eq!(preflight.degree(), BezierDegree::Quadratic);
+
+    let Classification::Decided(candidate) = rational_line
+        .offset_left_staged(Real::from(2_i8), &policy())
+        .unwrap()
+    else {
+        panic!("certified rational line image should produce a decided staged offset");
+    };
+    let BezierOffsetCandidate2::ExactLineImage { offset, preflight } = &candidate else {
+        panic!("certified rational line image should offset as an exact line primitive");
+    };
+    assert!(preflight.is_clear());
+    assert_eq!(candidate.preflight(), preflight);
+    assert_eq!(
+        candidate.exact_line_image_offset().unwrap().distance(),
+        &Real::from(2_i8)
+    );
+    assert_eq!(offset.line().start(), &point(0, 5));
+    assert_eq!(offset.line().end(), &point(6, 5));
+    assert_eq!(offset.control_point_count(), 3);
+    assert_eq!(offset.distance(), &Real::from(2_i8));
+
+    let rational_arch = RationalQuadraticBezier2::try_unit_end_weights(
+        point(0, 0),
+        point(2, 4),
+        point(4, 0),
+        Real::from(2_i8),
+    )
+    .unwrap();
+    let Classification::Decided(candidate) = rational_arch
+        .offset_right_staged(Real::from(3_i8), &policy())
+        .unwrap()
+    else {
+        panic!("free-form rational conic should decide as unresolved, not uncertain");
+    };
+    let BezierOffsetCandidate2::Unresolved {
+        preflight,
+        distance,
+    } = &candidate
+    else {
+        panic!("free-form rational conic offset should remain explicitly unresolved");
+    };
+    assert!(preflight.is_clear());
+    assert_eq!(distance, &Real::from(-3_i8));
+
+    let mixed_weights = RationalQuadraticBezier2::try_unit_end_weights(
+        point(0, 0),
+        point(2, 4),
+        point(4, 0),
+        Real::from(-1_i8),
+    )
+    .unwrap();
+    let Classification::Decided(preflight) = mixed_weights.offset_preflight(&policy()) else {
+        panic!("mixed-sign rational conic preflight should report a concrete risk");
+    };
+    assert!(
+        preflight
+            .risks()
+            .contains(&BezierOffsetRisk::ProjectiveDenominatorBoundary)
+    );
+}
+
+#[test]
+fn staged_bezier_offset_keeps_degenerate_point_preflight_payload() {
+    let collapsed = CubicBezier2::new(point(2, 3), point(2, 3), point(2, 3), point(2, 3));
+    let Classification::Decided(candidate) = collapsed
+        .offset_left_staged(Real::from(2_i8), &policy())
+        .unwrap()
+    else {
+        panic!("collapsed cubic should decide as unresolved with preflight");
+    };
+    let BezierOffsetCandidate2::Unresolved {
+        preflight,
+        distance,
+    } = &candidate
+    else {
+        panic!("collapsed cubic cannot produce an exact line offset");
+    };
+    assert!(
+        preflight
+            .risks()
+            .contains(&BezierOffsetRisk::DegeneratePoint)
+    );
+    assert_eq!(distance, &Real::from(2_i8));
+    assert_eq!(candidate.distance(), &Real::from(2_i8));
+
+    let rational = RationalQuadraticBezier2::try_unit_end_weights(
+        point(5, 7),
+        point(5, 7),
+        point(5, 7),
+        Real::from(2_i8),
+    )
+    .unwrap();
+    let Classification::Decided(candidate) = rational
+        .offset_right_staged(Real::one(), &policy())
+        .unwrap()
+    else {
+        panic!("collapsed rational conic should decide as unresolved with preflight");
+    };
+    let BezierOffsetCandidate2::Unresolved {
+        preflight,
+        distance,
+    } = &candidate
+    else {
+        panic!("collapsed rational conic cannot produce an exact line offset");
+    };
+    assert!(
+        preflight
+            .risks()
+            .contains(&BezierOffsetRisk::DegeneratePoint)
+    );
+    assert_eq!(distance, &Real::from(-1_i8));
+}
+
+#[test]
 fn bezier_length_bounds_use_exact_chord_and_control_polygon_interval() {
     let line_quadratic = QuadraticBezier2::new(point(0, 0), point(3, 4), point(6, 8));
     let line_bounds = line_quadratic.length_bounds().unwrap();
@@ -637,6 +917,30 @@ fn mixed_polynomial_bezier_curve_relation_certifies_disjoint_and_shared_endpoint
 }
 
 #[test]
+fn shared_endpoint_does_not_hide_exact_interior_quadratic_intersection() {
+    let first = QuadraticBezier2::new(point(0, 0), point(1, 2), point(2, 0));
+    let second = QuadraticBezier2::new(point(0, 0), point(1, 0), point(2, 4));
+
+    let Classification::Decided(BezierCurveRelation::IntersectionPoints { points }) =
+        first.relation_to_quadratic(&second, &policy())
+    else {
+        panic!("shared endpoint plus midpoint crossing should retain both exact points");
+    };
+    assert_eq!(points.len(), 2);
+    assert!(points.iter().any(|hit| hit.point() == &point(0, 0)));
+    assert!(points.iter().any(|hit| hit.point() == &point(1, 1)));
+
+    let Classification::Decided(BezierCurveRelation::IntersectionPoints { points }) =
+        second.relation_to_quadratic(&first, &policy())
+    else {
+        panic!("symmetric shared endpoint plus midpoint crossing should retain both exact points");
+    };
+    assert_eq!(points.len(), 2);
+    assert!(points.iter().any(|hit| hit.point() == &point(0, 0)));
+    assert!(points.iter().any(|hit| hit.point() == &point(1, 1)));
+}
+
+#[test]
 fn polynomial_bezier_curve_relation_certifies_endpoint_on_quadratic_interior() {
     let arch = QuadraticBezier2::new(point(0, 0), point(2, 4), point(4, 0));
     let endpoint_on_arch = CubicBezier2::new(point(2, 2), point(3, 5), point(5, 5), point(6, 4));
@@ -764,6 +1068,43 @@ fn polynomial_bezier_graph_order_classifies_monotone_ranges() {
         lower.graph_order_to_quadratic_over_axis(&not_graph, Axis2::X, &policy()),
         Classification::Decided(BezierMonotoneGraphOrder::NotSharedStrictlyMonotone)
     );
+}
+
+#[test]
+fn polynomial_bezier_graph_contact_order_classifies_crossings_and_tangencies() {
+    let baseline = QuadraticBezier2::new(point(0, 0), point(2, 0), point(4, 0));
+    let crossing = QuadraticBezier2::new(point(0, 1), point(2, 0), point(4, -1));
+    let tangent = QuadraticBezier2::new(point(0, 1), point(2, -1), point(4, 1));
+    let above = QuadraticBezier2::new(point(0, 2), point(2, 2), point(4, 2));
+
+    assert_eq!(
+        baseline.graph_contact_order_to_quadratic_over_axis(&above, Axis2::X, &policy()),
+        Classification::Decided(BezierMonotoneGraphContactOrder::FirstLess)
+    );
+
+    let Classification::Decided(BezierMonotoneGraphContactOrder::IntersectsOrTouches {
+        contacts,
+        spans,
+    }) = baseline.graph_contact_order_to_quadratic_over_axis(&crossing, Axis2::X, &policy())
+    else {
+        panic!("represented graph crossing should expose a contact certificate");
+    };
+    assert!(spans.is_empty());
+    assert_eq!(contacts.len(), 1);
+    assert_eq!(contacts[0].parameter(), &half());
+    assert_eq!(contacts[0].kind(), BezierLineContactKind::Crossing);
+
+    let Classification::Decided(BezierMonotoneGraphContactOrder::IntersectsOrTouches {
+        contacts,
+        spans,
+    }) = baseline.graph_contact_order_to_quadratic_over_axis(&tangent, Axis2::X, &policy())
+    else {
+        panic!("represented graph tangent should expose a contact certificate");
+    };
+    assert!(spans.is_empty());
+    assert_eq!(contacts.len(), 1);
+    assert_eq!(contacts[0].parameter(), &half());
+    assert_eq!(contacts[0].kind(), BezierLineContactKind::Tangent);
 }
 
 #[test]
@@ -1859,6 +2200,65 @@ fn matching_weight_rational_relations_promote_same_parameter_hits() {
 }
 
 #[test]
+fn rational_shared_endpoint_does_not_hide_exact_interior_hits() {
+    let first = RationalQuadraticBezier2::try_new(
+        point(0, 0),
+        point(1, 2),
+        point(2, 0),
+        Real::one(),
+        Real::from(2_i8),
+        Real::one(),
+    )
+    .unwrap();
+    let target = Point2::new(Real::one(), ratio(4, 3));
+    let second = RationalQuadraticBezier2::try_new(
+        point(0, 0),
+        point(1, 0),
+        point(2, 8),
+        Real::one(),
+        Real::from(2_i8),
+        Real::one(),
+    )
+    .unwrap();
+    let polynomial = QuadraticBezier2::new(
+        point(0, 0),
+        point(1, 0),
+        Point2::new(Real::from(2_i8), ratio(16, 3)),
+    );
+
+    let Classification::Decided(BezierCurveRelation::IntersectionPoints { points }) =
+        first.relation_to_rational_quadratic(&second, &policy())
+    else {
+        panic!("rational shared endpoint plus interior hit should retain both exact points");
+    };
+    assert_eq!(points.len(), 2);
+    assert!(points.iter().any(|hit| hit.point() == &point(0, 0)));
+    assert!(points.iter().any(|hit| hit.point() == &target));
+
+    let Classification::Decided(BezierCurveRelation::IntersectionPoints { points }) =
+        first.relation_to_quadratic(&polynomial, &policy())
+    else {
+        panic!(
+            "rational/polynomial shared endpoint plus interior hit should retain both exact points"
+        );
+    };
+    assert_eq!(points.len(), 2);
+    assert!(points.iter().any(|hit| hit.point() == &point(0, 0)));
+    assert!(points.iter().any(|hit| hit.point() == &target));
+
+    let Classification::Decided(BezierCurveRelation::IntersectionPoints { points }) =
+        polynomial.relation_to_rational_quadratic(&first, &policy())
+    else {
+        panic!(
+            "polynomial/rational shared endpoint plus interior hit should retain both exact points"
+        );
+    };
+    assert_eq!(points.len(), 2);
+    assert!(points.iter().any(|hit| hit.point() == &point(0, 0)));
+    assert!(points.iter().any(|hit| hit.point() == &target));
+}
+
+#[test]
 fn rational_polynomial_relations_promote_same_parameter_dyadic_hits() {
     let rational = RationalQuadraticBezier2::try_new(
         point(0, 0),
@@ -2246,6 +2646,38 @@ fn certified_flattening_simplifies_only_exactly_collinear_vertices() {
         simplified.certificate().max_error(),
         polyline.certificate().max_error()
     );
+    assert_eq!(simplified.certificate().max_depth(), options.max_depth());
+    let simplification = simplified
+        .simplification_certificate()
+        .expect("simplified polyline should carry a simplification certificate");
+    assert_eq!(simplification.source_start(), 0);
+    assert_eq!(simplification.source_end(), polyline.points().len());
+    assert_eq!(simplification.retained_vertex_count(), 2);
+    assert_eq!(
+        simplification.removed_vertex_count(),
+        polyline.points().len() - 2
+    );
+    assert_eq!(simplification.error_bound(), &Real::zero());
+    assert_eq!(
+        simplification.source_flattening_error(),
+        polyline.certificate().max_error()
+    );
+    assert_eq!(
+        simplification.source_flattening_max_depth(),
+        options.max_depth()
+    );
+    assert_eq!(
+        simplification.construction_policy().numeric_mode,
+        NumericMode::Certified
+    );
+    assert_eq!(
+        simplification.metric(),
+        BezierSimplificationErrorMetric::ExactPolylineImageDistance
+    );
+    assert_eq!(
+        simplification.bound_kind(),
+        BezierSimplificationBoundKind::ProvenExact
+    );
 
     let curved = QuadraticBezier2::new(point(0, 0), point(2, 4), point(4, 0));
     let curved_polyline = curved
@@ -2255,6 +2687,13 @@ fn certified_flattening_simplifies_only_exactly_collinear_vertices() {
         .simplify_exact_collinear(&policy())
         .unwrap_decided_for_test();
     assert_eq!(curved_simplified.points(), curved_polyline.points());
+    assert_eq!(
+        curved_simplified
+            .simplification_certificate()
+            .expect("unchanged simplification should still carry a certificate")
+            .removed_vertex_count(),
+        0
+    );
 }
 
 #[test]
@@ -2275,6 +2714,16 @@ fn display_offset_left_offsets_certified_flattened_chords_without_topology_claim
         offset.source_certificate().max_error(),
         polyline.certificate().max_error()
     );
+
+    let right_offset = polyline.display_offset_right(Real::one()).unwrap();
+    assert_eq!(right_offset.segments().len(), 1);
+    assert_eq!(right_offset.segments()[0].start(), &point(0, -1));
+    assert_eq!(right_offset.segments()[0].end(), &point(4, -1));
+    assert_eq!(
+        right_offset.source_certificate().max_error(),
+        polyline.certificate().max_error()
+    );
+    assert_eq!(right_offset.distance(), &Real::from(-1_i8));
 }
 
 #[test]
@@ -2299,6 +2748,19 @@ fn checked_offset_left_promotes_certified_polyline_to_checked_curve_string() {
         polyline.certificate().max_error()
     );
     assert_eq!(offset.distance(), &Real::one());
+
+    let right_offset = polyline
+        .checked_offset_right(Real::one(), &policy())
+        .unwrap()
+        .unwrap_decided_for_test();
+    assert_eq!(right_offset.curve().segments().len(), 1);
+    assert_eq!(right_offset.curve().segments()[0].start(), &point(0, -1));
+    assert_eq!(right_offset.curve().segments()[0].end(), &point(4, -1));
+    assert_eq!(
+        right_offset.source_certificate().max_error(),
+        polyline.certificate().max_error()
+    );
+    assert_eq!(right_offset.distance(), &Real::from(-1_i8));
 }
 
 #[test]
@@ -2335,6 +2797,32 @@ fn certified_flattened_polyline_fits_exact_line_only_for_zero_error_cases() {
         fit.source_certificate().max_error(),
         line_polyline.certificate().max_error()
     );
+    assert_eq!(fit.fit_certificate().source_start(), 0);
+    assert_eq!(
+        fit.fit_certificate().source_end(),
+        line_polyline.points().len()
+    );
+    assert_eq!(fit.fit_certificate().fit_error_bound(), &Real::zero());
+    assert_eq!(
+        fit.fit_certificate().source_flattening_error(),
+        Some(line_polyline.certificate().max_error())
+    );
+    assert_eq!(
+        fit.fit_certificate().source_flattening_max_depth(),
+        Some(options.max_depth())
+    );
+    assert_eq!(
+        fit.fit_certificate().construction_policy().numeric_mode,
+        NumericMode::Certified
+    );
+    assert_eq!(
+        fit.fit_certificate().metric(),
+        BezierFitErrorMetric::ExactEuclideanDistance
+    );
+    assert_eq!(
+        fit.fit_certificate().bound_kind(),
+        BezierFitBoundKind::ProvenExact
+    );
 
     let curved_polyline = curved
         .flatten_certified(&options, &policy())
@@ -2358,11 +2846,27 @@ fn polynomial_bezier_line_image_fits_without_flattening() {
     assert_eq!(fit.control_point_count(), 3);
     assert_eq!(fit.line().start(), &point(0, 3));
     assert_eq!(fit.line().end(), &point(6, 3));
+    assert_eq!(fit.fit_certificate().source_start(), 0);
+    assert_eq!(fit.fit_certificate().source_end(), 3);
+    assert_eq!(fit.fit_certificate().fit_error_bound(), &Real::zero());
+    assert_eq!(fit.fit_certificate().source_flattening_error(), None);
+    assert_eq!(fit.fit_certificate().source_flattening_max_depth(), None);
+    assert_eq!(
+        fit.fit_certificate().construction_policy().numeric_mode,
+        NumericMode::Certified
+    );
     let offset = fit.offset_left_exact(Real::from(2_i8)).unwrap();
     assert_eq!(offset.line().start(), &point(0, 5));
     assert_eq!(offset.line().end(), &point(6, 5));
     assert_eq!(offset.control_point_count(), 3);
     assert_eq!(offset.distance(), &Real::from(2_i8));
+    assert_eq!(offset.fit_certificate(), fit.fit_certificate());
+    let right_offset = fit.offset_right_exact(Real::from(2_i8)).unwrap();
+    assert_eq!(right_offset.line().start(), &point(0, 1));
+    assert_eq!(right_offset.line().end(), &point(6, 1));
+    assert_eq!(right_offset.control_point_count(), 3);
+    assert_eq!(right_offset.distance(), &Real::from(-2_i8));
+    assert_eq!(right_offset.fit_certificate(), fit.fit_certificate());
 
     let off_line = CubicBezier2::new(point(0, 0), point(1, 2), point(3, 2), point(4, 0));
     assert_eq!(
@@ -2395,6 +2899,7 @@ fn rational_bezier_line_image_fit_accepts_same_sign_weights() {
     assert_eq!(fit.line().end(), &point(6, 3));
     let offset = fit.offset_left_exact(Real::from(2_i8)).unwrap();
     assert_eq!(offset.line().start(), &point(0, 5));
+    assert_eq!(offset.fit_certificate(), fit.fit_certificate());
 
     let curved = RationalQuadraticBezier2::try_unit_end_weights(
         point(0, 0),
@@ -2429,6 +2934,8 @@ fn rational_bezier_line_image_fit_accepts_same_sign_weights() {
     };
     assert_eq!(fit.line().start(), &point(0, 3));
     assert_eq!(fit.line().end(), &point(6, 3));
+    let offset = fit.offset_left_exact(Real::from(2_i8)).unwrap();
+    assert_eq!(offset.fit_certificate(), fit.fit_certificate());
 
     let mixed_weights = RationalQuadraticBezier2::try_unit_end_weights(
         point(0, 3),
@@ -2455,6 +2962,12 @@ fn bezier_point_image_fits_certify_collapsed_control_polygons() {
     };
     assert_eq!(fit.point(), &point(3, 5));
     assert_eq!(fit.control_point_count(), 3);
+    assert_eq!(fit.fit_certificate().source_end(), 3);
+    assert_eq!(fit.fit_certificate().fit_error_bound(), &Real::zero());
+    assert_eq!(
+        fit.fit_certificate().metric(),
+        BezierFitErrorMetric::ExactEuclideanDistance
+    );
 
     let cubic = CubicBezier2::new(point(3, 5), point(3, 5), point(3, 5), point(3, 5));
     let fit = cubic
@@ -2466,6 +2979,7 @@ fn bezier_point_image_fits_certify_collapsed_control_polygons() {
     };
     assert_eq!(fit.point(), &point(3, 5));
     assert_eq!(fit.control_point_count(), 4);
+    assert_eq!(fit.fit_certificate().source_end(), 4);
 
     let nonpoint = QuadraticBezier2::new(point(3, 5), point(3, 5), point(4, 5));
     assert_eq!(
@@ -3101,6 +3615,17 @@ fn certified_line_fit_offsets_exactly_as_line_primitive() {
         offset.source_certificate().max_error(),
         fit.source_certificate().max_error()
     );
+    assert_eq!(offset.fit_certificate(), fit.fit_certificate());
+
+    let right_offset = fit.offset_right_exact(Real::one()).unwrap();
+    assert_eq!(right_offset.line().start(), &point(0, -1));
+    assert_eq!(right_offset.line().end(), &point(4, -1));
+    assert_eq!(right_offset.distance(), &Real::from(-1_i8));
+    assert_eq!(
+        right_offset.source_certificate().max_error(),
+        fit.source_certificate().max_error()
+    );
+    assert_eq!(right_offset.fit_certificate(), fit.fit_certificate());
 }
 
 #[test]
@@ -3532,6 +4057,36 @@ proptest! {
     }
 
     #[test]
+    fn offset_preflight_preserves_generated_line_and_collapsed_risks(
+        ax in -16_i32..16,
+        ay in -16_i32..16,
+        dx in 1_i32..16,
+    ) {
+        let line = QuadraticBezier2::new(point(ax, ay), point(ax + dx, ay), point(ax + 2 * dx, ay));
+        let Classification::Decided(preflight) = line.offset_preflight(&policy()) else {
+            panic!("generated nondegenerate line preflight should decide");
+        };
+        prop_assert!(preflight.is_clear());
+        prop_assert_eq!(preflight.degree(), BezierDegree::Quadratic);
+        prop_assert_eq!(preflight.construction_policy().numeric_mode, NumericMode::Certified);
+
+        let collapsed = CubicBezier2::new(point(ax, ay), point(ax, ay), point(ax, ay), point(ax, ay));
+        let Classification::Decided(preflight) = collapsed.offset_preflight(&policy()) else {
+            panic!("generated collapsed cubic preflight should decide");
+        };
+        prop_assert!(preflight.risks().contains(&BezierOffsetRisk::DegeneratePoint));
+        prop_assert!(preflight.risks().contains(&BezierOffsetRisk::CoincidentEndpoints));
+        let start_normal_is_undefined = preflight.risks().contains(&BezierOffsetRisk::UndefinedEndpointNormal {
+            endpoint: BezierEndpoint::Start
+        });
+        let end_normal_is_undefined = preflight.risks().contains(&BezierOffsetRisk::UndefinedEndpointNormal {
+            endpoint: BezierEndpoint::End
+        });
+        prop_assert!(start_normal_is_undefined);
+        prop_assert!(end_normal_is_undefined);
+    }
+
+    #[test]
     fn exact_collinear_simplification_preserves_generated_endpoints(
         ax in -16_i32..16,
         ay in -16_i32..16,
@@ -3547,6 +4102,16 @@ proptest! {
         prop_assert_eq!(simplified.points().last(), Some(&point(cx, ay)));
         prop_assert!(simplified.points().len() <= polyline.points().len());
         prop_assert_eq!(simplified.certificate().max_error(), polyline.certificate().max_error());
+        let certificate = simplified.simplification_certificate().unwrap();
+        prop_assert_eq!(certificate.source_end(), polyline.points().len());
+        prop_assert_eq!(certificate.retained_vertex_count(), simplified.points().len());
+        prop_assert_eq!(
+            certificate.removed_vertex_count(),
+            polyline.points().len() - simplified.points().len()
+        );
+        prop_assert_eq!(certificate.error_bound(), &Real::zero());
+        prop_assert_eq!(certificate.source_flattening_max_depth(), options.max_depth());
+        prop_assert_eq!(certificate.bound_kind(), BezierSimplificationBoundKind::ProvenExact);
     }
 
     #[test]
@@ -3568,6 +4133,14 @@ proptest! {
         prop_assert_eq!(fit.line().start(), &point(ax, ay));
         prop_assert_eq!(fit.line().end(), &point(cx, ay));
         prop_assert_eq!(fit.source_certificate().max_error(), polyline.certificate().max_error());
+        prop_assert_eq!(fit.fit_certificate().source_start(), 0);
+        prop_assert_eq!(fit.fit_certificate().source_end(), polyline.points().len());
+        prop_assert_eq!(fit.fit_certificate().fit_error_bound(), &Real::zero());
+        prop_assert_eq!(
+            fit.fit_certificate().source_flattening_error(),
+            Some(polyline.certificate().max_error())
+        );
+        prop_assert_eq!(fit.fit_certificate().source_flattening_max_depth(), Some(options.max_depth()));
     }
 
     #[test]
@@ -3585,6 +4158,8 @@ proptest! {
         };
         prop_assert_eq!(fit.point(), &point(ax, ay));
         prop_assert_eq!(fit.source_certificate().max_error(), polyline.certificate().max_error());
+        prop_assert_eq!(fit.fit_certificate().fit_error_bound(), &Real::zero());
+        prop_assert_eq!(fit.fit_certificate().bound_kind(), BezierFitBoundKind::ProvenExact);
     }
 
     #[test]
@@ -3610,8 +4185,11 @@ proptest! {
         prop_assert_eq!(fit.control_point_count(), 4);
         prop_assert_eq!(fit.line().start(), &point(ax, ay));
         prop_assert_eq!(fit.line().end(), &point(dx, ay));
+        prop_assert_eq!(fit.fit_certificate().source_end(), 4);
+        prop_assert_eq!(fit.fit_certificate().source_flattening_error(), None);
         let offset = fit.offset_left_exact(Real::one()).unwrap();
         prop_assert_eq!(offset.line().start(), &point(ax, ay + 1));
+        prop_assert_eq!(offset.fit_certificate(), fit.fit_certificate());
     }
 
     #[test]
@@ -3640,6 +4218,8 @@ proptest! {
         };
         prop_assert_eq!(quadratic_fit.point(), &point(ax, ay));
         prop_assert_eq!(quadratic_fit.control_point_count(), 3);
+        prop_assert_eq!(quadratic_fit.fit_certificate().source_end(), 3);
+        prop_assert_eq!(quadratic_fit.fit_certificate().fit_error_bound(), &Real::zero());
 
         let Classification::Decided(BezierPointImageFitRelation::Fit(cubic_fit)) =
             cubic.fit_exact_point_image(&policy()).unwrap()
@@ -3648,6 +4228,7 @@ proptest! {
         };
         prop_assert_eq!(cubic_fit.point(), &point(ax, ay));
         prop_assert_eq!(cubic_fit.control_point_count(), 4);
+        prop_assert_eq!(cubic_fit.fit_certificate().source_end(), 4);
 
         let Classification::Decided(BezierPointImageFitRelation::Fit(rational_fit)) =
             rational.fit_exact_point_image(&policy()).unwrap()
@@ -3656,6 +4237,7 @@ proptest! {
         };
         prop_assert_eq!(rational_fit.point(), &point(ax, ay));
         prop_assert_eq!(rational_fit.control_point_count(), 3);
+        prop_assert_eq!(rational_fit.fit_certificate().source_end(), 3);
     }
 
     #[test]
@@ -4201,6 +4783,10 @@ proptest! {
         prop_assert_eq!(
             raised.graph_order_to_quadratic_over_axis(&quadratic, Axis2::X, &policy()),
             Classification::Decided(BezierMonotoneGraphOrder::FirstGreater)
+        );
+        prop_assert_eq!(
+            quadratic.graph_contact_order_to_cubic_over_axis(&raised, Axis2::X, &policy()),
+            Classification::Decided(BezierMonotoneGraphContactOrder::FirstLess)
         );
     }
 
@@ -5255,9 +5841,13 @@ proptest! {
             .simplify_exact_collinear(&policy())
             .unwrap_decided_for_test();
         let offset = polyline.display_offset_left(Real::one()).unwrap();
+        let right_offset = polyline.display_offset_right(Real::one()).unwrap();
 
         prop_assert_eq!(offset.segments().len(), polyline.points().len() - 1);
+        prop_assert_eq!(right_offset.segments().len(), polyline.points().len() - 1);
         prop_assert_eq!(offset.source_certificate().segment_count(), polyline.certificate().segment_count());
+        prop_assert_eq!(right_offset.source_certificate().segment_count(), polyline.certificate().segment_count());
+        prop_assert_eq!(right_offset.distance(), &Real::from(-1_i8));
     }
 
     #[test]
@@ -5283,6 +5873,14 @@ proptest! {
         prop_assert_eq!(offset.curve().segments().len(), 1);
         prop_assert_eq!(offset.source_certificate().segment_count(), polyline.certificate().segment_count());
         prop_assert_eq!(offset.distance(), &Real::from(distance));
+        let right_offset = polyline
+            .checked_offset_right(Real::from(distance), &policy())
+            .unwrap()
+            .unwrap_decided_for_test();
+
+        prop_assert_eq!(right_offset.curve().segments().len(), 1);
+        prop_assert_eq!(right_offset.source_certificate().segment_count(), polyline.certificate().segment_count());
+        prop_assert_eq!(right_offset.distance(), &Real::from(-distance));
     }
 }
 

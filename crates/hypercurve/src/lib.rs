@@ -7,12 +7,14 @@
 //! Geometric Predicates" (*Discrete & Computational Geometry* 18(3), 305-363,
 //! 1997).
 
+mod area;
 mod bbox;
 mod bezier;
 mod bezier_fit;
 mod bezier_flatten;
 mod bezier_metric;
 mod bezier_moment;
+mod bezier_offset;
 mod bezier_topology;
 mod boolean;
 mod boolean_boundary;
@@ -23,6 +25,7 @@ mod curve_string;
 mod error;
 mod events;
 mod facts;
+mod finite_projection;
 mod fragment;
 mod intersect;
 mod offset;
@@ -40,26 +43,33 @@ mod region_nesting;
 mod segment;
 mod self_intersect;
 mod split;
+mod transform;
 
+pub use area::{
+    ContourAreaUnsupportedReason, ContourAreaUnsupportedSegment2, ContourSignedAreaReport2,
+    RegionAreaContourRole, RegionAreaUnsupportedContour2, RegionFilledAreaReport2,
+};
 pub use bbox::Aabb2;
 pub use bezier::{BezierEndpoint, CubicBezier2, EndpointTangent2, QuadraticBezier2};
 pub use bezier_fit::{
-    BezierLineFitRelation, BezierLineImageFitRelation, BezierPointFitRelation,
-    BezierPointImageFitRelation, CertifiedBezierLineFit2, CertifiedBezierLineImage2,
-    CertifiedBezierLineImageOffset2, CertifiedBezierLineOffset2, CertifiedBezierPointFit2,
-    CertifiedBezierPointImage2,
+    BezierFitBoundKind, BezierFitCertificate, BezierFitErrorMetric, BezierLineFitRelation,
+    BezierLineImageFitRelation, BezierPointFitRelation, BezierPointImageFitRelation,
+    CertifiedBezierLineFit2, CertifiedBezierLineImage2, CertifiedBezierLineImageOffset2,
+    CertifiedBezierLineOffset2, CertifiedBezierPointFit2, CertifiedBezierPointImage2,
 };
 pub use bezier_flatten::{
-    BezierFlatteningCertificate, BezierFlatteningOptions, CertifiedBezierPolyline2,
+    BezierFlatteningCertificate, BezierFlatteningOptions, BezierSimplificationBoundKind,
+    BezierSimplificationCertificate, BezierSimplificationErrorMetric, CertifiedBezierPolyline2,
     CertifiedBezierPolylineOffset2, DisplayBezierOffsetPolyline2,
 };
 pub use bezier_metric::{BezierArcLengthParameterRegion2, BezierLengthBounds2};
 pub use bezier_moment::{BezierAreaMomentPrefixSums2, BezierAreaMoments2, BezierAreaPrefixSums2};
+pub use bezier_offset::{BezierOffsetCandidate2, BezierOffsetPreflight2, BezierOffsetRisk};
 pub use bezier_topology::{
     Axis2, BezierCurveIntersectionPoint, BezierCurveIntersectionRegion, BezierCurveRelation,
-    BezierCuspClassification, BezierInflectionClassification, BezierLineContact,
-    BezierLineContactKind, BezierLineContactRelation, BezierLineRelation, BezierMonotoneGraphOrder,
-    BezierMonotoneSpan,
+    BezierCuspClassification, BezierGraphContact, BezierInflectionClassification,
+    BezierLineContact, BezierLineContactKind, BezierLineContactRelation, BezierLineRelation,
+    BezierMonotoneGraphContactOrder, BezierMonotoneGraphOrder, BezierMonotoneSpan,
 };
 pub use boolean::{
     BooleanFragmentAction, BooleanFragmentClassification, BooleanFragmentSelection, BooleanOp,
@@ -81,6 +91,10 @@ pub use facts::{
     Bezier2Facts, BezierDegree, CircularArc2Facts, CurveStringFacts, LineSeg2Facts, Point2Facts,
     RationalQuadraticBezier2Facts, RegionFacts, Segment2Facts, SegmentKind, SegmentKindCounts,
 };
+pub use finite_projection::{
+    FinitePolyline2, FiniteProjectionCertificate, FiniteProjectionOptions, FiniteRegionProfile2,
+    FiniteRegionProjection2, FiniteRegionProjectionCertificate, finite_ring_signed_area,
+};
 pub use fragment::{ContourFragment, ContourFragmentSet};
 pub use intersect::{
     ArcArcIntersection, ArcArcIntersectionPoint, CircleCircleRelation, IntersectionKind,
@@ -95,8 +109,11 @@ pub use prepared::{
     PreparedRegionView2, PreparedSegment2,
 };
 pub use rational_bezier::{RationalQuadraticBezier2, RationalQuadraticConicKind};
-pub use reconstruct::PolylineReconstructionOptions;
-pub use region::{Region2, RegionPointLocation, RegionView2};
+pub use reconstruct::{
+    FiniteContourImport2, FiniteCurveStringImport2, FiniteImportCertificate,
+    PolylineReconstructionOptions,
+};
+pub use region::{Region2, RegionContourProfile, RegionPointLocation, RegionView2};
 pub use region_events::{
     RegionContourIntersection, RegionContourKey, RegionContourRole, RegionIntersectionSet,
     RegionSide,
@@ -104,6 +121,7 @@ pub use region_events::{
 pub use region_fragments::{RegionContourFragments, RegionFragmentSet};
 pub use segment::{CircularArc2, LineSeg2, Segment2};
 pub use split::{ContourSplitMap, ContourSplitMarkers, SegmentSplitMarker, SegmentSplitPoint};
+pub use transform::Similarity2;
 
 pub use hyperreal::Rational;
 pub use hyperreal::{Real, RealSign, SymbolicDependencyMask, ZeroKnowledge as ZeroStatus};
@@ -210,6 +228,57 @@ mod tests {
         assert_eq!(curve.end(), Some(&p(3, 0)));
         assert!(matches!(curve.segments()[0], Segment2::Line(_)));
         assert!(matches!(curve.segments()[1], Segment2::Arc(_)));
+    }
+
+    #[test]
+    fn contour_signed_area_accumulates_line_segments_exactly() {
+        let contour = Contour2::from_bulge_vertices(&[
+            BulgeVertex2::new(p(0, 0), s(0)),
+            BulgeVertex2::new(p(2, 0), s(0)),
+            BulgeVertex2::new(p(2, 3), s(0)),
+            BulgeVertex2::new(p(0, 3), s(0)),
+        ])
+        .unwrap();
+
+        assert_eq!(contour.signed_area().unwrap(), Some(Real::from(6_i8)));
+    }
+
+    #[test]
+    fn contour_signed_area_accumulates_bulge_arc_segments() {
+        let contour = Contour2::from_bulge_vertices(&[
+            BulgeVertex2::new(p(1, 0), s(1)),
+            BulgeVertex2::new(p(-1, 0), s(0)),
+        ])
+        .unwrap();
+
+        assert_eq!(
+            contour.signed_area().unwrap(),
+            Some((Real::pi() / Real::from(2_i8)).unwrap())
+        );
+    }
+
+    #[test]
+    fn region_filled_area_uses_material_minus_hole_roles() {
+        let material = Contour2::from_bulge_vertices(&[
+            BulgeVertex2::new(p(0, 0), s(0)),
+            BulgeVertex2::new(p(4, 0), s(0)),
+            BulgeVertex2::new(p(4, 4), s(0)),
+            BulgeVertex2::new(p(0, 4), s(0)),
+        ])
+        .unwrap();
+        let clockwise_hole = Contour2::from_bulge_vertices(&[
+            BulgeVertex2::new(p(1, 1), s(0)),
+            BulgeVertex2::new(p(1, 3), s(0)),
+            BulgeVertex2::new(p(3, 3), s(0)),
+            BulgeVertex2::new(p(3, 1), s(0)),
+        ])
+        .unwrap();
+        let region = Region2::new(vec![material], vec![clockwise_hole]);
+
+        assert_eq!(
+            region.filled_area(&topology_policy()).unwrap(),
+            Classification::Decided(Some(Real::from(12_i8)))
+        );
     }
 
     #[test]

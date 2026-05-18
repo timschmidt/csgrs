@@ -51,6 +51,40 @@ pub struct PolylineReconstructionOptions {
     pub min_arc_points: usize,
 }
 
+/// Certificate for importing finite `f64` polyline/ring coordinates.
+///
+/// This certificate records the API-boundary promotion from primitive floats
+/// into native curve objects. It does not make the input samples authoritative
+/// for topology; it records how many finite points were accepted, whether a
+/// closing ring sample was consumed, and how many native line segments were
+/// emitted. That separation follows Yap, "Towards Exact Geometric
+/// Computation," *Computational Geometry* 7(1-2), 1997
+/// (<https://doi.org/10.1016/0925-7721(95)00040-2>): exact topology starts
+/// after finite adapter data has crossed into exact-aware objects.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct FiniteImportCertificate {
+    input_point_count: usize,
+    retained_point_count: usize,
+    skipped_duplicate_edge_count: usize,
+    repeated_closing_point: bool,
+    output_segment_count: usize,
+    closed: bool,
+}
+
+/// Result of importing a finite open line string.
+#[derive(Clone, Debug, PartialEq)]
+pub struct FiniteCurveStringImport2 {
+    curve: CurveString2,
+    certificate: FiniteImportCertificate,
+}
+
+/// Result of importing a finite closed line ring.
+#[derive(Clone, Debug, PartialEq)]
+pub struct FiniteContourImport2 {
+    contour: Contour2,
+    certificate: FiniteImportCertificate,
+}
+
 impl PolylineReconstructionOptions {
     /// Constructs conservative reconstruction options with a custom absolute
     /// distance tolerance.
@@ -88,6 +122,72 @@ impl PolylineReconstructionOptions {
 
     fn distance_limit(self, scale: f64) -> f64 {
         self.distance_tolerance + self.relative_tolerance * scale.abs()
+    }
+}
+
+impl FiniteImportCertificate {
+    /// Returns the number of finite points supplied at the API boundary.
+    pub const fn input_point_count(&self) -> usize {
+        self.input_point_count
+    }
+
+    /// Returns the number of finite points retained after boundary normalization.
+    pub const fn retained_point_count(&self) -> usize {
+        self.retained_point_count
+    }
+
+    /// Returns the number of adjacent duplicate open-line edges skipped.
+    pub const fn skipped_duplicate_edge_count(&self) -> usize {
+        self.skipped_duplicate_edge_count
+    }
+
+    /// Returns true when a repeated final ring point was consumed.
+    pub const fn repeated_closing_point(&self) -> bool {
+        self.repeated_closing_point
+    }
+
+    /// Returns the number of native segments emitted.
+    pub const fn output_segment_count(&self) -> usize {
+        self.output_segment_count
+    }
+
+    /// Returns true when the import target was a closed contour.
+    pub const fn is_closed(&self) -> bool {
+        self.closed
+    }
+}
+
+impl FiniteCurveStringImport2 {
+    /// Returns the imported native curve string.
+    pub const fn curve_string(&self) -> &CurveString2 {
+        &self.curve
+    }
+
+    /// Consumes the report and returns the imported native curve string.
+    pub fn into_curve_string(self) -> CurveString2 {
+        self.curve
+    }
+
+    /// Returns the import certificate.
+    pub const fn certificate(&self) -> &FiniteImportCertificate {
+        &self.certificate
+    }
+}
+
+impl FiniteContourImport2 {
+    /// Returns the imported native contour.
+    pub const fn contour(&self) -> &Contour2 {
+        &self.contour
+    }
+
+    /// Consumes the report and returns the imported native contour.
+    pub fn into_contour(self) -> Contour2 {
+        self.contour
+    }
+
+    /// Returns the import certificate.
+    pub const fn certificate(&self) -> &FiniteImportCertificate {
+        &self.certificate
     }
 }
 
@@ -130,6 +230,54 @@ impl BulgeVertex2 {
 }
 
 impl CurveString2 {
+    /// Constructs an open line-segment curve string from finite `f64` points.
+    ///
+    /// This is an API-boundary import adapter: primitive floats are accepted at
+    /// the boundary, immediately promoted to [`Real`], and stored as native
+    /// line geometry before any topology-sensitive operation runs. That follows
+    /// Yap, "Towards Exact Geometric Computation," *Computational Geometry*
+    /// 7(1-2), 1997 (<https://doi.org/10.1016/0925-7721(95)00040-2>).
+    /// Unlike [`CurveString2::reconstruct_from_polyline`], this constructor
+    /// makes no attempt to infer arcs from samples.
+    pub fn from_finite_line_string(points: &[[f64; 2]]) -> CurveResult<Self> {
+        Self::import_finite_line_string(points).map(FiniteCurveStringImport2::into_curve_string)
+    }
+
+    /// Imports an open finite line string and returns an audit certificate.
+    ///
+    /// Adjacent duplicate finite points are not represented as zero-length
+    /// native segments; they are counted in
+    /// [`FiniteImportCertificate::skipped_duplicate_edge_count`]. All
+    /// non-duplicate points are promoted through [`Real`] before constructing
+    /// exact-aware line segments.
+    pub fn import_finite_line_string(points: &[[f64; 2]]) -> CurveResult<FiniteCurveStringImport2> {
+        if points.len() < 2 {
+            return Err(CurveError::InsufficientVertices);
+        }
+
+        let mut segments = Vec::with_capacity(points.len() - 1);
+        let mut skipped_duplicate_edge_count = 0;
+        for edge in points.windows(2) {
+            let start = point_from_finite_xy(edge[0])?;
+            let end = point_from_finite_xy(edge[1])?;
+            if let Ok(line) = crate::LineSeg2::try_new(start, end) {
+                segments.push(crate::Segment2::Line(line));
+            } else {
+                skipped_duplicate_edge_count += 1;
+            }
+        }
+        let curve = Self::try_new(segments)?;
+        let certificate = FiniteImportCertificate {
+            input_point_count: points.len(),
+            retained_point_count: points.len(),
+            skipped_duplicate_edge_count,
+            repeated_closing_point: false,
+            output_segment_count: curve.len(),
+            closed: false,
+        };
+        Ok(FiniteCurveStringImport2 { curve, certificate })
+    }
+
     /// Reconstructs an open curve string from sampled polyline points.
     ///
     /// This is a finite-precision import helper. It is useful after tracing,
@@ -145,6 +293,80 @@ impl CurveString2 {
 }
 
 impl Contour2 {
+    /// Constructs a closed straight-segment contour from finite `f64` ring points.
+    ///
+    /// A repeated final point equal to the first point is accepted and removed
+    /// before native contour construction. This is the closed-ring counterpart
+    /// to [`CurveString2::from_finite_line_string`]; it imports finite boundary
+    /// coordinates as exact-aware line topology without fitting arcs.
+    pub fn from_finite_ring(points: &[[f64; 2]]) -> CurveResult<Self> {
+        Self::import_finite_ring(points).map(FiniteContourImport2::into_contour)
+    }
+
+    /// Constructs a closed straight-segment contour from finite `f64` ring
+    /// points and an explicit fill rule.
+    pub fn from_finite_ring_with_fill_rule(
+        points: &[[f64; 2]],
+        fill_rule: FillRule,
+    ) -> CurveResult<Self> {
+        Self::import_finite_ring_with_fill_rule(points, fill_rule)
+            .map(FiniteContourImport2::into_contour)
+    }
+
+    /// Imports a closed finite line ring and returns an audit certificate.
+    ///
+    /// A repeated final point equal to the first point is accepted as finite
+    /// file-format closure metadata and recorded in the certificate. The
+    /// emitted native contour remains the exact topology carrier.
+    pub fn import_finite_ring(points: &[[f64; 2]]) -> CurveResult<FiniteContourImport2> {
+        Self::import_finite_ring_with_fill_rule(points, FillRule::NonZero)
+    }
+
+    /// Imports a closed finite line ring with an explicit fill rule and returns
+    /// an audit certificate.
+    pub fn import_finite_ring_with_fill_rule(
+        points: &[[f64; 2]],
+        fill_rule: FillRule,
+    ) -> CurveResult<FiniteContourImport2> {
+        if points.len() < 3 {
+            return Err(CurveError::InsufficientVertices);
+        }
+
+        let repeated_closing_point = points.len() > 1 && points.first() == points.last();
+        let end = if repeated_closing_point {
+            points.len() - 1
+        } else {
+            points.len()
+        };
+        if end < 3 {
+            return Err(CurveError::InsufficientVertices);
+        }
+
+        let vertices = points
+            .iter()
+            .take(end)
+            .map(|point| {
+                Ok(BulgeVertex2::new(
+                    point_from_finite_xy(*point)?,
+                    Real::zero(),
+                ))
+            })
+            .collect::<CurveResult<Vec<_>>>()?;
+        let contour = Self::from_bulge_vertices_with_fill_rule(&vertices, fill_rule)?;
+        let certificate = FiniteImportCertificate {
+            input_point_count: points.len(),
+            retained_point_count: end,
+            skipped_duplicate_edge_count: 0,
+            repeated_closing_point,
+            output_segment_count: contour.len(),
+            closed: true,
+        };
+        Ok(FiniteContourImport2 {
+            contour,
+            certificate,
+        })
+    }
+
     /// Reconstructs a closed contour from sampled polyline points using the
     /// non-zero fill rule.
     ///
@@ -226,6 +448,16 @@ fn sample_open_points(
         samples.push(sample);
     }
     Ok(samples)
+}
+
+fn point_from_finite_xy(point: [f64; 2]) -> CurveResult<Point2> {
+    if !point[0].is_finite() || !point[1].is_finite() {
+        return Err(CurveError::NonFiniteReconstructionPoint);
+    }
+    Ok(Point2::new(
+        real_from_f64(point[0])?,
+        real_from_f64(point[1])?,
+    ))
 }
 
 fn sample_point(point: &Point2) -> CurveResult<SamplePoint> {

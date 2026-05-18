@@ -551,32 +551,50 @@ impl RationalQuadraticBezier2 {
             _ => {}
         }
 
+        let mut shared_endpoint_points = Vec::new();
         for a in [self.start(), self.end()] {
             for b in [other.start(), other.end()] {
                 match point_equal(a, b, policy) {
-                    Some(true) => {
-                        return Classification::Decided(BezierCurveRelation::SharedEndpoint);
-                    }
+                    Some(true) => push_unique_intersection_point(
+                        &mut shared_endpoint_points,
+                        a.clone(),
+                        policy,
+                    ),
                     Some(false) => {}
                     None => return Classification::Uncertain(UncertaintyReason::RealSign),
                 }
             }
         }
 
-        match rational_rational_endpoint_intersections(self, other, policy) {
-            Classification::Decided(points) if !points.is_empty() => {
-                return Classification::Decided(BezierCurveRelation::EndpointIntersections {
-                    points,
-                });
+        let endpoint_points = match rational_rational_endpoint_intersections(self, other, policy) {
+            Classification::Decided(points) => points,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+
+        match same_parameter_matching_weight_rational_relation(self, other, policy) {
+            Classification::Decided(Some(relation)) => {
+                return Classification::Decided(merge_endpoint_points_into_relation(
+                    relation,
+                    &endpoint_points,
+                    policy,
+                ));
             }
-            Classification::Decided(_) => {}
+            Classification::Decided(None) => {}
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         }
 
-        match same_parameter_matching_weight_rational_relation(self, other, policy) {
-            Classification::Decided(Some(relation)) => return Classification::Decided(relation),
-            Classification::Decided(None) => {}
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        if !endpoint_points.is_empty() {
+            return if endpoint_points_are_shared_only(
+                &endpoint_points,
+                &shared_endpoint_points,
+                policy,
+            ) {
+                Classification::Decided(BezierCurveRelation::SharedEndpoint)
+            } else {
+                Classification::Decided(BezierCurveRelation::EndpointIntersections {
+                    points: endpoint_points,
+                })
+            };
         }
 
         if self.weights_known_same_nonzero_sign(policy) == Some(true)
@@ -1816,32 +1834,50 @@ fn relation_to_polynomial_bezier(
         (None, None) => {}
     }
 
+    let mut shared_endpoint_points = Vec::new();
     for a in [rational.start(), rational.end()] {
         for b in [
             polynomial_controls[0],
             polynomial_controls[polynomial_controls.len() - 1],
         ] {
             match point_equal(a, b, policy) {
-                Some(true) => return Classification::Decided(BezierCurveRelation::SharedEndpoint),
+                Some(true) => {
+                    push_unique_intersection_point(&mut shared_endpoint_points, a.clone(), policy)
+                }
                 Some(false) => {}
                 None => return Classification::Uncertain(UncertaintyReason::RealSign),
             }
         }
     }
 
-    match rational_polynomial_endpoint_intersections(rational, polynomial_controls, policy) {
-        Classification::Decided(points) if !points.is_empty() => {
-            return Classification::Decided(BezierCurveRelation::EndpointIntersections { points });
-        }
-        Classification::Decided(_) => {}
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    }
+    let endpoint_points =
+        match rational_polynomial_endpoint_intersections(rational, polynomial_controls, policy) {
+            Classification::Decided(points) => points,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
 
     match same_parameter_dyadic_rational_polynomial_relation(rational, polynomial_controls, policy)
     {
-        Classification::Decided(Some(relation)) => return Classification::Decided(relation),
+        Classification::Decided(Some(relation)) => {
+            return Classification::Decided(merge_endpoint_points_into_relation(
+                relation,
+                &endpoint_points,
+                policy,
+            ));
+        }
         Classification::Decided(None) => {}
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    }
+
+    if !endpoint_points.is_empty() {
+        return if endpoint_points_are_shared_only(&endpoint_points, &shared_endpoint_points, policy)
+        {
+            Classification::Decided(BezierCurveRelation::SharedEndpoint)
+        } else {
+            Classification::Decided(BezierCurveRelation::EndpointIntersections {
+                points: endpoint_points,
+            })
+        };
     }
 
     if let Some(reason) = deferred_uncertainty {
@@ -2183,6 +2219,50 @@ fn rational_rational_endpoint_intersections(
         }
     }
     Classification::Decided(points)
+}
+
+fn merge_endpoint_points_into_relation(
+    relation: BezierCurveRelation,
+    endpoint_points: &[BezierCurveIntersectionPoint],
+    policy: &CurvePolicy,
+) -> BezierCurveRelation {
+    if endpoint_points.is_empty() {
+        return relation;
+    }
+
+    match relation {
+        BezierCurveRelation::IntersectionPoints { mut points } => {
+            // Rational/conic endpoints are exact lower-degree point predicates.
+            // When a later same-parameter conic solve finds additional roots,
+            // keep both evidence sets instead of letting an endpoint shortcut
+            // mask interior topology. This follows Yap's exact-geometric-
+            // computation boundary, and the rational homogeneous model is the
+            // standard Farin representation retained by this module.
+            for endpoint in endpoint_points {
+                push_unique_intersection_point(&mut points, endpoint.point().clone(), policy);
+            }
+            BezierCurveRelation::IntersectionPoints { points }
+        }
+        BezierCurveRelation::NoIntersection
+        | BezierCurveRelation::BoundingBoxesDisjoint
+        | BezierCurveRelation::Unresolved => BezierCurveRelation::EndpointIntersections {
+            points: endpoint_points.to_vec(),
+        },
+        relation => relation,
+    }
+}
+
+fn endpoint_points_are_shared_only(
+    endpoint_points: &[BezierCurveIntersectionPoint],
+    shared_endpoint_points: &[BezierCurveIntersectionPoint],
+    policy: &CurvePolicy,
+) -> bool {
+    !endpoint_points.is_empty()
+        && endpoint_points.iter().all(|endpoint| {
+            shared_endpoint_points
+                .iter()
+                .any(|shared| point_equal(endpoint.point(), shared.point(), policy) == Some(true))
+        })
 }
 
 fn same_parameter_matching_weight_rational_relation(

@@ -18,6 +18,56 @@ use crate::{
     RationalQuadraticBezier2, UncertaintyReason,
 };
 
+/// Error metric used by a certified Bezier fitting adapter.
+///
+/// The current fitting surface certifies the zero-error subset: every source
+/// vertex or control point is proven exactly on the fitted primitive. The
+/// metric is still named because later Levien-style fitting and simplification
+/// passes need to report whether a bound is Hausdorff, Fréchet-like, moment
+/// preserving, display-only, or another approximation contract. This follows
+/// Yap's requirement that approximate/fitted views carry proof obligations at
+/// their API boundary; see Yap, "Towards Exact Geometric Computation,"
+/// *Computational Geometry* 7.1-2 (1997), and Raph Levien, "Fitting cubic
+/// Bezier curves" (2021).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierFitErrorMetric {
+    /// Exact Euclidean point-to-primitive distance with a zero bound.
+    ExactEuclideanDistance,
+}
+
+/// Proof status for a certified Bezier fitting error bound.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BezierFitBoundKind {
+    /// The bound is proved exactly by symbolic predicates.
+    ProvenExact,
+}
+
+/// Certificate attached to a Bezier fitting product.
+///
+/// `source_range` is a half-open index range over the fitted source: flattened
+/// polyline vertices for [`CertifiedBezierLineFit2`] and
+/// [`CertifiedBezierPointFit2`], or Bezier/conic control points for
+/// [`CertifiedBezierLineImage2`] and [`CertifiedBezierPointImage2`]. The fit
+/// error bound is separate from `source_flattening_error`: a flattened-polyline
+/// fit may be exact for the emitted vertices while still carrying the source
+/// curve-to-polyline flattening budget. `construction_policy` records the
+/// predicate policy used to prove the fit, and
+/// `source_flattening_max_depth` records the upstream subdivision budget when
+/// the source is a flattened Bezier. Keeping these facts explicit is the
+/// certificate discipline requested by Yap's exact geometric computation model
+/// and by Levien's fitting/simplification notes.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BezierFitCertificate {
+    source_start: usize,
+    source_end: usize,
+    fit_error_bound: Real,
+    source_flattening_error: Option<Real>,
+    source_flattening_max_depth: Option<usize>,
+    construction_policy: CurvePolicy,
+    metric: BezierFitErrorMetric,
+    bound_kind: BezierFitBoundKind,
+}
+
 /// A Bezier or conic segment certified to be one exact affine point.
 ///
 /// This is the zero-dimensional companion to [`CertifiedBezierLineImage2`].
@@ -34,6 +84,7 @@ use crate::{
 pub struct CertifiedBezierPointImage2 {
     point: Point2,
     control_point_count: usize,
+    fit_certificate: BezierFitCertificate,
 }
 
 /// A Bezier or conic segment certified to trace exactly one endpoint line segment.
@@ -52,14 +103,24 @@ pub struct CertifiedBezierPointImage2 {
 pub struct CertifiedBezierLineImage2 {
     line: LineSeg2,
     control_point_count: usize,
+    fit_certificate: BezierFitCertificate,
 }
 
 /// Exact offset of a certified Bezier/conic line image.
+///
+/// The offset keeps the line-image fit certificate because the operation is
+/// exact only after the source image has been proved to be a primitive line.
+/// This keeps the proof object at the API boundary as required by Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997). General Bezier offsets remain a separate approximation/trimming
+/// problem; see Tiller and Hanson, "Offsets of Two-Dimensional Profiles"
+/// (1984).
 #[derive(Clone, Debug, PartialEq)]
 pub struct CertifiedBezierLineImageOffset2 {
     line: LineSeg2,
     control_point_count: usize,
     distance: Real,
+    fit_certificate: BezierFitCertificate,
 }
 
 /// A zero-error line fit recovered from a certified flattened Bezier polyline.
@@ -67,6 +128,7 @@ pub struct CertifiedBezierLineImageOffset2 {
 pub struct CertifiedBezierLineFit2 {
     line: LineSeg2,
     source_certificate: BezierFlatteningCertificate,
+    fit_certificate: BezierFitCertificate,
 }
 
 /// A zero-error point fit recovered from a certified flattened Bezier polyline.
@@ -74,14 +136,24 @@ pub struct CertifiedBezierLineFit2 {
 pub struct CertifiedBezierPointFit2 {
     point: Point2,
     source_certificate: BezierFlatteningCertificate,
+    fit_certificate: BezierFitCertificate,
 }
 
 /// Exact offset of a certified zero-error line fit.
+///
+/// The offset is represented by a true line segment and retains both the
+/// source flattening certificate and the zero-error fit certificate. This
+/// follows Yap's certificate discipline at approximation boundaries; see Yap,
+/// "Towards Exact Geometric Computation," *Computational Geometry* 7.1-2
+/// (1997). The restriction to already-certified line fits avoids applying a
+/// sampled offset algorithm as a topology decision; compare Tiller and Hanson,
+/// "Offsets of Two-Dimensional Profiles" (1984).
 #[derive(Clone, Debug, PartialEq)]
 pub struct CertifiedBezierLineOffset2 {
     line: LineSeg2,
     source_certificate: BezierFlatteningCertificate,
     distance: Real,
+    fit_certificate: BezierFitCertificate,
 }
 
 impl CertifiedBezierLineOffset2 {
@@ -98,6 +170,11 @@ impl CertifiedBezierLineOffset2 {
     /// Returns the exact offset distance.
     pub const fn distance(&self) -> &Real {
         &self.distance
+    }
+
+    /// Returns the fit certificate inherited by this exact primitive offset.
+    pub const fn fit_certificate(&self) -> &BezierFitCertificate {
+        &self.fit_certificate
     }
 }
 
@@ -141,6 +218,69 @@ pub enum BezierPointImageFitRelation {
     NotPoint,
 }
 
+impl BezierFitCertificate {
+    /// Builds a proven exact fit certificate over a half-open source range.
+    fn proven_exact(
+        source_start: usize,
+        source_end: usize,
+        source_flattening_error: Option<Real>,
+        source_flattening_max_depth: Option<usize>,
+        construction_policy: &CurvePolicy,
+    ) -> Self {
+        Self {
+            source_start,
+            source_end,
+            fit_error_bound: Real::zero(),
+            source_flattening_error,
+            source_flattening_max_depth,
+            construction_policy: construction_policy.clone(),
+            metric: BezierFitErrorMetric::ExactEuclideanDistance,
+            bound_kind: BezierFitBoundKind::ProvenExact,
+        }
+    }
+
+    /// Returns the half-open start index of the fitted source range.
+    pub const fn source_start(&self) -> usize {
+        self.source_start
+    }
+
+    /// Returns the half-open end index of the fitted source range.
+    pub const fn source_end(&self) -> usize {
+        self.source_end
+    }
+
+    /// Returns the proven fit-error bound.
+    pub const fn fit_error_bound(&self) -> &Real {
+        &self.fit_error_bound
+    }
+
+    /// Returns the source curve-to-polyline flattening error, when applicable.
+    pub const fn source_flattening_error(&self) -> Option<&Real> {
+        self.source_flattening_error.as_ref()
+    }
+
+    /// Returns the source flattening recursion budget, when the fit came from a
+    /// certified flattened Bezier polyline.
+    pub const fn source_flattening_max_depth(&self) -> Option<usize> {
+        self.source_flattening_max_depth
+    }
+
+    /// Returns the policy snapshot used to prove this fit.
+    pub const fn construction_policy(&self) -> &CurvePolicy {
+        &self.construction_policy
+    }
+
+    /// Returns the error metric certified by this fit.
+    pub const fn metric(&self) -> BezierFitErrorMetric {
+        self.metric
+    }
+
+    /// Returns whether the fit bound is proven or only a weaker approximation contract.
+    pub const fn bound_kind(&self) -> BezierFitBoundKind {
+        self.bound_kind
+    }
+}
+
 impl CertifiedBezierPointImage2 {
     /// Returns the exact point image traced by the Bezier.
     pub const fn point(&self) -> &Point2 {
@@ -150,6 +290,11 @@ impl CertifiedBezierPointImage2 {
     /// Returns the number of source Bezier control points covered by the fit.
     pub const fn control_point_count(&self) -> usize {
         self.control_point_count
+    }
+
+    /// Returns the certificate proving this exact point-image fit.
+    pub const fn fit_certificate(&self) -> &BezierFitCertificate {
+        &self.fit_certificate
     }
 }
 
@@ -162,6 +307,11 @@ impl CertifiedBezierLineImage2 {
     /// Returns the number of source Bezier control points covered by the fit.
     pub const fn control_point_count(&self) -> usize {
         self.control_point_count
+    }
+
+    /// Returns the certificate proving this exact line-image fit.
+    pub const fn fit_certificate(&self) -> &BezierFitCertificate {
+        &self.fit_certificate
     }
 
     /// Offsets the certified line image exactly as a line primitive.
@@ -178,7 +328,23 @@ impl CertifiedBezierLineImage2 {
             line: self.line.offset_left(distance.clone())?,
             control_point_count: self.control_point_count,
             distance,
+            fit_certificate: self.fit_certificate.clone(),
         })
+    }
+
+    /// Offsets the certified line image exactly to the curve's right side.
+    ///
+    /// The retained certificate stores the result as a negative signed
+    /// left-normal distance. This keeps left and right exact primitive offsets
+    /// in one algebraic representation, matching the exact-boundary discipline
+    /// advocated by Yap, "Towards Exact Geometric Computation,"
+    /// *Computational Geometry* 7.1-2 (1997), while still avoiding any
+    /// Tiller-Hanson-style sampled offset claim for non-line Bezier images.
+    pub fn offset_right_exact(
+        &self,
+        distance: Real,
+    ) -> CurveResult<CertifiedBezierLineImageOffset2> {
+        self.offset_left_exact(-distance)
     }
 }
 
@@ -197,6 +363,11 @@ impl CertifiedBezierLineImageOffset2 {
     pub const fn distance(&self) -> &Real {
         &self.distance
     }
+
+    /// Returns the fit certificate inherited by this exact primitive offset.
+    pub const fn fit_certificate(&self) -> &BezierFitCertificate {
+        &self.fit_certificate
+    }
 }
 
 impl CertifiedBezierLineFit2 {
@@ -208,6 +379,11 @@ impl CertifiedBezierLineFit2 {
     /// Returns the flattening certificate of the source polyline.
     pub const fn source_certificate(&self) -> &BezierFlatteningCertificate {
         &self.source_certificate
+    }
+
+    /// Returns the certificate proving this zero-error flattened-polyline fit.
+    pub const fn fit_certificate(&self) -> &BezierFitCertificate {
+        &self.fit_certificate
     }
 
     /// Offsets the certified zero-error line fit exactly.
@@ -222,7 +398,19 @@ impl CertifiedBezierLineFit2 {
             line: self.line.offset_left(distance.clone())?,
             source_certificate: self.source_certificate.clone(),
             distance,
+            fit_certificate: self.fit_certificate.clone(),
         })
+    }
+
+    /// Offsets the certified zero-error line fit exactly to the right side.
+    ///
+    /// Right offsets are represented as negative signed left-normal distances
+    /// in the returned certificate. The line fit itself has already proven a
+    /// zero-error primitive image, so no free-form Bezier offset topology claim
+    /// is introduced here; compare Tiller and Hanson, "Offsets of
+    /// Two-Dimensional Profiles" (1984).
+    pub fn offset_right_exact(&self, distance: Real) -> CurveResult<CertifiedBezierLineOffset2> {
+        self.offset_left_exact(-distance)
     }
 }
 
@@ -235,6 +423,11 @@ impl CertifiedBezierPointFit2 {
     /// Returns the flattening certificate of the source polyline.
     pub const fn source_certificate(&self) -> &BezierFlatteningCertificate {
         &self.source_certificate
+    }
+
+    /// Returns the certificate proving this zero-error flattened-polyline fit.
+    pub const fn fit_certificate(&self) -> &BezierFitCertificate {
+        &self.fit_certificate
     }
 }
 
@@ -347,6 +540,13 @@ impl CertifiedBezierPolyline2 {
             CertifiedBezierPointFit2 {
                 point: point.clone(),
                 source_certificate: self.certificate().clone(),
+                fit_certificate: BezierFitCertificate::proven_exact(
+                    0,
+                    self.points().len(),
+                    Some(self.certificate().max_error().clone()),
+                    Some(self.certificate().max_depth()),
+                    policy,
+                ),
             },
         )))
     }
@@ -395,6 +595,13 @@ impl CertifiedBezierPolyline2 {
             CertifiedBezierLineFit2 {
                 line,
                 source_certificate: self.certificate().clone(),
+                fit_certificate: BezierFitCertificate::proven_exact(
+                    0,
+                    self.points().len(),
+                    Some(self.certificate().max_error().clone()),
+                    Some(self.certificate().max_depth()),
+                    policy,
+                ),
             },
         )))
     }
@@ -443,6 +650,13 @@ fn fit_control_polygon_point_image(
         CertifiedBezierPointImage2 {
             point: point.clone(),
             control_point_count: controls.len(),
+            fit_certificate: BezierFitCertificate::proven_exact(
+                0,
+                controls.len(),
+                None,
+                None,
+                policy,
+            ),
         },
     )))
 }
@@ -484,6 +698,13 @@ fn fit_control_polygon_line_image(
         CertifiedBezierLineImage2 {
             line,
             control_point_count: controls.len(),
+            fit_certificate: BezierFitCertificate::proven_exact(
+                0,
+                controls.len(),
+                None,
+                None,
+                policy,
+            ),
         },
     )))
 }

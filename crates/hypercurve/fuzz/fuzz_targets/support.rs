@@ -11,11 +11,18 @@ use hypercurve::{
     Aabb2 as HAabb2, ArcArcIntersection as HArcArcIntersection,
     ArcArcIntersectionPoint as HArcArcIntersectionPoint,
     Axis2 as HAxis2, BezierCurveRelation as HBezierCurveRelation,
+    BezierFitBoundKind as HBezierFitBoundKind, BezierFitErrorMetric as HBezierFitErrorMetric,
     BezierLineContactKind as HBezierLineContactKind,
     BezierLineContactRelation as HBezierLineContactRelation,
+    BezierLineFitRelation as HBezierLineFitRelation,
+    BezierLineImageFitRelation as HBezierLineImageFitRelation,
     BezierMonotoneGraphOrder as HBezierMonotoneGraphOrder,
+    BezierOffsetCandidate2 as HBezierOffsetCandidate2,
+    BezierOffsetRisk as HBezierOffsetRisk,
     BezierPointFitRelation as HBezierPointFitRelation,
-    BezierPointImageFitRelation as HBezierPointImageFitRelation, BooleanOp as HBooleanOp,
+    BezierPointImageFitRelation as HBezierPointImageFitRelation,
+    BezierSimplificationBoundKind as HBezierSimplificationBoundKind,
+    BezierSimplificationErrorMetric as HBezierSimplificationErrorMetric, BooleanOp as HBooleanOp,
     BulgeVertex2 as HBulgeVertex2, CircularArc2 as HCircularArc2,
     Classification as HClassification, Contour2 as HContour2, ContourOperand as HContourOperand,
     ContourPointLocation as HContourPointLocation, ContourSplitMap as HContourSplitMap,
@@ -815,6 +822,21 @@ pub fn h_assert_contour_region_classification(reader: &mut ByteReader<'_>) {
         );
     }
 
+    let area_report = match region.filled_area_report(&h_policy()).unwrap() {
+        HClassification::Decided(report) => report,
+        HClassification::Uncertain(reason) => {
+            panic!("rectangle region area report should be decided: {reason:?}")
+        }
+    };
+    assert!(area_report.is_complete());
+    assert_eq!(
+        HClassification::Decided(area_report.filled_area.clone()),
+        region.filled_area(&h_policy()).unwrap()
+    );
+    assert_eq!(area_report.material_contour_count, 1);
+    assert_eq!(area_report.hole_contour_count, 1);
+    assert!(area_report.unsupported_contours.is_empty());
+
     assert_eq!(
         contour.classify_point(
             &h_point(
@@ -825,6 +847,63 @@ pub fn h_assert_contour_region_classification(reader: &mut ByteReader<'_>) {
         ),
         HClassification::Decided(HContourPointLocation::Inside)
     );
+
+    let projection_options = hypercurve::FiniteProjectionOptions::try_new(0.01).unwrap();
+    let ring = contour.project_to_finite_ring(&projection_options).unwrap();
+    assert!(ring.is_closed());
+    assert_eq!(ring.certificate().source_segment_count(), contour.len());
+    assert_eq!(
+        ring.certificate().emitted_point_count(),
+        ring.points().len()
+    );
+    assert_eq!(ring.certificate().line_segment_count(), contour.len());
+    assert_eq!(ring.certificate().arc_segment_count(), 0);
+    assert_eq!(ring.certificate().emitted_arc_sample_count(), 0);
+    assert!(ring.points().first() == ring.points().last());
+
+    let projected_region = region
+        .project_to_finite_region(&projection_options)
+        .unwrap();
+    assert_eq!(projected_region.material_rings().len(), 1);
+    assert_eq!(projected_region.hole_rings().len(), 1);
+    assert_eq!(projected_region.certificate().material_ring_count(), 1);
+    assert_eq!(projected_region.certificate().hole_ring_count(), 1);
+    assert_eq!(projected_region.certificate().source_segment_count(), 8);
+    assert_eq!(projected_region.certificate().line_segment_count(), 8);
+    assert_eq!(projected_region.certificate().arc_segment_count(), 0);
+    assert_eq!(
+        projected_region.certificate().emitted_point_count(),
+        projected_region
+            .material_rings()
+            .iter()
+            .chain(projected_region.hole_rings())
+            .map(|ring| ring.points().len())
+            .sum::<usize>()
+    );
+
+    let imported = HCurveString2::import_finite_line_string(&[
+        [outer.xmin, outer.ymin],
+        [outer.xmax, outer.ymin],
+        [outer.xmax, outer.ymin],
+        [outer.xmax, outer.ymax],
+    ])
+    .unwrap();
+    assert_eq!(imported.curve_string().len(), 2);
+    assert_eq!(imported.certificate().input_point_count(), 4);
+    assert_eq!(imported.certificate().skipped_duplicate_edge_count(), 1);
+    assert_eq!(imported.certificate().output_segment_count(), 2);
+
+    let imported_ring = HContour2::import_finite_ring(&[
+        [outer.xmin, outer.ymin],
+        [outer.xmax, outer.ymin],
+        [outer.xmax, outer.ymax],
+        [outer.xmin, outer.ymax],
+        [outer.xmin, outer.ymin],
+    ])
+    .unwrap();
+    assert_eq!(imported_ring.contour().len(), 4);
+    assert!(imported_ring.certificate().repeated_closing_point());
+    assert!(imported_ring.certificate().is_closed());
 }
 
 /// Fuzz native region booleans and prepared/ordinary consistency.
@@ -1865,6 +1944,65 @@ fn h_assert_bezier_conic_relations(reader: &mut ByteReader<'_>) {
         }
     }
 
+    let shared_endpoint_first = HQuadraticBezier2::new(
+        h_point_i32(0, 0),
+        h_point_i32(1, 2 * lift),
+        h_point_i32(2, 0),
+    );
+    let shared_endpoint_second = HQuadraticBezier2::new(
+        h_point_i32(0, 0),
+        h_point_i32(1, 0),
+        h_point_i32(2, 4 * lift),
+    );
+    let midpoint = HPoint2::new(HReal::one(), HReal::from(lift));
+    match shared_endpoint_first.relation_to_quadratic(&shared_endpoint_second, &policy) {
+        HClassification::Decided(HBezierCurveRelation::IntersectionPoints { points }) => {
+            assert!(points.iter().any(|point| point.point() == &h_point_i32(0, 0)));
+            assert!(points.iter().any(|point| point.point() == &midpoint));
+            for point in points {
+                h_assert_point_finite(point.point());
+            }
+        }
+        relation => {
+            panic!("shared endpoint hid generated quadratic midpoint crossing: {relation:?}");
+        }
+    }
+    let rational_shared_endpoint_first = HRationalQuadraticBezier2::try_new(
+        h_point_i32(0, 0),
+        h_point_i32(1, 2 * lift),
+        h_point_i32(2, 0),
+        HReal::one(),
+        HReal::from(2_i8),
+        HReal::one(),
+    )
+    .unwrap();
+    let rational_shared_endpoint_second = HRationalQuadraticBezier2::try_new(
+        h_point_i32(0, 0),
+        h_point_i32(1, 0),
+        h_point_i32(2, 8 * lift),
+        HReal::one(),
+        HReal::from(2_i8),
+        HReal::one(),
+    )
+    .unwrap();
+    let rational_midpoint = HPoint2::new(HReal::one(), h_ratio(4 * lift, 3));
+    match rational_shared_endpoint_first
+        .relation_to_rational_quadratic(&rational_shared_endpoint_second, &policy)
+    {
+        HClassification::Decided(HBezierCurveRelation::IntersectionPoints { points }) => {
+            assert!(points.iter().any(|point| point.point() == &h_point_i32(0, 0)));
+            assert!(points
+                .iter()
+                .any(|point| point.point() == &rational_midpoint));
+            for point in points {
+                h_assert_point_finite(point.point());
+            }
+        }
+        relation => {
+            panic!("shared endpoint hid generated rational midpoint crossing: {relation:?}");
+        }
+    }
+
     let graph_gap = HRationalQuadraticBezier2::try_new(
         h_point_i32(0, 1),
         h_point_i32(256, lift + 1),
@@ -2209,10 +2347,29 @@ fn h_assert_bezier_point_image_fits(reader: &mut ByteReader<'_>) {
             HClassification::Decided(HBezierPointImageFitRelation::Fit(fit)) => {
                 assert_eq!(fit.point(), &point);
                 assert_eq!(fit.control_point_count(), count);
+                assert_eq!(fit.fit_certificate().source_start(), 0);
+                assert_eq!(fit.fit_certificate().source_end(), count);
+                assert_eq!(fit.fit_certificate().fit_error_bound(), &HReal::zero());
+                assert_eq!(fit.fit_certificate().source_flattening_error(), None);
+                assert_eq!(
+                    fit.fit_certificate().metric(),
+                    HBezierFitErrorMetric::ExactEuclideanDistance
+                );
+                assert_eq!(
+                    fit.fit_certificate().bound_kind(),
+                    HBezierFitBoundKind::ProvenExact
+                );
             }
             relation => panic!("collapsed Bezier/conic did not certify point image: {relation:?}"),
         }
     }
+    let HClassification::Decided(preflight) = cubic.offset_preflight(&policy) else {
+        panic!("collapsed cubic offset preflight should be decided");
+    };
+    assert!(preflight
+        .risks()
+        .contains(&HBezierOffsetRisk::DegeneratePoint));
+    assert_eq!(preflight.construction_policy(), &policy);
 
     match quadratic.relation_to_rational_quadratic(&rational, &policy) {
         HClassification::Decided(HBezierCurveRelation::SameControlPolygon)
@@ -2229,6 +2386,12 @@ fn h_assert_bezier_point_image_fits(reader: &mut ByteReader<'_>) {
         HClassification::Decided(HBezierPointFitRelation::Fit(fit)) => {
             assert_eq!(fit.point(), &point);
             assert_eq!(fit.source_certificate(), polyline.certificate());
+            assert_eq!(fit.fit_certificate().source_end(), polyline.points().len());
+            assert_eq!(fit.fit_certificate().fit_error_bound(), &HReal::zero());
+            assert_eq!(
+                fit.fit_certificate().source_flattening_error(),
+                Some(polyline.certificate().max_error())
+            );
         }
         relation => panic!("collapsed certified polyline did not fit one point: {relation:?}"),
     }
@@ -2238,6 +2401,122 @@ fn h_assert_bezier_point_image_fits(reader: &mut ByteReader<'_>) {
         h_point_i32(0, 0),
         h_point_i32(2, 0),
     );
+    let HClassification::Decided(preflight) = line_curve.offset_preflight(&policy) else {
+        panic!("line-like quadratic offset preflight should be decided");
+    };
+    assert!(preflight.is_clear());
+    match line_curve.fit_exact_line_image(&policy).unwrap() {
+        HClassification::Decided(HBezierLineImageFitRelation::Fit(fit)) => {
+            let right_offset = fit.offset_right_exact(HReal::one()).unwrap();
+            assert_eq!(right_offset.control_point_count(), 3);
+            assert_eq!(right_offset.distance(), &HReal::from(-1_i8));
+            assert_eq!(right_offset.fit_certificate(), fit.fit_certificate());
+        }
+        relation => panic!("line-like quadratic image fit was not exact: {relation:?}"),
+    }
+    match line_curve
+        .offset_left_staged(HReal::one(), &policy)
+        .unwrap()
+    {
+        HClassification::Decided(candidate) => {
+            let HBezierOffsetCandidate2::ExactLineImage { preflight, .. } = &candidate else {
+                panic!("line-like quadratic staged offset was not exact: {candidate:?}");
+            };
+            assert!(preflight.is_clear());
+            assert_eq!(candidate.preflight(), preflight);
+            let Some(offset) = candidate.exact_line_image_offset() else {
+                unreachable!("matched exact line image");
+            };
+            assert_eq!(offset.control_point_count(), 3);
+            assert_eq!(offset.distance(), &HReal::one());
+            assert_eq!(candidate.distance(), &HReal::one());
+        }
+        relation => panic!("line-like quadratic staged offset was not exact: {relation:?}"),
+    }
+    match line_curve
+        .offset_right_staged(HReal::one(), &policy)
+        .unwrap()
+    {
+        HClassification::Decided(candidate) => {
+            let HBezierOffsetCandidate2::ExactLineImage { preflight, .. } = &candidate else {
+                panic!("line-like quadratic staged right offset was not exact: {candidate:?}");
+            };
+            assert!(preflight.is_clear());
+            assert_eq!(candidate.preflight(), preflight);
+            let Some(offset) = candidate.exact_line_image_offset() else {
+                unreachable!("matched exact line image");
+            };
+            assert_eq!(offset.control_point_count(), 3);
+            assert_eq!(offset.distance(), &HReal::from(-1_i8));
+            assert_eq!(candidate.distance(), &HReal::from(-1_i8));
+        }
+        relation => panic!("line-like quadratic staged right offset was not exact: {relation:?}"),
+    }
+    let rational_line = HRationalQuadraticBezier2::try_unit_end_weights(
+        h_point_i32(-2, 0),
+        h_point_i32(0, 0),
+        h_point_i32(2, 0),
+        HReal::from(2_i8),
+    )
+    .unwrap();
+    let HClassification::Decided(preflight) = rational_line.offset_preflight(&policy) else {
+        panic!("line-like rational conic offset preflight should be decided");
+    };
+    assert!(preflight.is_clear());
+    match rational_line
+        .offset_right_staged(HReal::one(), &policy)
+        .unwrap()
+    {
+        HClassification::Decided(candidate) => {
+            let HBezierOffsetCandidate2::ExactLineImage { preflight, .. } = &candidate else {
+                panic!("line-like rational staged right offset was not exact: {candidate:?}");
+            };
+            assert!(preflight.is_clear());
+            assert_eq!(candidate.preflight(), preflight);
+            let Some(offset) = candidate.exact_line_image_offset() else {
+                unreachable!("matched exact line image");
+            };
+            assert_eq!(offset.control_point_count(), 3);
+            assert_eq!(offset.distance(), &HReal::from(-1_i8));
+            assert_eq!(candidate.distance(), &HReal::from(-1_i8));
+        }
+        relation => panic!("line-like rational staged right offset was not exact: {relation:?}"),
+    }
+    let mixed_rational = HRationalQuadraticBezier2::try_unit_end_weights(
+        h_point_i32(-2, 0),
+        h_point_i32(0, 4),
+        h_point_i32(2, 0),
+        HReal::from(-1_i8),
+    )
+    .unwrap();
+    let HClassification::Decided(preflight) = mixed_rational.offset_preflight(&policy) else {
+        panic!("mixed-sign rational conic offset preflight should be decided");
+    };
+    assert!(preflight
+        .risks()
+        .contains(&HBezierOffsetRisk::ProjectiveDenominatorBoundary));
+    let collapsed_rational = HRationalQuadraticBezier2::try_unit_end_weights(
+        h_point_i32(3, 4),
+        h_point_i32(3, 4),
+        h_point_i32(3, 4),
+        HReal::from(2_i8),
+    )
+    .unwrap();
+    match collapsed_rational
+        .offset_left_staged(HReal::one(), &policy)
+        .unwrap()
+    {
+        HClassification::Decided(HBezierOffsetCandidate2::Unresolved {
+            preflight,
+            distance,
+        }) => {
+            assert!(preflight
+                .risks()
+                .contains(&HBezierOffsetRisk::DegeneratePoint));
+            assert_eq!(distance, HReal::one());
+        }
+        relation => panic!("collapsed rational staged offset lost preflight: {relation:?}"),
+    }
     let HClassification::Decided(line_polyline) = line_curve.flatten_certified(&options, &policy)
     else {
         panic!("line-like quadratic should flatten under generous fuzz options");
@@ -2248,6 +2527,34 @@ fn h_assert_bezier_point_image_fits(reader: &mut ByteReader<'_>) {
             panic!("line-like quadratic simplification became uncertain: {reason:?}");
         }
     };
+    let simplification = simplified_line
+        .simplification_certificate()
+        .expect("line-like simplification should carry a certificate");
+    assert_eq!(simplification.source_start(), 0);
+    assert_eq!(simplification.source_end(), line_polyline.points().len());
+    assert_eq!(
+        simplification.retained_vertex_count(),
+        simplified_line.points().len()
+    );
+    assert_eq!(
+        simplification.removed_vertex_count(),
+        line_polyline.points().len() - simplified_line.points().len()
+    );
+    assert_eq!(simplification.error_bound(), &HReal::zero());
+    assert_eq!(
+        simplification.source_flattening_error(),
+        line_polyline.certificate().max_error()
+    );
+    assert_eq!(simplification.source_flattening_max_depth(), options.max_depth());
+    assert_eq!(simplification.construction_policy(), &policy);
+    assert_eq!(
+        simplification.metric(),
+        HBezierSimplificationErrorMetric::ExactPolylineImageDistance
+    );
+    assert_eq!(
+        simplification.bound_kind(),
+        HBezierSimplificationBoundKind::ProvenExact
+    );
     match simplified_line
         .checked_offset_left(HReal::one(), &policy)
         .unwrap()
@@ -2258,6 +2565,42 @@ fn h_assert_bezier_point_image_fits(reader: &mut ByteReader<'_>) {
             assert_eq!(offset.distance(), &HReal::one());
         }
         relation => panic!("certified flattened line offset was not checked: {relation:?}"),
+    }
+    let right_preview = simplified_line.display_offset_right(HReal::one()).unwrap();
+    assert_eq!(
+        right_preview.segments().len(),
+        simplified_line.points().len() - 1
+    );
+    assert_eq!(right_preview.source_certificate(), simplified_line.certificate());
+    assert_eq!(right_preview.distance(), &HReal::from(-1_i8));
+    match simplified_line
+        .checked_offset_right(HReal::one(), &policy)
+        .unwrap()
+    {
+        HClassification::Decided(offset) => {
+            assert_eq!(offset.curve().segments().len(), 1);
+            assert_eq!(offset.source_certificate(), simplified_line.certificate());
+            assert_eq!(offset.distance(), &HReal::from(-1_i8));
+        }
+        relation => panic!("certified flattened right offset was not checked: {relation:?}"),
+    }
+    match simplified_line.fit_exact_line(&policy).unwrap() {
+        HClassification::Decided(HBezierLineFitRelation::Fit(fit)) => {
+            let offset = fit.offset_left_exact(HReal::one()).unwrap();
+            assert_eq!(offset.fit_certificate(), fit.fit_certificate());
+            assert_eq!(offset.source_certificate(), fit.source_certificate());
+            assert_eq!(offset.distance(), &HReal::one());
+            let right_offset = fit.offset_right_exact(HReal::one()).unwrap();
+            assert_eq!(right_offset.fit_certificate(), fit.fit_certificate());
+            assert_eq!(right_offset.source_certificate(), fit.source_certificate());
+            assert_eq!(right_offset.distance(), &HReal::from(-1_i8));
+            assert_eq!(
+                fit.fit_certificate().source_flattening_max_depth(),
+                Some(options.max_depth())
+            );
+            assert_eq!(fit.fit_certificate().construction_policy(), &policy);
+        }
+        relation => panic!("certified flattened line did not fit exactly: {relation:?}"),
     }
 
     let linear_cubic = HCubicBezier2::new(

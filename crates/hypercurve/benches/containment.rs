@@ -3,7 +3,8 @@ use std::time::Instant;
 
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, ContourPointLocation, CurvePolicy,
-    CurveResult, LineSeg2, LineSide, Point2, Real, Region2, RegionPointLocation,
+    CurveResult, CurveString2, FiniteProjectionOptions, LineSeg2, LineSide, Point2, Real, Region2,
+    RegionPointLocation,
 };
 
 fn s(value: i32) -> Real {
@@ -209,6 +210,130 @@ fn bench_sparse_region_single_hit(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
+fn bench_sparse_region_filled_area(iterations: u32) -> CurveResult<()> {
+    let region = sparse_region(120);
+    let policy = CurvePolicy::certified();
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+
+    for _ in 0..iterations {
+        match region.filled_area(&policy)? {
+            Classification::Decided(Some(area)) => {
+                checksum ^= format!("{area:?}").len();
+            }
+            other => panic!("sparse area benchmark expected exact filled area, got {other:?}"),
+        }
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "sparse_region_filled_area: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
+fn bench_sparse_region_filled_area_report(iterations: u32) -> CurveResult<()> {
+    let region = sparse_region(120);
+    let policy = CurvePolicy::certified();
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+
+    for _ in 0..iterations {
+        match region.filled_area_report(&policy)? {
+            Classification::Decided(report) if report.is_complete() => {
+                checksum ^= report.material_contour_count;
+                checksum ^= format!("{:?}", report.filled_area).len();
+            }
+            other => panic!("sparse area-report benchmark expected exact report, got {other:?}"),
+        }
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "sparse_region_filled_area_report: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
+fn bench_contour_finite_projection_certificate(iterations: u32) -> CurveResult<()> {
+    let contour = rectangle(0, 0, 100, 100);
+    let options = FiniteProjectionOptions::try_new(0.01)?;
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+
+    for _ in 0..iterations {
+        let projection = black_box(&contour).project_to_finite_ring(&options)?;
+        checksum ^= projection.certificate().source_segment_count();
+        checksum ^= projection.certificate().emitted_point_count();
+        checksum ^= projection.points().len();
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "contour_finite_projection_certificate: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
+fn bench_region_finite_projection_certificate(iterations: u32) -> CurveResult<()> {
+    let region = Region2::new(
+        vec![rectangle(0, 0, 100, 100)],
+        vec![rectangle(25, 25, 75, 75)],
+    );
+    let options = FiniteProjectionOptions::try_new(0.01)?;
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+
+    for _ in 0..iterations {
+        let projection = black_box(&region).project_to_finite_region(&options)?;
+        checksum ^= projection.certificate().material_ring_count();
+        checksum ^= projection.certificate().hole_ring_count();
+        checksum ^= projection.certificate().emitted_point_count();
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "region_finite_projection_certificate: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
+fn bench_finite_import_certificate(iterations: u32) -> CurveResult<()> {
+    let line_points = &[[0.0, 0.0], [25.0, 0.0], [25.0, 0.0], [50.0, 25.0]];
+    let ring_points = &[
+        [0.0, 0.0],
+        [100.0, 0.0],
+        [100.0, 100.0],
+        [0.0, 100.0],
+        [0.0, 0.0],
+    ];
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+
+    for _ in 0..iterations {
+        let line_import = CurveString2::import_finite_line_string(black_box(line_points))?;
+        checksum ^= line_import.certificate().input_point_count();
+        checksum ^= line_import.certificate().skipped_duplicate_edge_count();
+        checksum ^= line_import.certificate().output_segment_count();
+
+        let ring_import = Contour2::import_finite_ring(black_box(ring_points))?;
+        checksum ^= ring_import.certificate().retained_point_count();
+        checksum ^= usize::from(ring_import.certificate().repeated_closing_point());
+        checksum ^= ring_import.certificate().output_segment_count();
+    }
+
+    let elapsed = started.elapsed();
+    println!(
+        "finite_import_certificate: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / iterations
+    );
+    Ok(())
+}
+
 fn bench_prepared_sparse_region_single_hit(iterations: u32) -> CurveResult<()> {
     let region = sparse_region(120);
     let point = p(612, 2);
@@ -243,5 +368,10 @@ fn main() -> CurveResult<()> {
     bench_prepared_sparse_region_outside(10_000)?;
     bench_sparse_region_single_hit(10_000)?;
     bench_prepared_sparse_region_single_hit(10_000)?;
+    bench_sparse_region_filled_area(10_000)?;
+    bench_sparse_region_filled_area_report(10_000)?;
+    bench_contour_finite_projection_certificate(10_000)?;
+    bench_region_finite_projection_certificate(10_000)?;
+    bench_finite_import_certificate(10_000)?;
     Ok(())
 }
