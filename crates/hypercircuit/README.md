@@ -95,7 +95,7 @@ work.
 
 ```toml
 [dependencies]
-hypercircuit = "0.1.0"
+hypercircuit = "0.2.0"
 ```
 
 For sibling checkouts:
