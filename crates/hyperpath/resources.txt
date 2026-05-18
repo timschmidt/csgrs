@@ -356,7 +356,173 @@ and additive/subtractive toolpath planning where exact or precisely defined geom
     if hyperpath later supports scalar fields and variable bead/material deposition.
 
 
-5. Design implications for hyperpath
+5. PCB trace autorouting and EDA routing
+----------------------------------------
+
+53. C. Y. Lee, "An Algorithm for Path Connections and Its Applications", IRE Transactions on
+    Electronic Computers EC-10(3), 1961.
+    DOI: 10.1109/TEC.1961.5219222
+    Link: https://www.semanticscholar.org/paper/An-Algorithm-for-Path-Connections-and-Its-Applications-Lee/6b9cbd70349aac279cb69ffb6017ee6504a729b9
+    Why useful: foundational wave-propagation maze router for wiring diagrams, PCBs, and grid
+    routing. It guarantees a shortest path when one exists, but its memory/runtime costs explain
+    why practical autorouters layer heuristics and rip-up/reroute on top.
+
+54. Frank Rubin, "The Lee Path Connection Algorithm", IEEE Transactions on Computers C-23(9),
+    1974.
+    PDF: https://www.itseng.org/research/papers/topics/VLSI_Physical_Design_Automation/Routing/Global_Routing/A-star_Search/%5BRubin-1974%5D-IEEE_T_Comp.pdf
+    Why useful: clarifies Lee's path-cost assumptions and path-consistency restrictions. Relevant
+    for hyperpath if path costs include width, via count, impedance class, layer preference, and
+    length-matching penalties.
+
+55. David W. Hightower, "A solution to line-routing problems on the continuous plane",
+    DAC 1969.
+    DOI: 10.1145/800260.809014
+    Link: https://dl.acm.org/doi/10.1145/800260.809014
+    Metadata: https://cir.nii.ac.jp/crid/1360016867310862336
+    Why useful: line-search routing on the continuous plane rather than pure grids. This is a
+    natural reference for exact geometry because traces, keepouts, and pads are continuous
+    shapes before they are discretized for search.
+
+56. F. O. Hadlock, "A shortest path algorithm for grid graphs", Networks 7(4), 1977.
+    DOI: 10.1002/net.3230070404
+    Link: https://onlinelibrary.wiley.com/doi/10.1002/net.3230070404
+    Metadata: https://cir.nii.ac.jp/crid/1361418519827483904?lang=en
+    Why useful: detour-based shortest-path search for grid graphs, closely related to A*-style
+    routing. Good for exact integer/lattice routing kernels and for proving what a heuristic is
+    allowed to prune.
+
+57. Jiri Soukup, "Fast Maze Router", DAC 1978.
+    Link: https://janders.eecg.utoronto.ca/1387/readings/soukup.pdf
+    Metadata: https://dblp.org/rec/conf/dac/Soukup78
+    Why useful: combines direct line search with Lee-style expansion around obstacles. A useful
+    template for "try retained structural information first, then fall back to expensive search".
+
+58. Marco Tibaldi, "LAYMAT: A Lee-type router for two-layer wiring", Computers in Industry 1(4),
+    1980.
+    DOI: 10.1016/0166-3615(80)90020-2
+    Link: https://www.sciencedirect.com/science/article/pii/0166361580900202
+    Why useful: PCB-specific adaptation of Lee/Rubin routing for two-layer boards, emphasizing
+    that local shortest paths do not necessarily maximize completion of all nets.
+
+59. Tan Yan, Qiang Ma, and Martin D. F. Wong, "Advances in PCB Routing", IPSJ Transactions on
+    System LSI Design Methodology / Information and Media Technologies, 2012.
+    DOI: 10.11185/imt.7.535
+    Link: https://www.jstage.jst.go.jp/article/imt/7/2/7_535/_article
+    PDF: https://www.jstage.jst.go.jp/article/ipsjtsldm/5/0/5_0_14/_pdf/-char/en
+    Why useful: concise survey focused on escape routing and length-matching routing, two of the
+    hardest PCB-specific constraints beyond ordinary point-to-point routing.
+
+60. Tan Yan, "Algorithmic studies on PCB routing", Ph.D. dissertation, University of Illinois,
+    2011.
+    Link: https://www.ideals.illinois.edu/items/18457
+    Why useful: deeper companion to the survey above: escape routing, length-constrained routing,
+    layer assignment, BGA/PGA routing, and network-flow formulations.
+
+61. Tan Yan, Pei-Ci Wu, Qiang Ma, and Martin D. F. Wong, "On the escape routing of differential
+    pairs", ICCAD 2010.
+    DOI: 10.1109/ICCAD.2010.5654214
+    Link: https://experts.illinois.edu/en/publications/on-the-escape-routing-of-differential-pairs/
+    Why useful: differential pair routing couples two traces geometrically and electrically.
+    Exact path geometry matters for separation, skew, bend symmetry, and paired obstacle
+    avoidance.
+
+62. Tai-Hung Li et al., "Escape routing of differential pairs considering length matching",
+    ASP-DAC 2012.
+    DOI: 10.1109/ASPDAC.2012.6164934
+    Link: https://www.researchgate.net/publication/254019877_Escape_routing_of_differential_pairs_considering_length_matching
+    Why useful: combines differential-pair escape with length matching using min-cost median
+    points and network flow. Relevant to exact constraints over path length and paired traces.
+
+63. Mustafa Ozdal and Martin D. F. Wong, "A Length-Matching Routing Algorithm for
+    High-Performance Printed Circuit Boards", IEEE TCAD 25(12), 2006.
+    DOI: 10.1109/TCAD.2006.882584
+    Link: https://www.researchgate.net/publication/3225949_A_Length-Matching_Routing_Algorithm_for_High-Performance_Printed_Circuit_Boards
+    Why useful: length constraints are where a pure shortest-path router fails. Hyperpath's exact
+    curve/path length machinery could make this class of constraint auditable.
+
+64. Tsun-Ming Tseng et al., "Post-Route Alleviation of Dense Meander Segments in
+    High-Performance Printed Circuit Boards", ICCAD 2013.
+    DOI: 10.1109/ICCAD.2013.6691193
+    arXiv: https://arxiv.org/abs/1705.04983
+    Why useful: equal physical length is not always equal electrical delay because dense meanders
+    couple to themselves. Useful reminder that route geometry must eventually meet signal-
+    integrity models, not just topological DRC.
+
+65. Weijie Fang et al., "Obstacle-Aware Length-Matching Routing for Any-Direction Traces in
+    Printed Circuit Board", arXiv:2407.19195, 2024.
+    DOI: 10.48550/arXiv.2407.19195
+    Link: https://arxiv.org/abs/2407.19195
+    Why useful: modern any-direction length matching that preserves existing routes and handles
+    differential-pair decoupling issues. Directly relevant if hyperpath supports gridless or
+    arbitrary-angle routing.
+
+66. Sam Bayless, Holger H. Hoos, and Alan J. Hu, "Scalable, High-Quality, SAT-Based Multi-Layer
+    Escape Routing", ICCAD 2016.
+    DOI: 10.1145/2966986.2967072
+    Link: https://www.researchgate.net/publication/309268952_Scalable_high-quality_SAT-based_multi-layer_escape_routing
+    Why useful: formulates multi-layer BGA escape routing as SAT with network-flow constraints,
+    supporting vias and 45/90 degree routes. Valuable for exact feasibility proofs and "no solution
+    with fewer layers" certificates.
+
+67. "A Matching Based Escape Routing Algorithm with Variable Design Rules and Constraints",
+    IEEE/ACM routing literature, 2023-era work.
+    Link: https://scholars.lib.ntu.edu.tw/entities/publication/84cb474e-5460-4f5a-a1b7-208929c42bea
+    Why useful: addresses variable widths/spaces, necking, manual constraints, and differential
+    pair pad entry. This matches real PCB design rules more closely than uniform-grid toy routers.
+
+68. "A Genetic Algorithm-Based Optimization Method for Ordered Escape Routing in BGA PCBs Under
+    Non-Crossing and Single-Capacity Constraints", Applied Sciences 16(4), 2026.
+    Link: https://www.mdpi.com/2076-3417/16/4/2010
+    Why useful: recent ordered escape routing formulation over directed graphs with non-crossing
+    and capacity constraints. Useful as a heuristic comparison point, though exact/certified
+    methods should remain the baseline for correctness.
+
+69. "A Network Flow Approach for Simultaneous Escape Routing in PCB", HONET-ICT 2017.
+    DOI: 10.1109/HONET.2017.8102207
+    Link: https://www.researchgate.net/publication/320971533_A_network_flow_approach_for_simultaneous_escape_routing_in_PCB
+    Why useful: maps PCB pins, layers, and routing resources onto multi-flow network models.
+    Good bridge between geometry and combinatorial optimization.
+
+70. Jienan Chen et al., "GPCB Routing: Generative Pretrained Transformers-Based Printed Circuit
+    Board Routing Method", IEEE TCAD, 2024.
+    DOI: 10.1109/TCAD.2024.3486241
+    Link: https://ieeexplore.ieee.org/document/10734385/
+    Preprint PDF: https://umji.sjtu.edu.cn/~wkqian/papers/Chen_Tu_Wang_Zheng_Liu_Bai_He_Qian_GPCB_Routing_Generative_Pre-Trained_Transformers_Based_Printed_Circuit_Board_Routing_Method.pdf
+    Why useful: ML routing is worth tracking, but should be treated as a proposal generator.
+    Hyperpath-style exact geometry can verify and repair generated routes instead of trusting
+    learned output.
+
+71. FanoutNet: "A Neuralized PCB Fanout Automation Method Using Deep Reinforcement Learning",
+    AAAI 2023.
+    Link: https://ojs.aaai.org/index.php/AAAI/article/view/26030
+    PDF: https://ojs.aaai.org/index.php/AAAI/article/download/26030/25802
+    Why useful: fanout is a critical pre-routing stage for dense packages. Exact escape/fanout
+    geometry could be paired with learned ordering or resource-assignment heuristics.
+
+72. "Circuit Routing Using Monte Carlo Tree Search and Deep Neural Networks", arXiv:2006.13607.
+    Link: https://arxiv.org/abs/2006.13607
+    Why useful: models routing as sequential decision making. Useful for comparing search policies
+    while keeping exact DRC and topology checks outside the learner.
+
+73. FreeRouting.
+    Docs: https://freerouting.org/
+    GitHub: https://github.com/freerouting/freerouting
+    Why useful: practical open-source PCB autorouter using Specctra/Electra DSN and SES exchange.
+    It is a concrete interoperability target and a baseline for route quality and runtime.
+
+74. KiCad Specctra DSN / session support.
+    PCB editor manual: https://docs.kicad.org/9.0/ja/pcbnew/pcbnew.pdf
+    SPECCTRA_DB doxygen: https://docs.kicad.org/doxygen/classDSN_1_1SPECCTRA__DB.html
+    Why useful: KiCad exports Specctra DSN for third-party autorouters and imports session files.
+    Hyperpath could use DSN/SES as an initial PCB-routing interchange layer.
+
+75. FreeRouting user-interface docs for DSN/SES flow.
+    Link: https://freerouting.org/freerouting/manual/user-interface
+    Why useful: documents the round-trip file flow: DSN design input, SES session output. Useful
+    for testing hyperpath against existing board designs without building a complete EDA frontend.
+
+
+6. Design implications for hyperpath
 ------------------------------------
 
 - Build the first serious core around exact 2.5D regions: arrangements of lines and circular arcs,
@@ -381,4 +547,13 @@ and additive/subtractive toolpath planning where exact or precisely defined geom
   practical, but hyperpath can preserve more mathematical structure via hyperreal.
 - For additive paths, start with exact planar slicing/contours, then add continuous graph traversal
   and non-planar curved layers. Avoid baking STL tolerance assumptions into the core.
-
+- For PCB routing, separate candidate generation from verification. Exact clearance, keepout,
+  pad entry, annular-ring, copper-shape, and layer-transition predicates can certify or reject
+  routes proposed by maze routers, flow/SAT solvers, or learned policies.
+- Treat trace geometry as first-class geometry. A routed trace is a swept shape with width and
+  layer, not just a centerline; exact Minkowski/offset predicates are directly applicable.
+- Preserve board constraints as structured facts: net class, width/spacing, via technology,
+  impedance class, differential-pair coupling, length bounds, allowed layers, and manually fixed
+  routes should all participate in routing decisions.
+- Consider DSN/SES import/export early. It gives hyperpath a practical path into KiCad/FreeRouting
+  workflows while the internal exact geometry model matures.

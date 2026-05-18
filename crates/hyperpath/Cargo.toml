@@ -4,3 +4,14 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+hyperlimit = { path = "../hyperlimit", version = "0.2.0", default-features = false }
+hyperreal = { path = "../hyperreal", version = "0.11.1", default-features = false }
+hypersolve = { path = "../hypersolve", version = "0.1.0", default-features = false }
+
+[dev-dependencies]
+criterion = "0.5"
+proptest = "1.7.0"
+
+[[bench]]
+name = "path_predicates"
+harness = false
