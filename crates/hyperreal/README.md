@@ -3,199 +3,196 @@
   <img src="./doc/hyper.png" alt="Hyper, a clever mathematician" width="144" align="right">
 </h1>
 
-`hyperreal` provides exact rational arithmetic, symbolic real values, and lazy
-computable real approximation.
+`hyperreal` provides exact rational arithmetic, symbolic real values, lazy computable
+real approximation, and conservative structural facts for the Hyper ecosystem. It is
+the scalar layer used by the surrounding exact-aware geometry, solver, physics, circuit,
+routing, packing, voxel, and design-readiness crates.
+
+The crate is not a full computer algebra system, and it does not try to canonicalize
+every real expression eagerly. Its job is narrower: preserve enough exact, symbolic,
+and refinement-ready structure that higher layers can make certified decisions or
+report explicit uncertainty without quietly falling back to primitive floating point.
 
 ## Hyper Ecosystem
 
-`hyperreal` is the scalar substrate: exact rationals, symbolic constants,
-structural sign facts, and bounded approximation for higher Hyper crates.
+`hyperreal` is the scalar substrate. The rest of the Hyper stack should keep its own
+object-level facts, but use `hyperreal` values and certificates when scalar exactness
+matters.
 
-- [hyperreal](https://github.com/timschmidt/hyperreal): exact rational, symbolic, and computable
-  real arithmetic.
-- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate policy and certified
-  geometric decisions.
-- [hyperlattice](https://github.com/timschmidt/hyperlattice): small exact vector, matrix, and
-  transform algebra.
-- [hypercurve](https://github.com/timschmidt/hypercurve): planar curve, contour, region, and
-  boolean geometry.
-- [hypertri](https://github.com/timschmidt/hypertri): exact polygon triangulation and constrained
-  Delaunay topology.
-- [hypermesh](https://github.com/timschmidt/boolmesh): 3D mesh boolean experiments and the
-  future exact-aware mesh-topology layer.
-- [hypersolve](https://github.com/timschmidt/hypersolve): experimental exact-aware solver layer.
-- [hyperdrc](https://github.com/timschmidt/hyperdrc): PCB design-readiness checks over exact-aware
-  geometry adapters.
-- [hyperphysics](https://github.com/timschmidt/hyperphysics): placeholder physics-domain crate
-  for the exact geometry stack.
-- [csgrs](https://github.com/timschmidt/csgrs): constructive solid geometry and polygon boolean
-  engine used by HyperDRC and available as an interop target.
+Core layers:
 
-## Numeric Model
+- [hyperreal](https://github.com/timschmidt/hyperreal): exact rational, symbolic, and
+  computable real arithmetic.
+- [hyperlattice](https://github.com/timschmidt/hyperlattice): small exact vector,
+  matrix, transform, and shared-scale algebra.
+- [hyperlimit](https://github.com/timschmidt/hyperlimit): exact predicate policy,
+  escalation, and result provenance.
 
-`hyperreal` is built around three layers that deliberately keep exact and
-symbolic information available before approximation:
+Geometry and solver layers:
 
-- [`Rational`](src/rational/README.md): is the exact arithmetic base. It stores arbitrary-precision
-  numerator/denominator values and performs exact reduction, dyadic detection,
-  square extraction, shared-denominator dot products, and exact IEEE-754 import.
-- [`Computable`](src/computable/README.md): is the lazy approximation layer. It represents exact-real
-  expression graphs such as sums, products, inverses, roots, logs, trig kernels,
-  and shared constants. It approximates only when a caller asks for a binary
-  precision, then caches the result and conservative sign/magnitude facts.
-- [`Real`](src/real/README.md): is the public symbolic scalar. It stores an exact rational scale plus a
-  compact symbolic class and, when needed, a `Computable` certificate. Common
-  classes include exact one, powers/products of `pi` and `e`, selected square
-  roots, logarithms, trig forms, and factored constant products.
-- `RealStructuralFacts`: conservative public facts about sign, zero status,
-  magnitude, and exact-rational state.
-- `Simple`: a small Lisp-like expression parser, enabled by the optional
-  `simple` feature.
+- [hypercurve](https://github.com/timschmidt/hypercurve): planar curves, contours,
+  regions, offsets, and boolean-boundary work.
+- [hypertri](https://github.com/timschmidt/hypertri): exact polygon triangulation,
+  Delaunay, and constrained Delaunay topology.
+- [hypermesh](https://github.com/timschmidt/hypermesh): 3D mesh validation, topology,
+  and exact-aware boolean preflight.
+- [hypersolve](https://github.com/timschmidt/hypersolve): symbolic residuals,
+  solver preparation, and candidate certification.
 
-## Semantic Boundary and Structural Facts
+Domain and proposal layers:
 
-`hyperreal` is the scalar-fact owner for the stack. It should continue to expose
-only conservative facts about one value: sign, zero/nonzero status, exact
-rational availability, dyadic denominator class, symbolic class, magnitude bits,
-domain facts, and bounded-refinement capability.
+- [hyperpath](https://github.com/timschmidt/hyperpath): routing, toolpath, tangent,
+  clearance, and path-provenance carriers.
+- [hyperdrc](https://github.com/timschmidt/hyperdrc): PCB design-readiness checks and
+  manufacturing package evidence.
+- [hyperphysics](https://github.com/timschmidt/hyperphysics): exact-aware materials,
+  mass properties, contact, field, and simulation handoff reports.
+- [hypercircuit](https://github.com/timschmidt/hypercircuit): circuit MNA carriers,
+  residual replay, and coupled electrothermal reports.
+- [hyperparts](https://github.com/timschmidt/hyperparts): source-attributed part,
+  interface, process, and compatibility facts.
+- [hyperpack](https://github.com/timschmidt/hyperpack): exact-aware packing models and
+  feasibility replay.
+- [hypervoxel](https://github.com/timschmidt/hypervoxel): exact-aware voxel grid
+  frames, sparse-grid facts, and adapter manifests.
+- [hyperevolution](https://github.com/timschmidt/hyperevolution): exact-aware search,
+  fitness, archive, and replay-policy carriers.
 
-Future optimization metadata belongs here only when it is scalar-local and cheap
-to preserve opportunistically. Examples include denominator scale, square-factor
-state, known algebraic/transcendental class, cancellation hints attached to a
-single expression node, and cache provenance for a requested precision.
+## Typical Real-Number Problems
 
-Geometry facts do not belong here. Vector sparsity, affine-transform kind,
-predicate policy, ring topology, triangulation constraints, solver active sets,
-and manufacturing-domain metadata belong in `hyperlattice`, `hyperlimit`,
-`hypercurve`, `hypertri`, `hypersolve`, or the domain crate that discovered
-them. Those crates may use scalar facts to select faster exact algorithms, but
-topology-changing decisions must not be made from `f64` approximations.
+Most numerical programs choose between fixed-size floats, full rational arithmetic,
+symbolic algebra, or local epsilon rules.
 
-## Why Exact Reals?
+Floats are fast and hardware-friendly, but they round nearly every nontrivial value.
+That approximation becomes part of the value: `0.1` is not exactly one tenth, cancellation
+can manufacture near-zero signs, and equality answers a machine-representation question
+rather than a mathematical one. In geometry, routing, and constraint code, one wrong sign
+can move a point to the wrong side of a line, change a triangulation, or accept the wrong
+solver branch.
 
-Most numerical programs live between two useful but incomplete models:
-integers and floating-point numbers.
+Rationals give exact division, exact finite-float import, and exact determinant or
+dot-product results, but numerator and denominator growth can dominate runtime if every
+intermediate is fully canonicalized. Symbolic representations preserve more meaning, but
+they are incomplete unless the program becomes a full algebra system.
 
-Integers are exact and composable. Addition, multiplication, equality, and
-ordering have clear mathematical meaning, and arbitrary-precision integer
-libraries can grow as needed. But integer arithmetic cannot directly represent
-division, roots, `pi`, logarithms, rotations, or most geometric coordinates
-without adding another representation around it.
+`hyperreal` takes the middle path used by the Hyper stack: keep exact and symbolic
+structure alive, expose cheap conservative facts, refine only when a caller asks for a
+decision, and make lossy primitive-float export a named edge API rather than a hidden
+fallback.
 
-Rationals extend integers with exact division. They can represent values such
-as `1/10`, imported finite floats, and many determinant or dot-product results
-without rounding. Their cost is canonicalization: numerators and denominators
-grow, greatest-common-divisor reduction is not free, and naive repeated
-arithmetic can spend most of its time reducing intermediate fractions that
-later cancel.
+## Main Types
 
-Floats solve a different problem. They are fixed-size, fast, cache-friendly,
-and supported directly by hardware. They are excellent for simulation,
-graphics, statistics, and many approximation tasks. Their limitation is that
-they approximate almost every real value, and that approximation is part of the
-value. `0.1` is rounded, algebraic identities can fail after cancellation,
-near-zero signs can be artifacts of previous operations, and equality answers a
-machine-representation question rather than a mathematical one. In geometric
-or constraint code, one wrong sign can change topology: a point can move to the
-wrong side of a line, an intersection can appear or disappear, or a solver can
-choose the wrong branch.
+- [`Rational`](src/rational/README.md) is the exact arithmetic base. It stores
+  arbitrary-precision numerator/denominator values and supports exact reduction,
+  dyadic detection, square extraction, shared-denominator product sums, decimal/fraction
+  parsing, and exact finite IEEE-754 import.
+- [`Real`](src/real/README.md) is the public scalar for the stack. It combines an exact
+  rational scale with a compact symbolic/computable class so common values such as
+  exact ones, powers/products of `pi` and `e`, selected roots, logarithms, and trig forms
+  can expose facts before approximation.
+- [`Computable`](src/computable/README.md) is the lazy approximation layer. It stores an
+  exact-real expression graph and computes scaled integer approximations only at a
+  requested binary precision.
+- `RealStructuralFacts`, `RealDetailedFacts`, `CertifiedRealSign`,
+  `CertifiedRealOrdering`, and `CertifiedRealEquality` are conservative certificates
+  for sign, zero status, magnitude, rational state, primitive-float status, domain
+  status, and comparison outcomes.
+- `RealExactSetFacts` records useful exact-set summaries such as denominator class,
+  dyadic exponent class, and sign pattern for higher-level reducers.
+- `Simple`, enabled by the `simple` feature, is a small Lisp-like expression parser and
+  calculator surface for tests, examples, and configuration-facing formulas.
+- `Problem` is the crate-local error type used by fallible scalar operations.
 
-`hyperreal` takes a third route. It keeps exact and symbolic structure alive
-for as long as it is useful, then approximates only when a caller asks for a
-precision or a decision cannot be answered structurally. Exact rationals remain
-rationals. Dyadic values retain cheap denominator structure. Common constants
-and forms such as `pi`, `e`, selected roots, logarithms, and trig constants
-carry symbolic classes. Computable expression graphs provide lazy
-approximation when symbolic structure is no longer enough.
+## Precision Model
 
-In Yap's exact geometric computation sense, exactness is not eager
-canonicalization of every scalar expression. The crate preserves enough
-certified structure to answer later questions exactly, select exact reducers,
-or report explicit uncertainty. Primitive-float views are named lossy edge
-exports, not hidden predicate fallbacks.
+`hyperreal` treats precision as an API contract, not an implementation accident.
 
-This does not make real arithmetic free, and it is not a full computer algebra
-system. Some equality questions remain undecidable without more context, and
-some expressions eventually require refinement. The difference is that callers
-can ask better questions before rounding: known zero or nonzero, structural
-sign, exact-rational access, conservative magnitude, or bounded sign
-refinement. That is the niche this stack targets.
+- Finite `f32` and `f64` imports decode the exact IEEE-754 value. They do not reinterpret
+  a binary float as a decimal measurement.
+- Decimal and fraction strings parse through `Rational`, so text inputs such as
+  `12.125` and `97/8` remain exact.
+- `Real::structural_facts()` exposes conservative sign, zero, nonzero, magnitude,
+  exact-rational, symbolic, primitive-float, and domain facts without requiring a full
+  equality proof.
+- `refine_sign_until`, `sign_until`, and related certification APIs request bounded
+  refinement only when a caller needs more precision.
+- `PartialEq` on `Real` is structural. It is not a complete algebraic equality proof.
+  Use exact-rational extraction, structural certificates, or explicit refinement when
+  semantic equality is the question.
+- `Real::to_f32_lossy()` and `Real::to_f64_lossy()` are named edge exports for rendering,
+  IO, diagnostics, and third-party interop. They are not predicate, ordering, equality,
+  or topology decisions.
 
-Traditional robust-geometry stacks often choose between fast floating filters
-with exact fallbacks, full rational canonicalization, or domain-specific
-epsilon rules. `hyperreal` supports the Hyper stack by keeping those choices
-visible. It preserves exact rationals and recognizable symbolic forms, exposes
-cheap facts before expensive refinement, and makes lossy primitive-float export
-an explicit API edge rather than a hidden shortcut.
+In Yap's exact geometric computation sense, exactness here means preserving enough
+certified structure to decide later predicates exactly or report uncertainty. It does
+not mean expanding every scalar expression to its largest possible canonical form.
 
-## Avoiding Numerical Explosion
+## Performance Model
 
-`hyperreal` treats uncontrolled growth as a representation problem first, not
-as something to repair later with wider approximations. The stack uses several
-small controls together:
+Exact arithmetic is only useful in a systems stack if it is measured and kept under
+control. `hyperreal` uses several small performance strategies together:
 
-- Keep exact structure factored. Rationals, dyadics, named constants, roots,
-  logarithms, and selected trig forms stay in classified representations so
-  later identities can cancel them before any large numerator, denominator, or
-  expression graph is expanded.
-- Normalize at useful boundaries. Dyadic denominators reduce by shifts, exact
-  product sums share denominators, and matrix/vector reducers delay full
-  rational canonicalization until accumulated terms have had a chance to
-  combine.
-- Remove trivial work early. Canonical zeros, ones, identity constructors,
-  all-zero sums, single-term sums, exact endpoints, and known domain facts
-  avoid constructing larger intermediate values.
-- Use structural facts before scalar probing. Sign, zero, nonzero, magnitude,
-  exact-rational, dyadic, and symbolic-class facts can answer many branch
-  questions without inserting fresh approximation queries into hot loops.
-- Approximate only at the requested precision. `Computable` nodes use argument
-  reduction, prescaled kernels, cancellation-avoiding transforms, shared
-  constants, and precision-aware caches so refinement grows with the caller's
-  demand instead of with incidental expression size.
-- Measure growth directly. Dispatch traces and targeted benchmarks watch for
-  extra GCDs, rational temporaries, peak operand sizes, repeated approximation,
-  and regressions in reciprocal, inverse, division, and negative-power paths.
+- Preserve factored structure. Rationals, dyadics, constants, roots, logarithms, and
+  selected trig forms stay classified so later reducers can avoid expanding large
+  numerators, denominators, or expression graphs.
+- Normalize at useful boundaries. Dyadic denominators reduce by shifts, product sums can
+  share denominators, and matrix/vector callers can delay full rational canonicalization
+  until accumulated terms have had a chance to combine.
+- Remove trivial work early. Canonical zeros, ones, identity constructors, all-zero sums,
+  exact endpoints, and known domain facts avoid constructing larger expressions.
+- Prefer structural facts before scalar probing. Many hot branches need sign, zero,
+  nonzero, magnitude, dyadic, or exact-rational facts rather than a fresh approximation.
+- Approximate at requested precision. `Computable` nodes use argument reduction,
+  prescaled kernels, cancellation-aware transforms, shared constants, and precision-aware
+  caches so refinement grows with caller demand.
+- Keep hot kernels predictable. Borrowed arithmetic, shared-denominator/product-sum
+  reducers, cached constants, and capability-gated symbolic shortcuts are preferred over
+  speculative approximation in dense loops.
+- Measure regressions directly. Dispatch tracing and benchmark families track GCDs,
+  rational temporaries, peak operand sizes, repeated approximation, exact reducer use,
+  cache pressure, and stack-facing behavior for `hyperlattice` and `hyperlimit`.
 
-## Current State
+## Current Status
 
-The crate is active, benchmark-driven, and no longer just a direct port of
-computable real ideas. Current implementation work includes:
+Version `0.11.1` is active and benchmark-driven. Current implementation work includes:
 
-- exact rational and dyadic fast paths
-- dedicated identity constructors for common exact ones and zeros
-- cached internal constants for `pi`, `tau`, `e`, common square roots, and
-  common logarithms
-- symbolic classes for selected `pi`, `e`, `sqrt`, `ln`, `sin(pi*q)`, and
-  `tan(pi*q)` forms
-- exact trig, inverse-trig, logarithm, exponential, and inverse-hyperbolic
-  shortcuts where the input structure is recognizable
-- argument reduction and prescaled kernels for transcendental approximation
-- structural sign, zero, nonzero, magnitude, and exact-rational queries
-- bounded sign refinement through `sign_until` and `refine_sign_until`
-- certified equality/inequality through `certified_eq_until`
-- cached approximation and structural-fact propagation through computable nodes
-- borrowed arithmetic paths for `Rational` and `Real`
-- shared-denominator and signed-product-sum hooks used by matrix/vector callers
-  to delay rational canonicalization
+- exact rational and dyadic fast paths;
+- dedicated constructors and cached constants for common zeros, ones, `pi`, `tau`, `e`,
+  common square roots, and common logarithms;
+- symbolic classes for selected `pi`, `e`, `sqrt`, `ln`, `sin(pi*q)`, and `tan(pi*q)`
+  forms;
+- exact trig, inverse-trig, logarithm, exponential, and inverse-hyperbolic shortcuts
+  where the input structure is recognizable;
+- argument reduction and prescaled kernels for transcendental approximation;
+- structural sign, zero, nonzero, magnitude, exact-rational, exact-set, and domain
+  queries;
+- bounded sign refinement and certified equality/ordering/sign reports;
+- cached approximation and structural-fact propagation through computable nodes;
+- borrowed arithmetic paths for `Rational` and `Real`;
+- shared-denominator and signed-product-sum hooks used by matrix/vector callers;
 - `serde` support for expression structure, excluding transient caches and abort
-  signals
-- dispatch tracing and targeted benchmark suites for scalar, approximation,
-  symbolic, adversarial, and stack-facing regressions
+  signals;
+- dispatch tracing and targeted benchmark suites for scalar, approximation, symbolic,
+  adversarial, and stack-facing regressions;
 - source-level READMEs for `Rational`, `Real`, and `Computable`, plus
-  `structural_facts.txt` for planned and implemented fact propagation
+  `structural_facts.txt` for planned and implemented fact propagation.
+
+Known limits: some equality questions remain undecidable without more context, and some
+symbolic expressions eventually require refinement. Higher crates should preserve
+object-level facts rather than asking the scalar layer to infer geometry or topology.
 
 ## Installation
 
 ```toml
 [dependencies]
-hyperreal = "0.10.6"
+hyperreal = "0.11.1"
 ```
 
 With the `Simple` parser and calculator binary:
 
 ```toml
 [dependencies]
-hyperreal = { version = "0.10.6", features = ["simple"] }
+hyperreal = { version = "0.11.1", features = ["simple"] }
 ```
 
 Feature flags:
@@ -203,14 +200,17 @@ Feature flags:
 | Feature | Default | Purpose |
 | --- | --- | --- |
 | `simple` | no | Enables `Simple` and the package calculator binary. |
+| `cached-f32-approx` | no | Caches selected `f32` approximation paths. |
+| `cached-f64-approx` | no | Caches selected `f64` approximation paths. |
+| `dispatch-trace` | no | Records scalar dispatch and rational-growth counters. |
 
 ## Examples
 
 ### Exact Rationals
 
-`Rational` is the exact base layer. It is useful for imported measurements,
-test fixtures, small coefficients, and any value that should not become binary
-floating-point noise before the rest of the stack sees it.
+`Rational` is useful for measurements, fixtures, coefficients, and imported finite
+values that must not become binary floating-point noise before the rest of the stack
+sees them.
 
 ```rust
 use hyperreal::Rational;
@@ -221,20 +221,18 @@ let b = Rational::fraction(9, 10).unwrap();
 
 assert_eq!(a + b, Rational::fraction(79, 40).unwrap());
 
-// Finite floats import by exact IEEE-754 decoding, not by decimal rounding.
 let half = Rational::try_from(0.5_f64).unwrap();
 assert_eq!(half, Rational::fraction(1, 2).unwrap());
 
-// Decimal and fraction strings parse into exact rationals.
 let decimal: Rational = "12.125".parse().unwrap();
 let fraction: Rational = "97/8".parse().unwrap();
 assert_eq!(decimal, fraction);
 ```
 
-### Symbolic Reals
+### Symbolic Reals And Facts
 
-`Real` keeps a rational scale plus a symbolic/computable class. That lets common
-forms simplify or expose facts before approximation is needed.
+`Real` keeps a rational scale plus symbolic or computable structure. Recognizable forms
+can expose facts before a caller asks for a high-precision approximation.
 
 ```rust
 use hyperreal::{Rational, Real, RealSign, ZeroKnowledge};
@@ -243,77 +241,39 @@ let x = Real::new(Rational::new(2)).sqrt().unwrap();
 let y = Real::new(Rational::new(3)).sqrt().unwrap();
 let z = x * y;
 
-let approx: f64 = z.into();
+let approx = z.to_f64_lossy().unwrap();
 assert!(approx > 2.44 && approx < 2.45);
 
 let half = Real::new(Rational::fraction(1, 2).unwrap());
-let angle = half * Real::pi();
-let cosine = angle.cos().unwrap();
-
-// Recognizable symbolic/trig forms can answer facts without a full equality
-// proof or high-precision decimal expansion.
+let cosine = (half * Real::pi()).cos().unwrap();
 let facts = cosine.structural_facts();
+
 assert_eq!(facts.zero, ZeroKnowledge::Zero);
 assert_eq!(cosine.refine_sign_until(-32), Some(RealSign::Zero));
 ```
 
 ### Computable Approximation
 
-`Computable` is the lazy approximation layer. It stores an expression graph and
-only computes a scaled integer approximation when a precision is requested.
+`Computable` stores an expression graph and only computes a scaled integer
+approximation when a precision is requested.
 
 ```rust
 use hyperreal::{Computable, Rational, RealSign};
 
 let x = Computable::rational(Rational::fraction(7, 5).unwrap()).sin();
 let scaled = x.approx(-40);
-
 assert_ne!(scaled, 0.into());
 
-// Sign refinement asks for only enough precision to decide the sign down to a
-// requested floor. The result may be `None` for unresolved or truly difficult
-// cases, so callers can decide whether to refine further or use a fallback.
 let near_pi = Computable::pi().add(Computable::rational(
     Rational::fraction(-22, 7).unwrap(),
 ));
 assert_eq!(near_pi.sign_until(-8), Some(RealSign::Positive));
 ```
 
-### Structural Facts
+### Stack-Facing Decisions
 
-Structural facts are conservative certificates. They are designed for filters,
-predicates, and higher-level kernels that want to avoid approximation unless a
-decision actually requires it.
-
-```rust
-use hyperreal::{Rational, Real, RealSign, ZeroKnowledge};
-
-let value = Real::new(Rational::new(2)).sqrt().unwrap();
-let facts = value.structural_facts();
-
-assert_eq!(facts.sign, Some(RealSign::Positive));
-assert_eq!(facts.zero, ZeroKnowledge::NonZero);
-assert!(!facts.exact_rational);
-assert_eq!(value.refine_sign_until(-64), Some(RealSign::Positive));
-
-let exact = Real::new(Rational::fraction(9, 18).unwrap());
-let exact_facts = exact.structural_facts();
-
-assert_eq!(exact.exact_rational(), Some(Rational::fraction(1, 2).unwrap()));
-assert_eq!(exact_facts.sign, Some(RealSign::Positive));
-assert_eq!(exact_facts.zero, ZeroKnowledge::NonZero);
-assert!(exact_facts.exact_rational);
-```
-
-Facts are conservative. Missing sign or magnitude information means the fact
-was not proven cheaply.
-
-### Stack-Facing Exact Decisions
-
-The surrounding geometry stack uses `hyperreal` values as scalar certificates:
-try cheap structural facts first, then request bounded refinement when a decision
-needs a sign. Primitive-float approximation is reserved for named rendering, IO,
-and interop exports, not for core predicate branches.
+Higher crates should ask for cheap facts first, then request bounded refinement only
+when a decision needs a sign.
 
 ```rust
 use hyperreal::{Rational, Real, RealSign};
@@ -332,28 +292,9 @@ let offset = Real::pi() - Real::new(Rational::fraction(22, 7).unwrap());
 assert_eq!(classify_positive(&offset), Some(true));
 ```
 
-This pattern is the intended handoff to `hyperlattice` and `hyperlimit`: cheap
-facts route the common case, exact refinement remains available for hard
-predicate boundaries, and lossy approximation stays outside topology decisions.
-
 ### Simple Expressions
 
 Requires the `simple` feature.
-
-```rust
-use hyperreal::Simple;
-
-let expr: Simple = "(* (+ pi pi) (sin (/ 1 5)))".parse().unwrap();
-let value = expr.evaluate(&Default::default()).unwrap();
-
-let _: f64 = value.into();
-```
-
-`Simple` supports arithmetic, roots, powers, logs, exponentials, trig, inverse
-trig, inverse hyperbolic functions, integers, decimals, fractions, `pi`, and
-`e`.
-
-It can also be useful for small configuration- or test-facing formulas:
 
 ```rust
 use hyperreal::{Rational, Simple};
@@ -364,83 +305,39 @@ let value = expr.evaluate(&Default::default()).unwrap();
 assert_eq!(value.exact_rational(), Some(Rational::fraction(7, 8).unwrap()));
 ```
 
+`Simple` supports arithmetic, roots, powers, logs, exponentials, trig, inverse trig,
+inverse hyperbolic functions, integers, decimals, fractions, `pi`, and `e`.
+
 ## Conversions
 
 Supported conversions include:
 
-- integer types to `Rational` and `Real`
-- finite `f32`/`f64` to `Rational` and `Real` by exact IEEE-754 decoding
-- `Real` to `f32`/`f64` by approximation
-- `Real::to_f32_lossy()` and `Real::to_f64_lossy()` for borrowed primitive
-  exports used by rendering, IO, diagnostics, and third-party-library interop
-- `Real::to_f64_approx()` remains as a compatibility spelling, but new edge
-  APIs should prefer the `*_lossy` names
+- integer types to `Rational` and `Real`;
+- finite `f32`/`f64` to `Rational` and `Real` by exact IEEE-754 decoding;
+- `Real` to `f32`/`f64` by approximation;
+- `Real::to_f32_lossy()` and `Real::to_f64_lossy()` for borrowed primitive exports;
+- `Real::to_f64_approx()` as a compatibility spelling for older callers.
 
-Float import rejects `NaN` and infinities. Borrowed lossy export returns `None`
-when no finite primitive-float approximation can be produced. These exports are
-not certified sign, ordering, equality, or topology predicates.
+Float import rejects `NaN` and infinities. Borrowed lossy export returns `None` when no
+finite primitive-float approximation can be produced. Scientific notation is not a
+supported exact text format. `-0.0` imports as exact rational zero, so IEEE signed-zero
+information is not preserved.
 
-Finite decimal and fraction strings parse losslessly through `Rational`; the
-parser also accepts leading `+` signs and digit separators where the rational
-parser supports them. Scientific notation is not a supported exact text format.
-`-0.0` imports as exact rational zero, so IEEE signed-zero information is not
-preserved.
+## Documentation And Benchmarks
 
-`PartialEq` on `Real` is structural, not a full computer-algebra equality
-proof. Two expressions may print/debug similarly and approximate identically
-while still comparing unequal if they were built through different computable
-expression histories. Use structural facts, exact-rational extraction, or
-explicit approximation/refinement when semantic equivalence rather than
-representation identity is the question.
-
-## Performance Notes
-
-The implementation strategy is intentionally thin: preserve facts that are
-already known, reduce before approximating, and keep expensive scalar queries
-out of hot algebra loops. Performance shortcuts are documented next to the code
-that uses them, but most of them follow the same themes:
-
-- Preserve facts at the layer that discovered them. `hyperreal` keeps exact
-  rational, dyadic, symbolic, sign, zero, magnitude, and approximation-cache
-  facts; `hyperlattice` and higher layers keep object facts such as affine,
-  diagonal, triangular, point/direction, retained transform, known coordinate
-  zero, and shared determinant/cofactor structure.
-- Use exact and symbolic reductions before generic approximation. Exact
-  rationals, dyadics, named constants, roots, logarithms, selected trig forms,
-  identity values, endpoint cases, tiny-argument transforms, and reduced
-  trig/exponential arguments should simplify or classify before entering
-  broader computable kernels.
-- Approximate only when an explicit scalar-refinement request or output
-  precision requires it. Cache the resulting approximation plus conservative
-  sign or magnitude facts, and answer later structural queries from
-  certificates before refining again. Higher-level topology decisions still
-  route through exact predicate layers.
-- Keep hot kernels predictable. Prefer deterministic fast paths guarded by
-  cheap retained facts, borrowed arithmetic, shared-denominator/product-sum
-  reducers, and cached constants over speculative scalar probing or expression
-  graph cloning inside dense loops.
-- Split backend-sensitive loop shapes narrowly. Exact hyperreal and
-  hyperreal-rational paths may use capability-gated reducers or symbolic
-  shortcuts when benchmarks show a real win, while lossy primitive exports stay
-  outside the core scalar model.
-- Benchmark families, not isolated rows. A shortcut should improve the target
-  surface without making nearby functions or stack-facing `hyperlattice` and
-  `hyperlimit` paths erratic.
-
-Benchmark suites:
+Useful local checks:
 
 ```sh
-cargo bench --bench library_perf
+cargo fmt --check
+cargo test
+RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps
 cargo bench --bench numerical_micro
 cargo bench --bench borrowed_ops
 cargo bench --bench float_convert
 cargo bench --bench scalar_micro
+cargo bench --bench library_perf --features simple
 cargo bench --bench adversarial_transcendentals
 ```
-
-The generated benchmark summary is in [`benchmarks.md`](./benchmarks.md).
-Hand-maintained profiling anchors and regression goals for the `Rational`,
-`Real`, and `Computable` paths are in [`PERFORMANCE.md`](./PERFORMANCE.md).
 
 Run dispatch tracing separately:
 
@@ -448,36 +345,21 @@ Run dispatch tracing separately:
 cargo bench --bench dispatch_trace --features dispatch-trace
 ```
 
-The generated trace summary is in [`dispatch_trace.md`](./dispatch_trace.md).
-The public `dispatch_trace::TraceSnapshot` also exposes
-`correlation_summary()`, a coarse Yap-aligned report that groups raw trace
-labels into predicate, linear-algebra, object-fact, scalar-fact,
-exact-reducer, approximation, refinement, cache, and fallback pressure. Use it
-for cross-crate benchmark summaries; keep raw path labels for local hot-path
-diagnosis.
+The generated benchmark summary is in [`benchmarks.md`](./benchmarks.md). Profiling
+anchors and regression goals for `Rational`, `Real`, and `Computable` are in
+[`PERFORMANCE.md`](./PERFORMANCE.md). Dispatch summaries are written to
+[`dispatch_trace.md`](./dispatch_trace.md) when tracing is enabled.
 
-## Development
-
-Common checks:
-
-```sh
-cargo fmt --check
-cargo test
-cargo bench --bench numerical_micro
-```
-
-When adding a shortcut, add a focused correctness test and a benchmark row for
-the smallest affected surface. Keep the shortcut only if it improves the target
-without regressing broader `hyperlattice` or `hyperlimit` benchmarks.
+When adding a shortcut, add a focused correctness test and a benchmark row for the
+smallest affected surface. Keep the shortcut only if it improves the target without
+regressing broader stack-facing paths.
 
 ## Provenance and Acknowledgements
 
-`hyperreal` descends from the
-[`realistic`](https://github.com/tialaramex/realistic/) project and continues
-that project's interest in practical computable real arithmetic.
-
-Special thanks to [siefkenj](https://github.com/siefkenj), whose contributions
-improved realistic and hyperreal.
+`hyperreal` descends from the [`realistic`](https://github.com/tialaramex/realistic/)
+project and continues that project's interest in practical computable real arithmetic.
+Special thanks to [siefkenj](https://github.com/siefkenj), whose contributions improved
+realistic and hyperreal.
 
 ## References
 
