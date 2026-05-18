@@ -21,8 +21,13 @@ f64-interop = []
 serde = ["dep:serde"]
 
 [dependencies]
+# Hyper ecosystem dependencies: keep the crate-official release references and
+# the commented workspace references below. Switch to the workspace form for
+# local development, then switch back to crates.io versions before publishing.
 hyperreal = { version = "0.12.0" }
 hyperlimit = { version = "0.3.0", default-features = false, features = ["std"] }
+# hyperreal = { path = "../hyperreal" }
+# hyperlimit = { path = "../hyperlimit", default-features = false, features = ["std"] }
 serde = { version = "1.0.228", features = ["derive"], optional = true }
 
 [dev-dependencies]

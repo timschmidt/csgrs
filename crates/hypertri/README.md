@@ -1,4 +1,7 @@
-# hypertri
+<h1>
+  hypertri
+  <img src="./doc/hypertri.png" alt="hypertri logo" width="144" align="right">
+</h1>
 
 `hypertri` owns exact-aware triangulation for the Hyper geometry stack. It provides
 earcut-style polygon triangulation, incremental Delaunay and constrained Delaunay
