@@ -1,0 +1,384 @@
+Hyperpath resources: exact toolpathing, precise curves, and robust CAM geometry
+Curated: 2026-05-18
+
+Context for this workspace
+--------------------------
+The hyper geometry stack is unusual in ways that should shape hyperpath:
+
+- Infinite / exact scalar arithmetic is available through hyperreal.
+- Exact geometric predicates and structural predicate dispatch are available through hyperlimit.
+- The stack already values retained structure, cached facts, and fast exact decisions before
+  falling back to more expensive refinement.
+- Toolpathing should preserve exact geometry as long as possible: line segments, circular arcs,
+  algebraic curve facts, offsets, intersections, containment, and graph topology should not be
+  flattened to tolerance-polylines until a machine/export boundary explicitly requires it.
+
+The resources below are selected for exactness, robust predicates, offset/arrangement algorithms,
+and additive/subtractive toolpath planning where exact or precisely defined geometry can matter.
+
+
+1. Exact geometry and robust predicate foundations
+-------------------------------------------------
+
+1. Chee-Keng Yap, "Towards Exact Geometric Computation", Computational Geometry 7(1-2), 1997.
+   DOI: 10.1016/0925-7721(95)00040-2
+   Link: https://www.sciencedirect.com/science/article/pii/0925772195000402
+   Why useful: the core argument for exact computation as the right answer to geometric
+   nonrobustness. This matches hyperreal/hyperlimit's design: exact predicates, explicit
+   uncertainty, and no hidden epsilon topology.
+
+2. Chee-Keng Yap, "Robust Geometric Computation", Handbook of Discrete and Computational Geometry.
+   Link: https://cs.nyu.edu/~exact/doc/handbook03.pdf
+   Why useful: compact taxonomy of geometric nonrobustness and exact/filtered approaches.
+   Good framing for hyperpath's documentation.
+
+3. Jonathan Richard Shewchuk, "Adaptive Precision Floating-Point Arithmetic and Fast Robust
+   Geometric Predicates", Discrete & Computational Geometry 18, 1997.
+   DOI: 10.1007/PL00009321
+   Project page: https://www.cs.cmu.edu/~quake/robust.html
+   PDF: https://people.eecs.berkeley.edu/~jrs/papers/robust-predicates.pdf
+   Why useful: the standard adaptive predicate/filter reference. Even if hyperpath leans more
+   on exact hyperreal values, the performance lesson is essential: decide cheaply when the
+   certificate is clear; escalate only on hard cases.
+
+4. Steven Fortune and Christopher J. Van Wyk, "Efficient Exact Arithmetic for Computational
+   Geometry", SoCG 1993.
+   DOI: 10.1145/160985.161015
+   Link: https://dl.acm.org/doi/10.1145/160985.161015
+   Metadata: https://cir.nii.ac.jp/crid/1363388844985999104
+   Why useful: early exact-arithmetic performance work. Relevant to hyperpath's need to avoid
+   generic big-number paths when retained structure can answer the predicate.
+
+5. Jean-Daniel Boissonnat and Franco P. Preparata, "Robust Plane Sweep for Intersecting Segments",
+   SIAM Journal on Computing 29(5), 2000.
+   DOI: 10.1137/S0097539797329373
+   Link: https://epubs.siam.org/doi/10.1137/S0097539797329373
+   PDF: https://cs.brown.edu/research/pubs/pdfs/2000/Boissonnat-2000-RPS.pdf
+   Why useful: exact-computation treatment of Bentley-Ottmann-style sweeps. Directly relevant to
+   line/arc arrangements, offset loop cleanup, and curve intersection event queues.
+
+6. Andreas Fabri and Sylvain Pion, CGAL "The Exact Computation Paradigm".
+   Link: https://www.cgal.org/exact.html
+   Why useful: practical implementation notes for combining speed with arbitrary precision and
+   exact predicates at library scale. A useful comparison point for hyper's exact-but-fast design.
+
+7. CGAL Kernel documentation: predicates, constructions, and exact kernels.
+   Predicates/constructions: https://doc.cgal.org/Manual/3.1/doc_html/cgal_manual/Kernel_d/Chapter_predicates_constructions_d.html
+   Kernel representations: https://doc.cgal.org/Manual/3.1/doc_html/cgal_manual/Kernel_23/Chapter_kernel_representation.html
+   Why useful: separates exact predicates from exact constructions. Hyperpath should make this
+   distinction explicit for imported CAD, constructed offsets, and exported controller moves.
+
+8. Meyer and Pion, "FPG: A Code Generator for Fast and Certified Geometric Predicates", referenced
+   by modern robust-filter literature.
+   Related overview: https://link.springer.com/article/10.1007/s10543-023-00975-x
+   Why useful: formula-to-filter generation is relevant if hyperlimit later wants generated
+   exact predicates for special toolpath questions such as arc-line offset intersections.
+
+9. "Fast Floating-Point Filters for Robust Predicates", BIT Numerical Mathematics, 2023.
+   DOI: 10.1007/s10543-023-00975-x
+   Link: https://link.springer.com/article/10.1007/s10543-023-00975-x
+   Why useful: modern filter design and performance tradeoffs. Useful even if hyperpath keeps
+   exact scalars, because filters can be certified front-ends to exact fallback.
+
+10. "Fast Parallel Evaluation of Exact Geometric Predicates on GPUs", Computer-Aided Design 150,
+    2022.
+    DOI: 10.1016/j.cad.2022.103285
+    Link: https://www.sciencedirect.com/science/article/pii/S0010448522000616
+    Why useful: batch predicates with GPU/CPU filtering. Hyperpath may eventually batch millions
+    of segment/arc/triangle tests for slicing, rest machining, or voxel-to-path conversion.
+
+
+2. Exact arrangements, offsets, arcs, and curve primitives
+---------------------------------------------------------
+
+11. CGAL 2D Arrangements package.
+    Link: https://cgal.geometryfactory.com/CGAL/doc/master/Arrangement_on_surface_2/index.html
+    Why useful: arrangements are the natural substrate for exact overlay, offset-loop cleanup,
+    boolean regions, and toolpath graph construction. The circular-arc traits are especially
+    relevant because polygon dilation by a disk produces line segments and circular arcs.
+
+12. CGAL circular arcs and line segments in arrangements.
+    Older manual: https://doc.cgal.org/Manual/3.3/doc_html/cgal_manual/Arrangement_2/Chapter_main.html
+    Why useful: circular arcs require algebraic coordinates for exact intersections. This is
+    where hyperreal can be more expressive than integer-only offset libraries.
+
+13. CGAL Straight Skeleton and Polygon Offsetting.
+    Link: https://doc.cgal.org/latest/Straight_skeleton_2/index.html
+    Why useful: straight skeletons produce polygon offsets and event topology. The documentation
+    is useful for exact-construction warnings: near-collapsed offsets need exact constructions if
+    simple output polygons are required.
+
+14. "A CGAL Implementation of the Straight Skeleton of a Simple 2D Polygon with Holes".
+    PDF: https://www.cgal.org/Events/UserWorkshop/2004/straight_skeleton.pdf
+    Why useful: implementation-level notes on skeleton vertices, degeneracies, and offset regions.
+
+15. Rida T. Farouki, "Real-time CNC interpolators for Pythagorean-hodograph curves",
+    Computer Aided Geometric Design 13(7), 1996.
+    DOI: 10.1016/0167-8396(95)00047-X
+    Link: https://www.sciencedirect.com/science/article/pii/016783969500047X
+    Why useful: PH curves have polynomial arc length and rational offsets, making them unusually
+    compatible with exact toolpathing and controller interpolation.
+
+16. Rida T. Farouki, "Pythagorean-Hodograph Curves in Practical Use", SIAM, 2011.
+    DOI: 10.1137/1.9781611971668.ch1
+    Link: https://epubs.siam.org/doi/10.1137/1.9781611971668.ch1
+    Why useful: broad CAGD/manufacturing context for PH curves, offsets, and motion planning.
+
+17. Rida T. Farouki, Carlotta Giannelli, Duccio Mugnaini, Alessandra Sestini,
+    "Path planning with Pythagorean-hodograph curves for unmanned or autonomous vehicles", 2017.
+    DOI: 10.1177/0954410017690550
+    Link: https://www.researchgate.net/publication/313547604_Path_planning_with_Pythagorean-hodograph_curves_for_unmanned_or_autonomous_vehicles
+    Why useful: not CAM-specific, but useful for exact curve planning and avoiding approximate
+    constructions where exact PH methods exist.
+
+18. Millan Yeung and Desmond Walton, "Curve fitting with arc splines for NC toolpath generation",
+    Computer-Aided Design 26(11), 1994.
+    DOI: 10.1016/0010-4485(94)90099-X
+    Link: https://www.sciencedirect.com/science/article/pii/001044859490099X
+    Why useful: classic arc-spline compression for CNC. Hyperpath should prefer native G2/G3 arcs
+    over tiny line segments when exact geometry permits it.
+
+19. "An offset algorithm for polyline curves", Computer-Aided Design / CAD-related literature.
+    Link: https://www.sciencedirect.com/science/article/pii/S0166361506001060
+    Why useful: offsets for polylines containing line and arc segments, including bulge-style
+    arc representation. Directly relevant to DXF/G-code style line/arc paths.
+
+20. "Optimal Compression of a Polyline with Segments and Arcs", arXiv:1604.07476.
+    Link: https://arxiv.org/abs/1604.07476
+    Why useful: arc/segment compression after exact path construction or after importing dense
+    polylines. Useful as a postprocess while keeping exact error bounds.
+
+21. Ahn et al., "Curvature continuous offset approximation based on circle approximation using
+    quadratic Bezier biarcs", Computer-Aided Design 43, 2011.
+    PDF: https://www.cs.purdue.edu/cgvlab/www/resources/papers/Ahn-Computer_aided_Design-2011-Curvature_Contrinuous_Offset_Approximation_Based_on_Circle_Appro_Using_Quad_Bezier_Biarcs.pdf
+    Why useful: offset approximation with exact Hausdorff-style reasoning. Good for export
+    approximation when exact offset curves are not controller-representable.
+
+22. "Arrangement Computation for Planar Algebraic Curves", arXiv:1103.4697.
+    Link: https://arxiv.org/abs/1103.4697
+    Why useful: exact symbolic-numeric arrangements for algebraic curves. Relevant if hyperpath
+    grows beyond line/circle arcs into conics, Beziers, PH curves, or NURBS-derived algebraic
+    predicates.
+
+
+3. Subtractive manufacturing and CNC toolpath generation
+-------------------------------------------------------
+
+23. Byoung K. Choi and Sang C. Park, "A pair-wise offset algorithm for 2D point-sequence curve",
+    Computer-Aided Design 31(12), 1999.
+    DOI: 10.1016/S0010-4485(99)00060-3
+    Metadata: https://koasas.kaist.ac.kr/handle/10203/2966
+    PDF mirror: https://citeseerx.ist.psu.edu/document?doi=4c7da1da27ef86ca895b4c9c1cd73abfc8998298&repid=rep1&type=pdf
+    Why useful: pair-wise interference detection (PWID) removes local invalid loops before raw
+    offset construction. Very relevant to exact offset-loop cleanup.
+
+24. Sang C. Park and Byoung K. Choi, "Uncut free pocketing tool-paths generation using pair-wise
+    offset algorithm", Computer-Aided Design, 2001.
+    DOI: 10.1016/S0010-4485(00)00109-3
+    Link: https://www.sciencedirect.com/science/article/pii/S0010448500001093
+    Why useful: contour-parallel pocketing with uncut-region removal. Maps directly to 2.5D
+    clearing, rest machining, and multi-tool finishing.
+
+25. Park and Chung, "Mitered Offset Profile Machining", Computer-Aided Design 35, 2003.
+    PDF: https://www.sthu.org/misc/SKRW14/papers/ParkChung_2003_MiteredOffsetProfileMachining.pdf
+    Why useful: mitered offsets are important when the desired output is not round-offset geometry
+    but controller-friendly, sharp-corner-preserving profile motion.
+
+26. Martin Held, VRONI: Voronoi Diagrams of Points, Segments and Circular Arcs.
+    Link: https://www.cosy.sbg.ac.at/~held/projects/vroni/vroni.html
+    Why useful: production-proven Voronoi diagrams over points, segments, and circular arcs.
+    Especially relevant to pocket machining, medial axes, maximum inscribed circles, and offset
+    curves from mixed line/arc boundaries.
+
+27. Jacso, Matyasi, and Szalay, "Contour-parallel toolpath generation for pocket machining using
+    Voronoi diagram", 2015.
+    Link: https://www.researchgate.net/publication/325425342_Contour-parallel_toolpath_generation_for_pocket_machining_using_Voronoi_diagram
+    Why useful: Voronoi/wavefront approach for pockets with circular and linear boundaries.
+
+28. Hinduja, Mansor, and Owodunni, "Voronoi-diagram-based linking of contour-parallel tool paths
+    for two-and-a-half-dimensional closed-pocket machining", Proc. IMechE, 2010.
+    DOI: 10.1243/09544054JEM1596
+    Link: https://journals.sagepub.com/doi/10.1243/09544054JEM1596
+    Why useful: linking contour-parallel paths matters as much as generating offsets; exact graph
+    topology can minimize retracts and avoid invalid links.
+
+29. Xiong, Zhuang, and Ding, "Curvilinear tool path generation for pocket machining", Proc. IMechE,
+    2011.
+    DOI: 10.1177/2041297510394085
+    Link: https://journals.sagepub.com/doi/10.1177/2041297510394085
+    Why useful: level-set / moving-boundary perspective. Useful for comparing exact offset
+    approaches against implicit/field-based path generation.
+
+30. Held and Spielberger-related spiral pocket toolpath work; see "Spiral tool paths for high-speed
+    machining of 2D pockets with or without islands".
+    Link: https://www.sciencedirect.com/science/article/pii/S2288430017302452
+    Why useful: spiral paths reduce retracts and improve high-speed machining behavior. Good target
+    for exact medial-axis or Voronoi-based construction.
+
+31. "Geometric simulation of locally optimal tool paths in three-axis milling", arXiv:1209.4854.
+    Link: https://arxiv.org/abs/1209.4854
+    Why useful: 3-axis surface milling and local offsets/collision detection over triangulated
+    geometry. Relevant to future hypermesh/hyperpath integration.
+
+32. "Brief on tool path generation/optimization methods for multi-axis CNC machining",
+    arXiv:2212.07941.
+    Link: https://arxiv.org/abs/2212.07941
+    Why useful: survey entry point for multi-axis categories: tool orientation, end milling,
+    feedrate interpolation, and path optimization.
+
+33. "A survey of path planning and feedrate interpolation in computer numerical control",
+    arXiv:2303.01368.
+    Link: https://arxiv.org/abs/2303.01368
+    Why useful: overview for CNC interpolation and feed scheduling, including NURBS and smoothing.
+
+34. NURBS interpolation with smooth feedrate scheduling.
+    DOI: 10.1016/j.ijmachtools.2014.07.002
+    Link: https://www.sciencedirect.com/science/article/pii/S0890695514000960
+    Why useful: if hyperpath emits NURBS or spline-compatible controller paths, feed scheduling
+    must be considered alongside geometric accuracy.
+
+35. OpenCAMLib.
+    PyPI: https://pypi.org/project/opencamlib/
+    Docs PDF: https://opencamlib-test.readthedocs.io/_/downloads/en/fix-readthedocs/pdf/
+    Why useful: practical open-source reference for drop-cutter, push-cutter, and waterline
+    toolpaths. Not exact-first, but valuable for algorithm inventory and CNC concepts.
+
+36. Clipper2.
+    Overview: https://www.angusj.com/clipper2/Docs/Overview.htm
+    Offsetting: https://www.angusj.com/clipper2/Docs/Units/Clipper.Offset/Classes/ClipperOffset/_Body.htm
+    Robustness: https://angusj.com/clipper2/Docs/Robustness.htm
+    Why useful: integer-robust polygon clipping/offsetting baseline. Hyperpath can learn from
+    its fill rules, offset joins, and integer robustness while avoiding loss of exact arc/algebraic
+    structure.
+
+37. CavalierContours.
+    Parallel offset notes: https://deepwiki.com/jbuckmccready/cavalier_contours/2.1.4-parallel-offset
+    Why useful: practical line-and-arc polyline offsets. A useful implementation comparison for
+    preserving circular arcs rather than flattening to polylines.
+
+
+4. Additive manufacturing slicing and path planning
+--------------------------------------------------
+
+38. Andre Dolenc and Ismo Makela, "Slicing procedures for layered manufacturing techniques",
+    Computer-Aided Design 26(2), 1994.
+    DOI: 10.1016/0010-4485(94)90032-9
+    Link: https://www.sciencedirect.com/science/article/abs/pii/0010448594900329
+    Why useful: foundational slicing paper. Good baseline for where tolerance-based STL slicing
+    started and what exact CAD-native slicing can improve.
+
+39. Tata, Fadel, Bagchi, and Aziz, "Efficient slicing for layered manufacturing",
+    Rapid Prototyping Journal 4(4), 1998.
+    DOI: 10.1108/13552549810239003
+    Link: https://www.researchgate.net/publication/242341408_Efficient_slicing_for_layered_manufacturing
+    Why useful: adaptive slicing criteria such as cusp height, chord length, and volumetric error.
+    Hyperpath can express these as exact predicates plus explicit export tolerances.
+
+40. "An adaptive slicing and selective hatching strategy for layered manufacturing",
+    Journal of Materials Processing Technology, 1999.
+    DOI: 10.1016/S0924-0136(99)00043-6
+    Link: https://www.sciencedirect.com/science/article/pii/S0924013699000436
+    Why useful: direct slicing of NURBS CAD surfaces, avoiding STL where possible. Strong fit for
+    a precisely-defined-geometry stack.
+
+41. "Path Planning Strategies to Optimize Accuracy, Quality, Build Time and Material Use in
+    Additive Manufacturing: A Review", Micromachines 2020.
+    DOI: 10.3390/mi11070633
+    Link: https://www.mdpi.com/2072-666X/11/7/633
+    Why useful: broad additive path planning survey: contours, rasters, spirals, continuous paths,
+    support, material use, and multi-axis directions.
+
+42. "Continuous Toolpath Planning in Additive Manufacturing", arXiv:1908.07452, and the journal
+    version "Continuous toolpath planning in a graphical framework for sparse infill additive
+    manufacturing", Computer-Aided Design 127, 2020.
+    arXiv: https://arxiv.org/abs/1908.07452
+    DOI: 10.1016/j.cad.2020.102880
+    Link: https://www.sciencedirect.com/science/article/abs/pii/S0010448520300737
+    Why useful: models infill as a graph and guarantees continuous paths via Eulerian structure.
+    This is highly compatible with exact arrangement graphs and topological certificates.
+
+43. "Toolpath Planning for Continuous Extrusion Additive Manufacturing".
+    PDF: https://research.engr.oregonstate.edu/rdml/sites/research.engr.oregonstate.edu.rdml/files/toolpath-planning-continuous-final.pdf
+    Why useful: formal graph definition of additive toolpaths and continuous extrusion constraints.
+
+44. Roschli et al., "Creating Toolpaths Without Starts and Stops for Extrusion-Based Systems",
+    Solid Freeform Fabrication Proceedings, 2019.
+    Link: https://www.ornl.gov/publication/creating-toolpaths-without-starts-and-stops-extrusion-based-systems
+    Why useful: large-format additive manufacturing emphasizes avoiding starts/stops, wipes, and
+    non-printing travel. Exact path graph construction can make continuity constraints explicit.
+
+45. "A novel approach for adaptive skeleton toolpath generation", ORNL / SFF.
+    Link: https://www.ornl.gov/publication/novel-approach-adaptive-skeleton-toolpath-generation
+    PDF: https://www.sc.fsu.edu/attachments/article/1733/Cx23_White_Liam.pdf
+    Why useful: skeleton/Voronoi-based additive paths for filling voids, relevant to sparse infill,
+    bead-width-aware paths, and exact medial-axis experiments.
+
+46. Jensen et al., "Toolpath Strategies for 5DOF and 6DOF Extrusion-Based Additive Manufacturing",
+    Applied Sciences 9(19), 2019.
+    DOI: 10.3390/app9194168
+    Link: https://www.mdpi.com/2076-3417/9/19/4168
+    Why useful: non-planar/multi-axis path strategies and orientation control. Good bridge between
+    additive and subtractive surface-following toolpath concepts.
+
+47. "Five-axis additive manufacturing of freeform models through buildup of transition layers",
+    Journal of Manufacturing Systems 50, 2019.
+    DOI: 10.1016/j.jmsy.2018.12.002
+    Link: https://www.sciencedirect.com/science/article/abs/pii/S0278612518301419
+    Why useful: curved/freeform layers for surface quality and support reduction.
+
+48. "Curved layer based process planning for multi-axis volume printing of freeform models",
+    Computer-Aided Design 114, 2019.
+    PDF: https://gershon.cs.technion.ac.il/Seminar23_3DP/Papers/NonLayered/AMCurvedLayersMultiAxis2019Kai.pdf
+    Why useful: curved-layer slicing, volume printing, and multi-axis planning from exact CAD
+    geometry rather than just planar STL layers.
+
+49. "4 and 5-Axis additive manufacturing of parts represented using free-form 3D curves",
+    Graphical Models 120, 2022.
+    DOI: 10.1016/j.gmod.2022.101137
+    Link: https://www.sciencedirect.com/science/article/abs/pii/S1524070322000145
+    Why useful: free-form 3D curves as input paths, directly relevant to a curve-native hyperpath.
+
+50. "Non-planar 5-axis directional additive manufacturing of plastics: Machine, process, and
+    tool path", Additive Manufacturing / Elsevier, 2024.
+    Link: https://www.sciencedirect.com/science/article/pii/S2213846324001822
+    Repository page: https://research.sabanciuniv.edu/id/eprint/49974/
+    Why useful: modern non-planar directional path generation and bead-direction constraints.
+
+51. "As-Continuous-As-Possible Extrusion Fabrication of Surface Models", arXiv:2201.02374.
+    Link: https://arxiv.org/abs/2201.02374
+    Why useful: surface decomposition into patches printable with as few continuous paths as
+    possible. Useful for shell/surface additive path planning.
+
+52. "Implicit Toolpath Generation for Functionally Graded Additive Manufacturing via
+    Gradient-Aware Slicing", arXiv:2505.08093.
+    Link: https://arxiv.org/abs/2505.08093
+    Why useful: recent implicit/slicing work for graded material fields. Less mature, but relevant
+    if hyperpath later supports scalar fields and variable bead/material deposition.
+
+
+5. Design implications for hyperpath
+------------------------------------
+
+- Build the first serious core around exact 2.5D regions: arrangements of lines and circular arcs,
+  exact booleans, exact offset predicates, containment, winding, and graph traversal.
+- Treat offsets as geometry, not as sampled polylines. For polygonal input and round tools/nozzles,
+  the exact boundary is line segments plus circular arcs; preserve that.
+- Keep export tolerance explicit. Internal exact paths can later be lowered to G1/G2/G3, NURBS,
+  or dense G1 moves with a certified Hausdorff/chordal error.
+- Separate toolpath construction from machine dynamics. First prove that geometry/topology is
+  correct; then plan feedrates, acceleration, jerk, corner rounding, and controller-specific
+  smoothing.
+- Use hyperlimit-style reports for path decisions: "offset loop removed because exact containment",
+  "link crosses material boundary", "bead path stays inside region", "rest area remains", etc.
+- Favor graph formulations. Continuous extrusion, contour linking, rest machining, and spiral
+  pocketing all become more auditable when expressed as exact embedded graphs.
+- Watch the exact-construction boundary. CGAL's EPIC/EPEC distinction is a useful warning: exact
+  predicates over inexact constructed points are not exact topology. Hyperpath should keep exact
+  constructed geometry when those constructions feed later predicates.
+- Treat PH curves as a high-value research track. They offer exact/rational offsets and polynomial
+  arc length, which is rare among smooth curves and highly relevant to precise motion.
+- Compare, but do not blindly copy, integer polygon libraries. Clipper-style integer robustness is
+  practical, but hyperpath can preserve more mathematical structure via hyperreal.
+- For additive paths, start with exact planar slicing/contours, then add continuous graph traversal
+  and non-planar curved layers. Avoid baking STL tolerance assumptions into the core.
+
