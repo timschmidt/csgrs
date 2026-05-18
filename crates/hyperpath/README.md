@@ -1,4 +1,6 @@
-# hyperpath
+<h1>
+  hyperpath
+</h1>
 
 `hyperpath` owns exact-aware path planning and routing carriers for the Hyper ecosystem.
 It records line, arc, Bezier, offset, tangent, CAM, PCB, Specctra, swept-volume, and
@@ -103,6 +105,31 @@ For sibling checkouts:
 [dependencies]
 hyperpath = { path = "../hyperpath" }
 ```
+
+## Usage
+
+Keep imported geometry, candidate construction, and certification reports separate:
+
+```rust,ignore
+use hyperpath::{
+    LinePathSegment, NetId, OffsetSide, PcbTrace, SourceGrid, SourceLengthUnit,
+    SweptLineSegment, TraceLayer, offset_axis_aligned_segment,
+};
+use hyperreal::Real;
+
+let grid = SourceGrid::new(SourceLengthUnit::Millimeter, Real::from(1_000));
+let centerline = LinePathSegment::new([Real::from(0), Real::from(0)].into(),
+                                      [Real::from(10), Real::from(0)].into());
+let offset = offset_axis_aligned_segment(&centerline, Real::from(2), OffsetSide::Left)?;
+
+let swept = SweptLineSegment::new(centerline, Real::from(1))?;
+let trace = PcbTrace::new(NetId::new("D+")?, TraceLayer::Top, swept);
+```
+
+For CAM use `RectangularPocket`, bead/infill/support planners, and rectangular-region
+boolean reports. For PCB use trace, pad, via, board-outline, clearance, annular-ring,
+layer-span, and Specctra route records. For smooth paths use tangent and G1 chain
+certification helpers.
 
 ## Development
 
