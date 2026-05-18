@@ -1,6 +1,6 @@
 [package]
 name = "hyperpath"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 description = "Exact-aware path predicates and route constraints for the Hyper ecosystem"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
